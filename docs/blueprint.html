@@ -1,0 +1,227 @@
+<title>WeftMate 产品蓝图</title>
+<style>
+  :root {
+    --ground: #191a1e; --sidebar: #131317; --panel: #212129; --panel-2: #262630;
+    --line: #31313b; --line-soft: #26262f; --text: #e9e6df; --muted: #9e9a90; --faint: #6f6b63;
+    --accent: #d4a75d; --accent-dim: #8b7040; --ready: #8cba90; --ready-bg: #1d2a20;
+    --new: #7ba7d1; --new-bg: #1a2632; --her: #d9a0a8;
+    --p-mvp: #d4a75d; --p-soon: #8cba90; --p-later: #7d7a86;
+    --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-mono: "Cascadia Code", Consolas, ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  .wm { background: var(--ground); color: var(--text); font-family: var(--font-sans); line-height: 1.55; padding: 44px 28px 64px; max-width: 1080px; margin: 0 auto; -webkit-font-smoothing: antialiased; }
+
+  .hero { margin-bottom: 40px; }
+  .kicker { font-family: var(--font-mono); font-size: 12px; letter-spacing: .22em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+  .hero h1 { font-size: 40px; line-height: 1.08; letter-spacing: -.025em; margin: 0 0 14px; font-weight: 700; text-wrap: balance; }
+  .hero h1 .grad { background: linear-gradient(96deg, var(--accent), #e9cfa0); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p { color: var(--muted); font-size: 16px; max-width: 66ch; margin: 0; }
+  .hero p b { color: var(--text); font-weight: 600; } .hero .wname { color: var(--accent); font-weight: 600; }
+
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin: 0 0 16px; }
+  .eyebrow .sub { color: var(--faint); text-transform: none; letter-spacing: 0; margin-left: 8px; }
+  .sec { margin-bottom: 46px; }
+  .rule { height: 1px; background: linear-gradient(90deg, var(--accent-dim), transparent 65%); border: 0; margin: 34px 0; }
+
+  .loop { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line-soft); border-radius: 12px; overflow: hidden; background: var(--panel); }
+  .loop-node { padding: 16px 14px; display: flex; flex-direction: column; gap: 5px; }
+  .loop-node + .loop-node { border-left: 1px solid var(--line-soft); }
+  .loop-node .n { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+  .loop-node .t { font-size: 13.5px; font-weight: 650; }
+  .loop-node .d { font-size: 11.5px; color: var(--muted); line-height: 1.45; }
+  .loop-node.engine { background: linear-gradient(180deg, #241f14, #1e1a11); } .loop-node.engine .t { color: var(--accent); }
+  .loop-cap { text-align: center; font-family: var(--font-mono); font-size: 11.5px; color: var(--faint); margin-top: 14px; } .loop-cap b { color: var(--accent); }
+
+  .mock { display: grid; grid-template-columns: 176px 1fr; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--ground); box-shadow: 0 20px 46px -30px rgba(0,0,0,.85); }
+  .mside { background: var(--sidebar); border-right: 1px solid var(--line-soft); padding: 12px 9px; display: flex; flex-direction: column; gap: 2px; }
+  .mside-h { display: flex; align-items: center; justify-content: space-between; padding: 3px 7px 11px; }
+  .mside-h .b { font-weight: 700; font-size: 13.5px; } .mside-h .b span { color: var(--accent); } .mside-h .plus { color: var(--faint); font-size: 15px; }
+  .mside .lbl { font-family: var(--font-mono); font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 6px 7px 4px; }
+  .conv { padding: 7px 8px; border-radius: 6px; font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv.on { background: #23232b; color: var(--text); }
+  .mside .grow { flex: 1; }
+  .mside-foot { border-top: 1px solid var(--line-soft); padding-top: 8px; margin-top: 4px; display: flex; flex-direction: column; gap: 2px; }
+  .ftitem { display: flex; align-items: center; gap: 8px; padding: 6px 7px; border-radius: 6px; font-size: 11.5px; color: var(--muted); }
+  .ftitem .ic { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); } .ftitem.persona .ic { background: var(--her); } .ftitem.persona b { color: var(--her); }
+
+  .mmain { padding: 15px 18px; min-height: 288px; display: flex; flex-direction: column; position: relative; }
+  .mbar { display: flex; align-items: center; gap: 10px; padding-bottom: 11px; border-bottom: 1px solid var(--line-soft); margin-bottom: 13px; }
+  .mbar .tt { font-size: 13px; font-weight: 600; }
+  .mchip { margin-left: auto; font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 20px; color: var(--accent); border: 1px solid var(--accent-dim); background: #241f14; }
+  .bub { max-width: 76%; padding: 9px 12px; border-radius: 12px; font-size: 12.5px; margin-bottom: 8px; }
+  .bub.you { align-self: flex-end; background: #2a2a34; }
+  .bub.her { align-self: flex-start; background: #201d17; border: 1px solid #34291733; }
+  .bub.her .cite { display: block; margin-top: 5px; font-family: var(--font-mono); font-size: 9.5px; color: var(--faint); }
+  .bub.tool { align-self: flex-start; background: #16211a; border: 1px solid #26402e; font-family: var(--font-mono); font-size: 11px; color: var(--ready); }
+  .minput { margin-top: auto; border: 1px solid var(--line); border-radius: 10px; background: var(--sidebar); overflow: hidden; }
+  .mtext { padding: 11px 12px; font-size: 12px; color: var(--faint); }
+  .mtext .cur { color: var(--accent); }
+  .mtoolbar { display: flex; align-items: center; gap: 6px; padding: 7px 9px; border-top: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .mtool { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--muted); padding: 4px 8px; border-radius: 6px; background: #1e1e25; border: 1px solid var(--line-soft); }
+  .mtool.model { color: var(--accent); border-color: var(--accent-dim); background: #241f14; }
+  .mtoolbar .send { margin-left: auto; color: var(--accent); font-size: 14px; }
+  .pet { position: absolute; right: 16px; bottom: 74px; width: 46px; height: 46px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e8b6bd, #b76b78); box-shadow: 0 6px 18px -6px rgba(183,107,120,.7); display: flex; align-items: center; justify-content: center; font-size: 20px; }
+  .mock-note { font-size: 12px; color: var(--faint); margin-top: 12px; font-family: var(--font-mono); line-height: 1.6; } .mock-note b { color: var(--muted); }
+
+  /* Feature deck — three groups */
+  .grp { margin-bottom: 26px; }
+  .grp-h { display: flex; align-items: baseline; gap: 10px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line-soft); }
+  .grp-h h3 { font-size: 15.5px; margin: 0; font-weight: 650; letter-spacing: -.01em; }
+  .grp-h .gt { font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+  .grp-h .muscle { color: var(--her); } .grp-h .bone { color: var(--muted); } .grp-h .hand { color: var(--ready); }
+  .deck { display: grid; grid-template-columns: repeat(auto-fill, minmax(238px, 1fr)); gap: 11px; }
+  .f { background: var(--panel); border: 1px solid var(--line-soft); border-radius: 10px; padding: 12px 13px; display: flex; flex-direction: column; gap: 6px; }
+  .f:hover { border-color: var(--line); background: var(--panel-2); }
+  .f-top { display: flex; align-items: center; gap: 8px; }
+  .f-nm { font-size: 13px; font-weight: 600; letter-spacing: -.01em; }
+  .pr { font-family: var(--font-mono); font-size: 9px; letter-spacing: .04em; text-transform: uppercase; padding: 2px 6px; border-radius: 4px; margin-left: auto; flex: none; border: 1px solid; }
+  .pr.mvp { color: var(--p-mvp); border-color: var(--accent-dim); background: #241f14; }
+  .pr.soon { color: var(--p-soon); border-color: #2c4030; background: var(--ready-bg); }
+  .pr.later { color: var(--p-later); border-color: #34343e; background: #202027; }
+  .f-d { font-size: 11.5px; color: var(--muted); line-height: 1.48; }
+  .f.own { border-left: 2px solid var(--her); }
+
+  /* Discipline strip */
+  .disc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .dc { border: 1px dashed var(--accent-dim); border-radius: 10px; padding: 14px 15px; background: #201d14; }
+  .dc .dh { font-size: 13px; font-weight: 650; color: var(--accent); margin-bottom: 5px; }
+  .dc .dd { font-size: 11.5px; color: var(--muted); line-height: 1.5; }
+
+  .road { display: flex; flex-direction: column; gap: 10px; }
+  .phase { display: grid; grid-template-columns: 132px 1fr; gap: 16px; padding: 14px 16px; border: 1px solid var(--line-soft); border-radius: 10px; background: var(--panel); }
+  .phase.done { border-color: #2c4030; background: #17201933; }
+  .phase-k { font-family: var(--font-mono); font-size: 12px; color: var(--accent); font-weight: 600; }
+  .phase.done .phase-k { color: var(--ready); }
+  .phase-k .st { display: block; font-size: 10.5px; color: var(--faint); font-weight: 400; margin-top: 3px; }
+  .phase-b { font-size: 12.5px; color: var(--muted); } .phase-b b { color: var(--text); font-weight: 600; }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; font-size: 11.5px; color: var(--faint); margin: -6px 0 20px; font-family: var(--font-mono); }
+  .legend b { color: var(--muted); font-weight: 400; }
+
+  .foot { margin-top: 34px; padding-top: 18px; border-top: 1px solid var(--line-soft); font-size: 12.5px; color: var(--faint); } .foot b { color: var(--muted); }
+</style>
+
+<div class="wm">
+  <div class="hero">
+    <p class="kicker">memoweft 生态 · 桌面伴侣</p>
+    <h1>越用越懂你的<br><span class="grad">AI 桌面伴侣</span></h1>
+    <p><b class="wname">WeftMate</b> = 一套<b>成熟桌面 App 的产品骨架</b> + 三样竞品都没有的<b>独有肌肉</b>。你跟她聊天、让她帮你写代码干活,她一边陪你、一边<b>感知</b>你在忙什么,<b>MemoWeft</b> 把这些整理成"对你的理解"(分得清事实与猜测)。用得越久,她越懂你。<b class="wname">星瑶</b>是她此刻的一个人格,可以随时换。</p>
+  </div>
+
+  <section class="sec">
+    <p class="eyebrow">核心 · 懂你的循环</p>
+    <div class="loop">
+      <div class="loop-node"><span class="n">01</span><span class="t">相处</span><span class="d">聊天、让她帮你写代码/干日常活</span></div>
+      <div class="loop-node"><span class="n">02</span><span class="t">感知</span><span class="d">她看到你在忙什么、设备什么状态</span></div>
+      <div class="loop-node engine"><span class="n">03 · 引擎</span><span class="t">MemoWeft 整理</span><span class="d">沉淀成画像:哪些是事实、哪些只是猜测</span></div>
+      <div class="loop-node"><span class="n">04</span><span class="t">更懂你</span><span class="d">对你的理解越攒越准、越全</span></div>
+      <div class="loop-node"><span class="n">05</span><span class="t">更懂地帮你</span><span class="d">带着"懂你"回到相处,如此循环</span></div>
+    </div>
+    <p class="loop-cap">循环转得越久 → <b>越用越懂用户</b>。MemoWeft 是循环里的记忆引擎。</p>
+  </section>
+
+  <hr class="rule" />
+
+  <section class="sec">
+    <p class="eyebrow">界面 · Claude Desktop 风格 · 对话为主</p>
+    <div class="mock">
+      <div class="mside">
+        <div class="mside-h"><span class="b">Weft<span>Mate</span></span><span class="plus">＋</span></div>
+        <div class="lbl">对话记录</div>
+        <div class="conv on">Rust 生命周期怎么理解</div>
+        <div class="conv">帮我重构那个采集脚本</div>
+        <div class="conv">周末去哪玩的建议</div>
+        <div class="conv">昨天没睡好，聊聊</div>
+        <div class="grow"></div>
+        <div class="mside-foot">
+          <div class="ftitem"><span class="ic"></span>记忆与画像 ▾</div>
+          <div class="ftitem"><span class="ic"></span>能力与感知 ▾</div>
+          <div class="ftitem"><span class="ic"></span>设置</div>
+          <div class="ftitem persona"><span class="ic"></span>人格 · <b>星瑶</b> ▾</div>
+        </div>
+      </div>
+      <div class="mmain">
+        <div class="mbar"><div class="tt">Rust 生命周期怎么理解</div><span class="mchip">记住你 · 14 件事</span></div>
+        <div class="bub you">帮我把那个采集脚本用 Rust 重写一下</div>
+        <div class="bub her">好，我记得你更爱简洁的写法——我来起个骨架。<span class="cite">↳ 关联记忆:「偏好简洁代码」(把握度 820)</span></div>
+        <div class="bub tool">⚙ 调用能力 · Claude CLI — 正在写 collector.rs …</div>
+        <div class="minput">
+          <div class="mtext"><span class="cur">|</span></div>
+          <div class="mtoolbar">
+            <span class="mtool">＋ 文件 / 工作区</span>
+            <span class="mtool model">◇ GLM-5.2 ▾</span>
+            <span class="mtool">⚡ 技能 ▾</span>
+            <span class="mtool">🔒 沙箱 ▾</span>
+            <span class="send">↑</span>
+          </div>
+        </div>
+        <div class="pet">🧵</div>
+      </div>
+    </div>
+    <p class="mock-note">左＝对话记录(像 Claude Desktop);功能收在侧栏底部、点开有切换动画;桌面形象浮在角落。输入框<b>无默认提示</b>;底部一条工具栏:<b>＋(加文件/选工作区)· 模型选择器 · 技能 · 沙箱权限 · 发送</b>——模型配置就放这。对话里能直接调工具(如 Claude CLI)干活。</p>
+  </section>
+
+  <section class="sec">
+    <p class="eyebrow">功能盘 · 竞品综合<span class="sub">扒了 Claude / Codex / WorkBuddy / Cursor·Windsurf·Cline·Raycast·桌宠类</span></p>
+    <div class="legend"><b>优先级:</b> <span class="pr mvp" style="margin:0">MVP</span> 立身之本先做 &nbsp; <span class="pr soon" style="margin:0">近期</span> 紧接着 &nbsp; <span class="pr later" style="margin:0">后续</span> 锦上添花 &nbsp;·&nbsp; <span style="color:var(--her)">▎</span> = WeftMate 独有</div>
+
+    <div class="grp">
+      <div class="grp-h"><h3>产品骨架</h3><span class="gt bone">照搬成熟做法,别自创 — Claude/Codex/Raycast 已趟平</span></div>
+      <div class="deck">
+        <div class="f"><div class="f-top"><span class="f-nm">信息架构</span><span class="pr mvp">MVP</span></div><div class="f-d">单一"＋"加料入口(加文件/图片、选工作区)+ `/` 命令 + 设置抽屉。功能再多也不迷路。</div></div>
+        <div class="f"><div class="f-top"><span class="f-nm">模型 · 切换与配置</span><span class="pr mvp">MVP</span></div><div class="f-d">底部一个选择器:内置多模型(带用量倍率)+ 自定义模型 + 配置入口 + Max/推理档。模型配置就放这,不藏深处。</div></div>
+        <div class="f"><div class="f-top"><span class="f-nm">隐私与数据</span><span class="pr mvp">MVP</span></div><div class="f-d">一个主开关 + 无痕模式 + 明确留存期 + 恢复出厂。感知设备本就敏感,这是信任红线。</div></div>
+        <div class="f"><div class="f-top"><span class="f-nm">历史 · 搜索 · 会话</span><span class="pr soon">近期</span></div><div class="f-d">对话历史、全文搜索、重命名、归档不删可恢复;跨设备接力(懂你的她要跟着走)。</div></div>
+        <div class="f"><div class="f-top"><span class="f-nm">账号 · 用量看板</span><span class="pr later">后续</span></div><div class="f-d">个人向小看板:这个月聊了多少、烧了多少 token(本地估算·明标非账单)。BYOK,核心永远免费开源。</div></div>
+        <div class="f"><div class="f-top"><span class="f-nm">主题 · 更新 · 快捷键</span><span class="pr later">后续</span></div><div class="f-d">明暗主题 + 无障碍字体、App 内 changelog(她又学会了啥)、全局热键随叫随到。</div></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h"><h3>三样独有肌肉</h3><span class="gt muscle">立身之本 · code 工具全没有 · 区别于"又一个 code 工具"的全部理由</span></div>
+      <div class="deck">
+        <div class="f own"><div class="f-top"><span class="f-nm">记忆 + 画像可视</span><span class="pr mvp">MVP</span></div><div class="f-d">分事实与猜测、会变淡;把"她对你的了解"做成<b style="color:var(--her)">能看还能纠错</b>的画像面板(按来源分:感知来的/对话推断的/你改删过的)。</div></div>
+        <div class="f own"><div class="f-top"><span class="f-nm">记忆气泡 · 管理即对话</span><span class="pr mvp">MVP</span></div><div class="f-d">新理解当场织进聊天流:「记住了:X · 还没确认 · 改/删」。管理不用另开页——竞品都没有。</div></div>
+        <div class="f own"><div class="f-top"><span class="f-nm">人格 = 可切换能力包</span><span class="pr mvp">MVP</span></div><div class="f-d">一个人格 = 系统提示+语气+可选形象+声音+默认模型。切人格=切包,同一份"懂你"都还在。</div></div>
+        <div class="f own"><div class="f-top"><span class="f-nm">感知 + 主动关怀</span><span class="pr soon">近期</span></div><div class="f-d">感知你在用啥/活动节奏→喂画像(observed 默认不上云);该提醒时<b style="color:var(--her)">形象说话</b>而非冷 toast。</div></div>
+        <div class="f own"><div class="f-top"><span class="f-nm">桌面形象 · 陪伴</span><span class="pr later">后续</span></div><div class="f-d">常驻形象(Live2D/立绘)表情随对话/情绪同步。桌宠有形象但缺真记忆,WeftMate 两者合体——护城河,别当彩蛋。</div></div>
+      </div>
+    </div>
+
+    <div class="grp">
+      <div class="grp-h"><h3>帮你干活</h3><span class="gt hand">走 MCP 接工具 · 信任基建是前提</span></div>
+      <div class="deck">
+        <div class="f"><div class="f-top"><span class="f-nm">agent 干活</span><span class="pr soon">近期</span></div><div class="f-d">计划→确认→执行,自主度三档(只建议/问一下/放手做)+ 沙箱 + 每步可视 + 一键撤回。敢交执行权靠这套。</div></div>
+        <div class="f"><div class="f-top"><span class="f-nm">MCP 一键装市场</span><span class="pr soon">近期</span></div><div class="f-d">像装扩展一样装能力(如 Claude CLI 写代码),不手改配置;工具定义延迟加载。</div></div>
+        <div class="f"><div class="f-top"><span class="f-nm">上下文 · 工作区</span><span class="pr soon">近期</span></div><div class="f-d">拖文件/图片给她当上下文;<b style="color:var(--muted)">选个工作区(文件夹)让她在里面干活</b>;检索式召回不全量塞。</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="eyebrow">三条贯穿纪律 · 踩竞品的坑总结的</p>
+    <div class="disc">
+      <div class="dc"><div class="dh">工具定义延迟加载</div><div class="dd">只把名字放进上下文、用到才展开。长期陪伴接的工具越来越多,不这么做上下文必爆、token 失控——生死线。</div></div>
+      <div class="dc"><div class="dh">只报 P0/P1 · 少而准</div><div class="dd">凡是主动打断(提醒/建议/发问)都要少而准。伴侣最忌唠叨;克制是可感知的产品气质。</div></div>
+      <div class="dc"><div class="dh">不吹大 · 记≠信</div><div class="dd">守 naming.md:别写"真正理解你";慢活诚实说"要一会儿";不露原始把握度分,只给定性档;MemoWeft 不用"她"。</div></div>
+    </div>
+  </section>
+
+  <section class="sec">
+    <p class="eyebrow">生态 · 越多感知源 → 越懂你</p>
+    <div class="mock-note" style="font-size:13px;margin:0 0 4px;color:var(--muted)"><b style="color:var(--ready)">现在 · 桌面端</b> — 感知活动、帮你干活、攒画像,把根扎住。 &nbsp;&nbsp; <b style="color:var(--faint)">后续 · 手机+穿戴</b> — 应用时长、睡眠、心率汇进同一画像,拼出更完整的你(架构留位、先不做)。</div>
+  </section>
+
+  <section class="sec">
+    <p class="eyebrow">施工路线</p>
+    <div class="road">
+      <div class="phase done"><div class="phase-k">已通 ✓<span class="st">S0 · S1</span></div><div class="phase-b"><b>骨架落地</b> — node:sqlite 在 Electron 可用;主进程建 core + loopback + 窗口,现有能力已在桌面跑。</div></div>
+      <div class="phase"><div class="phase-k">阶段 1<span class="st">立身之本</span></div><div class="phase-b"><b>产品骨架 + 三样肌肉打底</b> — Claude Desktop 风格外壳(对话为主、功能收起有动画)、配模型、隐私开关;把<b>记忆+画像可视+记忆气泡+人格</b>做扎实,让"越用越懂"当场可感、可纠错。守克制纪律。</div></div>
+      <div class="phase"><div class="phase-k">阶段 2<span class="st">懂你 & 帮你</span></div><div class="phase-b"><b>感知→画像 + 帮你干活</b> — 感知源喂画像;agent 干活的信任基建(沙箱/分级审批/回滚)+ MCP 一键装(接 Claude CLI 等);上下文附件、历史接力。让循环真转起来。</div></div>
+      <div class="phase"><div class="phase-k">阶段 3<span class="st">陪伴 & 完整度</span></div><div class="phase-b"><b>桌面形象 + 锦上添花</b> — 桌宠形象深化(表情/情绪同步)、用量看板、主题/changelog/快捷键;为手机/手表感知源留架构。</div></div>
+    </div>
+  </section>
+
+  <p class="foot">这是 <b>v2 草案</b>(并入竞品综合)。功能有漏的补、优先级要调的排、界面还想怎么改都说——定稿后落进 WeftMate 仓库产品文档,按阶段开工。</p>
+</div>
