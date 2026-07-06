@@ -21,7 +21,7 @@
 | D2 | 人格 | **保留切换**(星瑶 + 普通助手)——演示"同记忆换张脸"的卖点。默认激活星瑶。 |
 | D3 | 记忆查看 | **MVP 只读**(砍卡片上的标失效/删除/授权写操作 + 二次确认链路)。 |
 | D4 | 主进程↔前端 | MVP 先在主进程内起 **127.0.0.1 loopback server** 复用现有 handler(前端 fetch 几乎零改、最快跑通);后期评估换 Electron IPC(去常驻端口)。 |
-| D5 | sqlite 驱动 | **第一步 smoke 先验 node:sqlite**;可用走它(零原生模块);不可用装 `better-sqlite3` + `@electron/rebuild` 重编 + 打包 asarUnpack。见 S0。 |
+| D5 | sqlite 驱动 | **✅ 实测定案(2026-07-07):node:sqlite 在 Electron 43(内置 Node 24.17)可用**——`npm run smoke` 建 core + 存读全通、未装 better-sqlite3。WeftMate 走 **node:sqlite,零原生模块、零 electron-rebuild、零 asarUnpack**(推翻了"要 better-sqlite3"的悲观预判)。 |
 | D6 | 模型 key 输入 | 做**设置界面**写用户数据目录配置,apiKey 走桌面安全存储(`safeStorage`),不明文躺 .env。**这是"不做就装完打不开"的前置。** |
 | D7 | 打包 | electron-builder(Windows/mac);到出安装包时再定细节。 |
 
@@ -45,7 +45,7 @@
 
 ## 施工步骤(分步)
 
-- **S0 · sqlite smoke**(头号风险·主线亲验):Electron 主进程 `createMemoWeftCore` + 存一条 + 读回 → 定 node:sqlite / better-sqlite3。**`src/main.mjs` 已就绪,装完依赖 `npm run smoke`。**
+- **S0 · sqlite smoke** ✅ **已过(2026-07-07)**:Electron 43 / Node 24.17,`npm run smoke` 建 core + 存读全通、未装 better-sqlite3 → **走 node:sqlite,零原生模块**。头号风险趟平。
 - **S1 · 骨架跑通**:主进程建 core + loopback server 复用 chat/记忆 handler + 开 BrowserWindow;DB 落 userData;单实例锁。
 - **S2 · 搬前端**:搬 `index.html`、砍非闭环 tab、记忆查看只读、文案贴星瑶、保留人格切换下拉;桌面观感靠 BrowserWindow 配置(去地址栏/托盘)。
 - **S3 · 模型配置**:设置界面 + safeStorage 存 key(不做则跑不起来)。
