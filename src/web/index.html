@@ -495,7 +495,7 @@
 <div id="wizard">
   <div class="wiz">
     <h1>先配一个模型，就能开始聊了</h1>
-    <p class="lead">MemoWeft 靠一个大模型来回话、并把你说的话记下来。填好下面第一组（必填），生成一段配置贴到项目里、重启，就能用了。你的密钥只用来生成这段文本，不会被保存在这里。</p>
+    <p class="lead">WeftMate 靠一个大模型来回话、并把你说的话记下来。填好下面第一组（必填），点「保存并启用」——你的密钥会在本机<b>加密保存</b>（safeStorage · 不明文落盘、也不上传），应用重启一下就能聊了。</p>
 
     <!-- 第 1 组：对话模型（必填） -->
     <div class="wiz-group">
@@ -559,32 +559,25 @@
       </div>
     </div>
 
-    <!-- 部署选项：是否带网页界面（对齐后端 withExperienceUI） -->
-    <div class="wiz-group">
+    <!-- 部署选项(纯库模式)对桌面 App 无意义:WeftMate 恒带界面,隐藏该项;保留 DOM 免动 gen-env 兼容 JS。 -->
+    <div class="wiz-group" style="display:none">
       <label class="wiz-check">
         <input id="expUI" type="checkbox" checked />
-        <span class="ck-text">带网页界面使用
-          <small>勾选＝像现在这样用网页聊天；取消＝只把 MemoWeft 当作程序库、不起网页（给开发者接进自己的应用用）。</small>
-        </span>
+        <span class="ck-text">带网页界面使用</span>
       </label>
     </div>
 
     <div class="wiz-actions">
-      <button id="wizGen">生成配置</button>
+      <button id="wizGen">保存并启用</button>
       <span id="wizErr"></span>
     </div>
 
-    <!-- 生成结果：只读 .env 文本 + 复制 + 保存引导 -->
-    <div id="wizResult">
-      <h2>把下面这段保存好</h2>
+    <!-- 保存中/重启提示(safeStorage 落盘后应用会自动重启生效)。gen-env 时代的 .env 只读框已弃用,隐藏保留免动兼容 JS。 -->
+    <div id="wizSaving" style="display:none">配置已加密保存，正在重启应用…</div>
+    <div id="wizResult" style="display:none">
       <textarea id="wizEnv" readonly spellcheck="false"></textarea>
-      <div class="wiz-result-actions">
-        <button id="wizCopy">复制</button>
-        <span id="wizCopied">已复制 ✓</span>
-      </div>
-      <div class="wiz-save-hint">
-        把上面内容保存到项目根目录的 <code>.env</code> 文件里，然后重启，就能开始聊了。
-      </div>
+      <button id="wizCopy" style="display:none">复制</button>
+      <span id="wizCopied" style="display:none"></span>
     </div>
   </div>
 </div>
@@ -814,43 +807,61 @@
     } catch (e) { /* 拿不到就先不提示、不强进向导 */ }
   }
 
-  // ── 配置向导 ──
-  function enterWizard() { document.body.classList.add('mode-wizard'); }
+  // ── 配置向导（阶段1·② safeStorage） ──
+  function enterWizard() { document.body.classList.add('mode-wizard'); wizPrefill(); }
 
-  // 生成配置：收三组 9 字段 + 是否带界面 → POST /api/gen-env → 只读框展示返回的 .env 文本。
-  //   apiKey 只随这次请求发出去、不存在页面任何持久处；生成后由用户自行保存到 .env。
-  async function wizGenEnv() {
+  // 预填：进配置页时读【安全视图】(GET /api/model-config，无 key)回填 baseUrl/model；已存 key 的组把密钥框提示改成"留空=不变"。
+  let WIZ_HAS_KEY = false; // 对话组此前是否已存过 key（决定密钥是否必填）
+  async function wizPrefill() {
+    try {
+      const c = await fetch('/api/model-config').then((x) => x.json());
+      const fill = (g, baseId, keyId, modelId) => {
+        if (!g) return;
+        if (g.baseUrl) $(baseId).value = g.baseUrl;
+        if (g.model) $(modelId).value = g.model;
+        if (g.hasKey) $(keyId).placeholder = '已保存 · 留空则不变';
+      };
+      fill(c.llm, 'llmBase', 'llmKey', 'llmModel');
+      fill(c.write, 'writeBase', 'writeKey', 'writeModel');
+      fill(c.embed, 'embedBase', 'embedKey', 'embedModel');
+      if (c.write && c.write.tier) $('writeTier').value = c.write.tier;
+      WIZ_HAS_KEY = !!(c.llm && c.llm.hasKey);
+    } catch (e) { /* 拿不到就不预填 */ }
+  }
+
+  // 保存并启用：收三组字段 → POST /api/model-config → safeStorage 加密落盘 → 后端延时 relaunch 重启生效。
+  //   apiKey 只随这次请求发到本机 loopback、不存页面任何持久处；密钥留空＝沿用已存的 key（重配不必重输）。
+  async function wizSaveConfig() {
     const errBox = $('wizErr');
     errBox.style.display = 'none'; errBox.textContent = '';
-    // 前端先兜一层必填校验（服务端还会再兜底，返回 400 也照样处理）。
     const llmBase = $('llmBase').value.trim(), llmKey = $('llmKey').value.trim(), llmModel = $('llmModel').value.trim();
-    if (!llmBase || !llmKey || !llmModel) {
-      errBox.textContent = '「对话模型」三项都要填：接口地址、密钥、模型名。';
-      errBox.style.display = 'inline';
-      return;
+    if (!llmBase || !llmModel) {
+      errBox.textContent = '「对话模型」的接口地址和模型名要填。';
+      errBox.style.display = 'inline'; return;
+    }
+    if (!llmKey && !WIZ_HAS_KEY) { // 首配必填 key；已存过则可留空沿用
+      errBox.textContent = '第一次配置要填「密钥」。';
+      errBox.style.display = 'inline'; return;
     }
     const payload = {
       llmBaseUrl: llmBase, llmApiKey: llmKey, llmModel: llmModel,
       writeBaseUrl: $('writeBase').value.trim(), writeApiKey: $('writeKey').value.trim(), writeModel: $('writeModel').value.trim(),
       writeTier: $('writeTier').value,
       embedBaseUrl: $('embedBase').value.trim(), embedApiKey: $('embedKey').value.trim(), embedModel: $('embedModel').value.trim(),
-      withExperienceUI: $('expUI').checked,
     };
     $('wizGen').disabled = true;
     try {
-      const res = await fetch('/api/gen-env', {
+      const res = await fetch('/api/model-config', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       });
       const d = await res.json();
-      if (d.error) { errBox.textContent = d.error; errBox.style.display = 'inline'; return; }
-      $('wizEnv').value = d.env || '';
-      $('wizResult').style.display = 'block';
-      $('wizCopied').style.display = 'none';
-      $('wizResult').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      if (d.error) { errBox.textContent = d.error; errBox.style.display = 'inline'; $('wizGen').disabled = false; return; }
+      // 保存成功：后端 ~0.5s 后 relaunch，页面连接随之断、新进程重开窗口。这里把界面切成"正在重启"。
+      $('wizSaving').style.display = 'block';
+      $('wizGen').style.display = 'none';
     } catch (e) {
-      errBox.textContent = '生成失败：' + (e && e.message ? e.message : String(e));
+      errBox.textContent = '保存失败：' + (e && e.message ? e.message : String(e));
       errBox.style.display = 'inline';
-    } finally {
       $('wizGen').disabled = false;
     }
   }
@@ -873,7 +884,8 @@
   }
 
   $('btnGoWizard').addEventListener('click', enterWizard);
-  $('wizGen').addEventListener('click', wizGenEnv);
+  $('wizGen').addEventListener('click', wizSaveConfig);
+  // 旧 gen-env 复制按钮已弃用(隐藏)；元素仍在，绑定留着无害，避免动 wizCopyEnv。
   $('wizCopy').addEventListener('click', wizCopyEnv);
 
   // ── 后台整理状态轮询（用户词，不显示 updateProfile 等术语） ──

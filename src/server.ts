@@ -38,6 +38,7 @@ import { createChatHistory, type HistoryTurn } from './chatHistory.ts';
 import { credBand } from './confBand.ts';
 import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_IDS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
 import { buildEnvResponse } from './genEnv.ts';
+import * as configStore from './config-store.ts';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
 //   loadEnvFile 幂等；没有 .env 抛错忽略。放在最顶部——否则 DB_PATH（下面就求值）读不到 .env 里的 MEMOWEFT_HOST_DB。
@@ -434,6 +435,52 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // ── 模型配置(阶段1·② · safeStorage 加密落盘,替代"手动配 .env") ──
+    // WeftMate 桌面 App 版:key 走 Electron safeStorage 加密存 userData(不明文),不再让用户拼 .env(gen-env 留着兼容)。
+    // 生效方式(见 config-store / 记忆 weftmate-config-apply):库构造时读死 key → 保存后自动 relaunch 重启进程生效。
+
+    // 读【安全视图】:只回 baseUrl/model + hasKey(是否已设 key),【绝不回 apiKey】。前端据此预填表单/判是否已配。
+    if (req.method === 'GET' && url.pathname === '/api/model-config') {
+      sendJson(res, 200, configStore.readPublicView());
+      return;
+    }
+
+    // 存模型配置:收三组字段 → 校验对话组三项 → safeStorage 加密落盘 → 回 200 后延时 relaunch 重启生效。
+    //   ⚠ 隐私:body 含 apiKey,只在本 handler 栈内流过(交 saveConfig 加密),不 console.log(body)、不入任何模块级变量。
+    //   密钥留空 = 沿用已存的 key(重配不必重输,见 config-store.mergeKeepingKeys)——所以首配才强制要 key。
+    if (req.method === 'POST' && url.pathname === '/api/model-config') {
+      const body = await readJson(req);
+      const s = (v: unknown): string => String(v ?? '').trim();
+      const llmBase = s(body.llmBaseUrl), llmKey = s(body.llmApiKey), llmModel = s(body.llmModel);
+      // 对话组:baseUrl/model 恒必填;apiKey 仅在"此前没存过 key"时必填(留空=沿用旧 key)。
+      const missing: string[] = [];
+      if (!llmBase) missing.push('接口地址');
+      if (!llmModel) missing.push('模型名');
+      if (!llmKey && !configStore.readPublicView().llm?.hasKey) missing.push('密钥');
+      if (missing.length) { sendJson(res, 400, { error: '对话模型必填:' + missing.join('、') }); return; }
+
+      const cfg: configStore.ModelConfig = { llm: { baseUrl: llmBase, apiKey: llmKey, model: llmModel } };
+      const wBase = s(body.writeBaseUrl), wKey = s(body.writeApiKey), wModel = s(body.writeModel);
+      if (wBase || wKey || wModel) {
+        cfg.write = { baseUrl: wBase, apiKey: wKey, model: wModel, tier: s(body.writeTier).toLowerCase() === 'local' ? 'local' : 'cloud' };
+      }
+      const eBase = s(body.embedBaseUrl), eKey = s(body.embedApiKey), eModel = s(body.embedModel);
+      if (eBase || eKey || eModel) {
+        cfg.embed = { baseUrl: eBase, apiKey: eKey, model: eModel };
+      }
+
+      try {
+        configStore.saveConfig(cfg); // 加密落盘(空 key 组会沿用旧 key)
+      } catch (e) {
+        sendJson(res, 500, { error: e instanceof Error ? e.message : String(e) });
+        return;
+      }
+      sendJson(res, 200, { ok: true, relaunching: true });
+      // 响应先发出去(让渲染层收到"正在重启"提示),再延时重启进程让新 key 生效。
+      setTimeout(() => configStore.applyAndRelaunch(), 500);
+      return;
+    }
+
     // ── 记忆管理页（批次5 步3） ──
     // 全走 core.memory.*（步0 已补齐的受控 API），绝不直接摸 store（Host 边界红线）。
     // 只做【列取 / 标失效 / 改授权 / 删除】，不做内容编辑（用户拍板：编辑记忆文案留 testbench）。
@@ -606,14 +653,27 @@ const server = createServer(async (req, res) => {
   }
 });
 
-// 优雅收尾：进程被 kill/中断时清调度器计时、关 Core 库连接（冒烟脚本会 kill 本进程）。
+// 优雅收尾（幂等）：清调度器计时、关 Core 库连接、关 loopback。
+//   两条触发路径共用：① Electron 主进程 before-quit（桌面常驻退出，见 main.mjs）；② SIGINT/SIGTERM（CLI/冒烟被 kill）。
+//   都可能触发，故用 shuttingDown 守一次；shutdown() 只做清理【不 process.exit】——退出交给调用方（Electron 让 app 退，信号路径自己 exit）。
 //   纯库模式（EXPERIENCE_UI=off）已在文件顶部提前 exit、根本走不到这里。
-for (const sig of ['SIGINT', 'SIGTERM'] as const) {
-  process.on(sig, () => {
-    scheduler.dispose();
-    core.close();
-    server.close(() => process.exit(0));
+let shuttingDown = false;
+export async function shutdown(): Promise<void> {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  scheduler.dispose(); // 停后台整理计时器（别留悬挂 timer；在飞的那次由 trigger 的兜底 catch 吞掉）
+  core.close();        // 关 sqlite 连接（flush WAL）——最要紧的一步
+  // 关 loopback：先强断残留连接再 close。退出时渲染进程的 keep-alive 连接还没拆，光 server.close() 会一直
+  //   等它们关完 → 卡死退出。closeAllConnections 强断（Node 18.2+），再套 1.5s 超时兜底，绝不让退出挂住。
+  server.closeAllConnections?.();
+  await new Promise<void>((resolve) => {
+    const t = setTimeout(resolve, 1500);
+    server.close(() => { clearTimeout(t); resolve(); });
   });
+}
+
+for (const sig of ['SIGINT', 'SIGTERM'] as const) {
+  process.on(sig, () => { void shutdown().then(() => process.exit(0)); });
 }
 
 server.listen(PORT, '127.0.0.1', () => {
@@ -622,7 +682,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`  聊天历史 → ${SESSIONS_DIR}（跟随库路径）`);
   console.log(`  当前对话 → ${currentConvId}`);
   console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
-  console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · POST /api/gen-env · GET /api/chat-history · GET /api/bg-status');
+  console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET/POST /api/model-config · POST /api/gen-env · GET /api/chat-history · GET /api/bg-status');
   console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
   console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
   console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');
