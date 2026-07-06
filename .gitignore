@@ -1,0 +1,25 @@
+# ── Dependencies ──
+node_modules/
+
+# ── Build / packaging output ──
+dist/
+release/
+out/
+
+# ── Local user data & secrets ──
+data/
+*.db
+*.db-journal
+*.sqlite
+.env
+.env.local
+
+# ── Local tooling / scratch ──
+*.log
+dogfood*.mjs
+
+# ── OS / editor cruft ──
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

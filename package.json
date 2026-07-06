@@ -1,0 +1,18 @@
+{
+  "name": "weftmate",
+  "version": "0.1.0",
+  "description": "WeftMate — a desktop companion with long-term memory, powered by MemoWeft. It remembers you, and keeps facts and guesses apart.",
+  "private": true,
+  "type": "module",
+  "main": "src/main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron ."
+  },
+  "dependencies": {
+    "memoweft": "^0.5.0"
+  },
+  "devDependencies": {
+    "electron": "latest"
+  }
+}
