@@ -6,10 +6,9 @@
 
 阶段 2 分五块、分开推、作者定入口。**先启「感知→画像」**。其余四块(agent 干活信任基建 / MCP 一键装 / 上下文附件 / 历史接力)排后。
 
-### 感知→画像(← 当前 · 作者拍板)
-- **通路已就绪一半**:`/api/observe` 收 observed 证据、强制不上云、进画像「感知来的」组(④-1 建)。缺**采集器**。
-- **作者两项拍板(2026-07-07)**:① **活动窗口标题也采**——接受为此引入原生依赖(如 `active-win`/`get-windows`,子进程 helper 型、不一定要 electron-rebuild,但**破"零原生模块"、打包要 asarUnpack helper**);② **感知默认关·opt-in**(设置里手动开;observed 已强制不上云)。
-- **待建**:采集器(main 进程,opt-in 时按节奏采 活动窗口 + powerMonitor 空闲/活跃 → POST /api/observe)+ 设置里感知开关(持久化)+ 采集时机(空闲不采、防噪)。窗口标题含敏感信息 → 守不上云 + 透明(证据可见/可删)。
+### 感知→画像 ✅ 已做(commit 18a7153·作者拍板)
+- 依赖 `get-windows`(N-API 预编译·**实测 Electron 免 electron-rebuild**;破"零原生模块"作者拍板)。`src/collector.ts`(main·powerMonitor 空闲跳过+get-windows 取窗+换窗才记 → POST /api/observe 审核层·observed 不上云)、`src/settings.ts`(非密明文设置·感知默认关 opt-in)、server `GET /api/settings`+`POST /api/settings/perception`、main 启停接线、设置弹窗「感知」开关 + 透明说明。**验:真机端到端(开→采集器→observed 证据)+ 前端开关读写翻转。** observed 证据进画像「感知来的」组。
+- 剩余四块(未启):**agent 干活信任基建**(计划→确认→执行·沙箱·分级审批·回滚) / **MCP 一键装**(当客户端接 Claude CLI 等·工具定义延迟加载=生死线) / **上下文附件**(拖文件图片+工作区) / **历史接力**(全文搜索/重命名/跨设备)。作者定下一块入口。
 
 ## 阶段 1 · 立身之本 ✅ 已基本齐(S0 / S1 已通)
 

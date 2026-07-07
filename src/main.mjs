@@ -56,6 +56,10 @@ async function bootstrap() {
   process.env.MEMOWEFT_HOST_DB = dbPath;
   process.env.PORT = String(PORT);
   process.env.MEMOWEFT_EXPERIENCE = 'xingyao';
+  // 库产出语言:memoweft 0.4.0 起缺省 en(进英文市场),consolidate/distill 形成"理解"的提示按它走 → 缺省出英文认知。
+  //   WeftMate 是中文产品,显式设 zh,让"记住了:X"的认知也是中文(聊天回复本就跟用户语言、不受此影响)。
+  //   必须在 import server.ts(建 core、memoweft config 读死此 env)之前设。后续要多语言可改成跟随设置。
+  process.env.MEMOWEFT_LANG = 'zh';
   delete process.env.MEMOWEFT_EXPERIENCE_UI; // 确保不是"纯库模式"(那会 process.exit)
   console.log('[weftmate] db =', dbPath);
   console.log('[weftmate] port =', PORT);
