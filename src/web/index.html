@@ -1286,8 +1286,70 @@
   </div>
 </div>
 
+<style>
+  /* ── agent 干活（阶段2·帮你干活①·方案B）：设置条 + 步骤卡。全用主题变量，跟随明暗。 ── */
+  .tool.on { color: var(--accent); border-color: var(--accent-dim); }
+  #agentBar { display:none; margin:0 0 8px; padding:10px 12px; background:var(--panel); border:1px solid var(--line); border-radius:12px; font-size:var(--fs-sm); }
+  #agentBar.show { display:block; }
+  .ab-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .ab-title { font-weight:600; color:var(--accent); }
+  .ab-ws { color:var(--muted); word-break:break-all; max-width:340px; }
+  .ab-btn { border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:8px; padding:4px 10px; cursor:pointer; font-size:var(--fs-sm); }
+  .ab-btn:hover { border-color:var(--accent-dim); }
+  .ab-seg { display:inline-flex; border:1px solid var(--line); border-radius:8px; overflow:hidden; }
+  .ab-seg button { border:none; background:transparent; color:var(--muted); padding:4px 10px; cursor:pointer; font-size:var(--fs-sm); }
+  .ab-seg button.on { background:var(--accent); color:var(--on-accent); }
+  .ab-note { color:var(--faint); font-size:var(--fs-xs); margin-top:6px; line-height:1.5; }
+  .ab-close { margin-left:auto; }
+
+  .agent-task { border:1px solid var(--line); border-radius:12px; background:var(--panel); margin:10px 0; overflow:hidden; }
+  .at-head { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line-soft); flex-wrap:wrap; }
+  .at-head .at-task { font-weight:600; flex:1; min-width:0; word-break:break-word; }
+  .at-status { font-size:var(--fs-xs); padding:2px 8px; border-radius:999px; background:var(--panel-2); color:var(--muted); white-space:nowrap; }
+  .at-status.running, .at-status.planning { background:var(--warn-bg); color:var(--warn-text); }
+  .at-status.done { background:var(--ready-bg); color:var(--ready); }
+  .at-status.failed, .at-status.stopped { background:var(--danger-bg); color:var(--danger); }
+  .at-status.awaiting { background:var(--new-bg); color:var(--new); }
+  .step-card { padding:9px 12px; border-bottom:1px solid var(--line-soft); }
+  .step-card:last-child { border-bottom:none; }
+  .sc-head { display:flex; align-items:center; gap:8px; }
+  .sc-tool { font-family:var(--font-mono); font-size:var(--fs-sm); color:var(--accent); }
+  .sc-badge { font-size:var(--fs-xs); padding:1px 7px; border-radius:999px; margin-left:auto; white-space:nowrap; }
+  .sc-badge.running { background:var(--warn-bg); color:var(--warn-text); }
+  .sc-badge.done { background:var(--ready-bg); color:var(--ready); }
+  .sc-badge.failed { background:var(--danger-bg); color:var(--danger); }
+  .sc-badge.awaiting { background:var(--new-bg); color:var(--new); }
+  .sc-badge.rejected, .sc-badge.proposed { background:var(--panel-2); color:var(--muted); }
+  .sc-thought { color:var(--muted); font-size:var(--fs-sm); margin-top:4px; }
+  .sc-args, .sc-result { font-family:var(--font-mono); font-size:var(--fs-xs); background:var(--code-bg); border-radius:6px; padding:6px 8px; margin-top:6px; white-space:pre-wrap; word-break:break-word; max-height:190px; overflow:auto; color:var(--text); }
+  .sc-result.err { color:var(--danger); }
+  .sc-approve { display:flex; gap:8px; margin-top:8px; }
+  .sc-approve button { border:none; border-radius:8px; padding:5px 14px; cursor:pointer; font-size:var(--fs-sm); }
+  .sc-approve .ok { background:var(--accent); color:var(--on-accent); }
+  .sc-approve .no { background:var(--panel-2); color:var(--muted); border:1px solid var(--line); }
+  .at-foot { padding:10px 12px; font-size:var(--fs-sm); color:var(--muted); border-top:1px solid var(--line-soft); }
+  .at-foot .at-summary { color:var(--text); }
+  .at-actions { display:flex; gap:8px; margin-top:8px; }
+  .at-actions button { border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:8px; padding:4px 12px; cursor:pointer; font-size:var(--fs-sm); }
+  .at-actions button:hover { border-color:var(--accent-dim); }
+</style>
 <footer>
   <div class="composer-wrap">
+    <!-- agent 干活设置条（阶段2·帮你干活①）：🔒沙箱 按钮开合。选工作区 + 自主度；开着时输入框发的是"任务"。 -->
+    <div id="agentBar">
+      <div class="ab-row">
+        <span class="ab-title">🛠 干活模式</span>
+        <button type="button" class="ab-btn" id="agWs">选工作区…</button>
+        <span class="ab-ws" id="agWsPath">未选文件夹</span>
+        <div class="ab-seg" id="agAuto">
+          <button type="button" data-a="suggest">只建议</button>
+          <button type="button" data-a="ask" class="on">问一下</button>
+          <button type="button" data-a="auto">放手做</button>
+        </div>
+        <button type="button" class="ab-btn ab-close" id="agClose">收起</button>
+      </div>
+      <div class="ab-note">选个文件夹当工作区，我只在里面动手；改文件能一键撤回，跑命令每次都会先问你。工作区的文件/命令输出会发给你配置的模型来干活。</div>
+    </div>
     <div class="composer" id="composer">
       <!-- 输入框不放 placeholder（按规格）。Enter 发送 / Shift+Enter 换行 / 自适应高度：交互沿用现有 JS。 -->
       <textarea id="text" rows="1"></textarea>
@@ -1576,6 +1638,13 @@
     const el = $('text');
     const message = el.value.trim();
     if (!message || sending) return;
+    // 干活模式：输入的是"任务"，交给 agent 后端（不走聊天链路）。
+    if (AG.mode) {
+      if (!AG.workspace) { memToast('先选个工作区文件夹', ''); return; }
+      el.value = ''; el.style.height = 'auto';
+      startAgentTask(message);
+      return;
+    }
     el.value = ''; el.style.height = 'auto'; el.disabled = true;
     $('send').disabled = true; sending = true;
     addMsg('user', message);
@@ -3724,11 +3793,13 @@
       $('toolModelName').textContent = m;
     } catch (e) { /* 拿不到就保持占位 */ }
   }
-  // ＋文件 / 技能 / 沙箱：本阶段占位（点=toast「近期」，不做假功能）。
+  // ＋文件 / 技能：本阶段占位（点=toast「近期」，不做假功能）。
   const soon = () => memToast('这个功能近期上线，先占个位～', '');
   $('toolAttach').addEventListener('click', soon);
   $('toolSkill').addEventListener('click', soon);
-  $('toolSandbox').addEventListener('click', soon);
+  // 🔒 沙箱 = 开合「干活模式」（阶段2·帮你干活①）。toggleAgentMode 是下面的函数声明（已 hoist）。
+  $('toolSandbox').addEventListener('click', toggleAgentMode);
+  $('toolSandbox').title = '干活模式（在工作区里帮你动手）';
 
   // 输入框聚焦态：给 composer 描边（追加监听，不动 #text 原有 keydown/input/自适应高度逻辑）。
   $('text').addEventListener('focus', () => $('composer').classList.add('focus'));
@@ -3759,6 +3830,145 @@
     b.textContent = isMax ? '❐' : '▢';
     b.title = isMax ? '还原' : '最大化';
   });
+
+  // ══════════════════ agent 干活（阶段2·帮你干活①·方案B）══════════════════
+  // 前端只做：开合干活模式、选工作区、选自主度、把任务交给 /api/agent/*、轮询渲染步骤卡、批准/撤回/叫停。
+  // 真正的循环在后端 agent.ts。步骤卡全用 createElement/textContent 构建（agent 产出/参数当不可信，防注入）。
+  const AG = { mode: false, workspace: null, autonomy: 'ask', taskId: null, poll: null };
+
+  function toggleAgentMode() {
+    AG.mode = !AG.mode;
+    $('agentBar').classList.toggle('show', AG.mode);
+    $('toolSandbox').classList.toggle('on', AG.mode);
+    if (AG.mode) $('text').focus();
+  }
+  function closeAgentMode() { AG.mode = false; $('agentBar').classList.remove('show'); $('toolSandbox').classList.remove('on'); }
+
+  async function agPickWorkspace() {
+    try {
+      const r = await fetch('/api/agent/pick-workspace', { method: 'POST' }).then((x) => x.json());
+      if (r && r.path) { AG.workspace = r.path; $('agWsPath').textContent = r.path; }
+    } catch (e) { memToast('选文件夹失败', 'danger'); }
+  }
+
+  function agSetAuto(a) {
+    AG.autonomy = a;
+    for (const b of $('agAuto').querySelectorAll('button')) b.classList.toggle('on', b.dataset.a === a);
+  }
+
+  async function startAgentTask(task) {
+    let started;
+    try {
+      started = await fetch('/api/agent/start', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task, workspace: AG.workspace, autonomy: AG.autonomy }),
+      }).then((x) => x.json());
+    } catch (e) { memToast('没连上，任务没发出去', 'danger'); return; }
+    if (!started || started.error) { memToast(started && started.error ? started.error : '开工失败', 'danger'); return; }
+    AG.taskId = started.id;
+    if (AG.poll) clearInterval(AG.poll);
+    AG.poll = setInterval(pollAgent, 1000);
+    pollAgent();
+  }
+
+  async function pollAgent() {
+    if (!AG.taskId) return;
+    let view;
+    try { view = await fetch('/api/agent/status?id=' + encodeURIComponent(AG.taskId)).then((x) => x.json()); }
+    catch (e) { return; }
+    if (!view || view.error) return;
+    renderAgentTask(view);
+    if (['done', 'failed', 'stopped'].includes(view.status)) { clearInterval(AG.poll); AG.poll = null; }
+  }
+
+  async function agDecide(decision) {
+    try { await fetch('/api/agent/decide', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: AG.taskId, decision }) }); }
+    catch (e) { /* 忽略，下一轮轮询会纠正 */ }
+    pollAgent();
+  }
+  async function agStop() {
+    try { await fetch('/api/agent/stop', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: AG.taskId }) }); }
+    catch (e) { /* 忽略 */ }
+    pollAgent();
+  }
+  async function agUndo() {
+    const ok = await memConfirm({ title: '撤回这次改动？', bodyText: '会把这次任务改过的文件还原（新建的删掉）。跑过的命令造成的其它变化撤不回。', okText: '撤回', okKind: 'danger' });
+    if (!ok) return;
+    try {
+      const r = await fetch('/api/agent/undo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: AG.taskId }) }).then((x) => x.json());
+      memToast('已还原 ' + (r.restored || 0) + ' 个文件' + (r.ranCommand ? '（命令副作用撤不回）' : ''), '');
+    } catch (e) { memToast('撤回失败', 'danger'); }
+    pollAgent();
+  }
+
+  const AG_STATUS_CN = { planning: '出方案中', running: '干活中', awaiting: '等你批准', done: '完成', failed: '出错', stopped: '已停' };
+  const AG_STEP_CN = { proposed: '建议', awaiting: '等批准', running: '进行中', done: '完成', failed: '失败', rejected: '已拒' };
+
+  // 每次轮询全量重建当前任务卡（简单可靠；轮询 1s 一次，重建成本可忽略）。
+  function renderAgentTask(v) {
+    let box = $('agentTask_' + v.id);
+    if (!box) {
+      hideEmpty();
+      box = document.createElement('div');
+      box.className = 'agent-task';
+      box.id = 'agentTask_' + v.id;
+      chatInner.appendChild(box);
+    }
+    box.textContent = '';
+    // 头：任务 + 状态
+    const head = document.createElement('div'); head.className = 'at-head';
+    const t = document.createElement('div'); t.className = 'at-task'; t.textContent = v.task; head.appendChild(t);
+    const st = document.createElement('span'); st.className = 'at-status ' + v.status; st.textContent = AG_STATUS_CN[v.status] || v.status; head.appendChild(st);
+    box.appendChild(head);
+    // 步骤卡
+    for (const s of (v.steps || [])) box.appendChild(renderStep(s));
+    // 脚：总结/提示 + 动作（叫停/撤回）
+    const running = v.status === 'running' || v.status === 'awaiting' || v.status === 'planning';
+    if (v.summary || v.note || running || v.canUndo) {
+      const foot = document.createElement('div'); foot.className = 'at-foot';
+      if (v.summary) { const sm = document.createElement('div'); sm.className = 'at-summary'; sm.textContent = v.summary; foot.appendChild(sm); }
+      if (v.note) { const nt = document.createElement('div'); nt.textContent = v.note; nt.style.marginTop = '4px'; foot.appendChild(nt); }
+      const acts = document.createElement('div'); acts.className = 'at-actions';
+      if (running) { const b = document.createElement('button'); b.textContent = '叫停'; b.onclick = agStop; acts.appendChild(b); }
+      if (v.canUndo) { const b = document.createElement('button'); b.textContent = '↩ 撤回改动'; b.onclick = agUndo; acts.appendChild(b); }
+      if (acts.children.length) foot.appendChild(acts);
+      box.appendChild(foot);
+    }
+    scrollDown();
+  }
+
+  function renderStep(s) {
+    const card = document.createElement('div'); card.className = 'step-card';
+    const h = document.createElement('div'); h.className = 'sc-head';
+    const tool = document.createElement('span'); tool.className = 'sc-tool'; tool.textContent = s.tool; h.appendChild(tool);
+    const badge = document.createElement('span'); badge.className = 'sc-badge ' + s.status; badge.textContent = AG_STEP_CN[s.status] || s.status; h.appendChild(badge);
+    card.appendChild(h);
+    if (s.thought) { const th = document.createElement('div'); th.className = 'sc-thought'; th.textContent = s.thought; card.appendChild(th); }
+    const argStr = agArgsSummary(s.args);
+    if (argStr) { const a = document.createElement('div'); a.className = 'sc-args'; a.textContent = argStr; card.appendChild(a); }
+    if (s.result) { const r = document.createElement('div'); r.className = 'sc-result'; r.textContent = s.result; card.appendChild(r); }
+    if (s.error) { const e = document.createElement('div'); e.className = 'sc-result err'; e.textContent = s.error; card.appendChild(e); }
+    if (s.status === 'awaiting') {
+      const ap = document.createElement('div'); ap.className = 'sc-approve';
+      const ok = document.createElement('button'); ok.className = 'ok'; ok.textContent = s.tool === 'run_command' ? '批准运行' : '批准'; ok.onclick = () => agDecide('approve');
+      const no = document.createElement('button'); no.className = 'no'; no.textContent = '拒绝'; no.onclick = () => agDecide('reject');
+      ap.appendChild(ok); ap.appendChild(no); card.appendChild(ap);
+    }
+    return card;
+  }
+
+  function agArgsSummary(args) {
+    if (!args || typeof args !== 'object') return '';
+    if (typeof args.command === 'string') return '$ ' + args.command;
+    if (typeof args.path === 'string' && typeof args.content === 'string') return args.path + '  (' + args.content.length + ' 字)';
+    if (typeof args.path === 'string') return args.path;
+    try { const s = JSON.stringify(args); return s === '{}' ? '' : s; } catch (e) { return ''; }
+  }
+
+  // 干活设置条接线。
+  $('agWs').addEventListener('click', agPickWorkspace);
+  $('agClose').addEventListener('click', closeAgentMode);
+  for (const b of $('agAuto').querySelectorAll('button')) b.addEventListener('click', () => agSetAuto(b.dataset.a));
 
   // 启动
   checkHealth();

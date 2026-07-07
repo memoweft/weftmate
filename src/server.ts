@@ -41,6 +41,8 @@ import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
 import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, resolvedLang } from './settings.ts';
+import * as agent from './agent.ts';
+import { dialog, BrowserWindow } from 'electron';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
 //   loadEnvFile 幂等；没有 .env 抛错忽略。放在最顶部——否则 DB_PATH（下面就求值）读不到 .env 里的 MEMOWEFT_HOST_DB。
@@ -117,6 +119,20 @@ const switchedExperienceConvs = new Set<string>();
 // 后台画像更新调度器（Host 自建）：注入 core.updateProfile，其余状态自持。
 //   闭包取模块级 core（let）——热重建 core 后自然调新实例（无需重建 scheduler、pending 计数得以保留）。
 const scheduler = createProfileScheduler({ updateProfile: () => core.updateProfile() });
+
+// agent 干活（阶段2·帮你干活 第①块 · 方案B：Host 自建循环，见 agent.ts）：注入记忆接线。
+//   闭包引用模块级 core（let）——热重建 core 后自然指向新实例，无需重配（同 scheduler 的路数）。
+//   recall：开工前捞点"关于你"喂给 agent 当背景；record：干完把任务回写画像，让干活也进"越用越懂"循环。
+//   agent 的中间对话（工具往返）只在 agent.ts 内部，不进 memoweft 的记忆/聊天链路。
+agent.configureAgentDeps({
+  recall: async (query) => {
+    const items = await core.recall({ query });
+    return items.slice(0, 6).map((r) => '· ' + r.content).join('\n');
+  },
+  record: async (taskText) => {
+    await core.ingestUserMessage({ content: `（让 WeftMate 帮我干活）${taskText}` });
+  },
+});
 
 /**
  * 进程内热重建 core（切模型档 / 改配置时调）。不重启进程、窗口不闪（作者二次拍板）。
@@ -728,6 +744,76 @@ const server = createServer(async (req, res) => {
       currentConvId = history.newId(); // 全新空对话作当前
 
       sendJson(res, 200, { ok: true, ...counts, sessionsArchived, conversationId: currentConvId });
+      return;
+    }
+
+    // ── agent 干活（阶段2·帮你干活 第①块 · 方案B：Host 自建循环，见 agent.ts）──
+    // 信任框架：计划→确认(三档自主度)→执行(沙箱)→每步可视→一键撤回。任务后台跑，前端轮询 status 刷步骤卡。
+    // 隐私：工作区文件/命令输出会发给用户配置的模型（可能云端），由用户主动发起任务视为同意（前端写明）。
+
+    // 选工作区文件夹：Electron 目录选择框（server 在主进程，可直接用 dialog）。返回选中的绝对路径。
+    if (req.method === 'POST' && url.pathname === '/api/agent/pick-workspace') {
+      const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0] ?? null;
+      const r = win
+        ? await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
+        : await dialog.showOpenDialog({ properties: ['openDirectory'] });
+      sendJson(res, 200, { canceled: r.canceled, path: r.filePaths[0] ?? null });
+      return;
+    }
+
+    // 开工：body {task, workspace, autonomy:'suggest'|'ask'|'auto'} → 返回 taskId（后台跑，前端轮询）。
+    //   startTask 会校验工作区存在/是目录、任务非空，非法则抛 → 400。
+    if (req.method === 'POST' && url.pathname === '/api/agent/start') {
+      const body = await readJson(req);
+      try {
+        const started = agent.startTask({
+          task: typeof body.task === 'string' ? body.task : '',
+          workspace: typeof body.workspace === 'string' ? body.workspace : '',
+          autonomy: (body.autonomy === 'ask' || body.autonomy === 'auto' ? body.autonomy : 'suggest'),
+        });
+        sendJson(res, 200, { ok: true, id: started.id });
+      } catch (e) {
+        sendJson(res, 400, { error: e instanceof Error ? e.message : String(e) });
+      }
+      return;
+    }
+
+    // 查状态：?id=xxx 查单个任务（前端轮询这个刷步骤卡）；无 id 列全部任务。
+    if (req.method === 'GET' && url.pathname === '/api/agent/status') {
+      const id = url.searchParams.get('id');
+      if (id) {
+        const view = agent.getTaskView(id);
+        if (!view) { sendJson(res, 404, { error: '没有这个任务' }); return; }
+        sendJson(res, 200, view);
+      } else {
+        sendJson(res, 200, { tasks: agent.listTasks() });
+      }
+      return;
+    }
+
+    // 批准/拒绝当前挂起的那一步：body {id, decision:'approve'|'reject'}。ok=false 表示当前没有挂起的步骤。
+    if (req.method === 'POST' && url.pathname === '/api/agent/decide') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      const decision = body.decision === 'approve' ? 'approve' : 'reject';
+      sendJson(res, 200, { ok: agent.decideStep(id, decision) });
+      return;
+    }
+
+    // 叫停任务：body {id}。置 stopped、唤醒可能挂起的审批门。
+    if (req.method === 'POST' && url.pathname === '/api/agent/stop') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      sendJson(res, 200, { ok: agent.stopTask(id) });
+      return;
+    }
+
+    // 一键撤回：body {id}。还原本任务改过的文件（改前不存在的删掉）；ranCommand=true 时命令副作用撤不回（如实回传）。
+    if (req.method === 'POST' && url.pathname === '/api/agent/undo') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      const r = await agent.undoTask(id);
+      sendJson(res, 200, r);
       return;
     }
 

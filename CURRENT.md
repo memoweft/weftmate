@@ -4,7 +4,8 @@
 
 ## 当前:阶段 2「懂你 & 帮你」(阶段 1 立身之本四块已齐)
 
-阶段 2 分五块、分开推、作者定入口。**「感知→画像」已做完**。下一块=作者说的「**换窗口给提示词**」——**场景没定清**(见文末待办),下个会话先问清再动手。其余块:agent 干活 / MCP 一键装 / 上下文附件 / 历史接力。
+阶段 2 分五块、分开推、作者定入口(作者拍板**按序做**)。**「感知→画像」「agent 干活」已做完**。剩下:**MCP 一键装 / 上下文附件 / 历史接力**,按序**下一块 = MCP 一键装**。
+(注:~~「换窗口给提示词」~~ 是误记——作者当时是说旧会话上下文满了要换新会话接力,**不做**这功能。)
 
 ### ✅ 感知→画像 + 一串 dogfood 修(commit 18a7153/afbbda3/1e99e3f/2a58260/7a26dc8/bb1cf80)
 - **感知采集**:依赖 `get-windows`(N-API 预编译·**实测 Electron 免 electron-rebuild**;破"零原生模块"·作者拍板)。`src/collector.ts`(main·powerMonitor 空闲跳过+get-windows 取窗+换窗才记 → POST /api/observe 审核层)、`src/settings.ts`(非密明文设置)。
@@ -13,6 +14,16 @@
 - **星瑶反编造(红线)**:dogfood 发现星瑶脑补"我记得你提过X"(认知=0·纯编)。`experiences/xingyao.ts` 记忆唤起段加硬:只复述真召回的记忆·没召回绝不说"我记得"/绝不凭空说未说过的。**注:prompt 强缓解非 100%;MemoWeft 只存有据记忆的结构保证未破(是人设层嘴快)。**
 - **z-index 修**:二次确认框 #memConfirm 50→70(原被设置弹窗 55 盖住)。
 - **验**:真机端到端(感知开→observed 证据·cloud 默认 false·开全局→true·仅App 只 App 名)+ 前端各面板 preview 读写翻转 + 语法门/复查 Agent。observed 证据进画像「感知来的」组。真"感知来的"认知需真模型 updateProfile 消化。
+
+### ✅ agent 干活(阶段2·帮你干活①·方案B:Host 自建循环)
+- **为什么 Host 自建**:memoweft 是纯记忆底座——聊天是文字进文字出的黑盒(`LLMClient.chat→string`,无 tool_use 口子),插件只能"交观察/读记忆"不能执行工具;库 README 写死"宿主决定怎么用(回话/调工具/agent)"。所以 agent 循环整个在 Host,库源码一行不碰(红线守住)。
+- **不挑模型的工具调用**:文字协议——系统提示教模型每轮只回一个 JSON(`{action:{tool,args}}` 或 `{done:{summary}}`),Host 解析去执行、结果当"观察"喂回,循环到 done。LLM 复用库导出的 `OpenAICompatClient`(读当前激活模型·env 已 injectEnv 保持最新·temperature=0),agent 中间对话不进 memoweft 记忆。
+- **`src/agent.ts`**(新):循环 + 内置四工具(`list_dir`/`read_file` 只读、`write_file` 改动、`run_command` 改动+永远要批准)+ 沙箱(`safeResolve` 路径锁死工作区、逃逸/跨盘/`..` 全拒)+ 快照撤回(改文件前备份原内容,撤回还原/删新建;`run_command` 副作用撤不回→`ranCommand` 如实标注)+ 三档自主度(suggest 只出计划不执行 / ask 每个改动先批 / auto 自动跑但命令仍批)。审批用可挂起的 gate,`decideStep`/`stopTask` 唤醒。记忆接线:`core.recall` 喂背景 + `core.ingestUserMessage` 回写。测试注入口 `__setClientFactory`。
+- **`server.ts` 端点**:`POST /api/agent/{start,decide,stop,undo}` + `GET /api/agent/status`(前端轮询)+ `POST /api/agent/pick-workspace`(Electron dialog 选工作区)。记忆接线闭包注入(引用模块级 core,热重建自然跟随)。
+- **前端**(`web/index.html`):🔒沙箱 从占位改成开合「干活模式」条(选工作区 + 三档自主度 + 隐私说明);干活模式下输入框发的是"任务"→ `/api/agent/start` → 轮询渲染步骤卡(徽章/参数摘要/结果/批准·拒绝/叫停/一键撤回),全 createElement+textContent 防注入。
+- **隐私口径**:工作区文件/命令输出会发给用户配置的模型(可能云端)——由用户主动发起任务视同意(界面写明),与"observed 默认不上云"两码事。
+- **验**:① 后端安全冒烟 15 断言全过(假模型确定性驱动·对临时文件夹)——正常写+撤回删新建 / 沙箱逃逸被拒(工作区外不留文件)/ 命令 auto 下也停 awaiting·拒则不跑·批才跑 / 撤回还原旧文件 / ask 下写文件也要批;② 前端 preview:零 JS 报错、干活条开合、完整流程 3 张步骤卡+批准+撤回渲染对、配色对(工具名金色等宽)。真模型端到端待作者亲验。
+- **未做(留后)**:MCP 外部工具(下块)· 工作区/附件富 UX(第③块)· 模型原生 tool_use(先文字协议)· 逐行 diff · 流式(先轮询)。
 
 ## 阶段 1 · 立身之本 ✅ 已基本齐(S0 / S1 已通)
 
@@ -41,9 +52,12 @@
 
 `experiences/`(星瑶/plain 人格 + 注册表) · `scheduler.ts`(后台整理) · `chatHistory.ts` · `confBand.ts`(把握度分档) · `server.ts`(loopback + core + chat 编排,切人格清双缓存那段必须原样保留) · `web/index.html`(前端 · **待重做**)。
 
-## ⏸ 下一块待澄清(下个会话先问,别按旧理解做)
+## 下一块 = MCP 一键装(阶段2·帮你干活②)
 
-作者说下一块=「**换窗口给提示词**」,但澄清"**我的意思是你(AI/WeftMate)换窗口**"(不是用户换窗)——场景没定清,我上一轮误按"用户换窗→主动关怀"想过、被否。下个会话【先问清是哪个场景】再动手,候选:① **agent 干活时切窗口**(WeftMate 操作电脑执行任务、切到别的窗口/App 时给提示——属 agent 干活块) ② **桌面形象跨窗口陪伴**(形象浮屏、用户切窗时形象跟过去给提示) ③ 切对话/面板时给提示词 ④ 别的。守红线:主动打断只报 P0/P1·别唠叨;窗口信息进云端模型碰"不上云"(除非本地模型/用户已开允许上云)。
+作者拍板阶段2 剩下的块**按序做**:agent 干活 ✅ → **② MCP 一键装** → ③ 上下文附件 → ④ 历史接力。
+**② MCP 一键装**(PRODUCT.md §帮你干活):像装扩展一样装能力(如 Claude CLI 写代码),不手改配置;**工具定义延迟加载**(生死线)。天然接上①——agent 循环已留好"工具"这层抽象(`src/agent.ts` 的 `TOOLS` 表),MCP 来了就是往同一个循环塞更多工具、复用同一套信任框架(审批/沙箱/每步可视/撤回)。动手前守三纪律:工具定义延迟加载、主动打断只报 P0/P1、隐私(observed 默认不上云)。
+
+(澄清:「换窗口给提示词」是误记,不做——见文首。)
 
 ## 待作者手动
 
