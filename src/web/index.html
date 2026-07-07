@@ -1,94 +1,206 @@
 <!--
-  MemoWeft Host · 最小聊天（批次5 步1）。
+  WeftMate 桌面外壳 · Claude Desktop 风格（深色·金调）。
   单文件、内联 CSS/JS、零外部依赖（不引 CDN，本地无网也能用）。
+  骨架重做自 docs/blueprint.html；内脏（JS 逻辑 + 后端接线）逐字保留自旧壳。
   文案遵 docs/naming.md：用户词（记住了/想起/对你的了解），不出现 evidence/cognition/updateProfile
-  等工程词，不说"真正理解你"，不用"她"指代 MemoWeft。
+  等工程词，不说"真正理解你"，不用"她"指代 WeftMate/MemoWeft。品牌名 WeftMate。
 -->
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>MemoWeft</title>
+<title>WeftMate</title>
+<!-- 主题尽早应用（任务3）：在 CSS 解析前读 localStorage['wm-theme']，是 'light' 就给 <html data-theme="light">，避免加载时闪一下白。默认暗色（不设 data-theme 即走 :root 暗色）。 -->
+<script>
+  try { if (localStorage.getItem('wm-theme') === 'light') document.documentElement.setAttribute('data-theme', 'light'); } catch (e) {}
+</script>
 <style>
   :root {
-    --bg: #f6f7f9; --panel: #ffffff; --line: #e6e8ec; --text: #1d2733; --muted: #6b7684;
-    --user: #2f6fed; --user-text: #ffffff; --assistant: #eef1f5; --assistant-text: #1d2733;
-    --warn-bg: #fff6e0; --warn-line: #f0d68a; --warn-text: #8a6d00;
-    --ok: #1f9d61; --accent: #2f6fed; --radius: 14px; --radius-pill: 999px;
+    /* 深色·金调（来自 blueprint.html）——默认主题 */
+    --ground: #191a1e; --sidebar: #131317; --panel: #212129; --panel-2: #262630;
+    --line: #31313b; --line-soft: #26262f; --text: #e9e6df; --muted: #9e9a90; --faint: #6f6b63;
+    --accent: #d4a75d; --accent-dim: #8b7040; --ready: #8cba90; --ready-bg: #1d2a20;
+    --new: #7ba7d1; --new-bg: #1a2632; --her: #d9a0a8;
+    /* 沿用旧名，映射到深色语义（避免大面积改类名）：bg=底、user/assistant=气泡、warn/ok=状态 */
+    --bg: var(--ground);
+    --user: #2a2a34; --user-text: var(--text);
+    --assistant: #201d17; --assistant-text: var(--text);
+    --warn-bg: #2e2612; --warn-line: #514219; --warn-text: #e0b96b;
+    --ok: var(--ready); --danger: #d9534f;
+    /* accent 上的文字色（金底配深字）/ accent 柔和底 / 危险区底 / 侧栏选中底 —— 亮色下另给值，避免深底浅字在亮主题打架 */
+    --on-accent: #191a1e; --accent-soft: #241f14; --danger-bg: #241618; --sb-on: #23232b;
+    --danger-toast-bg: #3a1c1c; --danger-toast-text: #e8a0a0; --code-bg: rgba(255,255,255,.07);
+    --radius: 14px; --radius-pill: 999px;
+    --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+    --font-mono: "Cascadia Code", Consolas, ui-monospace, monospace;
     --fs: 15px; --fs-sm: 13px; --fs-xs: 12px;
+    --sidebar-w: 244px;
+    /* ── 记忆图谱配色（提升到 :root，图谱 canvas JS 一律 getComputedStyle 读这些变量；变量名 --gc-*/--ge-* 保持不变，亮/暗各一套值）── */
+    --gc-subject: #a988ff; --gc-evidence: #4fc08d; --gc-event: #e0a24b; --gc-cognition: #7ba7d1;
+    --ge-belongs: #b39ddb; --ge-distilled: #f0b26b; --ge-supports: #57b894; --ge-contradicts: #d9534f;
+    /* 图谱其余原本写死的色，现改为变量：标签 / 选中环 / 冲突环 / 普通描边 / 边&节点兜底色 / 画布底色 */
+    --gr-label: #c9c4ba; --gr-ring: #d4a75d; --gr-conflict: #d9534f;
+    --gr-node-stroke: rgba(255,255,255,.85); --gr-edge-fallback: #b8c0cc; --gr-node-fallback: #8a94a6;
+    --gr-canvas-bg: #16161c;
+  }
+  /* ── 亮色主题：页面加载时若 localStorage['wm-theme']==='light' 就给 <html data-theme="light">（内联脚本尽早置，避免闪白）── */
+  html[data-theme="light"] {
+    /* 亮色·金调（round3 任务①）：品牌统一走金/琥珀，不再用蓝。底色带一点暖，让明暗两套一眼是同一个金调产品。 */
+    --ground: #f8f6f1; --sidebar: #f0ece2; --panel: #ffffff; --panel-2: #f4f0e7;
+    --line: #e7e1d4; --line-soft: #efeae0; --text: #2a251d; --muted: #726a5c; --faint: #837a6a;
+    /* accent 深琥珀（复查实算：#a06e14 卡 4.4 差半档 → 压深到 #946010，白字@金底/金字@白/金字@soft 四组同过 4.5，仍金调）；accent-dim 浅琥珀边框 */
+    --accent: #946010; --accent-dim: #d9b877; --ready: #276841; --ready-bg: #e7f2ea;
+    /* --new 原为蓝，改成与金调协调的暖中性（用于 pending 状态胶囊；压深达标） */
+    --new: #8a5a0e; --new-bg: #f6efdd; --her: #c15f7f;
+    --bg: var(--ground);
+    /* 用户气泡底：暖中性（原为蓝 #e8f0fe），与金调协调 */
+    --user: #f2ede1; --user-text: var(--text);
+    --assistant: #ffffff; --assistant-text: var(--text);
+    --warn-bg: #fbf0d6; --warn-line: #e8ca82; --warn-text: #8a6810;
+    --ok: var(--ready); --danger: #c9433f;
+    /* accent 是深琥珀：其上文字用白；柔和底/危险区底/侧栏选中底取暖浅色，亮主题下不打架 */
+    --on-accent: #ffffff; --accent-soft: #f6efdd; --danger-bg: #fbeceb; --sb-on: #e6ddcb;
+    --danger-toast-bg: #fbeceb; --danger-toast-text: #a3242a; --code-bg: rgba(0,0,0,.055);
+    /* 图谱：亮底上重新取值，保证节点/边/标签对比度达标（cognition 从蓝改暖褐，与金调呼应） */
+    --gc-subject: #7c4dff; --gc-evidence: #1f9d6b; --gc-event: #d98324; --gc-cognition: #b07d2a;
+    --ge-belongs: #8e6fd6; --ge-distilled: #d98324; --ge-supports: #1f9d6b; --ge-contradicts: #c9433f;
+    --gr-label: #4a4234; --gr-ring: #946010; --gr-conflict: #c9433f;
+    --gr-node-stroke: rgba(42,37,29,.35); --gr-edge-fallback: #b3a892; --gr-node-fallback: #a89a82;
+    --gr-canvas-bg: #fcfaf5;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
   body {
-    font: var(--fs)/1.55 -apple-system, "Segoe UI", "Microsoft YaHei", Roboto, sans-serif;
-    color: var(--text); background: var(--bg);
+    font: var(--fs)/1.55 var(--font-sans);
+    color: var(--text); background: var(--ground);
+    -webkit-font-smoothing: antialiased;
     display: flex; flex-direction: column; height: 100vh;
-    /* 左侧栏（固定定位）占 var(--sidebar-w)，给主列留出左内边距，让主列各态的 margin:0 auto 仍在剩余宽里居中。 */
-    --sidebar-w: 240px;
+    /* 左侧栏（固定定位）占 var(--sidebar-w)，给主列留出左内边距。 */
     padding-left: var(--sidebar-w);
+    /* round4 ①：自绘标题栏（38px，fixed 在最顶）替代已删的原生标题栏——主列下移一条，别被盖住。 */
+    padding-top: 38px;
   }
-  /* 向导态 / 记忆管理态是全屏页，藏侧栏、主列铺满（去掉左内边距）。 */
-  body.mode-wizard, body.mode-memory { padding-left: 0; }
-  body.mode-wizard #sidebar, body.mode-memory #sidebar { display: none; }
+
+  /* ══ round4 ③ 滚动条随主题上色（暗色下不再白底；用变量，别写死）══ */
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; border: 2px solid transparent; background-clip: padding-box; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--faint); }
+
+  /* ══ round4 ① 自绘标题栏（替代原生标题栏；frame:false 无边框窗口）══
+     全宽固定条，z-index:100 高于所有 overlay（memToast=60、settings=55），窗口控制随时可点。
+     整条可拖动窗口（-webkit-app-region: drag）；右侧控制区置 no-drag 好点。风格走主题变量。 */
+  #titlebar {
+    position: fixed; top: 0; left: 0; right: 0; height: 38px; z-index: 100;
+    background: var(--sidebar); border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; user-select: none;
+    -webkit-app-region: drag;
+  }
+  #titlebar .tb-brand {
+    display: flex; align-items: center; gap: 7px; padding: 0 14px;
+    font-weight: 700; font-size: 13px; letter-spacing: .2px; color: var(--text);
+  }
+  #titlebar .tb-brand .tb-dot { color: var(--accent); font-size: 12px; line-height: 1; }
+  #titlebar .tb-brand .tb-mate { color: var(--accent); }
+  #titlebar .tb-ctrl {
+    margin-left: auto; display: flex; align-items: stretch; height: 100%;
+    -webkit-app-region: no-drag;
+  }
+  #titlebar .tb-btn {
+    width: 46px; height: 38px; border: none; background: transparent; color: var(--muted);
+    cursor: pointer; font: inherit; font-size: 12px; line-height: 1;
+    display: inline-flex; align-items: center; justify-content: center;
+    transition: background .12s, color .12s;
+  }
+  #titlebar .tb-btn:hover { background: var(--panel-2); color: var(--text); }
+  #titlebar .tb-btn.tb-close:hover { background: #e05252; color: #fff; }
+  /* 向导态是全屏页，藏侧栏、主列铺满（去掉左内边距）。记忆态不再全屏——改成右侧滑入面板，见 #memory。 */
+  body.mode-wizard { padding-left: 0; }
+  body.mode-wizard #sidebar { display: none; }
 
   /* ── 左侧对话列表侧栏 ── */
   #sidebar {
-    position: fixed; top: 0; left: 0; bottom: 0; width: var(--sidebar-w); z-index: 20;
-    background: var(--panel); border-right: 1px solid var(--line);
+    position: fixed; top: 38px; left: 0; bottom: 0; width: var(--sidebar-w); z-index: 20;
+    background: var(--sidebar); border-right: 1px solid var(--line-soft);
     display: flex; flex-direction: column;
   }
   .sb-head {
-    flex: 0 0 auto; padding: 12px 14px; border-bottom: 1px solid var(--line);
+    /* 顶栏统一（round3 任务②）：与 header 同高、同底色、同底边线，侧栏顶与 header 连成一条连贯顶栏。 */
+    flex: 0 0 auto; height: 53px; padding: 0 14px; border-bottom: 1px solid var(--line);
     display: flex; align-items: center; gap: 8px;
   }
-  .sb-head .sb-title { font-weight: 700; font-size: var(--fs-sm); color: var(--text); }
+  /* round4 ①：.sb-brand 已随侧栏顶品牌去重删除（品牌移到自绘标题栏 #titlebar），此处不再保留其样式。 */
+  .sb-head .sb-title { font-weight: 600; font-size: var(--fs-xs); color: var(--faint);
+    font-family: var(--font-mono); letter-spacing: .1em; text-transform: uppercase; }
   #sbNew {
-    margin-left: auto; border: 1px solid var(--line); background: var(--bg); color: var(--text);
+    /* round4 ①去重后：品牌移到标题栏，新对话按钮撑满一行（原 margin-left:auto 靠品牌推右已无必要）。 */
+    flex: 1 1 auto; text-align: center; border: 1px solid var(--line); background: var(--panel); color: var(--muted);
     cursor: pointer; border-radius: var(--radius-pill); padding: 4px 12px;
     font: inherit; font-size: var(--fs-xs); font-weight: 600; white-space: nowrap;
   }
   #sbNew:hover { border-color: var(--accent); color: var(--accent); }
-  #sbList { flex: 1 1 auto; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 4px; }
-  .sb-empty { color: var(--muted); font-size: var(--fs-xs); text-align: center; padding: 20px 8px; line-height: 1.6; }
+  #sbList { flex: 1 1 auto; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 3px; }
+  .sb-empty { color: var(--faint); font-size: var(--fs-xs); text-align: center; padding: 20px 8px; line-height: 1.6; }
   .sb-item {
-    position: relative; border: 1px solid transparent; border-radius: 10px; padding: 9px 11px; cursor: pointer;
+    position: relative; border: 1px solid transparent; border-radius: 8px; padding: 8px 10px; cursor: pointer;
     display: flex; flex-direction: column; gap: 2px; transition: background .12s, border-color .12s;
   }
-  .sb-item:hover { background: var(--bg); }
-  .sb-item.on { background: #eaf1ff; border-color: var(--accent); }
+  .sb-item:hover { background: var(--panel); }
+  .sb-item.on { background: var(--sb-on); border-color: var(--line); }
   .sb-item .sb-preview {
-    font-size: var(--fs-sm); color: var(--text); line-height: 1.45;
+    font-size: var(--fs-sm); color: var(--muted); line-height: 1.45;
     /* 单行截断，长预览不撑破侧栏 */
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 22px;
   }
-  .sb-item.on .sb-preview { color: var(--accent); font-weight: 600; }
-  .sb-item .sb-time { font-size: var(--fs-xs); color: var(--muted); }
+  .sb-item.on .sb-preview { color: var(--text); font-weight: 600; }
+  .sb-item .sb-time { font-size: var(--fs-xs); color: var(--faint); }
   .sb-arch {
-    position: absolute; top: 8px; right: 8px; border: none; background: transparent; color: var(--muted);
-    cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 4px; border-radius: 6px;
+    position: absolute; top: 7px; right: 7px; border: none; background: transparent; color: var(--faint);
+    cursor: pointer; font-size: 13px; line-height: 1; padding: 2px 4px; border-radius: 6px;
     opacity: 0; transition: opacity .12s;
   }
   .sb-item:hover .sb-arch { opacity: 1; }
-  .sb-arch:hover { background: rgba(0,0,0,.07); color: #b4232a; }
+  .sb-arch:hover { background: rgba(255,255,255,.08); color: var(--danger); }
 
-  /* 顶栏：标题 + 后台整理状态 pill */
-  header {
-    flex: 0 0 auto; display: flex; align-items: center; gap: 12px;
-    padding: 12px 18px; background: var(--panel); border-bottom: 1px solid var(--line);
+  /* ── 侧栏底部功能区（blueprint 的 sidebar-foot）：四个可点项 → 各自滑入面板/弹层 ── */
+  #sbFoot {
+    flex: 0 0 auto; border-top: 1px solid var(--line-soft); padding: 8px; margin-top: 2px;
+    display: flex; flex-direction: column; gap: 2px;
   }
-  header .brand { font-weight: 700; font-size: 16px; letter-spacing: .2px; }
-  header .brand small { font-weight: 400; color: var(--muted); font-size: var(--fs-xs); margin-left: 6px; }
+  .ft-item {
+    display: flex; align-items: center; gap: 9px; padding: 8px 9px; border-radius: 8px;
+    font-size: var(--fs-sm); color: var(--muted); cursor: pointer; border: 1px solid transparent;
+    transition: background .12s, color .12s;
+  }
+  .ft-item:hover { background: var(--panel); color: var(--text); }
+  .ft-item .ft-ic { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: 0 0 auto; }
+  .ft-item .ft-tx { flex: 1 1 auto; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ft-item .ft-chev { color: var(--faint); font-size: 11px; flex: 0 0 auto; }
+  .ft-item.persona .ft-ic { background: var(--her); }
+  .ft-item.persona .ft-tx b { color: var(--her); font-weight: 600; }
+
+  /* 顶栏：当前对话标题 + 记忆胶囊 + 立即整理 + 后台状态。
+     round3 任务②：与侧栏顶 .sb-head 同高(53px)、同底色(--sidebar)、同底边线(--line)，
+     两条顶带读起来是一条连贯的顶栏而非割裂两块。 */
+  header {
+    flex: 0 0 auto; display: flex; align-items: center; gap: 10px;
+    height: 53px; padding: 0 20px; background: var(--sidebar); border-bottom: 1px solid var(--line);
+  }
+  header .hd-title { font-weight: 600; font-size: var(--fs-sm); color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 46vw; }
+  header .hd-right { margin-left: auto; display: inline-flex; align-items: center; gap: 8px; }
   #bgstatus {
-    margin-left: auto; display: inline-flex; align-items: center; gap: 6px;
-    padding: 4px 11px; border-radius: var(--radius-pill); background: var(--bg);
-    border: 1px solid var(--line); color: var(--muted); font-size: var(--fs-xs);
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 4px 11px; border-radius: var(--radius-pill); background: var(--panel);
+    border: 1px solid var(--line-soft); color: var(--muted); font-size: var(--fs-xs);
     font-weight: 500; white-space: nowrap; transition: all .2s ease;
   }
-  #bgstatus::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--muted); flex: 0 0 auto; }
+  #bgstatus::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: 0 0 auto; }
   #bgstatus.st-busy { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }
   #bgstatus.st-busy::before { background: var(--warn-text); animation: pulse 1s ease-in-out infinite; }
-  #bgstatus.st-pending { background: #eaf1ff; color: var(--accent); border-color: transparent; }
-  #bgstatus.st-pending::before { background: var(--accent); }
-  #bgstatus.st-done { background: #e7f6ee; color: var(--ok); border-color: transparent; }
-  #bgstatus.st-done::before { background: var(--ok); }
+  #bgstatus.st-pending { background: var(--new-bg); color: var(--new); border-color: transparent; }
+  #bgstatus.st-pending::before { background: var(--new); }
+  #bgstatus.st-done { background: var(--ready-bg); color: var(--ready); border-color: transparent; }
+  #bgstatus.st-done::before { background: var(--ready); }
   @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
 
   /* 未配模型黄条 */
@@ -98,14 +210,15 @@
     color: var(--warn-text); font-size: var(--fs-sm);
   }
   #warnbar.show { display: block; }
-  #warnbar code { background: rgba(0,0,0,.06); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+  #warnbar code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
 
   /* 聊天区 */
   #chat {
-    flex: 1 1 auto; overflow-y: auto; padding: 20px 0;
-    display: flex; flex-direction: column; gap: 12px;
+    flex: 1 1 auto; overflow-y: auto; padding: 22px 0 8px;
+    display: flex; flex-direction: column; gap: 12px; position: relative;
   }
-  .chat-inner { width: 100%; max-width: 720px; margin: 0 auto; padding: 0 18px; display: flex; flex-direction: column; gap: 12px; }
+  /* round4 ②：内容随窗口流动变宽、封顶 ~1040px（大屏填更满、仍有可读上限；窄屏不小于 720 也不超视口）。 */
+  .chat-inner { width: 100%; max-width: clamp(720px, 68vw, 1040px); margin: 0 auto; padding: 0 18px; display: flex; flex-direction: column; gap: 10px; }
   .empty { color: var(--muted); text-align: center; font-size: var(--fs-sm); margin: auto 0; padding: 40px 0; }
 
   .msg { display: flex; }
@@ -113,10 +226,11 @@
   .msg.assistant { justify-content: flex-start; }
   .bubble {
     max-width: 78%; padding: 9px 14px; border-radius: var(--radius);
-    white-space: pre-wrap; word-break: break-word; font-size: var(--fs);
+    white-space: pre-wrap; word-break: break-word; font-size: var(--fs); line-height: 1.55;
   }
   .msg.user .bubble { background: var(--user); color: var(--user-text); border-bottom-right-radius: 5px; }
-  .msg.assistant .bubble { background: var(--assistant); color: var(--assistant-text); border-bottom-left-radius: 5px; }
+  .msg.assistant .bubble { background: var(--assistant); color: var(--assistant-text);
+    border: 1px solid #34291733; border-bottom-left-radius: 5px; }
 
   /* 思考中三点 */
   .thinking-dots { display: inline-flex; gap: 4px; padding: 3px 0; }
@@ -125,21 +239,50 @@
   .thinking-dots span:nth-child(3) { animation-delay: .36s; }
   @keyframes bob { 0%,60%,100% { opacity: .35; transform: translateY(0); } 30% { opacity: 1; transform: translateY(-3px); } }
 
-  /* 输入区 */
-  footer { flex: 0 0 auto; border-top: 1px solid var(--line); background: var(--panel); padding: 12px 18px; }
-  .composer { width: 100%; max-width: 720px; margin: 0 auto; display: flex; gap: 10px; align-items: flex-end; }
+  /* ── 桌面形象（blueprint 的 .pet）：聊天区右下角浮圆头像，点=开人格切换 ── */
+  #pet {
+    position: fixed; right: 26px; bottom: 92px; width: 46px; height: 46px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #e8b6bd, #b76b78);
+    box-shadow: 0 6px 18px -6px rgba(183,107,120,.7);
+    display: flex; align-items: center; justify-content: center; font-size: 20px;
+    cursor: pointer; z-index: 15; transition: transform .15s, box-shadow .15s; user-select: none;
+  }
+  #pet:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 10px 22px -6px rgba(183,107,120,.8); }
+  body.mode-wizard #pet { display: none; }
+
+  /* ── 底部工具栏（重做输入区）：textarea 无 placeholder + 一条工具栏 ── */
+  footer { flex: 0 0 auto; background: var(--ground); padding: 0 18px 16px; }
+  .composer-wrap { width: 100%; max-width: clamp(720px, 68vw, 1040px); margin: 0 auto; }
+  .composer {
+    border: 1px solid var(--line); border-radius: 12px; background: var(--sidebar); overflow: hidden;
+    transition: border-color .15s;
+  }
+  .composer.focus { border-color: var(--accent-dim); }
   #text {
-    flex: 1 1 auto; resize: none; border: 1px solid var(--line); border-radius: 12px;
-    padding: 10px 12px; font: inherit; color: var(--text); background: var(--bg);
-    max-height: 160px; min-height: 44px; line-height: 1.5;
+    display: block; width: 100%; resize: none; border: none; background: transparent;
+    padding: 12px 13px 6px; font: inherit; color: var(--text);
+    max-height: 160px; min-height: 24px; line-height: 1.5;
   }
-  #text:focus { outline: none; border-color: var(--accent); background: var(--panel); }
+  #text:focus { outline: none; }
+  #text::placeholder { color: var(--faint); }
+  .toolbar {
+    display: flex; align-items: center; gap: 6px; padding: 7px 9px;
+    border-top: 1px solid var(--line-soft); flex-wrap: wrap;
+  }
+  .tool {
+    display: inline-flex; align-items: center; gap: 5px; font-size: var(--fs-xs); color: var(--muted);
+    padding: 5px 10px; border-radius: 7px; background: var(--panel); border: 1px solid var(--line-soft);
+    cursor: pointer; font: inherit; font-size: var(--fs-xs); white-space: nowrap; transition: border-color .12s, color .12s;
+  }
+  .tool:hover { border-color: var(--line); color: var(--text); }
+  .tool.model { color: var(--accent); border-color: var(--accent-dim); background: var(--accent-soft); }
+  .tool.model:hover { border-color: var(--accent); }
   #send {
-    flex: 0 0 auto; border: none; border-radius: 12px; background: var(--accent); color: #fff;
-    padding: 0 20px; height: 44px; font: inherit; font-weight: 600; cursor: pointer; transition: opacity .15s;
+    margin-left: auto; flex: 0 0 auto; border: none; border-radius: 8px; background: var(--accent); color: var(--on-accent);
+    padding: 0 16px; height: 32px; font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer; transition: opacity .15s;
   }
-  #send:disabled { opacity: .5; cursor: default; }
-  .hint { width: 100%; max-width: 720px; margin: 6px auto 0; color: var(--muted); font-size: var(--fs-xs); }
+  #send:disabled { opacity: .45; cursor: default; }
+  .hint { width: 100%; max-width: clamp(720px, 68vw, 1040px); margin: 7px auto 0; color: var(--faint); font-size: var(--fs-xs); text-align: center; }
 
   /* ── 配置向导（首启没配好模型时进这一态；配好后走聊天，向导隐藏）── */
   #wizard { display: none; flex: 1 1 auto; overflow-y: auto; padding: 28px 18px 40px; }
@@ -148,41 +291,43 @@
   .wiz { width: 100%; max-width: 620px; margin: 0 auto; }
   .wiz h1 { font-size: 21px; margin: 0 0 6px; letter-spacing: .2px; }
   .wiz .lead { color: var(--muted); font-size: var(--fs-sm); margin: 0 0 22px; line-height: 1.6; }
+  .wiz .lead b { color: var(--text); }
   .wiz-group {
-    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius);
     padding: 16px 18px; margin-bottom: 14px;
   }
   .wiz-group > h2 { font-size: 15px; margin: 0 0 3px; display: flex; align-items: center; gap: 8px; }
   .wiz-group .tag {
     font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-pill);
   }
-  .wiz-group .tag.req { background: #eaf1ff; color: var(--accent); }
-  .wiz-group .tag.opt { background: var(--bg); color: var(--muted); border: 1px solid var(--line); }
+  .wiz-group .tag.req { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-dim); }
+  .wiz-group .tag.opt { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
   .wiz-group .desc { color: var(--muted); font-size: var(--fs-xs); margin: 0 0 12px; line-height: 1.55; }
   .wiz-field { margin-bottom: 10px; }
   .wiz-field:last-child { margin-bottom: 0; }
   .wiz-field label { display: block; font-size: var(--fs-xs); color: var(--muted); margin-bottom: 4px; }
-  .wiz-field input {
+  .wiz-field input, .wiz-field select {
     width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px;
-    font: inherit; font-size: var(--fs-sm); color: var(--text); background: var(--bg);
+    font: inherit; font-size: var(--fs-sm); color: var(--text); background: var(--ground);
   }
-  .wiz-field input:focus { outline: none; border-color: var(--accent); background: var(--panel); }
+  .wiz-field input:focus, .wiz-field select:focus { outline: none; border-color: var(--accent); }
   .wiz-check { display: flex; align-items: flex-start; gap: 9px; font-size: var(--fs-sm); }
   .wiz-check input { margin-top: 3px; flex: 0 0 auto; }
   .wiz-check .ck-text small { display: block; color: var(--muted); font-size: var(--fs-xs); margin-top: 2px; }
   .wiz-actions { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
   #wizGen {
-    border: none; border-radius: 12px; background: var(--accent); color: #fff;
-    padding: 0 24px; height: 44px; font: inherit; font-weight: 600; cursor: pointer;
+    border: none; border-radius: 12px; background: var(--accent); color: var(--on-accent);
+    padding: 0 24px; height: 44px; font: inherit; font-weight: 700; cursor: pointer;
   }
   #wizGen:disabled { opacity: .5; cursor: default; }
-  #wizErr { color: #b4232a; font-size: var(--fs-sm); display: none; }
+  #wizErr { color: var(--danger); font-size: var(--fs-sm); display: none; }
+  #wizSaving { color: var(--accent); font-size: var(--fs-sm); }
   #wizResult { display: none; margin-top: 20px; }
   #wizResult h2 { font-size: 15px; margin: 0 0 8px; }
   #wizEnv {
     width: 100%; min-height: 180px; resize: vertical; border: 1px solid var(--line);
-    border-radius: 10px; padding: 12px; background: #0f1722; color: #d6e2f0;
-    font: 13px/1.6 "SF Mono", "Consolas", "Courier New", monospace; white-space: pre;
+    border-radius: 10px; padding: 12px; background: #0f0f13; color: #d6e2f0;
+    font: 13px/1.6 var(--font-mono); white-space: pre;
   }
   .wiz-result-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
   #wizCopy {
@@ -195,41 +340,49 @@
     margin-top: 14px; padding: 12px 14px; background: var(--warn-bg); border: 1px solid var(--warn-line);
     border-radius: 10px; color: var(--warn-text); font-size: var(--fs-sm); line-height: 1.6;
   }
-  .wiz-save-hint code { background: rgba(0,0,0,.08); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+  .wiz-save-hint code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
   #warnbar .gobtn {
-    margin-left: 10px; border: none; background: var(--warn-text); color: #fff; cursor: pointer;
-    border-radius: 8px; padding: 3px 12px; font: inherit; font-size: var(--fs-xs); font-weight: 600;
+    margin-left: 10px; border: none; background: var(--accent); color: var(--on-accent); cursor: pointer;
+    border-radius: 8px; padding: 3px 12px; font: inherit; font-size: var(--fs-xs); font-weight: 700;
   }
 
-  /* 顶栏体验选择器：换"聊天方式/人设"（普通助手 / 星瑶）。与 pill 风格一致，靠左排在 brand 后。 */
-  #expPick {
-    display: inline-flex; align-items: center; gap: 7px;
-    color: var(--muted); font-size: var(--fs-xs); white-space: nowrap;
+  /* ── 人格切换弹层（侧栏底部「人格」/桌面形象点开）：列可选人格，切换走 POST /api/experience ── */
+  #personaPop {
+    display: none; position: fixed; left: 12px; bottom: 12px; z-index: 40; width: 250px; max-width: calc(100vw - 24px);
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0,0,0,.5); padding: 12px 13px;
   }
-  #expPick .exp-label { font-weight: 500; }
+  #personaPop.show { display: block; }
+  #personaPop .pp-title { font-size: var(--fs-sm); font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  #personaPop .pp-desc { font-size: var(--fs-xs); color: var(--muted); margin-bottom: 10px; line-height: 1.5; }
+  /* 承载现有 #expSelect（把它从顶栏挪到这里）：全宽下拉 */
+  #expPick { display: block; }
+  #expPick .exp-label { display: block; font-size: var(--fs-xs); color: var(--faint); margin-bottom: 5px; }
   #expSelect {
-    border: 1px solid var(--line); background: var(--bg); color: var(--text); cursor: pointer;
-    border-radius: var(--radius-pill); padding: 4px 11px; font: inherit; font-size: var(--fs-xs);
-    font-weight: 600; max-width: 160px;
+    width: 100%; border: 1px solid var(--line); background: var(--ground); color: var(--text); cursor: pointer;
+    border-radius: 9px; padding: 8px 11px; font: inherit; font-size: var(--fs-sm); font-weight: 600;
   }
-  #expSelect:hover { border-color: var(--accent); color: var(--accent); }
+  #expSelect:hover { border-color: var(--accent); }
   #expSelect:focus { outline: none; border-color: var(--accent); }
   #expSelect:disabled { opacity: .55; cursor: default; }
+  /* 点弹层外区域关闭用的透明遮罩 */
+  #personaScrim { display: none; position: fixed; inset: 0; z-index: 39; }
+  #personaScrim.show { display: block; }
 
-  /* 顶栏 S0 记忆胶囊「它记住我 N 件事 ›」入口按钮（切到记忆抽屉/记忆管理页） */
+  /* 顶栏 S0 记忆胶囊「记住你 · N 件事 ›」入口（点开进记忆与画像面板） */
   #memPill {
     display: inline-flex; align-items: center; gap: 6px;
-    border: 1px solid var(--line); background: var(--bg); color: var(--text); cursor: pointer;
+    border: 1px solid var(--accent-dim); background: var(--accent-soft); color: var(--accent); cursor: pointer;
     border-radius: var(--radius-pill); padding: 4px 13px; font: inherit; font-size: var(--fs-xs);
     font-weight: 600; white-space: nowrap;
   }
-  #memPill:hover { border-color: var(--accent); color: var(--accent); }
+  #memPill:hover { border-color: var(--accent); }
   #memPill .pill-chev { font-size: 12px; line-height: 1; opacity: .7; }
 
-  /* 顶栏「立即整理记忆」按钮 */
+  /* 顶栏「立即整理记忆」按钮（图标式小按钮） */
   #btnRefresh {
-    border: 1px solid var(--line); background: var(--bg); color: var(--text); cursor: pointer;
-    border-radius: var(--radius-pill); padding: 4px 13px; font: inherit; font-size: var(--fs-xs);
+    border: 1px solid var(--line-soft); background: var(--panel); color: var(--muted); cursor: pointer;
+    border-radius: var(--radius-pill); padding: 4px 12px; font: inherit; font-size: var(--fs-xs);
     font-weight: 600; white-space: nowrap;
   }
   #btnRefresh:hover { border-color: var(--accent); color: var(--accent); }
@@ -239,31 +392,43 @@
   .mem-note { display: flex; justify-content: center; padding: 2px 0; }
   .mem-note .mn-inner {
     display: flex; align-items: flex-start; gap: 8px; max-width: 85%;
-    background: #eef4ff; border: 1px solid #d5e3ff; border-radius: 12px;
-    padding: 8px 13px; font-size: var(--fs-sm); color: #33507e; line-height: 1.5;
+    background: var(--accent-soft); border: 1px solid var(--accent-dim); border-radius: 12px;
+    padding: 8px 13px; font-size: var(--fs-sm); color: var(--accent); line-height: 1.5;
   }
   .mem-note .mn-ic { color: var(--accent); flex: 0 0 auto; font-size: 10px; margin-top: 5px; }
   .mem-note .mn-body { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
-  .mem-note .mn-lead { font-weight: 600; }
-  .mem-note .mn-txt { word-break: break-word; }
+  .mem-note .mn-lead { font-weight: 600; color: var(--accent); }
+  .mem-note .mn-txt { word-break: break-word; color: var(--text); }
   .mem-note .mn-band {
     font-size: var(--fs-xs); padding: 1px 8px; border-radius: var(--radius-pill);
-    background: #fff; border: 1px solid #cfe0ff; color: #5b7bb8; white-space: nowrap;
+    background: var(--panel); border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
   }
   .mem-note .mn-band.warn { background: var(--warn-bg); border-color: transparent; color: var(--warn-text); }
-  .mem-note .mn-band.ok { background: #e7f6ee; border-color: transparent; color: var(--ok); }
+  .mem-note .mn-band.ok { background: var(--ready-bg); border-color: transparent; color: var(--ready); }
   .mem-note .mn-acts { display: inline-flex; gap: 6px; margin-left: 2px; }
   .mem-note .mn-acts button {
-    border: 1px solid #cfe0ff; background: #fff; color: #4166a8; cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer;
     border-radius: 7px; padding: 2px 9px; font: inherit; font-size: var(--fs-xs); font-weight: 600;
   }
   .mem-note .mn-acts button:hover { border-color: var(--accent); color: var(--accent); }
-  .mem-note .mn-acts button.del:hover { border-color: #b4232a; color: #b4232a; }
+  .mem-note .mn-acts button.del:hover { border-color: var(--danger); color: var(--danger); }
 
-  /* ── 记忆管理页（body.mode-memory 时显示，藏聊天/输入/向导）── */
-  #memory { display: none; flex: 1 1 auto; overflow-y: auto; padding: 22px 18px 40px; }
-  body.mode-memory #memory { display: block; }
-  body.mode-memory #chat, body.mode-memory footer, body.mode-memory #wizard { display: none; }
+  /* ── 记忆与画像面板：从右侧滑入的层（不再全屏，聊天区留在底下）。开合仍靠 body.mode-memory ── */
+  #memory {
+    position: fixed; top: 38px; right: 0; bottom: 0; width: min(760px, 100vw);
+    z-index: 35; overflow-y: auto; padding: 22px 22px 40px;
+    background: var(--ground); border-left: 1px solid var(--line);
+    box-shadow: -18px 0 46px -20px rgba(0,0,0,.7);
+    transform: translateX(100%); opacity: 0; pointer-events: none;
+    transition: transform .28s cubic-bezier(.22,.61,.36,1), opacity .28s ease;
+  }
+  body.mode-memory #memory { transform: translateX(0); opacity: 1; pointer-events: auto; }
+  /* 面板打开时压暗背后聊天区的遮罩（点它=退出面板） */
+  #memScrim {
+    display: none; position: fixed; inset: 0; z-index: 34; background: rgba(10,10,12,.5);
+    opacity: 0; transition: opacity .28s ease;
+  }
+  body.mode-memory #memScrim { display: block; opacity: 1; }
   .mem { width: 100%; max-width: 720px; margin: 0 auto; }
   .mem-top { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
   .mem-top h1 { font-size: 20px; margin: 0; letter-spacing: .2px; }
@@ -275,24 +440,22 @@
   #memBack:hover { border-color: var(--accent); color: var(--accent); }
   .mem-lead { color: var(--muted); font-size: var(--fs-sm); margin: 0 0 18px; line-height: 1.6; }
 
-  /* tab 切换（理解 / 记忆线索） */
-  .mem-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+  /* tab 切换（理解 / 记忆线索 / 图谱 / 数据 / 插件） */
+  .mem-tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
   .mem-tab {
     border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer;
     border-radius: 10px; padding: 7px 16px; font: inherit; font-size: var(--fs-sm); font-weight: 600;
   }
-  .mem-tab.on { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .mem-tab:hover { border-color: var(--line); color: var(--text); }
+  .mem-tab.on { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
   /* 插件列表（步7·只读展示） */
-  .plugin-row { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
-  .plugin-name { font-weight: 600; }
+  .plugin-row { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; background: var(--panel); }
+  .plugin-name { font-weight: 600; color: var(--text); }
   .plugin-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  #memPlugins .desc { color: var(--muted); font-size: var(--fs-xs); line-height: 1.55; margin: 0 0 12px; }
 
   /* ══════════ 记忆图谱（步5-G2·手搓力导向图） ══════════ */
-  /* 节点/边基色（也在 JS 侧 GRAPH_COLORS 里同步用值渲染 canvas） */
-  #memGraph {
-    --gc-subject: #7c4dff; --gc-evidence: #2f9e6e; --gc-event: #e08a2b; --gc-cognition: #2f6fed;
-    --ge-belongs: #b39ddb; --ge-distilled: #f0b26b; --ge-supports: #57b894; --ge-contradicts: #d9534f;
-  }
+  /* 节点/边基色变量 --gc-*/--ge-* 已提到 :root（亮/暗各一套），图谱 canvas JS 直接 getComputedStyle 读它们。 */
   .gr-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
   .gr-node-filters, .gr-controls-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
   .gr-ctl-label { color: var(--muted); font-size: var(--fs-xs); font-weight: 600; }
@@ -307,6 +470,7 @@
     border: 1px solid var(--line); background: var(--panel); color: var(--text);
     border-radius: 10px; padding: 6px 12px; font: inherit; font-size: var(--fs-sm); min-width: 180px;
   }
+  .gr-search:focus { outline: none; border-color: var(--accent); }
   .gr-btn, .gr-leg {
     border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer;
     border-radius: 10px; padding: 6px 13px; font: inherit; font-size: var(--fs-sm);
@@ -324,7 +488,7 @@
   .gr-stats b { color: var(--text); font-weight: 700; }
   .gr-stage {
     position: relative; width: 100%; height: 62vh; min-height: 360px;
-    border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #fbfcfe;
+    border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--gr-canvas-bg);
   }
   #graphCanvas { display: block; width: 100%; height: 100%; cursor: grab; touch-action: none; }
   #graphCanvas.dragging { cursor: grabbing; }
@@ -334,10 +498,10 @@
   }
   .gr-detail {
     position: absolute; top: 12px; right: 12px; width: 260px; max-width: calc(100% - 24px);
-    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
-    padding: 13px 15px; box-shadow: 0 6px 24px rgba(20,30,50,.14); font-size: var(--fs-sm);
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 13px 15px; box-shadow: 0 6px 24px rgba(0,0,0,.4); font-size: var(--fs-sm);
   }
-  .gr-detail .grd-title { font-size: var(--fs); font-weight: 700; margin-bottom: 4px; word-break: break-word; }
+  .gr-detail .grd-title { font-size: var(--fs); font-weight: 700; margin-bottom: 4px; word-break: break-word; color: var(--text); }
   .gr-detail .grd-kind { color: var(--muted); font-size: var(--fs-xs); margin-bottom: 9px; }
   .gr-detail .grd-summary { color: var(--text); margin-bottom: 10px; word-break: break-word; white-space: pre-wrap; }
   .gr-detail .grd-row { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 4px; color: var(--muted); font-size: var(--fs-xs); }
@@ -355,25 +519,26 @@
 
   /* 记忆卡片（认知 / 证据通用） */
   .mem-card {
-    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius);
     padding: 13px 15px; margin-bottom: 10px;
   }
-  .mem-card.dead { opacity: .6; }
-  .mem-card .mc-text { font-size: var(--fs); line-height: 1.55; word-break: break-word; white-space: pre-wrap; }
+  .mem-card:hover { border-color: var(--line); }
+  .mem-card.dead { opacity: .55; }
+  .mem-card .mc-text { font-size: var(--fs); line-height: 1.55; word-break: break-word; white-space: pre-wrap; color: var(--text); }
   .mem-card .mc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 9px; }
   .mc-pill {
     display: inline-flex; align-items: center; font-size: var(--fs-xs); padding: 2px 9px;
-    border-radius: var(--radius-pill); background: var(--bg); border: 1px solid var(--line); color: var(--muted);
+    border-radius: var(--radius-pill); background: var(--ground); border: 1px solid var(--line); color: var(--muted);
   }
-  .mc-pill.ok { background: #e7f6ee; color: var(--ok); border-color: transparent; }
+  .mc-pill.ok { background: var(--ready-bg); color: var(--ready); border-color: transparent; }
   .mc-pill.warn { background: var(--warn-bg); color: var(--warn-text); border-color: transparent; }
   .mem-card .mc-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 11px; }
   .mc-btn {
-    border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer;
     border-radius: 9px; padding: 5px 12px; font: inherit; font-size: var(--fs-xs); font-weight: 600;
   }
   .mc-btn:hover { border-color: var(--accent); color: var(--accent); }
-  .mc-btn.danger:hover { border-color: #b4232a; color: #b4232a; }
+  .mc-btn.danger:hover { border-color: var(--danger); color: var(--danger); }
 
   /* 溯源折叠 */
   .mc-sources { margin-top: 10px; }
@@ -393,94 +558,365 @@
   /* 二次确认弹窗 */
   #memConfirm {
     display: none; position: fixed; inset: 0; z-index: 50;
-    background: rgba(15,23,34,.42); align-items: center; justify-content: center; padding: 20px;
+    background: rgba(10,10,12,.6); align-items: center; justify-content: center; padding: 20px;
   }
   #memConfirm.show { display: flex; }
   .mc-dialog {
-    background: var(--panel); border-radius: var(--radius); max-width: 440px; width: 100%;
-    padding: 20px 22px; box-shadow: 0 12px 40px rgba(0,0,0,.18);
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); max-width: 440px; width: 100%;
+    padding: 20px 22px; box-shadow: 0 12px 40px rgba(0,0,0,.5);
   }
-  .mc-dialog h3 { margin: 0 0 10px; font-size: 16px; }
+  .mc-dialog h3 { margin: 0 0 10px; font-size: 16px; color: var(--text); }
   .mc-dialog .mc-body { font-size: var(--fs-sm); color: var(--text); line-height: 1.6; word-break: break-word; }
-  .mc-dialog .mc-body b { color: #b4232a; }
-  .mc-dialog .mc-warn { margin-top: 10px; color: #b4232a; font-size: var(--fs-xs); }
+  .mc-dialog .mc-body b { color: var(--danger); }
+  .mc-dialog .mc-warn { margin-top: 10px; color: var(--danger); font-size: var(--fs-xs); }
   .mc-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
   .mc-dialog-actions button { border-radius: 10px; padding: 8px 18px; font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; }
   #memConfirmCancel { border: 1px solid var(--line); background: var(--panel); color: var(--text); }
-  #memConfirmOk { border: none; background: #b4232a; color: #fff; }
+  #memConfirmOk { border: none; background: var(--danger); color: #fff; }
 
   /* 轻提示 toast */
   #memToast {
     position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(12px);
-    background: #1d2733; color: #fff; padding: 9px 18px; border-radius: var(--radius-pill);
+    background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    padding: 9px 18px; border-radius: var(--radius-pill);
     font-size: var(--fs-sm); opacity: 0; pointer-events: none; transition: all .22s ease; z-index: 60; max-width: 90vw;
+    box-shadow: 0 8px 26px rgba(0,0,0,.45);
   }
   #memToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-  #memToast.warn { background: #8a6d00; }
-  #memToast.danger { background: #b4232a; }
+  #memToast.warn { background: var(--warn-bg); border-color: transparent; color: var(--warn-text); }
+  #memToast.danger { background: var(--danger-toast-bg); border-color: transparent; color: var(--danger-toast-text); }
 
   /* ── 数据 / 备份区（步5）── */
   .data-block {
-    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius);
     padding: 15px 16px; margin-bottom: 12px;
   }
-  .data-block h2 { font-size: 15px; margin: 0 0 4px; }
+  .data-block h2 { font-size: 15px; margin: 0 0 4px; color: var(--text); }
   .data-block .db-desc { color: var(--muted); font-size: var(--fs-xs); margin: 0 0 12px; line-height: 1.55; }
+  .data-block .db-desc code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: 11px; }
   .data-btn {
-    border: 1px solid var(--line); background: var(--panel); color: var(--text); cursor: pointer;
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer;
     border-radius: 10px; padding: 8px 16px; font: inherit; font-size: var(--fs-sm); font-weight: 600;
   }
   .data-btn:hover { border-color: var(--accent); color: var(--accent); }
   .data-btn:disabled { opacity: .5; cursor: default; }
-  .data-btn.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .data-btn.primary:hover { opacity: .9; color: #fff; }
+  .data-btn.primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
+  .data-btn.primary:hover { opacity: .9; color: var(--on-accent); }
   .data-hint { display: block; margin-top: 9px; color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
+  .data-hint code { background: var(--code-bg); padding: 1px 6px; border-radius: 5px; font-size: 11px; }
   /* 导入试算结果框 */
   #importPlan {
     display: none; margin-top: 12px; padding: 11px 13px; border-radius: 10px;
-    background: var(--bg); border: 1px solid var(--line); font-size: var(--fs-sm); line-height: 1.6;
+    background: var(--ground); border: 1px solid var(--line); font-size: var(--fs-sm); line-height: 1.6; color: var(--text);
   }
   #importPlan.show { display: block; }
   #importPlan .ip-warn { color: var(--warn-text); font-size: var(--fs-xs); margin-top: 6px; }
   #importPlan .ip-actions { display: flex; gap: 10px; margin-top: 12px; }
   #importFile { display: none; } /* 用按钮代触发原生 file 选择 */
   /* 危险区（恢复出厂）：红框强调 */
-  .data-block.danger { border-color: #f0b6b9; background: #fdf5f5; }
-  .data-block.danger h2 { color: #b4232a; }
-  #factoryReset { border-color: #d9666c; color: #b4232a; }
-  #factoryReset:hover { background: #b4232a; color: #fff; border-color: #b4232a; }
+  .data-block.danger { border-color: var(--danger); background: var(--danger-bg); }
+  .data-block.danger h2 { color: var(--danger); }
+  .data-block.danger .db-desc b { color: var(--danger); }
+  #factoryReset { border-color: var(--danger); color: var(--danger); background: transparent; }
+  #factoryReset:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
   /* 恢复出厂强确认弹窗内的输入框 */
   .mc-typeconfirm { margin-top: 14px; }
   .mc-typeconfirm label { display: block; font-size: var(--fs-xs); color: var(--muted); margin-bottom: 5px; }
   .mc-typeconfirm input {
     width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 8px 11px;
-    font: inherit; font-size: var(--fs-sm); color: var(--text); background: var(--bg);
+    font: inherit; font-size: var(--fs-sm); color: var(--text); background: var(--ground);
   }
-  .mc-typeconfirm input:focus { outline: none; border-color: #b4232a; }
+  .mc-typeconfirm input:focus { outline: none; border-color: var(--danger); }
+
+  /* ══════════ 设置模态弹窗（任务2·Claude Desktop 风格：遮罩 + 居中面板 + 左导航右内容）══════════ */
+  #settings {
+    display: none; position: fixed; inset: 0; z-index: 55;
+    background: rgba(10,10,12,.55); align-items: center; justify-content: center; padding: 24px;
+  }
+  #settings.show { display: flex; }
+  .set-panel {
+    display: flex; width: 100%; max-width: 760px; height: min(560px, 88vh);
+    background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+    box-shadow: 0 22px 64px rgba(0,0,0,.5); overflow: hidden;
+  }
+  .set-nav {
+    flex: 0 0 172px; background: var(--sidebar); border-right: 1px solid var(--line-soft);
+    padding: 16px 10px; display: flex; flex-direction: column; gap: 3px;
+  }
+  .set-nav .set-nav-title { font-size: var(--fs-xs); color: var(--faint); font-weight: 700;
+    letter-spacing: .08em; text-transform: uppercase; padding: 2px 10px 8px; }
+  .set-nav button {
+    text-align: left; border: 1px solid transparent; background: transparent; color: var(--muted);
+    cursor: pointer; border-radius: 8px; padding: 8px 11px; font: inherit; font-size: var(--fs-sm); font-weight: 600;
+  }
+  .set-nav button:hover { background: var(--panel); color: var(--text); }
+  .set-nav button.on { background: var(--panel-2); color: var(--text); border-color: var(--line); }
+  .set-main { flex: 1 1 auto; position: relative; overflow-y: auto; padding: 18px 22px 24px; }
+  .set-close {
+    position: absolute; top: 12px; right: 14px; border: none; background: transparent; color: var(--muted);
+    cursor: pointer; font-size: 20px; line-height: 1; padding: 2px 6px; border-radius: 8px; z-index: 2;
+  }
+  .set-close:hover { background: var(--panel-2); color: var(--text); }
+  .set-sec { display: none; }
+  .set-sec.on { display: block; }
+  .set-sec h2 { font-size: 16px; margin: 0 0 4px; color: var(--text); }
+  .set-sec .set-lead { color: var(--muted); font-size: var(--fs-sm); margin: 0 0 16px; line-height: 1.6; }
+
+  /* 模型档列表 */
+  .set-profile {
+    border: 1px solid var(--line-soft); border-radius: 10px; padding: 11px 13px; margin-bottom: 9px;
+    background: var(--panel-2); display: flex; align-items: center; gap: 10px;
+  }
+  .set-profile.on { border-color: var(--accent); }
+  .set-profile .sp-radio { flex: 0 0 auto; margin: 0; cursor: pointer; }
+  .set-profile .sp-body { flex: 1 1 auto; min-width: 0; cursor: pointer; }
+  .set-profile .sp-name { font-size: var(--fs-sm); font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .set-profile .sp-name .sp-active { color: var(--accent); font-size: var(--fs-xs); font-weight: 700; margin-left: 6px; }
+  .set-profile .sp-model { font-size: var(--fs-xs); color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .set-profile .sp-acts { flex: 0 0 auto; display: inline-flex; gap: 6px; }
+  .set-profile .sp-acts button {
+    border: 1px solid var(--line); background: var(--panel); color: var(--muted); cursor: pointer;
+    border-radius: 7px; padding: 3px 10px; font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  }
+  .set-profile .sp-acts button:hover { border-color: var(--accent); color: var(--accent); }
+  .set-profile .sp-acts button.del:hover { border-color: var(--danger); color: var(--danger); }
+  .set-add-btn {
+    border: 1px dashed var(--line); background: transparent; color: var(--muted); cursor: pointer;
+    border-radius: 10px; padding: 10px 13px; font: inherit; font-size: var(--fs-sm); font-weight: 600; width: 100%; text-align: left;
+  }
+  .set-add-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* 模型档表单（添加/编辑时展开） */
+  #setForm { display: none; margin-top: 12px; border: 1px solid var(--line); border-radius: 12px;
+    padding: 14px 15px; background: var(--panel-2); }
+  #setForm.show { display: block; }
+  #setForm .sf-group { margin-bottom: 12px; }
+  #setForm .sf-group:last-of-type { margin-bottom: 0; }
+  #setForm .sf-gtitle { font-size: var(--fs-sm); font-weight: 700; color: var(--text); margin: 0 0 3px;
+    display: flex; align-items: center; gap: 8px; }
+  #setForm .sf-tag { font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-pill); }
+  #setForm .sf-tag.req { background: var(--panel); color: var(--accent); border: 1px solid var(--accent-dim); }
+  #setForm .sf-tag.opt { background: var(--panel); color: var(--muted); border: 1px solid var(--line); }
+  #setForm .sf-desc { color: var(--muted); font-size: var(--fs-xs); margin: 0 0 9px; line-height: 1.5; }
+  #setForm .sf-field { margin-bottom: 8px; }
+  #setForm .sf-field:last-child { margin-bottom: 0; }
+  #setForm .sf-field label { display: block; font-size: var(--fs-xs); color: var(--muted); margin-bottom: 4px; }
+  #setForm .sf-field input, #setForm .sf-field select {
+    width: 100%; border: 1px solid var(--line); border-radius: 9px; padding: 8px 10px;
+    font: inherit; font-size: var(--fs-sm); color: var(--text); background: var(--ground);
+  }
+  #setForm .sf-field input:focus, #setForm .sf-field select:focus { outline: none; border-color: var(--accent); }
+  .set-form-actions { display: flex; align-items: center; gap: 12px; margin-top: 14px; }
+  #setFormSave {
+    border: none; border-radius: 10px; background: var(--accent); color: var(--on-accent);
+    padding: 0 20px; height: 38px; font: inherit; font-size: var(--fs-sm); font-weight: 700; cursor: pointer;
+  }
+  #setFormSave:disabled { opacity: .5; cursor: default; }
+  #setFormCancel {
+    border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text);
+    padding: 0 16px; height: 38px; font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
+  }
+  #setFormErr { color: var(--danger); font-size: var(--fs-sm); }
+  .set-empty { color: var(--muted); font-size: var(--fs-sm); padding: 12px 0; }
+
+  /* 外观：主题切换段 */
+  .set-theme-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .set-theme-opt {
+    border: 1px solid var(--line); background: var(--panel-2); color: var(--text); cursor: pointer;
+    border-radius: 10px; padding: 10px 18px; font: inherit; font-size: var(--fs-sm); font-weight: 600;
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .set-theme-opt:hover { border-color: var(--accent); }
+  .set-theme-opt.on { border-color: var(--accent); color: var(--accent); background: var(--panel); }
+  .set-about { color: var(--muted); font-size: var(--fs-sm); line-height: 1.7; }
+  .set-about b { color: var(--text); }
+
+  /* ── 底部模型选择器下拉（任务4 · round3 任务③重做：精致、Claude Desktop 风格）── */
+  #modelMenu {
+    display: none; position: absolute; bottom: calc(100% + 8px); left: 0; z-index: 45;
+    min-width: 248px; max-width: 340px; max-height: 320px; overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 14px 44px -8px rgba(0,0,0,.5); padding: 6px;
+  }
+  /* 打开时轻微淡入 + 上移（从按钮方向浮起）。列表本身仍可滚，动画只作用于打开瞬间。 */
+  #modelMenu.show { display: block; animation: mmIn .13s ease-out; }
+  @keyframes mmIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  /* 极轻标题：一行小字，跟档项分开 */
+  .mm-head {
+    padding: 6px 11px 5px; font-size: var(--fs-xs); font-weight: 700; color: var(--faint);
+    letter-spacing: .05em; text-transform: uppercase;
+  }
+  .mm-item {
+    display: flex; flex-direction: column; gap: 2px; padding: 8px 11px; border-radius: 9px;
+    cursor: pointer; border: 1px solid transparent; transition: background .1s, border-color .1s;
+  }
+  .mm-item:hover { background: var(--panel-2); }
+  .mm-item.on { border-color: var(--accent-dim); background: var(--accent-soft); }
+  .mm-item .mm-name {
+    display: flex; align-items: center; gap: 7px; font-size: var(--fs-sm); font-weight: 600; color: var(--text);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  }
+  .mm-item .mm-name .mm-nametx { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mm-item.on .mm-name { color: var(--accent); }
+  /* 当前档右侧一个金点标记 */
+  .mm-item .mm-dot { flex: 0 0 auto; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); margin-left: auto; }
+  .mm-item .mm-model { font-size: var(--fs-xs); color: var(--muted);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .mm-sep { height: 1px; background: var(--line-soft); margin: 6px 4px; }
+  .mm-manage {
+    display: block; width: 100%; text-align: left; padding: 8px 11px; border-radius: 9px;
+    border: none; background: transparent; color: var(--muted); cursor: pointer;
+    font: inherit; font-size: var(--fs-sm); font-weight: 600; transition: background .1s, color .1s;
+  }
+  .mm-manage:hover { background: var(--panel-2); color: var(--accent); }
+
+  /* ══════════ round3 任务⑤：助手消息平铺 + markdown 渲染（学 Claude Desktop）══════════
+     用户消息仍走 .bubble（右对齐气泡）；助手消息改成占满内容列宽的平铺文本块（无气泡背景/边框），
+     由手搓 markdown 渲染器 renderMarkdownInto 构建（全 DOM/textContent，零 innerHTML）。 */
+  .msg.assistant.flat { display: block; }
+  .md-body { width: 100%; color: var(--text); font-size: var(--fs); line-height: 1.65; word-break: break-word; }
+  /* 平铺块内的 markdown 元素间距：首个不留上边距，避免与上一条贴太近又不悬空 */
+  .md-body > *:first-child { margin-top: 0; }
+  .md-body > *:last-child { margin-bottom: 0; }
+  .md-body p { margin: 0 0 10px; }
+  .md-body h1, .md-body h2, .md-body h3 { margin: 16px 0 8px; line-height: 1.35; font-weight: 700; color: var(--text); }
+  .md-body h1 { font-size: 1.4em; }
+  .md-body h2 { font-size: 1.22em; }
+  .md-body h3 { font-size: 1.08em; }
+  .md-body ul, .md-body ol { margin: 0 0 10px; padding-left: 1.5em; }
+  .md-body li { margin: 3px 0; }
+  .md-body li > ul, .md-body li > ol { margin: 3px 0; }
+  .md-body blockquote {
+    margin: 0 0 10px; padding: 2px 0 2px 13px; border-left: 3px solid var(--accent-dim);
+    color: var(--muted);
+  }
+  .md-body hr { border: none; border-top: 1px solid var(--line); margin: 16px 0; }
+  .md-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .md-body a:hover { opacity: .82; }
+  .md-body strong { font-weight: 700; }
+  .md-body em { font-style: italic; }
+  /* 内联 code */
+  .md-body code.md-inline {
+    font-family: var(--font-mono); font-size: .9em; background: var(--code-bg);
+    padding: 1px 6px; border-radius: 5px; word-break: break-word;
+  }
+  /* 代码块容器（学 Claude：header + 复制 + 横向滚动的 pre） */
+  .md-code {
+    margin: 0 0 12px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden;
+    background: var(--panel-2);
+  }
+  .md-code-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+    padding: 6px 12px; background: var(--panel); border-bottom: 1px solid var(--line-soft);
+  }
+  .md-code-lang {
+    font-family: var(--font-mono); font-size: var(--fs-xs); color: var(--muted);
+    letter-spacing: .03em; text-transform: lowercase;
+  }
+  .md-code-copy {
+    border: 1px solid var(--line-soft); background: var(--panel-2); color: var(--muted); cursor: pointer;
+    border-radius: 6px; padding: 3px 10px; font: inherit; font-size: var(--fs-xs); font-weight: 600;
+    white-space: nowrap; transition: border-color .12s, color .12s;
+  }
+  .md-code-copy:hover { border-color: var(--accent); color: var(--accent); }
+  .md-code pre {
+    margin: 0; padding: 12px 13px; overflow-x: auto;
+    font-family: var(--font-mono); font-size: var(--fs-sm); line-height: 1.55; color: var(--text);
+  }
+  .md-code pre code { font-family: inherit; white-space: pre; }
+
+  /* ══════════ round3 任务④：自适应窗口大小（响应式）══════════ */
+  /* 中等偏窄：侧栏略收窄，主列内边距减小，但仍保持三栏骨架 */
+  @media (max-width: 900px) {
+    :root { --sidebar-w: 210px; }
+  }
+  /* 窄窗口（≤700px）：侧栏进一步收窄；聊天/输入列内边距收紧、气泡放宽；
+     工具栏按钮优雅换行；设置弹窗、模型下拉、人格弹层都不超出视口。 */
+  @media (max-width: 700px) {
+    :root { --sidebar-w: 168px; }
+    header { padding: 0 12px; gap: 6px; }
+    header .hd-title { max-width: 32vw; }
+    .chat-inner { padding: 0 12px; }
+    footer { padding: 0 12px 12px; }
+    .msg .bubble { max-width: 88%; }
+    /* 工具栏：允许按钮换行，发送键换行后仍靠右 */
+    .toolbar { gap: 5px; padding: 7px; }
+    .tool { padding: 5px 9px; }
+    /* 设置弹窗：小屏改上下布局（左导航变横条），面板铺满可视区 */
+    #settings { padding: 12px; }
+    .set-panel { flex-direction: column; height: min(620px, 92vh); max-width: 100%; }
+    .set-nav {
+      flex: 0 0 auto; flex-direction: row; flex-wrap: wrap; overflow-x: auto;
+      border-right: none; border-bottom: 1px solid var(--line-soft); padding: 10px 12px; gap: 4px;
+    }
+    .set-nav .set-nav-title { display: none; }
+    .set-main { padding: 16px 16px 22px; }
+    /* 模型下拉：不超视口宽 */
+    #modelMenu { max-width: calc(100vw - 24px); }
+  }
+  /* 极窄（≤440px，罕见但别破）：侧栏可临时藏起给内容让位——不改任何 JS，仅视觉兜底 */
+  @media (max-width: 440px) {
+    #settings { padding: 8px; }
+  }
 </style>
 
-<!-- 左侧对话列表侧栏（步4）：新建 / 切换 / 归档。当前对话高亮；hover 出归档钮。向导/记忆态自动隐藏。 -->
+<!-- round4 ①：自绘标题栏（frame:false 无边框窗口的替代）。整条可拖动，右侧三键接 window.wmWindow（preload 暴露，可选链兜 null）。 -->
+<div id="titlebar">
+  <div class="tb-brand"><span class="tb-dot">🧵</span><span>Weft</span><span class="tb-mate">Mate</span></div>
+  <div class="tb-ctrl">
+    <button class="tb-btn tb-min" id="tbMin" title="最小化">─</button>
+    <button class="tb-btn tb-max" id="tbMax" title="最大化">▢</button>
+    <button class="tb-btn tb-close" id="tbClose" title="关闭">✕</button>
+  </div>
+</div>
+
+<!-- 左侧栏（步4）：上＝对话记录列表（新建/切换/归档）；下＝功能区 sbFoot（记忆·能力·设置·人格）。 -->
 <aside id="sidebar">
+  <!-- round4 ①去重：品牌 WeftMate 已上移到自绘标题栏，这里不再重复；侧栏顶只留「＋新对话」，撑满一行读起来更顺。 -->
   <div class="sb-head">
-    <span class="sb-title">对话</span>
     <button id="sbNew" title="开一段新对话（当前这段会留着，随时能切回来）">＋ 新对话</button>
   </div>
   <div id="sbList"><div class="sb-empty">加载中…</div></div>
+  <!-- 侧栏底部功能区：四个可点项，点开对应滑入面板/弹层。人格选择器从顶栏挪到了这里。 -->
+  <div id="sbFoot">
+    <div class="ft-item" id="ftMemory" title="看它记住了你哪些事、对你有哪些理解——可随时改或删">
+      <span class="ft-ic"></span><span class="ft-tx">记忆与画像</span><span class="ft-chev">›</span>
+    </div>
+    <div class="ft-item" id="ftPlugins" title="看它接了哪些能力/感知源（插件）">
+      <span class="ft-ic"></span><span class="ft-tx">能力与感知</span><span class="ft-chev">›</span>
+    </div>
+    <div class="ft-item" id="ftSettings" title="重新配置对话模型">
+      <span class="ft-ic"></span><span class="ft-tx">设置</span><span class="ft-chev">›</span>
+    </div>
+    <div class="ft-item persona" id="ftPersona" title="换一种跟你聊天的方式（记住你的还是同一份，只是语气不同）">
+      <span class="ft-ic"></span><span class="ft-tx">人格 · <b id="ftPersonaName">…</b></span><span class="ft-chev">▾</span>
+    </div>
+  </div>
 </aside>
 
-<header>
-  <div class="brand">MemoWeft <small>会记住你说过的话</small></div>
-  <!-- 体验选择器：切它用哪种"人设/语气"跟你聊（普通助手 / 星瑶）。记忆是同一份，只换回话的方式。
-       切换后当前这段对话下一句起生效（后端会重建对话窗口、换上新语气）。 -->
-  <label id="expPick" title="换一种跟你聊天的方式（记住你的还是同一份，只是语气不同）">
-    <span class="exp-label">聊天方式</span>
+<!-- 人格切换弹层：从侧栏底部「人格」或桌面形象点开。承载现有 #expSelect（逻辑不动），切换走 POST /api/experience。 -->
+<div id="personaScrim"></div>
+<div id="personaPop">
+  <div class="pp-title">换一种聊天方式</div>
+  <div class="pp-desc">记住你的还是同一份，只是回话的语气/人设不同。切换后当前这段对话下一句起生效。</div>
+  <label id="expPick">
+    <span class="exp-label">人格 / 聊天方式</span>
     <select id="expSelect"><option>加载中…</option></select>
   </label>
-  <!-- S0 记忆胶囊：显示「它记住我 N 件事」，N=当前活跃理解数（轮询 /api/cognition/count）。点开进记忆抽屉（现有记忆管理页）。 -->
-  <button id="memPill" title="看看它记住了你哪些事——可以随时改或删"><span id="memPillN">它记住我的事</span><span class="pill-chev">›</span></button>
-  <!-- 立即整理记忆（S1）：不等后台攒批，用户主动让它现在整理一次。 -->
-  <button id="btnRefresh" title="让它现在就把你刚说的整理进记忆（平时它会在后台自动整理，这里是手动催一下）">立即整理记忆</button>
-  <span id="bgstatus" title="它对你的了解会在后台慢慢整理：聊完停一会儿就开始，要想一想、可能需要一点时间，但不挡你聊。">还没开始整理</span>
+</div>
+
+<header>
+  <!-- 精简顶栏：左=当前对话标题；右=后台状态 · 立即整理 · 记忆胶囊。 -->
+  <div class="hd-title" id="hdTitle">对话</div>
+  <div class="hd-right">
+    <span id="bgstatus" title="它对你的了解会在后台慢慢整理：聊完停一会儿就开始，要想一想、可能需要一点时间，但不挡你聊。">还没开始整理</span>
+    <!-- 立即整理记忆（S1）：不等后台攒批，用户主动让它现在整理一次。 -->
+    <button id="btnRefresh" title="让它现在就把你刚说的整理进记忆（平时它会在后台自动整理，这里是手动催一下）">整理记忆</button>
+    <!-- S0 记忆胶囊：显示「记住你 · N 件事」，N=当前活跃理解数（轮询 /api/cognition/count）。点开进记忆与画像面板。 -->
+    <button id="memPill" title="看看它记住了你哪些事——可以随时改或删"><span id="memPillN">记住你的事</span><span class="pill-chev">›</span></button>
+  </div>
 </header>
 
 <div id="warnbar">还没配好模型，暂时聊不了。<button class="gobtn" id="btnGoWizard">去配置</button></div>
@@ -490,6 +926,9 @@
     <div class="empty" id="emptyHint">跟它说点什么吧，它会记住你说过的话。</div>
   </div>
 </div>
+
+<!-- 桌面形象（blueprint 的 pet）：聊天区右下角浮圆头像，点它=打开人格切换。fixed 定位，放顶层不受裁剪。 -->
+<div id="pet" title="换一种跟你聊天的方式">🧵</div>
 
 <!-- 配置向导：首启没配好模型时进这一态（body.mode-wizard）。填完生成 .env 文本，保存后重启即可聊天。 -->
 <div id="wizard">
@@ -582,7 +1021,8 @@
   </div>
 </div>
 
-<!-- 记忆管理页（body.mode-memory）：看它记住了你哪些事，可标失效 / 改授权 / 删除。只做受控管理，无内容编辑框。 -->
+<!-- 记忆与画像面板（body.mode-memory）：从右侧滑入的层，点遮罩=退出。看它记住了你哪些事，可标失效 / 改授权 / 删除。 -->
+<div id="memScrim"></div>
 <div id="memory">
   <div class="mem">
     <div class="mem-top">
@@ -640,7 +1080,7 @@
       <!-- 危险区：恢复出厂 -->
       <div class="data-block danger">
         <h2>清空全部记忆 · 重新开始</h2>
-        <p class="db-desc">把它记住你的一切都清空——所有记忆线索、经历片段、对你的理解，以及这些操作的记录，全部抹掉，回到刚认识你时的空白。当前的对话会被收起（不删）、并开一段新的空对话。<b style="color:#b4232a;">此操作不可恢复。</b>建议先"导出我的记忆包"留个备份。</p>
+        <p class="db-desc">把它记住你的一切都清空——所有记忆线索、经历片段、对你的理解，以及这些操作的记录，全部抹掉，回到刚认识你时的空白。当前的对话会被收起（不删）、并开一段新的空对话。<b style="color:var(--danger);">此操作不可恢复。</b>建议先"导出我的记忆包"留个备份。</p>
         <button class="data-btn" id="factoryReset">清空全部记忆 · 重新开始</button>
       </div>
     </div>
@@ -700,12 +1140,117 @@
 
 <div id="memToast"></div>
 
-<footer>
-  <div class="composer">
-    <textarea id="text" rows="1" placeholder="说点什么…（Enter 发送，Shift+Enter 换行）"></textarea>
-    <button id="send">发送</button>
+<!-- 设置模态弹窗（任务2）：遮罩 + 居中面板，左导航（模型 / 外观 / 关于）右内容。侧栏「设置」与底部模型下拉「管理模型…」都开这个。 -->
+<div id="settings">
+  <div class="set-panel" role="dialog" aria-modal="true" aria-label="设置">
+    <div class="set-nav">
+      <div class="set-nav-title">设置</div>
+      <button class="set-nav-btn on" data-sec="models">模型</button>
+      <button class="set-nav-btn" data-sec="appearance">外观</button>
+      <button class="set-nav-btn" data-sec="about">关于</button>
+    </div>
+    <div class="set-main">
+      <button class="set-close" id="setClose" title="关闭（Esc）">×</button>
+
+      <!-- 模型节：列出所有模型档 + 添加/编辑表单 -->
+      <section class="set-sec on" data-sec="models">
+        <h2>模型</h2>
+        <p class="set-lead">配置用来跟你对话、并把你说的话整理成记忆的模型。可存多份配置，随时切换——切换即时生效，不用重启。</p>
+        <div id="setProfiles"><div class="set-empty">加载中…</div></div>
+        <button class="set-add-btn" id="setAddBtn">＋ 添加模型</button>
+
+        <!-- 添加 / 编辑表单（展开式） -->
+        <div id="setForm">
+          <div class="sf-group">
+            <div class="sf-field">
+              <label for="sfName">这份配置的名字</label>
+              <input id="sfName" type="text" autocomplete="off" spellcheck="false" placeholder="例如 我的 GPT-4o" />
+            </div>
+          </div>
+          <div class="sf-group">
+            <div class="sf-gtitle">对话模型 <span class="sf-tag req">必填</span></div>
+            <p class="sf-desc">用来跟你对话、也用来把你说的话整理成记忆。填一个 OpenAI 兼容的接口。</p>
+            <div class="sf-field"><label for="sfLlmBase">接口地址（Base URL）</label>
+              <input id="sfLlmBase" type="text" autocomplete="off" spellcheck="false" placeholder="https://…/v1" /></div>
+            <div class="sf-field"><label for="sfLlmKey">密钥（API Key）</label>
+              <input id="sfLlmKey" type="password" autocomplete="off" placeholder="sk-…" /></div>
+            <div class="sf-field"><label for="sfLlmModel">模型名</label>
+              <input id="sfLlmModel" type="text" autocomplete="off" spellcheck="false" placeholder="例如 gpt-4o-mini" /></div>
+          </div>
+          <div class="sf-group">
+            <div class="sf-gtitle">整理记忆的小模型 <span class="sf-tag opt">可选</span></div>
+            <p class="sf-desc">在后台把你说的话整理成记忆时用它，通常更快更省。不填就复用上面的对话模型。</p>
+            <div class="sf-field"><label for="sfWriteBase">接口地址（Base URL）</label>
+              <input id="sfWriteBase" type="text" autocomplete="off" spellcheck="false" placeholder="不填则复用对话模型" /></div>
+            <div class="sf-field"><label for="sfWriteKey">密钥（API Key）</label>
+              <input id="sfWriteKey" type="password" autocomplete="off" placeholder="不填则复用对话模型" /></div>
+            <div class="sf-field"><label for="sfWriteModel">模型名</label>
+              <input id="sfWriteModel" type="text" autocomplete="off" spellcheck="false" placeholder="不填则复用对话模型" /></div>
+            <div class="sf-field"><label for="sfWriteTier">这个模型在哪运行</label>
+              <select id="sfWriteTier">
+                <option value="cloud">云端（默认）</option>
+                <option value="local">本地（如 ollama / llama.cpp）</option>
+              </select></div>
+          </div>
+          <div class="sf-group">
+            <div class="sf-gtitle">语义联想模型 <span class="sf-tag opt">可选</span></div>
+            <p class="sf-desc">配上它，对话里更容易想起相关的旧事。不填也照常聊、照常整理记忆，只是暂不启用语义联想。</p>
+            <div class="sf-field"><label for="sfEmbedBase">接口地址（Base URL）</label>
+              <input id="sfEmbedBase" type="text" autocomplete="off" spellcheck="false" placeholder="不填则暂不启用" /></div>
+            <div class="sf-field"><label for="sfEmbedKey">密钥（API Key）</label>
+              <input id="sfEmbedKey" type="password" autocomplete="off" placeholder="不填则暂不启用" /></div>
+            <div class="sf-field"><label for="sfEmbedModel">模型名</label>
+              <input id="sfEmbedModel" type="text" autocomplete="off" spellcheck="false" placeholder="不填则暂不启用" /></div>
+          </div>
+          <div class="set-form-actions">
+            <button id="setFormSave">保存</button>
+            <button id="setFormCancel">取消</button>
+            <span id="setFormErr"></span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 外观节：日夜切换 -->
+      <section class="set-sec" data-sec="appearance">
+        <h2>外观</h2>
+        <p class="set-lead">选一个看着顺眼的主题。选择会记住，下次打开还是它。</p>
+        <div class="set-theme-row">
+          <button class="set-theme-opt" id="themeDark" data-theme="dark">🌙 暗色</button>
+          <button class="set-theme-opt" id="themeLight" data-theme="light">☀️ 亮色</button>
+        </div>
+      </section>
+
+      <!-- 关于节 -->
+      <section class="set-sec" data-sec="about">
+        <h2>关于</h2>
+        <p class="set-about"><b>WeftMate</b> —— 越用越懂你的桌面伴侣。<br />
+          它把你说过的话记成线索、慢慢整理成对你的理解，全都存在你自己的电脑上。<br />
+          你随时能在「记忆与画像」里看它记住了什么、改或删任何一条。</p>
+      </section>
+    </div>
   </div>
-  <div class="hint">它会记下你说的，之后在对话里更容易想起相关内容。</div>
+</div>
+
+<footer>
+  <div class="composer-wrap">
+    <div class="composer" id="composer">
+      <!-- 输入框不放 placeholder（按规格）。Enter 发送 / Shift+Enter 换行 / 自适应高度：交互沿用现有 JS。 -->
+      <textarea id="text" rows="1"></textarea>
+      <!-- 底部工具栏：＋文件、模型选择器、技能、沙箱、发送。＋/技能/沙箱本阶段为占位（点=toast「近期」）；模型选择器点=进设置重配；发送接现有 send()。 -->
+      <div class="toolbar">
+        <button type="button" class="tool" id="toolAttach" title="加文件 / 选工作区（近期）">＋ 文件 / 工作区</button>
+        <!-- 模型选择器（任务4）：下拉列各模型档，点某档=热切换（不跳页不重启）；末项「管理模型…」开设置弹窗「模型」节。 -->
+        <div id="modelWrap" style="position:relative;display:inline-flex;">
+          <button type="button" class="tool model" id="toolModel" title="切换模型 / 管理模型">◇ <span id="toolModelName">模型</span> ▾</button>
+          <div id="modelMenu"></div>
+        </div>
+        <button type="button" class="tool" id="toolSkill" title="技能（近期）">⚡ 技能</button>
+        <button type="button" class="tool" id="toolSandbox" title="沙箱权限（近期）">🔒 沙箱</button>
+        <button type="button" id="send" title="发送（Enter）">发送</button>
+      </div>
+    </div>
+    <div class="hint">它会记下你说的，之后在对话里更容易想起相关内容。</div>
+  </div>
 </footer>
 
 <script>
@@ -713,15 +1258,257 @@
   const chatInner = $('chatInner');
   let sending = false;
 
-  // HTML 转义（气泡按 textContent 放更稳，这里用 DOM 文本节点，天然免注入）。
+  // ══════════════════ 手搓极简 markdown → DOM 渲染器（round3 任务⑤）══════════════════
+  //   安全铁律：绝不 innerHTML 拼接模型输出。所有文本一律 document.createTextNode/textContent，
+  //   所有元素 document.createElement。链接 <a> 仅在 href 是 http/https 时才设 href（校验协议），
+  //   否则当纯文本；外链一律 target=_blank rel="noopener noreferrer"。任何脚本/HTML 注入都渲染成纯文字。
+  //   支持：段落、# ## ### 标题、- * / 1. 列表（单层为主，支持一层嵌套）、> 引用、--- 分隔线、
+  //         ```代码块```（带语言名+复制）、行内 `code`、**粗体**、*斜体*、[文字](http链接)。
+  //   接线：assistant 消息走 renderMarkdownInto；user 消息仍走 textContent 气泡。
+
+  // 只允许 http/https 链接落 href；其余（javascript:、data: 等）一律不设 href，当纯文本，挡 XSS。
+  function mdSafeHref(url) {
+    if (typeof url !== 'string') return null;
+    const u = url.trim();
+    if (/^https?:\/\//i.test(u)) return u;
+    return null;
+  }
+
+  // 行内解析：把一段纯文本按 `code` / **bold** / *italic* / [text](url) 拆成文本节点+元素，逐个 append 到 parent。
+  //   全程 createTextNode/createElement，绝不 innerHTML。未闭合的标记当普通字符输出。
+  function mdInline(parent, text) {
+    if (text == null) text = '';
+    let i = 0;
+    const n = text.length;
+    let buf = '';                                  // 累积普通文本
+    const flush = () => { if (buf) { parent.appendChild(document.createTextNode(buf)); buf = ''; } };
+    while (i < n) {
+      const ch = text[i];
+      // 行内 code：`...`（不跨越再一个反引号；内部不再解析）
+      if (ch === '`') {
+        const end = text.indexOf('`', i + 1);
+        if (end > i) {
+          flush();
+          const code = document.createElement('code');
+          code.className = 'md-inline';
+          code.textContent = text.slice(i + 1, end);
+          parent.appendChild(code);
+          i = end + 1; continue;
+        }
+      }
+      // 链接 [text](url)
+      if (ch === '[') {
+        const close = text.indexOf(']', i + 1);
+        if (close > i && text[close + 1] === '(') {
+          const paren = text.indexOf(')', close + 2);
+          if (paren > close) {
+            const label = text.slice(i + 1, close);
+            const rawUrl = text.slice(close + 2, paren);
+            const href = mdSafeHref(rawUrl);
+            flush();
+            if (href) {
+              const a = document.createElement('a');
+              a.href = href; a.target = '_blank'; a.rel = 'noopener noreferrer';
+              mdInline(a, label);                  // 链接文字里仍可有粗体等
+              parent.appendChild(a);
+            } else {
+              // 协议不安全 → 整段当纯文本（含中括号圆括号），不给 href
+              parent.appendChild(document.createTextNode(text.slice(i, paren + 1)));
+            }
+            i = paren + 1; continue;
+          }
+        }
+      }
+      // 粗体 **...**
+      if (ch === '*' && text[i + 1] === '*') {
+        const end = text.indexOf('**', i + 2);
+        if (end > i + 1) {
+          flush();
+          const strong = document.createElement('strong');
+          mdInline(strong, text.slice(i + 2, end));
+          parent.appendChild(strong);
+          i = end + 2; continue;
+        }
+      }
+      // 斜体 *...*（单星，且不是 ** 已在上面处理）
+      if (ch === '*') {
+        const end = text.indexOf('*', i + 1);
+        if (end > i) {
+          flush();
+          const em = document.createElement('em');
+          mdInline(em, text.slice(i + 1, end));
+          parent.appendChild(em);
+          i = end + 1; continue;
+        }
+      }
+      buf += ch; i++;
+    }
+    flush();
+  }
+
+  // 收集连续 li 行 → 生成 ul/ol；支持一层缩进嵌套（>=2 空格视为子项）。
+  function mdBuildList(lines, ordered) {
+    const list = document.createElement(ordered ? 'ol' : 'ul');
+    let curLi = null;
+    let subLines = null;   // 缓存当前项下的嵌套行
+    let subOrdered = false;
+    const closeSub = () => {
+      if (curLi && subLines && subLines.length) {
+        curLi.appendChild(mdBuildList(subLines, subOrdered));
+      }
+      subLines = null;
+    };
+    for (const raw of lines) {
+      const indented = /^\s{2,}/.test(raw);
+      const body = raw.replace(/^\s+/, '');
+      const om = body.match(/^\d+\.\s+(.*)$/);
+      const um = body.match(/^[-*]\s+(.*)$/);
+      if (indented && curLi && (om || um)) {
+        if (!subLines) { subLines = []; subOrdered = !!om; }
+        subLines.push(body);
+        continue;
+      }
+      closeSub();
+      const content = om ? om[1] : (um ? um[1] : body);
+      curLi = document.createElement('li');
+      mdInline(curLi, content);
+      list.appendChild(curLi);
+    }
+    closeSub();
+    return list;
+  }
+
+  // 主渲染器：把 markdown 文本按块解析进 el（el 应为空容器，如 .md-body）。
+  function renderMarkdownInto(el, text) {
+    el.textContent = '';                            // 先清空（重渲染安全）
+    const src = (text == null ? '' : String(text)).replace(/\r\n?/g, '\n');
+    const lines = src.split('\n');
+    let i = 0;
+    const N = lines.length;
+    while (i < N) {
+      let line = lines[i];
+      // 代码块 ```lang ... ```
+      const fence = line.match(/^\s*```(.*)$/);
+      if (fence) {
+        const lang = (fence[1] || '').trim();
+        const codeLines = [];
+        i++;
+        while (i < N && !/^\s*```/.test(lines[i])) { codeLines.push(lines[i]); i++; }
+        if (i < N) i++;                             // 跳过结束 ```
+        el.appendChild(mdCodeBlock(lang, codeLines.join('\n')));
+        continue;
+      }
+      // 空行：跳过
+      if (line.trim() === '') { i++; continue; }
+      // 分隔线 --- *** ___
+      if (/^\s*([-*_])\s*(\1\s*){2,}$/.test(line)) {
+        el.appendChild(document.createElement('hr'));
+        i++; continue;
+      }
+      // 标题 # ## ###
+      const h = line.match(/^\s*(#{1,3})\s+(.*)$/);
+      if (h) {
+        const tag = 'h' + h[1].length;
+        const node = document.createElement(tag);
+        mdInline(node, h[2].trim());
+        el.appendChild(node);
+        i++; continue;
+      }
+      // 引用块 > ...（连续行合并）
+      if (/^\s*>\s?/.test(line)) {
+        const quoteLines = [];
+        while (i < N && /^\s*>\s?/.test(lines[i])) {
+          quoteLines.push(lines[i].replace(/^\s*>\s?/, ''));
+          i++;
+        }
+        const bq = document.createElement('blockquote');
+        // 引用体内按段落处理（简单起见：整段 inline，保留换行为 <br> 语义用文本节点）
+        mdInline(bq, quoteLines.join('\n').replace(/\n+/g, ' '));
+        el.appendChild(bq);
+        continue;
+      }
+      // 列表（连续的 - * 或 1. 行）
+      if (/^\s*([-*]\s+|\d+\.\s+)/.test(line)) {
+        const listLines = [];
+        const orderedFirst = /^\s*\d+\.\s+/.test(line);
+        while (i < N && (/^\s*([-*]\s+|\d+\.\s+)/.test(lines[i]) || (/^\s{2,}\S/.test(lines[i]) && listLines.length))) {
+          listLines.push(lines[i]);
+          i++;
+        }
+        el.appendChild(mdBuildList(listLines, orderedFirst));
+        continue;
+      }
+      // 普通段落：把连续非空、非块起始的行合并成一段（软换行合成空格）
+      const paraLines = [];
+      while (i < N && lines[i].trim() !== ''
+             && !/^\s*```/.test(lines[i])
+             && !/^\s*(#{1,3})\s+/.test(lines[i])
+             && !/^\s*>\s?/.test(lines[i])
+             && !/^\s*([-*]\s+|\d+\.\s+)/.test(lines[i])
+             && !/^\s*([-*_])\s*(\1\s*){2,}$/.test(lines[i])) {
+        paraLines.push(lines[i]);
+        i++;
+      }
+      const p = document.createElement('p');
+      mdInline(p, paraLines.join(' '));
+      el.appendChild(p);
+    }
+  }
+
+  // 代码块 DOM：容器 + header（语言名 + 复制按钮）+ pre>code（横向滚动）。全 textContent。
+  function mdCodeBlock(lang, codeText) {
+    const box = document.createElement('div'); box.className = 'md-code';
+    const head = document.createElement('div'); head.className = 'md-code-head';
+    const langEl = document.createElement('span'); langEl.className = 'md-code-lang';
+    langEl.textContent = lang || 'code';
+    const copyBtn = document.createElement('button'); copyBtn.type = 'button'; copyBtn.className = 'md-code-copy';
+    copyBtn.textContent = '复制';
+    copyBtn.onclick = async () => {
+      let ok = false;
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(codeText); ok = true; }
+      } catch (e) { /* 落降级 */ }
+      if (!ok) {
+        try {
+          const ta = document.createElement('textarea');
+          ta.value = codeText; ta.style.position = 'fixed'; ta.style.opacity = '0';
+          document.body.appendChild(ta); ta.select(); ok = document.execCommand('copy');
+          document.body.removeChild(ta);
+        } catch (e) { ok = false; }
+      }
+      const orig = '复制';
+      copyBtn.textContent = ok ? '已复制 ✓' : '复制失败';
+      setTimeout(() => { copyBtn.textContent = orig; }, 1800);
+    };
+    head.appendChild(langEl); head.appendChild(copyBtn);
+    const pre = document.createElement('pre');
+    const code = document.createElement('code');
+    code.textContent = codeText;                    // 代码内容 → textContent，绝不 innerHTML
+    pre.appendChild(code);
+    box.appendChild(head); box.appendChild(pre);
+    return box;
+  }
+
+  // 消息渲染（round3 任务⑤）：按 role 分支——
+  //   user      → 右对齐气泡，textContent（天然免注入）。
+  //   assistant → 占满内容列宽的平铺文本块，走 renderMarkdownInto（markdown/代码块）。
+  //   记忆气泡 weaveMemNote 是另一套，不经这里。
   function addMsg(role, content) {
     hideEmpty();
     const msg = document.createElement('div');
     msg.className = 'msg ' + role;
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble';
-    bubble.textContent = content;
-    msg.appendChild(bubble);
+    if (role === 'assistant') {
+      msg.classList.add('flat');
+      const body = document.createElement('div');
+      body.className = 'md-body';
+      renderMarkdownInto(body, content);
+      msg.appendChild(body);
+    } else {
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = content;
+      msg.appendChild(bubble);
+    }
     chatInner.appendChild(msg);
     scrollDown();
     return msg;
@@ -739,12 +1526,33 @@
     addMsg('user', message);
 
     // 思考中：冒一个助手侧三点起伏气泡占位，回复到了原位替换。
+    //   round3：思考三点用 DOM 构建（不用 innerHTML，跟安全铁律一致）；占位仍用 .bubble 气泡样式（三点小圆更聚拢好看）。
     const thinking = document.createElement('div');
     thinking.className = 'msg assistant';
-    thinking.innerHTML = '<div class="bubble"><span class="thinking-dots"><span></span><span></span><span></span></span></div>';
+    const thBubble = document.createElement('div'); thBubble.className = 'bubble';
+    const dots = document.createElement('span'); dots.className = 'thinking-dots';
+    dots.appendChild(document.createElement('span'));
+    dots.appendChild(document.createElement('span'));
+    dots.appendChild(document.createElement('span'));
+    thBubble.appendChild(dots);
+    thinking.appendChild(thBubble);
     chatInner.appendChild(thinking); scrollDown();
 
-    const settle = (text) => { thinking.querySelector('.bubble').textContent = text; scrollDown(); };
+    // 成功回复：把这条占位换成平铺 markdown（清掉 .msg 上的气泡结构，改成 .flat + .md-body）。
+    const settleReply = (text) => {
+      thinking.className = 'msg assistant flat';
+      thinking.textContent = '';
+      const body = document.createElement('div'); body.className = 'md-body';
+      renderMarkdownInto(body, text);
+      thinking.appendChild(body);
+      scrollDown();
+    };
+    // 错误/未连上：仍当纯文本放回气泡（不走 markdown，避免把错误串当 markdown 出岔）。
+    const settleError = (text) => {
+      const b = thinking.querySelector('.bubble');
+      if (b) { b.textContent = text; } else { thinking.textContent = ''; const nb = document.createElement('div'); nb.className = 'bubble'; nb.textContent = text; thinking.appendChild(nb); }
+      scrollDown();
+    };
     try {
       const res = await fetch('/api/chat', {
         method: 'POST',
@@ -752,11 +1560,11 @@
         body: JSON.stringify({ message }),
       });
       const d = await res.json();
-      if (d.error) settle('出错了：' + d.error);
-      else settle(d.reply);
+      if (d.error) settleError('出错了：' + d.error);
+      else settleReply(d.reply);
     } catch (e) {
       // fetch 没连上 = 请求没到服务端，这句话还没入库也没落历史——别假承诺"已存下"（诚实口径）。
-      settle('没连上，这句话还没发出去，稍后再重发一次。');
+      settleError('没连上，这句话还没发出去，稍后再重发一次。');
     } finally {
       el.disabled = false; $('send').disabled = false; sending = false; el.focus();
       loadSessions(); // 聊完刷侧栏：新对话首条后要出现在列表、预览/最后活跃时间随之更新
@@ -794,21 +1602,23 @@
     } catch (e) { /* 历史读不到不影响新聊 */ }
   }
 
-  // ── 首启门：模型没配好 → 进配置向导；配好了 → 正常聊天 ──
-  //   llmReady=false：显示顶部黄条（带"去配置"）并直接进向导态（body.mode-wizard，藏聊天区、显向导面板）。
-  //   llmReady=true：不进向导，正常聊天（步1 行为不变）。
+  // ── 首启门（任务4·改走热重载，不再全屏向导/重启）──
+  //   llmReady=false（还没配好任何模型）：显示顶部黄条（带"去配置"）并打开设置弹窗「模型」节，引导先配一份。
+  //   llmReady=true：正常聊天。
+  //   首配保存改打 POST /api/model-config/profile（新档），成功后后端已热重建 → 前端 location.reload() 直接进聊天，无"重启"提示。
   async function checkHealth() {
     try {
       const h = await fetch('/api/health').then((x) => x.json());
       if (!h.llmReady) {
         $('warnbar').classList.add('show');
-        enterWizard();
+        openSettings('models'); // 首配：打开设置弹窗模型节（内部会自动展开添加表单，见 openSettings）
       }
-    } catch (e) { /* 拿不到就先不提示、不强进向导 */ }
+    } catch (e) { /* 拿不到就先不提示、不强开设置 */ }
   }
 
-  // ── 配置向导（阶段1·② safeStorage） ──
-  function enterWizard() { document.body.classList.add('mode-wizard'); wizPrefill(); }
+  // ── 旧向导入口兼容：所有历史调用点（黄条「去配置」/设置菜单/底部模型旧行为）统一转向设置弹窗「模型」节。
+  //   全屏向导 #wizard 及其 wizPrefill/wizCopyEnv 保留在 DOM 里不再被入口触发，避免大改动面。
+  function enterWizard() { openSettings('models'); }
 
   // 预填：进配置页时读【安全视图】(GET /api/model-config，无 key)回填 baseUrl/model；已存 key 的组把密钥框提示改成"留空=不变"。
   let WIZ_HAS_KEY = false; // 对话组此前是否已存过 key（决定密钥是否必填）
@@ -829,8 +1639,8 @@
     } catch (e) { /* 拿不到就不预填 */ }
   }
 
-  // 保存并启用：收三组字段 → POST /api/model-config → safeStorage 加密落盘 → 后端延时 relaunch 重启生效。
-  //   apiKey 只随这次请求发到本机 loopback、不存页面任何持久处；密钥留空＝沿用已存的 key（重配不必重输）。
+  // 旧全屏向导的保存（不再被 UI 触发；入口都改走设置弹窗）。为守规格红线：旧端点 POST /api/model-config 已不存在（会 404），
+  //   这里改打新端点 POST /api/model-config/profile（当新档，不带 id），成功后热重建已生效 → location.reload() 进聊天（无"重启"）。
   async function wizSaveConfig() {
     const errBox = $('wizErr');
     errBox.style.display = 'none'; errBox.textContent = '';
@@ -839,11 +1649,12 @@
       errBox.textContent = '「对话模型」的接口地址和模型名要填。';
       errBox.style.display = 'inline'; return;
     }
-    if (!llmKey && !WIZ_HAS_KEY) { // 首配必填 key；已存过则可留空沿用
+    if (!llmKey) { // 新档必须填 key
       errBox.textContent = '第一次配置要填「密钥」。';
       errBox.style.display = 'inline'; return;
     }
     const payload = {
+      name: (llmModel || '我的模型'),
       llmBaseUrl: llmBase, llmApiKey: llmKey, llmModel: llmModel,
       writeBaseUrl: $('writeBase').value.trim(), writeApiKey: $('writeKey').value.trim(), writeModel: $('writeModel').value.trim(),
       writeTier: $('writeTier').value,
@@ -851,14 +1662,12 @@
     };
     $('wizGen').disabled = true;
     try {
-      const res = await fetch('/api/model-config', {
+      const res = await fetch('/api/model-config/profile', {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
       });
       const d = await res.json();
       if (d.error) { errBox.textContent = d.error; errBox.style.display = 'inline'; $('wizGen').disabled = false; return; }
-      // 保存成功：后端 ~0.5s 后 relaunch，页面连接随之断、新进程重开窗口。这里把界面切成"正在重启"。
-      $('wizSaving').style.display = 'block';
-      $('wizGen').style.display = 'none';
+      window.location.reload(); // 后端已热重建，直接重载进聊天（无重启闪烁）
     } catch (e) {
       errBox.textContent = '保存失败：' + (e && e.message ? e.message : String(e));
       errBox.style.display = 'inline';
@@ -1484,12 +2293,33 @@
   // 客户端过滤（不重 fetch）：节点类型勾选 + 边类型图例 + 搜索高亮；含失效/归档 = 重 fetch。
   // 坐标系：世界坐标存 node.x/y；屏幕 = world*scale + offset。命中检测/绘制/交互统一走同一变换，pan/zoom 一致。
 
+  // 图谱配色：从 CSS 变量读（--gc-*/--ge-* 及新增 --gr-*），亮/暗各一套值。物理/交互/绘制逻辑不动，仅"颜色来源"从写死改为读变量。
+  // 在 graphLoad 时与主题切换时调 readGraphColors() 重新读，使图谱在两种主题下都清晰。初值给深色兜底，避免变量还没读到时空绘。
   const GRAPH_COLORS = {
-    node: { subject: '#7c4dff', evidence: '#2f9e6e', event: '#e08a2b', cognition: '#2f6fed' },
-    edge: {
-      belongs_to_subject: '#b39ddb', distilled_into: '#f0b26b', supports: '#57b894', contradicts: '#d9534f',
-    },
+    node: { subject: '#a988ff', evidence: '#4fc08d', event: '#e0a24b', cognition: '#7ba7d1' },
+    edge: { belongs_to_subject: '#b39ddb', distilled_into: '#f0b26b', supports: '#57b894', contradicts: '#d9534f' },
+    label: '#c9c4ba', ring: '#d4a75d', conflict: '#d9534f',
+    nodeStroke: 'rgba(255,255,255,.85)', edgeFallback: '#b8c0cc', nodeFallback: '#8a94a6',
   };
+  // 从 :root（随 data-theme 变化）读当前主题下的图谱色，写回 GRAPH_COLORS。空值则保留旧值兜底。
+  function readGraphColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const g = (name, fallback) => { const v = cs.getPropertyValue(name).trim(); return v || fallback; };
+    GRAPH_COLORS.node.subject = g('--gc-subject', GRAPH_COLORS.node.subject);
+    GRAPH_COLORS.node.evidence = g('--gc-evidence', GRAPH_COLORS.node.evidence);
+    GRAPH_COLORS.node.event = g('--gc-event', GRAPH_COLORS.node.event);
+    GRAPH_COLORS.node.cognition = g('--gc-cognition', GRAPH_COLORS.node.cognition);
+    GRAPH_COLORS.edge.belongs_to_subject = g('--ge-belongs', GRAPH_COLORS.edge.belongs_to_subject);
+    GRAPH_COLORS.edge.distilled_into = g('--ge-distilled', GRAPH_COLORS.edge.distilled_into);
+    GRAPH_COLORS.edge.supports = g('--ge-supports', GRAPH_COLORS.edge.supports);
+    GRAPH_COLORS.edge.contradicts = g('--ge-contradicts', GRAPH_COLORS.edge.contradicts);
+    GRAPH_COLORS.label = g('--gr-label', GRAPH_COLORS.label);
+    GRAPH_COLORS.ring = g('--gr-ring', GRAPH_COLORS.ring);
+    GRAPH_COLORS.conflict = g('--gr-conflict', GRAPH_COLORS.conflict);
+    GRAPH_COLORS.nodeStroke = g('--gr-node-stroke', GRAPH_COLORS.nodeStroke);
+    GRAPH_COLORS.edgeFallback = g('--gr-edge-fallback', GRAPH_COLORS.edgeFallback);
+    GRAPH_COLORS.nodeFallback = g('--gr-node-fallback', GRAPH_COLORS.nodeFallback);
+  }
   const GRAPH_EDGE_KINDS = ['belongs_to_subject', 'distilled_into', 'supports', 'contradicts'];
   const GRAPH_NODE_KINDS = ['subject', 'evidence', 'event', 'cognition'];
 
@@ -1516,6 +2346,7 @@
   async function graphLoad() {
     const canvas = $('graphCanvas');
     if (!canvas) return;
+    readGraphColors(); // 按当前主题（暗/亮）读一遍图谱色，保证进图谱时用对主题
     if (!GRAPH.ctx) graphInitCanvas(); // 首次：绑 canvas + 交互 + resize
 
     const wantInvalid = $('grShowInvalid').checked;
@@ -1715,7 +2546,7 @@
       const dim = searching && !(graphNodeMatched(e.s) || graphNodeMatched(e.t));
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y);
-      ctx.strokeStyle = GRAPH_COLORS.edge[e.data.kind] || '#b8c0cc';
+      ctx.strokeStyle = GRAPH_COLORS.edge[e.data.kind] || GRAPH_COLORS.edgeFallback;
       ctx.globalAlpha = dim ? 0.08 : 0.55;
       ctx.lineWidth = 1.4;
       if (e.data.dashed) ctx.setLineDash([5, 4]); else ctx.setLineDash([]);
@@ -1739,22 +2570,22 @@
       // 圆
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = GRAPH_COLORS.node[d.kind] || '#8a94a6';
+      ctx.fillStyle = GRAPH_COLORS.node[d.kind] || GRAPH_COLORS.nodeFallback;
       ctx.fill();
       // cognition 冲突 → 红环强调
       if (d.kind === 'cognition' && d.credStatus === 'conflicted') {
-        ctx.lineWidth = 2.5; ctx.strokeStyle = '#d9534f'; ctx.stroke();
+        ctx.lineWidth = 2.5; ctx.strokeStyle = GRAPH_COLORS.conflict; ctx.stroke();
       } else if (sn === GRAPH.selected) {
-        ctx.lineWidth = 2.5; ctx.strokeStyle = '#1d2733'; ctx.stroke();
+        ctx.lineWidth = 2.5; ctx.strokeStyle = GRAPH_COLORS.ring; ctx.stroke(); // 选中态=主题强调色（随主题走）
       } else {
-        ctx.lineWidth = 1; ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.stroke();
+        ctx.lineWidth = 1; ctx.strokeStyle = GRAPH_COLORS.nodeStroke; ctx.stroke();
       }
       // label（缩得太小时略）
       if (v.scale > 0.55 && (!searching || matched)) {
         const label = (d.label || '').slice(0, 22);
         if (label) {
           ctx.globalAlpha = alpha;
-          ctx.fillStyle = '#33404f';
+          ctx.fillStyle = GRAPH_COLORS.label; // 节点标签：随主题走（暗色浅字/亮色深字）
           ctx.font = '11px -apple-system, "Segoe UI", "Microsoft YaHei", sans-serif';
           ctx.textAlign = 'center'; ctx.textBaseline = 'top';
           ctx.fillText(label, p.x, p.y + r + 2);
@@ -1881,9 +2712,9 @@
     }
 
     const rows = [];
-    if (typeof d.confidence === 'number') rows.push(['把握度', Math.round(d.confidence / 10) + '%']);
-    if (d.contentType) rows.push(['类型', String(d.contentType)]);
-    if (d.credStatus) rows.push(['状态', d.credStatus === 'conflicted' ? '冲突中' : String(d.credStatus)]);
+    // 把握度只给定性档（守 naming.md §5：用户侧绝不露 0–1000 原始分；与记忆卡片/气泡口径一致）。
+    if (d.credStatus) rows.push(['把握度', CRED_CN[d.credStatus] || '还没确认']);
+    if (d.contentType) rows.push(['类型', CTYPE_CN[d.contentType] || String(d.contentType)]);
     if (d.sourceKind) rows.push(['来源', String(d.sourceKind)]);
     if (typeof d.allowCloudRead === 'boolean') rows.push(['可用于云端', d.allowCloudRead ? '是' : '否']);
     if (d.invalidAt) rows.push(['已失效', String(d.invalidAt).slice(0, 10)]);
@@ -2319,12 +3150,358 @@
   }
   $('expSelect').addEventListener('change', onExperienceChange);
 
+  // ══════════════════ 外壳接线（Claude Desktop 风格骨架 · 只接入口，不碰上面任何保留逻辑） ══════════════════
+  // 说明：下面全是新增的 DOM 事件接线，把重画后的外壳（侧栏功能区/顶栏/工具栏/人格弹层/桌面形象）接到
+  //   上面那些"逐字保留"的函数上（enterMemory/enterWizard/onExperienceChange…）。任何后端调用仍走原函数。
+
+  // ── 记忆与画像面板：滑入层，body.mode-memory 由 enterMemory/exitMemory 开合（函数体没动，只改了它的 CSS 定位/动画）──
+  $('ftMemory').addEventListener('click', () => { MEM.tab = 'cog'; enterMemory(); });
+  // 能力与感知：打开记忆面板并切到「插件」tab（复用现有 tab 逻辑：设 MEM.tab=plugins 再走 enterMemory→memLoad→memRender）
+  $('ftPlugins').addEventListener('click', () => { MEM.tab = 'plugins'; enterMemory(); });
+  // 点遮罩 = 退出记忆面板（等同「返回聊天」）
+  $('memScrim').addEventListener('click', exitMemory);
+  // Esc 关面板/弹层（就近关一个：优先设置弹窗，其次模型下拉，其次人格弹层，最后记忆面板）
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if ($('settings').classList.contains('show')) { closeSettings(); }
+    else if ($('modelMenu').classList.contains('show')) { closeModelMenu(); }
+    else if ($('personaPop').classList.contains('show')) { closePersona(); }
+    else if (document.body.classList.contains('mode-memory')) { exitMemory(); }
+  });
+
+  // ── 设置：打开设置模态弹窗「模型」节（任务2）。不再进全屏向导。──
+  $('ftSettings').addEventListener('click', () => { if (document.body.classList.contains('mode-memory')) exitMemory(); openSettings('models'); });
+
+  // ── 人格切换弹层：承载现有 #expSelect（逻辑不动）。开合是纯 UI；切换仍走 onExperienceChange → POST /api/experience ──
+  function openPersona() { $('personaScrim').classList.add('show'); $('personaPop').classList.add('show'); }
+  function closePersona() { $('personaScrim').classList.remove('show'); $('personaPop').classList.remove('show'); }
+  $('ftPersona').addEventListener('click', openPersona);
+  $('pet').addEventListener('click', openPersona);          // 桌面形象点击 = 开人格切换
+  $('personaScrim').addEventListener('click', closePersona);
+
+  // 侧栏底部「人格 · <名>」跟随当前选中项同步：不改 loadExperiences/onExperienceChange，只旁路读 #expSelect 选中文本。
+  function syncPersonaName() {
+    const sel = $('expSelect');
+    const opt = sel.options && sel.selectedIndex >= 0 ? sel.options[sel.selectedIndex] : null;
+    const name = opt && opt.textContent && !/^（|加载中/.test(opt.textContent) ? opt.textContent : '默认';
+    $('ftPersonaName').textContent = name;
+  }
+  // loadExperiences 是异步填充，用 MutationObserver 捕捉它填好选项的那一刻（纯旁路，不侵入原函数）。
+  new MutationObserver(syncPersonaName).observe($('expSelect'), { childList: true, subtree: true });
+  $('expSelect').addEventListener('change', syncPersonaName); // 切换后也同步（追加监听，不影响原 onExperienceChange）
+
+  // ══════════════════ 设置模态弹窗（任务2）══════════════════
+  // 左导航（模型/外观/关于）切节；模型节列 GET /api/model-config 的各档，可切 active / 编辑 / 删除 / 添加。
+  // 所有用户/后端字符串一律 textContent（免 XSS）；密钥框永不回填（编辑时 placeholder=「已保存·留空则不变」）。
+  const SET = { profiles: [], activeId: null, editingId: null }; // editingId: null=未开表单, ''=新建, 其它=编辑该档
+
+  function openSettings(sec) {
+    $('settings').classList.add('show');
+    setSelectSection(sec || 'models');
+    syncThemeButtons();
+    if ((sec || 'models') === 'models') loadProfiles();
+  }
+  function closeSettings() { $('settings').classList.remove('show'); setFormClose(); }
+
+  // 左导航切节
+  function setSelectSection(sec) {
+    document.querySelectorAll('#settings .set-nav-btn').forEach((b) => b.classList.toggle('on', b.getAttribute('data-sec') === sec));
+    document.querySelectorAll('#settings .set-sec').forEach((s) => s.classList.toggle('on', s.getAttribute('data-sec') === sec));
+    if (sec === 'models') loadProfiles();
+  }
+  document.querySelectorAll('#settings .set-nav-btn').forEach((b) => {
+    b.addEventListener('click', () => setSelectSection(b.getAttribute('data-sec')));
+  });
+  $('setClose').addEventListener('click', closeSettings);
+  // 点遮罩（面板外）关闭
+  $('settings').addEventListener('click', (e) => { if (e.target === $('settings')) closeSettings(); });
+
+  // ── 模型档列表 ──
+  async function loadProfiles() {
+    const box = $('setProfiles');
+    box.textContent = '';
+    const loading = document.createElement('div'); loading.className = 'set-empty'; loading.textContent = '加载中…';
+    box.appendChild(loading);
+    let c;
+    try { c = await fetch('/api/model-config').then((x) => x.json()); }
+    catch (e) { box.textContent = ''; const d = document.createElement('div'); d.className = 'set-empty'; d.textContent = '读取模型配置失败，稍后再试。'; box.appendChild(d); return; }
+    SET.profiles = Array.isArray(c.profiles) ? c.profiles : [];
+    SET.activeId = c.activeId || null;
+    renderProfiles();
+    // 首启（还没配好任何档）自动展开添加表单，引导先配一份（配合 checkHealth 的 openSettings('models')）。
+    if (!SET.profiles.length && SET.editingId === null) setFormOpen(null);
+    syncModelName(); // 顺手刷底部选择器名字
+  }
+
+  function renderProfiles() {
+    const box = $('setProfiles');
+    box.textContent = '';
+    if (!SET.profiles.length) {
+      const d = document.createElement('div'); d.className = 'set-empty';
+      d.textContent = '还没有配置任何模型——点下面「添加模型」配一份就能开始聊。';
+      box.appendChild(d);
+      return;
+    }
+    for (const p of SET.profiles) box.appendChild(profileRow(p));
+  }
+
+  function profileRow(p) {
+    const isActive = p.id === SET.activeId;
+    const row = document.createElement('div');
+    row.className = 'set-profile' + (isActive ? ' on' : '');
+
+    const radio = document.createElement('input');
+    radio.type = 'radio'; radio.name = 'set-active-profile'; radio.className = 'sp-radio';
+    radio.checked = isActive; radio.title = '设为当前使用';
+    radio.onchange = () => setActiveProfile(p.id);
+
+    const body = document.createElement('div');
+    body.className = 'sp-body';
+    body.title = '设为当前使用';
+    body.onclick = () => { if (!isActive) setActiveProfile(p.id); };
+    const name = document.createElement('div'); name.className = 'sp-name';
+    name.textContent = p.name || '(未命名)'; // 用户内容 → textContent
+    if (isActive) { const a = document.createElement('span'); a.className = 'sp-active'; a.textContent = '· 使用中'; name.appendChild(a); }
+    const model = document.createElement('div'); model.className = 'sp-model';
+    model.textContent = (p.llm && p.llm.model) ? p.llm.model : '(无模型名)';
+    body.appendChild(name); body.appendChild(model);
+
+    const acts = document.createElement('div'); acts.className = 'sp-acts';
+    const edit = document.createElement('button'); edit.textContent = '编辑'; edit.onclick = () => setFormOpen(p.id);
+    const del = document.createElement('button'); del.className = 'del'; del.textContent = '删除'; del.onclick = () => deleteProfile(p);
+    acts.appendChild(edit); acts.appendChild(del);
+
+    row.appendChild(radio); row.appendChild(body); row.appendChild(acts);
+    return row;
+  }
+
+  // 切 active 档 → POST /api/model-config/active（后端热重建，不重启）
+  async function setActiveProfile(id) {
+    try {
+      const d = await fetch('/api/model-config/active', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
+      }).then((x) => x.json());
+      if (d.error) { memToast('切换失败：' + d.error, 'danger'); return; }
+      SET.activeId = d.activeId || id;
+      renderProfiles();
+      syncModelName();
+      memToast('已切换当前模型', '');
+    } catch (e) { memToast('切换失败：' + String(e), 'danger'); await loadProfiles(); }
+  }
+
+  // 删除档 → 二次确认 → POST /api/model-config/delete
+  async function deleteProfile(p) {
+    const ok = await memConfirm({
+      title: '删除这份模型配置？',
+      bodyQuote: p.name || '(未命名)',
+      bodyText: '只删这份配置（不影响你的记忆）。删掉后如果它是当前使用的，会自动切到另一份。',
+      warn: '删除后无法恢复（重新填一遍即可）。',
+      okText: '删除', okKind: 'danger',
+    });
+    if (!ok) return;
+    try {
+      const d = await fetch('/api/model-config/delete', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: p.id }),
+      }).then((x) => x.json());
+      if (d.error) { memToast('删除失败：' + d.error, 'danger'); return; }
+      memToast('已删除这份配置', '');
+      if (SET.editingId === p.id) setFormClose();
+      await loadProfiles();
+    } catch (e) { memToast('删除失败：' + String(e), 'danger'); }
+  }
+
+  // ── 添加 / 编辑表单 ──
+  //   id=null → 新建（密钥必填、不带 id）；id=某档 → 编辑（预填 baseUrl/model，密钥框留空=不变、带 id 提交）。
+  const SF_IDS = ['sfName', 'sfLlmBase', 'sfLlmKey', 'sfLlmModel', 'sfWriteBase', 'sfWriteKey', 'sfWriteModel', 'sfEmbedBase', 'sfEmbedKey', 'sfEmbedModel'];
+  function setFormReset() {
+    SF_IDS.forEach((id) => { $(id).value = ''; });
+    $('sfWriteTier').value = 'cloud';
+    // 密钥 placeholder 复位成新建态
+    $('sfLlmKey').placeholder = 'sk-…';
+    $('sfWriteKey').placeholder = '不填则复用对话模型';
+    $('sfEmbedKey').placeholder = '不填则暂不启用';
+    $('setFormErr').textContent = '';
+  }
+  function setFormOpen(id) {
+    setFormReset();
+    SET.editingId = id; // null=新建
+    if (id !== null) {
+      const p = SET.profiles.find((x) => x.id === id);
+      if (p) {
+        $('sfName').value = p.name || '';
+        if (p.llm) { $('sfLlmBase').value = p.llm.baseUrl || ''; $('sfLlmModel').value = p.llm.model || ''; if (p.llm.hasKey) $('sfLlmKey').placeholder = '已保存 · 留空则不变'; }
+        if (p.write) { $('sfWriteBase').value = p.write.baseUrl || ''; $('sfWriteModel').value = p.write.model || ''; if (p.write.hasKey) $('sfWriteKey').placeholder = '已保存 · 留空则不变'; if (p.write.tier) $('sfWriteTier').value = p.write.tier; }
+        if (p.embed) { $('sfEmbedBase').value = p.embed.baseUrl || ''; $('sfEmbedModel').value = p.embed.model || ''; if (p.embed.hasKey) $('sfEmbedKey').placeholder = '已保存 · 留空则不变'; }
+      }
+    }
+    $('setForm').classList.add('show');
+    $('setForm').scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    $('sfName').focus();
+  }
+  function setFormClose() { $('setForm').classList.remove('show'); SET.editingId = null; }
+  $('setAddBtn').addEventListener('click', () => setFormOpen(null));
+  $('setFormCancel').addEventListener('click', setFormClose);
+
+  // 保存表单 → POST /api/model-config/profile（新建不带 id / 编辑带 id）。改的是 active 档时后端热重建即刻生效。
+  async function setFormSave() {
+    const errBox = $('setFormErr'); errBox.textContent = '';
+    const name = $('sfName').value.trim();
+    const llmBase = $('sfLlmBase').value.trim(), llmKey = $('sfLlmKey').value.trim(), llmModel = $('sfLlmModel').value.trim();
+    if (!name) { errBox.textContent = '给这份配置起个名字。'; return; }
+    if (!llmBase || !llmModel) { errBox.textContent = '「对话模型」的接口地址和模型名要填。'; return; }
+    const editing = SET.editingId !== null && SET.editingId !== '';
+    const existing = editing ? SET.profiles.find((x) => x.id === SET.editingId) : null;
+    const hadKey = !!(existing && existing.llm && existing.llm.hasKey);
+    if (!llmKey && !(editing && hadKey)) { errBox.textContent = '新配置要填「密钥」。'; return; } // 新档必填 key；编辑且已存过可留空沿用
+    const payload = {
+      name,
+      llmBaseUrl: llmBase, llmApiKey: llmKey, llmModel: llmModel,
+      writeBaseUrl: $('sfWriteBase').value.trim(), writeApiKey: $('sfWriteKey').value.trim(), writeModel: $('sfWriteModel').value.trim(),
+      writeTier: $('sfWriteTier').value,
+      embedBaseUrl: $('sfEmbedBase').value.trim(), embedApiKey: $('sfEmbedKey').value.trim(), embedModel: $('sfEmbedModel').value.trim(),
+    };
+    if (editing) payload.id = SET.editingId; // 带 id=改档；不带=新建
+    const btn = $('setFormSave'); btn.disabled = true;
+    try {
+      const d = await fetch('/api/model-config/profile', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      }).then((x) => x.json());
+      if (d.error) { errBox.textContent = d.error; return; }
+      const wasFirst = !SET.profiles.length; // 首配（此前无任何档）
+      memToast(editing ? '已保存这份配置' : '已添加这份配置', '');
+      setFormClose();
+      await loadProfiles();
+      // 首配保存后：后端已热重建，直接 reload 让页面重新初始化（configured=true → 进聊天），不提示"重启"。
+      if (wasFirst) window.location.reload();
+    } catch (e) { errBox.textContent = '保存失败：' + (e && e.message ? e.message : String(e)); }
+    finally { btn.disabled = false; }
+  }
+  $('setFormSave').addEventListener('click', setFormSave);
+
+  // ── 外观：主题切换（任务3）。默认暗色；选择存 localStorage['wm-theme']；切换即时（改 <html data-theme> + 重读图谱色）──
+  function applyTheme(theme) {
+    if (theme === 'light') document.documentElement.setAttribute('data-theme', 'light');
+    else document.documentElement.removeAttribute('data-theme'); // 暗色 = 不设 data-theme（走 :root）
+    try { localStorage.setItem('wm-theme', theme === 'light' ? 'light' : 'dark'); } catch (e) {}
+    syncThemeButtons();
+    // 图谱在开着时立刻跟随主题重着色（只改颜色来源，不动物理/交互）。
+    readGraphColors();
+    if (MEM.tab === 'graph' && GRAPH.ctx && !GRAPH.running) graphDraw();
+  }
+  function currentTheme() { return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark'; }
+  function syncThemeButtons() {
+    const t = currentTheme();
+    $('themeDark').classList.toggle('on', t === 'dark');
+    $('themeLight').classList.toggle('on', t === 'light');
+  }
+  $('themeDark').addEventListener('click', () => applyTheme('dark'));
+  $('themeLight').addEventListener('click', () => applyTheme('light'));
+
+  // ══════════════════ 底部模型选择器下拉（任务4）══════════════════
+  // 点 toolModel 展开下拉，列各档（active 高亮），点某档=热切换 POST /active；末项「管理模型…」开设置弹窗模型节。
+  function openModelMenu() { buildModelMenu(); $('modelMenu').classList.add('show'); }
+  function closeModelMenu() { $('modelMenu').classList.remove('show'); }
+  function toggleModelMenu() { if ($('modelMenu').classList.contains('show')) closeModelMenu(); else openModelMenu(); }
+
+  async function buildModelMenu() {
+    const menu = $('modelMenu');
+    menu.textContent = '';
+    let c;
+    try { c = await fetch('/api/model-config').then((x) => x.json()); } catch (e) { c = null; }
+    const profiles = (c && Array.isArray(c.profiles)) ? c.profiles : [];
+    const activeId = c && c.activeId;
+    if (!profiles.length) {
+      // 没有任何档：点「配置模型」→ 开设置模型节
+      const item = document.createElement('button'); item.className = 'mm-manage';
+      item.textContent = '配置模型…';
+      item.onclick = () => { closeModelMenu(); openSettings('models'); };
+      menu.appendChild(item);
+      return;
+    }
+    // 极轻标题（round3 任务③）：DOM 构建，不影响切换逻辑。
+    const head = document.createElement('div'); head.className = 'mm-head'; head.textContent = '模型';
+    menu.appendChild(head);
+    for (const p of profiles) {
+      const item = document.createElement('div');
+      item.className = 'mm-item' + (p.id === activeId ? ' on' : '');
+      const name = document.createElement('div'); name.className = 'mm-name';
+      const nameText = document.createElement('span'); nameText.className = 'mm-nametx'; nameText.textContent = p.name || '(未命名)';
+      name.appendChild(nameText);
+      if (p.id === activeId) { const dot = document.createElement('span'); dot.className = 'mm-dot'; dot.title = '当前使用'; name.appendChild(dot); }
+      const model = document.createElement('div'); model.className = 'mm-model'; model.textContent = (p.llm && p.llm.model) ? p.llm.model : '(无模型名)';
+      item.appendChild(name); item.appendChild(model);
+      item.onclick = async () => {
+        closeModelMenu();
+        if (p.id === activeId) return; // 点的就是当前档 → 不折腾
+        await setActiveProfile(p.id); // 热切换（不跳页、不重启），内部会 syncModelName
+      };
+      menu.appendChild(item);
+    }
+    const sep = document.createElement('div'); sep.className = 'mm-sep'; menu.appendChild(sep);
+    const manage = document.createElement('button'); manage.className = 'mm-manage'; manage.textContent = '管理模型…';
+    manage.onclick = () => { closeModelMenu(); openSettings('models'); };
+    menu.appendChild(manage);
+  }
+
+  // 点 toolModel = 切换下拉（不再跳向导）；点页面别处关下拉。
+  $('toolModel').addEventListener('click', (e) => { e.stopPropagation(); toggleModelMenu(); });
+  document.addEventListener('click', (e) => {
+    if ($('modelMenu').classList.contains('show') && !$('modelWrap').contains(e.target)) closeModelMenu();
+  });
+
+  // 底部工具栏当前模型名：读 GET /api/model-config 里 active 档的对话模型名（新契约 profiles/activeId）。
+  async function syncModelName() {
+    try {
+      const c = await fetch('/api/model-config').then((x) => x.json());
+      const profiles = Array.isArray(c.profiles) ? c.profiles : [];
+      const active = profiles.find((p) => p.id === c.activeId) || profiles[0];
+      const m = (active && active.llm && active.llm.model) ? active.llm.model : (c.configured ? '模型' : '配置模型');
+      $('toolModelName').textContent = m;
+    } catch (e) { /* 拿不到就保持占位 */ }
+  }
+  // ＋文件 / 技能 / 沙箱：本阶段占位（点=toast「近期」，不做假功能）。
+  const soon = () => memToast('这个功能近期上线，先占个位～', '');
+  $('toolAttach').addEventListener('click', soon);
+  $('toolSkill').addEventListener('click', soon);
+  $('toolSandbox').addEventListener('click', soon);
+
+  // 输入框聚焦态：给 composer 描边（追加监听，不动 #text 原有 keydown/input/自适应高度逻辑）。
+  $('text').addEventListener('focus', () => $('composer').classList.add('focus'));
+  $('text').addEventListener('blur', () => $('composer').classList.remove('focus'));
+
+  // 顶栏当前对话标题：跟随当前会话预览（旁路读侧栏高亮项，不改 loadSessions/renderSessions）。
+  function syncHdTitle() {
+    const on = document.querySelector('#sbList .sb-item.on .sb-preview');
+    $('hdTitle').textContent = (on && on.textContent && on.textContent !== '（还没说话的新对话）') ? on.textContent : '对话';
+  }
+  new MutationObserver(syncHdTitle).observe($('sbList'), { childList: true, subtree: true });
+
+  // ══════════════════ round4 ① 自绘标题栏窗口控制 ══════════════════
+  // 主进程 frame:false（无边框），preload 暴露 window.wmWindow{minimize,toggleMaximize,close,onMaximizeChange}。
+  // 全程可选链 window.wmWindow?.xxx() 兜 null——纯浏览器/无 preload（如本地静态预览）时静默不报错。
+  $('tbMin').addEventListener('click', () => { window.wmWindow?.minimize(); });
+  $('tbMax').addEventListener('click', () => { window.wmWindow?.toggleMaximize(); });
+  $('tbClose').addEventListener('click', () => { window.wmWindow?.close(); });
+  // 双击标题栏拖动区（避开三个控制按钮）= 最大化/还原切换，跟原生标题栏一致。
+  $('titlebar').addEventListener('dblclick', (e) => {
+    if (e.target.closest('.tb-ctrl')) return; // 点在控制区上不触发
+    window.wmWindow?.toggleMaximize();
+  });
+  // 最大化状态变化时切换按钮图标：最大化→显还原 ❐；普通→显最大化 ▢。
+  window.wmWindow?.onMaximizeChange?.((isMax) => {
+    const b = $('tbMax');
+    if (!b) return;
+    b.textContent = isMax ? '❐' : '▢';
+    b.title = isMax ? '还原' : '最大化';
+  });
+
   // 启动
   checkHealth();
   loadHistory();
   loadSessions();
   loadExperiences(); // 填体验选择器、标当前
   updateMemPill(); // 首次刷 S0 记忆胶囊计数
+  syncModelName(); // 首次刷底部工具栏当前模型名
   pollBg();
   setInterval(pollBg, 3000);
   $('text').focus();

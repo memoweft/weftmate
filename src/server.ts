@@ -87,7 +87,10 @@ const INDEX_HTML = join(import.meta.dirname, 'web', 'index.html');
 let activeExperienceId: string = DEFAULT_EXPERIENCE_ID;
 
 // plugins：把已注册插件传给 Core 让它烧 hook（experience 类无 hook 是 no-op；tool/collector 类在此生效）。
-const core = createMemoWeftCore({ dbPath: DB_PATH, plugins: ALL_PLUGINS });
+// let（非 const）：切模型档/改配置时【进程内热重建】——库在构造 core 时读死 env 里的 key/模型，改配置要重建 core
+//   才生效（作者拍板"不重启进程、窗口不闪"，见 rebuildCore + weftmate-config-apply 记忆）。scheduler/handler 都经
+//   模块级 core 引用,重建后自然指向新实例。
+let core = createMemoWeftCore({ dbPath: DB_PATH, plugins: ALL_PLUGINS });
 
 // 聊天历史（Host 自建落盘）：目录级多对话管理器（一对话一 jsonl，见 chatHistory.ts）。
 const history = createChatHistory(SESSIONS_DIR);
@@ -110,7 +113,21 @@ const activatedConvs = new Set<string>();
 const switchedExperienceConvs = new Set<string>();
 
 // 后台画像更新调度器（Host 自建）：注入 core.updateProfile，其余状态自持。
+//   闭包取模块级 core（let）——热重建 core 后自然调新实例（无需重建 scheduler、pending 计数得以保留）。
 const scheduler = createProfileScheduler({ updateProfile: () => core.updateProfile() });
+
+/**
+ * 进程内热重建 core（切模型档 / 改配置时调）。不重启进程、窗口不闪（作者二次拍板）。
+ * 步骤：injectEnv 强刷 env=当前 active 档 → 建新 core → 清 activatedConvs（新 core 无会话窗口，下句 chat 重新 seed
+ *   续上上下文）→ 关旧 core。旧 core 上若正好有在飞写路径，close 会抛 → try/catch 吞（少见、不致命）。
+ */
+function rebuildCore(): void {
+  const old = core;
+  configStore.injectEnv();                 // 先清后设：env 精确等于当前 active 档（切到没配 write/embed 的档时清掉旧残留）
+  core = createMemoWeftCore({ dbPath: DB_PATH, plugins: ALL_PLUGINS });
+  activatedConvs.clear();                   // 新 core 没有任何会话窗口 → 下句 chat 用 seedTurns 重建、续上下文
+  try { old.close(); } catch { /* 旧 core 若有在飞写路径会抛，吞掉——进程不重启、连接由新 core 接管 */ }
+}
 
 /**
  * 续聊种子：把一条对话历史的最近几轮转成 Core 的 Turn[]（{role, content}，剥掉 ts）。
@@ -435,49 +452,70 @@ const server = createServer(async (req, res) => {
       return;
     }
 
-    // ── 模型配置(阶段1·② · safeStorage 加密落盘,替代"手动配 .env") ──
-    // WeftMate 桌面 App 版:key 走 Electron safeStorage 加密存 userData(不明文),不再让用户拼 .env(gen-env 留着兼容)。
-    // 生效方式(见 config-store / 记忆 weftmate-config-apply):库构造时读死 key → 保存后自动 relaunch 重启进程生效。
+    // ── 模型配置(阶段1·②③ · 多模型档 + safeStorage 加密落盘 + 进程内热重建) ──
+    // key 走 Electron safeStorage 加密存 userData(不明文)。设置弹窗里管理多个模型档(增删改),底部下拉切 active 档。
+    // 生效=【进程内热重建 core】(不重启进程、窗口不闪,见 rebuildCore / 记忆 weftmate-config-apply)。
+    //   ⚠ 隐私:所有 POST 的 body 含 apiKey,只在 handler 栈内流过(交 config-store 加密),不 console.log(body)、不入模块级变量。
 
-    // 读【安全视图】:只回 baseUrl/model + hasKey(是否已设 key),【绝不回 apiKey】。前端据此预填表单/判是否已配。
+    // 读【安全视图】:profiles(每档剥掉 apiKey,只留 name/baseUrl/model + hasKey) + activeId + configured。前端据此渲染下拉/设置。
     if (req.method === 'GET' && url.pathname === '/api/model-config') {
       sendJson(res, 200, configStore.readPublicView());
       return;
     }
 
-    // 存模型配置:收三组字段 → 校验对话组三项 → safeStorage 加密落盘 → 回 200 后延时 relaunch 重启生效。
-    //   ⚠ 隐私:body 含 apiKey,只在本 handler 栈内流过(交 saveConfig 加密),不 console.log(body)、不入任何模块级变量。
-    //   密钥留空 = 沿用已存的 key(重配不必重输,见 config-store.mergeKeepingKeys)——所以首配才强制要 key。
-    if (req.method === 'POST' && url.pathname === '/api/model-config') {
+    // 增/改一个模型档:body {id?, name, llm*, write*, embed*}。id 缺=新建;带 id=改(空 key 沿用旧 key)。
+    //   对话组 baseUrl/model 恒必填;apiKey 仅"新档 / 该档此前没存过 key"时必填。存完若该档是 active → 热重建 core 生效。
+    if (req.method === 'POST' && url.pathname === '/api/model-config/profile') {
       const body = await readJson(req);
       const s = (v: unknown): string => String(v ?? '').trim();
+      const id = s(body.id) || undefined;
       const llmBase = s(body.llmBaseUrl), llmKey = s(body.llmApiKey), llmModel = s(body.llmModel);
-      // 对话组:baseUrl/model 恒必填;apiKey 仅在"此前没存过 key"时必填(留空=沿用旧 key)。
+      const view = configStore.readPublicView();
+      const existing = id ? view.profiles.find((p) => p.id === id) : null;
       const missing: string[] = [];
       if (!llmBase) missing.push('接口地址');
       if (!llmModel) missing.push('模型名');
-      if (!llmKey && !configStore.readPublicView().llm?.hasKey) missing.push('密钥');
+      if (!llmKey && !existing?.llm?.hasKey) missing.push('密钥');
       if (missing.length) { sendJson(res, 400, { error: '对话模型必填:' + missing.join('、') }); return; }
 
-      const cfg: configStore.ModelConfig = { llm: { baseUrl: llmBase, apiKey: llmKey, model: llmModel } };
       const wBase = s(body.writeBaseUrl), wKey = s(body.writeApiKey), wModel = s(body.writeModel);
-      if (wBase || wKey || wModel) {
-        cfg.write = { baseUrl: wBase, apiKey: wKey, model: wModel, tier: s(body.writeTier).toLowerCase() === 'local' ? 'local' : 'cloud' };
-      }
       const eBase = s(body.embedBaseUrl), eKey = s(body.embedApiKey), eModel = s(body.embedModel);
-      if (eBase || eKey || eModel) {
-        cfg.embed = { baseUrl: eBase, apiKey: eKey, model: eModel };
-      }
-
+      let savedId: string;
       try {
-        configStore.saveConfig(cfg); // 加密落盘(空 key 组会沿用旧 key)
+        savedId = configStore.upsertProfile({
+          id, name: s(body.name),
+          llm: { baseUrl: llmBase, apiKey: llmKey, model: llmModel },
+          write: (wBase || wKey || wModel) ? { baseUrl: wBase, apiKey: wKey, model: wModel, tier: s(body.writeTier).toLowerCase() === 'local' ? 'local' : 'cloud' } : null,
+          embed: (eBase || eKey || eModel) ? { baseUrl: eBase, apiKey: eKey, model: eModel } : null,
+        });
       } catch (e) {
         sendJson(res, 500, { error: e instanceof Error ? e.message : String(e) });
         return;
       }
-      sendJson(res, 200, { ok: true, relaunching: true });
-      // 响应先发出去(让渲染层收到"正在重启"提示),再延时重启进程让新 key 生效。
-      setTimeout(() => configStore.applyAndRelaunch(), 500);
+      const activeId = configStore.readPublicView().activeId;
+      if (activeId === savedId) rebuildCore(); // 改的正是当前生效档 → 热重建让新 key/模型即刻生效
+      sendJson(res, 200, { ok: true, id: savedId, activeId });
+      return;
+    }
+
+    // 切 active 档:body {id} → setActive → 热重建 core（底部下拉切模型走这，不重启不闪）。
+    if (req.method === 'POST' && url.pathname === '/api/model-config/active') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id || !configStore.setActive(id)) { sendJson(res, 404, { error: '没有这个模型档' }); return; }
+      rebuildCore();
+      sendJson(res, 200, { ok: true, activeId: id });
+      return;
+    }
+
+    // 删一个档:body {id} → deleteProfile（若删的是 active，activeId 落到剩下第一个或 null）→ 热重建。
+    if (req.method === 'POST' && url.pathname === '/api/model-config/delete') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要删除的模型档 id' }); return; }
+      const activeId = configStore.deleteProfile(id);
+      rebuildCore(); // active 可能已变(或清空)→ 重建让 core 对齐当前 active（没有档则回落未配态）
+      sendJson(res, 200, { ok: true, activeId });
       return;
     }
 
@@ -682,7 +720,8 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`  聊天历史 → ${SESSIONS_DIR}（跟随库路径）`);
   console.log(`  当前对话 → ${currentConvId}`);
   console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
-  console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET/POST /api/model-config · POST /api/gen-env · GET /api/chat-history · GET /api/bg-status');
+  console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET /api/chat-history · GET /api/bg-status');
+  console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
   console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
   console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
   console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');

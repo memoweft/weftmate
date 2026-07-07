@@ -12,10 +12,15 @@
  *      别让后台整理计时器/库连接悬着。异步收尾用 preventDefault 兜住,清完再放行。
  *   ④ 单实例:抢不到锁的第二个实例直接退;已在跑的实例收到 second-instance 事件时把窗口唤到前台。
  */
-import { app, BrowserWindow, Tray, Menu, nativeImage } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } from 'electron';
 import { join } from 'node:path';
 
-const PORT = 7788;
+// 端口:默认 7788;尊重 PORT 环境变量(允许多实例/开发时并存,避开被占端口)。
+const PORT = Number(process.env.PORT) || 7788;
+
+// 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面伴侣产品不该露原生菜单,不像成品。
+//   放模块顶层即可(whenReady 前设置也生效);置 null = 整条菜单不显示。
+Menu.setApplicationMenu(null);
 
 // 托盘图标:内嵌 data URL(32x32 金色圆),免打包路径/asarUnpack 麻烦。生成脚本见 scratchpad/gen-tray-icon.mjs。
 const TRAY_ICON =
@@ -77,8 +82,24 @@ async function bootstrap() {
   // server.listen 异步,粗糙等一下 ready(够用;后续可换成等 server 事件)。
   await new Promise((r) => setTimeout(r, 800));
 
-  win = new BrowserWindow({ width: 1040, height: 740, title: 'WeftMate', backgroundColor: '#191a1e' });
+  win = new BrowserWindow({
+    width: 1040, height: 740, minWidth: 760, minHeight: 520,
+    title: 'WeftMate', backgroundColor: '#191a1e',
+    // 无原生标题栏:前端自绘一条与 App 风格协调的标题栏(可拖拽 + 自定义 min/max/close,随主题上色)。
+    frame: false,
+    webPreferences: { preload: join(import.meta.dirname, 'preload.cjs'), contextIsolation: true },
+  });
   win.webContents.on('did-fail-load', (_e, code, desc) => console.error('[weftmate] ✗ 前端加载失败', code, desc));
+
+  // 自绘标题栏的窗口控制(前端经 preload 暴露的 window.wmWindow.* 发来 IPC):
+  ipcMain.on('wm:minimize', () => win?.minimize());
+  ipcMain.on('wm:toggle-maximize', () => { if (!win) return; win.isMaximized() ? win.unmaximize() : win.maximize(); });
+  ipcMain.on('wm:close', () => win?.close()); // 复用下面 'close' 处理:非退出=收托盘(与 X 一致)
+  // 最大化状态变化 → 通知前端切换"最大化/还原"图标。
+  win.on('maximize', () => win.webContents.send('wm:maximized', true));
+  win.on('unmaximize', () => win.webContents.send('wm:maximized', false));
+  // 页面加载完主动推一次当前最大化态——防"启动即最大化"时前端图标停在"最大化"没切成"还原"。
+  win.webContents.on('did-finish-load', () => { try { win.webContents.send('wm:maximized', win.isMaximized()); } catch { /* 窗口已关忽略 */ } });
 
   // 关窗不退:X = 收进托盘。只有走"退出"(isQuitting=true)才让窗口真关。
   win.on('close', (e) => {
