@@ -2,13 +2,17 @@
 
 > 唯一的"现在做什么"看板。产品定义看 `docs/PRODUCT.md`(活文档·中途可调),历史看 git 提交。
 
-## 当前:阶段 2「懂你 & 帮你」开工(阶段 1 立身之本四块已基本齐)
+## 当前:阶段 2「懂你 & 帮你」(阶段 1 立身之本四块已齐)
 
-阶段 2 分五块、分开推、作者定入口。**先启「感知→画像」**。其余四块(agent 干活信任基建 / MCP 一键装 / 上下文附件 / 历史接力)排后。
+阶段 2 分五块、分开推、作者定入口。**「感知→画像」已做完**。下一块=作者说的「**换窗口给提示词**」——**场景没定清**(见文末待办),下个会话先问清再动手。其余块:agent 干活 / MCP 一键装 / 上下文附件 / 历史接力。
 
-### 感知→画像 ✅ 已做(commit 18a7153·作者拍板)
-- 依赖 `get-windows`(N-API 预编译·**实测 Electron 免 electron-rebuild**;破"零原生模块"作者拍板)。`src/collector.ts`(main·powerMonitor 空闲跳过+get-windows 取窗+换窗才记 → POST /api/observe 审核层·observed 不上云)、`src/settings.ts`(非密明文设置·感知默认关 opt-in)、server `GET /api/settings`+`POST /api/settings/perception`、main 启停接线、设置弹窗「感知」开关 + 透明说明。**验:真机端到端(开→采集器→observed 证据)+ 前端开关读写翻转。** observed 证据进画像「感知来的」组。
-- 剩余四块(未启):**agent 干活信任基建**(计划→确认→执行·沙箱·分级审批·回滚) / **MCP 一键装**(当客户端接 Claude CLI 等·工具定义延迟加载=生死线) / **上下文附件**(拖文件图片+工作区) / **历史接力**(全文搜索/重命名/跨设备)。作者定下一块入口。
+### ✅ 感知→画像 + 一串 dogfood 修(commit 18a7153/afbbda3/1e99e3f/2a58260/7a26dc8/bb1cf80)
+- **感知采集**:依赖 `get-windows`(N-API 预编译·**实测 Electron 免 electron-rebuild**;破"零原生模块"·作者拍板)。`src/collector.ts`(main·powerMonitor 空闲跳过+get-windows 取窗+换窗才记 → POST /api/observe 审核层)、`src/settings.ts`(非密明文设置)。
+- **感知设置(多源·作者反馈丰富)**:`perception.sources.desktop{enabled,capture}`(架构留位手机/穿戴)+ 全局 `cloudAllowed`。**采集内容** app_title/app_only;**上云红线口子**:sanitize 剥授权(插件不能自授权),仅用户开 cloudAllowed 时 server 给 observed 显式加 allowCloudRead(默认关=不上云)。设置弹窗「感知」节:桌面源开关+采集内容+上云开关(默认只留本机·警示·允许要二次确认)+后续来源占位。
+- **语言设置**:memoweft 0.4.0 缺省 en → 认知出英文(dogfood 逮到)。`settings.language` auto/zh/en(auto 跟 app.getLocale);main 建 core 前设 MEMOWEFT_LANG;server `POST /api/settings/language` 运行期改 `config.language`(不重启;consolidate 调用时读共享单例)。设置「外观」加语言选择。
+- **星瑶反编造(红线)**:dogfood 发现星瑶脑补"我记得你提过X"(认知=0·纯编)。`experiences/xingyao.ts` 记忆唤起段加硬:只复述真召回的记忆·没召回绝不说"我记得"/绝不凭空说未说过的。**注:prompt 强缓解非 100%;MemoWeft 只存有据记忆的结构保证未破(是人设层嘴快)。**
+- **z-index 修**:二次确认框 #memConfirm 50→70(原被设置弹窗 55 盖住)。
+- **验**:真机端到端(感知开→observed 证据·cloud 默认 false·开全局→true·仅App 只 App 名)+ 前端各面板 preview 读写翻转 + 语法门/复查 Agent。observed 证据进画像「感知来的」组。真"感知来的"认知需真模型 updateProfile 消化。
 
 ## 阶段 1 · 立身之本 ✅ 已基本齐(S0 / S1 已通)
 
@@ -37,9 +41,14 @@
 
 `experiences/`(星瑶/plain 人格 + 注册表) · `scheduler.ts`(后台整理) · `chatHistory.ts` · `confBand.ts`(把握度分档) · `server.ts`(loopback + core + chat 编排,切人格清双缓存那段必须原样保留) · `web/index.html`(前端 · **待重做**)。
 
+## ⏸ 下一块待澄清(下个会话先问,别按旧理解做)
+
+作者说下一块=「**换窗口给提示词**」,但澄清"**我的意思是你(AI/WeftMate)换窗口**"(不是用户换窗)——场景没定清,我上一轮误按"用户换窗→主动关怀"想过、被否。下个会话【先问清是哪个场景】再动手,候选:① **agent 干活时切窗口**(WeftMate 操作电脑执行任务、切到别的窗口/App 时给提示——属 agent 干活块) ② **桌面形象跨窗口陪伴**(形象浮屏、用户切窗时形象跟过去给提示) ③ 切对话/面板时给提示词 ④ 别的。守红线:主动打断只报 P0/P1·别唠叨;窗口信息进云端模型碰"不上云"(除非本地模型/用户已开允许上云)。
+
 ## 待作者手动
 
 - **建 GitHub repo `weftmate`**(本机没装 gh):建好后配 remote 推送(本地已 `git init` + 提交若干)。命名口径见 MemoWeft 的记忆 [[memoweft-naming-positioning]]。
+- **dogfood 实例**:`scratchpad/dogfood-ud5`(隔离 userData·含作者真模型配置)可能还在跑(7899)/或已关;新会话要 dogfood 自己重起。scratchpad 里 static-serve.mjs 是 preview 用的 mock。
 
 ## 参照
 
