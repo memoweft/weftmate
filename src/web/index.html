@@ -517,6 +517,19 @@
 
   .mem-empty { color: var(--muted); text-align: center; font-size: var(--fs-sm); padding: 36px 0; }
 
+  /* 画像分组（按来源）：组标题 + 条数 */
+  .mem-group { margin-bottom: 22px; }
+  .mem-group:last-child { margin-bottom: 0; }
+  .mem-group-head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 11px; }
+  .mem-group-title { font-size: var(--fs-sm); font-weight: 700; color: var(--text); }
+  .mem-group-count { font-size: var(--fs-xs); color: var(--muted); }
+  .mem-group-hint { color: var(--muted); font-size: var(--fs-xs); padding: 8px 2px; line-height: 1.55; }
+  /* 「你改过/删过的」折叠组：整组 details，默认收起 */
+  details.mem-group-fold > summary { cursor: pointer; list-style: none; display: flex; align-items: baseline; gap: 8px; margin-bottom: 11px; }
+  details.mem-group-fold > summary::-webkit-details-marker { display: none; }
+  details.mem-group-fold > summary::before { content: "▸ "; color: var(--muted); }
+  details.mem-group-fold[open] > summary::before { content: "▾ "; color: var(--muted); }
+
   /* 记忆卡片（认知 / 证据通用） */
   .mem-card {
     background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius);
@@ -1038,11 +1051,6 @@
       <button class="mem-tab" id="tabPlugins" data-tab="plugins">插件</button>
       <button class="mem-tab" id="tabData" data-tab="data">数据 · 备份</button>
     </div>
-
-    <!-- 只在"理解" tab 显示：是否含已失效 -->
-    <label class="mem-filter" id="cogFilter">
-      <input type="checkbox" id="showDead" /> 也显示已经"不再有效"的
-    </label>
 
     <div id="memList"><div class="mem-empty">加载中…</div></div>
 
@@ -1873,7 +1881,6 @@
 
   const MEM = {
     tab: 'cog',        // 'cog' | 'ev' | 'graph' | 'data'
-    showDead: false,   // 理解 tab 是否显示已失效
     cog: [],           // 认知列表缓存
     ev: [],            // 证据列表缓存
     loaded: false,
@@ -1964,8 +1971,6 @@
     $('tabGraph').classList.toggle('on', MEM.tab === 'graph');
     $('tabPlugins').classList.toggle('on', MEM.tab === 'plugins');
     $('tabData').classList.toggle('on', MEM.tab === 'data');
-    // 过滤器只在理解 tab 显示
-    $('cogFilter').style.display = MEM.tab === 'cog' ? '' : 'none';
     // 图谱 tab：显示图谱面板、藏其余；其余 tab 藏图谱面板。
     const isGraph = MEM.tab === 'graph';
     const isPlugins = MEM.tab === 'plugins';
@@ -2021,21 +2026,97 @@
     }
   }
 
-  // ── 理解（认知）列表 ──
+  // ── 理解（认知）列表 · 按来源分组的画像视图 ──
+  // 一条理解归哪组：
+  //   1. 用户标失效/收起过的（invalidAt 或 archivedAt）→「你改过/删过的」（优先级最高，先摘出去）。
+  //   2. 其余活跃理解：join 它的 sources → 取证据 sourceKind——只要挂着任一条 observed 的线索
+  //      → 「从感知观察来的」；否则（spoken/inferred/无溯源）→「从对话里聊出来的」。
+  // 每条仍用 memCognitionCard(c) 渲染（整卡复用，未重写）。
   function memRenderCognitions() {
     const list = $('memList');
     list.textContent = '';
-    const rows = MEM.cog.filter((c) => MEM.showDead || (!c.invalidAt && !c.archivedAt));
-    if (!rows.length) {
+
+    const fromChat = [];   // 从对话里聊出来的
+    const fromSense = [];  // 从感知观察来的
+    const edited = [];     // 你改过/删过的
+    for (const c of MEM.cog) {
+      if (c.invalidAt || c.archivedAt) { edited.push(c); continue; }
+      const sources = Array.isArray(c.sources) ? c.sources : [];
+      const hasObserved = sources.some((s) => {
+        const e = memEvById(s.evidenceId);
+        return e && e.sourceKind === 'observed';
+      });
+      (hasObserved ? fromSense : fromChat).push(c);
+    }
+
+    // 三组全空 = 全新用户：显原空提示，不铺空组。
+    if (!fromChat.length && !fromSense.length && !edited.length) {
       const d = document.createElement('div');
       d.className = 'mem-empty';
-      d.textContent = MEM.cog.length
-        ? '当前没有"有效"的理解（勾上上面可看已失效的）。'
-        : '它还没形成对你的理解——多聊几句、等它在后台整理一下就有了。';
+      d.textContent = '它还没形成对你的理解——多聊几句、等它在后台整理一下就有了。';
       list.appendChild(d);
       return;
     }
-    for (const c of rows) list.appendChild(memCognitionCard(c));
+
+    // 小节：组标题 + 条数 + 组内卡片（复用 memCognitionCard）。
+    function section(title, cards) {
+      const box = document.createElement('div');
+      box.className = 'mem-group';
+      const head = document.createElement('div');
+      head.className = 'mem-group-head';
+      const t = document.createElement('span');
+      t.className = 'mem-group-title';
+      t.textContent = title;
+      head.appendChild(t);
+      const n = document.createElement('span');
+      n.className = 'mem-group-count';
+      n.textContent = cards.length + ' 条';
+      head.appendChild(n);
+      box.appendChild(head);
+      for (const c of cards) box.appendChild(memCognitionCard(c));
+      return box;
+    }
+
+    // 1) 从对话里聊出来的（主力，放最上）。
+    list.appendChild(section('从对话里聊出来的', fromChat));
+
+    // 2) 从感知观察来的（感知功能近期才上线，现在多半空——空时给一行淡提示，不报错）。
+    if (fromSense.length) {
+      list.appendChild(section('从感知观察来的', fromSense));
+    } else {
+      const box = document.createElement('div');
+      box.className = 'mem-group';
+      const head = document.createElement('div');
+      head.className = 'mem-group-head';
+      const t = document.createElement('span');
+      t.className = 'mem-group-title';
+      t.textContent = '从感知观察来的';
+      head.appendChild(t);
+      box.appendChild(head);
+      const hint = document.createElement('div');
+      hint.className = 'mem-group-hint';
+      hint.textContent = '感知功能近期上线，目前还没有从感知来的理解。';
+      box.appendChild(hint);
+      list.appendChild(box);
+    }
+
+    // 3) 你改过/删过的（信任视图，放最下，可折叠、默认收起；空则整组不显）。
+    if (edited.length) {
+      const det = document.createElement('details');
+      det.className = 'mem-group mem-group-fold';
+      const sum = document.createElement('summary');
+      const t = document.createElement('span');
+      t.className = 'mem-group-title';
+      t.textContent = '你改过 / 删过的';
+      sum.appendChild(t);
+      const n = document.createElement('span');
+      n.className = 'mem-group-count';
+      n.textContent = edited.length + ' 条';
+      sum.appendChild(n);
+      det.appendChild(sum);
+      for (const c of edited) det.appendChild(memCognitionCard(c));
+      list.appendChild(det);
+    }
   }
 
   function memCognitionCard(c) {
@@ -2284,7 +2365,6 @@
   $('tabGraph').addEventListener('click', () => { MEM.tab = 'graph'; memRender(); });
   $('tabPlugins').addEventListener('click', () => { MEM.tab = 'plugins'; memRender(); });
   $('tabData').addEventListener('click', () => { MEM.tab = 'data'; importReset(); memRender(); });
-  $('showDead').addEventListener('change', function () { MEM.showDead = this.checked; memRender(); });
 
   // ══════════════════ 记忆图谱（步5-G2·手搓 canvas 力导向图，零依赖） ══════════════════
   // 数据来源：GET /api/memory-graph（走 core.graph.buildMemoryGraph 产 { nodes, edges, stats }）。
