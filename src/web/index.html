@@ -1155,6 +1155,7 @@
       <div class="set-nav-title">设置</div>
       <button class="set-nav-btn on" data-sec="models">模型</button>
       <button class="set-nav-btn" data-sec="appearance">外观</button>
+      <button class="set-nav-btn" data-sec="perception">感知</button>
       <button class="set-nav-btn" data-sec="about">关于</button>
     </div>
     <div class="set-main">
@@ -1226,6 +1227,17 @@
           <button class="set-theme-opt" id="themeDark" data-theme="dark">🌙 暗色</button>
           <button class="set-theme-opt" id="themeLight" data-theme="light">☀️ 亮色</button>
         </div>
+      </section>
+
+      <!-- 感知节（阶段2）：opt-in 开关。开启后后端起采集器采「活动窗口 + 活动节奏」→ observed 证据（强制不上云）→ 画像「感知来的」组。 -->
+      <section class="set-sec" data-sec="perception">
+        <h2>感知</h2>
+        <p class="set-lead">开启后，它会留意你此刻在用的窗口和活动节奏，用来越用越懂你、把这些织进「对你的了解」。这些只留在你本机、默认不上云，随时可关。</p>
+        <div class="set-theme-row">
+          <button class="set-theme-opt" id="perceptOn" data-percept="on">开启</button>
+          <button class="set-theme-opt" id="perceptOff" data-percept="off">关闭</button>
+        </div>
+        <p class="set-lead" id="perceptStatus" style="margin-top:2px;"></p>
       </section>
 
       <!-- 关于节 -->
@@ -3288,10 +3300,52 @@
     document.querySelectorAll('#settings .set-nav-btn').forEach((b) => b.classList.toggle('on', b.getAttribute('data-sec') === sec));
     document.querySelectorAll('#settings .set-sec').forEach((s) => s.classList.toggle('on', s.getAttribute('data-sec') === sec));
     if (sec === 'models') loadProfiles();
+    // 感知节：切到时读一次当前开关态（懒加载，不动上面 models/appearance/about 的处理）
+    if (sec === 'perception') loadPerceptionSetting();
   }
   document.querySelectorAll('#settings .set-nav-btn').forEach((b) => {
     b.addEventListener('click', () => setSelectSection(b.getAttribute('data-sec')));
   });
+
+  // ── 感知开关（阶段2）：GET /api/settings 读态、POST /api/settings/perception 写态。用户/后端内容一律 textContent，fetch 失败兜错不崩。──
+  function syncPerceptionButtons(enabled, running) {
+    const on = $('perceptOn'), off = $('perceptOff'), st = $('perceptStatus');
+    if (!on || !off) return;
+    on.classList.toggle('on', enabled === true);
+    off.classList.toggle('on', enabled !== true);
+    if (st) {
+      if (enabled === true) st.textContent = running === true ? '当前：已开启，正在留意你的活动。' : '当前：已开启。';
+      else st.textContent = '当前：已关闭。';
+    }
+  }
+  async function loadPerceptionSetting() {
+    const st = $('perceptStatus');
+    if (st) st.textContent = '读取中…';
+    try {
+      const d = await fetch('/api/settings').then((x) => x.json());
+      const p = d && d.perception ? d.perception : {};
+      syncPerceptionButtons(p.enabled === true, p.running === true);
+    } catch (e) {
+      if (st) st.textContent = '读取感知设置失败，稍后再试。';
+    }
+  }
+  async function setPerception(enabled) {
+    try {
+      const res = await fetch('/api/settings/perception', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: enabled }),
+      });
+      const d = await res.json();
+      if (!res.ok || d.error) { memToast('感知设置没保存：' + (d && d.error ? d.error : '稍后再试'), 'danger'); await loadPerceptionSetting(); return; }
+      syncPerceptionButtons(d.enabled === true, d.running === true);
+      memToast(d.enabled === true ? '感知已开，它会开始留意你的活动' : '感知已关', '');
+    } catch (e) {
+      memToast('感知设置没保存：' + String(e), 'danger');
+      await loadPerceptionSetting();
+    }
+  }
+  { const _on = $('perceptOn'), _off = $('perceptOff');
+    if (_on) _on.addEventListener('click', () => setPerception(true));
+    if (_off) _off.addEventListener('click', () => setPerception(false)); }
   $('setClose').addEventListener('click', closeSettings);
   // 点遮罩（面板外）关闭
   $('settings').addEventListener('click', (e) => { if (e.target === $('settings')) closeSettings(); });

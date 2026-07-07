@@ -38,6 +38,7 @@ if (!app.requestSingleInstanceLock()) {
 let win = null;
 let tray = null;
 let serverMod = null; // server.ts 模块(拿它的 shutdown())
+let collectorMod = null; // collector.ts 模块(感知采集器;opt-in 时起,退出时停)
 let isQuitting = false; // 是否在真退出(区分"关窗收托盘" vs "退出应用")
 let cleanupDone = false; // shutdown() 是否已跑完(before-quit 二次放行)
 
@@ -117,6 +118,21 @@ async function bootstrap() {
   }
 
   setupTray();
+
+  // 感知采集器(阶段2·opt-in):只有用户在设置里开了才起。默认关(感知敏感)。采集走 /api/observe 审核层、observed 不上云。
+  try {
+    const { getPerceptionEnabled } = await import('./settings.ts');
+    collectorMod = await import('./collector.ts');
+    if (getPerceptionEnabled()) {
+      collectorMod.startCollector(PORT);
+      console.log('[weftmate] ✓ 感知采集已开启(opt-in;活动窗口+活动节奏 → observed 不上云)');
+    } else {
+      console.log('[weftmate] 感知采集默认关(opt-in;设置里可开)');
+    }
+  } catch (e) {
+    console.error('[weftmate] 感知采集器加载失败(忽略,不挡主流程):', e && e.message ? e.message : e);
+  }
+
   console.log('[weftmate] ═══ 桌面常驻就位:关窗收托盘、托盘"退出"才真退 ═══');
 }
 
@@ -142,8 +158,9 @@ app.on('before-quit', (e) => {
   e.preventDefault();
   (async () => {
     try {
+      collectorMod?.stopCollector?.(); // 停感知采集计时器
       await serverMod?.shutdown?.();
-      console.log('[weftmate] ✓ 退出收尾:scheduler.dispose + core.close 完成');
+      console.log('[weftmate] ✓ 退出收尾:感知停采 + scheduler.dispose + core.close 完成');
     } catch (err) {
       console.error('[weftmate] 退出收尾出错(仍继续退出):', err && err.message ? err.message : err);
     }

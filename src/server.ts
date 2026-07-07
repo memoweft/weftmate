@@ -39,6 +39,8 @@ import { credBand } from './confBand.ts';
 import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_IDS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
 import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
+import * as collector from './collector.ts';
+import { getPerceptionEnabled, setPerceptionEnabled } from './settings.ts';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
 //   loadEnvFile 幂等；没有 .env 抛错忽略。放在最顶部——否则 DB_PATH（下面就求值）读不到 .env 里的 MEMOWEFT_HOST_DB。
@@ -519,6 +521,22 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // ── 设置 · 感知开关（阶段2·感知→画像）──
+    // 感知采集 opt-in（默认关，见 settings.ts）。GET 读当前开关；POST 切换 → 写设置 + 启/停采集器。
+    //   采集器采到的样本仍走 /api/observe 审核层（sanitizeObservation 强制 observed 不上云，隐私红线）。
+    if (req.method === 'GET' && url.pathname === '/api/settings') {
+      sendJson(res, 200, { perception: { enabled: getPerceptionEnabled(), running: collector.isCollectorRunning() } });
+      return;
+    }
+    if (req.method === 'POST' && url.pathname === '/api/settings/perception') {
+      const body = await readJson(req);
+      const enabled = body.enabled === true; // 只认显式 true 为开
+      setPerceptionEnabled(enabled);
+      if (enabled) collector.startCollector(PORT); else collector.stopCollector();
+      sendJson(res, 200, { ok: true, enabled, running: collector.isCollectorRunning() });
+      return;
+    }
+
     // ── 记忆管理页（批次5 步3） ──
     // 全走 core.memory.*（步0 已补齐的受控 API），绝不直接摸 store（Host 边界红线）。
     // 只做【列取 / 标失效 / 改授权 / 删除】，不做内容编辑（用户拍板：编辑记忆文案留 testbench）。
@@ -722,6 +740,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
   console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET /api/chat-history · GET /api/bg-status');
   console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
+  console.log('  设置·感知(opt-in) → GET /api/settings · POST /api/settings/perception · POST /api/observe(采集摄入·不上云)');
   console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
   console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
   console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');

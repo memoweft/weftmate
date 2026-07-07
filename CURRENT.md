@@ -2,7 +2,16 @@
 
 > 唯一的"现在做什么"看板。产品定义看 `docs/PRODUCT.md`(活文档·中途可调),历史看 git 提交。
 
-## 当前:阶段 1 开工(S0 / S1 已通)
+## 当前:阶段 2「懂你 & 帮你」开工(阶段 1 立身之本四块已基本齐)
+
+阶段 2 分五块、分开推、作者定入口。**先启「感知→画像」**。其余四块(agent 干活信任基建 / MCP 一键装 / 上下文附件 / 历史接力)排后。
+
+### 感知→画像(← 当前 · 作者拍板)
+- **通路已就绪一半**:`/api/observe` 收 observed 证据、强制不上云、进画像「感知来的」组(④-1 建)。缺**采集器**。
+- **作者两项拍板(2026-07-07)**:① **活动窗口标题也采**——接受为此引入原生依赖(如 `active-win`/`get-windows`,子进程 helper 型、不一定要 electron-rebuild,但**破"零原生模块"、打包要 asarUnpack helper**);② **感知默认关·opt-in**(设置里手动开;observed 已强制不上云)。
+- **待建**:采集器(main 进程,opt-in 时按节奏采 活动窗口 + powerMonitor 空闲/活跃 → POST /api/observe)+ 设置里感知开关(持久化)+ 采集时机(空闲不采、防噪)。窗口标题含敏感信息 → 守不上云 + 透明(证据可见/可删)。
+
+## 阶段 1 · 立身之本 ✅ 已基本齐(S0 / S1 已通)
 
 - **S0 · sqlite** ✅ node:sqlite 在 Electron 43 / Node 24.17 可用 —— **走 node:sqlite,零原生模块**(未装 better-sqlite3、能跑就是它)。
 - **S1 · Electron 骨架** ✅ `src/main.mjs` 设 userData 库 + 默认星瑶 + 单实例锁 → `import './server.ts'`(起 127.0.0.1:7788 loopback + 建 core) → 开窗加载。现有 Host 能力已在桌面跑;**Electron main 直接跑 .ts、免编译链**。

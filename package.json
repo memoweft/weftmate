@@ -10,6 +10,7 @@
     "smoke": "electron ."
   },
   "dependencies": {
+    "get-windows": "^9.3.0",
     "memoweft": "^0.5.0"
   },
   "devDependencies": {
