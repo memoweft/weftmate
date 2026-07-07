@@ -1301,6 +1301,13 @@
   .ab-seg button.on { background:var(--accent); color:var(--on-accent); }
   .ab-note { color:var(--faint); font-size:var(--fs-xs); margin-top:6px; line-height:1.5; }
   .ab-close { margin-left:auto; }
+  .ab-attach { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .ab-attach:empty { display:none; }
+  .ab-chip { display:inline-flex; align-items:center; gap:6px; background:var(--panel-2); border:1px solid var(--line); border-radius:999px; padding:3px 6px 3px 10px; font-size:var(--fs-xs); color:var(--text); max-width:220px; }
+  .ab-chip span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .ab-chip-x { border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:11px; padding:0 2px; }
+  .ab-chip-x:hover { color:var(--danger); }
+  .at-attach { font-size:var(--fs-xs); color:var(--faint); padding:0 12px 8px; }
 
   .agent-task { border:1px solid var(--line); border-radius:12px; background:var(--panel); margin:10px 0; overflow:hidden; }
   .at-head { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line-soft); flex-wrap:wrap; }
@@ -1406,6 +1413,7 @@
         <span class="ab-title">🛠 干活模式</span>
         <button type="button" class="ab-btn" id="agWs">选工作区…</button>
         <span class="ab-ws" id="agWsPath">未选文件夹</span>
+        <button type="button" class="ab-btn" id="agAddFile">＋ 加文件</button>
         <div class="ab-seg" id="agAuto">
           <button type="button" data-a="suggest">只建议</button>
           <button type="button" data-a="ask" class="on">问一下</button>
@@ -1413,8 +1421,10 @@
         </div>
         <button type="button" class="ab-btn ab-close" id="agClose">收起</button>
       </div>
-      <div class="ab-note">选个文件夹当工作区，我只在里面动手；改文件能一键撤回，跑命令每次都会先问你。工作区的文件/命令输出会发给你配置的模型来干活。</div>
+      <div id="agAttach" class="ab-attach"></div>
+      <div class="ab-note">选个工作区文件夹让我在里面动手（改文件能撤回、跑命令先问你），或【加文件】把参考资料给我——我按需读、不入记忆。工作区/文件内容会发给你配置的模型来干活。</div>
     </div>
+    <input type="file" id="agFileInput" multiple style="display:none" />
     <div class="composer" id="composer">
       <!-- 输入框不放 placeholder（按规格）。Enter 发送 / Shift+Enter 换行 / 自适应高度：交互沿用现有 JS。 -->
       <textarea id="text" rows="1"></textarea>
@@ -1705,7 +1715,7 @@
     if (!message || sending) return;
     // 干活模式：输入的是"任务"，交给 agent 后端（不走聊天链路）。
     if (AG.mode) {
-      if (!AG.workspace) { memToast('先选个工作区文件夹', ''); return; }
+      if (!AG.workspace && !AG.attachments.length) { memToast('先选个工作区，或加个参考文件', ''); return; }
       el.value = ''; el.style.height = 'auto';
       startAgentTask(message);
       return;
@@ -3858,9 +3868,9 @@
       $('toolModelName').textContent = m;
     } catch (e) { /* 拿不到就保持占位 */ }
   }
-  // ＋文件：本阶段占位（点=toast「近期」，不做假功能）。
-  const soon = () => memToast('这个功能近期上线，先占个位～', '');
-  $('toolAttach').addEventListener('click', soon);
+  // ＋文件 = 给干活模式加参考文件（③·上下文附件）。agAttachClick 是下面的函数声明（已 hoist）。
+  $('toolAttach').addEventListener('click', agAttachClick);
+  $('toolAttach').title = '加文件（干活模式的参考资料）';
   // ⚡ 技能 = 打开 MCP 能力管理弹窗（②·帮你干活）。openMcp 是下面的函数声明（已 hoist）。
   $('toolSkill').addEventListener('click', openMcp);
   $('toolSkill').title = '能力 / MCP 工具（装外部能力包）';
@@ -3901,7 +3911,7 @@
   // ══════════════════ agent 干活（阶段2·帮你干活①·方案B）══════════════════
   // 前端只做：开合干活模式、选工作区、选自主度、把任务交给 /api/agent/*、轮询渲染步骤卡、批准/撤回/叫停。
   // 真正的循环在后端 agent.ts。步骤卡全用 createElement/textContent 构建（agent 产出/参数当不可信，防注入）。
-  const AG = { mode: false, workspace: null, autonomy: 'ask', taskId: null, poll: null };
+  const AG = { mode: false, workspace: null, autonomy: 'ask', taskId: null, poll: null, attachments: [] };
 
   function toggleAgentMode() {
     AG.mode = !AG.mode;
@@ -3928,11 +3938,12 @@
     try {
       started = await fetch('/api/agent/start', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task, workspace: AG.workspace, autonomy: AG.autonomy }),
+        body: JSON.stringify({ task, workspace: AG.workspace, autonomy: AG.autonomy, attachments: AG.attachments }),
       }).then((x) => x.json());
     } catch (e) { memToast('没连上，任务没发出去', 'danger'); return; }
     if (!started || started.error) { memToast(started && started.error ? started.error : '开工失败', 'danger'); return; }
     AG.taskId = started.id;
+    AG.attachments = []; renderAgentChips(); // 附件已交给这个任务，清空 chips（任务卡里会显示参考了哪些）
     if (AG.poll) clearInterval(AG.poll);
     AG.poll = setInterval(pollAgent, 1000);
     pollAgent();
@@ -3987,6 +3998,11 @@
     const t = document.createElement('div'); t.className = 'at-task'; t.textContent = v.task; head.appendChild(t);
     const st = document.createElement('span'); st.className = 'at-status ' + v.status; st.textContent = AG_STATUS_CN[v.status] || v.status; head.appendChild(st);
     box.appendChild(head);
+    if (v.attachments && v.attachments.length) {
+      const at = document.createElement('div'); at.className = 'at-attach';
+      at.textContent = '📎 参考：' + v.attachments.join('、');
+      box.appendChild(at);
+    }
     // 步骤卡
     for (const s of (v.steps || [])) box.appendChild(renderStep(s));
     // 脚：总结/提示 + 动作（叫停/撤回）
@@ -4032,10 +4048,43 @@
     try { const s = JSON.stringify(args); return s === '{}' ? '' : s; } catch (e) { return ''; }
   }
 
+  // ── 附件（③·上下文附件）：浏览器读文本文件，交给干活模式的 agent 当参考 ──
+  function agAttachClick() {
+    if (!AG.mode) { memToast('附件用在干活模式，先点 🔒沙箱 打开', ''); return; }
+    $('agFileInput').click();
+  }
+  async function agAddFiles(fileList) {
+    for (const f of Array.from(fileList || [])) {
+      if (AG.attachments.length >= 20) { memToast('参考文件最多 20 个', ''); break; }
+      if (f.size > 512 * 1024) { memToast('「' + f.name + '」太大（>512KB），跳过', ''); continue; }
+      try {
+        const text = await f.text();
+        if (text.indexOf('\u0000') >= 0) { memToast('「' + f.name + '」看着不是文本，跳过', ''); continue; }
+        AG.attachments.push({ name: f.name, content: text });
+      } catch (e) { memToast('读「' + f.name + '」失败', ''); }
+    }
+    renderAgentChips();
+  }
+  function renderAgentChips() {
+    const box = $('agAttach'); box.textContent = '';
+    AG.attachments.forEach((a, i) => {
+      const chip = document.createElement('span'); chip.className = 'ab-chip';
+      const n = document.createElement('span'); n.textContent = '📄 ' + a.name; chip.appendChild(n);
+      const x = document.createElement('button'); x.className = 'ab-chip-x'; x.textContent = '✕'; x.title = '移除';
+      x.onclick = () => { AG.attachments.splice(i, 1); renderAgentChips(); };
+      chip.appendChild(x); box.appendChild(chip);
+    });
+  }
+
   // 干活设置条接线。
   $('agWs').addEventListener('click', agPickWorkspace);
+  $('agAddFile').addEventListener('click', agAttachClick);
   $('agClose').addEventListener('click', closeAgentMode);
+  $('agFileInput').addEventListener('change', (e) => { agAddFiles(e.target.files); e.target.value = ''; });
   for (const b of $('agAuto').querySelectorAll('button')) b.addEventListener('click', () => agSetAuto(b.dataset.a));
+  // 拖文件到输入区 = 加参考文件（仅干活模式）。
+  $('composer').addEventListener('dragover', (e) => { if (AG.mode) e.preventDefault(); });
+  $('composer').addEventListener('drop', (e) => { if (!AG.mode) return; e.preventDefault(); if (e.dataTransfer && e.dataTransfer.files) agAddFiles(e.dataTransfer.files); });
 
   // ══════════════════ MCP 一键装（②·帮你干活）══════════════════
   // ⚡技能 打开这个弹窗：装/管理 MCP 服务（外部工具包）。装的工具进「干活模式」的 agent 循环。

@@ -788,6 +788,7 @@ const server = createServer(async (req, res) => {
           task: typeof body.task === 'string' ? body.task : '',
           workspace: typeof body.workspace === 'string' ? body.workspace : '',
           autonomy: (body.autonomy === 'ask' || body.autonomy === 'auto' ? body.autonomy : 'suggest'),
+          attachments: Array.isArray(body.attachments) ? body.attachments : [], // ③·上下文附件 {name,content}[]
         });
         sendJson(res, 200, { ok: true, id: started.id });
       } catch (e) {

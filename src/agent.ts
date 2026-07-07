@@ -36,7 +36,9 @@ const MAX_STEPS = 20;              // 单个任务最多几步（挡模型跑飞
 const MAX_PARSE_FAILS = 3;         // 连续几次解析不出 JSON 就放弃（挡模型一直不按格式回）
 const CMD_TIMEOUT_MS = 60_000;     // 单条命令最长跑多久
 const OUT_CHARS = 4_000;           // 工具结果喂回模型时的截断上限（防撑爆上下文）
-const READ_CHARS = 8_000;          // read_file 读回的字符上限
+const READ_CHARS = 8_000;          // read_file / read_attachment 读回的字符上限
+const MAX_ATTACHMENTS = 20;        // 单任务最多附几个参考文件
+const MAX_ATTACH_CHARS = 200_000;  // 单个附件内容上限（前端也会截；后端兜底防超大）
 
 // ── 对外类型 ──
 export type Autonomy = 'suggest' | 'ask' | 'auto';
@@ -68,6 +70,7 @@ export interface AgentTaskView {
   note?: string;             // 额外提示（到步数上限 / 撤回不完全等）
   canUndo: boolean;          // 有备份可还原
   ranCommand: boolean;       // 跑过命令（撤回不完全的提示）
+  attachments: string[];     // 附的参考文件名（③·给前端显示；不回传内容）
   createdAt: string;
 }
 
@@ -75,13 +78,14 @@ export interface AgentTaskView {
 interface Task {
   id: string;
   task: string;
-  workspace: string;         // 绝对路径（已校验是存在的目录）
+  workspace: string;         // 工作区绝对路径（已校验是存在的目录）；可为 '' = 这次没工作区、只读附件
   autonomy: Autonomy;
   status: TaskStatus;
   steps: AgentStep[];
   summary?: string;
   note?: string;
   createdAt: string;
+  attachments: { name: string; content: string }[]; // 用户附的参考文件（③·上下文附件）；agent 用 read_attachment 按需读
   // 内部：
   messages: ChatMessage[];               // agent 自己的对话历史（不进 memoweft）
   backups: Map<string, string | null>;   // 路径 → 改前内容（null=改前不存在）；撤回据此还原
@@ -121,6 +125,7 @@ function resolveTool(name: string): ToolDef | null {
 // ── 沙箱：把用户/模型给的路径锁死在工作区内 ──
 /** 解析并校验路径必须落在工作区内，否则抛错。绝对路径 / .. 逃逸一律拒。 */
 function safeResolve(workspace: string, p: unknown): string {
+  if (!workspace) throw new Error('这次没有工作区，用不了文件/命令工具（只能读附件）'); // 护栏：空工作区时 resolve 会落到 cwd，绝不允许
   const raw = String(p ?? '').trim();
   const abs = resolve(workspace, raw);          // 相对工作区解析；raw 若是绝对路径会覆盖 workspace（下面 relative 会揪出来）
   const rel = relative(workspace, abs);
@@ -186,6 +191,16 @@ const TOOLS: Record<string, ToolDef> = {
       if (!command) throw new Error('命令为空');
       task.ranCommand = true;                    // 标记：撤回不完全（命令副作用还原不了）
       return await runShell(command, task.workspace);
+    },
+  },
+  // 读用户附上的参考文件（③·上下文附件）：只读、按名字从 task.attachments 取（不碰文件系统、不受沙箱限制——用户已显式附上）。
+  read_attachment: {
+    mutating: false,
+    async run(args, task) {
+      const name = String(args.name ?? '').trim();
+      const att = task.attachments.find((a) => a.name === name);
+      if (!att) return `没有附件「${name}」。可用附件：${task.attachments.map((a) => a.name).join('、') || '（无）'}`;
+      return truncate(att.content, READ_CHARS);
     },
   },
 };
@@ -256,47 +271,74 @@ function parseAction(reply: string): Parsed | null {
   return null;
 }
 
-// ── 系统提示 ──
-function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: AgentMcpTool[]): string {
+// ── 系统提示（按"有无工作区/有无附件/有无 MCP"动态拼工具清单）──
+function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: AgentMcpTool[], attachments: Task['attachments']): string {
+  const hasWs = !!workspace;
   const mem = memoryNote ? `\n关于用户你已知道（供参考，别乱用）：\n${memoryNote}\n` : '';
+  // 工具清单：工作区工具仅在有工作区时给；read_attachment 仅在有附件时给。
+  const tools: string[] = [];
+  if (hasWs) {
+    tools.push('- list_dir(path)             列目录（path 省略=工作区根）');
+    tools.push('- read_file(path)            读文件');
+    tools.push('- write_file(path, content)  新建或覆盖文件');
+    tools.push('- run_command(command)       在工作区里跑一条命令（如 npm test）');
+  }
+  if (attachments.length) tools.push('- read_attachment(name)      读用户附上的参考文件');
   // 延迟加载（生死线）：外部工具只列 全名+签名+一句话，完整 schema 不进上下文；调用时 tool 用全名。
   const mcp = mcpTools.length
     ? `\n\n【外部工具·装的能力包】（调用时 tool 填下面的全名；非只读工具执行前会请用户确认）：\n` +
       mcpTools.map((t) => `- ${t.fqName}${t.signature}  ${t.description}`).join('\n')
     : '';
-  return `你是 WeftMate 里的干活助手，在用户指定的【工作区文件夹】里帮 ta 完成任务。
-工作区：${workspace}
-所有文件路径都相对工作区，且【不能超出工作区】（别用绝对路径、别用 .. 逃出去）。
+  // 参考文件清单（③·上下文附件）：只列名字+大小，让模型按需 read_attachment（不全量塞·检索由模型自己挑）。
+  const attList = attachments.length
+    ? `\n\n参考文件（用户附的·用 read_attachment 按名字读·别一次全读，按需读相关的）：\n` +
+      attachments.map((a) => `- ${a.name}（${a.content.length} 字）`).join('\n')
+    : '';
+  const envLine = hasWs
+    ? `工作区：${workspace}\n所有文件路径都相对工作区，且【不能超出工作区】（别用绝对路径、别用 .. 逃出去）。`
+    : `这次没有工作区：你只能读下面的参考文件来回答，不能读写工作区文件、不能跑命令。`;
+  const rules = hasWs
+    ? `- 一次只回一个 action，等我把结果给你，再决定下一步。
+- 改文件前先 read_file 看清楚，别凭空臆造内容。
+- 路径必须在工作区内。
+- 信息够了、任务完成了，就回 done，别画蛇添足。`
+    : `- 一次只回一个 action，等我把结果给你，再决定下一步。
+- 需要的信息在参考文件里就用 read_attachment 读；读够了就回 done 给出回答。
+- 别臆造参考文件里没有的内容。`;
+  return `你是 WeftMate 里的干活助手，在用户指定的环境里帮 ta 完成任务。
+${envLine}
 ${mem}
 你能用这些工具，每次回复【只做一件事】：
-- list_dir(path)             列目录（path 省略=工作区根）
-- read_file(path)            读文件
-- write_file(path, content)  新建或覆盖文件
-- run_command(command)       在工作区里跑一条命令（如 npm test）${mcp}
+${tools.join('\n')}${attList}${mcp}
 
 【回复格式】每次只回一个 JSON 对象，别加任何其它文字、别加 markdown 围栏：
 · 要执行一步：{"thought":"简短说明你要干嘛（用用户的语言）","action":{"tool":"工具名","args":{…}}}
-· 任务做完：{"thought":"…","done":{"summary":"给用户的简短总结（用用户的语言）"}}
+· 任务做完：{"thought":"…","done":{"summary":"给用户的简短总结/回答（用用户的语言）"}}
 
 规则：
-- 一次只回一个 action，等我把结果给你，再决定下一步。
-- 改文件前先 read_file 看清楚，别凭空臆造内容。
-- 路径必须在工作区内。
-- 信息够了、任务完成了，就回 done，别画蛇添足。`;
+${rules}`;
 }
 
 // ── 启动任务 ──
-export function startTask(input: { task: string; workspace: string; autonomy: Autonomy }): { id: string } {
+export function startTask(input: { task: string; workspace: string; autonomy: Autonomy; attachments?: Array<{ name: string; content: string }> }): { id: string } {
   const task = String(input.task ?? '').trim();
   const workspace = String(input.workspace ?? '').trim();
   if (!task) throw new Error('任务描述不能为空');
-  if (!workspace || !existsSync(workspace) || !statSync(workspace).isDirectory()) {
-    throw new Error('工作区文件夹不存在或不是目录');
+  // 附件清洗 + 兜底截断（前端也截；后端防超大/超多）。
+  const attachments = (Array.isArray(input.attachments) ? input.attachments : [])
+    .filter((a) => a && typeof a.name === 'string' && typeof a.content === 'string')
+    .slice(0, MAX_ATTACHMENTS)
+    .map((a) => ({ name: String(a.name).slice(0, 200), content: String(a.content).slice(0, MAX_ATTACH_CHARS) }));
+  // 工作区可选：给了就必须是存在的目录；没给则必须至少有一个附件（否则 agent 无事可做）。
+  if (workspace) {
+    if (!existsSync(workspace) || !statSync(workspace).isDirectory()) throw new Error('工作区文件夹不存在或不是目录');
+  } else if (!attachments.length) {
+    throw new Error('先选个工作区，或附一个参考文件');
   }
   const autonomy: Autonomy = input.autonomy === 'ask' || input.autonomy === 'auto' ? input.autonomy : 'suggest';
   const id = 'task-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
   const t: Task = {
-    id, task, workspace, autonomy,
+    id, task, workspace, autonomy, attachments,
     status: autonomy === 'suggest' ? 'planning' : 'running',
     steps: [], createdAt: new Date().toISOString(),
     messages: [], backups: new Map(), ranCommand: false, stopped: false,
@@ -313,7 +355,7 @@ async function plan(t: Task): Promise<void> {
     const client = mkClient();
     const memNote = deps.recall ? await safeRecall(t.task) : '';
     const mtools = deps.mcpTools ? deps.mcpTools() : [];
-    const sys = buildSystemPrompt(t.workspace, memNote, mtools) +
+    const sys = buildSystemPrompt(t.workspace, memNote, mtools, t.attachments) +
       `\n\n【本次只出计划】用户选了"只建议"，所以你【不要执行】，只回一个 JSON：
 {"summary":"整体思路（用用户的语言）","plan":[{"tool":"工具名","args":{…},"why":"这步为啥"}]}`;
     const reply = await client.chat([
@@ -349,7 +391,7 @@ async function drive(t: Task): Promise<void> {
     const memNote = deps.recall ? await safeRecall(t.task) : '';
     const mtools = deps.mcpTools ? deps.mcpTools() : [];
     t.messages = [
-      { role: 'system', content: buildSystemPrompt(t.workspace, memNote, mtools) },
+      { role: 'system', content: buildSystemPrompt(t.workspace, memNote, mtools, t.attachments) },
       { role: 'user', content: t.task },
     ];
     let parseFails = 0;
@@ -485,7 +527,8 @@ function toView(t: Task): AgentTaskView {
   return {
     id: t.id, task: t.task, workspace: t.workspace, autonomy: t.autonomy,
     status: t.status, steps: t.steps, summary: t.summary, note: t.note,
-    canUndo: t.backups.size > 0, ranCommand: t.ranCommand, createdAt: t.createdAt,
+    canUndo: t.backups.size > 0, ranCommand: t.ranCommand,
+    attachments: t.attachments.map((a) => a.name), createdAt: t.createdAt,
   };
 }
 
