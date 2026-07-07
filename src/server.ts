@@ -44,7 +44,7 @@ import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, 
 import * as agent from './agent.ts';
 import * as mcp from './mcp.ts';
 import * as mcpStore from './mcp-store.ts';
-import { dialog, BrowserWindow } from 'electron';
+import { dialog, BrowserWindow, app } from 'electron';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
 //   loadEnvFile 幂等；没有 .env 抛错忽略。放在最顶部——否则 DB_PATH（下面就求值）读不到 .env 里的 MEMOWEFT_HOST_DB。
@@ -224,8 +224,9 @@ function sanitizeObservation(raw: unknown): Observation | null {
 
 // MCP 预置清单（②「一键装」·点一下预填表单，用户仍需确认）。都经 npx 运行（首次会下载·需 Node+网络）。
 //   Windows spawn shell:false → npx 类必须走 command:'cmd' args:['/c','npx',...]（见 mcp.ts 说明）。
+const DEFAULT_FS_DIR = app.getPath('documents'); // 文件系统预置默认开放"文档"夹（真实存在·避免占位目录连不上；用户可编辑收窄）
 const MCP_CATALOG = [
-  { key: 'filesystem', name: '文件系统', desc: '读写你指定的文件夹（装完把 args 末尾改成要开放的目录）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-filesystem', 'D:\\改成你要开放的文件夹'] },
+  { key: 'filesystem', name: '文件系统', desc: '读写你指定的文件夹（默认你的"文档"夹，可在 args 末尾改）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-filesystem', DEFAULT_FS_DIR] },
   { key: 'memory', name: '知识记忆图', desc: '一个简单的知识图谱记忆库', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-memory'] },
   { key: 'sequential-thinking', name: '分步思考', desc: '帮模型把复杂问题拆成一步步想', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-sequential-thinking'] },
   { key: 'everything', name: '测试服务 everything', desc: 'MCP 官方测试服务，含各种示例工具（拿来试装最省事）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-everything'] },

@@ -33,6 +33,7 @@
 - **`server.ts` 端点**:`GET /api/mcp/{servers,catalog}` + `POST /api/mcp/server{,/toggle,/delete,/reconnect}`;启动 `void mcp.reconcile(已启用)`(后台连·不阻塞起服);shutdown 加 `mcp.shutdownAll`;预置清单 `MCP_CATALOG`(filesystem/memory/sequential-thinking/everything·Windows cmd/c npx 形态)。
 - **前端**:`⚡技能` 从占位改成 MCP 能力弹窗(第三方代码警示 + 已装服务卡[连接状态/工具数/错误/开关/编辑/删/出错才有重连] + 预置点填表单 + 自定义 command/args/env)。
 - **验**:① MCP 客户端冒烟 11 断言(真服务子进程·连接/命名空间/只读标记/延迟加载签名/调用/断开);② agent×MCP 组合冒烟 6 断言(只读工具 auto 直接跑·非只读 auto 也强制批准·系统提示只放名字签名不放完整 schema=守生死线);③ 前端 preview:零报错·弹窗/服务卡三态/预置预填/编辑回填/配色随主题。真模型 + 真 npx 服务端到端待作者亲验。
+- **dogfood 修(2026-07-08)**:① z-index——MCP 弹窗(80)盖住了确认框/toast → 确认框 70→90、toast 60→95(压过所有弹窗、仍低于标题栏 100);② 文件系统预置连不上——实测根因=占位目录 `D:\改成…` 不存在→服务启动即退(-32000);改成默认 `app.getPath('documents')`(真实存在·开箱即用),并**收子进程 stderr 把真实原因显给用户**(mcp.ts stderr 'ignore'→'pipe';错误变"…｜服务说：None of the specified directories are accessible")。真·filesystem 服务(经 npx)端到端验过:坏目录报可读错误、真目录 ready 14 工具、整条 cmd/c npx+SDK 链路在作者机器上通。
 - **未做(留后)**:HTTP/SSE 型 MCP(先只 stdio)· 工具多到名字都爆时的"查工具详情"元工具(现按名字+签名·够用)。
 
 ### ✅ 上下文附件(阶段2·帮你干活③·作者拍板方案A:接到干活模式)

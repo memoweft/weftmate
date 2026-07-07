@@ -59,14 +59,16 @@ export async function connectServer(server: McpServer): Promise<void> {
   await disconnectServer(server.id); // 先断旧的（重连场景）
   const conn: Conn = { server, tools: [], status: 'connecting' };
   conns.set(server.id, conn);
+  let stderrBuf = '';                              // 收子进程 stderr——连不上时把真实原因显给用户（别只剩 -32000）
+  const client = new Client({ name: 'weftmate', version: '0.1.0' }, { capabilities: {} });
   try {
     const transport = new StdioClientTransport({
       command: server.command,
       args: server.args || [],
       env: server.env,          // SDK 会自动叠 getDefaultEnvironment()（补 PATH 等）
-      stderr: 'ignore',
+      stderr: 'pipe',           // SDK 构造时即建 PassThrough，可立刻挂监听收 stderr
     });
-    const client = new Client({ name: 'weftmate', version: '0.1.0' }, { capabilities: {} });
+    transport.stderr?.on('data', (d: Buffer) => { if (stderrBuf.length < 2000) stderrBuf += d.toString('utf8'); });
     await withTimeout((async () => {
       await client.connect(transport);
       const listed = await client.listTools();
@@ -83,9 +85,14 @@ export async function connectServer(server: McpServer): Promise<void> {
     })(), CONNECT_TIMEOUT_MS);
     conn.status = 'ready';
   } catch (e) {
+    await new Promise((r) => setTimeout(r, 60)); // 等 stderr 排水（子进程退出的报错可能刚写完、还没派发到监听）
+    const base = e instanceof Error ? e.message : String(e);
+    const detail = stderrBuf.trim().split('\n').map((l) => l.trim()).filter(Boolean).slice(-3).join('  ');
     conn.status = 'error';
-    conn.error = e instanceof Error ? e.message : String(e);
-    try { await conn.client?.close(); } catch { /* 关不掉忽略 */ }
+    conn.error = detail
+      ? `${base}｜服务说：${detail.slice(0, 400)}`
+      : `${base}（服务启动后就退出了——多半是命令/参数不对，或首次要 npx 下载。点「编辑」核对命令与参数）`;
+    try { await client.close(); } catch { /* 关不掉忽略 */ }
     conn.client = undefined;
   }
 }

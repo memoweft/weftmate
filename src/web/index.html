@@ -570,8 +570,8 @@
 
   /* 二次确认弹窗 */
   #memConfirm {
-    /* z-index 70:二次确认要盖在设置弹窗(55)/记忆面板(35)/toast(60)之上——否则从设置里触发时被盖在后层看不见(bug 修复)。低于标题栏(100)。 */
-    display: none; position: fixed; inset: 0; z-index: 70;
+    /* z-index 90:二次确认要盖在所有弹窗之上——设置(55)/记忆面板(35)/MCP能力弹窗(80)/toast——否则从这些弹窗里触发时被盖在后层看不见(bug 修复)。低于标题栏(100)。 */
+    display: none; position: fixed; inset: 0; z-index: 90;
     background: rgba(10,10,12,.6); align-items: center; justify-content: center; padding: 20px;
   }
   #memConfirm.show { display: flex; }
@@ -593,7 +593,7 @@
     position: fixed; left: 50%; bottom: 26px; transform: translateX(-50%) translateY(12px);
     background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
     padding: 9px 18px; border-radius: var(--radius-pill);
-    font-size: var(--fs-sm); opacity: 0; pointer-events: none; transition: all .22s ease; z-index: 60; max-width: 90vw;
+    font-size: var(--fs-sm); opacity: 0; pointer-events: none; transition: all .22s ease; z-index: 95; max-width: 90vw;
     box-shadow: 0 8px 26px rgba(0,0,0,.45);
   }
   #memToast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
