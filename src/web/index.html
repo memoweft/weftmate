@@ -1332,7 +1332,72 @@
   .at-actions { display:flex; gap:8px; margin-top:8px; }
   .at-actions button { border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:8px; padding:4px 12px; cursor:pointer; font-size:var(--fs-sm); }
   .at-actions button:hover { border-color:var(--accent-dim); }
+
+  /* ── MCP 一键装（②·帮你干活）：能力管理弹窗 ── */
+  .mcp-modal { display:none; position:fixed; inset:0; z-index:80; background:rgba(0,0,0,.5); align-items:center; justify-content:center; padding:20px; }
+  .mcp-modal.show { display:flex; }
+  .mcp-card { background:var(--panel); border:1px solid var(--line); border-radius:16px; width:min(720px,100%); max-height:86vh; display:flex; flex-direction:column; overflow:hidden; }
+  .mcp-head { display:flex; align-items:center; padding:14px 18px; border-bottom:1px solid var(--line-soft); }
+  .mcp-title { font-weight:600; font-size:var(--fs); color:var(--text); flex:1; }
+  .mcp-x { border:none; background:transparent; color:var(--muted); font-size:18px; cursor:pointer; line-height:1; }
+  .mcp-body { padding:4px 18px 18px; overflow:auto; }
+  .mcp-warn { margin:12px 0 0; padding:8px 12px; background:var(--warn-bg); color:var(--warn-text); border:1px solid var(--warn-line); border-radius:10px; font-size:var(--fs-sm); line-height:1.5; }
+  .mcp-section-title { font-size:var(--fs-sm); font-weight:600; color:var(--muted); margin:18px 0 8px; }
+  .mcp-srv { border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin-bottom:8px; }
+  .mcp-srv-head { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+  .mcp-srv-name { font-weight:600; }
+  .mcp-badge { font-size:var(--fs-xs); padding:1px 8px; border-radius:999px; background:var(--panel-2); color:var(--muted); white-space:nowrap; }
+  .mcp-badge.ready { background:var(--ready-bg); color:var(--ready); }
+  .mcp-badge.error { background:var(--danger-bg); color:var(--danger); }
+  .mcp-badge.connecting { background:var(--warn-bg); color:var(--warn-text); }
+  .mcp-srv-tools { font-size:var(--fs-xs); color:var(--faint); margin-top:6px; font-family:var(--font-mono); word-break:break-word; }
+  .mcp-srv-err { font-size:var(--fs-xs); color:var(--danger); margin-top:6px; word-break:break-word; }
+  .mcp-srv-actions { display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
+  .mcp-mini { border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:7px; padding:2px 9px; cursor:pointer; font-size:var(--fs-xs); }
+  .mcp-mini:hover { border-color:var(--accent-dim); }
+  .mcp-mini.danger { color:var(--danger); }
+  .mcp-catalog { display:flex; flex-wrap:wrap; gap:8px; }
+  .mcp-cat-item { border:1px solid var(--line); border-radius:10px; padding:8px 10px; cursor:pointer; max-width:220px; }
+  .mcp-cat-item:hover { border-color:var(--accent-dim); }
+  .mcp-cat-name { font-weight:600; font-size:var(--fs-sm); }
+  .mcp-cat-desc { font-size:var(--fs-xs); color:var(--muted); margin-top:2px; line-height:1.4; }
+  .mcp-form { display:flex; flex-direction:column; gap:8px; }
+  .mcp-form input, .mcp-form textarea { background:var(--panel-2); border:1px solid var(--line); border-radius:8px; padding:8px 10px; color:var(--text); font-size:var(--fs-sm); resize:vertical; }
+  .mcp-form textarea { font-family:var(--font-mono); }
+  .mcp-form-actions { display:flex; align-items:center; gap:8px; }
+  .mcp-btn { border:1px solid var(--line); background:var(--panel-2); color:var(--text); border-radius:8px; padding:6px 14px; cursor:pointer; font-size:var(--fs-sm); }
+  .mcp-btn.primary { background:var(--accent); color:var(--on-accent); border:none; }
+  .mcp-editing { font-size:var(--fs-xs); color:var(--muted); }
+  .mcp-empty { color:var(--faint); font-size:var(--fs-sm); }
 </style>
+<!-- MCP 一键装弹窗（②）：⚡技能 按钮打开。装的 MCP 服务=一批新工具，进「干活模式」的 agent 循环。 -->
+<div id="mcpModal" class="mcp-modal">
+  <div class="mcp-card">
+    <div class="mcp-head">
+      <span class="mcp-title">⚡ 能力 · MCP 工具</span>
+      <button type="button" id="mcpClose" class="mcp-x" title="关闭">✕</button>
+    </div>
+    <div class="mcp-body">
+      <div class="mcp-warn">MCP 服务会在你电脑上运行外部代码，只装你信任的来源。装上的工具会出现在「干活模式」里；非只读的工具每次调用都要你点头确认。</div>
+      <div class="mcp-section-title">已装的服务</div>
+      <div id="mcpList"></div>
+      <div class="mcp-section-title">从预置装（点一下预填下面的表单）</div>
+      <div id="mcpCatalog" class="mcp-catalog"></div>
+      <div class="mcp-section-title" id="mcpFormTitle">自定义添加</div>
+      <div class="mcp-form">
+        <input id="mcpName" placeholder="名字（如 文件系统）" />
+        <input id="mcpCommand" placeholder="启动命令（如 cmd）" />
+        <textarea id="mcpArgs" rows="4" placeholder="参数，每行一个（Windows 跑 npx 类填：&#10;/c&#10;npx&#10;-y&#10;@modelcontextprotocol/server-everything）"></textarea>
+        <textarea id="mcpEnv" rows="2" placeholder="环境变量，每行 KEY=VALUE（没有就留空；编辑时留空=沿用原密钥）"></textarea>
+        <div class="mcp-form-actions">
+          <button type="button" id="mcpSave" class="mcp-btn primary">装上</button>
+          <button type="button" id="mcpFormReset" class="mcp-btn">清空</button>
+          <span id="mcpEditing" class="mcp-editing"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <footer>
   <div class="composer-wrap">
     <!-- agent 干活设置条（阶段2·帮你干活①）：🔒沙箱 按钮开合。选工作区 + 自主度；开着时输入框发的是"任务"。 -->
@@ -3793,10 +3858,12 @@
       $('toolModelName').textContent = m;
     } catch (e) { /* 拿不到就保持占位 */ }
   }
-  // ＋文件 / 技能：本阶段占位（点=toast「近期」，不做假功能）。
+  // ＋文件：本阶段占位（点=toast「近期」，不做假功能）。
   const soon = () => memToast('这个功能近期上线，先占个位～', '');
   $('toolAttach').addEventListener('click', soon);
-  $('toolSkill').addEventListener('click', soon);
+  // ⚡ 技能 = 打开 MCP 能力管理弹窗（②·帮你干活）。openMcp 是下面的函数声明（已 hoist）。
+  $('toolSkill').addEventListener('click', openMcp);
+  $('toolSkill').title = '能力 / MCP 工具（装外部能力包）';
   // 🔒 沙箱 = 开合「干活模式」（阶段2·帮你干活①）。toggleAgentMode 是下面的函数声明（已 hoist）。
   $('toolSandbox').addEventListener('click', toggleAgentMode);
   $('toolSandbox').title = '干活模式（在工作区里帮你动手）';
@@ -3969,6 +4036,122 @@
   $('agWs').addEventListener('click', agPickWorkspace);
   $('agClose').addEventListener('click', closeAgentMode);
   for (const b of $('agAuto').querySelectorAll('button')) b.addEventListener('click', () => agSetAuto(b.dataset.a));
+
+  // ══════════════════ MCP 一键装（②·帮你干活）══════════════════
+  // ⚡技能 打开这个弹窗：装/管理 MCP 服务（外部工具包）。装的工具进「干活模式」的 agent 循环。
+  const MCP = { editingId: null };
+
+  function openMcp() { $('mcpModal').classList.add('show'); mcpLoad(); mcpLoadCatalog(); }
+  function closeMcp() { $('mcpModal').classList.remove('show'); }
+
+  const MCP_ST_CN = { ready: '已连接', error: '出错', connecting: '连接中', disconnected: '未连接', disabled: '已停用' };
+
+  async function mcpLoad() {
+    const list = $('mcpList');
+    try {
+      const d = await fetch('/api/mcp/servers').then((x) => x.json());
+      mcpRenderList(d.servers || []);
+    } catch (e) { list.textContent = ''; const p = document.createElement('div'); p.className = 'mcp-empty'; p.textContent = '读不到服务清单。'; list.appendChild(p); }
+  }
+
+  function mcpRenderList(servers) {
+    const list = $('mcpList');
+    list.textContent = '';
+    if (!servers.length) { const p = document.createElement('div'); p.className = 'mcp-empty'; p.textContent = '还没装任何服务。下面选一个预置的，或自定义添加。'; list.appendChild(p); return; }
+    for (const s of servers) {
+      const card = document.createElement('div'); card.className = 'mcp-srv';
+      const head = document.createElement('div'); head.className = 'mcp-srv-head';
+      const name = document.createElement('span'); name.className = 'mcp-srv-name'; name.textContent = s.name; head.appendChild(name);
+      const badge = document.createElement('span'); badge.className = 'mcp-badge ' + (s.status || '');
+      badge.textContent = (MCP_ST_CN[s.status] || s.status) + (s.status === 'ready' ? '·' + s.toolCount + ' 个工具' : '');
+      head.appendChild(badge);
+      const acts = document.createElement('div'); acts.className = 'mcp-srv-actions';
+      const mk = (label, cls, fn) => { const b = document.createElement('button'); b.className = 'mcp-mini' + (cls ? ' ' + cls : ''); b.textContent = label; b.onclick = fn; return b; };
+      acts.appendChild(mk(s.enabled ? '停用' : '启用', '', () => mcpToggle(s.id, !s.enabled)));
+      if (s.status === 'error') acts.appendChild(mk('重连', '', () => mcpReconnect(s.id)));
+      acts.appendChild(mk('编辑', '', () => mcpEdit(s)));
+      acts.appendChild(mk('删除', 'danger', () => mcpDelete(s)));
+      head.appendChild(acts);
+      card.appendChild(head);
+      if (s.status === 'ready' && s.tools && s.tools.length) { const t = document.createElement('div'); t.className = 'mcp-srv-tools'; t.textContent = '工具：' + s.tools.join('、'); card.appendChild(t); }
+      if (s.error) { const e = document.createElement('div'); e.className = 'mcp-srv-err'; e.textContent = s.error; card.appendChild(e); }
+      list.appendChild(card);
+    }
+  }
+
+  async function mcpLoadCatalog() {
+    try {
+      const d = await fetch('/api/mcp/catalog').then((x) => x.json());
+      const box = $('mcpCatalog'); box.textContent = '';
+      for (const c of (d.catalog || [])) {
+        const item = document.createElement('div'); item.className = 'mcp-cat-item';
+        const n = document.createElement('div'); n.className = 'mcp-cat-name'; n.textContent = c.name; item.appendChild(n);
+        const de = document.createElement('div'); de.className = 'mcp-cat-desc'; de.textContent = c.desc || ''; item.appendChild(de);
+        item.onclick = () => mcpFillForm({ name: c.name, command: c.command, args: c.args || [] });
+        box.appendChild(item);
+      }
+    } catch (e) { /* 预置拉不到不影响自定义 */ }
+  }
+
+  function mcpFillForm(p) {
+    MCP.editingId = p.id || null;
+    $('mcpName').value = p.name || '';
+    $('mcpCommand').value = p.command || '';
+    $('mcpArgs').value = (p.args || []).join('\n');
+    $('mcpEnv').value = '';
+    $('mcpEditing').textContent = p.id ? '（正在编辑：' + (p.name || '') + '；密钥留空=不变）' : '';
+    $('mcpSave').textContent = p.id ? '保存' : '装上';
+    $('mcpName').scrollIntoView({ block: 'nearest' });
+  }
+  function mcpResetForm() { mcpFillForm({}); }
+  function mcpEdit(s) { mcpFillForm({ id: s.id, name: s.name, command: s.command, args: s.args || [] }); }
+
+  function mcpParseArgs(text) { return text.split('\n').map((l) => l.trim()).filter((l) => l.length); }
+  function mcpParseEnv(text) {
+    const env = {}; let any = false;
+    for (const line of text.split('\n')) {
+      const t = line.trim(); if (!t) continue;
+      const i = t.indexOf('='); if (i <= 0) continue;
+      env[t.slice(0, i).trim()] = t.slice(i + 1); any = true;
+    }
+    return any ? env : null;
+  }
+
+  async function mcpSave() {
+    const command = $('mcpCommand').value.trim();
+    if (!command) { memToast('填一下启动命令', ''); return; }
+    const body = { name: $('mcpName').value.trim(), command, args: mcpParseArgs($('mcpArgs').value) };
+    if (MCP.editingId) body.id = MCP.editingId;
+    const env = mcpParseEnv($('mcpEnv').value); if (env) body.env = env; // 空=不传=沿用旧密钥（编辑时不必重输）
+    $('mcpSave').disabled = true;
+    try {
+      const r = await fetch('/api/mcp/server', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((x) => x.json());
+      if (r.error) memToast(r.error, 'danger'); else { memToast('装好了，正在连接…', ''); mcpResetForm(); }
+    } catch (e) { memToast('保存失败', 'danger'); }
+    $('mcpSave').disabled = false;
+    mcpLoad();
+  }
+  async function mcpToggle(id, enabled) {
+    try { await fetch('/api/mcp/server/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, enabled }) }); } catch (e) { /* 下次 load 纠正 */ }
+    mcpLoad();
+  }
+  async function mcpReconnect(id) {
+    memToast('重连中…', '');
+    try { await fetch('/api/mcp/server/reconnect', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) }); } catch (e) { /* 忽略 */ }
+    mcpLoad();
+  }
+  async function mcpDelete(s) {
+    const ok = await memConfirm({ title: '删除服务？', bodyQuote: s.name, bodyText: '会断开连接并删掉这个服务的配置。', okText: '删除', okKind: 'danger' });
+    if (!ok) return;
+    try { await fetch('/api/mcp/server/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: s.id }) }); } catch (e) { /* 忽略 */ }
+    mcpLoad();
+  }
+
+  // 接线
+  $('mcpClose').addEventListener('click', closeMcp);
+  $('mcpModal').addEventListener('click', (e) => { if (e.target === $('mcpModal')) closeMcp(); });
+  $('mcpSave').addEventListener('click', mcpSave);
+  $('mcpFormReset').addEventListener('click', mcpResetForm);
 
   // 启动
   checkHealth();

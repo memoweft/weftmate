@@ -93,13 +93,30 @@ interface Task {
 // 活跃任务表（单用户单进程，模块级即可）。
 const tasks = new Map<string, Task>();
 
-// ── 记忆接线（server 注入；不 import core，保持解耦 + 热重建自然跟随）──
+// ── 记忆接线 + MCP 工具接线（server 注入；不 import core/mcp，保持解耦 + 热重建自然跟随）──
+/** MCP 工具（②·帮你干活）：延迟加载——只带 name/desc/极简签名，完整 schema 在 mcp.ts 手里、不进上下文。 */
+export interface AgentMcpTool { fqName: string; description: string; signature: string; readOnly: boolean; }
 interface AgentDeps {
   recall?: (query: string) => Promise<string>;               // 捞"关于用户"的背景，返回一段纯文本（空串=没有/失败）
   record?: (taskText: string, summary: string) => Promise<void>; // 干完把结果回写记忆
+  mcpTools?: () => AgentMcpTool[];                            // 当前可用的 MCP 工具（装的能力包）
+  callMcp?: (fqName: string, args: Record<string, unknown>) => Promise<string>; // 调一个 MCP 工具
 }
 let deps: AgentDeps = {};
 export function configureAgentDeps(d: AgentDeps): void { deps = d; }
+
+/** 解析工具名 → ToolDef：先内置四工具，再 MCP 工具（包成 ToolDef）。
+ *  MCP 是第三方代码：非只读工具 alwaysApprove=true——不管哪档自主度都要用户点头（安全底线，同 run_command）。 */
+function resolveTool(name: string): ToolDef | null {
+  if (TOOLS[name]) return TOOLS[name];
+  const mt = (deps.mcpTools ? deps.mcpTools() : []).find((t) => t.fqName === name);
+  if (!mt) return null;
+  return {
+    mutating: !mt.readOnly,
+    alwaysApprove: !mt.readOnly,
+    run: (args) => (deps.callMcp ? deps.callMcp(name, args) : Promise.reject(new Error('MCP 未接线'))),
+  };
+}
 
 // ── 沙箱：把用户/模型给的路径锁死在工作区内 ──
 /** 解析并校验路径必须落在工作区内，否则抛错。绝对路径 / .. 逃逸一律拒。 */
@@ -240,8 +257,13 @@ function parseAction(reply: string): Parsed | null {
 }
 
 // ── 系统提示 ──
-function buildSystemPrompt(workspace: string, memoryNote: string): string {
+function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: AgentMcpTool[]): string {
   const mem = memoryNote ? `\n关于用户你已知道（供参考，别乱用）：\n${memoryNote}\n` : '';
+  // 延迟加载（生死线）：外部工具只列 全名+签名+一句话，完整 schema 不进上下文；调用时 tool 用全名。
+  const mcp = mcpTools.length
+    ? `\n\n【外部工具·装的能力包】（调用时 tool 填下面的全名；非只读工具执行前会请用户确认）：\n` +
+      mcpTools.map((t) => `- ${t.fqName}${t.signature}  ${t.description}`).join('\n')
+    : '';
   return `你是 WeftMate 里的干活助手，在用户指定的【工作区文件夹】里帮 ta 完成任务。
 工作区：${workspace}
 所有文件路径都相对工作区，且【不能超出工作区】（别用绝对路径、别用 .. 逃出去）。
@@ -250,7 +272,7 @@ ${mem}
 - list_dir(path)             列目录（path 省略=工作区根）
 - read_file(path)            读文件
 - write_file(path, content)  新建或覆盖文件
-- run_command(command)       在工作区里跑一条命令（如 npm test）
+- run_command(command)       在工作区里跑一条命令（如 npm test）${mcp}
 
 【回复格式】每次只回一个 JSON 对象，别加任何其它文字、别加 markdown 围栏：
 · 要执行一步：{"thought":"简短说明你要干嘛（用用户的语言）","action":{"tool":"工具名","args":{…}}}
@@ -290,7 +312,8 @@ async function plan(t: Task): Promise<void> {
   try {
     const client = mkClient();
     const memNote = deps.recall ? await safeRecall(t.task) : '';
-    const sys = buildSystemPrompt(t.workspace, memNote) +
+    const mtools = deps.mcpTools ? deps.mcpTools() : [];
+    const sys = buildSystemPrompt(t.workspace, memNote, mtools) +
       `\n\n【本次只出计划】用户选了"只建议"，所以你【不要执行】，只回一个 JSON：
 {"summary":"整体思路（用用户的语言）","plan":[{"tool":"工具名","args":{…},"why":"这步为啥"}]}`;
     const reply = await client.chat([
@@ -305,7 +328,7 @@ async function plan(t: Task): Promise<void> {
           id: `${t.id}-s${i}`, index: i,
           tool: String(p.tool ?? '?'), args: (p.args as Record<string, unknown>) ?? {},
           thought: typeof p.why === 'string' ? p.why : undefined,
-          status: 'proposed', mutating: !!TOOLS[String(p.tool)]?.mutating, ts: new Date().toISOString(),
+          status: 'proposed', mutating: !!resolveTool(String(p.tool))?.mutating, ts: new Date().toISOString(),
         });
       });
     } else {
@@ -324,8 +347,9 @@ async function drive(t: Task): Promise<void> {
   try {
     const client = mkClient();
     const memNote = deps.recall ? await safeRecall(t.task) : '';
+    const mtools = deps.mcpTools ? deps.mcpTools() : [];
     t.messages = [
-      { role: 'system', content: buildSystemPrompt(t.workspace, memNote) },
+      { role: 'system', content: buildSystemPrompt(t.workspace, memNote, mtools) },
       { role: 'user', content: t.task },
     ];
     let parseFails = 0;
@@ -353,10 +377,10 @@ async function drive(t: Task): Promise<void> {
         return;
       }
 
-      const tool = TOOLS[parsed.tool ?? ''];
+      const tool = resolveTool(parsed.tool ?? '');
       if (!tool) {
         // 未知工具：把可用清单喂回，让它改（不算失败）。
-        t.messages.push({ role: 'user', content: `没有工具「${parsed.tool}」。可用：list_dir / read_file / write_file / run_command。` });
+        t.messages.push({ role: 'user', content: `没有工具「${parsed.tool}」。可用：list_dir / read_file / write_file / run_command；外部工具请用系统提示里列出的全名。` });
         continue;
       }
 

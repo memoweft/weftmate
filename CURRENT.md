@@ -4,7 +4,7 @@
 
 ## 当前:阶段 2「懂你 & 帮你」(阶段 1 立身之本四块已齐)
 
-阶段 2 分五块、分开推、作者定入口(作者拍板**按序做**)。**「感知→画像」「agent 干活」已做完**。剩下:**MCP 一键装 / 上下文附件 / 历史接力**,按序**下一块 = MCP 一键装**。
+阶段 2 分五块、分开推、作者定入口(作者拍板**按序做**)。**「感知→画像」「agent 干活」「MCP 一键装」已做完**。剩下:**上下文附件 / 历史接力**,按序**下一块 = 上下文附件**。
 (注:~~「换窗口给提示词」~~ 是误记——作者当时是说旧会话上下文满了要换新会话接力,**不做**这功能。)
 
 ### ✅ 感知→画像 + 一串 dogfood 修(commit 18a7153/afbbda3/1e99e3f/2a58260/7a26dc8/bb1cf80)
@@ -24,6 +24,16 @@
 - **隐私口径**:工作区文件/命令输出会发给用户配置的模型(可能云端)——由用户主动发起任务视同意(界面写明),与"observed 默认不上云"两码事。
 - **验**:① 后端安全冒烟 15 断言全过(假模型确定性驱动·对临时文件夹)——正常写+撤回删新建 / 沙箱逃逸被拒(工作区外不留文件)/ 命令 auto 下也停 awaiting·拒则不跑·批才跑 / 撤回还原旧文件 / ask 下写文件也要批;② 前端 preview:零 JS 报错、干活条开合、完整流程 3 张步骤卡+批准+撤回渲染对、配色对(工具名金色等宽)。真模型端到端待作者亲验。
 - **未做(留后)**:MCP 外部工具(下块)· 工作区/附件富 UX(第③块)· 模型原生 tool_use(先文字协议)· 逐行 diff · 流式(先轮询)。
+
+### ✅ MCP 一键装(阶段2·帮你干活②·作者拍板用官方 SDK)
+- **是什么**:像装扩展一样接外部工具包(MCP 服务),塞进①的 agent 循环。装了 `@modelcontextprotocol/sdk@1.29`(80 包·纯 JS·作者拍板接受依赖·破了"尽量少依赖"但换省事+协议正确)。
+- **`src/mcp.ts`**:官方 SDK 当**客户端**连 **stdio 型** MCP 服务(`StdioClientTransport` 启子进程,SDK 自动叠 getDefaultEnvironment 补 PATH·spawn shell:false→Windows npx 要 `cmd /c npx`)。connect 带 20s 超时兜底、单个坏不拖累其余;`listAllTools`/`callTool`(fqName=服务名slug__工具名·防重名)/`statusView`/`reconcile`/`shutdownAll`。**延迟加载(生死线)**:只把 name+一句话+极简参数签名 给模型,完整 inputSchema 留这。
+- **`src/mcp-store.ts`**:服务清单 `{id,name,command,args,env?,enabled}` 整份 safeStorage 加密落盘(env 常含密钥·比照模型配置)·`publicView` 剥 env 值只留键名·env 编辑留空=沿用旧密钥。
+- **接进①**:`agent.ts` 加 `AgentMcpTool`+`resolveTool`(先内置四工具再 MCP)+`buildSystemPrompt` 追加外部工具清单;deps 注 `mcpTools`/`callMcp`。**安全**:MCP=第三方代码,非只读工具(无 readOnlyHint)`alwaysApprove=true`——不管哪档自主度都要用户点头(同 run_command)。
+- **`server.ts` 端点**:`GET /api/mcp/{servers,catalog}` + `POST /api/mcp/server{,/toggle,/delete,/reconnect}`;启动 `void mcp.reconcile(已启用)`(后台连·不阻塞起服);shutdown 加 `mcp.shutdownAll`;预置清单 `MCP_CATALOG`(filesystem/memory/sequential-thinking/everything·Windows cmd/c npx 形态)。
+- **前端**:`⚡技能` 从占位改成 MCP 能力弹窗(第三方代码警示 + 已装服务卡[连接状态/工具数/错误/开关/编辑/删/出错才有重连] + 预置点填表单 + 自定义 command/args/env)。
+- **验**:① MCP 客户端冒烟 11 断言(真服务子进程·连接/命名空间/只读标记/延迟加载签名/调用/断开);② agent×MCP 组合冒烟 6 断言(只读工具 auto 直接跑·非只读 auto 也强制批准·系统提示只放名字签名不放完整 schema=守生死线);③ 前端 preview:零报错·弹窗/服务卡三态/预置预填/编辑回填/配色随主题。真模型 + 真 npx 服务端到端待作者亲验。
+- **未做(留后)**:HTTP/SSE 型 MCP(先只 stdio)· 工具多到名字都爆时的"查工具详情"元工具(现按名字+签名·够用)。
 
 ## 阶段 1 · 立身之本 ✅ 已基本齐(S0 / S1 已通)
 
@@ -52,10 +62,10 @@
 
 `experiences/`(星瑶/plain 人格 + 注册表) · `scheduler.ts`(后台整理) · `chatHistory.ts` · `confBand.ts`(把握度分档) · `server.ts`(loopback + core + chat 编排,切人格清双缓存那段必须原样保留) · `web/index.html`(前端 · **待重做**)。
 
-## 下一块 = MCP 一键装(阶段2·帮你干活②)
+## 下一块 = 上下文附件(阶段2·帮你干活③)
 
-作者拍板阶段2 剩下的块**按序做**:agent 干活 ✅ → **② MCP 一键装** → ③ 上下文附件 → ④ 历史接力。
-**② MCP 一键装**(PRODUCT.md §帮你干活):像装扩展一样装能力(如 Claude CLI 写代码),不手改配置;**工具定义延迟加载**(生死线)。天然接上①——agent 循环已留好"工具"这层抽象(`src/agent.ts` 的 `TOOLS` 表),MCP 来了就是往同一个循环塞更多工具、复用同一套信任框架(审批/沙箱/每步可视/撤回)。动手前守三纪律:工具定义延迟加载、主动打断只报 P0/P1、隐私(observed 默认不上云)。
+作者拍板阶段2 剩下的块**按序做**:感知→画像 ✅ · agent 干活 ✅ · MCP 一键装 ✅ → **③ 上下文附件** → ④ 历史接力。
+**③ 上下文附件**(PRODUCT.md §帮你干活):拖文件/图片当上下文;选个工作区(文件夹)让她在里面干活;**检索式召回不全量塞**(别把整个文件夹灌进上下文)。注:①已引入"工作区文件夹"的最小版(agent 沙箱=工作区),这块把工作区/附件做成正式的上下文来源。动手前守三纪律:工具定义延迟加载、主动打断只报 P0/P1、隐私。
 
 (澄清:「换窗口给提示词」是误记,不做——见文首。)
 

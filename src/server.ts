@@ -42,6 +42,8 @@ import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
 import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, resolvedLang } from './settings.ts';
 import * as agent from './agent.ts';
+import * as mcp from './mcp.ts';
+import * as mcpStore from './mcp-store.ts';
 import { dialog, BrowserWindow } from 'electron';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
@@ -132,7 +134,14 @@ agent.configureAgentDeps({
   record: async (taskText) => {
     await core.ingestUserMessage({ content: `（让 WeftMate 帮我干活）${taskText}` });
   },
+  // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
+  mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),
+  callMcp: (fqName, args) => mcp.callTool(fqName, args),
 });
+
+// 启动时连上所有【已启用】的 MCP 服务（后台·不阻塞起服；单个坏不拖累其余，见 mcp.reconcile）。
+//   配置读 mcpStore（safeStorage 解密·app 已 ready）；连接是 fire-and-forget，起服不等它。
+void mcp.reconcile(mcpStore.listServers());
 
 /**
  * 进程内热重建 core（切模型档 / 改配置时调）。不重启进程、窗口不闪（作者二次拍板）。
@@ -212,6 +221,15 @@ function sanitizeObservation(raw: unknown): Observation | null {
 }
 
 // 配置向导·拼 .env 的纯字符串函数已抽到 ./genEnv.ts（便于单测：server.ts 顶层会 listen，不宜在测试里 import）。
+
+// MCP 预置清单（②「一键装」·点一下预填表单，用户仍需确认）。都经 npx 运行（首次会下载·需 Node+网络）。
+//   Windows spawn shell:false → npx 类必须走 command:'cmd' args:['/c','npx',...]（见 mcp.ts 说明）。
+const MCP_CATALOG = [
+  { key: 'filesystem', name: '文件系统', desc: '读写你指定的文件夹（装完把 args 末尾改成要开放的目录）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-filesystem', 'D:\\改成你要开放的文件夹'] },
+  { key: 'memory', name: '知识记忆图', desc: '一个简单的知识图谱记忆库', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-memory'] },
+  { key: 'sequential-thinking', name: '分步思考', desc: '帮模型把复杂问题拆成一步步想', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-sequential-thinking'] },
+  { key: 'everything', name: '测试服务 everything', desc: 'MCP 官方测试服务，含各种示例工具（拿来试装最省事）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-everything'] },
+];
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? '/', `http://127.0.0.1:${PORT}`);
@@ -817,6 +835,90 @@ const server = createServer(async (req, res) => {
       return;
     }
 
+    // ── MCP 一键装（阶段2·帮你干活②·官方 SDK 当客户端，见 mcp.ts / mcp-store.ts）──
+    // 装的 MCP 服务 = 一批新工具，塞进①的 agent 循环。配置走 safeStorage 加密（env 常含密钥）。
+    // 安全：MCP 跑第三方代码 —— agent 里非只读工具一律要用户批准（agent.ts resolveTool）；前端装服务时警示。
+
+    // 服务清单：配置公开视图（env 剥值）+ 实时连接状态/工具数 合并。
+    if (req.method === 'GET' && url.pathname === '/api/mcp/servers') {
+      const st = new Map(mcp.statusView().map((s) => [s.id, s]));
+      const servers = mcpStore.publicView().servers.map((s) => {
+        const live = st.get(s.id);
+        return {
+          ...s,
+          status: live ? live.status : (s.enabled ? 'disconnected' : 'disabled'),
+          toolCount: live ? live.toolCount : 0,
+          error: live ? live.error : undefined,
+          tools: live ? live.tools : [],
+        };
+      });
+      sendJson(res, 200, { servers });
+      return;
+    }
+
+    // 预置清单（常用 MCP 服务·点一下预填表单）。
+    if (req.method === 'GET' && url.pathname === '/api/mcp/catalog') {
+      sendJson(res, 200, { catalog: MCP_CATALOG });
+      return;
+    }
+
+    // 增/改一个服务：body {id?, name, command, args?, env?, enabled?}。存完按 enabled 连/断。
+    //   ⚠ 隐私：env 可能含密钥，只在栈内流过交 mcpStore 加密落盘，不 log body、不进模块级变量。
+    if (req.method === 'POST' && url.pathname === '/api/mcp/server') {
+      const body = await readJson(req);
+      const command = typeof body.command === 'string' ? body.command.trim() : '';
+      if (!command) { sendJson(res, 400, { error: '缺少启动命令（command）' }); return; }
+      const args = Array.isArray(body.args) ? body.args.map((a) => String(a)) : [];
+      const env = (body.env && typeof body.env === 'object' && !Array.isArray(body.env)) ? body.env as Record<string, string> : undefined;
+      let id: string;
+      try {
+        id = mcpStore.upsertServer({
+          id: typeof body.id === 'string' ? body.id : undefined,
+          name: typeof body.name === 'string' ? body.name : '',
+          command, args, env,
+          enabled: typeof body.enabled === 'boolean' ? body.enabled : undefined,
+        });
+      } catch (e) { sendJson(res, 500, { error: e instanceof Error ? e.message : String(e) }); return; }
+      const srv = mcpStore.getServer(id);
+      if (srv && srv.enabled) await mcp.connectServer(srv); else await mcp.disconnectServer(id);
+      sendJson(res, 200, { ok: true, id });
+      return;
+    }
+
+    // 开/关一个服务：body {id, enabled}。开=连、关=断。
+    if (req.method === 'POST' && url.pathname === '/api/mcp/server/toggle') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      const enabled = body.enabled === true;
+      if (!id || !mcpStore.setEnabled(id, enabled)) { sendJson(res, 404, { error: '没有这个服务' }); return; }
+      const srv = mcpStore.getServer(id);
+      if (enabled && srv) await mcp.connectServer(srv); else await mcp.disconnectServer(id);
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    // 删一个服务：body {id}。先断连再删配置。
+    if (req.method === 'POST' && url.pathname === '/api/mcp/server/delete') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要删除的服务 id' }); return; }
+      await mcp.disconnectServer(id);
+      mcpStore.deleteServer(id);
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    // 重连一个服务（重试出错的 / 外部改过配置后）：body {id}。
+    if (req.method === 'POST' && url.pathname === '/api/mcp/server/reconnect') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      const srv = id ? mcpStore.getServer(id) : null;
+      if (!srv) { sendJson(res, 404, { error: '没有这个服务' }); return; }
+      if (srv.enabled) await mcp.connectServer(srv);
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
     res.writeHead(404, { 'Content-Type': 'application/json; charset=utf-8' });
     res.end(JSON.stringify({ error: 'not found' }));
   } catch (e) {
@@ -834,6 +936,7 @@ export async function shutdown(): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
   scheduler.dispose(); // 停后台整理计时器（别留悬挂 timer；在飞的那次由 trigger 的兜底 catch 吞掉）
+  try { await mcp.shutdownAll(); } catch { /* 关 MCP 子进程失败不阻断退出 */ } // 关所有 MCP 服务子进程
   core.close();        // 关 sqlite 连接（flush WAL）——最要紧的一步
   // 关 loopback：先强断残留连接再 close。退出时渲染进程的 keep-alive 连接还没拆，光 server.close() 会一直
   //   等它们关完 → 卡死退出。closeAllConnections 强断（Node 18.2+），再套 1.5s 超时兜底，绝不让退出挂住。
