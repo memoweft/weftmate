@@ -570,7 +570,8 @@
 
   /* 二次确认弹窗 */
   #memConfirm {
-    display: none; position: fixed; inset: 0; z-index: 50;
+    /* z-index 70:二次确认要盖在设置弹窗(55)/记忆面板(35)/toast(60)之上——否则从设置里触发时被盖在后层看不见(bug 修复)。低于标题栏(100)。 */
+    display: none; position: fixed; inset: 0; z-index: 70;
     background: rgba(10,10,12,.6); align-items: center; justify-content: center; padding: 20px;
   }
   #memConfirm.show { display: flex; }
