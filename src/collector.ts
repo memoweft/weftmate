@@ -14,6 +14,7 @@
  * get-windows：N-API 预编译原生模块，ABI 跨 Node/Electron 稳定（已实测 Electron 直接可加载，不需 electron-rebuild）。
  */
 import { powerMonitor } from 'electron';
+import { getDesktopCapture } from './settings.ts';
 
 const SAMPLE_MS = 20_000;      // 采样间隔 20s
 const IDLE_THRESHOLD_S = 60;   // 空闲 60s 视为"离开"，不采
@@ -42,7 +43,9 @@ async function sampleOnce(): Promise<void> {
     const w = await fn();
     if (!w) return;
     const app = (w.owner && w.owner.name) || 'unknown';
-    const title = w.title || '';
+    // 采集内容设置:'app_only' 只记 App 名(更省隐私、不采窗口标题);'app_title' 记 App+标题。
+    const titleOn = getDesktopCapture() !== 'app_only';
+    const title = titleOn ? (w.title || '') : '';
     const key = app + '|' + title;
     if (key === lastKey) return; // 没换窗口不重复记
     lastKey = key;
@@ -54,7 +57,7 @@ async function sampleOnce(): Promise<void> {
           kind: 'active_window',
           content: title ? `${app} — ${title}` : app,
           occurredAt: new Date().toISOString(),
-          meta: { app, title },
+          meta: titleOn ? { app, title } : { app },
         }],
       }),
     }).catch(() => { /* 采集摄入失败（服务没起/被拒）不闹，等下一轮 */ });

@@ -1238,15 +1238,40 @@
         <p class="set-lead" id="langStatus" style="margin-top:2px;"></p>
       </section>
 
-      <!-- 感知节（阶段2）：opt-in 开关。开启后后端起采集器采「活动窗口 + 活动节奏」→ observed 证据（强制不上云）→ 画像「感知来的」组。 -->
+      <!-- 感知节（阶段2·多来源）：来源开关 + 采集内容 + 上云开关。
+           读 GET /api/settings → perception:{ cloudAllowed, sources:{desktop:{enabled,capture}}, running }；
+           写 POST /api/settings/perception 部分更新 { enabled?, cloudAllowed?, capture? }。
+           上云默认关；感知数据只在允许后才随「云端」模型上行。 -->
       <section class="set-sec" data-sec="perception">
         <h2>感知</h2>
-        <p class="set-lead">开启后，它会留意你此刻在用的窗口和活动节奏，用来越用越懂你、把这些织进「对你的了解」。这些只留在你本机、默认不上云，随时可关。</p>
+        <p class="set-lead">开启后，它会留意你此刻在用的窗口和活动节奏，用来越用越懂你、把这些织进「对你的了解」。这些默认只留在你本机、不上云，随时可关。</p>
+
+        <!-- 来源 · 桌面活动 -->
+        <h3 style="margin:6px 0 4px;font-size:14px;color:var(--text);font-weight:600;">来源 · 桌面活动</h3>
         <div class="set-theme-row">
           <button class="set-theme-opt" id="perceptOn" data-percept="on">开启</button>
           <button class="set-theme-opt" id="perceptOff" data-percept="off">关闭</button>
         </div>
         <p class="set-lead" id="perceptStatus" style="margin-top:2px;"></p>
+
+        <!-- 采集内容 -->
+        <h3 style="margin:16px 0 4px;font-size:14px;color:var(--text);font-weight:600;">采集内容</h3>
+        <div class="set-theme-row">
+          <button class="set-theme-opt" id="captureAppTitle" data-capture="app_title">App＋窗口标题</button>
+          <button class="set-theme-opt" id="captureAppOnly" data-capture="app_only">仅 App 名</button>
+        </div>
+        <p class="set-lead" style="margin-top:2px;">仅 App 名更省隐私；窗口标题更懂你在忙啥，但可能含文档名／网址等敏感信息。</p>
+
+        <!-- 感知数据上云 -->
+        <h3 style="margin:16px 0 4px;font-size:14px;color:var(--text);font-weight:600;">感知数据上云</h3>
+        <div class="set-theme-row">
+          <button class="set-theme-opt" id="cloudDeny" data-cloud="off">只留本机（不上云）</button>
+          <button class="set-theme-opt" id="cloudAllow" data-cloud="on">允许上云</button>
+        </div>
+        <p class="set-lead" style="margin-top:8px;padding:10px 12px;background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:10px;color:var(--warn-text);line-height:1.6;">默认只留本机、不上云。开启后，感知到的活动会被允许发往你配置的「云端」模型——仅在你信任该模型服务时开。</p>
+
+        <!-- 后续来源（占位） -->
+        <p class="set-lead" style="margin-top:16px;color:var(--muted);opacity:.6;">手机／穿戴等来源，后续接入。</p>
       </section>
 
       <!-- 关于节 -->
@@ -3318,15 +3343,35 @@
     b.addEventListener('click', () => setSelectSection(b.getAttribute('data-sec')));
   });
 
-  // ── 感知开关（阶段2）：GET /api/settings 读态、POST /api/settings/perception 写态。用户/后端内容一律 textContent，fetch 失败兜错不崩。──
-  function syncPerceptionButtons(enabled, running) {
+  // ── 感知（阶段2·多来源）：GET /api/settings 读态、POST /api/settings/perception 部分更新写态。
+  //   新契约 perception:{ cloudAllowed, sources:{desktop:{enabled,capture}}, running }。
+  //   三组按钮：桌面源开关 / 采集内容(app_title|app_only) / 感知数据上云(默认不上云)。
+  //   用户/后端内容一律 textContent，fetch 失败兜错不崩。──
+  function syncPerceptionButtons(p) {
+    p = p || {};
+    const desktop = (p.sources && p.sources.desktop) ? p.sources.desktop : {};
+    const enabled = desktop.enabled === true;
+    const running = p.running === true;
+    const capture = desktop.capture === 'app_only' ? 'app_only' : 'app_title'; // 缺省当 app_title
+    const cloudAllowed = p.cloudAllowed === true;
+    // 桌面源开关 + 状态行
     const on = $('perceptOn'), off = $('perceptOff'), st = $('perceptStatus');
-    if (!on || !off) return;
-    on.classList.toggle('on', enabled === true);
-    off.classList.toggle('on', enabled !== true);
-    if (st) {
-      if (enabled === true) st.textContent = running === true ? '当前：已开启，正在留意你的活动。' : '当前：已开启。';
-      else st.textContent = '当前：已关闭。';
+    if (on && off) {
+      on.classList.toggle('on', enabled);
+      off.classList.toggle('on', !enabled);
+    }
+    if (st) st.textContent = enabled ? (running ? '正在留意…' : '当前：已开启。') : '未开启';
+    // 采集内容
+    const cAt = $('captureAppTitle'), cAo = $('captureAppOnly');
+    if (cAt && cAo) {
+      cAt.classList.toggle('on', capture === 'app_title');
+      cAo.classList.toggle('on', capture === 'app_only');
+    }
+    // 感知数据上云（默认不上云）
+    const cDeny = $('cloudDeny'), cAllow = $('cloudAllow');
+    if (cDeny && cAllow) {
+      cAllow.classList.toggle('on', cloudAllowed);
+      cDeny.classList.toggle('on', !cloudAllowed);
     }
   }
   async function loadPerceptionSetting() {
@@ -3334,29 +3379,56 @@
     if (st) st.textContent = '读取中…';
     try {
       const d = await fetch('/api/settings').then((x) => x.json());
-      const p = d && d.perception ? d.perception : {};
-      syncPerceptionButtons(p.enabled === true, p.running === true);
+      syncPerceptionButtons(d && d.perception ? d.perception : {});
     } catch (e) {
       if (st) st.textContent = '读取感知设置失败，稍后再试。';
     }
   }
-  async function setPerception(enabled) {
+  // 部分更新帮手：body 只带要改的字段；成功用返回的 perception 刷新三组高亮，失败兜错回读。
+  async function postPerception(patch) {
     try {
       const res = await fetch('/api/settings/perception', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ enabled: enabled }),
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch),
       });
       const d = await res.json();
       if (!res.ok || d.error) { memToast('感知设置没保存：' + (d && d.error ? d.error : '稍后再试'), 'danger'); await loadPerceptionSetting(); return; }
-      syncPerceptionButtons(d.enabled === true, d.running === true);
-      memToast(d.enabled === true ? '感知已开，它会开始留意你的活动' : '感知已关', '');
+      const p = d && d.perception ? d.perception : {};
+      syncPerceptionButtons(p);
+      // 按刚改的字段给一句贴切反馈
+      if ('enabled' in patch) {
+        memToast(patch.enabled === true ? '桌面感知已开，它会开始留意你的活动' : '桌面感知已关', '');
+      } else if ('capture' in patch) {
+        memToast(patch.capture === 'app_only' ? '采集内容：仅 App 名' : '采集内容：App＋窗口标题', '');
+      } else if ('cloudAllowed' in patch) {
+        memToast(patch.cloudAllowed === true ? '已允许感知数据上云（仅信任云端模型时开）' : '感知数据已改回只留本机', patch.cloudAllowed === true ? 'warn' : '');
+      } else {
+        memToast('感知设置已更新', '');
+      }
     } catch (e) {
       memToast('感知设置没保存：' + String(e), 'danger');
       await loadPerceptionSetting();
     }
   }
-  { const _on = $('perceptOn'), _off = $('perceptOff');
-    if (_on) _on.addEventListener('click', () => setPerception(true));
-    if (_off) _off.addEventListener('click', () => setPerception(false)); }
+  { const _on = $('perceptOn'), _off = $('perceptOff'),
+        _cAt = $('captureAppTitle'), _cAo = $('captureAppOnly'),
+        _cDeny = $('cloudDeny'), _cAllow = $('cloudAllow');
+    // 桌面源开关
+    if (_on) _on.addEventListener('click', () => postPerception({ enabled: true }));
+    if (_off) _off.addEventListener('click', () => postPerception({ enabled: false }));
+    // 采集内容
+    if (_cAt) _cAt.addEventListener('click', () => postPerception({ capture: 'app_title' }));
+    if (_cAo) _cAo.addEventListener('click', () => postPerception({ capture: 'app_only' }));
+    // 感知数据上云：不上云直接改；允许上云先二次确认（隐私敏感）
+    if (_cDeny) _cDeny.addEventListener('click', () => postPerception({ cloudAllowed: false }));
+    if (_cAllow) _cAllow.addEventListener('click', async () => {
+      const ok = await memConfirm({
+        title: '允许感知数据上云？',
+        bodyText: '开启后，感知到的活动（当前窗口、活动节奏等）会被允许发往你配置的「云端」模型。仅在你信任该模型服务时开。',
+        warn: '默认只留本机、不上云。',
+        okText: '我信任，允许上云', okKind: 'danger',
+      });
+      if (ok) postPerception({ cloudAllowed: true });
+    }); }
 
   // ── 语言（外观节）：GET /api/settings 读 language.setting 高亮、POST /api/settings/language 写。──
   //   影响后端形成的「理解」/摘要用哪种语言；运行期即刻生效不重启。用户/后端内容一律 textContent，fetch 失败兜错不崩。

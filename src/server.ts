@@ -40,7 +40,7 @@ import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_ID
 import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
-import { getPerceptionEnabled, setPerceptionEnabled, getLanguage, setLanguage, resolvedLang } from './settings.ts';
+import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, resolvedLang } from './settings.ts';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
 //   loadEnvFile 幂等；没有 .env 抛错忽略。放在最顶部——否则 DB_PATH（下面就求值）读不到 .env 里的 MEMOWEFT_HOST_DB。
@@ -373,7 +373,14 @@ const server = createServer(async (req, res) => {
         sendJson(res, 400, { error: 'observation 都不合法（需至少 kind + content）' });
         return;
       }
-      // 审核通过 → 交 Core 落 observed 证据（subjectId 缺省=库主人；不带授权位=走 observedDefaults 不上云）。
+      // 上云授权（用户拍板的全局 opt-in）：sanitizeObservation 已剥掉所有授权位（插件/采集器无权自授权上云）。
+      //   仅当【用户】在设置里显式开了"允许感知数据上云"时，server 才给每条显式加 allowCloudRead=true——
+      //   ingestObservation 认"授权位显式 > observedDefaults"，于是这些 observed 可上云。默认关=不加=不上云（红线）。
+      //   这是【用户授权】而非【插件自授权】，是隐私模型允许的口子。
+      if (getPerceptionCloudAllowed()) {
+        for (const o of observations) o.allowCloudRead = true;
+      }
+      // 审核通过 → 交 Core 落 observed 证据（subjectId 缺省=库主人；默认不带授权位=observedDefaults 不上云）。
       const stored = await core.ingestObservation({ observations });
       // stored=真新落库条数；其余=幂等命中（同 originId 重复采集）跳过。
       sendJson(res, 200, { stored: stored.length, skipped: observations.length - stored.length });
@@ -526,7 +533,8 @@ const server = createServer(async (req, res) => {
     //   采集器采到的样本仍走 /api/observe 审核层（sanitizeObservation 强制 observed 不上云，隐私红线）。
     if (req.method === 'GET' && url.pathname === '/api/settings') {
       sendJson(res, 200, {
-        perception: { enabled: getPerceptionEnabled(), running: collector.isCollectorRunning() },
+        // 多源结构 + 全局 cloudAllowed（默认不上云红线）+ running（采集器当前是否在跑）。
+        perception: { ...readPerceptionView(), running: collector.isCollectorRunning() },
         language: { setting: getLanguage(), resolved: resolvedLang() }, // setting=auto/zh/en(用户选)·resolved=实际生效 zh/en
       });
       return;
@@ -542,12 +550,20 @@ const server = createServer(async (req, res) => {
       sendJson(res, 200, { ok: true, setting: getLanguage(), resolved: config.language });
       return;
     }
+    // 感知设置（部分更新：只改 body 里带的字段）——桌面开关 / 全局上云 / 采集内容。
     if (req.method === 'POST' && url.pathname === '/api/settings/perception') {
       const body = await readJson(req);
-      const enabled = body.enabled === true; // 只认显式 true 为开
-      setPerceptionEnabled(enabled);
-      if (enabled) collector.startCollector(PORT); else collector.stopCollector();
-      sendJson(res, 200, { ok: true, enabled, running: collector.isCollectorRunning() });
+      if (typeof body.enabled === 'boolean') {
+        setPerceptionEnabled(body.enabled);
+        if (body.enabled) collector.startCollector(PORT); else collector.stopCollector(); // 桌面源启停
+      }
+      if (typeof body.cloudAllowed === 'boolean') {
+        setPerceptionCloudAllowed(body.cloudAllowed); // 上云在摄入时应用,无需重启采集器
+      }
+      if (body.capture === 'app_title' || body.capture === 'app_only') {
+        setDesktopCapture(body.capture); // 采集器每次采样读它,即时生效
+      }
+      sendJson(res, 200, { ok: true, perception: { ...readPerceptionView(), running: collector.isCollectorRunning() } });
       return;
     }
 

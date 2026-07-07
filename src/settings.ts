@@ -10,7 +10,15 @@ import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
 interface Settings {
-  perception?: { enabled?: boolean };
+  perception?: {
+    enabled?: boolean; // 旧扁平结构(迁移用):等价 sources.desktop.enabled
+    /** 全局:是否允许感知数据(observed)上云。默认 false=不上云(红线);作者拍板加 opt-in 开关。 */
+    cloudAllowed?: boolean;
+    /** 多来源(桌面=第一个源;架构留位手机/穿戴等后续源)。 */
+    sources?: {
+      desktop?: { enabled?: boolean; capture?: 'app_title' | 'app_only' };
+    };
+  };
   /** 库产出语言(认知/摘要):'auto'=跟系统 / 'zh' / 'en'。缺省 auto。见 [[weftmate 语言]] / MEMOWEFT_LANG。 */
   language?: 'auto' | 'zh' | 'en';
 }
@@ -33,16 +41,57 @@ function write(s: Settings): void {
   writeFileSync(settingsPath(), JSON.stringify(s, null, 2), 'utf-8');
 }
 
-/** 感知是否开启（默认关·opt-in）。 */
+// ── 感知(多源 · opt-in · 默认关) ──
+// 桌面源开关沿用 getPerceptionEnabled 名字(main/server/collector 都在用),读新结构 sources.desktop.enabled、
+//   兼容旧扁平 perception.enabled(迁移)。cloudAllowed/capture 为新增。
+
+/** 桌面感知源是否开启（默认关·opt-in;兼容旧扁平 enabled）。 */
 export function getPerceptionEnabled(): boolean {
-  return read().perception?.enabled === true;
+  const p = read().perception;
+  return p?.sources?.desktop?.enabled === true || (p?.sources === undefined && p?.enabled === true);
 }
 
-/** 设置感知开关，落盘。 */
+/** 设置桌面感知源开关（写新结构;不动 cloudAllowed/capture）。 */
 export function setPerceptionEnabled(on: boolean): void {
   const s = read();
-  s.perception = { ...(s.perception ?? {}), enabled: !!on };
+  const p = s.perception ?? {};
+  p.sources = { ...(p.sources ?? {}), desktop: { ...(p.sources?.desktop ?? {}), enabled: !!on } };
+  delete p.enabled; // 迁移:清掉旧扁平位,统一走 sources.desktop
+  s.perception = p;
   write(s);
+}
+
+/** 是否允许感知数据上云（默认 false=不上云·红线;true 时 server 才给 observed 显式放行 allowCloudRead）。 */
+export function getPerceptionCloudAllowed(): boolean {
+  return read().perception?.cloudAllowed === true;
+}
+export function setPerceptionCloudAllowed(on: boolean): void {
+  const s = read();
+  s.perception = { ...(s.perception ?? {}), cloudAllowed: !!on };
+  write(s);
+}
+
+/** 桌面源采集内容：'app_title'(App+窗口标题·默认) / 'app_only'(仅 App 名·更省隐私)。 */
+export function getDesktopCapture(): 'app_title' | 'app_only' {
+  return read().perception?.sources?.desktop?.capture === 'app_only' ? 'app_only' : 'app_title';
+}
+export function setDesktopCapture(cap: 'app_title' | 'app_only'): void {
+  const s = read();
+  const p = s.perception ?? {};
+  p.sources = { ...(p.sources ?? {}), desktop: { ...(p.sources?.desktop ?? {}), capture: cap === 'app_only' ? 'app_only' : 'app_title' } };
+  s.perception = p;
+  write(s);
+}
+
+/** 给渲染层的感知设置视图(多源结构 + 全局 cloudAllowed)。 */
+export function readPerceptionView(): {
+  cloudAllowed: boolean;
+  sources: { desktop: { enabled: boolean; capture: 'app_title' | 'app_only' } };
+} {
+  return {
+    cloudAllowed: getPerceptionCloudAllowed(),
+    sources: { desktop: { enabled: getPerceptionEnabled(), capture: getDesktopCapture() } },
+  };
 }
 
 /** 语言设置(原样存 'auto'/'zh'/'en';缺省 auto)。 */
