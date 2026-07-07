@@ -56,10 +56,6 @@ async function bootstrap() {
   process.env.MEMOWEFT_HOST_DB = dbPath;
   process.env.PORT = String(PORT);
   process.env.MEMOWEFT_EXPERIENCE = 'xingyao';
-  // 库产出语言:memoweft 0.4.0 起缺省 en(进英文市场),consolidate/distill 形成"理解"的提示按它走 → 缺省出英文认知。
-  //   WeftMate 是中文产品,显式设 zh,让"记住了:X"的认知也是中文(聊天回复本就跟用户语言、不受此影响)。
-  //   必须在 import server.ts(建 core、memoweft config 读死此 env)之前设。后续要多语言可改成跟随设置。
-  process.env.MEMOWEFT_LANG = 'zh';
   delete process.env.MEMOWEFT_EXPERIENCE_UI; // 确保不是"纯库模式"(那会 process.exit)
   console.log('[weftmate] db =', dbPath);
   console.log('[weftmate] port =', PORT);
@@ -72,6 +68,17 @@ async function bootstrap() {
     console.log('[weftmate] ✓ 模型配置已注入 env(若已配)');
   } catch (e) {
     console.error('[weftmate] 读模型配置失败(当作未配,进配置向导):', e && e.message ? e.message : e);
+  }
+
+  // 库产出语言(认知/摘要):memoweft 0.4.0 起缺省 en,consolidate/distill 按 config.language 走 → 缺省出英文认知。
+  //   按用户设置解析('auto'跟系统 zh-*→zh 否则 en / 'zh' / 'en'),【建 core 前】设 MEMOWEFT_LANG(config 在 import 时读死)。
+  //   运行期改语言由 server 直接改 config.language(不重启,见 /api/settings/language)。聊天回复本就跟用户语言、不受此影响。
+  try {
+    const { resolvedLang } = await import('./settings.ts');
+    process.env.MEMOWEFT_LANG = resolvedLang();
+    console.log('[weftmate] 库语言 =', process.env.MEMOWEFT_LANG, '(跟设置/系统)');
+  } catch (e) {
+    console.error('[weftmate] 读语言设置失败(回落 en):', e && e.message ? e.message : e);
   }
 
   try {

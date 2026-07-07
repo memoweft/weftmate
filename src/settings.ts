@@ -11,6 +11,8 @@ import { join } from 'node:path';
 
 interface Settings {
   perception?: { enabled?: boolean };
+  /** 库产出语言(认知/摘要):'auto'=跟系统 / 'zh' / 'en'。缺省 auto。见 [[weftmate 语言]] / MEMOWEFT_LANG。 */
+  language?: 'auto' | 'zh' | 'en';
 }
 
 function settingsPath(): string {
@@ -41,4 +43,26 @@ export function setPerceptionEnabled(on: boolean): void {
   const s = read();
   s.perception = { ...(s.perception ?? {}), enabled: !!on };
   write(s);
+}
+
+/** 语言设置(原样存 'auto'/'zh'/'en';缺省 auto)。 */
+export function getLanguage(): 'auto' | 'zh' | 'en' {
+  const v = read().language;
+  return v === 'zh' || v === 'en' ? v : 'auto';
+}
+export function setLanguage(lang: 'auto' | 'zh' | 'en'): void {
+  const s = read();
+  s.language = lang === 'zh' || lang === 'en' ? lang : 'auto';
+  write(s);
+}
+
+/** 解析成 memoweft 认的 'zh'/'en'——auto 时跟系统语言(zh-* → zh,否则 en)。供设 MEMOWEFT_LANG / 改 config.language。 */
+export function resolvedLang(): 'zh' | 'en' {
+  const l = getLanguage();
+  if (l === 'zh' || l === 'en') return l;
+  try {
+    return app.getLocale().toLowerCase().startsWith('zh') ? 'zh' : 'en';
+  } catch {
+    return 'en';
+  }
 }

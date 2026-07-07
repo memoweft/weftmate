@@ -40,7 +40,7 @@ import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_ID
 import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
-import { getPerceptionEnabled, setPerceptionEnabled } from './settings.ts';
+import { getPerceptionEnabled, setPerceptionEnabled, getLanguage, setLanguage, resolvedLang } from './settings.ts';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
 //   loadEnvFile 幂等；没有 .env 抛错忽略。放在最顶部——否则 DB_PATH（下面就求值）读不到 .env 里的 MEMOWEFT_HOST_DB。
@@ -525,7 +525,21 @@ const server = createServer(async (req, res) => {
     // 感知采集 opt-in（默认关，见 settings.ts）。GET 读当前开关；POST 切换 → 写设置 + 启/停采集器。
     //   采集器采到的样本仍走 /api/observe 审核层（sanitizeObservation 强制 observed 不上云，隐私红线）。
     if (req.method === 'GET' && url.pathname === '/api/settings') {
-      sendJson(res, 200, { perception: { enabled: getPerceptionEnabled(), running: collector.isCollectorRunning() } });
+      sendJson(res, 200, {
+        perception: { enabled: getPerceptionEnabled(), running: collector.isCollectorRunning() },
+        language: { setting: getLanguage(), resolved: resolvedLang() }, // setting=auto/zh/en(用户选)·resolved=实际生效 zh/en
+      });
+      return;
+    }
+
+    // 库产出语言(认知/摘要)：body {lang:'auto'|'zh'|'en'} → 存设置 + 【运行期直接改 memoweft config.language】即刻生效、不重启。
+    //   consolidate/distill 调用时读 config.language(共享单例·引用),改了下次整理就出对应语言。聊天回复本就跟用户语言、不受影响。
+    if (req.method === 'POST' && url.pathname === '/api/settings/language') {
+      const body = await readJson(req);
+      const lang = body.lang === 'zh' || body.lang === 'en' ? body.lang : 'auto';
+      setLanguage(lang);
+      config.language = resolvedLang(); // 运行期改共享单例 → 下次消化即生效(无需重建 core)
+      sendJson(res, 200, { ok: true, setting: getLanguage(), resolved: config.language });
       return;
     }
     if (req.method === 'POST' && url.pathname === '/api/settings/perception') {
@@ -740,7 +754,7 @@ server.listen(PORT, '127.0.0.1', () => {
   console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
   console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET /api/chat-history · GET /api/bg-status');
   console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
-  console.log('  设置·感知(opt-in) → GET /api/settings · POST /api/settings/perception · POST /api/observe(采集摄入·不上云)');
+  console.log('  设置 → GET /api/settings · POST /api/settings/perception(感知 opt-in) · POST /api/settings/language(库语言·运行期改) · POST /api/observe(采集·不上云)');
   console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
   console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
   console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');

@@ -1219,7 +1219,7 @@
         </div>
       </section>
 
-      <!-- 外观节：日夜切换 -->
+      <!-- 外观节：日夜切换 + 语言 -->
       <section class="set-sec" data-sec="appearance">
         <h2>外观</h2>
         <p class="set-lead">选一个看着顺眼的主题。选择会记住，下次打开还是它。</p>
@@ -1227,6 +1227,15 @@
           <button class="set-theme-opt" id="themeDark" data-theme="dark">🌙 暗色</button>
           <button class="set-theme-opt" id="themeLight" data-theme="light">☀️ 亮色</button>
         </div>
+        <!-- 语言：影响它形成的「理解」和摘要用什么语言；聊天回复本就跟着你说的语言走。GET /api/settings 读 language.setting 高亮、POST /api/settings/language 写。运行期即刻生效不重启。 -->
+        <h3 style="margin:20px 0 4px;font-size:14px;color:var(--text);font-weight:600;">语言</h3>
+        <p class="set-lead">影响它整理出来的「理解」和摘要用什么语言；聊天回复本就跟着你说的语言走。「跟随系统」＝按你系统语言。改了即刻生效，不用重启。</p>
+        <div class="set-theme-row">
+          <button class="set-theme-opt" id="langAuto" data-lang="auto">跟随系统</button>
+          <button class="set-theme-opt" id="langZh" data-lang="zh">中文</button>
+          <button class="set-theme-opt" id="langEn" data-lang="en">English</button>
+        </div>
+        <p class="set-lead" id="langStatus" style="margin-top:2px;"></p>
       </section>
 
       <!-- 感知节（阶段2）：opt-in 开关。开启后后端起采集器采「活动窗口 + 活动节奏」→ observed 证据（强制不上云）→ 画像「感知来的」组。 -->
@@ -3302,6 +3311,8 @@
     if (sec === 'models') loadProfiles();
     // 感知节：切到时读一次当前开关态（懒加载，不动上面 models/appearance/about 的处理）
     if (sec === 'perception') loadPerceptionSetting();
+    // 外观节：切到时读一次当前语言设置（懒加载，不动主题/上面各节的处理）
+    if (sec === 'appearance') loadLanguageState();
   }
   document.querySelectorAll('#settings .set-nav-btn').forEach((b) => {
     b.addEventListener('click', () => setSelectSection(b.getAttribute('data-sec')));
@@ -3346,6 +3357,53 @@
   { const _on = $('perceptOn'), _off = $('perceptOff');
     if (_on) _on.addEventListener('click', () => setPerception(true));
     if (_off) _off.addEventListener('click', () => setPerception(false)); }
+
+  // ── 语言（外观节）：GET /api/settings 读 language.setting 高亮、POST /api/settings/language 写。──
+  //   影响后端形成的「理解」/摘要用哪种语言；运行期即刻生效不重启。用户/后端内容一律 textContent，fetch 失败兜错不崩。
+  const LANG_LABEL = { auto: '跟随系统', zh: '中文', en: 'English' };
+  function syncLangButtons(setting, resolved) {
+    const auto = $('langAuto'), zh = $('langZh'), en = $('langEn'), st = $('langStatus');
+    if (!auto || !zh || !en) return;
+    const s = (setting === 'zh' || setting === 'en' || setting === 'auto') ? setting : 'auto';
+    auto.classList.toggle('on', s === 'auto');
+    zh.classList.toggle('on', s === 'zh');
+    en.classList.toggle('on', s === 'en');
+    if (st) {
+      const rz = resolved === 'en' ? 'English' : '中文';
+      st.textContent = s === 'auto' ? ('当前：跟随系统（实际用' + rz + '）。') : ('当前：' + (LANG_LABEL[s] || rz) + '。');
+    }
+  }
+  async function loadLanguageState() {
+    const st = $('langStatus');
+    if (st) st.textContent = '读取中…';
+    try {
+      const d = await fetch('/api/settings').then((x) => x.json());
+      const lg = d && d.language ? d.language : {};
+      syncLangButtons(lg.setting, lg.resolved);
+    } catch (e) {
+      if (st) st.textContent = '读取语言设置失败，稍后再试。';
+    }
+  }
+  async function setLanguage(lang) {
+    try {
+      const res = await fetch('/api/settings/language', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ lang: lang }),
+      });
+      const d = await res.json();
+      if (!res.ok || d.error) { memToast('语言没设成：' + (d && d.error ? d.error : '稍后再试'), 'danger'); await loadLanguageState(); return; }
+      syncLangButtons(d.setting, d.resolved);
+      const label = LANG_LABEL[d.setting] || (d.resolved === 'en' ? 'English' : '中文');
+      memToast('语言已设为' + label + '，新的理解会用' + (d.resolved === 'en' ? 'English' : '中文') + '；聊天回复仍跟你说的语言', '');
+    } catch (e) {
+      memToast('语言没设成：' + String(e), 'danger');
+      await loadLanguageState();
+    }
+  }
+  { const _a = $('langAuto'), _z = $('langZh'), _e = $('langEn');
+    if (_a) _a.addEventListener('click', () => setLanguage('auto'));
+    if (_z) _z.addEventListener('click', () => setLanguage('zh'));
+    if (_e) _e.addEventListener('click', () => setLanguage('en')); }
+
   $('setClose').addEventListener('click', closeSettings);
   // 点遮罩（面板外）关闭
   $('settings').addEventListener('click', (e) => { if (e.target === $('settings')) closeSettings(); });
