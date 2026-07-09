@@ -389,7 +389,9 @@
   #btnRefresh:disabled { opacity: .55; cursor: default; }
 
   /* S1 记忆气泡：后台/立即整理出新理解时，就地织进聊天流「记住了：X · 把握度档 · 改/删」的淡色细行。 */
-  .mem-note { display: flex; justify-content: center; padding: 2px 0; }
+  /* 无操作自动淡出（鼠标悬停即取消·见 scheduleNoteFade）——别让气泡在聊天流里越堆越多。 */
+  .mem-note { display: flex; justify-content: center; padding: 2px 0; transition: opacity .5s ease; }
+  .mem-note.fading { opacity: 0; }
   .mem-note .mn-inner {
     display: flex; align-items: flex-start; gap: 8px; max-width: 85%;
     background: var(--accent-soft); border: 1px solid var(--accent-dim); border-radius: 12px;
@@ -1946,6 +1948,20 @@
   //   textContent 免 XSS；_weavedNoteIds 按 id 去重（同一条只织一次，跨轮询不重复）。
   //   改/删复用受控端点（/api/cognition/{invalidate,delete}），与记忆管理页同一套后端。
   const _weavedNoteIds = new Set();
+  // 记忆气泡无操作淡出：气泡出现后 MEMNOTE_FADE_MS 内没被鼠标碰过就淡出移除；悬停即取消（"不操作才消失"）。
+  //   1-2s 太短、"这条不对/删"来不及点，取 5s 折中；要更短改这个常量即可。悬停期间永不消失。
+  const MEMNOTE_FADE_MS = 5000;
+  function scheduleNoteFade(note) {
+    let fadeTimer = null, killTimer = null;
+    const cancel = () => { clearTimeout(fadeTimer); clearTimeout(killTimer); fadeTimer = killTimer = null; note.classList.remove('fading'); };
+    const arm = () => {
+      cancel();
+      fadeTimer = setTimeout(() => { note.classList.add('fading'); killTimer = setTimeout(() => note.remove(), 550); }, MEMNOTE_FADE_MS);
+    };
+    note.addEventListener('mouseenter', cancel); // 碰到就保留（连同已开始的淡出一起取消、恢复不透明）
+    note.addEventListener('mouseleave', arm);     // 移开重新计时
+    arm();
+  }
   function weaveMemNote(c) {
     if (!c || !c.id || _weavedNoteIds.has(c.id)) return;
     _weavedNoteIds.add(c.id);
@@ -1980,6 +1996,7 @@
     inner.append(ic, body);
     note.append(inner);
     chatInner.appendChild(note);
+    scheduleNoteFade(note); // 无操作 5s 后淡出（悬停取消）
     scrollDown();
   }
 
