@@ -127,11 +127,12 @@ export async function callTool(fqName: string, args: Record<string, unknown>): P
   return (res.isError ? '[工具报错] ' : '') + (text || '（无输出）');
 }
 
-/** 连接状态（给前端能力管理面板）。 */
-export function statusView(): Array<{ id: string; name: string; status: string; toolCount: number; error?: string; tools: string[] }> {
+/** 连接状态（给前端能力管理面板）。tools 带 fqName + readOnly，供前端渲染逐工具「信任」开关（F1）。 */
+export function statusView(): Array<{ id: string; name: string; status: string; toolCount: number; error?: string; tools: Array<{ toolName: string; fqName: string; readOnly: boolean }> }> {
   return [...conns.values()].map((c) => ({
     id: c.server.id, name: c.server.name, status: c.status,
-    toolCount: c.tools.length, error: c.error, tools: c.tools.map((t) => t.toolName),
+    toolCount: c.tools.length, error: c.error,
+    tools: c.tools.map((t) => ({ toolName: t.toolName, fqName: t.fqName, readOnly: t.readOnly })),
   }));
 }
 

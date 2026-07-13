@@ -105,6 +105,7 @@ interface AgentDeps {
   record?: (taskText: string, summary: string) => Promise<void>; // 干完把结果回写记忆
   mcpTools?: () => AgentMcpTool[];                            // 当前可用的 MCP 工具（装的能力包）
   callMcp?: (fqName: string, args: Record<string, unknown>) => Promise<string>; // 调一个 MCP 工具
+  isMcpToolTrusted?: (fqName: string) => boolean;            // F1：用户是否已「信任」此 MCP 工具（信任=免批）
 }
 let deps: AgentDeps = {};
 export function configureAgentDeps(d: AgentDeps): void { deps = d; }
@@ -112,15 +113,17 @@ export function configureAgentDeps(d: AgentDeps): void { deps = d; }
 /** 解析工具名 → ToolDef：先内置四工具，再 MCP 工具（包成 ToolDef）。
  *  MCP 是第三方代码，且 readOnly 是【服务自报】的（annotations.readOnlyHint）——自报只读不可信：
  *  恶意/有 bug 的服务谎报 readOnlyHint=true 就能绕过审批、在 auto 档把用户画像/工作区文件当参数
- *  自动发往第三方。故【所有 MCP 工具一律 alwaysApprove=true】，不管哪档自主度、不管自报只读，
- *  都要用户点头（F1·安全底线，同 run_command）。readOnly 只留作 UI 提示标；逐工具「信任」豁免留后续 UI。 */
+ *  自动发往第三方。故【MCP 工具默认一律要用户点头】（F1·安全底线，同 run_command），不看自报只读。
+ *  用户对信得过的具体工具显式「信任」(isMcpToolTrusted) 后，才降级为免批、按 mutating/自主度走（同内置工具）。
+ *  readOnly 只留作 UI 提示标，绝不作免批依据。 */
 function resolveTool(name: string): ToolDef | null {
   if (TOOLS[name]) return TOOLS[name];
   const mt = (deps.mcpTools ? deps.mcpTools() : []).find((t) => t.fqName === name);
   if (!mt) return null;
+  const trusted = deps.isMcpToolTrusted?.(name) ?? false;
   return {
-    mutating: !mt.readOnly,          // 仅作展示/标注；审批与否由 alwaysApprove 定
-    alwaysApprove: true,             // F1：自报只读不免批，一律要点头
+    mutating: !mt.readOnly,               // 仅作展示/标注；审批与否由 alwaysApprove 定
+    alwaysApprove: !trusted,              // F1：默认强批；用户显式「信任」后才免批
     run: (args) => (deps.callMcp ? deps.callMcp(name, args) : Promise.reject(new Error('MCP 未接线'))),
   };
 }
@@ -228,17 +231,33 @@ async function backupBeforeWrite(task: Task, file: string): Promise<void> {
   }
 }
 
+/** 杀掉命令启的【整棵进程树】（F7）：shell:true 下 shell 还会派生子/孙进程，只 child.kill() 会留后台孤儿
+ *  （超时"已终止"是假象，孤儿可继续外联/占资源）。Windows 用 taskkill /T /F 收整棵树；
+ *  POSIX 靠 detached 让子进程自成进程组、kill(-pid) 收整组。 */
+function killTree(child: ReturnType<typeof spawn>): void {
+  const pid = child.pid;
+  if (pid == null) return;
+  if (process.platform === 'win32') {
+    try { spawn('taskkill', ['/PID', String(pid), '/T', '/F'], { stdio: 'ignore' }); }
+    catch { try { child.kill(); } catch { /* 尽力 */ } }
+  } else {
+    try { process.kill(-pid, 'SIGKILL'); }              // 负 pid = 整个进程组（需 spawn 时 detached）
+    catch { try { child.kill('SIGKILL'); } catch { /* 尽力 */ } }
+  }
+}
+
 /** 在工作区里跑一条命令，收 stdout+stderr（合并截断），带超时。 */
 function runShell(command: string, cwd: string): Promise<string> {
   return new Promise((resolvePromise) => {
-    const child = spawn(command, { cwd, shell: true });
+    // detached（仅 POSIX）：让子进程自成进程组，超时能整组 kill 掉孙进程（F7）；Windows 走 taskkill /T。
+    const child = spawn(command, { cwd, shell: true, detached: process.platform !== 'win32' });
     let out = '';
     const push = (b: Buffer) => { out += b.toString('utf8'); };
     child.stdout?.on('data', push);
     child.stderr?.on('data', push);
     const timer = setTimeout(() => {
-      child.kill();
-      out += `\n（超时 ${CMD_TIMEOUT_MS / 1000}s，已终止）`;
+      killTree(child);                                   // F7：收整棵进程树，别留后台孤儿
+      out += `\n（超时 ${CMD_TIMEOUT_MS / 1000}s，已终止整棵进程树）`;
     }, CMD_TIMEOUT_MS);
     child.on('close', (code) => {
       clearTimeout(timer);

@@ -4139,7 +4139,30 @@
       acts.appendChild(mk('删除', 'danger', () => mcpDelete(s)));
       head.appendChild(acts);
       card.appendChild(head);
-      if (s.status === 'ready' && s.tools && s.tools.length) { const t = document.createElement('div'); t.className = 'mcp-srv-tools'; t.textContent = '工具：' + s.tools.join('、'); card.appendChild(t); }
+      if (s.status === 'ready' && s.tools && s.tools.length) {
+        const tw = document.createElement('div'); tw.className = 'mcp-srv-tools';
+        const hint = document.createElement('div');
+        hint.style.cssText = 'font-size:12px;color:var(--muted,#8a8a8a);margin-bottom:4px;';
+        hint.textContent = '工具（第三方代码·默认每次调用都要你点头；信得过的勾「信任」可免批）：';
+        tw.appendChild(hint);
+        for (const t of s.tools) {
+          const row = document.createElement('label');
+          row.style.cssText = 'display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px;cursor:pointer;';
+          const cb = document.createElement('input'); cb.type = 'checkbox'; cb.checked = !!t.trusted;
+          cb.onchange = () => mcpTrust(t.fqName, cb.checked);
+          row.appendChild(cb);
+          const nm = document.createElement('span');
+          nm.style.cssText = 'font-family:var(--font-mono,ui-monospace,monospace);';
+          nm.textContent = t.toolName + (t.readOnly ? '（服务自称只读）' : '');
+          row.appendChild(nm);
+          const tag = document.createElement('span');
+          tag.style.cssText = 'margin-left:auto;font-size:11px;color:' + (t.trusted ? 'var(--ready,#8cba90)' : 'var(--muted,#8a8a8a)') + ';';
+          tag.textContent = t.trusted ? '信任·免批' : '每次要批准';
+          row.appendChild(tag);
+          tw.appendChild(row);
+        }
+        card.appendChild(tw);
+      }
       if (s.error) { const e = document.createElement('div'); e.className = 'mcp-srv-err'; e.textContent = s.error; card.appendChild(e); }
       list.appendChild(card);
     }
@@ -4149,6 +4172,10 @@
     try {
       const d = await fetch('/api/mcp/catalog').then((x) => x.json());
       const box = $('mcpCatalog'); box.textContent = '';
+      const warn = document.createElement('div');
+      warn.style.cssText = 'font-size:12px;color:var(--muted,#8a8a8a);margin:0 0 8px;line-height:1.5;';
+      warn.textContent = '⚠ 预置服务经 npx 拉取并运行第三方代码，每次启动可能拉最新版（TOFU·无版本锁）。信得过再装；想固定版本，把下面 args 里的「@包名」改成「@包名@版本号」。';
+      box.appendChild(warn);
       for (const c of (d.catalog || [])) {
         const item = document.createElement('div'); item.className = 'mcp-cat-item';
         const n = document.createElement('div'); n.className = 'mcp-cat-name'; n.textContent = c.name; item.appendChild(n);
@@ -4199,6 +4226,11 @@
   }
   async function mcpToggle(id, enabled) {
     try { await fetch('/api/mcp/server/toggle', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, enabled }) }); } catch (e) { /* 下次 load 纠正 */ }
+    mcpLoad();
+  }
+  async function mcpTrust(fqName, trusted) {
+    // F1：对信得过的具体 MCP 工具设「信任·免批」。默认全都要批准；信任后该工具降级为按自主度走。
+    try { await fetch('/api/mcp/tool/trust', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fqName, trusted }) }); } catch (e) { /* 下次 load 纠正 */ }
     mcpLoad();
   }
   async function mcpReconnect(id) {

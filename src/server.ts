@@ -40,7 +40,7 @@ import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_ID
 import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
-import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, resolvedLang } from './settings.ts';
+import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, resolvedLang, getTrustedMcpTools, setMcpToolTrust } from './settings.ts';
 import * as agent from './agent.ts';
 import * as mcp from './mcp.ts';
 import * as mcpStore from './mcp-store.ts';
@@ -137,6 +137,7 @@ agent.configureAgentDeps({
   // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
   mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),
   callMcp: (fqName, args) => mcp.callTool(fqName, args),
+  isMcpToolTrusted: (fqName) => getTrustedMcpTools().includes(fqName),   // F1：读明文信任列表决定是否免批
 });
 
 // 启动时连上所有【已启用】的 MCP 服务（后台·不阻塞起服；单个坏不拖累其余，见 mcp.reconcile）。
@@ -844,6 +845,7 @@ const server = createServer(async (req, res) => {
     // 服务清单：配置公开视图（env 剥值）+ 实时连接状态/工具数 合并。
     if (req.method === 'GET' && url.pathname === '/api/mcp/servers') {
       const st = new Map(mcp.statusView().map((s) => [s.id, s]));
+      const trusted = new Set(getTrustedMcpTools());
       const servers = mcpStore.publicView().servers.map((s) => {
         const live = st.get(s.id);
         return {
@@ -851,7 +853,7 @@ const server = createServer(async (req, res) => {
           status: live ? live.status : (s.enabled ? 'disconnected' : 'disabled'),
           toolCount: live ? live.toolCount : 0,
           error: live ? live.error : undefined,
-          tools: live ? live.tools : [],
+          tools: live ? live.tools.map((t) => ({ ...t, trusted: trusted.has(t.fqName) })) : [],  // F1：带每个工具的信任态
         };
       });
       sendJson(res, 200, { servers });
@@ -917,6 +919,16 @@ const server = createServer(async (req, res) => {
       const srv = id ? mcpStore.getServer(id) : null;
       if (!srv) { sendJson(res, 404, { error: '没有这个服务' }); return; }
       if (srv.enabled) await mcp.connectServer(srv);
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+
+    // 设某个 MCP 工具的「信任·免批」(F1)：body {fqName, trusted}。信任=该工具降级为按自主度走、不再每次强批。
+    if (req.method === 'POST' && url.pathname === '/api/mcp/tool/trust') {
+      const body = await readJson(req);
+      const fqName = typeof body.fqName === 'string' ? body.fqName.trim() : '';
+      if (!fqName) { sendJson(res, 400, { error: '缺少 fqName' }); return; }
+      setMcpToolTrust(fqName, body.trusted === true);
       sendJson(res, 200, { ok: true });
       return;
     }

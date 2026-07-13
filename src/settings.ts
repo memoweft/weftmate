@@ -21,6 +21,8 @@ interface Settings {
   };
   /** 库产出语言(认知/摘要):'auto'=跟系统 / 'zh' / 'en'。缺省 auto。见 [[weftmate 语言]] / MEMOWEFT_LANG。 */
   language?: 'auto' | 'zh' | 'en';
+  /** 已「信任·免批准」的 MCP 工具 fqName（F1 trust opt-in）。默认空=所有 MCP 工具都要批准。 */
+  trustedMcpTools?: string[];
 }
 
 function settingsPath(): string {
@@ -114,4 +116,21 @@ export function resolvedLang(): 'zh' | 'en' {
   } catch {
     return 'en';
   }
+}
+
+// ── MCP 工具信任（F1·trust opt-in）──────────────────────────────────
+// 安全默认：所有 MCP（第三方代码）工具都要用户点头（resolveTool alwaysApprove=true）。用户对信得过的
+//   具体工具显式「信任」后，它才降级为按自主度/mutating 走（同内置工具）。信任非机密→明文设置即可。
+/** 已信任·免批的 MCP 工具 fqName 列表。 */
+export function getTrustedMcpTools(): string[] {
+  const t = read().trustedMcpTools;
+  return Array.isArray(t) ? t.filter((x) => typeof x === 'string') : [];
+}
+/** 设某个 MCP 工具的信任（trusted=true 免批；false 撤回信任、恢复要批）。 */
+export function setMcpToolTrust(fqName: string, trusted: boolean): void {
+  const s = read();
+  const set = new Set(getTrustedMcpTools());
+  if (trusted) set.add(fqName); else set.delete(fqName);
+  s.trustedMcpTools = [...set];
+  write(s);
 }

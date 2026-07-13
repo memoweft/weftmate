@@ -229,6 +229,28 @@ describe('agent.resolveTool + 审批门｜所有 MCP 工具（含自报只读）
     assert.deepEqual(callLog[0], { fq: 'svc__search', args: { q: 'cats' } });
     assert.equal(agent.getTaskView(id).steps[0].status, 'done');
   });
+
+  test('已「信任」的 MCP 工具在 auto 档：免批、自动跑到 done（F1 trust opt-in）', async () => {
+    const callLog: any[] = [];
+    agent.configureAgentDeps({
+      mcpTools: () => [{ fqName: 'svc__write_note', description: 'writes', signature: '(text)', readOnly: false }],
+      callMcp: async (fq: string, args: any) => { callLog.push({ fq, args }); return 'WROTE'; },
+      isMcpToolTrusted: (fq: string) => fq === 'svc__write_note',   // 用户已显式信任这个工具
+    });
+    const { factory } = scriptClient([
+      '{"action":{"tool":"svc__write_note","args":{"text":"hi"}}}',
+      '{"done":{"summary":"完成"}}',
+    ]);
+    agent.__setClientFactory(factory);
+
+    const { id } = agent.startTask({ task: '干活', workspace: '', autonomy: 'auto', attachments: [{ name: 'ctx.txt', content: '参考' }] });
+
+    // 已信任 → 即便是 mutating(非只读) 工具，在 auto 下也免批、自动跑到 done（全程从不 decideStep）。
+    assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'done'), true, '已信任的 MCP 工具应在 auto 下自动跑到 done');
+    assert.equal(callLog.length, 1);
+    assert.deepEqual(callLog[0], { fq: 'svc__write_note', args: { text: 'hi' } });
+    assert.equal(agent.getTaskView(id).steps[0].status, 'done');
+  });
 });
 
 // ══ 不变量 3 · buildSystemPrompt 只吐 fqName+签名+描述 ══════════════════════

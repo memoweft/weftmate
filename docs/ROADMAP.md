@@ -38,6 +38,9 @@
 - **工作量**:16–21 人天 · **依赖**:无 · **⚠ B1 建仓需 owner**（本机没装 gh / 需 GitHub 授权）
 
 ### 🔴 M1 · P0 安全闭口 + 内核升级安全网
+> **进度 2026-07-13 · M1 ✅ 全部完成**：F1（MCP 自报只读不再免批·一律强批）· F2（沙箱 `safeResolve` 后 realpath 复核、拒 junction/symlink 逃逸·测试实建 junction 验过）· 内核精确 pin（去 `^0.5.0`）· F7（命令超时杀整棵进程树·POSIX 进程组 / Win `taskkill /T`）· F8（MCP 预置装弹「运行第三方代码·npx 拉最新·建议锁版本」警示）· F1「信任」豁免（逐工具 trust opt-in：settings 明文存 + `resolveTool` 按信任降级 + `/api/mcp/tool/trust` 端点 + 前端 MCP 面板逐工具开关）。`npm test` **30 绿**、typecheck 绿、前端内联脚本解析过。**G1 见下**（重定范围·挪 M5）。
+> **G1 重定范围**：读 memoweft `migrations.d.ts` 发现 **`createMemoWeftCore`→`openStores` 已自动跑迁移**（带 `.bak` + 事务回滚），且 `runMigrations` 要 `DatabaseSync` 句柄、库未暴露给 Host——所以「adapter 调 runMigrations」基本冗余、也做不到。G1 改为「**内核换版前先备份 `.db` 文件**」的 belt-and-suspenders，挪到 **M5 自动更新**（B6 更新前备份）落地更合适。
+
 agent/MCP 已上线可被利用，越晚堵爆炸半径越大。
 - **内容**:F1 MCP 只读=不可信自报（默认全批准 + 逐工具"信任"开关）· F2 沙箱硬化（safeResolve 后 realpath/lstat，拒 symlink 逃逸）· F7 超时杀整棵进程树 · F8 npx 装 MCP 锁版本+警示 · G1 schema 迁移接线（adapter 启动时 getSchemaVersion + runMigrations）· **内核精确 pin**（去 `^0.5.0`）
 - **验收**:自报 readOnly 未信任前仍弹审批;symlink 逃逸 fail-closed 有断言;超时后无孤儿进程;装 MCP 可见锁定版本;启动检查 schema 版本且能跑迁移;package.json 去 caret
