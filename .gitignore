@@ -18,6 +18,9 @@ data/
 *.log
 dogfood*.mjs
 
+# ── dogfood 隔离实例的数据/配置/密钥(绝不进仓;run.mjs 和 PROTOCOL.md 照常进仓) ──
+dogfood/data/
+
 # ── OS / editor cruft ──
 .DS_Store
 Thumbs.db
