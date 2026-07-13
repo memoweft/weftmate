@@ -48,13 +48,14 @@
 需要 Node.js（含 Electron,随 `npm install` 装上）。
 
 ```bash
+git clone https://github.com/memoweft/weftmate && cd weftmate
 npm install        # 装依赖(含 Electron、memoweft、MCP SDK)
 npm start          # 起 Electron:主进程 import server.ts 起 loopback + core → 窗口加载
 npm run typecheck  # tsc 类型检查
 npm test           # 跑契约/冒烟测试(node:test)
 ```
 
-> 公开仓库尚未建立(交付层在建),暂无 `git clone` 地址;以上命令在项目根目录内运行。
+> 源码:[github.com/memoweft/weftmate](https://github.com/memoweft/weftmate)(MIT · 开源)。尚无预编译安装包(打包在路线图 M4–M5),当前从源码运行。
 
 ---
 
