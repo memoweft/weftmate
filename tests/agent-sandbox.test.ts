@@ -227,4 +227,23 @@ describe('agent 沙箱 safeResolve + 快照撤回', () => {
     assert.match(String(step.error), /软链|越出/);
     assert.equal(readFileSync(secret, 'utf8'), 'ORIGINAL', '区外文件绝不能被经软链写穿');
   });
+
+  it('C6·撤回不损坏二进制：写盖含 null 字节的二进制 → 撤回按 Buffer 逐字节还原', async () => {
+    const ws = mkWorkspace();
+    const binPath = join(ws, 'img.bin');
+    const original = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x00, 0x01, 0xff, 0xfe, 0x00, 0x7f]); // 含 0x00 的二进制
+    writeFileSync(binPath, original);
+
+    __setClientFactory(scriptFactory([act('write_file', { path: 'img.bin', content: 'CORRUPT' }), done()]));
+    const { id } = startTask({ task: '盖掉二进制', workspace: ws, autonomy: 'auto' });
+    const v = await settle(id);
+    assert.equal(v.status, 'done');
+    assert.equal(v.canUndo, true);
+
+    const undo = await undoTask(id);
+    assert.equal(undo.ok, true);
+    assert.equal(undo.restored, 1);
+    // C6 前 backupBeforeWrite 用 utf8 读会丢字节，撤回写回就损坏；改 Buffer 备份后必须逐字节一致。
+    assert.equal(Buffer.compare(readFileSync(binPath), original), 0, '二进制文件撤回后应逐字节还原');
+  });
 });

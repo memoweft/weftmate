@@ -68,6 +68,23 @@ afterEach(() => {
 });
 
 describe('agent 审批门 + 三档自主度', () => {
+  // C1：干完把结果 summary 回写记忆（不只任务意图）——让"帮你干活"进"越用越懂"循环。
+  it('C1·done 后 record 被调用，且带上任务的 summary（干成了啥）', async () => {
+    const recordCalls: Array<{ task: string; summary: string }> = [];
+    configureAgentDeps({ record: async (task, summary) => { recordCalls.push({ task, summary }); } });
+    __setClientFactory(scriptedFactory([
+      `{"thought":"看看","action":{"tool":"list_dir","args":{"path":"."}}}`,
+      `{"done":{"summary":"建好了 3 个文件"}}`,
+    ]));
+
+    const { id } = startTask({ task: '帮我建脚手架', workspace: ws, autonomy: 'auto' });
+    await waitFor(id, (x) => terminal(x.status));
+
+    assert.equal(recordCalls.length, 1, 'done 后应回写一次记忆');
+    assert.equal(recordCalls[0].task, '帮我建脚手架');
+    assert.equal(recordCalls[0].summary, '建好了 3 个文件', 'summary(干成了啥) 必须传给 record，不能只记任务意图');
+  });
+
   // 不变量①：run_command 永远要批准，即便 autonomy='auto' 也停在 awaiting、不自动执行。
   it('run_command 在 auto 档也停在 awaiting，且未执行（sentinel 未落盘）', async () => {
     const sentinel = join(ws, 'ran.txt');

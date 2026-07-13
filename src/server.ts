@@ -131,8 +131,10 @@ agent.configureAgentDeps({
     const items = await core.recall({ query });
     return items.slice(0, 6).map((r) => '· ' + r.content).join('\n');
   },
-  record: async (taskText) => {
-    await core.ingestUserMessage({ content: `（让 WeftMate 帮我干活）${taskText}` });
+  record: async (taskText, summary) => {
+    // C1：把 agent 真正干成了啥(summary) 也回写，别只记任务意图——让"帮你干活"真进"越用越懂"闭环。
+    const done = summary && summary.trim() ? `\n结果：${summary.trim()}` : '';
+    await core.ingestUserMessage({ content: `（让 WeftMate 帮我干活）${taskText}${done}` });
   },
   // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
   mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),

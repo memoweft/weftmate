@@ -51,7 +51,10 @@ function slug(name: string): string {
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([p, new Promise<T>((_, rej) => setTimeout(() => rej(new Error('连接超时')), ms))]);
+  // 成功路径也要 clearTimeout：否则那个 ms 定时器悬挂着 keep event loop alive（M1 契约测试逮到的悬挂定时器）。
+  let timer: ReturnType<typeof setTimeout>;
+  const timeout = new Promise<T>((_, rej) => { timer = setTimeout(() => rej(new Error('连接超时')), ms); });
+  return Promise.race([p, timeout]).finally(() => clearTimeout(timer));
 }
 
 /** 连一个 stdio MCP 服务：启子进程 → initialize 握手 → tools/list 缓存。失败记 error 不抛（单个坏不拖累其余）。 */

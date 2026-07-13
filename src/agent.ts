@@ -85,10 +85,10 @@ interface Task {
   summary?: string;
   note?: string;
   createdAt: string;
-  attachments: { name: string; content: string }[]; // 用户附的参考文件（③·上下文附件）；agent 用 read_attachment 按需读
+  attachments: { name: string; content: string; origLen?: number }[]; // 参考文件（③·上下文附件）；origLen=截断前原字数（仅截断时有·C5）
   // 内部：
   messages: ChatMessage[];               // agent 自己的对话历史（不进 memoweft）
-  backups: Map<string, string | null>;   // 路径 → 改前内容（null=改前不存在）；撤回据此还原
+  backups: Map<string, Buffer | null>;   // 路径 → 改前内容 Buffer（原样备份含二进制；null=改前不存在）；撤回据此还原
   ranCommand: boolean;
   stopped: boolean;
   gate?: (decision: 'approve' | 'reject') => void;  // 等待批准时的 resolver
@@ -224,8 +224,9 @@ const TOOLS: Record<string, ToolDef> = {
 async function backupBeforeWrite(task: Task, file: string): Promise<void> {
   if (task.backups.has(file)) return;            // 已备份过原始态，别被后续写覆盖
   if (existsSync(file)) {
-    try { task.backups.set(file, await readFile(file, 'utf8')); }
-    catch { task.backups.set(file, null); }       // 读不出（二进制/权限）→ 当作无法还原的新建，撤回时删掉
+    // C6：读 Buffer 原样备份（不预设 utf8）——二进制文件用 utf8 读会丢字节，撤回时写回就损坏原文件。
+    try { task.backups.set(file, await readFile(file)); }
+    catch { task.backups.set(file, null); }       // 权限等读不出 → 当作无法还原（撤回时删掉）
   } else {
     task.backups.set(file, null);                // 改前不存在 → 撤回时删除
   }
@@ -323,7 +324,7 @@ function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: Agen
   // 参考文件清单（③·上下文附件）：只列名字+大小，让模型按需 read_attachment（不全量塞·检索由模型自己挑）。
   const attList = attachments.length
     ? `\n\n参考文件（用户附的·用 read_attachment 按名字读·别一次全读，按需读相关的）：\n` +
-      attachments.map((a) => `- ${a.name}（${a.content.length} 字）`).join('\n')
+      attachments.map((a) => `- ${a.name}（${a.content.length} 字${a.origLen ? `·已从 ${a.origLen} 字截断，后半段不在` : ''}）`).join('\n')
     : '';
   const envLine = hasWs
     ? `工作区：${workspace}\n所有文件路径都相对工作区，且【不能超出工作区】（别用绝对路径、别用 .. 逃出去）。`
@@ -359,7 +360,17 @@ export function startTask(input: { task: string; workspace: string; autonomy: Au
   const attachments = (Array.isArray(input.attachments) ? input.attachments : [])
     .filter((a) => a && typeof a.name === 'string' && typeof a.content === 'string')
     .slice(0, MAX_ATTACHMENTS)
-    .map((a) => ({ name: String(a.name).slice(0, 200), content: String(a.content).slice(0, MAX_ATTACH_CHARS) }));
+    .map((a) => {
+      const raw = String(a.content);
+      // C5：超上限就截断，并记 origLen——buildSystemPrompt 在附件清单里标"已从 N 字截断"，不再静默丢后半段
+      //   （否则模型拿半个文件当整份、给出看似完整实则漏读的结果，用户全程无感）。
+      const truncated = raw.length > MAX_ATTACH_CHARS;
+      return {
+        name: String(a.name).slice(0, 200),
+        content: truncated ? raw.slice(0, MAX_ATTACH_CHARS) : raw,
+        ...(truncated ? { origLen: raw.length } : {}),
+      };
+    });
   // 工作区可选：给了就必须是存在的目录；没给则必须至少有一个附件（否则 agent 无事可做）。
   if (workspace) {
     if (!existsSync(workspace) || !statSync(workspace).isDirectory()) throw new Error('工作区文件夹不存在或不是目录');
@@ -538,7 +549,7 @@ export async function undoTask(taskId: string): Promise<{ ok: boolean; restored:
   for (const [file, prior] of t.backups) {
     try {
       if (prior === null) { if (existsSync(file)) { await rm(file); restored++; } }
-      else { await writeFile(file, prior, 'utf8'); restored++; }
+      else { await writeFile(file, prior); restored++; }   // C6：prior 是 Buffer，原样写回（文本/二进制都不损坏）
     } catch { /* 单个文件还原失败不阻断其余（如已被外部删/锁） */ }
   }
   t.backups.clear();

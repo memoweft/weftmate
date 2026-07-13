@@ -49,8 +49,11 @@ async function sampleOnce(): Promise<void> {
     const titleOn = getDesktopCapture() !== 'app_only';
     const title = titleOn ? (w.title || '') : '';
     const key = app + '|' + title;
-    if (key === lastKey) return; // 没换窗口不重复记
+    if (key === lastKey) return; // 没换窗口不重复记（进程内去重）
     lastKey = key;
+    // C4：给稳定 originId=窗口键+小时桶——Core 按 originId 幂等去重，同窗口跨重启同小时不重复记
+    //   （lastKey 只在进程内、重启归零；隔到别的小时再回到该窗口仍算新事件）。
+    const originId = `aw:${key}@${new Date().toISOString().slice(0, 13)}`;
     await fetch(`http://127.0.0.1:${port}/api/observe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -59,6 +62,7 @@ async function sampleOnce(): Promise<void> {
           kind: 'active_window',
           content: title ? `${app} — ${title}` : app,
           occurredAt: new Date().toISOString(),
+          originId,
           meta: titleOn ? { app, title } : { app },
         }],
       }),

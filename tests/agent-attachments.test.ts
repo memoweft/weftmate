@@ -173,10 +173,9 @@ describe('套件3 · 上下文附件（agent.ts）', () => {
     const v = getTaskView(id)!;
     assert.equal(v.attachments[0].length, 200);
 
-    // 内容截到 200000：系统提示的"参考文件"清单按 content.length 打印字数
+    // C5：内容截到 200000，且系统提示的附件清单【显式标注】"已从 200001 字截断"（不再静默丢后半段）。
     const sys = cap.calls[0][0].content;
-    assert.match(sys, /（200000 字）/);
-    assert.doesNotMatch(sys, /200001/);
+    assert.match(sys, /200000 字·已从 200001 字截断/);
   });
 
   it('工作区 + 附件并存 → 文件工具与 read_attachment 都可用', async () => {
