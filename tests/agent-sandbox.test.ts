@@ -15,7 +15,7 @@
  */
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs';
+import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync, symlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
 
@@ -200,5 +200,31 @@ describe('agent 沙箱 safeResolve + 快照撤回', () => {
     assert.equal(step.tool, 'list_dir');
     assert.equal(step.status, 'done', '根路径应合法、不抛越界');
     assert.match(String(step.result), /inside\.txt/);
+  });
+
+  it('F2·软链/junction 逃逸：工作区内软链指向区外 → 经软链的写被拒、区外文件不被改', async () => {
+    const ws = mkWorkspace();
+    const outside = mkdtempSync(join(tmpdir(), 'weftmate-outside-'));
+    roots.push(outside); // 一并清理
+    const secret = join(outside, 'secret.txt');
+    writeFileSync(secret, 'ORIGINAL', 'utf8');
+
+    // 工作区内建一个指向【区外目录】的软链：Windows 用 junction（免提权），POSIX 走 dir symlink。
+    const linkInWs = join(ws, 'escape');
+    try {
+      symlinkSync(outside, linkInWs, 'junction');
+    } catch {
+      return; // 无权限建软链（罕见）→ 跳过而非误绿；真机通常能建 junction
+    }
+
+    // 纯字符串判断（resolve/relative）看 'escape/secret.txt' 像在区内 → 会放行；F2 的 realpath 复核才拦得住。
+    __setClientFactory(scriptFactory([act('write_file', { path: 'escape/secret.txt', content: 'PWNED' }), done()]));
+    const { id } = startTask({ task: '经软链写区外', workspace: ws, autonomy: 'auto' });
+    const v = await settle(id);
+
+    const step = v.steps[0];
+    assert.equal(step.status, 'failed', '经软链逃逸的写应被 F2 判失败');
+    assert.match(String(step.error), /软链|越出/);
+    assert.equal(readFileSync(secret, 'utf8'), 'ORIGINAL', '区外文件绝不能被经软链写穿');
   });
 });

@@ -27,7 +27,7 @@
  */
 import { spawn } from 'node:child_process';
 import { readFile, writeFile, readdir, rm, mkdir, stat } from 'node:fs/promises';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, statSync, realpathSync } from 'node:fs';
 import { resolve, relative, isAbsolute, dirname } from 'node:path';
 import { OpenAICompatClient, loadLLMConfig, type ChatMessage } from './memoweft.ts';
 
@@ -110,14 +110,17 @@ let deps: AgentDeps = {};
 export function configureAgentDeps(d: AgentDeps): void { deps = d; }
 
 /** 解析工具名 → ToolDef：先内置四工具，再 MCP 工具（包成 ToolDef）。
- *  MCP 是第三方代码：非只读工具 alwaysApprove=true——不管哪档自主度都要用户点头（安全底线，同 run_command）。 */
+ *  MCP 是第三方代码，且 readOnly 是【服务自报】的（annotations.readOnlyHint）——自报只读不可信：
+ *  恶意/有 bug 的服务谎报 readOnlyHint=true 就能绕过审批、在 auto 档把用户画像/工作区文件当参数
+ *  自动发往第三方。故【所有 MCP 工具一律 alwaysApprove=true】，不管哪档自主度、不管自报只读，
+ *  都要用户点头（F1·安全底线，同 run_command）。readOnly 只留作 UI 提示标；逐工具「信任」豁免留后续 UI。 */
 function resolveTool(name: string): ToolDef | null {
   if (TOOLS[name]) return TOOLS[name];
   const mt = (deps.mcpTools ? deps.mcpTools() : []).find((t) => t.fqName === name);
   if (!mt) return null;
   return {
-    mutating: !mt.readOnly,
-    alwaysApprove: !mt.readOnly,
+    mutating: !mt.readOnly,          // 仅作展示/标注；审批与否由 alwaysApprove 定
+    alwaysApprove: true,             // F1：自报只读不免批，一律要点头
     run: (args) => (deps.callMcp ? deps.callMcp(name, args) : Promise.reject(new Error('MCP 未接线'))),
   };
 }
@@ -129,9 +132,18 @@ function safeResolve(workspace: string, p: unknown): string {
   const raw = String(p ?? '').trim();
   const abs = resolve(workspace, raw);          // 相对工作区解析；raw 若是绝对路径会覆盖 workspace（下面 relative 会揪出来）
   const rel = relative(workspace, abs);
-  if (rel === '' ) return abs;                   // 指向工作区根本身
-  if (rel.startsWith('..') || isAbsolute(rel)) {
-    throw new Error(`路径越出工作区：${raw}`);   // 越界（含跨盘符：Windows 下 relative 会返回带盘符的绝对路径）
+  if (rel !== '' && (rel.startsWith('..') || isAbsolute(rel))) {
+    throw new Error(`路径越出工作区：${raw}`);   // 字符串层越界（含跨盘符：Windows 下 relative 会返回带盘符的绝对路径）
+  }
+  // F2·symlink 硬化：字符串层过了还不够——工作区内一个指向区外的 symlink/junction 会让上面的纯路径判断失效
+  //   （resolve/relative 不解析软链）。解析真实路径再复核：realpath 工作区根，再取 abs【最近的已存在祖先】
+  //   做 realpath（目标可能还没建=新写文件），确认它落在真实根内；跟着软链逃到区外就拒。
+  const realRoot = realpathSync(workspace);
+  let probe = abs;
+  while (!existsSync(probe) && dirname(probe) !== probe) probe = dirname(probe);
+  const realRel = relative(realRoot, realpathSync(probe));
+  if (realRel !== '' && (realRel.startsWith('..') || isAbsolute(realRel))) {
+    throw new Error(`路径经软链逃出工作区：${raw}`);
   }
   return abs;
 }

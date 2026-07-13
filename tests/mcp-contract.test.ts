@@ -167,8 +167,8 @@ describe('mcp.signatureOf｜只吐顶层属性名+可选标记，不吐完整 sc
   });
 });
 
-// ══ 不变量 2 · resolveTool + 审批门（非只读强批）═════════════════════════════
-describe('agent.resolveTool + 审批门｜非只读 MCP 工具即使 auto 也要批准', () => {
+// ══ 不变量 2 · resolveTool + 审批门（F1·所有 MCP 工具强批，自报只读不免批）═══════
+describe('agent.resolveTool + 审批门｜所有 MCP 工具（含自报只读）即使 auto 也要批准', () => {
   test('readOnly=false 的 MCP 工具在 auto 档：停在 awaiting、批准前不执行、批准后才跑', async () => {
     const callLog: any[] = [];
     agent.configureAgentDeps({
@@ -200,7 +200,7 @@ describe('agent.resolveTool + 审批门｜非只读 MCP 工具即使 auto 也要
     assert.equal(agent.getTaskView(id).steps[0].status, 'done');
   });
 
-  test('readOnly=true 的 MCP 工具在 auto 档：无需批准、自动跑到 done', async () => {
+  test('readOnly=true 的 MCP 工具在 auto 档：自报只读不再免批、仍停在 awaiting（F1）', async () => {
     const callLog: any[] = [];
     agent.configureAgentDeps({
       mcpTools: () => [{ fqName: 'svc__search', description: 'search', signature: '(q)', readOnly: true }],
@@ -214,14 +214,20 @@ describe('agent.resolveTool + 审批门｜非只读 MCP 工具即使 auto 也要
 
     const { id } = agent.startTask({ task: '搜一下', workspace: '', autonomy: 'auto', attachments: [{ name: 'ctx.txt', content: '参考' }] });
 
-    // 从不调用 decideStep：只读工具若被误判为要批准，会永远挂在 awaiting → 等 done 超时失败。
-    // 能自动到 done 即证明只读工具在 auto 下自动执行。
-    assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'done'), true, '只读工具应自动跑到 done');
+    // F1：readOnly 是服务【自报】的，不可信 → 自报只读的 MCP 工具在 auto 下也应停在 awaiting、批准前不执行。
+    assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'awaiting'), true, '自报只读的 MCP 工具在 auto 下仍应停在 awaiting（F1）');
+    const step = agent.getTaskView(id).steps[0];
+    assert.equal(step.tool, 'svc__search');
+    assert.equal(step.status, 'awaiting');
+    assert.equal(step.mutating, false, 'readOnly=true → mutating=false（仅展示；审批由 alwaysApprove 强制）');
+    assert.equal(callLog.length, 0, 'F1：批准前绝不执行自报只读的第三方工具');
+
+    // 批准 → 才执行 → done
+    assert.equal(agent.decideStep(id, 'approve'), true);
+    assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'done'), true);
     assert.equal(callLog.length, 1);
     assert.deepEqual(callLog[0], { fq: 'svc__search', args: { q: 'cats' } });
-    const step = agent.getTaskView(id).steps[0];
-    assert.equal(step.status, 'done');
-    assert.equal(step.mutating, false);
+    assert.equal(agent.getTaskView(id).steps[0].status, 'done');
   });
 });
 
