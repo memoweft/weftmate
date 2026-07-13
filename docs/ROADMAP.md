@@ -47,6 +47,8 @@ agent/MCP 已上线可被利用，越晚堵爆炸半径越大。
 - **工作量**:9–13 人天 · **依赖**:M0
 
 ### 🟡 M2 · 收口 + 首启健壮 + 数据安全 + 隐私
+> **进度 2026-07-14 · M2 ✅ 全部完成**（两切片·`npm test` 32 绿）：切片A — C1 agent 回写结果 summary（招牌闭环）· C5 附件截断在系统提示里显式标注「已从 N 字截断」· C6 撤回改 Buffer 备份、二进制逐字节还原（测试实建含 null 字节文件验过）· C4 感知设稳定 originId 跨重启去重 · 修 `mcp.ts` 悬挂定时器。切片B — B4 主进程全局兜异常→userData 滚动日志 · C7 无 keyring 提前警示（`/api/health` 带 encryptionAvailable + 前端 toast）· G5 GitHub issue 模板（含崩溃日志指引）· B8 `docs/PRIVACY.md` 隐私说明 + README 链接 · **G2 复用现成**（`/api/export-bundle` 导出备份 + `/api/factory-reset` 一键清空全部记忆=GDPR 删除，已存在）。
+
 让打包出去的那个 build 本身不破、不丢数据。
 - **内容**:C1 agent 回写 summary（server.ts:134 一行）· C6 撤回二进制护栏 · C4 感知 originId 跨重启去重 · C5 附件上限统一+截断明示 · C7 Linux 无 keyring 清楚降级 · B4 崩溃上报 · G5 反馈回流（GitHub issue 模板 + 应用内一键带日志报告，默认本地、发送需点）· B8 隐私文案（三处 + observed 默认不上云）· G2 记忆备份/导出 + 一键删除全部（GDPR）
 - **验收**:agent 完成后画像出 source=agent 摘要;撤回 PNG 字节一致;感知跨重启不重复;附件单一 cap+截断提示;无 keyring 不静默崩;强制抛异常有日志+前端入口+issue 模板;隐私文案三处;记忆可导出备份+可一键全删
