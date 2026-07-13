@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>WeftMate — 越用越懂你的桌面 AI 伴侣</title>
+<meta name="description" content="WeftMate 是一个记得住你的开源桌面 AI 伴侣。换模型、重开都不忘你说过的话，而且分得清哪些是事实、哪些只是猜测。由 MemoWeft 长期记忆能力驱动。" />
+<meta name="theme-color" content="#17181c" />
+<meta name="color-scheme" content="dark" />
+<meta name="robots" content="index,follow" />
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="zh_CN" />
+<meta property="og:title" content="WeftMate — 越用越懂你的桌面 AI 伴侣" />
+<meta property="og:description" content="记得住，也分得清：事实与猜测分开，记忆可见、可改、可迁移。" />
+<meta name="twitter:card" content="summary" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='16' fill='%2317181c'/%3E%3Cpath d='M16 18c12 0 12 28 24 28 5 0 8-3 8-8 0-9-9-14-16-8-7 6-5 16 3 18' fill='none' stroke='%23d4a75d' stroke-width='5' stroke-linecap='round'/%3E%3C/svg%3E" />
+<style>
+  :root {
+    --ground: #17181c; --ground-2: #1b1c21; --sidebar: #131317; --panel: #212129; --panel-2: #262630;
+    --line: #31313b; --line-soft: #26262f; --text: #ece9e2; --muted: #a29e94; --faint: #6f6b63;
+    --accent: #d4a75d; --accent-2: #e9cfa0; --accent-dim: #8b7040;
+    --ready: #8cba90; --ready-bg: #1a2620; --new: #7ba7d1; --her: #d9a0a8; --her-bg: #241a1d;
+    --font-sans: "Segoe UI", system-ui, -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-mono: "Cascadia Code", Consolas, ui-monospace, monospace;
+    --maxw: 1120px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--ground); color: var(--text); font-family: var(--font-sans);
+    line-height: 1.6; -webkit-font-smoothing: antialiased; overflow-x: hidden;
+  }
+  a { color: inherit; text-decoration: none; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  ::selection { color: #17130a; background: var(--accent-2); }
+  .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 24px; }
+  .skip-link {
+    position: fixed; left: 16px; top: 10px; z-index: 200; transform: translateY(-160%);
+    padding: 8px 12px; border-radius: 8px; color: #17130a; background: var(--accent-2);
+    font-size: 13px; font-weight: 700; transition: transform .15s;
+  }
+  .skip-link:focus { transform: translateY(0); }
+
+  /* ---- nav ---- */
+  header {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(23,24,28,.72); backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--line-soft);
+  }
+  .nav { display: flex; align-items: center; gap: 28px; height: 62px; }
+  .brand { font-weight: 700; font-size: 17px; letter-spacing: -.01em; }
+  .brand span { color: var(--accent); }
+  .brand .thread { color: var(--accent); margin-right: 7px; }
+  .nav .links { display: flex; gap: 22px; margin-left: 8px; }
+  .nav .links a { font-size: 13.5px; color: var(--muted); transition: color .15s; }
+  .nav .links a:hover { color: var(--text); }
+  .nav .spacer { flex: 1; }
+  .nav .ghost { font-size: 13px; color: var(--muted); }
+  .nav .ghost:hover { color: var(--text); }
+  .btn {
+    display: inline-flex; align-items: center; gap: 7px; font-size: 13.5px; font-weight: 600;
+    padding: 8px 15px; border-radius: 8px; border: 1px solid transparent; transition: all .16s; cursor: pointer;
+  }
+  .btn.primary { background: linear-gradient(96deg, var(--accent), var(--accent-2)); color: #1a1509; }
+  .btn.primary:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .btn.line { border-color: var(--line); color: var(--text); background: var(--panel); }
+  .btn.line:hover { border-color: var(--accent-dim); background: var(--panel-2); }
+
+  /* ---- hero ---- */
+  .hero { position: relative; padding: 92px 0 68px; }
+  .hero::before {
+    content: ""; position: absolute; inset: -120px 0 auto 0; height: 620px; z-index: -1;
+    background:
+      radial-gradient(680px 340px at 22% 8%, rgba(212,167,93,.16), transparent 62%),
+      radial-gradient(560px 320px at 88% 30%, rgba(217,160,168,.10), transparent 60%);
+  }
+  .hero-grid { display: grid; grid-template-columns: 1.15fr .85fr; gap: 52px; align-items: center; }
+  .kicker {
+    display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-mono);
+    font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent);
+    border: 1px solid var(--accent-dim); background: rgba(212,167,93,.07);
+    padding: 5px 12px; border-radius: 20px; margin-bottom: 22px;
+  }
+  .kicker .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  h1.head { font-size: 52px; line-height: 1.06; letter-spacing: -.03em; font-weight: 750; text-wrap: balance; }
+  h1.head .grad { background: linear-gradient(96deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .hero p.lede { color: var(--muted); font-size: 17px; max-width: 52ch; margin: 22px 0 0; }
+  .hero p.lede b { color: var(--text); font-weight: 600; }
+  .hero p.lede .w { color: var(--accent); font-weight: 600; }
+  .cta { display: flex; align-items: center; gap: 14px; margin-top: 32px; flex-wrap: wrap; }
+  .cta .note { font-size: 12.5px; color: var(--faint); font-family: var(--font-mono); }
+  .cta .note b { color: var(--ready); }
+
+  /* hero memory-bubble demo card */
+  .demo {
+    background: var(--ground-2); border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px 16px 14px; box-shadow: 0 30px 60px -34px rgba(0,0,0,.9);
+  }
+  .demo .dh { display: flex; align-items: center; gap: 8px; padding-bottom: 12px; border-bottom: 1px solid var(--line-soft); margin-bottom: 13px; }
+  .demo .dh .tt { font-size: 12.5px; font-weight: 600; }
+  .demo .dh .chip { margin-left: auto; font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: 20px; color: var(--accent); border: 1px solid var(--accent-dim); background: rgba(212,167,93,.09); }
+  .bub { max-width: 82%; padding: 9px 12px; border-radius: 13px; font-size: 13px; margin-bottom: 9px; }
+  .bub.you { align-self: flex-end; margin-left: auto; background: #2a2a34; }
+  .bub.her { background: #201d17; border: 1px solid #34291733; }
+  .bub.her .cite { display: block; margin-top: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--faint); }
+  .memo {
+    display: flex; align-items: flex-start; gap: 10px; margin-top: 4px;
+    background: var(--her-bg); border: 1px solid #4a2e3455; border-radius: 11px; padding: 11px 13px;
+  }
+  .memo .ic { flex: none; width: 22px; height: 22px; border-radius: 6px; background: rgba(217,160,168,.16); display: grid; place-items: center; font-size: 12px; }
+  .memo .mt { font-size: 12.5px; }
+  .memo .mt b { color: var(--her); }
+  .memo .actions { margin-top: 5px; display: flex; gap: 8px; font-family: var(--font-mono); font-size: 10.5px; color: var(--faint); }
+  .memo .actions .pending { color: var(--accent); }
+  .memo .actions .edit { border-bottom: 1px dotted var(--faint); }
+
+  /* ---- section scaffold ---- */
+  section { padding: 66px 0; }
+  .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+  .sec-h { font-size: 33px; line-height: 1.15; letter-spacing: -.02em; font-weight: 720; text-wrap: balance; }
+  .sec-h .soft { color: var(--muted); font-weight: 600; }
+  .sec-h .grad { background: linear-gradient(96deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .sec-sub { color: var(--muted); font-size: 15.5px; max-width: 60ch; margin-top: 14px; }
+
+  /* ---- 核心亮点 grid ---- */
+  .highlights { background: linear-gradient(180deg, transparent, rgba(212,167,93,.03) 40%, transparent); }
+  .hgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 40px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--line-soft); border-radius: 14px; padding: 22px 20px;
+    display: flex; flex-direction: column; gap: 10px; transition: transform .16s, border-color .16s, background .16s;
+  }
+  .card:hover { transform: translateY(-3px); border-color: var(--accent-dim); background: var(--panel-2); }
+  .card.hl { border-color: #4a3a1c; background: linear-gradient(180deg, #241f14, #1d1a12); }
+  .card .ic { width: 38px; height: 38px; border-radius: 10px; display: grid; place-items: center; font-size: 19px; background: rgba(212,167,93,.12); border: 1px solid var(--accent-dim); }
+  .card.own .ic { background: var(--her-bg); border-color: #5a3a4255; }
+  .card h3 { font-size: 16.5px; font-weight: 650; letter-spacing: -.01em; }
+  .card p { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+  .card p b { color: var(--text); font-weight: 600; }
+  .card .tag { margin-top: 2px; font-family: var(--font-mono); font-size: 10px; letter-spacing: .04em; color: var(--her); text-transform: uppercase; }
+
+  /* ---- loop ---- */
+  .loop { display: grid; grid-template-columns: repeat(5, 1fr); border: 1px solid var(--line-soft); border-radius: 14px; overflow: hidden; background: var(--panel); margin-top: 38px; }
+  .loop-node { padding: 22px 16px; display: flex; flex-direction: column; gap: 7px; }
+  .loop-node + .loop-node { border-left: 1px solid var(--line-soft); }
+  .loop-node .n { font-family: var(--font-mono); font-size: 11px; color: var(--faint); }
+  .loop-node .t { font-size: 15px; font-weight: 650; }
+  .loop-node .d { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .loop-node.engine { background: linear-gradient(180deg, #241f14, #1e1a11); }
+  .loop-node.engine .t { color: var(--accent); }
+  .loop-node.engine .n { color: var(--accent-dim); }
+  .loop-cap { text-align: center; font-family: var(--font-mono); font-size: 12.5px; color: var(--faint); margin-top: 18px; }
+  .loop-cap b { color: var(--accent); }
+
+  /* ---- interface mockup ---- */
+  .mock { display: grid; grid-template-columns: 190px 1fr; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--ground); box-shadow: 0 30px 64px -36px rgba(0,0,0,.9); margin-top: 40px; }
+  .mside { background: var(--sidebar); border-right: 1px solid var(--line-soft); padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .mside-h { display: flex; align-items: center; justify-content: space-between; padding: 4px 8px 13px; }
+  .mside-h .b { font-weight: 700; font-size: 14px; } .mside-h .b span { color: var(--accent); }
+  .mside-h .plus { color: var(--faint); font-size: 16px; }
+  .mside .lbl { font-family: var(--font-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--faint); padding: 8px 8px 5px; }
+  .conv { padding: 8px 9px; border-radius: 7px; font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .conv.on { background: #23232b; color: var(--text); }
+  .mside .grow { flex: 1; min-height: 8px; }
+  .mside-foot { border-top: 1px solid var(--line-soft); padding-top: 9px; margin-top: 5px; display: flex; flex-direction: column; gap: 2px; }
+  .ftitem { display: flex; align-items: center; gap: 9px; padding: 7px 8px; border-radius: 7px; font-size: 12px; color: var(--muted); }
+  .ftitem .ic { width: 6px; height: 6px; border-radius: 50%; background: var(--faint); }
+  .ftitem.persona .ic { background: var(--her); } .ftitem.persona b { color: var(--her); }
+  .mmain { padding: 18px 20px; min-height: 320px; display: flex; flex-direction: column; position: relative; }
+  .mbar { display: flex; align-items: center; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid var(--line-soft); margin-bottom: 15px; }
+  .mbar .tt { font-size: 13.5px; font-weight: 600; }
+  .mchip { margin-left: auto; font-family: var(--font-mono); font-size: 10.5px; padding: 3px 9px; border-radius: 20px; color: var(--accent); border: 1px solid var(--accent-dim); background: rgba(212,167,93,.09); }
+  .mmain .bub { max-width: 74%; }
+  .mmain .bub.you { background: #2a2a34; }
+  .mmain .bub.her { background: #201d17; border: 1px solid #34291733; }
+  .bub.tool { background: #16211a; border: 1px solid #26402e; font-family: var(--font-mono); font-size: 11.5px; color: var(--ready); max-width: 74%; }
+  .minput { margin-top: auto; border: 1px solid var(--line); border-radius: 11px; background: var(--sidebar); overflow: hidden; }
+  .mtext { padding: 12px 13px; font-size: 12.5px; color: var(--faint); }
+  .mtext .cur { color: var(--accent); animation: blink 1.1s steps(2) infinite; }
+  @keyframes blink { 0%,50% { opacity: 1 } 51%,100% { opacity: 0 } }
+  .mtoolbar { display: flex; align-items: center; gap: 7px; padding: 8px 10px; border-top: 1px solid var(--line-soft); flex-wrap: wrap; }
+  .mtool { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); padding: 5px 9px; border-radius: 7px; background: #1e1e25; border: 1px solid var(--line-soft); }
+  .mtool.model { color: var(--accent); border-color: var(--accent-dim); background: rgba(212,167,93,.09); }
+  .mtoolbar .send { margin-left: auto; color: var(--accent); font-size: 15px; }
+  .pet { position: absolute; right: 20px; bottom: 84px; width: 50px; height: 50px; border-radius: 50%; background: radial-gradient(circle at 35% 30%, #e8b6bd, #b76b78); box-shadow: 0 8px 22px -6px rgba(183,107,120,.7); display: grid; place-items: center; font-size: 22px; }
+  .mock-note { font-size: 12.5px; color: var(--faint); margin-top: 16px; font-family: var(--font-mono); line-height: 1.7; text-align: center; }
+  .mock-note b { color: var(--muted); }
+
+  /* ---- audiences ---- */
+  .agrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 40px; }
+  .aud { border: 1px solid var(--line-soft); border-radius: 13px; padding: 20px 18px; background: var(--panel); }
+  .aud .ai { font-size: 24px; margin-bottom: 12px; }
+  .aud h4 { font-size: 15px; font-weight: 650; margin-bottom: 7px; }
+  .aud p { font-size: 12.5px; color: var(--muted); line-height: 1.55; }
+
+  /* ---- trust / discipline ---- */
+  .trust { background: linear-gradient(180deg, transparent, rgba(140,186,144,.03), transparent); }
+  .disc { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 38px; }
+  .dc { border: 1px dashed var(--accent-dim); border-radius: 13px; padding: 22px 20px; background: rgba(212,167,93,.04); }
+  .dc .dh { font-size: 16px; font-weight: 680; color: var(--accent); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
+  .dc .dd { font-size: 13px; color: var(--muted); line-height: 1.6; }
+  .dc .dd b { color: var(--text); }
+
+  /* ---- final CTA ---- */
+  .final { text-align: center; padding: 84px 0; }
+  .final::before { content: ""; position: absolute; }
+  .final .box {
+    position: relative; border: 1px solid var(--line); border-radius: 22px; padding: 56px 32px;
+    background:
+      radial-gradient(600px 260px at 50% -10%, rgba(212,167,93,.14), transparent 66%),
+      var(--ground-2);
+    overflow: hidden;
+  }
+  .final h2 { font-size: 36px; line-height: 1.12; letter-spacing: -.025em; font-weight: 740; text-wrap: balance; }
+  .final h2 .grad { background: linear-gradient(96deg, var(--accent), var(--accent-2)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+  .final p { color: var(--muted); font-size: 16px; max-width: 48ch; margin: 18px auto 0; }
+  .final .cta { justify-content: center; }
+
+  /* ---- footer ---- */
+  footer { border-top: 1px solid var(--line-soft); padding: 44px 0 56px; }
+  .foot-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 40px; align-items: start; }
+  .foot-brand .brand { font-size: 18px; margin-bottom: 12px; display: inline-block; }
+  .foot-brand p { font-size: 13px; color: var(--muted); max-width: 46ch; line-height: 1.65; }
+  .layers { display: flex; flex-direction: column; gap: 10px; }
+  .layer { font-size: 12.5px; color: var(--muted); line-height: 1.5; }
+  .layer b { color: var(--text); } .layer .wm { color: var(--accent); } .layer .xy { color: var(--her); } .layer .mw { color: var(--new); }
+  .foot-bot { margin-top: 34px; padding-top: 20px; border-top: 1px solid var(--line-soft); display: flex; gap: 16px; align-items: center; font-size: 12px; color: var(--faint); flex-wrap: wrap; }
+  .foot-bot .spacer { flex: 1; }
+  .foot-bot a { color: var(--faint); } .foot-bot a:hover { color: var(--muted); }
+
+  /* reveal on scroll */
+  .reveal { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+
+  /* ---- responsive ---- */
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; gap: 40px; }
+    .hgrid, .disc { grid-template-columns: 1fr 1fr; }
+    .agrid { grid-template-columns: 1fr 1fr; }
+    .loop { grid-template-columns: 1fr 1fr; }
+    .loop-node + .loop-node { border-left: 0; }
+    .loop-node:nth-child(odd) { border-right: 1px solid var(--line-soft); }
+    .loop-node { border-top: 1px solid var(--line-soft); }
+    .foot-grid { grid-template-columns: 1fr; }
+    h1.head { font-size: 42px; }
+  }
+  @media (max-width: 620px) {
+    .nav .links { display: none; }
+    .hgrid, .disc, .agrid, .loop { grid-template-columns: 1fr; }
+    .loop-node:nth-child(odd) { border-right: 0; }
+    .mock { grid-template-columns: 1fr; }
+    .mside { flex-direction: row; overflow-x: auto; }
+    h1.head { font-size: 34px; }
+    .sec-h { font-size: 26px; }
+    section { padding: 48px 0; }
+  }
+  @media (max-width: 420px) {
+    .wrap { padding-inline: 18px; }
+    .nav { gap: 12px; }
+    .nav .ghost { display: none; }
+    .hero { padding-top: 64px; }
+    .final .box { padding: 44px 20px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .mtext .cur { animation: none; }
+  }
+</style>
+<noscript><style>.reveal { opacity: 1; transform: none; }</style></noscript>
+</head>
+<body id="top">
+
+<a class="skip-link" href="#content">跳到正文</a>
+<header>
+  <nav class="wrap nav" aria-label="主导航">
+    <a class="brand" href="#top"><span class="thread">🧵</span>Weft<span>Mate</span></a>
+    <div class="links">
+      <a href="#highlights">核心亮点</a>
+      <a href="#loop">怎么运作</a>
+      <a href="#muscles">独有能力</a>
+      <a href="#who">面向谁</a>
+      <a href="#trust">诚实纪律</a>
+    </div>
+    <div class="spacer"></div>
+    <a class="ghost" href="https://github.com/memoweft/memoweft" target="_blank" rel="noopener">MemoWeft GitHub</a>
+    <a class="btn primary" href="#final">关注进展 →</a>
+  </nav>
+</header>
+
+<main id="content">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="wrap hero-grid">
+      <div class="reveal in">
+        <span class="kicker"><span class="dot"></span>MEMOWEFT 生态 · 开源桌面伴侣</span>
+        <h1 class="head">越用越懂你的<br><span class="grad">桌面 AI 伴侣</span></h1>
+        <p class="lede"><b class="w">WeftMate</b> 是一个<b>记得住你</b>的开源桌面 AI 伴侣。你跟她聊天、让她帮你写代码干活，她一边陪你、一边把这些沉淀成"对你的理解"。换个模型、关掉重开，她<b>依然记得你说过什么</b>——而且分得清哪些是事实、哪些只是它的猜测。</p>
+        <div class="cta">
+          <a class="btn primary" href="#final">关注进展 →</a>
+          <a class="btn line" href="#loop">看看它怎么运作</a>
+          <span class="note"><b>开源</b> · 阶段 2 开发中</span>
+        </div>
+      </div>
+
+      <div class="demo reveal in">
+        <div class="dh"><span class="tt">星瑶</span><span class="chip">记住你 · 14 件事</span></div>
+        <div class="bub you">帮我把那个采集脚本用 Rust 重写一下</div>
+        <div class="bub her">好，我记得你更爱简洁的写法——我先起个骨架。<span class="cite">↳ 关联记忆:「偏好简洁代码」· 比较确定</span></div>
+        <div class="memo">
+          <span class="ic">🧵</span>
+          <div>
+            <div class="mt"><b>记住了：</b>你在用 Rust 重写采集脚本</div>
+            <div class="actions"><span class="pending">· 还没确认</span><span class="edit">改 / 删</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 核心亮点 -->
+  <section class="highlights" id="highlights">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">核心亮点</p>
+        <h2 class="sec-h">不止于<span class="soft">记得你</span>，更在于<span class="grad">分得清</span></h2>
+        <p class="sec-sub">大多数"AI 记忆"只是把你说的话塞进向量库。WeftMate 的底座 MemoWeft 会把"记住"和"采信"分开——它记，但不乱信、不乱忘、不乱脑补。</p>
+      </div>
+      <div class="hgrid">
+        <div class="card own reveal">
+          <div class="ic">🧭</div>
+          <h3>越用越懂你</h3>
+          <p>相处 → 感知 → 整理成画像 → 更懂你 → 更懂地帮你。这个循环转得越久，她对你的理解<b>越准、越全</b>。</p>
+        </div>
+        <div class="card hl own reveal">
+          <div class="ic">⚖️</div>
+          <span class="tag">独有 · 立身之本</span>
+          <h3>记得住，还分得清</h3>
+          <p>你亲口说的是<b>事实</b>，它推断出来的只是<b>低把握度的猜测</b>——两种记录分开存。矛盾会摆出来问你，而不是<b>静默覆盖</b>。</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic">🔄</div>
+          <h3>换模型 · 重开都不忘</h3>
+          <p>记忆是可迁移的，不绑定某个模型。今天用一个模型、明天换一个，同一份"懂你"<b>一直都在</b>。</p>
+        </div>
+        <div class="card own reveal">
+          <div class="ic">👁️</div>
+          <h3>记忆看得见、还能纠错</h3>
+          <p>"她对你的了解"是一块<b>能看还能改</b>的画像面板，按来源分：感知来的 / 对话推断的 / 你改删过的。错了当场纠。</p>
+        </div>
+        <div class="card own reveal">
+          <div class="ic">🎭</div>
+          <h3>一份"懂你"，换张脸都在</h3>
+          <p>人格是可切换的能力包——语气、形象、声音、默认模型一起换。切人格 = 切包，<b>对你的了解不丢</b>。星瑶只是其中一个。</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic">🔒</div>
+          <h3>本地优先 · 开源免费</h3>
+          <p>数据落在你自己机器上，感知内容默认不上云。自带 API key（BYOK），<b>核心永远免费开源</b>。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 懂你的循环 -->
+  <section id="loop">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">核心 · 懂你的循环</p>
+        <h2 class="sec-h">她怎么<span class="grad">越用越懂你</span></h2>
+        <p class="sec-sub">不是一次问答就"懂"了。懂你是一个持续转动的循环，MemoWeft 是循环里的记忆引擎。</p>
+      </div>
+      <div class="loop reveal">
+        <div class="loop-node"><span class="n">01</span><span class="t">相处</span><span class="d">聊天、让她帮你写代码 / 干日常活</span></div>
+        <div class="loop-node"><span class="n">02</span><span class="t">感知</span><span class="d">她看到你在忙什么、设备什么状态</span></div>
+        <div class="loop-node engine"><span class="n">03 · 引擎</span><span class="t">MemoWeft 整理</span><span class="d">沉淀成画像:哪些是事实、哪些只是猜测</span></div>
+        <div class="loop-node"><span class="n">04</span><span class="t">更懂你</span><span class="d">对你的理解越攒越准、越全</span></div>
+        <div class="loop-node"><span class="n">05</span><span class="t">更懂地帮你</span><span class="d">带着"懂你"回到相处,如此循环</span></div>
+      </div>
+      <p class="loop-cap reveal">循环转得越久 → <b>越用越懂你</b>。</p>
+    </div>
+  </section>
+
+  <!-- 界面 -->
+  <section>
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">界面 · Claude Desktop 风格 · 对话为主</p>
+        <h2 class="sec-h">熟悉的对话框，<span class="grad">藏着一套懂你的记忆</span></h2>
+      </div>
+      <div class="mock reveal">
+        <div class="mside">
+          <div class="mside-h"><span class="b">Weft<span>Mate</span></span><span class="plus">＋</span></div>
+          <div class="lbl">对话记录</div>
+          <div class="conv on">Rust 生命周期怎么理解</div>
+          <div class="conv">帮我重构那个采集脚本</div>
+          <div class="conv">周末去哪玩的建议</div>
+          <div class="conv">昨天没睡好，聊聊</div>
+          <div class="grow"></div>
+          <div class="mside-foot">
+            <div class="ftitem"><span class="ic"></span>记忆与画像 ▾</div>
+            <div class="ftitem"><span class="ic"></span>能力与感知 ▾</div>
+            <div class="ftitem"><span class="ic"></span>设置</div>
+            <div class="ftitem persona"><span class="ic"></span>人格 · <b>星瑶</b> ▾</div>
+          </div>
+        </div>
+        <div class="mmain">
+          <div class="mbar"><div class="tt">Rust 生命周期怎么理解</div><span class="mchip">记住你 · 14 件事</span></div>
+          <div class="bub you">帮我把那个采集脚本用 Rust 重写一下</div>
+          <div class="bub her">好，我记得你更爱简洁的写法——我来起个骨架。<span class="cite">↳ 关联记忆:「偏好简洁代码」· 比较确定</span></div>
+          <div class="bub tool">⚙ 调用能力 · Claude CLI — 正在写 collector.rs …</div>
+          <div class="minput">
+            <div class="mtext"><span class="cur">|</span></div>
+            <div class="mtoolbar">
+              <span class="mtool">＋ 文件 / 工作区</span>
+              <span class="mtool model">◇ 模型 ▾</span>
+              <span class="mtool">⚡ 技能 ▾</span>
+              <span class="mtool">🔒 沙箱 ▾</span>
+              <span class="send">↑</span>
+            </div>
+          </div>
+          <div class="pet">🧵</div>
+        </div>
+      </div>
+      <p class="mock-note reveal">左＝对话记录（像 Claude Desktop）· 功能收在侧栏底部、点开有动画 · 模型配置就放底部工具栏、不藏深处 · 桌面形象浮在角落随手唤起。</p>
+    </div>
+  </section>
+
+  <!-- 三样独有肌肉 -->
+  <section id="muscles" class="highlights">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">为什么不是又一个 code 工具</p>
+        <h2 class="sec-h">三样竞品都没有的<span class="grad">独有能力</span></h2>
+        <p class="sec-sub">产品骨架照搬成熟做法（Claude / Codex / Raycast 已趟平）。真正让 WeftMate 立身的，是这三样别处没有的肌肉。</p>
+      </div>
+      <div class="hgrid">
+        <div class="card own reveal">
+          <div class="ic">🧵</div>
+          <span class="tag">MVP</span>
+          <h3>记忆气泡 · 管理即对话</h3>
+          <p>新理解当场织进聊天流：「记住了：X · 还没确认 · 改 / 删」。<b>管理记忆不用另开一个页面</b>——就在你聊天的地方。</p>
+        </div>
+        <div class="card own reveal">
+          <div class="ic">👁️</div>
+          <span class="tag">MVP</span>
+          <h3>记忆 + 画像可视</h3>
+          <p>分事实与猜测、会随时间变淡；把"她对你的了解"做成看得见、<b>能纠错</b>的面板，按来源归类，一目了然。</p>
+        </div>
+        <div class="card own reveal">
+          <div class="ic">🎭</div>
+          <span class="tag">MVP</span>
+          <h3>人格 = 可切换能力包</h3>
+          <p>一个人格 = 系统提示 + 语气 + 可选形象 + 声音 + 默认模型。<b>切人格 = 切包</b>，同一份"懂你"都还在。</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic">🛰️</div>
+          <span class="tag" style="color:var(--ready)">近期</span>
+          <h3>感知 + 主动关怀</h3>
+          <p>感知你在用啥、活动节奏 → 喂给画像（感知内容默认不上云）。该提醒时让<b>形象开口说话</b>，而不是冷冰冰的 toast。</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic">🤝</div>
+          <span class="tag" style="color:var(--ready)">近期</span>
+          <h3>帮你干活 · 走 MCP</h3>
+          <p>计划 → 确认 → 执行，自主度三档（只建议 / 问一下 / 放手做）+ 沙箱 + 每步可视 + 一键撤回。像装扩展一样装能力。</p>
+        </div>
+        <div class="card reveal">
+          <div class="ic">🐾</div>
+          <span class="tag" style="color:var(--faint)">后续</span>
+          <h3>桌面形象 · 陪伴</h3>
+          <p>常驻形象（Live2D / 立绘）表情随对话、情绪同步。桌宠有形象但缺真记忆——WeftMate 两者合体。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 面向谁 -->
+  <section id="who">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">面向谁</p>
+        <h2 class="sec-h">给<span class="grad">想要一个记得住你</span>的助手的人</h2>
+      </div>
+      <div class="agrid">
+        <div class="aud reveal">
+          <div class="ai">💻</div>
+          <h4>开发者</h4>
+          <p>让她在你的工作区里帮你写代码、干活。她记得你的技术栈和写法偏好，不用每次从头交代。</p>
+        </div>
+        <div class="aud reveal">
+          <div class="ai">🗂️</div>
+          <h4>重度 AI 用户</h4>
+          <p>厌倦了换个工具就"失忆"、每次重开都要重新自我介绍。要一份跟着你走、越用越准的长期记忆。</p>
+        </div>
+        <div class="aud reveal">
+          <div class="ai">🛡️</div>
+          <h4>重视隐私的人</h4>
+          <p>数据落在自己机器上、感知默认不上云、BYOK。开源可审计——不放心的地方，代码摆在那。</p>
+        </div>
+        <div class="aud reveal">
+          <div class="ai">🫶</div>
+          <h4>想要陪伴感的人</h4>
+          <p>不只是工具。一个有形象、有人格、记得你、会在合适的时候关心你一句的桌面伙伴。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 诚实纪律 -->
+  <section id="trust" class="trust">
+    <div class="wrap">
+      <div class="reveal">
+        <p class="eyebrow">我们的诚实纪律</p>
+        <h2 class="sec-h">不吹大，<span class="grad">是我们的产品气质</span></h2>
+        <p class="sec-sub">别的 AI 爱说"真正懂你"。我们不这么写——因为记下来不等于采信。诚实本身，就是长期陪伴该有的样子。</p>
+      </div>
+      <div class="disc">
+        <div class="dc reveal">
+          <div class="dh">🎯 记 ≠ 信</div>
+          <div class="dd">推测只能是<b>低把握度的候选</b>，绝不冒充事实。我们不承诺"真正理解你"——它知道哪些能信、哪些只是猜、哪些要再问你确认。</div>
+        </div>
+        <div class="dc reveal">
+          <div class="dh">🔕 少而准</div>
+          <div class="dd">凡是主动打断你的（提醒 / 建议 / 发问）都<b>少而准</b>。伴侣最忌唠叨——克制，是能感知到的体贴。</div>
+        </div>
+        <div class="dc reveal">
+          <div class="dh">🧩 冲突不静默</div>
+          <div class="dd">前后矛盾的信息会<b>并排摆出来问你</b>，而不是偷偷选一个当赢家。过期的状态也会慢慢变淡，不会一直当成现在的你。</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- final CTA -->
+  <section class="final" id="final">
+    <div class="wrap">
+      <div class="box reveal">
+        <h2>让你的 AI，<span class="grad">开始长期记得你</span></h2>
+        <p>WeftMate 正在开源开发中。记忆画像、人格切换、桌面感知、Agent 干活、MCP 能力与上下文附件已经接入；当前继续补齐历史搜索与会话接力。</p>
+        <div class="cta">
+          <a class="btn primary" href="https://github.com/memoweft/memoweft" target="_blank" rel="noopener">了解 MemoWeft →</a>
+          <a class="btn line" href="#top">回顶部看看</a>
+          <span class="note"><b>开源</b> · 阶段 2 开发中 · 核心永远免费</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="foot-grid">
+      <div class="foot-brand">
+        <a class="brand" href="#top"><span class="thread">🧵</span>Weft<span>Mate</span></a>
+        <p>一个记得住你的开源桌面 AI 伴侣，由 <b style="color:var(--new)">MemoWeft</b> 长期记忆能力驱动。换模型、重开都不忘你说过什么，而且分得清事实与猜测。</p>
+      </div>
+      <div class="layers">
+        <div class="layer"><b>三层别搞混：</b></div>
+        <div class="layer"><span class="wm">● WeftMate</span> — 这个桌面产品（开源、面向大众）。</div>
+        <div class="layer"><span class="xy">● 星瑶</span> — 产品内置的一个可切换人格，不是产品名。第一人称"我记得你"只属这层。</div>
+        <div class="layer"><span class="mw">● MemoWeft</span> — 底层的长期记忆能力库，当依赖 <code style="font-family:var(--font-mono);color:var(--muted)">import</code>。</div>
+      </div>
+    </div>
+    <div class="foot-bot">
+      <span>© 2026 WeftMate · 开源伴侣</span>
+      <span class="spacer"></span>
+      <a href="https://github.com/memoweft/memoweft" target="_blank" rel="noopener">MemoWeft GitHub</a>
+      <a href="#highlights">核心亮点</a>
+      <a href="#trust">诚实纪律</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // scroll reveal
+  const reveals = document.querySelectorAll('.reveal:not(.in)');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+    }, { threshold: 0.12 });
+    reveals.forEach(el => io.observe(el));
+  } else {
+    reveals.forEach(el => el.classList.add('in'));
+  }
+</script>
+</body>
+</html>
