@@ -1810,6 +1810,10 @@
   async function checkHealth() {
     try {
       const h = await fetch('/api/health').then((x) => x.json());
+      if (h.encryptionAvailable === false) {
+        // C7：本机无加密后端(如 Linux 未装 gnome-keyring/libsecret) → 存不了模型密钥。提前说清，别等保存才甩天书 500。
+        memToast('本机没有密钥保护后端（如 Linux 未装 gnome-keyring/libsecret），暂时无法安全保存模型密钥；装好密钥环后重开即可。', 'danger');
+      }
       if (!h.llmReady) {
         $('warnbar').classList.add('show');
         openSettings('models'); // 首配：打开设置弹窗模型节（内部会自动展开添加表单，见 openSettings）

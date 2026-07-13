@@ -97,6 +97,12 @@ export function readPublicView(): {
   return { profiles, activeId: c.activeId, configured: !!(active?.llm?.baseUrl && active?.llm?.apiKey && active?.llm?.model) };
 }
 
+/** 本机是否有可用的加密后端（safeStorage）。C7：Linux 无 keyring(libsecret) 时 false → 前端好提前警示、
+ *  别到保存模型密钥才甩一句天书 500。Windows/macOS 一般有后端、恒 true。 */
+export function encryptionAvailable(): boolean {
+  return safeStorage.isEncryptionAvailable();
+}
+
 /** 稳定 id(非 workflow 脚本环境,Date/random 可用)。 */
 function genId(): string {
   return 'p-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);

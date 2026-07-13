@@ -14,6 +14,7 @@
  */
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } from 'electron';
 import { join } from 'node:path';
+import { appendFileSync, writeFileSync, statSync } from 'node:fs';
 
 // 端口:默认 7788;尊重 PORT 环境变量(允许多实例/开发时并存,避开被占端口)。
 const PORT = Number(process.env.PORT) || 7788;
@@ -21,6 +22,20 @@ const PORT = Number(process.env.PORT) || 7788;
 // 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面伴侣产品不该露原生菜单,不像成品。
 //   放模块顶层即可(whenReady 前设置也生效);置 null = 整条菜单不显示。
 Menu.setApplicationMenu(null);
+
+// ── B4·崩溃/错误上报最小闭环 ──
+// 主进程一崩就是静默白屏,用户和作者都拿不到线索。全局兜住未捕获异常,滚动写 userData 日志
+//   （前端「设置·关于」有查看/报告入口·G5）。守隐私:只记堆栈、不主动上传(发送要用户点·反馈回流走 issue)。
+function logCrash(kind, err) {
+  try {
+    const p = join(app.getPath('userData'), 'weftmate-crash.log');
+    try { if (statSync(p).size > 1_000_000) writeFileSync(p, ''); } catch { /* 首次无文件 */ } // 简单滚动:超 1MB 清一次
+    const detail = err && err.stack ? err.stack : String(err);
+    appendFileSync(p, `[${new Date().toISOString()}] ${kind}: ${detail}\n`);
+  } catch { /* 日志都写不了就算了,别二次崩 */ }
+}
+process.on('uncaughtException', (err) => { logCrash('uncaughtException', err); });
+process.on('unhandledRejection', (reason) => { logCrash('unhandledRejection', reason); });
 
 // 托盘图标:内嵌 data URL(32x32 金色圆),免打包路径/asarUnpack 麻烦。生成脚本见 scratchpad/gen-tray-icon.mjs。
 const TRAY_ICON =

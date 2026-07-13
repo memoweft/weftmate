@@ -249,7 +249,8 @@ const server = createServer(async (req, res) => {
 
     // 首启门（S3）：模型/嵌入器配没配 —— 前端据此决定先提示配置还是直接聊天。不需要 .env 也不崩。
     if (req.method === 'GET' && url.pathname === '/api/health') {
-      sendJson(res, 200, core.health());
+      // C7：附带本机是否有加密后端——Linux 无 keyring 时前端好提前警示"存不了模型密钥"，别到保存才崩。
+      sendJson(res, 200, { ...core.health(), encryptionAvailable: configStore.encryptionAvailable() });
       return;
     }
 

@@ -76,6 +76,7 @@ npm test           # 跑契约/冒烟测试(node:test)
 - [`docs/PRODUCT.md`](docs/PRODUCT.md) —— 产品定义(定位、界面、功能盘、贯穿纪律)。
 - [`docs/ROADMAP.md`](docs/ROADMAP.md) —— 路线图与计划(9 个里程碑、工作量、风险)。
 - [`AGENTS.md`](AGENTS.md) —— 开工红线(不碰库源码、守命名纪律、三条克制纪律)。
+- [`docs/PRIVACY.md`](docs/PRIVACY.md) —— 隐私说明(数据存哪、什么时候离开你机器、你的控制权)。
 
 ---
 
