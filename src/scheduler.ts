@@ -12,7 +12,7 @@
  * 单飞锁：同一用户的画像更新【不能并发】（否则重复消化同一批事件）。进行中再来 → 过 10s 重试、别丢这批。
  * fire-and-forget：调度不阻塞 /api/chat 回复——聊天先返回，画像后台慢慢消化。
  */
-import { config } from 'memoweft';
+import { config } from './memoweft.ts';
 
 /** 一条【本轮新增理解】的精简信号（S1 记忆气泡就地织进聊天流用）。
  *  只带够织气泡的最小三样：id（去重）/ content（气泡正文）/ credStatus（把握度档，前端映射到用户词）。

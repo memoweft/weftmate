@@ -9,7 +9,7 @@
  * 加第三个体验插件时：新建 xxx.ts 导出一个 MemoWeftPlugin，再在下面 REGISTRY 里加一行即可，
  *   其余（前端列表、切换白名单、env 校验）全自动跟上——注册表是唯一事实源。
  */
-import type { MemoWeftPlugin } from 'memoweft';
+import type { MemoWeftPlugin } from '../memoweft.ts';
 import { plain } from './plain.ts';
 import { xingyao } from './xingyao.ts';
 

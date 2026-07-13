@@ -28,7 +28,9 @@ let activeWindowFn: (() => Promise<{ title?: string; owner?: { name?: string } }
 async function loadActiveWindow(): Promise<typeof activeWindowFn> {
   if (!activeWindowFn) {
     const m = await import('get-windows');
-    activeWindowFn = m.activeWindow as typeof activeWindowFn;
+    // get-windows 真实签名是 (options?) => Promise<Result>；这里刻意收窄成只读 title/owner.name
+    // 的最小形状（经 unknown 显式承认在窄化第三方类型），fn() 无参调用合法、options 可选。
+    activeWindowFn = m.activeWindow as unknown as typeof activeWindowFn;
   }
   return activeWindowFn;
 }

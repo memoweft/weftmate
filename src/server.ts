@@ -32,7 +32,7 @@
 import { createServer, type IncomingMessage } from 'node:http';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
-import { createMemoWeftCore, config, type MemoryBundle, type Observation } from 'memoweft';
+import { createMemoWeftCore, config, type MemoryBundle, type Observation } from './memoweft.ts';
 import { createProfileScheduler } from './scheduler.ts';
 import { createChatHistory, type HistoryTurn } from './chatHistory.ts';
 import { credBand } from './confBand.ts';

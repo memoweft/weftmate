@@ -29,7 +29,7 @@ import { spawn } from 'node:child_process';
 import { readFile, writeFile, readdir, rm, mkdir, stat } from 'node:fs/promises';
 import { existsSync, statSync } from 'node:fs';
 import { resolve, relative, isAbsolute, dirname } from 'node:path';
-import { OpenAICompatClient, loadLLMConfig, type ChatMessage } from 'memoweft';
+import { OpenAICompatClient, loadLLMConfig, type ChatMessage } from './memoweft.ts';
 
 // ── 常量护栏 ──
 const MAX_STEPS = 20;              // 单个任务最多几步（挡模型跑飞、无限循环）
