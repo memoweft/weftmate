@@ -12,11 +12,13 @@
 import type { MemoWeftPlugin } from '../memoweft.ts';
 import { plain } from './plain.ts';
 import { xingyao } from './xingyao.ts';
+import { aria } from './aria.ts';
 
 /** 注册表：id → 插件。加插件只动这里（唯一事实源）。 */
 const REGISTRY: Record<string, MemoWeftPlugin> = {
   [plain.id]: plain,
   [xingyao.id]: xingyao,
+  [aria.id]: aria,       // M3·I3：英文陪伴人格（一等·英文用户的原生人格；星瑶保持中文魂）
 };
 
 /** 全部已注册插件（传给 createMemoWeftCore 让 Core 烧 hook；experience 类无 hook 是 no-op，供插件管理 UI 枚举）。 */
