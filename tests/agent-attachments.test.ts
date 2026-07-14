@@ -28,7 +28,7 @@ import {
 } from '../src/agent.ts';
 
 // ── 脚本化假模型：每次 chat 从预设序列取一段 JSON 返回，并把当次收到的 messages 快照进 capture ──
-type MsgSnap = { role: string; content: string };
+type MsgSnap = { role: string; content: string | unknown[] };
 interface Capture { calls: MsgSnap[][] }
 
 /** 注入假模型工厂：replies 用尽后重复最后一句（务必让最后一句是 done，否则会跑到步数上限）。 */
@@ -36,7 +36,7 @@ function useScript(replies: string[], capture?: Capture): void {
   __setClientFactory(() => {
     let i = 0;
     return {
-      async chat(messages: Array<{ role: string; content: string }>): Promise<string> {
+      async chat(messages: Array<{ role: string; content: string | unknown[] }>): Promise<string> {
         capture?.calls.push(messages.map((m) => ({ role: m.role, content: m.content })));
         const r = replies[Math.min(i, replies.length - 1)];
         i += 1;
@@ -242,5 +242,66 @@ describe('套件3 · 上下文附件（agent.ts）', () => {
     // 附件清单里带上附件名与字数
     assert.match(sys, /doc\.txt/);
     assert.match(sys, /（4 字）/); // '内容若干' = 4 字
+  });
+
+  it('图片附件作为 vision content part 直接进入模型请求，不伪装成文本文件', async () => {
+    const cap: Capture = { calls: [] };
+    useScript([doneReply('看到了图片')], cap);
+    const dataUrl = 'data:image/png;base64,iVBORw0KGgo=';
+
+    const { id } = startTask({
+      task: '看看这张图',
+      workspace: '',
+      autonomy: 'auto',
+      attachments: [{ name: 'screen.png', kind: 'image', mime: 'image/png', dataUrl }],
+    });
+    const view = await waitDone(id);
+
+    assert.equal(view.status, 'done');
+    assert.deepEqual(view.attachments, ['screen.png']);
+    const firstCall = cap.calls[0];
+    const sys = firstCall[0].content as string;
+    assert.match(sys, /参考图片/);
+    assert.match(sys, /screen\.png/);
+    assert.doesNotMatch(sys, /read_attachment/, '只有图片时不应暴露文本附件工具');
+
+    const user = firstCall.findLast((message) => message.role === 'user');
+    assert.ok(user && Array.isArray(user.content), '图片任务的 user content 应是多模态 parts');
+    const parts = user!.content as Array<Record<string, unknown>>;
+    assert.equal(parts[0].type, 'text');
+    assert.equal(parts[1].type, 'image_url');
+    assert.deepEqual(parts[1].image_url, { url: dataUrl, detail: 'auto' });
+  });
+
+  it('视觉模型直接返回自然语言时按普通回答完成，不误报格式失败', async () => {
+    const cap: Capture = { calls: [] };
+    useScript(['这张图片是一段聊天记录，主要在讨论学习安排。'], cap);
+
+    const { id } = startTask({
+      task: '分析一下这张聊天截图',
+      workspace: '',
+      autonomy: 'auto',
+      attachments: [{
+        name: 'chat.png', kind: 'image', mime: 'image/png',
+        dataUrl: 'data:image/png;base64,iVBORw0KGgo=',
+      }],
+    });
+    const view = await waitDone(id);
+
+    assert.equal(view.status, 'done');
+    assert.equal(view.summary, '这张图片是一段聊天记录，主要在讨论学习安排。');
+    assert.equal(view.note, undefined);
+    assert.equal(view.steps.length, 0);
+    assert.equal(cap.calls.length, 1, '自然语言图片回答不应再机械重试');
+  });
+
+  it('伪造或不支持格式的图片会被后端丢弃', () => {
+    assert.throws(
+      () => startTask({
+        task: '看图', workspace: '', autonomy: 'auto',
+        attachments: [{ name: 'bad.svg', kind: 'image', mime: 'image/svg+xml', dataUrl: 'data:image/svg+xml;base64,PHN2Zy8+' }],
+      }),
+      /先选个工作区，或附一个参考文件/,
+    );
   });
 });

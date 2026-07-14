@@ -39,11 +39,28 @@ const OUT_CHARS = 4_000;           // 工具结果喂回模型时的截断上限
 const READ_CHARS = 8_000;          // read_file / read_attachment 读回的字符上限
 const MAX_ATTACHMENTS = 20;        // 单任务最多附几个参考文件
 const MAX_ATTACH_CHARS = 200_000;  // 单个附件内容上限（前端也会截；后端兜底防超大）
+const MAX_IMAGE_DATA_CHARS = 8_500_000; // 单张图片 data URL 上限（约 6MB 原图）
+const MAX_IMAGE_TOTAL_CHARS = 26_000_000; // 单任务图片总量上限，防 loopback 请求把内存撑爆
+const MAX_CONTEXT_TURNS = 16;      // 带入统一 Agent 的最近会话轮数
+const MAX_CONTEXT_CHARS = 20_000;  // 单轮上下文上限（防历史异常撑爆请求）
+
+type AgentTextPart = { type: 'text'; text: string };
+type AgentImagePart = { type: 'image_url'; image_url: { url: string; detail: 'auto' } };
+type AgentMessage = {
+  role: 'system' | 'user' | 'assistant';
+  content: string | Array<AgentTextPart | AgentImagePart>;
+};
+type TaskAttachment =
+  | { kind: 'text'; name: string; content: string; origLen?: number }
+  | { kind: 'image'; name: string; mime: string; dataUrl: string };
 
 // ── 对外类型 ──
 export type Autonomy = 'suggest' | 'ask' | 'auto';
 export type StepStatus = 'proposed' | 'awaiting' | 'running' | 'done' | 'failed' | 'rejected';
 export type TaskStatus = 'planning' | 'running' | 'awaiting' | 'done' | 'failed' | 'stopped';
+export type AgentCompletionAttachment =
+  | { kind: 'file'; name: string }
+  | { kind: 'image'; name: string; mime: string; dataUrl: string };
 
 export interface AgentStep {
   id: string;
@@ -85,9 +102,10 @@ interface Task {
   summary?: string;
   note?: string;
   createdAt: string;
-  attachments: { name: string; content: string; origLen?: number }[]; // 参考文件（③·上下文附件）；origLen=截断前原字数（仅截断时有·C5）
+  attachments: TaskAttachment[]; // 文本按需读取；图片作为多模态内容直接交给当前模型
+  context: ChatMessage[];                  // 启动时所在会话的最近上下文（只含 user/assistant，不回传前端）
   // 内部：
-  messages: ChatMessage[];               // agent 自己的对话历史（不进 memoweft）
+  messages: AgentMessage[];              // agent 自己的对话历史（不进 memoweft）
   backups: Map<string, Buffer | null>;   // 路径 → 改前内容 Buffer（原样备份含二进制；null=改前不存在）；撤回据此还原
   ranCommand: boolean;
   stopped: boolean;
@@ -100,9 +118,13 @@ const tasks = new Map<string, Task>();
 // ── 记忆接线 + MCP 工具接线（server 注入；不 import core/mcp，保持解耦 + 热重建自然跟随）──
 /** MCP 工具（②·帮你干活）：延迟加载——只带 name/desc/极简签名，完整 schema 在 mcp.ts 手里、不进上下文。 */
 export interface AgentMcpTool { fqName: string; description: string; signature: string; readOnly: boolean; }
+interface AgentExperience { id: string; name: string; systemPrompt: string; }
 interface AgentDeps {
   recall?: (query: string) => Promise<string>;               // 捞"关于用户"的背景，返回一段纯文本（空串=没有/失败）
   record?: (taskText: string, summary: string) => Promise<void>; // 干完把结果回写记忆
+  recordChat?: (userText: string, reply: string) => Promise<void>; // 没调用工具的普通回答：按聊天证据入记忆，不伪装成"帮我干活"
+  complete?: (taskId: string, taskText: string, summary: string, usedTools: boolean, attachments: AgentCompletionAttachment[]) => Promise<void>; // 宿主落当前会话历史/附件引用
+  experience?: () => AgentExperience;                            // 当前人格（动态 getter；切换后下一任务立即读取新值）
   mcpTools?: () => AgentMcpTool[];                            // 当前可用的 MCP 工具（装的能力包）
   callMcp?: (fqName: string, args: Record<string, unknown>) => Promise<string>; // 调一个 MCP 工具
   isMcpToolTrusted?: (fqName: string) => boolean;            // F1：用户是否已「信任」此 MCP 工具（信任=免批）
@@ -214,7 +236,9 @@ const TOOLS: Record<string, ToolDef> = {
     async run(args, task) {
       const name = String(args.name ?? '').trim();
       const att = task.attachments.find((a) => a.name === name);
-      if (!att) return `没有附件「${name}」。可用附件：${task.attachments.map((a) => a.name).join('、') || '（无）'}`;
+      const readable = task.attachments.filter((a) => a.kind === 'text');
+      if (!att) return `没有附件「${name}」。可读附件：${readable.map((a) => a.name).join('、') || '（无）'}`;
+      if (att.kind === 'image') return `「${att.name}」是图片，已随用户消息直接提供给你，不需要 read_attachment。`;
       return truncate(att.content, READ_CHARS);
     },
   },
@@ -304,8 +328,10 @@ function parseAction(reply: string): Parsed | null {
 }
 
 // ── 系统提示（按"有无工作区/有无附件/有无 MCP"动态拼工具清单）──
-function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: AgentMcpTool[], attachments: Task['attachments']): string {
+function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: AgentMcpTool[], attachments: Task['attachments'], experience?: AgentExperience): string {
   const hasWs = !!workspace;
+  const textAttachments = attachments.filter((a) => a.kind === 'text');
+  const imageAttachments = attachments.filter((a) => a.kind === 'image');
   const mem = memoryNote ? `\n关于用户你已知道（供参考，别乱用）：\n${memoryNote}\n` : '';
   // 工具清单：工作区工具仅在有工作区时给；read_attachment 仅在有附件时给。
   const tools: string[] = [];
@@ -315,29 +341,49 @@ function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: Agen
     tools.push('- write_file(path, content)  新建或覆盖文件');
     tools.push('- run_command(command)       在工作区里跑一条命令（如 npm test）');
   }
-  if (attachments.length) tools.push('- read_attachment(name)      读用户附上的参考文件');
+  if (textAttachments.length) tools.push('- read_attachment(name)      读用户附上的文本/代码文件');
   // 延迟加载（生死线）：外部工具只列 全名+签名+一句话，完整 schema 不进上下文；调用时 tool 用全名。
   const mcp = mcpTools.length
     ? `\n\n【外部工具·装的能力包】（调用时 tool 填下面的全名；非只读工具执行前会请用户确认）：\n` +
       mcpTools.map((t) => `- ${t.fqName}${t.signature}  ${t.description}`).join('\n')
     : '';
   // 参考文件清单（③·上下文附件）：只列名字+大小，让模型按需 read_attachment（不全量塞·检索由模型自己挑）。
-  const attList = attachments.length
+  const textList = textAttachments.length
     ? `\n\n参考文件（用户附的·用 read_attachment 按名字读·别一次全读，按需读相关的）：\n` +
-      attachments.map((a) => `- ${a.name}（${a.content.length} 字${a.origLen ? `·已从 ${a.origLen} 字截断，后半段不在` : ''}）`).join('\n')
+      textAttachments.map((a) => `- ${a.name}（${a.content.length} 字${a.origLen ? `·已从 ${a.origLen} 字截断，后半段不在` : ''}）`).join('\n')
     : '';
+  const imageList = imageAttachments.length
+    ? `\n\n参考图片（已直接随本条用户消息提供，可直接看图）：\n` +
+      imageAttachments.map((a) => `- ${a.name}（${a.mime}）`).join('\n')
+    : '';
+  const attList = textList + imageList;
   const envLine = hasWs
     ? `工作区：${workspace}\n所有文件路径都相对工作区，且【不能超出工作区】（别用绝对路径、别用 .. 逃出去）。`
-    : `这次没有工作区：你只能读下面的参考文件来回答，不能读写工作区文件、不能跑命令。`;
+    : `这次没有工作区：你只能使用下面的参考文件或图片来回答，不能读写工作区文件、不能跑命令。`;
+  const attachmentUseRules = [
+    textAttachments.length ? '- 文本/代码文件按需用 read_attachment 读。' : '',
+    imageAttachments.length ? '- 图片已经直接随用户消息提供给你，可以直接看图。' : '',
+  ].filter(Boolean).join('\n');
   const rules = hasWs
-    ? `- 一次只回一个 action，等我把结果给你，再决定下一步。
+    ? `- 用户只是在打招呼、闲聊，或问题不需要读取/改动外部内容时，直接回 done 正常回答，不要为了展示能力调用工具。
+- 一次只回一个 action，等我把结果给你，再决定下一步。
 - 改文件前先 read_file 看清楚，别凭空臆造内容。
 - 路径必须在工作区内。
 - 信息够了、任务完成了，就回 done，别画蛇添足。`
-    : `- 一次只回一个 action，等我把结果给你，再决定下一步。
-- 需要的信息在参考文件里就用 read_attachment 读；读够了就回 done 给出回答。
-- 别臆造参考文件里没有的内容。`;
-  return `你是 WeftMate 里的干活助手，在用户指定的环境里帮 ta 完成任务。
+    : `- 用户只是在打招呼、闲聊，或问题不需要参考内容时，直接回 done 正常回答，不要为了展示能力调用工具。
+- 一次只回一个 action，等我把结果给你，再决定下一步。
+${attachmentUseRules}
+- 信息够了就回 done 给出回答。
+- 别臆造参考文件或图片里没有的内容。`;
+  const persona = experience && experience.systemPrompt.trim()
+    ? `【当前人格：${experience.name}（${experience.id}）】
+${experience.systemPrompt.trim()}
+
+保持上面人格的身份、称呼和语气。用户问“你是谁”时按当前人格回答，不要退回“我是 WeftMate 助手”。最终 done.summary 也必须使用当前人格的表达方式。
+
+`
+    : '';
+  return `${persona}你现在工作在 WeftMate 的统一聊天与协作环境中：可以自然聊天，也能在需要时使用用户允许的工具完成任务。
 ${envLine}
 ${mem}
 你能用这些工具，每次回复【只做一件事】：
@@ -352,25 +398,54 @@ ${rules}`;
 }
 
 // ── 启动任务 ──
-export function startTask(input: { task: string; workspace: string; autonomy: Autonomy; attachments?: Array<{ name: string; content: string }> }): { id: string } {
+export function startTask(input: {
+  task: string;
+  workspace: string;
+  autonomy: Autonomy;
+  attachments?: Array<{
+    name: string;
+    kind?: 'text' | 'image';
+    content?: string;
+    mime?: string;
+    dataUrl?: string;
+  }>;
+  context?: Array<{ role: 'user' | 'assistant'; content: string }>;
+}): { id: string; attachments: AgentCompletionAttachment[] } {
   const task = String(input.task ?? '').trim();
   const workspace = String(input.workspace ?? '').trim();
   if (!task) throw new Error('任务描述不能为空');
   // 附件清洗 + 兜底截断（前端也截；后端防超大/超多）。
-  const attachments = (Array.isArray(input.attachments) ? input.attachments : [])
-    .filter((a) => a && typeof a.name === 'string' && typeof a.content === 'string')
-    .slice(0, MAX_ATTACHMENTS)
-    .map((a) => {
-      const raw = String(a.content);
-      // C5：超上限就截断，并记 origLen——buildSystemPrompt 在附件清单里标"已从 N 字截断"，不再静默丢后半段
-      //   （否则模型拿半个文件当整份、给出看似完整实则漏读的结果，用户全程无感）。
-      const truncated = raw.length > MAX_ATTACH_CHARS;
-      return {
-        name: String(a.name).slice(0, 200),
-        content: truncated ? raw.slice(0, MAX_ATTACH_CHARS) : raw,
-        ...(truncated ? { origLen: raw.length } : {}),
-      };
+  const attachments: TaskAttachment[] = [];
+  let imageChars = 0;
+  for (const rawAttachment of (Array.isArray(input.attachments) ? input.attachments : []).slice(0, MAX_ATTACHMENTS)) {
+    if (!rawAttachment || typeof rawAttachment.name !== 'string') continue;
+    const name = rawAttachment.name.slice(0, 200);
+    if (rawAttachment.kind === 'image') {
+      const mime = typeof rawAttachment.mime === 'string' ? rawAttachment.mime.toLowerCase() : '';
+      const dataUrl = typeof rawAttachment.dataUrl === 'string' ? rawAttachment.dataUrl : '';
+      const expectedPrefix = `data:${mime};base64,`;
+      if (!['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(mime)) continue;
+      if (!dataUrl.startsWith(expectedPrefix) || dataUrl.length > MAX_IMAGE_DATA_CHARS) continue;
+      if (imageChars + dataUrl.length > MAX_IMAGE_TOTAL_CHARS) continue;
+      imageChars += dataUrl.length;
+      attachments.push({ kind: 'image', name, mime, dataUrl });
+      continue;
+    }
+    if (typeof rawAttachment.content !== 'string') continue;
+    const raw = rawAttachment.content;
+    // C5：超上限就截断，并记 origLen——buildSystemPrompt 在附件清单里标"已从 N 字截断"，不再静默丢后半段
+    //   （否则模型拿半个文件当整份、给出看似完整实则漏读的结果，用户全程无感）。
+    const truncated = raw.length > MAX_ATTACH_CHARS;
+    attachments.push({
+      kind: 'text', name,
+      content: truncated ? raw.slice(0, MAX_ATTACH_CHARS) : raw,
+      ...(truncated ? { origLen: raw.length } : {}),
     });
+  }
+  const context: ChatMessage[] = (Array.isArray(input.context) ? input.context : [])
+    .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .slice(-MAX_CONTEXT_TURNS)
+    .map((m) => ({ role: m.role, content: m.content.slice(0, MAX_CONTEXT_CHARS) }));
   // 工作区可选：给了就必须是存在的目录；没给则必须至少有一个附件（否则 agent 无事可做）。
   if (workspace) {
     if (!existsSync(workspace) || !statSync(workspace).isDirectory()) throw new Error('工作区文件夹不存在或不是目录');
@@ -380,7 +455,7 @@ export function startTask(input: { task: string; workspace: string; autonomy: Au
   const autonomy: Autonomy = input.autonomy === 'ask' || input.autonomy === 'auto' ? input.autonomy : 'suggest';
   const id = 'task-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
   const t: Task = {
-    id, task, workspace, autonomy, attachments,
+    id, task, workspace, autonomy, attachments, context,
     status: autonomy === 'suggest' ? 'planning' : 'running',
     steps: [], createdAt: new Date().toISOString(),
     messages: [], backups: new Map(), ranCommand: false, stopped: false,
@@ -388,7 +463,22 @@ export function startTask(input: { task: string; workspace: string; autonomy: Au
   tasks.set(id, t);
   if (autonomy === 'suggest') void plan(t);       // 只建议：出方案、不执行
   else void drive(t);                             // 问一下 / 放手做：进执行循环
-  return { id };
+  return { id, attachments: completionAttachments(t) };
+}
+
+/** 用户任务消息：没有图片时保持纯文本协议；有图片时使用 OpenAI 兼容的 vision content parts。 */
+function taskUserMessage(t: Task): AgentMessage {
+  const images = t.attachments.filter((a) => a.kind === 'image');
+  if (!images.length) return { role: 'user', content: t.task };
+  return {
+    role: 'user',
+    content: [
+      { type: 'text', text: t.task },
+      ...images.map((image): AgentImagePart => ({
+        type: 'image_url', image_url: { url: image.dataUrl, detail: 'auto' },
+      })),
+    ],
+  };
 }
 
 /** 只建议模式：单次调用出一份计划（不执行任何工具），渲染成 proposed 步骤卡。 */
@@ -397,12 +487,14 @@ async function plan(t: Task): Promise<void> {
     const client = mkClient();
     const memNote = deps.recall ? await safeRecall(t.task) : '';
     const mtools = deps.mcpTools ? deps.mcpTools() : [];
-    const sys = buildSystemPrompt(t.workspace, memNote, mtools, t.attachments) +
+    const experience = deps.experience ? deps.experience() : undefined;
+    const sys = buildSystemPrompt(t.workspace, memNote, mtools, t.attachments, experience) +
       `\n\n【本次只出计划】用户选了"只建议"，所以你【不要执行】，只回一个 JSON：
 {"summary":"整体思路（用用户的语言）","plan":[{"tool":"工具名","args":{…},"why":"这步为啥"}]}`;
     const reply = await client.chat([
       { role: 'system', content: sys },
-      { role: 'user', content: t.task },
+      ...t.context,
+      taskUserMessage(t),
     ]);
     const obj = extractJson(reply);
     if (obj && Array.isArray(obj.plan)) {
@@ -419,6 +511,7 @@ async function plan(t: Task): Promise<void> {
       t.summary = reply.trim();                    // 模型没按格式回 → 直接把它的话当方案展示
     }
     t.note = '这是建议方案，没有执行任何操作。要真做请换"问一下"或"放手做"。';
+    await safeFinish(t);
     t.status = 'done';
   } catch (e) {
     t.status = 'failed';
@@ -432,9 +525,11 @@ async function drive(t: Task): Promise<void> {
     const client = mkClient();
     const memNote = deps.recall ? await safeRecall(t.task) : '';
     const mtools = deps.mcpTools ? deps.mcpTools() : [];
+    const experience = deps.experience ? deps.experience() : undefined;
     t.messages = [
-      { role: 'system', content: buildSystemPrompt(t.workspace, memNote, mtools, t.attachments) },
-      { role: 'user', content: t.task },
+      { role: 'system', content: buildSystemPrompt(t.workspace, memNote, mtools, t.attachments, experience) },
+      ...t.context,
+      taskUserMessage(t),
     ];
     let parseFails = 0;
 
@@ -446,6 +541,19 @@ async function drive(t: Task): Promise<void> {
       const parsed = parseAction(reply);
 
       if (!parsed) {
+        // 聊天/视觉通用兜底：WeftMate 是【统一聊天与协作环境】，纯自然语言回复本身就是合法的聊天回答，
+        // 不该被当成“格式错误”。很多模型闲聊时（或视觉端点看图时）会忽略 system 里的 JSON 协议，直接说人话。
+        // 只要还没进入任何工具步骤（首轮直答），这就是一条普通回答——直接展示给用户，别重试。
+        //   为什么不重试：闲聊时塞“请只回 JSON”会逼模型下一轮向用户道歉“抱歉格式问题”，反而污染对话；
+        //   机械重试三次后还会误报“模型没按格式回复，放弃”，把内部话术泄漏给用户。
+        //   仅当执行中途（steps>0）模型才突然不按格式时，才保留重试→失败的跑飞保护。
+        const directReply = reply.trim();
+        if (t.steps.length === 0 && directReply) {
+          t.summary = directReply;
+          await safeFinish(t);
+          t.status = 'done';
+          return;
+        }
         if (++parseFails >= MAX_PARSE_FAILS) {
           t.status = 'failed'; t.note = '模型没按格式回复，放弃。'; return;
         }
@@ -456,8 +564,8 @@ async function drive(t: Task): Promise<void> {
 
       if (parsed.done) {
         t.summary = parsed.summary || '完成。';
-        t.status = 'done';
-        await safeRecord(t);                       // 回写记忆：进"越用越懂"循环
+        await safeFinish(t);                       // 普通回答/工具任务分别入记忆，并落宿主会话历史
+        t.status = 'done';                         // 宿主落盘完成后再对前端宣告 done，避免刷新历史的竞态
         return;
       }
 
@@ -575,10 +683,63 @@ function toView(t: Task): AgentTaskView {
 }
 
 // ── 内部小工具 ──
-type ChatClient = { chat(messages: ChatMessage[]): Promise<string> };
+type ChatClient = { chat(messages: AgentMessage[]): Promise<string> };
+
+/**
+ * Agent 专用的 OpenAI-compatible 客户端。
+ * 纯文本仍复用 MemoWeft 的成熟客户端；仅图片消息由 Host 直发标准 content parts，避免改动 MemoWeft 能力层。
+ */
+class AgentOpenAIClient implements ChatClient {
+  private readonly config: ReturnType<typeof loadLLMConfig>;
+  private readonly textClient: OpenAICompatClient;
+
+  constructor() {
+    this.config = { ...loadLLMConfig(), temperature: 0 };
+    this.textClient = new OpenAICompatClient(this.config);
+  }
+
+  async chat(messages: AgentMessage[]): Promise<string> {
+    if (messages.every((message) => typeof message.content === 'string')) {
+      return this.textClient.chat(messages as ChatMessage[]);
+    }
+    const timeoutMs = Number(process.env.MEMOWEFT_LLM_TIMEOUT_MS ?? process.env.DLA_LLM_TIMEOUT_MS) || 120_000;
+    const url = `${this.config.baseUrl.replace(/\/$/, '')}/chat/completions`;
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${this.config.apiKey}`,
+        },
+        body: JSON.stringify({ model: this.config.model, messages, temperature: 0 }),
+        signal: AbortSignal.timeout(timeoutMs),
+      });
+    } catch (error) {
+      if (error instanceof Error && error.name === 'TimeoutError') {
+        throw new Error(`图片请求超时（超过 ${timeoutMs}ms）`);
+      }
+      throw error;
+    }
+    if (!response.ok) {
+      const detail = (await response.text().catch(() => '')).slice(0, 500);
+      const visionHint = response.status === 400 || response.status === 404 || response.status === 415
+        ? '当前模型或接口可能不支持图片理解。请换用支持视觉的模型后重试。'
+        : '';
+      throw new Error(`图片请求失败 ${response.status}${visionHint ? `：${visionHint}` : ''}${detail ? `｜${detail}` : ''}`);
+    }
+    const data = await response.json() as {
+      choices?: Array<{ message?: { content?: string } }>;
+    };
+    const content = data.choices?.[0]?.message?.content;
+    if (typeof content !== 'string') throw new Error('模型返回的图片回复格式不正确');
+    return content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+  }
+}
+
 // LLM 客户端工厂（可注入）：默认用当前激活模型（env 已由 configStore.injectEnv 保持最新），temperature=0 让工具调用更稳。
 //   loadLLMConfig 缺配会抛（"没配模型"），由 driver/plan 的 try/catch 兜成任务失败、不崩进程。
-let clientFactory: () => ChatClient = () => new OpenAICompatClient({ ...loadLLMConfig(), temperature: 0 });
+let clientFactory: () => ChatClient = () => new AgentOpenAIClient();
 /** 仅测试用：注入假模型确定性地驱动循环，冒烟沙箱/撤回等安全逻辑（不碰生产路径；生产永远走默认工厂）。 */
 export function __setClientFactory(f: () => ChatClient): void { clientFactory = f; }
 function mkClient(): ChatClient { return clientFactory(); }
@@ -588,6 +749,26 @@ async function safeRecall(query: string): Promise<string> {
 async function safeRecord(t: Task): Promise<void> {
   if (!deps.record) return;
   try { await deps.record(t.task, t.summary ?? ''); } catch { /* 回写记忆失败不影响任务结果 */ }
+}
+
+async function safeFinish(t: Task): Promise<void> {
+  // 只建议模式也会有 proposed 步骤，但没有真正调用工具。
+  const usedTools = t.steps.some((step) => step.status !== 'proposed');
+  if (usedTools) {
+    await safeRecord(t);
+  } else if (deps.recordChat) {
+    try { await deps.recordChat(t.task, t.summary ?? ''); } catch { /* 普通回答入记忆失败不影响回复 */ }
+  }
+  if (deps.complete) {
+    const attachments = completionAttachments(t);
+    try { await deps.complete(t.id, t.task, t.summary ?? '', usedTools, attachments); } catch { /* 会话历史失败不影响任务结果 */ }
+  }
+}
+
+function completionAttachments(t: Task): AgentCompletionAttachment[] {
+  return t.attachments.map((attachment) => attachment.kind === 'image'
+    ? { kind: 'image', name: attachment.name, mime: attachment.mime, dataUrl: attachment.dataUrl }
+    : { kind: 'file', name: attachment.name });
 }
 /** plan 模式用的宽松 JSON 抠取（同 parseAction 的剥壳逻辑，但返回原始对象）。 */
 function extractJson(reply: string): Record<string, unknown> | null {

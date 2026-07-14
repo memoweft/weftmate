@@ -31,10 +31,10 @@
  */
 import { createServer, type IncomingMessage } from 'node:http';
 import { mkdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { createMemoWeftCore, config, type MemoryBundle, type Observation } from './memoweft.ts';
 import { createProfileScheduler } from './scheduler.ts';
-import { createChatHistory, type HistoryTurn } from './chatHistory.ts';
+import { createChatHistory, type HistoryTurn, type HistoryAttachment } from './chatHistory.ts';
 import { credBand } from './confBand.ts';
 import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_IDS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
 import { buildEnvResponse } from './genEnv.ts';
@@ -44,6 +44,7 @@ import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, 
 import * as agent from './agent.ts';
 import * as mcp from './mcp.ts';
 import * as mcpStore from './mcp-store.ts';
+import { ensureDefaultAgentWorkspace as ensureWorkspaceInDocuments } from './agent-workspace.ts';
 import { dialog, BrowserWindow, app } from 'electron';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
@@ -122,11 +123,46 @@ const switchedExperienceConvs = new Set<string>();
 //   闭包取模块级 core（let）——热重建 core 后自然调新实例（无需重建 scheduler、pending 计数得以保留）。
 const scheduler = createProfileScheduler({ updateProfile: () => core.updateProfile() });
 
+// Agent 在后台完成时仍要落回它启动时所在的对话；用户可能在任务期间切到另一段对话，不能误写当前全局会话。
+const agentTaskConversations = new Map<string, string>();
+const agentTaskUserPersisted = new Set<string>();
+
+function persistAgentAttachments(convId: string, attachments: agent.AgentCompletionAttachment[]): HistoryAttachment[] {
+  const savedAttachments: HistoryAttachment[] = [];
+  for (const attachment of attachments) {
+    if (attachment.kind === 'file') {
+      savedAttachments.push({ kind: 'file', name: attachment.name });
+      continue;
+    }
+    try {
+      const saved = history.saveImage(convId, attachment);
+      savedAttachments.push(saved ?? { kind: 'file', name: attachment.name });
+    } catch {
+      // 资源落盘失败不吞掉整条消息，至少留下附件名。
+      savedAttachments.push({ kind: 'file', name: attachment.name });
+    }
+  }
+  return savedAttachments;
+}
+
+function persistAgentUserTurn(convId: string, taskText: string, attachments: agent.AgentCompletionAttachment[]): void {
+  const savedAttachments = persistAgentAttachments(convId, attachments);
+  history.append(convId, {
+    role: 'user', content: taskText, ts: new Date().toISOString(),
+    ...(savedAttachments.length ? { attachments: savedAttachments } : {}),
+  });
+}
+
 // agent 干活（阶段2·帮你干活 第①块 · 方案B：Host 自建循环，见 agent.ts）：注入记忆接线。
 //   闭包引用模块级 core（let）——热重建 core 后自然指向新实例，无需重配（同 scheduler 的路数）。
 //   recall：开工前捞点"关于你"喂给 agent 当背景；record：干完把任务回写画像，让干活也进"越用越懂"循环。
 //   agent 的中间对话（工具往返）只在 agent.ts 内部，不进 memoweft 的记忆/聊天链路。
 agent.configureAgentDeps({
+  // 必须动态读取 activeExperienceId：人格切换后下一条统一 Agent 消息立即拿到新角色，而不是固定在启动时的人格。
+  experience: () => {
+    const current = getExperience(activeExperienceId);
+    return { id: current.id, name: current.name, systemPrompt: current.systemPrompt ?? '' };
+  },
   recall: async (query) => {
     const items = await core.recall({ query });
     return items.slice(0, 6).map((r) => '· ' + r.content).join('\n');
@@ -135,6 +171,20 @@ agent.configureAgentDeps({
     // C1：把 agent 真正干成了啥(summary) 也回写，别只记任务意图——让"帮你干活"真进"越用越懂"闭环。
     const done = summary && summary.trim() ? `\n结果：${summary.trim()}` : '';
     await core.ingestUserMessage({ content: `（让 WeftMate 帮我干活）${taskText}${done}` });
+  },
+  // 没调用任何工具就是普通聊天回答：只把用户原话作为证据，不加"帮我干活"标签。
+  recordChat: async (userText) => {
+    await core.ingestUserMessage({ content: userText });
+  },
+  // 无论是否用了工具，都把用户话和最终回答落进启动时的会话，刷新后仍能接着聊。
+  complete: async (taskId, taskText, summary, _usedTools, attachments) => {
+    const convId = agentTaskConversations.get(taskId) ?? currentConvId;
+    // 正常在 start 接受任务时就落用户轮；这里只是防竞态/写盘失败的兜底。
+    if (!agentTaskUserPersisted.has(taskId)) persistAgentUserTurn(convId, taskText, attachments);
+    history.append(convId, { role: 'assistant', content: summary || '完成。', ts: new Date().toISOString() });
+    agentTaskUserPersisted.delete(taskId);
+    agentTaskConversations.delete(taskId);
+    scheduler.onTurn();
   },
   // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
   mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),
@@ -175,12 +225,27 @@ function seedFor(conversationId: string, opts: { onlyUser?: boolean } = {}): Arr
 
 // ── 小工具 ──
 
+class RequestBodyTooLargeError extends Error {}
+
 /** 读请求体为 JSON。UTF-8 护栏（testbench readJson 教训）：非法 UTF-8 解码出 U+FFFD → 拒收，防乱码入库。 */
-function readJson(req: IncomingMessage): Promise<Record<string, unknown>> {
+function readJson(req: IncomingMessage, maxBytes = Number.POSITIVE_INFINITY): Promise<Record<string, unknown>> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c: Buffer) => chunks.push(c));
+    let bytes = 0;
+    let rejected = false;
+    req.on('data', (c: Buffer) => {
+      if (rejected) return;
+      bytes += c.length;
+      if (bytes > maxBytes) {
+        rejected = true;
+        chunks.length = 0;
+        reject(new RequestBodyTooLargeError('请求体过大'));
+        return;
+      }
+      chunks.push(c);
+    });
     req.on('end', () => {
+      if (rejected) return;
       try {
         const body = Buffer.concat(chunks).toString('utf8');
         if (body.includes('�')) {
@@ -228,6 +293,19 @@ function sanitizeObservation(raw: unknown): Observation | null {
 // MCP 预置清单（②「一键装」·点一下预填表单，用户仍需确认）。都经 npx 运行（首次会下载·需 Node+网络）。
 //   Windows spawn shell:false → npx 类必须走 command:'cmd' args:['/c','npx',...]（见 mcp.ts 说明）。
 const DEFAULT_FS_DIR = app.getPath('documents'); // 文件系统预置默认开放"文档"夹（真实存在·避免占位目录连不上；用户可编辑收窄）
+
+/**
+ * 用户没选工作区时的安全默认值：文档/WeftMate。
+ * 不放 userData——那里有数据库、会话与加密配置，不该暴露给 Agent；也不直接开放整个 Documents。
+ */
+function ensureDefaultAgentWorkspace(): string {
+  return ensureWorkspaceInDocuments(DEFAULT_FS_DIR);
+}
+
+/** 会话是工作区的唯一真源；旧会话没有元数据时平滑归入默认工作区。 */
+function workspaceForConversation(conversationId: string): string {
+  return history.getWorkspace(conversationId) || ensureDefaultAgentWorkspace();
+}
 const MCP_CATALOG = [
   { key: 'filesystem', name: '文件系统', desc: '读写你指定的文件夹（默认你的"文档"夹，可在 args 末尾改）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-filesystem', DEFAULT_FS_DIR] },
   { key: 'memory', name: '知识记忆图', desc: '一个简单的知识图谱记忆库', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-memory'] },
@@ -352,7 +430,7 @@ const server = createServer(async (req, res) => {
     }
 
     // 切换体验：body {id} → 校验在白名单里 → 换 activeExperienceId。
-    //   【切换后当前会话下一句就生效】：Core 语义是 systemPrompt 仅首次建实例生效，靠"重建实例"换人设。
+    //   【切换后当前会话下一句就生效】：普通 /api/chat 靠重建 Core 会话；统一 Agent 每个新任务动态读取 activeExperienceId。
     //   要真重建，得【两套缓存一起清】：① activatedConvs.delete → Host 下句传 seedTurns + 新 systemPrompt；
     //   ② core.dropConversation → 丢掉 Core 缓存的旧实例。只清 ① 不够：Core 命中旧实例就不重建、还用旧人设
     //   （这正是审查抓出的坑——Host 的 activatedConvs 与 Core 的 conversations Map 是两套独立缓存）。
@@ -431,23 +509,51 @@ const server = createServer(async (req, res) => {
     // 新建 = 换当前对话 id；列表 = history.list()；切换 = 改 currentConvId + 标未激活以触发 seed 重建；
     // 归档 = 文件加 .archived（数据不删）。
 
-    // 新建对话：生成新 id → 设为当前对话 → 返回新 id（前端据此清空聊天区）。
-    //   不预建文件（首条 chat 才落盘）；新对话本进程从没建过实例，自然要 seed（其实空历史、seed 为空，等价全新窗口）。
+    // 新建对话：继承当前工作区并立即写入会话元数据，所以空白对话也会出现在对应工作区分组里。
     if (req.method === 'POST' && url.pathname === '/api/reset') {
+      const workspace = workspaceForConversation(currentConvId);
       currentConvId = history.newId();
-      sendJson(res, 200, { ok: true, conversationId: currentConvId });
+      history.setWorkspace(currentConvId, workspace);
+      sendJson(res, 200, { ok: true, conversationId: currentConvId, workspace });
+      return;
+    }
+
+    // 会话图片资源：只按 chatHistory 生成的安全 assetId 读取，拒绝任意路径与符号链接。
+    if (req.method === 'GET' && url.pathname === '/api/session-image') {
+      const session = url.searchParams.get('session') ?? '';
+      const asset = url.searchParams.get('asset') ?? '';
+      const image = history.readImage(session, asset);
+      if (!image) { sendJson(res, 404, { error: '图片不存在' }); return; }
+      res.writeHead(200, {
+        'Content-Type': image.mime,
+        'Content-Length': image.data.length,
+        'Cache-Control': 'private, max-age=31536000, immutable',
+        'X-Content-Type-Options': 'nosniff',
+        'Cross-Origin-Resource-Policy': 'same-origin',
+      });
+      res.end(image.data);
       return;
     }
 
     // 会话列表：列所有未归档对话（供侧栏渲染），标出当前是哪条。按最后活跃倒序。
     if (req.method === 'GET' && url.pathname === '/api/sessions') {
-      const sessions = history.list().map((s) => ({
+      const defaultWorkspace = ensureDefaultAgentWorkspace();
+      const sessions = history.list().map((s) => {
+        const workspace = s.workspace || defaultWorkspace;
+        return {
         id: s.id,
         preview: s.preview,
         lastActiveMs: s.lastActiveMs,
         current: s.id === currentConvId,
-      }));
-      sendJson(res, 200, { sessions, currentId: currentConvId });
+          workspace,
+          workspaceName: basename(workspace),
+        };
+      });
+      sendJson(res, 200, {
+        sessions,
+        currentId: currentConvId,
+        currentWorkspace: workspaceForConversation(currentConvId),
+      });
       return;
     }
 
@@ -466,7 +572,12 @@ const server = createServer(async (req, res) => {
       currentConvId = id; // id 来自 list、已是规范安全形态
       activatedConvs.delete(id); // Host 侧：下句 chat 传 seedTurns
       core.dropConversation(id); // Core 侧：丢旧实例 → 下句真重建续聊窗口（两套缓存一起清）
-      sendJson(res, 200, { ok: true, conversationId: id, turns: history.read(id) });
+      sendJson(res, 200, {
+        ok: true,
+        conversationId: id,
+        turns: history.read(id),
+        workspace: workspaceForConversation(id),
+      });
       return;
     }
 
@@ -476,15 +587,26 @@ const server = createServer(async (req, res) => {
       const body = await readJson(req);
       const id = typeof body.id === 'string' ? body.id.trim() : '';
       if (!id) { sendJson(res, 400, { error: '缺少要归档的对话 id' }); return; }
+      const archivedWorkspace = workspaceForConversation(id);
       history.archive(id);
       activatedConvs.delete(id); // 归档就从活跃集移除（若在）
       let archivedCurrent = false;
       if (id === currentConvId) {
         const rest = history.list().filter((s) => !s.archived);
-        currentConvId = rest[0]?.id ?? history.newId();
+        if (rest[0]) {
+          currentConvId = rest[0].id;
+        } else {
+          currentConvId = history.newId();
+          history.setWorkspace(currentConvId, archivedWorkspace);
+        }
         archivedCurrent = true;
       }
-      sendJson(res, 200, { ok: true, currentId: currentConvId, archivedCurrent });
+      sendJson(res, 200, {
+        ok: true,
+        currentId: currentConvId,
+        archivedCurrent,
+        workspace: workspaceForConversation(currentConvId),
+      });
       return;
     }
 
@@ -774,30 +896,64 @@ const server = createServer(async (req, res) => {
     // 信任框架：计划→确认(三档自主度)→执行(沙箱)→每步可视→一键撤回。任务后台跑，前端轮询 status 刷步骤卡。
     // 隐私：工作区文件/命令输出会发给用户配置的模型（可能云端），由用户主动发起任务视为同意（前端写明）。
 
+    // 工作区跟随当前会话；旧会话首次进入时绑定到专用默认工作区。
+    if (req.method === 'GET' && url.pathname === '/api/agent/workspace') {
+      const defaultWorkspace = ensureDefaultAgentWorkspace();
+      const workspace = history.getWorkspace(currentConvId) || defaultWorkspace;
+      if (!history.getWorkspace(currentConvId)) history.setWorkspace(currentConvId, workspace);
+      sendJson(res, 200, {
+        path: workspace,
+        name: basename(workspace),
+        isDefault: workspace === defaultWorkspace,
+      });
+      return;
+    }
+
     // 选工作区文件夹：Electron 目录选择框（server 在主进程，可直接用 dialog）。返回选中的绝对路径。
     if (req.method === 'POST' && url.pathname === '/api/agent/pick-workspace') {
+      const currentWorkspace = workspaceForConversation(currentConvId);
       const win = BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0] ?? null;
       const r = win
-        ? await dialog.showOpenDialog(win, { properties: ['openDirectory'] })
-        : await dialog.showOpenDialog({ properties: ['openDirectory'] });
-      sendJson(res, 200, { canceled: r.canceled, path: r.filePaths[0] ?? null });
+        ? await dialog.showOpenDialog(win, { properties: ['openDirectory'], defaultPath: currentWorkspace })
+        : await dialog.showOpenDialog({ properties: ['openDirectory'], defaultPath: currentWorkspace });
+      const workspace = r.filePaths[0] ?? null;
+      if (workspace) history.setWorkspace(currentConvId, workspace);
+      sendJson(res, 200, { canceled: r.canceled, path: workspace });
       return;
     }
 
     // 开工：body {task, workspace, autonomy:'suggest'|'ask'|'auto'} → 返回 taskId（后台跑，前端轮询）。
     //   startTask 会校验工作区存在/是目录、任务非空，非法则抛 → 400。
     if (req.method === 'POST' && url.pathname === '/api/agent/start') {
-      const body = await readJson(req);
       try {
+        // 4 张×6MB 图片经 base64 后约 24MB；32MB 留出 JSON/文本附件余量，同时拒绝无上限堆内存。
+        const body = await readJson(req, 32 * 1024 * 1024);
+        // 不信任窗口缓存里的旧路径：切会话后，任务只能使用该会话已绑定的工作区。
+        const convId = currentConvId;
+        const workspace = workspaceForConversation(convId);
+        if (!history.getWorkspace(convId)) history.setWorkspace(convId, workspace);
+        // 统一 Agent 也要续上当前对话。刚切人格时只带用户历史，避免旧人格的 assistant 自称把新人格带偏。
+        const seedOnlyUser = switchedExperienceConvs.has(convId);
+        const context = seedFor(convId, { onlyUser: seedOnlyUser });
         const started = agent.startTask({
           task: typeof body.task === 'string' ? body.task : '',
-          workspace: typeof body.workspace === 'string' ? body.workspace : '',
+          workspace,
           autonomy: (body.autonomy === 'ask' || body.autonomy === 'auto' ? body.autonomy : 'suggest'),
           attachments: Array.isArray(body.attachments) ? body.attachments : [], // ③·上下文附件 {name,content}[]
+          context,
         });
-        sendJson(res, 200, { ok: true, id: started.id });
+        agentTaskConversations.set(started.id, convId);
+        // 先落用户消息与图片引用，任务还在跑时重开应用也能恢复。
+        try {
+          persistAgentUserTurn(convId, typeof body.task === 'string' ? body.task.trim() : '', started.attachments);
+          agentTaskUserPersisted.add(started.id);
+        } catch {
+          // 任务已经启动，不能因为一次历史写盘失败对前端伪报“没发送”；完成回调会再兜底一次。
+        }
+        switchedExperienceConvs.delete(convId);
+        sendJson(res, 200, { ok: true, id: started.id, workspace });
       } catch (e) {
-        sendJson(res, 400, { error: e instanceof Error ? e.message : String(e) });
+        sendJson(res, e instanceof RequestBodyTooLargeError ? 413 : 400, { error: e instanceof Error ? e.message : String(e) });
       }
       return;
     }
