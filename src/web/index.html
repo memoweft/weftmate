@@ -1498,17 +1498,28 @@
   }
   /** 程序化取译文（少数不经 DOM 的地方，如 document.title）。 */
   function t(zh) { return LANG === 'en' ? (I18N_FULL[zh] || i18nText(zh)) : zh; }
+  /** 只翻这个节点【自身】的属性（不递归子树）——给观察器的属性变更用，避免重扫整棵树（真机卡死主因）。 */
+  function i18nAttrs(node) {
+    if (LANG !== 'en' || !node || node.nodeType !== 1) return;
+    const A = ['placeholder', 'title', 'aria-label'];
+    for (let i = 0; i < A.length; i++) { const a = A[i]; if (node.hasAttribute(a)) { const v = node.getAttribute(a); if (v && /[一-鿿]/.test(v)) { const tr = i18nText(v); if (tr !== v) node.setAttribute(a, tr); } } }
+  }
   if (LANG === 'en') {
+    i18nNode(document.body); // 先翻已解析的静态壳（此刻观察器还没连，不会自触发）
     try {
-      new MutationObserver((muts) => {
-        for (let i = 0; i < muts.length; i++) {
-          const m = muts[i];
-          if (m.type === 'childList') { for (let j = 0; j < m.addedNodes.length; j++) i18nNode(m.addedNodes[j]); }
-          else if (m.target) i18nNode(m.target);
-        }
-      }).observe(document.body, { childList: true, subtree: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label'] });
-    } catch (e) { /* 无 MutationObserver 的老环境就只翻静态壳 */ }
-    i18nNode(document.body); // 初翻已解析的静态壳
+      const OBS_OPT = { childList: true, subtree: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label'] };
+      const mo = new MutationObserver((muts) => {
+        mo.disconnect(); // ★处理期间断开：我自己写译文触发的变更不再被当成新变更 → 断掉「改→触发→再改」的风暴/死循环。
+        try {
+          for (let i = 0; i < muts.length; i++) {
+            const m = muts[i];
+            if (m.type === 'childList') { for (let j = 0; j < m.addedNodes.length; j++) i18nNode(m.addedNodes[j]); } // 新加的子树整段翻
+            else if (m.target) i18nAttrs(m.target); // 属性变更只翻该节点自身属性，绝不递归整棵子树
+          }
+        } finally { mo.observe(document.body, OBS_OPT); }
+      });
+      mo.observe(document.body, OBS_OPT);
+    } catch (e) { /* 无 MutationObserver 的老环境：静态壳已翻，动态部分不译 */ }
   }
   // ══════════════════════════════════════════════════════════════════════════
   let sending = false;
