@@ -1486,10 +1486,13 @@
     if (I18N_SKIP_TAGS[node.tagName] || node.isContentEditable) return;                       // 别碰 script/style/输入/代码块
     const cl = node.classList;
     if (cl && (cl.contains('bubble') || cl.contains('md-body') || cl.contains('no-i18n'))) return; // 别碰消息内容(用户话/模型输出)
-    // 元素级整串命中：处理被 <code>/<strong>/<br> 打断的完整串——整个元素 textContent 精确等于某字典键就整体替换（会摊平内联标记，描述段可接受）。
+    // 元素级整串命中：处理被 <code>/<strong>/<br> 打断的完整串。★安全护栏：只在【所有子元素都是内联文本标记(b/i/code/span/a…)、
+    //   无 id、无孙元素】时才敢整体替换 textContent——否则会把结构/交互容器(如 chatInner)的子元素冲成纯文本、整块布局塌、按钮全死（真机 bug 根因）。
     if (node.childNodes.length > 1) {
-      const tc = node.textContent, tk = tc && tc.trim();
-      if (tk) { const en = _fullHit(tk); if (en) { node.textContent = tc.replace(tk, en); return; } }
+      const INLINE_OK = { B: 1, I: 1, EM: 1, STRONG: 1, CODE: 1, SPAN: 1, BR: 1, A: 1, U: 1, SMALL: 1, SUP: 1, SUB: 1, MARK: 1, WBR: 1 };
+      let safe = true; const ch = node.children;
+      for (let i = 0; i < ch.length; i++) { if (!INLINE_OK[ch[i].tagName] || ch[i].id || ch[i].children.length) { safe = false; break; } }
+      if (safe) { const tc = node.textContent, tk = tc && tc.trim(); if (tk) { const en = _fullHit(tk); if (en) { node.textContent = tc.replace(tk, en); return; } } }
     }
     const ATTRS = ['placeholder', 'title', 'aria-label'];
     for (let i = 0; i < ATTRS.length; i++) { const a = ATTRS[i]; if (node.hasAttribute(a)) { const v = node.getAttribute(a); if (v && /[一-鿿]/.test(v)) { const tr = i18nText(v); if (tr !== v) node.setAttribute(a, tr); } } }
