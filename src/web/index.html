@@ -3207,6 +3207,13 @@
     '有文件后来又被修改，已跳过，未覆盖你的新内容。未处理项仍保留，可稍后重试。': 'Some files were changed later, so they were skipped and your newer content was not overwritten. Unhandled items were kept so you can retry later.',
     '有些文件后来又被修改，另有文件还原失败；都没有被强行覆盖，未处理项仍保留，可稍后重试。': 'Some files were changed later and others could not be restored. Nothing was forcibly overwritten, and unhandled items were kept so you can retry later.',
     '会把这次任务改过的文件还原（新建的删掉）。如果文件后来又被你或别的程序改过，会跳过，不会覆盖。跑过的命令造成的其它变化撤不回。': 'This restores files changed by this task and deletes newly created ones. Files changed later by you or another program will be skipped, not overwritten. Other changes caused by commands cannot be undone.',
+    '还有一个任务没有结束，已重新接回原任务；不能同时启动第二个任务。': 'Another task is still active. The original task was reconnected, and a second task cannot start at the same time.',
+    '已重新接回未完成的任务。': 'Reconnected the unfinished task.',
+    '上次任务因应用重启或临时状态清理而中断，请重新发送。': 'The previous task was interrupted by an app restart or temporary-state cleanup. Please send it again.',
+    '请在 10 分钟内确认；超时后任务会自动停止。': 'Please confirm within 10 minutes; the task will stop automatically after timeout.',
+    '请在 30 秒内确认；超时后任务会自动停止。': 'Please confirm within 30 seconds; the task will stop automatically after timeout.',
+    '等待确认超过 10 分钟，任务已自动停止。没有执行这一步。': 'Approval timed out after 10 minutes. The task stopped automatically and this step was not run.',
+    '等待确认超过 30 秒，任务已自动停止。没有执行这一步。': 'Approval timed out after 30 seconds. The task stopped automatically and this step was not run.',
   });
   let LANG = '__WEFTMATE_UI_LANG__' === 'en' ? 'en' : 'zh';
   const I18N_SKIP_TAGS = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CODE: 1, PRE: 1, NOSCRIPT: 1 };
@@ -6322,6 +6329,22 @@
     autonomy: 'ask',
     taskId: null, taskConversationId: null, taskText: '', poll: null, attachments: [],
   };
+  const ACTIVE_AGENT_STORAGE_KEY = 'wm-active-agent-task';
+  function readActiveAgentMarker() {
+    try {
+      const marker = JSON.parse(localStorage.getItem(ACTIVE_AGENT_STORAGE_KEY) || 'null');
+      return marker && typeof marker.id === 'string'
+        ? { id: marker.id, conversationId: typeof marker.conversationId === 'string' ? marker.conversationId : null }
+        : null;
+    } catch (e) { return null; }
+  }
+  function persistActiveAgentMarker() {
+    if (!AG.taskId) return;
+    try { localStorage.setItem(ACTIVE_AGENT_STORAGE_KEY, JSON.stringify({ id: AG.taskId, conversationId: AG.taskConversationId })); } catch (e) { /* 后端仍会阻止重复任务 */ }
+  }
+  function clearActiveAgentMarker() {
+    try { localStorage.removeItem(ACTIVE_AGENT_STORAGE_KEY); } catch (e) { /* 无持久存储时退化为后端任务列表恢复 */ }
+  }
   let agentSettingsConfirmed = false;
   let agentSettingsBusy = true;
   let agentSettingsReady = Promise.resolve(false);
@@ -6472,6 +6495,49 @@
     if (!busy && agentSettingsConfirmed && !agentSettingsBusy) $('text').focus();
   }
 
+  async function restoreAgentTask(preferredId = null, announce = true) {
+    const marker = readActiveAgentMarker();
+    let listed;
+    try {
+      const response = await fetch('/api/agent/status');
+      listed = await response.json();
+      if (!response.ok) return false;
+    } catch (e) { return false; }
+
+    const tasks = Array.isArray(listed && listed.tasks) ? listed.tasks : [];
+    const markerTask = marker ? tasks.find((task) => task.id === marker.id) : null;
+    const active = tasks
+      .filter((task) => ['planning', 'running', 'awaiting'].includes(task.status))
+      .sort((left, right) => String(right.createdAt || '').localeCompare(String(left.createdAt || '')));
+    const task = active.find((entry) => entry.id === preferredId)
+      || active.find((entry) => marker && entry.id === marker.id)
+      || active.find((entry) => entry.conversationId && entry.conversationId === currentConvId)
+      || active[0];
+
+    if (!task) {
+      if (marker) {
+        clearActiveAgentMarker();
+        setAgentComposerBusy(false);
+        await loadHistory();
+        if (!markerTask) memToast('上次任务因应用重启或临时状态清理而中断，请重新发送。', 'danger');
+      }
+      return false;
+    }
+
+    AG.taskId = task.id;
+    AG.taskConversationId = task.conversationId || (marker && marker.id === task.id ? marker.conversationId : null) || currentConvId;
+    AG.taskText = task.task || '';
+    if (task.workspace && (!AG.taskConversationId || AG.taskConversationId === currentConvId)) adoptConversationWorkspace(task.workspace);
+    persistActiveAgentMarker();
+    setAgentComposerBusy(true);
+    if (!AG.taskConversationId || AG.taskConversationId === currentConvId) renderAgentTask(task);
+    if (AG.poll) clearInterval(AG.poll);
+    AG.poll = setInterval(pollAgent, 1000);
+    pollAgent();
+    if (announce) memToast('已重新接回未完成的任务。', '');
+    return true;
+  }
+
   async function startAgentTask(task) {
     if (!agentSettingsConfirmed || agentSettingsBusy) {
       if (!agentSettingsBusy) agentSettingsReady = initAgentAutonomy();
@@ -6490,11 +6556,15 @@
       setAgentComposerBusy(false); memToast('没连上，这句话还没发出去', 'danger'); return false;
     }
     if (!started || started.error) {
-      setAgentComposerBusy(false); memToast(started && started.error ? started.error : '发送失败', 'danger'); return false;
+      setAgentComposerBusy(false);
+      if (started && started.taskId) await restoreAgentTask(started.taskId, false);
+      memToast(started && started.error ? started.error : '发送失败', 'danger');
+      return false;
     }
     AG.taskId = started.id;
     AG.taskConversationId = currentConvId;
     AG.taskText = task;
+    persistActiveAgentMarker();
     if (started.workspace && started.workspace !== AG.workspace) {
       AG.workspace = started.workspace; persistAgentWindow(); syncAgentUi();
     }
@@ -6524,6 +6594,7 @@
       AG.taskId = null;
       AG.taskConversationId = null;
       AG.taskText = '';
+      clearActiveAgentMarker();
       setAgentComposerBusy(false);
       await Promise.all([loadSessions(), loadHistory()]);
       memToast('任务临时状态已清理；若任务已完成，结果可在会话记录中查看。', '');
@@ -6539,6 +6610,7 @@
         AG.taskId = null;
         AG.taskConversationId = null;
         AG.taskText = '';
+        clearActiveAgentMarker();
       }
       setAgentComposerBusy(false);
       loadSessions();
@@ -6650,6 +6722,14 @@
       const foot = document.createElement('div'); foot.className = 'at-foot';
       if (v.summary) { const sm = document.createElement('div'); sm.className = 'at-summary'; sm.textContent = v.summary; foot.appendChild(sm); }
       if (v.note) { const nt = document.createElement('div'); nt.textContent = v.note; nt.style.marginTop = '4px'; foot.appendChild(nt); }
+      if (v.status === 'awaiting' && Number(v.approvalTimeoutMs) > 0) {
+        const timeoutMs = Number(v.approvalTimeoutMs);
+        const label = timeoutMs < 60_000 ? Math.ceil(timeoutMs / 1_000) + ' 秒' : Math.ceil(timeoutMs / 60_000) + ' 分钟';
+        const hint = document.createElement('div');
+        hint.textContent = '请在 ' + label + '内确认；超时后任务会自动停止。';
+        hint.style.marginTop = '4px';
+        foot.appendChild(hint);
+      }
       const acts = document.createElement('div'); acts.className = 'at-actions';
       if (running) { const b = document.createElement('button'); b.textContent = '叫停'; b.onclick = () => agStop(v.id); acts.appendChild(b); }
       if (v.canUndo) {
@@ -7075,8 +7155,10 @@
 
   // 启动
   checkHealth();
-  loadHistory();
-  loadSessions();
+  void (async () => {
+    await Promise.all([loadHistory(), loadSessions()]);
+    await restoreAgentTask();
+  })();
   loadExperiences(); // 填体验选择器、标当前
   updateMemPill(); // 首次刷 S0 记忆胶囊计数
   syncModelName(); // 首次刷底部工具栏当前模型名

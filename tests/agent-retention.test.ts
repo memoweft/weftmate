@@ -6,10 +6,12 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import {
+  __approvalTimerHasRefForTests,
   __getTaskRetentionDebugForTests,
   __resetAgentTasksForTests,
   __runTaskCleanupForTests,
   __setBackupReaderForTests,
+  __setApprovalTimeoutForTests,
   __setClientFactory,
   __setTaskRetentionForTests,
   __taskCleanupTimerHasRefForTests,
@@ -234,6 +236,34 @@ describe('Agent 终态留存与重资源释放', () => {
     assert.equal(readFileSync(join(workspace, 'before.txt'), 'utf8'), 'new');
   });
 
+  it('等待批准超时会自动停止，不执行动作，且计时器不阻止进程退出', async () => {
+    __setApprovalTimeoutForTests(25);
+    let chatCalls = 0;
+    let settled = 0;
+    __setClientFactory(() => ({
+      chat: async () => {
+        chatCalls++;
+        return action('write_file', { path: 'must-not-write.txt', content: 'blocked' });
+      },
+    }));
+    configureAgentDeps({ settled: () => { settled++; } });
+
+    const { id } = startTask({ task: '等待后超时', workspace, autonomy: 'ask' });
+    const awaiting = await waitFor(id, (view) => view.status === 'awaiting');
+    assert.equal(awaiting.approvalTimeoutMs, 25);
+    assert.equal(typeof awaiting.approvalExpiresAt, 'number');
+    assert.equal(__approvalTimerHasRefForTests(id), false);
+
+    const stopped = await waitFor(id, terminal);
+    assert.equal(stopped.status, 'stopped');
+    assert.equal(stopped.steps[0].status, 'rejected');
+    assert.match(stopped.note ?? '', /等待确认超过.*自动停止/);
+    assert.equal(existsSync(join(workspace, 'must-not-write.txt')), false);
+    assert.equal(chatCalls, 1, '超时后不再请求模型继续规划');
+    assert.equal(settled, 1);
+    assert.equal(decideStep(id, 'approve'), false, '超时后的旧批准不能复活任务');
+  });
+
   it('部分撤回只删除成功备份，后续删除视为冲突并保留重试', async () => {
     const subdir = join(workspace, 'sub');
     mkdirSync(subdir);
@@ -417,11 +447,19 @@ describe('Agent 终态留存与重资源释放', () => {
     assert.match(html, /await refreshAgentTaskAfterUndo\(taskId\)/);
     assert.match(html, /renderAgentTask\(view\)/);
     assert.match(html, /s\.argsSummary \|\| agArgsSummary\(s\.args\)/);
+    assert.match(html, /async function restoreAgentTask\(/);
+    assert.match(html, /localStorage\.setItem\(ACTIVE_AGENT_STORAGE_KEY/);
+    assert.match(html, /await restoreAgentTask\(\)/);
+    assert.match(html, /setAgentComposerBusy\(true\)/);
     for (const key of [
       '任务临时状态已清理；若任务已完成，结果可在会话记录中查看。',
       '任务结束后约 30 分钟内可撤回；任务较多时可能提前清理。',
       '撤回窗口已过期，或任务较多时临时状态已提前清理。已写入会话的内容不受影响。',
       '部分文件还原失败；失败项仍保留，可稍后重试。',
+      '还有一个任务没有结束，已重新接回原任务；不能同时启动第二个任务。',
+      '已重新接回未完成的任务。',
+      '上次任务因应用重启或临时状态清理而中断，请重新发送。',
+      '请在 10 分钟内确认；超时后任务会自动停止。',
     ]) {
       assert.match(html, new RegExp(`'${key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}': '[^']+'`));
     }
@@ -430,5 +468,8 @@ describe('Agent 终态留存与重资源释放', () => {
     const settledBlock = server.slice(server.indexOf('settled: (taskId)'), server.indexOf('mcpTools:', server.indexOf('settled: (taskId)')));
     assert.match(settledBlock, /agentTaskUserPersisted\.delete\(taskId\)/);
     assert.match(settledBlock, /agentTaskConversations\.delete\(taskId\)/);
+    assert.match(server, /const activeTask = agent\.listTasks\(\)\.find/);
+    assert.match(server, /sendJson\(res, 409/);
+    assert.match(server, /conversationId: agentTaskConversations\.get\(task\.id\)/);
   });
 });

@@ -52,6 +52,12 @@ const MAX_CONTEXT_CHARS = 20_000;  // 单轮上下文上限（防历史异常撑
 const TERMINAL_TASK_TTL_MS = 30 * 60_000; // 终态临时状态约保留 30 分钟，供最终轮询与撤回
 const MAX_TERMINAL_TASKS = 50;             // 硬上限：任务多时最老终态会提前清理；活跃任务绝不参与
 const TASK_CLEANUP_INTERVAL_MS = 60_000;
+const DEFAULT_APPROVAL_TIMEOUT_MS = 10 * 60_000;
+const envApprovalTimeoutMs = Number(process.env.WEFTMATE_AGENT_APPROVAL_TIMEOUT_MS);
+const CONFIGURED_APPROVAL_TIMEOUT_MS = Number.isFinite(envApprovalTimeoutMs) && envApprovalTimeoutMs > 0
+  ? Math.max(1_000, Math.floor(envApprovalTimeoutMs))
+  : DEFAULT_APPROVAL_TIMEOUT_MS;
+let approvalTimeoutMs = CONFIGURED_APPROVAL_TIMEOUT_MS;
 
 type AgentTextPart = { type: 'text'; text: string };
 type AgentImagePart = { type: 'image_url'; image_url: { url: string; detail: 'auto' } };
@@ -106,9 +112,17 @@ export interface AgentTaskView {
   note?: string;             // 额外提示（到步数上限 / 撤回不完全等）
   canUndo: boolean;          // 有备份可还原
   undoHint?: string;         // 撤回临时窗口的诚实说明
+  approvalExpiresAt?: number; // 等待批准的截止时间；页面刷新后据此恢复提示
+  approvalTimeoutMs?: number; // 前端显示本次等待窗口，不自行猜配置
   ranCommand: boolean;       // 跑过命令（撤回不完全的提示）
   attachments: string[];     // 附的参考文件名（③·给前端显示；不回传内容）
   createdAt: string;
+}
+
+type ApprovalDecision = 'approve' | 'reject' | 'timeout';
+interface ApprovalGate {
+  finish: (decision: ApprovalDecision) => void;
+  timer: ReturnType<typeof setTimeout>;
 }
 
 // ── 内部任务态 ──
@@ -130,7 +144,8 @@ interface Task {
   backups: Map<string, FileBackup>;      // 改前原文 + 改前/改后指纹；撤回只覆盖仍保持 Agent 改后状态的文件
   ranCommand: boolean;
   stopped: boolean;
-  gate?: (decision: 'approve' | 'reject') => void;  // 等待批准时的 resolver
+  gate?: ApprovalGate;                              // 等待批准的 resolver + 超时 timer
+  approvalExpiresAt?: number;
   terminalAt?: number;                         // 进入终态的时刻；TTL/数量清理依据
 }
 
@@ -194,7 +209,9 @@ function settleTask(task: Task, status: 'done' | 'failed' | 'stopped'): void {
   task.attachments = [];
   task.messages = [];
   task.context = [];
+  if (task.gate) clearTimeout(task.gate.timer);
   task.gate = undefined;
+  task.approvalExpiresAt = undefined;
   try { deps.settled?.(task.id); } catch { /* 宿主清理失败不能改变任务结果 */ }
   cleanupTerminalTasks(task.terminalAt);
 }
@@ -704,6 +721,12 @@ async function drive(t: Task): Promise<void> {
         step.status = 'awaiting';
         t.status = 'awaiting';
         const decision = await waitGate(t);
+        if (decision === 'timeout') {
+          step.status = 'rejected';
+          t.note = `等待确认超过 ${formatApprovalTimeout(approvalTimeoutMs)}，任务已自动停止。没有执行这一步。`;
+          settleTask(t, 'stopped');
+          return;
+        }
         if (t.stopped || decision === 'reject') {
           step.status = 'rejected';
           if (t.stopped) { settleTask(t, 'stopped'); return; }
@@ -740,17 +763,35 @@ async function drive(t: Task): Promise<void> {
 }
 
 // ── 批准 / 停止 / 撤回 ──
-/** 等待用户批准：把 resolver 挂到 task.gate，/approve 或 /stop 来唤醒。 */
-function waitGate(t: Task): Promise<'approve' | 'reject'> {
-  return new Promise((res) => { t.gate = res; });
+function formatApprovalTimeout(ms: number): string {
+  return ms < 60_000 ? `${Math.ceil(ms / 1_000)} 秒` : `${Math.ceil(ms / 60_000)} 分钟`;
+}
+
+/** 等待用户批准：到期自动返回 timeout；timer 不得阻止 Electron/测试进程退出。 */
+function waitGate(t: Task): Promise<ApprovalDecision> {
+  return new Promise((resolveDecision) => {
+    let finished = false;
+    let timer: ReturnType<typeof setTimeout>;
+    const finish = (decision: ApprovalDecision) => {
+      if (finished) return;
+      finished = true;
+      clearTimeout(timer);
+      if (t.gate?.finish === finish) t.gate = undefined;
+      t.approvalExpiresAt = undefined;
+      resolveDecision(decision);
+    };
+    t.approvalExpiresAt = Date.now() + approvalTimeoutMs;
+    timer = setTimeout(() => finish('timeout'), approvalTimeoutMs);
+    timer.unref();
+    t.gate = { finish, timer };
+  });
 }
 
 /** 批准/拒绝当前挂起的那一步。返回是否确实有挂起的步骤被处理。 */
 export function decideStep(taskId: string, decision: 'approve' | 'reject'): boolean {
   const t = tasks.get(taskId);
   if (!t || !t.gate) return false;
-  const g = t.gate; t.gate = undefined;
-  g(decision);
+  t.gate.finish(decision);
   return true;
 }
 
@@ -759,7 +800,7 @@ export function stopTask(taskId: string): boolean {
   const t = tasks.get(taskId);
   if (!t || isTerminalStatus(t.status)) return false;
   t.stopped = true;
-  if (t.gate) { const g = t.gate; t.gate = undefined; g('reject'); }
+  if (t.gate) t.gate.finish('reject');
   return true;
 }
 
@@ -846,6 +887,8 @@ function toView(t: Task): AgentTaskView {
     status: t.status, steps: t.steps, summary: t.summary, note: t.note,
     canUndo, ranCommand: t.ranCommand,
     undoHint: canUndo ? '任务结束后约 30 分钟内可撤回；任务较多时可能提前清理。' : undefined,
+    approvalExpiresAt: t.status === 'awaiting' ? t.approvalExpiresAt : undefined,
+    approvalTimeoutMs: t.status === 'awaiting' ? approvalTimeoutMs : undefined,
     attachments: t.attachmentNames, createdAt: t.createdAt,
   };
 }
@@ -920,8 +963,14 @@ export function __setTaskRetentionForTests(input: {
   if (input.ttlMs !== undefined) taskRetention.ttlMs = input.ttlMs;
   if (input.maxTerminalTasks !== undefined) taskRetention.maxTerminalTasks = input.maxTerminalTasks;
 }
+export function __setApprovalTimeoutForTests(timeoutMs?: number): void {
+  approvalTimeoutMs = timeoutMs === undefined ? CONFIGURED_APPROVAL_TIMEOUT_MS : Math.max(1, Math.floor(timeoutMs));
+}
 export function __runTaskCleanupForTests(): void { cleanupTerminalTasks(); }
 export function __taskCleanupTimerHasRefForTests(): boolean { return taskCleanupTimer.hasRef(); }
+export function __approvalTimerHasRefForTests(taskId: string): boolean | null {
+  return tasks.get(taskId)?.gate?.timer.hasRef() ?? null;
+}
 export function __setBackupReaderForTests(reader?: (file: string) => Promise<Buffer>): void {
   backupReader = reader ?? ((file) => readFile(file));
 }
@@ -946,8 +995,10 @@ export function __getTaskRetentionDebugForTests(taskId: string): {
   } : null;
 }
 export function __resetAgentTasksForTests(): void {
+  for (const task of tasks.values()) if (task.gate) clearTimeout(task.gate.timer);
   tasks.clear();
   taskRetention = { ...DEFAULT_TASK_RETENTION };
+  approvalTimeoutMs = CONFIGURED_APPROVAL_TIMEOUT_MS;
   backupReader = (file) => readFile(file);
   deps = {};
   clientFactory = () => new AgentOpenAIClient();
