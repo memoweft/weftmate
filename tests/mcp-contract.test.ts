@@ -35,10 +35,13 @@ writeFileSync(
   `// 假的 MCP SDK 客户端：不启进程、不走 JSON-RPC，listTools 返回测试预置的工具。
 export class Client {
   constructor(info) { this._info = info; }
-  async connect() {}
+  async connect(transport) { this._transport = transport; }
   async listTools() { return { tools: globalThis.__WEFT_FAKE_TOOLS__ || [] }; }
   async close() {}
-  async callTool(req) { return { content: [{ type: 'text', text: 'echo' }], isError: false }; }
+  async callTool(req, schema, options) {
+    (globalThis.__WEFT_FAKE_CALLS__ ||= []).push({ command: this._transport?.opts?.command, req, schema, options });
+    return { content: [{ type: 'text', text: 'echo' }], isError: false };
+  }
 }
 export class StdioClientTransport {
   constructor(opts) { this.opts = opts; this.stderr = { on() {} }; }
@@ -130,8 +133,8 @@ describe('mcp.signatureOf｜只吐顶层属性名+可选标记，不吐完整 sc
     // McpToolInfo 结构上就没有完整 schema 字段（不进上下文）
     assert.ok(!('schema' in info), 'McpToolInfo 不应有 schema 字段');
     assert.ok(!('inputSchema' in info), 'McpToolInfo 不应有 inputSchema 字段');
-    // 顺带：fqName=服务名 slug + '__' + 工具名；描述空白压平；readOnly 取自 annotations.readOnlyHint
-    assert.equal(info.fqName, 'db_svc__query_db');
+    // fqName 只用稳定 server id + 工具名；显示名称不参与身份。db 的 UTF-8 hex = 6462。
+    assert.equal(info.fqName, 'mcp_6462__query_db');
     assert.equal(info.description, 'runs a query');
     assert.equal(info.readOnly, true);
 
@@ -164,6 +167,38 @@ describe('mcp.signatureOf｜只吐顶层属性名+可选标记，不吐完整 sc
     assert.equal(tools.find((x: any) => x.toolName === 'b').readOnly, false);
     assert.equal(tools.find((x: any) => x.toolName === 'c').readOnly, true);
     await mcp.disconnectServer('r');
+  });
+
+  test('同名服务不会碰撞，改显示名称不换身份；调用携带停止信号和明确总超时', async (t) => {
+    t.mock.timers.enable({ apis: ['setTimeout'] });
+    setFakeTools([{ name: 'ping', inputSchema: { type: 'object' } }]);
+    (globalThis as any).__WEFT_FAKE_CALLS__ = [];
+    await mcp.connectServer({ id: 'a', name: 'Same Name', command: 'first', args: [], enabled: true });
+    await mcp.connectServer({ id: 'b', name: 'Same Name', command: 'second', args: [], enabled: true });
+    const firstIdentity = 'mcp_61__ping';
+    const secondIdentity = 'mcp_62__ping';
+    assert.deepEqual(mcp.listAllTools().map((tool: any) => tool.fqName).sort(), [firstIdentity, secondIdentity]);
+
+    const controller = new AbortController();
+    const oldTimeout = process.env.WEFTMATE_AGENT_MCP_TIMEOUT_MS;
+    process.env.WEFTMATE_AGENT_MCP_TIMEOUT_MS = '1234';
+    try {
+      assert.equal(await mcp.callTool(firstIdentity, { value: 1 }, controller.signal), 'echo');
+    } finally {
+      if (oldTimeout === undefined) delete process.env.WEFTMATE_AGENT_MCP_TIMEOUT_MS;
+      else process.env.WEFTMATE_AGENT_MCP_TIMEOUT_MS = oldTimeout;
+    }
+    const call = (globalThis as any).__WEFT_FAKE_CALLS__[0];
+    assert.equal(call.command, 'first', '唯一身份必须路由到正确服务');
+    assert.equal(call.options.signal, controller.signal);
+    assert.equal(call.options.timeout, 1234);
+    assert.equal(call.options.maxTotalTimeout, 1234);
+
+    await mcp.disconnectServer('a');
+    await mcp.connectServer({ id: 'a', name: 'Renamed', command: 'first', args: [], enabled: true });
+    assert.ok(mcp.listAllTools().some((tool: any) => tool.fqName === firstIdentity), '显示名称变化不应改变工具身份');
+    await mcp.disconnectServer('a');
+    await mcp.disconnectServer('b');
   });
 });
 

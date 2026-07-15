@@ -214,7 +214,7 @@ agent.configureAgentDeps({
   },
   // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
   mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),
-  callMcp: (fqName, args) => mcp.callTool(fqName, args),
+  callMcp: (fqName, args, signal) => mcp.callTool(fqName, args, signal),
   isMcpToolTrusted: (fqName) => getTrustedMcpTools().includes(fqName),   // F1：读明文信任列表；仅 auto 档据此免批
 });
 
