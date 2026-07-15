@@ -27,6 +27,7 @@
  *   由用户主动发起任务即视为同意（与"感知 observed 默认不上云"是两码事）。界面会写明。
  */
 import { spawn } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { readFile, writeFile, readdir, rm, mkdir, stat } from 'node:fs/promises';
 import { existsSync, statSync, realpathSync } from 'node:fs';
 import { resolve, relative, isAbsolute, dirname } from 'node:path';
@@ -61,6 +62,16 @@ type AgentMessage = {
 type TaskAttachment =
   | { kind: 'text'; name: string; content: string; origLen?: number }
   | { kind: 'image'; name: string; mime: string; dataUrl: string };
+
+type FileState =
+  | { exists: false }
+  | { exists: true; digest: string; realPath: string };
+
+interface FileBackup {
+  prior: Buffer | null;
+  before: FileState;
+  after?: FileState;
+}
 
 // ── 对外类型 ──
 export type StepStatus = 'proposed' | 'awaiting' | 'running' | 'done' | 'failed' | 'rejected';
@@ -116,7 +127,7 @@ interface Task {
   context: ChatMessage[];                  // 启动时所在会话的最近上下文（只含 user/assistant，不回传前端）
   // 内部：
   messages: AgentMessage[];              // agent 自己的对话历史（不进 memoweft）
-  backups: Map<string, Buffer | null>;   // 路径 → 改前内容 Buffer（原样备份含二进制；null=改前不存在）；撤回据此还原
+  backups: Map<string, FileBackup>;      // 改前原文 + 改前/改后指纹；撤回只覆盖仍保持 Agent 改后状态的文件
   ranCommand: boolean;
   stopped: boolean;
   gate?: (decision: 'approve' | 'reject') => void;  // 等待批准时的 resolver
@@ -274,9 +285,11 @@ const TOOLS: Record<string, ToolDef> = {
     async run(args, task) {
       const file = safeResolve(task.workspace, args.path);
       const content = String(args.content ?? '');
+      const contentBytes = Buffer.from(content, 'utf8');
       await backupBeforeWrite(task, file);       // 撤回用：记下改前状态
       await mkdir(dirname(file), { recursive: true });
-      await writeFile(file, content, 'utf8');
+      await writeFile(file, contentBytes);
+      recordAfterWrite(task, file, contentBytes); // 只记指纹，不复制保留改后正文
       return `已写入 ${relative(task.workspace, file) || args.path}（${content.length} 字）`;
     },
   },
@@ -310,14 +323,46 @@ async function backupBeforeWrite(task: Task, file: string): Promise<void> {
   if (task.backups.has(file)) return;            // 已备份过原始态，别被后续写覆盖
   if (existsSync(file)) {
     // C6：读 Buffer 原样备份（不预设 utf8）——二进制文件用 utf8 读会丢字节，撤回时写回就损坏原文件。
-    try { task.backups.set(file, await backupReader(file)); }
+    try {
+      const prior = await backupReader(file);
+      task.backups.set(file, { prior, before: fileState(file, prior) });
+    }
     catch (e) {
       // 已存在文件读不出来时绝不能把它当成“原先不存在”：否则继续覆盖后，撤回会把用户原文件删掉。
       throw new Error(`无法在修改前备份 ${relative(task.workspace, file)}，已取消写入：${errMsg(e)}`);
     }
   } else {
-    task.backups.set(file, null);                // 改前不存在 → 撤回时删除
+    task.backups.set(file, { prior: null, before: { exists: false } }); // 改前不存在 → 撤回时删除
   }
+}
+
+function digest(content: Buffer): string {
+  return createHash('sha256').update(content).digest('hex');
+}
+
+function fileState(file: string, content: Buffer): FileState {
+  return { exists: true, digest: digest(content), realPath: realpathSync(file) };
+}
+
+function sameFileState(left: FileState, right: FileState): boolean {
+  if (!left.exists || !right.exists) return left.exists === right.exists;
+  return left.digest === right.digest && left.realPath === right.realPath;
+}
+
+async function readFileState(file: string): Promise<FileState> {
+  try {
+    const content = await readFile(file);
+    return fileState(file, content);
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return { exists: false };
+    throw error;
+  }
+}
+
+/** 同一路径可被 Agent 连续写多次；撤回只认可最后一次成功写入后的状态。 */
+function recordAfterWrite(task: Task, file: string, content: Buffer): void {
+  const backup = task.backups.get(file);
+  if (backup) backup.after = fileState(file, content);
 }
 
 /** 杀掉命令启的【整棵进程树】（F7）：shell:true 下 shell 还会派生子/孙进程，只 child.kill() 会留后台孤儿
@@ -723,6 +768,7 @@ export async function undoTask(taskId: string): Promise<{
   ok: boolean;
   restored: number;
   failed: number;
+  conflicted: number;
   ranCommand: boolean;
   error?: string;
 }> {
@@ -730,34 +776,57 @@ export async function undoTask(taskId: string): Promise<{
   const t = tasks.get(taskId);
   if (!t) {
     return {
-      ok: false, restored: 0, failed: 0, ranCommand: false,
+      ok: false, restored: 0, failed: 0, conflicted: 0, ranCommand: false,
       error: '撤回窗口已过期，或任务较多时临时状态已提前清理。已写入会话的内容不受影响。',
     };
   }
   if (!isTerminalStatus(t.status)) {
     return {
-      ok: false, restored: 0, failed: 0, ranCommand: t.ranCommand,
+      ok: false, restored: 0, failed: 0, conflicted: 0, ranCommand: t.ranCommand,
       error: '任务还没结束，暂时不能撤回。请先停止任务并等待它结束。',
     };
   }
   let restored = 0;
   let failed = 0;
-  for (const [file, prior] of [...t.backups]) {
+  let conflicted = 0;
+  for (const [file, backup] of [...t.backups]) {
     try {
-      if (prior === null) { if (existsSync(file)) await rm(file); }
-      else await writeFile(file, prior);   // C6：prior 是 Buffer，原样写回（文本/二进制都不损坏）
+      // 路径可能在任务结束后被换成 symlink/junction；撤回前重新走沙箱校验，绝不借撤回写出工作区。
+      const checked = safeResolve(t.workspace, relative(t.workspace, file));
+      if (checked !== file) throw new Error('撤回路径与原路径不一致');
+      const current = await readFileState(file);
+
+      // 用户或其它程序已经把文件恢复成改前状态：无需再写，也算安全完成。
+      if (sameFileState(current, backup.before)) {
+        restored++;
+        t.backups.delete(file);
+        continue;
+      }
+
+      // 只有文件仍是本任务最后一次成功写完的样子，才允许还原。其它状态一律尊重用户的新内容。
+      if (!backup.after || !sameFileState(current, backup.after)) {
+        conflicted++;
+        continue;
+      }
+
+      if (backup.prior === null) await rm(file);
+      else await writeFile(file, backup.prior); // C6：Buffer 原样写回，文本/二进制都不损坏
       restored++;
       t.backups.delete(file);              // 只删成功项；失败项保留，允许用户稍后重试
     } catch { failed++; /* 单个文件还原失败不阻断其余（如父目录已删/文件锁定） */ }
   }
-  if (failed > 0) {
-    const error = '部分文件还原失败；失败项仍保留，可稍后重试。';
-    t.note = `已还原 ${restored} 个文件，另有 ${failed} 个失败；失败项仍保留，可稍后重试。` +
+  if (failed > 0 || conflicted > 0) {
+    const error = conflicted > 0
+      ? (failed > 0
+        ? '有些文件后来又被修改，另有文件还原失败；都没有被强行覆盖，未处理项仍保留，可稍后重试。'
+        : '有文件后来又被修改，已跳过，未覆盖你的新内容。未处理项仍保留，可稍后重试。')
+      : '部分文件还原失败；失败项仍保留，可稍后重试。';
+    t.note = `已还原 ${restored} 个文件；${conflicted} 个检测到后续修改并跳过，${failed} 个还原失败。未处理项仍保留，可稍后重试。` +
       (t.ranCommand ? ' 注意：跑过命令，命令造成的其它变化撤不回。' : '');
-    return { ok: false, restored, failed, ranCommand: t.ranCommand, error };
+    return { ok: false, restored, failed, conflicted, ranCommand: t.ranCommand, error };
   }
   t.note = `已撤回：还原 ${restored} 个文件${t.ranCommand ? '（注意：跑过命令，命令造成的其它变化撤不回）' : ''}。`;
-  return { ok: true, restored, failed: 0, ranCommand: t.ranCommand };
+  return { ok: true, restored, failed: 0, conflicted: 0, ranCommand: t.ranCommand };
 }
 
 // ── 视图 / 查询（给 server 端点）──
