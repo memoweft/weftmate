@@ -114,8 +114,6 @@
   #titlebar .tb-btn:hover { background: var(--panel-2); color: var(--text); }
   #titlebar .tb-btn.tb-close:hover { background: #e05252; color: #fff; }
   /* 向导态是全屏页，藏侧栏、主列铺满（去掉左内边距）。记忆态不再全屏——改成右侧滑入面板，见 #memory。 */
-  body.mode-wizard { padding-left: 0; }
-  body.mode-wizard #sidebar { display: none; }
 
   /* ── 左侧对话列表侧栏 ── */
   #sidebar {
@@ -248,7 +246,6 @@
     cursor: pointer; z-index: 15; transition: transform .15s, box-shadow .15s; user-select: none;
   }
   #pet:hover { transform: translateY(-2px) scale(1.05); box-shadow: 0 10px 22px -6px rgba(183,107,120,.8); }
-  body.mode-wizard #pet { display: none; }
 
   /* ── 底部工具栏（重做输入区）：textarea 无 placeholder + 一条工具栏 ── */
   footer { flex: 0 0 auto; background: var(--ground); padding: 0 18px 16px; }
@@ -284,63 +281,6 @@
   #send:disabled { opacity: .45; cursor: default; }
   .hint { width: 100%; max-width: clamp(720px, 68vw, 1040px); margin: 7px auto 0; color: var(--faint); font-size: var(--fs-xs); text-align: center; }
 
-  /* ── 配置向导（首启没配好模型时进这一态；配好后走聊天，向导隐藏）── */
-  #wizard { display: none; flex: 1 1 auto; overflow-y: auto; padding: 28px 18px 40px; }
-  body.mode-wizard #wizard { display: block; }        /* 向导态：显示向导 */
-  body.mode-wizard #chat, body.mode-wizard footer { display: none; } /* 向导态：藏聊天与输入区 */
-  .wiz { width: 100%; max-width: 620px; margin: 0 auto; }
-  .wiz h1 { font-size: 21px; margin: 0 0 6px; letter-spacing: .2px; }
-  .wiz .lead { color: var(--muted); font-size: var(--fs-sm); margin: 0 0 22px; line-height: 1.6; }
-  .wiz .lead b { color: var(--text); }
-  .wiz-group {
-    background: var(--panel); border: 1px solid var(--line-soft); border-radius: var(--radius);
-    padding: 16px 18px; margin-bottom: 14px;
-  }
-  .wiz-group > h2 { font-size: 15px; margin: 0 0 3px; display: flex; align-items: center; gap: 8px; }
-  .wiz-group .tag {
-    font-size: 11px; font-weight: 600; padding: 1px 8px; border-radius: var(--radius-pill);
-  }
-  .wiz-group .tag.req { background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent-dim); }
-  .wiz-group .tag.opt { background: var(--panel-2); color: var(--muted); border: 1px solid var(--line); }
-  .wiz-group .desc { color: var(--muted); font-size: var(--fs-xs); margin: 0 0 12px; line-height: 1.55; }
-  .wiz-field { margin-bottom: 10px; }
-  .wiz-field:last-child { margin-bottom: 0; }
-  .wiz-field label { display: block; font-size: var(--fs-xs); color: var(--muted); margin-bottom: 4px; }
-  .wiz-field input, .wiz-field select {
-    width: 100%; border: 1px solid var(--line); border-radius: 10px; padding: 9px 11px;
-    font: inherit; font-size: var(--fs-sm); color: var(--text); background: var(--ground);
-  }
-  .wiz-field input:focus, .wiz-field select:focus { outline: none; border-color: var(--accent); }
-  .wiz-check { display: flex; align-items: flex-start; gap: 9px; font-size: var(--fs-sm); }
-  .wiz-check input { margin-top: 3px; flex: 0 0 auto; }
-  .wiz-check .ck-text small { display: block; color: var(--muted); font-size: var(--fs-xs); margin-top: 2px; }
-  .wiz-actions { display: flex; align-items: center; gap: 12px; margin-top: 4px; }
-  #wizGen {
-    border: none; border-radius: 12px; background: var(--accent); color: var(--on-accent);
-    padding: 0 24px; height: 44px; font: inherit; font-weight: 700; cursor: pointer;
-  }
-  #wizGen:disabled { opacity: .5; cursor: default; }
-  #wizErr { color: var(--danger); font-size: var(--fs-sm); display: none; }
-  #wizSaving { color: var(--accent); font-size: var(--fs-sm); }
-  #wizResult { display: none; margin-top: 20px; }
-  #wizResult h2 { font-size: 15px; margin: 0 0 8px; }
-  #wizEnv {
-    width: 100%; min-height: 180px; resize: vertical; border: 1px solid var(--line);
-    border-radius: 10px; padding: 12px; background: #0f0f13; color: #d6e2f0;
-    font: 13px/1.6 var(--font-mono); white-space: pre;
-  }
-  .wiz-result-actions { display: flex; align-items: center; gap: 12px; margin-top: 10px; }
-  #wizCopy {
-    border: 1px solid var(--line); border-radius: 10px; background: var(--panel); color: var(--text);
-    padding: 8px 16px; font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer;
-  }
-  #wizCopy:hover { border-color: var(--accent); color: var(--accent); }
-  #wizCopied { font-size: var(--fs-xs); color: var(--ok); display: none; }
-  .wiz-save-hint {
-    margin-top: 14px; padding: 12px 14px; background: var(--warn-bg); border: 1px solid var(--warn-line);
-    border-radius: 10px; color: var(--warn-text); font-size: var(--fs-sm); line-height: 1.6;
-  }
-  .wiz-save-hint code { background: rgba(255,255,255,.08); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
   #warnbar .gobtn {
     margin-left: 10px; border: none; background: var(--accent); color: var(--on-accent); cursor: pointer;
     border-radius: 8px; padding: 3px 12px; font: inherit; font-size: var(--fs-xs); font-weight: 700;
@@ -958,97 +898,6 @@
 
 <!-- 桌面形象（blueprint 的 pet）：聊天区右下角浮圆头像，点它=打开人格切换。fixed 定位，放顶层不受裁剪。 -->
 <div id="pet" title="换一种跟你聊天的方式"><span class="pet-orbit"><span class="pet-core"></span><span class="pet-thread"></span></span><span class="pet-status"></span></div>
-
-<!-- 配置向导：首启没配好模型时进这一态（body.mode-wizard）。填完生成 .env 文本，保存后重启即可聊天。 -->
-<div id="wizard">
-  <div class="wiz">
-    <h1>先配一个模型，就能开始聊了</h1>
-    <p class="lead">WeftMate 靠一个大模型来回话、并把你说的话记下来。填好下面第一组（必填），点「保存并启用」——你的密钥会在本机<b>加密保存</b>（safeStorage · 不明文落盘、也不上传），应用重启一下就能聊了。</p>
-
-    <!-- 第 1 组：对话模型（必填） -->
-    <div class="wiz-group">
-      <h2>对话模型 <span class="tag req">必填</span></h2>
-      <p class="desc">用来跟你对话、也用来把你说的话整理成记忆。填一个 OpenAI 兼容的接口就行。</p>
-      <div class="wiz-field">
-        <label for="llmBase">接口地址（Base URL）</label>
-        <input id="llmBase" type="text" autocomplete="off" spellcheck="false" placeholder="https://…/v1" />
-      </div>
-      <div class="wiz-field">
-        <label for="llmKey">密钥（API Key）</label>
-        <input id="llmKey" type="password" autocomplete="off" placeholder="sk-…" />
-      </div>
-      <div class="wiz-field">
-        <label for="llmModel">模型名</label>
-        <input id="llmModel" type="text" autocomplete="off" spellcheck="false" placeholder="例如 gpt-4o-mini" />
-      </div>
-    </div>
-
-    <!-- 第 2 组：整理记忆用的小模型（可选） -->
-    <div class="wiz-group">
-      <h2>整理记忆的小模型 <span class="tag opt">可选</span></h2>
-      <p class="desc">在后台把你说的话整理成记忆时用它，通常更快更省。不填就用上面那个对话模型。</p>
-      <div class="wiz-field">
-        <label for="writeBase">接口地址（Base URL）</label>
-        <input id="writeBase" type="text" autocomplete="off" spellcheck="false" placeholder="不填则复用对话模型" />
-      </div>
-      <div class="wiz-field">
-        <label for="writeKey">密钥（API Key）</label>
-        <input id="writeKey" type="password" autocomplete="off" placeholder="不填则复用对话模型" />
-      </div>
-      <div class="wiz-field">
-        <label for="writeModel">模型名</label>
-        <input id="writeModel" type="text" autocomplete="off" spellcheck="false" placeholder="不填则复用对话模型" />
-      </div>
-      <div class="wiz-field">
-        <label for="writeTier">这个模型在哪运行</label>
-        <select id="writeTier">
-          <option value="cloud">云端（默认）</option>
-          <option value="local">本地（如 ollama / llama.cpp）</option>
-        </select>
-        <p class="desc">选「本地」，你的「行为观察」（默认不上云的那些记录）才会被本地私密消化成记忆；选「云端」，这些观察会挂着不被消化——除非你之后在记忆管理里对具体记录单独「授权上云」（会离开本机）。</p>
-      </div>
-    </div>
-
-    <!-- 第 3 组：嵌入模型（可选） -->
-    <div class="wiz-group">
-      <h2>语义联想模型 <span class="tag opt">可选</span></h2>
-      <p class="desc">配上它，对话里会更容易想起相关的旧事。不填也没关系——聊天和整理记忆都照常，只是暂时不启用语义联想。</p>
-      <div class="wiz-field">
-        <label for="embedBase">接口地址（Base URL）</label>
-        <input id="embedBase" type="text" autocomplete="off" spellcheck="false" placeholder="不填则暂不启用" />
-      </div>
-      <div class="wiz-field">
-        <label for="embedKey">密钥（API Key）</label>
-        <input id="embedKey" type="password" autocomplete="off" placeholder="不填则暂不启用" />
-      </div>
-      <div class="wiz-field">
-        <label for="embedModel">模型名</label>
-        <input id="embedModel" type="text" autocomplete="off" spellcheck="false" placeholder="不填则暂不启用" />
-      </div>
-    </div>
-
-    <!-- 部署选项(纯库模式)对桌面 App 无意义:WeftMate 恒带界面,隐藏该项;保留 DOM 免动 gen-env 兼容 JS。 -->
-    <div class="wiz-group" style="display:none">
-      <label class="wiz-check">
-        <input id="expUI" type="checkbox" checked />
-        <span class="ck-text">带网页界面使用</span>
-      </label>
-    </div>
-
-    <div class="wiz-actions">
-      <button id="wizGen">保存并启用</button>
-      <span id="wizErr"></span>
-    </div>
-
-    <!-- 保存中/重启提示(safeStorage 落盘后应用会自动重启生效)。gen-env 时代的 .env 只读框已弃用,隐藏保留免动兼容 JS。 -->
-    <div id="wizSaving" style="display:none">配置已加密保存，正在重启应用…</div>
-    <div id="wizResult" style="display:none">
-      <textarea id="wizEnv" readonly spellcheck="false"></textarea>
-      <button id="wizCopy" style="display:none">复制</button>
-      <span id="wizCopied" style="display:none"></span>
-    </div>
-  </div>
-</div>
 
 <!-- 记忆与画像面板（body.mode-memory）：从右侧滑入的层，点遮罩=退出。看它记住了你哪些事，可标失效 / 改授权 / 删除。 -->
 <div id="memScrim"></div>
@@ -3243,14 +3092,8 @@
     if (I18N_SKIP_TAGS[node.tagName] || node.isContentEditable) return;                       // 别碰 script/style/输入/代码块
     const cl = node.classList;
     if (cl && (cl.contains('bubble') || cl.contains('md-body') || cl.contains('no-i18n'))) return; // 别碰消息内容(用户话/模型输出)
-    // 元素级整串命中：处理被 <code>/<strong>/<br> 打断的完整串。★安全护栏：只在【所有子元素都是内联文本标记(b/i/code/span/a…)、
-    //   无 id、无孙元素】时才敢整体替换 textContent——否则会把结构/交互容器(如 chatInner)的子元素冲成纯文本、整块布局塌、按钮全死（真机 bug 根因）。
-    if (node.childNodes.length > 1) {
-      const INLINE_OK = { B: 1, I: 1, EM: 1, STRONG: 1, CODE: 1, SPAN: 1, BR: 1, A: 1, U: 1, SMALL: 1, SUP: 1, SUB: 1, MARK: 1, WBR: 1 };
-      let safe = true; const ch = node.children;
-      for (let i = 0; i < ch.length; i++) { if (!INLINE_OK[ch[i].tagName] || ch[i].id || ch[i].children.length) { safe = false; break; } }
-      if (safe) { const tc = node.textContent, tk = tc && tc.trim(); if (tk) { const en = _fullHit(tk); if (en) { node.textContent = tc.replace(tk, en); return; } } }
-    }
+    // 只递归翻译文本节点，绝不给 Element 整体赋 textContent。整块替换会删掉按钮里的图标、状态节点和监听目标，
+    // 动态节点尤其容易因此变成“看得到译文、点了没反应”。被多个内联标签拆开的长句宁可分段翻，也不能破坏 DOM。
     const ATTRS = ['placeholder', 'title', 'aria-label'];
     for (let i = 0; i < ATTRS.length; i++) { const a = ATTRS[i]; if (node.hasAttribute(a)) { const v = node.getAttribute(a); if (v && /[一-鿿]/.test(v)) { const tr = i18nText(v); if (tr !== v) node.setAttribute(a, tr); } } }
     const kids = node.childNodes;
@@ -3622,63 +3465,12 @@
     const message = el.value.trim();
     const hasAttachments = AG.attachments.length > 0;
     if ((!message && !hasAttachments) || sending) return;
-    // 默认走统一协作链路；没调用工具的回答会按普通聊天渲染，真正执行工具时才展开任务过程。
-    if (AG.mode) {
-      const attachmentOnlyPrompt = AG.attachments.some((a) => a.kind === 'image')
-        ? '请查看我附上的图片。'
-        : '请查看我附上的文件。';
-      const accepted = await startAgentTask(message || attachmentOnlyPrompt);
-      if (accepted) { el.value = ''; el.style.height = 'auto'; }
-      return;
-    }
-    el.value = ''; el.style.height = 'auto'; el.disabled = true;
-    $('send').disabled = true; sending = true;
-    addMsg('user', message);
-
-    // 思考中：冒一个助手侧三点起伏气泡占位，回复到了原位替换。
-    //   round3：思考三点用 DOM 构建（不用 innerHTML，跟安全铁律一致）；占位仍用 .bubble 气泡样式（三点小圆更聚拢好看）。
-    const thinking = document.createElement('div');
-    thinking.className = 'msg assistant';
-    const thBubble = document.createElement('div'); thBubble.className = 'bubble';
-    const dots = document.createElement('span'); dots.className = 'thinking-dots';
-    dots.appendChild(document.createElement('span'));
-    dots.appendChild(document.createElement('span'));
-    dots.appendChild(document.createElement('span'));
-    thBubble.appendChild(dots);
-    thinking.appendChild(thBubble);
-    chatInner.appendChild(thinking); scrollDown();
-
-    // 成功回复：把这条占位换成平铺 markdown（清掉 .msg 上的气泡结构，改成 .flat + .md-body）。
-    const settleReply = (text) => {
-      thinking.className = 'msg assistant flat';
-      thinking.textContent = '';
-      const body = document.createElement('div'); body.className = 'md-body';
-      renderMarkdownInto(body, text);
-      thinking.appendChild(body);
-      scrollDown();
-    };
-    // 错误/未连上：仍当纯文本放回气泡（不走 markdown，避免把错误串当 markdown 出岔）。
-    const settleError = (text) => {
-      const b = thinking.querySelector('.bubble');
-      if (b) { b.textContent = text; } else { thinking.textContent = ''; const nb = document.createElement('div'); nb.className = 'bubble'; nb.textContent = text; thinking.appendChild(nb); }
-      scrollDown();
-    };
-    try {
-      const res = await fetch('/api/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message }),
-      });
-      const d = await res.json();
-      if (d.error) settleError('出错了：' + d.error);
-      else settleReply(d.reply);
-    } catch (e) {
-      // fetch 没连上 = 请求没到服务端，这句话还没入库也没落历史——别假承诺"已存下"（诚实口径）。
-      settleError('没连上，这句话还没发出去，稍后再重发一次。');
-    } finally {
-      el.disabled = false; $('send').disabled = false; sending = false; el.focus();
-      loadSessions(); // 聊完刷侧栏：新对话首条后要出现在列表、预览/最后活跃时间随之更新
-    }
+    // 唯一消息链：统一 Agent。没调用工具的回答按普通聊天渲染，真正执行工具时才展开任务过程。
+    const attachmentOnlyPrompt = AG.attachments.some((a) => a.kind === 'image')
+      ? '请查看我附上的图片。'
+      : '请查看我附上的文件。';
+    const accepted = await startAgentTask(message || attachmentOnlyPrompt);
+    if (accepted) { el.value = ''; el.style.height = 'auto'; }
   }
 
   // Enter 发送，Shift+Enter 换行；输入框随内容长高。
@@ -3732,86 +3524,8 @@
     } catch (e) { /* 拿不到就先不提示、不强开设置 */ }
   }
 
-  // ── 旧向导入口兼容：所有历史调用点（黄条「去配置」/设置菜单/底部模型旧行为）统一转向设置弹窗「模型」节。
-  //   全屏向导 #wizard 及其 wizPrefill/wizCopyEnv 保留在 DOM 里不再被入口触发，避免大改动面。
-  function enterWizard() { openSettings('models'); }
-
-  // 预填：进配置页时读【安全视图】(GET /api/model-config，无 key)回填 baseUrl/model；已存 key 的组把密钥框提示改成"留空=不变"。
-  let WIZ_HAS_KEY = false; // 对话组此前是否已存过 key（决定密钥是否必填）
-  async function wizPrefill() {
-    try {
-      const c = await fetch('/api/model-config').then((x) => x.json());
-      const fill = (g, baseId, keyId, modelId) => {
-        if (!g) return;
-        if (g.baseUrl) $(baseId).value = g.baseUrl;
-        if (g.model) $(modelId).value = g.model;
-        if (g.hasKey) $(keyId).placeholder = '已保存 · 留空则不变';
-      };
-      fill(c.llm, 'llmBase', 'llmKey', 'llmModel');
-      fill(c.write, 'writeBase', 'writeKey', 'writeModel');
-      fill(c.embed, 'embedBase', 'embedKey', 'embedModel');
-      if (c.write && c.write.tier) $('writeTier').value = c.write.tier;
-      WIZ_HAS_KEY = !!(c.llm && c.llm.hasKey);
-    } catch (e) { /* 拿不到就不预填 */ }
-  }
-
-  // 旧全屏向导的保存（不再被 UI 触发；入口都改走设置弹窗）。为守规格红线：旧端点 POST /api/model-config 已不存在（会 404），
-  //   这里改打新端点 POST /api/model-config/profile（当新档，不带 id），成功后热重建已生效 → location.reload() 进聊天（无"重启"）。
-  async function wizSaveConfig() {
-    const errBox = $('wizErr');
-    errBox.style.display = 'none'; errBox.textContent = '';
-    const llmBase = $('llmBase').value.trim(), llmKey = $('llmKey').value.trim(), llmModel = $('llmModel').value.trim();
-    if (!llmBase || !llmModel) {
-      errBox.textContent = '「对话模型」的接口地址和模型名要填。';
-      errBox.style.display = 'inline'; return;
-    }
-    if (!llmKey) { // 新档必须填 key
-      errBox.textContent = '第一次配置要填「密钥」。';
-      errBox.style.display = 'inline'; return;
-    }
-    const payload = {
-      name: (llmModel || '我的模型'),
-      llmBaseUrl: llmBase, llmApiKey: llmKey, llmModel: llmModel,
-      writeBaseUrl: $('writeBase').value.trim(), writeApiKey: $('writeKey').value.trim(), writeModel: $('writeModel').value.trim(),
-      writeTier: $('writeTier').value,
-      embedBaseUrl: $('embedBase').value.trim(), embedApiKey: $('embedKey').value.trim(), embedModel: $('embedModel').value.trim(),
-    };
-    $('wizGen').disabled = true;
-    try {
-      const res = await fetch('/api/model-config/profile', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
-      });
-      const d = await res.json();
-      if (d.error) { errBox.textContent = d.error; errBox.style.display = 'inline'; $('wizGen').disabled = false; return; }
-      window.location.reload(); // 后端已热重建，直接重载进聊天（无重启闪烁）
-    } catch (e) {
-      errBox.textContent = '保存失败：' + (e && e.message ? e.message : String(e));
-      errBox.style.display = 'inline';
-      $('wizGen').disabled = false;
-    }
-  }
-
-  // 复制生成的 .env 文本（clipboard API 优先，失败降级 execCommand）。
-  async function wizCopyEnv() {
-    const text = $('wizEnv').value || '';
-    let ok = false;
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) { await navigator.clipboard.writeText(text); ok = true; }
-    } catch (e) { /* 落降级 */ }
-    if (!ok) {
-      try { $('wizEnv').select(); ok = document.execCommand('copy'); } catch (e) { ok = false; }
-    }
-    const tag = $('wizCopied');
-    tag.textContent = ok ? '已复制 ✓' : '复制失败，请手动全选复制';
-    tag.style.color = ok ? 'var(--ok)' : '#b4232a';
-    tag.style.display = 'inline';
-    setTimeout(() => { tag.style.display = 'none'; }, 2500);
-  }
-
-  $('btnGoWizard').addEventListener('click', enterWizard);
-  $('wizGen').addEventListener('click', wizSaveConfig);
-  // 旧 gen-env 复制按钮已弃用(隐藏)；元素仍在，绑定留着无害，避免动 wizCopyEnv。
-  $('wizCopy').addEventListener('click', wizCopyEnv);
+  // 黄条与首启自动入口都只打开模型设置弹窗，不再维护第二套首配表单。
+  $('btnGoWizard').addEventListener('click', () => openSettings('models'));
 
   // ── 后台整理状态轮询（用户词，不显示 updateProfile 等术语） ──
   let lastAt = null;
@@ -5795,9 +5509,8 @@
   }
   $('expSelect').addEventListener('change', onExperienceChange);
 
-  // ══════════════════ 外壳接线（Claude Desktop 风格骨架 · 只接入口，不碰上面任何保留逻辑） ══════════════════
-  // 说明：下面全是新增的 DOM 事件接线，把重画后的外壳（侧栏功能区/顶栏/工具栏/人格弹层/桌面形象）接到
-  //   上面那些"逐字保留"的函数上（enterMemory/enterWizard/onExperienceChange…）。任何后端调用仍走原函数。
+  // ══════════════════ 外壳接线（Claude Desktop 风格骨架） ══════════════════
+  // 侧栏、顶栏、工具栏、人格弹层和桌面形象都接到上面的单一产品路径。
 
   // ── 记忆与画像面板：滑入层，body.mode-memory 由 enterMemory/exitMemory 开合（函数体没动，只改了它的 CSS 定位/动画）──
   $('ftMemory').addEventListener('click', () => { MEM.tab = 'cog'; enterMemory(); });
@@ -6324,7 +6037,6 @@
   let savedAgentWindow = {};
   try { savedAgentWindow = JSON.parse(sessionStorage.getItem('wm-agent-window') || '{}') || {}; } catch (e) { savedAgentWindow = {}; }
   const AG = {
-    mode: true,
     workspace: typeof savedAgentWindow.workspace === 'string' && savedAgentWindow.workspace ? savedAgentWindow.workspace : null,
     autonomy: 'ask',
     taskId: null, taskConversationId: null, taskText: '', poll: null, attachments: [],

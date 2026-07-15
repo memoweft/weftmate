@@ -1,9 +1,9 @@
 /**
- * @memoweft/host —— 用户产品运行壳（Host）。架构归位·批次5 步1/2/3。
+ * @memoweft/host —— 用户产品运行壳（Host）。
  *
  * node:http 起服，经【公开入口】`import 'memoweft'` 调 Core。层层叠加：
- *   步1：GET /api/health、POST /api/chat、GET /api/chat-history、GET /api/bg-status、GET /（干净前端）。
- *   步2：POST /api/gen-env（配置向导拼 .env）、MEMOWEFT_EXPERIENCE_UI=off 纯库开关。
+ *   基础入口：GET /api/health、GET /api/chat-history、GET /api/bg-status、GET /（产品前端）。
+ *   用户消息统一走 /api/agent/*；模型配置统一走 /api/model-config/*，密钥由 safeStorage 加密保存。
  *   步3：记忆管理页——GET /api/cognition、GET /api/evidence（列取）、
  *        POST /api/cognition/{invalidate,delete}、POST /api/evidence/{authorization,delete}（受控管理）。
  *   步4：多对话——POST /api/reset（新建）、GET /api/sessions（列表）、
@@ -17,12 +17,8 @@
  * 后台画像更新调度、聊天历史落盘、多对话编排 = Host 自实现（蓝图 §3.3）。
  * 记忆管理【全走 core.memory.*】（步0 已补齐的受控 API），绝不直接摸 store（Host 边界红线）。
  *
- * 多对话状态（蓝图 §3.3）：会话册（列表/新建/切换/归档）是【Host 的持久数据】，扫 sessions 目录的 jsonl 得来，
- *   不从 Core 掏——Core 的 conversations Map 只是活跃实例窗口缓存、故意不暴露枚举。Host 维护两样进程内状态：
- *   ① currentConvId：当前活跃对话（模块级，单用户单进程）；
- *   ② activatedConvs：本进程已在 Core 建过实例的对话集合（决定 chat 时要不要传 seedTurns 重建窗口）。
- *   续聊靠 seedTurns：切到一条【本进程还没在 Core 建实例】的旧对话，下次 chat 从其历史读最近几轮转 Turn[] 作 seedTurns，
- *   让 Core 首次建实例时重建上下文窗口（Core 语义：seedTurns 仅首次建实例生效，后续复用不重建）。
+ * 多对话状态（蓝图 §3.3）：会话册（列表/新建/切换/归档）是【Host 的持久数据】，扫 sessions 目录的 jsonl 得来。
+ *   currentConvId 记录当前活跃对话；每次统一 Agent 任务从该会话历史提取最近几轮作为上下文。
  *
  * 红线：只经 `import 'memoweft'` 调 Core，任何 `import '../../src/*'` 都算越界。
  * 数据隔离：Host 用自己独立的库（默认 apps/memoweft-host/data/host.db，env MEMOWEFT_HOST_DB 覆盖），
@@ -37,7 +33,6 @@ import { createProfileScheduler } from './scheduler.ts';
 import { createChatHistory, type HistoryTurn, type HistoryAttachment } from './chatHistory.ts';
 import { credBand } from './confBand.ts';
 import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_IDS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
-import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
 import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, getAgentAutonomy, setAgentAutonomy, resolvedLang, getTrustedMcpTools, setMcpToolTrust } from './settings.ts';
@@ -94,9 +89,6 @@ mkdirSync(dirname(DB_PATH), { recursive: true }); // 目录不存在则建（首
 //   这样用 MEMOWEFT_HOST_DB 指到隔离库时，聊天历史也一并隔离、不落默认 data/sessions（步3 遗留 TODO 收口）。
 const SESSIONS_DIR = join(dirname(DB_PATH), 'sessions');
 
-// 单条消息字符上限：挡异常客户端发超长串撑爆后续 updateProfile 的 prompt（正常长输入 2 万字符足够）。
-const MAX_MESSAGE_CHARS = 20000;
-
 // 采集摄入（/api/observe）：采集插件 → Host 审核 → Core（架构归位路线 §3）。
 //   COLLECTOR_ENABLED：部署级 kill-switch；env MEMOWEFT_HOST_COLLECTOR=off 时 UI 也不能绕过。缺省 on。
 //   MAX_OBSERVE_BATCH：单次 POST 最多几条 observation（挡异常客户端一次灌爆）。
@@ -111,7 +103,7 @@ const INDEX_HTML = join(import.meta.dirname, 'web', 'index.html');
 //   MemoWeft 本体冷静克制、不拟人（naming.md §6）；"知道自己有长期记忆、会自然想起用户过往"的注入
 //   归宿主这一层，且现在按体验分家——各体验的语气 / 拟人度写在各自插件的 systemPrompt 里。
 // activeExperienceId：模块级、单用户单进程。初值取 DEFAULT_EXPERIENCE_ID（env MEMOWEFT_EXPERIENCE，缺省 plain）。
-//   切换见 POST /api/experience：切完复用步4 的 activatedConvs.delete，让当前会话下一句重建实例、换上新人设。
+//   切换见 POST /api/experience；统一 Agent 每次开工时动态读取，下一条消息立即使用新人设。
 let activeExperienceId: string = DEFAULT_EXPERIENCE_ID;
 
 // plugins：把已注册插件传给 Core 让它烧 hook（experience 类无 hook 是 no-op；tool/collector 类在此生效）。
@@ -131,12 +123,8 @@ let currentConvId: string = (() => {
   return existing[0]?.id ?? history.newId();
 })();
 
-// activatedConvs：本进程已在 Core 建过实例（handleConversationTurn 建过窗口）的对话集合。
-//   不在集合里 = 本进程首次 chat 该对话 → 要传 seedTurns 让 Core 重建上下文窗口；建过后加入集合，之后复用不再 seed。
-const activatedConvs = new Set<string>();
-
-// switchedExperienceConvs：刚切过人设、下句 chat 要"只种用户话"的对话。换人设时若把整段历史（含旧人设的
-//   assistant 回复）种回窗口，新人设会被历史里的旧自称带跑（LLM 更信历史里演过的角色，而非 systemPrompt）。
+// switchedExperienceConvs：刚切过人设、下一次 Agent 任务要"只带用户话"的对话。若把整段历史（含旧人设的
+//   assistant 回复）带入上下文，新人设会被历史里的旧自称带跑（LLM 更信历史里演过的角色，而非 systemPrompt）。
 //   所以切人设后第一句只种【用户说过的话】、不认领旧人设的回复——用户的话是跨人设的事实、保留。
 const switchedExperienceConvs = new Set<string>();
 
@@ -224,20 +212,19 @@ void mcp.reconcile(mcpStore.listServers());
 
 /**
  * 进程内热重建 core（切模型档 / 改配置时调）。不重启进程、窗口不闪（作者二次拍板）。
- * 步骤：injectEnv 强刷 env=当前 active 档 → 建新 core → 清 activatedConvs（新 core 无会话窗口，下句 chat 重新 seed
- *   续上上下文）→ 关旧 core。旧 core 上若正好有在飞写路径，close 会抛 → try/catch 吞（少见、不致命）。
+ * 步骤：injectEnv 强刷 env=当前 active 档 → 建新 core → 关旧 core。
+ * 旧 core 上若正好有在飞写路径，close 会抛 → try/catch 吞（少见、不致命）。
  */
 function rebuildCore(): void {
   const old = core;
   configStore.injectEnv();                 // 先清后设：env 精确等于当前 active 档（切到没配 write/embed 的档时清掉旧残留）
   core = createMemoWeftCore({ dbPath: DB_PATH, plugins: ALL_PLUGINS });
-  activatedConvs.clear();                   // 新 core 没有任何会话窗口 → 下句 chat 用 seedTurns 重建、续上下文
   try { old.close(); } catch { /* 旧 core 若有在飞写路径会抛，吞掉——进程不重启、连接由新 core 接管 */ }
 }
 
 /**
- * 续聊种子：把一条对话历史的最近几轮转成 Core 的 Turn[]（{role, content}，剥掉 ts）。
- * 只取最近 config.workingMemory.maxTurns 条——回话窗口就这么大，多传也会被 Core 丢老的，省内存。
+ * 续聊上下文：把一条对话历史的最近几轮转成统一 Agent 使用的 {role, content}（剥掉 ts）。
+ * 只取最近 config.workingMemory.maxTurns 条，避免旧会话无限撑大模型上下文。
  * 历史里 user/assistant 已是分开的两条，直接映射即可（无需像 testbench 从一条 run 记录拆两条）。
  */
 function seedFor(conversationId: string, opts: { onlyUser?: boolean } = {}): Array<{ role: HistoryTurn['role']; content: string }> {
@@ -370,62 +357,6 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       return;
     }
 
-    // 一轮对话：存证据 → 召回 → 回话（Core），再把这轮 user + assistant 落 Host 历史、排后台整理。
-    if (req.method === 'POST' && url.pathname === '/api/chat') {
-      const body = await readJson(req);
-      // 服务端兜底（前端 trim 可被直连 API 绕过，服务端是唯一可信边界）：只收字符串、trim 后非空、不超上限，
-      //   否则 400 且【不落库、不排整理】——防空/脏（[object Object] 之类）证据污染画像、白耗一次 LLM 回话。
-      if (typeof body.message !== 'string') {
-        sendJson(res, 400, { error: '消息必须是文本' });
-        return;
-      }
-      const message = body.message.trim();
-      if (!message) {
-        sendJson(res, 400, { error: '消息不能为空' });
-        return;
-      }
-      if (message.length > MAX_MESSAGE_CHARS) {
-        sendJson(res, 400, { error: `消息太长（上限 ${MAX_MESSAGE_CHARS} 字），分几次说吧` });
-        return;
-      }
-
-      // 续聊种子重建（步4）：当前对话若本进程还没在 Core 建过实例（刚 open 的旧对话、或刚重启续上的对话），
-      //   把它的历史最近几轮作 seedTurns 传给 Core，让首次建窗口时接上上下文。已激活过的对话不传（Core 复用不重建）。
-      const convId = currentConvId;
-      const firstThisProcess = !activatedConvs.has(convId);
-      const seedOnlyUser = switchedExperienceConvs.has(convId); // 切人设后第一句：只种用户话，别被旧人设回复带跑
-      const outcome = await core.handleConversationTurn({
-        message,
-        conversationId: convId,
-        // 当前激活体验的人设：仅该对话首次建实例时生效（后续复用不重建）。切体验后靠 activatedConvs.delete
-        //   + core.dropConversation 让下一句重建实例，届时这里取到的就是新体验的 systemPrompt。
-        systemPrompt: getExperience(activeExperienceId).systemPrompt,
-        seedTurns: firstThisProcess ? seedFor(convId, { onlyUser: seedOnlyUser }) : undefined,
-      });
-      activatedConvs.add(convId); // 本进程已为该对话建过实例，后续 chat 不再 seed
-      switchedExperienceConvs.delete(convId); // "只种用户话"只作用于切人设后紧接的这一句
-
-      // user 原话落 Host 历史（话已由 Core 存为证据，无论回话成败）。
-      history.append(convId, { role: 'user', content: message, ts: new Date().toISOString() });
-
-      if (outcome.error) {
-        // 回话失败：Core 把错吞成兜底串塞进 outcome.reply、真错在 outcome.error。
-        //   别把这句失败串当正常回复落 assistant 历史 / 渲染给用户（否则用户分不清系统故障与模型真答，
-        //   还会永久留在历史里）——回一个可识别的失败信号，前端走"出错了/请重试"。
-        sendJson(res, 200, { error: '回话没成功：' + outcome.error, recall: [] });
-      } else {
-        history.append(convId, { role: 'assistant', content: outcome.reply, ts: new Date().toISOString() });
-        // recall 供未来"记忆气泡"（步6）：这里只精简回传，前端步1 可先不显示。
-        const recall = outcome.recall.map((r) => ({ content: r.content, score: r.score }));
-        sendJson(res, 200, { reply: outcome.reply, recall });
-      }
-
-      // 回合后排后台整理（fire-and-forget：不 await、不挡这次回话，防抖攒批见 scheduler）。
-      //   user 的话已入库为证据，回话成败都该攒进下一批整理。
-      scheduler.onTurn();
-      return;
-    }
-
     // 聊天历史：读回【当前对话】的轮列表，前端加载时渲染。空对话返回空列表、不报错。
     if (req.method === 'GET' && url.pathname === '/api/chat-history') {
       sendJson(res, 200, { turns: history.read(currentConvId), conversationId: currentConvId });
@@ -461,10 +392,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
     }
 
     // 切换体验：body {id} → 校验在白名单里 → 换 activeExperienceId。
-    //   【切换后当前会话下一句就生效】：普通 /api/chat 靠重建 Core 会话；统一 Agent 每个新任务动态读取 activeExperienceId。
-    //   要真重建，得【两套缓存一起清】：① activatedConvs.delete → Host 下句传 seedTurns + 新 systemPrompt；
-    //   ② core.dropConversation → 丢掉 Core 缓存的旧实例。只清 ① 不够：Core 命中旧实例就不重建、还用旧人设
-    //   （这正是审查抓出的坑——Host 的 activatedConvs 与 Core 的 conversations Map 是两套独立缓存）。
+    //   统一 Agent 每个新任务动态读取 activeExperienceId，因此当前会话下一条消息立即使用新人设。
     if (req.method === 'POST' && url.pathname === '/api/experience') {
       const body = await readJson(req);
       const id = typeof body.id === 'string' ? body.id.trim() : '';
@@ -472,10 +400,8 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       // 白名单校验：只接受注册表里确有的体验 id（挡未知 id / 脏输入），别让 activeExperienceId 落到非法值。
       if (!EXPERIENCE_IDS.includes(id)) { sendJson(res, 404, { error: '没有这个体验' }); return; }
       activeExperienceId = id;
-      // 两套缓存一起清，当前会话下一句才真换人设：
-      activatedConvs.delete(currentConvId);   // Host 侧：下句 chat 传 seedTurns + 新 systemPrompt
-      core.dropConversation(currentConvId);   // Core 侧：丢旧实例 → 下句真重建（否则 Core 命中旧实例、忽略新人设）
-      switchedExperienceConvs.add(currentConvId); // 下句只种"用户说过的话"，别让旧人设的回复把新人设带跑
+      // 下一条消息只带用户历史，别让旧人设的回复把新人设带跑。
+      switchedExperienceConvs.add(currentConvId);
       sendJson(res, 200, { ok: true, current: activeExperienceId });
       return;
     }
@@ -587,10 +513,8 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       return;
     }
 
-    // 打开一条对话：切当前对话为它 + 标记它【本进程未激活】（下次 chat 用 seedTurns 重建窗口）+ 返回其历史供前端渲染。
-    //   即便这条本进程之前激活过（Core 里已有窗口），open 也重置为未激活——用户切走再切回，语义上按"从历史续聊"更直观。
-    //   ⚠ Core 只复用不覆盖旧实例：光标记未激活不够，还得 core.dropConversation 丢掉 Core 缓存的旧实例，
-    //   下句 chat 才会用 seedTurns 真重建窗口（否则命中旧实例、seedTurns 被忽略。审查抓出的两套缓存坑，一并根治）。
+    // 打开一条对话：切换当前会话，并把它的历史与工作区返回前端。
+    // 下一次统一 Agent 任务会直接从这条会话历史提取上下文。
     if (req.method === 'POST' && url.pathname === '/api/session/open') {
       const body = await readJson(req);
       const id = typeof body.id === 'string' ? body.id.trim() : '';
@@ -600,8 +524,6 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       const known = history.list({ includeArchived: true }).some((s) => s.id === id);
       if (!known) { sendJson(res, 404, { error: '没有这条对话' }); return; }
       currentConvId = id; // id 来自 list、已是规范安全形态
-      activatedConvs.delete(id); // Host 侧：下句 chat 传 seedTurns
-      core.dropConversation(id); // Core 侧：丢旧实例 → 下句真重建续聊窗口（两套缓存一起清）
       sendJson(res, 200, {
         ok: true,
         conversationId: id,
@@ -619,7 +541,6 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       if (!id) { sendJson(res, 400, { error: '缺少要归档的对话 id' }); return; }
       const archivedWorkspace = workspaceForConversation(id);
       history.archive(id);
-      activatedConvs.delete(id); // 归档就从活跃集移除（若在）
       let archivedCurrent = false;
       if (id === currentConvId) {
         const rest = history.list().filter((s) => !s.archived);
@@ -637,18 +558,6 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
         archivedCurrent,
         workspace: workspaceForConversation(currentConvId),
       });
-      return;
-    }
-
-    // ── 配置向导·生成 .env 文本（批次5 步2） ──
-    // ⚠ 隐私核心铁律（决策3）：本 handler 只【拼文本、当场返回】——
-    //   绝不 writeFile 任何 .env、绝不把 apiKey（或任何请求体字段）写进模块级变量/缓存/全局/日志。
-    //   apiKey 只允许在"读 body → 拼进返回串 → 响应"这一条瞬时栈路径上流过；函数返回即随栈回收、进程内不残留。
-    //   收 9 个 env 值（对话三项必填 / 写路径三项可选 / 嵌入三项可选）+ 一个 withExperienceUI 布尔
-    //   → 拼成 .env 文本 → 返回 { env: "<多行文本>" }。gen-env 是 Host 自实现（蓝图 §3.3），不碰 Core、不碰记忆。
-    if (req.method === 'POST' && url.pathname === '/api/gen-env') {
-      const body = await readJson(req); // 局部量，拼完即随栈回收；全程不 console.log(body)、不外泄
-      sendJson(res, ...buildEnvResponse(body)); // 拼装是纯函数，key 只在其栈内流过
       return;
     }
 
@@ -931,7 +840,6 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       const active = history.list();
       for (const s of active) {
         history.archive(s.id);
-        activatedConvs.delete(s.id); // 从本进程活跃实例集移除（若在）
       }
       const sessionsArchived = active.length;
       currentConvId = history.newId(); // 全新空对话作当前
@@ -1212,7 +1120,7 @@ export const ready = new Promise<LoopbackReady>((resolve, reject) => {
     console.log(`  聊天历史 → ${SESSIONS_DIR}（跟随库路径）`);
     console.log(`  当前对话 → ${currentConvId}`);
     console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
-    console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET /api/chat-history · GET /api/bg-status');
+    console.log('  端点 → GET / · GET /api/health · GET /api/usage · GET /api/chat-history · GET /api/bg-status · /api/agent/*');
     console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
     console.log('  设置 → GET /api/settings · POST /api/settings/{perception,language,theme,agent-autonomy} · POST /api/observe(采集·不上云)');
     console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
