@@ -31,7 +31,7 @@ import { createHash } from 'node:crypto';
 import { readFile, writeFile, readdir, rm, mkdir, stat } from 'node:fs/promises';
 import { existsSync, statSync, realpathSync } from 'node:fs';
 import { resolve, relative, isAbsolute, dirname } from 'node:path';
-import { OpenAICompatClient, loadLLMConfig, type ChatMessage } from './memoweft.ts';
+import { loadLLMConfig, type ChatMessage } from './memoweft.ts';
 import { normalizeAutonomy, type Autonomy } from './agent-autonomy.ts';
 
 export { DEFAULT_AUTONOMY, isAutonomy, normalizeAutonomy } from './agent-autonomy.ts';
@@ -49,6 +49,12 @@ const MAX_IMAGE_DATA_CHARS = 8_500_000; // 单张图片 data URL 上限（约 6M
 const MAX_IMAGE_TOTAL_CHARS = 26_000_000; // 单任务图片总量上限，防 loopback 请求把内存撑爆
 const MAX_CONTEXT_TURNS = 16;      // 带入统一 Agent 的最近会话轮数
 const MAX_CONTEXT_CHARS = 20_000;  // 单轮上下文上限（防历史异常撑爆请求）
+const MAX_TASK_TEXT_BYTES = 64 * 1024;       // 单条原始任务上限；超限直接拒绝，不静默截用户意图
+const MAX_TERMINAL_FIELD_BYTES = 64 * 1024;  // 终态摘要/备注/步骤文本单项上限
+const MAX_TERMINAL_METADATA_BYTES = 4 * 1024 * 1024; // 全部终态轻量视图总上限
+const MAX_BACKUP_FILE_BYTES = 8 * 1024 * 1024;       // 单个撤回备份上限
+const MAX_TASK_BACKUP_BYTES = 32 * 1024 * 1024;      // 单任务撤回备份总上限
+const MAX_GLOBAL_BACKUP_BYTES = 64 * 1024 * 1024;    // 活跃+终态全部撤回备份总上限
 const TERMINAL_TASK_TTL_MS = 30 * 60_000; // 终态临时状态约保留 30 分钟，供最终轮询与撤回
 const MAX_TERMINAL_TASKS = 50;             // 硬上限：任务多时最老终态会提前清理；活跃任务绝不参与
 const TASK_CLEANUP_INTERVAL_MS = 60_000;
@@ -144,6 +150,7 @@ interface Task {
   backups: Map<string, FileBackup>;      // 改前原文 + 改前/改后指纹；撤回只覆盖仍保持 Agent 改后状态的文件
   ranCommand: boolean;
   stopped: boolean;
+  abortController?: AbortController;                 // 一次任务共用：叫停会同时中断模型、MCP 与命令
   gate?: ApprovalGate;                              // 等待批准的 resolver + 超时 timer
   approvalExpiresAt?: number;
   terminalAt?: number;                         // 进入终态的时刻；TTL/数量清理依据
@@ -157,6 +164,15 @@ const DEFAULT_TASK_RETENTION = {
   maxTerminalTasks: MAX_TERMINAL_TASKS,
 };
 let taskRetention = { ...DEFAULT_TASK_RETENTION };
+const DEFAULT_TASK_BUDGETS = {
+  taskTextBytes: MAX_TASK_TEXT_BYTES,
+  terminalFieldBytes: MAX_TERMINAL_FIELD_BYTES,
+  terminalMetadataBytes: MAX_TERMINAL_METADATA_BYTES,
+  backupFileBytes: MAX_BACKUP_FILE_BYTES,
+  taskBackupBytes: MAX_TASK_BACKUP_BYTES,
+  globalBackupBytes: MAX_GLOBAL_BACKUP_BYTES,
+};
+let taskBudgets = { ...DEFAULT_TASK_BUDGETS };
 let backupReader: (file: string) => Promise<Buffer> = (file) => readFile(file);
 
 // ── 记忆接线 + MCP 工具接线（server 注入；不 import core/mcp，保持解耦 + 热重建自然跟随）──
@@ -171,7 +187,7 @@ interface AgentDeps {
   settled?: (taskId: string) => void;                               // 任意终态都通知宿主清理任务关联容器
   experience?: () => AgentExperience;                            // 当前人格（动态 getter；切换后下一任务立即读取新值）
   mcpTools?: () => AgentMcpTool[];                            // 当前可用的 MCP 工具（装的能力包）
-  callMcp?: (fqName: string, args: Record<string, unknown>) => Promise<string>; // 调一个 MCP 工具
+  callMcp?: (fqName: string, args: Record<string, unknown>, signal?: AbortSignal) => Promise<string>; // 调一个 MCP 工具
   isMcpToolTrusted?: (fqName: string) => boolean;            // F1：用户是否已「信任」此 MCP 工具（仅 auto 档免批）
 }
 let deps: AgentDeps = {};
@@ -181,7 +197,52 @@ function isTerminalStatus(status: TaskStatus): status is 'done' | 'failed' | 'st
   return status === 'done' || status === 'failed' || status === 'stopped';
 }
 
-/** 只清理终态任务：先按 TTL，再执行数量硬上限；planning/running/awaiting 永不参与。 */
+function utf8Bytes(value: string): number {
+  return Buffer.byteLength(value, 'utf8');
+}
+
+/** UTF-8 字节级截断：不把多字节字符切成乱码，且截断标记也计入上限。 */
+function truncateUtf8(value: string, maxBytes: number): string {
+  if (utf8Bytes(value) <= maxBytes) return value;
+  const suffix = '…';
+  const suffixBytes = utf8Bytes(suffix);
+  if (maxBytes <= suffixBytes) return Buffer.from(suffix).subarray(0, maxBytes).toString('utf8').replace(/\uFFFD$/u, '');
+  return Buffer.from(value)
+    .subarray(0, maxBytes - suffixBytes)
+    .toString('utf8')
+    .replace(/\uFFFD$/u, '') + suffix;
+}
+
+function backupBytes(task: Task): number {
+  let total = 0;
+  for (const backup of task.backups.values()) total += backup.prior?.byteLength ?? 0;
+  return total;
+}
+
+function globalBackupBytes(): number {
+  let total = 0;
+  for (const task of tasks.values()) total += backupBytes(task);
+  return total;
+}
+
+function terminalMetadataBytes(task: Task): number {
+  return utf8Bytes(JSON.stringify(toView(task)));
+}
+
+function compactTerminalFields(task: Task): void {
+  const cap = taskBudgets.terminalFieldBytes;
+  if (task.summary !== undefined) task.summary = truncateUtf8(task.summary, cap);
+  if (task.note !== undefined) task.note = truncateUtf8(task.note, cap);
+  task.attachmentNames = task.attachmentNames.map((name) => truncateUtf8(name, cap));
+  for (const step of task.steps) {
+    if (step.argsSummary !== undefined) step.argsSummary = truncateUtf8(step.argsSummary, cap);
+    if (step.thought !== undefined) step.thought = truncateUtf8(step.thought, cap);
+    if (step.result !== undefined) step.result = truncateUtf8(step.result, cap);
+    if (step.error !== undefined) step.error = truncateUtf8(step.error, cap);
+  }
+}
+
+/** 只清理终态任务：依次执行 TTL、数量和总字节硬上限；planning/running/awaiting 永不参与。 */
 function cleanupTerminalTasks(now = taskRetention.now()): void {
   const terminal = [...tasks.values()]
     .filter((task) => isTerminalStatus(task.status) && task.terminalAt !== undefined)
@@ -195,6 +256,13 @@ function cleanupTerminalTasks(now = taskRetention.now()): void {
   while (survivors.length > taskRetention.maxTerminalTasks) {
     tasks.delete(survivors.shift()!.id);
   }
+  let metadataBytes = survivors.reduce((sum, task) => tasks.has(task.id) ? sum + terminalMetadataBytes(task) : sum, 0);
+  while (metadataBytes > taskBudgets.terminalMetadataBytes && survivors.length) {
+    const oldest = survivors.shift()!;
+    if (!tasks.has(oldest.id)) continue;
+    metadataBytes -= terminalMetadataBytes(oldest);
+    tasks.delete(oldest.id);
+  }
 }
 
 /** 所有终态都走同一出口：先标终态，再释放模型上下文/附件正文，最后通知宿主清理关联容器。 */
@@ -206,9 +274,12 @@ function settleTask(task: Task, status: 'done' | 'failed' | 'stopped'): void {
     step.argsSummary = summarizeStepArgs(step.args);
     step.args = {};
   }
+  compactTerminalFields(task);
   task.attachments = [];
   task.messages = [];
   task.context = [];
+  // stopped 任务保留已中断 signal 到后台 driver 真正退出，避免 stop 恰好发生在 recall 阶段后又启动新请求。
+  if (!task.stopped) task.abortController = undefined;
   if (task.gate) clearTimeout(task.gate.timer);
   task.gate = undefined;
   task.approvalExpiresAt = undefined;
@@ -234,7 +305,7 @@ function resolveTool(name: string): ToolDef | null {
     mutating: !mt.readOnly,               // 仅作展示/标注；审批由 external/alwaysApprove 与自主度共同决定
     external: true,                       // ask 档的边界：所有外部调用都逐次确认，不信任自报只读
     alwaysApprove: !trusted,              // 未信任工具在 auto 档也强批；信任只允许 auto 免批
-    run: (args) => (deps.callMcp ? deps.callMcp(name, args) : Promise.reject(new Error('MCP 未接线'))),
+    run: (args, task) => (deps.callMcp ? deps.callMcp(name, args, task.abortController?.signal) : Promise.reject(new Error('MCP 未接线'))),
   };
 }
 
@@ -318,7 +389,7 @@ const TOOLS: Record<string, ToolDef> = {
       const command = String(args.command ?? '').trim();
       if (!command) throw new Error('命令为空');
       task.ranCommand = true;                    // 标记：撤回不完全（命令副作用还原不了）
-      return await runShell(command, task.workspace);
+      return await runShell(command, task.workspace, task.abortController?.signal);
     },
   },
   // 读用户附上的参考文件（③·上下文附件）：只读、按名字从 task.attachments 取（不碰文件系统、不受沙箱限制——用户已显式附上）。
@@ -339,9 +410,13 @@ const TOOLS: Record<string, ToolDef> = {
 async function backupBeforeWrite(task: Task, file: string): Promise<void> {
   if (task.backups.has(file)) return;            // 已备份过原始态，别被后续写覆盖
   if (existsSync(file)) {
+    const size = (await stat(file)).size;
+    assertBackupCapacity(task, size);
     // C6：读 Buffer 原样备份（不预设 utf8）——二进制文件用 utf8 读会丢字节，撤回时写回就损坏原文件。
     try {
       const prior = await backupReader(file);
+      // 读取期间其它进程可能把文件换大；入表前按真实 Buffer 再检查一次，全球预算不会被竞态穿透。
+      assertBackupCapacity(task, prior.byteLength);
       task.backups.set(file, { prior, before: fileState(file, prior) });
     }
     catch (e) {
@@ -350,6 +425,19 @@ async function backupBeforeWrite(task: Task, file: string): Promise<void> {
     }
   } else {
     task.backups.set(file, { prior: null, before: { exists: false } }); // 改前不存在 → 撤回时删除
+  }
+}
+
+function assertBackupCapacity(task: Task, bytes: number): void {
+  const mib = (value: number) => Math.max(1, Math.floor(value / 1024 / 1024));
+  if (bytes > taskBudgets.backupFileBytes) {
+    throw new Error(`原文件超过单个撤回备份上限（${mib(taskBudgets.backupFileBytes)} MB），为避免无法安全撤回，已取消写入`);
+  }
+  if (backupBytes(task) + bytes > taskBudgets.taskBackupBytes) {
+    throw new Error(`本任务撤回备份将超过 ${mib(taskBudgets.taskBackupBytes)} MB，已取消这次写入`);
+  }
+  if (globalBackupBytes() + bytes > taskBudgets.globalBackupBytes) {
+    throw new Error(`全部任务的撤回备份将超过 ${mib(taskBudgets.globalBackupBytes)} MB，请先撤回或等待旧任务过期`);
   }
 }
 
@@ -397,26 +485,42 @@ function killTree(child: ReturnType<typeof spawn>): void {
   }
 }
 
-/** 在工作区里跑一条命令，收 stdout+stderr（合并截断），带超时。 */
-function runShell(command: string, cwd: string): Promise<string> {
+/** 在工作区里跑一条命令，收 stdout+stderr（合并截断），带超时和用户主动叫停。 */
+function runShell(command: string, cwd: string, signal?: AbortSignal): Promise<string> {
   return new Promise((resolvePromise) => {
     // detached（仅 POSIX）：让子进程自成进程组，超时能整组 kill 掉孙进程（F7）；Windows 走 taskkill /T。
     const child = spawn(command, { cwd, shell: true, detached: process.platform !== 'win32' });
     let out = '';
+    let stopReason = '';
+    let finished = false;
     const push = (b: Buffer) => { out += b.toString('utf8'); };
     child.stdout?.on('data', push);
     child.stderr?.on('data', push);
-    const timer = setTimeout(() => {
-      killTree(child);                                   // F7：收整棵进程树，别留后台孤儿
-      out += `\n（超时 ${CMD_TIMEOUT_MS / 1000}s，已终止整棵进程树）`;
-    }, CMD_TIMEOUT_MS);
-    child.on('close', (code) => {
+    const stop = (reason: string) => {
+      if (stopReason) return;
+      stopReason = reason;
+      killTree(child);                                   // 用户叫停与超时都收整棵树
+    };
+    const finish = (text: string) => {
+      if (finished) return;
+      finished = true;
       clearTimeout(timer);
-      resolvePromise(truncate(out.trim() || '（无输出）', OUT_CHARS) + `\n[退出码 ${code ?? '?'}]`);
+      signal?.removeEventListener('abort', onAbort);
+      resolvePromise(text);
+    };
+    const onAbort = () => stop('（用户已叫停，正在运行的命令进程树已终止）');
+    const timer = setTimeout(() => {
+      stop(`（超时 ${CMD_TIMEOUT_MS / 1000}s，已终止整棵进程树）`);
+    }, CMD_TIMEOUT_MS);
+    timer.unref();
+    signal?.addEventListener('abort', onAbort, { once: true });
+    if (signal?.aborted) onAbort();
+    child.on('close', (code) => {
+      const body = [out.trim(), stopReason].filter(Boolean).join('\n') || '（无输出）';
+      finish(truncate(body, OUT_CHARS) + `\n[退出码 ${code ?? '?'}]`);
     });
     child.on('error', (e) => {
-      clearTimeout(timer);
-      resolvePromise(`命令启动失败：${e.message}`);
+      finish(stopReason || `命令启动失败：${e.message}`);
     });
   });
 }
@@ -540,6 +644,9 @@ export function startTask(input: {
   const task = String(input.task ?? '').trim();
   const workspace = String(input.workspace ?? '').trim();
   if (!task) throw new Error('任务描述不能为空');
+  if (utf8Bytes(task) > taskBudgets.taskTextBytes) {
+    throw new Error(`任务描述不能超过 ${Math.floor(taskBudgets.taskTextBytes / 1024)} KB，请拆成几次发送`);
+  }
   // 附件清洗 + 兜底截断（前端也截；后端防超大/超多）。
   const attachments: TaskAttachment[] = [];
   let imageChars = 0;
@@ -584,7 +691,7 @@ export function startTask(input: {
     id, task, workspace, autonomy, attachments, attachmentNames: attachments.map((attachment) => attachment.name), context,
     status: autonomy === 'suggest' ? 'planning' : 'running',
     steps: [], createdAt: new Date().toISOString(),
-    messages: [], backups: new Map(), ranCommand: false, stopped: false,
+    messages: [], backups: new Map(), ranCommand: false, stopped: false, abortController: new AbortController(),
   };
   tasks.set(id, t);
   if (autonomy === 'suggest') void plan(t);       // 只建议：出方案、不执行
@@ -621,8 +728,8 @@ async function plan(t: Task): Promise<void> {
       { role: 'system', content: sys },
       ...t.context,
       taskUserMessage(t),
-    ]);
-    if (t.stopped) { settleTask(t, 'stopped'); return; }
+    ], t.abortController?.signal);
+    if (t.stopped) return;
     const obj = extractJson(reply);
     if (obj && Array.isArray(obj.plan)) {
       t.summary = String(obj.summary ?? '这是建议方案，没有执行任何操作。');
@@ -641,8 +748,9 @@ async function plan(t: Task): Promise<void> {
     await safeFinish(t);
     settleTask(t, t.stopped ? 'stopped' : 'done');
   } catch (e) {
+    if (t.stopped) return;
     t.note = errMsg(e);
-    settleTask(t, t.stopped ? 'stopped' : 'failed');
+    settleTask(t, 'failed');
   }
 }
 
@@ -663,9 +771,9 @@ async function drive(t: Task): Promise<void> {
     for (let i = 0; i < MAX_STEPS; i++) {
       if (t.stopped) { settleTask(t, 'stopped'); return; }
 
-      const reply = await client.chat(t.messages);
+      const reply = await client.chat(t.messages, t.abortController?.signal);
       // client.chat 在途时用户可能已经叫停；返回后先收口，绝不能再解析/开启下一步工具动作。
-      if (t.stopped) { settleTask(t, 'stopped'); return; }
+      if (t.stopped) return;
       t.messages.push({ role: 'assistant', content: reply });
       const parsed = parseAction(reply);
 
@@ -741,10 +849,12 @@ async function drive(t: Task): Promise<void> {
       step.status = 'running';
       try {
         const result = await tool.run(step.args, t);
+        if (t.stopped) return;
         step.result = truncate(result, OUT_CHARS);
         step.status = 'done';
         t.messages.push({ role: 'user', content: `[工具结果 ${parsed.tool}]\n${step.result}` });
       } catch (e) {
+        if (t.stopped) return;
         step.error = errMsg(e);
         step.status = 'failed';
         t.messages.push({ role: 'user', content: `[工具出错 ${parsed.tool}] ${step.error}` });
@@ -757,8 +867,9 @@ async function drive(t: Task): Promise<void> {
       settleTask(t, 'failed');
     }
   } catch (e) {
+    if (t.stopped) return;
     t.note = errMsg(e);
-    settleTask(t, t.stopped ? 'stopped' : 'failed');
+    settleTask(t, 'failed');
   }
 }
 
@@ -795,12 +906,22 @@ export function decideStep(taskId: string, decision: 'approve' | 'reject'): bool
   return true;
 }
 
-/** 叫停任务：置 stopped，并唤醒可能挂起的审批门（当拒绝处理）。 */
+/** 叫停任务：立刻收口 UI 状态，同时中断在途模型、MCP、命令并唤醒审批门。 */
 export function stopTask(taskId: string): boolean {
   const t = tasks.get(taskId);
   if (!t || isTerminalStatus(t.status)) return false;
   t.stopped = true;
+  const controller = t.abortController;
+  if (controller && !controller.signal.aborted) controller.abort(new Error('用户已叫停任务'));
   if (t.gate) t.gate.finish('reject');
+  for (const step of t.steps) {
+    if (step.status === 'running' || step.status === 'awaiting') {
+      step.status = 'rejected';
+      step.error = '用户已叫停';
+    }
+  }
+  t.note = '任务已停止；正在进行的模型请求、外部工具或命令也已发出中断。';
+  settleTask(t, 'stopped');
   return true;
 }
 
@@ -894,26 +1015,24 @@ function toView(t: Task): AgentTaskView {
 }
 
 // ── 内部小工具 ──
-type ChatClient = { chat(messages: AgentMessage[]): Promise<string> };
+type ChatClient = { chat(messages: AgentMessage[], signal?: AbortSignal): Promise<string> };
 
 /**
- * Agent 专用的 OpenAI-compatible 客户端。
- * 纯文本仍复用 MemoWeft 的成熟客户端；仅图片消息由 Host 直发标准 content parts，避免改动 MemoWeft 能力层。
+ * Agent 专用的 OpenAI-compatible 客户端。Host 直发文字/图片，才能把任务级 AbortSignal 接到真实网络请求；
+ * 不修改 MemoWeft 源码，也不让 MemoWeft 的记忆调用误共享 Agent 的停止信号。
  */
 class AgentOpenAIClient implements ChatClient {
   private readonly config: ReturnType<typeof loadLLMConfig>;
-  private readonly textClient: OpenAICompatClient;
 
   constructor() {
     this.config = { ...loadLLMConfig(), temperature: 0 };
-    this.textClient = new OpenAICompatClient(this.config);
   }
 
-  async chat(messages: AgentMessage[]): Promise<string> {
-    if (messages.every((message) => typeof message.content === 'string')) {
-      return this.textClient.chat(messages as ChatMessage[]);
-    }
+  async chat(messages: AgentMessage[], externalSignal?: AbortSignal): Promise<string> {
+    const hasImages = messages.some((message) => typeof message.content !== 'string');
     const timeoutMs = Number(process.env.MEMOWEFT_LLM_TIMEOUT_MS ?? process.env.DLA_LLM_TIMEOUT_MS) || 120_000;
+    const timeoutSignal = AbortSignal.timeout(timeoutMs);
+    const signal = externalSignal ? AbortSignal.any([externalSignal, timeoutSignal]) : timeoutSignal;
     const url = `${this.config.baseUrl.replace(/\/$/, '')}/chat/completions`;
     let response: Response;
     try {
@@ -924,26 +1043,26 @@ class AgentOpenAIClient implements ChatClient {
           Authorization: `Bearer ${this.config.apiKey}`,
         },
         body: JSON.stringify({ model: this.config.model, messages, temperature: 0 }),
-        signal: AbortSignal.timeout(timeoutMs),
+        signal,
       });
     } catch (error) {
-      if (error instanceof Error && error.name === 'TimeoutError') {
-        throw new Error(`图片请求超时（超过 ${timeoutMs}ms）`);
+      if (timeoutSignal.aborted && !externalSignal?.aborted) {
+        throw new Error(`模型请求超时（超过 ${timeoutMs}ms）`);
       }
       throw error;
     }
     if (!response.ok) {
       const detail = (await response.text().catch(() => '')).slice(0, 500);
-      const visionHint = response.status === 400 || response.status === 404 || response.status === 415
+      const visionHint = hasImages && (response.status === 400 || response.status === 404 || response.status === 415)
         ? '当前模型或接口可能不支持图片理解。请换用支持视觉的模型后重试。'
         : '';
-      throw new Error(`图片请求失败 ${response.status}${visionHint ? `：${visionHint}` : ''}${detail ? `｜${detail}` : ''}`);
+      throw new Error(`模型请求失败 ${response.status}${visionHint ? `：${visionHint}` : ''}${detail ? `｜${detail}` : ''}`);
     }
     const data = await response.json() as {
       choices?: Array<{ message?: { content?: string } }>;
     };
     const content = data.choices?.[0]?.message?.content;
-    if (typeof content !== 'string') throw new Error('模型返回的图片回复格式不正确');
+    if (typeof content !== 'string') throw new Error('模型返回格式不正确');
     return content.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
   }
 }
@@ -963,6 +1082,9 @@ export function __setTaskRetentionForTests(input: {
   if (input.ttlMs !== undefined) taskRetention.ttlMs = input.ttlMs;
   if (input.maxTerminalTasks !== undefined) taskRetention.maxTerminalTasks = input.maxTerminalTasks;
 }
+export function __setTaskBudgetsForTests(input: Partial<typeof DEFAULT_TASK_BUDGETS>): void {
+  taskBudgets = { ...taskBudgets, ...input };
+}
 export function __setApprovalTimeoutForTests(timeoutMs?: number): void {
   approvalTimeoutMs = timeoutMs === undefined ? CONFIGURED_APPROVAL_TIMEOUT_MS : Math.max(1, Math.floor(timeoutMs));
 }
@@ -981,6 +1103,8 @@ export function __getTaskRetentionDebugForTests(taskId: string): {
   messageCount: number;
   contextCount: number;
   backupCount: number;
+  backupBytes: number;
+  metadataBytes: number;
   stepArgs: Array<{ args: Record<string, unknown>; argsSummary?: string }>;
 } | null {
   const task = tasks.get(taskId);
@@ -991,13 +1115,19 @@ export function __getTaskRetentionDebugForTests(taskId: string): {
     messageCount: task.messages.length,
     contextCount: task.context.length,
     backupCount: task.backups.size,
+    backupBytes: backupBytes(task),
+    metadataBytes: isTerminalStatus(task.status) ? terminalMetadataBytes(task) : 0,
     stepArgs: task.steps.map((step) => ({ args: step.args, argsSummary: step.argsSummary })),
   } : null;
 }
 export function __resetAgentTasksForTests(): void {
-  for (const task of tasks.values()) if (task.gate) clearTimeout(task.gate.timer);
+  for (const task of tasks.values()) {
+    if (task.gate) clearTimeout(task.gate.timer);
+    if (task.abortController && !task.abortController.signal.aborted) task.abortController.abort();
+  }
   tasks.clear();
   taskRetention = { ...DEFAULT_TASK_RETENTION };
+  taskBudgets = { ...DEFAULT_TASK_BUDGETS };
   approvalTimeoutMs = CONFIGURED_APPROVAL_TIMEOUT_MS;
   backupReader = (file) => readFile(file);
   deps = {};

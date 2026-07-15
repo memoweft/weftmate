@@ -13,6 +13,7 @@ import {
   __setBackupReaderForTests,
   __setApprovalTimeoutForTests,
   __setClientFactory,
+  __setTaskBudgetsForTests,
   __setTaskRetentionForTests,
   __taskCleanupTimerHasRefForTests,
   configureAgentDeps,
@@ -61,6 +62,83 @@ afterEach(() => {
 });
 
 describe('Agent 终态留存与重资源释放', () => {
+  it('叫停会立刻中断在途模型请求，而不是等模型自己返回', async () => {
+    let started!: () => void;
+    let aborted!: () => void;
+    const didStart = new Promise<void>((resolve) => { started = resolve; });
+    const didAbort = new Promise<void>((resolve) => { aborted = resolve; });
+    let receivedSignal: AbortSignal | undefined;
+    __setClientFactory(() => ({
+      chat: async (_messages, signal) => {
+        receivedSignal = signal;
+        started();
+        return await new Promise<string>((_resolve, reject) => {
+          const onAbort = () => { aborted(); reject(new Error('aborted')); };
+          if (signal?.aborted) onAbort();
+          else signal?.addEventListener('abort', onAbort, { once: true });
+        });
+      },
+    }));
+    const { id } = startTask({ task: '等待模型', workspace, autonomy: 'auto' });
+    await didStart;
+
+    assert.equal(stopTask(id), true);
+    assert.equal(getTaskView(id)?.status, 'stopped', '停止接口应立即给 UI 终态');
+    await didAbort;
+    assert.equal(receivedSignal?.aborted, true);
+  });
+
+  it('叫停会把同一个停止信号传给正在运行的 MCP 调用', async () => {
+    let mcpStarted!: () => void;
+    let mcpAborted!: () => void;
+    const didStart = new Promise<void>((resolve) => { mcpStarted = resolve; });
+    const didAbort = new Promise<void>((resolve) => { mcpAborted = resolve; });
+    configureAgentDeps({
+      mcpTools: () => [{ fqName: 'mcp_61__wait', description: 'wait', signature: '()', readOnly: true }],
+      isMcpToolTrusted: () => true,
+      callMcp: async (_name, _args, signal) => {
+        mcpStarted();
+        return await new Promise<string>((_resolve, reject) => {
+          const onAbort = () => { mcpAborted(); reject(new Error('aborted')); };
+          if (signal?.aborted) onAbort();
+          else signal?.addEventListener('abort', onAbort, { once: true });
+        });
+      },
+    });
+    __setClientFactory(scriptedFactory([action('mcp_61__wait', {}), done()]));
+    const { id } = startTask({ task: '等待外部工具', workspace, autonomy: 'auto' });
+    await didStart;
+
+    assert.equal(stopTask(id), true);
+    await didAbort;
+    const view = getTaskView(id)!;
+    assert.equal(view.status, 'stopped');
+    assert.equal(view.steps[0].status, 'rejected');
+    assert.match(view.steps[0].error ?? '', /叫停/);
+  });
+
+  it('叫停会终止命令进程树，命令后续动作不会继续发生', async () => {
+    writeFileSync(join(workspace, 'long-command.cjs'), [
+      "require('fs').writeFileSync('started.flag', '1');",
+      "setTimeout(() => { require('fs').writeFileSync('finished.flag', '1'); process.exit(0); }, 700);",
+    ].join('\n'));
+    const command = `"${process.execPath}" long-command.cjs`;
+    __setClientFactory(scriptedFactory([action('run_command', { command }), done()]));
+    const { id } = startTask({ task: '跑长命令', workspace, autonomy: 'auto' });
+    await waitFor(id, (view) => view.status === 'awaiting');
+    assert.equal(decideStep(id, 'approve'), true);
+    const deadline = Date.now() + 2_000;
+    while (!existsSync(join(workspace, 'started.flag')) && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 10));
+    }
+    assert.equal(existsSync(join(workspace, 'started.flag')), true, '命令应已真实启动');
+
+    assert.equal(stopTask(id), true);
+    assert.equal(getTaskView(id)?.status, 'stopped');
+    await new Promise((resolve) => setTimeout(resolve, 1_000));
+    assert.equal(existsSync(join(workspace, 'finished.flag')), false, '被叫停的子进程不能继续写完成标记');
+  });
+
   it('planning/running/awaiting 永不清理，且 chat 在途叫停后不再执行新动作', async () => {
     let resolveRunning!: (value: string) => void;
     let resolvePlanning!: (value: string) => void;
@@ -206,6 +284,63 @@ describe('Agent 终态留存与重资源释放', () => {
     __runTaskCleanupForTests();
     assert.equal(getTaskView(second), null, 'age === TTL 时清理');
     assert.ok(getTaskView(third), '未到 TTL 的较新任务保留');
+  });
+
+  it('原始任务、终态字段和全部终态元数据都受字节预算约束', async () => {
+    __setTaskBudgetsForTests({ taskTextBytes: 10 });
+    assert.throws(
+      () => startTask({ task: '这段任务肯定超过十字节', workspace, autonomy: 'auto' }),
+      /任务描述不能超过/,
+    );
+
+    __setTaskBudgetsForTests({ taskTextBytes: 64 * 1024, terminalFieldBytes: 20 });
+    __setClientFactory(scriptedFactory([done('好'.repeat(100))]));
+    const first = startTask({ task: '第一项', workspace, autonomy: 'auto' }).id;
+    const firstView = await waitFor(first, terminal);
+    assert.ok(Buffer.byteLength(firstView.summary ?? '', 'utf8') <= 20, '摘要截断标记也必须计入单项预算');
+    assert.doesNotMatch(firstView.summary ?? '', /�/);
+
+    const firstBytes = __getTaskRetentionDebugForTests(first)!.metadataBytes;
+    __setTaskBudgetsForTests({ terminalMetadataBytes: firstBytes + 32 });
+    __setClientFactory(scriptedFactory([done('第二项')]))
+    const second = startTask({ task: '第二项', workspace, autonomy: 'auto' }).id;
+    await waitFor(second, terminal);
+    assert.equal(getTaskView(first), null, '超过全局字节预算时淘汰最老终态');
+    assert.ok(getTaskView(second), '保留较新的终态');
+  });
+
+  it('撤回备份有单文件、单任务和全局字节上限，超限时不覆盖原文件', async () => {
+    const large = join(workspace, 'large.txt');
+    writeFileSync(large, '12345');
+    __setTaskBudgetsForTests({ backupFileBytes: 4, taskBackupBytes: 100, globalBackupBytes: 100 });
+    __setClientFactory(scriptedFactory([action('write_file', { path: 'large.txt', content: 'changed' }), done()]));
+    const perFile = startTask({ task: '单文件上限', workspace, autonomy: 'auto' }).id;
+    const perFileView = await waitFor(perFile, terminal);
+    assert.equal(readFileSync(large, 'utf8'), '12345');
+    assert.match(perFileView.steps[0].error ?? '', /单个撤回备份上限/);
+
+    __setTaskBudgetsForTests({ backupFileBytes: 100, taskBackupBytes: 6, globalBackupBytes: 100 });
+    writeFileSync(join(workspace, 'one.txt'), '1111');
+    writeFileSync(join(workspace, 'two.txt'), '2222');
+    __setClientFactory(scriptedFactory([
+      action('write_file', { path: 'one.txt', content: 'new-one' }),
+      action('write_file', { path: 'two.txt', content: 'new-two' }),
+      done(),
+    ]));
+    const perTask = startTask({ task: '单任务上限', workspace, autonomy: 'auto' }).id;
+    const perTaskView = await waitFor(perTask, terminal);
+    assert.equal(readFileSync(join(workspace, 'one.txt'), 'utf8'), 'new-one');
+    assert.equal(readFileSync(join(workspace, 'two.txt'), 'utf8'), '2222');
+    assert.match(perTaskView.steps[1].error ?? '', /本任务撤回备份/);
+    assert.equal(__getTaskRetentionDebugForTests(perTask)?.backupBytes, 4);
+
+    __setTaskBudgetsForTests({ taskBackupBytes: 100, globalBackupBytes: 6 });
+    writeFileSync(join(workspace, 'three.txt'), '3333');
+    __setClientFactory(scriptedFactory([action('write_file', { path: 'three.txt', content: 'new-three' }), done()]));
+    const global = startTask({ task: '全局上限', workspace, autonomy: 'auto' }).id;
+    const globalView = await waitFor(global, terminal);
+    assert.equal(readFileSync(join(workspace, 'three.txt'), 'utf8'), '3333');
+    assert.match(globalView.steps[0].error ?? '', /全部任务的撤回备份/);
   });
 
   it('有备份的非终态也不可撤回；到 TTL 后返回诚实过期错误', async () => {

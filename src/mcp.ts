@@ -18,7 +18,7 @@ import type { McpServer } from './mcp-store.ts';
 const CONNECT_TIMEOUT_MS = 20_000; // 连接 + 列工具的总超时（挡坏包/不响应的服务把启动挂死）
 
 export interface McpToolInfo {
-  fqName: string;      // 暴露给 agent 的唯一名（服务名 slug + '__' + 工具名，防跨服务重名）
+  fqName: string;      // 暴露给 agent 的稳定唯一名（不可变 server id + 工具名；显示名称不参与身份）
   serverId: string;
   serverName: string;
   toolName: string;    // MCP 服务里的原始工具名（callTool 时用）
@@ -46,8 +46,10 @@ function signatureOf(schema: unknown): string {
   return '(' + Object.keys(props).map((k) => (required.has(k) ? k : k + '?')).join(', ') + ')';
 }
 
-function slug(name: string): string {
-  return (name || 'mcp').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'mcp';
+/** server id 转十六进制是单射：同名服务不碰撞，服务改显示名也不换身份。 */
+function toolIdentity(serverId: string, toolName: string): string {
+  if (!serverId) throw new Error('MCP 服务缺少稳定 id');
+  return `mcp_${Buffer.from(serverId, 'utf8').toString('hex')}__${toolName}`;
 }
 
 function withTimeout<T>(p: Promise<T>, ms: number): Promise<T> {
@@ -77,7 +79,7 @@ export async function connectServer(server: McpServer): Promise<void> {
       const listed = await client.listTools();
       conn.client = client;
       conn.tools = (listed.tools || []).map((t) => ({
-        fqName: slug(server.name) + '__' + t.name,
+        fqName: toolIdentity(server.id, t.name),
         serverId: server.id,
         serverName: server.name,
         toolName: t.name,
@@ -115,8 +117,8 @@ export function listAllTools(): McpToolInfo[] {
   return out;
 }
 
-/** 调一个工具（fqName 路由到对应服务）。返回文本结果（拼 content 里的 text 段）。 */
-export async function callTool(fqName: string, args: Record<string, unknown>): Promise<string> {
+/** 调一个工具（fqName 路由到对应服务）。支持任务叫停，并给每次外部调用明确总超时。 */
+export async function callTool(fqName: string, args: Record<string, unknown>, signal?: AbortSignal): Promise<string> {
   let target: { client: Client; toolName: string } | null = null;
   for (const c of conns.values()) {
     if (c.status !== 'ready' || !c.client) continue;
@@ -124,7 +126,13 @@ export async function callTool(fqName: string, args: Record<string, unknown>): P
     if (t) { target = { client: c.client, toolName: t.toolName }; break; }
   }
   if (!target) throw new Error(`MCP 工具不存在或服务未连接：${fqName}`);
-  const res = await target.client.callTool({ name: target.toolName, arguments: args || {} });
+  const configuredTimeout = Number(process.env.WEFTMATE_AGENT_MCP_TIMEOUT_MS);
+  const timeout = Number.isFinite(configuredTimeout) && configuredTimeout > 0 ? Math.floor(configuredTimeout) : 60_000;
+  const res = await target.client.callTool(
+    { name: target.toolName, arguments: args || {} },
+    undefined,
+    { signal, timeout, maxTotalTimeout: timeout },
+  );
   const content = Array.isArray(res.content) ? res.content : [];
   const text = content.map((b) => (b && b.type === 'text' ? String(b.text) : `[${b?.type || '非文本'}内容]`)).join('\n');
   return (res.isError ? '[工具报错] ' : '') + (text || '（无输出）');
