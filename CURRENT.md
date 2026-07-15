@@ -1,12 +1,12 @@
 # CURRENT.md · WeftMate 当前执行状态
 
-> 状态基线：2026-07-16；消息与首配单一路径、动态 i18n DOM 保护已完成自动检查和 owner 真机验收；具体代码基线以本文件所在提交为准
+> 状态基线：2026-07-16；消息与首配单一路径、动态 i18n DOM 保护及 `get-windows` 安装供应链修复已完成自动检查和 owner 真机验收；具体代码基线以本文件所在提交为准
 > 本文件是“现在做到哪里、下一步做什么”的唯一事实源。
 > 产品边界看 [`docs/PRODUCT.md`](./docs/PRODUCT.md)，大阶段看 [`docs/ROADMAP.md`](./docs/ROADMAP.md)，完整代码审计看 [`PROJECT_ANALYSIS.md`](./PROJECT_ANALYSIS.md)。
 
 ## 一句话状态
 
-**阶段 1「核心 Alpha 闭环」已经在本机开发环境完成；当前进入阶段 2「可交付产品 v1」。MemoWeft 依赖可复现性、公开协作和产品单一路径已经恢复；工程交付仍被 `get-windows` 供应链风险判断和缺失的安装发布链阻塞。**
+**阶段 1「核心 Alpha 闭环」已经在本机开发环境完成；当前进入阶段 2「可交付产品 v1」。MemoWeft 依赖可复现性、公开协作、产品单一路径和工程安全前置已经恢复；工程交付仍被缺失的安装发布链阻塞。**
 
 这不是空壳 Demo，也还不是可交给陌生用户的 v1：功能内核已经成形，产品首次使用路径、完整人格包和工程交付仍未完成。
 
@@ -16,7 +16,7 @@
 |---|---|---|
 | 功能内核 | `complete`（Alpha 口径） | 长期记忆、内置人格切换、桌面感知、统一 Agent、MCP、工作区、附件和会话地基已接线 |
 | 产品体验 | `partial` | 能日常 dogfood，但没有首次采访、真正画像编辑/指正双通道、用户人格包和完整桌面角色体验 |
-| 工程交付 | `blocked` | 已用公开 `memoweft@0.5.1` 完成无 sibling 干净安装验证，公开仓库及 Windows/macOS/Linux CI 已激活，消息与首配均已收敛为单一路径；仍需判断构建链风险，且无安装包、签名、自动更新和 Release |
+| 工程交付 | `blocked` | 已用公开 `memoweft@0.5.1` 完成无 sibling 干净安装验证，公开仓库及 Windows/macOS/Linux CI 已激活，消息与首配均已收敛为单一路径，生产依赖审计已归零；仍无安装包、签名、自动更新和 Release |
 | 外部验证 | `planned` | 无公开可下载版本，尚未进入陌生用户安装与长期留存验证 |
 
 不要再把四个维度混成一个完成百分比。
@@ -49,7 +49,7 @@
 | 对话历史 | `partial` | 多会话、续聊、工作区绑定、软归档、图片资源 | 搜索、重命名、归档恢复 UI、单会话导出 |
 | 中英文 | `partial` | 应用内字典、动态翻译、Aria；翻译器只修改文本节点与可翻译属性，不再整块替换 Element 子树，关键按钮结构有契约保护 | 全局 DOM 后处理仍需逐步收敛；真 Electron 逐屏回归、站点/发布文案收口 |
 | 安全与隐私 | `partial` | safeStorage、沙箱、审批、observed 默认本地、隐私文档；loopback 已有内存会话令牌、随机端口、Host/Origin 防护、nonce CSP 与导航限制；MCP 工具身份绑定不可变服务 id，同名服务和重命名不再串信任 | 全部本地数据删除、配置原子写 |
-| 干净构建与 CI | `complete`（当前范围） | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 干净验证通过；公开仓库与 Windows/macOS/Linux CI 已激活；安全分支三平台 typecheck 与 62 项测试全部通过 | CI 尚未覆盖安装包构建与 Electron 三平台真机冒烟 |
+| 干净构建与 CI | `complete`（当前范围） | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 干净验证通过；公开仓库与 Windows/macOS/Linux CI 已激活；发布预检会拦截本地 `file:` 依赖和生产依赖 high；当前 typecheck 与 94 项测试通过 | CI 尚未覆盖安装包构建与 Electron 三平台真机冒烟 |
 | 打包与发布 | `planned` | 无 | builder/预编译、原生资源、图标、三平台安装冒烟、签名、公证、自动更新、Release |
 
 ## 当前 P0 阻塞
@@ -76,7 +76,7 @@
 - GitHub Actions 已在 Windows、macOS、Linux 实际完成 `npm ci`、typecheck 和测试；验证运行见“最近验证”。
 - 无安装包、Release、签名或自动更新。
 
-### P0-3 · 发布前安全缺口
+### 已解除 · P0-3 · 发布前安全缺口
 
 - **已解除**：全部 `/api/*` 已受每进程随机 Bearer、精确 Host、Origin 与 Sec-Fetch-Site 校验保护；令牌不进入环境变量、Cookie、URL、页面、preload、日志或 MCP 子进程。
 - **已解除**：Electron 默认使用 OS 动态端口并等待真实 `ready`；显式端口被占时失败关闭，不加载占位页面。主窗口还增加 nonce CSP、跨源导航和新窗口限制。
@@ -92,7 +92,8 @@
 - **已解除**：MCP 工具身份只由不可变服务 id 与工具名组成；同名服务不会碰撞，服务重命名不改变身份。旧版按显示名保存的信任不会迁移到新身份，需用户重新确认一次，避免误信任。
 - **已解除**：用户消息只走统一 Agent，普通回答、工具执行、会话历史和记忆回写不再分成两套；旧 `POST /api/chat` 及其 Core 会话缓存已删除，`GET /api/chat-history` 继续作为统一历史读取入口。
 - **已解除**：首次模型配置只进入现有模型设置弹窗；旧全屏 wizard、`POST /api/gen-env`、`.env` 复制逻辑和生成器已删除。动态 i18n 同时取消 Element 级 `textContent` 替换，避免翻译时删除按钮图标、状态节点和交互结构。
-- `npm audit --omit=dev` 报告 7 个 high，集中在 `get-windows → node-gyp/tar` 安装/构建链且没有自动修复；发布前必须完成适用性判断或替换方案，不能把“测试通过”当作供应链安全通过。
+- **已解除**：`get-windows` 的 7 个 high 是安装/原生构建期的真实供应链风险，不是正常聊天或桌面感知运行时可直接触发的漏洞。上游 `get-windows@9.3.0` 暂无新版，因此用精确 overrides 将 `@mapbox/node-pre-gyp` 提升到 `2.0.3`、`node-gyp` 提升到 `11.5.0`，两条链统一落到已修复的 `tar@7.5.20`。
+- **已解除**：新增 `npm run release:preflight`，统一用官方 npm registry 拦截生产依赖 high，并拒绝 `package.json` 或锁文件中的本地 `file:` 依赖；该检查已接入三平台 CI。干净 `npm ci`、生产依赖审计、原生活动窗口探针、typecheck、94/94 测试和 Windows owner 真机桌面感知均通过。
 
 ## 容易继续制造漂移的结构问题
 
@@ -125,7 +126,7 @@
 - **已完成**：MCP 唯一身份；同名服务隔离，显示名称不再决定工具与信任身份。
 - **已完成**：删除旧 `/api/chat` 前后端链和旧首启 wizard/`gen-env` 链，保留单一消息链与单一首配入口。
 - **已完成**：给动态 i18n、首启和 Agent 路径补 3 项最小 UI/API 契约；翻译不再删除 Element 子树。
-- 完成 `get-windows → node-gyp/tar` 高危报告的适用性判断或替换，关闭阶段 2 工程安全前置。
+- **已完成**：确认 `get-windows → node-gyp/tar` 风险只适用于安装/原生构建期；精确覆盖修复版构建工具并加入可重复发布预检，生产依赖审计归零。
 
 ### 3. 完成 v1 产品路径
 
@@ -167,7 +168,7 @@
 - 干净副本 `npm run typecheck`：通过。
 - 干净副本 `npm test`：48/48 通过；真实 MemoWeft 消费方契约验证无 embedding 关键词召回和导出版本 `0.5.1`。
 - `memoweft@0.5.0` 隔离探针：无 sibling 安装、typecheck、原有 47/47 测试和 Electron 空数据窗口启动均通过，但新增消费方契约会因空召回器/错误导出版本失败，因此否决。
-- `npm audit --omit=dev --registry=https://registry.npmjs.org`：7 high，来自 `get-windows` 的 `node-gyp/tar` 链；无自动修复，已列入发布前安全缺口。
+- `get-windows` 供应链专项：确认旧链 7 个 high 只在安装/原生构建期可触发；精确覆盖 `@mapbox/node-pre-gyp@2.0.3`、`node-gyp@11.5.0` 后统一使用 `tar@7.5.20`。干净 `npm ci` 与 `npm run release:preflight` 均为 0 漏洞，原生活动窗口探针、typecheck 和 94/94 测试通过；Windows Electron 中 owner 开启桌面感知并切换窗口后确认通过。
 - 公开发布预检：当前树与 37 个历史提交未发现高置信凭据、私钥、用户数据或数据库文件；公开仓库已建立。
 - GitHub Actions [运行 29405484004](https://github.com/memoweft/weftmate/actions/runs/29405484004)：Ubuntu、macOS、Windows 全部成功；三平台安装和 typecheck 均通过，Windows 48/48 测试通过，Ubuntu/macOS 47 项通过且按设计跳过 1 项仅适用于 Windows 盘符语义的测试。
 - 首轮 CI 发现跨盘符沙箱测试错误地在 POSIX 平台执行；`703dc20` 将该测试精确限定到 Windows 后，本机与三平台回归通过，未改动沙箱实现。
