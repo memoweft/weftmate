@@ -1,90 +1,168 @@
-# CURRENT.md · WeftMate 当前任务白板
+# CURRENT.md · WeftMate 当前执行状态
 
-> 唯一的"现在做什么"看板。产品定义看 `docs/PRODUCT.md`(活文档·中途可调),历史看 git 提交。
+> 基线：2026-07-15，`main@894026e`
+> 本文件是“现在做到哪里、下一步做什么”的唯一事实源。
+> 产品边界看 [`docs/PRODUCT.md`](./docs/PRODUCT.md)，大阶段看 [`docs/ROADMAP.md`](./docs/ROADMAP.md)，完整代码审计看 [`PROJECT_ANALYSIS.md`](./PROJECT_ANALYSIS.md)。
 
-## 当前:阶段 2「懂你 & 帮你」(阶段 1 立身之本四块已齐)
+## 一句话状态
 
-阶段 2 分五块、分开推、作者定入口(作者拍板**按序做**)。**「感知→画像」「agent 干活」「MCP 一键装」「上下文附件」已做完**。剩下:**历史接力**(阶段2 最后一块),按序**下一块 = 历史接力**。
-(注:~~「换窗口给提示词」~~ 是误记——作者当时是说旧会话上下文满了要换新会话接力,**不做**这功能。)
+**阶段 1「核心 Alpha 闭环」已经在本机开发环境完成；当前进入阶段 2「可交付产品 v1」。MemoWeft 依赖可复现性已经恢复，公开仓库已经建立；工程交付仍被首次三平台 CI 待验证、发布前安全缺口和缺失的安装发布链阻塞。**
 
-### ✅ 感知→画像 + 一串 dogfood 修(commit 18a7153/afbbda3/1e99e3f/2a58260/7a26dc8/bb1cf80)
-- **感知采集**:依赖 `get-windows`(N-API 预编译·**实测 Electron 免 electron-rebuild**;破"零原生模块"·作者拍板)。`src/collector.ts`(main·powerMonitor 空闲跳过+get-windows 取窗+换窗才记 → POST /api/observe 审核层)、`src/settings.ts`(非密明文设置)。
-- **感知设置(多源·作者反馈丰富)**:`perception.sources.desktop{enabled,capture}`(架构留位手机/穿戴)+ 全局 `cloudAllowed`。**采集内容** app_title/app_only;**上云红线口子**:sanitize 剥授权(插件不能自授权),仅用户开 cloudAllowed 时 server 给 observed 显式加 allowCloudRead(默认关=不上云)。设置弹窗「感知」节:桌面源开关+采集内容+上云开关(默认只留本机·警示·允许要二次确认)+后续来源占位。
-- **语言设置**:memoweft 0.4.0 缺省 en → 认知出英文(dogfood 逮到)。`settings.language` auto/zh/en(auto 跟 app.getLocale);main 建 core 前设 MEMOWEFT_LANG;server `POST /api/settings/language` 运行期改 `config.language`(不重启;consolidate 调用时读共享单例)。设置「外观」加语言选择。
-- **星瑶反编造(红线)**:dogfood 发现星瑶脑补"我记得你提过X"(认知=0·纯编)。`experiences/xingyao.ts` 记忆唤起段加硬:只复述真召回的记忆·没召回绝不说"我记得"/绝不凭空说未说过的。**注:prompt 强缓解非 100%;MemoWeft 只存有据记忆的结构保证未破(是人设层嘴快)。**
-- **z-index 修**:二次确认框 #memConfirm 50→70(原被设置弹窗 55 盖住)。
-- **验**:真机端到端(感知开→observed 证据·cloud 默认 false·开全局→true·仅App 只 App 名)+ 前端各面板 preview 读写翻转 + 语法门/复查 Agent。observed 证据进画像「感知来的」组。真"感知来的"认知需真模型 updateProfile 消化。
+这不是空壳 Demo，也还不是可交给陌生用户的 v1：功能内核已经成形，产品首次使用路径、完整人格包和工程交付仍未完成。
 
-### ✅ agent 干活(阶段2·帮你干活①·方案B:Host 自建循环)
-- **为什么 Host 自建**:memoweft 是纯记忆底座——聊天是文字进文字出的黑盒(`LLMClient.chat→string`,无 tool_use 口子),插件只能"交观察/读记忆"不能执行工具;库 README 写死"宿主决定怎么用(回话/调工具/agent)"。所以 agent 循环整个在 Host,库源码一行不碰(红线守住)。
-- **不挑模型的工具调用**:文字协议——系统提示教模型每轮只回一个 JSON(`{action:{tool,args}}` 或 `{done:{summary}}`),Host 解析去执行、结果当"观察"喂回,循环到 done。LLM 复用库导出的 `OpenAICompatClient`(读当前激活模型·env 已 injectEnv 保持最新·temperature=0),agent 中间对话不进 memoweft 记忆。
-- **`src/agent.ts`**(新):循环 + 内置四工具(`list_dir`/`read_file` 只读、`write_file` 改动、`run_command` 改动+永远要批准)+ 沙箱(`safeResolve` 路径锁死工作区、逃逸/跨盘/`..` 全拒)+ 快照撤回(改文件前备份原内容,撤回还原/删新建;`run_command` 副作用撤不回→`ranCommand` 如实标注)+ 三档自主度(suggest 只出计划不执行 / ask 每个改动先批 / auto 自动跑但命令仍批)。审批用可挂起的 gate,`decideStep`/`stopTask` 唤醒。记忆接线:`core.recall` 喂背景 + `core.ingestUserMessage` 回写。测试注入口 `__setClientFactory`。
-- **`server.ts` 端点**:`POST /api/agent/{start,decide,stop,undo}` + `GET /api/agent/status`(前端轮询)+ `POST /api/agent/pick-workspace`(Electron dialog 选工作区)。记忆接线闭包注入(引用模块级 core,热重建自然跟随)。
-- **前端**(`web/index.html`):🔒沙箱 从占位改成开合「干活模式」条(选工作区 + 三档自主度 + 隐私说明);干活模式下输入框发的是"任务"→ `/api/agent/start` → 轮询渲染步骤卡(徽章/参数摘要/结果/批准·拒绝/叫停/一键撤回),全 createElement+textContent 防注入。
-- **隐私口径**:工作区文件/命令输出会发给用户配置的模型(可能云端)——由用户主动发起任务视同意(界面写明),与"observed 默认不上云"两码事。
-- **验**:① 后端安全冒烟 15 断言全过(假模型确定性驱动·对临时文件夹)——正常写+撤回删新建 / 沙箱逃逸被拒(工作区外不留文件)/ 命令 auto 下也停 awaiting·拒则不跑·批才跑 / 撤回还原旧文件 / ask 下写文件也要批;② 前端 preview:零 JS 报错、干活条开合、完整流程 3 张步骤卡+批准+撤回渲染对、配色对(工具名金色等宽)。真模型端到端待作者亲验。
-- **未做(留后)**:MCP 外部工具(下块)· 工作区/附件富 UX(第③块)· 模型原生 tool_use(先文字协议)· 逐行 diff · 流式(先轮询)。
+## 四个维度的真实状态
 
-### ✅ MCP 一键装(阶段2·帮你干活②·作者拍板用官方 SDK)
-- **是什么**:像装扩展一样接外部工具包(MCP 服务),塞进①的 agent 循环。装了 `@modelcontextprotocol/sdk@1.29`(80 包·纯 JS·作者拍板接受依赖·破了"尽量少依赖"但换省事+协议正确)。
-- **`src/mcp.ts`**:官方 SDK 当**客户端**连 **stdio 型** MCP 服务(`StdioClientTransport` 启子进程,SDK 自动叠 getDefaultEnvironment 补 PATH·spawn shell:false→Windows npx 要 `cmd /c npx`)。connect 带 20s 超时兜底、单个坏不拖累其余;`listAllTools`/`callTool`(fqName=服务名slug__工具名·防重名)/`statusView`/`reconcile`/`shutdownAll`。**延迟加载(生死线)**:只把 name+一句话+极简参数签名 给模型,完整 inputSchema 留这。
-- **`src/mcp-store.ts`**:服务清单 `{id,name,command,args,env?,enabled}` 整份 safeStorage 加密落盘(env 常含密钥·比照模型配置)·`publicView` 剥 env 值只留键名·env 编辑留空=沿用旧密钥。
-- **接进①**:`agent.ts` 加 `AgentMcpTool`+`resolveTool`(先内置四工具再 MCP)+`buildSystemPrompt` 追加外部工具清单;deps 注 `mcpTools`/`callMcp`。**安全**:MCP=第三方代码,非只读工具(无 readOnlyHint)`alwaysApprove=true`——不管哪档自主度都要用户点头(同 run_command)。
-- **`server.ts` 端点**:`GET /api/mcp/{servers,catalog}` + `POST /api/mcp/server{,/toggle,/delete,/reconnect}`;启动 `void mcp.reconcile(已启用)`(后台连·不阻塞起服);shutdown 加 `mcp.shutdownAll`;预置清单 `MCP_CATALOG`(filesystem/memory/sequential-thinking/everything·Windows cmd/c npx 形态)。
-- **前端**:`⚡技能` 从占位改成 MCP 能力弹窗(第三方代码警示 + 已装服务卡[连接状态/工具数/错误/开关/编辑/删/出错才有重连] + 预置点填表单 + 自定义 command/args/env)。
-- **验**:① MCP 客户端冒烟 11 断言(真服务子进程·连接/命名空间/只读标记/延迟加载签名/调用/断开);② agent×MCP 组合冒烟 6 断言(只读工具 auto 直接跑·非只读 auto 也强制批准·系统提示只放名字签名不放完整 schema=守生死线);③ 前端 preview:零报错·弹窗/服务卡三态/预置预填/编辑回填/配色随主题。真模型 + 真 npx 服务端到端待作者亲验。
-- **dogfood 修(2026-07-08)**:① z-index——MCP 弹窗(80)盖住了确认框/toast → 确认框 70→90、toast 60→95(压过所有弹窗、仍低于标题栏 100);② 文件系统预置连不上——实测根因=占位目录 `D:\改成…` 不存在→服务启动即退(-32000);改成默认 `app.getPath('documents')`(真实存在·开箱即用),并**收子进程 stderr 把真实原因显给用户**(mcp.ts stderr 'ignore'→'pipe';错误变"…｜服务说：None of the specified directories are accessible")。真·filesystem 服务(经 npx)端到端验过:坏目录报可读错误、真目录 ready 14 工具、整条 cmd/c npx+SDK 链路在作者机器上通。
-- **未做(留后)**:HTTP/SSE 型 MCP(先只 stdio)· 工具多到名字都爆时的"查工具详情"元工具(现按名字+签名·够用)。
+| 维度 | 状态 | 结论 |
+|---|---|---|
+| 功能内核 | `complete`（Alpha 口径） | 长期记忆、内置人格切换、桌面感知、统一 Agent、MCP、工作区、附件和会话地基已接线 |
+| 产品体验 | `partial` | 能日常 dogfood，但没有首次采访、真正画像编辑/指正双通道、用户人格包和完整桌面角色体验 |
+| 工程交付 | `blocked` | 已用公开 `memoweft@0.5.1` 完成无 sibling 干净安装验证，公开仓库已建立；首次三平台 CI 尚未验证，且无安装包、签名、自动更新和 Release |
+| 外部验证 | `planned` | 无公开可下载版本，尚未进入陌生用户安装与长期留存验证 |
 
-### ✅ 上下文附件(阶段2·帮你干活③·作者拍板方案A:接到干活模式)
-- **为什么接到 agent 而不是普通聊天**:查清库的聊天(`handleConversationTurn`)**总把 message 存成证据**,`PerceiveOptions` 没有"只回话不入证据"的口子、底层 `reply()` 也没导出——附件塞进聊天 message 会脏画像。而 agent 路径**读文件按需、不入记忆**、天然检索式(不全量塞),故作者拍板附件接到①的干活模式。
-- **`agent.ts`**:Task 加 `attachments:{name,content}[]`;新工具 `read_attachment(name)`(只读·从 task.attachments 取·不碰文件系统不受沙箱限);`buildSystemPrompt` 改成**按有无工作区/附件动态拼工具清单**(无工作区就不给文件/命令工具、只给 read_attachment,提示明说"这次没工作区");`startTask` 放宽=**工作区或附件二选一**(都没有才报错)+附件清洗截断(≤20 个/≤200K 字);**沙箱护栏**:`safeResolve` 空工作区直接抛(防 `resolve('',p)` 落到 cwd)。任务视图带附件名。
-- **`server.ts`**:`/api/agent/start` 收 `attachments`。
-- **前端**:`＋` 可选择图片/文本/代码文件，也可直接拖进输入区；输入框支持 `Ctrl+V` 直接粘贴剪贴板图片（纯文本粘贴不受影响）。拖入时整块输入框给投放反馈，图片显示缩略图、文件显示可删标签，支持只发附件不填文字。文本 >512K 跳过；图片单张 ≤6MB、每轮 ≤4 张/合计 ≤18MB。
-- **图片上下文**:图片不改 MemoWeft 文字接口，由 Host Agent 使用 OpenAI-compatible `image_url` content parts 直交当前模型；支持 PNG/JPEG/WebP/GIF。当前模型不支持视觉时如实提示换视觉模型，不静默丢图；部分视觉端点忽略 Agent JSON 协议、直接回自然语言时，Host 会按普通图片回答完成，不误报格式失败。文本/代码仍走 `read_attachment` 按需读取、不全量塞上下文。
-- **验**:① 后端附件冒烟 9 断言(无工作区靠附件读→答·系统提示动态给工具·空工作区文件工具被护栏挡·校验·工作区+附件并存);② 前端 preview:零报错·加文件/chips/移除/拖拽入口·无工作区带附件开工·任务卡「📎参考」·开工后清空。真模型 e2e 待作者验。
+不要再把四个维度混成一个完成百分比。
 
-## 阶段 1 · 立身之本 ✅ 已基本齐(S0 / S1 已通)
+## 当前大阶段：阶段 2「可交付产品 v1」
 
-- **S0 · sqlite** ✅ node:sqlite 在 Electron 43 / Node 24.17 可用 —— **走 node:sqlite,零原生模块**(未装 better-sqlite3、能跑就是它)。
-- **S1 · Electron 骨架** ✅ `src/main.mjs` 设 userData 库 + 默认星瑶 + 单实例锁 → `import './server.ts'`(起 127.0.0.1:7788 loopback + 建 core) → 开窗加载。现有 Host 能力已在桌面跑;**Electron main 直接跑 .ts、免编译链**。
+### 阶段目标
 
-### 阶段 1 · 立身之本(作者拍板开工顺序 = 下面 ①→②→③→④;配置生效见 [[weftmate-config-apply]])
+让一个不了解 MemoWeft、也不懂开发环境的用户，能够独立安装、配置模型，通过聊天感受到 AI 会逐渐了解自己，并能控制记忆、人格和权限。
 
-- **① 桌面化收尾** ✅ 已做:托盘常驻 + 左键唤窗 + 菜单(显示/退出)、**关窗收托盘不退**、`before-quit` 调 server 导出的幂等 `shutdown()`(scheduler.dispose + core.close + 强断连接关 loopback·带超时兜底)、第二实例唤前台;DB 落 userData(✅)、单实例锁(✅)。托盘图标内嵌 data URL(免打包路径)。**启动冒烟过**;before-quit→shutdown 运行时路径需 GUI 点"退出"才能验(代码复查过)。
-- **② 配模型 + safeStorage** ✅ 已做(作者亲验后二次迭代成【多模型档 + 进程内热重建】,见 [[weftmate-config-apply]]):`src/config-store.ts` = `{profiles:[{id,name,llm,write?,embed?}],activeId}`,key safeStorage 加密落盘(**明文绝不落盘/不 log**),`readPublicView()` 剥掉所有 key,重配留空 key 沿用旧的,`injectEnv()` 先清后设=当前 active 档。`server.ts`:`core` 改 `let` + `rebuildCore()`(改配置/切档【进程内重建 core、不重启不闪】),端点 `GET /api/model-config` + `POST /profile|active|delete`(全热重建)。main 删原生菜单 + 端口尊重 `PORT` env。**验:多档隔离冒烟全绿(增/切/删/injectEnv清设/无明文泄露)+ 真机热重建端到端(建档→health 翻 true、切/删正确、无泄露)。**
-- **③ 产品级对话界面** ✅ 已做(Claude Desktop 深色金调):`src/web/index.html` 重做外壳(2331→2528 行)——左对话记录 + 侧栏底部功能区(记忆与画像/能力与感知/设置/人格·带切换动画)、精简顶栏(对话标题+记忆胶囊)、底部工具栏(＋文件/工作区 · 模型选择器显真模型名 · 技能 · 沙箱 · 发送;＋/技能/沙箱=占位点弹"近期")、输入框**无 placeholder**、桌面形象 🧵 浮角落、记忆面板改**右滑入层**。**JS 逐字保留**(图谱 400+ 行字节级未动、82 个 id 引用全命中、24 个 API 全可达——独立 diff + 复查双证)。**验:node --check 过 + preview 真实渲染(body 深色 #191a1e / 无控制台报错 / 全结构在位)。** 复查揪出并已修:图谱选中环/标签深色对比度、图谱详情把握度**露分**(改定性档 CRED_CN)、恢复出厂警示字对比度、节点色对齐图例。
-  **作者亲验后二次迭代(已做)**:① 删 Electron 原生菜单条;② 设置做成**模态弹窗**(左导航 模型/外观/关于 + 右内容·多模型档增删改切);③ **日夜主题切换**(暗/亮两套 CSS 变量·图谱色改 getComputedStyle 读变量随主题走·localStorage 持久·head 预置防闪白);④ 底部**模型选择器改下拉**(列档+当前高亮+管理入口·切档走 /active 热重建·不重启);⑤ 首启改"填完 reload 进聊天"(不再"重启")。旧全屏向导 `#wizard` 成隔离死代码(进不去/打不到 404,日后可清)。**验:2 路复查(JS 接线/保全 + 双主题对比度/naming 全过)+ 真机渲染两主题(设置弹窗/下拉/主题翻转)+ 已修亮色对比漏网(toast.danger/内联 code/faint/accent/ready 全变量化)。**
-- **④ 三样立身之本做扎实** ✅ 基本齐(MVP):**画像可视** ✅ 已做(④-1 按来源分组·commit 78e89e9·种子渲染+dogfood 验过)、**记忆气泡** ✅ 已达标(weaveMemNote 织"记住了:X·把握度档·这条不对/删"+误删二次确认+就地反馈,PRODUCT.md 口径满足)、**人格切换** ✅ MVP 已达标(切人设+反馈+后端保留同记忆;更丰富能力包=形象/声音/默认模型属后续)。评估:剩两样本就到 MVP 水位,不造 polish。**阶段1 立身之本(①桌面化/②配模型/③外壳/④三样肌肉)四块基本齐。**
-   守克制纪律:少而准、不吹大、工具定义延迟加载。
+### 为什么现在做这个
 
-> **✅ 作者第二次亲验反馈(2026-07-07·已做并三重验证)** —— 第三轮外壳打磨(下面 5 点):亮色改金/琥珀统一(压深一档达标)、顶栏与侧栏顶同高同底连贯、模型下拉重做(加宽/标题/金点/淡入)、加响应式媒体查询(≤900/700/440·窄窗无溢出)、**助手消息平铺 + 手搓 markdown/代码块渲染器**。markdown 渲染器 **XSS 三重验证安全**(我逐行读 + 真机注入 script/img/js链接全中和 + 复查 Agent 28 条对抗输入 0 高危);双复查 + 真机渲染两主题 + 缩放全过。"越用越懂你"撞 naming.md §2 但=作者产品 slogan → **作者裁决保留**。
->
-> **✅ 作者第三次亲验反馈(2026-07-07·已做并验证)** —— 第四轮外壳:① **去 Windows 原生标题栏 → 自绘无边框标题栏**(main frame:false + `src/preload.cjs` 暴露 window.wmWindow{min/max/close/onMaximizeChange} + 前端 #titlebar 可拖拽+三键随主题上色+双击最大化;布局下移 38px 不重叠);② 内容列 max-width 改 `clamp(720px,68vw,1040px)`(最大化不留大白边、封顶可读);③ 全局滚动条随主题上色(暗色不再白底)。验:preview 渲染(标题栏/下移/宽度/滚动条/无报错)+ 真机无边框+preload 启动无错 + 复查 Agent 0 问题(核心逐字未动)。补:启动即最大化时图标初始态推送。
-> 1. **界面不统一**:设置弹窗(深色)与聊天页(浅色态)风格对不上;各页视觉要统一。
-> 2. **顶栏不统一**:header 与其余部分风格不搭,要统一。
-> 3. **模型下拉别扭**:#modelMenu 弹层位置/样式要重做好看。
-> 4. **对话框不自适应窗口**:输入区/聊天布局要随窗口大小自适应(现在固定/不伸缩)。
-> 5. **学 Claude 聊天排版**(最大):用户消息=气泡;**Agent 消息不用气泡、平铺文字 + 正确 markdown 渲染**(标题/列表/粗体/内联码);**代码块像 Claude**(语言标签 + 复制按钮 + 等宽块,可选轻量高亮)。零依赖单文件 → 需手搓极简 markdown/代码块渲染器,守 textContent 防注入(markdown 转 HTML 要自己白名单转义)。
+- 核心闭环已经验证，继续堆远期能力不会解决“只能在作者开发机运行”的问题。
+- 用户已拍板：第一入口是聊天，第一价值是“比普通聊天助手更了解我”。
+- 人格导入导出、桌面角色切换和能力配置属于当前产品闭环，但必须建立在可复现、安全的工程地基上。
+- 多端、官方云同步、代理型 Agent 和生态已经有方向，但不属于当前施工。
 
-## 复用(已在 `src/` · 从 `../DLA_rebuild/apps/memoweft-host` 搬 · 只经 import memoweft 用门面不碰库)
+## 模块状态
 
-`experiences/`(星瑶/plain 人格 + 注册表) · `scheduler.ts`(后台整理) · `chatHistory.ts` · `confBand.ts`(把握度分档) · `server.ts`(loopback + core + chat 编排,切人格清双缓存那段必须原样保留) · `web/index.html`(前端 · **待重做**)。
+| 模块 | 状态 | 已验证事实 | 当前缺口 |
+|---|---|---|---|
+| Electron 桌面骨架 | `complete` | 托盘、单实例、自绘窗口、关窗收托盘、优雅退出 | 全局快捷唤醒、真正桌面形象、安装包 |
+| 模型与密钥 | `complete`（Alpha） | 多模型档、本地/云端兼容、safeStorage、热切换 | 内置友好预设、发布环境与无 keyring 完整验收 |
+| MemoWeft 记忆闭环 | `complete`（Alpha） | 召回、画像、图谱、记忆气泡、来源、失效、删除、授权、记忆包导入导出 | 用户“修改”与“指正”双通道、完整恢复出厂语义 |
+| 首次认识用户 | `planned` | 仅首次模型配置存在 | 聊天式采访、可跳过/续答、低把握度初始假设、MBTI 仅作参考 |
+| 内置人格切换 | `partial` | 星瑶、Aria、普通助手可切换，下一句生效，共享同一份记忆 | 当前人格不持久化，重启强制回星瑶 |
+| 人格包系统 | `planned` | 只有编译期硬编码 registry | Persona Manifest/Store、创建/编辑/复制/删除、导入/导出、记忆访问、模型/工具/形象/主动度配置 |
+| 桌面感知 | `partial` | 活动窗口、空闲跳过、来源设置、observed 默认不上云 | `/api/observe` 未服从 UI 开关；主动关怀、P0/P1 通知未做 |
+| 协作型 Agent | `partial` | 单 Agent 循环、三档执行自主度、审批、停止、撤回、工作区、附件、图片、MCP | 默认 `auto` 待调整；任务只在内存、无清理/恢复、无可复用工作流、无可读 diff/审计 |
+| 对话历史 | `partial` | 多会话、续聊、工作区绑定、软归档、图片资源 | 搜索、重命名、归档恢复 UI、单会话导出 |
+| 中英文 | `partial` | 应用内字典、动态翻译、Aria，核心测试通过 | 全局 DOM 后处理风险高；真 Electron 逐屏回归、站点/发布文案收口 |
+| 安全与隐私 | `partial` | safeStorage、沙箱、审批、observed 默认本地、隐私文档 | loopback 鉴权/Origin、MCP 名称信任碰撞、全部本地数据删除、配置原子写 |
+| 干净构建与 CI | `partial` | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 的 `npm ci`、typecheck、48/48 测试和 Electron 空数据启动通过；公开仓库已建立 | 三平台 CI 首次运行待验证 |
+| 打包与发布 | `planned` | 无 | builder/预编译、原生资源、图标、三平台安装冒烟、签名、公证、自动更新、Release |
 
-## 下一块 = 历史接力(阶段2·帮你干活④·最后一块)
+## 当前 P0 阻塞
 
-作者拍板阶段2 剩下的块**按序做**:感知→画像 ✅ · agent 干活 ✅ · MCP 一键装 ✅ · 上下文附件 ✅ → **④ 历史接力**(阶段2 收尾)。
-**④ 历史接力**(PRODUCT.md §产品骨架·历史/搜索/会话):历史/全文搜索/重命名/归档不删可恢复;**跨设备接力**。注:多对话(新建/切换/归档/续聊 seedTurns 重建窗口)阶段1 已做;这块主要补**搜索(全文/按会话)** + 会话**重命名** + 跨设备接力雏形(架构留位·手机端未开工)。动手前守三纪律。做完这块阶段2 五块齐。
+### 已解除 · P0-1 · MemoWeft 0.5.1 公开依赖
 
-(澄清:「换窗口给提示词」是误记,不做——见文首。)
+当前 `package.json` 使用：
 
-## 待作者手动
+```json
+"memoweft": "0.5.1"
+```
 
-- **建 GitHub repo `weftmate`**(本机没装 gh):建好后配 remote 推送(本地已 `git init` + 提交若干)。命名口径见 MemoWeft 的记忆 [[memoweft-naming-positioning]]。
-- **dogfood 实例**:`scratchpad/dogfood-ud5`(隔离 userData·含作者真模型配置)可能还在跑(7899)/或已关;新会话要 dogfood 自己重起。scratchpad 里 static-serve.mjs 是 preview 用的 mock。
+- `memoweft@0.5.1` 已由 `v0.5.1` 标签发布到 npm，标签、包内 `gitHead` 与 `main` 提交 `6fb94ee` 一致；GitHub 发布流程全部成功，并带 SLSA provenance。
+- WeftMate 已精确固定 `0.5.1`，锁文件指向官方 registry tarball 与对应 integrity，不再保留 sibling link。
+- 在父目录不存在 `memoweft`、且没有旧 `node_modules` 的隔离副本中，`npm ci`、typecheck、48/48 测试与 Electron 空数据首启均通过；`node_modules/memoweft` 已确认是副本内部普通目录，不是 junction。
+- `0.5.0` 因无 embedding 时缺少关键词召回兜底、导出版本元数据错误而继续否决，不得回退。
 
-## 参照
+该前置已经关闭。独立仓库和发布版本继续禁止使用 sibling `file:` 依赖。
 
-- 产品定义 = `docs/PRODUCT.md`(**活文档·中途可调**)。
-- 可视化蓝图 = `docs/blueprint.html`(浏览器打开)。
-- 开工规矩/红线 = `AGENTS.md`。
+### P0-2 · 公开协作已建立，工程交付仍未完成
+
+- 公开仓库 `github.com/memoweft/weftmate` 已建立，本地 `origin` 已配置。
+- README 和站点入口已按当前五阶段路线收口；尚无可供普通用户下载的版本。
+- CI 配置文件和可复现依赖已经就绪，首次推送后的三平台运行仍待验证。
+- 无安装包、Release、签名或自动更新。
+
+### P0-3 · 发布前安全缺口
+
+- loopback 服务没有会话鉴权、Origin/Host 防护，却有记忆、配置和 Agent 写接口。
+- 感知 UI 关闭后，`/api/observe` 仍可被其他本机进程直接调用。
+- 统一 Agent 默认执行自主度是 `auto`，与“权限来自用户明确授权”的产品边界需要重新对齐。
+- 已完成任务和图片附件长期保留在内存 Map，没有 TTL 或回收。
+- `npm audit --omit=dev` 报告 7 个 high，集中在 `get-windows → node-gyp/tar` 安装/构建链且没有自动修复；发布前必须完成适用性判断或替换方案，不能把“测试通过”当作供应链安全通过。
+
+## 容易继续制造漂移的结构问题
+
+这些不一定全部先重构，但在增加采访和人格编辑前必须处理最危险的双路径：
+
+1. **统一 Agent 与旧 `/api/chat` 双链**：真实 UI 已固定走 Agent，旧聊天前后端仍存在；后续修改容易只修一条链。
+2. **新模型设置与旧全屏 wizard 双链**：旧向导、`/api/gen-env` 和复制 env 逻辑仍在，首启流程会继续分叉。
+3. **人格状态分散**：registry、启动默认、当前人格、模型、MCP、Agent 权限没有统一 Persona Manifest/Store。
+4. **DOM 后处理式 i18n**：全局 MutationObserver 曾造成卡死和按钮全死；新增复杂动态表单会放大风险。
+5. **单文件前端过大**：`src/web/index.html` 约 6,956 行，旧路径和多层 CSS 覆盖并存。
+
+## 当前阶段执行顺序
+
+严格按下面顺序推进；同一阶段可以并行设计，但不能绕过前置验收直接宣称 v1。
+
+### 1. 恢复独立仓库可复现性
+
+- **已完成**：确认 WeftMate 需要 MemoWeft 0.5.1 的产品语义，不能回退 0.5.0。
+- **已完成**：MemoWeft 0.5.1 已正式发布；本仓库已精确 pin 并重建 lockfile。
+- **已完成**：在无 sibling 的干净目录验证安装、typecheck、完整测试和 Electron 空数据启动。
+- **已完成**：建立公开仓库，修正 README/站点入口并完成发布前隐私与历史敏感信息审计。
+- 推送公开基线并验证首次三平台 CI。
+
+### 2. 关闭发布前安全缺口并收敛唯一运行路径
+
+- loopback 会话鉴权/Origin 防护。
+- `/api/observe` 与用户感知设置同源校验。
+- Agent 默认权限、任务清理与 MCP 唯一身份。
+- 删除旧 `/api/chat` 前端路径和旧首启 wizard，保留单一消息链与单一首启入口。
+- 给动态 i18n、首启和 Agent 路径补 UI/API 回归测试。
+
+### 3. 完成 v1 产品路径
+
+- 聊天式初次认识，低把握度初始假设。
+- 用户“修改画像”与“指正推断”双通道。
+- 默认简单、按需深入的记忆控制与完整数据删除。
+- 定义并实现 Persona Manifest/Store。
+- 人格持久化、创建/编辑/导入/导出、记忆访问控制和聊天/桌面入口切换。
+- 执行自主度与陪伴主动度分别配置。
+
+### 4. 打包、安装和首个公开版本
+
+- 预编译 TypeScript、处理 `get-windows` 原生资源、完成应用图标。
+- 至少完成目标平台的空用户数据安装冒烟，并持续验证三平台构建。
+- 发布前备份、签名/公证、Release 流水线和自动更新按资源条件落地。
+- 发布后再进入阶段 3 的历史深化、桌面形象和可靠工作流。
+
+## 当前不做
+
+- 多 Agent 协同。
+- Android、iOS、watchOS 与官方云同步。
+- 人格市场和开放生态。
+- 长期代理型 Agent。
+- 邮件、日历、企业权限、企业 SaaS。
+- 修改 MemoWeft 源码或在本仓库重新实现 MemoWeft。
+
+## 等待 owner 的当前动作与决策
+
+1. v1 的 Agent 初始执行自主度采用“每次确认”还是首次明确授权后进入“完全访问”。
+
+多端云端保存范围、收费方式、人格市场等不影响当前阶段，不在这里提前拍板。
+
+## 最近验证
+
+2026-07-15 在当前开发树：
+
+- MemoWeft `v0.5.1`：标签解引用、`main`、npm 包内 `gitHead` 均为 `6fb94ee`；GitHub Actions 8 个任务与 npm 发布成功，`latest=0.5.1`，provenance 存在。
+- 无 sibling 干净副本 `npm ci --registry=https://registry.npmjs.org`：通过；安装的 `memoweft` 为普通目录、版本 `0.5.1`，真实路径位于副本 `node_modules`。
+- 干净副本 `npm run typecheck`：通过。
+- 干净副本 `npm test`：48/48 通过；真实 MemoWeft 消费方契约验证无 embedding 关键词召回和导出版本 `0.5.1`。
+- `memoweft@0.5.0` 隔离探针：无 sibling 安装、typecheck、原有 47/47 测试和 Electron 空数据窗口启动均通过，但新增消费方契约会因空召回器/错误导出版本失败，因此否决。
+- `npm audit --omit=dev --registry=https://registry.npmjs.org`：7 high，来自 `get-windows` 的 `node-gyp/tar` 链；无自动修复，已列入发布前安全缺口。
+- 公开发布预检：当前树与 37 个历史提交未发现高置信凭据、私钥、用户数据或数据库文件；公开仓库已建立，首次 CI 待验证。
+- Electron 空数据隔离启动：窗口加载、首次模型配置、本地首页与 `/api/health` 通过；`llmReady=false`、`embedReady=false`、加密可用、感知默认关闭。关闭窗口后仍常驻，再次启动能唤回原窗口；因自动化无法操作系统托盘菜单，本轮未把进程终止计作“托盘优雅退出已验证”。
+- 安装包：不存在，未验证。
+
+## 状态维护规则
+
+- 当前阶段、阻塞或执行顺序发生变化时，只更新本文件。
+- 产品边界变化只更新 `docs/PRODUCT.md`，必须由 owner/产品经理拍板。
+- 大阶段顺序或退出标准变化才更新 `docs/ROADMAP.md`。
+- `complete` 必须有测试、真机或交付证据；底层存在但用户路径没通，写 `partial`。
+- 旧施工过程由 Git 和审计报告保存，不再把逐提交日志堆回本文件。

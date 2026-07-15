@@ -14,7 +14,7 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
     "get-windows": "^9.3.0",
-    "memoweft": "file:../memoweft"
+    "memoweft": "0.5.1"
   },
   "devDependencies": {
     "electron": "latest",

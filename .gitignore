@@ -10,9 +10,15 @@ out/
 data/
 *.db
 *.db-journal
+*.db-wal
+*.db-shm
 *.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
 .env
-.env.local
+.env.*
+!.env.example
 
 # ── Local tooling / scratch ──
 *.log

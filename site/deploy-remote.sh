@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 在目标服务器执行：原子替换落地页，并安全接入现有 nginx / Let's Encrypt。
+# 警告：本脚本需要管理员权限，可能安装 nginx、替换站点配置并重启服务；运行前请先审阅并备份目标服务器。
 set -euo pipefail
 export DEBIAN_FRONTEND=noninteractive
 

@@ -1,15 +1,15 @@
 # WeftMate
 
-开源的桌面 AI 伴侣。换个模型、关掉重开,它依然记得你说过什么;而且分得清哪些是**事实**、哪些只是**推测**。
+一个越用越了解你的开源 AI 桌面伴侣。换个模型、关掉重开，它依然能记起你说过什么；同时分清哪些是**事实**、哪些只是**推测**。
 
-底层用 [MemoWeft](#三层别搞混) 当长期记忆能力(`import 'memoweft'`,当依赖、不改库源码)。
+底层使用 [MemoWeft](#三层别搞混) 作为长期记忆能力（公开依赖、不改库源码）。
 
 > **English** — WeftMate is an open-source desktop AI companion. Switch models or restart the app,
 > and it still remembers what you told it — and keeps **facts** and **guesses** apart, powered by MemoWeft
 > as its long-term memory layer.
 >
-> This README is Chinese-first with an English summary. Full bilingual UI/docs (i18n) land at milestone **M3**
-> on the [roadmap](docs/ROADMAP.md) — this is the bilingual skeleton, not the finished translation.
+> This README is Chinese-first with an English summary. The app already includes Chinese/English UI support
+> and an English persona, while public-facing copy is still being refined for the first installable release.
 
 ---
 
@@ -33,50 +33,52 @@
 
 - **桌面常驻** —— 系统托盘、单实例锁、自绘无边框标题栏。
 - **多模型配置** —— 内置多模型 + 自定义;apiKey 用 Electron `safeStorage` 加密,**不明文落盘**。
-- **记忆 + 画像** —— 把「记住的东西」做成可看的画像,**按来源分组**(感知来的 / 对话推断的 / 你改删过的),分事实与推测,可当场纠错。
+- **记忆 + 画像** —— 把「记住的东西」做成可看的画像，按来源区分感知、对话推断和用户操作，并保留事实与推测的边界；完整的画像“修改/指正”双通道仍在建设。
 - **记忆气泡** —— 新理解当场织进聊天流(「记住了 · 还没确认 · 改/删」),管理不用另开页。
-- **人格切换** —— 一个人格 = 系统提示 + 语气 + 可选形象;切人格 = 切能力包,同一份记忆都还在。
+- **内置人格切换** —— 星瑶、Aria 和普通助手可以即时切换并共享同一份用户记忆；用户人格包系统仍在建设。
 - **感知采集** —— **opt-in**,采集你在忙什么 / 设备状态喂进画像;observed 数据**默认不上云**。
 - **agent 干活** —— Host 自建 agent 循环 + 内置四工具 + 沙箱;自主度三档(只建议 / 问一下 / 放手做)、每步可视、快照一键撤回。
 - **MCP 一键装** —— 走官方 MCP SDK(stdio),像装扩展一样接外部工具。
-- **上下文附件** —— 拖文本文件当上下文,接进干活模式(图片/多模态待后续)。
+- **上下文附件** —— 文本、代码和图片都能作为上下文接入干活模式；视觉模型可直接处理图片。
 
 ---
 
 ## 开发 · 运行
 
-需要 Node.js（含 Electron,随 `npm install` 装上）。
+建议使用 Node.js 24（Electron 会随依赖安装）。
 
 ```bash
 git clone https://github.com/memoweft/weftmate && cd weftmate
-npm install        # 装依赖(含 Electron、memoweft、MCP SDK)
+npm ci             # 按锁文件安装 Electron、memoweft、MCP SDK 等依赖
 npm start          # 起 Electron:主进程 import server.ts 起 loopback + core → 窗口加载
 npm run typecheck  # tsc 类型检查
 npm test           # 跑契约/冒烟测试(node:test)
 ```
 
-> 源码:[github.com/memoweft/weftmate](https://github.com/memoweft/weftmate)(MIT · 开源)。尚无预编译安装包(打包在路线图 M4–M5),当前从源码运行。
+> 源码：[github.com/memoweft/weftmate](https://github.com/memoweft/weftmate)（MIT · 开源）。当前尚无预编译安装包，需要从源码运行。
 
 ---
 
 ## 项目状态
 
-- **阶段** —— 开发中。功能内核已扎实接线(阶段 1 + 阶段 2 前四块),但目前**只从源码运行**。
-- **交付层在建** —— 打包 / 签名 / 自动更新 / CI 尚未就绪。
-- **暂无安装包** —— 还没有 Windows/macOS/Linux 安装物;可安装物计划在路线图 M4–M5。
-- **双语** —— 当前是双语骨架;完整 i18n(UI 字符串、英文人格、库语言口径)在 M3。
-- **发布后 fast-follow** —— 历史接力、记忆护城河深化等排在 v1.0 之后(M6–M9)。
+- **阶段** —— 阶段 1「核心 Alpha 闭环」已完成，当前处于阶段 2「可交付产品 v1」。
+- **可复现性** —— 已精确固定公开 `memoweft@0.5.1`，无 sibling 的干净安装、类型检查、48 项测试和 Electron 空数据启动已通过。
+- **CI** —— 仓库包含 Windows、macOS、Linux 三平台 GitHub Actions；是否可交付以实际运行结果和 [`CURRENT.md`](CURRENT.md) 为准。
+- **暂无安装包** —— 仍需完成发布前安全收口、打包、签名、公证、Release 和自动更新。
+- **双语** —— 应用内中英文和英文人格已经接线，站点与发布文案仍在收口。
 
-完整分期见 [`docs/ROADMAP.md`](docs/ROADMAP.md)(9 个里程碑)。
+当前事实看 [`CURRENT.md`](CURRENT.md)，五个大阶段见 [`docs/ROADMAP.md`](docs/ROADMAP.md)。
 
 ---
 
 ## 文档
 
-- [`docs/PRODUCT.md`](docs/PRODUCT.md) —— 产品定义(定位、界面、功能盘、贯穿纪律)。
-- [`docs/ROADMAP.md`](docs/ROADMAP.md) —— 路线图与计划(9 个里程碑、工作量、风险)。
-- [`AGENTS.md`](AGENTS.md) —— 开工红线(不碰库源码、守命名纪律、三条克制纪律)。
-- [`docs/PRIVACY.md`](docs/PRIVACY.md) —— 隐私说明(数据存哪、什么时候离开你机器、你的控制权)。
+- [`CURRENT.md`](CURRENT.md) —— 唯一当前状态、阻塞与下一步。
+- [`docs/PRODUCT.md`](docs/PRODUCT.md) —— 产品定位和长期边界。
+- [`docs/ROADMAP.md`](docs/ROADMAP.md) —— 五个大阶段、模块范围和退出标准。
+- [`PROJECT_ANALYSIS.md`](PROJECT_ANALYSIS.md) —— 当前基线的完整代码审计快照。
+- [`AGENTS.md`](AGENTS.md) —— 开工入口、文档职责和开发红线。
+- [`docs/PRIVACY.md`](docs/PRIVACY.md) —— 数据位置、离机条件和用户控制权。
 
 ---
 
