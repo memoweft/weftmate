@@ -3204,6 +3204,9 @@
     '撤回窗口已过期，或任务较多时临时状态已提前清理。已写入会话的内容不受影响。': 'The undo window expired, or temporary state was cleared early because many tasks ran. Content already written to the conversation is unaffected.',
     '任务还没结束，暂时不能撤回。请先停止任务并等待它结束。': 'This task has not ended yet. Stop it and wait for it to finish before undoing.',
     '部分文件还原失败；失败项仍保留，可稍后重试。': 'Some files could not be restored. Failed items were kept so you can retry later.',
+    '有文件后来又被修改，已跳过，未覆盖你的新内容。未处理项仍保留，可稍后重试。': 'Some files were changed later, so they were skipped and your newer content was not overwritten. Unhandled items were kept so you can retry later.',
+    '有些文件后来又被修改，另有文件还原失败；都没有被强行覆盖，未处理项仍保留，可稍后重试。': 'Some files were changed later and others could not be restored. Nothing was forcibly overwritten, and unhandled items were kept so you can retry later.',
+    '会把这次任务改过的文件还原（新建的删掉）。如果文件后来又被你或别的程序改过，会跳过，不会覆盖。跑过的命令造成的其它变化撤不回。': 'This restores files changed by this task and deletes newly created ones. Files changed later by you or another program will be skipped, not overwritten. Other changes caused by commands cannot be undone.',
   });
   let LANG = '__WEFTMATE_UI_LANG__' === 'en' ? 'en' : 'zh';
   const I18N_SKIP_TAGS = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CODE: 1, PRE: 1, NOSCRIPT: 1 };
@@ -6565,7 +6568,7 @@
     } catch (e) { /* 撤回结果已经明确；刷新失败不反转结果提示 */ }
   }
   async function agUndo(taskId = AG.taskId) {
-    const ok = await memConfirm({ title: '撤回这次改动？', bodyText: '会把这次任务改过的文件还原（新建的删掉）。跑过的命令造成的其它变化撤不回。', okText: '撤回', okKind: 'danger' });
+    const ok = await memConfirm({ title: '撤回这次改动？', bodyText: '会把这次任务改过的文件还原（新建的删掉）。如果文件后来又被你或别的程序改过，会跳过，不会覆盖。跑过的命令造成的其它变化撤不回。', okText: '撤回', okKind: 'danger' });
     if (!ok) return;
     try {
       const response = await fetch('/api/agent/undo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: taskId }) });

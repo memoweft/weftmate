@@ -1036,7 +1036,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       return;
     }
 
-    // 一键撤回：body {id}。还原本任务改过的文件（改前不存在的删掉）；ranCommand=true 时命令副作用撤不回（如实回传）。
+    // 一键撤回：body {id}。只还原仍保持本任务改后状态的文件；外部二次修改一律跳过，命令副作用仍撤不回。
     if (req.method === 'POST' && url.pathname === '/api/agent/undo') {
       const body = await readJson(req);
       const id = typeof body.id === 'string' ? body.id.trim() : '';

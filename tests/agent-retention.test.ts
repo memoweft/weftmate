@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -234,7 +234,7 @@ describe('Agent 终态留存与重资源释放', () => {
     assert.equal(readFileSync(join(workspace, 'before.txt'), 'utf8'), 'new');
   });
 
-  it('部分撤回只删除成功备份，失败项保留并可重试', async () => {
+  it('部分撤回只删除成功备份，后续删除视为冲突并保留重试', async () => {
     const subdir = join(workspace, 'sub');
     mkdirSync(subdir);
     writeFileSync(join(workspace, 'a.txt'), 'old-a');
@@ -251,17 +251,143 @@ describe('Agent 终态留存与重资源释放', () => {
     const partial = await undoTask(id);
     assert.equal(partial.ok, false);
     assert.equal(partial.restored, 1);
-    assert.equal(partial.failed, 1);
+    assert.equal(partial.failed, 0);
+    assert.equal(partial.conflicted, 1);
     assert.equal(readFileSync(join(workspace, 'a.txt'), 'utf8'), 'old-a');
-    assert.equal(getTaskView(id)?.canUndo, true, '失败备份仍可重试');
+    assert.equal(getTaskView(id)?.canUndo, true, '冲突备份仍可重试');
 
     mkdirSync(subdir);
+    writeFileSync(join(subdir, 'b.txt'), 'new-b');
     const retry = await undoTask(id);
     assert.equal(retry.ok, true);
     assert.equal(retry.restored, 1);
     assert.equal(retry.failed, 0);
     assert.equal(readFileSync(join(subdir, 'b.txt'), 'utf8'), 'old-b');
     assert.equal(getTaskView(id)?.canUndo, false);
+  });
+
+  it('已有文件和新文件被用户再次修改后，撤回不会覆盖或删除', async () => {
+    const existing = join(workspace, 'existing.txt');
+    const created = join(workspace, 'created.txt');
+    writeFileSync(existing, 'old');
+    __setClientFactory(scriptedFactory([
+      action('write_file', { path: 'existing.txt', content: 'agent-existing' }),
+      action('write_file', { path: 'created.txt', content: 'agent-created' }),
+      done(),
+    ]));
+    const { id } = startTask({ task: '改文件', workspace, autonomy: 'auto' });
+    await waitFor(id, terminal);
+
+    writeFileSync(existing, 'user-existing');
+    writeFileSync(created, 'user-created');
+    const result = await undoTask(id);
+
+    assert.equal(result.ok, false);
+    assert.equal(result.restored, 0);
+    assert.equal(result.failed, 0);
+    assert.equal(result.conflicted, 2);
+    assert.match(result.error ?? '', /未覆盖你的新内容/);
+    assert.equal(readFileSync(existing, 'utf8'), 'user-existing');
+    assert.equal(readFileSync(created, 'utf8'), 'user-created');
+    assert.equal(getTaskView(id)?.canUndo, true, '冲突项保留，允许之后重试');
+  });
+
+  it('混合撤回先还原安全项，冲突项恢复到 Agent 改后状态后可重试', async () => {
+    const safe = join(workspace, 'safe.txt');
+    const conflict = join(workspace, 'conflict.txt');
+    writeFileSync(safe, 'old-safe');
+    writeFileSync(conflict, 'old-conflict');
+    __setClientFactory(scriptedFactory([
+      action('write_file', { path: 'safe.txt', content: 'new-safe' }),
+      action('write_file', { path: 'conflict.txt', content: 'new-conflict' }),
+      done(),
+    ]));
+    const { id } = startTask({ task: '改两个文件', workspace, autonomy: 'auto' });
+    await waitFor(id, terminal);
+    writeFileSync(conflict, 'user-conflict');
+
+    const partial = await undoTask(id);
+    assert.equal(partial.ok, false);
+    assert.equal(partial.restored, 1);
+    assert.equal(partial.failed, 0);
+    assert.equal(partial.conflicted, 1);
+    assert.equal(readFileSync(safe, 'utf8'), 'old-safe');
+    assert.equal(readFileSync(conflict, 'utf8'), 'user-conflict');
+
+    writeFileSync(conflict, 'new-conflict');
+    const retry = await undoTask(id);
+    assert.equal(retry.ok, true);
+    assert.equal(retry.restored, 1);
+    assert.equal(retry.conflicted, 0);
+    assert.equal(readFileSync(conflict, 'utf8'), 'old-conflict');
+    assert.equal(getTaskView(id)?.canUndo, false);
+  });
+
+  it('文件已经回到改前状态时按已还原处理，不再强行写入', async () => {
+    const file = join(workspace, 'already-restored.txt');
+    writeFileSync(file, 'old');
+    __setClientFactory(scriptedFactory([
+      action('write_file', { path: 'already-restored.txt', content: 'new' }),
+      done(),
+    ]));
+    const { id } = startTask({ task: '改文件', workspace, autonomy: 'auto' });
+    await waitFor(id, terminal);
+    writeFileSync(file, 'old');
+
+    const result = await undoTask(id);
+    assert.equal(result.ok, true);
+    assert.equal(result.restored, 1);
+    assert.equal(result.conflicted, 0);
+    assert.equal(readFileSync(file, 'utf8'), 'old');
+    assert.equal(getTaskView(id)?.canUndo, false);
+  });
+
+  it('同一路径连续写入只认可最后一次成功写入状态', async () => {
+    const file = join(workspace, 'multi.txt');
+    writeFileSync(file, 'old');
+    __setClientFactory(scriptedFactory([
+      action('write_file', { path: 'multi.txt', content: 'first' }),
+      action('write_file', { path: 'multi.txt', content: 'final' }),
+      done(),
+    ]));
+    const { id } = startTask({ task: '连续写', workspace, autonomy: 'auto' });
+    await waitFor(id, terminal);
+
+    writeFileSync(file, 'first');
+    const conflict = await undoTask(id);
+    assert.equal(conflict.ok, false);
+    assert.equal(conflict.conflicted, 1);
+    assert.equal(readFileSync(file, 'utf8'), 'first');
+
+    writeFileSync(file, 'final');
+    const retry = await undoTask(id);
+    assert.equal(retry.ok, true);
+    assert.equal(readFileSync(file, 'utf8'), 'old');
+  });
+
+  it('任务后路径被换成指向工作区外的链接时，撤回安全失败且不触碰外部文件', async () => {
+    const subdir = join(workspace, 'linked');
+    const outside = mkdtempSync(join(tmpdir(), 'weftmate-retention-outside-'));
+    try {
+      __setClientFactory(scriptedFactory([
+        action('write_file', { path: 'linked/file.txt', content: 'agent' }),
+        done(),
+      ]));
+      const { id } = startTask({ task: '新建文件', workspace, autonomy: 'auto' });
+      await waitFor(id, terminal);
+      rmSync(subdir, { recursive: true, force: true });
+      writeFileSync(join(outside, 'file.txt'), 'outside');
+      symlinkSync(outside, subdir, process.platform === 'win32' ? 'junction' : 'dir');
+
+      const result = await undoTask(id);
+      assert.equal(result.ok, false);
+      assert.equal(result.failed, 1);
+      assert.equal(result.conflicted, 0);
+      assert.equal(readFileSync(join(outside, 'file.txt'), 'utf8'), 'outside');
+      assert.equal(getTaskView(id)?.canUndo, true);
+    } finally {
+      rmSync(outside, { recursive: true, force: true });
+    }
   });
 
   it('已有文件备份读取失败时中止覆盖，不把原文件误记成不存在', async () => {
