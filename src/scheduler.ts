@@ -10,7 +10,7 @@
  *   - 否则重置空闲计时，歇够 config.profileUpdate.idleMinutes 没新消息 → 更新一次。
  *   - 两者先到先触发。
  * 单飞锁：同一用户的画像更新【不能并发】（否则重复消化同一批事件）。进行中再来 → 过 10s 重试、别丢这批。
- * fire-and-forget：调度不阻塞 /api/chat 回复——聊天先返回，画像后台慢慢消化。
+ * fire-and-forget：调度不阻塞用户消息回复——回答先返回，画像后台慢慢消化。
  */
 import { config } from './memoweft.ts';
 
