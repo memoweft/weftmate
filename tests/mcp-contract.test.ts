@@ -1,5 +1,5 @@
 /**
- * 契约测试 · 套件4「MCP 延迟加载生死线 + 非只读强批」
+ * 契约测试 · 套件4「MCP 延迟加载生死线 + 外部工具审批」
  *
  * 对着【当前源码真实行为】写、真能 PASS。零测试框架依赖：只用 node 内置 node:test + node:assert/strict。
  * 跑法（项目根 D:\MemoWeft\weftmate 下）：node --test "tests/mcp-contract.test.ts"
@@ -8,8 +8,8 @@
  *  1) mcp.ts signatureOf（mcp.ts:41 附近，未导出）——只取 inputSchema 顶层属性名+可选标记，
  *     【不含】嵌套属性/类型/JSON-Schema 关键字；McpToolInfo 无 schema 字段（延迟加载生死线）。
  *     signatureOf 私有 → 走它唯一能被调到的公开路径 connectServer → listAllTools。
- *  2) agent.ts resolveTool + 审批门（agent.ts:114 alwaysApprove=!readOnly）——非只读 MCP 工具即使
- *     autonomy='auto' 也要用户批准；只读工具在 auto 下自动跑。resolveTool 私有 → 经 configureAgentDeps
+ *  2) agent.ts resolveTool + 审批门——ask 档所有 MCP 外部工具都要确认；未信任工具即使 auto 也要确认，
+ *     显式信任只允许 auto 免批。resolveTool 私有 → 经 configureAgentDeps
  *     注入 mcpTools + __setClientFactory 注入脚本化假模型，从 startTask/getTaskView/decideStep 的公开行为观测。
  *  3) agent.ts buildSystemPrompt——系统提示里出现 fqName+签名+描述，但【不出现】完整 inputSchema。
  *
@@ -167,8 +167,8 @@ describe('mcp.signatureOf｜只吐顶层属性名+可选标记，不吐完整 sc
   });
 });
 
-// ══ 不变量 2 · resolveTool + 审批门（F1·所有 MCP 工具强批，自报只读不免批）═══════
-describe('agent.resolveTool + 审批门｜所有 MCP 工具（含自报只读）即使 auto 也要批准', () => {
+// ══ 不变量 2 · resolveTool + 审批门（F1·ask 外部全确认；信任仅允许 auto 免批）═══════
+describe('agent.resolveTool + 审批门｜ask 外部全确认，信任仅允许 auto 免批', () => {
   test('readOnly=false 的 MCP 工具在 auto 档：停在 awaiting、批准前不执行、批准后才跑', async () => {
     const callLog: any[] = [];
     agent.configureAgentDeps({
@@ -230,6 +230,36 @@ describe('agent.resolveTool + 审批门｜所有 MCP 工具（含自报只读）
     assert.equal(agent.getTaskView(id).steps[0].status, 'done');
   });
 
+  test('ask 档：已信任 MCP 的 readOnly 与 mutating 调用仍都必须逐次确认', async () => {
+    for (const entry of [
+      { fqName: 'svc__trusted_search', readOnly: true, expectedMutating: false },
+      { fqName: 'svc__trusted_write', readOnly: false, expectedMutating: true },
+    ]) {
+      const callLog: any[] = [];
+      agent.configureAgentDeps({
+        mcpTools: () => [{ fqName: entry.fqName, description: 'trusted external tool', signature: '(q)', readOnly: entry.readOnly }],
+        callMcp: async (fq: string, args: any) => { callLog.push({ fq, args }); return 'SHOULD_NOT_RUN'; },
+        isMcpToolTrusted: (fq: string) => fq === entry.fqName,
+      });
+      const { factory } = scriptClient([
+        `{"action":{"tool":"${entry.fqName}","args":{"q":"value"}}}`,
+        '{"done":{"summary":"用户拒绝后收尾"}}',
+      ]);
+      agent.__setClientFactory(factory);
+
+      const { id } = agent.startTask({ task: '调用已信任外部工具', workspace: '', autonomy: 'ask', attachments: [{ name: 'ctx.txt', content: '参考' }] });
+      assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'awaiting'), true, `${entry.fqName} 在 ask 下应停在 awaiting`);
+      const step = agent.getTaskView(id).steps[0];
+      assert.equal(step.status, 'awaiting');
+      assert.equal(step.mutating, entry.expectedMutating);
+      assert.equal(callLog.length, 0, 'ask 档批准前不得调用已信任外部工具');
+      assert.equal(agent.decideStep(id, 'reject'), true);
+      assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'done'), true);
+      assert.equal(agent.getTaskView(id).steps[0].status, 'rejected');
+      assert.equal(callLog.length, 0);
+    }
+  });
+
   test('已「信任」的 MCP 工具在 auto 档：免批、自动跑到 done（F1 trust opt-in）', async () => {
     const callLog: any[] = [];
     agent.configureAgentDeps({
@@ -249,6 +279,26 @@ describe('agent.resolveTool + 审批门｜所有 MCP 工具（含自报只读）
     assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'done'), true, '已信任的 MCP 工具应在 auto 下自动跑到 done');
     assert.equal(callLog.length, 1);
     assert.deepEqual(callLog[0], { fq: 'svc__write_note', args: { text: 'hi' } });
+    assert.equal(agent.getTaskView(id).steps[0].status, 'done');
+  });
+
+  test('已「信任」且自报只读的 MCP 工具在 auto 档同样免批', async () => {
+    const callLog: any[] = [];
+    agent.configureAgentDeps({
+      mcpTools: () => [{ fqName: 'svc__trusted_search', description: 'search', signature: '(q)', readOnly: true }],
+      callMcp: async (fq: string, args: any) => { callLog.push({ fq, args }); return 'RESULTS'; },
+      isMcpToolTrusted: (fq: string) => fq === 'svc__trusted_search',
+    });
+    const { factory } = scriptClient([
+      '{"action":{"tool":"svc__trusted_search","args":{"q":"cats"}}}',
+      '{"done":{"summary":"完成"}}',
+    ]);
+    agent.__setClientFactory(factory);
+
+    const { id } = agent.startTask({ task: '搜索', workspace: '', autonomy: 'auto', attachments: [{ name: 'ctx.txt', content: '参考' }] });
+    assert.equal(await waitFor(() => agent.getTaskView(id)?.status === 'done'), true);
+    assert.deepEqual(callLog, [{ fq: 'svc__trusted_search', args: { q: 'cats' } }]);
+    assert.equal(agent.getTaskView(id).steps[0].mutating, false);
     assert.equal(agent.getTaskView(id).steps[0].status, 'done');
   });
 });

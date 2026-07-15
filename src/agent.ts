@@ -12,7 +12,8 @@
  *   读的是当前激活模型（injectEnv 保持 env 最新），与聊天/记忆链路互不干扰——agent 的中间对话不进 memoweft 的记忆。
  *
  * 信任框架（PRODUCT.md「agent 干活」四件套）：
- *   - 三档自主度：suggest 只建议（只出计划、一步不执行）/ ask 问一下（每个改动步骤先批准）/ auto 放手做（自动跑但每步可见）。
+ *   - 三档自主度：suggest 只建议（只出计划、一步不执行）/ ask 每次确认（改动与全部外部调用先批准）/
+ *       auto 完全访问（自动跑但每步可见；命令与未信任外部工具仍强批）。
  *   - 沙箱：所有文件操作路径【锁死在工作区文件夹内】，逃逸路径直接拒（safeResolve）。run_command 无法完全沙箱
  *       （shell 能 cd 出去），故【不管哪档，跑命令一律要显式批准】——这是安全底线。
  *   - 每步可视：每个工具调用 = 一个 AgentStep，状态流转（awaiting/running/done/failed/rejected），前端轮询渲染步骤卡。
@@ -30,6 +31,10 @@ import { readFile, writeFile, readdir, rm, mkdir, stat } from 'node:fs/promises'
 import { existsSync, statSync, realpathSync } from 'node:fs';
 import { resolve, relative, isAbsolute, dirname } from 'node:path';
 import { OpenAICompatClient, loadLLMConfig, type ChatMessage } from './memoweft.ts';
+import { normalizeAutonomy, type Autonomy } from './agent-autonomy.ts';
+
+export { DEFAULT_AUTONOMY, isAutonomy, normalizeAutonomy } from './agent-autonomy.ts';
+export type { Autonomy } from './agent-autonomy.ts';
 
 // ── 常量护栏 ──
 const MAX_STEPS = 20;              // 单个任务最多几步（挡模型跑飞、无限循环）
@@ -55,7 +60,6 @@ type TaskAttachment =
   | { kind: 'image'; name: string; mime: string; dataUrl: string };
 
 // ── 对外类型 ──
-export type Autonomy = 'suggest' | 'ask' | 'auto';
 export type StepStatus = 'proposed' | 'awaiting' | 'running' | 'done' | 'failed' | 'rejected';
 export type TaskStatus = 'planning' | 'running' | 'awaiting' | 'done' | 'failed' | 'stopped';
 export type AgentCompletionAttachment =
@@ -127,7 +131,7 @@ interface AgentDeps {
   experience?: () => AgentExperience;                            // 当前人格（动态 getter；切换后下一任务立即读取新值）
   mcpTools?: () => AgentMcpTool[];                            // 当前可用的 MCP 工具（装的能力包）
   callMcp?: (fqName: string, args: Record<string, unknown>) => Promise<string>; // 调一个 MCP 工具
-  isMcpToolTrusted?: (fqName: string) => boolean;            // F1：用户是否已「信任」此 MCP 工具（信任=免批）
+  isMcpToolTrusted?: (fqName: string) => boolean;            // F1：用户是否已「信任」此 MCP 工具（仅 auto 档免批）
 }
 let deps: AgentDeps = {};
 export function configureAgentDeps(d: AgentDeps): void { deps = d; }
@@ -136,7 +140,7 @@ export function configureAgentDeps(d: AgentDeps): void { deps = d; }
  *  MCP 是第三方代码，且 readOnly 是【服务自报】的（annotations.readOnlyHint）——自报只读不可信：
  *  恶意/有 bug 的服务谎报 readOnlyHint=true 就能绕过审批、在 auto 档把用户画像/工作区文件当参数
  *  自动发往第三方。故【MCP 工具默认一律要用户点头】（F1·安全底线，同 run_command），不看自报只读。
- *  用户对信得过的具体工具显式「信任」(isMcpToolTrusted) 后，才降级为免批、按 mutating/自主度走（同内置工具）。
+ *  用户对信得过的具体工具显式「信任」(isMcpToolTrusted) 后，只能在 auto 档免批；ask 档仍确认每次外部调用。
  *  readOnly 只留作 UI 提示标，绝不作免批依据。 */
 function resolveTool(name: string): ToolDef | null {
   if (TOOLS[name]) return TOOLS[name];
@@ -144,8 +148,9 @@ function resolveTool(name: string): ToolDef | null {
   if (!mt) return null;
   const trusted = deps.isMcpToolTrusted?.(name) ?? false;
   return {
-    mutating: !mt.readOnly,               // 仅作展示/标注；审批与否由 alwaysApprove 定
-    alwaysApprove: !trusted,              // F1：默认强批；用户显式「信任」后才免批
+    mutating: !mt.readOnly,               // 仅作展示/标注；审批由 external/alwaysApprove 与自主度共同决定
+    external: true,                       // ask 档的边界：所有外部调用都逐次确认，不信任自报只读
+    alwaysApprove: !trusted,              // 未信任工具在 auto 档也强批；信任只允许 auto 免批
     run: (args) => (deps.callMcp ? deps.callMcp(name, args) : Promise.reject(new Error('MCP 未接线'))),
   };
 }
@@ -180,6 +185,7 @@ function truncate(s: string, n: number): string {
 // ── 工具集（内置四个·全部锁在工作区）──
 interface ToolDef {
   mutating: boolean;
+  external?: boolean;                             // 第三方/外部工具：ask 档无论只读或改动都要逐次确认
   alwaysApprove?: boolean;                        // 不管哪档自主度都要显式批准（run_command）
   run(args: Record<string, unknown>, task: Task): Promise<string>;
 }
@@ -401,7 +407,7 @@ ${rules}`;
 export function startTask(input: {
   task: string;
   workspace: string;
-  autonomy: Autonomy;
+  autonomy?: Autonomy;
   attachments?: Array<{
     name: string;
     kind?: 'text' | 'image';
@@ -452,7 +458,7 @@ export function startTask(input: {
   } else if (!attachments.length) {
     throw new Error('先选个工作区，或附一个参考文件');
   }
-  const autonomy: Autonomy = input.autonomy === 'ask' || input.autonomy === 'auto' ? input.autonomy : 'suggest';
+  const autonomy = normalizeAutonomy(input.autonomy);
   const id = 'task-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
   const t: Task = {
     id, task, workspace, autonomy, attachments, context,
@@ -584,8 +590,8 @@ async function drive(t: Task): Promise<void> {
       };
       t.steps.push(step);
 
-      // 审批门：命令永远要批；ask 档下所有改动要批；只读永远自动。
-      const needApprove = !!tool.alwaysApprove || (t.autonomy === 'ask' && tool.mutating);
+      // 审批门：命令/未信任 MCP 永远要批；ask 档下所有改动与所有外部工具要批；仅内置只读自动。
+      const needApprove = !!tool.alwaysApprove || (t.autonomy === 'ask' && (tool.mutating || tool.external === true));
       if (needApprove) {
         step.status = 'awaiting';
         t.status = 'awaiting';

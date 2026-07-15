@@ -12,7 +12,7 @@
  */
 import { describe, it, beforeEach, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, rmSync, existsSync, mkdirSync } from 'node:fs';
+import { mkdtempSync, rmSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
@@ -23,6 +23,8 @@ import {
   decideStep,
   stopTask,
   getTaskView,
+  DEFAULT_AUTONOMY,
+  normalizeAutonomy,
 } from '../src/agent.ts';
 
 // ── 脚本化假模型：chat() 按预设序列依次返回一段 JSON；用尽后兜底返回 done（防循环跑飞）──
@@ -68,6 +70,101 @@ afterEach(() => {
 });
 
 describe('agent 审批门 + 三档自主度', () => {
+  it('新用户缺省为 ask，首个改动步骤必须等待批准', async () => {
+    __setClientFactory(scriptedFactory([
+      '{"thought":"写文件","action":{"tool":"write_file","args":{"path":"default.txt","content":"blocked-until-approved"}}}',
+      '{"done":{"summary":"已按用户决定收尾"}}',
+    ]));
+
+    const { id } = startTask({ task: '建一个文件', workspace: ws });
+    const awaiting = await waitFor(id, (v) => v.status === 'awaiting');
+    assert.equal(awaiting.autonomy, 'ask');
+    assert.equal(awaiting.steps[0].status, 'awaiting');
+    assert.equal(existsSync(join(ws, 'default.txt')), false, '新用户默认不得在批准前写文件');
+
+    assert.equal(decideStep(id, 'reject'), true);
+    await waitFor(id, (v) => terminal(v.status));
+    assert.equal(existsSync(join(ws, 'default.txt')), false);
+  });
+
+  it('默认归一化不覆盖已有用户显式保存的档位', () => {
+    assert.equal(DEFAULT_AUTONOMY, 'ask');
+    for (const invalid of [undefined, null, '', 'invalid', {}, []]) {
+      assert.equal(normalizeAutonomy(invalid), 'ask');
+    }
+    for (const saved of ['suggest', 'ask', 'auto'] as const) {
+      assert.equal(normalizeAutonomy(saved), saved);
+    }
+  });
+
+  it('持久化设置是唯一授权源：前端不迁移旧窗口档位，任务请求也不能临时提权', () => {
+    const html = readFileSync(new URL('../src/web/index.html', import.meta.url), 'utf8');
+    const serverSource = readFileSync(new URL('../src/server.ts', import.meta.url), 'utf8');
+    const settingsSource = readFileSync(new URL('../src/settings.ts', import.meta.url), 'utf8');
+    assert.match(html, /<span class="ab-kicker">后续任务默认<\/span>/);
+    assert.match(html, /data-a="ask" disabled>每次确认/);
+    assert.match(html, /<textarea id="text" rows="1" disabled><\/textarea>/);
+    assert.match(html, /<button type="button" id="send"[^>]*disabled>/);
+    assert.doesNotMatch(html, /data-a="(?:suggest|ask|auto)" class="on"/, '权限未加载时不得显示任何看似真实的档位');
+    assert.doesNotMatch(html, /data-a="auto" class="on">完全访问/);
+    assert.doesNotMatch(html, /savedAgentWindow\.autonomy/, '旧 sessionStorage 无法区分历史默认与显式选择，不得迁移');
+    assert.match(html, /autonomy: 'ask'/);
+    assert.match(html, /agentSettingsReady = initAgentAutonomy\(\)/, '启动时应加载持久化设置');
+    assert.match(html, /fetch\('\/api\/settings\/agent-autonomy'/, '显式切换应写服务端设置');
+    const uiSetBlock = html.slice(html.indexOf('function agSetAuto'), html.indexOf('function setAgentComposerBusy'));
+    assert.match(uiSetBlock, /agentSettingsReady = \(async \(\) =>/, '设置保存必须立即串行进发送前等待链，避免切档位后马上发送的竞态');
+
+    const uiStartBlock = html.slice(html.indexOf('async function startAgentTask'), html.indexOf('async function pollAgent'));
+    assert.match(uiStartBlock, /if \(!agentSettingsConfirmed \|\| agentSettingsBusy\)/);
+    assert.doesNotMatch(uiStartBlock, /await agentSettingsReady/, '未加载时不能等待后自动继续发送');
+    assert.doesNotMatch(uiStartBlock, /autonomy: AG\.autonomy/, '任务请求不得携带可提权的自主度');
+
+    const serverStartBlock = serverSource.slice(
+      serverSource.indexOf("url.pathname === '/api/agent/start'"),
+      serverSource.indexOf("url.pathname === '/api/agent/status'"),
+    );
+    assert.match(serverStartBlock, /autonomy: getAgentAutonomy\(\)/);
+    assert.doesNotMatch(serverStartBlock, /body\.autonomy/, '后端必须忽略任务请求里的 autonomy');
+
+    assert.match(serverSource, /if \(!autonomy\) \{ sendJson\(res, 400/, '非法设置值必须返回 400');
+    const setterBlock = settingsSource.slice(
+      settingsSource.indexOf('export function setAgentAutonomy'),
+      settingsSource.indexOf('// ── MCP 工具信任'),
+    );
+    assert.match(setterBlock, /if \(!isAutonomy\(value\)\) return null;/);
+    assert.ok(setterBlock.indexOf('return null') < setterBlock.indexOf('write(s)'), '非法值必须在写盘前返回，保留旧设置');
+  });
+
+  it('首次权限 GET 完成前禁用输入/档位，提前发送只拒绝、不等待后自动续发', () => {
+    const html = readFileSync(new URL('../src/web/index.html', import.meta.url), 'utf8');
+    const stateBlock = html.slice(html.indexOf('let agentSettingsConfirmed'), html.indexOf('function persistAgentWindow'));
+    assert.match(stateBlock, /let agentSettingsConfirmed = false;/);
+    assert.match(stateBlock, /let agentSettingsBusy = true;/);
+
+    const syncBlock = html.slice(html.indexOf('function syncAgentUi'), html.indexOf('function syncComposerContextUi'));
+    assert.match(syncBlock, /const settingsBlocked = !agentSettingsConfirmed \|\| agentSettingsBusy;/);
+    assert.match(syncBlock, /b\.disabled = settingsBlocked \|\| sending;/);
+    assert.match(syncBlock, /\$\('text'\)\.disabled = settingsBlocked \|\| sending;/);
+    assert.match(syncBlock, /\$\('send'\)\.disabled = settingsBlocked \|\| sending;/);
+
+    const startBlock = html.slice(html.indexOf('async function startAgentTask'), html.indexOf('async function pollAgent'));
+    const guardAt = startBlock.indexOf('if (!agentSettingsConfirmed || agentSettingsBusy)');
+    const busyAt = startBlock.indexOf('setAgentComposerBusy(true)');
+    const fetchAt = startBlock.indexOf("fetch('/api/agent/start'");
+    assert.ok(guardAt >= 0 && guardAt < busyAt && busyAt < fetchAt, '未确认权限的同步拒绝必须发生在发送请求前');
+    assert.match(startBlock.slice(guardAt, busyAt), /return false;/);
+    assert.doesNotMatch(startBlock, /await agentSettingsReady/);
+  });
+
+  it('权限 POST 响应不确定时必须 GET 对账；对账失败清空 ready 并继续阻止发送', () => {
+    const html = readFileSync(new URL('../src/web/index.html', import.meta.url), 'utf8');
+    const setBlock = html.slice(html.indexOf('function agSetAuto'), html.indexOf('function setAgentComposerBusy'));
+    assert.match(setBlock, /catch \(postError\)/);
+    assert.match(setBlock, /AG\.autonomy = await readAgentAutonomyFromServer\(\)/, 'POST 失败后必须读取服务端实际设置');
+    assert.match(setBlock, /catch \(reconcileError\)[\s\S]*agentSettingsConfirmed = false;[\s\S]*return false;/);
+    assert.doesNotMatch(setBlock, /return wasReady/, '响应不确定时不得沿用旧 ready');
+  });
+
   // C1：干完把结果 summary 回写记忆（不只任务意图）——让"帮你干活"进"越用越懂"循环。
   it('C1·done 后 record 被调用，且带上任务的 summary（干成了啥）', async () => {
     const recordCalls: Array<{ task: string; summary: string }> = [];
@@ -283,6 +380,26 @@ describe('agent 审批门 + 三档自主度', () => {
     assert.equal(done.status, 'done');
     assert.equal(done.steps[0].status, 'done', 'read_file 应直接执行、不 awaiting');
     assert.ok(String(done.steps[0].result ?? '').includes('file-body-here'));
+  });
+
+  it('ask 档内置 list_dir/read_file 仍是本地只读，直接执行且不弹审批', async () => {
+    const { writeFileSync } = await import('node:fs');
+    writeFileSync(join(ws, 'ask-read.txt'), 'ask-read-body', 'utf8');
+    __setClientFactory(scriptedFactory([
+      `{"action":{"tool":"list_dir","args":{"path":"."}}}`,
+      `{"action":{"tool":"read_file","args":{"path":"ask-read.txt"}}}`,
+      `{"done":{"summary":"本地只读完成"}}`,
+    ]));
+
+    const { id } = startTask({ task: '列出并读取本地文件', workspace: ws, autonomy: 'ask' });
+    const done = await waitFor(id, (x) => terminal(x.status));
+    assert.equal(done.status, 'done');
+    assert.deepEqual(done.steps.map((step) => [step.tool, step.status, step.mutating]), [
+      ['list_dir', 'done', false],
+      ['read_file', 'done', false],
+    ]);
+    assert.ok(String(done.steps[1].result ?? '').includes('ask-read-body'));
+    assert.equal(decideStep(id, 'approve'), false, '内置只读全程没有审批门');
   });
 
   // 不变量④：suggest 档只出计划(proposed 步骤)、不执行任何 mutating（工作区不落任何文件）。
