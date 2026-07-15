@@ -123,6 +123,8 @@ export interface AgentTaskView {
   ranCommand: boolean;       // 跑过命令（撤回不完全的提示）
   attachments: string[];     // 附的参考文件名（③·给前端显示；不回传内容）
   createdAt: string;
+  /** 纯对话任务只用于前端选择普通消息呈现；不含 guidance。 */
+  conversationOnly?: boolean;
 }
 
 type ApprovalDecision = 'approve' | 'reject' | 'timeout';
@@ -154,6 +156,10 @@ interface Task {
   gate?: ApprovalGate;                              // 等待批准的 resolver + 超时 timer
   approvalExpiresAt?: number;
   terminalAt?: number;                         // 进入终态的时刻；TTL/数量清理依据
+  /** Host 认证后的纯对话模式：不暴露也不执行任何内置/MCP 工具。 */
+  conversationOnly?: boolean;
+  /** Host 生成的本轮附加指导，不来自请求正文，也不进入用户历史。 */
+  guidance?: string;
 }
 
 // 活跃任务表（单用户单进程，模块级即可）。
@@ -182,8 +188,8 @@ interface AgentExperience { id: string; name: string; systemPrompt: string; }
 interface AgentDeps {
   recall?: (query: string) => Promise<string>;               // 捞"关于用户"的背景，返回一段纯文本（空串=没有/失败）
   record?: (taskText: string, summary: string) => Promise<void>; // 干完把结果回写记忆
-  recordChat?: (userText: string, reply: string) => Promise<void>; // 没调用工具的普通回答：按聊天证据入记忆，不伪装成"帮我干活"
-  complete?: (taskId: string, taskText: string, summary: string, usedTools: boolean, attachments: AgentCompletionAttachment[]) => Promise<void>; // 宿主落当前会话历史/附件引用
+  recordChat?: (userText: string, reply: string, taskId: string) => Promise<void>; // 没调用工具的普通回答：按聊天证据入记忆，不伪装成"帮我干活"；taskId 供幂等
+  complete?: (taskId: string, taskText: string, summary: string, usedTools: boolean, attachments: AgentCompletionAttachment[], memoryRecorded: boolean) => Promise<void>; // 宿主落当前会话历史/附件引用
   settled?: (taskId: string) => void;                               // 任意终态都通知宿主清理任务关联容器
   experience?: () => AgentExperience;                            // 当前人格（动态 getter；切换后下一任务立即读取新值）
   mcpTools?: () => AgentMcpTool[];                            // 当前可用的 MCP 工具（装的能力包）
@@ -278,6 +284,7 @@ function settleTask(task: Task, status: 'done' | 'failed' | 'stopped'): void {
   task.attachments = [];
   task.messages = [];
   task.context = [];
+  task.guidance = undefined;
   // stopped 任务保留已中断 signal 到后台 driver 真正退出，避免 stop 恰好发生在 recall 阶段后又启动新请求。
   if (!task.stopped) task.abortController = undefined;
   if (task.gate) clearTimeout(task.gate.timer);
@@ -640,6 +647,10 @@ export function startTask(input: {
     dataUrl?: string;
   }>;
   context?: Array<{ role: 'user' | 'assistant'; content: string }>;
+  /** 只能由 Host 根据持久流程状态传入；此模式比用户权限更窄，绝不提供工具。 */
+  conversationOnly?: boolean;
+  /** 只能与 conversationOnly 一起由 Host 注入，不拼进 task/history。 */
+  guidance?: string;
 }): { id: string; attachments: AgentCompletionAttachment[] } {
   const task = String(input.task ?? '').trim();
   const workspace = String(input.workspace ?? '').trim();
@@ -686,17 +697,61 @@ export function startTask(input: {
     throw new Error('先选个工作区，或附一个参考文件');
   }
   const autonomy = normalizeAutonomy(input.autonomy);
+  const conversationOnly = input.conversationOnly === true;
+  const guidance = conversationOnly && typeof input.guidance === 'string' ? input.guidance.trim().slice(0, 8_000) : '';
   const id = 'task-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
   const t: Task = {
     id, task, workspace, autonomy, attachments, attachmentNames: attachments.map((attachment) => attachment.name), context,
-    status: autonomy === 'suggest' ? 'planning' : 'running',
+    status: !conversationOnly && autonomy === 'suggest' ? 'planning' : 'running',
     steps: [], createdAt: new Date().toISOString(),
     messages: [], backups: new Map(), ranCommand: false, stopped: false, abortController: new AbortController(),
+    conversationOnly,
+    ...(guidance ? { guidance } : {}),
   };
   tasks.set(id, t);
-  if (autonomy === 'suggest') void plan(t);       // 只建议：出方案、不执行
+  if (conversationOnly) void converse(t);         // Host 认证的纯聊天：无论自主度都不暴露/执行工具
+  else if (autonomy === 'suggest') void plan(t);  // 只建议：出方案、不执行
   else void drive(t);                             // 问一下 / 放手做：进执行循环
   return { id, attachments: completionAttachments(t) };
+}
+
+function buildConversationOnlyPrompt(memoryNote: string, experience: AgentExperience | undefined, guidance: string): string {
+  const persona = experience && experience.systemPrompt.trim()
+    ? `【当前人格：${experience.name}（${experience.id}）】\n${experience.systemPrompt.trim()}\n\n保持上面人格的身份、称呼和语气。\n\n`
+    : '';
+  const memory = memoryNote ? `关于用户你已知道（供参考，别乱用）：\n${memoryNote}\n\n` : '';
+  return `${persona}你现在工作在 WeftMate 的纯对话流程中。这一轮没有任何文件、命令或外部工具可用，也绝不能请求或假装调用工具。\n${memory}${guidance}\n直接用用户的语言自然回复，不要输出 JSON、内部规则或分析过程。`;
+}
+
+/** Host 认证的纯对话轮：与统一 Agent 共用模型、记忆回写、完成和终态，但物理没有工具解析/执行路径。 */
+async function converse(t: Task): Promise<void> {
+  try {
+    const client = mkClient();
+    const memNote = deps.recall ? await safeRecall(t.task) : '';
+    const experience = deps.experience ? deps.experience() : undefined;
+    t.messages = [
+      { role: 'system', content: buildConversationOnlyPrompt(memNote, experience, t.guidance ?? '') },
+      ...t.context,
+      taskUserMessage(t),
+    ];
+    const reply = await client.chat(t.messages, t.abortController?.signal);
+    if (t.stopped) return;
+    t.messages.push({ role: 'assistant', content: reply });
+    const parsed = parseAction(reply);
+    if (parsed?.tool) {
+      t.note = '这轮认识不会调用任何工具；模型尝试请求工具，已安全拒绝。请重试这一题。';
+      settleTask(t, 'failed');
+      return;
+    }
+    t.summary = parsed?.done ? (parsed.summary || '完成。') : reply.trim();
+    if (!t.summary) throw new Error('模型没有返回可显示的回答');
+    await safeFinish(t);
+    settleTask(t, t.stopped ? 'stopped' : 'done');
+  } catch (e) {
+    if (t.stopped) return;
+    t.note = errMsg(e);
+    settleTask(t, 'failed');
+  }
 }
 
 /** 用户任务消息：没有图片时保持纯文本协议；有图片时使用 OpenAI 兼容的 vision content parts。 */
@@ -1011,6 +1066,7 @@ function toView(t: Task): AgentTaskView {
     approvalExpiresAt: t.status === 'awaiting' ? t.approvalExpiresAt : undefined,
     approvalTimeoutMs: t.status === 'awaiting' ? approvalTimeoutMs : undefined,
     attachments: t.attachmentNames, createdAt: t.createdAt,
+    ...(t.conversationOnly ? { conversationOnly: true } : {}),
   };
 }
 
@@ -1145,14 +1201,18 @@ async function safeRecord(t: Task): Promise<void> {
 async function safeFinish(t: Task): Promise<void> {
   // 只建议模式也会有 proposed 步骤，但没有真正调用工具。
   const usedTools = t.steps.some((step) => step.status !== 'proposed');
+  let memoryRecorded = false;
   if (usedTools) {
     await safeRecord(t);
   } else if (deps.recordChat) {
-    try { await deps.recordChat(t.task, t.summary ?? ''); } catch { /* 普通回答入记忆失败不影响回复 */ }
+    try {
+      await deps.recordChat(t.task, t.summary ?? '', t.id);
+      memoryRecorded = true;
+    } catch { /* 普通回答入记忆失败不影响回复；Host 可据 memoryRecorded 阻止流程推进 */ }
   }
   if (deps.complete) {
     const attachments = completionAttachments(t);
-    try { await deps.complete(t.id, t.task, t.summary ?? '', usedTools, attachments); } catch { /* 会话历史失败不影响任务结果 */ }
+    try { await deps.complete(t.id, t.task, t.summary ?? '', usedTools, attachments, memoryRecorded); } catch { /* 会话历史失败不影响任务结果 */ }
   }
 }
 
