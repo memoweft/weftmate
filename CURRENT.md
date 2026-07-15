@@ -1,12 +1,12 @@
 # CURRENT.md · WeftMate 当前执行状态
 
-> 基线：2026-07-15，`main@894026e`
+> 基线：2026-07-15，已验证功能与 CI 基线 `main@703dc20`
 > 本文件是“现在做到哪里、下一步做什么”的唯一事实源。
 > 产品边界看 [`docs/PRODUCT.md`](./docs/PRODUCT.md)，大阶段看 [`docs/ROADMAP.md`](./docs/ROADMAP.md)，完整代码审计看 [`PROJECT_ANALYSIS.md`](./PROJECT_ANALYSIS.md)。
 
 ## 一句话状态
 
-**阶段 1「核心 Alpha 闭环」已经在本机开发环境完成；当前进入阶段 2「可交付产品 v1」。MemoWeft 依赖可复现性已经恢复，公开仓库已经建立；工程交付仍被首次三平台 CI 待验证、发布前安全缺口和缺失的安装发布链阻塞。**
+**阶段 1「核心 Alpha 闭环」已经在本机开发环境完成；当前进入阶段 2「可交付产品 v1」。MemoWeft 依赖可复现性已经恢复，公开仓库与三平台 CI 已经激活；工程交付仍被发布前安全缺口和缺失的安装发布链阻塞。**
 
 这不是空壳 Demo，也还不是可交给陌生用户的 v1：功能内核已经成形，产品首次使用路径、完整人格包和工程交付仍未完成。
 
@@ -16,7 +16,7 @@
 |---|---|---|
 | 功能内核 | `complete`（Alpha 口径） | 长期记忆、内置人格切换、桌面感知、统一 Agent、MCP、工作区、附件和会话地基已接线 |
 | 产品体验 | `partial` | 能日常 dogfood，但没有首次采访、真正画像编辑/指正双通道、用户人格包和完整桌面角色体验 |
-| 工程交付 | `blocked` | 已用公开 `memoweft@0.5.1` 完成无 sibling 干净安装验证，公开仓库已建立；首次三平台 CI 尚未验证，且无安装包、签名、自动更新和 Release |
+| 工程交付 | `blocked` | 已用公开 `memoweft@0.5.1` 完成无 sibling 干净安装验证，公开仓库及 Windows/macOS/Linux CI 已激活；仍无安装包、签名、自动更新和 Release |
 | 外部验证 | `planned` | 无公开可下载版本，尚未进入陌生用户安装与长期留存验证 |
 
 不要再把四个维度混成一个完成百分比。
@@ -49,7 +49,7 @@
 | 对话历史 | `partial` | 多会话、续聊、工作区绑定、软归档、图片资源 | 搜索、重命名、归档恢复 UI、单会话导出 |
 | 中英文 | `partial` | 应用内字典、动态翻译、Aria，核心测试通过 | 全局 DOM 后处理风险高；真 Electron 逐屏回归、站点/发布文案收口 |
 | 安全与隐私 | `partial` | safeStorage、沙箱、审批、observed 默认本地、隐私文档 | loopback 鉴权/Origin、MCP 名称信任碰撞、全部本地数据删除、配置原子写 |
-| 干净构建与 CI | `partial` | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 的 `npm ci`、typecheck、48/48 测试和 Electron 空数据启动通过；公开仓库已建立 | 三平台 CI 首次运行待验证 |
+| 干净构建与 CI | `complete`（当前范围） | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 的 `npm ci`、typecheck、48/48 测试和 Electron 空数据启动通过；公开仓库与 Windows/macOS/Linux CI 已验证 | CI 尚未覆盖安装包构建与 Electron 真机冒烟，这部分归入“打包与发布” |
 | 打包与发布 | `planned` | 无 | builder/预编译、原生资源、图标、三平台安装冒烟、签名、公证、自动更新、Release |
 
 ## 当前 P0 阻塞
@@ -69,11 +69,11 @@
 
 该前置已经关闭。独立仓库和发布版本继续禁止使用 sibling `file:` 依赖。
 
-### P0-2 · 公开协作已建立，工程交付仍未完成
+### P0-2 · 公开协作已激活，安装发布链仍未完成
 
 - 公开仓库 `github.com/memoweft/weftmate` 已建立，本地 `origin` 已配置。
 - README 和站点入口已按当前五阶段路线收口；尚无可供普通用户下载的版本。
-- CI 配置文件和可复现依赖已经就绪，首次推送后的三平台运行仍待验证。
+- GitHub Actions 已在 Windows、macOS、Linux 实际完成 `npm ci`、typecheck 和测试；验证运行见“最近验证”。
 - 无安装包、Release、签名或自动更新。
 
 ### P0-3 · 发布前安全缺口
@@ -104,7 +104,7 @@
 - **已完成**：MemoWeft 0.5.1 已正式发布；本仓库已精确 pin 并重建 lockfile。
 - **已完成**：在无 sibling 的干净目录验证安装、typecheck、完整测试和 Electron 空数据启动。
 - **已完成**：建立公开仓库，修正 README/站点入口并完成发布前隐私与历史敏感信息审计。
-- 推送公开基线并验证首次三平台 CI。
+- **已完成**：推送公开基线并验证 Windows、macOS、Linux 三平台 CI。
 
 ### 2. 关闭发布前安全缺口并收敛唯一运行路径
 
@@ -155,7 +155,9 @@
 - 干净副本 `npm test`：48/48 通过；真实 MemoWeft 消费方契约验证无 embedding 关键词召回和导出版本 `0.5.1`。
 - `memoweft@0.5.0` 隔离探针：无 sibling 安装、typecheck、原有 47/47 测试和 Electron 空数据窗口启动均通过，但新增消费方契约会因空召回器/错误导出版本失败，因此否决。
 - `npm audit --omit=dev --registry=https://registry.npmjs.org`：7 high，来自 `get-windows` 的 `node-gyp/tar` 链；无自动修复，已列入发布前安全缺口。
-- 公开发布预检：当前树与 37 个历史提交未发现高置信凭据、私钥、用户数据或数据库文件；公开仓库已建立，首次 CI 待验证。
+- 公开发布预检：当前树与 37 个历史提交未发现高置信凭据、私钥、用户数据或数据库文件；公开仓库已建立。
+- GitHub Actions [运行 29405484004](https://github.com/memoweft/weftmate/actions/runs/29405484004)：Ubuntu、macOS、Windows 全部成功；三平台安装和 typecheck 均通过，Windows 48/48 测试通过，Ubuntu/macOS 47 项通过且按设计跳过 1 项仅适用于 Windows 盘符语义的测试。
+- 首轮 CI 发现跨盘符沙箱测试错误地在 POSIX 平台执行；`703dc20` 将该测试精确限定到 Windows 后，本机与三平台回归通过，未改动沙箱实现。
 - Electron 空数据隔离启动：窗口加载、首次模型配置、本地首页与 `/api/health` 通过；`llmReady=false`、`embedReady=false`、加密可用、感知默认关闭。关闭窗口后仍常驻，再次启动能唤回原窗口；因自动化无法操作系统托盘菜单，本轮未把进程终止计作“托盘优雅退出已验证”。
 - 安装包：不存在，未验证。
 
