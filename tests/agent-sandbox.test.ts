@@ -116,7 +116,9 @@ describe('agent 沙箱 safeResolve + 快照撤回', () => {
     assert.equal(existsSync(absOutside), false);
   });
 
-  it('跨盘符逃逸：另一盘符的绝对路径被拒（Windows relative 带盘符）', async () => {
+  it('跨盘符逃逸：另一盘符的绝对路径被拒（Windows relative 带盘符）', {
+    skip: process.platform !== 'win32',
+  }, async () => {
     const ws = mkWorkspace();
     const wsDrive = /^([A-Za-z]):/.exec(ws)?.[1]?.toUpperCase() ?? 'C';
     const otherDrive = wsDrive === 'C' ? 'D' : 'C';
