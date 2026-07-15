@@ -1,6 +1,6 @@
 # CURRENT.md · WeftMate 当前执行状态
 
-> 基线：2026-07-15，公开基线 `main@fbfe36d`；当前安全收口分支已完成本机验证，三平台 PR CI 待运行
+> 基线：2026-07-15，公开基线 `main@fbfe36d`；loopback 安全功能基线 `58be632` 已完成本机与三平台 CI 验证
 > 本文件是“现在做到哪里、下一步做什么”的唯一事实源。
 > 产品边界看 [`docs/PRODUCT.md`](./docs/PRODUCT.md)，大阶段看 [`docs/ROADMAP.md`](./docs/ROADMAP.md)，完整代码审计看 [`PROJECT_ANALYSIS.md`](./PROJECT_ANALYSIS.md)。
 
@@ -49,7 +49,7 @@
 | 对话历史 | `partial` | 多会话、续聊、工作区绑定、软归档、图片资源 | 搜索、重命名、归档恢复 UI、单会话导出 |
 | 中英文 | `partial` | 应用内字典、动态翻译、Aria，核心测试通过 | 全局 DOM 后处理风险高；真 Electron 逐屏回归、站点/发布文案收口 |
 | 安全与隐私 | `partial` | safeStorage、沙箱、审批、observed 默认本地、隐私文档；loopback 已有内存会话令牌、随机端口、Host/Origin 防护、nonce CSP 与导航限制 | MCP 名称信任碰撞、全部本地数据删除、配置原子写 |
-| 干净构建与 CI | `complete`（当前范围） | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 干净验证通过；公开仓库与 Windows/macOS/Linux CI 已激活；当前分支 typecheck 与 62/62 测试通过 | 当前安全分支的三平台 PR CI 待运行；CI 尚未覆盖安装包构建与 Electron 真机冒烟 |
+| 干净构建与 CI | `complete`（当前范围） | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 干净验证通过；公开仓库与 Windows/macOS/Linux CI 已激活；安全分支三平台 typecheck 与 62 项测试全部通过 | CI 尚未覆盖安装包构建与 Electron 三平台真机冒烟 |
 | 打包与发布 | `planned` | 无 | builder/预编译、原生资源、图标、三平台安装冒烟、签名、公证、自动更新、Release |
 
 ## 当前 P0 阻塞
@@ -162,6 +162,7 @@
 - loopback 安全专项：14/14 通过；覆盖正确同源与 collector、缺失/错误 token、错误 Host、恶意 Origin、cross-site、未知 API 先鉴权、nonce CSP、安全头、无 CORS 和感知双开关。完整测试 62/62 通过。
 - Windows Electron 安全冒烟：两次启动由 OS 分配 `61157 → 55216`；窗口内认证 `/api/health=200`，外部无 token 请求为 `401`；真实页面两个脚本均带 nonce，未出现 CSP/脚本错误；主题在动态 origin 间持久化。
 - 端口劫持回归：显式占用 `54862` 后启动，应用在 1 秒内 fail-closed 退出且未创建窗口。令牌渠道扫描未发现 env、Cookie、URL、页面、preload、日志或持久存储泄露；独立安全复核结论为 GO。
+- 安全分支 GitHub Actions：[push 运行 29407866320](https://github.com/memoweft/weftmate/actions/runs/29407866320) 与 [PR 运行 29407900352](https://github.com/memoweft/weftmate/actions/runs/29407900352) 均为 Ubuntu、macOS、Windows 全部成功；各平台完成 `npm ci`、typecheck 与 62 项测试。
 - Electron 空数据隔离启动：窗口加载、首次模型配置、本地首页与 `/api/health` 通过；`llmReady=false`、`embedReady=false`、加密可用、感知默认关闭。关闭窗口后仍常驻，再次启动能唤回原窗口；因自动化无法操作系统托盘菜单，本轮未把进程终止计作“托盘优雅退出已验证”。
 - 安装包：不存在，未验证。
 
