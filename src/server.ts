@@ -40,7 +40,7 @@ import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_ID
 import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
-import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, resolvedLang, getTrustedMcpTools, setMcpToolTrust } from './settings.ts';
+import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, getAgentAutonomy, setAgentAutonomy, resolvedLang, getTrustedMcpTools, setMcpToolTrust } from './settings.ts';
 import * as agent from './agent.ts';
 import * as mcp from './mcp.ts';
 import * as mcpStore from './mcp-store.ts';
@@ -210,7 +210,7 @@ agent.configureAgentDeps({
   // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
   mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),
   callMcp: (fqName, args) => mcp.callTool(fqName, args),
-  isMcpToolTrusted: (fqName) => getTrustedMcpTools().includes(fqName),   // F1：读明文信任列表决定是否免批
+  isMcpToolTrusted: (fqName) => getTrustedMcpTools().includes(fqName),   // F1：读明文信任列表；仅 auto 档据此免批
 });
 
 // 启动时连上所有【已启用】的 MCP 服务（后台·不阻塞起服；单个坏不拖累其余，见 mcp.reconcile）。
@@ -723,6 +723,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
         perception: { ...readPerceptionView(), running: collector.isCollectorRunning() },
         language: { setting: getLanguage(), resolved: resolvedLang() }, // setting=auto/zh/en(用户选)·resolved=实际生效 zh/en
         appearance: { theme: getTheme() },
+        agent: { autonomy: getAgentAutonomy() },
       });
       return;
     }
@@ -742,6 +743,14 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       const theme = body.theme === 'light' ? 'light' : 'dark';
       setTheme(theme);
       sendJson(res, 200, { ok: true, theme: getTheme() });
+      return;
+    }
+    // Agent 自主度由持久化设置唯一授权。非法值 400 且 setAgentAutonomy 不会改写旧值。
+    if (req.method === 'POST' && url.pathname === '/api/settings/agent-autonomy') {
+      const body = await readJson(req);
+      const autonomy = setAgentAutonomy(body.autonomy);
+      if (!autonomy) { sendJson(res, 400, { error: 'autonomy 必须是 suggest、ask 或 auto' }); return; }
+      sendJson(res, 200, { ok: true, autonomy });
       return;
     }
     // 感知设置（部分更新：只改 body 里带的字段）——桌面开关 / 全局上云 / 采集内容。
@@ -955,7 +964,8 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       return;
     }
 
-    // 开工：body {task, workspace, autonomy:'suggest'|'ask'|'auto'} → 返回 taskId（后台跑，前端轮询）。
+    // 开工：body {task, workspace, attachments} → 返回 taskId（后台跑，前端轮询）。
+    //   安全边界：忽略请求体里的 autonomy；只读用户持久化设置，避免调用方随任务临时提权到 auto。
     //   startTask 会校验工作区存在/是目录、任务非空，非法则抛 → 400。
     if (req.method === 'POST' && url.pathname === '/api/agent/start') {
       try {
@@ -971,7 +981,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
         const started = agent.startTask({
           task: typeof body.task === 'string' ? body.task : '',
           workspace,
-          autonomy: (body.autonomy === 'ask' || body.autonomy === 'auto' ? body.autonomy : 'suggest'),
+          autonomy: getAgentAutonomy(),
           attachments: Array.isArray(body.attachments) ? body.attachments : [], // ③·上下文附件 {name,content}[]
           context,
         });
@@ -1115,7 +1125,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       return;
     }
 
-    // 设某个 MCP 工具的「信任·免批」(F1)：body {fqName, trusted}。信任=该工具降级为按自主度走、不再每次强批。
+    // 设某个 MCP 工具的「信任·auto 免批」(F1)：body {fqName, trusted}。ask 档仍确认每次外部调用。
     if (req.method === 'POST' && url.pathname === '/api/mcp/tool/trust') {
       const body = await readJson(req);
       const fqName = typeof body.fqName === 'string' ? body.fqName.trim() : '';
@@ -1186,7 +1196,7 @@ export const ready = new Promise<LoopbackReady>((resolve, reject) => {
     console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
     console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET /api/chat-history · GET /api/bg-status');
     console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
-    console.log('  设置 → GET /api/settings · POST /api/settings/{perception,language,theme} · POST /api/observe(采集·不上云)');
+    console.log('  设置 → GET /api/settings · POST /api/settings/{perception,language,theme,agent-autonomy} · POST /api/observe(采集·不上云)');
     console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
     console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
     console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');

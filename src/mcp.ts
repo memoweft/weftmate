@@ -7,7 +7,7 @@
  * 延迟加载（PRODUCT.md 生死线）：给模型的系统提示里【只放 name + 一句话 + 极简参数签名】，
  *   完整的 inputSchema（啰嗦的 JSON Schema）留在这里、不进上下文——工具一多才不会撑爆 token。
  *
- * 安全：MCP 服务跑的是第三方代码。非只读工具（无 readOnlyHint）在 agent 里【一律要用户批准】（见 agent.ts resolveTool）。
+ * 安全：MCP 服务跑的是第三方代码。ask 档所有 MCP 调用逐次确认；未信任工具在 auto 档也要确认（见 agent.ts resolveTool）。
  *   env 合并由 SDK 处理（getDefaultEnvironment 补 PATH 等，再叠用户 env）；Windows 上 spawn shell:false，
  *   故 npx 类要配成 command:'cmd' args:['/c','npx',...]（预置清单已按此，见 server.ts /api/mcp/catalog）。
  */
@@ -24,7 +24,7 @@ export interface McpToolInfo {
   toolName: string;    // MCP 服务里的原始工具名（callTool 时用）
   description: string;
   signature: string;   // 极简参数签名 (a, b?, …)——不是完整 schema（延迟加载）
-  readOnly: boolean;   // annotations.readOnlyHint：只读工具 agent 里免批准
+  readOnly: boolean;   // annotations.readOnlyHint：服务自报，只作 UI/步骤标注，不单独决定审批
 }
 
 interface Conn {

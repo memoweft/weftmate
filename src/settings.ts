@@ -8,6 +8,7 @@
 import { app } from 'electron';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { isAutonomy, normalizeAutonomy, type Autonomy } from './agent-autonomy.ts';
 
 interface Settings {
   perception?: {
@@ -23,7 +24,9 @@ interface Settings {
   language?: 'auto' | 'zh' | 'en';
   /** 桌面外观主题。用设置文件持久化，避免动态 loopback 端口改变 localStorage origin。 */
   theme?: 'dark' | 'light';
-  /** 已「信任·免批准」的 MCP 工具 fqName（F1 trust opt-in）。默认空=所有 MCP 工具都要批准。 */
+  /** Agent 执行自主度。缺失时只读回落 ask，不主动写盘。 */
+  agent?: { autonomy?: Autonomy };
+  /** 已信任的 MCP 工具 fqName（F1 trust opt-in，仅 auto 档免批）。默认空=所有 MCP 工具都要批准。 */
   trustedMcpTools?: string[];
 }
 
@@ -119,6 +122,21 @@ export function setTheme(theme: 'dark' | 'light'): void {
   write(s);
 }
 
+// ── Agent 执行自主度 ──
+/** 读取持久化档位；新用户/损坏值安全回落 ask，但不在读取时写设置。 */
+export function getAgentAutonomy(): Autonomy {
+  return normalizeAutonomy(read().agent?.autonomy);
+}
+
+/** 显式保存合法档位；非法值返回 null，且绝不改写旧设置。 */
+export function setAgentAutonomy(value: unknown): Autonomy | null {
+  if (!isAutonomy(value)) return null;
+  const s = read();
+  s.agent = { ...(s.agent ?? {}), autonomy: value };
+  write(s);
+  return value;
+}
+
 /** 解析成 memoweft 认的 'zh'/'en'——auto 时跟系统语言(zh-* → zh,否则 en)。供设 MEMOWEFT_LANG / 改 config.language。 */
 export function resolvedLang(): 'zh' | 'en' {
   const l = getLanguage();
@@ -132,13 +150,13 @@ export function resolvedLang(): 'zh' | 'en' {
 
 // ── MCP 工具信任（F1·trust opt-in）──────────────────────────────────
 // 安全默认：所有 MCP（第三方代码）工具都要用户点头（resolveTool alwaysApprove=true）。用户对信得过的
-//   具体工具显式「信任」后，它才降级为按自主度/mutating 走（同内置工具）。信任非机密→明文设置即可。
-/** 已信任·免批的 MCP 工具 fqName 列表。 */
+//   具体工具显式「信任」后，只允许在 auto 档免批；ask 档仍逐次确认。信任非机密→明文设置即可。
+/** 已信任（仅 auto 档免批）的 MCP 工具 fqName 列表。 */
 export function getTrustedMcpTools(): string[] {
   const t = read().trustedMcpTools;
   return Array.isArray(t) ? t.filter((x) => typeof x === 'string') : [];
 }
-/** 设某个 MCP 工具的信任（trusted=true 免批；false 撤回信任、恢复要批）。 */
+/** 设某个 MCP 工具的信任（trusted=true 仅 auto 档免批；false 撤回信任、所有档位恢复要批）。 */
 export function setMcpToolTrust(fqName: string, trusted: boolean): void {
   const s = read();
   const set = new Set(getTrustedMcpTools());
