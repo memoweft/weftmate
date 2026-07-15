@@ -21,6 +21,8 @@ interface Settings {
   };
   /** 库产出语言(认知/摘要):'auto'=跟系统 / 'zh' / 'en'。缺省 auto。见 [[weftmate 语言]] / MEMOWEFT_LANG。 */
   language?: 'auto' | 'zh' | 'en';
+  /** 桌面外观主题。用设置文件持久化，避免动态 loopback 端口改变 localStorage origin。 */
+  theme?: 'dark' | 'light';
   /** 已「信任·免批准」的 MCP 工具 fqName（F1 trust opt-in）。默认空=所有 MCP 工具都要批准。 */
   trustedMcpTools?: string[];
 }
@@ -104,6 +106,16 @@ export function getLanguage(): 'auto' | 'zh' | 'en' {
 export function setLanguage(lang: 'auto' | 'zh' | 'en'): void {
   const s = read();
   s.language = lang === 'zh' || lang === 'en' ? lang : 'auto';
+  write(s);
+}
+
+/** 桌面主题（默认暗色）。 */
+export function getTheme(): 'dark' | 'light' {
+  return read().theme === 'light' ? 'light' : 'dark';
+}
+export function setTheme(theme: 'dark' | 'light'): void {
+  const s = read();
+  s.theme = theme === 'light' ? 'light' : 'dark';
   write(s);
 }
 

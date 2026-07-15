@@ -12,12 +12,15 @@
  *      别让后台整理计时器/库连接悬着。异步收尾用 preventDefault 兜住,清完再放行。
  *   ④ 单实例:抢不到锁的第二个实例直接退;已在跑的实例收到 second-instance 事件时把窗口唤到前台。
  */
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell } from 'electron';
 import { join } from 'node:path';
 import { appendFileSync, writeFileSync, statSync } from 'node:fs';
 
-// 端口:默认 7788;尊重 PORT 环境变量(允许多实例/开发时并存,避开被占端口)。
-const PORT = Number(process.env.PORT) || 7788;
+// Electron 默认让 OS 分配空闲端口；开发/诊断时仍可显式 PORT 固定。
+const REQUESTED_PORT = process.env.PORT === undefined ? 0 : Number(process.env.PORT);
+if (!Number.isInteger(REQUESTED_PORT) || REQUESTED_PORT < 0 || REQUESTED_PORT > 65535) {
+  throw new RangeError(`PORT 必须是 0–65535 的整数，收到：${process.env.PORT}`);
+}
 
 // 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面伴侣产品不该露原生菜单,不像成品。
 //   放模块顶层即可(whenReady 前设置也生效);置 null = 整条菜单不显示。
@@ -69,11 +72,11 @@ async function bootstrap() {
   // 让复用的 server.ts 建对库(打包后 app 目录只读,DB 必须落 userData)、起对端口、默认星瑶、非纯库模式。
   const dbPath = join(app.getPath('userData'), 'weftmate.db');
   process.env.MEMOWEFT_HOST_DB = dbPath;
-  process.env.PORT = String(PORT);
+  process.env.PORT = String(REQUESTED_PORT);
   process.env.MEMOWEFT_EXPERIENCE = 'xingyao';
   delete process.env.MEMOWEFT_EXPERIENCE_UI; // 确保不是"纯库模式"(那会 process.exit)
   console.log('[weftmate] db =', dbPath);
-  console.log('[weftmate] port =', PORT);
+  console.log('[weftmate] requested port =', REQUESTED_PORT === 0 ? 'automatic' : REQUESTED_PORT);
 
   // 先解密已存模型配置塞进 env(必须在 import server.ts 建 core 之前)——库构造时一次性读死 key(见 config-store)。
   //   没配/解不开 → injectEnv 静默跳过,core 起来但 llmReady=false,前端进配置向导("装完能用"路径)。
@@ -96,9 +99,13 @@ async function bootstrap() {
     console.error('[weftmate] 读语言设置失败(回落 en):', e && e.message ? e.message : e);
   }
 
+  let loopback;
+  let loopbackToken;
   try {
     // 复用现有 server.ts:主进程内起 loopback + 建 core(node:sqlite 已 S0 验)。捕获模块以便退出时调 shutdown()。
     serverMod = await import('./server.ts');
+    loopback = await serverMod.ready;
+    loopbackToken = serverMod.getLoopbackToken();
     console.log('[weftmate] ✓ server.ts 起来了(loopback + core)');
   } catch (e) {
     console.error('[weftmate] ✗ import server.ts 失败:', e && e.message ? e.message : e);
@@ -106,17 +113,60 @@ async function bootstrap() {
     return;
   }
 
-  // server.listen 异步,粗糙等一下 ready(够用;后续可换成等 server 事件)。
-  await new Promise((r) => setTimeout(r, 800));
-
   win = new BrowserWindow({
     width: 1040, height: 740, minWidth: 760, minHeight: 520,
     title: 'WeftMate', backgroundColor: '#191a1e',
     // 无原生标题栏:前端自绘一条与 App 风格协调的标题栏(可拖拽 + 自定义 min/max/close,随主题上色)。
     frame: false,
-    webPreferences: { preload: join(import.meta.dirname, 'preload.cjs'), contextIsolation: true },
+    webPreferences: {
+      preload: join(import.meta.dirname, 'preload.cjs'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+      webSecurity: true,
+    },
   });
   win.webContents.on('did-fail-load', (_e, code, desc) => console.error('[weftmate] ✗ 前端加载失败', code, desc));
+
+  // token 只在 Electron 网络层注入精确 /api/*；不进入页面、preload、URL、Cookie、env 或日志。
+  const trustedWebContentsId = win.webContents.id;
+  win.webContents.session.webRequest.onBeforeSendHeaders(
+    { urls: [`${loopback.origin}/*`] },
+    (details, callback) => {
+      const requestHeaders = { ...details.requestHeaders };
+      let isTrustedApiUrl = false;
+      try {
+        const target = new URL(details.url);
+        isTrustedApiUrl = target.origin === loopback.origin
+          && (target.pathname === '/api' || target.pathname.startsWith('/api/'));
+      } catch { /* 非法 URL 不注入 */ }
+      if (details.webContentsId === trustedWebContentsId && isTrustedApiUrl) {
+        for (const name of Object.keys(requestHeaders)) {
+          if (name.toLowerCase() === 'authorization') delete requestHeaders[name];
+        }
+        requestHeaders.Authorization = `Bearer ${loopbackToken}`;
+      }
+      callback({ requestHeaders });
+    },
+  );
+
+  // 主窗口永远留在可信 loopback origin。新开的 http(s) 链接交给系统浏览器，其余协议一律拒绝。
+  win.webContents.on('will-navigate', (event, targetUrl) => {
+    try {
+      if (new URL(targetUrl).origin !== loopback.origin) event.preventDefault();
+    } catch {
+      event.preventDefault();
+    }
+  });
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    try {
+      const protocol = new URL(url).protocol;
+      if (protocol === 'http:' || protocol === 'https:') {
+        void shell.openExternal(url).catch((error) => logCrash('openExternal', error));
+      }
+    } catch { /* 非法 URL 直接拒绝 */ }
+    return { action: 'deny' };
+  });
 
   // 自绘标题栏的窗口控制(前端经 preload 暴露的 window.wmWindow.* 发来 IPC):
   ipcMain.on('wm:minimize', () => win?.minimize());
@@ -137,10 +187,12 @@ async function bootstrap() {
   });
 
   try {
-    await win.loadURL(`http://127.0.0.1:${PORT}`);
+    await win.loadURL(loopback.origin);
     console.log('[weftmate] ✓ 窗口加载完成');
   } catch (e) {
     console.error('[weftmate] ✗ window.loadURL 失败:', e && e.message ? e.message : e);
+    app.quit();
+    return;
   }
 
   setupTray();
@@ -149,9 +201,12 @@ async function bootstrap() {
   try {
     const { getPerceptionEnabled } = await import('./settings.ts');
     collectorMod = await import('./collector.ts');
-    if (getPerceptionEnabled()) {
-      collectorMod.startCollector(PORT);
+    const collectorAllowed = (process.env.MEMOWEFT_HOST_COLLECTOR ?? 'on').toLowerCase() !== 'off';
+    if (getPerceptionEnabled() && collectorAllowed) {
+      collectorMod.startCollector(loopback.port, loopbackToken);
       console.log('[weftmate] ✓ 感知采集已开启(opt-in;活动窗口+活动节奏 → observed 不上云)');
+    } else if (!collectorAllowed) {
+      console.log('[weftmate] 感知采集被 MEMOWEFT_HOST_COLLECTOR=off 禁用');
     } else {
       console.log('[weftmate] 感知采集默认关(opt-in;设置里可开)');
     }

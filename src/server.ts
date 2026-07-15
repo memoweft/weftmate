@@ -27,7 +27,7 @@
  * 红线：只经 `import 'memoweft'` 调 Core，任何 `import '../../src/*'` 都算越界。
  * 数据隔离：Host 用自己独立的库（默认 apps/memoweft-host/data/host.db，env MEMOWEFT_HOST_DB 覆盖），
  *   聊天历史落【库同目录下的 sessions/】（跟随库路径：隔离库时聊天历史也隔离），与 testbench 互不污染。
- * 只绑 127.0.0.1：本服务无鉴权、直接读写个人画像，只开本机回环、杜绝外网面。
+ * 只绑 127.0.0.1，并以每进程 bearer token + Host/Origin/Sec-Fetch-Site 守住全部 API。
  */
 import { createServer, type IncomingMessage } from 'node:http';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -40,11 +40,12 @@ import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_ID
 import { buildEnvResponse } from './genEnv.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
-import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, resolvedLang, getTrustedMcpTools, setMcpToolTrust } from './settings.ts';
+import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, resolvedLang, getTrustedMcpTools, setMcpToolTrust } from './settings.ts';
 import * as agent from './agent.ts';
 import * as mcp from './mcp.ts';
 import * as mcpStore from './mcp-store.ts';
 import { ensureDefaultAgentWorkspace as ensureWorkspaceInDocuments } from './agent-workspace.ts';
+import { createLoopbackToken, loopbackPolicy, observationIngestionAllowed, secureHtmlDocument, withLoopbackSecurity } from './loopback-security.ts';
 import { dialog, BrowserWindow, app } from 'electron';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
@@ -62,8 +63,28 @@ if (process.env.MEMOWEFT_EXPERIENCE_UI === 'off') {
   process.exit(0);
 }
 
-// 端口：默认 7788（避开 testbench 的 7888，也避开 Clash/FlClash 常用的 7890/7891 代理端口）；env PORT 覆盖。
-const PORT = Number(process.env.PORT) || 7788;
+// 端口：standalone 无 env 时保留 7788；Electron main 默认显式传 0，让 OS 分配空闲端口。
+function readRequestedPort(): number {
+  if (process.env.PORT === undefined) return 7788;
+  const parsed = Number(process.env.PORT);
+  if (!Number.isInteger(parsed) || parsed < 0 || parsed > 65535) {
+    throw new RangeError(`PORT 必须是 0–65535 的整数，收到：${process.env.PORT}`);
+  }
+  return parsed;
+}
+const REQUESTED_PORT = readRequestedPort();
+const LOOPBACK_TOKEN = createLoopbackToken();
+let boundPort: number | null = null;
+
+function currentLoopbackPolicy() {
+  if (boundPort === null) throw new Error('loopback 尚未监听');
+  return loopbackPolicy(boundPort, LOOPBACK_TOKEN);
+}
+
+/** 只给同一 Electron 主进程中的可信客户端接线；不得记录、持久化或暴露给页面。 */
+export function getLoopbackToken(): string {
+  return LOOPBACK_TOKEN;
+}
 
 // 库路径：默认 data/host.db（相对本脚本位置，不受 cwd 影响）；env MEMOWEFT_HOST_DB 覆盖。
 const DB_PATH = process.env.MEMOWEFT_HOST_DB ?? join(import.meta.dirname, '..', 'data', 'host.db');
@@ -77,7 +98,7 @@ const SESSIONS_DIR = join(dirname(DB_PATH), 'sessions');
 const MAX_MESSAGE_CHARS = 20000;
 
 // 采集摄入（/api/observe）：采集插件 → Host 审核 → Core（架构归位路线 §3）。
-//   COLLECTOR_ENABLED：采集总开关（用户设置），env MEMOWEFT_HOST_COLLECTOR=off 则 Host 拒收（403）。缺省 on。
+//   COLLECTOR_ENABLED：部署级 kill-switch；env MEMOWEFT_HOST_COLLECTOR=off 时 UI 也不能绕过。缺省 on。
 //   MAX_OBSERVE_BATCH：单次 POST 最多几条 observation（挡异常客户端一次灌爆）。
 const COLLECTOR_ENABLED = (process.env.MEMOWEFT_HOST_COLLECTOR ?? 'on').toLowerCase() !== 'off';
 const MAX_OBSERVE_BATCH = 200;
@@ -313,15 +334,20 @@ const MCP_CATALOG = [
   { key: 'everything', name: '测试服务 everything', desc: 'MCP 官方测试服务，含各种示例工具（拿来试装最省事）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-everything'] },
 ];
 
-const server = createServer(async (req, res) => {
-  const url = new URL(req.url ?? '/', `http://127.0.0.1:${PORT}`);
-
+const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (req, res) => {
   try {
+    const url = new URL(req.url ?? '/', currentLoopbackPolicy().origin);
     // 前端：干净单文件 html（只含用户模式聊天）。
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
-      const html = readFileSync(INDEX_HTML, 'utf-8');
-      res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
-      res.end(html);
+      const source = readFileSync(INDEX_HTML, 'utf-8')
+        .replaceAll('__WEFTMATE_THEME__', getTheme())
+        .replaceAll('__WEFTMATE_UI_LANG__', resolvedLang());
+      const secured = secureHtmlDocument(source);
+      res.writeHead(200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Content-Security-Policy': secured.contentSecurityPolicy,
+      });
+      res.end(secured.html);
       return;
     }
 
@@ -467,12 +493,12 @@ const server = createServer(async (req, res) => {
 
     // ── 采集观察摄入（采集器插件 → Host 审核 → Core，架构归位路线 §3）──
     // 采集插件（如 @memoweft/collector-active-window）把窗口样本映射成 generic Observation 后 POST 这里。
-    // Host 审核三件事：① 采集总开关（COLLECTOR_ENABLED，off 则 403 拒收）；
+    // Host 审核三件事：① 部署 kill-switch 与用户实时 opt-in 必须同时开启，否则 403；
     //   ② 隐私红线——sanitizeObservation 强制剥掉授权位，observed 数据默认不上云（插件无权自行放行上云）；
     //   ③ 调 core.ingestObservation（插件绝不直穿 Core / Store）。前端无需入口——采集器直接 POST。
     if (req.method === 'POST' && url.pathname === '/api/observe') {
-      if (!COLLECTOR_ENABLED) {
-        sendJson(res, 403, { error: '采集已关闭（MEMOWEFT_HOST_COLLECTOR=off）' });
+      if (!observationIngestionAllowed(COLLECTOR_ENABLED, getPerceptionEnabled())) {
+        sendJson(res, 403, { error: '感知采集未开启' });
         return;
       }
       const body = await readJson(req);
@@ -527,7 +553,6 @@ const server = createServer(async (req, res) => {
       res.writeHead(200, {
         'Content-Type': image.mime,
         'Content-Length': image.data.length,
-        'Cache-Control': 'private, max-age=31536000, immutable',
         'X-Content-Type-Options': 'nosniff',
         'Cross-Origin-Resource-Policy': 'same-origin',
       });
@@ -697,6 +722,7 @@ const server = createServer(async (req, res) => {
         // 多源结构 + 全局 cloudAllowed（默认不上云红线）+ running（采集器当前是否在跑）。
         perception: { ...readPerceptionView(), running: collector.isCollectorRunning() },
         language: { setting: getLanguage(), resolved: resolvedLang() }, // setting=auto/zh/en(用户选)·resolved=实际生效 zh/en
+        appearance: { theme: getTheme() },
       });
       return;
     }
@@ -711,12 +737,20 @@ const server = createServer(async (req, res) => {
       sendJson(res, 200, { ok: true, setting: getLanguage(), resolved: config.language });
       return;
     }
+    if (req.method === 'POST' && url.pathname === '/api/settings/theme') {
+      const body = await readJson(req);
+      const theme = body.theme === 'light' ? 'light' : 'dark';
+      setTheme(theme);
+      sendJson(res, 200, { ok: true, theme: getTheme() });
+      return;
+    }
     // 感知设置（部分更新：只改 body 里带的字段）——桌面开关 / 全局上云 / 采集内容。
     if (req.method === 'POST' && url.pathname === '/api/settings/perception') {
       const body = await readJson(req);
       if (typeof body.enabled === 'boolean') {
         setPerceptionEnabled(body.enabled);
-        if (body.enabled) collector.startCollector(PORT); else collector.stopCollector(); // 桌面源启停
+        if (body.enabled && COLLECTOR_ENABLED) collector.startCollector(boundPort!, LOOPBACK_TOKEN);
+        else collector.stopCollector(); // 桌面源启停；env off 是不可被 UI 绕过的 kill-switch
       }
       if (typeof body.cloudAllowed === 'boolean') {
         setPerceptionCloudAllowed(body.cloudAllowed); // 上云在摄入时应用,无需重启采集器
@@ -908,7 +942,6 @@ const server = createServer(async (req, res) => {
       });
       return;
     }
-
     // 选工作区文件夹：Electron 目录选择框（server 在主进程，可直接用 dialog）。返回选中的绝对路径。
     if (req.method === 'POST' && url.pathname === '/api/agent/pick-workspace') {
       const currentWorkspace = workspaceForConversation(currentConvId);
@@ -1098,7 +1131,7 @@ const server = createServer(async (req, res) => {
     // 兜底：任何 handler 抛错（如非法 UTF-8 请求体）都返回 400，不崩服务。
     sendJson(res, 400, { error: e instanceof Error ? e.message : String(e) });
   }
-});
+}));
 
 // 优雅收尾（幂等）：清调度器计时、关 Core 库连接、关 loopback。
 //   两条触发路径共用：① Electron 主进程 before-quit（桌面常驻退出，见 main.mjs）；② SIGINT/SIGTERM（CLI/冒烟被 kill）。
@@ -1124,19 +1157,42 @@ for (const sig of ['SIGINT', 'SIGTERM'] as const) {
   process.on(sig, () => { void shutdown().then(() => process.exit(0)); });
 }
 
-server.listen(PORT, '127.0.0.1', () => {
-  console.log(`\n  MemoWeft Host（批次5 步6·S0/S1 用户正门）→ http://127.0.0.1:${PORT}`);
-  console.log(`  记忆库 → ${DB_PATH}`);
-  console.log(`  聊天历史 → ${SESSIONS_DIR}（跟随库路径）`);
-  console.log(`  当前对话 → ${currentConvId}`);
-  console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
-  console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET /api/chat-history · GET /api/bg-status');
-  console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
-  console.log('  设置 → GET /api/settings · POST /api/settings/perception(感知 opt-in) · POST /api/settings/language(库语言·运行期改) · POST /api/observe(采集·不上云)');
-  console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
-  console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
-  console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');
-  console.log('  数据/备份 → GET /api/export-bundle · POST /api/import-bundle · POST /api/factory-reset');
-  console.log('  用户正门 → GET /api/cognition/count · POST /api/refresh（立即整理记忆）');
-  console.log('  记忆图谱 → GET /api/memory-graph\n');
+export interface LoopbackReady {
+  port: number;
+  origin: string;
+}
+
+/** Resolves only after the OS has assigned the final port and the guard policy is usable. */
+export const ready = new Promise<LoopbackReady>((resolve, reject) => {
+  const onStartupError = (error: Error) => reject(error);
+  server.once('error', onStartupError);
+  server.listen(REQUESTED_PORT, '127.0.0.1', () => {
+    server.off('error', onStartupError);
+    server.on('error', (error) => {
+      console.error('[weftmate] loopback 运行时错误:', error instanceof Error ? error.message : String(error));
+    });
+    const address = server.address();
+    if (!address || typeof address === 'string') {
+      reject(new Error('loopback 未返回 TCP 监听地址'));
+      return;
+    }
+    boundPort = address.port;
+    const { origin } = currentLoopbackPolicy();
+
+    console.log(`\n  MemoWeft Host（批次5 步6·S0/S1 用户正门）→ ${origin}`);
+    console.log(`  记忆库 → ${DB_PATH}`);
+    console.log(`  聊天历史 → ${SESSIONS_DIR}（跟随库路径）`);
+    console.log(`  当前对话 → ${currentConvId}`);
+    console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
+    console.log('  端点 → GET / · GET /api/health · GET /api/usage · POST /api/chat · GET /api/chat-history · GET /api/bg-status');
+    console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
+    console.log('  设置 → GET /api/settings · POST /api/settings/{perception,language,theme} · POST /api/observe(采集·不上云)');
+    console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
+    console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
+    console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');
+    console.log('  数据/备份 → GET /api/export-bundle · POST /api/import-bundle · POST /api/factory-reset');
+    console.log('  用户正门 → GET /api/cognition/count · POST /api/refresh（立即整理记忆）');
+    console.log('  记忆图谱 → GET /api/memory-graph\n');
+    resolve({ port: boundPort, origin });
+  });
 });
