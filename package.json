@@ -8,6 +8,7 @@
   "scripts": {
     "start": "electron .",
     "smoke": "electron .",
+    "release:preflight": "node scripts/release-preflight.mjs",
     "typecheck": "tsc",
     "test": "node --test \"tests/**/*.test.ts\""
   },
@@ -15,6 +16,10 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "get-windows": "^9.3.0",
     "memoweft": "0.5.1"
+  },
+  "overrides": {
+    "@mapbox/node-pre-gyp": "2.0.3",
+    "node-gyp": "11.5.0"
   },
   "devDependencies": {
     "electron": "latest",
