@@ -48,6 +48,9 @@ const MAX_IMAGE_DATA_CHARS = 8_500_000; // 单张图片 data URL 上限（约 6M
 const MAX_IMAGE_TOTAL_CHARS = 26_000_000; // 单任务图片总量上限，防 loopback 请求把内存撑爆
 const MAX_CONTEXT_TURNS = 16;      // 带入统一 Agent 的最近会话轮数
 const MAX_CONTEXT_CHARS = 20_000;  // 单轮上下文上限（防历史异常撑爆请求）
+const TERMINAL_TASK_TTL_MS = 30 * 60_000; // 终态临时状态约保留 30 分钟，供最终轮询与撤回
+const MAX_TERMINAL_TASKS = 50;             // 硬上限：任务多时最老终态会提前清理；活跃任务绝不参与
+const TASK_CLEANUP_INTERVAL_MS = 60_000;
 
 type AgentTextPart = { type: 'text'; text: string };
 type AgentImagePart = { type: 'image_url'; image_url: { url: string; detail: 'auto' } };
@@ -71,6 +74,7 @@ export interface AgentStep {
   index: number;             // 第几步（0 起）
   tool: string;
   args: Record<string, unknown>;
+  argsSummary?: string;        // 终态只留有限长度摘要，不长期保留文件正文/命令等原始参数
   thought?: string;          // 模型这步的想法（透明化，给用户看）
   status: StepStatus;
   mutating: boolean;         // 是否改动文件系统（决定要不要备份/能不能撤回）
@@ -90,6 +94,7 @@ export interface AgentTaskView {
   summary?: string;          // done 时模型的总结 / suggest 的方案说明
   note?: string;             // 额外提示（到步数上限 / 撤回不完全等）
   canUndo: boolean;          // 有备份可还原
+  undoHint?: string;         // 撤回临时窗口的诚实说明
   ranCommand: boolean;       // 跑过命令（撤回不完全的提示）
   attachments: string[];     // 附的参考文件名（③·给前端显示；不回传内容）
   createdAt: string;
@@ -107,6 +112,7 @@ interface Task {
   note?: string;
   createdAt: string;
   attachments: TaskAttachment[]; // 文本按需读取；图片作为多模态内容直接交给当前模型
+  attachmentNames: string[];      // 轻量展示元数据；终态释放附件正文/dataUrl 后仍给最终 UI 看
   context: ChatMessage[];                  // 启动时所在会话的最近上下文（只含 user/assistant，不回传前端）
   // 内部：
   messages: AgentMessage[];              // agent 自己的对话历史（不进 memoweft）
@@ -114,10 +120,18 @@ interface Task {
   ranCommand: boolean;
   stopped: boolean;
   gate?: (decision: 'approve' | 'reject') => void;  // 等待批准时的 resolver
+  terminalAt?: number;                         // 进入终态的时刻；TTL/数量清理依据
 }
 
 // 活跃任务表（单用户单进程，模块级即可）。
 const tasks = new Map<string, Task>();
+const DEFAULT_TASK_RETENTION = {
+  now: () => Date.now(),
+  ttlMs: TERMINAL_TASK_TTL_MS,
+  maxTerminalTasks: MAX_TERMINAL_TASKS,
+};
+let taskRetention = { ...DEFAULT_TASK_RETENTION };
+let backupReader: (file: string) => Promise<Buffer> = (file) => readFile(file);
 
 // ── 记忆接线 + MCP 工具接线（server 注入；不 import core/mcp，保持解耦 + 热重建自然跟随）──
 /** MCP 工具（②·帮你干活）：延迟加载——只带 name/desc/极简签名，完整 schema 在 mcp.ts 手里、不进上下文。 */
@@ -128,6 +142,7 @@ interface AgentDeps {
   record?: (taskText: string, summary: string) => Promise<void>; // 干完把结果回写记忆
   recordChat?: (userText: string, reply: string) => Promise<void>; // 没调用工具的普通回答：按聊天证据入记忆，不伪装成"帮我干活"
   complete?: (taskId: string, taskText: string, summary: string, usedTools: boolean, attachments: AgentCompletionAttachment[]) => Promise<void>; // 宿主落当前会话历史/附件引用
+  settled?: (taskId: string) => void;                               // 任意终态都通知宿主清理任务关联容器
   experience?: () => AgentExperience;                            // 当前人格（动态 getter；切换后下一任务立即读取新值）
   mcpTools?: () => AgentMcpTool[];                            // 当前可用的 MCP 工具（装的能力包）
   callMcp?: (fqName: string, args: Record<string, unknown>) => Promise<string>; // 调一个 MCP 工具
@@ -135,6 +150,46 @@ interface AgentDeps {
 }
 let deps: AgentDeps = {};
 export function configureAgentDeps(d: AgentDeps): void { deps = d; }
+
+function isTerminalStatus(status: TaskStatus): status is 'done' | 'failed' | 'stopped' {
+  return status === 'done' || status === 'failed' || status === 'stopped';
+}
+
+/** 只清理终态任务：先按 TTL，再执行数量硬上限；planning/running/awaiting 永不参与。 */
+function cleanupTerminalTasks(now = taskRetention.now()): void {
+  const terminal = [...tasks.values()]
+    .filter((task) => isTerminalStatus(task.status) && task.terminalAt !== undefined)
+    .sort((a, b) => a.terminalAt! - b.terminalAt!);
+
+  for (const task of terminal) {
+    if (now - task.terminalAt! >= taskRetention.ttlMs) tasks.delete(task.id);
+  }
+
+  const survivors = terminal.filter((task) => tasks.has(task.id));
+  while (survivors.length > taskRetention.maxTerminalTasks) {
+    tasks.delete(survivors.shift()!.id);
+  }
+}
+
+/** 所有终态都走同一出口：先标终态，再释放模型上下文/附件正文，最后通知宿主清理关联容器。 */
+function settleTask(task: Task, status: 'done' | 'failed' | 'stopped'): void {
+  if (task.terminalAt !== undefined && isTerminalStatus(task.status)) return;
+  task.status = status;
+  task.terminalAt = taskRetention.now();
+  for (const step of task.steps) {
+    step.argsSummary = summarizeStepArgs(step.args);
+    step.args = {};
+  }
+  task.attachments = [];
+  task.messages = [];
+  task.context = [];
+  task.gate = undefined;
+  try { deps.settled?.(task.id); } catch { /* 宿主清理失败不能改变任务结果 */ }
+  cleanupTerminalTasks(task.terminalAt);
+}
+
+const taskCleanupTimer = setInterval(() => cleanupTerminalTasks(), TASK_CLEANUP_INTERVAL_MS);
+taskCleanupTimer.unref();
 
 /** 解析工具名 → ToolDef：先内置四工具，再 MCP 工具（包成 ToolDef）。
  *  MCP 是第三方代码，且 readOnly 是【服务自报】的（annotations.readOnlyHint）——自报只读不可信：
@@ -255,8 +310,11 @@ async function backupBeforeWrite(task: Task, file: string): Promise<void> {
   if (task.backups.has(file)) return;            // 已备份过原始态，别被后续写覆盖
   if (existsSync(file)) {
     // C6：读 Buffer 原样备份（不预设 utf8）——二进制文件用 utf8 读会丢字节，撤回时写回就损坏原文件。
-    try { task.backups.set(file, await readFile(file)); }
-    catch { task.backups.set(file, null); }       // 权限等读不出 → 当作无法还原（撤回时删掉）
+    try { task.backups.set(file, await backupReader(file)); }
+    catch (e) {
+      // 已存在文件读不出来时绝不能把它当成“原先不存在”：否则继续覆盖后，撤回会把用户原文件删掉。
+      throw new Error(`无法在修改前备份 ${relative(task.workspace, file)}，已取消写入：${errMsg(e)}`);
+    }
   } else {
     task.backups.set(file, null);                // 改前不存在 → 撤回时删除
   }
@@ -461,7 +519,7 @@ export function startTask(input: {
   const autonomy = normalizeAutonomy(input.autonomy);
   const id = 'task-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
   const t: Task = {
-    id, task, workspace, autonomy, attachments, context,
+    id, task, workspace, autonomy, attachments, attachmentNames: attachments.map((attachment) => attachment.name), context,
     status: autonomy === 'suggest' ? 'planning' : 'running',
     steps: [], createdAt: new Date().toISOString(),
     messages: [], backups: new Map(), ranCommand: false, stopped: false,
@@ -502,6 +560,7 @@ async function plan(t: Task): Promise<void> {
       ...t.context,
       taskUserMessage(t),
     ]);
+    if (t.stopped) { settleTask(t, 'stopped'); return; }
     const obj = extractJson(reply);
     if (obj && Array.isArray(obj.plan)) {
       t.summary = String(obj.summary ?? '这是建议方案，没有执行任何操作。');
@@ -518,10 +577,10 @@ async function plan(t: Task): Promise<void> {
     }
     t.note = '这是建议方案，没有执行任何操作。要真做请换"问一下"或"放手做"。';
     await safeFinish(t);
-    t.status = 'done';
+    settleTask(t, t.stopped ? 'stopped' : 'done');
   } catch (e) {
-    t.status = 'failed';
     t.note = errMsg(e);
+    settleTask(t, t.stopped ? 'stopped' : 'failed');
   }
 }
 
@@ -540,9 +599,11 @@ async function drive(t: Task): Promise<void> {
     let parseFails = 0;
 
     for (let i = 0; i < MAX_STEPS; i++) {
-      if (t.stopped) { t.status = 'stopped'; return; }
+      if (t.stopped) { settleTask(t, 'stopped'); return; }
 
       const reply = await client.chat(t.messages);
+      // client.chat 在途时用户可能已经叫停；返回后先收口，绝不能再解析/开启下一步工具动作。
+      if (t.stopped) { settleTask(t, 'stopped'); return; }
       t.messages.push({ role: 'assistant', content: reply });
       const parsed = parseAction(reply);
 
@@ -557,11 +618,13 @@ async function drive(t: Task): Promise<void> {
         if (t.steps.length === 0 && directReply) {
           t.summary = directReply;
           await safeFinish(t);
-          t.status = 'done';
+          settleTask(t, t.stopped ? 'stopped' : 'done');
           return;
         }
         if (++parseFails >= MAX_PARSE_FAILS) {
-          t.status = 'failed'; t.note = '模型没按格式回复，放弃。'; return;
+          t.note = '模型没按格式回复，放弃。';
+          settleTask(t, 'failed');
+          return;
         }
         t.messages.push({ role: 'user', content: '你的回复我解析不了。请【只回一个 JSON 对象】（action 或 done），别加其它文字。' });
         continue;
@@ -571,7 +634,7 @@ async function drive(t: Task): Promise<void> {
       if (parsed.done) {
         t.summary = parsed.summary || '完成。';
         await safeFinish(t);                       // 普通回答/工具任务分别入记忆，并落宿主会话历史
-        t.status = 'done';                         // 宿主落盘完成后再对前端宣告 done，避免刷新历史的竞态
+        settleTask(t, t.stopped ? 'stopped' : 'done'); // 宿主落盘完成后再对前端宣告终态，避免刷新历史的竞态
         return;
       }
 
@@ -598,7 +661,7 @@ async function drive(t: Task): Promise<void> {
         const decision = await waitGate(t);
         if (t.stopped || decision === 'reject') {
           step.status = 'rejected';
-          if (t.stopped) { t.status = 'stopped'; return; }
+          if (t.stopped) { settleTask(t, 'stopped'); return; }
           t.status = 'running';
           t.messages.push({ role: 'user', content: `用户拒绝了这步（${tool ? parsed.tool : ''}）。换个做法，或直接 done 收尾。` });
           continue;
@@ -621,13 +684,13 @@ async function drive(t: Task): Promise<void> {
     }
 
     // 到步数上限还没 done
-    if (t.status !== 'done') {
-      t.status = 'failed';
+    if (!isTerminalStatus(t.status)) {
       t.note = `到达步数上限（${MAX_STEPS} 步）还没完成，先停下。`;
+      settleTask(t, 'failed');
     }
   } catch (e) {
-    t.status = 'failed';
     t.note = errMsg(e);
+    settleTask(t, t.stopped ? 'stopped' : 'failed');
   }
 }
 
@@ -649,42 +712,72 @@ export function decideStep(taskId: string, decision: 'approve' | 'reject'): bool
 /** 叫停任务：置 stopped，并唤醒可能挂起的审批门（当拒绝处理）。 */
 export function stopTask(taskId: string): boolean {
   const t = tasks.get(taskId);
-  if (!t) return false;
+  if (!t || isTerminalStatus(t.status)) return false;
   t.stopped = true;
   if (t.gate) { const g = t.gate; t.gate = undefined; g('reject'); }
   return true;
 }
 
 /** 一键撤回：还原本任务改过的所有文件（改前不存在的删掉）。命令副作用还原不了，ranCommand 已如实标注。 */
-export async function undoTask(taskId: string): Promise<{ ok: boolean; restored: number; ranCommand: boolean }> {
+export async function undoTask(taskId: string): Promise<{
+  ok: boolean;
+  restored: number;
+  failed: number;
+  ranCommand: boolean;
+  error?: string;
+}> {
+  cleanupTerminalTasks();
   const t = tasks.get(taskId);
-  if (!t) return { ok: false, restored: 0, ranCommand: false };
-  let restored = 0;
-  for (const [file, prior] of t.backups) {
-    try {
-      if (prior === null) { if (existsSync(file)) { await rm(file); restored++; } }
-      else { await writeFile(file, prior); restored++; }   // C6：prior 是 Buffer，原样写回（文本/二进制都不损坏）
-    } catch { /* 单个文件还原失败不阻断其余（如已被外部删/锁） */ }
+  if (!t) {
+    return {
+      ok: false, restored: 0, failed: 0, ranCommand: false,
+      error: '撤回窗口已过期，或任务较多时临时状态已提前清理。已写入会话的内容不受影响。',
+    };
   }
-  t.backups.clear();
+  if (!isTerminalStatus(t.status)) {
+    return {
+      ok: false, restored: 0, failed: 0, ranCommand: t.ranCommand,
+      error: '任务还没结束，暂时不能撤回。请先停止任务并等待它结束。',
+    };
+  }
+  let restored = 0;
+  let failed = 0;
+  for (const [file, prior] of [...t.backups]) {
+    try {
+      if (prior === null) { if (existsSync(file)) await rm(file); }
+      else await writeFile(file, prior);   // C6：prior 是 Buffer，原样写回（文本/二进制都不损坏）
+      restored++;
+      t.backups.delete(file);              // 只删成功项；失败项保留，允许用户稍后重试
+    } catch { failed++; /* 单个文件还原失败不阻断其余（如父目录已删/文件锁定） */ }
+  }
+  if (failed > 0) {
+    const error = '部分文件还原失败；失败项仍保留，可稍后重试。';
+    t.note = `已还原 ${restored} 个文件，另有 ${failed} 个失败；失败项仍保留，可稍后重试。` +
+      (t.ranCommand ? ' 注意：跑过命令，命令造成的其它变化撤不回。' : '');
+    return { ok: false, restored, failed, ranCommand: t.ranCommand, error };
+  }
   t.note = `已撤回：还原 ${restored} 个文件${t.ranCommand ? '（注意：跑过命令，命令造成的其它变化撤不回）' : ''}。`;
-  return { ok: true, restored, ranCommand: t.ranCommand };
+  return { ok: true, restored, failed: 0, ranCommand: t.ranCommand };
 }
 
 // ── 视图 / 查询（给 server 端点）──
 export function getTaskView(taskId: string): AgentTaskView | null {
+  cleanupTerminalTasks();
   const t = tasks.get(taskId);
   return t ? toView(t) : null;
 }
 export function listTasks(): AgentTaskView[] {
+  cleanupTerminalTasks();
   return [...tasks.values()].map(toView).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
 }
 function toView(t: Task): AgentTaskView {
+  const canUndo = isTerminalStatus(t.status) && t.backups.size > 0;
   return {
     id: t.id, task: t.task, workspace: t.workspace, autonomy: t.autonomy,
     status: t.status, steps: t.steps, summary: t.summary, note: t.note,
-    canUndo: t.backups.size > 0, ranCommand: t.ranCommand,
-    attachments: t.attachments.map((a) => a.name), createdAt: t.createdAt,
+    canUndo, ranCommand: t.ranCommand,
+    undoHint: canUndo ? '任务结束后约 30 分钟内可撤回；任务较多时可能提前清理。' : undefined,
+    attachments: t.attachmentNames, createdAt: t.createdAt,
   };
 }
 
@@ -748,6 +841,48 @@ class AgentOpenAIClient implements ChatClient {
 let clientFactory: () => ChatClient = () => new AgentOpenAIClient();
 /** 仅测试用：注入假模型确定性地驱动循环，冒烟沙箱/撤回等安全逻辑（不碰生产路径；生产永远走默认工厂）。 */
 export function __setClientFactory(f: () => ChatClient): void { clientFactory = f; }
+/** 仅测试用：缩短 TTL/数量边界并注入假时钟，避免真实等待半小时。 */
+export function __setTaskRetentionForTests(input: {
+  now?: () => number;
+  ttlMs?: number;
+  maxTerminalTasks?: number;
+}): void {
+  if (input.now) taskRetention.now = input.now;
+  if (input.ttlMs !== undefined) taskRetention.ttlMs = input.ttlMs;
+  if (input.maxTerminalTasks !== undefined) taskRetention.maxTerminalTasks = input.maxTerminalTasks;
+}
+export function __runTaskCleanupForTests(): void { cleanupTerminalTasks(); }
+export function __taskCleanupTimerHasRefForTests(): boolean { return taskCleanupTimer.hasRef(); }
+export function __setBackupReaderForTests(reader?: (file: string) => Promise<Buffer>): void {
+  backupReader = reader ?? ((file) => readFile(file));
+}
+export function __getTaskRetentionDebugForTests(taskId: string): {
+  status: TaskStatus;
+  terminalAt?: number;
+  attachmentCount: number;
+  messageCount: number;
+  contextCount: number;
+  backupCount: number;
+  stepArgs: Array<{ args: Record<string, unknown>; argsSummary?: string }>;
+} | null {
+  const task = tasks.get(taskId);
+  return task ? {
+    status: task.status,
+    terminalAt: task.terminalAt,
+    attachmentCount: task.attachments.length,
+    messageCount: task.messages.length,
+    contextCount: task.context.length,
+    backupCount: task.backups.size,
+    stepArgs: task.steps.map((step) => ({ args: step.args, argsSummary: step.argsSummary })),
+  } : null;
+}
+export function __resetAgentTasksForTests(): void {
+  tasks.clear();
+  taskRetention = { ...DEFAULT_TASK_RETENTION };
+  backupReader = (file) => readFile(file);
+  deps = {};
+  clientFactory = () => new AgentOpenAIClient();
+}
 function mkClient(): ChatClient { return clientFactory(); }
 async function safeRecall(query: string): Promise<string> {
   try { return (await deps.recall!(query)) || ''; } catch { return ''; }
@@ -784,5 +919,19 @@ function extractJson(reply: string): Record<string, unknown> | null {
   const first = s.indexOf('{'), last = s.lastIndexOf('}');
   if (first < 0 || last <= first) return null;
   try { return JSON.parse(s.slice(first, last + 1)); } catch { return null; }
+}
+function summarizeStepArgs(args: Record<string, unknown>): string | undefined {
+  if (!args || Object.keys(args).length === 0) return undefined;
+  if (typeof args.command === 'string') return truncate(`$ ${args.command}`, 500);
+  if (typeof args.path === 'string' && typeof args.content === 'string') {
+    return truncate(`${args.path}（${args.content.length} 字）`, 500);
+  }
+  if (typeof args.path === 'string') return truncate(args.path, 500);
+  try {
+    const summary = JSON.stringify(args);
+    return summary && summary !== '{}' ? truncate(summary, 500) : undefined;
+  } catch {
+    return undefined;
+  }
 }
 function errMsg(e: unknown): string { return e instanceof Error ? e.message : String(e); }

@@ -3199,6 +3199,11 @@
     '画像概览': 'Profile overview', '当前画像': 'Current profile', '来自感知': 'From perception', '建议核对': 'Review suggested',
     '这些内容来自对话与感知，会随新的线索继续变化。': 'Built from conversations and perception, and updated as new clues arrive.',
     '来自对话': 'From conversations', '没有符合当前筛选的画像内容。': 'No profile items match the current filters.',
+    '任务临时状态已清理；若任务已完成，结果可在会话记录中查看。': 'Temporary task state was cleared; completed results remain available in conversation history.',
+    '任务结束后约 30 分钟内可撤回；任务较多时可能提前清理。': 'Changes can usually be undone for about 30 minutes after a task ends; busy queues may clear them sooner.',
+    '撤回窗口已过期，或任务较多时临时状态已提前清理。已写入会话的内容不受影响。': 'The undo window expired, or temporary state was cleared early because many tasks ran. Content already written to the conversation is unaffected.',
+    '任务还没结束，暂时不能撤回。请先停止任务并等待它结束。': 'This task has not ended yet. Stop it and wait for it to finish before undoing.',
+    '部分文件还原失败；失败项仍保留，可稍后重试。': 'Some files could not be restored. Failed items were kept so you can retry later.',
   });
   let LANG = '__WEFTMATE_UI_LANG__' === 'en' ? 'en' : 'zh';
   const I18N_SKIP_TAGS = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CODE: 1, PRE: 1, NOSCRIPT: 1 };
@@ -6501,9 +6506,26 @@
 
   async function pollAgent() {
     if (!AG.taskId) return;
-    let view;
-    try { view = await fetch('/api/agent/status?id=' + encodeURIComponent(AG.taskId)).then((x) => x.json()); }
+    const pollingId = AG.taskId;
+    let response, view;
+    try {
+      response = await fetch('/api/agent/status?id=' + encodeURIComponent(pollingId));
+      view = await response.json();
+    }
     catch (e) { return; }
+    if (response.status === 404) {
+      // 终态任务只保留短时轮询/撤回状态；若数量上限先清掉，不能让 1s 轮询和输入锁永远挂着。
+      if (AG.taskId !== pollingId) return;
+      if (AG.poll) clearInterval(AG.poll);
+      AG.poll = null;
+      AG.taskId = null;
+      AG.taskConversationId = null;
+      AG.taskText = '';
+      setAgentComposerBusy(false);
+      await Promise.all([loadSessions(), loadHistory()]);
+      memToast('任务临时状态已清理；若任务已完成，结果可在会话记录中查看。', '');
+      return;
+    }
     if (!view || view.error) return;
     // 任务继续在原会话后台运行；用户浏览其它会话时绝不把旧任务卡串到当前聊天区。
     const taskIsVisible = !AG.taskConversationId || AG.taskConversationId === currentConvId;
@@ -6530,14 +6552,32 @@
     catch (e) { /* 忽略 */ }
     pollAgent();
   }
+  async function refreshAgentTaskAfterUndo(taskId) {
+    try {
+      const response = await fetch('/api/agent/status?id=' + encodeURIComponent(taskId));
+      if (response.status === 404) {
+        // 过期任务已经没有可刷新的临时卡状态；重铺会话历史，移除陈旧撤回按钮，结果消息仍保留。
+        await loadHistory();
+        return;
+      }
+      const view = await response.json();
+      if (response.ok && view && !view.error) renderAgentTask(view);
+    } catch (e) { /* 撤回结果已经明确；刷新失败不反转结果提示 */ }
+  }
   async function agUndo(taskId = AG.taskId) {
     const ok = await memConfirm({ title: '撤回这次改动？', bodyText: '会把这次任务改过的文件还原（新建的删掉）。跑过的命令造成的其它变化撤不回。', okText: '撤回', okKind: 'danger' });
     if (!ok) return;
     try {
-      const r = await fetch('/api/agent/undo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: taskId }) }).then((x) => x.json());
+      const response = await fetch('/api/agent/undo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: taskId }) });
+      const r = await response.json();
+      if (!response.ok || !r.ok) {
+        memToast(r.error || '撤回失败', 'danger');
+        await refreshAgentTaskAfterUndo(taskId);
+        return;
+      }
       memToast('已还原 ' + (r.restored || 0) + ' 个文件' + (r.ranCommand ? '（命令副作用撤不回）' : ''), '');
     } catch (e) { memToast('撤回失败', 'danger'); }
-    pollAgent();
+    await refreshAgentTaskAfterUndo(taskId);
   }
 
   const AG_STATUS_CN = { planning: '出方案中', running: '干活中', awaiting: '等你批准', done: '完成', failed: '出错', stopped: '已停' };
@@ -6609,7 +6649,13 @@
       if (v.note) { const nt = document.createElement('div'); nt.textContent = v.note; nt.style.marginTop = '4px'; foot.appendChild(nt); }
       const acts = document.createElement('div'); acts.className = 'at-actions';
       if (running) { const b = document.createElement('button'); b.textContent = '叫停'; b.onclick = () => agStop(v.id); acts.appendChild(b); }
-      if (v.canUndo) { const b = document.createElement('button'); b.textContent = '↩ 撤回改动'; b.onclick = () => agUndo(v.id); acts.appendChild(b); }
+      if (v.canUndo) {
+        const b = document.createElement('button');
+        b.textContent = '↩ 撤回改动';
+        b.title = v.undoHint || '任务结束后约 30 分钟内可撤回；任务较多时可能提前清理。';
+        b.onclick = () => agUndo(v.id);
+        acts.appendChild(b);
+      }
       if (acts.children.length) foot.appendChild(acts);
       box.appendChild(foot);
     }
@@ -6623,7 +6669,7 @@
     const badge = document.createElement('span'); badge.className = 'sc-badge ' + s.status; badge.textContent = AG_STEP_CN[s.status] || s.status; h.appendChild(badge);
     card.appendChild(h);
     if (s.thought) { const th = document.createElement('div'); th.className = 'sc-thought'; th.textContent = s.thought; card.appendChild(th); }
-    const argStr = agArgsSummary(s.args);
+    const argStr = s.argsSummary || agArgsSummary(s.args);
     if (argStr) { const a = document.createElement('div'); a.className = 'sc-args'; a.textContent = argStr; card.appendChild(a); }
     if (s.result) { const r = document.createElement('div'); r.className = 'sc-result'; r.textContent = s.result; card.appendChild(r); }
     if (s.error) { const e = document.createElement('div'); e.className = 'sc-result err'; e.textContent = s.error; card.appendChild(e); }
