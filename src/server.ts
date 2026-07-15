@@ -35,13 +35,22 @@ import { credBand } from './confBand.ts';
 import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_IDS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
-import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, getAgentAutonomy, setAgentAutonomy, resolvedLang, getTrustedMcpTools, setMcpToolTrust } from './settings.ts';
+import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, getAgentAutonomy, setAgentAutonomy, resolvedLang, getTrustedMcpTools, setMcpToolTrust, getFirstInterviewState, setFirstInterviewState, resetFirstInterviewState } from './settings.ts';
 import * as agent from './agent.ts';
 import * as mcp from './mcp.ts';
 import * as mcpStore from './mcp-store.ts';
 import { ensureDefaultAgentWorkspace as ensureWorkspaceInDocuments } from './agent-workspace.ts';
 import { createLoopbackToken, loopbackPolicy, observationIngestionAllowed, secureHtmlDocument, withLoopbackSecurity } from './loopback-security.ts';
 import { dialog, BrowserWindow, app } from 'electron';
+import {
+  FIRST_INTERVIEW_TOTAL_STEPS,
+  advanceFirstInterview,
+  ensureFirstInterviewRunId,
+  firstInterviewCopy,
+  newFirstInterviewState,
+  transitionFirstInterview,
+  type FirstInterviewState,
+} from './first-interview.ts';
 
 // 先读 .env（Node 不加 --env-file 不会自动读）：确保下面 DB_PATH / 纯库开关 / Core 构造都拿得到 .env 配置。
 //   loadEnvFile 幂等；没有 .env 抛错忽略。放在最顶部——否则 DB_PATH（下面就求值）读不到 .env 里的 MEMOWEFT_HOST_DB。
@@ -123,6 +132,12 @@ let currentConvId: string = (() => {
   return existing[0]?.id ?? history.newId();
 })();
 
+// Agent 任务不跨进程恢复；若应用在采访中退出，重启时把流程明确收口为“可继续”，不伪装仍在进行。
+const firstInterviewAtStartup = getFirstInterviewState();
+if (firstInterviewAtStartup?.status === 'in_progress') {
+  setFirstInterviewState(transitionFirstInterview(firstInterviewAtStartup, 'pause'));
+}
+
 // switchedExperienceConvs：刚切过人设、下一次 Agent 任务要"只带用户话"的对话。若把整段历史（含旧人设的
 //   assistant 回复）带入上下文，新人设会被历史里的旧自称带跑（LLM 更信历史里演过的角色，而非 systemPrompt）。
 //   所以切人设后第一句只种【用户说过的话】、不认领旧人设的回复——用户的话是跨人设的事实、保留。
@@ -135,6 +150,55 @@ const scheduler = createProfileScheduler({ updateProfile: () => core.updateProfi
 // Agent 在后台完成时仍要落回它启动时所在的对话；用户可能在任务期间切到另一段对话，不能误写当前全局会话。
 const agentTaskConversations = new Map<string, string>();
 const agentTaskUserPersisted = new Set<string>();
+const firstInterviewTasks = new Map<string, { conversationId: string; step: number; runId: string }>();
+const ACTIVE_AGENT_STATUSES = new Set(['planning', 'running', 'awaiting']);
+
+function activeAgentTask() {
+  const activeTask = agent.listTasks().find((task) => ACTIVE_AGENT_STATUSES.has(task.status));
+  return activeTask;
+}
+
+function activeFirstInterviewTask() {
+  return agent.listTasks().find((task) => ACTIVE_AGENT_STATUSES.has(task.status) && firstInterviewTasks.has(task.id));
+}
+
+function hasRealConversationHistory(): boolean {
+  return history.list({ includeArchived: true }).some((session) => history.read(session.id).length > 0);
+}
+
+function firstInterviewIsFresh(): boolean {
+  return core.memory.listEvidence().length === 0 && !hasRealConversationHistory();
+}
+
+function firstInterviewView() {
+  const stored = getFirstInterviewState();
+  const state = stored ?? newFirstInterviewState('');
+  const modelReady = core.health().llmReady;
+  const fresh = stored === null && firstInterviewIsFresh();
+  const canOffer = fresh || (stored !== null && ['new', 'in_progress', 'paused', 'skipped'].includes(stored.status));
+  // 首次安装要求“无持久状态 + 无真实数据”；恢复出厂会显式写回 new，也重新允许选择。
+  const eligible = modelReady && (fresh || stored?.status === 'new');
+  const modelBlocked = !modelReady && canOffer;
+  const copy = firstInterviewCopy(state.step, resolvedLang());
+  return {
+    status: state.status,
+    step: state.step,
+    total: FIRST_INTERVIEW_TOTAL_STEPS,
+    conversationId: state.conversationId,
+    eligible,
+    modelReady,
+    modelBlocked,
+    canContinue: modelReady && state.status === 'paused' && !!state.conversationId,
+    question: copy.question,
+  };
+}
+
+function refreshProfileAfterInterview(): void {
+  // 与手动“立即整理”共用 scheduler 单飞锁；不阻塞采访收尾，也不制造第二条写画像路径。
+  void scheduler.refreshNow().catch((error) => {
+    console.error('首次认识结束后的记忆整理失败（不影响对话）：', error instanceof Error ? error.message : error);
+  });
+}
 
 function persistAgentAttachments(convId: string, attachments: agent.AgentCompletionAttachment[]): HistoryAttachment[] {
   const savedAttachments: HistoryAttachment[] = [];
@@ -182,23 +246,44 @@ agent.configureAgentDeps({
     await core.ingestUserMessage({ content: `（让 WeftMate 帮我干活）${taskText}${done}` });
   },
   // 没调用任何工具就是普通聊天回答：只把用户原话作为证据，不加"帮我干活"标签。
-  recordChat: async (userText) => {
-    await core.ingestUserMessage({ content: userText });
+  recordChat: async (userText, _reply, taskId) => {
+    const interview = firstInterviewTasks.get(taskId);
+    const originId = interview
+      ? `weftmate-first-interview:${interview.runId}:${interview.step}`
+      : `weftmate-agent:${taskId}`;
+    await core.ingestUserMessage({ content: userText, originId });
   },
   // 无论是否用了工具，都把用户话和最终回答落进启动时的会话，刷新后仍能接着聊。
-  complete: async (taskId, taskText, summary, _usedTools, attachments) => {
+  complete: async (taskId, taskText, summary, usedTools, attachments, memoryRecorded) => {
     const convId = agentTaskConversations.get(taskId) ?? currentConvId;
     // 正常在 start 接受任务时就落用户轮；这里只是防竞态/写盘失败的兜底。
     if (!agentTaskUserPersisted.has(taskId)) persistAgentUserTurn(convId, taskText, attachments);
     history.append(convId, { role: 'assistant', content: summary || '完成。', ts: new Date().toISOString() });
+    scheduler.onTurn();
+    const interview = firstInterviewTasks.get(taskId);
+    if (interview && !usedTools && memoryRecorded && interview.conversationId === convId) {
+      const state = getFirstInterviewState();
+      // 只有仍处于启动时那一轮才推进；暂停/跳过/切状态后的迟到回调不能越权改回来。
+      if (
+        state?.status === 'in_progress'
+        && state.conversationId === convId
+        && state.runId === interview.runId
+        && state.step === interview.step
+      ) {
+        const next = advanceFirstInterview(state);
+        setFirstInterviewState(next);
+        if (next.status === 'completed') refreshProfileAfterInterview();
+      }
+    }
     agentTaskUserPersisted.delete(taskId);
     agentTaskConversations.delete(taskId);
-    scheduler.onTurn();
+    firstInterviewTasks.delete(taskId);
   },
   // done / failed / stopped 都会走这个终态回调；complete 只覆盖正常完成，不能让失败/叫停任务的会话映射常驻内存。
   settled: (taskId) => {
     agentTaskUserPersisted.delete(taskId);
     agentTaskConversations.delete(taskId);
+    firstInterviewTasks.delete(taskId);
   },
   // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
   mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),
@@ -360,6 +445,72 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
     // 聊天历史：读回【当前对话】的轮列表，前端加载时渲染。空对话返回空列表、不报错。
     if (req.method === 'GET' && url.pathname === '/api/chat-history') {
       sendJson(res, 200, { turns: history.read(currentConvId), conversationId: currentConvId });
+      return;
+    }
+
+    // ── 首次认识用户：流程端点只管理游标，不接收回答；回答仍唯一走 /api/agent/start。 ──
+    if (req.method === 'GET' && url.pathname === '/api/first-interview') {
+      sendJson(res, 200, firstInterviewView());
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/first-interview/action') {
+      const body = await readJson(req);
+      const keys = Object.keys(body);
+      if (keys.some((key) => !['action', 'expectedStep'].includes(key))) {
+        sendJson(res, 400, { error: '首次认识流程端点只接受 action 和 expectedStep，不接受回答内容' });
+        return;
+      }
+      const action = typeof body.action === 'string' ? body.action : '';
+      if (!['start', 'pause', 'resume', 'skip', 'skip_step'].includes(action)) {
+        sendJson(res, 400, { error: '不支持的首次认识操作' });
+        return;
+      }
+      if (!Number.isInteger(body.expectedStep)) {
+        sendJson(res, 400, { error: '首次认识操作缺少当前步骤' });
+        return;
+      }
+      const activeInterview = activeFirstInterviewTask();
+      if (activeInterview) {
+        sendJson(res, 409, { error: '请先等当前回复结束，再调整这次认识。', taskId: activeInterview.id });
+        return;
+      }
+
+      const stored = getFirstInterviewState();
+      const current = stored ?? newFirstInterviewState();
+      if (body.expectedStep !== current.step) {
+        sendJson(res, 409, { error: '这次认识的进度已经变化，请按最新进度操作' });
+        return;
+      }
+      if (action === 'resume' && !core.health().llmReady) {
+        sendJson(res, 409, { error: '请先配置对话模型，再继续这次认识' });
+        return;
+      }
+      try {
+        let next: FirstInterviewState;
+        if (action === 'start') {
+          const canStart = core.health().llmReady && (
+            stored?.status === 'skipped'
+            || stored?.status === 'new'
+            || (stored === null && firstInterviewIsFresh())
+          );
+          if (!canStart) {
+            sendJson(res, 409, { error: core.health().llmReady ? '这不是空白的新用户状态' : '请先配置对话模型' });
+            return;
+          }
+          next = transitionFirstInterview(current, 'start', { conversationId: currentConvId });
+        } else {
+          const canSkipFresh = action === 'skip' && stored === null && core.health().llmReady && firstInterviewIsFresh();
+          if (!stored && !canSkipFresh) { sendJson(res, 409, { error: '还没有可操作的首次认识流程' }); return; }
+          next = transitionFirstInterview(current, action as 'pause' | 'resume' | 'skip' | 'skip_step');
+          if (action === 'resume') currentConvId = next.conversationId!;
+        }
+        setFirstInterviewState(next);
+        if (next.status === 'completed') refreshProfileAfterInterview();
+        sendJson(res, 200, { ok: true, ...firstInterviewView(), conversationId: next.conversationId });
+      } catch (error) {
+        sendJson(res, 409, { error: error instanceof Error ? error.message : String(error) });
+      }
       return;
     }
 
@@ -832,6 +983,16 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       //   "请求到达并执行"，所以裸端点直连就能清库——这里加一道服务端确认兜底。前端另有"输入清空二字"强确认。
       const body = await readJson(req);
       if (body.confirm !== '清空') { sendJson(res, 400, { error: '恢复出厂需要确认（body 缺 confirm）' }); return; }
+      // 确认正文读完后再做最终闸门；从这里到同步清库之间不再 await，避免检查通过后又启动在途写入。
+      const activeTask = activeAgentTask();
+      if (activeTask) {
+        sendJson(res, 409, { error: '还有任务没有结束，请等它结束后再恢复出厂。', taskId: activeTask.id });
+        return;
+      }
+      if (scheduler.status().profileUpdating) {
+        sendJson(res, 409, { error: '记忆还在整理中，请等整理结束后再恢复出厂。' });
+        return;
+      }
       // 破坏性收口：清 Core 记忆库（三层 + 审计 + 向量索引）。返回四个清除计数。
       const counts = core.memory.resetSubject({ reason: 'host:用户在记忆管理页恢复出厂' });
 
@@ -843,6 +1004,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       }
       const sessionsArchived = active.length;
       currentConvId = history.newId(); // 全新空对话作当前
+      resetFirstInterviewState(); // 清空记忆后重新提供“聊两三句 / 先跳过”的选择
 
       sendJson(res, 200, { ok: true, ...counts, sessionsArchived, conversationId: currentConvId });
       return;
@@ -884,7 +1046,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       try {
         // 4 张×6MB 图片经 base64 后约 24MB；32MB 留出 JSON/文本附件余量，同时拒绝无上限堆内存。
         const body = await readJson(req, 32 * 1024 * 1024);
-        const activeTask = agent.listTasks().find((task) => ['planning', 'running', 'awaiting'].includes(task.status));
+        const activeTask = activeAgentTask();
         if (activeTask) {
           sendJson(res, 409, {
             error: '还有一个任务没有结束，已重新接回原任务；不能同时启动第二个任务。',
@@ -899,14 +1061,42 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
         // 统一 Agent 也要续上当前对话。刚切人格时只带用户历史，避免旧人格的 assistant 自称把新人格带偏。
         const seedOnlyUser = switchedExperienceConvs.has(convId);
         const context = seedFor(convId, { onlyUser: seedOnlyUser });
+        const firstInterviewRequested = body.firstInterview === true;
+        if (firstInterviewRequested && !core.health().llmReady) {
+          sendJson(res, 409, { error: '请先配置对话模型，再发送这次认识的回答' });
+          return;
+        }
+        let interviewState = firstInterviewRequested ? getFirstInterviewState() : null;
+        if (firstInterviewRequested && !(
+          interviewState?.status === 'in_progress'
+          && interviewState.conversationId === convId
+          && interviewState.step >= 0
+          && interviewState.step < FIRST_INTERVIEW_TOTAL_STEPS
+        )) {
+          sendJson(res, 409, { error: '这条对话当前不在首次认识流程中' });
+          return;
+        }
+        // 兼容旧版本留下的进行中状态：首条新回答进入前只补幂等 runId，不改步骤、会话或用户内容。
+        if (interviewState && !interviewState.runId) {
+          interviewState = ensureFirstInterviewRunId(interviewState);
+          setFirstInterviewState(interviewState);
+        }
+        const interviewCopy = interviewState ? firstInterviewCopy(interviewState.step, resolvedLang()) : null;
         const started = agent.startTask({
           task: typeof body.task === 'string' ? body.task : '',
           workspace,
           autonomy: getAgentAutonomy(),
           attachments: Array.isArray(body.attachments) ? body.attachments : [], // ③·上下文附件 {name,content}[]
           context,
+          // 请求体只能表达“这是采访回答”；是否真进入纯对话由持久状态+绑定会话决定，guidance 永不信客户端。
+          conversationOnly: firstInterviewRequested,
+          ...(interviewCopy ? { guidance: interviewCopy.guidance } : {}),
         });
         agentTaskConversations.set(started.id, convId);
+        if (interviewState) {
+          if (!interviewState.runId) throw new Error('首次认识缺少运行标识');
+          firstInterviewTasks.set(started.id, { conversationId: convId, step: interviewState.step, runId: interviewState.runId });
+        }
         // 先落用户消息与图片引用，任务还在跑时重开应用也能恢复。
         try {
           persistAgentUserTurn(convId, typeof body.task === 'string' ? body.task.trim() : '', started.attachments);

@@ -9,6 +9,11 @@ import { app } from 'electron';
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { isAutonomy, normalizeAutonomy, type Autonomy } from './agent-autonomy.ts';
+import {
+  newFirstInterviewState,
+  normalizeFirstInterviewState,
+  type FirstInterviewState,
+} from './first-interview.ts';
 
 interface Settings {
   perception?: {
@@ -28,6 +33,8 @@ interface Settings {
   agent?: { autonomy?: Autonomy };
   /** 已信任的 MCP 工具 fqName（F1 trust opt-in，仅 auto 档免批）。默认空=所有 MCP 工具都要批准。 */
   trustedMcpTools?: string[];
+  /** 首次认识只保存流程游标；答案、总结和画像仍只属于会话历史与 MemoWeft。 */
+  firstInterview?: FirstInterviewState;
 }
 
 function settingsPath(): string {
@@ -135,6 +142,27 @@ export function setAgentAutonomy(value: unknown): Autonomy | null {
   s.agent = { ...(s.agent ?? {}), autonomy: value };
   write(s);
   return value;
+}
+
+// ── 首次认识用户 ──
+/** 没有持久状态返回 null，让 Host 结合真实记忆/会话判断是否为新用户。 */
+export function getFirstInterviewState(): FirstInterviewState | null {
+  return normalizeFirstInterviewState(read().firstInterview);
+}
+
+/** 只保存状态机元数据；调用方不得把回答、总结或画像塞进来。 */
+export function setFirstInterviewState(state: FirstInterviewState): FirstInterviewState {
+  const normalized = normalizeFirstInterviewState(state);
+  if (!normalized) throw new Error('首次认识状态无效');
+  const s = read();
+  s.firstInterview = normalized;
+  write(s);
+  return normalized;
+}
+
+/** 恢复出厂后重新成为可选择是否认识的新用户。 */
+export function resetFirstInterviewState(): FirstInterviewState {
+  return setFirstInterviewState(newFirstInterviewState());
 }
 
 /** 解析成 memoweft 认的 'zh'/'en'——auto 时跟系统语言(zh-* → zh,否则 en)。供设 MEMOWEFT_LANG / 改 config.language。 */
