@@ -976,6 +976,14 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       try {
         // 4 张×6MB 图片经 base64 后约 24MB；32MB 留出 JSON/文本附件余量，同时拒绝无上限堆内存。
         const body = await readJson(req, 32 * 1024 * 1024);
+        const activeTask = agent.listTasks().find((task) => ['planning', 'running', 'awaiting'].includes(task.status));
+        if (activeTask) {
+          sendJson(res, 409, {
+            error: '还有一个任务没有结束，已重新接回原任务；不能同时启动第二个任务。',
+            taskId: activeTask.id,
+          });
+          return;
+        }
         // 不信任窗口缓存里的旧路径：切会话后，任务只能使用该会话已绑定的工作区。
         const convId = currentConvId;
         const workspace = workspaceForConversation(convId);
@@ -1014,7 +1022,12 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
         if (!view) { sendJson(res, 404, { error: '没有这个任务' }); return; }
         sendJson(res, 200, view);
       } else {
-        sendJson(res, 200, { tasks: agent.listTasks() });
+        sendJson(res, 200, {
+          tasks: agent.listTasks().map((task) => ({
+            ...task,
+            conversationId: agentTaskConversations.get(task.id) ?? null,
+          })),
+        });
       }
       return;
     }

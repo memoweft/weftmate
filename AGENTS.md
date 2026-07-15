@@ -39,6 +39,7 @@ WeftMate 是一个**越用越了解你的 AI 桌面伴侣**：Electron 桌面常
 - 执行自主度与陪伴主动度是两个设置，不要复用同一个开关。
 - 保留用户最高修改权，区分画像“修改”和推断“指正”。
 - 改完至少运行 `npm run typecheck` 与 `npm test`；涉及 Electron 主进程、UI、安装或原生模块时追加对应真机验证。
+- 每次准备向 GitHub 发布或合并前，必须先用当前待发布代码启动真实 Electron，留给 owner Dogfood；只有 owner 明确确认体验无误后才允许提交、推送和合并，不能先发布再补体验。
 - 独立仓库和发布版本不得使用 MemoWeft sibling `file:` 依赖；必须精确固定公开版本，并在无 sibling 的干净目录验证安装、类型检查、测试和 Electron 启动。
 
 ## 运行
