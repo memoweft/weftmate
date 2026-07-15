@@ -1,6 +1,6 @@
 # CURRENT.md · WeftMate 当前执行状态
 
-> 基线：2026-07-15，已验证功能与 CI 基线 `main@703dc20`
+> 基线：2026-07-15，公开基线 `main@fbfe36d`；当前安全收口分支已完成本机验证，三平台 PR CI 待运行
 > 本文件是“现在做到哪里、下一步做什么”的唯一事实源。
 > 产品边界看 [`docs/PRODUCT.md`](./docs/PRODUCT.md)，大阶段看 [`docs/ROADMAP.md`](./docs/ROADMAP.md)，完整代码审计看 [`PROJECT_ANALYSIS.md`](./PROJECT_ANALYSIS.md)。
 
@@ -44,12 +44,12 @@
 | 首次认识用户 | `planned` | 仅首次模型配置存在 | 聊天式采访、可跳过/续答、低把握度初始假设、MBTI 仅作参考 |
 | 内置人格切换 | `partial` | 星瑶、Aria、普通助手可切换，下一句生效，共享同一份记忆 | 当前人格不持久化，重启强制回星瑶 |
 | 人格包系统 | `planned` | 只有编译期硬编码 registry | Persona Manifest/Store、创建/编辑/复制/删除、导入/导出、记忆访问、模型/工具/形象/主动度配置 |
-| 桌面感知 | `partial` | 活动窗口、空闲跳过、来源设置、observed 默认不上云 | `/api/observe` 未服从 UI 开关；主动关怀、P0/P1 通知未做 |
+| 桌面感知 | `partial` | 活动窗口、空闲跳过、来源设置、observed 默认不上云；`/api/observe` 同时服从部署总开关、用户开关和 loopback 会话鉴权 | 主动关怀、P0/P1 通知未做 |
 | 协作型 Agent | `partial` | 单 Agent 循环、三档执行自主度、审批、停止、撤回、工作区、附件、图片、MCP | 默认 `auto` 待调整；任务只在内存、无清理/恢复、无可复用工作流、无可读 diff/审计 |
 | 对话历史 | `partial` | 多会话、续聊、工作区绑定、软归档、图片资源 | 搜索、重命名、归档恢复 UI、单会话导出 |
 | 中英文 | `partial` | 应用内字典、动态翻译、Aria，核心测试通过 | 全局 DOM 后处理风险高；真 Electron 逐屏回归、站点/发布文案收口 |
-| 安全与隐私 | `partial` | safeStorage、沙箱、审批、observed 默认本地、隐私文档 | loopback 鉴权/Origin、MCP 名称信任碰撞、全部本地数据删除、配置原子写 |
-| 干净构建与 CI | `complete`（当前范围） | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 的 `npm ci`、typecheck、48/48 测试和 Electron 空数据启动通过；公开仓库与 Windows/macOS/Linux CI 已验证 | CI 尚未覆盖安装包构建与 Electron 真机冒烟，这部分归入“打包与发布” |
+| 安全与隐私 | `partial` | safeStorage、沙箱、审批、observed 默认本地、隐私文档；loopback 已有内存会话令牌、随机端口、Host/Origin 防护、nonce CSP 与导航限制 | MCP 名称信任碰撞、全部本地数据删除、配置原子写 |
+| 干净构建与 CI | `complete`（当前范围） | 公开 `memoweft@0.5.1` 已精确固定；无 sibling 干净验证通过；公开仓库与 Windows/macOS/Linux CI 已激活；当前分支 typecheck 与 62/62 测试通过 | 当前安全分支的三平台 PR CI 待运行；CI 尚未覆盖安装包构建与 Electron 真机冒烟 |
 | 打包与发布 | `planned` | 无 | builder/预编译、原生资源、图标、三平台安装冒烟、签名、公证、自动更新、Release |
 
 ## 当前 P0 阻塞
@@ -78,8 +78,9 @@
 
 ### P0-3 · 发布前安全缺口
 
-- loopback 服务没有会话鉴权、Origin/Host 防护，却有记忆、配置和 Agent 写接口。
-- 感知 UI 关闭后，`/api/observe` 仍可被其他本机进程直接调用。
+- **已解除**：全部 `/api/*` 已受每进程随机 Bearer、精确 Host、Origin 与 Sec-Fetch-Site 校验保护；令牌不进入环境变量、Cookie、URL、页面、preload、日志或 MCP 子进程。
+- **已解除**：Electron 默认使用 OS 动态端口并等待真实 `ready`；显式端口被占时失败关闭，不加载占位页面。主窗口还增加 nonce CSP、跨源导航和新窗口限制。
+- **已解除**：`/api/observe` 同时要求部署 kill-switch、用户实时 opt-in 和会话鉴权，UI 关闭后拒绝摄入。
 - 统一 Agent 默认执行自主度是 `auto`，与“权限来自用户明确授权”的产品边界需要重新对齐。
 - 已完成任务和图片附件长期保留在内存 Map，没有 TTL 或回收。
 - `npm audit --omit=dev` 报告 7 个 high，集中在 `get-windows → node-gyp/tar` 安装/构建链且没有自动修复；发布前必须完成适用性判断或替换方案，不能把“测试通过”当作供应链安全通过。
@@ -108,8 +109,8 @@
 
 ### 2. 关闭发布前安全缺口并收敛唯一运行路径
 
-- loopback 会话鉴权/Origin 防护。
-- `/api/observe` 与用户感知设置同源校验。
+- **已完成**：loopback 会话鉴权、随机端口、Host/Origin 防护、nonce CSP 与导航限制。
+- **已完成**：`/api/observe` 与部署总开关、用户实时设置和会话鉴权同源校验。
 - Agent 默认权限、任务清理与 MCP 唯一身份。
 - 删除旧 `/api/chat` 前端路径和旧首启 wizard，保留单一消息链与单一首启入口。
 - 给动态 i18n、首启和 Agent 路径补 UI/API 回归测试。
@@ -158,6 +159,9 @@
 - 公开发布预检：当前树与 37 个历史提交未发现高置信凭据、私钥、用户数据或数据库文件；公开仓库已建立。
 - GitHub Actions [运行 29405484004](https://github.com/memoweft/weftmate/actions/runs/29405484004)：Ubuntu、macOS、Windows 全部成功；三平台安装和 typecheck 均通过，Windows 48/48 测试通过，Ubuntu/macOS 47 项通过且按设计跳过 1 项仅适用于 Windows 盘符语义的测试。
 - 首轮 CI 发现跨盘符沙箱测试错误地在 POSIX 平台执行；`703dc20` 将该测试精确限定到 Windows 后，本机与三平台回归通过，未改动沙箱实现。
+- loopback 安全专项：14/14 通过；覆盖正确同源与 collector、缺失/错误 token、错误 Host、恶意 Origin、cross-site、未知 API 先鉴权、nonce CSP、安全头、无 CORS 和感知双开关。完整测试 62/62 通过。
+- Windows Electron 安全冒烟：两次启动由 OS 分配 `61157 → 55216`；窗口内认证 `/api/health=200`，外部无 token 请求为 `401`；真实页面两个脚本均带 nonce，未出现 CSP/脚本错误；主题在动态 origin 间持久化。
+- 端口劫持回归：显式占用 `54862` 后启动，应用在 1 秒内 fail-closed 退出且未创建窗口。令牌渠道扫描未发现 env、Cookie、URL、页面、preload、日志或持久存储泄露；独立安全复核结论为 GO。
 - Electron 空数据隔离启动：窗口加载、首次模型配置、本地首页与 `/api/health` 通过；`llmReady=false`、`embedReady=false`、加密可用、感知默认关闭。关闭窗口后仍常驻，再次启动能唤回原窗口；因自动化无法操作系统托盘菜单，本轮未把进程终止计作“托盘优雅退出已验证”。
 - 安装包：不存在，未验证。
 

@@ -21,6 +21,7 @@ const IDLE_THRESHOLD_S = 60;   // 空闲 60s 视为"离开"，不采
 
 let timer: ReturnType<typeof setInterval> | null = null;
 let port = 7788;
+let loopbackToken = '';
 let lastKey = '';              // 上次记录的窗口键（app|title），去重用
 let activeWindowFn: (() => Promise<{ title?: string; owner?: { name?: string } } | undefined>) | null = null;
 
@@ -54,9 +55,13 @@ async function sampleOnce(): Promise<void> {
     // C4：给稳定 originId=窗口键+小时桶——Core 按 originId 幂等去重，同窗口跨重启同小时不重复记
     //   （lastKey 只在进程内、重启归零；隔到别的小时再回到该窗口仍算新事件）。
     const originId = `aw:${key}@${new Date().toISOString().slice(0, 13)}`;
+    if (!loopbackToken) return;
     await fetch(`http://127.0.0.1:${port}/api/observe`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Authorization': `Bearer ${loopbackToken}`,
+        'Content-Type': 'application/json',
+      },
       body: JSON.stringify({
         observations: [{
           kind: 'active_window',
@@ -70,9 +75,12 @@ async function sampleOnce(): Promise<void> {
   } catch { /* 取窗/采样出错静默，别让感知拖垮主进程 */ }
 }
 
-/** 开启采集（opt-in 时 main/server 调）。幂等：已在跑则忽略。port = loopback 端口。 */
-export function startCollector(p?: number): void {
-  if (p) port = p;
+/** 开启采集（opt-in 时 main/server 调）。凭据只在进程内持有，不落盘。 */
+export function startCollector(p: number, token: string): void {
+  if (!Number.isInteger(p) || p < 1 || p > 65535) throw new RangeError(`无效 loopback 端口：${p}`);
+  if (!token) throw new Error('缺少 loopback 会话凭据');
+  port = p;
+  loopbackToken = token;
   if (timer) return;
   lastKey = '';
   timer = setInterval(() => { void sampleOnce(); }, SAMPLE_MS);
@@ -82,6 +90,7 @@ export function startCollector(p?: number): void {
 /** 停采（关开关 / 退出时调）。 */
 export function stopCollector(): void {
   if (timer) { clearInterval(timer); timer = null; }
+  loopbackToken = '';
 }
 
 export function isCollectorRunning(): boolean {
