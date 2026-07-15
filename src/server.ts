@@ -207,6 +207,11 @@ agent.configureAgentDeps({
     agentTaskConversations.delete(taskId);
     scheduler.onTurn();
   },
+  // done / failed / stopped 都会走这个终态回调；complete 只覆盖正常完成，不能让失败/叫停任务的会话映射常驻内存。
+  settled: (taskId) => {
+    agentTaskUserPersisted.delete(taskId);
+    agentTaskConversations.delete(taskId);
+  },
   // MCP 工具接线（②·帮你干活）：延迟加载——只把 name/desc/签名交给 agent，完整 schema 留 mcp.ts。
   mcpTools: () => mcp.listAllTools().map((t) => ({ fqName: t.fqName, description: t.description, signature: t.signature, readOnly: t.readOnly })),
   callMcp: (fqName, args) => mcp.callTool(fqName, args),
