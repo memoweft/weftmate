@@ -41,6 +41,8 @@ import * as mcp from './mcp.ts';
 import * as mcpStore from './mcp-store.ts';
 import { ensureDefaultAgentWorkspace as ensureWorkspaceInDocuments } from './agent-workspace.ts';
 import { createLoopbackToken, loopbackPolicy, observationIngestionAllowed, secureHtmlDocument, withLoopbackSecurity } from './loopback-security.ts';
+import { ProfileOverrideStore } from './profile-overrides.ts';
+import { cognitionCorrectionOriginId } from './cognition-correction.ts';
 import { dialog, BrowserWindow, app } from 'electron';
 import {
   FIRST_INTERVIEW_TOTAL_STEPS,
@@ -120,6 +122,7 @@ let activeExperienceId: string = DEFAULT_EXPERIENCE_ID;
 //   才生效（作者拍板"不重启进程、窗口不闪"，见 rebuildCore + weftmate-config-apply 记忆）。scheduler/handler 都经
 //   模块级 core 引用,重建后自然指向新实例。
 let core = createMemoWeftCore({ dbPath: DB_PATH, plugins: ALL_PLUGINS });
+const profileOverrides = new ProfileOverrideStore(join(app.getPath('userData'), 'profile-overrides.json'));
 
 // 聊天历史（Host 自建落盘）：目录级多对话管理器（一对话一 jsonl，见 chatHistory.ts）。
 const history = createChatHistory(SESSIONS_DIR);
@@ -160,6 +163,56 @@ function activeAgentTask() {
 
 function activeFirstInterviewTask() {
   return agent.listTasks().find((task) => ACTIVE_AGENT_STATUSES.has(task.status) && firstInterviewTasks.has(task.id));
+}
+
+let localDataWipePrepared = false;
+let inFlightMutations = 0;
+const mutationDrainWaiters = new Set<() => void>();
+
+function finishMutation(): void {
+  inFlightMutations = Math.max(0, inFlightMutations - 1);
+  if (inFlightMutations === 0) {
+    for (const resolve of mutationDrainWaiters) resolve();
+    mutationDrainWaiters.clear();
+  }
+}
+
+function waitForMutationDrain(timeoutMs = 3_000): Promise<boolean> {
+  if (inFlightMutations === 0) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    let timer: ReturnType<typeof setTimeout>;
+    const done = () => { clearTimeout(timer); mutationDrainWaiters.delete(done); resolve(true); };
+    timer = setTimeout(() => { mutationDrainWaiters.delete(done); resolve(false); }, timeoutMs);
+    mutationDrainWaiters.add(done);
+  });
+}
+
+type WipePrepareResult = { ok: true } | { ok: false; status: 409; code: string; error: string };
+
+/** 仅供 Electron 主进程在创建一次性擦除 marker 前调用。 */
+export async function prepareLocalDataWipe(): Promise<WipePrepareResult> {
+  if (localDataWipePrepared) return { ok: false, status: 409, code: 'WIPE_ALREADY_PREPARING', error: '删除全部本机数据已经在准备中。' };
+  if (activeAgentTask()) return { ok: false, status: 409, code: 'WIPE_ACTIVE_AGENT', error: '还有任务没有结束，请等它结束后再删除本机数据。' };
+  if (scheduler.status().profileUpdating) return { ok: false, status: 409, code: 'WIPE_PROFILE_UPDATING', error: '记忆还在整理中，请等整理结束后再删除本机数据。' };
+  localDataWipePrepared = true;
+  scheduler.freeze();
+  const drained = await waitForMutationDrain();
+  const activeAfterDrain = activeAgentTask();
+  const profileUpdatingAfterDrain = scheduler.status().profileUpdating;
+  if (!drained || activeAfterDrain || profileUpdatingAfterDrain) {
+    localDataWipePrepared = false;
+    scheduler.resume();
+    if (!drained) return { ok: false, status: 409, code: 'WIPE_MUTATION_TIMEOUT', error: '仍有本机数据更改没有结束，请稍后再试。' };
+    if (activeAfterDrain) return { ok: false, status: 409, code: 'WIPE_ACTIVE_AGENT', error: '还有任务没有结束，请等它结束后再删除本机数据。' };
+    return { ok: false, status: 409, code: 'WIPE_PROFILE_UPDATING', error: '记忆还在整理中，请等整理结束后再删除本机数据。' };
+  }
+  return { ok: true };
+}
+
+/** marker 创建失败时由主进程撤销闸门；正常删除流程会立即退出，不会撤销。 */
+export function cancelPreparedLocalDataWipe(): void {
+  localDataWipePrepared = false;
+  scheduler.resume();
 }
 
 function hasRealConversationHistory(): boolean {
@@ -237,8 +290,14 @@ agent.configureAgentDeps({
     return { id: current.id, name: current.name, systemPrompt: current.systemPrompt ?? '' };
   },
   recall: async (query) => {
-    const items = await core.recall({ query });
-    return items.slice(0, 6).map((r) => '· ' + r.content).join('\n');
+    const sourceCognitions = core.memory.listCognitions();
+    const recalled = profileOverrides.applyRecall(await core.recall({ query }), sourceCognitions).slice(0, 6);
+    const seen = new Set(recalled.flatMap((item) => item.id ? [item.id] : []));
+    // Core 的索引仍保存原 cognition 文案；用户改写后的关键词另做最多 6 条的本地命中补充。
+    const supplemental = profileOverrides.matchingOverrides(
+      sourceCognitions, query, seen, 6 - recalled.length,
+    );
+    return [...recalled, ...supplemental].map((r) => '· ' + r.content).join('\n');
   },
   record: async (taskText, summary) => {
     // C1：把 agent 真正干成了啥(summary) 也回写，别只记任务意图——让"帮你干活"真进"越用越懂"闭环。
@@ -412,8 +471,18 @@ const MCP_CATALOG = [
 ];
 
 const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (req, res) => {
+  let countedMutation = false;
   try {
     const url = new URL(req.url ?? '/', currentLoopbackPolicy().origin);
+    const mutating = req.method !== 'GET' && req.method !== 'HEAD' && req.method !== 'OPTIONS';
+    if (localDataWipePrepared && mutating) {
+      sendJson(res, 423, { code: 'WIPE_PREPARING', error: '正在准备删除全部本机数据，已停止新的更改。' });
+      return;
+    }
+    if (mutating) {
+      inFlightMutations++;
+      countedMutation = true;
+    }
     // 前端：干净单文件 html（只含用户模式聊天）。
     if (req.method === 'GET' && (url.pathname === '/' || url.pathname === '/index.html')) {
       const source = readFileSync(INDEX_HTML, 'utf-8')
@@ -846,7 +915,8 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       // 每条附 confBand：按【有效把握度】(effectiveConfidence，衰减后)定的用户档，让前端如实反映"会变淡"。
       //   阈值取自 Core config（不硬编码、不漂移）；档位逻辑抽在 confBand.ts、有单测护栏。
       const thresholds = config.consolidation.credThresholds;
-      const cognitions = core.memory.listCognitions().map((c) => ({ ...c, confBand: credBand(c, thresholds) }));
+      const cognitions = profileOverrides.applyCognitions(core.memory.listCognitions())
+        .map((c) => c.overridden || c.rejectedByUser ? c : ({ ...c, confBand: credBand(c, thresholds) }));
       sendJson(res, 200, { cognitions });
       return;
     }
@@ -855,7 +925,8 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
     //   单开一个轻量端点，让聊天页顶栏轮询它就够——不必在聊天页拉整份 /api/cognition 列表（那是记忆管理页/抽屉的活）。
     //   口径与记忆抽屉列表里"活跃"的过滤一致（!invalidAt && !archivedAt），胶囊数和抽屉里看到的对得上。
     if (req.method === 'GET' && url.pathname === '/api/cognition/count') {
-      const active = core.memory.listCognitions().filter((c) => !c.invalidAt && !c.archivedAt);
+      const active = profileOverrides.applyCognitions(core.memory.listCognitions())
+        .filter((c) => !c.invalidAt && !c.archivedAt && !c.needsReview);
       sendJson(res, 200, { count: active.length });
       return;
     }
@@ -871,11 +942,174 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
     //   后端默认不含失效/归档；前端勾"也显示"时带 includeInvalid=true/includeArchived=true 重新 fetch。
     if (req.method === 'GET' && url.pathname === '/api/memory-graph') {
       const sp = url.searchParams;
-      sendJson(res, 200, core.graph.buildMemoryGraph({
+      const graph = core.graph.buildMemoryGraph({
         includeEvidence: sp.get('includeEvidence') !== 'false',
         includeInvalid: sp.get('includeInvalid') === 'true',
         includeArchived: sp.get('includeArchived') === 'true',
-      }));
+      });
+      const cognitionViews = profileOverrides.applyCognitions(core.memory.listCognitions());
+      const viewById = new Map(cognitionViews.map((item) => [item.id, item]));
+      graph.nodes = graph.nodes.map((node) => {
+        if (node.kind !== 'cognition') return node;
+        const view = viewById.get(node.id);
+        if (!view || view.needsReview || (!view.overridden && !view.rejectedByUser)) return node;
+        const { confidence: _confidence, credStatus: _credStatus, ...rest } = node;
+        const content = view.overridden ? view.content : (node.summary ?? node.label);
+        return {
+          ...rest,
+          summary: content,
+          label: content.length > 40 ? `${content.slice(0, 39)}…` : content,
+          val: 8,
+          ...(view.overridden ? { userConfirmed: true } : {}),
+          ...(view.rejectedByUser ? { userRejected: true } : {}),
+          ...(view.restoredFromRejection ? { userRestored: true } : {}),
+        } as typeof node;
+      });
+      const graphIds = new Set(graph.nodes.map((node) => node.id));
+      for (const view of cognitionViews) {
+        if (!view.independent || view.needsReview || graphIds.has(view.id)) continue;
+        graph.nodes.push({
+          id: view.id,
+          kind: 'cognition',
+          label: view.content.length > 40 ? `${view.content.slice(0, 39)}…` : view.content,
+          summary: view.content,
+          contentType: view.contentType,
+          formedBy: view.formedBy,
+          createdAt: view.createdAt,
+          updatedAt: view.updatedAt,
+          val: 8,
+          colorKey: 'cognition',
+          userConfirmed: true,
+          ...(view.restoredFromRejection ? { userRestored: true } : {}),
+        } as (typeof graph.nodes)[number]);
+        graph.stats.nodeCount++;
+        graph.stats.activeCognitionCount++;
+      }
+      sendJson(res, 200, graph);
+      return;
+    }
+
+    // 修改画像只写 WeftMate 覆盖层；MemoWeft cognition/evidence/export 均保持原样。
+    if (req.method === 'POST' && url.pathname === '/api/cognition/override') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      const content = typeof body.content === 'string' ? body.content.trim() : '';
+      if (!id || !content) { sendJson(res, 400, { error: '修改画像需要条目和新内容' }); return; }
+      if (content.length > 4_000) { sendJson(res, 400, { error: '画像内容过长，请缩短后再保存' }); return; }
+      const existingOverride = profileOverrides.get(id);
+      const original = core.memory.listCognitions().find((item) => item.id === id);
+      if (!existingOverride?.independent && (!original || original.invalidAt || original.archivedAt)) {
+        sendJson(res, 409, { error: '底层理解已经变化，请先选择继续采用或放弃修改' });
+        return;
+      }
+      const record = profileOverrides.set(id, content, original);
+      const cognition = profileOverrides.applyCognitions(core.memory.listCognitions()).find((item) => item.id === id);
+      sendJson(res, 200, { ok: true, cognition: cognition ?? { id, content: record.content, overridden: true, independent: true } });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/cognition/override/keep') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要继续采用的条目 id' }); return; }
+      const views = profileOverrides.applyCognitions(core.memory.listCognitions());
+      const view = views.find((item) => item.id === id);
+      if (!view?.needsReview) { sendJson(res, 409, { error: '这条修改当前不需要确认' }); return; }
+      const kept = profileOverrides.keepIndependent(id);
+      sendJson(res, kept ? 200 : 404, { ok: !!kept, cognition: kept ? profileOverrides.applyCognitions(core.memory.listCognitions()).find((item) => item.id === id) : null });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/cognition/override/restore') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要恢复的条目 id' }); return; }
+      const original = core.memory.listCognitions().find((item) => item.id === id);
+      const restored = profileOverrides.remove(id);
+      profileOverrides.removeRejection(id);
+      sendJson(res, 200, { ok: true, restored, cognition: original ? { ...original, overridden: false } : null });
+      return;
+    }
+
+    // 暂时不用只调公开 muteCognition：仍是 active 画像、保留演化与溯源，但不再进入 recall。
+    if (req.method === 'POST' && url.pathname === '/api/cognition/mute') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id || typeof body.muted !== 'boolean') { sendJson(res, 400, { error: '静音操作缺少条目或状态' }); return; }
+      const override = profileOverrides.get(id);
+      const updated = override?.independent
+        ? profileOverrides.setIndependentMuted(id, body.muted)
+        : core.memory.muteCognition({
+          cognitionId: id,
+          muted: body.muted,
+          reason: body.muted ? 'host:用户暂时不用这条画像' : 'host:用户恢复使用这条画像',
+        });
+      sendJson(res, updated ? 200 : 404, { updated: !!updated, cognition: updated, ...(!updated ? { error: '这条理解已经不在了' } : {}) });
+      return;
+    }
+
+    // 指正只接受 active inferred。正确内容先幂等摄入，再走 scheduler 的公开 updateProfile 路径；旧推断仍 active 则公开失效兜底。
+    if (req.method === 'POST' && url.pathname === '/api/cognition/correct') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      const content = typeof body.content === 'string' ? body.content.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要指正的条目 id' }); return; }
+      if (content.length > 4_000) { sendJson(res, 400, { error: '指正内容过长，请缩短后再提交' }); return; }
+      const cognition = core.memory.listCognitions().find((item) => item.id === id);
+      if (!cognition) { sendJson(res, 404, { error: '这条理解已经不在了' }); return; }
+      if (cognition.invalidAt || cognition.archivedAt || cognition.formedBy !== 'inferred') {
+        sendJson(res, 409, { error: '只有仍在使用中的推断可以指正' });
+        return;
+      }
+
+      if (!content) {
+        const invalidated = core.memory.invalidateCognition({ cognitionId: id, reason: 'host:用户否定推断且未提供正确内容' });
+        if (invalidated) profileOverrides.markRejected(id);
+        sendJson(res, invalidated ? 200 : 404, { ok: !!invalidated, status: 'applied', invalidated: !!invalidated });
+        return;
+      }
+
+      const originId = cognitionCorrectionOriginId(id, content);
+      const evidence = await core.ingestUserMessage({ content, originId });
+      let status: 'applied' | 'pending' = 'applied';
+      try {
+        const refresh = await scheduler.refreshNow();
+        if (!refresh.ran) {
+          status = 'pending';
+          scheduler.onTurn();
+        }
+      } catch {
+        status = 'pending';
+        scheduler.onTurn();
+      }
+      const stillActive = core.memory.listCognitions().find((item) => item.id === id && !item.invalidAt && !item.archivedAt);
+      const invalidated = stillActive
+        ? core.memory.invalidateCognition({ cognitionId: id, reason: 'host:用户指正推断后的旧项兜底失效' })
+        : null;
+      profileOverrides.remove(id);
+      profileOverrides.removeRejection(id);
+      sendJson(res, status === 'pending' ? 202 : 200, {
+        ok: true,
+        status,
+        evidenceId: evidence.id,
+        invalidatedOld: !stillActive || !!invalidated,
+        message: status === 'pending' ? '指正已记下，画像仍待后台整理' : '指正已记下并完成整理',
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/cognition/rejection/undo') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要撤销否定的条目 id' }); return; }
+      if (!profileOverrides.hasRejection(id)) { sendJson(res, 404, { error: '没有找到这条否定记录' }); return; }
+      const source = core.memory.listCognitions().find((item) => item.id === id) ?? null;
+      if (!source) { sendJson(res, 404, { error: '原理解已经被永久删除，无法恢复' }); return; }
+      const restored = profileOverrides.restoreRejected(source);
+      const cognition = restored
+        ? profileOverrides.applyCognitions(core.memory.listCognitions()).find((item) => item.id === id)
+        : null;
+      sendJson(res, restored && cognition ? 200 : 409, { ok: !!restored && !!cognition, cognition, ...(!restored || !cognition ? { error: '撤销否定没有完成，请重试' } : {}) });
       return;
     }
 
@@ -884,9 +1118,13 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       const body = await readJson(req);
       const id = typeof body.id === 'string' ? body.id.trim() : '';
       if (!id) { sendJson(res, 400, { error: '缺少要标失效的条目 id' }); return; }
-      const updated = core.memory.invalidateCognition({ cognitionId: id, reason: 'host:用户在记忆管理页标失效' });
+      const override = profileOverrides.get(id);
+      const independent = override?.independent === true;
+      const updated = independent ? { id } : core.memory.invalidateCognition({ cognitionId: id, reason: 'host:用户在记忆管理页标失效' });
+      const overrideRemoved = override ? profileOverrides.remove(id) : false;
+      profileOverrides.removeRejection(id);
       // 不存在返回 null（受控 API 口径）：如实回 removed=false，别假报成功。
-      sendJson(res, 200, { invalidated: !!updated, cognition: updated });
+      sendJson(res, 200, { invalidated: !!updated, overrideRemoved, cognition: updated });
       return;
     }
 
@@ -895,9 +1133,15 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       const body = await readJson(req);
       const id = typeof body.id === 'string' ? body.id.trim() : '';
       if (!id) { sendJson(res, 400, { error: '缺少要删除的条目 id' }); return; }
-      const r = core.memory.removeCognitionSafely({ cognitionId: id, reason: 'host:用户删除' });
+      const override = profileOverrides.get(id);
+      const independent = override?.independent === true;
+      const r = independent
+        ? { removed: profileOverrides.remove(id), cognitionId: id, productLayer: true }
+        : core.memory.removeCognitionSafely({ cognitionId: id, reason: 'host:用户删除' });
+      const overrideRemoved = !independent && override ? profileOverrides.remove(id) : false;
+      profileOverrides.removeRejection(id);
       // removed=false = 目标早已不存在（别处/后台先删了）：如实回传，前端刷新同步。
-      sendJson(res, 200, r);
+      sendJson(res, 200, { ...r, removed: r.removed || overrideRemoved, sourceRemoved: r.removed, overrideRemoved });
       return;
     }
 
@@ -982,19 +1226,20 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       //   CORS preflight，本地无鉴权服务不响应 preflight → 浏览器挡下跨源清库。CORS 只挡"读响应"、不挡
       //   "请求到达并执行"，所以裸端点直连就能清库——这里加一道服务端确认兜底。前端另有"输入清空二字"强确认。
       const body = await readJson(req);
-      if (body.confirm !== '清空') { sendJson(res, 400, { error: '恢复出厂需要确认（body 缺 confirm）' }); return; }
+      if (body.confirm !== '清空' && body.confirm !== 'Clear') { sendJson(res, 400, { error: '清空记忆需要确认（body 缺 confirm）' }); return; }
       // 确认正文读完后再做最终闸门；从这里到同步清库之间不再 await，避免检查通过后又启动在途写入。
       const activeTask = activeAgentTask();
       if (activeTask) {
-        sendJson(res, 409, { error: '还有任务没有结束，请等它结束后再恢复出厂。', taskId: activeTask.id });
+        sendJson(res, 409, { error: '还有任务没有结束，请等它结束后再清空记忆。', taskId: activeTask.id });
         return;
       }
       if (scheduler.status().profileUpdating) {
-        sendJson(res, 409, { error: '记忆还在整理中，请等整理结束后再恢复出厂。' });
+        sendJson(res, 409, { error: '记忆还在整理中，请等整理结束后再清空记忆。' });
         return;
       }
       // 破坏性收口：清 Core 记忆库（三层 + 审计 + 向量索引）。返回四个清除计数。
-      const counts = core.memory.resetSubject({ reason: 'host:用户在记忆管理页恢复出厂' });
+      const counts = core.memory.resetSubject({ reason: 'host:用户在记忆管理页清空记忆' });
+      profileOverrides.clear();
 
       // Host 会话历史：归档所有未归档对话（软移除、不硬删），再开一条空对话作当前 → 用户回到干净空白。
       //   history.list() 默认只列未归档，逐个 archive（加 .archived 后缀，数据留盘可挖回）。
@@ -1256,6 +1501,8 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
   } catch (e) {
     // 兜底：任何 handler 抛错（如非法 UTF-8 请求体）都返回 400，不崩服务。
     sendJson(res, 400, { error: e instanceof Error ? e.message : String(e) });
+  } finally {
+    if (countedMutation) finishMutation();
   }
 }));
 
