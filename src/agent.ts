@@ -184,7 +184,7 @@ let backupReader: (file: string) => Promise<Buffer> = (file) => readFile(file);
 // ── 记忆接线 + MCP 工具接线（server 注入；不 import core/mcp，保持解耦 + 热重建自然跟随）──
 /** MCP 工具（②·帮你干活）：延迟加载——只带 name/desc/极简签名，完整 schema 在 mcp.ts 手里、不进上下文。 */
 export interface AgentMcpTool { fqName: string; description: string; signature: string; readOnly: boolean; }
-interface AgentExperience { id: string; name: string; systemPrompt: string; }
+interface AgentExperience { id: string; name: string; systemPrompt: string; memoryReadEnabled?: boolean; }
 interface AgentDeps {
   recall?: (query: string) => Promise<string>;               // 捞"关于用户"的背景，返回一段纯文本（空串=没有/失败）
   record?: (taskText: string, summary: string) => Promise<void>; // 干完把结果回写记忆
@@ -570,6 +570,9 @@ function buildSystemPrompt(workspace: string, memoryNote: string, mcpTools: Agen
   const textAttachments = attachments.filter((a) => a.kind === 'text');
   const imageAttachments = attachments.filter((a) => a.kind === 'image');
   const mem = memoryNote ? `\n关于用户你已知道（供参考，别乱用）：\n${memoryNote}\n` : '';
+  const memoryAccess = experience?.memoryReadEnabled === false
+    ? '\n【长期记忆权限】这个人格不能读取长期记忆，也不能声称记得以前长期保存的内容；但可以使用本轮提供的当前对话上下文。\n'
+    : '';
   // 工具清单：工作区工具仅在有工作区时给；read_attachment 仅在有附件时给。
   const tools: string[] = [];
   if (hasWs) {
@@ -622,7 +625,7 @@ ${experience.systemPrompt.trim()}
     : '';
   return `${persona}你现在工作在 WeftMate 的统一聊天与协作环境中：可以自然聊天，也能在需要时使用用户允许的工具完成任务。
 ${envLine}
-${mem}
+${mem}${memoryAccess}
 你能用这些工具，每次回复【只做一件事】：
 ${tools.join('\n')}${attList}${mcp}
 
@@ -720,15 +723,18 @@ function buildConversationOnlyPrompt(memoryNote: string, experience: AgentExperi
     ? `【当前人格：${experience.name}（${experience.id}）】\n${experience.systemPrompt.trim()}\n\n保持上面人格的身份、称呼和语气。\n\n`
     : '';
   const memory = memoryNote ? `关于用户你已知道（供参考，别乱用）：\n${memoryNote}\n\n` : '';
-  return `${persona}你现在工作在 WeftMate 的纯对话流程中。这一轮没有任何文件、命令或外部工具可用，也绝不能请求或假装调用工具。\n${memory}${guidance}\n直接用用户的语言自然回复，不要输出 JSON、内部规则或分析过程。`;
+  const memoryAccess = experience?.memoryReadEnabled === false
+    ? '【长期记忆权限】这个人格不能读取长期记忆，也不能声称记得以前长期保存的内容；但可以使用本轮提供的当前对话上下文。\n\n'
+    : '';
+  return `${persona}你现在工作在 WeftMate 的纯对话流程中。这一轮没有任何文件、命令或外部工具可用，也绝不能请求或假装调用工具。\n${memory}${memoryAccess}${guidance}\n直接用用户的语言自然回复，不要输出 JSON、内部规则或分析过程。`;
 }
 
 /** Host 认证的纯对话轮：与统一 Agent 共用模型、记忆回写、完成和终态，但物理没有工具解析/执行路径。 */
 async function converse(t: Task): Promise<void> {
   try {
     const client = mkClient();
-    const memNote = deps.recall ? await safeRecall(t.task) : '';
     const experience = deps.experience ? deps.experience() : undefined;
+    const memNote = deps.recall && experience?.memoryReadEnabled !== false ? await safeRecall(t.task) : '';
     t.messages = [
       { role: 'system', content: buildConversationOnlyPrompt(memNote, experience, t.guidance ?? '') },
       ...t.context,
@@ -773,9 +779,9 @@ function taskUserMessage(t: Task): AgentMessage {
 async function plan(t: Task): Promise<void> {
   try {
     const client = mkClient();
-    const memNote = deps.recall ? await safeRecall(t.task) : '';
-    const mtools = deps.mcpTools ? deps.mcpTools() : [];
     const experience = deps.experience ? deps.experience() : undefined;
+    const memNote = deps.recall && experience?.memoryReadEnabled !== false ? await safeRecall(t.task) : '';
+    const mtools = deps.mcpTools ? deps.mcpTools() : [];
     const sys = buildSystemPrompt(t.workspace, memNote, mtools, t.attachments, experience) +
       `\n\n【本次只出计划】用户选了"只建议"，所以你【不要执行】，只回一个 JSON：
 {"summary":"整体思路（用用户的语言）","plan":[{"tool":"工具名","args":{…},"why":"这步为啥"}]}`;
@@ -813,9 +819,9 @@ async function plan(t: Task): Promise<void> {
 async function drive(t: Task): Promise<void> {
   try {
     const client = mkClient();
-    const memNote = deps.recall ? await safeRecall(t.task) : '';
-    const mtools = deps.mcpTools ? deps.mcpTools() : [];
     const experience = deps.experience ? deps.experience() : undefined;
+    const memNote = deps.recall && experience?.memoryReadEnabled !== false ? await safeRecall(t.task) : '';
+    const mtools = deps.mcpTools ? deps.mcpTools() : [];
     t.messages = [
       { role: 'system', content: buildSystemPrompt(t.workspace, memNote, mtools, t.attachments, experience) },
       ...t.context,

@@ -422,6 +422,7 @@
   /* 人格完整管理页 */
   .persona-manage-head { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
   .persona-manage-copy { flex: 1; color: var(--muted); font-size: var(--fs-sm); line-height: 1.55; }
+  .persona-manage-actions { display: flex; flex-wrap: wrap; gap: 8px; }
   #personaNew {
     border: 0; border-radius: 9px; background: var(--accent); color: var(--on-accent);
     padding: 8px 13px; cursor: pointer; font: inherit; font-size: var(--fs-sm); font-weight: 600;
@@ -444,6 +445,15 @@
   .persona-card-actions button:hover { border-color: var(--accent); }
   .persona-card-actions button.danger { color: var(--danger); }
   .persona-card-actions button:disabled { opacity: .5; cursor: default; }
+  .persona-memory-access { display: flex; align-items: center; gap: 12px; padding: 9px 10px; border-radius: 10px; background: var(--panel-2); }
+  .persona-memory-copy { flex: 1; min-width: 0; }
+  .persona-memory-title { color: var(--text); font-size: var(--fs-xs); font-weight: 600; }
+  .persona-memory-note { margin-top: 3px; color: var(--faint); font-size: var(--fs-xs); line-height: 1.45; }
+  .persona-memory-switch { width: 38px; height: 22px; flex: 0 0 auto; position: relative; padding: 0; border: 0; border-radius: 999px; background: var(--panel-2); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; transition: background-color 140ms ease; }
+  .persona-memory-switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 16px; height: 16px; border-radius: 50%; background: var(--faint); transition: transform 160ms var(--ease), background-color 140ms ease; }
+  .persona-memory-switch[aria-checked="true"] { background: var(--accent-soft); }
+  .persona-memory-switch[aria-checked="true"]::after { transform: translateX(16px); background: var(--accent); }
+  .persona-memory-switch:disabled { cursor: progress; opacity: .55; }
   #personaManageStatus { min-height: 18px; margin: 8px 0; color: var(--muted); font-size: var(--fs-xs); }
   #personaFormTitle { margin: 0 0 8px; font-size: var(--fs-sm); }
   #personaFormLead { margin: 0 0 8px; color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
@@ -581,6 +591,10 @@
   }
   .mc-dialog h3 { margin: 0 0 10px; font-size: 16px; color: var(--text); }
   .mc-dialog .mc-body { font-size: var(--fs-sm); color: var(--text); line-height: 1.6; word-break: break-word; }
+  .mc-dialog.mc-persona-preview { max-height: calc(100vh - 40px); display: flex; flex-direction: column; }
+  .mc-dialog.mc-persona-preview .mc-body { min-height: 0; overflow: hidden; }
+  .mc-dialog .mc-package-preview { white-space: pre-wrap; max-height: min(360px, 42vh); overflow-y: auto; padding: 10px 11px; border-radius: 9px; background: var(--ground); font-weight: 500; }
+  .mc-dialog.mc-persona-preview .mc-dialog-actions { flex: 0 0 auto; }
   .mc-dialog .mc-body b { color: var(--danger); }
   .mc-dialog .mc-warn { margin-top: 10px; color: var(--danger); font-size: var(--fs-xs); }
   .mc-dialog textarea.mc-editor { width: 100%; min-height: 110px; box-sizing: border-box; margin-top: 12px; padding: 10px 11px; resize: vertical; border: 1px solid var(--line); border-radius: 9px; background: var(--ground); color: var(--text); font: inherit; line-height: 1.5; }
@@ -1009,7 +1023,11 @@
     <div id="memPersonas" style="display:none;">
       <div class="persona-manage-head">
         <div class="persona-manage-copy">人格只改变说话方式，不会带走或复制你的记忆。内置人格可以改显示名；普通助手是系统兜底，不能删除。</div>
-        <button id="personaNew" type="button">＋ 新建人格</button>
+        <div class="persona-manage-actions">
+          <button id="personaNew" type="button">＋ 新建人格</button>
+          <button id="personaImport" type="button">导入人格</button>
+          <input id="personaImportFile" type="file" hidden accept=".weftmate-persona.json,.json,application/json">
+        </div>
       </div>
       <div id="personaManageStatus" role="status" aria-live="polite"></div>
       <div id="personaManageList"><div class="mem-empty">加载中…</div></div>
@@ -3162,6 +3180,22 @@
     '保存成功。现在可以在上方列表中选择它。': 'Saved. You can now select it from the list above.',
     '人格没有读取成功，请稍后重试。': 'The persona could not be loaded. Please try again.',
     '人格内容没有保存，请检查名称和提示词后重试。': 'The persona was not saved. Check its name and prompt, then try again.',
+    '导入人格': 'Import persona', '导出人格': 'Export persona', '使用': 'Use',
+    '可读取长期记忆': 'Can read long-term memory', '不读取长期记忆': 'Cannot read long-term memory',
+    '允许这个人格读取我的长期记忆': 'Allow this persona to read my long-term memory',
+    '关闭只是不读取旧记忆；仍能看到当前对话；你之后说的话仍会继续记入 MemoWeft。': 'Turning this off only stops reading old memories. It can still see the current conversation, and what you say afterward will continue to be recorded in MemoWeft.',
+    '正在导出人格…': 'Preparing persona export…', '正在导入人格…': 'Importing persona…', '正在更新记忆权限…': 'Updating memory access…',
+    '导出人格前请确认': 'Confirm persona export', '导入这个人格？': 'Import this persona?',
+    '只包含可分享的人格设置，不包含记忆、聊天、密钥、文件路径、本机权限或本机状态。你自己写进提示词的内容也会一起导出。': 'This contains only shareable persona settings, not memories, chats, secrets, file paths, local permissions, or local state. Anything you wrote in the prompt is included too.',
+    '这会新建一个自定义人格，不会自动启用，默认不能读取长期记忆。只导入你信任的文件。': 'This creates a new custom persona without activating it, and long-term memory access is off by default. Only import files you trust.',
+    '下载人格包': 'Download persona package', '确认导入人格': 'Import persona',
+    '人格包不能超过 64KB。': 'Persona packages cannot exceed 64KB.',
+    '人格包没有读取成功，请确认它是可信的 WeftMate 人格 JSON。': 'Could not read the persona package. Make sure it is a trusted WeftMate persona JSON file.',
+    '人格没有导入，请检查文件后重试。': 'The persona was not imported. Check the file and try again.',
+    '已导入人格；它没有自动启用，长期记忆读取默认关闭。': 'Persona imported. It was not activated, and long-term memory access is off by default.',
+    '人格没有导出，请先检查提示词里是否有密钥或本机路径。': 'The persona was not exported. Check its prompt for secrets or local paths.',
+    '记忆权限没有更新，请稍后重试。': 'Memory access was not updated. Please try again.',
+    '当前回复结束后再调整这个人格的记忆权限': 'Wait for the current reply to finish before changing this persona’s memory access.',
     '第一次认识': 'First introduction', '聊两三句，让之后的帮助更贴合你': 'A short chat can make future help fit you better',
     '这些回答只是初步线索，不会把你定义死，也可以之后再改。': 'These answers are only early clues. They do not define you, and you can change them later.',
     '聊两三句': 'Chat for a moment', '先跳过': 'Skip for now', '先暂停': 'Pause for now', '跳过这一题': 'Skip this question',
@@ -3923,7 +3957,7 @@
   }
 
   // 二次确认弹窗：返回 Promise<boolean>。所有用户内容经 setText 放，不拼 innerHTML。
-  function memConfirm({ title, bodyText, bodyQuote, quoteNoI18n, warn, okText, okKind }) {
+  function memConfirm({ title, bodyText, bodyQuote, quoteNoI18n, bodyPreformatted, warn, okText, okKind }) {
     return new Promise((resolve) => {
       $('memConfirmTitle').textContent = title || '确认操作';
       const body = $('memConfirmBody');
@@ -3931,8 +3965,9 @@
       if (bodyQuote) {
         const q = document.createElement('div');
         if (quoteNoI18n) q.classList.add('no-i18n');
-        q.style.cssText = 'margin-bottom:8px;font-weight:600;';
-        q.textContent = '「' + bodyQuote + '」'; // 用户内容 → textContent
+        if (bodyPreformatted) q.classList.add('mc-package-preview');
+        q.style.marginBottom = '8px';
+        q.textContent = bodyPreformatted ? bodyQuote : '「' + bodyQuote + '」'; // 用户内容 → textContent
         body.appendChild(q);
       }
       if (bodyText) {
@@ -3945,9 +3980,12 @@
       okBtn.textContent = okText || '确认';
       okBtn.style.background = okKind === 'danger' ? '#b4232a' : 'var(--accent)';
       const box = $('memConfirm');
+      const dialog = body.closest('.mc-dialog');
+      dialog?.classList.toggle('mc-persona-preview', bodyPreformatted === true);
       box.classList.add('show');
       const done = (v) => {
         box.classList.remove('show');
+        dialog?.classList.remove('mc-persona-preview');
         okBtn.onclick = null; $('memConfirmCancel').onclick = null;
         resolve(v);
       };
@@ -5971,6 +6009,9 @@
   let personaSwitchBusyId = '';
   let personaMutationBusyId = '';
   let personaDeleteConfirmingId = '';
+  let personaExportBusyId = '';
+  let personaImportBusy = false;
+  let personaMemoryBusyId = '';
   let personaEditingId = '';
   let personaEditingBuiltin = false;
   let personaEditorToken = 0;
@@ -6010,7 +6051,9 @@
         button.className = 'persona-quick' + (persona.id === personaCurrentId ? ' current' : '');
         button.disabled = !!personaSwitchBusyId;
         const name = document.createElement('span'); name.className = 'persona-quick-name no-i18n'; name.textContent = persona.name;
-        const desc = document.createElement('span'); desc.className = 'persona-quick-desc' + (persona.source === 'user' ? ' no-i18n' : ''); desc.textContent = persona.description || '';
+        const desc = document.createElement('span'); desc.className = 'persona-quick-desc' + (persona.source === 'user' ? ' no-i18n' : '');
+        const description = persona.source === 'user' ? persona.description : t(persona.description || '');
+        desc.textContent = [description, t(persona.memoryReadEnabled === false ? '不读取长期记忆' : '可读取长期记忆')].filter(Boolean).join(' · ');
         const mark = document.createElement('span'); mark.className = 'persona-quick-mark';
         mark.textContent = personaSwitchBusyId === persona.id ? t('保存中…') : persona.id === personaCurrentId ? '✓' : '';
         button.append(name, desc, mark);
@@ -6027,6 +6070,7 @@
     box.textContent = '';
     const personaActionLocked = !!personaMutationBusyId || !!personaDeleteConfirmingId;
     $('personaNew').disabled = personaActionLocked || personaEditorOpen;
+    $('personaImport').disabled = personaImportBusy || personaActionLocked || personaEditorOpen;
     if (!personaListReady) {
       const empty = document.createElement('div'); empty.className = 'mem-empty';
       empty.textContent = personaListError ? t('人格列表加载失败，请稍后重试。') : t('加载中…'); box.appendChild(empty);
@@ -6047,13 +6091,32 @@
         : persona.source === 'builtin' ? t('内置人格；可以改显示名或从这台电脑移除。')
           : t('自定义人格；可以修改全部内容或删除。');
       const actions = document.createElement('div'); actions.className = 'persona-card-actions';
+      if (persona.id !== personaCurrentId) {
+        const use = document.createElement('button'); use.type = 'button'; use.textContent = t('使用');
+        use.disabled = !!personaSwitchBusyId; use.addEventListener('click', () => switchPersona(persona.id)); actions.appendChild(use);
+      }
       const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = persona.editable ? t('编辑人格') : t('改名');
       edit.disabled = personaActionLocked; edit.addEventListener('click', () => openPersonaEditor(persona.id)); actions.appendChild(edit);
+      const exportButton = document.createElement('button'); exportButton.type = 'button';
+      exportButton.textContent = personaExportBusyId === persona.id ? t('正在导出人格…') : t('导出人格');
+      exportButton.disabled = !!personaExportBusyId;
+      exportButton.addEventListener('click', () => exportPersona(persona)); actions.appendChild(exportButton);
       if (persona.canDelete) {
         const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'danger'; remove.textContent = t('删除');
         remove.disabled = personaActionLocked; remove.addEventListener('click', () => deletePersona(persona)); actions.appendChild(remove);
       }
-      card.append(top, note, actions); box.appendChild(card);
+      const memoryAccess = document.createElement('div'); memoryAccess.className = 'persona-memory-access';
+      const memoryCopy = document.createElement('div'); memoryCopy.className = 'persona-memory-copy';
+      const memoryTitle = document.createElement('div'); memoryTitle.className = 'persona-memory-title'; memoryTitle.textContent = t('允许这个人格读取我的长期记忆');
+      const memoryNote = document.createElement('div'); memoryNote.className = 'persona-memory-note'; memoryNote.textContent = t('关闭只是不读取旧记忆；仍能看到当前对话；你之后说的话仍会继续记入 MemoWeft。');
+      memoryCopy.append(memoryTitle, memoryNote);
+      const memorySwitch = document.createElement('button'); memorySwitch.type = 'button'; memorySwitch.className = 'persona-memory-switch';
+      memorySwitch.setAttribute('role', 'switch'); memorySwitch.setAttribute('aria-checked', persona.memoryReadEnabled === false ? 'false' : 'true');
+      memorySwitch.setAttribute('aria-label', t('允许这个人格读取我的长期记忆'));
+      memorySwitch.disabled = !!personaMemoryBusyId;
+      memorySwitch.addEventListener('click', () => setPersonaMemoryRead(persona.id, persona.memoryReadEnabled === false));
+      memoryAccess.append(memoryCopy, memorySwitch);
+      card.append(top, note, memoryAccess, actions); box.appendChild(card);
     }
   }
 
@@ -6254,7 +6317,143 @@
     }
   }
 
+  function personaPackagePreview(manifest) {
+    return [
+      t('名称') + '：' + manifest.name,
+      t('简介') + '：' + (manifest.description || '—'),
+      'Prompt：\n' + manifest.systemPrompt,
+    ].join('\n\n');
+  }
+
+  function personaPackagePreviewable(manifest) {
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) return false;
+    const expected = ['schemaVersion', 'id', 'name', 'description', 'systemPrompt'].sort();
+    const actual = Object.keys(manifest).sort();
+    return actual.length === expected.length
+      && actual.every((key, index) => key === expected[index])
+      && manifest.schemaVersion === 1
+      && typeof manifest.id === 'string'
+      && typeof manifest.name === 'string' && !!manifest.name.trim() && manifest.name.length <= 80
+      && typeof manifest.description === 'string' && manifest.description.length <= 500
+      && typeof manifest.systemPrompt === 'string' && !!manifest.systemPrompt.trim() && manifest.systemPrompt.length <= 8000;
+  }
+
+  function safePersonaPackageName(name) {
+    const safe = String(name || '').replace(/[<>:"/\\|?*\u0000-\u001F]/g, '-').replace(/[. ]+$/g, '').trim().slice(0, 80);
+    return (safe || 'persona') + '.weftmate-persona.json';
+  }
+
+  async function exportPersona(persona) {
+    if (personaExportBusyId) return;
+    personaExportBusyId = persona.id;
+    setPersonaManageStatus(t('正在导出人格…'), '');
+    renderPersonaManager();
+    try {
+      const res = await fetch('/api/persona/export?id=' + encodeURIComponent(persona.id));
+      const manifest = await res.json();
+      if (!res.ok || manifest.error) throw new Error(manifest.error || 'export failed');
+      const confirmed = await memConfirm({
+        title: t('导出人格前请确认'),
+        bodyQuote: personaPackagePreview(manifest),
+        quoteNoI18n: true,
+        bodyPreformatted: true,
+        bodyText: t('只包含可分享的人格设置，不包含记忆、聊天、密钥、文件路径、本机权限或本机状态。你自己写进提示词的内容也会一起导出。'),
+        okText: t('下载人格包'),
+      });
+      if (!confirmed) { setPersonaManageStatus('', ''); return; }
+      const blob = new Blob([JSON.stringify(manifest, null, 2) + '\n'], { type: 'application/json;charset=utf-8' });
+      const urlObj = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = urlObj;
+      link.download = safePersonaPackageName(manifest.name);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(urlObj);
+      setPersonaManageStatus('', '');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      setPersonaManageStatus(LANG === 'en' ? t('人格没有导出，请先检查提示词里是否有密钥或本机路径。') : (message || t('人格没有导出，请先检查提示词里是否有密钥或本机路径。')), 'error');
+    } finally {
+      personaExportBusyId = '';
+      renderPersonaManager();
+    }
+  }
+
+  async function importPersonaFile(file) {
+    if (!file || personaImportBusy) return; // 用户取消文件选择时不发任何请求。
+    personaImportBusy = true;
+    setPersonaManageStatus(t('正在导入人格…'), '');
+    renderPersonaManager();
+    try {
+      if (file.size > 64 * 1024) throw new Error(t('人格包不能超过 64KB。'));
+      const text = await file.text();
+      const manifest = JSON.parse(text);
+      if (!personaPackagePreviewable(manifest)) {
+        throw new Error(t('人格包没有读取成功，请确认它是可信的 WeftMate 人格 JSON。'));
+      }
+      const confirmed = await memConfirm({
+        title: t('导入这个人格？'),
+        bodyQuote: personaPackagePreview(manifest),
+        quoteNoI18n: true,
+        bodyPreformatted: true,
+        bodyText: t('这会新建一个自定义人格，不会自动启用，默认不能读取长期记忆。只导入你信任的文件。'),
+        okText: t('确认导入人格'),
+      });
+      if (!confirmed) { setPersonaManageStatus('', ''); return; }
+      const res = await fetch('/api/persona/import', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: text,
+      });
+      const data = await res.json();
+      if (!res.ok || data.error || !data.ok) throw new Error(data.error || 'import failed');
+      await loadPersonas();
+      setPersonaManageStatus(t('已导入人格；它没有自动启用，长期记忆读取默认关闭。'), 'ok');
+      memToast(t('已导入人格；它没有自动启用，长期记忆读取默认关闭。'), '');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : '';
+      const knownLocalError = message === t('人格包不能超过 64KB。')
+        || message === t('人格包没有读取成功，请确认它是可信的 WeftMate 人格 JSON。');
+      setPersonaManageStatus(knownLocalError ? message : LANG === 'en' ? t('人格没有导入，请检查文件后重试。') : (message || t('人格没有导入，请检查文件后重试。')), 'error');
+    } finally {
+      personaImportBusy = false;
+      $('personaImportFile').value = '';
+      renderPersonaManager();
+    }
+  }
+
+  async function setPersonaMemoryRead(id, enabled) {
+    if (personaMemoryBusyId) return;
+    personaMemoryBusyId = id;
+    setPersonaManageStatus(t('正在更新记忆权限…'), '');
+    renderPersonaManager();
+    try {
+      const res = await fetch('/api/persona/memory-read', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, enabled }),
+      });
+      const data = await res.json();
+      if (!res.ok || data.error || !data.ok) {
+        const message = res.status === 409 ? t('当前回复结束后再调整这个人格的记忆权限') : (data.error || t('记忆权限没有更新，请稍后重试。'));
+        throw new Error(message);
+      }
+      expOptions = Array.isArray(data.personas) ? data.personas : expOptions;
+      personaCurrentId = typeof data.current === 'string' ? data.current : personaCurrentId;
+      personaListReady = true;
+      personaListError = '';
+      setPersonaManageStatus('', '');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : t('记忆权限没有更新，请稍后重试。');
+      await loadPersonas(); // 请求结果不确定时回读服务端真状态，不做乐观开关。
+      setPersonaManageStatus(LANG === 'en' && !message.includes('Wait for') ? t('记忆权限没有更新，请稍后重试。') : message, 'error');
+    } finally {
+      personaMemoryBusyId = '';
+      renderPersonaQuickList();
+      renderPersonaManager();
+    }
+  }
+
   $('personaNew').addEventListener('click', () => openPersonaEditor(''));
+  $('personaImport').addEventListener('click', () => { if (!personaImportBusy) $('personaImportFile').click(); });
+  $('personaImportFile').addEventListener('change', (event) => importPersonaFile(event.target.files?.[0]));
   $('personaCancel').addEventListener('click', closePersonaEditor);
   $('personaForm').addEventListener('submit', savePersonaEditor);
   // ── Persona editor end ──

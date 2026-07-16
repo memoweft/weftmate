@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const server = readFileSync(new URL('../src/server.ts', import.meta.url), 'utf8');
 const html = readFileSync(new URL('../src/web/index.html', import.meta.url), 'utf8');
+const agent = readFileSync(new URL('../src/agent.ts', import.meta.url), 'utf8');
 
 function between(source: string, start: string, end: string): string {
   const from = source.indexOf(start); const to = source.indexOf(end, from + start.length);
@@ -47,6 +48,51 @@ describe('Persona API / UI 接线', () => {
     assert.match(routes, /personaErrorResponse\(res, error\)/);
     assert.match(server, /error\.code === 'storage' \? 500/);
     assert.match(server, /error\.code === 'not_found' \? 404/);
+  });
+
+  it('人格包 API 是严格 Manifest 根对象、64KB 导入且不会切换当前人格', () => {
+    const routes = between(server, '// ── Persona API ──', '// 插件管理');
+    const exportRoute = between(routes, "url.pathname === '/api/persona/export'", '// 导入不覆盖');
+    const importRoute = between(routes, "url.pathname === '/api/persona/import'", '// 记忆读取权限');
+    assert.match(exportRoute, /personaStore\.exportManifest\(id\)/);
+    assert.doesNotMatch(exportRoute, /persona:|manifest:|setCurrent|activatePersona/);
+    assert.match(importRoute, /readJson\(req, 64 \* 1024\)/);
+    assert.match(importRoute, /personaStore\.importManifest\(body\)/);
+    assert.match(importRoute, /personas: personaStore\.listSummaries\(\)/);
+    assert.doesNotMatch(importRoute, /setCurrent|activatePersona/);
+    assert.match(importRoute, /RequestBodyTooLargeError[\s\S]*413/);
+  });
+
+  it('记忆权限 API 类型严格，当前任务守卫在 Store 写前；服务端召回在所有记忆读取前硬短路', () => {
+    const routes = between(server, '// ── Persona API ──', '// 插件管理');
+    const memoryRoute = between(routes, "url.pathname === '/api/persona/memory-read'", '// 创建/编辑用户人格');
+    assert.match(memoryRoute, /typeof body\.enabled !== 'boolean'/);
+    assert.ok(memoryRoute.indexOf('rejectPersonaChangeDuringActiveTask') < memoryRoute.indexOf('personaStore.setMemoryRead'));
+    assert.match(memoryRoute, /personaStore\.setMemoryRead\(id, body\.enabled\)/);
+    assert.match(memoryRoute, /personas: personaStore\.listSummaries\(\)/);
+    const recall = between(server, 'recall: async (query) => {', 'record: async');
+    const guard = recall.indexOf("if (!personaStore.current().memoryReadEnabled) return '';");
+    assert.ok(guard >= 0);
+    for (const read of ['core.memory.listCognitions()', 'core.recall({ query })', 'profileOverrides.applyRecall']) {
+      assert.ok(guard < recall.indexOf(read), `硬守卫必须早于 ${read}`);
+    }
+    assert.match(server, /seedFor\(conversationId: string\)[\s\S]*filterPersonaHistory\(history\.read\(conversationId\)/);
+    assert.match(server, /recordChat: async[\s\S]*core\.ingestUserMessage/);
+  });
+
+  it('Agent 三路径按 runtime 权限跳过 recall，并给出关闭说明而不丢当前上下文', () => {
+    for (const [start, end] of [
+      ['async function converse(t: Task)', 'function taskUserMessage'],
+      ['async function plan(t: Task)', '/** 执行循环'],
+      ['async function drive(t: Task)', '// LLM 客户端工厂'],
+    ]) {
+      const block = between(agent, start, end);
+      assert.ok(block.indexOf('deps.experience') < block.indexOf('safeRecall'));
+      assert.match(block, /experience\?\.memoryReadEnabled !== false/);
+    }
+    assert.match(agent, /不能读取长期记忆，也不能声称记得以前长期保存的内容/);
+    assert.match(agent, /可以使用本轮提供的当前对话上下文/);
+    assert.match(agent, /\.\.\.t\.context/);
   });
 
   it('活跃任务守卫先于所有会改变当前人格语义的 Store 写入', () => {
@@ -105,6 +151,56 @@ describe('Persona API / UI 接线', () => {
     assert.match(personaBlock, /persona\.safetyFallback/);
     assert.match(personaBlock, /persona\.canDelete/);
     assert.match(html, /maxlength="8000"/);
+  });
+
+  it('管理页人格包与记忆开关有确认、大小、busy 和失败回读；快捷列表只显示记忆状态', () => {
+    const quick = between(html, '<!-- 人格快捷弹层', '<header>');
+    const manager = between(html, '<!-- 人格管理区', '<!-- 数据 / 备份区');
+    const personaBlock = between(html, '// ══════════════════ Persona 快捷切换与完整管理', '// ══════════════════ 外壳接线');
+    assert.match(manager, /id="personaImport"/);
+    assert.match(manager, /id="personaImportFile"[^>]*hidden[^>]*accept="\.weftmate-persona\.json,\.json,application\/json"/);
+    assert.doesNotMatch(quick, /personaImport|导出人格|persona-memory-switch/);
+    assert.match(personaBlock, /persona\.memoryReadEnabled === false \? '不读取长期记忆' : '可读取长期记忆'/);
+    assert.match(personaBlock, /persona\.source === 'user' \? ' no-i18n' : ''/);
+    assert.match(personaBlock, /persona\.source === 'user' \? persona\.description : t\(persona\.description \|\| ''\)/);
+    assert.match(personaBlock, /function exportPersona\(persona\)/);
+    assert.match(personaBlock, /fetch\('\/api\/persona\/export\?id='/);
+    assert.ok(personaBlock.indexOf('await memConfirm({', personaBlock.indexOf('function exportPersona'))
+      < personaBlock.indexOf('new Blob(', personaBlock.indexOf('function exportPersona')));
+    assert.match(personaBlock, /personaPackagePreview\(manifest\)/);
+    assert.match(personaBlock, /bodyPreformatted: true/);
+    assert.match(html, /\.mc-dialog \.mc-package-preview \{ white-space: pre-wrap; max-height: min\(360px, 42vh\); overflow-y: auto;/);
+    assert.match(html, /\.mc-dialog\.mc-persona-preview[\s\S]*max-height: calc\(100vh - 40px\)[\s\S]*\.mc-dialog-actions \{ flex: 0 0 auto;/);
+    assert.match(personaBlock, /safePersonaPackageName\(manifest\.name\)/);
+    assert.match(personaBlock, /URL\.createObjectURL|URL\.revokeObjectURL/);
+    assert.match(personaBlock, /if \(!file \|\| personaImportBusy\) return/);
+    assert.match(personaBlock, /file\.size > 64 \* 1024/);
+    assert.match(personaBlock, /const text = await file\.text\(\)/);
+    const previewGuard = between(personaBlock, 'function personaPackagePreviewable(manifest)', 'function safePersonaPackageName');
+    assert.match(previewGuard, /\['schemaVersion', 'id', 'name', 'description', 'systemPrompt'\]\.sort\(\)/);
+    assert.match(previewGuard, /actual\.length === expected\.length/);
+    assert.match(previewGuard, /manifest\.schemaVersion === 1/);
+    assert.match(previewGuard, /typeof manifest\.id === 'string'/);
+    assert.match(previewGuard, /manifest\.name\.length <= 80/);
+    assert.match(previewGuard, /manifest\.description\.length <= 500/);
+    assert.match(previewGuard, /manifest\.systemPrompt\.length <= 8000/);
+    assert.ok(personaBlock.indexOf('if (!personaPackagePreviewable(manifest))')
+      < personaBlock.indexOf('const confirmed = await memConfirm({', personaBlock.indexOf('function importPersonaFile')));
+    assert.ok(personaBlock.indexOf('const confirmed = await memConfirm({', personaBlock.indexOf('function importPersonaFile'))
+      < personaBlock.indexOf("fetch('/api/persona/import'", personaBlock.indexOf('function importPersonaFile')));
+    assert.match(personaBlock, /body: text/);
+    assert.match(personaBlock, /personaImportBusy/);
+    assert.match(personaBlock, /className = 'persona-memory-switch'/);
+    assert.match(personaBlock, /setAttribute\('role', 'switch'\)/);
+    assert.match(personaBlock, /fetch\('\/api\/persona\/memory-read'/);
+    assert.match(personaBlock, /await loadPersonas\(\); \/\/ 请求结果不确定时回读服务端真状态/);
+    assert.match(personaBlock, /\.textContent\s*=/);
+    assert.match(personaBlock, /no-i18n/);
+    for (const busy of ['personaExportBusyId', 'personaImportBusy', 'personaMemoryBusyId']) assert.match(personaBlock, new RegExp(busy));
+    assert.match(html, /'导入人格': 'Import persona'/);
+    assert.match(html, /'允许这个人格读取我的长期记忆': 'Allow this persona to read my long-term memory'/);
+    assert.match(html, /不包含记忆、聊天、密钥、文件路径、本机权限或本机状态/);
+    assert.match(html, /关闭只是不读取旧记忆；仍能看到当前对话；你之后说的话仍会继续记入 MemoWeft/);
   });
 
   it('关于你不再展示旧插件页，两个独立 MCP 入口仍保持原接线', () => {

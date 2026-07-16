@@ -58,7 +58,7 @@ describe('Persona Manifest / Store', () => {
       'description', 'id', 'name', 'schemaVersion', 'systemPrompt',
     ]);
     assert.deepEqual(Object.keys(disk.personas[0]).sort(), ['createdAt', 'manifest', 'updatedAt']);
-    assert.equal(JSON.stringify(disk).includes('memory'), false);
+    assert.equal(JSON.stringify(disk.personas[0]).includes('memory'), false);
     assert.equal(JSON.stringify(disk).includes('apiKey'), false);
   });
 
