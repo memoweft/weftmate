@@ -1,7 +1,12 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import { dirname } from 'node:path';
-import { buildPersonaManifest, parsePersonaManifest, type PersonaManifest } from './manifest.ts';
+import {
+  buildPersonaManifest,
+  parsePersonaManifest,
+  personaManifestShareBlockReason,
+  type PersonaManifest,
+} from './manifest.ts';
 
 export type { PersonaManifest } from './manifest.ts';
 
@@ -24,6 +29,7 @@ export interface PersonaView extends PersonaManifest {
   canRename: boolean;
   canDelete: boolean;
   safetyFallback: boolean;
+  memoryReadEnabled: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -37,6 +43,7 @@ export interface PersonaSummary {
   canRename: boolean;
   canDelete: boolean;
   safetyFallback: boolean;
+  memoryReadEnabled: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -60,9 +67,10 @@ interface StoredPersonaFile {
   personas: StoredPersonaRecord[];
   builtinNameOverrides: Record<string, string>;
   hiddenBuiltinIds: string[];
+  memoryReadByPersona: Record<string, boolean>;
 }
 
-const FILE_KEYS = ['version', 'currentPersonaId', 'assistantHistoryBoundaryAt', 'personas', 'builtinNameOverrides', 'hiddenBuiltinIds'];
+const FILE_KEYS = ['version', 'currentPersonaId', 'assistantHistoryBoundaryAt', 'personas', 'builtinNameOverrides', 'hiddenBuiltinIds', 'memoryReadByPersona'];
 const REQUIRED_FILE_KEYS = ['version', 'currentPersonaId', 'personas'];
 const RECORD_KEYS = ['createdAt', 'updatedAt', 'manifest'];
 const LEGACY_RECORD_KEYS = ['source', 'createdAt', 'updatedAt', 'manifest'];
@@ -114,6 +122,13 @@ function parseStoredFile(value: unknown): StoredPersonaFile {
     throw new Error('内置人格隐藏记录格式不正确');
   }
   const hiddenBuiltinIds = [...new Set((rawHidden ?? []).map((id) => id.trim()))];
+  const rawMemoryRead = value.memoryReadByPersona;
+  if (rawMemoryRead !== undefined && !plainObject(rawMemoryRead)) throw new Error('人格记忆读取权限格式不正确');
+  const memoryReadByPersona: Record<string, boolean> = {};
+  for (const [id, enabled] of Object.entries(rawMemoryRead ?? {})) {
+    if (!id.trim() || typeof enabled !== 'boolean') throw new Error('人格记忆读取权限格式不正确');
+    if (!enabled) memoryReadByPersona[id.trim()] = false;
+  }
   const ids = new Set<string>();
   const personas = value.personas.map((candidate): StoredPersonaRecord => {
     if (!plainObject(candidate) || (!exactKeys(candidate, RECORD_KEYS) && !exactKeys(candidate, LEGACY_RECORD_KEYS))) {
@@ -133,6 +148,7 @@ function parseStoredFile(value: unknown): StoredPersonaFile {
     personas,
     builtinNameOverrides,
     hiddenBuiltinIds,
+    memoryReadByPersona,
   };
 }
 
@@ -162,6 +178,7 @@ export class PersonaStore {
   private personas: StoredPersonaRecord[] = [];
   private builtinNameOverrides = new Map<string, string>();
   private hiddenBuiltinIds = new Set<string>();
+  private memoryReadByPersona = new Map<string, boolean>();
   private corruptSourcePending = false;
   private corruptBackupCreated = false;
 
@@ -197,15 +214,23 @@ export class PersonaStore {
         if (id === this.invalidFallbackId) throw new Error('安全回退人格不能隐藏');
         hidden.add(id);
       }
+      const knownIds = new Set([...builtinIds, ...parsed.personas.map((record) => record.manifest.id)]);
+      const memoryRead = new Map<string, boolean>();
+      for (const [id, enabled] of Object.entries(parsed.memoryReadByPersona)) {
+        if (!knownIds.has(id)) throw new Error('人格记忆读取权限引用未知 id');
+        if (!enabled) memoryRead.set(id, false);
+      }
       this.personas = parsed.personas.map(cloneRecord);
       this.builtinNameOverrides = overrides;
       this.hiddenBuiltinIds = hidden;
+      this.memoryReadByPersona = memoryRead;
       this.currentPersonaId = this.has(parsed.currentPersonaId) ? parsed.currentPersonaId : this.invalidFallbackId;
       this.contextBoundaryAt = parsed.assistantHistoryBoundaryAt;
     } catch {
       this.personas = [];
       this.builtinNameOverrides = new Map();
       this.hiddenBuiltinIds = new Set();
+      this.memoryReadByPersona = new Map();
       this.currentPersonaId = this.invalidFallbackId;
       this.contextBoundaryAt = null;
       this.corruptSourcePending = true;
@@ -218,6 +243,7 @@ export class PersonaStore {
     assistantHistoryBoundaryAt = this.contextBoundaryAt,
     builtinNameOverrides = this.builtinNameOverrides,
     hiddenBuiltinIds = this.hiddenBuiltinIds,
+    memoryReadByPersona = this.memoryReadByPersona,
   ): StoredPersonaFile {
     return {
       version: 1,
@@ -226,6 +252,7 @@ export class PersonaStore {
       personas: personas.map(cloneRecord),
       builtinNameOverrides: Object.fromEntries(builtinNameOverrides),
       hiddenBuiltinIds: [...hiddenBuiltinIds],
+      memoryReadByPersona: Object.fromEntries(memoryReadByPersona),
     };
   }
 
@@ -264,6 +291,7 @@ export class PersonaStore {
       canRename: true,
       canDelete: manifest.id !== this.invalidFallbackId,
       safetyFallback: manifest.id === this.invalidFallbackId,
+      memoryReadEnabled: this.memoryReadByPersona.get(manifest.id) !== false,
     };
   }
 
@@ -275,6 +303,7 @@ export class PersonaStore {
       canRename: true,
       canDelete: true,
       safetyFallback: false,
+      memoryReadEnabled: this.memoryReadByPersona.get(record.manifest.id) !== false,
       createdAt: record.createdAt,
       updatedAt: record.updatedAt,
     };
@@ -311,8 +340,8 @@ export class PersonaStore {
   }
 
   listSummaries(): PersonaSummary[] {
-    return this.list().map(({ id, name, description, source, editable, canRename, canDelete, safetyFallback, createdAt, updatedAt }) => ({
-      id, name, description, source, editable, canRename, canDelete, safetyFallback,
+    return this.list().map(({ id, name, description, source, editable, canRename, canDelete, safetyFallback, memoryReadEnabled, createdAt, updatedAt }) => ({
+      id, name, description, source, editable, canRename, canDelete, safetyFallback, memoryReadEnabled,
       ...(createdAt ? { createdAt } : {}),
       ...(updatedAt ? { updatedAt } : {}),
     }));
@@ -364,6 +393,98 @@ export class PersonaStore {
     this.personas = nextPersonas;
     this.contextBoundaryAt = nextBoundary;
     return this.viewUser(record);
+  }
+
+  /** 导出包就是严格五字段 Manifest；逐字段构造，绝不展开运行态 View。 */
+  exportManifest(id: string): PersonaManifest {
+    const persona = this.get(id.trim());
+    if (!persona) throw new PersonaStoreError('not_found', '没有这个人格');
+    const manifest: PersonaManifest = {
+      schemaVersion: 1,
+      id: persona.id,
+      name: persona.name,
+      description: persona.description,
+      systemPrompt: persona.systemPrompt,
+    };
+    const blocked = personaManifestShareBlockReason(manifest);
+    if (blocked) throw new PersonaStoreError('validation', blocked);
+    return manifest;
+  }
+
+  /** 导入永远新建本机人格；包内 id 只验证、不复用，且默认不能读取长期记忆。 */
+  importManifest(value: unknown, now = new Date().toISOString()): PersonaView {
+    if (!validIso(now)) throw new PersonaStoreError('validation', '人格导入时间无效');
+    let imported: PersonaManifest;
+    try {
+      imported = parsePersonaManifest(value);
+    } catch (error) {
+      throw new PersonaStoreError('validation', error instanceof Error ? error.message : '人格包内容不正确');
+    }
+    const blocked = personaManifestShareBlockReason(imported);
+    if (blocked) throw new PersonaStoreError('validation', blocked);
+    if (this.personas.length >= MAX_USER_PERSONAS) {
+      throw new PersonaStoreError('validation', `自定义人格最多 ${MAX_USER_PERSONAS} 个`);
+    }
+    const names = new Set(this.list().map((persona) => persona.name));
+    let name = imported.name;
+    if (names.has(name)) {
+      for (let index = 1; ; index++) {
+        const suffix = index === 1 ? '（导入）' : `（导入 ${index}）`;
+        const candidate = `${imported.name.slice(0, Math.max(1, 80 - suffix.length))}${suffix}`;
+        if (!names.has(candidate)) { name = candidate; break; }
+      }
+    }
+    const id = `persona:${randomUUID()}`;
+    let manifest: PersonaManifest;
+    try {
+      manifest = buildPersonaManifest({
+        id,
+        name,
+        description: imported.description,
+        systemPrompt: imported.systemPrompt,
+      });
+    } catch (error) {
+      throw new PersonaStoreError('validation', error instanceof Error ? error.message : '人格包内容不正确');
+    }
+    const record: StoredPersonaRecord = { createdAt: now, updatedAt: now, manifest };
+    const nextPersonas = [...this.personas.map(cloneRecord), record];
+    const nextMemoryRead = new Map(this.memoryReadByPersona);
+    nextMemoryRead.set(id, false);
+    this.write(this.snapshot(
+      this.currentPersonaId,
+      nextPersonas,
+      this.contextBoundaryAt,
+      this.builtinNameOverrides,
+      this.hiddenBuiltinIds,
+      nextMemoryRead,
+    ));
+    this.personas = nextPersonas;
+    this.memoryReadByPersona = nextMemoryRead;
+    return this.viewUser(record);
+  }
+
+  setMemoryRead(id: string, enabled: boolean, now = new Date().toISOString()): PersonaView {
+    if (typeof enabled !== 'boolean') throw new PersonaStoreError('validation', '记忆读取权限格式不正确');
+    if (!validIso(now)) throw new PersonaStoreError('validation', '记忆读取权限更新时间无效');
+    const normalized = id.trim();
+    const persona = this.get(normalized);
+    if (!persona) throw new PersonaStoreError('not_found', '没有这个人格');
+    if (persona.memoryReadEnabled === enabled) return persona;
+    const nextMemoryRead = new Map(this.memoryReadByPersona);
+    if (enabled) nextMemoryRead.delete(normalized);
+    else nextMemoryRead.set(normalized, false);
+    const nextBoundary = normalized === this.currentPersonaId ? now : this.contextBoundaryAt;
+    this.write(this.snapshot(
+      this.currentPersonaId,
+      this.personas,
+      nextBoundary,
+      this.builtinNameOverrides,
+      this.hiddenBuiltinIds,
+      nextMemoryRead,
+    ));
+    this.memoryReadByPersona = nextMemoryRead;
+    this.contextBoundaryAt = nextBoundary;
+    return this.get(normalized)!;
   }
 
   renamePersona(id: string, name: unknown, now = new Date().toISOString()): PersonaView {
@@ -418,18 +539,21 @@ export class PersonaStore {
     const removingCurrent = normalized === this.currentPersonaId;
     const nextCurrent = removingCurrent ? this.invalidFallbackId : this.currentPersonaId;
     const nextBoundary = removingCurrent ? now : this.contextBoundaryAt;
+    const nextMemoryRead = new Map(this.memoryReadByPersona);
+    nextMemoryRead.delete(normalized);
     if (builtin) {
       const nextHidden = new Set(this.hiddenBuiltinIds);
       nextHidden.add(normalized);
-      this.write(this.snapshot(nextCurrent, this.personas, nextBoundary, this.builtinNameOverrides, nextHidden));
+      this.write(this.snapshot(nextCurrent, this.personas, nextBoundary, this.builtinNameOverrides, nextHidden, nextMemoryRead));
       this.hiddenBuiltinIds = nextHidden;
     } else {
       const nextPersonas = this.personas.filter((item) => item.manifest.id !== normalized).map(cloneRecord);
-      this.write(this.snapshot(nextCurrent, nextPersonas, nextBoundary));
+      this.write(this.snapshot(nextCurrent, nextPersonas, nextBoundary, this.builtinNameOverrides, this.hiddenBuiltinIds, nextMemoryRead));
       this.personas = nextPersonas;
     }
     this.currentPersonaId = nextCurrent;
     this.contextBoundaryAt = nextBoundary;
+    this.memoryReadByPersona = nextMemoryRead;
     return { removedId: normalized, source: builtin ? 'builtin' : 'user', current: nextCurrent };
   }
 }

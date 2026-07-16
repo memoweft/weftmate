@@ -171,10 +171,11 @@ function rejectPersonaChangeDuringActiveTask(
   res: import('node:http').ServerResponse,
   id?: string,
   onlyWhenCurrent = false,
+  message?: string,
 ): boolean {
   if (!activeAgentTask()) return false;
   if (onlyWhenCurrent && id !== personaStore.currentId()) return false;
-  sendJson(res, 409, { error: '当前回复结束后再切换人格' });
+  sendJson(res, 409, { error: message ?? '当前回复结束后再切换人格' });
   return true;
 }
 
@@ -304,9 +305,16 @@ agent.configureAgentDeps({
   // 必须动态读取 Persona Store：切换或编辑当前人格后，下一条统一 Agent 消息立即拿到最新角色。
   experience: () => {
     const current = personaStore.current();
-    return { id: current.id, name: current.name, systemPrompt: current.systemPrompt };
+    return {
+      id: current.id,
+      name: current.name,
+      systemPrompt: current.systemPrompt,
+      memoryReadEnabled: current.memoryReadEnabled,
+    };
   },
   recall: async (query) => {
+    // 二次硬守卫：即使 Agent 调用方未来漏判断，也必须在任何 MemoWeft / 本地画像读取前返回。
+    if (!personaStore.current().memoryReadEnabled) return '';
     const sourceCognitions = core.memory.listCognitions();
     const recalled = profileOverrides.applyRecall(await core.recall({ query }), sourceCognitions).slice(0, 6);
     const seen = new Set(recalled.flatMap((item) => item.id ? [item.id] : []));
@@ -639,6 +647,63 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       const persona = personaStore.get(id);
       if (!persona) { sendJson(res, 404, { error: '没有这个人格' }); return; }
       sendJson(res, 200, { persona, current: personaStore.currentId() });
+      return;
+    }
+
+    // 人格包就是严格五字段 Manifest 根对象；只扫描这五字段是否疑似夹带密钥或本机路径。
+    if (req.method === 'GET' && url.pathname === '/api/persona/export') {
+      const id = (url.searchParams.get('id') ?? '').trim();
+      if (!id) { sendJson(res, 400, { error: '缺少人格 id' }); return; }
+      try {
+        sendJson(res, 200, personaStore.exportManifest(id));
+      } catch (error) {
+        personaErrorResponse(res, error);
+      }
+      return;
+    }
+
+    // 导入不覆盖、不切换；64KB UTF-8 JSON 根对象由严格 Manifest 解析器逐字段验证。
+    if (req.method === 'POST' && url.pathname === '/api/persona/import') {
+      try {
+        const body = await readJson(req, 64 * 1024);
+        const persona = personaStore.importManifest(body);
+        sendJson(res, 200, {
+          ok: true,
+          persona,
+          current: personaStore.currentId(),
+          personas: personaStore.listSummaries(),
+        });
+      } catch (error) {
+        if (error instanceof RequestBodyTooLargeError) sendJson(res, 413, { error: '人格包不能超过 64KB' });
+        else if (error instanceof PersonaStoreError) personaErrorResponse(res, error);
+        else sendJson(res, 400, { error: '人格包不是合法的 UTF-8 JSON' });
+      }
+      return;
+    }
+
+    // 记忆读取权限只影响召回；当前人格切换时先切历史边界，旧 assistant 不能把召回内容绕回来。
+    if (req.method === 'POST' && url.pathname === '/api/persona/memory-read') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少人格 id' }); return; }
+      if (typeof body.enabled !== 'boolean') { sendJson(res, 400, { error: '记忆读取权限格式不正确' }); return; }
+      if (rejectPersonaChangeDuringActiveTask(
+        res,
+        id,
+        true,
+        '当前回复结束后再调整这个人格的记忆权限',
+      )) return;
+      try {
+        const persona = personaStore.setMemoryRead(id, body.enabled);
+        sendJson(res, 200, {
+          ok: true,
+          persona,
+          current: personaStore.currentId(),
+          personas: personaStore.listSummaries(),
+        });
+      } catch (error) {
+        personaErrorResponse(res, error);
+      }
       return;
     }
 
