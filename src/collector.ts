@@ -24,6 +24,14 @@ let port = 7788;
 let loopbackToken = '';
 let lastKey = '';              // 上次记录的窗口键（app|title），去重用
 let activeWindowFn: (() => Promise<{ title?: string; owner?: { name?: string } } | undefined>) | null = null;
+let presenceState: 'off' | 'active' | 'idle' | 'locked' | 'unknown' = 'off';
+let presenceUpdatedAt = new Date().toISOString();
+
+function setPresence(state: typeof presenceState): void {
+  if (presenceState === state) return;
+  presenceState = state;
+  presenceUpdatedAt = new Date().toISOString();
+}
 
 /** 惰性加载 get-windows（ESM 动态 import；由 weftmate 内的模块 import，node_modules 能解析）。 */
 async function loadActiveWindow(): Promise<typeof activeWindowFn> {
@@ -40,7 +48,12 @@ async function loadActiveWindow(): Promise<typeof activeWindowFn> {
 async function sampleOnce(): Promise<void> {
   try {
     // 离开电脑（空闲超阈值 / 锁屏）不采——只记"你在用时"的活动节奏。
-    if (powerMonitor.getSystemIdleState(IDLE_THRESHOLD_S) !== 'active') return;
+    const systemState = powerMonitor.getSystemIdleState(IDLE_THRESHOLD_S);
+    if (systemState !== 'active') {
+      setPresence(systemState === 'locked' ? 'locked' : systemState === 'idle' ? 'idle' : 'unknown');
+      return;
+    }
+    setPresence('active');
     const fn = await loadActiveWindow();
     if (!fn) return;
     const w = await fn();
@@ -83,6 +96,7 @@ export function startCollector(p: number, token: string): void {
   loopbackToken = token;
   if (timer) return;
   lastKey = '';
+  setPresence('unknown');
   timer = setInterval(() => { void sampleOnce(); }, SAMPLE_MS);
   void sampleOnce(); // 开启即采一次，别等 20s
 }
@@ -91,8 +105,14 @@ export function startCollector(p: number, token: string): void {
 export function stopCollector(): void {
   if (timer) { clearInterval(timer); timer = null; }
   loopbackToken = '';
+  setPresence('off');
 }
 
 export function isCollectorRunning(): boolean {
   return !!timer;
+}
+
+/** 只给桌面宠物/状态 UI 的派生状态；绝不暴露 App、窗口标题或 observation 内容。 */
+export function presenceView(): { running: boolean; state: typeof presenceState; updatedAt: string } {
+  return { running: !!timer, state: presenceState, updatedAt: presenceUpdatedAt };
 }

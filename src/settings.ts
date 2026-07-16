@@ -6,7 +6,8 @@
  * 感知默认【关】(opt-in)：文件不存在 / 无该字段 → false。感知敏感，尊重用户先手动开。
  */
 import { app } from 'electron';
-import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, existsSync, renameSync, rmSync } from 'node:fs';
+import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { isAutonomy, normalizeAutonomy, type Autonomy } from './agent-autonomy.ts';
 import {
@@ -35,6 +36,8 @@ interface Settings {
   trustedMcpTools?: string[];
   /** 首次认识只保存流程游标；答案、总结和画像仍只属于会话历史与 MemoWeft。 */
   firstInterview?: FirstInterviewState;
+  /** 透明桌面宠物窗口的本机显示偏好与位置；不属于 Soul，也不会随人格包分享。 */
+  desktopPet?: { visible?: boolean; x?: number; y?: number; roaming?: boolean; freeActivity?: boolean };
 }
 
 function settingsPath(): string {
@@ -52,7 +55,15 @@ function read(): Settings {
 }
 
 function write(s: Settings): void {
-  writeFileSync(settingsPath(), JSON.stringify(s, null, 2), 'utf-8');
+  const target = settingsPath();
+  const temp = `${target}.${process.pid}.${randomUUID()}.tmp`;
+  try {
+    writeFileSync(temp, `${JSON.stringify(s, null, 2)}\n`, { encoding: 'utf-8', mode: 0o600 });
+    renameSync(temp, target);
+  } catch (error) {
+    try { rmSync(temp, { force: true }); } catch { /* 保留旧设置文件 */ }
+    throw error;
+  }
 }
 
 // ── 感知(多源 · opt-in · 默认关) ──
@@ -127,6 +138,42 @@ export function setTheme(theme: 'dark' | 'light'): void {
   const s = read();
   s.theme = theme === 'light' ? 'light' : 'dark';
   write(s);
+}
+
+export interface DesktopPetWindowState {
+  visible: boolean;
+  x?: number;
+  y?: number;
+  freeActivity?: boolean;
+}
+
+/** 读取桌面宠物窗口状态；损坏坐标直接忽略，由主进程回到当前屏幕右下角。 */
+export function getDesktopPetWindowState(): DesktopPetWindowState {
+  const value = read().desktopPet;
+  const finite = (candidate: unknown): candidate is number => typeof candidate === 'number' && Number.isFinite(candidate);
+  return {
+    visible: value?.visible === true,
+    // 旧 roaming 只代表低频挪动，不能静默升级成会读取瞬时鼠标位置的新“自由活动”。
+    freeActivity: value?.freeActivity === true,
+    ...(finite(value?.x) ? { x: Math.round(value.x) } : {}),
+    ...(finite(value?.y) ? { y: Math.round(value.y) } : {}),
+  };
+}
+
+/** 只保存已验证的显示状态/整数坐标，不影响主题、感知或 Agent 自主度。 */
+export function setDesktopPetWindowState(next: DesktopPetWindowState): DesktopPetWindowState {
+  const s = read();
+  const previous = s.desktopPet;
+  const finite = (candidate: unknown): candidate is number => typeof candidate === 'number' && Number.isFinite(candidate);
+  const normalized: DesktopPetWindowState = {
+    visible: next.visible === true,
+    freeActivity: typeof next.freeActivity === 'boolean' ? next.freeActivity : previous?.freeActivity === true,
+    ...(finite(next.x) ? { x: Math.round(next.x) } : {}),
+    ...(finite(next.y) ? { y: Math.round(next.y) } : {}),
+  };
+  s.desktopPet = normalized;
+  write(s);
+  return normalized;
 }
 
 // ── Agent 执行自主度 ──
