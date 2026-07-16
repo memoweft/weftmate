@@ -26,6 +26,7 @@
  * 只绑 127.0.0.1，并以每进程 bearer token + Host/Origin/Sec-Fetch-Site 守住全部 API。
  */
 import { createServer, type IncomingMessage } from 'node:http';
+import { randomUUID } from 'node:crypto';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { createMemoWeftCore, config, type MemoryBundle, type Observation } from './memoweft.ts';
@@ -34,6 +35,8 @@ import { createChatHistory, type HistoryTurn, type HistoryAttachment } from './c
 import { credBand } from './confBand.ts';
 import { listBuiltinPersonas, listPlugins, ALL_PLUGINS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
 import { PersonaStore, PersonaStoreError, filterPersonaHistory } from './personas/store.ts';
+import { PetStore, PetStoreError, type CompanionProactivity } from './pets/store.ts';
+import { hatchLocalPet, LOCAL_HATCH_PROVIDER } from './pets/hatch.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
 import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, getAgentAutonomy, setAgentAutonomy, resolvedLang, getTrustedMcpTools, setMcpToolTrust, getFirstInterviewState, setFirstInterviewState, resetFirstInterviewState } from './settings.ts';
@@ -121,6 +124,16 @@ const personaStore = new PersonaStore(
   listBuiltinPersonas(),
   DEFAULT_EXPERIENCE_ID,
 );
+const petStore = new PetStore(join(app.getPath('userData'), 'weftmate-pets.json'));
+
+export function currentCompanionView() {
+  const persona = personaStore.current();
+  return {
+    persona: { id: persona.id, name: persona.name },
+    pet: petStore.petForPersona(persona.id),
+    proactivity: petStore.proactivityForPersona(persona.id),
+  };
+}
 
 // plugins：把已注册插件传给 Core 让它烧 hook（experience 类无 hook 是 no-op；tool/collector 类在此生效）。
 // let（非 const）：切模型档/改配置时【进程内热重建】——库在构造 core 时读死 env 里的 key/模型，改配置要重建 core
@@ -504,6 +517,98 @@ const MCP_CATALOG = [
   { key: 'everything', name: '测试服务 everything', desc: 'MCP 官方测试服务，含各种示例工具（拿来试装最省事）', command: 'cmd', args: ['/c', 'npx', '-y', '@modelcontextprotocol/server-everything'] },
 ];
 
+type PetHatchStage = 'getting_ready' | 'imagining' | 'hatching' | 'done' | 'failed' | 'cancelled';
+interface PetHatchPreview {
+  id: string;
+  summaryItems: string[];
+  expiresAt: number;
+}
+interface PetHatchJob {
+  id: string;
+  stage: PetHatchStage;
+  createdAt: number;
+  updatedAt: number;
+  previewId: string;
+  appearanceBrief: string;
+  abort: AbortController;
+  petId?: string;
+  error?: string;
+}
+const petHatchPreviews = new Map<string, PetHatchPreview>();
+const petHatchJobs = new Map<string, PetHatchJob>();
+const petHatchRunners = new Map<string, Promise<void>>();
+const PET_HATCH_PREVIEW_TTL_MS = 10 * 60_000;
+const PET_HATCH_JOB_TTL_MS = 30 * 60_000;
+
+function petErrorResponse(res: import('node:http').ServerResponse, error: unknown): void {
+  if (!(error instanceof PetStoreError)) { sendJson(res, 400, { error: error instanceof Error ? error.message : String(error) }); return; }
+  sendJson(res, error.code === 'not_found' ? 404 : error.code === 'storage' ? 500 : 400, { error: error.message });
+}
+
+function cleanupPetHatchState(now = Date.now()): void {
+  for (const [id, preview] of petHatchPreviews) if (preview.expiresAt <= now) petHatchPreviews.delete(id);
+  for (const [id, job] of petHatchJobs) {
+    if ((job.stage === 'done' || job.stage === 'failed' || job.stage === 'cancelled') && now - job.updatedAt > PET_HATCH_JOB_TTL_MS) {
+      petHatchJobs.delete(id);
+    }
+  }
+}
+
+function hatchSummaryItems(): string[] {
+  return profileOverrides.applyCognitions(core.memory.listCognitions())
+    .filter((item) => !item.invalidAt && !item.archivedAt && !item.rejectedByUser && !item.mutedAt)
+    .slice(0, 6)
+    .map((item) => item.content.trim().slice(0, 160))
+    .filter(Boolean);
+}
+
+function petHatchJobView(job: PetHatchJob) {
+  return {
+    id: job.id,
+    stage: job.stage,
+    provider: LOCAL_HATCH_PROVIDER,
+    ...(job.petId ? { petId: job.petId, pet: petStore.get(job.petId) } : {}),
+    ...(job.error ? { error: job.error } : {}),
+  };
+}
+
+async function runLocalPetHatch(job: PetHatchJob, preview: PetHatchPreview): Promise<void> {
+  try {
+    job.stage = 'imagining'; job.updatedAt = Date.now();
+    const design = await hatchLocalPet({
+      profileSummary: preview.summaryItems.join('\n'),
+      appearanceBrief: job.appearanceBrief,
+    }, job.abort.signal);
+    if (job.abort.signal.aborted) { job.stage = 'cancelled'; job.updatedAt = Date.now(); return; }
+    job.stage = 'hatching'; job.updatedAt = Date.now();
+    const saved = petStore.save({
+      name: design.name,
+      description: design.description,
+      shape: design.appearance.shape,
+      primary: design.appearance.primary,
+      accent: design.appearance.accent,
+      feature: design.appearance.feature,
+    });
+    job.petId = saved.id;
+    job.stage = 'done'; job.updatedAt = Date.now();
+  } catch (error) {
+    job.stage = job.abort.signal.aborted ? 'cancelled' : 'failed';
+    job.error = job.stage === 'failed' ? (error instanceof Error ? error.message : '宠物没有孵化成功') : undefined;
+    job.updatedAt = Date.now();
+  }
+}
+
+function startLocalPetHatch(job: PetHatchJob, preview: PetHatchPreview): void {
+  const runner = runLocalPetHatch(job, preview).finally(() => petHatchRunners.delete(job.id));
+  petHatchRunners.set(job.id, runner);
+}
+
+async function waitForPetHatchRunner(id: string, timeoutMs = 2_000): Promise<void> {
+  const runner = petHatchRunners.get(id);
+  if (!runner) return;
+  await Promise.race([runner, new Promise<void>((resolve) => setTimeout(resolve, timeoutMs))]);
+}
+
 const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (req, res) => {
   let countedMutation = false;
   try {
@@ -620,6 +725,152 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
     // 后台整理状态：前端顶栏轮询显示"正在整理记忆…/已整理"。
     if (req.method === 'GET' && url.pathname === '/api/bg-status') {
       sendJson(res, 200, scheduler.status());
+      return;
+    }
+
+    // ── Pet / 桌面角色 API ──
+    // Soul 仍是严格五字段；宠物、绑定和陪伴主动度只存在本机 Pet Store。
+    if (req.method === 'GET' && url.pathname === '/api/pets') {
+      const persona = personaStore.current();
+      const personaNames = new Map(personaStore.listSummaries().map((entry) => [entry.id, entry.name]));
+      sendJson(res, 200, {
+        pets: petStore.list().map((pet) => {
+          const boundPersonas = petStore.boundPersonaIds(pet.id).map((id) => ({ id, name: personaNames.get(id) ?? id }));
+          return { ...pet, bindingCount: boundPersonas.length, boundPersonas };
+        }),
+        currentPersona: { id: persona.id, name: persona.name },
+        currentPetId: petStore.bindingForPersona(persona.id),
+        proactivity: petStore.proactivityForPersona(persona.id),
+        hatchProviders: [LOCAL_HATCH_PROVIDER],
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/pet') {
+      const body = await readJson(req);
+      try {
+        const pet = petStore.save({
+          id: typeof body.id === 'string' ? body.id : undefined,
+          name: body.name,
+          description: body.description,
+          shape: body.shape,
+          primary: body.primary,
+          accent: body.accent,
+          feature: body.feature,
+        });
+        sendJson(res, 200, { ok: true, pet, pets: petStore.list() });
+      } catch (error) {
+        petErrorResponse(res, error);
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/pet/delete') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少宠物 id' }); return; }
+      try {
+        const removed = petStore.remove(id);
+        sendJson(res, 200, { ok: true, removed, pets: petStore.list(), current: currentCompanionView() });
+      } catch (error) {
+        petErrorResponse(res, error);
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/persona/pet') {
+      const body = await readJson(req);
+      const personaId = typeof body.personaId === 'string' ? body.personaId.trim() : '';
+      const petId = typeof body.petId === 'string' ? body.petId.trim() : '';
+      if (!personaId || !petId) { sendJson(res, 400, { error: '缺少人格或宠物' }); return; }
+      if (!personaStore.get(personaId)) { sendJson(res, 404, { error: '没有这个人格' }); return; }
+      try {
+        const pet = petStore.bind(personaId, petId);
+        sendJson(res, 200, {
+          ok: true, personaId, pet,
+          current: currentCompanionView(),
+        });
+      } catch (error) {
+        petErrorResponse(res, error);
+      }
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/persona/proactivity') {
+      const body = await readJson(req);
+      const personaId = typeof body.personaId === 'string' ? body.personaId.trim() : '';
+      if (!personaId) { sendJson(res, 400, { error: '缺少人格 id' }); return; }
+      if (!personaStore.get(personaId)) { sendJson(res, 404, { error: '没有这个人格' }); return; }
+      try {
+        const level = petStore.setProactivity(personaId, body.level) as CompanionProactivity;
+        sendJson(res, 200, { ok: true, personaId, level, current: currentCompanionView() });
+      } catch (error) {
+        petErrorResponse(res, error);
+      }
+      return;
+    }
+
+    // 先把将使用的画像摘要完整展示给用户；确认前绝不启动 MCP、绝不写宠物。
+    if (req.method === 'GET' && url.pathname === '/api/pets/hatch-preview') {
+      cleanupPetHatchState();
+      const preview: PetHatchPreview = {
+        id: randomUUID(),
+        summaryItems: hatchSummaryItems(),
+        expiresAt: Date.now() + PET_HATCH_PREVIEW_TTL_MS,
+      };
+      petHatchPreviews.set(preview.id, preview);
+      sendJson(res, 200, {
+        previewId: preview.id,
+        summaryItems: preview.summaryItems,
+        provider: LOCAL_HATCH_PROVIDER,
+        note: preview.summaryItems.length
+          ? '只有上面这些摘要会交给本机孵化器，生成后的宠物不会保存这些摘要。'
+          : '现在还没有可用画像，将只按你填写的外观要求孵化。',
+      });
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/pets/hatch') {
+      cleanupPetHatchState();
+      const body = await readJson(req);
+      if (body.consent !== true) { sendJson(res, 400, { error: '需要先确认本次孵化使用的摘要' }); return; }
+      const previewId = typeof body.previewId === 'string' ? body.previewId.trim() : '';
+      const preview = petHatchPreviews.get(previewId);
+      if (!preview || preview.expiresAt <= Date.now()) { sendJson(res, 409, { error: '孵化预览已过期，请重新查看摘要' }); return; }
+      if (petHatchRunners.size > 0) {
+        sendJson(res, 409, { error: '已经有一个宠物正在孵化' }); return;
+      }
+      const appearanceBrief = typeof body.appearanceBrief === 'string' ? body.appearanceBrief.trim() : '';
+      if (appearanceBrief.length > 500) { sendJson(res, 400, { error: '外观要求不能超过 500 个字' }); return; }
+      const job: PetHatchJob = {
+        id: randomUUID(), stage: 'getting_ready', createdAt: Date.now(), updatedAt: Date.now(),
+        previewId, appearanceBrief, abort: new AbortController(),
+      };
+      petHatchJobs.set(job.id, job);
+      petHatchPreviews.delete(previewId);
+      startLocalPetHatch(job, preview);
+      sendJson(res, 202, petHatchJobView(job));
+      return;
+    }
+
+    if (req.method === 'GET' && url.pathname === '/api/pets/hatch') {
+      cleanupPetHatchState();
+      const id = (url.searchParams.get('id') ?? '').trim();
+      const job = petHatchJobs.get(id);
+      if (!job) { sendJson(res, 404, { error: '没有这个孵化任务' }); return; }
+      sendJson(res, 200, petHatchJobView(job));
+      return;
+    }
+
+    if (req.method === 'POST' && url.pathname === '/api/pets/hatch/cancel') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      const job = petHatchJobs.get(id);
+      if (!job) { sendJson(res, 404, { error: '没有这个孵化任务' }); return; }
+      if (!['done', 'failed', 'cancelled'].includes(job.stage)) job.abort.abort();
+      if (job.stage !== 'done' && job.stage !== 'failed') { job.stage = 'cancelled'; job.updatedAt = Date.now(); }
+      await waitForPetHatchRunner(job.id);
+      sendJson(res, 200, petHatchJobView(job));
       return;
     }
 
@@ -755,6 +1006,7 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       if (rejectPersonaChangeDuringActiveTask(res, id, true)) return;
       try {
         const removed = personaStore.removePersona(id);
+        try { petStore.removePersona(id); } catch { /* Soul 已删；孤儿本机偏好不影响回退，下次写仍可覆盖 */ }
         sendJson(res, 200, {
           ok: true,
           removed,
@@ -1696,6 +1948,13 @@ export async function shutdown(): Promise<void> {
   if (shuttingDown) return;
   shuttingDown = true;
   scheduler.dispose(); // 停后台整理计时器（别留悬挂 timer；在飞的那次由 trigger 的兜底 catch 吞掉）
+  for (const job of petHatchJobs.values()) {
+    if (!['done', 'failed', 'cancelled'].includes(job.stage)) job.abort.abort();
+  }
+  await Promise.race([
+    Promise.allSettled([...petHatchRunners.values()]),
+    new Promise<void>((resolve) => setTimeout(resolve, 1_500)),
+  ]);
   try { await mcp.shutdownAll(); } catch { /* 关 MCP 子进程失败不阻断退出 */ } // 关所有 MCP 服务子进程
   core.close();        // 关 sqlite 连接（flush WAL）——最要紧的一步
   // 关 loopback：先强断残留连接再 close。退出时渲染进程的 keep-alive 连接还没拆，光 server.close() 会一直

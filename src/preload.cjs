@@ -18,3 +18,20 @@ contextBridge.exposeInMainWorld('wmWindow', {
 contextBridge.exposeInMainWorld('wmData', {
   deleteAllLocalData: (confirmation) => ipcRenderer.invoke('wm:delete-all-local-data', confirmation),
 });
+
+// 桌面宠物只接受一份已裁剪的显示状态；主进程会再次严格校验，不暴露通用 IPC。
+contextBridge.exposeInMainWorld('wmPet', {
+  toggle: (state) => ipcRenderer.invoke('wm:pet-toggle', state),
+  visibility: () => ipcRenderer.invoke('wm:pet-visibility'),
+  setFreeActivity: (enabled) => ipcRenderer.invoke('wm:pet-free-activity', enabled === true),
+  composerActivity: () => ipcRenderer.send('wm:pet-composer-activity'),
+  sync: (state) => ipcRenderer.send('wm:pet-sync', state),
+  onVisibility: (callback) => {
+    if (typeof callback !== 'function') return;
+    ipcRenderer.on('wm:pet-visibility', (_event, state) => callback(state));
+  },
+  onOpenPets: (callback) => {
+    if (typeof callback !== 'function') return;
+    ipcRenderer.on('wm:open-pets', () => callback());
+  },
+});

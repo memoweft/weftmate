@@ -458,6 +458,91 @@
   #personaFormTitle { margin: 0 0 8px; font-size: var(--fs-sm); }
   #personaFormLead { margin: 0 0 8px; color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
 
+  /* Soul 绑定的宠物外观：宠物是本机视觉资产，不进入可分享 Soul 包，也不携带权限。 */
+  .pet-manage { margin-top: 26px; padding-top: 20px; border-top: 1px solid var(--line-soft); }
+  #memPets .pet-manage { margin-top: 0; padding-top: 0; border-top: 0; }
+  .pet-manage-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+  .pet-manage-copy { flex: 1; min-width: 0; }
+  .pet-manage-copy h2 { margin: 0 0 5px; color: var(--text); font-size: 17px; }
+  .pet-manage-copy p { margin: 0; color: var(--muted); font-size: var(--fs-sm); line-height: 1.55; }
+  .pet-manage-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+  .pet-manage-actions button, #petForm button, .pet-hatch-actions button {
+    border: 1px solid var(--line); border-radius: 9px; background: var(--panel-2); color: var(--text);
+    padding: 7px 11px; cursor: pointer; font: inherit; font-size: var(--fs-xs); font-weight: 600;
+  }
+  .pet-manage-actions button.primary, #petSave, #petHatchConfirm { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+  .pet-manage-actions button:disabled, #petForm button:disabled, .pet-hatch-actions button:disabled { opacity: .5; cursor: default; }
+  #petManageStatus { min-height: 18px; margin: 7px 0; color: var(--muted); font-size: var(--fs-xs); }
+  #petManageList { display: flex; flex-direction: column; gap: 2px; overflow: hidden; border: 1px solid var(--line-soft); border-radius: 14px; background: var(--panel); }
+  .pet-card { display: grid; grid-template-columns: 48px minmax(0,1fr) auto; align-items: center; gap: 12px; padding: 12px 13px; background: var(--panel); border-bottom: 1px solid var(--line-soft); }
+  .pet-card:last-child { border-bottom: 0; }
+  .pet-card.current { background: var(--accent-soft); }
+  .pet-card-copy { min-width: 0; }
+  .pet-card-name { color: var(--text); font-size: var(--fs-sm); font-weight: 650; word-break: break-word; }
+  .pet-card-desc { margin-top: 3px; color: var(--muted); font-size: var(--fs-xs); line-height: 1.4; word-break: break-word; }
+  .pet-card-meta { margin-top: 4px; color: var(--faint); font-size: 10px; }
+  .pet-card-actions { display: flex; align-items: center; justify-content: flex-end; gap: 6px; flex-wrap: wrap; }
+  .pet-card-actions button { border: 1px solid var(--line); border-radius: 8px; background: var(--panel-2); color: var(--text); padding: 6px 9px; cursor: pointer; font: inherit; font-size: var(--fs-xs); }
+  .pet-card-actions button.primary { border-color: var(--accent); background: var(--accent); color: var(--on-accent); }
+  .pet-card-actions button.danger { color: var(--danger); }
+  .pet-card-actions button:disabled { opacity: .5; cursor: default; }
+  .pet-avatar { --pet-primary: #c46f8b; --pet-accent: #f1b3c5; position: relative; display: inline-grid; place-items: center; width: 42px; height: 42px; border-radius: 14px; background: color-mix(in srgb, var(--pet-primary) 16%, var(--panel-2)); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--pet-primary) 28%, transparent); }
+  .pet-avatar-body { position: relative; width: 24px; height: 24px; background: var(--pet-primary); box-shadow: 0 5px 12px color-mix(in srgb, var(--pet-primary) 35%, transparent); }
+  .pet-avatar[data-shape="orbit"] .pet-avatar-body { border-radius: 50%; background: transparent; border: 3px solid var(--pet-primary); }
+  .pet-avatar[data-shape="orbit"] .pet-avatar-body::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: var(--pet-accent); box-shadow: 0 0 8px var(--pet-accent); }
+  .pet-avatar[data-shape="sprout"] .pet-avatar-body { height: 20px; margin-top: 6px; border-radius: 50% 50% 43% 43%; }
+  .pet-avatar[data-shape="sprout"] .pet-avatar-body::before { content: ""; position: absolute; left: 11px; top: -8px; width: 11px; height: 8px; border-radius: 90% 10% 90% 10%; background: var(--pet-accent); transform: rotate(-18deg); }
+  .pet-avatar[data-shape="wisp"] .pet-avatar-body { border-radius: 55% 55% 48% 48%; transform: rotate(45deg); }
+  .pet-avatar[data-shape="wisp"] .pet-avatar-body::after { content: ""; position: absolute; width: 9px; height: 9px; right: -3px; bottom: -3px; background: var(--panel); border-radius: 50%; }
+  .pet-avatar-feature { position: absolute; z-index: 2; pointer-events: none; }
+  .pet-avatar[data-feature="thread"] .pet-avatar-feature { width: 25px; height: 9px; border-top: 2px solid var(--pet-accent); border-bottom: 2px solid var(--pet-accent); border-radius: 50%; transform: rotate(-24deg); }
+  .pet-avatar[data-feature="leaf"] .pet-avatar-feature { right: 7px; top: 7px; width: 8px; height: 12px; border-radius: 90% 10% 90% 10%; background: var(--pet-accent); transform: rotate(25deg); }
+  .pet-avatar[data-feature="halo"] .pet-avatar-feature { top: 6px; width: 25px; height: 8px; border: 2px solid var(--pet-accent); border-radius: 50%; }
+  .pet-avatar[data-feature="ears"] .pet-avatar-feature { top: 7px; width: 24px; height: 10px; border-left: 7px solid var(--pet-accent); border-right: 7px solid var(--pet-accent); border-radius: 45%; }
+  .pet-proactivity { margin: 13px 0; padding: 12px 13px; border-radius: 12px; background: var(--panel); }
+  .pet-desktop-controls { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin: 12px 0; padding: 12px 13px; border-radius: 12px; background: var(--panel); }
+  .pet-desktop-controls > div { min-width: 0; }
+  .pet-roaming-toggle { display: inline-flex; align-items: center; gap: 8px; flex: 0 0 auto; color: var(--text); font-size: var(--fs-xs); cursor: pointer; }
+  .pet-roaming-toggle input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+  .pet-inline-link { margin-top: 4px; padding: 0; border: 0; background: transparent; color: var(--accent); cursor: pointer; font: inherit; font-size: var(--fs-xs); }
+  .pet-proactivity-title { color: var(--text); font-size: var(--fs-sm); font-weight: 650; }
+  .pet-proactivity-copy { margin: 4px 0 9px; color: var(--muted); font-size: var(--fs-xs); line-height: 1.45; }
+  .pet-segments { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; padding: 4px; border-radius: 10px; background: var(--ground); }
+  .pet-segments button { min-height: 34px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; font: inherit; font-size: var(--fs-xs); font-weight: 650; }
+  .pet-segments button.on { background: var(--panel-2); color: var(--accent); box-shadow: 0 1px 6px rgba(0,0,0,.14); }
+  .pet-segments button:disabled { opacity: .5; cursor: default; }
+  #petForm, #petHatchPanel { display: none; margin-top: 13px; padding: 14px; border-radius: 13px; background: var(--panel); }
+  #petForm.show, #petHatchPanel.show { display: block; animation: quietIn .16s ease-out; }
+  #petForm h3, #petHatchPanel h3 { margin: 0 0 5px; color: var(--text); font-size: var(--fs-sm); }
+  #petForm > p, #petHatchPanel > p { margin: 0 0 11px; color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
+  #petForm > label, #petHatchPanel > label { display: flex; flex-direction: column; gap: 5px; margin-top: 10px; color: var(--muted); font-size: var(--fs-xs); }
+  #petForm input[type="text"], #petForm textarea, #petHatchPanel textarea { width: 100%; box-sizing: border-box; border: 1px solid var(--line); border-radius: 9px; background: var(--ground); color: var(--text); padding: 8px 10px; font: inherit; }
+  #petForm textarea, #petHatchPanel textarea { min-height: 70px; resize: vertical; }
+  .pet-choice-label { margin: 11px 0 6px; color: var(--muted); font-size: var(--fs-xs); }
+  .pet-choice-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+  .pet-choice-grid button { min-height: 34px; }
+  .pet-choice-grid button.on { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+  .pet-color-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .pet-color-row input[type="color"] { width: 100%; height: 38px; padding: 3px; border: 1px solid var(--line); border-radius: 9px; background: var(--ground); cursor: pointer; }
+  .pet-form-actions, .pet-hatch-actions { display: flex; justify-content: flex-end; gap: 7px; margin-top: 13px; }
+  #petSaveStatus, #petHatchStatus { min-height: 18px; margin-top: 7px; color: var(--muted); font-size: var(--fs-xs); }
+  .pet-hatch-provider { margin: 10px 0; padding: 9px 10px; border-radius: 9px; background: var(--ground); color: var(--muted); font-size: var(--fs-xs); line-height: 1.5; }
+  .pet-hatch-provider b { color: var(--text); }
+  #petHatchSummary { margin: 7px 0 0; padding-left: 20px; color: var(--text); font-size: var(--fs-xs); line-height: 1.55; }
+  .pet-hatch-progress { display: none; margin-top: 11px; }
+  .pet-hatch-progress.show { display: block; }
+  .pet-hatch-track { height: 4px; overflow: hidden; border-radius: 99px; background: var(--ground); }
+  .pet-hatch-track i { display: block; width: 35%; height: 100%; border-radius: inherit; background: var(--accent); animation: mcpActivity 1.1s ease-in-out infinite; }
+  .pet-hatch-progress.done .pet-hatch-track i { width: 100%; animation: none; background: var(--ready); }
+  .pet-hatch-progress.failed .pet-hatch-track i { width: 100%; animation: none; background: var(--danger); }
+  @media (max-width: 700px) {
+    .pet-manage-head { flex-direction: column; }
+    .pet-manage-actions { justify-content: flex-start; }
+    .pet-card { grid-template-columns: 44px minmax(0,1fr); }
+    .pet-card-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .pet-choice-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+
   /* ══════════ 记忆图谱（步5-G2·手搓力导向图） ══════════ */
   /* 节点/边基色变量 --gc-*/--ge-* 已提到 :root（亮/暗各一套），图谱 canvas JS 直接 getComputedStyle 读它们。 */
   .gr-controls { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
@@ -971,8 +1056,11 @@
   </div>
 </div>
 
-<!-- 桌面形象（blueprint 的 pet）：聊天区右下角浮圆头像，点它=打开人格切换。fixed 定位，放顶层不受裁剪。 -->
-<div id="pet" title="换一种跟你聊天的方式"><span class="pet-orbit"><span class="pet-core"></span><span class="pet-thread"></span></span><span class="pet-status"></span></div>
+<!-- 当前 Soul 的宠物快捷入口；真正编辑在「关于你 → 人格 → 宠物外观」。 -->
+<div id="pet" title="打开人格与宠物">
+  <span id="chatPetAvatar" class="pet-avatar" data-shape="orbit" data-feature="thread"><span class="pet-avatar-body"></span><span class="pet-avatar-feature"></span></span>
+  <span class="pet-status"></span>
+</div>
 
 <!-- 记忆与画像面板（body.mode-memory）：从右侧滑入的层，点遮罩=退出。看它记住了你哪些事，可标失效 / 改授权 / 删除。 -->
 <div id="memScrim"></div>
@@ -996,6 +1084,7 @@
       <button class="mem-tab" id="tabEv" data-tab="ev">线索</button>
       <button class="mem-tab" id="tabGraph" data-tab="graph">图谱</button>
       <button class="mem-tab" id="tabPersonas" data-tab="personas">人格</button>
+      <button class="mem-tab" id="tabPets" data-tab="pets">宠物</button>
       <button class="mem-tab" id="tabData" data-tab="data">数据</button>
     </div>
 
@@ -1043,6 +1132,87 @@
         </div>
         <div id="personaSaveStatus" role="status" aria-live="polite"></div>
       </form>
+    </div>
+
+    <!-- 宠物有自己的页面；Soul 页面只负责人格本身，绑定仍以当前 Soul 为对象。 -->
+    <div id="memPets" style="display:none;">
+      <section class="pet-manage" aria-labelledby="petManageTitle">
+        <div class="pet-manage-head">
+          <div class="pet-manage-copy">
+            <h2 id="petManageTitle">宠物外观</h2>
+            <p>宠物是人格在桌面上的样子。每个人格可以绑定一只；宠物不包含记忆、模型、工具或权限。</p>
+          </div>
+          <div class="pet-manage-actions">
+            <button id="petWake" type="button">唤醒桌面宠物</button>
+            <button id="petHatch" type="button">根据对我的了解孵化</button>
+            <button id="petNew" type="button" class="primary">＋ 创建宠物</button>
+          </div>
+        </div>
+        <div id="petManageStatus" role="status" aria-live="polite"></div>
+        <div class="pet-desktop-controls">
+          <div>
+            <div class="pet-proactivity-title">桌面生活</div>
+            <div id="petDesktopState" class="pet-proactivity-copy">读取桌面宠物状态中…</div>
+            <div id="petSensingState" class="pet-proactivity-copy">读取桌面感知状态中…</div>
+            <button id="petSensingSettings" type="button" class="pet-inline-link">调整感知设置</button>
+          </div>
+          <label class="pet-roaming-toggle"><input id="petFreeActivity" type="checkbox"><span>允许自由活动</span></label>
+        </div>
+        <div class="pet-proactivity">
+          <div class="pet-proactivity-title">陪伴动画强度</div>
+          <div class="pet-proactivity-copy">改变宠物待机动作和自由活动的节奏，不会主动弹提醒，也不会扩大文件、工具或协作权限。</div>
+          <div id="petProactivity" class="pet-segments" role="group" aria-label="陪伴动画强度">
+            <button type="button" data-level="quiet">安静</button>
+            <button type="button" data-level="light">轻陪伴</button>
+            <button type="button" data-level="companion">常伴</button>
+          </div>
+        </div>
+        <div id="petManageList"><div class="mem-empty">加载中…</div></div>
+
+        <form id="petForm">
+          <h3 id="petFormTitle">创建宠物</h3>
+          <p id="petFormLead">当前是轻量原创程序化造型，不是完整动画图集；之后可按 Pet v2 标准继续扩展。</p>
+          <label>名称<input id="petName" type="text" maxlength="80" autocomplete="off" required></label>
+          <label>简介<textarea id="petDescription" maxlength="300"></textarea></label>
+          <div class="pet-choice-label">造型</div>
+          <div id="petShapeChoices" class="pet-choice-grid" role="group" aria-label="宠物造型">
+            <button type="button" data-value="orbit">织光</button>
+            <button type="button" data-value="sprout">芽芽</button>
+            <button type="button" data-value="wisp">微光</button>
+          </div>
+          <div class="pet-choice-label">小特征</div>
+          <div id="petFeatureChoices" class="pet-choice-grid" role="group" aria-label="宠物特征">
+            <button type="button" data-value="thread">丝线</button>
+            <button type="button" data-value="leaf">叶子</button>
+            <button type="button" data-value="halo">光环</button>
+            <button type="button" data-value="ears">小耳朵</button>
+          </div>
+          <div class="pet-color-row">
+            <label>主色<input id="petPrimary" type="color" value="#c46f8b"></label>
+            <label>点缀色<input id="petAccent" type="color" value="#f1b3c5"></label>
+          </div>
+          <div class="pet-form-actions">
+            <button id="petFormCancel" type="button">取消</button>
+            <button id="petSave" type="submit">保存宠物</button>
+          </div>
+          <div id="petSaveStatus" role="status" aria-live="polite"></div>
+        </form>
+
+        <section id="petHatchPanel" aria-labelledby="petHatchTitle">
+          <h3 id="petHatchTitle">根据对你的了解孵化</h3>
+          <p>确认后才会启动本机 MCP。当前会生成轻量程序化外观，不冒充完整动画宠物包；请先逐条看清本次会使用的画像摘要。</p>
+          <div id="petHatchProvider" class="pet-hatch-provider"></div>
+          <div class="pet-choice-label">本次会交给孵化器的内容</div>
+          <ul id="petHatchSummary"></ul>
+          <label>你还希望它长什么样（可选）<textarea id="petHatchBrief" maxlength="500" placeholder="例如：安静一点，蓝绿色，像会发光的小种子"></textarea></label>
+          <div id="petHatchProgress" class="pet-hatch-progress"><div class="pet-hatch-track"><i></i></div></div>
+          <div id="petHatchStatus" role="status" aria-live="polite"></div>
+          <div class="pet-hatch-actions">
+            <button id="petHatchCancel" type="button">取消</button>
+            <button id="petHatchConfirm" type="button">我确认，开始本机孵化</button>
+          </div>
+        </section>
+      </section>
     </div>
 
     <!-- 数据 / 备份区（步5）：数据 tab 时显示。导出/导入/恢复出厂。 -->
@@ -1958,6 +2128,10 @@
   }
   html[data-theme="light"] #pet { background: rgba(255,255,255,.92); }
   #pet:hover { transform: translateY(-3px) scale(1.04); border-color: var(--her); box-shadow: 0 18px 40px rgba(0,0,0,.34), 0 0 30px rgba(208,117,150,.18); }
+  #pet[data-activity="running"] { animation-duration: 1.8s; }
+  #pet[data-activity="waiting"] .pet-status { background: var(--new); box-shadow: 0 0 8px color-mix(in srgb, var(--new) 55%, transparent); }
+  #pet[data-activity="failed"] .pet-status { background: var(--danger); box-shadow: 0 0 8px color-mix(in srgb, var(--danger) 55%, transparent); }
+  #pet[data-activity="review"] .pet-status { background: var(--accent); }
   .pet-orbit { position: relative; width: 29px; height: 29px; border: 1px solid rgba(227,155,173,.28); border-radius: 50%; }
   .pet-orbit::before { content: ""; position: absolute; inset: 5px; border: 1px dashed rgba(227,155,173,.35); border-radius: 50%; animation: orbitSpin 12s linear infinite reverse; }
   .pet-core { position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; transform: translate(-50%,-50%); border-radius: 50%; background: var(--her); box-shadow: 0 0 9px var(--her); }
@@ -2614,8 +2788,8 @@
   }
   .mem-tab:hover { border: 0; background: rgba(127,127,135,.08); color: var(--text); }
   .mem-tab.on { border: 0; background: var(--accent-soft); color: var(--accent); }
-  #tabPersonas.on { color: var(--accent); }
-  #memList, #memPersonas, #memData, #memGraph, #memCogTools { margin-left: 0; }
+  #tabPersonas.on, #tabPets.on { color: var(--accent); }
+  #memList, #memPersonas, #memPets, #memData, #memGraph, #memCogTools { margin-left: 0; }
   .mem-cog-tools { display: flex; align-items: center; gap: 8px; margin-bottom: 18px; }
   .mem-search {
     width: min(380px,100%); height: 36px; display: flex; align-items: center; gap: 8px;
@@ -2940,7 +3114,8 @@
 
   #personaPop { left: 10px; bottom: 64px; width: 244px; border: 0; border-radius: var(--radius-card); background: var(--panel); box-shadow: var(--shadow-popover); }
   .persona-quick { border-radius: var(--radius-input); }
-  #pet { display: none !important; }
+  #pet { display: flex; padding: 3px; }
+  #pet .pet-avatar { width: 41px; height: 41px; background: transparent; box-shadow: none; }
 
   @keyframes quietIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -2964,7 +3139,7 @@
     footer { padding: 6px 12px 12px; }
     .tool span:not(#toolModelName), #toolModel .tool-chev { display: none; }
     .tool { padding: 0 7px; }
-    .mem-lead, .mem-tabs, #memList, #memPersonas, #memData, #memGraph, #memCogTools { margin-left: 0; }
+    .mem-lead, .mem-tabs, #memList, #memPersonas, #memPets, #memData, #memGraph, #memCogTools { margin-left: 0; }
     .mem-overview { align-items: flex-start; flex-direction: column; gap: 14px; }
     .mem-overview-stats { width: 100%; justify-content: space-between; gap: 10px; }
     .mem-cog-tools { align-items: stretch; flex-direction: column; }
@@ -3317,6 +3492,51 @@
     '还有任务没有结束，请等任务结束后再删除。': 'A task is still running. Wait for it to finish before deleting.',
     '记忆还在整理中，请等整理结束后再删除。': 'Memory is still being organized. Wait for it to finish before deleting.',
     '仍有本机数据更改没有结束，请稍后再试。': 'Some local data changes are still finishing. Please try again shortly.',
+    '宠物': 'Pets', '宠物外观': 'Pet appearance', '唤醒桌面宠物': 'Wake desktop pet', '让桌面宠物休息': 'Let desktop pet rest', '根据对我的了解孵化': 'Hatch from what you know about me',
+    '桌面生活': 'Desktop life', '允许自由活动': 'Allow free activity',
+    '读取桌面宠物状态中…': 'Reading desktop pet state…', '读取桌面感知状态中…': 'Reading desktop sensing state…', '调整感知设置': 'Adjust sensing settings',
+    '＋ 创建宠物': '＋ Create pet', '创建宠物': 'Create pet', '编辑宠物': 'Edit pet', '保存宠物': 'Save pet',
+    '宠物是人格在桌面上的样子。每个人格可以绑定一只；宠物不包含记忆、模型、工具或权限。': 'A pet is how a persona appears on your desktop. Each persona can bind one; pets contain no memories, models, tools, or permissions.',
+    '陪伴主动度': 'Companion presence', '陪伴动画强度': 'Companion animation level', '安静': 'Quiet', '轻陪伴': 'Light', '常伴': 'Lively',
+    '只决定宠物是否主动露面和做环境动作，不会扩大文件、工具或协作权限。主动提醒仍只报重要或紧急的事。': 'Only controls whether the pet appears on its own and makes ambient movements. It never expands file, tool, or collaboration permissions. Proactive alerts remain limited to important or urgent matters.',
+    '改变宠物待机动作和自由活动的节奏，不会主动弹提醒，也不会扩大文件、工具或协作权限。': 'Changes the pace of idle animation and free activity. It does not show proactive alerts or expand file, tool, or collaboration permissions.',
+    '造型': 'Shape', '小特征': 'Feature', '丝线': 'Thread', '叶子': 'Leaf', '光环': 'Halo', '小耳朵': 'Ears', '主色': 'Primary color', '点缀色': 'Accent color',
+    '先从轻量的原创造型开始，之后可以继续扩展为完整动画宠物包。': 'Start with an original lightweight shape; it can later grow into a full animated pet package.',
+    '当前是轻量原创程序化造型，不是完整动画图集；之后可按 Pet v2 标准继续扩展。': 'This is currently an original lightweight procedural shape, not a full animation atlas. It can later expand using the Pet v2 standard.',
+    '这只宠物被多个 Soul 共用；保存会同时改变这些 Soul 的外观。': 'This pet is shared by multiple Souls. Saving changes the appearance of all of them.',
+    '当前人格正在使用': 'Used by the current persona', '已有其他人格绑定': 'Bound to other personas', '内置宠物': 'Built-in pet', '我的宠物': 'My pet',
+    '绑定当前人格': 'Bind to current persona', '已绑定': 'Bound', '正在绑定宠物…': 'Binding pet…',
+    '宠物已绑定到当前人格': 'Pet bound to the current persona', '宠物没有绑定成功，请稍后重试。': 'The pet could not be bound. Please try again.',
+    '已保存宠物': 'Pet saved', '已创建宠物；你可以把它绑定到当前人格': 'Pet created. You can now bind it to the current persona.',
+    '宠物没有保存，请稍后重试。': 'The pet was not saved. Please try again.', '删除宠物？': 'Delete pet?', '删除宠物': 'Delete pet',
+    '会永久删除这只自定义宠物。绑定它的人格会安全回到默认宠物。': 'This custom pet will be permanently deleted. Personas bound to it will safely return to the default pet.',
+    '会回到默认宠物的 Soul': 'Souls that will return to the default pet',
+    '已删除宠物': 'Pet deleted', '宠物没有删除，请稍后重试。': 'The pet was not deleted. Please try again.',
+    '陪伴主动度已更新': 'Companion presence updated', '陪伴主动度没有更新，请稍后重试。': 'Companion presence was not updated. Please try again.',
+    '陪伴动画强度已更新': 'Companion animation level updated', '陪伴动画强度没有更新，请稍后重试。': 'Companion animation level was not updated. Please try again.',
+    '根据对你的了解孵化': 'Hatch from what is known about you', '确认后才会启动本机 MCP。请先逐条看清本次会使用的画像摘要。': 'The local MCP starts only after you confirm. Review every profile summary used for this hatch.',
+    '确认后才会启动本机 MCP。当前会生成轻量程序化外观，不冒充完整动画宠物包；请先逐条看清本次会使用的画像摘要。': 'The local MCP starts only after you confirm. It currently creates a lightweight procedural appearance and does not pretend to be a full animated pet package. Review every profile summary used for this hatch.',
+    '本次会交给孵化器的内容': 'What will be sent to the hatcher', '你还希望它长什么样（可选）': 'How else should it look? (optional)',
+    '我确认，开始本机孵化': 'I confirm — start local hatching', '本机孵化器': 'Local hatcher',
+    '只在本机运行，摘要不会离开设备': 'Runs only on this device; summaries do not leave it', '可能离开本机': 'May leave this device',
+    '输出轻量程序化外观，不是动画图集': 'Outputs a lightweight procedural appearance, not an animation atlas',
+    '没有可用画像；只会使用你填写的外观要求。': 'No profile summary is available; only your appearance request will be used.',
+    '正在准备孵化预览…': 'Preparing hatch preview…', '孵化预览没有准备好，请稍后重试。': 'The hatch preview is not ready. Please try again.',
+    '正在准备本机孵化器…': 'Preparing the local hatcher…', '正在根据已确认的摘要构思外观…': 'Designing from the summaries you confirmed…',
+    '正在把外观做成宠物…': 'Turning the design into a pet…', '宠物孵化完成': 'Pet hatching complete', '宠物孵化失败': 'Pet hatching failed',
+    '已取消孵化': 'Hatching cancelled', '正在孵化…': 'Hatching…', '暂时读不到孵化进度，正在重试…': 'Hatch progress is temporarily unavailable. Retrying…',
+    '新宠物已经加入列表；确认喜欢后再绑定到当前人格。': 'The new pet is in the list. Bind it to the current persona after you decide you like it.',
+    '宠物没有孵化成功': 'The pet did not hatch', '桌面宠物只在 WeftMate 应用里可用。': 'The desktop pet is available in the WeftMate app.',
+    '桌面宠物已经醒来': 'The desktop pet is awake', '桌面宠物已经休息': 'The desktop pet is resting', '正在切换…': 'Switching…',
+    '桌面宠物状态没有切换成功。': 'The desktop pet state could not be changed.', '自由活动设置没有保存。': 'The free-activity setting was not saved.',
+    '自由活动已开启：宠物会留意本机鼠标，在你向 WeftMate 输入时靠到窗口旁，挡操作时会让开。鼠标坐标和输入内容都不会保存。': 'Free activity is on. The pet watches the local pointer, moves beside WeftMate while you type, and yields when it blocks an action. Pointer coordinates and input content are never saved.',
+    '自由活动已关闭：宠物会待在你放下的位置，仍然可以点击和拖动。': 'Free activity is off. The pet stays where you leave it and can still be clicked or dragged.',
+    '桌面宠物正在休息；切换 Soul 仍会保存绑定。': 'The desktop pet is resting; Soul bindings are still kept.',
+    '桌面感知已开启：宠物只接收“活跃 / 离开”的本机状态来决定休息，不会收到窗口标题。': 'Desktop sensing is on. The pet only receives a local active/away state to decide when to rest; it never receives window titles.',
+    '桌面感知未开启；宠物照常显示和走动，不会替你打开感知。': 'Desktop sensing is off. The pet can still appear and roam, and it will never enable sensing for you.',
+    '暂时读不到桌面感知状态。': 'Desktop sensing status is temporarily unavailable.',
+    '打开人格与宠物': 'Open personas and pets',
+    '宠物列表加载失败，请稍后重试。': 'Could not load pets. Please try again.', '正在更新宠物…': 'Updating pet…',
     '确认短语不正确。': 'The confirmation phrase is incorrect.',
   });
   let LANG = '__WEFTMATE_UI_LANG__' === 'en' ? 'en' : 'zh';
@@ -3939,7 +4159,7 @@
   };
 
   const MEM = {
-    tab: 'cog',        // 'cog' | 'ev' | 'graph' | 'personas' | 'data'
+    tab: 'cog',        // 'cog' | 'ev' | 'graph' | 'personas' | 'pets' | 'data'
     cog: [],           // 认知列表缓存
     ev: [],            // 证据列表缓存
     loaded: false,
@@ -4075,13 +4295,16 @@
     $('tabEv').classList.toggle('on', MEM.tab === 'ev');
     $('tabGraph').classList.toggle('on', MEM.tab === 'graph');
     $('tabPersonas').classList.toggle('on', MEM.tab === 'personas');
+    $('tabPets').classList.toggle('on', MEM.tab === 'pets');
     $('tabData').classList.toggle('on', MEM.tab === 'data');
     // 图谱 tab：显示图谱面板、藏其余；其余 tab 藏图谱面板。
     const isGraph = MEM.tab === 'graph';
     const isPersonas = MEM.tab === 'personas';
+    const isPets = MEM.tab === 'pets';
     $('memCogTools').style.display = MEM.tab === 'cog' ? 'flex' : 'none';
     $('memGraph').style.display = isGraph ? 'block' : 'none';
     $('memPersonas').style.display = isPersonas ? 'block' : 'none';
+    $('memPets').style.display = isPets ? 'block' : 'none';
     if (isGraph) {
       $('memData').style.display = 'none';
       $('memList').style.display = 'none';
@@ -4092,6 +4315,14 @@
       $('memData').style.display = 'none';
       $('memList').style.display = 'none';
       renderPersonaManager();
+      return;
+    }
+    if (isPets) {
+      $('memData').style.display = 'none';
+      $('memList').style.display = 'none';
+      renderPetManager();
+      void syncDesktopPetVisibility();
+      void loadPetSensingState();
       return;
     }
     // 数据 tab：显示数据面板、藏列表；其余 tab：显示列表、藏数据面板。
@@ -4610,6 +4841,7 @@
   $('tabEv').addEventListener('click', () => { MEM.tab = 'ev'; memRender(); });
   $('tabGraph').addEventListener('click', () => { MEM.tab = 'graph'; memRender(); });
   $('tabPersonas').addEventListener('click', () => { MEM.tab = 'personas'; memRender(); });
+  $('tabPets').addEventListener('click', () => { MEM.tab = 'pets'; memRender(); });
   $('tabData').addEventListener('click', () => { MEM.tab = 'data'; importReset(); memRender(); });
   $('memCogSearch').addEventListener('input', (e) => { MEM.cogQuery = e.target.value || ''; if (MEM.tab === 'cog') memRenderCognitions(); });
   $('memCogType').addEventListener('change', (e) => { MEM.cogType = e.target.value || 'all'; if (MEM.tab === 'cog') memRenderCognitions(); });
@@ -6017,6 +6249,13 @@
   let personaEditorToken = 0;
   let personaEditorOpen = false;
 
+  const PETS = {
+    items: [], currentPersona: null, currentPetId: '', proactivity: 'light', providers: [],
+    ready: false, loading: false, error: '', busy: '', editingId: '', shape: 'orbit', feature: 'thread',
+    preview: null, hatchJobId: '', hatchPoll: 0, activity: 'idle', activityTimer: 0,
+    desktopVisible: false, freeActivity: false, visibilityBusy: false,
+  };
+
   function setPersonaSaveStatus(message, kind) {
     const status = $('personaSaveStatus');
     status.textContent = message || '';
@@ -6027,6 +6266,340 @@
     const status = $('personaManageStatus');
     status.textContent = message || '';
     status.className = kind || '';
+  }
+
+  function setPetStatus(message, kind) {
+    $('petManageStatus').textContent = message || '';
+    $('petManageStatus').className = kind || '';
+  }
+
+  function petAvatar(pet, extraClass = '') {
+    const avatar = document.createElement('span');
+    avatar.className = 'pet-avatar' + (extraClass ? ' ' + extraClass : '');
+    avatar.dataset.shape = pet?.appearance?.shape || 'orbit';
+    avatar.dataset.feature = pet?.appearance?.feature || 'thread';
+    avatar.style.setProperty('--pet-primary', pet?.appearance?.primary || '#c46f8b');
+    avatar.style.setProperty('--pet-accent', pet?.appearance?.accent || '#f1b3c5');
+    const body = document.createElement('span'); body.className = 'pet-avatar-body';
+    const feature = document.createElement('span'); feature.className = 'pet-avatar-feature';
+    avatar.append(body, feature);
+    return avatar;
+  }
+
+  function currentPet() {
+    return PETS.items.find((entry) => entry.id === PETS.currentPetId) || PETS.items[0] || null;
+  }
+
+  function currentCompanionPayload() {
+    const pet = currentPet();
+    if (!pet || !PETS.currentPersona) return null;
+    return { persona: PETS.currentPersona, pet, proactivity: PETS.proactivity, activity: PETS.activity };
+  }
+
+  function syncPetActivity(status) {
+    if (PETS.activityTimer) { clearTimeout(PETS.activityTimer); PETS.activityTimer = 0; }
+    PETS.activity = ({ planning: 'running', running: 'running', awaiting: 'waiting', done: 'review', failed: 'failed' })[status] || 'idle';
+    $('pet').dataset.activity = PETS.activity;
+    const payload = currentCompanionPayload();
+    if (payload && window.wmPet?.sync) window.wmPet.sync(payload);
+    if (PETS.activity === 'review' || PETS.activity === 'failed') {
+      PETS.activityTimer = setTimeout(() => { PETS.activityTimer = 0; syncPetActivity('idle'); }, 4_000);
+    }
+  }
+
+  function renderChatPet() {
+    const pet = currentPet();
+    if (!pet) return;
+    const old = $('chatPetAvatar');
+    const avatar = petAvatar(pet);
+    avatar.id = 'chatPetAvatar';
+    old?.replaceWith(avatar);
+    $('pet').dataset.activity = PETS.activity;
+    $('pet').title = `${pet.name} · ${t('打开人格与宠物')}`;
+    if (window.wmPet?.sync) window.wmPet.sync(currentCompanionPayload());
+  }
+
+  function choosePetOption(groupId, value) {
+    document.querySelectorAll(`#${groupId} button`).forEach((button) => button.classList.toggle('on', button.dataset.value === value));
+  }
+
+  function closePetEditor(force = false) {
+    if (PETS.busy === 'save' && !force) return;
+    PETS.editingId = '';
+    $('petForm').classList.remove('show');
+    $('petSaveStatus').textContent = '';
+  }
+
+  function openPetEditor(pet = null) {
+    if (PETS.busy) return;
+    PETS.editingId = pet?.id || '';
+    PETS.shape = pet?.appearance?.shape || 'orbit';
+    PETS.feature = pet?.appearance?.feature || 'thread';
+    $('petFormTitle').textContent = pet ? t('编辑宠物') : t('创建宠物');
+    const sharedCount = Number(pet?.bindingCount || 0);
+    $('petFormLead').textContent = pet && sharedCount > 1
+      ? t('这只宠物被多个 Soul 共用；保存会同时改变这些 Soul 的外观。') + `（${sharedCount}）`
+      : t('当前是轻量原创程序化造型，不是完整动画图集；之后可按 Pet v2 标准继续扩展。');
+    $('petName').value = pet?.name || '';
+    $('petDescription').value = pet?.description || '';
+    $('petPrimary').value = pet?.appearance?.primary || '#c46f8b';
+    $('petAccent').value = pet?.appearance?.accent || '#f1b3c5';
+    choosePetOption('petShapeChoices', PETS.shape);
+    choosePetOption('petFeatureChoices', PETS.feature);
+    $('petSaveStatus').textContent = '';
+    $('petForm').classList.add('show');
+    $('petForm').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    $('petName').focus();
+  }
+
+  function renderPetManager() {
+    $('petNew').disabled = !!PETS.busy;
+    $('petHatch').disabled = !!PETS.busy || !PETS.ready;
+    $('petWake').disabled = !PETS.ready || PETS.visibilityBusy;
+    $('petWake').textContent = PETS.visibilityBusy ? t('正在切换…') : PETS.desktopVisible ? t('让桌面宠物休息') : t('唤醒桌面宠物');
+    $('petFreeActivity').checked = PETS.freeActivity;
+    $('petFreeActivity').disabled = PETS.visibilityBusy || !window.wmPet?.setFreeActivity;
+    $('petDesktopState').textContent = PETS.desktopVisible
+      ? t(PETS.freeActivity
+        ? '自由活动已开启：宠物会留意本机鼠标，在你向 WeftMate 输入时靠到窗口旁，挡操作时会让开。鼠标坐标和输入内容都不会保存。'
+        : '自由活动已关闭：宠物会待在你放下的位置，仍然可以点击和拖动。')
+      : t('桌面宠物正在休息；切换 Soul 仍会保存绑定。');
+    document.querySelectorAll('#petProactivity button').forEach((button) => {
+      button.classList.toggle('on', button.dataset.level === PETS.proactivity);
+      button.disabled = !!PETS.busy || !PETS.ready;
+    });
+    const box = $('petManageList');
+    box.textContent = '';
+    if (!PETS.ready) {
+      const empty = document.createElement('div'); empty.className = 'mem-empty';
+      empty.textContent = PETS.error || t('加载中…'); box.appendChild(empty); return;
+    }
+    for (const pet of PETS.items) {
+      const card = document.createElement('article'); card.className = 'pet-card' + (pet.id === PETS.currentPetId ? ' current' : '');
+      card.appendChild(petAvatar(pet));
+      const copy = document.createElement('div'); copy.className = 'pet-card-copy';
+      const name = document.createElement('div'); name.className = 'pet-card-name no-i18n'; name.textContent = pet.name;
+      const desc = document.createElement('div'); desc.className = 'pet-card-desc no-i18n'; desc.textContent = pet.description || '';
+      const meta = document.createElement('div'); meta.className = 'pet-card-meta';
+      const bound = Number(pet.bindingCount || 0);
+      meta.textContent = pet.id === PETS.currentPetId
+        ? t('当前人格正在使用')
+        : bound > 0 ? t('已有其他人格绑定') + ` · ${bound}` : pet.source === 'builtin' ? t('内置宠物') : t('我的宠物');
+      copy.append(name, desc, meta); card.appendChild(copy);
+      const actions = document.createElement('div'); actions.className = 'pet-card-actions';
+      if (pet.id !== PETS.currentPetId) {
+        const use = document.createElement('button'); use.type = 'button'; use.className = 'primary'; use.textContent = t('绑定当前人格');
+        use.disabled = !!PETS.busy; use.addEventListener('click', () => bindPet(pet.id)); actions.appendChild(use);
+      } else {
+        const picked = document.createElement('button'); picked.type = 'button'; picked.disabled = true; picked.textContent = t('已绑定'); actions.appendChild(picked);
+      }
+      if (pet.editable) {
+        const edit = document.createElement('button'); edit.type = 'button'; edit.textContent = t('编辑'); edit.disabled = !!PETS.busy;
+        edit.addEventListener('click', () => openPetEditor(pet)); actions.appendChild(edit);
+      }
+      if (pet.canDelete) {
+        const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'danger'; remove.textContent = t('删除'); remove.disabled = !!PETS.busy;
+        remove.addEventListener('click', () => deletePet(pet)); actions.appendChild(remove);
+      }
+      card.appendChild(actions); box.appendChild(card);
+    }
+    renderChatPet();
+  }
+
+  function applyDesktopPetVisibility(state) {
+    PETS.desktopVisible = state?.visible === true;
+    PETS.freeActivity = state?.freeActivity === true;
+    renderPetManager();
+  }
+
+  async function syncDesktopPetVisibility() {
+    if (!window.wmPet?.visibility) { applyDesktopPetVisibility({ visible: false, freeActivity: false }); return; }
+    try { applyDesktopPetVisibility(await window.wmPet.visibility()); } catch { /* 保留上次真实回调状态 */ }
+  }
+
+  async function loadPetSensingState() {
+    try {
+      const data = await fetch('/api/settings').then((response) => response.json());
+      const desktop = data?.perception?.sources?.desktop;
+      $('petSensingState').textContent = desktop?.enabled
+        ? t('桌面感知已开启：宠物只接收“活跃 / 离开”的本机状态来决定休息，不会收到窗口标题。')
+        : t('桌面感知未开启；宠物照常显示和走动，不会替你打开感知。');
+    } catch { $('petSensingState').textContent = t('暂时读不到桌面感知状态。'); }
+  }
+
+  async function togglePetVisibility() {
+    if (PETS.visibilityBusy || !window.wmPet?.toggle) return;
+    const payload = currentCompanionPayload(); if (!payload) return;
+    PETS.visibilityBusy = true; renderPetManager();
+    try {
+      applyDesktopPetVisibility(await window.wmPet.toggle(payload));
+      setPetStatus(PETS.desktopVisible ? t('桌面宠物已经醒来') : t('桌面宠物已经休息'), 'ok');
+    } catch { setPetStatus(t('桌面宠物状态没有切换成功。'), 'error'); }
+    finally { PETS.visibilityBusy = false; renderPetManager(); }
+  }
+
+  async function setPetFreeActivity(enabled) {
+    if (PETS.visibilityBusy || !window.wmPet?.setFreeActivity) return;
+    PETS.visibilityBusy = true; renderPetManager();
+    try { applyDesktopPetVisibility(await window.wmPet.setFreeActivity(enabled)); }
+    catch { await syncDesktopPetVisibility(); setPetStatus(t('自由活动设置没有保存。'), 'error'); }
+    finally { PETS.visibilityBusy = false; renderPetManager(); }
+  }
+
+  async function loadPets() {
+    if (PETS.loading) return;
+    PETS.loading = true; PETS.error = '';
+    renderPetManager();
+    try {
+      const res = await fetch('/api/pets');
+      const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'load failed');
+      PETS.items = Array.isArray(data.pets) ? data.pets : [];
+      PETS.currentPersona = data.currentPersona || null;
+      PETS.currentPetId = typeof data.currentPetId === 'string' ? data.currentPetId : '';
+      PETS.proactivity = ['quiet', 'light', 'companion'].includes(data.proactivity) ? data.proactivity : 'light';
+      PETS.providers = Array.isArray(data.hatchProviders) ? data.hatchProviders : [];
+      PETS.ready = true;
+      void syncDesktopPetVisibility();
+    } catch {
+      PETS.ready = false; PETS.error = t('宠物列表加载失败，请稍后重试。');
+    } finally {
+      PETS.loading = false; renderPetManager();
+    }
+  }
+
+  async function bindPet(petId) {
+    if (PETS.busy || !PETS.currentPersona) return;
+    PETS.busy = 'bind'; setPetStatus(t('正在绑定宠物…'), ''); renderPetManager();
+    try {
+      const res = await fetch('/api/persona/pet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ personaId: PETS.currentPersona.id, petId }) });
+      const data = await res.json(); if (!res.ok || data.error || !data.ok) throw new Error(data.error || 'bind failed');
+      await loadPets(); setPetStatus(t('宠物已绑定到当前人格'), 'ok');
+    } catch { await loadPets(); setPetStatus(t('宠物没有绑定成功，请稍后重试。'), 'error'); }
+    finally { PETS.busy = ''; renderPetManager(); }
+  }
+
+  async function savePet(event) {
+    event.preventDefault();
+    if (PETS.busy) return;
+    PETS.busy = 'save'; $('petSave').disabled = true; $('petFormCancel').disabled = true; $('petSaveStatus').textContent = t('保存中…');
+    try {
+      const body = { ...(PETS.editingId ? { id: PETS.editingId } : {}), name: $('petName').value, description: $('petDescription').value, shape: PETS.shape, primary: $('petPrimary').value, accent: $('petAccent').value, feature: PETS.feature };
+      const res = await fetch('/api/pet', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const data = await res.json(); if (!res.ok || data.error || !data.ok) throw new Error(data.error || 'save failed');
+      const createdId = data.pet?.id;
+      const wasEditing = !!PETS.editingId;
+      closePetEditor(true); await loadPets();
+      setPetStatus(wasEditing ? t('已保存宠物') : t('已创建宠物；你可以把它绑定到当前人格'), 'ok');
+      if (createdId) document.querySelector(`.pet-card button`)?.focus();
+    } catch (error) {
+      $('petSaveStatus').textContent = error instanceof Error ? error.message : t('宠物没有保存，请稍后重试。');
+    } finally {
+      PETS.busy = ''; $('petSave').disabled = false; $('petFormCancel').disabled = false; renderPetManager();
+    }
+  }
+
+  async function deletePet(pet) {
+    if (PETS.busy || !pet.canDelete) return;
+    const boundNames = Array.isArray(pet.boundPersonas) ? pet.boundPersonas.map((entry) => entry.name).filter(Boolean) : [];
+    const impact = boundNames.length ? `\n${t('会回到默认宠物的 Soul')}：${boundNames.join('、')}` : '';
+    const confirmed = await memConfirm({ title: t('删除宠物？'), bodyQuote: pet.name, quoteNoI18n: true, bodyText: t('会永久删除这只自定义宠物。绑定它的人格会安全回到默认宠物。') + impact, warn: t('此操作不可恢复。'), okText: t('删除宠物'), okKind: 'danger' });
+    if (!confirmed) return;
+    PETS.busy = 'delete'; renderPetManager();
+    try {
+      const res = await fetch('/api/pet/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: pet.id }) });
+      const data = await res.json(); if (!res.ok || data.error || !data.ok) throw new Error(data.error || 'delete failed');
+      if (PETS.editingId === pet.id) closePetEditor(true); await loadPets(); setPetStatus(t('已删除宠物'), 'ok');
+    } catch { await loadPets(); setPetStatus(t('宠物没有删除，请稍后重试。'), 'error'); }
+    finally { PETS.busy = ''; renderPetManager(); }
+  }
+
+  async function setPetProactivity(level) {
+    if (PETS.busy || !PETS.currentPersona || level === PETS.proactivity) return;
+    PETS.busy = 'proactivity'; renderPetManager();
+    try {
+      const res = await fetch('/api/persona/proactivity', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ personaId: PETS.currentPersona.id, level }) });
+      const data = await res.json(); if (!res.ok || data.error || !data.ok) throw new Error(data.error || 'save failed');
+      PETS.proactivity = data.level; renderChatPet(); setPetStatus(t('陪伴动画强度已更新'), 'ok');
+    } catch { await loadPets(); setPetStatus(t('陪伴动画强度没有更新，请稍后重试。'), 'error'); }
+    finally { PETS.busy = ''; renderPetManager(); }
+  }
+
+  function closePetHatch(force = false) {
+    if (PETS.hatchJobId && !force) return cancelPetHatch();
+    if (PETS.hatchPoll) { clearTimeout(PETS.hatchPoll); PETS.hatchPoll = 0; }
+    PETS.preview = null; PETS.hatchJobId = '';
+    $('petHatchPanel').classList.remove('show'); $('petHatchProgress').className = 'pet-hatch-progress';
+    $('petHatchStatus').textContent = ''; $('petHatchConfirm').disabled = false; $('petHatchCancel').textContent = t('取消');
+  }
+
+  async function openPetHatch() {
+    if (PETS.busy) return;
+    PETS.busy = 'preview'; setPetStatus(t('正在准备孵化预览…'), ''); renderPetManager();
+    try {
+      const res = await fetch('/api/pets/hatch-preview'); const data = await res.json();
+      if (!res.ok || data.error) throw new Error(data.error || 'preview failed');
+      PETS.preview = data; $('petHatchBrief').value = '';
+      const provider = data.provider || {};
+      $('petHatchProvider').textContent = '';
+      const providerName = document.createElement('b'); providerName.className = 'no-i18n'; providerName.textContent = provider.name || t('本机孵化器');
+      const locality = provider.leavesDevice === false ? t('只在本机运行，摘要不会离开设备') : t('可能离开本机');
+      const output = provider.animated === false ? ` · ${t('输出轻量程序化外观，不是动画图集')}` : '';
+      $('petHatchProvider').append(providerName, document.createTextNode(` · ${locality}${output}`));
+      const list = $('petHatchSummary'); list.textContent = '';
+      const items = Array.isArray(data.summaryItems) ? data.summaryItems : [];
+      if (items.length) for (const item of items) { const li = document.createElement('li'); li.className = 'no-i18n'; li.textContent = item; list.appendChild(li); }
+      else { const li = document.createElement('li'); li.textContent = t('没有可用画像；只会使用你填写的外观要求。'); list.appendChild(li); }
+      $('petHatchStatus').textContent = data.note || '';
+      $('petHatchPanel').classList.add('show'); $('petHatchPanel').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      setPetStatus('', '');
+    } catch { setPetStatus(t('孵化预览没有准备好，请稍后重试。'), 'error'); }
+    finally { PETS.busy = ''; renderPetManager(); }
+  }
+
+  function hatchStageText(stage) {
+    return ({ getting_ready: t('正在准备本机孵化器…'), imagining: t('正在根据已确认的摘要构思外观…'), hatching: t('正在把外观做成宠物…'), done: t('宠物孵化完成'), failed: t('宠物孵化失败'), cancelled: t('已取消孵化') })[stage] || t('正在孵化…');
+  }
+
+  async function pollPetHatch() {
+    if (!PETS.hatchJobId) return;
+    try {
+      const res = await fetch('/api/pets/hatch?id=' + encodeURIComponent(PETS.hatchJobId)); const data = await res.json();
+      if (!res.ok || data.error && !data.stage) throw new Error(data.error || 'poll failed');
+      $('petHatchStatus').textContent = data.error || hatchStageText(data.stage);
+      if (data.stage === 'done') {
+        $('petHatchProgress').className = 'pet-hatch-progress show done';
+        PETS.hatchJobId = ''; PETS.busy = ''; $('petHatchCancel').textContent = t('关闭'); await loadPets();
+        setPetStatus(t('新宠物已经加入列表；确认喜欢后再绑定到当前人格。'), 'ok'); renderPetManager(); return;
+      }
+      if (data.stage === 'failed' || data.stage === 'cancelled') {
+        $('petHatchProgress').className = 'pet-hatch-progress show failed';
+        PETS.hatchJobId = ''; PETS.busy = ''; $('petHatchCancel').textContent = t('关闭'); $('petHatchConfirm').disabled = false; renderPetManager(); return;
+      }
+      PETS.hatchPoll = setTimeout(pollPetHatch, 450);
+    } catch {
+      $('petHatchStatus').textContent = t('暂时读不到孵化进度，正在重试…');
+      PETS.hatchPoll = setTimeout(pollPetHatch, 900);
+    }
+  }
+
+  async function startPetHatch() {
+    if (PETS.hatchJobId || !PETS.preview) return;
+    PETS.busy = 'hatch'; $('petHatchConfirm').disabled = true; $('petHatchProgress').className = 'pet-hatch-progress show'; $('petHatchStatus').textContent = t('正在准备本机孵化器…'); renderPetManager();
+    try {
+      const res = await fetch('/api/pets/hatch', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ previewId: PETS.preview.previewId, appearanceBrief: $('petHatchBrief').value, consent: true }) });
+      const data = await res.json(); if (!res.ok || data.error && !data.stage) throw new Error(data.error || 'hatch failed');
+      PETS.hatchJobId = data.id; $('petHatchStatus').textContent = hatchStageText(data.stage); pollPetHatch();
+    } catch (error) {
+      PETS.busy = ''; $('petHatchConfirm').disabled = false; $('petHatchProgress').className = 'pet-hatch-progress show failed'; $('petHatchStatus').textContent = error instanceof Error ? error.message : t('宠物没有孵化成功'); renderPetManager();
+    }
+  }
+
+  async function cancelPetHatch() {
+    if (!PETS.hatchJobId) { closePetHatch(true); return; }
+    const jobId = PETS.hatchJobId; PETS.hatchJobId = ''; if (PETS.hatchPoll) clearTimeout(PETS.hatchPoll);
+    try { await fetch('/api/pets/hatch/cancel', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: jobId }) }); } catch { /* 本机任务会在 server 退出或超时后收口 */ }
+    PETS.busy = ''; closePetHatch(true); renderPetManager(); setPetStatus(t('已取消孵化'), '');
   }
 
   function syncPersonaName() {
@@ -6156,6 +6729,7 @@
       if (!res.ok || data.error || !data.ok) throw new Error(data.error || 'switch failed');
       personaCurrentId = data.current;
       await loadPersonas();
+      await loadPets();
       memToast('好，下一句起，它会用「' + name + '」的方式跟你聊', '');
     } catch (error) {
       await loadPersonas(); // 不做乐观选中；失败后回读服务端真实当前项。
@@ -6303,6 +6877,7 @@
       personaCurrentId = data.current || personaCurrentId;
       personaListReady = true;
       personaListError = '';
+      await loadPets();
       setPersonaManageStatus(t('已删除人格'), 'ok');
       memToast(t('已删除人格'), '');
     } catch (error) {
@@ -6456,6 +7031,36 @@
   $('personaImportFile').addEventListener('change', (event) => importPersonaFile(event.target.files?.[0]));
   $('personaCancel').addEventListener('click', closePersonaEditor);
   $('personaForm').addEventListener('submit', savePersonaEditor);
+  $('petNew').addEventListener('click', () => openPetEditor());
+  $('petFormCancel').addEventListener('click', () => closePetEditor());
+  $('petForm').addEventListener('submit', savePet);
+  $('petShapeChoices').addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-value]'); if (!button) return;
+    PETS.shape = button.dataset.value; choosePetOption('petShapeChoices', PETS.shape);
+  });
+  $('petFeatureChoices').addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-value]'); if (!button) return;
+    PETS.feature = button.dataset.value; choosePetOption('petFeatureChoices', PETS.feature);
+  });
+  $('petProactivity').addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-level]'); if (button) setPetProactivity(button.dataset.level);
+  });
+  $('petHatch').addEventListener('click', openPetHatch);
+  $('petHatchConfirm').addEventListener('click', startPetHatch);
+  $('petHatchCancel').addEventListener('click', () => closePetHatch());
+  $('petWake').addEventListener('click', togglePetVisibility);
+  $('petFreeActivity').addEventListener('change', (event) => setPetFreeActivity(event.target.checked));
+  $('petSensingSettings').addEventListener('click', () => openSettings('perception'));
+  window.wmPet?.onVisibility?.(applyDesktopPetVisibility);
+  window.wmPet?.onOpenPets?.(() => { MEM.tab = 'pets'; enterMemory(); memRender(); });
+  let lastPetInputPulse = 0;
+  document.addEventListener('input', (event) => {
+    if (!event.target?.matches?.('input, textarea, [contenteditable="true"]')) return;
+    const now = Date.now();
+    if (now - lastPetInputPulse < 250) return;
+    lastPetInputPulse = now;
+    window.wmPet?.composerActivity?.();
+  }, true);
   // ── Persona editor end ──
 
   // ══════════════════ 外壳接线（Claude Desktop 风格骨架） ══════════════════
@@ -6493,7 +7098,11 @@
     $('personaPop').classList.remove('show');
   }
   $('ftPersona').addEventListener('click', openPersona);
-  $('pet').addEventListener('click', openPersona);          // 桌面形象点击 = 开人格切换
+  $('pet').addEventListener('click', () => {
+    if (document.body.classList.contains('mode-memory')) exitMemory();
+    MEM.tab = 'pets'; enterMemory();
+    setTimeout(() => $('petManageTitle').scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
+  });
   $('personaScrim').addEventListener('click', closePersona);
   $('personaManage').addEventListener('click', () => {
     closePersona();
@@ -7184,12 +7793,14 @@
         await loadHistory();
         if (!markerTask) memToast('上次任务因应用重启或临时状态清理而中断，请重新发送。', 'danger');
       }
+      syncPetActivity('idle');
       return false;
     }
 
     AG.taskId = task.id;
     AG.taskConversationId = task.conversationId || (marker && marker.id === task.id ? marker.conversationId : null) || currentConvId;
     AG.taskText = task.task || '';
+    syncPetActivity(task.status);
     if (task.workspace && (!AG.taskConversationId || AG.taskConversationId === currentConvId)) adoptConversationWorkspace(task.workspace);
     persistActiveAgentMarker();
     setAgentComposerBusy(true);
@@ -7227,6 +7838,7 @@
     AG.taskId = started.id;
     AG.taskConversationId = currentConvId;
     AG.taskText = task;
+    syncPetActivity(started.status || 'planning');
     persistActiveAgentMarker();
     if (started.workspace && started.workspace !== AG.workspace) {
       AG.workspace = started.workspace; persistAgentWindow(); syncAgentUi();
@@ -7261,10 +7873,12 @@
       await Promise.all([loadSessions(), loadHistory()]);
       await loadFirstInterview();
       setAgentComposerBusy(false);
+      syncPetActivity('idle');
       memToast('任务临时状态已清理；若任务已完成，结果可在会话记录中查看。', '');
       return;
     }
     if (!view || view.error) return;
+    syncPetActivity(view.status);
     // 任务继续在原会话后台运行；用户浏览其它会话时绝不把旧任务卡串到当前聊天区。
     const taskIsVisible = !AG.taskConversationId || AG.taskConversationId === currentConvId;
     if (taskIsVisible) renderAgentTask(view);
@@ -7825,6 +8439,7 @@
     await restoreAgentTask();
   })();
   loadPersonas(); // 填人格快捷列表、管理页和侧栏当前名称
+  loadPets(); // 填宠物外观、当前 Soul 绑定与陪伴主动度
   updateMemPill(); // 首次刷 S0 记忆胶囊计数
   syncModelName(); // 首次刷底部工具栏当前模型名
   pollBg();
