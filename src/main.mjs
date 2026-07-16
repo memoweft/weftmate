@@ -15,6 +15,28 @@
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell } from 'electron';
 import { join } from 'node:path';
 import { appendFileSync, writeFileSync, statSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import {
+  createLocalDataWipeMarker,
+  localDataWipeLaunchRequest,
+  wipeLocalDataFromMarker,
+} from './local-data-wipe.ts';
+
+// 擦除重启必须发生在单实例锁、数据库和窗口之前。参数缺失、marker 伪造、目标不等于当前 userData 或删除失败都直接失败退出。
+const wipeLaunch = localDataWipeLaunchRequest(process.argv);
+if (wipeLaunch) {
+  try {
+    wipeLocalDataFromMarker({
+      ...wipeLaunch,
+      userData: app.getPath('userData'),
+      tempDir: tmpdir(),
+    });
+    console.log('[weftmate] ✓ 已删除全部 WeftMate 本机数据，开始全新初始化');
+  } catch (error) {
+    console.error('[weftmate] ✗ 删除全部本机数据失败:', error && error.message ? error.message : error);
+    process.exit(1);
+  }
+}
 
 // Electron 默认让 OS 分配空闲端口；开发/诊断时仍可显式 PORT 固定。
 const REQUESTED_PORT = process.env.PORT === undefined ? 0 : Number(process.env.PORT);
@@ -59,6 +81,7 @@ let serverMod = null; // server.ts 模块(拿它的 shutdown())
 let collectorMod = null; // collector.ts 模块(感知采集器;opt-in 时起,退出时停)
 let isQuitting = false; // 是否在真退出(区分"关窗收托盘" vs "退出应用")
 let cleanupDone = false; // shutdown() 是否已跑完(before-quit 二次放行)
+let wipeRelaunching = false;
 
 /** 把窗口唤到前台(托盘点击 / 第二实例 / 菜单"显示")。 */
 function showWindow() {
@@ -166,6 +189,29 @@ async function bootstrap() {
       }
     } catch { /* 非法 URL 直接拒绝 */ }
     return { action: 'deny' };
+  });
+
+  // 删除全部本机数据只能走这一个窄 IPC。renderer 不接触 marker/token/文件系统；server 先关 mutation gate，主进程再创建一次性授权并重启擦除。
+  ipcMain.handle('wm:delete-all-local-data', async (event, confirmation) => {
+    if (!win || event.sender !== win.webContents) return { ok: false, code: 'WIPE_UNTRUSTED_SOURCE', error: '请求来源不可信' };
+    if (confirmation !== '删除 WeftMate' && confirmation !== 'Delete WeftMate') return { ok: false, code: 'WIPE_BAD_CONFIRMATION', error: '确认短语不正确' };
+    if (wipeRelaunching) return { ok: false, code: 'WIPE_ALREADY_PREPARING', error: '删除已经在准备中' };
+    const prepared = await serverMod?.prepareLocalDataWipe?.();
+    if (!prepared?.ok) return { ok: false, code: prepared?.code || 'WIPE_PREPARE_FAILED', error: prepared?.error || '当前不能删除本机数据' };
+    try {
+      const marker = createLocalDataWipeMarker({ tempDir: tmpdir(), userData: app.getPath('userData') });
+      const args = process.argv.slice(1).filter((arg) => !arg.startsWith('--weftmate-wipe-marker=') && !arg.startsWith('--weftmate-wipe-token='));
+      args.push(`--weftmate-wipe-marker=${marker.markerPath}`, `--weftmate-wipe-token=${marker.token}`);
+      wipeRelaunching = true;
+      isQuitting = true;
+      collectorMod?.stopCollector?.();
+      app.relaunch({ args });
+      app.quit(); // 仍走既有 before-quit：collector → server/MCP/scheduler/core 全部收干净后才真正退出。
+      return { ok: true, relaunching: true };
+    } catch (error) {
+      serverMod?.cancelPreparedLocalDataWipe?.();
+      return { ok: false, code: 'WIPE_MARKER_FAILED', error: error && error.message ? error.message : String(error) };
+    }
   });
 
   // 自绘标题栏的窗口控制(前端经 preload 暴露的 window.wmWindow.* 发来 IPC):

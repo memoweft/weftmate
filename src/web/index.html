@@ -501,6 +501,12 @@
   .mc-sources > summary::-webkit-details-marker { display: none; }
   .mc-sources > summary::before { content: "▸ "; }
   .mc-sources[open] > summary::before { content: "▾ "; }
+  .mc-advanced { margin-top: 10px; border-top: 1px solid var(--line-soft); padding-top: 8px; }
+  .mc-advanced > summary { cursor: pointer; color: var(--muted); font-size: var(--fs-xs); list-style: none; }
+  .mc-advanced > summary::-webkit-details-marker { display: none; }
+  .mc-advanced > summary::before { content: "▸ "; }
+  .mc-advanced[open] > summary::before { content: "▾ "; }
+  .mc-original { margin-top: 9px; padding: 9px 10px; border-radius: 8px; background: var(--ground); color: var(--muted); font-size: var(--fs-xs); line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
   .mc-source-item {
     font-size: var(--fs-xs); color: var(--muted); padding: 6px 0 6px 12px;
     border-left: 2px solid var(--line); margin-top: 6px; line-height: 1.5; white-space: pre-wrap; word-break: break-word;
@@ -525,8 +531,10 @@
   .mc-dialog .mc-body { font-size: var(--fs-sm); color: var(--text); line-height: 1.6; word-break: break-word; }
   .mc-dialog .mc-body b { color: var(--danger); }
   .mc-dialog .mc-warn { margin-top: 10px; color: var(--danger); font-size: var(--fs-xs); }
+  .mc-dialog textarea.mc-editor { width: 100%; min-height: 110px; box-sizing: border-box; margin-top: 12px; padding: 10px 11px; resize: vertical; border: 1px solid var(--line); border-radius: 9px; background: var(--ground); color: var(--text); font: inherit; line-height: 1.5; }
   .mc-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
   .mc-dialog-actions button { border-radius: 10px; padding: 8px 18px; font: inherit; font-size: var(--fs-sm); font-weight: 600; cursor: pointer; }
+  .mc-dialog-actions .mc-secondary { margin-right: auto; border: 1px solid var(--line); background: transparent; color: var(--muted); }
   #memConfirmCancel { border: 1px solid var(--line); background: var(--panel); color: var(--text); }
   #memConfirmOk { border: none; background: var(--danger); color: #fff; }
 
@@ -575,6 +583,8 @@
   .data-block.danger .db-desc b { color: var(--danger); }
   #factoryReset { border-color: var(--danger); color: var(--danger); background: transparent; }
   #factoryReset:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+  #deleteLocalData { border-color: var(--danger); color: var(--danger); background: transparent; }
+  #deleteLocalData:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
   /* 恢复出厂强确认弹窗内的输入框 */
   .mc-typeconfirm { margin-top: 14px; }
   .mc-typeconfirm label { display: block; font-size: var(--fs-xs); color: var(--muted); margin-bottom: 5px; }
@@ -975,11 +985,17 @@
         </div>
       </div>
 
-      <!-- 危险区：恢复出厂 -->
+      <!-- 危险区：只清 MemoWeft 记忆，不冒充恢复出厂 -->
       <div class="data-block danger">
-        <h2>清空全部记忆 · 重新开始</h2>
-        <p class="db-desc">把它记住你的一切都清空——所有记忆线索、经历片段、对你的理解，以及这些操作的记录，全部抹掉，回到刚认识你时的空白。当前的对话会被收起（不删）、并开一段新的空对话。<b style="color:var(--danger);">此操作不可恢复。</b>建议先"导出我的记忆包"留个备份。</p>
-        <button class="data-btn" id="factoryReset">清空全部记忆 · 重新开始</button>
+        <h2>清空记忆</h2>
+        <p class="db-desc">只清空记忆线索、经历和画像，并收起当前对话后开一段空对话。模型设置、应用设置和其他 WeftMate 本机数据仍会保留；这不是恢复出厂。<b style="color:var(--danger);">此操作不可恢复。</b>建议先导出记忆包。</p>
+        <button class="data-btn" id="factoryReset">清空记忆</button>
+      </div>
+
+      <div class="data-block danger">
+        <h2>删除全部本机数据</h2>
+        <p class="db-desc">删除 WeftMate 放在本机的数据，包括记忆、聊天、模型密钥与设置、应用设置、内部能力配置和日志。不会删除你选择的工作区、已经导出的记忆包、安装文件，也不会删除外部 MCP 服务自己保存的数据。应用会安全退出、删除后重新启动。<b style="color:var(--danger);">此操作不可恢复。</b></p>
+        <button class="data-btn" id="deleteLocalData">删除全部本机数据</button>
       </div>
     </div>
 
@@ -3046,6 +3062,39 @@
     '配好模型后，可以从当前进度接着聊；你的进度不会丢。': 'After configuring a model, you can continue from here. Your progress will be kept.',
     '正在回应': 'Responding', '正在整理你的回答': 'Working with your answer',
     '请稍等，这一轮完成后会自动显示下一题。': 'Please wait. The next question will appear automatically when this response is ready.',
+    '修改': 'Edit', '管理画像': 'Manage profile', '你修改过': 'Edited by you', '你确认的': 'You confirmed', '恢复原理解': 'Restore original',
+    'MemoWeft 原理解': 'Original MemoWeft understanding',
+    '暂时不用': 'Pause using', '恢复使用': 'Resume using', '指正': 'Correct', '高级': 'Advanced',
+    '修改这条画像': 'Edit this profile item', '保存修改': 'Save edit',
+    '这里的修改只覆盖 WeftMate 显示和使用的画像文案；原始记忆与溯源不会被改写。': 'This edit only changes the profile wording WeftMate displays and uses. Original memory and provenance stay unchanged.',
+    '指正这条推断': 'Correct this inference',
+    '写下正确内容；如果只想否定这条推断，可以留空。': 'Write the correct information, or leave it blank to simply reject this inference.',
+    '写下正确内容；如果只想否定这条推断，请使用下面的单独按钮。': 'Write the correct information. To reject this inference without a correction, use the separate button below.',
+    '仅否定这条推断': 'Reject this inference',
+    '你确认过的画像': 'Profile items you confirmed', '已停用 / 已收起的': 'Inactive / archived',
+    '你已否定': 'Rejected by you', '撤销否定': 'Undo rejection', '你恢复使用': 'Restored by you',
+    '撤销对这条推断的否定？': 'Undo rejection of this inference?',
+    '会保留你曾否定过的记录，但从现在起重新使用这条内容。': 'The record that you rejected it will remain, but this content will be used again from now on.',
+    '已撤销否定，并重新使用这条内容': 'Rejection undone; this content is in use again',
+    '撤销否定失败': 'Could not undo rejection', '没有找到这条否定记录': 'This rejection record was not found',
+    '原理解已经被永久删除，无法恢复': 'The original understanding was permanently deleted and cannot be restored',
+    '撤销否定没有完成，请重试': 'Undoing the rejection did not finish; please try again',
+    '提交指正': 'Submit correction', '已保存画像修改': 'Profile edit saved', '已恢复原理解': 'Original understanding restored',
+    '这条已暂时不用': 'This item is paused', '这条已恢复使用': 'This item is active again',
+    '指正已记下，画像仍待后台整理': 'Correction saved; the profile is still waiting to be organized',
+    '指正已记下并完成整理': 'Correction saved and organized',
+    '清空记忆': 'Clear memory',
+    '清空记忆？': 'Clear memory?', '我确认，清空记忆': 'I confirm — clear memory',
+    '只清空记忆线索、经历和画像，并收起当前对话后开一段空对话。模型设置、应用设置和其他 WeftMate 本机数据仍会保留；这不是恢复出厂。': 'Only clears memory clues, experiences, and profile, then archives the current conversation and opens an empty one. Model settings, app settings, and other local WeftMate data remain. This is not a factory reset.',
+    '只会清空记忆线索、经历和画像，并收起当前对话。模型设置、应用设置和其他本机数据会保留；这不是恢复出厂。': 'Only memory clues, experiences, and profile will be cleared, and the current conversation will be archived. Model settings, app settings, and other local data remain. This is not a factory reset.',
+    '删除全部本机数据': 'Delete all local data',
+    '删除 WeftMate 放在本机的数据，包括记忆、聊天、模型密钥与设置、应用设置、内部能力配置和日志。不会删除你选择的工作区、已经导出的记忆包、安装文件，也不会删除外部 MCP 服务自己保存的数据。应用会安全退出、删除后重新启动。': 'Deletes WeftMate data stored on this device, including memories, chats, model keys and settings, app settings, internal capability configuration, and logs. It does not delete selected workspaces, exported memory bundles, installation files, or data stored by external MCP services. The app will safely exit, delete the data, and restart.',
+    '删除全部 WeftMate 本机数据？': 'Delete all local WeftMate data?',
+    '应用会安全退出并重新启动。工作区、导出包、安装文件和外部 MCP 数据不会被删除。': 'The app will safely exit and restart. Workspaces, exports, installation files, and external MCP data will not be deleted.',
+    '记忆、聊天、模型密钥与设置、应用设置、内部能力配置和日志都会永久删除。': 'Memories, chats, model keys and settings, app settings, internal capability configuration, and logs will be permanently deleted.',
+    '我确认，删除全部本机数据': 'I confirm — delete all local data',
+    '正在安全退出…': 'Safely closing…',
+    '当前环境不支持安全删除，请从桌面应用中操作': 'Safe deletion is unavailable here. Use the desktop app.',
     '如果你愿意，可以随时用三轮简短对话让我重新认识你。': 'If you like, you can use three short prompts anytime to help me get to know you again.',
     '完全访问时免确认': 'No approval in Full access',
     '后续任务默认': 'Default for future tasks', '权限读取中': 'Loading access', '权限未确认': 'Access unconfirmed',
@@ -3116,6 +3165,16 @@
     '请在 30 秒内确认；超时后任务会自动停止。': 'Please confirm within 30 seconds; the task will stop automatically after timeout.',
     '等待确认超过 10 分钟，任务已自动停止。没有执行这一步。': 'Approval timed out after 10 minutes. The task stopped automatically and this step was not run.',
     '等待确认超过 30 秒，任务已自动停止。没有执行这一步。': 'Approval timed out after 30 seconds. The task stopped automatically and this step was not run.',
+    '底层理解已变化': 'The underlying understanding changed',
+    '这条修改暂时不会用于对话。请选择继续采用你的修改，或放弃修改。': 'This edit is not being used in conversations. Keep your edit as an independent profile item, or discard it.',
+    '继续采用我的修改': 'Keep my edit', '放弃修改': 'Discard edit',
+    '已继续采用你的修改': 'Your edit is now kept independently', '已放弃这条修改': 'Edit discarded',
+    '当前不能修改：底层理解已经变化。': 'This cannot be edited because the underlying understanding changed.',
+    '删除已经在准备中，请稍等。': 'Deletion is already being prepared. Please wait.',
+    '还有任务没有结束，请等任务结束后再删除。': 'A task is still running. Wait for it to finish before deleting.',
+    '记忆还在整理中，请等整理结束后再删除。': 'Memory is still being organized. Wait for it to finish before deleting.',
+    '仍有本机数据更改没有结束，请稍后再试。': 'Some local data changes are still finishing. Please try again shortly.',
+    '确认短语不正确。': 'The confirmation phrase is incorrect.',
   });
   let LANG = '__WEFTMATE_UI_LANG__' === 'en' ? 'en' : 'zh';
   const I18N_SKIP_TAGS = { SCRIPT: 1, STYLE: 1, TEXTAREA: 1, CODE: 1, PRE: 1, NOSCRIPT: 1 };
@@ -3673,62 +3732,17 @@
     tag.className = 'mn-band' + (band === 'stable' ? ' ok' : (band === 'conflicted' ? ' warn' : ''));
     tag.textContent = bandText;
     body.append(tag);
-    // 改 / 删：改 = 标"不再有效"（受控端点，不做内容编辑，与记忆管理页口径一致）；删 = 删这条理解。
+    // 快速气泡不放永久删除；进入画像页后按“修改 / 暂时不用 / 指正 / 高级”统一管理。
     const acts = document.createElement('div'); acts.className = 'mn-acts';
-    const bEdit = document.createElement('button');
-    bEdit.textContent = '这条不对';
-    bEdit.title = '把这条标为"不再有效"，往后不再用它';
-    bEdit.onclick = () => noteInvalidate(c.id, note);
-    const bDel = document.createElement('button'); bDel.className = 'del';
-    bDel.textContent = '删';
-    bDel.title = '删掉这条理解';
-    bDel.onclick = () => noteDelete(c, note);
-    acts.append(bEdit, bDel);
+    const manage = document.createElement('button'); manage.textContent = '管理画像';
+    manage.onclick = () => { note.remove(); enterMemory(); };
+    acts.appendChild(manage);
     body.append(acts);
     inner.append(ic, body);
     note.append(inner);
     chatInner.appendChild(note);
     scheduleNoteFade(note); // 无操作 5s 后淡出（悬停取消）
     scrollDown();
-  }
-
-  // 气泡上"这条不对"：标失效（受控端点）。成功后气泡淡出、刷胶囊。
-  async function noteInvalidate(id, noteEl) {
-    try {
-      const r = await fetch('/api/cognition/invalidate', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }),
-      }).then((x) => x.json());
-      if (r.error || !r.invalidated) { noteFlash(noteEl, '这条已经不在了'); }
-      else { noteFlash(noteEl, '好的，往后不用这条了'); updateMemPill(); invalidateMemoryViews(false); }
-    } catch (e) { noteFlash(noteEl, '操作没成功，稍后再试'); }
-  }
-  // 气泡上"删"：删这条理解（受控端点·硬删连溯源链、不可逆）。破坏性操作先二次确认——
-  //   与记忆管理页删除同一护栏（团队有误删事故教训）；且"删"紧挨"这条不对"，别让手滑一点就永久删。
-  async function noteDelete(c, noteEl) {
-    const ok = await memConfirm({
-      title: '删掉这条理解？',
-      bodyQuote: c.content,
-      warn: '删除后无法恢复。想让它别再生效，用「这条不对」更稳——还能追溯。',
-      okText: '永久删除', okKind: 'danger',
-    });
-    if (!ok) return;
-    try {
-      const r = await fetch('/api/cognition/delete', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id }),
-      }).then((x) => x.json());
-      if (r.error || !r.removed) { noteFlash(noteEl, '这条已经不在了'); }
-      else { noteFlash(noteEl, '已删掉这条'); updateMemPill(); invalidateMemoryViews(false); }
-    } catch (e) { noteFlash(noteEl, '删除没成功，稍后再试'); }
-  }
-  // 气泡操作后把整条气泡换成一行淡提示（就地反馈，不弹 toast、不跳走）。
-  function noteFlash(noteEl, msg) {
-    const inner = noteEl.querySelector('.mn-inner');
-    if (!inner) return;
-    inner.textContent = '';
-    const s = document.createElement('span');
-    s.style.cssText = 'color:var(--muted);font-size:var(--fs-sm);';
-    s.textContent = msg;
-    inner.appendChild(s);
   }
 
   // ── 立即整理记忆（S1 · 用户主动）：POST /api/refresh → 整理中禁按钮、完成提示新增数、刷胶囊 ──
@@ -3832,6 +3846,41 @@
     });
   }
 
+  // 复用同一弹窗收一段纯文本：主按钮始终要求正文；空串只可能来自明确的次级动作，取消仍返回 null。
+  function memPromptText({ title, bodyText, value, placeholder, okText, emptyActionText }) {
+    return new Promise((resolve) => {
+      $('memConfirmTitle').textContent = title || '确认操作';
+      const body = $('memConfirmBody'); body.textContent = '';
+      if (bodyText) {
+        const copy = document.createElement('div'); copy.textContent = bodyText; body.appendChild(copy);
+      }
+      const editor = document.createElement('textarea'); editor.className = 'mc-editor'; editor.maxLength = 4000;
+      editor.value = value || ''; editor.placeholder = placeholder || ''; body.appendChild(editor);
+      $('memConfirmWarn').textContent = '';
+      const okBtn = $('memConfirmOk'); okBtn.textContent = okText || '确认'; okBtn.style.background = 'var(--accent)';
+      const cancelBtn = $('memConfirmCancel');
+      let emptyActionBtn = null;
+      if (emptyActionText) {
+        emptyActionBtn = document.createElement('button');
+        emptyActionBtn.type = 'button'; emptyActionBtn.className = 'mc-secondary'; emptyActionBtn.textContent = emptyActionText;
+        cancelBtn.parentNode.insertBefore(emptyActionBtn, cancelBtn);
+      }
+      const box = $('memConfirm'); box.classList.add('show');
+      const sync = () => { okBtn.disabled = !editor.value.trim(); };
+      const done = (result) => {
+        box.classList.remove('show'); okBtn.disabled = false;
+        okBtn.onclick = null; cancelBtn.onclick = null; editor.oninput = null;
+        if (emptyActionBtn) { emptyActionBtn.onclick = null; emptyActionBtn.remove(); }
+        resolve(result);
+      };
+      editor.oninput = sync;
+      okBtn.onclick = () => done(editor.value.trim());
+      if (emptyActionBtn) emptyActionBtn.onclick = () => done('');
+      cancelBtn.onclick = () => done(null);
+      sync(); requestAnimationFrame(() => { editor.focus(); editor.select(); });
+    });
+  }
+
   // 进 / 出记忆管理页
   function enterMemory() {
     closeMcp();
@@ -3855,7 +3904,7 @@
       MEM.loaded = true;
       // 顺手刷 S0 胶囊：用刚拉到的这份算活跃数（零额外请求，口径同 /api/cognition/count：!invalidAt && !archivedAt）。
       //   记忆管理页里删/标失效后都会 memLoad，胶囊随之同步、不必等 count 轮询。
-      const activeN = MEM.cog.filter((c) => !c.invalidAt && !c.archivedAt).length;
+      const activeN = MEM.cog.filter((c) => !c.invalidAt && !c.archivedAt && !c.needsReview).length;
       $('memPillN').textContent = activeN > 0 ? (activeN + ' 条记忆') : '记忆';
       $('sidebarMemoryCount').textContent = activeN > 0 ? String(activeN) : '';
       memRender();
@@ -3945,9 +3994,10 @@
     const list = $('memList');
     list.textContent = '';
 
-    const activeAll = MEM.cog.filter((c) => !c.invalidAt && !c.archivedAt);
-    const stableN = activeAll.filter((c) => (c.confBand || c.credStatus) === 'stable').length;
-    const reviewN = activeAll.filter((c) => ['candidate', 'low', 'conflicted'].includes(c.confBand || c.credStatus)).length;
+    const activeAll = MEM.cog.filter((c) => !c.invalidAt && !c.archivedAt && !c.needsReview);
+    const confidenceEligible = activeAll.filter((c) => !c.overridden);
+    const stableN = confidenceEligible.filter((c) => (c.confBand || c.credStatus) === 'stable').length;
+    const reviewN = confidenceEligible.filter((c) => ['candidate', 'low', 'conflicted'].includes(c.confBand || c.credStatus)).length;
     const observedN = activeAll.filter((c) => (Array.isArray(c.sources) ? c.sources : []).some((s) => {
       const e = memEvById(s.evidenceId); return e && e.sourceKind === 'observed';
     })).length;
@@ -3975,9 +4025,13 @@
 
     const fromChat = [];   // 从对话里聊出来的
     const fromSense = [];  // 从感知观察来的
-    const edited = [];     // 你改过/删过的
+    const confirmedEdits = []; // 仍在使用的用户确认画像
+    const inactive = [];   // 已失效或已归档，只表示停用/收起，不冒充“删过”
+    const needsReview = []; // 底层条目已变化，必须让用户明确选保留或放弃
     for (const c of visibleCognitions) {
-      if (c.invalidAt || c.archivedAt) { edited.push(c); continue; }
+      if (c.needsReview) { needsReview.push(c); continue; }
+      if (c.invalidAt || c.archivedAt) { inactive.push(c); continue; }
+      if (c.overridden || c.independent) { confirmedEdits.push(c); continue; }
       const sources = Array.isArray(c.sources) ? c.sources : [];
       const hasObserved = sources.some((s) => {
         const e = memEvById(s.evidenceId);
@@ -3987,7 +4041,7 @@
     }
 
     // 三组全空 = 全新用户：显原空提示，不铺空组。
-    if (!fromChat.length && !fromSense.length && !edited.length) {
+    if (!fromChat.length && !fromSense.length && !confirmedEdits.length && !inactive.length && !needsReview.length) {
       const d = document.createElement('div');
       d.className = 'mem-empty';
       d.textContent = MEM.cog.length ? '没有符合当前筛选的画像内容。' : '它还没形成对你的理解——多聊几句、等它在后台整理一下就有了。';
@@ -4016,6 +4070,10 @@
       return box;
     }
 
+    if (needsReview.length) list.appendChild(section('底层理解已变化', needsReview));
+
+    if (confirmedEdits.length) list.appendChild(section('你确认过的画像', confirmedEdits));
+
     // 1) 从对话里聊出来的（主力，放最上）。
     if (fromChat.length) list.appendChild(section('来自对话', fromChat));
 
@@ -4024,22 +4082,22 @@
       list.appendChild(section('来自感知', fromSense));
     }
 
-    // 3) 你改过/删过的（信任视图，放最下，可折叠、默认收起；空则整组不显）。
-    if (edited.length) {
+    // 已停用/已收起条目放最下并默认折叠；永久删除的条目不会出现在列表里。
+    if (inactive.length) {
       const det = document.createElement('details');
       det.className = 'mem-group mem-group-fold';
       const sum = document.createElement('summary');
       const t = document.createElement('span');
       t.className = 'mem-group-title';
-      t.textContent = '你改过 / 删过的';
+      t.textContent = '已停用 / 已收起的';
       sum.appendChild(t);
       const n = document.createElement('span');
       n.className = 'mem-group-count';
-      n.textContent = edited.length + ' 条';
+      n.textContent = inactive.length + ' 条';
       sum.appendChild(n);
       det.appendChild(sum);
       const grid = document.createElement('div'); grid.className = 'mem-card-grid';
-      for (const c of edited) grid.appendChild(memCognitionCard(c));
+      for (const c of inactive) grid.appendChild(memCognitionCard(c));
       det.appendChild(grid);
       list.appendChild(det);
     }
@@ -4047,6 +4105,7 @@
 
   function memCognitionCard(c) {
     const dead = !!c.invalidAt || !!c.archivedAt; // 失效 或 已归档 都算"非活跃"（召回同款跳过）
+    const muted = !!c.mutedAt;
     const card = document.createElement('div');
     card.className = 'mem-card' + (dead ? ' dead' : '');
 
@@ -4059,15 +4118,64 @@
     const meta = document.createElement('div');
     meta.className = 'mc-meta';
     meta.appendChild(memPill(CTYPE_CN[c.contentType] || '理解'));
-    // 把握度：用 confBand 定性档（后端按【有效把握度】effectiveConfidence 衰减后定，反映"会变淡"；不露 0~1000 数字）。
-    const band = c.confBand || c.credStatus || 'candidate';
-    const credText = CRED_CN[band] || '还没确认';
-    meta.appendChild(memPill('把握度：' + credText, band === 'stable' ? 'ok' : (band === 'conflicted' ? 'warn' : '')));
+    // 覆盖文案是用户自己的确认，不再把底层原 cognition 的把握度误贴到新文案上。
+    if (c.rejectedByUser) meta.appendChild(memPill('你已否定', 'warn'));
+    else if (c.overridden) meta.appendChild(memPill(c.restoredFromRejection ? '你恢复使用' : '你确认的', 'ok'));
+    else {
+      const band = c.confBand || c.credStatus || 'candidate';
+      const credText = CRED_CN[band] || '还没确认';
+      meta.appendChild(memPill('把握度：' + credText, band === 'stable' ? 'ok' : (band === 'conflicted' ? 'warn' : '')));
+    }
     // 状态：活跃 / 已标失效 / 已收起（归档）——用用户词；冲突已并入把握度档。
-    if (c.invalidAt) meta.appendChild(memPill('已标为不再有效', 'warn'));
+    if (c.rejectedByUser) { /* “你已否定”已经是完整状态，不重复贴旧失效/把握度。 */ }
+    else if (c.needsReview) meta.appendChild(memPill('底层理解已变化', 'warn'));
+    else if (c.invalidAt) meta.appendChild(memPill('已标为不再有效', 'warn'));
     else if (c.archivedAt) meta.appendChild(memPill('已收起', ''));
+    else if (muted) meta.appendChild(memPill('暂时不用', 'warn'));
     else meta.appendChild(memPill('活跃', 'ok'));
     card.appendChild(meta);
+
+    // 主操作：可逆、常用的修改 / 暂时不用 / 指正。永久删除和溯源统一收进高级区。
+    const actions = document.createElement('div');
+    actions.className = 'mc-actions';
+    if (c.rejectedByUser) {
+      const undo = document.createElement('button'); undo.className = 'mc-btn'; undo.textContent = '撤销否定';
+      undo.onclick = () => memUndoRejection(c); actions.appendChild(undo);
+    } else if (c.needsReview) {
+      const keep = document.createElement('button'); keep.className = 'mc-btn'; keep.textContent = '继续采用我的修改';
+      keep.onclick = () => memKeepCog(c); actions.appendChild(keep);
+      const discard = document.createElement('button'); discard.className = 'mc-btn'; discard.textContent = '放弃修改';
+      discard.onclick = () => memRestoreCog(c, true); actions.appendChild(discard);
+    } else if (!dead) {
+      const edit = document.createElement('button'); edit.className = 'mc-btn'; edit.textContent = '修改';
+      edit.onclick = () => memEditCog(c); actions.appendChild(edit);
+      if (c.overridden && !c.independent) {
+        const restore = document.createElement('button'); restore.className = 'mc-btn'; restore.textContent = '恢复原理解';
+        restore.onclick = () => memRestoreCog(c); actions.appendChild(restore);
+      }
+      const mute = document.createElement('button'); mute.className = 'mc-btn'; mute.textContent = muted ? '恢复使用' : '暂时不用';
+      mute.onclick = () => memMuteCog(c, !muted); actions.appendChild(mute);
+      if (!c.independent && c.formedBy === 'inferred') {
+        const correct = document.createElement('button'); correct.className = 'mc-btn'; correct.textContent = '指正';
+        correct.onclick = () => memCorrectCog(c); actions.appendChild(correct);
+      }
+    }
+    if (actions.childNodes.length) card.appendChild(actions);
+
+    if (c.needsReview) {
+      const notice = document.createElement('div'); notice.className = 'mc-original';
+      notice.textContent = '这条修改暂时不会用于对话。请选择继续采用你的修改，或放弃修改。';
+      card.appendChild(notice);
+    }
+
+    const advanced = document.createElement('details'); advanced.className = 'mc-advanced';
+    const advancedSummary = document.createElement('summary'); advancedSummary.textContent = '高级'; advanced.appendChild(advancedSummary);
+    if (c.overridden && c.originalContent) {
+      const original = document.createElement('div'); original.className = 'mc-original';
+      const label = document.createElement('b'); label.textContent = 'MemoWeft 原理解';
+      const copy = document.createElement('div'); copy.textContent = c.originalContent;
+      original.append(label, copy); advanced.appendChild(original);
+    }
 
     // 溯源折叠：这条理解从哪几条记忆线索来的
     const sources = Array.isArray(c.sources) ? c.sources : [];
@@ -4092,24 +4200,17 @@
       item.textContent = '（没有挂线索——无法溯源的理解要多留个心眼）';
       det.appendChild(item);
     }
-    card.appendChild(det);
+    advanced.appendChild(det);
 
-    // 操作：标失效（未失效时）+ 删除
-    const actions = document.createElement('div');
-    actions.className = 'mc-actions';
-    if (!dead) {
-      const b = document.createElement('button');
-      b.className = 'mc-btn';
-      b.textContent = '标记不再有效';
-      b.onclick = () => memInvalidateCog(c);
-      actions.appendChild(b);
+    if (!c.needsReview) {
+      const destructive = document.createElement('div'); destructive.className = 'mc-actions';
+      const del = document.createElement('button');
+      del.className = 'mc-btn danger';
+      del.textContent = '永久删除';
+      del.onclick = () => memDeleteCog(c);
+      destructive.appendChild(del); advanced.appendChild(destructive);
     }
-    const del = document.createElement('button');
-    del.className = 'mc-btn danger';
-    del.textContent = '删除';
-    del.onclick = () => memDeleteCog(c);
-    actions.appendChild(del);
-    card.appendChild(actions);
+    card.appendChild(advanced);
 
     return card;
   }
@@ -4179,6 +4280,101 @@
     s.className = 'mc-pill' + (kind ? ' ' + kind : '');
     s.textContent = txt;
     return s;
+  }
+
+  async function memEditCog(c) {
+    const content = await memPromptText({
+      title: '修改这条画像',
+      bodyText: '这里的修改只覆盖 WeftMate 显示和使用的画像文案；原始记忆与溯源不会被改写。',
+      value: c.content,
+      placeholder: LANG === 'en' ? 'Write the wording you want WeftMate to use' : '写下你希望 WeftMate 使用的内容',
+      okText: '保存修改',
+    });
+    if (content === null) return;
+    try {
+      const response = await fetch('/api/cognition/override', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, content }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error) throw new Error(result.error || '保存失败');
+      memToast('已保存画像修改', '');
+    } catch (error) { memToast('保存失败：' + (error.message || String(error)), 'danger'); }
+    invalidateMemoryViews(false); await memLoad();
+  }
+
+  async function memRestoreCog(c, discard = false) {
+    try {
+      const response = await fetch('/api/cognition/override/restore', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error) throw new Error(result.error || '恢复失败');
+      memToast(discard ? '已放弃这条修改' : '已恢复原理解', '');
+    } catch (error) { memToast('操作失败：' + (error.message || String(error)), 'danger'); }
+    invalidateMemoryViews(false); await memLoad();
+  }
+
+  async function memKeepCog(c) {
+    try {
+      const response = await fetch('/api/cognition/override/keep', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error || !result.ok) throw new Error(result.error || '操作失败');
+      memToast('已继续采用你的修改', '');
+    } catch (error) { memToast('操作失败：' + (error.message || String(error)), 'danger'); }
+    invalidateMemoryViews(false); await memLoad(); updateMemPill();
+  }
+
+  async function memUndoRejection(c) {
+    const ok = await memConfirm({
+      title: '撤销对这条推断的否定？',
+      bodyQuote: c.content,
+      bodyText: '会保留你曾否定过的记录，但从现在起重新使用这条内容。',
+      okText: '撤销否定',
+    });
+    if (!ok) return;
+    try {
+      const response = await fetch('/api/cognition/rejection/undo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error || !result.ok) throw new Error(t(result.error || '撤销否定失败'));
+      memToast('已撤销否定，并重新使用这条内容', '');
+    } catch (error) { memToast('操作失败：' + (error.message || String(error)), 'danger'); }
+    invalidateMemoryViews(false); await memLoad(); updateMemPill();
+  }
+
+  async function memMuteCog(c, muted) {
+    try {
+      const response = await fetch('/api/cognition/mute', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, muted }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error || !result.updated) throw new Error(result.error || '操作失败');
+      memToast(muted ? '这条已暂时不用' : '这条已恢复使用', '');
+    } catch (error) { memToast('操作失败：' + (error.message || String(error)), 'danger'); }
+    invalidateMemoryViews(false); await memLoad();
+  }
+
+  async function memCorrectCog(c) {
+    const content = await memPromptText({
+      title: '指正这条推断',
+      bodyText: '写下正确内容；如果只想否定这条推断，请使用下面的单独按钮。',
+      value: '',
+      placeholder: LANG === 'en' ? 'Write the correct information' : '写下正确内容',
+      okText: '提交指正', emptyActionText: '仅否定这条推断',
+    });
+    if (content === null) return;
+    try {
+      const response = await fetch('/api/cognition/correct', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id: c.id, content }),
+      });
+      const result = await response.json();
+      if (!response.ok || result.error || !result.ok) throw new Error(result.error || '指正失败');
+      memToast(result.message || (result.status === 'pending' ? '指正已记下，画像仍待后台整理' : '指正已记下并完成整理'), result.status === 'pending' ? 'warn' : '');
+    } catch (error) { memToast('操作失败：' + (error.message || String(error)), 'danger'); }
+    invalidateMemoryViews(false); await memLoad(); updateMemPill();
   }
 
   // ── 操作：标失效认知 ──
@@ -4560,7 +4756,7 @@
     const d = sn.data;
     let base = 3.2;
     if (d.kind === 'subject') base = 5.8;
-    else if (d.kind === 'cognition') base = 4 + (typeof d.confidence === 'number' ? (d.confidence / 1000) * 1.8 : .8);
+    else if (d.kind === 'cognition') base = d.userConfirmed ? 4.8 : 4 + (typeof d.confidence === 'number' ? (d.confidence / 1000) * 1.8 : .8);
     else if (d.kind === 'event') base = 4.4;
     else if (typeof d.val === 'number') base = 3 + Math.min(2, d.val * .25);
     return base;
@@ -4936,7 +5132,10 @@
 
     const rows = [];
     // 把握度只给定性档（守 naming.md §5：用户侧绝不露 0–1000 原始分；与记忆卡片/气泡口径一致）。
-    if (d.credStatus) rows.push(['把握度', CRED_CN[d.credStatus] || '还没确认']);
+    if (d.userRejected) rows.push(['把握度', '你已否定']);
+    else if (d.userRestored) rows.push(['把握度', '你恢复使用']);
+    else if (d.userConfirmed) rows.push(['把握度', '你确认的']);
+    else if (d.credStatus) rows.push(['把握度', CRED_CN[d.credStatus] || '还没确认']);
     if (d.contentType) rows.push(['类型', CTYPE_CN[d.contentType] || String(d.contentType)]);
     const sourceLabel = { spoken: '你亲口说的', observed: '从行为观察到的', inferred: '根据线索推测的' };
     if (d.sourceKind) rows.push(['来源', sourceLabel[d.sourceKind] || '记录']);
@@ -5193,20 +5392,21 @@
     }
   }
 
-  // ── 恢复出厂（强二次确认：要输入「清空」二字）──
+  // ── 清空记忆（保留其它 WeftMate 本机数据；强二次确认）──
   async function doFactoryReset() {
+    const clearWord = LANG === 'en' ? 'Clear' : '清空';
     const ok = await memConfirmType({
-      title: '清空全部记忆 · 重新开始？',
-      bodyText: '这会把它记住你的一切都抹掉：所有记忆线索、经历片段、对你的理解，以及这些操作的记录。当前对话会被收起、并开一段新的空对话。',
+      title: '清空记忆？',
+      bodyText: '只会清空记忆线索、经历和画像，并收起当前对话。模型设置、应用设置和其他本机数据会保留；这不是恢复出厂。',
       warn: '此操作不可恢复。建议先导出记忆包留个备份。',
-      needWord: '清空',
-      okText: '我确认，清空全部记忆', okKind: 'danger',
+      needWord: clearWord,
+      okText: '我确认，清空记忆', okKind: 'danger',
     });
     if (!ok) return;
     try {
       const res = await fetch('/api/factory-reset', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: '清空' }), // 服务端确认兜底（防 CSRF/误触发直连）
+        body: JSON.stringify({ confirm: clearWord }), // 服务端同时接受中英文精确确认词
       });
       const d = await res.json();
       if (!res.ok || d.error || !d.ok) { memToast('清空失败：' + (d.error || '未知错误'), 'danger'); return; }
@@ -5223,6 +5423,39 @@
       await loadFirstInterview();
     } catch (e) {
       memToast('清空失败：' + String(e), 'danger');
+    }
+  }
+
+  async function doDeleteLocalData() {
+    const deleteWord = LANG === 'en' ? 'Delete WeftMate' : '删除 WeftMate';
+    const ok = await memConfirmType({
+      title: '删除全部 WeftMate 本机数据？',
+      bodyText: '应用会安全退出并重新启动。工作区、导出包、安装文件和外部 MCP 数据不会被删除。',
+      warn: '记忆、聊天、模型密钥与设置、应用设置、内部能力配置和日志都会永久删除。',
+      needWord: deleteWord,
+      okText: '我确认，删除全部本机数据', okKind: 'danger',
+    });
+    if (!ok) return;
+    const button = $('deleteLocalData'); button.disabled = true;
+    try {
+      if (!window.wmData || typeof window.wmData.deleteAllLocalData !== 'function') {
+        throw new Error('当前环境不支持安全删除，请从桌面应用中操作');
+      }
+      const result = await window.wmData.deleteAllLocalData(deleteWord);
+      if (!result || !result.ok) {
+        const messages = {
+          WIPE_ALREADY_PREPARING: '删除已经在准备中，请稍等。',
+          WIPE_ACTIVE_AGENT: '还有任务没有结束，请等任务结束后再删除。',
+          WIPE_PROFILE_UPDATING: '记忆还在整理中，请等整理结束后再删除。',
+          WIPE_MUTATION_TIMEOUT: '仍有本机数据更改没有结束，请稍后再试。',
+          WIPE_BAD_CONFIRMATION: '确认短语不正确。',
+        };
+        throw new Error(t(messages[result && result.code] || (result && result.error) || '删除未能启动'));
+      }
+      button.textContent = LANG === 'en' ? 'Safely closing…' : '正在安全退出…';
+    } catch (error) {
+      button.disabled = false;
+      memToast('删除失败：' + (error.message || String(error)), 'danger');
     }
   }
 
@@ -5277,6 +5510,7 @@
   $('importConfirm').addEventListener('click', doImportConfirm);
   $('importCancel').addEventListener('click', importReset);
   $('factoryReset').addEventListener('click', doFactoryReset);
+  $('deleteLocalData').addEventListener('click', doDeleteLocalData);
 
   // ══════════════════ 对话列表侧栏（步4） ══════════════════
   // 会话册由后端持久（扫 sessions 目录）；前端只渲染 + 切换/新建/归档。用户内容一律 textContent（免 XSS）。

@@ -81,6 +81,10 @@ export interface ProfileScheduler {
   refreshNow(): Promise<RefreshOutcome>;
   /** 当前状态（供 /api/bg-status）。 */
   status(): BgStatus;
+  /** 删除本机数据准备期：清计时器并阻止任何新整理启动；pending 计数保留。 */
+  freeze(): void;
+  /** 取消删除准备后恢复调度；若仍有 pending，会重新按批量/空闲策略安排。 */
+  resume(): void;
   /** 收尾：清空闲计时器（进程退出时调，别留悬挂 timer）。 */
   dispose(): void;
 }
@@ -90,10 +94,11 @@ export function createProfileScheduler(deps: SchedulerDeps): ProfileScheduler {
   let pendingSinceUpdate = 0;
   let bgTimer: ReturnType<typeof setTimeout> | null = null;
   let lastUpdate: LastUpdateSummary | null = null;
+  let frozen = false;
 
   /** 真跑一次整理（持单飞锁）。正忙返回 false（调用方决定重排），成功返回 true。 */
   async function runUpdate(): Promise<boolean> {
-    if (profileUpdating) return false; // 正忙 → 不并发
+    if (profileUpdating || frozen) return false; // 正忙/冻结 → 不并发
     profileUpdating = true;
     try {
       const r = await deps.updateProfile();
@@ -116,13 +121,16 @@ export function createProfileScheduler(deps: SchedulerDeps): ProfileScheduler {
 
   /** 触发一轮整理；正忙则过 10s 重试（保留计数，别丢这批）。一次网络抖动不该崩服务。 */
   async function trigger(): Promise<void> {
+    if (frozen) return;
     const before = pendingSinceUpdate; // 快照：updateProfile 的 await 期间可能有新 turn 累加计数
     try {
       const ok = await runUpdate();
       if (!ok) {
         // 单飞锁被占着 → 过 10s 再排（不清 pendingSinceUpdate，这批还没整理）。
-        if (bgTimer) clearTimeout(bgTimer);
-        bgTimer = setTimeout(() => { bgTimer = null; void trigger(); }, 10_000);
+        if (!frozen) {
+          if (bgTimer) clearTimeout(bgTimer);
+          bgTimer = setTimeout(() => { bgTimer = null; void trigger(); }, 10_000);
+        }
         return;
       }
       // 成功 → 只扣掉本次消化的那批（before），保留 await 期间新到的 turn（别把最新一句抹掉、迟迟不进画像）。
@@ -133,22 +141,27 @@ export function createProfileScheduler(deps: SchedulerDeps): ProfileScheduler {
     }
   }
 
+  function schedulePending(): void {
+    if (frozen || pendingSinceUpdate <= 0) return;
+    const { batchSize, idleMinutes } = config.profileUpdate;
+    if (bgTimer) { clearTimeout(bgTimer); bgTimer = null; }
+    if (pendingSinceUpdate >= batchSize) {
+      void trigger();
+    } else {
+      bgTimer = setTimeout(() => { bgTimer = null; void trigger(); }, idleMinutes * 60_000);
+    }
+  }
+
   return {
     onTurn() {
       pendingSinceUpdate++;
-      const { batchSize, idleMinutes } = config.profileUpdate;
-      if (pendingSinceUpdate >= batchSize) {
-        if (bgTimer) { clearTimeout(bgTimer); bgTimer = null; } // 攒够一批 → 立刻排，清空闲计时
-        void trigger();
-      } else {
-        if (bgTimer) clearTimeout(bgTimer); // 又聊了 → 重置空闲计时
-        bgTimer = setTimeout(() => { bgTimer = null; void trigger(); }, idleMinutes * 60_000);
-      }
+      schedulePending();
     },
     async refreshNow() {
       // 用户主动"立即整理"：走同一把单飞锁（runUpdate 内部 profileUpdating 判并发）。
       //   后台正忙 → runUpdate 返回 false，这里回 ran:false（不排队、不 10s 重试——用户在等结果，
       //   等一个在跑的后台整理完即可，前端提示"正在整理中"让用户稍后再看 bg-status）。
+      if (frozen) return { ran: false, summary: null };
       const before = pendingSinceUpdate; // 快照：updateProfile 的 await 期间可能有新 turn 累加计数
       const ok = await runUpdate();
       if (!ok) return { ran: false, summary: null };
@@ -162,7 +175,17 @@ export function createProfileScheduler(deps: SchedulerDeps): ProfileScheduler {
     status() {
       return { profileUpdating, pendingSinceUpdate, lastUpdate };
     },
+    freeze() {
+      frozen = true;
+      if (bgTimer) { clearTimeout(bgTimer); bgTimer = null; }
+    },
+    resume() {
+      if (!frozen) return;
+      frozen = false;
+      schedulePending();
+    },
     dispose() {
+      frozen = true;
       if (bgTimer) { clearTimeout(bgTimer); bgTimer = null; }
     },
   };
