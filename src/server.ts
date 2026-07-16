@@ -32,7 +32,8 @@ import { createMemoWeftCore, config, type MemoryBundle, type Observation } from 
 import { createProfileScheduler } from './scheduler.ts';
 import { createChatHistory, type HistoryTurn, type HistoryAttachment } from './chatHistory.ts';
 import { credBand } from './confBand.ts';
-import { getExperience, listExperiences, listPlugins, ALL_PLUGINS, EXPERIENCE_IDS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
+import { listBuiltinPersonas, listPlugins, ALL_PLUGINS, DEFAULT_EXPERIENCE_ID } from './experiences/index.ts';
+import { PersonaStore, PersonaStoreError, filterPersonaHistory } from './personas/store.ts';
 import * as configStore from './config-store.ts';
 import * as collector from './collector.ts';
 import { getPerceptionEnabled, setPerceptionEnabled, getPerceptionCloudAllowed, setPerceptionCloudAllowed, setDesktopCapture, readPerceptionView, getLanguage, setLanguage, getTheme, setTheme, getAgentAutonomy, setAgentAutonomy, resolvedLang, getTrustedMcpTools, setMcpToolTrust, getFirstInterviewState, setFirstInterviewState, resetFirstInterviewState } from './settings.ts';
@@ -113,9 +114,13 @@ const INDEX_HTML = join(import.meta.dirname, 'web', 'index.html');
 // 回话人设不再硬编码，改由【当前激活的体验插件】提供 systemPrompt（普通助手 / 星瑶，见 experiences/）。
 //   MemoWeft 本体冷静克制、不拟人（naming.md §6）；"知道自己有长期记忆、会自然想起用户过往"的注入
 //   归宿主这一层，且现在按体验分家——各体验的语气 / 拟人度写在各自插件的 systemPrompt 里。
-// activeExperienceId：模块级、单用户单进程。初值取 DEFAULT_EXPERIENCE_ID（env MEMOWEFT_EXPERIENCE，缺省 plain）。
-//   切换见 POST /api/experience；统一 Agent 每次开工时动态读取，下一条消息立即使用新人设。
-let activeExperienceId: string = DEFAULT_EXPERIENCE_ID;
+// Persona Store 独立于 MemoWeft：内置人格来自编译期 registry，用户人格与当前选择原子保存到 userData。
+//   没有 Store 时沿用旧默认（Electron=xingyao、standalone=env/plain）；损坏/未知引用安全回退 plain。
+const personaStore = new PersonaStore(
+  join(app.getPath('userData'), 'weftmate-personas.json'),
+  listBuiltinPersonas(),
+  DEFAULT_EXPERIENCE_ID,
+);
 
 // plugins：把已注册插件传给 Core 让它烧 hook（experience 类无 hook 是 no-op；tool/collector 类在此生效）。
 // let（非 const）：切模型档/改配置时【进程内热重建】——库在构造 core 时读死 env 里的 key/模型，改配置要重建 core
@@ -141,10 +146,10 @@ if (firstInterviewAtStartup?.status === 'in_progress') {
   setFirstInterviewState(transitionFirstInterview(firstInterviewAtStartup, 'pause'));
 }
 
-// switchedExperienceConvs：刚切过人设、下一次 Agent 任务要"只带用户话"的对话。若把整段历史（含旧人设的
-//   assistant 回复）带入上下文，新人设会被历史里的旧自称带跑（LLM 更信历史里演过的角色，而非 systemPrompt）。
-//   所以切人设后第一句只种【用户说过的话】、不认领旧人设的回复——用户的话是跨人设的事实、保留。
-const switchedExperienceConvs = new Set<string>();
+/** 切换只有在 Persona Store 成功写盘后才改变运行态；Store 同次持久化全会话上下文边界。 */
+function activatePersona(id: string) {
+  return personaStore.setCurrent(id);
+}
 
 // 后台画像更新调度器（Host 自建）：注入 core.updateProfile，其余状态自持。
 //   闭包取模块级 core（let）——热重建 core 后自然调新实例（无需重建 scheduler、pending 计数得以保留）。
@@ -159,6 +164,18 @@ const ACTIVE_AGENT_STATUSES = new Set(['planning', 'running', 'awaiting']);
 function activeAgentTask() {
   const activeTask = agent.listTasks().find((task) => ACTIVE_AGENT_STATUSES.has(task.status));
   return activeTask;
+}
+
+/** 旧人格任务结束前不能改变当前人格语义；守卫必须先于任何 Persona Store 写入。 */
+function rejectPersonaChangeDuringActiveTask(
+  res: import('node:http').ServerResponse,
+  id?: string,
+  onlyWhenCurrent = false,
+): boolean {
+  if (!activeAgentTask()) return false;
+  if (onlyWhenCurrent && id !== personaStore.currentId()) return false;
+  sendJson(res, 409, { error: '当前回复结束后再切换人格' });
+  return true;
 }
 
 function activeFirstInterviewTask() {
@@ -284,10 +301,10 @@ function persistAgentUserTurn(convId: string, taskText: string, attachments: age
 //   recall：开工前捞点"关于你"喂给 agent 当背景；record：干完把任务回写画像，让干活也进"越用越懂"循环。
 //   agent 的中间对话（工具往返）只在 agent.ts 内部，不进 memoweft 的记忆/聊天链路。
 agent.configureAgentDeps({
-  // 必须动态读取 activeExperienceId：人格切换后下一条统一 Agent 消息立即拿到新角色，而不是固定在启动时的人格。
+  // 必须动态读取 Persona Store：切换或编辑当前人格后，下一条统一 Agent 消息立即拿到最新角色。
   experience: () => {
-    const current = getExperience(activeExperienceId);
-    return { id: current.id, name: current.name, systemPrompt: current.systemPrompt ?? '' };
+    const current = personaStore.current();
+    return { id: current.id, name: current.name, systemPrompt: current.systemPrompt };
   },
   recall: async (query) => {
     const sourceCognitions = core.memory.listCognitions();
@@ -371,11 +388,10 @@ function rebuildCore(): void {
  * 只取最近 config.workingMemory.maxTurns 条，避免旧会话无限撑大模型上下文。
  * 历史里 user/assistant 已是分开的两条，直接映射即可（无需像 testbench 从一条 run 记录拆两条）。
  */
-function seedFor(conversationId: string, opts: { onlyUser?: boolean } = {}): Array<{ role: HistoryTurn['role']; content: string }> {
-  let turns = history.read(conversationId);
-  // onlyUser（切人设后第一句）：只留用户说过的话，滤掉上一个人设的 assistant 回复——否则历史里旧人设的
-  //   自我表述（"我是星瑶"）会把新人设带跑。用户的话是跨人设的事实、要保留。
-  if (opts.onlyUser) turns = turns.filter((t) => t.role === 'user');
+function seedFor(conversationId: string): Array<{ role: HistoryTurn['role']; content: string }> {
+  // 人格边界属于持久产品状态：所有会话、包括重启后的旧会话，都保留用户原话，只过滤边界前 assistant；
+  // 边界后的新人格回复继续参与上下文，避免每一轮都退化成“只有用户消息”。
+  const turns = filterPersonaHistory(history.read(conversationId), personaStore.assistantHistoryBoundaryAt());
   const recent = turns.slice(-config.workingMemory.maxTurns);
   return recent.map((t) => ({ role: t.role, content: t.content }));
 }
@@ -421,6 +437,16 @@ function readJson(req: IncomingMessage, maxBytes = Number.POSITIVE_INFINITY): Pr
 function sendJson(res: import('node:http').ServerResponse, code: number, data: unknown): void {
   res.writeHead(code, { 'Content-Type': 'application/json; charset=utf-8' });
   res.end(JSON.stringify(data));
+}
+
+/** Persona 错误只按稳定类别映射 HTTP；storage 绝不把底层系统错误或文件路径返回页面。 */
+function personaErrorResponse(res: import('node:http').ServerResponse, error: unknown): void {
+  if (error instanceof PersonaStoreError) {
+    const status = error.code === 'storage' ? 500 : error.code === 'not_found' ? 404 : 400;
+    sendJson(res, status, { error: error.message });
+    return;
+  }
+  sendJson(res, 500, { error: '人格设置暂时无法处理' });
 }
 
 /**
@@ -589,40 +615,132 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
       return;
     }
 
-    // ── 体验插件（批次5「做插件」v1） ──
-    // 体验 = 回话的人设/语气（普通助手 / 星瑶），只换 systemPrompt，不碰记忆本体（记忆全在 Core，各体验共用同一份）。
-
-    // 列出可选体验 + 当前是哪个：前端顶栏选择器据此渲染下拉、标出当前。只透 id/name，不外泄 systemPrompt 原文。
+    // ── Persona API ──
+    // 兼容列表：保留旧路径与 id/name/current 主字段，追加来源/只读摘要；完整 systemPrompt 只走详情接口。
     if (req.method === 'GET' && url.pathname === '/api/experiences') {
-      const experiences = listExperiences().map((e) => ({ ...e, current: e.id === activeExperienceId }));
-      sendJson(res, 200, { experiences, current: activeExperienceId });
+      const experiences = personaStore.listSummaries().map((persona) => ({
+        ...persona,
+        current: persona.id === personaStore.currentId(),
+      }));
+      sendJson(res, 200, { experiences, current: personaStore.currentId() });
+      return;
+    }
+
+    // 新列表同样只给摘要，避免所有人格的完整提示词无条件进入页面。
+    if (req.method === 'GET' && url.pathname === '/api/personas') {
+      sendJson(res, 200, { personas: personaStore.listSummaries(), current: personaStore.currentId() });
+      return;
+    }
+
+    // 单项详情：编辑器明确点开后才读取完整 systemPrompt；内置项也返回 editable=false 供 UI 只读提示。
+    if (req.method === 'GET' && url.pathname === '/api/persona') {
+      const id = (url.searchParams.get('id') ?? '').trim();
+      if (!id) { sendJson(res, 400, { error: '缺少人格 id' }); return; }
+      const persona = personaStore.get(id);
+      if (!persona) { sendJson(res, 404, { error: '没有这个人格' }); return; }
+      sendJson(res, 200, { persona, current: personaStore.currentId() });
+      return;
+    }
+
+    // 创建/编辑用户人格：服务端只抽取 Manifest 白名单字段；Store 内置项只读，且先写盘再更新运行态。
+    if (req.method === 'POST' && url.pathname === '/api/persona') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (id && rejectPersonaChangeDuringActiveTask(res, id, true)) return;
+      try {
+        const saved = personaStore.save({
+          id: id || undefined,
+          name: body.name,
+          description: body.description,
+          systemPrompt: body.systemPrompt,
+        });
+        // Store 在编辑当前人格的同一次原子写中推进持久上下文边界；Agent 下一任务动态读取最新提示词。
+        sendJson(res, 200, { ok: true, persona: saved, current: personaStore.currentId() });
+      } catch (error) {
+        personaErrorResponse(res, error);
+      }
+      return;
+    }
+
+    // 名称是独立的产品层设置：自定义人格更新 Manifest 名称；内置人格只写本机显示名覆盖，源码提示词不改。
+    if (req.method === 'POST' && url.pathname === '/api/persona/name') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少人格 id' }); return; }
+      if (rejectPersonaChangeDuringActiveTask(res, id, true)) return;
+      try {
+        const persona = personaStore.renamePersona(id, body.name);
+        sendJson(res, 200, {
+          ok: true,
+          persona,
+          current: personaStore.currentId(),
+          personas: personaStore.listSummaries(),
+        });
+      } catch (error) {
+        personaErrorResponse(res, error);
+      }
+      return;
+    }
+
+    // 内置人格删除写本机墓碑；自定义人格硬删除。删当前项时 Store 同一次原子写回退 plain 并推进历史边界。
+    if (req.method === 'POST' && url.pathname === '/api/persona/delete') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少人格 id' }); return; }
+      if (rejectPersonaChangeDuringActiveTask(res, id, true)) return;
+      try {
+        const removed = personaStore.removePersona(id);
+        sendJson(res, 200, {
+          ok: true,
+          removed,
+          current: personaStore.currentId(),
+          personas: personaStore.listSummaries(),
+        });
+      } catch (error) {
+        personaErrorResponse(res, error);
+      }
+      return;
+    }
+
+    // canonical 当前人格入口。
+    if (req.method === 'POST' && url.pathname === '/api/persona/active') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要切换的人格 id' }); return; }
+      if (rejectPersonaChangeDuringActiveTask(res)) return;
+      try {
+        const persona = activatePersona(id);
+        sendJson(res, 200, { ok: true, current: persona.id });
+      } catch (error) {
+        personaErrorResponse(res, error);
+      }
+      return;
+    }
+
+    // 旧切换入口保留为同一 Persona Store 的兼容别名。
+    if (req.method === 'POST' && url.pathname === '/api/experience') {
+      const body = await readJson(req);
+      const id = typeof body.id === 'string' ? body.id.trim() : '';
+      if (!id) { sendJson(res, 400, { error: '缺少要切换的人格 id' }); return; }
+      if (rejectPersonaChangeDuringActiveTask(res)) return;
+      try {
+        const persona = activatePersona(id);
+        sendJson(res, 200, { ok: true, current: persona.id });
+      } catch (error) {
+        personaErrorResponse(res, error);
+      }
       return;
     }
 
     // 插件管理（第 7 步 v2）：列出全部已注册插件 + 类型 + 声明的权限（供插件管理面板只读展示）。
-    //   experience 类的"启用"= 当前激活的那个人设（activeExperienceId）；tool/collector 类注册即启用（v2 不做运行时装卸）。
+    //   experience 类的"启用"= 当前 Persona Store 选择；tool/collector 类注册即启用（v2 不做运行时装卸）。
     if (req.method === 'GET' && url.pathname === '/api/plugins') {
       const plugins = listPlugins().map((p) => ({
         ...p,
         // experience 的"启用"跟随当前人设；非 experience 注册即启用。
-        active: p.type === 'experience' ? p.id === activeExperienceId : true,
+        active: p.type === 'experience' ? p.id === personaStore.currentId() : true,
       }));
-      sendJson(res, 200, { plugins, activeExperience: activeExperienceId });
-      return;
-    }
-
-    // 切换体验：body {id} → 校验在白名单里 → 换 activeExperienceId。
-    //   统一 Agent 每个新任务动态读取 activeExperienceId，因此当前会话下一条消息立即使用新人设。
-    if (req.method === 'POST' && url.pathname === '/api/experience') {
-      const body = await readJson(req);
-      const id = typeof body.id === 'string' ? body.id.trim() : '';
-      if (!id) { sendJson(res, 400, { error: '缺少要切换的体验 id' }); return; }
-      // 白名单校验：只接受注册表里确有的体验 id（挡未知 id / 脏输入），别让 activeExperienceId 落到非法值。
-      if (!EXPERIENCE_IDS.includes(id)) { sendJson(res, 404, { error: '没有这个体验' }); return; }
-      activeExperienceId = id;
-      // 下一条消息只带用户历史，别让旧人设的回复把新人设带跑。
-      switchedExperienceConvs.add(currentConvId);
-      sendJson(res, 200, { ok: true, current: activeExperienceId });
+      sendJson(res, 200, { plugins, activeExperience: personaStore.currentId() });
       return;
     }
 
@@ -1303,9 +1421,8 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
         const convId = currentConvId;
         const workspace = workspaceForConversation(convId);
         if (!history.getWorkspace(convId)) history.setWorkspace(convId, workspace);
-        // 统一 Agent 也要续上当前对话。刚切人格时只带用户历史，避免旧人格的 assistant 自称把新人格带偏。
-        const seedOnlyUser = switchedExperienceConvs.has(convId);
-        const context = seedFor(convId, { onlyUser: seedOnlyUser });
+        // 统一 Agent 续上当前对话；Persona Store 的持久边界会滤掉旧人格 assistant，并保留全部用户话与新人格回复。
+        const context = seedFor(convId);
         const firstInterviewRequested = body.firstInterview === true;
         if (firstInterviewRequested && !core.health().llmReady) {
           sendJson(res, 409, { error: '请先配置对话模型，再发送这次认识的回答' });
@@ -1349,7 +1466,6 @@ const server = createServer(withLoopbackSecurity(currentLoopbackPolicy, async (r
         } catch {
           // 任务已经启动，不能因为一次历史写盘失败对前端伪报“没发送”；完成回调会再兜底一次。
         }
-        switchedExperienceConvs.delete(convId);
         sendJson(res, 200, { ok: true, id: started.id, workspace });
       } catch (e) {
         sendJson(res, e instanceof RequestBodyTooLargeError ? 413 : 400, { error: e instanceof Error ? e.message : String(e) });
@@ -1556,13 +1672,13 @@ export const ready = new Promise<LoopbackReady>((resolve, reject) => {
     console.log(`  记忆库 → ${DB_PATH}`);
     console.log(`  聊天历史 → ${SESSIONS_DIR}（跟随库路径）`);
     console.log(`  当前对话 → ${currentConvId}`);
-    console.log(`  当前体验 → ${getExperience(activeExperienceId).name}（${activeExperienceId}）`);
+    console.log(`  当前人格 → ${personaStore.current().name}（${personaStore.currentId()}）`);
     console.log('  端点 → GET / · GET /api/health · GET /api/usage · GET /api/chat-history · GET /api/bg-status · /api/agent/*');
     console.log('  模型配置(多档·热重建) → GET /api/model-config · POST /api/model-config/{profile,active,delete}');
     console.log('  设置 → GET /api/settings · POST /api/settings/{perception,language,theme,agent-autonomy} · POST /api/observe(采集·不上云)');
     console.log('  记忆管理 → GET /api/cognition · GET /api/evidence · POST /api/cognition/{invalidate,delete} · POST /api/evidence/{authorization,delete}');
     console.log('  多对话 → POST /api/reset · GET /api/sessions · POST /api/session/{open,archive}');
-    console.log('  体验 → GET /api/experiences · POST /api/experience（切人设：普通助手/星瑶）');
+    console.log('  人格 → GET /api/experiences · POST /api/persona/active（旧 /api/experience 兼容）');
     console.log('  数据/备份 → GET /api/export-bundle · POST /api/import-bundle · POST /api/factory-reset');
     console.log('  用户正门 → GET /api/cognition/count · POST /api/refresh（立即整理记忆）');
     console.log('  记忆图谱 → GET /api/memory-graph\n');
