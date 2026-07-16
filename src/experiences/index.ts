@@ -10,6 +10,7 @@
  *   其余（前端列表、切换白名单、env 校验）全自动跟上——注册表是唯一事实源。
  */
 import type { MemoWeftPlugin } from '../memoweft.ts';
+import type { PersonaManifest } from '../personas/manifest.ts';
 import { plain } from './plain.ts';
 import { xingyao } from './xingyao.ts';
 import { aria } from './aria.ts';
@@ -23,6 +24,26 @@ const REGISTRY: Record<string, MemoWeftPlugin> = {
 
 /** 全部已注册插件（传给 createMemoWeftCore 让 Core 烧 hook；experience 类无 hook 是 no-op，供插件管理 UI 枚举）。 */
 export const ALL_PLUGINS: MemoWeftPlugin[] = Object.values(REGISTRY);
+
+/**
+ * 内置人格的 WeftMate Manifest 视图。稳定 id 与提示词仍由原 experience 文件提供；
+ * Persona Store 只把它们当只读底座，不会把内置项复制进用户数据文件。
+ */
+const BUILTIN_DESCRIPTIONS: Record<string, string> = {
+  plain: '自然、简洁、克制的通用助手。',
+  xingyao: '温柔真诚、重视陪伴感的长期伙伴。',
+  aria: 'A warm, genuine English-speaking companion.',
+};
+
+export function listBuiltinPersonas(): PersonaManifest[] {
+  return Object.values(REGISTRY).map((plugin) => ({
+    schemaVersion: 1,
+    id: plugin.id,
+    name: plugin.name,
+    description: BUILTIN_DESCRIPTIONS[plugin.id] ?? '',
+    systemPrompt: plugin.systemPrompt ?? '',
+  }));
+}
 
 /** 兜底体验：任何未知 id 都回退到它（普通助手最中性、最不会出错）。 */
 export const FALLBACK_EXPERIENCE = plain;
