@@ -1,10 +1,10 @@
 # WeftMate
 
-一个越用越了解你的开源 AI 桌面伴侣。换个模型、关掉重开，它依然能记起你说过什么；同时分清哪些是**事实**、哪些只是**推测**。
+一个基于开源 MemoWeft 构建的专有 AI 桌面伴侣。换个模型、关掉重开，它依然能记起你说过什么；同时分清哪些是**事实**、哪些只是**推测**。
 
 底层使用 [MemoWeft](#三层别搞混) 作为长期记忆能力（公开依赖、不改库源码）。
 
-> **English** — WeftMate is an open-source desktop AI companion. Switch models or restart the app,
+> **English** — WeftMate is a proprietary desktop AI companion built on open-source MemoWeft. Switch models or restart the app,
 > and it still remembers what you told it — and keeps **facts** and **guesses** apart, powered by MemoWeft
 > as its long-term memory layer.
 >
@@ -19,7 +19,7 @@
 
 | 名字 | 是什么 | 说明 |
 |---|---|---|
-| **WeftMate** | 产品层 · 这个 Electron 桌面 App | 开源、面向大众,主打展示长期记忆能力 |
+| **WeftMate** | 产品层 · 这个 Electron 桌面 App | 专有产品、面向大众，基于开源 MemoWeft 构建 |
 | **星瑶** | 人格层 · App 内置的一个可切换人格 | **不是产品名**。第一人称「我记得你」只属这一层 |
 | **MemoWeft** | 能力层 · 长期记忆库 | 当依赖 `import`,不改其源码;负责把记忆分成事实与推测 |
 
@@ -48,14 +48,14 @@
 建议使用 Node.js 24（Electron 会随依赖安装）。
 
 ```bash
-git clone https://github.com/memoweft/weftmate && cd weftmate
+git clone https://github.com/memoweft/weftmate && cd weftmate  # 需要仓库访问授权
 npm ci             # 按锁文件安装 Electron、memoweft、MCP SDK 等依赖
 npm start          # 起 Electron:主进程 import server.ts 起 loopback + core → 窗口加载
 npm run typecheck  # tsc 类型检查
 npm test           # 跑契约/冒烟测试(node:test)
 ```
 
-> 源码：[github.com/memoweft/weftmate](https://github.com/memoweft/weftmate)（MIT · 开源）。当前尚无预编译安装包，需要从源码运行。
+> WeftMate 采用专有授权，见 [`LICENSE`](LICENSE)。当前仓库仅对获授权的协作者开放；后续版本与分发方式以官方说明为准。
 
 ---
 
@@ -84,4 +84,4 @@ npm test           # 跑契约/冒烟测试(node:test)
 
 ## 许可证
 
-MIT,见 [`LICENSE`](LICENSE)。
+WeftMate 自有代码、二进制、视觉资产和文档采用专有授权（All Rights Reserved），见 [`LICENSE`](LICENSE)。MemoWeft 与第三方组件继续按各自许可证授权。

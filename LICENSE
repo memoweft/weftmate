@@ -1,21 +1,23 @@
-MIT License
+WeftMate Proprietary License / All Rights Reserved
 
-Copyright (c) 2026 WeftMate contributors
+Copyright (c) 2026 WeftMate contributors. All rights reserved.
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This license covers only WeftMate's own source code, binaries, visual assets,
+and documentation in this repository (the "WeftMate Materials"). It does not
+cover MemoWeft or any third-party component; those remain subject to their own
+licenses and notices.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+No permission is granted to use, copy, modify, publish, distribute,
+redistribute, sublicense, sell, offer, or create derivative works from the
+WeftMate Materials, whether in source or binary form, without prior written
+permission from the copyright holder.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Any permission granted must be in writing and may include additional terms.
+This license and any later notice do not retroactively change the authorization
+that accompanied an earlier version; each version remains governed by the
+license supplied with that version.
+
+THE WEFTMATE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTIES OF ANY KIND,
+EXPRESS OR IMPLIED, TO THE MAXIMUM EXTENT PERMITTED BY LAW. IN NO EVENT SHALL
+THE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER LIABILITY
+ARISING FROM THE MATERIALS OR THEIR USE.

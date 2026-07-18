@@ -13,6 +13,8 @@ WeftMate 是一个**越用越了解你的 AI 桌面伴侣**：Electron 桌面常
 
 一句话边界：**MemoWeft 是记忆内核，WeftMate 是产品，人格是可选择的外壳和能力配置。**
 
+授权边界：**MemoWeft 是独立、完全开源的记忆能力层；WeftMate 是专有桌面产品，不承诺开源。** WeftMate 自有代码、二进制、视觉资产和文档受本仓库 `LICENSE` 的专有授权约束；MemoWeft 与第三方组件继续按各自许可证执行。不得把 MemoWeft 的开源属性套用于 WeftMate。
+
 ## 文档职责
 
 - `docs/PRODUCT.md`：产品定位和 owner 已拍板的长期边界。
