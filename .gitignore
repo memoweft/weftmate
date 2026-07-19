@@ -23,6 +23,12 @@ data/
 # ── Local tooling / scratch ──
 *.log
 dogfood*.mjs
+.tmp/
+# 注意:上面是 `.tmp/`(带点)。工具/技能默认往【不带点】的 tmp/ 和 output/ 写产物
+#   (docx/pdf 等生成物、渲染中间件),它们曾以未跟踪目录出现在 git status 里,
+#   一次 `git add -A` 就会把个人文件写进 git 历史——推上去很难干净删除。两条都挡住:
+tmp/
+output/
 
 # ── dogfood 隔离实例的数据/配置/密钥(绝不进仓;run.mjs 和 PROTOCOL.md 照常进仓) ──
 dogfood/data/
