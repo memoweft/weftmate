@@ -1,0 +1,23 @@
+{
+  "name": "@weftmate/client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "WeftMate 客户端插件（R3-01 spike）：官方 web UI 槽位里的品牌标识 + 托盘联动状态条占位。",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  },
+  "dsh": {
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-runtime",
+        "@deepseek-ai/dsh-client-ui-layout"
+      ],
+      "platform": "web",
+      "immediately": true
+    }
+  }
+}

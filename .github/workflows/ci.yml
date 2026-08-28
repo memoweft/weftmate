@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    name: test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      # npm ci installs from package-lock.json. get-windows v9 ships N-API
+      # prebuilds so no native toolchain is normally needed; if a prebuild is
+      # ever missing for a runner, add the platform's build deps here.
+      - name: Install dependencies
+        run: npm ci
+
+      # vendor:dsh 需要 pnpm（Node 24 起 corepack 不再默认随附，CI 上显式安装）。
+      - name: Setup pnpm
+        run: npm install -g pnpm@11
+
+      - name: Release preflight
+        run: npm run release:preflight
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      # 发货闭包：从 pin checkout 构建 vendored 运行时（干净克隆 CI 的核心验证之一）。
+      - name: Vendor DSH runtime
+        run: npm run vendor:dsh
+
+      - name: Verify DSH vendor
+        run: npm run vendor:verify
+
+      # 契约测试以 vendor 形态跑（B1/B2 用 vendored 编译产物；C 场景 vendor 形态 skip，
+      # checkout 形态契约是本地/升级纪律，见 tests/contract/README.md）。pin 一致性由
+      # resolveRuntimeRoot 校验 VENDOR-MANIFEST.json。
+      - name: Test
+        run: npm test
+        env:
+          WEFTMATE_DSH_RUNTIME: ${{ github.workspace }}/vendor/dsh-runtime

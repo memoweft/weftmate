@@ -1,0 +1,189 @@
+import { createDshAgentAdapter } from '../../dsh-adapter/agents.mjs'
+import { createDshModelAdapter } from '../../dsh-adapter/models.mjs'
+import { createDshPermissionAdapter } from '../../dsh-adapter/permissions.mjs'
+import { createDshSessionAdapter } from '../../dsh-adapter/sessions.mjs'
+import { createDshWorkspaceAdapter } from '../../dsh-adapter/workspace.mjs'
+import { createDiagnostics } from '../diagnostics.mjs'
+import { gatewayError, writeJson } from '../errors/gateway-error.mjs'
+import { beginSse, sseEvent } from '../event-stream/sse.mjs'
+
+const BASE = '/weftmate/api/v1'
+const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
+
+async function readJson(req) {
+  const chunks = []; let bytes = 0
+  for await (const chunk of req) { bytes += chunk.length; if (bytes > 65_536) throw new Error('body-too-large'); chunks.push(chunk) }
+  return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}
+}
+
+function requestAllowed(req) {
+  const origin = req.headers.origin
+  if (typeof origin === 'string' && origin !== '') {
+    try { return new URL(origin).origin === `http://${req.headers.host}` } catch { return false }
+  }
+  return LOOPBACK.has(req.socket?.remoteAddress ?? '')
+}
+
+function idFor(rawSeq, fallback) { return Number.isInteger(rawSeq) ? `dsh-${rawSeq}` : `gateway-${fallback}` }
+
+export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
+  if (client === undefined) throw new TypeError('supported DSH client is required')
+  const sessions = createDshSessionAdapter(client)
+  const agents = createDshAgentAdapter(sessions)
+  const workspaces = createDshWorkspaceAdapter(client)
+  const models = createDshModelAdapter(client)
+  const permissions = createDshPermissionAdapter(client)
+  const diagnostics = diagnosticsDeps === undefined ? null : createDiagnostics({ client, ...diagnosticsDeps })
+  const records = new Map()
+
+  function record(sessionId) {
+    const value = records.get(sessionId)
+    if (!value) throw Object.assign(new Error('unknown session'), { code: 'session-not-found' })
+    return value
+  }
+  function emit(sessionId, normalized) {
+    const entry = record(sessionId)
+    // A mux also carries global/control frames.  Never attach an unscoped raw
+    // frame to whichever Gateway session happened to subscribe first.
+    if (normalized.sessionId !== sessionId) return
+    const event = {
+      v: 1, id: idFor(normalized.rawSeq, entry.nextId++), type: normalized.type,
+      at: new Date().toISOString(), sessionId, turn: normalized.turn ?? null,
+      data: { sessionId, turn: normalized.turn ?? null, ...normalized.data },
+      rawType: normalized.rawType,
+      ...(Number.isInteger(normalized.rawSeq) ? { rawSeq: normalized.rawSeq } : {}),
+      ...(normalized.rawTime !== undefined ? { rawTime: normalized.rawTime } : {}),
+    }
+    if (entry.events.some((candidate) => candidate.id === event.id)) return
+    entry.events.push(event)
+    for (const res of entry.listeners) res.write(sseEvent(event))
+  }
+  async function reconcile(sessionId, raw) {
+    const entry = record(sessionId)
+    const result = await agents.reconcile(raw, { sessionId, lastSeq: entry.lastSeq, state: entry.state })
+    entry.lastSeq = result.lastSeq; entry.state = result.state
+    sessions.noteReplayCursor(sessionId, result.lastSeq)
+    for (const event of result.events) emit(sessionId, event)
+  }
+  async function pump(sessionId, signal) {
+    try {
+      for await (const frame of agents.openMux(signal)) {
+        // Only `session/event` envelopes carry a durable log seq.  Control /
+        // projection frames borrow the projected event's seq as a watermark;
+        // stripping it here keeps that number from ever driving the replay
+        // cursor, dedupe keys, or public event ids.
+        const payload = frame?.payload
+        if (
+          payload !== null && typeof payload === 'object'
+          && payload.type !== 'session/event' && Number.isInteger(payload.seq)
+        ) {
+          await reconcile(sessionId, [{ ...frame, payload: { ...payload, seq: undefined } }])
+        } else {
+          await reconcile(sessionId, [frame])
+        }
+      }
+    } catch (error) {
+      if (!signal.aborted) {
+        const safe = await gatewayError(error)
+        diagnostics?.recordError(safe.code, safe.details?.digest ?? null)
+        emit(sessionId, { type: 'error', sessionId, data: safe, rawType: 'gateway/mux' })
+        throw error
+      }
+    }
+  }
+  async function handle(req, res) {
+    if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
+    const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://gateway').pathname)
+    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models))?$/.exec(pathname)
+    const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
+    try {
+      if (pathname === `${BASE}/sessions` && req.method === 'POST') {
+        const payload = await readJson(req); const created = await sessions.create(payload)
+        records.set(created.sessionId, { events: [], listeners: new Set(), state: undefined, lastSeq: -1, nextId: 1 })
+        emit(created.sessionId, { type: 'session.created', sessionId: created.sessionId, data: { id: created.sessionId }, rawType: 'gateway/create' })
+        return writeJson(res, 201, { sessionId: created.sessionId })
+      }
+      if (pathname === `${BASE}/workspaces` && req.method === 'GET') {
+        return writeJson(res, 200, await workspaces.list())
+      }
+      if (pathname === `${BASE}/workspaces` && req.method === 'POST') {
+        const payload = await readJson(req); const result = await workspaces.create(payload)
+        return writeJson(res, result.created ? 201 : 200, result)
+      }
+      if (workspaceMatch && req.method === 'PATCH') {
+        const payload = await readJson(req); const result = await workspaces.rename({ workspaceId: workspaceMatch[1], title: payload.title })
+        return writeJson(res, 200, result)
+      }
+      if (workspaceMatch && req.method === 'DELETE') {
+        return writeJson(res, 200, await workspaces.remove({ workspaceId: workspaceMatch[1] }))
+      }
+      if (pathname === `${BASE}/models` && req.method === 'GET') {
+        return writeJson(res, 200, await models.catalog())
+      }
+      if (pathname === `${BASE}/settings/permission` && req.method === 'GET') {
+        return writeJson(res, 200, { namespace: await permissions.describe() })
+      }
+      if (pathname === `${BASE}/settings/permission` && req.method === 'PUT') {
+        const payload = await readJson(req); const view = await permissions.update(payload)
+        return writeJson(res, 200, { namespace: view })
+      }
+      // ── P1-05 diagnostics：health 快照 / paths / last errors（红字：只留 code+digest）──
+      if (pathname === `${BASE}/diagnostics` && req.method === 'GET') {
+        if (diagnostics === null) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
+        return writeJson(res, 200, await diagnostics.snapshot())
+      }
+      if (pathname === `${BASE}/paths` && req.method === 'GET') {
+        if (diagnostics === null) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
+        return writeJson(res, 200, diagnostics.pathsSnapshot())
+      }
+      if (pathname === `${BASE}/last-errors` && req.method === 'GET') {
+        if (diagnostics === null) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
+        return writeJson(res, 200, { items: diagnostics.lastErrorsSnapshot() })
+      }
+      if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
+      const [, sessionId, action] = match
+      if (action === 'resume' && req.method === 'POST') {
+        const resumed = await sessions.resume(sessionId)
+        if (!records.has(sessionId)) records.set(sessionId, { events: [], listeners: new Set(), state: undefined, lastSeq: -1, nextId: 1 })
+        await reconcile(sessionId, resumed.events)
+        return writeJson(res, 200, { sessionId, lastSeq: record(sessionId).lastSeq })
+      }
+      if (action === 'messages' && req.method === 'POST') {
+        record(sessionId); const payload = await readJson(req)
+        const result = await sessions.send(sessionId, payload.content, payload.mode ?? 'queue')
+        return writeJson(res, result.accepted ? 202 : 409, { accepted: result.accepted })
+      }
+      if (action === 'cancel' && req.method === 'POST') {
+        record(sessionId); const result = await sessions.cancel(sessionId)
+        return writeJson(res, result.accepted ? 202 : 409, { accepted: result.accepted })
+      }
+      if (action === 'models' && req.method === 'GET') {
+        record(sessionId); return writeJson(res, 200, await models.sessionModels(sessionId))
+      }
+      if (action === 'models' && req.method === 'PUT') {
+        record(sessionId); const payload = await readJson(req)
+        const result = await models.selectSessionModel(sessionId, payload)
+        return writeJson(res, 200, result)
+      }
+      if (action === 'events' && req.method === 'GET') {
+        const entry = record(sessionId)
+        beginSse(res)
+        const lastId = req.headers['last-event-id']; const position = typeof lastId === 'string' ? entry.events.findIndex((event) => event.id === lastId) + 1 : 0
+        for (const event of entry.events.slice(position)) res.write(sseEvent(event))
+        entry.listeners.add(res)
+        // IncomingMessage `close` can fire once its request body is consumed;
+        // an SSE subscription is owned by the response socket lifetime.
+        const abort = new AbortController(); res.on('close', () => { abort.abort(); entry.listeners.delete(res) })
+        void pump(sessionId, abort.signal)
+        return
+      }
+      return writeJson(res, 405, { error: { code: 'method-not-allowed', message: 'Gateway request failed' } })
+    } catch (error) {
+      const safe = await gatewayError(error)
+      diagnostics?.recordError(safe.code, safe.details?.digest ?? null)
+      const notFound = error?.code === 'session-not-found' || error?.code === 'workspace-not-found'
+      return writeJson(res, notFound ? 404 : 400, { error: safe })
+    }
+  }
+  return { handle, emitForTest: emit, reconcileForTest: reconcile }
+}

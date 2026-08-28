@@ -1,0 +1,107 @@
+{
+  "name": "weftmate",
+  "version": "0.1.0",
+  "author": "Memoweft",
+  "description": "WeftMate — a desktop companion with long-term memory, powered by MemoWeft. It remembers you, and keeps facts and guesses apart.",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "main": "src/main.mjs",
+  "scripts": {
+    "start": "electron .",
+    "smoke": "electron .",
+    "release:preflight": "node scripts/release-preflight.mjs",
+    "typecheck": "tsc",
+    "test": "node --test --test-concurrency=4 \"tests/**/*.test.ts\"",
+    "test:contract": "node --test --test-concurrency=4 \"tests/contract/**/*.test.ts\"",
+    "vendor:dsh": "node scripts/vendor-dsh.mjs",
+    "vendor:verify": "node scripts/verify-dsh-vendor.mjs",
+    "dsh:upgrade": "node scripts/upgrade-dsh.mjs",
+    "dist": "npm run vendor:dsh && node scripts/stage-dsh-runtime.mjs && electron-builder",
+    "dist:win": "npm run vendor:dsh && node scripts/stage-dsh-runtime.mjs && electron-builder --win",
+    "dist:win:feed": "npm run vendor:dsh && node scripts/stage-dsh-runtime.mjs && node scripts/electron-builder-feed.mjs"
+  },
+  "build": {
+    "appId": "com.memoweft.weftmate",
+    "productName": "WeftMate",
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/get-windows/**/*"
+    ],
+    "files": [
+      "src/**/*",
+      "runtime/**/*",
+      "package.json"
+    ],
+    "extraResources": [
+      {
+        "from": ".stage",
+        "to": "",
+        "filter": [
+          "dsh-runtime/**/*"
+        ]
+      }
+    ],
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "icon": "build/icon.png",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "installerLanguages": [
+        "zh_CN",
+        "en_US"
+      ],
+      "language": "2052",
+      "shortcutName": "WeftMate",
+      "uninstallDisplayName": "WeftMate",
+      "createDesktopShortcut": "always",
+      "runAfterFinish": true,
+      "artifactName": "WeftMate-Setup-${version}.${ext}",
+      "deleteAppDataOnUninstall": false,
+      "license": "LICENSE"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity",
+      "notarize": false
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    },
+    "publish": null
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "electron-updater": "^6.8.9",
+    "get-windows": "^9.3.0"
+  },
+  "overrides": {
+    "@mapbox/node-pre-gyp": "2.0.3",
+    "node-gyp": "11.5.0"
+  },
+  "devDependencies": {
+    "electron": "43.0.0",
+    "electron-builder": "^26.15.3",
+    "typescript": "^5.9.3",
+    "ws": "^8.21.3"
+  }
+}

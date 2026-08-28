@@ -1,0 +1,18 @@
+{
+  "memoProtocolVersion": 1,
+  "schemaVersion": 8,
+  "packageVersion": "0.7.0.dev0",
+  "artifactSha256": "6c84f0461e49f4acb4f6318c3f389c4d22300c828a4510fed90d27abd0a1eec9",
+  "recordedAt": "2026-08-25T00:00:00Z",
+  "artifact": {
+    "kind": "site-packages-tree",
+    "python": "D:/AIProjects/WeftMate/Runtime/MemoWeftVenv/Scripts/python.exe",
+    "roots": ["memoweft", "memoweft-0.7.0.dev0.dist-info"],
+    "algorithm": "walk roots in order; per file line `relpath\\nsize\\nsha256(file)` with sorted dirs/files and / separators; sha256 over the joined lines"
+  },
+  "notes": [
+    "P2-01 冻结基线：MemoWeft candidate wheel memoweft-0.7.0.dev0（schema v8）装入 D:/AIProjects/WeftMate/Runtime/MemoWeftVenv。",
+    "memoProtocolVersion = WeftMate ↔ MemoWeft stdio 桥协议的首个冻结版本（initialize/health/shutdown JSON-Lines）；正式协议化在 P2-02。",
+    "升级只由 owner 触发：更新本文件 → 重跑 npm run test:contract。"
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  // 仅做类型检查（noEmit）——WeftMate 靠 Electron/Node 24 原生 type-stripping 直跑 .ts，
+  // 不产出 JS。这份 config 是升级 memoweft 内核时的编译期护栏。
+  // .ts 之间用显式 .ts 扩展名互相 import → 必须 allowImportingTsExtensions + moduleResolution:bundler。
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2023"],
+    "module": "preserve",
+    "moduleResolution": "bundler",
+    "types": ["node"],
+
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
+    "resolveJsonModule": true,
+
+    "strict": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts"]
+}

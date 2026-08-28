@@ -1,0 +1,42 @@
+# ── Dependencies ──
+node_modules/
+
+# ── Build / packaging output ──
+dist/
+release/
+out/
+
+# ── DSH vendor 生成物（npm run vendor:dsh 产物；不进 git，发布时构建）──
+vendor/dsh-runtime/
+
+# ── Local user data & secrets ──
+data/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+.env
+.env.*
+!.env.example
+
+# ── Local tooling / scratch ──
+*.log
+dogfood*.mjs
+.tmp/
+
+# ── dogfood 隔离实例的数据/配置/密钥(绝不进仓;run.mjs 和 PROTOCOL.md 照常进仓) ──
+dogfood/data/
+
+# ── OS / editor cruft ──
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+.stage/
+
+.certs/
+

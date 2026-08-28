@@ -1,0 +1,1156 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src 'self' file: data: blob:">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>星瑶 · WeftMate</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --primary: #c46f8b;
+      --accent: #f1b3c5;
+      --panel: rgba(25, 24, 38, .92);
+      --line: rgba(227, 224, 255, .52);
+      --text: #faf8ff;
+      --muted: #cac4dc;
+      --faint: #9c94b4;
+      --info: #83eaff;
+      --warn: #ffd794;
+      --ready: #9be7c0;
+      --danger: #ffaaa8;
+      --look-x: 0px;
+      --look-y: 0px;
+      --xingyao-cyan: #53e3ff;
+      --xingyao-violet: #8873ff;
+      --xingyao-rose: #e88fbd;
+      --chip-bg: var(--panel);
+      --chip-text: var(--text);
+      --chip-line: var(--line);
+      --chip-shadow: rgba(12, 10, 28, .34);
+      --character-edge: rgba(255, 255, 255, .34);
+      --character-shadow: rgba(7, 7, 24, .46);
+      --character-outline: rgba(214, 238, 255, .6);
+      --focus: #72e5ff;
+      /* All non-semantic illustration colors stay behind theme tokens so the
+         companion can be tuned without leaking raw colors into components. */
+      --clear: transparent;
+      --focus-shadow: rgba(16, 13, 37, .66);
+      --light-focus-glow: rgba(18, 107, 146, .28);
+      --aurora-clear: rgba(8, 8, 24, .28);
+      --white-soft: rgba(255, 255, 255, .34);
+      --white-highlight: rgba(255, 255, 255, .72);
+      --white-glint: rgba(255, 255, 255, .24);
+      --violet-deep: #382750;
+      --violet-mid: #6b63d9;
+      --cyan-bright: #73e2ff;
+      --rose-deep: #6d405a;
+      --rose-soft: rgba(232, 125, 156, .3);
+      --violet-shadow: rgba(66, 48, 138, .22);
+      --pet-surface: #fffaf8;
+      --pet-surface-mid: #ffecea;
+      --pet-surface-end: #f9dcd9;
+      --pet-surface-shadow: rgba(212, 125, 147, .1);
+      --pet-lilac: #f8f5ff;
+      --pet-lilac-end: #dcd8ff;
+      --lilac-violet: #b8a9ff;
+      --violet-end: #5f4cbc;
+      --pet-cyan-start: #eaffff;
+      --pet-cyan-end: #618eff;
+      --sleep-face: #55405f;
+      --t-fast: 140ms;
+      --t-standard: 180ms;
+      font-family: "Microsoft YaHei UI", "Segoe UI", system-ui, sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--clear);
+      user-select: none;
+    }
+    body {
+      display: grid;
+      place-items: center;
+      padding: 4px;
+      pointer-events: none;
+    }
+    #stage {
+      -webkit-app-region: no-drag;
+      width: 100%;
+      height: 100%;
+      display: grid;
+      place-items: center;
+      pointer-events: none;
+      touch-action: none;
+    }
+    #petWrap {
+      position: relative;
+      width: 104px;
+      height: 116px;
+      flex: 0 0 auto;
+      pointer-events: auto;
+      cursor: default;
+      outline: 0;
+      transform-origin: 50% 91%;
+      animation: breathe 5.2s ease-in-out infinite;
+    }
+    #petWrap::after {
+      content: "";
+      position: absolute;
+      z-index: 30;
+      inset: 8px 5px 3px;
+      border: 2px solid var(--focus);
+      border-radius: 44% 44% 42% 42%;
+      box-shadow: 0 0 0 3px var(--focus-shadow), 0 0 14px color-mix(in srgb, var(--focus) 42%, var(--clear));
+      opacity: 0;
+      transform: scale(.96);
+      transition: opacity var(--t-fast) ease, transform var(--t-standard) ease;
+      pointer-events: none;
+    }
+    #petWrap:focus-visible::after { opacity: 1; transform: scale(1); }
+    #petWrap.hovering { cursor: grab; }
+    #petWrap.pressing,
+    #petWrap.is-dragging { cursor: grabbing; }
+
+    #visual {
+      position: absolute;
+      z-index: 2;
+      inset: 7px 4px 1px;
+      transform-origin: 50% 88%;
+      transition: transform var(--t-standard) cubic-bezier(.2, .75, .3, 1), filter var(--t-standard) ease;
+      pointer-events: none;
+    }
+    #petWrap.hovering #visual { transform: translateY(-2px) scale(1.025); }
+    #petWrap.pressing #visual { transform: translateY(1px) scale(.982); }
+    #petWrap.is-dragging #visual { transform: translateY(-5px) rotate(-1deg) scale(1.025); }
+    #petWrap.poke #visual { animation: poke .46s cubic-bezier(.2, .78, .28, 1); }
+
+    #aura {
+      position: absolute;
+      z-index: 0;
+      left: 12px;
+      top: 24px;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 38% 34%, color-mix(in srgb, var(--xingyao-cyan) 45%, var(--clear)), var(--clear) 44%),
+        radial-gradient(circle at 65% 65%, color-mix(in srgb, var(--xingyao-violet) 45%, var(--clear)), var(--clear) 64%);
+      filter: blur(13px);
+      opacity: .18;
+      transform: scale(.88);
+      transition: opacity var(--t-standard) ease, transform var(--t-standard) ease;
+    }
+    body[data-ui-state="activity"] #aura { opacity: .32; transform: scale(1.02); }
+    body[data-ui-state="notice"] #aura { opacity: .45; transform: scale(1.04); }
+
+    #ground {
+      position: absolute;
+      z-index: 0;
+      left: 25px;
+      bottom: 1px;
+      width: 46px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--aurora-clear);
+      filter: blur(4px);
+      opacity: .74;
+      transition: opacity var(--t-standard) ease, transform var(--t-standard) ease;
+    }
+    #petWrap.hovering #ground,
+    #petWrap.is-dragging #ground { opacity: .42; transform: scale(.82); }
+
+    #sprite {
+      display: block;
+      position: absolute;
+      z-index: 3;
+      left: 0;
+      top: 0;
+      width: 96px;
+      height: 104px;
+      opacity: 0;
+      image-rendering: auto;
+      /* M6：角色描边（owner 拍板）——八向细描边沿角色剪影走，贴屏幕边/换壁纸都轮廓清晰；
+         加轻微降饱和收敛进冷色系。 */
+      filter:
+        saturate(.86)
+        drop-shadow(0 1px 0 var(--character-outline))
+        drop-shadow(0 -1px 0 var(--character-outline))
+        drop-shadow(1px 0 0 var(--character-outline))
+        drop-shadow(-1px 0 0 var(--character-outline))
+        drop-shadow(1px 1px 0 var(--character-outline))
+        drop-shadow(-1px 1px 0 var(--character-outline))
+        drop-shadow(1px -1px 0 var(--character-outline))
+        drop-shadow(-1px -1px 0 var(--character-outline))
+        drop-shadow(0 0 1px var(--character-edge))
+        drop-shadow(0 7px 6px var(--character-shadow));
+      transition: opacity var(--t-standard) ease, filter var(--t-standard) ease;
+    }
+    body[data-appearance="sprite"] #sprite { opacity: 1; }
+    body[data-ui-state="activity"][data-appearance="sprite"] #sprite {
+      filter:
+        saturate(.86)
+        drop-shadow(0 1px 0 var(--character-outline))
+        drop-shadow(0 -1px 0 var(--character-outline))
+        drop-shadow(1px 0 0 var(--character-outline))
+        drop-shadow(-1px 0 0 var(--character-outline))
+        drop-shadow(1px 1px 0 var(--character-outline))
+        drop-shadow(-1px 1px 0 var(--character-outline))
+        drop-shadow(1px -1px 0 var(--character-outline))
+        drop-shadow(-1px -1px 0 var(--character-outline))
+        drop-shadow(0 0 1px var(--character-edge))
+        drop-shadow(0 8px 7px var(--character-shadow))
+        drop-shadow(0 0 5px color-mix(in srgb, var(--xingyao-cyan) 22%, var(--clear)));
+    }
+    body[data-ui-state="notice"][data-appearance="sprite"] #sprite {
+      filter:
+        saturate(.86)
+        drop-shadow(0 1px 0 var(--character-outline))
+        drop-shadow(0 -1px 0 var(--character-outline))
+        drop-shadow(1px 0 0 var(--character-outline))
+        drop-shadow(-1px 0 0 var(--character-outline))
+        drop-shadow(1px 1px 0 var(--character-outline))
+        drop-shadow(-1px 1px 0 var(--character-outline))
+        drop-shadow(1px -1px 0 var(--character-outline))
+        drop-shadow(-1px -1px 0 var(--character-outline))
+        drop-shadow(0 0 1px var(--character-edge))
+        drop-shadow(0 8px 7px var(--character-shadow))
+        drop-shadow(0 0 7px color-mix(in srgb, var(--xingyao-violet) 26%, var(--clear)));
+    }
+
+    /* 正式图集缺失或解码失败时仍显示同一位星空系角色，而不是退回旧三宠物。 */
+    #procedural {
+      position: absolute;
+      z-index: 2;
+      left: 5px;
+      top: 10px;
+      width: 86px;
+      height: 91px;
+      opacity: 1;
+      transition: opacity var(--t-standard) ease;
+      filter: drop-shadow(0 1px 0 var(--character-edge)) drop-shadow(0 8px 7px var(--character-shadow));
+    }
+    body[data-appearance="sprite"] #procedural { opacity: 0; }
+    /* ── ImageForm（owner 拍板：给一张图自动生成桌宠）──
+       形态可变：图片=角色的视觉载荷；行为/状态/拖拽/命中测试全是固定引擎。 */
+    body[data-form="image"] #aura,
+    body[data-form="image"] #sprite,
+    body[data-form="image"] #procedural { display: none; }
+    #petImage {
+      position: absolute;
+      z-index: 3;
+      pointer-events: none;
+      image-rendering: auto;
+      filter:
+        saturate(.92)
+        drop-shadow(0 1px 0 var(--character-outline))
+        drop-shadow(0 -1px 0 var(--character-outline))
+        drop-shadow(1px 0 0 var(--character-outline))
+        drop-shadow(-1px 0 0 var(--character-outline))
+        drop-shadow(1px 1px 0 var(--character-outline))
+        drop-shadow(-1px 1px 0 var(--character-outline))
+        drop-shadow(1px -1px 0 var(--character-outline))
+        drop-shadow(-1px -1px 0 var(--character-outline))
+        drop-shadow(0 6px 7px var(--character-shadow));
+      transform-origin: 50% 92%;
+      transition: transform var(--t-standard) cubic-bezier(.2, .75, .3, 1), filter var(--t-standard) ease;
+    }
+    body[data-form="image"] #petWrap.hovering #petImage { transform: translateY(-2px) scale(1.03); }
+    body[data-form="image"] #petWrap.pressing #petImage { transform: translateY(1px) scale(.98); }
+    body[data-form="image"] #petWrap.is-dragging #petImage { transform: translateY(-4px) rotate(-1deg) scale(1.03); }
+    /* 注视：朝光标方向轻倾 + 左看翻面（通用形态动效，任何图都适用）。 */
+    body[data-form="image"] #petImage { transform: translate(var(--look-x, 0px), var(--look-y, 0px)); }
+    body[data-form="image"][data-look-sign="left"] #petImage { transform: translate(var(--look-x, 0px), var(--look-y, 0px)) scaleX(-1); }
+    #imgGround {
+      position: absolute;
+      z-index: 0;
+      left: 22%;
+      bottom: 2px;
+      width: 56%;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--aurora-clear);
+      filter: blur(4px);
+      opacity: .74;
+      display: none;
+    }
+    body[data-form="image"] #imgGround { display: block; }
+    body[data-form="image"] #ground { display: none; }
+    #orbit {
+      position: absolute;
+      z-index: 0;
+      inset: 5px 2px 2px;
+      border: 1px solid color-mix(in srgb, var(--accent) 52%, var(--clear));
+      border-radius: 50%;
+      transform: rotate(-18deg);
+      opacity: .56;
+      animation: orbit-turn 14s linear infinite;
+    }
+    #orbit::before,
+    #orbit::after {
+      content: "";
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--xingyao-cyan);
+      box-shadow: 0 0 8px color-mix(in srgb, var(--xingyao-cyan) 72%, var(--clear));
+    }
+    #orbit::before { left: 3px; top: 24px; }
+    #orbit::after { right: 5px; bottom: 20px; width: 4px; height: 4px; background: var(--xingyao-violet); }
+    #body {
+      position: absolute;
+      z-index: 1;
+      left: 7px;
+      top: 10px;
+      width: 72px;
+      height: 73px;
+      border: 1px solid var(--character-edge);
+      border-radius: 48% 52% 45% 47% / 45% 46% 53% 55%;
+      background:
+        radial-gradient(circle at 32% 22%, var(--white-highlight), var(--clear) 20%),
+        linear-gradient(145deg,
+          color-mix(in srgb, var(--primary) 48%, var(--pet-lilac)) 0%,
+          color-mix(in srgb, var(--primary) 76%, var(--lilac-violet)) 48%,
+          color-mix(in srgb, var(--primary) 62%, var(--violet-end)) 100%);
+      box-shadow: inset 0 -8px 14px var(--violet-shadow), inset 0 6px 9px var(--white-glint);
+    }
+    #body::before {
+      content: "";
+      position: absolute;
+      left: 9px;
+      top: 14px;
+      width: 52px;
+      height: 48px;
+      border-radius: 47% 49% 45% 45%;
+      background: linear-gradient(160deg, var(--pet-surface) 0%, var(--pet-surface-mid) 72%, var(--pet-surface-end) 100%);
+      box-shadow: inset 0 -3px 6px var(--pet-surface-shadow), 0 1px 0 var(--white-highlight);
+    }
+    #body::after {
+      content: "";
+      position: absolute;
+      left: 8px;
+      bottom: -5px;
+      width: 56px;
+      height: 18px;
+      border-radius: 20% 20% 55% 55%;
+      background: linear-gradient(90deg, var(--xingyao-violet), var(--xingyao-cyan), var(--xingyao-violet));
+      opacity: .82;
+      clip-path: polygon(0 0, 100% 0, 90% 100%, 73% 55%, 60% 100%, 48% 55%, 34% 100%, 20% 55%, 8% 100%);
+    }
+    #fringe {
+      position: absolute;
+      z-index: 3;
+      left: 21px;
+      top: 22px;
+      width: 44px;
+      height: 22px;
+      border-radius: 46% 50% 35% 35%;
+      background: linear-gradient(155deg, var(--pet-lilac), color-mix(in srgb, var(--primary) 35%, var(--pet-lilac-end)));
+      clip-path: polygon(0 0, 100% 0, 100% 42%, 84% 31%, 74% 78%, 58% 35%, 45% 85%, 29% 38%, 16% 72%, 0 44%);
+    }
+    #feature {
+      position: absolute;
+      z-index: 5;
+      right: 13px;
+      top: 23px;
+      width: 15px;
+      height: 15px;
+      background: linear-gradient(145deg, var(--pet-cyan-start), var(--xingyao-cyan) 52%, var(--pet-cyan-end));
+      clip-path: polygon(50% 0, 61% 34%, 96% 22%, 70% 50%, 96% 78%, 61% 66%, 50% 100%, 39% 66%, 4% 78%, 30% 50%, 4% 22%, 39% 34%);
+      filter: drop-shadow(0 0 4px color-mix(in srgb, var(--xingyao-cyan) 68%, var(--clear)));
+    }
+    #face {
+      position: absolute;
+      z-index: 4;
+      left: 50%;
+      top: 45px;
+      width: 34px;
+      height: 17px;
+      transform: translate(calc(-50% + var(--look-x)), var(--look-y));
+      transition: transform var(--t-fast) linear;
+    }
+    #face::before,
+    #face::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      width: 6px;
+      height: 8px;
+      border-radius: 52% 52% 48% 48%;
+      background: linear-gradient(var(--violet-deep) 0 40%, var(--violet-mid) 42% 68%, var(--cyan-bright) 70% 100%);
+      box-shadow: inset 0 1px 0 var(--white-highlight);
+      transform-origin: 50% 55%;
+      animation: blink 5.6s infinite;
+    }
+    #face::before { left: 3px; }
+    #face::after { right: 3px; }
+    #mouth {
+      position: absolute;
+      left: 50%;
+      top: 10px;
+      width: 8px;
+      height: 4px;
+      border-bottom: 2px solid var(--rose-deep);
+      border-radius: 0 0 50% 50%;
+      transform: translateX(-50%);
+    }
+    #blush {
+      position: absolute;
+      z-index: 4;
+      left: 18px;
+      top: 56px;
+      width: 9px;
+      height: 4px;
+      border-radius: 50%;
+      background: var(--rose-soft);
+      box-shadow: 42px 0 0 var(--rose-soft);
+    }
+
+    #activity {
+      position: absolute;
+      z-index: 24;
+      top: auto;
+      bottom: 2px;
+      right: -8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      width: max-content;
+      max-width: 92px;
+      min-height: 22px;
+      padding: 4px 7px;
+      border: 1px solid var(--chip-line);
+      border-radius: 4px 10px 10px 10px;
+      background: var(--chip-bg);
+      box-shadow: 0 5px 14px var(--chip-shadow), inset 0 1px 0 var(--white-glint);
+      color: var(--chip-text);
+      font-size: 9px;
+      font-weight: 600;
+      line-height: 1.25;
+      letter-spacing: .02em;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-2px) scale(.94);
+      transform-origin: 78% 0%;
+      transition:
+        opacity var(--t-fast) ease,
+        transform var(--t-standard) cubic-bezier(.2, .78, .3, 1),
+        visibility 0s linear var(--t-standard);
+      pointer-events: none;
+    }
+    #activity::after {
+      content: "";
+      position: absolute;
+      left: 13px;
+      top: -5px;
+      width: 8px;
+      height: 8px;
+      border-right: 1px solid var(--chip-line);
+      border-bottom: 1px solid var(--chip-line);
+      background: var(--chip-bg);
+      transform: rotate(42deg) skew(-7deg);
+    }
+    #activity[data-visible="true"] {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+      transition-delay: 0s;
+    }
+    #statusDot {
+      position: relative;
+      z-index: 1;
+      width: 6px;
+      height: 6px;
+      flex: 0 0 6px;
+      border-radius: 50%;
+      background: currentColor;
+      box-shadow: 0 0 7px color-mix(in srgb, currentColor 60%, var(--clear));
+    }
+    #activity[data-tone="running"] { color: var(--info); }
+    #activity[data-tone="running"] #statusDot {
+      width: 7px;
+      height: 7px;
+      flex-basis: 7px;
+      border: 1.5px solid currentColor;
+      border-right-color: var(--clear);
+      background: var(--clear);
+      box-shadow: none;
+      animation: status-spin .9s linear infinite;
+    }
+    #activity[data-tone="waiting"] { color: var(--warn); }
+    #activity[data-tone="waiting"] #statusDot { animation: status-pulse 1.45s ease-in-out infinite; }
+    #activity[data-tone="review"] { color: var(--ready); }
+    #activity[data-tone="failed"] { color: var(--danger); }
+
+    #noticeCue {
+      position: absolute;
+      z-index: 22;
+      top: 9px;
+      right: -1px;
+      width: 23px;
+      height: 23px;
+      border: 1px solid color-mix(in srgb, var(--xingyao-cyan) 66%, var(--clear));
+      border-radius: 50%;
+      background: color-mix(in srgb, var(--chip-bg) 88%, var(--clear));
+      box-shadow: 0 4px 12px var(--chip-shadow), 0 0 12px color-mix(in srgb, var(--xingyao-cyan) 30%, var(--clear));
+      opacity: 0;
+      transform: translateY(4px) scale(.72);
+      transition: opacity var(--t-fast) ease, transform var(--t-standard) cubic-bezier(.2, .78, .3, 1);
+      pointer-events: none;
+    }
+    #noticeCue::before {
+      content: "";
+      position: absolute;
+      inset: 5px;
+      background: linear-gradient(145deg, var(--pet-cyan-start), var(--xingyao-cyan) 48%, var(--xingyao-violet));
+      clip-path: polygon(50% 0, 61% 35%, 100% 50%, 61% 65%, 50% 100%, 39% 65%, 0 50%, 39% 35%);
+    }
+    body[data-ui-state="notice"] #noticeCue {
+      opacity: .94;
+      transform: translateY(0) scale(1);
+      animation: notice-cue 1.8s ease-in-out 1;
+    }
+
+    body[data-presence="companion"][data-activity="idle"] #petWrap { animation: companion 3.8s ease-in-out infinite; }
+    body[data-presence="quiet"][data-activity="idle"] #petWrap { animation-duration: 7s; }
+    body[data-behavior="wander"] #petWrap,
+    body[data-behavior="dock"] #petWrap { animation: travel var(--walk-dur, .46s) ease-in-out infinite; }
+    body[data-behavior="avoid"] #petWrap { animation: scurry .28s ease-in-out infinite alternate; }
+    body[data-behavior="notice"][data-activity="idle"] #petWrap { animation: notice .74s cubic-bezier(.2, .76, .28, 1) 1; }
+    body[data-activity="running"] #petWrap { animation: working 1.8s ease-in-out infinite; }
+    body[data-activity="waiting"] #petWrap { animation: waiting 2.2s ease-in-out infinite; }
+    body[data-activity="review"] #petWrap { animation: review .72s cubic-bezier(.2, .78, .28, 1) 1; }
+    body[data-activity="failed"] #petWrap { animation: failed .46s ease-out 1; }
+    body[data-sensing="idle"][data-activity="idle"] #petWrap,
+    body[data-sensing="locked"][data-activity="idle"] #petWrap {
+      animation: rest 7s ease-in-out infinite;
+      filter: saturate(.72) opacity(.86);
+    }
+    body[data-sensing="idle"] #face::before,
+    body[data-sensing="idle"] #face::after,
+    body[data-sensing="locked"] #face::before,
+    body[data-sensing="locked"] #face::after {
+      top: 4px;
+      height: 2px;
+      animation: none;
+      background: var(--sleep-face);
+      box-shadow: none;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-2px) scale(1.008); }
+    }
+    @keyframes companion {
+      0%, 100% { transform: translateY(0) rotate(-.7deg); }
+      50% { transform: translateY(-4px) rotate(.7deg); }
+    }
+    @keyframes working {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    @keyframes waiting {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(1px) scale(.992); }
+    }
+    @keyframes review {
+      0%, 100% { transform: translateY(0) scale(1); }
+      45% { transform: translateY(-6px) scale(1.025); }
+      72% { transform: translateY(1px) scale(.992, 1.01); }
+    }
+    @keyframes failed {
+      0%, 100% { transform: translateX(0); }
+      32% { transform: translateX(-3px); }
+      66% { transform: translateX(3px); }
+    }
+    @keyframes notice {
+      0%, 100% { transform: translateY(0) rotate(0); }
+      35% { transform: translateY(-5px) rotate(-2deg); }
+      68% { transform: translateY(-2px) rotate(2deg); }
+    }
+    @keyframes travel {
+      /* 步伐节奏（owner：走动要自然）——两步一循环的轻踏 + 轻微前倾，配 --walk-dur 变速。 */
+      0%, 100% { transform: translateY(0) rotate(-1.2deg) scale(1); }
+      25% { transform: translateY(-3px) rotate(-2.4deg) scale(1.01, .992); }
+      50% { transform: translateY(-.5px) rotate(.6deg) scale(1); }
+      75% { transform: translateY(-3px) rotate(2.4deg) scale(1.01, .992); }
+    }
+    @keyframes scurry {
+      from { transform: translateY(1px) rotate(-3deg); }
+      to { transform: translateY(-4px) rotate(3deg); }
+    }
+    @keyframes rest {
+      0%, 100% { transform: translateY(2px) scale(1); }
+      50% { transform: translateY(3px) scale(1.006, .994); }
+    }
+    @keyframes poke {
+      0%, 100% { transform: translateY(0) scale(1); }
+      34% { transform: translateY(-9px) scale(1.035, .965); }
+      68% { transform: translateY(1px) scale(.982, 1.02); }
+    }
+    @keyframes blink {
+      0%, 45%, 48%, 100% { transform: scaleY(1); }
+      46%, 47% { transform: scaleY(.08); }
+    }
+    @keyframes orbit-turn { to { transform: rotate(342deg); } }
+    @keyframes status-spin { to { transform: rotate(1turn); } }
+    @keyframes status-pulse {
+      0%, 100% { opacity: .52; transform: scale(.82); }
+      50% { opacity: 1; transform: scale(1); }
+    }
+    @keyframes notice-cue {
+      0% { opacity: 0; transform: translateY(4px) scale(.7); }
+      28% { opacity: 1; transform: translateY(-1px) scale(1.08); }
+      52%, 100% { opacity: .94; transform: translateY(0) scale(1); }
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --panel: rgba(255, 255, 255, .94);
+        --line: rgba(76, 61, 102, .32);
+        --text: #3d3049;
+        --muted: #675c72;
+        --faint: #85798f;
+        --info: #08799a;
+        --warn: #9a6200;
+        --ready: #18754a;
+        --danger: #b33942;
+        --chip-shadow: rgba(60, 43, 82, .2);
+        --character-edge: rgba(45, 39, 72, .44);
+        --character-shadow: rgba(43, 33, 72, .34);
+        --character-outline: rgba(30, 52, 88, .55);
+        --focus: #126b92;
+        --clear: transparent;
+        --focus-shadow: rgba(255, 255, 255, .82);
+        --light-focus-glow: rgba(18, 107, 146, .28);
+        --aurora-clear: rgba(45, 37, 68, .22);
+        --white-highlight: rgba(255, 255, 255, .72);
+        --white-glint: rgba(255, 255, 255, .72);
+      }
+      #ground { background: var(--aurora-clear); }
+      #petWrap::after { box-shadow: 0 0 0 3px var(--focus-shadow), 0 0 12px var(--light-focus-glow); }
+      #activity { box-shadow: 0 5px 14px var(--chip-shadow), inset 0 1px 0 var(--white-highlight); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      #petWrap,
+      #visual,
+      #orbit,
+      #face::before,
+      #face::after,
+      #activity,
+      #statusDot,
+      #noticeCue { animation: none !important; }
+      #petWrap,
+      #visual,
+      #aura,
+      #ground,
+      #sprite,
+      #procedural,
+      #activity,
+      #noticeCue,
+      #petWrap::after { transition-duration: .01ms !important; }
+      #petWrap.hovering #visual,
+      #petWrap.pressing #visual,
+      #petWrap.is-dragging #visual { transform: none; }
+    }
+
+    @media (forced-colors: active) {
+      #petWrap:focus-visible::after { border-color: Highlight; box-shadow: none; }
+      #activity { border-color: CanvasText; background: Canvas; color: CanvasText; }
+      #activity::after { border-color: CanvasText; background: Canvas; }
+      #noticeCue { border-color: Highlight; background: Canvas; }
+    }
+  </style>
+</head>
+<body data-appearance="procedural" data-shape="orbit" data-feature="thread" data-presence="light" data-activity="idle" data-sensing="off" data-behavior="idle" data-ui-state="idle">
+  <div id="stage" title="拖动星瑶换位置">
+    <div id="petWrap" role="button" tabindex="0" aria-label="星瑶桌面伙伴。拖动可以移动，按 Enter 打开 WeftMate。">
+      <div id="activity" role="status" aria-live="polite" aria-hidden="true" data-visible="false" data-tone="idle">
+        <span id="statusDot" aria-hidden="true"></span><span id="activityText"></span>
+      </div>
+      <div id="noticeCue" role="status" aria-label="星瑶注意到你了" aria-hidden="true"></div>
+      <div id="visual" aria-hidden="true">
+        <div id="aura"></div>
+        <div id="ground"></div>
+        <canvas id="sprite" width="192" height="208"></canvas>
+        <div id="procedural">
+          <div id="orbit"></div>
+          <div id="body"></div>
+          <div id="fringe"></div>
+          <div id="feature"></div>
+          <div id="face"><span id="mouth"></span></div>
+          <div id="blush"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    const body = document.body;
+    const petWrap = document.getElementById('petWrap');
+    const activity = document.getElementById('activity');
+    const activityMessage = document.getElementById('activityText');
+    const noticeCue = document.getElementById('noticeCue');
+    const sprite = document.getElementById('sprite');
+    const spriteContext = sprite.getContext('2d', { alpha: true, willReadFrequently: true });
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const bridge = window.wmDesktopPet;
+
+    const activityText = Object.freeze({
+      running: '正在处理',
+      waiting: '等你确认',
+      review: '已经完成',
+      failed: '出了点问题',
+    });
+    const allowedActivities = new Set(['idle', ...Object.keys(activityText)]);
+    const allowedBehaviors = new Set(['idle', 'watch', 'notice', 'wander', 'avoid', 'dock', 'rest']);
+    const spriteAnimations = Object.freeze({
+      idle: Object.freeze({ row: 0, frames: 6, durations: [280, 110, 110, 140, 140, 320], loop: true, still: 0 }),
+      walkRight: Object.freeze({ row: 1, frames: 8, durations: Array(8).fill(110), loop: true, still: 2 }),
+      walkLeft: Object.freeze({ row: 2, frames: 8, durations: Array(8).fill(110), loop: true, still: 2 }),
+      notice: Object.freeze({ row: 3, frames: 4, durations: [140, 140, 140, 280], loop: false, still: 3 }),
+      failed: Object.freeze({ row: 5, frames: 8, durations: [140, 140, 140, 140, 140, 140, 140, 260], loop: false, still: 7 }),
+      waiting: Object.freeze({ row: 6, frames: 6, durations: [150, 150, 150, 150, 150, 280], loop: true, still: 0 }),
+      running: Object.freeze({ row: 7, frames: 6, durations: [130, 130, 130, 130, 130, 230], loop: true, still: 0 }),
+      review: Object.freeze({ row: 8, frames: 6, durations: [150, 150, 150, 150, 150, 300], loop: false, still: 5 }),
+    });
+
+    let currentActivity = 'idle';
+    let currentBehavior = 'idle';
+    let currentPetName = '星瑶';
+    let lookX = 0;
+    let lookY = 0;
+    let behaviorStartedAt = performance.now();
+    let activePoseKey = '';
+    let activePoseStartedAt = performance.now();
+    let lastDrawnFrame = '';
+    let spriteReady = false;
+    let spriteAtlas = null;
+    let framePixels = null;
+    let lastPointer = null;
+    let pointerInside = false;
+    let drag = null;
+    let suppressClick = false;
+    let reactionTimer = 0;
+
+    // ── 形态渲染器（owner 拍板：逻辑固定、形态可变）──
+    // sprite = 内置星瑶（spritesheet + 程序化兜底，第一个形态实现）；image = 任意一张图自动生成。
+    let activeForm = 'sprite';
+    let imageSource = '';
+    let imageContent = null;
+    let imageHitData = null;
+    let imageHitSize = { w: 0, h: 0 };
+    const imageFormEls = { img: null, ground: null };
+
+    function mountImageForm() {
+      if (imageFormEls.img) return;
+      const visual = document.getElementById('visual');
+      const img = document.createElement('img');
+      img.id = 'petImage';
+      img.alt = '';
+      const ground = document.createElement('div');
+      ground.id = 'imgGround';
+      visual.appendChild(img);
+      visual.appendChild(ground);
+      imageFormEls.img = img;
+      imageFormEls.ground = ground;
+    }
+
+    async function switchToImageForm(dataUrl) {
+      if (activeForm === 'image' && imageSource === dataUrl) return;
+      imageSource = dataUrl;
+      mountImageForm();
+      try {
+        const image = await imageFromSource(dataUrl);
+        const canvas = document.createElement('canvas');
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+        const ctx = canvas.getContext('2d', { alpha: true, willReadFrequently: true });
+        ctx.drawImage(image, 0, 0);
+        const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+        let minX = canvas.width, minY = canvas.height, maxX = -1, maxY = -1;
+        for (let y = 0; y < canvas.height; y++) {
+          for (let x = 0; x < canvas.width; x++) {
+            if (data[(y * canvas.width + x) * 4 + 3] >= 16) {
+              if (x < minX) minX = x;
+              if (x > maxX) maxX = x;
+              if (y < minY) minY = y;
+              if (y > maxY) maxY = y;
+            }
+          }
+        }
+        imageContent = maxX >= minX
+          ? { x: minX, y: minY, w: maxX - minX + 1, h: maxY - minY + 1 }
+          : { x: 0, y: 0, w: canvas.width, h: canvas.height };
+        imageHitData = data;
+        imageHitSize = { w: canvas.width, h: canvas.height };
+        // 窗口自适应：内容最长边封顶 108px + 内边距，底部留地面阴影；主进程按内容收窄窗口（脚底锚定）。
+        const pad = 10, groundPad = 8, maxSide = 108;
+        const scale = Math.min(1, maxSide / Math.max(imageContent.w, imageContent.h));
+        const dw = Math.max(24, Math.round(imageContent.w * scale));
+        const dh = Math.max(24, Math.round(imageContent.h * scale));
+        const winW = Math.max(56, Math.min(220, dw + pad * 2));
+        const winH = Math.max(56, Math.min(220, dh + pad + groundPad));
+        const img = imageFormEls.img;
+        img.src = dataUrl;
+        img.style.width = dw + 'px';
+        img.style.height = dh + 'px';
+        img.style.left = Math.round((winW - dw) / 2) + 'px';
+        img.style.top = Math.round(winH - groundPad - dh) + 'px';
+        body.dataset.form = 'image';
+        activeForm = 'image';
+        bridge?.requestResize?.({ width: winW, height: winH });
+      } catch (error) {
+        // 图片解不开 → 回退内置星瑶（fail-safe，不空白）。
+        console.warn('[weftmate-pet] 图片形态加载失败，回退内置星瑶:', error && error.message ? error.message : error);
+        switchToSpriteForm();
+      }
+    }
+
+    function switchToSpriteForm() {
+      activeForm = 'sprite';
+      imageSource = '';
+      body.dataset.form = 'sprite';
+    }
+
+    function imageFormHit(clientX, clientY) {
+      const img = imageFormEls.img;
+      if (!img || !imageHitData || !imageContent) return false;
+      const rect = img.getBoundingClientRect();
+      if (clientX < rect.left || clientX >= rect.right || clientY < rect.top || clientY >= rect.bottom) return false;
+      const sx = imageContent.w / rect.width;
+      const sy = imageContent.h / rect.height;
+      const x = imageContent.x + Math.floor((clientX - rect.left) * sx);
+      const y = imageContent.y + Math.floor((clientY - rect.top) * sy);
+      for (let oy = -2; oy <= 2; oy++) {
+        for (let ox = -2; ox <= 2; ox++) {
+          const sampleX = x + ox, sampleY = y + oy;
+          if (sampleX >= 0 && sampleX < imageHitSize.w && sampleY >= 0 && sampleY < imageHitSize.h
+            && imageHitData[(sampleY * imageHitSize.w + sampleX) * 4 + 3] >= 24) return true;
+        }
+      }
+      return false;
+    }
+
+    function animationDuration(sequence) {
+      return sequence.durations.reduce((total, duration) => total + duration, 0);
+    }
+
+    function animationFrame(sequence, elapsed) {
+      if (reducedMotion.matches) return sequence.still || 0;
+      const total = animationDuration(sequence);
+      if (!sequence.loop && elapsed >= total) return sequence.frames - 1;
+      let cursor = sequence.loop ? elapsed % total : Math.max(0, elapsed);
+      for (let frame = 0; frame < sequence.frames; frame++) {
+        cursor -= sequence.durations[frame];
+        if (cursor < 0) return frame;
+      }
+      return sequence.frames - 1;
+    }
+
+    function lookDirectionFrame() {
+      if (Math.hypot(lookX, lookY) < .1) return null;
+      const degrees = (Math.atan2(lookX, -lookY) * 180 / Math.PI + 360) % 360;
+      const index = Math.round(degrees / 22.5) % 16;
+      return { row: index < 8 ? 9 : 10, column: index < 8 ? index : index - 8 };
+    }
+
+    function desiredPose(now) {
+      if (currentActivity !== 'idle') {
+        const sequence = spriteAnimations[currentActivity];
+        return { key: `activity-${currentActivity}`, sequence };
+      }
+      if (currentBehavior === 'notice') {
+        const sequence = spriteAnimations.notice;
+        if (now - behaviorStartedAt < animationDuration(sequence)) return { key: 'notice', sequence };
+      }
+      if (currentBehavior === 'wander' || currentBehavior === 'dock' || currentBehavior === 'avoid') {
+        const sequence = lookX < -.08 ? spriteAnimations.walkLeft : spriteAnimations.walkRight;
+        return { key: sequence === spriteAnimations.walkLeft ? 'walk-left' : 'walk-right', sequence };
+      }
+      if (currentBehavior === 'watch' || currentBehavior === 'notice') {
+        const look = lookDirectionFrame();
+        if (look) return { key: `look-${look.row}-${look.column}`, row: look.row, column: look.column };
+      }
+      return { key: 'idle', sequence: spriteAnimations.idle };
+    }
+
+    function drawSpriteFrame(row, column) {
+      if (!spriteReady || !spriteAtlas) return;
+      const key = `${row}:${column}`;
+      if (key === lastDrawnFrame) return;
+      spriteContext.clearRect(0, 0, 192, 208);
+      spriteContext.imageSmoothingEnabled = true;
+      spriteContext.imageSmoothingQuality = 'high';
+      spriteContext.drawImage(spriteAtlas, column * 192, row * 208, 192, 208, 0, 0, 192, 208);
+      lastDrawnFrame = key;
+      try { framePixels = spriteContext.getImageData(0, 0, 192, 208).data; }
+      catch { framePixels = null; }
+      if (lastPointer) syncPointerState(lastPointer.clientX, lastPointer.clientY);
+    }
+
+    function animateSprite(now) {
+      if (activeForm !== 'sprite') { requestAnimationFrame(animateSprite); return; }
+      if (spriteReady) {
+        const pose = desiredPose(now);
+        if (pose.key !== activePoseKey) {
+          activePoseKey = pose.key;
+          activePoseStartedAt = now;
+        }
+        if (pose.sequence) drawSpriteFrame(pose.sequence.row, animationFrame(pose.sequence, now - activePoseStartedAt));
+        else drawSpriteFrame(pose.row, pose.column);
+      }
+      requestAnimationFrame(animateSprite);
+    }
+
+    function acceptSpriteImage(image) {
+      if (image.naturalWidth !== 1536 || image.naturalHeight !== 2288) throw new Error('unexpected sprite atlas dimensions');
+      spriteAtlas = image;
+      spriteReady = true;
+      body.dataset.appearance = 'sprite';
+      activePoseKey = '';
+      lastDrawnFrame = '';
+    }
+
+    function imageFromSource(source) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.decoding = 'async';
+        image.onload = () => resolve(image);
+        image.onerror = () => reject(new Error('sprite unavailable'));
+        image.src = source;
+      });
+    }
+
+    async function loadXingyaoSprite() {
+      if (typeof bridge?.loadSpriteAtlas === 'function') {
+        let objectUrl = '';
+        try {
+          const raw = await bridge.loadSpriteAtlas('xingyao');
+          if (raw) {
+            objectUrl = URL.createObjectURL(new Blob([raw], { type: 'image/webp' }));
+            acceptSpriteImage(await imageFromSource(objectUrl));
+            return;
+          }
+        } catch { /* 旧桥不可用时继续尝试随包本地资产。 */ }
+        finally { if (objectUrl) URL.revokeObjectURL(objectUrl); }
+      }
+      try {
+        const assetUrl = new URL('../pets/assets/xingyao/spritesheet.webp', window.location.href).href;
+        acceptSpriteImage(await imageFromSource(assetUrl));
+      } catch {
+        body.dataset.appearance = 'procedural';
+      }
+    }
+
+    function syncUiState() {
+      const uiState = currentActivity !== 'idle' ? 'activity' : currentBehavior === 'notice' ? 'notice' : 'idle';
+      body.dataset.uiState = uiState;
+      const message = activityText[currentActivity] || '';
+      activityMessage.textContent = message;
+      activity.dataset.tone = currentActivity;
+      activity.dataset.visible = message ? 'true' : 'false';
+      activity.setAttribute('aria-hidden', message ? 'false' : 'true');
+      noticeCue.setAttribute('aria-hidden', uiState === 'notice' ? 'false' : 'true');
+      const stateLabel = message ? `当前状态：${message}。` : uiState === 'notice' ? '正在回应你。' : '';
+      petWrap.setAttribute('aria-label', `${currentPetName}桌面伙伴。${stateLabel}拖动可以移动，按 Enter 打开 WeftMate。`);
+    }
+
+    function validColor(value, fallback) {
+      return typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value) ? value : fallback;
+    }
+
+    bridge?.onState?.((state) => {
+      const appearance = state?.pet?.appearance || {};
+      // 形态选择（owner 拍板：逻辑固定、形态可变）——form.kind='image' 用图片形态，其余回内置星瑶。
+      const form = state?.pet?.form;
+      if (form && form.kind === 'image' && typeof form.dataUrl === 'string' && form.dataUrl.startsWith('data:image/')) {
+        void switchToImageForm(form.dataUrl);
+      } else {
+        switchToSpriteForm();
+      }
+      const nextActivity = allowedActivities.has(state?.activity) ? state.activity : 'idle';
+      if (nextActivity !== currentActivity) {
+        currentActivity = nextActivity;
+        activePoseKey = '';
+      }
+      currentPetName = typeof state?.pet?.name === 'string' && state.pet.name.trim()
+        ? state.pet.name.trim() : typeof state?.persona?.name === 'string' && state.persona.name.trim() ? state.persona.name.trim() : '星瑶';
+      body.dataset.shape = appearance.shape || 'orbit';
+      body.dataset.feature = appearance.feature || 'thread';
+      body.dataset.presence = ['quiet', 'light', 'companion'].includes(state?.proactivity) ? state.proactivity : 'light';
+      body.dataset.activity = currentActivity;
+      body.dataset.sensing = typeof state?.presence?.state === 'string' ? state.presence.state : 'off';
+      document.documentElement.style.setProperty('--primary', validColor(appearance.primary, '#c46f8b'));
+      document.documentElement.style.setProperty('--accent', validColor(appearance.accent, '#f1b3c5'));
+      document.title = `${currentPetName} · WeftMate`;
+      petWrap.title = `拖动${currentPetName}换位置 · 双击打开宠物设置`;
+      syncUiState();
+    });
+
+    bridge?.onBehavior?.((state) => {
+      const nextBehavior = allowedBehaviors.has(state?.kind) ? state.kind : 'idle';
+      if (nextBehavior !== currentBehavior) {
+        currentBehavior = nextBehavior;
+        behaviorStartedAt = performance.now();
+        activePoseKey = '';
+      }
+      lookX = Math.max(-1, Math.min(1, Number(state?.lookX) || 0));
+      lookY = Math.max(-1, Math.min(1, Number(state?.lookY) || 0));
+      body.dataset.behavior = currentBehavior;
+      body.dataset.lookSign = lookX < -0.08 ? 'left' : lookX > 0.08 ? 'right' : '';
+      // 走速 → 步伐节奏（px/s → 周期 s，0.3–0.9s 夹取）：走得快步子快，像真宠物。
+      const speed = Number(state?.speed);
+      const walkDur = Number.isFinite(speed) && speed > 40 ? Math.min(0.9, Math.max(0.3, 300 / speed)) : 0.46;
+      document.documentElement.style.setProperty('--walk-dur', walkDur.toFixed(2) + 's');
+      document.documentElement.style.setProperty('--look-x', `${(lookX * 3.5).toFixed(1)}px`);
+      document.documentElement.style.setProperty('--look-y', `${(lookY * 2.2).toFixed(1)}px`);
+      syncUiState();
+    });
+
+    function spritePixelHit(clientX, clientY) {
+      const rect = sprite.getBoundingClientRect();
+      if (clientX < rect.left || clientX >= rect.right || clientY < rect.top || clientY >= rect.bottom) return false;
+      if (!framePixels) return true;
+      const x = Math.max(0, Math.min(191, Math.floor((clientX - rect.left) / rect.width * 192)));
+      const y = Math.max(0, Math.min(207, Math.floor((clientY - rect.top) / rect.height * 208)));
+      for (let offsetY = -2; offsetY <= 2; offsetY++) {
+        for (let offsetX = -2; offsetX <= 2; offsetX++) {
+          const sampleX = x + offsetX, sampleY = y + offsetY;
+          if (sampleX >= 0 && sampleX < 192 && sampleY >= 0 && sampleY < 208
+            && framePixels[(sampleY * 192 + sampleX) * 4 + 3] >= 24) return true;
+        }
+      }
+      return false;
+    }
+
+    function proceduralHit(clientX, clientY) {
+      const target = document.getElementById('procedural').getBoundingClientRect();
+      if (clientX < target.left || clientX >= target.right || clientY < target.top || clientY >= target.bottom) return false;
+      const x = (clientX - target.left) / target.width * 2 - 1;
+      const y = (clientY - target.top) / target.height * 2 - 1;
+      return x * x + y * y <= 1.08;
+    }
+
+    function pointHitsVisual(clientX, clientY) {
+      if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) return false;
+      if (activeForm === 'image') return imageFormHit(clientX, clientY);
+      return spriteReady ? spritePixelHit(clientX, clientY) : proceduralHit(clientX, clientY);
+    }
+
+    function setPointerState(inside) {
+      if (inside === pointerInside) return;
+      pointerInside = inside;
+      petWrap.classList.toggle('hovering', inside);
+      bridge?.setPointerInside?.(inside);
+    }
+
+    function syncPointerState(clientX, clientY) {
+      const inside = drag ? true : pointHitsVisual(clientX, clientY);
+      setPointerState(inside);
+      bridge?.setHitTest?.(inside, inside);
+      return inside;
+    }
+
+    function eventHitsVisual(event) {
+      return drag ? true : pointHitsVisual(Number(event?.clientX), Number(event?.clientY));
+    }
+
+    document.addEventListener('mousemove', (event) => {
+      lastPointer = { clientX: event.clientX, clientY: event.clientY };
+      syncPointerState(event.clientX, event.clientY);
+    }, true);
+    document.addEventListener('mouseleave', () => {
+      if (drag) return;
+      lastPointer = null;
+      setPointerState(false);
+      bridge?.setHitTest?.(false, false);
+    });
+    document.addEventListener('contextmenu', (event) => {
+      if (!eventHitsVisual(event)) return;
+      event.preventDefault();
+      bridge?.interact?.('context');
+      bridge?.openContextMenu();
+    });
+
+    petWrap.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0 || !eventHitsVisual(event)) return;
+      drag = { pointerId: event.pointerId, x: event.screenX, y: event.screenY, started: false };
+      petWrap.classList.add('pressing');
+      petWrap.setPointerCapture?.(event.pointerId);
+      bridge?.setHitTest?.(true, true);
+    });
+    petWrap.addEventListener('pointermove', (event) => {
+      if (!drag || drag.pointerId !== event.pointerId) return;
+      if (!drag.started && Math.hypot(event.screenX - drag.x, event.screenY - drag.y) < 4) return;
+      if (!drag.started) {
+        drag.started = true;
+        petWrap.classList.remove('pressing');
+        petWrap.classList.add('is-dragging');
+        bridge?.dragStart?.({ x: drag.x, y: drag.y });
+      }
+      bridge?.dragMove?.({ x: event.screenX, y: event.screenY });
+    });
+    const finishDrag = (event) => {
+      if (!drag || (event?.pointerId !== undefined && drag.pointerId !== event.pointerId)) return;
+      petWrap.classList.remove('pressing', 'is-dragging');
+      if (drag.started) {
+        suppressClick = true;
+        bridge?.dragEnd?.();
+        setTimeout(() => { suppressClick = false; }, 0);
+      }
+      drag = null;
+      if (lastPointer) syncPointerState(lastPointer.clientX, lastPointer.clientY);
+    };
+    petWrap.addEventListener('pointerup', finishDrag);
+    petWrap.addEventListener('pointercancel', finishDrag);
+    petWrap.addEventListener('lostpointercapture', finishDrag);
+
+    function playPoke() {
+      petWrap.classList.remove('poke');
+      void petWrap.offsetWidth;
+      petWrap.classList.add('poke');
+      if (reactionTimer) clearTimeout(reactionTimer);
+      reactionTimer = setTimeout(() => { reactionTimer = 0; petWrap.classList.remove('poke'); }, 480);
+    }
+
+    petWrap.addEventListener('click', (event) => {
+      if (suppressClick || event.detail > 1 || !eventHitsVisual(event)) return;
+      bridge?.interact?.('click');
+      playPoke();
+    });
+    petWrap.addEventListener('dblclick', (event) => {
+      if (!eventHitsVisual(event)) return;
+      bridge?.interact?.('doubleclick');
+      bridge?.openPage?.();
+    });
+    petWrap.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        bridge?.interact?.('doubleclick');
+        bridge?.openPage?.();
+      } else if (event.key === ' ' || event.key === 'Spacebar') {
+        event.preventDefault();
+        bridge?.interact?.('click');
+        playPoke();
+      }
+    });
+
+    reducedMotion.addEventListener?.('change', () => {
+      activePoseKey = '';
+      lastDrawnFrame = '';
+    });
+    window.addEventListener('blur', () => {
+      if (drag) finishDrag({ pointerId: drag.pointerId });
+      else petWrap.classList.remove('pressing', 'is-dragging');
+    });
+    void loadXingyaoSprite();
+    requestAnimationFrame(animateSprite);
+  </script>
+</body>
+</html>
