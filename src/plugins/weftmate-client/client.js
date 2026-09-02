@@ -26,6 +26,434 @@ window.__ModuleLoader__.load({
   factory: function (require) {
     var React = require('react')
 
+    // The DSH client remains the actual UI. This shell layer changes only the
+    // product frame around the fixed, official client graph: native chrome,
+    // wordmark and sidebar surface. It deliberately owns no DSH data, route,
+    // setting, session, tool, approval, or interaction state.
+    function installElectronWindowChrome() {
+      if (!document || !document.body || document.getElementById('weftmate-electron-drag-region')) return
+      var style = document.createElement('style')
+      style.id = 'weftmate-electron-window-style'
+      style.textContent = [
+        'html[data-weftmate-electron-shell] body { box-sizing: border-box; padding-top: 44px !important; background: var(--dsw-alias-bg-base, Canvas); }',
+        '#weftmate-electron-drag-region { position: fixed; top: 0; left: 0; right: 0; height: 44px; z-index: 2147483000; display: flex; align-items: center; gap: 9px; padding: 0 18px; box-sizing: border-box; border-bottom: 1px solid var(--dsw-alias-border-l1); background: var(--dsw-alias-bg-base, Canvas); color: var(--dsw-alias-label-secondary, currentColor); font-family: var(--dsw-font-family, system-ui, sans-serif); -webkit-app-region: drag; }',
+        '#weftmate-electron-drag-region .weftmate-mark { display: inline-grid; place-items: center; width: 20px; height: 20px; box-sizing: border-box; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; color: var(--dsw-alias-label-primary); font-size: 11px; font-weight: 700; line-height: 1; letter-spacing: -.05em; }',
+        '#weftmate-electron-drag-region .weftmate-wordmark { color: var(--dsw-alias-label-primary); font-size: 13px; font-weight: 650; letter-spacing: -.01em; }',
+        '#weftmate-electron-drag-region .weftmate-context { padding-left: 9px; border-left: 1px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-label-tertiary); font-size: 11px; font-weight: 500; letter-spacing: .08em; }',
+        'html[data-weftmate-electron-shell] .qfhBTW_frame { background: var(--dsw-alias-bg-base); }',
+        'html[data-weftmate-electron-shell] .qfhBTW_sidebarCol { border-right-color: var(--dsw-alias-border-l2); }',
+        'html[data-weftmate-electron-shell] .ocUJRa_root { padding-top: 8px; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_logoRow { height: 52px; margin-bottom: 4px; padding-left: 4px; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_brand { gap: 8px; min-height: 36px; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_brand > * { display: none; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_brand::before { content: "WeftMate"; color: var(--dsw-alias-label-primary); font: 650 16px/20px var(--dsw-font-family, system-ui, sans-serif); letter-spacing: -.025em; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_brand::after { content: "WORKSPACE"; margin-left: 9px; padding-left: 9px; border-left: 1px solid var(--dsw-alias-border-l2); color: var(--dsw-alias-label-tertiary); font: 500 10px/16px var(--dsw-font-family, system-ui, sans-serif); letter-spacing: .09em; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_newSession { border-radius: 8px; box-shadow: none; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_newSession:hover { background: var(--dsw-alias-interactive-bg-hover); }',
+        'html[data-weftmate-electron-shell] .ocUJRa_regionArea { border-top: 1px solid var(--dsw-alias-border-l2); margin-top: 3px; padding-top: 8px; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_footArea { border-top: 1px solid var(--dsw-alias-border-l2); margin-top: 6px; padding-top: 6px; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_logoRow { justify-content: flex-start; height: 36px; margin-bottom: 12px; padding: 0; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_brand { display: none; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_toggle { width: 36px; height: 36px; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_railFish { display: none; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_toggle .ocUJRa_panelIcon { display: none !important; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_toggle::before { content: "W"; display: grid; place-items: center; width: 22px; height: 22px; box-sizing: border-box; border: 1px solid var(--dsw-alias-border-l2); border-radius: 6px; color: var(--dsw-alias-label-primary); font: 700 11px/1 var(--dsw-font-family, system-ui, sans-serif); letter-spacing: -.05em; }',
+        'html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_regionArea, html[data-weftmate-electron-shell] .ocUJRa_collapsed .ocUJRa_footArea { border-top-color: transparent; }',
+        '@media (prefers-reduced-motion: reduce) { html[data-weftmate-electron-shell] .qfhBTW_frame, html[data-weftmate-electron-shell] .ocUJRa_fading > * { transition: none !important; animation: none !important; } }',
+        'button, input, textarea, select, a, [role="button"], [contenteditable="true"] { -webkit-app-region: no-drag; }',
+      ].join('\n')
+      document.head.appendChild(style)
+      document.documentElement.setAttribute('data-weftmate-electron-shell', '')
+      var dragRegion = document.createElement('div')
+      dragRegion.id = 'weftmate-electron-drag-region'
+      dragRegion.setAttribute('aria-hidden', 'true')
+      // This is inert native chrome, not a second navigation or state source.
+      dragRegion.innerHTML = '<span class="weftmate-mark">W</span><span class="weftmate-wordmark">WeftMate</span><span class="weftmate-context">WORKSPACE</span>'
+      document.body.appendChild(dragRegion)
+
+      var lastThemeSignature = null
+      var syncTheme = function () {
+        var theme = document.body.hasAttribute('data-ds-dark-theme') ? 'dark' : 'light'
+        // Read the exact strip colour rather than the browser's default body
+        // colour. This keeps Windows chrome continuous with the visible DSH
+        // surface even when the document body itself is transparent.
+        var color = window.getComputedStyle(dragRegion).backgroundColor
+        var signature = theme + '\u0000' + color
+        if (signature === lastThemeSignature) return
+        lastThemeSignature = signature
+        var bridge = window.weftmateSurface
+        if (bridge && typeof bridge.syncTheme === 'function') {
+          Promise.resolve(bridge.syncTheme(theme, color)).catch(function () { /* Electron may be closing */ })
+        }
+      }
+      syncTheme()
+      new MutationObserver(syncTheme).observe(document.body, { attributes: true, attributeFilter: ['data-ds-dark-theme', 'style'] })
+    }
+
+    // This is intentionally a stylesheet-only treatment of DSH's documented
+    // conversation structure.  The attributes below are supplied by the
+    // official ConversationRoot, ChatView, ApprovalPanel, and InputBar; no
+    // session, message, approval, input, model, or streaming state is read or
+    // recreated by WeftMate.
+    function installConversationWorkspaceSurface() {
+      if (!document || !document.head || document.getElementById('weftmate-conversation-surface-style')) return
+      var style = document.createElement('style')
+      style.id = 'weftmate-conversation-surface-style'
+      style.textContent = [
+        'html[data-weftmate-electron-shell] div[data-phase="hero"], html[data-weftmate-electron-shell] div[data-phase="active"], html[data-weftmate-electron-shell] div[data-phase="settling"] { --dsh-chat-content-width: 680px; --dsh-composer-card-max-width: calc(var(--dsh-chat-content-width) + 24px); --dsh-composer-side-clearance: clamp(20px, 5vw, 72px); --dsh-composer-dock-inset: 12px; }',
+        'html[data-weftmate-electron-shell] div[data-phase] > header { padding: 14px clamp(20px, 3vw, 36px) 0; }',
+        'html[data-weftmate-electron-shell] div[data-phase="active"] > header { border-bottom-color: var(--dsw-alias-border-l2); }',
+        'html[data-weftmate-electron-shell] [data-conversation-scroll] { scrollbar-gutter: stable both-edges; }',
+        'html[data-weftmate-electron-shell] [data-conversation-scroll] [data-chat-flow-kind] { padding-block: 2px; }',
+        'html[data-weftmate-electron-shell] [data-chat-flow-kind="command"], html[data-weftmate-electron-shell] [data-chat-flow-kind="model-retry"], html[data-weftmate-electron-shell] [data-chat-flow-kind="turn-error"], html[data-weftmate-electron-shell] [data-chat-flow-kind="turn-max-tokens"] { border-block: 1px solid var(--dsw-alias-border-l2); padding-block: 8px; }',
+        'html[data-weftmate-electron-shell] [data-chat-flow-kind="user"] [data-time-hover-root] { margin-block: 2px; }',
+        'html[data-weftmate-electron-shell] [data-chat-flow-kind="user"] [data-time-hover-root] > div > div { border-radius: 14px; }',
+        'html[data-weftmate-electron-shell] [data-approval-key] { padding: 10px clamp(20px, 5vw, 72px) 14px; }',
+        'html[data-weftmate-electron-shell] [data-approval-key] > div { border-radius: 12px; box-shadow: none; }',
+        'html[data-weftmate-electron-shell] div[data-phase="active"] [data-composer-seat], html[data-weftmate-electron-shell] div[data-phase="settling"] [data-composer-seat] { border-top: 1px solid var(--dsw-alias-border-l2); padding-top: 10px; }',
+        'html[data-weftmate-electron-shell] [data-composer-card] { border-color: var(--dsw-alias-border-l2); border-radius: 14px; box-shadow: none; transition: border-color 120ms ease, background-color 120ms ease; }',
+        'html[data-weftmate-electron-shell] [data-composer-card]:focus-within { border-color: var(--dsw-alias-border-l3); }',
+        'html[data-weftmate-electron-shell] [data-composer-card]:has(textarea[aria-haspopup="menu"]) { border-color: var(--dsw-alias-border-l2); }',
+        'html[data-weftmate-electron-shell] [data-composer-card]:has(textarea[aria-haspopup="menu"])::after { display: none; }',
+        'html[data-weftmate-electron-shell] [data-composer-card] textarea { padding-inline: 16px; }',
+        'html[data-weftmate-electron-shell] [data-composer-card] button { border-radius: 8px; }',
+        'html[data-weftmate-electron-shell] div[data-phase="hero"] [data-conversation-scroll] { position: relative; justify-content: flex-end; padding-bottom: 12px; }',
+        'html[data-weftmate-electron-shell] div[data-phase="hero"] [data-conversation-scroll]::before { content: "今天想推进什么？"; position: absolute; top: 42%; left: 50%; color: var(--dsw-alias-label-primary); font: 500 clamp(24px, 2.5vw, 34px)/1.25 var(--dsw-font-family, system-ui, sans-serif); letter-spacing: -.03em; transform: translate(-50%, -50%); }',
+        'html[data-weftmate-electron-shell] div[data-phase="hero"] [data-weftmate-hero-composer] { box-sizing: border-box; position: relative; width: min(var(--dsh-composer-card-max-width), calc(100% - 2 * var(--dsh-composer-side-clearance))); margin: 0 auto; overflow: visible; border: 0; background: transparent; }',
+        'html[data-weftmate-electron-shell] div[data-phase="hero"] [data-weftmate-hero-composer] > div:has(> button[aria-haspopup="menu"][aria-label]) { box-sizing: border-box; position: absolute; z-index: 0; top: -54px; left: 32px; display: flex; align-items: center; gap: 8px; width: calc(100% - 64px); min-height: 48px; margin: 0; padding: 0 16px; border: 0; border-radius: 14px; background: var(--dsw-alias-bg-layer-2, var(--dsw-specific-input-major)); }',
+        'html[data-weftmate-electron-shell] div[data-phase="hero"] [data-weftmate-hero-composer] button[aria-haspopup="menu"][aria-label] { margin-inline-start: 0; }',
+        'html[data-weftmate-electron-shell] div[data-phase="hero"] [data-weftmate-hero-composer] div:has(> [data-composer-card]) { position: relative; z-index: 1; width: 100% !important; max-width: none !important; padding: 0 !important; }',
+        'html[data-weftmate-electron-shell] div[data-phase="hero"] [data-weftmate-hero-composer] [data-composer-card] { width: 100%; max-width: none; border: 1px solid var(--dsw-alias-border-l2); border-radius: 18px; background: var(--dsw-specific-input-major); box-shadow: none; }',
+        '@media (min-width: 1180px) { html[data-weftmate-electron-shell] div[data-phase="hero"], html[data-weftmate-electron-shell] div[data-phase="active"], html[data-weftmate-electron-shell] div[data-phase="settling"] { --dsh-chat-content-width: 704px; } }',
+        '@media (prefers-reduced-motion: reduce) { html[data-weftmate-electron-shell] [data-chat-flow-kind] *, html[data-weftmate-electron-shell] [data-approval-key], html[data-weftmate-electron-shell] [data-composer-card] { transition: none !important; animation: none !important; } }',
+      ].join('\n')
+      document.head.appendChild(style)
+    }
+
+    // Stage 4B is a projection inside the resident DSH details column. The
+    // selected Tool result supplies the durable pointer; this client receives
+    // only allowlisted state from a fixed same-origin route.
+    var AI_GAME_STATUSES = {
+      running: '执行中', waiting_event: '等待设备事件', needs_user_input: '等待你的回答',
+      succeeded: '已完成', failed: '失败', cancelled: '已取消',
+    }
+    var aiGameAutoOpened = Object.create(null)
+    var aiGameOverview = Object.create(null)
+
+    function installAiGamePanelStyles() {
+      if (!document || !document.head || document.getElementById('weftmate-ai-game-panel-style')) return
+      var style = document.createElement('style')
+      style.id = 'weftmate-ai-game-panel-style'
+      style.textContent = [
+        '.weftmate-phone-row{display:flex;align-items:center;gap:10px;min-width:0;padding:7px 2px;color:var(--dsw-alias-label-primary)}',
+        '.weftmate-phone-row__mark{width:8px;height:8px;flex:none;border-radius:50%;background:var(--dsw-alias-brand-primary)}',
+        '.weftmate-phone-row__copy{min-width:0;flex:1}.weftmate-phone-row__title{font-size:13px;font-weight:600;line-height:1.4}',
+        '.weftmate-phone-row__status{overflow:hidden;color:var(--dsw-alias-label-secondary);font-size:11px;line-height:1.4;text-overflow:ellipsis;white-space:nowrap}',
+        '.weftmate-phone-row__open,.weftmate-ai-game__action{min-height:28px;border:1px solid var(--dsw-alias-border-l2);border-radius:7px;background:transparent;color:var(--dsw-alias-label-primary);font:500 12px/1.35 var(--dsw-font-family,system-ui,sans-serif);cursor:pointer}',
+        '.weftmate-phone-row__open{padding:4px 9px;flex:none}.weftmate-phone-row__open:hover,.weftmate-ai-game__action:hover{background:var(--dsw-alias-interactive-bg-hover)}',
+        '.weftmate-phone-row__open:focus-visible,.weftmate-ai-game__action:focus-visible{outline:2px solid var(--dsw-alias-brand-primary);outline-offset:2px}',
+        '.weftmate-ai-game{margin-top:18px;border-top:1px solid var(--dsw-alias-border-l2);color:var(--dsw-alias-label-primary);font-family:var(--dsw-font-family,system-ui,sans-serif)}',
+        '.weftmate-ai-game__header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:18px 0 14px}.weftmate-ai-game__eyebrow{color:var(--dsw-alias-label-tertiary);font-size:10px;font-weight:650;letter-spacing:.1em;text-transform:uppercase}.weftmate-ai-game__heading{margin-top:3px;font-size:15px;font-weight:650;line-height:1.35}',
+        '.weftmate-ai-game__badge{flex:none;max-width:46%;padding:3px 7px;border:1px solid var(--dsw-alias-border-l2);border-radius:999px;color:var(--dsw-alias-label-secondary);font-size:10px;line-height:1.4;text-align:center}.weftmate-ai-game__badge[data-status="needs_user_input"]{border-color:var(--dsw-alias-brand-primary);color:var(--dsw-alias-brand-primary)}',
+        '.weftmate-ai-game__section{padding:13px 0;border-top:1px solid var(--dsw-alias-border-l2)}.weftmate-ai-game__label{margin-bottom:5px;color:var(--dsw-alias-label-tertiary);font-size:10px;font-weight:650;letter-spacing:.06em;text-transform:uppercase}',
+        '.weftmate-ai-game__goal{font-size:13px;font-weight:560;line-height:1.55;overflow-wrap:anywhere}.weftmate-ai-game__facts{display:grid;grid-template-columns:minmax(78px,.42fr) minmax(0,1fr);gap:7px 12px;margin:0;font-size:12px;line-height:1.5}.weftmate-ai-game__facts dt{color:var(--dsw-alias-label-tertiary)}.weftmate-ai-game__facts dd{min-width:0;margin:0;overflow-wrap:anywhere}',
+        '.weftmate-ai-game__question{padding:12px 0;border-block:1px solid var(--dsw-alias-brand-primary)}.weftmate-ai-game__question p,.weftmate-ai-game__notice p{margin:0;font-size:12px;line-height:1.55;overflow-wrap:anywhere}.weftmate-ai-game__muted{margin-top:5px;color:var(--dsw-alias-label-secondary);font-size:11px;line-height:1.5}',
+        '.weftmate-ai-game__list{display:grid;gap:8px;margin:0;padding:0;list-style:none}.weftmate-ai-game__list li{display:grid;gap:2px;font-size:11px;line-height:1.45;overflow-wrap:anywhere}.weftmate-ai-game__meta{color:var(--dsw-alias-label-tertiary);font-size:10px}',
+        '.weftmate-ai-game__actions{display:flex;flex-wrap:wrap;gap:7px;padding:14px 0 2px;border-top:1px solid var(--dsw-alias-border-l2)}.weftmate-ai-game__action{padding:5px 10px}.weftmate-ai-game__notice{padding:12px 0;color:var(--dsw-alias-label-secondary)}.weftmate-ai-game__skeleton{min-height:72px;padding:18px 0;color:var(--dsw-alias-label-secondary);font-size:12px}',
+        '@media(max-width:900px){.weftmate-ai-game__facts{grid-template-columns:1fr;gap:2px}.weftmate-ai-game__facts dd{margin-bottom:6px}}',
+        '@media(prefers-reduced-motion:reduce){.weftmate-phone-row__open,.weftmate-ai-game__action{transition:none!important;animation:none!important}}',
+      ].join('\n')
+      document.head.appendChild(style)
+    }
+
+    function aiGamePointer(block) {
+      if (!block || typeof block !== 'object' || !('kind' in block)) return null
+      var meta = block.meta
+      if (!meta || typeof meta !== 'object' || Array.isArray(meta)
+        || meta.schemaVersion !== 1 || meta.kind !== 'ai-game-execution' || meta.toolName !== 'phone_execution'
+        || typeof meta.executionId !== 'string' || !/^[A-Za-z0-9._:-]{1,256}$/.test(meta.executionId)
+        || !AI_GAME_STATUSES[meta.status] || !Number.isSafeInteger(meta.eventCursor) || meta.eventCursor < 0) return null
+      return { executionId: meta.executionId, status: meta.status, eventCursor: meta.eventCursor }
+    }
+
+    function safeAiGameSnapshot(value) {
+      if (!value || typeof value !== 'object' || !AI_GAME_STATUSES[value.status]
+        || typeof value.executionId !== 'string' || typeof value.goalSummary !== 'string'
+        || !value.progress || value.progress.kind !== 'unknown' || !Number.isSafeInteger(value.eventCursor) || value.eventCursor < 0
+        || !Array.isArray(value.evidence) || !value.allowedIntents) throw new Error('AI_GAME_PANEL_SCHEMA_REJECTED')
+      return {
+        executionId: value.executionId, status: value.status, goalSummary: value.goalSummary,
+        currentStage: typeof value.currentStage === 'string' ? value.currentStage : null,
+        progress: { kind: 'unknown', explanation: typeof value.progress.explanation === 'string' ? value.progress.explanation : '' },
+        currentAction: typeof value.currentAction === 'string' ? value.currentAction : null,
+        pendingQuestion: value.pendingQuestion && typeof value.pendingQuestion.question === 'string'
+          ? { questionId: String(value.pendingQuestion.questionId || ''), question: value.pendingQuestion.question, whyNeeded: String(value.pendingQuestion.whyNeeded || '') }
+          : null,
+        resultSummary: typeof value.resultSummary === 'string' ? value.resultSummary : null,
+        error: value.error && typeof value.error.code === 'string' ? { code: value.error.code } : null,
+        evidence: value.evidence.slice(0, 10).map(function (item) {
+          return { evidenceId: String(item.evidenceId || ''), contentType: String(item.contentType || 'application/octet-stream'), sizeBytes: Number.isSafeInteger(item.sizeBytes) ? item.sizeBytes : 0, availability: item.availability === 'protected' ? 'protected' : 'unavailable' }
+        }),
+        eventCursor: value.eventCursor,
+        allowedIntents: { cancel: value.allowedIntents.cancel === true, resume: value.allowedIntents.resume === true, answer: value.allowedIntents.answer === true },
+      }
+    }
+
+    function safeAiGamePanel(value, sessionId) {
+      if (!value || value.schemaVersion !== 1 || value.kind !== 'ai-game-panel'
+        || value.sessionId !== sessionId || typeof value.hasExecution !== 'boolean') throw new Error('AI_GAME_PANEL_SCHEMA_REJECTED')
+      if (!value.hasExecution) return { hasExecution: false, sessionId: sessionId }
+      if (typeof value.selectedExecutionId !== 'string' || !Array.isArray(value.history) || !Array.isArray(value.events)) throw new Error('AI_GAME_PANEL_SCHEMA_REJECTED')
+      return {
+        hasExecution: true, sessionId: sessionId, selectedExecutionId: value.selectedExecutionId,
+        availability: value.availability === 'ready' ? 'ready' : 'unavailable',
+        snapshot: value.snapshot === null ? null : safeAiGameSnapshot(value.snapshot),
+        historyCount: value.history.length,
+        events: value.events.slice(-12).filter(function (item) { return item && Number.isSafeInteger(item.cursor) && item.cursor > 0 && typeof item.label === 'string' }).map(function (item) { return { cursor: item.cursor, label: item.label, createdAt: typeof item.createdAt === 'string' ? item.createdAt : null } }),
+        nextCursor: Number.isSafeInteger(value.nextCursor) && value.nextCursor >= 0 ? value.nextCursor : 0,
+        failure: value.failure && typeof value.failure.code === 'string' ? { code: value.failure.code, message: String(value.failure.message || ''), retryable: value.failure.retryable === true } : null,
+        eventsFailure: value.eventsFailure && typeof value.eventsFailure.code === 'string' ? { code: value.eventsFailure.code } : null,
+      }
+    }
+
+    function fetchAiGamePanel(sessionId, executionId, after, signal) {
+      var params = new URLSearchParams({ session_id: sessionId, after: String(after || 0) })
+      if (executionId) params.set('execution_id', executionId)
+      return fetch('/weftmate/ai-game/panel.json?' + params.toString(), {
+        method: 'GET', cache: 'no-store', credentials: 'same-origin', signal: signal, headers: { Accept: 'application/json' },
+      }).then(function (response) {
+        if (!response.ok) throw new Error('AI_GAME_PANEL_HTTP_' + response.status)
+        return response.json()
+      }).then(function (value) { return safeAiGamePanel(value, sessionId) })
+    }
+
+    function aiGameOverviewFor(sessionId) {
+      var cached = aiGameOverview[sessionId]
+      if (cached && Date.now() - cached.startedAt < 1200) return cached.promise
+      var promise = fetchAiGamePanel(sessionId, null, 0).catch(function () { return null })
+      aiGameOverview[sessionId] = { startedAt: Date.now(), promise: promise }
+      return promise
+    }
+
+    function PhoneExecutionRow(props) {
+      var pointer = aiGamePointer(props.block)
+      React.useEffect(function () {
+        if (!pointer || typeof props.openDetails !== 'function') return
+        var key = props.sessionId + '\u0000' + pointer.executionId
+        if (aiGameAutoOpened[key]) return
+        var active = true
+        aiGameOverviewFor(props.sessionId).then(function (overview) {
+          if (!active || !overview || overview.selectedExecutionId !== pointer.executionId || aiGameAutoOpened[key]) return
+          aiGameAutoOpened[key] = true
+          props.openDetails()
+        })
+        return function () { active = false }
+      }, [props.sessionId, pointer && pointer.executionId, props.openDetails])
+      var status = pointer ? AI_GAME_STATUSES[pointer.status] : ('kind' in props.block ? '未取得执行指针' : '正在建立执行')
+      return React.createElement('div', { className: 'weftmate-phone-row', 'data-weftmate-phone-execution': pointer ? pointer.executionId : 'pending' },
+        React.createElement('span', { className: 'weftmate-phone-row__mark', 'aria-hidden': 'true' }),
+        React.createElement('div', { className: 'weftmate-phone-row__copy' },
+          React.createElement('div', { className: 'weftmate-phone-row__title' }, 'AI-Game 手机执行'),
+          React.createElement('div', { className: 'weftmate-phone-row__status' }, status)),
+        typeof props.openDetails === 'function' ? React.createElement('button', {
+          type: 'button', className: 'weftmate-phone-row__open', onClick: props.openDetails, 'aria-label': '打开 AI-Game 执行详情',
+        }, '查看') : null)
+    }
+
+    function aiGameTime(value) {
+      var date = value ? new Date(value) : null
+      return date && !isNaN(date.getTime()) ? date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''
+    }
+
+    function aiGameBytes(value) {
+      if (!Number.isFinite(value) || value <= 0) return '大小未知'
+      if (value < 1024) return value + ' B'
+      if (value < 1024 * 1024) return Math.round(value / 1024) + ' KB'
+      return (value / (1024 * 1024)).toFixed(1) + ' MB'
+    }
+
+    function AiGameExecutionDetails(props) {
+      var pointer = aiGamePointer(props.block)
+      var panelState = React.useState(null)
+      var panel = panelState[0]
+      var setPanel = panelState[1]
+      var retryState = React.useState(0)
+      var retry = retryState[0]
+      var setRetry = retryState[1]
+      var visibleState = React.useState(document.visibilityState !== 'hidden')
+      var visible = visibleState[0]
+      var setVisible = visibleState[1]
+      var rootRef = React.useRef(null)
+      var cursorRef = React.useRef(0)
+      var eventRef = React.useRef(new Map())
+      var draft = props.useInput(function (input) { return input.draft })
+
+      React.useEffect(function () {
+        var root = rootRef.current
+        var inViewport = true
+        var update = function () { setVisible(document.visibilityState !== 'hidden' && inViewport) }
+        var onVisibility = function () { update() }
+        document.addEventListener('visibilitychange', onVisibility)
+        var observer = typeof IntersectionObserver === 'function' && root
+          ? new IntersectionObserver(function (entries) {
+              inViewport = entries.length === 0 || entries[0].isIntersecting
+              update()
+            })
+          : null
+        if (observer && root) observer.observe(root)
+        update()
+        return function () {
+          document.removeEventListener('visibilitychange', onVisibility)
+          if (observer) observer.disconnect()
+        }
+      }, [])
+
+      React.useEffect(function () {
+        if (!pointer || !visible) return
+        var stopped = false
+        var timer = null
+        var controller = null
+        var backoff = 1500
+        cursorRef.current = 0
+        eventRef.current = new Map()
+        var poll = function () {
+          if (stopped) return
+          controller = new AbortController()
+          fetchAiGamePanel(props.sessionId, pointer.executionId, cursorRef.current, controller.signal)
+            .then(function (next) {
+              if (stopped || next.selectedExecutionId !== pointer.executionId) return
+              next.events.forEach(function (event) { eventRef.current.set(event.cursor, event) })
+              next.events = Array.from(eventRef.current.values()).sort(function (a, b) { return a.cursor - b.cursor }).slice(-12)
+              cursorRef.current = Math.max(cursorRef.current, next.nextCursor, next.snapshot ? next.snapshot.eventCursor : 0)
+              setPanel(next)
+              backoff = 1500
+              var terminal = next.snapshot && ['succeeded', 'failed', 'cancelled'].indexOf(next.snapshot.status) >= 0
+              timer = setTimeout(poll, terminal ? 10000 : 1500)
+            })
+            .catch(function () {
+              if (stopped) return
+              setPanel(function (prior) {
+                return prior ? Object.assign({}, prior, {
+                  availability: 'unavailable',
+                  failure: { code: 'AI_GAME_PANEL_UNAVAILABLE', message: 'AI-Game 当前不可用；历史 DSH 对话仍可读取。', retryable: true },
+                }) : {
+                  hasExecution: true,
+                  sessionId: props.sessionId,
+                  selectedExecutionId: pointer.executionId,
+                  availability: 'unavailable',
+                  snapshot: null,
+                  historyCount: 1,
+                  events: [],
+                  nextCursor: cursorRef.current,
+                  failure: { code: 'AI_GAME_PANEL_UNAVAILABLE', message: 'AI-Game 当前不可用；历史 DSH 对话仍可读取。', retryable: true },
+                  eventsFailure: null,
+                }
+              })
+              timer = setTimeout(poll, backoff)
+              backoff = Math.min(backoff * 2, 10000)
+            })
+        }
+        poll()
+        return function () {
+          stopped = true
+          if (timer !== null) clearTimeout(timer)
+          if (controller) controller.abort()
+        }
+      }, [props.sessionId, pointer && pointer.executionId, visible, retry])
+
+      var fillComposer = function (instruction) {
+        if (!props.inputActions || typeof props.inputActions.setDraft !== 'function') return
+        var prefix = draft && draft.trim() ? draft.replace(/\s+$/, '') + '\n\n' : ''
+        props.inputActions.setDraft(prefix + instruction)
+      }
+      if (!pointer) {
+        return React.createElement('div', { ref: rootRef, className: 'weftmate-ai-game' },
+          React.createElement('div', { className: 'weftmate-ai-game__skeleton', role: 'status' }, '等待 DSH 写入可恢复的 AI-Game 执行指针…'))
+      }
+      if (!panel) {
+        return React.createElement('div', { ref: rootRef, className: 'weftmate-ai-game' },
+          React.createElement('div', { className: 'weftmate-ai-game__skeleton', role: 'status' }, '正在读取 AI-Game 权威状态…'))
+      }
+      var snap = panel.snapshot
+      if (!snap) {
+        return React.createElement('div', { ref: rootRef, className: 'weftmate-ai-game' },
+          React.createElement('div', { className: 'weftmate-ai-game__header' },
+            React.createElement('div', null,
+              React.createElement('div', { className: 'weftmate-ai-game__eyebrow' }, 'AI-Game execution'),
+              React.createElement('div', { className: 'weftmate-ai-game__heading' }, '执行状态暂不可用')),
+            React.createElement('span', { className: 'weftmate-ai-game__badge' }, '已断线')),
+          React.createElement('div', { className: 'weftmate-ai-game__notice', role: 'status' },
+            React.createElement('p', null, panel.failure ? panel.failure.message : 'AI-Game 当前不可用；历史 DSH 对话仍可读取。'),
+            React.createElement('div', { className: 'weftmate-ai-game__muted' }, '执行 ID ' + pointer.executionId)),
+          React.createElement('div', { className: 'weftmate-ai-game__actions' },
+            React.createElement('button', { type: 'button', className: 'weftmate-ai-game__action', onClick: function () { setRetry(function (value) { return value + 1 }) } }, '重新检查连接')))
+      }
+
+      var factNodes = []
+      ;[
+        ['当前阶段', snap.currentStage || '阶段未知'],
+        ['真实进度', '进度未知'],
+        ['当前动作', snap.currentAction || '暂无可展示动作'],
+      ].forEach(function (item, index) {
+        factNodes.push(React.createElement('dt', { key: 'dt' + index }, item[0]))
+        factNodes.push(React.createElement('dd', { key: 'dd' + index }, item[1]))
+      })
+      var evidence = snap.evidence.length === 0
+        ? React.createElement('div', { className: 'weftmate-ai-game__muted' }, '尚无受保护证据引用')
+        : React.createElement('ul', { className: 'weftmate-ai-game__list' }, snap.evidence.map(function (item) {
+            return React.createElement('li', { key: item.evidenceId },
+              React.createElement('span', null, item.contentType + ' · ' + aiGameBytes(item.sizeBytes)),
+              React.createElement('span', { className: 'weftmate-ai-game__meta' }, '受保护引用；此面板不暴露本机路径'))
+          }))
+      var events = panel.events.length === 0
+        ? React.createElement('div', { className: 'weftmate-ai-game__muted' }, '暂无新的阶段变化')
+        : React.createElement('ul', { className: 'weftmate-ai-game__list' }, panel.events.map(function (item) {
+            return React.createElement('li', { key: item.cursor },
+              React.createElement('span', null, item.label),
+              React.createElement('span', { className: 'weftmate-ai-game__meta' }, aiGameTime(item.createdAt)))
+          }))
+      var actions = []
+      if (snap.allowedIntents.cancel) actions.push(React.createElement('button', {
+        key: 'cancel', type: 'button', className: 'weftmate-ai-game__action',
+        onClick: function () { fillComposer('请调用 phone_execution 取消执行 ' + snap.executionId + '。') },
+      }, '在对话中请求取消'))
+      if (snap.allowedIntents.resume) actions.push(React.createElement('button', {
+        key: 'resume', type: 'button', className: 'weftmate-ai-game__action',
+        onClick: function () { fillComposer('请调用 phone_execution 恢复执行 ' + snap.executionId + '。') },
+      }, '在对话中请求恢复'))
+      if (snap.allowedIntents.answer && snap.pendingQuestion) actions.push(React.createElement('button', {
+        key: 'answer', type: 'button', className: 'weftmate-ai-game__action',
+        onClick: function () { fillComposer('关于执行 ' + snap.executionId + ' 的问题 ' + snap.pendingQuestion.questionId + '，我的回答是：') },
+      }, '到输入区回答'))
+
+      return React.createElement('div', { ref: rootRef, className: 'weftmate-ai-game', 'data-weftmate-ai-game-status': snap.status },
+        React.createElement('div', { className: 'weftmate-ai-game__header' },
+          React.createElement('div', null,
+            React.createElement('div', { className: 'weftmate-ai-game__eyebrow' }, 'AI-Game execution'),
+            React.createElement('div', { className: 'weftmate-ai-game__heading' }, '手机执行任务')),
+          React.createElement('span', { className: 'weftmate-ai-game__badge', 'data-status': snap.status, role: 'status' }, AI_GAME_STATUSES[snap.status])),
+        React.createElement('section', { className: 'weftmate-ai-game__section', 'aria-label': '执行目标' },
+          React.createElement('div', { className: 'weftmate-ai-game__label' }, '目标'),
+          React.createElement('div', { className: 'weftmate-ai-game__goal' }, snap.goalSummary),
+          panel.historyCount > 1 ? React.createElement('div', { className: 'weftmate-ai-game__muted' }, '本会话另有 ' + (panel.historyCount - 1) + ' 个执行；可从中间对话的对应工具行打开。') : null),
+        React.createElement('section', { className: 'weftmate-ai-game__section', 'aria-label': '执行状态' },
+          React.createElement('dl', { className: 'weftmate-ai-game__facts' }, factNodes),
+          React.createElement('div', { className: 'weftmate-ai-game__muted' }, snap.progress.explanation)),
+        snap.pendingQuestion ? React.createElement('section', { className: 'weftmate-ai-game__question', 'aria-label': '待回答问题' },
+          React.createElement('div', { className: 'weftmate-ai-game__label' }, '需要你的回答'),
+          React.createElement('p', null, snap.pendingQuestion.question),
+          snap.pendingQuestion.whyNeeded ? React.createElement('div', { className: 'weftmate-ai-game__muted' }, snap.pendingQuestion.whyNeeded) : null) : null,
+        snap.resultSummary || snap.error ? React.createElement('section', { className: 'weftmate-ai-game__section', 'aria-label': snap.error ? '执行错误' : '执行结果' },
+          React.createElement('div', { className: 'weftmate-ai-game__label' }, snap.error ? '错误' : '结果'),
+          React.createElement('div', { className: 'weftmate-ai-game__goal' }, snap.error ? snap.error.code : snap.resultSummary)) : null,
+        React.createElement('section', { className: 'weftmate-ai-game__section', 'aria-label': '最近证据' },
+          React.createElement('div', { className: 'weftmate-ai-game__label' }, '最近证据'), evidence),
+        React.createElement('section', { className: 'weftmate-ai-game__section', 'aria-label': '阶段变化' },
+          React.createElement('div', { className: 'weftmate-ai-game__label' }, '阶段变化'), events),
+        panel.eventsFailure ? React.createElement('div', { className: 'weftmate-ai-game__muted', role: 'status' }, '事件续接暂不可用；权威快照仍可读取。') : null,
+        actions.length > 0 ? React.createElement('div', { className: 'weftmate-ai-game__actions', 'aria-label': '可用操作' }, actions) : null)
+    }
+
     /** 状态接口失败/首次加载时的回退（与宿主插件 fallbackState 同形状语义）。 */
     var FALLBACK_STATE = {
       app: { name: 'WeftMate', version: 'dev' },
@@ -681,6 +1109,19 @@ window.__ModuleLoader__.load({
       name: 'weftmate-client',
       inject: ['slots', 'connection'],
       apply: function (ctx) {
+        installElectronWindowChrome()
+        installConversationWorkspaceSurface()
+        installAiGamePanelStyles()
+        ctx.slots.inject('tool.call.toolview', function () {
+          return ctx.slots.register({ name: 'tool.call.toolview', key: 'phone_execution' }, PhoneExecutionRow)
+        })
+        ctx.slots.inject('conversation.details.supplement', function () {
+          return ctx.slots.register({ name: 'conversation.details.supplement', key: 'phone_execution' }, AiGameExecutionDetails)
+        })
+        // Project Repair: global emulator settings and task-center entry points
+        // are absent until WeftMate owns the AI-GAME lifecycle. A user must
+        // never be sent to a product surface that depends on manually starting
+        // port 4310. The conversation result/details read seam remains active.
         // 声明等待：官方槽位系统要求目标槽已被某个声明者（ui-layout 在 root 的 children 表里
         // 声明 shell.overlay）登记；`slots.inject(key, cb)` 是官方「声明依赖」接缝——声明已存在则
         // 同步注册，否则等声明者的 register 提交后再注册（回调返回注册的 disposer，随声明生命周期回收）。

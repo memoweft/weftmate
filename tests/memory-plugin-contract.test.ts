@@ -62,9 +62,9 @@ describe('R7 记忆宿主插件契约', () => {
   it('桥传输：env 注入 python/PYTHONPATH、stdio JSON-Lines、fail-closed', () => {
     assert.match(plugin, /export const inject = \['webServer'\]/);
     assert.match(plugin, /WEFTMATE_MEMOWEFT_PYTHON \|\| 'python'/);
-    assert.match(plugin, /PYTHONPATH: PYTHONPATH\(\)/);
-    assert.match(plugin, /spawn\(python, \['-m', 'memoweft\.integrations\.dsh_bridge'\]/);
-    assert.match(plugin, /this\.child\.stdin\.write\(`\$\{JSON\.stringify\(\{ id, method, params: params \?\? \{\} \}\)\}\\n`/);
+    assert.match(plugin, /PYTHONPATH: this\.pythonPath/);
+    assert.match(plugin, /spawn\(this\.python, \['-m', 'memoweft\.integrations\.dsh_bridge'\]/);
+    assert.match(plugin, /this\.child\.stdin\.write\(line, 'utf8'\)/);
     assert.match(plugin, /failAll/);
     // 初始化 dsh_home 走运行时 DSH_HOME（产品数据目录内）。
     assert.match(plugin, /dsh_home: DSH_HOME\(\)/);
@@ -87,14 +87,16 @@ describe('R7 记忆宿主插件契约', () => {
     assert.match(plugin, /kind: 'prefix', path: '\/weftmate\/memory'/);
   });
 
-  it('profile 接线：补丁层挂记忆行、旧模板升级路径、资产复制、main env 注入', () => {
+  it('profile 接线：补丁层保留试验行、默认关闭、资产复制、main 不注入开发机绝对路径', () => {
     assert.match(runtime, /- id: weftmate-memory\s*\n\s*name: \.\/plugins\/weftmate-memory\.mjs/);
     assert.match(runtime, /PROFILE_PATCH_TEMPLATE_R3_PICKER/);
     const upgrade = between(runtime, 'if (existing === PROFILE_PATCH_TEMPLATE) return false', 'return false // owner 手改');
     assert.match(upgrade, /PROFILE_PATCH_TEMPLATE_R3_PICKER/);
     assert.match(runtime, /\[join\(PLUGINS_DIR, 'weftmate-memory\.mjs'\), memoryDest\]/);
-    assert.match(main, /WEFTMATE_MEMOWEFT_PYTHON: process\.env\.WEFTMATE_MEMOWEFT_PYTHON \|\| 'D:\\\\MemoWeft\\\\.venv-memoweft\\\\Scripts\\\\python\.exe'/);
-    assert.match(main, /WEFTMATE_MEMOWEFT_PYTHONPATH: process\.env\.WEFTMATE_MEMOWEFT_PYTHONPATH \|\| 'D:\\\\AIProjects\\\\MemoWeft\\\\Core\\\\py\\\\src'/);
+    assert.match(plugin, /process\.env\.WEFTMATE_MEMOWEFT_ENABLED !== '1'/);
+    assert.ok(plugin.indexOf("WEFTMATE_MEMOWEFT_ENABLED !== '1'") < plugin.indexOf('new MemoWeftBridge'));
+    assert.match(main, /WEFTMATE_MEMOWEFT_ENABLED: process\.env\.WEFTMATE_MEMOWEFT_ENABLED === '1' \? '1' : '0'/);
+    assert.doesNotMatch(main, /D:\\\\MemoWeft\\\\\.venv-memoweft/);
   });
 
   it('管理页（客户端，只读 v1）：胶囊轮询 world、面板浏览/确定性搜索/导出备份', () => {

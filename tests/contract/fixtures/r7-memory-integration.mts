@@ -213,7 +213,7 @@ try {
   await ctx.fiber.dispose()
   await rm(workspaceCwd, { recursive: true, force: true }).catch(() => undefined)
   console.log('[r7-memory] EVIDENCE ' + JSON.stringify(evidence))
-  process.exit(0)
+  process.exitCode = 0
 } catch (error) {
   try { await ctx.fiber.dispose() } catch { /* boot 失败不掩盖原始错误 */ }
   await rm(workspaceCwd, { recursive: true, force: true }).catch(() => undefined)
@@ -221,7 +221,7 @@ try {
     name: (error as Error | null)?.name ?? null,
     message: error instanceof Error ? error.message : String(error),
   }))
-  process.exit(1)
+  process.exitCode = 1
 } finally {
   if (process.cwd() !== originalCwd) process.chdir(originalCwd)
 }

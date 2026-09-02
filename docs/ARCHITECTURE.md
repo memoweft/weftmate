@@ -1,60 +1,68 @@
-# WeftMate 当前架构
+# WeftMate 架构与当前代码事实
 
 ## 目标结构
 
 ```text
 用户
-  ↓
-WeftMate UI
-  ↓
-统一管理框架
-  ├── DSH adapter
-  ├── MemoWeft adapter（试验）
-  └── AI-Game adapter（未来）
+  -> WeftMate Electron 壳
+       -> 固定 DSH 官方客户端
+            -> 会话 / 消息 / 模型 / 工具 / 审批 / 工作区
+            -> phone_execution host tool（宿主工具）
+                 -> WeftMate 管理的 AI-GAME 生命周期
+                 -> /api/execution/v2
+                 -> canonical Task + android_ui_agent/1
+                 -> 用户选择的 Android 模拟器
+                 -> 状态 / 证据 / 结果回原 DSH 对话
 ```
 
-## WeftMate 自己负责
+AI-GAME 生命周期一行是目标边界；当前尚未由 WeftMate 完成，所以依赖它的全局入口保持未注册。
 
-- Electron 桌面应用生命周期；
-- WeftMate 产品 UI；
-- 外部系统的状态、启动、停止、重启和诊断；
-- 会话、模型、工作区和权限的产品化展示；
-- 凭据、本地数据、安装、更新和故障提示；
-- 各系统之间的用户交互转接。
+## 当前活动路径
 
-## 外部系统边界
+### DSH 产品面
 
-### DSH
+- Electron main 启动一个 shared DSH runtime（共享 DSH 运行时），主窗口直接加载其官方 Web client（网页客户端）。
+- WeftMate 客户端插件只增加原生窗口 chrome（窗口外框）、品牌、主题、布局修正，以及 `phone_execution` 的 `tool.call.toolview` 和 `conversation.details.supplement` 两个官方 keyed seat（按键席位）。
+- WeftMate 自有旧 renderer、Gateway 会话投影、桌宠、感知和记忆 UI 不进入当前官方对话路径。
 
-DSH 提供 Agent、会话、模型、工具、权限和代码执行。当前代码已经通过 Gateway 与 runtime adapter 接入。DSH Web 暂时保留为开发和诊断入口，未来普通用户默认进入 WeftMate UI。
+### 凭据与配置
 
-### MemoWeft
+- Electron `safeStorage` 保存模型密钥和 AI-GAME capability（能力）凭据。
+- DSH 通过宿主 credential provider（凭据提供器）的窄 IPC 按引用读取，密钥不写入 DSH 普通设置或子进程环境。
+- renderer 只获得脱敏状态和公开配置，不获得 token、ADB serial（ADB 序列号）、artifact path（证据路径）或 owner ID。
 
-当前仓库保留 MemoWeft 的试验桥接代码。它必须可选、可关闭、可降级；MemoWeft 未完成时不能阻止 WeftMate 正常启动。正式集成等待 MemoWeft 提供稳定的写入、Recall、来源、纠正、删除、健康和生命周期接口。
+### AI-GAME 接缝
 
-### AI-Game
+- `src/plugins/weftmate-aigame-host.mjs` 注册 goal-only（仅目标）`phone_execution` 工具；host 冻结 `android_ui_agent/1`，renderer 不能直接提交 Task。
+- `src/runtime/ai-game/transport.mjs` 只接受显式 `http://127.0.0.1:<port>`、固定路径、超时、响应大小限制、schema validation（模式校验）和脱敏错误。
+- V2 owner 是稳定的 `{principal_id, controller_id}`，不由 bearer token、DSH session 或请求体临时生成；同一 pair 可跨 DSH 会话读取自己的 Task，其他 pair 得到不泄露存在性的空结果或 not-found（未找到）。
+- DSH 的权限裁决是唯一批准来源。Full Access（完全访问）直接允许；其他预设至多经过一次官方 approval（审批）。AI-GAME 不追加第二次“是否继续”。
+- 一次 DSH turn/tool abort（轮次/工具中止）只终止本次等待，不自动取消长期 Task；明确的 Task control 才改变任务。
 
-当前仓库没有正式 AI-Game adapter。正式集成等待 AI-Game 提供稳定的状态、事件、用户问题、用户回答和健康接口。AI-Game 的目标与行为逻辑继续留在自己的项目中。
+## 4310 与生命周期
 
-## 统一管理接口
+`127.0.0.1:4310` 当前是 AI-GAME 开发诊断服务的默认地址。源码开发者可以显式启动它，但这不是最终用户合同。
 
-每个外部系统只需向 WeftMate 提供：
+正式发布模拟器设置或任务中心之前，WeftMate 必须负责：
 
-- 标识和版本；
-- 安装与连接状态；
-- 健康状态；
-- 能力列表；
-- 启动、停止和重启；
-- 事件与用户请求；
-- 最近错误和诊断信息。
+- 定位或安装兼容 AI-GAME runtime；
+- 启动并等待健康；
+- 处理端口占用、崩溃和版本不匹配；
+- 在应用退出时完成任务状态保存与进程收口；
+- 提供可见状态和恢复动作。
 
-一个外部系统故障时，WeftMate 和其他系统仍应继续工作。
+在这些条件成立前，客户端不会注册 `settings.section/android-simulators`、`sidebar.footer.action/mobile-task-center` 或对应 `shell.overlay`。这保证用户看不到一个只能由开发者手工开关的半成品。
 
-## 当前代码事实
+## AI-GAME 当前工程基础
 
-- Electron main 负责启动 DSH 和桌面窗口；
-- Gateway v1 已有会话、事件、模型、工作区、权限和诊断基础；
-- 当前界面主要借用 DSH Web；
-- MemoWeft bridge 是试验接缝；
-- 桌宠、感知和设备代码存在，但不属于当前施工重点；
-- WeftMate 自有 UI 尚未完成。
+当前代码已包含 V2 execution contract（执行契约）、canonical Task（权威任务）、owner-pair 隔离、模拟器 Profile、常驻调度、通用 `android_ui_agent/1`、RuntimeKernel 观察/动作/验证和 scoped experience（有范围经验）。这些是下阶段可复用基础。
+
+旧真机 Companion、固定 `emulator_settings_v1` 产品路径和单次验证 effect budget 已退出活动方向。个别数据库字段或只读解析仍可为旧数据兼容而存在，但不能创建新正式任务、出现在公开 capability 或重新驱动路线。
+
+## 证据边界
+
+- 单元/契约测试通过：证明对应代码合同。
+- AI-GAME health 或 HTTP 成功：证明当时服务可达。
+- 模拟器动作：必须有设备观察、动作回执和后置验证。
+- WeftMate 可见并可控：必须由受管生命周期启动同一后端，不能手工拼接。
+- 产品所有者 dogfood `PASS`：只对指定候选和环境有效。

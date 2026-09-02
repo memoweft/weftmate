@@ -16,6 +16,7 @@ const SAFE_ERROR_CODES = new Set([
   'workspace-invalid-path',
   'workspace-name-conflict',
   'settings-rejected',
+  'approval-not-pending',
 ])
 
 export class DshAdapterError extends Error {
@@ -87,6 +88,18 @@ export function createDshSessionAdapter(client) {
   }
 
   return {
+    /** Product-safe ordinary-session summaries for the WeftMate sidebar. */
+    async list() {
+      const value = await unwrap(await client.sessions.list({}), 'list')
+      const items = Array.isArray(value?.items) ? value.items : []
+      return items
+        .filter((item) => item?.origin !== 'subagent' && sessionIdOf(item) !== null)
+        .map((item) => ({
+          sessionId: sessionIdOf(item),
+          title: typeof item.title === 'string' ? item.title : '新对话',
+          running: item.running === true,
+        }))
+    },
     async create(options = {}) {
       const value = await unwrap(await client.sessions.create(options), 'create')
       const sessionId = sessionIdOf(value)
@@ -113,7 +126,16 @@ export function createDshSessionAdapter(client) {
     async send(sessionId, content, mode = 'queue') {
       assertOwned(sessionId, 'send')
       if (mode !== 'queue' && mode !== 'steer') throw new TypeError('mode must be queue or steer')
-      const value = await unwrap(await client.sessions.prompt({ sessionId, mode, content }), 'prompt')
+      if (typeof content !== 'string' || content.length === 0) throw new TypeError('content must be non-empty text')
+      // The supported DSH wire is an array of prompt content parts, not the
+      // convenient renderer string.  Passing the string through is rejected
+      // before the Agent can begin a turn, which also makes a healthy model
+      // look like a credential failure.
+      const value = await unwrap(await client.sessions.prompt({
+        sessionId,
+        mode,
+        content: [{ type: 'text', text: content }],
+      }), 'prompt')
       return { accepted: value?.accepted === true, command: value?.command }
     },
 
@@ -133,6 +155,33 @@ export function createDshSessionAdapter(client) {
 
     openHost(signal) {
       return client.events.host({}, signal)
+    },
+
+    /** Resolve one live tool-approval request.  The opaque rpcId is supplied
+     * only by a current mux frame; no approval state is recreated by WeftMate. */
+    async respondApproval({ rpcId, sessionId, approvalId, outcome }) {
+      if (typeof rpcId !== 'string' || typeof sessionId !== 'string' || typeof approvalId !== 'string') {
+        throw new TypeError('approval response identifiers are required')
+      }
+      if (outcome !== 'allowed-once' && outcome !== 'rejected') throw new TypeError('invalid approval outcome')
+      // `respond()` is the client-response carrier, not an ordinary RPC
+      // method: the pinned client returns its receipt directly instead of an
+      // `{ result: { ok, value } }` envelope.  Applying `unwrap()` here turns
+      // every valid allow/reject into a fabricated gateway failure.
+      const value = await client.respond({
+        // DSH routes this carrier by its discriminant before it can resolve
+        // the pending approval.  This is not an optional metadata field.
+        type: 'client-response',
+        rpcId,
+        result: { ok: true, value: { sessionId, approvalId, outcome } },
+      })
+      if (value?.accepted !== true) {
+        // `reason` is a closed transport enum (for example `not-pending` or
+        // `bad-response`), never a model/tool payload.  Preserve only its
+        // digest on the product boundary while retaining a diagnostic code.
+        throw new DshAdapterError('approval-not-pending', 'approval.respond', await payloadDigest(value?.reason ?? null))
+      }
+      return { accepted: true }
     },
 
     getReplayCursor(sessionId) {

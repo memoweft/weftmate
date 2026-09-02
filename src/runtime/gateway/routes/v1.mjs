@@ -26,6 +26,17 @@ function requestAllowed(req) {
 
 function idFor(rawSeq, fallback) { return Number.isInteger(rawSeq) ? `dsh-${rawSeq}` : `gateway-${fallback}` }
 
+/** Accept the product's text convenience payload and the pinned Gateway
+ * contract's DSH-style text parts, then collapse both at the renderer boundary.
+ * No arbitrary content block is forwarded through this narrow stage-1 surface. */
+function promptText(value) {
+  if (typeof value === 'string') return value
+  if (!Array.isArray(value)) throw new TypeError('message content must be text')
+  const parts = value.filter((part) => part?.type === 'text' && typeof part.text === 'string')
+  if (parts.length !== value.length) throw new TypeError('message content must be text')
+  return parts.map((part) => part.text).join('')
+}
+
 export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
   if (client === undefined) throw new TypeError('supported DSH client is required')
   const sessions = createDshSessionAdapter(client)
@@ -85,6 +96,10 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
     } catch (error) {
       if (!signal.aborted) {
         const safe = await gatewayError(error)
+        // Safe code only: useful when a pinned runtime closes the mux after a
+        // live interaction, without carrying a tool payload or credential to
+        // Electron's product surface.
+        console.error(`[weftmate] stage-1 mux closed: ${safe.code}`)
         diagnostics?.recordError(safe.code, safe.details?.digest ?? null)
         emit(sessionId, { type: 'error', sessionId, data: safe, rawType: 'gateway/mux' })
         throw error
@@ -94,7 +109,7 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
   async function handle(req, res) {
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
     const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://gateway').pathname)
-    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models))?$/.exec(pathname)
+    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval))?$/.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
     try {
       if (pathname === `${BASE}/sessions` && req.method === 'POST') {
@@ -102,6 +117,9 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
         records.set(created.sessionId, { events: [], listeners: new Set(), state: undefined, lastSeq: -1, nextId: 1 })
         emit(created.sessionId, { type: 'session.created', sessionId: created.sessionId, data: { id: created.sessionId }, rawType: 'gateway/create' })
         return writeJson(res, 201, { sessionId: created.sessionId })
+      }
+      if (pathname === `${BASE}/sessions` && req.method === 'GET') {
+        return writeJson(res, 200, { items: await sessions.list() })
       }
       if (pathname === `${BASE}/workspaces` && req.method === 'GET') {
         return writeJson(res, 200, await workspaces.list())
@@ -150,12 +168,16 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
       }
       if (action === 'messages' && req.method === 'POST') {
         record(sessionId); const payload = await readJson(req)
-        const result = await sessions.send(sessionId, payload.content, payload.mode ?? 'queue')
+        const result = await sessions.send(sessionId, promptText(payload.content), payload.mode ?? 'queue')
         return writeJson(res, result.accepted ? 202 : 409, { accepted: result.accepted })
       }
       if (action === 'cancel' && req.method === 'POST') {
         record(sessionId); const result = await sessions.cancel(sessionId)
         return writeJson(res, result.accepted ? 202 : 409, { accepted: result.accepted })
+      }
+      if (action === 'approval' && req.method === 'POST') {
+        record(sessionId); const payload = await readJson(req)
+        return writeJson(res, 200, await sessions.respondApproval({ sessionId, ...payload }))
       }
       if (action === 'models' && req.method === 'GET') {
         record(sessionId); return writeJson(res, 200, await models.sessionModels(sessionId))

@@ -7,7 +7,7 @@
  *  - 凭据绝不带进测试：子进程环境删除 *_API_KEY / *_API_TOKEN / *_API_SECRET。
  */
 
-import { spawn } from 'node:child_process'
+import { execFile, spawn } from 'node:child_process'
 import { existsSync, readFileSync } from 'node:fs'
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { homedir, tmpdir } from 'node:os'
@@ -254,8 +254,20 @@ export interface SpawnSpec {
 }
 
 /**
+ * POSIX timeout 后的第二道终止围栏。Windows 不走这里：它必须先以根 PID 做 taskkill /T /F，
+ * 否则单杀 root 后，继承 stdout/stderr pipe 的 descendant 可能令 close 永久不来。
+ */
+function hardKillPosixChild(child: ReturnType<typeof spawn>): void {
+  try {
+    child.kill('SIGKILL')
+  } catch {
+    // close/error 监听仍负责结算；不可因 cleanup 失败吞掉测试输出。
+  }
+}
+
+/**
  * spawn 一个 node 子进程并收集完整输出；支持「标记到达后关 stdin」。
- * 超时杀进程并置 timedOut。
+ * 超时先请求终止、再由有界 watchdog 强制终止；无论哪个路径，最终只在 child close 后结算。
  */
 export function runNode(spec: SpawnSpec): Promise<ChildResult> {
   return new Promise((resolve) => {
@@ -268,12 +280,32 @@ export function runNode(spec: SpawnSpec): Promise<ChildResult> {
     let stderr = ''
     let markerSeen = false
     let settled = false
+    let timedOut = false
+    let stdinEndTimer: NodeJS.Timeout | undefined
+    let timeoutTimer: NodeJS.Timeout | undefined
+    let hardKillTimer: NodeJS.Timeout | undefined
+    let taskkillCallbackSeen = false
+    // spawn 成功后立即固定本次 root PID；Windows watchdog 绝不做名称/模糊 PID 匹配。
+    const rootPid = child.pid
+
+    const clearTimers = (): void => {
+      if (stdinEndTimer !== undefined) clearTimeout(stdinEndTimer)
+      if (timeoutTimer !== undefined) clearTimeout(timeoutTimer)
+      if (hardKillTimer !== undefined) clearTimeout(hardKillTimer)
+    }
 
     const finish = (result: ChildResult): void => {
       if (settled) return
       settled = true
-      clearTimeout(timer)
+      clearTimers()
       resolve(result)
+    }
+
+    const endStdinAfterMarker = (): void => {
+      // 给 roundtrip 后的收尾留一拍，再 EOF stdin → runner disposeAndExit(0)。
+      stdinEndTimer = setTimeout(() => {
+        if (!settled && !child.stdin.destroyed) child.stdin.end()
+      }, 250)
     }
 
     child.stdout.setEncoding('utf8')
@@ -281,8 +313,7 @@ export function runNode(spec: SpawnSpec): Promise<ChildResult> {
       stdout += chunk
       if (spec.endStdinOnMarker !== undefined && !markerSeen && spec.endStdinOnMarker.test(stdout + stderr)) {
         markerSeen = true
-        // 给 roundtrip 后的收尾留一拍，再 EOF stdin → runner disposeAndExit(0)。
-        setTimeout(() => child.stdin.end(), 250)
+        endStdinAfterMarker()
       }
     })
     child.stderr.setEncoding('utf8')
@@ -290,20 +321,48 @@ export function runNode(spec: SpawnSpec): Promise<ChildResult> {
       stderr += chunk
       if (spec.endStdinOnMarker !== undefined && !markerSeen && spec.endStdinOnMarker.test(stdout + stderr)) {
         markerSeen = true
-        setTimeout(() => child.stdin.end(), 250)
+        endStdinAfterMarker()
       }
     })
 
-    const timer = setTimeout(() => {
-      child.kill()
-      finish({ code: null, stdout, stderr, timedOut: true })
+    timeoutTimer = setTimeout(() => {
+      timedOut = true
+      if (process.platform === 'win32' && rootPid !== undefined && rootPid > 0) {
+        // 先收整棵树，不能先 child.kill()：root 消失后 descendant 继承的 pipe 会拖住 close。
+        execFile('taskkill', ['/PID', String(rootPid), '/T', '/F'], { windowsHide: true }, (error) => {
+          taskkillCallbackSeen = true
+          // taskkill 启动/执行失败时才回退到精确的 child handle；仍由 close 结算。
+          if (error !== null && !settled) {
+            try { child.kill() } catch { /* close/error 监听保留诊断 */ }
+          }
+        })
+      } else {
+        try {
+          child.kill()
+        } catch {
+          // 仍启动 watchdog；close 是唯一结算点。
+        }
+      }
+      hardKillTimer = setTimeout(() => {
+        if (settled) return
+        if (process.platform === 'win32') {
+          // taskkill callback 迟迟不回时，精确 child handle 是最后兜底；不按名称/PID 模糊匹配。
+          if (!taskkillCallbackSeen) {
+            try { child.kill() } catch { /* close/error 监听保留诊断 */ }
+          }
+          return
+        }
+        hardKillPosixChild(child)
+      }, 5_000)
     }, spec.timeoutMs)
 
     child.on('error', (error) => {
-      finish({ code: null, stdout, stderr, timedOut: false, spawnError: error.message })
+      if (!timedOut) finish({ code: null, stdout, stderr, timedOut: false, spawnError: error.message })
     })
     child.on('close', (code) => {
-      finish({ code, stdout, stderr, timedOut: false })
+      finish(timedOut
+        ? { code: null, stdout, stderr, timedOut: true }
+        : { code, stdout, stderr, timedOut: false })
     })
   })
 }

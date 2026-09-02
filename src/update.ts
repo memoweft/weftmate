@@ -5,13 +5,14 @@
  *  - 只在「打包形态 + 配置了更新渠道」时启用；开发形态/无渠道 → enabled:false，UI 显示未配置。
  *  - 渠道 = 打包目录里的 app-update.yml（electron-builder 在配置 publish 时生成），或
  *    WEFTMATE_UPDATE_FEED 环境变量（预发布验证用）。
- *  - 签名：正式发布必须有签名证书（electron-builder 经 CSC_LINK/CSC_KEY_PASSWORD 环境变量；
- *    mac 另需公证）。未签名的包不做自动更新（updater 会拒绝不一致签名）。
+ *  - 签名：正式发布必须有可信签名证书。阶段 3 只允许未签名候选通过进程级 loopback feed
+ *    做受控工程升级；它不是已签名预览发布，也不能转成公共更新源。
  *  - 状态机只保留 UI 需要的极简叶子，绝不 log 任何路径/凭据。
  */
 import { app, BrowserWindow } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
+import { sanitizeUpdateFailure } from './update-policy.ts'
 
 export type UpdateStatus =
   | 'disabled'      // 未打包或未配置渠道
@@ -34,6 +35,13 @@ export interface UpdateState {
 const state: UpdateState = { enabled: false, status: 'disabled', version: null, error: null }
 let autoUpdater: typeof import('electron-updater').autoUpdater | null = null
 let installed = false
+let stateListener: ((state: UpdateState) => void) | null = null
+
+function publishState(getWindow?: () => BrowserWindow | null): void {
+  const snapshot = updateState()
+  try { getWindow?.()?.webContents.send('wm:update-state', snapshot) } catch { /* window may be closing */ }
+  try { stateListener?.(snapshot) } catch { /* lifecycle UI must not break updater */ }
+}
 
 /** 更新渠道：app-update.yml（打包内）或 WEFTMATE_UPDATE_FEED 环境变量（预发布验证）。 */
 function resolveFeed(): string | null {
@@ -54,8 +62,9 @@ export function updateState(): UpdateState {
 }
 
 /** 初始化：打包形态 + 有渠道才装 electron-updater（懒 import，dev 不加载）。 */
-export async function initUpdater(getWindow: () => BrowserWindow | null): Promise<UpdateState> {
-  if (installed) return state
+export async function initUpdater(getWindow: () => BrowserWindow | null, onStateChange?: (state: UpdateState) => void): Promise<UpdateState> {
+  if (onStateChange) stateListener = onStateChange
+  if (installed) { publishState(getWindow); return state }
   installed = true
   if (!app.isPackaged) return state // 开发形态永远 disabled
   const feed = resolveFeed()
@@ -78,26 +87,33 @@ export async function initUpdater(getWindow: () => BrowserWindow | null): Promis
     if (feed !== 'packaged') {
       updater.setFeedURL({ provider: 'generic', url: feed })
     }
-    const send = (s: UpdateState) => {
-      try { getWindow()?.webContents.send('wm:update-state', s) } catch { /* 窗口未就绪 */ }
+    updater.logger = {
+      info: () => undefined,
+      debug: () => undefined,
+      warn: (message: unknown) => console.warn(`[weftmate-updater] ${sanitizeUpdateFailure(message)}`),
+      error: (message: unknown) => console.error(`[weftmate-updater] ${sanitizeUpdateFailure(message)}`),
     }
     updater.autoDownload = true
-    updater.autoInstallOnAppQuit = true
-    updater.on('checking-for-update', () => { state.status = 'checking'; state.error = null; send(state) })
-    updater.on('update-available', (info) => { state.status = 'available'; state.version = info?.version ?? null; send(state) })
-    updater.on('update-not-available', () => { state.status = 'not-available'; send(state) })
-    updater.on('download-progress', () => { state.status = 'available'; send(state) })
-    updater.on('update-downloaded', (info) => { state.status = 'downloaded'; state.version = info?.version ?? state.version; send(state) })
+    // Preview updates are installed only after the user chooses the explicit
+    // tray action. A normal app exit must never silently mutate the install.
+    updater.autoInstallOnAppQuit = false
+    updater.on('checking-for-update', () => { state.status = 'checking'; state.error = null; publishState(getWindow) })
+    updater.on('update-available', (info) => { state.status = 'available'; state.version = info?.version ?? null; publishState(getWindow) })
+    updater.on('update-not-available', () => { state.status = 'not-available'; publishState(getWindow) })
+    updater.on('download-progress', () => { state.status = 'available'; publishState(getWindow) })
+    updater.on('update-downloaded', (info) => { state.status = 'downloaded'; state.version = info?.version ?? state.version; publishState(getWindow) })
     updater.on('error', (error) => {
       state.status = 'error'
-      state.error = error?.message ? error.message : String(error)
-      send(state)
+      state.error = sanitizeUpdateFailure(error)
+      publishState(getWindow)
     })
     state.enabled = true
     state.status = 'idle'
+    publishState(getWindow)
   } catch (error) {
     state.status = 'error'
-    state.error = error instanceof Error ? error.message : String(error)
+    state.error = sanitizeUpdateFailure(error)
+    publishState(getWindow)
   }
   return state
 }
@@ -110,7 +126,8 @@ export async function checkForUpdates(getWindow: () => BrowserWindow | null): Pr
     await autoUpdater.checkForUpdates()
   } catch (error) {
     state.status = 'error'
-    state.error = error instanceof Error ? error.message : String(error)
+    state.error = sanitizeUpdateFailure(error)
+    publishState(getWindow)
   }
   return state
 }

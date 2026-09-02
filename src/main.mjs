@@ -2,8 +2,8 @@
  * WeftMate · Electron 主进程（R1 · 官方 DSH web 基座）。
  *
  * 职责（docs/ARCHITECTURE.md v3 §2）：
- *   ① 凭据接缝：safeStorage 解密 active 模型档 → 只经子进程 env 注入（DEEPSEEK_API_KEY /
- *     DEEPSEEK_BASE_URL），key 不明文落盘。
+ *   ① 凭据接缝：safeStorage 解密按 ref 请求的模型密钥 → 只经受管 Node child IPC 返回给
+ *     固定 DSH provider；密钥不明文落盘，也不进入子进程环境。
  *   ② 运行时：boot 时把 profile `weftmate` 写进 dsh-home（bundles [dsh-base, dsh-web-app]
  *     + cordis.patch.yml 补丁层），spawn 官方 CLI `dsh --profile weftmate --port 0`
  *     （ELECTRON_RUN_AS_NODE=1，Node 用 Electron 自带，不依赖 PATH 里的 node）。
@@ -14,10 +14,28 @@
  *
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen } from 'electron';
-import { join } from 'node:path';
-import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, existsSync, rmSync } from 'node:fs';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme } from 'electron';
+import { normalizeApiBaseUrl } from './stage2-config.ts';
+import { switchActiveModel } from './model-switch-transaction.ts';
+import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './openai-compatible-client.ts';
+import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
+import { resolveModelSaveCredential } from './model-save-policy.ts';
+import { routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
+import { assertModelProfileMutationAllowed } from './model-profile-guard.ts';
+import { buildRedactedDiagnostics } from './diagnostics-export.ts';
+import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
+import { runRecoverableProfileMutation } from './model-mutation-transaction.ts';
+import { assertAuthoritativeSessionsIdle, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
+import { createRouteMutationJournal, recoverRouteMutationJournalFiles } from './route-mutation-journal.ts';
+import { createRouteMutationQueue } from './route-mutation-queue.ts';
+import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from './renderer-trust.ts';
+import { join, resolve } from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, existsSync, renameSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
+import { randomUUID } from 'node:crypto';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import {
   createLocalDataWipeMarker,
   localDataWipeLaunchRequest,
@@ -34,6 +52,13 @@ import {
   tuckPetBounds,
 } from './desktop-pet-motion.ts';
 import { DshWebRuntime } from './dsh-web-runtime.ts';
+import {
+  createOfficialDshSettingsClient,
+  migrateLegacyRoutes,
+  officialCredentialRef,
+  verifyLegacyRouteMigration,
+} from './dsh-settings-migration.ts';
+import { formatHarnessStartupError } from './harness-startup-error.ts';
 import { checkForUpdates, initUpdater, quitAndInstall, updateState } from './update.ts';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
@@ -43,7 +68,13 @@ import { initDevices } from './devices.ts';
 // 大小写不敏感冲突——Windows 上 'WeftMate' ≡ 'weftmate' 是同一目录，产品名命名无效）。
 // 隔离目的：① 单实例锁不再互斥（dev 与打包可同时跑）；② v2 遗留的开发数据
 // （weftmate.db/旧画像/旧设置）不进产品目录。必须在任何 userData 读取（含顶部擦除请求）之前设置。
-if (app.isPackaged) {
+const requestedUserData = typeof process.env.WEFTMATE_USER_DATA === 'string'
+  ? process.env.WEFTMATE_USER_DATA.trim()
+  : '';
+if (requestedUserData) {
+  // dogfood/自动化使用专用目录；必须早于 wipe、单实例锁和任何设置读取。
+  app.setPath('userData', resolve(requestedUserData));
+} else if (app.isPackaged) {
   app.setPath('userData', join(app.getPath('appData'), 'com.memoweft.weftmate'));
 }
 
@@ -67,11 +98,17 @@ if (wipeLaunch) {
 Menu.setApplicationMenu(null);
 
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
+function redactSecretText(value) {
+  return String(value ?? '')
+    .replace(/(authorization\s*[:=]\s*bearer\s+)[^\s,;"'}]+/gi, '$1[REDACTED]')
+    .replace(/((?:api[_-]?key|token|secret|password)\s*[=:]\s*["']?)[^\s,;"'}]+/gi, '$1[REDACTED]');
+}
+
 function logCrash(kind, err) {
   try {
     const p = join(app.getPath('userData'), 'weftmate-crash.log');
     try { if (statSync(p).size > 1_000_000) writeFileSync(p, ''); } catch { /* 首次无文件 */ }
-    const detail = err && err.stack ? err.stack : String(err);
+    const detail = redactSecretText(err && err.stack ? err.stack : String(err));
     appendFileSync(p, `[${new Date().toISOString()}] ${kind}: ${detail}\n`);
   } catch { /* 日志都写不了就算了,别二次崩 */ }
 }
@@ -88,7 +125,7 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   // 第二个实例被拉起(用户又点了图标):把已在跑的窗口唤到前台。
   app.on('second-instance', showWindow);
-  app.whenReady().then(bootstrap);
+  app.whenReady().then(bootstrap).catch((error) => failBootstrap(error));
 }
 
 let win = null;
@@ -122,16 +159,165 @@ let desktopPetDocked = false;
 let desktopPetIgnoreMovedUntil = 0;
 let isQuitting = false; // 是否在真退出(区分"关窗收托盘" vs "退出应用")
 let cleanupDone = false; // shutdown() 是否已跑完(before-quit 二次放行)
+let shutdownPromise = null; // 只允许一个异步退出收尾，避免 before-quit 重入。
+let startupExitCode = 0;
+let startupFailureReported = false;
 let wipeRelaunching = false;
 let webBootReloads = 0; // web boot 失败自愈计数（防抖限次）
+let runtimeOrigin = null; // 当前共享官方 DSH Web 的精确 loopback origin。
+let trustedRuntimeOrigin = null; // 仅当前 origin + 当前 main frame 才可拥有壳 IPC。
+let stageOneEventsAbort = null;
+const activeStageOneTurns = new Set();
+let ensureSharedRuntime = null;
+let saveModelRoute = null;
+let enqueueExclusiveMainOperation = null;
+let exclusiveMainQueue = null;
+// Sidebar fetching is intentionally best-effort, but the startup reference
+// scan is a safety boundary: until it has completed, profile mutation must not
+// be allowed to orphan a session merely because the gateway was unavailable.
+let sessionReferenceScan = { state: 'pending', error: null };
+const execFileAsync = promisify(execFile);
+
+function stageOneFailure(error) {
+  if (error?.code === 'approval-not-pending') {
+    return { ok: false, error: '该工具许可已经失效，请重新发起这项操作。' };
+  }
+  if (error?.code === 'session-model-ownership-unknown') {
+    return { ok: false, error: error.message };
+  }
+  const name = error?.name === 'AbortError' ? '连接超时' : '连接或验证失败';
+  return { ok: false, error: `${name}。请检查 API 地址、API Key 和模型后重试。` };
+}
+
+/** Keep unrelated settings writes from being lost to a failed raw-byte rollback. */
+function enqueueSettingsFileWrite(label, work) {
+  if (!enqueueExclusiveMainOperation) {
+    try { work(); } catch (error) { logCrash(label, error); }
+    return;
+  }
+  void enqueueExclusiveMainOperation(() => work()).catch((error) => logCrash(label, error));
+}
+
+function activeModelProfile() {
+  const view = settingsMod?.listModelProfiles?.() ?? { profiles: [], activeId: null };
+  return view.profiles.find((profile) => profile.id === view.activeId) ?? null;
+}
+
+function publicModelView() {
+  const view = settingsMod?.listModelProfiles?.() ?? { profiles: [], activeId: null };
+  const profiles = view.profiles.map((profile) => {
+    const route = routeForProfile(profile.id);
+    // During the one-time migration the same secret moves from the private
+    // profile id to DSH's route ref and finally to the official provider ref.
+    // Diagnostics and retained-data checks must recognise every exact alias
+    // without decrypting or projecting the value.
+    const hasKey = [profile.id, route.apiKeyEnv, officialCredentialRef(route.provider)]
+      .some((ref) => !!configStoreMod?.getCredential?.(ref));
+    return { ...profile, hasKey };
+  });
+  const active = profiles.find((profile) => profile.id === view.activeId) ?? null;
+  return { profiles, activeId: view.activeId, configured: !!active?.hasKey, active };
+}
+
+async function discoverOpenAICompatible({ baseUrl, apiKey }) {
+  return discoverOpenAICompatibleModels({ baseUrl, apiKey });
+}
+
+async function validateStageOneModel({ baseUrl, apiKey, model }) {
+  return verifyOpenAICompatibleModel({ baseUrl, apiKey, model });
+}
+
+/**
+ * 本机测试便利入口。密钥只经子进程 stdout 管道进入当前主进程栈，
+ * 随即完成真实验证并交给 config-store 的 safeStorage；绝不进入 renderer、命令行、
+ * 普通配置、日志或错误对象。调用方不得保留返回值。
+ */
+async function readCurrentLocalServiceKey() {
+  const script = [
+    "$ErrorActionPreference = 'Stop'",
+    "$items = @(Get-CimInstance Win32_Process -Filter \"Name = 'llama-server.exe'\" | Where-Object { $_.CommandLine -match '--api[-_]key' })",
+    'if ($items.Count -ne 1) { exit 41 }',
+    "$match = [regex]::Match($items[0].CommandLine, '(?i)--api[-_]key\\s+(?:\\\"(?<key>[^\\\"]+)\\\"|(?<key>[^\\s]+))')",
+    'if (!$match.Success) { exit 42 }',
+    '[Console]::Out.Write($match.Groups[\'key\'].Value)',
+  ].join('; ');
+  try {
+    const { stdout } = await execFileAsync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script], { windowsHide: true, maxBuffer: 8 * 1024 });
+    const apiKey = String(stdout).trim();
+    if (!apiKey || apiKey.length > 4096) throw new Error('local service credential is unavailable');
+    return apiKey;
+  } catch {
+    throw new Error('local service credential is unavailable');
+  }
+}
+
+async function activateStageOneConfig(clean) {
+  if (!saveModelRoute) throw new Error('模型路由尚未完成安全初始化');
+  return saveModelRoute({ ...clean, provider: 'openai-compatible' });
+}
+
+async function stageOneGateway(path, init = {}) {
+  if (!runtimeOrigin) throw new Error('runtime unavailable');
+  const response = await fetch(new URL(`/weftmate/api/v1${path}`, runtimeOrigin), { ...init, headers: { 'content-type': 'application/json', ...(init.headers ?? {}) } });
+  const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error('gateway request failed'); return body;
+}
+
+function stopStageOneEvents() { stageOneEventsAbort?.abort(); stageOneEventsAbort = null; }
+function startStageOneEvents(sessionId) {
+  stopStageOneEvents(); const controller = new AbortController(); stageOneEventsAbort = controller;
+  void (async () => { try {
+    if (!runtimeOrigin) throw new Error('session runtime unavailable');
+    const response = await fetch(new URL(`/weftmate/api/v1/sessions/${encodeURIComponent(sessionId)}/events`, runtimeOrigin), { signal: controller.signal });
+    if (!response.ok || !response.body) throw new Error('event stream unavailable');
+    const reader = response.body.getReader(); let pending = '';
+    while (!controller.signal.aborted) { const next = await reader.read(); if (next.done) break; pending += new TextDecoder().decode(next.value, { stream: true }); let boundary;
+      while ((boundary = pending.indexOf('\n\n')) >= 0) { const frame = pending.slice(0, boundary); pending = pending.slice(boundary + 2); const data = frame.split('\n').find((line) => line.startsWith('data: ')); if (!data) continue; try { const event = JSON.parse(data.slice(6)); if (event?.type === 'turn.started') activeStageOneTurns.add(sessionId); if (event?.type === 'turn.stopped') activeStageOneTurns.delete(sessionId); win?.webContents.send('wm:stage1:event', event); } catch {} }
+    }
+  } catch (error) { if (!controller.signal.aborted) win?.webContents.send('wm:stage1:runtime-error', stageOneFailure(error)); } })();
+}
 
 /** 把窗口唤到前台(托盘点击 / 第二实例 / 菜单"显示")。 */
 function showWindow() {
-  if (!win) return;
+  if (!win || win.isDestroyed()) return;
   if (win.isMinimized()) win.restore();
   win.show();
   win.focus();
 }
+
+function requestFatalStartupExit(kind, error, view) {
+  if (startupFailureReported) return;
+  startupFailureReported = true;
+  startupExitCode = 1;
+  logCrash(kind, error);
+  console.error(`[weftmate] ✗ ${kind}:`, error && error.message ? error.message : error);
+  try {
+    dialog.showErrorBox(view.title, view.message);
+  } catch (dialogError) {
+    // Windows 原生对话框若不可用，崩溃日志和 stderr 仍保留完整诊断。
+    logCrash('startup-error-dialog', dialogError);
+  }
+  app.quit();
+}
+
+function failHarnessStartup(error) {
+  requestFatalStartupExit('Harness 启动失败', error, formatHarnessStartupError(error));
+}
+
+function failBootstrap(error) {
+  requestFatalStartupExit('主进程启动失败', error, {
+    title: 'WeftMate 启动失败',
+    message: 'WeftMate 未能完成启动。请重试；若问题持续，请查看本机 WeftMate 崩溃日志。',
+  });
+}
+
+// dogfood 启动器以 IPC 请求干净退出；普通 Electron 启动永远不开放此控制面。
+process.on('message', (message) => {
+  if (process.env.WEFTMATE_DOGFOOD_CONTROL !== '1'
+    || !message || typeof message !== 'object' || message.type !== 'weftmate:quit') return;
+  console.log('[weftmate] 收到 dogfood 退出请求');
+  isQuitting = true;
+  app.quit();
+});
 
 const PET_WINDOW_SIZE = { width: 132, height: 132 };
 const PET_SHAPES = new Set(['orbit', 'sprout', 'wisp']);
@@ -190,10 +376,11 @@ function desktopPetBounds(saved = {}) {
 
 function persistDesktopPet(visible) {
   if (!settingsMod) return;
-  const bounds = desktopPetWin && !desktopPetWin.isDestroyed() ? desktopPetWin.getBounds() : settingsMod.getDesktopPetWindowState?.();
-  const freeActivity = settingsMod.getDesktopPetWindowState?.().freeActivity === true;
-  try { settingsMod.setDesktopPetWindowState?.({ visible: visible === true, x: bounds?.x, y: bounds?.y, freeActivity }); }
-  catch (error) { logCrash('desktop-pet-settings', error); }
+  enqueueSettingsFileWrite('desktop-pet-settings', () => {
+    const bounds = desktopPetWin && !desktopPetWin.isDestroyed() ? desktopPetWin.getBounds() : settingsMod.getDesktopPetWindowState?.();
+    const freeActivity = settingsMod.getDesktopPetWindowState?.().freeActivity === true;
+    settingsMod.setDesktopPetWindowState?.({ visible: visible === true, x: bounds?.x, y: bounds?.y, freeActivity });
+  });
 }
 
 function desktopPetVisible() {
@@ -211,8 +398,10 @@ function notifyDesktopPetVisibility() {
 }
 
 function setDesktopPetFreeActivity(enabled) {
-  const previous = settingsMod?.getDesktopPetWindowState?.() ?? { visible: desktopPetVisible(), freeActivity: false };
-  settingsMod?.setDesktopPetWindowState?.({ ...previous, visible: desktopPetVisible(), freeActivity: enabled === true });
+  enqueueSettingsFileWrite('desktop-pet-free-activity', () => {
+    const previous = settingsMod?.getDesktopPetWindowState?.() ?? { visible: desktopPetVisible(), freeActivity: false };
+    settingsMod?.setDesktopPetWindowState?.({ ...previous, visible: desktopPetVisible(), freeActivity: enabled === true });
+  });
   if (enabled) {
     desktopPetNextWanderAt = Date.now() + 8_000;
     startDesktopPetActivityController();
@@ -727,14 +916,138 @@ async function loadCompanion() {
 
 async function bootstrap() {
   // ── R1 · 官方 DSH web 基座：产品面全部经官方 web（子进程托管 127.0.0.1 前端）──
-  // 先解密已存模型配置（safeStorage 只在 main；凭据接缝在 spawn 时经子进程 env 注入）。
+  // A crash journal must be restored before *any* config/vault import, legacy
+  // migration, patch read, or runtime construction.  Those modules may
+  // otherwise normalize/rewrite exactly the bytes the journal protects.
+  const userDataDir = app.getPath('userData');
+  const dshHome = join(userDataDir, 'dsh-home');
+  const ROUTES_PATCH = join(dshHome, 'weftmate-stage2-model-routes.patch.yml');
+  const SECURITY_PATCH = join(dshHome, 'weftmate-security-credentials.patch.yml');
+  const ROUTE_MUTATION_JOURNAL = join(dshHome, 'weftmate-stage2-model-routes.recovery.json');
+  const OFFICIAL_ROUTE_MIGRATION_MARKER = join(dshHome, 'weftmate-stage2-official-routes-migration.json');
+  const isRoutePatchRetired = () => {
+    try { return /providers:\s*\{\}/.test(readFileSync(ROUTES_PATCH, 'utf8')); }
+    catch { return false; }
+  };
+  const readOfficialRouteMigrationMarker = () => {
+    try {
+      const marker = JSON.parse(readFileSync(OFFICIAL_ROUTE_MIGRATION_MARKER, 'utf8'));
+      if (marker?.schemaVersion !== 1 || marker?.authority !== 'official-dsh-user-settings'
+        || !Array.isArray(marker?.routes) || !marker.routes.every((route) => typeof route === 'string' && route.length > 0)) return null;
+      return new Set(marker.routes);
+    } catch { return null; }
+  };
+  const writeOfficialRouteMigrationMarker = (routes) => {
+    const marker = JSON.stringify({
+      schemaVersion: 1,
+      authority: 'official-dsh-user-settings',
+      routes: [...routes],
+    }, null, 2) + '\n';
+    mkdirSync(dshHome, { recursive: true });
+    const temporary = `${OFFICIAL_ROUTE_MIGRATION_MARKER}.${process.pid}.${randomUUID()}.tmp`;
+    try { writeFileSync(temporary, marker, { encoding: 'utf8', mode: 0o600 }); renameSync(temporary, OFFICIAL_ROUTE_MIGRATION_MARKER); }
+    catch (error) { try { rmSync(temporary, { force: true }); } catch { /* do not replace a valid prior marker */ } throw error; }
+  };
+  // This is deliberately recomputed *after* recovery below. A recovered
+  // route-mutation journal may replace the bytes of ROUTES_PATCH.
+  let legacyRoutePatchRetired = false;
+  let officialRouteMigrationComplete = false;
+  let officialRouteMigrationRoutes = new Set();
+  /** Last CLI overlay: even a handwritten profile patch cannot re-enable the
+   * file-backed credential provider after WeftMate selected safeStorage IPC. */
+  function writeCredentialSecurityPatch() {
+    const content = [
+      '# Generated by WeftMate. This final CLI overlay keeps secrets out of DSH_HOME.',
+      '- id: credentials',
+      '  disabled: true',
+      '- id: weftmate-credentials',
+      '  disabled: true',
+      '# This reserved root insert is authoritative even when an owner patch',
+      '# omits or edits the old provider. A second credential service is a',
+      '# Cordis collision and therefore fails boot rather than falling back.',
+      '- insert:',
+      '    - id: weftmate-safe-credentials',
+      '      name: ./plugins/weftmate-credentials.mjs',
+      '',
+    ].join('\n');
+    mkdirSync(dshHome, { recursive: true });
+    const temporary = `${SECURITY_PATCH}.${process.pid}.${randomUUID()}.tmp`;
+    try { writeFileSync(temporary, content, { encoding: 'utf8', mode: 0o600 }); renameSync(temporary, SECURITY_PATCH); }
+    catch (error) { try { rmSync(temporary, { force: true }); } catch { /* retain last safe patch */ } throw error; }
+  }
+  try {
+    recoverRouteMutationJournalFiles({ journalPath: ROUTE_MUTATION_JOURNAL,
+      settingsPath: join(userDataDir, 'weftmate-settings.json'), vaultPath: join(userDataDir, 'weftmate-model.enc'), patchPath: ROUTES_PATCH });
+  } catch (error) {
+    requestFatalStartupExit('模型路由恢复失败', error, {
+      title: 'WeftMate 启动已安全停止',
+      message: '检测到损坏或无法恢复的模型路由记录。为保护原有模型设置和凭据，WeftMate 没有继续启动。',
+    });
+    return;
+  }
+  const restoredOfficialMigrationRoutes = readOfficialRouteMigrationMarker();
+  officialRouteMigrationComplete = restoredOfficialMigrationRoutes !== null;
+  officialRouteMigrationRoutes = restoredOfficialMigrationRoutes ?? new Set();
+  legacyRoutePatchRetired = officialRouteMigrationComplete || isRoutePatchRetired();
+  // 先加载 safeStorage vault；现有密钥只在 DSH 受管 child IPC 按 ref 请求时解密。
   try {
     configStoreMod = await import('./config-store.ts');
-    configStoreMod.injectEnv();
-    console.log('[weftmate] ✓ 模型配置已注入 env(若已配)');
+    console.log('[weftmate] ✓ 模型凭据保险库已就绪');
   } catch (e) {
     console.error('[weftmate] 读模型配置失败(当作未配,官方 Models 页可配):', e && e.message ? e.message : e);
   }
+
+  // Stage 4A development seam: an operator may seed the AI-Game capability
+  // once into safeStorage. The value is deleted from Electron's environment
+  // before the managed DSH child is constructed; only ctx.credentials can
+  // resolve it afterward. Packaged Stage 3 does not start or imply AI-Game.
+  const AI_GAME_CREDENTIAL_REF = 'WEFTMATE_AI_GAME_CAPABILITY_TOKEN';
+  const AI_GAME_PRINCIPAL_REF = 'WEFTMATE_AI_GAME_PRINCIPAL_ID';
+  const AI_GAME_CONTROLLER_REF = 'WEFTMATE_AI_GAME_CONTROLLER_ID';
+  const aiGameDevelopmentToken = app.isPackaged
+    ? undefined
+    : process.env.WEFTMATE_AI_GAME_DEV_TOKEN;
+  delete process.env.WEFTMATE_AI_GAME_DEV_TOKEN;
+  if (typeof aiGameDevelopmentToken === 'string'
+    && aiGameDevelopmentToken.length >= 16 && aiGameDevelopmentToken.length <= 4096) {
+    try { configStoreMod?.saveCredential?.(AI_GAME_CREDENTIAL_REF, aiGameDevelopmentToken); }
+    catch { console.warn('[weftmate] AI-Game 开发 capability 未能写入安全凭据库。'); }
+  }
+  // Stable per-installation capability owner pair. These values are
+  // intentionally non-secret, but remain host-only: the credential bridge
+  // keeps them out of renderer state, URLs, ordinary settings, child env, and
+  // logs. The bearer token authenticates requests but never defines ownership.
+  try {
+    for (const [ref, prefix] of [
+      [AI_GAME_PRINCIPAL_REF, 'principal'],
+      [AI_GAME_CONTROLLER_REF, 'controller'],
+    ]) {
+      const existingId = configStoreMod?.getCredential?.(ref);
+      if (typeof existingId !== 'string'
+        || !/^[A-Za-z0-9._:-]{1,256}$/.test(existingId)) {
+        configStoreMod?.saveCredential?.(
+          ref,
+          `${prefix}_${randomUUID().replaceAll('-', '')}`,
+        );
+      }
+    }
+  } catch {
+    console.warn('[weftmate] AI-Game 本机 owner identity 未能持久化；v2 capability 将保持不可用。');
+  }
+  let aiGameDevelopmentOrigin = '';
+  if (!app.isPackaged) {
+    try {
+      const candidate = new URL(String(process.env.WEFTMATE_AI_GAME_ORIGIN ?? '').trim());
+      const port = Number(candidate.port);
+      if (candidate.protocol === 'http:' && candidate.hostname === '127.0.0.1'
+        && candidate.username === '' && candidate.password === ''
+        && candidate.pathname === '/' && candidate.search === '' && candidate.hash === ''
+        && Number.isInteger(port) && port >= 1024 && port <= 65535) {
+        aiGameDevelopmentOrigin = candidate.origin;
+      }
+    } catch { /* missing/invalid origin keeps only the tool locally unavailable */ }
+  }
+  process.env.WEFTMATE_AI_GAME_ORIGIN = aiGameDevelopmentOrigin;
 
   // settings.ts 仍驻 main：桌面宠物窗口状态（本机显示偏好）归它。
   try {
@@ -748,9 +1061,8 @@ async function bootstrap() {
 
   // ── R1-02 · DSH web 运行时：写 profile → spawn 官方 CLI → 等官方 URL 行 ──
   //   DSH_HOME 指到 userData 隔离目录(profile/会话/设置/凭据文件同域)。
-  //   凭据接缝:active 模型档经 safeStorage 解密 → 只经子进程 env(DEEPSEEK_API_KEY/BASE_URL),不明文落盘。
+  //   凭据接缝:DSH provider 经受管 child IPC 按 ref 请求 safeStorage；密钥不进 child env 或普通文件。
   //   Electron 里用 process.execPath + ELECTRON_RUN_AS_NODE=1 当 node 用(不依赖 PATH 里的 node)。
-  const dshHome = join(app.getPath('userData'), 'dsh-home');
   // R2-02：工作区默认值 = userData/workspace（REQUIREMENTS 口径）。子进程 cwd = 此目录 →
   // sandbox-policy workspaceRoot = process.cwd()，沙箱 workspace-write 以它为界；官方 UI 工作区选择器可换。
   const workspaceDir = join(app.getPath('userData'), 'workspace');
@@ -768,8 +1080,20 @@ async function bootstrap() {
     } catch { return '0.0.0'; }
   };
   const appVersion = readAppVersion();
+  // These are product metadata only. DshWebRuntime removes all secret-shaped
+  // variables before spawning; its credential IPC remains the sole key path.
+  Object.assign(process.env, {
+    WEFTMATE_APP_VERSION: appVersion,
+    WEFTMATE_USER_DATA: app.getPath('userData'),
+    WEFTMATE_DSH_HOME: dshHome,
+    WEFTMATE_WORKSPACE: workspaceDir,
+    WEFTMATE_MEMOWEFT_ENABLED: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? '1' : '0',
+  });
   function writeHostState() {
     try {
+      // 故障路径也要留下可读诊断：DSH checkout 的预检失败可能发生在 profile
+      // 首次创建 dshHome 之前，不能让状态文件的父目录缺失掩盖原始失败原因。
+      mkdirSync(dshHome, { recursive: true });
       const payload = {
         schemaVersion: 1,
         app: { name: 'WeftMate', version: appVersion },
@@ -811,7 +1135,7 @@ async function bootstrap() {
     } catch { return; } // 半写/坏文件：下轮再读
     if (!raw || typeof raw.action !== 'string') return;
     try { rmSync(PERCEPTION_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
-    try {
+    enqueueSettingsFileWrite('perception-request', () => {
       if (raw.action === 'set-enabled') {
         settingsMod?.setPerceptionEnabled?.(raw.value === true);
       } else if (raw.action === 'set-capture') {
@@ -823,7 +1147,7 @@ async function bootstrap() {
       } else if (raw.action === 'set-mobile') {
         settingsMod?.setMobilePerceptionEnabled?.(raw.value === true);
       }
-    } catch (error) { logCrash('perception-request', error); }
+    });
   }
   // R6-01 · 感知采集面（main 侧）：opt-in、热生效；采样双工文件供运行时宿主插件出 UI/注入面。
   // R8-01 · 设备接缝（main 侧）：配对 token/设备登记/手机观察消费；手机段合并进感知采样。
@@ -860,71 +1184,483 @@ async function bootstrap() {
   setInterval(handlePerceptionRequests, 1_000).unref?.();
   setInterval(handlePetRequests, 1_000).unref?.();
 
-  webRuntime = new DshWebRuntime({
+  const routeMutationJournal = createRouteMutationJournal({ journalPath: ROUTE_MUTATION_JOURNAL, patchPath: ROUTES_PATCH,
+    restoreSettingsBytes: (bytes) => settingsMod.restoreSettingsBytes(bytes), restoreVaultBytes: (bytes) => configStoreMod.restoreVaultBytes(bytes) });
+  const routeMutationQueue = createRouteMutationQueue();
+  // One exclusive lane covers the snapshot/rollback transaction *and* any
+  // session or settings-file write that could otherwise cross its idle fence.
+  const enqueueRouteMutation = (work) => routeMutationQueue.run(work);
+  enqueueExclusiveMainOperation = enqueueRouteMutation;
+  exclusiveMainQueue = routeMutationQueue;
+  function verifiedLegacyCompatibilityProfile(profiles = settingsMod.listModelProfiles().profiles) {
+    const recorded = settingsMod.legacyCompatibilityProfileId();
+    const evidence = configStoreMod.legacyCompatibilityEvidence();
+    if (!recorded || !evidence || recorded !== evidence.id) return null;
+    const profile = profiles.find((item) => item.id === evidence.id) ?? null;
+    return profile && profile.baseUrl === evidence.baseUrl && profile.model === evidence.model ? profile : null;
+  }
+  /**
+   * DSH credential references are deliberately just POSIX-style identifiers.
+   * They are names, not environment variables in WeftMate: the child receives
+   * no secret environment at all, and this handler is the sole resolver.
+   */
+  const isCredentialRef = (value) => typeof value === 'string'
+    && /^[A-Za-z_][A-Za-z0-9_]*$/.test(value)
+    && value.length <= 160;
+  const profileForCredentialRef = (ref) => settingsMod.listModelProfiles().profiles
+    .find((profile) => routeForProfile(profile.id).apiKeyEnv === ref) ?? null;
+  /**
+   * Stage 2's first candidate keyed the vault by public profile id.  The DSH
+   * Models surface addresses credentials by `apiKeyEnv`, so migrate only the
+   * exact deterministic route alias on first access.  This stays entirely in
+   * Electron main and never exposes either identifier's value to the page.
+   */
+  const legacyCredentialForRef = (ref) => {
+    const current = configStoreMod.getCredential(ref);
+    if (current) return current;
+    const profile = profileForCredentialRef(ref);
+    if (!profile) return null;
+    return configStoreMod.getCredential(profile.id);
+  };
+  const migrateLegacyCredentialRef = (ref) => {
+    const current = configStoreMod.getCredential(ref);
+    if (current) return current;
+    const profile = profileForCredentialRef(ref);
+    if (!profile) return null;
+    const legacy = configStoreMod.getCredential(profile.id);
+    if (!legacy) return null;
+    configStoreMod.saveCredential(ref, legacy);
+    configStoreMod.removeCredential(profile.id);
+    return legacy;
+  };
+  const credentialRequestHandler = async ({ operation, ref, value }) => {
+    if (!isCredentialRef(ref)) throw new Error('invalid credential ref');
+    if (operation === 'resolve') {
+      const resolved = migrateLegacyCredentialRef(ref);
+      return resolved ? { value: resolved, source: 'weftmate-safe-storage' } : {};
+    }
+    if (operation === 'describe') {
+      return { configured: !!migrateLegacyCredentialRef(ref), source: 'weftmate-safe-storage', writable: true };
+    }
+    if (operation === 'set') {
+      if (typeof value !== 'string' || value.length === 0 || value.length > 4096) throw new Error('invalid credential value');
+      configStoreMod.saveCredential(ref, value);
+      // If a legacy profile-id entry remains, the ref is now authoritative.
+      const profile = profileForCredentialRef(ref);
+      if (profile) configStoreMod.removeCredential(profile.id);
+      return { changed: true };
+    }
+    if (operation === 'unset') {
+      configStoreMod.removeCredential(ref);
+      // A delete from the official page must not leave the old profile-id
+      // fallback silently usable after a restart.
+      const profile = profileForCredentialRef(ref);
+      if (profile) configStoreMod.removeCredential(profile.id);
+      return { changed: true };
+    }
+    throw new Error('unsupported credential operation');
+  };
+  const productDshRuntime = app.isPackaged
+    ? join(process.resourcesPath, 'dsh-runtime')
+    : join(app.getAppPath(), 'vendor', 'dsh-runtime');
+  const createWebRuntime = () => new DshWebRuntime({
+    // One process and one home are the Stage 0/1 durability boundary. Session
+    // provider/model selection, not a child process, owns model affinity.
     homeDir: dshHome,
     workspaceDir,
     nodeElectron: true,
-    // M5-01：打包形态强制 vendor 运行时（安装包 resources/dsh-runtime；开发形态沿用 checkout 默认）。
-    ...(app.isPackaged ? { runtimePath: join(process.resourcesPath, 'dsh-runtime') } : {}),
-    credentialEnv: () => {
-      const llm = configStoreMod?.readActiveLlms?.().llm;
-      // R3-02：品牌/数据目录接缝经子进程 env（宿主插件读；与凭据同纪律——只经 env，不落明文 key 之外的敏感物）。
-      const env = {
-        WEFTMATE_APP_VERSION: appVersion,
-        WEFTMATE_USER_DATA: app.getPath('userData'),
-        WEFTMATE_DSH_HOME: dshHome,
-        WEFTMATE_WORKSPACE: workspaceDir,
-        // R7：MemoWeft 本地桥环境（宿主插件 spawn python 用；可经外层 env 覆盖，缺省本机开发值）。
-        WEFTMATE_MEMOWEFT_PYTHON: process.env.WEFTMATE_MEMOWEFT_PYTHON || 'D:\\MemoWeft\\.venv-memoweft\\Scripts\\python.exe',
-        WEFTMATE_MEMOWEFT_PYTHONPATH: process.env.WEFTMATE_MEMOWEFT_PYTHONPATH || 'D:\\AIProjects\\MemoWeft\\Core\\py\\src',
-      };
-      if (!llm?.apiKey) return env;
-      // 官方 llm-deepseek 适配器：key 经 DEEPSEEK_API_KEY（credentials-local env 层优先），
-      // baseUrl 经 DEEPSEEK_BASE_URL（trusted env 层回退）。key 只经子进程 env，不明文落盘。
-      env.DEEPSEEK_API_KEY = llm.apiKey;
-      if (typeof llm.baseUrl === 'string' && llm.baseUrl.length > 0) env.DEEPSEEK_BASE_URL = llm.baseUrl;
-      return env;
-    },
-    log: (line) => console.log(`[weftmate] ${line}`),
+    // WeftMate 始终使用产品自有的固定 vendor runtime。开发版来自仓内
+    // vendor/dsh-runtime，安装版来自 resources/dsh-runtime；显式传值也会压过
+    // shell 中遗留的 WEFTMATE_DSH_CHECKOUT/WEFTMATE_DSH_RUNTIME，绝不启动个人 DSH checkout。
+    runtimePath: productDshRuntime,
+    // Security overlay is last: a preserved/handwritten profile patch cannot
+    // turn dsh-credentials-local back on after we chose safeStorage IPC.
+    patchFiles: [ROUTES_PATCH, SECURITY_PATCH],
+    // The child IPC bridge is the only secret path.  The non-secret runtime
+    // identity fields remain ordinary process metadata for our host plugins.
+    credentialRequestHandler,
+    log: (line) => console.log(`[weftmate] ${redactSecretText(line)}`),
   });
-  console.log('[weftmate] DSH_HOME =', dshHome);
-  let runtimeOrigin = null; // 当前受信 origin（崩溃重拉换源时跟随更新）
-  try {
+  async function replaceSharedRuntime() {
+    const profiles = settingsMod.listModelProfiles().profiles;
+    // Once the official settings migration is authoritative, this private
+    // overlay must stay empty forever. Otherwise an official Models delete
+    // would silently resurrect on the next child restart.
+    writeModelRoutesPatch(ROUTES_PATCH, (legacyRoutePatchRetired || officialRouteMigrationComplete) ? [] : profiles);
+    writeCredentialSecurityPatch();
+    const previous = webRuntime;
+    runtimeOrigin = null;
+    trustedRuntimeOrigin = null;
+    if (previous) await previous.close();
+    webRuntime = createWebRuntime();
+    webRuntime.onOrigin = (origin) => {
+      runtimeOrigin = origin;
+      if (origin) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));
+      else trustedRuntimeOrigin = null;
+    };
     runtimeOrigin = await webRuntime.start();
-    console.log('[weftmate] ✓ DSH web 运行时就绪:', runtimeOrigin, '（官方 URL 行出现）');
-  } catch (e) {
-    console.error('[weftmate] ✗ DSH web 运行时启动失败:', e && e.message ? e.message : e);
-    app.quit();
+    return runtimeOrigin;
+  }
+  async function mutateModelRouteTransaction(mutator) {
+    // Preflight both persistent documents before changing either one. The raw
+    // vault snapshot is opaque ciphertext; it never crosses the main-process
+    // boundary, diagnostics, or logs.
+    const settingsSnapshot = settingsMod.snapshotSettingsBytes();
+    configStoreMod.preflightVault();
+    const vaultSnapshot = configStoreMod.snapshotVaultBytes();
+    const patchSnapshot = existsSync(ROUTES_PATCH) ? readFileSync(ROUTES_PATCH) : null;
+    return runRecoverableProfileMutation({
+      snapshot: { settingsSnapshot, vaultSnapshot, patchSnapshot },
+      writeJournal: ({ settingsSnapshot, vaultSnapshot, patchSnapshot }) => routeMutationJournal.write({ settingsSnapshot, vaultSnapshot, patchSnapshot }),
+      apply: mutator,
+      restore: async ({ settingsSnapshot: settings, vaultSnapshot: vault, patchSnapshot: patch }) => {
+        settingsMod.restoreSettingsBytes(settings);
+        configStoreMod.restoreVaultBytes(vault);
+        if (patch === null) { if (existsSync(ROUTES_PATCH)) rmSync(ROUTES_PATCH, { force: true }); }
+        else writeFileSync(ROUTES_PATCH, patch, { mode: 0o600 });
+        // replaceSharedRuntime may already have closed the old child. Rebuild
+        // exactly one child using the compensated public/vault/patch state.
+        await replaceSharedRuntime();
+      },
+      clearJournal: routeMutationJournal.clear,
+    });
+  }
+  ensureSharedRuntime = async ({ reload = false } = {}) => {
+    if (reload || !webRuntime) return replaceSharedRuntime();
+    if (!runtimeOrigin) {
+      runtimeOrigin = await webRuntime.start();
+    }
+    return runtimeOrigin;
+  };
+  /**
+   * Private Stage-2 routes originally arrived through the CLI base patch. The
+   * official Models page correctly treats those as non-removable. Copy them
+   * once through DSH's own settings API, then restart with an empty base
+   * overlay so delete/edit is owned by the durable user settings layer.
+   *
+   * Ordering is recoverable: copy the target safeStorage ref first, commit
+   * the official live settings mutation, then retire the base patch. A crash
+   * can leave a harmless duplicate source, never a route without its key.
+   */
+  async function migrateLegacyRoutesToOfficialSettings() {
+    // A durable marker means the official user layer owns these routes. Do
+    // not inspect the retained Stage-2 compatibility profiles again: a user
+    // deletion in official Models is intentional and must not resurrect.
+    if (officialRouteMigrationComplete) return runtimeOrigin;
+    const profiles = settingsMod.listModelProfiles().profiles;
+    if (profiles.length === 0) {
+      legacyRoutePatchRetired = true;
+      writeModelRoutesPatch(ROUTES_PATCH, []);
+      return runtimeOrigin;
+    }
+    await assertRouteReloadSafe();
+    const expectedRoutes = profiles.map((profile) => {
+      const route = routeForProfile(profile.id);
+      const targetRef = officialCredentialRef(route.provider);
+      return {
+        profile, route, targetRef,
+        routeProjection: {
+          route: route.provider,
+          displayName: profile.name,
+          baseURL: profile.baseUrl,
+          models: [{ id: profile.model, name: profile.name, contextWindow: 262144, maxTokens: 32768 }],
+        },
+      };
+    });
+    // Copy first; if the process stops before the official mutation, the old
+    // base route and original key remain valid. We remove aliases only after
+    // restart verification below.
+    for (const item of expectedRoutes) {
+      const legacy = legacyCredentialForRef(item.route.apiKeyEnv) ?? configStoreMod.getCredential(item.profile.id);
+      if (legacy && !configStoreMod.getCredential(item.targetRef)) configStoreMod.saveCredential(item.targetRef, legacy);
+    }
+    if (!runtimeOrigin) throw new Error('official DSH runtime is unavailable');
+    const officialDsh = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+    // The helper validates exact loopback origin, rpcId correlation, bounded
+    // unary transport, optimistic-concurrency retry, and user-route conflicts.
+    await migrateLegacyRoutes(officialDsh, expectedRoutes.map((item) => item.routeProjection));
+    legacyRoutePatchRetired = true;
+    writeModelRoutesPatch(ROUTES_PATCH, []);
+    const restarted = await replaceSharedRuntime();
+    const restartedDsh = createOfficialDshSettingsClient({ origin: restarted });
+    const restartedSettings = await restartedDsh.describeSettings();
+    const migratedCredentials = expectedRoutes.filter((item) => (
+      legacyCredentialForRef(item.route.apiKeyEnv) ?? configStoreMod.getCredential(item.profile.id)
+    )).map((item) => item.targetRef);
+    const credentialRows = migratedCredentials.length > 0
+      ? await restartedDsh.describeCredentials(migratedCredentials)
+      : undefined;
+    // `verifyLegacyRouteMigration` treats a supplied map as a requirement for
+    // every route. Some legacy profiles legitimately had no key, so verify
+    // route ownership first and only require rows for credentials that existed.
+    const verification = verifyLegacyRouteMigration(expectedRoutes.map((item) => item.routeProjection), restartedSettings);
+    if (!verification.ok) throw new Error(`official DSH route migration verification failed after restart: ${verification.reasons.join('; ')}`);
+    for (const ref of migratedCredentials) {
+      if (credentialRows?.[ref]?.configured !== true || credentialRows?.[ref]?.writable !== true) {
+        throw new Error(`official DSH migrated credential is unavailable after restart: ${ref}`);
+      }
+    }
+    // Crash-forward marker is written only after the restarted child proves
+    // user-layer ownership. It prevents future reloads from restoring a base
+    // route the user has later deleted in official Models.
+    const migratedRouteNames = expectedRoutes.map((item) => item.route.provider);
+    writeOfficialRouteMigrationMarker(migratedRouteNames);
+    officialRouteMigrationComplete = true;
+    officialRouteMigrationRoutes = new Set(migratedRouteNames);
+    for (const item of expectedRoutes) {
+      // Now, and only now, remove the pre-official aliases.
+      configStoreMod.removeCredential(item.route.apiKeyEnv);
+      configStoreMod.removeCredential(item.profile.id);
+    }
+    return restarted;
+  }
+  /**
+   * A marker is written only after the restarted runtime verified durable
+   * official ownership. If the app died between that marker and alias cleanup,
+   * finish the idempotent cleanup on the next boot. We deliberately do not
+   * recreate routes here: an absent route is an official Models deletion.
+   */
+  function cleanupMarkedLegacyCredentialAliases() {
+    if (!officialRouteMigrationComplete) return;
+    for (const profile of settingsMod.listModelProfiles().profiles) {
+      const route = routeForProfile(profile.id);
+      if (!officialRouteMigrationRoutes.has(route.provider)) continue;
+      configStoreMod.removeCredential(route.apiKeyEnv);
+      configStoreMod.removeCredential(profile.id);
+    }
+  }
+  webRuntime = createWebRuntime();
+  // The journal was recovered before imports above.  From this point onward
+  // every route mutation enters the same queue before it can write one again.
+  try {
+    const legacy = configStoreMod?.migrateLegacyProfiles?.();
+    if (legacy?.pending) {
+      await enqueueRouteMutation(() => mutateModelRouteTransaction(async () => {
+        const imported = settingsMod.importLegacyModelProfiles?.(legacy.profiles, legacy.activeId);
+        if (!imported || imported.rejected.length > 0) throw new Error('旧模型公开元数据未被完整接受；保留原凭据档。');
+        // Replace the Stage 1 vault only after the public profiles and the
+        // explicit legacy compatibility profile are durable.
+        configStoreMod?.completeLegacyMigration?.();
+      }));
+    }
+  } catch (error) {
+    requestFatalStartupExit('旧模型迁移失败', error, {
+      title: 'WeftMate 启动已安全停止',
+      message: '旧模型配置无法在受保护的路由事务中迁移，原始配置已保留。',
+    });
     return;
   }
-  // 崩溃重拉换源 → 主窗口重载新 origin（官方 UI 状态由官方 storage/会话落盘保底）。
-  webRuntime.onOrigin = (origin) => {
-    if (origin === null) {
-      console.log('[weftmate] DSH web 运行时已退出，后台重拉中…');
+  // Older v2 candidate installs retain encrypted legacyPayload but predate the
+  // public compatibility marker.  Backfill only exact evidence, journalled so
+  // a crash restores the prior public/vault/patch bytes as one transaction.
+  if (!settingsMod.legacyCompatibilityProfileId() && configStoreMod.legacyCompatibilityEvidence()) {
+    try {
+      await enqueueRouteMutation(() => mutateModelRouteTransaction(async () => {
+        settingsMod.backfillLegacyCompatibilityProfile(configStoreMod.legacyCompatibilityEvidence());
+      }));
+    } catch (error) {
+      requestFatalStartupExit('旧模型兼容归属回填失败', error, {
+        title: 'WeftMate 启动已安全停止',
+        message: '旧模型兼容归属无法安全回填，原有设置与凭据已保留。',
+      });
       return;
     }
-    runtimeOrigin = origin;
-    console.log('[weftmate] ✓ DSH web 运行时已重拉:', origin);
-    if (win && !win.isDestroyed() && win.webContents.getURL() !== origin) {
-      win.loadURL(origin).catch((e) => console.error('[weftmate] ✗ 重载新 origin 失败:', e && e.message ? e.message : e));
-    }
+  }
+  try { cleanupMarkedLegacyCredentialAliases(); }
+  catch (error) { logCrash('official-route-migration-alias-cleanup', error); }
+  console.log('[weftmate] DSH_HOME =', dshHome);
+  runtimeOrigin = null;
+  // Official DSH is also the first-run Models/onboarding surface, so it must
+  // boot before any private WeftMate profile exists.  Start it after the
+  // BrowserWindow and its exact-origin fence have been installed below.
+  sessionReferenceScan = { state: 'ready', error: null };
+  // Kept solely to fail closed for dormant migration-only stage-1 handlers.
+  // The main window never loads this local page once the DSH surface is ready.
+  const legacyRendererUrl = pathToFileURL(join(import.meta.dirname, 'web', 'weftmate.html')).href;
+  const TITLE_BAR_OVERLAY_HEIGHT = 40;
+  let dshResolvedTheme = null;
+  let dshSurfaceBackgroundColor = null;
+  // The renderer sends only `getComputedStyle(body).backgroundColor`. Recheck
+  // it in main: CSS variables, URLs, named colours and unbounded expressions
+  // never cross this narrow visual-only IPC seam.
+  const normalizeSurfaceColor = (value) => {
+    if (typeof value !== 'string') return null;
+    const color = value.trim();
+    if (color.length < 4 || color.length > 32) return null;
+    if (/^#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i.test(color)) return color;
+    const match = /^rgba?\(\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})(?:\s*,\s*(0|1|0\.\d{1,3}))?\s*\)$/i.exec(color);
+    if (!match || (color.slice(0, 4).toLowerCase() === 'rgba' && match[4] === undefined)
+      || (color.slice(0, 4).toLowerCase() === 'rgb(' && match[4] !== undefined)) return null;
+    if ([match[1], match[2], match[3]].some((part) => Number(part) > 255)) return null;
+    return color;
   };
-
-  // ── R1-03 · 主窗口：官方前端 origin（loopback + 官方 trust fence；受信 webContents）──
+  const nativeWindowPalette = (resolvedTheme = dshResolvedTheme) => (resolvedTheme === 'dark'
+    || (resolvedTheme !== 'light' && nativeTheme.shouldUseDarkColors))
+    ? { background: '#121619', symbols: '#e8edf1' }
+    : { background: '#f7f8fa', symbols: '#15202b' };
+  const updateNativeWindowColors = (resolvedTheme = dshResolvedTheme, surfaceColor = dshSurfaceBackgroundColor) => {
+    const palette = nativeWindowPalette(resolvedTheme);
+    const background = surfaceColor ?? palette.background;
+    if (!win || win.isDestroyed()) return palette;
+    try { win.setBackgroundColor(background); } catch { /* window closed between the guard and update */ }
+    if (process.platform === 'win32' && typeof win.setTitleBarOverlay === 'function') {
+      try { win.setTitleBarOverlay({ color: background, symbolColor: palette.symbols, height: TITLE_BAR_OVERLAY_HEIGHT }); }
+      catch { /* retain the already-applied renderer theme if native overlay is unavailable */ }
+    }
+    return palette;
+  };
+  const applyNativeTheme = (theme) => {
+    const value = theme === 'light' || theme === 'dark' ? theme : 'system';
+    nativeTheme.themeSource = value;
+    updateNativeWindowColors();
+    return value;
+  };
+  let surfaceNavigation = Promise.resolve();
+  /**
+   * A DSH restart receives a new port. Revoke the old origin before loading
+   * the replacement, then make the new one authoritative only for this exact
+   * BrowserWindow main frame.  No `localhost`/host-only trust shortcut.
+   */
+  function navigateToRuntimeSurface(origin) {
+    // Preserve a rejected caller result, but never poison the serial lane:
+    // the next runtime port must still be able to navigate after one failed
+    // loadURL (for example a child that died during first paint).
+    const request = surfaceNavigation.catch(() => undefined).then(async () => {
+      if (!win || win.isDestroyed() || runtimeOrigin !== origin) return;
+      if (trustedRuntimeOrigin === origin && !blocksUnexpectedRendererNavigation(win.webContents.getURL(), origin)) return;
+      trustedRuntimeOrigin = null;
+      // Set the exact *new* origin before navigation. The old document still
+      // fails the main-frame URL check, while DSH's boot-time theme observer
+      // can synchronise the native bar on its first paint.
+      trustedRuntimeOrigin = origin;
+      try {
+        await win.loadURL(origin);
+      } catch (error) {
+        if (trustedRuntimeOrigin === origin) trustedRuntimeOrigin = null;
+        throw error;
+      }
+      if (runtimeOrigin !== origin || win.isDestroyed()
+        || blocksUnexpectedRendererNavigation(win.webContents.getURL(), origin)) {
+        if (trustedRuntimeOrigin === origin) trustedRuntimeOrigin = null;
+        throw new Error('official DSH navigation did not finish at the current exact runtime origin');
+      }
+    });
+    surfaceNavigation = request.catch(() => undefined);
+    return request;
+  }
+  // DSH owns the durable theme preference. Before its boot script resolves
+  // light/dark, follow Windows system colors; the page then sends only the
+  // resolved palette to update the native bar without changing themeSource.
+  nativeTheme.themeSource = 'system';
+  const initialWindowPalette = nativeWindowPalette();
   win = new BrowserWindow({
     width: 1200, height: 800, minWidth: 760, minHeight: 520,
-    title: 'WeftMate', backgroundColor: '#111418',
+    title: 'WeftMate', show: false, backgroundColor: initialWindowPalette.background,
+    ...(process.platform === 'win32' ? {
+      titleBarStyle: 'hidden',
+      titleBarOverlay: { color: initialWindowPalette.background, symbolColor: initialWindowPalette.symbols, height: TITLE_BAR_OVERLAY_HEIGHT },
+    } : {}),
     webPreferences: {
+      // The DSH page gets only the theme bridge below.  It never receives the
+      // old local-renderer model/session IPC surface.
+      preload: join(import.meta.dirname, 'dsh-surface-preload.cjs'),
       nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
       webSecurity: true,
     },
   });
+  // DSH owns the document body, but its browser title must not replace the
+  // product name in the native frame/taskbar. This only changes Electron's
+  // outer shell identity and does not alter the official DSH page title/DOM.
+  win.webContents.on('page-title-updated', (event) => {
+    event.preventDefault();
+    if (!win.isDestroyed()) win.setTitle('WeftMate');
+  });
+  nativeTheme.on('updated', () => {
+    if (nativeTheme.themeSource === 'system' && dshResolvedTheme === null && win && !win.isDestroyed()) {
+      updateNativeWindowColors();
+    }
+  });
+  // Active selection is a future-session preference. It never swaps the
+  // shared child, so an in-flight/old DSH session retains its own persisted
+  // provider+model request header.
+  async function listSharedSessionsForUi() {
+    return stageOneGateway('/sessions').catch(() => ({ items: [] }));
+  }
+  async function listSharedSessionsForReferenceGuard() {
+    const result = await stageOneGateway('/sessions');
+    if (!Array.isArray(result?.items)) throw new Error('session reference scan returned an invalid response');
+    return result;
+  }
+  function assertSessionReferenceScanComplete() {
+    assertSessionReferenceScanReady(sessionReferenceScan);
+  }
+  /** Cold-start migration guard: enumerate the one shared root, never sidebar-origin scanning. */
+  async function hydrateLegacySessionBindings() {
+    try {
+      const profiles = settingsMod.listModelProfiles().profiles;
+      // Before the first profile exists there is no managed DSH child to scan.
+      // This establishes no ownership and therefore cannot bind an old session;
+      // after the first controlled start the post-save scan will fail closed for
+      // any unresolved history.
+      if (!runtimeOrigin && profiles.length === 0) {
+        sessionReferenceScan = { state: 'ready', error: null };
+        return;
+      }
+      await scanSharedSessionBindings({ profiles, listSessions: listSharedSessionsForReferenceGuard,
+        readSelectedModel: (sessionId) => stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`),
+        providerForProfile: (profile) => routeForProfile(profile.id).provider,
+        priorBinding: (sessionId) => settingsMod.sessionModelBinding(sessionId),
+        legacyCompatibilityProfileId: verifiedLegacyCompatibilityProfile(profiles)?.id ?? null,
+        bind: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId, true) });
+      sessionReferenceScan = { state: 'ready', error: null };
+    } catch (error) {
+      sessionReferenceScan = { state: 'failed', error: error instanceof Error ? error.message : 'scan failed' };
+    }
+  }
+  async function assertRouteReloadSafe() {
+    if (activeStageOneTurns.size > 0) throw new Error('当前仍有生成中的会话。请等待完成或停止后，再修改、添加或删除模型路由。');
+    // Renderer SSE is only a convenience signal. Before a route-changing
+    // mutation, query the authoritative shared DSH session list. An invalid or
+    // unavailable response is treated as unsafe rather than guessing idle.
+    if (!runtimeOrigin) return;
+    const sessions = await listSharedSessionsForReferenceGuard();
+    assertAuthoritativeSessionsIdle(sessions);
+  }
+  async function ensureKnownSession(sessionId) {
+    const sessions = await listSharedSessionsForReferenceGuard();
+    if (!Array.isArray(sessions.items) || !sessions.items.some((item) => item?.sessionId === sessionId)) throw new Error('unknown session');
+    const selected = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`);
+    const chosen = resolveSafeSessionBinding({ provider: selected?.current?.provider,
+      profiles: settingsMod.listModelProfiles().profiles, providerForProfile: (profile) => routeForProfile(profile.id).provider,
+      priorBinding: settingsMod.sessionModelBinding(sessionId), legacyCompatibilityProfileId: verifiedLegacyCompatibilityProfile()?.id ?? null });
+    // Header and explicitly-recorded legacy sources are persisted only after
+    // resolution succeeds.  Unknown sessions never reach resume/send/cancel.
+    if (chosen.source !== 'durable-binding') settingsMod.bindSessionModel(sessionId, chosen.profile.id, true);
+    const profile = chosen.profile;
+    if (!profile || !configStoreMod.getCredential(profile.id)) throw new Error('session model profile is unavailable');
+    const route = routeForProfile(profile.id);
+    await restoreInternalSessionRoute({ sessionId, profile, provider: route.provider, needsRestore: settingsMod.sessionBindingNeedsInternalRoute(sessionId),
+      current: () => stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`),
+      select: (value) => stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`, { method: 'PUT', body: JSON.stringify(value) }),
+    });
+  }
+  // 关窗与托盘先于 loadURL 接线：DSH 页面加载慢时，用户点击 X 也只能最小化到托盘，
+  // 不会把窗口销毁在 await loadURL 的中途。
+  win.on('close', (e) => {
+    if (!isQuitting) {
+      e.preventDefault();
+      win.hide();
+    }
+  });
+  win.on('closed', () => {
+    win = null;
+  });
+  setupTray();
   win.webContents.on('did-fail-load', (_e, code, desc) => console.error('[weftmate] ✗ 前端加载失败', code, desc));
-  // 渲染进程诊断：全部 console 转发主进程日志（排查 appShell boot 竞态；定位后收紧回 warning+）。
-  win.webContents.on('console-message', (_e, level, message, line, sourceId) => {
-    console.error(`[weftmate:renderer:${level}] ${message} (${sourceId}:${line})`);
+  // 本地 renderer 不把内容或表单错误逐字转发到日志，避免第三方错误回显秘密。
+  win.webContents.on('console-message', (_e, level, message) => {
     // 自愈：官方 web boot 偶发竞态（web boot: appShell service missing after settled）时
     // 自动重载窗口恢复（防抖限次，最多 3 次，之后放弃并留日志）。
     if (typeof message === 'string' && message.includes('web boot:') && webBootReloads < 3) {
@@ -941,7 +1677,7 @@ async function bootstrap() {
   screen.on('display-metrics-changed', handleDesktopDisplayChange);
 
   // M5-01：自动更新（打包形态 + 有更新渠道才启用；dev/未配置 = disabled）。
-  void initUpdater(() => win);
+  void initUpdater(() => win, () => refreshTrayMenu());
 
   // ── 下载落盘（v2 遗产）：官方 web 的 /export 会话导出走浏览器下载 ──
   win.webContents.session.on('will-download', (event, item) => {
@@ -955,16 +1691,13 @@ async function bootstrap() {
     });
   });
 
-  // 主窗口永远留在运行时 origin（loopback）。新开的 http(s) 链接交给系统浏览器，其余协议一律拒绝。
-  const allowedOrigin = () => {
-    try { return new URL(runtimeOrigin).origin; } catch { return null; }
-  };
+  // The official page is local but still untrusted until it is the current
+  // dynamic loopback origin in this exact main frame.
   win.webContents.on('will-navigate', (event, targetUrl) => {
-    try {
-      if (new URL(targetUrl).origin !== allowedOrigin()) event.preventDefault();
-    } catch {
-      event.preventDefault();
-    }
+    if (blocksUnexpectedRendererNavigation(targetUrl, trustedRuntimeOrigin)) event.preventDefault();
+  });
+  win.webContents.on('will-redirect', (event, targetUrl) => {
+    if (blocksUnexpectedRendererNavigation(targetUrl, trustedRuntimeOrigin)) event.preventDefault();
   });
   win.webContents.setWindowOpenHandler(({ url }) => {
     try {
@@ -976,10 +1709,184 @@ async function bootstrap() {
     return { action: 'deny' };
   });
 
+  // Both the initial setup bridge and Stage 2 CRUD use this exact queue/journal
+  // path.  It is intentionally assigned before the preload-facing handlers.
+  saveModelRoute = async (input) => {
+    if (input?.provider !== 'openai-compatible') throw new TypeError('unsupported provider');
+    const id = typeof input?.id === 'string' && input.id.length > 0 ? input.id : `model-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
+    const providedKey = String(input?.apiKey ?? '').trim();
+    const baseUrl = normalizeApiBaseUrl(String(input?.baseUrl ?? '').trim());
+    const nextModel = String(input?.model ?? '').trim();
+    if (!baseUrl) throw new TypeError('API 地址必须是 HTTPS，或不含凭据、查询参数或片段的本机 HTTP 地址');
+    return enqueueRouteMutation(async () => {
+      const profilesBefore = settingsMod.listModelProfiles().profiles;
+      const wasUnconfigured = profilesBefore.length === 0;
+      const prior = profilesBefore.find((item) => item.id === id);
+      // A retained credential is scoped to its exact provider+endpoint. Never
+      // send it to a newly typed address merely because the edit field is blank.
+      const routeChanged = !prior || prior.baseUrl !== baseUrl || prior.model !== nextModel;
+      const childEnvironmentChanged = routeChanged || providedKey.length > 0;
+      // Every endpoint/model/key change has a route-bearing child environment.
+      // Retry the authoritative scan in this exclusive lane before any guard,
+      // validation, journal write, or runtime replacement.
+      if (childEnvironmentChanged) {
+        await hydrateLegacySessionBindings();
+        assertSessionReferenceScanComplete();
+      }
+      if (prior) {
+        assertModelProfileMutationAllowed({ referenced: settingsMod.profileHasSessionBinding(id), operation: 'edit',
+          displayNameOnly: prior.baseUrl === baseUrl && prior.model === nextModel && providedKey.length === 0 });
+      }
+      if (childEnvironmentChanged) await assertRouteReloadSafe();
+      const apiKey = resolveModelSaveCredential({ prior, provider: input.provider, baseUrl, providedKey,
+        storedKey: prior ? configStoreMod.getCredential(id) : null });
+      const clean = { name: String(input?.name ?? '').trim(), baseUrl, apiKey, model: nextModel };
+      await validateStageOneModel(clean);
+      const profile = await mutateModelRouteTransaction(async () => {
+        configStoreMod.saveCredential(id, apiKey);
+        const saved = settingsMod.upsertModelProfile({ id, name: clean.name || clean.model, provider: 'openai-compatible', baseUrl, model: clean.model, reasoningEffort: 'off' });
+        if (childEnvironmentChanged) await ensureSharedRuntime({ reload: true });
+        return saved;
+      });
+      // A no-profile startup cannot have proved old-session ownership before a
+      // route existed.  Scan after its first controlled runtime start; unknown
+      // history remains blocked rather than being bound to this new profile.
+      if (wasUnconfigured && childEnvironmentChanged && runtimeOrigin) await hydrateLegacySessionBindings();
+      return profile;
+    });
+  };
+
+  const stageOneTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: legacyRendererUrl,
+    sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
+  const dshSurfaceTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: trustedRuntimeOrigin,
+    sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
+  // The official DSH page has no product IPC. This one-way visual hint only
+  // keeps Windows' native titlebar aligned with DSH's resolved light/dark
+  // token; persistence remains in official DSH settings, not this bridge.
+  ipcMain.handle('wm:dsh-surface:theme', (event, payload) => {
+    if (!dshSurfaceTrusted(event)) return { ok: false };
+    const value = payload?.theme === 'dark' ? 'dark' : 'light';
+    const background = normalizeSurfaceColor(payload?.color);
+    if (!background) return { ok: false };
+    dshResolvedTheme = value;
+    dshSurfaceBackgroundColor = background;
+    updateNativeWindowColors(value, background);
+    return { ok: true };
+  });
+  ipcMain.handle('wm:stage1:bootstrap', async (event) => stageOneTrusted(event) ? { ...publicModelView(), settings: settingsMod.readProductSettings(), runtimeReady: !!runtimeOrigin } : { configured: false, error: '请求来源不可信。' });
+  ipcMain.handle('wm:stage1:setup', async (event, input) => {
+    if (!stageOneTrusted(event)) return { ok: false, error: '请求来源不可信。' };
+    try { const clean = { name: String(input?.name ?? '').trim(), baseUrl: String(input?.baseUrl ?? '').trim(), apiKey: String(input?.apiKey ?? '').trim(), model: String(input?.model ?? '').trim() }; await activateStageOneConfig(clean); return { ok: true }; } catch (error) { return stageOneFailure(error); }
+  });
+  ipcMain.handle('wm:stage1:import-current-local-model', async (event) => {
+    if (!stageOneTrusted(event)) return { ok: false, error: '请求来源不可信。' };
+    try {
+      const apiKey = await readCurrentLocalServiceKey();
+      await activateStageOneConfig({ name: '本机 Qwen', baseUrl: 'http://127.0.0.1:8080/v1', apiKey, model: 'qwen3.8-27b-u' });
+      return { ok: true };
+    } catch (error) { return stageOneFailure(error); }
+  });
+  // Stage 2 model management: only OpenAI-compatible discovery is currently
+  // supported because it performs a real GET /models with the supplied key.
+  // No generic Harness provider directory is used as evidence of credentials.
+  ipcMain.handle('wm:stage2:discover-models', async (event, input) => {
+    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
+    try {
+      if (input?.provider !== 'openai-compatible') return { ok: false, error: '当前只支持 OpenAI-compatible 服务；该协议尚未实现真实发现与验证。', models: [] };
+      const request = resolveModelDiscoveryRequest(input ?? {}, settingsMod.listModelProfiles().profiles,
+        (profileId) => configStoreMod.getCredential(profileId));
+      const models = await discoverOpenAICompatible(request);
+      return { ok: true, models };
+    } catch (error) { return { ...stageOneFailure(error), models: [] }; }
+  });
+  ipcMain.handle('wm:stage2:save-model', async (event, input) => {
+    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
+    try {
+      const profile = await saveModelRoute(input);
+      return { ok: true, profile: { ...profile, hasKey: true }, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
+    } catch (error) { return stageOneFailure(error); }
+  });
+  ipcMain.handle('wm:stage2:test-model', async (event, id) => {
+    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
+    try {
+      const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === id);
+      const apiKey = profile ? configStoreMod.getCredential(profile.id) : null;
+      if (!profile || !apiKey) throw new Error('missing model credential');
+      await validateStageOneModel({ ...profile, apiKey });
+      return { ok: true };
+    } catch (error) { return stageOneFailure(error); }
+  });
+  ipcMain.handle('wm:stage2:set-active-model', async (event, id) => {
+    if (!stageOneTrusted(event) || typeof id !== 'string') return stageOneFailure(new Error());
+    try {
+      await enqueueRouteMutation(() => switchActiveModel({
+        id,
+        list: () => settingsMod.listModelProfiles(),
+        hasCredential: (profileId) => !!configStoreMod.getCredential(profileId),
+        setActive: (profileId) => settingsMod.restoreActiveModelProfile(profileId),
+      }));
+      return { ok: true, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
+    } catch (error) { return stageOneFailure(error); }
+  });
+  ipcMain.handle('wm:stage2:delete-model', async (event, id) => {
+    if (!stageOneTrusted(event) || typeof id !== 'string') return stageOneFailure(new Error());
+    try {
+      await enqueueRouteMutation(async () => {
+        await hydrateLegacySessionBindings();
+        assertSessionReferenceScanComplete();
+        assertModelProfileMutationAllowed({ referenced: settingsMod.profileHasSessionBinding(id), operation: 'delete' });
+        await assertRouteReloadSafe();
+        await mutateModelRouteTransaction(async () => {
+          settingsMod.removeModelProfile(id);
+          configStoreMod.removeCredential(id);
+          await ensureSharedRuntime({ reload: true });
+        });
+      });
+      return { ok: true, models: { ...publicModelView(), runtimeReady: !!runtimeOrigin } };
+    } catch (error) { return stageOneFailure(error); }
+  });
+  ipcMain.handle('wm:stage2:set-theme', async (event, theme) => {
+    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
+    try {
+      const savedTheme = await enqueueRouteMutation(() => settingsMod.setThemePreference(theme));
+      return { ok: true, theme: applyNativeTheme(savedTheme) };
+    }
+    catch (error) { return stageOneFailure(error); }
+  });
+  ipcMain.handle('wm:stage2:export-diagnostics', async (event) => {
+    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
+    try {
+      return await exportRedactedDiagnosticsFromMain();
+    } catch (error) { return { ok: false, error: '导出失败。请检查保存位置后重试。' }; }
+  });
+  ipcMain.handle('wm:stage1:sessions', async (event) => !stageOneTrusted(event) ? { items: [] } : listSharedSessionsForUi());
+  ipcMain.handle('wm:stage1:create', async (event) => {
+    if (!stageOneTrusted(event)) return stageOneFailure(new Error());
+    try {
+      const created = await enqueueRouteMutation(async () => {
+        const value = await stageOneGateway('/sessions', { method: 'POST', body: '{}' });
+        const profile = activeModelProfile();
+        if (!profile?.model) throw new Error('active model is missing');
+        settingsMod.bindSessionModel(value.sessionId, profile.id);
+        const route = routeForProfile(profile.id);
+        await stageOneGateway(`/sessions/${encodeURIComponent(value.sessionId)}/models`, {
+          method: 'PUT', body: JSON.stringify({ provider: route.provider, model: profile.model,
+            ...(profile.reasoningEffort && profile.reasoningEffort !== 'off' ? { reasoningEffort: profile.reasoningEffort } : {}) }),
+        });
+        return value;
+      });
+      return { ok: true, ...created };
+    } catch (error) { return stageOneFailure(error); }
+  });
+  ipcMain.handle('wm:stage1:select', async (event, sessionId) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); try { await enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' }); }); startStageOneEvents(sessionId); return { ok: true }; } catch (error) { return stageOneFailure(error); } });
+  ipcMain.handle('wm:stage1:send', async (event, { sessionId, content, mode = 'queue' } = {}) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string' || typeof content !== 'string' || !content.trim()) return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/messages`, { method: 'POST', body: JSON.stringify({ content: content.trim(), mode }) }); return { ok: true, ...value }; }).catch(stageOneFailure); });
+  ipcMain.handle('wm:stage1:cancel', async (event, sessionId) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: 'POST', body: '{}' }); return { ok: true, ...value }; }).catch(stageOneFailure); });
+  ipcMain.handle('wm:stage1:approval', async (event, { sessionId, rpcId, approvalId, outcome } = {}) => { if (!stageOneTrusted(event) || typeof sessionId !== 'string') return stageOneFailure(new Error()); return enqueueRouteMutation(async () => { await ensureKnownSession(sessionId); const value = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/approval`, { method: 'POST', body: JSON.stringify({ rpcId, approvalId, outcome }) }); return { ok: true, ...value }; }).catch(stageOneFailure); });
+
   // ── 删除全部本机数据（v2 遗产，ARCHITECTURE §5 保留）：只走这一个窄 IPC。renderer 不接触
   //    marker/token/文件系统；主进程创建一次性授权并重启擦除。──
   ipcMain.handle('wm:delete-all-local-data', async (event, confirmation) => {
-    if (!win || event.sender !== win.webContents) return { ok: false, code: 'WIPE_UNTRUSTED_SOURCE', error: '请求来源不可信' };
+    if (!stageOneTrusted(event)) return { ok: false, code: 'WIPE_UNTRUSTED_SOURCE', error: '请求来源不可信' };
     if (confirmation !== '删除 WeftMate' && confirmation !== 'Delete WeftMate') return { ok: false, code: 'WIPE_BAD_CONFIRMATION', error: '确认短语不正确' };
     if (wipeRelaunching) return { ok: false, code: 'WIPE_ALREADY_PREPARING', error: '删除已经在准备中' };
     try {
@@ -998,7 +1905,7 @@ async function bootstrap() {
 
   // ── 宠物窗口 IPC（宠物窗口自身交互用；R6 恢复完整桌宠机制）──
   ipcMain.on('wm:pet-sync', (event, state) => {
-    if (!win || event.sender !== win.webContents) return;
+    if (!stageOneTrusted(event)) return;
     const sanitized = sanitizeCompanionState(state);
     if (!sanitized) return;
     desktopCompanion = sanitized;
@@ -1011,25 +1918,25 @@ async function bootstrap() {
     startDesktopPetActivityController();
   });
   ipcMain.handle('wm:pet-toggle', async (event, state) => {
-    if (!win || event.sender !== win.webContents) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
+    if (!stageOneTrusted(event)) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
     const sanitized = sanitizeCompanionState(state);
     if (!desktopPetVisible() && !sanitized && !desktopCompanion) return { visible: false, freeActivity: desktopPetFreeActivity() };
     return toggleDesktopPet(sanitized || desktopCompanion);
   });
   ipcMain.handle('wm:pet-visibility', (event) => {
-    if (!win || event.sender !== win.webContents) return { visible: false, freeActivity: false };
+    if (!stageOneTrusted(event)) return { visible: false, freeActivity: false };
     return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
   });
   ipcMain.handle('wm:pet-free-activity', (event, enabled) => {
-    if (!win || event.sender !== win.webContents) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
+    if (!stageOneTrusted(event)) return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
     setDesktopPetFreeActivity(enabled === true);
     return { visible: desktopPetVisible(), freeActivity: desktopPetFreeActivity() };
   });
   ipcMain.on('wm:pet-composer-activity', (event) => {
-    if (win && event.sender === win.webContents) noteDesktopPetComposerActivity();
+    if (stageOneTrusted(event)) noteDesktopPetComposerActivity();
   });
   ipcMain.on('wm:pet-hide', (event) => {
-    const trustedMain = !!win && event.sender === win.webContents;
+    const trustedMain = stageOneTrusted(event);
     const trustedPet = !!desktopPetWin && !desktopPetWin.isDestroyed() && event.sender === desktopPetWin.webContents;
     if (trustedMain || trustedPet) hideDesktopPet();
   });
@@ -1118,23 +2025,19 @@ async function bootstrap() {
   win.webContents.on('did-finish-load', () => { try { win.webContents.send('wm:maximized', win.isMaximized()); } catch { /* 窗口已关忽略 */ } });
 
   try {
-    await win.loadURL(runtimeOrigin);
-    console.log('[weftmate] ✓ 窗口加载完成:', runtimeOrigin);
+    // DSH is the complete first-run surface as well as the conversation
+    // surface: on a brand-new install its official Models page owns setup.
+    let origin = await ensureSharedRuntime({ reload: true });
+    if (!origin) throw new Error('official DSH runtime did not publish an origin');
+    origin = await migrateLegacyRoutesToOfficialSettings();
+    await navigateToRuntimeSurface(origin);
+    await hydrateLegacySessionBindings();
+    win.show();
+    console.log('[weftmate] ✓ WeftMate 官方 DSH 界面加载完成');
   } catch (e) {
-    console.error('[weftmate] ✗ window.loadURL 失败:', e && e.message ? e.message : e);
-    app.quit();
+    requestFatalStartupExit('Harness 前端加载失败', e, formatHarnessStartupError(e));
     return;
   }
-
-  // 关窗不退:X = 收进托盘。只有走"退出"(isQuitting=true)才让窗口真关。
-  win.on('close', (e) => {
-    if (!isQuitting) {
-      e.preventDefault();
-      win.hide();
-    }
-  });
-
-  setupTray();
 
   // R6-02 · 桌宠自愈：上次可见（设置里 visible=true）→ 启动补唤醒（v2 等价路径的恢复）。
   if (desktopCompanion && settingsMod?.getDesktopPetWindowState?.().visible) {
@@ -1144,7 +2047,65 @@ async function bootstrap() {
   console.log('[weftmate] ═══ 官方 DSH web 基座就位:关窗收托盘、托盘"退出"才真退 ═══');
 }
 
-/** 系统托盘:常驻图标 + 菜单(显示/退出),左键点=显示窗口。 */
+async function exportRedactedDiagnosticsFromMain() {
+  const options = {
+    title: '导出 WeftMate 脱敏诊断',
+    defaultPath: `weftmate-diagnostics-${app.getVersion()}.json`,
+    filters: [{ name: 'JSON', extensions: ['json'] }],
+  };
+  const choice = win && !win.isDestroyed()
+    ? await dialog.showSaveDialog(win, options)
+    : await dialog.showSaveDialog(options);
+  if (choice.canceled || !choice.filePath) return { ok: true, canceled: true };
+
+  const settings = settingsMod?.readProductSettings?.() ?? {
+    schemaVersion: 0,
+    appearance: { theme: 'system' },
+    models: { profiles: [], activeId: null },
+  };
+  const models = publicModelView();
+  const redacted = buildRedactedDiagnostics({
+    version: app.getVersion(),
+    settings,
+    models,
+    configured: models.configured,
+    ready: !!runtimeOrigin,
+    packaged: app.isPackaged,
+    safeStorageAvailable: configStoreMod?.encryptionAvailable?.() === true,
+    update: updateState(),
+  });
+  writeFileSync(choice.filePath, `${JSON.stringify(redacted, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
+  return { ok: true, canceled: false };
+}
+
+async function checkPreviewUpdateFromTray() {
+  const state = await checkForUpdates(() => win);
+  refreshTrayMenu();
+  if (state.status === 'error') {
+    const options = {
+      type: 'warning',
+      title: 'WeftMate 更新检查未完成',
+      message: state.error ?? '更新未完成。当前版本保持不变，请稍后重试。',
+      buttons: ['知道了'],
+    };
+    if (win && !win.isDestroyed()) await dialog.showMessageBox(win, options);
+    else await dialog.showMessageBox(options);
+  }
+}
+
+function installPreviewUpdateFromTray() {
+  if (!quitAndInstall()) {
+    const options = {
+      type: 'info',
+      title: 'WeftMate 更新尚未就绪',
+      message: '尚未下载可安装的更新。请先检查更新并等待下载完成。',
+      buttons: ['知道了'],
+    };
+    void (win && !win.isDestroyed() ? dialog.showMessageBox(win, options) : dialog.showMessageBox(options));
+  }
+}
+
+/** 系统托盘:常驻图标 + 生命周期/诊断入口,左键点=显示窗口。 */
 function setupTray() {
   if (tray) return;
   tray = new Tray(nativeImage.createFromDataURL(TRAY_ICON));
@@ -1155,8 +2116,21 @@ function setupTray() {
 
 function refreshTrayMenu() {
   if (!tray) return;
+  const update = updateState();
+  const updateBusy = update.status === 'checking' || update.status === 'available';
+  const updateReady = update.status === 'downloaded';
+  const updateLabel = updateReady
+    ? `安装更新${update.version ? ` v${update.version}` : ''}…`
+    : updateBusy
+      ? '正在检查或下载更新…'
+      : update.enabled
+        ? '检查更新…'
+        : '检查更新（未配置预览源）';
   tray.setContextMenu(Menu.buildFromTemplate([
     { label: '显示 WeftMate', click: showWindow },
+    { type: 'separator' },
+    { label: updateLabel, enabled: updateReady || (update.enabled && !updateBusy), click: updateReady ? installPreviewUpdateFromTray : () => { void checkPreviewUpdateFromTray(); } },
+    { label: '导出脱敏诊断…', click: () => { void exportRedactedDiagnosticsFromMain().catch((error) => logCrash('diagnostics-export', error)); } },
     { label: '宠物设置…', click: openDesktopPetPage },
     { label: desktopPetVisible() ? '让桌面宠物休息' : '唤醒桌面宠物', click: () => {
       const latest = desktopCompanion;
@@ -1167,24 +2141,56 @@ function refreshTrayMenu() {
   ]));
 }
 
-// 退出前收尾:先拦下(异步 shutdown 跑不完就退会漏收口),清完再放行二次退出。
+// 退出前收尾：首次 before-quit 唯一创建 shutdown Promise；其余重入只等待同一份收尾。
 app.on('before-quit', (e) => {
   isQuitting = true;
-  disposeDesktopPetRuntime();
   if (cleanupDone) return; // 已清理完 → 放行真正退出
   e.preventDefault();
-  (async () => {
+  if (shutdownPromise) return;
+
+  shutdownPromise = (async () => {
+    // Stop admission before any asynchronous cleanup.  A mutation already in
+    // this lane may finish/compensate, but no new session/settings/model work
+    // can cross the shutdown fence.
+    exclusiveMainQueue?.stopAcceptingAndDrain();
     try {
-      perceptionRuntime?.dispose?.(); // R6-01：停感知采集
-      devicesRuntime?.dispose?.(); // R8-01：停设备接缝
-      await webRuntime?.close?.(); // 收口 DSH web 运行时子进程
+      disposeDesktopPetRuntime();
+    } catch (err) {
+      logCrash('shutdown-desktop-pet', err);
+      console.error('[weftmate] 桌宠退出收尾出错(继续关闭 DSH):', err && err.message ? err.message : err);
+    }
+    try {
+      await perceptionRuntime?.dispose?.(); // R6-01：停感知采集
+    } catch (err) {
+      logCrash('shutdown-perception', err);
+      console.error('[weftmate] 感知退出收尾出错(继续关闭 DSH):', err && err.message ? err.message : err);
+    }
+    try {
+      await devicesRuntime?.dispose?.(); // R8-01：停设备接缝
+    } catch (err) {
+      logCrash('shutdown-devices', err);
+      console.error('[weftmate] 设备退出收尾出错(继续关闭 DSH):', err && err.message ? err.message : err);
+    }
+    try {
+      if (exclusiveMainQueue) {
+        await exclusiveMainQueue.stopAcceptingAndDrain(async () => {
+          await webRuntime?.close?.();
+        });
+      } else {
+        // Startup failed before the lane existed: no admitted work can race a
+        // runtime close, so retain the bounded fallback.
+        await webRuntime?.close?.();
+      }
       console.log('[weftmate] ✓ 退出收尾:DSH web 运行时收口完成');
     } catch (err) {
-      console.error('[weftmate] 退出收尾出错(仍继续退出):', err && err.message ? err.message : err);
+      logCrash('shutdown-dsh-runtime', err);
+      console.error('[weftmate] DSH 退出收尾出错(仍继续退出):', err && err.message ? err.message : err);
     }
-    cleanupDone = true;
-    app.quit(); // 再触发 before-quit,这次 cleanupDone=true 放行
   })();
+  void shutdownPromise.finally(() => {
+    cleanupDone = true;
+    app.exit(startupExitCode); // cleanup 完成后一次性退出；启动失败必须保留非零码。
+  });
 });
 
 // 托盘常驻:窗口全关也不退出(关窗已被 hide 兜住,这里是双保险)。真退只走托盘"退出"→ before-quit。

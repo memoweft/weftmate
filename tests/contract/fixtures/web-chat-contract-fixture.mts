@@ -247,7 +247,7 @@ try {
   await rm(workspaceCwd, { recursive: true, force: true }).catch(() => undefined)
   await rm(persistenceRoot, { recursive: true, force: true }).catch(() => undefined)
   console.log('[web-chat] EVIDENCE ' + JSON.stringify(evidence))
-  process.exit(0)
+  process.exitCode = 0
 } catch (error) {
   try {
     await ctx.fiber.dispose()
@@ -264,7 +264,7 @@ try {
     name: (error as Error | null)?.name ?? null,
     message: error instanceof Error ? error.message : String(error),
   }))
-  process.exit(1)
+  process.exitCode = 1
 } finally {
   if (process.cwd() !== originalCwd) process.chdir(originalCwd)
 }

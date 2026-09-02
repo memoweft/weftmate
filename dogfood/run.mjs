@@ -1,89 +1,207 @@
 /**
- * WeftMate · dogfood 启动器（进仓·可复现·零密钥）
- * ────────────────────────────────────────────────────────────────────────
- * 用途：起一个**与你日常真实实例完全隔离**的 WeftMate，用来天天遛自己的产品
- *   （dogfood）。隔离靠两样：
- *     ① `--user-data-dir` 指到 dogfood/data/userdata —— Electron 的 userData 改这，
- *        main.mjs 据此把库落到 <userData>/weftmate.db、模型配置/MCP 清单也存这。
- *        → 绝不碰你真实的 userData（真机聊天记录/画像/密钥一点不动）。
- *     ② 不同的 PORT（默认 7899，正常实例是 7788）—— loopback 端口错开，
- *        dogfood 实例和正常实例可以同时开着互不撞。
- *   单实例锁按 userData 目录走，两个 userData 各自一把锁，天然不打架。
+ * WeftMate 隔离开发候选启动器。
  *
- * 不含任何密钥：首次启动会进「配模型」向导，自己填 key（safeStorage 加密落 userData）。
- *   这个脚本不预置、不读取、不写入任何密钥。
+ * 始终使用 WeftMate 仓内的独立 vendor DSH 与独立 userData：
+ *   npm run dogfood -- --dsh vendor
+ *   npm run dogfood -- --dsh vendor --dsh-path 'Z:\\独立的dsh-runtime'
  *
- * 跑：
- *     node dogfood/run.mjs              # 默认 PORT=7899
- *     PORT=7900 node dogfood/run.mjs    # 想换端口就设 env（PowerShell: $env:PORT=7900; node ...）
- *
- * 重置 dogfood（回到「刚装好、没配过」的干净态）：
- *     直接删掉整个 dogfood/data 目录即可 —— 那里面全是隔离实例的库/配置/密钥，
- *     已在 .gitignore 里忽略、绝不进仓。删完下次跑又是全新向导。
- *
- * 跨平台：electron 二进制路径用 npm 包的默认导出解析（Windows/mac/linux 通用），
- *   等价于 node_modules/.bin/electron 背后启动的同一个 exe，但绕开了 Windows 上
- *   .cmd shim / shell 引号的坑，直接 spawn 真正的可执行文件。
+ * DSH 使用 `--port 0` 让操作系统分配独立 loopback 端口；没有固定 7788/7899 契约。
+ * MemoWeft 试验接缝默认关闭，AI-Game 当前没有正式 adapter，因此二者都不是启动依赖。
  */
-import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
-import { mkdirSync } from 'node:fs';
-import { createRequire } from 'node:module';
+import { spawn } from 'node:child_process'
+import { existsSync, mkdirSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { dirname, join, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const here = dirname(fileURLToPath(import.meta.url));
-const projectRoot = join(here, '..'); // electron . 要在项目根跑（package.json main = src/main.mjs）
-const userDataDir = join(here, 'data', 'userdata');
+const here = dirname(fileURLToPath(import.meta.url))
+const projectRoot = resolve(here, '..')
+const defaultUserData = join(here, 'data', 'stage-1')
+const defaultVendor = join(projectRoot, 'vendor', 'dsh-runtime')
 
-// 隔离 userData 目录先建好（Electron 自己也会建，但先建一份日志更清楚）。
-mkdirSync(userDataDir, { recursive: true });
-
-// 解析 electron 可执行文件的绝对路径。
-//   electron npm 包的默认导出 = 二进制绝对路径（读 path.txt → dist/electron.exe|electron），
-//   这是官方推荐、最稳的跨平台拿法；从本文件位置向上找 node_modules 命中项目根的 electron。
-const require = createRequire(import.meta.url);
-let electronBin;
-try {
-  electronBin = require('electron');
-} catch {
-  console.error('[dogfood] 找不到 electron —— 先在项目根跑 `npm install`。');
-  process.exit(1);
+function usage() {
+  return [
+    '用法：npm run dogfood -- [--dsh vendor] [--dsh-path <独立 vendor runtime 路径>]',
+    '      [--user-data-dir <隔离目录>] [--dry-run]',
+    '',
+    '示例：',
+    '  npm run dogfood -- --dsh vendor',
+    "  npm run dogfood -- --dsh vendor --dsh-path 'Z:\\独立的dsh-runtime'",
+  ].join('\n')
 }
 
-// 端口：默认 7899（错开正常实例的 7788）；尊重外部 PORT env（main.mjs 也尊重 PORT）。
-const PORT = process.env.PORT || '7899';
+function optionValue(args, index, name) {
+  const arg = args[index]
+  if (arg.startsWith(`${name}=`)) return { value: arg.slice(name.length + 1), next: index }
+  if (arg === name) {
+    if (index + 1 >= args.length || args[index + 1].startsWith('--')) {
+      throw new Error(`${name} 缺少值`)
+    }
+    return { value: args[index + 1], next: index + 1 }
+  }
+  return null
+}
 
-console.log('[dogfood] userData =', userDataDir, '（隔离·不碰真实 userData）');
-console.log('[dogfood] PORT     =', PORT, '（正常实例默认 7788，错开避免撞）');
-console.log('[dogfood] electron =', electronBin);
-console.log('[dogfood] 首启走「配模型」向导（本脚本不预置任何密钥）。重置：删掉 dogfood/data 整个目录。');
+function parseArgs(args) {
+  const out = { dsh: 'vendor', dshPath: null, userData: defaultUserData, dryRun: false, help: false }
+  for (let index = 0; index < args.length; index += 1) {
+    const arg = args[index]
+    if (arg === '--dry-run') { out.dryRun = true; continue }
+    if (arg === '--help' || arg === '-h') { out.help = true; continue }
+    const dsh = optionValue(args, index, '--dsh')
+    if (dsh) { out.dsh = dsh.value; index = dsh.next; continue }
+    const dshPath = optionValue(args, index, '--dsh-path')
+    if (dshPath) { out.dshPath = dshPath.value; index = dshPath.next; continue }
+    const userData = optionValue(args, index, '--user-data-dir')
+    if (userData) { out.userData = userData.value; index = userData.next; continue }
+    throw new Error(`未知参数：${arg}`)
+  }
+  if (out.help) return out
+  if (out.dsh !== 'vendor') {
+    throw new Error('WeftMate 只允许使用产品自有 vendor DSH；不能选择个人/shared checkout')
+  }
+  return out
+}
 
+let options
+try {
+  options = parseArgs(process.argv.slice(2))
+} catch (error) {
+  console.error(`[dogfood] 参数错误：${error instanceof Error ? error.message : String(error)}\n\n${usage()}`)
+  process.exit(2)
+}
+
+if (options.help) {
+  console.log(usage())
+  process.exit(0)
+}
+
+const userDataDir = resolve(projectRoot, options.userData)
+const dshRoot = resolve(projectRoot, options.dshPath ?? defaultVendor)
+const childEnv = { ...process.env }
+delete childEnv.WEFTMATE_DSH_CHECKOUT
+delete childEnv.WEFTMATE_DSH_RUNTIME
+childEnv.WEFTMATE_DSH_RUNTIME = dshRoot
+childEnv.WEFTMATE_USER_DATA = userDataDir
+childEnv.WEFTMATE_MEMOWEFT_ENABLED = '0'
+childEnv.WEFTMATE_DOGFOOD_CONTROL = '1'
+
+const config = {
+  mode: options.dsh,
+  dshRoot,
+  dshRootExists: existsSync(dshRoot),
+  userData: userDataDir,
+  port: 'dynamic-loopback',
+  memoweft: 'disabled',
+  aiGame: typeof childEnv.WEFTMATE_AI_GAME_ORIGIN === 'string'
+    && childEnv.WEFTMATE_AI_GAME_ORIGIN !== '' ? 'optional-configured' : 'optional-unconfigured',
+  runtimeEnv: {
+    WEFTMATE_DSH_CHECKOUT: childEnv.WEFTMATE_DSH_CHECKOUT ?? null,
+    WEFTMATE_DSH_RUNTIME: childEnv.WEFTMATE_DSH_RUNTIME ?? null,
+  },
+}
+
+console.log('[dogfood] CONFIG ' + JSON.stringify(config))
+console.log('[dogfood] 端口由 OS 动态分配；实际地址以 “[weftmate] ✓ DSH web 运行时就绪” 日志为准。')
+console.log('[dogfood] MemoWeft 已关闭；AI-GAME 全局入口在宿主生命周期完成前不发布，普通 DSH 对话不依赖 4310。')
+
+if (options.dryRun) process.exit(0)
+
+mkdirSync(userDataDir, { recursive: true })
+
+const require = createRequire(import.meta.url)
+let electronBin
+try {
+  electronBin = require('electron')
+} catch {
+  console.error('[dogfood] 找不到 Electron。请把此错误交给工程代理；当前构建尚未准备好。')
+  process.exit(1)
+}
+
+console.log('[dogfood] electron =', electronBin)
 const child = spawn(
   electronBin,
   ['.', `--user-data-dir=${userDataDir}`],
   {
     cwd: projectRoot,
-    stdio: 'inherit', // 把 [weftmate] 日志直通到当前终端，dogfood 看得见后台在干嘛
-    env: { ...process.env, PORT },
+    // Electron 本身不读终端输入；stdin 留给 launcher 的 q/quit 干净退出控制。
+    stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+    env: childEnv,
   },
-);
+)
 
-child.on('error', (err) => {
-  console.error('[dogfood] 启动 electron 失败:', err && err.message ? err.message : err);
-  process.exit(1);
-});
+let stopping = false
+let hardStopTimer = null
+let inputBuffer = ''
+
+function hardStop() {
+  if (!child.pid || child.exitCode !== null || child.signalCode !== null) return
+  console.error('[dogfood] Electron 未在 10 秒内干净退出，开始终止本次启动的精确进程树。')
+  if (process.platform === 'win32') {
+    const killer = spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], {
+      stdio: 'ignore',
+      windowsHide: true,
+    })
+    killer.unref()
+  } else {
+    try { child.kill('SIGKILL') } catch { /* 已退出 */ }
+  }
+}
+
+function requestCleanQuit(signal) {
+  if (stopping) return
+  stopping = true
+  console.log(`[dogfood] 收到 ${signal}，请求 Electron 走应用内 shutdown（关闭流程）…`)
+  if (child.connected) {
+    child.send({ type: 'weftmate:quit', source: 'dogfood-launcher' }, (error) => {
+      if (error) console.error('[dogfood] 发送干净退出请求失败，将等待有界兜底：', error.message)
+    })
+  }
+  hardStopTimer = setTimeout(hardStop, 10_000)
+  hardStopTimer.unref?.()
+}
+
+function stopReadingInput() {
+  process.stdin.off('data', handleInput)
+  process.stdin.pause()
+}
+
+function handleInput(chunk) {
+  inputBuffer += chunk
+  const lines = inputBuffer.split(/[\r\n]+/)
+  inputBuffer = lines.pop() ?? ''
+  for (const line of lines) {
+    const command = line.trim().toLowerCase()
+    if (command === 'q' || command === 'quit') requestCleanQuit('终端 q')
+  }
+}
+
+if (process.stdin.isTTY) {
+  process.stdin.setEncoding('utf8')
+  process.stdin.resume()
+  process.stdin.on('data', handleInput)
+  console.log('[dogfood] 退出：使用应用托盘菜单；或在此终端输入 q 后回车（Windows 干净退出证据请用 q，不用 Ctrl+C）。')
+}
+
+child.on('error', (error) => {
+  if (hardStopTimer) clearTimeout(hardStopTimer)
+  stopReadingInput()
+  console.error('[dogfood] 启动 Electron 失败:', error instanceof Error ? error.message : String(error))
+  process.exitCode = 1
+})
 
 child.on('exit', (code, signal) => {
+  if (hardStopTimer) clearTimeout(hardStopTimer)
+  stopReadingInput()
   if (signal) {
-    console.log(`[dogfood] electron 被信号 ${signal} 结束`);
-    process.exit(0);
+    console.error(`[dogfood] Electron 被信号 ${signal} 终止；这不算干净退出证据。`)
+    process.exitCode = 1
+    return
   }
-  process.exit(code ?? 0);
-});
+  console.log(`[dogfood] Electron 已完成应用内退出（code ${code ?? 'null'}）。`)
+  process.exitCode = code ?? 1
+})
 
-// 转发中断信号，让 electron 干净退出（走 before-quit 收尾：停采集 + scheduler.dispose + core.close）。
-for (const sig of ['SIGINT', 'SIGTERM']) {
-  process.on(sig, () => {
-    if (!child.killed) child.kill(sig);
-  });
+for (const signal of ['SIGINT', 'SIGTERM']) {
+  process.on(signal, () => requestCleanQuit(signal))
 }

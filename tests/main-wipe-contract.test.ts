@@ -8,7 +8,12 @@ const main = readFileSync(new URL('../src/main.mjs', import.meta.url), 'utf8');
 
 describe('本机数据删除接线（新基座：main 壳接缝）', () => {
   it('擦除发生在单实例锁之前，确认短语校验必须先于创建擦除标记', () => {
-    assert.ok(main.indexOf('wipeLocalDataFromMarker') < main.indexOf('app.requestSingleInstanceLock()'));
+    const wipeLaunch = main.indexOf('const wipeLaunch = localDataWipeLaunchRequest(process.argv)');
+    const wipeCall = main.indexOf('wipeLocalDataFromMarker({', wipeLaunch);
+    const singleInstanceLock = main.indexOf('app.requestSingleInstanceLock()');
+    assert.ok(wipeLaunch >= 0, 'main 必须先解析擦除启动请求');
+    assert.ok(wipeCall > wipeLaunch, '擦除调用必须发生在擦除启动请求之后');
+    assert.ok(wipeCall < singleInstanceLock, '擦除调用必须发生在单实例锁之前');
     const wipeHandler = main.indexOf("ipcMain.handle('wm:delete-all-local-data'");
     assert.ok(wipeHandler > 0, 'main 必须保留擦除 IPC 接缝');
     assert.ok(
@@ -19,9 +24,9 @@ describe('本机数据删除接线（新基座：main 壳接缝）', () => {
     assert.match(main, /confirmation !== '删除 WeftMate' && confirmation !== 'Delete WeftMate'/);
   });
 
-  it('IPC 只信任主窗口 webContents，重入与失败都有明确错误码', () => {
+  it('IPC 只信任 canonical 主 frame，重入与失败都有明确错误码', () => {
     const wipeHandler = main.slice(main.indexOf("ipcMain.handle('wm:delete-all-local-data'"));
-    assert.match(wipeHandler, /event\.sender !== win\.webContents[\s\S]*WIPE_UNTRUSTED_SOURCE/);
+    assert.match(wipeHandler, /stageOneTrusted\(event\)[\s\S]*WIPE_UNTRUSTED_SOURCE/);
     assert.match(wipeHandler, /WIPE_ALREADY_PREPARING/);
     assert.match(wipeHandler, /WIPE_MARKER_FAILED/);
   });

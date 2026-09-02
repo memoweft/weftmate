@@ -32,12 +32,35 @@ describe('P1-03 · DSH session / agent adapter', () => {
     assert.deepEqual(await adapter.resume('s-1'), {
       sessionId: 's-1', events: [{ event: { type: 'user/message', seq: 4 }, sessionId: 's-1' }], lastSeq: 4,
     })
-    assert.deepEqual(await adapter.send('s-1', [{ type: 'text', text: 'hello' }]), { accepted: true, command: undefined })
+    assert.deepEqual(await adapter.send('s-1', 'hello'), { accepted: true, command: undefined })
     assert.deepEqual(await adapter.cancel('s-1'), { accepted: true, observedStopped: false })
     adapter.openMux(new AbortController().signal)
     adapter.openHost(new AbortController().signal)
     assert.deepEqual(calls.map((call) => call.method), ['create', 'list', 'history', 'prompt', 'cancel', 'mux', 'host'])
+    assert.deepEqual(calls[3]?.value, { sessionId: 's-1', mode: 'queue', content: [{ type: 'text', text: 'hello' }] })
     assert.deepEqual(calls[5]?.value, {}, 'mux must not pretend DSH since is implemented')
+  })
+
+  it('fails closed when the live approval receipt is no longer pending', async () => {
+    const { client } = fakeClient()
+    ;(client as Record<string, unknown>).respond = async () => ({ accepted: false, reason: 'not-pending' })
+    const adapter = createDshSessionAdapter(client)
+    await assert.rejects(
+      adapter.respondApproval({ rpcId: 'old-rpc', sessionId: 's-1', approvalId: 'approval-1', outcome: 'allowed-once' }),
+      (error: unknown) => error instanceof DshAdapterError && error.code === 'approval-not-pending',
+    )
+  })
+
+  it('accepts the pinned direct client-response receipt without RPC envelope unwrapping', async () => {
+    const { client } = fakeClient()
+    const responses: unknown[] = []
+    ;(client as Record<string, unknown>).respond = async (value: unknown) => { responses.push(value); return { accepted: true } }
+    const adapter = createDshSessionAdapter(client)
+    assert.deepEqual(
+      await adapter.respondApproval({ rpcId: 'current-rpc', sessionId: 's-1', approvalId: 'approval-1', outcome: 'allowed-once' }),
+      { accepted: true },
+    )
+    assert.deepEqual(responses, [{ type: 'client-response', rpcId: 'current-rpc', result: { ok: true, value: { sessionId: 's-1', approvalId: 'approval-1', outcome: 'allowed-once' } } }])
   })
 
   it('resume preserves the DSH subagent cancel fence but permits ordinary fork lineage', async () => {
@@ -65,14 +88,15 @@ describe('P1-03 · DSH session / agent adapter', () => {
   it('normalizes required raw DSH session/agent/tool events and drops reasoning', async () => {
     const state = createEventState()
     const input = [
-      { type: 'user/message', seq: 1, time: 1, data: { message: { content: [{ type: 'text', text: 'ask' }] } } },
-      { type: 'assistant/chunk', seq: 2, time: 2, data: { turn: 1, chunk: { type: 'reasoning-delta', text: 'private chain' } } },
-      { type: 'assistant/chunk', seq: 3, time: 3, data: { turn: 1, chunk: { type: 'text-delta', text: 'answer' } } },
-      { type: 'tool/call', seq: 4, data: { turn: 1, callId: 'c-1', name: 'shell', arguments: 'SECRET=abc' } },
-      { type: 'tool/result', seq: 5, data: { turn: 1, message: { source: { kind: 'tool', callId: 'c-1' }, content: [{ type: 'tool-result', toolCallId: 'c-1', isError: false, text: '/absolute/private/output' }] } } },
-      { type: 'tool/result', seq: 6, data: { turn: 1, error: { message: 'stack trace' }, message: { source: { kind: 'tool', callId: 'c-1' }, content: [{ type: 'tool-result', toolCallId: 'c-1', isError: true }] } } },
-      { type: 'assistant/message', seq: 7, data: { turn: 1, message: { content: [{ type: 'text', text: 'done' }] } } },
-      { type: 'host/session-status', seq: 8, sessionId: 's-1', running: false },
+      { type: 'user/message', seq: 1, time: 1, data: { source: { kind: 'user' }, message: { content: [{ type: 'text', text: 'ask' }] } } },
+      { type: 'user/message', seq: 2, time: 2, data: { source: { kind: 'plugin', plugin: '@deepseek-ai/dsh-system-prompt' }, message: { content: [{ type: 'text', text: 'Current runtime context. D:\\private\\workspace' }] } } },
+      { type: 'assistant/chunk', seq: 3, time: 3, data: { turn: 1, chunk: { type: 'reasoning-delta', text: 'private chain' } } },
+      { type: 'assistant/chunk', seq: 4, time: 4, data: { turn: 1, chunk: { type: 'text-delta', text: 'answer' } } },
+      { type: 'tool/call', seq: 5, data: { turn: 1, callId: 'c-1', name: 'shell', arguments: 'SECRET=abc' } },
+      { type: 'tool/result', seq: 6, data: { turn: 1, message: { source: { kind: 'tool', callId: 'c-1' }, content: [{ type: 'tool-result', toolCallId: 'c-1', isError: false, text: '/absolute/private/output' }] } } },
+      { type: 'tool/result', seq: 7, data: { turn: 1, error: { message: 'stack trace' }, message: { source: { kind: 'tool', callId: 'c-1' }, content: [{ type: 'tool-result', toolCallId: 'c-1', isError: true }] } } },
+      { type: 'assistant/message', seq: 8, data: { turn: 1, message: { content: [{ type: 'text', text: 'done' }] } } },
+      { type: 'host/session-status', seq: 9, sessionId: 's-1', running: false },
     ]
     const output = []
     for (const raw of input) {
@@ -83,6 +107,8 @@ describe('P1-03 · DSH session / agent adapter', () => {
     assert.equal(JSON.stringify(output).includes('SECRET=abc'), false)
     assert.equal(JSON.stringify(output).includes('/absolute/private/output'), false)
     assert.equal(JSON.stringify(output).includes('private chain'), false)
+    assert.equal(JSON.stringify(output).includes('Current runtime context'), false)
+    assert.equal(JSON.stringify(output).includes('D:\\private\\workspace'), false)
   })
 
   it('reconciles deterministic seq order, dedupes replay, and makes cancelled turns terminal-safe', async () => {

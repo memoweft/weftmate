@@ -14,6 +14,7 @@ const PYTHONPATH = process.env.WEFTMATE_MEMOWEFT_PYTHONPATH ?? 'D:\\AIProjects\\
 const FIXTURE = new URL('./contract/fixtures/r7-bridge-smoke.py', import.meta.url);
 
 const available = existsSync(PYTHON) && existsSync(join(PYTHONPATH, 'memoweft', 'integrations', 'dsh_bridge', '__main__.py'));
+const optIn = process.env.WEFTMATE_TEST_MEMOWEFT === '1';
 
 function runPython(args: string[], input?: string, timeoutMs = 120_000): Promise<{ code: number | null; stdout: string; stderr: string }> {
   return new Promise((resolve) => {
@@ -41,7 +42,10 @@ function runPython(args: string[], input?: string, timeoutMs = 120_000): Promise
   });
 }
 
-describe('R7 MemoWeft 2.0 本地桥契约', { skip: available ? false : `MemoWeft 桥环境不可用（${PYTHON} / ${PYTHONPATH}）` }, () => {
+describe('R7 MemoWeft 2.0 本地桥契约（可选外部系统，显式 opt-in）', {
+  skip: !optIn ? 'MemoWeft 正向集成不属于默认工程门（设置 WEFTMATE_TEST_MEMOWEFT=1 显式运行）'
+    : available ? false : `MemoWeft 桥环境不可用（${PYTHON} / ${PYTHONPATH}）`,
+}, () => {
   it('边界链纵切：真实边界→durable 存储→Job applied→cognition→确定性召回（预算 0/1）', { timeout: 180_000 }, async () => {
     const result = await runPython([FIXTURE.pathname.slice(1)], undefined, 150_000);
     assert.equal(result.code, 0, `冒烟失败。stderr:\n${result.stderr.slice(-2000)}\nstdout:\n${result.stdout.slice(-2000)}`);

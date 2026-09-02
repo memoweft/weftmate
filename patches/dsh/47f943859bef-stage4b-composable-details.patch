@@ -1,0 +1,431 @@
+diff --git a/packages/client/ui-conversation/src/client/apply.ts b/packages/client/ui-conversation/src/client/apply.ts
+index f57caea9e5..191b6bf432 100644
+--- a/packages/client/ui-conversation/src/client/apply.ts
++++ b/packages/client/ui-conversation/src/client/apply.ts
+@@ -446,6 +446,7 @@ export function apply(ctx: Context): void {
+     locale: NS,
+     children: {
+       'conversation.details.tool': { kind: 'single', scope: 'session' },
++      'conversation.details.supplement': { kind: 'keyed', scope: 'session' },
+     },
+     store: chatStore,
+     inject: (): DetailsInjected => ({
+diff --git a/packages/client/ui-conversation/src/client/chat/ChatNodeSeat.tsx b/packages/client/ui-conversation/src/client/chat/ChatNodeSeat.tsx
+index f3343a183f..f70bab060c 100644
+--- a/packages/client/ui-conversation/src/client/chat/ChatNodeSeat.tsx
++++ b/packages/client/ui-conversation/src/client/chat/ChatNodeSeat.tsx
+@@ -17,7 +17,7 @@ type RoutedChatNodeOwner = {
+ 
+ /** Subscribe and dispatch one stable Context key without observing sibling Nodes. */
+ export const ChatNodeSeat = memo(function ChatNodeSeat({
+-  nodeKey, selectedCallId, cwd, openFile, inspectCall, forkAt,
++  nodeKey, selectedCallId, cwd, openFile, openDetails, inspectCall, forkAt,
+   loadImage, fileMentions, useSession, renderSlot, t,
+ }: ChatNodeSeatProps) {
+   const node = useSession(snapshot => snapshot.chat.nodes.get(nodeKey))
+@@ -28,11 +28,12 @@ export const ChatNodeSeat = memo(function ChatNodeSeat({
+       selectedCallId,
+       cwd,
+       openFile,
++      openDetails,
+       inspectCall,
+       forkAt,
+       loadImage,
+       fileMentions,
+-    }, [node, selectedCallId, cwd, openFile, inspectCall, forkAt, loadImage, fileMentions])
++    }, [node, selectedCallId, cwd, openFile, openDetails, inspectCall, forkAt, loadImage, fileMentions])
+   if (routedNode === undefined || owner === null) return null
+   // Runtime dispatch owns the correlation: every Node's discriminant is the
+   // keyed-slot entry passed alongside that same Node. TypeScript does not
+diff --git a/packages/client/ui-conversation/src/client/chat/ChatView.tsx b/packages/client/ui-conversation/src/client/chat/ChatView.tsx
+index 58e63b312f..2cddd0314c 100644
+--- a/packages/client/ui-conversation/src/client/chat/ChatView.tsx
++++ b/packages/client/ui-conversation/src/client/chat/ChatView.tsx
+@@ -144,7 +144,7 @@ function TurnStatus({ startTime, t }: {
+  * ordered business Node crosses the keyed renderer seat.
+  */
+ export function ChatView({
+-  useSession, useSessions, useStore, renderSlot, sessionId, openFile, loadOlder, loadImage, inspectCall, chatScroll, forkAt,
++  useSession, useSessions, useStore, renderSlot, sessionId, openDetails, openFile, loadOlder, loadImage, inspectCall, chatScroll, forkAt,
+   fileMentions, t,
+ }: ChatViewSlotProps) {
+   const order = useSession(s => s.chat.order)
+@@ -387,6 +387,7 @@ export function ChatView({
+               selectedCallId={selectedCallId}
+               cwd={cwd}
+               openFile={openFile}
++              openDetails={openDetails}
+               inspectCall={inspectCall}
+               forkAt={forkAt}
+               loadImage={loadImage}
+diff --git a/packages/client/ui-conversation/src/client/contract/slots.ts b/packages/client/ui-conversation/src/client/contract/slots.ts
+index 21259146a7..394b08f3a8 100644
+--- a/packages/client/ui-conversation/src/client/contract/slots.ts
++++ b/packages/client/ui-conversation/src/client/contract/slots.ts
+@@ -122,6 +122,17 @@ declare module '@deepseek-ai/dsh-client-ui-slots' {
+      * instead; this one is the whole panel.
+      */
+     'conversation.details.tool': { kind: 'single'; scope: 'session'; owner: DetailsToolOwnerProps }
++    /**
++     * Optional per-tool continuation rendered after the resident Input and
++     * Output sections. Unlike `conversation.details.tool`, this keyed seat is
++     * additive: an extension claims only its own wire Tool name and leaves the
++     * shipped ToolDetails occupant and every unclaimed tool unchanged.
++     */
++    'conversation.details.supplement': {
++      kind: 'keyed'
++      scope: 'session'
++      owner: DetailsSupplementOwnerProps
++    }
+     /**
+      * The composer takeover chain: entries are selector-routed replacements
+      * of the default InputBar. Declared by this package's 'conversation'
+@@ -360,6 +371,8 @@ export interface ChatNodeOwnerProps {
+   cwd?: string | undefined
+   openFile: (path: string) => void
+   inspectCall: (callId: CallId) => void
++  /** Select a Tool call and reveal the resident details column. */
++  openDetails?: ((target: SelectionTarget) => void) | undefined
+   forkAt: (seq: number) => void
+   /** Resolve a session-authorized historical image for inline display. */
+   loadImage: (attachment: ImageAttachmentRef) => Promise<string>
+@@ -378,6 +391,21 @@ export interface DetailsToolOwnerProps {
+   cwd?: string | undefined
+ }
+ 
++/** Narrow owner currency for one keyed additive details supplement. */
++export interface DetailsSupplementOwnerProps {
++  /** Stable Tool call identity. */
++  callId: CallId
++  /** Wire Tool name and keyed dispatch value. */
++  toolName: string
++  /** Frozen selected running-or-settled call slice. */
++  block: ToolCallBlock
++  /** Session workspace root for display-only path shortening. */
++  cwd?: string | undefined
++}
++
++/** Full props of one keyed additive details supplement. */
++export type DetailsSupplementProps = PropsRuntime<'conversation.details.supplement'>
++
+ /**
+  * Owner share of the per-command row slot: the frozen {@link CommandNode}
+  * slice off the snapshot (cache-stable reference — memo premise). The node
+@@ -722,7 +750,8 @@ export interface DetailsInjected {
+ }
+ 
+ /** Full details-slot props: selection store, Tool output seat, injected close callback, and locale. */
+-export type DetailsSlotProps = PropsRuntime<'details'> & PropsRenderSlots<'conversation.details.tool'>
++export type DetailsSlotProps = PropsRuntime<'details'>
++  & PropsRenderSlots<'conversation.details.tool' | 'conversation.details.supplement'>
+   & PropsStore<ChatStore> & DetailsInjected & PropsLocale<'conversation'>
+ 
+ /** Owner share common to the hero / New-Session Workspace pickers. */
+diff --git a/packages/client/ui-conversation/src/client/index.ts b/packages/client/ui-conversation/src/client/index.ts
+index 0574aa8375..929c55a6a9 100644
+--- a/packages/client/ui-conversation/src/client/index.ts
++++ b/packages/client/ui-conversation/src/client/index.ts
+@@ -32,7 +32,8 @@ export type {
+   ChatStore, ChatViewInjected, ChatViewSlotProps, CommandRowOwnerProps, CommandRowProps, ComposerBarInjected,
+   ComposerAttachment, ComposerChainProps, ConversationInjected,
+   ConversationSessionHeaderInjected, ConversationSessionInjected, ConversationSlotProps, ConvViewOwnerProps,
+-  ConvViewProps, DetailsInjected, DetailsSlotProps, DetailsToolOwnerProps, EmptyWorkspaceOwnerProps,
++  ConvViewProps, DetailsInjected, DetailsSlotProps, DetailsSupplementOwnerProps, DetailsSupplementProps,
++  DetailsToolOwnerProps, EmptyWorkspaceOwnerProps,
+   TurnTailOwnerProps, UseChatNodeTurnData,
+ } from './contract/slots.ts'
+ // Export discipline: packages/client/AGENTS.md.
+diff --git a/packages/client/ui-conversation/src/client/skeleton/DetailsPanel.tsx b/packages/client/ui-conversation/src/client/skeleton/DetailsPanel.tsx
+index 8d11e3c5ea..e76159fcc3 100644
+--- a/packages/client/ui-conversation/src/client/skeleton/DetailsPanel.tsx
++++ b/packages/client/ui-conversation/src/client/skeleton/DetailsPanel.tsx
+@@ -121,6 +121,14 @@ export function DetailsPanel({ useSession, useSessions, sessionId, useStore, ren
+                     })}
+                   </Fragment>
+                 </section>
++                <Fragment key={`supplement:${callId}`}>
++                  {renderSlot('conversation.details.supplement', {
++                    callId,
++                    toolName: material.name,
++                    block: material.block,
++                    cwd: sessionCwd,
++                  }, { entryKey: material.name })}
++                </Fragment>
+               </>
+             )}
+       </div>
+diff --git a/packages/client/ui-conversation/tests/gate-branch-tails.client.spec.tsx b/packages/client/ui-conversation/tests/gate-branch-tails.client.spec.tsx
+index 14dbd317f2..479796ca77 100644
+--- a/packages/client/ui-conversation/tests/gate-branch-tails.client.spec.tsx
++++ b/packages/client/ui-conversation/tests/gate-branch-tails.client.spec.tsx
+@@ -42,7 +42,8 @@ const SessionProviderStub: SessionProviderComponent = ({ children }) => children
+ 
+ /** Observe the owner currency without importing the Tool details renderer. */
+ function renderToolDetailsProbe(owners?: DetailsToolOwnerProps[]): DetailsSlotProps['renderSlot'] {
+-  return (_key, owner) => {
++  return (key, owner) => {
++    if (key !== 'conversation.details.tool') return null
+     owners?.push(owner as unknown as DetailsToolOwnerProps)
+     return <div data-testid="tool-details-seat" />
+   }
+diff --git a/packages/client/ui-tool/src/client/contract/slots.ts b/packages/client/ui-tool/src/client/contract/slots.ts
+index 04af306db4..f5b6064bb2 100644
+--- a/packages/client/ui-tool/src/client/contract/slots.ts
++++ b/packages/client/ui-tool/src/client/contract/slots.ts
+@@ -38,6 +38,8 @@ export interface ToolCallOwnerProps {
+   openFile: (path: string) => void
+   /** Inspect this call in the trajectory view when available. */
+   inspect?: (() => void) | undefined
++  /** Select this call and reveal the resident details column. */
++  openDetails?: (() => void) | undefined
+ }
+ 
+ /** Full props of a registered atomic Tool view. */
+diff --git a/packages/client/ui-tool/src/client/tool/ToolCallTree.tsx b/packages/client/ui-tool/src/client/tool/ToolCallTree.tsx
+index db3ed0af06..d8b923930c 100644
+--- a/packages/client/ui-tool/src/client/tool/ToolCallTree.tsx
++++ b/packages/client/ui-tool/src/client/tool/ToolCallTree.tsx
+@@ -12,11 +12,12 @@ function callName(node: ToolCallBlock): string {
+ 
+ /** One atomic call dispatched through the Tool-owned keyed slot. */
+ const ToolCall = memo(function ToolCall({
+-  renderSlot, callId, toolName, block, openFile, selected, cwd, inspectCall, t, children,
+-}: Pick<ToolTreeProps, 'renderSlot' | 'openFile' | 'cwd' | 'inspectCall' | 't'> & {
++  renderSlot, callId, toolName, block, turnSeq, openFile, openDetails, selected, cwd, inspectCall, t, children,
++}: Pick<ToolTreeProps, 'renderSlot' | 'openFile' | 'openDetails' | 'cwd' | 'inspectCall' | 't'> & {
+   callId: string
+   toolName: string
+   block: ToolCallBlock
++  turnSeq: number
+   selected: boolean
+   children?: ReactNode
+ }) {
+@@ -27,7 +28,10 @@ const ToolCall = memo(function ToolCall({
+     openFile,
+     cwd,
+     inspect: () => { inspectCall(callId) },
+-  }), [callId, toolName, block, openFile, cwd, inspectCall])
++    openDetails: openDetails === undefined
++      ? undefined
++      : () => { openDetails({ turnSeq, callId, toolName }) },
++  }), [callId, toolName, block, turnSeq, openFile, cwd, inspectCall, openDetails])
+   return (
+     <div
+       className={css.callRow}
+@@ -45,9 +49,10 @@ const ToolCall = memo(function ToolCall({
+ })
+ 
+ const ToolCallBranch = memo(function ToolCallBranch({
+-  renderSlot, block, selectedCallId, cwd, openFile, inspectCall, t,
+-}: Pick<ToolTreeProps, 'renderSlot' | 'selectedCallId' | 'cwd' | 'openFile' | 'inspectCall' | 't'> & {
++  renderSlot, block, turnSeq, selectedCallId, cwd, openFile, openDetails, inspectCall, t,
++}: Pick<ToolTreeProps, 'renderSlot' | 'selectedCallId' | 'cwd' | 'openFile' | 'openDetails' | 'inspectCall' | 't'> & {
+   block: ToolCallBlock
++  turnSeq: number
+ }) {
+   return (
+     <ToolCall
+@@ -55,7 +60,9 @@ const ToolCallBranch = memo(function ToolCallBranch({
+       callId={block.callId}
+       toolName={callName(block)}
+       block={block}
++      turnSeq={turnSeq}
+       openFile={openFile}
++      openDetails={openDetails}
+       selected={block.callId === selectedCallId}
+       cwd={cwd}
+       inspectCall={inspectCall}
+@@ -68,9 +75,11 @@ const ToolCallBranch = memo(function ToolCallBranch({
+               key={child.callId}
+               renderSlot={renderSlot}
+               block={child}
++              turnSeq={turnSeq}
+               selectedCallId={selectedCallId}
+               cwd={cwd}
+               openFile={openFile}
++              openDetails={openDetails}
+               inspectCall={inspectCall}
+               t={t}
+             />
+@@ -88,16 +97,18 @@ const ToolCallBranch = memo(function ToolCallBranch({
+  * @returns the Tool call tree.
+  */
+ export function ToolCallTree({
+-  renderSlot, node, selectedCallId, cwd, openFile, inspectCall, t,
++  renderSlot, node, selectedCallId, cwd, openFile, openDetails, inspectCall, t,
+ }: ToolTreeProps) {
+   const block = node.data.root
+   return (
+     <ToolCallBranch
+       renderSlot={renderSlot}
+       block={block}
++      turnSeq={node.anchorSeq}
+       selectedCallId={selectedCallId}
+       cwd={cwd}
+       openFile={openFile}
++      openDetails={openDetails}
+       inspectCall={inspectCall}
+       t={t}
+     />
+diff --git a/packages/client/ui-tool/tests/details-supplement.client.spec.tsx b/packages/client/ui-tool/tests/details-supplement.client.spec.tsx
+new file mode 100644
+index 0000000000..0000000000
+--- /dev/null
++++ b/packages/client/ui-tool/tests/details-supplement.client.spec.tsx
+@@ -0,0 +1,141 @@
++// @vitest-environment jsdom
++
++import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
++import { cleanup, fireEvent } from '@testing-library/react'
++import type { ISession, SessionId, ToolResultNode } from '@deepseek-ai/dsh-client-runtime/client'
++import type { PropsRenderSlots } from '@deepseek-ai/dsh-client-ui-slots'
++import { SlotTestRuntime, stubSettingsScope } from '@deepseek-ai/dsh-client-test-runtime'
++import { LocaleRuntime } from '@deepseek-ai/dsh-client-locale/client'
++import {
++  apply as applyConversation, inject as injectConversation,
++  type DetailsSupplementProps,
++} from '@deepseek-ai/dsh-client-ui-conversation/client'
++import { apply as applyTool, inject as injectTool } from '@deepseek-ai/dsh-client-ui-tool/client'
++import type { ToolCallViewProps } from '@deepseek-ai/dsh-client-ui-tool/client'
++import { toolChatSnapshot } from './tool-details-render.client.tsx'
++
++const SID = 'supplement-session' as SessionId
++
++class ResizeObserverStub {
++  observe(): void {}
++  unobserve(): void {}
++  disconnect(): void {}
++}
++
++afterEach(() => {
++  cleanup()
++  vi.unstubAllGlobals()
++})
++
++
++beforeEach(() => {
++  localStorage.clear()
++  vi.stubGlobal('ResizeObserver', ResizeObserverStub)
++})
++
++type AppRootProps = PropsRenderSlots<'conversation' | 'details'>
++function AppRoot({ renderSlot }: AppRootProps) {
++  return <>{renderSlot('conversation', {})}{renderSlot('details', {})}</>
++}
++
++const LAYOUT_CHILDREN = {
++  conversation: { kind: 'single', scope: 'session-maybe' },
++  details: { kind: 'single', scope: 'session' },
++} as const
++
++const result: ToolResultNode = {
++  kind: 'tool-result',
++  seq: 4,
++  time: 4_000,
++  callId: 'phone-1',
++  call: { name: 'phone_execution', argsRaw: '{"action":"inspect"}' },
++  callTime: 3_000,
++  content: [{ type: 'text', text: 'official output remains visible' }],
++  isError: false,
++  meta: { kind: 'ai-game-execution', executionId: 'exec-1' },
++  callView: null,
++  resultView: null,
++  subCalls: [],
++}
++
++describe('additive details supplement seam', () => {
++  it('keeps the resident ToolDetails occupant and opens through official selection/layout', async () => {
++    const runtime = await SlotTestRuntime.create()
++    runtime.provide('connection', { api: { settings: {} }, isLoopback: false })
++    runtime.provide('remote', { $on: () => () => {} })
++    runtime.provide('settingsScope', { bind: () => stubSettingsScope().scope } as never)
++    const layout = { openDetails: vi.fn(), closeDetails: vi.fn() }
++    runtime.provide('layout', layout)
++    const locale = new LocaleRuntime(runtime.ctx)
++    runtime.provide('locale', locale)
++    runtime.slots.installLocale(locale)
++    await runtime.sessions.add({
++      id: SID,
++      summary: { title: 'S', displayTitle: 'S', cwd: '/proj' },
++      snapshot: { nodes: [result], chat: toolChatSnapshot([result]) },
++      session: {
++        loadOlder: vi.fn<ISession['loadOlder']>(),
++        prompt: vi.fn<ISession['prompt']>(async () => ({ ok: true, value: { accepted: true } })),
++      },
++    })
++    await runtime.root.declare(LAYOUT_CHILDREN, AppRoot)
++    await runtime.mount({ inject: [...injectConversation], apply: applyConversation })
++    await runtime.mount({ inject: [...injectTool], apply: applyTool })
++
++    runtime.slots.register(
++      { name: 'tool.call.toolview', key: 'phone_execution' },
++      ({ openDetails }: ToolCallViewProps) => (
++        <button type="button" onClick={() => { openDetails?.() }}>Open phone execution</button>
++      ),
++    )
++    runtime.slots.register(
++      { name: 'conversation.details.supplement', key: 'phone_execution' },
++      ({ callId, toolName, block }: DetailsSupplementProps) => (
++        <div data-testid="supplement">{`${callId}:${toolName}:${'kind' in block ? 'settled' : 'running'}`}</div>
++      ),
++    )
++
++    const view = runtime.renderRoot()
++    fireEvent.click(view.getByRole('button', { name: 'Open phone execution' }))
++    expect(layout.openDetails).toHaveBeenCalledOnce()
++    expect(view.getByText('official output remains visible')).toBeTruthy()
++    expect(view.getByTestId('supplement').textContent).toBe('phone-1:phone_execution:settled')
++    await runtime.dispose()
++  })
++
++  it('renders no supplement for an unclaimed tool while resident details still works', async () => {
++    const other = { ...result, callId: 'other-1', call: { name: 'mystery', argsRaw: '{}' } }
++    const runtime = await SlotTestRuntime.create()
++    runtime.provide('connection', { api: { settings: {} }, isLoopback: false })
++    runtime.provide('remote', { $on: () => () => {} })
++    runtime.provide('settingsScope', { bind: () => stubSettingsScope().scope } as never)
++    const layout = { openDetails: vi.fn(), closeDetails: vi.fn() }
++    runtime.provide('layout', layout)
++    const locale = new LocaleRuntime(runtime.ctx)
++    runtime.provide('locale', locale)
++    runtime.slots.installLocale(locale)
++    await runtime.sessions.add({
++      id: SID,
++      summary: { title: 'S', displayTitle: 'S' },
++      snapshot: { nodes: [other], chat: toolChatSnapshot([other]) },
++    })
++    await runtime.root.declare(LAYOUT_CHILDREN, AppRoot)
++    await runtime.mount({ inject: [...injectConversation], apply: applyConversation })
++    await runtime.mount({ inject: [...injectTool], apply: applyTool })
++    runtime.slots.register(
++      { name: 'tool.call.toolview', key: 'mystery' },
++      ({ openDetails }: ToolCallViewProps) => (
++        <button type="button" onClick={() => { openDetails?.() }}>Open mystery</button>
++      ),
++    )
++    runtime.slots.register(
++      { name: 'conversation.details.supplement', key: 'phone_execution' },
++      () => <div data-testid="supplement" />,
++    )
++    const view = runtime.renderRoot()
++    fireEvent.click(view.getByRole('button', { name: 'Open mystery' }))
++    expect(view.getByText('official output remains visible')).toBeTruthy()
++    expect(view.queryByTestId('supplement')).toBeNull()
++    await runtime.dispose()
++  })
++})
++
+diff --git a/packages/client/ui-tool/tests/tool-details-render.client.tsx b/packages/client/ui-tool/tests/tool-details-render.client.tsx
+index 812307a509..328a0b32f2 100644
+--- a/packages/client/ui-tool/tests/tool-details-render.client.tsx
++++ b/packages/client/ui-tool/tests/tool-details-render.client.tsx
+@@ -51,7 +51,8 @@ export function toolChatSnapshot(
+  * @returns a direct-test renderSlot implementation.
+  */
+ export function renderToolDetails(t: TranslateNS<'conversation'>): DetailsSlotProps['renderSlot'] {
+-  return (_key, owner) => {
++  return (key, owner) => {
++    if (key !== 'conversation.details.tool') return null
+     // PropsRenderSlots keeps its key generic even for this one-key share;
+     // recover the concrete owner selected by the adapter's fixed slot.
+     const details = owner as unknown as DetailsToolOwnerProps

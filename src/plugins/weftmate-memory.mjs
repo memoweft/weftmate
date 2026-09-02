@@ -13,7 +13,9 @@
  *  - 管理面：GET /weftmate/memory/{world,search,export}.json 只读路由（管理页数据面）。
  *
  * 传输：stdio JSON-Lines 长驻子进程 `python -m memoweft.integrations.dsh_bridge`
- * （python/PYTHONPATH 经 env 注入：WEFTMATE_MEMOWEFT_PYTHON / _PYTHONPATH，缺省本机开发值）。
+ * 仅在 `WEFTMATE_MEMOWEFT_ENABLED=1` 时启用；python/PYTHONPATH 经
+ * WEFTMATE_MEMOWEFT_PYTHON / _PYTHONPATH 显式注入。默认关闭，外部项目缺失或漂移
+ * 不得影响 WeftMate 与 DSH 主链启动。
  * 跨进程只传 JSON 叶子；Evidence/World 权威全在 MemoWeft 侧。
  */
 import { spawn } from 'node:child_process'
@@ -280,6 +282,10 @@ function buildBoundaryMessages(session, shadowedSeqs) {
 export function apply(ctx) {
   const log = (line) => {
     try { ctx.logger?.info?.(line) } catch { /* 日志尽力 */ }
+  }
+  if (process.env.WEFTMATE_MEMOWEFT_ENABLED !== '1') {
+    log('weftmate-memory: disabled（设置 WEFTMATE_MEMOWEFT_ENABLED=1 才启用试验接缝）')
+    return
   }
   const bridge = new MemoWeftBridge({ log })
   const summaries = new WeakMap() // session → Map<compactionId, { shadowedSeqs }>

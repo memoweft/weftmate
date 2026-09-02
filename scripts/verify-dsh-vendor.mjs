@@ -23,6 +23,12 @@ import { join, dirname, basename, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawn } from 'node:child_process'
 import { loadPin, isolatedEnv } from '../tests/contract/support/checkout.ts'
+import {
+  assertManifestClosureClosed,
+  assertManifestScriptVersion,
+  assertPackageEntrypoints,
+  isSkippedPlatformOptional,
+} from './dsh-vendor-closure.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
@@ -132,6 +138,10 @@ async function main() {
   const manifest = JSON.parse(await readFile(join(RUNTIME_DIR, 'VENDOR-MANIFEST.json'), 'utf8'))
   const pin = await loadPin()
 
+  // script 更新意味着打包布局、闭包审计字段或校验规则已经变化；旧产物不能伪装为已验证。
+  assertManifestScriptVersion(manifest)
+  assertManifestClosureClosed(manifest)
+
   console.log(`[vendor-verify] manifest: ${manifest.closure.length} 包, dsh ${manifest.dsh.packageVersion} @ ${manifest.dsh.commit.slice(0, 7)}`)
 
   // 1. pin 一致
@@ -139,23 +149,40 @@ async function main() {
     fail(`manifest 与 pin 不一致：${JSON.stringify(manifest.dsh)} vs ${JSON.stringify({ packageVersion: pin.packageVersion, commit: pin.commit })}`)
   }
 
-  // 2. tarball sha256
+  if (!existsSync(join(RUNTIME_DIR, 'pnpm-workspace.yaml'))) {
+    fail('缺 pnpm-workspace.yaml —— 本地内部 tarball overrides 未建立')
+  }
+  if (manifest.sourceArtifacts?.workspaceOverrides !== true) {
+    fail('manifest 未记录 runtime workspace local-tarball overrides')
+  }
+
+  // 2. tarball sha256。当前平台不适用的 optional 包可以在 Windows 装配时没有可用的
+  //    原生 release artifact；manifest 必须明确记为 null，不能伪造 tarball/hash。
   for (const entry of manifest.closure) {
+    if (entry.tarball === null || entry.sha256 === null) {
+      if (!isSkippedPlatformOptional(entry)) {
+        fail(`非当前平台跳过包缺 tarball 或 sha256：${entry.name}`)
+      }
+      continue
+    }
     const tgz = join(RUNTIME_DIR, 'tarballs', entry.tarball)
     if (!existsSync(tgz)) fail(`tarball 缺失：${entry.tarball}`)
     const actual = createHash('sha256').update(readFileSync(tgz)).digest('hex')
     if (actual !== entry.sha256) fail(`tarball sha256 不符：${entry.tarball}`)
   }
-  console.log('[vendor-verify] tarball sha256 全部一致')
+  console.log('[vendor-verify] 已装配 tarball sha256 全部一致；非当前平台 optional 包按 manifest 合法跳过')
 
-  // 3. node_modules 闭包完整
-  for (const entry of manifest.closure) {
+  // 3. node_modules 实际 internal set 与 manifest 闭包一致。平台可选包的 tarball 仍必须
+  //    存在并验 hash，但当前平台不合法时 pnpm 正确跳过安装，日志明确列出而不是误报缺包。
+  const skippedPlatformPackages = manifest.closure.filter((entry) => isSkippedPlatformOptional(entry))
+  const expectedInstalled = manifest.closure.filter((entry) => !isSkippedPlatformOptional(entry))
+  for (const entry of expectedInstalled) {
     const pkgPath = join(RUNTIME_DIR, 'node_modules', ...entry.name.split('/'), 'package.json')
     if (!existsSync(pkgPath)) fail(`node_modules 缺包：${entry.name}`)
     const pkg = JSON.parse(await readFile(pkgPath, 'utf8'))
     if (pkg.version !== entry.version) fail(`${entry.name} 版本不符：安装 ${pkg.version} vs 清单 ${entry.version}`)
   }
-  console.log('[vendor-verify] node_modules 闭包版本全部一致')
+  const expectedNames = new Set(expectedInstalled.map((entry) => entry.name))
 
   // 3b. @deepseek-ai 单实例：任何包出现嵌套第二副本即失败（版本漂移双实例会切断
   //     dsh-tools 的 unique symbol，真机表现为工具执行报 reading 'prepare'）。
@@ -173,6 +200,16 @@ async function main() {
     const listing = shown.map(([name, paths]) => `  ${name}:\n${paths.map((p) => `    ${p}`).join('\n')}`).join('\n')
     fail(`发现 @deepseek-ai 包多实例（依赖区间漂移出嵌套副本）：\n${listing}${more > 0 ? `\n  …及另外 ${more} 个包` : ''}`)
   }
+  const actualNames = new Set(copies.map((copy) => `@deepseek-ai/${copy.name}`))
+  const unexpected = [...actualNames].filter((name) => !expectedNames.has(name))
+  const absent = [...expectedNames].filter((name) => !actualNames.has(name))
+  if (unexpected.length > 0 || absent.length > 0) {
+    fail(`node_modules 内部包集合与 manifest 闭包不一致：缺 ${absent.join(', ') || '(无)'}；多 ${unexpected.join(', ') || '(无)'}`)
+  }
+  console.log(`[vendor-verify] node_modules 闭包版本与内部包集合全部一致（${expectedInstalled.length} 个安装包）`)
+  console.log(`[vendor-verify] 当前平台合法跳过的 optional 包：${skippedPlatformPackages.map((entry) => entry.name).join(', ') || '(无)'}`)
+  await assertPackageEntrypoints(join(RUNTIME_DIR, 'node_modules'), manifest.closure)
+  console.log('[vendor-verify] 包 main / exports 默认入口检查通过')
   console.log(`[vendor-verify] @deepseek-ai 单实例检查通过（${copies.length} 个包，无嵌套重复副本）`)
 
   // 4. 编译产物纯净（无源码树）：dsh-* 自身包禁 src/ 与 .ts；cordis 工具族上游发布自带 src，

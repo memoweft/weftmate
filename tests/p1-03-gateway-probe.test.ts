@@ -26,8 +26,10 @@ function fakeDsh() {
       list: async () => ok({ items: [{ sessionId: 's-1', origin: undefined }] }),
       history: async () => ok({ events: [] }),
       prompt: async ({ content }: any) => {
-        if (content === 'cause-error') return fail('internal', { secret: 'sk-hidden-probe-secret', stack: 'private stack' })
-        if (content === 'cancel-turn') return ok({ accepted: true })
+        // Match the supported DSH prompt wire: content is structured blocks.
+        const text = content?.[0]?.type === 'text' ? content[0].text : null
+        if (text === 'cause-error') return fail('internal', { secret: 'sk-hidden-probe-secret', stack: 'private stack' })
+        if (text === 'cancel-turn') return ok({ accepted: true })
         push({ type: 'assistant/chunk', seq: ++seq, data: { turn: 1, chunk: { type: 'text-delta', text: 'one ' } } })
         push({ type: 'assistant/chunk', seq: ++seq, data: { turn: 1, chunk: { type: 'text-delta', text: 'two' } } })
         push({ type: 'tool/call', seq: ++seq, data: { turn: 1, callId: 'c-ok', name: 'read', arguments: 'SECRET=never' } })

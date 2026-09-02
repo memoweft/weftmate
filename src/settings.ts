@@ -11,11 +11,18 @@
  *   - 桌面宠物窗口显示偏好（托盘+主窗口形态保留，R6 恢复完整桌宠）。
  */
 import { app } from 'electron';
-import { readFileSync, writeFileSync, existsSync, renameSync, rmSync } from 'node:fs';
-import { randomUUID } from 'node:crypto';
+import { existsSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
+import { ProductConfigStore, type PublicModelProfile, type ThemePreference } from './stage2-config.ts';
+import { selectLegacyCompatibilityBackfill, type LegacyCompatibilityEvidence } from './legacy-compatibility-backfill.ts';
 
 interface Settings {
+  schemaVersion?: number;
+  appearance?: { theme?: ThemePreference };
+  models?: { profiles?: PublicModelProfile[]; activeId?: string | null };
+  sessionBindings?: Record<string, { profileId: string; restoreInternalRoute: boolean }>;
+  legacyCompatibilityProfileId?: string | null;
   perception?: {
     enabled?: boolean; // 旧扁平结构(迁移用):等价 sources.desktop.enabled
     /** 全局:是否允许感知数据(observed)上云。默认 false=不上云(红线);作者拍板加 opt-in 开关。 */
@@ -39,25 +46,145 @@ function settingsPath(): string {
 }
 
 function read(): Settings {
-  try {
-    if (existsSync(settingsPath())) {
-      const parsed = JSON.parse(readFileSync(settingsPath(), 'utf-8'));
-      return parsed && typeof parsed === 'object' ? parsed : {};
-    }
-  } catch { /* 文件损坏/读不到 → 当空设置 */ }
-  return {};
+  return new ProductConfigStore(settingsPath()).read() as Settings;
 }
 
 function write(s: Settings): void {
+  new ProductConfigStore(settingsPath()).write(s as never);
+}
+
+/** Stage 2 的唯一非敏感设置视图。不存在 API Key，也不会间接暴露存储路径。 */
+export function readProductSettings(): {
+  schemaVersion: number;
+  appearance: { theme: ThemePreference };
+  models: { profiles: PublicModelProfile[]; activeId: string | null };
+} {
+  const settings = read();
+  return {
+    schemaVersion: settings.schemaVersion ?? 2,
+    appearance: { theme: settings.appearance?.theme ?? 'system' },
+    models: { profiles: settings.models?.profiles ?? [], activeId: settings.models?.activeId ?? null },
+  };
+}
+
+/** Main-process-only full non-secret snapshot used to compensate a failed
+ * profile/vault/runtime mutation. It is never returned through IPC. */
+export function snapshotSettings(): Settings { return structuredClone(read()); }
+export function restoreSettings(snapshot: Settings): void { write(structuredClone(snapshot)); }
+/** Raw public bytes are used only by the private recovery journal, so a crash
+ * compensation can restore the exact prior file rather than reformatting it. */
+export function snapshotSettingsBytes(): Buffer | null { return existsSync(settingsPath()) ? readFileSync(settingsPath()) : null; }
+export function restoreSettingsBytes(snapshot: Buffer | null): void {
   const target = settingsPath();
-  const temp = `${target}.${process.pid}.${randomUUID()}.tmp`;
-  try {
-    writeFileSync(temp, `${JSON.stringify(s, null, 2)}\n`, { encoding: 'utf-8', mode: 0o600 });
-    renameSync(temp, target);
-  } catch (error) {
-    try { rmSync(temp, { force: true }); } catch { /* 保留旧设置文件 */ }
-    throw error;
+  if (snapshot === null) { if (existsSync(target)) rmSync(target, { force: true }); return; }
+  const temporary = `${target}.${process.pid}.${randomUUID()}.rollback.tmp`;
+  try { writeFileSync(temporary, snapshot, { mode: 0o600 }); renameSync(temporary, target); }
+  catch (error) { try { rmSync(temporary, { force: true }); } catch {} throw error; }
+}
+
+export function setThemePreference(theme: unknown): ThemePreference {
+  const next: ThemePreference = theme === 'light' || theme === 'dark' ? theme : 'system';
+  const settings = read();
+  settings.appearance = { ...(settings.appearance ?? {}), theme: next };
+  write(settings);
+  return next;
+}
+
+export function listModelProfiles(): { profiles: PublicModelProfile[]; activeId: string | null } {
+  const settings = readProductSettings();
+  return { profiles: settings.models.profiles, activeId: settings.models.activeId };
+}
+
+/** 旧 Stage 1 密文档迁移时只导入尚不存在的 id，故可安全重试。 */
+export function importLegacyModelProfiles(profiles: PublicModelProfile[], activeId: string | null): { accepted: string[]; rejected: string[] } {
+  const settings = read();
+  const current = settings.models?.profiles ?? [];
+  if (profiles.length === 0) return { accepted: [], rejected: [] };
+  if (current.length === 0) {
+    const selected = profiles.some((item) => item.id === activeId) ? activeId : profiles[0]?.id ?? null;
+    settings.models = { profiles, activeId: selected };
+    // The sole durable source for empty/legacy DSH headers.  A later active
+    // switch must never silently redirect an old session.
+    settings.legacyCompatibilityProfileId = selected;
+    write(settings);
   }
+  const persisted = read().models?.profiles ?? [];
+  const accepted = profiles.filter((profile) => persisted.some((item) => item.id === profile.id && item.provider === profile.provider && item.baseUrl === profile.baseUrl && item.model === profile.model)).map((profile) => profile.id);
+  return { accepted, rejected: profiles.filter((profile) => !accepted.includes(profile.id)).map((profile) => profile.id) };
+}
+
+export function upsertModelProfile(profile: PublicModelProfile): PublicModelProfile {
+  const settings = read();
+  const models = settings.models?.profiles ?? [];
+  const index = models.findIndex((item) => item.id === profile.id);
+  if (index >= 0) models[index] = profile;
+  else models.push(profile);
+  settings.models = { profiles: models, activeId: settings.models?.activeId ?? profile.id };
+  write(settings);
+  return profile;
+}
+
+export function removeModelProfile(id: string): string | null {
+  const settings = read();
+  const profiles = (settings.models?.profiles ?? []).filter((item) => item.id !== id);
+  const activeId = settings.models?.activeId === id ? profiles[0]?.id ?? null : settings.models?.activeId ?? null;
+  settings.models = { profiles, activeId };
+  if (settings.legacyCompatibilityProfileId === id) settings.legacyCompatibilityProfileId = null;
+  write(settings);
+  return activeId;
+}
+
+/** A durable, non-secret fallback only for pre-Stage-2 sessions lacking a DSH model header. */
+export function sessionModelBinding(sessionId: string): string | null {
+  const value = read().sessionBindings?.[sessionId];
+  return typeof value?.profileId === 'string' ? value.profileId : null;
+}
+
+export function sessionBindingNeedsInternalRoute(sessionId: string): boolean {
+  return read().sessionBindings?.[sessionId]?.restoreInternalRoute === true;
+}
+
+export function bindSessionModel(sessionId: string, profileId: string, restoreInternalRoute = true): void {
+  if (!sessionId || !profileId || sessionId.length > 240 || profileId.length > 160) throw new TypeError('invalid session binding');
+  const settings = read();
+  if (!(settings.models?.profiles ?? []).some((profile) => profile.id === profileId)) throw new Error('unknown model profile');
+  settings.sessionBindings = { ...(settings.sessionBindings ?? {}), [sessionId]: { profileId, restoreInternalRoute } };
+  write(settings);
+}
+
+export function profileHasSessionBinding(profileId: string): boolean {
+  return Object.values(read().sessionBindings ?? {}).some((binding) => binding.profileId === profileId);
+}
+
+/** Explicitly persisted by legacy migration; it is intentionally not activeId. */
+export function legacyCompatibilityProfileId(): string | null {
+  const settings = read();
+  const id = settings.legacyCompatibilityProfileId;
+  return typeof id === 'string' && (settings.models?.profiles ?? []).some((profile) => profile.id === id) ? id : null;
+}
+
+/** Backfill only from encrypted migration evidence that exactly matches the retained public route metadata. */
+export function backfillLegacyCompatibilityProfile(evidence: LegacyCompatibilityEvidence | null): boolean {
+  const settings = read();
+  const id = selectLegacyCompatibilityBackfill({ recordedId: settings.legacyCompatibilityProfileId ?? null,
+    profiles: settings.models?.profiles ?? [], evidence });
+  if (!id) return false;
+  settings.legacyCompatibilityProfileId = id;
+  write(settings);
+  return true;
+}
+
+export function setActiveModelProfile(id: string): boolean {
+  return restoreActiveModelProfile(id);
+}
+
+/** Internal switch transaction hook; null restores the legitimate no-active state. */
+export function restoreActiveModelProfile(id: string | null): boolean {
+  const settings = read();
+  if (id !== null && !(settings.models?.profiles ?? []).some((item) => item.id === id)) return false;
+  settings.models = { profiles: settings.models?.profiles ?? [], activeId: id };
+  write(settings);
+  return true;
 }
 
 // ── 感知(多源 · opt-in · 默认关) ──

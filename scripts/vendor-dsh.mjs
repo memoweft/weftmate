@@ -13,10 +13,10 @@
  *
  * 流程（对应 docs/VENDOR-PACKAGING.md §6.1）：
  *   1. resolve+verify：复用契约测试的 pin 校验（tests/contract/support/checkout.ts，单一事实源）；
- *   2. build：checkout 内 `pnpm run build:lib`（上游同一命令，tsc -b + tsdown 全量构建），
- *      再 `pnpm run build:web`（官方前端 vite dist——frontend-static 托管的发货物）；
+ *   2. preflight：验证 checkout 已有的官方编译入口；构建属于 Harness 所有者职责，
+ *      本脚本绝不在 checkout 内执行 build/install/clean；
  *   3. closure：从直接行（§发货子集）按 dependencies/peerDependencies/optionalDependencies 推导
- *      @deepseek-ai 传递闭包（workspace 扫描含 packages/vendor/apps 三处）；
+ *      @deepseek-ai 传递闭包（workspace 扫描含 packages/vendor/apps 与 native/landlock-run/packages）；
  *   4. pack：逐包 `pnpm pack`（pnpm 会把 workspace: 协议替换为具体版本）；
  *   5. assemble：vendor/dsh-runtime/{package.json, tarballs/, bin/} → `pnpm install` 产出闭包 node_modules；
  *      package.json 带 pnpm.overrides 把闭包内全部 @deepseek-ai 包锁到逐包精确版本——
@@ -30,22 +30,33 @@
  * 用法：
  *   node scripts/vendor-dsh.mjs [--dry-run]   # --dry-run 只计算并打印闭包，不构建/打包/安装
  *
- * 红线：本脚本只读 checkout 并运行其官方构建与打包命令，不修改 checkout 中任何被 git 跟踪的文件。
+ * 红线：本脚本只读 checkout 并只执行逐包 pack；不在 checkout 内执行 build/install/clean，
+ * 不修改 checkout 中任何被 git 跟踪的文件。
  */
 
 import { spawnSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { existsSync, readFileSync } from 'node:fs'
-import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readdir, rm, writeFile } from 'node:fs/promises'
 import { basename, dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { loadPin, resolveCheckout } from '../tests/contract/support/checkout.ts'
+import {
+  VENDOR_SCRIPT_VERSION,
+  assertPackageEntrypoints,
+  assertWorkspaceClosureEntrypoints,
+  computeClosure,
+  isSkippedPlatformOptional,
+  loadWorkspaceIndex,
+  manifestClosureEntries,
+  platformConstraint,
+  runtimeDependencySections,
+} from './dsh-vendor-closure.mjs'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
 const RUNTIME_DIR = join(repoRoot, 'vendor', 'dsh-runtime')
 const TARBALLS_DIR = join(RUNTIME_DIR, 'tarballs')
-const SCRIPT_VERSION = '2'
 
 /** 发货子集·直接行（行集合变更需 owner 拍板；R1 起 = 官方 web 运行时 + v2 直接行保留）。 */
 const SUBSET = [
@@ -111,69 +122,33 @@ function tarballName(name, version) {
   return `${name.replace('@', '').replace('/', '-')}-${version}.tgz`
 }
 
-/** 收集 checkout workspace 内全部 @deepseek-ai 包（packages 两级子目录 + vendor/apps 一级子目录）。 */
-async function loadWorkspaceIndex(checkout) {
-  const index = new Map()
-  const scan = async (dir, depth) => {
-    if (depth === 0) {
-      const pkgPath = join(dir, 'package.json')
-      if (existsSync(pkgPath)) await loadPkg(pkgPath)
-      return
-    }
-    const entries = await readdir(dir, { withFileTypes: true })
-    for (const entry of entries) {
-      if (!entry.isDirectory()) continue
-      await scan(join(dir, entry.name), depth - 1)
-    }
-  }
-  const loadPkg = async (pkgPath) => {
-    const pkg = JSON.parse(await readFile(pkgPath, 'utf8'))
-    if (typeof pkg.name === 'string' && pkg.name.startsWith('@deepseek-ai/')) {
-      index.set(pkg.name, { dir: dirname(pkgPath), pkg })
-    }
-  }
-  await scan(join(checkout, 'packages'), 2)
-  await scan(join(checkout, 'vendor'), 1)
-  // R1：apps/（cli 与 web 前端都在这里，packages 扫描覆盖不到）
-  await scan(join(checkout, 'apps'), 1)
-  return index
-}
-
-function depNames(pkg) {
-  const out = new Set()
-  for (const field of ['dependencies', 'peerDependencies', 'optionalDependencies']) {
-    for (const key of Object.keys(pkg[field] ?? {})) out.add(key)
-  }
-  return out
-}
-
-/** 直接行 → @deepseek-ai 传递闭包（含直接行自身）。 */
-function computeClosure(index, roots) {
-  const closure = new Map()
-  const queue = [...roots]
-  while (queue.length > 0) {
-    const name = queue.shift()
-    if (closure.has(name)) continue
-    const entry = index.get(name)
-    if (entry === undefined) throw new Error(`发货子集包含 checkout 中不存在的包：${name}`)
-    closure.set(name, entry)
-    for (const depName of depNames(entry.pkg)) {
-      if (depName.startsWith('@deepseek-ai/') && index.has(depName)) queue.push(depName)
-    }
-  }
-  return closure
-}
-
 /** 解析 pnpm 可执行（WEFTMATE_PNPM 覆盖，可含子命令如 'corepack pnpm' → PATH 上找 pnpm.cmd/.exe/pnpm → corepack.cmd pnpm 回退）。 */
 function resolvePnpm() {
-  const override = process.env.WEFTMATE_PNPM
-  if (override !== undefined && override !== '') return override.split(/\s+/).filter(Boolean)
   const findInPath = (name) => {
     for (const dir of (process.env.PATH ?? '').split(';')) {
       const path = join(dir || '.', name)
       if (existsSync(path)) return path
     }
     return null
+  }
+  const resolveCommand = (name) => {
+    const hasExecutableExtension = /\.(?:cmd|exe)$/i.test(name)
+    // Windows 的 Node 安装目录会同时留下无扩展名 corepack 占位文件和真正可执行的
+    // corepack.cmd；必须先选 .cmd/.exe，不能把前者交给 spawnSync。
+    if (!hasExecutableExtension && process.platform === 'win32') {
+      const windowsShim = findInPath(`${name}.cmd`) ?? findInPath(`${name}.exe`)
+      if (windowsShim !== null) return windowsShim
+    }
+    if (existsSync(name)) return name
+    return findInPath(name)
+      ?? (!hasExecutableExtension ? findInPath(`${name}.cmd`) : null)
+      ?? (!hasExecutableExtension ? findInPath(`${name}.exe`) : null)
+      ?? name
+  }
+  const override = process.env.WEFTMATE_PNPM
+  if (override !== undefined && override !== '') {
+    const parts = override.split(/\s+/).filter(Boolean)
+    return [resolveCommand(parts[0]), ...parts.slice(1)]
   }
   const direct = findInPath('pnpm.cmd') ?? findInPath('pnpm.exe') ?? findInPath('pnpm')
   if (direct !== null) return [direct]
@@ -186,13 +161,13 @@ function quoteCmd(arg) {
   return /[\s"&|<>^]/.test(arg) ? `"${arg.replaceAll('"', '\\"')}"` : arg
 }
 
-function run(command, args, cwd, label) {
+function run(command, args, cwd, label, env = process.env) {
   // command 可为多段（如 'corepack pnpm'）；Windows 上 .cmd shim 需 shell 包装（args 已逐项引号）。
   const parts = Array.isArray(command) ? command : [command]
   const useShell = /\.cmd$/i.test(parts[0] ?? '')
   const result = useShell
-    ? spawnSync([...parts, ...args].map(quoteCmd).join(' '), [], { cwd, encoding: 'utf8', shell: true })
-    : spawnSync(parts[0], [...parts.slice(1), ...args], { cwd, encoding: 'utf8' })
+    ? spawnSync([...parts, ...args].map(quoteCmd).join(' '), [], { cwd, env, encoding: 'utf8', shell: true })
+    : spawnSync(parts[0], [...parts.slice(1), ...args], { cwd, env, encoding: 'utf8' })
   if (result.status !== 0) {
     const tail = (result.stderr ?? result.stdout ?? (result.error ? String(result.error) : '')).split('\n').slice(-15).join('\n')
     throw new Error(`${label} 失败（exit ${result.status}）：\n${tail}`)
@@ -202,6 +177,37 @@ function run(command, args, cwd, label) {
 
 function sha256Of(file) {
   return createHash('sha256').update(readFileSync(file)).digest('hex')
+}
+
+/** 运行时装配沿用已验证 checkout 声明的 Corepack pnpm 版本，避免 PATH 上的全局 pnpm 漂移。 */
+function checkoutPackageManager(checkout) {
+  const packageManager = JSON.parse(readFileSync(join(checkout, 'package.json'), 'utf8')).packageManager
+  if (typeof packageManager !== 'string' || !/^pnpm@\d/.test(packageManager)) {
+    throw new Error(`checkout 未声明可用的 pnpm packageManager：${String(packageManager)}`)
+  }
+  return packageManager
+}
+
+/** pnpm 11 只从 workspace root 读取 overrides；运行时自己就是一个隔离 workspace。 */
+function runtimeWorkspaceYaml(packed) {
+  const overrides = packed
+    .map((entry) => `  '${entry.name}': 'file:tarballs/${entry.tarball}'`)
+    .join('\n')
+  return `packages:\n  - '.'\noverrides:\n${overrides}\n`
+}
+
+/** 大闭包的 pnpm 解析在 Node 默认堆上限下会 OOM；仅 vendor 产物 install 提高其子进程堆。 */
+function runtimeInstallEnv() {
+  const raw = process.env.WEFTMATE_VENDOR_NODE_HEAP_MB ?? '8192'
+  const heapMb = Number(raw)
+  if (!Number.isInteger(heapMb) || heapMb < 1024 || heapMb > 16384) {
+    throw new Error(`WEFTMATE_VENDOR_NODE_HEAP_MB 必须是 1024-16384 的整数，当前为 ${raw}`)
+  }
+  const existing = process.env.NODE_OPTIONS?.trim()
+  return {
+    env: { ...process.env, NODE_OPTIONS: [existing, `--max-old-space-size=${heapMb}`].filter(Boolean).join(' ') },
+    heapMb,
+  }
 }
 
 /**
@@ -259,7 +265,9 @@ async function main() {
   const dryRun = process.argv.includes('--dry-run')
   const pin = await loadPin()
   const checkout = await resolveCheckout(pin)
+  const packageManager = checkoutPackageManager(checkout)
   console.log(`[vendor-dsh] checkout ${checkout} @ ${pin.commit}（${pin.packageVersion}）`)
+  console.log(`[vendor-dsh] Corepack packageManager：${packageManager}`)
 
   const index = await loadWorkspaceIndex(checkout)
   const closure = computeClosure(index, SUBSET.map((entry) => entry.name))
@@ -274,58 +282,64 @@ async function main() {
     return
   }
 
-  console.log('[vendor-dsh] build: pnpm run build:lib（checkout 内，上游同一命令）')
-  run(resolvePnpm(), ['run', 'build:lib'], checkout, 'build:lib')
-  // R1：官方前端 dist 是发货物（dsh-web-app 经 exports 解析 dist/index.html）。
-  // 上游 build:web = `pnpm --filter @deepseek-ai/dsh-web-frontend run build`（vite build，apps/web），
-  // 依赖 build:lib 的 client 面产物，故在其后。这里把 --filter 提到本脚本一层：等价于上游命令，
-  // 且避免根 script 内部再查裸 pnpm（本机 pnpm 只经 corepack shim 提供，内层 cmd 找不到）。
-  console.log('[vendor-dsh] build: pnpm run build:web（官方前端 vite dist）')
-  run(resolvePnpm(), ['--filter', '@deepseek-ai/dsh-web-frontend', 'run', 'build'], checkout, 'build:web')
+  await assertWorkspaceClosureEntrypoints(closure)
+  console.log('[vendor-dsh] checkout 已有编译入口检查通过（只读；未在 Harness checkout 执行 build/install/clean）')
 
   await rm(RUNTIME_DIR, { recursive: true, force: true })
   await mkdir(TARBALLS_DIR, { recursive: true })
 
   console.log('[vendor-dsh] pack：逐包 pnpm pack')
   const packed = []
+  const skippedPlatformOptionals = []
   const sorted = [...closure].sort(([a], [b]) => a.localeCompare(b))
   for (const [name, entry] of sorted) {
+    const platformOptional = platformConstraint(entry.pkg)
+    if (platformOptional !== null && isSkippedPlatformOptional({ platformOptional })) {
+      skippedPlatformOptionals.push({ name, platformOptional })
+      continue
+    }
     run(resolvePnpm(), ['--dir', entry.dir, 'pack', '--pack-destination', TARBALLS_DIR], checkout, `pack ${name}`)
     const tgz = join(TARBALLS_DIR, tarballName(name, entry.pkg.version))
     if (!existsSync(tgz)) throw new Error(`${name} 未产出预期 tarball：${tgz}`)
     packed.push({ name, version: entry.pkg.version, tarball: basename(tgz), sha256: sha256Of(tgz) })
   }
+  console.log(`[vendor-dsh] 当前平台合法跳过的 optional 包：${skippedPlatformOptionals.map((entry) => entry.name).join(', ') || '(无)'}`)
+
+  const runtimeSections = runtimeDependencySections(packed, closure)
+  const manifestClosure = manifestClosureEntries(packed, closure, { allowSkippedPlatformOptionals: true })
 
   const runtimePkg = {
     name: 'weftmate-dsh-runtime',
     version: '0.0.0',
     private: true,
+    packageManager,
     description: `WeftMate 内嵌 DSH 运行时闭包（pin ${pin.packageVersion} @ ${pin.commit.slice(0, 7)}；生成物，勿手改）`,
     engines: { node: '^22.19.0 || >=24.0.0' },
-    dependencies: Object.fromEntries(packed.map((entry) => [entry.name, `file:tarballs/${entry.tarball}`])),
-    // 2026-08-17 事故修复：上游发布包的 @deepseek-ai 依赖区间为 `^0.1.0-rc.N`，
-    // semver 会匹配同 tuple 的新 rc，装配期漂移出嵌套双实例（rc.N 顶层 + rc.N+1 嵌套），
-    // dsh-tools 的 TOOL_RUNTIME_SCHEDULER unique symbol 跨实例断裂 →
-    // 工具执行报 `Cannot read properties of undefined (reading 'prepare')`。
-    // overrides 把闭包内全部 @deepseek-ai 包锁到逐包精确版本，杜绝任何漂移。
-    pnpm: {
-      overrides: Object.fromEntries(packed.map((entry) => [entry.name, entry.version])),
-    },
+    dependencies: runtimeSections.dependencies,
+    // Linux-only Landlock launcher tarballs remain optional.  They are present for Linux
+    // assemblies but must never become mandatory direct dependencies on Windows.
+    optionalDependencies: runtimeSections.optionalDependencies,
   }
   await writeFile(join(RUNTIME_DIR, 'package.json'), JSON.stringify(runtimePkg, null, 2) + '\n', 'utf8')
+  // pnpm 11 从 pnpm-workspace.yaml 的 root overrides 读取传递依赖来源。所有已打包
+  // @deepseek-ai 包都必须指向本地 tarball，不能因 ^rc 区间回退 registry。
+  await writeFile(join(RUNTIME_DIR, 'pnpm-workspace.yaml'), runtimeWorkspaceYaml(packed), 'utf8')
 
-  console.log('[vendor-dsh] install：pnpm install --ignore-scripts --node-linker=hoisted（装配闭包 node_modules）')
+  const install = runtimeInstallEnv()
+  console.log(`[vendor-dsh] install：pnpm install --ignore-scripts --node-linker=hoisted（隔离 runtime workspace；Node heap ${install.heapMb} MiB）`)
   // --ignore-scripts：node-pty/koffi 的 build 与 subprocess-local 的 postinstall 一律跳过——
   // 与探针验证过的 checkout 状态一致（那里同样未构建，DSH 照常运行；两包均带平台 prebuild，
   // subprocess-local 的 postinstall 只是 POSIX chmod）。manifest.buildScriptsIgnored 记录此决策。
   // M5-01：--node-linker=hoisted——pnpm 默认布局用 junction 链接 node_modules/@deepseek-ai/*，
   // electron-builder 的 extraResources 不跟随 junction，打包会丢整个闭包；hoisted 布局是真实目录，
   // 复制语义可靠（运行时解析行为不变，contract/T8/verify 冒烟锁行为）。
-  run(resolvePnpm(), ['install', '--ignore-workspace', '--ignore-scripts', '--node-linker=hoisted'], RUNTIME_DIR, 'runtime pnpm install')
+  run(resolvePnpm(), ['install', '--ignore-scripts', '--node-linker=hoisted'], RUNTIME_DIR, 'runtime pnpm install', install.env)
 
   // 单实例结构检查：任何 @deepseek-ai 包出现嵌套第二副本即失败（见 runtimePkg.pnpm.overrides 注释）。
   await assertSingleInstance(join(RUNTIME_DIR, 'node_modules'))
   console.log('[vendor-dsh] 单实例检查通过：闭包内 @deepseek-ai 包无嵌套重复副本')
+  await assertPackageEntrypoints(join(RUNTIME_DIR, 'node_modules'), manifestClosure)
+  console.log('[vendor-dsh] 包 main / exports 默认入口检查通过')
 
   await mkdir(join(RUNTIME_DIR, 'bin'), { recursive: true })
   // R1：官方 CLI 启动器（main 用 process.execPath + ELECTRON_RUN_AS_NODE=1 直跑 lib/bin.js，
@@ -348,15 +362,22 @@ async function main() {
   const manifest = {
     schemaVersion: 1,
     generatedAt: new Date().toISOString(),
-    scriptVersion: SCRIPT_VERSION,
+    scriptVersion: VENDOR_SCRIPT_VERSION,
     dsh: { repo: pin.repo, packageVersion: pin.packageVersion, commit: pin.commit },
     toolchain: { node: process.version, pnpm: pnpmVersion },
     subset: SUBSET.map(({ name, why }) => ({ name, why })),
-    closure: packed,
+    closure: manifestClosure,
     // R1：web profile 全挂官方树，机制包不再有「带入不挂行」审计项；字段保留（恒为空）。
     carriedButNotMounted,
     buildScriptsIgnored: true,
-    builds: ['build:lib', 'build:web'],
+    sourceArtifacts: {
+      mode: 'prebuilt-checkout',
+      verifiedEntrypoints: true,
+      harnessBuildInvoked: false,
+      skippedPlatformOptionals,
+      runtimeInstallNodeHeapMb: install.heapMb,
+      workspaceOverrides: true,
+    },
     webRuntimeEntry: `node_modules/@deepseek-ai/dsh/lib/bin.js`,
   }
   await writeFile(join(RUNTIME_DIR, 'VENDOR-MANIFEST.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf8')

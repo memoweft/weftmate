@@ -1,24 +1,68 @@
-// M5-01 打包暂存：vendor/dsh-runtime → .stage/dsh-runtime（去 tarballs）。
-// 为什么需要暂存：electron-builder 的 filter.js 硬编码丢弃 extraResources 根目录下的 node_modules
-// （relative === "node_modules" → return false），直接把 vendor/dsh-runtime 当 from 会丢整个运行时闭包。
-// 包一层父目录后 node_modules 变成子路径（dsh-runtime/node_modules），按普通文件树复制。
-import { cp, mkdir, rm } from 'node:fs/promises'
+#!/usr/bin/env node
+/**
+ * Copy the already verified vendor runtime below a wrapper directory so
+ * electron-builder does not discard its root node_modules directory.
+ *
+ * This script never regenerates vendor/dsh-runtime. Stage 3 builds pass an
+ * explicit, isolated --stage-root; the legacy default remains .stage so the
+ * existing dist scripts keep working.
+ */
+import { cp, lstat, mkdir, readdir, rm } from 'node:fs/promises'
 import { existsSync } from 'node:fs'
+import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path'
+import { fileURLToPath } from 'node:url'
 
-const runtime = 'vendor/dsh-runtime'
-const stage = '.stage/dsh-runtime'
+const here = dirname(fileURLToPath(import.meta.url))
+const repoRoot = resolve(here, '..')
+const runtime = join(repoRoot, 'vendor', 'dsh-runtime')
 
-if (!existsSync(`${runtime}/VENDOR-MANIFEST.json`)) {
-  console.error('[stage-dsh-runtime] 缺 vendor/dsh-runtime —— 先跑 npm run vendor:dsh')
+function option(name, fallback) {
+  const index = process.argv.indexOf(name)
+  if (index === -1) return fallback
+  const value = process.argv[index + 1]
+  if (!value || value.startsWith('--')) throw new Error(`${name} requires a path`)
+  return value
+}
+
+function isInside(parent, child) {
+  const rel = relative(parent, child)
+  return rel !== '' && rel !== '..' && !rel.startsWith(`..${sep}`) && !isAbsolute(rel)
+}
+
+async function assertNoReparsePoints(root) {
+  const pending = [root]
+  while (pending.length > 0) {
+    const current = pending.pop()
+    const stat = await lstat(current)
+    if (stat.isSymbolicLink()) throw new Error(`reparse point is not allowed in the staged vendor source: ${relative(root, current) || '.'}`)
+    if (!stat.isDirectory()) continue
+    for (const entry of await readdir(current)) pending.push(join(current, entry))
+  }
+}
+
+const requestedRoot = option('--stage-root', join(repoRoot, '.stage'))
+const stageRoot = resolve(requestedRoot)
+const stage = join(stageRoot, 'dsh-runtime')
+
+if (!existsSync(join(runtime, 'VENDOR-MANIFEST.json'))) {
+  console.error('[stage-dsh-runtime] missing vendor/dsh-runtime; Stage 3 does not regenerate vendor automatically')
+  process.exit(1)
+}
+if (stageRoot === repoRoot || !isInside(dirname(stageRoot), stageRoot) || !isInside(stageRoot, stage)) {
+  console.error(`[stage-dsh-runtime] unsafe stage root: ${stageRoot}`)
   process.exit(1)
 }
 
-await rm('.stage', { recursive: true, force: true })
-await mkdir('.stage', { recursive: true })
-// hoisted 布局下全是真实目录（无 junction），fs.cp 递归复制即可；tarballs 是构建产物不进安装包。
+await assertNoReparsePoints(runtime)
+await mkdir(stageRoot, { recursive: true })
+// Delete only the exact runtime child below the already validated stage root.
+await rm(stage, { recursive: true, force: true })
 await cp(runtime, stage, {
   recursive: true,
   dereference: false,
-  filter: (src) => !src.replaceAll('\\', '/').includes('/tarballs'),
+  filter: (source) => {
+    const rel = relative(runtime, source).split(sep).join('/')
+    return rel !== 'tarballs' && !rel.startsWith('tarballs/')
+  },
 })
-console.log('[stage-dsh-runtime] 已暂存 → .stage/dsh-runtime')
+console.log(`[stage-dsh-runtime] staged verified vendor runtime -> ${stage}`)

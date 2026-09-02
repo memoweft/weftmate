@@ -38,7 +38,8 @@ describe('R6-02 桌宠恢复接缝契约（新基座）', () => {
   });
 
   it('自动唤醒只认设置里的 visible 真值；动作请求白名单 set-visible/set-free-activity', () => {
-    const autoWake = between(main, 'setupTray();', 'console.log');
+    // 阶段 0 会把 setupTray() 提前到 loadURL 前，不能再把托盘接线当作自动唤醒片段的锚点。
+    const autoWake = between(main, '// R6-02 · 桌宠自愈：', "console.log('[weftmate] ═══ 官方 DSH web 基座就位");
     assert.match(autoWake, /desktopCompanion && settingsMod\?\.getDesktopPetWindowState\?\.\(\)\.visible/);
     assert.match(autoWake, /void wakeDesktopPet\(\)/);
     const consumer = between(main, 'function handlePetRequests()', 'writeHostState();');

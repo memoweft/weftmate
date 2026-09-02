@@ -26,12 +26,12 @@ function textFromMessage(value) {
 
 function eventFromFrame(raw) {
   const payload = raw?.payload ?? raw
-  if (payload?.type === 'session/event') return { sessionId: payload.sessionId, event: payload.event }
+  if (payload?.type === 'session/event') return { sessionId: payload.sessionId, event: payload.event, rpcId: raw?.rpcId ?? null, payload }
   // sessions.history returns HistoryEntry `{ event, view? }`, not a mux frame.
   if (payload?.event?.type && typeof payload.event.type === 'string') {
-    return { sessionId: payload.sessionId ?? null, event: payload.event }
+  return { sessionId: payload.sessionId ?? null, event: payload.event, rpcId: raw?.rpcId ?? null, payload }
   }
-  return { sessionId: payload?.sessionId, event: payload }
+  return { sessionId: payload?.sessionId, event: payload, rpcId: raw?.rpcId ?? null, payload }
 }
 
 function turnOf(event) {
@@ -70,7 +70,21 @@ function unknown(event, sessionId) {
  * digest and non-content metadata escape this boundary.
  */
 export async function normalizeDshEvent(raw, state = createEventState()) {
-  const { sessionId, event } = eventFromFrame(raw)
+  const { sessionId, event, rpcId, payload } = eventFromFrame(raw)
+  if (payload?.type === 'approval/requested') {
+    return base('tool.approval-requested', payload.sessionId ?? null, payload, {
+      rpcId: typeof rpcId === 'string' ? rpcId : null,
+      approvalId: typeof payload.approvalId === 'string' ? payload.approvalId : null,
+      tool: typeof payload.toolName === 'string' ? payload.toolName : 'unknown',
+      reason: typeof payload.reason === 'string' ? payload.reason.slice(0, 500) : null,
+    })
+  }
+  if (payload?.type === 'approval/resolved') {
+    return base('tool.approval-resolved', payload.sessionId ?? null, payload, {
+      approvalId: typeof payload.approvalId === 'string' ? payload.approvalId : null,
+      outcome: typeof payload.outcome === 'string' ? payload.outcome : 'unknown',
+    })
+  }
   if (!event || typeof event.type !== 'string') return unknown({ type: 'invalid', data: raw }, sessionId ?? null)
 
   if (event.type === 'stream/error' || event.type === 'host/agent-error' || event.type === 'error') {
@@ -98,6 +112,11 @@ export async function normalizeDshEvent(raw, state = createEventState()) {
   }
 
   if (event.type === 'user/message') {
+    // DSH persists several injected context messages as `user/message`.
+    // Their source is explicit; only an actual user's message belongs in the
+    // WeftMate transcript.  This keeps runtime policy, workspace paths and
+    // system-prompt snapshots behind the adapter boundary.
+    if (event.data?.source?.kind !== 'user') return null
     return base('user.message', sessionId, event, { text: textFromMessage(event.data) })
   }
 

@@ -1,0 +1,24 @@
+diff --git a/packages/client/ui-conversation/src/client/skeleton/ConversationRoot.tsx b/packages/client/ui-conversation/src/client/skeleton/ConversationRoot.tsx
+index ef1221cd99..21323beb6a 100644
+--- a/packages/client/ui-conversation/src/client/skeleton/ConversationRoot.tsx
++++ b/packages/client/ui-conversation/src/client/skeleton/ConversationRoot.tsx
+@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
+ import clsx from 'clsx'
+ import type { WorkspaceId } from '@deepseek-ai/dsh-client-runtime/client'
+ import type { ConversationSlotProps, InputZone } from '../contract/slots.ts'
+-import { HeroGlow, HeroShell, WorkspaceChip, workspaceLabel } from './EmptyHero.tsx'
++import { HeroGlow, WorkspaceChip, workspaceLabel } from './EmptyHero.tsx'
+ import css from './ConversationRoot.module.css'
+ 
+ /** Full props composed from the slot contract. */
+@@ -157,9 +157,8 @@ export function ConversationRoot({
+   })
+ 
+   const composerBar = (
+-    <div className={clsx(css.composerStack, hero && css.composerHero)}>
++    <div className={clsx(css.composerStack, hero && css.composerHero)} data-weftmate-hero-composer="">
+       {hero && <HeroGlow className={css.heroGlow} />}
+-      {hero && <HeroShell t={t} />}
+       {hero && heroWorkspaceRow}
+       {zone !== undefined && renderSlot('conversation.input.dock', zone)}
+       {inputBar}

@@ -44,6 +44,9 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     const patch = await readFile(join(dir, 'profiles', 'weftmate', 'cordis.patch.yml'), 'utf8')
     assert.ok(patch.includes('id: weftmate-host'))
     assert.ok(patch.includes('name: ./plugins/weftmate-host.mjs'))
+    assert.ok(patch.includes('id: weftmate-aigame-host'))
+    assert.ok(patch.includes('name: ./plugins/weftmate-aigame-host.mjs'))
+    assert.ok(!patch.includes('weftmate-credentials'), 'credential provider must be owned by the final host security overlay')
     assert.ok(patch.includes("id: '@weftmate/client'"))
     assert.ok(patch.includes("name: '@weftmate/client'"))
     // 插件资产落位（客户端包 node half + 浏览器 bundle；宿主插件）。
@@ -51,8 +54,10 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'node_modules', '@weftmate', 'client', 'index.js')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'node_modules', '@weftmate', 'client', 'client.js')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-host.mjs')))
+    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-aigame-host.mjs')))
     // P1-02：Gateway 运行时同形落位（宿主插件以相对路径 import）；schemas/ 等 TS 契约不进 profile。
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'index.mjs')))
+    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'diagnostics.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'legacy', 'http.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'legacy', 'inject.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'routes', 'v1.mjs')))
@@ -60,6 +65,10 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'errors', 'gateway-error.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'dsh-adapter', 'sessions.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'dsh-adapter', 'agents.mjs')))
+    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'transport.mjs')))
+    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'panel.mjs')))
+    assert.ok(!existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'ai-game', 'control-center.mjs')))
+    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs')))
     assert.ok(!existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'schemas')))
   })
 
@@ -125,4 +134,18 @@ describe('parseWebUrlLine（官方 web-app 行就绪信号）', () => {
 test('P1-03：host composition 声明 apiProxy 注入依赖，避免 apply 先于官方 api-gateway', async () => {
   const host = await readFile(new URL('../src/plugins/weftmate-host.mjs', import.meta.url), 'utf8')
   assert.match(host, /export const inject = \['webServer', 'apiProxy'\]/)
+})
+
+test('安全快照启动器只接收一次父进程快照，不观察 profile/home 补丁', async () => {
+  const runtime = await readFile(new URL('../src/dsh-web-runtime.ts', import.meta.url), 'utf8')
+  const bootstrap = await readFile(new URL('../src/plugins/weftmate-secure-snapshot-bootstrap.mjs', import.meta.url), 'utf8')
+  assert.match(runtime, /join\(this\.opts\.checkoutPath, 'apps', 'cli', 'package\.json'\)/)
+  assert.match(runtime, /WEFTMATE_SECURE_BOOTSTRAP_PACKAGE_ANCHOR: this\.runtimePackageAnchor\(\)/)
+  assert.match(bootstrap, /createNodeRequire\(runtimePackageAnchor\)/)
+  assert.match(bootstrap, /healProfilesModuleFallback\(runtimePackageAnchor\)/)
+  assert.match(bootstrap, /boot\('dsh', rootConfig, \[\{ insert: entries \}\]/)
+  assert.match(bootstrap, /second snapshot frame rejected/)
+  assert.doesNotMatch(bootstrap, /watchUserPatches\s*\(/)
+  assert.match(bootstrap, /loadLayeredEnv\('dsh', process\.cwd\(\)\)/)
+  assert.match(bootstrap, /scrubCredentialEnvironment\(\)/)
 })
