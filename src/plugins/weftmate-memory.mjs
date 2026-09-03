@@ -1,12 +1,15 @@
 /**
  * WeftMate 记忆宿主插件（R7）：DSH compaction 边界 → MemoWeft 2.0 本地桥。
  *
- * 职责（docs/MEMOWEFT-2-INTEGRATION.md，owner 拍板版）：
+ * 产品意图与边界：`docs/PRODUCT.md`、`docs/ARCHITECTURE.md` 与
+ * `D:/AIProjects/MemoWeft/PROJECT-MAP.md`；实现事实以当前代码、测试和运行时证据为准。
+ *
+ * 职责：
  *  - 边界源：官方 `session/event` 事件流里的 `compaction/summary` + `compaction/end`
  *    （A+B：自动压缩与 /compact 同一事件源）——committed boundary 才产生正式记忆；
  *  - 组装精确 user Evidence（被压缩段 shadowedSeqs → 逐字 user/message 文本；
  *    assistant 文本只进 preceding_ai_context，桥侧处理）→ 本地桥入队 Job；
- *  - 预算不变式（AUTHORITY §6.6）：普通回合 0 次记忆调用；每边界 0/1 次（桥侧 worker）；
+ *  - 预算不变式：普通回合 0 次记忆调用；每边界 0/1 次（桥侧 worker）；
  *    Recall 0 生成调用、0 写入；
  *  - Recall 注入：`agent/pre-step` 用当轮用户消息确定性查询本地桥，命中才注入
  *    snapshot 节（source 可核验，支撑「已记住」诚实性）；
