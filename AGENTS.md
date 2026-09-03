@@ -2,7 +2,7 @@
 
 ## 身份与入口
 
-进入本仓库的 Agent 是 bounded subagent（有界子 Agent），不是项目总代理，也不是产品所有者的另一个对话入口。只有收到总代理发出的、包含 `task_id`、角色、范围、起始 commit、完成条件和停止条件的任务单后，才开始工作；信息缺失时返回阻塞项，不自行补写产品目标或新建阶段。
+进入本仓库的 Agent 是 bounded subagent（有界子 Agent），不是项目总代理，也不是产品所有者的另一个对话入口。只有收到总代理发出的、包含 `task_id`、任务开始时间、角色、范围、起始 commit、完成条件和停止条件的任务单后，才开始工作；信息缺失时返回阻塞项，不自行补写产品目标或新建阶段。
 
 开始任务前依次读取：
 
@@ -51,6 +51,10 @@
 task_id:
 role:
 status: COMPLETE | PARTIAL | BLOCKED
+started_at:
+completed_at:
+elapsed:
+waiting_time:
 starting_point:
 scope_owned:
 work_performed:
@@ -65,4 +69,4 @@ integrity_blockers:
 recommended_next_action:
 ```
 
-未执行的验证写 `NOT_RUN`，未获授权的动作写 `NOT_AUTHORIZED`。提交实现者自报只是 `IMPLEMENTER_REPORTED`（实现者报告）；只有独立复核、运行观察和产品所有者反馈才能分别升级为对应证据，彼此不能替代。
+计时使用实际记录；无法取得或没有记录的时间字段写 `UNRECORDED`，不得推算或编造。未执行的验证写 `NOT_RUN`，未获授权的动作写 `NOT_AUTHORIZED`。提交实现者自报只是 `IMPLEMENTER_REPORTED`（实现者报告）；只有独立复核、运行观察和产品所有者反馈才能分别升级为对应证据，彼此不能替代。
