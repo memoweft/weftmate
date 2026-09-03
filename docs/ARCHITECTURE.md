@@ -25,7 +25,7 @@ AI-GAME 生命周期一行是目标边界；当前尚未由 WeftMate 完成，�
 
 - Electron main 启动一个 shared DSH runtime（共享 DSH 运行时），主窗口直接加载其官方 Web client（网页客户端）。
 - WeftMate 客户端插件只增加原生窗口 chrome（窗口外框）、品牌、主题、布局修正，以及 `phone_execution` 的 `tool.call.toolview` 和 `conversation.details.supplement` 两个官方 keyed seat（按键席位）。
-- WeftMate 自有旧 renderer、Gateway 会话投影、桌宠、感知和记忆 UI 不进入当前官方对话路径。
+- 正式对话路径只由固定 DSH 官方客户端和已注册的 additive seam（增量接缝）组成；仓库中未注册的兼容代码不构成产品入口。
 
 ### 凭据与配置
 
@@ -59,7 +59,7 @@ AI-GAME 生命周期一行是目标边界；当前尚未由 WeftMate 完成，�
 
 当前代码已包含 V2 execution contract（执行契约）、canonical Task（权威任务）、owner-pair 隔离、模拟器 Profile、常驻调度、通用 `android_ui_agent/1`、RuntimeKernel 观察/动作/验证和 scoped experience（有范围经验）。这些是下阶段可复用基础。
 
-旧真机 Companion、固定 `emulator_settings_v1` 产品路径和单次验证 effect budget 已退出活动方向。个别数据库字段或只读解析仍可为旧数据兼容而存在，但不能创建新正式任务、出现在公开 capability 或重新驱动路线。
+新正式任务只使用 V2、模拟器 Profile 和通用 `android_ui_agent/1`。兼容数据库字段或只读解析不能创建任务、出现在公开 capability（能力）或决定产品路线。
 
 ## 证据边界
 

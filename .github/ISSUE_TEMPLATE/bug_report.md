@@ -37,7 +37,7 @@ Please fill in as much as you can so we can reproduce it.
 If the app crashed or showed a blank screen, the log helps a lot.
 
 日志在 / The log is at:  <userData>/weftmate-crash.log
-（Windows: %APPDATA%\weftmate · macOS: ~/Library/Application Support/weftmate · Linux: ~/.config/weftmate）
+（Windows 正式安装 / packaged install: %APPDATA%\com.memoweft.weftmate\weftmate-crash.log）
 
 ⚠ 隐私 / Privacy：日志只含堆栈，一般不含个人内容；粘贴前请自行看一眼、删掉任何敏感信息。
 The log is stack traces only; please glance over it and remove anything sensitive before pasting.

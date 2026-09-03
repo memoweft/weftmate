@@ -34,4 +34,4 @@ npm run dist:win:candidate -- --version <pre-release-version> --output-dir <abso
 
 代码签名、可信发布者、受控 HTTPS 更新源和干净 Windows 用户环境验证仍是正式发布阻断。
 
-旧候选的机器路径、哈希、测试次数和交接步骤是历史证据，不是当前可执行指令，已移入项目修复归档。
+候选的机器路径、哈希和测试次数只写入当次交付结果，不进入长期产品文档。

@@ -16,17 +16,19 @@ npm run vendor:verify
 npm run dist:win
 
 # 可辨识 Windows 候选；输出与暂存都使用明确隔离目录
+$candidateVersion = '0.1.0-preview.1'
+$candidateRoot = Join-Path 'D:\AIProjects\WeftMate\Runtime\Candidates' $candidateVersion
 npm run dist:win:candidate -- `
-  --version 0.1.0-stage3.2 `
-  --output-dir D:\AIProjects\WeftMate\Runtime\Stage3\builds\0.1.0-stage3.2 `
-  --stage-root D:\AIProjects\WeftMate\Runtime\Stage3\staging\0.1.0-stage3.2
+  --version $candidateVersion `
+  --output-dir (Join-Path $candidateRoot 'build') `
+  --stage-root (Join-Path $candidateRoot 'staging')
 ```
 
 - `vendor:dsh` 只在 vendor 缺失、损坏或固定 DSH 版本被产品所有者明确升级时手动运行；候选构建不会隐式重建 vendor；
 - `vendor:verify` 检查版本、文件、依赖闭包和启动行为；
 - `dist:win` 把已验证的 DSH 运行时放入 Windows 安装包；
 - `dist:win:candidate` 先验证现有 vendor，再使用无 reparse point（重解析点）的隔离暂存目录构建，并审计安装包闭包、开发机路径、用户数据和凭据文件；
-- 当前 manifest 为 `scriptVersion=3`、DSH `0.1.0-rc.5@47f943859bef60e4160492346772ded9b24f765a`、197 包闭包、195 个 Windows 实装包、2 个 Linux-only optional package（仅 Linux 可选包）、`carriedButNotMounted=[]`。
+- DSH 版本、脚本版本和依赖闭包必须在每次构建时从当前 pin（固定版本文件）与生成的 manifest（清单）读取；长期文档不保存会过期的 commit、包数量或候选路径。
 
 ## 运行
 
