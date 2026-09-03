@@ -17,6 +17,8 @@
 
 AI-GAME 生命周期一行是目标边界；当前尚未由 WeftMate 完成，所以依赖它的全局入口保持未注册。
 
+这个目标不是一次性工具调用或自动点击脚本。DSH 负责从一句话继续澄清并维护用户可见任务单；确认后，AI-GAME 的通用 Android agent（智能体）需要自己读取第三方 App 页面和会话上下文、决定下一步、生成获授权的对外消息、通过可见 UI 操作并在后置观察中验证。完整验收见 `D:\AIProjects\AIGame\Repository\docs\product\ACCEPTANCE.md`。
+
 ## 当前活动路径
 
 ### DSH 产品面
