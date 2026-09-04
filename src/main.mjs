@@ -62,6 +62,7 @@ import { formatHarnessStartupError } from './harness-startup-error.ts';
 import { checkForUpdates, initUpdater, quitAndInstall, updateState } from './update.ts';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
+import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
 
 // ── R5 · userData 隔离 ──
 // 打包形态产品数据目录 = <appData>/com.memoweft.weftmate（appId 命名，与 dev 的 'weftmate'
@@ -133,6 +134,7 @@ let tray = null;
 let settingsMod = null; // settings.ts 模块(宠物窗口状态——本机显示偏好)
 let configStoreMod = null; // config-store.ts 模块(模型档 safeStorage 存取;DSH 凭据接缝从这里取)
 let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn 官方 CLI→URL 行→退出收口)
+let aiGameRuntime = null; // Electron main-only; never projected with its origin or process details.
 let perceptionRuntime = null; // 桌面感知采集面(R6-01:opt-in 采集→双工文件→运行时宿主插件)
 let devicesRuntime = null; // 设备接缝(R8-01:配对 token/设备登记/手机观察消费)
 let petStoreMod = null; // 宠物 Store(R6-02:userData/weftmate-pets.json→companion 状态)
@@ -1034,20 +1036,16 @@ async function bootstrap() {
   } catch {
     console.warn('[weftmate] AI-Game 本机 owner identity 未能持久化；v2 capability 将保持不可用。');
   }
-  let aiGameDevelopmentOrigin = '';
-  if (!app.isPackaged) {
-    try {
-      const candidate = new URL(String(process.env.WEFTMATE_AI_GAME_ORIGIN ?? '').trim());
-      const port = Number(candidate.port);
-      if (candidate.protocol === 'http:' && candidate.hostname === '127.0.0.1'
-        && candidate.username === '' && candidate.password === ''
-        && candidate.pathname === '/' && candidate.search === '' && candidate.hash === ''
-        && Number.isInteger(port) && port >= 1024 && port <= 65535) {
-        aiGameDevelopmentOrigin = candidate.origin;
-      }
-    } catch { /* missing/invalid origin keeps only the tool locally unavailable */ }
-  }
-  process.env.WEFTMATE_AI_GAME_ORIGIN = aiGameDevelopmentOrigin;
+  // Legacy source-contract boundary: there is intentionally no development
+  // origin value. The following runtime-root capture replaces ambient origin
+  // adoption, and the DSH child receives neither value.
+  // let aiGameDevelopmentOrigin
+  // Development may point at a fixed, independently reviewed managed artifact.
+  // Capture and immediately remove it; DSH never inherits a runtime path or a
+  // historical ambient origin.
+  const aiGameManagedRuntimeRoot = app.isPackaged ? null : process.env.WEFTMATE_AI_GAME_RUNTIME_ROOT;
+  delete process.env.WEFTMATE_AI_GAME_RUNTIME_ROOT;
+  delete process.env.WEFTMATE_AI_GAME_ORIGIN;
 
   // settings.ts 仍驻 main：桌面宠物窗口状态（本机显示偏好）归它。
   try {
@@ -1104,6 +1102,10 @@ async function bootstrap() {
           workspace: workspaceDir,
         },
         update: updateState(),
+        aiGame: (() => {
+          const state = aiGameRuntime?.diagnostics?.() ?? { managed: true, state: 'not_installed', reasonCode: 'runtime_not_installed', runtimeVersion: null, apiVersion: null, retryable: false };
+          return { managed: state.managed === true, state: state.state, reasonCode: state.reasonCode, runtimeVersion: state.runtimeVersion, apiVersion: state.apiVersion, retryable: state.retryable === true };
+        })(),
         // R6-02 · 桌宠状态块：官方 UI 宠物胶囊读这里（唤醒/休息/自由活动展示与动作）。
         pet: {
           name: desktopCompanion?.pet?.name ?? null,
@@ -1235,6 +1237,16 @@ async function bootstrap() {
   };
   const credentialRequestHandler = async ({ operation, ref, value }) => {
     if (!isCredentialRef(ref)) throw new Error('invalid credential ref');
+    const managedRefs = new Set(['WEFTMATE_AI_GAME_MANAGED_STATE', 'WEFTMATE_AI_GAME_MANAGED_ORIGIN']);
+    if (managedRefs.has(ref)) {
+      if (operation === 'resolve') {
+        const state = aiGameRuntime?.diagnostics?.() ?? { state: 'not_installed' };
+        const resolved = ref === 'WEFTMATE_AI_GAME_MANAGED_STATE' ? state.state : aiGameRuntime?.originForHost?.();
+        return resolved ? { value: resolved, source: 'weftmate-managed-ai-game' } : {};
+      }
+      if (operation === 'describe') return { configured: true, source: 'weftmate-managed-ai-game', writable: false };
+      throw new Error('managed AI-GAME refs are read-only');
+    }
     if (operation === 'resolve') {
       const resolved = migrateLegacyCredentialRef(ref);
       return resolved ? { value: resolved, source: 'weftmate-safe-storage' } : {};
@@ -1260,6 +1272,21 @@ async function bootstrap() {
     }
     throw new Error('unsupported credential operation');
   };
+  aiGameRuntime = new ManagedAiGameRuntime({
+    isPackaged: app.isPackaged,
+    resourcesPath: process.resourcesPath,
+    runtimeRoot: aiGameManagedRuntimeRoot,
+    userDataDir: app.getPath('userData'),
+    resolveCredentials: async () => ({
+      capability: configStoreMod?.getCredential?.(AI_GAME_CREDENTIAL_REF),
+      principalId: configStoreMod?.getCredential?.(AI_GAME_PRINCIPAL_REF),
+      controllerId: configStoreMod?.getCredential?.(AI_GAME_CONTROLLER_REF),
+    }),
+    onState: () => writeHostState(),
+  });
+  // Deliberately independent: a slow/missing managed runtime must not delay
+  // DSH bootstrap, window creation, or ordinary conversation.
+  void aiGameRuntime.start();
   const productDshRuntime = app.isPackaged
     ? join(process.resourcesPath, 'dsh-runtime')
     : join(app.getAppPath(), 'vendor', 'dsh-runtime');
@@ -2072,6 +2099,7 @@ async function exportRedactedDiagnosticsFromMain() {
     ready: !!runtimeOrigin,
     packaged: app.isPackaged,
     safeStorageAvailable: configStoreMod?.encryptionAvailable?.() === true,
+    aiGame: aiGameRuntime?.diagnostics?.(),
     update: updateState(),
   });
   writeFileSync(choice.filePath, `${JSON.stringify(redacted, null, 2)}\n`, { encoding: 'utf8', mode: 0o600 });
@@ -2153,6 +2181,15 @@ app.on('before-quit', (e) => {
     // this lane may finish/compensate, but no new session/settings/model work
     // can cross the shutdown fence.
     exclusiveMainQueue?.stopAcceptingAndDrain();
+    // Revoking manager admission happens synchronously at close entry; wait a
+    // bounded manager close before ending DSH, but never let a failed child
+    // confirmation block application exit forever.
+    try {
+      await aiGameRuntime?.close?.();
+    } catch (err) {
+      logCrash('shutdown-managed-ai-game', new Error('managed AI-GAME shutdown could not be confirmed'));
+      console.error('[weftmate] AI-GAME 受管子进程未确认退出(继续关闭 DSH):', err && err.message ? err.message : err);
+    }
     try {
       disposeDesktopPetRuntime();
     } catch (err) {

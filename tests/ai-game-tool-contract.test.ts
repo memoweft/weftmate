@@ -167,7 +167,9 @@ test('official host plugin is additive and profile assets are installed', async 
   assert.match(main, /app\.isPackaged\s*\?\s*undefined\s*:\s*process\.env\.WEFTMATE_AI_GAME_DEV_TOKEN/)
   assert.match(main, /delete process\.env\.WEFTMATE_AI_GAME_DEV_TOKEN/)
   assert.match(main, /saveCredential\?\.\(AI_GAME_CREDENTIAL_REF, aiGameDevelopmentToken\)/)
-  assert.match(main, /if \(!app\.isPackaged\) \{[\s\S]*WEFTMATE_AI_GAME_ORIGIN/)
+  assert.match(main, /delete process\.env\.WEFTMATE_AI_GAME_ORIGIN/)
+  assert.match(main, /WEFTMATE_AI_GAME_MANAGED_STATE/)
+  assert.match(main, /WEFTMATE_AI_GAME_MANAGED_ORIGIN/)
 
   const home = await mkdtemp(join(tmpdir(), 'weftmate-ai-game-profile-'))
   try {
@@ -381,13 +383,20 @@ test('fixed vendor ToolRuntime executes the official tool with approval and dura
     await readFile(join(process.cwd(), 'src', 'runtime', 'ai-game', 'panel.mjs'), 'utf8'),
     'utf8',
   )
-  const previousOrigin = process.env.WEFTMATE_AI_GAME_ORIGIN
-  process.env.WEFTMATE_AI_GAME_ORIGIN = `http://127.0.0.1:${address.port}`
   const ctx = new Context()
   try {
     class TestCredentials extends credentialModule.CredentialProvider {
       constructor(serviceCtx: any) { super(serviceCtx) }
-      async resolve() { return { value: 'vendor-tool-test-token', source: 'test-memory' } }
+      async resolve(ref: string) {
+        const values: Record<string, string> = {
+          WEFTMATE_AI_GAME_MANAGED_STATE: 'ready',
+          WEFTMATE_AI_GAME_MANAGED_ORIGIN: `http://127.0.0.1:${address.port}`,
+          WEFTMATE_AI_GAME_CAPABILITY_TOKEN: 'vendor-tool-test-token',
+          WEFTMATE_AI_GAME_PRINCIPAL_ID: 'principal_vendor_test',
+          WEFTMATE_AI_GAME_CONTROLLER_ID: 'controller_vendor_test',
+        }
+        return values[ref] ? { value: values[ref], source: 'test-memory' } : {}
+      }
       async describe() { return { configured: true, writable: false, source: 'test-memory' } }
       async set() { throw new Error('read only') }
       async unset() { throw new Error('read only') }
@@ -526,7 +535,7 @@ test('fixed vendor ToolRuntime executes the official tool with approval and dura
     })
     assert.equal(noProfile.isError, true)
     assert.match(JSON.stringify(noProfile), /AI_GAME_SIMULATOR_PROFILE_REQUIRED/)
-    assert.match(JSON.stringify(noProfile), /Save one default Android emulator/)
+    assert.match(JSON.stringify(noProfile), /preconfigured default Android emulator Profile/)
     assert.equal(requestBodies.length, 2, 'missing default profile must not create a Task or a v1 execution')
     assert.equal(approvalRequests, approvalsBeforeNoProfile, 'profile preflight must fail before asking for effect approval')
     defaultProfileAvailable = true
@@ -720,7 +729,5 @@ test('fixed vendor ToolRuntime executes the official tool with approval and dura
     await ctx.fiber.dispose().catch(() => undefined)
     await new Promise<void>((resolve) => server.close(() => resolve()))
     await rm(temp, { recursive: true, force: true })
-    if (previousOrigin === undefined) delete process.env.WEFTMATE_AI_GAME_ORIGIN
-    else process.env.WEFTMATE_AI_GAME_ORIGIN = previousOrigin
   }
 })

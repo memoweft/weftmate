@@ -40,7 +40,8 @@ describe('AI-GAME client surfaces use the official DSH seams', () => {
     assert.match(client, /overview\.selectedExecutionId !== pointer\.executionId/)
     assert.match(client, /props\.openDetails\(\)/)
     assert.doesNotMatch(client, /localStorage.*task|sessionStorage.*task/)
-    assert.match(client, /meta\.schemaVersion !== 1 \|\| meta\.kind !== 'ai-game-execution'/)
+    assert.match(client, /meta\.schemaVersion === 2 && meta\.kind === 'ai-game-task'/)
+    assert.match(client, /selectedTaskId/)
   })
 
   it('reads one fixed same-origin route without putting capabilities in the renderer', () => {

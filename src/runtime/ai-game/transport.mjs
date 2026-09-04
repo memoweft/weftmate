@@ -54,17 +54,24 @@ export function parseAiGameOrigin(value) {
 
 export class AiGameTransport {
   constructor({
-    origin, resolveToken, resolvePrincipalId, resolveControllerId,
+    origin, resolveToken, resolvePrincipalId, resolveControllerId, resolveManagedState, resolveManagedOrigin,
     fetchImpl = globalThis.fetch, timeoutMs = 30_000,
   } = {}) {
-    this.origin = parseAiGameOrigin(origin)
+    if (origin !== undefined && (resolveManagedState !== undefined || resolveManagedOrigin !== undefined)) {
+      throw new TypeError('origin and managed origin resolvers are mutually exclusive')
+    }
+    this.origin = origin === undefined ? null : parseAiGameOrigin(origin)
     if (typeof resolveToken !== 'function') throw new TypeError('resolveToken must be a function')
     if (resolvePrincipalId !== undefined && typeof resolvePrincipalId !== 'function') throw new TypeError('resolvePrincipalId must be a function')
     if (resolveControllerId !== undefined && typeof resolveControllerId !== 'function') throw new TypeError('resolveControllerId must be a function')
     if (typeof fetchImpl !== 'function') throw new TypeError('fetchImpl must be a function')
+    if (resolveManagedState !== undefined && typeof resolveManagedState !== 'function') throw new TypeError('resolveManagedState must be a function')
+    if (resolveManagedOrigin !== undefined && typeof resolveManagedOrigin !== 'function') throw new TypeError('resolveManagedOrigin must be a function')
     this.resolveToken = resolveToken
     this.resolvePrincipalId = resolvePrincipalId
     this.resolveControllerId = resolveControllerId
+    this.resolveManagedState = resolveManagedState
+    this.resolveManagedOrigin = resolveManagedOrigin
     this.fetchImpl = fetchImpl
     this.timeoutMs = timeoutMs
   }
@@ -191,6 +198,7 @@ export class AiGameTransport {
   }
 
   async #json(method, path, body, callerSignal, validate, requiresOwner = false) {
+    const origin = await this.#currentOrigin()
     const token = await this.resolveToken()
     if (typeof token !== 'string' || token.length < 16) {
       throw new AiGameTransportError('AI_GAME_CREDENTIAL_UNAVAILABLE', 'AI-Game capability credential is unavailable.')
@@ -202,7 +210,7 @@ export class AiGameTransport {
     const onAbort = () => controller.abort(callerSignal?.reason)
     callerSignal?.addEventListener('abort', onAbort, { once: true })
     try {
-      const response = await this.fetchImpl(`${this.origin}${path}`, {
+      const response = await this.fetchImpl(`${origin}${path}`, {
         method,
         signal: controller.signal,
         redirect: 'error',
@@ -247,6 +255,7 @@ export class AiGameTransport {
   }
 
   async #binary(path, metadata, callerSignal) {
+    const origin = await this.#currentOrigin()
     const token = await this.resolveToken()
     if (typeof token !== 'string' || token.length < 16) {
       throw new AiGameTransportError('AI_GAME_CREDENTIAL_UNAVAILABLE', 'AI-Game capability credential is unavailable.')
@@ -258,7 +267,7 @@ export class AiGameTransport {
     const onAbort = () => controller.abort(callerSignal?.reason)
     callerSignal?.addEventListener('abort', onAbort, { once: true })
     try {
-      const response = await this.fetchImpl(`${this.origin}${path}`, {
+      const response = await this.fetchImpl(`${origin}${path}`, {
         method: 'GET', signal: controller.signal, redirect: 'error', headers: {
           Accept: 'image/png', 'X-AI-Game-Client': CLIENT_ID,
           Authorization: `Bearer ${token}`,
@@ -298,6 +307,22 @@ export class AiGameTransport {
       throw new AiGameTransportError('AI_GAME_OWNER_UNAVAILABLE', 'AI-Game installation identity is unavailable.')
     }
     return { principalId, controllerId }
+  }
+
+  async #currentOrigin() {
+    if (typeof this.resolveManagedState !== 'function' || typeof this.resolveManagedOrigin !== 'function') {
+      if (this.origin === null) throw new AiGameTransportError('AI_GAME_NOT_CONFIGURED', 'AI-Game local origin is not configured.')
+      return this.origin
+    }
+    const state = await this.resolveManagedState()
+    if (state !== 'ready') {
+      throw new AiGameTransportError('AI_GAME_UNAVAILABLE', 'AI-Game managed runtime is not ready.', { retryable: state === 'starting' || state === 'recovering' || state === 'needs_setup' })
+    }
+    const origin = await this.resolveManagedOrigin()
+    try { return parseAiGameOrigin(origin) } catch (error) {
+      if (error instanceof AiGameTransportError) throw new AiGameTransportError('AI_GAME_UNAVAILABLE', 'AI-Game managed runtime is unavailable.', { retryable: true })
+      throw error
+    }
   }
 }
 

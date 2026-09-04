@@ -22,6 +22,8 @@ export const AI_GAME_CREDENTIAL_REF = 'WEFTMATE_AI_GAME_CAPABILITY_TOKEN'
 // cannot select another capability owner by forging a request.
 export const AI_GAME_PRINCIPAL_REF = 'WEFTMATE_AI_GAME_PRINCIPAL_ID'
 export const AI_GAME_CONTROLLER_REF = 'WEFTMATE_AI_GAME_CONTROLLER_ID'
+export const AI_GAME_MANAGED_STATE_REF = 'WEFTMATE_AI_GAME_MANAGED_STATE'
+export const AI_GAME_MANAGED_ORIGIN_REF = 'WEFTMATE_AI_GAME_MANAGED_ORIGIN'
 
 const EFFECTS = new Set(['submit', 'cancel', 'resume', 'answer', 'revise', 'control'])
 const V1_TERMINAL = new Set(['succeeded', 'failed', 'cancelled', 'needs_user_input'])
@@ -429,15 +431,15 @@ export function createAiGamePanelHandler({ sessions, transport }) {
 }
 
 export function apply(ctx) {
-  const origin = process.env.WEFTMATE_AI_GAME_ORIGIN
   const credentials = ctx.credentials
   let transport
   try {
     transport = new AiGameTransport({
-      origin,
       resolveToken: async () => (await credentials.resolve(credentialRef(AI_GAME_CREDENTIAL_REF)))?.value,
       resolvePrincipalId: async () => (await credentials.resolve(credentialRef(AI_GAME_PRINCIPAL_REF)))?.value,
       resolveControllerId: async () => (await credentials.resolve(credentialRef(AI_GAME_CONTROLLER_REF)))?.value,
+      resolveManagedState: async () => (await credentials.resolve(credentialRef(AI_GAME_MANAGED_STATE_REF)))?.value,
+      resolveManagedOrigin: async () => (await credentials.resolve(credentialRef(AI_GAME_MANAGED_ORIGIN_REF)))?.value,
     })
   } catch (error) {
     // Registration must not block DSH boot. The tool reports its local failure only when called.
@@ -605,7 +607,7 @@ export function apply(ctx) {
           if (defaults.length !== 1) {
             throw toolError(
               'AI_GAME_SIMULATOR_PROFILE_REQUIRED',
-              'Save one default Android emulator in WeftMate Settings before creating a phone task.',
+              'AI-GAME needs one preconfigured default Android emulator Profile before creating a phone task in this development candidate.',
             )
           }
           const authorizationMode = await requireApproval(ctx, exec, args.action)
