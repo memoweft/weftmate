@@ -6,7 +6,7 @@
  *   npm run dogfood -- --dsh vendor --dsh-path 'Z:\\独立的dsh-runtime'
  *
  * DSH 使用 `--port 0` 让操作系统分配独立 loopback 端口；没有固定 7788/7899 契约。
- * MemoWeft 试验接缝默认关闭，AI-Game 当前没有正式 adapter，因此二者都不是启动依赖。
+ * MemoWeft 试验接缝默认关闭；AI-GAME 由 WeftMate 受管启动，普通 DSH 不依赖它就绪。
  */
 import { spawn } from 'node:child_process'
 import { existsSync, mkdirSync } from 'node:fs'
@@ -22,7 +22,7 @@ const defaultVendor = join(projectRoot, 'vendor', 'dsh-runtime')
 function usage() {
   return [
     '用法：npm run dogfood -- [--dsh vendor] [--dsh-path <独立 vendor runtime 路径>]',
-    '      [--user-data-dir <隔离目录>] [--dry-run]',
+    '      [--user-data-dir <隔离目录>] [--ai-game-runtime-root <受管运行时目录>] [--dry-run]',
     '',
     '示例：',
     '  npm run dogfood -- --dsh vendor',
@@ -43,7 +43,7 @@ function optionValue(args, index, name) {
 }
 
 function parseArgs(args) {
-  const out = { dsh: 'vendor', dshPath: null, userData: defaultUserData, dryRun: false, help: false }
+  const out = { dsh: 'vendor', dshPath: null, userData: defaultUserData, aiGameRuntimeRoot: null, dryRun: false, help: false }
   for (let index = 0; index < args.length; index += 1) {
     const arg = args[index]
     if (arg === '--dry-run') { out.dryRun = true; continue }
@@ -54,6 +54,8 @@ function parseArgs(args) {
     if (dshPath) { out.dshPath = dshPath.value; index = dshPath.next; continue }
     const userData = optionValue(args, index, '--user-data-dir')
     if (userData) { out.userData = userData.value; index = userData.next; continue }
+    const runtimeRoot = optionValue(args, index, '--ai-game-runtime-root')
+    if (runtimeRoot) { out.aiGameRuntimeRoot = runtimeRoot.value; index = runtimeRoot.next; continue }
     throw new Error(`未知参数：${arg}`)
   }
   if (out.help) return out
@@ -85,6 +87,8 @@ childEnv.WEFTMATE_DSH_RUNTIME = dshRoot
 childEnv.WEFTMATE_USER_DATA = userDataDir
 childEnv.WEFTMATE_MEMOWEFT_ENABLED = '0'
 childEnv.WEFTMATE_DOGFOOD_CONTROL = '1'
+delete childEnv.WEFTMATE_AI_GAME_ORIGIN
+if (options.aiGameRuntimeRoot) childEnv.WEFTMATE_AI_GAME_RUNTIME_ROOT = resolve(projectRoot, options.aiGameRuntimeRoot)
 
 const config = {
   mode: options.dsh,
@@ -93,8 +97,7 @@ const config = {
   userData: userDataDir,
   port: 'dynamic-loopback',
   memoweft: 'disabled',
-  aiGame: typeof childEnv.WEFTMATE_AI_GAME_ORIGIN === 'string'
-    && childEnv.WEFTMATE_AI_GAME_ORIGIN !== '' ? 'optional-configured' : 'optional-unconfigured',
+  aiGame: options.aiGameRuntimeRoot ? 'managed-configured' : 'not-configured',
   runtimeEnv: {
     WEFTMATE_DSH_CHECKOUT: childEnv.WEFTMATE_DSH_CHECKOUT ?? null,
     WEFTMATE_DSH_RUNTIME: childEnv.WEFTMATE_DSH_RUNTIME ?? null,
@@ -103,7 +106,7 @@ const config = {
 
 console.log('[dogfood] CONFIG ' + JSON.stringify(config))
 console.log('[dogfood] 端口由 OS 动态分配；实际地址以 “[weftmate] ✓ DSH web 运行时就绪” 日志为准。')
-console.log('[dogfood] MemoWeft 已关闭；AI-GAME 全局入口在宿主生命周期完成前不发布，普通 DSH 对话不依赖 4310。')
+console.log('[dogfood] MemoWeft 已关闭；AI-GAME 由宿主按需受管，普通 DSH 对话不依赖本地端口。')
 
 if (options.dryRun) process.exit(0)
 

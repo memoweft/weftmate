@@ -134,7 +134,7 @@ window.__ModuleLoader__.load({
     // selected Tool result supplies the durable pointer; this client receives
     // only allowlisted state from a fixed same-origin route.
     var AI_GAME_STATUSES = {
-      running: '执行中', waiting_event: '等待设备事件', needs_user_input: '等待你的回答',
+      scheduled: '已计划', running: '执行中', waiting_time: '等待时间', waiting_event: '等待设备事件', recovering: '恢复中', replanning: '重新规划中', paused: '已暂停', user_takeover: '用户接管中', needs_user_input: '等待你的回答',
       succeeded: '已完成', failed: '失败', cancelled: '已取消',
     }
     var aiGameAutoOpened = Object.create(null)
@@ -169,14 +169,25 @@ window.__ModuleLoader__.load({
     function aiGamePointer(block) {
       if (!block || typeof block !== 'object' || !('kind' in block)) return null
       var meta = block.meta
-      if (!meta || typeof meta !== 'object' || Array.isArray(meta)
-        || meta.schemaVersion !== 1 || meta.kind !== 'ai-game-execution' || meta.toolName !== 'phone_execution'
-        || typeof meta.executionId !== 'string' || !/^[A-Za-z0-9._:-]{1,256}$/.test(meta.executionId)
+      if (!meta || typeof meta !== 'object' || Array.isArray(meta) || meta.toolName !== 'phone_execution'
         || !AI_GAME_STATUSES[meta.status] || !Number.isSafeInteger(meta.eventCursor) || meta.eventCursor < 0) return null
-      return { executionId: meta.executionId, status: meta.status, eventCursor: meta.eventCursor }
+      if (meta.schemaVersion === 1 && meta.kind === 'ai-game-execution'
+        && typeof meta.executionId === 'string' && /^[A-Za-z0-9._:-]{1,256}$/.test(meta.executionId)) return { executionId: meta.executionId, status: meta.status, eventCursor: meta.eventCursor, version: 1 }
+      if (meta.schemaVersion === 2 && meta.kind === 'ai-game-task'
+        && typeof meta.taskId === 'string' && /^[A-Za-z0-9._:-]{1,256}$/.test(meta.taskId)) return { executionId: meta.taskId, taskId: meta.taskId, status: meta.status, eventCursor: meta.eventCursor, version: 2 }
+      return null
     }
 
     function safeAiGameSnapshot(value) {
+      if (value && typeof value === 'object' && typeof value.taskId === 'string' && AI_GAME_STATUSES[value.status]) {
+        var controls = Array.isArray(value.allowedControls) ? value.allowedControls : []
+        return { executionId: value.taskId, taskId: value.taskId, status: value.status, goalSummary: typeof value.goalSummary === 'string' ? value.goalSummary : '', currentStage: typeof value.currentStage === 'string' ? value.currentStage : null,
+          progress: { kind: 'unknown', explanation: '当前没有权威数值进度。' }, currentAction: typeof value.currentAction === 'string' ? value.currentAction : null,
+          pendingQuestion: value.pendingQuestion && typeof value.pendingQuestion.question === 'string' ? { questionId: String(value.pendingQuestion.questionId || ''), question: value.pendingQuestion.question, whyNeeded: String(value.pendingQuestion.whyNeeded || '') } : null,
+          resultSummary: typeof value.resultSummary === 'string' ? value.resultSummary : null, error: value.error && typeof value.error.code === 'string' ? { code: value.error.code } : null,
+          evidence: [], eventCursor: Number.isSafeInteger(value.eventCursor) ? value.eventCursor : 0,
+          allowedIntents: { cancel: controls.indexOf('cancel') >= 0, resume: controls.indexOf('resume') >= 0, answer: value.status === 'needs_user_input' } }
+      }
       if (!value || typeof value !== 'object' || !AI_GAME_STATUSES[value.status]
         || typeof value.executionId !== 'string' || typeof value.goalSummary !== 'string'
         || !value.progress || value.progress.kind !== 'unknown' || !Number.isSafeInteger(value.eventCursor) || value.eventCursor < 0
@@ -203,9 +214,10 @@ window.__ModuleLoader__.load({
       if (!value || value.schemaVersion !== 1 || value.kind !== 'ai-game-panel'
         || value.sessionId !== sessionId || typeof value.hasExecution !== 'boolean') throw new Error('AI_GAME_PANEL_SCHEMA_REJECTED')
       if (!value.hasExecution) return { hasExecution: false, sessionId: sessionId }
-      if (typeof value.selectedExecutionId !== 'string' || !Array.isArray(value.history) || !Array.isArray(value.events)) throw new Error('AI_GAME_PANEL_SCHEMA_REJECTED')
+      var selectedId = typeof value.selectedExecutionId === 'string' ? value.selectedExecutionId : value.selectedTaskId
+      if (typeof selectedId !== 'string' || !Array.isArray(value.history) || !Array.isArray(value.events)) throw new Error('AI_GAME_PANEL_SCHEMA_REJECTED')
       return {
-        hasExecution: true, sessionId: sessionId, selectedExecutionId: value.selectedExecutionId,
+        hasExecution: true, sessionId: sessionId, selectedExecutionId: selectedId, selectedTaskId: typeof value.selectedTaskId === 'string' ? value.selectedTaskId : null,
         availability: value.availability === 'ready' ? 'ready' : 'unavailable',
         snapshot: value.snapshot === null ? null : safeAiGameSnapshot(value.snapshot),
         historyCount: value.history.length,
