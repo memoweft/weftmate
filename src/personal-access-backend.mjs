@@ -9,7 +9,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   hostOwnerId = () => null,
   modelAllowed = () => true,
   moduleStatus = () => ({}),
-  desktopTask = null, naturalLanguageDesktopReady = () => false,
+  desktopTask = null, taskStop = null, naturalLanguageDesktopReady = () => false,
   naturalLanguageDesktopVerified = () => false, inferenceVerified = () => false }) {
   const requireRuntime = () => { if (!currentOrigin()) fail('RUNTIME_UNAVAILABLE') }
   const presetForOwner = (ownerId) => {
@@ -202,6 +202,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/cancel`, { method: 'POST', body: '{}' })
         return { accepted: result?.accepted === true }
       })
+    },
+    async stopTask({ sessionId, ownerId, requestId, receiptIds }) {
+      requireRuntime()
+      if (typeof taskStop !== 'function') fail('CAPABILITY_UNAVAILABLE')
+      if (hostOwnerId() !== null && ownerId !== hostOwnerId()) fail('SESSION_READ_ONLY')
+      if (typeof requestId !== 'string' || !idPattern.test(requestId) ||
+          !Array.isArray(receiptIds) || receiptIds.length < 1 || receiptIds.length > 16 ||
+          new Set(receiptIds).size !== receiptIds.length ||
+          receiptIds.some((value) => typeof value !== 'string' || !idPattern.test(value))) fail('INVALID_COMMAND')
+      await requireSession(sessionId, ownerId)
+      const result = await taskStop({ sessionId, requestId, receiptIds })
+      if (!Array.isArray(result?.outcomes) || result.outcomes.length !== receiptIds.length ||
+          new Set(result.outcomes.map((item) => item?.receiptId)).size !== receiptIds.length ||
+          result.outcomes.some((item) => !receiptIds.includes(item?.receiptId) ||
+            !['cancel_requested', 'queue_removed', 'unconfirmed'].includes(item?.status))) fail('BACKEND_UNAVAILABLE')
+      return result
     },
     async openDesktopApp({ appId, ownerId }) {
       requireRuntime()

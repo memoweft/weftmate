@@ -26,7 +26,7 @@
     unresolvedMarker: null, cleanupMarker: null, cleanupRetrying: false, receiptNotice: null }
   let phonePreview = null
   const taskDetail = { taskId: null, generation: 0, selectedArtifactId: null, operation: null, unknown: null,
-    drafts: new Map() }
+    drafts: new Map(), pollTimer: null, pollCount: 0, pollStartedAt: 0 }
 
   function takeSetupGrant() {
     const hash = window.location.hash
@@ -1567,7 +1567,8 @@
     if (command.kind === 'desktop.write_artifact') return command.fileName || '电脑生成的文件'
     if (command.kind === 'desktop.open_app') return '在电脑打开记事本'
     if (command.kind === 'session.create') return '新建对话'
-    if (command.kind === 'session.message') return '发送消息'
+    if (command.kind === 'session.message') return !command.rootTaskId && typeof command.taskLabel === 'string' && command.taskLabel
+      ? command.taskLabel : '发送消息'
     if (command.kind === 'session.cancel') return '请求停止回复'
     return '请求'
   }
@@ -1688,6 +1689,7 @@
     byId('more-tasks').hidden = !state.nextBefore
   }
   function closeTaskDetail() {
+    stopTaskObservation()
     taskDetail.generation++
     taskDetail.taskId = null
     taskDetail.selectedArtifactId = null
@@ -1701,6 +1703,10 @@
     byId('task-preview-text').hidden = true
     byId('task-preview-text').textContent = ''
   }
+  function stopTaskObservation() {
+    if (taskDetail.pollTimer) clearTimeout(taskDetail.pollTimer)
+    taskDetail.pollTimer = null
+  }
   function taskDetailCurrent(generation, taskId) {
     return generation === taskDetail.generation && taskDetail.taskId === taskId &&
       state.currentView === 'assistant' && !!state.csrfToken
@@ -1711,7 +1717,25 @@
     if (error.status === 409 || error.code === 'ARTIFACT_UNVERIFIED') return '文件读回校验失败，无法预览或下载。请在电脑核对原文件。'
     return '文件暂时无法读取，请稍后重新核对。'
   }
+  function taskVerificationText(payload) {
+    const verified = (Array.isArray(payload.artifacts) ? payload.artifacts : []).filter((row) =>
+      row?.state === 'observed' && row.verification?.status === 'observed' &&
+      row.verification?.method === 'sha256_readback')
+    if (verified.length) return `${verified.length} 个文件已由电脑写入并读回核验。`
+    if (payload.control?.stopStatus === 'stopped') return '这件事已停止，当前没有已核验文件；原会话保留执行记录。'
+    if (payload.control?.stopStatus === 'completed') return '回合已正常结束，当前没有已核验文件；可在原会话查看回复。'
+    return payload.source?.state === 'accepted_by_dsh'
+      ? '原消息已送达电脑，当前没有已核验文件。' : '当前没有已核验文件，请稍后重新核对。'
+  }
   function taskControlStatus(control) {
+    if (control?.state === 'stop_requested' && typeof control.stopStatus === 'string') {
+      if (control.stopStatus === 'stopped') return '电脑已核对这件事的实际停止。已执行的步骤与成果会保留。'
+      if (control.stopStatus === 'completed') return '这件事的回合已正常结束；停止请求没有已证实的中断结果。核对成果后可写明下一步。'
+      if (control.stopStatus === 'cancel_requested') return '电脑已对准这件事发起取消，正在等待实际结束记录。'
+      if (control.legacyStopIntent && !control.canResume) return '旧停止记录缺少完整目标快照，结果仍待核对。请查看原会话与成果，稍后重新核对。'
+      if (control.stopStatus === 'requested') return '停止请求已记录，正在核对电脑回合；目前还不能确认已停止。'
+      return '停止结果仍不明确。请核对原会话与成果，稍后重新核对；不要重复执行。'
+    }
     switch (control?.state) {
       case 'active': return '任务可继续处理；文件是否完成仍以读回核验为准。'
       case 'stop_requested': return control.reasonCode === 'TURN_ENDED_AFTER_STOP_REQUEST' && control.canResume === true
@@ -1734,6 +1758,11 @@
     const message = element('p', 'task-control-state', taskControlStatus(control))
     message.setAttribute('role', 'status')
     section.append(message)
+    if (control.stopStatus === 'stopped' && control.stopObservedAt) {
+      section.append(element('p', 'task-control-proof', `停止核对：${formatDate(control.stopObservedAt)}`))
+    } else if (control.state === 'stop_requested' && Number.isSafeInteger(control.pendingReceipts) && control.pendingReceipts > 0) {
+      section.append(element('p', 'task-control-proof', '仍有回合或执行结果待核对。'))
+    }
     const unknown = taskDetail.unknown
     if (unknown?.taskId === taskId && unknown.ownerId === state.ownerId &&
       unknown.identity === state.identityGeneration) {
@@ -1778,6 +1807,39 @@
       section.append(input, resume)
     }
     return section
+  }
+  function scheduleTaskObservation(taskId, generation, ownerId, identity, control) {
+    stopTaskObservation()
+    if (control?.state !== 'stop_requested' || typeof control.stopStatus !== 'string' || control.canResume === true ||
+        ['stopped', 'completed'].includes(control.stopStatus) || taskDetail.unknown) return
+    if (taskDetail.pollCount >= 8 || Date.now() - taskDetail.pollStartedAt >= 20_000) {
+      const section = byId('task-detail-control').children[0]
+      const status = section?.children?.[1]
+      if (status) status.textContent += ' 自动核对已暂停，可点“重新核对”。'
+      return
+    }
+    taskDetail.pollTimer = setTimeout(async () => {
+      taskDetail.pollTimer = null
+      if (!taskDetailCurrent(generation, taskId) || state.ownerId !== ownerId ||
+          state.identityGeneration !== identity) return
+      taskDetail.pollCount++
+      let payload
+      try { payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}`) }
+      catch {
+        if (taskDetailCurrent(generation, taskId) && state.ownerId === ownerId &&
+            state.identityGeneration === identity) {
+          const status = byId('task-detail-control').children[0]?.children?.[1]
+          if (status) status.textContent = '暂时无法连接电脑核对停止结果。可点“重新核对”；原请求编号会保留。'
+        }
+        return
+      }
+      if (!taskDetailCurrent(generation, taskId) || state.ownerId !== ownerId ||
+          state.identityGeneration !== identity || payload?.taskId !== taskId || !payload.control) return
+      const section = byId('task-detail-control').children[0]
+      if (section?.className?.includes('task-control')) section.replaceChildren(...renderTaskControls(taskId, payload.control).children)
+      byId('task-detail-verification').textContent = taskVerificationText(payload)
+      scheduleTaskObservation(taskId, generation, ownerId, identity, payload.control)
+    }, 2_000)
   }
   function renderTaskFollowUps(payload) {
     const commands = [...(Array.isArray(payload.supplements) ? payload.supplements : []),
@@ -1868,8 +1930,12 @@
   }
   async function openTaskDetail(taskId) {
     if (!sessionIdPattern.test(taskId)) return
+    stopTaskObservation()
+    taskDetail.pollCount = 0
+    taskDetail.pollStartedAt = Date.now()
     taskDetail.taskId = taskId
     const generation = ++taskDetail.generation
+    const ownerId = state.ownerId, identity = state.identityGeneration
     taskDetail.selectedArtifactId = null
     byId('task-detail-title').textContent = '事情详情'
     byId('task-detail-status').textContent = '正在核对原任务与成果…'
@@ -1890,9 +1956,7 @@
         ? payload.sourceText : '原消息请回到会话查看。'
       const verified = artifacts.filter((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
         row.verification?.method === 'sha256_readback')
-      byId('task-detail-verification').textContent = verified.length
-        ? `${verified.length} 个文件已由电脑写入并读回核验。` : payload.source?.state === 'accepted_by_dsh'
-          ? '原消息已送达电脑，尚无完成核验的文件。' : '尚无完成核验的文件，请稍后重新核对。'
+      byId('task-detail-verification').textContent = taskVerificationText(payload)
       const controlSlot = byId('task-detail-control')
       controlSlot.replaceChildren()
       if (payload.control && typeof payload.control.state === 'string') {
@@ -1924,6 +1988,7 @@
       byId('task-detail-session').dataset.sessionId = payload.sessionId || ''
       byId('task-detail-body').hidden = false
       byId('task-detail-status').textContent = ''
+      scheduleTaskObservation(taskId, generation, ownerId, identity, payload.control)
       if (verified.length === 1) void previewArtifact(taskId, verified[0].artifactId)
       else byId('task-preview-status').textContent = verified.length ? '选择一个文件查看内容。' : '文件核验完成后可查看内容。'
     } catch (error) {

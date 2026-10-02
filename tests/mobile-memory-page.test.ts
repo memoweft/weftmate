@@ -86,6 +86,9 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   details?: (owner: string, kind: string, id: string) => object; sources?: (owner: string, kind: string, id: string) => object;
   write?: (owner: string, path: string, method: string, body: any) => object | Promise<object>;
   receipt?: (owner: string, requestId: string) => object | Promise<object>;
+  taskDetail?: (owner: string, taskId: string) => object | Promise<object>;
+  commandDetail?: (owner: string, commandId: string) => object | Promise<object>;
+  hostTask?: object; hostActivities?: object[];
   deferItemsFor?: string; deferMore?: boolean } = {}) {
   const nodes = new Map<string, FakeElement>()
   const get = (id: string) => { if (!nodes.has(id)) nodes.set(id, new FakeElement('div', id)); return nodes.get(id)! }
@@ -157,6 +160,11 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
             model: null, busy: false, ui: null, backgroundSync: 'scheduled' }; break
           case 'app.ready': result = {}; break
           case 'conversations.list': result = { conversations: [] }; break
+          case 'activity.list': result = { activities: options.hostActivities ?? (options.hostTask ? [options.hostTask] : []), hostAvailable: true }; break
+          case 'shared.commands.detail': result = owner && options.commandDetail
+            ? options.commandDetail(owner, request.params.commandId) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'shared.tasks.detail': result = owner && options.taskDetail
+            ? options.taskDetail(owner, request.params.taskId) : (() => { throw new Error('NOT_FOUND') })(); break
           case 'settings.appearance': result = { value: 'light' }; break
           case 'auth.me': result = owner ? { owner: scopes[owner], connectionVerified: true, username: `Fixture${owner}` } : (() => { throw new Error('LOGIN_REQUIRED') })(); break
           case 'auth.logout': active = null; result = {}; break
@@ -643,4 +651,110 @@ test('delete conflict copy names source or dependency conflict without guessing 
   findButton(app.get('page-content'), '确认永久删除记忆')!.fire('click')
   await waitUntil(() => app.get('page-content').textContent.includes('来源或依赖关系存在冲突'), 'conflict shown')
   assert.doesNotMatch(app.get('page-content').textContent, /其他记忆使用/)
+})
+
+test('mobile task detail observes exact stop state and ends polling at a proven terminal', async () => {
+  let reads = 0
+  const source = { commandId: 'task-a', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session-a' }
+  const task = (stopStatus: string, canResume = false) => ({ taskId: 'task-a', sessionId: 'session-a', sourceText: '请整理本周工作，并保留来源。',
+    source, artifacts: [], control: { state: 'stop_requested', stopStatus, canStop: false,
+      canSupplement: false, canResume, pendingReceipts: canResume ? 0 : 1,
+      ...(stopStatus === 'stopped' ? { stopObservedAt: '2026-10-03T10:00:00.000Z' } : {}) } })
+  const app = harness({ hostTask: { source: 'host', kind: 'session.message', commandId: 'task-a',
+    taskId: 'task-a', sessionId: 'session-a', status: 'accepted_by_dsh', title: '合成任务' },
+  taskDetail: () => { reads++; return task(reads === 1 ? 'requested' : reads === 2 ? 'cancel_requested' : 'stopped', reads >= 3) } })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '继续电脑会话'), 'host activity did not load')
+  findButton(app.get('page-content'), '继续电脑会话')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('目前还不能确认已停止'), 'request state missing')
+  await waitUntil(() => app.get('page-content').textContent.includes('实际停止'), 'stopped state missing')
+  assert.match(app.get('page-content').textContent, /这件事已停止.*原目标.*请整理本周工作.*停止核对.*恢复这件事/)
+  assert.match(app.get('page-content').textContent, /没有可查看的文件成果/)
+  assert.doesNotMatch(app.get('page-content').textContent, /已交给电脑会话/)
+  const count = reads
+  await new Promise((resolve) => setTimeout(resolve, 30))
+  assert.equal(reads, count, 'polling stops when exact terminal is observed')
+  assert.equal(app.calls.some((call) => call.method === 'shared.tasks.stop'), false)
+})
+
+test('mobile task detail keeps normal completion and legacy uncertainty distinct', async () => {
+  let legacy = false
+  const source = { commandId: 'task-a', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session-a' }
+  const app = harness({ hostTask: { source: 'host', kind: 'session.message', commandId: 'task-a',
+    taskId: 'task-a', sessionId: 'session-a', status: 'accepted_by_dsh', title: '合成任务' },
+  taskDetail: () => ({ taskId: 'task-a', sessionId: 'session-a', source, artifacts: [], control: legacy
+    ? { state: 'stop_requested', stopStatus: 'unconfirmed', legacyStopIntent: true,
+      canStop: false, canSupplement: false, canResume: false, pendingReceipts: 1 }
+    : { state: 'stop_requested', stopStatus: 'completed', canStop: false,
+      canSupplement: false, canResume: true, pendingReceipts: 0 } }) })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '继续电脑会话'), 'host activity did not load')
+  findButton(app.get('page-content'), '继续电脑会话')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('正常结束'), 'completion copy missing')
+  assert.match(app.get('page-content').textContent, /没有已证实的中断结果.*恢复这件事/)
+  legacy = true
+  findButton(app.get('page-content'), '刷新任务')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('旧停止记录'), 'legacy copy missing')
+  assert.doesNotMatch(app.get('page-content').textContent, /恢复这件事/)
+})
+
+test('mobile late stop observation cannot update a closed detail', async () => {
+  let reads = 0
+  let resolveLate!: (value: object) => void
+  const late = new Promise<object>((resolve) => { resolveLate = resolve })
+  const source = { commandId: 'task-a', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session-a' }
+  const detail = (status: string) => ({ taskId: 'task-a', sessionId: 'session-a', source, artifacts: [],
+    control: { state: 'stop_requested', stopStatus: status, canStop: false, canSupplement: false,
+      canResume: status === 'stopped', pendingReceipts: status === 'stopped' ? 0 : 1 } })
+  const app = harness({ hostTask: { source: 'host', kind: 'session.message', commandId: 'task-a',
+    taskId: 'task-a', sessionId: 'session-a', status: 'accepted_by_dsh' },
+  taskDetail: () => ++reads === 1 ? detail('requested') : late })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '继续电脑会话'), 'host activity did not load')
+  findButton(app.get('page-content'), '继续电脑会话')!.fire('click')
+  await waitUntil(() => reads >= 2, 'stop observation did not start')
+  app.nav.find((button) => button.dataset.page === 'connect')!.fire('click')
+  resolveLate(detail('stopped'))
+  await flush()
+  assert.doesNotMatch(app.get('page-content').textContent, /实际停止/)
+  const count = reads
+  await new Promise((resolve) => setTimeout(resolve, 30))
+  assert.equal(reads, count)
+})
+
+test('mobile fetches bounded root labels without using task detail or repeating a command', async () => {
+  const activities = Array.from({ length: 10 }, (_, index) => ({ source: 'host', kind: 'session.message',
+    commandId: `task-${index + 1}`, taskId: `task-${index + 1}`, sessionId: 'session-a', status: 'accepted_by_dsh' }))
+  const app = harness({ hostActivities: activities, commandDetail: (_owner, commandId) => ({ command: {
+    commandId, kind: 'session.message', taskLabel: `目标 ${commandId}`, state: 'accepted_by_dsh' } }) })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('目标 task-8'), 'visible labels did not load')
+  assert.match(app.get('page-content').textContent, /目标 task-1/)
+  assert.doesNotMatch(app.get('page-content').textContent, /目标 task-9|目标 task-10/)
+  assert.equal(app.calls.filter((call) => call.method === 'shared.commands.detail').length, 8)
+  assert.equal(app.calls.some((call) => call.method === 'shared.tasks.detail'), false)
+  assert.equal(app.calls.some((call) => call.method === 'shared.tasks.stop'), false)
+})
+
+test('a late task label from account A cannot replace account B title', async () => {
+  let resolveA!: (value: object) => void
+  const lateA = new Promise<object>((resolve) => { resolveA = resolve })
+  const hostTask = { source: 'host', kind: 'session.message', commandId: 'task-same',
+    taskId: 'task-same', sessionId: 'session-a', status: 'accepted_by_dsh' }
+  const app = harness({ hostTask, commandDetail: (owner, commandId) => owner === 'A' ? lateA : {
+    command: { commandId, kind: 'session.message', taskLabel: 'B 的目标', state: 'accepted_by_dsh' } } })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  await waitUntil(() => app.calls.some((call) => call.method === 'shared.commands.detail' && call.owner === 'A'), 'A label request missing')
+  await logoutAndLoginB(app)
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('B 的目标'), 'B label missing')
+  resolveA({ command: { commandId: 'task-same', kind: 'session.message', taskLabel: 'A 的私人目标' } })
+  await flush()
+  assert.match(app.get('page-content').textContent, /B 的目标/)
+  assert.doesNotMatch(app.get('page-content').textContent, /A 的私人目标/)
 })

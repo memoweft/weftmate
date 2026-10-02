@@ -342,7 +342,23 @@ function validateSingleStore(store) {
             !Array.isArray(command.taskControl.stopRequests) || command.taskControl.stopRequests.length > 100 ||
             command.taskControl.stopRequests.some((item) => !plainObject(item) ||
               !REQUEST_ID.test(item.requestId ?? '') || !validTime(item.at) ||
-              Object.keys(item).some((key) => !['requestId', 'at'].includes(key))) ||
+              (item.targets !== undefined && (!Array.isArray(item.targets) || item.targets.length > MAX_COMMANDS ||
+                new Set(item.targets.map((target) => target.commandId)).size !== item.targets.length ||
+                new Set(item.targets.map((target) => target.receiptId).filter(Boolean)).size !==
+                  item.targets.filter((target) => target.receiptId).length ||
+                item.targets.some((target) => !plainObject(target) || !validId(target.commandId) ||
+                  !Object.hasOwn(store.commands, target.commandId) ||
+                  store.commands[target.commandId].kind !== 'session.message' ||
+                  store.commands[target.commandId].sessionId !== command.sessionId ||
+                  (target.commandId !== commandId && store.commands[target.commandId].rootTaskId !== commandId) ||
+                  (target.receiptId !== undefined && (!validId(target.receiptId) ||
+                    target.receiptId !== store.commands[target.commandId].receiptId)) ||
+                  (target.ack !== undefined && !['cancel_requested', 'queue_removed', 'unconfirmed'].includes(target.ack)) ||
+                  (target.ackAt !== undefined && !validTime(target.ackAt)) ||
+                  (target.attemptAt !== undefined && !validTime(target.attemptAt)) ||
+                  Object.keys(target).some((key) => !['commandId', 'receiptId', 'ack', 'ackAt', 'attemptAt'].includes(key))))) ||
+              (item.lastAttemptAt !== undefined && !validTime(item.lastAttemptAt)) ||
+              Object.keys(item).some((key) => !['requestId', 'at', 'targets', 'lastAttemptAt'].includes(key))) ||
             !validTime(command.taskControl.updatedAt) ||
             Object.keys(command.taskControl).some((key) => !['state', 'stopRequests', 'updatedAt'].includes(key)))) ||
           (command.receiptId !== undefined && !validId(command.receiptId)) ||
@@ -476,6 +492,12 @@ function publicCommand(command) {
     updatedAt: command.updatedAt,
   };
   if (command.sessionId) result.sessionId = command.sessionId;
+  if (command.kind === 'session.message' && !command.rootTaskId && typeof command.payload?.text === 'string') {
+    const normalized = command.payload.text.replace(/\s+/g, ' ').trim();
+    const characters = Array.from(normalized);
+    if (characters.length) result.taskLabel = characters.length > 72
+      ? `${characters.slice(0, 72).join('')}…` : normalized;
+  }
   if (command.appId) result.appId = command.appId;
   if (command.taskId) result.taskId = command.taskId;
   if (command.rootTaskId) result.rootTaskId = command.rootTaskId;
@@ -732,6 +754,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const active = new Set();
   const activeByCommand = new Map();
   const scheduled = new Set();
+  const stopping = new Map();
   const pendingPreflights = new Map();
 
   function timestamp() {
@@ -775,10 +798,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         ['pending', 'dispatching', 'uncertain', 'accepted_by_host'].includes(item.state)));
   }
 
-  // DSH's current cancel API has no turn identity. A terminal history event
-  // proves that this exact, uniquely matched prompt ended; it does not prove
-  // that a stop request canceled it or rolled back tool effects.
-  async function taskTurnObserved(account, taskId) {
+  // A stop freezes command identities. A receipt learned after dispatch is
+  // attached only to a command already in that frozen set.
+  function stopTargets(account, taskId) {
+    return [taskSource(account, taskId), ...taskChildren(account, taskId)]
+      .map((item) => ({ commandId: item.commandId,
+        ...(item.receiptId ? { receiptId: item.receiptId } : {}) }));
+  }
+
+  function latestStop(account, taskId) {
+    return taskSource(account, taskId).taskControl?.stopRequests.at(-1) ?? null;
+  }
+
+  // Native turn identity and source.rpcId are necessary. Text equality is
+  // never evidence: two user messages may contain identical text.
+  async function taskStopEvidence(account, taskId) {
     const deadline = timestamp() + 2_500;
     const observe = (work) => {
       const remaining = deadline - timestamp();
@@ -786,58 +820,118 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       return withDeadline(() => { requireOpen(); return work(); }, remaining);
     };
     const source = taskSource(account, taskId);
-    const children = taskChildren(account, taskId);
-    const messages = [source, ...children];
-    const latest = messages.filter((item) => item.state === 'accepted_by_dsh').at(-1);
-    const messageIds = new Set([source.commandId, ...children.map((item) => item.commandId)]);
-    if (messages.some((item) => ['pending', 'dispatching', 'uncertain'].includes(item.state)) ||
-        Object.values(account.commands).some((item) =>
-          (item.taskId === taskId || messageIds.has(item.toolSource?.sourceCommandId)) &&
-          ['pending', 'dispatching', 'uncertain', 'accepted_by_host'].includes(item.state))) return false;
-    if (!latest) return messages.every((item) => item.state === 'rejected' &&
-      item.errorCode === 'TASK_NOT_READY');
+    const stop = latestStop(account, taskId);
+    if (!stop) return { ready: false, status: 'unconfirmed', pendingCount: 1 };
+    // Stage 08 recorded intent without a target snapshot. Derive only the
+    // commands that already existed at that instant for read-only history
+    // observation. Never send these inferred identities to stopTask.
+    const legacy = !stop.targets;
+    const targets = stop.targets ?? stopTargets(account, taskId).filter((target) =>
+      Date.parse(account.commands[target.commandId].createdAt) <= Date.parse(stop.at));
+    const needsHistory = targets.some((target) => target.receiptId && target.ack !== 'queue_removed');
+    const turns = new Map();
+    const receiptTurns = new Map();
+    let historyComplete = !needsHistory;
+    let invalidHistory = false;
+    if (needsHistory) {
     let described;
     try { described = await observe(() => backend.describeSession(source.sessionId, account.ownerId)); }
-    catch { return false; }
-    if (described?.sessionId !== source.sessionId || described.agentPreset !== 'personal-remote' ||
-        described.running !== false) return false;
+    catch { return { ready: false, status: 'unconfirmed', pendingCount: targets.length }; }
+    if (described?.sessionId !== source.sessionId || described.agentPreset !== 'personal-remote') {
+      return { ready: false, status: 'unconfirmed', pendingCount: targets.length };
+    }
     let afterSeq = -1;
-    let matches = 0;
-    let started = false;
-    let activeMatch = false;
-    let awaitingStart = false;
-    let terminalObserved = false;
+    let openTurn = null;
     try {
-      for (let pageNo = 0; pageNo < 10; pageNo++) {
+      for (let pageNo = 0; pageNo < 50; pageNo++) {
         const page = await observe(() => backend.readEvents({ sessionId: source.sessionId,
           afterSeq, limit: 200, ownerId: account.ownerId }));
         if (!Array.isArray(page?.events) || !Number.isSafeInteger(page.nextSeq) ||
-            page.nextSeq < afterSeq) return false;
+            page.nextSeq < afterSeq) break;
         for (const event of page.events) {
           if (event.type === 'turn.started') {
-            if (activeMatch) return false;
-            started = true;
-            activeMatch = awaitingStart;
-            awaitingStart = false;
+            const turn = event.data?.turn;
+            if (!Number.isSafeInteger(turn) || turn < 0 || openTurn !== null || turns.has(turn)) {
+              invalidHistory = true; break;
+            }
+            openTurn = turn;
+            turns.set(turn, { receipts: new Set(), unknownUser: false, startedAt: event.at, ended: false });
           } else if (event.type === 'user.message') {
-            if (event.data?.text === latest.payload.text) {
-              if (++matches > 1) return false;
-              if (started) activeMatch = true;
-              else awaitingStart = true;
-            } else if (activeMatch || awaitingStart) return false;
+            const receiptId = event.data?.receiptId;
+            if (openTurn === null) { invalidHistory = true; break; }
+            if (typeof receiptId !== 'string' || !ID.test(receiptId)) {
+              turns.get(openTurn).unknownUser = true; continue;
+            }
+            turns.get(openTurn).receipts.add(receiptId);
+            if (receiptTurns.has(receiptId)) receiptTurns.set(receiptId, null);
+            else receiptTurns.set(receiptId, openTurn);
           } else if (event.type === 'turn.ended') {
-            if (started && activeMatch) terminalObserved = true;
-            started = false;
-            activeMatch = false;
-            awaitingStart = false;
+            const turn = event.data?.turn;
+            if (openTurn !== null && turn === openTurn) {
+              const record = turns.get(turn);
+              record.ended = true;
+              record.reason = event.data?.reason;
+              record.endedAt = event.at;
+              openTurn = null;
+            }
           }
         }
-        if (!page.hasMore) return matches === 1 && terminalObserved;
-        if (page.nextSeq === afterSeq) return false;
+        if (invalidHistory) break;
+        if (!page.hasMore) { historyComplete = true; break; }
+        if (page.nextSeq === afterSeq) break;
         afterSeq = page.nextSeq;
       }
     } catch { /* Incomplete history is not proof of a closed turn. */ }
-    return false;
+    }
+    let pendingCount = 0;
+    let aborted = false;
+    let removed = false;
+    let completed = false;
+    let cancelRequested = false;
+    let uncertain = invalidHistory;
+    const terminalTimes = [];
+    const targetReceipts = new Set(targets.map((item) => item.receiptId).filter(Boolean));
+    for (const target of targets) {
+      const command = account.commands[target.commandId];
+      if (target.ack === 'queue_removed' && target.receiptId) {
+        removed = true;
+        if (target.ackAt) terminalTimes.push(target.ackAt);
+        continue;
+      }
+      if (!target.receiptId) {
+        if (command?.state === 'rejected' && command.errorCode === 'TASK_NOT_READY') {
+          removed = true;
+          if (command.updatedAt) terminalTimes.push(command.updatedAt);
+          continue;
+        }
+        if (command?.state === 'uncertain') uncertain = true;
+        pendingCount++;
+        continue;
+      }
+      const turnId = receiptTurns.get(target.receiptId);
+      const turn = turns.get(turnId);
+      if (invalidHistory || !historyComplete || !turn?.ended || turn.unknownUser || turn.receipts.size === 0 ||
+          [...turn.receipts].some((receipt) => !targetReceipts.has(receipt))) {
+        if (target.ack === 'unconfirmed' || turn?.unknownUser ||
+            (turn && [...turn.receipts].some((receipt) => !targetReceipts.has(receipt)))) uncertain = true;
+        pendingCount++;
+        if (target.ack === 'cancel_requested') cancelRequested = true;
+        continue;
+      }
+      if (turn.reason === 'aborted' && validTime(turn.endedAt) &&
+          Date.parse(turn.endedAt) >= Date.parse(stop.at)) aborted = true;
+      else if (turn.reason === 'completed') completed = true;
+      if (validTime(turn.endedAt)) terminalTimes.push(turn.endedAt);
+    }
+    const effectsUnknown = taskHasUnknownEffects(account, taskId);
+    if (effectsUnknown) { pendingCount++; uncertain = true; }
+    if (targets.some((target) => target.attemptAt || target.ack === 'unconfirmed')) uncertain = true;
+    const status = pendingCount ? cancelRequested ? 'cancel_requested' : uncertain || legacy ? 'unconfirmed' : 'requested'
+      : aborted || removed ? 'stopped' : completed ? 'completed' : 'unconfirmed';
+    return { ready: pendingCount === 0, legacy,
+      ...(status === 'stopped' && terminalTimes.length ? {
+        observedAt: terminalTimes.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1) } : {}),
+      status, pendingCount };
   }
 
   async function taskDetail(account, taskId) {
@@ -852,7 +946,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const storedState = source.taskControl?.state ?? 'active';
     const state = storedState === 'active' && taskHasUnknownEffects(account, taskId)
       ? 'uncertain' : storedState;
-    const observed = state === 'stop_requested' ? await taskTurnObserved(account, taskId) : false;
+    const evidence = state === 'stop_requested' ? await taskStopEvidence(account, taskId) : null;
     return { taskId, sessionId: source.sessionId, sourceText: source.payload.text,
       source: publicCommand(source), artifacts, steps,
       supplements: children.filter((item) => item.taskAction === 'supplement').map(publicCommand),
@@ -861,10 +955,77 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         ...(state === 'stop_requested' && source.taskControl?.stopRequests?.length ? {
           stopRequestedAt: source.taskControl.stopRequests.at(-1).at } : {}),
         canSupplement: state === 'active', canStop: storedState === 'active',
-        canResume: state === 'stop_requested' && observed,
+        canResume: state === 'stop_requested' && evidence?.ready === true,
+        ...(state === 'stop_requested' ? { stopStatus: evidence.status,
+          pendingReceipts: evidence.pendingCount,
+          ...(evidence.observedAt ? { stopObservedAt: evidence.observedAt } : {}),
+          ...(evidence.legacy ? { legacyStopIntent: true } : {}) } : {}),
         ...(state === 'uncertain' ? { reasonCode: 'EFFECT_OUTCOME_UNCONFIRMED' } : {}),
-        ...(state === 'stop_requested' ? { reasonCode: observed
-          ? 'TURN_ENDED_AFTER_STOP_REQUEST' : 'TURN_OUTCOME_UNCONFIRMED' } : {}) } };
+        ...(state === 'stop_requested' ? { reasonCode: evidence.status === 'stopped'
+          ? 'STOP_OBSERVED' : evidence.status === 'completed'
+            ? 'TURN_ENDED_AFTER_STOP_REQUEST' : evidence.status === 'cancel_requested'
+              ? 'STOP_CANCEL_REQUESTED' : evidence.status === 'requested'
+                ? 'STOP_REQUEST_PENDING' : evidence.ready
+                ? 'TURN_ENDED_AFTER_STOP_REQUEST' : evidence.legacy
+                  ? 'LEGACY_STOP_RECHECK_REQUIRED' : 'TURN_OUTCOME_UNCONFIRMED' } : {}) } };
+  }
+
+  function driveTaskStop(ownerId, taskId, force = false) {
+    const key = `${ownerId}|${taskId}`;
+    if (stopping.has(key)) return stopping.get(key);
+    const work = (async () => {
+      if (closing || storageFault || typeof backend.stopTask !== 'function') return;
+      const account = accountState(ownerId);
+      const source = taskSource(account, taskId);
+      if (source.taskControl?.state !== 'stop_requested') return;
+      const stop = latestStop(account, taskId);
+      if (!stop?.targets) return;
+      if (!force && stop.lastAttemptAt && timestamp() - Date.parse(stop.lastAttemptAt) < 1_000) return;
+      const candidates = stop.targets.filter((target) => target.receiptId && target.ack !== 'queue_removed' &&
+        account.commands[target.commandId]?.state === 'accepted_by_dsh')
+        .sort((left, right) => (left.attemptAt ? Date.parse(left.attemptAt) : 0) -
+          (right.attemptAt ? Date.parse(right.attemptAt) : 0)).slice(0, 16);
+      if (!candidates.length) return;
+      const described = await withDeadline(() => backend.describeSession(source.sessionId, ownerId), 2_500)
+        .catch(() => null);
+      if (described?.sessionId !== source.sessionId || described.agentPreset !== 'personal-remote') return;
+      await serial(() => mutate(ownerId, (next) => {
+        const current = latestStop(next, taskId);
+        if (current?.requestId !== stop.requestId) return;
+        const at = new Date(timestamp()).toISOString();
+        current.lastAttemptAt = at;
+        for (const candidate of candidates) {
+          const target = current.targets.find((item) => item.commandId === candidate.commandId);
+          if (target?.receiptId === candidate.receiptId) target.attemptAt = at;
+        }
+      }));
+      {
+        const receipts = candidates.map((item) => item.receiptId);
+        let result;
+        try {
+          result = await withDeadline(() => backend.stopTask({ sessionId: source.sessionId,
+            ownerId, requestId: stop.requestId, receiptIds: receipts }), 3_000);
+        } catch { return; }
+        if (!Array.isArray(result?.outcomes) || result.outcomes.length !== receipts.length ||
+            new Set(result.outcomes.map((item) => item.receiptId)).size !== receipts.length ||
+            result.outcomes.some((item) => !receipts.includes(item.receiptId) ||
+              !['cancel_requested', 'queue_removed', 'unconfirmed'].includes(item.status))) return;
+        if (closing) return;
+        await serial(() => mutate(ownerId, (next) => {
+          const current = latestStop(next, taskId);
+          if (current?.requestId !== stop.requestId) return;
+          const at = new Date(timestamp()).toISOString();
+          for (const outcome of result.outcomes) {
+            const target = current.targets.find((item) => item.receiptId === outcome.receiptId);
+            if (!target || target.ack === 'queue_removed') continue;
+            target.ack = outcome.status;
+            target.ackAt = at;
+          }
+        }));
+      }
+    })().finally(() => stopping.delete(key));
+    stopping.set(key, work);
+    return work;
   }
 
   function serial(task) {
@@ -1470,6 +1631,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
               outcome: result?.outcome === 'already_open' ? 'already_open' : 'opened' }
             : { status: 'unconfirmed', method: 'visible_window' };
           if (typeof result.receiptId === 'string' && ID.test(result.receiptId)) command.receiptId = result.receiptId;
+          if (snapshot.kind === 'session.message' && command.receiptId) {
+            const taskId = command.rootTaskId ?? command.commandId;
+            const stop = next.commands[taskId]?.taskControl?.state === 'stop_requested'
+              ? next.commands[taskId].taskControl.stopRequests.at(-1) : null;
+            const target = stop?.targets?.find((item) => item.commandId === commandId);
+            if (target && !target.receiptId) target.receiptId = command.receiptId;
+          }
           // The source of truth for events is DSH history. A callback receipt
           // alone does not prove that a turn completed.
           if (snapshot.kind !== 'session.message') delete command.payload.text;
@@ -1480,6 +1648,12 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           accountState(ownerId).commands[commandId]?.state === 'accepted_by_dsh') {
         await sharedAttachmentStores.get(ownerId).release({ sessionId: snapshot.sessionId,
           requestId: snapshot.requestId, attachments: snapshot.payload.attachments });
+      }
+      if (snapshot.kind === 'session.message') {
+        const taskId = snapshot.rootTaskId ?? snapshot.commandId;
+        if (accountState(ownerId).commands[taskId]?.taskControl?.state === 'stop_requested') {
+          await driveTaskStop(ownerId, taskId, true);
+        }
       }
     } catch {
       // A failed store write leaves dispatching on disk. Recovery marks it
@@ -1995,7 +2169,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (request.method === 'GET' && taskMatch) {
         if (url.search) throw failure('INVALID_REQUEST');
         const taskId = id(taskMatch[1]);
-        return json(response, 200, await taskDetail(state, taskId));
+        taskSource(state, taskId);
+        await driveTaskStop(ownerId, taskId);
+        return json(response, 200, await taskDetail(accountState(ownerId), taskId));
       }
       const taskActionMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/(supplements|stop|resume)$/.exec(pathname);
       if (request.method === 'POST' && taskActionMatch?.[2] === 'stop') {
@@ -2019,7 +2195,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             throw failure('TASK_NOT_READY', 409);
           }
           control.state = 'stop_requested';
-          control.stopRequests.push({ requestId: body.requestId, at: now });
+          control.stopRequests.push({ requestId: body.requestId, at: now,
+            targets: stopTargets(next, taskId) });
           control.updatedAt = now;
           source.taskControl = control;
           for (const item of [source, ...taskChildren(next, taskId)]) {
@@ -2028,6 +2205,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             }
           }
         }));
+        await driveTaskStop(ownerId, taskId, true);
         return json(response, 202, { task: await taskDetail(accountState(ownerId), taskId) });
       }
       const artifactMatch = /^\/personal\/v1\/artifacts\/([A-Za-z0-9_-]+)(?:\/(preview|download))?$/.exec(pathname);
@@ -2136,7 +2314,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           throw failure('TASK_NOT_READY', 409);
         }
         const resumeReady = taskAction === 'resume' && rootSource.taskControl?.state === 'stop_requested'
-          ? await taskTurnObserved(state, rootTaskId) : false;
+          ? (await taskStopEvidence(state, rootTaskId)).ready : false;
         if (taskAction === 'resume' && !resumeReady) throw failure('TASK_NOT_READY', 409);
         // A session must be bound to this owner before even the read-only
         // backend preflight can inspect its model or history.
@@ -2283,6 +2461,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
         for (const command of Object.values(account.commands)) {
           if (command.state === 'pending') schedule(ownerId, command.commandId);
+          if (command.taskControl?.state === 'stop_requested') {
+            driveTaskStop(ownerId, command.commandId).catch(() => {});
+          }
         }
       }
       return { origin, hostId: rootState.hostId, ownerId: rootState.legacyOwnerId };
@@ -2591,7 +2772,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           ]);
           clearTimeout(timer);
           await Promise.race([
-            Promise.allSettled([listeningClosed, ...active]),
+            Promise.allSettled([listeningClosed, ...active, ...stopping.values()]),
             new Promise((resolve) => { timer = setTimeout(resolve, CLOSE_TIMEOUT_MS); }),
           ]);
         } finally {

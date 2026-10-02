@@ -127,8 +127,10 @@ export function projectHistoryEvent(raw) {
     const message = event.data?.message ?? event.data
     const data = messageText(message)
     const images = messageImages(message)
+    const receiptId = typeof event.data?.source?.rpcId === 'string' &&
+      /^[A-Za-z0-9._:-]{1,160}$/.test(event.data.source.rpcId) ? event.data.source.rpcId : null
     if (data || images.length) projected = { seq, type: 'user.message', data: { ...(data ?? { text: '' }),
-      ...(images.length ? { images } : {}) } }
+      ...(images.length ? { images } : {}), ...(receiptId ? { receiptId } : {}) } }
   } else if (type === 'assistant/message') {
     const message = event.data?.message ?? event.data
     const data = messageText(message)
@@ -136,10 +138,13 @@ export function projectHistoryEvent(raw) {
     if (data || images.length) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
       ...(images.length ? { images } : {}) } }
   } else if (type === 'turn/start') {
-    projected = { seq, type: 'turn.started', data: {} }
+    projected = { seq, type: 'turn.started', data: {
+      ...(Number.isSafeInteger(event.data?.turn) && event.data.turn > 0 ? { turn: event.data.turn } : {}) } }
   } else if (type === 'turn/end') {
     const kind = event.data?.reason?.kind
-    projected = { seq, type: 'turn.ended', data: { reason: ['completed', 'aborted', 'error', 'blocked'].includes(kind) ? kind : 'unknown' } }
+    projected = { seq, type: 'turn.ended', data: {
+      reason: ['completed', 'aborted', 'error', 'blocked'].includes(kind) ? kind : 'unknown',
+      ...(Number.isSafeInteger(event.data?.turn) && event.data.turn > 0 ? { turn: event.data.turn } : {}) } }
   }
   if (projected && Number.isFinite(event.time) && Math.abs(event.time) <= 8.64e15) projected.at = new Date(event.time).toISOString()
   return projected

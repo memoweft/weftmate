@@ -62,7 +62,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     configured?: boolean; authenticated?: boolean; setupGrant?: string;
     profileAccounts?: Record<string, any>; initialProfileOwner?: string;
     taskDetails?: Record<string, object>; artifactPreviews?: Record<string, object | { error: { code: string }; status: number }>;
-    deferTaskDetail?: boolean;
+    deferTaskDetail?: boolean; taskPollTimers?: boolean;
   } = {}) {
   const nodes = new Map<string, Element>()
   const get = (id: string) => { if (!nodes.has(id)) nodes.set(id, new Element(id)); return nodes.get(id)! }
@@ -78,6 +78,9 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   let deferNextMe = false
   let deferNextDevices = false
   let deferredTaskDetail: ReturnType<typeof deferred<ReturnType<typeof reply>>> | null = null
+  let deferNextTaskDetail = false
+  const taskTimers = new Map<number, () => void>()
+  let timerId = 0
   let profileOwner = config.initialProfileOwner ?? 'A'
   const profileAccounts = config.profileAccounts ?? {
     A: { username: 'ProfileA', ownerId: 'profile-owner-a', displayName: '合成账户 A', avatar: null, profileRevision: 0 },
@@ -183,7 +186,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       return Promise.resolve(task ? reply({ task }, 202) : reply({ error: { code: 'NOT_FOUND' } }, 404))
     }
     if (url.includes('/tasks/')) {
-      if (config.deferTaskDetail) {
+      if (config.deferTaskDetail || deferNextTaskDetail) {
+        deferNextTaskDetail = false
         deferredTaskDetail = deferred<ReturnType<typeof reply>>()
         return deferredTaskDetail.promise
       }
@@ -220,12 +224,19 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
   crypto: { randomUUID: () => config.uuidForSync
     ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal, Intl, Date, btoa,
-  setTimeout: () => 1, clearTimeout() {}, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
+   setTimeout: (callback: () => void, delay: number) => {
+     const id = ++timerId
+     if (config.taskPollTimers && delay === 2_000) taskTimers.set(id, callback)
+     return id
+   }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
   runInNewContext(source, context)
   return { get, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
     deferDevices: () => { deferNextDevices = true }, resolveDevices: (value: object) => { deferredDevices?.resolve(reply(value)); deferredDevices = null },
     resolveTaskDetail: (value: object, status = 200) => { deferredTaskDetail?.resolve(reply(value, status)); deferredTaskDetail = null },
+     deferOneTaskDetail: () => { deferNextTaskDetail = true },
+     runTaskTimer: () => { const next = taskTimers.entries().next().value; if (!next) return false; taskTimers.delete(next[0]); next[1](); return true },
+     pendingTaskTimers: () => taskTimers.size,
     deferProfilePatch: () => { pendingProfilePatch = deferred<ReturnType<typeof reply>>() },
     resolveProfilePatch: (value: object, status = 200) => { pendingProfilePatch?.resolve(reply(value, status)); pendingProfilePatch = null },
     profileAccounts,
@@ -591,6 +602,19 @@ test('supplement and resume commands remain under the root file task card', asyn
   assert.match(visibleText(followSection), /查看记录编号.*follow-two/)
 })
 
+test('desktop task cards use bounded goal labels to distinguish the same session', async () => {
+  const first = { commandId: 'root-one', requestId: 'request-one', kind: 'session.message',
+    state: 'accepted_by_dsh', sessionId: 'A', taskLabel: '整理本周工作并标注来源' }
+  const second = { commandId: 'root-two', requestId: 'request-two', kind: 'session.message',
+    state: 'accepted_by_dsh', sessionId: 'A', taskLabel: '检查另一份清单' }
+  const page = harness([first, second], [], true)
+  for (let i = 0; i < 15 && page.get('task-list').children.length < 2; i++) await flush()
+  const list = visibleText(page.get('task-list'))
+  assert.match(list, /整理本周工作并标注来源/)
+  assert.match(list, /检查另一份清单/)
+  assert.doesNotMatch(list, /root-one|root-two/)
+})
+
 test('observed prior turn offers resume without claiming the stop caused it', async () => {
   const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
   const page = harness([source], [], true, { taskDetails: { 'root-task': {
@@ -604,6 +628,84 @@ test('observed prior turn offers resume without claiming the stop caused it', as
   assert.match(control, /上一回合已结束.*尚不能确认是停止请求.*请写明下一步/)
   assert.doesNotMatch(control, /仍在等待执行端状态核对/)
   assert.match(control, /恢复这件事/)
+})
+
+test('task stop observation shows request, cancel request, and proven terminal without another POST', async () => {
+  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
+  const taskDetails: Record<string, any> = { 'root-task': {
+    taskId: 'root-task', sessionId: 'A', source, artifacts: [], control: {
+      state: 'stop_requested', stopStatus: 'requested', pendingReceipts: 1,
+      canSupplement: false, canStop: false, canResume: false },
+  } }
+  const page = harness([source], [], true, { taskDetails, taskPollTimers: true })
+  for (let i = 0; i < 15 && page.get('task-list').children.length === 0; i++) await flush()
+  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
+  for (let i = 0; i < 15 && page.get('task-detail-control').children.length === 0; i++) await flush()
+  assert.match(visibleText(page.get('task-detail-control')), /目前还不能确认已停止/)
+  assert.equal(page.pendingTaskTimers(), 1)
+  taskDetails['root-task'] = { ...taskDetails['root-task'], control: {
+    state: 'stop_requested', stopStatus: 'cancel_requested', pendingReceipts: 1,
+    canSupplement: false, canStop: false, canResume: false } }
+  page.runTaskTimer(); await flush()
+  assert.match(visibleText(page.get('task-detail-control')), /发起取消.*等待实际结束记录/)
+  assert.equal(page.pendingTaskTimers(), 1)
+  taskDetails['root-task'] = { ...taskDetails['root-task'], control: {
+    state: 'stop_requested', stopStatus: 'stopped', pendingReceipts: 0,
+    stopObservedAt: '2026-10-03T10:00:00.000Z', canSupplement: false, canStop: false, canResume: true } }
+  page.runTaskTimer(); await flush()
+  assert.match(visibleText(page.get('task-detail-control')), /实际停止.*停止核对.*恢复这件事/)
+  assert.match(page.get('task-detail-verification').textContent, /这件事已停止/)
+  assert.doesNotMatch(page.get('task-detail-verification').textContent, /原消息已送达/)
+  assert.equal(page.pendingTaskTimers(), 0)
+  assert.equal(page.requests.filter((item) => item.url.endsWith('/tasks/root-task/stop')).length, 0)
+  assert.equal(page.requests.filter((item) => item.url.endsWith('/tasks/root-task')).length, 3)
+})
+
+test('task stop observation is bounded and ignores a late result after close or account switch', async () => {
+  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
+  const taskDetails: Record<string, any> = { 'root-task': {
+    taskId: 'root-task', sessionId: 'A', source, artifacts: [], control: {
+      state: 'stop_requested', stopStatus: 'unconfirmed', pendingReceipts: 1,
+      canSupplement: false, canStop: false, canResume: false },
+  } }
+  const page = harness([source], [], true, { taskDetails, taskPollTimers: true, profileAccounts: profileFixture() })
+  await ready(page)
+  for (let i = 0; i < 15 && page.get('task-list').children.length === 0; i++) await flush()
+  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
+  for (let i = 0; i < 15 && page.pendingTaskTimers() === 0; i++) await flush()
+  for (let i = 0; i < 8; i++) { assert.equal(page.runTaskTimer(), true); await flush() }
+  assert.equal(page.pendingTaskTimers(), 0)
+  assert.match(visibleText(page.get('task-detail-control')), /自动核对已暂停/)
+  page.get('task-detail-refresh').fire('click')
+  for (let i = 0; i < 15 && page.pendingTaskTimers() === 0; i++) await flush()
+  page.deferOneTaskDetail()
+  page.runTaskTimer(); await flush()
+  await switchToB(page)
+  page.resolveTaskDetail({ ...taskDetails['root-task'], control: { state: 'stop_requested', stopStatus: 'stopped', canResume: true } })
+  await flush()
+  assert.equal(page.get('task-detail-dialog').open, false)
+  assert.doesNotMatch(visibleText(page.get('task-detail-control')), /实际停止/)
+  assert.equal(page.pendingTaskTimers(), 0)
+})
+
+test('normal completion and legacy stop keep honest copy and explicit resume', async () => {
+  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
+  const taskDetails: Record<string, any> = { 'root-task': {
+    taskId: 'root-task', sessionId: 'A', source, artifacts: [], control: {
+      state: 'stop_requested', stopStatus: 'completed', canResume: true, canStop: false, canSupplement: false },
+  } }
+  const page = harness([source], [], true, { taskDetails })
+  for (let i = 0; i < 15 && page.get('task-list').children.length === 0; i++) await flush()
+  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
+  for (let i = 0; i < 15 && page.get('task-detail-control').children.length === 0; i++) await flush()
+  assert.match(visibleText(page.get('task-detail-control')), /正常结束.*没有已证实的中断结果.*恢复这件事/)
+  taskDetails['root-task'] = { ...taskDetails['root-task'], control: {
+    state: 'stop_requested', stopStatus: 'unconfirmed', legacyStopIntent: true, pendingReceipts: 1,
+    canResume: false, canStop: false, canSupplement: false } }
+  page.get('task-detail-refresh').fire('click')
+  await flush()
+  assert.match(visibleText(page.get('task-detail-control')), /旧停止记录.*结果仍待核对/)
+  assert.doesNotMatch(visibleText(page.get('task-detail-control')), /恢复这件事/)
 })
 
 test('task detail shows model desktop steps with evidence-bound status and hidden IDs', async () => {
