@@ -1,0 +1,98 @@
+{
+  "task": "S03",
+  "recordedAt": "2026-09-08T14:32:46.597Z",
+  "status": "developer_verified_owner_trial_pending",
+  "runtime": {
+    "platform": "Windows",
+    "entry": "START_MEMORY_PREVIEW.cmd",
+    "data": "../Runtime/MemoryPreview/user-data",
+    "dsh": "vendor/dsh-runtime, 0.1.0-rc.5",
+    "model": "weftlearn-qwen3.8-27b",
+    "endpoint": "http://127.0.0.1:18080/v1",
+    "modelTier": "local",
+    "routeReady": true,
+    "modelPid": 20024
+  },
+  "tests": {
+    "weftmate": 28,
+    "memoweft": 44,
+    "commands": [
+      "node --test tests/memory-plugin-contract.test.ts tests/memory-ui.test.ts tests/memoweft-config.test.ts tests/dogfood-launcher.test.ts tests/settings-ui-contract.test.ts",
+      "py/.venv/Scripts/python.exe -m pytest -q py/tests/test_dsh_local_route.py py/tests/test_dsh_trust_rpc.py py/tests/test_hermes_dsh_bridge.py"
+    ]
+  },
+  "actual": {
+    "normalChatReply": "收到",
+    "ordinaryTurnWithoutCompaction": true,
+    "cancelledTurnSourceSaved": true,
+    "restartPendingJobPreserved": true,
+    "recoveredJobIdentityUnchanged": true,
+    "evidenceCount": 2,
+    "jobCount": 2,
+    "cognitionCount": 2,
+    "jobs": [
+      {
+        "id": "memory-world-job-4641784e9522d19accd4ac0c6fc59a3bed282d7f6cf1e36f7caf99341230b5ff",
+        "state": "applied",
+        "attempts": 4,
+        "terminal": "applied",
+        "evidenceIds": [
+          "3e7fa77f-5275-4720-80d9-41d9ecb4b8c8"
+        ]
+      },
+      {
+        "id": "memory-world-job-6a900c73267ed31f9ddc5da0417d9ebd66da23b20e968f704162347363511ee3",
+        "state": "applied",
+        "attempts": 1,
+        "terminal": "applied",
+        "evidenceIds": [
+          "ad89823d-5edc-497f-b6c9-0d4d609ab655"
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "3e7fa77f-5275-4720-80d9-41d9ecb4b8c8",
+        "kind": "spoken",
+        "text": "这是雨舟的测试资料：我挑洗护用品时不喜欢浓烈香味。请简短回应，不使用工具。"
+      },
+      {
+        "id": "ad89823d-5edc-497f-b6c9-0d4d609ab655",
+        "kind": "spoken",
+        "text": "我出门时习惯带一把黄色雨伞。请只回复收到，不使用工具。"
+      }
+    ],
+    "understanding": [
+      {
+        "id": "cognition-61cc68d3e06b4dbcd8d75f93437c9d0eba3cd73c3120df65c4285ac5b3a3a6a4",
+        "content": "用户出门时习惯带一把黄色雨伞。"
+      },
+      {
+        "id": "cognition-33c4bc2e8cadbac596f862d0259926847528d409670107a40adfafcf32ad3b67",
+        "content": "用户挑洗护用品时不喜欢浓烈香味"
+      }
+    ],
+    "cleanDiagnosticExitCode": 0,
+    "normalLauncherAfterCompletedJobsRestart": {
+      "entry": "START_MEMORY_PREVIEW.cmd",
+      "url": "http://127.0.0.1:58941",
+      "ready": true,
+      "evidenceCount": 2,
+      "jobCount": 2,
+      "cognitionCount": 2,
+      "allJobsApplied": true
+    }
+  },
+  "sourceIsolation": "Only current human source.kind=user; plugin/assistant/tool injection rejected by behavioral tests. No private history import.",
+  "localPolicy": "Explicit loopback model route; official credential reference resolved into stdin memory only; local HTTP ignores environment proxies; no cloud fallback.",
+  "modelIncident": "The test request stalled; after stopping it the source remained. Restarted only the owned local model using unchanged existing config. Not a large-image bug fix.",
+  "limits": [
+    "Automatic processing uses the existing four-attempt retry policy; no manual retry control in UI yet.",
+    "Abrupt power loss and every crash timing window were not tested.",
+    "Cross-session use and corrections belong to S04; phone tasks remain untested."
+  ],
+  "screenshots": [
+    "../Runtime/MemoryPreview/screenshots/s03-source-retry.png",
+    "../Runtime/MemoryPreview/screenshots/s03-memory-formed.png"
+  ]
+}

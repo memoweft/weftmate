@@ -11,6 +11,11 @@ export function isExactRuntimeOrigin(value: unknown, expectedOrigin: string | nu
     return actual.protocol === 'http:'
       && actual.hostname === '127.0.0.1'
       && actual.origin === expected.origin
+      // Only the DSH document root can hold the surface preload. A same-origin
+      // Mod wrapper, generated asset, API response, or query route must never
+      // acquire top-level renderer authority. Hash routing remains DSH-owned.
+      && actual.pathname === '/'
+      && actual.search === ''
       && expected.protocol === 'http:'
       && expected.hostname === '127.0.0.1';
   } catch {

@@ -1,0 +1,49 @@
+{
+  "recordedDate": "2026-09-14",
+  "task": "MOD_SDK_01",
+  "status": "backend-candidate-awaiting-owner-review-and-ui-integration",
+  "completeUserExperiencePassed": false,
+  "repairBudget": { "allowed": 2, "used": 2, "initialRunPlusRetries": 3 },
+  "model": "muse-glimmer-30b-q5",
+  "dshPin": "47f943859bef60e4160492346772ded9b24f765a",
+  "finalPluginSha256": "5E2A6F803AC5B4F1E11AF52108F1591B7A5D93E7BDE5D60BD2AE2B74248DB1C4",
+  "checks": {
+    "relatedTests": { "passed": 63, "failed": 0, "skipped": 0 },
+    "typecheckPassed": true,
+    "finalTestLog": "%TEMP%/weftmate-r1-final-tests-20260914-192049.log",
+    "earlierFailure": "One asynchronous Windows EPERM rename during test teardown; not reproduced in the subsequent same-group run; root cause not established"
+  },
+  "runs": [
+    { "root": "%TEMP%/weftmate-sdk-r1-20260914-185547", "outcome": "generated source; wrong expect.value shape; no active version; cancelled" },
+    { "root": "%TEMP%/weftmate-sdk-r1b-20260914-191058", "outcome": "activated; developer add/list and restart preservation passed; owner injection error and repeated tools; UI not connected" },
+    {
+      "root": "%TEMP%/weftmate-sdk-r1c-20260914-192117",
+      "projectId": "mod-b50ea97f-4a66-45ea-8d83-79cd395c2cda",
+      "versionId": "version-3ccb0169-de89-4c80-8ad1-8794b2c03be4",
+      "maintenanceSessionId": "mod-maintenance-e62ea936-a62f-4e37-90e5-0b4beba729af",
+      "promptSubmittedAt": "2026-09-14T11:21:43.510Z",
+      "ownerTurnEndedAt": "2026-09-14T11:22:03.146Z",
+      "hostCompletedAt": "2026-09-14T11:23:06.430Z",
+      "maintenanceTurnEndedAt": "2026-09-14T11:23:10.574Z",
+      "ownerToolCalls": ["create_goal", "mod_project:create"],
+      "ownerGoalPaused": true,
+      "ownerGoalPhase": "paused",
+      "ownerTurnsObserved": 1,
+      "internalModelGeneratedAndActivated": true,
+      "developerLiveProbe": { "savedAndReadBack": true, "recordCount": 1, "preservedAfterModStopStart": true, "stopLatchObserved": true },
+      "hostScenarioValidated": false,
+      "modelPlanScope": "empty-list assertion only",
+      "modelUsedNoArgumentComplete": false,
+      "uiObservation": "Generated source contains a placeholder submit handler with no host action bridge",
+      "finalModState": "stopped"
+    }
+  ],
+  "knownGaps": ["shared UI integration", "meaningful autonomous business-scenario validation", "completion delivery back to owner conversation"],
+  "scopeProtection": { "filesCompared": 452, "unchanged": 450, "parallelChangesPreserved": ["collab/FRONTEND.md", "FrontendDev/Repository/src/plugins/weftmate-client/client.js"], "added": 0, "removed": 0 },
+  "trialServicesClosed": true,
+  "existingLocalModelServicePreserved": true,
+  "businessSourceWrittenByExternalDeveloper": false,
+  "privateBusinessOrMemoryDataUsed": false,
+  "dependenciesUpgraded": false,
+  "committedOrPushed": false
+}

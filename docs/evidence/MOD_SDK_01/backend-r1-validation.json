@@ -1,0 +1,73 @@
+{
+  "date": "2026-09-14",
+  "task": "MOD_SDK_01",
+  "backendAssessment": "developer-verified-for-current-r1-scope",
+  "userAcceptance": "pending",
+  "frontendIncluded": false,
+  "liveAttempts": 1,
+  "externalRepairRetriesUsed": 0,
+  "model": "muse-glimmer-30b-q5",
+  "runtimeRootRelativeToTemp": "weftmate-backend-r1-20260914-202539",
+  "projectId": "mod-b7f43873-0521-46c9-b8c7-2dd0f9775c0e",
+  "versionId": "version-bee94489-b4f2-4ff1-b0de-58bf538e6f3e",
+  "maintenanceSessionId": "mod-maintenance-f3a180b4-7e86-4d19-aa5a-02c8666a0ff6",
+  "times": {
+    "promptSubmittedAt": "2026-09-14T12:26:08.113Z",
+    "ownerTurnEndedEpochMs": 1789388787181,
+    "publishedAt": "2026-09-14T12:27:45.101Z",
+    "maintenanceTurnEndedEpochMs": 1789388870072
+  },
+  "automatedChecks": {
+    "passed": 66,
+    "failed": 0,
+    "skipped": 0,
+    "typecheckPassed": true,
+    "logRelativeToTemp": "weftmate-r1-backend-final-20260914-202513.log"
+  },
+  "modelEvidence": {
+    "sourceWrittenByInternalModel": true,
+    "sourceWrittenByExternalDeveloper": false,
+    "initialCheckFailedDueToMissingPayload": true,
+    "structuredFailureCode": "MOD_SDK_BEHAVIOR_CHECK_FAILED",
+    "failureItems": 4,
+    "modelCorrectedInputWithoutExternalParameterFilling": true,
+    "passingAssertionPaths": ["result.entry.title", "result.entry.link", "result.entry.notes", "result.entries.0.title"],
+    "checkToolCalls": 2,
+    "completeToolCalls": 1,
+    "completeUsedExplicitPlan": true,
+    "hostScenarioValidated": false
+  },
+  "liveBackendProbes": {
+    "noActiveVersionControls": {"canStart": false, "canStop": false, "canInvoke": false, "startBlockedReason": "NO_ACTIVE_VERSION", "publishing": false},
+    "startWithoutVersionHttpStatus": 400,
+    "distinctRecordsSaved": 2,
+    "independentlyReadFields": ["title", "link", "notes"],
+    "missingTitleError": "标题不能为空",
+    "missingLinkError": "链接不能为空",
+    "recordCountAfterRejectedInputs": 2,
+    "stoppedInvokeHttpStatus": 400,
+    "hostRestartAfterExplicitModStop": true,
+    "stopLatchPreservedAcrossHostRestart": true,
+    "explicitStartAfterRestart": true,
+    "recordsPreservedAfterHostRestart": 2,
+    "allRecordFieldsMatchedAfterRestart": true,
+    "ownerTurnCountAfterHostRestart": 1
+  },
+  "settledValidation": {"isolatedBehaviorChecks": "passed", "behaviorCheckCount": 4, "scenarioValidated": false, "userAcceptance": "not-tracked-by-mod-runtime"},
+  "settledCompletionScope": "candidate-published",
+  "finalModState": "stopped",
+  "newTrialServicesClosed": true,
+  "oldUserView50191Preserved": true,
+  "existingModel8080Preserved": true,
+  "frontendBridgeTemplateAndKimiRecordHashesUnchanged": true,
+  "privateBusinessOrMemoryDataUsed": false,
+  "dependenciesUpgraded": false,
+  "committedOrPushed": false,
+  "codeSha256": {
+    "src/plugins/weftmate-mod-projects.mjs": "F5F8C5786C371AE34B47E3BBC2B458887D0FE0CE542764DD6EAEDF9CA0687382",
+    "src/plugins/weftmate-mod-development.mjs": "78C0FB358842410BF410B43240132A3576ADFEB82E56F9D57F3068B17E462AC5",
+    "src/runtime/mod-projects/index.mjs": "A632B00A501A9D660AFC29E02918DA29B9483ECA5A42C677F91BC378E1274FB3",
+    "tests/mods-integration-host.test.ts": "463567A2256ED3A0BB68776022DA3BCA19DB0F146442BA6E30319D2FC89B5347",
+    "tests/mod-project-runtime.test.ts": "81180C5C6022644DCD07ADEFA1BD33528363B49F018DEADA54394C1448178523"
+  }
+}

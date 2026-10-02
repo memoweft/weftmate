@@ -12,15 +12,36 @@ import { existsSync } from 'node:fs'
 import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { after, before, describe, test } from 'node:test'
 import {
   DEFAULT_PROFILE_BUNDLES,
   PROFILE_PATCH_TEMPLATE_LEGACY,
+  PROFILE_PATCH_TEMPLATE_R12,
+  PROFILE_PATCH_TEMPLATE_R13,
   parseWebUrlLine,
   writeWebProfile,
+  writeContextAwareMinimalPreset,
 } from '../src/dsh-web-runtime.ts'
 
 let dir: string
+
+test('minimal preset keeps its pinned tools and gets one isolated compactor without changing vendor', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-context-preset-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const shipped = fileURLToPath(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh/config/agent-presets/', import.meta.url))
+  const original = await readFile(join(shipped, 'minimal', 'agent.cordis.yml'), 'utf8')
+  await writeContextAwareMinimalPreset(shipped, root)
+  const first = await readFile(join(root, 'minimal', 'agent.cordis.yml'), 'utf8')
+  for (const name of ['dsh-persona', 'dsh-tool-bash-persistent', 'dsh-tool-str-replace-editor', 'dsh-command-compact', 'dsh-compaction-tool-result-pruner']) {
+    assert.ok(first.includes(`@deepseek-ai/${name}`), name)
+  }
+  assert.equal(first.match(/name: '@deepseek-ai\/dsh-compaction-basic'/g)?.length, 1)
+  assert.match(first, /isolate:\s+compaction: true\s+toolResultPruner: true/)
+  await writeContextAwareMinimalPreset(shipped, root)
+  assert.equal(await readFile(join(root, 'minimal', 'agent.cordis.yml'), 'utf8'), first)
+  assert.equal(await readFile(join(shipped, 'minimal', 'agent.cordis.yml'), 'utf8'), original)
+})
 
 before(async () => {
   dir = await mkdtemp(join(tmpdir(), 'weftmate-dsh-web-profile-'))
@@ -55,6 +76,8 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'node_modules', '@weftmate', 'client', 'client.js')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-host.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-aigame-host.mjs')))
+    assert.ok(patch.includes('id: weftmate-personal-memory'))
+    assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'plugins', 'weftmate-personal-memory.mjs')))
     // P1-02：Gateway 运行时同形落位（宿主插件以相对路径 import）；schemas/ 等 TS 契约不进 profile。
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'index.mjs')))
     assert.ok(existsSync(join(dir, 'profiles', 'weftmate', 'runtime', 'gateway', 'diagnostics.mjs')))
@@ -108,6 +131,75 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(!patch.includes('[]'))
   })
 
+  test('R12 profile-local preset root upgrades to formal DSH_HOME user preset discovery', async () => {
+    const patchPath = join(dir, 'profiles', 'weftmate', 'cordis.patch.yml')
+    await writeFile(patchPath, PROFILE_PATCH_TEMPLATE_R12, 'utf8')
+    assert.equal(await writeWebProfile(dir, 'weftmate'), 'repaired')
+    assert.equal(await readFile(patchPath, 'utf8'), (await import('../src/dsh-web-runtime.ts')).PROFILE_PATCH_TEMPLATE)
+    const preset = await readFile(join(dir, '.agent-presets', 'mod-maintainer', 'agent.cordis.yml'), 'utf8')
+    assert.match(preset, /^- name: \.\.\/\.\.\/profiles\/weftmate\/plugins\/weftmate-mod-development\.mjs$/m)
+    assert.match(preset, /isolate:\s+compaction: true\s+toolResultPruner: true/)
+    assert.match(preset, /name: '@deepseek-ai\/dsh-compaction-basic'\s+config:\s+auto: true\s+thresholdRatio: 0\.85\s+retainRatio: 0\.16\s+maxTokens: 4096/)
+    assert.match(preset, /name: '@deepseek-ai\/dsh-command-compact'/)
+    assert.match(preset, /name: '@deepseek-ai\/dsh-compaction-tool-result-pruner'/)
+    assert.doesNotMatch(preset, /@deepseek-ai\/dsh-tool-/)
+  })
+
+  test('known R13 plugin composition upgrades to account-memory R14 without overwriting custom presets', async () => {
+    const patchPath = join(dir, 'profiles', 'weftmate', 'cordis.patch.yml')
+    await writeFile(patchPath, PROFILE_PATCH_TEMPLATE_R13, 'utf8')
+    assert.equal(await writeWebProfile(dir, 'weftmate'), 'repaired')
+    const upgraded = await readFile(patchPath, 'utf8')
+    assert.equal(upgraded.match(/id: weftmate-personal-memory/g)?.length, 1)
+    assert.ok(upgraded.includes('id: weftmate-personal-desktop'))
+  })
+
+  test('personal-remote upgrades only the generated Notepad preset to include document saving', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'weftmate-personal-preset-'))
+    t.after(() => rm(root, { recursive: true, force: true }))
+    await writeWebProfile(root, 'weftmate')
+    const composition = join(root, '.agent-presets', 'personal-remote', 'agent.cordis.yml')
+    const metadata = join(root, '.agent-presets', 'personal-remote', 'preset.yml')
+    const current = await readFile(composition, 'utf8')
+    assert.match(current, /personal_save_document/)
+    const legacy = current.replace(
+      '      confirms it. Use personal_save_document only when the current user asks to create a Markdown or plain-text document. Give its complete text and a simple .md or .txt filename. The host verifies the saved file. Never claim other desktop, shell or file capabilities.',
+      '      confirms it. Never claim other desktop, shell or file capabilities.')
+    await writeFile(composition, legacy, 'utf8')
+    await writeFile(metadata, 'name: 个人远端助手\ndescription: 只允许受控记事本工具的远端会话。\norder: 91\n', 'utf8')
+    assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
+    assert.equal(await readFile(composition, 'utf8'), current)
+    assert.match(await readFile(metadata, 'utf8'), /文档保存工具/)
+    assert.equal(await writeWebProfile(root, 'weftmate'), 'unchanged')
+    const custom = '# owner-managed preset\n- name: ./custom.mjs\n'
+    await writeFile(composition, custom, 'utf8')
+    await assert.rejects(() => writeWebProfile(root, 'weftmate'), /personal-remote preset conflict/)
+    assert.equal(await readFile(composition, 'utf8'), custom)
+  })
+
+  test('mod-maintainer upgrades both owned one-line compositions idempotently and preserves a user preset conflict', async t => {
+    const root = await mkdtemp(join(tmpdir(), 'weftmate-mod-maintainer-preset-'))
+    t.after(() => rm(root, { recursive: true, force: true }))
+    const composition = join(root, '.agent-presets', 'mod-maintainer', 'agent.cordis.yml')
+    for (const old of [
+      '- name: ../../profiles/weftmate/plugins/weftmate-mod-development.mjs\n',
+      '- name: ../../plugins/weftmate-mod-development.mjs\n',
+    ]) {
+      await writeWebProfile(root, 'weftmate')
+      await writeFile(composition, old, 'utf8')
+      assert.equal(await writeWebProfile(root, 'weftmate'), 'repaired')
+      const upgraded = await readFile(composition, 'utf8')
+      assert.match(upgraded, /thresholdRatio: 0\.85/)
+      assert.equal(await writeWebProfile(root, 'weftmate'), 'unchanged')
+      assert.equal(await readFile(composition, 'utf8'), upgraded)
+    }
+
+    const ownerComposition = '# owner-managed preset\n- name: ./custom-maintainer.mjs\n'
+    await writeFile(composition, ownerComposition, 'utf8')
+    await assert.rejects(() => writeWebProfile(root, 'weftmate'), /mod-maintainer preset conflict/)
+    assert.equal(await readFile(composition, 'utf8'), ownerComposition)
+  })
+
   test('owner 手改（非任何已知模板）不覆盖且返回 unchanged', async () => {
     const patchPath = join(dir, 'profiles', 'weftmate', 'cordis.patch.yml')
     const ownerPatch = '# owner 手改：只留宿主行\n- insert:\n    - id: weftmate-host\n      name: ./plugins/weftmate-host.mjs\n'
@@ -148,4 +240,5 @@ test('安全快照启动器只接收一次父进程快照，不观察 profile/ho
   assert.doesNotMatch(bootstrap, /watchUserPatches\s*\(/)
   assert.match(bootstrap, /loadLayeredEnv\('dsh', process\.cwd\(\)\)/)
   assert.match(bootstrap, /scrubCredentialEnvironment\(\)/)
+  assert.match(runtime, /Object\.hasOwn\(config, 'includeUserRoot'\)/)
 })

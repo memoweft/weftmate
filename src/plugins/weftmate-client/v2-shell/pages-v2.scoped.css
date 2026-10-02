@@ -1,0 +1,85 @@
+@scope (.weftmate-v2-shell) {
+/* ============================================================
+   WeftMate v2 · 页面样式包（第二包 · 待命交付 · 未启用）
+   来源：Design/design-language/index.html（用户 2026-09-14 验收原型）
+   生成：tools/extract_pages_css.py 程序化抽取——禁止手改本文件，
+         设计变更请改原型后重新生成。
+   范围：Mods 页 / Mod 详情 / 记忆 / 设置 / 规范页 + prog-card / err-block。
+         与 skeleton-v2.css 零交集（脚本校验）；类名与数值照抄原型。
+   还原适配与集成注意：同 skeleton-v2.css 头部说明（令牌改名、主题块交换、
+   var() 双作用域声明、JS 内联令牌机械改名、壳基础选择器随载体定作用域）。
+   注入顺序：installModFavoritesStyle() → installWeftmateV2Style()
+             → skeleton-v2.css → 本包。
+   ============================================================ */
+
+/* ═══ Mods 页：卡片网格（mod-grid / mod-card 内部） ═══ */
+.mod-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.mod-card{background:var(--weftmate-surface);border:1px solid var(--weftmate-hairline);border-radius:var(--weftmate-r-card);
+  padding:15px 16px;cursor:pointer;display:flex;flex-direction:column;gap:9px;
+  transition:border-color var(--weftmate-t-fast) var(--weftmate-ease-out),transform var(--weftmate-t-fast) var(--weftmate-ease-out),box-shadow var(--weftmate-t-fast) var(--weftmate-ease-out)}
+.mod-card:hover{border-color:var(--weftmate-hairline-strong);transform:translateY(-2px);box-shadow:var(--weftmate-shadow-2)}
+.mod-card .mc-top{display:flex;align-items:center;gap:10px}
+.mc-name{font-size:13.5px;font-weight:700}
+.mc-ver{font-size:10px;color:var(--weftmate-ink-3);font-family:var(--weftmate-font-num);background:var(--weftmate-surface-2);padding:1px 7px;border-radius:5px}
+.mc-desc{font-size:12px;color:var(--weftmate-ink-2);line-height:1.55;min-height:18px}
+.mc-foot{display:flex;align-items:center;gap:8px;margin-top:2px}
+.mc-foot .spacer{margin-left:auto}
+/* ═══ 设置页：分组与行（set-group / set-row） ═══ */
+.set-group{background:var(--weftmate-surface);border:1px solid var(--weftmate-hairline);border-radius:var(--weftmate-r-card);overflow:hidden;margin-bottom:14px}
+.set-group .sg-title{font-size:11px;font-weight:700;color:var(--weftmate-ink-3);padding:12px 16px 5px;letter-spacing:.06em}
+.set-row{display:flex;align-items:center;gap:12px;padding:10px 16px;font-size:12.5px;border-top:1px solid var(--weftmate-surface-2);min-height:42px}
+.sg-title+.set-row{border-top:none}
+.set-row .sr-k{font-weight:500}
+.set-row .sr-d{font-size:11px;color:var(--weftmate-ink-3);margin-top:1px}
+.set-row .sr-v{margin-left:auto;font-size:11.5px;color:var(--weftmate-ink-3);font-family:var(--weftmate-font-num);text-align:right}
+.set-row .sr-act{margin-left:auto;display:flex;gap:8px;align-items:center}
+/* ═══ Mod 详情：hero 与业务预览（mod-hero / preview-card / ro-mask） ═══ */
+.mod-hero{display:flex;align-items:flex-start;gap:14px;margin-bottom:20px}
+.mod-hero .mh-ic{width:46px;height:46px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;font-size:19px;font-weight:800}
+.mod-hero h2{font-size:17px;font-weight:700;display:flex;align-items:center;gap:9px}
+.mod-hero .mh-sub{font-size:12px;color:var(--weftmate-ink-2);margin-top:3px}
+.mod-hero .mh-meta{font-size:11px;color:var(--weftmate-ink-3);margin-top:5px;display:flex;gap:12px;font-family:var(--weftmate-font-num)}
+.preview-card{border:1px solid var(--weftmate-hairline);border-radius:var(--weftmate-r-card);overflow:hidden;background:var(--weftmate-surface)}
+.preview-bar{height:34px;display:flex;align-items:center;gap:8px;padding:0 12px;background:var(--weftmate-surface-2);border-bottom:1px solid var(--weftmate-hairline);font-size:11.5px;color:var(--weftmate-ink-3)}
+.preview-bar .url{font-family:var(--weftmate-font-mono);font-size:10.5px;background:var(--weftmate-surface);border:1px solid var(--weftmate-hairline);border-radius:5px;padding:1px 8px}
+.preview-bar .sp{margin-left:auto;display:flex;gap:6px}
+.preview-body{height:250px;position:relative;background:var(--weftmate-bg-base)}
+.preview-body .ro-mask{position:absolute;inset:0;background:var(--weftmate-bg-base);opacity:.72;display:grid;place-items:center;z-index:2}
+.ro-mask .ro-note{background:var(--weftmate-surface);border:1px solid var(--weftmate-hairline-strong);border-radius:var(--weftmate-r-card);padding:10px 16px;font-size:12px;color:var(--weftmate-ink-2);display:flex;align-items:center;gap:8px;box-shadow:var(--weftmate-shadow-2)}
+/* ═══ Mod 进度卡与错误透出（prog-card / err-block） ═══ */
+.prog-card{border:1px solid var(--weftmate-warn);border-radius:var(--weftmate-r-card);background:var(--weftmate-warn-bg);padding:14px 16px}
+.prog-card .pc-head{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--weftmate-warn)}
+.err-block{border:1px solid var(--weftmate-err);border-radius:var(--weftmate-r-card);background:var(--weftmate-err-bg);overflow:hidden}
+.err-block .eb-head{padding:12px 16px;display:flex;align-items:flex-start;gap:10px}
+.err-block .eb-title{font-size:12.5px;font-weight:600;color:var(--weftmate-err)}
+.err-block .eb-desc{font-size:12px;color:var(--weftmate-ink-2);margin-top:2px}
+.err-block details{border-top:1px dashed var(--weftmate-err);padding:0}
+.err-block summary{cursor:pointer;font-size:11.5px;color:var(--weftmate-err);padding:8px 16px;list-style:none;display:flex;align-items:center;gap:6px;user-select:none}
+.err-block summary::-webkit-details-marker{display:none}
+.err-block summary::before{content:"▸";transition:transform var(--weftmate-t-fast)}
+.err-block details[open] summary::before{transform:rotate(90deg)}
+.err-block .eb-tech{padding:10px 16px 14px;font-family:var(--weftmate-font-mono);font-size:11px;color:var(--weftmate-ink-2);white-space:pre-wrap;word-break:break-all;line-height:1.6}
+/* ═══ 记忆页：卡片与来源标签（mem-card / src-tag） ═══ */
+.mem-card{background:var(--weftmate-surface);border:1px solid var(--weftmate-hairline);border-radius:var(--weftmate-r-card);padding:13px 15px;margin-bottom:10px}
+.mem-card .mc-rel{font-size:12.5px;line-height:1.6}
+.mem-card .mc-src{margin-top:8px;font-size:11px;color:var(--weftmate-ink-3);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.src-tag{background:var(--weftmate-surface-2);border-radius:5px;padding:1px 7px;font-size:10px}
+/* ═══ 规范页（swatches / rule-card / state-table / demo-box，含 @media 1100） ═══ */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.swatch{border-radius:var(--weftmate-r-ctl);overflow:hidden;border:1px solid var(--weftmate-hairline);background:var(--weftmate-surface)}
+.swatch .c{height:52px}
+.swatch .t{padding:7px 10px}
+.swatch .t b{display:block;font-size:11px;font-weight:600}
+.swatch .t span{font-size:10px;color:var(--weftmate-ink-3);font-family:var(--weftmate-font-num)}
+.demo-box{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.rule-card{background:var(--weftmate-surface);border:1px solid var(--weftmate-hairline);border-radius:var(--weftmate-r-card);padding:14px 16px}
+.rule-card h4{font-size:12.5px;font-weight:700;display:flex;align-items:center;gap:7px}
+.rule-card p{font-size:12px;color:var(--weftmate-ink-2);margin-top:5px;line-height:1.6}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:1100px){.rule-grid{grid-template-columns:1fr}}
+.state-table{width:100%;border-collapse:collapse;font-size:12px}
+.state-table th{text-align:left;font-size:10.5px;color:var(--weftmate-ink-3);font-weight:600;letter-spacing:.06em;padding:7px 10px;border-bottom:1px solid var(--weftmate-hairline)}
+.state-table td{padding:8px 10px;border-bottom:1px solid var(--weftmate-surface-2);vertical-align:middle}
+.state-table tr:last-child td{border-bottom:none}
+
+}

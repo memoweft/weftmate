@@ -1,0 +1,89 @@
+{
+  "candidate": "V2-HOST-20260915-R1",
+  "status": "待云验证；原生窗口待运行验证",
+  "phase": "R1 frontend integration; R2 not started",
+  "targetedTests": {
+    "passed": 63,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "unitSuite": {
+    "passed": 380,
+    "failed": 3,
+    "skipped": 1,
+    "total": 384,
+    "failures": [
+      "licensing-contract: README wording",
+      "pet-newbase-contract: legacy settings body assertion",
+      "r8-device-contract: legacy device settings assertion"
+    ]
+  },
+  "contractSuite": {
+    "initial": {
+      "passed": 9,
+      "failed": 1,
+      "skipped": 1
+    },
+    "failure": "historical ocUJRa brand hash and old apply-prefix assertion",
+    "afterRepair": "R3 semantic contract targeted rerun 1/1 passed; full suite not rerun"
+  },
+  "solReview": "latest source reviewed independently; no remaining identified code-level blockers; native proof absent",
+  "webEvidence": {
+    "runtime": "pinned DSH rc.5 + real local Muse Q5",
+    "syntheticPrompt": "这是 WeftMate 隔离界面验证，不要调用工具。请只回复：普通对话保留。",
+    "observedReply": "普通对话保留",
+    "restart": "history and answer reopened after runtime port changed from 64076 to 51971",
+    "limit": "ordinary browser, not WebContentsView or BrowserWindow acceptance"
+  },
+  "nativeEvidence": {
+    "result": "not run successfully",
+    "startupExit": 4294967295,
+    "explicitLauncherRejection": "blocked by policy",
+    "notProven": [
+      "native preload and data fallback URL matching",
+      "36px rendered measurement and dark/light screenshot comparison",
+      "real Mod business actions and stop/start in independent window",
+      "focus, drafts, resize, approvals, attachments and stream in embedded DSH",
+      "runtime port rebinding of native windows"
+    ]
+  },
+  "preserved": {
+    "FrontendDevClientSHA256": "7B82DB6D675A75B425E9AC1F0D9497E511529BEE086FA4839061F701AA6BBC93",
+    "designIndexSHA256": "57543021B76B6AB9B9C517A841C60EBF132E6000245B2B49FADFC23CC48E6F2B",
+    "designModWindowSHA256": "925D5AD6008362AA3ED6EDC240127FCAB0A5D27813F6056DC518270145994386",
+    "livePorts": {
+      "50191": 30444,
+      "8080": 39708
+    },
+    "closedTemporaryPorts": [
+      64076,
+      51971
+    ]
+  },
+  "retainedTemporaryRoot": "C:/Users/yun/AppData/Local/Temp/weftmate-v2-seam-20260915",
+  "sourceSHA256": {
+    "src/main.mjs": "c21e84212fe880020b764dd188a7246714c02885b28b700190a51f8512188d7f",
+    "src/dsh-surface-preload.cjs": "b674ebf0e082a4fd94af553ee5196f5a63762aa7a6070e7a55ff4f48ea1b5c33",
+    "src/dsh-view-carrier.mjs": "31fddec454601d7e9aa868932d5b37094112467b1b847e52deb52a3670efa9da",
+    "src/dsh-carrier-preload.cjs": "6ebe3b4442fea6120b88b5879ca4e4b1e1cee0c71eaf0cf99923e5e846364dd4",
+    "src/dsh-web-runtime.ts": "fb6939cc8e84a094975cfc7868bfaa783cf0b5ad22a2d2de45febe3e7f43f79d",
+    "src/mod-window-manager.mjs": "d690356c9f897e938aa9fa943a7bf4ec73b76743b83c86f91de620e085ae87fb",
+    "src/mod-window-preload.cjs": "80fe16e3ed89173585db2bdb5f06505e28c22160559f89173117aa4cb1c5144f",
+    "src/plugins/weftmate-client/client.js": "989ff6b117f9144ab91a045c1c3fa18265fea2c2ff890b887363c6cface7fa4f",
+    "src/plugins/weftmate-client/mod-state.mjs": "7159eb3b5d6eb5b40d60313dc511938e9c871a817bf0373056bc4d94c396ac3d",
+    "src/plugins/weftmate-client/mod-window/assets.mjs": "2d95af7a819a83d0d07a66412cdc9b07cd0ea9f6423b6dbdf875ea5ddfa3a0a7",
+    "src/plugins/weftmate-mod-projects.mjs": "fca0eae54b3ba3e15224eae9d267a41b2e6c0e3125e6617d026f47a1dc273a03",
+    "scripts/preview-mod-projects.mjs": "35a35856958a73e23834aaf27f58e6b62cf5f3fd664eb2f3311ade81e91b88d9",
+    "scripts/verify-dsh-view-seam.mjs": "c03ddfa9d9607a5608c3e1fd3c0f9387c9e1885d637bbb88c2d43c749829c092",
+    "scripts/verify-mod-window-electron.mjs": "b736c0a8ecbcf1c73603b929cf875a5f76b5a84eb78903a9a3c12972f7fb24de",
+    "package.json": "17c1bd642c270748af5fdd6d0e84d2955df21ba0d5629d84c5e58aacfff539c7",
+    "tests/dsh-view-carrier.test.ts": "b5b378ebb70177afad047422a67344f738475afb422b71bb9369306fcc7048f7",
+    "tests/mod-window-manager.test.ts": "8b056416862df3eb03d2b77d6328f86fee1c6f6d9683e6d4d2afc500267584d8",
+    "tests/mod-window-renderer.test.ts": "21b636921847663e453199e854c3c0abf3811f784cae0b7f79daa04397ef6dd0",
+    "tests/mods-integration-host.test.ts": "88255c8efceafec8519ceffb40583d740bbcf4e1c23eb3be1cc55f29d0fe9c37",
+    "tests/dsh-surface-contract.test.ts": "eaa03cf1c29f974417b15888c0effa85bb6bf929c195da287f31c540caecea11",
+    "tests/weftmate-conversation-surface.test.ts": "e3e0ed1d4275d45b3cd9c79c450664f4e6fa282ba3d7c8cc17eb3027b91d66b9",
+    "tests/stage1-shell-contract.test.ts": "ac84d0c5814b5352ed871f1006a071a26454ccdb25838f014ed0b99a9d40ab46",
+    "tests/contract/dsh-web-profile.test.ts": "cc2636a20a21d7db2bb5f954b003c4deec3763a5bfea988a462fc5607000a8fc"
+  }
+}

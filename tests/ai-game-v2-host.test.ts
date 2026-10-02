@@ -4,6 +4,7 @@ import { describe, test } from 'node:test'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
+import { Readable } from 'node:stream'
 
 import {
   AiGameTransport,
@@ -63,6 +64,56 @@ function task(status = 'running') {
 const identity = {
   dsh_session_id: 'session_123', dsh_turn_id: 3, tool_call_id: 'call_123', root_call_id: 'call_123',
 }
+
+test('device setup projects safe fields and saves only an explicit same-origin selection', async t => {
+  const loaded = await loadHostPlugin()
+  t.after(() => rm(loaded.temp, { recursive: true, force: true }))
+  const writes: unknown[] = []
+  const profile = { device_profile_id: 'profile_1', display_name: 'Test emulator', state: 'ready', is_default: true, serial: 'private-device-transport' }
+  const transport = {
+    deviceProfiles: async () => ({ items: [profile] }),
+    discoverEmulators: async () => ({ items: [{ candidate_id: 'candidate_1', display_name: 'Test emulator', state: 'ready', internal_path: 'private' }] }),
+    createDeviceProfile: async (payload: unknown) => { writes.push(payload); return profile },
+    updateDeviceProfile: async (id: string, payload: unknown) => { writes.push({ id, payload }); return profile },
+  }
+  async function request(path: string, method = 'GET', input?: unknown, origin = 'http://127.0.0.1:7777') {
+    const req = Readable.from(input === undefined ? [] : [Buffer.from(JSON.stringify(input))]) as any
+    Object.assign(req, { url: path, method, headers: { host: '127.0.0.1:7777', origin } })
+    let status = 0, body = ''
+    const res = { writeHead: (value: number) => { status = value }, end: (value: string) => { body = value } }
+    await loaded.plugin.createAiGamePanelHandler({ sessions: {}, transport })(req, res)
+    return { status, body: JSON.parse(body) }
+  }
+  const list = await request('/weftmate/ai-game/devices.json')
+  assert.equal(list.status, 200)
+  assert.deepEqual(list.body.items, [{
+    device_profile_id: 'profile_1', display_name: 'Test emulator', state: 'ready',
+    connection_state: 'connected', is_default: true,
+  }])
+  assert.equal(JSON.stringify(list.body).includes('private-device'), false)
+  profile.state = 'offline'
+  const disconnected = await request('/weftmate/ai-game/devices.json')
+  assert.equal(disconnected.body.items[0].connection_state, 'disconnected')
+  assert.equal(disconnected.body.items[0].is_default, true)
+  profile.state = 'ready'
+  const discovery = await request('/weftmate/ai-game/devices/discovery.json')
+  assert.deepEqual(discovery.body.items, [{
+    candidate_id: 'candidate_1', display_name: 'Test emulator', state: 'ready',
+    connection_state: 'connected',
+  }])
+  assert.equal(JSON.stringify(discovery.body).includes('internal_path'), false)
+  const selection = { candidate_id: 'candidate_1', display_name: 'Test emulator', idempotency_key: 'save_1' }
+  assert.equal((await request('/weftmate/ai-game/devices/select.json', 'POST', selection, 'https://outside.example')).status, 403)
+  assert.equal(writes.length, 0)
+  assert.equal((await request('/weftmate/ai-game/devices/select.json', 'POST', selection)).status, 200)
+  assert.deepEqual(writes[0], { ...selection, is_default: true })
+  assert.equal((await request('/weftmate/ai-game/devices/select.json', 'POST', { ...selection, profile_id: 'another' })).status, 400)
+  assert.equal(writes.length, 1)
+  transport.deviceProfiles = async () => { throw new Error('private failure details') }
+  const failed = await request('/weftmate/ai-game/devices.json')
+  assert.equal(failed.status, 503)
+  assert.equal(JSON.stringify(failed.body).includes('private failure'), false)
+})
 
 describe('AI-Game v2 transport fence', () => {
   test('rejects missing or unknown runner kind before HTTP', async () => {
@@ -232,7 +283,54 @@ describe('AI-Game v2 transport fence', () => {
   })
 })
 
+test('a panel pause reaches the existing task directly, with owner and revision checks', async t => {
+  const loaded = await loadHostPlugin()
+  t.after(() => rm(loaded.temp, { recursive: true, force: true }))
+  const events = [
+    { type: 'turn/start', data: { turn: 2 } },
+    { type: 'tool/call', seq: 1, data: { callId: 'call_123', name: 'phone_execution' } },
+    { type: 'tool/result', seq: 2, data: { message: { source: { callId: 'call_123' } }, meta: {
+      schemaVersion: 2, kind: 'ai-game-task', toolName: 'phone_execution', taskId: 'task_123', status: 'running', eventCursor: 7, evidenceRefs: [],
+    } } },
+  ]
+  const session = { id: 'session_123', events }
+  const writes: any[] = []
+  const handler = loaded.plugin.createAiGamePanelHandler({ sessions: { get: (id: string) => id === session.id ? session : undefined }, transport: {
+    taskDetail: async () => task(),
+    controlTask: async (id: string, body: any) => { writes.push({ id, body }); return task('paused') },
+  } })
+  async function request(patch = {}, origin = 'http://127.0.0.1:7777') {
+    const req: any = Readable.from([Buffer.from(JSON.stringify({ session_id: session.id, task_id: 'task_123', action: 'pause', expected_revision: 2, ...patch }))])
+    Object.assign(req, { url: '/weftmate/ai-game/controls.json', method: 'POST', headers: { host: '127.0.0.1:7777', origin } })
+    let status = 0, body = ''
+    await handler(req, { writeHead: (value: number) => { status = value }, end: (value: string) => { body = value } })
+    return { status, body: JSON.parse(body) }
+  }
+  assert.equal((await request({}, 'https://outside.example')).status, 403)
+  assert.equal((await request({ task_id: 'another-task' })).status, 403)
+  assert.equal((await request({ expected_revision: 1 })).status, 400)
+  assert.equal(writes.length, 0)
+  const accepted = await request()
+  assert.equal(accepted.status, 200)
+  assert.equal(accepted.body.status, 'paused')
+  assert.equal(writes[0].body.identity.dsh_session_id, session.id)
+  assert.equal(writes[0].body.expected_revision, 2)
+  assert.equal(writes[0].body.authorization_mode, 'allowed-once')
+})
+
 describe('AI-Game v2 durable task projection', () => {
+  test('model-visible task results include the revision required by control calls', async () => {
+    const { plugin, temp } = await loadHostPlugin()
+    try {
+      let definition: any
+      plugin.apply({ credentials: {}, inject() {}, tools: { register(value: unknown) { definition = value } } })
+      const value = plugin.canonicalV2({ ...task(), current_revision: 7 }, 'inspect')
+      const rendered = definition.output.render({}, value).map((part: any) => part.text).join('\n')
+      assert.match(rendered, /Current revision: 7/)
+      assert.match(rendered, /pause/)
+      assert.ok(definition.output.schema.required.includes('current_revision'))
+    } finally { await rm(temp, { recursive: true, force: true }) }
+  })
   test('freezes the general runner in the trusted host and enforces authoritative controls', async () => {
     const { plugin, temp } = await loadHostPlugin()
     try {

@@ -15,12 +15,14 @@ describe('阶段 1 的 DSH 产品面收敛', () => {
     assert.match(main, /preload: join\(import\.meta\.dirname, 'dsh-surface-preload\.cjs'\)/);
   });
 
-  it('官方页面只得到调和原生标题栏所需的 theme bridge，不能调用旧模型或对话 IPC', () => {
+  it('官方页面仅得到主题与受控 Mod 窗口桥，不能调用旧模型或对话 IPC', () => {
     assert.match(preload, /contextBridge\.exposeInMainWorld\('weftmateSurface'/);
     assert.match(preload, /wm:dsh-surface:theme/);
-    for (const forbidden of ['wm:stage1:', 'wm:stage2:', 'ipcRenderer.on', 'runtimeOrigin', 'apiKey', "require('node:"]) {
+    for (const forbidden of ['wm:stage1:', 'wm:stage2:', 'runtimeOrigin', 'apiKey', "require('node:"]) {
       assert.doesNotMatch(preload, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
+    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:mod-window:open-project']);
+    assert.match(preload, /removeListener\('wm:mod-window:open-project', listener\)/);
     assert.match(main, /dshSurfaceTrusted\(event\)/);
   });
 

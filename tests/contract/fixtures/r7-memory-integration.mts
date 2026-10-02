@@ -65,7 +65,10 @@ process.env.DSH_PERMISSION_MODE = 'danger-full-access'
 
 const originalCwd = process.cwd()
 const ctx = new Context()
+const fixtureStartedAt = Date.now()
+const phase = (name: string) => console.error(`[r7-memory] phase=${name} elapsedMs=${Date.now() - fixtureStartedAt}`)
 try {
+  phase('boot-start')
   process.chdir(workspaceCwd)
   const basePatches = loadOverlayPatches('weftmate r7-memory', BASE_PATCH_PATH)
   const surfacePatches = loadOverlayPatches('weftmate r7-memory', WEB_PATCH_PATH)
@@ -104,14 +107,10 @@ try {
   await mkdir(join(profileDir, 'plugins'), { recursive: true })
   await cp(join(WEFTMATE_SRC, 'plugins', 'weftmate-host.mjs'), join(profileDir, 'plugins', 'weftmate-host.mjs'))
   await cp(join(WEFTMATE_SRC, 'plugins', 'weftmate-memory.mjs'), join(profileDir, 'plugins', 'weftmate-memory.mjs'))
-  // P1-02：宿主插件相对 import ../runtime/gateway → 同形复制 gateway 运行时（index + legacy/*.mjs）。
-  await mkdir(join(profileDir, 'runtime', 'gateway'), { recursive: true })
-  await cp(join(WEFTMATE_SRC, 'runtime', 'gateway', 'index.mjs'), join(profileDir, 'runtime', 'gateway', 'index.mjs'))
-  await cp(join(WEFTMATE_SRC, 'runtime', 'gateway', 'legacy'), join(profileDir, 'runtime', 'gateway', 'legacy'), { recursive: true })
-  // P1-03：同形 staging 新 Gateway/adapter graph，避免 fixture 的 profile 运行时漏模块。
-  await cp(join(WEFTMATE_SRC, 'runtime', 'gateway', 'routes'), join(profileDir, 'runtime', 'gateway', 'routes'), { recursive: true })
-  await cp(join(WEFTMATE_SRC, 'runtime', 'gateway', 'event-stream'), join(profileDir, 'runtime', 'gateway', 'event-stream'), { recursive: true })
-  await cp(join(WEFTMATE_SRC, 'runtime', 'gateway', 'errors'), join(profileDir, 'runtime', 'gateway', 'errors'), { recursive: true })
+  // Host imports the profile-local runtime tree.  Copy the complete gateway
+  // tree, matching writePluginAssets, so newly added sibling modules (such as
+  // diagnostics.mjs) cannot be silently omitted by this integration fixture.
+  await cp(join(WEFTMATE_SRC, 'runtime', 'gateway'), join(profileDir, 'runtime', 'gateway'), { recursive: true })
   await cp(join(WEFTMATE_SRC, 'runtime', 'dsh-adapter'), join(profileDir, 'runtime', 'dsh-adapter'), { recursive: true })
   await mkdir(join(profileDir, 'node_modules', '@weftmate', 'client'), { recursive: true })
   for (const file of ['package.json', 'index.js', 'client.js']) {
@@ -135,6 +134,7 @@ try {
   })
   await ctx.loader.await()
   assertEntriesLoaded(ctx, 'weftmate r7-memory')
+  phase('boot-ready')
 
   const apiProxy = ctx.get('apiProxy')
   if (apiProxy === undefined) throw new Error('apiProxy 服务在 boot 后缺失')
@@ -182,6 +182,7 @@ try {
     model: 'mock',
   })
   session.append('compaction/end', { compactionId, turn: null })
+  phase('events')
 
   // 轮询管理面（真实插件 → 真实桥 → applied → 浏览/搜索命中）。
   const port = ctx.get('webServer')?.port
@@ -191,7 +192,7 @@ try {
   const deadline = Date.now() + 60_000
   while (Date.now() < deadline) {
     try {
-      const res = await fetch(worldUrl)
+      const res = await fetch(worldUrl, { signal: AbortSignal.timeout(20_000) })
       if (res.ok) {
         world = await res.json()
         if (Array.isArray(world?.cognitions) && world.cognitions.length >= 1) break
@@ -199,9 +200,10 @@ try {
     } catch { /* 桥尚未就绪，重试 */ }
     await new Promise((resolve) => setTimeout(resolve, 1000))
   }
-  const searchRes = await fetch(`http://127.0.0.1:${port}/weftmate/memory/search.json?q=${encodeURIComponent('茉莉花茶')}`)
+  phase('world-ready')
+  const searchRes = await fetch(`http://127.0.0.1:${port}/weftmate/memory/search.json?q=${encodeURIComponent('茉莉花茶')}`, { signal: AbortSignal.timeout(20_000) })
   const search = searchRes.ok ? await searchRes.json() : null
-  const negativeRes = await fetch(`http://127.0.0.1:${port}/weftmate/memory/search.json?q=${encodeURIComponent('我开的什么车')}`)
+  const negativeRes = await fetch(`http://127.0.0.1:${port}/weftmate/memory/search.json?q=${encodeURIComponent('我开的什么车')}`, { signal: AbortSignal.timeout(20_000) })
   const negative = negativeRes.ok ? await negativeRes.json() : null
 
   const evidence = {
@@ -210,9 +212,12 @@ try {
     searchText: typeof search?.text === 'string' ? search.text : null,
     negativeCount: typeof negative?.count === 'number' ? negative.count : null,
   }
+  phase('dispose-start')
   await ctx.fiber.dispose()
+  phase('dispose-done')
   await rm(workspaceCwd, { recursive: true, force: true }).catch(() => undefined)
   console.log('[r7-memory] EVIDENCE ' + JSON.stringify(evidence))
+  phase('fixture-done')
   process.exitCode = 0
 } catch (error) {
   try { await ctx.fiber.dispose() } catch { /* boot 失败不掩盖原始错误 */ }

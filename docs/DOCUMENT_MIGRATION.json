@@ -1,0 +1,86 @@
+{
+  "version": "local-repository-layout-20260908-review",
+  "remote_modified": false,
+  "runtime_paths_moved": false,
+  "authority_migrations": [
+    {
+      "old_snapshot_path": "PROJECT_DIRECTION.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/PROJECT_DIRECTION.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "CURRENT_STATE.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/CURRENT_STATE.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "START_HERE.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/START_HERE.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "WORKLOG.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/WORKLOG.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "SETUP.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/SETUP.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "docs/DECISIONS.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/DECISIONS.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "docs/DEVELOPMENT_LOOP.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/DEVELOPMENT_LOOP.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "docs/OWNER_TESTS.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/OWNER_TESTS.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "docs/FRONTEND_PLAN.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/FRONTEND_PLAN.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    },
+    {
+      "old_snapshot_path": "docs/DSH_UPGRADE_POLICY.md",
+      "canonical_snapshot_path": "WeftMate/Repository/docs/DSH_UPGRADE_POLICY.md",
+      "action": "canonical_content_in_repository; old_path_pointer_only"
+    }
+  ],
+  "historical_source": "User-supplied cumulative ZIP in local WeftMate/References; not unpacked into an active authority archive.",
+  "preserve_and_review": [
+    "MemoWeft/",
+    "Shared/",
+    "WeftMate/Repository/vendor/",
+    "WeftMod/Repository/apps/",
+    "source licenses",
+    "private data outside source"
+  ],
+  "deletions_authorized": [
+    "2026-09-08 user authorized local obsolete documents and build artifacts cleanup, explicitly no backup; exact executed scope is in evidence/S00-A/local-validation.json"
+  ],
+  "local_roots": {
+    "weftmate": "WeftMate/Repository",
+    "weftmod": "AIGame/Repository",
+    "memoweft": "MemoWeft/Core",
+    "dsh": "Shared/Dependencies/DeepSeekHarness"
+  },
+  "note": "authority_migrations describes the supplied snapshot document roles, not proof that every old snapshot path existed locally. Local outer control files were deleted under the current user instruction.",
+  "legacy_control_cleanup": {
+    "removed": [
+      "MemoWeft/.codex",
+      "MemoWeft/Hosts/HermesAgent/apps/desktop/AGENTS.md",
+      "AIGame/Repository/.agents"
+    ],
+    "entrypoints": "Current AGENTS files are navigation and task methods; no inherited coordinator-only role policy.",
+    "research_moved_to": "WeftMate/References/Research",
+    "authorization": "Current user explicitly authorized code audit and removal of old model restrictions; no backup."
+  }
+}

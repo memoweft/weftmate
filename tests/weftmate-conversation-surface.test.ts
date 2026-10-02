@@ -36,12 +36,11 @@ describe('WeftMate conversation workspace surface', () => {
 
   it('keeps the official graph as the only interactive owner', () => {
     const applyStart = client.indexOf("apply: function (ctx) {");
-    const shellOnlyReturn = client.indexOf('        return', applyStart);
-    const oldOverlay = client.indexOf("ctx.slots.inject('shell.overlay'", applyStart);
-
-    assert.ok(applyStart >= 0 && shellOnlyReturn > applyStart);
-    assert.match(client.slice(applyStart, shellOnlyReturn), /installElectronWindowChrome\(\)/);
-    assert.match(client.slice(applyStart, shellOnlyReturn), /installConversationWorkspaceSurface\(\)/);
-    assert.ok(oldOverlay > shellOnlyReturn, 'no WeftMate overlay is registered for the official conversation');
+    assert.ok(applyStart >= 0);
+    assert.match(client.slice(applyStart), /installElectronWindowChrome\(\)/);
+    assert.match(client.slice(applyStart), /installConversationWorkspaceSurface\(\)/);
+    assert.doesNotMatch(client.slice(applyStart), /register\(\{\s*name:\s*['"](?:root|conversation)['"]/);
+    assert.match(client, /ctx\.sessions\.open\(command\.sessionId\)/);
+    assert.match(client, /ctx\.theme\.setTheme\(command\.theme\)/);
   });
 });

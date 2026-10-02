@@ -1,0 +1,14 @@
+{
+  "id": "dsh-v0.1.7-alpha.2",
+  "repository": "https://github.com/deepseek-ai/deepseek-harness.git",
+  "tag": "dsh-v0.1.7-alpha.2",
+  "commit": "00102833dfaee1da9f48a3a8eae9d34005a75218",
+  "packageVersion": "0.1.7-alpha.2",
+  "profileName": "weftmate-alpha2",
+  "profilePolicy": "alpha2",
+  "pinPath": "runtime/dsh-candidates/dsh-v0.1.7-alpha.2.pin.json",
+  "vendorRuntimePath": "../Runtime/HarnessStores/dsh-v0.1.7-alpha.2/vendor",
+  "checkoutPath": "../Runtime/HarnessWorktrees/dsh-00102833-alpha2",
+  "runtimeHome": "../Runtime/HarnessStores/dsh-v0.1.7-alpha.2/dsh-home",
+  "workspacePath": "../Runtime/HarnessStores/dsh-v0.1.7-alpha.2/workspace"
+}

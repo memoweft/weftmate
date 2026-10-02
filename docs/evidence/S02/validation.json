@@ -1,0 +1,86 @@
+{
+  "date": "2026-09-08",
+  "scope": "S02 local model configuration, real conversation and component states",
+  "model": {
+    "name": "Qwen3.8-27B",
+    "id": "weftlearn-qwen3.8-27b",
+    "endpoint": "http://127.0.0.1:18080/v1",
+    "processId": 16012,
+    "modelFile": "Qwen3.8-27B-Q4_K_M.gguf",
+    "projectorFile": "mmproj-Qwen3.8-27B-Q8_0.gguf",
+    "contextSize": 92160,
+    "existingTunedLaunchConfigurationUnchanged": true,
+    "serverVisionReported": true,
+    "serverVideoReported": true,
+    "videoInteractionTested": false,
+    "auth": "Existing local credential saved through the official UI credential channel; value omitted"
+  },
+  "realDialogue": {
+    "model": "weftlearn-qwen3.8-27b",
+    "reply": "本地对话正常。",
+    "completed": true,
+    "source": "actual native WeftMate conversation, local model"
+  },
+  "smallImageDialogue": {
+    "reply": "选择项目",
+    "elapsedMs": 16282,
+    "model": "weftlearn-qwen3.8-27b",
+    "imageDimensions": [
+      1278,
+      264
+    ],
+    "completed": true
+  },
+  "largeImageKnownIssue": {
+    "status": "not resolved",
+    "image": "weftmate-style-a3.png",
+    "observed": "Long image preprocessing with zero decoded output; UI request canceled; server slot did not release promptly and the owned model service was restarted with unchanged configuration.",
+    "noRepeatedSameRequest": true,
+    "rootCause": "not established"
+  },
+  "pluginChecks": {
+    "entry": "设置 > WeftMate > 记忆与插件",
+    "memoweft": "本次未启用",
+    "phone": "未安装",
+    "petShowConfirmedFromHost": true,
+    "petPreferencePersisted": true,
+    "petRestoredAfterApplicationRestart": true,
+    "petFinalPreference": "off",
+    "freeActivityChanged": false,
+    "noRealDeviceActions": true,
+    "noPrivateMemoryEnabled": true
+  },
+  "applicationRestart": {
+    "selectedLocalModelRestored": true,
+    "setupKeyPromptCount": 0,
+    "modelRemainedHealthyDuringAppExit": true
+  },
+  "code": {
+    "productFiles": [
+      "src/main.mjs",
+      "src/plugins/weftmate-client/client.js"
+    ],
+    "testFiles": [
+      "tests/settings-ui-contract.test.ts"
+    ],
+    "directTestsPassed": 10,
+    "directTestsFailed": 0,
+    "subagentsUsed": 1,
+    "noDependenciesUpgraded": true,
+    "noCommitOrPush": true
+  },
+  "screenshotsLocalOnly": [
+    "Runtime/Preview/screenshots/s02-text-success.png",
+    "Runtime/Preview/screenshots/s02-vision-success.png",
+    "Runtime/Preview/screenshots/s02-components-final.png"
+  ],
+  "privacy": "No credential values included; screenshots for the component area exclude pairing tokens.",
+  "handoff": {
+    "normalLauncherStarted": true,
+    "applicationLeftOpen": true,
+    "modelLeftRunning": true,
+    "modelPort": 18080,
+    "petFinalPreference": "off",
+    "userAcceptance": "not tested"
+  }
+}

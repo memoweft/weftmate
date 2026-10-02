@@ -1,27 +1,26 @@
 #!/usr/bin/env node
 /**
- * upgrade-dsh.mjs — DSH 升级流程（只由 owner 触发，docs/REQUIREMENTS.md G-03 / docs/VENDOR-PACKAGING.md §8）。
+ * Safe DSH upgrade entrypoint.
  *
- * 用法：node scripts/upgrade-dsh.mjs --commit <sha> [--version <ver>] [--skip-vendor]
+ * The previous implementation fetched and checked out the ambient shared
+ * Harness tree, then wrote the production pin before tests or vendor assembly
+ * could fail. This entrypoint accepts only a named, independently pinned
+ * candidate. Formal promotion remains a separate reviewed change.
  *
- * 步骤：
- *   1. checkout 先切到目标 commit（git fetch + checkout，不校验旧 pin——pin 即将更新）；
- *   2. 更新 tests/contract/dsh-pin.json（commit / packageVersion / commitSubject / recordedAt）；
- *   3. 跑契约测试（必须全绿，失败即中止——契约先行的纪律）；
- *   4. 重建 vendor 并验证（vendor:dsh + vendor:verify；--skip-vendor 跳过，仅用于分步执行）。
+ * Usage: npm run dsh:upgrade -- --candidate alpha2
  */
-
 import { spawnSync } from 'node:child_process'
-import { readFile, writeFile } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const here = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(here, '..')
-const PIN_PATH = join(repoRoot, 'tests', 'contract', 'dsh-pin.json')
+const candidates = new Map([
+  ['alpha2', 'scripts/build-dsh-alpha2-candidate.mjs'],
+])
 
 function fail(message) {
-  console.error(`[dsh-upgrade] 失败：${message}`)
+  console.error(`[dsh-upgrade] ${message}`)
   process.exit(1)
 }
 
@@ -33,80 +32,16 @@ function argValue(name) {
   return value
 }
 
-function run(command, args, cwd, label) {
-  const result = spawnSync(command, args, { cwd, encoding: 'utf8' })
-  if (result.status !== 0) {
-    const tail = (result.stderr ?? result.stdout ?? '').split('\n').slice(-15).join('\n')
-    fail(`${label}（exit ${result.status}）：\n${tail}`)
-  }
-  return result.stdout.trim()
+const candidate = argValue('--candidate')
+if (candidate === undefined) {
+  fail('正式 pin/vendor 不可由此脚本直接覆盖。使用 --candidate alpha2 建立并验证隔离候选。')
+}
+const script = candidates.get(candidate)
+if (script === undefined) fail(`未知隔离候选：${candidate}`)
+if (process.argv.includes('--commit') || process.argv.includes('--version') || process.argv.includes('--skip-vendor')) {
+  fail('候选身份由仓库内固定 tag/commit 配置决定；不接受会绕过该配置的 --commit、--version 或 --skip-vendor。')
 }
 
-function checkoutCandidates() {
-  const fromEnv = process.env.WEFTMATE_DSH_CHECKOUT
-  const list = [
-    fromEnv === undefined || fromEnv === '' ? undefined : fromEnv,
-    'D:/AIProjects/Shared/Dependencies/DeepSeekHarness',
-  ]
-  return list.filter((candidate) => candidate !== undefined)
-}
-
-async function main() {
-  const commit = argValue('--commit')
-  if (commit === undefined) fail('缺少 --commit <sha>')
-  if (!/^[0-9a-f]{7,40}$/.test(commit)) fail(`--commit 不是合法 sha：${commit}`)
-
-  const pin = JSON.parse(await readFile(PIN_PATH, 'utf8'))
-  const checkout = checkoutCandidates().find((candidate) => {
-    try {
-      return JSON.parse(require('node:fs').readFileSync(join(candidate, 'package.json'), 'utf8')).name !== undefined
-    } catch {
-      return false
-    }
-  })
-  if (checkout === undefined) fail('找不到 DSH checkout（WEFTMATE_DSH_CHECKOUT 或 D:/AIProjects/Shared/Dependencies/DeepSeekHarness）')
-
-  console.log(`[dsh-upgrade] 当前 pin：${pin.packageVersion} @ ${pin.commit.slice(0, 7)}`)
-  console.log(`[dsh-upgrade] checkout：${checkout} → ${commit}`)
-
-  console.log('[dsh-upgrade] git fetch + checkout（owner 已确认的升级动作）')
-  run('git', ['-C', checkout, 'fetch', 'origin', 'master'], checkout, 'git fetch')
-  run('git', ['-C', checkout, 'checkout', commit], checkout, 'git checkout')
-
-  const head = run('git', ['-C', checkout, 'rev-parse', 'HEAD'], checkout, 'git rev-parse')
-  if (head !== commit && !head.startsWith(commit)) fail(`checkout 后 HEAD=${head} 与目标 ${commit} 不符`)
-
-  const rootPkg = JSON.parse(await readFile(join(checkout, 'package.json'), 'utf8'))
-  const version = argValue('--version') ?? rootPkg.version ?? pin.packageVersion
-  console.log(`[dsh-upgrade] 目标版本：${version}（checkout 根 package.json=${rootPkg.version ?? '?'}）`)
-
-  pin.commit = head
-  pin.packageVersion = version
-  pin.commitSubject = run('git', ['-C', checkout, 'log', '-1', '--format=%s'], checkout, 'git log')
-  pin.recordedAt = new Date().toISOString().slice(0, 10)
-  await writeFile(PIN_PATH, JSON.stringify(pin, null, 2) + '\n', 'utf8')
-  console.log('[dsh-upgrade] pin 已更新')
-
-  console.log('[dsh-upgrade] 契约测试（失败即中止，先修适配再继续）')
-  const contract = spawnSync(process.execPath, ['--test', 'tests/contract/**/*.test.ts'], {
-    cwd: repoRoot, encoding: 'utf8', stdio: 'inherit', shell: false,
-  })
-  if (contract.status !== 0) fail('契约测试未全绿——升级中止，请先修 weftmate 适配（或回退 checkout 与 pin）')
-
-  if (process.argv.includes('--skip-vendor')) {
-    console.log('[dsh-upgrade] --skip-vendor：vendor 重建留待下一步手动执行（npm run vendor:dsh && npm run vendor:verify）')
-    return
-  }
-
-  console.log('[dsh-upgrade] vendor 重建 + 验证')
-  const vendor = spawnSync(process.execPath, ['scripts/vendor-dsh.mjs'], { cwd: repoRoot, encoding: 'utf8', stdio: 'inherit' })
-  if (vendor.status !== 0) fail('vendor:dsh 失败')
-  const verify = spawnSync(process.execPath, ['scripts/verify-dsh-vendor.mjs'], { cwd: repoRoot, encoding: 'utf8', stdio: 'inherit' })
-  if (verify.status !== 0) fail('vendor:verify 失败')
-
-  console.log(`[dsh-upgrade] 完成：${version} @ ${head.slice(0, 7)}（契约全绿 + vendor 重建验证通过）`)
-}
-
-main().catch((error) => {
-  fail(error instanceof Error ? error.stack : String(error))
-})
+const result = spawnSync(process.execPath, [script], { cwd: repoRoot, stdio: 'inherit', env: process.env })
+if (result.status !== 0) fail(`隔离候选 ${candidate} 构建或验证失败（exit ${result.status}）`)
+console.log(`[dsh-upgrade] 隔离候选 ${candidate} 已完成；正式 rc5 pin/vendor 未修改。`)

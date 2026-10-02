@@ -1,0 +1,186 @@
+{
+  "task": "S04",
+  "recordedAt": "2026-09-08T23:37:42.719Z",
+  "status": "developer_verified_owner_trial_pending",
+  "tests": {
+    "weftmate": {
+      "passed": 26,
+      "command": "node --test tests/memory-plugin-contract.test.ts tests/memory-ui.test.ts tests/settings-ui-contract.test.ts"
+    },
+    "memoweft": {
+      "passed": 49,
+      "command": "py/.venv/Scripts/python.exe -m pytest -q py/tests/test_hermes_batch_adapter_v3d.py py/tests/test_trust_query_service.py py/tests/test_trust_command_service.py py/tests/test_dsh_trust_rpc.py py/tests/test_trust_portable_service.py"
+    }
+  },
+  "actualWindows": {
+    "entry": "START_MEMORY_PREVIEW.cmd",
+    "data": "../Runtime/MemoryPreview/user-data",
+    "sourcePanelVerified": true,
+    "correction": {
+      "correctedId": "cognition-161690fe8aa4c7a9fa87d9e66c3ec6f7d8ab39f53b0e063fe4ad035f635757d6",
+      "currentText": "用户出门时习惯带一把蓝色雨伞。",
+      "oldId": "cognition-61cc68d3e06b4dbcd8d75f93437c9d0eba3cd73c3120df65c4285ac5b3a3a6a4",
+      "otherRecordsPreserved": true
+    },
+    "muted": {
+      "correctedId": "cognition-161690fe8aa4c7a9fa87d9e66c3ec6f7d8ab39f53b0e063fe4ad035f635757d6",
+      "notInCurrent": true,
+      "recallCount": 0,
+      "selected": [],
+      "retainedInExport": true,
+      "exportMatches": [
+        {
+          "keys": [
+            "id",
+            "subjectId",
+            "content",
+            "contentType",
+            "formedBy",
+            "confidence",
+            "credStatus",
+            "scope",
+            "validAt",
+            "invalidAt",
+            "askedAt",
+            "archivedAt",
+            "mutedAt",
+            "createdAt",
+            "updatedAt"
+          ]
+        }
+      ],
+      "exportMutedStatePreserved": true
+    },
+    "firstStepInjection": [
+      {
+        "session_id": "session-16c7fca5-5dd6-46ae-b01f-2a16cedb9167",
+        "user_seq": null,
+        "user_message_id": "c778fa65-46eb-4f63-8e3f-f2a738e10c4b",
+        "world_revision": 5,
+        "selected_item_ids": [
+          [
+            "cognition",
+            "cognition-33c4bc2e8cadbac596f862d0259926847528d409670107a40adfafcf32ad3b67"
+          ]
+        ],
+        "recall_snapshot_token": "2e60b5f0f69a85438c86304d02a24b23901d5c789e91752ec9b97a790f02dc0c",
+        "adopted_at": "2026-09-08T15:30:18.359Z"
+      }
+    ],
+    "unrelatedPythonRecallCount": 0,
+    "finalRestart": {
+      "normalEntryOpened": true,
+      "ready": true,
+      "context": 61440,
+      "wrongOwnershipStillRetracted": true,
+      "mutedStillExcluded": true,
+      "userAddedRecordPreserved": true,
+      "adoptionRecordsPreserved": true
+    },
+    "url": "http://127.0.0.1:65090"
+  },
+  "notVerified": [
+    "Owner acceptance of S04",
+    "All possible natural-language corrections and transient-state interpretations",
+    "Original 92160-context startup root cause and long-run stability",
+    "Phone/device tasks"
+  ],
+  "model": {
+    "endpoint": "http://127.0.0.1:18080/v1",
+    "weightsAndOriginalConfigUnchanged": true,
+    "originalContextSize": 92160,
+    "sameConfigStartAttempts": 2,
+    "eachWaitSeconds": 180,
+    "lastResponse": "ready",
+    "failedProcessesStopped": true,
+    "temporaryProposal": {
+      "contextSize": 61440,
+      "approved": true,
+      "started": true,
+      "approvedAt": "2026-09-09",
+      "liveContextSize": 61440,
+      "activePid": 6740,
+      "ready": true,
+      "vision": true
+    }
+  },
+  "boundaries": {
+    "uiOverallRedesignDeferred": true,
+    "noPhoneActions": true,
+    "noCloudFallback": true,
+    "noPrivateMemoryImport": true,
+    "userAddedRecordPreserved": true
+  },
+  "screenshots": [
+    "../Runtime/MemoryPreview/screenshots/s04-provenance.png",
+    "../Runtime/MemoryPreview/screenshots/s04-correction-applied.png",
+    "../Runtime/MemoryPreview/screenshots/s04-muted.png",
+    "../Runtime/MemoryPreview/screenshots/s04-current-panel.png",
+    "../Runtime/MemoryPreview/screenshots/s04-after-correction-answer.png",
+    "../Runtime/MemoryPreview/screenshots/s04-after-mute-answer.png"
+  ],
+  "realModelValidation": {
+    "contextSize": 61440,
+    "sameModel": "weftlearn-qwen3.8-27b",
+    "samePrompt": "为我挑洗护用品时，先考虑哪些条件？请只依据已有记忆简短回答，不使用工具。",
+    "before": {
+      "reply": "根据已有记忆，优先考虑：香味——你挑洗护用品时不喜欢浓烈香味，应优先选择淡香或无香型产品。\n其余条件（如发质/肤质、功效、成分等）目前记忆中没有记录。",
+      "sessionId": "session-7244146f-8a3a-4c89-9a98-a96340d43bdd",
+      "selectedItems": [
+        [
+          "cognition",
+          "cognition-33c4bc2e8cadbac596f862d0259926847528d409670107a40adfafcf32ad3b67"
+        ]
+      ]
+    },
+    "correction": {
+      "prompt": "刚才不喜欢浓香的是朋友，不是我本人。请纠正这条归属，简短回复，不使用工具。",
+      "oldId": "cognition-33c4bc2e8cadbac596f862d0259926847528d409670107a40adfafcf32ad3b67",
+      "oldNoLongerCurrent": true,
+      "sources": [
+        {
+          "relation": "support",
+          "text": "这是雨舟的测试资料：我挑洗护用品时不喜欢浓烈香味。请简短回应，不使用工具。"
+        },
+        {
+          "relation": "retracts",
+          "text": "刚才不喜欢浓香的是朋友，不是我本人。请纠正这条归属，简短回复，不使用工具。"
+        }
+      ],
+      "transitions": [
+        {
+          "kind": "retracts",
+          "priorItemId": "cognition-33c4bc2e8cadbac596f862d0259926847528d409670107a40adfafcf32ad3b67"
+        }
+      ],
+      "job": {
+        "id": "memory-world-job-f09a5e774ade2523788eb2f850e7ba5275e931a6170cfd69d356c5e2ca1754a5",
+        "state": "applied",
+        "attempts": 1
+      },
+      "userAddedRecordPreserved": true
+    },
+    "after": {
+      "reply": "我这边没有相关记忆（WeftMate 记忆上下文为空），所以无法依据已有记忆给出你的挑品条件。\n如果你告诉我你的关键条件（例如：发质/肤质、是否敏感、预算、偏好香型、成分避雷等），我可以记录下来，之后帮你按这些条件筛选洗护用品。",
+      "sessionId": "session-f338d6d1-ea14-47d9-bc30-8c5ceb737ed0",
+      "recallCount": 0
+    },
+    "temporaryState": {
+      "prompt": "这周不想社交。请只回复收到，不使用工具。",
+      "submittedAt": "2026-09-08T23:31:07.874Z",
+      "status": "verified",
+      "sourceId": "ee0e6ed3-7ca3-48f9-85b0-aaa7c4b37db3",
+      "jobId": "memory-world-job-614f03daf6e4dbb767b07a85bf60b8071c0abeec8e522a45ff63a07f33ab0379",
+      "terminal": "no_change",
+      "noPermanentSocialPreference": true
+    },
+    "afterMuteAndRestart": {
+      "prompt": "根据当前仍在使用的记忆，我出门会带什么？只依据已有记忆回答，简短回复，不调用工具。",
+      "submittedAt": "2026-09-08T23:35:23.041Z",
+      "status": "completed",
+      "recallCount": 0,
+      "reply": "当前没有可用记忆，无法确认你出门会带什么。"
+    }
+  },
+  "hostBehaviorNote": "Added plugin-only explanation of automatic end-of-turn handoff and honest asynchronous completion; never treated as human evidence."
+}

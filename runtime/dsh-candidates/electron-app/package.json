@@ -1,0 +1,6 @@
+{
+  "name": "weftmate-alpha2-electron-candidate",
+  "private": true,
+  "type": "module",
+  "main": "../../../src/alpha2-electron-main.mjs"
+}

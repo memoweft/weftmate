@@ -49,6 +49,25 @@ describe('Stage 2 strict shared-session guards', () => {
     assert.deepEqual([...bindings], [], 'the first newly added profile cannot become an implicit legacy owner');
   });
 
+  it('keeps an empty unconfigured session available for recovery while model-route mutations remain blocked', async () => {
+    const bindings = new Map<string, string>();
+    let scan: { state: 'ready' | 'failed'; error: string | null } = { state: 'ready', error: null };
+    try {
+      await scanSharedSessionBindings({ profiles: [],
+        listSessions: async () => ({ items: [{ sessionId: 'empty-session' }] }),
+        readSelectedModel: async () => ({ current: { provider: '' } }),
+        providerForProfile: () => 'unused', priorBinding: () => null, legacyCompatibilityProfileId: null,
+        bind: (id, profileId) => bindings.set(id, profileId) });
+    } catch (error) {
+      scan = { state: 'failed', error: error instanceof Error ? error.message : 'scan failed' };
+    }
+    assert.equal(scan.state, 'failed');
+    assert.deepEqual([...bindings], []);
+    assert.throws(() => assertSessionReferenceScanReady(scan), /暂不能修改或删除模型/);
+    assert.throws(() => resolveSafeSessionBinding({ provider: '', profiles: [], providerForProfile: () => 'unused',
+      priorBinding: null, legacyCompatibilityProfileId: null }), (error: Error & { code?: string }) => error.code === 'session-model-ownership-unknown');
+  });
+
   it('never treats an empty Stage 2 header as legacy compatibility, but retains an existing durable binding', () => {
     const common = { profiles: [{ id: 'created' }], providerForProfile: (profile: { id: string }) => `weftmate-${profile.id}`, legacyCompatibilityProfileId: 'created' };
     assert.throws(() => resolveSafeSessionBinding({ ...common, provider: '', priorBinding: null }), (error: Error & { code?: string }) => error.code === 'session-model-ownership-unknown');

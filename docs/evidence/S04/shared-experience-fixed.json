@@ -1,0 +1,136 @@
+{
+  "scenario": "AI proposes two plans, user defers, new session resumes",
+  "phase": "after_fix",
+  "firstSessionId": "session-6cdc76da-e526-4f41-b868-152ea0260177",
+  "items": [
+    {
+      "id": "3ad2f37a-22d2-4816-97c7-177e4672a093",
+      "conversation_id": "session-6cdc76da-e526-4f41-b868-152ea0260177",
+      "episode_id": "weftmate-turn-boundary-v1:0f4aa545fa203b8b5ea282e914303bdd:841129df375341f1055ff7c14bdfa884da209f41b59f430c20b411a50ec097b4",
+      "created_at": "2026-09-09T01:36:14.358Z",
+      "turns": [
+        {
+          "role": "user",
+          "content": "我想给 MemoWeft 增加健康数据相关功能。请你提出两个小的起步方案，每个由你起一个简短名称，写清第一步和主要取舍。总共不超过200字。只讨论，不实施、不调用工具。",
+          "source_ref": "source:0",
+          "message_id": "f978b4a8-f071-4a30-ae15-53f5d3380070",
+          "timestamp": 1788917724
+        },
+        {
+          "role": "assistant",
+          "content": "方案A「健康记录卡」：第一步，在 MemoWeft 中新增\"健康记录\"卡类型，含日期、血压、体重、血糖字段，支持单向录入。取舍：仅手动录入，不接设备，范围小、可先上线。\n\n方案B「健康提醒」：第一步，给现有笔记挂定时提醒触发器（如服药、测血压），复用既有调度逻辑。取舍：不采集数据，只做提醒，且依赖宿主通知权限。",
+          "source_ref": "source:1",
+          "message_id": "c1e6d142-aad3-4e77-99a8-8448b2bdd0d9",
+          "timestamp": 1788917774
+        }
+      ]
+    },
+    {
+      "id": "5335216e-b201-4f0c-9ec2-3da3011caba6",
+      "conversation_id": "session-6cdc76da-e526-4f41-b868-152ea0260177",
+      "episode_id": "weftmate-turn-boundary-v1:1bccb9d07af0cd8c5212c802dc4dc5eb:6da58ca98d23fa30ee04d3eef9a8a8b84e30c1102cec57cb6342e9b9bf047c42",
+      "created_at": "2026-09-09T01:37:25.841Z",
+      "turns": [
+        {
+          "role": "user",
+          "content": "先不做了，这两个方案都暂时搁置。",
+          "source_ref": "source:0",
+          "message_id": "4a7d7767-e275-479e-af58-002f54ffcb1b",
+          "timestamp": 1788917833
+        },
+        {
+          "role": "assistant",
+          "content": "好的，两个方案先搁置，不做任何改动。需要时再随时捡起。",
+          "source_ref": "source:1",
+          "message_id": "b71465cf-9a65-4cd3-a079-971c45362547",
+          "timestamp": 1788917845
+        }
+      ]
+    }
+  ],
+  "querySessionId": "session-3abfe566-6924-41cd-b366-51ba1b5b11a2",
+  "adoption": {
+    "session_id": "session-3abfe566-6924-41cd-b366-51ba1b5b11a2",
+    "user_seq": null,
+    "user_message_id": "38787a5d-4d41-430a-bf63-f0a1d51125cd",
+    "world_revision": 8,
+    "selected_item_ids": [],
+    "interaction_ids": [
+      "3ad2f37a-22d2-4816-97c7-177e4672a093",
+      "5335216e-b201-4f0c-9ec2-3da3011caba6"
+    ],
+    "recall_snapshot_token": "e00a78a78419f304852ac8eb0d2a7ad56c78f48dcf2dc25ba1851c288c865116",
+    "interaction_snapshot_token": "7d9c79f98363c86d7e5db5fcff0d0e9fc35ef51208e356706061a8335bd5b4ad",
+    "world_context_hash": null,
+    "interaction_context_hash": "8f534cf32b824c51b285fb0cb6800fd7b3db2de7f923a74b2e2bd1ae9b1915f6",
+    "context_hash": "43e63a5411cbbd2f89afba372bd881edfeaf562f68ea58e74bfb1ce8a6f04869",
+    "adopted_at": "2026-09-09T01:38:23.458Z"
+  },
+  "distinctSessions": true,
+  "status": "developer_verified_owner_trial_pending",
+  "originalCodeProbe": "docs/evidence/S04/shared-experience-probe.json",
+  "actualReply": "根据历史记录，当时讨论的是两个方案（2026-09-09 会话，之后你说过先搁置）：\n方案A「健康记录卡」：第一步是在 MemoWeft 中新增\"健康记录\"卡类型，包含日期、血压、体重、血糖字段，支持单向（手动）录入。方案B「健康提醒」：第一步是给现有笔记挂定时提醒触发器（如服药、测血压），复用既有调度逻辑，不采集数据。\n两个方案我都记得，没有不确定的地方。你想先从哪个开始？",
+  "proposalsRecovered": true,
+  "deferralRecovered": true,
+  "searchChecks": [
+    {
+      "query": "上次健康数据的方案",
+      "count": 3,
+      "ids": [
+        "1a9c714f-cf59-4dbf-8bc7-7a015749c8d8",
+        "3ad2f37a-22d2-4816-97c7-177e4672a093",
+        "5335216e-b201-4f0c-9ec2-3da3011caba6"
+      ]
+    },
+    {
+      "query": "你之前说的火星旅行方案是什么？",
+      "count": 0,
+      "ids": []
+    },
+    {
+      "query": "如何运行Python测试？",
+      "count": 0,
+      "ids": []
+    }
+  ],
+  "restartSourcesPreserved": true,
+  "afterRestartReply": "两个方案：方案A「健康记录卡」先新增健康记录卡，日期、血压、体重、血糖字段，仅手动录入；方案B「健康提醒」先给现有笔记挂定时提醒，不采集数据。没有立即开做。提出方案后当时说先搁置；之后说可以开始并要求回忆，但没有最终拍板选择或实际启动记录。",
+  "afterRestartReplyKind": "summary of observed rendered answer",
+  "uiSearchVerified": true,
+  "rolesVisible": true,
+  "futureSources": {
+    "weftmateChat": "connected",
+    "soul": "planned_not_connected",
+    "healthData": "planned_not_connected"
+  },
+  "historyScope": "Only conversations handed off after this fix are indexed automatically; no bulk import of old sessions was performed.",
+  "tests": {
+    "weftmate": 28,
+    "memoweftFocused": 53
+  },
+  "storageChecks": {
+    "items": [
+      {
+        "id": "3ad2f37a-22d2-4816-97c7-177e4672a093",
+        "exists": true,
+        "roles": [
+          "user",
+          "assistant"
+        ],
+        "ai_texts_in_spoken_evidence": 0
+      },
+      {
+        "id": "5335216e-b201-4f0c-9ec2-3da3011caba6",
+        "exists": true,
+        "roles": [
+          "user",
+          "assistant"
+        ],
+        "ai_texts_in_spoken_evidence": 0
+      }
+    ],
+    "firstConversationRecords": 2,
+    "uniqueBoundaries": 2,
+    "noDuplicateBoundaries": true
+  }
+}

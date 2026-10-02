@@ -1,0 +1,82 @@
+{
+  "date": "2026-09-08",
+  "candidate": "preview-a3-20260908",
+  "platform": "Windows native Electron",
+  "source_commit": "dda5356fec14ecc8a77774d4f319350e3a951417",
+  "uncommitted_candidate": true,
+  "changed_product_files": [
+    "src/plugins/weftmate-client/client.js"
+  ],
+  "launcher": "START_PREVIEW.cmd",
+  "source_sha256": "5c47bb10481fc3ae70112cf93158303d38c888d607ceb4bbf156d72644784853",
+  "vendor": {
+    "version": "0.1.0-rc.5",
+    "commit": "47f943859bef60e4160492346772ded9b24f765a",
+    "verify": "passed"
+  },
+  "direct_tests": {
+    "files": [
+      "tests/settings-ui-contract.test.ts",
+      "tests/dsh-web-profile.test.ts"
+    ],
+    "passed": 14,
+    "failed": 0,
+    "note": "Run once for the functional/style candidate; final CSS class correction verified by syntax, actual vendor mappings and live window."
+  },
+  "native_checks": {
+    "startup": true,
+    "workspace_selection": true,
+    "local_command_without_model_call": "/goal (read current goal only)",
+    "active_phase_hides_workspace_chooser": true,
+    "active_workspace_chooser_count": 0,
+    "composer_count": 1,
+    "restart_replayed_local_command": true,
+    "sidebar_collapse_and_expand": true,
+    "collapsed_sidebar_width_px": 56,
+    "input_layers_match": {
+      "font_px": 15,
+      "line_height_px": 24,
+      "padding": "4px 18px 0px"
+    },
+    "memory_unavailable_not_empty": true,
+    "viewport_document_size_match": [
+      1200,
+      802
+    ],
+    "shutdown": {
+      "remainingCandidateProcesses": 0,
+      "runtimePortStillListening": false,
+      "electronExitCode": 0
+    }
+  },
+  "isolation": {
+    "relative_data_path": "../Runtime/Preview/user-data",
+    "relative_test_workspace": "../Runtime/Preview/workspace",
+    "memoweft_enabled": false,
+    "weftmod_runtime_configured": false,
+    "real_model_calls": 0,
+    "real_device_actions": 0
+  },
+  "not_verified": [
+    "user acceptance",
+    "real model conversation",
+    "memory formation/recall/correction",
+    "real phone execution",
+    "full new navigation",
+    "macOS/mobile"
+  ],
+  "subagents_used": 1,
+  "screenshots_local_only": [
+    "../Runtime/Preview/screenshots/candidate-final.png",
+    "../Runtime/Preview/screenshots/long-input.png"
+  ],
+  "no_dependency_upgrade": true,
+  "no_commit_or_push": true,
+  "launcher_verification": {
+    "dry_run": "passed",
+    "actual_start": "passed",
+    "terminal_q_clean_exit_code": 0,
+    "runtime_port_closed_after_quit": true,
+    "left_running_for_user": false
+  }
+}

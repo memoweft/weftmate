@@ -1,0 +1,27 @@
+{
+  "description": "Documentation example only; the application does not load this file. Paths relative to the workspace root.",
+  "repositories": {
+    "weftmate": "WeftMate/Repository",
+    "weftmod": "AIGame/Repository",
+    "memoweft": "MemoWeft/Core",
+    "dsh": "Shared/Dependencies/DeepSeekHarness"
+  },
+  "local_only": {
+    "weftmate_runtime": "WeftMate/Runtime",
+    "inputs": "WeftMate/References",
+    "research": "WeftMate/References/Research"
+  },
+  "target_layout": {
+    "repositories": "repos/{weftmate,memoweft,weftmod}",
+    "dependencies": "dependencies",
+    "private_data": "local-data",
+    "outputs": "artifacts",
+    "backup_directory_created": false
+  },
+  "runtime_directories_moved": false,
+  "format": "weftmate-workspace-map/1",
+  "remotes": {
+    "weftmate": "https://github.com/memoweft/weftmate.git",
+    "weftmod": "https://github.com/memoweft/AI-GAME.git"
+  }
+}

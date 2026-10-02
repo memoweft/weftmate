@@ -56,11 +56,14 @@ export interface CredentialRow {
   source?: string;
 }
 
-export interface SettingsPathSetOperation {
+export type SettingsPathSetOperation = {
   op: 'set';
   path: ['providers', string];
   value: ProviderConfig;
-}
+} | {
+  op: 'unset';
+  path: ['providers', string];
+};
 
 export interface MigrationPlan {
   operations: SettingsPathSetOperation[];
@@ -315,6 +318,49 @@ export async function migrateLegacyRoutes(
     }
   }
   throw new OfficialDshRpcError('legacy route migration exhausted its retry budget');
+}
+
+/**
+ * Reconcile an earlier WeftMate local route whose only stale fields are the
+ * formal model limits. Caller must already have proved exact profile/key
+ * ownership and passed the host's session-idle and reference-scan guards.
+ * An unrelated user edit is never overwritten.
+ */
+export async function repairOfficialLocalRouteLimits(
+  client: OfficialDshSettingsClient,
+  route: LegacyRouteProjection,
+  maxAttempts = 3,
+): Promise<boolean> {
+  if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3) throw new TypeError('invalid retry budget');
+  const desired = projectOfficialProviderConfig(route);
+  if (desired.models.length !== 1) throw new TypeError('local route must have exactly one model');
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    const snapshot = await client.describeSettings();
+    if (!snapshot.writable || snapshot.applies !== 'live') throw new OfficialDshRpcError('official settings are not writable live');
+    const actual = snapshot.userProviders[route.route];
+    if (isDeepStrictEqual(actual, desired)) return false;
+    if (!isRecord(actual) || !Array.isArray(actual.models) || actual.models.length !== 1 || !isRecord(actual.models[0])) {
+      throw new OfficialDshRpcError('official local route differs from the owned projection');
+    }
+    const existingModel = actual.models[0];
+    if (typeof existingModel.contextWindow !== 'number' || typeof existingModel.maxTokens !== 'number'
+      || !Number.isSafeInteger(existingModel.contextWindow) || !Number.isSafeInteger(existingModel.maxTokens)
+      || existingModel.contextWindow < 1 || existingModel.maxTokens < 1) {
+      throw new OfficialDshRpcError('official local route has invalid limits');
+    }
+    const previousLimits = { ...desired, models: [{ ...desired.models[0],
+      contextWindow: existingModel.contextWindow, maxTokens: existingModel.maxTokens }] };
+    if (!isDeepStrictEqual(actual, previousLimits)) {
+      throw new OfficialDshRpcError('official local route differs from the owned projection');
+    }
+    try {
+      await client.mutateSettings([{ op: 'set', path: ['providers', route.route], value: desired }], snapshot.revision);
+      return true;
+    } catch (error) {
+      if (!(error instanceof OfficialDshRpcError) || error.code !== 'settings-conflict' || attempt === maxAttempts) throw error;
+    }
+  }
+  throw new OfficialDshRpcError('official local route repair exhausted its retry budget');
 }
 
 /**

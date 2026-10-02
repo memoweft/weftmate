@@ -1,0 +1,25 @@
+<resources>
+    <item type="id" name="status_text" />
+    <item type="id" name="settings_toggle" />
+    <item type="id" name="origin_input" />
+    <item type="id" name="username_input" />
+    <item type="id" name="password_input" />
+    <item type="id" name="login_button" />
+    <item type="id" name="model_endpoint_input" />
+    <item type="id" name="model_id_input" />
+    <item type="id" name="model_key_input" />
+    <item type="id" name="save_model_button" />
+    <item type="id" name="transcript" />
+    <item type="id" name="composer" />
+    <item type="id" name="send_button" />
+    <item type="id" name="open_settings_button" />
+    <item type="id" name="new_conversation_button" />
+    <item type="id" name="conversation_spinner" />
+    <item type="id" name="stop_button" />
+    <item type="id" name="drawer_search" />
+    <item type="id" name="drawer_history" />
+    <item type="id" name="welcome_connection" />
+    <item type="id" name="chat_scroll" />
+    <item type="id" name="model_choice" />
+    <item type="id" name="mic_button" />
+</resources>

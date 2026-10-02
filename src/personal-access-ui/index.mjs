@@ -1,0 +1,38 @@
+/** Static, public account shell. All account data comes from authenticated API calls. */
+import { readFile } from 'node:fs/promises'
+import { join } from 'node:path'
+
+const files = new Map([
+  ['/personal/v1/ui', ['index.html', 'text/html; charset=utf-8']],
+  ['/personal/v1/ui/', ['index.html', 'text/html; charset=utf-8']],
+  ['/personal/v1/ui/index.html', ['index.html', 'text/html; charset=utf-8']],
+  ['/personal/v1/ui/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/styles.css', ['styles.css', 'text/css; charset=utf-8']],
+])
+
+const securityHeaders = {
+  'cache-control': 'no-store',
+  'content-security-policy': "default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; img-src 'self' data: blob:; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; object-src 'none'",
+  'referrer-policy': 'no-referrer',
+  'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY',
+  'cross-origin-resource-policy': 'same-origin',
+}
+
+export async function servePersonalAccessUi(request, response) {
+  if (request.method !== 'GET' || typeof request.url !== 'string') return false
+  let url
+  try { url = new URL(request.url, 'http://127.0.0.1') } catch { return false }
+  if (url.search || url.pathname.includes('%')) return false
+  const asset = files.get(url.pathname)
+  if (!asset) return false
+  try {
+    const body = await readFile(join(import.meta.dirname, asset[0]))
+    response.writeHead(200, { ...securityHeaders, 'content-type': asset[1], 'content-length': String(body.length) })
+    response.end(body)
+  } catch {
+    response.writeHead(503, { ...securityHeaders, 'content-type': 'text/plain; charset=utf-8' })
+    response.end('Account page unavailable')
+  }
+  return true
+}

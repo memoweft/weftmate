@@ -17,15 +17,22 @@ const SAFE_ERROR_CODES = new Set([
   'workspace-name-conflict',
   'settings-rejected',
   'approval-not-pending',
+  'attachment-error',
+])
+const SAFE_IMAGE_REASONS = new Set([
+  'MODEL_DOES_NOT_SUPPORT_IMAGES', 'INVALID_IMAGE_BASE64', 'TOO_MANY_IMAGES',
+  'IMAGES_TOO_LARGE', 'INVALID_IMAGE', 'IMAGE_TYPE_MISMATCH', 'IMAGE_TOO_LARGE',
+  'IMAGE_TOO_MANY_PIXELS',
 ])
 
 export class DshAdapterError extends Error {
-  constructor(code, operation, digest = null) {
+  constructor(code, operation, digest = null, reasonCode = null) {
     super(`DSH ${operation} failed`)
     this.name = 'DshAdapterError'
     this.code = SAFE_ERROR_CODES.has(code) ? code : 'dsh-rejected'
     this.operation = operation
     this.details = digest === null ? {} : { digest }
+    if (SAFE_IMAGE_REASONS.has(reasonCode)) this.reasonCode = reasonCode
   }
 }
 
@@ -50,7 +57,8 @@ export async function unwrap(response, operation) {
   const result = response?.result
   if (result?.ok === true) return result.value
   if (result?.ok === false) {
-    throw new DshAdapterError(result.error?.code, operation, await payloadDigest(result.error ?? null))
+    throw new DshAdapterError(result.error?.code, operation, await payloadDigest(result.error ?? null),
+      result.error?.details?.reason)
   }
   // The narrow client contract returns an RpcResponse.  Keeping this failure
   // structured prevents accidental rendering/logging of an unexpected body.
@@ -72,6 +80,95 @@ function requireOrdinarySummary(item, sessionId) {
   if (item === undefined) throw new DshAdapterError('session-not-found', 'resume')
   if (isSubagentSummary(item)) throw new DshAdapterError('agent-busy', 'resume')
   if (sessionIdOf(item) !== sessionId) throw new DshAdapterError('session-not-found', 'resume')
+}
+
+const HISTORY_TEXT_LIMIT = 4_000
+const HISTORY_PAGE_LIMIT = 200
+const HISTORY_NATIVE_PAGE_LIMIT = 24
+const HISTORY_RAW_EVENT_LIMIT = 12_000
+const HISTORY_RESPONSE_BYTES_LIMIT = 900_000
+function safeHistoryText(value) {
+  const raw = String(value ?? '')
+  const text = raw.slice(0, HISTORY_TEXT_LIMIT)
+    .replace(/(?:[A-Za-z]:\\|\\\\)[^\s"'<>]+/g, '[local path]')
+    .replace(/(^|[\s(])\/(?:[^\s"'<>/]+\/)*[^\s"'<>/]+/g, '$1[local path]')
+    .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [redacted]')
+    .replace(/(?:sk-[A-Za-z0-9_-]{8,}|(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+)/gi, '[redacted]')
+  return { text, ...(raw.length > HISTORY_TEXT_LIMIT ? { truncated: true } : {}) }
+}
+function messageText(message) {
+  if (!Array.isArray(message?.content)) return null
+  const text = message.content.filter((part) => part?.type === 'text' && typeof part.text === 'string').map((part) => part.text).join('')
+  return text ? safeHistoryText(text) : null
+}
+function messageImages(message) {
+  if (!Array.isArray(message?.content)) return []
+  return message.content.filter((part) => part?.type === 'image' && part.attachment &&
+    typeof part.attachment.attachmentId === 'string' &&
+    /^sha256:[a-f0-9]{64}$/.test(part.attachment.attachmentId) &&
+    ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(part.attachment.mediaType) &&
+    Number.isSafeInteger(part.attachment.bytes) && part.attachment.bytes > 0 &&
+    Number.isSafeInteger(part.attachment.width) && part.attachment.width > 0 &&
+    Number.isSafeInteger(part.attachment.height) && part.attachment.height > 0)
+    .slice(0, 4).map((part) => ({ attachmentId: part.attachment.attachmentId,
+      contentType: part.attachment.mediaType, size: part.attachment.bytes,
+      width: part.attachment.width, height: part.attachment.height,
+      ...(typeof part.attachment.name === 'string' ? { name: safeHistoryText(part.attachment.name.slice(0, 120)).text } : {}) }))
+}
+
+/** The remote timeline contains only user-visible text and closed turn states. */
+export function projectHistoryEvent(raw) {
+  const event = raw?.event ?? raw
+  const seq = event?.seq
+  if (!Number.isSafeInteger(seq) || seq < 0) return null
+  const type = event?.type
+  let projected = null
+  if (type === 'user/message' && event.data?.source?.kind === 'user') {
+    const message = event.data?.message ?? event.data
+    const data = messageText(message)
+    const images = messageImages(message)
+    if (data || images.length) projected = { seq, type: 'user.message', data: { ...(data ?? { text: '' }),
+      ...(images.length ? { images } : {}) } }
+  } else if (type === 'assistant/message') {
+    const message = event.data?.message ?? event.data
+    const data = messageText(message)
+    const images = messageImages(message)
+    if (data || images.length) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
+      ...(images.length ? { images } : {}) } }
+  } else if (type === 'turn/start') {
+    projected = { seq, type: 'turn.started', data: {} }
+  } else if (type === 'turn/end') {
+    const kind = event.data?.reason?.kind
+    projected = { seq, type: 'turn.ended', data: { reason: ['completed', 'aborted', 'error', 'blocked'].includes(kind) ? kind : 'unknown' } }
+  }
+  if (projected && Number.isFinite(event.time) && Math.abs(event.time) <= 8.64e15) projected.at = new Date(event.time).toISOString()
+  return projected
+}
+
+export function pageHistoryEvents(entries, afterSeq = -1, limit = 50) {
+  if (!Number.isSafeInteger(afterSeq) || afterSeq < -1 || !Number.isInteger(limit) || limit < 1 || limit > HISTORY_PAGE_LIMIT) {
+    throw new TypeError('invalid history cursor or limit')
+  }
+  const ordered = (Array.isArray(entries) ? entries : []).map((entry) => ({ entry, seq: (entry?.event ?? entry)?.seq }))
+    .filter((row) => Number.isSafeInteger(row.seq) && row.seq >= 0 && row.seq > afterSeq)
+    .sort((a, b) => a.seq - b.seq)
+  const events = []
+  let nextSeq = afterSeq
+  let previousSeq = null
+  let hasMore = false
+  let projectedBytes = 0
+  for (const row of ordered) {
+    if (row.seq === previousSeq) continue
+    previousSeq = row.seq
+    const event = projectHistoryEvent(row.entry)
+    if (event && events.length >= limit) { hasMore = true; break }
+    if (event && events.length > 0 && projectedBytes + Buffer.byteLength(JSON.stringify(event), 'utf8') > HISTORY_RESPONSE_BYTES_LIMIT) {
+      hasMore = true; break
+    }
+    nextSeq = row.seq
+    if (event) { events.push(event); projectedBytes += Buffer.byteLength(JSON.stringify(event), 'utf8') }
+  }
+  return { events, nextSeq, hasMore }
 }
 
 /**
@@ -98,6 +195,7 @@ export function createDshSessionAdapter(client) {
           sessionId: sessionIdOf(item),
           title: typeof item.title === 'string' ? item.title : '新对话',
           running: item.running === true,
+          ...(typeof item.agentPreset === 'string' ? { agentPreset: item.agentPreset } : {}),
         }))
     },
     async create(options = {}) {
@@ -123,20 +221,74 @@ export function createDshSessionAdapter(client) {
       return { sessionId, events, lastSeq }
     },
 
+    async historyPage(sessionId, { afterSeq = -1, limit = 50 } = {}) {
+      if (typeof sessionId !== 'string' || sessionId.length === 0) throw new TypeError('sessionId is required')
+      pageHistoryEvents([], afterSeq, limit)
+      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const item = (Array.isArray(listed?.items) ? listed.items : []).find((candidate) => sessionIdOf(candidate) === sessionId)
+      requireOrdinarySummary(item, sessionId)
+      const entries = []
+      let beforeSeq
+      let tailWatermark = null
+      let complete = false
+      for (let page = 0; page < HISTORY_NATIVE_PAGE_LIMIT; page += 1) {
+        const history = await unwrap(await client.sessions.history({ sessionId, maxMessages: 50,
+          ...(beforeSeq === undefined ? {} : { beforeSeq }) }), 'history')
+        if (!Array.isArray(history?.events) || typeof history.hasMore !== 'boolean') throw new DshAdapterError('internal', 'history')
+        const sequences = history.events.map((entry) => (entry?.event ?? entry)?.seq).filter(Number.isSafeInteger)
+        if (history.hasMore && sequences.length === 0) throw Object.assign(new Error('history window cannot advance'), { code: 'history-window-limited' })
+        const oldest = sequences.length ? Math.min(...sequences) : null
+        if (tailWatermark === null) tailWatermark = sequences.length ? Math.max(...sequences) : -1
+        entries.push(...history.events.filter((entry) => {
+          const seq = (entry?.event ?? entry)?.seq
+          return Number.isSafeInteger(seq) && seq <= tailWatermark
+        }))
+        if (entries.length > HISTORY_RAW_EVENT_LIMIT) throw Object.assign(new Error('history window exceeds bounded scan'), { code: 'history-window-limited' })
+        if (!history.hasMore || tailWatermark <= afterSeq || (oldest !== null && oldest <= afterSeq)) { complete = true; break }
+        if (oldest === null || (beforeSeq !== undefined && oldest >= beforeSeq)) {
+          throw Object.assign(new Error('history window did not advance'), { code: 'history-window-limited' })
+        }
+        beforeSeq = oldest
+      }
+      if (!complete) throw Object.assign(new Error('history window exceeds page bound'), { code: 'history-window-limited' })
+      return pageHistoryEvents(entries, afterSeq, limit)
+    },
+
     async send(sessionId, content, mode = 'queue') {
       assertOwned(sessionId, 'send')
       if (mode !== 'queue' && mode !== 'steer') throw new TypeError('mode must be queue or steer')
-      if (typeof content !== 'string' || content.length === 0) throw new TypeError('content must be non-empty text')
+      const parts = typeof content === 'string' ? [{ type: 'text', text: content }] : content
+      if (!Array.isArray(parts) || parts.length < 1 || parts.length > 5 ||
+          parts.some((part) => part?.type === 'text' ? typeof part.text !== 'string'
+            : part?.type === 'image' ? !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(part.mediaType) ||
+              typeof part.data !== 'string' || part.data.length > 7_000_000 ||
+              (part.name !== undefined && (typeof part.name !== 'string' || part.name.length > 120))
+              : true) || !parts.some((part) => part.type === 'image' || part.text.trim())) {
+        throw new TypeError('content must contain bounded text or image parts')
+      }
       // The supported DSH wire is an array of prompt content parts, not the
       // convenient renderer string.  Passing the string through is rejected
       // before the Agent can begin a turn, which also makes a healthy model
       // look like a credential failure.
-      const value = await unwrap(await client.sessions.prompt({
+      const response = await client.sessions.prompt({
         sessionId,
         mode,
-        content: [{ type: 'text', text: content }],
-      }), 'prompt')
-      return { accepted: value?.accepted === true, command: value?.command }
+        content: parts,
+      })
+      const value = await unwrap(response, 'prompt')
+      const receiptId = typeof response?.rpcId === 'string' && /^[A-Za-z0-9._:-]{1,160}$/.test(response.rpcId)
+        ? response.rpcId : undefined
+      return { accepted: value?.accepted === true, command: value?.command, ...(receiptId ? { receiptId } : {}) }
+    },
+
+    async attachment(sessionId, attachmentId) {
+      assertOwned(sessionId, 'attachment')
+      if (typeof attachmentId !== 'string' || !/^sha256:[a-f0-9]{64}$/.test(attachmentId))
+        throw new TypeError('invalid attachment id')
+      const result = await unwrap(await client.sessions.attachment({ sessionId, attachmentId }), 'attachment')
+      if (result?.attachment?.attachmentId !== attachmentId || typeof result?.data !== 'string' ||
+          result.data.length > 7_000_000) throw new DshAdapterError('dsh-rejected', 'attachment')
+      return result
     },
 
     /** Acknowledged cancellation is a receipt, not proof that the turn stopped. */

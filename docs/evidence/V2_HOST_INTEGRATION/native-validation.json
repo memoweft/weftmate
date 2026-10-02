@@ -1,0 +1,143 @@
+{
+  "date": "2026-09-15",
+  "status": "待云验证；最小原生载体与真实Mod通道已有开发证据，完整V2未验收",
+  "authorization": "用户明确批准后恢复隔离Electron验证",
+  "skeleton": {
+    "source": "../Design/design-language/skeleton-v2.css",
+    "sha256": "1BE0B3AA5DEDE247C9D284E58621A5D1B34D1CA6F3D88D6242D95B7F31DEF227",
+    "reproducedInTemporaryDirectory": true,
+    "staticChecksPassed": 4,
+    "rules": 282,
+    "references": 45,
+    "supplementValues": 36,
+    "pixelComparison": {
+      "width": 1440,
+      "height": 900,
+      "darkChangedPixels": 200,
+      "lightChangedPixels": 218,
+      "darkPercent": 0.015432,
+      "lightPercent": 0.016821,
+      "changedRows": [
+        [
+          304,
+          309
+        ],
+        [
+          349,
+          351
+        ],
+        [
+          881,
+          888
+        ]
+      ],
+      "scope": "existing initial-state images; no screenshots rerun or noise-floor reproduction"
+    },
+    "activated": false
+  },
+  "nativeModFixture": {
+    "reportedChecksPassed": [
+      "runningShell",
+      "stableTokenAction",
+      "oneProjectOneWindow",
+      "darkTheme36px",
+      "stopAndRestart",
+      "closeDoesNotStop",
+      "portRebind",
+      "fallbackReturn",
+      "exitCleanup"
+    ],
+    "scope": "real Electron with simulated host; production CSP and actual main route are not proven by this fixture"
+  },
+  "realMod": {
+    "checks": {
+      "mode": "real-http",
+      "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+      "fixtureDirectory": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mod-window-real-fixture-1vQFEl",
+      "evidenceRoot": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-v2-native-20260915\\mod-window-real",
+      "realFrameInvoke": true,
+      "realIncrement": true,
+      "realStopRestart": true,
+      "realCloseDoesNotStop": true
+    },
+    "invocations": [
+      {
+        "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+        "sessionId": "preview-mod-owner",
+        "action": "status",
+        "frameTokenBound": true
+      },
+      {
+        "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+        "sessionId": "preview-mod-owner",
+        "action": "increment",
+        "frameTokenBound": true
+      },
+      {
+        "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+        "sessionId": "preview-mod-owner",
+        "action": "increment",
+        "frameTokenBound": true
+      },
+      {
+        "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+        "sessionId": "preview-mod-owner",
+        "action": "status",
+        "frameTokenBound": true
+      }
+    ],
+    "diagnostics": [
+      "did-finish-load:http://127.0.0.1:57316/weftmate/mods/window.html?project_id=mod-3c26cb61-ed9c-4c5e-ad11-20824714986c&session_id=preview-mod-owner",
+      "did-finish-load:http://127.0.0.1:57316/weftmate/mods/window.html?project_id=mod-3c26cb61-ed9c-4c5e-ad11-20824714986c&session_id=preview-mod-owner"
+    ]
+  },
+  "carrier": {
+    "report": "carrier-report-retry2.json",
+    "checks": {
+      "sessionSelect": true,
+      "darkTheme": true,
+      "lightTheme": true,
+      "sameWebContentsOnHide": true,
+      "cleanup": true
+    },
+    "errors": [],
+    "scope": "complete official DSH page in WebContentsView; existing real Muse history; not a conversation-only component or full V2 integration"
+  },
+  "limitations": [
+    "No new message was sent from the embedded carrier; stream/stop/approval/question/attachment remain untested.",
+    "No production main-window return route end-to-end test.",
+    "Native port rebind uses simulated host in the native fixture, not a real DSH restart.",
+    "Mod host bar has actual light/dark rendering; template business text is still black in dark mode and is not accepted as finished UI.",
+    "Complete V2 three columns, six routes and skeleton CSS activation remain undone."
+  ],
+  "review": "Sol independently inspected final scripts, reports and screenshots; evidence scopes confirmed",
+  "checks": {
+    "targetedCurrent": {
+      "pass": 8,
+      "fail": 0
+    },
+    "typecheck": "passed",
+    "previousBroaderResult": "63/63 from prior product candidate, not rerun this turn",
+    "previousFullSuite": "380 passed, 3 failed, 1 skipped; unchanged legacy licensing/pet/device assertions"
+  },
+  "cleanup": {
+    "allThreeCreatedModsVerifiedStopped": true,
+    "temporaryPort57316Closed": true,
+    "noElectronProcessLeft": true,
+    "preservedPorts": {
+      "50191": 30444,
+      "8080": 39708
+    },
+    "testRootRetained": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-v2-native-20260915"
+  },
+  "changedCodeSincePreviousCandidate": [
+    "scripts/verify-mod-window-electron.mjs",
+    "scripts/verify-dsh-view-seam.mjs",
+    "package.json"
+  ],
+  "sha256": {
+    "scripts/verify-mod-window-electron.mjs": "4bd5ccd0aa2137e59a3252c8ff1836814fdad6fb3e681d4eea7987e48db82ebe",
+    "scripts/verify-dsh-view-seam.mjs": "b6db05ad6511666f9a91c8c0caefd6546f7fddb752fd0d63a559b7b9b457c202",
+    "package.json": "6a8e02a5efd158df6b9d10bfe3d684f17636114b04ae900a0cc2a9b6722a57f5"
+  }
+}

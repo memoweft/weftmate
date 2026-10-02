@@ -166,6 +166,29 @@ export class AiGameTransport {
   discoverEmulators(signal) {
     return this.#json('GET', '/api/execution/v2/device-profiles/discovery', undefined, signal, validateV2Discovery, true)
   }
+  createDeviceRun(payload, signal) {
+    return this.#json('POST', '/api/execution/v2/device-runs', payload, signal, validateDeviceRun, true)
+  }
+  deviceRun(runId, signal) {
+    return this.#json('GET', `/api/execution/v2/device-runs/${segment(runId)}`, undefined, signal, validateDeviceRun, true)
+  }
+  observeDeviceRun(runId, options = {}, signal) {
+    return this.#json('POST', `/api/execution/v2/device-runs/${segment(runId)}/observe`, options, signal, value => {
+      record(value, 'device observation')
+      if (value.run_id !== runId || typeof value.observation_id !== 'string' || !isRecord(value.ui_tree)) rejected()
+      return value
+    }, true, 16 * 1024 * 1024)
+  }
+  actDeviceRun(runId, payload, signal) {
+    return this.#json('POST', `/api/execution/v2/device-runs/${segment(runId)}/actions`, payload, signal, value => {
+      record(value, 'device action')
+      if (value.run_id !== runId || typeof value.accepted !== 'boolean' || !Array.isArray(value.results)) rejected()
+      return value
+    }, true, MAX_JSON_BYTES, 600_000)
+  }
+  controlDeviceRun(runId, action, signal) {
+    return this.#json('POST', `/api/execution/v2/device-runs/${segment(runId)}/controls`, { action }, signal, validateDeviceRun, true)
+  }
   async frameMetadata(taskId, signal) {
     const expectedTaskId = inert(taskId, 'task id')
     const metadata = await this.#json('GET', `/api/execution/v2/tasks/${segment(expectedTaskId)}/frame`, undefined, signal, validateV2FrameMetadata, true)
@@ -197,7 +220,8 @@ export class AiGameTransport {
     return snapshot
   }
 
-  async #json(method, path, body, callerSignal, validate, requiresOwner = false) {
+  async #json(method, path, body, callerSignal, validate, requiresOwner = false, maxBytes = MAX_JSON_BYTES, timeoutMs = this.timeoutMs) {
+    callerSignal?.throwIfAborted()
     const origin = await this.#currentOrigin()
     const token = await this.resolveToken()
     if (typeof token !== 'string' || token.length < 16) {
@@ -205,7 +229,7 @@ export class AiGameTransport {
     }
     const owner = requiresOwner ? await this.#ownerIdentity() : null
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(new Error('timeout')), this.timeoutMs)
+    const timer = setTimeout(() => controller.abort(new Error('timeout')), timeoutMs)
     timer.unref?.()
     const onAbort = () => controller.abort(callerSignal?.reason)
     callerSignal?.addEventListener('abort', onAbort, { once: true })
@@ -227,7 +251,7 @@ export class AiGameTransport {
         ...(body === undefined ? {} : { body: JSON.stringify(body) }),
       })
       const text = await response.text()
-      if (new TextEncoder().encode(text).byteLength > MAX_JSON_BYTES) {
+      if (new TextEncoder().encode(text).byteLength > maxBytes) {
         throw new AiGameTransportError('AI_GAME_RESPONSE_REJECTED', 'AI-Game response exceeded the safe size limit.')
       }
       let decoded
@@ -236,7 +260,9 @@ export class AiGameTransport {
       }
       if (!response.ok) {
         const code = safeErrorCode(decoded) ?? 'AI_GAME_REQUEST_FAILED'
-        throw new AiGameTransportError(code, publicErrorMessage(code), { retryable: response.status >= 500 })
+        const message = path.startsWith('/api/execution/v2/device-runs') && typeof decoded?.error?.message === 'string'
+          ? decoded.error.message.slice(0, 2000) : publicErrorMessage(code)
+        throw new AiGameTransportError(code, message, { retryable: response.status >= 500 })
       }
       return validate(decoded)
     } catch (error) {
@@ -677,6 +703,11 @@ function record(value, label) {
   if (!isRecord(value)) {
     throw new AiGameTransportError('AI_GAME_RESPONSE_REJECTED', `AI-Game ${label} response failed schema validation.`)
   }
+}
+function validateDeviceRun(value) {
+  record(value, 'device run')
+  if (!inertOrFalse(value.run_id) || typeof value.status !== 'string' || typeof value.device_profile_id !== 'string') rejected()
+  return value
 }
 function isRecord(value) { return value !== null && typeof value === 'object' && !Array.isArray(value) }
 function rejected() { throw new AiGameTransportError('AI_GAME_RESPONSE_REJECTED', 'AI-Game response failed schema validation.') }

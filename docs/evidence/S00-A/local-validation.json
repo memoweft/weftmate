@@ -1,0 +1,1644 @@
+{
+  "date": "2026-09-08",
+  "repositories": [
+    {
+      "repository": "WeftMate/Repository",
+      "baseline_files": 221,
+      "unchanged_files": 214,
+      "expected_changed_documents": 7,
+      "head_unchanged": true
+    },
+    {
+      "repository": "AIGame/Repository",
+      "baseline_files": 339,
+      "unchanged_files": 332,
+      "expected_changed_documents": 7,
+      "head_unchanged": true
+    },
+    {
+      "repository": "MemoWeft/Core",
+      "baseline_files": 680,
+      "unchanged_files": 680,
+      "expected_changed_documents": 0,
+      "head_unchanged": true
+    },
+    {
+      "repository": "MemoWeft/Hosts/HermesAgent",
+      "baseline_files": 8961,
+      "unchanged_files": 8961,
+      "expected_changed_documents": 0,
+      "head_unchanged": true
+    },
+    {
+      "repository": "Shared/Dependencies/DeepSeekHarness",
+      "baseline_files": 7418,
+      "unchanged_files": 7418,
+      "expected_changed_documents": 0,
+      "head_unchanged": true
+    },
+    {
+      "repository": "WeftLearn/Repository",
+      "baseline_files": 75,
+      "unchanged_files": 75,
+      "expected_changed_documents": 0,
+      "head_unchanged": true
+    }
+  ],
+  "unexpected_changes": [],
+  "cleanup_targets": 24,
+  "deleted_file_entries": 752420,
+  "deleted_logical_bytes": 11912134864,
+  "cleanup_failures": [],
+  "note": "Logical sizes, not a measurement of physically reclaimed disk space. Baseline covers tracked and non-ignored files, excluding the four explicitly deleted unmanaged candidates.",
+  "checks": {
+    "weftmate_layout": true,
+    "weftmod_layout": true,
+    "licensing_tests_passed": 1,
+    "production_release_tests_passed": 3,
+    "owner_acceptance": "not tested",
+    "application_startup": "not tested",
+    "remote": "not contacted"
+  },
+  "cleanup": [
+    {
+      "path": "_ProjectRepairArchive",
+      "files": 859,
+      "bytes": 15877026,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": ".pytest_cache",
+      "files": 4,
+      "bytes": 9343,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Exports",
+      "files": 17853,
+      "bytes": 334349965,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/.codex",
+      "files": 5,
+      "bytes": 272138,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Repository/.stage",
+      "files": 34071,
+      "bytes": 262071181,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Repository/.tmp",
+      "files": 1457,
+      "bytes": 316922379,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Repository/NVIDIA Corporation",
+      "files": 0,
+      "bytes": 0,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Repository/docs/ROADMAP.md",
+      "files": 1,
+      "bytes": 3140,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Repository/docs/AI-GAME-AUTONOMOUS-MOBILE-TASKS.md",
+      "files": 1,
+      "bytes": 4424,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Runtime/Stage3/builds",
+      "files": 131859,
+      "bytes": 3650633310,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Runtime/Stage3/install",
+      "files": 32955,
+      "bytes": 657569699,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Runtime/Stage3/staging",
+      "files": 131396,
+      "bytes": 1028559580,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Runtime/Stage4B/dsh-47f943859bef-stage4b-src",
+      "files": 400786,
+      "bytes": 5358185912,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Runtime/Stage4B/dsh-47f943859bef.tar",
+      "files": 1,
+      "bytes": 54077440,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "WeftMate/Runtime/Stage4B/pack-probe-artifact",
+      "files": 1,
+      "bytes": 55438,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/.managed-runtime-candidate-4161310",
+      "files": 285,
+      "bytes": 44358205,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/.managed-runtime-verify",
+      "files": 288,
+      "bytes": 44357475,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/.managed-runtime-verify-closure",
+      "files": 285,
+      "bytes": 44357964,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/.managed-runtime-verify-final",
+      "files": 276,
+      "bytes": 42620306,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/.pytest_cache",
+      "files": 2,
+      "bytes": 256569,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/.ruff_cache",
+      "files": 4,
+      "bytes": 1234,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/work",
+      "files": 29,
+      "bytes": 57576130,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/docs/product/ACCEPTANCE.md",
+      "files": 1,
+      "bytes": 12594,
+      "links_removed": 0,
+      "deleted": true
+    },
+    {
+      "path": "AIGame/Repository/docs/product/EXECUTION_CONTRACT.md",
+      "files": 1,
+      "bytes": 3412,
+      "links_removed": 0,
+      "deleted": true
+    }
+  ],
+  "input_reference_files": 3,
+  "follow_up_review": {
+    "reason": "User challenged incomplete reading of supplied cleanup/startup/layout documentation",
+    "status": "S00-A in progress; local cleanup done; review and owner acceptance incomplete",
+    "branches": {
+      "WeftMate/Repository": "chore/repository-layout",
+      "AIGame/Repository": "chore/repository-layout"
+    },
+    "remote_heads": {
+      "memoweft/weftmate": "c8b8c38c3b459433c8b5728ad3f29f4f73cdc6b8",
+      "memoweft/AI-GAME": "8374bde8c584ff9fae56bec9e198183b170a3642"
+    },
+    "weftmate_remote_configured": false,
+    "remote_full_tree_compared": false,
+    "additional_deletions": false,
+    "business_source_changed": false
+  },
+  "continuation_cleanup": {
+    "targets": 50,
+    "deleted_file_entries": 62933,
+    "logical_bytes": 1777375729,
+    "entries": [
+      {
+        "path": "WeftMate/Repository/dist",
+        "reason": "obsolete installer and unpacked packaging output",
+        "files": 61498,
+        "bytes": 1616948287,
+        "deleted": true
+      },
+      {
+        "path": "WeftMate/Runtime/HarnessBuilds",
+        "reason": "compiled diagnostic probes",
+        "files": 5,
+        "bytes": 291784,
+        "deleted": true
+      },
+      {
+        "path": "WeftMate/Runtime/HarnessStatus",
+        "reason": "obsolete diagnostic outputs",
+        "files": 2,
+        "bytes": 2662,
+        "deleted": true
+      },
+      {
+        "path": "WeftMate/Runtime/IsolatedOnline",
+        "reason": "stale isolated-run process markers",
+        "files": 2,
+        "bytes": 520,
+        "deleted": true
+      },
+      {
+        "path": "WeftMate/Runtime/K4D",
+        "reason": "obsolete launch probes and logs",
+        "files": 7,
+        "bytes": 6574,
+        "deleted": true
+      },
+      {
+        "path": "WeftMate/Runtime/Stage3/evidence",
+        "reason": "obsolete packaging test evidence",
+        "files": 4,
+        "bytes": 1503,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/runtime/tmp",
+        "reason": "temporary download probes",
+        "files": 6,
+        "bytes": 90279506,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/runtime/releases",
+        "reason": "rebuildable local release archives",
+        "files": 9,
+        "bytes": 20912969,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/runtime/review-bundles",
+        "reason": "obsolete source review copy without Git history",
+        "files": 338,
+        "bytes": 6653772,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/.agents",
+        "reason": "empty obsolete skills directory",
+        "files": 0,
+        "bytes": 0,
+        "deleted": true
+      },
+      {
+        "path": "MemoWeft/.codex",
+        "reason": "superseded coordinator-only governance",
+        "files": 5,
+        "bytes": 37665,
+        "deleted": true
+      },
+      {
+        "path": "MemoWeft/Hosts/HermesAgent/apps/desktop/AGENTS.md",
+        "reason": "superseded nested role restriction",
+        "files": 1,
+        "bytes": 1683,
+        "deleted": true
+      },
+      {
+        "path": "WeftMate/Repository/src/vault-file-guard.ts",
+        "reason": "unused helper; actual credential protection is credential-vault-document.ts",
+        "files": 1,
+        "bytes": 533,
+        "deleted": true
+      },
+      {
+        "path": "WeftMate/Repository/tests/vault-file-guard.test.ts",
+        "reason": "isolated test of unused helper; active encrypted-vault tests remain",
+        "files": 1,
+        "bytes": 1128,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/.pytest_cache",
+        "reason": "rebuildable Python/test cache",
+        "files": 5,
+        "bytes": 219489,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/.pytest_cache",
+        "reason": "rebuildable Python/test cache",
+        "files": 5,
+        "bytes": 126611,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/.ruff_cache",
+        "reason": "rebuildable Python/test cache",
+        "files": 4,
+        "bytes": 3573,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 126,
+        "bytes": 3388865,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/agent_runtime/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 63,
+        "bytes": 2328292,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/android_ui_runtime/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 21,
+        "bytes": 783888,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/applications/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 3,
+        "bytes": 760,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/applications/soul/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 21,
+        "bytes": 361742,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/application_runtime/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 12,
+        "bytes": 445418,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/device_body/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 18,
+        "bytes": 568881,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/emulator_runtime/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 30,
+        "bytes": 1039662,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/execution_contract/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 18,
+        "bytes": 716452,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/experience_runtime/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 15,
+        "bytes": 677778,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/game_learning/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 24,
+        "bytes": 446692,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/gateway/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 24,
+        "bytes": 140876,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/goal_runtime/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 39,
+        "bytes": 1070843,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/mobile_agent/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 15,
+        "bytes": 445022,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_adapters/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 70985,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_adapters/android/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 9,
+        "bytes": 74556,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_adapters/artifacts/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 19152,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_adapters/sqlite/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 352832,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 12,
+        "bytes": 286254,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/action/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 34200,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/checkpoint/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 21911,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/control/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 8719,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/event/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 14491,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/fact/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 16018,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/lease/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 26423,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/observation/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 53091,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/stage/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 24758,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/task/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 41238,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/runtime_kernel/verify/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 6,
+        "bytes": 16507,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/backend/ai_game_console/user_fact_runtime/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 15,
+        "bytes": 168238,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/scripts/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 1,
+        "bytes": 2847,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/apps/console/tests/backend/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 484,
+        "bytes": 27008682,
+        "deleted": true
+      },
+      {
+        "path": "AIGame/Repository/scripts/__pycache__",
+        "reason": "rebuildable Python/test cache",
+        "files": 12,
+        "bytes": 1231397,
+        "deleted": true
+      }
+    ],
+    "no_backup_created": true,
+    "research_relocation": {
+      "files_verified": 3600,
+      "repositories": [
+        {
+          "name": "android_world",
+          "status_ok": true,
+          "head": "3e50888527ef9f29b9157ecd537e408008bb1c85"
+        },
+        {
+          "name": "appium-inspector",
+          "status_ok": true,
+          "head": "5e73695aea31163d7d15d5913cc07ddfad583348"
+        },
+        {
+          "name": "appium-uiautomator2-driver",
+          "status_ok": true,
+          "head": "63600b10739459bee0e8b723043dd958ab16f373"
+        },
+        {
+          "name": "atxserver2",
+          "status_ok": true,
+          "head": "a1b42c5597c0a9b204ef95f0809f299224136b1a"
+        },
+        {
+          "name": "atxserver2-android-provider",
+          "status_ok": true,
+          "head": "b4be7941eb4b7ad0b8d494ae7117761e697aeb2b"
+        },
+        {
+          "name": "mobilerun",
+          "status_ok": true,
+          "head": "66cd7eb030cd05b551763c96879a6385e328fa98"
+        },
+        {
+          "name": "mobilerun-portal",
+          "status_ok": true,
+          "head": "d4cb7d6657385488239812e776df584f890e32fd"
+        },
+        {
+          "name": "open-autoglm",
+          "status_ok": true,
+          "head": "86f55382982fb054e8fc98ca80609dff8a2cdc3c"
+        },
+        {
+          "name": "scrcpy",
+          "status_ok": true,
+          "head": "2926c06c5dc3064ae6d8db706f1a98a37cfcf3f0"
+        },
+        {
+          "name": "uiautomator2",
+          "status_ok": true,
+          "head": "b788548cf5a8e318ecbdd22461d47d19bf53b04c"
+        },
+        {
+          "name": "ya-webadb",
+          "status_ok": true,
+          "head": "340d3fe0f0f6a44830ac41965106a2aea41bc484"
+        }
+      ]
+    },
+    "remote_tree_comparison": {
+      "WeftMate/Repository": {
+        "local_head": "dda5356fec14ecc8a77774d4f319350e3a951417",
+        "remote_head": "c8b8c38c3b459433c8b5728ad3f29f4f73cdc6b8",
+        "common_ancestor": null,
+        "unique_commits_local_remote": "8\t88",
+        "committed_tree_changes": {
+          "M": 31,
+          "D": 71,
+          "A": 173
+        },
+        "local_tracked_files": 221,
+        "remote_tracked_files": 119,
+        "remote_workflows": [
+          ".github/workflows/ci.yml"
+        ],
+        "local_workflows": [
+          ".github/workflows/ci.yml"
+        ],
+        "committed_tree_paths": [
+          "M\t.github/ISSUE_TEMPLATE/bug_report.md",
+          "M\t.gitignore",
+          "M\tAGENTS.md",
+          "D\tCURRENT.md",
+          "M\tREADME.md",
+          "A\tbuild/icon.png",
+          "A\tbuild/tray-icon.png",
+          "A\tdocs/AI-GAME-AUTONOMOUS-MOBILE-TASKS.md",
+          "M\tdocs/ARCHITECTURE.md",
+          "D\tdocs/PRIVACY.md",
+          "M\tdocs/PRODUCT.md",
+          "D\tdocs/REQUIREMENTS.md",
+          "A\tdocs/ROADMAP.md",
+          "M\tdocs/VENDOR-PACKAGING.md",
+          "A\tdocs/WINDOWS-PREVIEW.md",
+          "D\tdocs/ui-redesign/realapp-collapsed-chat.png",
+          "D\tdocs/ui-redesign/realapp2-dark-memory.png",
+          "D\tdocs/ui-redesign/realapp2-light-chat.png",
+          "D\tdocs/ui-redesign/realapp2-light-personas.png",
+          "D\tdocs/ui-redesign/realapp3-graph.png",
+          "D\tdocs/ui-redesign/realapp3-mcp.png",
+          "D\tdocs/ui-redesign/realapp3-settings.png",
+          "M\tdogfood/PROTOCOL.md",
+          "M\tdogfood/run.mjs",
+          "M\tpackage-lock.json",
+          "M\tpackage.json",
+          "A\tpatches/dsh/47f943859bef-stage3-hero-composer-carry.patch",
+          "A\tpatches/dsh/47f943859bef-stage4b-composable-details.patch",
+          "D\truntime/cordis.yml",
+          "D\truntime/plugins/memoweft-plugin.template.ts",
+          "D\truntime/plugins/weftmate-approval-channel.template.ts",
+          "D\truntime/plugins/weftmate-autonomy.template.ts",
+          "D\truntime/plugins/weftmate-bridge.template.ts",
+          "D\truntime/plugins/weftmate-persona.template.ts",
+          "D\truntime/plugins/weftmate-workspace.template.ts",
+          "A\tscripts/build-windows-candidate.mjs",
+          "A\tscripts/dogfood-web.mts",
+          "A\tscripts/dsh-vendor-closure.mjs",
+          "A\tscripts/electron-builder-feed.mjs",
+          "A\tscripts/gen-icon.ps1",
+          "A\tscripts/make-self-signed-cert.ps1",
+          "A\tscripts/materialize-dsh-stage4b-build.ps1",
+          "A\tscripts/materialize-dsh-stage4b-workspace-dependencies.ps1",
+          "A\tscripts/run-contract-tests.mjs",
+          "M\tscripts/stage-dsh-runtime.mjs",
+          "A\tscripts/stage3-export-installed-diagnostics.mjs",
+          "A\tscripts/stage3-run-installed.mjs",
+          "A\tscripts/stage3-seed-isolated-local-model.mjs",
+          "M\tscripts/upgrade-dsh.mjs",
+          "M\tscripts/vendor-dsh.mjs",
+          "M\tscripts/verify-dsh-vendor.mjs",
+          "A\tscripts/verify-windows-package.mjs",
+          "A\tscripts/windows-package-policy.mjs",
+          "D\tsrc/agent-autonomy.ts",
+          "D\tsrc/approval-queue.ts",
+          "D\tsrc/chatHistory.ts",
+          "D\tsrc/cognition-correction.ts",
+          "D\tsrc/confBand.ts",
+          "M\tsrc/config-store.ts",
+          "A\tsrc/credential-vault-document.ts",
+          "M\tsrc/desktop-pet-motion.ts",
+          "M\tsrc/desktop-pet-preload.cjs",
+          "A\tsrc/devices.ts",
+          "A\tsrc/diagnostics-export.ts",
+          "D\tsrc/dsh-chat.ts",
+          "D\tsrc/dsh-history.ts",
+          "D\tsrc/dsh-runtime.ts",
+          "A\tsrc/dsh-settings-migration.ts",
+          "A\tsrc/dsh-surface-preload.cjs",
+          "A\tsrc/dsh-web-runtime.ts",
+          "D\tsrc/experiences/aria.ts",
+          "D\tsrc/experiences/index.ts",
+          "D\tsrc/experiences/plain.ts",
+          "D\tsrc/experiences/xingyao.ts",
+          "D\tsrc/first-interview.ts",
+          "A\tsrc/harness-model-routes.ts",
+          "A\tsrc/harness-startup-error.ts",
+          "A\tsrc/legacy-compatibility-backfill.ts",
+          "A\tsrc/legacy-vault-migration.ts",
+          "M\tsrc/main.mjs",
+          "A\tsrc/managed-ai-game-runtime.mjs",
+          "D\tsrc/mcp-rows.ts",
+          "D\tsrc/mcp-store.ts",
+          "D\tsrc/memoweft.ts",
+          "A\tsrc/model-discovery-policy.ts",
+          "A\tsrc/model-mutation-transaction.ts",
+          "A\tsrc/model-profile-guard.ts",
+          "A\tsrc/model-save-policy.ts",
+          "A\tsrc/model-switch-transaction.ts",
+          "D\tsrc/nudge-runtime.ts",
+          "A\tsrc/openai-compatible-client.ts",
+          "A\tsrc/openai-compatible.ts",
+          "A\tsrc/perception.ts",
+          "D\tsrc/persona-runtime.ts",
+          "D\tsrc/personas/manifest.ts",
+          "D\tsrc/personas/store.ts",
+          "A\tsrc/pets/assets/xingyao/spritesheet.webp",
+          "M\tsrc/pets/schema.ts",
+          "M\tsrc/pets/store.ts",
+          "A\tsrc/plugins/weftmate-aigame-host.mjs",
+          "A\tsrc/plugins/weftmate-client/client.js",
+          "A\tsrc/plugins/weftmate-client/index.js",
+          "A\tsrc/plugins/weftmate-client/package.json",
+          "A\tsrc/plugins/weftmate-credentials.mjs",
+          "A\tsrc/plugins/weftmate-host.mjs",
+          "A\tsrc/plugins/weftmate-memory.mjs",
+          "A\tsrc/plugins/weftmate-secure-snapshot-bootstrap.mjs",
+          "D\tsrc/preload.cjs",
+          "D\tsrc/profile-overrides.ts",
+          "A\tsrc/renderer-trust.ts",
+          "A\tsrc/route-mutation-journal.ts",
+          "A\tsrc/route-mutation-queue.ts",
+          "A\tsrc/runtime/ai-game/panel.mjs",
+          "A\tsrc/runtime/ai-game/transport.mjs",
+          "A\tsrc/runtime/dsh-adapter/agents.mjs",
+          "A\tsrc/runtime/dsh-adapter/models.mjs",
+          "A\tsrc/runtime/dsh-adapter/permissions.mjs",
+          "A\tsrc/runtime/dsh-adapter/sessions.mjs",
+          "A\tsrc/runtime/dsh-adapter/workspace.mjs",
+          "A\tsrc/runtime/gateway/diagnostics.mjs",
+          "A\tsrc/runtime/gateway/errors/gateway-error.mjs",
+          "A\tsrc/runtime/gateway/event-stream/sse.mjs",
+          "A\tsrc/runtime/gateway/index.mjs",
+          "A\tsrc/runtime/gateway/legacy/device.mjs",
+          "A\tsrc/runtime/gateway/legacy/files.mjs",
+          "A\tsrc/runtime/gateway/legacy/http.mjs",
+          "A\tsrc/runtime/gateway/legacy/inject.mjs",
+          "A\tsrc/runtime/gateway/legacy/perception.mjs",
+          "A\tsrc/runtime/gateway/legacy/pet.mjs",
+          "A\tsrc/runtime/gateway/legacy/state.mjs",
+          "A\tsrc/runtime/gateway/legacy/update.mjs",
+          "A\tsrc/runtime/gateway/routes/v1.mjs",
+          "A\tsrc/runtime/gateway/schemas/bootstrap.ts",
+          "A\tsrc/runtime/gateway/schemas/catalog.ts",
+          "A\tsrc/runtime/gateway/schemas/coding.ts",
+          "A\tsrc/runtime/gateway/schemas/envelope.ts",
+          "A\tsrc/runtime/gateway/schemas/health.ts",
+          "A\tsrc/runtime/gateway/schemas/index.ts",
+          "A\tsrc/runtime/gateway/schemas/model.ts",
+          "A\tsrc/runtime/gateway/schemas/permission.ts",
+          "A\tsrc/runtime/gateway/schemas/session.ts",
+          "A\tsrc/runtime/gateway/schemas/stream.ts",
+          "A\tsrc/runtime/gateway/schemas/workspace.ts",
+          "D\tsrc/scheduler.ts",
+          "A\tsrc/session-model-route-restore.ts",
+          "M\tsrc/settings.ts",
+          "A\tsrc/stage2-config.ts",
+          "A\tsrc/stage2-session-guards.ts",
+          "A\tsrc/update-policy.ts",
+          "M\tsrc/update.ts",
+          "A\tsrc/vault-file-guard.ts",
+          "A\tsrc/web/approval-state.js",
+          "M\tsrc/web/desktop-pet.html",
+          "D\tsrc/web/index.html",
+          "A\tsrc/web/message-dom-updates.js",
+          "A\tsrc/web/message-stream-state.js",
+          "A\tsrc/web/session-retry.js",
+          "A\tsrc/web/settings-editor-state.js",
+          "A\tsrc/web/theme-preference-state.js",
+          "A\tsrc/web/weftmate.css",
+          "A\tsrc/web/weftmate.html",
+          "A\tsrc/web/weftmate.js",
+          "A\tsrc/web/workspace-state.js",
+          "A\tsrc/weftmate-preload.cjs",
+          "D\tsrc/workspace-undo.ts",
+          "D\ttests/agent-autonomy.test.ts",
+          "A\ttests/ai-game-controller-persistence.test.ts",
+          "A\ttests/ai-game-panel-client-contract.test.ts",
+          "A\ttests/ai-game-panel.test.ts",
+          "A\ttests/ai-game-tool-contract.test.ts",
+          "A\ttests/ai-game-v2-host.test.ts",
+          "D\ttests/approval-queue.test.ts",
+          "D\ttests/chat-history-workspace.test.ts",
+          "M\ttests/contract/README.md",
+          "A\ttests/contract/checkout-worktree-pointer.test.ts",
+          "A\ttests/contract/dsh-web-chat-contract.test.ts",
+          "A\ttests/contract/dsh-web-profile.test.ts",
+          "A\ttests/contract/fixtures/p1-03-b-host-direct.mts",
+          "A\ttests/contract/fixtures/p1-03-c-gateway-clean-pin.mts",
+          "A\ttests/contract/fixtures/p1-03-gateway-clean-pin.mts",
+          "A\ttests/contract/fixtures/p1-04-c-adapter-contract.mts",
+          "A\ttests/contract/fixtures/p1-05-c-diagnostics.mts",
+          "D\ttests/contract/fixtures/probe-b-broken.cordis.yml",
+          "D\ttests/contract/fixtures/probe-b-client.mts",
+          "D\ttests/contract/fixtures/probe-b.cordis.yml",
+          "D\ttests/contract/fixtures/probe-c-plugin.template.ts",
+          "D\ttests/contract/fixtures/probe-c.cordis.yml",
+          "A\ttests/contract/fixtures/r7-bridge-smoke.py",
+          "A\ttests/contract/fixtures/r7-memory-integration.mts",
+          "A\ttests/contract/fixtures/web-chat-contract-fixture.mts",
+          "A\ttests/contract/fixtures/web-chat-replay.jsonl",
+          "A\ttests/contract/memoweft-pin.json",
+          "A\ttests/contract/memoweft-pin.test.ts",
+          "A\ttests/contract/p1-03-gateway-clean-pin.test.ts",
+          "A\ttests/contract/p1-04-adapter-contract.test.ts",
+          "A\ttests/contract/p1-05-diagnostics.test.ts",
+          "D\ttests/contract/probe-b-sdk-client.test.ts",
+          "D\ttests/contract/probe-c-memoweft-plugin.test.ts",
+          "A\ttests/contract/r7-memory-integration.test.ts",
+          "M\ttests/contract/support/checkout.ts",
+          "A\ttests/contract/support/memoweft-pin.ts",
+          "A\ttests/credential-vault-document.test.ts",
+          "M\ttests/desktop-pet-motion.test.ts",
+          "A\ttests/diagnostics-export.test.ts",
+          "A\ttests/dogfood-launcher.test.ts",
+          "D\ttests/dsh-bridge.test.ts",
+          "D\ttests/dsh-chat.test.ts",
+          "D\ttests/dsh-history.test.ts",
+          "D\ttests/dsh-perception.test.ts",
+          "D\ttests/dsh-persona.test.ts",
+          "D\ttests/dsh-runtime.test.ts",
+          "A\ttests/dsh-settings-migration.test.ts",
+          "A\ttests/dsh-surface-contract.test.ts",
+          "A\ttests/dsh-vendor-closure.test.ts",
+          "A\ttests/dsh-web-profile.test.ts",
+          "A\ttests/dsh-web-runtime-lifecycle.test.ts",
+          "D\ttests/experiences.test.ts",
+          "D\ttests/first-interview.test.ts",
+          "A\ttests/gateway-schemas.test.ts",
+          "A\ttests/harness-model-routes.test.ts",
+          "A\ttests/harness-startup-error.test.ts",
+          "A\ttests/legacy-compatibility-backfill.test.ts",
+          "A\ttests/legacy-vault-migration.test.ts",
+          "M\ttests/licensing-contract.test.ts",
+          "A\ttests/main-renderer-trust-contract.test.ts",
+          "A\ttests/main-shutdown-contract.test.ts",
+          "A\ttests/main-wipe-contract.test.ts",
+          "D\ttests/mcp-rows.test.ts",
+          "A\ttests/memory-plugin-contract.test.ts",
+          "A\ttests/memoweft-bridge.test.ts",
+          "D\ttests/memoweftCompatibility.test.ts",
+          "D\ttests/memoweftConversationContext.test.ts",
+          "A\ttests/message-stream-state.test.ts",
+          "A\ttests/model-discovery-policy.test.ts",
+          "A\ttests/model-mutation-transaction.test.ts",
+          "A\ttests/model-profile-guard.test.ts",
+          "A\ttests/model-save-policy.test.ts",
+          "A\ttests/model-switch-transaction.test.ts",
+          "D\ttests/nudge-runtime.test.ts",
+          "A\ttests/openai-compatible.test.ts",
+          "A\ttests/p1-03-dsh-adapter.test.ts",
+          "A\ttests/p1-03-gateway-probe.test.ts",
+          "A\ttests/p1-04-dsh-adapter.test.ts",
+          "A\ttests/p1-05-gateway-diagnostics.test.ts",
+          "A\ttests/perception-contract.test.ts",
+          "D\ttests/persona-contract.test.ts",
+          "D\ttests/persona-runtime.test.ts",
+          "D\ttests/persona-store.test.ts",
+          "M\ttests/pet-desktop-soul-contract.test.ts",
+          "A\ttests/pet-newbase-contract.test.ts",
+          "M\ttests/pet-store.test.ts",
+          "D\ttests/profile-and-wipe-contract.test.ts",
+          "D\ttests/profile-controls.test.ts",
+          "A\ttests/r8-device-contract.test.ts",
+          "A\ttests/renderer-trust.test.ts",
+          "A\ttests/route-mutation-journal.test.ts",
+          "A\ttests/route-mutation-queue.test.ts",
+          "A\ttests/settings-ui-contract.test.ts",
+          "A\ttests/shared-runtime-vendor-routes.test.ts",
+          "A\ttests/stage1-gateway.test.ts",
+          "A\ttests/stage1-shell-contract.test.ts",
+          "A\ttests/stage1-vendor-approval-carrier.test.ts",
+          "A\ttests/stage2-config.test.ts",
+          "A\ttests/stage2-interaction-state.test.ts",
+          "A\ttests/stage2-renderer-behavior.test.ts",
+          "A\ttests/stage2-session-guards.test.ts",
+          "A\ttests/stage2-shell-contract.test.ts",
+          "A\ttests/stage3-windows-preview.test.ts",
+          "D\ttests/unified-entry-contract.test.ts",
+          "A\ttests/vault-file-guard.test.ts",
+          "A\ttests/weftmate-conversation-surface.test.ts",
+          "A\ttests/weftmate-credentials-bridge.test.ts",
+          "A\ttests/windows-package-policy.test.ts",
+          "D\ttests/workspace-undo.test.ts",
+          "M\ttsconfig.json"
+        ]
+      },
+      "AIGame/Repository": {
+        "local_head": "d6a2793f320b41a5500e12a905ce614415fcda53",
+        "remote_head": "8374bde8c584ff9fae56bec9e198183b170a3642",
+        "common_ancestor": "8374bde8c584ff9fae56bec9e198183b170a3642",
+        "unique_commits_local_remote": "29\t0",
+        "committed_tree_changes": {
+          "M": 80,
+          "A": 176,
+          "D": 71
+        },
+        "local_tracked_files": 339,
+        "remote_tracked_files": 234,
+        "remote_workflows": [
+          ".github/workflows/ci.yml"
+        ],
+        "local_workflows": [
+          ".github/workflows/ci.yml"
+        ],
+        "committed_tree_paths": [
+          "M\t.gitignore",
+          "A\tAGENTS.md",
+          "D\tCONTEXT.md",
+          "D\tPHASE_5_WEEK_4_DEVICE_LEASE_MANAGER.md",
+          "D\tPHASE_5_WEEK_7_E2E_TESTING_PLAN.md",
+          "M\tREADME.md",
+          "D\tRUNTIME_KERNEL_ROADMAP_STATUS.md",
+          "M\tapps/console/README.md",
+          "M\tapps/console/backend/ai_game_console/adb_executor.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/__init__.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/activity_integration.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/activity_policy.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/activity_slice.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/activity_store.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/agenda.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/api.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/continuation.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/coverage.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/domain.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/event_pump.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/event_router.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/fact_questions.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/goal_graph.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/planner.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/preemption.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/projection.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/scheduler.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/service.py",
+          "A\tapps/console/backend/ai_game_console/agent_runtime/store.py",
+          "A\tapps/console/backend/ai_game_console/android_ui_runtime/__init__.py",
+          "A\tapps/console/backend/ai_game_console/android_ui_runtime/domain.py",
+          "A\tapps/console/backend/ai_game_console/android_ui_runtime/role.py",
+          "A\tapps/console/backend/ai_game_console/android_ui_runtime/runner.py",
+          "A\tapps/console/backend/ai_game_console/android_ui_runtime/sanitizer.py",
+          "A\tapps/console/backend/ai_game_console/android_ui_runtime/semantic_verification.py",
+          "A\tapps/console/backend/ai_game_console/android_ui_runtime/store.py",
+          "M\tapps/console/backend/ai_game_console/api.py",
+          "M\tapps/console/backend/ai_game_console/application_runtime/__init__.py",
+          "M\tapps/console/backend/ai_game_console/application_runtime/domain.py",
+          "M\tapps/console/backend/ai_game_console/application_runtime/runtime.py",
+          "M\tapps/console/backend/ai_game_console/application_runtime/store.py",
+          "A\tapps/console/backend/ai_game_console/application_runtime_catalog.py",
+          "D\tapps/console/backend/ai_game_console/applications/soul/__init__.py",
+          "D\tapps/console/backend/ai_game_console/applications/soul/adapter.py",
+          "D\tapps/console/backend/ai_game_console/applications/soul/domain.py",
+          "D\tapps/console/backend/ai_game_console/applications/soul/errors.py",
+          "D\tapps/console/backend/ai_game_console/applications/soul/owner.py",
+          "D\tapps/console/backend/ai_game_console/applications/soul/reply_learning.py",
+          "D\tapps/console/backend/ai_game_console/applications/soul/vision.py",
+          "M\tapps/console/backend/ai_game_console/config.py",
+          "A\tapps/console/backend/ai_game_console/cutover_cli.py",
+          "A\tapps/console/backend/ai_game_console/device_body/__init__.py",
+          "A\tapps/console/backend/ai_game_console/device_body/adb_adapter.py",
+          "A\tapps/console/backend/ai_game_console/device_body/domain.py",
+          "A\tapps/console/backend/ai_game_console/device_body/kernel_bridge.py",
+          "A\tapps/console/backend/ai_game_console/device_body/ports.py",
+          "A\tapps/console/backend/ai_game_console/device_body/store.py",
+          "M\tapps/console/backend/ai_game_console/discovery.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/__init__.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/domain.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/general_kernel.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/general_production.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/general_store.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/production.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/service.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/store.py",
+          "A\tapps/console/backend/ai_game_console/emulator_runtime/task_runner.py",
+          "M\tapps/console/backend/ai_game_console/execution.py",
+          "A\tapps/console/backend/ai_game_console/execution_contract/__init__.py",
+          "A\tapps/console/backend/ai_game_console/execution_contract/api.py",
+          "A\tapps/console/backend/ai_game_console/execution_contract/service.py",
+          "A\tapps/console/backend/ai_game_console/execution_contract/store.py",
+          "A\tapps/console/backend/ai_game_console/execution_contract/v2_models.py",
+          "A\tapps/console/backend/ai_game_console/execution_v2_composition.py",
+          "A\tapps/console/backend/ai_game_console/experience_runtime/__init__.py",
+          "A\tapps/console/backend/ai_game_console/experience_runtime/benchmark.py",
+          "A\tapps/console/backend/ai_game_console/experience_runtime/domain.py",
+          "A\tapps/console/backend/ai_game_console/experience_runtime/service.py",
+          "A\tapps/console/backend/ai_game_console/experience_runtime/store.py",
+          "A\tapps/console/backend/ai_game_console/gateway/__init__.py",
+          "A\tapps/console/backend/ai_game_console/gateway/conversations.py",
+          "A\tapps/console/backend/ai_game_console/gateway/device_registry.py",
+          "A\tapps/console/backend/ai_game_console/gateway/errors.py",
+          "A\tapps/console/backend/ai_game_console/gateway/idempotency.py",
+          "A\tapps/console/backend/ai_game_console/gateway/snapshot.py",
+          "A\tapps/console/backend/ai_game_console/gateway/store.py",
+          "A\tapps/console/backend/ai_game_console/gateway/task_gateway.py",
+          "A\tapps/console/backend/ai_game_console/gateway_api.py",
+          "A\tapps/console/backend/ai_game_console/goal_families.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/__init__.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/api.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/attention_selector.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/domain.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/preflight.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/production_repair.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/qwen.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/repair.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/routing.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/service.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/store.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/stzb_daily.py",
+          "A\tapps/console/backend/ai_game_console/goal_runtime/stzb_daily_benchmark.py",
+          "M\tapps/console/backend/ai_game_console/gui_owl_client.py",
+          "A\tapps/console/backend/ai_game_console/kernel_canary.py",
+          "A\tapps/console/backend/ai_game_console/legacy_cutover.py",
+          "A\tapps/console/backend/ai_game_console/local_managed_application_composition.py",
+          "A\tapps/console/backend/ai_game_console/long_lived_mobile_application_composition.py",
+          "A\tapps/console/backend/ai_game_console/managed_entry.py",
+          "A\tapps/console/backend/ai_game_console/managed_runtime.py",
+          "A\tapps/console/backend/ai_game_console/managed_runtime_builder.py",
+          "M\tapps/console/backend/ai_game_console/mobile_agent/__init__.py",
+          "M\tapps/console/backend/ai_game_console/mobile_agent/archive.py",
+          "M\tapps/console/backend/ai_game_console/mobile_agent/domain.py",
+          "M\tapps/console/backend/ai_game_console/mobile_agent/runtime.py",
+          "M\tapps/console/backend/ai_game_console/mobile_agent/store.py",
+          "M\tapps/console/backend/ai_game_console/mobile_task_adapter.py",
+          "M\tapps/console/backend/ai_game_console/mobile_task_profiles.py",
+          "A\tapps/console/backend/ai_game_console/production_release.py",
+          "M\tapps/console/backend/ai_game_console/repository.py",
+          "D\tapps/console/backend/ai_game_console/resources/date-as-yun-runtime-v1.md",
+          "M\tapps/console/backend/ai_game_console/runtime_adapters/adb_executor.py",
+          "M\tapps/console/backend/ai_game_console/runtime_adapters/android/__init__.py",
+          "A\tapps/console/backend/ai_game_console/runtime_adapters/android/device_registry.py",
+          "M\tapps/console/backend/ai_game_console/runtime_adapters/android/observation.py",
+          "M\tapps/console/backend/ai_game_console/runtime_adapters/sqlite/store.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/__init__.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/action/domain.py",
+          "A\tapps/console/backend/ai_game_console/runtime_kernel/control/__init__.py",
+          "A\tapps/console/backend/ai_game_console/runtime_kernel/control/domain.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/executor.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/kernel.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/observation/__init__.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/observation/domain.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/ports.py",
+          "M\tapps/console/backend/ai_game_console/runtime_kernel/task/domain.py",
+          "M\tapps/console/backend/ai_game_console/runtime_mode.py",
+          "M\tapps/console/backend/ai_game_console/schemas.py",
+          "M\tapps/console/backend/ai_game_console/service.py",
+          "D\tapps/console/backend/ai_game_console/soul_application_composition.py",
+          "D\tapps/console/backend/ai_game_console/soul_integration.py",
+          "A\tapps/console/backend/ai_game_console/user_fact_runtime/__init__.py",
+          "A\tapps/console/backend/ai_game_console/user_fact_runtime/api.py",
+          "A\tapps/console/backend/ai_game_console/user_fact_runtime/domain.py",
+          "A\tapps/console/backend/ai_game_console/user_fact_runtime/service.py",
+          "A\tapps/console/backend/ai_game_console/user_fact_runtime/store.py",
+          "A\tapps/console/backend/ai_game_console/visual_similarity.py",
+          "M\tapps/console/backend/pyproject.toml",
+          "A\tapps/console/backend/uv.lock",
+          "M\tapps/console/frontend/index.html",
+          "M\tapps/console/frontend/src/App.tsx",
+          "M\tapps/console/frontend/src/api.ts",
+          "D\tapps/console/frontend/src/components/ChatWorkspace.tsx",
+          "D\tapps/console/frontend/src/components/LearningWorkspace.tsx",
+          "D\tapps/console/frontend/src/components/MobileTaskWorkspace.tsx",
+          "A\tapps/console/frontend/src/components/QuestionCard.tsx",
+          "A\tapps/console/frontend/src/components/SessionWorkspace.tsx",
+          "D\tapps/console/frontend/src/components/SoulWorkspace.tsx",
+          "M\tapps/console/frontend/src/main.tsx",
+          "M\tapps/console/frontend/src/status.ts",
+          "M\tapps/console/frontend/src/styles.css",
+          "A\tapps/console/frontend/src/theme-light.css",
+          "M\tapps/console/frontend/src/types.ts",
+          "M\tapps/console/tests/backend/conftest.py",
+          "A\tapps/console/tests/backend/r7_fixtures.py",
+          "A\tapps/console/tests/backend/test_activity_slice.py",
+          "A\tapps/console/tests/backend/test_activity_slice_controls.py",
+          "A\tapps/console/tests/backend/test_activity_slice_normal_composition.py",
+          "A\tapps/console/tests/backend/test_activity_slice_restart.py",
+          "M\tapps/console/tests/backend/test_adb_executor.py",
+          "A\tapps/console/tests/backend/test_agent_session_api.py",
+          "A\tapps/console/tests/backend/test_agent_session_domain.py",
+          "A\tapps/console/tests/backend/test_agent_session_store.py",
+          "A\tapps/console/tests/backend/test_android_observation_emulator.py",
+          "A\tapps/console/tests/backend/test_android_ui_experience.py",
+          "A\tapps/console/tests/backend/test_android_ui_production_experience.py",
+          "A\tapps/console/tests/backend/test_android_ui_production_settlement.py",
+          "A\tapps/console/tests/backend/test_android_ui_role.py",
+          "A\tapps/console/tests/backend/test_android_ui_runner.py",
+          "A\tapps/console/tests/backend/test_android_ui_semantic_verification.py",
+          "A\tapps/console/tests/backend/test_android_ui_store.py",
+          "M\tapps/console/tests/backend/test_api_basics.py",
+          "M\tapps/console/tests/backend/test_application_runtime.py",
+          "A\tapps/console/tests/backend/test_attention_scheduler.py",
+          "A\tapps/console/tests/backend/test_attention_selector.py",
+          "A\tapps/console/tests/backend/test_cross_app_preemption.py",
+          "A\tapps/console/tests/backend/test_device_body_adb_adapter.py",
+          "A\tapps/console/tests/backend/test_device_body_domain.py",
+          "A\tapps/console/tests/backend/test_device_body_store.py",
+          "M\tapps/console/tests/backend/test_discovery.py",
+          "A\tapps/console/tests/backend/test_emulator_general_command_claim.py",
+          "A\tapps/console/tests/backend/test_emulator_profile_service.py",
+          "A\tapps/console/tests/backend/test_event_goal_routing.py",
+          "A\tapps/console/tests/backend/test_execution_contract_v2.py",
+          "A\tapps/console/tests/backend/test_execution_v2_composition.py",
+          "A\tapps/console/tests/backend/test_experience_runtime.py",
+          "A\tapps/console/tests/backend/test_experience_scope_contract.py",
+          "A\tapps/console/tests/backend/test_gateway_api.py",
+          "A\tapps/console/tests/backend/test_gateway_device_lease_wiring.py",
+          "A\tapps/console/tests/backend/test_gateway_idempotency.py",
+          "A\tapps/console/tests/backend/test_gateway_integration.py",
+          "A\tapps/console/tests/backend/test_gateway_sse.py",
+          "A\tapps/console/tests/backend/test_gateway_task_gateway.py",
+          "A\tapps/console/tests/backend/test_goal_api.py",
+          "A\tapps/console/tests/backend/test_goal_completion.py",
+          "A\tapps/console/tests/backend/test_goal_continuation.py",
+          "A\tapps/console/tests/backend/test_goal_graph.py",
+          "A\tapps/console/tests/backend/test_goal_kernel_canary.py",
+          "A\tapps/console/tests/backend/test_goal_long_lived_routing.py",
+          "A\tapps/console/tests/backend/test_goal_preflight.py",
+          "A\tapps/console/tests/backend/test_goal_production_repair.py",
+          "A\tapps/console/tests/backend/test_goal_qwen.py",
+          "A\tapps/console/tests/backend/test_goal_repair.py",
+          "A\tapps/console/tests/backend/test_gui_executor_action_adapter.py",
+          "M\tapps/console/tests/backend/test_gui_owl_client.py",
+          "A\tapps/console/tests/backend/test_kernel_canary.py",
+          "A\tapps/console/tests/backend/test_legacy_cutover.py",
+          "A\tapps/console/tests/backend/test_legacy_cutover_helpers.py",
+          "A\tapps/console/tests/backend/test_legacy_cutover_integration.py",
+          "A\tapps/console/tests/backend/test_local_managed_application.py",
+          "A\tapps/console/tests/backend/test_long_lived_mobile_application_composition.py",
+          "A\tapps/console/tests/backend/test_long_task_aggregate.py",
+          "A\tapps/console/tests/backend/test_long_task_scheduler.py",
+          "A\tapps/console/tests/backend/test_managed_runtime.py",
+          "M\tapps/console/tests/backend/test_mobile_agent_runtime.py",
+          "M\tapps/console/tests/backend/test_mobile_task_adapter.py",
+          "M\tapps/console/tests/backend/test_mobile_task_api.py",
+          "M\tapps/console/tests/backend/test_mobile_task_profiles.py",
+          "A\tapps/console/tests/backend/test_need_user_fact_flow.py",
+          "A\tapps/console/tests/backend/test_production_release.py",
+          "A\tapps/console/tests/backend/test_r4_hardening_preflight.py",
+          "M\tapps/console/tests/backend/test_run_state_machine.py",
+          "M\tapps/console/tests/backend/test_runtime_admin_api.py",
+          "M\tapps/console/tests/backend/test_runtime_kernel_action_verify_commit_spine.py",
+          "A\tapps/console/tests/backend/test_runtime_kernel_controls.py",
+          "M\tapps/console/tests/backend/test_runtime_kernel_e2e_integration.py",
+          "M\tapps/console/tests/backend/test_runtime_kernel_execute_action.py",
+          "M\tapps/console/tests/backend/test_runtime_kernel_lease_deadline.py",
+          "M\tapps/console/tests/backend/test_runtime_kernel_observation_spine.py",
+          "M\tapps/console/tests/backend/test_runtime_kernel_recovery_paths.py",
+          "M\tapps/console/tests/backend/test_runtime_mode.py",
+          "M\tapps/console/tests/backend/test_runtime_probe.py",
+          "A\tapps/console/tests/backend/test_session_event_inbox.py",
+          "A\tapps/console/tests/backend/test_session_goal_activation.py",
+          "A\tapps/console/tests/backend/test_session_planner.py",
+          "A\tapps/console/tests/backend/test_session_restart_schedule.py",
+          "D\tapps/console/tests/backend/test_soul_api.py",
+          "D\tapps/console/tests/backend/test_soul_application_adapter.py",
+          "D\tapps/console/tests/backend/test_soul_application_production.py",
+          "D\tapps/console/tests/backend/test_soul_integration.py",
+          "A\tapps/console/tests/backend/test_stzb_daily_vertical.py",
+          "A\tapps/console/tests/backend/test_time_event_runtime.py",
+          "A\tapps/console/tests/backend/test_user_active_recovery.py",
+          "A\tapps/console/tests/backend/test_user_fact_store.py",
+          "M\tapps/console/tests/frontend/App.test.tsx",
+          "D\tapps/console/tests/frontend/ChatWorkspace.test.tsx",
+          "D\tapps/console/tests/frontend/LearningWorkspace.test.tsx",
+          "D\tapps/console/tests/frontend/MobileTaskWorkspace.test.tsx",
+          "A\tapps/console/tests/frontend/SessionWorkspace.test.tsx",
+          "D\tapps/console/tests/frontend/SoulWorkspace.test.tsx",
+          "M\tconfig/console.env.example",
+          "M\tconfig/executor-runtime.env.example",
+          "A\tconfig/mobile-role-runtime.env.example",
+          "M\tconfig/model-runtime.env.example",
+          "D\tcontracts/control-plane-v1.md",
+          "D\tcontracts/game-learning-v1.md",
+          "D\tcontracts/mobile-task-v1.md",
+          "D\tdocs/NEW/PHASE_0_CURRENT_BASELINE.md",
+          "D\tdocs/NEW/PHASE_1_DATA_MODEL_DESIGN.md",
+          "D\tdocs/NEW/PHASE_1_DEVICE_OWNERSHIP.md",
+          "D\tdocs/NEW/PHASE_1_GATEWAY_CONTRACT_DESIGN.md",
+          "D\tdocs/NEW/PHASE_1_LEGACY_MIGRATION_STRATEGY.md",
+          "D\tdocs/NEW/PHASE_1_RUNTIME_KERNEL_BOUNDARY_DESIGN.md",
+          "D\tdocs/NEW/PHASE_2_RUNTIME_PERSISTENT_SPINE.md",
+          "D\tdocs/NEW/PHASE_3_OBSERVATION_SPINE.md",
+          "D\tdocs/NEW/PHASE_4_ACTION_VERIFY_COMMIT_SPINE.md",
+          "D\tdocs/NEW/PHASE_4_RECOVERY_STRATEGY.md",
+          "D\tdocs/NEW/PHASE_4_RECOVERY_VERIFICATION.md",
+          "D\tdocs/NEW/PHASE_5_DEVICE_OWNERSHIP_IMPL.md",
+          "D\tdocs/NEW/PHASE_5_WEEK_5_DEADLINE_PROTECTION.md",
+          "D\tdocs/NEW/PHASE_5_WEEK_6_ADMIN_API.md",
+          "D\tdocs/NEW/PHASE_5_WEEK_7_E2E_VERIFICATION.md",
+          "D\tdocs/NEW/docs/00_README.md",
+          "D\tdocs/NEW/docs/01_PRODUCT_VISION.md",
+          "D\tdocs/NEW/docs/02_SYSTEM_ARCHITECTURE.md",
+          "D\tdocs/NEW/docs/03_TASK_RUNTIME.md",
+          "D\tdocs/NEW/docs/04_TASK_STATE_AND_EVENTS.md",
+          "D\tdocs/NEW/docs/05_MODEL_ROLES_AND_ROUTING.md",
+          "D\tdocs/NEW/docs/06_ANDROID_ADB_DEVICE_LAYER.md",
+          "D\tdocs/NEW/docs/07_OBSERVATION_ACTION_VERIFY.md",
+          "D\tdocs/NEW/docs/08_RECOVERY_CHECKPOINT_LONG_TASKS.md",
+          "D\tdocs/NEW/docs/09_RUNTIME_GATEWAY_API.md",
+          "D\tdocs/NEW/docs/10_FRONTEND_CHAT_WORKBENCH.md",
+          "D\tdocs/NEW/docs/11_HERMES_WECHAT_INTEGRATION.md",
+          "D\tdocs/NEW/docs/12_SKILL_AND_MEMORY_BOUNDARIES.md",
+          "D\tdocs/NEW/docs/13_SECURITY_AND_USER_CONTROL_BOUNDARY.md",
+          "D\tdocs/NEW/docs/14_MVP_SCOPE_AND_ACCEPTANCE.md",
+          "D\tdocs/NEW/docs/15_IMPLEMENTATION_ROADMAP.md",
+          "D\tdocs/NEW/docs/16_CODEX_EXECUTION_PROTOCOL.md",
+          "D\tdocs/NEW/docs/17_DATA_MODELS.md",
+          "D\tdocs/NEW/docs/18_API_CONTRACT_DRAFT.md",
+          "D\tdocs/NEW/docs/19_TEST_STRATEGY.md",
+          "D\tdocs/NEW/docs/20_OPEN_QUESTIONS_AND_NON_GOALS.md",
+          "D\tdocs/adr/0001-general-mobile-agent-runtime.md",
+          "D\tdocs/console-architecture.md",
+          "D\tdocs/game-learning.md",
+          "D\tdocs/gameplay-readiness.md",
+          "D\tdocs/mobile-task-runtime.md",
+          "A\tdocs/product/ACCEPTANCE.md",
+          "A\tdocs/product/EXECUTION_CONTRACT.md",
+          "A\tdocs/product/PROJECT_MAP.md",
+          "A\tdocs/product/VISION.md",
+          "D\tdocs/runtime-layout.md",
+          "A\tscripts/benchmark-visual-bindings.py",
+          "M\tscripts/console.ps1",
+          "M\tscripts/model-runtime.ps1",
+          "A\tscripts/production-release.ps1",
+          "A\tscripts/test-console-data-dir.ps1",
+          "M\tscripts/test-executor-runtime-config.ps1",
+          "M\tscripts/wsl/bootstrap-gui-model.sh",
+          "M\tscripts/wsl/start-gui-model.sh",
+          "M\tscripts/wsl/status-gui-model.sh",
+          "M\tscripts/wsl/stop-gui-model.sh",
+          "M\tservices/gui-model/README.md",
+          "M\tstart-console.cmd",
+          "M\tstop-console.cmd",
+          "M\t\"\\345\\201\\234\\346\\255\\242\\346\\216\\247\\345\\210\\266\\345\\217\\260.cmd\"",
+          "M\t\"\\345\\220\\257\\345\\212\\250\\346\\216\\247\\345\\210\\266\\345\\217\\260.cmd\""
+        ]
+      }
+    },
+    "remote_metadata": [
+      {
+        "repository": "weftmate",
+        "endpoint": "/",
+        "ok": true,
+        "result": {
+          "full_name": "memoweft/weftmate",
+          "private": true,
+          "default_branch": "main",
+          "archived": false,
+          "has_pages": false,
+          "permissions": {
+            "admin": true,
+            "maintain": true,
+            "push": true,
+            "triage": true,
+            "pull": true
+          }
+        }
+      },
+      {
+        "repository": "weftmate",
+        "endpoint": "/branches/main",
+        "ok": true,
+        "result": {
+          "protected": false,
+          "commit": "c8b8c38c3b459433c8b5728ad3f29f4f73cdc6b8"
+        }
+      },
+      {
+        "repository": "weftmate",
+        "endpoint": "/actions/workflows",
+        "ok": true,
+        "result": {
+          "total": 1,
+          "workflows": [
+            {
+              "name": "CI",
+              "path": ".github/workflows/ci.yml",
+              "state": "active"
+            }
+          ]
+        }
+      },
+      {
+        "repository": "weftmate",
+        "endpoint": "/rulesets",
+        "ok": false,
+        "error": "gh: Upgrade to GitHub Pro or make this repository public to enable this feature. (HTTP 403)"
+      },
+      {
+        "repository": "weftmate",
+        "endpoint": "/pages",
+        "ok": false,
+        "error": "gh: Not Found (HTTP 404)"
+      },
+      {
+        "repository": "weftmate",
+        "endpoint": "/releases?per_page=10",
+        "ok": true,
+        "result": {
+          "releases": []
+        }
+      },
+      {
+        "repository": "AI-GAME",
+        "endpoint": "/",
+        "ok": true,
+        "result": {
+          "full_name": "memoweft/AI-GAME",
+          "private": false,
+          "default_branch": "main",
+          "archived": false,
+          "has_pages": false,
+          "permissions": {
+            "admin": true,
+            "maintain": true,
+            "push": true,
+            "triage": true,
+            "pull": true
+          }
+        }
+      },
+      {
+        "repository": "AI-GAME",
+        "endpoint": "/branches/main",
+        "ok": true,
+        "result": {
+          "protected": false,
+          "commit": "8374bde8c584ff9fae56bec9e198183b170a3642"
+        }
+      },
+      {
+        "repository": "AI-GAME",
+        "endpoint": "/actions/workflows",
+        "ok": true,
+        "result": {
+          "total": 1,
+          "workflows": [
+            {
+              "name": "Verify AI-GAME Console",
+              "path": ".github/workflows/ci.yml",
+              "state": "active"
+            }
+          ]
+        }
+      },
+      {
+        "repository": "AI-GAME",
+        "endpoint": "/rulesets",
+        "ok": true,
+        "result": {
+          "rulesets": []
+        }
+      },
+      {
+        "repository": "AI-GAME",
+        "endpoint": "/pages",
+        "ok": false,
+        "error": "gh: Not Found (HTTP 404)"
+      },
+      {
+        "repository": "AI-GAME",
+        "endpoint": "/releases?per_page=10",
+        "ok": true,
+        "result": {
+          "releases": []
+        }
+      }
+    ],
+    "weftmate_origin_configured": true,
+    "temporary_review_refs_removed": true,
+    "active_runtime_started": false,
+    "code_audit_scope": "Source reference scan and key runtime entry review; not a line-by-line audit of all upstream code.",
+    "source_removed": [
+      "src/vault-file-guard.ts",
+      "tests/vault-file-guard.test.ts"
+    ],
+    "checks": {
+      "typecheck": "passed",
+      "active_vault_and_licensing_tests": {
+        "passed": 4,
+        "failed": 0
+      },
+      "research_files_sha256_verified": 3600,
+      "research_repositories_clean": 11,
+      "missing_repository_rejected": true,
+      "layout": {
+        "weftmate": 24,
+        "weftmod": 6,
+        "passed": true
+      },
+      "links_and_ignore": {
+        "changed_document_links_checked": 10,
+        "errors": [],
+        "tracked_secret_shaped_paths": [],
+        "note": "Filename and ignore-rule check only, not a content secret audit."
+      },
+      "diff_check_repositories": 5
+    },
+    "integrity": {
+      "repositories": [
+        {
+          "repository": "WeftMate/Repository",
+          "baseline_files": 238,
+          "unchanged": 224,
+          "expected_changes": 14,
+          "head_unchanged": true
+        },
+        {
+          "repository": "AIGame/Repository",
+          "baseline_files": 339,
+          "unchanged": 338,
+          "expected_changes": 1,
+          "head_unchanged": true
+        },
+        {
+          "repository": "MemoWeft/Core",
+          "baseline_files": 680,
+          "unchanged": 679,
+          "expected_changes": 1,
+          "head_unchanged": true
+        },
+        {
+          "repository": "MemoWeft/Hosts/HermesAgent",
+          "baseline_files": 8961,
+          "unchanged": 8959,
+          "expected_changes": 2,
+          "head_unchanged": true
+        },
+        {
+          "repository": "Shared/Dependencies/DeepSeekHarness",
+          "baseline_files": 7418,
+          "unchanged": 7418,
+          "expected_changes": 0,
+          "head_unchanged": true
+        },
+        {
+          "repository": "WeftLearn/Repository",
+          "baseline_files": 75,
+          "unchanged": 71,
+          "expected_changes": 4,
+          "head_unchanged": true
+        }
+      ],
+      "unexpected_changes": [],
+      "deletion_targets_still_present": [],
+      "cleanup_change_list": [
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/tasks/S00-A.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "src/vault-file-guard.ts",
+          "action": "deleted"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/DECISIONS.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/evidence/S00-A/VALIDATION.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/PROJECT_DIRECTION.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/WORKLOG.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/REPOSITORY_LAYOUT.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/CURRENT_STATE.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/CODEX_START_PROMPT.txt",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "tests/vault-file-guard.test.ts",
+          "action": "deleted"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/WORKSPACE_MAP.example.json",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/DOCUMENT_MIGRATION.json",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "AGENTS.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftMate/Repository",
+          "path": "docs/evidence/S00-A/local-validation.json",
+          "action": "modified"
+        },
+        {
+          "repository": "AIGame/Repository",
+          "path": "AGENTS.md",
+          "action": "modified"
+        },
+        {
+          "repository": "MemoWeft/Core",
+          "path": "AGENTS.md",
+          "action": "modified"
+        },
+        {
+          "repository": "MemoWeft/Hosts/HermesAgent",
+          "path": "AGENTS.md",
+          "action": "modified"
+        },
+        {
+          "repository": "MemoWeft/Hosts/HermesAgent",
+          "path": "apps/desktop/AGENTS.md",
+          "action": "deleted"
+        },
+        {
+          "repository": "WeftLearn/Repository",
+          "path": "docs/ARCHITECTURE.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftLearn/Repository",
+          "path": "docs/WORKFLOW.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftLearn/Repository",
+          "path": "docs/DESIGN.md",
+          "action": "modified"
+        },
+        {
+          "repository": "WeftLearn/Repository",
+          "path": "AGENTS.md",
+          "action": "modified"
+        }
+      ]
+    },
+    "helper_cleanup": {
+      "status": "blocked_by_tool_policy",
+      "path": ".local/layout-cleanup",
+      "contains": "Task scripts and checksum metadata only; no source backup",
+      "ignored": true
+    }
+  },
+  "combined_cleanup": {
+    "targets": 74,
+    "deleted_file_entries": 815353,
+    "logical_bytes": 13689510593
+  }
+}

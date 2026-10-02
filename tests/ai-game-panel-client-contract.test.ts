@@ -52,6 +52,18 @@ describe('AI-GAME client surfaces use the official DSH seams', () => {
     assert.doesNotMatch(client, /fetch\([^\n]+\/api\/execution\/v1/)
   })
 
+  it('separates emulator connection state from the saved default and hides saved discoveries', () => {
+    const setup = client.slice(
+      client.indexOf('function PhoneDeviceSetup()'),
+      client.indexOf('function MemoryPanel(', client.indexOf('function PhoneDeviceSetup()')),
+    )
+    assert.match(setup, /当前连接：/)
+    assert.match(setup, /默认设备：/)
+    assert.match(setup, /没有发现新设备，已保存设备及连接状态见上方/)
+    assert.match(setup, /尚未保存/)
+    assert.doesNotMatch(setup, /\(labels\[item\.state\]/)
+  })
+
   it('bounds polling, rejects stale work, resumes from eventCursor, and supports reduced motion', () => {
     assert.match(client, /new AbortController\(\)/)
     assert.match(client, /controller\.abort\(\)/)
@@ -61,14 +73,15 @@ describe('AI-GAME client surfaces use the official DSH seams', () => {
     assert.match(client, /prefers-reduced-motion:reduce/)
   })
 
-  it('routes answer, cancel, and resume intents through the official composer', () => {
+  it('sends task controls directly and reserves the composer for missing answers', () => {
     assert.match(client, /props\.inputActions\.setDraft/)
-    assert.match(client, /请调用 phone_execution 取消执行/)
-    assert.match(client, /请调用 phone_execution 恢复执行/)
+    assert.match(client, /directControl\('cancel'\)/)
+    assert.match(client, /directControl\('resume'\)/)
+    assert.match(client, /\/weftmate\/ai-game\/controls\.json/)
     assert.match(client, /到输入区回答/)
     const panelSource = client.slice(client.indexOf('function AiGameExecutionDetails'), client.indexOf('/** 状态接口失败'))
     assert.doesNotMatch(panelSource, /createElement\('textarea'|createElement\('input'/)
-    assert.doesNotMatch(panelSource, /method:\s*'POST'|method:\s*'DELETE'/)
+    assert.match(panelSource, /method:\s*'POST'/)
   })
 
 })

@@ -29,13 +29,14 @@ import { assertAuthoritativeSessionsIdle, assertSessionReferenceScanReady, resol
 import { createRouteMutationJournal, recoverRouteMutationJournalFiles } from './route-mutation-journal.ts';
 import { createRouteMutationQueue } from './route-mutation-queue.ts';
 import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from './renderer-trust.ts';
-import { join, resolve } from 'node:path';
+import { basename, isAbsolute, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, existsSync, renameSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { loadPhoneExecutionConfig } from './phone-execution-config.mjs';
 import { execFile } from 'node:child_process';
-import { promisify } from 'node:util';
+import { isDeepStrictEqual, promisify } from 'node:util';
 import {
   createLocalDataWipeMarker,
   localDataWipeLaunchRequest,
@@ -56,6 +57,8 @@ import {
   createOfficialDshSettingsClient,
   migrateLegacyRoutes,
   officialCredentialRef,
+  projectOfficialProviderConfig,
+  repairOfficialLocalRouteLimits,
   verifyLegacyRouteMigration,
 } from './dsh-settings-migration.ts';
 import { formatHarnessStartupError } from './harness-startup-error.ts';
@@ -63,6 +66,73 @@ import { checkForUpdates, initUpdater, quitAndInstall, updateState } from './upd
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
 import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
+import { ModWindowManager } from './mod-window-manager.mjs';
+import { createPersonalAccessBackend } from './personal-access-backend.mjs';
+import { createPersonalDesktopTask } from './personal-desktop-task.mjs';
+import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels, prepareLocalModelConfig,
+  projectOccamyImageInput, reconcileOccamyImageInput,
+  readUserModelSwitcherKey } from './local-model-config.mjs';
+import { servePersonalAccessUi } from './personal-access-ui/index.mjs';
+import { loadPersonalMemoryConfig } from './personal-memory/config.mjs';
+import { createPersonalMemoryManager } from './personal-memory/index.mjs';
+import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
+import { memoryRecallDestination, memorySessionPolicy } from './personal-memory/policy.mjs';
+import { ensurePrivateDirectory } from './private-host-storage.mjs';
+import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
+
+const personalHostMode = personalHostRequested(process.argv);
+if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {
+  console.error('[weftmate] personal-host refused: account-scoped memory is not connected');
+  process.exit(2);
+}
+let accessPort = null;
+try { accessPort = personalAccessPort(process.argv, personalHostMode); }
+catch (error) { console.error('[weftmate] personal access refused:', error.message); process.exit(2); }
+let personalPublicOrigin = null;
+try { personalPublicOrigin = parsePersonalPublicOrigin(process.argv, personalHostMode, accessPort); }
+catch (error) { console.error('[weftmate] public access refused:', error.message); process.exit(2); }
+const androidPackageArgs = process.argv.filter((arg) => arg.startsWith('--android-package-path'));
+let androidPackagePath = null;
+if (androidPackageArgs.length) {
+  const value = androidPackageArgs.length === 1 && androidPackageArgs[0].startsWith('--android-package-path=')
+    ? androidPackageArgs[0].slice('--android-package-path='.length) : '';
+  if (!personalHostMode || accessPort === null || !isAbsolute(value) ||
+      basename(value).toLowerCase() !== 'android-candidate.apk') {
+    console.error('[weftmate] Android package path refused');
+    process.exit(2);
+  }
+  androidPackagePath = resolve(value);
+}
+const mobileUiArgs = process.argv.filter((arg) => arg.startsWith('--mobile-ui-dir'));
+let mobileUiDir = null;
+if (mobileUiArgs.length) {
+  const value = mobileUiArgs.length === 1 && mobileUiArgs[0].startsWith('--mobile-ui-dir=')
+    ? mobileUiArgs[0].slice('--mobile-ui-dir='.length) : '';
+  if (!personalHostMode || accessPort === null || !isAbsolute(value)) {
+    console.error('[weftmate] mobile UI release directory refused');
+    process.exit(2);
+  }
+  mobileUiDir = resolve(value);
+}
+const memoryArgs = process.argv.filter((arg) => arg.startsWith('--personal-memory-config'));
+let personalMemoryConfigPath = null;
+if (memoryArgs.length) {
+  const value = memoryArgs.length === 1 && memoryArgs[0].startsWith('--personal-memory-config=')
+    ? memoryArgs[0].slice('--personal-memory-config='.length) : '';
+  if (!personalHostMode || accessPort === null || !isAbsolute(value)) {
+    console.error('[weftmate] account memory configuration refused');
+    process.exit(2);
+  }
+  personalMemoryConfigPath = resolve(value);
+}
+let personalHostUserData = null;
+if (personalHostMode) {
+  try { personalHostUserData = validatePersonalHostProfile(process.env.WEFTMATE_USER_DATA?.trim()); }
+  catch (error) {
+    console.error('[weftmate] personal-host refused:', error.message);
+    process.exit(2);
+  }
+}
 
 // ── R5 · userData 隔离 ──
 // 打包形态产品数据目录 = <appData>/com.memoweft.weftmate（appId 命名，与 dev 的 'weftmate'
@@ -70,7 +140,7 @@ import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
 // 隔离目的：① 单实例锁不再互斥（dev 与打包可同时跑）；② v2 遗留的开发数据
 // （weftmate.db/旧画像/旧设置）不进产品目录。必须在任何 userData 读取（含顶部擦除请求）之前设置。
 const requestedUserData = typeof process.env.WEFTMATE_USER_DATA === 'string'
-  ? process.env.WEFTMATE_USER_DATA.trim()
+  ? (personalHostUserData ?? process.env.WEFTMATE_USER_DATA.trim())
   : '';
 if (requestedUserData) {
   // dogfood/自动化使用专用目录；必须早于 wipe、单实例锁和任何设置读取。
@@ -122,10 +192,14 @@ const TRAY_ICON =
 
 // 单实例锁:桌面常驻防开多份进程抢同一个数据目录。抢不到 = 已有一个在跑,退出自己,让那个把窗口唤前台。
 if (!app.requestSingleInstanceLock()) {
-  app.quit();
+  if (personalHostMode) {
+    console.error('[weftmate] personal-host refused: this userData already has a WeftMate instance');
+    app.exit(2);
+  } else app.quit();
 } else {
   // 第二个实例被拉起(用户又点了图标):把已在跑的窗口唤到前台。
-  app.on('second-instance', showWindow);
+  app.on('second-instance', () => { if (!personalHostMode) showWindow(); });
+  console.log(`[weftmate] startup mode=${personalHostMode ? 'personal-host' : 'desktop'}`);
   app.whenReady().then(bootstrap).catch((error) => failBootstrap(error));
 }
 
@@ -134,6 +208,12 @@ let tray = null;
 let settingsMod = null; // settings.ts 模块(宠物窗口状态——本机显示偏好)
 let configStoreMod = null; // config-store.ts 模块(模型档 safeStorage 存取;DSH 凭据接缝从这里取)
 let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn 官方 CLI→URL 行→退出收口)
+let personalAccessService = null;
+let personalAccessOrigin = null;
+let personalMemoryManager = null;
+const personalMemoryIpc = { recallAttempts: 0, recallRequests: 0,
+  recallWithContext: 0, recallReplies: 0, ingestRequests: 0, rejectedBindings: 0 };
+let modWindowManager = null; // 独立 Mod 视图；只管理窗口，不拥有 Mod 生命周期。
 let aiGameRuntime = null; // Electron main-only; never projected with its origin or process details.
 let perceptionRuntime = null; // 桌面感知采集面(R6-01:opt-in 采集→双工文件→运行时宿主插件)
 let devicesRuntime = null; // 设备接缝(R8-01:配对 token/设备登记/手机观察消费)
@@ -167,11 +247,15 @@ let startupFailureReported = false;
 let wipeRelaunching = false;
 let webBootReloads = 0; // web boot 失败自愈计数（防抖限次）
 let runtimeOrigin = null; // 当前共享官方 DSH Web 的精确 loopback origin。
+let hostLifecycleState = 'starting';
+let writeHostStateForLifecycle = null;
 let trustedRuntimeOrigin = null; // 仅当前 origin + 当前 main frame 才可拥有壳 IPC。
 let stageOneEventsAbort = null;
 const activeStageOneTurns = new Set();
 let ensureSharedRuntime = null;
 let saveModelRoute = null;
+let configureLocalModel = null;
+let configureLocalCatalog = null;
 let enqueueExclusiveMainOperation = null;
 let exclusiveMainQueue = null;
 // Sidebar fetching is intentionally best-effort, but the startup reference
@@ -205,16 +289,27 @@ function activeModelProfile() {
   return view.profiles.find((profile) => profile.id === view.activeId) ?? null;
 }
 
+function hasProfileCredential(profile) {
+  return !!credentialForModelProfile(profile);
+}
+
+function credentialForModelProfile(profile) {
+  const route = routeForProfile(profile.id);
+  for (const ref of [profile.id, route.apiKeyEnv, officialCredentialRef(route.provider)]) {
+    const credential = configStoreMod?.getCredential?.(ref);
+    if (credential) return credential;
+  }
+  return null;
+}
+
 function publicModelView() {
   const view = settingsMod?.listModelProfiles?.() ?? { profiles: [], activeId: null };
   const profiles = view.profiles.map((profile) => {
-    const route = routeForProfile(profile.id);
     // During the one-time migration the same secret moves from the private
     // profile id to DSH's route ref and finally to the official provider ref.
     // Diagnostics and retained-data checks must recognise every exact alias
     // without decrypting or projecting the value.
-    const hasKey = [profile.id, route.apiKeyEnv, officialCredentialRef(route.provider)]
-      .some((ref) => !!configStoreMod?.getCredential?.(ref));
+    const hasKey = hasProfileCredential(profile);
     return { ...profile, hasKey };
   });
   const active = profiles.find((profile) => profile.id === view.activeId) ?? null;
@@ -261,7 +356,13 @@ async function activateStageOneConfig(clean) {
 async function stageOneGateway(path, init = {}) {
   if (!runtimeOrigin) throw new Error('runtime unavailable');
   const response = await fetch(new URL(`/weftmate/api/v1${path}`, runtimeOrigin), { ...init, headers: { 'content-type': 'application/json', ...(init.headers ?? {}) } });
-  const body = await response.json().catch(() => ({})); if (!response.ok) throw new Error('gateway request failed'); return body;
+  const body = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const error = new Error('gateway request failed');
+    if (body?.error?.code === 'history-window-limited') error.code = 'HISTORY_WINDOW_LIMIT';
+    throw error;
+  }
+  return body;
 }
 
 function stopStageOneEvents() { stageOneEventsAbort?.abort(); stageOneEventsAbort = null; }
@@ -291,12 +392,14 @@ function requestFatalStartupExit(kind, error, view) {
   startupFailureReported = true;
   startupExitCode = 1;
   logCrash(kind, error);
-  console.error(`[weftmate] ✗ ${kind}:`, error && error.message ? error.message : error);
-  try {
-    dialog.showErrorBox(view.title, view.message);
-  } catch (dialogError) {
-    // Windows 原生对话框若不可用，崩溃日志和 stderr 仍保留完整诊断。
-    logCrash('startup-error-dialog', dialogError);
+  console.error(`[weftmate] ✗ ${kind}:`, redactSecretText(error && error.message ? error.message : error));
+  if (!personalHostMode) {
+    try {
+      dialog.showErrorBox(view.title, view.message);
+    } catch (dialogError) {
+      // Windows 原生对话框若不可用，崩溃日志和 stderr 仍保留完整诊断。
+      logCrash('startup-error-dialog', dialogError);
+    }
   }
   app.quit();
 }
@@ -312,13 +415,62 @@ function failBootstrap(error) {
   });
 }
 
-// dogfood 启动器以 IPC 请求干净退出；普通 Electron 启动永远不开放此控制面。
+// 仅连接中的父进程可用本机 IPC 管理个人接入；网络侧没有管理路由。
 process.on('message', (message) => {
   if (process.env.WEFTMATE_DOGFOOD_CONTROL !== '1'
-    || !message || typeof message !== 'object' || message.type !== 'weftmate:quit') return;
-  console.log('[weftmate] 收到 dogfood 退出请求');
-  isQuitting = true;
-  app.quit();
+    || !process.connected || !message || typeof message !== 'object') return;
+  if (message.type === 'weftmate:quit') {
+    console.log('[weftmate] 收到 dogfood 退出请求');
+    isQuitting = true;
+    app.quit();
+    return;
+  }
+  if (!personalHostMode || message.type !== 'weftmate:manage'
+    || typeof message.requestId !== 'string' || !/^[A-Za-z0-9-]{1,80}$/.test(message.requestId)) return;
+  void (async () => {
+    let result;
+    try {
+      if (!personalAccessService || isQuitting) throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+      switch (message.action) {
+        case 'device.add': result = await personalAccessService.enrollDevice({ name: message.name, scopes: message.scopes }); break;
+        case 'device.revoke': result = await personalAccessService.revokeDevice(message.deviceId); break;
+        case 'device.list': result = personalAccessService.listDevices(); break;
+        case 'session.attach': result = await personalAccessService.attachSession(message.sessionId); break;
+        case 'account.setup': {
+          if (message.open !== undefined && typeof message.open !== 'boolean') {
+            throw Object.assign(new Error('invalid setup request'), { code: 'INVALID_COMMAND' });
+          }
+          if (!personalAccessOrigin) throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+          const issued = await personalAccessService.issueSetupGrant();
+          if (message.open === true) {
+            const setupUrl = new URL('/personal/v1/ui', personalAccessOrigin);
+            setupUrl.hash = `setup=${encodeURIComponent(issued.grant)}`;
+            try { await shell.openExternal(setupUrl.href); }
+            catch { throw Object.assign(new Error('browser unavailable'), { code: 'SETUP_OPEN_FAILED' }); }
+            result = { opened: true, expiresAt: issued.expiresAt };
+          } else result = { grant: issued.grant, expiresAt: issued.expiresAt, origin: personalAccessOrigin };
+          break;
+        }
+        case 'model.configure-local': {
+          if (!configureLocalModel) throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+          result = await configureLocalModel({ modelId: message.modelId, name: message.name });
+          break;
+        }
+        case 'model.configure-local-catalog': {
+          if (Object.keys(message).some((key) => !['type', 'requestId', 'action'].includes(key)) ||
+              !configureLocalCatalog) throw Object.assign(new Error('invalid catalog request'), { code: 'INVALID_COMMAND' });
+          result = await configureLocalCatalog();
+          break;
+        }
+        case 'status': result = personalAccessService.status(); break;
+        default: throw Object.assign(new Error('invalid action'), { code: 'INVALID_COMMAND' });
+      }
+      try { process.send?.({ type: 'weftmate:manage-result', requestId: message.requestId, ok: true, result }); } catch { /* parent disconnected */ }
+    } catch (error) {
+      const code = typeof error?.code === 'string' && /^[A-Z_]{2,48}$/.test(error.code) ? error.code : 'MANAGEMENT_FAILED';
+      try { process.send?.({ type: 'weftmate:manage-result', requestId: message.requestId, ok: false, code }); } catch { /* parent disconnected */ }
+    }
+  })();
 });
 
 const PET_WINDOW_SIZE = { width: 132, height: 132 };
@@ -922,6 +1074,7 @@ async function bootstrap() {
   // migration, patch read, or runtime construction.  Those modules may
   // otherwise normalize/rewrite exactly the bytes the journal protects.
   const userDataDir = app.getPath('userData');
+  if (personalHostMode) await ensurePrivateDirectory(userDataDir);
   const dshHome = join(userDataDir, 'dsh-home');
   const ROUTES_PATCH = join(dshHome, 'weftmate-stage2-model-routes.patch.yml');
   const SECURITY_PATCH = join(dshHome, 'weftmate-security-credentials.patch.yml');
@@ -1046,6 +1199,15 @@ async function bootstrap() {
   const aiGameManagedRuntimeRoot = app.isPackaged ? null : process.env.WEFTMATE_AI_GAME_RUNTIME_ROOT;
   delete process.env.WEFTMATE_AI_GAME_RUNTIME_ROOT;
   delete process.env.WEFTMATE_AI_GAME_ORIGIN;
+  const phoneExecutionConfigPath = app.isPackaged ? null : process.env.WEFTMATE_PHONE_EXECUTION_CONFIG;
+  delete process.env.WEFTMATE_PHONE_EXECUTION_CONFIG;
+  if (aiGameManagedRuntimeRoot || (app.isPackaged && existsSync(join(process.resourcesPath, 'ai-game-runtime')))) {
+    try {
+      if (!configStoreMod.getCredential(AI_GAME_CREDENTIAL_REF)) {
+        configStoreMod.saveCredential(AI_GAME_CREDENTIAL_REF, randomBytes(32).toString('hex'));
+      }
+    } catch { console.warn('[weftmate] 手机运行组件的本机凭据尚未就绪。'); }
+  }
 
   // settings.ts 仍驻 main：桌面宠物窗口状态（本机显示偏好）归它。
   try {
@@ -1086,6 +1248,7 @@ async function bootstrap() {
     WEFTMATE_DSH_HOME: dshHome,
     WEFTMATE_WORKSPACE: workspaceDir,
     WEFTMATE_MEMOWEFT_ENABLED: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? '1' : '0',
+    WEFTMATE_PERSONAL_MEMORY_ENABLED: personalMemoryConfigPath ? '1' : '0',
   });
   function writeHostState() {
     try {
@@ -1095,13 +1258,28 @@ async function bootstrap() {
       const payload = {
         schemaVersion: 1,
         app: { name: 'WeftMate', version: appVersion },
-        tray: { resident: true }, // 关窗收托盘，托盘常驻（桌面伴侣形态）
+        mode: personalHostMode ? 'personal-host' : 'desktop',
+        tray: { resident: !personalHostMode }, // 只有可视模式创建托盘。
+        runtime: hostRuntimeState(hostLifecycleState, runtimeOrigin),
+        referenceScan: {
+          state: sessionReferenceScan.state,
+          modelRouteChangesBlocked: sessionReferenceScan.state !== 'ready',
+        },
+        personalAccess: {
+          enabled: accessPort !== null,
+          state: hostLifecycleState === 'stopped' ? 'stopped'
+            : hostLifecycleState === 'stopping' ? 'stopping'
+              : personalAccessOrigin ? 'listening' : accessPort === null ? 'disabled' : 'starting',
+          origin: hostLifecycleState === 'stopping' || hostLifecycleState === 'stopped' ? null : personalAccessOrigin,
+        },
         dataDirs: {
           userData: app.getPath('userData'),
           dshHome,
           workspace: workspaceDir,
         },
         update: updateState(),
+        memoweft: { enabled: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' },
+        ...(personalHostMode && personalMemoryConfigPath ? { accountMemoryIpc: { ...personalMemoryIpc } } : {}),
         aiGame: (() => {
           const state = aiGameRuntime?.diagnostics?.() ?? { managed: true, state: 'not_installed', reasonCode: 'runtime_not_installed', runtimeVersion: null, apiVersion: null, retryable: false };
           return { managed: state.managed === true, state: state.state, reasonCode: state.reasonCode, runtimeVersion: state.runtimeVersion, apiVersion: state.apiVersion, retryable: state.retryable === true };
@@ -1117,6 +1295,7 @@ async function bootstrap() {
       writeFileSync(HOST_STATE_FILE, `${JSON.stringify(payload, null, 2)}\n`, 'utf8');
     } catch (error) { logCrash('host-state-write', error); }
   }
+  writeHostStateForLifecycle = writeHostState;
   /** 消费 UI 侧发来的更新请求（check / install）；消费即删，防重复触发。 */
   function handleUpdateRequests() {
     let raw = null;
@@ -1161,6 +1340,7 @@ async function bootstrap() {
   // ── R6-02 · 桌宠动作请求面：官方 UI 胶囊 → 宿主插件写请求文件 → main 消费 ──
   const PET_REQUEST_FILE = join(dshHome, 'weftmate-pet-request.json');
   function handlePetRequests() {
+    if (personalHostMode) return; // No renderer or pet window may appear in host mode.
     let raw = null;
     try {
       if (existsSync(PET_REQUEST_FILE)) raw = JSON.parse(readFileSync(PET_REQUEST_FILE, 'utf8'));
@@ -1282,6 +1462,7 @@ async function bootstrap() {
       principalId: configStoreMod?.getCredential?.(AI_GAME_PRINCIPAL_REF),
       controllerId: configStoreMod?.getCredential?.(AI_GAME_CONTROLLER_REF),
     }),
+    resolveExecution: () => loadPhoneExecutionConfig(phoneExecutionConfigPath, migrateLegacyCredentialRef),
     onState: () => writeHostState(),
   });
   // Deliberately independent: a slow/missing managed runtime must not delay
@@ -1296,6 +1477,7 @@ async function bootstrap() {
     homeDir: dshHome,
     workspaceDir,
     nodeElectron: true,
+    noOpen: personalHostMode,
     // WeftMate 始终使用产品自有的固定 vendor runtime。开发版来自仓内
     // vendor/dsh-runtime，安装版来自 resources/dsh-runtime；显式传值也会压过
     // shell 中遗留的 WEFTMATE_DSH_CHECKOUT/WEFTMATE_DSH_RUNTIME，绝不启动个人 DSH checkout。
@@ -1306,6 +1488,66 @@ async function bootstrap() {
     // The child IPC bridge is the only secret path.  The non-secret runtime
     // identity fields remain ordinary process metadata for our host plugins.
     credentialRequestHandler,
+    personalDesktopRequestHandler: personalHostMode ? async (request) => {
+      if (!personalAccessService || isQuitting || !runtimeOrigin) {
+        throw Object.assign(new Error('unavailable'), { code: 'CAPABILITY_UNAVAILABLE' });
+      }
+      const described = await accessBackend.describeSession(request.sessionId);
+      if (described?.agentPreset !== 'personal-remote') {
+        throw Object.assign(new Error('unsafe preset'), { code: 'SESSION_READ_ONLY' });
+      }
+      if (request.action === 'write_document') {
+        return personalAccessService.submitToolArtifact({ sessionId: request.sessionId, turn: request.turn,
+          callId: request.callId, messageHash: request.messageHash,
+          fileName: request.fileName, content: request.content });
+      }
+      return personalAccessService.submitToolDesktop(request);
+    } : undefined,
+    personalMemoryRequestHandler: personalHostMode && personalMemoryConfigPath ? async (request) => {
+      if (request.action === 'recall') personalMemoryIpc.recallAttempts++;
+      writeHostState();
+      if (!personalAccessService || !personalMemoryManager || isQuitting || !runtimeOrigin) {
+        throw Object.assign(new Error('unavailable'), { code: 'MEMORY_UNAVAILABLE' });
+      }
+      const binding = personalAccessService.ownerForSession(request.sessionId);
+      // The account store recorded origin when this authenticated session was
+      // created with its fixed preset. Do not call describeSession here: it
+      // resolves through DSH while DSH is waiting on this very IPC response.
+      const described = { agentPreset: binding?.origin === 'shared-chat'
+        ? 'personal-shared-chat' : binding?.origin === 'personal-remote' ? 'personal-remote' : null };
+      const bound = memorySessionPolicy({ binding, described, access: personalAccessService });
+      if (!bound.allowed) {
+        personalMemoryIpc.rejectedBindings++;
+        writeHostState();
+        throw Object.assign(new Error('memory preset mismatch'), { code: 'MEMORY_OWNER_UNAVAILABLE' });
+      }
+      if (request.action === 'ingest') {
+        const boundary = assertOwnerBoundBoundary(request.sessionId, request.boundary);
+        personalMemoryIpc.ingestRequests++;
+        writeHostState();
+        return personalMemoryManager.ingest(binding.ownerId, boundary);
+      }
+      // DSH is awaiting this pre-step IPC. Calling its session/model gateway here
+      // can re-enter the same active turn, so use the host's durable route only.
+      const destination = memoryRecallDestination({ binding, described,
+        boundProfileId: settingsMod.sessionModelBinding(request.sessionId),
+        profiles: settingsMod.listModelProfiles().profiles,
+        access: personalAccessService, hasCredential: hasProfileCredential });
+      if (!destination.allowed) {
+        personalMemoryIpc.recallReplies++;
+        writeHostState();
+        return { state: 'withheld', reasonCode: destination.reasonCode };
+      }
+      personalMemoryIpc.recallRequests++;
+      const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,
+        sessionId: request.sessionId });
+      if (recalled?.state === 'ready' && typeof recalled.contextText === 'string' && recalled.contextText.trim()) {
+        personalMemoryIpc.recallWithContext++;
+      }
+      personalMemoryIpc.recallReplies++;
+      writeHostState();
+      return recalled;
+    } : undefined,
     log: (line) => console.log(`[weftmate] ${redactSecretText(line)}`),
   });
   async function replaceSharedRuntime() {
@@ -1318,14 +1560,20 @@ async function bootstrap() {
     const previous = webRuntime;
     runtimeOrigin = null;
     trustedRuntimeOrigin = null;
+    await modWindowManager?.rebind?.(null);
     if (previous) await previous.close();
     webRuntime = createWebRuntime();
     webRuntime.onOrigin = (origin) => {
       runtimeOrigin = origin;
-      if (origin) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));
+      writeHostState();
+      if (origin) {
+        if (!personalHostMode) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));
+        void modWindowManager?.rebind?.(origin);
+      }
       else trustedRuntimeOrigin = null;
     };
     runtimeOrigin = await webRuntime.start();
+    await modWindowManager?.rebind?.(runtimeOrigin);
     return runtimeOrigin;
   }
   async function mutateModelRouteTransaction(mutator) {
@@ -1457,6 +1705,17 @@ async function bootstrap() {
     }
   }
   webRuntime = createWebRuntime();
+  webRuntime.onOrigin = (origin) => {
+    runtimeOrigin = origin;
+    writeHostState();
+    if (origin) {
+      if (!personalHostMode) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));
+      void modWindowManager?.rebind?.(origin);
+    } else {
+      trustedRuntimeOrigin = null;
+      void modWindowManager?.rebind?.(null);
+    }
+  };
   // The journal was recovered before imports above.  From this point onward
   // every route mutation enters the same queue before it can write one again.
   try {
@@ -1497,14 +1756,13 @@ async function bootstrap() {
   catch (error) { logCrash('official-route-migration-alias-cleanup', error); }
   console.log('[weftmate] DSH_HOME =', dshHome);
   runtimeOrigin = null;
-  // Official DSH is also the first-run Models/onboarding surface, so it must
-  // boot before any private WeftMate profile exists.  Start it after the
-  // BrowserWindow and its exact-origin fence have been installed below.
-  sessionReferenceScan = { state: 'ready', error: null };
+  // Official DSH also owns first-run setup. The desktop view starts after
+  // its exact-origin fence; personal host starts after IPC registration.
+  sessionReferenceScan = { state: personalHostMode ? 'pending' : 'ready', error: null };
   // Kept solely to fail closed for dormant migration-only stage-1 handlers.
   // The main window never loads this local page once the DSH surface is ready.
   const legacyRendererUrl = pathToFileURL(join(import.meta.dirname, 'web', 'weftmate.html')).href;
-  const TITLE_BAR_OVERLAY_HEIGHT = 40;
+  const TITLE_BAR_OVERLAY_HEIGHT = 44;
   let dshResolvedTheme = null;
   let dshSurfaceBackgroundColor = null;
   // The renderer sends only `getComputedStyle(body).backgroundColor`. Recheck
@@ -1578,6 +1836,7 @@ async function bootstrap() {
   // DSH owns the durable theme preference. Before its boot script resolves
   // light/dark, follow Windows system colors; the page then sends only the
   // resolved palette to update the native bar without changing themeSource.
+  if (!personalHostMode) {
   nativeTheme.themeSource = 'system';
   const initialWindowPalette = nativeWindowPalette();
   win = new BrowserWindow({
@@ -1609,6 +1868,7 @@ async function bootstrap() {
       updateNativeWindowColors();
     }
   });
+  }
   // Active selection is a future-session preference. It never swaps the
   // shared child, so an in-flight/old DSH session retains its own persisted
   // provider+model request header.
@@ -1644,6 +1904,8 @@ async function bootstrap() {
       sessionReferenceScan = { state: 'ready', error: null };
     } catch (error) {
       sessionReferenceScan = { state: 'failed', error: error instanceof Error ? error.message : 'scan failed' };
+    } finally {
+      writeHostState();
     }
   }
   async function assertRouteReloadSafe() {
@@ -1655,19 +1917,22 @@ async function bootstrap() {
     const sessions = await listSharedSessionsForReferenceGuard();
     assertAuthoritativeSessionsIdle(sessions);
   }
-  async function ensureKnownSession(sessionId) {
+  async function resolveKnownSession(sessionId) {
     const sessions = await listSharedSessionsForReferenceGuard();
     if (!Array.isArray(sessions.items) || !sessions.items.some((item) => item?.sessionId === sessionId)) throw new Error('unknown session');
     const selected = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`);
     const chosen = resolveSafeSessionBinding({ provider: selected?.current?.provider,
       profiles: settingsMod.listModelProfiles().profiles, providerForProfile: (profile) => routeForProfile(profile.id).provider,
       priorBinding: settingsMod.sessionModelBinding(sessionId), legacyCompatibilityProfileId: verifiedLegacyCompatibilityProfile()?.id ?? null });
+    const profile = chosen.profile;
+    if (!profile || !hasProfileCredential(profile)) throw new Error('session model profile is unavailable');
+    return { chosen, profile, route: routeForProfile(profile.id) };
+  }
+  async function ensureKnownSession(sessionId) {
+    const { chosen, profile, route } = await resolveKnownSession(sessionId);
     // Header and explicitly-recorded legacy sources are persisted only after
     // resolution succeeds.  Unknown sessions never reach resume/send/cancel.
     if (chosen.source !== 'durable-binding') settingsMod.bindSessionModel(sessionId, chosen.profile.id, true);
-    const profile = chosen.profile;
-    if (!profile || !configStoreMod.getCredential(profile.id)) throw new Error('session model profile is unavailable');
-    const route = routeForProfile(profile.id);
     await restoreInternalSessionRoute({ sessionId, profile, provider: route.provider, needsRestore: settingsMod.sessionBindingNeedsInternalRoute(sessionId),
       current: () => stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`),
       select: (value) => stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`, { method: 'PUT', body: JSON.stringify(value) }),
@@ -1675,6 +1940,7 @@ async function bootstrap() {
   }
   // 关窗与托盘先于 loadURL 接线：DSH 页面加载慢时，用户点击 X 也只能最小化到托盘，
   // 不会把窗口销毁在 await loadURL 的中途。
+  if (!personalHostMode) {
   win.on('close', (e) => {
     if (!isQuitting) {
       e.preventDefault();
@@ -1735,10 +2001,11 @@ async function bootstrap() {
     } catch { /* 非法 URL 直接拒绝 */ }
     return { action: 'deny' };
   });
+  }
 
   // Both the initial setup bridge and Stage 2 CRUD use this exact queue/journal
   // path.  It is intentionally assigned before the preload-facing handlers.
-  saveModelRoute = async (input) => {
+  saveModelRoute = async (input, { catalogOnly = false } = {}) => {
     if (input?.provider !== 'openai-compatible') throw new TypeError('unsupported provider');
     const id = typeof input?.id === 'string' && input.id.length > 0 ? input.id : `model-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`;
     const providedKey = String(input?.apiKey ?? '').trim();
@@ -1749,6 +2016,22 @@ async function bootstrap() {
       const profilesBefore = settingsMod.listModelProfiles().profiles;
       const wasUnconfigured = profilesBefore.length === 0;
       const prior = profilesBefore.find((item) => item.id === id);
+      const publicName = String(input?.name ?? '').trim() || nextModel;
+      const officialRoute = routeForProfile(id);
+      const exactLocalRepair = catalogOnly && prior && prior.baseUrl === baseUrl &&
+        prior.model === nextModel && prior.name === publicName &&
+        providedKey.length > 0 &&
+        providedKey === (configStoreMod.getCredential(id) ??
+          configStoreMod.getCredential(officialCredentialRef(officialRoute.provider)));
+      if (exactLocalRepair && prior.provider === 'openai-compatible' &&
+          id === OCCAMY_VISION_PROFILE_ID && runtimeOrigin) {
+        const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+        const snapshot = await official.describeSettings();
+        if (Object.hasOwn(snapshot.userProviders, officialRoute.provider)) {
+          await reconcileOccamyImageInput(official, { route: officialRoute.provider, modelId: nextModel });
+          return prior;
+        }
+      }
       // A retained credential is scoped to its exact provider+endpoint. Never
       // send it to a newly typed address merely because the edit field is blank.
       const routeChanged = !prior || prior.baseUrl !== baseUrl || prior.model !== nextModel;
@@ -1760,7 +2043,7 @@ async function bootstrap() {
         await hydrateLegacySessionBindings();
         assertSessionReferenceScanComplete();
       }
-      if (prior) {
+      if (prior && !exactLocalRepair) {
         assertModelProfileMutationAllowed({ referenced: settingsMod.profileHasSessionBinding(id), operation: 'edit',
           displayNameOnly: prior.baseUrl === baseUrl && prior.model === nextModel && providedKey.length === 0 });
       }
@@ -1768,6 +2051,80 @@ async function bootstrap() {
       const apiKey = resolveModelSaveCredential({ prior, provider: input.provider, baseUrl, providedKey,
         storedKey: prior ? configStoreMod.getCredential(id) : null });
       const clean = { name: String(input?.name ?? '').trim(), baseUrl, apiKey, model: nextModel };
+      if (catalogOnly) {
+        if (!Number.isSafeInteger(input.contextWindow) || input.contextWindow < 4_096 ||
+            input.contextWindow > 1_048_576 || !Number.isSafeInteger(input.outputReserve) ||
+            input.outputReserve < 1 || input.outputReserve > 131_072 ||
+            input.outputReserve >= input.contextWindow) throw new TypeError('invalid formal local model limits');
+        const models = await discoverOpenAICompatibleModels({ baseUrl: clean.baseUrl, apiKey: clean.apiKey });
+        if (!models.includes(clean.model)) throw new Error('selected model was not returned by local catalog');
+        if (!runtimeOrigin) throw new Error('official DSH runtime unavailable');
+        const projection = { route: officialRoute.provider, displayName: publicName, baseURL: baseUrl,
+          models: [{ id: clean.model, name: publicName,
+            contextWindow: input.contextWindow, maxTokens: input.outputReserve }] };
+        const visionProjection = id === OCCAMY_VISION_PROFILE_ID
+          ? projectOccamyImageInput(projectOfficialProviderConfig(projection),
+            { route: officialRoute.provider, modelId: clean.model }) : null;
+        const targetRef = officialCredentialRef(officialRoute.provider);
+        let addedOfficialRoute = false;
+        let profile;
+        try {
+          profile = await mutateModelRouteTransaction(async () => {
+            configStoreMod.saveCredential(id, apiKey);
+            configStoreMod.saveCredential(targetRef, apiKey);
+            const client = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+            if (exactLocalRepair && officialRouteMigrationComplete &&
+                officialRouteMigrationRoutes.has(officialRoute.provider)) {
+              await repairOfficialLocalRouteLimits(client, projection);
+            }
+            const installed = await migrateLegacyRoutes(client, [projection]);
+            addedOfficialRoute = installed.mutated;
+            const saved = exactLocalRepair ? prior : settingsMod.upsertModelProfile({
+              id, name: publicName, provider: 'openai-compatible', baseUrl, model: clean.model, reasoningEffort: 'off',
+            });
+            await ensureSharedRuntime({ reload: true });
+            const restarted = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+            const [snapshot, credentials] = await Promise.all([
+              restarted.describeSettings(), restarted.describeCredentials([targetRef]),
+            ]);
+            const verification = verifyLegacyRouteMigration([projection], snapshot, credentials);
+            if (!verification.ok) throw new Error('official local model route not verified after restart');
+            if (visionProjection) {
+              await reconcileOccamyImageInput(restarted, { route: officialRoute.provider, modelId: clean.model });
+            }
+            // A first local catalog route can be installed after the no-profile
+            // startup migration. Persist official ownership now, after the
+            // restarted child proves the route and credential. Otherwise a
+            // cold boot would run the legacy fixed-limit projection again.
+            if (!officialRouteMigrationRoutes.has(officialRoute.provider)) {
+              const routes = new Set([...officialRouteMigrationRoutes, officialRoute.provider]);
+              writeModelRoutesPatch(ROUTES_PATCH, []);
+              writeOfficialRouteMigrationMarker([...routes]);
+              officialRouteMigrationRoutes = routes;
+              officialRouteMigrationComplete = true;
+              legacyRoutePatchRetired = true;
+            }
+            return saved;
+          });
+          if (wasUnconfigured && runtimeOrigin) await hydrateLegacySessionBindings();
+        } catch (error) {
+          // A route newly added by this transaction is removed only when the
+          // current official user row still exactly matches our projection.
+          if (addedOfficialRoute && runtimeOrigin) {
+            try {
+              const current = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+              const snapshot = await current.describeSettings();
+              if (isDeepStrictEqual(snapshot.userProviders[officialRoute.provider],
+                projectOfficialProviderConfig(projection)) || visionProjection &&
+                  isDeepStrictEqual(snapshot.userProviders[officialRoute.provider], visionProjection)) {
+                await current.mutateSettings([{ op: 'unset', path: ['providers', officialRoute.provider] }], snapshot.revision);
+              }
+            } catch { /* Keep the original failure; a later retry remains idempotent. */ }
+          }
+          throw error;
+        }
+        return profile;
+      }
       await validateStageOneModel(clean);
       const profile = await mutateModelRouteTransaction(async () => {
         configStoreMod.saveCredential(id, apiKey);
@@ -1782,11 +2139,185 @@ async function bootstrap() {
       return profile;
     });
   };
+  configureLocalModel = async ({ modelId, name }) => {
+    if (!personalHostMode || !personalAccessService || isQuitting) {
+      throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+    }
+    const id = `personal-local-${modelId}`;
+    const prior = settingsMod.listModelProfiles().profiles.find((item) => item.id === id);
+    const input = await prepareLocalModelConfig({ modelId, name: name ?? prior?.name });
+    const profile = await saveModelRoute(input, { catalogOnly: true });
+    return { configured: true, profileId: profile.id, modelId: profile.model,
+      verification: 'catalog_only', inferenceVerified: false };
+  };
+  configureLocalCatalog = async () => {
+    if (!personalHostMode || !personalAccessService || isQuitting) {
+      throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+    }
+    const formal = await listFormalLocalModels();
+    if (formal.length !== 9) throw Object.assign(new Error('expected nine formal local models'), { code: 'LOCAL_MODEL_INVALID' });
+    const apiKey = await readUserModelSwitcherKey();
+    const sharedMarkers = formal.map((item) => ({
+      id: `personal-local-${item.modelId}`, model: item.modelId,
+      baseUrl: FORMAL_LOCAL_BASE_URL, provider: 'openai-compatible', source: 'formal-host-catalog',
+      credentialHash: createHash('sha256').update(apiKey).digest('hex'),
+    }));
+    const prepared = await Promise.all(formal.map((item) => prepareLocalModelConfig({
+      modelId: item.modelId, readKey: async () => apiKey,
+    })));
+    const models = await discoverOpenAICompatibleModels({ baseUrl: prepared[0].baseUrl, apiKey });
+    if (prepared.some((item) => !models.includes(item.model))) {
+      throw Object.assign(new Error('formal model is absent from local catalog'), { code: 'MODEL_UNAVAILABLE' });
+    }
+    return enqueueRouteMutation(async () => {
+      await hydrateLegacySessionBindings();
+      assertSessionReferenceScanComplete();
+      await assertRouteReloadSafe();
+      if (!runtimeOrigin) throw Object.assign(new Error('runtime unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+      const current = settingsMod.listModelProfiles();
+      const bindingsBefore = settingsMod.snapshotSettings().sessionBindings;
+      const additions = [];
+      for (const input of prepared) {
+        const prior = current.profiles.find((item) => item.id === input.id);
+        if (prior) {
+          if (prior.provider !== 'openai-compatible' || prior.baseUrl !== input.baseUrl ||
+              prior.model !== input.model || !hasProfileCredential(prior)) {
+            throw Object.assign(new Error('existing local profile differs'), { code: 'MODEL_ROUTE_BLOCKED' });
+          }
+        } else additions.push(input);
+      }
+      if (additions.length === 0) {
+        const catalog = await stageOneGateway('/models');
+        if (!Array.isArray(catalog?.groups) || prepared.some((input) =>
+          !catalog.groups.some((group) => group?.id === routeForProfile(input.id).provider &&
+            Array.isArray(group.models) && group.models.some((model) => model?.id === input.model)))) {
+          throw Object.assign(new Error('official local catalog route is unavailable'), { code: 'MODEL_ROUTE_BLOCKED' });
+        }
+        await reconcileOccamyImageInput(createOfficialDshSettingsClient({ origin: runtimeOrigin }),
+          { route: routeForProfile(OCCAMY_VISION_PROFILE_ID).provider });
+        await personalAccessService.setSharedModelProfiles(sharedMarkers);
+        return { configured: true, total: formal.length, added: 0,
+          reused: formal.length, reloads: 0, modelIds: formal.map((item) => item.modelId),
+          verification: 'catalog_only', inferenceVerified: false };
+      }
+      const projections = additions.map((input) => {
+        const route = routeForProfile(input.id);
+        return { route: route.provider, displayName: input.name, baseURL: input.baseUrl,
+          models: [{ id: input.model, name: input.name,
+            contextWindow: input.contextWindow, maxTokens: input.outputReserve }] };
+      });
+      const occamyRoute = routeForProfile(OCCAMY_VISION_PROFILE_ID).provider;
+      const freshOccamy = additions.some((item) => item.id === OCCAMY_VISION_PROFILE_ID);
+      if (!freshOccamy) {
+        await reconcileOccamyImageInput(createOfficialDshSettingsClient({ origin: runtimeOrigin }),
+          { route: occamyRoute });
+      }
+      const beforeOfficial = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
+      try {
+        await mutateModelRouteTransaction(async () => {
+          for (const input of additions) {
+            const route = routeForProfile(input.id);
+            configStoreMod.saveCredential(input.id, apiKey);
+            configStoreMod.saveCredential(officialCredentialRef(route.provider), apiKey);
+          }
+          const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+          await migrateLegacyRoutes(official, projections);
+          for (const input of additions) settingsMod.upsertModelProfile({
+            id: input.id, name: input.name, provider: 'openai-compatible', baseUrl: input.baseUrl,
+            model: input.model, reasoningEffort: 'off',
+          });
+          if (current.activeId === null && !settingsMod.setActiveModelProfile('personal-local-occamy-miniplus-v21')) {
+            throw new Error('MiniPlus default could not be retained');
+          }
+          await ensureSharedRuntime({ reload: true });
+          const restarted = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+          const refs = projections.map((item) => officialCredentialRef(item.route));
+          const [snapshot, credentials] = await Promise.all([
+            restarted.describeSettings(), restarted.describeCredentials(refs),
+          ]);
+          const verified = verifyLegacyRouteMigration(projections, snapshot, credentials);
+          if (!verified.ok || settingsMod.listModelProfiles().activeId !==
+              (current.activeId ?? 'personal-local-occamy-miniplus-v21') ||
+              !isDeepStrictEqual(settingsMod.snapshotSettings().sessionBindings, bindingsBefore)) {
+            throw new Error('formal local catalog did not preserve route ownership and selection');
+          }
+          if (freshOccamy) await reconcileOccamyImageInput(restarted, { route: occamyRoute });
+          const routes = new Set([...officialRouteMigrationRoutes, ...projections.map((item) => item.route)]);
+          writeModelRoutesPatch(ROUTES_PATCH, []);
+          writeOfficialRouteMigrationMarker([...routes]);
+          officialRouteMigrationRoutes = routes;
+          officialRouteMigrationComplete = true;
+          legacyRoutePatchRetired = true;
+        });
+      } catch (error) {
+        // The product settings/vault journal already restored its own files.
+        // Undo only official user routes newly added by this call, and only
+        // while their content still exactly matches our non-secret projection.
+        if (runtimeOrigin) try {
+          const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+          const snapshot = await official.describeSettings();
+          const operations = projections.filter((item) => !Object.hasOwn(beforeOfficial.userProviders, item.route) &&
+            (isDeepStrictEqual(snapshot.userProviders[item.route], projectOfficialProviderConfig(item)) ||
+              item.route === occamyRoute && isDeepStrictEqual(snapshot.userProviders[item.route],
+                projectOccamyImageInput(projectOfficialProviderConfig(item), { route: item.route }))))
+            .map((item) => ({ op: 'unset', path: ['providers', item.route] }));
+          if (operations.length) {
+            await official.mutateSettings(operations, snapshot.revision);
+            await ensureSharedRuntime({ reload: true });
+          }
+        } catch { /* Keep the original failure; never overwrite a changed user route. */ }
+        throw error;
+      }
+      await personalAccessService.setSharedModelProfiles(sharedMarkers);
+      return { configured: true, total: formal.length, added: additions.length,
+        reused: formal.length - additions.length, reloads: 1,
+        modelIds: formal.map((item) => item.modelId),
+        verification: 'catalog_only', inferenceVerified: false };
+    });
+  };
 
   const stageOneTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: legacyRendererUrl,
     sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
   const dshSurfaceTrusted = (event) => !!win && isTrustedRendererInvocation({ expectedOrigin: trustedRuntimeOrigin,
     sender: event.sender, expectedSender: win.webContents, senderFrame: event.senderFrame, mainFrame: win.webContents.mainFrame });
+  const modWindowRequest = async ({ projectId, sessionId, action, frameToken = null, request = null, userInitiated = false }) => {
+    if (!runtimeOrigin) throw new Error('WeftMate runtime is unavailable')
+    const response = await fetch(new URL('/weftmate/mods/request', runtimeOrigin), {
+      method: 'POST',
+      headers: { origin: runtimeOrigin, 'content-type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionId, project_id: projectId, action, ...(frameToken ? { frame_token: frameToken } : {}), ...(request ? { request } : {}), ...(userInitiated ? { user_initiated: true } : {}) }),
+    })
+    const value = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(typeof value?.error === 'string' ? value.error : 'Mod request failed')
+    return value
+  }
+  const modWindowSnapshot = async ({ projectId, sessionId, frameToken = null }) => {
+    if (!runtimeOrigin) throw new Error('WeftMate runtime is unavailable')
+    const url = new URL('/weftmate/mods/window/snapshot', runtimeOrigin)
+    url.searchParams.set('project_id', projectId); url.searchParams.set('session_id', sessionId)
+    if (frameToken) url.searchParams.set('frame_token', frameToken)
+    const response = await fetch(url, { headers: { origin: runtimeOrigin } })
+    const value = await response.json().catch(() => ({}))
+    if (!response.ok) throw new Error(typeof value?.error === 'string' ? value.error : 'Mod detail unavailable')
+    return value
+  }
+  modWindowManager = new ModWindowManager({
+    BrowserWindow,
+    ipcMain,
+    getOrigin: () => runtimeOrigin,
+    getTheme: () => dshResolvedTheme ?? (nativeTheme.shouldUseDarkColors ? 'dark' : 'light'),
+    fetchSnapshot: modWindowSnapshot,
+    invoke: ({ projectId, sessionId, frameToken, request }) => modWindowRequest({ projectId, sessionId, action: 'invoke', frameToken, request }),
+    control: ({ projectId, sessionId, action }) => modWindowRequest({ projectId, sessionId, action, userInitiated: action === 'start' }),
+    preload: join(import.meta.dirname, 'mod-window-preload.cjs'),
+    parent: () => win,
+    showWorkspace: showWindow,
+    onOpenWorkspace: ({ projectId, sessionId }) => { if (win && !win.isDestroyed()) win.webContents.send('wm:mod-window:open-project', { projectId, sessionId }); },
+  })
+  ipcMain.handle('wm:mod-window:open', async (event, payload) => {
+    if (!dshSurfaceTrusted(event)) throw new Error('请求来源不可信。')
+    return modWindowManager.open({ projectId: payload?.projectId, sessionId: payload?.sessionId })
+  })
   // The official DSH page has no product IPC. This one-way visual hint only
   // keeps Windows' native titlebar aligned with DSH's resolved light/dark
   // token; persistence remains in official DSH settings, not this bridge.
@@ -1798,6 +2329,7 @@ async function bootstrap() {
     dshResolvedTheme = value;
     dshSurfaceBackgroundColor = background;
     updateNativeWindowColors(value, background);
+    modWindowManager?.syncTheme();
     return { ok: true };
   });
   ipcMain.handle('wm:stage1:bootstrap', async (event) => stageOneTrusted(event) ? { ...publicModelView(), settings: settingsMod.readProductSettings(), runtimeReady: !!runtimeOrigin } : { configured: false, error: '请求来源不可信。' });
@@ -2046,32 +2578,112 @@ async function bootstrap() {
     }
   });
   // 最大化状态变化 → 通知前端切换"最大化/还原"图标（官方 UI 忽略未知事件，保留无害）。
+  if (!personalHostMode) {
   win.on('maximize', () => win.webContents.send('wm:maximized', true));
   win.on('unmaximize', () => win.webContents.send('wm:maximized', false));
   // 页面加载完主动推一次当前最大化态——防"启动即最大化"时前端图标停在"最大化"没切成"还原"。
   win.webContents.on('did-finish-load', () => { try { win.webContents.send('wm:maximized', win.isMaximized()); } catch { /* 窗口已关忽略 */ } });
+  }
+
+  if (personalMemoryConfigPath !== null) {
+    const memoryConfig = await loadPersonalMemoryConfig(personalMemoryConfigPath);
+    personalMemoryManager = createPersonalMemoryManager({
+      root: join(userDataDir, 'personal-access'), enabled: true,
+      python: memoryConfig.python, pythonPath: memoryConfig.pythonPath,
+      baseUrl: memoryConfig.baseUrl, model: memoryConfig.model,
+      credential: (ownerId) => {
+        if (!personalAccessService?.canUseModelProfile?.(ownerId, memoryConfig.authRef) ||
+            !personalAccessService?.isFormalLocalProfile?.(memoryConfig.authRef)) return null;
+        const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === memoryConfig.authRef);
+        return profile ? credentialForModelProfile(profile) : null;
+      },
+    });
+  }
+  const personalDesktopTask = accessPort === null ? null : createPersonalDesktopTask();
+  const accessBackend = accessPort === null ? null : createPersonalAccessBackend({
+    currentOrigin: () => runtimeOrigin,
+    referenceScan: () => sessionReferenceScan,
+    profiles: () => settingsMod.listModelProfiles().profiles,
+    hasCredential: hasProfileCredential,
+    credentialForProfile: credentialForModelProfile,
+    hostOwnerId: () => personalAccessService?.legacyOwnerId?.() ?? null,
+    modelAllowed: (ownerId, profileId) => personalAccessService?.canUseModelProfile?.(ownerId, profileId) === true,
+    moduleStatus: () => ({ memory: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? 'unknown' : 'disabled' }),
+    routeForProfile,
+    listSessions: listSharedSessionsForReferenceGuard,
+    resolveSession: resolveKnownSession,
+    ensureKnownSession,
+    gateway: stageOneGateway,
+    queue: enqueueRouteMutation,
+    bindSession: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId),
+    desktopTask: personalDesktopTask,
+    naturalLanguageDesktopReady: () => personalAccessService !== null && personalHostMode,
+    naturalLanguageDesktopVerified: () => personalAccessService?.hasVerifiedPersonalTool?.() === true,
+  });
 
   try {
-    // DSH is the complete first-run surface as well as the conversation
-    // surface: on a brand-new install its official Models page owns setup.
-    let origin = await ensureSharedRuntime({ reload: true });
-    if (!origin) throw new Error('official DSH runtime did not publish an origin');
-    origin = await migrateLegacyRoutesToOfficialSettings();
-    await navigateToRuntimeSurface(origin);
-    await hydrateLegacySessionBindings();
-    win.show();
-    console.log('[weftmate] ✓ WeftMate 官方 DSH 界面加载完成');
+    if (personalHostMode) {
+      await startPersonalHost({
+        startRuntime: () => ensureSharedRuntime({ reload: true }),
+        migrateRoutes: migrateLegacyRoutesToOfficialSettings,
+        hydrateBindings: async () => {
+          await hydrateLegacySessionBindings();
+        },
+        log: (message) => {
+          writeHostState();
+          if (sessionReferenceScan.state === 'failed') {
+            console.warn(`[weftmate] ⚠ personal-host degraded origin=${runtimeOrigin} referenceScan=failed modelRouteChangesBlocked=true`);
+          } else console.log(message);
+        },
+      });
+      if (accessPort !== null) {
+        const { createPersonalAccessService } = await import('./personal-access/index.mjs');
+        personalAccessService = await createPersonalAccessService({
+          root: join(userDataDir, 'personal-access'), port: accessPort, backend: accessBackend,
+          uiHandler: servePersonalAccessUi,
+          androidPackagePath,
+           mobileUiDir,
+           memoryManager: personalMemoryManager,
+           sharedProfileIsFormal: (marker) => {
+             const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === marker.id);
+             if (profile?.provider !== marker.provider || profile.baseUrl !== marker.baseUrl ||
+                 profile.model !== marker.model || marker.baseUrl !== FORMAL_LOCAL_BASE_URL ||
+                 marker.source !== 'formal-host-catalog') return false;
+             const credential = credentialForModelProfile(profile);
+             return typeof credential === 'string' &&
+               createHash('sha256').update(credential).digest('hex') === marker.credentialHash;
+           },
+          ...(personalPublicOrigin ? { allowedOrigins: [personalPublicOrigin], trustedProxy: true } : {}),
+        });
+        const started = await personalAccessService.start();
+        personalAccessOrigin = assertLoopbackOrigin(started.origin);
+        writeHostState();
+        console.log(`[weftmate] ✓ personal-access listening origin=${personalAccessOrigin}`);
+      }
+    } else {
+      // DSH is the complete first-run and conversation surface.
+      let origin = await ensureSharedRuntime({ reload: true });
+      if (!origin) throw new Error('official DSH runtime did not publish an origin');
+      origin = await migrateLegacyRoutesToOfficialSettings();
+      await navigateToRuntimeSurface(origin);
+      await hydrateLegacySessionBindings();
+      win.show();
+      writeHostState();
+      console.log('[weftmate] ✓ WeftMate 官方 DSH 界面加载完成');
+    }
   } catch (e) {
-    requestFatalStartupExit('Harness 前端加载失败', e, formatHarnessStartupError(e));
+    requestFatalStartupExit(personalHostMode ? 'Personal host 启动失败' : 'Harness 前端加载失败', e, formatHarnessStartupError(e));
     return;
   }
 
   // R6-02 · 桌宠自愈：上次可见（设置里 visible=true）→ 启动补唤醒（v2 等价路径的恢复）。
-  if (desktopCompanion && settingsMod?.getDesktopPetWindowState?.().visible) {
+  if (!personalHostMode && desktopCompanion && settingsMod?.getDesktopPetWindowState?.().visible) {
     void wakeDesktopPet().catch((error) => logCrash('desktop-pet-autowake', error));
   }
 
-  console.log('[weftmate] ═══ 官方 DSH web 基座就位:关窗收托盘、托盘"退出"才真退 ═══');
+  console.log(personalHostMode
+    ? '[weftmate] personal-host active; managed shutdown via launcher IPC'
+    : '[weftmate] ═══ 官方 DSH web 基座就位:关窗收托盘、托盘"退出"才真退 ═══');
 }
 
 async function exportRedactedDiagnosticsFromMain() {
@@ -2175,12 +2787,39 @@ app.on('before-quit', (e) => {
   if (cleanupDone) return; // 已清理完 → 放行真正退出
   e.preventDefault();
   if (shutdownPromise) return;
+  hostLifecycleState = 'stopping';
+  runtimeOrigin = null;
+  writeHostStateForLifecycle?.();
 
   shutdownPromise = (async () => {
+    let accessClosing = null;
+    try { accessClosing = personalAccessService?.close?.() ?? null; }
+    catch (error) { logCrash('shutdown-personal-access', error); }
     // Stop admission before any asynchronous cleanup.  A mutation already in
     // this lane may finish/compensate, but no new session/settings/model work
     // can cross the shutdown fence.
     exclusiveMainQueue?.stopAcceptingAndDrain();
+    if (accessClosing) {
+      let timer;
+      try {
+        await Promise.race([accessClosing, new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('personal access close timed out')), 5_000);
+        })]);
+      } catch (error) { logCrash('shutdown-personal-access', error); }
+      finally { if (timer) clearTimeout(timer); }
+    }
+    personalAccessOrigin = null;
+    writeHostStateForLifecycle?.();
+    if (personalMemoryManager) {
+      let timer;
+      try {
+        await Promise.race([personalMemoryManager.close(), new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('account memory close timed out')), 5_000);
+        })]);
+      } catch (error) { logCrash('shutdown-account-memory', error); }
+      finally { if (timer) clearTimeout(timer); }
+    }
+    await modWindowManager?.dispose?.();
     // Revoking manager admission happens synchronously at close entry; wait a
     // bounded manager close before ending DSH, but never let a failed child
     // confirmation block application exit forever.
@@ -2226,6 +2865,9 @@ app.on('before-quit', (e) => {
   })();
   void shutdownPromise.finally(() => {
     cleanupDone = true;
+    hostLifecycleState = 'stopped';
+    runtimeOrigin = null;
+    writeHostStateForLifecycle?.();
     app.exit(startupExitCode); // cleanup 完成后一次性退出；启动失败必须保留非零码。
   });
 });
