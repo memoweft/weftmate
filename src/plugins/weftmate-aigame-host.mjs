@@ -1,6 +1,6 @@
 /** Official DSH host tool seam for the AI-Game phone execution service. */
 
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { credentialRef } from '@deepseek-ai/dsh-credentials'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
@@ -11,7 +11,7 @@ import {
   AiGameTransport,
   AiGameTransportError,
 } from '../runtime/ai-game/transport.mjs'
-import { AiGamePanelError, projectAiGameSessionPanel } from '../runtime/ai-game/panel.mjs'
+import { AiGamePanelError, projectAiGameSessionPanel, collectDurableExecutionPointers } from '../runtime/ai-game/panel.mjs'
 
 export const name = 'weftmate-aigame-host'
 export const inject = ['tools', 'approval', 'credentials']
@@ -39,7 +39,7 @@ function toolError(code, message) {
   return error
 }
 
-function callIdentity(exec) {
+export function callIdentity(exec) {
   const agent = exec.agent
   if (agent === undefined || agent.session === undefined) {
     throw toolError('AI_GAME_CALLER_UNAVAILABLE', 'The phone tool requires an owning DSH session.')
@@ -87,7 +87,7 @@ export function stableSubmissionKey(identity, principalId, controllerId) {
   return `dsh-submit-v2-${digest}`
 }
 
-function effectivePermissionPreset(session) {
+export function effectivePermissionPreset(session) {
   for (let index = session.events.length - 1; index >= 0; index -= 1) {
     const event = session.events[index]
     if (event.type === 'permission/preset') return event.data?.preset
@@ -201,7 +201,7 @@ function requireCurrentRevision(task, baseRevision) {
   if (task.current_revision !== baseRevision) {
     throw toolError(
       'AI_GAME_REVISION_CONFLICT',
-      'The requested revision is stale. Inspect the Task and retry against its current revision.',
+      `The requested revision is stale. Current revision: ${task.current_revision}. Inspect the Task before retrying the requested control.`,
     )
   }
 }
@@ -385,6 +385,28 @@ function sendJson(res, status, value) {
 export function createAiGamePanelHandler({ sessions, transport }) {
   return async (req, res) => {
     const url = new URL(req.url ?? '/', 'http://weftmate.invalid')
+    if (req.method === 'POST' && url.pathname === '/weftmate/ai-game/controls.json') {
+      try {
+        const origin = new URL(`http://${req.headers.host}`)
+        if (!['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname) || req.headers.origin !== origin.origin) return sendJson(res, 403, { error: { code: 'AI_GAME_CONTROL_ORIGIN_REJECTED' } })
+        let body = ''
+        for await (const chunk of req) { body += chunk.toString('utf8'); if (Buffer.byteLength(body) > 8192) throw new TypeError('request too large') }
+        const input = JSON.parse(body)
+        const session = sessions.get(input.session_id)
+        if (!session || !collectDurableExecutionPointers(session.events).some(p => p.taskId === input.task_id)) return sendJson(res, 403, { error: { code: 'AI_GAME_CONTROL_TASK_FORBIDDEN' } })
+        if (!['pause', 'cancel', 'resume'].includes(input.action)) throw new TypeError('invalid control')
+        const current = await transport.taskDetail(input.task_id)
+        requireAllowedControl(current, input.action)
+        requireCurrentRevision(current, input.expected_revision)
+        const callId = `ui-${randomUUID()}`
+        const identity = callIdentity({ agent: { session }, callId, rootCallId: callId })
+        const result = await transport.controlTask(input.task_id, { identity, action: input.action, expected_revision: current.current_revision, idempotency_key: callId, authorization_mode: 'allowed-once' })
+        return sendJson(res, 200, canonicalV2(result, 'control'))
+      } catch (error) { return sendJson(res, 400, { error: { code: error.code ?? 'AI_GAME_CONTROL_FAILED', message: error.message } }) }
+    }
+    if (url.pathname.startsWith('/weftmate/ai-game/devices')) {
+      return handleDeviceSetup(req, res, url, transport)
+    }
     if (req.method !== 'GET' || url.pathname !== '/weftmate/ai-game/panel.json') {
       sendJson(res, req.method === 'GET' ? 404 : 405, { error: { code: 'AI_GAME_PANEL_ROUTE_NOT_FOUND' } })
       return
@@ -427,6 +449,73 @@ export function createAiGamePanelHandler({ sessions, transport }) {
       req.removeListener?.('aborted', abort)
       res.removeListener?.('close', abort)
     }
+  }
+}
+
+function deviceProjection(profile) {
+  const connectionState = profile.state === 'ready'
+    ? 'connected'
+    : profile.state === 'offline'
+      ? 'disconnected'
+      : 'unknown'
+  return {
+    device_profile_id: profile.device_profile_id,
+    display_name: profile.display_name,
+    state: profile.state,
+    connection_state: connectionState,
+    is_default: profile.is_default,
+  }
+}
+
+async function handleDeviceSetup(req, res, url, transport) {
+  try {
+    if (req.method === 'GET' && url.pathname === '/weftmate/ai-game/devices.json') {
+      const profiles = await transport.deviceProfiles()
+      return sendJson(res, 200, { items: profiles.items.map(deviceProjection) })
+    }
+    if (req.method === 'GET' && url.pathname === '/weftmate/ai-game/devices/discovery.json') {
+      const found = await transport.discoverEmulators()
+      return sendJson(res, 200, {
+        items: found.items.map(item => ({
+          candidate_id: item.candidate_id,
+          display_name: item.display_name,
+          state: item.state,
+          connection_state: item.state === 'ready' ? 'connected' : 'unknown',
+        })),
+      })
+    }
+    if (req.method !== 'POST' || url.pathname !== '/weftmate/ai-game/devices/select.json') {
+      return sendJson(res, 405, { error: { code: 'PHONE_DEVICE_OPERATION_UNSUPPORTED' } })
+    }
+    const origin = new URL(`http://${req.headers.host}`)
+    if (!['127.0.0.1', 'localhost', '[::1]'].includes(origin.hostname) || req.headers.origin !== origin.origin) {
+      return sendJson(res, 403, { error: { code: 'PHONE_DEVICE_ORIGIN_REJECTED' } })
+    }
+    let body = ''
+    for await (const chunk of req) {
+      body += chunk.toString('utf8')
+      if (Buffer.byteLength(body, 'utf8') > 8192) throw new TypeError('invalid device request')
+    }
+    let input
+    try { input = JSON.parse(body) } catch { throw new TypeError('invalid device request') }
+    const allowed = ['candidate_id', 'profile_id', 'display_name', 'idempotency_key']
+    const identifier = value => typeof value === 'string' && /^[A-Za-z0-9_.:-]{1,256}$/.test(value)
+    if (!input || typeof input !== 'object' || Array.isArray(input)
+      || Object.keys(input).some(key => !allowed.includes(key))
+      || !identifier(input.idempotency_key)
+      || (Object.hasOwn(input, 'candidate_id') === Object.hasOwn(input, 'profile_id'))
+      || !identifier(input.candidate_id ?? input.profile_id)) throw new TypeError('invalid device request')
+    const profile = input.profile_id
+      ? await transport.updateDeviceProfile(input.profile_id, { action: 'set_default', idempotency_key: input.idempotency_key })
+      : await transport.createDeviceProfile({
+          candidate_id: input.candidate_id, idempotency_key: input.idempotency_key,
+          display_name: typeof input.display_name === 'string' ? input.display_name : 'Android emulator', is_default: true,
+        })
+    return sendJson(res, 200, { profile: deviceProjection(profile) })
+  } catch (error) {
+    return sendJson(res, error instanceof TypeError ? 400 : 503, {
+      error: { code: error instanceof TypeError ? 'PHONE_DEVICE_REQUEST_INVALID' : 'PHONE_DEVICE_SERVICE_UNAVAILABLE' },
+    })
   }
 }
 
@@ -511,7 +600,7 @@ export function apply(ctx) {
 
   ctx.tools.register(defineTool({
     name: AI_GAME_TOOL_NAME,
-    description: `Create and manage authoritative, durable AI-Game phone Tasks. Every new phone request uses the canonical v2 Task path, the saved default Android emulator profile, and the host-selected ${AI_GAME_GENERAL_RUNNER_KIND}/${AI_GAME_GENERAL_RUNNER_VERSION} runner. Do not fall back to shell, PowerShell, ADB, emulator CLI, legacy settings, or another execution path. Legacy v1 executions are historical read-only records and are not reachable from this tool.`,
+    description: `Manage existing durable AI-Game phone Tasks and their controls. For new complete desktop/phone goals, use weftmod and weftmod_script to observe, operate, write code and reuse scripts as the conversation agent. submit remains a compatibility entry for the ${AI_GAME_GENERAL_RUNNER_KIND}/${AI_GAME_GENERAL_RUNNER_VERSION} runner. Legacy v1 records are historical read-only.`,
     parameters: {
       action: {
         type: 'string', required: true,
@@ -544,7 +633,7 @@ export function apply(ctx) {
           evidence_refs: { type: 'array', required: true, items: { type: 'json' } },
           event_cursor: { type: 'integer', required: true },
           error_code: { required: true, oneOf: [{ type: 'string' }, { type: 'null' }] },
-          current_revision: { type: 'integer' },
+          current_revision: { type: 'integer', required: true },
           reason_code: { type: 'string' },
           allowed_controls: { type: 'array', required: true, items: { type: 'string', enum: ['pause', 'resume', 'cancel', 'takeover', 'release_takeover'] } },
           device: { type: 'json', required: true },
@@ -554,6 +643,7 @@ export function apply(ctx) {
         type: 'text',
         text: [
           `AI-Game task ${value.task_id}: ${value.status}`,
+          `Current revision: ${value.current_revision}`,
           `Goal: ${value.goal_summary}`,
           value.current_stage === null ? 'Current stage: unknown' : `Current stage: ${value.current_stage}`,
           value.current_action === null ? null : `Current action: ${value.current_action}`,
@@ -563,6 +653,7 @@ export function apply(ctx) {
           value.device === null ? 'Device: not bound' : `Device: ${value.device.display_name} (${value.device.state})`,
           `Allowed controls: ${value.allowed_controls.length === 0 ? 'none' : value.allowed_controls.join(', ')}`,
           `Evidence references: ${value.evidence_refs.length}`,
+          AI_GAME_V2_TERMINAL.has(value.status) ? null : 'This task runs in the background. Report its current state once and wait for the existing task notice; do not repeatedly inspect it or use a shell command to wait.',
         ].filter(Boolean).join('\n'),
       }],
       presentationMeta: (_args, value) => ({
@@ -607,7 +698,7 @@ export function apply(ctx) {
           if (defaults.length !== 1) {
             throw toolError(
               'AI_GAME_SIMULATOR_PROFILE_REQUIRED',
-              'AI-GAME needs one preconfigured default Android emulator Profile before creating a phone task in this development candidate.',
+              '尚未选择默认模拟器。请打开 WeftMate 左下角“设置” → “WeftMate” → “手机测试设备”，点击“发现设备”，再点击目标设备的“使用这台设备”或“设为默认”。保存后重新提交原手机任务即可。',
             )
           }
           const authorizationMode = await requireApproval(ctx, exec, args.action)
@@ -649,6 +740,7 @@ export function apply(ctx) {
             const current = await transport.taskDetail(taskId, exec.signal)
             requireCurrentTask(current, taskId, action)
             requireAllowedControl(current, action)
+            requireCurrentRevision(current, args.expected_revision)
             const authorizationMode = await requireApproval(ctx, exec, args.action)
             snapshot = await transport.controlTask(taskId, {
               identity, action, expected_revision: args.expected_revision,

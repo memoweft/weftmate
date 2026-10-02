@@ -1,0 +1,190 @@
+{
+  "kind": "real-electron-carrier",
+  "checks": {
+    "sessionSelect": true,
+    "darkTheme": true,
+    "lightTheme": true,
+    "sameWebContentsOnHide": true,
+    "cleanup": true
+  },
+  "limitations": [
+    "Complete V2 geometry is not implemented by this probe."
+  ],
+  "errors": [],
+  "dom": {
+    "text": "新会话\n工作区\nworkspace\nworkspace\nworkspace\n未分组\n这是隔离对话载体验证。不要\n13分钟\nMods\n项目管理\n设置\n这是隔离对话载体验证。不要\n标准模式\nSession log\n对话\n轨迹\n这是隔离对话载体验证。不要调用任何工具，仅回复：接缝验证样本已准备。\n08:35\n上下文注入\n@deepseek-ai/dsh-system-prompt\nThink\n这是隔离对话载体验证。不要调用任何工具，仅回复：接缝验证样本已准备。\n\n接缝验证样本已准备\n\n08:36 · 用时 11秒 · 首 token 10秒 · 56 tok/s\nWorkspace Write\nLocal preview model\n1 轮 · 1 步| LLM 11.5s| 首 token 平均 10.1s · 56 tok/s| 缓存命中 0%| 输入 9.4K tok · 输出 78 tok\n详情\n点击消息流中的工具行查看详情\n记忆 状态未知\nWeftMate\nvdev\n运行时已连接\n托盘未就绪",
+    "inputs": [
+      {
+        "tag": "INPUT",
+        "type": "text",
+        "placeholder": "搜索会话…",
+        "role": null,
+        "editable": null
+      },
+      {
+        "tag": "TEXTAREA",
+        "type": "textarea",
+        "placeholder": "给智能体发消息",
+        "role": null,
+        "editable": null
+      }
+    ],
+    "buttons": [
+      {
+        "text": "",
+        "title": "",
+        "aria": "新建会话"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "收起侧边栏"
+      },
+      {
+        "text": "新会话",
+        "title": "",
+        "aria": "新建会话"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "搜索会话"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "视图选项"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "添加工作区"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "工作区“workspace”的操作"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "在“workspace”中新建会话"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "工作区“workspace”的操作"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "在“workspace”中新建会话"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "工作区“workspace”的操作"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "在“workspace”中新建会话"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "在“未分组”中新建会话"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "会话“这是隔离对话载体验证。不要”的操作"
+      },
+      {
+        "text": "Mods\n项目管理",
+        "title": "",
+        "aria": null
+      },
+      {
+        "text": "设置",
+        "title": "",
+        "aria": null
+      },
+      {
+        "text": "这是隔离对话载体验证。不要",
+        "title": "",
+        "aria": null
+      },
+      {
+        "text": "Session log",
+        "title": "",
+        "aria": null
+      },
+      {
+        "text": "对话",
+        "title": "",
+        "aria": null
+      },
+      {
+        "text": "轨迹",
+        "title": "",
+        "aria": null
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "复制"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "复制"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "好的回答"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "有问题的回答"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "在新对话中分支"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "命令"
+      },
+      {
+        "text": "Workspace Write",
+        "title": "",
+        "aria": "访问模式，当前：Workspace Write"
+      },
+      {
+        "text": "Local preview model",
+        "title": "Local preview model",
+        "aria": "选择模型，当前 Local preview model"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "上下文已用 29%"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "发送消息"
+      },
+      {
+        "text": "",
+        "title": "",
+        "aria": "关闭详情"
+      }
+    ]
+  }
+}

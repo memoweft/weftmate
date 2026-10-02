@@ -45,9 +45,11 @@ describe('official DSH surface shell contract', () => {
 
   it('exposes no old stage-one renderer bridge to the official page', () => {
     assert.match(preload, /wm:dsh-surface:theme/);
-    for (const forbidden of ['wm:stage1:', 'wm:stage2:', 'ipcRenderer.on', 'sessions:', 'apiKey']) {
+    for (const forbidden of ['wm:stage1:', 'wm:stage2:', 'sessions:', 'apiKey']) {
       assert.doesNotMatch(preload, new RegExp(forbidden.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     }
+    assert.deepEqual([...preload.matchAll(/ipcRenderer\.on\('([^']+)'/g)].map(match => match[1]), ['wm:mod-window:open-project']);
+    assert.match(preload, /removeListener\('wm:mod-window:open-project', listener\)/);
   });
 
   it('accepts only bounded computed body colors and mirrors the exact accepted color to native chrome', () => {
@@ -64,10 +66,11 @@ describe('official DSH surface shell contract', () => {
   it('keeps visual integration to a drag strip and resolved DSH theme observation', () => {
     assert.match(client, /weftmate-electron-drag-region/);
     assert.match(client, /background: var\(--dsw-alias-bg-base, Canvas\)/);
-    assert.match(client, /dragRegion\.innerHTML = '<span class="weftmate-mark">W<\/span><span class="weftmate-wordmark">WeftMate<\/span><span class="weftmate-context">WORKSPACE<\/span>'/);
-    assert.match(client, /ocUJRa_collapsed \.ocUJRa_brand \{ display: none; \}/);
-    assert.match(client, /ocUJRa_collapsed \.ocUJRa_toggle \{ width: 36px; height: 36px; \}/);
-    assert.match(client, /ocUJRa_collapsed \.ocUJRa_toggle \.ocUJRa_panelIcon \{ display: none !important; \}/);
+    assert.match(client, /dragRegion\.innerHTML = '<span class="weftmate-mark">W<\/span><span class="weftmate-wordmark">WeftMate<\/span>'/);
+    // The current fixed DSH has changed its hashed class names. Assert the
+    // retained collapsed-brand and button geometry, not a historical hash.
+    assert.match(client, /\.[\w-]+_collapsed \.[\w-]+_brand \{ display: none; \}/);
+    assert.match(client, /\.[\w-]+_collapsed \.[\w-]+_toggle \{ width: 36px; height: 36px; \}/);
     assert.match(client, /-webkit-app-region: drag/);
     assert.match(client, /-webkit-app-region: no-drag/);
     assert.match(client, /getComputedStyle\(dragRegion\)\.backgroundColor/);
@@ -80,15 +83,12 @@ describe('official DSH surface shell contract', () => {
     assert.match(main, /webContents\.on\('page-title-updated', \(event\) => \{\s*event\.preventDefault\(\);\s*if \(!win\.isDestroyed\(\)\) win\.setTitle\('WeftMate'\)/);
   });
 
-  it('does not register the dormant WeftMate overlays or duplicate settings navigation', () => {
+  it('keeps additive Mod integration without replacing the official conversation or root', () => {
     const applyStart = client.indexOf("apply: function (ctx) {");
-    const shellOnlyReturn = client.indexOf('        return', applyStart);
-    const oldOverlay = client.indexOf("ctx.slots.inject('shell.overlay'", applyStart);
-    const oldSettings = client.indexOf("ctx.slots.inject('settings.section'", applyStart);
-
-    assert.ok(applyStart >= 0 && shellOnlyReturn > applyStart);
-    assert.ok(oldOverlay > shellOnlyReturn);
-    assert.ok(oldSettings > shellOnlyReturn);
-    assert.match(client.slice(applyStart, shellOnlyReturn), /installElectronWindowChrome\(\)/);
+    assert.ok(applyStart >= 0);
+    assert.match(client.slice(applyStart), /installElectronWindowChrome\(\)/);
+    assert.match(client.slice(applyStart), /name: 'shell\.overlay',\s*id: 'weftmate-v2-shell'/);
+    assert.match(client.slice(applyStart), /name: 'sidebar\.workspaces', id: 'weftmate-v2-sessions'/);
+    assert.doesNotMatch(client.slice(applyStart), /register\(\{\s*name:\s*['"](?:root|conversation|sidebar|details)['"]/);
   });
 });

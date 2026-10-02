@@ -282,16 +282,17 @@ describe('weftmate web profile 组合基线（R2-02 安全基线 + G-01 官方�
     assert.match(gatewayRouter, /\/weftmate\/update/)
     const gatewayUpdate = readFileSync(new URL('../../src/runtime/gateway/legacy/update.mjs', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
     assert.match(gatewayUpdate, /action !== 'check' && action !== 'install'/)
-    // 当前 UI 门只允许 client plugin 提供无状态产品外壳；不重新注册旧
-    // shell overlay 或模型/设置/会话的第二份状态。官方 DSH client graph
-    // 继续拥有完整的交互与数据来源。
+    // V2 adds managed Mod views while the official DSH graph remains the
+    // owner of conversation/model/approval state. Verify brand semantics,
+    // not a class hash from an older pinned build.
     const client = readFileSync(new URL('../../src/plugins/weftmate-client/client.js', import.meta.url), 'utf8').replace(/\r\n/g, '\n')
     assert.match(client, /product frame around the fixed, official client graph/)
     assert.match(client, /weftmate-electron-drag-region/)
-    assert.match(client, /ocUJRa_brand::before/)
+    assert.match(client, /\.[\w-]+_brand::before \{ content: "WeftMate"/)
     assert.match(client, /content: "WeftMate"/)
     assert.match(client, /prefers-reduced-motion/)
-    assert.match(client, /apply: function \(ctx\) \{\s*installElectronWindowChrome\(\)/)
+    assert.match(client, /apply: function \(ctx\) \{[\s\S]*installElectronWindowChrome\(\)/)
+    assert.doesNotMatch(client, /register\(\{\s*name:\s*['"](?:root|conversation)['"]/)
     const clientPkg = readFileSync(new URL('../../src/plugins/weftmate-client/package.json', import.meta.url), 'utf8')
     assert.match(clientPkg, /@deepseek-ai\/dsh-client-ui-layout/)
   })

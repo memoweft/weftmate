@@ -21,13 +21,38 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 
 /** 官方 web profile 的 bundle 层（dsh --profile 组装顺序 = 本列表顺序 + cordis.patch.yml）。 */
 export const DEFAULT_PROFILE_BUNDLES: readonly string[] = [
   '@deepseek-ai/dsh-base',
   '@deepseek-ai/dsh-web-app',
 ]
+
+/** Preserve the pinned minimal preset's tools while giving long WeftMod tasks
+ * the same scoped context lifecycle as the shipped standard preset. Generated
+ * assets live under this app's profile; vendor and user-authored presets stay
+ * owned by their respective sources. */
+export async function writeContextAwareMinimalPreset(shippedRoot: string, targetRoot: string): Promise<void> {
+  const source = await readFile(join(shippedRoot, 'minimal', 'agent.cordis.yml'), 'utf8')
+  const standard = await readFile(join(shippedRoot, 'standard', 'agent.cordis.yml'), 'utf8')
+  const compaction = standard.match(/^(- id: compaction\r?\n[\s\S]*?)(?=^# ──|^- id:|(?![\s\S]))/m)?.[1]
+  if (!compaction?.includes("name: '@deepseek-ai/dsh-compaction-basic'")
+    || !compaction.includes('compaction: true')) {
+    throw new Error('Pinned DSH standard preset has no scoped context compaction composition')
+  }
+  const composition = source.includes("name: '@deepseek-ai/dsh-compaction-basic'")
+    ? source : `${source.replace('Context compaction is absent.', 'WeftMate adds scoped context compaction below.')}\n${compaction}`
+  const destination = join(targetRoot, 'minimal')
+  await mkdir(destination, { recursive: true })
+  for (const [name, content] of [
+    ['agent.cordis.yml', composition],
+    ['preset.yml', 'name: 极简模式\ndescription: 轻量对话与工具执行，支持自动上下文压缩和 /compact。\norder: 3\n'],
+  ]) {
+    const path = join(destination, name)
+    if (await readFile(path, 'utf8').catch(() => '') !== content) await writeFile(path, content, 'utf8')
+  }
+}
 
 /** R1 旧补丁层模板（只有注释 + 空列表 `[]`）；仅用于识别并升级 owner 未手改的旧 profile。 */
 export const PROFILE_PATCH_TEMPLATE_LEGACY = `# WeftMate 补丁层（R1）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
@@ -106,7 +131,7 @@ export const PROFILE_PATCH_TEMPLATE_R9 = `# WeftMate 补丁层（R9）：官方 
 `
 
 /** R10 adds one independent official host tool without changing the client graph/details slot. */
-export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层（R10）：官方 DSH 功能、最小桌面扩展与 AI-Game 工具接缝。
+export const PROFILE_PATCH_TEMPLATE_R10 = `# WeftMate 补丁层（R10）：官方 DSH 功能、最小桌面扩展与 AI-Game 工具接缝。
 - insert:
     - id: weftmate-host
       name: ./plugins/weftmate-host.mjs
@@ -128,6 +153,38 @@ export const PROFILE_PATCH_TEMPLATE = `# WeftMate 补丁层（R10）：官方 DS
 `
 
 /** R3 旧补丁层模板（两行 + 目录选择器覆盖，无记忆行）；识别为「未手改旧模板」自动升级。 */
+export const PROFILE_PATCH_TEMPLATE_R11 = PROFILE_PATCH_TEMPLATE_R10.replace('（R10）', '（R11）')
+  .replace("    - id: '@weftmate/client'", "    - id: weftmate-weftmod\n      name: ./plugins/weftmate-weftmod.mjs\n    - id: weftmate-mod-projects\n      name: ./plugins/weftmate-mod-projects.mjs\n    - id: '@weftmate/client'")
+
+/** R12 attempted to add a profile-local root. The official CLI replaces
+ * configured roots with its shipped root during final composition, so files in
+ * that path never reached the live roster. Retained solely for safe upgrade. */
+export const PROFILE_PATCH_TEMPLATE_R12 = `${PROFILE_PATCH_TEMPLATE_R11}
+# A deployment-owned preset root. Its mod-maintainer composition is written
+# with the profile assets; user preset authoring remains under DSH.
+- id: agent-presets
+  config:
+    default: standard
+    roots:
+      - path: !!js dshHomePath('profiles/weftmate/agent-presets')
+        trust: system
+`
+
+/** Personal remote execution tool is global, but guarded and visible only in its restricted preset. */
+export const PROFILE_PATCH_TEMPLATE_R13 = PROFILE_PATCH_TEMPLATE_R11.replace('（R11）', '（R13）')
+  .replace('    - id: weftmate-weftmod', "    - id: weftmate-personal-desktop\n      name: ./plugins/weftmate-personal-desktop.mjs\n    - id: weftmate-weftmod")
+
+/** R14 adds only the account-scoped memory IPC plugin; the old global bridge stays disabled. */
+export const PROFILE_PATCH_TEMPLATE_R14 = PROFILE_PATCH_TEMPLATE_R13.replace('（R13）', '（R14）')
+  .replace('    - id: weftmate-personal-desktop', "    - id: weftmate-personal-memory\n      name: ./plugins/weftmate-personal-memory.mjs\n    - id: weftmate-personal-desktop")
+
+/** The official profile boot always restores its shipped preset root and then
+ * appends `$DSH_HOME/.agent-presets` when `includeUserRoot` is enabled. The
+ * deployment-owned Mod composition is therefore written there, using the
+ * official discovery mechanism instead of a profile-only root that the final
+ * CLI roster discards. */
+export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R14
+
 export const PROFILE_PATCH_TEMPLATE_R3_PICKER = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
 # 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
 - insert:
@@ -163,6 +220,7 @@ const PLUGINS_DIR = join(here, 'plugins')
 const CLIENT_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-client')
 const HOST_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-host.mjs')
 const AI_GAME_HOST_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-aigame-host.mjs')
+const MOD_DEVELOPMENT_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-mod-development.mjs')
 const CREDENTIALS_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-credentials.mjs')
 const SECURE_SNAPSHOT_BOOTSTRAP_SRC = join(PLUGINS_DIR, 'weftmate-secure-snapshot-bootstrap.mjs')
 /** Gateway 运行时源目录（P1-02 起）：宿主插件以相对路径 import，profile 侧同形落位
@@ -170,9 +228,52 @@ const SECURE_SNAPSHOT_BOOTSTRAP_SRC = join(PLUGINS_DIR, 'weftmate-secure-snapsho
 const GATEWAY_SRC = join(here, 'runtime', 'gateway')
 const DSH_ADAPTER_SRC = join(here, 'runtime', 'dsh-adapter')
 const AI_GAME_RUNTIME_SRC = join(here, 'runtime', 'ai-game')
+const MOD_MAINTAINER_PRESET_ID = 'mod-maintainer'
+const MOD_MAINTAINER_PRESET_METADATA = 'name: Mod 开发维护\ndescription: 受控的单项目 Mod 开发通道。\norder: 90\n'
+const PERSONAL_REMOTE_PRESET_ID = 'personal-remote'
+const PERSONAL_REMOTE_PRESET_METADATA_LEGACY = 'name: 个人远端助手\ndescription: 只允许受控记事本工具的远端会话。\norder: 91\n'
+const PERSONAL_REMOTE_PRESET_METADATA = 'name: 个人远端助手\ndescription: 允许受控记事本与文档保存工具的远端会话。\norder: 91\n'
+const PERSONAL_SHARED_CHAT_PRESET_ID = 'personal-shared-chat'
+const PERSONAL_SHARED_CHAT_PRESET_METADATA = 'name: 共享模型对话\ndescription: 不访问宿主桌面、文件或记忆的独立对话。\norder: 92\n'
+/** The maintenance preset has no general model tools.  This mirrors the
+ * pinned standard preset's *scoped* context lifecycle only: compaction stays
+ * owned by the selected maintenance agent, never by the web host or ordinary
+ * sessions.  At a 102,400-token route, retainRatio 0.16 keeps 16,384 recent
+ * tokens; a ratio keeps the policy valid for smaller routed context windows. */
+const MOD_MAINTAINER_PRESET_COMPACTION = `
+- id: compaction
+  name: cordis:group
+  group: true
+  isolate:
+    compaction: true
+    toolResultPruner: true
+  config:
+    - id: compaction-basic
+      name: '@deepseek-ai/dsh-compaction-basic'
+      config:
+        auto: true
+        thresholdRatio: 0.85
+        retainRatio: 0.16
+        maxTokens: 4096
 
-/** 官方就绪信号行（web-app 行 printUrl: true）：`dsh web: http://127.0.0.1:<port>[ (LAN: …)]`。 */
-const WEB_URL_LINE = /^dsh web: (http:\/\/127\.0\.0\.1:\d+)/
+    - id: command-compact
+      name: '@deepseek-ai/dsh-command-compact'
+
+    - id: tool-result-pruner
+      name: '@deepseek-ai/dsh-compaction-tool-result-pruner'
+      config:
+        thresholdChars: 8192
+        headChars: 4096
+        tailChars: 1024
+`
+
+/** 官方就绪信号行（web-app 行 printUrl: true）。新版 DSH 可能追加一次性 Web token。 */
+const WEB_URL_LINE = /^dsh web: (http:\/\/127\.0\.0\.1:\d+\/?(?:\?[^\s]+)?)/
+
+/** URL token 仅可交给 BrowserWindow/fetch，绝不能写入运行日志或诊断 tail。 */
+export function redactWebToken(line: string): string {
+  return line.replace(/([?&]token=)[^\s&]+/g, '$1[redacted]')
+}
 
 /**
  * 解析 stdout/stderr 单行里的官方 URL 行。
@@ -185,6 +286,14 @@ export function parseWebUrlLine(line: string): string | null {
 }
 
 export type WriteProfileResult = 'created' | 'repaired' | 'unchanged'
+
+/**
+ * A profile can either receive the current WeftMate plugin graph or remain an
+ * upstream-only probe.  The latter is deliberately used for an incompatible
+ * DSH generation: it proves the official runtime and profile boot without
+ * mounting plugins that were compiled against the older generation.
+ */
+export type DshProfilePolicy = 'weftmate' | 'upstream' | 'alpha2'
 
 /** 幂等复制：源/目标内容一致不重写；返回是否发生了写入。 */
 async function copyFileIfChanged(src: string, dest: string): Promise<boolean> {
@@ -232,12 +341,91 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
   if (existing === PROFILE_PATCH_TEMPLATE) return false // 已是新模板
   if (existing === PROFILE_PATCH_TEMPLATE_LEGACY || existing === PROFILE_PATCH_TEMPLATE_R3
     || existing === PROFILE_PATCH_TEMPLATE_R3_PICKER || existing === PROFILE_PATCH_TEMPLATE_R7
-    || existing === PROFILE_PATCH_TEMPLATE_R8 || existing === PROFILE_PATCH_TEMPLATE_R9) {
+    || existing === PROFILE_PATCH_TEMPLATE_R8 || existing === PROFILE_PATCH_TEMPLATE_R9 || existing === PROFILE_PATCH_TEMPLATE_R10 || existing === PROFILE_PATCH_TEMPLATE_R11 || existing === PROFILE_PATCH_TEMPLATE_R12 || existing === PROFILE_PATCH_TEMPLATE_R13 || existing === PROFILE_PATCH_TEMPLATE_R14) {
     await writeFile(patchPath, PROFILE_PATCH_TEMPLATE, 'utf8')
     return true // 已知旧模板升级
   }
   return false // owner 手改（非任何已知模板）→ 保留
 }
+
+/** Candidate overlays use an independent profile and never overwrite a hand-authored patch. */
+async function writeCandidateProfilePatch(patchPath: string, template: string, generatedLegacy: readonly string[] = []): Promise<boolean> {
+  const existing = await readFile(patchPath, 'utf8').catch(() => undefined)
+  if (existing === template) return false
+  if (existing !== undefined && !generatedLegacy.includes(existing)) return false
+  await writeFile(patchPath, template, 'utf8')
+  return true
+}
+
+const PROFILE_PATCH_TEMPLATE_ALPHA2_LEGACY = `# WeftMate alpha.2 candidate: official DSH V4 with a minimal product seam.
+- insert:
+    - id: weftmate-alpha2-host
+      name: ./plugins/weftmate-alpha2-host.mjs
+    - id: '@weftmate/alpha2-client'
+      name: '@weftmate/alpha2-client'
+`
+
+const PROFILE_PATCH_TEMPLATE_ALPHA2 = `# WeftMate alpha.2 candidate: official DSH V4 with a minimal product seam.
+- id: credentials
+  disabled: true
+- id: hmr
+  disabled: true
+- insert:
+    - id: weftmate-alpha2-host
+      name: ./plugins/weftmate-alpha2-host.mjs
+    - id: weftmate-alpha2-safe-credentials
+      name: ./plugins/weftmate-credentials.mjs
+    - id: weftmate-alpha2-credential-probe
+      name: ./plugins/weftmate-alpha2-credential-probe.mjs
+    - id: weftmate-alpha2-model-settings
+      name: ./plugins/weftmate-alpha2-model-settings.mjs
+    - id: weftmate-alpha2-memoweft
+      name: ./plugins/weftmate-alpha2-memoweft.mjs
+    - id: weftmate-alpha2-mods
+      name: ./plugins/weftmate-alpha2-mods.mjs
+    - id: weftmate-alpha2-mod-maintainer-preset
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: mod-maintainer
+        order: 90
+        plugins:
+          - id: weftmate-alpha2-mod-maintainer
+            name: ./plugins/weftmate-alpha2-mod-maintainer.mjs
+    - id: '@weftmate/alpha2-client'
+      name: '@weftmate/alpha2-client'
+`
+
+/** Candidate patch emitted before the model settings seam existed. */
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
+  "    - id: weftmate-alpha2-model-settings\n      name: ./plugins/weftmate-alpha2-model-settings.mjs\n",
+  '',
+)
+/** Previous generated candidate patch before the isolated MemoWeft seam. */
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MEMORY = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
+  "    - id: weftmate-alpha2-memoweft\n      name: ./plugins/weftmate-alpha2-memoweft.mjs\n",
+  '',
+)
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODS = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
+  "    - id: weftmate-alpha2-mods\n      name: ./plugins/weftmate-alpha2-mods.mjs\n",
+  '',
+)
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_HMR = PROFILE_PATCH_TEMPLATE_ALPHA2.replace('- id: hmr\n  disabled: true\n', '')
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MOD_MAINTAINER = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
+  "    - id: weftmate-alpha2-mod-maintainer-preset\n      name: '@deepseek-ai/dsh-agent-preset'\n      config:\n        id: mod-maintainer\n        order: 90\n        plugins:\n          - id: weftmate-alpha2-mod-maintainer\n            name: ./plugins/weftmate-alpha2-mod-maintainer.mjs\n",
+  '',
+)
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MEMORY = PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS.replace(
+  "    - id: weftmate-alpha2-memoweft\n      name: ./plugins/weftmate-alpha2-memoweft.mjs\n",
+  '',
+)
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MODS = PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS.replace(
+  "    - id: weftmate-alpha2-mods\n      name: ./plugins/weftmate-alpha2-mods.mjs\n",
+  '',
+)
+const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MOD_MAINTAINER = PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS.replace(
+  "    - id: weftmate-alpha2-mod-maintainer-preset\n      name: '@deepseek-ai/dsh-agent-preset'\n      config:\n        id: mod-maintainer\n        order: 90\n        plugins:\n          - id: weftmate-alpha2-mod-maintainer\n            name: ./plugins/weftmate-alpha2-mod-maintainer.mjs\n",
+  '',
+)
 
 /**
  * 落位插件资产：客户端包 → `profiles/<name>/node_modules/@weftmate/client/`（profile 自己的 node_modules，
@@ -258,8 +446,20 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(CLIENT_PLUGIN_SRC, 'package.json'), join(clientDest, 'package.json')],
     [join(CLIENT_PLUGIN_SRC, 'index.js'), join(clientDest, 'index.js')],
     [join(CLIENT_PLUGIN_SRC, 'client.js'), join(clientDest, 'client.js')],
+    [join(CLIENT_PLUGIN_SRC, 'mod-projects-client.js'), join(clientDest, 'mod-projects-client.js')],
+    [join(CLIENT_PLUGIN_SRC, 'mod-state.mjs'), join(dir, 'plugins', 'weftmate-client', 'mod-state.mjs')],
+    [join(CLIENT_PLUGIN_SRC, 'v2-shell', 'skeleton-v2.scoped.css'), join(dir, 'plugins', 'weftmate-client', 'v2-shell', 'skeleton-v2.scoped.css')],
+    [join(CLIENT_PLUGIN_SRC, 'v2-shell', 'pages-v2.scoped.css'), join(dir, 'plugins', 'weftmate-client', 'v2-shell', 'pages-v2.scoped.css')],
+    [join(CLIENT_PLUGIN_SRC, 'mod-window', 'assets.mjs'), join(dir, 'plugins', 'weftmate-client', 'mod-window', 'assets.mjs')],
     [HOST_PLUGIN_SRC, hostDest],
     [AI_GAME_HOST_PLUGIN_SRC, aiGameHostDest],
+    [join(PLUGINS_DIR, 'weftmate-weftmod.mjs'), join(dir, 'plugins', 'weftmate-weftmod.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-shared-chat-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-shared-chat-preset.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-mod-projects.mjs'), join(dir, 'plugins', 'weftmate-mod-projects.mjs')],
+    [MOD_DEVELOPMENT_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-mod-development.mjs')],
     [join(PLUGINS_DIR, 'weftmate-memory.mjs'), memoryDest],
     [CREDENTIALS_PLUGIN_SRC, credentialsDest],
     [SECURE_SNAPSHOT_BOOTSTRAP_SRC, secureBootstrapDest],
@@ -276,6 +476,175 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   if (await copyDirIfChanged(join(GATEWAY_SRC, 'errors'), join(gatewayDest, 'errors'))) changed = true
   if (await copyDirIfChanged(DSH_ADAPTER_SRC, join(dir, 'runtime', 'dsh-adapter'))) changed = true
   if (await copyDirIfChanged(AI_GAME_RUNTIME_SRC, join(dir, 'runtime', 'ai-game'))) changed = true
+  if (await copyDirIfChanged(join(here, 'runtime', 'weftmod'), join(dir, 'runtime', 'weftmod'))) changed = true
+  if (await copyDirIfChanged(join(here, 'runtime', 'mod-projects'), join(dir, 'runtime', 'mod-projects'))) changed = true
+  return changed
+}
+
+/** Alpha.2 copies only generation-compatible product seams into its own profile. */
+async function writeAlpha2PluginAssets(dir: string): Promise<boolean> {
+  const clientDest = join(dir, 'node_modules', '@weftmate', 'alpha2-client')
+  const files: Array<[string, string]> = [
+    [join(PLUGINS_DIR, 'weftmate-alpha2-client', 'package.json'), join(clientDest, 'package.json')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-client', 'index.js'), join(clientDest, 'index.js')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-client', 'client.js'), join(clientDest, 'client.js')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-host.mjs'), join(dir, 'plugins', 'weftmate-alpha2-host.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-session-bridge.mjs'), join(dir, 'plugins', 'weftmate-alpha2-session-bridge.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-model-settings.mjs'), join(dir, 'plugins', 'weftmate-alpha2-model-settings.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-memoweft.mjs'), join(dir, 'plugins', 'weftmate-alpha2-memoweft.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-memory.mjs'), join(dir, 'plugins', 'weftmate-memory.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-mods.mjs'), join(dir, 'plugins', 'weftmate-alpha2-mods.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-mod-maintainer.mjs'), join(dir, 'plugins', 'weftmate-alpha2-mod-maintainer.mjs')],
+    [CREDENTIALS_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-credentials.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-alpha2-credential-probe.mjs'), join(dir, 'plugins', 'weftmate-alpha2-credential-probe.mjs')],
+    [SECURE_SNAPSHOT_BOOTSTRAP_SRC, join(dir, 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs')],
+  ]
+  let changed = false
+  for (const [src, dest] of files) {
+    if (await copyFileIfChanged(src, dest)) changed = true
+  }
+  if (await copyDirIfChanged(join(here, 'runtime', 'mod-projects'), join(dir, 'runtime', 'mod-projects'))) changed = true
+  if (await copyDirIfChanged(join(PLUGINS_DIR, 'weftmate-client', 'mod-window'), join(dir, 'plugins', 'weftmate-client', 'mod-window'))) changed = true
+  return changed
+}
+
+/** Derive the launch-only DSH overlay from the single offline settings document. */
+async function materializeAlpha2SettingsOverlay(dir: string): Promise<boolean> {
+  const documentPath = join(dir, 'weftmate-alpha2-model-settings.json')
+  const patchPath = join(dir, 'weftmate-alpha2-model-settings.patch.yml')
+  const raw = await readFile(documentPath, 'utf8').catch(error => {
+    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
+    throw error
+  })
+  if (raw === undefined) return false
+  let document: unknown
+  try { document = JSON.parse(raw) } catch { throw new Error('alpha2 offline model settings document is not JSON') }
+  const moduleUrl = pathToFileURL(join(PLUGINS_DIR, 'weftmate-alpha2-model-settings.mjs')).href
+  const normalizer = await import(moduleUrl) as { normalizeAlpha2OfflineSettingsDocument: (value: unknown) => { providers: unknown } }
+  let normalized: { providers: unknown }
+  try { normalized = normalizer.normalizeAlpha2OfflineSettingsDocument(document) }
+  catch { throw new Error('alpha2 offline model settings document has an invalid schema') }
+  // JSON is valid YAML. The profile patch is generated on every launch from
+  // the single document, never independently authored or edited in-process.
+  const content = `${JSON.stringify([{ id: 'llm-pi-ai', config: { providers: normalized.providers } }], null, 2)}\n`
+  return copyFileIfChangedFromContent(content, patchPath)
+}
+
+async function materializeAlpha2WelcomeOverlay(dir: string): Promise<boolean> {
+  const document = join(dir, 'weftmate-alpha2-welcome.json')
+  const patch = join(dir, 'weftmate-alpha2-welcome.patch.yml')
+  const raw = await readFile(document, 'utf8').catch(error => (error as NodeJS.ErrnoException).code === 'ENOENT' ? undefined : Promise.reject(error))
+  if (raw === undefined) return false
+  let value: unknown
+  try { value = JSON.parse(raw) } catch { throw new Error('alpha2 welcome document is not JSON') }
+  if (value === null || typeof value !== 'object' || Array.isArray(value)
+    || (value as Record<string, unknown>).schemaVersion !== 1 || typeof (value as Record<string, unknown>).welcomeNoticeVersion !== 'string') {
+    throw new Error('alpha2 welcome document has an invalid schema')
+  }
+  return copyFileIfChangedFromContent(`${JSON.stringify([{ id: 'ui-settings-general', config: { welcomeNoticeVersion: (value as Record<string, unknown>).welcomeNoticeVersion } }], null, 2)}\n`, patch)
+}
+
+async function copyFileIfChangedFromContent(content: string, dest: string): Promise<boolean> {
+  const current = await readFile(dest, 'utf8').catch(() => undefined)
+  if (current === content) return false
+  await writeFile(dest, content, 'utf8')
+  return true
+}
+
+/** Write the deployment-owned preset consumed before a maintenance agent is published. */
+async function writeModMaintainerPreset(homeDir: string, profileName: string): Promise<boolean> {
+  const presetDir = join(homeDir, '.agent-presets', MOD_MAINTAINER_PRESET_ID)
+  const composition = join(presetDir, 'agent.cordis.yml')
+  const metadata = join(presetDir, 'preset.yml')
+  const compositionText = `- name: ../../profiles/${profileName}/plugins/weftmate-mod-development.mjs\n${MOD_MAINTAINER_PRESET_COMPACTION}`
+  const legacyComposition = '- name: ../../plugins/weftmate-mod-development.mjs\n'
+  const profileOwnedLegacyComposition = `- name: ../../profiles/${profileName}/plugins/weftmate-mod-development.mjs\n`
+  let changed = false
+  await mkdir(presetDir, { recursive: true })
+  const existingComposition = await readFile(composition, 'utf8').catch(() => '')
+  if (existingComposition && existingComposition !== compositionText
+    && existingComposition !== legacyComposition && existingComposition !== profileOwnedLegacyComposition) {
+    throw new Error('mod-maintainer preset conflict: the existing user preset is not owned by this profile and was preserved')
+  }
+  if (existingComposition !== compositionText) {
+    await writeFile(composition, compositionText, 'utf8')
+    changed = true
+  }
+  const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
+  if (existingMetadata && existingMetadata !== MOD_MAINTAINER_PRESET_METADATA) {
+    throw new Error('mod-maintainer preset conflict: the existing user preset metadata is not owned by this profile and was preserved')
+  }
+  if (existingMetadata !== MOD_MAINTAINER_PRESET_METADATA) {
+    await writeFile(metadata, MOD_MAINTAINER_PRESET_METADATA, 'utf8')
+    changed = true
+  }
+  return changed
+}
+
+/** A separate agent-plane composition; no standard/weftmod/pwsh preset rows. */
+async function writePersonalRemotePreset(homeDir: string, profileName: string): Promise<boolean> {
+  const presetDir = join(homeDir, '.agent-presets', PERSONAL_REMOTE_PRESET_ID)
+  const composition = join(presetDir, 'agent.cordis.yml')
+  const metadata = join(presetDir, 'preset.yml')
+  const legacyCompositionText = `- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: >-
+      You are WeftMate, a personal assistant. Answer ordinary questions. Only use
+      personal_open_notepad when this turn's user explicitly asks to open Notepad
+      on their computer. Treat a tool receipt as pending until visible evidence
+      confirms it. Never claim other desktop, shell or file capabilities.
+    complete: true
+    includeRuntimeContext: false
+- name: ../../profiles/${profileName}/plugins/weftmate-personal-desktop-preset.mjs
+`
+  const compositionText = legacyCompositionText.replace(
+    '      confirms it. Never claim other desktop, shell or file capabilities.',
+    '      confirms it. Use personal_save_document only when the current user asks to create a Markdown or plain-text document. Give its complete text and a simple .md or .txt filename. The host verifies the saved file. Never claim other desktop, shell or file capabilities.')
+  await mkdir(presetDir, { recursive: true })
+  const existingComposition = await readFile(composition, 'utf8').catch(() => '')
+  const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
+  if ((existingComposition && existingComposition !== compositionText && existingComposition !== legacyCompositionText) ||
+      (existingMetadata && existingMetadata !== PERSONAL_REMOTE_PRESET_METADATA &&
+        existingMetadata !== PERSONAL_REMOTE_PRESET_METADATA_LEGACY)) {
+    throw new Error('personal-remote preset conflict: existing user preset was preserved')
+  }
+  let changed = false
+  if (existingComposition !== compositionText) { await writeFile(composition, compositionText, 'utf8'); changed = true }
+  if (existingMetadata !== PERSONAL_REMOTE_PRESET_METADATA) {
+    await writeFile(metadata, PERSONAL_REMOTE_PRESET_METADATA, 'utf8'); changed = true
+  }
+  return changed
+}
+
+/** An account-scoped chat preset with an empty host-tool roster. */
+async function writePersonalSharedChatPreset(homeDir: string, profileName: string): Promise<boolean> {
+  const presetDir = join(homeDir, '.agent-presets', PERSONAL_SHARED_CHAT_PRESET_ID)
+  const composition = join(presetDir, 'agent.cordis.yml')
+  const metadata = join(presetDir, 'preset.yml')
+  const compositionText = `- id: persona
+  name: '@deepseek-ai/dsh-persona'
+  config:
+    text: >-
+      You are WeftMate. Answer the account owner's questions. This chat has no
+      access to the host desktop, files, projects, or personal memory. Never
+      claim to have performed an action on the host computer.
+    complete: true
+    includeRuntimeContext: false
+- name: ../../profiles/${profileName}/plugins/weftmate-personal-shared-chat-preset.mjs
+`
+  await mkdir(presetDir, { recursive: true })
+  const existingComposition = await readFile(composition, 'utf8').catch(() => '')
+  const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
+  if ((existingComposition && existingComposition !== compositionText) ||
+      (existingMetadata && existingMetadata !== PERSONAL_SHARED_CHAT_PRESET_METADATA)) {
+    throw new Error('personal-shared-chat preset conflict: existing user preset was preserved')
+  }
+  let changed = false
+  if (existingComposition !== compositionText) { await writeFile(composition, compositionText, 'utf8'); changed = true }
+  if (existingMetadata !== PERSONAL_SHARED_CHAT_PRESET_METADATA) {
+    await writeFile(metadata, PERSONAL_SHARED_CHAT_PRESET_METADATA, 'utf8'); changed = true
+  }
   return changed
 }
 
@@ -288,6 +657,7 @@ export async function writeWebProfile(
   homeDir: string,
   profileName = 'weftmate',
   bundles: readonly string[] = DEFAULT_PROFILE_BUNDLES,
+  policy: DshProfilePolicy = 'weftmate',
 ): Promise<WriteProfileResult> {
   const dir = join(homeDir, 'profiles', profileName)
   await mkdir(dir, { recursive: true })
@@ -327,13 +697,35 @@ export async function writeWebProfile(
     manifest.dependencies = {}
     dirty = true
   }
+  // The Alpha.2 profile owns this unpacked client asset. Declaring it in the
+  // profile manifest lets the official runtime resolver preserve one DSH
+  // package graph when that profile-local package imports DSH peers. This is
+  // metadata only: no package-manager install or registry resolution occurs.
+  if (policy === 'alpha2') {
+    const dependencies = manifest.dependencies as Record<string, unknown>
+    if (dependencies['@weftmate/alpha2-client'] !== 'file:node_modules/@weftmate/alpha2-client') {
+      dependencies['@weftmate/alpha2-client'] = 'file:node_modules/@weftmate/alpha2-client'
+      dirty = true
+    }
+  }
   if (dirty) {
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
   }
   if (result === 'unchanged' && dirty) result = 'repaired'
 
-  if (await writeProfilePatch(join(dir, 'cordis.patch.yml')) && result === 'unchanged') result = 'repaired'
-  if (await writePluginAssets(dir) && result === 'unchanged') result = 'repaired'
+  if (policy === 'weftmate') {
+    if (await writeProfilePatch(join(dir, 'cordis.patch.yml')) && result === 'unchanged') result = 'repaired'
+    if (await writePluginAssets(dir) && result === 'unchanged') result = 'repaired'
+    if (await writeModMaintainerPreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
+    if (await writePersonalRemotePreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
+    if (await writePersonalSharedChatPreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
+  }
+  if (policy === 'alpha2') {
+    if (await writeCandidateProfilePatch(join(dir, 'cordis.patch.yml'), PROFILE_PATCH_TEMPLATE_ALPHA2, [PROFILE_PATCH_TEMPLATE_ALPHA2_LEGACY, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MEMORY, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODS, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MOD_MAINTAINER, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MEMORY, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MODS, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MOD_MAINTAINER, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_HMR]) && result === 'unchanged') result = 'repaired'
+    if (await writeAlpha2PluginAssets(dir) && result === 'unchanged') result = 'repaired'
+    if (await materializeAlpha2SettingsOverlay(dir) && result === 'unchanged') result = 'repaired'
+    if (await materializeAlpha2WelcomeOverlay(dir) && result === 'unchanged') result = 'repaired'
+  }
   return result
 }
 
@@ -344,8 +736,15 @@ export interface DshWebRuntimeOptions {
   workspaceDir: string
   /** profile 名（缺省 'weftmate'）。 */
   profileName?: string
+  /**
+   * `upstream` 只启动 DSH 自己的 bundle，供新 generation 的隔离候选使用。
+   * 它不复制 WeftMate 插件、不创建旧 agent-preset，也不复用日常数据。
+   */
+  profilePolicy?: DshProfilePolicy
   /** 监听端口（缺省 0 = OS 分配，URL 行回报实际端口）。 */
   port?: number
+  /** Suppress DSH's own browser launch; Electron or a candidate smoke owns navigation. */
+  noOpen?: boolean
   /** dev 形态的 checkout 路径（缺省只认显式 WEFTMATE_DSH_CHECKOUT；安装版不使用此路径）。 */
   checkoutPath?: string
   /** vendor 形态的 vendor/dsh-runtime 路径（缺省 WEFTMATE_DSH_RUNTIME；空 = dev 形态）。 */
@@ -362,6 +761,15 @@ export interface DshWebRuntimeOptions {
    * 交给它，绝不记录 request/response 的 value；main 后续可用 safeStorage 实现此接口。
    */
   credentialRequestHandler?: WeftMateCredentialRequestHandler
+  /** Restricted personal desktop tool requests from this exact managed DSH child. */
+  personalDesktopRequestHandler?: (request: Readonly<
+    { id: string, sessionId: string, turn: number, callId: string, messageHash: string, appId: 'notepad' } |
+    { id: string, action: 'write_document', sessionId: string, turn: number, callId: string,
+      messageHash: string, fileName: string, content: string }>) => Promise<unknown>
+  /** Account memory requests carry only real DSH session identity, never caller-owned ownerId. */
+  personalMemoryRequestHandler?: (request: Readonly<{ id: string, action: 'recall' | 'ingest',
+    sessionId: string, turn: number, query?: string, userMessageId?: string | null,
+    boundary?: Record<string, unknown> }>) => Promise<unknown>
   /** Unit-test seam only; production callers leave this unset. */
   testOnlySecureCompositionPreflight?: () => Promise<void>
   /** Test-only race seam, after the verified snapshot exists and before child spawn. */
@@ -485,7 +893,7 @@ class DshCheckoutPreflightError extends Error {}
  * is spawned. No dump content is logged because a third-party patch may put
  * sensitive literals in arbitrary configuration fields.
  */
-function assertSecureCredentialComposition(entries: unknown): void {
+function assertSecureCredentialComposition(entries: unknown, safeProviderId: string, safeProviderName: string, safeProviderPath?: string): void {
   let safeProviderActive = 0
   let modelsActive = 0
   let rejected = false
@@ -507,8 +915,11 @@ function assertSecureCredentialComposition(entries: unknown): void {
       if (isolatedCredentials !== undefined && isolatedCredentials !== null && isolatedCredentials !== false) rejected = true
     }
     if (active && name === '@deepseek-ai/dsh-credentials-local') rejected = true
-    if (active && name === './plugins/weftmate-credentials.mjs') {
-      if (id === 'weftmate-safe-credentials') safeProviderActive += 1
+    const exactProfileProvider = name === safeProviderName || (safeProviderPath !== undefined && name.startsWith('file:') && (() => {
+      try { return fileURLToPath(name) === safeProviderPath } catch { return false }
+    })())
+    if (active && exactProfileProvider) {
+      if (id === safeProviderId) safeProviderActive += 1
       else rejected = true
     }
     if (active && id === 'ui-settings-models'
@@ -558,12 +969,16 @@ export class DshWebRuntime {
     homeDir: string
     workspaceDir: string
     profileName: string
+    profilePolicy: DshProfilePolicy
     port: number
+    noOpen: boolean
     checkoutPath: string
     runtimePath: string
     nodeElectron: boolean
     credentialEnv: () => NodeJS.ProcessEnv
     credentialRequestHandler: WeftMateCredentialRequestHandler | undefined
+    personalDesktopRequestHandler: DshWebRuntimeOptions['personalDesktopRequestHandler']
+    personalMemoryRequestHandler: DshWebRuntimeOptions['personalMemoryRequestHandler']
     testOnlySecureCompositionPreflight: (() => Promise<void>) | undefined
     testOnlyAfterSecureCompositionSnapshot: ((snapshot: Readonly<{ digest: string, entries: readonly unknown[] }>) => Promise<void>) | undefined
     credentialRequestTimeoutMs: number
@@ -585,6 +1000,8 @@ export class DshWebRuntime {
   private readonly closedChildren = new WeakSet<ChildProcess>()
   /** 正在等待 main safeStorage 回调的 IPC；close/child exit 都会立即失效，不等待回调自行结束。 */
   private readonly credentialPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
+  private readonly personalDesktopPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
+  private readonly personalMemoryPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
 
   /** 就绪后崩溃重拉换源时回调（首启的 origin 由 start() 的返回值给出，不走本回调）。 */
   onOrigin: ((origin: string | null) => void) | undefined
@@ -594,13 +1011,17 @@ export class DshWebRuntime {
       homeDir: options.homeDir,
       workspaceDir: options.workspaceDir,
       profileName: options.profileName ?? 'weftmate',
+      profilePolicy: options.profilePolicy ?? 'weftmate',
       port: options.port ?? 0,
+      noOpen: options.noOpen ?? false,
       // 显式 options 是 Electron/main 的确定性配置，必须压过开发 shell 遗留环境变量。
       checkoutPath: options.checkoutPath ?? process.env.WEFTMATE_DSH_CHECKOUT ?? '',
       runtimePath: options.runtimePath ?? process.env.WEFTMATE_DSH_RUNTIME ?? '',
       nodeElectron: options.nodeElectron ?? false,
       credentialEnv: options.credentialEnv ?? (() => ({})),
       credentialRequestHandler: options.credentialRequestHandler,
+      personalDesktopRequestHandler: options.personalDesktopRequestHandler,
+      personalMemoryRequestHandler: options.personalMemoryRequestHandler,
       testOnlySecureCompositionPreflight: options.testOnlySecureCompositionPreflight,
       testOnlyAfterSecureCompositionSnapshot: options.testOnlyAfterSecureCompositionSnapshot,
       credentialRequestTimeoutMs: options.credentialRequestTimeoutMs ?? 10_000,
@@ -672,11 +1093,15 @@ export class DshWebRuntime {
   }
 
   /** Mirror runProfile()'s shipped agent-preset overlay over the flattened CLI dump. */
-  private finalizeSecureComposition(entries: unknown[]): SecureCompositionSnapshot {
+  private async finalizeSecureComposition(entries: unknown[]): Promise<SecureCompositionSnapshot> {
     const finalized = structuredClone(entries) as unknown[]
     const shippedPresetRoot = this.form() === 'vendor'
       ? join(this.opts.runtimePath, 'node_modules', '@deepseek-ai', 'dsh', 'config', 'agent-presets')
       : join(this.opts.checkoutPath, 'apps', 'cli', 'config', 'agent-presets')
+    const userPresetRoot = join(this.opts.homeDir, '.agent-presets')
+    await writeModMaintainerPreset(this.opts.homeDir, this.opts.profileName)
+    await writePersonalRemotePreset(this.opts.homeDir, this.opts.profileName)
+    await writePersonalSharedChatPreset(this.opts.homeDir, this.opts.profileName)
     const visit = (value: unknown): void => {
       if (value === null || typeof value !== 'object') return
       if (Array.isArray(value)) { for (const child of value) visit(child); return }
@@ -684,7 +1109,7 @@ export class DshWebRuntime {
       if (row.id === 'agent-presets') {
         const config = row.config !== null && typeof row.config === 'object' && !Array.isArray(row.config)
           ? row.config as Record<string, unknown> : {}
-        row.config = { ...config, roots: [{ path: shippedPresetRoot, trust: 'system' }] }
+        row.config = { ...config, roots: [{ path: shippedPresetRoot, trust: 'system' }], ...(Object.hasOwn(config, 'includeUserRoot') ? {} : { includeUserRoot: true }) }
       }
       // childEnv() always turns telemetry off. runProfile() adds this after
       // composition, so a flattened --dump-config needs the same final row.
@@ -692,7 +1117,16 @@ export class DshWebRuntime {
       for (const child of Object.values(row)) visit(child)
     }
     visit(finalized)
-    assertSecureCredentialComposition(finalized)
+    assertSecureCredentialComposition(
+      finalized,
+      this.opts.profilePolicy === 'alpha2' ? 'weftmate-alpha2-safe-credentials' : 'weftmate-safe-credentials',
+      this.opts.profilePolicy === 'alpha2'
+        ? pathToFileURL(join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-credentials.mjs')).href
+        : './plugins/weftmate-credentials.mjs',
+      this.opts.profilePolicy === 'alpha2'
+        ? join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-credentials.mjs')
+        : undefined,
+    )
     const encoded = encodeSecureSnapshot(finalized)
     return {
       entries: finalized,
@@ -713,7 +1147,7 @@ export class DshWebRuntime {
     }
     const spec = this.launchSpec()
     const args = [...spec.nodeArgs, spec.bin, '--profile', this.opts.profileName,
-      ...this.opts.patchFiles.flatMap((file) => ['--patch', file]), '--dump-config']
+      ...this.launchPatchFiles().flatMap((file) => ['--patch', file]), '--dump-config']
     const stdout = await new Promise<string>((resolve, reject) => {
       execFile(spec.command, args, {
         cwd: spec.cwd,
@@ -776,6 +1210,14 @@ export class DshWebRuntime {
     return this.logTail.slice(-40).join('\n')
   }
 
+  /** Candidate-only generated settings overlay, prepared while the child is stopped. */
+  private launchPatchFiles(): readonly string[] {
+    if (this.opts.profilePolicy !== 'alpha2') return this.opts.patchFiles
+    const profile = join(this.opts.homeDir, 'profiles', this.opts.profileName)
+    return [join(profile, 'weftmate-alpha2-model-settings.patch.yml'), join(profile, 'weftmate-alpha2-welcome.patch.yml')]
+      .filter(existsSync).reduce((files, file) => [...files, file], [...this.opts.patchFiles])
+  }
+
   private rememberLine(line: string): void {
     this.logTail.push(line)
     if (this.logTail.length > 200) this.logTail.shift()
@@ -789,6 +1231,8 @@ export class DshWebRuntime {
     this.children.add(child)
     child.once('close', () => {
       this.failCredentialRequests(child)
+      this.failPersonalDesktopRequests(child)
+      this.failPersonalMemoryRequests(child)
       this.closedChildren.add(child)
       this.children.delete(child)
     })
@@ -809,6 +1253,180 @@ export class DshWebRuntime {
     }
     pending.clear()
     this.credentialPending.delete(child)
+  }
+
+  private failPersonalDesktopRequests(child: ChildProcess): void {
+    const pending = this.personalDesktopPending.get(child)
+    if (!pending) return
+    for (const entry of pending) { entry.settled = true; clearTimeout(entry.timer) }
+    pending.clear()
+    this.personalDesktopPending.delete(child)
+  }
+
+  private failPersonalMemoryRequests(child: ChildProcess): void {
+    const pending = this.personalMemoryPending.get(child)
+    if (!pending) return
+    for (const entry of pending) { entry.settled = true; clearTimeout(entry.timer) }
+    pending.clear()
+    this.personalMemoryPending.delete(child)
+  }
+
+  private handlePersonalDesktopMessage(child: ChildProcess, message: unknown): void {
+    if (!message || typeof message !== 'object' || Array.isArray(message)) return
+    const row = message as Record<string, unknown>
+    if (row.protocol !== 'weftmate.personal-desktop.v1') return
+    if (typeof row.id !== 'string' || !/^personal-[0-9a-f-]{36}$/.test(row.id) ||
+        typeof row.sessionId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) ||
+        !Number.isSafeInteger(row.turn) || (row.turn as number) < 0 ||
+        typeof row.callId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(row.callId) ||
+        typeof row.messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(row.messageHash)) return
+    const writeDocument = row.action === 'write_document'
+    if (writeDocument) {
+      const fileName = row.fileName
+      const stem = typeof fileName === 'string' ? fileName.slice(0, fileName.lastIndexOf('.')) : ''
+      if (typeof fileName !== 'string' || fileName !== fileName.normalize('NFC') ||
+          Buffer.byteLength(fileName, 'utf8') > 160 || fileName.includes('..') ||
+          !/^[\p{L}\p{N}][\p{L}\p{N} _.-]*\.(?:md|txt)$/u.test(fileName) ||
+          /[ .]$/.test(stem) || /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i.test(stem) ||
+          typeof row.content !== 'string' || !row.content.length ||
+          Buffer.byteLength(row.content, 'utf8') > 128 * 1024 || row.content.includes('\0') ||
+          Buffer.from(row.content, 'utf8').toString('utf8') !== row.content ||
+          Object.keys(row).some((key) => !['protocol', 'id', 'action', 'sessionId', 'turn', 'callId',
+            'messageHash', 'fileName', 'content'].includes(key))) return
+    } else if (row.action !== undefined || row.appId !== 'notepad' ||
+        Object.keys(row).some((key) => !['protocol', 'id', 'sessionId', 'turn', 'callId', 'messageHash', 'appId'].includes(key))) return
+    const respond = (value: object): void => {
+      if (!child.connected) return
+      try { child.send({ protocol: 'weftmate.personal-desktop.v1', id: row.id, ...value }) }
+      catch { /* disconnected child cannot receive a tool receipt */ }
+    }
+    if (this.closed || this.closedChildren.has(child) || this.child !== child ||
+        this.opts.personalDesktopRequestHandler === undefined) {
+      respond({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
+    }
+    const entry = { timer: undefined as unknown as NodeJS.Timeout, settled: false }
+    let pending = this.personalDesktopPending.get(child)
+    if (!pending) { pending = new Set(); this.personalDesktopPending.set(child, pending) }
+    pending.add(entry)
+    const settle = (value: object): void => {
+      if (entry.settled) return
+      entry.settled = true
+      clearTimeout(entry.timer)
+      pending?.delete(entry)
+      if (pending?.size === 0) this.personalDesktopPending.delete(child)
+      if (!this.closed && !this.closedChildren.has(child) && this.child === child) respond(value)
+    }
+    entry.timer = setTimeout(() => settle({ ok: false, error: 'PERSONAL_TOOL_TIMEOUT' }), 12_000)
+    entry.timer.unref?.()
+    const identity = { id: row.id, sessionId: row.sessionId, turn: row.turn as number,
+      callId: row.callId as string, messageHash: row.messageHash as string }
+    const request = Object.freeze(writeDocument
+      ? { ...identity, action: 'write_document' as const, fileName: row.fileName as string, content: row.content as string }
+      : { ...identity, appId: 'notepad' as const })
+    void Promise.resolve().then(() => this.opts.personalDesktopRequestHandler?.(request)).then(
+      (command: unknown) => {
+        const value = command as Record<string, unknown> | null
+        if (writeDocument) {
+          if (!value || typeof value.taskId !== 'string' || !/^cmd-[0-9a-f-]{36}$/.test(value.taskId) ||
+              typeof value.artifactId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/.test(value.artifactId) ||
+              value.fileName !== row.fileName || !Number.isSafeInteger(value.size) ||
+              (value.size as number) < 1 || (value.size as number) > 128 * 1024 ||
+              typeof value.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.sha256) ||
+              typeof value.state !== 'string' || !['observed', 'uncertain', 'rejected'].includes(value.state)) {
+            settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
+          }
+          settle({ ok: true, command: { taskId: value.taskId, artifactId: value.artifactId,
+            fileName: value.fileName, size: value.size, sha256: value.sha256, state: value.state,
+            ...(value.state === 'uncertain' && value.errorCode === 'RECEIPT_UNKNOWN'
+              ? { errorCode: 'RECEIPT_UNKNOWN' } : {}) } })
+          return
+        }
+        if (!value || typeof value.commandId !== 'string' || !/^cmd-[0-9a-f-]{36}$/.test(value.commandId) ||
+            typeof value.state !== 'string' ||
+            !['pending', 'dispatching', 'accepted_by_host', 'observed', 'uncertain', 'rejected'].includes(value.state)) {
+          settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
+        }
+        const verification = value.verification && typeof value.verification === 'object'
+          ? value.verification as Record<string, unknown> : null
+        settle({ ok: true, command: { commandId: value.commandId, state: value.state,
+          ...(verification?.status === 'observed' || verification?.status === 'unconfirmed'
+            ? { verification: { status: verification.status,
+              method: 'visible_window',
+              ...(typeof verification.observedAt === 'string' ? { observedAt: verification.observedAt } : {}),
+              ...(['opened', 'already_open'].includes(String(verification.outcome)) ? { outcome: verification.outcome } : {}) } }
+            : {}) } })
+      },
+      (error: unknown) => {
+        const code = (error as { code?: unknown } | null)?.code
+        settle({ ok: false, error: typeof code === 'string' &&
+          ['SESSION_READ_ONLY', 'TOOL_SOURCE_UNAVAILABLE', 'TOOL_INTENT_UNCONFIRMED', 'CAPABILITY_UNAVAILABLE',
+            'STORAGE_UNAVAILABLE', 'DEVICE_REVOKED', 'SESSION_REPLACED', 'SESSION_EXPIRED',
+            'INVALID_COMMAND', 'REQUEST_CONFLICT', 'CAPACITY_LIMIT', 'BACKEND_UNAVAILABLE',
+            'SERVICE_CLOSING'].includes(code)
+          ? code : 'PERSONAL_TOOL_UNAVAILABLE' })
+      },
+    )
+  }
+
+  private handlePersonalMemoryMessage(child: ChildProcess, message: unknown): void {
+    if (!message || typeof message !== 'object' || Array.isArray(message)) return
+    const row = message as Record<string, unknown>
+    if (row.protocol !== 'weftmate.personal-memory.v1') return
+    const action = row.action
+    if (typeof row.id !== 'string' || !/^memory-[0-9a-f-]{36}$/.test(row.id) ||
+        !['recall', 'ingest'].includes(String(action)) ||
+        typeof row.sessionId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) ||
+        !Number.isSafeInteger(row.turn) || (row.turn as number) < 0 ||
+        (action === 'recall'
+          ? typeof row.query !== 'string' || !row.query.trim() || row.query.length > 500 ||
+            (row.userMessageId !== null && row.userMessageId !== undefined &&
+              (typeof row.userMessageId !== 'string' || row.userMessageId.length > 160)) ||
+            Object.keys(row).some((key) => !['protocol', 'id', 'action', 'sessionId', 'turn', 'query', 'userMessageId'].includes(key))
+          : !row.boundary || typeof row.boundary !== 'object' || Array.isArray(row.boundary) ||
+            Object.keys(row).some((key) => !['protocol', 'id', 'action', 'sessionId', 'turn', 'boundary'].includes(key)))) return
+    try { if (Buffer.byteLength(JSON.stringify(row), 'utf8') > 256 * 1024) return } catch { return }
+    const respond = (value: object): void => {
+      if (!child.connected) return
+      try { child.send({ protocol: 'weftmate.personal-memory.v1', id: row.id, ...value }) }
+      catch { /* No response can be delivered after child disconnect. */ }
+    }
+    if (this.closed || this.closedChildren.has(child) || this.child !== child ||
+        this.opts.personalMemoryRequestHandler === undefined) {
+      respond({ ok: false, error: 'MEMORY_UNAVAILABLE' }); return
+    }
+    const entry = { timer: undefined as unknown as NodeJS.Timeout, settled: false }
+    let pending = this.personalMemoryPending.get(child)
+    if (!pending) { pending = new Set(); this.personalMemoryPending.set(child, pending) }
+    pending.add(entry)
+    const settle = (value: object): void => {
+      if (entry.settled) return
+      entry.settled = true
+      clearTimeout(entry.timer)
+      pending?.delete(entry)
+      if (pending?.size === 0) this.personalMemoryPending.delete(child)
+      if (!this.closed && !this.closedChildren.has(child) && this.child === child) respond(value)
+    }
+    entry.timer = setTimeout(() => settle({ ok: false, error: 'MEMORY_TIMEOUT' }), 20_000)
+    entry.timer.unref?.()
+    const request = Object.freeze({ id: row.id, action: action as 'recall' | 'ingest',
+      sessionId: row.sessionId, turn: row.turn as number,
+      ...(action === 'recall' ? { query: row.query as string,
+        userMessageId: row.userMessageId as string | null | undefined }
+        : { boundary: row.boundary as Record<string, unknown> }) })
+    void Promise.resolve().then(() => this.opts.personalMemoryRequestHandler?.(request)).then(
+      (result: unknown) => {
+        if (!result || typeof result !== 'object' || Array.isArray(result)) {
+          settle({ ok: false, error: 'MEMORY_UNAVAILABLE' }); return
+        }
+        try {
+          if (Buffer.byteLength(JSON.stringify(result), 'utf8') > 32 * 1024) {
+            settle({ ok: false, error: 'MEMORY_UNAVAILABLE' }); return
+          }
+        } catch { settle({ ok: false, error: 'MEMORY_UNAVAILABLE' }); return }
+        settle({ ok: true, result })
+      },
+      () => settle({ ok: false, error: 'MEMORY_UNAVAILABLE' }),
+    )
   }
 
   /**
@@ -928,7 +1546,8 @@ export class DshWebRuntime {
       const args = secureBootstrap === undefined
         // `--patch` is the pinned DSH CLI's formal, repeatable extra-overlay seam.
         ? [...spec.nodeArgs, spec.bin, '--profile', this.opts.profileName,
-            ...this.opts.patchFiles.flatMap((file) => ['--patch', file]), '--port', String(this.opts.port)]
+            ...this.launchPatchFiles().flatMap((file) => ['--patch', file]), '--port', String(this.opts.port),
+            ...(this.opts.noOpen ? ['--no-open'] : [])]
         : [...spec.nodeArgs, secureBootstrap]
       const env = secureBootstrap === undefined ? this.childEnv() : {
         ...this.childEnv(),
@@ -937,19 +1556,29 @@ export class DshWebRuntime {
         WEFTMATE_SECURE_BOOTSTRAP_NONCE: snapshot!.nonce,
         WEFTMATE_SECURE_BOOTSTRAP_DIGEST: snapshot!.digest,
         WEFTMATE_SECURE_BOOTSTRAP_PORT: String(this.opts.port),
+        WEFTMATE_SECURE_BOOTSTRAP_NO_OPEN: this.opts.noOpen ? '1' : '0',
+        WEFTMATE_SECURE_BOOTSTRAP_PROFILE_POLICY: this.opts.profilePolicy,
+        WEFTMATE_SECURE_SNAPSHOT_ACTIVE: '1',
       }
       const child = spawn(spec.command, args, {
         cwd: spec.cwd,
         env,
         // DSH is normally a plain child. The secure credentials profile adds exactly one Node IPC fd;
         // it is process-local and never opens a localhost listener. Electron-as-node supports this stdio form.
-        stdio: this.opts.credentialRequestHandler === undefined ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe', 'ipc'],
+        stdio: this.opts.credentialRequestHandler === undefined &&
+          this.opts.personalDesktopRequestHandler === undefined && this.opts.personalMemoryRequestHandler === undefined
+          ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe', 'ipc'],
         windowsHide: true,
       })
       this.registerChild(child)
       this.child = child
-      if (this.opts.credentialRequestHandler !== undefined) {
-        child.on('message', (message: unknown) => { this.handleCredentialMessage(child, message) })
+      if (this.opts.credentialRequestHandler !== undefined || this.opts.personalDesktopRequestHandler !== undefined ||
+          this.opts.personalMemoryRequestHandler !== undefined) {
+        child.on('message', (message: unknown) => {
+          this.handleCredentialMessage(child, message)
+          this.handlePersonalDesktopMessage(child, message)
+          this.handlePersonalMemoryMessage(child, message)
+        })
       }
       let state: 'starting' | 'ready' | 'failed' | 'stopped' = 'starting'
       let buffer = ''
@@ -965,8 +1594,9 @@ export class DshWebRuntime {
         while (index !== -1) {
           const line = buffer.slice(0, index).replace(/\r$/, '')
           buffer = buffer.slice(index + 1)
-          this.opts.log(`[dsh:${stream}] ${line}`)
-          this.rememberLine(line)
+          const safeLine = redactWebToken(line)
+          this.opts.log(`[dsh:${stream}] ${safeLine}`)
+          this.rememberLine(safeLine)
           const origin = parseWebUrlLine(line)
           if (origin !== null && state === 'starting') {
             if (this.closed) {
@@ -1097,7 +1727,7 @@ export class DshWebRuntime {
       this.ensureOpen()
       await mkdir(this.opts.workspaceDir, { recursive: true })
       this.ensureOpen()
-      const profileResult = await writeWebProfile(this.opts.homeDir, this.opts.profileName)
+      const profileResult = await writeWebProfile(this.opts.homeDir, this.opts.profileName, DEFAULT_PROFILE_BUNDLES, this.opts.profilePolicy)
       this.ensureOpen()
       if (profileResult !== 'unchanged') {
         this.opts.log(`[dsh] profile ${this.opts.profileName} ${profileResult === 'created' ? '已写入' : '已修复'}（${this.opts.homeDir}）`)
@@ -1130,7 +1760,11 @@ export class DshWebRuntime {
     this.originValue = null
     // 同一 Promise 对并发 close 复用；快照在 closed fence 之后取得，之后不可能再登记新 child。
     const registered = [...this.children]
-    for (const child of registered) this.failCredentialRequests(child)
+    for (const child of registered) {
+      this.failCredentialRequests(child)
+      this.failPersonalDesktopRequests(child)
+      this.failPersonalMemoryRequests(child)
+    }
     this.closeInFlight = Promise.all(registered.map(async (child) => {
       await this.terminateChild(child)
     })).then(() => undefined)

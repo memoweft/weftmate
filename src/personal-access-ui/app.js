@@ -1,0 +1,2985 @@
+(() => {
+  'use strict'
+
+  const authBase = '/personal/v1/auth'
+  const accessBase = '/personal/v1'
+  const views = ['loading', 'owner', 'setup', 'login', 'assistant', 'memory', 'account']
+  const byId = (id) => document.getElementById(id)
+  const state = { csrfToken: null, account: null, device: null, setupGrant: null, revokeId: null, toastTimer: null,
+    ownerId: null, hostId: null, online: false, capabilities: null, models: [], modelProfileId: null,
+    sessions: [], selectedSessionId: null, activeChatSource: 'desktop', afterSeq: -1, seenSeq: new Set(), tasks: [], nextBefore: null,
+    taskPane: false, unresolvedSubmission: false, unresolvedRequests: new Set(), reviewableRequests: new Set(), reviewRequestId: null,
+    acknowledgedDesktop: new Set(),
+    syncAvailable: false, phonePane: false, phoneEvents: [], phoneAfterSeq: 0, phoneHasMore: true,
+    phoneLoading: false, selectedPhoneConversationId: null, phoneDeviceNames: new Map(),
+    phoneSending: false, phoneSendNotice: '', phoneDrafts: new Map(), desktopDraft: '',
+    refreshTimer: null, refreshing: false,
+    submitting: false, cancelSubmitting: false, lastSubmissionMs: 0,
+    historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null,
+    identityGeneration: 0, accountViewGeneration: 0, currentView: null, avatarGeneration: 0, avatarSelectionGeneration: 0,
+    profileDraftAvatar: undefined, profileConflict: false, profileSaving: false, profileOperationGeneration: 0, profileDraftGeneration: 0,
+    avatarChecking: false, avatarObjectUrl: null,
+    profileFetchGeneration: 0, deviceFetchGeneration: 0, deviceEditing: null, deviceNotice: '', cachedDevices: [] }
+  const memory = { viewGeneration: 0, entryGeneration: 0, queryGeneration: 0, selectedGeneration: 0, operationGeneration: 0,
+    status: null, items: [], revision: null, cursor: null, hasMore: false, query: '', kind: 'cognition',
+    selected: null, sources: [], mode: 'detail', drafts: new Map(), activeOperation: null,
+    unresolvedMarker: null, cleanupMarker: null, cleanupRetrying: false, receiptNotice: null }
+  let phonePreview = null
+  const taskDetail = { taskId: null, generation: 0, selectedArtifactId: null, operation: null, unknown: null,
+    drafts: new Map() }
+
+  function takeSetupGrant() {
+    const hash = window.location.hash
+    let grant = null
+    if (hash.startsWith('#setup=')) {
+      try { grant = decodeURIComponent(hash.slice(7)) } catch { /* Invalid grant remains unusable. */ }
+    }
+    if (hash) window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    return grant && /^[A-Za-z0-9_-]{16,256}$/.test(grant) ? grant : null
+  }
+  state.setupGrant = takeSetupGrant()
+
+  function show(view) {
+    if (view !== 'assistant' && taskDetail.taskId) closeTaskDetail()
+    if (state.currentView === 'memory' && view !== 'memory') {
+      memory.viewGeneration++
+      closeMemoryDetail()
+    }
+    if (view === 'memory' && state.currentView !== 'memory') memory.viewGeneration++
+    if (state.currentView === 'account' && view !== 'account') {
+      state.profileOperationGeneration++
+      state.profileSaving = false
+      state.avatarSelectionGeneration++
+      state.avatarChecking = false
+      releaseAvatarUrl()
+    }
+    if (state.currentView !== view) { state.currentView = view; state.accountViewGeneration++; state.avatarGeneration++ }
+    for (const name of views) byId(`${name}-view`).hidden = name !== view
+    document.body.classList.toggle('assistant-active', view === 'assistant')
+  }
+  function errorAt(id, message) {
+    const element = byId(id)
+    element.textContent = message
+    element.hidden = !message
+  }
+  function toast(message) {
+    const element = byId('toast')
+    element.textContent = message
+    element.hidden = false
+    if (state.toastTimer) clearTimeout(state.toastTimer)
+    state.toastTimer = setTimeout(() => { element.hidden = true; element.textContent = '' }, 5000)
+  }
+  function clearPasswords(...ids) {
+    for (const id of ids) {
+      const input = byId(id)
+      input.value = ''
+      input.type = 'password'
+      const reveal = document.querySelector(`.reveal[data-target="${id}"]`)
+      if (reveal) { reveal.textContent = '显示'; reveal.setAttribute('aria-label', '显示密码') }
+    }
+  }
+  function clearSession() {
+    stopAssistantRefresh()
+    closeTaskDetail()
+    taskDetail.drafts.clear()
+    taskDetail.unknown = null
+    resetMemoryIdentity()
+    state.identityGeneration++
+    state.avatarGeneration++
+    state.avatarSelectionGeneration++
+    state.deviceFetchGeneration++
+    state.profileFetchGeneration++
+    state.profileDraftAvatar = undefined
+    state.profileDraftGeneration++
+    state.profileConflict = false
+    state.profileSaving = false
+    state.profileOperationGeneration++
+    state.avatarChecking = false
+    releaseAvatarUrl()
+    state.deviceEditing = null
+    state.deviceNotice = ''
+    state.cachedDevices = []
+    byId('profile-display-name').value = ''
+    byId('profile-avatar-file').value = ''
+    byId('profile-avatar-image').removeAttribute?.('src')
+    byId('profile-avatar-image').hidden = true
+    byId('profile-avatar-placeholder').hidden = false
+    byId('profile-avatar-status').textContent = '支持 PNG、JPEG 或 WebP，最多 128 KiB。选择后先预览，再保存。'
+    byId('profile-status').textContent = ''
+    errorAt('profile-error', '')
+    errorAt('revoke-error', '')
+    byId('profile-reload').hidden = true
+    byId('logout-button').disabled = false
+    setBusy(byId('password-form'), false)
+    byId('revoke-confirm').disabled = false
+    state.csrfToken = null
+    state.account = null
+    state.device = null
+    byId('account-name').textContent = ''
+    byId('device-list').replaceChildren()
+    if (byId('password-dialog').open) byId('password-dialog').close()
+    if (byId('revoke-dialog').open) byId('revoke-dialog').close()
+    state.revokeId = null
+    state.ownerId = null
+    state.unresolvedRequests.clear()
+    state.reviewableRequests.clear()
+    state.reviewRequestId = null
+    state.acknowledgedDesktop.clear()
+    state.syncAvailable = false
+    state.phonePane = false
+    state.phoneEvents = []
+    state.phoneAfterSeq = 0
+    state.phoneHasMore = true
+    state.phoneLoading = false
+    state.selectedPhoneConversationId = null
+    state.activeChatSource = 'desktop'
+    state.phoneSending = false
+    state.phoneSendNotice = ''
+    state.phoneDrafts.clear()
+    state.desktopDraft = ''
+    closePhoneImagePreview()
+    state.phoneDeviceNames.clear()
+    state.hostId = null
+    state.online = false
+    state.submitting = false
+    state.cancelSubmitting = false
+    state.capabilities = null
+    state.sessions = []
+    state.models = []
+    state.tasks = []
+    state.selectedSessionId = null
+    state.afterSeq = -1
+    state.historyGeneration++
+    state.historyInFlight = null
+    state.historyHasMore = false
+    state.turnStatus = null
+    state.seenSeq.clear()
+    byId('transcript').replaceChildren()
+    byId('session-list').replaceChildren()
+    byId('assistant-title').textContent = '新对话'
+    byId('task-list').replaceChildren()
+    byId('phone-conversations').replaceChildren()
+    byId('phone-history').replaceChildren()
+    byId('phone-pane').hidden = true
+    byId('android-download-row').hidden = true
+    byId('message-text').value = ''
+    operation('')
+  }
+  function setBusy(form, busy) {
+    for (const control of form.querySelectorAll('input, button')) control.disabled = busy
+  }
+  function failureMessage(error, context) {
+    switch (error?.code) {
+      case 'INVALID_CREDENTIALS': return '账户名或密码不正确。'
+      case 'LOGIN_RATE_LIMITED': return '登录尝试过于频繁，请稍后再试。'
+      case 'INVALID_SETUP_GRANT': return '设置链接已失效，请在这台电脑上重新发起设置。'
+      case 'ACCOUNT_ALREADY_CONFIGURED': return '账户已设置，请直接登录。'
+      case 'ACCOUNT_ALREADY_EXISTS': return '这个账户名已经有人使用，请换一个名称或直接登录。'
+      case 'FORBIDDEN': return '当前登录没有执行这项操作的权限。'
+      case 'UNAUTHORIZED': return '登录已失效，请重新登录。'
+      default: return context === 'network' ? '暂时无法连接宿主，请稍后重试。' : '操作未完成，请重试。'
+    }
+  }
+  async function requestJson(url, { method = 'GET', body, protectedWrite = false } = {}) {
+    const headers = {}
+    if (body !== undefined) headers['content-type'] = 'application/json'
+    if (protectedWrite) {
+      if (!state.csrfToken) throw { code: 'UNAUTHORIZED' }
+      headers['X-WeftMate-CSRF'] = state.csrfToken
+    }
+    let response
+    try {
+      response = await fetch(url, {
+        method, headers, credentials: 'same-origin', cache: 'no-store',
+        signal: AbortSignal.timeout(15_000),
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      })
+    } catch { throw { code: 'NETWORK' } }
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) throw { code: payload?.error?.code || 'REQUEST_FAILED', status: response.status }
+    return payload
+  }
+  const api = (path, options) => requestJson(`${authBase}${path}`, options)
+  async function accessApi(path, options) {
+    const identityAtStart = state.csrfToken
+    try {
+      const value = await requestJson(`${accessBase}${path}`, options)
+      if (state.csrfToken === identityAtStart && identityAtStart) setOnline(true)
+      return value
+    } catch (error) {
+      if (error.code === 'NETWORK') setOnline(false)
+      if (error.code === 'UNAUTHORIZED' && state.csrfToken === identityAtStart) sessionExpired()
+      throw error
+    }
+  }
+  function acceptSession(payload) {
+    if (typeof payload?.account?.username !== 'string' || typeof payload?.device?.id !== 'string'
+      || typeof payload?.csrfToken !== 'string' || !payload.csrfToken) throw { code: 'REQUEST_FAILED' }
+    state.identityGeneration++
+    resetMemoryIdentity()
+    state.avatarGeneration++
+    state.avatarSelectionGeneration++
+    state.deviceFetchGeneration++
+    state.profileFetchGeneration++
+    state.profileOperationGeneration++
+    state.profileSaving = false
+    state.avatarChecking = false
+    releaseAvatarUrl()
+    state.profileDraftAvatar = undefined
+    state.profileDraftGeneration++
+    state.profileConflict = false
+    state.deviceEditing = null
+    state.account = payload.account
+    state.device = payload.device
+    state.csrfToken = payload.csrfToken
+    byId('account-name').textContent = payload.account.username
+    if (state.currentView === 'account') resetProfileDraft()
+  }
+  function accountToken() {
+    return { generation: state.identityGeneration, view: state.accountViewGeneration,
+      ownerId: state.account?.ownerId, deviceId: state.device?.id, csrf: state.csrfToken }
+  }
+  function accountCurrent(token) {
+    return state.currentView === 'account' && token.generation === state.identityGeneration
+      && token.view === state.accountViewGeneration && token.ownerId === state.account?.ownerId
+      && token.deviceId === state.device?.id && token.csrf === state.csrfToken
+  }
+  function accountIdentityCurrent(token) {
+    return token.generation === state.identityGeneration && token.ownerId === state.account?.ownerId
+      && token.deviceId === state.device?.id && token.csrf === state.csrfToken
+  }
+  function sessionExpired() {
+    clearSession()
+    show('login')
+    toast('登录已失效，请重新登录。')
+  }
+  function formatDate(value) {
+    if (typeof value !== 'string') return '未记录'
+    const date = new Date(value)
+    return Number.isNaN(date.getTime()) ? '未记录' : new Intl.DateTimeFormat('zh-CN', { dateStyle: 'medium', timeStyle: 'short' }).format(date)
+  }
+  function element(tag, className, text) {
+    const node = document.createElement(tag)
+    if (className) node.className = className
+    if (text !== undefined) node.textContent = text
+    return node
+  }
+  function profileName() { return state.account?.displayName ?? state.account?.username ?? '' }
+  function profileDirty() {
+    return byId('profile-display-name').value !== profileName() || state.profileDraftAvatar !== undefined
+  }
+  function profileControls() {
+    byId('profile-save').disabled = state.profileSaving || state.avatarChecking || state.profileConflict || !profileDirty()
+    byId('profile-cancel').disabled = state.profileSaving || (!profileDirty() && !state.avatarChecking)
+    byId('profile-display-name').disabled = state.profileSaving
+    byId('profile-avatar-file').disabled = state.profileSaving
+    byId('profile-avatar-remove').disabled = state.profileSaving || !(state.profileDraftAvatar === undefined ? state.account?.avatar : state.profileDraftAvatar)
+  }
+  function releaseAvatarUrl() {
+    if (state.avatarObjectUrl) URL.revokeObjectURL(state.avatarObjectUrl)
+    state.avatarObjectUrl = null
+  }
+  function avatarSignature(bytes, mimeType) {
+    const png = bytes.length >= 16 && [137, 80, 78, 71, 13, 10, 26, 10].every((byte, index) => bytes[index] === byte)
+    const jpeg = bytes.length >= 16 && bytes[0] === 255 && bytes[1] === 216 && bytes.at(-2) === 255 && bytes.at(-1) === 217
+    const webp = bytes.length >= 16 && String.fromCharCode(...bytes.subarray(0, 4)) === 'RIFF'
+      && String.fromCharCode(...bytes.subarray(8, 12)) === 'WEBP'
+    return mimeType === 'image/png' && png || mimeType === 'image/jpeg' && jpeg || mimeType === 'image/webp' && webp
+  }
+  async function paintAvatar(avatar, token, file = null) {
+    const generation = ++state.avatarGeneration
+    const current = () => accountCurrent(token) && generation === state.avatarGeneration
+    const image = byId('profile-avatar-image')
+    const placeholder = byId('profile-avatar-placeholder')
+    releaseAvatarUrl()
+    image.removeAttribute?.('src')
+    image.hidden = true
+    placeholder.hidden = false
+    if (!current()) return false
+    if (!avatar) {
+      placeholder.textContent = Array.from(byId('profile-display-name').value.trim() || state.account?.username || '?')[0] || '?'
+      return true
+    }
+    try {
+      const url = file ? URL.createObjectURL(file) : `data:${avatar.mimeType};base64,${avatar.dataBase64}`
+      if (file) state.avatarObjectUrl = url
+      image.src = url
+      if (typeof image.decode === 'function') await image.decode()
+      else await new Promise((resolve, reject) => {
+        image.addEventListener('load', resolve, { once: true })
+        image.addEventListener('error', reject, { once: true })
+      })
+      if (!current()) return false
+      image.hidden = false
+      placeholder.hidden = true
+      return true
+    } catch {
+      if (current()) {
+        byId('profile-avatar-status').textContent = '头像无法预览，请重新选择有效图片。'
+        releaseAvatarUrl()
+        image.removeAttribute?.('src')
+      }
+      return false
+    }
+  }
+  function resetProfileDraft() {
+    state.profileDraftGeneration++
+    state.avatarSelectionGeneration++
+    state.avatarChecking = false
+    state.profileDraftAvatar = undefined
+    state.profileConflict = false
+    byId('profile-display-name').value = profileName()
+    byId('profile-avatar-file').value = ''
+    byId('profile-avatar-status').textContent = state.account?.avatar ? '当前头像。选择新图片或移除后再保存。' : '未设置头像。支持 PNG、JPEG 或 WebP，最多 128 KiB。'
+    byId('profile-reload').hidden = true
+    errorAt('profile-error', '')
+    byId('profile-status').textContent = ''
+    if (state.currentView === 'account') void paintAvatar(state.account?.avatar ?? null, accountToken())
+    profileControls()
+  }
+  async function refreshProfile({ preserveDraft = false } = {}) {
+    const token = accountToken()
+    const draftGeneration = state.profileDraftGeneration
+    const fetchGeneration = ++state.profileFetchGeneration
+    if (!accountCurrent(token)) return
+    if (!preserveDraft && (profileDirty() || state.avatarChecking)) return
+    byId('profile-status').textContent = '正在读取资料…'
+    try {
+      const payload = await api('/me')
+      if (!accountCurrent(token) || fetchGeneration !== state.profileFetchGeneration) return
+      if (draftGeneration !== state.profileDraftGeneration) {
+        byId('profile-status').textContent = preserveDraft
+          ? '读取期间草稿发生变化，本次结果未应用。请重新读取最新资料。'
+          : '当前草稿已保留，保存时会检查资料版本。'
+        return
+      }
+      if (payload?.account?.ownerId !== state.account?.ownerId || payload?.device?.id !== state.device?.id
+        || !Number.isSafeInteger(payload.account.profileRevision)) throw { code: 'REQUEST_FAILED' }
+      if (!preserveDraft && (profileDirty() || state.avatarChecking)) {
+        byId('profile-status').textContent = '资料读取已完成；当前输入仍保留，保存时会检查资料版本。'
+        return
+      }
+      const nameWasChanged = byId('profile-display-name').value !== profileName()
+      const avatarWasChanged = state.profileDraftAvatar !== undefined || state.avatarChecking
+      state.account = payload.account
+      if (preserveDraft) {
+        if (!nameWasChanged) byId('profile-display-name').value = profileName()
+        if (!avatarWasChanged) {
+          byId('profile-avatar-status').textContent = state.account.avatar ? '已更新为账户当前头像。' : '账户当前未设置头像。'
+          void paintAvatar(state.account.avatar ?? null, token)
+        }
+        state.profileConflict = false
+        byId('profile-reload').hidden = true
+        errorAt('profile-error', '')
+        byId('profile-status').textContent = '已读取最新资料；未修改的字段已更新。请核对保留的草稿，再明确保存。'
+        profileControls()
+      } else resetProfileDraft()
+    } catch (error) {
+      if (!accountCurrent(token) || fetchGeneration !== state.profileFetchGeneration) return
+      if (error.code === 'UNAUTHORIZED') return sessionExpired()
+      byId('profile-status').textContent = ''
+      byId('profile-reload').hidden = false
+      errorAt('profile-error', '资料暂时无法读取，请稍后重试。当前输入仍保留。')
+    }
+  }
+  function renderDevices(devices) {
+    const list = byId('device-list')
+    list.replaceChildren()
+    if (!devices.length) {
+      list.append(element('li', 'device-item muted', '没有可显示的设备记录。'))
+      return
+    }
+    for (const device of devices) {
+      const item = element('li', 'device-item')
+      if (typeof device.id === 'string') item.dataset.deviceId = device.id
+      const content = element('div', 'device-content')
+      const title = element('div', 'device-title')
+      title.append(element('strong', '', typeof device.name === 'string' ? device.name : '未命名设备'))
+      if (device.current === true) title.append(element('span', 'badge', '当前设备'))
+      if (device.revoked === true) title.append(element('span', 'badge revoked', '已撤销'))
+      const meta = element('div', 'device-meta')
+      meta.append(element('span', '', `加入于 ${formatDate(device.createdAt)}`))
+      if (device.lastSeenAt) meta.append(element('span', '', `最近使用 ${formatDate(device.lastSeenAt)}`))
+      meta.append(element('span', '', `会话有效期至 ${formatDate(device.expiresAt)}`))
+      content.append(title, meta)
+      const editing = state.deviceEditing?.id === device.id ? state.deviceEditing : null
+      if (editing) {
+        const form = element('form', 'device-edit')
+        const input = element('input')
+        input.type = 'text'
+        input.maxLength = 128
+        input.value = editing.draft
+        input.setAttribute('aria-label', `修改${device.name || '未命名设备'}的名称`)
+        const save = element('button', 'button primary small', '保存名称')
+        save.type = 'submit'
+        save.disabled = editing.busy
+        const cancel = element('button', 'button quiet small', '取消')
+        cancel.type = 'button'
+        cancel.disabled = editing.busy
+        const feedback = element('p', `device-feedback${editing.error ? ' is-error' : ''}`, editing.error || (editing.busy ? '正在保存设备名称…' : '修改只影响这台设备的显示名称。'))
+        feedback.setAttribute('role', editing.error ? 'alert' : 'status')
+        input.disabled = editing.busy
+        input.addEventListener('input', () => { editing.draft = input.value; editing.error = ''; feedback.textContent = '修改只影响这台设备的显示名称。'; feedback.className = 'device-feedback' })
+        cancel.addEventListener('click', () => { state.deviceEditing = null; renderDevices(state.cachedDevices) })
+        form.addEventListener('submit', async (event) => {
+          event.preventDefault()
+          if (editing.busy) return
+          const name = input.value.trim()
+          if (!name || name.length > 128) { editing.error = '设备名称须为 1–128 个字符。'; feedback.textContent = editing.error; feedback.className = 'device-feedback is-error'; return }
+          const token = accountToken()
+          editing.busy = true
+          input.disabled = save.disabled = cancel.disabled = true
+          feedback.textContent = '正在保存设备名称…'
+          try {
+            const result = await api(`/devices/${encodeURIComponent(device.id)}`, { method: 'PATCH', protectedWrite: true, body: { name } })
+            if (!accountCurrent(token) || state.deviceEditing !== editing) return
+            if (result?.device?.id !== device.id || result.device.name !== name) throw { code: 'REQUEST_FAILED' }
+            state.deviceEditing = null
+            state.deviceNotice = '设备名称已保存。'
+            await refreshDevices()
+          } catch (error) {
+            if (!accountCurrent(token) || state.deviceEditing !== editing) return
+            if (error.code === 'UNAUTHORIZED') return sessionExpired()
+            editing.error = error.code === 'NOT_FOUND' ? '设备已不在当前账户中，请取消后刷新列表。' : '设备名称未确认保存，请检查连接并重试。'
+            feedback.textContent = editing.error
+            feedback.className = 'device-feedback is-error'
+          } finally {
+            if (accountCurrent(token) && state.deviceEditing === editing) {
+              editing.busy = false
+              input.disabled = save.disabled = cancel.disabled = false
+            }
+          }
+        })
+        form.append(input, save, cancel, feedback)
+        content.append(form)
+      }
+      item.append(content)
+      if (device.revoked !== true && typeof device.id === 'string' && !editing) {
+        const actions = element('div', 'device-actions')
+        const rename = element('button', 'button secondary small', '改名')
+        rename.type = 'button'
+        rename.addEventListener('click', () => {
+          state.deviceEditing = { id: device.id, draft: typeof device.name === 'string' ? device.name : '', error: '', busy: false }
+          renderDevices(state.cachedDevices)
+          byId('device-list').querySelector?.(`[data-device-id="${device.id}"] input`)?.focus()
+        })
+        actions.append(rename)
+      if (device.current !== true && device.revoked !== true && typeof device.id === 'string') {
+        const button = element('button', 'button secondary small', '撤销')
+        button.type = 'button'
+        button.addEventListener('click', () => {
+          state.revokeId = device.id
+          errorAt('revoke-error', '')
+          byId('revoke-description').textContent = `确定撤销“${device.name || '未命名设备'}”吗？`
+          byId('revoke-dialog').showModal()
+        })
+        actions.append(button)
+      }
+        item.append(actions)
+      }
+      list.append(item)
+    }
+  }
+  async function refreshDevices() {
+    const loading = byId('devices-loading')
+    const token = accountToken()
+    if (!accountCurrent(token)) return
+    if (state.deviceEditing) {
+      loading.hidden = false
+      loading.textContent = '请先保存或取消设备名称修改，再刷新列表。'
+      return
+    }
+    const generation = ++state.deviceFetchGeneration
+    loading.hidden = false
+    loading.textContent = '正在读取设备…'
+    try {
+      const payload = await api('/devices')
+      if (!accountCurrent(token) || generation !== state.deviceFetchGeneration) return
+      if (!Array.isArray(payload.devices)) throw { code: 'REQUEST_FAILED' }
+      if (state.deviceEditing) {
+        loading.textContent = '设备记录已读取；请先保存或取消当前改名，再刷新列表。'
+        return
+      }
+      state.cachedDevices = payload.devices
+      renderDevices(payload.devices)
+      loading.hidden = !state.deviceNotice
+      if (state.deviceNotice) { loading.textContent = state.deviceNotice; state.deviceNotice = '' }
+    } catch (error) {
+      if (!accountCurrent(token) || generation !== state.deviceFetchGeneration) return
+      if (error.code === 'UNAUTHORIZED') return sessionExpired()
+      loading.textContent = state.deviceNotice ? `${state.deviceNotice}但列表暂时无法刷新，请稍后重试。` : '设备记录暂时无法读取。请点击刷新重试。'
+      state.deviceNotice = ''
+    }
+  }
+
+  const memoryBase = `${accessBase}/memory`
+  const memoryKinds = { cognition: '理解', entity: '人物与事物', relationship: '关系', event: '经历' }
+  const memoryPreDispatchCodes = new Set(['UNAUTHORIZED', 'FORBIDDEN', 'INVALID_REQUEST', 'NOT_FOUND', 'MEMORY_DISABLED',
+    'MEMORY_UNAVAILABLE', 'MEMORY_ACTION_UNSUPPORTED', 'MEMORY_DELETE_UNAVAILABLE'])
+  const memoryItemId = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/
+  const memoryPathId = (id) => typeof id === 'string' && memoryItemId.test(id) ? id : null
+  function memoryIdentity() {
+    return { generation: state.identityGeneration, ownerId: state.account?.ownerId,
+      deviceId: state.device?.id, csrf: state.csrfToken, view: memory.viewGeneration }
+  }
+  function memoryIdentityCurrent(token) {
+    return token.generation === state.identityGeneration && token.ownerId === state.account?.ownerId
+      && token.deviceId === state.device?.id && token.csrf === state.csrfToken && !!token.csrf
+  }
+  function memoryViewCurrent(token) {
+    return memoryIdentityCurrent(token) && state.currentView === 'memory' && token.view === memory.viewGeneration
+  }
+  function memoryStatus(message, error = false) {
+    const node = byId('memory-status')
+    const degraded = memory.status?.state === 'degraded'
+    const modelNote = degraded && memory.status?.capabilities?.inject === false
+      ? (memory.status?.reasonCode === 'MEMORY_MODEL_UNAVAILABLE'
+        ? '模型路线暂不可用，当前记忆未用于模型回复。 ' : '当前记忆未用于模型回复。 ')
+      : ''
+    const processingNote = memory.status?.blockedBoundaryCount > 0
+      ? '部分来源已阻断，当前不会自动重试。 '
+      : memory.status?.pendingBoundaryCount > 0 ? '有来源待处理。 ' : ''
+    node.textContent = `${modelNote}${processingNote}${message}`
+    node.classList.toggle('is-error', error)
+  }
+  function detailStatus(message, error = false) {
+    const node = byId('memory-detail-status')
+    node.textContent = message
+    node.classList.toggle('is-error', error)
+  }
+  function detailError(message) { errorAt('memory-detail-error', message) }
+  function showMemoryReceipt(message, requestId, action = 'none') {
+    memory.receiptNotice = { message, requestId, action }
+    byId('memory-receipt-text').textContent = message
+    byId('memory-receipt-id').textContent = requestId
+    byId('memory-receipt-check').hidden = action === 'none'
+    byId('memory-receipt-check').textContent = action === 'retry-cleanup' ? '重试底层清理' : '核对处理结果'
+    byId('memory-receipt').hidden = false
+  }
+  function resetMemoryIdentity() {
+    memory.viewGeneration++
+    memory.entryGeneration++
+    memory.queryGeneration++
+    memory.selectedGeneration++
+    memory.operationGeneration++
+    memory.status = null
+    memory.items = []
+    memory.revision = null
+    memory.cursor = null
+    memory.hasMore = false
+    memory.query = ''
+    memory.kind = 'cognition'
+    memory.selected = null
+    memory.sources = []
+    memory.mode = 'detail'
+    memory.drafts.clear()
+    memory.activeOperation = null
+    memory.unresolvedMarker = null
+    memory.cleanupMarker = null
+    memory.cleanupRetrying = false
+    memory.receiptNotice = null
+    byId('memory-kind').value = 'cognition'
+    byId('memory-query').value = ''
+    byId('memory-list').replaceChildren()
+    byId('memory-more').hidden = true
+    byId('memory-receipt').hidden = true
+    byId('memory-detail-text').textContent = ''
+    byId('memory-sources').replaceChildren()
+    byId('memory-correct-text').value = ''
+    detailError('')
+    detailStatus('')
+    memoryStatus('登录后可查看当前账户的记忆。')
+    if (byId('memory-detail-dialog').open) byId('memory-detail-dialog').close()
+  }
+  async function memoryRequest(path, { method = 'GET', body } = {}) {
+    const identity = memoryIdentity()
+    const headers = {}
+    if (body !== undefined) headers['content-type'] = 'application/json'
+    if (method !== 'GET') {
+      if (!state.csrfToken) throw { code: 'UNAUTHORIZED', status: 401 }
+      headers['X-WeftMate-CSRF'] = state.csrfToken
+    }
+    let response
+    try {
+      response = await fetch(`${memoryBase}${path}`, { method, headers, credentials: 'same-origin', cache: 'no-store',
+        signal: AbortSignal.timeout(15_000), ...(body !== undefined ? { body: JSON.stringify(body) } : {}) })
+    } catch { throw { code: 'NETWORK', status: 0 } }
+    const payload = await response.json().catch(() => ({}))
+    if (!memoryIdentityCurrent(identity)) throw { code: 'STALE_MEMORY_RESPONSE', status: 0 }
+    if ((response.ok || Object.hasOwn(payload, 'ownerId')) && payload.ownerId !== identity.ownerId) {
+      clearSession()
+      show('login')
+      toast('登录账户已在其他页面改变，请重新登录核对账户。')
+      throw { code: 'MEMORY_OWNER_MISMATCH', status: 401 }
+    }
+    if (!response.ok) throw { code: payload?.error?.code ?? 'REQUEST_FAILED', status: response.status, payload }
+    return payload
+  }
+  function memoryFailure(error) {
+    if (error?.status === 403 || error?.code === 'FORBIDDEN') return '当前账户没有查看这项记忆的权限。'
+    if (error?.code === 'MEMORY_SEARCH_LIMIT') return '当前账户记忆超过搜索上限，未返回局部结果。请稍后再试。'
+    if (error?.code === 'MEMORY_REVISION_CHANGED') return '记忆已变更，旧页已清除。保留了搜索条件，请重新查询。'
+    if (error?.code === 'NETWORK') return '连接中断，记忆状态暂时无法确认。请重试。'
+    return '记忆暂时无法读取。请检查连接并重试。'
+  }
+  function invalidateMemorySnapshot(message, error = true) {
+    closeMemoryDetail()
+    memory.items = []
+    memory.revision = null
+    memory.cursor = null
+    memory.hasMore = false
+    byId('memory-list').replaceChildren()
+    byId('memory-more').hidden = true
+    memoryStatus(message, error)
+  }
+  function memoryLifecycle(item) {
+    const life = item?.lifecycle ?? {}
+    const labels = []
+    if (life.invalidAt) labels.push('已失效')
+    if (life.archivedAt) labels.push('已归档')
+    if (life.mutedAt) labels.push('已停用，不参与召回')
+    if (labels.length) return labels.join(' · ')
+    return item?.currentState === 'current' ? '当前有效' : '状态待确认'
+  }
+  function renderMemoryItems() {
+    const list = byId('memory-list')
+    list.replaceChildren()
+    for (const item of memory.items) {
+      const row = element('li', 'memory-item')
+      const button = element('button', 'memory-item-button')
+      button.type = 'button'
+      button.append(element('span', 'memory-item-text', typeof item.text === 'string'
+        ? `${item.text}${item.truncated === true ? '\n（仅显示片段）' : ''}` : '内容暂不可用'))
+      button.append(element('span', 'memory-item-meta', `${memoryKinds[item.kind] ?? '记忆'} · ${memoryLifecycle(item)}${item.updatedAt ? ` · 更新于 ${formatDate(item.updatedAt)}` : ''}`))
+      if (!memoryPathId(item.id)) {
+        button.disabled = true
+        button.append(element('span', 'memory-item-meta', '此标识无法安全打开详情，暂可在列表查看。'))
+      } else button.addEventListener('click', () => { void openMemoryDetail(item.kind, item.id) })
+      row.append(button)
+      list.append(row)
+    }
+    byId('memory-more').hidden = !memory.hasMore
+  }
+  async function refreshMemoryStatus() {
+    const token = memoryIdentity()
+    if (!memoryViewCurrent(token)) return false
+    memoryStatus('正在检查记忆服务…')
+    try {
+      const payload = await memoryRequest('/status')
+      if (!memoryViewCurrent(token)) return false
+      if (!['ready', 'degraded', 'disabled', 'unavailable'].includes(payload?.state) || !payload?.capabilities) throw { code: 'REQUEST_FAILED' }
+      memory.status = payload
+      if (!['ready', 'degraded'].includes(payload.state) || payload.capabilities.list !== true) {
+        invalidateMemorySnapshot(payload.state === 'disabled' ? '记忆尚未接入当前宿主。'
+          : ['ready', 'degraded'].includes(payload.state) ? '当前账户没有记忆列表权限。' : '记忆服务暂时不可用，请稍后刷新。', payload.state !== 'disabled')
+        return false
+      }
+      return true
+    } catch (error) {
+      if (!memoryViewCurrent(token)) return false
+      if (error.code === 'UNAUTHORIZED' || error.status === 401) { sessionExpired(); return false }
+      memory.status = null
+      invalidateMemorySnapshot(memoryFailure(error))
+      return false
+    }
+  }
+  async function loadMemoryPage({ more = false } = {}) {
+    const token = memoryIdentity()
+    if (!memoryViewCurrent(token) || !['ready', 'degraded'].includes(memory.status?.state) || memory.status.capabilities.list !== true) return
+    const queryGeneration = more ? memory.queryGeneration : ++memory.queryGeneration
+    const kind = memory.kind
+    const query = memory.query
+    const after = more ? memory.cursor : null
+    if (more && (!memory.hasMore || !after)) return
+    if (!more) { memory.items = []; memory.cursor = null; memory.hasMore = false; byId('memory-list').replaceChildren(); byId('memory-more').hidden = true }
+    memoryStatus(more ? '正在读取更多记忆…' : '正在读取记忆…')
+    byId('memory-more').disabled = true
+    try {
+      const params = new URLSearchParams({ kind, limit: '20' })
+      if (query) params.set('query', query)
+      if (after) params.set('after', after)
+      const page = await memoryRequest(`/items?${params}`)
+      if (!memoryViewCurrent(token) || queryGeneration !== memory.queryGeneration) return
+      if (!Array.isArray(page?.items) || !Number.isSafeInteger(page.worldRevision)
+        || page.searchScope !== 'account_snapshot' || typeof page.hasMore !== 'boolean'
+        || (page.hasMore && (typeof page.nextCursor !== 'string' || !page.nextCursor))
+        || (more && memory.revision !== page.worldRevision)
+        || page.items.some((item) => item?.kind !== kind || typeof item.id !== 'string')) throw { code: 'MEMORY_REVISION_CHANGED' }
+      memory.items = more ? [...memory.items, ...page.items] : page.items
+      memory.revision = page.worldRevision
+      memory.cursor = page.nextCursor ?? null
+      memory.hasMore = page.hasMore
+      renderMemoryItems()
+      memoryStatus(memory.items.length ? `已读取${memoryKinds[kind]}。${memory.hasMore ? '可继续读取更多。' : ''}`
+        : query ? '当前类型没有匹配的已形成记忆。'
+          : memory.status?.pendingBoundaryCount > 0
+            ? '尚无已形成记忆；有待处理来源。'
+            : '当前账户的这一类记忆为空。')
+    } catch (error) {
+      if (!memoryViewCurrent(token) || queryGeneration !== memory.queryGeneration) return
+      if (error.code === 'UNAUTHORIZED' || error.status === 401) return sessionExpired()
+      invalidateMemorySnapshot(memoryFailure(error))
+    } finally { if (memoryViewCurrent(token) && queryGeneration === memory.queryGeneration) byId('memory-more').disabled = false }
+  }
+  function memoryActionAllowed(action) {
+    const global = memory.status?.capabilities
+    const selected = memory.selected
+    if (!selected || selected.stale || !['ready', 'degraded'].includes(memory.status?.state)
+      || memory.activeOperation || memory.unresolvedMarker) return false
+    if (action === 'correct' && selected.kind === 'entity') return false
+    const globalKey = action === 'delete' ? 'deleteWorldItem' : action
+    return global?.[globalKey] === true && selected.availableActions?.[action]?.available === true
+  }
+  function renderMemorySources(sources) {
+    const list = byId('memory-sources')
+    list.replaceChildren()
+    if (!sources.length) { byId('memory-sources-status').textContent = '当前没有可展示的来源。'; return }
+    byId('memory-sources-status').textContent = ''
+    const currentnessLabels = new Map([
+      ['current', '当前来源'],
+      ['not_current', '来源不再支持当前理解'],
+      ['evidence_deleted', '来源已删除'],
+      ['evidence_local_read_denied', '来源未允许本机模型读取'],
+      ['evidence_cloud_read_denied', '来源未允许云端模型读取'],
+      ['evidence_not_model_readable', '来源当前不可供模型读取'],
+      ['evidence_missing', '来源记录未找到'],
+      ['evidence_subject_mismatch', '来源账户不匹配'],
+    ])
+    for (const source of sources) {
+      const row = element('li', 'memory-source')
+      const currentness = currentnessLabels.get(source.currentnessState) ?? '来源状态待确认'
+      const meta = element('p', 'memory-source-meta', `${currentness}${source.recordedAt ? ` · 记录于 ${formatDate(source.recordedAt)}` : ''}`)
+      const summary = element('p', 'memory-source-summary', typeof source.summary === 'string' && source.summary.trim()
+        ? source.summary : source.contentAvailable === false ? '此来源当前不可读。' : '摘要当前不可用。')
+      const raw = element('p', 'memory-source-raw', source.contentAvailable === true && typeof source.rawContent === 'string'
+        ? `${source.rawContent}${source.rawContentTruncated === true ? '\n（仅显示可读片段）' : ''}` : '原文当前不可用。')
+      row.append(meta, summary, raw)
+      list.append(row)
+    }
+  }
+  function renderMemoryMode() {
+    const mode = memory.mode
+    byId('memory-detail-body').hidden = false
+    byId('memory-correct-panel').hidden = mode !== 'correct'
+    byId('memory-confirm-panel').hidden = !['mute', 'delete'].includes(mode)
+    byId('memory-detail-back').hidden = mode === 'detail'
+    byId('memory-detail-check').hidden = !memory.unresolvedMarker && !memory.cleanupMarker
+    byId('memory-detail-check').textContent = memory.cleanupMarker?.cleanupState === 'pending'
+      && memory.cleanupMarker?.retryUnknown !== true
+      && !memory.unresolvedMarker ? '重试底层清理' : '核对处理结果'
+    byId('memory-detail-check').disabled = memory.cleanupRetrying
+    byId('memory-correct-action').hidden = mode !== 'detail' || !memoryActionAllowed('correct')
+    byId('memory-mute-action').hidden = mode !== 'detail' || !memoryActionAllowed('mute')
+    byId('memory-delete-action').hidden = mode !== 'detail' || !memoryActionAllowed('delete')
+    byId('memory-confirm-action').hidden = mode === 'detail'
+    byId('memory-delete-boundary').hidden = mode !== 'delete'
+    if (mode === 'correct') {
+      byId('memory-confirm-action').textContent = '保存纠正'
+      byId('memory-correct-text').value = memory.drafts.get(`${memory.selected.kind}|${memory.selected.id}`) ?? ''
+    } else if (mode === 'mute') {
+      byId('memory-confirm-action').textContent = '确认停用'
+      byId('memory-confirm-copy').textContent = '停用后仍可查看记忆和来源，但不再用于后续召回。'
+    } else if (mode === 'delete') {
+      byId('memory-confirm-action').textContent = '确认删除'
+      byId('memory-confirm-copy').textContent = '请确认删除这项当前账户记忆。共享或不明来源可能使删除被拒绝；停用可单独选择。'
+    }
+    byId('memory-confirm-action').disabled = !!memory.activeOperation || !!memory.unresolvedMarker || !!memory.selected?.stale
+  }
+  function closeMemoryDetail() {
+    memory.selectedGeneration++
+    memory.selected = null
+    memory.sources = []
+    memory.mode = 'detail'
+    byId('memory-detail-text').textContent = ''
+    byId('memory-detail-meta').textContent = ''
+    byId('memory-sources').replaceChildren()
+    byId('memory-correct-text').value = ''
+    detailError('')
+    detailStatus('')
+    if (byId('memory-detail-dialog').open) byId('memory-detail-dialog').close()
+  }
+  async function openMemoryDetail(kind, id) {
+    const token = memoryIdentity()
+    if (!memoryViewCurrent(token) || !memoryKinds[kind] || !memoryPathId(id)) return
+    const selectedGeneration = ++memory.selectedGeneration
+    memory.selected = null
+    memory.sources = []
+    memory.mode = 'detail'
+    byId('memory-detail-title').textContent = `${memoryKinds[kind]}详情`
+    byId('memory-detail-text').textContent = ''
+    byId('memory-detail-meta').textContent = ''
+    byId('memory-sources').replaceChildren()
+    byId('memory-sources-status').textContent = ''
+    detailError('')
+    detailStatus('正在读取记忆详情…')
+    renderMemoryMode()
+    if (!byId('memory-detail-dialog').open) byId('memory-detail-dialog').showModal()
+    try {
+      const result = await memoryRequest(`/items/${kind}/${memoryPathId(id)}`)
+      if (!memoryViewCurrent(token) || selectedGeneration !== memory.selectedGeneration) return
+      if (result?.item?.id !== id || result.item.kind !== kind || !Number.isSafeInteger(result.worldRevision)) throw { code: 'REQUEST_FAILED' }
+      memory.selected = { kind, id, item: result.item, worldRevision: result.worldRevision, availableActions: result.availableActions ?? {} }
+      byId('memory-detail-text').textContent = typeof result.item.text === 'string'
+        ? `${result.item.text}${result.item.truncated === true ? '\n（仅显示片段）' : ''}` : '内容当前不可用。'
+      byId('memory-detail-meta').textContent = `${memoryLifecycle(result.item)}${result.item.updatedAt ? ` · 更新于 ${formatDate(result.item.updatedAt)}` : ''}`
+      detailStatus('正在读取来源…')
+      renderMemoryMode()
+      const sourceResult = await memoryRequest(`/items/${kind}/${memoryPathId(id)}/sources`)
+      if (!memoryViewCurrent(token) || selectedGeneration !== memory.selectedGeneration) return
+      if (!Array.isArray(sourceResult?.sources) || sourceResult.worldRevision !== result.worldRevision) throw { code: 'MEMORY_REVISION_CHANGED' }
+      memory.sources = sourceResult.sources
+      renderMemorySources(memory.sources)
+      detailStatus('详情与来源已读取。')
+    } catch (error) {
+      if (!memoryViewCurrent(token) || selectedGeneration !== memory.selectedGeneration) return
+      if (error.code === 'UNAUTHORIZED' || error.status === 401) return sessionExpired()
+      invalidateMemorySnapshot(memoryFailure(error))
+    }
+  }
+  function memoryMarkerKey(ownerId = state.account?.ownerId, hostId = state.hostId) {
+    return typeof ownerId === 'string' && ownerId && typeof hostId === 'string' && hostId
+      ? `weftmate:memory-request:v1:${hostId}:${ownerId}` : null
+  }
+  function persistMemoryMarker(marker, key) {
+    if (!key) return false
+    try { localStorage.setItem(key, JSON.stringify(marker)); return true } catch { return false }
+  }
+  function clearMemoryMarker(key) {
+    if (!key) return
+    try { localStorage.removeItem(key) } catch { /* Best effort; a later lookup is safe. */ }
+  }
+  function storedMemoryMarker(key) {
+    if (!key) return null
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || 'null')
+      return value && /^[A-Za-z0-9_.:-]{1,128}$/.test(value.requestId)
+        && memoryKinds[value.kind] && typeof value.id === 'string' && value.id.length > 0
+        && ['correct', 'mute', 'delete'].includes(value.operation) ? value : null
+    } catch { return null }
+  }
+  function memoryCleanupKey(ownerId = state.account?.ownerId, hostId = state.hostId) {
+    return typeof ownerId === 'string' && ownerId && typeof hostId === 'string' && hostId
+      ? `weftmate:memory-cleanup:v1:${hostId}:${ownerId}` : null
+  }
+  function storedCleanupMarkers(key) {
+    if (!key) return []
+    try {
+      const values = JSON.parse(localStorage.getItem(key) || '[]')
+      return Array.isArray(values) ? values.filter((value) => value && value.operation === 'delete'
+        && /^[A-Za-z0-9_.:-]{1,128}$/.test(value.requestId) && typeof value.id === 'string'
+        && memoryKinds[value.kind]).slice(-100) : []
+    } catch { return [] }
+  }
+  function setCleanupMarker(marker, key) {
+    if (!key) return
+    try {
+      const values = storedCleanupMarkers(key).filter((value) => value.requestId !== marker.requestId)
+      values.push(marker)
+      localStorage.setItem(key, JSON.stringify(values.slice(-100)))
+    } catch { /* Current tab can still query the receipt. */ }
+  }
+  function clearCleanupMarker(requestId, key) {
+    if (!key) return
+    try { localStorage.setItem(key, JSON.stringify(storedCleanupMarkers(key).filter((value) => value.requestId !== requestId))) }
+    catch { /* Best effort. */ }
+  }
+  function memoryReceiptMessage(receipt, operation) {
+    if (receipt.state === 'no_change') return '宿主确认没有发生变更。'
+    if (operation === 'correct') return '纠正已应用，当前记忆已更新。'
+    if (operation === 'mute') return '记忆已停用，不再参与后续召回；原内容和来源仍可查看。'
+    if (receipt.storageCleanup?.state === 'pending') return '已从当前有效记忆与召回移除，底层清理待完成。可稍后查询回执。'
+    if (receipt.storageCleanup?.state === 'complete') return '已从当前有效记忆与召回移除，当前存储清理已完成。原聊天、会话存档、过去备份和文件系统快照仍保留。'
+    return '已从当前有效记忆与召回移除，底层清理状态待确认；原聊天、会话存档、过去备份和文件系统快照仍保留。'
+  }
+  function staleMemoryProjection(marker) {
+    memory.items = []
+    memory.revision = null
+    memory.cursor = null
+    memory.hasMore = false
+    byId('memory-list').replaceChildren()
+    byId('memory-more').hidden = true
+    if (memory.selected && memory.selected.kind === marker.kind && memory.selected.id === marker.id
+      && memory.selectedGeneration === marker.selectedGeneration) closeMemoryDetail()
+    else if (memory.selected) {
+      memory.selected.stale = true
+      detailStatus('记忆已变更；当前详情请关闭后重新打开，暂不可继续操作。')
+      renderMemoryMode()
+    }
+  }
+  function applyMemoryReceipt(receipt, marker, key, token) {
+    if (!receipt || !['applied', 'no_change', 'revision_conflict', 'rejected'].includes(receipt.state)
+      || receipt.requestId !== marker.requestId) return false
+    const needsCleanupCheck = marker.operation === 'delete' && receipt.state === 'applied'
+      && receipt.storageCleanup?.state !== 'complete'
+    const cleanupState = receipt.storageCleanup?.state === 'pending' ? 'pending' : 'unknown'
+    const cleanupMarker = needsCleanupCheck ? { ...marker, cleanupOnly: true, cleanupState, retryUnknown: false } : null
+    const cleanupKey = memoryCleanupKey(token.ownerId, marker.hostId ?? state.hostId)
+    if (!marker.cleanupOnly && storedMemoryMarker(key)?.requestId === marker.requestId) clearMemoryMarker(key)
+    if (cleanupMarker) setCleanupMarker(cleanupMarker, cleanupKey)
+    else clearCleanupMarker(marker.requestId, cleanupKey)
+    if (!memoryIdentityCurrent(token)) return true
+    if (memory.unresolvedMarker?.requestId === marker.requestId) memory.unresolvedMarker = null
+    memory.cleanupMarker = cleanupMarker
+    if (receipt.state === 'applied' || receipt.state === 'no_change') {
+      showMemoryReceipt(memoryReceiptMessage(receipt, marker.operation), marker.requestId,
+        cleanupMarker ? cleanupMarker.cleanupState === 'pending' ? 'retry-cleanup' : 'check' : 'none')
+      if (marker.operation === 'correct') memory.drafts.delete(`${marker.kind}|${marker.id}`)
+      if (!marker.cleanupOnly) staleMemoryProjection(marker)
+      if (!marker.cleanupOnly && memoryViewCurrent(token)) {
+        void refreshMemoryStatus().then((ready) => { if (ready && memoryViewCurrent(token)) void loadMemoryPage() })
+      }
+      return true
+    }
+    if (!memoryViewCurrent(token)) return true
+    if (receipt.state === 'revision_conflict') {
+      staleMemoryProjection(marker)
+      memoryStatus('记忆在操作前发生变化，旧页已清除；请重新查询，未自动重试。', true)
+      showMemoryReceipt('记忆版本已变化，本次未应用；纠正草稿仍保留。请重新查询后明确提交。', marker.requestId)
+      return true
+    }
+    const code = receipt.reasonCode
+    const message = code === 'MEMORY_DELETE_CONFLICT'
+      ? '来源仍被其他记忆使用，本次未删除。可查看来源或选择停用。'
+      : code === 'MEMORY_SOURCE_UNRECOVERABLE'
+        ? '旧来源身份已不可恢复，本次未删除；需要单独处理旧资料。'
+        : '宿主拒绝了本次操作，记忆未确认更改。请核对状态后重试。'
+    showMemoryReceipt(message, marker.requestId)
+    if (memory.selected && memory.selected.kind === marker.kind && memory.selected.id === marker.id
+      && memory.selectedGeneration === marker.selectedGeneration) detailError(message)
+    return true
+  }
+  async function recoverMemoryReceipt() {
+    const token = memoryIdentity()
+    const key = memoryMarkerKey()
+    const unknown = storedMemoryMarker(key) ?? memory.unresolvedMarker
+    const cleanup = storedCleanupMarkers(memoryCleanupKey()).at(0) ?? memory.cleanupMarker
+    const marker = unknown ?? cleanup
+    if (!memoryViewCurrent(token) || !marker || memory.activeOperation) return
+    memory.unresolvedMarker = unknown ?? null
+    memory.cleanupMarker = cleanup ?? null
+    showMemoryReceipt(marker.cleanupOnly ? '逻辑删除已确认，正在核对底层清理回执…'
+      : '上次操作的结果待确认，正在查询持久回执…', marker.requestId,
+    marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check')
+    try {
+      const result = await memoryRequest(`/commands/by-request/${encodeURIComponent(marker.requestId)}`)
+      if (!memoryIdentityCurrent(token)) return
+      if (!applyMemoryReceipt(result?.receipt, marker, key, token) && memoryViewCurrent(token)) {
+        showMemoryReceipt(marker.cleanupOnly ? '逻辑删除已确认，但底层清理回执仍无法确认。'
+          : '仍无法确认上次操作的结果。不会自动重发，请稍后查询。', marker.requestId,
+        marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check')
+      }
+    } catch (error) {
+      if (!memoryViewCurrent(token)) return
+      if (error.code === 'UNAUTHORIZED' || error.status === 401) return sessionExpired()
+      showMemoryReceipt(marker.cleanupOnly ? '逻辑删除已确认，底层清理状态暂无法查询。'
+        : '上次操作的结果待确认。不会自动重发；请稍后查询回执。', marker.requestId,
+      marker.cleanupOnly && marker.cleanupState === 'pending' && marker.retryUnknown !== true ? 'retry-cleanup' : 'check')
+    } finally { if (memoryViewCurrent(token)) renderMemoryMode() }
+  }
+  async function retryMemoryCleanup() {
+    const token = memoryIdentity()
+    if (!memoryViewCurrent(token) || memory.cleanupRetrying || memory.activeOperation) return
+    const cleanupKey = memoryCleanupKey()
+    const displayedId = byId('memory-receipt-id').textContent
+    const marker = storedCleanupMarkers(cleanupKey).find((entry) => entry.requestId === displayedId)
+      ?? memory.cleanupMarker
+    if (!marker?.cleanupOnly || marker.operation !== 'delete' || marker.cleanupState !== 'pending'
+      || marker.retryUnknown === true) {
+      void recoverMemoryReceipt()
+      return
+    }
+    memory.cleanupRetrying = true
+    byId('memory-receipt-check').disabled = true
+    byId('memory-detail-check').disabled = true
+    showMemoryReceipt('正在请求底层清理并等待结果…', marker.requestId, 'retry-cleanup')
+    byId('memory-receipt-check').disabled = true
+    try {
+      const result = await memoryRequest(`/commands/by-request/${encodeURIComponent(marker.requestId)}/retry-cleanup`,
+        { method: 'POST', body: {} })
+      if (!memoryIdentityCurrent(token)) return
+      if (!(result?.receipt?.state === 'applied' && applyMemoryReceipt(result.receipt, marker,
+        memoryMarkerKey(token.ownerId, marker.hostId), token))
+        && memoryViewCurrent(token)) {
+        const uncertain = { ...marker, retryUnknown: true }
+        setCleanupMarker(uncertain, cleanupKey)
+        memory.cleanupMarker = uncertain
+        showMemoryReceipt('本次清理结果暂无法确认。请先核对原回执；不会自动再次重试。',
+          marker.requestId, 'check')
+      }
+    } catch (error) {
+      if (!memoryIdentityCurrent(token)) return
+      if (error?.payload?.receipt?.state === 'applied'
+        && applyMemoryReceipt(error.payload.receipt, marker, memoryMarkerKey(token.ownerId, marker.hostId), token)) return
+      if (error.code === 'UNAUTHORIZED' || error.status === 401) return sessionExpired()
+      if (memoryViewCurrent(token)) {
+        const refused = error.code === 'FORBIDDEN' || error.status === 403
+        if (!refused) {
+          const uncertain = { ...marker, retryUnknown: true }
+          setCleanupMarker(uncertain, cleanupKey)
+          memory.cleanupMarker = uncertain
+        }
+        const message = refused
+          ? '当前账户无权重试底层清理，本次未执行；请核对权限后再决定。'
+          : '本次清理结果待确认。请先核对原回执；不会自动再次重试。'
+        showMemoryReceipt(message, marker.requestId, refused ? 'retry-cleanup' : 'check')
+      }
+    } finally {
+      if (memoryIdentityCurrent(token)) {
+        memory.cleanupRetrying = false
+        if (memoryViewCurrent(token)) {
+          byId('memory-receipt-check').disabled = false
+          renderMemoryMode()
+        }
+      }
+    }
+  }
+  function handleMemoryReceiptAction() {
+    const unknown = storedMemoryMarker(memoryMarkerKey()) ?? memory.unresolvedMarker
+    if (unknown) { void recoverMemoryReceipt(); return }
+    const cleanup = storedCleanupMarkers(memoryCleanupKey()).find((entry) =>
+      entry.requestId === byId('memory-receipt-id').textContent) ?? memory.cleanupMarker
+    if (cleanup?.cleanupOnly && cleanup.cleanupState === 'pending' && cleanup.retryUnknown !== true) void retryMemoryCleanup()
+    else void recoverMemoryReceipt()
+  }
+  async function submitMemoryAction() {
+    const selected = memory.selected
+    const operation = memory.mode
+    const token = memoryIdentity()
+    if (!memoryViewCurrent(token) || !selected || !['correct', 'mute', 'delete'].includes(operation)
+      || !memoryActionAllowed(operation)) return
+    const selectedGeneration = memory.selectedGeneration
+    let textValue = null
+    if (operation === 'correct') {
+      textValue = byId('memory-correct-text').value.trim()
+      if (!textValue || textValue.length > 4000) return detailError('纠正内容须为 1–4000 个字符。')
+      memory.drafts.set(`${selected.kind}|${selected.id}`, textValue)
+    }
+    const requestId = `memory-${typeof globalThis.crypto?.randomUUID === 'function' ? globalThis.crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`}`
+    const marker = { requestId, kind: selected.kind, id: selected.id, operation, selectedGeneration, hostId: state.hostId }
+    const key = memoryMarkerKey(token.ownerId, state.hostId)
+    const existing = storedMemoryMarker(key)
+    if (existing) {
+      memory.unresolvedMarker = existing
+      return detailError('当前账户有一条待核对操作。请刷新查询原回执后再提交新操作。')
+    }
+    if (!persistMemoryMarker(marker, key)) return detailError('暂时无法保存回执查询标识；为避免结果不明，本次没有提交。')
+    memory.activeOperation = marker
+    const operationGeneration = ++memory.operationGeneration
+    byId('memory-confirm-action').disabled = true
+    detailError('')
+    detailStatus('正在提交并等待处理结果…')
+    const path = `/items/${selected.kind}/${memoryPathId(selected.id)}/${operation}`
+    const body = { requestId, expectedWorldRevision: selected.worldRevision, ...(operation === 'correct' ? { text: textValue } : {}) }
+    try {
+      const result = await memoryRequest(operation === 'delete'
+        ? `/items/${selected.kind}/${memoryPathId(selected.id)}` : path,
+      { method: operation === 'delete' ? 'DELETE' : 'POST', body })
+      if (!memoryIdentityCurrent(token) || operationGeneration !== memory.operationGeneration) return
+      if (!applyMemoryReceipt(result?.receipt, marker, key, token) && memoryViewCurrent(token)) {
+        memory.unresolvedMarker = marker
+        showMemoryReceipt('回执内容无法确认，原请求仍待核对；不会自动重发。', marker.requestId, 'check')
+        detailStatus('本次执行结果待确认。')
+        detailError('请点“核对处理结果”查询原请求，不会自动重发。')
+      }
+    } catch (error) {
+      if (!memoryIdentityCurrent(token) || operationGeneration !== memory.operationGeneration) return
+      const receipt = error?.payload?.receipt
+      if (applyMemoryReceipt(receipt, marker, key, token)) return
+      if (memoryPreDispatchCodes.has(error.code)) {
+        clearMemoryMarker(key)
+        memory.unresolvedMarker = null
+        if (error.code === 'UNAUTHORIZED') return sessionExpired()
+        if (memoryViewCurrent(token)) {
+          if (error.code === 'NOT_FOUND') {
+            staleMemoryProjection(marker)
+            memoryStatus('这条记忆已不在当前账户的有效库中，旧列表已清除；请刷新查询。', true)
+            showMemoryReceipt('记忆已不存在，本次未提交。请刷新列表后重新核对。', marker.requestId)
+            return
+          }
+          const message = error.code === 'INVALID_REQUEST' ? '请求内容未通过检查，本次未提交。请核对更正说明后重新提交。'
+            : error.code === 'MEMORY_DELETE_UNAVAILABLE' ? '删除能力暂不可用，本次未提交。'
+              : '当前账户或记忆能力不允许这项操作，本次未提交。请刷新状态后核对。'
+          detailStatus('本次未提交。')
+          showMemoryReceipt(message, marker.requestId)
+          detailError(message)
+        }
+      } else if (error.code === 'MEMORY_REQUEST_CONFLICT' || error.code === 'MEMORY_REPLAY_REDACTED') {
+        clearMemoryMarker(key)
+        memory.unresolvedMarker = null
+        if (memoryViewCurrent(token)) {
+          const message = error.code === 'MEMORY_REQUEST_CONFLICT'
+            ? '原请求标识与已保存内容冲突，本次未提交。请重新核对后再决定。'
+            : '旧请求正文已不可重放，本次未提交。请重新核对后再决定。'
+          detailStatus('本次未提交。')
+          showMemoryReceipt(message, marker.requestId)
+          detailError(message)
+          if (memory.selected) memory.selected.stale = true
+        }
+      } else {
+        memory.unresolvedMarker = marker
+        if (memoryViewCurrent(token)) {
+          showMemoryReceipt('结果待确认，原请求已保留；不会自动重发。', marker.requestId, 'check')
+          detailStatus('本次执行结果待确认。')
+          detailError('请点“核对处理结果”查询原请求，不会自动重发。')
+        }
+      }
+    } finally {
+      if (memoryIdentityCurrent(token) && operationGeneration === memory.operationGeneration) {
+        if (memory.activeOperation === marker) memory.activeOperation = null
+        if (memoryViewCurrent(token) && selectedGeneration === memory.selectedGeneration) {
+          byId('memory-confirm-action').disabled = false
+          renderMemoryMode()
+        }
+      }
+    }
+  }
+
+  const markerId = /^[A-Za-z0-9_.:-]{1,128}$/
+  const sessionIdPattern = /^[A-Za-z0-9_-]{1,128}$/
+  const syncIdPattern = /^(?:[A-Za-z][A-Za-z0-9_-]{0,31}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+  function phoneOutboxKey() { return state.ownerId && state.device?.id
+    ? `weftmate:phone-sync-outbox:v1:${state.ownerId}:${state.device.id}` : null }
+  function phoneSequenceKey() { return state.ownerId && state.device?.id
+    ? `weftmate:phone-sync-seq:v1:${state.ownerId}:${state.device.id}` : null }
+  function phoneRecoveryKey() { return state.ownerId ? `weftmate:phone-sync-recovery:v1:${state.ownerId}` : null }
+  function readPhoneRecovery() {
+    try {
+      const row = JSON.parse(localStorage.getItem(phoneRecoveryKey()) || 'null')
+      return row?.ownerId === state.ownerId && sessionIdPattern.test(row.deviceId) &&
+        syncIdPattern.test(row.event?.eventId) && syncIdPattern.test(row.event?.conversationId) &&
+        typeof row.event?.payload?.text === 'string' ? row : null
+    } catch { return null }
+  }
+  function readPhoneOutbox() {
+    const key = phoneOutboxKey()
+    if (!key) return null
+    try {
+      const row = JSON.parse(localStorage.getItem(key) || 'null')
+      const event = row?.event
+      return row?.ownerId === state.ownerId && row?.deviceId === state.device.id &&
+        syncIdPattern.test(event?.eventId) && syncIdPattern.test(event?.conversationId) &&
+        syncIdPattern.test(event?.payload?.messageId) && event.kind === 'message.created' &&
+        event.payload.role === 'user' && typeof event.payload.text === 'string' &&
+        event.payload.text.trim() && Number.isSafeInteger(event.clientSeq) && event.clientSeq > 0
+        ? row : null
+    } catch { return null }
+  }
+  function writePhoneOutbox(row) {
+    const key = phoneOutboxKey()
+    if (!key) return false
+    try {
+      localStorage.setItem(key, JSON.stringify(row))
+      localStorage.setItem(phoneRecoveryKey(), JSON.stringify(row))
+      return true
+    } catch {
+      try { localStorage.removeItem(key) } catch { /* Retain any already durable record. */ }
+      return false
+    }
+  }
+  function clearPhoneOutbox() {
+    const key = phoneOutboxKey()
+    if (!key) return
+    try { localStorage.removeItem(key) } catch { /* A later reconciliation can still clear the receipt. */ }
+    if (readPhoneRecovery()?.deviceId === state.device?.id) {
+      try { localStorage.removeItem(phoneRecoveryKey()) } catch { /* no further send while outbox remains */ }
+    }
+  }
+  function nextPhoneClientSeq() {
+    let saved = 0
+    try { saved = Number(localStorage.getItem(phoneSequenceKey()) || '0') } catch { /* use server events */ }
+    const server = state.phoneEvents.filter((event) => event.sourceDeviceId === state.device?.id)
+      .reduce((maximum, event) => Math.max(maximum, Number.isSafeInteger(event.clientSeq) ? event.clientSeq : 0), 0)
+    const next = Math.max(Number.isSafeInteger(saved) && saved > 0 ? saved : 0, server,
+      Number.isSafeInteger(Date.now()) ? Date.now() - 1 : 0) + 1
+    return Number.isSafeInteger(next) ? next : null
+  }
+  function rememberPhoneClientSeq(value) {
+    try { localStorage.setItem(phoneSequenceKey(), String(value)) } catch { /* receipt remains in the outbox */ }
+  }
+  function markerKey() { return state.ownerId ? `weftmate:requests:v1:${state.ownerId}` : null }
+  function sessionKey() { return state.ownerId ? `weftmate:last-session:v1:${state.ownerId}` : null }
+  function desktopAckKey() { return state.ownerId ? `weftmate:desktop-ack:v1:${state.ownerId}` : null }
+  function readDesktopAcknowledgements() {
+    try {
+      const value = JSON.parse(localStorage.getItem(desktopAckKey()) || '[]')
+      return Array.isArray(value) ? value.filter((id) => typeof id === 'string' && sessionIdPattern.test(id)).slice(-5000) : []
+    } catch { return [] }
+  }
+  function acknowledgeDesktop(command) {
+    if (command.kind !== 'desktop.open_app' || !['accepted_by_host', 'uncertain'].includes(command.state)) return
+    state.acknowledgedDesktop.add(command.commandId)
+    try { localStorage.setItem(desktopAckKey(), JSON.stringify([...state.acknowledgedDesktop].slice(-5000))) }
+    catch { /* In private browsing the current page still records the acknowledgement. */ }
+    forgetMarker(command.requestId)
+    operation('已记录你的核对，可重新发起记事本动作。', false, command.requestId)
+    renderTasks()
+    updateAvailability()
+  }
+  function readMarkers() {
+    const key = markerKey()
+    if (!key) return []
+    try {
+      const value = JSON.parse(localStorage.getItem(key) || '[]')
+      return Array.isArray(value) ? value.filter((row) => typeof row?.requestId === 'string' && markerId.test(row.requestId) &&
+        ['session.create', 'session.message', 'session.cancel', 'desktop.open_app'].includes(row?.kind) &&
+        (row.sessionId === undefined || sessionIdPattern.test(row.sessionId)) &&
+        (row.commandId === undefined || sessionIdPattern.test(row.commandId)))
+        .slice(-30) : []
+    } catch { return [] }
+  }
+  function writeMarkers(rows) {
+    const key = markerKey()
+    if (!key) return
+    try { localStorage.setItem(key, JSON.stringify(rows.slice(-30))) } catch { /* Private browsing can refuse storage. */ }
+  }
+  function rememberMarker(row) {
+    const rows = readMarkers().filter((item) => item.requestId !== row.requestId)
+    rows.push({ requestId: row.requestId, kind: row.kind,
+      ...(row.commandId ? { commandId: row.commandId } : {}),
+      ...(row.sessionId ? { sessionId: row.sessionId } : {}) })
+    writeMarkers(rows)
+  }
+  function forgetMarker(requestId) { writeMarkers(readMarkers().filter((row) => row.requestId !== requestId)) }
+  function desktopBlocker() {
+    const active = (command) => command?.kind === 'desktop.open_app' && command.appId === 'notepad' &&
+      ['pending', 'dispatching', 'accepted_by_host', 'uncertain'].includes(command.state) &&
+      !state.acknowledgedDesktop.has(command.commandId)
+    const task = state.tasks.find(active)
+    if (task) return task
+    return readMarkers().find((marker) => marker.kind === 'desktop.open_app' && marker.commandId &&
+      !state.acknowledgedDesktop.has(marker.commandId)) ?? null
+  }
+  function setOnline(online) {
+    state.online = online
+    const badge = document.querySelector('.local-badge')
+    badge.textContent = online ? (location.protocol === 'https:' ? '已连接个人宿主' : '本机候选 · 已连接') : '连接中断'
+    byId('assistant-connection').textContent = online ? '已连接个人宿主' : '无法连接电脑'
+    byId('connection-copy').textContent = online
+      ? (location.protocol === 'https:' ? '已通过安全连接接入个人宿主。电脑动作以实际核验结果为准。'
+        : '当前连接本机候选。跨设备入口以实际网络部署与连接验证为准。')
+      : '电脑暂时无法连接，重连后会先核对原请求。'
+    const banner = byId('connection-banner')
+    banner.hidden = online
+    banner.classList.toggle('is-offline', !online)
+    banner.textContent = online ? '' : '电脑暂时无法连接。重连后会先核对原请求，不会自动重复执行。'
+    updateAvailability()
+  }
+  function operation(message, locked = false, requestId = null, reviewable = locked) {
+    if (requestId) {
+      if (locked) {
+        state.unresolvedRequests.add(requestId)
+        if (reviewable) {
+          state.reviewableRequests.add(requestId)
+          state.reviewRequestId = requestId
+        } else state.reviewableRequests.delete(requestId)
+      } else {
+        state.unresolvedRequests.delete(requestId)
+        state.reviewableRequests.delete(requestId)
+      }
+      if (!state.reviewableRequests.has(state.reviewRequestId)) {
+        state.reviewRequestId = [...state.reviewableRequests].at(-1) ?? null
+      }
+    }
+    state.unresolvedSubmission = state.unresolvedRequests.size > 0
+    const output = byId('operation-status')
+    const visibleMessage = state.unresolvedSubmission && !locked
+      ? state.reviewableRequests.size ? '仍有请求结果待核对；不会自动重复发送。请查看事情记录后确认。'
+        : '仍有请求正在处理；会继续核对原请求。' : message
+    output.hidden = !visibleMessage
+    output.textContent = visibleMessage || ''
+    byId('reset-operation').hidden = state.reviewableRequests.size === 0
+    updateAvailability()
+  }
+  function updateAvailability() {
+    byId('show-phone').hidden = true
+    byId('rail-phone').hidden = true
+    const phoneChat = state.activeChatSource === 'phone'
+    const pendingPhone = phoneChat ? readPhoneOutbox() : null
+    const recovery = phoneChat && !pendingPhone ? readPhoneRecovery() : null
+    const pendingHere = pendingPhone?.event.conversationId === state.selectedPhoneConversationId
+    const recoveryHere = recovery?.event.conversationId === state.selectedPhoneConversationId
+    const phoneReady = state.online && state.syncAvailable && !!state.ownerId && !!state.device?.id &&
+      !!state.selectedPhoneConversationId && !state.phoneSending
+    const chat = state.online && state.capabilities?.chat?.available === true
+    const model = state.models.some((item) => item.id === state.modelProfileId)
+    const selected = state.sessions.find((item) => item.sessionId === state.selectedSessionId)
+    const canSendHere = selected?.sendAvailable === true
+    byId('new-session').disabled = !chat || !model || state.submitting || state.unresolvedSubmission
+    byId('model-select').disabled = phoneChat || !chat || !state.models.length
+    byId('message-text').disabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery : !chat || !model || !canSendHere
+    byId('send-message').disabled = phoneChat ? !phoneReady || (!!pendingPhone && !pendingHere) ||
+      (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !byId('message-text').value.trim())
+      : !chat || !model || !canSendHere || state.submitting ||
+      !byId('message-text').value.trim() || state.unresolvedSubmission
+    byId('send-message').textContent = phoneChat ? recoveryHere && !pendingPhone ? '核对旧请求'
+      : pendingHere ? '核对并重试' : '同步文字' : '发送'
+    const blockedDesktop = desktopBlocker()
+    byId('open-notepad').textContent = blockedDesktop ? '查看原事情' : '打开记事本'
+    byId('open-notepad').disabled = blockedDesktop ? false : !state.online ||
+      state.capabilities?.desktopOpenApp?.available !== true ||
+      !state.capabilities.desktopOpenApp.appIds?.includes('notepad') || state.submitting || state.unresolvedSubmission
+    byId('cancel-turn').hidden = phoneChat || !selected?.running
+    byId('cancel-turn').disabled = !state.online || !selected?.running || state.cancelSubmitting
+    const hint = byId('model-hint')
+    if (phoneChat) hint.textContent = pendingPhone && !pendingHere
+      ? '另一条手机对话有未确认的同步请求。请先切回原对话核对。'
+      : pendingHere ? state.phoneSendNotice || '这条文字的同步结果待核对。重试会沿用同一个消息编号。'
+        : recovery && !recoveryHere ? '旧设备有未确认文字，请先切回原手机对话核对。'
+          : recoveryHere ? '重新登录后保留了旧文字。先核对服务器是否已接收，再决定是否重新同步。'
+        : state.phoneSendNotice || (state.online
+          ? '文字可同步到原手机对话；MiMo 回复需在手机端继续，电脑不会运行该模型。'
+          : '连接中断。草稿仍保留，重连后再同步。')
+    else if (!state.online) hint.textContent = '等待重新连接电脑。'
+    else if (selected && !canSendHere) hint.textContent = '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
+    else if (!chat || !model) hint.textContent = '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。'
+    else if (state.capabilities?.naturalLanguageDesktop?.available === true) hint.textContent =
+      state.capabilities?.chat?.inferenceVerified === false
+        ? '可以直接说“打开电脑上的记事本”。首次回复可能需要加载模型。'
+        : '可以直接说“打开电脑上的记事本”。'
+    else if (state.capabilities?.chat?.inferenceVerified === false) hint.textContent = '首次回复可能需要加载模型，请以会话中的实际结果为准。'
+    else hint.textContent = '消息会送到这台电脑的助手。'
+  }
+  async function refreshStatus() {
+    let payload
+    try { payload = await accessApi('/status') }
+    catch (error) { if (error.code !== 'UNAUTHORIZED') setOnline(false); throw error }
+    if (typeof payload.ownerId !== 'string' || typeof payload.hostId !== 'string') throw { code: 'REQUEST_FAILED' }
+    if (state.ownerId !== payload.ownerId) {
+      state.ownerId = payload.ownerId
+      state.unresolvedRequests = new Set(readMarkers().filter((marker) =>
+        marker.kind !== 'desktop.open_app' || !marker.commandId).map((marker) => marker.requestId))
+      state.reviewableRequests.clear()
+      state.reviewRequestId = null
+      state.acknowledgedDesktop = new Set(readDesktopAcknowledgements())
+      state.unresolvedSubmission = state.unresolvedRequests.size > 0
+      if (state.unresolvedSubmission) operation('正在核对上次请求。')
+    }
+    state.hostId = payload.hostId
+    state.capabilities = payload.backend?.capabilities ?? null
+    state.syncAvailable = payload.sync?.available === true
+    byId('android-download-row').hidden = payload.downloads?.android !== true
+    if (!state.syncAvailable && state.phonePane) showTaskPane(false)
+    updateAvailability()
+  }
+  async function refreshModels() {
+    const payload = await accessApi('/models')
+    state.models = Array.isArray(payload.models) ? payload.models.filter((item) => item?.configured === true &&
+      typeof item.id === 'string' && typeof item.name === 'string') : []
+    const select = byId('model-select')
+    const previous = state.modelProfileId
+    select.replaceChildren()
+    if (state.models.length === 0) {
+      select.append(element('option', '', '没有可用模型'))
+      state.modelProfileId = null
+    } else {
+      for (const model of state.models) {
+        const option = element('option', '', model.name)
+        option.value = model.id
+        select.append(option)
+      }
+      state.modelProfileId = state.models.some((item) => item.id === previous) ? previous : state.models[0].id
+      select.value = state.modelProfileId
+    }
+    updateAvailability()
+  }
+  function renderSessions() {
+    const list = byId('session-list')
+    list.replaceChildren()
+    const phone = phoneConversations()
+    if (!state.sessions.length && !phone.length) { byId('sessions-status').textContent = '还没有会话。'; return }
+    byId('sessions-status').textContent = ''
+    for (const session of state.sessions) {
+      if (!sessionIdPattern.test(session.sessionId)) continue
+      const row = element('li')
+      const button = element('button', state.activeChatSource === 'desktop' &&
+        session.sessionId === state.selectedSessionId ? 'is-current' : '')
+      button.type = 'button'
+      const model = state.models.find((item) => item.id === session.modelProfileId)
+      button.append(element('span', 'session-title', typeof session.title === 'string' && session.title ? session.title : '新对话'),
+        element('small', 'session-source', `电脑 · ${model?.name || '电脑模型'}`))
+      button.addEventListener('click', () => { void selectSession(session.sessionId) })
+      row.append(button)
+      list.append(row)
+    }
+    for (const record of phone) {
+      const row = element('li')
+      const button = element('button', state.activeChatSource === 'phone' &&
+        record.id === state.selectedPhoneConversationId ? 'is-current' : '')
+      button.type = 'button'
+      button.append(element('span', 'session-title', phoneDisplayTitle(record)),
+        element('small', 'session-source', '手机 · MiMo'))
+      button.addEventListener('click', () => { selectPhoneConversation(record.id) })
+      row.append(button)
+      list.append(row)
+    }
+  }
+  async function refreshSessions() {
+    const payload = await accessApi('/sessions')
+    state.sessions = Array.isArray(payload.sessions) ? payload.sessions : []
+    if (!state.selectedSessionId && state.sessions.length && state.ownerId) {
+      let saved = null
+      try { saved = localStorage.getItem(sessionKey()) } catch { /* no preference storage */ }
+      const chosen = state.sessions.find((item) => item.sessionId === saved) ?? state.sessions[0]
+      if (chosen?.sessionId) await selectSession(chosen.sessionId)
+    } else renderSessions()
+    if (state.turnStatus === 'running') renderTurnStatus()
+    updateAvailability()
+  }
+  function appendHistory(events) {
+    const list = byId('transcript')
+    const sessionId = state.selectedSessionId
+    for (const event of events) {
+      if (!Number.isSafeInteger(event?.seq) || state.seenSeq.has(event.seq)) continue
+      if (typeof event.sessionId === 'string' && event.sessionId !== sessionId) continue
+      state.seenSeq.add(event.seq)
+      if (event.type === 'turn.started') { state.turnStatus = 'running'; continue }
+      if (event.type === 'turn.ended') {
+        state.turnStatus = ['completed', 'aborted', 'error', 'blocked'].includes(event.data?.reason) ? event.data.reason : 'unknown'
+        continue
+      }
+      if (!['user.message', 'assistant.message'].includes(event.type)) continue
+      const images = event.type === 'user.message' && Array.isArray(event.data?.images) ? event.data.images : []
+      if (typeof event.data?.text !== 'string' && images.length === 0) continue
+      const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
+      row.append(element('span', 'message-label', event.type === 'user.message' ? '你' : 'WeftMate'))
+      if (typeof event.data?.text === 'string' && event.data.text) row.append(element('span', 'message-text', event.data.text))
+      if (images.length) {
+        const gallery = element('div', 'synced-image-gallery')
+        const previewScope = { ownerId: state.ownerId, identityGeneration: state.identityGeneration,
+          source: 'desktop', conversationId: sessionId }
+        let unavailable = 0
+        for (const image of images) {
+          if (!sessionIdPattern.test(sessionId) || !/^sha256:[a-f0-9]{64}$/.test(image?.attachmentId) ||
+              !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(image?.contentType) ||
+              !Number.isSafeInteger(image?.size) || image.size < 1 || image.size > 5 * 1024 * 1024 ||
+              image?.sessionId !== undefined && image.sessionId !== sessionId) { unavailable++; continue }
+          const name = typeof image.name === 'string' && image.name.trim() ? image.name.slice(0, 128) : '图片'
+          const url = `${accessBase}/sessions/${sessionId}/attachments/${image.attachmentId}`
+          const button = element('button', 'synced-image')
+          button.type = 'button'
+          button.setAttribute('aria-label', `查看原图 ${name}`)
+          const thumb = element('img')
+          thumb.src = url
+          thumb.alt = ''
+          thumb.loading = 'lazy'
+          thumb.decoding = 'async'
+          button.append(thumb)
+          button.addEventListener('click', () => openPhoneImagePreview(url, name, button, previewScope))
+          gallery.append(button)
+        }
+        if (gallery.children.length) {
+          row.classList.add('message-has-images')
+          if (!event.data?.text) row.classList.add('message-image-only')
+          row.append(gallery)
+        }
+        if (unavailable) row.append(element('small', 'truncated', `${unavailable} 张历史图片暂无法查看。`))
+      }
+      if (event.data.truncated === true) row.append(element('span', 'truncated', '这条记录已截断，可在电脑查看完整来源。'))
+      list.append(row)
+    }
+    renderTurnStatus()
+  }
+  function renderTurnStatus() {
+    if (state.activeChatSource === 'phone') return
+    const status = byId('timeline-status')
+    if (state.historyHasMore) {
+      status.textContent = '正在补读会话历史，尚未核对到本轮结束。'
+      return
+    }
+    switch (state.turnStatus) {
+      case 'running': status.textContent = state.sessions.find((item) => item.sessionId === state.selectedSessionId)?.running === true
+        ? '助手正在处理，结果以会话历史为准。' : '这轮对话尚无结束记录，请核对实际结果。'; break
+      case 'aborted': status.textContent = '本轮已停止。如需继续，请重新发送。'; break
+      case 'blocked': status.textContent = '本轮因执行受限而停止，目标尚未确认完成。'; break
+      case 'error': status.textContent = '本轮运行失败，未看到完整回复。请在电脑核对后再试。'; break
+      case 'unknown': status.textContent = '本轮结束状态尚不明确，请在电脑核对。'; break
+      default: status.textContent = ''
+    }
+  }
+  async function refreshHistory(reset = false) {
+    const sessionId = state.selectedSessionId
+    if (state.activeChatSource !== 'desktop' || !sessionId || !state.online) return
+    if (reset) {
+      state.historyGeneration++
+      state.afterSeq = -1
+      state.historyHasMore = false
+      state.seenSeq.clear()
+      state.turnStatus = null
+      byId('transcript').replaceChildren()
+      renderTurnStatus()
+    }
+    const generation = state.historyGeneration
+    const ownerId = state.ownerId
+    if (!reset && state.historyInFlight?.generation === generation) return state.historyInFlight.promise
+    const stillCurrent = () => state.activeChatSource === 'desktop' && state.historyGeneration === generation && state.ownerId === ownerId &&
+      state.selectedSessionId === sessionId && !!state.csrfToken
+    const run = async () => {
+      const status = byId('timeline-status')
+      try {
+        const maxPages = reset ? 10 : 5
+        for (let pageNo = 0; pageNo < maxPages; pageNo++) {
+          const cursor = state.afterSeq
+          const page = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/events?afterSeq=${cursor}&limit=200`)
+          if (!stillCurrent()) return
+          if (!Array.isArray(page.events) || !Number.isSafeInteger(page.nextSeq) || page.nextSeq < cursor) throw { code: 'REQUEST_FAILED' }
+          state.historyHasMore = page.hasMore === true
+          appendHistory(page.events)
+          state.afterSeq = page.nextSeq
+          if (!page.hasMore) { renderTurnStatus(); break }
+          if (pageNo === maxPages - 1) status.textContent = '历史仍在补读，当前只显示已读取的一部分。'
+        }
+      } catch (error) {
+        if (!stillCurrent()) return
+        if (error.code === 'HISTORY_WINDOW_LIMIT') status.textContent = '这段历史超出当前可读取范围，请在电脑查看完整会话。'
+        else if (error.code === 'NETWORK') status.textContent = '连接中断，稍后将从原位置续读。'
+        else if (error.code !== 'UNAUTHORIZED') status.textContent = '历史暂时无法读取，请稍后重试。'
+      }
+    }
+    const promise = run()
+    state.historyInFlight = { generation, promise }
+    try { await promise } finally {
+      if (state.historyInFlight?.promise === promise) state.historyInFlight = null
+    }
+  }
+  async function selectSession(sessionId) {
+    if (!sessionIdPattern.test(sessionId)) return
+    const fromPhone = state.activeChatSource === 'phone'
+    if (fromPhone && state.selectedPhoneConversationId && !readPhoneOutbox())
+      state.phoneDrafts.set(state.selectedPhoneConversationId, byId('message-text').value)
+    state.activeChatSource = 'desktop'
+    byId('conversation-pane').classList.remove('is-phone')
+    if (fromPhone) byId('message-text').value = state.desktopDraft
+    byId('message-text').placeholder = '向 WeftMate 说说你的目标'
+    state.selectedSessionId = sessionId
+    closePhoneImagePreview()
+    byId('chat-intro').hidden = false
+    byId('desktop-action').hidden = false
+    const selected = state.sessions.find((item) => item.sessionId === sessionId)
+    byId('assistant-title').textContent = selected?.title || '新对话'
+    renderSessions()
+    showTaskPane(false)
+    closeRail()
+    if (state.ownerId) { try { localStorage.setItem(sessionKey(), sessionId) } catch { /* optional preference */ } }
+    await refreshHistory(true)
+    updateAvailability()
+  }
+  function commandTitle(command) {
+    if (command.kind === 'desktop.write_artifact') return command.fileName || '电脑生成的文件'
+    if (command.kind === 'desktop.open_app') return '在电脑打开记事本'
+    if (command.kind === 'session.create') return '新建对话'
+    if (command.kind === 'session.message') return '发送消息'
+    if (command.kind === 'session.cancel') return '请求停止回复'
+    return '请求'
+  }
+  function commandStatus(command) {
+    if (command.kind === 'desktop.write_artifact') {
+      return command.state === 'observed' && command.verification?.status === 'observed' &&
+        command.verification?.method === 'sha256_readback' ? '文件已由电脑写入并读回核验。'
+        : command.state === 'rejected' ? '文件未生成。' : '文件尚未完成读回核验。'
+    }
+    switch (command.state) {
+      case 'pending': return '请求已记录，等待派发。'
+      case 'dispatching': return '正在交给电脑执行。'
+      case 'accepted_by_dsh':
+        if (command.kind === 'session.create') return '新对话已创建。'
+        if (command.kind === 'session.message') return '消息已送达，回复见原会话。'
+        if (command.kind === 'session.cancel') return '停止请求已受理，实际状态见会话。'
+        return '请求已受理。'
+      case 'accepted_by_host': return '电脑已接收启动请求，窗口尚未核验。'
+      case 'observed':
+        if (command.kind === 'desktop.open_app') {
+          if (command.verification?.status === 'observed' && command.verification?.method === 'visible_window') {
+            return command.verification.outcome === 'already_open'
+              ? '记事本已在电脑上打开，窗口已核验。' : '记事本窗口已打开并核验。'
+          }
+          return '动作状态已更新，窗口仍待核对。'
+        }
+        return '已从原会话观察到结果。'
+      case 'uncertain': return '结果待确认。请先查看原会话或电脑，不会自动重复执行。'
+      case 'rejected':
+        if (command.errorCode === 'SESSION_READ_ONLY') return '旧会话只供阅读；请新建受限远端会话后继续。'
+        if (command.errorCode === 'MODEL_UNAVAILABLE') return '电脑没有可用模型，请先在电脑设置中配置。'
+        if (command.errorCode === 'RUNTIME_UNAVAILABLE') return '电脑运行时不可用，请稍后再试。'
+        if (command.errorCode === 'CAPABILITY_UNAVAILABLE') return '这项电脑能力目前不可用。'
+        return '请求未执行，请核对电脑状态。'
+      default: return '正在核对请求状态。'
+    }
+  }
+  function renderTasks() {
+    const list = byId('task-list')
+    list.replaceChildren()
+    byId('tasks-status').textContent = state.tasks.length ? '' : '还没有事情记录。'
+    const children = new Map()
+    const followUps = new Map()
+    const roots = new Map()
+    for (const command of state.tasks) if (command?.kind === 'session.message' &&
+      !command.rootTaskId && sessionIdPattern.test(command.commandId || '')) roots.set(command.commandId, command)
+    for (const command of state.tasks) if (command?.kind === 'desktop.write_artifact' &&
+      sessionIdPattern.test(command.taskId || '')) {
+      const rows = children.get(command.taskId) || []
+      rows.push(command)
+      children.set(command.taskId, rows)
+    }
+    for (const command of state.tasks) if (command?.kind === 'session.message' &&
+      sessionIdPattern.test(command.rootTaskId || '')) {
+      const rows = followUps.get(command.rootTaskId) || []
+      rows.push(command)
+      followUps.set(command.rootTaskId, rows)
+    }
+    const shown = new Set()
+    for (const entry of state.tasks) {
+      const rootTaskId = entry?.rootTaskId || (entry?.kind === 'desktop.write_artifact' ? entry.taskId :
+        entry?.kind === 'session.message' ? entry.commandId : null)
+      const grouped = !!rootTaskId && sessionIdPattern.test(rootTaskId)
+      if (grouped && shown.has(rootTaskId)) continue
+      const command = grouped ? roots.get(rootTaskId) || entry : entry
+      if (!command || typeof command.commandId !== 'string') continue
+      if (grouped) shown.add(rootTaskId)
+      const artifacts = grouped ? children.get(rootTaskId) || [] : []
+      const updates = grouped ? followUps.get(rootTaskId) || [] : []
+      const item = element('li', 'task-item')
+      const head = element('div', 'task-heading')
+      head.append(element('strong', '', artifacts.length ? artifacts.map((row) => row.fileName || '成果文件').join('、') :
+        command.rootTaskId ? '电脑任务的后续要求' : commandTitle(command)))
+      const verified = artifacts.some((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
+        row.verification?.method === 'sha256_readback')
+      const latestUpdate = updates[0]
+      const badge = element('span', `badge ${!latestUpdate && (verified || command.state === 'observed') ? 'is-done' :
+        command.state === 'rejected' || command.state === 'uncertain' ? 'is-failed' : ''}`,
+        latestUpdate ? latestUpdate.state === 'accepted_by_dsh' ? '后续已送达' : '后续待核对' :
+        artifacts.length ? verified ? '文件已核验' : '待核验' :
+        command.state === 'observed' && command.kind === 'desktop.open_app' && command.verification?.status !== 'observed'
+          ? '待核对' : command.state === 'observed' ? '已核验' : command.state === 'rejected' ? '未执行'
+            : command.state === 'uncertain' ? '待确认' : command.state === 'accepted_by_dsh'
+              ? command.kind === 'session.create' ? '已创建' : command.kind === 'session.message' ? '已送达' : '已受理'
+                : '进行中')
+      head.append(badge)
+      item.append(head, element('p', '', artifacts.length ? verified
+        ? `${artifacts.length} 个成果文件已记录；打开后可核对内容和下载。` : '文件尚未完成读回核验，请打开核对。'
+        : commandStatus(command)))
+      if (updates.length) item.append(element('p', 'task-meta',
+        `后续要求 ${updates.length} 条，最新${updates[0].taskAction === 'resume' ? '恢复' : '补充'}${
+          updates[0].state === 'accepted_by_dsh' ? '已送达，结果待核对' : '状态待核对'}。`))
+      if (command.verification?.status === 'observed' && command.verification?.method === 'visible_window' && command.verification.observedAt) {
+        item.append(element('p', 'task-meta', `窗口核验时间 ${formatDate(command.verification.observedAt)}`))
+      } else if (command.updatedAt) item.append(element('p', 'task-meta', `更新时间 ${formatDate(command.updatedAt)}`))
+      if (typeof command.sessionId === 'string' && state.sessions.some((row) => row.sessionId === command.sessionId)) {
+        const link = element('button', 'button quiet small', '回到原会话')
+        link.type = 'button'
+        link.addEventListener('click', () => { void selectSession(command.sessionId) })
+        item.append(link)
+      }
+      if (command.kind === 'desktop.open_app' && ['accepted_by_host', 'uncertain'].includes(command.state) &&
+        !state.acknowledgedDesktop.has(command.commandId)) {
+        const acknowledge = element('button', 'button quiet small', '已在电脑核对，允许再次发起')
+        acknowledge.type = 'button'
+        acknowledge.addEventListener('click', () => acknowledgeDesktop(command))
+        item.append(acknowledge)
+      }
+      const taskId = grouped ? rootTaskId : null
+      if (taskId && sessionIdPattern.test(taskId)) {
+        const details = element('button', 'button secondary small', '查看事情与成果')
+        details.type = 'button'
+        details.addEventListener('click', () => { void openTaskDetail(taskId) })
+        item.append(details)
+      }
+      list.append(item)
+    }
+    byId('more-tasks').hidden = !state.nextBefore
+  }
+  function closeTaskDetail() {
+    taskDetail.generation++
+    taskDetail.taskId = null
+    taskDetail.selectedArtifactId = null
+    taskDetail.operation = null
+    const dialog = byId('task-detail-dialog')
+    if (dialog.open) dialog.close()
+    byId('task-detail-source').textContent = ''
+    byId('task-detail-verification').textContent = ''
+    byId('task-detail-artifacts').replaceChildren()
+    byId('task-detail-control').replaceChildren()
+    byId('task-preview-text').hidden = true
+    byId('task-preview-text').textContent = ''
+  }
+  function taskDetailCurrent(generation, taskId) {
+    return generation === taskDetail.generation && taskDetail.taskId === taskId &&
+      state.currentView === 'assistant' && !!state.csrfToken
+  }
+  function artifactStatus(error) {
+    if (error.code === 'NETWORK') return '连接中断，文件尚未核对。重连后点“重新核对”。'
+    if (error.status === 404) return '当前账户找不到这件事或文件，无法预览或下载。'
+    if (error.status === 409 || error.code === 'ARTIFACT_UNVERIFIED') return '文件读回校验失败，无法预览或下载。请在电脑核对原文件。'
+    return '文件暂时无法读取，请稍后重新核对。'
+  }
+  function taskControlStatus(control) {
+    switch (control?.state) {
+      case 'active': return '任务可继续处理；文件是否完成仍以读回核验为准。'
+      case 'stop_requested': return control.reasonCode === 'TURN_ENDED_AFTER_STOP_REQUEST' && control.canResume === true
+        ? '上一回合已结束，但尚不能确认是停止请求使它结束。请写明下一步，再恢复这件事。'
+        : '停止意图已记录，仍在等待执行端状态核对；请勿把它当作已经停止。'
+      case 'stopped': return control.stoppedAt ? `执行端停止已核对：${formatDate(control.stoppedAt)}` : '执行端停止已核对。'
+      case 'uncertain': return '任务结果尚不明确。请先核对电脑会话和成果，再决定是否恢复。'
+      default: return '任务控制状态待核对。'
+    }
+  }
+  function taskControlError(error) {
+    if (error.code === 'TASK_NOT_READY' || error.status === 409) return '任务状态已变化或结果仍待核对，请重新核对后再操作。'
+    if (error.code === 'NETWORK') return '连接中断，操作结果待核对；请重新打开任务查看记录。'
+    if (error.status === 403 || error.status === 404) return '当前账户或设备无法操作这件事。'
+    return '操作尚未确认，请重新核对任务记录。'
+  }
+  function renderTaskControls(taskId, control) {
+    const section = element('section', 'task-detail-section task-control')
+    section.append(element('h3', '', '继续与停止'))
+    const message = element('p', 'task-control-state', taskControlStatus(control))
+    message.setAttribute('role', 'status')
+    section.append(message)
+    const unknown = taskDetail.unknown
+    if (unknown?.taskId === taskId && unknown.ownerId === state.ownerId &&
+      unknown.identity === state.identityGeneration) {
+      message.textContent = '上次操作回执不明。请先核对任务；重试会沿用原请求编号。'
+      const retry = element('button', 'button secondary', '重试同一请求')
+      retry.type = 'button'
+      retry.addEventListener('click', () => { void submitTaskControl(taskId, unknown.action, unknown.text, message) })
+      section.append(retry)
+      return section
+    }
+    const canSupplement = control.canSupplement === true
+    const canStop = control.canStop === true
+    const canResume = control.canResume === true
+    if (canSupplement) {
+      const input = element('textarea', 'task-supplement-input')
+      input.placeholder = '补充这件事需要的信息或调整'
+      input.setAttribute('aria-label', '补充任务要求')
+      input.maxLength = 8192
+      input.value = taskDetail.drafts.get(taskId) || ''
+      input.addEventListener('input', () => taskDetail.drafts.set(taskId, input.value))
+      const submit = element('button', 'button secondary', '提交补充')
+      submit.type = 'button'
+      submit.addEventListener('click', () => { void submitTaskControl(taskId, 'supplements', input.value, message) })
+      section.append(input, submit)
+    }
+    if (canStop) {
+      const stop = element('button', 'button secondary', '请求停止这件事')
+      stop.type = 'button'
+      stop.addEventListener('click', () => { void submitTaskControl(taskId, 'stop', null, message) })
+      section.append(stop)
+    }
+    if (canResume) {
+      const input = element('textarea', 'task-supplement-input')
+      input.placeholder = '说明恢复后要做什么，例如先核对现有文件再继续修改'
+      input.setAttribute('aria-label', '恢复任务后的明确要求')
+      input.maxLength = 8192
+      input.value = taskDetail.drafts.get(`${taskId}:resume`) || ''
+      input.addEventListener('input', () => taskDetail.drafts.set(`${taskId}:resume`, input.value))
+      const resume = element('button', 'button secondary', '恢复这件事')
+      resume.type = 'button'
+      resume.addEventListener('click', () => { void submitTaskControl(taskId, 'resume', input.value, message) })
+      section.append(input, resume)
+    }
+    return section
+  }
+  function renderTaskFollowUps(payload) {
+    const commands = [...(Array.isArray(payload.supplements) ? payload.supplements : []),
+      ...(Array.isArray(payload.resumes) ? payload.resumes : [])]
+      .filter((row) => row?.rootTaskId === payload.taskId && sessionIdPattern.test(row.commandId || ''))
+      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
+    if (!commands.length) return null
+    const section = element('section', 'task-detail-section')
+    section.append(element('h3', '', '后续要求'))
+    for (const command of commands) {
+      const row = element('div', 'task-followup')
+      row.append(element('p', 'task-meta',
+        `${command.taskAction === 'resume' ? '恢复' : '补充'} · ${commandStatus(command)} · ${formatDate(command.createdAt)}`))
+      const detail = element('details', 'task-record-id')
+      detail.append(element('summary', '', '查看记录编号'), element('code', '', command.commandId))
+      row.append(detail)
+      section.append(row)
+    }
+    return section
+  }
+  function taskStepStatus(step) {
+    if (step.state === 'observed') return step.verification?.status === 'observed' &&
+      step.verification?.method === 'visible_window' ? '电脑窗口已观察' : '动作状态已更新，窗口仍待核对'
+    return { pending: '等待电脑受理', dispatching: '正在派发', accepted_by_host: '电脑已受理，窗口待核对',
+      uncertain: '结果待确认', rejected: '未执行' }[step.state] || '状态待确认'
+  }
+  function renderTaskSteps(payload) {
+    const steps = (Array.isArray(payload.steps) ? payload.steps : []).filter((step) =>
+      step?.kind === 'desktop.open_app' && sessionIdPattern.test(step.commandId || '') &&
+      (step.taskId === undefined || step.taskId === payload.taskId))
+    if (!steps.length) return null
+    const section = element('section', 'task-detail-section')
+    section.append(element('h3', '', '执行步骤'))
+    for (const step of steps) {
+      const row = element('div', 'task-followup')
+      const at = step.verification?.status === 'observed' && step.verification?.observedAt ||
+        step.updatedAt || step.createdAt
+      row.append(element('p', 'task-meta',
+        `${step.appId === 'notepad' ? '打开记事本' : '打开电脑应用'} · ${taskStepStatus(step)} · ${formatDate(at)}`))
+      const detail = element('details', 'task-record-id')
+      detail.append(element('summary', '', '查看记录编号'), element('code', '', step.commandId))
+      row.append(detail)
+      section.append(row)
+    }
+    return section
+  }
+  async function submitTaskControl(taskId, action, text, message) {
+    if (taskDetail.taskId !== taskId || taskDetail.operation) return
+    const value = typeof text === 'string' ? text.trim() : null
+    if ((action === 'supplements' || action === 'resume') && !value) {
+      message.textContent = action === 'resume' ? '请先写明恢复后要做什么。' : '先填写补充内容。'; return
+    }
+    if (value && value.length > 8192) { message.textContent = '内容过长，请缩短后重试。'; return }
+    const generation = taskDetail.generation, identity = state.identityGeneration, ownerId = state.ownerId
+    const previous = taskDetail.unknown
+    if (previous?.taskId === taskId && previous.ownerId === ownerId && previous.identity === identity &&
+      (previous.action !== action || previous.text !== value)) {
+      message.textContent = '请先核对上一项操作结果。'; return
+    }
+    const operation = previous?.taskId === taskId && previous.ownerId === ownerId && previous.identity === identity
+      ? previous : { taskId, ownerId, identity, action, text: value, requestId: crypto.randomUUID() }
+    taskDetail.operation = operation
+    message.textContent = '正在提交；结果以任务记录为准…'
+    for (const control of message.parentNode?.querySelectorAll?.('button, textarea') || []) control.disabled = true
+    try {
+      const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}/${action}`, {
+        method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, ...(value ? { text: value } : {}) },
+      })
+      if (!taskDetailCurrent(generation, taskId) || state.identityGeneration !== identity ||
+        state.ownerId !== ownerId || taskDetail.operation !== operation) return
+      if (payload?.task?.taskId !== taskId || !payload.task.control) throw { code: 'REQUEST_FAILED' }
+      taskDetail.unknown = null
+      if (action === 'supplements') taskDetail.drafts.delete(taskId)
+      if (action === 'resume') taskDetail.drafts.delete(`${taskId}:resume`)
+      message.textContent = action === 'stop' ? '停止意图已记录，正在重新核对执行端状态。' :
+        '请求已记录，正在重新核对任务状态。'
+      void openTaskDetail(taskId)
+    } catch (error) {
+      if (taskDetailCurrent(generation, taskId) && state.identityGeneration === identity &&
+        state.ownerId === ownerId && taskDetail.operation === operation) {
+        taskDetail.unknown = error.code === 'NETWORK' ? operation : null
+        message.textContent = taskControlError(error)
+      }
+    } finally {
+      if (taskDetail.operation === operation) taskDetail.operation = null
+      if (taskDetailCurrent(generation, taskId)) for (const control of message.parentNode?.querySelectorAll?.('button, textarea') || []) control.disabled = false
+    }
+  }
+  async function openTaskDetail(taskId) {
+    if (!sessionIdPattern.test(taskId)) return
+    taskDetail.taskId = taskId
+    const generation = ++taskDetail.generation
+    taskDetail.selectedArtifactId = null
+    byId('task-detail-title').textContent = '事情详情'
+    byId('task-detail-status').textContent = '正在核对原任务与成果…'
+    byId('task-detail-body').hidden = true
+    byId('task-detail-session').hidden = true
+    byId('task-preview-text').hidden = true
+    byId('task-preview-text').textContent = ''
+    byId('task-preview-status').textContent = ''
+    if (!byId('task-detail-dialog').open) byId('task-detail-dialog').showModal()
+    try {
+      const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}`)
+      if (!taskDetailCurrent(generation, taskId)) return
+      if (payload.taskId !== taskId || !Array.isArray(payload.artifacts)) throw { code: 'REQUEST_FAILED' }
+      const artifacts = payload.artifacts.filter((row) => row?.taskId === taskId &&
+        sessionIdPattern.test(row.artifactId || ''))
+      byId('task-detail-title').textContent = artifacts.length === 1 ? artifacts[0].fileName || '事情详情' : '事情详情'
+      byId('task-detail-source').textContent = typeof payload.sourceText === 'string' && payload.sourceText
+        ? payload.sourceText : '原消息请回到会话查看。'
+      const verified = artifacts.filter((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
+        row.verification?.method === 'sha256_readback')
+      byId('task-detail-verification').textContent = verified.length
+        ? `${verified.length} 个文件已由电脑写入并读回核验。` : payload.source?.state === 'accepted_by_dsh'
+          ? '原消息已送达电脑，尚无完成核验的文件。' : '尚无完成核验的文件，请稍后重新核对。'
+      const controlSlot = byId('task-detail-control')
+      controlSlot.replaceChildren()
+      if (payload.control && typeof payload.control.state === 'string') {
+        controlSlot.append(renderTaskControls(taskId, payload.control))
+      }
+      const followUps = renderTaskFollowUps(payload)
+      if (followUps) controlSlot.append(followUps)
+      const steps = renderTaskSteps(payload)
+      if (steps) controlSlot.append(steps)
+      const list = byId('task-detail-artifacts')
+      list.replaceChildren()
+      for (const artifact of artifacts) {
+        const row = element('li', 'task-artifact')
+        const name = element('strong', '', artifact.fileName || '成果文件')
+        const okay = artifact.state === 'observed' && artifact.verification?.status === 'observed' &&
+          artifact.verification?.method === 'sha256_readback'
+        row.append(name, element('span', `badge ${okay ? 'is-done' : 'is-failed'}`, okay ? '已读回核验' : '待核验'))
+        if (Number.isSafeInteger(artifact.size)) row.append(element('small', '', `${artifact.size.toLocaleString('zh-CN')} 字节`))
+        if (okay) {
+          const preview = element('button', 'button secondary small', '查看内容')
+          preview.type = 'button'
+          preview.addEventListener('click', () => { void previewArtifact(taskId, artifact.artifactId) })
+          row.append(preview)
+        }
+        list.append(row)
+      }
+      if (!artifacts.length) list.append(element('li', 'task-artifact-empty', '这件事尚无成果文件。'))
+      byId('task-detail-session').hidden = !sessionIdPattern.test(payload.sessionId || '')
+      byId('task-detail-session').dataset.sessionId = payload.sessionId || ''
+      byId('task-detail-body').hidden = false
+      byId('task-detail-status').textContent = ''
+      if (verified.length === 1) void previewArtifact(taskId, verified[0].artifactId)
+      else byId('task-preview-status').textContent = verified.length ? '选择一个文件查看内容。' : '文件核验完成后可查看内容。'
+    } catch (error) {
+      if (!taskDetailCurrent(generation, taskId)) return
+      byId('task-detail-status').textContent = artifactStatus(error)
+      byId('task-detail-body').hidden = true
+    }
+  }
+  async function previewArtifact(taskId, artifactId) {
+    if (!sessionIdPattern.test(artifactId) || taskDetail.taskId !== taskId) return
+    const generation = taskDetail.generation
+    taskDetail.selectedArtifactId = artifactId
+    byId('task-preview-text').hidden = true
+    byId('task-preview-text').textContent = ''
+    byId('task-preview-status').textContent = '正在读回并核对文件…'
+    try {
+      const payload = await accessApi(`/artifacts/${encodeURIComponent(artifactId)}/preview`)
+      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedArtifactId !== artifactId) return
+      if (payload.artifact?.artifactId !== artifactId || payload.artifact?.taskId !== taskId ||
+        payload.artifact?.verification?.status !== 'observed' || typeof payload.text !== 'string') throw { code: 'REQUEST_FAILED' }
+      byId('task-preview-text').textContent = payload.text
+      byId('task-preview-text').hidden = false
+      byId('task-preview-status').textContent = '内容已通过读回校验。'
+      const link = element('a', 'button secondary small', '下载文件')
+      link.href = `${accessBase}/artifacts/${encodeURIComponent(artifactId)}/download`
+      link.setAttribute('download', payload.artifact.fileName || 'WeftMate-artifact.txt')
+      link.addEventListener('click', (event) => {
+        event.preventDefault()
+        void downloadArtifact(taskId, artifactId, payload.artifact.fileName || 'WeftMate-artifact.txt')
+      })
+      byId('task-preview-status').replaceChildren(element('span', '', '内容已通过读回校验。'), link)
+    } catch (error) {
+      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedArtifactId !== artifactId) return
+      byId('task-preview-status').textContent = artifactStatus(error)
+    }
+  }
+  async function downloadArtifact(taskId, artifactId, fileName) {
+    const generation = taskDetail.generation
+    const identityAtStart = state.csrfToken
+    byId('task-preview-status').textContent = '正在重新核验并下载文件…'
+    try {
+      const response = await fetch(`${accessBase}/artifacts/${encodeURIComponent(artifactId)}/download`, {
+        credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(15_000),
+      })
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}))
+        throw { status: response.status, code: payload?.error?.code || 'REQUEST_FAILED' }
+      }
+      const blob = await response.blob()
+      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedArtifactId !== artifactId) return
+      const url = URL.createObjectURL(blob)
+      const anchor = element('a')
+      anchor.href = url
+      anchor.download = fileName
+      document.body.append(anchor)
+      anchor.click()
+      anchor.remove()
+      setTimeout(() => URL.revokeObjectURL(url), 60_000)
+      byId('task-preview-status').textContent = '文件已通过服务器核验，下载已开始。'
+    } catch (error) {
+      if (error.status === 401 && state.csrfToken === identityAtStart) return sessionExpired()
+      if (taskDetailCurrent(generation, taskId)) byId('task-preview-status').textContent = artifactStatus(error)
+    }
+  }
+  async function refreshTasks(append = false) {
+    const identity = state.identityGeneration
+    const ownerId = state.ownerId
+    try {
+      const before = append && state.nextBefore ? `&before=${encodeURIComponent(state.nextBefore)}` : ''
+      const payload = await accessApi(`/commands?limit=50${before}`)
+      if (identity !== state.identityGeneration || ownerId !== state.ownerId) return
+      if (!Array.isArray(payload.commands)) throw { code: 'REQUEST_FAILED' }
+      state.tasks = append ? [...state.tasks, ...payload.commands.filter((item) =>
+        !state.tasks.some((previous) => previous.commandId === item.commandId))] : payload.commands
+      state.nextBefore = typeof payload.nextBefore === 'string' ? payload.nextBefore : null
+      renderTasks()
+      for (const marker of readMarkers()) {
+        const found = state.tasks.find((item) => item.requestId === marker.requestId)
+        if (found) updateFromCommand(found)
+      }
+      updateAvailability()
+    } catch (error) {
+      if (identity !== state.identityGeneration || ownerId !== state.ownerId) return
+      if (error.code === 'UNAUTHORIZED') return
+      byId('tasks-status').textContent = error.code === 'NETWORK'
+        ? '连接中断，重连后会查询原有事情记录。' : '事情记录暂时无法读取，请点击刷新。'
+    }
+  }
+  function updateFromCommand(command) {
+    if (!command || typeof command.requestId !== 'string') return
+    const marker = readMarkers().find((item) => item.requestId === command.requestId)
+    if (!marker) return
+    const pending = ['pending', 'dispatching'].includes(command.state)
+    const activeDesktop = command.kind === 'desktop.open_app' &&
+      ['pending', 'dispatching', 'accepted_by_host', 'uncertain'].includes(command.state) &&
+      !state.acknowledgedDesktop.has(command.commandId)
+    if (pending || activeDesktop || command.state === 'uncertain') {
+      rememberMarker({ ...marker, commandId: command.commandId, sessionId: command.sessionId ?? marker.sessionId })
+    } else {
+      // Keep pending work until the later durable receipt can be observed after refresh or restart.
+      forgetMarker(command.requestId)
+    }
+    const locked = command.kind !== 'desktop.open_app' && (pending || command.state === 'uncertain')
+    operation(commandStatus(command), locked, command.requestId, command.state === 'uncertain')
+    if (command.kind === 'session.create' && command.state === 'accepted_by_dsh' && command.sessionId) {
+      void refreshSessions().then(() => selectSession(command.sessionId))
+    }
+  }
+  async function lookupRequest(marker) {
+    try {
+      const payload = await accessApi(`/commands/by-request/${encodeURIComponent(marker.requestId)}`)
+      if (!readMarkers().some((row) => row.requestId === marker.requestId)) return
+      if (payload.command) {
+        updateFromCommand(payload.command)
+        if (!state.tasks.some((item) => item.commandId === payload.command.commandId)) {
+          state.tasks.unshift(payload.command)
+          renderTasks()
+        }
+      }
+    } catch (error) {
+      if (!readMarkers().some((row) => row.requestId === marker.requestId)) return
+      if (error.code === 'NOT_FOUND') operation('上次请求尚无宿主记录；不会自动再次发送。请核对后重新输入。', true, marker.requestId)
+      else if (error.code === 'NETWORK') operation('连接中断，请重连后查询原请求，不会自动重复发送。', true, marker.requestId)
+    }
+  }
+  async function restoreRequests() {
+    for (const marker of readMarkers()) await lookupRequest(marker)
+  }
+  async function submitCommand(kind, fields = {}, sessionId = null) {
+    if (!state.online || !state.hostId) { setOnline(false); return }
+    const cancelling = kind === 'session.cancel'
+    if (cancelling) {
+      if (state.cancelSubmitting) return null
+      state.cancelSubmitting = true
+    } else {
+      if (state.submitting || state.unresolvedSubmission || Date.now() - state.lastSubmissionMs < 800) return null
+      state.submitting = true
+      state.lastSubmissionMs = Date.now()
+    }
+    updateAvailability()
+    try {
+      const requestId = crypto.randomUUID()
+      const marker = { requestId, kind, ...(sessionId ? { sessionId } : {}) }
+      rememberMarker(marker) // Durable ID before the network request; body stays in memory.
+      operation('正在提交请求。')
+      try {
+        const payload = await accessApi('/commands', { method: 'POST', protectedWrite: true,
+          body: { requestId, kind, targetDeviceId: state.hostId, ...fields } })
+        if (!payload.command) throw { code: 'REQUEST_FAILED' }
+        updateFromCommand(payload.command)
+        await refreshTasks()
+        return payload.command
+      } catch (error) {
+        if (error.code === 'NETWORK' || error.code === 'REQUEST_FAILED') {
+          operation('送达状态尚未确认，正在查询原请求；不会自动重复发送。', true, requestId)
+          await lookupRequest(marker)
+        } else if (error.code !== 'UNAUTHORIZED') {
+          forgetMarker(requestId)
+          operation(error.code === 'MODEL_UNAVAILABLE' ? '电脑尚无可用模型，消息未发送。'
+            : error.code === 'SESSION_READ_ONLY' ? '旧会话只供阅读，请新建受限远端会话。'
+              : error.code === 'CAPABILITY_UNAVAILABLE' ? '这项电脑能力目前不可用，请稍后再试。'
+                : '请求未受理，请检查状态后重试。', false, requestId)
+        }
+        return null
+      }
+    } finally {
+      if (cancelling) state.cancelSubmitting = false
+      else state.submitting = false
+      updateAvailability()
+    }
+  }
+  function showTaskPane(tasks) {
+    if (!tasks) closeTaskDetail()
+    state.taskPane = tasks
+    state.phonePane = false
+    byId('conversation-pane').hidden = tasks
+    byId('tasks-pane').hidden = !tasks
+    byId('phone-pane').hidden = true
+    byId('assistant-title').textContent = tasks ? '事情' : state.activeChatSource === 'phone'
+      ? phoneDisplayTitle(phoneConversations().find((item) => item.id === state.selectedPhoneConversationId) || { title: '手机对话', events: [] })
+      : state.sessions.find((item) => item.sessionId === state.selectedSessionId)?.title || '新对话'
+    closeRail()
+    if (tasks) void refreshTasks()
+    else if (state.activeChatSource === 'phone') renderSelectedPhoneConversation()
+  }
+  function phoneSource(deviceId) {
+    return state.phoneDeviceNames.get(deviceId) ?? '同步设备（名称未读取）'
+  }
+  function phoneDisplayTitle(record) {
+    if (!['新对话', '手机对话'].includes(record.title.trim())) return record.title
+    const first = record.events.find((event) => event.kind === 'message.created' &&
+      event.payload?.role === 'user' && typeof event.payload.text === 'string')
+    const summary = first?.payload.text.replace(/\s+/gu, ' ').trim()
+    if (!summary) return record.title
+    const characters = Array.from(summary)
+    return characters.slice(0, 26).join('') + (characters.length > 26 ? '…' : '')
+  }
+  function phoneConversations() {
+    const conversations = new Map()
+    for (const event of [...state.phoneEvents].sort((a, b) => a.seq - b.seq)) {
+      if (typeof event?.conversationId !== 'string' || !syncIdPattern.test(event.conversationId)) continue
+      if (!conversations.has(event.conversationId)) conversations.set(event.conversationId,
+        { id: event.conversationId, title: '手机对话', sources: new Set(), events: [] })
+      const record = conversations.get(event.conversationId)
+      if (event.kind === 'conversation.created' && typeof event.payload?.title === 'string') record.title = event.payload.title
+      record.sources.add(event.sourceDeviceId)
+      record.events.push(event)
+    }
+    return [...conversations.values()]
+  }
+  async function findPhoneSyncEvent(outbox, current) {
+    let afterSeq = 0
+    for (let pageNo = 0; pageNo < 101; pageNo++) {
+      const page = await accessApi(`/sync/events?afterSeq=${afterSeq}&limit=200`)
+      if (!current()) return null
+      if (!Array.isArray(page.events) || !Number.isSafeInteger(page.nextSeq) ||
+          page.nextSeq < afterSeq || typeof page.hasMore !== 'boolean') throw { code: 'REQUEST_FAILED' }
+      const found = page.events.find((row) => row.eventId === outbox.event.eventId)
+      if (found) {
+        const expected = outbox.event
+        if (found.sourceDeviceId !== outbox.deviceId || found.conversationId !== expected.conversationId ||
+            found.clientSeq !== expected.clientSeq || found.kind !== expected.kind ||
+            found.occurredAt !== expected.occurredAt || JSON.stringify(found.payload) !== JSON.stringify(expected.payload)) {
+          throw { code: 'REQUEST_CONFLICT' }
+        }
+        return found
+      }
+      if (!page.hasMore) return null
+      if (page.nextSeq === afterSeq) throw { code: 'REQUEST_FAILED' }
+      afterSeq = page.nextSeq
+    }
+    throw { code: 'CAPACITY_LIMIT' }
+  }
+  function completePhoneSend(outbox, row) {
+    if (!state.phoneEvents.some((event) => event.eventId === row.eventId)) {
+      state.phoneEvents.push(row)
+      state.phoneEvents.sort((a, b) => a.seq - b.seq)
+    }
+    rememberPhoneClientSeq(outbox.event.clientSeq)
+    clearPhoneOutbox()
+    state.phoneDrafts.delete(outbox.event.conversationId)
+    if (state.activeChatSource === 'phone' && state.selectedPhoneConversationId === outbox.event.conversationId) {
+      if (byId('message-text').value === outbox.event.payload.text) byId('message-text').value = ''
+      state.phoneSendNotice = '文字已同步到原手机对话。MiMo 回复需在手机端继续，电脑没有运行模型。'
+      renderSelectedPhoneConversation()
+    }
+    renderSessions()
+    updateAvailability()
+  }
+  async function sendPhoneMessage() {
+    if (state.phoneSending || state.activeChatSource !== 'phone' || !state.online || !state.syncAvailable ||
+        !state.ownerId || !state.device?.id || !syncIdPattern.test(state.selectedPhoneConversationId)) return
+    const ownerId = state.ownerId, deviceId = state.device.id, generation = state.identityGeneration,
+      conversationId = state.selectedPhoneConversationId
+    const current = () => state.ownerId === ownerId && state.device?.id === deviceId &&
+      state.identityGeneration === generation && state.activeChatSource === 'phone' &&
+      state.selectedPhoneConversationId === conversationId && !!state.csrfToken
+    let outbox = readPhoneOutbox()
+    if (outbox && outbox.event.conversationId !== conversationId) return
+    const recovery = !outbox ? readPhoneRecovery() : null
+    if (recovery) {
+      if (recovery.event.conversationId !== conversationId) return
+      state.phoneSending = true
+      updateAvailability()
+      try {
+        const saved = await findPhoneSyncEvent(recovery, current)
+        if (!current()) return
+        if (saved && !state.phoneEvents.some((event) => event.eventId === saved.eventId)) {
+          state.phoneEvents.push(saved)
+          state.phoneEvents.sort((a, b) => a.seq - b.seq)
+        }
+        try {
+          localStorage.removeItem(`weftmate:phone-sync-outbox:v1:${ownerId}:${recovery.deviceId}`)
+          localStorage.removeItem(phoneRecoveryKey())
+        } catch { /* A later check may still see the old record. */ }
+        if (saved) {
+          byId('message-text').value = ''
+          state.phoneSendNotice = '旧文字已在原对话中找到，没有再次发送。MiMo 回复需在手机端继续。'
+          renderSelectedPhoneConversation()
+        } else {
+          state.phoneDrafts.set(conversationId, recovery.event.payload.text)
+          byId('message-text').value = recovery.event.payload.text
+          state.phoneSendNotice = '未找到旧文字，草稿已恢复。确认内容后可用新设备会话同步。'
+        }
+      } catch {
+        if (current()) state.phoneSendNotice = '旧请求暂时无法核对。原文仍保留，请重连后重试。'
+      } finally {
+        if (state.ownerId === ownerId && state.device?.id === deviceId && state.identityGeneration === generation) {
+          state.phoneSending = false
+          if (current()) updateAvailability()
+        }
+      }
+      return
+    }
+    const wasPending = !!outbox
+    if (!outbox) {
+      const text = byId('message-text').value.trim()
+      const clientSeq = nextPhoneClientSeq()
+      const eventId = `event-${crypto.randomUUID()}`, messageId = `message-${crypto.randomUUID()}`
+      if (!text || text.length > 8192 || !clientSeq || !syncIdPattern.test(eventId) ||
+          !syncIdPattern.test(messageId)) return
+      outbox = { ownerId, deviceId, event: { eventId, conversationId, clientSeq,
+        kind: 'message.created', occurredAt: new Date().toISOString(),
+        payload: { messageId, role: 'user', text } } }
+      if (!writePhoneOutbox(outbox)) {
+        state.phoneSendNotice = '浏览器未能保存待发送文字。本次没有提交，请检查浏览器存储后重试。'
+        updateAvailability()
+        return
+      }
+    }
+    state.phoneSending = true
+    state.phoneSendNotice = '正在核对并同步这条文字…'
+    updateAvailability()
+    try {
+      if (wasPending) {
+        const existing = await findPhoneSyncEvent(outbox, current)
+        if (!current()) return
+        if (existing) return completePhoneSend(outbox, existing)
+      }
+      const result = await accessApi('/sync/events', { method: 'POST', protectedWrite: true,
+        body: { events: [outbox.event] } })
+      if (!current()) return
+      const receipt = result?.accepted?.find((item) => item.eventId === outbox.event.eventId)
+      if (!Number.isSafeInteger(receipt?.seq) || receipt.seq < 1) throw { code: 'REQUEST_FAILED' }
+      const saved = await findPhoneSyncEvent(outbox, current)
+      if (!current()) return
+      if (!saved) throw { code: 'REQUEST_FAILED' }
+      completePhoneSend(outbox, saved)
+    } catch (error) {
+      if (!current()) return
+      if (['NETWORK', 'REQUEST_CONFLICT', 'REQUEST_FAILED'].includes(error?.code)) {
+        try {
+          const saved = await findPhoneSyncEvent(outbox, current)
+          if (!current()) return
+          if (saved) return completePhoneSend(outbox, saved)
+        } catch { /* Keep the exact event for the next explicit reconciliation. */ }
+      }
+      state.phoneSendNotice = error?.code === 'UNAUTHORIZED' ? '登录已失效。重新登录后请核对这条文字。'
+        : error?.code === 'REQUEST_CONFLICT' ? '同步编号发生冲突，原文已保留。请重新登录以生成新设备会话，先核对旧消息再发送。'
+          : '同步结果未确认。文字已保留；重连后点“核对并重试”，不会生成第二条消息。'
+    } finally {
+      if (state.ownerId === ownerId && state.device?.id === deviceId && state.identityGeneration === generation) {
+        state.phoneSending = false
+        if (current()) updateAvailability()
+      }
+    }
+  }
+  function closePhoneImagePreview() {
+    if (!phonePreview) return
+    const button = phonePreview.returnFocus
+    const scope = phonePreview.scope
+    phonePreview.returnFocus = null
+    phonePreview.scope = null
+    if (phonePreview.dialog.open) phonePreview.dialog.close()
+    phonePreview.dialog.hidden = true
+    phonePreview.image.removeAttribute('src')
+    phonePreview.image.alt = ''
+    if (button && button.isConnected !== false && scope?.ownerId === state.ownerId &&
+        scope.identityGeneration === state.identityGeneration &&
+        scope.source === state.activeChatSource && scope.conversationId ===
+          (scope.source === 'phone' ? state.selectedPhoneConversationId : state.selectedSessionId)) button.focus()
+  }
+  function ensurePhoneImagePreview() {
+    if (phonePreview) return phonePreview
+    const dialog = element('dialog', 'phone-image-preview')
+    dialog.id = 'phone-image-preview'
+    dialog.hidden = true
+    dialog.setAttribute('role', 'dialog')
+    dialog.setAttribute('aria-modal', 'true')
+    dialog.setAttribute('aria-label', '图片预览')
+    const image = element('img')
+    const close = element('button', 'phone-image-close', '×')
+    close.type = 'button'
+    close.setAttribute('aria-label', '关闭图片预览')
+    close.addEventListener('click', closePhoneImagePreview)
+    dialog.append(image, close)
+    dialog.addEventListener('click', (event) => { if (event.target === dialog) closePhoneImagePreview() })
+    dialog.addEventListener('cancel', (event) => { event.preventDefault(); closePhoneImagePreview() })
+    dialog.addEventListener('close', closePhoneImagePreview)
+    document.body.append(dialog)
+    phonePreview = { dialog, image, close, returnFocus: null, scope: null }
+    return phonePreview
+  }
+  function openPhoneImagePreview(url, name, button, scope) {
+    if (!scope || scope.ownerId !== state.ownerId || scope.identityGeneration !== state.identityGeneration ||
+        scope.source !== state.activeChatSource || scope.conversationId !==
+          (scope.source === 'phone' ? state.selectedPhoneConversationId : state.selectedSessionId)) return
+    const preview = ensurePhoneImagePreview()
+    preview.returnFocus = button
+    preview.scope = scope
+    preview.image.src = url
+    preview.image.alt = name
+    preview.dialog.hidden = false
+    preview.dialog.showModal()
+    preview.close.focus()
+  }
+  function phoneMessageText(value) {
+    const text = typeof value === 'string' ? value : ''
+    const marker = /(?:^|\n)\[本机附件：([^\n]*)；跨端暂不可见\]$/.exec(text)
+    return marker ? { text: text.slice(0, marker.index).trimEnd(), legacy: marker[1] } : { text, legacy: null }
+  }
+  function legacyFileNames(value) {
+    return typeof value === 'string' ? value.split('、').map((name) => name.trim()).filter((name) =>
+      name && !/\.(?:png|jpe?g|webp|gif)$/i.test(name)).join('、') : ''
+  }
+  function renderSelectedPhoneConversation() {
+    if (state.activeChatSource !== 'phone' || state.phonePane || state.taskPane) return
+    const record = phoneConversations().find((item) => item.id === state.selectedPhoneConversationId)
+    if (!record) { byId('transcript').replaceChildren(); byId('timeline-status').textContent = '这条手机对话尚未同步完成。'; return }
+    byId('assistant-title').textContent = phoneDisplayTitle(record)
+    const list = byId('transcript')
+    list.replaceChildren()
+    const previewScope = { ownerId: state.ownerId, identityGeneration: state.identityGeneration,
+      source: 'phone', conversationId: state.selectedPhoneConversationId }
+    for (const event of record.events) {
+      if (event.kind !== 'message.created' || !['user', 'assistant'].includes(event.payload?.role)) continue
+      const row = element('li', `message ${event.payload.role}`)
+      row.append(element('span', 'message-label', event.payload.role === 'user'
+        ? event.sourceDeviceId === state.device?.id ? '你 · 电脑同步' : '你 · 手机 MiMo'
+        : 'WeftMate · 手机 MiMo'))
+      const display = phoneMessageText(event.payload.text)
+      if (display.text) row.append(element('span', 'message-text', display.text))
+      const attachments = Array.isArray(event.payload.attachments) ? event.payload.attachments : []
+      const gallery = element('div', 'synced-image-gallery')
+      for (const attachment of attachments) {
+        if (!syncIdPattern.test(attachment?.attachmentId) ||
+            !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(attachment?.contentType)) continue
+        const name = typeof attachment.name === 'string' ? attachment.name.slice(0, 128) : '图片'
+        const url = `${accessBase}/sync/attachments/${attachment.attachmentId}`
+        const displayUrl = `${url}?variant=display`
+        const safeSize = Number.isSafeInteger(attachment.size) && attachment.size > 0 ? attachment.size : null
+        const smallLegacy = safeSize !== null && safeSize <= 5 * 1024 * 1024
+        const safeOriginal = safeSize !== null && safeSize <= 20 * 1024 * 1024
+        const button = element('button', 'synced-image')
+        button.type = 'button'
+        button.setAttribute('aria-label', `查看图片 ${name}`)
+        const image = element('img')
+        image.src = displayUrl
+        image.alt = ''
+        image.loading = 'lazy'
+        image.decoding = 'async'
+        image.addEventListener('error', () => {
+          if (smallLegacy && image.src === displayUrl) { image.src = url; return }
+          image.hidden = true
+          button.classList.add('is-unavailable')
+          button.disabled = true
+        })
+        button.append(image)
+        button.addEventListener('click', () => openPhoneImagePreview(safeOriginal ? url : displayUrl, name, button, previewScope))
+        gallery.append(button)
+      }
+      if (gallery.children.length) {
+        row.classList.add('message-has-images')
+        if (!display.text && !legacyFileNames(display.legacy)) row.classList.add('message-image-only')
+        row.append(gallery)
+      }
+      const files = legacyFileNames(display.legacy)
+      if (files) row.append(element('small', 'truncated', `旧附件：${files}。`))
+      list.append(row)
+    }
+    byId('timeline-status').textContent = state.phoneHasMore ? '仍有手机同步记录未读完，连接后会继续读取。' : ''
+    updateAvailability()
+  }
+  function selectPhoneConversation(conversationId) {
+    if (!syncIdPattern.test(conversationId) || !phoneConversations().some((item) => item.id === conversationId)) return
+    if (state.activeChatSource === 'desktop') state.desktopDraft = byId('message-text').value
+    else if (state.selectedPhoneConversationId && !readPhoneOutbox())
+      state.phoneDrafts.set(state.selectedPhoneConversationId, byId('message-text').value)
+    state.activeChatSource = 'phone'
+    state.selectedPhoneConversationId = conversationId
+    state.phoneSendNotice = ''
+    const pending = readPhoneOutbox()
+    const recovery = !pending ? readPhoneRecovery() : null
+    byId('message-text').value = pending?.event.conversationId === conversationId
+      ? pending.event.payload.text : recovery?.event.conversationId === conversationId
+        ? recovery.event.payload.text : state.phoneDrafts.get(conversationId) || ''
+    byId('message-text').placeholder = '补充到这条手机对话'
+    byId('conversation-pane').classList.add('is-phone')
+    state.historyGeneration++
+    closePhoneImagePreview()
+    byId('chat-intro').hidden = true
+    byId('desktop-action').hidden = true
+    showTaskPane(false)
+    renderSessions()
+    closeRail()
+  }
+  function renderPhoneRecords() {
+    const records = phoneConversations()
+    if (!records.some((record) => record.id === state.selectedPhoneConversationId)) {
+      state.selectedPhoneConversationId = records[0]?.id ?? null
+    }
+    const list = byId('phone-conversations')
+    list.replaceChildren()
+    for (const record of records) {
+      const item = element('li')
+      const button = element('button', record.id === state.selectedPhoneConversationId ? 'is-current' : '')
+      button.type = 'button'
+      button.append(element('strong', '', phoneDisplayTitle(record)), element('small', '',
+        [...record.sources].map(phoneSource).join('、')))
+      button.addEventListener('click', () => { state.selectedPhoneConversationId = record.id; renderPhoneRecords() })
+      item.append(button)
+      list.append(item)
+    }
+    const history = byId('phone-history')
+    history.replaceChildren()
+    const selected = records.find((record) => record.id === state.selectedPhoneConversationId)
+    for (const event of selected?.events ?? []) {
+      const source = phoneSource(event.sourceDeviceId)
+      let label, content
+      if (event.kind === 'message.created' && typeof event.payload?.text === 'string') {
+        label = event.payload.role === 'assistant' ? `${source} · 手机助手` : `${source} · 你`
+        content = event.payload.text
+      } else if (event.kind === 'turn.finished') {
+        label = `${source} · 本地回合`
+        content = ({ completed: '已结束', cancelled: '已取消', failed: '失败', interrupted: '中断' })[event.payload?.status]
+      } else if (event.kind === 'tool.receipt') {
+        label = `${source} · 手机工具回执`
+        const status = ({ dispatched: '已派发，结果待核对', observed: '已观察到结果', failed: '失败',
+          uncertain: '结果待确认' })[event.payload?.status]
+        content = status ? `${status}。${event.payload.summary ?? ''}` : null
+      }
+      if (!content) continue
+      const row = element('li', 'message')
+      row.append(element('span', 'message-label', label), element('span', 'message-text', content))
+      history.append(row)
+    }
+    byId('phone-status').textContent = records.length ? '' : '还没有来自手机的同步记录。'
+    byId('phone-more').hidden = !state.phoneHasMore
+  }
+  async function refreshPhoneRecords(reset = false) {
+    if (!state.syncAvailable || state.phoneLoading) return
+    if (reset) { state.phoneEvents = []; state.phoneAfterSeq = 0; state.phoneHasMore = true }
+    const owner = state.ownerId, identity = state.csrfToken
+    state.phoneLoading = true
+    try {
+      let shouldRead = true
+      for (let pageNo = 0; pageNo < 5 && shouldRead; pageNo++) {
+        const page = await accessApi(`/sync/events?afterSeq=${state.phoneAfterSeq}&limit=100`)
+        if (state.ownerId !== owner || state.csrfToken !== identity) return
+        if (!Array.isArray(page.events) || !Number.isSafeInteger(page.nextSeq) ||
+            page.nextSeq < state.phoneAfterSeq || typeof page.hasMore !== 'boolean') throw { code: 'REQUEST_FAILED' }
+        let previous = state.phoneAfterSeq
+        for (const event of page.events) {
+          if (!Number.isSafeInteger(event?.seq) || event.seq <= previous || event.seq > page.nextSeq) throw { code: 'REQUEST_FAILED' }
+          previous = event.seq
+          if (!state.phoneEvents.some((known) => known.seq === event.seq)) state.phoneEvents.push(event)
+        }
+        if (page.hasMore && page.nextSeq === state.phoneAfterSeq) throw { code: 'REQUEST_FAILED' }
+        state.phoneAfterSeq = page.nextSeq
+        state.phoneHasMore = page.hasMore
+        shouldRead = page.hasMore
+      }
+      renderPhoneRecords()
+      renderSessions()
+      if (state.activeChatSource === 'phone') renderSelectedPhoneConversation()
+      if (state.phoneHasMore) byId('phone-status').textContent = '还有同步记录未读完，可继续读取。'
+    } catch (error) {
+      if (error.code !== 'UNAUTHORIZED') byId('phone-status').textContent =
+        error.code === 'NETWORK' ? '连接中断，重连后从原位置补读手机记录。' : '手机记录暂时无法读取，请刷新重试。'
+    } finally { state.phoneLoading = false }
+  }
+  async function showPhonePane() {
+    if (!state.syncAvailable) return
+    state.phonePane = true
+    state.taskPane = false
+    byId('conversation-pane').hidden = true
+    byId('tasks-pane').hidden = true
+    byId('phone-pane').hidden = false
+    byId('assistant-title').textContent = '手机来源'
+    closeRail()
+    try {
+      const payload = await api('/devices')
+      if (Array.isArray(payload.devices)) state.phoneDeviceNames = new Map(payload.devices
+        .filter((device) => typeof device?.id === 'string' && typeof device.name === 'string')
+        .map((device) => [device.id, device.name]))
+    } catch { /* The source ID remains bound on the server if names are temporarily unavailable. */ }
+    renderPhoneRecords()
+    await refreshPhoneRecords()
+  }
+  function closeRail() {
+    byId('session-rail').classList.remove('is-open')
+    byId('rail-backdrop').hidden = true
+    byId('rail-open').setAttribute('aria-expanded', 'false')
+  }
+  function startAssistantRefresh() {
+    stopAssistantRefresh()
+    state.refreshTimer = setInterval(() => { if (document.visibilityState === 'visible') void refreshAssistant() }, 6_000)
+  }
+  function stopAssistantRefresh() { if (state.refreshTimer) clearInterval(state.refreshTimer); state.refreshTimer = null }
+  async function refreshAssistant() {
+    if (state.refreshing || !state.csrfToken) return
+    state.refreshing = true
+    try {
+      await refreshStatus()
+      await refreshModels()
+      await refreshSessions()
+      await refreshTasks()
+      await refreshHistory()
+      if (state.syncAvailable) await refreshPhoneRecords()
+      await restoreRequests()
+    } catch (error) { if (error.code !== 'UNAUTHORIZED' && error.code !== 'NETWORK') toast('部分状态暂时无法读取，稍后会重试。') }
+    finally { state.refreshing = false }
+  }
+  async function enterAssistant() {
+    show('assistant')
+    closeRail()
+    await refreshAssistant()
+    startAssistantRefresh()
+  }
+  async function load() {
+    show('loading')
+    try {
+      const accountState = await api('/state')
+      if (state.setupGrant) { clearSession(); showRegistration(); return }
+      try {
+        acceptSession(await api('/me'))
+        await enterAssistant()
+      } catch (error) {
+        if (error.code === 'UNAUTHORIZED') {
+          clearSession()
+          if (state.setupGrant || accountState.configured !== true) showRegistration()
+          else show('login')
+        }
+        else throw error
+      }
+    } catch (error) {
+      show('owner')
+      errorAt('setup-error', '')
+      toast(failureMessage(error, 'network'))
+    }
+  }
+
+  function showRegistration() {
+    byId('setup-title').textContent = state.setupGrant ? '设置这台电脑的原账户' : '注册新账户'
+    byId('setup-intro').textContent = state.setupGrant
+      ? '这份本机设置链接只可使用一次。旧会话与资料仍归原账户。'
+      : '每个人使用自己的账户和设备，资料与对话分别保存。'
+    show('setup')
+  }
+
+  byId('owner-refresh').addEventListener('click', load)
+  byId('setup-to-login').addEventListener('click', () => show('login'))
+  byId('login-to-register').addEventListener('click', showRegistration)
+  byId('setup-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    errorAt('setup-error', '')
+    const username = byId('setup-name').value.trim()
+    const deviceName = byId('setup-device').value.trim()
+    const password = byId('setup-password').value
+    const confirmation = byId('setup-confirm').value
+    if (!username || !deviceName) return errorAt('setup-error', '请填写账户名和设备名称。')
+    const normalizedName = username.normalize('NFKC')
+    if (Array.from(normalizedName).length < 3 || Array.from(normalizedName).length > 64 || !/^[\p{L}\p{N}_.-]+$/u.test(normalizedName)) {
+      return errorAt('setup-error', '账户名须为 3–64 个文字、数字、下划线、点或短横线。')
+    }
+    if (Array.from(password).length < 15 || Array.from(password).length > 128) return errorAt('setup-error', '密码须为 15–128 个字符。')
+    if (password !== confirmation) return errorAt('setup-error', '两次输入的密码不一致。')
+    setBusy(form, true)
+    try {
+      const ownerSetup = !!state.setupGrant
+      acceptSession(await api(ownerSetup ? '/setup' : '/register', { method: 'POST',
+        body: ownerSetup ? { grant: state.setupGrant, username, password, deviceName }
+          : { username, password, deviceName } }))
+      state.setupGrant = null
+      toast(ownerSetup ? '原账户已设置。' : '账户已注册。')
+      await enterAssistant()
+    } catch (error) {
+      if (error.code === 'INVALID_SETUP_GRANT' || error.code === 'ACCOUNT_ALREADY_CONFIGURED') {
+        state.setupGrant = null
+        if (error.code === 'ACCOUNT_ALREADY_CONFIGURED') show('login')
+        else showRegistration()
+      }
+      errorAt('setup-error', failureMessage(error))
+      toast(failureMessage(error))
+    } finally {
+      clearPasswords('setup-password', 'setup-confirm')
+      setBusy(form, false)
+    }
+  })
+  byId('login-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    errorAt('login-error', '')
+    const username = byId('login-name').value.trim()
+    const password = byId('login-password').value
+    const deviceName = byId('login-device').value.trim()
+    if (!username || !password || !deviceName) return errorAt('login-error', '请填写账户名、密码和设备名称。')
+    setBusy(form, true)
+    try {
+      acceptSession(await api('/login', { method: 'POST', body: { username, password, deviceName } }))
+      toast('已登录。')
+      await enterAssistant()
+    } catch (error) { errorAt('login-error', failureMessage(error)) }
+    finally { clearPasswords('login-password'); setBusy(form, false) }
+  })
+  byId('profile-display-name').addEventListener('input', () => {
+    state.profileDraftGeneration++
+    byId('profile-status').textContent = ''
+    errorAt('profile-error', '')
+    profileControls()
+  })
+  byId('profile-avatar-file').addEventListener('change', async (event) => {
+    const file = event.currentTarget.files?.[0]
+    if (!file) return
+    const token = accountToken()
+    const selection = ++state.avatarSelectionGeneration
+    state.profileDraftGeneration++
+    state.avatarGeneration++
+    releaseAvatarUrl()
+    byId('profile-avatar-image').removeAttribute?.('src')
+    byId('profile-avatar-image').hidden = true
+    byId('profile-avatar-placeholder').hidden = false
+    state.avatarChecking = true
+    state.profileDraftAvatar = undefined
+    profileControls()
+    byId('profile-status').textContent = ''
+    byId('profile-avatar-status').textContent = '正在检查并预览头像…'
+    errorAt('profile-error', '')
+    try {
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) throw new Error('头像仅支持 PNG、JPEG 或 WebP。')
+      if (file.size < 16 || file.size > 128 * 1024) throw new Error('头像不能超过 128 KiB，且须为有效图片。')
+      const bytes = new Uint8Array(await file.arrayBuffer())
+      if (!accountCurrent(token) || selection !== state.avatarSelectionGeneration) return
+      if (!avatarSignature(bytes, file.type)) throw new Error('图片格式与文件内容不符，请选择有效图片。')
+      let binary = ''
+      for (let index = 0; index < bytes.length; index += 8192) binary += String.fromCharCode(...bytes.subarray(index, index + 8192))
+      const avatar = { mimeType: file.type, dataBase64: btoa(binary) }
+      if (!accountCurrent(token) || selection !== state.avatarSelectionGeneration) return
+      const previewed = await paintAvatar(avatar, token, file)
+      if (!accountCurrent(token) || selection !== state.avatarSelectionGeneration) return
+      if (!previewed) throw new Error('图片无法解码，请重新选择有效图片。')
+      state.profileDraftAvatar = avatar
+      byId('profile-avatar-status').textContent = '新头像待保存。'
+    } catch (error) {
+      if (!accountCurrent(token) || selection !== state.avatarSelectionGeneration) return
+      byId('profile-avatar-status').textContent = error.message || '无法读取这张图片，请重新选择。'
+      byId('profile-avatar-file').value = ''
+      void paintAvatar(state.account?.avatar ?? null, token)
+    } finally {
+      if (accountCurrent(token) && selection === state.avatarSelectionGeneration) {
+        state.avatarChecking = false
+        profileControls()
+      }
+    }
+  })
+  byId('profile-avatar-remove').addEventListener('click', () => {
+    if (state.currentView !== 'account') return
+    if (!(state.profileDraftAvatar === undefined ? state.account?.avatar : state.profileDraftAvatar)) return
+    state.avatarSelectionGeneration++
+    state.profileDraftGeneration++
+    state.avatarChecking = false
+    state.profileDraftAvatar = null
+    byId('profile-status').textContent = ''
+    byId('profile-avatar-file').value = ''
+    byId('profile-avatar-status').textContent = '头像将在保存后移除。'
+    errorAt('profile-error', '')
+    void paintAvatar(null, accountToken())
+    profileControls()
+  })
+  byId('profile-cancel').addEventListener('click', () => {
+    if (state.currentView !== 'account') return
+    resetProfileDraft()
+    byId('profile-status').textContent = '已取消未保存的修改。'
+  })
+  byId('profile-reload').addEventListener('click', () => { void refreshProfile({ preserveDraft: true }) })
+  byId('profile-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    if (state.profileSaving || state.avatarChecking || state.profileConflict || !profileDirty()) return
+    const token = accountToken()
+    const operation = ++state.profileOperationGeneration
+    const name = byId('profile-display-name').value.normalize('NFKC').trim()
+    if (!name || Array.from(name).length > 64 || /[\u0000-\u001f\u007f]/.test(name)) {
+      return errorAt('profile-error', '昵称须为 1–64 个字符，不能包含控制字符。')
+    }
+    const revision = state.account?.profileRevision
+    if (!Number.isSafeInteger(revision)) return errorAt('profile-error', '资料版本不可用，请读取最新资料后重试。')
+    const body = { expectedRevision: revision }
+    if (name !== profileName()) body.displayName = name
+    if (state.profileDraftAvatar !== undefined) body.avatar = state.profileDraftAvatar
+    if (!Object.hasOwn(body, 'displayName') && !Object.hasOwn(body, 'avatar')) return resetProfileDraft()
+    state.profileSaving = true
+    profileControls()
+    errorAt('profile-error', '')
+    byId('profile-status').textContent = '正在保存资料…'
+    try {
+      const result = await api('/profile', { method: 'PATCH', protectedWrite: true, body })
+      if (!accountCurrent(token)) return
+      if (result?.account?.profileRevision !== revision + 1) throw { code: 'REQUEST_FAILED' }
+      const readback = await api('/me')
+      if (!accountCurrent(token)) return
+      if (readback?.account?.ownerId !== token.ownerId || readback?.device?.id !== token.deviceId
+        || readback.account.profileRevision !== revision + 1) throw { code: 'REQUEST_FAILED' }
+      if (Object.hasOwn(body, 'displayName') && readback.account.displayName !== name) throw { code: 'REQUEST_FAILED' }
+      if (Object.hasOwn(body, 'avatar')) {
+        const currentAvatar = readback.account.avatar
+        if (body.avatar === null ? currentAvatar !== null
+          : currentAvatar?.mimeType !== body.avatar.mimeType || currentAvatar?.dataBase64 !== body.avatar.dataBase64) {
+          throw { code: 'REQUEST_FAILED' }
+        }
+      }
+      state.account = readback.account
+      state.profileDraftAvatar = undefined
+      resetProfileDraft()
+      byId('profile-status').textContent = '资料已保存，并从账户重新读取确认。'
+    } catch (error) {
+      if (!accountCurrent(token)) return
+      byId('profile-status').textContent = ''
+      if (error.code === 'UNAUTHORIZED') return sessionExpired()
+      if (error.code === 'REQUEST_CONFLICT' || error.status === 409) {
+        state.profileConflict = true
+        byId('profile-reload').hidden = false
+        errorAt('profile-error', '资料已被其他设备修改。当前草稿已保留；请读取最新资料并核对，再决定是否保存。')
+      } else errorAt('profile-error', '资料未确认保存。请读取最新资料核对后再试，当前草稿已保留。')
+    } finally {
+      if (accountCurrent(token) && operation === state.profileOperationGeneration) { state.profileSaving = false; profileControls() }
+    }
+  })
+  byId('devices-refresh').addEventListener('click', refreshDevices)
+  byId('account-back').addEventListener('click', () => { resetProfileDraft(); state.deviceEditing = null; void enterAssistant() })
+  function openAccount() {
+    stopAssistantRefresh(); closeRail(); show('account')
+    state.deviceEditing = null
+    resetProfileDraft()
+    void refreshProfile()
+    void refreshDevices()
+  }
+  byId('rail-account').addEventListener('click', openAccount)
+  byId('show-account').addEventListener('click', openAccount)
+  async function openMemory() {
+    if (state.currentView === 'memory') { memory.viewGeneration++; closeMemoryDetail() }
+    memory.queryGeneration++
+    const entryGeneration = ++memory.entryGeneration
+    stopAssistantRefresh()
+    closeRail()
+    show('memory')
+    const token = memoryIdentity()
+    memory.kind = byId('memory-kind').value
+    memory.query = byId('memory-query').value.trim().normalize('NFKC')
+    invalidateMemorySnapshot('正在读取记忆…', false)
+    if (!state.hostId) {
+      try {
+        const host = await accessApi('/status')
+        if (!memoryViewCurrent(token) || entryGeneration !== memory.entryGeneration) return
+        if (host?.ownerId !== token.ownerId || typeof host.hostId !== 'string') {
+          clearSession(); show('login'); toast('账户身份已变化，请重新登录核对。'); return
+        }
+        state.hostId = host.hostId
+      } catch (error) {
+        if (!memoryViewCurrent(token)) return
+        invalidateMemorySnapshot('暂时无法确认宿主身份，管理操作不可用。请重试。')
+        return
+      }
+    }
+    const initialQueryGeneration = memory.queryGeneration
+    const ready = await refreshMemoryStatus()
+    if (!memoryViewCurrent(token) || entryGeneration !== memory.entryGeneration) return
+    if (ready && initialQueryGeneration === memory.queryGeneration) await loadMemoryPage()
+    if (!memoryViewCurrent(token) || entryGeneration !== memory.entryGeneration) return
+    await recoverMemoryReceipt()
+  }
+  byId('rail-memory').addEventListener('click', () => { void openMemory() })
+  byId('memory-back').addEventListener('click', () => { closeMemoryDetail(); void enterAssistant() })
+  byId('memory-search-form').addEventListener('submit', (event) => {
+    event.preventDefault()
+    const kind = byId('memory-kind').value
+    const query = byId('memory-query').value.trim().normalize('NFKC')
+    if (!memoryKinds[kind] || query.length > 120) return memoryStatus('请输入不超过 120 个字符的关键词。', true)
+    memory.kind = kind
+    memory.query = query
+    void loadMemoryPage()
+  })
+  byId('memory-kind').addEventListener('change', () => {
+    memory.kind = byId('memory-kind').value
+    memory.query = byId('memory-query').value.trim().normalize('NFKC')
+    if (memoryKinds[memory.kind] && memory.query.length <= 120) void loadMemoryPage()
+  })
+  byId('memory-refresh').addEventListener('click', () => { void openMemory() })
+  byId('memory-more').addEventListener('click', () => { void loadMemoryPage({ more: true }) })
+  byId('memory-receipt-check').addEventListener('click', handleMemoryReceiptAction)
+  byId('memory-detail-close').addEventListener('click', closeMemoryDetail)
+  byId('memory-detail-dialog').addEventListener('close', () => { if (memory.selected) closeMemoryDetail() })
+  byId('memory-detail-back').addEventListener('click', () => { memory.mode = 'detail'; detailError(''); renderMemoryMode() })
+  byId('memory-detail-check').addEventListener('click', handleMemoryReceiptAction)
+  byId('memory-correct-action').addEventListener('click', () => {
+    if (!memoryActionAllowed('correct')) return
+    memory.mode = 'correct'; detailError(''); renderMemoryMode(); byId('memory-correct-text').focus()
+  })
+  byId('memory-mute-action').addEventListener('click', () => {
+    if (!memoryActionAllowed('mute')) return
+    memory.mode = 'mute'; detailError(''); renderMemoryMode()
+  })
+  byId('memory-delete-action').addEventListener('click', () => {
+    if (!memoryActionAllowed('delete')) return
+    memory.mode = 'delete'; detailError(''); renderMemoryMode()
+  })
+  byId('memory-correct-text').addEventListener('input', () => {
+    if (!memory.selected) return
+    memory.drafts.set(`${memory.selected.kind}|${memory.selected.id}`, byId('memory-correct-text').value)
+    detailError('')
+  })
+  byId('memory-confirm-action').addEventListener('click', () => { void submitMemoryAction() })
+  byId('rail-open').addEventListener('click', () => {
+    byId('session-rail').classList.add('is-open')
+    byId('rail-backdrop').hidden = false
+    byId('rail-open').setAttribute('aria-expanded', 'true')
+  })
+  byId('rail-close').addEventListener('click', closeRail)
+  byId('rail-backdrop').addEventListener('click', closeRail)
+  byId('show-tasks').addEventListener('click', () => showTaskPane(true))
+  byId('rail-tasks').addEventListener('click', () => showTaskPane(true))
+  byId('show-phone').addEventListener('click', () => { void showPhonePane() })
+  byId('rail-phone').addEventListener('click', () => { void showPhonePane() })
+  byId('phone-back').addEventListener('click', () => showTaskPane(false))
+  byId('phone-refresh').addEventListener('click', () => { void refreshPhoneRecords() })
+  byId('phone-more').addEventListener('click', () => { void refreshPhoneRecords() })
+  byId('back-to-chat').addEventListener('click', () => showTaskPane(false))
+  byId('refresh-tasks').addEventListener('click', () => { void refreshTasks() })
+  byId('more-tasks').addEventListener('click', () => { void refreshTasks(true) })
+  byId('task-detail-close').addEventListener('click', closeTaskDetail)
+  byId('task-detail-dialog').addEventListener('cancel', (event) => { event.preventDefault(); closeTaskDetail() })
+  byId('task-detail-dialog').addEventListener('close', () => { if (taskDetail.taskId) closeTaskDetail() })
+  byId('task-detail-refresh').addEventListener('click', () => { if (taskDetail.taskId) void openTaskDetail(taskDetail.taskId) })
+  byId('task-detail-session').addEventListener('click', () => {
+    const sessionId = byId('task-detail-session').dataset.sessionId
+    closeTaskDetail()
+    if (sessionIdPattern.test(sessionId || '')) void selectSession(sessionId)
+  })
+  byId('model-select').addEventListener('change', (event) => { state.modelProfileId = event.target.value; updateAvailability() })
+  byId('message-text').addEventListener('input', updateAvailability)
+  byId('new-session').addEventListener('click', async () => {
+    if (!state.modelProfileId || state.capabilities?.chat?.available !== true) return
+    closeRail()
+    await submitCommand('session.create', { modelProfileId: state.modelProfileId })
+  })
+  byId('message-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    if (state.activeChatSource === 'phone') return sendPhoneMessage()
+    const text = byId('message-text').value
+    if (!text.trim() || !state.selectedSessionId || state.unresolvedSubmission ||
+      state.capabilities?.chat?.available !== true ||
+      state.sessions.find((item) => item.sessionId === state.selectedSessionId)?.sendAvailable !== true) return
+    const sent = await submitCommand('session.message', { sessionId: state.selectedSessionId, text, mode: 'queue' }, state.selectedSessionId)
+    if (sent) { byId('message-text').value = ''; updateAvailability() }
+  })
+  byId('cancel-turn').addEventListener('click', async () => {
+    if (state.activeChatSource === 'desktop' && state.selectedSessionId)
+      await submitCommand('session.cancel', { sessionId: state.selectedSessionId }, state.selectedSessionId)
+  })
+  byId('open-notepad').addEventListener('click', async () => {
+    const blocker = desktopBlocker()
+    if (blocker) {
+      showTaskPane(true)
+      if (blocker.commandId && !state.tasks.some((item) => item.commandId === blocker.commandId)) {
+        try {
+          const payload = await accessApi(`/commands/${encodeURIComponent(blocker.commandId)}`)
+          if (payload.command) { state.tasks.unshift(payload.command); renderTasks(); updateAvailability() }
+        } catch { /* The task pane can still show its cached record or refresh state. */ }
+      }
+      return
+    }
+    if (state.capabilities?.desktopOpenApp?.available !== true ||
+      !state.capabilities.desktopOpenApp.appIds?.includes('notepad')) return
+    await submitCommand('desktop.open_app', { appId: 'notepad' })
+  })
+  byId('reset-operation').addEventListener('click', () => {
+    const requestId = state.reviewRequestId
+    if (!requestId) return
+    if (requestId) forgetMarker(requestId)
+    byId('message-text').value = ''
+    operation('请先核对原请求，再重新输入你的目标。', false, requestId)
+    updateAvailability()
+  })
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible' && !byId('assistant-view').hidden) void refreshAssistant()
+    else if (document.visibilityState === 'visible' && !byId('memory-view').hidden) void openMemory()
+  })
+  window.addEventListener('online', () => { if (!byId('assistant-view').hidden) void refreshAssistant() })
+  window.addEventListener('online', () => { if (!byId('memory-view').hidden) void openMemory() })
+  byId('logout-button').addEventListener('click', async () => {
+    const button = byId('logout-button')
+    const token = accountToken()
+    button.disabled = true
+    try {
+      await api('/logout', { method: 'POST', protectedWrite: true })
+      if (!accountIdentityCurrent(token)) return
+      clearSession()
+      show('login')
+      toast('已退出当前设备。')
+    } catch (error) {
+      if (!accountIdentityCurrent(token)) return
+      if (error.code === 'UNAUTHORIZED') sessionExpired()
+      else toast(failureMessage(error))
+    } finally { button.disabled = false }
+  })
+  byId('password-open').addEventListener('click', () => byId('password-dialog').showModal())
+  byId('password-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const form = event.currentTarget
+    const token = accountToken()
+    let completionToken = null
+    errorAt('password-error', '')
+    const currentPassword = byId('current-password').value
+    const newPassword = byId('new-password').value
+    const confirmation = byId('new-confirm').value
+    if (Array.from(newPassword).length < 15 || Array.from(newPassword).length > 128) return errorAt('password-error', '新密码须为 15–128 个字符。')
+    if (newPassword !== confirmation) return errorAt('password-error', '两次输入的新密码不一致。')
+    if (!currentPassword) return errorAt('password-error', '请输入当前密码。')
+    setBusy(form, true)
+    try {
+      const changed = await api('/change-password', { method: 'POST', protectedWrite: true, body: { currentPassword, newPassword } })
+      if (!accountIdentityCurrent(token)) return
+      acceptSession(changed)
+      completionToken = accountToken()
+      byId('password-dialog').close()
+      toast('密码已修改，其他设备需要重新登录。')
+      await refreshDevices()
+    } catch (error) {
+      if (!accountIdentityCurrent(token)) return
+      if (error.code === 'UNAUTHORIZED') sessionExpired()
+      else errorAt('password-error', failureMessage(error))
+    } finally { if (accountIdentityCurrent(completionToken ?? token)) { clearPasswords('current-password', 'new-password', 'new-confirm'); setBusy(form, false) } }
+  })
+  byId('revoke-confirm').addEventListener('click', async () => {
+    if (!state.revokeId) return
+    const button = byId('revoke-confirm')
+    const token = accountToken()
+    const revokeId = state.revokeId
+    button.disabled = true
+    errorAt('revoke-error', '')
+    try {
+      const result = await api(`/devices/${encodeURIComponent(revokeId)}`, { method: 'DELETE', protectedWrite: true })
+      if (!accountCurrent(token) || state.revokeId !== revokeId) return
+      if (result?.revoked !== true) throw { code: 'REQUEST_FAILED' }
+      byId('revoke-dialog').close()
+      state.revokeId = null
+      state.deviceNotice = '设备撤销已收到宿主回执。'
+      await refreshDevices()
+    } catch (error) {
+      if (!accountCurrent(token) || state.revokeId !== revokeId) return
+      if (error.code === 'UNAUTHORIZED') sessionExpired()
+      else errorAt('revoke-error', '撤销未确认成功，请检查连接后重试。')
+    } finally { button.disabled = false }
+  })
+  for (const button of document.querySelectorAll('[data-close]')) button.addEventListener('click', () => byId(button.dataset.close).close())
+  byId('password-dialog').addEventListener('close', () => clearPasswords('current-password', 'new-password', 'new-confirm'))
+  for (const button of document.querySelectorAll('.reveal')) button.addEventListener('click', () => {
+    const input = byId(button.dataset.target)
+    const revealed = input.type === 'password'
+    input.type = revealed ? 'text' : 'password'
+    button.textContent = revealed ? '隐藏' : '显示'
+    button.setAttribute('aria-label', revealed ? '隐藏密码' : '显示密码')
+  })
+  window.addEventListener('hashchange', () => {
+    const grant = takeSetupGrant()
+    if (grant) { state.setupGrant = grant; void load() }
+  })
+  void load()
+})()

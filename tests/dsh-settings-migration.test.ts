@@ -9,6 +9,7 @@ import {
   migrateLegacyRoutes,
   officialCredentialRef,
   projectOfficialProviderConfig,
+  repairOfficialLocalRouteLimits,
   verifyLegacyRouteMigration,
   type LegacyRouteProjection,
 } from '../src/dsh-settings-migration.ts';
@@ -110,6 +111,42 @@ describe('official DSH legacy route migration helper', () => {
       await assert.rejects(migrateLegacyRoutes(createOfficialDshSettingsClient({ origin }), [route]), /conflicts with an existing official user route/);
     });
     assert.equal(mutates, 0);
+  });
+
+  it('repairs only owned local model limits with a revision guard', async () => {
+    const desired = { ...route, models: [{ ...route.models[0], maxTokens: 16384 }] };
+    const old = projectOfficialProviderConfig(route);
+    let current: unknown = old;
+    const writes: any[] = [];
+    await withFixture(({ path, body }) => {
+      if (path === '/api/settings.describe') return { body: successEnvelope(body, settingsValue(3, { user: { [route.route]: current } })) };
+      if (path === '/api/settings.mutate') {
+        writes.push(body.payload);
+        current = body.payload.ops[0].value;
+        return { body: successEnvelope(body, {}) };
+      }
+      return { status: 404 };
+    }, async (origin) => {
+      const client = createOfficialDshSettingsClient({ origin });
+      assert.equal(await repairOfficialLocalRouteLimits(client, desired), true);
+      assert.equal(await repairOfficialLocalRouteLimits(client, desired), false);
+    });
+    assert.equal(writes.length, 1);
+    assert.equal(writes[0].expectedRevision, 3);
+    assert.deepEqual(writes[0].ops, [{ op: 'set', path: ['providers', route.route], value: projectOfficialProviderConfig(desired) }]);
+
+    let attempted = 0;
+    await withFixture(({ path, body }) => {
+      if (path === '/api/settings.describe') return { body: successEnvelope(body, settingsValue(4, {
+        user: { [route.route]: { ...old, baseURL: 'http://127.0.0.1:9999/v1' } },
+      })) };
+      if (path === '/api/settings.mutate') attempted += 1;
+      return { status: 500 };
+    }, async (origin) => {
+      await assert.rejects(repairOfficialLocalRouteLimits(createOfficialDshSettingsClient({ origin }), desired),
+        /differs from the owned projection/);
+    });
+    assert.equal(attempted, 0);
   });
 
   it('rejects invalid carrier envelopes and mismatched rpcIds', async () => {

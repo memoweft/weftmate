@@ -20,8 +20,8 @@ export const AI_GAME_MANAGED_PROTOCOL_VERSION = 1
 export const AI_GAME_EXECUTION_API_VERSION = '2.0'
 export const AI_GAME_RUNTIME_VERSION = '0.1.0'
 export const AI_GAME_SOURCE_REVISION = 'd6a2793f320b41a5500e12a905ce614415fcda53'
-export const AI_GAME_ENTRY_SHA256 = '732099de691d86755de8352d113cb871feb6e88b62a08747a3074b08fb1bfb7c'
-export const AI_GAME_MANIFEST_SHA256 = 'bd78f466dabc13081ebb1f857b60678d50a94333d537bb7b6291a1646a1cb257'
+export const AI_GAME_ENTRY_SHA256 = 'cc2e11a8fc962c087298f6ca733389bbe350be18b0f92de3093b8a862024144a'
+export const AI_GAME_MANIFEST_SHA256 = 'e65e93ded561aa62115c05d8b4cf2aba46e9382cd060b0f471d10f3287643477'
 export const AI_GAME_NOTICES_SHA256 = '6f0000424baa84e0d1ace4d57ef9752d9da05171c5df0672ed18d13edcd43e58'
 export const AI_GAME_PORT_CANDIDATES = Object.freeze([4310, 4311, 4312, 4313])
 
@@ -444,6 +444,7 @@ export class ManagedAiGameRuntime {
       dataDir: join(userDataDir, 'ai-game', 'data'),
       portCandidates: [...ports],
       resolveCredentials: options.resolveCredentials,
+      resolveExecution: options.resolveExecution,
       verifyRuntime: options.verifyRuntime ?? verifyManagedAiGameRuntime,
       spawnImpl: options.spawnImpl ?? spawn,
       fetchImpl: options.fetchImpl ?? globalThis.fetch,
@@ -580,6 +581,9 @@ export class ManagedAiGameRuntime {
       || !safeIdentifier(credentials.principalId) || !safeIdentifier(credentials.controllerId)) {
       throw runtimeError('credential_unavailable', 'Managed AI-GAME credentials are unavailable.')
     }
+    let execution = null
+    try { execution = await this.#options.resolveExecution?.() ?? null }
+    catch { throw runtimeError('execution_configuration_unavailable', 'Phone execution configuration is unavailable.', { retryable: true }) }
     // Credential resolution can await protected storage.  Verify the artifact
     // only after it, so no await is left between the final verification result
     // and child spawn. This narrows, but cannot remove, installation-directory
@@ -598,7 +602,7 @@ export class ManagedAiGameRuntime {
     for (const port of this.#options.portCandidates) {
       if (this.#closed) throw runtimeError('closed', 'The managed runtime is closed.')
       try {
-        await this.#spawnCandidate(verified, credentials, port)
+        await this.#spawnCandidate(verified, credentials, port, execution)
         return
       } catch (error) {
         const failure = error instanceof ManagedAiGameRuntimeError
@@ -618,7 +622,7 @@ export class ManagedAiGameRuntime {
     throw runtimeError(code, 'No managed runtime loopback candidate became ready.', { retryable: true })
   }
 
-  async #spawnCandidate(verified, credentials, port) {
+  async #spawnCandidate(verified, credentials, port, execution) {
     const nonce = this.#randomSecret(24)
     const shutdownToken = this.#randomSecret(32)
     let child
@@ -626,7 +630,7 @@ export class ManagedAiGameRuntime {
       child = this.#options.spawnImpl(verified.entryPath, [], {
         cwd: verified.root,
         env: childEnvironment(this.#options.environment, new Set([
-          credentials.capability, shutdownToken, nonce,
+          credentials.capability, shutdownToken, nonce, ...(execution ? [execution.model.api_key] : []),
         ])),
         windowsHide: true,
         stdio: ['pipe', 'pipe', 'pipe'],
@@ -651,6 +655,7 @@ export class ManagedAiGameRuntime {
       runtime_mode: 'weftmate-managed-v1',
       capability: credentials.capability,
       shutdown_token: shutdownToken,
+      ...(execution ? { execution } : {}),
     }
     const encoded = Buffer.from(`${JSON.stringify(frame)}\n`, 'utf8')
     try {

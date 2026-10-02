@@ -1,0 +1,5 @@
+接手真实 WeftMate 主仓库，不重新定义产品或把交接包快照当作当前进度。
+
+依次读取 `AGENTS.md`、`docs/START_HERE.md`、`docs/PROJECT_DIRECTION.md`、`docs/CURRENT_STATE.md`，再读当前状态指定任务卡和 `docs/DEVELOPMENT_LOOP.md`。目标以用户最新明确决定为准，进度以代码、运行证据和用户验收为准，接口以 `docs/ARCHITECTURE.md` 索引的正式契约为准。
+
+跨侧协作只用 `D:/AIProjects/WeftMate/collab/README.md`、`FRONTEND.md` 和 `BACKEND.md`；保留他人改动、写前重读、交付候选后停下等待云验证。不得自动推进下一阶段、清理历史、升级依赖、迁移数据或改写他人任务卡。

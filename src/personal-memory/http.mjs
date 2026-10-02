@@ -1,0 +1,250 @@
+const KINDS = new Set(['cognition', 'entity', 'relationship', 'event']);
+const REQUEST_ID = /^[A-Za-z0-9_.:-]{1,128}$/;
+const ITEM_ID = /^[A-Za-z0-9._:-]{1,512}$/;
+const MAX_SNAPSHOT_BYTES = 8 * 1024 * 1024;
+const MAX_SNAPSHOT_ITEMS = 5_000;
+const MAX_DETAIL_BYTES = 256 * 1024;
+
+const failure = (code, status = 400) => Object.assign(new Error(code), { code, status });
+const record = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+const keys = (value, allowed, required = []) => {
+  if (!record(value) || Object.keys(value).some((key) => !allowed.includes(key)) ||
+      required.some((key) => !Object.hasOwn(value, key))) throw failure('INVALID_REQUEST');
+};
+const bounded = (value, limit) => typeof value === 'string' ? value.slice(0, limit) : '';
+const safeNumber = (value) => Number.isSafeInteger(value) && value >= 0;
+async function ownerQuery(manager, ownerId, method, params) {
+  try { return await manager.query(ownerId, method, params); }
+  catch (cause) {
+    if (['world_item_not_found', 'evidence_not_found'].includes(cause?.code)) throw failure('NOT_FOUND', 404);
+    throw cause;
+  }
+}
+
+function itemView(value) {
+  if (!record(value) || typeof value.item_id !== 'string' || !ITEM_ID.test(value.item_id) ||
+      !KINDS.has(value.object_kind) || !record(value.value)) throw failure('MEMORY_RESPONSE_INVALID', 503);
+  const text = bounded(value.value.content ?? value.value.canonical_name, 4_000);
+  return { id: value.item_id, kind: value.object_kind, text,
+    truncated: typeof (value.value.content ?? value.value.canonical_name) === 'string' &&
+      (value.value.content ?? value.value.canonical_name).length > 4_000,
+    currentState: value.current_state === 'current' ? 'current' : 'not_current',
+    createdAt: bounded(value.created_at, 64), updatedAt: bounded(value.updated_at, 64),
+    lifecycle: { invalidAt: value.lifecycle?.invalid_at ?? null,
+      archivedAt: value.lifecycle?.archived_at ?? null, mutedAt: value.lifecycle?.muted_at ?? null },
+    sourceCount: Array.isArray(value.provenance) ? value.provenance.length : 0 };
+}
+
+function cursor(value, ownerId, kind, query, revision) {
+  if (!value) return 0;
+  if (typeof value !== 'string' || value.length > 512 || !/^[A-Za-z0-9_-]+$/.test(value)) {
+    throw failure('INVALID_REQUEST');
+  }
+  let parsed;
+  try { parsed = JSON.parse(Buffer.from(value, 'base64url').toString('utf8')); }
+  catch { throw failure('INVALID_REQUEST'); }
+  if (!record(parsed) || parsed.ownerId !== ownerId || parsed.kind !== kind ||
+      parsed.query !== query || !safeNumber(parsed.offset) || !safeNumber(parsed.worldRevision)) {
+    throw failure('INVALID_REQUEST');
+  }
+  if (parsed.worldRevision !== revision) throw failure('MEMORY_REVISION_CHANGED', 409);
+  return parsed.offset;
+}
+
+function publicReceipt(value, requestId) {
+  const receipt = value?.receipt ?? value;
+  if (!record(receipt) || !['applied', 'no_change', 'revision_conflict', 'rejected'].includes(receipt.result_state) ||
+      !safeNumber(receipt.after_revision) || typeof receipt.command_id !== 'string') {
+    throw failure('MEMORY_RESPONSE_INVALID', 503);
+  }
+  const rawReason = receipt.rejection_code;
+  const isDelete = ['delete_evidence', 'delete_world_item'].includes(value?.operation);
+  const reasonCode = receipt.result_state === 'rejected'
+    ? isDelete && rawReason === 'source_origin_unrecoverable' ? 'MEMORY_SOURCE_UNRECOVERABLE'
+      : isDelete && ['shared_source', 'source_evidence_shared', 'source_origin_reused',
+        'world_item_has_dependents'].includes(rawReason) ? 'MEMORY_DELETE_CONFLICT'
+        : isDelete && rawReason === 'source_provenance_missing' ? 'MEMORY_DELETE_SOURCE_UNKNOWN'
+          : 'MEMORY_COMMAND_REJECTED'
+    : undefined;
+  const cleanup = receipt.storage_cleanup;
+  const storageCleanup = record(cleanup) && ['complete', 'pending'].includes(cleanup.state) &&
+    ['current_journal_committed', 'current_wal_truncated', 'wal_reader_busy',
+      'checkpoint_pending', 'host_journal_cleanup_pending'].includes(cleanup.detail_code)
+    ? { state: cleanup.state, detailCode: cleanup.detail_code } : undefined;
+  return { commandId: receipt.command_id, requestId, state: receipt.result_state,
+    worldRevision: receipt.after_revision, ...(reasonCode ? { reasonCode } : {}),
+    ...(storageCleanup ? { storageCleanup } : {}) };
+}
+
+/** Authenticated owner has already been resolved by personal-access. */
+export async function handlePersonalMemoryHttp({ manager, ownerId, request, pathname, url, readJson }) {
+  const method = request.method;
+  if (method === 'GET' && pathname === '/personal/v1/memory/status') {
+    if (url.search) throw failure('INVALID_REQUEST');
+    return { status: 200, body: await manager.status(ownerId) };
+  }
+  if (method === 'GET' && pathname === '/personal/v1/memory/items') {
+    if ([...url.searchParams.keys()].some((key) => !['kind', 'query', 'limit', 'after'].includes(key))) {
+      throw failure('INVALID_REQUEST');
+    }
+    const kind = url.searchParams.get('kind') ?? 'cognition';
+    const rawQuery = url.searchParams.get('query') ?? '';
+    const query = rawQuery.normalize('NFKC').trim().toLocaleLowerCase();
+    const limit = Number(url.searchParams.get('limit') ?? '50');
+    if (!KINDS.has(kind) || rawQuery.length > 120 || !Number.isInteger(limit) || limit < 1 || limit > 50) {
+      throw failure('INVALID_REQUEST');
+    }
+    const result = await manager.query(ownerId, 'query_world', {
+      operation: 'list', object_kind: kind, include_history: true,
+    });
+    if (!record(result) || !safeNumber(result.world_revision) || !Array.isArray(result.items) ||
+        result.items.length > MAX_SNAPSHOT_ITEMS ||
+        Buffer.byteLength(JSON.stringify(result), 'utf8') > MAX_SNAPSHOT_BYTES) {
+      throw failure('MEMORY_SEARCH_LIMIT', 413);
+    }
+    const items = result.items.filter((item) => {
+      if (!query) return true;
+      const fullText = item?.value?.content ?? item?.value?.canonical_name;
+      return typeof fullText === 'string' && fullText.normalize('NFKC').toLocaleLowerCase().includes(query);
+    }).map(itemView);
+    const offset = cursor(url.searchParams.get('after'), ownerId, kind, query, result.world_revision);
+    if (offset > items.length) throw failure('INVALID_REQUEST');
+    const page = items.slice(offset, offset + limit);
+    const hasMore = offset + page.length < items.length;
+    const nextCursor = hasMore ? Buffer.from(JSON.stringify({ ownerId, kind, query,
+      worldRevision: result.world_revision, offset: offset + page.length })).toString('base64url') : null;
+    return { status: 200, body: { items: page, worldRevision: result.world_revision,
+      nextCursor, hasMore, searchScope: 'account_snapshot' } };
+  }
+  const itemMatch = /^\/personal\/v1\/memory\/items\/(cognition|entity|relationship|event)\/([A-Za-z0-9._:-]+)(?:\/(sources|correct|mute))?$/.exec(pathname);
+  if (itemMatch) {
+    const [, kind, id, action] = itemMatch;
+    if (!ITEM_ID.test(id) || url.search) throw failure('INVALID_REQUEST');
+    if (method === 'GET' && !action) {
+      const status = await manager.status(ownerId);
+      const result = await ownerQuery(manager, ownerId, 'query_world', {
+        operation: 'get', object_kind: kind, item_id: id, include_history: true,
+      });
+      if (!record(result) || !safeNumber(result.world_revision) ||
+          Buffer.byteLength(JSON.stringify(result), 'utf8') > MAX_DETAIL_BYTES) {
+        throw failure('MEMORY_RESPONSE_INVALID', 503);
+      }
+      const item = itemView(result.item);
+      const current = item.currentState === 'current';
+      const noAction = (reasonCode) => ({ available: false, reasonCode });
+      return { status: 200, body: { item, worldRevision: result.world_revision,
+        availableActions: {
+          correct: kind === 'entity' ? noAction('MEMORY_ACTION_UNSUPPORTED')
+            : status.capabilities.correct && current ? { available: true }
+              : noAction(status.capabilities.correct ? 'MEMORY_NOT_CURRENT' : 'MEMORY_UNAVAILABLE'),
+          mute: status.capabilities.mute && current ? { available: true }
+            : noAction(status.capabilities.mute ? 'MEMORY_NOT_CURRENT' : 'MEMORY_UNAVAILABLE'),
+          delete: status.capabilities.deleteWorldItem ? { available: true }
+            : noAction('MEMORY_DELETE_UNAVAILABLE'),
+        } } };
+    }
+    if (method === 'GET' && action === 'sources') {
+      const result = await ownerQuery(manager, ownerId, 'query_provenance', {
+        object_kind: kind, item_id: id, projection: 'history',
+      });
+      if (!record(result) || !safeNumber(result.world_revision) || !Array.isArray(result.provenance) ||
+          result.provenance.length > 200 || Buffer.byteLength(JSON.stringify(result), 'utf8') > MAX_DETAIL_BYTES) {
+        throw failure('MEMORY_RESPONSE_INVALID', 503);
+      }
+      const sources = result.provenance.map((source) => ({
+        evidenceId: bounded(source.evidence_id, 512), relation: bounded(source.relation, 64),
+        currentnessState: bounded(source.currentness_state, 64),
+        permissions: { allowLocalRead: source.permissions?.allow_local_read === true,
+          allowCloudRead: source.permissions?.allow_cloud_read === true,
+          allowInference: source.permissions?.allow_inference === true },
+        contentAvailable: source.evidence?.content_available === true,
+        summary: typeof source.evidence?.summary === 'string'
+          ? bounded(source.evidence.summary, 2_000) : null,
+        rawContent: typeof source.evidence?.raw_content === 'string'
+          ? bounded(source.evidence.raw_content, 8_192) : null,
+        rawContentTruncated: typeof source.evidence?.raw_content === 'string' &&
+          source.evidence.raw_content.length > 8_192,
+        recordedAt: bounded(source.evidence?.recorded_at, 64),
+      }));
+      return { status: 200, body: { sources, worldRevision: result.world_revision } };
+    }
+    if (method === 'POST' && ['correct', 'mute'].includes(action)) {
+      const body = await readJson(request, 16 * 1024);
+      keys(body, action === 'correct' ? ['requestId', 'expectedWorldRevision', 'text']
+        : ['requestId', 'expectedWorldRevision'], ['requestId', 'expectedWorldRevision',
+        ...(action === 'correct' ? ['text'] : [])]);
+      if (action === 'correct' && (kind === 'entity' || typeof body.text !== 'string' ||
+          !body.text.trim() || body.text.length > 4_000)) throw failure('MEMORY_ACTION_UNSUPPORTED', 422);
+      return submit({ manager, ownerId, body, operation: action === 'correct' ? 'correct_world_item' : 'mute_world_item',
+        targetKind: kind, targetId: id, payload: action === 'correct' ? { correction_text: body.text } : {} });
+    }
+    if (method === 'DELETE' && !action) {
+      const body = await readJson(request, 12 * 1024);
+      keys(body, ['requestId', 'expectedWorldRevision'], ['requestId', 'expectedWorldRevision']);
+      return submit({ manager, ownerId, body, operation: 'delete_world_item', targetKind: kind,
+        targetId: id, payload: {} });
+    }
+  }
+  const evidenceMatch = /^\/personal\/v1\/memory\/evidence\/([A-Za-z0-9._:-]+)$/.exec(pathname);
+  if (method === 'DELETE' && evidenceMatch) {
+    if (url.search || !ITEM_ID.test(evidenceMatch[1])) throw failure('INVALID_REQUEST');
+    const body = await readJson(request, 12 * 1024);
+    keys(body, ['requestId', 'expectedWorldRevision'], ['requestId', 'expectedWorldRevision']);
+    return submit({ manager, ownerId, body, operation: 'delete_evidence', targetKind: 'evidence',
+      targetId: evidenceMatch[1], payload: {} });
+  }
+  const receiptMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)$/.exec(pathname);
+  if (method === 'GET' && receiptMatch) {
+    if (url.search || !REQUEST_ID.test(receiptMatch[1])) throw failure('INVALID_REQUEST');
+    try {
+      const result = await manager.receiptByRequest(ownerId, receiptMatch[1]);
+      return { status: 200, body: { receipt: publicReceipt(result, receiptMatch[1]) } };
+    } catch (cause) {
+      if (cause?.code === 'command_receipt_not_found') throw failure('NOT_FOUND', 404);
+      throw cause;
+    }
+  }
+  const cleanupMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)\/retry-cleanup$/.exec(pathname);
+  if (method === 'POST' && cleanupMatch) {
+    if (url.search || !REQUEST_ID.test(cleanupMatch[1])) throw failure('INVALID_REQUEST');
+    keys(await readJson(request, 1024), [], []);
+    let result;
+    try { result = await manager.retryCleanupByRequest(ownerId, cleanupMatch[1]); }
+    catch (cause) {
+      if (cause?.code === 'command_receipt_not_found') throw failure('NOT_FOUND', 404);
+      if (cause?.code === 'MEMORY_ACTION_UNSUPPORTED') throw failure('MEMORY_ACTION_UNSUPPORTED', 422);
+      throw failure('SERVICE_UNAVAILABLE', 503);
+    }
+    return { status: 200, body: { receipt: publicReceipt(result, cleanupMatch[1]) } };
+  }
+  throw failure('NOT_FOUND', 404);
+}
+
+async function submit({ manager, ownerId, body, operation, targetKind, targetId, payload }) {
+  if (!REQUEST_ID.test(body.requestId) || !safeNumber(body.expectedWorldRevision)) throw failure('INVALID_REQUEST');
+  const status = await manager.status(ownerId);
+  if (status.state === 'disabled' || status.state === 'unavailable') throw failure('MEMORY_UNAVAILABLE', 503);
+  const operationAllowed = operation === 'correct_world_item' ? status.capabilities.correct
+    : operation === 'mute_world_item' ? status.capabilities.mute
+      : operation === 'delete_evidence' ? status.capabilities.deleteEvidence
+        : status.capabilities.deleteWorldItem;
+  if (!operationAllowed) throw failure(operation.startsWith('delete_')
+    ? 'MEMORY_DELETE_UNAVAILABLE' : 'MEMORY_ACTION_UNSUPPORTED', 503);
+  if (targetKind === 'evidence') await ownerQuery(manager, ownerId, 'query_evidence',
+    { operation: 'get', evidence_id: targetId });
+  else await ownerQuery(manager, ownerId, 'query_world',
+    { operation: 'get', object_kind: targetKind, item_id: targetId, include_history: true });
+  let result;
+  try {
+    result = await manager.submitCommand(ownerId, { requestId: body.requestId,
+      expectedWorldRevision: body.expectedWorldRevision, operation, targetKind, targetId, payload });
+  } catch (cause) {
+    if (cause?.code === 'MEMORY_REQUEST_CONFLICT') throw failure('MEMORY_REQUEST_CONFLICT', 409);
+    if (cause?.code === 'MEMORY_REPLAY_REDACTED') throw failure('MEMORY_REPLAY_REDACTED', 409);
+    // Once dispatch was entered, even a named RPC error may follow a committed command.
+    // Never reuse an error code that the client treats as certainly pre-dispatch.
+    throw failure('SERVICE_UNAVAILABLE', 503);
+  }
+  const receipt = publicReceipt({ ...result, operation }, body.requestId);
+  return { status: ['applied', 'no_change'].includes(receipt.state) ? 200 : 409, body: { receipt } };
+}

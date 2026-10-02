@@ -11,6 +11,17 @@ export const name = 'weftmate-credentials'
 export const WEFTMATE_CREDENTIALS_IPC_PROTOCOL = 'weftmate.credentials.v1'
 const REQUEST_TIMEOUT_MS = 10_000
 const REQUEST_ID = /^[A-Za-z0-9._:-]{1,160}$/
+// Browser-auth records belong to the candidate process, not to one Cordis
+// provider Fiber. A live settings edit can replace the provider instance; if
+// that discarded this map, its otherwise valid authenticated browser cookie
+// would immediately become a 401. The map is still never written to disk or
+// sent over the reference-credential IPC, and a process restart clears it.
+const PROCESS_LOCAL_RECORDS = Symbol.for('weftmate.credentials.process-local-records.v1')
+// Cordis may evaluate a reloaded plugin in a new isolate, which has a new
+// `globalThis`. Node's `process` object is the child-process lifetime owner
+// shared by those isolates, so this remains volatile yet survives a provider
+// re-mount caused by a live settings edit.
+const processLocalRecords = process[PROCESS_LOCAL_RECORDS] ??= new Map()
 
 function credentialError(code) {
   // 错误只保留受控 code：永远不能把 safeStorage/Electron 的错误或密钥折回 DSH/UI 日志。
@@ -116,7 +127,12 @@ export class WeftMateCredentialProvider extends CredentialProvider {
   constructor(ctx) {
     super(ctx)
     this.bridge = new WeftMateCredentialBridge()
-    ctx.on('dispose', () => { this.bridge.close() })
+    // DSH V4's local browser carrier creates an authentication record during
+    // startup. Keep that record process-local: it is not an LLM credential,
+    // it never enters DSH_HOME, and a restart intentionally creates a new one.
+    this.records = processLocalRecords
+    // Cordis lifecycle uses effect return values, not an ad-hoc dispose event.
+    ctx.effect(() => () => { this.bridge.close() }, 'weftmate-credentials: ipc lifecycle')
   }
 
   async resolve(ref) {
@@ -147,6 +163,34 @@ export class WeftMateCredentialProvider extends CredentialProvider {
   async unset(ref) {
     const result = await this.bridge.request('unset', ref)
     if (result.changed !== false) this.notifyUpdated(ref)
+  }
+
+  // DSH V4 adds plugin-owned credential records beside the existing reference
+  // API. The candidate needs this for the browser-auth nonce, but it must not
+  // fall back to DSH's file-backed provider.  Records are therefore bounded to
+  // this provider process; durable plugin-owned records need a later explicit
+  // safeStorage protocol extension.
+  async readRecord(key) { return this.records.get(String(key)) }
+
+  async describeRecord(key) {
+    const current = this.records.get(String(key))
+    return current === undefined ? { configured: false, writable: true } : { configured: true, kind: current.kind, writable: true }
+  }
+
+  async listRecords() { return [...this.records.entries()].map(([key, record]) => ({ key, kind: record.kind })) }
+
+  async modifyRecord(key, mutate) {
+    const name = String(key)
+    const next = await mutate(this.records.get(name))
+    if (next !== undefined) {
+      this.records.set(name, next)
+      this.notifyRecordUpdated(key)
+    }
+    return next ?? this.records.get(name)
+  }
+
+  async deleteRecord(key) {
+    if (this.records.delete(String(key))) this.notifyRecordUpdated(key)
   }
 }
 

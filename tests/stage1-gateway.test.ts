@@ -31,11 +31,15 @@ describe('阶段 1 Gateway 会话恢复与逐次工具许可', () => {
 
   it('只投影普通会话，并把 approval 当前 rpcId 传回 DSH', async () => {
     const responses: unknown[] = [];
+    const modelReads: unknown[] = [];
     const client = {
       sessions: {
         create: async () => ok({ sessionId: 's-1' }),
         list: async () => ok({ items: [{ sessionId: 's-1', title: '保留的对话' }, { sessionId: 'sub', origin: 'subagent', title: '不可见' }] }),
         history: async () => ok({ events: [] }), prompt: async () => ok({ accepted: true }), cancel: async () => ok({ accepted: true }),
+        models: async (value: unknown) => {
+          modelReads.push(value); return ok({ current: { provider: 'cold-provider', model: 'cold-model' }, routable: true });
+        },
       },
       events: { mux: async function* () {}, host: async function* () {} },
       workspace: { list: async () => ok({}), create: async () => ok({}), rename: async () => ok({}), remove: async () => ok({}) },
@@ -48,6 +52,10 @@ describe('阶段 1 Gateway 会话恢复与逐次工具许可', () => {
     try {
       const listed = await (await fetch(`${base}/sessions`)).json();
       assert.deepEqual(listed.items, [{ sessionId: 's-1', title: '保留的对话', running: false }]);
+      const coldModels = await fetch(`${base}/sessions/s-1/models`);
+      assert.equal(coldModels.status, 200);
+      assert.deepEqual((await coldModels.json()).current, { provider: 'cold-provider', model: 'cold-model' });
+      assert.deepEqual(modelReads, [{ sessionId: 's-1' }]);
       await fetch(`${base}/sessions`, { method: 'POST' });
       const approved = await (await fetch(`${base}/sessions/s-1/approval`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ rpcId: 'current-rpc', approvalId: 'approval-1', outcome: 'rejected' }) })).json();
       assert.equal(approved.accepted, true);

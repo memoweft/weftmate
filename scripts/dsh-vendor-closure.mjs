@@ -10,6 +10,11 @@ import { dirname, join } from 'node:path'
 export const VENDOR_SCRIPT_VERSION = '3'
 
 const INTERNAL_SCOPE = '@deepseek-ai/'
+// Alpha.2's Web bundle declares this released package under the DeepSeek
+// scope, but it is intentionally not part of the checkout workspace. Treat
+// it like any registry dependency; only actual workspace packages belong in
+// the locally packed closure.
+const RELEASED_EXTERNAL_PACKAGES = new Set(['@deepseek-ai/libreoffice-kit'])
 const DEPENDENCY_FIELDS = ['dependencies', 'peerDependencies', 'optionalDependencies']
 
 /** DSH pnpm workspace 的包根。native 路径是 2026-08 的 Landlock 子工作区。 */
@@ -18,10 +23,12 @@ const WORKSPACE_PACKAGE_ROOTS = [
   { relative: 'vendor', depth: 1 },
   { relative: 'apps', depth: 1 },
   { relative: 'native/landlock-run/packages', depth: 1 },
+  { relative: 'native/system', depth: 0 },
+  { relative: 'native/system/packages', depth: 1 },
 ]
 
 function isInternal(name) {
-  return typeof name === 'string' && name.startsWith(INTERNAL_SCOPE)
+  return typeof name === 'string' && name.startsWith(INTERNAL_SCOPE) && !RELEASED_EXTERNAL_PACKAGES.has(name)
 }
 
 async function scanPackageLeaves(root, depth, loadPackage) {

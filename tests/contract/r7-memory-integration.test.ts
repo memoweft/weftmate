@@ -29,6 +29,9 @@ describe('R7 记忆插件集成（checkout 形态，真插件→真桥→applied
     env.WEFTMATE_MEMOWEFT_PYTHON = PYTHON;
     env.WEFTMATE_MEMOWEFT_PYTHONPATH = PYTHONPATH;
     env.WEFTMATE_MEMOWEFT_ENABLED = '1';
+    // Core accepts its deterministic bridge model response only in the
+    // explicit test mode; this remains inside the child fixture environment.
+    env.MEMOWEFT_TESTING = '1';
     env.MEMOWEFT_TEST_MODEL_RESPONSE = '__smart__';
 
     const result = await runNode({
@@ -37,7 +40,7 @@ describe('R7 记忆插件集成（checkout 形态，真插件→真桥→applied
       env,
       timeoutMs: 220_000,
     });
-    assert.equal(result.timedOut, false, `fixture 超时。stderr 尾部：\n${result.stderr.slice(-2000)}`);
+    assert.equal(result.timedOut, false, `fixture 超时。stderr 尾部：\n${result.stderr.slice(-2000)}\nstdout 尾部：\n${result.stdout.slice(-2000)}`);
     assert.equal(result.spawnError, undefined, `spawn 失败：${result.spawnError ?? ''}`);
     assert.equal(result.code, 0, `fixture 非零退出（${result.code}）。stderr 尾部：\n${result.stderr.slice(-2000)}\nstdout:\n${result.stdout.slice(-2000)}`);
 

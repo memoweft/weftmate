@@ -1,0 +1,42 @@
+{
+  "checks": {
+    "mode": "real-http",
+    "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+    "fixtureDirectory": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mod-window-real-fixture-1vQFEl",
+    "evidenceRoot": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-v2-native-20260915\\mod-window-real",
+    "realFrameInvoke": true,
+    "realIncrement": true,
+    "realStopRestart": true,
+    "realCloseDoesNotStop": true
+  },
+  "invocations": [
+    {
+      "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+      "sessionId": "preview-mod-owner",
+      "action": "status",
+      "frameTokenBound": true
+    },
+    {
+      "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+      "sessionId": "preview-mod-owner",
+      "action": "increment",
+      "frameTokenBound": true
+    },
+    {
+      "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+      "sessionId": "preview-mod-owner",
+      "action": "increment",
+      "frameTokenBound": true
+    },
+    {
+      "projectId": "mod-3c26cb61-ed9c-4c5e-ad11-20824714986c",
+      "sessionId": "preview-mod-owner",
+      "action": "status",
+      "frameTokenBound": true
+    }
+  ],
+  "diagnostics": [
+    "did-finish-load:http://127.0.0.1:57316/weftmate/mods/window.html?project_id=mod-3c26cb61-ed9c-4c5e-ad11-20824714986c&session_id=preview-mod-owner",
+    "did-finish-load:http://127.0.0.1:57316/weftmate/mods/window.html?project_id=mod-3c26cb61-ed9c-4c5e-ad11-20824714986c&session_id=preview-mod-owner"
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "scenario": "AI suggests two health-feature plans; user defers; user resumes in a new conversation",
+  "startedAt": "2026-09-09T00:53:01.611Z",
+  "firstPrompt": "我想给 MemoWeft 增加健康数据相关功能。请你提出两个小的起步方案，每个由你起一个简短名称，写清第一步和主要取舍。总共不超过200字。只讨论，不实施、不调用工具。",
+  "deferPrompt": "先不做了，这两个方案都暂时搁置。",
+  "originalPlans": [
+    {
+      "name": "健康快记",
+      "firstStep": "给笔记加健康标签，快速录入血压、体重等字段",
+      "tradeoff": "改动最小；数据非结构化，日后难统计"
+    },
+    {
+      "name": "指标看板",
+      "firstStep": "建日期、项目、数值的最简指标表，先接一项数据",
+      "tradeoff": "可图表看趋势；要先定数据模型，起步成本高"
+    }
+  ],
+  "sourceIds": [
+    "e23b9908-6eb7-406a-bcee-1e1d38808e47",
+    "b8747ca3-e458-4741-ac72-6154f18acd6c"
+  ],
+  "firstSessionId": "session-7f162606-2745-4de9-9465-98b6df4cbb18",
+  "firstJobs": [
+    {
+      "state": "no_change",
+      "terminal": "no_change"
+    },
+    {
+      "state": "no_change",
+      "terminal": "no_change"
+    }
+  ],
+  "status": "failed_new_session_cannot_recall_original_proposals",
+  "businessCodeChanged": false,
+  "sourceInspection": {
+    "evidence": [
+      {
+        "id": "e23b9908-6eb7-406a-bcee-1e1d38808e47",
+        "source_kind": "spoken",
+        "has_preceding_ai_context": false,
+        "context_has_original_names": false
+      },
+      {
+        "id": "b8747ca3-e458-4741-ac72-6154f18acd6c",
+        "source_kind": "spoken",
+        "has_preceding_ai_context": false,
+        "context_has_original_names": false
+      }
+    ]
+  },
+  "newSessionReplySummary": "模型明确说回忆不起来，当前记忆快照为空，请求用户重新提供原方案或会话位置。",
+  "newSessionPrompt": "你之前说的健康数据那几个方案，我觉得可以开始做了。你当时给我的方案各叫什么，第一步分别是什么？只回忆之前的讨论，不确定就直说，不要重新设计、不调用工具。",
+  "recallCount": 0,
+  "selectedItems": [],
+  "newSessionId": "session-c4bce880-2486-49c6-a1aa-7996c1751ecd",
+  "distinctSessions": true,
+  "deferReply": "好的，两个方案都搁置，不做任何改动。后续想继续时，随时告诉我从「健康快记」还是「指标看板」接着聊。",
+  "newSessionReplyQuote": "直说：我回忆不起来。",
+  "result": "fail",
+  "interpretation": "The two original messages settled as no_change. The AI proposals and the deferral were not available as a shared experience in the new session. This is not a model-runtime or pending-job failure."
+}

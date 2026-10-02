@@ -1,7 +1,7 @@
 import { createDshAgentAdapter } from '../../dsh-adapter/agents.mjs'
 import { createDshModelAdapter } from '../../dsh-adapter/models.mjs'
 import { createDshPermissionAdapter } from '../../dsh-adapter/permissions.mjs'
-import { createDshSessionAdapter } from '../../dsh-adapter/sessions.mjs'
+import { createDshSessionAdapter, DshAdapterError } from '../../dsh-adapter/sessions.mjs'
 import { createDshWorkspaceAdapter } from '../../dsh-adapter/workspace.mjs'
 import { createDiagnostics } from '../diagnostics.mjs'
 import { gatewayError, writeJson } from '../errors/gateway-error.mjs'
@@ -10,9 +10,9 @@ import { beginSse, sseEvent } from '../event-stream/sse.mjs'
 const BASE = '/weftmate/api/v1'
 const LOOPBACK = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1'])
 
-async function readJson(req) {
+async function readJson(req, limit = 65_536) {
   const chunks = []; let bytes = 0
-  for await (const chunk of req) { bytes += chunk.length; if (bytes > 65_536) throw new Error('body-too-large'); chunks.push(chunk) }
+  for await (const chunk of req) { bytes += chunk.length; if (bytes > limit) throw new Error('body-too-large'); chunks.push(chunk) }
   return chunks.length ? JSON.parse(Buffer.concat(chunks).toString('utf8')) : {}
 }
 
@@ -29,12 +29,18 @@ function idFor(rawSeq, fallback) { return Number.isInteger(rawSeq) ? `dsh-${rawS
 /** Accept the product's text convenience payload and the pinned Gateway
  * contract's DSH-style text parts, then collapse both at the renderer boundary.
  * No arbitrary content block is forwarded through this narrow stage-1 surface. */
-function promptText(value) {
+function promptContent(value) {
   if (typeof value === 'string') return value
-  if (!Array.isArray(value)) throw new TypeError('message content must be text')
-  const parts = value.filter((part) => part?.type === 'text' && typeof part.text === 'string')
-  if (parts.length !== value.length) throw new TypeError('message content must be text')
-  return parts.map((part) => part.text).join('')
+  if (!Array.isArray(value) || value.length < 1 || value.length > 5) throw new TypeError('invalid prompt content')
+  const images = value.filter((part) => part?.type === 'image')
+  if (images.length > 4 || value.some((part) => part?.type === 'text'
+    ? typeof part.text !== 'string' || part.text.length > 32_000
+    : part?.type === 'image' ? !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(part.mediaType) ||
+      typeof part.data !== 'string' || part.data.length > 7_000_000 ||
+      (part.name !== undefined && (typeof part.name !== 'string' || part.name.length > 120))
+      : true)) throw new TypeError('invalid prompt content')
+  if (!images.length) return value.map((part) => part.text).join('')
+  return value
 }
 
 export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
@@ -108,8 +114,10 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
   }
   async function handle(req, res) {
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
-    const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://gateway').pathname)
-    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval))?$/.exec(pathname)
+    const requestUrl = new URL(req.url ?? '/', 'http://gateway')
+    const pathname = decodeURIComponent(requestUrl.pathname)
+    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history))?$/.exec(pathname)
+    const attachmentMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/attachments\/(sha256:[a-f0-9]{64})$/.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
     try {
       if (pathname === `${BASE}/sessions` && req.method === 'POST') {
@@ -158,8 +166,19 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
         if (diagnostics === null) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
         return writeJson(res, 200, { items: diagnostics.lastErrorsSnapshot() })
       }
+      if (attachmentMatch && req.method === 'GET') {
+        const [, sessionId, attachmentId] = attachmentMatch
+        record(sessionId)
+        return writeJson(res, 200, await sessions.attachment(sessionId, attachmentId))
+      }
       if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
       const [, sessionId, action] = match
+      if (action === 'history' && req.method === 'GET') {
+        const afterRaw = requestUrl.searchParams.get('afterSeq') ?? '-1'
+        const limitRaw = requestUrl.searchParams.get('limit') ?? '50'
+        if (!/^-?\d+$/.test(afterRaw) || !/^\d+$/.test(limitRaw)) throw new TypeError('invalid history cursor')
+        return writeJson(res, 200, await sessions.historyPage(sessionId, { afterSeq: Number(afterRaw), limit: Number(limitRaw) }))
+      }
       if (action === 'resume' && req.method === 'POST') {
         const resumed = await sessions.resume(sessionId)
         if (!records.has(sessionId)) records.set(sessionId, { events: [], listeners: new Set(), state: undefined, lastSeq: -1, nextId: 1 })
@@ -167,9 +186,21 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
         return writeJson(res, 200, { sessionId, lastSeq: record(sessionId).lastSeq })
       }
       if (action === 'messages' && req.method === 'POST') {
-        record(sessionId); const payload = await readJson(req)
-        const result = await sessions.send(sessionId, promptText(payload.content), payload.mode ?? 'queue')
-        return writeJson(res, result.accepted ? 202 : 409, { accepted: result.accepted })
+        record(sessionId); const payload = await readJson(req, 14 * 1024 * 1024)
+        const content = promptContent(payload.content)
+        let result
+        try { result = await sessions.send(sessionId, content, payload.mode ?? 'queue') }
+        catch (error) {
+          if (Array.isArray(content) && content.some((part) => part.type === 'image') &&
+              error instanceof DshAdapterError && error.operation === 'prompt' &&
+              error.code === 'attachment-error') {
+            return writeJson(res, 200, { accepted: false, rejected: true, errorCode: 'IMAGE_REJECTED',
+              ...(error.reasonCode ? { imageReasonCode: error.reasonCode } : {}) })
+          }
+          throw error
+        }
+        return writeJson(res, result.accepted ? 202 : 409, { accepted: result.accepted,
+          ...(result.receiptId ? { receiptId: result.receiptId } : {}) })
       }
       if (action === 'cancel' && req.method === 'POST') {
         record(sessionId); const result = await sessions.cancel(sessionId)
@@ -180,7 +211,10 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
         return writeJson(res, 200, await sessions.respondApproval({ sessionId, ...payload }))
       }
       if (action === 'models' && req.method === 'GET') {
-        record(sessionId); return writeJson(res, 200, await models.sessionModels(sessionId))
+        // Native session.models reads the persisted selection for a cold session.
+        // Route reference scans must not depend on this Gateway's in-memory
+        // record, which is empty again after every managed DSH restart.
+        return writeJson(res, 200, await models.sessionModels(sessionId))
       }
       if (action === 'models' && req.method === 'PUT') {
         record(sessionId); const payload = await readJson(req)

@@ -29,12 +29,19 @@ export interface DshPin {
   notes: string[]
 }
 
-/** 读取 tests/contract/dsh-pin.json（pin 的单一事实源）。 */
+/**
+ * 默认读取正式 pin；隔离候选可显式给出只读 pin 副本。候选覆盖不修改正式
+ * `tests/contract/dsh-pin.json`，因此不能意外把日常 vendor 指到新 generation。
+ */
 export async function loadPin(): Promise<DshPin> {
-  const text = await readFile(join(contractDir, 'dsh-pin.json'), 'utf8')
+  const configured = process.env.WEFTMATE_DSH_PIN_FILE
+  const pinPath = configured === undefined || configured === ''
+    ? join(contractDir, 'dsh-pin.json')
+    : resolve(repoRoot, configured)
+  const text = await readFile(pinPath, 'utf8')
   const pin = JSON.parse(text) as DshPin
   if (typeof pin.packageVersion !== 'string' || typeof pin.commit !== 'string' || typeof pin.repo !== 'string') {
-    throw new Error(`dsh-pin.json 缺字段：${text}`)
+    throw new Error(`DSH pin 缺字段（${pinPath}）：${text}`)
   }
   return pin
 }

@@ -1,8 +1,8 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 // The official DSH document is intentionally not given the legacy WeftMate
-// renderer bridge. This is its entire Electron capability: report a resolved
-// palette and a strictly bounded computed body colour for the native titlebar.
+// renderer bridge. Its capabilities are bounded theme reporting and managed
+// Mod view navigation; generated Mod frames never receive this bridge.
 function normalizeSurfaceColor(value) {
   if (typeof value !== 'string') return null;
   const color = value.trim();
@@ -20,4 +20,11 @@ contextBridge.exposeInMainWorld('weftmateSurface', Object.freeze({
     theme: theme === 'dark' ? 'dark' : 'light',
     color: normalizeSurfaceColor(color),
   }),
+  openModWindow: (projectId, sessionId) => ipcRenderer.invoke('wm:mod-window:open', { projectId, sessionId }),
+  onOpenModProject(callback) {
+    if (typeof callback !== 'function') throw new TypeError('callback required')
+    const listener = (_event, target) => callback({ projectId: target?.projectId, sessionId: target?.sessionId })
+    ipcRenderer.on('wm:mod-window:open-project', listener)
+    return () => ipcRenderer.removeListener('wm:mod-window:open-project', listener)
+  },
 }));

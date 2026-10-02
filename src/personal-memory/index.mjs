@@ -1,0 +1,507 @@
+import { lstat, open, readFile, rename, rm } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import path from 'node:path';
+import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
+import { MemoWeftRpc } from './rpc.mjs';
+import { createMemoryCommandJournal } from './journal.mjs';
+
+const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
+  'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
+  'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup'];
+const MAX_ACTIVE_OWNERS = 4;
+const MAX_OUTBOX_ITEMS = 200;
+const MAX_OUTBOX_BYTES = 8 * 1024 * 1024;
+
+const error = (code) => Object.assign(new Error(code), { code });
+const owner = (value) => {
+  if (typeof value !== 'string' || !OWNER.test(value)) throw error('MEMORY_OWNER_UNAVAILABLE');
+  return value;
+};
+
+/** Lazily owns one MemoWeft RPC v2 process and private data root per account. */
+export function createPersonalMemoryManager({ root, enabled = false, python, pythonPath,
+  baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
+  maxActiveOwners = MAX_ACTIVE_OWNERS }) {
+  if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
+      typeof credential !== 'function' || typeof rpcFactory !== 'function' ||
+      !Number.isInteger(maxActiveOwners) || maxActiveOwners < 1 || maxActiveOwners > 16 ||
+      (enabled && (typeof python !== 'string' || !path.isAbsolute(python) ||
+        typeof pythonPath !== 'string' || !path.isAbsolute(pythonPath) ||
+        typeof baseUrl !== 'string' || !/^http:\/\/127\.0\.0\.1:\d{1,5}\/v1$/.test(baseUrl) ||
+        model !== '@current'))) {
+    throw error('MEMORY_CONFIGURATION_INVALID');
+  }
+  const entries = new Map();
+  const failures = new Map();
+  const boundaryFailures = new Map();
+  const boundaryFlights = new Set();
+  const outboxQueues = new Map();
+  const homePromises = new Map();
+  const journal = createMemoryCommandJournal({ root });
+  const commandFlights = new Map();
+  let closing = false;
+  let startQueue = Promise.resolve();
+
+  async function preparePrivateHome(ownerId) {
+    const accountRoot = await ensurePrivateDirectory(path.join(root, 'accounts', ownerId));
+    const home = await ensurePrivateDirectory(path.join(accountRoot, 'memory-home'));
+    const data = await ensurePrivateDirectory(path.join(home, 'memoweft'));
+    for (const name of ['memoweft.sqlite3', 'memoweft.sqlite3-wal', 'memoweft.sqlite3-shm']) {
+      const file = path.join(data, name);
+      const info = await lstat(file).catch((cause) => {
+        if (cause?.code === 'ENOENT') return null;
+        throw cause;
+      });
+      if (info) await ensurePrivateFile(file);
+    }
+    return home;
+  }
+  function privateHome(ownerId) {
+    if (!homePromises.has(ownerId)) {
+      const work = preparePrivateHome(ownerId).catch((cause) => {
+        homePromises.delete(ownerId);
+        throw cause;
+      });
+      homePromises.set(ownerId, work);
+    }
+    return homePromises.get(ownerId);
+  }
+
+  const outboxFile = (ownerId) => path.join(root, 'accounts', ownerId, 'memory-home', 'boundary-outbox.json');
+  function queueOutbox(ownerId, task) {
+    const prior = outboxQueues.get(ownerId) ?? Promise.resolve();
+    const work = prior.catch(() => {}).then(task);
+    outboxQueues.set(ownerId, work.catch(() => {}));
+    return work;
+  }
+  async function readOutbox(ownerId) {
+    const file = outboxFile(ownerId);
+    const info = await lstat(file).catch((cause) => cause?.code === 'ENOENT' ? null : Promise.reject(cause));
+    if (!info) return { version: 2, ownerId, items: [],
+      discardedBoundaryCount: 0, lastFailureCode: null };
+    await ensurePrivateFile(file);
+    if (!info.isFile() || info.size > MAX_OUTBOX_BYTES) throw error('MEMORY_OUTBOX_CORRUPT');
+    let state;
+    try { state = JSON.parse(await readFile(file, 'utf8')); }
+    catch { throw error('MEMORY_OUTBOX_CORRUPT'); }
+    if (![1, 2].includes(state?.version) || state?.ownerId !== ownerId || !Array.isArray(state.items) ||
+        state.items.length > MAX_OUTBOX_ITEMS) {
+      throw error('MEMORY_OUTBOX_CORRUPT');
+    }
+    const items = state.items.map((item) => state.version === 1
+      ? { boundary: item, blocked: false, lastFailureCode: null } : item);
+    if (items.some((item) => !item || typeof item !== 'object' ||
+        !item.boundary || typeof item.boundary !== 'object' ||
+        typeof item.boundary.event_id !== 'string' ||
+        typeof item.blocked !== 'boolean' ||
+        (item.lastFailureCode !== null &&
+          (typeof item.lastFailureCode !== 'string' || item.lastFailureCode.length > 80)))) {
+      throw error('MEMORY_OUTBOX_CORRUPT');
+    }
+    if (state.version === 2 &&
+        (!Number.isSafeInteger(state.discardedBoundaryCount) || state.discardedBoundaryCount < 0 ||
+          (state.lastFailureCode !== null &&
+            (typeof state.lastFailureCode !== 'string' || state.lastFailureCode.length > 80)))) {
+      throw error('MEMORY_OUTBOX_CORRUPT');
+    }
+    return { version: 2, ownerId, items,
+      discardedBoundaryCount: state.version === 2 ? state.discardedBoundaryCount : 0,
+      lastFailureCode: state.version === 2 ? state.lastFailureCode : null };
+  }
+  async function writeOutbox(ownerId, state) {
+    const file = outboxFile(ownerId);
+    const body = JSON.stringify(state);
+    if (Buffer.byteLength(body, 'utf8') > MAX_OUTBOX_BYTES) throw error('MEMORY_OUTBOX_FULL');
+    const tmp = `${file}.${randomUUID()}.tmp`;
+    let handle;
+    try {
+      handle = await open(tmp, 'wx', 0o600);
+      await handle.writeFile(body, 'utf8');
+      await handle.sync();
+      await handle.close(); handle = null;
+      await ensurePrivateFile(tmp);
+      await rename(tmp, file);
+      await ensurePrivateFile(file);
+    } finally {
+      await handle?.close().catch(() => {});
+      await rm(tmp, { force: true }).catch(() => {});
+    }
+  }
+
+  const boundaryFailureCode = (cause) => {
+    if (cause?.code === 'hard_deleted_source') return 'MEMORY_SOURCE_DELETED';
+    if (cause?.code === 'internal_error') return 'MEMORY_BOUNDARY_BLOCKED';
+    if (['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_TIMEOUT', 'MEMORY_BUSY', 'MEMORY_CLOSING'].includes(cause?.code)) {
+      return cause.code;
+    }
+    return 'MEMORY_BOUNDARY_FAILED';
+  };
+  async function noteBoundaryFailure(ownerId, eventId, cause) {
+    const code = boundaryFailureCode(cause);
+    boundaryFailures.set(ownerId, code);
+    await queueOutbox(ownerId, async () => {
+      const latest = await readOutbox(ownerId);
+      const row = latest.items.find((item) => item.boundary.event_id === eventId);
+      if (!row) return;
+      if (code === 'MEMORY_SOURCE_DELETED') {
+        latest.items = latest.items.filter((item) => item !== row);
+        latest.discardedBoundaryCount++;
+        latest.lastFailureCode = code;
+        await writeOutbox(ownerId, latest);
+        return;
+      }
+      row.lastFailureCode = code;
+      // Core currently reports both hard-deleted origins and ordinary evidence conflicts as
+      // internal_error. Keep the original privately for review; never silently replay it.
+      row.blocked = code === 'MEMORY_BOUNDARY_BLOCKED';
+      await writeOutbox(ownerId, latest);
+    });
+    const backlog = await outboxStatus(ownerId);
+    const entry = entries.get(ownerId);
+    if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
+    if (code === 'MEMORY_SOURCE_DELETED' && backlog.pendingBoundaryCount === 0) {
+      boundaryFailures.delete(ownerId);
+    }
+    return code;
+  }
+  async function outboxStatus(ownerId) {
+    const state = await queueOutbox(ownerId, () => readOutbox(ownerId));
+    const blockedBoundaryCount = state.items.filter((item) => item.blocked).length;
+    return { pendingBoundaryCount: state.items.length, blockedBoundaryCount,
+      discardedBoundaryCount: state.discardedBoundaryCount,
+      lastFailureCode: state.items.findLast((item) => item.lastFailureCode)?.lastFailureCode ??
+        state.lastFailureCode };
+  }
+  async function flushPending(ownerId) {
+    if (closing) return;
+    let pending;
+    try { pending = await queueOutbox(ownerId, () => readOutbox(ownerId)); }
+    catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return; }
+    for (const row of pending.items) {
+      if (closing) return;
+      if (row.blocked) continue;
+      const boundary = row.boundary;
+      if (boundaryFlights.has(`${ownerId}\0${boundary.event_id}`)) continue;
+      try {
+        await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }));
+        await queueOutbox(ownerId, async () => {
+          const latest = await readOutbox(ownerId);
+          latest.items = latest.items.filter((item) => item.boundary.event_id !== boundary.event_id);
+          await writeOutbox(ownerId, latest);
+        });
+        const backlog = await outboxStatus(ownerId);
+        const entry = entries.get(ownerId);
+        if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
+        if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
+      } catch (cause) {
+        let code;
+        try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause); }
+        catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); }
+        if (code === 'MEMORY_SOURCE_DELETED') continue;
+        return;
+      }
+    }
+  }
+
+  async function prepare(ownerId) {
+    if (closing) throw error('MEMORY_CLOSING');
+    const existing = entries.get(ownerId);
+    if (existing?.ready && existing.rpc.child) return existing;
+    if (existing?.initializing) return existing.initializing;
+    if (existing?.active > 0) throw error('MEMORY_BUSY');
+    if (existing) { entries.delete(ownerId); await existing.rpc.close().catch(() => {}); }
+    if (entries.size >= maxActiveOwners) {
+      const idle = [...entries.entries()].filter(([, entry]) => entry.active === 0 && !entry.initializing)
+        .sort((a, b) => a[1].lastUsed - b[1].lastUsed)[0];
+      if (!idle) throw error('MEMORY_BUSY');
+      entries.delete(idle[0]);
+      await idle[1].rpc.close();
+    }
+    const home = await privateHome(ownerId);
+    const rpc = rpcFactory({ python, pythonPath, env: { MEMOWEFT_BASE_URL: baseUrl, MEMOWEFT_WORLD_MODEL: model } });
+    const entry = { rpc, ready: false, active: 0, lastUsed: Date.now(),
+      capabilities: null, routeReady: false, backlogCount: null, initializing: null };
+    entries.set(ownerId, entry);
+    entry.initializing = (async () => {
+      const before = await rpc.request('capabilities');
+      if (before?.protocol !== 'memoweft.dsh_rpc' || before?.protocol_version !== 2 ||
+          before?.schema_version !== 1 || !Array.isArray(before?.methods) ||
+          REQUIRED_METHODS.some((name) => !before.methods.includes(name))) {
+        throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
+      }
+      const key = await credential(ownerId);
+      const initialized = await rpc.request('initialize', {
+        session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
+        platform: 'dsh', model_tier: 'local', lang: 'zh', auto_route: typeof key === 'string' && !!key,
+        ...(typeof key === 'string' && key ? { model_api_key: key } : {}),
+      });
+      if (initialized?.runtime?.subject_id !== ownerId ||
+          path.resolve(initialized.runtime.db_path ?? '') !== path.join(home, 'memoweft', 'memoweft.sqlite3')) {
+        throw error('MEMORY_IDENTITY_MISMATCH');
+      }
+      const capabilities = initialized.capabilities;
+      if (!capabilities || capabilities.subject_id !== ownerId ||
+          !Array.isArray(capabilities?.services?.command?.operations)) {
+        throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
+      }
+      entry.capabilities = capabilities;
+      const health = await rpc.request('health');
+      if (health?.runtime?.subject_id !== ownerId) throw error('MEMORY_IDENTITY_MISMATCH');
+      entry.routeReady = health.runtime.route_ready === true;
+      const backlog = await outboxStatus(ownerId);
+      entry.backlogCount = backlog.pendingBoundaryCount;
+      if (backlog.pendingBoundaryCount > 0) boundaryFailures.set(ownerId,
+        backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED' ? 'MEMORY_BOUNDARY_PENDING'
+          : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
+      entry.ready = true;
+      entry.initializing = null;
+      failures.delete(ownerId);
+      queueMicrotask(() => { void flushPending(ownerId); });
+      return entry;
+    })().catch(async (cause) => {
+      entry.initializing = null;
+      entry.ready = false;
+      entries.delete(ownerId);
+      failures.set(ownerId, cause?.code ?? 'MEMORY_UNAVAILABLE');
+      await rpc.close().catch(() => {});
+      throw cause;
+    });
+    return entry.initializing;
+  }
+
+  function acquire(ownerId) {
+    owner(ownerId);
+    if (!enabled) throw error('MEMORY_DISABLED');
+    if (closing) throw error('MEMORY_CLOSING');
+    const work = startQueue.then(() => prepare(ownerId));
+    startQueue = work.catch(() => {});
+    return work;
+  }
+
+  async function withOwner(ownerId, work) {
+    const entry = await acquire(ownerId);
+    entry.active++;
+    entry.lastUsed = Date.now();
+    try { return await work(entry); }
+    catch (cause) {
+      if (cause?.code === 'MEMORY_PROCESS_UNAVAILABLE' || cause?.code === 'MEMORY_TIMEOUT' ||
+          cause?.code === 'MEMORY_PROTOCOL_ERROR') {
+        entry.ready = false;
+        failures.set(ownerId, cause.code);
+      }
+      throw cause;
+    } finally { entry.active--; entry.lastUsed = Date.now(); }
+  }
+
+  const commandOperations = (entry) => new Set(entry?.capabilities?.services?.command?.operations ?? []);
+  const capabilities = (entry) => ({ list: Boolean(entry?.ready), source: Boolean(entry?.ready),
+    inject: Boolean(entry?.ready && entry.routeReady),
+    correct: Boolean(entry?.ready && commandOperations(entry).has('correct_world_item')),
+    mute: Boolean(entry?.ready && commandOperations(entry).has('mute_world_item')),
+    deleteEvidence: Boolean(entry?.ready && commandOperations(entry).has('delete_evidence')),
+    deleteWorldItem: Boolean(entry?.ready && commandOperations(entry).has('delete_world_item')) });
+
+  async function cleanupAfterDelete(ownerId, command, result) {
+    if (!['delete_evidence', 'delete_world_item'].includes(command.operation)) return result;
+    const receipt = result?.receipt ?? result;
+    if (!['applied', 'no_change'].includes(receipt?.result_state)) return result;
+    const ids = [command.target_id, ...(Array.isArray(receipt.affected_ids)
+      ? receipt.affected_ids.filter((id) => typeof id === 'string' && id.length <= 512) : [])];
+    try { await journal.redactTargets(ownerId, ids); return result; }
+    catch {
+      const pending = { ...receipt,
+        storage_cleanup: { state: 'pending', detail_code: 'host_journal_cleanup_pending' } };
+      return result?.receipt ? { ...result, receipt: pending } : pending;
+    }
+  }
+
+  return {
+    enabled,
+    peek(ownerId) {
+      owner(ownerId);
+      if (!enabled) return 'disabled';
+      const entry = entries.get(ownerId);
+      return entry?.ready && entry.routeReady && entry.backlogCount === 0 && entry.rpc?.child &&
+        !boundaryFailures.has(ownerId)
+        ? 'connected' : 'unknown';
+    },
+    async status(ownerId) {
+      owner(ownerId);
+      if (!enabled) return { state: 'disabled', worldRevision: null, capabilities: capabilities(null),
+        pendingBoundaryCount: 0, blockedBoundaryCount: 0, discardedBoundaryCount: 0,
+        lastFailureCode: null };
+      try {
+        return await withOwner(ownerId, async (entry) => {
+          const health = await entry.rpc.request('health');
+          const revisionResult = await entry.rpc.request('query_world', { operation: 'revision' });
+          const backlog = await outboxStatus(ownerId);
+          entry.backlogCount = backlog.pendingBoundaryCount;
+          const revision = revisionResult?.world_revision ?? revisionResult?.revision;
+          entry.routeReady = health?.runtime?.route_ready === true;
+          const ready = entry.routeReady && backlog.pendingBoundaryCount === 0;
+          if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
+          else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
+            ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
+          return { state: ready ? 'ready' : 'degraded',
+            worldRevision: Number.isSafeInteger(revision) ? revision : null,
+            capabilities: { ...capabilities(entry), inject: ready }, ...backlog,
+            ...(!entry.routeReady ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
+              : backlog.pendingBoundaryCount ? { reasonCode: backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
+                ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING' } : {}) };
+        });
+      } catch (cause) {
+        const code = cause?.code === 'MEMORY_OUTBOX_CORRUPT' ? cause.code
+          : failures.get(ownerId) ?? 'MEMORY_UNAVAILABLE';
+        return { state: 'unavailable', worldRevision: null, capabilities: capabilities(null),
+          pendingBoundaryCount: null, blockedBoundaryCount: null,
+          discardedBoundaryCount: null,
+          lastFailureCode: code, reasonCode: code };
+      }
+    },
+    query(ownerId, method, params) { return withOwner(ownerId, (entry) => entry.rpc.request(method, params)); },
+    async recall(ownerId, { query, sessionId }) {
+      owner(ownerId);
+      if (typeof query !== 'string' || !query.trim() || query.length > 500 ||
+          typeof sessionId !== 'string' || sessionId.length > 128) throw error('MEMORY_REQUEST_INVALID');
+      return withOwner(ownerId, async (entry) => {
+        if (!entry.routeReady) return { state: 'withheld', reasonCode: 'MEMORY_MODEL_UNAVAILABLE' };
+        const backlog = await outboxStatus(ownerId);
+        if (backlog.pendingBoundaryCount > 0) return { state: 'withheld',
+          reasonCode: backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
+            ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING' };
+        const [world, interaction] = await Promise.all([
+          entry.rpc.request('preview_recall', { query }),
+          entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model' }),
+        ]);
+        const fragments = [world?.preview?.rendered_recall, interaction?.rendered_context]
+          .filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim());
+        const contextText = fragments.join('\n\n').slice(0, 16_384);
+        return { state: 'ready', contextText, worldRevision: Number.isSafeInteger(world?.world_revision)
+          ? world.world_revision : null, sourceCount: Array.isArray(world?.preview?.selected_item_ids)
+            ? world.preview.selected_item_ids.length : 0 };
+      });
+    },
+    async ingest(ownerId, boundary) {
+      owner(ownerId);
+      if (!enabled) throw error('MEMORY_DISABLED');
+      if (!boundary || typeof boundary !== 'object' || Array.isArray(boundary) ||
+          typeof boundary.event_id !== 'string' || !/^[A-Za-z0-9._:-]{1,180}$/.test(boundary.event_id) ||
+          Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 128 * 1024) throw error('MEMORY_REQUEST_INVALID');
+      await privateHome(ownerId);
+      await queueOutbox(ownerId, async () => {
+        const state = await readOutbox(ownerId);
+        const prior = state.items.find((item) => item.boundary.event_id === boundary.event_id);
+        if (prior) {
+          if (JSON.stringify(prior.boundary) !== JSON.stringify(boundary)) throw error('MEMORY_EVENT_CONFLICT');
+          return;
+        }
+        if (state.items.length >= MAX_OUTBOX_ITEMS) throw error('MEMORY_OUTBOX_FULL');
+        state.items.push({ boundary, blocked: false, lastFailureCode: null });
+        await writeOutbox(ownerId, state);
+      });
+      const blocked = await queueOutbox(ownerId, async () => (await readOutbox(ownerId))
+        .items.some((item) => item.boundary.event_id === boundary.event_id && item.blocked));
+      if (blocked) {
+        return { state: 'blocked', reasonCode: 'MEMORY_BOUNDARY_BLOCKED' };
+      }
+      const flight = `${ownerId}\0${boundary.event_id}`;
+      boundaryFlights.add(flight);
+      try {
+        const result = await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }));
+        await queueOutbox(ownerId, async () => {
+          const state = await readOutbox(ownerId);
+          state.items = state.items.filter((item) => item.boundary.event_id !== boundary.event_id);
+          await writeOutbox(ownerId, state);
+        });
+        const backlog = await outboxStatus(ownerId);
+        const entry = entries.get(ownerId);
+        if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
+        if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
+        else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
+          ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
+        return { state: 'accepted', jobState: result?.job_state ?? 'unknown' };
+      } catch (cause) {
+        let code;
+        try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause); }
+        catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return { state: 'blocked', reasonCode: 'MEMORY_OUTBOX_CORRUPT' }; }
+        return { state: code === 'MEMORY_SOURCE_DELETED' ? 'discarded'
+          : code === 'MEMORY_BOUNDARY_BLOCKED' ? 'blocked' : 'queued', reasonCode: code };
+      } finally { boundaryFlights.delete(flight); }
+    },
+    submit(ownerId, command) { return withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command })); },
+    receipt(ownerId, commandId) { return withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
+      { command_id: commandId })); },
+    async submitCommand(ownerId, proposal) {
+      owner(ownerId);
+      await privateHome(ownerId);
+      const marker = await journal.reserve({ ownerId, ...proposal });
+      const command = marker.command;
+      const key = `${ownerId}\0${proposal.requestId}`;
+      if (commandFlights.has(key)) return commandFlights.get(key);
+      const work = (async () => {
+        let result;
+        try { result = await withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
+          { command_id: command.command_id })); }
+        catch (cause) { if (cause?.code !== 'command_receipt_not_found') throw cause; }
+        if (!result) {
+          if (marker.redacted === true) throw error('MEMORY_REPLAY_REDACTED');
+          result = await withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command }));
+        }
+        return { ...await cleanupAfterDelete(ownerId, command, result), operation: command.operation };
+      })();
+      commandFlights.set(key, work);
+      try { return await work; } finally { commandFlights.delete(key); }
+    },
+    async receiptByRequest(ownerId, requestId) {
+      owner(ownerId);
+      const marker = await journal.get(ownerId, requestId);
+      if (!marker) throw error('command_receipt_not_found');
+      const result = await withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
+        { command_id: marker.command.command_id }));
+      return { ...await cleanupAfterDelete(ownerId, marker.command, result),
+        operation: marker.command.operation };
+    },
+    async retryCleanupByRequest(ownerId, requestId) {
+      owner(ownerId);
+      const marker = await journal.get(ownerId, requestId);
+      if (!marker) throw error('command_receipt_not_found');
+      if (!['delete_evidence', 'delete_world_item'].includes(marker.command.operation)) {
+        throw error('MEMORY_ACTION_UNSUPPORTED');
+      }
+      const key = `${ownerId}\0${requestId}`;
+      if (commandFlights.has(key)) await commandFlights.get(key);
+      const work = (async () => {
+        const query = () => withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
+          { command_id: marker.command.command_id }));
+        let result = await query();
+        const receipt = result?.receipt ?? result;
+        if (['applied', 'no_change'].includes(receipt?.result_state) &&
+            receipt?.storage_cleanup?.state === 'pending') {
+          try {
+            result = await withOwner(ownerId, (entry) => entry.rpc.request('retry_delete_storage_cleanup',
+              { command_id: marker.command.command_id }));
+          } catch { result = await query().catch(() => result); }
+        }
+        return { ...await cleanupAfterDelete(ownerId, marker.command, result),
+          operation: marker.command.operation };
+      })();
+      commandFlights.set(key, work);
+      try { return await work; } finally { commandFlights.delete(key); }
+    },
+    hasOperation(ownerId, operation) {
+      owner(ownerId);
+      return commandOperations(entries.get(ownerId)).has(operation);
+    },
+    async close() {
+      if (closing) return;
+      closing = true;
+      await startQueue.catch(() => {});
+      await Promise.all([...outboxQueues.values()].map((pending) => pending.catch(() => {})));
+      await Promise.all([...commandFlights.values()].map((pending) => pending.catch(() => {})));
+      await journal.close();
+      await Promise.all([...entries.values()].map((entry) => entry.rpc.close().catch(() => {})));
+      entries.clear();
+    },
+  };
+}
