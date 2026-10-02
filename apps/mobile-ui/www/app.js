@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 const state = { page:'chat', conversationId:null, conversations:[], model:null, busy:false, modelSwitching:false, transitionPending:false,
   phase:'idle', progressText:'', loggedIn:false, connection:'local',backgroundSync:'unknown',authEpoch:0,booted:false,
   username:'', owner:'', ui:null, draft:'', models:[], menu:false, attachmentMenu:false, attachmentPick:null, previewScope:null, previewReturnFocus:null, drawer:false, scrollPinned:true, generation:0,memory:null,lastTerminal:null,sendUncertain:false,
-  chatSource:'phone',thingsDetail:null,taskControlAttempt:null,taskControlDrafts:new Map(),restorePending:false,sharedSessionId:null,sharedSessions:[],sharedHostAvailable:false,sharedEvents:[],sharedNextSeq:-1,
+  chatSource:'phone',thingsDetail:null,taskControlAttempt:null,taskControlDrafts:new Map(),taskControlPollTimer:null,taskControlPollGeneration:0,taskControlPollCount:0,taskControlPollStartedAt:0,taskLabels:new Map(),taskLabelOwner:null,taskLabelEpoch:-1,restorePending:false,sharedSessionId:null,sharedSessions:[],sharedHostAvailable:false,sharedEvents:[],sharedNextSeq:-1,
   sharedRunning:false,sharedError:'',sharedPending:null,sharedOutboxLoading:false,sharedAwaiting:null,sharedChecking:null,sharedStopping:false,sharedGeneration:0,sharedLoading:false,sharedPollTimer:null };
 const pending = new Map();
 const attachmentDrafts = new Map();
@@ -303,7 +303,7 @@ function placeModelMenu(){const top=$('model-button').getBoundingClientRect().to
   popup.style.bottom=`${Math.max(110,window.innerHeight-top+8)}px`;
   popup.style.maxHeight=`${Math.min(300,Math.max(160,top-24),Math.floor(window.innerHeight*.46))}px`}
 function page(name){
-  const previousPage=state.page;closeDrawer();closeModelMenu();closeAttachmentMenu();if(name!=='chat'){
+  stopTaskControlObservation();const previousPage=state.page;closeDrawer();closeModelMenu();closeAttachmentMenu();if(name!=='chat'){
     closeImagePreview({restoreFocus:false});invalidateLiveProgress();cancelAttachmentPick();stopSharedPoll();if(state.restorePending){state.restorePending=false;loadDraft();updateComposer()}}state.page=name;state.generation++;
   $('chat-page').classList.toggle('active',name==='chat');$('generic-page').classList.toggle('active',name!=='chat');
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
@@ -1383,7 +1383,9 @@ function modelsPage(target){target.append(heading('对话模型','手机直连�
           catch(e){toast(safeError(e),true)}}))}
     }).catch(e=>{clear(hostBody);hostBody.append(el('p','inline-error',safeError(e)))})}
 }
-function thingsPage(target){state.thingsDetail=null;
+function thingsPage(target){stopTaskControlObservation();state.thingsDetail=null;
+  if(state.taskLabelOwner!==state.owner||state.taskLabelEpoch!==state.authEpoch){
+    state.taskLabels.clear();state.taskLabelOwner=state.owner;state.taskLabelEpoch=state.authEpoch}
   target.append(heading('正在做的事','这里汇总手机回合与电脑命令。命令已受理不代表回复或动作已经完成。'));
   if(!state.loggedIn){target.append(notice('请登录自己的账户后查看任务与手机回合。其他账户的记录不会在这里显示。'));return}
   if(state.busy)target.append(group('进行中',[row('手机模型正在回复','可以返回对话停止',()=>page('chat'))]));
@@ -1392,11 +1394,13 @@ function thingsPage(target){state.thingsDetail=null;
   call('activity.list').then(result=>{if(state.page!=='things'||state.generation!==gen||
     state.owner!==owner||state.authEpoch!==epoch||state.thingsDetail)return;loading.remove();
     const activities=groupTaskActivities(result.activities||[]);if(!activities.length)target.append(notice('当前没有可显示的活动。手机回合与电脑任务会按当前账户分别记录。'));
-    else target.append(group('最近活动',activities.map(item=>row(item.source==='host'?hostActivityTitle(item):item.title,
+    else {const entries=activities.map(item=>({item,button:row(item.source==='host'?hostActivityTitle(item):item.title,
       `${item.source==='host'?'电脑':'手机'} · ${item.source==='host'?taskActivityStatus(item):activityStatus(item.status)}${item.summary?' · '+item.summary:''}`,
       ()=>{if(item.source==='phone'&&item.conversationId)selectConversation(item.conversationId);
         else if(item.source==='host'&&item.commandId)showHostCommandDetail(item);
-        else toast('这条活动没有可读取的详情',true)}))));
+        else toast('这条活动没有可读取的详情',true)})}));
+      target.append(group('最近活动',entries.map(entry=>entry.button)));
+      void loadVisibleTaskLabels(entries,target,gen,owner,epoch)}
     if(state.loggedIn&&!result.hostAvailable)target.append(notice('电脑活动暂时无法读取；手机记录仍可查看。'));
   }).catch(e=>{if(state.page!=='things'||state.generation!==gen||state.owner!==owner||state.authEpoch!==epoch||state.thingsDetail)return;
     loading.textContent=safeError(e);loading.className='inline-error'});
@@ -1426,7 +1430,28 @@ function hostActivityTitle(item){const session=state.sharedSessions.find(row=>ro
   const file=item.kind==='session.message'&&item.children?.find(child=>verifiedArtifact(child)&&
     typeof child.fileName==='string'&&child.fileName.trim());
   if(file)return `生成：${file.fileName.trim()}`;
+  const label=item.kind==='session.message'&&state.taskLabels.get(item.taskId||item.commandId);
+  if(label)return `电脑任务：${label}`;
   return item.kind==='session.message'&&session?.title?`电脑任务：${session.title}`:hostActionLabel(item.kind)}
+ async function loadVisibleTaskLabels(entries,target,generation,owner,epoch){
+   const current=()=>state.page==='things'&&!state.thingsDetail&&state.generation===generation&&
+     state.owner===owner&&state.authEpoch===epoch&&state.taskLabelOwner===owner&&state.taskLabelEpoch===epoch;
+   const candidates=entries.filter(({item})=>item.source==='host'&&item.kind==='session.message'&&
+     sessionIdPattern.test(item.taskId||item.commandId||'')&&!item.children?.some(verifiedArtifact)&&
+     !state.taskLabels.has(item.taskId||item.commandId)).slice(0,8);
+   let next=0;
+   const worker=async()=>{while(current()&&next<candidates.length){const entry=candidates[next++];
+     const taskId=entry.item.taskId||entry.item.commandId;
+     try{const result=await call('shared.commands.detail',{commandId:taskId});
+       if(!current())return;
+       const command=result?.command;
+       if(command?.commandId!==taskId||command.kind!=='session.message'||command.rootTaskId||
+         typeof command.taskLabel!=='string'||!command.taskLabel.trim()||command.taskLabel.length>100)continue;
+       state.taskLabels.set(taskId,command.taskLabel);
+       if(target.contains(entry.button))entry.button.children[0].children[0].textContent=hostActivityTitle(entry.item)
+     }catch{ /* The existing title remains usable when a label is unavailable. */ }
+   }};
+   await Promise.all([worker(),worker()])}
 function hostCommandStatus(value){return {pending:'等待电脑受理',dispatching:'正在派发',accepted_by_dsh:'已交给电脑会话',
   accepted_by_host:'电脑已受理',observed:'已观察到结果',uncertain:'结果待确认',rejected:'未受理'}[value]||'状态待确认'}
 function commandTime(value){const date=new Date(value);return Number.isFinite(date.getTime())?
@@ -1449,7 +1474,14 @@ async function openHostCommandSession(sessionId){if(!sessionId)return;
   selectSharedSession(sessionId)}
 function artifactSize(value){return Number.isSafeInteger(value)&&value>=0?
   value<1024?`${value} 字节`:`${(value/1024).toFixed(1)} KiB`:'大小待确认'}
-function taskControlMeaning(control){if(control?.state==='stop_requested'&&control.reasonCode==='TURN_ENDED_AFTER_STOP_REQUEST'&&
+function taskControlMeaning(control){if(control?.state==='stop_requested'&&typeof control.stopStatus==='string'){
+  if(control.stopStatus==='stopped')return '电脑已核对这件事的实际停止。已执行的步骤与成果会保留。';
+  if(control.stopStatus==='completed')return '这件事的回合已正常结束；停止请求没有已证实的中断结果。核对成果后可写明下一步。';
+  if(control.stopStatus==='cancel_requested')return '电脑已对准这件事发起取消，正在等待实际结束记录。';
+  if(control.legacyStopIntent&&!control.canResume)return '旧停止记录缺少完整目标快照，结果仍待核对。请查看原会话与成果，稍后刷新任务。';
+  if(control.stopStatus==='requested')return '停止请求已记录，正在核对电脑回合；目前还不能确认已停止。';
+  return '停止结果仍不明确。请核对原会话与成果，稍后刷新任务；不要重复执行。'}
+  if(control?.state==='stop_requested'&&control.reasonCode==='TURN_ENDED_AFTER_STOP_REQUEST'&&
   control.canResume===true)return '上一回合已结束，但尚不能确认是停止请求使它结束。请写明下一步，再恢复这件事。';
   return {active:'事情仍可继续处理；文件完成以电脑读回核验为准。',
   stop_requested:'停止意图已记录，执行端状态仍待核对。',stopped:'执行端停止已核对。',
@@ -1461,7 +1493,10 @@ function taskStepStatus(step){if(step.state==='observed')return step.verificatio
 function taskControlGroup(taskId,control,current){const section=group('补充与控制',[]),body=section.querySelector('.group-body');
   body.append(el('p','task-control-state',taskControlMeaning(control)));
   if(control?.stopRequestedAt)body.append(el('p','command-fact',`停止意图：${commandTime(control.stopRequestedAt)}`));
-  if(control?.stoppedAt)body.append(el('p','command-fact',`停止核对：${commandTime(control.stoppedAt)}`));
+  if(control?.stopStatus==='stopped'&&control.stopObservedAt)body.append(el('p','command-fact',`停止核对：${commandTime(control.stopObservedAt)}`));
+  else if(control?.stoppedAt)body.append(el('p','command-fact',`停止核对：${commandTime(control.stoppedAt)}`));
+  if(control?.state==='stop_requested'&&Number.isSafeInteger(control.pendingReceipts)&&control.pendingReceipts>0)
+    body.append(el('p','command-fact','仍有回合或执行结果待核对。'));
   const attempt=state.taskControlAttempt;
   if(attempt?.taskId===taskId&&attempt.owner===state.owner&&attempt.epoch===state.authEpoch&&attempt.unknown){
     body.append(notice('上次操作回执尚不明确。请先刷新任务；重试会沿用同一请求编号。'));
@@ -1507,7 +1542,29 @@ async function submitTaskControl(taskId,action,text,current,input,section){if(!c
       body.append(notice('回执尚不明确，请先刷新任务；重试会沿用同一请求编号。'),
         action('重试同一请求',()=>submitTaskControl(taskId,action,value,current,null,section),false))}
   }finally{attempt.busy=false;if(!attempt.unknown&&current())for(const control of section?.querySelectorAll?.('button,textarea')||[])control.disabled=false}}
-function showTaskDetail(taskId){if(!taskId||state.page!=='things')return;
+ function stopTaskControlObservation(){clearTimeout(state.taskControlPollTimer);state.taskControlPollTimer=null;state.taskControlPollGeneration++}
+ function scheduleTaskControlObservation(taskId,control,current,statusNode,pollGeneration){
+   clearTimeout(state.taskControlPollTimer);state.taskControlPollTimer=null;
+   if(control?.state!=='stop_requested'||typeof control.stopStatus!=='string'||control.canResume===true||
+     ['stopped','completed'].includes(control.stopStatus)||state.taskControlAttempt?.unknown)return;
+   if(state.taskControlPollCount>=8||Date.now()-state.taskControlPollStartedAt>=20000){
+     statusNode.textContent+=' 自动核对已暂停，可点“刷新任务”。';return}
+   state.taskControlPollTimer=setTimeout(async()=>{state.taskControlPollTimer=null;
+     if(!current()||state.taskControlPollGeneration!==pollGeneration)return;
+     state.taskControlPollCount++;
+     try{const task=await call('shared.tasks.detail',{taskId});
+       if(!current()||state.taskControlPollGeneration!==pollGeneration)return;
+       if(task?.taskId!==taskId||!task.control)throw new Error('COMMAND_RECEIPT_INVALID');
+       if(task.control.canResume===true||['stopped','completed'].includes(task.control.stopStatus)||task.control.state!=='stop_requested'){
+         showTaskDetail(taskId);return}
+       statusNode.textContent=taskControlMeaning(task.control);
+       scheduleTaskControlObservation(taskId,task.control,current,statusNode,pollGeneration);
+     }catch(e){if(current()&&state.taskControlPollGeneration===pollGeneration)
+       statusNode.textContent='暂时无法连接电脑核对停止结果。可点“刷新任务”；原请求编号会保留。'}
+   },2000)}
+ function showTaskDetail(taskId){if(!taskId||state.page!=='things')return;
+   stopTaskControlObservation();state.taskControlPollCount=0;state.taskControlPollStartedAt=Date.now();
+   const pollGeneration=state.taskControlPollGeneration;
   state.thingsDetail=taskId;const target=$('page-content');clear(target);
   target.append(action('返回最近活动',()=>page('things'),false),heading('电脑任务','正在核对任务与文件成果…'));
   const owner=state.owner,epoch=state.authEpoch,gen=state.generation;
@@ -1525,15 +1582,27 @@ function showTaskDetail(taskId){if(!taskId||state.page!=='things')return;
     const uncertain=artifacts.some(item=>item.state==='uncertain');
     const rejected=artifacts.some(item=>item.state==='rejected');
     const summary=group('任务进度',[]),body=summary.querySelector('.group-body');
-    body.append(el('p','command-status',verified.length?`${verified.length} 个文件已在电脑核验`:
+    const stopStatus=task.control?.state==='stop_requested'?task.control.stopStatus:null;
+    body.append(el('p','command-status',stopStatus==='stopped'?'这件事已停止':
+      stopStatus==='completed'?'回合已正常结束':stopStatus?'停止状态待核对':
+      verified.length?`${verified.length} 个文件已在电脑核验`:
       uncertain?'文件结果待确认':rejected?'文件生成未完成':hostCommandStatus(source.state)));
-    body.append(el('p','command-explanation',verified.length?'电脑已经重新读取文件并核对大小和 SHA-256。保存到手机后还会再次核对。':
+    body.append(el('p','command-explanation',stopStatus==='stopped'?
+      '电脑已核对这件事的实际停止。已经完成的步骤与文件会保留。':
+      stopStatus==='completed'?'电脑回合已正常结束；停止请求没有已证实的中断结果。':
+      stopStatus?taskControlMeaning(task.control):verified.length?
+      '电脑已经重新读取文件并核对大小和 SHA-256。保存到手机后还会再次核对。':
       uncertain?'电脑尚不能确定文件是否写成。请查看原会话，避免重复执行。':
       rejected?'电脑未能完成文件生成；原会话保留具体回复。':hostCommandMeaning(source)));
     body.append(el('p','command-fact','聊天中的“停止”只停止当前回复；事情的停止状态在这里单独记录。'));
     if(source.errorCode)body.append(el('p','command-error',safeError(new Error(source.errorCode))));
     target.append(summary);
-    if(task.control&&typeof task.control.state==='string')target.append(taskControlGroup(taskId,task.control,current));
+    if(typeof task.sourceText==='string'&&task.sourceText.trim()){
+      const goal=group('原目标',[]);goal.querySelector('.group-body').append(el('p','task-source-text',task.sourceText));
+      target.append(goal)}
+     if(task.control&&typeof task.control.state==='string'){
+       const controls=taskControlGroup(taskId,task.control,current);target.append(controls);
+       scheduleTaskControlObservation(taskId,task.control,current,controls.querySelector('.task-control-state'),pollGeneration)}
     const followUps=[...(Array.isArray(task.supplements)?task.supplements:[]),
       ...(Array.isArray(task.resumes)?task.resumes:[])]
       .filter(item=>item?.rootTaskId===taskId&&sessionIdPattern.test(item.commandId||''))
@@ -1578,7 +1647,7 @@ function showTaskDetail(taskId){if(!taskId||state.page!=='things')return;
             }));
         }wrap.append(el('p','command-fact',`更新：${commandTime(item.updatedAt)}`));fileBody.append(wrap)}
       target.append(fileGroup)
-    }else target.append(notice('电脑还没有返回可核验的文件。你可以回原会话查看回复，并稍后刷新任务。'));
+    }else target.append(notice('这件事目前没有可查看的文件成果。回复与执行过程可在原电脑会话查看。'));
     const facts=group('记录',[]),factsBody=facts.querySelector('.group-body');
     factsBody.append(el('p','command-fact',`发往电脑：${commandTime(source.createdAt)}`),
       el('p','command-fact',`最近更新：${commandTime(source.updatedAt)}`));

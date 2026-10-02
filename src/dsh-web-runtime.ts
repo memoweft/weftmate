@@ -16,7 +16,7 @@
  * 不 import electron（可 headless 测试）；凭据绝不落盘、绝不 console.log。
  */
 import { execFile, spawn, type ChildProcess } from 'node:child_process'
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { existsSync } from 'node:fs'
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
@@ -184,6 +184,7 @@ export const PROFILE_PATCH_TEMPLATE_R14 = PROFILE_PATCH_TEMPLATE_R13.replace('�
  * official discovery mechanism instead of a profile-only root that the final
  * CLI roster discards. */
 export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R14
+  .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-task-control\n      name: ./plugins/weftmate-personal-task-control.mjs\n    - id: weftmate-personal-memory")
 
 export const PROFILE_PATCH_TEMPLATE_R3_PICKER = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
 # 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
@@ -457,6 +458,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-shared-chat-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-shared-chat-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-mod-projects.mjs'), join(dir, 'plugins', 'weftmate-mod-projects.mjs')],
     [MOD_DEVELOPMENT_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-mod-development.mjs')],
@@ -791,6 +793,43 @@ interface SecureCompositionSnapshot {
   nonce: string
 }
 
+export type PersonalTaskStopStatus = 'cancel_requested' | 'queue_removed' | 'unconfirmed'
+export interface PersonalTaskStopResult {
+  status: PersonalTaskStopStatus
+  outcomes: Array<{ receiptId: string, status: PersonalTaskStopStatus, turn?: number }>
+}
+
+const TASK_STOP_PROTOCOL = 'weftmate.personal-task-control.v1'
+const TASK_STOP_RECEIPT = /^[A-Za-z0-9._:-]{1,160}$/
+function unknownTaskStop(receiptIds: readonly string[]): PersonalTaskStopResult {
+  return { status: 'unconfirmed', outcomes: receiptIds.map((receiptId) => ({ receiptId, status: 'unconfirmed' })) }
+}
+
+function parseTaskStopResponse(message: unknown, id: string, receiptIds: readonly string[]): PersonalTaskStopResult | null {
+  if (!message || typeof message !== 'object' || Array.isArray(message)) return null
+  const row = message as Record<string, unknown>
+  if (row.protocol !== TASK_STOP_PROTOCOL || row.id !== id ||
+      Object.keys(row).sort().join(',') !== 'id,outcomes,protocol,status' || !Array.isArray(row.outcomes) ||
+      row.outcomes.length !== receiptIds.length) return null
+  const statuses = new Set(['cancel_requested', 'queue_removed', 'unconfirmed'])
+  const outcomes = row.outcomes.map((item) => {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) return null
+    const outcome = item as Record<string, unknown>
+    if (!receiptIds.includes(outcome.receiptId as string) || !statuses.has(outcome.status as string) ||
+        Object.keys(outcome).sort().join(',') !== (outcome.turn === undefined ? 'receiptId,status' : 'receiptId,status,turn') ||
+        (outcome.turn !== undefined && (!Number.isSafeInteger(outcome.turn) || (outcome.turn as number) <= 0 ||
+          outcome.status !== 'cancel_requested'))) return null
+    return { receiptId: outcome.receiptId as string, status: outcome.status as PersonalTaskStopStatus,
+      ...(outcome.turn === undefined ? {} : { turn: outcome.turn as number }) }
+  })
+  if (outcomes.some((item) => item === null) || new Set(outcomes.map((item) => item?.receiptId)).size !== receiptIds.length ||
+      !receiptIds.every((receiptId) => outcomes.some((item) => item?.receiptId === receiptId))) return null
+  const status = outcomes.some((item) => item?.status === 'unconfirmed') ? 'unconfirmed'
+    : outcomes.some((item) => item?.status === 'cancel_requested') ? 'cancel_requested' : 'queue_removed'
+  if (row.status !== status) return null
+  return { status, outcomes: outcomes as PersonalTaskStopResult['outcomes'] }
+}
+
 export const WEFTMATE_CREDENTIALS_IPC_PROTOCOL = 'weftmate.credentials.v1'
 
 export type WeftMateCredentialOperation = 'resolve' | 'describe' | 'set' | 'unset'
@@ -1002,6 +1041,8 @@ export class DshWebRuntime {
   private readonly credentialPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly personalDesktopPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly personalMemoryPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
+  private readonly taskStopPending = new Map<string, { child: ChildProcess, timer: NodeJS.Timeout,
+    receiptIds: readonly string[], resolve: (result: PersonalTaskStopResult) => void }>()
 
   /** 就绪后崩溃重拉换源时回调（首启的 origin 由 start() 的返回值给出，不走本回调）。 */
   onOrigin: ((origin: string | null) => void) | undefined
@@ -1233,6 +1274,7 @@ export class DshWebRuntime {
       this.failCredentialRequests(child)
       this.failPersonalDesktopRequests(child)
       this.failPersonalMemoryRequests(child)
+      this.failTaskStopRequests(child)
       this.closedChildren.add(child)
       this.children.delete(child)
     })
@@ -1269,6 +1311,66 @@ export class DshWebRuntime {
     for (const entry of pending) { entry.settled = true; clearTimeout(entry.timer) }
     pending.clear()
     this.personalMemoryPending.delete(child)
+  }
+
+  private failTaskStopRequests(child: ChildProcess): void {
+    for (const [id, pending] of this.taskStopPending) {
+      if (pending.child !== child) continue
+      this.taskStopPending.delete(id)
+      clearTimeout(pending.timer)
+      pending.resolve(unknownTaskStop(pending.receiptIds))
+    }
+  }
+
+  private handleTaskStopMessage(child: ChildProcess, message: unknown): void {
+    if (!message || typeof message !== 'object' || Array.isArray(message)) return
+    const row = message as Record<string, unknown>
+    if (row.protocol !== TASK_STOP_PROTOCOL || typeof row.id !== 'string') return
+    const pending = this.taskStopPending.get(row.id)
+    if (!pending || pending.child !== child) return
+    this.taskStopPending.delete(row.id)
+    clearTimeout(pending.timer)
+    pending.resolve(!this.closed && this.child === child && child.connected && !this.closedChildren.has(child)
+      ? parseTaskStopResponse(message, row.id, pending.receiptIds) ?? unknownTaskStop(pending.receiptIds)
+      : unknownTaskStop(pending.receiptIds))
+  }
+
+  /** Dedicated parent-to-child stop protocol. The child is the only authority
+   * able to compare an exact receipt with its current turn in one JS tick. */
+  stopPersonalTask(input: { sessionId: string, requestId: string, receiptIds: string[] }): Promise<PersonalTaskStopResult> {
+    const receiptIds = input?.receiptIds
+    if (typeof input?.sessionId !== 'string' || input.sessionId.length < 1 || input.sessionId.length > 160 ||
+        typeof input.requestId !== 'string' || !TASK_STOP_RECEIPT.test(input.requestId) ||
+        !Array.isArray(receiptIds) || receiptIds.length < 1 || receiptIds.length > 16 ||
+        receiptIds.some((id) => typeof id !== 'string' || !TASK_STOP_RECEIPT.test(id)) ||
+        new Set(receiptIds).size !== receiptIds.length) return Promise.reject(new TypeError('invalid task stop request'))
+    const child = this.child
+    if (this.closed || !child || this.closedChildren.has(child) || !child.connected || this.originValue === null) {
+      return Promise.resolve(unknownTaskStop(receiptIds))
+    }
+    const id = `stop-${randomUUID()}`
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        const pending = this.taskStopPending.get(id)
+        if (!pending) return
+        this.taskStopPending.delete(id)
+        resolve(unknownTaskStop(receiptIds))
+      }, 2_500)
+      this.taskStopPending.set(id, { child, timer, receiptIds: [...receiptIds], resolve })
+      try {
+        child.send({ protocol: TASK_STOP_PROTOCOL, id, requestId: input.requestId,
+          sessionId: input.sessionId, receiptIds }, (error) => {
+          if (!error || !this.taskStopPending.has(id)) return
+          this.taskStopPending.delete(id)
+          clearTimeout(timer)
+          resolve(unknownTaskStop(receiptIds))
+        })
+      } catch {
+        this.taskStopPending.delete(id)
+        clearTimeout(timer)
+        resolve(unknownTaskStop(receiptIds))
+      }
+    })
   }
 
   private handlePersonalDesktopMessage(child: ChildProcess, message: unknown): void {
@@ -1565,21 +1667,17 @@ export class DshWebRuntime {
         env,
         // DSH is normally a plain child. The secure credentials profile adds exactly one Node IPC fd;
         // it is process-local and never opens a localhost listener. Electron-as-node supports this stdio form.
-        stdio: this.opts.credentialRequestHandler === undefined &&
-          this.opts.personalDesktopRequestHandler === undefined && this.opts.personalMemoryRequestHandler === undefined
-          ? ['ignore', 'pipe', 'pipe'] : ['ignore', 'pipe', 'pipe', 'ipc'],
+        stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
         windowsHide: true,
       })
       this.registerChild(child)
       this.child = child
-      if (this.opts.credentialRequestHandler !== undefined || this.opts.personalDesktopRequestHandler !== undefined ||
-          this.opts.personalMemoryRequestHandler !== undefined) {
-        child.on('message', (message: unknown) => {
-          this.handleCredentialMessage(child, message)
-          this.handlePersonalDesktopMessage(child, message)
-          this.handlePersonalMemoryMessage(child, message)
-        })
-      }
+      child.on('message', (message: unknown) => {
+        this.handleCredentialMessage(child, message)
+        this.handlePersonalDesktopMessage(child, message)
+        this.handlePersonalMemoryMessage(child, message)
+        this.handleTaskStopMessage(child, message)
+      })
       let state: 'starting' | 'ready' | 'failed' | 'stopped' = 'starting'
       let buffer = ''
       const feed = (chunk: string, stream: 'stdout' | 'stderr'): void => {
@@ -1764,6 +1862,7 @@ export class DshWebRuntime {
       this.failCredentialRequests(child)
       this.failPersonalDesktopRequests(child)
       this.failPersonalMemoryRequests(child)
+      this.failTaskStopRequests(child)
     }
     this.closeInFlight = Promise.all(registered.map(async (child) => {
       await this.terminateChild(child)

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -50,8 +50,10 @@ test('task supplement, stop intent and observed resume keep one root across rest
     sendMessage: async ({ text }: { text: string }) => {
       sends.push(text)
       if (failNextSend) { failNextSend = false; return { accepted: false } }
-      return { accepted: true }
+      return { accepted: true, receiptId: `receipt-${sends.length}` }
     },
+    stopTask: async ({ receiptIds }: { receiptIds: string[] }) => ({ status: 'unconfirmed',
+      outcomes: receiptIds.map((receiptId) => ({ receiptId, status: 'unconfirmed' })) }),
     cancelSession: async () => { throw new Error('task stop must not use session-wide cancel') },
     openDesktopApp: async () => { appCalls++; return { accepted: true, observed: true, outcome: 'opened' } },
     readEvents: async ({ afterSeq }: { afterSeq: number }) => ({
@@ -114,18 +116,27 @@ test('task supplement, stop intent and observed resume keep one root across rest
       messageHash: sha(supplementText), fileName: 'late.md', content: 'late' }),
     (error: { code: string }) => error.code === 'TASK_NOT_READY')
     await service.close()
+    const oldStoreFile = join(root, 'store.json')
+    const oldStore = JSON.parse(readFileSync(oldStoreFile, 'utf8'))
+    const oldAccount = Object.values(oldStore.accounts)[0] as any
+    delete oldAccount.commands[taskId].taskControl.stopRequests[0].targets
+    writeFileSync(oldStoreFile, JSON.stringify(oldStore))
     service = await createPersonalAccessService({ root, port: 0, backend })
     origin = (await service.start()).origin
     auth.origin = origin
     assert.equal((await request(origin, 'GET', route, undefined, auth)).body.control.state, 'stop_requested')
     events = [
       // Official rc.5 history starts the turn before recording the user message.
-      { seq: 888, type: 'turn.started', data: {} },
-      { seq: 891, type: 'user.message', data: { text: supplementText } },
-      { seq: 1376, type: 'turn.ended', data: { reason: 'completed' } },
+      { seq: 887, type: 'turn.started', data: { turn: 0 } },
+      { seq: 888, type: 'user.message', data: { text: sourceText, receiptId: 'receipt-1' } },
+      { seq: 889, type: 'turn.ended', data: { turn: 0, reason: 'completed' } },
+      { seq: 890, type: 'turn.started', data: { turn: 1 } },
+      { seq: 891, type: 'user.message', data: { text: supplementText, receiptId: 'receipt-2' } },
+      { seq: 1376, type: 'turn.ended', data: { turn: 1, reason: 'completed' } },
     ]
     const observed = await request(origin, 'GET', route, undefined, auth)
     assert.equal(observed.body.control.canResume, true)
+    assert.equal(observed.body.control.legacyStopIntent, true)
     assert.equal(observed.body.control.state, 'stop_requested')
     assert.equal(observed.body.control.reasonCode, 'TURN_ENDED_AFTER_STOP_REQUEST')
     const resumeText = 'Only confirm the existing file. Do not create another file.'
@@ -160,9 +171,9 @@ test('task supplement, stop intent and observed resume keep one root across rest
     assert.equal((await request(origin, 'GET', route, undefined, auth)).body.control.canResume, false)
     events = [
       ...events,
-      { seq: 1377, type: 'user.message', data: { text: resumeText } },
-      { seq: 1378, type: 'turn.started', data: {} },
-      { seq: 1379, type: 'turn.ended', data: { reason: 'completed' } },
+      { seq: 1377, type: 'turn.started', data: { turn: 2 } },
+      { seq: 1378, type: 'user.message', data: { text: resumeText, receiptId: 'receipt-3' } },
+      { seq: 1379, type: 'turn.ended', data: { turn: 2, reason: 'completed' } },
     ]
     assert.equal((await request(origin, 'GET', route, undefined, auth)).body.control.canResume, true)
     assert.equal((await service.submitToolArtifact({ sessionId, turn: 1, callId: 'supplement-file',

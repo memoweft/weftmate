@@ -209,6 +209,7 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .task-control { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .task-control h3, .task-control-state, .task-supplement-input { flex: 1 0 100%; }
 .task-control-state { margin: 0; color: var(--ink-secondary); line-height: 1.6; overflow-wrap: anywhere; }
+.task-control-proof { flex: 1 0 100%; margin: -3px 0 3px; color: var(--ink-secondary); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 .task-supplement-input { min-width: 0; min-height: 92px; padding: 11px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-soft); color: var(--ink); font: inherit; resize: vertical; }
 .task-control .button { min-height: 42px; }
 .task-record-id { color: var(--ink-muted); font-size: 12px; }

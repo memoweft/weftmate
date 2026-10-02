@@ -69,6 +69,7 @@ import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
 import { ModWindowManager } from './mod-window-manager.mjs';
 import { createPersonalAccessBackend } from './personal-access-backend.mjs';
 import { createPersonalDesktopTask } from './personal-desktop-task.mjs';
+import { syntheticStopFixtureRoute } from './synthetic-stop-fixture-policy.mjs';
 import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels, prepareLocalModelConfig,
   projectOccamyImageInput, reconcileOccamyImageInput,
   readUserModelSwitcherKey } from './local-model-config.mjs';
@@ -460,6 +461,20 @@ process.on('message', (message) => {
           if (Object.keys(message).some((key) => !['type', 'requestId', 'action'].includes(key)) ||
               !configureLocalCatalog) throw Object.assign(new Error('invalid catalog request'), { code: 'INVALID_COMMAND' });
           result = await configureLocalCatalog();
+          break;
+        }
+        case 'model.configure-synthetic-stop-fixture': {
+          const fixture = syntheticStopFixtureRoute(message, {
+            enabled: process.env.WEFTMATE_SYNTHETIC_STOP_FIXTURE === '1',
+            profile: app.getPath('userData'),
+          });
+          if (!fixture) {
+            throw Object.assign(new Error('invalid fixture configuration'), { code: 'INVALID_COMMAND' });
+          }
+          result = await saveModelRoute({ id: 'synthetic-stop-fixture', name: 'Synthetic stop fixture',
+            provider: 'openai-compatible', baseUrl: fixture.baseUrl, model: 'synthetic-stop-model',
+            apiKey: 'synthetic-stop-fixture-only', contextWindow: 8192, outputReserve: 1024 },
+          { catalogOnly: true });
           break;
         }
         case 'status': result = personalAccessService.status(); break;
@@ -2617,6 +2632,8 @@ async function bootstrap() {
     queue: enqueueRouteMutation,
     bindSession: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId),
     desktopTask: personalDesktopTask,
+    taskStop: (input) => webRuntime?.stopPersonalTask(input) ?? Promise.resolve({ status: 'unconfirmed',
+      outcomes: input.receiptIds.map((receiptId) => ({ receiptId, status: 'unconfirmed' })) }),
     naturalLanguageDesktopReady: () => personalAccessService !== null && personalHostMode,
     naturalLanguageDesktopVerified: () => personalAccessService?.hasVerifiedPersonalTool?.() === true,
   });
