@@ -86,6 +86,16 @@ class Stage13ModelUiProbeTest {
         """.trimIndent()) == "true" && waitFor(web,
             "document.querySelector('#page-content')?.textContent?.includes('手机已保存模型')")
     }
+    private fun openOriginalCard(web: WebView, conversationId: String): Boolean {
+        if (!navigate(web, "chat") || !waitFor(web,
+            "[...document.querySelectorAll('#conversation-list button[data-conversation-id]')].some(x=>x.dataset.conversationId===${JSONObject.quote(conversationId)})", 20)) return false
+        return evaluate(web, """
+            (()=>{const button=[...document.querySelectorAll('#conversation-list button[data-conversation-id]')]
+              .find(x=>x.dataset.conversationId===${JSONObject.quote(conversationId)});
+              if(!button)return false;button.click();return true})()
+        """.trimIndent()) == "true" && waitFor(web,
+            "state.page==='chat'&&state.chatSource==='phone'&&state.conversationId===${JSONObject.quote(conversationId)}", 12)
+    }
     private fun digest(bytes: ByteArray): String = MessageDigest.getInstance("SHA-256")
         .digest(bytes).joinToString("") { (it.toInt() and 0xff).toString(16).padStart(2, '0') }
     private fun capture(web: WebView, name: String) {
@@ -329,6 +339,8 @@ class Stage13ModelUiProbeTest {
         assertTrue("Actual phone direct turn did not complete", waitFor(web,
             "state.lastTerminal?.status==='completed'&&/^conversation-[0-9a-f-]{36}$/.test(state.conversationId||'')", 150))
         val conversationId = JSONTokener(evaluate(web, "state.conversationId")).nextValue() as String
+        assertTrue("Original phone card could not be selected before adoption",
+            openOriginalCard(web, conversationId))
         val progress = JSONObject(stageFile.readText()).put("phase", "phone_completed")
             .put("conversationId", conversationId).put("accountModelId", accountModel.getString("accountModelId"))
         stageFile.writeText(progress.toString(), Charsets.UTF_8)
@@ -377,8 +389,22 @@ class Stage13ModelUiProbeTest {
 
     private fun inspectArtifactAndSave(activity: Activity, web: WebView,
         conversationId: String, taskId: String, fact: String): String {
-        assertTrue("Original phone card did not show host continuation", waitFor(web,
-            "state.conversationId===${JSONObject.quote(conversationId)}&&state.handoffViews.get(${JSONObject.quote(conversationId)})?.status==='active'&&state.linkedEvents.get(${JSONObject.quote(conversationId)})?.events?.some(x=>x.type==='assistant.message')", 50))
+        assertTrue("Original phone card could not be selected after host completion",
+            openOriginalCard(web, conversationId))
+        val linked = waitFor(web,
+            "state.conversationId===${JSONObject.quote(conversationId)}&&state.handoffViews.get(${JSONObject.quote(conversationId)})?.status==='active'&&state.linkedEvents.get(${JSONObject.quote(conversationId)})?.events?.some(x=>x.type==='assistant.message')", 50)
+        if (!linked) System.out.println("STAGE13_MODEL_DIAGNOSTIC " + evaluate(web, """
+            (()=>JSON.stringify({phase:'linked_card',page:state.page,
+              selectedExact:state.conversationId===${JSONObject.quote(conversationId)},
+              source:state.chatSource,
+              originalCardCount:[...document.querySelectorAll('#conversation-list button[data-conversation-id]')]
+                .filter(x=>x.dataset.conversationId===${JSONObject.quote(conversationId)}).length,
+              handoffStatus:state.handoffViews.get(${JSONObject.quote(conversationId)})?.status||'none',
+              hostEventCount:state.linkedEvents.get(${JSONObject.quote(conversationId)})?.events?.length||0,
+              hostAssistantSeen:!!state.linkedEvents.get(${JSONObject.quote(conversationId)})?.events
+                ?.some(x=>x.type==='assistant.message')}))()
+        """.trimIndent()))
+        assertTrue("Original phone card did not show host continuation", linked)
         capture(web, "stage13-linked-chat.png")
         assertTrue("Task navigation missing", navigate(web, "things"))
         assertTrue("Task card missing", waitFor(web,
