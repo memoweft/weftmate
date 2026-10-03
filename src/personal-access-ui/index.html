@@ -165,6 +165,20 @@
           <p class="muted" id="devices-loading">正在读取设备…</p>
           <ul class="device-list" id="device-list" aria-live="polite"></ul>
         </section>
+        <section class="card group" id="account-model-section" aria-labelledby="account-models-heading" hidden>
+          <div class="group-heading"><div><h2 id="account-models-heading">我的电脑云模型</h2><p class="muted">只管理当前账户明确保存的云模型。新配置不会改变已有对话选用的模型；测试连接只核目录与鉴权，不发送推理消息。</p></div><button type="button" class="button secondary small" id="account-models-refresh">刷新</button></div>
+          <p id="account-models-status" class="muted" role="status" aria-live="polite">正在读取账户模型…</p>
+          <ul id="account-models-list" class="project-list" aria-live="polite"></ul>
+          <form id="account-model-form" class="project-register" autocomplete="off" hidden>
+            <label for="account-model-name">显示名称</label><input id="account-model-name" maxlength="100" placeholder="例如：我的 MiMo">
+            <label for="account-model-base-url">提供方地址</label><input id="account-model-base-url" type="url" placeholder="https://api.example.com/v1">
+            <label for="account-model-id">模型 ID</label><input id="account-model-id" maxlength="128" placeholder="例如：mimo-v2.6-flash">
+            <label for="account-model-key">API Key</label><input id="account-model-key" type="password" autocomplete="new-password" placeholder="新建时填写；编辑留空沿用原密钥">
+            <p class="field-help">密钥仅在这次提交中发送到当前账户的电脑，不会从目录回填。修改服务地址时必须输入该新地址的密钥；手机本机原配置不会自动改变。</p>
+            <p id="account-model-form-status" class="form-error" role="status" aria-live="polite"></p>
+            <div class="actions"><button type="submit" class="button primary small" id="account-model-submit">保存到电脑账户</button><button type="button" class="button quiet small" id="account-model-cancel" hidden>取消编辑</button></div>
+          </form>
+        </section>
         <section class="card group" aria-labelledby="projects-heading">
           <div class="group-heading"><div><h2 id="projects-heading">项目与成果</h2><p class="muted">电脑账户登记资料目录后，手机可选择项目和模型发起摘要任务。只读取目录中的 Markdown 和纯文本文件。</p></div><button type="button" class="button secondary small" id="projects-refresh">刷新</button></div>
           <p id="projects-status" class="muted" role="status" aria-live="polite">正在读取项目…</p>

@@ -28,7 +28,7 @@ data class SharedCommandRow(val owner: String, val hostId: String, val sessionId
 }
 
 /** One private on-device database. Local changes and their outbox entries share a transaction. */
-class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") : SQLiteOpenHelper(context, databaseName, null, 6) {
+class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") : SQLiteOpenHelper(context, databaseName, null, 7) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL)")
         db.execSQL("CREATE TABLE conversations(id TEXT PRIMARY KEY,owner_key TEXT,title TEXT NOT NULL,created_at TEXT NOT NULL,source_event_id TEXT)")
@@ -41,12 +41,13 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         createSharedCommands(db)
         createConversationHandoffs(db)
         createSharedHistoryCache(db)
+        createAccountModelIntents(db)
         createMessageThumbnails(db)
         createMessageImages(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        if (newVersion != 6 || oldVersion !in 1..5)
+        if (newVersion != 7 || oldVersion !in 1..6)
             throw IllegalStateException("Unsupported local database migration")
         if (oldVersion <= 4) {
             if (oldVersion == 1) createSharedCommands(db)
@@ -69,8 +70,11 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
                 }
             }
         }
-        createConversationHandoffs(db)
-        createSharedHistoryCache(db)
+        if (oldVersion <= 5) {
+            createConversationHandoffs(db)
+            createSharedHistoryCache(db)
+        }
+        createAccountModelIntents(db)
     }
 
     private fun createMessageImages(db: SQLiteDatabase) {
@@ -116,6 +120,52 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
     private fun createSharedHistoryCache(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE shared_history_events(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,session_id TEXT NOT NULL,seq INTEGER NOT NULL,digest TEXT NOT NULL,body TEXT NOT NULL,cached_at INTEGER NOT NULL,PRIMARY KEY(owner_key,host_id,session_id,seq))")
         db.execSQL("CREATE TABLE shared_history_cursors(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,session_id TEXT NOT NULL,next_seq INTEGER NOT NULL,truncated INTEGER NOT NULL DEFAULT 0,updated_at INTEGER NOT NULL,PRIMARY KEY(owner_key,host_id,session_id))")
+    }
+
+    private fun createAccountModelIntents(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE account_model_intents(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,request_id TEXT NOT NULL,kind TEXT NOT NULL,payload_hash TEXT NOT NULL,body TEXT NOT NULL,state TEXT NOT NULL,response TEXT,PRIMARY KEY(owner_key,host_id,request_id))")
+        db.execSQL("CREATE INDEX account_model_intents_pending ON account_model_intents(owner_key,host_id,state)")
+    }
+
+    @Synchronized fun accountModelIntent(owner: String, hostId: String, requestId: String): JSONObject? =
+        readableDatabase.rawQuery("SELECT kind,payload_hash,body,state,response FROM account_model_intents WHERE owner_key=? AND host_id=? AND request_id=?",
+            arrayOf(owner, hostId, requestId)).use { cursor ->
+            if (!cursor.moveToFirst()) null else JSONObject().put("requestId", requestId)
+                .put("kind", cursor.getString(0)).put("payloadHash", cursor.getString(1))
+                .put("body", JSONObject(cursor.getString(2))).put("state", cursor.getString(3))
+                .apply { if (!cursor.isNull(4)) put("response", JSONObject(cursor.getString(4))) }
+        }
+
+    @Synchronized fun queueAccountModelIntent(owner: String, hostId: String, requestId: String,
+        kind: String, payloadHash: String, publicBody: JSONObject): JSONObject = write { db ->
+        require(owner.isNotBlank() && hostId.isNotBlank() &&
+            requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) &&
+            kind in setOf("publish", "transfer") && payloadHash.matches(Regex("[a-f0-9]{64}")) &&
+            publicBody.toString().toByteArray(Charsets.UTF_8).size <= 4096 &&
+            !publicBody.has("apiKey"))
+        val previous = accountModelIntent(owner, hostId, requestId)
+        if (previous != null) {
+            if (previous.getString("kind") != kind || previous.getString("payloadHash") != payloadHash ||
+                previous.getJSONObject("body").toString() != publicBody.toString())
+                throw ApiFailure(409, "REQUEST_CONFLICT")
+            return@write previous
+        }
+        val count = db.rawQuery("SELECT COUNT(*) FROM account_model_intents WHERE owner_key=? AND host_id=?",
+            arrayOf(owner, hostId)).use { it.moveToFirst(); it.getInt(0) }
+        if (count >= 100) throw ApiFailure(429, "CAPACITY_LIMIT")
+        db.insertOrThrow("account_model_intents", null, ContentValues().apply {
+            put("owner_key", owner); put("host_id", hostId); put("request_id", requestId)
+            put("kind", kind); put("payload_hash", payloadHash); put("body", publicBody.toString())
+            put("state", "pending")
+        })
+        accountModelIntent(owner, hostId, requestId)!!
+    }
+
+    @Synchronized fun updateAccountModelIntent(owner: String, hostId: String,
+        requestId: String, state: String, response: JSONObject? = null) = write { db ->
+        require(state in setOf("pending", "uncertain", "succeeded", "failed", "credential_conflict"))
+        db.execSQL("UPDATE account_model_intents SET state=?,response=? WHERE owner_key=? AND host_id=? AND request_id=?",
+            arrayOf(state, response?.toString(), owner, hostId, requestId))
     }
 
     @Synchronized fun handoffIntent(owner: String, hostId: String, conversationId: String): JSONObject? =

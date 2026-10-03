@@ -90,6 +90,10 @@ main{min-height:0;flex:1;position:relative;display:flex;flex-direction:column}.p
 .handoff-card .handoff-picker{display:flex;flex-direction:column;align-items:flex-start;gap:9px;width:100%}
 .handoff-card .handoff-picker label{display:flex;flex-direction:column;gap:5px;width:100%;color:var(--secondary);font-size:12px}
 .handoff-card select{width:100%;min-height:38px;padding:6px 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
+.model-library-entry{display:flex;flex-direction:column;gap:5px;padding:12px 0;border-bottom:1px solid var(--line)}
+.model-library-entry strong{font-size:14px;color:var(--ink)}.model-library-entry small{font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+.model-library-actions{display:flex;flex-wrap:wrap;gap:7px;margin-top:5px}.model-library-actions button{min-height:36px;padding:6px 10px;border-radius:9px}
+.model-library-warning{margin:4px 0;color:var(--danger);font-size:12px;line-height:1.55}
 .shared-notice{margin:0 0 14px;padding:10px 12px;border-radius:12px;background:var(--soft);color:var(--secondary);font-size:13px;line-height:1.5}
 .shared-check{display:block;min-height:40px;margin-top:8px;padding:0 10px;border-radius:9px;color:var(--accent);font-size:13px;font-weight:500}
 .shared-check:active{background:var(--accent-soft)}

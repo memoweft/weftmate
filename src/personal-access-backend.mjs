@@ -24,8 +24,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
     if (!profile || !profile.model || !hasCredential(profile)) fail('MODEL_UNAVAILABLE')
     return profile
   }
-  const requireModelAllowed = (ownerId, profileId) => {
-    if (modelAllowed(ownerId, profileId) !== true) fail('MODEL_UNAVAILABLE')
+  const requireModelAllowed = (ownerId, profileId, usage = 'bound') => {
+    if (modelAllowed(ownerId, profileId, usage) !== true) fail('MODEL_UNAVAILABLE')
   }
   const requireCatalogRoute = async (profile) => {
     const route = routeForProfile(profile.id)
@@ -83,7 +83,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       catch { return null } })(),
       sourceKind: (() => { try { return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(profile.baseUrl).hostname)
         ? 'local' : 'cloud' } catch { return 'cloud' } })() })) },
-    async verifyModelProfile(profileId) {
+    async verifyModelProfile(profileId, ownerId) {
+      requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
       if (typeof credentialForProfile !== 'function') fail('MODEL_UNAVAILABLE')
       const apiKey = credentialForProfile(profile)
@@ -93,11 +94,13 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         return { configured: true, reachable: true, modelListed: models.includes(profile.model), inferenceVerified: false }
       } catch { return { configured: true, reachable: false, modelListed: false, inferenceVerified: false } }
     },
-    async modelCompletion({ profileId, body, signal }) {
+    async modelCompletion({ profileId, body, signal, ownerId }) {
+      requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)
       if (body.model !== profile.model || typeof credentialForProfile !== 'function') fail('MODEL_UNAVAILABLE')
       const apiKey = credentialForProfile(profile)
       if (!apiKey) fail('MODEL_UNAVAILABLE')
+      requireModelAllowed(ownerId, profileId, 'new')
       return modelFetch(openAICompatibleEndpoint(profile.baseUrl, 'chat/completions'), {
         method: 'POST', redirect: 'error', signal,
         headers: { 'content-type': 'application/json', accept: body.stream ? 'text/event-stream' : 'application/json',
@@ -109,7 +112,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       requireRuntime()
       const preset = presetForOwner(command?.ownerId)
       if (command?.kind === 'session.create') {
-        requireModelAllowed(command.ownerId, command.modelProfileId)
+        requireModelAllowed(command.ownerId, command.modelProfileId, 'new')
         await requireCatalogRoute(modelProfile(command.modelProfileId))
       }
       else if (command?.kind === 'desktop.open_app') {
@@ -138,7 +141,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)) fail('SESSION_UNAVAILABLE')
       const preset = presetForOwner(ownerId)
       return queue(async () => {
-        requireModelAllowed(ownerId, modelProfileId)
+        requireModelAllowed(ownerId, modelProfileId, 'new')
         const profile = modelProfile(modelProfileId)
         await requireCatalogRoute(profile)
         const created = await gateway('/sessions', { method: 'POST',
@@ -168,12 +171,14 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         await requireCatalogRoute(session.profile)
         try { await ensureKnownSession(sessionId) }
         catch (error) { fail(error?.code === 'session-model-ownership-unknown' ? 'MODEL_ROUTE_BLOCKED' : 'SESSION_UNAVAILABLE') }
+        requireModelAllowed(ownerId, session.profile?.id)
         await gateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' })
         const content = attachments.length ? [
           ...(text ? [{ type: 'text', text }] : []),
           ...attachments.map((item) => ({ type: 'image', mediaType: item.contentType,
             data: item.data, name: item.name })),
         ] : text
+        requireModelAllowed(ownerId, session.profile?.id)
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/messages`, { method: 'POST',
           body: JSON.stringify({ content, mode }) })
         return { accepted: result?.accepted === true,

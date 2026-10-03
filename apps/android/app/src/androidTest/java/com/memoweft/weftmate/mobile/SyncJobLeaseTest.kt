@@ -44,7 +44,7 @@ class SyncJobLeaseTest {
                     JSONObject().put("account", JSONObject().put("ownerId", old.ownerId)))
                 if (url.endsWith("/sync/capabilities")) return HttpReply(200,
                     JSONObject().put("deviceId", old.deviceId).put("sharedConversations", 1)
-                        .put("nativeVersionCode", 11))
+                        .put("nativeVersionCode", 12))
                 if (url.endsWith("/sync/events") && method == "POST") {
                     entered.countDown()
                     assertTrue("Synthetic server release timed out", release.await(6, TimeUnit.SECONDS))
@@ -124,7 +124,7 @@ class SyncJobLeaseTest {
                     JSONObject().put("account", JSONObject().put("ownerId", old.ownerId)))
                 if (url.endsWith("/sync/capabilities")) return HttpReply(200,
                     JSONObject().put("deviceId", old.deviceId).put("sharedConversations", 1)
-                        .put("nativeVersionCode", 11))
+                        .put("nativeVersionCode", 12))
                 if (url.endsWith("/sync/events") && method == "POST") {
                     entered.countDown()
                     assertTrue(release.await(6, TimeUnit.SECONDS))

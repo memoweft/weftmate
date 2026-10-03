@@ -116,6 +116,7 @@ class HybridActivity : Activity() {
     private lateinit var store: LocalStore
     private lateinit var sharedChat: SharedChat
     private lateinit var conversationHandoff: ConversationHandoff
+    private lateinit var accountModels: AccountModels
     private lateinit var attachments: AttachmentStore
     private lateinit var secrets: SecureSettings
     private val api = PersonalApi()
@@ -155,6 +156,7 @@ class HybridActivity : Activity() {
         sharedChat = SharedChat(store, api, attachments)
         conversationHandoff = ConversationHandoff(store, api, attachments)
         secrets = SecureSettings(this)
+        accountModels = AccountModels(store, api, secrets)
         worker.execute {
             try { if (!closed.get()) {
                 store.recoverInterruptedTurns()
@@ -1108,6 +1110,58 @@ class HybridActivity : Activity() {
             for (profile in secrets.modelProfiles(scope)) rows.put(modelView(profile,
                 !hostSelected && selected?.endpoint == profile.endpoint && selected.modelId == profile.modelId))
             JSONObject().put("models", rows).put("selected", modelStatus(host))
+        }
+        "models.account.list" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            accountModels.list(host) { !closed.get() && !accountTransition.get() &&
+                epoch == accountEpoch.get() && secrets.host() == host }
+        }
+        "models.account.byRequest" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            accountModels.byRequest(host, params.getString("requestId")) {
+                !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() && secrets.host() == host }
+        }
+        "models.account.publishSaved" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            accountModels.publishSaved(host, params.getString("endpoint"), params.getString("modelId"),
+                params.getString("requestId")) { !closed.get() && !accountTransition.get() &&
+                epoch == accountEpoch.get() && secrets.host() == host }
+        }
+        "models.account.transfer" -> {
+            if (busy.get()) throw ApiFailure(409, "TURN_RUNNING")
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            accountModels.importToPhone(host, params.getString("accountModelId"),
+                params.getLong("expectedRevision"), params.getString("requestId"),
+                params.optBoolean("replaceExistingKey", false)) { !busy.get() && !closed.get() &&
+                !accountTransition.get() && epoch == accountEpoch.get() && secrets.host() == host }
+        }
+        "models.account.test", "models.account.stopUsing", "models.account.remove" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            val action = when (method) { "models.account.test" -> "test"
+                "models.account.stopUsing" -> "stop-using"; else -> "remove" }
+            accountModels.control(host, params.getString("accountModelId"), action,
+                params.getString("requestId"), params.getLong("expectedRevision")) {
+                !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
+                    secrets.host() == host }
+        }
+        "models.account.removeLocal" -> {
+            if (busy.get()) throw ApiFailure(409, "TURN_RUNNING")
+            val host = requireHost()
+            val scope = owner(host) ?: throw ApiFailure(401, "LOGIN_REQUIRED")
+            val endpoint = params.getString("endpoint")
+            val modelId = params.getString("modelId")
+            val item = secrets.modelProfiles(scope).firstOrNull {
+                Endpoints.modelUrl(it.endpoint) == Endpoints.modelUrl(endpoint) && it.modelId == modelId }
+                ?: throw ApiFailure(404, "MODEL_NOT_FOUND")
+            if (secrets.model(scope)?.let { Endpoints.modelUrl(it.endpoint) == Endpoints.modelUrl(endpoint) &&
+                    it.modelId == modelId } == true) throw ApiFailure(409, "MODEL_IN_USE")
+            secrets.removeModelProfile(endpoint, modelId, scope)
+            JSONObject().put("removed", true).put("endpoint", item.endpoint).put("modelId", item.modelId)
         }
         "models.configure" -> {
             requireHost()

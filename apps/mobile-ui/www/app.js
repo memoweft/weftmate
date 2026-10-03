@@ -20,6 +20,7 @@ state.handoffViews=new Map();state.linkedEvents=new Map();state.linkedLoading=fa
 state.linkedPollTimer=null;
 state.handoffModelNames=new Map();state.handoffModelLastCheck=0;
 state.handoffPickerOpen=new Set();state.handoffSelections=new Map();
+state.accountModelCredentialConflict=null;
 function draftKey(id=state.conversationId){return `weftmate-draft:${state.owner||'local'}:${id||'new'}`}
 function sharedDraftKey(id=state.sharedSessionId){return `weftmate-shared-draft:${state.owner||'local'}:${id||'none'}`}
 function attachmentConversationId(){return state.chatSource==='host'?state.sharedSessionId||'':state.conversationId||''}
@@ -154,6 +155,15 @@ function safeError(error) {
     HOST_ATTACHMENTS_UNSUPPORTED:'这段电脑会话暂不支持图片发送；原图片草稿仍保留',
     IMAGE_REJECTED:'这段电脑会话的模型不支持图片；图片仍在草稿中，请选择支持图片的电脑会话',
     MODEL_UPSTREAM_ERROR:'模型服务未完成回复，请检查模型配置和连接',
+    MODEL_ROUTE_NOT_PORTABLE:'本机地址无法作为账户云模型跨设备共享；若电脑能访问，可在电脑现有模型目录单独配置',
+    MODEL_NOT_PORTABLE:'此电脑模型地址无法从手机直连；仍可在电脑会话使用，手机请选择可直接访问的云模型',
+    MODEL_RECEIPT_INVALID:'模型配置回执无法核对；原选择与密钥仍保留',
+    MODEL_IN_USE:'当前手机模型正在使用；请先明确切换到另一模型再删除',
+    MODEL_NOT_FOUND:'这项模型已不可用，请刷新目录',
+    MODEL_SECRET_CHANGED:'已存密钥在原请求之后改变，请先核对原编号',
+    MODEL_REVISION_CONFLICT:'模型配置已在别处更新，请刷新后核对原请求',
+    ACCOUNT_MODEL_SECRET_REQUIRED:'更换服务地址时，请提供新地址的密钥',
+    RUNTIME_BUSY:'电脑正在处理现有回合；原配置请求已保留，稍后核对',
     CONVERSATION_SYNC_PENDING:'这条手机消息和图片仍在同步，请稍后核对原对话',
     CONVERSATION_NOT_READY:'手机回合尚未结束或同步，请完成后再转到电脑',
     CONVERSATION_ROUTING_UNCONFIRMED:'这条消息已保存在手机，执行位置待核对；不会自动交给另一个模型',
@@ -942,7 +952,7 @@ function processEvent(message){const {event,data}=message;if(event==='chat.start
       data.conversationId===state.conversationId&&!state.handoffPickerOpen.has(state.conversationId))
     void renderConversation({silent:true});
   if(event==='account.transition'){
-    if(data.pending){closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;state.linkedPending=null;state.sharedGeneration++;state.chatSource='phone';state.thingsDetail=null;state.taskControlAttempt=null;state.taskControlDrafts.clear();state.restorePending=false;state.sharedSessionId=null;state.sharedLoading=false;
+    if(data.pending){closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.accountModelCredentialConflict=null;state.handoffModelLastCheck=0;state.linkedPending=null;state.sharedGeneration++;state.chatSource='phone';state.thingsDetail=null;state.taskControlAttempt=null;state.taskControlDrafts.clear();state.restorePending=false;state.sharedSessionId=null;state.sharedLoading=false;
       state.sharedSessions=[];state.sharedEvents=[];state.sharedPending=null;state.sharedOutboxLoading=false;state.sharedAwaiting=null;state.sharedChecking=null;state.sharedHostAvailable=false;
       state.conversations=[];state.artifactSaveRequest=null;state.artifactSaveLabel=null;renderConversationList();clear($('chat-content'));
       activeSend=null;state.sendUncertain=false;state.authEpoch++;state.transitionPending=true;state.busy=false;state.models=[];closeModelMenu();closeAttachmentMenu();cancelAttachmentPick();resetMemoryForAuthBoundary('正在切换账户，已清除上一个账户的记忆显示。');
@@ -1087,6 +1097,8 @@ function renderModels(){const list=$('model-options');clear(list);if(!state.mode
       catch(e){status(safeError(e),true)}finally{state.modelSwitching=false;updateComposer()}});
     list.append(button)}
   if(state.directoryError){const note=el('button','hint','当前目录暂不可用 · 点此重试');note.addEventListener('click',()=>{closeModelMenu();openModels()});list.append(note)}
+  const manage=el('button','hint','管理手机与账户模型');manage.addEventListener('click',()=>{
+    closeModelMenu();page('models')});list.append(manage)
 }
 function renderPage(name){const target=$('page-content');clear(target);switch(name){
   case 'things':return thingsPage(target);
@@ -1773,7 +1785,7 @@ function connectPage(target){target.append(heading('电脑账户与连接','手�
         toast(state.connection==='expired'?'登录已失效，请重新登录':'电脑暂不可达，本机资料仍保留',true);
       }
     }),
-     row('退出登录','本机对话保留；当前设备的服务器会话将撤销',async()=>{try{await call('auth.logout');state.authEpoch++;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=false;state.connection='local';state.username='';state.owner='';state.profile=null;state.model=null;state.conversationId=null;
+     row('退出登录','本机对话保留；当前设备的服务器会话将撤销',async()=>{try{await call('auth.logout');state.authEpoch++;state.accountModelCredentialConflict=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=false;state.connection='local';state.username='';state.owner='';state.profile=null;state.model=null;state.conversationId=null;
        resetMemoryForAuthBoundary('已退出电脑账户；记忆内容已清除。');
       state.backgroundSync='not_scheduled';
       $('model-label').textContent='选择模型';try{applyTheme((await call('settings.appearance')).value)}catch{applyTheme('system')}
@@ -1792,7 +1804,7 @@ function connectPage(target){target.append(heading('电脑账户与连接','手�
     result.textContent=method==='auth.register'?'正在注册账户…':'正在登录…';result.className='muted';
     try{const account=await call(method,{origin:origin.input.value,username:user.input.value,
       password:password.input.value,deviceName:device.input.value,displayName:display.input.value});password.input.value='';
-      state.authEpoch++;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=true;state.connection=account.connectionVerified?'connected':'checking';state.username=account.username;state.owner=account.owner||'';state.profile=account;state.conversationId=null;
+      state.authEpoch++;state.accountModelCredentialConflict=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=true;state.connection=account.connectionVerified?'connected':'checking';state.username=account.username;state.owner=account.owner||'';state.profile=account;state.conversationId=null;
       resetMemoryForAuthBoundary('账户已切换。请重新读取新账户的记忆。');
       const current=await call('app.bootstrap');state.model=current.model?.source?current.model:null;
       state.backgroundSync=account.backgroundSync||current.backgroundSync||'unknown';
@@ -1819,37 +1831,162 @@ function connectPage(target){target.append(heading('电脑账户与连接','手�
     catch(e){if(current!==probeEpoch||authenticating)return;result.textContent=safeError(e);result.className='inline-error';login.hidden=true;register.hidden=true}},false);
   root.querySelector('.group-body').insertBefore(probe,result);
 }
-function modelsPage(target){target.append(heading('对话模型','手机直连模型与电脑模型分开列出；电脑不向手机发送模型密钥。'));
+function accountModelIntentKey(kind,id){return `weftmate-account-model:${kind}:${state.owner}:${id}`}
+function savedAccountModelIntent(kind,id){try{const value=JSON.parse(localStorage.getItem(accountModelIntentKey(kind,id))||'null');
+  return value?.owner===state.owner&&/^[0-9a-f-]{36}$/.test(value.requestId||'')?value:null}catch{return null}}
+function clearAccountModelIntent(kind,id,requestId){if(savedAccountModelIntent(kind,id)?.requestId===requestId)
+  try{localStorage.removeItem(accountModelIntentKey(kind,id))}catch{}}
+function modelPageCurrent(owner,epoch,generation){return state.page==='models'&&state.owner===owner&&
+  state.authEpoch===epoch&&state.generation===generation&&!state.transitionPending}
+async function publishSavedPhoneModel(item){const owner=state.owner,epoch=state.authEpoch,generation=state.generation,
+  id=`${item.endpoint}|${item.modelId}`,current=()=>modelPageCurrent(owner,epoch,generation);
+  let marker=savedAccountModelIntent('publish',id);
+  if(marker&&(marker.endpoint!==item.endpoint||marker.modelId!==item.modelId)){
+    toast('原上传请求仍待核对；请保持原手机模型',true);return}
+  marker ||= {owner,requestId:crypto.randomUUID(),endpoint:item.endpoint,modelId:item.modelId};
+  try{localStorage.setItem(accountModelIntentKey('publish',id),JSON.stringify(marker))}
+  catch{toast('无法保存上传编号，本次没有提交',true);return}
+  try{const result=await call('models.account.publishSaved',{endpoint:item.endpoint,
+    modelId:item.modelId,requestId:marker.requestId});if(!current())return;
+    const operation=result?.operation;
+    if(operation?.requestId!==marker.requestId){toast('上传回执无法核对；原编号已保留',true);return}
+    if(operation.status==='succeeded'){
+      clearAccountModelIntent('publish',id,marker.requestId);
+      toast('原手机模型已保存到当前电脑账户；已有会话目的地保持不变');page('models')
+    }else if(operation.status==='failed'){
+      clearAccountModelIntent('publish',id,marker.requestId);
+      toast(safeError({message:operation.errorCode||operation.reasonCode||'OPERATION_FAILED'}),true)
+    }else toast('电脑仍在处理原模型配置，请稍后用同编号核对',true)
+  }catch(error){if(current())toast(error?.message==='TIMEOUT'
+    ? '上传结果待核对；原请求编号已保留，不会换模型':safeError(error),true)}}
+async function transferAccountModel(item,replaceExistingKey=false){const owner=state.owner,epoch=state.authEpoch,
+  generation=state.generation,current=()=>modelPageCurrent(owner,epoch,generation),
+  id=`${item.accountModelId}:${item.revision}`;
+  let marker=replaceExistingKey?null:savedAccountModelIntent('transfer',id);
+  if(marker&&(marker.accountModelId!==item.accountModelId||marker.expectedRevision!==item.revision)){
+    toast('原下载请求仍待核对，请保持原配置修订',true);return}
+  marker ||= {owner,requestId:crypto.randomUUID(),accountModelId:item.accountModelId,
+    expectedRevision:item.revision};
+  try{localStorage.setItem(accountModelIntentKey('transfer',id),JSON.stringify(marker))}
+  catch{toast('无法保存取回编号，本次没有提交',true);return}
+  try{const result=await call('models.account.transfer',{accountModelId:item.accountModelId,
+    expectedRevision:item.revision,requestId:marker.requestId,replaceExistingKey});if(!current())return;
+    if(result?.requestId!==marker.requestId){toast('取回回执无法核对；原编号已保留',true);return}
+    if(result.status==='credential_conflict'){
+      clearAccountModelIntent('transfer',id,marker.requestId);
+      state.accountModelCredentialConflict={owner,id,item};
+      toast('手机同一地址已有不同密钥，原配置与当前模型未改变',true);page('models');return}
+    if(result.status==='saved'){
+      clearAccountModelIntent('transfer',id,marker.requestId);
+      state.accountModelCredentialConflict=null;
+      toast('已加密存到手机。要改为手机直连，请在本机模型列表明确选择');page('models')
+    }else toast('取回结果待核对，原手机配置保持不变',true)
+  }catch(error){if(current())toast(safeError(error),true)}}
+async function testAccountModel(item){const owner=state.owner,epoch=state.authEpoch,
+  generation=state.generation,current=()=>modelPageCurrent(owner,epoch,generation),
+  id=`${item.accountModelId}:${item.revision}`;
+  let marker=savedAccountModelIntent('test',id);
+  marker ||= {owner,requestId:crypto.randomUUID(),accountModelId:item.accountModelId,
+    expectedRevision:item.revision};
+  try{localStorage.setItem(accountModelIntentKey('test',id),JSON.stringify(marker))}
+  catch{toast('无法保存测试编号，本次没有提交',true);return}
+  try{let result;try{result=await call('models.account.byRequest',{requestId:marker.requestId})}
+    catch(error){if(error?.message!=='NOT_FOUND')throw error}
+    if(!current())return;
+    result ||= await call('models.account.test',{accountModelId:item.accountModelId,
+      expectedRevision:item.revision,requestId:marker.requestId});
+    if(!current())return;
+    if(result?.operation?.requestId!==marker.requestId||result.operation.kind!=='test')
+      throw new Error('MODEL_RECEIPT_INVALID');
+    if(result.operation.status==='succeeded'){
+      clearAccountModelIntent('test',id,marker.requestId);
+      const checked=result.operation.testResult;
+      const passed=checked?.configured===true&&checked.reachable===true&&checked.modelListed===true;
+      toast(passed?'目录与鉴权已核对；尚未发送推理消息':
+        '连接检查已完成，但目录、鉴权或模型列表未通过；尚未发送推理消息',!passed)
+    }else if(result.operation.status==='failed'){
+      clearAccountModelIntent('test',id,marker.requestId);
+      toast(safeError({message:result.operation.errorCode||result.operation.reasonCode||'OPERATION_FAILED'}),true)
+    }else toast('连接检查仍在处理，原测试编号已保留',true)
+  }catch(error){if(current())toast(safeError(error),true)}}
+function modelsPage(target){target.append(heading('对话模型','手机直连模型与电脑模型分开列出；密钥不会出现在账户模型目录中。'));
   if(!state.loggedIn){target.append(notice('请登录或注册账户后选择模型。原有未绑定的模型配置会原样保留，不会自动交给新账户。'),
     action('连接账户',()=>page('connect')));return}
+  const pageOwner=state.owner,pageEpoch=state.authEpoch,pageGeneration=state.generation;
+  const current=()=>modelPageCurrent(pageOwner,pageEpoch,pageGeneration);
   const list=group('手机已保存模型',[]);target.append(list);const body=list.querySelector('.group-body');
-  call('models.list').then(result=>{if(state.page!=='models')return;clear(body);
+  call('models.list').then(result=>{if(!current())return;clear(body);
     if(!result.models?.length)body.append(el('p','muted','尚未保存手机模型'));
-    for(const item of result.models){body.append(row(`${item.displayName||item.modelId}${item.selected?' · 当前':''}`,
-      `${item.endpoint.startsWith('http://')?'本地服务':'云端服务'} · ${item.endpoint}`,
-      async()=>{try{const selected=await call('models.select',{endpoint:item.endpoint,modelId:item.modelId});state.model=selected;
-        $('model-label').textContent=selected.displayName||selected.modelId;page('models')}catch(e){toast(safeError(e),true)}}))}
-  }).catch(e=>body.append(el('p','inline-error',safeError(e))));
+    for(const item of result.models){const card=el('div','model-library-entry');
+      card.append(el('strong','',`${item.displayName||item.modelId}${item.selected?' · 当前':''}`),
+        el('small','',`${item.endpoint.startsWith('http://')?'本地服务':'手机直连云'} · ${item.modelId}`));
+      const controls=el('div','model-library-actions');
+      const use=el('button','secondary','在手机使用');use.disabled=item.selected===true;
+      use.addEventListener('click',async()=>{try{const selected=await call('models.select',{endpoint:item.endpoint,modelId:item.modelId});
+        if(!current())return;
+        state.model=selected;$('model-label').textContent=selected.displayName||selected.modelId;
+        toast('已明确切换为手机直连模型');page('models')}catch(e){if(current())toast(safeError(e),true)}});
+      controls.append(use);
+      if(item.endpoint.startsWith('https://')){const publish=el('button','secondary',
+        savedAccountModelIntent('publish',`${item.endpoint}|${item.modelId}`)?'核对电脑配置':'在电脑使用这个模型');
+        publish.addEventListener('click',()=>void publishSavedPhoneModel(item));controls.append(publish)}
+      if(!item.selected){const remove=el('button','quiet','删除本机副本');remove.addEventListener('click',async()=>{
+        if(remove.dataset.confirm!=='yes'){remove.dataset.confirm='yes';remove.textContent='确认删除本机副本';return}
+        try{await call('models.account.removeLocal',{endpoint:item.endpoint,modelId:item.modelId});
+          if(!current())return;
+          toast('仅移除了这台手机的副本；账户共享配置未改变');page('models')}
+        catch(error){if(current())toast(safeError(error),true)}});controls.append(remove)}
+      card.append(controls);body.append(card)}
+  }).catch(e=>{if(current())body.append(el('p','inline-error',safeError(e)))});
   const endpoint=field('提供方地址（/v1）','url',state.model?.endpoint||'');
   const id=field('模型 ID','text',state.model?.modelId||'');const key=field('API Key（留空保留同一地址已存密钥）','password');
   const form=group('配置自定义模型',[]);form.querySelector('.group-body').append(endpoint.box,id.box,key.box,
     action('保存并选择',async()=>{try{const selected=await call('models.configure',{endpoint:endpoint.input.value,
-      modelId:id.input.value,apiKey:key.input.value});key.input.value='';state.model=selected;$('model-label').textContent=selected.displayName||selected.modelId;
-      toast('手机模型已保存');page('models')}catch(e){key.input.value='';toast(safeError(e),true)}}));target.append(form);
+      modelId:id.input.value,apiKey:key.input.value});key.input.value='';if(!current())return;
+      state.model=selected;$('model-label').textContent=selected.displayName||selected.modelId;
+      toast('手机模型已保存');page('models')}catch(e){key.input.value='';if(current())toast(safeError(e),true)}}));target.append(form);
   if(state.model?.source==='phone')target.append(group('连接检查',[row('检查当前模型目录','只确认服务可达和模型是否列出，不发送推理消息',async()=>{
     try{const result=await call('models.verifyPhone');toast(result.modelListed?'目录中已列出当前模型；尚未测试推理':'服务可达，但目录未列出当前模型',!result.modelListed)}
     catch(e){toast(safeError(e),true)}})]));
   if(state.loggedIn){const hostGroup=group('电脑模型',[]);const hostBody=hostGroup.querySelector('.group-body');hostBody.append(el('p','muted','正在读取电脑已配置模型…'));target.append(hostGroup);
-    const gen=state.generation;call('models.host').then(result=>{if(state.page!=='models'||state.generation!==gen)return;clear(hostBody);
+    call('models.host').then(result=>{if(!current())return;clear(hostBody);
       const models=result.models||[];if(!models.length)hostBody.append(el('p','muted','电脑当前没有可选模型'));
       for(const item of models){hostBody.append(row(`${item.displayName}${item.selected?' · 当前':''}`,
         `${item.sourceKind==='local'?'电脑本机':'电脑云端'} · ${item.configured?'已配置':'未配置'}`,async()=>{
           if(!item.configured){toast('请先在电脑上配置这个模型',true);return}
-          try{const verified=await call('models.verifyHost',{profileId:item.profileId});if(verified.available===false){toast('电脑模型暂不可用',true);return}
-            const selected=await call('models.selectHost',{profileId:item.profileId});state.model=selected;
+          try{const verified=await call('models.verifyHost',{profileId:item.profileId});if(!current())return;
+            if(verified.available===false){toast('电脑模型暂不可用',true);return}
+            const selected=await call('models.selectHost',{profileId:item.profileId});if(!current())return;
+            state.model=selected;
             $('model-label').textContent=selected.displayName||selected.profileId;toast('已选择电脑模型');page('models')}
-          catch(e){toast(safeError(e),true)}}))}
-    }).catch(e=>{clear(hostBody);hostBody.append(el('p','inline-error',safeError(e)))})}
+          catch(e){if(current())toast(safeError(e),true)}}))}
+    }).catch(e=>{if(current()){clear(hostBody);hostBody.append(el('p','inline-error',safeError(e)))}});
+    const accountGroup=group('账户云模型',[]);const accountBody=accountGroup.querySelector('.group-body');
+    accountBody.append(el('p','muted','正在读取当前账户的配置…'));target.append(accountGroup);
+    const owner=state.owner,epoch=state.authEpoch,generation=state.generation;
+    call('models.account.list').then(result=>{if(!modelPageCurrent(owner,epoch,generation))return;
+      clear(accountBody);const models=Array.isArray(result?.models)?result.models:[];
+      if(!models.length)accountBody.append(el('p','muted','当前账户尚无可取回的云模型。可从手机已保存模型明确上传，或在电脑账户页配置。'));
+      for(const item of models){if(typeof item?.accountModelId!=='string'||!Number.isSafeInteger(item.revision))continue;
+        const card=el('div','model-library-entry');card.append(el('strong','',item.name||item.modelId),
+          el('small','',`${item.modelId} · ${{active:'账户可用',stopped:'已停止使用',pending:'配置中',failed:'配置失败'}[item.status]||'待核对'} · 修订 ${item.revision}`));
+        const controls=el('div','model-library-actions');
+        if(item.status==='active'){
+          const transfer=el('button','secondary','保存到手机');transfer.addEventListener('click',()=>void transferAccountModel(item));
+          const test=el('button','quiet',savedAccountModelIntent('test',`${item.accountModelId}:${item.revision}`)
+            ?'核对连接检查':'测试连接');test.addEventListener('click',()=>void testAccountModel(item));
+          controls.append(transfer,test)
+        }
+        const conflict=state.accountModelCredentialConflict;
+        if(conflict?.owner===state.owner&&conflict.id===`${item.accountModelId}:${item.revision}`){
+          card.append(el('p','model-library-warning','手机同一地址已有不同密钥。保留本机配置，或明确替换该地址所有本机模型使用的密钥；当前选择不会自动切换。'));
+          const keep=el('button','quiet','保留本机密钥');keep.addEventListener('click',()=>{
+            state.accountModelCredentialConflict=null;page('models')});
+          const replace=el('button','secondary','替换同地址密钥');replace.addEventListener('click',()=>void transferAccountModel(item,true));
+          controls.append(keep,replace)}
+        card.append(controls);accountBody.append(card)}
+    }).catch(error=>{if(modelPageCurrent(owner,epoch,generation)){
+      clear(accountBody);accountBody.append(el('p','inline-error',safeError(error)))}})}
 }
 function thingsPage(target){stopTaskControlObservation();state.thingsDetail=null;
   if(state.taskLabelOwner!==state.owner||state.taskLabelEpoch!==state.authEpoch){
@@ -2213,7 +2350,7 @@ function deviceDetails(device){const target=$('page-content');clear(target);targ
     catch(e){toast(safeError(e),true)}}));controls.append(action('移除设备',()=>{
     const warning=notice(`移除 ${device.name} 后，该设备需要重新登录。`,'确认移除设备');
     const confirmActions=el('div','form-actions');confirmActions.append(action('保留设备',()=>{warning.remove();confirmActions.remove()},false),
-      action('确认移除',async()=>{try{const result=await call('auth.revokeDevice',{deviceId:device.id});if(!result.loggedIn){state.authEpoch++;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=false;state.connection='local';state.username='';state.owner='';state.conversationId=null;
+      action('确认移除',async()=>{try{const result=await call('auth.revokeDevice',{deviceId:device.id});if(!result.loggedIn){state.authEpoch++;state.accountModelCredentialConflict=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.handoffModelLastCheck=0;clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.loggedIn=false;state.connection='local';state.username='';state.owner='';state.conversationId=null;
         state.profile=null;state.model=null;state.backgroundSync='not_scheduled';
         $('model-label').textContent='选择模型';showProfile({displayName:'未登录'});
         try{applyTheme((await call('settings.appearance')).value)}catch{applyTheme('system')}

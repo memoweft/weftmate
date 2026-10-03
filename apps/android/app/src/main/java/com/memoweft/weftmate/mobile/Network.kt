@@ -568,6 +568,49 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
     fun hostModels(host: HostIdentity): JSONObject = http.request("${host.origin}/personal/v1/models", "GET",
         headers = mapOf("Cookie" to host.cookie)).body
 
+    fun accountModels(host: HostIdentity): JSONObject = http.request(
+        "${host.origin}/personal/v1/account/models", "GET", headers = mapOf("Cookie" to host.cookie)).body
+
+    fun accountModel(host: HostIdentity, accountModelId: String): JSONObject {
+        require(accountModelId.matches(Regex("[A-Za-z0-9_-]{1,128}")))
+        return http.request("${host.origin}/personal/v1/account/models/$accountModelId", "GET",
+            headers = mapOf("Cookie" to host.cookie)).body
+    }
+
+    fun accountModelByRequest(host: HostIdentity, requestId: String): JSONObject {
+        require(requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")))
+        return http.request("${host.origin}/personal/v1/account/models/by-request/$requestId", "GET",
+            headers = mapOf("Cookie" to host.cookie)).body
+    }
+
+    fun createAccountModel(host: HostIdentity, requestId: String, name: String,
+        baseUrl: String, modelId: String, apiKey: String): JSONObject {
+        require(requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")))
+        return http.request("${host.origin}/personal/v1/account/models", "POST",
+            JSONObject().put("requestId", requestId).put("name", name).put("baseUrl", baseUrl)
+                .put("modelId", modelId).put("apiKey", apiKey), authWriteHeaders(host)).body
+    }
+
+    fun mutateAccountModel(host: HostIdentity, accountModelId: String, action: String,
+        body: JSONObject): JSONObject {
+        require(accountModelId.matches(Regex("[A-Za-z0-9_-]{1,128}")) &&
+            action in setOf("update", "test", "stop-using", "remove"))
+        val method = when (action) { "update" -> "PATCH"; "remove" -> "DELETE"; else -> "POST" }
+        val suffix = when (action) { "update", "remove" -> ""; "test" -> "/test"; else -> "/stop-using" }
+        return http.request("${host.origin}/personal/v1/account/models/$accountModelId$suffix",
+            method, body, authWriteHeaders(host)).body
+    }
+
+    /** The secret response is consumed inside Native and never returned by a Hybrid bridge action. */
+    fun transferAccountModel(host: HostIdentity, accountModelId: String,
+        requestId: String, expectedRevision: Long): JSONObject {
+        require(accountModelId.matches(Regex("[A-Za-z0-9_-]{1,128}")) &&
+            requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) && expectedRevision >= 1)
+        return http.request("${host.origin}/personal/v1/account/models/$accountModelId/transfer",
+            "POST", JSONObject().put("requestId", requestId).put("expectedRevision", expectedRevision),
+            authWriteHeaders(host)).body
+    }
+
     fun projects(host: HostIdentity): JSONObject = http.request("${host.origin}/personal/v1/projects", "GET",
         headers = mapOf("Cookie" to host.cookie)).body
 
@@ -655,10 +698,10 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
     fun registerSyncCapabilities(host: HostIdentity,
         active: AtomicReference<HttpURLConnection?>? = null): JSONObject {
         val result = http.request("${host.origin}/personal/v1/sync/capabilities", "POST",
-            JSONObject().put("sharedConversations", 1).put("nativeVersionCode", 11),
+            JSONObject().put("sharedConversations", 1).put("nativeVersionCode", 12),
             authWriteHeaders(host), active).body
         if (result.optString("deviceId") != host.deviceId ||
-            result.optInt("sharedConversations") != 1 || result.optInt("nativeVersionCode") != 11)
+            result.optInt("sharedConversations") != 1 || result.optInt("nativeVersionCode") != 12)
             throw ApiFailure(502, "CAPABILITY_RECEIPT_INVALID")
         return result
     }
