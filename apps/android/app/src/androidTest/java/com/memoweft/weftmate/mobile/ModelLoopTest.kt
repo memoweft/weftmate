@@ -12,6 +12,30 @@ import java.util.concurrent.atomic.AtomicReference
 
 @RunWith(AndroidJUnit4::class)
 class ModelLoopTest {
+    @Test fun requestHookReportsTheActualMiMoModelAndRouteWithoutAnyCredential() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val observed = mutableListOf<Pair<String, String>>()
+        val transport = object : JsonTransport {
+            override fun request(url: String, method: String, body: JSONObject?, headers: Map<String, String>,
+                active: AtomicReference<HttpURLConnection?>?, readTimeoutMs: Int): HttpReply {
+                assertEquals("mimo-v2.6-flash", body?.getString("model"))
+                return HttpReply(200, JSONObject().put("choices", JSONArray().put(JSONObject()
+                    .put("message", JSONObject().put("content", "synthetic answer"))
+                    .put("finish_reason", "stop"))))
+            }
+        }
+        val tools = object : DeviceToolExecutor {
+            override fun execute(name: String, arguments: JSONObject): ToolResult =
+                throw AssertionError("No device action expected")
+        }
+        val answer = ModelClient(context, transport, tools).complete(
+            ModelSettings("https://api.xiaomimimo.com/v1", "MiMo-V2.6-Flash", "synthetic-key"),
+            listOf(LocalMessage("msg-1", "user", "synthetic goal")),
+            receipt = { _, _, _, _ -> }, onRequestStart = { route, model -> observed += route to model })
+        assertEquals("synthetic answer", answer)
+        assertEquals(listOf("https://api.xiaomimimo.com/v1/chat/completions" to "mimo-v2.6-flash"), observed)
+    }
+
     @Test fun repeatedDispatchedToolStopsWithoutSecondDeviceAction() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         var modelCalls = 0

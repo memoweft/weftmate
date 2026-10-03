@@ -652,6 +652,17 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         "${host.origin}/personal/v1/sync/events", "POST", JSONObject().put("events", events),
         mapOf("Cookie" to host.cookie, "Origin" to host.origin, "X-WeftMate-CSRF" to host.csrf), active).body
 
+    fun registerSyncCapabilities(host: HostIdentity,
+        active: AtomicReference<HttpURLConnection?>? = null): JSONObject {
+        val result = http.request("${host.origin}/personal/v1/sync/capabilities", "POST",
+            JSONObject().put("sharedConversations", 1).put("nativeVersionCode", 11),
+            authWriteHeaders(host), active).body
+        if (result.optString("deviceId") != host.deviceId ||
+            result.optInt("sharedConversations") != 1 || result.optInt("nativeVersionCode") != 11)
+            throw ApiFailure(502, "CAPABILITY_RECEIPT_INVALID")
+        return result
+    }
+
     fun getEvents(host: HostIdentity, after: Long, limit: Int = 100,
         active: AtomicReference<HttpURLConnection?>? = null): JSONObject = http.request(
         "${host.origin}/personal/v1/sync/events?afterSeq=$after&limit=$limit", "GET",
@@ -659,6 +670,46 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
 
     fun remoteSessions(host: HostIdentity): JSONObject = http.request(
         "${host.origin}/personal/v1/sessions", "GET", headers = mapOf("Cookie" to host.cookie)).body
+
+    fun sharedConversation(host: HostIdentity, conversationId: String): JSONObject {
+        require(validImageScopeId(conversationId))
+        return http.request("${host.origin}/personal/v1/sync/conversations/$conversationId/shared",
+            "GET", headers = mapOf("Cookie" to host.cookie)).body
+    }
+
+    fun adoptSharedConversation(host: HostIdentity, conversationId: String, requestId: String,
+        modelProfileId: String, expectedSyncSeq: Long): JSONObject {
+        require(validImageScopeId(conversationId) &&
+            requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) &&
+            modelProfileId.matches(Regex("[A-Za-z0-9._-]{1,128}")) && expectedSyncSeq >= 0)
+        val body = JSONObject().put("requestId", requestId)
+            .put("modelProfileId", modelProfileId).put("expectedSyncSeq", expectedSyncSeq)
+        return http.request("${host.origin}/personal/v1/sync/conversations/$conversationId/shared",
+            "POST", body, authWriteHeaders(host)).body
+    }
+
+    fun localTurn(host: HostIdentity, conversationId: String, turnId: String): JSONObject {
+        require(validImageScopeId(conversationId) && validImageScopeId(turnId))
+        return http.request("${host.origin}/personal/v1/sync/conversations/$conversationId/local-turns/$turnId",
+            "GET", headers = mapOf("Cookie" to host.cookie)).body
+    }
+
+    fun reserveLocalTurn(host: HostIdentity, conversationId: String, turnId: String,
+        sourceSyncEventId: String, requestId: String): JSONObject {
+        require(validImageScopeId(conversationId) && validImageScopeId(turnId) &&
+            validImageScopeId(sourceSyncEventId) && requestId == "local-turn:$turnId")
+        return http.request("${host.origin}/personal/v1/sync/conversations/$conversationId/local-turns",
+            "POST", JSONObject().put("requestId", requestId).put("turnId", turnId)
+                .put("sourceSyncEventId", sourceSyncEventId), authWriteHeaders(host)).body
+    }
+
+    fun updateLocalTurn(host: HostIdentity, conversationId: String, turnId: String,
+        requestId: String, action: String): JSONObject {
+        require(validImageScopeId(conversationId) && validImageScopeId(turnId) &&
+            requestId == "local-turn:$turnId" && action in setOf("renew", "finish"))
+        return http.request("${host.origin}/personal/v1/sync/conversations/$conversationId/local-turns/$turnId/$action",
+            "POST", JSONObject().put("requestId", requestId), authWriteHeaders(host)).body
+    }
 
     fun recentCommands(host: HostIdentity): JSONObject = http.request(
         "${host.origin}/personal/v1/commands?limit=50", "GET", headers = mapOf("Cookie" to host.cookie)).body
@@ -754,6 +805,8 @@ class SyncManager(private val store: LocalStore, private val api: PersonalApi,
         fun checkAllowed() { if (!shouldContinue()) throw SyncInterrupted() }
         checkAllowed()
         api.me(host, active) // Revocation/expiry stops before touching the outbox.
+        checkAllowed()
+        api.registerSyncCapabilities(host, active)
         checkAllowed()
         val owner = Endpoints.ownerKey(host.origin, host.ownerId)
         var uploaded = 0

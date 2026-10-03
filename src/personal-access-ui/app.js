@@ -27,6 +27,10 @@
   state.browserHostId = null
   state.browserAvailable = false
   state.browserFetchGeneration = 0
+  state.phoneBindings = new Map()
+  state.phoneHostEvents = new Map()
+  state.phoneHandoffBusy = false
+  state.phoneHandoffSelections = new Map()
   const memory = { viewGeneration: 0, entryGeneration: 0, queryGeneration: 0, selectedGeneration: 0, operationGeneration: 0,
     status: null, items: [], revision: null, cursor: null, hasMore: false, query: '', kind: 'cognition',
     selected: null, sources: [], mode: 'detail', drafts: new Map(), activeOperation: null,
@@ -144,6 +148,10 @@
     state.phoneSending = false
     state.phoneSendNotice = ''
     state.phoneDrafts.clear()
+    state.phoneBindings.clear()
+    state.phoneHostEvents.clear()
+    state.phoneHandoffBusy = false
+    state.phoneHandoffSelections.clear()
     state.desktopDraft = ''
     closePhoneImagePreview()
     state.phoneDeviceNames.clear()
@@ -1526,8 +1534,10 @@
     const recovery = phoneChat && !pendingPhone ? readPhoneRecovery() : null
     const pendingHere = pendingPhone?.event.conversationId === state.selectedPhoneConversationId
     const recoveryHere = recovery?.event.conversationId === state.selectedPhoneConversationId
-    const phoneReady = state.online && state.syncAvailable && !!state.ownerId && !!state.device?.id &&
-      !!state.selectedPhoneConversationId && !state.phoneSending
+    const bound = phoneChat ? phoneBinding() : null
+    const boundSession = bound && state.sessions.find((item) => item.sessionId === bound.sessionId)
+    const phoneReady = state.online && !!state.ownerId && !!state.selectedPhoneConversationId && !state.phoneSending &&
+      (bound ? boundSession?.sendAvailable === true : state.syncAvailable && !!state.device?.id)
     const chat = state.online && state.capabilities?.chat?.available === true
     const model = state.models.some((item) => item.id === state.modelProfileId)
     const selected = state.sessions.find((item) => item.sessionId === state.selectedSessionId)
@@ -1539,8 +1549,9 @@
       (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !byId('message-text').value.trim())
       : !chat || !model || !canSendHere || state.submitting ||
       !byId('message-text').value.trim() || state.unresolvedSubmission
-    byId('send-message').textContent = phoneChat ? recoveryHere && !pendingPhone ? '核对旧请求'
-      : pendingHere ? '核对并重试' : '同步文字' : '发送'
+    byId('send-message').textContent = phoneChat ? bound ? '发送到电脑'
+      : recoveryHere && !pendingPhone ? '核对旧请求'
+        : pendingHere ? '核对并重试' : '同步文字' : '发送'
     const blockedDesktop = desktopBlocker()
     byId('open-notepad').textContent = blockedDesktop ? '查看原事情' : '打开记事本'
     byId('open-notepad').disabled = blockedDesktop ? false : !state.online ||
@@ -1549,7 +1560,9 @@
     byId('cancel-turn').hidden = phoneChat || !selected?.running
     byId('cancel-turn').disabled = !state.online || !selected?.running || state.cancelSubmitting
     const hint = byId('model-hint')
-    if (phoneChat) hint.textContent = pendingPhone && !pendingHere
+    if (phoneChat && bound) hint.textContent = state.phoneSendNotice ||
+      `后续消息由${state.models.find((item) => item.id === bound.modelProfileId)?.name || '所选电脑模型'}处理；原手机记录仍保留。`
+    else if (phoneChat) hint.textContent = pendingPhone && !pendingHere
       ? '另一条手机对话有未确认的同步请求。请先切回原对话核对。'
       : pendingHere ? state.phoneSendNotice || '这条文字的同步结果待核对。重试会沿用同一个消息编号。'
         : recovery && !recoveryHere ? '旧设备有未确认文字，请先切回原手机对话核对。'
@@ -1615,10 +1628,11 @@
     const list = byId('session-list')
     list.replaceChildren()
     const phone = phoneConversations()
+    const linkedSessionIds = new Set(phone.map((record) => phoneBinding(record.id)?.sessionId).filter(Boolean))
     if (!state.sessions.length && !phone.length) { byId('sessions-status').textContent = '还没有会话。'; return }
     byId('sessions-status').textContent = ''
     for (const session of state.sessions) {
-      if (!sessionIdPattern.test(session.sessionId)) continue
+      if (!sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId)) continue
       const row = element('li')
       const button = element('button', state.activeChatSource === 'desktop' &&
         session.sessionId === state.selectedSessionId ? 'is-current' : '')
@@ -1636,7 +1650,9 @@
         record.id === state.selectedPhoneConversationId ? 'is-current' : '')
       button.type = 'button'
       button.append(element('span', 'session-title', phoneDisplayTitle(record)),
-        element('small', 'session-source', '手机 · MiMo'))
+        element('small', 'session-source', phoneBinding(record.id)
+          ? `手机起步 · ${state.models.find((item) => item.id === phoneBinding(record.id).modelProfileId)?.name || '电脑模型'}续聊`
+          : '手机 · MiMo'))
       button.addEventListener('click', () => { selectPhoneConversation(record.id) })
       row.append(button)
       list.append(row)
@@ -1772,6 +1788,8 @@
   }
   async function selectSession(sessionId) {
     if (!sessionIdPattern.test(sessionId)) return
+    const linked = phoneConversations().find((record) => phoneBinding(record.id)?.sessionId === sessionId)
+    if (linked) { selectPhoneConversation(linked.id); return }
     const fromPhone = state.activeChatSource === 'phone'
     if (fromPhone && state.selectedPhoneConversationId && !readPhoneOutbox())
       state.phoneDrafts.set(state.selectedPhoneConversationId, byId('message-text').value)
@@ -2503,6 +2521,62 @@
     }
     return [...conversations.values()]
   }
+  function phoneBinding(conversationId = state.selectedPhoneConversationId) {
+    const view = state.phoneBindings.get(conversationId)
+    return view?.status === 'active' && sessionIdPattern.test(view.binding?.sessionId || '')
+      ? view.binding : null
+  }
+  function matchingOriginalPhoneModels(view, models) {
+    const original = view?.originalModel
+    if (!original || typeof original.modelId !== 'string') return []
+    if (typeof original.hostProfileId === 'string') return models.filter((model) =>
+      model.id === original.hostProfileId && model.model === original.modelId)
+    if (typeof original.routeFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(original.routeFingerprint)) return []
+    return models.filter((model) => model.model === original.modelId &&
+      model.routeFingerprint === original.routeFingerprint)
+  }
+  async function refreshPhoneBinding(conversationId) {
+    if (!state.online || !state.syncAvailable || !syncIdPattern.test(conversationId)) return null
+    const owner = state.ownerId, generation = state.identityGeneration
+    try {
+      const view = await requestJson(`${accessBase}/sync/conversations/${encodeURIComponent(conversationId)}/shared`)
+      if (state.ownerId !== owner || state.identityGeneration !== generation ||
+          view?.conversationId !== conversationId || view?.hostId !== state.hostId || view?.source !== 'host') return null
+      state.phoneBindings.set(conversationId, view)
+      renderSessions()
+      if (state.activeChatSource === 'desktop' && state.selectedSessionId === view.binding?.sessionId &&
+          view.status === 'active') selectPhoneConversation(conversationId)
+      if (state.activeChatSource === 'phone' && state.selectedPhoneConversationId === conversationId) {
+        updateAvailability()
+        renderSelectedPhoneConversation()
+        if (phoneBinding(conversationId)) void refreshPhoneHostEvents(conversationId)
+      }
+      return view
+    } catch { return null }
+  }
+  async function refreshPhoneHostEvents(conversationId) {
+    const binding = phoneBinding(conversationId)
+    if (!binding || !state.online) return
+    const owner = state.ownerId, generation = state.identityGeneration, sessionId = binding.sessionId
+    const events = []
+    let afterSeq = -1
+    try {
+      for (let pageNo = 0; pageNo < 20; pageNo++) {
+        const page = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/events?afterSeq=${afterSeq}&limit=100`)
+        if (state.ownerId !== owner || state.identityGeneration !== generation ||
+            phoneBinding(conversationId)?.sessionId !== sessionId || !Array.isArray(page?.events) ||
+            !Number.isSafeInteger(page.nextSeq) || page.nextSeq < afterSeq) return
+        events.push(...page.events.filter((event) => Number.isSafeInteger(event?.seq) &&
+          ['user.message', 'assistant.message', 'turn.started', 'turn.ended'].includes(event.type)))
+        if (page.hasMore !== true) break
+        if (page.nextSeq <= afterSeq) return
+        afterSeq = page.nextSeq
+      }
+      state.phoneHostEvents.set(conversationId, events)
+      if (state.activeChatSource === 'phone' && state.selectedPhoneConversationId === conversationId)
+        renderSelectedPhoneConversation()
+    } catch { /* The verified phone history remains visible. */ }
+  }
   async function findPhoneSyncEvent(outbox, current) {
     let afterSeq = 0
     for (let pageNo = 0; pageNo < 101; pageNo++) {
@@ -2543,6 +2617,30 @@
     updateAvailability()
   }
   async function sendPhoneMessage() {
+    const bound = phoneBinding()
+    if (bound) {
+      if (state.phoneSending || !state.online ||
+          state.sessions.find((item) => item.sessionId === bound.sessionId)?.sendAvailable !== true) return
+      const conversationId = state.selectedPhoneConversationId, text = byId('message-text').value.trim(),
+        owner = state.ownerId, generation = state.identityGeneration
+      if (!text) return
+      state.phoneSending = true
+      updateAvailability()
+      try {
+        const command = await submitCommand('session.message',
+          { sessionId: bound.sessionId, text, mode: 'queue' }, bound.sessionId)
+        if (state.ownerId !== owner || state.identityGeneration !== generation ||
+            state.selectedPhoneConversationId !== conversationId || state.activeChatSource !== 'phone') return
+        if (command?.state === 'accepted_by_dsh') {
+          state.phoneDrafts.delete(conversationId)
+          if (byId('message-text').value.trim() === text) byId('message-text').value = ''
+          state.phoneSendNotice = '电脑已受理，正在等待真实会话记录。'
+          await Promise.all([refreshPhoneBinding(conversationId), refreshPhoneHostEvents(conversationId)])
+        } else state.phoneSendNotice = '结果待核对。原请求编号和草稿已保留。'
+      } finally { if (state.ownerId === owner && state.identityGeneration === generation) {
+        state.phoneSending = false; updateAvailability() } }
+      return
+    }
     if (state.phoneSending || state.activeChatSource !== 'phone' || !state.online || !state.syncAvailable ||
         !state.ownerId || !state.device?.id || !syncIdPattern.test(state.selectedPhoneConversationId)) return
     const ownerId = state.ownerId, deviceId = state.device.id, generation = state.identityGeneration,
@@ -2698,6 +2796,156 @@
     return typeof value === 'string' ? value.split('、').map((name) => name.trim()).filter((name) =>
       name && !/\.(?:png|jpe?g|webp|gif)$/i.test(name)).join('、') : ''
   }
+  function phoneHandoffKey(conversationId) {
+    return `weftmate:phone-handoff:v1:${state.ownerId}:${conversationId}`
+  }
+  async function adoptPhoneConversation(conversationId, modelProfileId) {
+    if (state.phoneHandoffBusy || !state.online || !syncIdPattern.test(conversationId) ||
+        !state.models.some((model) => model.id === modelProfileId)) return
+    const view = state.phoneBindings.get(conversationId)
+    if (!view || view.status === 'active' || view.canAdopt !== true ||
+        !Number.isSafeInteger(view.syncThroughSeq)) return
+    const owner = state.ownerId, generation = state.identityGeneration
+    const key = phoneHandoffKey(conversationId)
+    let intent
+    try { intent = JSON.parse(localStorage.getItem(key) || 'null') } catch { intent = null }
+    if (intent && (intent.modelProfileId !== modelProfileId ||
+        intent.expectedSyncSeq !== view.syncThroughSeq || !/^[0-9a-f-]{36}$/.test(intent.requestId || ''))) {
+      state.phoneSendNotice = '原交接请求仍待核对，请保持原模型选择并重试。'
+      renderSelectedPhoneConversation()
+      return
+    }
+    intent ||= { requestId: crypto.randomUUID(), modelProfileId, expectedSyncSeq: view.syncThroughSeq }
+    try { localStorage.setItem(key, JSON.stringify(intent)) }
+    catch { state.phoneSendNotice = '无法保存交接编号。本次没有提交，请检查浏览器存储。'; renderSelectedPhoneConversation(); return }
+    state.phoneHandoffBusy = true
+    renderSelectedPhoneConversation()
+    const current = () => state.ownerId === owner && state.identityGeneration === generation &&
+      state.selectedPhoneConversationId === conversationId
+    try {
+      let command = null
+      try {
+        const prior = await accessApi(`/commands/by-request/${encodeURIComponent(intent.requestId)}`)
+        command = prior.command
+      } catch (error) { if (error?.code !== 'NOT_FOUND') throw error }
+      if (!current()) return
+      if (!command) {
+        const result = await accessApi(`/sync/conversations/${encodeURIComponent(conversationId)}/shared`, {
+          method: 'POST', protectedWrite: true, body: intent })
+        command = result.command
+      }
+      if (!current() || command?.requestId !== intent.requestId || command?.kind !== 'session.create')
+        throw { code: 'REQUEST_FAILED' }
+      state.phoneSendNotice = '电脑正在接上原对话，完成后可在这里继续发送。'
+      for (let attempt = 0; attempt < 10 && current(); attempt++) {
+        const latest = await refreshPhoneBinding(conversationId)
+        if (latest?.status === 'active' && latest.binding?.sessionId === command.sessionId) {
+          localStorage.removeItem(key)
+          state.phoneSendNotice = '已接上电脑模型。原手机记录和图片仍在这条对话里。'
+          await refreshSessions()
+          await refreshPhoneHostEvents(conversationId)
+          break
+        }
+        await new Promise((resolve) => setTimeout(resolve, 400))
+      }
+    } catch (error) {
+      const existing = current() ? await refreshPhoneBinding(conversationId) : null
+      if (current() && existing?.status === 'active') {
+        if (existing.binding?.modelProfileId === modelProfileId) {
+          localStorage.removeItem(key)
+          state.phoneSendNotice = '这条原对话已有电脑接续，已显示现有会话。'
+        } else state.phoneSendNotice = '这条对话已绑定另一台电脑模型；请查看原交接。'
+      } else if (current()) state.phoneSendNotice = error?.code === 'LOCAL_TURN_RUNNING'
+        ? '手机仍在回复，等这轮结束并同步后再接到电脑。'
+        : error?.code === 'LOCAL_TURN_UNCONFIRMED'
+          ? '手机回合状态待核对；只能按已同步的记录明确交接。'
+          : error?.code === 'SOURCE_DEVICE_UPGRADE_REQUIRED'
+            ? '请先更新创建这条对话的手机应用，再从原对话接到电脑。'
+          : '交接结果待核对。原编号已保留，不会另建会话。'
+    } finally {
+      if (state.ownerId === owner && state.identityGeneration === generation) {
+        state.phoneHandoffBusy = false
+        if (current()) renderSelectedPhoneConversation()
+      }
+    }
+  }
+  function phoneHandoffControls(list, record, view) {
+    const row = element('li', 'phone-handoff')
+    const binding = phoneBinding(record.id)
+    if (binding) {
+      const model = state.models.find((item) => item.id === binding.modelProfileId)
+      row.append(element('strong', '', '这条对话已在电脑继续'),
+        element('span', '', `当前由${model?.name || '所选电脑模型'}处理。此前手机文字与图片保留在下方。`))
+      const linkedTask = state.tasks.find((item) => item?.conversationId === record.id &&
+        sessionIdPattern.test(item.taskId || item.commandId || ''))
+      if (linkedTask) {
+        const task = element('button', '', '查看这段的事情与成果')
+        task.addEventListener('click', () => { void openTaskDetail(linkedTask.taskId || linkedTask.commandId) })
+        row.append(task)
+      }
+    } else if (view?.status === 'creating' || view?.status === 'uncertain') {
+      row.append(element('strong', '', '正在核对电脑交接'),
+        element('span', '', '保留原请求编号，核对完成前不会创建第二段会话。'))
+      const check = element('button', '', '检查状态')
+      check.addEventListener('click', () => { void refreshPhoneBinding(record.id) })
+      row.append(check)
+    } else if (view?.canAdopt === true && state.models.length) {
+      row.append(element('strong', '', '在电脑继续这条对话'))
+      const original = view.originalModel
+      const matches = matchingOriginalPhoneModels(view, state.models)
+      const modelLabel = typeof original?.displayName === 'string' ? original.displayName : '原手机模型'
+      row.append(element('span', '', !original
+        ? '旧记录没有可核对的原模型身份。请在下方明确选择已配置的电脑模型；手机消息与图片仍保留。'
+        : matches.length === 1
+          ? `手机原用：${modelLabel}。已找到同一电脑配置并优先选中；手机消息与图片仍保留。`
+          : matches.length > 1
+            ? `手机原用：${modelLabel}。找到多个可核对的相同配置，请明确选其中一个。`
+            : `手机原用：${modelLabel}。电脑模型目录尚无可核对的同一配置；此页不能添加模型密钥。请先在电脑主程序核对配置，再刷新目录，或明确选择另一模型。`))
+      const label = element('label', '', '电脑模型')
+      const select = element('select')
+      const placeholder = element('option', '', '请选择电脑模型')
+      placeholder.value = ''
+      select.append(placeholder)
+      for (const model of state.models) {
+        const option = element('option', '', model.name)
+        option.value = model.id
+        select.append(option)
+      }
+      let pending
+      try { pending = JSON.parse(localStorage.getItem(phoneHandoffKey(record.id)) || 'null') }
+      catch { pending = null }
+      const manual = state.phoneHandoffSelections.get(record.id)
+      select.value = state.phoneHandoffSelections.has(record.id)
+        ? state.models.some((model) => model.id === manual) ? manual : ''
+        : pending?.modelProfileId
+          ? state.models.some((model) => model.id === pending.modelProfileId) ? pending.modelProfileId : ''
+          : matches.length === 1 ? matches[0].id : ''
+      label.append(select)
+      const start = element('button', '', state.phoneHandoffBusy ? '正在核对…' : '在电脑继续')
+      start.disabled = state.phoneHandoffBusy || !select.value
+      select.addEventListener('change', () => {
+        state.phoneHandoffSelections.set(record.id, select.value)
+        start.disabled = state.phoneHandoffBusy || !select.value
+      })
+      start.addEventListener('click', () => { void adoptPhoneConversation(record.id, select.value) })
+      const refresh = element('button', 'secondary', '刷新电脑模型目录')
+      refresh.addEventListener('click', () => { void refreshModels().then(() => refreshPhoneBinding(record.id)) })
+      row.append(label, start, refresh)
+    } else {
+      row.append(element('strong', '', view?.canAdopt === true ? '电脑模型尚未配置' : '手机记录暂未准备好交接'), element('span', '',
+        view?.reasonCode === 'LOCAL_TURN_RUNNING' ? '等手机回复结束并同步后再试。'
+          : view?.reasonCode === 'LOCAL_TURN_UNCONFIRMED' ? '手机回合状态待核对；原消息仍保留。'
+            : view?.reasonCode === 'SOURCE_DEVICE_UPGRADE_REQUIRED' ? '请先更新创建这条对话的手机应用。'
+            : view?.canAdopt === true ? `手机原用${view.originalModel?.displayName ? ` ${view.originalModel.displayName}` : '的模型'}；电脑目录没有已配置的可选模型。此页不能添加模型密钥，配置完成后刷新目录。`
+              : state.online ? '请先完成同步并配置可用的电脑模型。' : '重连电脑后可核对交接状态。'))
+      if (view?.canAdopt === true) {
+        const refresh = element('button', 'secondary', '刷新电脑模型目录')
+        refresh.addEventListener('click', () => { void refreshModels().then(() => refreshPhoneBinding(record.id)) })
+        row.append(refresh)
+      }
+    }
+    list.append(row)
+  }
   function renderSelectedPhoneConversation() {
     if (state.activeChatSource !== 'phone' || state.phonePane || state.taskPane) return
     const record = phoneConversations().find((item) => item.id === state.selectedPhoneConversationId)
@@ -2707,8 +2955,9 @@
     list.replaceChildren()
     const previewScope = { ownerId: state.ownerId, identityGeneration: state.identityGeneration,
       source: 'phone', conversationId: state.selectedPhoneConversationId }
-    for (const event of record.events) {
-      if (event.kind !== 'message.created' || !['user', 'assistant'].includes(event.payload?.role)) continue
+    const view = state.phoneBindings.get(record.id)
+    const appendPhoneMessage = (event) => {
+      if (event.kind !== 'message.created' || !['user', 'assistant'].includes(event.payload?.role)) return
       const row = element('li', `message ${event.payload.role}`)
       row.append(element('span', 'message-label', event.payload.role === 'user'
         ? event.sourceDeviceId === state.device?.id ? '你 · 电脑同步' : '你 · 手机 MiMo'
@@ -2753,6 +3002,50 @@
       if (files) row.append(element('small', 'truncated', `旧附件：${files}。`))
       list.append(row)
     }
+    const binding = phoneBinding(record.id)
+    if (!binding) {
+      for (const event of record.events) appendPhoneMessage(event)
+    } else {
+      const cutover = binding.cutoverSyncSeq
+      for (const event of record.events) if (event.seq <= cutover) appendPhoneMessage(event)
+      const section = element('li', 'phone-handoff-divider', '从这里起，由电脑模型接着处理')
+      list.append(section)
+      const adopted = new Map((Array.isArray(view?.adoptedMessages) ? view.adoptedMessages : [])
+        .filter((item) => item?.state === 'accepted_by_dsh' &&
+          typeof item.receiptId === 'string' && syncIdPattern.test(item.sourceSyncEventId || ''))
+        .map((item) => [item.receiptId, item.sourceSyncEventId]))
+      const shownSync = new Set()
+      for (const event of state.phoneHostEvents.get(record.id) || []) {
+        if (event.type === 'user.message') {
+          const exactId = adopted.get(event.data?.receiptId)
+          const original = exactId && record.events.find((item) => item.eventId === exactId)
+          if (original) { appendPhoneMessage(original); shownSync.add(exactId); continue }
+        }
+        if (!['user.message', 'assistant.message'].includes(event.type)) continue
+        const text = typeof event.data?.text === 'string' ? event.data.text : ''
+        const images = Array.isArray(event.data?.images) ? event.data.images : []
+        if (!text && !images.length) continue
+        const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
+        row.append(element('span', 'message-label', event.type === 'user.message'
+          ? '你 · 电脑续聊' : 'WeftMate · 电脑模型'))
+        if (text) row.append(element('span', 'message-text', text))
+        for (const image of images) {
+          const url = /^sha256:[a-f0-9]{64}$/.test(image?.attachmentId || '') &&
+            ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(image?.contentType)
+            ? `${accessBase}/sessions/${encodeURIComponent(binding.sessionId)}/attachments/${encodeURIComponent(image.attachmentId)}` : null
+          if (!url) continue
+          const button = element('button', 'synced-image', '查看电脑会话图片')
+          button.addEventListener('click', () => openPhoneImagePreview(url, image.name || '电脑会话图片', button, previewScope))
+          row.append(button)
+        }
+        list.append(row)
+      }
+      const late = record.events.filter((event) => event.seq > cutover &&
+        event.kind === 'message.created' && !shownSync.has(event.eventId))
+      if (late.length) list.append(element('li', 'phone-handoff-divider', '交接后才同步的手机记录 · 已保留，尚未自动并入电脑上下文'))
+      for (const event of late) appendPhoneMessage(event)
+    }
+    phoneHandoffControls(list, record, view)
     byId('timeline-status').textContent = state.phoneHasMore ? '仍有手机同步记录未读完，连接后会继续读取。' : ''
     updateAvailability()
   }
@@ -2778,6 +3071,7 @@
     showTaskPane(false)
     renderSessions()
     closeRail()
+    void refreshPhoneBinding(conversationId)
   }
   function renderPhoneRecords() {
     const records = phoneConversations()
@@ -2848,6 +3142,8 @@
       renderPhoneRecords()
       renderSessions()
       if (state.activeChatSource === 'phone') renderSelectedPhoneConversation()
+      const candidates = phoneConversations().slice(0, 30).map((record) => record.id)
+      void Promise.allSettled(candidates.map((id) => refreshPhoneBinding(id)))
       if (state.phoneHasMore) byId('phone-status').textContent = '还有同步记录未读完，可继续读取。'
     } catch (error) {
       if (error.code !== 'UNAUTHORIZED') byId('phone-status').textContent =

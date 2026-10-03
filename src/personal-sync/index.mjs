@@ -15,6 +15,8 @@ const DEVICE_ID = /^[A-Za-z0-9_-]{1,128}$/;
 const ERROR_CODE = /^[A-Z][A-Z0-9_]{1,63}$/;
 const TOOL_NAME = /^[A-Za-z][A-Za-z0-9._:-]{0,127}$/;
 const RFC3339 = /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,9})?(?:Z|[+-]\d\d:\d\d)$/;
+const MODEL_ID = /^[A-Za-z0-9._:/-]{1,128}$/;
+const HOST_PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 
 export class PersonalSyncError extends Error {
   constructor(code, status = 400) {
@@ -50,6 +52,20 @@ function when(value) {
   return time.toISOString();
 }
 
+function canonicalOriginalModel(value) {
+  optionalExact(value, ['modelId', 'displayName', 'routeFingerprint'], ['hostProfileId']);
+  if (typeof value.modelId !== 'string' || !MODEL_ID.test(value.modelId) ||
+      typeof value.displayName !== 'string' || !value.displayName.trim() ||
+      Array.from(value.displayName).length > 100 || /[\u0000-\u001f\u007f]/.test(value.displayName) ||
+      value.routeFingerprint !== null &&
+        (typeof value.routeFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(value.routeFingerprint)) ||
+      value.hostProfileId !== undefined &&
+        (typeof value.hostProfileId !== 'string' || !HOST_PROFILE_ID.test(value.hostProfileId))) invalid();
+  return { modelId: value.modelId, displayName: value.displayName,
+    routeFingerprint: value.routeFingerprint,
+    ...(value.hostProfileId === undefined ? {} : { hostProfileId: value.hostProfileId }) };
+}
+
 export function canonicalSyncEvent(input) {
   exact(input, ['eventId', 'conversationId', 'clientSeq', 'kind', 'occurredAt', 'payload']);
   const eventId = uuid(input.eventId), conversationId = uuid(input.conversationId);
@@ -74,12 +90,14 @@ export function canonicalSyncEvent(input) {
         ...(attachments ? { attachments } : {}) };
       break;
     case 'turn.finished':
-      optionalExact(input.payload, ['turnId', 'status'], ['errorCode']);
+      optionalExact(input.payload, ['turnId', 'status'], ['errorCode', 'originalModel']);
       if (!['completed', 'cancelled', 'failed', 'interrupted'].includes(input.payload.status) ||
           (input.payload.errorCode !== undefined &&
             (typeof input.payload.errorCode !== 'string' || !ERROR_CODE.test(input.payload.errorCode)))) invalid();
       payload = { turnId: uuid(input.payload.turnId), status: input.payload.status,
-        ...(input.payload.errorCode === undefined ? {} : { errorCode: input.payload.errorCode }) };
+        ...(input.payload.errorCode === undefined ? {} : { errorCode: input.payload.errorCode }),
+        ...(input.payload.originalModel === undefined ? {} : {
+          originalModel: canonicalOriginalModel(input.payload.originalModel) }) };
       break;
     case 'tool.receipt':
       exact(input.payload, ['toolCallId', 'toolName', 'status', 'summary']);
@@ -241,6 +259,27 @@ export async function createPersonalSyncStore({ root, ownerId }) {
       const events = state.events.slice(afterSeq, afterSeq + limit).map(({ digest: _digest, ...row }) => row);
       const nextSeq = events.at(-1)?.seq ?? afterSeq;
       return { events, nextSeq, hasMore: nextSeq < state.lastSeq };
+    },
+    conversationSnapshot(conversationId) {
+      uuid(conversationId);
+      const events = state.events.filter((row) => row.conversationId === conversationId)
+        .map(({ digest: _digest, ...row }) => structuredClone(row));
+      const created = events.filter((row) => row.kind === 'conversation.created');
+      const devices = new Map();
+      for (const row of events) {
+        const progress = devices.get(row.sourceDeviceId) ?? { userSeq: 0, terminalSeq: 0 };
+        if (row.kind === 'message.created' && row.payload.role === 'user') {
+          progress.userSeq = Math.max(progress.userSeq, row.clientSeq);
+        }
+        if (row.kind === 'turn.finished') {
+          progress.terminalSeq = Math.max(progress.terminalSeq, row.clientSeq);
+        }
+        devices.set(row.sourceDeviceId, progress);
+      }
+      return { conversationId, events, latestSeq: events.at(-1)?.seq ?? 0,
+        createdCount: created.length,
+        title: created.length === 1 ? created[0].payload.title : null,
+        unfinished: [...devices.values()].some((item) => item.userSeq > item.terminalSeq) };
     },
     references(attachmentId, conversationId, messageId) {
       return state.events.some((event) => event.kind === 'message.created' &&

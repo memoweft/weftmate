@@ -10,9 +10,11 @@ import org.json.JSONObject
 import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.util.UUID
+import java.security.MessageDigest
 
 data class LocalConversation(val id: String, val title: String, val ownerKey: String?, val createdAt: String)
-data class LocalMessage(val id: String, val role: String, val text: String)
+data class LocalMessage(val id: String, val role: String, val text: String,
+    val serverSeq: Long? = null, val sourceEventId: String? = null)
 data class TimelineItem(val text: String, val user: Boolean)
 data class PendingSyncEvent(val eventId: String, val body: JSONObject)
 data class MessageThumbnail(val attachmentId: String, val name: String, val jpeg: ByteArray)
@@ -26,7 +28,7 @@ data class SharedCommandRow(val owner: String, val hostId: String, val sessionId
 }
 
 /** One private on-device database. Local changes and their outbox entries share a transaction. */
-class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") : SQLiteOpenHelper(context, databaseName, null, 5) {
+class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") : SQLiteOpenHelper(context, databaseName, null, 6) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL("CREATE TABLE meta(key TEXT PRIMARY KEY,value TEXT NOT NULL)")
         db.execSQL("CREATE TABLE conversations(id TEXT PRIMARY KEY,owner_key TEXT,title TEXT NOT NULL,created_at TEXT NOT NULL,source_event_id TEXT)")
@@ -37,32 +39,38 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         db.execSQL("CREATE TABLE remote_events(owner_key TEXT NOT NULL,seq INTEGER NOT NULL,body TEXT NOT NULL,event_id TEXT,PRIMARY KEY(owner_key,seq))")
         db.execSQL("CREATE UNIQUE INDEX remote_events_id ON remote_events(owner_key,event_id)")
         createSharedCommands(db)
+        createConversationHandoffs(db)
+        createSharedHistoryCache(db)
         createMessageThumbnails(db)
         createMessageImages(db)
     }
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-        if (newVersion != 5 || oldVersion !in 1..4)
+        if (newVersion != 6 || oldVersion !in 1..5)
             throw IllegalStateException("Unsupported local database migration")
-        if (oldVersion == 1) createSharedCommands(db)
-        if (oldVersion <= 2) createMessageThumbnails(db)
-        if (oldVersion <= 3) createMessageImages(db)
-        db.execSQL("ALTER TABLE conversations ADD COLUMN source_event_id TEXT")
-        db.execSQL("ALTER TABLE messages ADD COLUMN server_seq INTEGER")
-        db.execSQL("ALTER TABLE messages ADD COLUMN source_event_id TEXT")
-        db.execSQL("ALTER TABLE remote_events ADD COLUMN event_id TEXT")
-        db.execSQL("CREATE UNIQUE INDEX remote_events_id ON remote_events(owner_key,event_id)")
-        migrateAcceptedEvents(db)
-        db.rawQuery("SELECT owner_key,seq,body FROM remote_events ORDER BY owner_key,seq", null).use { c ->
-            while (c.moveToNext()) {
-                val owner = c.getString(0)
-                val seq = c.getLong(1)
-                val row = JSONObject(c.getString(2))
-                db.execSQL("UPDATE remote_events SET event_id=? WHERE owner_key=? AND seq=?",
-                    arrayOf(row.getString("eventId"), owner, seq))
-                materializeRemoteEvent(db, owner, row, seq)
+        if (oldVersion <= 4) {
+            if (oldVersion == 1) createSharedCommands(db)
+            if (oldVersion <= 2) createMessageThumbnails(db)
+            if (oldVersion <= 3) createMessageImages(db)
+            db.execSQL("ALTER TABLE conversations ADD COLUMN source_event_id TEXT")
+            db.execSQL("ALTER TABLE messages ADD COLUMN server_seq INTEGER")
+            db.execSQL("ALTER TABLE messages ADD COLUMN source_event_id TEXT")
+            db.execSQL("ALTER TABLE remote_events ADD COLUMN event_id TEXT")
+            db.execSQL("CREATE UNIQUE INDEX remote_events_id ON remote_events(owner_key,event_id)")
+            migrateAcceptedEvents(db)
+            db.rawQuery("SELECT owner_key,seq,body FROM remote_events ORDER BY owner_key,seq", null).use { c ->
+                while (c.moveToNext()) {
+                    val owner = c.getString(0)
+                    val seq = c.getLong(1)
+                    val row = JSONObject(c.getString(2))
+                    db.execSQL("UPDATE remote_events SET event_id=? WHERE owner_key=? AND seq=?",
+                        arrayOf(row.getString("eventId"), owner, seq))
+                    materializeRemoteEvent(db, owner, row, seq)
+                }
             }
         }
+        createConversationHandoffs(db)
+        createSharedHistoryCache(db)
     }
 
     private fun createMessageImages(db: SQLiteDatabase) {
@@ -80,6 +88,230 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         db.execSQL("CREATE TABLE shared_commands(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,session_id TEXT NOT NULL,request_id TEXT NOT NULL,payload TEXT NOT NULL,state TEXT NOT NULL,command_body TEXT,updated_at TEXT NOT NULL,PRIMARY KEY(owner_key,host_id,session_id,request_id))")
         db.execSQL("CREATE INDEX shared_commands_pending ON shared_commands(owner_key,host_id,state,updated_at)")
         db.execSQL("CREATE TABLE shared_sessions(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,session_id TEXT NOT NULL,body TEXT NOT NULL,PRIMARY KEY(owner_key,host_id,session_id))")
+    }
+
+    private fun createConversationHandoffs(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE conversation_handoffs(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,conversation_id TEXT NOT NULL,request_id TEXT NOT NULL,model_profile_id TEXT NOT NULL,expected_sync_seq INTEGER NOT NULL,state TEXT NOT NULL,body TEXT,PRIMARY KEY(owner_key,host_id,conversation_id))")
+        db.execSQL("CREATE UNIQUE INDEX conversation_handoffs_request ON conversation_handoffs(owner_key,host_id,request_id)")
+        db.execSQL("CREATE TABLE shared_conversation_snapshots(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,conversation_id TEXT NOT NULL,body TEXT NOT NULL,PRIMARY KEY(owner_key,host_id,conversation_id))")
+        db.execSQL("CREATE TABLE local_turn_reservations(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,conversation_id TEXT NOT NULL,turn_id TEXT NOT NULL,source_event_id TEXT NOT NULL,request_id TEXT NOT NULL,state TEXT NOT NULL,PRIMARY KEY(owner_key,host_id,turn_id))")
+    }
+
+    @Synchronized fun saveSharedConversationSnapshot(owner: String, hostId: String,
+        conversationId: String, body: JSONObject) = write { db ->
+        if (body.toString().toByteArray(Charsets.UTF_8).size > 64 * 1024 ||
+            body.optString("source") != "host" || body.optString("conversationId") != conversationId ||
+            body.optString("hostId") != hostId || body.optString("status") !in
+            setOf("unbound", "creating", "active", "uncertain")) throw ApiFailure(502, "BINDING_RECEIPT_INVALID")
+        db.execSQL("INSERT OR REPLACE INTO shared_conversation_snapshots(owner_key,host_id,conversation_id,body) VALUES(?,?,?,?)",
+            arrayOf(owner, hostId, conversationId, body.toString()))
+    }
+
+    @Synchronized fun sharedConversationSnapshot(owner: String, hostId: String,
+        conversationId: String): JSONObject? = readableDatabase.rawQuery(
+        "SELECT body FROM shared_conversation_snapshots WHERE owner_key=? AND host_id=? AND conversation_id=?",
+        arrayOf(owner, hostId, conversationId)).use { cursor ->
+        if (cursor.moveToFirst()) JSONObject(cursor.getString(0)) else null }
+
+    private fun createSharedHistoryCache(db: SQLiteDatabase) {
+        db.execSQL("CREATE TABLE shared_history_events(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,session_id TEXT NOT NULL,seq INTEGER NOT NULL,digest TEXT NOT NULL,body TEXT NOT NULL,cached_at INTEGER NOT NULL,PRIMARY KEY(owner_key,host_id,session_id,seq))")
+        db.execSQL("CREATE TABLE shared_history_cursors(owner_key TEXT NOT NULL,host_id TEXT NOT NULL,session_id TEXT NOT NULL,next_seq INTEGER NOT NULL,truncated INTEGER NOT NULL DEFAULT 0,updated_at INTEGER NOT NULL,PRIMARY KEY(owner_key,host_id,session_id))")
+    }
+
+    @Synchronized fun handoffIntent(owner: String, hostId: String, conversationId: String): JSONObject? =
+        readableDatabase.rawQuery("SELECT request_id,model_profile_id,expected_sync_seq,state,body FROM conversation_handoffs WHERE owner_key=? AND host_id=? AND conversation_id=?",
+            arrayOf(owner, hostId, conversationId)).use { cursor ->
+            if (!cursor.moveToFirst()) null else JSONObject().put("source", "host")
+                .put("conversationId", conversationId).put("hostId", hostId)
+                .put("requestId", cursor.getString(0)).put("modelProfileId", cursor.getString(1))
+                .put("expectedSyncSeq", cursor.getLong(2)).put("state", cursor.getString(3))
+                .apply { if (!cursor.isNull(4)) put("response", JSONObject(cursor.getString(4))) }
+        }
+
+    /** The request body is immutable before the first network call. */
+    @Synchronized fun queueHandoffIntent(owner: String, hostId: String, conversationId: String,
+        requestId: String, modelProfileId: String, expectedSyncSeq: Long): JSONObject = write { db ->
+        require(owner.isNotBlank() && hostId.isNotBlank() && conversationId.isNotBlank() &&
+            requestId.isNotBlank() && modelProfileId.isNotBlank() && expectedSyncSeq >= 0)
+        val prior = handoffIntent(owner, hostId, conversationId)
+        if (prior != null) {
+            if (prior.getString("requestId") != requestId ||
+                prior.getString("modelProfileId") != modelProfileId ||
+                prior.getLong("expectedSyncSeq") != expectedSyncSeq)
+                throw ApiFailure(409, "REQUEST_CONFLICT")
+            return@write prior
+        }
+        db.insertOrThrow("conversation_handoffs", null, ContentValues().apply {
+            put("owner_key", owner); put("host_id", hostId); put("conversation_id", conversationId)
+            put("request_id", requestId); put("model_profile_id", modelProfileId)
+            put("expected_sync_seq", expectedSyncSeq); put("state", "pending")
+        })
+        handoffIntent(owner, hostId, conversationId)!!
+    }
+
+    @Synchronized fun recordHandoffResponse(owner: String, hostId: String, conversationId: String,
+        requestId: String, state: String, response: JSONObject?) = write { db ->
+        require(state in setOf("pending", "uncertain", "creating", "active", "rejected"))
+        val prior = handoffIntent(owner, hostId, conversationId)
+            ?: throw ApiFailure(409, "REQUEST_CONFLICT")
+        if (prior.getString("requestId") != requestId) throw ApiFailure(409, "REQUEST_CONFLICT")
+        db.execSQL("UPDATE conversation_handoffs SET state=?,body=? WHERE owner_key=? AND host_id=? AND conversation_id=? AND request_id=?",
+            arrayOf(state, response?.toString(), owner, hostId, conversationId, requestId))
+    }
+
+    @Synchronized fun hasPendingConversationEvents(owner: String, conversationId: String): Boolean =
+        readableDatabase.rawQuery("SELECT 1 FROM events WHERE owner_key=? AND conversation_id=? AND ack_seq IS NULL LIMIT 1",
+            arrayOf(owner, conversationId)).use { it.moveToFirst() }
+
+    @Synchronized fun messageSyncEvent(owner: String, conversationId: String,
+        messageId: String): JSONObject? = readableDatabase.rawQuery(
+        "SELECT e.event_id,e.ack_seq,e.payload FROM messages m JOIN events e ON e.event_id=m.source_event_id WHERE m.id=? AND m.conversation_id=? AND e.owner_key=? AND e.conversation_id=? AND e.kind='message.created'",
+        arrayOf(messageId, conversationId, owner, conversationId)).use { cursor ->
+        if (!cursor.moveToFirst()) null else JSONObject().put("eventId", cursor.getString(0))
+            .put("ackSeq", if (cursor.isNull(1)) JSONObject.NULL else cursor.getLong(1))
+            .put("payload", JSONObject(cursor.getString(2)))
+    }
+
+    @Synchronized fun queueLocalTurnReservation(owner: String, hostId: String,
+        conversationId: String, turnId: String, sourceEventId: String): String = write { db ->
+        val requestId = "local-turn:$turnId"
+        val prior = db.rawQuery("SELECT conversation_id,source_event_id,request_id FROM local_turn_reservations WHERE owner_key=? AND host_id=? AND turn_id=?",
+            arrayOf(owner, hostId, turnId)).use { cursor ->
+            if (cursor.moveToFirst()) listOf(cursor.getString(0), cursor.getString(1), cursor.getString(2)) else null }
+        if (prior != null) {
+            if (prior != listOf(conversationId, sourceEventId, requestId))
+                throw ApiFailure(409, "REQUEST_CONFLICT")
+            return@write requestId
+        }
+        db.insertOrThrow("local_turn_reservations", null, ContentValues().apply {
+            put("owner_key", owner); put("host_id", hostId); put("conversation_id", conversationId)
+            put("turn_id", turnId); put("source_event_id", sourceEventId)
+            put("request_id", requestId); put("state", "pending")
+        })
+        requestId
+    }
+
+    @Synchronized fun recordLocalTurnReservation(owner: String, hostId: String,
+        turnId: String, state: String) = write { db ->
+        require(state in setOf("pending", "running", "uncertain", "finished"))
+        db.execSQL("UPDATE local_turn_reservations SET state=? WHERE owner_key=? AND host_id=? AND turn_id=?",
+            arrayOf(state, owner, hostId, turnId))
+    }
+
+    private fun sharedHistoryDigest(body: String): String = MessageDigest.getInstance("SHA-256")
+        .digest(body.toByteArray(Charsets.UTF_8)).joinToString("") {
+            (it.toInt() and 0xff).toString(16).padStart(2, '0') }
+
+    private fun pruneSharedHistory(db: SQLiteDatabase, owner: String, hostId: String,
+        sessionId: String) {
+        val local = mutableListOf<Pair<Long, Int>>()
+        db.rawQuery("SELECT seq,length(CAST(body AS BLOB)) FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? ORDER BY seq",
+            arrayOf(owner, hostId, sessionId)).use { cursor ->
+            while (cursor.moveToNext()) local += cursor.getLong(0) to cursor.getInt(1)
+        }
+        var bytes = local.sumOf { it.second.toLong() }
+        var count = local.size
+        for ((seq, size) in local) {
+            if (count <= 512 && bytes <= 2L * 1024 * 1024) break
+            db.execSQL("DELETE FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq=?",
+                arrayOf(owner, hostId, sessionId, seq))
+            count--; bytes -= size
+            db.execSQL("UPDATE shared_history_cursors SET truncated=1 WHERE owner_key=? AND host_id=? AND session_id=?",
+                arrayOf(owner, hostId, sessionId))
+        }
+        data class Cached(val host: String, val session: String, val seq: Long, val bytes: Int)
+        val all = mutableListOf<Cached>()
+        db.rawQuery("SELECT host_id,session_id,seq,length(CAST(body AS BLOB)) FROM shared_history_events WHERE owner_key=? ORDER BY cached_at,rowid",
+            arrayOf(owner)).use { cursor ->
+            while (cursor.moveToNext()) all += Cached(cursor.getString(0), cursor.getString(1),
+                cursor.getLong(2), cursor.getInt(3))
+        }
+        var totalBytes = all.sumOf { it.bytes.toLong() }
+        var totalCount = all.size
+        for (item in all) {
+            if (totalCount <= 4096 && totalBytes <= 16L * 1024 * 1024) break
+            db.execSQL("DELETE FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq=?",
+                arrayOf(owner, item.host, item.session, item.seq))
+            db.execSQL("UPDATE shared_history_cursors SET truncated=1 WHERE owner_key=? AND host_id=? AND session_id=?",
+                arrayOf(owner, item.host, item.session))
+            totalCount--; totalBytes -= item.bytes
+        }
+        val sessions = mutableListOf<Pair<String, String>>()
+        db.rawQuery("SELECT host_id,session_id FROM shared_history_cursors WHERE owner_key=? ORDER BY updated_at DESC,host_id,session_id",
+            arrayOf(owner)).use { cursor ->
+            while (cursor.moveToNext()) sessions += cursor.getString(0) to cursor.getString(1)
+        }
+        for ((oldHost, oldSession) in sessions.drop(64)) {
+            db.execSQL("DELETE FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=?",
+                arrayOf(owner, oldHost, oldSession))
+            db.execSQL("DELETE FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?",
+                arrayOf(owner, oldHost, oldSession))
+        }
+    }
+
+    /** Cache only projected native events, under their exact owner/host/session identity. */
+    @Synchronized fun saveSharedHistoryPage(owner: String, hostId: String, sessionId: String,
+        events: JSONArray, nextSeq: Long) = write { db ->
+        require(owner.isNotBlank() && hostId.isNotBlank() && sessionId.isNotBlank() &&
+            events.length() <= 100 && nextSeq >= -1)
+        val priorCursor = db.rawQuery("SELECT next_seq FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?",
+            arrayOf(owner, hostId, sessionId)).use { if (it.moveToFirst()) it.getLong(0) else -1L }
+        var previous = -1L
+        for (index in 0 until events.length()) {
+            val event = events.getJSONObject(index)
+            val seq = event.getLong("seq")
+            if (seq < 0 || seq <= previous || seq > nextSeq ||
+                event.optString("type") !in setOf("user.message", "assistant.message", "turn.started", "turn.ended"))
+                throw ApiFailure(502, "HISTORY_CURSOR_INVALID")
+            previous = seq
+            val body = event.toString()
+            if (body.toByteArray(Charsets.UTF_8).size > 48 * 1024)
+                throw ApiFailure(502, "HISTORY_EVENT_INVALID")
+            val digest = sharedHistoryDigest(body)
+            db.rawQuery("SELECT digest FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq=?",
+                arrayOf(owner, hostId, sessionId, seq.toString())).use { row ->
+                if (row.moveToFirst()) {
+                    if (row.getString(0) != digest) throw ApiFailure(502, "HISTORY_CONFLICT")
+                } else db.insertOrThrow("shared_history_events", null, ContentValues().apply {
+                    put("owner_key", owner); put("host_id", hostId); put("session_id", sessionId)
+                    put("seq", seq); put("digest", digest); put("body", body)
+                    put("cached_at", System.currentTimeMillis())
+                })
+            }
+        }
+        val oldTruncated = db.rawQuery("SELECT truncated FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?",
+            arrayOf(owner, hostId, sessionId)).use { if (it.moveToFirst()) it.getInt(0) else 0 }
+        db.execSQL("INSERT OR REPLACE INTO shared_history_cursors(owner_key,host_id,session_id,next_seq,truncated,updated_at) VALUES(?,?,?,?,?,?)",
+            arrayOf(owner, hostId, sessionId, maxOf(nextSeq, priorCursor), oldTruncated, System.currentTimeMillis()))
+        pruneSharedHistory(db, owner, hostId, sessionId)
+    }
+
+    @Synchronized fun cachedSharedHistory(owner: String, hostId: String, sessionId: String,
+        afterSeq: Long): JSONObject {
+        val events = JSONArray()
+        readableDatabase.rawQuery("SELECT seq,digest,body FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq>? ORDER BY seq LIMIT 100",
+            arrayOf(owner, hostId, sessionId, afterSeq.toString())).use { cursor ->
+            while (cursor.moveToNext()) {
+                val body = cursor.getString(2)
+                if (sharedHistoryDigest(body) != cursor.getString(1)) throw ApiFailure(502, "HISTORY_CONFLICT")
+                events.put(JSONObject(body))
+            }
+        }
+        val metadata = readableDatabase.rawQuery("SELECT next_seq,truncated FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?",
+            arrayOf(owner, hostId, sessionId)).use {
+            if (it.moveToFirst()) it.getLong(0) to (it.getInt(1) != 0) else -1L to false }
+        val watermark = metadata.first
+        val oldest = readableDatabase.rawQuery("SELECT MIN(seq) FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=?",
+            arrayOf(owner, hostId, sessionId)).use {
+            if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else null }
+        val last = if (events.length() > 0) events.getJSONObject(events.length() - 1).getLong("seq") else afterSeq
+        val hasMore = last < watermark && readableDatabase.rawQuery(
+            "SELECT 1 FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq>? LIMIT 1",
+            arrayOf(owner, hostId, sessionId, last.toString())).use { it.moveToFirst() }
+        return JSONObject().put("events", events).put("nextSeq", if (hasMore) last else maxOf(last, watermark))
+            .put("hasMore", hasMore).put("cached", true).put("hostAvailable", false)
+            .put("tailUnknown", true).put("oldestSeq", oldest ?: JSONObject.NULL)
+            .put("historyTruncated", metadata.second && (oldest == null || afterSeq < oldest - 1))
     }
 
     @Synchronized fun saveSharedSessions(owner: String, hostId: String, sessions: JSONArray) = write { db ->
@@ -344,7 +576,7 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
     }
 
     @Synchronized fun finishTurn(turnId: String, status: String, errorCode: String? = null,
-        upstreamHttpStatus: Int? = null) = write { db ->
+        upstreamHttpStatus: Int? = null, originalModel: JSONObject? = null) = write { db ->
         require(status in setOf("completed", "cancelled", "failed", "interrupted"))
         val row = db.rawQuery("SELECT conversation_id,status FROM turns WHERE id=?", arrayOf(turnId)).use {
             if (!it.moveToFirst()) throw IllegalArgumentException("Unknown turn")
@@ -354,6 +586,21 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
             db.execSQL("UPDATE turns SET status=? WHERE id=?", arrayOf(status, turnId))
             val payload = JSONObject().put("turnId", turnId).put("status", status)
             if (errorCode != null) payload.put("errorCode", errorCode)
+            if (originalModel != null) {
+                val keys = originalModel.keys().asSequence().toSet()
+                val label = originalModel.optString("displayName")
+                val route = originalModel.opt("routeFingerprint")
+                val valid = keys in setOf(
+                    setOf("modelId", "displayName", "routeFingerprint"),
+                    setOf("modelId", "displayName", "routeFingerprint", "hostProfileId")) &&
+                    originalModel.optString("modelId").matches(Regex("[A-Za-z0-9._:/-]{1,128}")) &&
+                    label.codePointCount(0, label.length) in 1..100 &&
+                    label.none { it.isISOControl() } &&
+                    (route == JSONObject.NULL || route is String && route.matches(Regex("[a-f0-9]{64}"))) &&
+                    (!originalModel.has("hostProfileId") || originalModel.optString("hostProfileId")
+                        .matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,127}")))
+                if (valid) payload.put("originalModel", originalModel)
+            }
             if (status == "failed" && errorCode == "MODEL_UPSTREAM_ERROR" && upstreamHttpStatus in 400..599)
                 payload.put("upstreamHttpStatus", upstreamHttpStatus)
             event(db, ownerOf(db, row.first), row.first, "turn.finished", payload)
@@ -415,8 +662,9 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
             c.moveToFirst() && (if (c.isNull(0)) null else c.getString(0)) == owner
         }
         if (!allowed) return items
-        readableDatabase.rawQuery("SELECT id,role,text FROM messages WHERE conversation_id=? ORDER BY server_seq IS NULL,server_seq,rowid", arrayOf(conversationId)).use { c ->
-            while (c.moveToNext()) items += LocalMessage(c.getString(0), c.getString(1), c.getString(2))
+        readableDatabase.rawQuery("SELECT id,role,text,server_seq,source_event_id FROM messages WHERE conversation_id=? ORDER BY server_seq IS NULL,server_seq,rowid", arrayOf(conversationId)).use { c ->
+            while (c.moveToNext()) items += LocalMessage(c.getString(0), c.getString(1), c.getString(2),
+                if (c.isNull(3)) null else c.getLong(3), if (c.isNull(4)) null else c.getString(4))
         }
         return items
     }

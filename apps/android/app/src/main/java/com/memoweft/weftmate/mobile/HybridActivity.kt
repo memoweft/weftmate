@@ -43,6 +43,7 @@ import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.ScheduledFuture
 import java.net.HttpURLConnection
 import java.net.URL
 import java.security.MessageDigest
@@ -80,6 +81,7 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
         .put("verification", row.optJSONObject("verification"))
         .put("sessionId", row.optString("sessionId"))
         .put("createdAt", row.optString("createdAt"))
+    if (row.has("conversationId")) projected.put("conversationId", row.optString("conversationId"))
     if (row.has("rootTaskId")) projected.put("rootTaskId", row.optString("rootTaskId"))
     if (row.has("taskAction")) projected.put("taskAction", row.optString("taskAction"))
     return projected
@@ -96,6 +98,7 @@ class HybridActivity : Activity() {
     private val syncWorker = Executors.newSingleThreadExecutor()
     private val updateWorker = Executors.newSingleThreadExecutor()
     private val streamWorker = Executors.newSingleThreadExecutor()
+    private val localTurnRenewWorker = Executors.newSingleThreadScheduledExecutor()
     private val updateChecking = AtomicBoolean(false)
     private val closed = AtomicBoolean(false)
     private val fallbackInProgress = AtomicBoolean(false)
@@ -112,6 +115,7 @@ class HybridActivity : Activity() {
     private lateinit var bundles: MobileUiBundles
     private lateinit var store: LocalStore
     private lateinit var sharedChat: SharedChat
+    private lateinit var conversationHandoff: ConversationHandoff
     private lateinit var attachments: AttachmentStore
     private lateinit var secrets: SecureSettings
     private val api = PersonalApi()
@@ -149,6 +153,7 @@ class HybridActivity : Activity() {
         store = LocalStore(this)
         attachments = AttachmentStore(this, store)
         sharedChat = SharedChat(store, api, attachments)
+        conversationHandoff = ConversationHandoff(store, api, attachments)
         secrets = SecureSettings(this)
         worker.execute {
             try { if (!closed.get()) {
@@ -633,6 +638,20 @@ class HybridActivity : Activity() {
             .put("modelId", selected.modelId).put("displayName", selected.name)
             else secrets.model(owner(host) ?: "local")?.let(::modelView) ?: JSONObject()
     }
+    private fun actualOriginalModel(requestUrl: String, actualModelId: String,
+        settings: ModelSettings, hostProfile: HostChoice?): JSONObject? {
+        if (!actualModelId.matches(Regex("[A-Za-z0-9._:/-]{1,128}"))) return null
+        if (hostProfile != null && !hostProfile.profileId.matches(Regex("[A-Za-z0-9][A-Za-z0-9._-]{0,127}")))
+            return null
+        val rawName = settings.displayName.map { if (it.isISOControl()) ' ' else it }
+            .joinToString("").trim().ifBlank { actualModelId }
+        val count = rawName.codePointCount(0, rawName.length)
+        val name = rawName.substring(0, rawName.offsetByCodePoints(0, minOf(count, 100)))
+        return JSONObject().put("modelId", actualModelId).put("displayName", name)
+            .put("routeFingerprint", if (hostProfile == null)
+                modelRouteFingerprint(requestUrl, actualModelId) ?: JSONObject.NULL else JSONObject.NULL)
+            .apply { if (hostProfile != null) put("hostProfileId", hostProfile.profileId) }
+    }
 
     private fun accountView(body: JSONObject): JSONObject {
         val account = body.optJSONObject("account") ?: JSONObject()
@@ -781,14 +800,35 @@ class HybridActivity : Activity() {
             val host = requireHost()
             val rows = JSONArray()
             for (item in store.listConversations(owner(host))) {
+                val linked = store.sharedConversationSnapshot(owner(host)!!, host.hostId, item.id)
                 rows.put(JSONObject().put("id", item.id).put("title", item.title)
-                    .put("createdAt", item.createdAt).put("source", "phone"))
+                    .put("createdAt", item.createdAt).put("source", "phone")
+                    .apply { if (linked?.optString("status") == "active")
+                        put("binding", linked.optJSONObject("binding")) })
             }
             JSONObject().put("conversations", rows).put("source", "phone")
         }
         "shared.sessions.list" -> {
             val host = requireHost()
             sharedChat.sessions(host)
+        }
+        "shared.conversations.get" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            conversationHandoff.status(host, params.getString("conversationId")) {
+                !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
+                    owner(secrets.host()) == owner(host)
+            }
+        }
+        "shared.conversations.adopt" -> {
+            if (busy.get()) throw ApiFailure(409, "TURN_RUNNING")
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            conversationHandoff.adopt(host, params.getString("conversationId"),
+                params.getString("modelProfileId"), params.getString("requestId")) {
+                !busy.get() && !closed.get() && !accountTransition.get() &&
+                    epoch == accountEpoch.get() && owner(secrets.host()) == owner(host)
+            }
         }
         "shared.projects.list" -> {
             val host = requireHost()
@@ -812,7 +852,7 @@ class HybridActivity : Activity() {
             val host = requireHost()
             val sessionId = params.getString("sessionId")
             val after = params.optLong("afterSeq", -1)
-            val result = api.remoteHistory(host, sessionId, after)
+            val result = sharedChat.history(host, sessionId, after)
             val events = result.getJSONArray("events")
             for (i in 0 until events.length()) {
                 val images = events.getJSONObject(i).optJSONObject("data")?.optJSONArray("images") ?: continue
@@ -832,19 +872,20 @@ class HybridActivity : Activity() {
             } ?: emptyList()
             val epoch = accountEpoch.get()
             sharedChat.submit(host, params.getString("sessionId"), params.getString("text"),
-                "session.message", params.optString("requestId").takeIf { it.isNotBlank() }, attachmentIds) {
+                "session.message", params.optString("requestId").takeIf { it.isNotBlank() }, attachmentIds,
+                sourceSyncEventId = params.optString("sourceSyncEventId").takeIf { it.isNotBlank() }, current = {
                 !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
                     owner(secrets.host()) == owner(host)
-            }
+            })
         }
         "shared.stop" -> {
             val host = requireHost()
             val epoch = accountEpoch.get()
             sharedChat.submit(host, params.getString("sessionId"), null,
-                "session.cancel", params.optString("requestId").takeIf { it.isNotBlank() }) {
+                "session.cancel", params.optString("requestId").takeIf { it.isNotBlank() }, current = {
                 !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
                     owner(secrets.host()) == owner(host)
-            }
+            })
         }
         "shared.outbox.list" -> sharedChat.outbox(requireHost())
         "shared.outbox.reconcile" -> {
@@ -914,7 +955,9 @@ class HybridActivity : Activity() {
             val rows = JSONArray()
             for (item in store.messages(id, owner(host)))
                 rows.put(JSONObject().put("id", item.id).put("role", item.role).put("text", item.text)
-                    .put("thumbnails", store.messageThumbnails(id, owner(host), item.id)))
+                    .put("thumbnails", store.messageThumbnails(id, owner(host), item.id))
+                    .apply { item.serverSeq?.let { put("serverSeq", it) }
+                        item.sourceEventId?.let { put("sourceEventId", it) } })
             val result = JSONObject().put("messages", rows).put("source", "phone")
                 .put("turnStatus", store.latestTurnStatus(id) ?: "")
                 .put("receipts", JSONArray(store.toolReceipts(id, owner(host))))
@@ -1100,6 +1143,8 @@ class HybridActivity : Activity() {
                     .put("sourceKind", item.optString("sourceKind"))
                     .put("configured", item.optBoolean("configured"))
                     .put("modelId", item.optString("model"))
+                    .put("routeFingerprint", item.optString("routeFingerprint")
+                        .takeIf { it.matches(Regex("[a-f0-9]{64}")) } ?: JSONObject.NULL)
                     .put("selected", hostChoice(host)?.profileId == id))
             }
             JSONObject().put("models", rows)
@@ -1531,10 +1576,49 @@ class HybridActivity : Activity() {
         emitForAccount(turnEpoch, "chat.started", JSONObject().put("conversationId", conversationId).put("turnId", turnId)
             .put("messageId", saved.messageId).put("userText", text))
         try { modelWorker.execute {
+            var reservationRequestId: String? = null
+            var renewal: ScheduledFuture<*>? = null
+            var actualModel: JSONObject? = null
+            val stillCurrent = { !closed.get() && !accountTransition.get() &&
+                turnEpoch == accountEpoch.get() && secrets.host() == host && !stopped }
             try {
                 ensureOpen()
-                if (configured == null) throw ApiFailure(409, "MODEL_NOT_CONFIGURED")
                 if (stopped) throw ModelCancelled()
+                if (host != null) {
+                    when (val route = conversationHandoff.routeNewUserTurn(host, conversationId,
+                        turnId, saved.messageId, stillCurrent)) {
+                        is ConversationSendRoute.Host -> {
+                            if (files.isNotEmpty()) throw ApiFailure(415, "HOST_ATTACHMENTS_UNSUPPORTED")
+                            store.finishTurn(turnId, "interrupted")
+                            queueSync(host, turnEpoch, conversationId)
+                            sharedChat.sessions(host)
+                            val sent = sharedChat.submit(host, route.sessionId, route.acceptedText, "session.message",
+                                "phone-sync:${route.sourceSyncEventId}", sourceSyncEventId = route.sourceSyncEventId,
+                                current = stillCurrent)
+                            emitForAccount(turnEpoch, "chat.delegated", JSONObject()
+                                .put("conversationId", conversationId).put("sessionId", route.sessionId)
+                                .put("sourceSyncEventId", route.sourceSyncEventId)
+                                .put("requestId", sent.optString("requestId"))
+                                .put("state", sent.optString("state")))
+                            return@execute
+                        }
+                        is ConversationSendRoute.Unconfirmed ->
+                            throw ApiFailure(409, "CONVERSATION_ROUTING_UNCONFIRMED")
+                        is ConversationSendRoute.Phone -> if (route.reserved) {
+                            reservationRequestId = route.requestId
+                            val requestId = route.requestId!!
+                            renewal = localTurnRenewWorker.scheduleAtFixedRate({
+                                if (!stillCurrent()) return@scheduleAtFixedRate
+                                if (!conversationHandoff.renew(host, conversationId, turnId,
+                                        requestId, stillCurrent)) {
+                                    stopped = true
+                                    activeModel?.cancel()
+                                }
+                            }, 10, 10, TimeUnit.SECONDS)
+                        }
+                    }
+                }
+                if (configured == null) throw ApiFailure(409, "MODEL_NOT_CONFIGURED")
                 val guardedTools = object : DeviceToolExecutor {
                     private val device = DeviceTools(this@HybridActivity)
                     override fun execute(name: String, arguments: JSONObject): ToolResult {
@@ -1564,12 +1648,15 @@ class HybridActivity : Activity() {
                     }, onPhase = { phase ->
                         emitForAccount(turnEpoch, "chat.phase", JSONObject().put("conversationId", conversationId)
                             .put("turnId", turnId).put("phase", phase))
-                    }, attachments = files, attachmentStore = attachments)
+                    }, attachments = files, attachmentStore = attachments,
+                    onRequestStart = { requestUrl, actualModelId ->
+                        actualModel = actualOriginalModel(requestUrl, actualModelId, configured, hostProfile)
+                    })
                 if (stopped) throw ModelCancelled(answer)
                 ensureOpen()
                 store.addMessage(conversationId, "assistant", answer, turnId)
                 ensureOpen()
-                store.finishTurn(turnId, "completed")
+                store.finishTurn(turnId, "completed", originalModel = actualModel)
                 if (files.isNotEmpty()) try { attachments.markUsed(owner!!, conversationId, attachmentIds, turnId, store) }
                     catch (_: Exception) { emitForAccount(turnEpoch, "storage.error", JSONObject()) }
                 host?.let { queueSync(it, turnEpoch, conversationId) }
@@ -1589,15 +1676,24 @@ class HybridActivity : Activity() {
                 } catch (_: Exception) { }
                 val code = if (status == "failed") safeCode(error) else null
                 val upstreamStatus = if (status == "failed") upstreamHttpStatus(error) else null
-                try { store.finishTurn(turnId, status, code, upstreamStatus) } catch (_: Exception) { }
+                try { store.finishTurn(turnId, status, code, upstreamStatus, actualModel) } catch (_: Exception) { }
                 val finished = JSONObject().put("conversationId", conversationId).put("turnId", turnId)
                     .put("status", status).put("partialSaved", partial.isNotBlank())
                     .put("errorCode", code ?: "")
+                if (code == "CONVERSATION_ROUTING_UNCONFIRMED") finished.put("retryText", text)
                 if (upstreamStatus != null) finished.put("upstreamHttpStatus", upstreamStatus)
                 emitForAccount(turnEpoch, "chat.finished", finished)
                 if (status == "failed") note("reply", "回复未完成", "点此查看状态与重试", conversationId,
                     owner ?: "local")
             } finally {
+                renewal?.cancel(false)
+                if (host != null && reservationRequestId != null) {
+                    val finished = conversationHandoff.finish(host, conversationId, turnId,
+                        reservationRequestId!!, { !closed.get() && !accountTransition.get() &&
+                            turnEpoch == accountEpoch.get() && secrets.host() == host })
+                    if (!finished) emitForAccount(turnEpoch, "chat.reservation.uncertain", JSONObject()
+                        .put("conversationId", conversationId).put("turnId", turnId))
+                }
                 activeModel = null
                 activeTurnScope = null
                 busy.set(false)
@@ -1855,6 +1951,7 @@ class HybridActivity : Activity() {
         worker.shutdownNow()
         attachmentWorker.shutdownNow()
         syncWorker.shutdownNow()
+        localTurnRenewWorker.shutdownNow()
         modelWorker.shutdownNow()
         updateConnection.getAndSet(null)?.disconnect()
         updateWorker.shutdownNow()
