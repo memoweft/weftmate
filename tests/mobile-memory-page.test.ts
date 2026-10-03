@@ -97,6 +97,11 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   browserStatus?: (owner: string) => object | Promise<object>;
   browserSession?: (owner: string, params: any) => object | Promise<object>;
   browserSend?: (owner: string, params: any) => object | Promise<object>;
+  localConversations?: (owner: string) => object[];
+  localMessages?: (owner: string, conversationId: string) => object[];
+  handoffStatus?: (owner: string, conversationId: string) => object | Promise<object>;
+  handoffAdopt?: (owner: string, params: any) => object | Promise<object>;
+  sharedHistory?: (owner: string, sessionId: string) => object | Promise<object>;
   deferAnimationFrame?: boolean;
   hostTask?: object; hostActivities?: object[];
   deferItemsFor?: string; deferMore?: boolean } = {}) {
@@ -170,7 +175,17 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
           case 'app.bootstrap': result = { loggedIn: !!owner, username: owner ? `Fixture${owner}` : '', owner: owner ? scopes[owner] : '',
             model: null, busy: false, ui: null, backgroundSync: 'scheduled' }; break
           case 'app.ready': result = {}; break
-          case 'conversations.list': result = { conversations: [] }; break
+          case 'conversations.list': result = { conversations: owner ? options.localConversations?.(owner) ?? [] : [] }; break
+          case 'conversations.messages': result = { source: 'phone', messages: owner
+            ? options.localMessages?.(owner, request.params.conversationId) ?? [] : [], receipts: [], turnStatus: 'completed' }; break
+          case 'shared.conversations.get': result = owner && options.handoffStatus
+            ? options.handoffStatus(owner, request.params.conversationId) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'shared.conversations.adopt': result = owner && options.handoffAdopt
+            ? options.handoffAdopt(owner, request.params) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'shared.sessions.events': result = owner && options.sharedHistory
+            ? options.sharedHistory(owner, request.params.sessionId) : { sessionId: request.params.sessionId,
+              source: 'host', events: [], nextSeq: -1, hasMore: false }; break
+          case 'shared.outbox.list': result = { source: 'host', commands: [] }; break
           case 'activity.list': result = { activities: options.hostActivities ?? (options.hostTask ? [options.hostTask] : []), hostAvailable: true }; break
           case 'shared.commands.detail': result = owner && options.commandDetail
             ? options.commandDetail(owner, request.params.commandId) : (() => { throw new Error('NOT_FOUND') })(); break
@@ -949,4 +964,108 @@ test('project list failure does not hide browser entry and browser 404 differs f
   offline.nav.find((button) => button.dataset.page === 'workspaces')!.fire('click')
   await waitUntil(() => offline.get('page-content').textContent.includes('网页阅读暂时无法连接'), 'outage state missing')
   assert.doesNotMatch(offline.get('page-content').textContent, /还没有网页资料入口/)
+})
+
+test('adopted phone conversation keeps one card and sends the next turn through its DSH session', async () => {
+  const conversationId = 'conversation-11111111-1111-4111-8111-111111111111'
+  const sessionId = 'session-22222222-2222-4222-8222-222222222222'
+  const sourceEventId = 'event-33333333-3333-4333-8333-333333333333'
+  const app = harness({
+    localConversations: () => [{ id: conversationId, title: 'Phone fact', source: 'phone',
+      binding: { sessionId, modelProfileId: 'model-host', cutoverSyncSeq: 3 } }],
+    localMessages: () => [{ id: 'message-old', role: 'user', text: 'old phone fact',
+      serverSeq: 3, sourceEventId }],
+    handoffStatus: () => ({ source: 'host', conversationId, hostId: 'host-fixture', status: 'active',
+      binding: { sessionId, modelProfileId: 'model-host', cutoverSyncSeq: 3,
+        historyMessageCount: 1, truncated: false, omittedImages: 0 }, adoptedMessages: [] }),
+    projectSessions: () => ({ source: 'host', hostAvailable: true, sessions: [{ source: 'host', sessionId,
+      conversationId, modelProfileId: 'model-host', sendAvailable: true, title: 'Phone fact' }] }),
+    hostModels: () => ({ models: [{ source: 'host', profileId: 'model-host',
+      displayName: '合成电脑模型', configured: true }] }),
+    sharedHistory: () => ({ source: 'host', sessionId, nextSeq: 8, hasMore: false,
+      events: [{ seq: 7, type: 'user.message', data: { text: 'new question' } },
+        { seq: 8, type: 'assistant.message', data: { text: 'host continuation' } }] }),
+  })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'bootstrap ready')
+  await waitUntil(() => app.get('chat-content').textContent.includes('host continuation'), 'linked history')
+  await waitUntil(() => app.get('chat-content').textContent.includes('合成电脑模型'), 'human model name')
+  assert.match(app.get('chat-content').textContent, /old phone fact/)
+  assert.match(app.get('device-line').textContent, /已连接/)
+  assert.equal(app.get('draft').disabled, false, 'linked phone composer follows the async verified session list')
+  assert.doesNotMatch(app.get('chat-content').textContent, /model-host/)
+  assert.equal(findAll(app.get('conversation-list'), (node) => node.tagName === 'BUTTON' &&
+    node.textContent.includes('Phone fact')).length, 1)
+  app.get('draft').value = 'follow-up'; app.get('draft').fire('input')
+  app.get('send-button').fire('click')
+  await waitUntil(() => app.calls.some((call) => call.method === 'shared.send'), 'shared send')
+  assert.equal(app.calls.some((call) => call.method === 'chat.send'), false)
+  assert.equal(app.calls.find((call) => call.method === 'shared.send')?.params.sessionId, sessionId)
+})
+
+test('an open original phone card observes a later desktop adoption without navigation', async () => {
+  const conversationId = 'conversation-aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+  const sessionId = 'session-bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+  let reads = 0
+  const app = harness({
+    localConversations: () => [{ id: conversationId, title: 'Phone fact', source: 'phone' }],
+    localMessages: () => [{ id: 'message-local', role: 'user', text: 'phone fact', serverSeq: 2 }],
+    handoffStatus: () => ++reads < 2
+      ? { source: 'host', conversationId, hostId: 'host-fixture', status: 'unbound', canAdopt: true,
+          syncThroughSeq: 2 }
+      : { source: 'host', conversationId, hostId: 'host-fixture', status: 'active',
+          binding: { sessionId, modelProfileId: 'model-host', cutoverSyncSeq: 2,
+            historyMessageCount: 1, truncated: false, omittedImages: 0 }, adoptedMessages: [] },
+    projectSessions: () => ({ source: 'host', hostAvailable: true, sessions: [{ source: 'host',
+      sessionId, conversationId, sendAvailable: true, modelProfileId: 'model-host', title: 'Phone fact' }] }),
+    sharedHistory: () => ({ source: 'host', sessionId, nextSeq: 5, hasMore: false,
+      events: [{ seq: 5, type: 'assistant.message', data: { text: 'later host answer' } }] }),
+  })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'bootstrap ready')
+  await waitUntil(() => reads >= 2 && app.get('chat-content').textContent.includes('later host answer'),
+    'open phone card did not observe desktop adoption')
+  assert.equal(findAll(app.get('conversation-list'), (node) => node.tagName === 'BUTTON' &&
+    node.textContent.includes('Phone fact')).length, 1)
+})
+
+test('mobile handoff selects only a unique exact original model and preserves a manual choice', async () => {
+  const conversationId = 'conversation-cccccccc-cccc-4ccc-8ccc-cccccccccccc'
+  const models = [{ source: 'host', profileId: 'qwen', modelId: 'qwen',
+    displayName: 'Qwen', routeFingerprint: 'b'.repeat(64), configured: true },
+  { source: 'host', profileId: 'mimo', modelId: 'mimo-v2.6-flash',
+    displayName: 'MiMo', routeFingerprint: 'a'.repeat(64), configured: true }]
+  async function picker(originalModel: object | null) {
+    const app = harness({ localConversations: () => [{ id: conversationId, title: 'Old phone chat', source: 'phone' }],
+      localMessages: () => [{ id: 'message-old', role: 'user', text: 'old phone goal', serverSeq: 2 }],
+      handoffStatus: () => ({ source: 'host', hostId: 'host-fixture', conversationId,
+        status: 'unbound', canAdopt: true, syncThroughSeq: 2, originalModel }),
+      hostModels: () => ({ models }) })
+    await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'bootstrap ready')
+    await waitUntil(() => !!findButton(app.get('chat-content'), '选择电脑模型'), 'handoff entry')
+    findButton(app.get('chat-content'), '选择电脑模型')!.fire('click')
+    await waitUntil(() => findAll(app.get('chat-content'), (node) => node.tagName === 'SELECT').length > 0,
+      'model picker')
+    const select = findAll(app.get('chat-content'), (node) => node.tagName === 'SELECT')[0]
+    return { app, select }
+  }
+  const exact = await picker({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo',
+    routeFingerprint: 'a'.repeat(64) })
+  assert.equal(exact.select.value, 'mimo')
+  const sameHost = await picker({ modelId: 'qwen', displayName: 'Qwen',
+    routeFingerprint: null, hostProfileId: 'qwen' })
+  assert.equal(sameHost.select.value, 'qwen')
+  const unknown = await picker(null)
+  assert.equal(unknown.select.value, '')
+  assert.match(unknown.app.get('chat-content').textContent, /原模型身份未知/)
+  const missing = await picker({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo',
+    routeFingerprint: 'c'.repeat(64) })
+  assert.equal(missing.select.value, '')
+  missing.select.value = 'qwen'; missing.select.fire('change')
+  await waitUntil(() => missing.app.calls.filter((call) => call.method === 'shared.conversations.get').length > 1,
+    'bounded background refresh')
+  assert.equal(missing.select.value, 'qwen', 'background refresh cannot replace an explicit model choice')
+  models.push({ source: 'host', profileId: 'mimo-second', modelId: 'mimo-v2.6-flash',
+    displayName: 'MiMo second route', routeFingerprint: 'a'.repeat(64), configured: true })
+  const multiple = await picker({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo',
+    routeFingerprint: 'a'.repeat(64) })
+  assert.equal(multiple.select.value, '', 'two exact routes still require an explicit choice')
 })

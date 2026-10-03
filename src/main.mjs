@@ -1572,6 +1572,16 @@ async function bootstrap() {
       writeHostState();
       return recalled;
     } : undefined,
+    personalConversationContextHandler: personalHostMode ? async (request) => {
+      if (!personalAccessService || isQuitting || !runtimeOrigin) {
+        throw Object.assign(new Error('unavailable'), { code: 'CONVERSATION_CONTEXT_UNAVAILABLE' });
+      }
+      // The child is blocked at pre-step. The service checks its own owner-bound
+      // command receipt and sync snapshot; do not re-enter the DSH gateway here.
+      return personalAccessService.getConversationContext({ sessionId: request.sessionId,
+        turn: request.turn, step: request.step, receiptId: request.receiptId,
+        messageHash: request.messageHash });
+    } : undefined,
     log: (line) => console.log(`[weftmate] ${redactSecretText(line)}`),
   });
   async function replaceSharedRuntime() {

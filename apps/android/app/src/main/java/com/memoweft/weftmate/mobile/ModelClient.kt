@@ -64,7 +64,8 @@ class ModelClient(context: Context, private val http: JsonTransport = JsonHttp()
         receipt: (String, String, String, String) -> Unit,
         contextOmitted: (Int) -> Unit = {},
         onProgress: (String) -> Unit = {}, onPhase: (String) -> Unit = {},
-        attachments: List<ChatAttachment> = emptyList(), attachmentStore: AttachmentStore? = null): String {
+        attachments: List<ChatAttachment> = emptyList(), attachmentStore: AttachmentStore? = null,
+        onRequestStart: (String, String) -> Unit = { _, _ -> }): String {
         if (attachments.isNotEmpty() && attachmentStore == null) throw ApiFailure(400, "ATTACHMENT_INVALID")
         if (attachments.any { it.kind == "image" } && !supportsAttachmentImage(settings))
             throw ApiFailure(415, "MODEL_IMAGE_UNSUPPORTED")
@@ -109,10 +110,12 @@ class ModelClient(context: Context, private val http: JsonTransport = JsonHttp()
                     "ATTACHMENT_TOO_LARGE" else "MODEL_CONTEXT_TOO_LARGE")
             val headers = if (settings.apiKey.isBlank()) emptyMap() else mapOf("Authorization" to "Bearer ${settings.apiKey}")
             onPhase("waiting")
+            val requestUrl = Endpoints.modelUrl(settings.endpoint)
+            onRequestStart(requestUrl, payload.getString("model"))
             val (answer, finishReason) = if (http is SseTransport) {
                 val collector = SseMessageCollector(onProgress, onPhase)
                 try {
-                    val full = http.streamRequest(Endpoints.modelUrl(settings.endpoint), payload, headers,
+                    val full = http.streamRequest(requestUrl, payload, headers,
                         active, 300_000, collector::accept)
                     if (cancelled.get()) throw ModelCancelled(collector.partialText)
                     if (full != null) {
@@ -125,7 +128,7 @@ class ModelClient(context: Context, private val http: JsonTransport = JsonHttp()
                     throw error
                 }
             } else {
-                val reply = try { http.request(Endpoints.modelUrl(settings.endpoint), "POST", payload, headers, active, 300_000).body }
+                val reply = try { http.request(requestUrl, "POST", payload, headers, active, 300_000).body }
                     catch (error: Exception) { checkActive(); throw error }
                 val choice = reply.getJSONArray("choices").getJSONObject(0)
                 choice.getJSONObject("message") to (if (choice.isNull("finish_reason")) null else

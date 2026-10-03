@@ -25,10 +25,33 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         }
     }
 
+    fun history(host: HostIdentity, sessionId: String, afterSeq: Long): JSONObject {
+        if (!sessionIdPattern.matches(sessionId) || afterSeq < -1) throw ApiFailure(400, "INVALID_REQUEST")
+        val owner = Endpoints.ownerKey(host.origin, host.ownerId)
+        return try {
+            api.me(host)
+            val result = api.remoteHistory(host, sessionId, afterSeq)
+            val events = result.getJSONArray("events")
+            val next = result.getLong("nextSeq")
+            if (next < afterSeq || events.length() > 100 ||
+                result.optBoolean("hasMore") && next == afterSeq)
+                throw ApiFailure(502, "HISTORY_CURSOR_INVALID")
+            store.saveSharedHistoryPage(owner, host.hostId, sessionId, events, next)
+            result.put("source", "host").put("sessionId", sessionId)
+                .put("hostAvailable", true).put("cached", false)
+        } catch (error: Exception) {
+            if (error is ApiFailure && error.status in 400..499) throw error
+            store.cachedSharedHistory(owner, host.hostId, sessionId, afterSeq)
+                .put("source", "host").put("sessionId", sessionId)
+        }
+    }
+
     private fun checked(row: SharedCommandRow, command: JSONObject): JSONObject {
         if (command.optString("requestId") != row.requestId ||
             command.optString("sessionId") != row.sessionId ||
-            command.optString("kind") != row.payload.getString("kind"))
+            command.optString("kind") != row.payload.getString("kind") ||
+            row.payload.has("sourceSyncEventId") &&
+            command.optString("sourceSyncEventId") != row.payload.getString("sourceSyncEventId"))
             throw ApiFailure(502, "COMMAND_RECEIPT_INVALID")
         val state = when (command.optString("state")) {
             "accepted_by_dsh", "observed" -> "accepted"
@@ -104,13 +127,16 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
     }
 
     @Synchronized fun submit(host: HostIdentity, sessionId: String, text: String?, kind: String,
-        requestId: String?, attachmentIds: List<String> = emptyList(), current: () -> Boolean): JSONObject {
+        requestId: String?, attachmentIds: List<String> = emptyList(),
+        sourceSyncEventId: String? = null, current: () -> Boolean): JSONObject {
         if (!sessionIdPattern.matches(sessionId) || kind !in setOf("session.message", "session.cancel"))
             throw ApiFailure(400, "INVALID_REQUEST")
         if (kind == "session.message" && ((text.isNullOrBlank() && attachmentIds.isEmpty()) ||
             (text?.length ?: 0) > 16_384))
             throw ApiFailure(400, "MESSAGE_INVALID")
         if (kind != "session.message" && attachmentIds.isNotEmpty()) throw ApiFailure(400, "INVALID_REQUEST")
+        if (sourceSyncEventId != null && (kind != "session.message" ||
+            !validImageScopeId(sourceSyncEventId))) throw ApiFailure(400, "INVALID_REQUEST")
         val id = requestId ?: "mobile-${UUID.randomUUID()}"
         if (!requestIdPattern.matches(id)) throw ApiFailure(400, "INVALID_REQUEST")
         val owner = Endpoints.ownerKey(host.origin, host.ownerId)
@@ -131,6 +157,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             .put("targetDeviceId", host.hostId).put("sessionId", sessionId)
         if (kind == "session.message") payload.put("text", text)
             .put("mode", "queue")
+        if (sourceSyncEventId != null) payload.put("sourceSyncEventId", sourceSyncEventId)
         if (attachmentIds.isNotEmpty()) {
             val rows = attachments?.get(owner, sessionId, attachmentIds)
                 ?: throw ApiFailure(409, "ATTACHMENT_UNAVAILABLE")

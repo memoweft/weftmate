@@ -84,6 +84,12 @@ main{min-height:0;flex:1;position:relative;display:flex;flex-direction:column}.p
 .conversation-source:not(:first-child){border-top:1px solid var(--line);padding-top:12px;margin-top:10px}
 .shared-heading{display:flex;flex-direction:column;gap:5px;margin:0 0 22px;padding-bottom:14px;border-bottom:1px solid var(--line)}
 .shared-heading strong{font-size:17px;font-weight:600}.shared-heading small{color:var(--muted);font-size:12px}
+.handoff-divider{margin:2px 0 16px;padding:10px 0;border-top:1px solid var(--line);color:var(--muted);font-size:12px;line-height:1.5}
+.handoff-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;margin:10px 0 20px;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--soft);color:var(--secondary);font-size:13px;line-height:1.55}
+.handoff-card strong{color:var(--ink);font-size:14px}.handoff-card p{margin:0}.handoff-card .handoff-caveat{color:var(--muted);font-size:12px}
+.handoff-card .handoff-picker{display:flex;flex-direction:column;align-items:flex-start;gap:9px;width:100%}
+.handoff-card .handoff-picker label{display:flex;flex-direction:column;gap:5px;width:100%;color:var(--secondary);font-size:12px}
+.handoff-card select{width:100%;min-height:38px;padding:6px 9px;border:1px solid var(--line);border-radius:9px;background:var(--surface);color:var(--ink)}
 .shared-notice{margin:0 0 14px;padding:10px 12px;border-radius:12px;background:var(--soft);color:var(--secondary);font-size:13px;line-height:1.5}
 .shared-check{display:block;min-height:40px;margin-top:8px;padding:0 10px;border-radius:9px;color:var(--accent);font-size:13px;font-weight:500}
 .shared-check:active{background:var(--accent-soft)}

@@ -171,6 +171,16 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .desktop-action h2 { font-size: 15px; }
 .desktop-action p { font-size: 12px; margin-top: 4px; }
 .transcript { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 15px; }
+.phone-handoff { align-self: stretch; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 13px 15px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-soft); color: var(--ink-secondary); font-size: 12px; }
+.phone-handoff strong { flex-basis: 100%; color: var(--ink); font-size: 13px; }
+.phone-handoff span { flex-basis: 100%; line-height: 1.5; }
+.phone-handoff label { display: flex; align-items: center; gap: 8px; }
+.phone-handoff select { min-height: 34px; max-width: min(260px, 55vw); border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--ink); }
+.phone-handoff button { min-height: 34px; padding: 6px 12px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: white; cursor: pointer; }
+.phone-handoff button.secondary { border-color: var(--line); background: var(--surface); color: var(--ink); }
+.phone-handoff button:disabled { opacity: .55; cursor: not-allowed; }
+.phone-handoff :is(button,select):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.phone-handoff-divider { align-self: stretch; padding: 4px 0; border-bottom: 1px solid var(--line); color: var(--ink-muted); font-size: 11px; }
 .message { max-width: 86%; padding: 12px 15px; border-radius: 16px; overflow-wrap: anywhere; white-space: pre-wrap; }
 .message.user { align-self: flex-end; color: var(--ink); background: var(--accent-soft); border-bottom-right-radius: 5px; }
 .message.assistant { align-self: flex-start; background: var(--surface-soft); border: 1px solid var(--line); border-bottom-left-radius: 5px; }

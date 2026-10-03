@@ -183,8 +183,10 @@ export const PROFILE_PATCH_TEMPLATE_R14 = PROFILE_PATCH_TEMPLATE_R13.replace('�
  * deployment-owned Mod composition is therefore written there, using the
  * official discovery mechanism instead of a profile-only root that the final
  * CLI roster discards. */
-export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R14
+export const PROFILE_PATCH_TEMPLATE_R15 = PROFILE_PATCH_TEMPLATE_R14
   .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-task-control\n      name: ./plugins/weftmate-personal-task-control.mjs\n    - id: weftmate-personal-memory")
+export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R15
+  .replace('    - id: weftmate-personal-task-control', "    - id: weftmate-personal-conversation-context\n      name: ./plugins/weftmate-personal-conversation-context.mjs\n    - id: weftmate-personal-task-control")
 
 export const PROFILE_PATCH_TEMPLATE_R3_PICKER = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
 # 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
@@ -344,7 +346,7 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
   if (existing === PROFILE_PATCH_TEMPLATE) return false // 已是新模板
   if (existing === PROFILE_PATCH_TEMPLATE_LEGACY || existing === PROFILE_PATCH_TEMPLATE_R3
     || existing === PROFILE_PATCH_TEMPLATE_R3_PICKER || existing === PROFILE_PATCH_TEMPLATE_R7
-    || existing === PROFILE_PATCH_TEMPLATE_R8 || existing === PROFILE_PATCH_TEMPLATE_R9 || existing === PROFILE_PATCH_TEMPLATE_R10 || existing === PROFILE_PATCH_TEMPLATE_R11 || existing === PROFILE_PATCH_TEMPLATE_R12 || existing === PROFILE_PATCH_TEMPLATE_R13 || existing === PROFILE_PATCH_TEMPLATE_R14) {
+    || existing === PROFILE_PATCH_TEMPLATE_R8 || existing === PROFILE_PATCH_TEMPLATE_R9 || existing === PROFILE_PATCH_TEMPLATE_R10 || existing === PROFILE_PATCH_TEMPLATE_R11 || existing === PROFILE_PATCH_TEMPLATE_R12 || existing === PROFILE_PATCH_TEMPLATE_R13 || existing === PROFILE_PATCH_TEMPLATE_R14 || existing === PROFILE_PATCH_TEMPLATE_R15) {
     await writeFile(patchPath, PROFILE_PATCH_TEMPLATE, 'utf8')
     return true // 已知旧模板升级
   }
@@ -460,6 +462,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-conversation-context.mjs'), join(dir, 'plugins', 'weftmate-personal-conversation-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-shared-chat-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-shared-chat-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-mod-projects.mjs'), join(dir, 'plugins', 'weftmate-mod-projects.mjs')],
@@ -794,6 +797,9 @@ export interface DshWebRuntimeOptions {
   personalMemoryRequestHandler?: (request: Readonly<{ id: string, action: 'recall' | 'ingest',
     sessionId: string, turn: number, query?: string, userMessageId?: string | null,
     boundary?: Record<string, unknown> }>) => Promise<unknown>
+  /** First-turn, owner-bound phone conversation context from this managed child only. */
+  personalConversationContextHandler?: (request: Readonly<{ id: string, sessionId: string,
+    turn: number, step: 1, receiptId: string, messageHash: string }>) => Promise<unknown>
   /** Unit-test seam only; production callers leave this unset. */
   testOnlySecureCompositionPreflight?: () => Promise<void>
   /** Test-only race seam, after the verified snapshot exists and before child spawn. */
@@ -1056,6 +1062,7 @@ export class DshWebRuntime {
     credentialRequestHandler: WeftMateCredentialRequestHandler | undefined
     personalDesktopRequestHandler: DshWebRuntimeOptions['personalDesktopRequestHandler']
     personalMemoryRequestHandler: DshWebRuntimeOptions['personalMemoryRequestHandler']
+    personalConversationContextHandler: DshWebRuntimeOptions['personalConversationContextHandler']
     testOnlySecureCompositionPreflight: (() => Promise<void>) | undefined
     testOnlyAfterSecureCompositionSnapshot: ((snapshot: Readonly<{ digest: string, entries: readonly unknown[] }>) => Promise<void>) | undefined
     credentialRequestTimeoutMs: number
@@ -1079,6 +1086,7 @@ export class DshWebRuntime {
   private readonly credentialPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly personalDesktopPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly personalMemoryPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
+  private readonly personalConversationContextPending = new Map<ChildProcess, Set<{ timer: NodeJS.Timeout, settled: boolean }>>()
   private readonly taskStopPending = new Map<string, { child: ChildProcess, timer: NodeJS.Timeout,
     receiptIds: readonly string[], resolve: (result: PersonalTaskStopResult) => void }>()
   private readonly projectProofPending = new Map<string, { child: ChildProcess,
@@ -1103,6 +1111,7 @@ export class DshWebRuntime {
       credentialRequestHandler: options.credentialRequestHandler,
       personalDesktopRequestHandler: options.personalDesktopRequestHandler,
       personalMemoryRequestHandler: options.personalMemoryRequestHandler,
+      personalConversationContextHandler: options.personalConversationContextHandler,
       testOnlySecureCompositionPreflight: options.testOnlySecureCompositionPreflight,
       testOnlyAfterSecureCompositionSnapshot: options.testOnlyAfterSecureCompositionSnapshot,
       credentialRequestTimeoutMs: options.credentialRequestTimeoutMs ?? 10_000,
@@ -1314,6 +1323,7 @@ export class DshWebRuntime {
       this.failCredentialRequests(child)
       this.failPersonalDesktopRequests(child)
       this.failPersonalMemoryRequests(child)
+      this.failPersonalConversationContextRequests(child)
       this.failTaskStopRequests(child)
       this.failProjectProofRequests(child)
       this.closedChildren.add(child)
@@ -1352,6 +1362,14 @@ export class DshWebRuntime {
     for (const entry of pending) { entry.settled = true; clearTimeout(entry.timer) }
     pending.clear()
     this.personalMemoryPending.delete(child)
+  }
+
+  private failPersonalConversationContextRequests(child: ChildProcess): void {
+    const pending = this.personalConversationContextPending.get(child)
+    if (!pending) return
+    for (const entry of pending) { entry.settled = true; clearTimeout(entry.timer) }
+    pending.clear()
+    this.personalConversationContextPending.delete(child)
   }
 
   private failTaskStopRequests(child: ChildProcess): void {
@@ -1761,6 +1779,64 @@ export class DshWebRuntime {
     )
   }
 
+  private handlePersonalConversationContextMessage(child: ChildProcess, message: unknown): void {
+    if (!message || typeof message !== 'object' || Array.isArray(message)) return
+    const row = message as Record<string, unknown>
+    if (row.protocol !== 'weftmate.personal-conversation-context.v1') return
+    if (Object.keys(row).sort().join(',') !== 'id,messageHash,protocol,receiptId,sessionId,step,turn' ||
+        typeof row.id !== 'string' || !/^context-[0-9a-f-]{36}$/.test(row.id) ||
+        typeof row.sessionId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) ||
+        !Number.isSafeInteger(row.turn) || (row.turn as number) < 1 || row.step !== 1 ||
+        typeof row.receiptId !== 'string' || !TASK_STOP_RECEIPT.test(row.receiptId) ||
+        typeof row.messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(row.messageHash)) return
+    const respond = (value: object): void => {
+      if (!child.connected) return
+      try { child.send({ protocol: 'weftmate.personal-conversation-context.v1', id: row.id, ...value }) }
+      catch { /* Closing children cannot receive context. */ }
+    }
+    if (this.closed || this.closedChildren.has(child) || this.child !== child ||
+        !this.opts.personalConversationContextHandler) {
+      respond({ ok: false, error: 'CONVERSATION_CONTEXT_UNAVAILABLE' }); return
+    }
+    const entry = { timer: undefined as unknown as NodeJS.Timeout, settled: false }
+    let pending = this.personalConversationContextPending.get(child)
+    if (!pending) { pending = new Set(); this.personalConversationContextPending.set(child, pending) }
+    pending.add(entry)
+    const settle = (value: object): void => {
+      if (entry.settled) return
+      entry.settled = true
+      clearTimeout(entry.timer)
+      pending?.delete(entry)
+      if (pending?.size === 0) this.personalConversationContextPending.delete(child)
+      if (!this.closed && !this.closedChildren.has(child) && this.child === child) respond(value)
+    }
+    entry.timer = setTimeout(() => settle({ ok: false, error: 'CONVERSATION_CONTEXT_UNAVAILABLE' }), 2_800)
+    entry.timer.unref?.()
+    const request = Object.freeze({ id: row.id, sessionId: row.sessionId, turn: row.turn as number,
+      step: 1 as const, receiptId: row.receiptId, messageHash: row.messageHash })
+    void Promise.resolve().then(() => this.opts.personalConversationContextHandler?.(request)).then(
+      (result: unknown) => {
+        if (!result || typeof result !== 'object' || Array.isArray(result)) {
+          settle({ ok: false, error: 'CONVERSATION_CONTEXT_UNAVAILABLE' }); return
+        }
+        const value = result as Record<string, unknown>
+        if (value.state !== 'none' && (value.state !== 'ready' ||
+            typeof value.contextText !== 'string' || !value.contextText.trim() ||
+            Buffer.byteLength(value.contextText, 'utf8') > 16_384 ||
+            typeof value.contextHash !== 'string' || !/^[a-f0-9]{64}$/.test(value.contextHash) ||
+            createHash('sha256').update(value.contextText, 'utf8').digest('hex') !== value.contextHash ||
+            !Number.isSafeInteger(value.throughSeq) || (value.throughSeq as number) < 0)) {
+          settle({ ok: false, error: 'CONVERSATION_CONTEXT_UNAVAILABLE' }); return
+        }
+        const projected = value.state === 'none' ? { state: 'none' } : {
+          state: 'ready', contextText: value.contextText as string,
+          contextHash: value.contextHash as string, throughSeq: value.throughSeq as number,
+        }
+        settle({ ok: true, result: projected })
+      }, () => settle({ ok: false, error: 'CONVERSATION_CONTEXT_UNAVAILABLE' }),
+    )
+  }
+
   /**
    * 处理官方 credentials provider 发出的单次请求。这里不持久化、不输出 ref/value：
    * 只负责 correlation、生命周期与 fail-closed 边界，safeStorage 留给 main 注入 handler。
@@ -1906,6 +1982,7 @@ export class DshWebRuntime {
         this.handleCredentialMessage(child, message)
         this.handlePersonalDesktopMessage(child, message)
         this.handlePersonalMemoryMessage(child, message)
+        this.handlePersonalConversationContextMessage(child, message)
         this.handleTaskStopMessage(child, message)
         this.handleProjectProofMessage(child, message)
       })

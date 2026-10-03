@@ -58,6 +58,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   config: { markers?: object[]; byRequest?: Record<string, object>; storage?: Map<string, string>;
     sessions?: Array<{ sessionId: string; title: string; sendAvailable: boolean; running?: boolean }>;
     eventPageSize?: number; syncAvailable?: boolean; syncEvents?: object[]; downloadAvailable?: boolean;
+    conversationViews?: Record<string, object>;
+    modelCatalog?: object[];
     syncPost?: 'timeout-no-commit' | 'timeout-committed' | 'conflict'; uuidForSync?: boolean; deviceSuffix?: string;
     configured?: boolean; authenticated?: boolean; setupGrant?: string;
     profileAccounts?: Record<string, any>; initialProfileOwner?: string;
@@ -146,6 +148,11 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       ...(config.syncAvailable ? { sync: { available: true } } : {}),
       ...(config.downloadAvailable ? { downloads: { android: true } } : {}),
       backend: { capabilities: { chat: { available: true }, desktopOpenApp: { available: true, appIds: ['notepad'] }, naturalLanguageDesktop: { available: false } } } }))
+    if (url.includes('/sync/conversations/') && url.endsWith('/shared') && options.method !== 'POST') {
+      const conversationId = decodeURIComponent(url.split('/').at(-2)!)
+      return Promise.resolve(config.conversationViews?.[conversationId]
+        ? reply(config.conversationViews[conversationId]) : reply({ error: { code: 'NOT_FOUND' } }, 404))
+    }
     if (url.endsWith('/sync/events') && options.method === 'POST') {
       syncPosts++
       const event = JSON.parse(options.body).events[0]
@@ -167,7 +174,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       return Promise.resolve(reply({ events, nextSeq: (events.at(-1) as any)?.seq ?? afterSeq,
         hasMore: remaining.length > events.length }))
     }
-    if (url.endsWith('/models')) return Promise.resolve(reply({ models: [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
+    if (url.endsWith('/models')) return Promise.resolve(reply({ models: config.modelCatalog ??
+      [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
     if (url.endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
       { sessionId: 'A', title: 'A', sendAvailable: true, running: aRunning }, { sessionId: 'B', title: 'B', sendAvailable: true },
     ] }))
@@ -886,6 +894,79 @@ test('main chat rail opens the same phone MiMo conversation and its authenticate
   await flush()
   assert.equal(page.get('assistant-title').textContent, 'A')
   assert.equal(page.get('message-text').disabled, false, 'desktop DSH conversation remains sendable')
+})
+
+test('bound phone conversation keeps one rail card and exact receipt renders its adopted user once', async () => {
+  const conversationId = 'conversation-11111111-1111-4111-8111-111111111111'
+  const adoptedId = 'event-22222222-2222-4222-8222-222222222222'
+  const rows = [
+    { seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created', payload: { title: '同一段对话' } },
+    { seq: 2, conversationId, sourceDeviceId: 'device-phone', kind: 'message.created', payload: {
+      messageId: 'message-33333333-3333-4333-8333-333333333333', role: 'user', text: '手机事实' } },
+    { seq: 3, conversationId, sourceDeviceId: 'device-phone', kind: 'message.created', payload: {
+      messageId: 'message-44444444-4444-4444-8444-444444444444', role: 'assistant', text: '本机回应' } },
+    { seq: 4, eventId: adoptedId, conversationId, sourceDeviceId: 'device-phone', kind: 'message.created', payload: {
+      messageId: 'message-55555555-5555-4555-8555-555555555555', role: 'user', text: '新的电脑追问' } },
+  ]
+  const view = { source: 'host', hostId: 'host-test', conversationId, status: 'active', canAdopt: false,
+    binding: { sessionId: 'A', modelProfileId: 'model-test', cutoverSyncSeq: 3,
+      historyMessageCount: 3, truncated: false, omittedImages: 0 },
+    adoptedMessages: [{ sourceSyncEventId: adoptedId, receiptId: 'rpc-exact', state: 'accepted_by_dsh' }] }
+  const history = [{ seq: 10, type: 'user.message', data: { text: '新的电脑追问', receiptId: 'rpc-exact' } },
+    { seq: 11, type: 'assistant.message', data: { text: '电脑基于手机事实回答' } }]
+  const page = harness([], history, false, { syncAvailable: true, syncEvents: rows,
+    conversationViews: { [conversationId]: view } })
+  for (let attempt = 0; attempt < 30 && page.get('session-list').children.length !== 2; attempt++) await flush()
+  assert.equal(page.get('session-list').children.length, 2, 'bound A is represented by the original phone card')
+  page.get('session-list').children[1].children[0].fire('click')
+  for (let attempt = 0; attempt < 30 && !visibleText(page.get('transcript')).includes('电脑基于手机事实回答'); attempt++) await flush()
+  const text = visibleText(page.get('transcript'))
+  assert.match(text, /手机事实.*本机回应.*电脑基于手机事实回答/)
+  assert.equal(text.match(/新的电脑追问/g)?.length, 1)
+  assert.equal(page.get('send-message').textContent, '发送到电脑')
+})
+
+test('phone handoff prefers only one exact original route and never defaults to unrelated Qwen', async () => {
+  const conversationId = 'conversation-66666666-6666-4666-8666-666666666666'
+  const events = [{ seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created',
+    payload: { title: '模型选择' } }, { seq: 2, conversationId, sourceDeviceId: 'device-phone',
+    kind: 'message.created', payload: { messageId: 'message-77777777-7777-4777-8777-777777777777',
+      role: 'user', text: '原目标' } }]
+  const fingerprint = 'a'.repeat(64)
+  const catalog = [
+    { id: 'qwen', name: 'Qwen', model: 'qwen', routeFingerprint: 'b'.repeat(64), configured: true },
+    { id: 'mimo', name: 'MiMo', model: 'mimo-v2.6-flash', routeFingerprint: fingerprint, configured: true },
+  ]
+  const view = (originalModel: object | null) => ({ source: 'host', hostId: 'host-test', conversationId,
+    status: 'unbound', canAdopt: true, syncThroughSeq: 2, originalModel })
+  async function opened(originalModel: object | null) {
+    const page = harness([], [], false, { syncAvailable: true, syncEvents: events,
+      modelCatalog: catalog, conversationViews: { [conversationId]: view(originalModel) } })
+    for (let attempt = 0; attempt < 25 && page.get('session-list').children.length < 3; attempt++) await flush()
+    page.get('session-list').children[2].children[0].fire('click')
+    for (let attempt = 0; attempt < 25 && !visibleText(page.get('transcript')).includes('刷新电脑模型目录'); attempt++) await flush()
+    const controls = page.get('transcript').children.at(-1)!
+    const select = controls.children.find((item) => item.textContent === '电脑模型')?.children[0]
+    assert.ok(select)
+    return { page, select, controls }
+  }
+  const exact = await opened({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo', routeFingerprint: fingerprint })
+  assert.equal(exact.select.value, 'mimo')
+  const sameHost = await opened({ modelId: 'qwen', displayName: 'Qwen', routeFingerprint: null,
+    hostProfileId: 'qwen' })
+  assert.equal(sameHost.select.value, 'qwen', 'exact prior host profile remains valid without a local URL hash')
+  const unknown = await opened(null)
+  assert.equal(unknown.select.value, '')
+  assert.match(visibleText(unknown.controls), /旧记录没有可核对的原模型身份/)
+  const missing = await opened({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo',
+    routeFingerprint: 'c'.repeat(64) })
+  assert.equal(missing.select.value, '')
+  assert.match(visibleText(missing.controls), /尚无可核对的同一配置/)
+  catalog.push({ id: 'mimo-second', name: 'MiMo second route', model: 'mimo-v2.6-flash',
+    routeFingerprint: fingerprint, configured: true })
+  const multiple = await opened({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo',
+    routeFingerprint: fingerprint })
+  assert.equal(multiple.select.value, '', 'multiple exact routes require a deliberate selection')
 })
 
 test('phone image timeline bounds large originals and recovers small images without display sidecars', async () => {
