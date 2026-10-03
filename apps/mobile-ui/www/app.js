@@ -1273,15 +1273,119 @@ function capabilityDetail(key,title,status){const target=$('page-content');clear
   if(key==='workspaces')target.append(action('查看项目与成果',()=>page('workspaces'),false));
   if(key==='mods')target.append(group('目录与详情',[row('已安装能力','接通 Mod 目录后在这里查看版本、设置和权限',()=>subNotice('Mod 目录','当前没有可展示的已安装列表'))]));
 }
-function workspacesPage(target){target.append(heading('项目与成果','电脑项目、文件和生成成果将从原会话接续。'));
-  const info=notice(state.loggedIn?'正在检查电脑工作区…':'连接电脑账户后可查看项目与成果的连接状态。');target.append(info);
-  if(state.loggedIn){const gen=state.generation;call('host.modules').then(modules=>{
-    if(state.page!=='workspaces'||state.generation!==gen)return;info.textContent=modules.workspaces==='connected'?
-      '电脑工作区服务已连接。当前手机页尚未接线文件与成果预览。':
-      modules.workspaces==='disabled'?'电脑工作区能力尚未启用。':'电脑工作区状态暂未确认。'
-  }).catch(()=>{info.textContent='电脑暂时不可达；手机本机对话仍可使用。'})}
-  target.append(group('项目',[row('电脑项目','按账户与会话来源列出，尚未接线',()=>subNotice('电脑项目','当前手机还不能浏览项目文件。'))]),
-    group('成果',[row('文件与生成结果','从原任务返回并预览，尚未接线',()=>subNotice('成果','当前手机还不能预览电脑生成文件。'))]));
+const projectIdPattern=/^project-[A-Za-z0-9-]{1,128}$/;
+const profileIdPattern=/^[A-Za-z0-9._-]{1,128}$/;
+const hostIdPattern=/^[A-Za-z0-9_-]{1,128}$/;
+function projectIntentKey(hostId){return `weftmate-project-create:${state.owner}:${hostId}`}
+function savedProjectIntent(hostId){try{const value=JSON.parse(localStorage.getItem(projectIntentKey(hostId))||'null');
+  return value?.owner===state.owner&&value.hostId===hostId&&projectIdPattern.test(value.projectId||'')&&
+    profileIdPattern.test(value.modelProfileId||'')&&/^[0-9a-f-]{36}$/.test(value.requestId||'')?value:null}catch{return null}}
+function projectIntentCurrent(owner,epoch,generation){return state.loggedIn&&state.owner===owner&&
+  state.authEpoch===epoch&&state.page==='workspaces'&&state.generation===generation&&!state.transitionPending}
+async function resolveProjectSessionIntent(intent,message){
+  const owner=state.owner,epoch=state.authEpoch,generation=state.generation;
+  const current=()=>projectIntentCurrent(owner,epoch,generation);
+  if(!current())return;
+  message.textContent='正在核对上次项目会话请求…';
+  let command=null;
+  try{const result=await call('shared.commands.byRequest',{requestId:intent.requestId});
+    if(!current())return;command=result?.command||null}
+  catch(error){if(!current())return;if(!['NOT_FOUND','SESSION_UNAVAILABLE'].includes(error?.message)){
+    message.textContent='当前无法核对原请求。项目与模型选择已保留，重连后再试。';return}}
+  if(!command){try{const result=await call('shared.projects.createSession',{projectId:intent.projectId,
+      modelProfileId:intent.modelProfileId,requestId:intent.requestId});
+      if(!current())return;command=result?.command||null;
+      if(result?.source!=='host'||command?.requestId!==intent.requestId)throw new Error('COMMAND_RECEIPT_INVALID')}
+    catch(error){if(current())message.textContent='送达状态尚不明确。保留原请求编号；重连后会先查询再重试。';return}}
+  if(command.kind!=='session.create'||command.requestId!==intent.requestId||
+    command.projectId!==intent.projectId||!sessionIdPattern.test(command.sessionId||'')){
+    if(current())message.textContent='会话回执与原选择不一致，已保留请求供核对。';return}
+  if(['pending','dispatching'].includes(command.state)){
+    for(let attempt=0;attempt<5&&current()&&['pending','dispatching'].includes(command.state);attempt++){
+      await new Promise(resolve=>setTimeout(resolve,800));
+      if(!current())return;
+      try{command=(await call('shared.commands.byRequest',{requestId:intent.requestId}))?.command||command}
+      catch{break}}
+    if(['pending','dispatching'].includes(command.state)){
+      if(current())message.textContent='电脑已记录请求，正在创建会话；稍后可用同一选择继续核对。';return}}
+  if(command.state!=='accepted_by_dsh'){
+    if(current())message.textContent='电脑尚未确认会话创建；原选择和编号仍保留。';return}
+  try{const result=await call('shared.sessions.list');if(!current())return;
+    if(result?.source!=='host'||!Array.isArray(result.sessions))throw new Error('SESSION_UNAVAILABLE');
+    const exact=result.sessions.find(item=>item.sessionId===command.sessionId&&item.projectId===intent.projectId&&
+      item.modelProfileId===intent.modelProfileId);
+    if(!exact){message.textContent='会话已受理，正在等待项目绑定出现在列表；原编号已保留。';return}
+    state.sharedSessions=result.sessions.filter(item=>item?.source==='host'&&typeof item.sessionId==='string');
+    localStorage.removeItem(projectIntentKey(intent.hostId));
+    selectSharedSession(command.sessionId);
+    toast('项目会话已打开，可在原对话发送摘要目标。')
+  }catch(error){if(current())message.textContent='会话列表暂时不可核对；原选择和编号已保留。'}
+}
+function workspacesPage(target){target.append(heading('项目与成果'));
+  if(!state.loggedIn){target.append(notice('请先连接自己的电脑账户。项目目录只能由原电脑账户登记。'),
+    action('连接账户',()=>page('connect')));return}
+  const owner=state.owner,epoch=state.authEpoch,generation=state.generation;
+  const current=()=>projectIntentCurrent(owner,epoch,generation);
+  const statusNode=el('p','workspace-status','正在读取账户项目与电脑模型…');target.append(statusNode);
+  const projectGroup=group('已登记项目',[]),projectBody=projectGroup.querySelector('.group-body');
+  const modelGroup=group('使用的模型',[]),modelBody=modelGroup.querySelector('.group-body');
+  target.append(projectGroup,modelGroup);
+  void Promise.all([call('shared.projects.list'),call('models.host')]).then(([listed,catalog])=>{
+    if(!current())return;
+    if(listed?.source!=='host'||!hostIdPattern.test(listed.hostId||'')||!Array.isArray(listed.projects)||
+      !Array.isArray(catalog?.models))throw new Error('PROJECT_RESPONSE_INVALID');
+    clear(projectBody);clear(modelBody);
+    const projects=listed.projects.filter(item=>projectIdPattern.test(item?.projectId||'')&&
+      typeof item.name==='string'),models=catalog.models.filter(item=>item?.configured===true&&
+      profileIdPattern.test(item.profileId||'')&&typeof item.displayName==='string');
+    const intent=savedProjectIntent(listed.hostId);
+    let selectedProject=projects.find(item=>item.projectId===intent?.projectId&&!item.revoked)||
+      projects.find(item=>!item.revoked)||null;
+    let selectedModel=models.find(item=>item.profileId===intent?.modelProfileId)||models[0]||null;
+    if(!projects.length){projectBody.append(notice('此账户还没有登记项目。请先在电脑账户页的“项目与成果”选择资料目录。'))}
+    else for(const item of projects){const button=row(item.name,
+      item.revoked?'已撤销 · 历史成果仍可查看':'电脑登记',()=>{
+        if(item.revoked)return;selectedProject=item;renderSelection()});button.disabled=item.revoked;
+      button.dataset.projectId=item.projectId;projectBody.append(button)}
+    const select=el('select','workspace-model-select');select.setAttribute('aria-label','项目资料使用的电脑模型');
+    if(!models.length){select.append(el('option','','电脑没有已配置模型'));select.disabled=true;
+      modelBody.append(notice('请先在电脑设置中配置模型；项目目录登记不会自动选择资料目的地。'))}
+    else {for(const item of models){const option=el('option','',`${item.displayName} · ${item.sourceKind==='local'?'电脑本机':'电脑云端'}`);
+        option.value=item.profileId;select.append(option)}
+      select.value=selectedModel.profileId;select.addEventListener('change',()=>{
+        selectedModel=models.find(item=>item.profileId===select.value)||null;renderSelection()});modelBody.append(select)}
+    const disclosure=el('p','workspace-disclosure'),send=action('在此项目开始对话',async()=>{
+      if(!current()||!selectedProject||!selectedModel)return;
+      statusNode.hidden=false;
+      const prior=savedProjectIntent(listed.hostId);
+      if(prior&&(prior.projectId!==selectedProject.projectId||prior.modelProfileId!==selectedModel.profileId)){
+        statusNode.textContent='上一次项目会话仍待核对。请先恢复原选择，避免重复创建。';return}
+      const next=prior||{owner,hostId:listed.hostId,projectId:selectedProject.projectId,
+        modelProfileId:selectedModel.profileId,requestId:crypto.randomUUID()};
+      try{const verified=await call('models.verifyHost',{profileId:next.modelProfileId});
+        if(!current())return;
+        if(verified?.available!==true){statusNode.textContent='所选电脑模型当前不可用。请选择其他已配置模型或稍后重试。';return}}
+      catch{if(current())statusNode.textContent='暂时无法核对所选模型，请检查电脑连接后重试。';return}
+      try{localStorage.setItem(projectIntentKey(listed.hostId),JSON.stringify(next))}
+      catch{statusNode.textContent='无法安全保存请求编号，暂不能创建会话。';return}
+      send.disabled=true;
+      try{await resolveProjectSessionIntent(next,statusNode)}finally{if(current())send.disabled=false}
+    });
+    modelBody.append(disclosure,send);
+    function renderSelection(){for(const button of projectBody.querySelectorAll('[data-project-id]')){
+        button.classList.toggle('is-selected',button.dataset.projectId===selectedProject?.projectId)}
+      disclosure.textContent=selectedProject&&selectedModel?`“${selectedProject.name}”中实际读取的资料将交给${
+        selectedModel.sourceKind==='local'?'电脑本机':'电脑云端'}模型“${selectedModel.displayName}”。仅当前项目的已读正文进入该会话。`:
+        '选择一个未撤销项目和已配置模型后，才能开始项目对话。';
+      send.disabled=!selectedProject||!selectedModel}
+    renderSelection();
+    statusNode.textContent=intent?'发现上次未完成的会话请求，正在用原编号核对。':
+      projects.some(item=>!item.revoked)?'':'项目均已撤销；请在电脑重新登记。';
+    statusNode.hidden=!statusNode.textContent;
+    if(intent)void resolveProjectSessionIntent(intent,statusNode)
+  }).catch(error=>{if(!current())return;statusNode.textContent=['NOT_FOUND','OPERATION_FAILED'].includes(error?.message)?
+    '当前电脑服务还没有项目目录入口，原有聊天和历史仍可使用。':'电脑暂时不可达；原项目会话请求会保留，重连后继续核对。';
+    clear(projectBody);clear(modelBody)})
 }
 function connectPage(target){target.append(heading('电脑账户与连接','手机离线时仍可使用本机对话；连接后可同步记录和管理设备。'));
   if(state.loggedIn){target.append(notice(`当前账户：${state.username}。${connectionLabel()}。`,
@@ -1622,16 +1726,45 @@ async function submitTaskControl(taskId,action,text,current,input,section){if(!c
         const detail=el('details','task-record-id');detail.append(el('summary','','查看记录编号'),el('code','',item.commandId));
         entry.append(detail);stepsBody.append(entry)}
       target.append(section)}
+    const projectSources=(Array.isArray(task.sources)?task.sources:[]).filter(item=>
+      /^source-[a-f0-9]{48}$/.test(item?.snapshotId||'')&&typeof item.relativePath==='string'&&
+      Number.isSafeInteger(item.lineStart)&&Number.isSafeInteger(item.lineEnd)&&
+      /^[a-f0-9]{64}$/.test(item.fileSha256||''));
+    if(task.project||projectSources.length){const sourceGroup=group('读取的来源',[]),sourceBody=sourceGroup.querySelector('.group-body');
+      sourceBody.append(el('p','muted',task.project?`项目：${task.project.name}${task.project.revoked?' · 已撤销；历史来源仍保留':''}`:
+        '这些是任务读取时保存的资料版本。'));
+      if(!projectSources.length)sourceBody.append(el('p','muted','尚无已核验的读取来源；不能把未读内容当作摘要依据。'));
+      for(const source of projectSources){const wrap=el('div','project-source-entry');
+        wrap.append(el('p','artifact-name',source.relativePath),
+          el('p','artifact-meta',`第 ${source.lineStart}–${source.lineEnd} 行 · ${commandTime(source.readAt)} · ${
+            source.cited?'已用于成果':'已读取，未被成果引用'}`));
+        const preview=el('div','artifact-preview');preview.hidden=true;
+        const detail=el('details','task-record-id');detail.append(el('summary','','查看文件版本与来源编号'),
+          el('code','',`SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`));
+        wrap.append(action('查看来源正文',async()=>{
+          preview.hidden=false;preview.textContent='正在读取来源正文…';
+          try{const result=await call('shared.sources.detail',{taskId,snapshotId:source.snapshotId});
+            if(!current())return;
+            const actual=result?.source;
+            if(actual?.snapshotId!==source.snapshotId||actual.fileSha256!==source.fileSha256||
+              actual.lineStart!==source.lineStart||actual.lineEnd!==source.lineEnd||
+              typeof actual.text!=='string'||new TextEncoder().encode(actual.text).length>32*1024)
+              throw new Error('SOURCE_INVALID');
+            preview.textContent=actual.text;
+          }catch(e){if(current())preview.textContent=['NOT_FOUND','UNAUTHORIZED'].includes(e?.message)?
+            '当前账户无法读取这份来源。':`来源正文未能核对：${safeError(e)}`}
+        },false),preview,detail);sourceBody.append(wrap)}
+      target.append(sourceGroup)}
     if(artifacts.length){const fileGroup=group('成果文件',[]),fileBody=fileGroup.querySelector('.group-body');
       for(const item of artifacts){const wrap=el('div','artifact-entry');
         wrap.append(el('p','artifact-name',item.fileName||'未命名文件'),
           el('p','artifact-meta',`${artifactSize(item.size)} · ${item.state==='observed'&&item.verification?.status==='observed'?'电脑已核验':
             item.state==='uncertain'?'结果待确认':item.state==='rejected'?'生成失败':'等待电脑核验'}`));
         if(item.state==='observed'&&item.verification?.status==='observed'&&item.artifactId){
-          const preview=el('div','artifact-preview');preview.textContent='选择“查看内容”读取文件预览。';
+          const preview=el('div','artifact-preview');preview.hidden=true;
           let saveStatus=null;
           wrap.append(action('查看内容',async()=>{
-            preview.textContent='正在读取内容…';try{const result=await call('shared.artifacts.preview',{artifactId:item.artifactId});
+            preview.hidden=false;preview.textContent='正在读取内容…';try{const result=await call('shared.artifacts.preview',{artifactId:item.artifactId});
               if(!current())return;
               if(result?.artifact?.artifactId!==item.artifactId||result.artifact?.sha256!==item.sha256||
                 result.artifact?.size!==item.size||typeof result.text!=='string')throw new Error('ARTIFACT_CHANGED');

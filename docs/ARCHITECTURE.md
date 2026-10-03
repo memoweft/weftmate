@@ -7,6 +7,9 @@
 | 个人宿主有窗口/无窗口模式（隔离候选） | [main.mjs](../src/main.mjs)、[host-mode.mjs](../src/host-mode.mjs)；同一宿主的生命周期、隔离目录验证、启动/停止状态与会话引用扫描降级 |
 | 个人宿主隔离启动与按账户记忆配置 | [run-personal-host.mjs](../scripts/run-personal-host.mjs)、[personal-memory/config.mjs](../src/personal-memory/config.mjs)；仅显式的`--personal-memory-config`启用按账户记忆，旧`--memoweft-config`在个人宿主仍被拒绝 |
 | 账户与设备身份、受控接入及持久请求 | [personal-access/index.mjs](../src/personal-access/index.mjs)；v3按账户保存设备/会话/命令，鉴权后携带不可变owner上下文、账户内请求去重及容量/存储故障边界；正式运行状态见CURRENT_STATE |
+| 个人项目登记、共享会话绑定与来源快照 | [personal-access/index.mjs](../src/personal-access/index.mjs)；原电脑账户网页登录登记只读目录，手机列/选已登记项目；项目及登记修订绑定新共享会话，根任务与补充冻结同一绑定，模型只给不透明文件身份；来源按账户/项目/根任务/回合/确切消息回执关联 |
+| Windows 项目资料读取 | [personal-projects/index.mjs](../src/personal-projects/index.mjs)、[reader.ps1](../src/personal-projects/reader.ps1)；固定读取器使用Windows（视窗系统）文件句柄核根身份、路径与文件版本，保持只读并拒绝链接或变化；UTF-8（统一字符编码）Markdown/纯文本分行有界读取，不修改用户目录权限 |
+| 项目摘要来源证明与安卓入口 | [个人工具](../src/plugins/weftmate-personal-desktop.mjs)、[父子桥](../src/dsh-web-runtime.ts)、[宿主回调](../src/personal-access-backend.mjs)、[安卓有限桥](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt)；成功读取须在物理持久DSH历史中早于同回合保存调用，宿主生成来源清单；手机项目列表、按原请求创建会话及完整有界来源正文分别有有限动作 |
 | 账户密码、注册、资料、设备登录与存储迁移 | [personal-access/index.mjs](../src/personal-access/index.mjs)、[password.mjs](../src/personal-access/password.mjs)；异步 scrypt（密码派生算法）、限速、会话撤销、改密保留当前设备并拒绝旧待派发命令；来源/CSRF（跨站请求伪造防护）与可信代理检查；v2→v3须保留已知原账户，公开注册建立独立新账户 |
 | 电脑网页对话、事情、账户与记忆页面 | [personal-access-ui/index.mjs](../src/personal-access-ui/index.mjs)、[app.js](../src/personal-access-ui/app.js)；固定静态路径、同源表单、按requestId恢复、非终态动作锁、历史游标/视图代数；记忆详情、来源、纠正、停用与删除回执按当前登录账户呈现；资料按版本保存，头像解码与资料响应按账户/设备/视图代次核对 |
 | 手机来源事件与账户内同步 | [personal-sync/index.mjs](../src/personal-sync/index.mjs)、[接入与鉴权](../src/personal-access/index.mjs)；持久事件身份、账户/设备来源、同内容重试去重、不同内容冲突、有界分页、写入前重新鉴权；只同步记录，不重新派发动作 |

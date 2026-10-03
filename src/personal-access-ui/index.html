@@ -165,6 +165,18 @@
           <p class="muted" id="devices-loading">正在读取设备…</p>
           <ul class="device-list" id="device-list" aria-live="polite"></ul>
         </section>
+        <section class="card group" aria-labelledby="projects-heading">
+          <div class="group-heading"><div><h2 id="projects-heading">项目与成果</h2><p class="muted">电脑账户登记资料目录后，手机可选择项目和模型发起摘要任务。只读取目录中的 Markdown 和纯文本文件。</p></div><button type="button" class="button secondary small" id="projects-refresh">刷新</button></div>
+          <p id="projects-status" class="muted" role="status" aria-live="polite">正在读取项目…</p>
+          <ul id="projects-list" class="project-list" aria-live="polite"></ul>
+          <form id="project-register-form" class="project-register" hidden>
+            <label for="project-name">项目名称</label><input id="project-name" maxlength="80" autocomplete="off" placeholder="例如：产品资料">
+            <label for="project-root">资料目录</label><input id="project-root" autocomplete="off" placeholder="选择电脑上的资料目录">
+            <p class="field-help">仅登记你明确选择的目录；模型只会看到该项目的文件清单与获准读取的正文。</p>
+            <p id="project-register-status" class="form-error" role="status" aria-live="polite"></p>
+            <button type="submit" class="button primary small">登记项目</button>
+          </form>
+        </section>
         <section class="card group notice"><h2>连接状态</h2><p id="connection-copy">正在读取连接状态…</p></section>
       </section>
     </main>
@@ -199,6 +211,7 @@
         <div class="task-detail-section"><h3>交代的目标</h3><p id="task-detail-source"></p></div>
         <div class="task-detail-section"><h3>执行与核验</h3><p id="task-detail-verification"></p><p class="field-help">“消息已送达”只代表电脑接收了请求。文件完成以读回校验和预览结果为准；聊天中的“停止回复”与事情的停止分开记录。</p></div>
         <div id="task-detail-control"></div>
+        <div class="task-detail-section"><h3>读取的来源</h3><p class="field-help">来源保留读取时的正文和文件版本；文件后来改变也不会改写这次依据。</p><ul id="task-detail-sources" class="task-source-list"></ul><p id="task-source-preview-status" class="muted" role="status"></p><pre id="task-source-preview" class="task-preview-text" hidden></pre></div>
         <div class="task-detail-section"><h3>成果文件</h3><ul id="task-detail-artifacts" class="task-detail-artifacts"></ul></div>
         <div class="task-detail-section"><h3>文件预览</h3><p id="task-preview-status" class="muted" role="status"></p><pre id="task-preview-text" class="task-preview-text" hidden></pre></div>
       </div>

@@ -60,3 +60,41 @@ test('personal document IPC accepts bounded text and projects only verified arti
     artifactId: 'artifact-1', fileName: '会议纪要.md', size: 5, sha256: 'a'.repeat(64), state: 'observed' })
   assert.equal(JSON.stringify(sent[0]).includes('C:/private'), false)
 })
+
+test('project IPC requires an exact receipt and returns only bounded list/read results', async () => {
+  const calls: any[] = []
+  const sent: any[] = []
+  const runtime = new DshWebRuntime({ homeDir: 'C:\\synthetic\\dsh-home', workspaceDir: 'C:\\synthetic\\work',
+    personalDesktopRequestHandler: async (request: any) => {
+      calls.push(request)
+      return request.action === 'list_project'
+        ? { files: [{ fileId: `file-${'a'.repeat(48)}`, relativePath: 'brief.md', size: 12 }],
+          truncated: false, scannedCount: 1, skippedCount: 0, rootPath: 'C:/secret' }
+        : { snapshotId: `source-${'b'.repeat(48)}`, relativePath: 'brief.md',
+          lineStart: 1, lineEnd: 2, totalLines: 2, fileSha256: 'c'.repeat(64),
+          text: 'bounded read', readAt: '2026-10-03T00:00:00.000Z', hasMore: false,
+          privatePath: 'C:/secret' }
+    } }) as any
+  const child = { connected: true, send: (value: any) => { sent.push(value) } }
+  runtime.child = child
+  const base = { protocol: 'weftmate.personal-desktop.v1',
+    id: 'personal-12345678-1234-1234-1234-123456789abc', sessionId: 'session-safe',
+    turn: 1, callId: 'call-safe', messageHash: 'a'.repeat(64), receiptId: 'receipt-safe' }
+  runtime.handlePersonalDesktopMessage(child, { ...base, action: 'list_project', query: '', rootPath: 'C:/secret' })
+  runtime.handlePersonalDesktopMessage(child, { ...base, action: 'list_project', query: '', receiptId: undefined })
+  runtime.handlePersonalDesktopMessage(child, { ...base, action: 'read_project', fileId: 'C:/secret' })
+  assert.equal(calls.length, 0)
+  runtime.handlePersonalDesktopMessage(child, { ...base, action: 'list_project', query: '' })
+  for (let index = 0; index < 20 && sent.length < 1; index++) await new Promise((resolve) => setTimeout(resolve, 5))
+  assert.equal(calls.length, 1)
+  assert.equal(sent[0].command.files[0].relativePath, 'brief.md')
+  assert.equal(sent[0].command.skippedCount, 0)
+  assert.equal(JSON.stringify(sent[0]).includes('C:/secret'), false)
+  runtime.handlePersonalDesktopMessage(child, { ...base, action: 'read_project',
+    fileId: `file-${'a'.repeat(48)}`, startLine: 1 })
+  for (let index = 0; index < 20 && sent.length < 2; index++) await new Promise((resolve) => setTimeout(resolve, 5))
+  assert.equal(calls.length, 2)
+  assert.equal(sent[1].command.snapshotId, `source-${'b'.repeat(48)}`)
+  assert.equal(sent[1].command.text, 'bounded read')
+  assert.equal(JSON.stringify(sent[1]).includes('C:/secret'), false)
+})
