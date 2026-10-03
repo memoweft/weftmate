@@ -790,6 +790,24 @@ class HybridActivity : Activity() {
             val host = requireHost()
             sharedChat.sessions(host)
         }
+        "shared.projects.list" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            val result = api.projects(host)
+            val hostId = api.status(host).getString("hostId")
+            if (closed.get() || accountTransition.get() || epoch != accountEpoch.get() ||
+                owner(secrets.host()) != owner(host)) throw ApiFailure(403, "ACCOUNT_SWITCHED")
+            result.put("source", "host").put("hostId", hostId)
+        }
+        "shared.projects.createSession" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            val result = api.createProjectSession(host, params.getString("projectId"),
+                params.getString("modelProfileId"), params.getString("requestId"))
+            if (closed.get() || accountTransition.get() || epoch != accountEpoch.get() ||
+                owner(secrets.host()) != owner(host)) throw ApiFailure(403, "ACCOUNT_SWITCHED")
+            result.put("source", "host")
+        }
         "shared.sessions.events" -> {
             val host = requireHost()
             val sessionId = params.getString("sessionId")
@@ -850,6 +868,14 @@ class HybridActivity : Activity() {
         "shared.tasks.detail" -> {
             val host = requireHost()
             api.taskDetail(host, params.getString("taskId"))
+        }
+        "shared.sources.detail" -> {
+            val host = requireHost()
+            val epoch = accountEpoch.get()
+            val result = api.sourceDetail(host, params.getString("taskId"), params.getString("snapshotId"))
+            if (closed.get() || accountTransition.get() || epoch != accountEpoch.get() ||
+                owner(secrets.host()) != owner(host)) throw ApiFailure(403, "ACCOUNT_SWITCHED")
+            result
         }
         "shared.tasks.supplement", "shared.tasks.stop", "shared.tasks.resume" -> {
             val host = requireHost()
@@ -1668,6 +1694,11 @@ class HybridActivity : Activity() {
             !fileName.matches(Regex("[^\\p{Cntrl}/\\\\]{1,180}")) ||
             size !in 1..131072 || !sha.matches(Regex("[0-9a-fA-F]{64}")))
             throw ApiFailure(409, "ARTIFACT_UNVERIFIED")
+        val mimeType = when {
+            fileName.endsWith(".md", ignoreCase = true) -> "text/markdown"
+            fileName.endsWith(".txt", ignoreCase = true) -> "text/plain"
+            else -> throw ApiFailure(409, "ARTIFACT_UNVERIFIED")
+        }
         val attempt = synchronized(this) {
             if (pendingArtifactSave != null) throw ApiFailure(409, "ARTIFACT_SAVE_IN_PROGRESS")
             ArtifactSaveAttempt(UUID.randomUUID().toString(), owner(host)!!, accountEpoch.get(),
@@ -1678,7 +1709,7 @@ class HybridActivity : Activity() {
             try {
                 val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
                     addCategory(Intent.CATEGORY_OPENABLE)
-                    type = "text/plain"
+                    type = mimeType
                     putExtra(Intent.EXTRA_TITLE, fileName)
                 }
                 @Suppress("DEPRECATION")

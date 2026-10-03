@@ -9,7 +9,7 @@ import test from 'node:test'
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
 
-test('official ToolRuntime gives the personal-remote scope only the bounded Notepad and document tools', async () => {
+test('official ToolRuntime gives the personal-remote scope only bounded desktop and project tools', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-scope-'))
   try {
     const source = readFileSync(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop.mjs'), 'utf8')
@@ -55,7 +55,8 @@ test('official ToolRuntime gives the personal-remote scope only the bounded Note
     agent.ctx = scoped.ctx
     await scoped.ctx.plugin(preset.default)
     assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name),
-      ['personal_open_notepad', 'personal_save_document'])
+      ['personal_open_notepad', 'personal_save_document',
+        'personal_list_project_files', 'personal_read_project_file'])
     const preStep = (turn: number) => scoped.ctx.waterfall('agent/pre-step', {
       agent, messages: [], turn, step: turn, signal: new AbortController().signal,
     }, async () => ({ kind: 'enter', messages: [] }))
@@ -73,7 +74,8 @@ test('official ToolRuntime gives the personal-remote scope only the bounded Note
     }
     const standard = { ...agent, id: 'standard', session: ctx.sessions.create('standard', { meta: { agentPreset: 'standard' } }) }
     assert.ok(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'pwsh'))
-    for (const name of ['personal_open_notepad', 'personal_save_document']) {
+    for (const name of ['personal_open_notepad', 'personal_save_document',
+      'personal_list_project_files', 'personal_read_project_file']) {
       const guarded = await ctx.get('tools').execute({ name,
         arguments: name === 'personal_open_notepad' ? { appId: 'notepad' } : { fileName: 'note.md', content: 'Hi' },
         agent: standard, callId: `guarded-${name}`, signal: new AbortController().signal })
@@ -99,7 +101,8 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   const fakeTool = (name: string) => tools.defineTool({ name, description: name,
     parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
     execute: async () => ({ ok: true }) })
-  for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document']) {
+  for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
+    'personal_list_project_files', 'personal_read_project_file']) {
     ctx.get('tools').register(fakeTool(name))
   }
   const session = ctx.sessions.create('friend-session', { meta: { agentPreset: 'personal-shared-chat' } })
@@ -110,7 +113,8 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   agent.ctx = scoped.ctx
   await scoped.ctx.plugin(preset.default)
   assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name), [])
-  for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document']) {
+  for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
+    'personal_list_project_files', 'personal_read_project_file']) {
     const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
       callId: `deny-${name.replaceAll('_', '-')}`, signal: new AbortController().signal })
     assert.equal(result.isError, true, `${name} must not execute in a shared-account chat`)

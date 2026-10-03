@@ -20,12 +20,17 @@
     profileDraftAvatar: undefined, profileConflict: false, profileSaving: false, profileOperationGeneration: 0, profileDraftGeneration: 0,
     avatarChecking: false, avatarObjectUrl: null,
     profileFetchGeneration: 0, deviceFetchGeneration: 0, deviceEditing: null, deviceNotice: '', cachedDevices: [] }
+  state.projects = []
+  state.projectCanManage = false
+  state.projectPending = null
+  state.projectFetchGeneration = 0
   const memory = { viewGeneration: 0, entryGeneration: 0, queryGeneration: 0, selectedGeneration: 0, operationGeneration: 0,
     status: null, items: [], revision: null, cursor: null, hasMore: false, query: '', kind: 'cognition',
     selected: null, sources: [], mode: 'detail', drafts: new Map(), activeOperation: null,
     unresolvedMarker: null, cleanupMarker: null, cleanupRetrying: false, receiptNotice: null }
   let phonePreview = null
-  const taskDetail = { taskId: null, generation: 0, selectedArtifactId: null, operation: null, unknown: null,
+  const taskDetail = { taskId: null, generation: 0, selectedArtifactId: null, selectedSourceId: null,
+    operation: null, unknown: null,
     drafts: new Map(), pollTimer: null, pollCount: 0, pollStartedAt: 0 }
 
   function takeSetupGrant() {
@@ -147,6 +152,10 @@
     state.sessions = []
     state.models = []
     state.tasks = []
+    state.projects = []
+    state.projectCanManage = false
+    state.projectPending = null
+    state.projectFetchGeneration++
     state.selectedSessionId = null
     state.afterSeq = -1
     state.historyGeneration++
@@ -158,6 +167,8 @@
     byId('session-list').replaceChildren()
     byId('assistant-title').textContent = '新对话'
     byId('task-list').replaceChildren()
+    byId('projects-list').replaceChildren()
+    byId('project-register-form').hidden = true
     byId('phone-conversations').replaceChildren()
     byId('phone-history').replaceChildren()
     byId('phone-pane').hidden = true
@@ -509,6 +520,76 @@
       if (error.code === 'UNAUTHORIZED') return sessionExpired()
       loading.textContent = state.deviceNotice ? `${state.deviceNotice}但列表暂时无法刷新，请稍后重试。` : '设备记录暂时无法读取。请点击刷新重试。'
       state.deviceNotice = ''
+    }
+  }
+
+  function renderProjects() {
+    const list = byId('projects-list')
+    list.replaceChildren()
+    byId('project-register-form').hidden = !state.projectCanManage
+    if (!state.projects.length) {
+      byId('projects-status').textContent = state.projectCanManage
+        ? '还没有登记项目。选择一个你愿意让这台电脑读取的资料目录。'
+        : '当前账户没有可用项目。请在原电脑账户中登记资料目录。'
+      return
+    }
+    byId('projects-status').textContent = ''
+    for (const project of state.projects) {
+      if (!/^project-[A-Za-z0-9-]{1,128}$/.test(project?.projectId ?? '')) continue
+      const row = element('li', 'project-row')
+      const title = element('div', 'project-row-main')
+      title.append(element('strong', '', project.name || '未命名项目'),
+        element('small', '', project.revoked ? '已撤销 · 历史来源与成果仍可查看'
+          : `可读取 · 修订 ${project.revision}`))
+      row.append(title)
+      if (state.projectCanManage && !project.revoked) {
+        const revoke = element('button', 'button quiet small', '撤销')
+        revoke.type = 'button'
+        revoke.addEventListener('click', () => {
+          if (revoke.dataset.confirm !== 'yes') {
+            revoke.dataset.confirm = 'yes'; revoke.textContent = '确认撤销'; return
+          }
+          const token = accountToken()
+          revoke.disabled = true
+          const requestId = crypto.randomUUID()
+          void accessApi(`/projects/${encodeURIComponent(project.projectId)}/revoke`, {
+            method: 'POST', protectedWrite: true, body: { requestId },
+          }).then(() => { if (accountCurrent(token)) void refreshProjects() }, (error) => {
+            if (!accountCurrent(token)) return
+            revoke.disabled = false
+            revoke.dataset.confirm = ''
+            revoke.textContent = '撤销'
+            byId('projects-status').textContent = error.code === 'NETWORK'
+              ? '撤销结果尚未确认，请刷新项目列表核对。' : '撤销未完成，请刷新后重试。'
+          })
+        })
+        row.append(revoke)
+      }
+      list.append(row)
+    }
+  }
+
+  async function refreshProjects() {
+    const token = accountToken()
+    if (!accountCurrent(token)) return
+    const generation = ++state.projectFetchGeneration
+    byId('projects-status').textContent = '正在读取项目…'
+    try {
+      const payload = await accessApi('/projects')
+      if (!accountCurrent(token) || generation !== state.projectFetchGeneration) return
+      if (!Array.isArray(payload?.projects) || typeof payload.canManage !== 'boolean') throw { code: 'REQUEST_FAILED' }
+      state.projects = payload.projects
+      state.projectCanManage = payload.canManage
+      renderProjects()
+    } catch (error) {
+      if (!accountCurrent(token) || generation !== state.projectFetchGeneration) return
+      state.projects = []
+      state.projectCanManage = false
+      byId('projects-list').replaceChildren()
+      byId('project-register-form').hidden = true
+      byId('projects-status').textContent = error.status === 404
+        ? '当前电脑服务还没有项目目录功能；原有聊天与历史仍可使用。'
+        : error.code === 'NETWORK' ? '电脑暂时不可达，重连后可刷新项目。' : '项目暂时无法读取，请刷新重试。'
     }
   }
 
@@ -1693,12 +1774,17 @@
     taskDetail.generation++
     taskDetail.taskId = null
     taskDetail.selectedArtifactId = null
+    taskDetail.selectedSourceId = null
     taskDetail.operation = null
     const dialog = byId('task-detail-dialog')
     if (dialog.open) dialog.close()
     byId('task-detail-source').textContent = ''
     byId('task-detail-verification').textContent = ''
     byId('task-detail-artifacts').replaceChildren()
+    byId('task-detail-sources').replaceChildren()
+    byId('task-source-preview').hidden = true
+    byId('task-source-preview').textContent = ''
+    byId('task-source-preview-status').textContent = ''
     byId('task-detail-control').replaceChildren()
     byId('task-preview-text').hidden = true
     byId('task-preview-text').textContent = ''
@@ -1886,6 +1972,61 @@
     }
     return section
   }
+  function renderTaskSources(payload) {
+    const list = byId('task-detail-sources')
+    list.replaceChildren()
+    const sources = Array.isArray(payload.sources) ? payload.sources.filter((source) =>
+      /^source-[a-f0-9]{48}$/.test(source?.snapshotId ?? '') &&
+      typeof source.relativePath === 'string' && Number.isSafeInteger(source.lineStart) &&
+      Number.isSafeInteger(source.lineEnd) && /^[a-f0-9]{64}$/.test(source.fileSha256 ?? '')) : []
+    if (!sources.length) {
+      list.append(element('li', 'task-artifact-empty', payload.project
+        ? '尚无已核验的读取来源。摘要必须先读取项目文件。' : '这件事没有项目资料来源。'))
+      return
+    }
+    for (const source of sources) {
+      const item = element('li', 'task-source-item')
+      const title = element('strong', '', source.relativePath)
+      const meta = element('small', '', `第 ${source.lineStart}–${source.lineEnd} 行 · ${formatDate(source.readAt)}${
+        source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`)
+      const view = element('button', 'button secondary small', '查看读取正文')
+      view.type = 'button'
+      view.addEventListener('click', () => { void previewTaskSource(payload.taskId, source) })
+      const technical = element('details', 'task-record-id')
+      technical.append(element('summary', '', '查看文件版本与来源编号'),
+        element('code', '', `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`))
+      item.append(title, meta, view, technical)
+      list.append(item)
+    }
+  }
+
+  async function previewTaskSource(taskId, source) {
+    if (taskDetail.taskId !== taskId) return
+    const generation = taskDetail.generation, identity = state.identityGeneration
+    taskDetail.selectedSourceId = source.snapshotId
+    const status = byId('task-source-preview-status'), preview = byId('task-source-preview')
+    status.textContent = '正在读取这次保存的来源正文…'
+    preview.hidden = true
+    preview.textContent = ''
+    try {
+      const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}/sources/${encodeURIComponent(source.snapshotId)}`)
+      if (!taskDetailCurrent(generation, taskId) || identity !== state.identityGeneration ||
+          taskDetail.selectedSourceId !== source.snapshotId) return
+      const actual = payload?.source
+      if (actual?.snapshotId !== source.snapshotId || actual.fileSha256 !== source.fileSha256 ||
+          actual.lineStart !== source.lineStart || actual.lineEnd !== source.lineEnd ||
+          typeof actual.text !== 'string' || new TextEncoder().encode(actual.text).length > 32 * 1024) {
+        throw { code: 'SOURCE_CHANGED' }
+      }
+      preview.textContent = actual.text
+      preview.hidden = false
+      status.textContent = `${source.relativePath} · 读取时的正文与版本已核对。`
+    } catch (error) {
+      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedSourceId !== source.snapshotId) return
+      status.textContent = error.code === 'NETWORK' ? '连接中断，来源正文尚未确认；请重试。'
+        : error.status === 404 ? '当前账户找不到这份来源。' : '来源无法核对，请刷新任务后重试。'
+    }
+  }
   async function submitTaskControl(taskId, action, text, message) {
     if (taskDetail.taskId !== taskId || taskDetail.operation) return
     const value = typeof text === 'string' ? text.trim() : null
@@ -1937,6 +2078,7 @@
     const generation = ++taskDetail.generation
     const ownerId = state.ownerId, identity = state.identityGeneration
     taskDetail.selectedArtifactId = null
+    taskDetail.selectedSourceId = null
     byId('task-detail-title').textContent = '事情详情'
     byId('task-detail-status').textContent = '正在核对原任务与成果…'
     byId('task-detail-body').hidden = true
@@ -1966,6 +2108,7 @@
       if (followUps) controlSlot.append(followUps)
       const steps = renderTaskSteps(payload)
       if (steps) controlSlot.append(steps)
+      renderTaskSources(payload)
       const list = byId('task-detail-artifacts')
       list.replaceChildren()
       for (const artifact of artifacts) {
@@ -2808,6 +2951,42 @@
     }
   })
   byId('devices-refresh').addEventListener('click', refreshDevices)
+  byId('projects-refresh').addEventListener('click', () => { void refreshProjects() })
+  byId('project-register-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    if (!state.projectCanManage) return
+    const token = accountToken()
+    const name = byId('project-name').value.trim().normalize('NFC')
+    const rootPath = byId('project-root').value.trim()
+    const status = byId('project-register-status')
+    if (!name || !rootPath) { status.textContent = '请填写项目名称和电脑资料目录。'; return }
+    const pending = state.projectPending?.name === name && state.projectPending?.rootPath === rootPath
+      ? state.projectPending : { name, rootPath, requestId: crypto.randomUUID() }
+    state.projectPending = pending
+    const button = byId('project-register-form').querySelector('button[type="submit"]')
+    button.disabled = true
+    status.textContent = '正在登记并核对目录…'
+    try {
+      const payload = await accessApi('/projects', { method: 'POST', protectedWrite: true,
+        body: { requestId: pending.requestId, name, rootPath } })
+      if (!accountCurrent(token) || state.projectPending !== pending) return
+      if (!payload?.project?.projectId) throw { code: 'REQUEST_FAILED' }
+      state.projectPending = null
+      byId('project-name').value = ''
+      byId('project-root').value = ''
+      status.textContent = '项目已登记。手机同账户现在可以选择它。'
+      void refreshProjects()
+    } catch (error) {
+      if (!accountCurrent(token) || state.projectPending !== pending) return
+      if (error.code !== 'NETWORK') state.projectPending = null
+      status.textContent = error.code === 'NETWORK'
+        ? '送达结果不明。草稿与请求编号已保留；可用原信息重试或先刷新项目核对。'
+        : error.code === 'PROJECT_UNSAFE_PATH' || error.code === 'PROJECT_ROOT_CHANGED'
+          ? '目录无法安全读取，请选择普通本地资料目录后重试。'
+          : error.code === 'FORBIDDEN' ? '只有原电脑账户可以登记目录。'
+            : '登记未完成，请检查目录并重试。'
+    } finally { if (accountCurrent(token)) button.disabled = false }
+  })
   byId('account-back').addEventListener('click', () => { resetProfileDraft(); state.deviceEditing = null; void enterAssistant() })
   function openAccount() {
     stopAssistantRefresh(); closeRail(); show('account')
@@ -2815,6 +2994,7 @@
     resetProfileDraft()
     void refreshProfile()
     void refreshDevices()
+    void refreshProjects()
   }
   byId('rail-account').addEventListener('click', openAccount)
   byId('show-account').addEventListener('click', openAccount)

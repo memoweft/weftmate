@@ -15,6 +15,7 @@ import { canonicalCompletion, projectCompletion } from './model-completion.mjs';
 import { createMobileUiPublisher } from './mobile-ui-release.mjs';
 import { handlePersonalMemoryHttp } from '../personal-memory/http.mjs';
 import { canonicalArtifact, createPersonalArtifactStore, validArtifactFileName } from '../personal-artifacts/index.mjs';
+import { inspectProjectRoot, listProjectFiles, readProjectFile } from '../personal-projects/index.mjs';
 
 const VERSION = 3;
 const SINGLE_ACCOUNT_VERSION = 2;
@@ -30,6 +31,9 @@ const MAX_COMMANDS = 5_000;
 const MAX_ACTIVE_PASSWORD_DEVICES = 32;
 const MAX_ACCOUNTS = 64;
 const MAX_UNRECONCILED_TEXT_BYTES = 8 * 1024 * 1024;
+const MAX_PROJECTS = 64;
+const MAX_PROJECT_FILES = 2_000;
+const MAX_SOURCE_SNAPSHOTS = 5_000;
 const DISPATCH_TIMEOUT_MS = 30_000;
 const CLOSE_TIMEOUT_MS = 3_000;
 const MODEL_TIMEOUT_MS = 300_000;
@@ -62,6 +66,11 @@ const PUBLIC_CODES = new Set([
   'ATTACHMENT_NOT_FOUND',
   'ARTIFACT_UNVERIFIED',
   'TASK_NOT_READY',
+  'PROJECT_WINDOWS_REQUIRED', 'PROJECT_UNSAFE_PATH', 'PROJECT_ROOT_CHANGED',
+  'PROJECT_FILE_UNAVAILABLE', 'PROJECT_FILE_CHANGED', 'PROJECT_INVALID_UTF8',
+  'PROJECT_LINE_OUT_OF_RANGE', 'PROJECT_LINE_TOO_LONG', 'PROJECT_READER_TIMEOUT',
+  'PROJECT_READER_INVALID', 'PROJECT_REVOKED', 'PROJECT_NOT_SELECTED',
+  'PROJECT_SOURCE_UNVERIFIED', 'PROJECT_MODEL_CHANGED',
   'IMAGE_REJECTED',
 ]);
 const LEGACY_SCOPES = new Set(['sessions:read', 'commands:write']);
@@ -71,6 +80,9 @@ const INTERNAL_ARTIFACT_KIND = 'desktop.write_artifact';
 const IMAGE_REASONS = new Set(['MODEL_DOES_NOT_SUPPORT_IMAGES', 'INVALID_IMAGE_BASE64',
   'TOO_MANY_IMAGES', 'IMAGES_TOO_LARGE', 'INVALID_IMAGE', 'IMAGE_TYPE_MISMATCH',
   'IMAGE_TOO_LARGE', 'IMAGE_TOO_MANY_PIXELS']);
+const PROJECT_NAME = /^[\p{L}\p{N}][\p{L}\p{N} ._()\-]{0,79}$/u;
+const FILE_ID = /^file-[a-f0-9]{48}$/;
+const SNAPSHOT_ID = /^source-[a-f0-9]{48}$/;
 
 function failure(code, status = 400) {
   const error = new Error(code);
@@ -120,6 +132,24 @@ function validTime(value) {
     Number.isFinite(Date.parse(value));
 }
 
+function validProjectName(value) {
+  return typeof value === 'string' && PROJECT_NAME.test(value) && value.trim() === value &&
+    value.normalize('NFC') === value && !value.includes('..');
+}
+
+function publicProject(project) {
+  return { projectId: project.projectId, name: project.name, revision: project.revision,
+    revoked: project.revoked, createdAt: project.createdAt,
+    ...(project.revokedAt ? { revokedAt: project.revokedAt } : {}) };
+}
+
+function publicSource(source) {
+  return { snapshotId: source.snapshotId, relativePath: source.relativePath,
+    lineStart: source.lineStart, lineEnd: source.lineEnd, totalLines: source.totalLines,
+    fileSha256: source.fileSha256, readAt: source.readAt, hasMore: source.hasMore,
+    projectId: source.projectId, projectRevision: source.projectRevision };
+}
+
 /** A bounded permission hint for the one fixed desktop app, not language understanding. */
 export function explicitNotepadOpenIntent(value) {
   if (typeof value !== 'string' || !value.trim()) return false;
@@ -144,20 +174,25 @@ export function explicitNotepadOpenIntent(value) {
 
 function canonicalCommand(value, hostId, internal = false) {
   exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'appId', 'attachments',
-    ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction'] : [])],
+    ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
+      'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds'] : [])],
     ['requestId', 'kind', 'targetDeviceId']);
   if (typeof value.requestId !== 'string' || !REQUEST_ID.test(value.requestId) ||
       !(KINDS.has(value.kind) || (internal && value.kind === INTERNAL_ARTIFACT_KIND))) {
     throw failure('INVALID_REQUEST');
   }
   if (value.targetDeviceId !== hostId) throw failure('TARGET_UNAVAILABLE', 409);
+  if ((value.projectId === undefined) !== (value.projectRevision === undefined) ||
+      (value.projectId !== undefined && (!internal || !validId(value.projectId) ||
+        !Number.isSafeInteger(value.projectRevision) || value.projectRevision < 1))) throw failure('INVALID_REQUEST');
   if (value.kind === 'session.create') {
-    exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId'],
+    exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId',
+      ...(internal ? ['projectId', 'projectRevision'] : [])],
       ['requestId', 'kind', 'targetDeviceId', 'modelProfileId']);
     modelProfileId(value.modelProfileId);
   } else if (value.kind === 'session.message') {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text', 'mode', 'attachments',
-      ...(internal ? ['rootTaskId', 'taskAction'] : [])],
+      ...(internal ? ['rootTaskId', 'taskAction', 'projectId', 'projectRevision'] : [])],
       ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text']);
     id(value.sessionId);
     if (value.rootTaskId !== undefined && (!internal || !validId(value.rootTaskId) ||
@@ -179,20 +214,27 @@ function canonicalCommand(value, hostId, internal = false) {
     id(value.sessionId);
   } else if (value.kind === INTERNAL_ARTIFACT_KIND) {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'taskId', 'artifactId',
-      'fileName', 'size', 'sha256'], ['requestId', 'kind', 'targetDeviceId', 'sessionId',
+      'fileName', 'size', 'sha256', 'sourceReceiptId', 'sourceSnapshotIds'], ['requestId', 'kind', 'targetDeviceId', 'sessionId',
       'taskId', 'artifactId', 'fileName', 'size', 'sha256']);
     id(value.sessionId); id(value.taskId); id(value.artifactId);
     if (!validArtifactFileName(value.fileName) || !Number.isSafeInteger(value.size) ||
         value.size < 1 || value.size > 128 * 1024 || !/^[a-f0-9]{64}$/.test(value.sha256)) {
       throw failure('INVALID_COMMAND');
     }
+    if ((value.sourceReceiptId === undefined) !== (value.sourceSnapshotIds === undefined) ||
+        (value.sourceReceiptId !== undefined && (!validId(value.sourceReceiptId) ||
+          !Array.isArray(value.sourceSnapshotIds) || value.sourceSnapshotIds.length < 1 ||
+          value.sourceSnapshotIds.length > 16 ||
+          new Set(value.sourceSnapshotIds).size !== value.sourceSnapshotIds.length ||
+          value.sourceSnapshotIds.some((sourceId) => !SNAPSHOT_ID.test(sourceId))))) throw failure('INVALID_COMMAND');
   } else {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'appId'],
       ['requestId', 'kind', 'targetDeviceId', 'appId']);
     if (value.appId !== 'notepad') throw failure('INVALID_COMMAND');
   }
   return Object.fromEntries(['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'appId', 'attachments',
-    'taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction']
+    'taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
+    'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds']
     .filter((key) => Object.hasOwn(value, key) || (key === 'mode' && value.kind === 'session.message'))
     .map((key) => [key, key === 'mode' ? (value.mode ?? 'queue')
       : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment) : value[key]]));
@@ -278,9 +320,72 @@ function validateSingleStore(store) {
         (session.origin !== undefined && !['personal-remote', 'shared-chat', 'legacy-local', 'local-attached'].includes(session.origin)) ||
         (session.modelProfileId !== undefined && (typeof session.modelProfileId !== 'string' ||
           !MODEL_PROFILE_ID.test(session.modelProfileId))) ||
-        (session.origin === 'shared-chat' && !MODEL_PROFILE_ID.test(session.modelProfileId ?? ''))) {
+        (session.origin === 'shared-chat' && !MODEL_PROFILE_ID.test(session.modelProfileId ?? '')) ||
+        ((session.projectId === undefined) !== (session.projectRevision === undefined)) ||
+        (session.projectId !== undefined && (!validId(session.projectId) ||
+          !Number.isSafeInteger(session.projectRevision) || session.projectRevision < 1 ||
+          session.origin !== 'personal-remote' || !MODEL_PROFILE_ID.test(session.modelProfileId ?? '') ||
+          !Object.hasOwn(store.projects ?? {}, session.projectId)))) {
       throw failure('STORE_CORRUPT', 500);
     }
+  }
+  if (store.projects !== undefined && (!plainObject(store.projects) ||
+      Object.keys(store.projects).length > MAX_PROJECTS)) throw failure('STORE_CORRUPT', 500);
+  for (const [projectId, project] of Object.entries(store.projects ?? {})) {
+    if (!validId(projectId) || !plainObject(project) || project.projectId !== projectId ||
+        project.ownerId !== store.ownerId || !validProjectName(project.name) ||
+        typeof project.rootPath !== 'string' || !/^[A-Za-z]:\\/.test(project.rootPath) ||
+        typeof project.rootFinalPath !== 'string' || !/^\\\\\?\\[A-Za-z]:\\/.test(project.rootFinalPath) ||
+        !/^[A-F0-9]{8}:[A-F0-9]{16}$/.test(project.rootIdentity ?? '') ||
+        !/^[a-f0-9]{64}$/.test(project.fileSecret ?? '') ||
+        !Number.isSafeInteger(project.revision) || project.revision < 1 ||
+        typeof project.revoked !== 'boolean' || !validTime(project.createdAt) ||
+        !validTime(project.updatedAt) || (project.revokedAt !== undefined && !validTime(project.revokedAt)) ||
+        !plainObject(project.files) || Object.keys(project.files).length > MAX_PROJECT_FILES ||
+        Object.entries(project.files).some(([fileId, file]) => !FILE_ID.test(fileId) ||
+          !plainObject(file) || file.fileId !== fileId ||
+          typeof file.relativePath !== 'string' || file.relativePath.length > 1024 ||
+          !Number.isSafeInteger(file.size) || file.size < 0 || file.size > 8 * 1024 * 1024 ||
+          !/^[A-F0-9]{8}:[A-F0-9]{16}$/.test(file.identity ?? '') ||
+          !/^\d{1,20}$/.test(file.lastWriteTime ?? '') || !validTime(file.listedAt))) {
+      throw failure('STORE_CORRUPT', 500);
+    }
+  }
+  if (store.projectOperations !== undefined && (!plainObject(store.projectOperations) ||
+      Object.keys(store.projectOperations).length > 500)) throw failure('STORE_CORRUPT', 500);
+  for (const [requestId, operation] of Object.entries(store.projectOperations ?? {})) {
+    if (!REQUEST_ID.test(requestId) || !plainObject(operation) ||
+        !['register', 'revoke'].includes(operation.kind) || !validId(operation.projectId) ||
+        !Object.hasOwn(store.projects ?? {}, operation.projectId) ||
+        !/^[a-f0-9]{64}$/.test(operation.payloadHash ?? '') || !validTime(operation.at)) {
+      throw failure('STORE_CORRUPT', 500);
+    }
+  }
+  if (store.projectSources !== undefined && (!plainObject(store.projectSources) ||
+      Object.keys(store.projectSources).length > MAX_SOURCE_SNAPSHOTS)) throw failure('STORE_CORRUPT', 500);
+  for (const [snapshotId, source] of Object.entries(store.projectSources ?? {})) {
+    if (!SNAPSHOT_ID.test(snapshotId) || !plainObject(source) || source.snapshotId !== snapshotId ||
+        source.ownerId !== store.ownerId || !validId(source.projectId) ||
+        !Object.hasOwn(store.projects ?? {}, source.projectId) ||
+        !Number.isSafeInteger(source.projectRevision) || source.projectRevision < 1 ||
+        !validId(source.taskId) || !validId(source.sourceCommandId) ||
+        store.commands[source.sourceCommandId]?.kind !== 'session.message' ||
+        (store.commands[source.sourceCommandId].rootTaskId ?? source.sourceCommandId) !== source.taskId ||
+        !validId(source.sessionId) || store.commands[source.sourceCommandId].sessionId !== source.sessionId ||
+        store.sessions[source.sessionId]?.projectId !== source.projectId ||
+        store.sessions[source.sessionId]?.projectRevision !== source.projectRevision ||
+        store.commands[source.sourceCommandId].dshTurn !== source.turn ||
+        !Number.isSafeInteger(source.turn) || source.turn < 0 ||
+        !validId(source.sourceReceiptId) || store.commands[source.sourceCommandId].receiptId !== source.sourceReceiptId ||
+        typeof source.readCallId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(source.readCallId) ||
+        !FILE_ID.test(source.fileId ?? '') || typeof source.relativePath !== 'string' ||
+        !Number.isSafeInteger(source.lineStart) || source.lineStart < 1 ||
+        !Number.isSafeInteger(source.lineEnd) || source.lineEnd < source.lineStart ||
+        !Number.isSafeInteger(source.totalLines) || source.totalLines < source.lineEnd ||
+        !/^[a-f0-9]{64}$/.test(source.fileSha256 ?? '') ||
+        !Number.isSafeInteger(source.textSize) || source.textSize < 0 || source.textSize > 32 * 1024 ||
+        !/^[a-f0-9]{64}$/.test(source.textSha256 ?? '') || !validTime(source.readAt) ||
+        typeof source.hasMore !== 'boolean') throw failure('STORE_CORRUPT', 500);
   }
   const requestIds = new Set();
   for (const [commandId, command] of Object.entries(store.commands)) {
@@ -300,10 +405,25 @@ function validateSingleStore(store) {
           digest(JSON.stringify(payload)) !== command.payloadHash ||
           command.kind !== payload.kind || command.requestId !== payload.requestId ||
           command.targetDeviceId !== store.hostId ||
+           (payload.projectId !== undefined && (!['session.create', 'session.message'].includes(command.kind) ||
+             !Object.hasOwn(store.projects ?? {}, payload.projectId) ||
+             (command.kind === 'session.message' &&
+               (store.sessions[command.sessionId]?.projectId !== payload.projectId ||
+                 store.sessions[command.sessionId]?.projectRevision !== payload.projectRevision)))) ||
+           (command.kind === 'session.message' &&
+             (payload.projectId ?? null) !== (store.sessions[command.sessionId]?.projectId ?? null)) ||
           (command.kind === INTERNAL_ARTIFACT_KIND &&
             (command.sessionId !== payload.sessionId || command.taskId !== payload.taskId ||
               command.artifactId !== payload.artifactId || command.fileName !== payload.fileName ||
               command.size !== payload.size || command.sha256 !== payload.sha256 ||
+               JSON.stringify(command.sourceSnapshotIds ?? null) !== JSON.stringify(payload.sourceSnapshotIds ?? null) ||
+               (command.sourceReceiptId ?? null) !== (payload.sourceReceiptId ?? null) ||
+               (store.sessions[command.sessionId]?.projectId !== undefined &&
+                 (!payload.sourceSnapshotIds?.length ||
+                   store.commands[command.toolSource?.sourceCommandId]?.receiptId !== payload.sourceReceiptId ||
+                   payload.sourceSnapshotIds.some((sourceId) =>
+                     store.projectSources?.[sourceId]?.taskId !== command.taskId ||
+                     store.projectSources?.[sourceId]?.sourceReceiptId !== payload.sourceReceiptId))) ||
               command.taskId !== (store.commands[command.toolSource?.sourceCommandId]?.rootTaskId ??
                 command.toolSource?.sourceCommandId) ||
               !['dispatching', 'observed', 'uncertain', 'rejected'].includes(command.state) ||
@@ -328,13 +448,17 @@ function validateSingleStore(store) {
             ['accepted_by_dsh', 'observed'].includes(command.state) &&
             (!Object.hasOwn(store.sessions, command.sessionId) ||
               (store.sessions[command.sessionId].modelProfileId !== undefined &&
-                store.sessions[command.sessionId].modelProfileId !== payload.modelProfileId))) ||
+                 store.sessions[command.sessionId].modelProfileId !== payload.modelProfileId) ||
+               (store.sessions[command.sessionId].projectId ?? null) !== (payload.projectId ?? null) ||
+               (store.sessions[command.sessionId].projectRevision ?? null) !== (payload.projectRevision ?? null))) ||
           (command.rootTaskId !== undefined && (command.kind !== 'session.message' ||
             command.rootTaskId !== payload.rootTaskId || command.taskAction !== payload.taskAction ||
             command.rootTaskId === commandId ||
             store.commands[command.rootTaskId]?.kind !== 'session.message' ||
             store.commands[command.rootTaskId]?.rootTaskId !== undefined ||
-            store.commands[command.rootTaskId]?.sessionId !== command.sessionId)) ||
+             store.commands[command.rootTaskId]?.sessionId !== command.sessionId ||
+             (store.commands[command.rootTaskId]?.payload.projectId ?? null) !== (payload.projectId ?? null) ||
+             (store.commands[command.rootTaskId]?.payload.projectRevision ?? null) !== (payload.projectRevision ?? null))) ||
           (command.taskAction !== undefined && command.rootTaskId === undefined) ||
           (command.taskControl !== undefined && (command.kind !== 'session.message' ||
             command.rootTaskId !== undefined || !plainObject(command.taskControl) ||
@@ -506,6 +630,11 @@ function publicCommand(command) {
   if (command.fileName) result.fileName = command.fileName;
   if (command.size !== undefined) result.size = command.size;
   if (command.sha256) result.sha256 = command.sha256;
+  if (command.payload?.projectId) {
+    result.projectId = command.payload.projectId;
+    result.projectRevision = command.payload.projectRevision;
+  }
+  if (command.sourceSnapshotIds) result.sourceSnapshotIds = [...command.sourceSnapshotIds];
   if (command.receiptId) result.receiptId = command.receiptId;
   if (command.verification) result.verification = { ...command.verification };
   if (command.errorCode) result.errorCode = command.errorCode;
@@ -600,7 +729,7 @@ async function writeStreamPart(response, part) {
  */
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, sharedProfileIsFormal = () => false, memoryManager = null,
-  allowedOrigins = [], trustedProxy = false, clock = Date.now }) {
+  allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -614,6 +743,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         !path.isAbsolute(androidPackagePath) || path.basename(androidPackagePath).toLowerCase() !== 'android-candidate.apk')) ||
       (mobileUiDir !== null && (typeof mobileUiDir !== 'string' || !path.isAbsolute(mobileUiDir))) ||
       !Array.isArray(allowedOrigins) || typeof trustedProxy !== 'boolean' ||
+      (verifyToolResult !== null && typeof verifyToolResult !== 'function') ||
       (allowedOrigins.length > 0 && !trustedProxy) || allowedOrigins.some((value) => {
         try { return new URL(value).origin !== value || !value.startsWith('https://'); }
         catch { return true; }
@@ -790,6 +920,49 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return Object.values(account.commands).filter((item) => item.rootTaskId === taskId);
   }
 
+  function projectGrant(account, sessionId) {
+    const session = account.sessions[sessionId];
+    if (session?.origin !== 'personal-remote' || !session.projectId) throw failure('PROJECT_NOT_SELECTED', 409);
+    const project = account.projects?.[session.projectId];
+    if (!project || project.revoked || project.revision !== session.projectRevision) {
+      throw failure('PROJECT_REVOKED', 409);
+    }
+    return { session, project };
+  }
+
+  function projectToolSource(account, { sessionId, turn, messageHash, receiptId }) {
+    const eligible = Object.values(account.commands).filter((item) => {
+      if (item.kind !== 'session.message' || item.sessionId !== sessionId ||
+          item.state !== 'accepted_by_dsh' || item.receiptId !== receiptId ||
+          typeof item.payload.text !== 'string' || digest(item.payload.text) !== messageHash ||
+          (item.dshTurn !== undefined && item.dshTurn !== turn) ||
+          !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
+      const device = account.devices[item.sourceDeviceId];
+      return device?.authKind === 'password' && !device.revoked &&
+        device.authEpoch === item.sourceAuthEpoch && Date.parse(device.expiresAt) > timestamp();
+    });
+    if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+    const source = eligible[0];
+    const rootTaskId = source.rootTaskId ?? source.commandId;
+    const root = account.commands[rootTaskId];
+    const session = account.sessions[sessionId];
+    if (root?.taskControl?.state === 'stop_requested') throw failure('TASK_NOT_READY', 409);
+    if (root?.payload.projectId !== session?.projectId ||
+        root?.payload.projectRevision !== session?.projectRevision ||
+        source.payload.projectId !== session?.projectId ||
+        source.payload.projectRevision !== session?.projectRevision) throw failure('PROJECT_REVOKED', 409);
+    return { source, rootTaskId };
+  }
+
+  async function checkedProjectSession(ownerId, sessionId) {
+    const account = accountState(ownerId);
+    const { session, project } = projectGrant(account, sessionId);
+    const described = await callBackend(() => backend.describeSession(sessionId, ownerId));
+    if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' ||
+        described.modelProfileId !== session.modelProfileId) throw failure('PROJECT_MODEL_CHANGED', 409);
+    return { session, project };
+  }
+
   function taskHasUnknownEffects(account, taskId) {
     const messageIds = new Set([taskId, ...taskChildren(account, taskId).map((item) => item.commandId)]);
     return Object.values(account.commands).some((item) =>
@@ -940,6 +1113,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const messageIds = new Set([taskId, ...children.map((item) => item.commandId)]);
     const artifacts = Object.values(account.commands).filter((item) =>
       item.kind === INTERNAL_ARTIFACT_KIND && item.taskId === taskId).map(publicCommand);
+    const citedIds = new Set(artifacts.filter((item) => item.state === 'observed')
+      .flatMap((item) => item.sourceSnapshotIds ?? []));
+    const sources = Object.values(account.projectSources ?? {}).filter((item) => item.taskId === taskId)
+      .map((item) => ({ ...publicSource(item), cited: citedIds.has(item.snapshotId) }));
+    const projectRecord = source.payload.projectId ? account.projects?.[source.payload.projectId] : null;
     const steps = Object.values(account.commands).filter((item) =>
       item.kind === 'desktop.open_app' && item.toolSource &&
       (item.taskId === taskId || messageIds.has(item.toolSource.sourceCommandId))).map(publicCommand);
@@ -948,7 +1126,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       ? 'uncertain' : storedState;
     const evidence = state === 'stop_requested' ? await taskStopEvidence(account, taskId) : null;
     return { taskId, sessionId: source.sessionId, sourceText: source.payload.text,
-      source: publicCommand(source), artifacts, steps,
+      source: publicCommand(source), artifacts, steps, sources,
+      ...(projectRecord ? { project: publicProject(projectRecord) } : {}),
       supplements: children.filter((item) => item.taskAction === 'supplement').map(publicCommand),
       resumes: children.filter((item) => item.taskAction === 'resume').map(publicCommand),
       control: { state, updatedAt: source.taskControl?.updatedAt ?? source.updatedAt,
@@ -1488,6 +1667,30 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }));
         return;
       }
+      if (pending.payload.projectId) {
+        const project = accountState(ownerId).projects?.[pending.payload.projectId];
+        const session = pending.kind === 'session.message'
+          ? accountState(ownerId).sessions[pending.sessionId] : null;
+        let modelMatches = true;
+        if (session) {
+          try {
+            const described = await callBackend(() => backend.describeSession(pending.sessionId, ownerId));
+            modelMatches = described?.sessionId === pending.sessionId &&
+              described.agentPreset === 'personal-remote' &&
+              described.modelProfileId === session.modelProfileId;
+          } catch { modelMatches = false; }
+        }
+        if (!project || project.revoked || project.revision !== pending.payload.projectRevision ||
+            !modelMatches) {
+          await serial(() => mutate(ownerId, (next) => {
+            if (next.commands[commandId]?.state !== 'pending') return;
+            next.commands[commandId].state = 'rejected';
+            next.commands[commandId].errorCode = !modelMatches ? 'PROJECT_MODEL_CHANGED' : 'PROJECT_REVOKED';
+            next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
+          }));
+          return;
+        }
+      }
       if (accountState(ownerId).devices[pending.sourceDeviceId]?.revoked ||
           (pending.sourceAuthEpoch !== undefined &&
             accountState(ownerId).devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch) ||
@@ -1523,6 +1726,15 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
         const command = accountState(ownerId).commands[commandId];
         if (!command || command.state !== 'pending') return;
+        if (command.payload.projectId && (accountState(ownerId).projects?.[command.payload.projectId]?.revoked ||
+            accountState(ownerId).projects?.[command.payload.projectId]?.revision !== command.payload.projectRevision)) {
+          await mutate(ownerId, (next) => {
+            next.commands[commandId].state = 'rejected';
+            next.commands[commandId].errorCode = 'PROJECT_REVOKED';
+            next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
+          });
+          return;
+        }
         if (command.toolSource) {
           const source = accountState(ownerId).commands[command.toolSource.sourceCommandId];
           const root = accountState(ownerId).commands[source?.rootTaskId ?? source?.commandId];
@@ -1624,7 +1836,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             next.sessions[snapshot.sessionId] = { ownerId: next.ownerId, attachedAt: new Date().toISOString(),
               origin: next.devices[snapshot.sourceDeviceId]?.authKind !== 'password'
                 ? 'legacy-local' : hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
-              modelProfileId: snapshot.payload.modelProfileId };
+              modelProfileId: snapshot.payload.modelProfileId,
+              ...(snapshot.payload.projectId ? { projectId: snapshot.payload.projectId,
+                projectRevision: snapshot.payload.projectRevision } : {}) };
           }
           if (snapshot.kind === 'desktop.open_app') command.verification = result?.observed === true
             ? { status: 'observed', method: 'visible_window', observedAt: new Date().toISOString(),
@@ -2023,6 +2237,89 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         return json(response, 200, { models: modelProjection(await callBackend(() => backend.listModels({ ownerId })))
           .filter((item) => modelVisible(ownerId, item.id)) });
       }
+      if (request.method === 'GET' && pathname === '/personal/v1/projects') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = authenticate(request, 'sessions:read');
+        return json(response, 200, { projects: Object.values(state.projects ?? {}).map(publicProject)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          canManage: hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
+      }
+      if (request.method === 'POST' && pathname === '/personal/v1/projects') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = authenticate(request, 'account:manage');
+        if (!hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
+        const body = await readJson(request);
+        exactKeys(body, ['requestId', 'name', 'rootPath'], ['requestId', 'name', 'rootPath']);
+        if (!REQUEST_ID.test(body.requestId ?? '') || !validProjectName(body.name)) throw failure('INVALID_REQUEST');
+        const hash = digest(JSON.stringify({ name: body.name, rootPath: body.rootPath }));
+        const prior = state.projectOperations?.[body.requestId];
+        if (prior) {
+          if (prior.kind !== 'register' || prior.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
+          return json(response, 200, { project: publicProject(state.projects[prior.projectId]) });
+        }
+        const inspected = await inspectProjectRoot(body.rootPath);
+        const project = await serial(() => mutate(ownerId, (next) => {
+          const latest = authenticate(request, 'account:manage');
+          if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId || !hostOwner(ownerId)) {
+            throw failure('UNAUTHORIZED', 401);
+          }
+          next.projects ??= {}; next.projectOperations ??= {};
+          const existing = next.projectOperations[body.requestId];
+          if (existing) {
+            if (existing.kind !== 'register' || existing.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
+            return publicProject(next.projects[existing.projectId]);
+          }
+          if (Object.keys(next.projects).length >= MAX_PROJECTS || Object.keys(next.projectOperations).length >= 500 ||
+              Object.values(next.commands).some((command) => command.requestId === body.requestId)) {
+            throw failure('CAPACITY_LIMIT', 429);
+          }
+          const projectId = `project-${randomUUID()}`;
+          const now = new Date(timestamp()).toISOString();
+          next.projects[projectId] = { projectId, ownerId, name: body.name, ...inspected,
+            fileSecret: randomBytes(32).toString('hex'), revision: 1, revoked: false,
+            createdAt: now, updatedAt: now, files: {} };
+          next.projectOperations[body.requestId] = { kind: 'register', projectId, payloadHash: hash, at: now };
+          return publicProject(next.projects[projectId]);
+        }));
+        return json(response, 201, { project });
+      }
+      const projectRevokeMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)\/revoke$/.exec(pathname);
+      if (request.method === 'POST' && projectRevokeMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = authenticate(request, 'account:manage');
+        if (!hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
+        const projectId = id(projectRevokeMatch[1]);
+        const body = await readJson(request);
+        exactKeys(body, ['requestId'], ['requestId']);
+        if (!REQUEST_ID.test(body.requestId ?? '')) throw failure('INVALID_REQUEST');
+        const project = await serial(() => mutate(ownerId, (next) => {
+          const latest = authenticate(request, 'account:manage');
+          if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId || !hostOwner(ownerId)) {
+            throw failure('UNAUTHORIZED', 401);
+          }
+          const found = next.projects?.[projectId];
+          if (!found) throw failure('NOT_FOUND', 404);
+          next.projectOperations ??= {};
+          const hash = digest(projectId);
+          const prior = next.projectOperations[body.requestId];
+          if (prior) {
+            if (prior.kind !== 'revoke' || prior.projectId !== projectId || prior.payloadHash !== hash) {
+              throw failure('REQUEST_CONFLICT', 409);
+            }
+            return publicProject(found);
+          }
+          if (found.revoked) throw failure('PROJECT_REVOKED', 409);
+          if (Object.keys(next.projectOperations).length >= 500 ||
+              Object.values(next.commands).some((command) => command.requestId === body.requestId)) {
+            throw failure('CAPACITY_LIMIT', 429);
+          }
+          const now = new Date(timestamp()).toISOString();
+          found.revoked = true; found.revision++; found.revokedAt = now; found.updatedAt = now;
+          next.projectOperations[body.requestId] = { kind: 'revoke', projectId, payloadHash: hash, at: now };
+          return publicProject(found);
+        }));
+        return json(response, 200, { project });
+      }
       const modelMatch = /^\/personal\/v1\/models\/([A-Za-z0-9._-]+)\/(verify|chat\/completions)$/.exec(pathname);
       if (request.method === 'POST' && modelMatch) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -2102,8 +2399,18 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
               sessionId,
               title: bounded(described.title, 256) ?? '',
               running: described.running === true,
+              ...(state.sessions[sessionId].projectId ? {
+                projectId: state.sessions[sessionId].projectId,
+                projectRevision: state.sessions[sessionId].projectRevision,
+                projectName: state.projects?.[state.sessions[sessionId].projectId]?.name ?? '已登记项目',
+                projectRevoked: state.projects?.[state.sessions[sessionId].projectId]?.revoked === true,
+                modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
               sendAvailable: (state.sessions[sessionId].origin === 'personal-remote' &&
-                described.agentPreset === 'personal-remote') ||
+                described.agentPreset === 'personal-remote' &&
+                (!state.sessions[sessionId].projectId ||
+                  (state.projects?.[state.sessions[sessionId].projectId]?.revoked === false &&
+                    state.projects[state.sessions[sessionId].projectId].revision === state.sessions[sessionId].projectRevision &&
+                    described.modelProfileId === state.sessions[sessionId].modelProfileId))) ||
                 (state.sessions[sessionId].origin === 'shared-chat' &&
                 described.agentPreset === 'personal-shared-chat' &&
                 modelVisible(ownerId, state.sessions[sessionId].modelProfileId)),
@@ -2173,7 +2480,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         await driveTaskStop(ownerId, taskId);
         return json(response, 200, await taskDetail(accountState(ownerId), taskId));
       }
+      const taskSourceMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/sources\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      if (request.method === 'GET' && taskSourceMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const taskId = id(taskSourceMatch[1]), snapshotId = id(taskSourceMatch[2]);
+        taskSource(state, taskId);
+        const source = state.projectSources?.[snapshotId];
+        if (!source || source.taskId !== taskId || source.ownerId !== ownerId) throw failure('NOT_FOUND', 404);
+        const bytes = await artifactStore.inspect(ownerId, taskId, snapshotId,
+          { size: source.textSize, sha256: source.textSha256 });
+        const current = authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return json(response, 200, { source: { ...publicSource(source), text: bytes.toString('utf8') } });
+      }
       const taskActionMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/(supplements|stop|resume)$/.exec(pathname);
+      const projectSessionMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)\/sessions$/.exec(pathname);
       if (request.method === 'POST' && taskActionMatch?.[2] === 'stop') {
         if (url.search) throw failure('INVALID_REQUEST');
         const taskId = id(taskActionMatch[1]);
@@ -2273,19 +2594,35 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         return json(response, 200, { command: publicCommand(command) });
       }
       if (request.method === 'POST' && (pathname === '/personal/v1/commands' ||
-          (taskActionMatch && taskActionMatch[2] !== 'stop'))) {
+          (taskActionMatch && taskActionMatch[2] !== 'stop') || projectSessionMatch)) {
         if (url.search) throw failure('INVALID_REQUEST');
         const taskAction = taskActionMatch?.[2] === 'supplements' ? 'supplement'
           : taskActionMatch?.[2] === 'resume' ? 'resume' : null;
         const rootTaskId = taskAction ? id(taskActionMatch[1]) : null;
         const body = await readJson(request);
         if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
+        if (projectSessionMatch) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         const rootSource = taskAction ? taskSource(state, rootTaskId) : null;
-        const payload = canonicalCommand(taskAction ? {
+        const requestedProjectId = projectSessionMatch ? id(projectSessionMatch[1]) : null;
+        const requestedProject = requestedProjectId ? state.projects?.[requestedProjectId] : null;
+        if (requestedProjectId && (!hostOwner(ownerId) || !requestedProject)) throw failure('NOT_FOUND', 404);
+        const priorProjectCommand = requestedProjectId ? Object.values(state.commands).find((item) =>
+          item.requestId === body.requestId && item.kind === 'session.create' &&
+          item.payload.projectId === requestedProjectId && item.payload.modelProfileId === body.modelProfileId) : null;
+        const rawPayload = projectSessionMatch ? {
+          requestId: body.requestId, kind: 'session.create', targetDeviceId: state.hostId,
+          modelProfileId: body.modelProfileId, projectId: requestedProjectId,
+          projectRevision: priorProjectCommand?.payload.projectRevision ?? requestedProject.revision,
+        } : taskAction ? {
           requestId: body.requestId, kind: 'session.message', targetDeviceId: state.hostId,
           sessionId: rootSource.sessionId, text: body.text,
           mode: 'queue', rootTaskId, taskAction,
-        } : body, state.hostId, Boolean(taskAction));
+        } : canonicalCommand(body, state.hostId);
+        const projectBinding = rawPayload.kind === 'session.message' ? taskAction
+          ? rootSource.payload : state.sessions[rawPayload.sessionId] : null;
+        const payload = canonicalCommand({ ...rawPayload,
+          ...(projectBinding?.projectId ? { projectId: projectBinding.projectId,
+            projectRevision: projectBinding.projectRevision } : {}) }, state.hostId, true);
         requireOpen();
         if (storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
         if (payload.kind === 'desktop.open_app' && typeof backend.openDesktopApp !== 'function') {
@@ -2298,6 +2635,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           throw failure('MODEL_UNAVAILABLE', 422);
         }
         const payloadHash = digest(JSON.stringify(payload));
+        if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (Object.values(state.commands).some((command) =>
           command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
           throw failure('REQUEST_CONFLICT', 409);
@@ -2308,6 +2646,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           return json(response, 202, taskAction
             ? { task: await taskDetail(state, rootTaskId), command: publicCommand(prior) }
             : { command: publicCommand(prior) });
+        }
+        if (payload.projectId && (state.projects?.[payload.projectId]?.revoked ||
+            state.projects?.[payload.projectId]?.revision !== payload.projectRevision)) {
+          throw failure('PROJECT_REVOKED', 409);
         }
         if (taskAction === 'supplement' &&
             (rootSource.taskControl?.state === 'stop_requested' || taskHasUnknownEffects(state, rootTaskId))) {
@@ -2357,6 +2699,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           const current = authenticate(request, 'commands:write');
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           const latest = accountState(ownerId);
+          if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (Object.values(latest.commands).some((command) =>
             command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
             throw failure('REQUEST_CONFLICT', 409);
@@ -2366,6 +2709,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           if (existing) {
             if (existing.payloadHash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
             return publicCommand(existing);
+          }
+          if (payload.projectId && (latest.projects?.[payload.projectId]?.revoked ||
+              latest.projects?.[payload.projectId]?.revision !== payload.projectRevision)) {
+            throw failure('PROJECT_REVOKED', 409);
           }
           if (taskAction) {
             const source = taskSource(latest, rootTaskId);
@@ -2565,6 +2912,124 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }));
       return { sessionId };
     },
+    async projectForSession({ sessionId, ownerId = rootState.legacyOwnerId }) {
+      id(sessionId);
+      if (!hostOwner(ownerId)) throw failure('NOT_FOUND', 404);
+      const session = accountState(ownerId).sessions[sessionId];
+      if (!session?.projectId) return null;
+      const { project } = await checkedProjectSession(ownerId, sessionId);
+      return { ...publicProject(project), modelProfileId: session.modelProfileId };
+    },
+    /** Main-process only: list or read inside the project frozen on this session. */
+    async submitToolProject({ action, sessionId, turn, callId, messageHash, receiptId,
+      query = '', fileId, startLine = 1 }) {
+      const ownerId = rootState.legacyOwnerId;
+      id(sessionId);
+      if (!['list_project', 'read_project'].includes(action) ||
+          !Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
+          !/^[A-Za-z0-9._:-]{1,160}$/.test(callId) ||
+          typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash) ||
+          !validId(receiptId) || (action === 'read_project' && !FILE_ID.test(fileId ?? '')) ||
+          (action === 'list_project' && fileId !== undefined) ||
+          typeof query !== 'string' || Buffer.byteLength(query, 'utf8') > 200 ||
+          /[\p{Cc}\p{Cf}]/u.test(query) ||
+          !Number.isSafeInteger(startLine) || startLine < 1 || startLine > 1_000_000) {
+        throw failure('INVALID_COMMAND');
+      }
+      const { project, session } = await checkedProjectSession(ownerId, sessionId);
+      for (let attempt = 0; attempt < 20 && Object.values(accountState(ownerId).commands).some((item) =>
+        item.kind === 'session.message' && item.sessionId === sessionId &&
+        item.state === 'dispatching' && typeof item.payload.text === 'string' &&
+        digest(item.payload.text) === messageHash); attempt++) {
+        if (closing) throw failure('SERVICE_CLOSING', 503);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const account = accountState(ownerId);
+      const { source, rootTaskId } = projectToolSource(account,
+        { sessionId, turn, messageHash, receiptId });
+      if (action === 'list_project') {
+        const listing = await listProjectFiles(project, query);
+        const files = listing.files.map((file) => ({
+          ...file, fileId: `file-${createHmac('sha256', project.fileSecret)
+            .update(`${project.projectId}\0${project.revision}\0${file.relativePath}\0${file.identity}\0${file.size}\0${file.lastWriteTime}`)
+            .digest('hex').slice(0, 48)}` }));
+        await serial(() => mutate(ownerId, (next) => {
+          const grant = projectGrant(next, sessionId);
+          if (grant.project.projectId !== project.projectId || grant.project.revision !== project.revision ||
+              grant.session.modelProfileId !== session.modelProfileId) throw failure('PROJECT_REVOKED', 409);
+          const checked = projectToolSource(next, { sessionId, turn, messageHash, receiptId });
+          if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+          for (const file of files) {
+            if (!Object.hasOwn(grant.project.files, file.fileId) &&
+                Object.keys(grant.project.files).length >= MAX_PROJECT_FILES) throw failure('CAPACITY_LIMIT', 429);
+            grant.project.files[file.fileId] = { fileId: file.fileId, relativePath: file.relativePath,
+              size: file.size, identity: file.identity, lastWriteTime: file.lastWriteTime,
+              listedAt: new Date(timestamp()).toISOString() };
+          }
+          checked.source.dshTurn = turn;
+        }));
+        await checkedProjectSession(ownerId, sessionId);
+        projectToolSource(accountState(ownerId), { sessionId, turn, messageHash, receiptId });
+        return { files: files.map(({ fileId, relativePath, size }) => ({ fileId, relativePath, size })),
+          truncated: listing.truncated, scannedCount: listing.scannedCount, skippedCount: listing.skippedCount };
+      }
+      const file = project.files[fileId];
+      if (!file) throw failure('PROJECT_FILE_UNAVAILABLE', 404);
+      const snapshotId = `source-${digest(`${ownerId}|${project.projectId}|${project.revision}|${rootTaskId}|${sessionId}|${turn}|${receiptId}|${callId}|${fileId}|${startLine}`).slice(0, 48)}`;
+      const existing = account.projectSources?.[snapshotId];
+      if (existing) {
+        if (existing.sourceCommandId !== source.commandId || existing.readCallId !== callId ||
+            existing.fileId !== fileId || existing.lineStart !== startLine) throw failure('REQUEST_CONFLICT', 409);
+        const bytes = await artifactStore.inspect(ownerId, rootTaskId, snapshotId,
+          { size: existing.textSize, sha256: existing.textSha256 });
+        await checkedProjectSession(ownerId, sessionId);
+        const checked = projectToolSource(accountState(ownerId), { sessionId, turn, messageHash, receiptId });
+        if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+        return { ...publicSource(existing), text: bytes.toString('utf8') };
+      }
+      const read = await readProjectFile(project, file, startLine);
+      const bytes = Buffer.from(read.text, 'utf8');
+      const textSha256 = digest(bytes);
+      const readAt = new Date(timestamp()).toISOString();
+      try { await artifactStore.write(ownerId, rootTaskId, snapshotId,
+        { bytes, size: bytes.length, sha256: textSha256 }); }
+      catch (error) {
+        if (error?.code !== 'ARTIFACT_EXISTS') throw error;
+        await artifactStore.inspect(ownerId, rootTaskId, snapshotId, { size: bytes.length, sha256: textSha256 });
+      }
+      const saved = await serial(() => mutate(ownerId, (next) => {
+        const grant = projectGrant(next, sessionId);
+        if (grant.project.projectId !== project.projectId || grant.project.revision !== project.revision ||
+            grant.session.modelProfileId !== session.modelProfileId) throw failure('PROJECT_REVOKED', 409);
+        const checked = projectToolSource(next, { sessionId, turn, messageHash, receiptId });
+        if (checked.source.commandId !== source.commandId || checked.rootTaskId !== rootTaskId) {
+          throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+        }
+        const latestFile = grant.project.files[fileId];
+        if (!latestFile || latestFile.relativePath !== file.relativePath ||
+            latestFile.identity !== file.identity || latestFile.size !== file.size ||
+            latestFile.lastWriteTime !== file.lastWriteTime) {
+          throw failure('PROJECT_FILE_CHANGED', 409);
+        }
+        next.projectSources ??= {};
+        if (next.projectSources[snapshotId]) return next.projectSources[snapshotId];
+        if (Object.keys(next.projectSources).length >= MAX_SOURCE_SNAPSHOTS) throw failure('CAPACITY_LIMIT', 429);
+        checked.source.dshTurn = turn;
+        const record = { snapshotId, ownerId, projectId: project.projectId,
+          projectRevision: project.revision, taskId: rootTaskId,
+          sourceCommandId: source.commandId, sessionId, turn, sourceReceiptId: receiptId,
+          readCallId: callId, fileId, relativePath: read.relativePath,
+          lineStart: read.lineStart, lineEnd: read.lineEnd, totalLines: read.totalLines,
+          fileSha256: read.fileSha256, textSize: bytes.length, textSha256,
+          readAt, hasMore: read.hasMore };
+        next.projectSources[snapshotId] = record;
+        return record;
+      }));
+      await checkedProjectSession(ownerId, sessionId);
+      const checked = projectToolSource(accountState(ownerId), { sessionId, turn, messageHash, receiptId });
+      if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      return { ...publicSource(saved), text: read.text };
+    },
     /** Main-process only: a DSH tool call from an owner-bound restricted turn. */
     async submitToolDesktop({ sessionId, turn, callId, messageHash, appId }) {
       const ownerId = rootState.legacyOwnerId;
@@ -2644,7 +3109,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       return publicCommand(accountState(ownerId).commands[commandId]);
     },
     /** Main-process only: create a bounded document from one accepted owner turn. */
-    async submitToolArtifact({ sessionId, turn, callId, messageHash, fileName, content }) {
+    async submitToolArtifact({ sessionId, turn, callId, messageHash, receiptId,
+      sourceSnapshotIds, fileName, content }) {
       const ownerId = rootState.legacyOwnerId;
       id(sessionId);
       if (!Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
@@ -2652,9 +3118,42 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash)) {
         throw failure('INVALID_COMMAND');
       }
-      const artifact = canonicalArtifact(fileName, content);
+      let artifact = canonicalArtifact(fileName, content);
       const state = accountState(ownerId);
       if (state.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+      const projectSession = state.sessions[sessionId]?.projectId ? await checkedProjectSession(ownerId, sessionId) : null;
+      let citedSources = null;
+      if (projectSession) {
+        if (!validId(receiptId) || !Array.isArray(sourceSnapshotIds) || sourceSnapshotIds.length < 1 ||
+            sourceSnapshotIds.length > 16 || new Set(sourceSnapshotIds).size !== sourceSnapshotIds.length ||
+            sourceSnapshotIds.some((sourceId) => !SNAPSHOT_ID.test(sourceId)) ||
+            typeof verifyToolResult !== 'function') throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
+        const { source, rootTaskId } = projectToolSource(state,
+          { sessionId, turn, messageHash, receiptId });
+        citedSources = sourceSnapshotIds.map((sourceId) => {
+          const read = state.projectSources?.[sourceId];
+          if (!read || read.projectId !== projectSession.project.projectId ||
+              read.projectRevision !== projectSession.project.revision || read.taskId !== rootTaskId ||
+              read.sourceCommandId !== source.commandId || read.sessionId !== sessionId ||
+              read.turn !== turn || read.sourceReceiptId !== receiptId) {
+            throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
+          }
+          return read;
+        });
+        const proofs = await Promise.all(citedSources.map((read) => withDeadline(() => verifyToolResult({
+          sessionId, turn, readCallId: read.readCallId, snapshotId: read.snapshotId,
+          sourceReceiptId: receiptId, beforeCallId: callId,
+        }), 3_500).catch(() => false)));
+        if (proofs.some((proof) => proof !== true)) throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
+        const manifest = citedSources.map((read) =>
+          `- ${read.relativePath}，第 ${read.lineStart}–${read.lineEnd} 行，读取于 ${read.readAt}，SHA-256 ${read.fileSha256}`)
+          .join('\n');
+        artifact = canonicalArtifact(fileName, `${content.trimEnd()}\n\n## 已读取来源\n${manifest}\n`);
+      } else if (sourceSnapshotIds !== undefined || receiptId !== undefined) {
+        if (sourceSnapshotIds !== undefined && (!Array.isArray(sourceSnapshotIds) || sourceSnapshotIds.length)) {
+          throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
+        }
+      }
       const described = await callBackend(() => backend.describeSession(sessionId, ownerId));
       if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote') {
         throw failure('SESSION_READ_ONLY', 409);
@@ -2676,6 +3175,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           if (item.kind !== 'session.message' || item.sessionId !== sessionId ||
               item.state !== 'accepted_by_dsh' || typeof item.payload.text !== 'string' ||
               digest(item.payload.text) !== messageHash ||
+              (projectSession && item.receiptId !== receiptId) ||
               (item.dshTurn !== undefined && item.dshTurn !== turn) ||
               !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
           const device = next.devices[item.sourceDeviceId];
@@ -2685,11 +3185,24 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
         const source = eligible[0];
         const rootTaskId = source.rootTaskId ?? source.commandId;
+        if (projectSession) {
+          const grant = projectGrant(next, sessionId);
+          if (grant.project.projectId !== projectSession.project.projectId ||
+              grant.project.revision !== projectSession.project.revision ||
+              source.payload.projectId !== grant.project.projectId ||
+              source.payload.projectRevision !== grant.project.revision ||
+              citedSources.some((read) => next.projectSources?.[read.snapshotId]?.sourceCommandId !== source.commandId)) {
+            throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
+          }
+        }
         const existing = Object.values(next.commands).find((item) => item.requestId === requestId);
         if (existing) {
           if (existing.kind !== INTERNAL_ARTIFACT_KIND || existing.taskId !== rootTaskId ||
               existing.fileName !== artifact.fileName || existing.size !== artifact.size ||
-              existing.sha256 !== artifact.sha256) throw failure('REQUEST_CONFLICT', 409);
+              existing.sha256 !== artifact.sha256 ||
+              JSON.stringify(existing.sourceSnapshotIds ?? null) !== JSON.stringify(sourceSnapshotIds ?? null)) {
+            throw failure('REQUEST_CONFLICT', 409);
+          }
           return existing.commandId;
         }
         if (next.commands[rootTaskId]?.taskControl?.state === 'stop_requested') {
@@ -2701,7 +3214,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const artifactId = `artifact-${randomUUID()}`;
         const payload = canonicalCommand({ requestId, kind: INTERNAL_ARTIFACT_KIND,
           targetDeviceId: next.hostId, sessionId, taskId: rootTaskId, artifactId,
-          fileName: artifact.fileName, size: artifact.size, sha256: artifact.sha256 }, next.hostId, true);
+          fileName: artifact.fileName, size: artifact.size, sha256: artifact.sha256,
+          ...(projectSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}) }, next.hostId, true);
         const now = new Date(timestamp()).toISOString();
         next.commands[commandId] = { commandId, ownerId, requestId,
           payloadHash: digest(JSON.stringify(payload)), payload,
@@ -2709,6 +3223,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           targetDeviceId: next.hostId, kind: INTERNAL_ARTIFACT_KIND, sessionId,
           taskId: rootTaskId, artifactId, fileName: artifact.fileName,
           size: artifact.size, sha256: artifact.sha256,
+          ...(projectSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}),
           toolSource: { sessionId, turn, callId, sourceCommandId: source.commandId },
           state: 'dispatching', createdAt: now, updatedAt: now };
         return commandId;

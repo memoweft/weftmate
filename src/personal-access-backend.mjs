@@ -9,7 +9,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   hostOwnerId = () => null,
   modelAllowed = () => true,
   moduleStatus = () => ({}),
-  desktopTask = null, taskStop = null, naturalLanguageDesktopReady = () => false,
+  desktopTask = null, taskStop = null, toolResultProof = null, naturalLanguageDesktopReady = () => false,
   naturalLanguageDesktopVerified = () => false, inferenceVerified = () => false }) {
   const requireRuntime = () => { if (!currentOrigin()) fail('RUNTIME_UNAVAILABLE') }
   const presetForOwner = (ownerId) => {
@@ -218,6 +218,21 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
           result.outcomes.some((item) => !receiptIds.includes(item?.receiptId) ||
             !['cancel_requested', 'queue_removed', 'unconfirmed'].includes(item?.status))) fail('BACKEND_UNAVAILABLE')
       return result
+    },
+    async verifyToolResult({ sessionId, turn, readCallId, snapshotId, sourceReceiptId, beforeCallId }) {
+      requireRuntime()
+      if (typeof toolResultProof !== 'function') return false
+      if (typeof sessionId !== 'string' || !idPattern.test(sessionId) ||
+          !Number.isSafeInteger(turn) || turn < 1 ||
+          [readCallId, sourceReceiptId, beforeCallId].some((id) =>
+            typeof id !== 'string' || !idPattern.test(id)) ||
+          typeof snapshotId !== 'string' || !idPattern.test(snapshotId) ||
+          readCallId === beforeCallId) return false
+      try {
+        await requireSession(sessionId, hostOwnerId())
+        return await toolResultProof({ sessionId, turn, readCallId, snapshotId,
+          sourceReceiptId, beforeCallId }) === true
+      } catch { return false }
     },
     async openDesktopApp({ appId, ownerId }) {
       requireRuntime()

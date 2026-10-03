@@ -568,6 +568,33 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
     fun hostModels(host: HostIdentity): JSONObject = http.request("${host.origin}/personal/v1/models", "GET",
         headers = mapOf("Cookie" to host.cookie)).body
 
+    fun projects(host: HostIdentity): JSONObject = http.request("${host.origin}/personal/v1/projects", "GET",
+        headers = mapOf("Cookie" to host.cookie)).body
+
+    fun createProjectSession(host: HostIdentity, projectId: String, profileId: String,
+        requestId: String): JSONObject {
+        require(projectId.matches(Regex("project-[A-Za-z0-9-]{1,128}")))
+        require(profileId.matches(Regex("[A-Za-z0-9._-]{1,128}")))
+        require(requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")))
+        return http.request("${host.origin}/personal/v1/projects/$projectId/sessions", "POST",
+            JSONObject().put("requestId", requestId).put("modelProfileId", profileId),
+            authWriteHeaders(host)).body
+    }
+
+    fun sourceDetail(host: HostIdentity, taskId: String, snapshotId: String): JSONObject {
+        require(taskId.matches(Regex("cmd-[0-9a-f-]{36}")))
+        require(snapshotId.matches(Regex("source-[a-f0-9]{48}")))
+        val source = http.request("${host.origin}/personal/v1/tasks/$taskId/sources/$snapshotId", "GET",
+            headers = mapOf("Cookie" to host.cookie)).body.getJSONObject("source")
+        val text = source.getString("text")
+        if (source.optString("snapshotId") != snapshotId ||
+            text.toByteArray(Charsets.UTF_8).size > 32 * 1024 ||
+            !source.optString("fileSha256").matches(Regex("[a-f0-9]{64}"))) {
+            throw ApiFailure(502, "SOURCE_INVALID")
+        }
+        return JSONObject().put("source", source)
+    }
+
     fun verifyHostModel(host: HostIdentity, profileId: String): JSONObject {
         require(profileId.matches(Regex("[A-Za-z0-9._-]{1,128}")))
         return http.request("${host.origin}/personal/v1/models/$profileId/verify", "POST", JSONObject(),

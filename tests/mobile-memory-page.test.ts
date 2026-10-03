@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
+import { webcrypto } from 'node:crypto'
 
 const candidateRoot = fileURLToPath(new URL('../', import.meta.url))
 const source = readFileSync(new URL('../apps/mobile-ui/www/app.js', import.meta.url), 'utf8')
@@ -88,6 +89,11 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   receipt?: (owner: string, requestId: string) => object | Promise<object>;
   taskDetail?: (owner: string, taskId: string) => object | Promise<object>;
   commandDetail?: (owner: string, commandId: string) => object | Promise<object>;
+  projectList?: (owner: string) => object | Promise<object>;
+  projectCreate?: (owner: string, params: any) => object | Promise<object>;
+  projectReceipt?: (owner: string, requestId: string) => object | Promise<object>;
+  projectSessions?: (owner: string) => object | Promise<object>;
+  hostModels?: (owner: string) => object | Promise<object>;
   hostTask?: object; hostActivities?: object[];
   deferItemsFor?: string; deferMore?: boolean } = {}) {
   const nodes = new Map<string, FakeElement>()
@@ -163,6 +169,16 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
           case 'activity.list': result = { activities: options.hostActivities ?? (options.hostTask ? [options.hostTask] : []), hostAvailable: true }; break
           case 'shared.commands.detail': result = owner && options.commandDetail
             ? options.commandDetail(owner, request.params.commandId) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'shared.commands.byRequest': result = owner && options.projectReceipt
+            ? options.projectReceipt(owner, request.params.requestId) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'shared.projects.list': result = owner && options.projectList
+            ? options.projectList(owner) : { source: 'host', hostId: 'host-fixture', projects: [], canManage: false }; break
+          case 'shared.projects.createSession': result = owner && options.projectCreate
+            ? options.projectCreate(owner, request.params) : (() => { throw new Error('OPERATION_FAILED') })(); break
+          case 'shared.sessions.list': result = owner && options.projectSessions
+            ? options.projectSessions(owner) : { source: 'host', sessions: [], hostAvailable: true }; break
+          case 'models.host': result = owner && options.hostModels ? options.hostModels(owner) : { models: [] }; break
+          case 'models.verifyHost': result = { available: true }; break
           case 'shared.tasks.detail': result = owner && options.taskDetail
             ? options.taskDetail(owner, request.params.taskId) : (() => { throw new Error('NOT_FOUND') })(); break
           case 'settings.appearance': result = { value: 'light' }; break
@@ -197,7 +213,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     } }
   runInNewContext(source, { document, window, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
-    console, Intl, Date, Error, Map, Set, Promise })
+    console, Intl, Date, Error, Map, Set, Promise, crypto: webcrypto, TextEncoder })
   return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, setDeferredOwner: (owner: string) => { deferOwner = owner },
     setDeferMore: () => { deferMore = true }, resolveDeferred(index: number, value: object) { deferred[index].resolve(value) },
     rejectDeferred(index: number, code: string) { deferred[index].reject(new Error(code)) },
@@ -757,4 +773,67 @@ test('a late task label from account A cannot replace account B title', async ()
   await flush()
   assert.match(app.get('page-content').textContent, /B 的目标/)
   assert.doesNotMatch(app.get('page-content').textContent, /A 的私人目标/)
+})
+
+test('project session saves owner-host choice before POST and selects only the exact bound session', async () => {
+  const projectId = 'project-11111111-1111-4111-8111-111111111111'
+  const sessionId = 'session-11111111-1111-4111-8111-111111111111'
+  let app!: ReturnType<typeof harness>
+  let storedAtPost = ''
+  const row = { projectId, name: '合成项目', revision: 1, revoked: false,
+    createdAt: '2026-10-03T00:00:00.000Z' }
+  app = harness({ projectList: () => ({ source: 'host', hostId: 'host-fixture', projects: [row], canManage: false }),
+    hostModels: () => ({ models: [{ source: 'host', profileId: 'model-local', displayName: '本地模型',
+      sourceKind: 'local', configured: true }] }),
+    projectReceipt: () => { throw new Error('NOT_FOUND') },
+    projectCreate: (_owner, params) => {
+      storedAtPost = app.storage.get('weftmate-project-create:scope-A:host-fixture') ?? ''
+      return { source: 'host', command: { commandId: 'cmd-create', kind: 'session.create',
+        requestId: params.requestId, projectId, modelProfileId: params.modelProfileId,
+        sessionId, state: 'accepted_by_dsh' } }
+    },
+    projectSessions: () => ({ source: 'host', hostAvailable: true, sessions: [{ source: 'host',
+      sessionId, projectId, modelProfileId: 'model-local', sendAvailable: true }] }) })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'workspaces')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '在此项目开始对话'), 'project action missing')
+  assert.match(app.get('page-content').textContent, /合成项目.*本地模型.*资料将交给电脑本机模型/)
+  findButton(app.get('page-content'), '在此项目开始对话')!.fire('click')
+  await waitUntil(() => app.calls.some((call) => call.method === 'shared.projects.createSession'), 'project POST missing')
+  assert.match(storedAtPost, /"projectId":"project-1111/)
+  const methods = app.calls.map((call) => call.method)
+  assert.ok(methods.indexOf('shared.commands.byRequest') < methods.indexOf('shared.projects.createSession'))
+  await waitUntil(() => !app.storage.has('weftmate-project-create:scope-A:host-fixture'), 'project intent was not reconciled')
+  assert.ok(app.calls.some((call) => call.method === 'shared.sessions.list'))
+  assert.equal(app.calls.filter((call) => call.method === 'shared.projects.createSession').length, 1)
+})
+
+test('lost project-session POST receipt reuses the saved request before selecting a session', async () => {
+  const projectId = 'project-22222222-2222-4222-8222-222222222222'
+  const sessionId = 'session-22222222-2222-4222-8222-222222222222'
+  let accepted: any = null
+  let postCount = 0
+  const app = harness({ projectList: () => ({ source: 'host', hostId: 'host-fixture',
+    projects: [{ projectId, name: '断线项目', revision: 1, revoked: false }], canManage: false }),
+  hostModels: () => ({ models: [{ profileId: 'model-local', displayName: '本地模型',
+    sourceKind: 'local', configured: true }] }),
+  projectReceipt: () => accepted ? { source: 'host', command: accepted } : (() => { throw new Error('NOT_FOUND') })(),
+  projectCreate: (_owner, params) => {
+    postCount++
+    accepted = { commandId: 'cmd-lost', kind: 'session.create', requestId: params.requestId,
+      projectId, modelProfileId: params.modelProfileId, sessionId, state: 'accepted_by_dsh' }
+    throw new Error('NETWORK')
+  }, projectSessions: () => ({ source: 'host', sessions: [{ source: 'host', sessionId, projectId,
+    modelProfileId: 'model-local', sendAvailable: true }] }) })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  const workspace = app.nav.find((button) => button.dataset.page === 'workspaces')!
+  workspace.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '在此项目开始对话'), 'project action missing')
+  findButton(app.get('page-content'), '在此项目开始对话')!.fire('click')
+  await waitUntil(() => postCount === 1, 'first project POST missing')
+  assert.ok(app.storage.has('weftmate-project-create:scope-A:host-fixture'))
+  workspace.fire('click')
+  await waitUntil(() => !app.storage.has('weftmate-project-create:scope-A:host-fixture'), 'lost receipt was not reconciled')
+  assert.equal(postCount, 1, 'recovery must not create a second session')
+  assert.ok(app.calls.filter((call) => call.method === 'shared.commands.byRequest').length >= 2)
 })

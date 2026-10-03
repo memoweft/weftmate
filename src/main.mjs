@@ -1513,8 +1513,12 @@ async function bootstrap() {
       }
       if (request.action === 'write_document') {
         return personalAccessService.submitToolArtifact({ sessionId: request.sessionId, turn: request.turn,
-          callId: request.callId, messageHash: request.messageHash,
-          fileName: request.fileName, content: request.content });
+          callId: request.callId, messageHash: request.messageHash, receiptId: request.receiptId,
+          fileName: request.fileName, content: request.content,
+          sourceSnapshotIds: request.sourceSnapshotIds });
+      }
+      if (request.action === 'list_project' || request.action === 'read_project') {
+        return personalAccessService.submitToolProject(request);
       }
       return personalAccessService.submitToolDesktop(request);
     } : undefined,
@@ -2634,6 +2638,7 @@ async function bootstrap() {
     desktopTask: personalDesktopTask,
     taskStop: (input) => webRuntime?.stopPersonalTask(input) ?? Promise.resolve({ status: 'unconfirmed',
       outcomes: input.receiptIds.map((receiptId) => ({ receiptId, status: 'unconfirmed' })) }),
+    toolResultProof: (input) => webRuntime?.verifyPersonalToolResult(input) ?? Promise.resolve(false),
     naturalLanguageDesktopReady: () => personalAccessService !== null && personalHostMode,
     naturalLanguageDesktopVerified: () => personalAccessService?.hasVerifiedPersonalTool?.() === true,
   });
@@ -2657,6 +2662,7 @@ async function bootstrap() {
         const { createPersonalAccessService } = await import('./personal-access/index.mjs');
         personalAccessService = await createPersonalAccessService({
           root: join(userDataDir, 'personal-access'), port: accessPort, backend: accessBackend,
+          verifyToolResult: (input) => accessBackend.verifyToolResult(input),
           uiHandler: servePersonalAccessUi,
           androidPackagePath,
            mobileUiDir,
