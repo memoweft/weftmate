@@ -177,6 +177,17 @@
             <button type="submit" class="button primary small">登记项目</button>
           </form>
         </section>
+        <section class="card group" aria-labelledby="browser-workspace-heading">
+          <div class="group-heading"><div><h2 id="browser-workspace-heading">网页资料</h2><p class="muted">阅读你交代的公共网页与页内链接，核对来源后保存摘要。登录、表单、下载与任意网页操作尚不支持。</p></div><button type="button" class="button secondary small" id="browser-workspace-refresh">刷新</button></div>
+          <p id="browser-workspace-status" class="muted" role="status" aria-live="polite">正在核对网页阅读能力…</p>
+          <form id="browser-workspace-form" class="browser-workspace-form" hidden>
+            <label for="browser-url-list">公共网页链接（每行一个，1–5条）</label><textarea id="browser-url-list" rows="3" placeholder="https://example.org/article"></textarea>
+            <label for="browser-goal">希望整理什么</label><textarea id="browser-goal" rows="3" maxlength="6000" placeholder="例如：比较两篇文章的主要观点并保存摘要"></textarea>
+            <label for="browser-model-select">电脑模型</label><select id="browser-model-select"><option value="">读取中…</option></select>
+            <p id="browser-destination" class="field-help"></p>
+            <button type="submit" class="button primary small">开始网页任务</button>
+          </form>
+        </section>
         <section class="card group notice"><h2>连接状态</h2><p id="connection-copy">正在读取连接状态…</p></section>
       </section>
     </main>

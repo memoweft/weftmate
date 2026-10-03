@@ -14,7 +14,7 @@
  *
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
-import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme } from 'electron';
+import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session } from 'electron';
 import { normalizeApiBaseUrl } from './stage2-config.ts';
 import { switchActiveModel } from './model-switch-transaction.ts';
 import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './openai-compatible-client.ts';
@@ -70,6 +70,7 @@ import { ModWindowManager } from './mod-window-manager.mjs';
 import { createPersonalAccessBackend } from './personal-access-backend.mjs';
 import { createPersonalDesktopTask } from './personal-desktop-task.mjs';
 import { syntheticStopFixtureRoute } from './synthetic-stop-fixture-policy.mjs';
+import { syntheticBrowserFixtureSettings } from './synthetic-browser-fixture-policy.mjs';
 import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels, prepareLocalModelConfig,
   projectOccamyImageInput, reconcileOccamyImageInput,
   readUserModelSwitcherKey } from './local-model-config.mjs';
@@ -212,6 +213,7 @@ let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn �
 let personalAccessService = null;
 let personalAccessOrigin = null;
 let personalMemoryManager = null;
+let personalBrowserReader = null;
 const personalMemoryIpc = { recallAttempts: 0, recallRequests: 0,
   recallWithContext: 0, recallReplies: 0, ingestRequests: 0, rejectedBindings: 0 };
 let modWindowManager = null; // 独立 Mod 视图；只管理窗口，不拥有 Mod 生命周期。
@@ -1520,6 +1522,9 @@ async function bootstrap() {
       if (request.action === 'list_project' || request.action === 'read_project') {
         return personalAccessService.submitToolProject(request);
       }
+      if (request.action === 'open_page' || request.action === 'follow_link') {
+        return personalAccessService.submitToolBrowser(request);
+      }
       return personalAccessService.submitToolDesktop(request);
     } : undefined,
     personalMemoryRequestHandler: personalHostMode && personalMemoryConfigPath ? async (request) => {
@@ -2619,6 +2624,9 @@ async function bootstrap() {
     });
   }
   const personalDesktopTask = accessPort === null ? null : createPersonalDesktopTask();
+  personalBrowserReader = accessPort === null ? null :
+    (await import('./personal-browser/index.mjs')).createPersonalBrowserReader({ BrowserWindow, session,
+      ...syntheticBrowserFixtureSettings(process.env, userDataDir) });
   const accessBackend = accessPort === null ? null : createPersonalAccessBackend({
     currentOrigin: () => runtimeOrigin,
     referenceScan: () => sessionReferenceScan,
@@ -2667,6 +2675,7 @@ async function bootstrap() {
           androidPackagePath,
            mobileUiDir,
            memoryManager: personalMemoryManager,
+          browserReader: personalBrowserReader,
            sharedProfileIsFormal: (marker) => {
              const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === marker.id);
              if (profile?.provider !== marker.provider || profile.baseUrl !== marker.baseUrl ||
@@ -2833,6 +2842,15 @@ app.on('before-quit', (e) => {
     }
     personalAccessOrigin = null;
     writeHostStateForLifecycle?.();
+    if (personalBrowserReader) {
+      let timer;
+      try {
+        await Promise.race([personalBrowserReader.close(), new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('personal browser reader close timed out')), 5_000);
+        })]);
+      } catch (error) { logCrash('shutdown-personal-browser', error); }
+      finally { if (timer) clearTimeout(timer); personalBrowserReader = null; }
+    }
     if (personalMemoryManager) {
       let timer;
       try {

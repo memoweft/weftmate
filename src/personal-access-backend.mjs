@@ -219,7 +219,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
             !['cancel_requested', 'queue_removed', 'unconfirmed'].includes(item?.status))) fail('BACKEND_UNAVAILABLE')
       return result
     },
-    async verifyToolResult({ sessionId, turn, readCallId, snapshotId, sourceReceiptId, beforeCallId }) {
+    async verifyToolResult({ sessionId, turn, readCallId, snapshotId, sourceReceiptId, beforeCallId,
+      readTool = 'personal_read_project_file', beforeTool = 'personal_save_document' }) {
       requireRuntime()
       if (typeof toolResultProof !== 'function') return false
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId) ||
@@ -227,11 +228,13 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
           [readCallId, sourceReceiptId, beforeCallId].some((id) =>
             typeof id !== 'string' || !idPattern.test(id)) ||
           typeof snapshotId !== 'string' || !idPattern.test(snapshotId) ||
+          !['personal_read_project_file', 'personal_browser_open', 'personal_browser_follow'].includes(readTool) ||
+          !['personal_save_document', 'personal_browser_follow'].includes(beforeTool) ||
           readCallId === beforeCallId) return false
       try {
         await requireSession(sessionId, hostOwnerId())
         return await toolResultProof({ sessionId, turn, readCallId, snapshotId,
-          sourceReceiptId, beforeCallId }) === true
+          sourceReceiptId, beforeCallId, readTool, beforeTool }) === true
       } catch { return false }
     },
     async openDesktopApp({ appId, ownerId }) {

@@ -16,6 +16,7 @@ import { createMobileUiPublisher } from './mobile-ui-release.mjs';
 import { handlePersonalMemoryHttp } from '../personal-memory/http.mjs';
 import { canonicalArtifact, createPersonalArtifactStore, validArtifactFileName } from '../personal-artifacts/index.mjs';
 import { inspectProjectRoot, listProjectFiles, readProjectFile } from '../personal-projects/index.mjs';
+import { canonicalPublicUrl } from '../personal-browser/network.mjs';
 
 const VERSION = 3;
 const SINGLE_ACCOUNT_VERSION = 2;
@@ -34,6 +35,7 @@ const MAX_UNRECONCILED_TEXT_BYTES = 8 * 1024 * 1024;
 const MAX_PROJECTS = 64;
 const MAX_PROJECT_FILES = 2_000;
 const MAX_SOURCE_SNAPSHOTS = 5_000;
+const MAX_BROWSER_SNAPSHOTS = 5_000;
 const DISPATCH_TIMEOUT_MS = 30_000;
 const CLOSE_TIMEOUT_MS = 3_000;
 const MODEL_TIMEOUT_MS = 300_000;
@@ -71,6 +73,12 @@ const PUBLIC_CODES = new Set([
   'PROJECT_LINE_OUT_OF_RANGE', 'PROJECT_LINE_TOO_LONG', 'PROJECT_READER_TIMEOUT',
   'PROJECT_READER_INVALID', 'PROJECT_REVOKED', 'PROJECT_NOT_SELECTED',
   'PROJECT_SOURCE_UNVERIFIED', 'PROJECT_MODEL_CHANGED',
+  'BROWSER_UNAVAILABLE', 'BROWSER_BUSY', 'BROWSER_CANCELLED', 'BROWSER_URL_INVALID',
+  'BROWSER_TARGET_BLOCKED', 'BROWSER_NETWORK_LIMIT', 'BROWSER_NETWORK_ERROR',
+  'BROWSER_RENDERER_FAILED', 'BROWSER_LOGIN_REQUIRED', 'BROWSER_HTTP_ERROR',
+  'BROWSER_EMPTY_PAGE', 'BROWSER_SOURCE_UNVERIFIED', 'BROWSER_URL_REQUIRED',
+  'BROWSER_DNS_TIMEOUT', 'BROWSER_DNS_ERROR', 'BROWSER_DOWNGRADE_BLOCKED', 'BROWSER_PAGE_CHANGED',
+  'BROWSER_CLEANUP_FAILED',
   'IMAGE_REJECTED',
 ]);
 const LEGACY_SCOPES = new Set(['sessions:read', 'commands:write']);
@@ -83,6 +91,8 @@ const IMAGE_REASONS = new Set(['MODEL_DOES_NOT_SUPPORT_IMAGES', 'INVALID_IMAGE_B
 const PROJECT_NAME = /^[\p{L}\p{N}][\p{L}\p{N} ._()\-]{0,79}$/u;
 const FILE_ID = /^file-[a-f0-9]{48}$/;
 const SNAPSHOT_ID = /^source-[a-f0-9]{48}$/;
+const WEB_SNAPSHOT_ID = /^source-[a-f0-9]{48}$/;
+const LINK_ID = /^link-[a-f0-9]{40}$/;
 
 function failure(code, status = 400) {
   const error = new Error(code);
@@ -144,10 +154,29 @@ function publicProject(project) {
 }
 
 function publicSource(source) {
+  if (source.kind === 'webpage') return { kind: 'webpage', snapshotId: source.snapshotId,
+    title: source.title, url: source.url, requestedUrl: source.requestedUrl,
+    readAt: source.readAt, contentSha256: source.textSha256, truncated: source.truncated,
+    links: source.links.map((link) => ({ linkId: link.linkId, label: link.label, url: link.url })) };
   return { snapshotId: source.snapshotId, relativePath: source.relativePath,
     lineStart: source.lineStart, lineEnd: source.lineEnd, totalLines: source.totalLines,
     fileSha256: source.fileSha256, readAt: source.readAt, hasMore: source.hasMore,
     projectId: source.projectId, projectRevision: source.projectRevision };
+}
+
+function initialBrowserUrls(text, browserReader) {
+  const found = [...text.matchAll(/https?:\/\/[^\s<>"'“”‘’]+/giu)]
+    .map((match) => {
+      const raw = match[0];
+      // Natural Chinese punctuation followed by an instruction starts prose,
+      // while URL path/query characters (including ?, ., and encoded Unicode)
+      // are preserved. The user's next instruction is never URL authority.
+      const boundary = raw.search(/[。；！？：，](?=分别|请|然后|再|同时|仅|只|保存|核对|不要|把|根据|关于)/u);
+      return (boundary < 0 ? raw : raw.slice(0, boundary)).replace(/[。，；！？]+$/u, '');
+    });
+  if (found.length < 1 || found.length > 5) throw failure('BROWSER_URL_REQUIRED', 400);
+  const urls = found.map((raw) => browserReader?.canonicalUrl?.(raw) ?? canonicalPublicUrl(raw));
+  return [...new Set(urls)];
 }
 
 /** A bounded permission hint for the one fixed desktop app, not language understanding. */
@@ -175,7 +204,7 @@ export function explicitNotepadOpenIntent(value) {
 function canonicalCommand(value, hostId, internal = false) {
   exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'appId', 'attachments',
     ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
-      'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds'] : [])],
+      'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls'] : [])],
     ['requestId', 'kind', 'targetDeviceId']);
   if (typeof value.requestId !== 'string' || !REQUEST_ID.test(value.requestId) ||
       !(KINDS.has(value.kind) || (internal && value.kind === INTERNAL_ARTIFACT_KIND))) {
@@ -185,14 +214,18 @@ function canonicalCommand(value, hostId, internal = false) {
   if ((value.projectId === undefined) !== (value.projectRevision === undefined) ||
       (value.projectId !== undefined && (!internal || !validId(value.projectId) ||
         !Number.isSafeInteger(value.projectRevision) || value.projectRevision < 1))) throw failure('INVALID_REQUEST');
+  if (value.workspaceKind !== undefined && (!internal || value.workspaceKind !== 'browser' ||
+      value.projectId !== undefined || !['session.create', 'session.message'].includes(value.kind))) {
+    throw failure('INVALID_REQUEST');
+  }
   if (value.kind === 'session.create') {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId',
-      ...(internal ? ['projectId', 'projectRevision'] : [])],
+      ...(internal ? ['projectId', 'projectRevision', 'workspaceKind'] : [])],
       ['requestId', 'kind', 'targetDeviceId', 'modelProfileId']);
     modelProfileId(value.modelProfileId);
   } else if (value.kind === 'session.message') {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text', 'mode', 'attachments',
-      ...(internal ? ['rootTaskId', 'taskAction', 'projectId', 'projectRevision'] : [])],
+      ...(internal ? ['rootTaskId', 'taskAction', 'projectId', 'projectRevision', 'workspaceKind', 'initialUrls'] : [])],
       ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text']);
     id(value.sessionId);
     if (value.rootTaskId !== undefined && (!internal || !validId(value.rootTaskId) ||
@@ -208,6 +241,16 @@ function canonicalCommand(value, hostId, internal = false) {
       throw failure('INVALID_REQUEST');
     }
     if (value.mode !== undefined && !['queue', 'steer'].includes(value.mode)) throw failure('INVALID_REQUEST');
+    if (value.workspaceKind === 'browser' && (!Array.isArray(value.initialUrls) ||
+        value.initialUrls.length < 1 || value.initialUrls.length > 5 ||
+        new Set(value.initialUrls).size !== value.initialUrls.length ||
+        value.initialUrls.some((url) => {
+          if (typeof url !== 'string' || Buffer.byteLength(url, 'utf8') > 2048) return true;
+          try { const parsed = new URL(url); return !['http:', 'https:'].includes(parsed.protocol) ||
+            Boolean(parsed.username || parsed.password) || parsed.toString() !== url; }
+          catch { return true; }
+        }))) throw failure('INVALID_REQUEST');
+    if (value.workspaceKind !== 'browser' && value.initialUrls !== undefined) throw failure('INVALID_REQUEST');
   } else if (value.kind === 'session.cancel') {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId'],
       ['requestId', 'kind', 'targetDeviceId', 'sessionId']);
@@ -226,7 +269,9 @@ function canonicalCommand(value, hostId, internal = false) {
           !Array.isArray(value.sourceSnapshotIds) || value.sourceSnapshotIds.length < 1 ||
           value.sourceSnapshotIds.length > 16 ||
           new Set(value.sourceSnapshotIds).size !== value.sourceSnapshotIds.length ||
-          value.sourceSnapshotIds.some((sourceId) => !SNAPSHOT_ID.test(sourceId))))) throw failure('INVALID_COMMAND');
+          value.sourceSnapshotIds.some((sourceId) => !SNAPSHOT_ID.test(sourceId) && !WEB_SNAPSHOT_ID.test(sourceId))))) {
+      throw failure('INVALID_COMMAND');
+    }
   } else {
     exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'appId'],
       ['requestId', 'kind', 'targetDeviceId', 'appId']);
@@ -234,10 +279,11 @@ function canonicalCommand(value, hostId, internal = false) {
   }
   return Object.fromEntries(['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'appId', 'attachments',
     'taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
-    'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds']
+    'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls']
     .filter((key) => Object.hasOwn(value, key) || (key === 'mode' && value.kind === 'session.message'))
     .map((key) => [key, key === 'mode' ? (value.mode ?? 'queue')
-      : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment) : value[key]]));
+      : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment)
+        : key === 'initialUrls' ? [...value.initialUrls] : value[key]]));
 }
 
 async function durableWrite(file, state, shouldCommit = () => true) {
@@ -325,7 +371,10 @@ function validateSingleStore(store) {
         (session.projectId !== undefined && (!validId(session.projectId) ||
           !Number.isSafeInteger(session.projectRevision) || session.projectRevision < 1 ||
           session.origin !== 'personal-remote' || !MODEL_PROFILE_ID.test(session.modelProfileId ?? '') ||
-          !Object.hasOwn(store.projects ?? {}, session.projectId)))) {
+          !Object.hasOwn(store.projects ?? {}, session.projectId))) ||
+        (session.workspaceKind !== undefined && (session.workspaceKind !== 'browser' ||
+          session.projectId !== undefined || session.origin !== 'personal-remote' ||
+          !MODEL_PROFILE_ID.test(session.modelProfileId ?? '')))) {
       throw failure('STORE_CORRUPT', 500);
     }
   }
@@ -378,6 +427,7 @@ function validateSingleStore(store) {
         !Number.isSafeInteger(source.turn) || source.turn < 0 ||
         !validId(source.sourceReceiptId) || store.commands[source.sourceCommandId].receiptId !== source.sourceReceiptId ||
         typeof source.readCallId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(source.readCallId) ||
+        (source.readTool !== undefined && source.readTool !== 'personal_read_project_file') ||
         !FILE_ID.test(source.fileId ?? '') || typeof source.relativePath !== 'string' ||
         !Number.isSafeInteger(source.lineStart) || source.lineStart < 1 ||
         !Number.isSafeInteger(source.lineEnd) || source.lineEnd < source.lineStart ||
@@ -386,6 +436,35 @@ function validateSingleStore(store) {
         !Number.isSafeInteger(source.textSize) || source.textSize < 0 || source.textSize > 32 * 1024 ||
         !/^[a-f0-9]{64}$/.test(source.textSha256 ?? '') || !validTime(source.readAt) ||
         typeof source.hasMore !== 'boolean') throw failure('STORE_CORRUPT', 500);
+  }
+  if (store.browserSources !== undefined && (!plainObject(store.browserSources) ||
+      Object.keys(store.browserSources).length > MAX_BROWSER_SNAPSHOTS)) throw failure('STORE_CORRUPT', 500);
+  for (const [snapshotId, source] of Object.entries(store.browserSources ?? {})) {
+    if (!WEB_SNAPSHOT_ID.test(snapshotId) || Object.hasOwn(store.projectSources ?? {}, snapshotId) ||
+        !plainObject(source) || source.snapshotId !== snapshotId ||
+        source.kind !== 'webpage' || source.ownerId !== store.ownerId ||
+        !validId(source.taskId) || !validId(source.sourceCommandId) ||
+        store.commands[source.sourceCommandId]?.kind !== 'session.message' ||
+        (store.commands[source.sourceCommandId].rootTaskId ?? source.sourceCommandId) !== source.taskId ||
+        !validId(source.sessionId) || store.sessions[source.sessionId]?.workspaceKind !== 'browser' ||
+        store.commands[source.sourceCommandId].sessionId !== source.sessionId ||
+        store.commands[source.sourceCommandId].dshTurn !== source.turn ||
+        !Number.isSafeInteger(source.turn) || source.turn < 0 ||
+        !validId(source.sourceReceiptId) || store.commands[source.sourceCommandId].receiptId !== source.sourceReceiptId ||
+        typeof source.readCallId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(source.readCallId) ||
+        !['personal_browser_open', 'personal_browser_follow'].includes(source.readTool) ||
+        typeof source.title !== 'string' || Array.from(source.title).length > 256 ||
+        typeof source.url !== 'string' || Buffer.byteLength(source.url, 'utf8') > 2048 ||
+        typeof source.requestedUrl !== 'string' || Buffer.byteLength(source.requestedUrl, 'utf8') > 2048 ||
+        !Number.isSafeInteger(source.textSize) || source.textSize < 1 || source.textSize > 32 * 1024 ||
+        !/^[a-f0-9]{64}$/.test(source.textSha256 ?? '') || !validTime(source.readAt) ||
+        typeof source.truncated !== 'boolean' || !Array.isArray(source.links) || source.links.length > 50 ||
+        new Set(source.links.map((link) => link.linkId)).size !== source.links.length ||
+        source.links.some((link) => !plainObject(link) || !LINK_ID.test(link.linkId ?? '') ||
+          typeof link.url !== 'string' || Buffer.byteLength(link.url, 'utf8') > 2048 ||
+          typeof link.label !== 'string' || Array.from(link.label).length > 160)) {
+      throw failure('STORE_CORRUPT', 500);
+    }
   }
   const requestIds = new Set();
   for (const [commandId, command] of Object.entries(store.commands)) {
@@ -412,6 +491,12 @@ function validateSingleStore(store) {
                  store.sessions[command.sessionId]?.projectRevision !== payload.projectRevision)))) ||
            (command.kind === 'session.message' &&
              (payload.projectId ?? null) !== (store.sessions[command.sessionId]?.projectId ?? null)) ||
+           (command.kind === 'session.message' &&
+             (payload.workspaceKind ?? null) !== (store.sessions[command.sessionId]?.workspaceKind ?? null)) ||
+           (command.kind === 'session.message' && payload.workspaceKind === 'browser' &&
+             command.rootTaskId !== undefined &&
+             JSON.stringify(payload.initialUrls) !==
+               JSON.stringify(store.commands[command.rootTaskId]?.payload.initialUrls)) ||
           (command.kind === INTERNAL_ARTIFACT_KIND &&
             (command.sessionId !== payload.sessionId || command.taskId !== payload.taskId ||
               command.artifactId !== payload.artifactId || command.fileName !== payload.fileName ||
@@ -424,6 +509,12 @@ function validateSingleStore(store) {
                    payload.sourceSnapshotIds.some((sourceId) =>
                      store.projectSources?.[sourceId]?.taskId !== command.taskId ||
                      store.projectSources?.[sourceId]?.sourceReceiptId !== payload.sourceReceiptId))) ||
+               (store.sessions[command.sessionId]?.workspaceKind === 'browser' &&
+                 (!payload.sourceSnapshotIds?.length ||
+                   store.commands[command.toolSource?.sourceCommandId]?.receiptId !== payload.sourceReceiptId ||
+                   payload.sourceSnapshotIds.some((sourceId) =>
+                     store.browserSources?.[sourceId]?.taskId !== command.taskId ||
+                     store.browserSources?.[sourceId]?.sourceReceiptId !== payload.sourceReceiptId))) ||
               command.taskId !== (store.commands[command.toolSource?.sourceCommandId]?.rootTaskId ??
                 command.toolSource?.sourceCommandId) ||
               !['dispatching', 'observed', 'uncertain', 'rejected'].includes(command.state) ||
@@ -450,7 +541,8 @@ function validateSingleStore(store) {
               (store.sessions[command.sessionId].modelProfileId !== undefined &&
                  store.sessions[command.sessionId].modelProfileId !== payload.modelProfileId) ||
                (store.sessions[command.sessionId].projectId ?? null) !== (payload.projectId ?? null) ||
-               (store.sessions[command.sessionId].projectRevision ?? null) !== (payload.projectRevision ?? null))) ||
+               (store.sessions[command.sessionId].projectRevision ?? null) !== (payload.projectRevision ?? null) ||
+               (store.sessions[command.sessionId].workspaceKind ?? null) !== (payload.workspaceKind ?? null))) ||
           (command.rootTaskId !== undefined && (command.kind !== 'session.message' ||
             command.rootTaskId !== payload.rootTaskId || command.taskAction !== payload.taskAction ||
             command.rootTaskId === commandId ||
@@ -458,7 +550,8 @@ function validateSingleStore(store) {
             store.commands[command.rootTaskId]?.rootTaskId !== undefined ||
              store.commands[command.rootTaskId]?.sessionId !== command.sessionId ||
              (store.commands[command.rootTaskId]?.payload.projectId ?? null) !== (payload.projectId ?? null) ||
-             (store.commands[command.rootTaskId]?.payload.projectRevision ?? null) !== (payload.projectRevision ?? null))) ||
+             (store.commands[command.rootTaskId]?.payload.projectRevision ?? null) !== (payload.projectRevision ?? null) ||
+             (store.commands[command.rootTaskId]?.payload.workspaceKind ?? null) !== (payload.workspaceKind ?? null))) ||
           (command.taskAction !== undefined && command.rootTaskId === undefined) ||
           (command.taskControl !== undefined && (command.kind !== 'session.message' ||
             command.rootTaskId !== undefined || !plainObject(command.taskControl) ||
@@ -634,6 +727,7 @@ function publicCommand(command) {
     result.projectId = command.payload.projectId;
     result.projectRevision = command.payload.projectRevision;
   }
+  if (command.payload?.workspaceKind) result.workspaceKind = command.payload.workspaceKind;
   if (command.sourceSnapshotIds) result.sourceSnapshotIds = [...command.sourceSnapshotIds];
   if (command.receiptId) result.receiptId = command.receiptId;
   if (command.verification) result.verification = { ...command.verification };
@@ -729,7 +823,8 @@ async function writeStreamPart(response, part) {
  */
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, sharedProfileIsFormal = () => false, memoryManager = null,
-  allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null }) {
+  allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
+  browserReader = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -744,6 +839,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       (mobileUiDir !== null && (typeof mobileUiDir !== 'string' || !path.isAbsolute(mobileUiDir))) ||
       !Array.isArray(allowedOrigins) || typeof trustedProxy !== 'boolean' ||
       (verifyToolResult !== null && typeof verifyToolResult !== 'function') ||
+      (browserReader !== null && (typeof browserReader.read !== 'function' ||
+        typeof browserReader.cancelTask !== 'function' || typeof browserReader.close !== 'function' ||
+        typeof browserReader.status !== 'function' || typeof browserReader.canonicalUrl !== 'function')) ||
       (allowedOrigins.length > 0 && !trustedProxy) || allowedOrigins.some((value) => {
         try { return new URL(value).origin !== value || !value.startsWith('https://'); }
         catch { return true; }
@@ -963,6 +1061,44 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return { session, project };
   }
 
+  async function checkedBrowserSession(ownerId, sessionId) {
+    const account = accountState(ownerId);
+    const session = account.sessions[sessionId];
+    if (!hostOwner(ownerId) || session?.origin !== 'personal-remote' ||
+        session.workspaceKind !== 'browser' || browserReader?.status()?.available !== true) {
+      throw failure(browserReader?.status()?.lastFailure === 'BROWSER_CLEANUP_FAILED'
+        ? 'BROWSER_CLEANUP_FAILED' : 'BROWSER_UNAVAILABLE', 409);
+    }
+    const described = await callBackend(() => backend.describeSession(sessionId, ownerId));
+    if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' ||
+        described.modelProfileId !== session.modelProfileId) throw failure('PROJECT_MODEL_CHANGED', 409);
+    return session;
+  }
+
+  function browserToolSource(account, { sessionId, turn, messageHash, receiptId }) {
+    const eligible = Object.values(account.commands).filter((item) => {
+      if (item.kind !== 'session.message' || item.sessionId !== sessionId ||
+          item.state !== 'accepted_by_dsh' || item.receiptId !== receiptId ||
+          item.payload.workspaceKind !== 'browser' ||
+          typeof item.payload.text !== 'string' || digest(item.payload.text) !== messageHash ||
+          (item.dshTurn !== undefined && item.dshTurn !== turn) ||
+          !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
+      const device = account.devices[item.sourceDeviceId];
+      return device?.authKind === 'password' && !device.revoked &&
+        device.authEpoch === item.sourceAuthEpoch && Date.parse(device.expiresAt) > timestamp();
+    });
+    if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+    const source = eligible[0];
+    const rootTaskId = source.rootTaskId ?? source.commandId;
+    const root = account.commands[rootTaskId];
+    if (root?.taskControl?.state === 'stop_requested') throw failure('TASK_NOT_READY', 409);
+    if (root?.payload.workspaceKind !== 'browser' ||
+        JSON.stringify(root.payload.initialUrls) !== JSON.stringify(source.payload.initialUrls)) {
+      throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+    }
+    return { source, rootTaskId, root };
+  }
+
   function taskHasUnknownEffects(account, taskId) {
     const messageIds = new Set([taskId, ...taskChildren(account, taskId).map((item) => item.commandId)]);
     return Object.values(account.commands).some((item) =>
@@ -1115,7 +1251,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       item.kind === INTERNAL_ARTIFACT_KIND && item.taskId === taskId).map(publicCommand);
     const citedIds = new Set(artifacts.filter((item) => item.state === 'observed')
       .flatMap((item) => item.sourceSnapshotIds ?? []));
-    const sources = Object.values(account.projectSources ?? {}).filter((item) => item.taskId === taskId)
+    const sources = [...Object.values(account.projectSources ?? {}), ...Object.values(account.browserSources ?? {})]
+      .filter((item) => item.taskId === taskId)
       .map((item) => ({ ...publicSource(item), cited: citedIds.has(item.snapshotId) }));
     const projectRecord = source.payload.projectId ? account.projects?.[source.payload.projectId] : null;
     const steps = Object.values(account.commands).filter((item) =>
@@ -1127,6 +1264,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const evidence = state === 'stop_requested' ? await taskStopEvidence(account, taskId) : null;
     return { taskId, sessionId: source.sessionId, sourceText: source.payload.text,
       source: publicCommand(source), artifacts, steps, sources,
+      ...(source.payload.workspaceKind === 'browser' ? { workspace: { kind: 'browser' } } : {}),
       ...(projectRecord ? { project: publicProject(projectRecord) } : {}),
       supplements: children.filter((item) => item.taskAction === 'supplement').map(publicCommand),
       resumes: children.filter((item) => item.taskAction === 'resume').map(publicCommand),
@@ -1691,6 +1829,28 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           return;
         }
       }
+      if (pending.payload.workspaceKind === 'browser') {
+        const session = pending.kind === 'session.message'
+          ? accountState(ownerId).sessions[pending.sessionId] : null;
+        let modelMatches = browserReader?.status()?.available === true;
+        if (modelMatches && session) {
+          try {
+            const described = await callBackend(() => backend.describeSession(pending.sessionId, ownerId));
+            modelMatches = described?.sessionId === pending.sessionId &&
+              described.agentPreset === 'personal-remote' &&
+              described.modelProfileId === session.modelProfileId;
+          } catch { modelMatches = false; }
+        }
+        if (!modelMatches) {
+          await serial(() => mutate(ownerId, (next) => {
+            if (next.commands[commandId]?.state !== 'pending') return;
+            next.commands[commandId].state = 'rejected';
+            next.commands[commandId].errorCode = 'BROWSER_UNAVAILABLE';
+            next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
+          }));
+          return;
+        }
+      }
       if (accountState(ownerId).devices[pending.sourceDeviceId]?.revoked ||
           (pending.sourceAuthEpoch !== undefined &&
             accountState(ownerId).devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch) ||
@@ -1731,6 +1891,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           await mutate(ownerId, (next) => {
             next.commands[commandId].state = 'rejected';
             next.commands[commandId].errorCode = 'PROJECT_REVOKED';
+            next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
+          });
+          return;
+        }
+        if (command.payload.workspaceKind === 'browser' && browserReader?.status()?.available !== true) {
+          await mutate(ownerId, (next) => {
+            next.commands[commandId].state = 'rejected';
+            next.commands[commandId].errorCode = 'BROWSER_UNAVAILABLE';
             next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
           });
           return;
@@ -1837,6 +2005,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
               origin: next.devices[snapshot.sourceDeviceId]?.authKind !== 'password'
                 ? 'legacy-local' : hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
               modelProfileId: snapshot.payload.modelProfileId,
+              ...(snapshot.payload.workspaceKind ? { workspaceKind: snapshot.payload.workspaceKind } : {}),
               ...(snapshot.payload.projectId ? { projectId: snapshot.payload.projectId,
                 projectRevision: snapshot.payload.projectRevision } : {}) };
           }
@@ -2244,6 +2413,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
           canManage: hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
       }
+      if (request.method === 'GET' && pathname === '/personal/v1/workspaces/browser') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        authenticate(request, 'sessions:read');
+        const readerStatus = hostOwner(ownerId) ? browserReader?.status() : null;
+        return json(response, 200, { available: readerStatus?.available === true,
+          hostId: state.hostId, workspaceKind: 'browser',
+          ...(readerStatus?.lastFailure ? { reasonCode: readerStatus.lastFailure } : {}) });
+      }
       if (request.method === 'POST' && pathname === '/personal/v1/projects') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = authenticate(request, 'account:manage');
@@ -2399,6 +2576,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
               sessionId,
               title: bounded(described.title, 256) ?? '',
               running: described.running === true,
+              ...(state.sessions[sessionId].workspaceKind ? {
+                workspaceKind: state.sessions[sessionId].workspaceKind,
+                modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
               ...(state.sessions[sessionId].projectId ? {
                 projectId: state.sessions[sessionId].projectId,
                 projectRevision: state.sessions[sessionId].projectRevision,
@@ -2410,6 +2590,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
                 (!state.sessions[sessionId].projectId ||
                   (state.projects?.[state.sessions[sessionId].projectId]?.revoked === false &&
                     state.projects[state.sessions[sessionId].projectId].revision === state.sessions[sessionId].projectRevision &&
+                    described.modelProfileId === state.sessions[sessionId].modelProfileId)) &&
+                (!state.sessions[sessionId].workspaceKind ||
+                  (browserReader?.status()?.available === true &&
                     described.modelProfileId === state.sessions[sessionId].modelProfileId))) ||
                 (state.sessions[sessionId].origin === 'shared-chat' &&
                 described.agentPreset === 'personal-shared-chat' &&
@@ -2485,16 +2668,20 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (url.search) throw failure('INVALID_REQUEST');
         const taskId = id(taskSourceMatch[1]), snapshotId = id(taskSourceMatch[2]);
         taskSource(state, taskId);
-        const source = state.projectSources?.[snapshotId];
+        const source = state.projectSources?.[snapshotId] ?? state.browserSources?.[snapshotId];
         if (!source || source.taskId !== taskId || source.ownerId !== ownerId) throw failure('NOT_FOUND', 404);
         const bytes = await artifactStore.inspect(ownerId, taskId, snapshotId,
           { size: source.textSize, sha256: source.textSha256 });
         const current = authenticate(request, 'sessions:read');
         if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
-        return json(response, 200, { source: { ...publicSource(source), text: bytes.toString('utf8') } });
+        return json(response, 200, { source: { ...publicSource(source), text: bytes.toString('utf8'),
+          // Native v10 source preview verifies fileSha256 over delivered text.
+          // For a webpage this is the same captured-body hash, not a project-file claim.
+          ...(source.kind === 'webpage' ? { fileSha256: source.textSha256 } : {}) } });
       }
       const taskActionMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/(supplements|stop|resume)$/.exec(pathname);
       const projectSessionMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)\/sessions$/.exec(pathname);
+      const browserSessionPath = pathname === '/personal/v1/workspaces/browser/sessions';
       if (request.method === 'POST' && taskActionMatch?.[2] === 'stop') {
         if (url.search) throw failure('INVALID_REQUEST');
         const taskId = id(taskActionMatch[1]);
@@ -2526,6 +2713,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             }
           }
         }));
+        if (accountState(ownerId).commands[taskId]?.taskControl?.state === 'stop_requested' &&
+            accountState(ownerId).sessions[accountState(ownerId).commands[taskId].sessionId]?.workspaceKind === 'browser') {
+          browserReader?.cancelTask(ownerId, taskId);
+        }
         await driveTaskStop(ownerId, taskId, true);
         return json(response, 202, { task: await taskDetail(accountState(ownerId), taskId) });
       }
@@ -2594,7 +2785,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         return json(response, 200, { command: publicCommand(command) });
       }
       if (request.method === 'POST' && (pathname === '/personal/v1/commands' ||
-          (taskActionMatch && taskActionMatch[2] !== 'stop') || projectSessionMatch)) {
+          (taskActionMatch && taskActionMatch[2] !== 'stop') || projectSessionMatch || browserSessionPath)) {
         if (url.search) throw failure('INVALID_REQUEST');
         const taskAction = taskActionMatch?.[2] === 'supplements' ? 'supplement'
           : taskActionMatch?.[2] === 'resume' ? 'resume' : null;
@@ -2602,14 +2793,22 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const body = await readJson(request);
         if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
         if (projectSessionMatch) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
+        if (browserSessionPath) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
         const rootSource = taskAction ? taskSource(state, rootTaskId) : null;
         const requestedProjectId = projectSessionMatch ? id(projectSessionMatch[1]) : null;
         const requestedProject = requestedProjectId ? state.projects?.[requestedProjectId] : null;
         if (requestedProjectId && (!hostOwner(ownerId) || !requestedProject)) throw failure('NOT_FOUND', 404);
+        if (browserSessionPath && (!hostOwner(ownerId) || browserReader?.status()?.available !== true)) {
+          throw failure(browserReader?.status()?.lastFailure === 'BROWSER_CLEANUP_FAILED'
+            ? 'BROWSER_CLEANUP_FAILED' : 'BROWSER_UNAVAILABLE', 503);
+        }
         const priorProjectCommand = requestedProjectId ? Object.values(state.commands).find((item) =>
           item.requestId === body.requestId && item.kind === 'session.create' &&
           item.payload.projectId === requestedProjectId && item.payload.modelProfileId === body.modelProfileId) : null;
-        const rawPayload = projectSessionMatch ? {
+        const rawPayload = browserSessionPath ? {
+          requestId: body.requestId, kind: 'session.create', targetDeviceId: state.hostId,
+          modelProfileId: body.modelProfileId, workspaceKind: 'browser',
+        } : projectSessionMatch ? {
           requestId: body.requestId, kind: 'session.create', targetDeviceId: state.hostId,
           modelProfileId: body.modelProfileId, projectId: requestedProjectId,
           projectRevision: priorProjectCommand?.payload.projectRevision ?? requestedProject.revision,
@@ -2620,9 +2819,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         } : canonicalCommand(body, state.hostId);
         const projectBinding = rawPayload.kind === 'session.message' ? taskAction
           ? rootSource.payload : state.sessions[rawPayload.sessionId] : null;
+        const browserBinding = rawPayload.kind === 'session.message' &&
+          (taskAction ? rootSource.payload.workspaceKind : state.sessions[rawPayload.sessionId]?.workspaceKind) === 'browser';
         const payload = canonicalCommand({ ...rawPayload,
           ...(projectBinding?.projectId ? { projectId: projectBinding.projectId,
-            projectRevision: projectBinding.projectRevision } : {}) }, state.hostId, true);
+            projectRevision: projectBinding.projectRevision } : {}),
+          ...(browserBinding ? { workspaceKind: 'browser', initialUrls: taskAction
+            ? rootSource.payload.initialUrls : initialBrowserUrls(rawPayload.text, browserReader) } : {}) }, state.hostId, true);
         requireOpen();
         if (storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
         if (payload.kind === 'desktop.open_app' && typeof backend.openDesktopApp !== 'function') {
@@ -2920,6 +3123,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const { project } = await checkedProjectSession(ownerId, sessionId);
       return { ...publicProject(project), modelProfileId: session.modelProfileId };
     },
+    async browserForSession({ sessionId, ownerId = rootState.legacyOwnerId }) {
+      id(sessionId);
+      if (!hostOwner(ownerId)) return null;
+      if (accountState(ownerId).sessions[sessionId]?.workspaceKind !== 'browser') return null;
+      const session = await checkedBrowserSession(ownerId, sessionId);
+      return { workspaceKind: 'browser', modelProfileId: session.modelProfileId };
+    },
     /** Main-process only: list or read inside the project frozen on this session. */
     async submitToolProject({ action, sessionId, turn, callId, messageHash, receiptId,
       query = '', fileId, startLine = 1 }) {
@@ -3030,6 +3240,120 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       return { ...publicSource(saved), text: read.text };
     },
+    /** Main-process only: one browser read from a frozen user URL or observed link. */
+    async submitToolBrowser({ action, sessionId, turn, callId, messageHash, receiptId,
+      url, snapshotId: linkSnapshotId, linkId }) {
+      const ownerId = rootState.legacyOwnerId;
+      id(sessionId);
+      if (!['open_page', 'follow_link'].includes(action) ||
+          !Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
+          !/^[A-Za-z0-9._:-]{1,160}$/.test(callId) ||
+          typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash) ||
+          !validId(receiptId) ||
+          (action === 'open_page' && (typeof url !== 'string' || linkSnapshotId !== undefined || linkId !== undefined)) ||
+          (action === 'follow_link' && (url !== undefined || !WEB_SNAPSHOT_ID.test(linkSnapshotId ?? '') ||
+            !LINK_ID.test(linkId ?? '')))) throw failure('INVALID_COMMAND');
+      await checkedBrowserSession(ownerId, sessionId);
+      for (let attempt = 0; attempt < 20 && Object.values(accountState(ownerId).commands).some((item) =>
+        item.kind === 'session.message' && item.sessionId === sessionId &&
+        item.state === 'dispatching' && typeof item.payload.text === 'string' &&
+        digest(item.payload.text) === messageHash); attempt++) {
+        if (closing) throw failure('SERVICE_CLOSING', 503);
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
+      const account = accountState(ownerId);
+      const { source, rootTaskId, root } = browserToolSource(account,
+        { sessionId, turn, messageHash, receiptId });
+      let targetUrl;
+      if (action === 'open_page') {
+        targetUrl = browserReader.canonicalUrl(url);
+        if (!root.payload.initialUrls.includes(targetUrl)) throw failure('BROWSER_SOURCE_UNVERIFIED', 403);
+      } else {
+        const prior = account.browserSources?.[linkSnapshotId];
+        if (!prior || prior.ownerId !== ownerId || prior.taskId !== rootTaskId ||
+            prior.sessionId !== sessionId || prior.turn !== turn ||
+            prior.sourceReceiptId !== receiptId) throw failure('BROWSER_SOURCE_UNVERIFIED', 403);
+        const observedLink = prior.links.find((link) => link.linkId === linkId);
+        if (!observedLink) throw failure('BROWSER_SOURCE_UNVERIFIED', 403);
+        if (typeof verifyToolResult !== 'function') throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+        const proven = await withDeadline(() => verifyToolResult({ sessionId, turn,
+          readCallId: prior.readCallId, snapshotId: prior.snapshotId,
+          sourceReceiptId: receiptId, beforeCallId: callId,
+          readTool: prior.readTool, beforeTool: 'personal_browser_follow' }), 3_500).catch(() => false);
+        if (proven !== true) throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+        targetUrl = browserReader.canonicalUrl(observedLink.url);
+      }
+      const snapshotId = `source-${digest(`web|${ownerId}|${rootTaskId}|${sessionId}|${turn}|${receiptId}|${callId}|${action}|${targetUrl}`).slice(0, 48)}`;
+      const existing = account.browserSources?.[snapshotId];
+      if (existing) {
+        if (existing.sourceCommandId !== source.commandId || existing.readCallId !== callId ||
+            existing.requestedUrl !== targetUrl || existing.readTool !==
+              (action === 'open_page' ? 'personal_browser_open' : 'personal_browser_follow')) {
+          throw failure('REQUEST_CONFLICT', 409);
+        }
+        const bytes = await artifactStore.inspect(ownerId, rootTaskId, snapshotId,
+          { size: existing.textSize, sha256: existing.textSha256 });
+        await checkedBrowserSession(ownerId, sessionId);
+        const checked = browserToolSource(accountState(ownerId), { sessionId, turn, messageHash, receiptId });
+        if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+        return { ...publicSource(existing), text: bytes.toString('utf8') };
+      }
+      const read = await browserReader.read({ ownerId, taskId: rootTaskId, sessionId,
+        receiptId, callId, url: targetUrl });
+      const canonicalFinal = browserReader.canonicalUrl(read.url);
+      if (read.requestedUrl !== targetUrl || canonicalFinal !== read.url ||
+          typeof read.text !== 'string' || !read.text.trim() ||
+          Buffer.byteLength(read.text, 'utf8') > 32 * 1024 ||
+          typeof read.title !== 'string' || Array.from(read.title).length > 256 ||
+          typeof read.truncated !== 'boolean' || !Array.isArray(read.links) || read.links.length > 50) {
+        throw failure('BROWSER_RENDERER_FAILED', 503);
+      }
+      await checkedBrowserSession(ownerId, sessionId);
+      const afterRead = browserToolSource(accountState(ownerId), { sessionId, turn, messageHash, receiptId });
+      if (afterRead.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      const links = read.links.map((link, index) => {
+        if (typeof link.label !== 'string' || Array.from(link.label).length > 160 ||
+            typeof link.url !== 'string' || Buffer.byteLength(link.url, 'utf8') > 2048) {
+          throw failure('BROWSER_RENDERER_FAILED', 503);
+        }
+        return { linkId: `link-${digest(`${snapshotId}|${index}|${link.url}|${randomBytes(16).toString('hex')}`).slice(0, 40)}`,
+          label: link.label, url: browserReader.canonicalUrl(link.url) };
+      });
+      const bytes = Buffer.from(read.text, 'utf8');
+      const textSha256 = digest(bytes);
+      const readAt = new Date(timestamp()).toISOString();
+      try { await artifactStore.write(ownerId, rootTaskId, snapshotId,
+        { bytes, size: bytes.length, sha256: textSha256 }); }
+      catch (error) {
+        if (error?.code !== 'ARTIFACT_EXISTS') throw error;
+        await artifactStore.inspect(ownerId, rootTaskId, snapshotId, { size: bytes.length, sha256: textSha256 });
+      }
+      const saved = await serial(() => mutate(ownerId, (next) => {
+        if (next.sessions[sessionId]?.workspaceKind !== 'browser' ||
+            next.sessions[sessionId]?.modelProfileId !== account.sessions[sessionId].modelProfileId) {
+          throw failure('BROWSER_UNAVAILABLE', 409);
+        }
+        const checked = browserToolSource(next, { sessionId, turn, messageHash, receiptId });
+        if (checked.source.commandId !== source.commandId || checked.rootTaskId !== rootTaskId) {
+          throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+        }
+        next.browserSources ??= {};
+        if (next.browserSources[snapshotId]) return next.browserSources[snapshotId];
+        if (Object.keys(next.browserSources).length >= MAX_BROWSER_SNAPSHOTS) throw failure('CAPACITY_LIMIT', 429);
+        checked.source.dshTurn = turn;
+        const record = { kind: 'webpage', snapshotId, ownerId, taskId: rootTaskId,
+          sourceCommandId: source.commandId, sessionId, turn, sourceReceiptId: receiptId,
+          readCallId: callId, readTool: action === 'open_page' ? 'personal_browser_open' : 'personal_browser_follow',
+          title: read.title, url: read.url, requestedUrl: targetUrl, readAt,
+          textSize: bytes.length, textSha256, truncated: read.truncated, links };
+        next.browserSources[snapshotId] = record;
+        return record;
+      }));
+      await checkedBrowserSession(ownerId, sessionId);
+      const checked = browserToolSource(accountState(ownerId), { sessionId, turn, messageHash, receiptId });
+      if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      return { ...publicSource(saved), text: read.text };
+    },
     /** Main-process only: a DSH tool call from an owner-bound restricted turn. */
     async submitToolDesktop({ sessionId, turn, callId, messageHash, appId }) {
       const ownerId = rootState.legacyOwnerId;
@@ -3122,6 +3446,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const state = accountState(ownerId);
       if (state.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
       const projectSession = state.sessions[sessionId]?.projectId ? await checkedProjectSession(ownerId, sessionId) : null;
+      const browserSession = state.sessions[sessionId]?.workspaceKind === 'browser'
+        ? await checkedBrowserSession(ownerId, sessionId) : null;
       let citedSources = null;
       if (projectSession) {
         if (!validId(receiptId) || !Array.isArray(sourceSnapshotIds) || sourceSnapshotIds.length < 1 ||
@@ -3149,6 +3475,31 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           `- ${read.relativePath}，第 ${read.lineStart}–${read.lineEnd} 行，读取于 ${read.readAt}，SHA-256 ${read.fileSha256}`)
           .join('\n');
         artifact = canonicalArtifact(fileName, `${content.trimEnd()}\n\n## 已读取来源\n${manifest}\n`);
+      } else if (browserSession) {
+        if (!validId(receiptId) || !Array.isArray(sourceSnapshotIds) || sourceSnapshotIds.length < 1 ||
+            sourceSnapshotIds.length > 16 || new Set(sourceSnapshotIds).size !== sourceSnapshotIds.length ||
+            sourceSnapshotIds.some((sourceId) => !WEB_SNAPSHOT_ID.test(sourceId)) ||
+            typeof verifyToolResult !== 'function') throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+        const { source, rootTaskId } = browserToolSource(state,
+          { sessionId, turn, messageHash, receiptId });
+        citedSources = sourceSnapshotIds.map((sourceId) => {
+          const read = state.browserSources?.[sourceId];
+          if (!read || read.ownerId !== ownerId || read.taskId !== rootTaskId ||
+              read.sourceCommandId !== source.commandId || read.sessionId !== sessionId ||
+              read.turn !== turn || read.sourceReceiptId !== receiptId) {
+            throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+          }
+          return read;
+        });
+        const proofs = await Promise.all(citedSources.map((read) => withDeadline(() => verifyToolResult({
+          sessionId, turn, readCallId: read.readCallId, snapshotId: read.snapshotId,
+          sourceReceiptId: receiptId, beforeCallId: callId, readTool: read.readTool,
+        }), 3_500).catch(() => false)));
+        if (proofs.some((proof) => proof !== true)) throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+        const manifest = citedSources.map((read) =>
+          `- 网页：${JSON.stringify(read.title.replace(/\s+/g, ' '))}；地址：${read.url}；读取于 ${read.readAt}；SHA-256 ${read.textSha256}${read.truncated ? '；正文已截断' : ''}`)
+          .join('\n');
+        artifact = canonicalArtifact(fileName, `${content.trimEnd()}\n\n## 已读取网页来源\n${manifest}\n`);
       } else if (sourceSnapshotIds !== undefined || receiptId !== undefined) {
         if (sourceSnapshotIds !== undefined && (!Array.isArray(sourceSnapshotIds) || sourceSnapshotIds.length)) {
           throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
@@ -3175,7 +3526,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           if (item.kind !== 'session.message' || item.sessionId !== sessionId ||
               item.state !== 'accepted_by_dsh' || typeof item.payload.text !== 'string' ||
               digest(item.payload.text) !== messageHash ||
-              (projectSession && item.receiptId !== receiptId) ||
+              ((projectSession || browserSession) && item.receiptId !== receiptId) ||
               (item.dshTurn !== undefined && item.dshTurn !== turn) ||
               !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
           const device = next.devices[item.sourceDeviceId];
@@ -3193,6 +3544,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
               source.payload.projectRevision !== grant.project.revision ||
               citedSources.some((read) => next.projectSources?.[read.snapshotId]?.sourceCommandId !== source.commandId)) {
             throw failure('PROJECT_SOURCE_UNVERIFIED', 409);
+          }
+        }
+        if (browserSession) {
+          if (next.sessions[sessionId]?.workspaceKind !== 'browser' ||
+              next.sessions[sessionId]?.modelProfileId !== browserSession.modelProfileId ||
+              source.payload.workspaceKind !== 'browser' ||
+              citedSources.some((read) => next.browserSources?.[read.snapshotId]?.sourceCommandId !== source.commandId)) {
+            throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
           }
         }
         const existing = Object.values(next.commands).find((item) => item.requestId === requestId);
@@ -3215,7 +3574,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const payload = canonicalCommand({ requestId, kind: INTERNAL_ARTIFACT_KIND,
           targetDeviceId: next.hostId, sessionId, taskId: rootTaskId, artifactId,
           fileName: artifact.fileName, size: artifact.size, sha256: artifact.sha256,
-          ...(projectSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}) }, next.hostId, true);
+          ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}) }, next.hostId, true);
         const now = new Date(timestamp()).toISOString();
         next.commands[commandId] = { commandId, ownerId, requestId,
           payloadHash: digest(JSON.stringify(payload)), payload,
@@ -3223,7 +3582,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           targetDeviceId: next.hostId, kind: INTERNAL_ARTIFACT_KIND, sessionId,
           taskId: rootTaskId, artifactId, fileName: artifact.fileName,
           size: artifact.size, sha256: artifact.sha256,
-          ...(projectSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}),
+          ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}),
           toolSource: { sessionId, turn, callId, sourceCommandId: source.commandId },
           state: 'dispatching', createdAt: now, updatedAt: now };
         return commandId;
@@ -3268,6 +3627,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       closing = true;
       closePromise = (async () => {
         mobileUi?.close();
+        const browserClosed = Promise.resolve(browserReader?.close());
         const syncClosed = Promise.all([...syncStores.values()].map((store) => store.close()));
         const current = server;
         server = undefined;
@@ -3282,7 +3642,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           // Store transactions contain no backend await. Successful close waits
           // for the last atomic write before another instance may open this root.
           await Promise.race([
-            Promise.all([queue, syncClosed]),
+            Promise.all([queue, syncClosed, browserClosed]),
             new Promise((_, reject) => { timer = setTimeout(() => reject(failure('CLOSE_TIMEOUT', 503)), CLOSE_TIMEOUT_MS); }),
           ]);
           clearTimeout(timer);

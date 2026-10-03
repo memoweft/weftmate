@@ -94,6 +94,10 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   projectReceipt?: (owner: string, requestId: string) => object | Promise<object>;
   projectSessions?: (owner: string) => object | Promise<object>;
   hostModels?: (owner: string) => object | Promise<object>;
+  browserStatus?: (owner: string) => object | Promise<object>;
+  browserSession?: (owner: string, params: any) => object | Promise<object>;
+  browserSend?: (owner: string, params: any) => object | Promise<object>;
+  deferAnimationFrame?: boolean;
   hostTask?: object; hostActivities?: object[];
   deferItemsFor?: string; deferMore?: boolean } = {}) {
   const nodes = new Map<string, FakeElement>()
@@ -107,6 +111,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   let scopes: Record<string, string> = { A: 'scope-A', B: 'scope-B' }
   let rawOwners: Record<string, string> = { A: 'account-A-raw', B: 'account-B-raw' }
   const deferred: DeferredRequest[] = []
+  const animationFrames: Array<(time: number) => unknown> = []
   let deferOwner = options.deferItemsFor ?? ''
   let deferMore = options.deferMore ?? false
   const itemsByOwner: Record<string, MemoryItem[]> = {
@@ -175,6 +180,9 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
             ? options.projectList(owner) : { source: 'host', hostId: 'host-fixture', projects: [], canManage: false }; break
           case 'shared.projects.createSession': result = owner && options.projectCreate
             ? options.projectCreate(owner, request.params) : (() => { throw new Error('OPERATION_FAILED') })(); break
+          case 'shared.send': result = owner && options.browserSend
+            ? options.browserSend(owner, request.params) : { source: 'host', sessionId: request.params.sessionId,
+              requestId: request.params.requestId, state: 'accepted' }; break
           case 'shared.sessions.list': result = owner && options.projectSessions
             ? options.projectSessions(owner) : { source: 'host', sessions: [], hostAvailable: true }; break
           case 'models.host': result = owner && options.hostModels ? options.hostModels(owner) : { models: [] }; break
@@ -188,6 +196,14 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
             connectionVerified: true, backgroundSync: 'scheduled' }; break
           case 'host.business':
             if (!owner) throw new Error('LOGIN_REQUIRED')
+            if (request.params.path === '/personal/v1/workspaces/browser' && request.params.method === 'GET') {
+              result = options.browserStatus?.(owner) ?? { available: false, hostId: 'host-fixture', workspaceKind: 'browser' }
+              break
+            }
+            if (request.params.path === '/personal/v1/workspaces/browser/sessions' && request.params.method === 'POST') {
+              result = options.browserSession?.(owner, request.params.body) ?? Promise.reject(new Error('OPERATION_FAILED'))
+              break
+            }
             result = business(request.params.path, owner, request.params.method, request.params.body); break
           case 'app.activity': result = {}; break
           default: result = {}
@@ -206,15 +222,19 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const window: any = { weftNative: bridge, innerHeight: 844, matchMedia: () => ({ matches: false, addEventListener() {} }),
     addEventListener() {}, WeftFormat: null }
   const timers: any = { setTimeout: (fn: (...args: any[]) => unknown, delay: number) => { const timer: any = setTimeout(fn, Math.min(delay, 10)); timer.unref?.(); return timer },
-    clearTimeout, requestAnimationFrame: (fn: (time: number) => unknown) => { fn(0); return 1 }, localStorage: {
+    clearTimeout, requestAnimationFrame: (fn: (time: number) => unknown) => {
+      if (options.deferAnimationFrame) animationFrames.push(fn); else fn(0)
+      return animationFrames.length || 1
+    }, localStorage: {
       get length() { return storage.size }, key: (index: number) => [...storage.keys()][index] ?? null,
       getItem: (key: string) => storage.get(key) ?? null, setItem: (key: string, value: string) => storage.set(key, value),
       removeItem: (key: string) => storage.delete(key),
     } }
   runInNewContext(source, { document, window, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
-    console, Intl, Date, Error, Map, Set, Promise, crypto: webcrypto, TextEncoder })
+    console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, TextEncoder })
   return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, setDeferredOwner: (owner: string) => { deferOwner = owner },
+    flushAnimationFrames() { for (const frame of animationFrames.splice(0)) frame(0) },
     setDeferMore: () => { deferMore = true }, resolveDeferred(index: number, value: object) { deferred[index].resolve(value) },
     rejectDeferred(index: number, code: string) { deferred[index].reject(new Error(code)) },
     setOwner: (owner: 'A' | 'B' | null) => { active = owner }, scopes, rawOwners }
@@ -836,4 +856,97 @@ test('lost project-session POST receipt reuses the saved request before selectin
   await waitUntil(() => !app.storage.has('weftmate-project-create:scope-A:host-fixture'), 'lost receipt was not reconciled')
   assert.equal(postCount, 1, 'recovery must not create a second session')
   assert.ok(app.calls.filter((call) => call.method === 'shared.commands.byRequest').length >= 2)
+})
+
+test('browser workspace persists two request IDs and goal before exact session and shared send', async () => {
+  const sessionId = 'session-33333333-3333-4333-8333-333333333333'
+  let app!: ReturnType<typeof harness>
+  let storedAtSessionPost = ''
+  const messageCalls: any[] = []
+  app = harness({ projectList: () => ({ source: 'host', hostId: 'host-fixture', projects: [], canManage: false }),
+    browserStatus: () => ({ available: true, hostId: 'host-fixture', workspaceKind: 'browser' }),
+    hostModels: () => ({ models: [{ profileId: 'model-local', displayName: '本地模型',
+      sourceKind: 'local', configured: true }] }),
+    projectReceipt: () => { throw new Error('NOT_FOUND') },
+    browserSession: (_owner, body) => {
+      storedAtSessionPost = app.storage.get('weftmate-browser-create:scope-A:host-fixture') ?? ''
+      return { command: { commandId: 'cmd-browser', kind: 'session.create',
+        requestId: body.requestId, workspaceKind: 'browser', sessionId, state: 'accepted_by_dsh' } }
+    },
+    projectSessions: () => ({ source: 'host', sessions: [{ source: 'host', sessionId,
+      workspaceKind: 'browser', modelProfileId: 'model-local', sendAvailable: true }] }),
+    browserSend: (_owner, params) => { messageCalls.push(params); return { source: 'host',
+      sessionId: params.sessionId, requestId: params.requestId, state: 'accepted' } },
+  })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'workspaces')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '开始网页任务'), 'browser action missing')
+  const inputs = findAll(app.get('page-content'), (item) => item.tagName === 'TEXTAREA')
+  assert.equal(inputs.length, 2)
+  inputs[0].value = 'https://example.org/article'
+  inputs[1].value = '请阅读此公共网页并保存摘要。'
+  findButton(app.get('page-content'), '开始网页任务')!.fire('click')
+  for (let attempt = 0; attempt < 100 && messageCalls.length < 1; attempt++) await flush()
+  assert.equal(messageCalls.length, 1, `browser shared send missing: ${JSON.stringify(app.calls.map((call) => call.method))}; ${app.get('page-content').textContent.slice(-180)}`)
+  const marker = JSON.parse(storedAtSessionPost)
+  assert.equal(marker.owner, 'scope-A')
+  assert.equal(marker.hostId, 'host-fixture')
+  assert.notEqual(marker.sessionRequestId, marker.messageRequestId)
+  assert.equal(marker.modelProfileId, 'model-local')
+  assert.deepEqual([...marker.urls], ['https://example.org/article'])
+  assert.match(messageCalls[0].text, /请阅读此公共网页.*https:\/\/example\.org\/article/s)
+  assert.equal(messageCalls[0].requestId, marker.messageRequestId)
+  assert.equal(app.calls.filter((call) => call.method === 'host.business' &&
+    call.params.path === '/personal/v1/workspaces/browser/sessions').length, 1)
+  await waitUntil(() => !app.storage.has('weftmate-browser-create:scope-A:host-fixture'), 'browser marker was not cleared')
+})
+
+test('closing the drawer in the same frame prevents its delayed open animation', async () => {
+  const app = harness({ deferAnimationFrame: true })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.get('menu-button').fire('click')
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  app.flushAnimationFrames()
+  assert.equal(app.get('drawer').classList.contains('open'), false)
+  assert.equal(app.get('drawer-scrim').classList.contains('open'), false)
+})
+
+test('empty projects keep browser first and hide project-only model controls', async () => {
+  const app = harness({ projectList: () => ({ source: 'host', hostId: 'host-fixture', projects: [], canManage: false }),
+    browserStatus: () => ({ available: true, hostId: 'host-fixture', workspaceKind: 'browser' }),
+    hostModels: () => ({ models: [{ profileId: 'model-local', displayName: '本地模型',
+      sourceKind: 'local', configured: true }] }) })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'workspaces')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '开始网页任务'), 'browser entry missing')
+  const page = app.get('page-content')
+  assert.ok(page.textContent.indexOf('网页资料') < page.textContent.indexOf('已登记项目'))
+  assert.doesNotMatch(page.textContent, /项目均已撤销/)
+  const projectModel = findAll(page, (node) => node.classList.contains('group') &&
+    node.children.some((child) => child.tagName === 'H2' && child.textContent === '使用的模型'))[0]
+  assert.equal(projectModel?.hidden, true)
+})
+
+test('project list failure does not hide browser entry and browser 404 differs from outage', async () => {
+  const browser = { available: true, hostId: 'host-fixture', workspaceKind: 'browser' }
+  const app = harness({ projectList: () => { throw new Error('SERVICE_UNAVAILABLE') },
+    browserStatus: () => browser,
+    hostModels: () => ({ models: [{ profileId: 'model-local', displayName: '本地模型',
+      sourceKind: 'local', configured: true }] }) })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'workspaces')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '开始网页任务'), 'browser entry missing after project failure')
+  assert.match(app.get('page-content').textContent, /项目列表暂时无法核对/)
+  const old = harness({ projectList: () => ({ source: 'host', hostId: 'host-fixture', projects: [], canManage: false }),
+    browserStatus: () => { throw new Error('NOT_FOUND') } })
+  await waitUntil(() => old.calls.some((call) => call.method === 'app.ready'), 'old host did not boot')
+  old.nav.find((button) => button.dataset.page === 'workspaces')!.fire('click')
+  await waitUntil(() => old.get('page-content').textContent.includes('还没有网页资料入口'), '404 state missing')
+  assert.doesNotMatch(old.get('page-content').textContent, /网页阅读暂时无法连接/)
+  const offline = harness({ projectList: () => ({ source: 'host', hostId: 'host-fixture', projects: [], canManage: false }),
+    browserStatus: () => { throw new Error('SERVICE_UNAVAILABLE') } })
+  await waitUntil(() => offline.calls.some((call) => call.method === 'app.ready'), 'offline host did not boot')
+  offline.nav.find((button) => button.dataset.page === 'workspaces')!.fire('click')
+  await waitUntil(() => offline.get('page-content').textContent.includes('网页阅读暂时无法连接'), 'outage state missing')
+  assert.doesNotMatch(offline.get('page-content').textContent, /还没有网页资料入口/)
 })

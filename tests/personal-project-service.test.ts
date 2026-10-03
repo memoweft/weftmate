@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import test from 'node:test'
@@ -145,6 +145,10 @@ test('project grant, exact read snapshot, cited artifact, revoke and restart sta
     (error: { code?: string }) => error.code === 'PROJECT_REVOKED')
     assert.equal((await request(origin, 'GET', `/personal/v1/tasks/${source.commandId}/sources/${read.snapshotId}`, auth)).status, 200)
     await service.close()
+    const savedStore = JSON.parse(readFileSync(join(profileRoot, 'store.json'), 'utf8'))
+    const savedOwner = Object.values(savedStore.accounts)[0] as any
+    assert.equal(savedOwner.projectSources[read.snapshotId].readTool, undefined,
+      'Stage10 persisted project sources have no readTool field')
     service = await createPersonalAccessService({ root: profileRoot, port: 0, backend, verifyToolResult })
     origin = (await service.start()).origin; auth.origin = origin
     assert.equal((await request(origin, 'GET', `/personal/v1/tasks/${source.commandId}`, auth)).body.sources[0].snapshotId, read.snapshotId)
