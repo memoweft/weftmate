@@ -24,6 +24,9 @@
   state.projectCanManage = false
   state.projectPending = null
   state.projectFetchGeneration = 0
+  state.browserHostId = null
+  state.browserAvailable = false
+  state.browserFetchGeneration = 0
   const memory = { viewGeneration: 0, entryGeneration: 0, queryGeneration: 0, selectedGeneration: 0, operationGeneration: 0,
     status: null, items: [], revision: null, cursor: null, hasMore: false, query: '', kind: 'cognition',
     selected: null, sources: [], mode: 'detail', drafts: new Map(), activeOperation: null,
@@ -156,6 +159,9 @@
     state.projectCanManage = false
     state.projectPending = null
     state.projectFetchGeneration++
+    state.browserHostId = null
+    state.browserAvailable = false
+    state.browserFetchGeneration++
     state.selectedSessionId = null
     state.afterSeq = -1
     state.historyGeneration++
@@ -169,6 +175,7 @@
     byId('task-list').replaceChildren()
     byId('projects-list').replaceChildren()
     byId('project-register-form').hidden = true
+    byId('browser-workspace-form').hidden = true
     byId('phone-conversations').replaceChildren()
     byId('phone-history').replaceChildren()
     byId('phone-pane').hidden = true
@@ -188,6 +195,10 @@
       case 'ACCOUNT_ALREADY_EXISTS': return '这个账户名已经有人使用，请换一个名称或直接登录。'
       case 'FORBIDDEN': return '当前登录没有执行这项操作的权限。'
       case 'UNAUTHORIZED': return '登录已失效，请重新登录。'
+      case 'BROWSER_DNS_TIMEOUT': return '网页域名解析超时，本次没有取得可引用的页面正文。'
+      case 'BROWSER_DOWNGRADE_BLOCKED': return '网页从 HTTPS 跳到不安全的 HTTP，已阻止继续读取。'
+      case 'BROWSER_PAGE_CHANGED': return '网页读取时发生跳转或变化，本次正文不能作为来源，请重试。'
+      case 'BROWSER_CLEANUP_FAILED': return '隔离浏览会话清理未能确认，请稍后重新核对网页任务。'
       default: return context === 'network' ? '暂时无法连接宿主，请稍后重试。' : '操作未完成，请重试。'
     }
   }
@@ -590,6 +601,142 @@
       byId('projects-status').textContent = error.status === 404
         ? '当前电脑服务还没有项目目录功能；原有聊天与历史仍可使用。'
         : error.code === 'NETWORK' ? '电脑暂时不可达，重连后可刷新项目。' : '项目暂时无法读取，请刷新重试。'
+    }
+  }
+
+  const browserRequestId = /^[0-9a-f-]{36}$/
+  const browserModelId = /^[A-Za-z0-9._-]{1,128}$/
+  function browserIntentKey(ownerId = state.ownerId, hostId = state.browserHostId) {
+    return `weftmate-browser-intent:${ownerId}:${hostId}`
+  }
+  function savedBrowserIntent(ownerId = state.ownerId, hostId = state.browserHostId) {
+    if (!ownerId || !hostId) return null
+    try {
+      const value = JSON.parse(localStorage.getItem(browserIntentKey(ownerId, hostId)) || 'null')
+      return value?.ownerId === ownerId && value.hostId === hostId &&
+        browserModelId.test(value.modelProfileId ?? '') &&
+        browserRequestId.test(value.sessionRequestId ?? '') && browserRequestId.test(value.messageRequestId ?? '') &&
+        typeof value.goal === 'string' && value.goal.length > 0 && value.goal.length <= 6000 &&
+        Array.isArray(value.urls) && value.urls.length >= 1 && value.urls.length <= 5 &&
+        value.urls.every((url) => typeof url === 'string' && url.length <= 2048) ? value : null
+    } catch { return null }
+  }
+  function renderBrowserModels() {
+    const select = byId('browser-model-select')
+    const previous = select.value || savedBrowserIntent()?.modelProfileId || state.modelProfileId
+    select.replaceChildren()
+    for (const model of state.models) {
+      const option = element('option', '', `${model.name} · ${model.sourceKind === 'local' ? '电脑本机' : '电脑云端'}`)
+      option.value = model.id
+      select.append(option)
+    }
+    select.value = state.models.some((item) => item.id === previous) ? previous : state.models[0]?.id || ''
+    select.disabled = !state.models.length || !state.browserAvailable
+    const selected = state.models.find((item) => item.id === select.value)
+    byId('browser-destination').textContent = selected
+      ? `网页实际读取的正文将交给${selected.sourceKind === 'local' ? '电脑本机' : '电脑云端'}模型“${selected.name}”。`
+      : '电脑尚无已配置模型，网页任务暂不能开始。'
+    byId('browser-workspace-form').querySelector('button[type="submit"]').disabled = !selected || !state.browserAvailable
+  }
+  async function refreshBrowserWorkspace() {
+    const token = accountToken()
+    if (!accountCurrent(token)) return
+    const generation = ++state.browserFetchGeneration
+    const status = byId('browser-workspace-status')
+    status.textContent = '正在核对网页阅读能力…'
+    try {
+      const payload = await accessApi('/workspaces/browser')
+      if (!accountCurrent(token) || generation !== state.browserFetchGeneration) return
+      if (payload?.workspaceKind !== 'browser' || typeof payload.available !== 'boolean' ||
+          typeof payload.hostId !== 'string' || payload.hostId !== state.hostId) throw { code: 'REQUEST_FAILED' }
+      state.browserHostId = payload.hostId
+      state.browserAvailable = payload.available
+      byId('browser-workspace-form').hidden = !payload.available
+      if (!payload.available) { status.textContent = '当前账户或电脑暂不能发起网页阅读；原有任务仍可查看。'; return }
+      const prior = savedBrowserIntent()
+      if (prior) {
+        byId('browser-url-list').value = prior.urls.join('\n')
+        byId('browser-goal').value = prior.goal
+      }
+      renderBrowserModels()
+      status.textContent = prior ? '发现上次未确认的网页任务，正在用原编号核对。' : ''
+      status.hidden = !status.textContent
+      if (prior) void reconcileBrowserIntent(prior, status)
+    } catch (error) {
+      if (!accountCurrent(token) || generation !== state.browserFetchGeneration) return
+      state.browserAvailable = false
+      byId('browser-workspace-form').hidden = true
+      status.hidden = false
+      status.textContent = error.status === 404 ? '当前电脑服务还没有网页资料入口；原有项目和聊天仍可使用。'
+        : error.code === 'NETWORK' ? '电脑暂时不可达，重连后可核对原网页任务。' : '网页阅读状态暂不可核对。'
+    }
+  }
+
+  async function reconcileBrowserIntent(intent, status) {
+    const token = accountToken()
+    const current = () => accountCurrent(token) && state.browserHostId === intent.hostId
+    if (!current()) return
+    status.hidden = false
+    status.textContent = '正在按原编号核对网页会话…'
+    let command = null
+    try { command = (await accessApi(`/commands/by-request/${encodeURIComponent(intent.sessionRequestId)}`))?.command || null }
+    catch (error) {
+      if (!current()) return
+      if (error.code !== 'NOT_FOUND') { status.textContent = '暂时无法核对原会话请求；选择和编号已保留。'; return }
+    }
+    if (!command) {
+      try {
+        command = (await accessApi('/workspaces/browser/sessions', { method: 'POST', protectedWrite: true,
+          body: { requestId: intent.sessionRequestId, modelProfileId: intent.modelProfileId } }))?.command || null
+      } catch { if (current()) status.textContent = '会话送达状态不明；原编号已保留，不会另建会话。'; return }
+    }
+    if (!current()) return
+    if (command?.kind !== 'session.create' || command.requestId !== intent.sessionRequestId ||
+        command.workspaceKind !== 'browser' || !sessionIdPattern.test(command.sessionId ?? '')) {
+      status.textContent = '网页会话回执与原选择不一致，已保留请求供核对。'; return
+    }
+    for (let attempt = 0; attempt < 5 && current() && ['pending', 'dispatching'].includes(command.state); attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 800))
+      if (!current()) return
+      try { command = (await accessApi(`/commands/by-request/${encodeURIComponent(intent.sessionRequestId)}`))?.command || command }
+      catch { break }
+    }
+    if (command.state !== 'accepted_by_dsh') { status.textContent = '电脑尚未确认网页会话，原编号仍保留。'; return }
+    let sessions
+    try { sessions = (await accessApi('/sessions'))?.sessions }
+    catch { if (current()) status.textContent = '网页会话列表暂不可核对，原编号仍保留。'; return }
+    if (!current()) return
+    if (!Array.isArray(sessions) || !sessions.some((item) => item.sessionId === command.sessionId &&
+        item.workspaceKind === 'browser' && item.modelProfileId === intent.modelProfileId)) {
+      status.textContent = '网页会话已受理，等待准确绑定进入列表。'; return
+    }
+    state.sessions = sessions
+    const text = `${intent.goal}\n\n网页链接：\n${intent.urls.join('\n')}`
+    let message = null
+    try { message = (await accessApi(`/commands/by-request/${encodeURIComponent(intent.messageRequestId)}`))?.command || null }
+    catch (error) { if (error.code !== 'NOT_FOUND') {
+      if (current()) status.textContent = '网页目标状态暂无法核对，原编号仍保留。'; return
+    } }
+    if (!current()) return
+    if (!message) {
+      try { message = (await accessApi('/commands', { method: 'POST', protectedWrite: true,
+        body: { requestId: intent.messageRequestId, kind: 'session.message',
+          targetDeviceId: intent.hostId, sessionId: command.sessionId, text, mode: 'queue' } }))?.command || null }
+      catch { if (current()) status.textContent = '网页目标送达状态不明；原消息编号已保留。'; return }
+    }
+    if (!current()) return
+    if (message?.kind !== 'session.message' || message.requestId !== intent.messageRequestId ||
+        message.sessionId !== command.sessionId || message.workspaceKind !== 'browser') {
+      status.textContent = '网页目标回执与原选择不一致，编号已保留。'; return
+    }
+    if (message.state !== 'accepted_by_dsh') {
+      status.textContent = '电脑已记录网页目标，正在派发；可按原编号重新核对。'; return
+    }
+    try { localStorage.removeItem(browserIntentKey(intent.ownerId, intent.hostId)) } catch { /* same request remains safe */ }
+    await enterAssistant()
+    if (state.ownerId === intent.ownerId && state.sessions.some((item) => item.sessionId === command.sessionId)) {
+      await selectSession(command.sessionId)
+      toast('网页目标已送达原会话；请在事情中查看实际阅读与来源。')
     }
   }
 
@@ -1462,6 +1609,7 @@
       select.value = state.modelProfileId
     }
     updateAvailability()
+    if (state.currentView === 'account' && state.browserAvailable) renderBrowserModels()
   }
   function renderSessions() {
     const list = byId('session-list')
@@ -1976,25 +2124,34 @@
     const list = byId('task-detail-sources')
     list.replaceChildren()
     const sources = Array.isArray(payload.sources) ? payload.sources.filter((source) =>
-      /^source-[a-f0-9]{48}$/.test(source?.snapshotId ?? '') &&
-      typeof source.relativePath === 'string' && Number.isSafeInteger(source.lineStart) &&
-      Number.isSafeInteger(source.lineEnd) && /^[a-f0-9]{64}$/.test(source.fileSha256 ?? '')) : []
+      source?.kind === 'webpage' ? /^source-[a-f0-9]{48}$/.test(source.snapshotId ?? '') &&
+        typeof source.title === 'string' && typeof source.url === 'string' &&
+        /^[a-f0-9]{64}$/.test(source.contentSha256 ?? '') :
+        /^source-[a-f0-9]{48}$/.test(source?.snapshotId ?? '') &&
+        typeof source.relativePath === 'string' && Number.isSafeInteger(source.lineStart) &&
+        Number.isSafeInteger(source.lineEnd) && /^[a-f0-9]{64}$/.test(source.fileSha256 ?? '')) : []
     if (!sources.length) {
-      list.append(element('li', 'task-artifact-empty', payload.project
-        ? '尚无已核验的读取来源。摘要必须先读取项目文件。' : '这件事没有项目资料来源。'))
+      list.append(element('li', 'task-artifact-empty', payload.workspace?.kind === 'browser'
+        ? '尚无已核验的网页阅读来源；未读页面不能作为摘要依据。' : payload.project
+          ? '尚无已核验的读取来源。摘要必须先读取项目文件。' : '这件事没有项目资料来源。'))
       return
     }
     for (const source of sources) {
       const item = element('li', 'task-source-item')
-      const title = element('strong', '', source.relativePath)
-      const meta = element('small', '', `第 ${source.lineStart}–${source.lineEnd} 行 · ${formatDate(source.readAt)}${
-        source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`)
+      const web = source.kind === 'webpage'
+      const title = element('strong', '', web ? source.title || source.url : source.relativePath)
+      const meta = element('small', '', web
+        ? `${source.url} · ${formatDate(source.readAt)}${source.truncated ? ' · 只读取了部分正文' : ''}${
+          source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`
+        : `第 ${source.lineStart}–${source.lineEnd} 行 · ${formatDate(source.readAt)}${
+          source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`)
       const view = element('button', 'button secondary small', '查看读取正文')
       view.type = 'button'
       view.addEventListener('click', () => { void previewTaskSource(payload.taskId, source) })
       const technical = element('details', 'task-record-id')
-      technical.append(element('summary', '', '查看文件版本与来源编号'),
-        element('code', '', `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`))
+      technical.append(element('summary', '', web ? '查看网页来源编号与内容版本' : '查看文件版本与来源编号'),
+        element('code', '', web ? `正文 SHA-256 ${source.contentSha256}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length ?? 0} 条`
+          : `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`))
       item.append(title, meta, view, technical)
       list.append(item)
     }
@@ -2013,14 +2170,18 @@
       if (!taskDetailCurrent(generation, taskId) || identity !== state.identityGeneration ||
           taskDetail.selectedSourceId !== source.snapshotId) return
       const actual = payload?.source
-      if (actual?.snapshotId !== source.snapshotId || actual.fileSha256 !== source.fileSha256 ||
-          actual.lineStart !== source.lineStart || actual.lineEnd !== source.lineEnd ||
-          typeof actual.text !== 'string' || new TextEncoder().encode(actual.text).length > 32 * 1024) {
+      const same = source.kind === 'webpage'
+        ? actual?.kind === 'webpage' && actual.url === source.url &&
+          actual.contentSha256 === source.contentSha256 && actual.truncated === source.truncated
+        : actual?.fileSha256 === source.fileSha256 && actual.lineStart === source.lineStart &&
+          actual.lineEnd === source.lineEnd
+      if (actual?.snapshotId !== source.snapshotId || !same || typeof actual.text !== 'string' ||
+          new TextEncoder().encode(actual.text).length > 32 * 1024) {
         throw { code: 'SOURCE_CHANGED' }
       }
       preview.textContent = actual.text
       preview.hidden = false
-      status.textContent = `${source.relativePath} · 读取时的正文与版本已核对。`
+      status.textContent = `${source.kind === 'webpage' ? source.title || source.url : source.relativePath} · 读取时的正文与版本已核对。`
     } catch (error) {
       if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedSourceId !== source.snapshotId) return
       status.textContent = error.code === 'NETWORK' ? '连接中断，来源正文尚未确认；请重试。'
@@ -2952,6 +3113,41 @@
   })
   byId('devices-refresh').addEventListener('click', refreshDevices)
   byId('projects-refresh').addEventListener('click', () => { void refreshProjects() })
+  byId('browser-workspace-refresh').addEventListener('click', () => { void refreshBrowserWorkspace() })
+  byId('browser-model-select').addEventListener('change', renderBrowserModels)
+  byId('browser-workspace-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    if (!state.browserAvailable || !state.browserHostId) return
+    const token = accountToken(), status = byId('browser-workspace-status')
+    status.hidden = false
+    const goal = byId('browser-goal').value.trim()
+    const urls = byId('browser-url-list').value.split(/\r?\n/u).map((value) => value.trim()).filter(Boolean)
+    const modelProfileId = byId('browser-model-select').value
+    if (!goal || goal.length > 6000 || /https?:\/\//iu.test(goal) || urls.length < 1 || urls.length > 5 ||
+        !state.models.some((item) => item.id === modelProfileId)) {
+      status.textContent = '请填写目标和1–5条单独列出的公共链接；目标中不要重复贴链接。'; return
+    }
+    if (urls.some((value) => { try { const parsed = new URL(value); return !['http:', 'https:'].includes(parsed.protocol) ||
+      parsed.username || parsed.password || new TextEncoder().encode(value).length > 2048 } catch { return true } })) {
+      status.textContent = '链接须是完整的公共 HTTP/HTTPS 地址，且不能包含账号密码。'; return
+    }
+    if (new TextEncoder().encode(`${goal}\n\n网页链接：\n${urls.join('\n')}`).length > 8192) {
+      status.textContent = '目标和链接合计过长，请缩短后重试。'; return
+    }
+    const previous = savedBrowserIntent()
+    if (previous && (previous.goal !== goal || previous.modelProfileId !== modelProfileId ||
+        JSON.stringify(previous.urls) !== JSON.stringify(urls))) {
+      status.textContent = '上一项网页任务仍待核对，请保留原目标与模型，避免重复派发。'; return
+    }
+    const intent = previous || { ownerId: state.ownerId, hostId: state.browserHostId,
+      goal, urls, modelProfileId, sessionRequestId: crypto.randomUUID(), messageRequestId: crypto.randomUUID() }
+    try { localStorage.setItem(browserIntentKey(), JSON.stringify(intent)) }
+    catch { status.textContent = '无法安全保存请求编号，暂不能发送。'; return }
+    const button = byId('browser-workspace-form').querySelector('button[type="submit"]')
+    button.disabled = true
+    try { if (accountCurrent(token)) await reconcileBrowserIntent(intent, status) }
+    finally { if (accountCurrent(token)) button.disabled = false }
+  })
   byId('project-register-form').addEventListener('submit', async (event) => {
     event.preventDefault()
     if (!state.projectCanManage) return
@@ -2995,6 +3191,8 @@
     void refreshProfile()
     void refreshDevices()
     void refreshProjects()
+    void refreshModels()
+    void refreshBrowserWorkspace()
   }
   byId('rail-account').addEventListener('click', openAccount)
   byId('show-account').addEventListener('click', openAccount)

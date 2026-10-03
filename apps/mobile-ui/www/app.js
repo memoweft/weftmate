@@ -12,6 +12,7 @@ let sequence = 0;
 let activeSend = null;
 let liveProgressFrame = null, liveProgressVersion = 0;
 let liveMotionFrame = null, liveFollowTop = null, liveRevealStart = null, liveRevealLength = 0;
+let drawerFrameGeneration = 0;
 function invalidateLiveProgress(){liveProgressVersion++;liveProgressFrame=null;liveMotionFrame=null;
   liveFollowTop=null;liveRevealStart=null;liveRevealLength=0}
 let draftReportTimer = null, lastReportedDraft = null;
@@ -148,7 +149,12 @@ function safeError(error) {
     MODEL_IMAGE_UNSUPPORTED:'当前模型不支持图片输入，请换用支持图片的模型或移除图片',
     HOST_ATTACHMENTS_UNSUPPORTED:'这段电脑会话暂不支持图片发送；原图片草稿仍保留',
     IMAGE_REJECTED:'这段电脑会话的模型不支持图片；图片仍在草稿中，请选择支持图片的电脑会话',
-    MODEL_UPSTREAM_ERROR:'模型服务未完成回复，请检查模型配置和连接'};
+    MODEL_UPSTREAM_ERROR:'模型服务未完成回复，请检查模型配置和连接',
+    BROWSER_DNS_TIMEOUT:'网页域名解析超时，本次没有取得可引用的页面正文',
+    BROWSER_DOWNGRADE_BLOCKED:'网页从 HTTPS 跳到不安全的 HTTP，已阻止继续读取',
+    BROWSER_PAGE_CHANGED:'网页读取时发生跳转或变化，本次正文不能作为来源，请重试',
+    BROWSER_CLEANUP_FAILED:'隔离浏览会话清理未能确认，请稍后重新核对网页任务',
+  };
   return names[code] || '操作未完成，请稍后重试';
 }
 function turnFailure(code,httpStatus){const status=Number(httpStatus);
@@ -210,10 +216,13 @@ function openImagePreview(url,name,button,scope,{original=false,display=false,no
   $('image-preview').hidden=false;
   $('image-preview-close').focus()}
 function openDrawer(){closeAttachmentMenu();closeModelMenu();state.drawer=true;
+  const generation=++drawerFrameGeneration;
   renderConversationList();$('drawer-scrim').hidden=false;
   void listSharedSessions();
-  requestAnimationFrame(()=>{$('drawer').classList.add('open');$('drawer-scrim').classList.add('open')});$('drawer-close').focus()}
-function closeDrawer(){state.drawer=false;$('drawer').classList.remove('open');$('drawer-scrim').classList.remove('open');
+  requestAnimationFrame(()=>{if(!state.drawer||generation!==drawerFrameGeneration)return;
+    $('drawer').classList.add('open');$('drawer-scrim').classList.add('open')});$('drawer-close').focus()}
+function closeDrawer(){state.drawer=false;drawerFrameGeneration++;
+  $('drawer').classList.remove('open');$('drawer-scrim').classList.remove('open');
   clearTimeout(closeDrawer.timer);closeDrawer.timer=setTimeout(()=>{if(!state.drawer)$('drawer-scrim').hidden=true},
     window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:300)}
 function closeModelMenu(){state.menu=false;$('model-popover').hidden=true;$('model-button').setAttribute('aria-expanded','false')}
@@ -1282,6 +1291,64 @@ function savedProjectIntent(hostId){try{const value=JSON.parse(localStorage.getI
     profileIdPattern.test(value.modelProfileId||'')&&/^[0-9a-f-]{36}$/.test(value.requestId||'')?value:null}catch{return null}}
 function projectIntentCurrent(owner,epoch,generation){return state.loggedIn&&state.owner===owner&&
   state.authEpoch===epoch&&state.page==='workspaces'&&state.generation===generation&&!state.transitionPending}
+function browserIntentKey(hostId){return `weftmate-browser-create:${state.owner}:${hostId}`}
+function savedBrowserIntent(hostId){try{const value=JSON.parse(localStorage.getItem(browserIntentKey(hostId))||'null');
+  return value?.owner===state.owner&&value.hostId===hostId&&profileIdPattern.test(value.modelProfileId||'')&&
+    /^[0-9a-f-]{36}$/.test(value.sessionRequestId||'')&&/^[0-9a-f-]{36}$/.test(value.messageRequestId||'')&&
+    typeof value.goal==='string'&&value.goal.length>0&&value.goal.length<=6000&&
+    Array.isArray(value.urls)&&value.urls.length>=1&&value.urls.length<=5&&
+    value.urls.every(url=>typeof url==='string'&&url.length<=2048)?value:null}catch{return null}}
+async function resolveBrowserIntent(intent,message){const owner=state.owner,epoch=state.authEpoch,generation=state.generation;
+  const current=()=>projectIntentCurrent(owner,epoch,generation),sameOwner=()=>state.owner===owner&&
+    state.authEpoch===epoch&&!state.transitionPending;
+  if(!current())return;message.textContent='正在核对原网页会话请求…';
+  let command=null;
+  try{command=(await call('shared.commands.byRequest',{requestId:intent.sessionRequestId}))?.command||null}
+  catch(error){if(!current())return;if(error?.message!=='NOT_FOUND'){
+    message.textContent='暂时无法核对原网页会话，原选择和编号已保留。';return}}
+  if(!command){try{const result=await call('host.business',{path:'/personal/v1/workspaces/browser/sessions',
+      method:'POST',body:{requestId:intent.sessionRequestId,modelProfileId:intent.modelProfileId}});
+      if(!current())return;command=result?.command||null}
+    catch{if(current())message.textContent='网页会话送达状态不明；重连后先查原编号，不会重复创建。';return}}
+  if(command?.kind!=='session.create'||command.requestId!==intent.sessionRequestId||
+    command.workspaceKind!=='browser'||!sessionIdPattern.test(command.sessionId||'')){
+    if(current())message.textContent='网页会话回执与原选择不一致，编号已保留供核对。';return}
+  for(let attempt=0;attempt<5&&current()&&['pending','dispatching'].includes(command.state);attempt++){
+    await new Promise(resolve=>setTimeout(resolve,800));if(!current())return;
+    try{command=(await call('shared.commands.byRequest',{requestId:intent.sessionRequestId}))?.command||command}
+    catch{break}}
+  if(command.state!=='accepted_by_dsh'){
+    if(current())message.textContent='电脑尚未确认网页会话；原选择与请求编号已保留。';return}
+  let session=null;
+  try{const listed=await call('shared.sessions.list');if(!current())return;
+    if(listed?.source!=='host'||!Array.isArray(listed.sessions))throw new Error('SESSION_UNAVAILABLE');
+    session=listed.sessions.find(item=>item.sessionId===command.sessionId&&item.workspaceKind==='browser'&&
+      item.modelProfileId===intent.modelProfileId)||null;
+    if(!session){message.textContent='网页会话已受理，正在等待准确会话绑定进入列表。';return}
+    state.sharedSessions=listed.sessions.filter(item=>item?.source==='host'&&typeof item.sessionId==='string');
+    selectSharedSession(command.sessionId)
+  }catch{if(current())message.textContent='网页会话列表暂不可核对；原编号仍保留。';return}
+  if(!sameOwner())return;
+  const text=`${intent.goal}\n\n网页链接：\n${intent.urls.join('\n')}`;
+  let sent=null;
+  try{sent=(await call('shared.commands.byRequest',{requestId:intent.messageRequestId}))?.command||null}
+  catch(error){if(!sameOwner())return;if(error?.message!=='NOT_FOUND'){
+    status('网页目标状态待核对，原消息编号仍保留');return}}
+  if(!sent){try{const result=await call('shared.send',{sessionId:command.sessionId,
+      text,requestId:intent.messageRequestId});if(!sameOwner())return;
+      if(result?.source!=='host'||result.sessionId!==command.sessionId||
+        result.requestId!==intent.messageRequestId){status('网页目标回执不完整，原编号已保留');return}
+      if(result.state==='accepted'){
+        localStorage.removeItem(browserIntentKey(intent.hostId));
+        status('网页目标已送达电脑会话，正在等待实际阅读结果');void loadSharedHistory();return}
+      status('网页目标送达结果待核对；原编号已保留，不会自动重复发送');return}
+    catch{if(sameOwner())status('网页目标送达状态不明；原编号已保留，重连后先查询');return}}
+  if(sent.requestId===intent.messageRequestId&&sent.sessionId===command.sessionId&&
+      sent.kind==='session.message'&&sent.state==='accepted_by_dsh'){
+    localStorage.removeItem(browserIntentKey(intent.hostId));
+    status('网页目标已在原电脑会话受理');void loadSharedHistory();return}
+  status('网页目标尚未确认受理；原消息编号仍保留')
+}
 async function resolveProjectSessionIntent(intent,message){
   const owner=state.owner,epoch=state.authEpoch,generation=state.generation;
   const current=()=>projectIntentCurrent(owner,epoch,generation);
@@ -1329,24 +1396,34 @@ function workspacesPage(target){target.append(heading('项目与成果'));
   const statusNode=el('p','workspace-status','正在读取账户项目与电脑模型…');target.append(statusNode);
   const projectGroup=group('已登记项目',[]),projectBody=projectGroup.querySelector('.group-body');
   const modelGroup=group('使用的模型',[]),modelBody=modelGroup.querySelector('.group-body');
-  target.append(projectGroup,modelGroup);
-  void Promise.all([call('shared.projects.list'),call('models.host')]).then(([listed,catalog])=>{
+  const browserGroup=group('网页资料',[]),browserBody=browserGroup.querySelector('.group-body');
+  target.append(browserGroup,projectGroup,modelGroup);
+  void Promise.allSettled([call('shared.projects.list'),call('models.host'),
+    call('host.business',{path:'/personal/v1/workspaces/browser',method:'GET'})])
+    .then(([projectResult,modelResult,browserResult])=>{
     if(!current())return;
-    if(listed?.source!=='host'||!hostIdPattern.test(listed.hostId||'')||!Array.isArray(listed.projects)||
-      !Array.isArray(catalog?.models))throw new Error('PROJECT_RESPONSE_INVALID');
-    clear(projectBody);clear(modelBody);
-    const projects=listed.projects.filter(item=>projectIdPattern.test(item?.projectId||'')&&
-      typeof item.name==='string'),models=catalog.models.filter(item=>item?.configured===true&&
+    const candidate=projectResult.status==='fulfilled'?projectResult.value:null;
+    const listed=candidate?.source==='host'&&hostIdPattern.test(candidate.hostId||'')&&
+      Array.isArray(candidate.projects)?candidate:null;
+    const catalog=modelResult.status==='fulfilled'?modelResult.value:null;
+    const browser=browserResult.status==='fulfilled'?browserResult.value:null;
+    const browserError=browserResult.status==='rejected'?browserResult.reason:null;
+    clear(projectBody);clear(modelBody);clear(browserBody);
+    const projects=listed?listed.projects.filter(item=>projectIdPattern.test(item?.projectId||'')&&
+      typeof item.name==='string'):[],models=(Array.isArray(catalog?.models)?catalog.models:[]).filter(item=>item?.configured===true&&
       profileIdPattern.test(item.profileId||'')&&typeof item.displayName==='string');
-    const intent=savedProjectIntent(listed.hostId);
+    const intent=listed?savedProjectIntent(listed.hostId):null;
     let selectedProject=projects.find(item=>item.projectId===intent?.projectId&&!item.revoked)||
       projects.find(item=>!item.revoked)||null;
     let selectedModel=models.find(item=>item.profileId===intent?.modelProfileId)||models[0]||null;
-    if(!projects.length){projectBody.append(notice('此账户还没有登记项目。请先在电脑账户页的“项目与成果”选择资料目录。'))}
+    if(!listed)projectBody.append(notice(projectResult.status==='rejected'&&projectResult.reason?.message==='NOT_FOUND'?
+      '当前电脑服务还没有项目目录入口；网页资料仍可单独使用。':'项目列表暂时无法核对；网页资料仍可单独使用。'));
+    else if(!projects.length){projectBody.append(notice('此账户还没有登记项目。请先在电脑账户页的“项目与成果”选择资料目录。'))}
     else for(const item of projects){const button=row(item.name,
       item.revoked?'已撤销 · 历史成果仍可查看':'电脑登记',()=>{
         if(item.revoked)return;selectedProject=item;renderSelection()});button.disabled=item.revoked;
       button.dataset.projectId=item.projectId;projectBody.append(button)}
+    modelGroup.hidden=!listed||!selectedProject;
     const select=el('select','workspace-model-select');select.setAttribute('aria-label','项目资料使用的电脑模型');
     if(!models.length){select.append(el('option','','电脑没有已配置模型'));select.disabled=true;
       modelBody.append(notice('请先在电脑设置中配置模型；项目目录登记不会自动选择资料目的地。'))}
@@ -1379,8 +1456,70 @@ function workspacesPage(target){target.append(heading('项目与成果'));
         '选择一个未撤销项目和已配置模型后，才能开始项目对话。';
       send.disabled=!selectedProject||!selectedModel}
     renderSelection();
-    statusNode.textContent=intent?'发现上次未完成的会话请求，正在用原编号核对。':
-      projects.some(item=>!item.revoked)?'':'项目均已撤销；请在电脑重新登记。';
+    if(browser?.available!==true||!hostIdPattern.test(browser?.hostId||'')||
+      browser.workspaceKind!=='browser'||listed&&browser.hostId!==listed.hostId){
+      const missing=browserError?.message==='NOT_FOUND'||browserError?.status===404;
+      browserBody.append(notice(missing?'当前电脑服务还没有网页资料入口；已有项目和聊天仍可使用。':
+        browserError?'网页阅读暂时无法连接，请稍后刷新；原请求会保留。':
+          '网页阅读目前不可用，请检查电脑连接与账户权限。'))}
+    else{const priorBrowser=savedBrowserIntent(browser.hostId);
+      const urlBox=el('label','field'),urlInput=el('textarea');urlInput.rows=3;
+      urlInput.value=priorBrowser?.urls.join('\n')||'';
+      urlInput.placeholder='https://example.org/article';
+      urlBox.append(el('span','','公共网页链接（每行一个，1–5条）'),urlInput);
+      const goalBox=el('label','field'),goalInput=el('textarea');goalInput.rows=3;
+      goalInput.maxLength=6000;goalInput.value=priorBrowser?.goal||'';
+      goalInput.placeholder='例如：比较两篇文章的主要观点并保存摘要';
+      goalBox.append(el('span','','希望整理什么'),goalInput);
+      const browserModel=el('select','workspace-model-select');browserModel.setAttribute('aria-label','网页资料使用的电脑模型');
+      for(const item of models){const option=el('option','',`${item.displayName} · ${item.sourceKind==='local'?'电脑本机':'电脑云端'}`);
+        option.value=item.profileId;browserModel.append(option)}
+      browserModel.value=models.some(item=>item.profileId===priorBrowser?.modelProfileId)?priorBrowser.modelProfileId:
+        models[0]?.profileId||'';
+      browserModel.disabled=!models.length;
+      const disclosureWeb=el('p','workspace-disclosure'),webStatus=el('p','workspace-status',
+        priorBrowser?'发现上次未确认的网页任务，正在按原编号核对。':'');
+      webStatus.hidden=!webStatus.textContent;
+      const start=action('开始网页任务',async()=>{
+        if(!current())return;
+        webStatus.hidden=false;
+        const profile=models.find(item=>item.profileId===browserModel.value);
+        const goal=goalInput.value.trim(),urls=urlInput.value.split(/\r?\n/u).map(value=>value.trim()).filter(Boolean);
+        if(!profile||!goal||goal.length>6000||/https?:\/\//iu.test(goal)||urls.length<1||urls.length>5){
+          webStatus.textContent='请填写目标和1–5条单独列出的公共链接；目标文字中不要重复贴链接。';return}
+        if(urls.some(value=>{try{const parsed=new URL(value);return !['http:','https:'].includes(parsed.protocol)||
+            parsed.username||parsed.password||new TextEncoder().encode(value).length>2048}
+          catch{return true}})){
+          webStatus.textContent='链接须是完整的公共 HTTP/HTTPS 地址，且不能包含账号密码。';return}
+        const composed=`${goal}\n\n网页链接：\n${urls.join('\n')}`;
+        if(new TextEncoder().encode(composed).length>8192){webStatus.textContent='目标与链接合计过长，请缩短后重试。';return}
+        const previous=savedBrowserIntent(browser.hostId);
+        if(previous&&(previous.modelProfileId!==profile.profileId||previous.goal!==goal||
+            JSON.stringify(previous.urls)!==JSON.stringify(urls))){
+          webStatus.textContent='上一项网页任务仍待核对，请先按原选择恢复，避免重复派发。';return}
+        const intent=previous||{owner,hostId:browser.hostId,modelProfileId:profile.profileId,goal,urls,
+          sessionRequestId:crypto.randomUUID(),messageRequestId:crypto.randomUUID()};
+        try{const check=await call('models.verifyHost',{profileId:intent.modelProfileId});if(!current())return;
+          if(check?.available!==true){webStatus.textContent='所选电脑模型当前不可用，请核对后再试。';return}}
+        catch{if(current())webStatus.textContent='暂时无法核对所选模型；请检查连接后重试。';return}
+        try{localStorage.setItem(browserIntentKey(browser.hostId),JSON.stringify(intent))}
+        catch{webStatus.textContent='无法安全保存任务编号，暂不能发送。';return}
+        start.disabled=true;
+        try{await resolveBrowserIntent(intent,webStatus)}finally{if(current())start.disabled=false}
+      });
+      const updateWebDisclosure=()=>{const selected=models.find(item=>item.profileId===browserModel.value);
+        disclosureWeb.textContent=selected?`实际读取的公共网页正文将交给${
+          selected.sourceKind==='local'?'电脑本机':'电脑云端'}模型“${selected.displayName}”。链接会由电脑逐一核对。`:
+          '请先在电脑配置可用模型，再发起网页任务。';start.disabled=!selected};
+      browserModel.addEventListener('change',updateWebDisclosure);
+      browserBody.append(urlBox,goalBox,browserModel,disclosureWeb,start,webStatus);
+      updateWebDisclosure();
+      if(priorBrowser)void resolveBrowserIntent(priorBrowser,webStatus)
+    }
+    statusNode.textContent=!listed?projectResult.status==='rejected'&&projectResult.reason?.message==='NOT_FOUND'?
+      '项目目录入口尚未接入；网页资料可独立使用。':'项目列表暂时无法读取；网页资料可独立使用。':
+      intent?'发现上次未完成的会话请求，正在用原编号核对。':
+        projects.length>0&&!selectedProject?'项目均已撤销；请在电脑重新登记。':'';
     statusNode.hidden=!statusNode.textContent;
     if(intent)void resolveProjectSessionIntent(intent,statusNode)
   }).catch(error=>{if(!current())return;statusNode.textContent=['NOT_FOUND','OPERATION_FAILED'].includes(error?.message)?
@@ -1726,30 +1865,36 @@ async function submitTaskControl(taskId,action,text,current,input,section){if(!c
         const detail=el('details','task-record-id');detail.append(el('summary','','查看记录编号'),el('code','',item.commandId));
         entry.append(detail);stepsBody.append(entry)}
       target.append(section)}
-    const projectSources=(Array.isArray(task.sources)?task.sources:[]).filter(item=>
+    const taskSources=(Array.isArray(task.sources)?task.sources:[]).filter(item=>item?.kind==='webpage'?
+      /^source-[a-f0-9]{48}$/.test(item.snapshotId||'')&&typeof item.title==='string'&&
+      typeof item.url==='string'&&/^[a-f0-9]{64}$/.test(item.contentSha256||''):
       /^source-[a-f0-9]{48}$/.test(item?.snapshotId||'')&&typeof item.relativePath==='string'&&
       Number.isSafeInteger(item.lineStart)&&Number.isSafeInteger(item.lineEnd)&&
       /^[a-f0-9]{64}$/.test(item.fileSha256||''));
-    if(task.project||projectSources.length){const sourceGroup=group('读取的来源',[]),sourceBody=sourceGroup.querySelector('.group-body');
+    if(task.project||task.workspace?.kind==='browser'||taskSources.length){const sourceGroup=group('读取的来源',[]),sourceBody=sourceGroup.querySelector('.group-body');
       sourceBody.append(el('p','muted',task.project?`项目：${task.project.name}${task.project.revoked?' · 已撤销；历史来源仍保留':''}`:
-        '这些是任务读取时保存的资料版本。'));
-      if(!projectSources.length)sourceBody.append(el('p','muted','尚无已核验的读取来源；不能把未读内容当作摘要依据。'));
-      for(const source of projectSources){const wrap=el('div','project-source-entry');
-        wrap.append(el('p','artifact-name',source.relativePath),
-          el('p','artifact-meta',`第 ${source.lineStart}–${source.lineEnd} 行 · ${commandTime(source.readAt)} · ${
-            source.cited?'已用于成果':'已读取，未被成果引用'}`));
+        task.workspace?.kind==='browser'?'公共网页实际渲染并读取时保存的正文与链接。':'这些是任务读取时保存的资料版本。'));
+      if(!taskSources.length)sourceBody.append(el('p','muted',task.workspace?.kind==='browser'?
+        '尚无已核验的网页来源；未读页面不能作为摘要依据。':'尚无已核验的读取来源；不能把未读内容当作摘要依据。'));
+      for(const source of taskSources){const wrap=el('div','project-source-entry'),web=source.kind==='webpage';
+        wrap.append(el('p','artifact-name',web?source.title||source.url:source.relativePath),
+          el('p','artifact-meta',web?`${source.url} · ${commandTime(source.readAt)}${source.truncated?' · 只读到部分正文':''} · ${
+            source.cited?'已用于成果':'已读取，未被成果引用'}`:
+            `第 ${source.lineStart}–${source.lineEnd} 行 · ${commandTime(source.readAt)} · ${
+              source.cited?'已用于成果':'已读取，未被成果引用'}`));
         const preview=el('div','artifact-preview');preview.hidden=true;
-        const detail=el('details','task-record-id');detail.append(el('summary','','查看文件版本与来源编号'),
-          el('code','',`SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`));
+        const detail=el('details','task-record-id');detail.append(el('summary','',web?'查看网页来源与内容版本':'查看文件版本与来源编号'),
+          el('code','',web?`正文 SHA-256 ${source.contentSha256}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length??0} 条`:
+            `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`));
         wrap.append(action('查看来源正文',async()=>{
           preview.hidden=false;preview.textContent='正在读取来源正文…';
           try{const result=await call('shared.sources.detail',{taskId,snapshotId:source.snapshotId});
             if(!current())return;
-            const actual=result?.source;
-            if(actual?.snapshotId!==source.snapshotId||actual.fileSha256!==source.fileSha256||
-              actual.lineStart!==source.lineStart||actual.lineEnd!==source.lineEnd||
-              typeof actual.text!=='string'||new TextEncoder().encode(actual.text).length>32*1024)
-              throw new Error('SOURCE_INVALID');
+            const actual=result?.source,same=web?actual?.kind==='webpage'&&actual.url===source.url&&
+              actual.contentSha256===source.contentSha256&&actual.truncated===source.truncated:
+              actual?.fileSha256===source.fileSha256&&actual.lineStart===source.lineStart&&actual.lineEnd===source.lineEnd;
+            if(actual?.snapshotId!==source.snapshotId||!same||typeof actual.text!=='string'||
+              new TextEncoder().encode(actual.text).length>32*1024)throw new Error('SOURCE_INVALID');
             preview.textContent=actual.text;
           }catch(e){if(current())preview.textContent=['NOT_FOUND','UNAUTHORIZED'].includes(e?.message)?
             '当前账户无法读取这份来源。':`来源正文未能核对：${safeError(e)}`}

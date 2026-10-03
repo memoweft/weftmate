@@ -6,6 +6,8 @@ const MAX_NOTEPAD_CALLS_PER_TURN = 2;
 const MAX_DOCUMENT_CALLS_PER_TURN = 2;
 const MAX_PROJECT_LIST_CALLS_PER_TURN = 3;
 const MAX_PROJECT_READ_CALLS_PER_TURN = 12;
+const MAX_BROWSER_OPEN_CALLS_PER_TURN = 5;
+const MAX_BROWSER_FOLLOW_CALLS_PER_TURN = 10;
 
 function distinctCalls(events, turn, name) {
   if (!Array.isArray(events) || !Number.isSafeInteger(turn)) return 0;
@@ -24,7 +26,8 @@ export function repeatedDocumentCalls(events, turn) {
 
 export function apply(ctx) {
   const dispose = ctx.tools.restrict({ allow: ['personal_open_notepad', 'personal_save_document',
-    'personal_list_project_files', 'personal_read_project_file'] });
+    'personal_list_project_files', 'personal_read_project_file',
+    'personal_browser_open', 'personal_browser_follow'] });
   // The official loop records a blocked turn/end when pre-step rejects. A
   // repeated receipt is not progress on the user's goal; stop before another
   // model/tool step, while leaving every prior command and its outcome intact.
@@ -34,7 +37,9 @@ export function apply(ctx) {
     return repeatedNotepadCalls(payload.agent.session.events, payload.turn) >= MAX_NOTEPAD_CALLS_PER_TURN ||
       repeatedDocumentCalls(payload.agent.session.events, payload.turn) >= MAX_DOCUMENT_CALLS_PER_TURN ||
       distinctCalls(payload.agent.session.events, payload.turn, 'personal_list_project_files') >= MAX_PROJECT_LIST_CALLS_PER_TURN ||
-      distinctCalls(payload.agent.session.events, payload.turn, 'personal_read_project_file') >= MAX_PROJECT_READ_CALLS_PER_TURN
+      distinctCalls(payload.agent.session.events, payload.turn, 'personal_read_project_file') >= MAX_PROJECT_READ_CALLS_PER_TURN ||
+      distinctCalls(payload.agent.session.events, payload.turn, 'personal_browser_open') >= MAX_BROWSER_OPEN_CALLS_PER_TURN ||
+      distinctCalls(payload.agent.session.events, payload.turn, 'personal_browser_follow') >= MAX_BROWSER_FOLLOW_CALLS_PER_TURN
       ? { kind: 'reject' } : decision;
   });
   ctx.effect(() => () => dispose(), 'weftmate-personal-desktop-preset: restricted tool roster');

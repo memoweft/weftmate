@@ -7,6 +7,8 @@ export const PERSONAL_DESKTOP_TOOL = 'personal_open_notepad';
 export const PERSONAL_DOCUMENT_TOOL = 'personal_save_document';
 export const PERSONAL_PROJECT_LIST_TOOL = 'personal_list_project_files';
 export const PERSONAL_PROJECT_READ_TOOL = 'personal_read_project_file';
+export const PERSONAL_BROWSER_OPEN_TOOL = 'personal_browser_open';
+export const PERSONAL_BROWSER_FOLLOW_TOOL = 'personal_browser_follow';
 export const PERSONAL_PROJECT_PROOF_PROTOCOL = 'weftmate.personal-project-proof.v1';
 export const inject = ['tools'];
 const SAFE_ID = /^[A-Za-z0-9._:-]{1,160}$/;
@@ -21,7 +23,14 @@ const SAFE_TOOL_ERRORS = new Set(['PERSONAL_TOOL_UNAVAILABLE', 'PERSONAL_TOOL_TI
   'PROJECT_MODEL_CHANGED', 'PROJECT_READ_INVALID', 'PROJECT_SOURCE_UNVERIFIED',
   'PROJECT_ROOT_CHANGED', 'PROJECT_UNSAFE_PATH', 'PROJECT_INVALID_UTF8',
   'PROJECT_FILE_UNAVAILABLE', 'PROJECT_READER_TIMEOUT', 'PROJECT_LINE_OUT_OF_RANGE',
-  'PROJECT_LINE_TOO_LONG', 'PROJECT_READER_INVALID']);
+  'PROJECT_LINE_TOO_LONG', 'PROJECT_READER_INVALID', 'BROWSER_UNAVAILABLE',
+  'BROWSER_BUSY', 'BROWSER_CANCELLED', 'BROWSER_EMPTY_PAGE', 'BROWSER_HTTP_ERROR',
+  'BROWSER_LOGIN_REQUIRED', 'BROWSER_NETWORK_ERROR', 'BROWSER_NETWORK_LIMIT',
+  'BROWSER_RENDERER_FAILED', 'BROWSER_TARGET_BLOCKED', 'BROWSER_URL_INVALID',
+  'BROWSER_LINK_UNAVAILABLE', 'BROWSER_SOURCE_UNVERIFIED', 'BROWSER_DNS_TIMEOUT',
+  'BROWSER_DOWNGRADE_BLOCKED', 'BROWSER_PAGE_CHANGED', 'BROWSER_CLEANUP_FAILED']);
+const READ_TOOLS = new Set([PERSONAL_PROJECT_READ_TOOL, PERSONAL_BROWSER_OPEN_TOOL,
+  PERSONAL_BROWSER_FOLLOW_TOOL]);
 
 function refused(code) {
   const error = new Error(code);
@@ -74,6 +83,15 @@ function projectIdentity(exec) {
   return identity;
 }
 
+function safePublicUrl(value) {
+  if (typeof value !== 'string' || Buffer.byteLength(value, 'utf8') > 2_048 ||
+      /[\x00-\x1f\x7f]/.test(value)) return null;
+  let parsed;
+  try { parsed = new URL(value); } catch { return null; }
+  return ['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password &&
+    parsed.hostname ? value : null;
+}
+
 function safeQuery(value) {
   return value === undefined ? '' : typeof value === 'string' &&
     Buffer.byteLength(value, 'utf8') <= 200 && !/[\x00-\x1f\x7f]/.test(value) ? value : null;
@@ -87,8 +105,13 @@ function safeSnapshotIds(value) {
 
 function proofRequest(frame) {
   return frame && typeof frame === 'object' && !Array.isArray(frame) &&
-    Object.keys(frame).sort().join(',') ===
-      'beforeCallId,id,protocol,readCallId,sessionId,snapshotId,sourceReceiptId,turn' &&
+    Object.keys(frame).sort().join(',') === ['beforeCallId', 'id', 'protocol', 'readCallId',
+      'sessionId', 'snapshotId', 'sourceReceiptId', 'turn',
+      ...(frame.readTool === undefined ? [] : ['readTool']),
+      ...(frame.beforeTool === undefined ? [] : ['beforeTool'])].sort().join(',') &&
+    (frame.readTool === undefined || READ_TOOLS.has(frame.readTool)) &&
+    (frame.beforeTool === undefined || ['personal_save_document',
+      PERSONAL_BROWSER_FOLLOW_TOOL].includes(frame.beforeTool)) &&
     frame.protocol === PERSONAL_PROJECT_PROOF_PROTOCOL && typeof frame.id === 'string' &&
     /^proof-[0-9a-f-]{36}$/.test(frame.id) &&
     typeof frame.sessionId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(frame.sessionId) &&
@@ -110,6 +133,8 @@ export function verifyStoredProjectRead(content, request) {
   let saveCall = 0;
   let previousSeq = -1;
   let rows = 0;
+  const readTool = request.readTool ?? PERSONAL_PROJECT_READ_TOOL;
+  const beforeTool = request.beforeTool ?? PERSONAL_DOCUMENT_TOOL;
   for (const line of content.split('\n')) {
     if (!line.trim()) continue;
     if (++rows > 12_000) return false;
@@ -134,10 +159,10 @@ export function verifyStoredProjectRead(content, request) {
     }
     if (event.type === 'tool/call' && event.data?.turn === request.turn) {
       if (event.data.callId === request.readCallId) {
-        if (event.data.name !== PERSONAL_PROJECT_READ_TOOL || ++readCall !== 1 || saveCall) return false;
+        if (event.data.name !== readTool || ++readCall !== 1 || saveCall) return false;
       }
       if (event.data.callId === request.beforeCallId) {
-        if (event.data.name !== PERSONAL_DOCUMENT_TOOL || ++saveCall !== 1 ||
+        if (event.data.name !== beforeTool || ++saveCall !== 1 ||
             readResult !== 1 || userCount !== 1) return false;
         return true;
       }
@@ -153,9 +178,12 @@ export function verifyStoredProjectRead(content, request) {
           block.content[0].text.length > 80_000) return false;
       let value;
       try { value = JSON.parse(block.content[0].text); } catch { return false; }
-      if (value?.snapshotId !== request.snapshotId ||
-          typeof value?.fileSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.fileSha256) ||
-          typeof value?.text !== 'string') return false;
+      if (value?.snapshotId !== request.snapshotId || typeof value?.text !== 'string') return false;
+      if (readTool === PERSONAL_PROJECT_READ_TOOL) {
+        if (typeof value.fileSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.fileSha256)) return false;
+      } else if (typeof value.contentSha256 !== 'string' ||
+          !/^[a-f0-9]{64}$/.test(value.contentSha256) ||
+          typeof value.url !== 'string' || safePublicUrl(value.url) === null) return false;
     }
   }
   return false;
@@ -223,7 +251,7 @@ export class PersonalDesktopBridge {
         signal?.removeEventListener?.('abort', entry.abort);
         reject(error);
       };
-      const timeout = ['list_project', 'read_project'].includes(payload.action) ||
+      const timeout = ['list_project', 'read_project', 'open_page', 'follow_link'].includes(payload.action) ||
         payload.action === 'write_document' && payload.sourceSnapshotIds?.length > 0 ? 20_000 : 12_000;
       const timer = setTimeout(() => finish(refused('PERSONAL_TOOL_TIMEOUT')), timeout);
       const abort = () => finish(refused('PERSONAL_TOOL_CANCELLED'));
@@ -271,7 +299,7 @@ export function apply(ctx) {
     description: 'Save one Markdown or plain-text document requested by the current user. Give a simple Chinese or English filename ending in .md or .txt and the complete document text. The host chooses the storage path and verifies the saved file.',
     parameters: { fileName: { type: 'string', required: true }, content: { type: 'string', required: true },
       sourceSnapshotIds: { type: 'array', items: { type: 'string' },
-        description: 'For project summaries, provide the snapshot IDs returned by successful reads in this same turn.' } },
+        description: 'For project or browser summaries, provide snapshot IDs returned by successful reads in this same turn.' } },
     output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
     execute: async (args, exec) => {
       const fileName = safeDocumentName(args?.fileName);
@@ -313,10 +341,41 @@ export function apply(ctx) {
     },
     presentCall: () => ({ card: 'generic', title: '读取项目资料', kind: 'execute' }),
   }));
+  const disposeBrowserOpen = ctx.tools.register(defineTool({
+    name: PERSONAL_BROWSER_OPEN_TOOL,
+    description: 'Read one public HTTP/HTTPS page that belongs to the current user browser task. The host checks the user-submitted URL, public network destination and real rendered page. Returns bounded visible text and observed link IDs. Never accepts JavaScript, cookies or browser actions.',
+    parameters: { url: { type: 'string', required: true,
+      description: 'Public page URL from the current user request; no local or private address.' } },
+    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+    execute: async (args, exec) => {
+      const url = safePublicUrl(args?.url);
+      if (!url) throw refused('PERSONAL_TOOL_INVALID');
+      return bridge.request({ action: 'open_page', ...projectIdentity(exec), url }, exec.signal);
+    },
+    presentCall: () => ({ card: 'generic', title: '阅读公共网页', kind: 'execute' }),
+  }));
+  const disposeBrowserFollow = ctx.tools.register(defineTool({
+    name: PERSONAL_BROWSER_FOLLOW_TOOL,
+    description: 'Follow one link ID actually observed in a successful page snapshot of this same browser task. Pass only the prior snapshotId and linkId; the host resolves the URL. Never invent a link or provide a script, click target, form or download.',
+    parameters: { snapshotId: { type: 'string', required: true },
+      linkId: { type: 'string', required: true } },
+    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+    execute: async (args, exec) => {
+      if (typeof args?.snapshotId !== 'string' || !/^source-[a-f0-9]{48}$/.test(args.snapshotId) ||
+          typeof args?.linkId !== 'string' || !/^link-[a-f0-9]{40}$/.test(args.linkId)) {
+        throw refused('PERSONAL_TOOL_INVALID');
+      }
+      return bridge.request({ action: 'follow_link', ...projectIdentity(exec),
+        snapshotId: args.snapshotId, linkId: args.linkId }, exec.signal);
+    },
+    presentCall: () => ({ card: 'generic', title: '沿已读链接继续阅读', kind: 'execute' }),
+  }));
   const disposeGuard = ctx.tools.guard((exec) => [PERSONAL_DESKTOP_TOOL, PERSONAL_DOCUMENT_TOOL,
-    PERSONAL_PROJECT_LIST_TOOL, PERSONAL_PROJECT_READ_TOOL].includes(exec.name) &&
+    PERSONAL_PROJECT_LIST_TOOL, PERSONAL_PROJECT_READ_TOOL,
+    PERSONAL_BROWSER_OPEN_TOOL, PERSONAL_BROWSER_FOLLOW_TOOL].includes(exec.name) &&
     exec.agent?.session?.header?.agentPreset !== 'personal-remote' ? 'PERSONAL_TOOL_SCOPE_DENIED' : undefined);
-  ctx.effect(() => () => { disposeGuard(); disposeRead(); disposeList(); disposeDocument(); disposeTool(); disposeProof(); bridge.close(); }, 'weftmate-personal-desktop: lifecycle');
+  ctx.effect(() => () => { disposeGuard(); disposeBrowserFollow(); disposeBrowserOpen(); disposeRead();
+    disposeList(); disposeDocument(); disposeTool(); disposeProof(); bridge.close(); }, 'weftmate-personal-desktop: lifecycle');
 }
 
 export default { name, inject, apply };

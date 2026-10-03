@@ -64,6 +64,39 @@ test('physical DSH read result proves only its exact source receipt, snapshot an
   assert.equal(plugin.verifyStoredProjectRead(encoded(onlyList), proof), false)
 })
 
+test('physical proof admits only the requested successful browser read tool before save', async () => {
+  const plugin = await loadPlugin()
+  const events = storedEvents()
+  const webId = `source-${'b'.repeat(48)}`
+  events[3].data.name = 'personal_browser_open'
+  events[4].data.message.content[0].content[0].text = JSON.stringify({
+    snapshotId: webId, contentSha256: 'a'.repeat(64), url: 'https://example.com/page',
+    text: 'rendered visible content', links: [] })
+  const webProof = { ...proof, snapshotId: webId, readTool: 'personal_browser_open' }
+  assert.equal(plugin.verifyStoredProjectRead(encoded(events), webProof), true)
+  assert.equal(plugin.verifyStoredProjectRead(encoded(events), { ...webProof, readTool: 'personal_browser_follow' }), false)
+  assert.equal(plugin.verifyStoredProjectRead(encoded(events), { ...webProof, sourceReceiptId: 'other' }), false)
+  assert.equal(plugin.verifyStoredProjectRead(encoded(events), { ...webProof, snapshotId: `source-${'c'.repeat(48)}` }), false)
+  const onlyObservedLink = structuredClone(events)
+  onlyObservedLink[3].data.name = 'personal_browser_follow'
+  onlyObservedLink.splice(4, 1)
+  onlyObservedLink[4].seq = 4
+  assert.equal(plugin.verifyStoredProjectRead(encoded(onlyObservedLink),
+    { ...webProof, readTool: 'personal_browser_follow' }), false)
+  const failed = structuredClone(events)
+  failed[4].data.error = { code: 'BROWSER_NETWORK_ERROR', name: 'Error' }
+  assert.equal(plugin.verifyStoredProjectRead(encoded(failed), webProof), false)
+  const follow = structuredClone(events)
+  follow[3].data.name = 'personal_browser_follow'
+  assert.equal(plugin.verifyStoredProjectRead(encoded(follow),
+    { ...webProof, readTool: 'personal_browser_follow' }), true)
+  const priorReadBeforeFollow = structuredClone(events)
+  priorReadBeforeFollow[5].data.name = 'personal_browser_follow'
+  assert.equal(plugin.verifyStoredProjectRead(encoded(priorReadBeforeFollow), webProof), false)
+  assert.equal(plugin.verifyStoredProjectRead(encoded(priorReadBeforeFollow),
+    { ...webProof, beforeTool: 'personal_browser_follow' }), true)
+})
+
 test('parent proof IPC accepts only current child, strict reply and bounded timeout', async () => {
   const runtime = new DshWebRuntime({ homeDir: 'C:\\synthetic\\home', workspaceDir: 'C:\\synthetic\\work' }) as any
   const sent: any[] = []
@@ -109,5 +142,13 @@ test('project reader failure survives the actual child bridge without losing the
     transport.emit('message', { protocol: plugin.PERSONAL_DESKTOP_PROTOCOL,
       id: transport.sent[0].id, ok: false, error: 'PROJECT_INVALID_UTF8' })
     await assert.rejects(result, (error: any) => error?.code === 'PROJECT_INVALID_UTF8')
+    for (const code of ['BROWSER_DNS_TIMEOUT', 'BROWSER_DOWNGRADE_BLOCKED',
+      'BROWSER_PAGE_CHANGED', 'BROWSER_CLEANUP_FAILED']) {
+      const pending = bridge.request({ action: 'open_page', sessionId: 'session-a' })
+      const frame = transport.sent.at(-1)
+      transport.emit('message', { protocol: plugin.PERSONAL_DESKTOP_PROTOCOL,
+        id: frame.id, ok: false, error: code })
+      await assert.rejects(pending, (error: any) => error?.code === code)
+    }
   } finally { bridge.close() }
 })
