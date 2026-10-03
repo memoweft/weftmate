@@ -113,13 +113,16 @@ export function importLegacyModelProfiles(profiles: PublicModelProfile[], active
   return { accepted, rejected: profiles.filter((profile) => !accepted.includes(profile.id)).map((profile) => profile.id) };
 }
 
-export function upsertModelProfile(profile: PublicModelProfile): PublicModelProfile {
+export function upsertModelProfile(profile: PublicModelProfile,
+  options: { preserveActive?: boolean } = {}): PublicModelProfile {
   const settings = read();
   const models = settings.models?.profiles ?? [];
   const index = models.findIndex((item) => item.id === profile.id);
   if (index >= 0) models[index] = profile;
   else models.push(profile);
-  settings.models = { profiles: models, activeId: settings.models?.activeId ?? profile.id };
+  settings.models = { profiles: models,
+    activeId: options.preserveActive === true ? settings.models?.activeId ?? null
+      : settings.models?.activeId ?? profile.id };
   write(settings);
   return profile;
 }

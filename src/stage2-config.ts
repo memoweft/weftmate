@@ -96,7 +96,8 @@ export function normalizeProductConfig(raw: unknown): ProductConfig {
   const rawModels = isRecord(raw.models) ? raw.models : {};
   const profiles = Array.isArray(rawModels.profiles) ? rawModels.profiles.map(validProfile).filter((item): item is PublicModelProfile => item !== null) : [];
   const activeCandidate = typeof rawModels.activeId === 'string' ? rawModels.activeId : null;
-  const activeId = profiles.some((item) => item.id === activeCandidate) ? activeCandidate : (profiles[0]?.id ?? null);
+  const activeId = rawModels.activeId === null ? null
+    : profiles.some((item) => item.id === activeCandidate) ? activeCandidate : (profiles[0]?.id ?? null);
   const knownProfileIds = new Set(profiles.map((profile) => profile.id));
   const legacyCompatibilityCandidate = stringValue(raw.legacyCompatibilityProfileId, 160);
   const legacyCompatibilityProfileId = legacyCompatibilityCandidate && knownProfileIds.has(legacyCompatibilityCandidate)

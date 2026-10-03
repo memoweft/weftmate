@@ -16,6 +16,7 @@ data class HostIdentity(val origin: String, val username: String, val ownerId: S
     val hostId: String, val deviceId: String, val cookie: String, val csrf: String)
 data class ModelSettings(val endpoint: String, val modelId: String, val apiKey: String,
     val displayName: String = modelId)
+data class ModelImportResult(val status: String, val model: ModelSettings? = null)
 
 /** Passwords never enter preferences. The credential blobs are AES-GCM encrypted with an AndroidKeyStore key. */
 class SecureSettings(context: Context, storageName: String = "private-settings", keyAlias: String = "weftmate-mobile-v1") {
@@ -219,6 +220,32 @@ class SecureSettings(context: Context, storageName: String = "private-settings",
         val saved = modelProfiles(scope).find { canonical(it.endpoint) == canonical(endpoint) && it.modelId == modelId }
             ?: throw IllegalArgumentException("Unknown saved model")
         return saveModel(saved, scope)
+    }
+
+    /** Explicit account import preserves the current phone selection. A shared endpoint has one key. */
+    @Synchronized fun importModel(value: ModelSettings, replaceExistingKey: Boolean,
+        scope: String = activeModelScope()): ModelImportResult {
+        val endpoint = value.endpoint.trim().trimEnd('/')
+        val identity = canonical(endpoint)
+        require(value.modelId.matches(Regex("[A-Za-z0-9._:/-]{1,128}")) &&
+            value.apiKey.isNotBlank() && value.apiKey.length <= 4096 &&
+            value.displayName.isNotBlank() && value.displayName.length <= 100)
+        val old = library(scope)
+        val providers = old.providers.toMutableList()
+        val index = providers.indexOfFirst { canonical(it.endpoint) == identity }
+        val previous = providers.getOrNull(index)
+        if (previous != null && previous.apiKey != value.apiKey && !replaceExistingKey)
+            return ModelImportResult("credential_conflict")
+        val models = (previous?.models ?: emptyList()).toMutableList()
+        val itemIndex = models.indexOfFirst { it.id == value.modelId }
+        val selectedLabel = value.displayName.trim()
+        val item = ModelEntry(value.modelId, selectedLabel)
+        if (itemIndex >= 0) models[itemIndex] = item else models += item
+        require(models.size <= 100 && (index >= 0 || providers.size < 16))
+        val updated = Provider(endpoint, value.apiKey, models)
+        if (index >= 0) providers[index] = updated else providers += updated
+        persist(old.copy(providers = providers), scope)
+        return ModelImportResult("saved", ModelSettings(endpoint, value.modelId, value.apiKey, selectedLabel))
     }
 
     @Synchronized fun removeModelProfile(endpoint: String, modelId: String, scope: String = activeModelScope()) {

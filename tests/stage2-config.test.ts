@@ -2,8 +2,16 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { afterEach, describe, it } from 'node:test';
+import { afterEach, describe, it, test } from 'node:test';
 import { PRODUCT_CONFIG_SCHEMA_VERSION, ProductConfigStore, normalizeProductConfig } from '../src/stage2-config.ts';
+
+test('an explicit null active model stays null when account routes are added', () => {
+  const profile = { id: 'private-model-a', name: 'Account model', provider: 'openai-compatible',
+    baseUrl: 'https://example.test/v1', model: 'model-a' };
+  assert.equal(normalizeProductConfig({ models: { profiles: [profile], activeId: null } }).models.activeId, null);
+  assert.equal(normalizeProductConfig({ models: { profiles: [profile] } }).models.activeId, profile.id,
+    'pre-existing documents without the field retain legacy inference');
+});
 
 const roots: string[] = [];
 afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true }); });

@@ -222,6 +222,7 @@ const here = dirname(fileURLToPath(import.meta.url))
 const PLUGINS_DIR = join(here, 'plugins')
 const CLIENT_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-client')
 const HOST_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-host.mjs')
+const PERSONAL_API_PROXY_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-personal-api-proxy.mjs')
 const AI_GAME_HOST_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-aigame-host.mjs')
 const MOD_DEVELOPMENT_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-mod-development.mjs')
 const CREDENTIALS_PLUGIN_SRC = join(PLUGINS_DIR, 'weftmate-credentials.mjs')
@@ -457,6 +458,8 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(CLIENT_PLUGIN_SRC, 'v2-shell', 'pages-v2.scoped.css'), join(dir, 'plugins', 'weftmate-client', 'v2-shell', 'pages-v2.scoped.css')],
     [join(CLIENT_PLUGIN_SRC, 'mod-window', 'assets.mjs'), join(dir, 'plugins', 'weftmate-client', 'mod-window', 'assets.mjs')],
     [HOST_PLUGIN_SRC, hostDest],
+    [PERSONAL_API_PROXY_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-personal-api-proxy.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-model-idle.mjs'), join(dir, 'plugins', 'weftmate-personal-model-idle.mjs')],
     [AI_GAME_HOST_PLUGIN_SRC, aiGameHostDest],
     [join(PLUGINS_DIR, 'weftmate-weftmod.mjs'), join(dir, 'plugins', 'weftmate-weftmod.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
@@ -762,6 +765,8 @@ export interface DshWebRuntimeOptions {
   port?: number
   /** Suppress DSH's own browser launch; Electron or a candidate smoke owns navigation. */
   noOpen?: boolean
+  /** The personal host replaces the sole official ApiProxy with a no-default-write wrapper. */
+  personalHostApiProxy?: boolean
   /** dev 形态的 checkout 路径（缺省只认显式 WEFTMATE_DSH_CHECKOUT；安装版不使用此路径）。 */
   checkoutPath?: string
   /** vendor 形态的 vendor/dsh-runtime 路径（缺省 WEFTMATE_DSH_RUNTIME；空 = dev 形态）。 */
@@ -829,6 +834,7 @@ export interface PersonalTaskStopResult {
 
 const TASK_STOP_PROTOCOL = 'weftmate.personal-task-control.v1'
 const PROJECT_PROOF_PROTOCOL = 'weftmate.personal-project-proof.v1'
+const MODEL_IDLE_PROTOCOL = 'weftmate.personal-model-idle.v1'
 const TASK_STOP_RECEIPT = /^[A-Za-z0-9._:-]{1,160}$/
 function safeProjectRelativePath(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && Buffer.byteLength(value, 'utf8') <= 512 &&
@@ -1019,6 +1025,45 @@ function assertSecureCredentialComposition(entries: unknown, safeProviderId: str
   }
 }
 
+function assertPersonalApiProxyComposition(entries: unknown, expectedPath: string): void {
+  let personal = 0
+  let official = 0
+  let idleProbe = 0
+  const seen = new Set<object>()
+  const visit = (value: unknown): void => {
+    if (value === null || typeof value !== 'object') return
+    if (seen.has(value)) return
+    seen.add(value)
+    if (Array.isArray(value)) { for (const item of value) visit(item); return }
+    const row = value as Record<string, unknown>
+    if (row.disabled !== true) {
+      const name = typeof row.name === 'string' ? row.name : ''
+      if (name === '@deepseek-ai/dsh-host-apiproxy') official++
+      const own = name === './plugins/weftmate-personal-api-proxy.mjs' ||
+        name.startsWith('file:') && (() => {
+          try { return fileURLToPath(name) === expectedPath } catch { return false }
+        })()
+      if (own) {
+        if (row.id !== 'weftmate-personal-api-gateway') throw new Error('unexpected personal ApiProxy identity')
+        personal++
+      }
+      if (name === './plugins/weftmate-personal-model-idle.mjs' ||
+          name.startsWith('file:') && (() => {
+            try { return fileURLToPath(name) === join(dirname(expectedPath), 'weftmate-personal-model-idle.mjs') }
+            catch { return false }
+          })()) {
+        if (row.id !== 'weftmate-personal-model-idle') throw new Error('unexpected model-idle probe identity')
+        idleProbe++
+      }
+    }
+    for (const child of Object.values(row)) visit(child)
+  }
+  visit(entries)
+  if (personal !== 1 || official !== 0 || idleProbe !== 1) {
+    throw new Error('personal host requires one no-default-write ApiProxy and one idle probe')
+  }
+}
+
 /** Credential-like names are never reachable from a secure child, including through `.env`. */
 function isCredentialLikeEnvironmentName(name: string): boolean {
   return /(?:^|[_-])(?:KEY|TOKEN|SECRET|PASSWORD|PASSWD|CREDENTIALS?)(?:$|[_-])/i.test(name)
@@ -1055,6 +1100,7 @@ export class DshWebRuntime {
     profilePolicy: DshProfilePolicy
     port: number
     noOpen: boolean
+    personalHostApiProxy: boolean
     checkoutPath: string
     runtimePath: string
     nodeElectron: boolean
@@ -1091,6 +1137,8 @@ export class DshWebRuntime {
     receiptIds: readonly string[], resolve: (result: PersonalTaskStopResult) => void }>()
   private readonly projectProofPending = new Map<string, { child: ChildProcess,
     timer: NodeJS.Timeout, resolve: (verified: boolean) => void }>()
+  private readonly modelIdlePending = new Map<string, { child: ChildProcess,
+    timer: NodeJS.Timeout, resolve: (idle: boolean) => void }>()
 
   /** 就绪后崩溃重拉换源时回调（首启的 origin 由 start() 的返回值给出，不走本回调）。 */
   onOrigin: ((origin: string | null) => void) | undefined
@@ -1103,6 +1151,7 @@ export class DshWebRuntime {
       profilePolicy: options.profilePolicy ?? 'weftmate',
       port: options.port ?? 0,
       noOpen: options.noOpen ?? false,
+      personalHostApiProxy: options.personalHostApiProxy ?? false,
       // 显式 options 是 Electron/main 的确定性配置，必须压过开发 shell 遗留环境变量。
       checkoutPath: options.checkoutPath ?? process.env.WEFTMATE_DSH_CHECKOUT ?? '',
       runtimePath: options.runtimePath ?? process.env.WEFTMATE_DSH_RUNTIME ?? '',
@@ -1217,6 +1266,10 @@ export class DshWebRuntime {
         ? join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-credentials.mjs')
         : undefined,
     )
+    if (this.opts.personalHostApiProxy) {
+      assertPersonalApiProxyComposition(finalized,
+        join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-personal-api-proxy.mjs'))
+    }
     const encoded = encodeSecureSnapshot(finalized)
     return {
       entries: finalized,
@@ -1326,6 +1379,7 @@ export class DshWebRuntime {
       this.failPersonalConversationContextRequests(child)
       this.failTaskStopRequests(child)
       this.failProjectProofRequests(child)
+      this.failModelIdleRequests(child)
       this.closedChildren.add(child)
       this.children.delete(child)
     })
@@ -1388,6 +1442,57 @@ export class DshWebRuntime {
       clearTimeout(pending.timer)
       pending.resolve(false)
     }
+  }
+
+  private failModelIdleRequests(child: ChildProcess): void {
+    for (const [id, pending] of this.modelIdlePending) {
+      if (pending.child !== child) continue
+      this.modelIdlePending.delete(id)
+      clearTimeout(pending.timer)
+      pending.resolve(false)
+    }
+  }
+
+  private handleModelIdleMessage(child: ChildProcess, message: unknown): void {
+    if (!message || typeof message !== 'object' || Array.isArray(message)) return
+    const row = message as Record<string, unknown>
+    if (row.protocol !== MODEL_IDLE_PROTOCOL || typeof row.id !== 'string') return
+    const pending = this.modelIdlePending.get(row.id)
+    if (!pending || pending.child !== child) return
+    this.modelIdlePending.delete(row.id)
+    clearTimeout(pending.timer)
+    pending.resolve(!this.closed && this.child === child && child.connected &&
+      !this.closedChildren.has(child) && Object.keys(row).sort().join(',') === 'id,idle,protocol' &&
+      row.idle === true)
+  }
+
+  /** Exact current-child, in-process DSH running/inbox snapshot. Unknown is busy. */
+  personalModelQueueIdle(): Promise<boolean> {
+    const child = this.child
+    if (!this.opts.personalHostApiProxy || this.closed || !child ||
+        this.closedChildren.has(child) || !child.connected || this.originValue === null) {
+      return Promise.resolve(false)
+    }
+    const id = `model-idle-${randomUUID()}`
+    return new Promise((resolve) => {
+      const timer = setTimeout(() => {
+        if (!this.modelIdlePending.delete(id)) return
+        resolve(false)
+      }, 2_000)
+      this.modelIdlePending.set(id, { child, timer, resolve })
+      try {
+        child.send({ protocol: MODEL_IDLE_PROTOCOL, id }, (error) => {
+          if (!error || !this.modelIdlePending.has(id)) return
+          this.modelIdlePending.delete(id)
+          clearTimeout(timer)
+          resolve(false)
+        })
+      } catch {
+        this.modelIdlePending.delete(id)
+        clearTimeout(timer)
+        resolve(false)
+      }
+    })
   }
 
   private handleProjectProofMessage(child: ChildProcess, message: unknown): void {
@@ -1985,6 +2090,7 @@ export class DshWebRuntime {
         this.handlePersonalConversationContextMessage(child, message)
         this.handleTaskStopMessage(child, message)
         this.handleProjectProofMessage(child, message)
+        this.handleModelIdleMessage(child, message)
       })
       let state: 'starting' | 'ready' | 'failed' | 'stopped' = 'starting'
       let buffer = ''
@@ -2172,6 +2278,7 @@ export class DshWebRuntime {
       this.failPersonalMemoryRequests(child)
       this.failTaskStopRequests(child)
       this.failProjectProofRequests(child)
+      this.failModelIdleRequests(child)
     }
     this.closeInFlight = Promise.all(registered.map(async (child) => {
       await this.terminateChild(child)

@@ -94,6 +94,12 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   projectReceipt?: (owner: string, requestId: string) => object | Promise<object>;
   projectSessions?: (owner: string) => object | Promise<object>;
   hostModels?: (owner: string) => object | Promise<object>;
+  phoneModels?: (owner: string) => object | Promise<object>;
+  accountModels?: (owner: string) => object | Promise<object>;
+  accountPublish?: (owner: string, params: any) => object | Promise<object>;
+  accountTransfer?: (owner: string, params: any) => object | Promise<object>;
+  accountByRequest?: (owner: string, requestId: string) => object | Promise<object>;
+  accountTest?: (owner: string, params: any) => object | Promise<object>;
   browserStatus?: (owner: string) => object | Promise<object>;
   browserSession?: (owner: string, params: any) => object | Promise<object>;
   browserSend?: (owner: string, params: any) => object | Promise<object>;
@@ -201,6 +207,16 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
           case 'shared.sessions.list': result = owner && options.projectSessions
             ? options.projectSessions(owner) : { source: 'host', sessions: [], hostAvailable: true }; break
           case 'models.host': result = owner && options.hostModels ? options.hostModels(owner) : { models: [] }; break
+          case 'models.list': result = owner && options.phoneModels ? options.phoneModels(owner) : { models: [] }; break
+          case 'models.account.list': result = owner && options.accountModels ? options.accountModels(owner) : { models: [] }; break
+          case 'models.account.publishSaved': result = owner && options.accountPublish
+            ? options.accountPublish(owner, request.params) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'models.account.transfer': result = owner && options.accountTransfer
+            ? options.accountTransfer(owner, request.params) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'models.account.byRequest': result = owner && options.accountByRequest
+            ? options.accountByRequest(owner, request.params.requestId) : (() => { throw new Error('NOT_FOUND') })(); break
+          case 'models.account.test': result = owner && options.accountTest
+            ? options.accountTest(owner, request.params) : (() => { throw new Error('NOT_FOUND') })(); break
           case 'models.verifyHost': result = { available: true }; break
           case 'shared.tasks.detail': result = owner && options.taskDetail
             ? options.taskDetail(owner, request.params.taskId) : (() => { throw new Error('NOT_FOUND') })(); break
@@ -275,6 +291,12 @@ async function openMemory(app: ReturnType<typeof harness>, owner: 'A' | 'B' = 'A
   await waitUntil(() => app.businessPaths.some((request) => request.owner === owner && request.path === '/personal/v1/memory/status'), 'memory status was not requested')
 }
 function switchToConnect(app: ReturnType<typeof harness>) { app.nav.find((button) => button.dataset.page === 'connect')!.fire('click') }
+async function openModels(app: ReturnType<typeof harness>) {
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app bootstrap did not finish')
+  app.nav.find((button) => button.dataset.page === 'settings')!.fire('click')
+  findButton(app.get('page-content'), '对话模型')!.fire('click')
+  await waitUntil(() => app.calls.some((call) => call.method === 'models.account.list'), 'account models were not requested')
+}
 async function logoutAndLoginB(app: ReturnType<typeof harness>) {
   switchToConnect(app)
   const logout = findButton(app.get('page-content'), '退出登录')!
@@ -1068,4 +1090,55 @@ test('mobile handoff selects only a unique exact original model and preserves a 
   const multiple = await picker({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo',
     routeFingerprint: 'a'.repeat(64) })
   assert.equal(multiple.select.value, '', 'two exact routes still require an explicit choice')
+})
+
+test('phone model publish sends only a saved model identity through JS and keeps the request ID', async () => {
+  const model = { endpoint: 'https://api.xiaomimimo.com/v1/chat/completions', modelId: 'mimo-v2.6-flash',
+    displayName: 'MiMo', selected: true }
+  const app = harness({ phoneModels: () => ({ models: [model] }), accountModels: () => ({ models: [] }),
+    accountPublish: (_, params) => ({ operation: { requestId: params.requestId, kind: 'create', status: 'succeeded' } }) })
+  await openModels(app)
+  await waitUntil(() => !!findButton(app.get('page-content'), '在电脑使用这个模型'), 'publish action')
+  findButton(app.get('page-content'), '在电脑使用这个模型')!.fire('click')
+  await waitUntil(() => app.calls.some((call) => call.method === 'models.account.publishSaved'), 'publish native call')
+  const call = app.calls.find((entry) => entry.method === 'models.account.publishSaved')!
+  assert.deepEqual(Object.keys(call.params).sort(), ['endpoint', 'modelId', 'requestId'])
+  assert.equal(call.params.endpoint, model.endpoint)
+  assert.equal(JSON.stringify([...app.storage.values()]).includes('apiKey'), false)
+  assert.equal(JSON.stringify([...app.storage.values()]).includes('secret'), false)
+})
+
+test('account model import keeps phone selection and asks before replacing an endpoint credential', async () => {
+  const account = { accountModelId: 'account-model-one', revision: 1, name: 'MiMo',
+    modelId: 'mimo-v2.6-flash', status: 'active' }
+  const app = harness({ accountModels: () => ({ models: [account] }),
+    accountTransfer: (_, params) => ({ requestId: params.requestId,
+      status: params.replaceExistingKey ? 'saved' : 'credential_conflict', model: account }) })
+  await openModels(app)
+  await waitUntil(() => !!findButton(app.get('page-content'), '保存到手机'), 'import action')
+  findButton(app.get('page-content'), '保存到手机')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '替换同地址密钥'), 'credential conflict')
+  assert.equal(app.calls.filter((call) => call.method === 'models.select').length, 0)
+  findButton(app.get('page-content'), '替换同地址密钥')!.fire('click')
+  await waitUntil(() => app.calls.filter((call) => call.method === 'models.account.transfer').length === 2,
+    'explicit replacement')
+  assert.equal(app.calls.filter((call) => call.method === 'models.account.transfer')[1].params.replaceExistingKey, true)
+  assert.equal(app.calls.filter((call) => call.method === 'models.select').length, 0)
+})
+
+test('late account model directory from A cannot replace B model list', async () => {
+  let resolveA!: (value: object) => void
+  const app = harness({ accountModels: (owner) => owner === 'A'
+    ? new Promise<object>((resolve) => { resolveA = resolve })
+    : { models: [{ accountModelId: 'account-model-B', revision: 1, name: 'B 独有模型',
+      modelId: 'model-b', status: 'active' }] } })
+  await openModels(app)
+  await logoutAndLoginB(app)
+  await openModels(app)
+  await waitUntil(() => app.get('page-content').textContent.includes('B 独有模型'), 'B model directory')
+  resolveA({ models: [{ accountModelId: 'account-model-A', revision: 1, name: 'A 私有模型',
+    modelId: 'model-a', status: 'active' }] })
+  await flush()
+  assert.match(app.get('page-content').textContent, /B 独有模型/)
+  assert.doesNotMatch(app.get('page-content').textContent, /A 私有模型/)
 })

@@ -298,6 +298,9 @@ function hasProfileCredential(profile) {
 
 function credentialForModelProfile(profile) {
   const route = routeForProfile(profile.id);
+  if (profile.id.startsWith('private-model-')) {
+    return configStoreMod?.getCredential?.(officialCredentialRef(route.provider)) ?? null;
+  }
   for (const ref of [profile.id, route.apiKeyEnv, officialCredentialRef(route.provider)]) {
     const credential = configStoreMod?.getCredential?.(ref);
     if (credential) return credential;
@@ -1140,6 +1143,17 @@ async function bootstrap() {
       '- insert:',
       '    - id: weftmate-safe-credentials',
       '      name: ./plugins/weftmate-credentials.mjs',
+      ...(personalHostMode ? [
+        '# Personal host retains one ApiProxy but omits its default-model write callback.',
+        '- id: api-gateway',
+        '  disabled: true',
+        '- insert:',
+        '    - id: weftmate-personal-api-gateway',
+        '      name: ./plugins/weftmate-personal-api-proxy.mjs',
+        '- insert:',
+        '    - id: weftmate-personal-model-idle',
+        '      name: ./plugins/weftmate-personal-model-idle.mjs',
+      ] : []),
       '',
     ].join('\n');
     mkdirSync(dshHome, { recursive: true });
@@ -1495,6 +1509,7 @@ async function bootstrap() {
     workspaceDir,
     nodeElectron: true,
     noOpen: personalHostMode,
+    personalHostApiProxy: personalHostMode,
     // WeftMate 始终使用产品自有的固定 vendor runtime。开发版来自仓内
     // vendor/dsh-runtime，安装版来自 resources/dsh-runtime；显式传值也会压过
     // shell 中遗留的 WEFTMATE_DSH_CHECKOUT/WEFTMATE_DSH_RUNTIME，绝不启动个人 DSH checkout。
@@ -1585,7 +1600,8 @@ async function bootstrap() {
     log: (line) => console.log(`[weftmate] ${redactSecretText(line)}`),
   });
   async function replaceSharedRuntime() {
-    const profiles = settingsMod.listModelProfiles().profiles;
+    const profiles = settingsMod.listModelProfiles().profiles
+      .filter((profile) => !profile.id.startsWith('private-model-'));
     // Once the official settings migration is authoritative, this private
     // overlay must stay empty forever. Otherwise an official Models delete
     // would silently resurrect on the next child restart.
@@ -1656,7 +1672,8 @@ async function bootstrap() {
     // not inspect the retained Stage-2 compatibility profiles again: a user
     // deletion in official Models is intentional and must not resurrect.
     if (officialRouteMigrationComplete) return runtimeOrigin;
-    const profiles = settingsMod.listModelProfiles().profiles;
+    const profiles = settingsMod.listModelProfiles().profiles
+      .filter((profile) => !profile.id.startsWith('private-model-'));
     if (profiles.length === 0) {
       legacyRoutePatchRetired = true;
       writeModelRoutesPatch(ROUTES_PATCH, []);
@@ -1967,6 +1984,9 @@ async function bootstrap() {
     // Header and explicitly-recorded legacy sources are persisted only after
     // resolution succeeds.  Unknown sessions never reach resume/send/cancel.
     if (chosen.source !== 'durable-binding') settingsMod.bindSessionModel(sessionId, chosen.profile.id, true);
+    // After a managed child reload, Gateway's in-memory record is empty. Its
+    // supported resume route owns that record; model PUT requires it to exist.
+    await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' });
     await restoreInternalSessionRoute({ sessionId, profile, provider: route.provider, needsRestore: settingsMod.sessionBindingNeedsInternalRoute(sessionId),
       current: () => stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`),
       select: (value) => stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`, { method: 'PUT', body: JSON.stringify(value) }),
@@ -2644,7 +2664,7 @@ async function bootstrap() {
     hasCredential: hasProfileCredential,
     credentialForProfile: credentialForModelProfile,
     hostOwnerId: () => personalAccessService?.legacyOwnerId?.() ?? null,
-    modelAllowed: (ownerId, profileId) => personalAccessService?.canUseModelProfile?.(ownerId, profileId) === true,
+    modelAllowed: (ownerId, profileId, usage) => personalAccessService?.canUseModelProfile?.(ownerId, profileId, usage) === true,
     moduleStatus: () => ({ memory: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? 'unknown' : 'disabled' }),
     routeForProfile,
     listSessions: listSharedSessionsForReferenceGuard,
@@ -2660,6 +2680,168 @@ async function bootstrap() {
     naturalLanguageDesktopReady: () => personalAccessService !== null && personalHostMode,
     naturalLanguageDesktopVerified: () => personalAccessService?.hasVerifiedPersonalTool?.() === true,
   });
+
+  async function assertAccountModelReloadSafe() {
+    const busy = () => Object.assign(new Error('account model route is busy'), { code: 'ACCOUNT_MODEL_BUSY' });
+    if (personalAccessService?.hasUnissuedDshCommands?.()) throw busy();
+    try { await assertRouteReloadSafe(); }
+    catch { throw busy(); }
+    if (!(await webRuntime?.personalModelQueueIdle?.())) throw busy();
+    if (personalAccessService?.hasUnissuedDshCommands?.()) throw busy();
+  }
+
+  const accountModelManager = accessPort === null ? null : {
+    hasCredential(profileId) {
+      if (typeof profileId !== 'string' || !/^private-model-[a-f0-9]{40}$/.test(profileId)) return false;
+      const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === profileId);
+      return !!profile && !!configStoreMod.getCredential(officialCredentialRef(routeForProfile(profileId).provider));
+    },
+    async stageSecret({ stageRef, apiKey }) {
+      if (typeof stageRef !== 'string' || !/^pending-model-[a-f0-9]{48}$/.test(stageRef) ||
+          typeof apiKey !== 'string' || !apiKey || apiKey.length > 4096) {
+        throw Object.assign(new Error('invalid staged model secret'), { code: 'INVALID_REQUEST' });
+      }
+      return enqueueRouteMutation(() => {
+        configStoreMod.preflightVault();
+        const existing = configStoreMod.getCredential(stageRef);
+        if (existing && existing !== apiKey) {
+          throw Object.assign(new Error('staged secret conflict'), { code: 'REQUEST_CONFLICT' });
+        }
+        if (!existing) configStoreMod.saveCredential(stageRef, apiKey);
+      });
+    },
+    async apply({ target, stageRef, previousProfileId }) {
+      if (!target || !/^private-model-[a-f0-9]{40}$/.test(target.profileId) ||
+          (stageRef && !/^pending-model-[a-f0-9]{48}$/.test(stageRef)) ||
+          (previousProfileId && !/^private-model-[a-f0-9]{40}$/.test(previousProfileId))) {
+        throw Object.assign(new Error('invalid account model target'), { code: 'INVALID_REQUEST', definite: true });
+      }
+      return enqueueRouteMutation(async () => {
+        if (!runtimeOrigin || isQuitting) throw Object.assign(new Error('runtime unavailable'), { code: 'ACCOUNT_MODEL_BUSY' });
+        configStoreMod.preflightVault();
+        await hydrateLegacySessionBindings();
+        try { assertSessionReferenceScanComplete(); await assertAccountModelReloadSafe(); }
+        catch { throw Object.assign(new Error('runtime busy'), { code: 'ACCOUNT_MODEL_BUSY' }); }
+        const route = routeForProfile(target.profileId);
+        const credentialRef = officialCredentialRef(route.provider);
+        const secret = stageRef ? configStoreMod.getCredential(stageRef)
+          : previousProfileId ? configStoreMod.getCredential(
+            officialCredentialRef(routeForProfile(previousProfileId).provider)) : null;
+        if (!secret) throw Object.assign(new Error('model credential unavailable'),
+          { code: 'ACCOUNT_MODEL_SECRET_REQUIRED', definite: true });
+        const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
+          models: [{ id: target.modelId, name: target.name, contextWindow: 32768, maxTokens: 8192 }] };
+        const previousActive = settingsMod.listModelProfiles().activeId;
+        const routeBefore = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
+        let addedOfficialRoute = false;
+        try {
+          await mutateModelRouteTransaction(async () => {
+            configStoreMod.saveCredential(credentialRef, secret);
+            const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+            const installed = await migrateLegacyRoutes(official, [projection]);
+            addedOfficialRoute = installed.mutated;
+            settingsMod.upsertModelProfile({ id: target.profileId, name: target.name,
+              provider: 'openai-compatible', baseUrl: target.baseUrl,
+              model: target.modelId, reasoningEffort: 'off' }, { preserveActive: true });
+            if (settingsMod.listModelProfiles().activeId !== previousActive) {
+              throw new Error('product default model changed while registering account route');
+            }
+            await ensureSharedRuntime({ reload: true });
+            const restarted = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+            const [snapshot, credentials] = await Promise.all([
+              restarted.describeSettings(), restarted.describeCredentials([credentialRef]),
+            ]);
+            const verified = verifyLegacyRouteMigration([projection], snapshot, credentials);
+            if (!verified.ok || settingsMod.listModelProfiles().activeId !== previousActive) {
+              throw new Error('account model route not verified after restart');
+            }
+          });
+        } catch (error) {
+          if (addedOfficialRoute && !Object.hasOwn(routeBefore.userProviders, route.provider) && runtimeOrigin) {
+            try {
+              const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+              const snapshot = await official.describeSettings();
+              if (isDeepStrictEqual(snapshot.userProviders[route.provider],
+                projectOfficialProviderConfig(projection))) {
+                await official.mutateSettings([{ op: 'unset', path: ['providers', route.provider] }], snapshot.revision);
+              }
+            } catch { /* Failed compensation is observed, never retried as a new route. */ }
+          }
+          throw error;
+        }
+        if (stageRef) configStoreMod.removeCredential(stageRef);
+        return { applied: true };
+      });
+    },
+    async inspect({ kind, target, profileIds = [] }) {
+      return enqueueRouteMutation(async () => {
+        if (!runtimeOrigin) return { applied: false, clean: false };
+        configStoreMod.preflightVault();
+        if (kind === 'stop_using' || kind === 'remove') {
+          return { applied: profileIds.every((id) => !configStoreMod.getCredential(
+            officialCredentialRef(routeForProfile(id).provider))) };
+        }
+        if (!target) return { applied: false, clean: false };
+        const route = routeForProfile(target.profileId);
+        const ref = officialCredentialRef(route.provider);
+        const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === target.profileId);
+        const snapshot = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
+        const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
+          models: [{ id: target.modelId, name: target.name, contextWindow: 32768, maxTokens: 8192 }] };
+        const exact = isDeepStrictEqual(snapshot.userProviders[route.provider],
+          projectOfficialProviderConfig(projection)) && profile?.baseUrl === target.baseUrl &&
+          profile.model === target.modelId && !!configStoreMod.getCredential(ref);
+        const clean = !Object.hasOwn(snapshot.userProviders, route.provider) && !profile &&
+          !configStoreMod.getCredential(ref);
+        return { applied: exact, clean };
+      });
+    },
+    async test({ profileId, ownerId }) {
+      return accessBackend.verifyModelProfile(profileId, ownerId);
+    },
+    async disable({ profileIds, stageRefs = [] }) {
+      return enqueueRouteMutation(async () => {
+        configStoreMod.preflightVault();
+        if (profileIds.every((profileId) => /^private-model-[a-f0-9]{40}$/.test(profileId) &&
+            !configStoreMod.getCredential(officialCredentialRef(routeForProfile(profileId).provider)) &&
+            !configStoreMod.getCredential(profileId)) &&
+            stageRefs.every((ref) => /^pending-model-[a-f0-9]{48}$/.test(ref) &&
+              !configStoreMod.getCredential(ref))) return { applied: true };
+        if (!runtimeOrigin || isQuitting) throw Object.assign(new Error('runtime unavailable'), { code: 'ACCOUNT_MODEL_BUSY' });
+        try { await assertAccountModelReloadSafe(); }
+        catch { throw Object.assign(new Error('runtime busy'), { code: 'ACCOUNT_MODEL_BUSY' }); }
+        await mutateModelRouteTransaction(async () => {
+          const refs = [];
+          for (const profileId of profileIds) {
+            if (!/^private-model-[a-f0-9]{40}$/.test(profileId)) throw new Error('invalid private model identity');
+            const ref = officialCredentialRef(routeForProfile(profileId).provider);
+            refs.push(ref);
+            configStoreMod.removeCredential(ref);
+            configStoreMod.removeCredential(profileId);
+          }
+          for (const ref of stageRefs) {
+            if (!/^pending-model-[a-f0-9]{48}$/.test(ref)) throw new Error('invalid staged model credential');
+            configStoreMod.removeCredential(ref);
+          }
+          await ensureSharedRuntime({ reload: true });
+          const official = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+          for (let start = 0; start < refs.length; start += 64) {
+            const batch = refs.slice(start, start + 64);
+            const described = await official.describeCredentials(batch);
+            if (batch.some((ref) => described[ref]?.configured !== false)) {
+              throw new Error('account model credential revocation was not verified');
+            }
+          }
+        });
+        return { applied: true };
+      });
+    },
+    async readSecret({ profileId }) {
+      if (!/^private-model-[a-f0-9]{40}$/.test(profileId)) return null;
+      configStoreMod.preflightVault();
+      return configStoreMod.getCredential(officialCredentialRef(routeForProfile(profileId).provider));
+    },
+  };
 
   try {
     if (personalHostMode) {
@@ -2686,6 +2868,7 @@ async function bootstrap() {
            mobileUiDir,
            memoryManager: personalMemoryManager,
           browserReader: personalBrowserReader,
+          accountModelManager,
            sharedProfileIsFormal: (marker) => {
              const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === marker.id);
              if (profile?.provider !== marker.provider || profile.baseUrl !== marker.baseUrl ||

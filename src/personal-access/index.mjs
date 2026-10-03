@@ -18,6 +18,12 @@ import { canonicalArtifact, createPersonalArtifactStore, validArtifactFileName }
 import { inspectProjectRoot, listProjectFiles, readProjectFile } from '../personal-projects/index.mjs';
 import { canonicalPublicUrl } from '../personal-browser/network.mjs';
 import { buildConversationContext, validConversationContext } from '../personal-conversations/context.mjs';
+import { ACCOUNT_MODEL_ID, PRIVATE_PROFILE_ID, MODEL_ID as ACCOUNT_MODEL_NAME_ID,
+  privateProfileId, publicAccountModel, publicModelOperation,
+  validAccountModel, validModelOperation } from '../personal-account-models/index.mjs';
+import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
+import { normalizeApiBaseUrl } from '../stage2-config.ts';
+import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
 
 const VERSION = 3;
 const SINGLE_ACCOUNT_VERSION = 2;
@@ -84,6 +90,8 @@ const PUBLIC_CODES = new Set([
   'CONVERSATION_CONTEXT_UNAVAILABLE', 'CONVERSATION_NOT_READY', 'CONVERSATION_SYNC_CHANGED',
   'LOCAL_TURN_RUNNING', 'LOCAL_TURN_UNCONFIRMED',
   'SOURCE_DEVICE_UPGRADE_REQUIRED',
+  'ACCOUNT_MODEL_UNAVAILABLE', 'ACCOUNT_MODEL_REVISION_CHANGED', 'ACCOUNT_MODEL_BUSY',
+  'ACCOUNT_MODEL_SECRET_REQUIRED', 'ACCOUNT_MODEL_ROUTE_UNCONFIRMED',
   'IMAGE_REJECTED',
 ]);
 const LEGACY_SCOPES = new Set(['sessions:read', 'commands:write']);
@@ -100,6 +108,11 @@ const WEB_SNAPSHOT_ID = /^source-[a-f0-9]{48}$/;
 const LINK_ID = /^link-[a-f0-9]{40}$/;
 const CONVERSATION_ID = /^(?:conversation-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 const SYNC_EVENT_ID = /^(?:[A-Za-z][A-Za-z0-9_-]{0,31}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+
+function canonicalAccountBaseUrl(input) {
+  const url = normalizeApiBaseUrl(input);
+  return url?.endsWith('/chat/completions') ? url.slice(0, -'/chat/completions'.length) : url;
+}
 
 function failure(code, status = 400) {
   const error = new Error(code);
@@ -400,6 +413,35 @@ function validateSingleStore(store) {
       : device.authKind === 'password'
         ? accountDeviceInvalid(device, store.account)
         : true)) throw failure('STORE_CORRUPT', 500);
+  }
+  if (store.accountModels !== undefined && (!plainObject(store.accountModels) ||
+      Object.keys(store.accountModels).length > 1000)) throw failure('STORE_CORRUPT', 500);
+  for (const [accountModelId, record] of Object.entries(store.accountModels ?? {})) {
+    if (!validAccountModel(record, store.ownerId, accountModelId)) throw failure('STORE_CORRUPT', 500);
+    for (const revision of Object.values(record.revisions)) {
+      if (canonicalAccountBaseUrl(revision.baseUrl) !== revision.baseUrl ||
+          modelRouteFingerprint(openAICompatibleEndpoint(revision.baseUrl, 'chat/completions').href,
+            revision.modelId) !== revision.routeFingerprint) throw failure('STORE_CORRUPT', 500);
+    }
+  }
+  if (store.modelOperations !== undefined && (!plainObject(store.modelOperations) ||
+      Object.keys(store.modelOperations).length > 1000)) throw failure('STORE_CORRUPT', 500);
+  for (const [requestId, operation] of Object.entries(store.modelOperations ?? {})) {
+    if (!REQUEST_ID.test(requestId) || !validModelOperation(operation, store.ownerId,
+      requestId, store.accountModels ?? {})) throw failure('STORE_CORRUPT', 500);
+    const model = store.accountModels[operation.accountModelId];
+    if (operation.target && (canonicalAccountBaseUrl(operation.target.baseUrl) !== operation.target.baseUrl ||
+        modelRouteFingerprint(openAICompatibleEndpoint(operation.target.baseUrl,
+          'chat/completions').href, operation.target.modelId) !== operation.target.routeFingerprint ||
+        !['create', 'update'].includes(operation.kind) ||
+        (operation.kind === 'create' && operation.target.runtimeRevision !== 1) ||
+        (operation.kind === 'update' && (operation.status === 'succeeded'
+          ? model.revisions[String(operation.target.runtimeRevision)]?.profileId !== operation.target.profileId
+          : operation.target.runtimeRevision !== model.runtimeRevision + 1)))) {
+      throw failure('STORE_CORRUPT', 500);
+    }
+    if (operation.previousProfileId && !Object.values(model.revisions).some((row) =>
+      row.profileId === operation.previousProfileId)) throw failure('STORE_CORRUPT', 500);
   }
   if (store.conversationBindings !== undefined && (!plainObject(store.conversationBindings) ||
       Object.keys(store.conversationBindings).length > 500)) throw failure('STORE_CORRUPT', 500);
@@ -930,11 +972,18 @@ async function writeStreamPart(response, part) {
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null }) {
+  browserReader = null, accountModelManager = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
       typeof sharedProfileIsFormal !== 'function' ||
+      (accountModelManager !== null && (typeof accountModelManager.stageSecret !== 'function' ||
+        typeof accountModelManager.apply !== 'function' ||
+        typeof accountModelManager.inspect !== 'function' ||
+        typeof accountModelManager.hasCredential !== 'function' ||
+        typeof accountModelManager.test !== 'function' ||
+        typeof accountModelManager.disable !== 'function' ||
+        typeof accountModelManager.readSecret !== 'function')) ||
       (memoryManager !== null && (typeof memoryManager.status !== 'function' ||
         typeof memoryManager.peek !== 'function' || typeof memoryManager.query !== 'function' ||
         typeof memoryManager.submitCommand !== 'function' ||
@@ -1017,17 +1066,38 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   };
   const artifactStore = createPersonalArtifactStore(path.join(root, 'artifacts'));
   const hostOwner = (ownerId) => ownerId === rootState.legacyOwnerId;
+  const accountModelForProfile = (ownerId, profileId) => Object.values(accountState(ownerId).accountModels ?? {})
+    .find((model) => Object.values(model.revisions).some((revision) => revision.profileId === profileId));
   const modelVisible = (ownerId, profileId) => {
+    if (typeof profileId !== 'string') return false;
+    if (profileId.startsWith('private-model-')) {
+      const model = PRIVATE_PROFILE_ID.test(profileId) ? accountModelForProfile(ownerId, profileId) : null;
+      if (model?.status !== 'active') return false;
+      return !Object.values(accountState(ownerId).modelOperations ?? {}).some((operation) =>
+        operation.accountModelId === model.accountModelId &&
+        ['stop_using', 'remove'].includes(operation.kind) &&
+        ['pending', 'applying', 'uncertain'].includes(operation.status));
+    }
     if (hostOwner(ownerId)) return true;
     const marker = rootState.sharedModelProfiles.find((item) => item.id === profileId);
     if (!marker) return false;
     try { return sharedProfileIsFormal(marker) === true; } catch { return false; }
   };
+  const modelSelectable = (ownerId, profileId) => {
+    if (!modelVisible(ownerId, profileId)) return false;
+    if (!profileId.startsWith('private-model-')) return true;
+    const model = accountModelForProfile(ownerId, profileId);
+    return model?.revisions[String(model.runtimeRevision)]?.profileId === profileId;
+  };
+  const messageModelUsable = (ownerId, session) => !!session &&
+    (modelVisible(ownerId, session.modelProfileId) ||
+      (hostOwner(ownerId) && session.modelProfileId === undefined));
   const registeredAccountCount = () => Object.values(rootState.accounts)
     .filter((entry) => entry.account !== null).length;
   // A callback may have run before the process died. Never replay these commands.
   if (Object.values(rootState.accounts).some((account) =>
-    Object.values(account.commands).some((command) => command.state === 'dispatching'))) {
+    Object.values(account.commands).some((command) => command.state === 'dispatching') ||
+    Object.values(account.modelOperations ?? {}).some((operation) => operation.status === 'applying'))) {
     const recovered = structuredClone(rootState);
     for (const [ownerId, account] of Object.entries(recovered.accounts)) {
       for (const command of Object.values(account.commands)) {
@@ -1050,6 +1120,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (binding.status === 'creating' && account.commands[binding.adoptCommandId]?.state === 'uncertain') {
           binding.status = 'uncertain';
           binding.updatedAt = new Date().toISOString();
+        }
+      }
+      for (const operation of Object.values(account.modelOperations ?? {})) {
+        if (operation.status === 'applying') {
+          operation.status = 'uncertain';
+          operation.reasonCode = 'ACCOUNT_MODEL_ROUTE_UNCONFIRMED';
+          operation.updatedAt = new Date().toISOString();
         }
       }
     }
@@ -1182,6 +1259,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const scheduled = new Set();
   const stopping = new Map();
   const pendingPreflights = new Map();
+  const activeModelOperations = new Map();
 
   function timestamp() {
     const value = clock();
@@ -1590,6 +1668,144 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     });
   }
 
+  function accountModelView(ownerId, record) {
+    const profileId = record.revisions[String(record.runtimeRevision)].profileId;
+    let configured = false;
+    try { configured = accountModelManager?.hasCredential(profileId) === true; } catch { /* Unknown is not configured. */ }
+    return publicAccountModel(record, configured);
+  }
+
+  function modelOperationResponse(ownerId, operation) {
+    const model = accountState(ownerId).accountModels?.[operation.accountModelId];
+    return { operation: publicModelOperation(operation),
+      ...(model ? { model: accountModelView(ownerId, model) } : {}) };
+  }
+
+  function completeModelOperation(next, operation, result) {
+    const model = next.accountModels[operation.accountModelId];
+    if (!model || operation.status !== 'applying' && operation.status !== 'uncertain') return;
+    const now = new Date(timestamp()).toISOString();
+    if (operation.kind === 'create') {
+      model.status = 'active';
+    } else if (operation.kind === 'update') {
+      if (operation.target) {
+        const target = operation.target;
+        model.revisions[String(target.runtimeRevision)] = {
+          revision: target.runtimeRevision, profileId: target.profileId,
+          baseUrl: target.baseUrl, modelId: target.modelId,
+          routeFingerprint: target.routeFingerprint, createdAt: now,
+        };
+        model.runtimeRevision = target.runtimeRevision;
+      }
+      if (operation.name !== undefined) model.name = operation.name;
+      model.revision++;
+      model.updatedAt = now;
+    } else if (operation.kind === 'stop_using' || operation.kind === 'remove') {
+      model.status = operation.kind === 'remove' ? 'removed' : 'stopped';
+      model.revision++;
+      model.updatedAt = now;
+    } else if (operation.kind === 'test') {
+      operation.testResult = { configured: result?.configured === true,
+        reachable: result?.reachable === true, modelListed: result?.modelListed === true };
+    }
+    operation.status = 'succeeded'; operation.resultRevision = model.revision;
+    delete operation.reasonCode; delete operation.errorCode;
+    operation.updatedAt = now;
+  }
+
+  async function reconcileModelOperation(ownerId, requestId) {
+    if (!accountModelManager) return;
+    const operation = accountState(ownerId).modelOperations?.[requestId];
+    if (!operation || operation.status !== 'uncertain' || operation.kind === 'test') return;
+    let observed;
+    try {
+      observed = await accountModelManager.inspect({ ownerId, kind: operation.kind,
+        target: operation.target, profileIds: Object.values(
+          accountState(ownerId).accountModels[operation.accountModelId].revisions)
+          .map((item) => item.profileId) });
+    } catch { return; }
+    if (observed?.applied !== true && observed?.clean !== true) return;
+    await serial(() => mutate(ownerId, (next) => {
+      const current = next.modelOperations?.[requestId];
+      if (current?.status !== 'uncertain') return;
+      if (observed.applied === true) completeModelOperation(next, current, observed);
+      else {
+        current.status = 'failed'; current.errorCode = 'ACCOUNT_MODEL_ROUTE_UNCONFIRMED';
+        delete current.reasonCode;
+        current.updatedAt = new Date(timestamp()).toISOString();
+        if (current.kind === 'create') next.accountModels[current.accountModelId].status = 'failed';
+      }
+    }));
+  }
+
+  async function driveModelOperation(ownerId, requestId) {
+    if (!accountModelManager || closing || storageFault) return;
+    const before = accountState(ownerId).modelOperations?.[requestId];
+    if (before?.status !== 'pending') return;
+    await serial(() => mutate(ownerId, (next) => {
+      const current = next.modelOperations?.[requestId];
+      if (current?.status !== 'pending') return;
+      current.status = 'applying'; current.updatedAt = new Date(timestamp()).toISOString();
+      delete current.reasonCode;
+    }));
+    const operation = accountState(ownerId).modelOperations[requestId];
+    if (operation.status !== 'applying') return;
+    let result;
+    try {
+      if (operation.kind === 'create' || operation.kind === 'update') {
+        result = operation.target ? await accountModelManager.apply({ ownerId,
+          requestId, kind: operation.kind, accountModelId: operation.accountModelId,
+          target: operation.target, stageRef: operation.stageRef,
+          previousProfileId: operation.previousProfileId }) : { applied: true };
+      } else if (operation.kind === 'test') {
+        const model = accountState(ownerId).accountModels[operation.accountModelId];
+        result = await accountModelManager.test({ ownerId,
+          profileId: model.revisions[String(model.runtimeRevision)].profileId });
+      } else {
+        const model = accountState(ownerId).accountModels[operation.accountModelId];
+        result = await accountModelManager.disable({ ownerId,
+          profileIds: Object.values(model.revisions).map((item) => item.profileId),
+          stageRefs: Object.values(accountState(ownerId).modelOperations ?? {})
+            .filter((item) => item.accountModelId === operation.accountModelId && item.stageRef)
+            .map((item) => item.stageRef) });
+      }
+      if (result?.applied === false) throw failure('ACCOUNT_MODEL_ROUTE_UNCONFIRMED', 503);
+    } catch (error) {
+      if (closing) return;
+      const busy = error?.code === 'ACCOUNT_MODEL_BUSY';
+      await serial(() => mutate(ownerId, (next) => {
+        const current = next.modelOperations?.[requestId];
+        if (current?.status !== 'applying') return;
+        current.status = busy ? 'pending' : error?.definite === true ? 'failed' : 'uncertain';
+        current.reasonCode = busy ? 'RUNTIME_BUSY' : 'ACCOUNT_MODEL_ROUTE_UNCONFIRMED';
+        if (!busy) current.errorCode = PUBLIC_CODES.has(error?.code)
+          ? error.code : 'ACCOUNT_MODEL_ROUTE_UNCONFIRMED';
+        current.updatedAt = new Date(timestamp()).toISOString();
+        if (current.status === 'failed' && current.kind === 'create') {
+          next.accountModels[current.accountModelId].status = 'failed';
+        }
+      }));
+      if (busy && !closing) {
+        const timer = setTimeout(() => scheduleModelOperation(ownerId, requestId), 2000);
+        timer.unref?.();
+      }
+      return;
+    }
+    if (closing) return;
+    await serial(() => mutate(ownerId, (next) => {
+      const current = next.modelOperations?.[requestId];
+      if (current?.status === 'applying') completeModelOperation(next, current, result);
+    }));
+  }
+
+  function scheduleModelOperation(ownerId, requestId) {
+    const key = `${ownerId}|${requestId}`;
+    if (activeModelOperations.has(key) || closing) return;
+    const work = Promise.resolve().then(() => driveModelOperation(ownerId, requestId))
+      .catch(() => {}).finally(() => activeModelOperations.delete(key));
+    activeModelOperations.set(key, work);
+  }
+
   function requestAuthority(request) {
     const host = request.headers.host;
     if (typeof host !== 'string') return null;
@@ -1980,6 +2196,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       let callback;
       const pending = accountState(ownerId).commands[commandId];
       if (!pending || pending.state !== 'pending') return;
+      const pendingSession = pending.kind === 'session.message'
+        ? accountState(ownerId).sessions[pending.sessionId] : null;
       if (pending.toolSource) {
         let safePreset = false;
         try {
@@ -2005,8 +2223,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }));
         return;
       }
-      if (pending.kind === 'session.message' && !hostOwner(ownerId) &&
-          !modelVisible(ownerId, accountState(ownerId).sessions[pending.sessionId]?.modelProfileId)) {
+      if (pending.kind === 'session.message' &&
+          !messageModelUsable(ownerId, accountState(ownerId).sessions[pending.sessionId])) {
         await serial(() => mutate(ownerId, (next) => {
           if (next.commands[commandId]?.state !== 'pending') return;
           next.commands[commandId].state = 'rejected';
@@ -2136,6 +2354,29 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
           });
           return;
+        }
+        if (command.kind === 'session.create' &&
+            !modelSelectable(ownerId, command.payload.modelProfileId)) {
+          await mutate(ownerId, (next) => {
+            next.commands[commandId].state = 'rejected';
+            next.commands[commandId].errorCode = 'MODEL_UNAVAILABLE';
+            next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
+          });
+          return;
+        }
+        if (command.kind === 'session.message') {
+          const session = accountState(ownerId).sessions[command.sessionId];
+          if (!session || session.ownerId !== ownerId || !pendingSession ||
+              session.modelProfileId !== pendingSession.modelProfileId ||
+              session.conversationId !== pendingSession.conversationId ||
+              !messageModelUsable(ownerId, session)) {
+            await mutate(ownerId, (next) => {
+              next.commands[commandId].state = 'rejected';
+              next.commands[commandId].errorCode = 'MODEL_UNAVAILABLE';
+              next.commands[commandId].updatedAt = new Date(timestamp()).toISOString();
+            });
+            return;
+          }
         }
         if (command.payload.conversationId) {
           const bound = accountState(ownerId).conversationBindings?.[command.payload.conversationId];
@@ -2768,7 +3009,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         backendStatus.modules.memory = memoryManager?.peek(ownerId) ?? 'disabled';
         if (!hostOwner(ownerId)) {
           const models = modelProjection(await callBackend(() => backend.listModels({ ownerId })))
-            .filter((item) => modelVisible(ownerId, item.id));
+            .filter((item) => modelSelectable(ownerId, item.id));
           if (!models.some((item) => item.configured)) {
             backendStatus.capabilities.chat = { available: false, reasonCode: 'MODEL_UNAVAILABLE' };
           }
@@ -2788,7 +3029,191 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (request.method === 'GET' && pathname === '/personal/v1/models') {
         if (url.search) throw failure('INVALID_REQUEST');
         return json(response, 200, { models: modelProjection(await callBackend(() => backend.listModels({ ownerId })))
-          .filter((item) => modelVisible(ownerId, item.id)) });
+          .filter((item) => modelSelectable(ownerId, item.id))
+          .map((item) => {
+            const owned = item.id.startsWith('private-model-') ? accountModelForProfile(ownerId, item.id) : null;
+            return owned ? { ...item, name: owned.name, accountModelId: owned.accountModelId,
+              revision: owned.revision } : item;
+          }) });
+      }
+      if (pathname === '/personal/v1/account/models' && request.method === 'GET') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = authenticate(request, 'sessions:read');
+        return json(response, 200, { models: Object.values(state.accountModels ?? {})
+          .filter((item) => item.status !== 'removed').map((item) => accountModelView(ownerId, item))
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          canManage: current.via === 'cookie' && current.device.scopes.includes('account:manage') });
+      }
+      const modelOperationMatch = /^\/personal\/v1\/account\/models\/by-request\/([A-Za-z0-9_.:-]{1,128})$/.exec(pathname);
+      if (modelOperationMatch && request.method === 'GET') {
+        if (url.search || !REQUEST_ID.test(modelOperationMatch[1])) throw failure('INVALID_REQUEST');
+        const operation = state.modelOperations?.[modelOperationMatch[1]];
+        if (!operation) throw failure('NOT_FOUND', 404);
+        if (operation.status === 'uncertain') await reconcileModelOperation(ownerId, operation.requestId);
+        return json(response, 200, modelOperationResponse(ownerId,
+          accountState(ownerId).modelOperations[operation.requestId]));
+      }
+      const accountModelMatch = /^\/personal\/v1\/account\/models\/(account-model-[0-9a-f-]{36})(?:\/(test|stop-using|transfer))?$/.exec(pathname);
+      if (accountModelMatch && request.method === 'GET' && !accountModelMatch[2]) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const record = state.accountModels?.[accountModelMatch[1]];
+        if (!record) throw failure('NOT_FOUND', 404);
+        return json(response, 200, { model: accountModelView(ownerId, record) });
+      }
+      if ((pathname === '/personal/v1/account/models' && request.method === 'POST') ||
+          (accountModelMatch && ['PATCH', 'POST', 'DELETE'].includes(request.method))) {
+        if (url.search || !accountModelManager) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 503);
+        const current = authenticate(request, 'account:manage');
+        if (current.via !== 'cookie' || current.device.authKind !== 'password') {
+          throw failure('FORBIDDEN', 403);
+        }
+        const action = !accountModelMatch ? 'create' : request.method === 'PATCH' ? 'update'
+          : request.method === 'DELETE' ? 'remove' : accountModelMatch[2] === 'test' ? 'test'
+            : accountModelMatch[2] === 'stop-using' ? 'stop_using'
+              : accountModelMatch[2] === 'transfer' ? 'transfer' : null;
+        if (!action) throw failure('NOT_FOUND', 404);
+        const body = await readJson(request, action === 'create' || action === 'update' ? 12 * 1024 : MAX_BODY);
+        if (action === 'create') exactKeys(body, ['requestId', 'name', 'baseUrl', 'modelId', 'apiKey'],
+          ['requestId', 'name', 'baseUrl', 'modelId', 'apiKey']);
+        else if (action === 'update') exactKeys(body,
+          ['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey'],
+          ['requestId', 'expectedRevision']);
+        else exactKeys(body, ['requestId', 'expectedRevision'], ['requestId', 'expectedRevision']);
+        if (!REQUEST_ID.test(body.requestId ?? '') ||
+            (action !== 'create' && (!Number.isSafeInteger(body.expectedRevision) ||
+              body.expectedRevision < 1))) throw failure('INVALID_REQUEST');
+        const accountModelId = action === 'create' ? null : accountModelMatch[1];
+        const prior = state.modelOperations?.[body.requestId];
+        if (action === 'transfer') {
+          if (prior) throw failure('REQUEST_CONFLICT', 409);
+          const record = state.accountModels?.[accountModelId];
+          if (!record) throw failure('NOT_FOUND', 404);
+          if (record.status !== 'active' || record.revision !== body.expectedRevision) {
+            throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
+          }
+          if (current.device.syncCapabilities?.nativeVersionCode < 12 ||
+              current.device.syncCapabilities?.sharedConversations !== 1) throw failure('FORBIDDEN', 403);
+          const profileId = record.revisions[String(record.runtimeRevision)].profileId;
+          if (record.ownerId !== ownerId || !modelVisible(ownerId, profileId)) {
+            throw failure('ACCOUNT_MODEL_UNAVAILABLE', 409);
+          }
+          const secret = await accountModelManager.readSecret({ ownerId, profileId });
+          const latest = authenticate(request, 'account:manage');
+          const newest = accountState(ownerId).accountModels?.[accountModelId];
+          if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
+              latest.via !== 'cookie' || latest.device.authKind !== 'password' ||
+              latest.device.authEpoch !== current.device.authEpoch ||
+              latest.device.syncCapabilities?.nativeVersionCode < 12 ||
+              newest?.ownerId !== ownerId || newest.status !== 'active' ||
+              newest.revision !== body.expectedRevision ||
+              newest.revisions[String(newest.runtimeRevision)]?.profileId !== profileId ||
+              !modelVisible(ownerId, profileId) ||
+              typeof secret !== 'string' || !secret) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 409);
+          return json(response, 200, { model: accountModelView(ownerId,
+            accountState(ownerId).accountModels[accountModelId]), apiKey: secret });
+        }
+        const priorModel = accountModelId ? state.accountModels?.[accountModelId] : null;
+        if (accountModelId && !priorModel) throw failure('NOT_FOUND', 404);
+        let name = body.name, baseUrl = body.baseUrl, modelId = body.modelId;
+        if (action === 'create' || action === 'update') {
+          if (action === 'update' && !['name', 'baseUrl', 'modelId', 'apiKey'].some((key) =>
+            Object.hasOwn(body, key))) throw failure('INVALID_REQUEST');
+          name = action === 'create' || body.name !== undefined ? body.name : priorModel.name;
+          baseUrl = canonicalAccountBaseUrl(action === 'create' || body.baseUrl !== undefined
+            ? body.baseUrl : priorModel.revisions[String(priorModel.runtimeRevision)].baseUrl);
+          modelId = action === 'create' || body.modelId !== undefined
+            ? body.modelId : priorModel.revisions[String(priorModel.runtimeRevision)].modelId;
+          if (typeof name !== 'string' || !name.trim() || name.length > 120 ||
+              !baseUrl || typeof modelId !== 'string' || !ACCOUNT_MODEL_NAME_ID.test(modelId) ||
+              (body.apiKey !== undefined && (typeof body.apiKey !== 'string' ||
+                !body.apiKey || body.apiKey.length > 4096))) throw failure('INVALID_REQUEST');
+          if (action === 'create' && !body.apiKey) throw failure('ACCOUNT_MODEL_SECRET_REQUIRED', 400);
+          if (action === 'update' && body.baseUrl !== undefined &&
+              baseUrl !== priorModel.revisions[String(priorModel.runtimeRevision)].baseUrl &&
+              body.apiKey === undefined) throw failure('ACCOUNT_MODEL_SECRET_REQUIRED', 400);
+        }
+        const hash = digest(JSON.stringify({ action, accountModelId,
+          request: action === 'create' || action === 'update'
+            ? Object.fromEntries(['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey']
+              .filter((key) => Object.hasOwn(body, key))
+              .map((key) => [key, key === 'baseUrl' ? canonicalAccountBaseUrl(body[key]) : body[key]]))
+            : { requestId: body.requestId, expectedRevision: body.expectedRevision } }));
+        if (prior) {
+          if (prior.kind !== action || prior.accountModelId !== accountModelId && accountModelId !== null ||
+              prior.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
+          return json(response, ['pending', 'applying'].includes(prior.status) ? 202 : 200,
+            modelOperationResponse(ownerId, prior));
+        }
+        if (Object.values(state.commands).some((item) => item.requestId === body.requestId) ||
+            state.projectOperations?.[body.requestId]) throw failure('REQUEST_CONFLICT', 409);
+        if (priorModel && (priorModel.revision !== body.expectedRevision ||
+            !(action === 'remove' ? ['active', 'stopped', 'failed'].includes(priorModel.status)
+              : priorModel.status === 'active'))) {
+          throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
+        }
+        if (accountModelId && Object.values(state.modelOperations ?? {}).some((item) =>
+          item.accountModelId === accountModelId &&
+          ['pending', 'applying', 'uncertain'].includes(item.status))) {
+          throw failure('ACCOUNT_MODEL_BUSY', 409);
+        }
+        const newId = accountModelId ?? `account-model-${randomUUID()}`;
+        const currentRuntime = priorModel?.revisions[String(priorModel.runtimeRevision)];
+        const routeChange = action === 'create' || action === 'update' &&
+          (baseUrl !== currentRuntime.baseUrl || modelId !== currentRuntime.modelId || body.apiKey !== undefined);
+        const target = routeChange ? {
+          runtimeRevision: action === 'create' ? 1 : priorModel.runtimeRevision + 1,
+          profileId: privateProfileId(ownerId, newId,
+            action === 'create' ? 1 : priorModel.runtimeRevision + 1),
+          baseUrl, modelId, name, routeFingerprint: modelRouteFingerprint(
+            openAICompatibleEndpoint(baseUrl, 'chat/completions').href, modelId),
+        } : null;
+        const stageRef = body.apiKey !== undefined
+          ? `pending-model-${digest(`${ownerId}|${body.requestId}|${hash}`).slice(0, 48)}` : null;
+        if (stageRef) await accountModelManager.stageSecret({ ownerId, stageRef, apiKey: body.apiKey });
+        const operation = await serial(() => mutate(ownerId, (next) => {
+          const latest = authenticate(request, 'account:manage');
+          if (latest.ownerId !== ownerId || latest.deviceId !== deviceId || latest.via !== 'cookie') {
+            throw failure('UNAUTHORIZED', 401);
+          }
+          next.accountModels ??= {}; next.modelOperations ??= {};
+          const existing = next.modelOperations[body.requestId];
+          if (existing) {
+            if (existing.payloadHash !== hash || existing.kind !== action) throw failure('REQUEST_CONFLICT', 409);
+            return existing;
+          }
+          if (Object.keys(next.modelOperations).length >= 1000 ||
+              (action === 'create' && (Object.keys(next.accountModels).length >= 1000 ||
+                Object.values(next.accountModels).filter((item) => item.status !== 'removed').length >= 100))) {
+            throw failure('CAPACITY_LIMIT', 429);
+          }
+          const found = accountModelId ? next.accountModels[accountModelId] : null;
+          if (accountModelId && (!found ||
+              !(action === 'remove' ? ['active', 'stopped', 'failed'].includes(found.status)
+                : found.status === 'active') ||
+              found.revision !== body.expectedRevision)) throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
+          if (accountModelId && Object.values(next.modelOperations).some((item) =>
+            item.accountModelId === accountModelId &&
+            ['pending', 'applying', 'uncertain'].includes(item.status))) {
+            throw failure('ACCOUNT_MODEL_BUSY', 409);
+          }
+          const now = new Date(timestamp()).toISOString();
+          if (action === 'create') next.accountModels[newId] = { accountModelId: newId,
+            ownerId, revision: 1, runtimeRevision: 1, name, status: 'pending',
+            revisions: { '1': { revision: 1, profileId: target.profileId,
+              baseUrl, modelId, routeFingerprint: target.routeFingerprint, createdAt: now } },
+            createdAt: now, updatedAt: now };
+          const saved = { ownerId, requestId: body.requestId, kind: action,
+            accountModelId: newId, payloadHash: hash, status: 'pending',
+            ...(body.expectedRevision ? { expectedRevision: body.expectedRevision } : {}),
+            ...(target ? { target } : {}), ...(stageRef ? { stageRef } : {}),
+            ...(action === 'update' ? { name } : {}),
+            ...(currentRuntime && target ? { previousProfileId: currentRuntime.profileId } : {}),
+            createdAt: now, updatedAt: now };
+          next.modelOperations[body.requestId] = saved;
+          return saved;
+        }));
+        scheduleModelOperation(ownerId, operation.requestId);
+        return json(response, 202, modelOperationResponse(ownerId, operation));
       }
       if (request.method === 'GET' && pathname === '/personal/v1/projects') {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -2885,7 +3310,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (request.method === 'POST' && modelMatch) {
         if (url.search) throw failure('INVALID_REQUEST');
         const profileId = modelProfileId(modelMatch[1]);
-        if (!modelVisible(ownerId, profileId)) throw failure('MODEL_UNAVAILABLE', 422);
+        if (!modelSelectable(ownerId, profileId)) throw failure('MODEL_UNAVAILABLE', 422);
         if (modelMatch[2] === 'verify') {
           if (typeof backend.verifyModelProfile !== 'function') throw failure('CAPABILITY_UNAVAILABLE', 503);
           exactKeys(await readJson(request), [], []);
@@ -3277,10 +3702,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (payload.kind === 'desktop.open_app' && !hostOwner(ownerId)) {
           throw failure('CAPABILITY_UNAVAILABLE', 403);
         }
-        if (payload.kind === 'session.create' && !modelVisible(ownerId, payload.modelProfileId)) {
+        if (payload.kind === 'session.create' && !modelSelectable(ownerId, payload.modelProfileId)) {
           throw failure('MODEL_UNAVAILABLE', 422);
         }
         const payloadHash = digest(JSON.stringify(payload));
+        if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (Object.values(state.commands).some((command) =>
           command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
@@ -3315,8 +3741,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             !['personal-remote', 'shared-chat'].includes(state.sessions[payload.sessionId].origin)) {
           throw failure('SESSION_READ_ONLY', 409);
         }
-        if (payload.kind === 'session.message' && !hostOwner(ownerId) &&
-            !modelVisible(ownerId, state.sessions[payload.sessionId].modelProfileId)) {
+        if (payload.kind === 'session.message' &&
+            !messageModelUsable(ownerId, state.sessions[payload.sessionId])) {
           throw failure('MODEL_UNAVAILABLE', 422);
         }
         if (payload.kind === 'session.message' && payload.sourceSyncEventId &&
@@ -3353,6 +3779,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           const current = authenticate(request, 'commands:write');
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           const latest = accountState(ownerId);
+          if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (Object.values(latest.commands).some((command) =>
             command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
@@ -3407,8 +3834,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
               !['personal-remote', 'shared-chat'].includes(latest.sessions[payload.sessionId].origin)) {
             throw failure('SESSION_READ_ONLY', 409);
           }
-          if (payload.kind === 'session.message' && !hostOwner(ownerId) &&
-              !modelVisible(ownerId, latest.sessions[payload.sessionId].modelProfileId)) {
+          if (payload.kind === 'session.message' &&
+              !messageModelUsable(ownerId, latest.sessions[payload.sessionId])) {
             throw failure('MODEL_UNAVAILABLE', 422);
           }
           if (payload.kind === 'session.message' && payload.sourceSyncEventId &&
@@ -3496,6 +3923,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       server = candidate;
       origin = `http://127.0.0.1:${candidate.address().port}`;
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
+        for (const operation of Object.values(account.modelOperations ?? {})) {
+          if (operation.status === 'pending') scheduleModelOperation(ownerId, operation.requestId);
+        }
         for (const command of Object.values(account.commands)) {
           if (command.state === 'pending') schedule(ownerId, command.commandId);
           if (command.taskControl?.state === 'stop_requested') {
@@ -3517,9 +3947,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       };
     },
     legacyOwnerId() { return rootState.legacyOwnerId; },
-    canUseModelProfile(ownerId, profileId) {
+    canUseModelProfile(ownerId, profileId, usage = 'bound') {
       return Object.hasOwn(rootState.accounts, ownerId) &&
-        typeof profileId === 'string' && modelVisible(ownerId, profileId);
+        typeof profileId === 'string' && (usage === 'new' ? modelSelectable(ownerId, profileId)
+          : modelVisible(ownerId, profileId));
     },
     isFormalLocalProfile(profileId) {
       const marker = rootState.sharedModelProfiles.find((item) => item.id === profileId);
@@ -3528,6 +3959,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     },
     ownerForSession(sessionId) {
       return uniqueSessionOwner(rootState.accounts, sessionId);
+    },
+    hasUnissuedDshCommands() {
+      return Object.values(rootState.accounts).some((account) =>
+        Object.values(account.commands).some((command) =>
+          ['pending', 'dispatching'].includes(command.state)));
     },
     async getConversationContext({ sessionId, turn, step, receiptId, messageHash }) {
       if (!validId(sessionId) || !Number.isSafeInteger(turn) || turn < 0 || step !== 1 ||
@@ -4182,7 +4618,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           ]);
           clearTimeout(timer);
           await Promise.race([
-            Promise.allSettled([listeningClosed, ...active, ...stopping.values()]),
+            Promise.allSettled([listeningClosed, ...active, ...stopping.values(),
+              ...activeModelOperations.values()]),
             new Promise((resolve) => { timer = setTimeout(resolve, CLOSE_TIMEOUT_MS); }),
           ]);
         } finally {

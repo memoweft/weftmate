@@ -42,6 +42,7 @@ class Element {
   querySelectorAll() { return [] }
   close() { this.open = false }
   showModal() { this.open = true }
+  reset() { this.value = '' }
   open = false
 }
 
@@ -60,6 +61,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     eventPageSize?: number; syncAvailable?: boolean; syncEvents?: object[]; downloadAvailable?: boolean;
     conversationViews?: Record<string, object>;
     modelCatalog?: object[];
+    accountModels?: object[]; accountModelWrite?: (url: string, options: any) => object;
+    accountModelByRequest?: Record<string, object>;
     syncPost?: 'timeout-no-commit' | 'timeout-committed' | 'conflict'; uuidForSync?: boolean; deviceSuffix?: string;
     configured?: boolean; authenticated?: boolean; setupGrant?: string;
     profileAccounts?: Record<string, any>; initialProfileOwner?: string;
@@ -174,6 +177,18 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       return Promise.resolve(reply({ events, nextSeq: (events.at(-1) as any)?.seq ?? afterSeq,
         hasMore: remaining.length > events.length }))
     }
+    if (url.endsWith('/account/models') && options.method === 'POST') return Promise.resolve(reply(
+      config.accountModelWrite?.(url, options) ?? { error: { code: 'NOT_FOUND' } },
+      config.accountModelWrite ? 200 : 404))
+    if (url.endsWith('/account/models')) return Promise.resolve(reply({ models: config.accountModels ?? [], canManage: true }))
+    if (url.includes('/account/models/by-request/')) {
+      const requestId = url.split('/').at(-1)!
+      return Promise.resolve(config.accountModelByRequest?.[requestId]
+        ? reply(config.accountModelByRequest[requestId]) : reply({ error: { code: 'NOT_FOUND' } }, 404))
+    }
+    if (url.includes('/account/models/') && options.method && options.method !== 'GET')
+      return Promise.resolve(reply(config.accountModelWrite?.(url, options) ?? { error: { code: 'NOT_FOUND' } },
+        config.accountModelWrite ? 200 : 404))
     if (url.endsWith('/models')) return Promise.resolve(reply({ models: config.modelCatalog ??
       [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
     if (url.endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
@@ -967,6 +982,53 @@ test('phone handoff prefers only one exact original route and never defaults to 
   const multiple = await opened({ modelId: 'mimo-v2.6-flash', displayName: 'MiMo',
     routeFingerprint: fingerprint })
   assert.equal(multiple.select.value, '', 'multiple exact routes require a deliberate selection')
+})
+
+test('desktop account model form sends a typed secret once and recovers only public operation fields', async () => {
+  const models: any[] = []
+  const receipts: Record<string, object> = {}
+  const writes: Array<{ url: string; body: any }> = []
+  const page = harness([], [], false, { accountModels: models, accountModelByRequest: receipts,
+    accountModelWrite: (url, options) => {
+      const body = JSON.parse(options.body)
+      writes.push({ url, body })
+      const model = { accountModelId: 'account-model-one', revision: 1, profileId: 'private-one',
+        name: '我的 MiMo', provider: 'openai-compatible', baseUrl: 'https://api.xiaomimimo.com/v1',
+        modelId: 'mimo-v2.6-flash', routeFingerprint: 'a'.repeat(64), configured: true,
+        status: 'active', createdAt: '2026-10-03T00:00:00Z', updatedAt: '2026-10-03T00:00:00Z' }
+      if (url.endsWith('/account/models')) models.push(model)
+      const result = { operation: { requestId: body.requestId,
+        kind: url.endsWith('/test') ? 'test' : 'create', accountModelId: model.accountModelId,
+        status: 'succeeded', resultRevision: 1,
+        ...(url.endsWith('/test') ? { testResult: { configured: true, reachable: false, modelListed: false } } : {}) }, model }
+      receipts[body.requestId] = result
+      return result
+    } })
+  for (let attempt = 0; attempt < 15 && page.get('assistant-view').hidden; attempt++) await flush()
+  page.get('rail-account').fire('click')
+  for (let attempt = 0; attempt < 30 &&
+      !page.get('account-models-status').textContent.includes('可把手机已保存'); attempt++) await flush()
+  assert.equal(page.get('account-model-form').hidden, false)
+  page.get('account-model-name').value = '我的 MiMo'
+  page.get('account-model-base-url').value = 'https://api.xiaomimimo.com/v1'
+  page.get('account-model-id').value = 'mimo-v2.6-flash'
+  page.get('account-model-key').value = 'synthetic-private-key'
+  assert.ok(page.get('account-model-form').listeners.get('submit')?.length)
+  page.get('account-model-form').fire('submit')
+  for (let attempt = 0; attempt < 35 && models.length < 1; attempt++) await flush()
+  assert.equal(writes.length, 1, `form=${page.get('account-model-form-status').textContent}; list=${page.get('account-models-status').textContent}; requests=${page.requests.filter((item) => item.url.includes('/account/models')).map((item) => item.url).join(',')}`)
+  assert.equal(writes[0].body.apiKey, 'synthetic-private-key')
+  assert.equal([...page.storage.values()].some((value) => value.includes('synthetic-private-key')), false)
+  for (let attempt = 0; attempt < 25 && !visibleText(page.get('account-models-list')).includes('我的 MiMo'); attempt++) await flush()
+  assert.match(visibleText(page.get('account-models-list')), /我的 MiMo/)
+  const test = page.get('account-models-list').children[0].children[1].children
+    .find((item) => item.textContent === '测试连接')!
+  test.fire('click')
+  for (let attempt = 0; attempt < 25 && writes.length < 2; attempt++) await flush()
+  assert.equal(writes.length, 2)
+  assert.equal(writes[1].body.apiKey, undefined)
+  assert.match(page.get('account-models-status').textContent, /尚未发送推理消息/)
+  assert.match(page.get('account-models-status').textContent, /未通过/)
 })
 
 test('phone image timeline bounds large originals and recovers small images without display sidecars', async () => {

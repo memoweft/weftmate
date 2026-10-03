@@ -24,6 +24,11 @@
   state.projectCanManage = false
   state.projectPending = null
   state.projectFetchGeneration = 0
+  state.accountModels = []
+  state.accountModelsCanManage = false
+  state.accountModelFetchGeneration = 0
+  state.accountModelEditing = null
+  state.accountModelBusy = false
   state.browserHostId = null
   state.browserAvailable = false
   state.browserFetchGeneration = 0
@@ -152,6 +157,12 @@
     state.phoneHostEvents.clear()
     state.phoneHandoffBusy = false
     state.phoneHandoffSelections.clear()
+    state.accountModels = []
+    state.accountModelsCanManage = false
+    state.accountModelFetchGeneration++
+    state.accountModelEditing = null
+    state.accountModelBusy = false
+    byId('account-model-section').hidden = true
     state.desktopDraft = ''
     closePhoneImagePreview()
     state.phoneDeviceNames.clear()
@@ -539,6 +550,179 @@
       if (error.code === 'UNAUTHORIZED') return sessionExpired()
       loading.textContent = state.deviceNotice ? `${state.deviceNotice}但列表暂时无法刷新，请稍后重试。` : '设备记录暂时无法读取。请点击刷新重试。'
       state.deviceNotice = ''
+    }
+  }
+
+  function accountModelMarkerKey() { return `weftmate:account-model-operation:${state.ownerId || 'none'}` }
+  function savedAccountModelMarker() {
+    try {
+      const value = JSON.parse(localStorage.getItem(accountModelMarkerKey()) || 'null')
+      return value?.ownerId === state.ownerId && value?.hostId === state.hostId &&
+        /^[0-9a-f-]{36}$/.test(value.requestId || '') &&
+        ['create', 'update', 'test', 'stop_using', 'remove'].includes(value.kind) ? value : null
+    } catch { return null }
+  }
+  function storeAccountModelMarker(marker) {
+    try { localStorage.setItem(accountModelMarkerKey(), JSON.stringify(marker)); return true }
+    catch { return false }
+  }
+  function forgetAccountModelMarker(requestId) {
+    if (savedAccountModelMarker()?.requestId === requestId)
+      try { localStorage.removeItem(accountModelMarkerKey()) } catch { /* Pending state stays visible. */ }
+  }
+  function accountModelStatus(text, error = false) {
+    const node = byId('account-models-status')
+    node.textContent = text
+    node.classList.toggle('form-error', error)
+  }
+  async function accountModelReceipt(marker, token) {
+    try {
+      const result = await accessApi(`/account/models/by-request/${encodeURIComponent(marker.requestId)}`)
+      if (!accountCurrent(token)) return null
+      const operation = result?.operation
+      if (operation?.requestId !== marker.requestId || operation.kind !== marker.kind)
+        throw { code: 'MODEL_RECEIPT_INVALID' }
+      if (operation.status === 'succeeded') {
+        forgetAccountModelMarker(marker.requestId)
+        const checked = operation.testResult
+        accountModelStatus(operation.kind === 'test'
+          ? (checked?.configured === true && checked.reachable === true && checked.modelListed === true
+            ? '目录与鉴权已核对；尚未发送推理消息。'
+            : '连接检查已完成，但目录、鉴权或模型列表未通过；尚未发送推理消息。')
+          : operation.kind === 'stop_using'
+            ? '已停止使用；原会话记录与绑定仍保留，后续新发送需要另选可用模型。'
+            : operation.kind === 'remove'
+              ? '已移除账户配置；手机另存的副本保持不变。'
+              : '账户模型配置已保存；已有会话模型绑定保持不变。',
+          operation.kind === 'test' && !(checked?.configured === true && checked.reachable === true && checked.modelListed === true))
+        void refreshAccountModels(true); void refreshModels()
+      } else if (operation.status === 'failed') {
+        forgetAccountModelMarker(marker.requestId)
+        accountModelStatus('这次模型操作未完成；原有配置仍可查看。', true)
+      } else accountModelStatus(operation.reasonCode === 'RUNTIME_BUSY'
+        ? '电脑正在处理其他回合；原模型请求已保存，稍后用同编号核对。'
+        : '模型操作仍在处理；原请求编号已保存，不会再次创建。')
+      return result
+    } catch (error) {
+      if (accountCurrent(token)) accountModelStatus(error.code === 'NOT_FOUND'
+        ? '电脑尚未找到原请求；原编号已保存。请核对输入后再明确重试。'
+        : '原请求暂时无法核对，配置与密钥输入仍保留在本页。', true)
+      return null
+    }
+  }
+  function renderAccountModels() {
+    const list = byId('account-models-list')
+    list.replaceChildren()
+    const marker = savedAccountModelMarker()
+    const form = byId('account-model-form')
+    form.hidden = !state.accountModelsCanManage
+    if (!state.accountModels.length) {
+      list.append(element('li', 'muted', '当前账户尚无已配置的电脑云模型。手机原模型不会自动上传。'))
+    }
+    for (const model of state.accountModels) {
+      const row = element('li', 'project-row')
+      const main = element('div', 'project-row-main')
+      main.append(element('strong', '', model.name || model.modelId),
+        element('small', '', `${model.modelId} · ${{ active: '可用', stopped: '已停止使用', pending: '配置中', failed: '配置失败' }[model.status] || '待核对'} · 修订 ${model.revision}`))
+      const actions = element('div', 'actions')
+      const edit = element('button', 'button quiet small', '编辑')
+      edit.disabled = state.accountModelBusy || !!marker || model.status !== 'active'
+      edit.addEventListener('click', () => {
+        state.accountModelEditing = { id: model.accountModelId, revision: model.revision }
+        byId('account-model-name').value = model.name || ''
+        byId('account-model-base-url').value = model.baseUrl || ''
+        byId('account-model-id').value = model.modelId || ''
+        byId('account-model-key').value = ''
+        byId('account-model-submit').textContent = '保存修改'
+        byId('account-model-cancel').hidden = false
+        byId('account-model-form-status').textContent = '留空密钥表示沿用原地址已保存的密钥；换地址需输入新地址的密钥。'
+        byId('account-model-name').focus()
+      })
+      actions.append(edit)
+      if (model.status === 'active') {
+        const test = element('button', 'button secondary small', '测试连接')
+        test.disabled = state.accountModelBusy || !!marker
+        test.addEventListener('click', () => { void submitAccountModelControl(model, 'test') })
+        const stop = element('button', 'button quiet small', '停止使用')
+        stop.disabled = state.accountModelBusy || !!marker
+        stop.addEventListener('click', () => {
+          if (stop.dataset.confirm !== 'yes') {
+            stop.dataset.confirm = 'yes'; stop.textContent = '确认停止'; return
+          }
+          void submitAccountModelControl(model, 'stop_using')
+        })
+        actions.append(test, stop)
+      } else if (model.status === 'stopped' || model.status === 'failed') {
+        const remove = element('button', 'button danger small', '移除配置')
+        remove.disabled = state.accountModelBusy || !!marker
+        remove.addEventListener('click', () => {
+          if (remove.dataset.confirm !== 'yes') {
+            remove.dataset.confirm = 'yes'; remove.textContent = '确认移除'; return
+          }
+          void submitAccountModelControl(model, 'remove')
+        })
+        actions.append(remove)
+      }
+      row.append(main, actions)
+      list.append(row)
+    }
+  }
+  async function refreshAccountModels(preserveStatus = false) {
+    const token = accountToken()
+    if (!accountCurrent(token)) return
+    const generation = ++state.accountModelFetchGeneration
+    if (!preserveStatus) accountModelStatus('正在读取当前账户的电脑模型…')
+    try {
+      const result = await accessApi('/account/models')
+      if (!accountCurrent(token) || generation !== state.accountModelFetchGeneration) return
+      if (!Array.isArray(result.models)) throw { code: 'MODEL_RECEIPT_INVALID' }
+      byId('account-model-section').hidden = false
+      state.accountModels = result.models.filter((item) =>
+        typeof item?.accountModelId === 'string' && Number.isSafeInteger(item.revision) &&
+        typeof item.name === 'string' && typeof item.modelId === 'string')
+      state.accountModelsCanManage = result.canManage === true
+      renderAccountModels()
+      const marker = savedAccountModelMarker()
+      if (marker) void accountModelReceipt(marker, token)
+      else if (!preserveStatus) accountModelStatus(state.accountModels.length
+        ? '测试连接只核目录和鉴权；配置变化不会改变已有会话的模型。'
+        : '可把手机已保存的云模型从手机明确上传，或在此新增账户配置。')
+    } catch (error) {
+      if (accountCurrent(token) && error.code === 'NOT_FOUND') byId('account-model-section').hidden = true
+      if (accountCurrent(token) && generation === state.accountModelFetchGeneration)
+        accountModelStatus(error.code === 'NOT_FOUND' ? '当前电脑尚未接入账户模型配置。'
+          : '账户模型目录暂时无法读取；已有聊天与草稿保持原样。', true)
+    }
+  }
+  async function submitAccountModelControl(model, kind) {
+    const token = accountToken()
+    if (!accountCurrent(token) || state.accountModelBusy) return
+    const prior = savedAccountModelMarker()
+    if (prior && (prior.kind !== kind || prior.accountModelId !== model.accountModelId)) {
+      accountModelStatus('上一项模型操作仍待核对；先刷新原请求状态。', true); return
+    }
+    const marker = prior || { ownerId: state.ownerId, hostId: state.hostId,
+      requestId: crypto.randomUUID(), kind, accountModelId: model.accountModelId,
+      expectedRevision: model.revision }
+    if (!storeAccountModelMarker(marker)) {
+      accountModelStatus('无法保存请求编号，本次没有提交。', true); return
+    }
+    const path = `/account/models/${encodeURIComponent(model.accountModelId)}${kind === 'test' ? '/test'
+      : kind === 'stop_using' ? '/stop-using' : ''}`
+    state.accountModelBusy = true; renderAccountModels()
+    try {
+      const previous = await accountModelReceipt(marker, token)
+      if (!accountCurrent(token) || previous?.operation) return
+      const sent = await accessApi(path, { method: kind === 'remove' ? 'DELETE' : 'POST',
+        protectedWrite: true, body: { requestId: marker.requestId,
+          expectedRevision: marker.expectedRevision } })
+      if (!accountCurrent(token)) return
+      if (sent?.operation?.requestId !== marker.requestId) throw { code: 'MODEL_RECEIPT_INVALID' }
+      await accountModelReceipt(marker, token)
+    } catch (error) {
+      if (accountCurrent(token)) accountModelStatus('结果待核对，原请求编号已保留；不会重复提交。', true)
+    } finally {
+      if (accountCurrent(token)) { state.accountModelBusy = false; renderAccountModels() }
     }
   }
 
@@ -3479,6 +3663,89 @@
             : '登记未完成，请检查目录并重试。'
     } finally { if (accountCurrent(token)) button.disabled = false }
   })
+  byId('account-models-refresh').addEventListener('click', () => { void refreshAccountModels() })
+  byId('account-model-cancel').addEventListener('click', () => {
+    state.accountModelEditing = null
+    byId('account-model-form').reset()
+    byId('account-model-submit').textContent = '保存到电脑账户'
+    byId('account-model-cancel').hidden = true
+    byId('account-model-form-status').textContent = ''
+  })
+  byId('account-model-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    const token = accountToken()
+    const error = byId('account-model-form-status')
+    if (!accountCurrent(token) || !state.accountModelsCanManage || state.accountModelBusy) {
+      error.textContent = '账户状态正在变化；请核对后重试。'; return
+    }
+    const name = byId('account-model-name').value.trim().normalize('NFC')
+    const baseUrl = byId('account-model-base-url').value.trim()
+    const modelId = byId('account-model-id').value.trim()
+    const apiKey = byId('account-model-key').value
+    if (!name || !/^[A-Za-z0-9._:/-]{1,128}$/.test(modelId) || !baseUrl) {
+      error.textContent = '请填写名称、提供方地址和有效模型 ID。'; return
+    }
+    let route
+    try { route = new URL(baseUrl) } catch { error.textContent = '请输入完整的 HTTPS 提供方地址。'; return }
+    if (route.protocol !== 'https:' || route.username || route.password || route.search || route.hash ||
+        !route.pathname.replace(/\/+$/, '').endsWith('/v1')) {
+      error.textContent = '电脑云模型需要 HTTPS 的 /v1 地址，不能包含账号、参数或片段。'; return
+    }
+    const editing = state.accountModelEditing
+    const priorModel = editing && state.accountModels.find((item) => item.accountModelId === editing.id)
+    if (editing && (!priorModel || priorModel.revision !== editing.revision)) {
+      error.textContent = '配置修订已变化，请先刷新目录，表单内容仍保留。'; return
+    }
+    if ((!editing || priorModel?.baseUrl !== baseUrl) && !apiKey) {
+      error.textContent = '新建或更换服务地址时，请输入该地址的密钥。'; return
+    }
+    const kind = editing ? 'update' : 'create'
+    const existing = savedAccountModelMarker()
+    if (existing && (existing.kind !== kind || existing.accountModelId !== (editing?.id ?? undefined) ||
+        existing.name !== name || existing.baseUrl !== baseUrl || existing.modelId !== modelId ||
+        existing.expectedRevision !== (editing?.revision ?? undefined))) {
+      error.textContent = '上一项账户模型操作仍待核对；请保持原输入并刷新请求状态。'; return
+    }
+    const marker = existing || { ownerId: state.ownerId, hostId: state.hostId,
+      requestId: crypto.randomUUID(), kind, ...(editing ? { accountModelId: editing.id,
+        expectedRevision: editing.revision } : {}), name, baseUrl, modelId }
+    if (!storeAccountModelMarker(marker)) {
+      error.textContent = '无法保存请求编号，本次没有提交。'; return
+    }
+    state.accountModelBusy = true
+    byId('account-model-submit').disabled = true
+    error.textContent = '正在核对原请求并保存配置…'
+    try {
+      const known = await accountModelReceipt(marker, token)
+      if (!accountCurrent(token)) return
+      if (!known?.operation) {
+        const body = { requestId: marker.requestId, ...(editing ? { expectedRevision: editing.revision } : {}),
+          name, baseUrl, modelId, ...(apiKey ? { apiKey } : {}) }
+        const result = await accessApi(editing
+          ? `/account/models/${encodeURIComponent(editing.id)}` : '/account/models', {
+          method: editing ? 'PATCH' : 'POST', protectedWrite: true, body })
+        if (!accountCurrent(token) || result?.operation?.requestId !== marker.requestId)
+          throw { code: 'MODEL_RECEIPT_INVALID' }
+      }
+      const settled = await accountModelReceipt(marker, token)
+      if (!accountCurrent(token)) return
+      if (settled?.operation?.status === 'succeeded') {
+        byId('account-model-form').reset()
+        state.accountModelEditing = null
+        byId('account-model-submit').textContent = '保存到电脑账户'
+        byId('account-model-cancel').hidden = true
+        error.textContent = '配置已保存。测试连接需单独点击；尚未发送推理消息。'
+      } else error.textContent = '请求正在核对，原编号和输入仍保留。'
+    } catch (failure) {
+      if (accountCurrent(token)) error.textContent = failure.code === 'NETWORK'
+        ? '送达结果不明，原请求编号与输入仍保留；请刷新核对。'
+        : failure.code === 'REQUEST_CONFLICT' ? '原请求内容或配置修订不同；请先核对原操作。'
+          : '配置未完成；密钥仍留在本页输入框中供你核对。'
+    } finally {
+      if (accountCurrent(token)) { state.accountModelBusy = false; byId('account-model-submit').disabled = false;
+        renderAccountModels() }
+    }
+  })
   byId('account-back').addEventListener('click', () => { resetProfileDraft(); state.deviceEditing = null; void enterAssistant() })
   function openAccount() {
     stopAssistantRefresh(); closeRail(); show('account')
@@ -3486,6 +3753,7 @@
     resetProfileDraft()
     void refreshProfile()
     void refreshDevices()
+    void refreshAccountModels()
     void refreshProjects()
     void refreshModels()
     void refreshBrowserWorkspace()
