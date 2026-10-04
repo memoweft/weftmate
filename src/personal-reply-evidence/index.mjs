@@ -51,6 +51,9 @@ export function projectReplyEvidence(content, { receiptId, live = false } = {}) 
   const start = [...rows].reverse().find((event) => event.seq < target.seq &&
     event.type === 'turn/start' && Number.isSafeInteger(event.data?.turn))
   if (!start || start.data.turn < 1) return result
+  // A late user receipt cannot inherit an already completed native turn.
+  if (rows.some((event) => event.seq > start.seq && event.seq < target.seq &&
+      event.type === 'turn/end')) return result
   const turn = start.data.turn
   const after = rows.filter((event) => event.seq > start.seq)
   const nextStart = after.find((event) => event.type === 'turn/start')
@@ -58,7 +61,10 @@ export function projectReplyEvidence(content, { receiptId, live = false } = {}) 
   const users = turnRows.filter((event) => event.type === 'user/message' &&
     event.data?.source?.kind === 'user')
   if (users.length !== 1 || users[0].seq !== target.seq) return result
-  const end = turnRows.find((event) => event.type === 'turn/end' && event.data?.turn === turn)
+  const terminals = turnRows.filter((event) => event.type === 'turn/end')
+  if (terminals.length > 1 || (terminals.length === 1 &&
+      (terminals[0].seq <= target.seq || terminals[0].data?.turn !== turn))) return result
+  const end = terminals[0] ?? null
   const scopedRows = end ? turnRows.filter((event) => event.seq <= end.seq) : turnRows
   const calls = new Set()
   let step = 0, assistantChunks = 0, textChunks = 0, reasoningChunks = 0
