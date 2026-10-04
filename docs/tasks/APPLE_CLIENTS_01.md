@@ -1,6 +1,6 @@
 # WeftMate Mac iPhone 和 Apple Watch 开发交接
 
-日期：2026-10-04。用户已明确让另一侧 Codex 开发 Mac、iOS 和 Apple Watch 版本，手表类型已确认。本文是 Apple 平台的任务交接与实施范围；当前尚无 Apple 客户端工程或构建验收。
+当前更新：2026-10-05。Mac布局修复候选为 `0.1.0 / 4`，同网普通连接、隔离新安装侧栏、保存状态恢复、设备/设置/正常退出已有实际证据，Release4/新DMG已形成且实际空登录入口通过；iPhone/Watch最后实际构建仍为 `0.1.0 / 2`。候选尚未由用户验收，旧Keychain跨签名覆盖与公网未通过。当前本轮记录见文末。初始交接日期为2026-10-04，历史计划不代表当前仍无工程。
 
 目标是让 Apple 设备加入同一个 WeftMate：同账户继续聊天、使用记忆、交代事情、查看和接续任务；Mac 与 iPhone 同时具备自身可用的助手能力。现有 Windows 服务端和 Android 成果继续复用，Apple 侧按设备特点交付真实 App。
 
@@ -45,9 +45,9 @@ WeftMate 是各种设备统一的 AI Agent（人工智能助手）。首版路�
 
 用户随后明确已连接 Mac，授权 Windows 主助手直接指挥苹果侧。已定位现有 Mac 任务 `01a106a1-c996-7e12-a93d-4441c14e530b`，工作目录 `/Users/yun/Desktop/WeftMate`；Windows 主任务为 `01a0dc76-b04c-7492-9cb9-94a1b1a0744e`。任务消息已能从 Windows 发到 Mac，进度由 Windows 的 wait_threads（任务等待工具）读取，用户无需复制两边对话。此处记录的是已发生的调度；源码同步仍需单独核实际通路。
 
-Mac 此前已实测 Xcode 26.3/Swift 6.2.4，当前目录只有旧方案包；旁边的 `/Users/yun/Desktop/APPLE` 工程先作为只读参考，不能覆盖。首次调度要求核现有私有文件通路，取得最新源码后才开始正式接入。
+初始调度时Mac目录只有旧方案包；其后已接收并校验源码，独立工作根为 `/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate`，Xcode 26.3/Swift 6.2.4已实测。旁边的 `/Users/yun/Desktop/APPLE` 工程仍只读保留。源码快照与新本地Git历史的精确版本见实施记录。
 
-建议 Apple 生产目录为 `apps/apple/`，内部组织 Shared、macOS、iOS、watchOS 和 Tests；这些目录是建议，当前还不存在。Apple 侧先在自己的检出或独立目录核工具链，保留已有修改，随后拥有 Apple 目录和本任务卡的实施记录。共享根依赖、锁文件、服务端源码和 Android 改动先协调，避免双方同写。
+Apple当前实现位于 `apps/apple/`，包含共享Swift包、UI、macOS、iOS、watchOS、Tests、工程与脚本。Apple侧拥有该目录和本任务卡的实施记录；共享根依赖、锁文件、服务端源码和Android由Windows侧维护。Mac接收的旧后端源码快照不能覆盖Windows已发布的 `cb08461`。
 
 共同接口需求按现有 `collab/README.md` 协作；BACKEND.md 保持一个写者，由 Windows 侧合入 Apple 请求及答复。Apple 实施进展记录在本任务卡，由 Windows 侧据实际证据更新 CURRENT_STATE。交接包是快照，不另建一套实时状态系统。
 
@@ -258,3 +258,121 @@ Mac当前入口为上方 `LAN-Revision2` 中的已构建App；iPhone/Watch仍使
 4. 查看Watch当前模拟器入口：明确尚未接通账户和手机同步，不应显示已发送任务或已联网接续。
 
 仍未完成：普通公网客户端路径、Mac完整登录界面、真实Apple签名与安装、Watch账户/后台/独立联网、发送、持久草稿和真实覆盖安装保留行为。更新需求仍按本人手动下载安装，未发布新包或渠道时不造下载链接。本轮冻结并等待用户反馈，不进入B—F或健康模块。
+
+### 构建号2交接接收记录（2026-10-04）
+
+Windows主任务通知已从指定 `192.168.31.144` 接收 `Mac-Apple-A-build2-03a681f9.zip`，120,437字节，实际SHA-256与Mac交接值精确一致：`14347591ac9134763903b278bafddd8241163686a89cda3c3e7a38ba40215dfd`。Windows副本保存在 `AppleHandoff-20261004`，由其读取桥按36项源码清单审查整合，保留共同后端与全局文档改动；是否完成整合以Windows后续记录为准。
+
+Mac只读核对传送日志：`served-once`、peer为 `192.168.31.144`、bytes为120437，随后 `closed/consumed`，进程退出0；原端口51698已无监听。没有新开传输或复跑测试。冻结应用源码提交仍为 `03a681f911cb281edc1b8c31fc87554380196fd6`；本次仅追加接收事实，不改变候选或A的验收边界，不进入B—F。
+
+### 2026-10-05 已授权接续：日常连接、完整Mac登录与安装候选
+
+Windows主协调转达用户明确同意继续推荐路线：先收口A的日常连接、完整Mac认证与真实安装渠道，再由主协调安排同会话续聊。旧build2与已通过/未通过证据继续保留。Windows已报告主仓整合提交 `68f150c`、共同后端 `cb08461`；本机独立历史不覆盖其后端或全局状态。
+
+本轮范围：现有代理中仅 `home.weftmate.com` 的可维护规则/解析与正常原生URLSession；Mac完整原生登录、原历史、重启同设备与退出；真实Mac可安装试用包；Phone/Watch现有签名/团队/分发条件只读核对。无需新费用的本机Mac试用先形成具体交付，遇到本人账户登录/团队选择/费用才给具体最终步骤，密码不进入聊天。
+
+修复预算：最多3次有不同目的的网络诊断。第1次已执行普通URLSession/正式默认URL状态探测，仍 `SERVICE_UNAVAILABLE`。不重复旧proxy503/TLS故障；第2次用于现有Shadowrocket配置/路由定位，第3次用于针对性修复后的默认网络验证。单域可逆变更先保留原值，不修改全局DNS/TUN/代理或放宽TLS，不以长期Debug CONNECT代替日常入口。若需要现有Caddy增加LAN8443监听，明确请求交Windows维护。
+
+Mac自动化原环境初始化超时已保留；仅找到明确环境变化后再试，最多2次修复尝试。完整认证验证复用既有源码外0600隔离账户，未知写入结果先核同一身份，不创建新日常账户或使用私人历史。安装覆盖保持App身份和已实现的凭据/聊天/任务归属，当前内存草稿不能承诺跨安装保留；需要持久化时另按当前范围核实，不伪报更新成功。
+
+主助手负责拆解、默认网络基线与独立验收；实际子Agent分别定位单域配置及准备安装/测试。模型继承实际主任务设置并按元数据记录。完成可日常连接/安装候选，或出现精确外部阻塞时报告，本轮不擅自进入B—F或健康模块。
+
+### 2026-10-05 日常入口与Mac安装实际结果
+
+当前日常网络仍未通过：初始普通URLSession状态探测为SERVICE_UNAVAILABLE；被动定位Shadowrocket兜底FINAL,PROXY和fake-IP路径后，准备只新增两项的候选，保留原配置。通过已有Accessibility许可仅在Shadowrocket中执行候选选择/使用配置，CurrentRuleFileName实际为WeftMate-home-direct.db、Config模式不变；原PID827已映射新的.rule文件，原默认DB SHA未变化，未切VPN/TUN或请求新权限。候选只加always-real-ip=home.weftmate.com和首条DOMAIN精确DIRECT。
+
+激活后普通URLSession仍exit1、5.16秒、SERVICE_UNAVAILABLE；证据 `Daily-20261005/native-default-after-domain-rule-01.log`。现有日志没有该次请求的实际解析值/运行policy，不将缓存缺条目解释为解析已正常。该轮3个不同目的诊断已收口，未重复旧proxy503/TLS请求、未做认证写入。配置备份/600候选/脱敏差异与实际激活/被动核实均在源码外 `Daily-20261005/Shadowrocket-private`（700），原default.conf可经“使用配置”回退。
+
+给Windows主协调的精确外部请求：现有Caddy增加192.168.31.91:8443 HTTPS监听，沿用home.weftmate.com证书及现有上游，仅允许Mac192.168.31.92；保留公网映射/443及正式账户/模型。收到该新监听已验证通知后，再明确记录单域LAN解析和普通URLSession验证。当前并未声称此监听已存在，也不把未来同网路径当公网通过。
+
+Mac本机安装候选已形成：`AppleDelivery-20261005/MacTrial-20261004T191033Z-1b6bd5ca/WeftMate-Mac-0.1.0-2-x86_64-local.dmg`，927603字节，SHA-256 `e405930f81dd0b2eb3d691a197d0495dc8b8dbbebd6b20aaceb6383b1ff3f63f`。Release版本0.1.0/build2，bundleID保持，Intel x86_64，sandbox/network client签名权限核对通过。codesign strict/deep、DMG verify、只读挂载签名和独立TrialInstall副本/可执行哈希均通过。
+
+独立TrialInstall中实际Release启动成功并显示空登录窗口，App-only截图保留于trial-release-login-window.png；生产session属性-only查询为不存在，没有读cookie/profile，未输入账户或点击登录。试用实例已关闭，未覆盖旧应用或清资料。Gatekeeper评估exit3/rejected，当前是本机ad-hoc未公证包，不是可在其他Mac无提示安装的公众发行版本。
+
+签名只读核对：0个有效codesigning identity，工程DEVELOPMENT_TEAM为空，Xcode有免费Personal Team缓存但profiles0/实际连接设备0。iPhone/Watch不能记作可安装；本人最后步骤是在Xcode为两个target选同一已有团队、连接解锁并信任手机/配对手表、依设备提示启用Developer Mode、选择真实设备Run。账号登录只在Xcode完成，不索取聊天密码、不创建收费账户或未签名IPA。
+
+Mac真实认证仍暂缓；旧XCTest初始化timeout未重试。已有宿主AXIsProcessTrusted=true，有限本机AX脚本已编译，使用0600旧隔离fixture和独立namespace、正常网络，只操作自身WeftMate窗口；这是另一实际验收方法，不是XCTest通过。Release因不支持隔离namespace会在启动/网络前被该脚本拒绝，真实AX全流程尚未运行。
+
+本地ad-hoc签名的旧Debug与新Release designated requirement为不同cdhash，保持bundleID不等于证明跨安装Keychain无提示保留。未弱化DR或清除凭据；完整覆盖保留和内存草稿跨退出均未通过。可复用打包脚本、AX验收脚本与README仅在apps/apple中接续，主助手/实际子Agent模型记录为gpt-6.1-sol。
+
+本人当前可操作的真实交付：打开上述本地DMG，首次把App手动拖到独立目录，打开查看Mac原生登录/注册和服务器入口，再退出。日常认证未恢复，不要求本人用日常账户重复网络排障；不将该安装窗口视为完整登录通过。当前处于A日常连接的精确外部阻塞与本机安装候选待反馈，不进入B—F或健康模块。
+
+### 2026-10-05 新同网监听补验
+
+Windows已通知现有Caddy新增192.168.31.91:8443，原443保留，沿用home.weftmate.com证书及原路由；新site和Private防火墙均限制Mac192.168.31.92，Windows从144以正确SNI/TLS得到403。此项是Windows维护的外部状态变化，后端/公用文档仍由其负责。
+
+Mac以保留的单域候选为基础新增唯一Host home.weftmate.com=192.168.31.91，命名WeftMate-home-lan.conf，600文件/700私有目录，23061字节，SHA-256 `baf1964e6d7d3187754a71c238a0f5c96bef0ce73bb4f33882542463ec29f6a7`。同名db已选中且原TunnelPID827实际mmap新.rule，Config/原默认DB与home-direct SHA保持，无VPN/TUN开关、新权限或全局DNS变化。
+
+主助手针对新监听只执行一次普通URLSession补验：正式默认URL、无development proxy参数，exit0/0.14秒、HTTP200、route=system；证据 `DailyLAN-20261005/native-default-lan-listener-01.log`。不启用Debug CONNECT。当前仅证明同网普通入口可用，公网/离网未因此通过。LAN映射只适用于当前同网；离网经Shadowrocket切回home-direct或default，维护说明在源码外LAN-MAINTENANCE.md。
+
+用户已明确真机稍后连接、先Mac，iPhone/Watch只保留签名/设备待办，不再以连接设备作为本轮前置。完整Mac原生AX认证现在复用旧隔离fixture执行，不创建新账户、模型/工具；实际结果待下项记录。Windows原生manifest/按SHA包下载在测试未发布，需Mac认证结束后再由Windows短时发布并通知，不抢先假定清单接口存在。
+
+### 2026-10-05 Mac实际认证与限定修复结果
+
+已有宿主Accessibility权限被AXIsProcessTrusted实际确认；未改变TCC/DevToolsSecurity、未重跑旧XCTest。MacAX-01初次仅启动菜单而无主窗口，31秒超时且未发认证。进程级 -NSTreatUnknownArgumentsAsOpen NO 单变量对照后主窗口实际出现；该参数不写持久偏好、不改应用源码。
+
+Retry-02通过真实Mac原生UI的A登录、原会话ID/标题/正文、当前设备/账户、真实terminate/relaunch后相同服务端设备ID与原正文，普通URLSession，无开发代理。截图original-history.png/server-devices.png/restored-history.png由主助手核对。其后A退出动作执行时AX控件消失、回执失败，记录不冒充正常ack；只读重开同namespace为登录窗，旧本机凭据随后确认不存在。
+
+第二个具体脚本修复仅处理未知ack并观察后置条件，Resume-03从已退出A开始旧B登录，不重复已过A流程。B实际登录、读取0条自己历史，无authError；脚本后续断言仍超时，完整A→B→A及最终脚本Passed未取得。两次脚本修复预算到此停止。对B只做一次UI退出清理，确认按钮ack为-25205仍保留；属性-only查询旧mac-daily namespace已无session项（-25300），未删钥匙串替代UI退出，不能补写远端确认或脚本全通过。
+
+实际B截图另外暴露sidebar整列空白，AX仍含文案/设备/设置/footer。源中空史分支正确，无确定内部根因；仅用1次产品修复预算把sidebar改原生List根/insets/搜索容器。build3 Debug构建成功，旧B只1次登录；测试框架main窗口ID断言超时。其后同已保存B状态只读restore，不新增login，准确主窗口截图仍侧栏空白，AX几何显示列表/导航/footer异常；产品修复无效。
+
+实验patch/源码副本/构建3/失败与截图保留在DailyLAN-20261005/Sidebar-Build3；主助手比对实验单文件SHA后仅撤回自有UI与Config改动到已知build2，不使用reset/clean，不动其他脚本/文档。无Release3/DMG3，不能把旧2标成已修复包。新mac-sidebar测试namespace的B凭据保留，实例已关闭，不清用户钥匙串。
+
+原DMG2已一次性私有传送：服务日志peer192.168.31.144/bytes927603/served-once，随后closed consumed/exit0，端口51030不再监听。SHA仍e405930f81dd0b2eb3d691a197d0495dc8b8dbbebd6b20aaceb6383b1ff3f63f，实际Windows接收SHA以其通知为准。认证写操作已结束，可由Windows部署其待发布原生manifest/包下载；Mac需等正式通知再使用认证Cookie核清单及下载hash，不提前将404当失败。
+
+本轮已通过：普通同网入口、A真实登录/原历史/同设备重启、旧namespace本机退出删除观察及本机Release安装启动。未通过：Mac整套AX回归、A→B→A、空账户可见sidebar、跨安装Keychain与草稿保留；XCTest和公网/真机仍未因此通过。预算已收口，所有失败保留，不把AX可操作等同可见产品正确。
+
+### 新窄产品修复授权与实际无效依据
+
+Windows主协调明确继续Mac日用目标，并给新的窄产品修复预算：只修macOS MacWorkspace/Window布局及必要selection，保持sidebar内容、Weave、账户隔离、Core和iPhone；两批代码修复，每批一次检查及最多一次确认，不重复公网/签名/21项/其他平台整套。旧AX两次修复预算耗尽不等于用户取消日用目标。
+
+前次无效判断使用实际build3 Debug App（Sidebar-Build3/DerivedData），只改MacWorkspace sidebar容器/搜索/insets；B已登录空史并有已保存凭据。准确CG主窗是WeftMate的1080×760窗口，不用30px菜单条截图；真实图仍sidebar全空，AX几何列表position[802,-88]/size260×1286，导航[0,1080]/0×0，footer[802,1199]/260×66，相对主窗[794,106]/1080×760异常。此为可见+测量问题，不仅AX节点缺失；主账户A同构建2有历史时正常。预算内实验回退后当前交付仍已知2。
+
+下一窄批采用明确可见高度的原生Mac布局承载同一sidebar/detail（可HSplitView/真实窗口GeometryReader），先B保存状态readonly恢复验证可见控制与数据，再按必要最多一次确认。新包必须对应实际源路径/版本/截图/代码，不凭改build号或强制columnVisibility称通过。最后仍失败则给源级原因/最小可复现，而非只说AX超时。源代码与旧实验/截图均保留，等待本批实际结果。
+
+### 构建号4首批检查的精确系统批准步骤
+
+首批布局源SHA `2eee17a8d6fd38109633ac2bf1a19929fadb20ce2d6442de146e83edd671b01a`，Debug build4/codepath已独立记录在Sidebar-Build4-Batch1/built-info-codepath.json。首次readonly B恢复只等待UI状态30秒超时，不判布局失败。同批唯一确认取得准确主窗1080×760，画面为“正在打开WeftMate…”Restoring；1秒自有进程sample精确停在PersonalClient.restoreSession→KeychainCredentialStore.load→SecItemCopyMatching/SecKeychainItemCopyContent。
+
+系统SecurityAgent正常保护窗只读文本明确：WeftMate请求读取`com.weftmate.apple.ui-tests.mac-sidebar-20261005.credentials`中的机密信息，要求“登录”钥匙串密码；按钮始终允许/拒绝/允许。密码字段未读、保护动作0。当前新的ad-hoc签名访问旧合成B凭据需要本人系统批准，不是新的TLS/服务错误。主助手已通过原生问题面板请本人仅在系统窗输入密码并点允许；不在聊天索密，不弱化签名/DR或删除旧凭据绕过。
+
+当前自有build4实例PID39901保留等待，本批可见sidebar结果未取得；第二批代码修复暂不使用，不能为钥匙串阻塞盲改布局。App身份相同不等于当前临时签名更新无提示的凭据保留已通过，此保护步骤是实际边界。本人完成后继续同批既有实例观察，不新login或整套测试；若不允许则保存源码/旧版本/精确阻塞，不宣本轮完成。
+
+### 本人推进后的只读核实与一次新安装验证授权
+
+用户通过主协调明确推进，不等于Keychain允许。主助手与子Agent只读确认旧PID39901仍在、build4/source/code不变、根AXBusyIndicator及原系统保护窗口仍要求登录钥匙串密码；actions0/passwordFieldsRead=false，证据retained-instance-2026-10-04T213133Z.json。旧实例/旧项原样保留，没有新构建、代授权、删除或签名弱化。
+
+Windows随后明确允许旧实例保留+同源build4唯一干净DEBUG namespace的新安装状态验证，使用已有隔离B账号、自己的新service/installation/session，只做这一次用例，正常同网TLS、无Debug CONNECT。新namespace mac-fresh-layout-20261005，产物Sidebar-Build4-FreshInstall。旧登录覆盖保留仍待本人许可；新安装通过不得替代旧项复用通过。若新namespace也要求系统解锁/许可立即停，不绕过。源App无需改或重构，父协调临时不并行约束仅调整为这两个明确实例。当前等待该唯一用例的实际窗口/几何/导航结果，第二批产品代码不提前开展。
+
+### 唯一FreshInstall用例实际结果
+
+同源build4 Debug、UIhash2eee、namespace mac-fresh-layout-20261005，新service初始-25300；旧B只登录1次，普通同网域名/TLS，无新系统保护、Debug CONNECT、新账号或模型/工具。准确CG681/1080×760 fresh-sidebar.png主助手已审查，品牌/搜索/空史/设备/设置/footer全部实际可见。几何列表[794,262]/320×537、设备[814,371]/52×16、设置[817,403]/49×16、footer[794,800]/320×66，均在主窗内，原整列空白/零尺寸/出窗异常未再出现。由此可记录新安装状态的侧栏绘制与真实B登录已取得证据，不替代旧Keychain复用。
+
+用例设备导航后实际等到devicesList，随后设备页截图收集仍限定窗口标题WeftMate，报Own main window unavailable；动态标题变化是已到设备页后的收集器疑点，未把推断改成独立确认。fresh-install-events.json保持failed；设置身份与退出未完成、整体FreshInstall未通过。FreshPID42105已退出、自己的B凭据保留，未删旧项/再登录/新开第二fresh。旧39901保留原系统许可等待。
+
+证据Sidebar-Build4-FreshInstall/actual-fresh-results.json、preflight-info.json、fresh-sidebar.png/json、fresh-install-events.json。当前首批布局新安装可见证据有效，第二批产品代码未使用；控件后续确认须按主协调精确预算，不因为收集器标题问题盲重跑整套。Release4/新DMG尚未生成；旧2问题包已封存，不发布替代新包。
+
+### 同一FreshInstall用例重启后段授权（2026-10-05）
+
+Windows主协调已明确知晓fresh实例因原收集器失败而关闭，授权恢复同一build4路径、相同可执行文件/CDHash、mac-fresh-layout-20261005的已保存新安装状态。只正常restore，不重编译重签、不另建namespace、不新账号或重复登录；旧39901及旧Keychain项原样保留。新系统许可出现即停止，不代授权。
+
+后段改按确切新PID和稳定CG主窗口ID取证，不以设备/设置页面的动态标题选窗；仅补设备页、设置账号可达和正常UI退出。原fresh-install-events.json的failed结果保留，续接独立记录为同一用例的重启后段，不重写整体首次通过。真实控件与退出确认后才固定Release4/DMG4、版本/SHA/源码清单供Windows验证。旧项跨安装保留、公网、真机及草稿持久化仍未因此通过。Codex Remote设备密钥与密码管理讨论是独立背景，不成为Mac主线新任务。
+
+### FreshInstall同一用例重启后段实际通过（2026-10-05）
+
+外部观察工具执行一次后段，exit0。先核原App路径、Info0.1.0/4、三个MachO SHA与fresh preflight逐项一致，CDHash/DR仍ee2eab645c09cab72ce0595342070083b43094a3；应用未重编译或重签。相同mac-fresh-layout-20261005保存状态正常restore，loginActions0/newAccounts0，当前隔离B账户正确，无新系统保护、开发代理或模型/工具。
+
+续接PID43803、稳定CG695；真实窗口标题在设备页变为“设备”、设置页为“设置”，由此确认前次采集器按WeftMate标题取窗的限制。此次按PID+CG ID取得continued-devices.png、continued-settings.png、continued-signed-out.png，主助手独立查看，侧栏/设备本机标记/账号与退出入口均实际可见。UI退出只提交一次，确认按钮ACK仍-25205，随后真实登录页busy=false/authError=false，属性-only查询fresh service=-25300；probe未读data或修改项，没有删除凭据冒充退出。新实例在正常退出后关闭，旧39901及其系统许可等待保留。
+
+原fresh-install-events.json仍failed，不改写首次用例结果；新restart-continuation-events.json记同一用例重启后段completed。设备/设置/正常退出收口通过不等于整套A→B→A通过；此前build2 A原史/同设备证据保留，本批未重跑A原史。当前可固定同源Release4与新安装试用DMG；跨签名旧项保留、公网/离网、真机、持久草稿和发送仍未通过或未实现。
+
+### Mac构建号4真实安装候选与本人试用（2026-10-05）
+
+唯一Release打包由干净源码提交5ef8dc70c1e7d381bbb2365d7a12dcb9eab2c454构建，源码UIhash仍2eee17a8d6fd38109633ac2bf1a19929fadb20ce2d6442de146e83edd671b01a。新包路径AppleDelivery-20261005/Build4/MacTrial-20261004T221047Z-db761c0c/WeftMate-Mac-0.1.0-4-x86_64-local.dmg，937054字节，SHA-256 eb50a8af748d831a9f61d17f73d886805b77453992fe506c6f8f6ac2822754d4。Info实际0.1.0/4、x86_64、最低macOS14.0，bundleID保持com.weftmate.apple.weftmatemac，Release CDHash fd1c6f0ee31421354547490f5358f720d9e70f9c；主助手独立核Info和DMG SHA一致。
+
+既有脚本一次打包exit0，strict/deep签名、DMG verify、只读挂载与独立TrialInstall副本/可执行hash一致。标准production service仅属性-only预检-25300/session.macOS项0，不读data或修改项；从新TrialInstall只启动一次Release，PID44541/open0，空登录表单/App-only截图实际通过，主助手独立查看。未输入凭据或认证；新Release实例已关闭，旧39901仍保留。Release本批未重跑Debug已验证的登录/设备/设置/退出流程。
+
+当前为这台Intel Mac的本机ad-hoc试用包、未公证，Gatekeeper assess退出3/rejected；不声明其他Mac免提示安装或正式公开发行。manifest保留oldCrossVersion/publicInternet/persistentDrafts=false，不自动安装/覆盖/卸载/删除资料，旧DMG2与失败证据保留。Windows收到新包并核真SHA后再发布其已部署的认证下载清单，Mac当前不宣清单已非空。
+
+本人试用入口是上方新DMG或同目录TrialInstall/WeftMateMac.app。按本人当前同网环境：①打开DMG，把App手动放入独立试用文件夹，保留旧App；②打开查看原生登录/注册/服务器入口，系统需许可时本人在系统窗口决定；③用本人WeftMate账户登录后查看侧栏、设备和设置，预期控件真实可见，持续空白或打不开为失败；④退出应回到登录页且停止忙碌，服务器原记录保留。草稿仅内存，先保存需要的文字；同网规则离网切回home-direct/default，公网仍待验证。遇系统许可等待先报告，不清钥匙串替代授权。候选待本人试用，当前不进入B—F、健康或真机阶段。
