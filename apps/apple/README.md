@@ -38,6 +38,18 @@ python3 Scripts/run_private_ui_test.py \
 
 手机测试把 Scheme 改为 `WeftMatePhone`、destination 改为 `platform=iOS Simulator,id=<UUID>`。脚本为每次运行建立独立证据目录，生成权限 600 的 xctestrun 并注入测试环境；密码不会进入源码或命令行，控制台及文本日志会隐藏密码。UI 使用 `--ui-testing` 和独立 `--ui-testing-namespace`；同一用例重启复用此 namespace，验证 Keychain 恢复及服务器设备 ID 保持。用例核对原会话 ID、标题、原消息正文、当前设备、重启恢复和退出；存在 `<credentials路径>.second-account.json` 时，再执行 A→B→A 的账户隔离。缺少第二账户时只记录该扩展未执行。测试结果、xctestrun、账号文件均属私有运行材料，不加入源码包。
 
+Mac 的 XCTest Runner 初始化失败时，可以在当前宿主**已经获准辅助功能访问**的条件下，运行有限的真实原生 AX 验收。脚本只操作它自己启动的 WeftMate 窗口，不申请权限、修改 TCC、启用代理或操作其他应用；它读取同一份 0600 隔离 fixture，完成原 ID／标题／正文、当前设备、重启恢复、A→B→A 及退出后重启。运行前由开发者确认普通 URLSession 已可达；这是 AX 界面证据，不能记为 XCTest 通过：
+
+```sh
+swift Scripts/run_mac_ax_test.swift \
+  --debug-app /private/path/DerivedData/Build/Products/Debug/WeftMateMac.app \
+  --credentials /private/path/test-account.json \
+  --artifacts /private/path/new-mac-ax-validation \
+  --namespace mac-daily-test
+```
+
+必须使用 Debug 的独立测试命名空间；Release 不支持此测试入口，脚本会在启动和联网前拒绝它，以免使用日常账户存储。每次使用新证据目录，密码不进入命令行／文本日志，截图只取当前测试应用窗口。既有辅助功能或屏幕截图许可不可用时明确失败，不自动修改系统安全设置。
+
 仅修导航布局时，脚本可加 `--test navigation-layout`：只登录一次、读取原消息、核对导航标题/返回/刷新不被开发提示遮挡、保留应用截图并退出，不重复完整账户回归。真实登录测试遇到系统的保存密码提示时，为隔离密码选择“以后”。
 
 ### 有界局域网开发联调
@@ -55,5 +67,21 @@ python3 Scripts/development_tls_relay.py
 ## 真机安装
 
 需要用户自己的 Apple 开发团队和设备签名。将 `Config/Local.xcconfig.example` 复制为未跟踪的 `Config/Local.xcconfig` 并填写团队 ID，或在 Xcode 的 Signing & Capabilities 选择团队。手机伴随 Watch 的 bundle 标识和依赖已配置；Watch 独立账户、后台通知及实际手表联网验收仍按后续里程碑推进。
+
+### Mac 本机试用交付
+
+无需付费开发者账号的本机候选使用 Xcode 的 ad-hoc 签名，保持 `com.weftmate.apple.weftmatemac` 身份和沙盒网络权限。以下脚本按运行它的 Mac 的架构构建 Release，创建 DMG、只读挂载校验，再复制到全新的试用目录校验签名；不自动启动或覆盖现有应用：
+
+```sh
+python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
+```
+
+输出包括 `.dmg`、`TrialInstall/WeftMateMac.app`、构建与签名日志以及 `manifest.json`。每次使用独立目录，保留旧候选。DMG 中的安装说明要求本人手动安装或覆盖。本地签名未公证，不能当作公众分发或其他 Mac 的免提示安装版本。安装目录变更不清理资料，但跨版本 Keychain 访问仍需真实验证：ad-hoc 的签名要求绑定代码哈希，bundle ID 相同不足以证明凭据保留。当前草稿仅在内存，不能承诺退出或覆盖安装后保留。
+
+### iPhone 与 Watch 真实设备的最后准备
+
+在 Xcode 设置的 Apple Accounts 中确认本人账户可用；Phone 和 Watch 两个 target 的 Signing & Capabilities 选择同一个已有团队并保留 Automatically manage signing。将解锁的 iPhone 连接到 Mac，在设备提示中信任这台电脑；Watch 使用与该手机的真实配对。按设备提示开启 Developer Mode，然后在 Scheme 的运行目标中选择真实 iPhone 或 Watch，执行 Run。Xcode 此时创建所需开发签名与描述文件；尚未完成这一步时，不提供未签名 IPA 下载。个人设备开发试用可以采用 Personal Team；TestFlight 和公开发行需要另行核实对应开发者资格。本工程不自动注册收费账号或修改本人团队选择。
+
+[Apple 真实设备运行说明](https://developer.apple.com/documentation/Xcode/running-your-app-on-simulated-or-physical-devices)、[签名和团队流程](https://help.apple.com/xcode/mac/current/en.lproj/dev60b6fbbc7.html)。
 
 当前运行证据、服务接口缺口和本人试用操作统一写在 `docs/tasks/APPLE_CLIENTS_01.md`，本说明不替代实际联调或用户验收。
