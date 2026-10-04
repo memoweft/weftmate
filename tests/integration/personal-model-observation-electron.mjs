@@ -41,10 +41,11 @@ const loginFile = join(profile, 'stage14-login.json');
 writeFileSync(loginFile, `${JSON.stringify(login)}\n`, { flag: 'wx', mode: 0o600 });
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 const stallFinal = process.env.WEFTMATE_SEGMENT_STALL_FINAL === '1';
+const lowFixture = process.env.WEFTMATE_STAGE14_R2_LOW_FIXTURE === '1';
 const stopTask = process.env.WEFTMATE_STAGE14_R2_STOP_TASK === '1';
 if (stopTask && !stallFinal) throw new Error('Synthetic stop requires the stalled final stream.');
 const heldResponses = new Set();
-let summaryCalls = 0, pageReads = 0;
+let summaryCalls = 0, pageReads = 0, serveCatalog = true;
 const observedTools = [];
 let pagePort = null;
 const segmentFact = 'SEGMENT_TWO_FACT_7A14: the second section is actually read.';
@@ -81,7 +82,8 @@ function sse(response, model, name, args) {
 const modelServer = createServer(async (request, response) => {
   if (request.method === 'GET' && request.url === '/v1/models') {
     response.writeHead(200, { 'content-type': 'application/json' });
-    response.end(JSON.stringify({ object: 'list', data: [{ id: 'synthetic-stop-model', object: 'model' }] }));
+    response.end(JSON.stringify({ object: 'list', data: serveCatalog
+      ? [{ id: 'synthetic-stop-model', object: 'model' }] : [] }));
     return;
   }
   if (request.method !== 'POST' || request.url !== '/v1/chat/completions') {
@@ -99,6 +101,8 @@ const modelServer = createServer(async (request, response) => {
     sse(response, body.model, null);
     return;
   }
+  if (lowFixture) assert.equal(body.reasoning_effort, 'low',
+    'the official SDK must send low on actual conversation requests');
   summaryCalls++;
   if (summaryCalls === 1) {
     observedTools.push('personal_browser_open');
@@ -236,9 +240,27 @@ async function waitForPhoneStop() {
 }
 try {
   let origin = await until(host, () => /personal-access listening origin=(http:\/\/127\.0\.0\.1:\d+)/.exec(host.output())?.[1]);
-  const configured = await manage(host, 'model.configure-synthetic-stop-fixture',
+  const configured = await manage(host, lowFixture ? 'model.configure-observed-low-fixture'
+    : 'model.configure-synthetic-stop-fixture',
     { baseUrl: `http://127.0.0.1:${modelPort}/v1` });
-  assert.equal(configured.id, 'synthetic-stop-fixture');
+  assert.equal(configured.id ?? configured.profileId, lowFixture
+    ? 'synthetic-stop-fixture-stage14r2-low' : 'synthetic-stop-fixture');
+  if (lowFixture) assert.equal(configured.reasoningEffort, 'low');
+  if (process.env.WEFTMATE_STAGE14_R2_REPEAT_PROXY === '1' && !lowFixture) {
+    const priorUrl = configured.baseUrl;
+    assert.match(priorUrl, /^http:\/\/127\.0\.0\.1:\d+\/observe-[^/]+\/v1$/);
+    serveCatalog = false;
+    await assert.rejects(manage(host, 'model.configure-synthetic-stop-fixture',
+      { baseUrl: `http://127.0.0.1:${modelPort}/v1` }));
+    serveCatalog = true;
+    assert.equal((await fetch(`${priorUrl}/models`)).status, 200,
+      'failed replacement must retain the old route and owned proxy');
+    await assert.rejects(manage(host, 'model.configure-synthetic-stop-fixture',
+      { baseUrl: `http://127.0.0.1:${modelPort}/v1` }),
+    'official route migration refuses changing the same immutable route to another random proxy port');
+    assert.equal((await fetch(`${priorUrl}/models`)).status, 200,
+      'repeated refused configuration must keep the original port live');
+  }
   const grant = await manage(host, 'account.setup');
   const created = await json(origin, null, 'POST', '/personal/v1/auth/setup',
     { grant: grant.grant, ...login, deviceName: 'Stage 14 segment fixture' });
@@ -258,7 +280,8 @@ try {
   assert.equal(workspace.body.available, true);
   const browserSession = await submit(host, origin, account,
     '/personal/v1/workspaces/browser/sessions',
-    { requestId: randomUUID(), modelProfileId: 'synthetic-stop-fixture' });
+    { requestId: randomUUID(), modelProfileId: lowFixture
+      ? 'synthetic-stop-fixture-stage14r2-low' : 'synthetic-stop-fixture' });
   assert.equal(browserSession.workspaceKind, 'browser');
   const task = await submit(host, origin, account, '/personal/v1/commands', {
     requestId: randomUUID(), kind: 'session.message', targetDeviceId: workspace.body.hostId,
@@ -359,6 +382,9 @@ try {
     findLog: async () => logs[0], readStableFile: async () => ({ buffer: readFileSync(logs[0]) }),
   }, browserSession.sessionId);
   const rows = physical.content.split('\n').filter(Boolean).map((line) => JSON.parse(line));
+  if (lowFixture) assert.ok(rows.some((row) => row.type === 'request/header' &&
+    row.data?.header?.config?.reasoningEffort === 'low'),
+  'official native request header must freeze the low choice before model dispatch');
   const fixedHints = rows.filter((row) => row.type === 'user/message' &&
     row.data?.source?.kind === 'plugin' &&
     row.data.source.plugin === 'weftmate-personal-reply-evidence');

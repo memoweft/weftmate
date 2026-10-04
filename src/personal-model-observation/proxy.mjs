@@ -20,6 +20,7 @@ export async function createPersonalModelObservationProxy({ targetOrigin, record
   const upstreams = new Set()
   const active = new Map()
   let closed = false
+  let closePromise = null
   const record = (event, row = {}) => { recorder.record({ event, runId, ...row }) }
   const server = createServer((incoming, outgoing) => {
     if (closed) { outgoing.writeHead(503); outgoing.end(); return }
@@ -31,9 +32,8 @@ export async function createPersonalModelObservationProxy({ targetOrigin, record
     }
     const requestId = randomUUID()
     const row = { requestId, kind }
-    for (const other of active.values()) record('wire-ambiguous', other)
+    for (const other of active.values()) record('wire-ambiguous', other.row)
     if (active.size) record('wire-ambiguous', row)
-    active.set(requestId, row)
     record('wire-arrival', row)
     let finished = false
     let upstreamResponse = null
@@ -46,6 +46,7 @@ export async function createPersonalModelObservationProxy({ targetOrigin, record
       active.delete(requestId)
       record(event, { ...row, bytes: outboundBytes })
     }
+    active.set(requestId, { row, end })
     const upstream = httpRequest(new URL(path, target), {
       method: incoming.method,
       headers: { ...filtered(incoming.headers), host: target.host },
@@ -98,13 +99,21 @@ export async function createPersonalModelObservationProxy({ targetOrigin, record
   return { baseUrl: `http://127.0.0.1:${address.port}${prefix}/v1`,
     status() { return { closed, active: active.size, clients: clients.size, upstreams: upstreams.size } },
     async close() {
-      if (closed) return
+      if (closePromise) return closePromise
       closed = true
-      for (const row of active.values()) record('wire-cancel', row)
-      active.clear()
-      for (const upstream of upstreams) upstream.destroy()
-      for (const client of clients) client.destroy()
-      await new Promise((resolve) => { server.close(resolve); server.closeAllConnections?.() })
-      recorder.close?.()
+      for (const item of active.values()) item.end('wire-cancel')
+      const closedResources = [...upstreams, ...clients].map((resource) => new Promise((resolve) => {
+        resource.once('close', resolve)
+        resource.destroy()
+      }))
+      const serverClosed = new Promise((resolve) => { server.close(resolve); server.closeAllConnections?.() })
+      let timer
+      closePromise = Promise.race([
+        Promise.all([serverClosed, ...closedResources]),
+        new Promise((_, reject) => {
+          timer = setTimeout(() => reject(new Error('MODEL_OBSERVATION_PROXY_CLOSE_TIMEOUT')), 5_000)
+        }),
+      ]).then(() => undefined).finally(() => clearTimeout(timer))
+      return closePromise
     } }
 }

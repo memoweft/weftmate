@@ -37,7 +37,8 @@ export function createSemanticObserver({ record, isAgentLoopRequest }) {
           if (chunk?.type === 'text-delta' && !firstText) {
             firstText = true; record({ event: 'semantic-first-text', ...id })
           }
-          if (chunk?.type === 'tool-call-delta' && !firstTool) {
+          if ((chunk?.type === 'tool-call-delta' ||
+              chunk?.type === 'block-end' && chunk.block?.type === 'tool-call') && !firstTool) {
             firstTool = true; record({ event: 'semantic-first-tool', ...id })
           }
           if (chunk?.type === 'usage') {
