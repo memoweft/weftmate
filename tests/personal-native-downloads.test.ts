@@ -63,6 +63,8 @@ test('authenticated macOS manifest and DMG use only verified published bytes', a
     assert.equal(downloaded.status, 200)
     assert.equal(downloaded.headers.get('content-length'), String(bytes.length))
     assert.equal(downloaded.headers.get('content-type'), 'application/x-apple-diskimage')
+    assert.equal(downloaded.headers.get('content-disposition'),
+      'attachment; filename="WeftMate-Mac-0.1.0-build1.dmg"')
     assert.equal(sha256(Buffer.from(await downloaded.arrayBuffer())), hash)
     assert.equal((await get(`/personal/v1/downloads/native/macos/${'f'.repeat(64)}`)).status, 404)
     writeFileSync(join(directory, `${'f'.repeat(64)}.dmg`), Buffer.from('not published'))

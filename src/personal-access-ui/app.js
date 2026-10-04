@@ -16,7 +16,8 @@
     refreshTimer: null, refreshing: false,
     submitting: false, cancelSubmitting: false, lastSubmissionMs: 0,
     historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null,
-    identityGeneration: 0, accountViewGeneration: 0, currentView: null, avatarGeneration: 0, avatarSelectionGeneration: 0,
+    identityGeneration: 0, accountViewGeneration: 0, currentView: null, nativeDownloadFetchGeneration: 0,
+    avatarGeneration: 0, avatarSelectionGeneration: 0,
     profileDraftAvatar: undefined, profileConflict: false, profileSaving: false, profileOperationGeneration: 0, profileDraftGeneration: 0,
     avatarChecking: false, avatarObjectUrl: null,
     profileFetchGeneration: 0, deviceFetchGeneration: 0, deviceEditing: null, deviceNotice: '', cachedDevices: [] }
@@ -64,6 +65,7 @@
     }
     if (view === 'memory' && state.currentView !== 'memory') memory.viewGeneration++
     if (state.currentView === 'account' && view !== 'account') {
+      clearMacDownload()
       state.profileOperationGeneration++
       state.profileSaving = false
       state.avatarSelectionGeneration++
@@ -199,6 +201,7 @@
     byId('phone-history').replaceChildren()
     byId('phone-pane').hidden = true
     byId('android-download-row').hidden = true
+    clearMacDownload()
     byId('message-text').value = ''
     operation('')
   }
@@ -257,6 +260,7 @@
     if (typeof payload?.account?.username !== 'string' || typeof payload?.device?.id !== 'string'
       || typeof payload?.csrfToken !== 'string' || !payload.csrfToken) throw { code: 'REQUEST_FAILED' }
     state.identityGeneration++
+    clearMacDownload()
     resetMemoryIdentity()
     state.avatarGeneration++
     state.avatarSelectionGeneration++
@@ -288,6 +292,58 @@
   function accountIdentityCurrent(token) {
     return token.generation === state.identityGeneration && token.ownerId === state.account?.ownerId
       && token.deviceId === state.device?.id && token.csrf === state.csrfToken
+  }
+  function clearMacDownload() {
+    state.nativeDownloadFetchGeneration++
+    const row = byId('mac-download-row')
+    const link = byId('mac-download')
+    row.hidden = true
+    link.removeAttribute('href')
+    link.removeAttribute('download')
+    byId('mac-download-meta').textContent = ''
+  }
+  function validMacRelease(manifest) {
+    const manifestKeys = ['macos', 'schemaVersion']
+    if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest) ||
+        manifest.schemaVersion !== 1 || Object.keys(manifest).length !== manifestKeys.length ||
+        !manifestKeys.every((key) => Object.hasOwn(manifest, key))) return null
+    const release = manifest.macos
+    const releaseKeys = ['architecture', 'build', 'bytes', 'channel', 'downloadUrl', 'fileName',
+      'notes', 'sha256', 'version']
+    if (!release || typeof release !== 'object' || Array.isArray(release) ||
+        Object.keys(release).length !== releaseKeys.length || !releaseKeys.every((key) => Object.hasOwn(release, key)) ||
+        typeof release.version !== 'string' || !/^\d+(?:\.\d+){1,3}$/.test(release.version) ||
+        typeof release.build !== 'string' || !/^\d+(?:\.\d+){0,2}$/.test(release.build) ||
+        !Number.isSafeInteger(release.bytes) || release.bytes < 1 || release.bytes > 1024 * 1024 * 1024 ||
+        typeof release.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(release.sha256) ||
+        !['universal', 'arm64', 'x86_64'].includes(release.architecture) || release.channel !== 'trial' ||
+        typeof release.notes !== 'string' || release.notes.length > 1000 ||
+        /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/.test(release.notes) ||
+        typeof release.fileName !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}\.dmg$/i.test(release.fileName) ||
+        !release.fileName.endsWith(`${release.sha256}.dmg`) || release.fileName.includes('..') ||
+        /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\.|$)/i.test(release.fileName) ||
+        typeof release.downloadUrl !== 'string' ||
+        release.downloadUrl !== `/personal/v1/downloads/native/macos/${release.sha256}`) return null
+    return release
+  }
+  async function refreshMacDownload() {
+    clearMacDownload()
+    const token = accountToken()
+    if (!accountCurrent(token)) return
+    const generation = state.nativeDownloadFetchGeneration
+    try {
+      const manifest = await accessApi('/native/manifest')
+      if (!accountCurrent(token) || generation !== state.nativeDownloadFetchGeneration) return
+      const release = validMacRelease(manifest)
+      if (!release) return
+      byId('mac-download').href = release.downloadUrl
+      byId('mac-download').download = release.fileName
+      const architecture = { x86_64: 'Intel Mac', arm64: 'Apple 芯片', universal: 'Intel / Apple 芯片' }[release.architecture]
+      byId('mac-download-meta').textContent = `版本 ${release.version} · 构建 ${release.build} · ${architecture}`
+      byId('mac-download-row').hidden = false
+    } catch {
+      if (accountCurrent(token) && generation === state.nativeDownloadFetchGeneration) clearMacDownload()
+    }
   }
   function sessionExpired() {
     clearSession()
@@ -1671,6 +1727,7 @@
   }
   function setOnline(online) {
     state.online = online
+    if (!online) clearMacDownload()
     const badge = document.querySelector('.local-badge')
     badge.textContent = online ? (location.protocol === 'https:' ? '已连接个人宿主' : '本机候选 · 已连接') : '连接中断'
     byId('assistant-connection').textContent = online ? '已连接个人宿主' : '无法连接电脑'
@@ -3812,6 +3869,7 @@
     resetProfileDraft()
     void refreshProfile()
     void refreshDevices()
+    void refreshMacDownload()
     void refreshAccountModels()
     void refreshProjects()
     void refreshModels()

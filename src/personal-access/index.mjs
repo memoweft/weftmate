@@ -2895,7 +2895,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           const current = authenticate(request, 'sessions:read');
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           response.writeHead(200, { 'content-type': 'application/x-apple-diskimage',
-            'content-disposition': `attachment; filename="${opened.release.fileName}"`,
+            'content-disposition': `attachment; filename="WeftMate-Mac-${opened.release.version}-build${opened.release.build}.dmg"`,
             'content-length': String(opened.release.bytes), 'cache-control': 'no-store',
             'x-content-type-options': 'nosniff' });
           await pipeline(opened.handle.createReadStream({ start: 0, autoClose: false }), response);
