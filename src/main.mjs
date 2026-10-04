@@ -262,10 +262,12 @@ let ensureSharedRuntime = null;
 let saveModelRoute = null;
 let configureLocalModel = null;
 let configureObservedLocalModel = null;
+let configureObservedSyntheticLowModel = null;
 let configureLocalCatalog = null;
 let stage14R2Observation = null;
 let modelObservationProxy = null;
 let modelObservationRecorder = null;
+const ownedModelObservationProxies = new Set();
 let enqueueExclusiveMainOperation = null;
 let exclusiveMainQueue = null;
 // Sidebar fetching is intentionally best-effort, but the startup reference
@@ -477,6 +479,26 @@ process.on('message', (message) => {
           result = await configureObservedLocalModel();
           break;
         }
+        case 'model.configure-observed-low': {
+          if (!stage14R2Observation || !configureObservedLocalModel ||
+              Object.keys(message).some((key) => !['type', 'requestId', 'action'].includes(key))) {
+            throw Object.assign(new Error('invalid observation request'), { code: 'INVALID_COMMAND' });
+          }
+          result = await configureObservedLocalModel({ low: true });
+          break;
+        }
+        case 'model.configure-observed-low-fixture': {
+          const fixture = syntheticStopFixtureRoute({ ...message,
+            action: 'model.configure-synthetic-stop-fixture' }, {
+            enabled: stage14R2Observation && process.env.WEFTMATE_SYNTHETIC_STOP_FIXTURE === '1',
+            profile: app.getPath('userData'),
+          });
+          if (!fixture || !configureObservedSyntheticLowModel) {
+            throw Object.assign(new Error('invalid low fixture'), { code: 'INVALID_COMMAND' });
+          }
+          result = await configureObservedSyntheticLowModel(fixture.baseUrl);
+          break;
+        }
         case 'model.configure-local-catalog': {
           if (Object.keys(message).some((key) => !['type', 'requestId', 'action'].includes(key)) ||
               !configureLocalCatalog) throw Object.assign(new Error('invalid catalog request'), { code: 'INVALID_COMMAND' });
@@ -496,13 +518,27 @@ process.on('message', (message) => {
               targetOrigin: new URL(fixture.baseUrl).origin, recorder: modelObservationRecorder,
               runId: stage14R2Observation.runId,
             }) : null;
+          if (observer) ownedModelObservationProxies.add(observer);
           try {
             result = await saveModelRoute({ id: 'synthetic-stop-fixture', name: 'Synthetic stop fixture',
               provider: 'openai-compatible', baseUrl: observer?.baseUrl ?? fixture.baseUrl,
               model: 'synthetic-stop-model', apiKey: 'synthetic-stop-fixture-only',
               contextWindow: 8192, outputReserve: 1024 }, { catalogOnly: true });
-            if (observer) modelObservationProxy = observer;
-          } catch (error) { await observer?.close(); throw error; }
+          } catch (error) {
+            if (observer) {
+              try { await observer.close(); ownedModelObservationProxies.delete(observer); }
+              catch { /* Shutdown will retry this owned observer. */ }
+            }
+            throw error;
+          }
+          if (observer) {
+            const previous = modelObservationProxy;
+            modelObservationProxy = observer;
+            if (previous && previous !== observer) {
+              try { await previous.close(); ownedModelObservationProxies.delete(previous); }
+              catch { /* New route is already committed; keep old observer tracked for shutdown. */ }
+            }
+          }
           break;
         }
         case 'status': result = personalAccessService.status(); break;
@@ -2251,22 +2287,99 @@ async function bootstrap() {
     return { configured: true, profileId: profile.id, modelId: profile.model,
       verification: 'catalog_only', inferenceVerified: false };
   };
-  configureObservedLocalModel = async () => {
+  const enableStage14LowCapability = async (profile, input) => {
+    const route = routeForProfile(profile.id).provider;
+    const client = createOfficialDshSettingsClient({ origin: runtimeOrigin });
+    const snapshot = await client.describeSettings();
+    if (!snapshot.writable || snapshot.applies !== 'live') throw new Error('observed low route is not writable live');
+    const expected = projectOfficialProviderConfig({ route, displayName: profile.name,
+      baseURL: profile.baseUrl, models: [{ id: profile.model, name: profile.name,
+        contextWindow: input.contextWindow, maxTokens: input.outputReserve }] });
+    if (!isDeepStrictEqual(snapshot.userProviders[route], expected)) {
+      throw new Error('observed low route differs before capability installation');
+    }
+    const enabled = structuredClone(expected);
+    enabled.models[0].reasoningEfforts = { off: null, low: 'low' };
+    enabled.models[0].compat = { thinkingFormat: 'openai', supportsReasoningEffort: true };
+    await client.mutateSettings([{ op: 'set', path: ['providers', route], value: enabled }], snapshot.revision);
+    const verified = await client.describeSettings();
+    if (!isDeepStrictEqual(verified.userProviders[route], enabled)) {
+      throw new Error('observed low capability was not confirmed by official settings');
+    }
+    const activeBefore = settingsMod.listModelProfiles().activeId;
+    const updated = settingsMod.upsertModelProfile({ id: profile.id, name: profile.name,
+      provider: 'openai-compatible', baseUrl: profile.baseUrl, model: profile.model,
+      reasoningEffort: 'low' });
+    if (settingsMod.listModelProfiles().activeId !== activeBefore) {
+      throw new Error('observed low profile changed active model');
+    }
+    return updated;
+  };
+  configureObservedLocalModel = async ({ low = false } = {}) => {
     if (!stage14R2Observation || !personalHostMode || !personalAccessService || isQuitting ||
-        modelObservationProxy || !modelObservationRecorder) {
+        !modelObservationRecorder) {
       throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
     }
     const observer = await createPersonalModelObservationProxy({
       targetOrigin: 'http://127.0.0.1:8081', recorder: modelObservationRecorder,
       runId: stage14R2Observation.runId,
     });
+    ownedModelObservationProxies.add(observer);
+    let profile;
     try {
       const prepared = await prepareLocalModelConfig({ modelId: 'qwen3.8-27b' });
-      const profile = await saveModelRoute({ ...prepared, baseUrl: observer.baseUrl }, { catalogOnly: true });
-      modelObservationProxy = observer;
-      return { configured: true, profileId: profile.id, modelId: profile.model,
-        verification: 'catalog_only', inferenceVerified: false, observation: 'isolated' };
-    } catch (error) { await observer.close(); throw error; }
+      const input = { ...prepared, ...(low ? {
+        id: 'personal-local-qwen3.8-27b-stage14r2-low',
+        name: `${prepared.name} (Stage14R2 low)`,
+      } : {}), baseUrl: observer.baseUrl };
+      profile = await saveModelRoute(input, { catalogOnly: true });
+      if (low) profile = await enableStage14LowCapability(profile, input);
+    } catch (error) {
+      try { await observer.close(); ownedModelObservationProxies.delete(observer); }
+      catch { /* Shutdown will retry this owned observer. */ }
+      throw error;
+    }
+    const previous = modelObservationProxy;
+    modelObservationProxy = observer;
+    if (previous && previous !== observer) {
+      try { await previous.close(); ownedModelObservationProxies.delete(previous); }
+      catch { /* Route is already committed; retain old observer for shutdown. */ }
+    }
+    return { configured: true, profileId: profile.id, modelId: profile.model,
+      verification: 'catalog_only', inferenceVerified: false, observation: 'isolated',
+      ...(low ? { reasoningEffort: 'low' } : {}) };
+  };
+  configureObservedSyntheticLowModel = async (baseUrl) => {
+    if (!stage14R2Observation || !modelObservationRecorder || isQuitting) {
+      throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+    }
+    const observer = await createPersonalModelObservationProxy({
+      targetOrigin: new URL(baseUrl).origin, recorder: modelObservationRecorder,
+      runId: stage14R2Observation.runId,
+    });
+    ownedModelObservationProxies.add(observer);
+    let profile;
+    try {
+      const input = { id: 'synthetic-stop-fixture-stage14r2-low',
+        name: 'Synthetic stop fixture (Stage14R2 low)', provider: 'openai-compatible',
+        baseUrl: observer.baseUrl, model: 'synthetic-stop-model',
+        apiKey: 'synthetic-stop-fixture-only', contextWindow: 8192, outputReserve: 1024 };
+      profile = await saveModelRoute(input, { catalogOnly: true });
+      profile = await enableStage14LowCapability(profile, input);
+    } catch (error) {
+      try { await observer.close(); ownedModelObservationProxies.delete(observer); }
+      catch { /* Shutdown will retry this owned observer. */ }
+      throw error;
+    }
+    const previous = modelObservationProxy;
+    modelObservationProxy = observer;
+    if (previous && previous !== observer) {
+      try { await previous.close(); ownedModelObservationProxies.delete(previous); }
+      catch { /* New route is committed; old proxy remains tracked for shutdown. */ }
+    }
+    return { configured: true, profileId: profile.id, modelId: profile.model,
+      verification: 'catalog_only', inferenceVerified: false, observation: 'isolated',
+      reasoningEffort: 'low' };
   };
   configureLocalCatalog = async () => {
     if (!personalHostMode || !personalAccessService || isQuitting) {
@@ -3164,11 +3277,13 @@ app.on('before-quit', (e) => {
       logCrash('shutdown-dsh-runtime', err);
       console.error('[weftmate] DSH 退出收尾出错(仍继续退出):', err && err.message ? err.message : err);
     }
-    if (modelObservationProxy) {
-      try { await modelObservationProxy.close(); }
-      catch { /* Isolated observer cleanup must not block host shutdown. */ }
-      finally { modelObservationProxy = null; modelObservationRecorder = null; }
-    } else modelObservationRecorder?.close?.();
+    for (const observer of ownedModelObservationProxies) {
+      try { await observer.close(); ownedModelObservationProxies.delete(observer); }
+      catch { /* Preserve host shutdown; owned sockets were destroyed by close entry. */ }
+    }
+    modelObservationProxy = null;
+    modelObservationRecorder?.close?.();
+    modelObservationRecorder = null;
   })();
   void shutdownPromise.finally(() => {
     cleanupDone = true;

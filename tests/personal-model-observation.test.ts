@@ -102,6 +102,45 @@ test('relay cancellation destroys the upstream, records no false finish and clos
   }
 })
 
+test('closing one proxy frees its port without closing a recorder reused by the next proxy', async () => {
+  const upstream = createServer(async (request, response) => {
+    for await (const _ of request) { /* consume */ }
+    response.writeHead(200, { 'content-type': 'text/event-stream' })
+    response.end('data: done\n\n')
+  })
+  await new Promise<void>((resolve) => upstream.listen(0, '127.0.0.1', resolve))
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-observation-retry-'))
+  const file = join(root, 'wire.jsonl')
+  const recorder = createObservationRecorder(file)
+  const make = () => createPersonalModelObservationProxy({
+    targetOrigin: `http://127.0.0.1:${(upstream.address() as any).port}`,
+    recorder, runId: 'run-synthetic',
+  })
+  try {
+    const first = await make()
+    const oldUrl = `${first.baseUrl}/chat/completions`
+    assert.equal((await fetch(oldUrl, { method: 'POST', body: 'one' })).status, 200)
+    await first.close()
+    assert.deepEqual(first.status(), { closed: true, active: 0, clients: 0, upstreams: 0 })
+    await assert.rejects(fetch(oldUrl, { method: 'POST', body: 'late',
+      signal: AbortSignal.timeout(1_000) }))
+    assert.equal(recorder.record({ event: 'proxy-retry' }), true)
+    const second = await make()
+    assert.equal((await fetch(`${second.baseUrl}/chat/completions`, {
+      method: 'POST', body: 'two',
+    })).status, 200)
+    await second.close()
+    const rows = readFileSync(file, 'utf8').trim().split('\n').map((line) => JSON.parse(line))
+    assert.equal(rows.filter((row) => row.event === 'wire-arrival').length, 2)
+    assert.equal(rows.some((row) => row.event === 'proxy-retry'), true)
+  } finally {
+    recorder.close()
+    upstream.closeAllConnections()
+    await new Promise<void>((resolve) => upstream.close(() => resolve()))
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('semantic hook binds only marked personal loop requests to exact signal and never records text', async () => {
   const rows: any[] = []
   const observer = createSemanticObserver({ record: (row: any) => rows.push(row),
@@ -130,6 +169,14 @@ test('semantic hook binds only marked personal loop requests to exact signal and
   assert.equal(JSON.stringify(rows).includes('private'), false)
   for await (const _ of observer.stream({ ...options, purpose: 'session-title' }, chunks)) { /* ignored */ }
   assert.equal(rows.length, 7)
+  const directBlock = async function* () {
+    yield { type: 'block-end', block: { type: 'tool-call',
+      name: 'private-tool-name', arguments: '{"private":"argument"}' } }
+    yield { type: 'finish', reason: { kind: 'tool-calls' } }
+  }
+  for await (const _ of observer.stream(options, directBlock)) { /* exact next attempt */ }
+  assert.equal(rows.filter((row) => row.event === 'semantic-first-tool').length, 2)
+  assert.equal(JSON.stringify(rows).includes('private-tool-name'), false)
 })
 
 test('opt-in observation accepts only an isolated fixture profile', () => {

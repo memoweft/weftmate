@@ -15,11 +15,14 @@ if (process.platform !== 'win32' || process.env.WEFTMATE_STAGE14_R2_REAL_E2E !==
 const repository = dirname(fileURLToPath(new URL('../../package.json', import.meta.url)));
 const acceptanceRoot = join(repository, '..', 'Runtime', 'UnifiedAssistant', 'Stage14R2Acceptance-20261004');
 const expectedModel = 'qwen3.8-27b';
-const modelProfileId = `personal-local-${expectedModel}`;
 const caseId = process.env.WEFTMATE_STAGE14_R2_CASE ?? 'iana-short';
 if (!['electron-api', 'iana-short'].includes(caseId)) throw new Error('Unknown bounded browser acceptance case.');
 const mode = process.env.WEFTMATE_STAGE14_R2_MODE ?? 'baseline';
-if (mode !== 'baseline') throw new Error('Only the baseline observation is frozen; candidate needs separate evidence.');
+if (!['baseline', 'candidate-low'].includes(mode) || mode === 'candidate-low' && caseId !== 'iana-short') {
+  throw new Error('Unknown Stage14R2 case or candidate mode.');
+}
+const modelProfileId = mode === 'candidate-low'
+  ? `personal-local-${expectedModel}-stage14r2-low` : `personal-local-${expectedModel}`;
 const observationRunId = randomUUID();
 const documentation = caseId === 'iana-short' ? [
   'https://www.iana.org/help/example-domains',
@@ -190,6 +193,8 @@ async function nativeTimeline() {
         ...(row.type === 'step/end' ? { usage: numericUsage(row.data?.usage) } : {}) }));
     const chunks = scoped.filter((row) => row.type === 'assistant/chunk' && row.data?.turn === turn);
     const end = scoped.find((row) => row.type === 'turn/end' && row.data?.turn === turn);
+    const requestHeaderEfforts = scoped.filter((row) => row.type === 'request/header')
+      .map((row) => row.data?.header?.config?.reasoningEffort ?? 'off');
     const tools = scoped.filter((row) => row.type === 'tool/call' &&
       /^personal_browser_(open|follow|read_segment)$|^personal_save_document$/.test(row.data?.name ?? ''))
       .map((row) => ({ name: row.data.name, step: row.data.step ?? null,
@@ -204,7 +209,7 @@ async function nativeTimeline() {
     firstChunkAt: Number.isFinite(firstChunk?.time) ? new Date(firstChunk.time).toISOString() : null,
     lastChunkAt: Number.isFinite(chunks.at(-1)?.time) ? new Date(chunks.at(-1).time).toISOString() : null,
     firstChunkDelayFromStepMs: precedingStep && firstChunk ? Math.max(0, firstChunk.time - precedingStep.time) : null,
-    assistantChunks: chunks.length,
+    assistantChunks: chunks.length, requestHeaderEfforts,
     textChunks: chunks.filter((row) => row.data?.chunk?.type === 'text-delta').length,
     reasoningChunks: chunks.filter((row) => row.data?.chunk?.type === 'reasoning-delta').length,
     nativeTurnEnd: end ? { reason: end.data?.reason?.kind ?? 'unknown',
@@ -263,9 +268,11 @@ let account, origin, sessionId, taskId, receiptId, goalAcceptedAt = null;
 let result = 'failed', failure = null;
 try {
   origin = await until(() => /personal-access listening origin=(http:\/\/127\.0\.0\.1:\d+)/.exec(output)?.[1], 90_000);
-  const configured = await management('model.configure-observed-local');
+  const configured = await management(mode === 'candidate-low'
+    ? 'model.configure-observed-low' : 'model.configure-observed-local');
   assert.equal(configured?.profileId, modelProfileId);
   assert.equal(configured?.observation, 'isolated');
+  if (mode === 'candidate-low') assert.equal(configured?.reasoningEffort, 'low');
   await until(() => {
     const file = join(profile, 'stage14-r2-observation', 'semantic.jsonl');
     return existsSync(file) && readFileSync(file, 'utf8').includes('"observer-ready"');
@@ -424,6 +431,10 @@ try {
   const clean = await stopOwned();
   const physical = await nativeTimeline();
   const modelObservation = observationTimeline();
+  if (mode === 'candidate-low' && physical.available &&
+      physical.exactReceiptCount === 1 && !physical.requestHeaderEfforts?.includes('low')) {
+    result = 'failed'; failure = { code: 'LOW_HEADER_UNCONFIRMED', name: 'Error' };
+  }
   if (result === 'passed' && (!modelObservation.available ||
       modelObservation.semanticAttempts.length < 1 || modelObservation.networkRequestCount < 1)) {
     result = 'failed'; failure = { code: 'OBSERVATION_UNAVAILABLE', name: 'Error' };
@@ -441,7 +452,7 @@ try {
     }
   } catch { afterModel = { available: false }; }
   writeFileSync(join(runRoot, 'sanitized-evidence.json'), `${JSON.stringify({
-    result, caseId, at: new Date().toISOString(), runRoot, profile,
+    result, mode, caseId, at: new Date().toISOString(), runRoot, profile,
     documentation, goalAcceptedAt, wallTimeBudgetMs: 300_000, turnBudgetMs: 240_000,
     sessionId: sessionId ?? null,
     taskId: taskId ?? null, receiptPresent: Boolean(receiptId), expectedModel,
@@ -449,4 +460,5 @@ try {
   }, null, 2)}\n`, { flag: 'wx', mode: 0o600 });
   if (!clean) throw new Error('isolated host did not finish managed shutdown; profile retained');
   if (failure?.code === 'OBSERVATION_UNAVAILABLE') throw new Error('isolated observation was unavailable');
+  if (failure?.code === 'LOW_HEADER_UNCONFIRMED') throw new Error('native low request header was not observed');
 }
