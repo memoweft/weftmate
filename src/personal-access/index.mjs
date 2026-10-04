@@ -13,6 +13,7 @@ import { hashPassword, normalizeUsername, validPassword, validPasswordRecord, ve
 import { avatarImage, displayName, publicProfile, validStoredProfile } from './profile.mjs';
 import { canonicalCompletion, projectCompletion } from './model-completion.mjs';
 import { createMobileUiPublisher } from './mobile-ui-release.mjs';
+import { createNativeDownloadPublisher } from './native-downloads.mjs';
 import { handlePersonalMemoryHttp } from '../personal-memory/http.mjs';
 import { canonicalArtifact, createPersonalArtifactStore, validArtifactFileName,
   MAX_ARTIFACT_BYTES } from '../personal-artifacts/index.mjs';
@@ -1324,6 +1325,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return Date.parse(turn.expiresAt) > timestamp() ? 'running' : 'uncertain';
   }
   const mobileUi = mobileUiDir === null ? null : createMobileUiPublisher({ root: mobileUiDir });
+  const nativeDownloads = createNativeDownloadPublisher(root);
   const androidPackageEntry = async () => {
     if (!androidPackagePath) return null;
     const entry = await lstat(androidPackagePath).catch(() => null);
@@ -2876,6 +2878,29 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           });
           return;
         } finally { await handle.close(); }
+      }
+      if (pathname === '/personal/v1/native/manifest' && request.method === 'GET') {
+        if (url.search) throw failure('NOT_FOUND', 404);
+        const manifest = await nativeDownloads.manifest();
+        const current = authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return json(response, 200, manifest);
+      }
+      const nativeMacosMatch = /^\/personal\/v1\/downloads\/native\/macos\/([a-f0-9]{64})$/.exec(pathname);
+      if (nativeMacosMatch && request.method === 'GET') {
+        if (url.search) throw failure('NOT_FOUND', 404);
+        const opened = await nativeDownloads.openMacos(nativeMacosMatch[1]);
+        if (!opened) throw failure('NOT_FOUND', 404);
+        try {
+          const current = authenticate(request, 'sessions:read');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          response.writeHead(200, { 'content-type': 'application/x-apple-diskimage',
+            'content-disposition': `attachment; filename="${opened.release.fileName}"`,
+            'content-length': String(opened.release.bytes), 'cache-control': 'no-store',
+            'x-content-type-options': 'nosniff' });
+          await pipeline(opened.handle.createReadStream({ start: 0, autoClose: false }), response);
+          return;
+        } finally { await opened.handle.close(); }
       }
       const sharedImageMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/attachments\/((?:attachment-[0-9a-f-]{36})|(?:sha256:[a-f0-9]{64}))$/i.exec(pathname.replace(/%3a/ig, ':'));
       if (sharedImageMatch) {
