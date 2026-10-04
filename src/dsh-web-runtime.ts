@@ -461,6 +461,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [PERSONAL_API_PROXY_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-personal-api-proxy.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-model-idle.mjs'), join(dir, 'plugins', 'weftmate-personal-model-idle.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-reply-evidence.mjs'), join(dir, 'plugins', 'weftmate-personal-reply-evidence.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-model-observer.mjs'), join(dir, 'plugins', 'weftmate-personal-model-observer.mjs')],
     [AI_GAME_HOST_PLUGIN_SRC, aiGameHostDest],
     [join(PLUGINS_DIR, 'weftmate-weftmod.mjs'), join(dir, 'plugins', 'weftmate-weftmod.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
@@ -488,6 +489,8 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   if (await copyDirIfChanged(DSH_ADAPTER_SRC, join(dir, 'runtime', 'dsh-adapter'))) changed = true
   if (await copyDirIfChanged(join(here, 'personal-reply-evidence'),
     join(dir, 'personal-reply-evidence'))) changed = true
+  if (await copyDirIfChanged(join(here, 'personal-model-observation'),
+    join(dir, 'personal-model-observation'))) changed = true
   if (await copyDirIfChanged(AI_GAME_RUNTIME_SRC, join(dir, 'runtime', 'ai-game'))) changed = true
   if (await copyDirIfChanged(join(here, 'runtime', 'weftmod'), join(dir, 'runtime', 'weftmod'))) changed = true
   if (await copyDirIfChanged(join(here, 'runtime', 'mod-projects'), join(dir, 'runtime', 'mod-projects'))) changed = true
