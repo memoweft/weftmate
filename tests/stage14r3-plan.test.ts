@@ -58,8 +58,8 @@ test('maintenance plan changes exactly the three MTP switches and retains precis
   const oldTokens = [101, 102, 103].map((pid) => ({ ...token, pid, available: true }))
   const proof = { code: 'OK', originalServicesUntouched: true,
     runId: diagnosticRunId, nonce, oldTokens }
-  const status = { code: 'OK', action: 'Preflight', runId: diagnosticRunId, nonce,
-    token }
+  const status = { kind: 's4u-preflight', ready: true, action: 'Preflight',
+    runId: diagnosticRunId, nonce, token }
   try {
     mkdirSync(acceptanceRoot)
     writeFileSync(inventoryFile, JSON.stringify(inventory))
@@ -94,5 +94,11 @@ test('maintenance plan changes exactly the three MTP switches and retains precis
     missingOldRole.oldTokens.forEach((item: any) => { delete item.adminRole })
     assert.equal(planStage14R3(inventory, { ...args,
       tokenProofBytes: Buffer.from(JSON.stringify(missingOldRole)) }).requiredToken.sid, token.sid)
+    const freshProcesses = structuredClone(inventory)
+    freshProcesses.modelSwitcher.loopbackProxyPid = 202
+    freshProcesses.modelSwitcher.supervisorPid = 203
+    assert.throws(() => planStage14R3(freshProcesses, args), /TOKEN_PROOF_MISMATCH/)
+    assert.equal(planStage14R3(freshProcesses, { ...args,
+      allowPriorTokenForDiagnostic: true }).tokenEvidenceProvisional, true)
   } finally { rmSync(root, { recursive: true, force: true }) }
 })

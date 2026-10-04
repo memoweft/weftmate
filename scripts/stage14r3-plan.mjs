@@ -11,7 +11,8 @@ const failure = (code) => Object.assign(new Error(code), { code })
 
 export function planStage14R3(inventory, { inventoryFile, acceptanceRoot,
   configBytes, stateBytes, workerBytes, benchmarkBytes, aiRoot = 'D:\\AI',
-  tokenProofFile, tokenProofBytes, workerStatusBytes, orchestratorBytes } = {}) {
+  tokenProofFile, tokenProofBytes, workerStatusBytes, orchestratorBytes,
+  allowPriorTokenForDiagnostic = false } = {}) {
   if (!inventory || inventory.schemaVersion !== 1 || inventory.elevated !== true ||
       inventory.readyForReview !== true || !Array.isArray(inventory.failures) ||
       inventory.failures.length !== 0 || inventory.readyForMaintenance !== false) {
@@ -48,14 +49,24 @@ export function planStage14R3(inventory, { inventoryFile, acceptanceRoot,
     inventory.modelSwitcher?.loopbackProxyPid, inventory.modelSwitcher?.supervisorPid]
   const old = proof?.oldTokens
   const worker = workerStatus?.token
+  const workerEvidenceMatches = proof?.code === 'OK'
+    ? workerStatus?.kind === 's4u-preflight' && workerStatus?.ready === true &&
+      workerStatus?.action === 'Preflight'
+    : workerStatus?.code === 'WORKER_TOKEN_MISMATCH' &&
+      workerStatus?.action === 'Preflight'
+  const exactTokenPids = Array.isArray(old) && old.length === 3 &&
+    old.every((item, index) => item?.pid === expectedPids[index])
+  const provisionalTokenPids = allowPriorTokenForDiagnostic === true &&
+    Array.isArray(old) && old.length === 3 && old[0]?.pid === expectedPids[0] &&
+    old[1]?.pid !== expectedPids[1] && old[2]?.pid !== expectedPids[2]
   if (proof?.originalServicesUntouched !== true ||
       !['WORKER_TOKEN_MISMATCH', 'OK'].includes(proof?.code) ||
       !Array.isArray(old) || old.length !== 3 ||
-      !['WORKER_TOKEN_MISMATCH', 'OK'].includes(workerStatus?.code) ||
-      workerStatus?.action !== 'Preflight' ||
+      !workerEvidenceMatches ||
       proof?.runId !== workerStatus?.runId ||
       (proof?.nonce ?? null) !== (workerStatus?.nonce ?? null) ||
-      !old.every((item, index) => item?.available === true && item.pid === expectedPids[index] &&
+      (!exactTokenPids && !provisionalTokenPids) ||
+      !old.every((item) => item?.available === true &&
         typeof item.sid === 'string' && /^S-1-5-21-(?:\d+-){3}\d+$/.test(item.sid) &&
         item.sid === old[0].sid && item.elevationType === old[0].elevationType &&
         item.integritySid === old[0].integritySid && item.name === old[0].name) ||
@@ -139,6 +150,7 @@ export function planStage14R3(inventory, { inventoryFile, acceptanceRoot,
     orchestratorSha256: sha(orchestratorBytes),
     requiredToken, tokenProofFile, tokenProofSha256: sha(tokenProofBytes),
     tokenWorkerStatusSha256: sha(workerStatusBytes),
+    tokenEvidenceProvisional: !exactTokenPids,
     original: { pid: inventory.ninfer.pid, createdAt: inventory.ninfer.createdAt,
       owner: inventory.ninfer.owner, sessionId: 0,
       exe: inventory.ninfer.executablePath, argv: originalArgv,
@@ -170,7 +182,7 @@ export function planStage14R3(inventory, { inventoryFile, acceptanceRoot,
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const [inventoryFile, outputFile, tokenProofFile] = process.argv.slice(2)
+  const [inventoryFile, outputFile, tokenProofFile, option] = process.argv.slice(2)
   if (!inventoryFile || !outputFile || !tokenProofFile) throw new Error('usage: node stage14r3-plan.mjs <inventory.json> <manifest.json> <preflight-controller.json>')
   const acceptanceRoot = resolve(join(import.meta.dirname, '..', '..', 'Runtime',
     'UnifiedAssistant', relativeRoot))
@@ -180,14 +192,18 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const inventory = JSON.parse(readFileSync(inventoryFile, 'utf8').replace(/^\uFEFF/, ''))
   const tokenProofBytes = readFileSync(tokenProofFile)
   const tokenProof = JSON.parse(tokenProofBytes.toString('utf8').replace(/^\uFEFF/, ''))
-  const workerStatusFile = join(acceptanceRoot, `worker-status-Preflight-${tokenProof.runId}${tokenProof.nonce ? `-${tokenProof.nonce}` : ''}.json`)
+  const workerStatusFile = tokenProof.code === 'OK'
+    ? join(acceptanceRoot, `preflight-${tokenProof.runId}-${tokenProof.nonce}.json`)
+    : join(acceptanceRoot, `worker-status-Preflight-${tokenProof.runId}${tokenProof.nonce ? `-${tokenProof.nonce}` : ''}.json`)
+  if (option && option !== '--bootstrap-token-proof') throw failure('PLAN_OPTION_INVALID')
   const manifest = planStage14R3(inventory, { inventoryFile, acceptanceRoot,
     configBytes: readFileSync('D:\\AI\\Config\\qwen3.8-27b-ninfer.json'),
     stateBytes: readFileSync('D:\\AI\\Control\\State\\ModelSwitcher\\current.json'),
     workerBytes: readFileSync(join(import.meta.dirname, 'stage14r3-worker.ps1')),
     benchmarkBytes: readFileSync(join(import.meta.dirname, 'stage14r3-ninfer-micro.mjs')),
     orchestratorBytes: readFileSync(join(import.meta.dirname, 'stage14r3-orchestrate.ps1')),
-    tokenProofFile, tokenProofBytes, workerStatusBytes: readFileSync(workerStatusFile) })
+    tokenProofFile, tokenProofBytes, workerStatusBytes: readFileSync(workerStatusFile),
+    allowPriorTokenForDiagnostic: option === '--bootstrap-token-proof' })
   writeFileSync(outputFile, `${JSON.stringify(manifest, null, 2)}\n`, { flag: 'wx', mode: 0o600 })
   process.stdout.write(`manifestFile=${outputFile} readyForExecution=false\n`)
 }

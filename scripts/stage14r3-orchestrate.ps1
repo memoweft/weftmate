@@ -116,9 +116,9 @@ function Wait-NinferQuiescent([int]$maxSeconds) {
   return $false
 }
 function Stop-Exact([int]$processId, [string]$createdAt, [string[]]$argv, [object]$owner,
-  [ref]$attempted = $null) {
+  [object]$attempted = $null) {
   if (-not (Process-Identity $processId $createdAt $argv $owner)) { throw 'PROCESS_IDENTITY_CHANGED' }
-  if ($null -ne $attempted) { $attempted.Value = $true }
+  if ($attempted -is [System.Management.Automation.PSReference]) { $attempted.Value = $true }
   Stop-Process -Id $processId -Force -ErrorAction Stop
   $until = (Get-Date).AddSeconds(15)
   while ((Get-Process -Id $processId -ErrorAction SilentlyContinue) -and (Get-Date) -lt $until) {
@@ -137,6 +137,13 @@ function Worker-TaskDefinition([string]$action, [string]$nonce) {
   return [pscustomobject]@{ execute = $powerShell; arguments = $arguments;
     workingDirectory = $PSScriptRoot;
     principalUser = "$($plan.original.owner.domain)\$($plan.original.owner.user)" }
+}
+function Principal-SidMatches([string]$userId, [string]$expectedSid) {
+  try {
+    $resolved = (New-Object Security.Principal.NTAccount($userId)).Translate(
+      [Security.Principal.SecurityIdentifier]).Value
+    return [string]::Equals($resolved, $expectedSid, [StringComparison]::Ordinal)
+  } catch { return $false }
 }
 function Register-Worker([string]$action, [string]$taskName, [string]$nonce) {
   if (Get-ScheduledTask -TaskName $taskName -TaskPath '\AI\' -ErrorAction SilentlyContinue) {
@@ -161,8 +168,7 @@ function Assert-WorkerTask([string]$action, [string]$taskName, [string]$nonce) {
   $definition = Worker-TaskDefinition $action $nonce
   $actions = @($task.Actions)
   if ($actions.Count -ne 1 -or [string]$task.State -eq 'Running' -or
-      -not [string]::Equals([string]$task.Principal.UserId, $definition.principalUser,
-        [StringComparison]::OrdinalIgnoreCase) -or
+      -not (Principal-SidMatches ([string]$task.Principal.UserId) ([string]$plan.requiredToken.sid)) -or
       [string]$task.Principal.LogonType -ne 'S4U' -or
       [string]$task.Principal.RunLevel -ne 'Limited' -or
       -not [string]::Equals([string]$actions[0].Execute, $definition.execute,
@@ -499,7 +505,8 @@ public static class WeftMateR3TokenFacts {
         using (var identity = new WindowsIdentity(token)) {
           facts["sid"] = identity.User == null ? null : identity.User.Value;
           facts["name"] = identity.Name;
-          facts["adminRole"] = new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator);
+          try { facts["adminRole"] = new WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator); }
+          catch { facts["adminRole"] = null; }
           facts["elevationType"] = Elevation(token);
           facts["integritySid"] = Integrity(token);
           facts["available"] = true;
@@ -513,6 +520,11 @@ public static class WeftMateR3TokenFacts {
 '@
 Add-Type -TypeDefinition $argvSource
 if ($SelfTest) {
+  $selfSid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+  if (-not (Principal-SidMatches $env:USERNAME $selfSid) -or
+      (Principal-SidMatches $env:USERNAME 'S-1-5-21-0-0-0-9999')) {
+    throw 'TASK_PRINCIPAL_SID_TEST_FAILED'
+  }
   if (-not (Test-IdleLogLines @('[2026-10-04 00:00:00] throughput interval=5.0s running=0')) -or
       (Test-IdleLogLines @('[2026-10-04 00:00:00] throughput interval=5.0s running=0',
         '[2026-10-04 01:00:00] [req 8] submitted')) -or
@@ -532,6 +544,8 @@ if ($SelfTest) {
   $attempted = $false
   try { Stop-Exact 101 '2026-10-04T00:00:00Z' @('fake.exe') @{} ([ref]$attempted); throw 'CHANGED_PID_ACCEPTED' }
   catch { if ($_.Exception.Message -ne 'PROCESS_IDENTITY_CHANGED' -or $script:trace.Count -ne 0 -or $attempted) { throw } }
+  try { Stop-Exact 101 '2026-10-04T00:00:00Z' @('fake.exe') @{}; throw 'OMITTED_REF_ACCEPTED' }
+  catch { if ($_.Exception.Message -ne 'PROCESS_IDENTITY_CHANGED' -or $script:trace.Count -ne 0) { throw } }
   function Process-Identity { return $true }
   function Stop-Process { throw 'SYNTHETIC_STOP_CONFIRMATION_FAILED' }
   try { Stop-Exact 101 '2026-10-04T00:00:00Z' @('fake.exe') @{} ([ref]$attempted); throw 'STOP_FAILURE_ACCEPTED' }
@@ -641,6 +655,7 @@ $selectedModes = @(@($Run, $PreflightOnly, $RecoverOnly, $ExplainPlan) | Where-O
 if ($selectedModes.Count -gt 1) {
   throw 'MAINTENANCE_MODE_CONFLICT'
 }
+if ($Run -and $plan.tokenEvidenceProvisional -eq $true) { throw 'TOKEN_EVIDENCE_PROVISIONAL' }
 if ($ExplainPlan) {
   $ninferIdentity = try { Explain-ProcessIdentity ([int]$plan.original.pid) `
     $plan.original.createdAt @($plan.original.argv) $plan.original.owner } catch { [ordered]@{ readFailed = $true } }
@@ -842,6 +857,8 @@ $recoverRegistered = $false
 $stoppedAny = $false
 $restored = $false
 $outcome = 'failed'
+$initialFailure = $null
+$recoveryFailure = $null
 try {
   Register-Worker 'Preflight' $preflightTask $preflightNonce; $preflightRegistered = $true
   $preflightTriggeredAt = Get-Date
@@ -882,13 +899,30 @@ try {
   Require-Budget 330
   [void](Run-Micro 'no-spec')
   $outcome = 'micro-complete'
+} catch {
+  $initialFailure = [ordered]@{
+    code = if ($_.Exception.Message -cmatch '^[A-Z][A-Z0-9_]{3,80}$') {
+      $_.Exception.Message
+    } else { 'MAINTENANCE_FAILED' }
+    type = $_.Exception.GetType().Name
+    line = [int]$_.InvocationInfo.ScriptLineNumber
+  }
 } finally {
   if ($stoppedAny) {
     try {
       if (-not $recoverRegistered) { throw 'RECOVERY_TASK_NOT_REGISTERED' }
       [void](Recover-AfterStop $recoverTask $recoverNonce)
       $restored = $true
-    } catch { $outcome = 'recovery-unconfirmed' }
+    } catch {
+      $outcome = 'recovery-unconfirmed'
+      $recoveryFailure = [ordered]@{
+        code = if ($_.Exception.Message -cmatch '^[A-Z][A-Z0-9_]{3,80}$') {
+          $_.Exception.Message
+        } else { 'RECOVERY_FAILED' }
+        type = $_.Exception.GetType().Name
+        line = [int]$_.InvocationInfo.ScriptLineNumber
+      }
+    }
   } else { $restored = $true }
   $cleanupConfirmed = $true
   if ($restored) {
@@ -906,6 +940,7 @@ try {
   }
   $summary = [ordered]@{ schemaVersion = 1; runId = $plan.runId; nonce = $runNonce; outcome = $outcome;
     restored = $restored; cleanupConfirmed = $cleanupConfirmed;
+    initialFailure = $initialFailure; recoveryFailure = $recoveryFailure;
     seconds = [math]::Round(((Get-Date) - $start).TotalSeconds, 1);
     admissionWindowUnproven = $true;
     trialTaskRetained = $trialRegistered -and -not $restored;
@@ -917,3 +952,4 @@ try {
   if (-not $restored) { throw 'RECOVERY_UNCONFIRMED' }
   if (-not $cleanupConfirmed) { throw 'OWNED_TASK_CLEANUP_UNCONFIRMED' }
 }
+if ($null -ne $initialFailure) { throw $initialFailure.code }

@@ -28,6 +28,12 @@ ModelSwitcher（模型切换服务）无可持续持有的维护锁；status零�
 
 受控维护前候选已冻结：主助手独立定向7/7、类型检查通过；复用只读审查者核连接排空与恢复，无新增阻断项。最终manifest `manifest-2d7d9250-9771-4a40-b33c-ff2091a9a2c2.json`，SHA-256 `6e03ed2cd1d46c2eccdb877281e60e363d5eca2c6fef0332e1c8da9bf5bd6344`，runId `f35d540c-5ce1-471b-8155-ad2bc185d09b`；源码三项哈希匹配。管理员默认Plan（只读计划）exit0，尚无微基准请求；代码先本地快照后执行同清单`-Run`，正式界面仍0.7.1。
 
+首次实际维护失败保留：本地快照`de8040f`后执行上述`-Run`，10.4秒后报告`recovery-unconfirmed`；监督PID16464已停止，原proxy17092/NInfer25644及正式WeftMate25312仍运行，无任何微基准请求。一次原清单`-RecoverOnly`也返回`RECOVERY_FAILED`。核心用最小假函数确认`[ref]`参数默认`$null`在省略实参时产生PowerShell参数转换异常；首个显式传参调用生效，第二个停止及恢复调用在绑定阶段失败。既有模拟未覆盖该实际绑定路径，7/7不代表维护成功。当前优先精确恢复原代理/监督，不重启NInfer、不重复原失败入口；临时任务与失败证据保留，恢复后才修本仓停止函数及相应真实函数回归。
+
+独立紧急恢复已完成：`stage14r3-restore-switcher.ps1`冻结SHA-256 `12ad71461a49d1f9c2a8f0a8cde3b4f93dc84bb99cb8e18c7cb0c621b163dc6f`，只读计划exit0/`READY_READ_ONLY`，窄审补齐无新监督、真实空闲、停止责任前置及失败后仅一次原任务补救。主助手实际`-Run`于16:42:12 exit0/`OK`，新proxy37880/监督36092，原NInfer25644未停、未触发补救。只停止确切旧代理并启动原`ModelSwitcher-A-Logon`，未更改任务定义、Config/current.json或模型默认，原代理日志先复制保留。新管理员清点`inventory-20261004-164258-a2a52f9875da4e6d991669cdaf903dad.json` exit0、无失败；原Config/启动脚本/ModelSwitcher源码哈希均不变，正式25312/Caddy3304/Tailscale9424保持，公网页面200。停止函数继续按实际绑定路径修复，旧失败证据不覆盖，仍无微基准请求。
+
+停止函数已改为可省略的object（对象）参数，仅真实引用写回；实际函数的带引用/省略引用/停止异常路径已覆盖。Windows计划任务把同一账户返回为`yun`，现按真实SID（账户标识）核同一身份，仍核完整动作/随机编号/运行形态；不以姓名放宽。四个旧Ready（未运行）临时任务经只读4/4匹配后精确清理exit0，未删事故资料。新进程token通过现有只读S4U引导预检重新实测：`preflight-controller-e712f2c5-0e73-4132-b096-2175df45ec12-6622c8e016734c638441b19e829d2ca1.json`，三个PID均真实SID/elevation/integrity匹配，passed/任务结果0；引导清单禁止Run（实际维护）。最终非引导manifest `manifest-26f8ad11-8718-43ba-90af-b22e0dd8049c.json`、SHA-256 `ecbd251ea4655ef162777c8e6e7a00d13ddecda873327854def392796d6319db`、runId `9d8af3ed-de38-4637-bc4a-8cba9c66bb09`。主助手独立7/7及管理员默认Plan exit0，三源码哈希一致，窄审无阻断；只修有实际证据的三处问题后重新固定候选，微基准预算仍各一次。
+
 ## 第二轮续修：请求观测与模型适配（已冻结，真实未通过）
 
 2026-10-04用户在了解接续顺序后明确“继续”。基线`a7edde6`清洁，正式0.7.1/18186/PID25312保持；只读当前Qwen健康、活动/队列/维护0、未切换。本轮先定位上轮慢在请求/生成/工具/结束的哪一段，再实施有证据的个人会话适配；不把已同步记录当完整附件上下文已完成。
