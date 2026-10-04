@@ -40,6 +40,11 @@ private struct AcceptanceSyncReply: Decodable {
     struct Accepted: Decodable { let eventId: String; let seq: Int }
     let accepted: [Accepted]
 }
+private struct AcceptanceCapabilitiesReply: Decodable {
+    let deviceId: String
+    let platform: String
+    let sharedConversations: Int
+}
 
 private enum JSONValue: Decodable {
     case object([String: JSONValue]), array([JSONValue]), string(String), number(Double), bool(Bool), null
@@ -285,6 +290,23 @@ public actor PersonalClient {
         try check(generation)
         let reply: AcceptanceSyncReply = try decode(response.body)
         guard reply.accepted.map(\.eventId) == eventIDs, reply.accepted.allSatisfy({ $0.seq > 0 }) else { throw APIFailure.invalidResponse }
+    }
+
+    /// Checks the deployed Apple declaration contract for an isolated test device only.
+    /// This read milestone does not receive model secrets and therefore never declares transfer capability.
+    @_spi(Acceptance) public func declareAcceptanceCapabilities() async throws {
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        let platformName = platform.rawValue.lowercased()
+        let response = try await rawRequest(server: auth.session.server, path: "/sync/capabilities", method: "POST",
+            body: try JSONSerialization.data(withJSONObject: ["platform": platformName, "sharedConversations": 1], options: [.sortedKeys]), auth: auth)
+        try check(generation)
+        let reply: AcceptanceCapabilitiesReply = try decode(response.body)
+        guard let fields = try? JSONSerialization.jsonObject(with: response.body) as? [String: Any],
+              Set(fields.keys) == Set(["deviceId", "platform", "sharedConversations"]), reply.sharedConversations == 1 else {
+            throw APIFailure.invalidResponse
+        }
+        guard reply.deviceId == auth.session.device.id, reply.platform == platformName else { throw APIFailure.identityMismatch }
     }
 
     private func readSync(_ auth: Credential, _ generation: UInt64) async throws -> [SyncEvent] {

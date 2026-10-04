@@ -73,6 +73,7 @@ private struct DeviceRow: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier(device.current ? "currentDevice.\(device.id)" : "deviceRow.\(device.id)")
     }
 
     private var symbol: String {

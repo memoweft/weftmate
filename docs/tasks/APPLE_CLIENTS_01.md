@@ -159,7 +159,7 @@ DSH 固定依据为 `tests/contract/dsh-pin.json`：版本`0.1.0-rc.5`、提交`
 
 ## Apple 侧实施记录
 
-状态：Apple 候选 `0.1.0 / 1` 已固定，待云验证；真实后端联调未通过，里程碑 A 尚未完成验收。当前仅实现账户、设备与原历史读取，不启用消息发送或健康数据能力。
+状态：Apple 修订候选 `0.1.0 / 2` 已固定，局域网开发通道的原生工具与iPhone模拟器真实账户/原历史回归通过，待云验证；Mac完整登录界面、Watch账户接续、公网及真机仍未通过或未验证。版本1保留为恢复依据。当前仅实现账户、设备与原历史读取，不启用消息发送或健康数据能力。
 
 2026-10-04 Mac 接收记录：源码包 6,886,010 字节，SHA-256 为 `43171b9533ab237ec6ddce70b4c71a6b0caefc9070825b3cddcbc9c74d1722c5`。解压根为 `/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate`。包声明的来源提交为 `844429c32a866c53145b9a8ba00fc3ca1e653779`；包不含原 Git 历史。Mac 在该快照上建立独立 Apple 工作历史，初始本地提交 `9bef79dd89c85035a4a818a2e6c5060f55798d04`，只导入包内 735 个文件，没有远端推送。
 
@@ -171,7 +171,7 @@ DSH 固定依据为 `tests/contract/dsh-pin.json`：版本`0.1.0-rc.5`、提交`
 
 首次连接检查：公网直连发生 TLS 连接失败；经本机既有 HTTP 代理为 CONNECT 503；保留原域名、端口和证书校验的局域网连接到 Windows `192.168.31.144:443` 被拒绝。当前尚未创建测试账户，真实认证/会话联调未通过；等待 Windows 侧恢复可达入口，Apple 构建继续。
 
-共同接口需求：`src/personal-access/index.mjs` 的同步能力声明只接受现有 `nativeVersionCode`（至少 11），账户模型密钥迁移还要求至少 12；尚无 Apple 的构建号与共同协议能力分离入口。新来源对话采用会检查来源设备的能力声明，需要 Windows 侧补跨平台协商。已经绑定的宿主 `session.message` 命令与新来源采用的检查不同，不能据此断言所有 Apple 续聊都被版本门槛阻止。Mac 不填 Android 版本号绕过检查；本轮只实现登录、设备和原历史读取，尚未实现持久发送账本或发送。稳定安装身份和平台字段可作为后续认证接口的最小补充，当前先恢复服务端签发的 cookie/device，避免每次启动都重新登录产生设备。
+历史接口核对（接收快照 `844429c`，其后已由Windows更新）：`src/personal-access/index.mjs` 的同步能力声明只接受现有 `nativeVersionCode`（至少 11），账户模型密钥迁移还要求至少 12；尚无 Apple 的构建号与共同协议能力分离入口。新来源对话采用会检查来源设备的能力声明，需要 Windows 侧补跨平台协商。已经绑定的宿主 `session.message` 命令与新来源采用的检查不同，不能据此断言所有 Apple 续聊都被版本门槛阻止。Mac 不填 Android 版本号绕过检查；本轮只实现登录、设备和原历史读取，尚未实现持久发送账本或发送。稳定安装身份和平台字段可作为后续认证接口的最小补充，当前先恢复服务端签发的 cookie/device，避免每次启动都重新登录产生设备。
 
 Apple 侧接续在本节记录首个源码版本、工程路径、工具链、已完成里程碑、真实联调与未完成的接口需求；Windows 侧读取这些证据更新全局进度。
 
@@ -183,14 +183,14 @@ Apple 侧接续在本节记录首个源码版本、工程路径、工具链、�
 - iPhone 最终构建 `build-phone-03.log` 通过，iPhone 17 / iOS 26.3 模拟器实际启动并取得 `iphone-login-01.png`，登录入口布局已审查。首次构建发生共享包仍在写入时的源文件缺失，保留 `build-phone-01.log`。UI 测试 `test-phone-01.log` 实际为 2 通过、1 真实登录跳过、0 失败：注册入口可操作，连接真实不可达的 `https://127.0.0.1:1` 后显示失败、用户名保留、登录按钮恢复且不进入会话列表。`PhoneUITests-01.xcresult` 与 app-only 附件 `PhoneUIAttachments-01` 保留并视觉审查；不能把整体测试成功记作认证通过。
 - Mac XCUITest `test-mac-01.log` 在执行任何用例前因 `Timed out while enabling automation mode` 失败，`MacUITests-01.xcresult` 保留；不能记作界面测试通过，不重复同一环境超时。实际登录窗口可见检查与自动化测试结果分别记录。
 - Windows 通知公网恢复后再次直接请求正式 `/personal/v1/auth/state`：curl 退出 35，TLS `SSL_ERROR_SYSCALL`，约 5.15 秒，`HTTP_STATUS:000`，无 HTTP 响应；原生 `AppleAcceptance --probe` 亦失败为 `SERVICE_UNAVAILABLE`、退出 1。尚未创建隔离测试账户，注册/登录请求未执行，真实账户归属、Keychain 恢复与原历史联调保持未通过。
-- Windows 新 Apple 功能声明适配尚待其验证与发布通知；Mac 不自行启用或写 Android 版本数字。设备授权故障另行排查，不扩大本轮服务代理/TLS调查或健康功能范围。
+- 上一候选时点：Windows 新 Apple 功能声明适配尚待发布，Mac 未伪报Android版本。当前正式发布与实际回归结果见下方A追加联调记录；设备授权故障不作为工程协作前置。
 
 - Watch 最终构建 `build-watch-01.log` 通过，watchOS 26.2 / Apple Watch Series 11（46mm）沿用现有 iPhone 17 / iOS 26.2 配对，实际安装启动并显示 WeftMate 场景。有效截图为 `watch-entry-02.png`；第一张截图是启动前系统表盘，排除。当前明确显示账户/手机同步尚未接通，只形成可运行目标与独立本机身份，未通过手表账户、接续、后台或独立联网验证。
 - 代码与测试由实际子 Agent 执行，主助手独立复跑核心测试、核对最终产物与截图。本轮子 Agent 按启动时主任务模型继承运行，未指定模型覆盖；当前主任务记录模型为 `gpt-6.1-sol`。候选冻结后不自动进入 B—F。
 
 ### 本人试用入口与四项操作
 
-工程：`/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate/apps/apple/WeftMate.xcodeproj`。Mac 已构建应用：`/Users/yun/Desktop/WeftMate/AppleValidation-844429c/DerivedData/Build/Products/Debug/WeftMateMac.app`。模拟器入口在该工程选择 `WeftMatePhone` 或 `WeftMateWatch`；构建/运行脚本见 `apps/apple/README.md`。
+工程：`/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate/apps/apple/WeftMate.xcodeproj`。Mac 已构建应用：`/Users/yun/Desktop/WeftMate/AppleValidation-844429c/LAN-Revision2/DerivedData/Build/Products/Debug/WeftMateMac.app`。模拟器入口在该工程选择 `WeftMatePhone` 或 `WeftMateWatch`；构建/运行脚本见 `apps/apple/README.md`。
 
 1. 打开上述 Mac 应用：应看到原生 WeftMate 登录窗口，标题、账户、密码和服务器入口可见。窗口不存在或持续停在打开状态即为失败。
 2. 在 Mac 或 iPhone 点击“注册”，再切回“登录”：昵称和账户规则随模式显示，页面可滚动；不提交日常账户资料。
@@ -216,3 +216,45 @@ Mac/iPhone 的设置页已有当前版本展示；新原生包的发布清单、
 `GET https://home.weftmate.com:8443/personal/v1/auth/state`：curl无HTTP/HTTPS/ALL_PROXY环境变量，未显式设置HTTP代理；连接目标 `198.18.0.26`，约5.09秒后退出35（LibreSSL TLS `SSL_ERROR_SYSCALL`），`HTTP_STATUS:000`，没有HTTP响应。系统HTTP/HTTPS代理配置仍开启，地址 `127.0.0.1:1082`，不据配置推断请求实际路由。
 
 另以与客户端相同的临时URLSession、无共享cookie/cache及正常证书校验执行原生只读诊断：采集到 `isProxyConnection=false`、协议未知；没有HTTP响应，错误 `NSURLErrorDomain -1005`（network connection lost），底层为 `kCFErrorDomainCFNetwork -1005`。源码外证据 `AppleValidation-844429c/native-routing-probe-01.log`。这次也未发送密码/Token或注册请求。该错误发生在HTTP之前，不能归为登录接口返回401/403/500；真实认证和原历史联调仍未通过。
+
+### A 内追加真实联调范围
+
+Windows 已接收128,880字节源码包，SHA-256为 `d7aa55b3a163107bef3d5d4e43af9f322b58aaacea3eb12d891713a105dff77e`。Mac服务日志已确认来自 `192.168.31.144` 的一次完整传送，服务自动关闭且原端口不再监听。
+
+Windows 通知新能力声明接口已发布，代码提交 `cb08461`、后端源SHA `E1726D8D6CC3A1221D2414609ABF2E8B2C3C78749A4B4C57F055452A4A021F7C`。本机仍是接收的源码快照，不能将该远端通知当本机已合并的新后端源码。新公开Apple功能字段按实际服务回归，不报Android构建数字，不声明尚未实现的账户模型密钥迁移。
+
+本轮追加范围：仅DEBUG、显式启动的开发传输参数，以及既有隔离账户验收工具和原生界面测试。采用只监听127.0.0.1、最多15分钟的透明CONNECT转发，仅允许正式 `home.weftmate.com:8443` 通往现有 `192.168.31.91:443`；TLS由真实URLSession客户端端到端验证，不解密，原URL/SNI/账户身份保持。关闭转发或移除启动参数即可撤回，默认/Release构建不启用；界面显式标记局域网开发联调。
+
+不更改全局代理、DNS、hosts、TUN、系统登录或服务端。主助手先检查真实只读入口，再使用源码外0600隔离账户文件测试注册/登录、不同平台身份、能力声明、原记录读取、Keychain恢复、错误密码、第二账户隔离和退出；写操作未知结果保留同一文件，先核状态，不盲目重建账户或重放记录。记录用例不执行模型/工具。
+
+实际子Agent分别拥有共享核心/验收工具、原生UI、开发转发/工程/界面测试；主助手独立核对真实结果与产物。当前仍是A范围，不展开B—F、健康或完整更新发布。修复预算保持连续3轮；无证书关闭、伪回执或无限重试。
+
+### 已取得的正式服务证据（A追加联调）
+
+- 接口已经实际发布：本次通过普通证书验证的局域网开发通道，原生URLSession只读状态200；同一正式URL/Origin/SNI保持。普通公网/本机既有代理路径仍未通过，分别记结果。
+- 主助手一次执行原生验收工具，9.21秒exit0，证据 `AppleValidation-844429c/real-core-lan-01.log`：隔离注册、Mac进程中三种Apple平台测试身份同owner/3异device、三平台功能回包、原fixture对话ID/正文、真实Keychain恢复、错误密码、第二账户隔离和持久退出全部通过。未报Android数字，也未声明账户模型密钥迁移；模型/工具请求0。此项不是三台真机或Watch界面登录。
+- 共享核心21/21测试通过（原16项保留）。Release验收工具实际编译，带开发参数在网络前拒绝，证明开发路由不进入Release；正常App仍沿用正式联网配置。
+- 三端 `0.1.0 / 2` 初次最终构建均成功：`LAN-Revision2/build-mac-01.log`、`build-phone-01.log`、`build-watch-01.log`。实际Info.plist版本与中文权限说明已核对。
+- iPhone真实UI第一轮受系统“保存密码”弹层遮挡而失败，33秒、原结果保留；测试选择“以后”处理该系统弹层后第二轮真实用例exit0、1通过/0失败/0跳过、122.238秒。实际设备报告为iPhone17模拟器、iOS26.3.1（23D8133）、x86_64，Runtime名称26.3。
+- 第二轮实际核对登录、原对话ID/标题/正文、服务端当前设备、terminate/relaunch后同设备ID与原记录、A→B→A隔离和最终退出。私有结果 `WeftMatePhone-RealUI-20261004T150320Z-8c50d305/RealUITests.xcresult` 与app-only截图保留，密码不进入源码包或公开输出。
+- 实际截图另发现开发提示遮住导航，已仅修为正常占位并更新过时发送说明。该具体布局修复的增量构建/最小真实原史导航检查接续，不重复已通过的账户切换全流程。Mac自动化仍未重试；真机、Watch账户/接续、发送及持久草稿未验证或未实现。
+- 首个开发relay按15分钟关闭；旧PID14547已退出、端口64834不再监听。仅为修复后的有界视觉检查启动另一个loopback relay，取证后必须关闭并记录，不自动续期。
+
+### 修订候选2最终收口
+
+- 最终Mac/Phone增量构建日志分别为 `LAN-Revision2/build-mac-02.log` 和 `build-phone-02.log`，均exit0；Watch未使用修改过的Mac/Phone UI，最终 `build-watch-01.log` exit0。三端版本、构建号和bundle身份实际核对为0.1.0/2。
+- 修后的最小真实导航用例 `testRealConversationNavigationLayout` 为1通过/0失败/0跳过，34.946秒：重新登录同一隔离账户、原ID/正文、标题/返回/刷新完整可见、开发提示不相交、截图、退出。结果 `WeftMatePhone-RealUI-20261004T151243Z-4ded4d03/RealUITests.xcresult`；最终 `Attachments/CDF9E5F8-A77F-49D4-B632-F8F8D84649FD.png` 主助手已审查。此项不重复前述全账户流程。
+- 当前build2 Mac应用实际启动并取得仅该窗口截图 `LAN-Revision2/mac-build2-login-01.png`，独立测试namespace、空输入、无日常账户；这不是Mac界面完整登录通过。Watch沿原配对安装启动，实际安装Info.plist核build2，截图 `watch-build2-entry-01.png` 仍明确账户/手机同步尚未接通。
+- 最终脱敏汇总 `LAN-Revision2/project-acceptance-02.json` 与 `runtime-build2-01.json`。密码、cookie、Token、私有xctestrun、数据库和运行产物不进入源码交接包；公开截图仅为合成测试记录，不含本人私人会话。
+- 开发通道已撤回：首窗口PID14547/端口64834已退出；取证窗口PID17240/端口60714以SIGINT退出0，accepted2/completed2/failed0，端口连接拒绝。主助手复核两PID和监听均不存在。源码传送另用限制Windows来源的一次性服务，传送后或TTL到期自动关闭。
+
+### 修订候选2本人试用范围
+
+Mac当前入口为上方 `LAN-Revision2` 中的已构建App；iPhone/Watch仍使用本机Xcode模拟器，不提供未签名IPA安装链接。已停止临时开发通道；默认公网路径在这台Mac仍受既有代理/fake-IP路径影响，不能把默认登录失败解释为本轮接口回归失败。需本人看真实联调页面时，由开发者使用现有有界脚本重新启动并保正常TLS，不能让用户自行诊断网络或改全局设置。
+
+1. 查看当前Mac原生登录/注册窗口：账户、密码、服务器设置可见且输入不被遮挡。Mac完整登录UI需另行补证，不能以CLI替代。
+2. 查看最终iPhone原记录截图，或在开发者准备的同一隔离账户中打开“Apple联调测试记录”：原正文与标题对应，返回/刷新可用，“局域网开发联调”与发送未开放说明清楚。
+3. 查看设备页面与重启恢复体验：开发者已验证当前设备身份与重启前相同；本人反馈设备是否容易识别。全账户回归已通过，不要求用户重跑技术测试。
+4. 查看Watch当前模拟器入口：明确尚未接通账户和手机同步，不应显示已发送任务或已联网接续。
+
+仍未完成：普通公网客户端路径、Mac完整登录界面、真实Apple签名与安装、Watch账户/后台/独立联网、发送、持久草稿和真实覆盖安装保留行为。更新需求仍按本人手动下载安装，未发布新包或渠道时不造下载链接。本轮冻结并等待用户反馈，不进入B—F或健康模块。

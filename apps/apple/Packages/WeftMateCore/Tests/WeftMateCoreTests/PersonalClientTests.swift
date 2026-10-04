@@ -1,6 +1,6 @@
 import Foundation
 import Testing
-@testable import WeftMateCore
+@_spi(Acceptance) @testable import WeftMateCore
 
 final class MemoryStore: CredentialStore, @unchecked Sendable {
     private let lock = NSLock()
@@ -277,4 +277,82 @@ private func login(_ client: PersonalClient) async throws -> AccountSession {
     let rows = try await client.conversations()
     #expect(rows.map(\.title) == ["first", "second"])
     #expect(await transport.remaining() == 0)
+}
+
+#if DEBUG
+@Test func developmentProxyPortRequiresExplicitUnprivilegedTCPPort() throws {
+    for invalid in [-1, 0, 80, 1023, 65536, Int.max] {
+        #expect(throws: APIFailure.invalidServer) { try DevelopmentProxyRoute(port: invalid) }
+    }
+    #expect(try DevelopmentProxyRoute(port: 1024).port == 1024)
+    #expect(try DevelopmentProxyRoute(port: 65535).port == 65535)
+}
+
+@Test func developmentProxyRejectsOtherOriginsBeforeConnecting() async throws {
+    let route = try DevelopmentProxyRoute(port: 64834)
+    try route.validate(URL(string: "https://home.weftmate.com:8443/personal/v1/auth/state"))
+    try route.validate(URL(string: "https://HOME.WEFTMATE.COM:8443/personal/v1/sync/events?afterSeq=0&limit=100"))
+    let transport = try URLSessionTransport(developmentProxyPort: 64834)
+    for invalid in ["http://home.weftmate.com:8443/personal/v1/auth/state", "https://home.weftmate.com/personal/v1/auth/state",
+                    "https://home.weftmate.com:443/personal/v1/auth/state", "https://192.168.31.91:8443/personal/v1/auth/state",
+                    "https://home.weftmate.com.evil.example:8443/personal/v1/auth/state", "https://user:password@home.weftmate.com:8443/personal/v1/auth/state",
+                    "https://home.weftmate.com:8443/personal/v1/auth/state#fragment"] {
+        #expect(throws: APIFailure.invalidServer) { try route.validate(URL(string: invalid)) }
+        await #expect(throws: APIFailure.invalidServer) { try await transport.send(URLRequest(url: URL(string: invalid)!)) }
+    }
+    #expect(throws: APIFailure.invalidServer) { try route.validate(nil) }
+}
+#endif
+
+@Test func isolatedAppleCapabilitiesUseIssuedDeviceAndNeverDeclareAndroidOrSecretTransfer() async throws {
+    for platform in ApplePlatform.allCases {
+        let platformName = platform.rawValue.lowercased()
+        let transport = ScriptTransport([step("/auth/login", auth()), step("/status", status()), step("/auth/me", auth()),
+            step("/sync/capabilities", json("{\"deviceId\":\"device-Mac\",\"platform\":\"\(platformName)\",\"sharedConversations\":1}"))])
+        let client = PersonalClient(credentialStore: MemoryStore(), transport: transport, platform: platform)
+        _ = try await login(client)
+        try await client.declareAcceptanceCapabilities()
+        let sent = await transport.requests().last!
+        let body = try JSONSerialization.jsonObject(with: sent.httpBody!) as! [String: Any]
+        #expect(sent.httpMethod == "POST")
+        #expect(sent.value(forHTTPHeaderField: "Origin") == origin)
+        #expect(sent.value(forHTTPHeaderField: "Cookie") == cookie)
+        #expect(sent.value(forHTTPHeaderField: "X-WeftMate-CSRF") == csrf)
+        #expect(Set(body.keys) == Set(["platform", "sharedConversations"]))
+        #expect(body["platform"] as? String == platformName)
+        #expect(body["sharedConversations"] as? Int == 1)
+        #expect(await transport.remaining() == 0)
+    }
+}
+
+@Test func capabilityReplyCannotSubstituteDevicePlatformOrUnimplementedCapability() async throws {
+    let rejected: [(String, APIFailure)] = [
+        ("{\"deviceId\":\"device-Other\",\"platform\":\"macos\",\"sharedConversations\":1}", .identityMismatch),
+        ("{\"deviceId\":\"device-Mac\",\"platform\":\"ios\",\"sharedConversations\":1}", .identityMismatch),
+        ("{\"deviceId\":\"device-Mac\",\"platform\":\"macos\",\"sharedConversations\":2}", .invalidResponse),
+        ("{\"deviceId\":\"device-Mac\",\"platform\":\"macos\",\"sharedConversations\":1,\"nativeVersionCode\":11}", .invalidResponse),
+        ("{\"deviceId\":\"device-Mac\",\"platform\":\"macos\",\"sharedConversations\":1,\"accountModelTransfer\":1}", .invalidResponse)
+    ]
+    for (body, failure) in rejected {
+        let transport = ScriptTransport([step("/auth/login", auth()), step("/status", status()), step("/auth/me", auth()),
+            step("/sync/capabilities", json(body))])
+        let client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+        _ = try await login(client)
+        await #expect(throws: failure) { try await client.declareAcceptanceCapabilities() }
+    }
+}
+
+@Test func capabilityResponseFromOldAccountCannotCompleteAfterAccountSwitch() async throws {
+    let transport = ScriptTransport([step("/auth/login", auth()), step("/status", status()), step("/auth/me", auth()),
+        step("/sync/capabilities", json("{\"deviceId\":\"device-Mac\",\"platform\":\"macos\",\"sharedConversations\":1}"), pause: true),
+        step("/auth/logout", json("{}")), step("/auth/login", auth("owner-B", device: "device-B")), step("/status", status("owner-B"))])
+    let client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+    _ = try await login(client)
+    let old = Task { try await client.declareAcceptanceCapabilities() }
+    await transport.waitUntilPaused()
+    try await client.logout()
+    _ = try await login(client)
+    await transport.release()
+    await #expect(throws: APIFailure.accountChanged) { try await old.value }
+    #expect(await client.currentSession()?.account.ownerId == "owner-B")
 }

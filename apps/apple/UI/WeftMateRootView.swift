@@ -5,20 +5,29 @@ struct WeftMateRootView: View {
     @ObservedObject var model: AppleAppModel
 
     var body: some View {
-        Group {
-            if model.restoring {
-                VStack(spacing: 20) {
-                    BrandMark(size: 48)
-                    ProgressView("正在打开 WeftMate…").font(.callout).foregroundStyle(Weave.muted)
-                }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Weave.canvas)
-            } else if let session = model.session {
-                #if os(macOS)
-                MacWorkspace(model: model).id(session.account.ownerId)
-                #else
-                PhoneWorkspace(model: model).id(session.account.ownerId)
-                #endif
-            } else {
-                AuthView(model: model)
+        VStack(spacing: 0) {
+            if model.developmentRouteEnabled {
+                Label("局域网开发联调", systemImage: "network")
+                    .font(.caption).foregroundStyle(Weave.secondary)
+                    .frame(maxWidth: .infinity).padding(.vertical, 6)
+                    .background(Weave.accentSoft)
+                    .accessibilityIdentifier("developmentRouteNotice")
+            }
+            Group {
+                if model.restoring {
+                    VStack(spacing: 20) {
+                        BrandMark(size: 48)
+                        ProgressView("正在打开 WeftMate…").font(.callout).foregroundStyle(Weave.muted)
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Weave.canvas)
+                } else if let session = model.session {
+                    #if os(macOS)
+                    MacWorkspace(model: model).id(session.account.ownerId)
+                    #else
+                    PhoneWorkspace(model: model).id(session.account.ownerId)
+                    #endif
+                } else {
+                    AuthView(model: model)
+                }
             }
         }
         .tint(Weave.accent)
@@ -56,7 +65,9 @@ private struct MacWorkspace: View {
                     }
                     Section {
                         Label("设备", systemImage: "laptopcomputer.and.iphone").tag(SidebarSelection.devices)
+                            .accessibilityIdentifier("devicesNavigation")
                         Label("设置", systemImage: "slider.horizontal.3").tag(SidebarSelection.settings)
+                            .accessibilityIdentifier("settingsNavigation")
                     }
                 }
                 .listStyle(.sidebar)
@@ -134,6 +145,7 @@ private struct PhoneWorkspace: View {
                         ConversationListContent(model: model, search: $search)
                         ForEach(filteredConversations) { conversation in
                             NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }
+                                .accessibilityIdentifier("conversationRow.\(conversation.id)")
                         }
                     }
                 }

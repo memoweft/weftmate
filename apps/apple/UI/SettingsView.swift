@@ -22,12 +22,14 @@ struct SettingsView: View {
                                 Text(model.accountName).font(.headline).foregroundStyle(Weave.ink)
                                 Text(model.session?.account.username ?? "")
                                     .font(.callout).foregroundStyle(Weave.muted)
+                                    .accessibilityIdentifier("accountUsername")
                             }
                             Spacer(minLength: 0)
                         }
                         Divider()
                         LabeledContent("登录设备", value: model.session?.device.name ?? model.deviceName)
                             .font(.callout).foregroundStyle(Weave.secondary)
+                            .accessibilityIdentifier("accountDevice.\(model.session?.device.id ?? "unknown")")
                         Button(role: .destructive) { confirmSignOut = true } label: {
                             Label("退出登录 / 切换账户", systemImage: "rectangle.portrait.and.arrow.right")
                         }
