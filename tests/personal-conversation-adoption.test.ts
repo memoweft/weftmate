@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -418,5 +418,59 @@ test('old phone source cannot be adopted until that same device declares native 
     assert.equal((await api(host.origin, host.auth, 'GET', route)).body.canAdopt, true)
     assert.equal((await api(host.origin, host.auth, 'POST', route,
       { requestId: 'old-phone-adopt', modelProfileId: 'local', expectedSyncSeq: 4 })).status, 202)
+  } finally { await host.service.close(); rmSync(root, { recursive: true, force: true }) }
+})
+
+test('Apple capability declarations map to compatible stored levels and can be downgraded', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'personal-conversation-apple-capability-'))
+  const fixture = backendFixture()
+  let host = await setup(root, fixture.backend, undefined, false)
+  const route = '/personal/v1/sync/capabilities'
+  try {
+    assert.equal((await api(host.origin, host.auth, 'POST', '/personal/v1/sync/events',
+      { events: [created, user, assistant, terminal] })).status, 200)
+    const shared = `/personal/v1/sync/conversations/${conversationId}/shared`
+    assert.equal((await api(host.origin, host.auth, 'GET', shared)).body.reasonCode,
+      'SOURCE_DEVICE_UPGRADE_REQUIRED')
+    for (const body of [
+      { platform: 'android', sharedConversations: 1 },
+      { platform: 'ios' },
+      { platform: 'ios', sharedConversations: 1, accountModelTransfer: 0 },
+      { platform: 'ios', sharedConversations: 1, nativeVersionCode: 12 },
+    ]) assert.equal((await api(host.origin, host.auth, 'POST', route, body)).status, 400)
+    const apple = { platform: 'ios', sharedConversations: 1 }
+    const declared = await api(host.origin, host.auth, 'POST', route, apple)
+    assert.equal(declared.status, 200)
+    assert.deepEqual(declared.body, { deviceId: declared.body.deviceId, ...apple })
+    assert.equal((await api(host.origin, host.auth, 'GET', shared)).body.canAdopt, true)
+    const savedCapability = () => {
+      const saved = JSON.parse(readFileSync(join(root, 'store.json'), 'utf8'))
+      return saved.accounts[Object.keys(saved.accounts)[0]].devices[declared.body.deviceId].syncCapabilities
+    }
+    const first = savedCapability()
+    assert.deepEqual(Object.keys(first).sort(), ['declaredAt', 'nativeVersionCode', 'sharedConversations'])
+    assert.equal(first.nativeVersionCode, 11,
+      'stored 11 is a server compatibility level, not the Apple build number')
+    assert.deepEqual((await api(host.origin, host.auth, 'POST', route, apple)).body, declared.body)
+    assert.deepEqual(savedCapability(), first, 'identical declarations do not rewrite the store')
+    const transfer = { ...apple, accountModelTransfer: 1 }
+    assert.deepEqual((await api(host.origin, host.auth, 'POST', route, transfer)).body,
+      { deviceId: declared.body.deviceId, ...transfer })
+    assert.equal(savedCapability().nativeVersionCode, 12)
+    assert.deepEqual((await api(host.origin, host.auth, 'POST', route, apple)).body, declared.body)
+    assert.equal(savedCapability().nativeVersionCode, 11,
+      'omitting transfer clears a capability the current client no longer declares')
+    await host.service.close()
+    const reopened = await createPersonalAccessService({ root, port: 0, backend: fixture.backend })
+    const { origin } = await reopened.start()
+    host = { ...host, service: reopened, origin, auth: { ...host.auth, origin } }
+    assert.equal((await api(origin, host.auth, 'GET', shared)).body.canAdopt, true)
+    assert.deepEqual((await api(origin, host.auth, 'POST', route, apple)).body, declared.body)
+    assert.equal(savedCapability().nativeVersionCode, 11)
+    assert.equal((await api(origin, host.auth, 'POST', route,
+      { sharedConversations: 1, nativeVersionCode: 12 })).body.nativeVersionCode, 12)
+    assert.equal((await api(origin, host.auth, 'POST', route,
+      { sharedConversations: 1, nativeVersionCode: 11 })).body.nativeVersionCode, 12,
+    'legacy Android declarations retain their existing highest-build behavior')
   } finally { await host.service.close(); rmSync(root, { recursive: true, force: true }) }
 })

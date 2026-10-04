@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { request as httpRequest } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -139,6 +140,53 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
     assert.equal((await settled(origin, owner, 'model-test')).operation.testResult.modelListed, true)
     assert.equal((await api(origin, owner, 'POST', `/personal/v1/account/models/${accountModelId}/transfer`, {
       requestId: 'transfer-before-native', expectedRevision: 3 })).status, 403)
+    const appleShared = { platform: 'ios', sharedConversations: 1 }
+    assert.deepEqual((await api(origin, owner, 'POST', '/personal/v1/sync/capabilities',
+      appleShared)).body, { deviceId: ownerBody.device.id, ...appleShared })
+    assert.equal((await api(origin, owner, 'POST', `/personal/v1/account/models/${accountModelId}/transfer`, {
+      requestId: 'transfer-before-apple-capability', expectedRevision: 3 })).status, 403)
+    let finishShared!: () => void
+    let partialSent!: () => void
+    const sent = new Promise<void>((resolve) => { partialSent = resolve })
+    const delayedShared = new Promise<{ status: number; body: any }>((resolve, reject) => {
+      const request = httpRequest(`${origin}/personal/v1/sync/capabilities`, {
+        method: 'POST', headers: { ...owner, 'content-type': 'application/json' },
+      }, (response) => {
+        let text = ''
+        response.setEncoding('utf8')
+        response.on('data', (chunk) => { text += chunk })
+        response.on('end', () => resolve({ status: response.statusCode!, body: JSON.parse(text) }))
+      })
+      request.on('error', reject)
+      request.write('{"platform":"ios",', partialSent)
+      finishShared = () => request.end('"sharedConversations":1}')
+    })
+    await sent
+    await new Promise((resolve) => setTimeout(resolve, 100))
+    try {
+      assert.equal((await api(origin, owner, 'POST', '/personal/v1/sync/capabilities',
+        { ...appleShared, accountModelTransfer: 1 })).status, 200)
+    } finally { finishShared() }
+    const downgraded = await delayedShared
+    assert.deepEqual(downgraded, { status: 200, body: { deviceId: ownerBody.device.id, ...appleShared } })
+    const saved = JSON.parse(readFileSync(join(root, 'store.json'), 'utf8'))
+    assert.equal(saved.accounts[ownerBody.account.ownerId].devices[ownerBody.device.id]
+      .syncCapabilities.nativeVersionCode, 11,
+    'the later accepted Apple declaration clears transfer after an in-flight upgrade')
+    assert.equal((await api(origin, owner, 'POST', `/personal/v1/account/models/${accountModelId}/transfer`, {
+      requestId: 'transfer-after-interleaved-downgrade', expectedRevision: 3 })).status, 403)
+    assert.deepEqual((await api(origin, owner, 'POST', '/personal/v1/sync/capabilities',
+      { ...appleShared, accountModelTransfer: 1 })).body,
+    { deviceId: ownerBody.device.id, ...appleShared, accountModelTransfer: 1 })
+    const appleTransfer = await api(origin, owner, 'POST',
+      `/personal/v1/account/models/${accountModelId}/transfer`, {
+        requestId: 'transfer-apple', expectedRevision: 3 })
+    assert.equal(appleTransfer.status, 200)
+    assert.equal(appleTransfer.body.apiKey, 'synthetic-key-one')
+    assert.equal((await api(origin, owner, 'POST', '/personal/v1/sync/capabilities',
+      appleShared)).status, 200)
+    assert.equal((await api(origin, owner, 'POST', `/personal/v1/account/models/${accountModelId}/transfer`, {
+      requestId: 'transfer-after-apple-downgrade', expectedRevision: 3 })).status, 403)
     assert.equal((await api(origin, owner, 'POST', '/personal/v1/sync/capabilities', {
       sharedConversations: 1, nativeVersionCode: 12 })).status, 200)
     const transfer = await api(origin, owner, 'POST', `/personal/v1/account/models/${accountModelId}/transfer`, {

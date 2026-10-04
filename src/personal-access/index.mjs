@@ -2975,6 +2975,33 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           throw failure('FORBIDDEN', 403);
         }
         const body = await readJson(request);
+        if (plainObject(body) && Object.hasOwn(body, 'platform')) {
+          exactKeys(body, ['platform', 'sharedConversations', 'accountModelTransfer'],
+            ['platform', 'sharedConversations']);
+          if (!['macos', 'ios', 'watchos'].includes(body.platform) ||
+              body.sharedConversations !== 1 ||
+              (body.accountModelTransfer !== undefined && body.accountModelTransfer !== 1)) {
+            throw failure('INVALID_REQUEST');
+          }
+          // Apple has no Android build number. Persist 11/12 as server compatibility
+          // levels so existing stores and gates remain readable by older releases.
+          const level = body.accountModelTransfer === 1 ? 12 : 11;
+          await serial(() => {
+            const latest = authenticate(request, 'commands:write');
+            if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
+                latest.via !== 'cookie' || latest.device.authKind !== 'password') {
+              throw failure('UNAUTHORIZED', 401);
+            }
+            if (latest.device.syncCapabilities?.nativeVersionCode !== level) {
+              return mutate(ownerId, (next) => {
+                next.devices[deviceId].syncCapabilities = { sharedConversations: 1,
+                  nativeVersionCode: level, declaredAt: new Date(timestamp()).toISOString() };
+              });
+            }
+          });
+          return json(response, 200, { deviceId, platform: body.platform, sharedConversations: 1,
+            ...(level === 12 ? { accountModelTransfer: 1 } : {}) });
+        }
         exactKeys(body, ['sharedConversations', 'nativeVersionCode'],
           ['sharedConversations', 'nativeVersionCode']);
         if (body.sharedConversations !== 1 || !Number.isSafeInteger(body.nativeVersionCode) ||
