@@ -8,6 +8,7 @@ private struct TestCredential: Codable {
     let password: String
     var conversationID: String?
     var marker: String?
+    var conversationTitle: String?
 }
 
 @main struct AppleAcceptance {
@@ -19,7 +20,15 @@ private struct TestCredential: Codable {
                 guard let i = args.firstIndex(of: key), args.indices.contains(i + 1) else { return nil }
                 return args[i + 1]
             }
-            let transport = URLSessionTransport()
+            let transport: URLSessionTransport
+            if args.contains("--development-proxy-port") {
+                #if DEBUG
+                guard let proxyArgument = option("--development-proxy-port"), let port = Int(proxyArgument) else { throw APIFailure.invalidServer }
+                transport = try URLSessionTransport(developmentProxyPort: port)
+                #else
+                throw APIFailure.invalidServer
+                #endif
+            } else { transport = URLSessionTransport() }
             let server = try ServerConfiguration(input: option("--server") ?? "https://home.weftmate.com:8443")
             if args.contains("--probe") {
                 stage = "native-auth-state"
@@ -27,7 +36,8 @@ private struct TestCredential: Codable {
                 request.setValue("application/json", forHTTPHeaderField: "Accept")
                 let response = try await transport.send(request)
                 guard response.status == 200 else { throw APIFailure.server(status: response.status, code: "HTTP_\(response.status)") }
-                report(["result": "passed", "stage": stage, "httpStatus": response.status])
+                report(["result": "passed", "stage": stage, "httpStatus": response.status,
+                    "route": option("--development-proxy-port") == nil ? "system" : "developmentLoopbackCONNECT"])
                 return
             }
             guard let path = option("--credentials-file"), path.hasPrefix("/") else { throw APIFailure.invalidResponse }
@@ -41,7 +51,7 @@ private struct TestCredential: Codable {
                 stage = "register-isolated-account"
                 test = TestCredential(server: server.originString, username: "AppleTest" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(16),
                     password: "AppleFixture-" + UUID().uuidString + UUID().uuidString, conversationID: UUID().uuidString.lowercased(),
-                    marker: "Apple 原会话读取联调 " + UUID().uuidString)
+                    marker: "Apple 原会话读取联调 " + UUID().uuidString, conversationTitle: "Apple 联调测试记录")
                 // Create private file before the request. Never overwrite a prior account file.
                 try writePrivate(test, path: path, create: true)
                 first = try await mac.register(server: server, username: test.username, password: test.password,
@@ -50,10 +60,7 @@ private struct TestCredential: Codable {
                 try await mac.seedAcceptanceConversation(conversationID: test.conversationID!, marker: test.marker!)
             } else {
                 stage = "read-private-test-credential"
-                let attrs = try FileManager.default.attributesOfItem(atPath: path)
-                guard attrs[.type] as? FileAttributeType == .typeRegular,
-                      let permissions = attrs[.posixPermissions] as? NSNumber, permissions.intValue & 0o077 == 0 else { throw APIFailure.credentialStorage }
-                test = try JSONDecoder().decode(TestCredential.self, from: Data(contentsOf: URL(fileURLWithPath: path)))
+                test = try readPrivate(path: path)
                 guard test.server == server.originString else { throw APIFailure.invalidServer }
                 stage = "login-isolated-account"
                 first = try await mac.login(server: server, username: test.username, password: test.password, deviceName: "Mac · Apple acceptance")
@@ -63,6 +70,10 @@ private struct TestCredential: Codable {
             let third = try await watch.login(server: server, username: test.username, password: test.password, deviceName: "Apple Watch · Apple acceptance")
             guard first.account.ownerId == second.account.ownerId, second.account.ownerId == third.account.ownerId,
                   Set([first.device.id, second.device.id, third.device.id]).count == 3 else { throw APIFailure.identityMismatch }
+            stage = "apple-platform-capabilities"
+            try await mac.declareAcceptanceCapabilities()
+            try await phone.declareAcceptanceCapabilities()
+            try await watch.declareAcceptanceCapabilities()
             stage = "original-conversation-read"
             let macConversations = try await mac.conversations()
             let phoneConversations = try await phone.conversations()
@@ -82,25 +93,50 @@ private struct TestCredential: Codable {
             guard restored?.device.id == second.device.id, devices.contains(where: { $0.id == third.device.id }),
                   restored?.verification == .verified else { throw APIFailure.identityMismatch }
             stage = "wrong-password"
-            let wrong = PersonalClient(credentialStore: store, transport: transport, platform: .iOS)
+            // A failed login deliberately clears that client's persisted identity. Keep this probe separate.
+            let wrong = PersonalClient(credentialStore: KeychainCredentialStore(service: "com.weftmate.apple.acceptance.wrong.\(UUID().uuidString)"),
+                transport: transport, platform: .iOS)
             do {
                 _ = try await wrong.login(server: server, username: test.username, password: "wrong-fixture-password", deviceName: "Invalid test")
                 throw APIFailure.identityMismatch
             } catch APIFailure.server(401, "INVALID_CREDENTIALS") { /* expected */ }
+            let afterWrong = PersonalClient(credentialStore: store, transport: transport, platform: .iOS)
+            guard try await afterWrong.restoreSession(server: server)?.device.id == second.device.id else { throw APIFailure.identityMismatch }
             stage = "second-account-isolation"
-            let isolated = PersonalClient(credentialStore: store, transport: transport, platform: .macOS)
-            let other = try await isolated.register(server: server,
-                username: "AppleOther" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(16),
-                password: "AppleFixture-" + UUID().uuidString + UUID().uuidString, deviceName: "Mac · Second isolated test")
+            let isolated = PersonalClient(credentialStore: KeychainCredentialStore(service: "com.weftmate.apple.acceptance.other.\(UUID().uuidString)"),
+                transport: transport, platform: .macOS)
+            let otherPath = path + ".second-account.json"
+            let other: AccountSession
+            if FileManager.default.fileExists(atPath: otherPath) {
+                let savedOther = try readPrivate(path: otherPath)
+                guard savedOther.server == server.originString else { throw APIFailure.invalidServer }
+                other = try await isolated.login(server: server, username: savedOther.username, password: savedOther.password,
+                    deviceName: "Mac · Second isolated test")
+            } else {
+                let newOther = TestCredential(server: server.originString,
+                    username: "AppleOther" + UUID().uuidString.replacingOccurrences(of: "-", with: "").prefix(16),
+                    password: "AppleFixture-" + UUID().uuidString + UUID().uuidString)
+                try writePrivate(newOther, path: otherPath, create: true)
+                other = try await isolated.register(server: server, username: newOther.username, password: newOther.password,
+                    deviceName: "Mac · Second isolated test")
+            }
             guard other.account.ownerId != first.account.ownerId,
                   try await isolated.conversations().allSatisfy({ $0.id != originalID }) else { throw APIFailure.identityMismatch }
             try await isolated.logout()
+            let afterOther = PersonalClient(credentialStore: store, transport: transport, platform: .macOS)
+            guard try await afterOther.restoreSession(server: server)?.device.id == first.device.id else { throw APIFailure.identityMismatch }
             stage = "logout"
             try await mac.logout(); try await phone.logout(); try await watch.logout()
+            for platform in ApplePlatform.allCases {
+                let loggedOut = PersonalClient(credentialStore: store, transport: transport, platform: platform)
+                guard try await loggedOut.restoreSession(server: server) == nil else { throw APIFailure.identityMismatch }
+            }
             report(["result": "passed", "stage": "account-original-history", "distinctDevices": 3,
                 "macConversationCount": macConversations.count, "phoneConversationCount": phoneConversations.count,
                 "watchConversationCount": watchConversations.count, "fixtureMessageVisible": true,
-                "accountIsolation": true, "keychainRestoration": true, "modelRequests": 0])
+                "accountIsolation": true, "keychainRestoration": true, "persistedLogout": true,
+                "appleCapabilities": ["macos", "ios", "watchos"], "modelTransferDeclared": false,
+                "route": option("--development-proxy-port") == nil ? "system" : "developmentLoopbackCONNECT", "modelRequests": 0])
         } catch {
             let safe = (error as? APIFailure)?.safeCode ?? "ACCEPTANCE_FAILED"
             report(["result": "failed", "stage": stage, "code": safe])
@@ -116,5 +152,15 @@ private struct TestCredential: Codable {
         guard fd >= 0 else { throw APIFailure.credentialStorage }
         let file = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
         try file.write(contentsOf: JSONEncoder().encode(test)); try file.synchronize(); try file.close()
+    }
+    private static func readPrivate(path: String) throws -> TestCredential {
+        let fd = open(path, O_RDONLY | O_NOFOLLOW)
+        guard fd >= 0 else { throw APIFailure.credentialStorage }
+        let file = FileHandle(fileDescriptor: fd, closeOnDealloc: true)
+        defer { try? file.close() }
+        var info = stat()
+        guard fstat(fd, &info) == 0, info.st_mode & S_IFMT == S_IFREG, info.st_mode & 0o077 == 0,
+              info.st_size > 0, info.st_size <= 16_384 else { throw APIFailure.credentialStorage }
+        return try JSONDecoder().decode(TestCredential.self, from: file.readToEnd() ?? Data())
     }
 }

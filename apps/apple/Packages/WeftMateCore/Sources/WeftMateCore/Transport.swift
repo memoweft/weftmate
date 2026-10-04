@@ -1,4 +1,7 @@
 import Foundation
+#if DEBUG
+import Network
+#endif
 
 public struct HTTPResponse: Sendable {
     public let status: Int
@@ -21,13 +24,40 @@ private final class RedirectRefuser: NSObject, URLSessionTaskDelegate, Sendable 
 
 public final class URLSessionTransport: HTTPTransport, Sendable {
     private let session: URLSession
+    #if DEBUG
+    private let developmentRoute: DevelopmentProxyRoute?
+    #endif
     public init() {
+        #if DEBUG
+        developmentRoute = nil
+        #endif
+        session = URLSession(configuration: Self.standardConfiguration(), delegate: RedirectRefuser(), delegateQueue: nil)
+    }
+    private static func standardConfiguration() -> URLSessionConfiguration {
         let config = URLSessionConfiguration.ephemeral
         config.httpCookieStorage = nil; config.httpShouldSetCookies = false; config.urlCache = nil
         config.timeoutIntervalForRequest = 20; config.timeoutIntervalForResource = 30
+        return config
+    }
+    #if DEBUG
+    /// Explicit, temporary development routing. CONNECT carries the original end-to-end TLS stream.
+    /// Default/release sessions never install this override or read a proxy option from preferences.
+    public init(developmentProxyPort: Int) throws {
+        let route = try DevelopmentProxyRoute(port: developmentProxyPort)
+        let config = Self.standardConfiguration()
+        var proxy = ProxyConfiguration(httpCONNECTProxy: .hostPort(host: "127.0.0.1",
+            port: NWEndpoint.Port(rawValue: UInt16(route.port))!))
+        proxy.allowFailover = false
+        proxy.matchDomains = ["home.weftmate.com"]
+        config.proxyConfigurations = [proxy]
+        developmentRoute = route
         session = URLSession(configuration: config, delegate: RedirectRefuser(), delegateQueue: nil)
     }
+    #endif
     public func send(_ request: URLRequest) async throws -> HTTPResponse {
+        #if DEBUG
+        if let developmentRoute { try developmentRoute.validate(request.url) }
+        #endif
         do {
             let (bytes, response) = try await session.bytes(for: request)
             guard let http = response as? HTTPURLResponse else { throw APIFailure.invalidResponse }
@@ -53,3 +83,20 @@ public final class URLSessionTransport: HTTPTransport, Sendable {
         } catch { throw APIFailure.transport(.unavailable) }
     }
 }
+
+#if DEBUG
+struct DevelopmentProxyRoute: Sendable {
+    let port: Int
+    init(port: Int) throws {
+        guard (1024...65535).contains(port) else { throw APIFailure.invalidServer }
+        self.port = port
+    }
+    func validate(_ url: URL?) throws {
+        guard let url, let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              parts.scheme?.lowercased() == "https", parts.host?.lowercased() == "home.weftmate.com",
+              parts.port == 8443, parts.user == nil, parts.password == nil, parts.fragment == nil else {
+            throw APIFailure.invalidServer
+        }
+    }
+}
+#endif

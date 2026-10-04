@@ -23,24 +23,61 @@ final class AppleAppModel: ObservableObject {
     @Published private(set) var lastRefresh: Date?
     @Published private(set) var verificationPending = false
 
+    let developmentRouteEnabled: Bool
+
     private let client: PersonalClient
-    private let defaults: UserDefaults
-    private let uiTesting: Bool
+    private let defaults: UserDefaults?
+    private let launchConfigurationError: String?
     private var epoch = UUID()
     private var historyRequest = UUID()
     private var started = false
 
     init() {
-        uiTesting = ProcessInfo.processInfo.arguments.contains("--ui-testing")
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        let uiTesting = args.contains("--ui-testing")
+        #else
+        let args: [String] = []
+        let uiTesting = false
+        #endif
+        var configurationError: String?
+        var testNamespace = "default"
+        if uiTesting, let index = args.firstIndex(of: "--ui-testing-namespace") {
+            if args.indices.contains(index + 1),
+               args[index + 1].range(of: "^[A-Za-z0-9._-]{1,64}$", options: .regularExpression) != nil {
+                testNamespace = args[index + 1]
+            } else {
+                configurationError = "测试存储命名空间无效，请检查启动参数。"
+            }
+        }
+        let testService = "com.weftmate.apple.ui-tests.\(testNamespace)"
         let preferences = uiTesting
-            ? UserDefaults(suiteName: "com.weftmate.apple.ui-tests") ?? .standard : .standard
+            ? UserDefaults(suiteName: testService) : UserDefaults.standard
+        if preferences == nil { configurationError = "无法打开测试存储，请检查启动参数。" }
         defaults = preferences
         let store = KeychainCredentialStore(service: uiTesting
-            ? "com.weftmate.apple.ui-tests.credentials" : "com.weftmate.apple.credentials")
-        client = PersonalClient(credentialStore: store)
-        serverInput = uiTesting ? "https://127.0.0.1:1"
-            : preferences.string(forKey: "weftmate.server") ?? "https://home.weftmate.com:8443"
-        let args = ProcessInfo.processInfo.arguments
+            ? "\(testService).credentials" : "com.weftmate.apple.credentials")
+        var transport = URLSessionTransport()
+        var routeEnabled = false
+        #if DEBUG
+        if let index = args.firstIndex(of: "--development-proxy-port") {
+            if args.indices.contains(index + 1), let port = Int(args[index + 1]), (1024...65535).contains(port) {
+                do {
+                    transport = try URLSessionTransport(developmentProxyPort: port)
+                    routeEnabled = true
+                } catch {
+                    configurationError = "局域网开发联调参数无效，请检查启动参数。"
+                }
+            } else {
+                configurationError = "局域网开发联调端口无效，请检查启动参数。"
+            }
+        }
+        #endif
+        developmentRouteEnabled = routeEnabled
+        launchConfigurationError = configurationError
+        client = PersonalClient(credentialStore: store, transport: transport)
+        serverInput = preferences?.string(forKey: "weftmate.server")
+            ?? (uiTesting ? "https://127.0.0.1:1" : "https://home.weftmate.com:8443")
         if let index = args.firstIndex(of: "--server-url"), args.indices.contains(index + 1) {
             serverInput = args[index + 1]
         }
@@ -70,7 +107,10 @@ final class AppleAppModel: ObservableObject {
         guard !started else { return }
         started = true
         defer { restoring = false }
-        guard !uiTesting else { return }
+        if let launchConfigurationError {
+            authError = launchConfigurationError
+            return
+        }
         do {
             let server = try ServerConfiguration(input: serverInput)
             session = try await client.restoreSession(server: server)
@@ -90,6 +130,10 @@ final class AppleAppModel: ObservableObject {
 
     func authenticate(username: String, password: String, displayName: String?, register: Bool) async {
         guard !authBusy else { return }
+        if let launchConfigurationError {
+            authError = launchConfigurationError
+            return
+        }
         authBusy = true
         authError = nil
         let actionEpoch = epoch
@@ -110,7 +154,7 @@ final class AppleAppModel: ObservableObject {
             guard actionEpoch == epoch else { return }
             session = result
             verificationPending = false
-            defaults.set(server.originString, forKey: "weftmate.server")
+            defaults?.set(server.originString, forKey: "weftmate.server")
             serverInput = server.originString
             await refresh()
         } catch {

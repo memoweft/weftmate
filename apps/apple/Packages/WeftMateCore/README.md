@@ -16,7 +16,13 @@ The package uses the existing `/personal/v1` contracts indexed by `docs/ARCHITEC
 - Strict certificates, no redirects, no shared cookie jar, bounded response bytes and monotonic paginated history. A network/protocol error cannot become an empty successful list.
 - Logout reports both local credential removal and remote acknowledgement. A Keychain failure is not reported as persisted logout success.
 
-Sending, model selection/secret transfer, attachments and durable offline history are later milestones. `sendAvailable` is false in this read candidate. The backend capability declaration still accepts an Android `nativeVersionCode`; Apple does not supply a fake Android version. Existing bound host commands and new-source adoption have different requirements; see the actual backend routes before extending the write flow.
+Sending, model selection/secret transfer, attachments and durable offline history are later milestones. `sendAvailable` is false in this read candidate. Windows published the Apple platform capability adaptation at `cb08461`; the acceptance executable checks it on its isolated test devices. Apple does not supply an Android `nativeVersionCode` or declare model-secret transfer. The regular App does not use this acceptance SPI to advertise a send flow. Existing bound host commands and new-source adoption have different requirements; see the actual backend routes before extending the write flow.
+
+## Temporary DEBUG network route
+
+`URLSessionTransport(developmentProxyPort: Int)` is available only in DEBUG builds. It installs an HTTP CONNECT proxy at `127.0.0.1` using an explicit port in `1024...65535`. Requests to any origin other than `https://home.weftmate.com:8443` are rejected before networking; redirects and proxy failover are refused. The original URL, Host, SNI and normal URLSession certificate verification stay in use. There is no custom TLS challenge handler. Removing the launch argument removes this session override; it never changes system proxy/DNS settings or saved preferences.
+
+This uses Apple's [URLSession proxy configuration](https://developer.apple.com/documentation/foundation/urlsessionconfiguration/proxyconfigurations) and [HTTP CONNECT initializer](https://developer.apple.com/documentation/network/proxyconfiguration/init(httpconnectproxy:tlsoptions:)). The API is available at the package's macOS 14, iOS 17 and watchOS 10 minimum versions. Default/release transport sessions keep the existing system route. A loopback development result proves the specified local route only, not a public-network or physical-device result.
 
 ## Tests
 
@@ -24,11 +30,13 @@ Sending, model selection/secret transfer, attachments and durable offline histor
 swift test --scratch-path /tmp/weftmate-apple-core-tests-844429c
 ```
 
-The 16 Swift Testing cases cover valid/invalid server settings, distinct stable platform identity, issued-device restoration, cookie/owner checks, account changes with late responses, revocation, valid/bad cursors, exact original-history merging, safe errors, offline restore and both local/remote logout failures. Scripted transport tests validate the client; they do not prove a deployed service or physical device.
+The existing 16 Swift Testing cases cover valid/invalid server settings, distinct stable platform identity, issued-device restoration, cookie/owner checks, account changes with late responses, revocation, valid/bad cursors, exact original-history merging, safe errors, offline restore and both local/remote logout failures. Five additional DEBUG/acceptance cases cover development port/origin limits, the authenticated three-platform declaration, mismatched device/platform and undeclared capability replies, and a late capability response after account switching. Scripted transport tests validate the client; they do not prove a deployed service or physical device.
 
 ## Native acceptance executable
 
 `AppleAcceptance --probe --server https://home.weftmate.com:8443` checks the real native URLSession route without a password. Failure is an exit status 1 with a safe code.
+
+The DEBUG executable accepts `--development-proxy-port <port>` for both the read-only probe and isolated account flow. Start the bounded loopback relay from `apps/apple/Scripts` first and use its actual port. The relay must only CONNECT the formal server to the explicitly authorized development destination. Console results label this route `developmentLoopbackCONNECT`.
 
 To create an isolated account and record-only fixture on an authorized test server:
 
@@ -36,6 +44,6 @@ To create an isolated account and record-only fixture on an authorized test serv
 swift run AppleAcceptance --create-test-account --server https://home.weftmate.com:8443 --credentials-file /absolute/private/new-test-account.json
 ```
 
-The credentials file is created exclusively with mode 0600, before the register request, so it is retained after a lost reply. Never pass a daily account file to this test. The executable checks distinct issued Mac/iPhone/Watch devices, the same original fixture conversation, devices, Keychain restore, wrong password and a second account's isolation. It writes an explicit interrupted fixture turn and does not run a model or tool. Console output includes only result/stage/code/counts; credentials and message text are excluded.
+The credentials file is created exclusively with mode 0600, before the register request, so it is retained after a lost reply. Never pass a daily account file to this test. The executable checks distinct issued Mac/iPhone/Watch devices, Apple platform declarations with no model transfer, the same original fixture conversation, devices, Keychain restore, wrong password and a second account's isolation. The wrong-password probe and second account have separate Keychain namespaces so they cannot delete the first account's saved credentials. The second account's credentials are saved to `<credentials-file>.second-account.json` before registration and reused on a repeat run; unknown registration results retain that same identity. Finally it verifies that all three main platform credentials have been removed by logout. It writes an explicit interrupted fixture turn and does not run a model or tool. Console output includes only result/stage/code/counts; credentials and message text are excluded.
 
-An existing **isolated test** credential file can be used with `--credentials-file` without `--create-test-account`. The required private JSON fields are `server`, `username`, `password`, `conversationID` and `marker`. This form logs in and reads the existing fixture rather than creating another one. Unknown write outcomes require inspecting the same test identity; do not repeat fixture creation with a new account to infer that the original failed.
+An existing **isolated test** credential file can be used with `--credentials-file` without `--create-test-account`. The required private JSON fields are `server`, `username`, `password`, `conversationID` and `marker`; `conversationTitle` is optional. This form logs in and reads the existing fixture rather than creating another one. Private input files must be regular files with no group/other permissions; symlinks are refused. Unknown write outcomes require inspecting the same test identity; do not repeat fixture creation with a new account to infer that the original failed.

@@ -49,6 +49,7 @@ struct ConversationRow: View {
         }
         .padding(.vertical, 5)
         .accessibilityElement(children: .combine)
+        .accessibilityIdentifier("conversationRow.\(conversation.id)")
     }
 }
 
@@ -148,7 +149,7 @@ struct ConversationView: View {
             .background(Weave.soft, in: RoundedRectangle(cornerRadius: 20))
             .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Weave.line))
 
-            Text("可以查看原记录。服务器接通 Apple 续聊后，才能在这里发送；当前草稿尚未发送。")
+            Text("当前可查看原记录，发送暂未开放；草稿仅保留在本次登录中。")
                 .font(.caption).foregroundStyle(Weave.secondary).lineSpacing(3)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -188,6 +189,7 @@ private struct MessageView: View {
         }
         .font(.body).foregroundStyle(Weave.ink)
         .padding(.vertical, 2)
+        .accessibilityIdentifier("message.\(message.id)")
     }
 
     private func markdown(_ text: String) -> AttributedString {

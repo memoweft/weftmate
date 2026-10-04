@@ -26,7 +26,7 @@ make test-phone
 
 默认服务为 `https://home.weftmate.com:8443/`，网络层沿用 `/personal/v1`。服务器设置采用实际地址；TLS 验证保持系统默认。服务器不可达时应显示失败及恢复入口，不将空列表视为读取成功。
 
-普通 UI 测试验证原生登录入口，真实登录/原会话测试在没有隔离测试账户时明确跳过。执行真实 UI 测试前，由后端或原生注册流程建立测试账户和已有会话，将 `username`、`password` 和可选 `conversationTitle` 写入源码目录之外的私有 JSON，权限设为 600，然后执行：
+普通 UI 测试验证原生登录入口，真实登录/原会话测试在没有隔离测试账户和原消息时明确跳过。真实 UI 测试直接采用共享包 `AppleAcceptance` 生成的私有 JSON：必需 `server`、`username`、`password`、`conversationID`、`marker`，可选 `conversationTitle`。账户与原消息由隔离联调流程建立，不触发模型或工具请求。文件保存在源码目录之外，权限为 600，私有证据目录为 700，然后执行：
 
 ```sh
 python3 Scripts/run_private_ui_test.py \
@@ -36,7 +36,21 @@ python3 Scripts/run_private_ui_test.py \
   --artifacts /private/path/apple-validation
 ```
 
-手机测试把 Scheme 改为 `WeftMatePhone`、destination 改为 `platform=iOS Simulator,id=<UUID>`。脚本在私有目录生成 xctestrun 并注入测试环境，密码不会进入源码或命令行。UI 使用 `--ui-testing` 以隔离测试会话启动。测试结果、xctestrun、账号文件均属私有运行材料，不加入源码包。
+手机测试把 Scheme 改为 `WeftMatePhone`、destination 改为 `platform=iOS Simulator,id=<UUID>`。脚本为每次运行建立独立证据目录，生成权限 600 的 xctestrun 并注入测试环境；密码不会进入源码或命令行，控制台及文本日志会隐藏密码。UI 使用 `--ui-testing` 和独立 `--ui-testing-namespace`；同一用例重启复用此 namespace，验证 Keychain 恢复及服务器设备 ID 保持。用例核对原会话 ID、标题、原消息正文、当前设备、重启恢复和退出；存在 `<credentials路径>.second-account.json` 时，再执行 A→B→A 的账户隔离。缺少第二账户时只记录该扩展未执行。测试结果、xctestrun、账号文件均属私有运行材料，不加入源码包。
+
+仅修导航布局时，脚本可加 `--test navigation-layout`：只登录一次、读取原消息、核对导航标题/返回/刷新不被开发提示遮挡、保留应用截图并退出，不重复完整账户回归。真实登录测试遇到系统的保存密码提示时，为隔离密码选择“以后”。
+
+### 有界局域网开发联调
+
+公网路径不可达而现有局域网 HTTPS 服务可达时，可以启动仅用 Python 标准库的临时 CONNECT relay：
+
+```sh
+python3 Scripts/development_tls_relay.py
+```
+
+脚本只监听 `127.0.0.1` 临时端口，输出 `proxyPort` 和 PID，最多运行 15 分钟。唯一允许的目标为 `home.weftmate.com:8443`，透明转发至既有 `192.168.31.91:443`；拒绝其他目标，不列目录、不解密 TLS、不记录请求头或数据。客户端仍使用原 URL、SNI、Host 和正常系统证书验证。Ctrl-C、终止 PID 或到期会关闭监听和活动连接，不改全局代理、DNS、hosts 或 TUN。
+
+先对正式只读状态执行正常 TLS 的探测，再使用 `AppleAcceptance --probe --development-proxy-port <端口>`；确认原生探测成功后才执行已授权隔离注册。真实 UI 脚本加入同一个 `--development-proxy-port <端口>`。该参数只在 Debug 开发构建生效；界面明确显示“局域网开发联调”。停止 relay 后恢复普通连接。局域网联调成功不能记录为公网、真机或 Watch 后台联网通过。
 
 ## 真机安装
 
