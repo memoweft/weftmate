@@ -67,6 +67,28 @@ test('open turn needs current live proof for waiting or streaming; restart stays
     'aborted')
 })
 
+test('a late receipt and duplicate or conflicting native ends cannot inherit completed', () => {
+  const late = events().filter((row: any) => row.seq !== 3)
+  late.push({ seq: 13, time: time + 12, type: 'user/message', data: {
+    source: { kind: 'user', rpcId: 'receipt-late' } } })
+  assert.equal(projectReplyEvidence(encoded(late), { receiptId: 'receipt-late', live: false }).status,
+    'unconfirmed', 'a persisted completed turn does not complete a later receipt after restart')
+  assert.equal(projectReplyEvidence(encoded(late), { receiptId: 'receipt-late', live: true }).status,
+    'unconfirmed')
+  const duplicate = events()
+  duplicate.push({ seq: 13, time: time + 12, type: 'turn/end',
+    data: { turn: 1, reason: { kind: 'completed' } } })
+  assert.equal(projectReplyEvidence(encoded(duplicate), { receiptId: 'receipt-a' }).status,
+    'unconfirmed')
+  const conflicting = events()
+  conflicting.push({ seq: 13, time: time + 12, type: 'turn/end',
+    data: { turn: 2, reason: { kind: 'blocked' } } })
+  assert.equal(projectReplyEvidence(encoded(conflicting), { receiptId: 'receipt-a', live: true }).status,
+    'unconfirmed')
+  assert.equal(projectReplyEvidence(encoded(events()), { receiptId: 'receipt-a' }).status,
+    'completed', 'one matching terminal still proves the normal case')
+})
+
 test('after a physically observed save, the next step gets one fixed plugin reminder', async () => {
   const rows = events().slice(0, 8)
   const session = { id: 'session-a', header: { agentPreset: 'personal-remote' }, events: rows.slice(1) }
