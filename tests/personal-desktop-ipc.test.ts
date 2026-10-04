@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import test from 'node:test'
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
 
@@ -108,7 +109,7 @@ test('browser IPC accepts only bounded open/follow frames and redacts host-only 
       return { snapshotId: `source-${'a'.repeat(48)}`, title: 'Public page',
         url: 'https://example.com/final', requestedUrl: 'https://example.com/start',
         text: 'rendered visible text', readAt: '2026-10-03T00:00:00.000Z',
-        contentSha256: 'b'.repeat(64), truncated: false,
+        contentSha256: createHash('sha256').update('rendered visible text').digest('hex'), truncated: false,
         links: [{ linkId: `link-${'c'.repeat(40)}`, label: 'Next', url: 'https://example.com/next' }],
         privateProxy: '127.0.0.1:1', cookie: 'must-not-escape' }
     } }) as any
@@ -152,4 +153,39 @@ test('browser IPC preserves closed timeout and safety failures without exposing 
   assert.deepEqual(sent[0], { protocol: 'weftmate.personal-desktop.v1',
     id: 'personal-12345678-1234-1234-1234-123456789abc', ok: false, error: 'BROWSER_DNS_TIMEOUT' })
   assert.equal(JSON.stringify(sent).includes('secret page body'), false)
+})
+
+test('browser segment IPC keeps exact parent identity, byte range and bounded text', async () => {
+  const calls: any[] = [], sent: any[] = []
+  const parentSnapshotId = `source-${'a'.repeat(48)}`
+  const text = '实际读取的第一段。'
+  const bytes = Buffer.byteLength(text, 'utf8')
+  const runtime = new DshWebRuntime({ homeDir: 'C:\\synthetic\\dsh-home',
+    workspaceDir: 'C:\\synthetic\\work', personalDesktopRequestHandler: async (request: any) => {
+      calls.push(request)
+      return { kind: 'webpage', snapshotId: `source-${'b'.repeat(48)}`,
+        parentSnapshotId, segmentIndex: 0, segmentCount: 2, byteStart: 0, byteEnd: bytes,
+        totalCapturedBytes: 16_000, captureTruncated: false, versionHash: 'c'.repeat(64),
+        title: 'Synthetic', url: 'https://example.com/page', requestedUrl: 'https://example.com/page',
+        text, contentSha256: createHash('sha256').update(text).digest('hex'),
+        readAt: '2026-10-04T00:00:00.000Z', truncated: false, links: [],
+        privateCapturePath: 'C:/private' }
+    } }) as any
+  const child = { connected: true, send: (value: any) => { sent.push(value) } }
+  runtime.child = child
+  const frame = { protocol: 'weftmate.personal-desktop.v1',
+    id: 'personal-12345678-1234-1234-1234-123456789abc', sessionId: 'session-safe',
+    turn: 1, callId: 'call-safe', messageHash: 'a'.repeat(64), receiptId: 'receipt-safe',
+    action: 'read_segment', snapshotId: parentSnapshotId, segmentIndex: 0 }
+  runtime.handlePersonalDesktopMessage(child, { ...frame, segmentIndex: 32 })
+  runtime.handlePersonalDesktopMessage(child, { ...frame, snapshotId: 'https://example.com/page' })
+  assert.equal(calls.length, 0)
+  runtime.handlePersonalDesktopMessage(child, frame)
+  for (let index = 0; index < 20 && sent.length < 1; index++) await new Promise((resolve) => setTimeout(resolve, 5))
+  assert.equal(calls.length, 1)
+  assert.equal(calls[0].snapshotId, parentSnapshotId)
+  assert.equal(sent[0].ok, true)
+  assert.equal(sent[0].command.text, text)
+  assert.equal(sent[0].command.parentSnapshotId, parentSnapshotId)
+  assert.equal(JSON.stringify(sent[0]).includes('privateCapturePath'), false)
 })

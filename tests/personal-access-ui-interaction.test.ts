@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict'
+import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -8,6 +9,7 @@ import test from 'node:test'
 const repository = fileURLToPath(new URL('../', import.meta.url))
 const source = readFileSync(join(repository, 'src', 'personal-access-ui', 'app.js'), 'utf8')
 const styles = readFileSync(join(repository, 'src', 'personal-access-ui', 'styles.css'), 'utf8')
+const sha = (value: string) => createHash('sha256').update(value).digest('hex')
 
 class Element {
   id: string
@@ -66,7 +68,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     syncPost?: 'timeout-no-commit' | 'timeout-committed' | 'conflict'; uuidForSync?: boolean; deviceSuffix?: string;
     configured?: boolean; authenticated?: boolean; setupGrant?: string;
     profileAccounts?: Record<string, any>; initialProfileOwner?: string;
-    taskDetails?: Record<string, object>; artifactPreviews?: Record<string, object | { error: { code: string }; status: number }>;
+    taskDetails?: Record<string, object>; sourceDetails?: Record<string, object>;
+    artifactPreviews?: Record<string, object | { error: { code: string }; status: number }>;
     deferTaskDetail?: boolean; taskPollTimers?: boolean;
   } = {}) {
   const nodes = new Map<string, Element>()
@@ -208,6 +211,11 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       const task = config.taskDetails?.[taskId]
       return Promise.resolve(task ? reply({ task }, 202) : reply({ error: { code: 'NOT_FOUND' } }, 404))
     }
+    if (url.includes('/tasks/') && url.includes('/sources/')) {
+      const snapshotId = url.split('/').at(-1)!
+      return Promise.resolve(config.sourceDetails?.[snapshotId]
+        ? reply({ source: config.sourceDetails[snapshotId] }) : reply({ error: { code: 'NOT_FOUND' } }, 404))
+    }
     if (url.includes('/tasks/')) {
       if (config.deferTaskDetail || deferNextTaskDetail) {
         deferNextTaskDetail = false
@@ -245,7 +253,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
   const context = { document, window, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
-  crypto: { randomUUID: () => config.uuidForSync
+  TextEncoder, crypto: { randomUUID: () => config.uuidForSync
     ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal, Intl, Date, btoa,
    setTimeout: (callback: () => void, delay: number) => {
      const id = ++timerId
@@ -540,7 +548,9 @@ test('file task groups source and verified child, shows the original goal and ch
     taskId: 'cmd-source', artifactId: 'artifact-one', fileName: '周计划.md', size: 22, sessionId: 'A',
     state: 'observed', verification: { status: 'observed', method: 'sha256_readback' } }
   const page = harness([artifact, source], [], true, {
-    taskDetails: { 'cmd-source': { taskId: 'cmd-source', sessionId: 'A', source, sourceText: '请在电脑生成周计划', artifacts: [artifact] } },
+    taskDetails: { 'cmd-source': { taskId: 'cmd-source', sessionId: 'A', source, sourceText: '请在电脑生成周计划', artifacts: [artifact],
+      replyEvidence: { status: 'streaming', turn: 1, assistantChunks: 7, textChunks: 5,
+        reasoningChunks: 2, assistantMessages: 0, toolSaveObserved: true } } },
     artifactPreviews: { 'artifact-one': { artifact, text: '# 周计划\n已完成。' } },
   })
   for (let attempt = 0; attempt < 15 && page.get('task-list').children.length !== 1; attempt++) await flush()
@@ -552,8 +562,41 @@ test('file task groups source and verified child, shows the original goal and ch
   for (let attempt = 0; attempt < 15 && page.get('task-preview-text').hidden; attempt++) await flush()
   assert.equal(page.get('task-detail-source').textContent, '请在电脑生成周计划')
   assert.match(page.get('task-detail-verification').textContent, /读回核验/)
+  assert.match(page.get('task-detail-reply').textContent, /正在生成.*尚未见到结束记录/)
   assert.equal(page.get('task-preview-text').textContent, '# 周计划\n已完成。')
   assert.match(visibleText(page.get('task-preview-status')), /下载文件/)
+})
+
+test('desktop groups only read browser segments and keeps reply state separate from file status', async () => {
+  const parentId = `source-${'a'.repeat(48)}`, segmentId = `source-${'b'.repeat(48)}`
+  const versionHash = 'c'.repeat(64), text = '后续段的实际正文'
+  const common = { kind: 'webpage', title: '长页面', url: 'https://public.example/long',
+    requestedUrl: 'https://public.example/long', readAt: '2026-10-04T00:00:00Z',
+    truncated: true, links: [], versionHash, segmentCount: 4, totalCapturedBytes: 22_000,
+    captureTruncated: false }
+  const parent = { ...common, snapshotId: parentId, segmentIndex: 0, byteStart: 0,
+    byteEnd: 10, contentSha256: sha('开头已读正文'), cited: false }
+  const segment = { ...common, snapshotId: segmentId, parentSnapshotId: parentId,
+    segmentIndex: 2, byteStart: 16_384, byteEnd: 16_384 + Buffer.byteLength(text),
+    contentSha256: sha(text), cited: true }
+  const source = { commandId: 'cmd-source', requestId: 'browser-request', kind: 'session.message',
+    state: 'accepted_by_dsh', sessionId: 'A' }
+  const page = harness([source], [], true, { taskDetails: { 'cmd-source': {
+    taskId: 'cmd-source', sessionId: 'A', source, artifacts: [], sources: [parent, segment],
+    workspace: { kind: 'browser' }, replyEvidence: { status: 'unconfirmed', turn: null,
+      assistantChunks: 0, textChunks: 0, reasoningChunks: 0,
+      assistantMessages: 0, toolSaveObserved: false } } },
+  sourceDetails: { [segmentId]: { ...segment, text } } })
+  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
+  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
+  for (let attempt = 0; attempt < 20 && !visibleText(page.get('task-detail-sources')).includes('已读 2/4 段'); attempt++) await flush()
+  assert.match(visibleText(page.get('task-detail-sources')), /已读 2\/4 段.*第 1\/4 段.*第 3\/4 段/s)
+  assert.match(page.get('task-detail-reply').textContent, /是否结束尚无法核对/)
+  const rows = page.get('task-detail-sources').children
+  rows.at(-1)!.children.find((item) => item.textContent === '查看读取正文')!.fire('click')
+  for (let attempt = 0; attempt < 20 && !page.get('task-source-preview').textContent.includes(text); attempt++) await flush()
+  assert.equal(page.get('task-source-preview').textContent, text,
+    `status=${page.get('task-source-preview-status').textContent}; requests=${page.requests.filter((item) => item.url.includes('/sources/')).map((item) => item.url).join(',')}`)
 })
 
 test('file task detail handles missing task and tampered file without claiming completion', async () => {

@@ -14,9 +14,12 @@ import { avatarImage, displayName, publicProfile, validStoredProfile } from './p
 import { canonicalCompletion, projectCompletion } from './model-completion.mjs';
 import { createMobileUiPublisher } from './mobile-ui-release.mjs';
 import { handlePersonalMemoryHttp } from '../personal-memory/http.mjs';
-import { canonicalArtifact, createPersonalArtifactStore, validArtifactFileName } from '../personal-artifacts/index.mjs';
+import { canonicalArtifact, createPersonalArtifactStore, validArtifactFileName,
+  MAX_ARTIFACT_BYTES } from '../personal-artifacts/index.mjs';
 import { inspectProjectRoot, listProjectFiles, readProjectFile } from '../personal-projects/index.mjs';
 import { canonicalPublicUrl } from '../personal-browser/network.mjs';
+import { browserCaptureSegments, browserCaptureVersion,
+  MAX_CAPTURE_BYTES, MAX_SEGMENT_BYTES } from '../personal-browser/index.mjs';
 import { buildConversationContext, validConversationContext } from '../personal-conversations/context.mjs';
 import { ACCOUNT_MODEL_ID, PRIVATE_PROFILE_ID, MODEL_ID as ACCOUNT_MODEL_NAME_ID,
   privateProfileId, publicAccountModel, publicModelOperation,
@@ -43,6 +46,7 @@ const MAX_PROJECTS = 64;
 const MAX_PROJECT_FILES = 2_000;
 const MAX_SOURCE_SNAPSHOTS = 5_000;
 const MAX_BROWSER_SNAPSHOTS = 5_000;
+const MAX_BROWSER_CAPTURES = 500;
 const MAX_LOCAL_TURNS = 5_000;
 const DISPATCH_TIMEOUT_MS = 30_000;
 const CLOSE_TIMEOUT_MS = 3_000;
@@ -177,7 +181,14 @@ function publicSource(source) {
   if (source.kind === 'webpage') return { kind: 'webpage', snapshotId: source.snapshotId,
     title: source.title, url: source.url, requestedUrl: source.requestedUrl,
     readAt: source.readAt, contentSha256: source.textSha256, truncated: source.truncated,
-    links: source.links.map((link) => ({ linkId: link.linkId, label: link.label, url: link.url })) };
+    links: source.links.map((link) => ({ linkId: link.linkId, label: link.label, url: link.url })),
+    ...(source.versionHash ? { versionHash: source.versionHash,
+      segmentIndex: source.segmentIndex, segmentCount: source.segmentCount,
+      byteStart: source.byteStart, byteEnd: source.byteEnd,
+      totalCapturedBytes: source.totalCapturedBytes,
+      captureTruncated: source.captureTruncated,
+      ...(source.parentSnapshotId ? { parentSnapshotId: source.parentSnapshotId } : {}),
+      ...(source.outline ? { outline: source.outline } : {}) } : {}) };
   return { snapshotId: source.snapshotId, relativePath: source.relativePath,
     lineStart: source.lineStart, lineEnd: source.lineEnd, totalLines: source.totalLines,
     fileSha256: source.fileSha256, readAt: source.readAt, hasMore: source.hasMore,
@@ -559,6 +570,9 @@ function validateSingleStore(store) {
   }
   if (store.browserSources !== undefined && (!plainObject(store.browserSources) ||
       Object.keys(store.browserSources).length > MAX_BROWSER_SNAPSHOTS)) throw failure('STORE_CORRUPT', 500);
+  if (Object.values(store.browserSources ?? {}).filter((source) =>
+    source?.versionHash && source.parentSnapshotId === undefined).length > MAX_BROWSER_CAPTURES)
+    throw failure('STORE_CORRUPT', 500);
   for (const [snapshotId, source] of Object.entries(store.browserSources ?? {})) {
     if (!WEB_SNAPSHOT_ID.test(snapshotId) || Object.hasOwn(store.projectSources ?? {}, snapshotId) ||
         !plainObject(source) || source.snapshotId !== snapshotId ||
@@ -572,17 +586,68 @@ function validateSingleStore(store) {
         !Number.isSafeInteger(source.turn) || source.turn < 0 ||
         !validId(source.sourceReceiptId) || store.commands[source.sourceCommandId].receiptId !== source.sourceReceiptId ||
         typeof source.readCallId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(source.readCallId) ||
-        !['personal_browser_open', 'personal_browser_follow'].includes(source.readTool) ||
+        !['personal_browser_open', 'personal_browser_follow',
+          'personal_browser_read_segment'].includes(source.readTool) ||
+        (source.readTool === 'personal_browser_read_segment' && source.versionHash === undefined) ||
+        (source.versionHash === undefined && ['segmentIndex', 'segmentCount', 'byteStart',
+          'byteEnd', 'totalCapturedBytes', 'captureTruncated', 'outline', 'captureParts',
+          'parentSnapshotId'].some((key) => Object.hasOwn(source, key))) ||
         typeof source.title !== 'string' || Array.from(source.title).length > 256 ||
         typeof source.url !== 'string' || Buffer.byteLength(source.url, 'utf8') > 2048 ||
         typeof source.requestedUrl !== 'string' || Buffer.byteLength(source.requestedUrl, 'utf8') > 2048 ||
-        !Number.isSafeInteger(source.textSize) || source.textSize < 1 || source.textSize > 32 * 1024 ||
+        !Number.isSafeInteger(source.textSize) || source.textSize < 1 || source.textSize >
+          (source.versionHash ? MAX_SEGMENT_BYTES : 32 * 1024) ||
         !/^[a-f0-9]{64}$/.test(source.textSha256 ?? '') || !validTime(source.readAt) ||
         typeof source.truncated !== 'boolean' || !Array.isArray(source.links) || source.links.length > 50 ||
         new Set(source.links.map((link) => link.linkId)).size !== source.links.length ||
         source.links.some((link) => !plainObject(link) || !LINK_ID.test(link.linkId ?? '') ||
           typeof link.url !== 'string' || Buffer.byteLength(link.url, 'utf8') > 2048 ||
-          typeof link.label !== 'string' || Array.from(link.label).length > 160)) {
+          typeof link.label !== 'string' || Array.from(link.label).length > 160) ||
+        (source.versionHash !== undefined &&
+          (!/^[a-f0-9]{64}$/.test(source.versionHash) ||
+            !Number.isSafeInteger(source.segmentIndex) || source.segmentIndex < 0 ||
+            source.segmentIndex >= 32 || !Number.isSafeInteger(source.segmentCount) ||
+            source.segmentCount < 1 || source.segmentCount > 32 ||
+            source.segmentIndex >= source.segmentCount ||
+            !Number.isSafeInteger(source.byteStart) || source.byteStart < 0 ||
+            !Number.isSafeInteger(source.byteEnd) ||
+            source.byteEnd - source.byteStart !== source.textSize ||
+            !Number.isSafeInteger(source.totalCapturedBytes) ||
+            source.totalCapturedBytes < source.byteEnd ||
+            source.totalCapturedBytes > MAX_CAPTURE_BYTES ||
+            typeof source.captureTruncated !== 'boolean' ||
+            source.truncated !== (source.captureTruncated || source.segmentCount > 1) ||
+            (source.parentSnapshotId === undefined
+              ? (source.segmentIndex !== 0 || source.byteStart !== 0 ||
+                source.readTool === 'personal_browser_read_segment' ||
+                !Array.isArray(source.captureParts) || source.captureParts.length < 1 ||
+                source.captureParts.length > 2 ||
+                source.captureParts.some((item) => !plainObject(item)) ||
+                source.captureParts.reduce((sum, item) => sum + item.size, 0) !==
+                  source.totalCapturedBytes ||
+                source.captureParts.some((item, index) => !plainObject(item) ||
+                  item.id !== `capture-${source.snapshotId}-${index}` ||
+                  !Number.isSafeInteger(item.size) || item.size < 1 || item.size > 128 * 1024 ||
+                  !/^[a-f0-9]{64}$/.test(item.sha256 ?? '')) ||
+                typeof source.outline !== 'string' ||
+                Buffer.byteLength(source.outline, 'utf8') > 2 * 1024)
+              : (!WEB_SNAPSHOT_ID.test(source.parentSnapshotId) ||
+                source.readTool !== 'personal_browser_read_segment' ||
+                source.captureParts !== undefined || source.outline !== undefined ||
+                source.links.length !== 0 ||
+                !store.browserSources[source.parentSnapshotId] ||
+                store.browserSources[source.parentSnapshotId].parentSnapshotId !== undefined ||
+                store.browserSources[source.parentSnapshotId].versionHash !== source.versionHash ||
+                store.browserSources[source.parentSnapshotId].segmentCount !== source.segmentCount ||
+                store.browserSources[source.parentSnapshotId].totalCapturedBytes !== source.totalCapturedBytes ||
+                store.browserSources[source.parentSnapshotId].captureTruncated !== source.captureTruncated ||
+                store.browserSources[source.parentSnapshotId].sourceCommandId !== source.sourceCommandId ||
+                store.browserSources[source.parentSnapshotId].url !== source.url ||
+                store.browserSources[source.parentSnapshotId].taskId !== source.taskId ||
+                store.browserSources[source.parentSnapshotId].ownerId !== source.ownerId ||
+                store.browserSources[source.parentSnapshotId].sessionId !== source.sessionId ||
+                store.browserSources[source.parentSnapshotId].turn !== source.turn ||
+                store.browserSources[source.parentSnapshotId].sourceReceiptId !== source.sourceReceiptId))))) {
       throw failure('STORE_CORRUPT', 500);
     }
   }
@@ -1007,6 +1072,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     'sendMessage', 'cancelSession', 'readEvents', 'describeSession']) {
     if (typeof backend[method] !== 'function') throw failure('INVALID_CONFIGURATION');
   }
+  if (backend.getTaskReplyEvidence !== undefined &&
+      typeof backend.getTaskReplyEvidence !== 'function') throw failure('INVALID_CONFIGURATION');
   await ensurePrivateDirectory(root);
   const storeFile = path.join(root, 'store.json');
   let rootState;
@@ -1065,6 +1132,24 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return { version: SINGLE_ACCOUNT_VERSION, hostId: rootState.hostId, ownerId, ...account };
   };
   const artifactStore = createPersonalArtifactStore(path.join(root, 'artifacts'));
+  const frozenBrowserCapture = async (source) => {
+    if (!source?.versionHash || !Array.isArray(source.captureParts))
+      throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+    try {
+      const parts = await Promise.all(source.captureParts.map((item) => artifactStore.inspect(
+        source.ownerId, source.taskId, item.id, { size: item.size, sha256: item.sha256 })));
+      const bytes = Buffer.concat(parts);
+      if (bytes.length !== source.totalCapturedBytes ||
+          browserCaptureVersion(source.url, bytes) !== source.versionHash)
+        throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+      const segments = browserCaptureSegments(bytes);
+      if (segments.length !== source.segmentCount || segments[0].text !==
+          (await artifactStore.inspect(source.ownerId, source.taskId, source.snapshotId,
+            { size: source.textSize, sha256: source.textSha256 })).toString('utf8'))
+        throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+      return segments;
+    } catch { throw failure('BROWSER_SOURCE_UNVERIFIED', 409); }
+  };
   const hostOwner = (ownerId) => ownerId === rootState.legacyOwnerId;
   const accountModelForProfile = (ownerId, profileId) => Object.values(accountState(ownerId).accountModels ?? {})
     .find((model) => Object.values(model.revisions).some((revision) => revision.profileId === profileId));
@@ -1538,9 +1623,39 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const state = storedState === 'active' && taskHasUnknownEffects(account, taskId)
       ? 'uncertain' : storedState;
     const evidence = state === 'stop_requested' ? await taskStopEvidence(account, taskId) : null;
+    const latestMessage = [source, ...children].filter((item) =>
+      item.kind === 'session.message').sort((a, b) =>
+      String(a.createdAt).localeCompare(String(b.createdAt))).at(-1);
+    const latestAccepted = latestMessage?.state === 'accepted_by_dsh' &&
+      typeof latestMessage.receiptId === 'string' ? latestMessage : null;
+    let replyEvidence = { status: 'unconfirmed', turn: null,
+      assistantChunks: 0, textChunks: 0, reasoningChunks: 0,
+      assistantMessages: 0, toolSaveObserved: false };
+    if (latestAccepted && typeof backend.getTaskReplyEvidence === 'function') {
+      try {
+        const reported = await withDeadline(() => backend.getTaskReplyEvidence({
+          sessionId: latestAccepted.sessionId, rootTaskId: taskId,
+          receiptId: latestAccepted.receiptId, ownerId: account.ownerId,
+        }), 3_000);
+        if (reported && ['waiting', 'streaming', 'completed', 'aborted', 'blocked',
+          'failed', 'unconfirmed'].includes(reported.status) &&
+            (reported.turn === null || Number.isSafeInteger(reported.turn) && reported.turn >= 0) &&
+            ['assistantChunks', 'textChunks', 'reasoningChunks', 'assistantMessages'].every((key) =>
+              Number.isSafeInteger(reported[key]) && reported[key] >= 0 && reported[key] <= 100_000) &&
+            typeof reported.toolSaveObserved === 'boolean') replyEvidence = {
+          status: reported.status, turn: reported.turn,
+          assistantChunks: reported.assistantChunks, textChunks: reported.textChunks,
+          reasoningChunks: reported.reasoningChunks, assistantMessages: reported.assistantMessages,
+          toolSaveObserved: reported.toolSaveObserved,
+          ...(Number.isSafeInteger(reported.step) && reported.step >= 0 ? { step: reported.step } : {}),
+          ...Object.fromEntries(['observedAt', 'terminalAt', 'firstChunkAt', 'lastChunkAt']
+            .filter((key) => validTime(reported[key])).map((key) => [key, reported[key]])),
+        };
+      } catch { /* An unreadable native turn remains unconfirmed. */ }
+    }
     return { taskId, sessionId: source.sessionId, sourceText: source.payload.text,
       ...(source.payload.conversationId ? { conversationId: source.payload.conversationId } : {}),
-      source: publicCommand(source), artifacts, steps, sources,
+      source: publicCommand(source), artifacts, steps, sources, replyEvidence,
       ...(source.payload.workspaceKind === 'browser' ? { workspace: { kind: 'browser' } } : {}),
       ...(projectRecord ? { project: publicProject(projectRecord) } : {}),
       supplements: children.filter((item) => item.taskAction === 'supplement').map(publicCommand),
@@ -4213,17 +4328,21 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     },
     /** Main-process only: one browser read from a frozen user URL or observed link. */
     async submitToolBrowser({ action, sessionId, turn, callId, messageHash, receiptId,
-      url, snapshotId: linkSnapshotId, linkId }) {
+      url, snapshotId: linkSnapshotId, linkId, segmentIndex }) {
       const ownerId = rootState.legacyOwnerId;
       id(sessionId);
-      if (!['open_page', 'follow_link'].includes(action) ||
+      if (!['open_page', 'follow_link', 'read_segment'].includes(action) ||
           !Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
           !/^[A-Za-z0-9._:-]{1,160}$/.test(callId) ||
           typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash) ||
           !validId(receiptId) ||
-          (action === 'open_page' && (typeof url !== 'string' || linkSnapshotId !== undefined || linkId !== undefined)) ||
+          (action === 'open_page' && (typeof url !== 'string' || linkSnapshotId !== undefined ||
+            linkId !== undefined || segmentIndex !== undefined)) ||
           (action === 'follow_link' && (url !== undefined || !WEB_SNAPSHOT_ID.test(linkSnapshotId ?? '') ||
-            !LINK_ID.test(linkId ?? '')))) throw failure('INVALID_COMMAND');
+            !LINK_ID.test(linkId ?? '') || segmentIndex !== undefined)) ||
+          (action === 'read_segment' && (url !== undefined || linkId !== undefined ||
+            !WEB_SNAPSHOT_ID.test(linkSnapshotId ?? '') || !Number.isSafeInteger(segmentIndex) ||
+            segmentIndex < 0 || segmentIndex > 31))) throw failure('INVALID_COMMAND');
       await checkedBrowserSession(ownerId, sessionId);
       for (let attempt = 0; attempt < 20 && Object.values(accountState(ownerId).commands).some((item) =>
         item.kind === 'session.message' && item.sessionId === sessionId &&
@@ -4235,6 +4354,80 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const account = accountState(ownerId);
       const { source, rootTaskId, root } = browserToolSource(account,
         { sessionId, turn, messageHash, receiptId });
+      if (action === 'read_segment') {
+        const parent = account.browserSources?.[linkSnapshotId];
+        if (!parent || !parent.versionHash || parent.parentSnapshotId !== undefined ||
+            parent.ownerId !== ownerId || parent.taskId !== rootTaskId ||
+            parent.sourceCommandId !== source.commandId || parent.sessionId !== sessionId ||
+            parent.turn !== turn || parent.sourceReceiptId !== receiptId ||
+            !['personal_browser_open', 'personal_browser_follow'].includes(parent.readTool) ||
+            segmentIndex >= parent.segmentCount || typeof verifyToolResult !== 'function') {
+          throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+        }
+        const proven = await withDeadline(() => verifyToolResult({ sessionId, turn,
+          readCallId: parent.readCallId, snapshotId: parent.snapshotId,
+          sourceReceiptId: receiptId, beforeCallId: callId, readTool: parent.readTool,
+          beforeTool: 'personal_browser_read_segment' }), 3_500).catch(() => false);
+        if (proven !== true) throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+        const snapshotId = `source-${digest(`web-segment|${ownerId}|${rootTaskId}|${sessionId}|${turn}|${receiptId}|${callId}|${parent.snapshotId}|${segmentIndex}`).slice(0, 48)}`;
+        const existing = account.browserSources?.[snapshotId];
+        if (existing && (existing.sourceCommandId !== source.commandId ||
+            existing.readCallId !== callId || existing.parentSnapshotId !== parent.snapshotId ||
+            existing.segmentIndex !== segmentIndex || existing.versionHash !== parent.versionHash)) {
+          throw failure('REQUEST_CONFLICT', 409);
+        }
+        const segments = await frozenBrowserCapture(parent);
+        const segment = segments[segmentIndex];
+        if (!segment) throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+        const bytes = Buffer.from(segment.text, 'utf8');
+        const textSha256 = digest(bytes);
+        if (existing) {
+          if (existing.textSha256 !== textSha256 || existing.textSize !== bytes.length ||
+              existing.byteStart !== segment.byteStart || existing.byteEnd !== segment.byteEnd)
+            throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+          await artifactStore.inspect(ownerId, rootTaskId, snapshotId,
+            { size: bytes.length, sha256: textSha256 });
+          return { ...publicSource(existing), text: segment.text };
+        }
+        await checkedBrowserSession(ownerId, sessionId);
+        const afterRead = browserToolSource(accountState(ownerId),
+          { sessionId, turn, messageHash, receiptId });
+        if (afterRead.source.commandId !== source.commandId)
+          throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+        try { await artifactStore.write(ownerId, rootTaskId, snapshotId,
+          { bytes, size: bytes.length, sha256: textSha256 }); }
+        catch (error) {
+          if (error?.code !== 'ARTIFACT_EXISTS') throw error;
+          await artifactStore.inspect(ownerId, rootTaskId, snapshotId,
+            { size: bytes.length, sha256: textSha256 });
+        }
+        const saved = await serial(() => mutate(ownerId, (next) => {
+          const checked = browserToolSource(next, { sessionId, turn, messageHash, receiptId });
+          const currentParent = next.browserSources?.[linkSnapshotId];
+          if (checked.source.commandId !== source.commandId ||
+              currentParent?.versionHash !== parent.versionHash ||
+              currentParent.sourceReceiptId !== receiptId ||
+              currentParent.sourceCommandId !== source.commandId)
+            throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
+          next.browserSources ??= {};
+          if (next.browserSources[snapshotId]) return next.browserSources[snapshotId];
+          if (Object.keys(next.browserSources).length >= MAX_BROWSER_SNAPSHOTS)
+            throw failure('CAPACITY_LIMIT', 429);
+          const record = { kind: 'webpage', snapshotId, ownerId, taskId: rootTaskId,
+            sourceCommandId: source.commandId, sessionId, turn, sourceReceiptId: receiptId,
+            readCallId: callId, readTool: 'personal_browser_read_segment',
+            title: parent.title, url: parent.url, requestedUrl: parent.requestedUrl,
+            readAt: new Date(timestamp()).toISOString(), textSize: bytes.length, textSha256,
+            truncated: parent.captureTruncated || parent.segmentCount > 1, links: [],
+            parentSnapshotId: parent.snapshotId, segmentIndex, segmentCount: parent.segmentCount,
+            byteStart: segment.byteStart, byteEnd: segment.byteEnd,
+            totalCapturedBytes: parent.totalCapturedBytes,
+            captureTruncated: parent.captureTruncated, versionHash: parent.versionHash };
+          next.browserSources[snapshotId] = record;
+          return record;
+        }));
+        return { ...publicSource(saved), text: segment.text };
+      }
       let targetUrl;
       if (action === 'open_page') {
         targetUrl = browserReader.canonicalUrl(url);
@@ -4269,12 +4462,26 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
         return { ...publicSource(existing), text: bytes.toString('utf8') };
       }
+      if (Object.values(account.browserSources ?? {}).filter((item) =>
+        item.versionHash && item.parentSnapshotId === undefined).length >= MAX_BROWSER_CAPTURES)
+        throw failure('CAPACITY_LIMIT', 429);
       const read = await browserReader.read({ ownerId, taskId: rootTaskId, sessionId,
         receiptId, callId, url: targetUrl });
       const canonicalFinal = browserReader.canonicalUrl(read.url);
+      if (typeof read.capturedText !== 'string') throw failure('BROWSER_RENDERER_FAILED', 503);
+      const captureBytes = Buffer.from(read.capturedText, 'utf8');
+      let segments;
+      try { segments = browserCaptureSegments(captureBytes); }
+      catch { throw failure('BROWSER_RENDERER_FAILED', 503); }
       if (read.requestedUrl !== targetUrl || canonicalFinal !== read.url ||
           typeof read.text !== 'string' || !read.text.trim() ||
-          Buffer.byteLength(read.text, 'utf8') > 32 * 1024 ||
+          Buffer.byteLength(read.text, 'utf8') > MAX_SEGMENT_BYTES ||
+          read.text !== segments[0].text || captureBytes.length !== read.totalCapturedBytes ||
+          read.segmentCount !== segments.length ||
+          read.versionHash !== browserCaptureVersion(read.url, captureBytes) ||
+          typeof read.captureTruncated !== 'boolean' ||
+          read.truncated !== (read.captureTruncated || segments.length > 1) ||
+          typeof read.outline !== 'string' || Buffer.byteLength(read.outline, 'utf8') > 2 * 1024 ||
           typeof read.title !== 'string' || Array.from(read.title).length > 256 ||
           typeof read.truncated !== 'boolean' || !Array.isArray(read.links) || read.links.length > 50) {
         throw failure('BROWSER_RENDERER_FAILED', 503);
@@ -4293,6 +4500,20 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const bytes = Buffer.from(read.text, 'utf8');
       const textSha256 = digest(bytes);
       const readAt = new Date(timestamp()).toISOString();
+      const captureParts = [];
+      for (let index = 0, offset = 0; offset < captureBytes.length; index++, offset += MAX_ARTIFACT_BYTES) {
+        const part = captureBytes.subarray(offset, offset + MAX_ARTIFACT_BYTES);
+        const entry = { id: `capture-${snapshotId}-${index}`,
+          size: part.length, sha256: digest(part) };
+        try { await artifactStore.write(ownerId, rootTaskId, entry.id,
+          { bytes: part, size: entry.size, sha256: entry.sha256 }); }
+        catch (error) {
+          if (error?.code !== 'ARTIFACT_EXISTS') throw error;
+          await artifactStore.inspect(ownerId, rootTaskId, entry.id,
+            { size: entry.size, sha256: entry.sha256 });
+        }
+        captureParts.push(entry);
+      }
       try { await artifactStore.write(ownerId, rootTaskId, snapshotId,
         { bytes, size: bytes.length, sha256: textSha256 }); }
       catch (error) {
@@ -4311,12 +4532,18 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         next.browserSources ??= {};
         if (next.browserSources[snapshotId]) return next.browserSources[snapshotId];
         if (Object.keys(next.browserSources).length >= MAX_BROWSER_SNAPSHOTS) throw failure('CAPACITY_LIMIT', 429);
+        if (Object.values(next.browserSources).filter((item) =>
+          item.versionHash && item.parentSnapshotId === undefined).length >= MAX_BROWSER_CAPTURES)
+          throw failure('CAPACITY_LIMIT', 429);
         checked.source.dshTurn = turn;
         const record = { kind: 'webpage', snapshotId, ownerId, taskId: rootTaskId,
           sourceCommandId: source.commandId, sessionId, turn, sourceReceiptId: receiptId,
           readCallId: callId, readTool: action === 'open_page' ? 'personal_browser_open' : 'personal_browser_follow',
           title: read.title, url: read.url, requestedUrl: targetUrl, readAt,
-          textSize: bytes.length, textSha256, truncated: read.truncated, links };
+          textSize: bytes.length, textSha256, truncated: read.truncated, links,
+          versionHash: read.versionHash, segmentIndex: 0, segmentCount: segments.length,
+          byteStart: 0, byteEnd: bytes.length, totalCapturedBytes: captureBytes.length,
+          captureTruncated: read.captureTruncated, outline: read.outline, captureParts };
         next.browserSources[snapshotId] = record;
         return record;
       }));
@@ -4468,7 +4695,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }), 3_500).catch(() => false)));
         if (proofs.some((proof) => proof !== true)) throw failure('BROWSER_SOURCE_UNVERIFIED', 409);
         const manifest = citedSources.map((read) =>
-          `- 网页：${JSON.stringify(read.title.replace(/\s+/g, ' '))}；地址：${read.url}；读取于 ${read.readAt}；SHA-256 ${read.textSha256}${read.truncated ? '；正文已截断' : ''}`)
+          `- 网页：${JSON.stringify(read.title.replace(/\s+/g, ' '))}；地址：${read.url}；读取于 ${read.readAt}；本段 SHA-256 ${read.textSha256}${read.versionHash
+            ? `；捕获版本 ${read.versionHash}；第 ${read.segmentIndex + 1}/${read.segmentCount} 段，字节 ${read.byteStart}–${read.byteEnd}（结束位置不含）${read.captureTruncated ? '；本次捕获未覆盖全文' : ''}`
+            : read.truncated ? '；正文已截断' : ''}`)
           .join('\n');
         artifact = canonicalArtifact(fileName, `${content.trimEnd()}\n\n## 已读取网页来源\n${manifest}\n`);
       } else if (sourceSnapshotIds !== undefined || receiptId !== undefined) {

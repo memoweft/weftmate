@@ -95,6 +95,20 @@ test('physical proof admits only the requested successful browser read tool befo
   assert.equal(plugin.verifyStoredProjectRead(encoded(priorReadBeforeFollow), webProof), false)
   assert.equal(plugin.verifyStoredProjectRead(encoded(priorReadBeforeFollow),
     { ...webProof, beforeTool: 'personal_browser_follow' }), true)
+  const priorReadBeforeSegment = structuredClone(events)
+  priorReadBeforeSegment[5].data.name = 'personal_browser_read_segment'
+  assert.equal(plugin.verifyStoredProjectRead(encoded(priorReadBeforeSegment), webProof), false)
+  assert.equal(plugin.verifyStoredProjectRead(encoded(priorReadBeforeSegment),
+    { ...webProof, beforeTool: 'personal_browser_read_segment' }), true)
+  const segment = structuredClone(events)
+  segment[3].data.name = 'personal_browser_read_segment'
+  segment[4].data.message.content[0].content[0].text = JSON.stringify({
+    snapshotId: webId, parentSnapshotId: `source-${'c'.repeat(48)}`,
+    contentSha256: 'a'.repeat(64), url: 'https://example.com/page',
+    text: 'actually read segment', segmentIndex: 0, segmentCount: 2 })
+  assert.equal(plugin.verifyStoredProjectRead(encoded(segment),
+    { ...webProof, readTool: 'personal_browser_read_segment' }), true)
+  assert.equal(plugin.verifyStoredProjectRead(encoded(segment), webProof), false)
 })
 
 test('parent proof IPC accepts only current child, strict reply and bounded timeout', async () => {

@@ -1153,6 +1153,9 @@ async function bootstrap() {
         '- insert:',
         '    - id: weftmate-personal-model-idle',
         '      name: ./plugins/weftmate-personal-model-idle.mjs',
+        '- insert:',
+        '    - id: weftmate-personal-reply-evidence',
+        '      name: ./plugins/weftmate-personal-reply-evidence.mjs',
       ] : []),
       '',
     ].join('\n');
@@ -1537,7 +1540,8 @@ async function bootstrap() {
       if (request.action === 'list_project' || request.action === 'read_project') {
         return personalAccessService.submitToolProject(request);
       }
-      if (request.action === 'open_page' || request.action === 'follow_link') {
+      if (request.action === 'open_page' || request.action === 'follow_link' ||
+          request.action === 'read_segment') {
         return personalAccessService.submitToolBrowser(request);
       }
       return personalAccessService.submitToolDesktop(request);
@@ -2664,6 +2668,7 @@ async function bootstrap() {
     hasCredential: hasProfileCredential,
     credentialForProfile: credentialForModelProfile,
     hostOwnerId: () => personalAccessService?.legacyOwnerId?.() ?? null,
+    ownerForSession: (sessionId) => personalAccessService?.ownerForSession?.(sessionId)?.ownerId ?? null,
     modelAllowed: (ownerId, profileId, usage) => personalAccessService?.canUseModelProfile?.(ownerId, profileId, usage) === true,
     moduleStatus: () => ({ memory: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? 'unknown' : 'disabled' }),
     routeForProfile,
@@ -2677,6 +2682,9 @@ async function bootstrap() {
     taskStop: (input) => webRuntime?.stopPersonalTask(input) ?? Promise.resolve({ status: 'unconfirmed',
       outcomes: input.receiptIds.map((receiptId) => ({ receiptId, status: 'unconfirmed' })) }),
     toolResultProof: (input) => webRuntime?.verifyPersonalToolResult(input) ?? Promise.resolve(false),
+    replyEvidence: (input) => webRuntime?.readPersonalReplyEvidence(input) ?? Promise.resolve({
+      status: 'unconfirmed', turn: null, assistantChunks: 0, textChunks: 0,
+      reasoningChunks: 0, assistantMessages: 0, toolSaveObserved: false }),
     naturalLanguageDesktopReady: () => personalAccessService !== null && personalHostMode,
     naturalLanguageDesktopVerified: () => personalAccessService?.hasVerifiedPersonalTool?.() === true,
   });

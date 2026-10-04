@@ -2163,6 +2163,18 @@
     return payload.source?.state === 'accepted_by_dsh'
       ? '原消息已送达电脑，当前没有已核验文件。' : '当前没有已核验文件，请稍后重新核对。'
   }
+  function taskReplyText(evidence) {
+    switch (evidence?.status) {
+      case 'waiting': return '回复：电脑会话正在等待模型输出。'
+      case 'streaming': return `回复：模型正在生成${evidence.lastChunkAt ? `，最近输出于 ${formatDate(evidence.lastChunkAt)}` : ''}；尚未见到结束记录。`
+      case 'completed': return evidence.assistantMessages > 0
+        ? '回复：电脑会话已正常结束。' : '回复：回合已结束，但没有已核对的最终文字回复。'
+      case 'aborted': return '回复：回合已中断；已核验的文件仍可查看。'
+      case 'blocked': return '回复：模型请求被阻断，尚无正常结束记录。'
+      case 'failed': return '回复：模型回合未完成；请查看原会话的错误。'
+      default: return '回复：是否结束尚无法核对；请勿把已核验文件当作回复完成。'
+    }
+  }
   function taskControlStatus(control) {
     if (control?.state === 'stop_requested' && typeof control.stopStatus === 'string') {
       if (control.stopStatus === 'stopped') return '电脑已核对这件事的实际停止。已执行的步骤与成果会保留。'
@@ -2328,7 +2340,19 @@
     const sources = Array.isArray(payload.sources) ? payload.sources.filter((source) =>
       source?.kind === 'webpage' ? /^source-[a-f0-9]{48}$/.test(source.snapshotId ?? '') &&
         typeof source.title === 'string' && typeof source.url === 'string' &&
-        /^[a-f0-9]{64}$/.test(source.contentSha256 ?? '') :
+        /^[a-f0-9]{64}$/.test(source.contentSha256 ?? '') &&
+        (source.versionHash === undefined || /^[a-f0-9]{64}$/.test(source.versionHash) &&
+          Number.isSafeInteger(source.segmentIndex) && source.segmentIndex >= 0 &&
+          Number.isSafeInteger(source.segmentCount) && source.segmentCount >= 1 &&
+          source.segmentCount <= 32 && source.segmentIndex < source.segmentCount &&
+          Number.isSafeInteger(source.byteStart) && source.byteStart >= 0 &&
+          Number.isSafeInteger(source.byteEnd) && source.byteEnd > source.byteStart &&
+          source.byteEnd - source.byteStart <= 8192 &&
+          Number.isSafeInteger(source.totalCapturedBytes) &&
+          source.totalCapturedBytes <= 256 * 1024 &&
+          typeof source.captureTruncated === 'boolean' &&
+          (source.outline === undefined || typeof source.outline === 'string' &&
+            new TextEncoder().encode(source.outline).length <= 2048)) :
         /^source-[a-f0-9]{48}$/.test(source?.snapshotId ?? '') &&
         typeof source.relativePath === 'string' && Number.isSafeInteger(source.lineStart) &&
         Number.isSafeInteger(source.lineEnd) && /^[a-f0-9]{64}$/.test(source.fileSha256 ?? '')) : []
@@ -2338,12 +2362,39 @@
           ? '尚无已核验的读取来源。摘要必须先读取项目文件。' : '这件事没有项目资料来源。'))
       return
     }
-    for (const source of sources) {
+    const captureGroups = new Map()
+    for (const source of sources) if (source.kind === 'webpage' && /^[a-f0-9]{64}$/.test(source.versionHash ?? '')) {
+      const root = source.parentSnapshotId || source.snapshotId
+      if (!captureGroups.has(root)) captureGroups.set(root, [])
+      captureGroups.get(root).push(source)
+    }
+    const ordered = [...sources].sort((a, b) => {
+      const rootA = a.parentSnapshotId || a.snapshotId
+      const rootB = b.parentSnapshotId || b.snapshotId
+      return rootA.localeCompare(rootB) || (a.segmentIndex ?? 0) - (b.segmentIndex ?? 0)
+    })
+    let shownGroup = null
+    for (const source of ordered) {
       const item = element('li', 'task-source-item')
       const web = source.kind === 'webpage'
-      const title = element('strong', '', web ? source.title || source.url : source.relativePath)
+      const groupId = source.parentSnapshotId || source.snapshotId
+      if (web && captureGroups.has(groupId) && shownGroup !== groupId) {
+        const siblings = captureGroups.get(groupId)
+        const readCount = new Set(siblings.map((row) => row.segmentIndex)).size
+        const group = element('li', 'task-source-item')
+        group.append(element('strong', '', source.title || source.url),
+          element('small', '', `已读 ${readCount}/${source.segmentCount} 段${source.captureTruncated
+            ? ' · 本次捕获未覆盖全文' : readCount < source.segmentCount ? ' · 还有未读段' : ' · 已读完本次捕获'}`))
+        list.append(group)
+        shownGroup = groupId
+      }
+      const title = element('strong', '', web && source.versionHash
+        ? `第 ${source.segmentIndex + 1}/${source.segmentCount} 段`
+        : web ? source.title || source.url : source.relativePath)
       const meta = element('small', '', web
-        ? `${source.url} · ${formatDate(source.readAt)}${source.truncated ? ' · 只读取了部分正文' : ''}${
+        ? `${source.url} · ${formatDate(source.readAt)}${source.versionHash
+          ? ` · 已读字节 ${source.byteStart + 1}–${source.byteEnd}`
+          : source.truncated ? ' · 只读取了部分正文' : ''}${
           source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`
         : `第 ${source.lineStart}–${source.lineEnd} 行 · ${formatDate(source.readAt)}${
           source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`)
@@ -2352,7 +2403,8 @@
       view.addEventListener('click', () => { void previewTaskSource(payload.taskId, source) })
       const technical = element('details', 'task-record-id')
       technical.append(element('summary', '', web ? '查看网页来源编号与内容版本' : '查看文件版本与来源编号'),
-        element('code', '', web ? `正文 SHA-256 ${source.contentSha256}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length ?? 0} 条`
+        element('code', '', web ? `本段 SHA-256 ${source.contentSha256}${source.versionHash
+          ? `\n捕获版本 SHA-256 ${source.versionHash}\n本段字节 ${source.byteStart}–${source.byteEnd}（结束位置不含）${source.outline ? `\n页面标题目录\n${source.outline}` : ''}` : ''}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length ?? 0} 条`
           : `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`))
       item.append(title, meta, view, technical)
       list.append(item)
@@ -2374,7 +2426,10 @@
       const actual = payload?.source
       const same = source.kind === 'webpage'
         ? actual?.kind === 'webpage' && actual.url === source.url &&
-          actual.contentSha256 === source.contentSha256 && actual.truncated === source.truncated
+          actual.contentSha256 === source.contentSha256 && actual.truncated === source.truncated &&
+          (!source.versionHash || actual.versionHash === source.versionHash &&
+            actual.segmentIndex === source.segmentIndex && actual.byteStart === source.byteStart &&
+            actual.byteEnd === source.byteEnd)
         : actual?.fileSha256 === source.fileSha256 && actual.lineStart === source.lineStart &&
           actual.lineEnd === source.lineEnd
       if (actual?.snapshotId !== source.snapshotId || !same || typeof actual.text !== 'string' ||
@@ -2383,7 +2438,9 @@
       }
       preview.textContent = actual.text
       preview.hidden = false
-      status.textContent = `${source.kind === 'webpage' ? source.title || source.url : source.relativePath} · 读取时的正文与版本已核对。`
+      status.textContent = `${source.kind === 'webpage' ? source.versionHash
+        ? `第 ${source.segmentIndex + 1}/${source.segmentCount} 段` : source.title || source.url
+        : source.relativePath} · 读取时的正文与版本已核对。`
     } catch (error) {
       if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedSourceId !== source.snapshotId) return
       status.textContent = error.code === 'NETWORK' ? '连接中断，来源正文尚未确认；请重试。'
@@ -2444,6 +2501,7 @@
     taskDetail.selectedSourceId = null
     byId('task-detail-title').textContent = '事情详情'
     byId('task-detail-status').textContent = '正在核对原任务与成果…'
+    byId('task-detail-reply').textContent = ''
     byId('task-detail-body').hidden = true
     byId('task-detail-session').hidden = true
     byId('task-preview-text').hidden = true
@@ -2462,6 +2520,7 @@
       const verified = artifacts.filter((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
         row.verification?.method === 'sha256_readback')
       byId('task-detail-verification').textContent = taskVerificationText(payload)
+      byId('task-detail-reply').textContent = taskReplyText(payload.replyEvidence)
       const controlSlot = byId('task-detail-control')
       controlSlot.replaceChildren()
       if (payload.control && typeof payload.control.state === 'string') {

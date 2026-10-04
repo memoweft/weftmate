@@ -1,7 +1,10 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createPinnedProxy, canonicalPublicUrl } from './network.mjs';
 
-const MAX_TEXT_BYTES = 32 * 1024;
+export const MAX_CAPTURE_BYTES = 256 * 1024;
+export const MAX_SEGMENT_BYTES = 8 * 1024;
+const CAPTURE_PAYLOAD_LIMIT = MAX_CAPTURE_BYTES - 96; // UTF-8 boundary slack for 32 segments.
+const MAX_OUTLINE_BYTES = 2 * 1024;
 const MAX_LINKS = 50;
 const MAX_LABEL = 160;
 const READ_TIMEOUT_MS = 15_000;
@@ -19,8 +22,13 @@ const EXTRACT = `(() => {
     if (href.length > 2048) continue;
     links.push({ url: href, label: String(anchor.innerText || anchor.textContent || '').trim().slice(0, 160) });
   }
-  return { title: String(document.title || '').slice(0, 500), text: raw.slice(0, 50000),
-    rawTruncated: raw.length > 50000, needsLogin: !!document.querySelector('input[type=password]'), links };
+  const headings = [...(body?.querySelectorAll('h1,h2,h3,h4') || [])].slice(0, 80)
+    .filter((item) => item.getClientRects().length && getComputedStyle(item).display !== 'none')
+    .map((item) => String(item.innerText || item.textContent || '').replace(/\\s+/g, ' ').trim().slice(0, 160))
+    .filter(Boolean);
+  return { title: String(document.title || '').slice(0, 500), text: raw.slice(0, 262144),
+    rawTruncated: raw.length > 262144, needsLogin: !!document.querySelector('input[type=password]'),
+    headings, links };
 })()`;
 
 function fault(code, details = {}) { return Object.assign(new Error(code), { code, ...details }); }
@@ -30,13 +38,43 @@ async function cleanupWithin(work, ms = 6_000) {
     new Promise((_, reject) => { timer = setTimeout(() => reject(fault('BROWSER_CLEANUP_FAILED')), ms); })]); }
   finally { clearTimeout(timer); }
 }
-function boundedText(value) {
-  const raw = typeof value === 'string' ? value : '';
-  const bytes = Buffer.from(raw, 'utf8');
-  if (bytes.length <= MAX_TEXT_BYTES) return { text: raw, truncated: false };
-  let end = MAX_TEXT_BYTES;
-  while (end > 0 && (bytes[end] & 0xc0) === 0x80) end--;
-  return { text: bytes.subarray(0, end).toString('utf8'), truncated: true };
+function utf8Boundary(bytes, start, limit) {
+  let end = Math.min(bytes.length, limit);
+  while (end > start && end < bytes.length && (bytes[end] & 0xc0) === 0x80) end--;
+  return end;
+}
+export function browserCaptureSegments(value) {
+  const bytes = Buffer.isBuffer(value) ? value : Buffer.from(String(value ?? ''), 'utf8');
+  if (bytes.length < 1 || bytes.length > MAX_CAPTURE_BYTES ||
+      !Buffer.from(bytes.toString('utf8'), 'utf8').equals(bytes)) throw fault('BROWSER_CAPTURE_INVALID');
+  const segments = [];
+  for (let start = 0; start < bytes.length;) {
+    const end = utf8Boundary(bytes, start, start + MAX_SEGMENT_BYTES);
+    if (end <= start) throw fault('BROWSER_CAPTURE_INVALID');
+    segments.push({ text: bytes.subarray(start, end).toString('utf8'),
+      byteStart: start, byteEnd: end });
+    start = end;
+  }
+  if (segments.length > 32) throw fault('BROWSER_CAPTURE_INVALID');
+  return segments;
+}
+export function browserCaptureVersion(url, bytes) {
+  if (typeof url !== 'string' || !Buffer.isBuffer(bytes) || bytes.length < 1 ||
+      bytes.length > MAX_CAPTURE_BYTES) throw fault('BROWSER_CAPTURE_INVALID');
+  return createHash('sha256').update('weftmate-browser-capture/v1\0').update(url)
+    .update('\0').update(bytes).digest('hex');
+}
+function captureText(value) {
+  const bytes = Buffer.from(typeof value === 'string' ? value : '', 'utf8');
+  const end = utf8Boundary(bytes, 0, CAPTURE_PAYLOAD_LIMIT);
+  const captured = bytes.subarray(0, end);
+  return { bytes: captured, truncated: end < bytes.length };
+}
+function boundedOutline(value) {
+  const lines = Array.isArray(value) ? value.filter((item) => typeof item === 'string')
+    .slice(0, 80).map((item) => item.replace(/\s+/g, ' ').trim().slice(0, 160)) : [];
+  const bytes = Buffer.from(lines.filter(Boolean).join('\n'), 'utf8');
+  return bytes.subarray(0, utf8Boundary(bytes, 0, MAX_OUTLINE_BYTES)).toString('utf8');
 }
 function boundedLinks(value, syntheticFixture) {
   if (!Array.isArray(value)) return [];
@@ -211,12 +249,18 @@ export function createPersonalBrowserReader({ BrowserWindow, session, resolver, 
         if (!extracted || typeof extracted !== 'object' || extracted.needsLogin === true) {
           throw fault(extracted?.needsLogin ? 'BROWSER_LOGIN_REQUIRED' : 'BROWSER_RENDERER_FAILED');
         }
-        const { text, truncated } = boundedText(extracted.text);
-        if (!text.trim()) throw fault('BROWSER_EMPTY_PAGE');
+        const capture = captureText(extracted.text);
+        const capturedText = capture.bytes.toString('utf8');
+        if (!capturedText.trim()) throw fault('BROWSER_EMPTY_PAGE');
+        const segments = browserCaptureSegments(capture.bytes);
         readsCompleted++;
         return { title: Array.from(String(extracted.title ?? '')).slice(0, 256).join(''),
-          requestedUrl, url: finalUrl, text,
-          truncated: truncated || extracted.rawTruncated === true,
+          requestedUrl, url: finalUrl, text: segments[0].text, capturedText,
+          outline: boundedOutline(extracted.headings), segmentCount: segments.length,
+          totalCapturedBytes: capture.bytes.length,
+          versionHash: browserCaptureVersion(finalUrl, capture.bytes),
+          captureTruncated: capture.truncated || extracted.rawTruncated === true,
+          truncated: capture.truncated || extracted.rawTruncated === true || segments.length > 1,
           links: boundedLinks(extracted.links, syntheticFixture), httpStatus: httpStatus ?? 200 };
       } finally {
         clearTimeout(timer);
