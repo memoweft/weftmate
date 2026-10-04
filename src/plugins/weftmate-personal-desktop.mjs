@@ -9,6 +9,7 @@ export const PERSONAL_PROJECT_LIST_TOOL = 'personal_list_project_files';
 export const PERSONAL_PROJECT_READ_TOOL = 'personal_read_project_file';
 export const PERSONAL_BROWSER_OPEN_TOOL = 'personal_browser_open';
 export const PERSONAL_BROWSER_FOLLOW_TOOL = 'personal_browser_follow';
+export const PERSONAL_BROWSER_SEGMENT_TOOL = 'personal_browser_read_segment';
 export const PERSONAL_PROJECT_PROOF_PROTOCOL = 'weftmate.personal-project-proof.v1';
 export const inject = ['tools'];
 const SAFE_ID = /^[A-Za-z0-9._:-]{1,160}$/;
@@ -30,7 +31,7 @@ const SAFE_TOOL_ERRORS = new Set(['PERSONAL_TOOL_UNAVAILABLE', 'PERSONAL_TOOL_TI
   'BROWSER_LINK_UNAVAILABLE', 'BROWSER_SOURCE_UNVERIFIED', 'BROWSER_DNS_TIMEOUT',
   'BROWSER_DOWNGRADE_BLOCKED', 'BROWSER_PAGE_CHANGED', 'BROWSER_CLEANUP_FAILED']);
 const READ_TOOLS = new Set([PERSONAL_PROJECT_READ_TOOL, PERSONAL_BROWSER_OPEN_TOOL,
-  PERSONAL_BROWSER_FOLLOW_TOOL]);
+  PERSONAL_BROWSER_FOLLOW_TOOL, PERSONAL_BROWSER_SEGMENT_TOOL]);
 
 function refused(code) {
   const error = new Error(code);
@@ -111,7 +112,7 @@ function proofRequest(frame) {
       ...(frame.beforeTool === undefined ? [] : ['beforeTool'])].sort().join(',') &&
     (frame.readTool === undefined || READ_TOOLS.has(frame.readTool)) &&
     (frame.beforeTool === undefined || ['personal_save_document',
-      PERSONAL_BROWSER_FOLLOW_TOOL].includes(frame.beforeTool)) &&
+      PERSONAL_BROWSER_FOLLOW_TOOL, PERSONAL_BROWSER_SEGMENT_TOOL].includes(frame.beforeTool)) &&
     frame.protocol === PERSONAL_PROJECT_PROOF_PROTOCOL && typeof frame.id === 'string' &&
     /^proof-[0-9a-f-]{36}$/.test(frame.id) &&
     typeof frame.sessionId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(frame.sessionId) &&
@@ -251,7 +252,7 @@ export class PersonalDesktopBridge {
         signal?.removeEventListener?.('abort', entry.abort);
         reject(error);
       };
-      const timeout = ['list_project', 'read_project', 'open_page', 'follow_link'].includes(payload.action) ||
+      const timeout = ['list_project', 'read_project', 'open_page', 'follow_link', 'read_segment'].includes(payload.action) ||
         payload.action === 'write_document' && payload.sourceSnapshotIds?.length > 0 ? 20_000 : 12_000;
       const timer = setTimeout(() => finish(refused('PERSONAL_TOOL_TIMEOUT')), timeout);
       const abort = () => finish(refused('PERSONAL_TOOL_CANCELLED'));
@@ -370,11 +371,27 @@ export function apply(ctx) {
     },
     presentCall: () => ({ card: 'generic', title: '沿已读链接继续阅读', kind: 'execute' }),
   }));
+  const disposeBrowserSegment = ctx.tools.register(defineTool({
+    name: PERSONAL_BROWSER_SEGMENT_TOOL,
+    description: 'Read one 0-based segment (0..31) from a frozen page capture already read in this same turn. Pass its exact source snapshotId and segmentIndex. The host checks the committed parent read, owner, task, receipt and capture version; this cannot navigate to a new URL. Cite only segments actually returned.',
+    parameters: { snapshotId: { type: 'string', required: true },
+      segmentIndex: { type: 'integer', required: true } },
+    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+    execute: async (args, exec) => {
+      if (typeof args?.snapshotId !== 'string' || !/^source-[a-f0-9]{48}$/.test(args.snapshotId) ||
+          !Number.isSafeInteger(args.segmentIndex) || args.segmentIndex < 0 || args.segmentIndex > 31) {
+        throw refused('PERSONAL_TOOL_INVALID');
+      }
+      return bridge.request({ action: 'read_segment', ...projectIdentity(exec),
+        snapshotId: args.snapshotId, segmentIndex: args.segmentIndex }, exec.signal);
+    },
+    presentCall: () => ({ card: 'generic', title: '读取网页段落', kind: 'execute' }),
+  }));
   const disposeGuard = ctx.tools.guard((exec) => [PERSONAL_DESKTOP_TOOL, PERSONAL_DOCUMENT_TOOL,
     PERSONAL_PROJECT_LIST_TOOL, PERSONAL_PROJECT_READ_TOOL,
-    PERSONAL_BROWSER_OPEN_TOOL, PERSONAL_BROWSER_FOLLOW_TOOL].includes(exec.name) &&
+    PERSONAL_BROWSER_OPEN_TOOL, PERSONAL_BROWSER_FOLLOW_TOOL, PERSONAL_BROWSER_SEGMENT_TOOL].includes(exec.name) &&
     exec.agent?.session?.header?.agentPreset !== 'personal-remote' ? 'PERSONAL_TOOL_SCOPE_DENIED' : undefined);
-  ctx.effect(() => () => { disposeGuard(); disposeBrowserFollow(); disposeBrowserOpen(); disposeRead();
+  ctx.effect(() => () => { disposeGuard(); disposeBrowserSegment(); disposeBrowserFollow(); disposeBrowserOpen(); disposeRead();
     disposeList(); disposeDocument(); disposeTool(); disposeProof(); bridge.close(); }, 'weftmate-personal-desktop: lifecycle');
 }
 

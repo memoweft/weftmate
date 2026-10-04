@@ -2199,6 +2199,14 @@ async function submitTaskControl(taskId,action,text,current,input,section){if(!c
       '电脑已经重新读取文件并核对大小和 SHA-256。保存到手机后还会再次核对。':
       uncertain?'电脑尚不能确定文件是否写成。请查看原会话，避免重复执行。':
       rejected?'电脑未能完成文件生成；原会话保留具体回复。':hostCommandMeaning(source)));
+    const reply=task.replyEvidence;
+    const replyLabel=reply?.status==='waiting'?'电脑会话正在等待模型输出':
+      reply?.status==='streaming'?'模型正在生成回复，尚未见到结束记录':
+      reply?.status==='completed'?reply.assistantMessages>0?'回复回合已正常结束':'回合已结束，但未见最终文字回复':
+      reply?.status==='aborted'?'回复回合已中断':
+      reply?.status==='blocked'?'模型请求被阻断':
+      reply?.status==='failed'?'模型回合未完成':'回复是否结束尚无法核对';
+    body.append(el('p','command-fact',`回复：${replyLabel}。`));
     body.append(el('p','command-fact','聊天中的“停止”只停止当前回复；事情的停止状态在这里单独记录。'));
     if(source.errorCode)body.append(el('p','command-error',safeError(new Error(source.errorCode))));
     target.append(summary);
@@ -2229,7 +2237,16 @@ async function submitTaskControl(taskId,action,text,current,input,section){if(!c
       target.append(section)}
     const taskSources=(Array.isArray(task.sources)?task.sources:[]).filter(item=>item?.kind==='webpage'?
       /^source-[a-f0-9]{48}$/.test(item.snapshotId||'')&&typeof item.title==='string'&&
-      typeof item.url==='string'&&/^[a-f0-9]{64}$/.test(item.contentSha256||''):
+      typeof item.url==='string'&&/^[a-f0-9]{64}$/.test(item.contentSha256||'')&&
+      (item.versionHash===undefined||/^[a-f0-9]{64}$/.test(item.versionHash)&&
+        Number.isSafeInteger(item.segmentIndex)&&item.segmentIndex>=0&&
+        Number.isSafeInteger(item.segmentCount)&&item.segmentCount>=1&&item.segmentCount<=32&&
+        item.segmentIndex<item.segmentCount&&Number.isSafeInteger(item.byteStart)&&item.byteStart>=0&&
+        Number.isSafeInteger(item.byteEnd)&&item.byteEnd>item.byteStart&&
+        item.byteEnd-item.byteStart<=8192&&Number.isSafeInteger(item.totalCapturedBytes)&&
+        item.totalCapturedBytes<=256*1024&&typeof item.captureTruncated==='boolean'&&
+        (item.outline===undefined||typeof item.outline==='string'&&
+          new TextEncoder().encode(item.outline).length<=2048)):
       /^source-[a-f0-9]{48}$/.test(item?.snapshotId||'')&&typeof item.relativePath==='string'&&
       Number.isSafeInteger(item.lineStart)&&Number.isSafeInteger(item.lineEnd)&&
       /^[a-f0-9]{64}$/.test(item.fileSha256||''));
@@ -2238,22 +2255,36 @@ async function submitTaskControl(taskId,action,text,current,input,section){if(!c
         task.workspace?.kind==='browser'?'公共网页实际渲染并读取时保存的正文与链接。':'这些是任务读取时保存的资料版本。'));
       if(!taskSources.length)sourceBody.append(el('p','muted',task.workspace?.kind==='browser'?
         '尚无已核验的网页来源；未读页面不能作为摘要依据。':'尚无已核验的读取来源；不能把未读内容当作摘要依据。'));
-      for(const source of taskSources){const wrap=el('div','project-source-entry'),web=source.kind==='webpage';
-        wrap.append(el('p','artifact-name',web?source.title||source.url:source.relativePath),
-          el('p','artifact-meta',web?`${source.url} · ${commandTime(source.readAt)}${source.truncated?' · 只读到部分正文':''} · ${
+      const captureGroups=new Map();for(const source of taskSources)if(source.kind==='webpage'&&/^[a-f0-9]{64}$/.test(source.versionHash||'')){
+        const root=source.parentSnapshotId||source.snapshotId;if(!captureGroups.has(root))captureGroups.set(root,[]);
+        captureGroups.get(root).push(source)}
+      const ordered=[...taskSources].sort((a,b)=>(a.parentSnapshotId||a.snapshotId).localeCompare(b.parentSnapshotId||b.snapshotId)||
+        (a.segmentIndex??0)-(b.segmentIndex??0));let shownGroup=null;
+      for(const source of ordered){const wrap=el('div','project-source-entry'),web=source.kind==='webpage';
+        const root=source.parentSnapshotId||source.snapshotId;
+        if(web&&captureGroups.has(root)&&shownGroup!==root){const siblings=captureGroups.get(root),readCount=new Set(siblings.map(x=>x.segmentIndex)).size;
+          sourceBody.append(el('p','artifact-name',`${source.title||source.url} · 已读 ${readCount}/${source.segmentCount} 段${
+            source.captureTruncated?' · 本次捕获未覆盖全文':readCount<source.segmentCount?' · 还有未读段':' · 已读完本次捕获'}`));shownGroup=root}
+        wrap.append(el('p','artifact-name',web&&source.versionHash?`第 ${source.segmentIndex+1}/${source.segmentCount} 段`:web?source.title||source.url:source.relativePath),
+          el('p','artifact-meta',web?`${source.url} · ${commandTime(source.readAt)}${source.versionHash?
+            ` · 已读字节 ${source.byteStart+1}–${source.byteEnd}`:source.truncated?' · 只读到部分正文':''} · ${
             source.cited?'已用于成果':'已读取，未被成果引用'}`:
             `第 ${source.lineStart}–${source.lineEnd} 行 · ${commandTime(source.readAt)} · ${
               source.cited?'已用于成果':'已读取，未被成果引用'}`));
         const preview=el('div','artifact-preview');preview.hidden=true;
         const detail=el('details','task-record-id');detail.append(el('summary','',web?'查看网页来源与内容版本':'查看文件版本与来源编号'),
-          el('code','',web?`正文 SHA-256 ${source.contentSha256}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length??0} 条`:
+          el('code','',web?`本段 SHA-256 ${source.contentSha256}${source.versionHash?
+            `\n捕获版本 SHA-256 ${source.versionHash}\n本段字节 ${source.byteStart}–${source.byteEnd}（结束位置不含）${source.outline?`\n页面标题目录\n${source.outline}`:''}`:''}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length??0} 条`:
             `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`));
         wrap.append(action('查看来源正文',async()=>{
           preview.hidden=false;preview.textContent='正在读取来源正文…';
           try{const result=await call('shared.sources.detail',{taskId,snapshotId:source.snapshotId});
             if(!current())return;
             const actual=result?.source,same=web?actual?.kind==='webpage'&&actual.url===source.url&&
-              actual.contentSha256===source.contentSha256&&actual.truncated===source.truncated:
+              actual.contentSha256===source.contentSha256&&actual.truncated===source.truncated&&
+              (!source.versionHash||actual.versionHash===source.versionHash&&
+                actual.segmentIndex===source.segmentIndex&&actual.byteStart===source.byteStart&&
+                actual.byteEnd===source.byteEnd):
               actual?.fileSha256===source.fileSha256&&actual.lineStart===source.lineStart&&actual.lineEnd===source.lineEnd;
             if(actual?.snapshotId!==source.snapshotId||!same||typeof actual.text!=='string'||
               new TextEncoder().encode(actual.text).length>32*1024)throw new Error('SOURCE_INVALID');

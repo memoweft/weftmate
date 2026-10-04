@@ -8,9 +8,11 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   routeForProfile, listSessions, resolveSession, ensureKnownSession, gateway, queue, bindSession,
   credentialForProfile = null, modelFetch = fetch,
   hostOwnerId = () => null,
+  ownerForSession = () => null,
   modelAllowed = () => true,
   moduleStatus = () => ({}),
-  desktopTask = null, taskStop = null, toolResultProof = null, naturalLanguageDesktopReady = () => false,
+  desktopTask = null, taskStop = null, toolResultProof = null, replyEvidence = null,
+  naturalLanguageDesktopReady = () => false,
   naturalLanguageDesktopVerified = () => false, inferenceVerified = () => false }) {
   const requireRuntime = () => { if (!currentOrigin()) fail('RUNTIME_UNAVAILABLE') }
   const presetForOwner = (ownerId) => {
@@ -237,14 +239,31 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
           [readCallId, sourceReceiptId, beforeCallId].some((id) =>
             typeof id !== 'string' || !idPattern.test(id)) ||
           typeof snapshotId !== 'string' || !idPattern.test(snapshotId) ||
-          !['personal_read_project_file', 'personal_browser_open', 'personal_browser_follow'].includes(readTool) ||
-          !['personal_save_document', 'personal_browser_follow'].includes(beforeTool) ||
+          !['personal_read_project_file', 'personal_browser_open', 'personal_browser_follow',
+            'personal_browser_read_segment'].includes(readTool) ||
+          !['personal_save_document', 'personal_browser_follow',
+            'personal_browser_read_segment'].includes(beforeTool) ||
           readCallId === beforeCallId) return false
       try {
         await requireSession(sessionId, hostOwnerId())
         return await toolResultProof({ sessionId, turn, readCallId, snapshotId,
           sourceReceiptId, beforeCallId, readTool, beforeTool }) === true
       } catch { return false }
+    },
+    async getTaskReplyEvidence({ sessionId, rootTaskId, receiptId, ownerId }) {
+      const unknown = { status: 'unconfirmed', turn: null, assistantChunks: 0,
+        textChunks: 0, reasoningChunks: 0, assistantMessages: 0, toolSaveObserved: false }
+      if (typeof replyEvidence !== 'function' || typeof sessionId !== 'string' ||
+          !idPattern.test(sessionId) || typeof rootTaskId !== 'string' ||
+          !idPattern.test(rootTaskId) || typeof receiptId !== 'string' ||
+          !idPattern.test(receiptId) || typeof ownerId !== 'string' ||
+          ownerForSession(sessionId) !== ownerId) return unknown
+      try {
+        const listed = await listSessions()
+        if (!Array.isArray(listed?.items) || !listed.items.some((item) =>
+          item?.sessionId === sessionId && item.agentPreset === presetForOwner(ownerId))) return unknown
+        return await replyEvidence({ sessionId, receiptId }) ?? unknown
+      } catch { return unknown }
     },
     async openDesktopApp({ appId, ownerId }) {
       requireRuntime()

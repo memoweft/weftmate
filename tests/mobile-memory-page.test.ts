@@ -751,6 +751,39 @@ test('mobile task detail observes exact stop state and ends polling at a proven 
   assert.equal(app.calls.some((call) => call.method === 'shared.tasks.stop'), false)
 })
 
+test('mobile keeps verified file and still-streaming reply as separate task facts', async () => {
+  const taskId = 'task-streaming'
+  const parentId = `source-${'a'.repeat(48)}`
+  const sourceMeta = { kind: 'webpage', title: '长网页', url: 'https://public.example/long',
+    requestedUrl: 'https://public.example/long', readAt: '2026-10-04T00:00:00Z',
+    contentSha256: 'c'.repeat(64), versionHash: 'd'.repeat(64),
+    segmentCount: 4, totalCapturedBytes: 22_000, captureTruncated: false,
+    truncated: true, links: [] }
+  const artifact = { artifactId: 'artifact-streaming', taskId, fileName: '网页摘要.md',
+    state: 'observed', size: 120, sha256: 'a'.repeat(64),
+    verification: { status: 'observed', method: 'sha256_readback' } }
+  const app = harness({ hostTask: { source: 'host', kind: 'session.message', commandId: taskId,
+    taskId, sessionId: 'session-a', status: 'accepted_by_dsh', title: '长网页摘要' },
+  taskDetail: () => ({ taskId, sessionId: 'session-a', sourceText: '总结网页',
+    source: { commandId: taskId, kind: 'session.message', state: 'accepted_by_dsh' },
+    artifacts: [artifact], workspace: { kind: 'browser' }, sources: [
+      { ...sourceMeta, snapshotId: parentId, segmentIndex: 0, byteStart: 0, byteEnd: 10, cited: false },
+      { ...sourceMeta, snapshotId: `source-${'b'.repeat(48)}`, parentSnapshotId: parentId,
+        segmentIndex: 2, byteStart: 16_384, byteEnd: 16_400, cited: true }],
+    replyEvidence: { status: 'streaming', turn: 1,
+      assistantChunks: 8, textChunks: 6, reasoningChunks: 2,
+      assistantMessages: 0, toolSaveObserved: true } }) })
+  await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app did not boot')
+  app.nav.find((button) => button.dataset.page === 'things')!.fire('click')
+  await waitUntil(() => !!findButton(app.get('page-content'), '继续电脑会话'), 'task missing')
+  findButton(app.get('page-content'), '继续电脑会话')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('模型正在生成回复'), 'reply evidence missing')
+  assert.match(app.get('page-content').textContent, /文件已在电脑核验/)
+  assert.match(app.get('page-content').textContent, /回复：模型正在生成回复，尚未见到结束记录/)
+  assert.match(app.get('page-content').textContent, /已读 2\/4 段.*第 1\/4 段.*第 3\/4 段/s)
+  assert.doesNotMatch(app.get('page-content').textContent, /回复回合已正常结束/)
+})
+
 test('mobile task detail keeps normal completion and legacy uncertainty distinct', async () => {
   let legacy = false
   const source = { commandId: 'task-a', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session-a' }

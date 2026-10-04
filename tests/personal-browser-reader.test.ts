@@ -1,9 +1,29 @@
 import assert from 'node:assert/strict'
 import { EventEmitter } from 'node:events'
 import test from 'node:test'
-import { createPersonalBrowserReader } from '../src/personal-browser/index.mjs'
+import { browserCaptureSegments, browserCaptureVersion,
+  createPersonalBrowserReader, MAX_CAPTURE_BYTES } from '../src/personal-browser/index.mjs'
 
-function fakeElectron(mode: 'downgrade' | 'navigation-change' | 'normal', failCleanup = false) {
+test('UTF-8 browser capture segments stay bounded and carry one stable capture version', () => {
+  const url = 'https://public-domain.com/long'
+  const captured = Buffer.from('标题🙂\n' + '甲乙丙丁🙂'.repeat(14_000), 'utf8')
+  assert.ok(captured.length < MAX_CAPTURE_BYTES)
+  const parts = browserCaptureSegments(captured)
+  assert.ok(parts.length > 8 && parts.length <= 32)
+  assert.equal(parts.map((item) => item.text).join(''), captured.toString('utf8'))
+  for (const part of parts) {
+    assert.ok(Buffer.byteLength(part.text) <= 8192)
+    assert.equal(part.byteEnd - part.byteStart, Buffer.byteLength(part.text))
+    assert.equal(captured.subarray(part.byteStart, part.byteEnd).toString('utf8'), part.text)
+  }
+  assert.notEqual(browserCaptureVersion(url, captured),
+    browserCaptureVersion(url, Buffer.from(captured.toString('utf8') + '后来改变的内容')))
+  assert.throws(() => browserCaptureSegments(Buffer.alloc(MAX_CAPTURE_BYTES + 1, 0x61)),
+    (error: { code?: string }) => error.code === 'BROWSER_CAPTURE_INVALID')
+})
+
+function fakeElectron(mode: 'downgrade' | 'navigation-change' | 'normal', failCleanup = false,
+  pageText = 'Visible rendered body') {
   const partitions: string[] = []
   const sessions: Array<{ downloadListeners: number }> = []
   class Contents extends EventEmitter {
@@ -13,7 +33,8 @@ function fakeElectron(mode: 'downgrade' | 'navigation-change' | 'normal', failCl
     getURL() { return this.current }
     async executeJavaScriptInIsolatedWorld() {
       if (mode === 'navigation-change') this.current = 'https://public-domain.com/changed'
-      return { title: 'Synthetic', text: 'Visible rendered body', needsLogin: false, links: [] }
+      return { title: 'Synthetic', text: pageText, needsLogin: false, links: [],
+        headings: ['Overview', 'Later section'] }
     }
   }
   class Window {
@@ -71,6 +92,24 @@ test('a cleaned slot reuses one in-memory session with one fixed download-deny h
     assert.equal(electron.partitions.length, 1)
     assert.equal(electron.sessions[0].downloadListeners, 1)
     assert.equal(reader.status().quarantinedSessions, 0)
+  } finally { await reader.close() }
+})
+
+test('a long rendered page exposes a small lead and marks capture beyond its 256 KiB limit incomplete', async () => {
+  const reader = createPersonalBrowserReader(fakeElectron('normal', false, '甲乙🙂'.repeat(70_000)))
+  try {
+    const result = await reader.read({ ownerId: 'owner-long', taskId: 'task-long',
+      sessionId: 'session-long', receiptId: 'receipt-long', callId: 'call-long',
+      url: 'https://public-domain.com/long' })
+    assert.equal(result.captureTruncated, true)
+    assert.equal(result.truncated, true)
+    assert.equal(result.segmentCount, 32)
+    assert.ok(result.totalCapturedBytes <= MAX_CAPTURE_BYTES)
+    assert.ok(Buffer.byteLength(result.text) <= 8192)
+    assert.ok(Buffer.byteLength(result.outline) <= 2048)
+    assert.equal(result.versionHash,
+      browserCaptureVersion(result.url, Buffer.from(result.capturedText)))
+    assert.equal(result.text, browserCaptureSegments(result.capturedText)[0].text)
   } finally { await reader.close() }
 })
 
