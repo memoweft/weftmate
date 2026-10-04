@@ -5,7 +5,8 @@ param(
   [string]$Manifest,
   [string]$ManifestSha256,
   [string]$StatusFile,
-  [string]$Nonce
+  [string]$Nonce,
+  [switch]$SelfTest
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -136,7 +137,7 @@ function Ready-Switcher([int]$expectedPid) {
   } catch { return $false }
 }
 function Start-Exact([string[]]$argv, [string]$label) {
-  if ((Listener8080).Count -ne 0 -or (HasDirectClients)) { throw 'NINFER_PORT_NOT_FREE' }
+  if (@(Listener8080).Count -ne 0 -or (HasDirectClients)) { throw 'NINFER_PORT_NOT_FREE' }
   $stamp = (Get-Date -Format 'yyyyMMdd-HHmmss') + '-' + [guid]::NewGuid().ToString('N')
   $stdout = Join-Path $plan.acceptanceRoot "$label-$stamp.stdout.log"
   $stderr = Join-Path $plan.acceptanceRoot "$label-$stamp.stderr.log"
@@ -167,6 +168,19 @@ function Start-Exact([string[]]$argv, [string]$label) {
     Start-Sleep -Milliseconds 500
   } while ((Get-Date) -lt $deadline)
   throw 'NINFER_START_TIMEOUT'
+}
+
+if ($SelfTest) {
+  function Listener8080 { return @() }
+  function HasDirectClients { return $false }
+  function Start-Process { throw 'SYNTHETIC_START_REACHED' }
+  $plan = [pscustomobject]@{ runId = 'synthetic'; acceptanceRoot = [IO.Path]::GetTempPath();
+    original = [pscustomobject]@{ declaredWorkingDirectory = [IO.Path]::GetTempPath() } }
+  try { [void](Start-Exact @('synthetic.exe','model.ninfer') 'trial'); throw 'EMPTY_PORT_BLOCKED' }
+  catch { if ($_.Exception.Message -ne 'SYNTHETIC_START_REACHED') { throw } }
+  if (@(Listener8080).Count -ne 0) { throw 'EMPTY_LISTENER_COUNT_WRONG' }
+  Write-Output 'stage14r3-worker-selftest=passed'
+  exit 0
 }
 
 $repository = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
@@ -263,7 +277,7 @@ if ($Action -eq 'Trial') {
 # The administrator has already fenced ingress and stopped the exact temporary
 # PID. A separate S4U task only starts the original route under its original
 # owner/session. It never terminates an existing process.
-if ((Listener8080).Count -ne 0 -or (HasDirectClients)) { throw 'RECOVERY_PORT_NOT_FREE' }
+if (@(Listener8080).Count -ne 0 -or (HasDirectClients)) { throw 'RECOVERY_PORT_NOT_FREE' }
 [void](Start-Exact @($plan.original.argv) 'restore')
 } catch {
   $code = if ($_.Exception.Message -cmatch '^[A-Z][A-Z0-9_]{3,80}$') {
@@ -274,6 +288,8 @@ if ((Listener8080).Count -ne 0 -or (HasDirectClients)) { throw 'RECOVERY_PORT_NO
       [ordered]@{ schemaVersion = 1; runId = if ($null -ne $plan) { $plan.runId } else { $null };
         action = $Action; nonce = $Nonce; phase = 'failed'; code = $code;
         token = $tokenFacts;
+        errorType = $_.Exception.GetType().Name;
+        errorLine = [int]$_.InvocationInfo.ScriptLineNumber;
         at = (Get-Date).ToString('o') } | ConvertTo-Json -Depth 3 |
         Set-Content -LiteralPath $StatusFile -Encoding UTF8
     } catch { }
