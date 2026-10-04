@@ -93,7 +93,7 @@ Apple 官方支持独立 watchOS App（手表应用），独立应用需要自�
 
 Mac 与 iPhone 的本机模型入口先兼容已配置服务，模型接入优先复用现有运行方式。Mac 现有 Electron（桌面应用框架）/DSH 宿主的可移植部分单独核对；Windows 路径、`get-windows` 和项目 PowerShell 读取器需平台适配，不能靠改 package.json 标题就称完成 Mac 版。
 
-更新分三层：服务器数据/模型目录/任务能力可以更新；采用的网页内容与共享界面资源按现有清单与兼容能力更新；原生 Swift 代码和新增系统能力通过安装包更新。不要承诺所有 SwiftUI 变更都能由服务器免打包推送。更新时保留草稿、账户和在途任务，失败恢复可用版本。
+更新分三层：服务器数据/模型目录/任务能力可以更新；采用的网页内容与共享界面资源按现有清单与兼容能力更新；原生 Swift 代码和新增系统能力通过安装包更新。2026-10-04 用户确认：需要新原生包时，在更新入口点击下载新版，再由本人手动安装或覆盖；原生手感和功能优先，继续使用原生主屏。更新时保留草稿、账户和在途任务，失败恢复可用版本。
 
 Watch Connectivity 的即时消息依赖对端可达，后台传输由系统调度；独立手表的服务器通信要按真实网络状态验证，不能把配对或排队当已送达。[WCSession](https://developer.apple.com/documentation/watchconnectivity/wcsession)
 
@@ -159,6 +159,60 @@ DSH 固定依据为 `tests/contract/dsh-pin.json`：版本`0.1.0-rc.5`、提交`
 
 ## Apple 侧实施记录
 
-状态：交接材料已准备，Mac 准备轮已派发；待取得当前源码快照后开始第一条真实客户端流程。
+状态：Apple 候选 `0.1.0 / 1` 已固定，待云验证；真实后端联调未通过，里程碑 A 尚未完成验收。当前仅实现账户、设备与原历史读取，不启用消息发送或健康数据能力。
+
+2026-10-04 Mac 接收记录：源码包 6,886,010 字节，SHA-256 为 `43171b9533ab237ec6ddce70b4c71a6b0caefc9070825b3cddcbc9c74d1722c5`。解压根为 `/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate`。包声明的来源提交为 `844429c32a866c53145b9a8ba00fc3ca1e653779`；包不含原 Git 历史。Mac 在该快照上建立独立 Apple 工作历史，初始本地提交 `9bef79dd89c85035a4a818a2e6c5060f55798d04`，只导入包内 735 个文件，没有远端推送。
+
+本轮范围：`apps/apple/` 下的共享 Swift 核心、原生 Mac/iPhone 登录注册、服务器设置、设备和原会话/历史读取，以及可构建运行的 watchOS 目标。本任务卡由 Mac 记录实施证据；全局 CURRENT_STATE 和 Windows BACKEND 协作记录由 Windows 主助手合入。源码包未包含相邻 collab 目录，不据此新建另一套协作记录。
+
+共享核心、原生界面、工程/测试分别交给实际子 Agent 实现；主助手负责范围、正式契约核对和独立验收。现有 `/Users/yun/Desktop/APPLE` 保持只读参考。构建与测试数据分开，私有验证资料放源码外 `/Users/yun/Desktop/WeftMate/AppleValidation-844429c`。
+
+验证计划：三端实际构建与启动；共享核心检查正常/失败/凭据及账户隔离；真实后端隔离测试账户的登录、设备归属和原会话读取；模拟器登录错误、输入保持与退出/重启。编译错误按明确错误修复，连续三轮未能收口时报告具体阻塞；真实后端不可达时保留失败，不用模拟响应充当真实通过。本轮固定候选后按既有规则标记待云验证，不自动进入 B—F。
+
+首次连接检查：公网直连发生 TLS 连接失败；经本机既有 HTTP 代理为 CONNECT 503；保留原域名、端口和证书校验的局域网连接到 Windows `192.168.31.144:443` 被拒绝。当前尚未创建测试账户，真实认证/会话联调未通过；等待 Windows 侧恢复可达入口，Apple 构建继续。
+
+共同接口需求：`src/personal-access/index.mjs` 的同步能力声明只接受现有 `nativeVersionCode`（至少 11），账户模型密钥迁移还要求至少 12；尚无 Apple 的构建号与共同协议能力分离入口。新来源对话采用会检查来源设备的能力声明，需要 Windows 侧补跨平台协商。已经绑定的宿主 `session.message` 命令与新来源采用的检查不同，不能据此断言所有 Apple 续聊都被版本门槛阻止。Mac 不填 Android 版本号绕过检查；本轮只实现登录、设备和原历史读取，尚未实现持久发送账本或发送。稳定安装身份和平台字段可作为后续认证接口的最小补充，当前先恢复服务端签发的 cookie/device，避免每次启动都重新登录产生设备。
 
 Apple 侧接续在本节记录首个源码版本、工程路径、工具链、已完成里程碑、真实联调与未完成的接口需求；Windows 侧读取这些证据更新全局进度。
+
+### 本轮实际检查
+
+- 当前工程为 Apple 候选 `0.1.0 / 1`，与既有正式公网 UI `0.7.1` 的版本独立。Xcode 26.3（17C529）、Swift 6.2.4、Intel x86_64；本机 macOS 26.6.2（25G83）。最低部署设置为 macOS 14、iOS 17、watchOS 10，尚未在最低系统实跑。
+- 共享 Swift 核心 16 项测试通过，主助手独立复跑亦通过：`swift test --scratch-path /tmp/weftmate-apple-core-tests-844429c`。源码外日志 `AppleValidation-844429c/core-root-acceptance-01.log`。脚本传输测试不能替代真实后端认证。
+- Mac 构建 `build-mac-05.log` 末尾为 `BUILD SUCCEEDED`，实际登录窗口截图 `mac-login-01.png` 已审查；最终 app 的网络权限说明为完整中文。前两次 Mac 构建因 Debug 多架构与本地 Swift 包产物不匹配而失败，修为当前架构后收口；早期完整日志未保存，仅保存实际诊断摘录 `build-mac-prior-attempts.txt`，后续日志均按唯一名称保留。
+- iPhone 最终构建 `build-phone-03.log` 通过，iPhone 17 / iOS 26.3 模拟器实际启动并取得 `iphone-login-01.png`，登录入口布局已审查。首次构建发生共享包仍在写入时的源文件缺失，保留 `build-phone-01.log`。UI 测试 `test-phone-01.log` 实际为 2 通过、1 真实登录跳过、0 失败：注册入口可操作，连接真实不可达的 `https://127.0.0.1:1` 后显示失败、用户名保留、登录按钮恢复且不进入会话列表。`PhoneUITests-01.xcresult` 与 app-only 附件 `PhoneUIAttachments-01` 保留并视觉审查；不能把整体测试成功记作认证通过。
+- Mac XCUITest `test-mac-01.log` 在执行任何用例前因 `Timed out while enabling automation mode` 失败，`MacUITests-01.xcresult` 保留；不能记作界面测试通过，不重复同一环境超时。实际登录窗口可见检查与自动化测试结果分别记录。
+- Windows 通知公网恢复后再次直接请求正式 `/personal/v1/auth/state`：curl 退出 35，TLS `SSL_ERROR_SYSCALL`，约 5.15 秒，`HTTP_STATUS:000`，无 HTTP 响应；原生 `AppleAcceptance --probe` 亦失败为 `SERVICE_UNAVAILABLE`、退出 1。尚未创建隔离测试账户，注册/登录请求未执行，真实账户归属、Keychain 恢复与原历史联调保持未通过。
+- Windows 新 Apple 功能声明适配尚待其验证与发布通知；Mac 不自行启用或写 Android 版本数字。设备授权故障另行排查，不扩大本轮服务代理/TLS调查或健康功能范围。
+
+- Watch 最终构建 `build-watch-01.log` 通过，watchOS 26.2 / Apple Watch Series 11（46mm）沿用现有 iPhone 17 / iOS 26.2 配对，实际安装启动并显示 WeftMate 场景。有效截图为 `watch-entry-02.png`；第一张截图是启动前系统表盘，排除。当前明确显示账户/手机同步尚未接通，只形成可运行目标与独立本机身份，未通过手表账户、接续、后台或独立联网验证。
+- 代码与测试由实际子 Agent 执行，主助手独立复跑核心测试、核对最终产物与截图。本轮子 Agent 按启动时主任务模型继承运行，未指定模型覆盖；当前主任务记录模型为 `gpt-6.1-sol`。候选冻结后不自动进入 B—F。
+
+### 本人试用入口与四项操作
+
+工程：`/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate/apps/apple/WeftMate.xcodeproj`。Mac 已构建应用：`/Users/yun/Desktop/WeftMate/AppleValidation-844429c/DerivedData/Build/Products/Debug/WeftMateMac.app`。模拟器入口在该工程选择 `WeftMatePhone` 或 `WeftMateWatch`；构建/运行脚本见 `apps/apple/README.md`。
+
+1. 打开上述 Mac 应用：应看到原生 WeftMate 登录窗口，标题、账户、密码和服务器入口可见。窗口不存在或持续停在打开状态即为失败。
+2. 在 Mac 或 iPhone 点击“注册”，再切回“登录”：昵称和账户规则随模式显示，页面可滚动；不提交日常账户资料。
+3. 登录页“更改”服务器为 `https://127.0.0.1:1`，输入仅用于失败检查的账户名 `apple_failure_probe` 与密码 `LocalFailureProbe123!` 并点击登录：应显示服务器不可达、保留当前输入、恢复登录按钮，不进入会话列表。这是实际不可达连接测试，不创建账户。结束后恢复 `https://home.weftmate.com:8443`。
+4. 打开 Watch 模拟器中的 WeftMate：应显示“尚未连接账户”与尚未接通说明；滚动查看本机身份入口，不应显示已经同步或任务已发送。该检查只验证模拟器可见入口。
+
+真实注册、设备归属、原历史读取和重启恢复由开发者在入口实际可达后使用隔离账户补测，未将排障交给用户。真机安装与 Watch 后台验证尚未执行，签名团队未配置；不要将模拟器通过记成实机通过。
+
+恢复：关闭本轮应用即可停止试用；未迁移日常数据库、模型配置或旧 `/Users/yun/Desktop/APPLE` 工程。源码与运行资料分开，新 Apple 工作历史保留初始快照 `9bef79dd89c85035a4a818a2e6c5060f55798d04`，需要回看基线时另建目录，不能 reset/clean 当前目录或删除钥匙串。
+
+### 原生更新入口需求（2026-10-04 用户决定）
+
+Mac/iPhone 的设置页已有当前版本展示；新原生包的发布清单、下载与安装渠道尚未配置，本候选没有下载按钮或发布链接。完整更新页按后续页面里程碑实现，当前记录需求，不将界面文字当发布能力。
+
+- 更新页展示当前版本/构建、真实新版本和变更说明、对应平台渠道。未发布包或渠道未配置时显示“尚未配置新版下载”；无法连服务时显示“暂时无法检查更新”，不能当作已是最新版。只有实际发布且适配本平台的包/渠道才显示可操作入口。
+- 用户点击“下载新版”取得真实可安装产物或跳转既有渠道，再由本人手动安装或覆盖。Mac 对应应用包/DMG等；iPhone、Watch 对应真实签名的开发安装、TestFlight或后续正式分发渠道。源码ZIP和未签名IPA不标为可直接安装版本。
+- 更新不会自动替用户安装、卸载或清除数据。保持同一App身份与匹配签名/Keychain访问组，账户、服务器设备身份、本地聊天、草稿和原任务身份保留。当前草稿仅在内存，尚未具备跨安装/进程持久保留能力；完整更新交付之前补持久化并实测，不能承诺现候选已满足。
+- 真正覆盖安装前后验证登录、设备ID、会话/任务ID、已有消息与未发送草稿；文件数据结构需保持兼容或有已验证迁移及恢复。取消或下载失败不改变当前安装和数据；不自动重放在途动作。签名/安装渠道和覆盖保留实测均尚未执行。
+- 共同决定由Windows侧维护 `docs/DECISIONS.md` 与 `docs/FRONTEND_PLAN.md`；Apple任务卡只记录原生端要求与实际状态。跨机工程信息通过Windows侧现有读取桥交接。
+
+### 正式入口最新复测（2026-10-04）
+
+`GET https://home.weftmate.com:8443/personal/v1/auth/state`：curl无HTTP/HTTPS/ALL_PROXY环境变量，未显式设置HTTP代理；连接目标 `198.18.0.26`，约5.09秒后退出35（LibreSSL TLS `SSL_ERROR_SYSCALL`），`HTTP_STATUS:000`，没有HTTP响应。系统HTTP/HTTPS代理配置仍开启，地址 `127.0.0.1:1082`，不据配置推断请求实际路由。
+
+另以与客户端相同的临时URLSession、无共享cookie/cache及正常证书校验执行原生只读诊断：采集到 `isProxyConnection=false`、协议未知；没有HTTP响应，错误 `NSURLErrorDomain -1005`（network connection lost），底层为 `kCFErrorDomainCFNetwork -1005`。源码外证据 `AppleValidation-844429c/native-routing-probe-01.log`。这次也未发送密码/Token或注册请求。该错误发生在HTTP之前，不能归为登录接口返回401/403/500；真实认证和原历史联调仍未通过。

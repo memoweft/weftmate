@@ -1,0 +1,2 @@
+// Copy to Local.xcconfig for physical devices. This file contains no credentials.
+DEVELOPMENT_TEAM = YOUR_APPLE_TEAM_ID

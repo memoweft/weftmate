@@ -1,0 +1,7 @@
+Build/
+Config/Local.xcconfig
+*.xcuserstate
+xcuserdata/
+*.xcresult
+*.xctestrun
+.DS_Store

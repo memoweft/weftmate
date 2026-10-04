@@ -1,0 +1,204 @@
+import SwiftUI
+import WeftMateCore
+
+struct WeftMateRootView: View {
+    @ObservedObject var model: AppleAppModel
+
+    var body: some View {
+        Group {
+            if model.restoring {
+                VStack(spacing: 20) {
+                    BrandMark(size: 48)
+                    ProgressView("正在打开 WeftMate…").font(.callout).foregroundStyle(Weave.muted)
+                }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Weave.canvas)
+            } else if let session = model.session {
+                #if os(macOS)
+                MacWorkspace(model: model).id(session.account.ownerId)
+                #else
+                PhoneWorkspace(model: model).id(session.account.ownerId)
+                #endif
+            } else {
+                AuthView(model: model)
+            }
+        }
+        .tint(Weave.accent)
+        .task { await model.start() }
+        .accessibilityIdentifier("weftmateRoot")
+    }
+}
+
+#if os(macOS)
+private enum SidebarSelection: Hashable {
+    case conversation(String), devices, settings
+}
+
+private struct MacWorkspace: View {
+    @ObservedObject var model: AppleAppModel
+    @State private var selected: SidebarSelection?
+    @State private var search = ""
+
+    var body: some View {
+        NavigationSplitView {
+            VStack(spacing: 0) {
+                HStack(spacing: 10) {
+                    BrandMark(size: 30)
+                    Text("WeftMate").font(.title3.weight(.semibold)).tracking(-0.5)
+                    Spacer()
+                }.padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 14)
+
+                List(selection: $selected) {
+                    Section("最近对话") {
+                        ConversationListContent(model: model, search: $search)
+                        ForEach(filteredConversations) { conversation in
+                            ConversationRow(conversation: conversation)
+                                .tag(SidebarSelection.conversation(conversation.id))
+                        }
+                    }
+                    Section {
+                        Label("设备", systemImage: "laptopcomputer.and.iphone").tag(SidebarSelection.devices)
+                        Label("设置", systemImage: "slider.horizontal.3").tag(SidebarSelection.settings)
+                    }
+                }
+                .listStyle(.sidebar)
+                .searchable(text: $search, placement: .sidebar, prompt: "搜索原会话")
+                .accessibilityIdentifier("conversationList")
+
+                Divider()
+                Button { selected = .settings } label: {
+                    HStack(spacing: 11) {
+                        Text(String(model.accountName.prefix(1)).uppercased())
+                            .font(.body.weight(.medium)).foregroundStyle(Weave.accent)
+                            .frame(width: 34, height: 34).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: 11))
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(model.accountName).font(.callout.weight(.medium)).lineLimit(1)
+                            Text(model.verificationPending ? "等待重新验证登录" : model.serverDisplayName)
+                                .font(.caption2).foregroundStyle(Weave.muted).lineLimit(1)
+                        }
+                        Spacer()
+                        Image(systemName: "chevron.right").font(.caption).foregroundStyle(Weave.muted)
+                    }
+                    .padding(16).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).accessibilityLabel("账户与设置")
+            }
+            .background(Weave.soft)
+            .navigationSplitViewColumnWidth(min: 230, ideal: 260, max: 320)
+            .toolbar {
+                ToolbarItem {
+                    Button { Task { await model.refresh() } } label: {
+                        Label("刷新", systemImage: "arrow.clockwise")
+                    }.disabled(model.refreshing)
+                }
+            }
+        } detail: {
+            switch selected {
+            case .conversation(let id):
+                if let conversation = model.conversations.first(where: { $0.id == id }) {
+                    ConversationView(model: model, conversation: conversation)
+                } else {
+                    WelcomeView(model: model)
+                }
+            case .devices: DevicesView(model: model)
+            case .settings: SettingsView(model: model)
+            case nil: WelcomeView(model: model)
+            }
+        }
+        .navigationSplitViewStyle(.balanced)
+        .onChange(of: selected) { _, selection in
+            if case .conversation = selection {} else { model.closeConversation() }
+        }
+    }
+
+    private var filteredConversations: [WeftMateCore.ConversationSummary] {
+        search.isEmpty ? model.conversations : model.conversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
+    }
+}
+#else
+private struct PhoneWorkspace: View {
+    @ObservedObject var model: AppleAppModel
+    @State private var search = ""
+    var body: some View {
+        TabView {
+            NavigationStack {
+                List {
+                    Section {
+                        HStack(spacing: 12) {
+                            BrandMark(size: 35)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("接上之前的话题").font(.headline).foregroundStyle(Weave.ink)
+                                Text(model.accountName).font(.caption).foregroundStyle(Weave.muted)
+                            }
+                        }.padding(.vertical, 6)
+                    }.listRowBackground(Weave.surface)
+                    Section("原会话") {
+                        ConversationListContent(model: model, search: $search)
+                        ForEach(filteredConversations) { conversation in
+                            NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }
+                        }
+                    }
+                }
+                .listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Weave.canvas)
+                .searchable(text: $search, prompt: "搜索原会话")
+                .navigationTitle("对话")
+                .navigationDestination(for: String.self) { id in
+                    if let conversation = model.conversations.first(where: { $0.id == id }) {
+                        ConversationView(model: model, conversation: conversation)
+                    } else {
+                        EmptyState(symbol: "text.bubble", title: "会话已变更", message: "返回会话列表后刷新。")
+                    }
+                }
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { Task { await model.refresh() } } label: {
+                            Label("刷新会话", systemImage: "arrow.clockwise")
+                        }.disabled(model.refreshing)
+                    }
+                }
+                .refreshable { await model.refresh() }
+                .accessibilityIdentifier("conversationList")
+            }
+            .tabItem { Label("对话", systemImage: "bubble.left.and.bubble.right") }
+            NavigationStack { DevicesView(model: model) }
+                .tabItem { Label("设备", systemImage: "laptopcomputer.and.iphone") }
+            NavigationStack { SettingsView(model: model) }
+                .tabItem { Label("设置", systemImage: "slider.horizontal.3") }
+        }
+    }
+
+    private var filteredConversations: [WeftMateCore.ConversationSummary] {
+        search.isEmpty ? model.conversations : model.conversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
+    }
+}
+#endif
+
+private struct WelcomeView: View {
+    @ObservedObject var model: AppleAppModel
+    var body: some View {
+        VStack(alignment: .leading, spacing: 23) {
+            HStack(spacing: 9) {
+                BrandMark(size: 25)
+                Text("WeftMate").font(.callout.weight(.medium)).foregroundStyle(Weave.muted)
+            }
+            Text("\(model.accountName)，\n接着聊吧。")
+                .font(.system(size: 34, weight: .medium)).tracking(-1).foregroundStyle(Weave.ink)
+                .fixedSize(horizontal: false, vertical: true)
+            Text("从侧栏选择一段原会话。\n你在其他设备上的记录，会在同一个账户中接续。")
+                .font(.body).lineSpacing(7).foregroundStyle(Weave.muted)
+            if let error = model.conversationsError {
+                InlineNotice(message: error, isError: true)
+                Button("重新连接") { Task { await model.refresh() } }.buttonStyle(.bordered)
+                    .disabled(model.refreshing)
+            } else if model.refreshing {
+                HStack(spacing: 10) { ProgressView().controlSize(.small); Text("正在读取原会话…") }
+                    .font(.callout).foregroundStyle(Weave.muted)
+            } else if model.lastRefresh != nil {
+                Label("已读取 \(model.conversations.count) 段原会话", systemImage: "checkmark.circle")
+                    .font(.callout).foregroundStyle(Weave.secondary)
+            }
+        }
+        .frame(maxWidth: 440, alignment: .leading).padding(40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Weave.surface)
+        .navigationTitle("WeftMate")
+    }
+}
