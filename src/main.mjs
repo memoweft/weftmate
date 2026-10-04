@@ -68,6 +68,9 @@ import { initDevices } from './devices.ts';
 import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
 import { ModWindowManager } from './mod-window-manager.mjs';
 import { createPersonalAccessBackend } from './personal-access-backend.mjs';
+import { createObservationRecorder } from './personal-model-observation/record.mjs';
+import { createPersonalModelObservationProxy } from './personal-model-observation/proxy.mjs';
+import { stage14R2ObservationProfile } from './personal-model-observation/policy.mjs';
 import { createPersonalDesktopTask } from './personal-desktop-task.mjs';
 import { syntheticStopFixtureRoute } from './synthetic-stop-fixture-policy.mjs';
 import { syntheticBrowserFixtureSettings } from './synthetic-browser-fixture-policy.mjs';
@@ -79,7 +82,7 @@ import { loadPersonalMemoryConfig } from './personal-memory/config.mjs';
 import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { memoryRecallDestination, memorySessionPolicy } from './personal-memory/policy.mjs';
-import { ensurePrivateDirectory } from './private-host-storage.mjs';
+import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
 const personalHostMode = personalHostRequested(process.argv);
@@ -258,7 +261,11 @@ const activeStageOneTurns = new Set();
 let ensureSharedRuntime = null;
 let saveModelRoute = null;
 let configureLocalModel = null;
+let configureObservedLocalModel = null;
 let configureLocalCatalog = null;
+let stage14R2Observation = null;
+let modelObservationProxy = null;
+let modelObservationRecorder = null;
 let enqueueExclusiveMainOperation = null;
 let exclusiveMainQueue = null;
 // Sidebar fetching is intentionally best-effort, but the startup reference
@@ -462,6 +469,14 @@ process.on('message', (message) => {
           result = await configureLocalModel({ modelId: message.modelId, name: message.name });
           break;
         }
+        case 'model.configure-observed-local': {
+          if (!stage14R2Observation || !configureObservedLocalModel ||
+              Object.keys(message).some((key) => !['type', 'requestId', 'action'].includes(key))) {
+            throw Object.assign(new Error('invalid observation request'), { code: 'INVALID_COMMAND' });
+          }
+          result = await configureObservedLocalModel();
+          break;
+        }
         case 'model.configure-local-catalog': {
           if (Object.keys(message).some((key) => !['type', 'requestId', 'action'].includes(key)) ||
               !configureLocalCatalog) throw Object.assign(new Error('invalid catalog request'), { code: 'INVALID_COMMAND' });
@@ -476,10 +491,18 @@ process.on('message', (message) => {
           if (!fixture) {
             throw Object.assign(new Error('invalid fixture configuration'), { code: 'INVALID_COMMAND' });
           }
-          result = await saveModelRoute({ id: 'synthetic-stop-fixture', name: 'Synthetic stop fixture',
-            provider: 'openai-compatible', baseUrl: fixture.baseUrl, model: 'synthetic-stop-model',
-            apiKey: 'synthetic-stop-fixture-only', contextWindow: 8192, outputReserve: 1024 },
-          { catalogOnly: true });
+          const observer = stage14R2Observation
+            ? await createPersonalModelObservationProxy({
+              targetOrigin: new URL(fixture.baseUrl).origin, recorder: modelObservationRecorder,
+              runId: stage14R2Observation.runId,
+            }) : null;
+          try {
+            result = await saveModelRoute({ id: 'synthetic-stop-fixture', name: 'Synthetic stop fixture',
+              provider: 'openai-compatible', baseUrl: observer?.baseUrl ?? fixture.baseUrl,
+              model: 'synthetic-stop-model', apiKey: 'synthetic-stop-fixture-only',
+              contextWindow: 8192, outputReserve: 1024 }, { catalogOnly: true });
+            if (observer) modelObservationProxy = observer;
+          } catch (error) { await observer?.close(); throw error; }
           break;
         }
         case 'status': result = personalAccessService.status(); break;
@@ -1095,6 +1118,21 @@ async function bootstrap() {
   // otherwise normalize/rewrite exactly the bytes the journal protects.
   const userDataDir = app.getPath('userData');
   if (personalHostMode) await ensurePrivateDirectory(userDataDir);
+  if (process.env.WEFTMATE_STAGE14_R2_OBSERVE === '1') {
+    if (!personalHostMode || app.isPackaged) throw new Error('Stage14R2 observer requires an isolated development host');
+    stage14R2Observation = stage14R2ObservationProfile({ enabled: '1', profile: userDataDir,
+      repository: process.cwd(), runId: process.env.WEFTMATE_STAGE14_R2_RUN_ID });
+    const observationDir = await ensurePrivateDirectory(join(userDataDir, 'stage14-r2-observation'));
+    const semanticFile = join(observationDir, 'semantic.jsonl');
+    const networkFile = join(observationDir, 'network.jsonl');
+    for (const file of [semanticFile, networkFile]) {
+      if (!existsSync(file)) writeFileSync(file, '', { flag: 'wx', mode: 0o600 });
+      await ensurePrivateFile(file);
+    }
+    process.env.WEFTMATE_STAGE14_R2_SEMANTIC_LOG = semanticFile;
+    modelObservationRecorder = createObservationRecorder(networkFile);
+    stage14R2Observation = { ...stage14R2Observation, semanticFile, networkFile };
+  }
   const dshHome = join(userDataDir, 'dsh-home');
   const ROUTES_PATCH = join(dshHome, 'weftmate-stage2-model-routes.patch.yml');
   const SECURITY_PATCH = join(dshHome, 'weftmate-security-credentials.patch.yml');
@@ -1156,6 +1194,11 @@ async function bootstrap() {
         '- insert:',
         '    - id: weftmate-personal-reply-evidence',
         '      name: ./plugins/weftmate-personal-reply-evidence.mjs',
+        ...(stage14R2Observation ? [
+          '- insert:',
+          '    - id: weftmate-personal-model-observer',
+          '      name: ./plugins/weftmate-personal-model-observer.mjs',
+        ] : []),
       ] : []),
       '',
     ].join('\n');
@@ -2208,6 +2251,23 @@ async function bootstrap() {
     return { configured: true, profileId: profile.id, modelId: profile.model,
       verification: 'catalog_only', inferenceVerified: false };
   };
+  configureObservedLocalModel = async () => {
+    if (!stage14R2Observation || !personalHostMode || !personalAccessService || isQuitting ||
+        modelObservationProxy || !modelObservationRecorder) {
+      throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
+    }
+    const observer = await createPersonalModelObservationProxy({
+      targetOrigin: 'http://127.0.0.1:8081', recorder: modelObservationRecorder,
+      runId: stage14R2Observation.runId,
+    });
+    try {
+      const prepared = await prepareLocalModelConfig({ modelId: 'qwen3.8-27b' });
+      const profile = await saveModelRoute({ ...prepared, baseUrl: observer.baseUrl }, { catalogOnly: true });
+      modelObservationProxy = observer;
+      return { configured: true, profileId: profile.id, modelId: profile.model,
+        verification: 'catalog_only', inferenceVerified: false, observation: 'isolated' };
+    } catch (error) { await observer.close(); throw error; }
+  };
   configureLocalCatalog = async () => {
     if (!personalHostMode || !personalAccessService || isQuitting) {
       throw Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' });
@@ -3104,6 +3164,11 @@ app.on('before-quit', (e) => {
       logCrash('shutdown-dsh-runtime', err);
       console.error('[weftmate] DSH 退出收尾出错(仍继续退出):', err && err.message ? err.message : err);
     }
+    if (modelObservationProxy) {
+      try { await modelObservationProxy.close(); }
+      catch { /* Isolated observer cleanup must not block host shutdown. */ }
+      finally { modelObservationProxy = null; modelObservationRecorder = null; }
+    } else modelObservationRecorder?.close?.();
   })();
   void shutdownPromise.finally(() => {
     cleanupDone = true;
