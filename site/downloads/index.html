@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#000000">
+  <meta name="color-scheme" content="dark">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <meta name="description" content="查看 WeftMate 各平台的官方下载与发布状态。">
+  <link rel="canonical" href="https://www.weftmate.com/downloads/">
+  <title>下载 WeftMate</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">跳到正文</a>
+  <header class="site-header">
+    <nav class="wrap nav" aria-label="主导航">
+      <a class="brand" href="/" aria-label="WeftMate 首页">
+        <svg class="glyph" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="brand-gradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#64d2ff"/><stop offset="1" stop-color="#5e5ce6"/></linearGradient></defs><path d="M16 18c12 0 12 28 24 28 5 0 8-3 8-8 0-9-9-14-16-8-7 6-5 16 3 18" fill="none" stroke="url(#brand-gradient)" stroke-width="5" stroke-linecap="round"/></svg>
+        WeftMate
+      </a>
+      <div class="nav-links"><a href="/">首页</a><a href="/memoweft.html">MemoWeft</a></div>
+      <a class="btn line sm nav-current" href="/downloads/" aria-current="page">下载应用</a>
+    </nav>
+  </header>
+
+  <main id="main" class="wrap page">
+    <section class="intro" aria-labelledby="page-title">
+      <h1 id="page-title">下载 WeftMate</h1>
+      <p>选择你的设备，查看官方安装包、版本和平台状态。公开安装包无需登录。</p>
+    </section>
+
+    <p id="loading-state" class="page-state" role="status" aria-live="polite">正在读取发布清单…</p>
+    <section id="error-state" class="page-state error-state" role="alert" hidden>
+      <p id="error-message">暂时无法读取发布信息。</p>
+      <button id="retry-button" class="btn line" type="button">重新读取</button>
+    </section>
+
+    <nav id="platform-picker" class="platform-picker" aria-label="选择平台" role="tablist" hidden>
+      <button class="platform-tab" id="tab-macos" type="button" role="tab" data-platform="macos" aria-controls="release-panel" aria-selected="false">Mac</button>
+      <button class="platform-tab" id="tab-android" type="button" role="tab" data-platform="android" aria-controls="release-panel" aria-selected="false">Android</button>
+      <button class="platform-tab" id="tab-windows" type="button" role="tab" data-platform="windows" aria-controls="release-panel" aria-selected="false">Windows</button>
+      <button class="platform-tab" id="tab-ios" type="button" role="tab" data-platform="ios" aria-controls="release-panel" aria-selected="false">iPhone</button>
+      <button class="platform-tab" id="tab-watchos" type="button" role="tab" data-platform="watchos" aria-controls="release-panel" aria-selected="false">Apple Watch</button>
+    </nav>
+
+    <section id="release-panel" class="release-panel" role="tabpanel" aria-labelledby="selected-platform" tabindex="0" hidden>
+      <div class="release-info">
+        <div class="release-heading">
+          <div class="release-title-row"><h2 id="selected-platform"></h2><p id="platform-state" class="platform-state"></p></div>
+          <span id="recommendation" class="recommendation" hidden></span>
+        </div>
+        <p id="release-summary" class="release-summary"></p>
+        <dl id="release-details" class="release-details"></dl>
+        <p id="release-notes" class="release-notes" hidden></p>
+        <div class="release-actions">
+          <a id="download-action" class="btn primary" hidden>下载</a>
+          <a id="web-action" class="btn primary" target="_blank" rel="noopener noreferrer" hidden>打开网页版</a>
+        </div>
+        <p id="availability-note" class="availability-note"></p>
+      </div>
+      <aside class="qr-area" aria-labelledby="qr-title">
+        <h3 id="qr-title">手机扫码打开此平台页面</h3>
+        <div id="qr-frame" class="qr-frame">
+          <p id="qr-unavailable" class="qr-unavailable" hidden>二维码暂时无法读取，请复制页面链接。</p>
+        </div>
+        <a id="landing-link" class="landing-link" href="#" hidden></a>
+        <button id="copy-link" class="btn line copy-button" type="button" disabled>复制此平台链接</button>
+        <p id="copy-status" class="copy-status" role="status" aria-live="polite"></p>
+      </aside>
+    </section>
+
+    <noscript><p class="page-state">请启用 JavaScript 以读取当前平台和发布信息。</p></noscript>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap footer-inner"><a href="/">WeftMate</a><span>官方发布页</span><a href="/memoweft.html">MemoWeft</a></div>
+  </footer>
+</body>
+</html>
