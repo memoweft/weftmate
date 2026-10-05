@@ -855,6 +855,14 @@ export interface PersonalTaskStopResult {
 const TASK_STOP_PROTOCOL = 'weftmate.personal-task-control.v1'
 const PROJECT_PROOF_PROTOCOL = 'weftmate.personal-project-proof.v1'
 const MODEL_IDLE_PROTOCOL = 'weftmate.personal-model-idle.v1'
+export type PersonalModelIdleReason = 'idle' | 'agent_running' | 'inbox_pending' |
+  'agent_state_unknown' | 'agent_list_unknown' | 'runtime_unavailable' | 'timeout' |
+  'ipc_unavailable' | 'invalid_response'
+export interface PersonalModelIdleResult { idle: boolean, reason: PersonalModelIdleReason }
+const MODEL_IDLE_REASONS = new Set<PersonalModelIdleReason>(['idle', 'agent_running', 'inbox_pending',
+  'agent_state_unknown', 'agent_list_unknown'])
+const modelIdleResult = (reason: PersonalModelIdleReason): PersonalModelIdleResult =>
+  ({ idle: reason === 'idle', reason })
 const REPLY_EVIDENCE_PROTOCOL = 'weftmate.personal-reply-evidence.v1'
 const unknownReplyEvidence = () => ({ status: 'unconfirmed' as const, turn: null,
   assistantChunks: 0, textChunks: 0, reasoningChunks: 0,
@@ -1162,7 +1170,7 @@ export class DshWebRuntime {
   private readonly projectProofPending = new Map<string, { child: ChildProcess,
     timer: NodeJS.Timeout, resolve: (verified: boolean) => void }>()
   private readonly modelIdlePending = new Map<string, { child: ChildProcess,
-    timer: NodeJS.Timeout, resolve: (idle: boolean) => void }>()
+    timer: NodeJS.Timeout, resolve: (result: PersonalModelIdleResult) => void }>()
   private readonly replyEvidencePending = new Map<string, { child: ChildProcess,
     timer: NodeJS.Timeout, resolve: (result: unknown) => void }>()
 
@@ -1476,7 +1484,7 @@ export class DshWebRuntime {
       if (pending.child !== child) continue
       this.modelIdlePending.delete(id)
       clearTimeout(pending.timer)
-      pending.resolve(false)
+      pending.resolve(modelIdleResult('runtime_unavailable'))
     }
   }
 
@@ -1559,23 +1567,27 @@ export class DshWebRuntime {
     if (!pending || pending.child !== child) return
     this.modelIdlePending.delete(row.id)
     clearTimeout(pending.timer)
+    const exact = Object.keys(row).sort().join(',') === 'id,idle,protocol,reason'
+    const reason = MODEL_IDLE_REASONS.has(row.reason as PersonalModelIdleReason)
+      ? row.reason as PersonalModelIdleReason : null
+    const consistent = reason !== null && row.idle === (reason === 'idle')
     pending.resolve(!this.closed && this.child === child && child.connected &&
-      !this.closedChildren.has(child) && Object.keys(row).sort().join(',') === 'id,idle,protocol' &&
-      row.idle === true)
+      !this.closedChildren.has(child) && exact && consistent
+      ? modelIdleResult(reason!) : modelIdleResult('invalid_response'))
   }
 
   /** Exact current-child, in-process DSH running/inbox snapshot. Unknown is busy. */
-  personalModelQueueIdle(): Promise<boolean> {
+  personalModelQueueIdle(): Promise<PersonalModelIdleResult> {
     const child = this.child
     if (!this.opts.personalHostApiProxy || this.closed || !child ||
         this.closedChildren.has(child) || !child.connected || this.originValue === null) {
-      return Promise.resolve(false)
+      return Promise.resolve(modelIdleResult('runtime_unavailable'))
     }
     const id = `model-idle-${randomUUID()}`
     return new Promise((resolve) => {
       const timer = setTimeout(() => {
         if (!this.modelIdlePending.delete(id)) return
-        resolve(false)
+        resolve(modelIdleResult('timeout'))
       }, 2_000)
       this.modelIdlePending.set(id, { child, timer, resolve })
       try {
@@ -1583,12 +1595,12 @@ export class DshWebRuntime {
           if (!error || !this.modelIdlePending.has(id)) return
           this.modelIdlePending.delete(id)
           clearTimeout(timer)
-          resolve(false)
+          resolve(modelIdleResult('ipc_unavailable'))
         })
       } catch {
         this.modelIdlePending.delete(id)
         clearTimeout(timer)
-        resolve(false)
+        resolve(modelIdleResult('ipc_unavailable'))
       }
     })
   }

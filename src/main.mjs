@@ -218,6 +218,7 @@ let personalAccessOrigin = null;
 let personalMemoryManager = null;
 let personalMemoryRuntimeConfig = null;
 let personalBrowserReader = null;
+let accountModelRouteGate = { idle: false, reasonCode: 'unknown', changedAt: null };
 const personalMemoryIpc = { recallAttempts: 0, recallRequests: 0,
   recallWithContext: 0, recallReplies: 0, ingestRequests: 0, rejectedBindings: 0 };
 let modWindowManager = null; // 独立 Mod 视图；只管理窗口，不拥有 Mod 生命周期。
@@ -1393,6 +1394,8 @@ async function bootstrap() {
         },
         update: updateState(),
         memoweft: { enabled: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' },
+        ...(personalHostMode && accessPort !== null
+          ? { accountModelRouteGate: { ...accountModelRouteGate } } : {}),
         ...(personalHostMode && personalMemoryConfigPath ? { accountMemoryIpc: { ...personalMemoryIpc } } : {}),
         aiGame: (() => {
           const state = aiGameRuntime?.diagnostics?.() ?? { managed: true, state: 'not_installed', reasonCode: 'runtime_not_installed', runtimeVersion: null, apiVersion: null, retryable: false };
@@ -2900,13 +2903,35 @@ async function bootstrap() {
     naturalLanguageDesktopVerified: () => personalAccessService?.hasVerifiedPersonalTool?.() === true,
   });
 
+  const accountModelGateReasons = new Set(['idle', 'host_command_pending', 'session_state_busy',
+    'reference_scan_incomplete', 'reference_scan_failed', 'agent_running', 'inbox_pending',
+    'agent_state_unknown', 'agent_list_unknown', 'runtime_unavailable', 'timeout',
+    'ipc_unavailable', 'invalid_response']);
+  const accountModelBusy = () => Object.assign(new Error('account model route is busy'),
+    { code: 'ACCOUNT_MODEL_BUSY' });
+  function noteAccountModelGate(candidate) {
+    const reasonCode = accountModelGateReasons.has(candidate) ? candidate : 'invalid_response';
+    const idle = reasonCode === 'idle';
+    if (accountModelRouteGate.idle === idle && accountModelRouteGate.reasonCode === reasonCode) return;
+    const previous = accountModelRouteGate.reasonCode;
+    accountModelRouteGate = { idle, reasonCode, changedAt: new Date().toISOString() };
+    writeHostState();
+    if (idle) console.log(`[weftmate] ✓ account-model route gate idle previous=${previous}`);
+    else console.warn(`[weftmate] ⚠ account-model route gate blocked reason=${reasonCode}`);
+  }
   async function assertAccountModelReloadSafe() {
-    const busy = () => Object.assign(new Error('account model route is busy'), { code: 'ACCOUNT_MODEL_BUSY' });
-    if (personalAccessService?.hasUnissuedDshCommands?.()) throw busy();
+    if (personalAccessService?.hasUnissuedDshCommands?.()) {
+      noteAccountModelGate('host_command_pending'); throw accountModelBusy();
+    }
     try { await assertRouteReloadSafe(); }
-    catch { throw busy(); }
-    if (!(await webRuntime?.personalModelQueueIdle?.())) throw busy();
-    if (personalAccessService?.hasUnissuedDshCommands?.()) throw busy();
+    catch { noteAccountModelGate('session_state_busy'); throw accountModelBusy(); }
+    const snapshot = await webRuntime?.personalModelQueueIdle?.() ??
+      { idle: false, reason: 'runtime_unavailable' };
+    noteAccountModelGate(snapshot?.reason);
+    if (snapshot?.idle !== true || snapshot.reason !== 'idle') throw accountModelBusy();
+    if (personalAccessService?.hasUnissuedDshCommands?.()) {
+      noteAccountModelGate('host_command_pending'); throw accountModelBusy();
+    }
   }
 
   const accountModelManager = accessPort === null ? null : {
@@ -2939,8 +2964,13 @@ async function bootstrap() {
         if (!runtimeOrigin || isQuitting) throw Object.assign(new Error('runtime unavailable'), { code: 'ACCOUNT_MODEL_BUSY' });
         configStoreMod.preflightVault();
         await hydrateLegacySessionBindings();
-        try { assertSessionReferenceScanComplete(); await assertAccountModelReloadSafe(); }
-        catch { throw Object.assign(new Error('runtime busy'), { code: 'ACCOUNT_MODEL_BUSY' }); }
+        try { assertSessionReferenceScanComplete(); }
+        catch {
+          noteAccountModelGate(sessionReferenceScan.state === 'failed'
+            ? 'reference_scan_failed' : 'reference_scan_incomplete');
+          throw accountModelBusy();
+        }
+        await assertAccountModelReloadSafe();
         const route = routeForProfile(target.profileId);
         const credentialRef = officialCredentialRef(route.provider);
         const secret = stageRef ? configStoreMod.getCredential(stageRef)
