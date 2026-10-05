@@ -104,7 +104,8 @@
                 <form id="message-form" class="message-form">
                   <label for="message-text" class="sr-only">输入消息</label>
                   <textarea id="message-text" rows="2" maxlength="8192" placeholder="向 WeftMate 说说你的目标" disabled></textarea>
-                  <div class="composer-actions"><button type="button" class="button quiet" id="cancel-turn" hidden>请求停止</button><button type="submit" class="button primary" id="send-message" disabled>发送</button></div>
+                  <div class="composer-attachments" id="composer-attachments" hidden><div class="attachment-draft-list" id="attachment-draft-list"></div><p class="attachment-status" id="attachment-status" role="status" aria-live="polite"></p></div>
+                  <div class="composer-actions"><input id="message-attachments" type="file" multiple hidden><label class="button quiet attachment-add" id="attachment-add" for="message-attachments" aria-label="添加图片或文件">＋ 添加图片或文件</label><button type="button" class="button quiet" id="attachment-cancel" hidden>取消上传</button><button type="button" class="button quiet" id="cancel-turn" hidden>请求停止</button><button type="submit" class="button primary" id="send-message" disabled>发送</button></div>
                 </form>
               </div>
             </section>

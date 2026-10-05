@@ -375,6 +375,91 @@ test('shared session raw upload, command refs, owner read and exact command retr
     assert.equal(originalRead.status, 200)
     assert.deepEqual(Buffer.from(await originalRead.arrayBuffer()), textBytes)
     assert.equal((await fetch(`${origin}/personal/v1/sync/attachments/${textId}`, { headers: { cookie: b.cookie } })).status, 404)
+    const imageMessageId = `message-${uuid(60)}`
+    const smallOriginalId = `attachment-${uuid(61)}`
+    const largeOriginalId = `attachment-${uuid(62)}`
+    const largeImageBytes = Buffer.alloc(6 * 1024 * 1024)
+    Buffer.from('89504e470d0a1a0a', 'hex').copy(largeImageBytes, 0)
+    Buffer.from('0000000049454e44ae426082', 'hex').copy(largeImageBytes, largeImageBytes.length - 12)
+    const largeImageHash = createHash('sha256').update(largeImageBytes).digest('hex')
+    const uploadOriginalImage = async (attachmentId: string, fileName: string, body: Buffer, sha256: string) => {
+      const response = await fetch(`${origin}/personal/v1/sync/attachments/${attachmentId}` +
+        `?conversationId=${sessionId}&messageId=${imageMessageId}&name=${encodeURIComponent(fileName)}`, {
+        method: 'PUT', headers: { origin, cookie: a.cookie, 'x-weftmate-csrf': a.csrf,
+          'content-type': 'image/png', 'x-weftmate-sha256': sha256 }, body })
+      assert.equal(response.status, 201)
+      return (await response.json()).attachment
+    }
+    const smallOriginal = await uploadOriginalImage(smallOriginalId, 'small-staged.png', bytes, hash)
+    const largeOriginal = await uploadOriginalImage(largeOriginalId, 'large-original.png', largeImageBytes, largeImageHash)
+    const waitForAccepted = async (commandId: string) => {
+      let command: any
+      for (let i = 0; i < 200; i++) {
+        const response = await fetch(`${origin}/personal/v1/commands/${commandId}`, { headers: { cookie: a.cookie } })
+        command = (await response.json()).command
+        if (command.state === 'accepted_by_dsh') return command
+        await delay(10)
+      }
+      assert.fail(`command ${commandId} did not reach accepted_by_dsh`)
+    }
+    const beforeLarge = sent.length
+    const largePost = await write(a, { requestId: 'send-large-original-only', kind: 'session.message',
+      targetDeviceId: hostId, sessionId, text: '保留这张没有预览的大图。', attachmentMessageId: imageMessageId,
+      originalAttachments: [largeOriginal] })
+    assert.equal(largePost.status, 202)
+    const largeAccepted = await waitForAccepted((await largePost.json()).command.commandId)
+    assert.equal(sent.length, beforeLarge + 1)
+    const largeModelInput = sent[beforeLarge]
+    assert.deepEqual(largeModelInput.attachments, [])
+    assert.match(largeModelInput.text, /large-original\.png/)
+    assert.match(largeModelInput.text, /retained for download but not read/)
+
+    const mixedRequestId = 'send-mixed-small-large-images'
+    const stagedSmall = await fetch(`${origin}/personal/v1/sessions/${sessionId}/attachments/${smallOriginalId}` +
+      `?requestId=${mixedRequestId}&name=${encodeURIComponent(smallOriginal.name)}`, { method: 'PUT', headers: {
+      origin, cookie: a.cookie, 'x-weftmate-csrf': a.csrf, 'content-type': 'image/png',
+      'x-weftmate-sha256': hash }, body: bytes })
+    assert.equal(stagedSmall.status, 201)
+    const smallStagedRef = (await stagedSmall.json()).attachment
+    const beforeMixed = sent.length
+    const mixedPost = await write(a, { requestId: mixedRequestId, kind: 'session.message', targetDeviceId: hostId,
+      sessionId, text: '小图正常预览，大图保留原件。', attachments: [smallStagedRef],
+      attachmentMessageId: imageMessageId, originalAttachments: [smallOriginal, largeOriginal] })
+    assert.equal(mixedPost.status, 202)
+    const mixedAccepted = await waitForAccepted((await mixedPost.json()).command.commandId)
+    assert.equal(sent.length, beforeMixed + 1)
+    const mixedModelInput = sent[beforeMixed]
+    assert.equal(mixedModelInput.attachments.length, 1)
+    assert.equal(mixedModelInput.attachments[0].data, bytes.toString('base64'))
+    assert.match(mixedModelInput.text, /large-original\.png/)
+    assert.doesNotMatch(mixedModelInput.text, /small-staged\.png/)
+
+    ;(backend as any).readEvents = async ({ afterSeq }: { afterSeq: number }) => afterSeq < 61
+      ? { events: [{ seq: 60, type: 'user.message', data: { text: largeModelInput.text,
+        messageHash: createHash('sha256').update(largeModelInput.text).digest('hex'),
+        receiptId: largeAccepted.receiptId, truncated: true } },
+      { seq: 61, type: 'user.message', data: { text: mixedModelInput.text,
+        messageHash: createHash('sha256').update(mixedModelInput.text).digest('hex'),
+        receiptId: mixedAccepted.receiptId, truncated: true,
+        images: [{ attachmentId: durableId, contentType: 'image/png', size: bytes.length }] } }],
+      nextSeq: 61, hasMore: false } : { events: [], nextSeq: afterSeq, hasMore: false }
+    const imageHistory = await fetch(`${origin}/personal/v1/sessions/${sessionId}/events?afterSeq=43&limit=100`,
+      { headers: { cookie: a.cookie } })
+    assert.equal(imageHistory.status, 200)
+    const imageEvents = (await imageHistory.json()).events
+    assert.deepEqual(imageEvents[0].data, { text: '保留这张没有预览的大图。', receiptId: largeAccepted.receiptId,
+      originalAttachments: [largeOriginal], attachmentMessageId: imageMessageId,
+      unpreviewedOriginalImageIds: [largeOriginalId] })
+    assert.deepEqual(imageEvents[1].data, { text: '小图正常预览，大图保留原件。', receiptId: mixedAccepted.receiptId,
+      images: [{ attachmentId: durableId, contentType: 'image/png', size: bytes.length }],
+      originalAttachments: [smallOriginal, largeOriginal], attachmentMessageId: imageMessageId,
+      unpreviewedOriginalImageIds: [largeOriginalId] },
+    'the staged small image remains a normal preview while only the unstaged 6 MiB original gets a download fallback')
+    const largeRead = await fetch(`${origin}/personal/v1/sync/attachments/${largeOriginalId}`, { headers: { cookie: a.cookie } })
+    assert.equal(largeRead.status, 200)
+    const largeReadBytes = Buffer.from(await largeRead.arrayBuffer())
+    assert.equal(largeReadBytes.length, largeImageBytes.length)
+    assert.equal(createHash('sha256').update(largeReadBytes).digest('hex'), largeImageHash)
     const mismatchedSource = await write(a, { requestId: 'send-shared-text', kind: 'session.message', targetDeviceId: hostId,
       sessionId, text: 'Summarize this data.', attachments: [textRef], attachmentMessageId: `message-${uuid(52)}`,
       originalAttachments: [originalRef] })

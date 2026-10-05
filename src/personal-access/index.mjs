@@ -1313,10 +1313,15 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       typeof command.payload.attachmentMessageId === 'string');
     if (matching.length !== 1) return { ...event, data: publicData };
     const source = matching[0];
+    const stagedIds = new Set((source.payload.attachments ?? []).map((item) => item.attachmentId));
+    const unpreviewedOriginalImageIds = source.payload.originalAttachments
+      .filter((item) => IMAGE_CONTENT_TYPES.has(item.contentType) && !stagedIds.has(item.attachmentId))
+      .map((item) => item.attachmentId);
     return { ...event, data: {
       ...publicData, text: source.payload.text,
       originalAttachments: source.payload.originalAttachments.map((item) => ({ ...item })),
       attachmentMessageId: source.payload.attachmentMessageId,
+      ...(unpreviewedOriginalImageIds.length ? { unpreviewedOriginalImageIds } : {}),
       truncated: false,
     } };
   }
@@ -2789,7 +2794,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         throw failure('ORIGIN_NOT_ALLOWED', 403);
       }
       const staticPaths = new Set(['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
-        '/personal/v1/ui/app.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg']);
+        '/personal/v1/ui/app.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
+        '/personal/v1/ui/file-sha256.js', '/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js',
+        '/personal/v1/ui/vendor/noble-hashes-2.3.0/_md.js',
+        '/personal/v1/ui/vendor/noble-hashes-2.3.0/_u64.js',
+        '/personal/v1/ui/vendor/noble-hashes-2.3.0/utils.js']);
       if (request.method === 'GET' && !url.search && staticPaths.has(pathname)) {
         if (uiHandler && await uiHandler(request, response) === true) return;
         throw failure('NOT_FOUND', 404);
