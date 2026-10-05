@@ -91,6 +91,35 @@ test('real HTML IDs support bootstrap and ResizeObserver without app.failed',asy
   assert.equal(h.bridge.some(request=>request.method==='app.failed'),false);
 });
 
+test('bootstrap restores a new-conversation draft before the empty composer can overwrite it',async()=>{
+  const text='重启后继续写这条新对话';
+  const h=harness({autoBoot:true,storage:{'weftmate-draft:A:new':text},autoResults:{
+    'app.bootstrap':{loggedIn:true,username:'Alice',owner:'A',model:null,busy:false},
+    'conversations.list':{conversations:[]},
+    'shared.sessions.list':{source:'host',hostAvailable:false,sessions:[]},
+    'attachments.list':{attachments:[]},
+    'auth.me':{displayName:'Alice',connectionVerified:true}
+  }});
+  h.domReady();
+  for(let i=0;i<30&&!h.bridge.some(request=>request.method==='app.ready');i++)await h.flush();
+  assert.equal(h.node('draft').value,text);
+  assert.equal(h.storage.get('weftmate-draft:A:new'),text);
+  assert.equal(h.run('state.conversationId'),null);
+});
+
+test('Android updates show the official package link and QR while Back keeps the draft',async()=>{
+  const h=harness();h.run(`state.loggedIn=true;state.owner='A';state.page='updates';
+    call=async method=>method==='updates.status'?{activeVersion:'0.8.0（内置）',nativeVersion:'0.8.0',autoEnabled:true}:{};
+    document.getElementById('draft').value='返回后仍在';updateComposer()`);
+  await h.run("updatesPage(document.getElementById('page-content'))");
+  const link=h.node('page-content').querySelector('.native-download-link');
+  const qr=h.node('page-content').querySelector('.native-download-qr');
+  assert.equal(link.attrs.href,'https://www.weftmate.com/downloads/?platform=android');
+  assert.equal(qr.src,'qr/android.svg');assert.match(qr.alt,/安卓下载页面二维码/);
+  h.run('handleBack()');assert.equal(h.run('state.page'),'chat');
+  assert.equal(h.node('draft').value,'返回后仍在');
+});
+
 test('error toast is tappable, visibly fades, and reentry cancels an older hide',()=>{
   const h=harness();h.run('toast("第一次失败",true)');
   assert.equal(h.node('toast').hidden,false);assert.equal(h.node('toast').classList.contains('error'),true);
@@ -125,12 +154,12 @@ test('attachment draft belongs to account and conversation, and only receipt IDs
   h.reply(0,{pending:true,requestId:'pick-1'});await pending;
   h.run('processEvent({event:"attachment.result",data:{requestId:"pick-1",conversationId:"c1",status:"selected",viewGeneration:0}})');
   assert.equal(h.bridge[1].method,'attachments.list');
-  h.reply(1,{attachments:[{attachmentId:'a1',kind:'image',name:'图.png'}]});await h.flush();
+  h.reply(1,{attachments:[{attachmentId:'attachment-00000000-0000-4000-8000-0000000000a1',kind:'image',name:'图.png'}]});await h.flush();
   assert.equal(h.node('attachment-drafts').hidden,false);
   h.run('state.conversationId="c2";renderAttachmentDrafts()');assert.equal(h.node('attachment-drafts').hidden,true);
   h.run('state.conversationId="c1";state.owner="B";renderAttachmentDrafts()');assert.equal(h.node('attachment-drafts').hidden,true);
   h.run('state.owner="A";renderAttachmentDrafts()');assert.equal(h.node('attachment-drafts').hidden,false);
-  const removing=h.run('removeAttachment("a1")');assert.equal(h.bridge[2].method,'attachments.remove');
+  const removing=h.run('removeAttachment("attachment-00000000-0000-4000-8000-0000000000a1")');assert.equal(h.bridge[2].method,'attachments.remove');
   h.reply(2,{});await removing;assert.equal(h.node('attachment-drafts').hidden,true);
 });
 
@@ -152,7 +181,7 @@ test('picker event after more than 45 seconds restores draft without a bridge ti
   assert.doesNotMatch(h.node('chat-status').textContent,/超时|不兼容/);
   h.run('processEvent({event:"attachment.result",data:{requestId:"slow-pick",conversationId:"c1",status:"selected",viewGeneration:0}})');
   const listIndex=h.bridge.findIndex(request=>request.method==='attachments.list');
-  h.reply(listIndex,{attachments:[{attachmentId:'late-image',kind:'image',name:'晚选图片.png'}]});await h.flush();
+  h.reply(listIndex,{attachments:[{attachmentId:'attachment-00000000-0000-4000-8000-0000000000a2',kind:'image',name:'晚选图片.png'}]});await h.flush();
   assert.equal(h.node('attachment-pick-status').hidden,true);
   assert.equal(h.node('attachment-drafts').hidden,false);
   assert.equal(h.node('draft').value,'保留提问');
@@ -217,7 +246,7 @@ test('HTTP failure classification is safe and can remain in the conversation',()
 
 test('restored failed turn keeps a safe reason in its conversation and back closes selection first',async()=>{
   const h=harness();h.run('state.page="chat";state.conversationId="c1";state.loggedIn=true;state.owner="A"');
-  h.run('call=async(method)=>method==="attachments.list"?{attachments:[{attachmentId:"saved",kind:"file",name:"saved.txt"}]}:{messages:[{role:"user",text:"你好"}],receipts:[],turnStatus:"failed",turnErrorCode:"MODEL_UPSTREAM_ERROR",upstreamHttpStatus:400}');
+  h.run('call=async(method)=>method==="attachments.list"?{attachments:[{attachmentId:"attachment-00000000-0000-4000-8000-0000000000a3",kind:"file",name:"saved.txt"}]}:{messages:[{role:"user",text:"你好"}],receipts:[],turnStatus:"failed",turnErrorCode:"MODEL_UPSTREAM_ERROR",upstreamHttpStatus:400}');
   await h.run('renderConversation()');
   await h.flush();
   const card=h.node('chat-content').children.at(-1);
@@ -235,7 +264,7 @@ test('accepted send followed by upstream failure restores private attachments wi
   assert.equal(h.node('attachment-drafts').hidden,true);
   h.run('processEvent({event:"chat.finished",data:{conversationId:"c1",status:"failed",turnErrorCode:"MODEL_UPSTREAM_ERROR",upstreamHttpStatus:400}})');
   assert.equal(h.bridge[1].method,'attachments.list');
-  h.reply(1,{attachments:[{attachmentId:'a1',kind:'file',name:'a.txt'}]});await h.flush();
+  h.reply(1,{attachments:[{attachmentId:'attachment-00000000-0000-4000-8000-0000000000a1',kind:'file',name:'a.txt'}]});await h.flush();
   assert.equal(h.node('attachment-drafts').hidden,false);
   assert.equal(h.node('send-button').disabled,false);
   assert.match(h.node('toast').textContent,/模型 ID/);
@@ -295,11 +324,11 @@ test('native draft list restores only the current account and conversation',asyn
   const h=harness();h.run('state.loggedIn=true;state.owner="A";state.conversationId="c1";loadDraft()');
   assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[0].params)),{conversationId:'c1'});
   h.run('state.owner="B";state.authEpoch++;state.conversationId="c2";loadDraft()');
-  h.reply(0,{attachments:[{attachmentId:'A-private',kind:'image',name:'A.png'}]});await h.flush();
+  h.reply(0,{attachments:[{attachmentId:'attachment-00000000-0000-4000-8000-0000000000a4',kind:'image',name:'A.png'}]});await h.flush();
   assert.equal(h.node('attachment-drafts').hidden,true);
-  h.reply(1,{attachments:[{attachmentId:'B-private',kind:'file',name:'B.txt'}]});await h.flush();
+  h.reply(1,{attachments:[{attachmentId:'attachment-00000000-0000-4000-8000-0000000000b1',kind:'file',name:'B.txt'}]});await h.flush();
   assert.equal(h.node('attachment-drafts').hidden,false);
-  assert.equal(h.run('currentAttachments()[0].attachmentId'),'B-private');
+  assert.equal(h.run('currentAttachments()[0].attachmentId'),'attachment-00000000-0000-4000-8000-0000000000b1');
   assert.equal(h.run('attachmentDrafts.has("A:c1")'),false);
 });
 
@@ -335,7 +364,7 @@ test('shared send keeps phone drafts separate and blocks uncertain duplicate',as
   h.node('draft').value='发送到电脑';h.run('updateComposer()');
   assert.equal(h.node('attachment-drafts').hidden,true);
   h.run('openAttachmentMenu()');assert.equal(h.run('state.attachmentMenu'),true);
-  assert.equal(h.node('pick-file').hidden,true);assert.equal(h.node('attachment-note').hidden,false);
+  assert.equal(h.node('pick-file').hidden,false);assert.equal(h.node('attachment-note').hidden,false);
   h.run('closeAttachmentMenu()');assert.equal(h.bridge.some(request=>request.method==='attachments.pick'),false);
   const sending=h.run('send()');const request=h.bridge.find(item=>item.method==='shared.send');
   assert.ok(request);assert.deepEqual(JSON.parse(JSON.stringify(request.params)),{sessionId:'pc1',text:'发送到电脑',requestId:request.params.requestId});
@@ -348,13 +377,12 @@ test('shared send keeps phone drafts separate and blocks uncertain duplicate',as
   assert.match(h.node('chat-status').textContent,/待核对/);
 });
 
-test('host image picker scopes drafts to the exact DSH session and hides file selection',async()=>{
+test('host image picker scopes drafts to the exact DSH session and offers file selection',async()=>{
   const h=harness(),id='attachment-00000000-0000-4000-8000-000000000001';
   h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="session-one";state.sharedSessions=[{sessionId:"session-one",sendAvailable:true,source:"host"},{sessionId:"session-two",sendAvailable:true,source:"host"}]');
-  h.run('openAttachmentMenu()');assert.equal(h.node('pick-file').hidden,true);
-  assert.equal(h.node('attachment-note').hidden,false);assert.match(html,/电脑会话目前只支持图片/);
+  h.run('openAttachmentMenu()');assert.equal(h.node('pick-file').hidden,false);
+  assert.equal(h.node('attachment-note').hidden,false);assert.match(html,/普通文件将以文件卡显示/);
   h.run('closeAttachmentMenu()');
-  await h.run('pickAttachment("file")');assert.equal(h.bridge.some(item=>item.method==='attachments.pick'),false);
   const picking=h.run('pickAttachment("image")');
   assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[0].params)),{kind:'image',conversationId:'session-one',viewGeneration:0});
   h.reply(0,{pending:true,requestId:'host-pick'});await picking;
@@ -376,6 +404,21 @@ test('host image picker scopes drafts to the exact DSH session and hides file se
   assert.deepEqual(JSON.parse(JSON.stringify(remove.params)),{attachmentId:id,conversationId:'session-one'});
   h.reply(h.bridge.indexOf(remove),{});await removing;
   assert.equal(h.run('currentAttachments().length'),0);
+});
+
+test('host file picker keeps one attachment UUID under the selected DSH session',async()=>{
+  const h=harness(),id='attachment-00000000-0000-4000-8000-000000000003';
+  h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="session-file";state.sharedSessions=[{sessionId:"session-file",sendAvailable:true,source:"host"}]');
+  const picking=h.run('pickAttachment("file")');
+  assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[0].params)),
+    {kind:'file',conversationId:'session-file',viewGeneration:0});
+  h.reply(0,{pending:true,requestId:'host-file-pick'});await picking;
+  h.run('processEvent({event:"attachment.result",data:{requestId:"host-file-pick",conversationId:"session-file",status:"selected",viewGeneration:0}})');
+  assert.equal(h.bridge[1].method,'attachments.list');
+  h.reply(1,{attachments:[{attachmentId:id,kind:'file',name:'资料.csv'}]});await h.flush();
+  assert.equal(h.node('attachment-drafts').hidden,false);
+  assert.equal(h.run('currentAttachments()[0].attachmentId'),id);
+  assert.equal(h.run('currentAttachments()[0].kind'),'file');
 });
 
 test('host draft preview uses its session-scoped attachment-UUID original instead of the thumbnail',()=>{

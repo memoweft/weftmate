@@ -1,7 +1,7 @@
 {
   "name": "weftmate-mobile-ui",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.8.0",
   "description": "Offline Weave UI bundled into Android and published by the personal host",
   "scripts": {
     "build": "esbuild src/vendor.js --bundle --minify --format=iife --global-name=WeftFormat --outfile=www/vendor.js",
