@@ -1,13 +1,18 @@
 import assert from 'node:assert/strict'
+import { Blob, File } from 'node:buffer'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import test from 'node:test'
+import { hashBlobSha256 } from '../src/personal-access-ui/file-sha256.js'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 const source = readFileSync(join(repository, 'src', 'personal-access-ui', 'app.js'), 'utf8')
+const executableSource = source.replace("import('./file-sha256.js')",
+  'Promise.resolve({ hashBlobSha256: globalThis.__weftmateTestHashBlobSha256 })')
+assert.notEqual(executableSource, source, 'the attachment test harness replaces only the browser module loader')
 const accountHtml = readFileSync(join(repository, 'src', 'personal-access-ui', 'index.html'), 'utf8')
 const styles = readFileSync(join(repository, 'src', 'personal-access-ui', 'styles.css'), 'utf8')
 const sha = (value: string) => createHash('sha256').update(value).digest('hex')
@@ -91,6 +96,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     taskDetails?: Record<string, object>; sourceDetails?: Record<string, object>;
     artifactPreviews?: Record<string, object | { error: { code: string }; status: number }>;
     deferTaskDetail?: boolean; taskPollTimers?: boolean;
+    deferOriginalAttachment?: boolean;
+    failOriginalAttachmentOnce?: boolean;
   } = {}) {
   const nodes = new Map<string, Element>()
   const get = (id: string) => { if (!nodes.has(id)) nodes.set(id, new Element(id)); return nodes.get(id)! }
@@ -106,6 +113,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   let deferNextMe = false
   let deferNextDevices = false
   let deferredTaskDetail: ReturnType<typeof deferred<ReturnType<typeof reply>>> | null = null
+  let deferredOriginalAttachment: ReturnType<typeof deferred<ReturnType<typeof reply>>> | null = null
   let deferNextTaskDetail = false
   const taskTimers = new Map<number, () => void>()
   let timerId = 0
@@ -118,6 +126,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   const objectUrls = { created: [] as string[], revoked: [] as string[] }
   let sequence = 0
   let syncPosts = 0
+  let originalAttachmentAttempts = 0
   const synchronized = [...(config.syncEvents ?? [])] as any[]
   let refreshTick = () => {}
   const fetch = (url: string, options: any = {}) => {
@@ -225,6 +234,30 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
       const events = remaining.slice(0, config.eventPageSize ?? remaining.length)
       return Promise.resolve(reply({ events, nextSeq: events.at(-1)?.seq ?? afterSeq, hasMore: remaining.length > events.length }))
     }
+    if (url.includes('/sync/attachments/') && options.method === 'PUT') {
+      originalAttachmentAttempts++
+      const parsed = new URL(url, 'http://local.test')
+      const attachmentId = decodeURIComponent(parsed.pathname.split('/').at(-1)!)
+      const body = options.body as Blob
+      const response = reply({ attachment: { attachmentId, name: parsed.searchParams.get('name'),
+        contentType: options.headers['content-type'], size: body.size, sha256: options.headers['x-weftmate-sha256'] } }, 201)
+      if (config.deferOriginalAttachment) {
+        deferredOriginalAttachment = deferred<ReturnType<typeof reply>>()
+        options.signal?.addEventListener('abort', () => deferredOriginalAttachment?.reject(new DOMException('aborted', 'AbortError')), { once: true })
+        return deferredOriginalAttachment.promise
+      }
+      if (config.failOriginalAttachmentOnce && originalAttachmentAttempts === 1) {
+        return Promise.resolve(reply({ error: { code: 'STORAGE_UNAVAILABLE' } }, 503))
+      }
+      return Promise.resolve(response)
+    }
+    if (/\/sessions\/[^/]+\/attachments\//.test(url) && options.method === 'PUT') {
+      const parsed = new URL(url, 'http://local.test')
+      const attachmentId = decodeURIComponent(parsed.pathname.split('/').at(-1)!)
+      const body = options.body as Blob
+      return Promise.resolve(reply({ attachment: { attachmentId, name: parsed.searchParams.get('name'),
+        contentType: options.headers['content-type'], size: body.size, sha256: options.headers['x-weftmate-sha256'] } }, 201))
+    }
     if (url.includes('/commands?')) return Promise.resolve(reply({ commands, nextBefore: null, hasMore: false }))
     if (url.includes('/tasks/') && options.method === 'POST') {
       const taskId = url.split('/').at(-2)!
@@ -273,14 +306,15 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
   const context = { document, window, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
-  TextEncoder, crypto: { randomUUID: () => config.uuidForSync
+  TextEncoder, TextDecoder, Blob, File, AbortController, DOMException,
+  __weftmateTestHashBlobSha256: hashBlobSha256, crypto: { randomUUID: () => config.uuidForSync
     ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal, Intl, Date, btoa,
    setTimeout: (callback: () => void, delay: number) => {
      const id = ++timerId
      if (config.taskPollTimers && delay === 2_000) taskTimers.set(id, callback)
      return id
    }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
-  runInNewContext(source, context)
+  runInNewContext(executableSource, context)
   return { get, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
     deferDevices: () => { deferNextDevices = true }, resolveDevices: (value: object) => { deferredDevices?.resolve(reply(value)); deferredDevices = null },
@@ -290,6 +324,9 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
      pendingTaskTimers: () => taskTimers.size,
     deferProfilePatch: () => { pendingProfilePatch = deferred<ReturnType<typeof reply>>() },
     resolveProfilePatch: (value: object, status = 200) => { pendingProfilePatch?.resolve(reply(value, status)); pendingProfilePatch = null },
+    resolveOriginalAttachment: (value: object, status = 201) => {
+      deferredOriginalAttachment?.resolve(reply(value, status)); deferredOriginalAttachment = null
+    },
     profileAccounts,
     tick: () => refreshTick(),
     resolvePost: (value: object) => { pendingPost?.resolve(reply(value)); pendingPost = null },
@@ -299,6 +336,76 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
 function visibleText(node: Element): string {
   return [node.textContent, ...node.children.map(visibleText)].join(' ')
 }
+
+test('desktop file composer streams a file over 2 MiB, retries the same tuple, and stages only bounded UTF-8', async () => {
+  class StreamingOnlyFile extends File {
+    arrayBuffer(): Promise<ArrayBuffer> { throw new Error('whole-file arrayBuffer must not be used') }
+  }
+  const prefix = Buffer.from('row,value\n终端标记,WINDOWS_ATTACHMENT_OK\n', 'utf8')
+  const bytes = Buffer.concat([prefix, Buffer.alloc(2 * 1024 * 1024 + 8192 - prefix.length, 0x61)])
+  const file = new StreamingOnlyFile([bytes], 'stage15-windows-large.csv',
+    { type: 'text/csv', lastModified: 1_780_000_000_000 })
+  const expectedSha = createHash('sha256').update(bytes).digest('hex')
+  const page = harness([], [], false, { failOriginalAttachmentOnce: true })
+  for (let attempt = 0; attempt < 20 && page.get('assistant-view').hidden; attempt++) await flush()
+  assert.equal(page.get('assistant-title').textContent, 'A')
+  page.get('message-attachments').files = [file]
+  page.get('message-attachments').fire('change')
+  assert.equal(page.get('attachment-draft-list').children.length, 1)
+  page.get('message-text').value = '请读取标记并保留原件。'
+  page.get('message-text').fire('input')
+  page.get('message-form').fire('submit')
+  for (let attempt = 0; attempt < 100 && !page.get('attachment-status').textContent.includes('可重试'); attempt++) await flush()
+  assert.match(page.get('attachment-status').textContent, /仍保留，可重试/)
+  assert.equal(page.requests.filter((request) => request.url.includes('/sync/attachments/') && request.options.method === 'PUT').length, 1,
+    page.get('attachment-status').textContent)
+  assert.equal(page.requests.some((request) => request.url.endsWith('/commands') && request.options.method === 'POST'), false)
+
+  page.get('message-form').fire('submit')
+  for (let attempt = 0; attempt < 100 && !page.requests.some((request) => request.url.endsWith('/commands') && request.options.method === 'POST'); attempt++) await flush()
+  const originals = page.requests.filter((request) => request.url.includes('/sync/attachments/') && request.options.method === 'PUT')
+  assert.equal(originals.length, 2)
+  assert.equal(originals[0].url, originals[1].url, 'retry keeps the exact owner/session/message/attachment tuple')
+  assert.equal(originals[1].options.body, file, 'the original File is passed directly to fetch')
+  assert.equal(originals[1].options.headers['x-weftmate-sha256'], expectedSha)
+  const staged = page.requests.filter((request) => /\/sessions\/A\/attachments\//.test(request.url) && request.options.method === 'PUT')
+  assert.equal(staged.length, 1)
+  assert.ok(staged[0].options.body instanceof Blob)
+  assert.ok(staged[0].options.body.size <= 16 * 1024)
+  assert.equal(Buffer.from(await staged[0].options.body.arrayBuffer()).includes(Buffer.from('WINDOWS_ATTACHMENT_OK')), true)
+  const commandRequest = page.requests.find((request) => request.url.endsWith('/commands') && request.options.method === 'POST')!
+  const command = JSON.parse(commandRequest.options.body)
+  const originalUrl = new URL(originals[1].url, 'http://local.test')
+  const stagedUrl = new URL(staged[0].url, 'http://local.test')
+  assert.equal(command.requestId, stagedUrl.searchParams.get('requestId'))
+  assert.equal(command.attachmentMessageId, originalUrl.searchParams.get('messageId'))
+  assert.equal(command.originalAttachments[0].size, file.size)
+  assert.equal(command.originalAttachments[0].sha256, expectedSha)
+  assert.ok(command.attachments[0].size <= 16 * 1024)
+  page.resolvePost({ command: { ...command, commandId: 'cmd-file-stage15', state: 'pending' } })
+  for (let attempt = 0; attempt < 20 && page.get('attachment-draft-list').children.length; attempt++) await flush()
+  assert.equal(page.get('attachment-draft-list').children.length, 0)
+  assert.equal(page.get('message-text').value, '')
+})
+
+test('switching sessions aborts a late original upload and keeps the file only in its original draft', async () => {
+  const page = harness([], [], false, { deferOriginalAttachment: true })
+  for (let attempt = 0; attempt < 20 && page.get('assistant-view').hidden; attempt++) await flush()
+  const file = new File(['scope check'], 'scope.txt', { type: 'text/plain', lastModified: 7 })
+  page.get('message-attachments').files = [file]
+  page.get('message-attachments').fire('change')
+  page.get('message-form').fire('submit')
+  for (let attempt = 0; attempt < 40 && !page.requests.some((request) => request.url.includes('/sync/attachments/')); attempt++) await flush()
+  const sessionButtons = page.get('session-list').children.map((item) => item.children[0])
+  sessionButtons[1].fire('click')
+  for (let attempt = 0; attempt < 20 && page.get('assistant-title').textContent !== 'B'; attempt++) await flush()
+  assert.equal(page.get('attachment-draft-list').children.length, 0)
+  assert.equal(page.requests.some((request) => request.url.endsWith('/commands') && request.options.method === 'POST'), false)
+  sessionButtons[0].fire('click')
+  for (let attempt = 0; attempt < 20 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
+  assert.equal(page.get('attachment-draft-list').children.length, 1)
+  assert.equal(page.get('send-message').disabled, false)
+})
 
 test('public browser can register a separate account without a local setup grant', async () => {
   const page = harness([], [], false, { configured: true, authenticated: false })
@@ -1165,6 +1272,43 @@ test('DSH history renders image-only and mixed user turns from owner-scoped GET,
   assert.equal(viewer.hidden, true)
   assert.equal(viewer.children[0].src, '')
   assert.equal(firstGallery.children[0].focused, false, 'session switch does not restore focus to a stale card')
+})
+
+test('desktop history offers a generic original download only for unstaged large images', async () => {
+  const durableId = `sha256:${'c'.repeat(64)}`
+  const smallOriginalId = 'attachment-00000000-0000-4000-8000-000000000063'
+  const largeOriginalId = 'attachment-00000000-0000-4000-8000-000000000064'
+  const small = { attachmentId: smallOriginalId, name: 'small-preview.png', contentType: 'image/png',
+    size: 20, sha256: 'd'.repeat(64) }
+  const large = { attachmentId: largeOriginalId, name: 'large-private-name.png', contentType: 'image/png',
+    size: 6 * 1024 * 1024, sha256: 'e'.repeat(64) }
+  const events = [
+    { seq: 1, type: 'user.message', data: { text: '仅保留大图原件', originalAttachments: [large],
+      unpreviewedOriginalImageIds: [largeOriginalId] } },
+    { seq: 2, type: 'user.message', data: { text: '小图预览和大图原件', images: [{ attachmentId: durableId,
+      contentType: 'image/png', size: small.size }], originalAttachments: [small, large],
+      unpreviewedOriginalImageIds: [largeOriginalId] } },
+  ]
+  const page = harness([], events, false)
+  for (let attempt = 0; attempt < 20 && page.get('transcript').children.length < 2; attempt++) await flush()
+  const rows = page.get('transcript').children
+  const largeOnly = rows[0].children.find((child) => child.className === 'synced-image-original-list')!
+  assert.equal(largeOnly.children.length, 1)
+  const largeLink = largeOnly.children[0] as any
+  assert.equal(largeLink.href, `/personal/v1/sync/attachments/${largeOriginalId}`)
+  assert.equal(largeLink.attributes.get('download'), large.name)
+  assert.match(visibleText(largeLink), /下载图片原件.*6\.0 MB/)
+  assert.doesNotMatch(visibleText(largeLink), /large-private-name/)
+  assert.equal(rows[0].children.some((child) => child.className === 'synced-image-gallery'), false)
+
+  const gallery = rows[1].children.find((child) => child.className === 'synced-image-gallery')!
+  assert.equal(gallery.children.length, 1, 'the staged small image remains the normal inline preview')
+  assert.equal(gallery.children[0].children[0].src, `/personal/v1/sessions/A/attachments/${durableId}`)
+  const mixedOriginals = rows[1].children.find((child) => child.className === 'synced-image-original-list')!
+  assert.equal(mixedOriginals.children.length, 1, 'the small staged UUID is not duplicated as an original download')
+  assert.equal((mixedOriginals.children[0] as any).href, `/personal/v1/sync/attachments/${largeOriginalId}`)
+  assert.doesNotMatch(visibleText(rows[1]), /small-preview\.png|large-private-name\.png/,
+    'normal previews keep their filename-free presentation and the large fallback stays generic')
 })
 
 test('account logout clears an open DSH image viewer and its conversation cards', async () => {

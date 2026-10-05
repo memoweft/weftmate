@@ -205,6 +205,19 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .synced-image { display: block; width: 100%; height: auto; overflow: hidden; padding: 0; border: 0; border-radius: 14px; background: transparent; line-height: 0; cursor: zoom-in; }
 .synced-image img { display: block; width: 100%; height: auto; object-fit: contain; }
 .synced-image.is-unavailable { min-height: 160px; background: var(--surface-soft); cursor: default; }
+.synced-file-list { display: grid; gap: 8px; width: 100%; margin-top: 10px; }
+.synced-file { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 2px 14px; min-height: 48px; padding: 9px 11px; border-radius: 12px; background: var(--surface); color: var(--ink); text-decoration: none; }
+.synced-file strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.synced-file small { color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+.synced-file span { grid-column: 2; grid-row: 1 / span 2; color: var(--accent); font-size: 12px; font-weight: 700; }
+.synced-file:hover { background: var(--surface-soft); }
+.synced-file:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.synced-image-original-list { display: flex; flex-wrap: wrap; gap: 8px; width: 100%; margin-top: 10px; }
+.synced-image-original { display: inline-flex; min-height: 40px; align-items: center; gap: 9px; padding: 7px 10px; border-radius: 11px; background: var(--surface); color: var(--accent); text-decoration: none; }
+.synced-image-original strong { font-size: 12px; }
+.synced-image-original small { color: var(--ink-muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.synced-image-original:hover { background: var(--surface-soft); }
+.synced-image-original:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .synced-image:focus-visible, .phone-image-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
 .phone-image-preview:not([hidden]) { position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; box-sizing: border-box; width: 100vw; max-width: none; height: 100dvh; max-height: none; margin: 0; padding: 0; overflow: hidden; border: 0; background: #0d1524; color: #fff; }
 .phone-image-preview img { display: block; flex: none; min-width: 0; min-height: 0; width: auto; height: auto; max-width: 100vw; max-height: 100dvh; object-fit: contain; }
@@ -221,7 +234,19 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .message-form { border: 1px solid #cdd7e7; border-radius: 18px; padding: 7px; }
 .message-form:focus-within { border-color: var(--accent); }
 .message-form textarea { display: block; width: 100%; min-height: 54px; max-height: 140px; resize: vertical; border: 0; outline: 0; padding: 8px; color: var(--ink); background: transparent; }
-.composer-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.composer-attachments { margin: 0 5px 7px; padding-top: 7px; border-top: 1px solid var(--line); }
+.attachment-draft-list { display: grid; gap: 6px; }
+.attachment-draft { display: flex; min-width: 0; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 11px; background: var(--surface-soft); }
+.attachment-draft-copy { display: flex; min-width: 0; flex: 1; flex-direction: column; gap: 2px; }
+.attachment-draft-copy strong { overflow: hidden; color: var(--ink); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.attachment-draft-copy small { overflow-wrap: anywhere; color: var(--ink-muted); font-size: 11px; }
+.attachment-remove { min-width: 44px; min-height: 36px; padding: 6px 9px; border: 0; border-radius: 9px; background: transparent; color: var(--danger); cursor: pointer; }
+.attachment-remove:hover:not(:disabled) { background: var(--danger-soft); }
+.attachment-remove:focus-visible, .attachment-add:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.attachment-status { min-height: 16px; margin: 6px 3px 0; color: var(--ink-secondary); font-size: 11px; }
+.composer-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+.attachment-add { margin-right: auto; cursor: pointer; }
+.attachment-add.is-disabled { opacity: .55; pointer-events: none; cursor: not-allowed; }
 .tasks-pane { overflow-y: auto; padding: 28px; flex: 1; }
 .tasks-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; }
 .tasks-head h1 { margin: 7px 0; }

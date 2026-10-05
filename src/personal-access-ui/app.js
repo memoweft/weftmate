@@ -17,6 +17,8 @@
     submitting: false, cancelSubmitting: false, lastSubmissionMs: 0,
     historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null,
     identityGeneration: 0, accountViewGeneration: 0, currentView: null,
+    attachmentDrafts: new Map(), attachmentGroups: new Map(), attachmentAttempts: new Map(),
+    attachmentUpload: null, attachmentHasher: null, attachmentStatus: '',
     avatarGeneration: 0, avatarSelectionGeneration: 0,
     profileDraftAvatar: undefined, profileConflict: false, profileSaving: false, profileOperationGeneration: 0, profileDraftGeneration: 0,
     avatarChecking: false, avatarObjectUrl: null,
@@ -58,6 +60,7 @@
   state.setupGrant = takeSetupGrant()
 
   function show(view) {
+    if (view !== 'assistant' && state.currentView === 'assistant') cancelAttachmentUpload()
     if (view !== 'assistant' && taskDetail.taskId) closeTaskDetail()
     if (state.currentView === 'memory' && view !== 'memory') {
       memory.viewGeneration++
@@ -98,6 +101,7 @@
     }
   }
   function clearSession() {
+    cancelAttachmentUpload()
     stopAssistantRefresh()
     closeTaskDetail()
     taskDetail.drafts.clear()
@@ -166,6 +170,10 @@
     state.accountModelBusy = false
     byId('account-model-section').hidden = true
     state.desktopDraft = ''
+    state.attachmentDrafts.clear()
+    state.attachmentGroups.clear()
+    state.attachmentAttempts.clear()
+    state.attachmentStatus = ''
     closePhoneImagePreview()
     state.phoneDeviceNames.clear()
     state.hostId = null
@@ -202,6 +210,8 @@
     byId('phone-pane').hidden = true
     resetOtherDeviceInstall()
     byId('message-text').value = ''
+    byId('message-attachments').value = ''
+    renderAttachmentDrafts()
     operation('')
   }
   function setBusy(form, busy) {
@@ -1608,6 +1618,258 @@
   const markerId = /^[A-Za-z0-9_.:-]{1,128}$/
   const sessionIdPattern = /^[A-Za-z0-9_-]{1,128}$/
   const syncIdPattern = /^(?:[A-Za-z][A-Za-z0-9_-]{0,31}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/
+  const originalAttachmentBytes = 1024 * 1024 * 1024
+  const sharedImageBytes = 5 * 1024 * 1024
+  const sharedMessageBytes = 10 * 1024 * 1024
+  const sharedTextBytes = 16 * 1024
+  const attachmentImageTypes = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
+  const attachmentTextTypes = new Set(['text/plain', 'text/markdown', 'text/csv', 'application/json', 'application/x-ndjson'])
+  const attachmentTypePattern = /^[a-z0-9][a-z0-9!#$&^_.+-]{0,62}\/[a-z0-9][a-z0-9!#$&^_.+-]{0,62}$/
+  function attachmentDraftKey(sessionId = state.selectedSessionId) {
+    return state.ownerId && sessionId ? `${state.ownerId}|${sessionId}` : null
+  }
+  function currentAttachmentDrafts() {
+    const key = attachmentDraftKey()
+    return key ? state.attachmentDrafts.get(key) ?? [] : []
+  }
+  function attachmentScope(sessionId = state.selectedSessionId) {
+    return { generation: state.identityGeneration, ownerId: state.ownerId, deviceId: state.device?.id,
+      csrf: state.csrfToken, sessionId, view: state.currentView }
+  }
+  function attachmentScopeCurrent(scope) {
+    return scope.generation === state.identityGeneration && scope.ownerId === state.ownerId &&
+      scope.deviceId === state.device?.id && scope.csrf === state.csrfToken && !!scope.csrf &&
+      scope.sessionId === state.selectedSessionId && state.activeChatSource === 'desktop' &&
+      scope.view === 'assistant' && state.currentView === 'assistant'
+  }
+  function attachmentMime(file) {
+    const supplied = String(file?.type || '').trim().toLowerCase()
+    if (attachmentTypePattern.test(supplied)) return supplied
+    const extension = String(file?.name || '').toLowerCase().match(/\.([a-z0-9]+)$/)?.[1]
+    return ({ txt: 'text/plain', text: 'text/plain', md: 'text/markdown', markdown: 'text/markdown',
+      csv: 'text/csv', json: 'application/json', ndjson: 'application/x-ndjson', jsonl: 'application/x-ndjson',
+      png: 'image/png', jpg: 'image/jpeg', jpeg: 'image/jpeg', webp: 'image/webp', gif: 'image/gif',
+      pdf: 'application/pdf' })[extension] || 'application/octet-stream'
+  }
+  function validAttachmentName(value) {
+    return typeof value === 'string' && value === value.trim() && value.length > 0 &&
+      Array.from(value).length <= 128 && !/[\\/\x00-\x1f\x7f]/.test(value) && !['.', '..'].includes(value)
+  }
+  function attachmentHint(item) {
+    if (attachmentTextTypes.has(item.contentType)) return '原件可下载 · 最多 16 KB 内容供模型读取'
+    if (attachmentImageTypes.has(item.contentType) && item.file.size <= sharedImageBytes) return '原图可下载 · 图片会发送给模型'
+    if (attachmentImageTypes.has(item.contentType)) return '原图可下载 · 超过模型图片大小限制'
+    if (item.contentType === 'application/pdf') return '原件可下载 · 当前不读取 PDF 内容'
+    return '原件可下载 · 当前类型不读取内容'
+  }
+  function setAttachmentStatus(message) {
+    state.attachmentStatus = message
+    const status = byId('attachment-status')
+    status.textContent = message
+    status.hidden = !message
+  }
+  function renderAttachmentDrafts() {
+    const drafts = state.activeChatSource === 'desktop' ? currentAttachmentDrafts() : []
+    const root = byId('composer-attachments')
+    const list = byId('attachment-draft-list')
+    list.replaceChildren()
+    for (const item of drafts) {
+      const row = element('div', 'attachment-draft')
+      const copy = element('span', 'attachment-draft-copy')
+      copy.append(element('strong', '', item.file.name),
+        element('small', '', `${originalFileSize(item.file.size)} · ${attachmentHint(item)}`))
+      const remove = element('button', 'attachment-remove', '移除')
+      remove.type = 'button'
+      remove.disabled = !!state.attachmentUpload
+      remove.setAttribute('aria-label', `移除文件 ${item.file.name}`)
+      remove.addEventListener('click', () => removeAttachmentDraft(item.attachmentId))
+      row.append(copy, remove)
+      list.append(row)
+    }
+    root.hidden = drafts.length === 0 && !state.attachmentStatus
+    setAttachmentStatus(state.attachmentStatus)
+  }
+  function invalidateAttachmentAttempt(key = attachmentDraftKey()) {
+    if (key) state.attachmentAttempts.delete(key)
+  }
+  function removeAttachmentDraft(attachmentId) {
+    if (state.attachmentUpload) return
+    const key = attachmentDraftKey()
+    if (!key) return
+    const remaining = currentAttachmentDrafts().filter((item) => item.attachmentId !== attachmentId)
+    if (remaining.length) state.attachmentDrafts.set(key, remaining)
+    else {
+      state.attachmentDrafts.delete(key)
+      state.attachmentGroups.delete(key)
+    }
+    invalidateAttachmentAttempt(key)
+    state.attachmentStatus = ''
+    renderAttachmentDrafts()
+    updateAvailability()
+  }
+  function cancelAttachmentUpload(announce = false) {
+    const upload = state.attachmentUpload
+    if (!upload) return
+    upload.controller.abort()
+    state.attachmentUpload = null
+    if (announce && attachmentScopeCurrent(upload.scope)) setAttachmentStatus('已取消上传，所选文件仍保留，可重新发送。')
+    renderAttachmentDrafts()
+    updateAvailability()
+  }
+  async function attachmentHasher() {
+    if (!state.attachmentHasher) state.attachmentHasher = import('./file-sha256.js').then((module) => {
+      if (typeof module.hashBlobSha256 !== 'function') throw new Error('FILE_HASH_UNAVAILABLE')
+      return module.hashBlobSha256
+    })
+    return state.attachmentHasher
+  }
+  async function uploadAttachmentBlob(path, blob, contentType, sha256, scope, signal) {
+    if (!attachmentScopeCurrent(scope)) throw new DOMException('Upload cancelled', 'AbortError')
+    let response
+    try {
+      response = await fetch(`${accessBase}${path}`, { method: 'PUT', credentials: 'same-origin', cache: 'no-store', signal,
+        headers: { 'content-type': contentType, 'x-weftmate-sha256': sha256, 'X-WeftMate-CSRF': scope.csrf }, body: blob })
+    } catch (error) {
+      if (signal.aborted || error?.name === 'AbortError') throw new DOMException('Upload cancelled', 'AbortError')
+      throw { code: 'NETWORK' }
+    }
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      const error = { code: payload?.error?.code || 'REQUEST_FAILED', status: response.status }
+      if (error.code === 'UNAUTHORIZED' && attachmentScopeCurrent(scope)) sessionExpired()
+      throw error
+    }
+    if (!attachmentScopeCurrent(scope)) throw new DOMException('Upload cancelled', 'AbortError')
+    setOnline(true)
+    return payload?.attachment
+  }
+  function exactAttachmentMeta(value, expected) {
+    return value && value.attachmentId === expected.attachmentId && value.name === expected.file.name &&
+      value.contentType === expected.contentType && value.size === expected.size && value.sha256 === expected.sha256
+      ? { attachmentId: value.attachmentId, name: value.name, contentType: value.contentType,
+        size: value.size, sha256: value.sha256 } : null
+  }
+  async function textStageBlob(file, maximum, signal) {
+    const limit = Math.min(file.size, maximum)
+    if (limit < 1) return null
+    const probe = new Uint8Array(await file.slice(0, Math.min(file.size, limit + 3)).arrayBuffer())
+    if (signal.aborted) throw new DOMException('Upload cancelled', 'AbortError')
+    for (let end = Math.min(limit, probe.length); end >= Math.max(0, Math.min(limit, probe.length) - 3); end--) {
+      try {
+        const text = new TextDecoder('utf-8', { fatal: true }).decode(probe.subarray(0, end))
+        if (!text || text.includes('\u0000')) return null
+        return new Blob([probe.subarray(0, end)], { type: attachmentMime(file) })
+      } catch { /* Try the previous UTF-8 boundary. */ }
+    }
+    return null
+  }
+  function attachmentAttempt(key, text, drafts) {
+    const signature = JSON.stringify([text, ...drafts.map((item) => [item.attachmentId, item.file.name,
+      item.file.size, item.file.lastModified, item.contentType])])
+    const old = state.attachmentAttempts.get(key)
+    if (old?.signature === signature) return old
+    const attempt = { signature, requestId: `attachment-send-${crypto.randomUUID()}`, text }
+    state.attachmentAttempts.set(key, attempt)
+    return attempt
+  }
+  function finishAttachmentCommand(command) {
+    if (command?.kind !== 'session.message' || typeof command.requestId !== 'string') return
+    for (const [key, attempt] of state.attachmentAttempts) {
+      if (attempt.requestId !== command.requestId) continue
+      state.attachmentAttempts.delete(key)
+      state.attachmentDrafts.delete(key)
+      state.attachmentGroups.delete(key)
+      if (key === attachmentDraftKey(command.sessionId)) {
+        if (byId('message-text').value === attempt.text) byId('message-text').value = ''
+        state.attachmentStatus = ''
+        renderAttachmentDrafts()
+        updateAvailability()
+      }
+      break
+    }
+  }
+  async function sendDesktopMessageWithAttachments(text) {
+    const sessionId = state.selectedSessionId
+    const key = attachmentDraftKey(sessionId)
+    const drafts = key ? [...currentAttachmentDrafts()] : []
+    if (!key || drafts.length < 1 || drafts.length > 4 || state.attachmentUpload) return null
+    const scope = attachmentScope(sessionId)
+    const controller = new AbortController()
+    const attempt = attachmentAttempt(key, text, drafts)
+    const messageId = state.attachmentGroups.get(key) || `message-${crypto.randomUUID()}`
+    state.attachmentGroups.set(key, messageId)
+    const upload = { controller, scope, key, requestId: attempt.requestId }
+    state.attachmentUpload = upload
+    setAttachmentStatus('正在核对文件并保存原件…')
+    renderAttachmentDrafts()
+    updateAvailability()
+    try {
+      const hashBlob = await attachmentHasher()
+      const originals = []
+      let completedBytes = 0
+      const totalBytes = drafts.reduce((sum, item) => sum + item.file.size, 0)
+      for (const item of drafts) {
+        if (!attachmentScopeCurrent(scope) || controller.signal.aborted) throw new DOMException('Upload cancelled', 'AbortError')
+        item.sha256 ||= await hashBlob(item.file, { signal: controller.signal, onProgress: (done) => {
+          if (attachmentScopeCurrent(scope)) setAttachmentStatus(`正在核对文件 ${originalFileSize(completedBytes + done)} / ${originalFileSize(totalBytes)}`)
+        } })
+        const expected = { ...item, size: item.file.size }
+        setAttachmentStatus(`正在保存原件 ${originals.length + 1} / ${drafts.length}…`)
+        const uploaded = await uploadAttachmentBlob(`/sync/attachments/${encodeURIComponent(item.attachmentId)}` +
+          `?conversationId=${encodeURIComponent(sessionId)}&messageId=${encodeURIComponent(messageId)}` +
+          `&name=${encodeURIComponent(item.file.name)}`, item.file, item.contentType, item.sha256, scope, controller.signal)
+        const exact = exactAttachmentMeta(uploaded, expected)
+        if (!exact) throw { code: 'REQUEST_FAILED' }
+        originals.push(exact)
+        completedBytes += item.file.size
+      }
+      const staged = []
+      let stagedBytes = 0
+      let stagedTextBytes = 0
+      for (const item of drafts) {
+        let blob = null
+        if (attachmentImageTypes.has(item.contentType) && item.file.size <= sharedImageBytes &&
+          stagedBytes + item.file.size <= sharedMessageBytes) blob = item.file
+        else if (attachmentTextTypes.has(item.contentType) && stagedTextBytes < sharedTextBytes) {
+          blob = await textStageBlob(item.file, sharedTextBytes - stagedTextBytes, controller.signal)
+        }
+        if (!blob || staged.length >= 4 || stagedBytes + blob.size > sharedMessageBytes) continue
+        const stagedHash = blob === item.file ? item.sha256 : await hashBlob(blob, { signal: controller.signal })
+        const expected = { ...item, size: blob.size, sha256: stagedHash }
+        setAttachmentStatus(`正在准备模型可读内容 ${staged.length + 1} / ${drafts.length}…`)
+        const uploaded = await uploadAttachmentBlob(`/sessions/${encodeURIComponent(sessionId)}/attachments/` +
+          `${encodeURIComponent(item.attachmentId)}?requestId=${encodeURIComponent(attempt.requestId)}` +
+          `&name=${encodeURIComponent(item.file.name)}`, blob, item.contentType, stagedHash, scope, controller.signal)
+        const exact = exactAttachmentMeta(uploaded, expected)
+        if (!exact) throw { code: 'REQUEST_FAILED' }
+        staged.push(exact)
+        stagedBytes += blob.size
+        if (attachmentTextTypes.has(item.contentType)) stagedTextBytes += blob.size
+      }
+      if (!attachmentScopeCurrent(scope)) throw new DOMException('Upload cancelled', 'AbortError')
+      state.attachmentUpload = null
+      setAttachmentStatus('原件已保存，正在发送消息…')
+      updateAvailability()
+      return await submitCommand('session.message', { sessionId, text, mode: 'queue',
+        ...(staged.length ? { attachments: staged } : {}), attachmentMessageId: messageId,
+        originalAttachments: originals }, sessionId, attempt.requestId)
+    } catch (error) {
+      if (attachmentScopeCurrent(scope)) {
+        if (error?.name === 'AbortError') setAttachmentStatus('已取消上传，所选文件仍保留，可重新发送。')
+        else setAttachmentStatus(error?.code === 'BODY_TOO_LARGE' ? '文件超过可保存大小，请移除后重试。'
+          : error?.code === 'CAPACITY_LIMIT' ? '附件存储空间不足，所选文件仍保留。'
+            : error?.code === 'INVALID_REQUEST' ? '文件内容或名称未通过检查，请移除后重新选择。'
+              : '文件发送未完成，所选文件仍保留，可重试。')
+      }
+      return null
+    } finally {
+      if (state.attachmentUpload === upload) state.attachmentUpload = null
+      if (attachmentScopeCurrent(scope)) {
+        renderAttachmentDrafts()
+        updateAvailability()
+      }
+    }
+  }
   function phoneOutboxKey() { return state.ownerId && state.device?.id
     ? `weftmate:phone-sync-outbox:v1:${state.ownerId}:${state.device.id}` : null }
   function phoneSequenceKey() { return state.ownerId && state.device?.id
@@ -1777,16 +2039,26 @@
     const model = state.models.some((item) => item.id === state.modelProfileId)
     const selected = state.sessions.find((item) => item.sessionId === state.selectedSessionId)
     const canSendHere = selected?.sendAvailable === true
-    byId('new-session').disabled = !chat || !model || state.submitting || state.unresolvedSubmission
+    const attachmentCount = phoneChat ? 0 : currentAttachmentDrafts().length
+    const attachmentBusy = !!state.attachmentUpload
+    byId('new-session').disabled = !chat || !model || state.submitting || attachmentBusy || state.unresolvedSubmission
     byId('model-select').disabled = phoneChat || !chat || !state.models.length
-    byId('message-text').disabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery : !chat || !model || !canSendHere
+    byId('message-text').disabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery
+      : !chat || !model || !canSendHere || attachmentBusy
     byId('send-message').disabled = phoneChat ? !phoneReady || (!!pendingPhone && !pendingHere) ||
       (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !byId('message-text').value.trim())
-      : !chat || !model || !canSendHere || state.submitting ||
-      !byId('message-text').value.trim() || state.unresolvedSubmission
+      : !chat || !model || !canSendHere || state.submitting || attachmentBusy ||
+      (!byId('message-text').value.trim() && attachmentCount === 0) || state.unresolvedSubmission
     byId('send-message').textContent = phoneChat ? bound ? '发送到电脑'
       : recoveryHere && !pendingPhone ? '核对旧请求'
         : pendingHere ? '核对并重试' : '同步文字' : '发送'
+    byId('message-attachments').disabled = phoneChat || !chat || !model || !canSendHere ||
+      state.submitting || attachmentBusy || state.unresolvedSubmission || attachmentCount >= 4
+    byId('attachment-add').hidden = phoneChat
+    byId('attachment-add').classList.toggle('is-disabled', byId('message-attachments').disabled)
+    byId('attachment-add').setAttribute('aria-disabled', String(byId('message-attachments').disabled))
+    byId('attachment-cancel').hidden = !attachmentBusy
+    byId('attachment-cancel').disabled = !attachmentBusy
     const blockedDesktop = desktopBlocker()
     byId('open-notepad').textContent = blockedDesktop ? '查看原事情' : '打开记事本'
     byId('open-notepad').disabled = blockedDesktop ? false : !state.online ||
@@ -1904,6 +2176,70 @@
     if (state.turnStatus === 'running') renderTurnStatus()
     updateAvailability()
   }
+  function normalizedOriginalAttachment(item) {
+    if (!item || typeof item.attachmentId !== 'string' || !syncIdPattern.test(item.attachmentId)
+      || typeof item.name !== 'string' || item.name !== item.name.trim() || !item.name ||
+      Array.from(item.name).length > 128 || /[\x00-\x1f\x7f\\/]/.test(item.name) || ['.', '..'].includes(item.name)
+      || typeof item.contentType !== 'string' || item.contentType.length > 127 ||
+      !/^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/.test(item.contentType)
+      || !Number.isSafeInteger(item.size) || item.size < 1 || item.size > 1024 * 1024 * 1024
+      || typeof item.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(item.sha256)) return null
+    return { attachmentId: item.attachmentId, name: item.name, contentType: item.contentType,
+      size: item.size, sha256: item.sha256 }
+  }
+  function normalizedOriginalFile(item) {
+    const attachment = normalizedOriginalAttachment(item)
+    return attachment && !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(attachment.contentType)
+      ? attachment : null
+  }
+  function originalFileSize(size) {
+    if (size >= 1024 * 1024 * 1024) return `${(size / 1024 / 1024 / 1024).toFixed(1)} GB`
+    if (size >= 1024 * 1024) return `${(size / 1024 / 1024).toFixed(size >= 10 * 1024 * 1024 ? 0 : 1)} MB`
+    if (size >= 1024) return `${Math.ceil(size / 1024)} KB`
+    return `${size} B`
+  }
+  function appendOriginalFiles(row, event) {
+    const files = (Array.isArray(event.data?.originalAttachments) ? event.data.originalAttachments : [])
+      .map(normalizedOriginalFile).filter(Boolean)
+    if (!files.length) return 0
+    const list = element('div', 'synced-file-list')
+    for (const file of files) {
+      const link = element('a', 'synced-file')
+      link.href = `${accessBase}/sync/attachments/${encodeURIComponent(file.attachmentId)}`
+      link.setAttribute('download', file.name)
+      link.setAttribute('aria-label', `下载文件 ${file.name}`)
+      link.append(element('strong', '', file.name), element('small', '', originalFileSize(file.size)),
+        element('span', '', '下载'))
+      list.append(link)
+    }
+    row.append(list)
+    return files.length
+  }
+  function unpreviewedOriginalImages(event) {
+    const ids = Array.isArray(event.data?.unpreviewedOriginalImageIds)
+      ? [...new Set(event.data.unpreviewedOriginalImageIds.filter((id) => typeof id === 'string' && syncIdPattern.test(id)))].slice(0, 4)
+      : []
+    if (!ids.length) return []
+    const originals = new Map((Array.isArray(event.data?.originalAttachments) ? event.data.originalAttachments : [])
+      .map(normalizedOriginalAttachment).filter((item) => item &&
+        ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(item.contentType))
+      .map((item) => [item.attachmentId, item]))
+    return ids.map((id) => originals.get(id)).filter(Boolean)
+  }
+  function appendUnpreviewedOriginalImages(row, images) {
+    if (!images.length) return 0
+    const list = element('div', 'synced-image-original-list')
+    for (const image of images) {
+      const link = element('a', 'synced-image-original')
+      link.href = `${accessBase}/sync/attachments/${encodeURIComponent(image.attachmentId)}`
+      link.setAttribute('download', image.name)
+      link.setAttribute('aria-label', `下载图片原件，${originalFileSize(image.size)}`)
+      link.append(element('strong', '', '下载图片原件'), element('small', '', originalFileSize(image.size)))
+      list.append(link)
+    }
+    row.append(list)
+    return images.length
+  }
   function appendHistory(events) {
     const list = byId('transcript')
     const sessionId = state.selectedSessionId
@@ -1918,7 +2254,10 @@
       }
       if (!['user.message', 'assistant.message'].includes(event.type)) continue
       const images = event.type === 'user.message' && Array.isArray(event.data?.images) ? event.data.images : []
-      if (typeof event.data?.text !== 'string' && images.length === 0) continue
+      const files = event.type === 'user.message' && Array.isArray(event.data?.originalAttachments)
+        ? event.data.originalAttachments.map(normalizedOriginalFile).filter(Boolean) : []
+      const originalImages = event.type === 'user.message' ? unpreviewedOriginalImages(event) : []
+      if (typeof event.data?.text !== 'string' && images.length === 0 && files.length === 0 && originalImages.length === 0) continue
       const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
       row.append(element('span', 'message-label', event.type === 'user.message' ? '你' : 'WeftMate'))
       if (typeof event.data?.text === 'string' && event.data.text) row.append(element('span', 'message-text', event.data.text))
@@ -1953,6 +2292,8 @@
         }
         if (unavailable) row.append(element('small', 'truncated', `${unavailable} 张历史图片暂无法查看。`))
       }
+      if (files.length) appendOriginalFiles(row, event)
+      if (originalImages.length) appendUnpreviewedOriginalImages(row, originalImages)
       if (event.data.truncated === true) row.append(element('span', 'truncated', '这条记录已截断，可在电脑查看完整来源。'))
       list.append(row)
     }
@@ -2025,6 +2366,7 @@
     const linked = phoneConversations().find((record) => phoneBinding(record.id)?.sessionId === sessionId)
     if (linked) { selectPhoneConversation(linked.id); return }
     const fromPhone = state.activeChatSource === 'phone'
+    if (state.selectedSessionId !== sessionId) cancelAttachmentUpload()
     if (fromPhone && state.selectedPhoneConversationId && !readPhoneOutbox())
       state.phoneDrafts.set(state.selectedPhoneConversationId, byId('message-text').value)
     state.activeChatSource = 'desktop'
@@ -2032,6 +2374,8 @@
     if (fromPhone) byId('message-text').value = state.desktopDraft
     byId('message-text').placeholder = '向 WeftMate 说说你的目标'
     state.selectedSessionId = sessionId
+    state.attachmentStatus = ''
+    renderAttachmentDrafts()
     closePhoneImagePreview()
     byId('chat-intro').hidden = false
     byId('desktop-action').hidden = false
@@ -2693,6 +3037,7 @@
     }
   }
   function updateFromCommand(command) {
+    finishAttachmentCommand(command)
     if (!command || typeof command.requestId !== 'string') return
     const marker = readMarkers().find((item) => item.requestId === command.requestId)
     if (!marker) return
@@ -2732,7 +3077,7 @@
   async function restoreRequests() {
     for (const marker of readMarkers()) await lookupRequest(marker)
   }
-  async function submitCommand(kind, fields = {}, sessionId = null) {
+  async function submitCommand(kind, fields = {}, sessionId = null, fixedRequestId = null) {
     if (!state.online || !state.hostId) { setOnline(false); return }
     const cancelling = kind === 'session.cancel'
     if (cancelling) {
@@ -2745,7 +3090,7 @@
     }
     updateAvailability()
     try {
-      const requestId = crypto.randomUUID()
+      const requestId = fixedRequestId || crypto.randomUUID()
       const marker = { requestId, kind, ...(sessionId ? { sessionId } : {}) }
       rememberMarker(marker) // Durable ID before the network request; body stays in memory.
       operation('正在提交请求。')
@@ -3344,7 +3689,10 @@
   }
   function selectPhoneConversation(conversationId) {
     if (!syncIdPattern.test(conversationId) || !phoneConversations().some((item) => item.id === conversationId)) return
-    if (state.activeChatSource === 'desktop') state.desktopDraft = byId('message-text').value
+    if (state.activeChatSource === 'desktop') {
+      state.desktopDraft = byId('message-text').value
+      cancelAttachmentUpload()
+    }
     else if (state.selectedPhoneConversationId && !readPhoneOutbox())
       state.phoneDrafts.set(state.selectedPhoneConversationId, byId('message-text').value)
     state.activeChatSource = 'phone'
@@ -3356,6 +3704,8 @@
       ? pending.event.payload.text : recovery?.event.conversationId === conversationId
         ? recovery.event.payload.text : state.phoneDrafts.get(conversationId) || ''
     byId('message-text').placeholder = '补充到这条手机对话'
+    state.attachmentStatus = ''
+    renderAttachmentDrafts()
     byId('conversation-pane').classList.add('is-phone')
     state.historyGeneration++
     closePhoneImagePreview()
@@ -3971,6 +4321,33 @@
   })
   byId('model-select').addEventListener('change', (event) => { state.modelProfileId = event.target.value; updateAvailability() })
   byId('message-text').addEventListener('input', updateAvailability)
+  byId('message-attachments').addEventListener('change', (event) => {
+    const input = event.currentTarget
+    const key = attachmentDraftKey()
+    const selected = [...(input.files || [])]
+    input.value = ''
+    if (!key || state.activeChatSource !== 'desktop' || state.attachmentUpload || selected.length === 0) return
+    const drafts = [...currentAttachmentDrafts()]
+    let rejected = 0
+    for (const file of selected) {
+      if (drafts.length >= 4 || !(file instanceof Blob) || !validAttachmentName(file.name) ||
+        !Number.isSafeInteger(file.size) || file.size < 1 || file.size > originalAttachmentBytes) {
+        rejected++
+        continue
+      }
+      const contentType = attachmentMime(file)
+      const duplicate = drafts.some((item) => item.file.name === file.name && item.file.size === file.size &&
+        item.file.lastModified === file.lastModified && item.contentType === contentType)
+      if (duplicate) { rejected++; continue }
+      drafts.push({ attachmentId: `attachment-${crypto.randomUUID()}`, file, contentType, sha256: null })
+    }
+    if (drafts.length) state.attachmentDrafts.set(key, drafts)
+    invalidateAttachmentAttempt(key)
+    state.attachmentStatus = rejected ? '部分文件未添加：每次最多 4 个，单个须为 1 B–1 GiB，名称不能含路径字符。' : ''
+    renderAttachmentDrafts()
+    updateAvailability()
+  })
+  byId('attachment-cancel').addEventListener('click', () => cancelAttachmentUpload(true))
   byId('new-session').addEventListener('click', async () => {
     if (!state.modelProfileId || state.capabilities?.chat?.available !== true) return
     closeRail()
@@ -3980,9 +4357,11 @@
     event.preventDefault()
     if (state.activeChatSource === 'phone') return sendPhoneMessage()
     const text = byId('message-text').value
-    if (!text.trim() || !state.selectedSessionId || state.unresolvedSubmission ||
+    const attachments = currentAttachmentDrafts()
+    if ((!text.trim() && attachments.length === 0) || !state.selectedSessionId || state.unresolvedSubmission ||
       state.capabilities?.chat?.available !== true ||
       state.sessions.find((item) => item.sessionId === state.selectedSessionId)?.sendAvailable !== true) return
+    if (attachments.length) return sendDesktopMessageWithAttachments(text)
     const sent = await submitCommand('session.message', { sessionId: state.selectedSessionId, text, mode: 'queue' }, state.selectedSessionId)
     if (sent) { byId('message-text').value = ''; updateAvailability() }
   })
