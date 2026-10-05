@@ -2,7 +2,7 @@
 
 > 2026-09-14：用户接受本轮规则与路线归并，并明确要求继续下一阶段。最新任务与验证状态只看 [CURRENT_STATE](CURRENT_STATE.md)。
 
-> 2026-09-27 路线同步：先看 `PROJECT_DIRECTION` 顶部的 Windows＋Android 四阶段，以及 `FRONTEND_PLAN` 顶部的双端体验交付基线；当前 05 候选继续收口，已有成果按证据抵扣。本轮只调整文档，不把规划当成新功能已实现。
+> 2026-10-05 当前授权：Windows/Android 连续推进到大体验收候选，Apple 侧作为同级总代理并行。先读各文件的当前小节和 `UNIFIED_ASSISTANT_15`，已有成果按证据抵扣。旧逐小阶段停止规则由这次明确授权替代；规划不等于功能已实现。
 
 唯一阅读顺序为：`AGENTS → 本文件 → PROJECT_DIRECTION → CURRENT_STATE → CURRENT_STATE 指定的当前任务卡 → DEVELOPMENT_LOOP`。
 
@@ -17,7 +17,7 @@
 | 目录、数据、依赖与跨仓定位 | [REPOSITORY_LAYOUT](REPOSITORY_LAYOUT.md)、[DSH_UPGRADE_POLICY](DSH_UPGRADE_POLICY.md) |
 | 历史决定和过程 | [DECISIONS](DECISIONS.md)、[WORKLOG](WORKLOG.md) |
 
-文件职责不重叠：`PROJECT_DIRECTION` 管目标，`CURRENT_STATE` 管真实进度，`ARCHITECTURE` 管契约索引，`collab` 管跨侧归属，`DECISIONS/WORKLOG` 管历史。普通对话和统一 Weave 界面保留；旧星球图谱已废弃。完成候选后必须交付并停止，等待云验证；明确通过前不得自动推进。
+文件职责不重叠：`PROJECT_DIRECTION` 管目标，`CURRENT_STATE` 管真实进度，`ARCHITECTURE` 管契约索引，`collab` 管跨侧归属，`DECISIONS/WORKLOG` 管历史。普通对话和统一 Weave 界面保留；旧星球图谱已废弃。本批内部检查通过后继续下一工作流，整批候选才交付并停止等待本人体验。开工与上下文恢复只读当前状态顶部及当前任务卡的进度表；历史按具体问题查证。
 
 旧 S 阶段导航已由当前状态替代。其历史依据保留在 `PROJECT_DIRECTION`、`CURRENT_STATE` 与 `WORKLOG`，不作为开工队列。
 

@@ -506,3 +506,15 @@ Root指定144单次下载外ZIP1689579字节/SHA6136dfc3ac3b44cc6d9d5945b7ea9164
 新DMG1048583字节/SHAe2c7f92d1bf1c7cdf84382f547a16bb16eced16fecdfa7f9659ba72253ed5729。Root第一次prepare因缺输出父目录拒绝，未创建或发布候选，补明确Runtime父目录后同参数成功；旧公开4目录只保留已核installer，非Mac条目与旧JSON逐字段相同，三个安装文件。Ubuntu旧官网完整私用备份，线上旧清单SHA512d...核定；新文件同SHA后先发布不可变5、原子切清单231c67ba9198d128d5733bd1cd5ada7d18a9bf31f3a9306d47cd9472475a9a51，不改nginx/网站资源。正常TLS公网新5GET200/同SHA、旧4URL仍GET200/937054字节/原SHA；Android12和其他状态不变，无私人数据上传。
 
 官网5正式回执发Mac后，后验工具throw/&&编译错误经窄修，实际执行在窗口绑定前失败，downloadClicked=false且未发新检查。原debug4/78962/CG743和release5/80246/CG752及旧39901均保留，AXWindows0、CG原窗口非当前可见；console记录loginComplete=true/onConsole=false/locked=false，缺字段默认false不能断言锁屏。Root独立看验证子线程原始命令/失败，已请本人切回已登录可见桌面保持亮并回复；等待实际环境回执，不用脚本直读HTTP或数值模拟代替按钮。实例/编译错误/窗口失败均保留，Mac停止扩诊断；完整4→5/按钮下载与5→5最新尚未通过。版本5可从官网下载，当前整体验收未完成。
+
+## 2026-10-05 · 连续 Windows/Android 批次与 Apple 同级总代理
+
+用户要求整段路线兼顾上下文、防止漂移，做到大体验收才停；本侧 Windows/Android、Apple 侧 Mac/iOS/Watch 并行，Watch 融入 iOS，健康与精灵/跨账户共养后续细设计。主助手建立 UNIFIED_ASSISTANT_15 六项流程、完整验收清单和恢复阅读规则，更新现有开工/循环/产品/前端/决定；旧每小阶段停止由最新授权替代。保留现有 Weave、用户已过图片/滚动、原账户与固定 DSH（对话运行时）。共同宠物采用显式共享对象，私人记忆/对话/原始健康不自动合并。
+
+实际 GPT-5.6 Terra 分别承担隔离云模型、Android 记忆、普通文件实现；实际 GPT-6 Luna 只读跟进 Mac，未冒充新模型。Mac 已接受同级主线，首项聊天/请求核对/持久草稿，旧更新 GUI 仍等可见桌面。当前候选继续开发，尚未打包、部署或交用户验收。
+
+云实现者新增受显式 Windows/DPAPI（系统加密保护）路径门禁的 personal-account-model-real-electron.mjs，独立临时 profile/DSH_HOME，最多3个真实回合、单回合240秒。首批真实注册/短聊通过后普通远程账户的 tasks API 404；沿既有一次性account.setup建立隔离宿主账户，第二批 MiMo 注册、目录验证、短回复 completed、保存工件 observed、停止 aborted/STOP_OBSERVED、正常重开配置及停止状态保持通过。脱敏记录 ba19b018，首批d086295f保留；真实工具字节内容尚未直接核，本侧要求15.2补读而不重复全套paid回合。既有synthetic（合成）账户模型回归通过，生产18186未重启或变更。
+
+Android 记忆现有页面/host.business链经核存在；合法冒号ID被encodeURIComponent转为%3A，原native白名单拒绝。Terra只在Network.kt business验证允许该编码并拒编码分隔符/双编码/无效编码，receipt仍在固定memory路由；Kotlin定向成功、移动页面35/35、desktop管理3/3过。MuMu真实ADB路径已定位D:/Software/MuMuPlayer/nx_main/adb.exe，index0 Android15未启动；按既有用户调试授权继续隔离真bridge/Core流程，不把源码测试当设备通过。云memory政策仍只接受正式local目的地，下一步同账户私有云精确绑定接线待方案。
+
+附件实现者已核固定DSH公开send只有text/image；普通原件流与文本有界片段可沿真正text schema进入，未知PDF/二进制保留原件不称已读。正在源库实现与测试，Android32KiB文件旧入口及共享image-only需一起接通，尚无原件/输入新契约正式发布；未修改root依赖或DSH。证据统一Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005，用户凭据不入仓/输出。
