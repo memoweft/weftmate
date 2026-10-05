@@ -466,3 +466,23 @@ Mac真实DMG（安装磁盘映像）0.1.0/build4/x86_64已原子发布：937054�
 下一续聊前置仅一次为隔离QA4提交MiMo私有配置，固定requestId`ccf50b8f-2be3-474d-8af7-c410e5d5a778`；最后一次只读HTTP200仍pending/RUNTIME_BUSY/configured=false、errorCode=null。原默认`personal-local-occamy-miniplus-v21`保持；未重发、未生成、未传密钥到Mac，不为了排空而改旧任务。B的发送/取消/恢复现有契约已核，第二账户shared-chat工具实际为空，完整电脑任务另验；本地NInfer离线/OOM（显存不足）事实保留，不追加模型维护。全局状态与下一入口回CURRENT_STATE及APPLE_CLIENTS_01。
 
 Mac随后仅追加正式下载发布回执，提交`cf355c1bb92ca10408b0727420a5c40399723f1c`、工作区干净；应用代码和DMG冻结不变。读取Agent（智能体）在cursor `fcaf77e4-c556-4a92-965a-4e4c78d8edc9:172`结束本轮，可下轮复用；未重新开传送或重复验收。主仓保留交接头e889364c及本轮全局发布记录，不把后续文档提交冒充发布包源码。
+
+## 2026-10-05：官网集中下载、公开安装包与账户二维码发布
+
+用户在Mac构建4交付后要求安装下载放官网，设备只对应更新或二维码，并选择现有Ubuntu。主助手记录DECISIONS/PROJECT_DIRECTION/FRONTEND_PLAN和PUBLIC_DOWNLOADS_01；实际GPT-6 Luna写官网窄扩展与账户页，GPT-6 Sol写明确输入/字节摘要校验的静态发布器、标准QR（二维码）和部署片段。私有宿主与模型维护不迁移到Ubuntu。
+
+原SSH（安全远程连接）公钥认证失败；用户随后提供既有服务器访问资料，正常密码认证实得Ubuntu22.04.5/Nginx，站点根/原证书及既有多站点/代理路径已实查，凭据不保存到源码或公开资源。原首页38990字节、SHA d761c73dfee56a1e448c7a1e507597959ae84b9bb7c00e2ac4e1ede40ca4f010，和主仓07dc6a0一致。旧整站部署脚本未运行；在服务器私有stage保存原首页/配置，HTTPS配置只增下载snippet include，nginx -t/reload通过后同盘切换新下载目录和首页单文件。
+
+下载页沿原官网黑/蓝/青/紫及glyph（图形标记），明确可下载/网页版/未分发。主助手窄审修hidden及平台提示，单次impeccable detector（界面检测）修4项新页提示，旧首页15项不扩大整改。独立收尾预设role不在本环境，使用新的实际GPT-6 Sol只读审查；手机原fullPage工具裁掉滚动条宽度导致recapture（重取证据），明确390px clip后有效，实际client375/scrollWidth375无横溢。唯一material fix（实质修正）为状态眉题，改到标题同行后同截图复核resolved（已解决）、verdict ship仅覆盖该项。无新增品味修整；独立Luna记录SURFACE，不创建全局换肤规则。
+
+最终r4静态目录仅3网页资源、releases.json、5个标准SVG、2份已核安装包；Nayuki官方固定MIT实现本地生成，5/5独立OpenCV解码均为官网稳定平台URL。Android0.7.0/12为1975295字节/SHA cafa44d486e2578a83084b96aedd475cb9c92ffdcb44b3aafeae7f3f1797661e；IntelMac0.1.0/4为937054字节/SHA eb50a8af748d831a9f61d17f73d886805b77453992fe506c6f8f6ac2822754d4，未公证且同网试用。Windows仅网页，iPhone/Watch未分发。网站源和两包在Ubuntu复核SHA，公开资源不含profile/账户/模型密钥；未来旧官网SHA路径长期保留尚未实现，首次无旧downloads。
+
+正式 https://www.weftmate.com/downloads/ 已发布。Windows正常TLS（加密连接）GET2包HTTP200、字节/SHA匹配；正式浏览器实点Mac也匹配。正式首页/下载HTML/CSS/JS/清单5资源HTTP200同候选SHA，清单no-store、安装包attachment/immutable。首次重载旧首页标签一度ERR_CONNECTION_CLOSED并触发工具恢复，保留失败；新标签正式页/发布清单/下载成功，未放宽浏览器或证书校验。正式页面截图downloads-published-desktop.png保存在PublicDownloads-20261005。
+
+账户页删除跨平台包按钮，官网入口及可选平台QR保留设备原资料。因服务直接读取HTML/JS/CSS，先按SHA封存新页并恢复07dc6a0原字节，官网上线后再同SHA接回；没有以“未手动发布”误报它不会影响运行。首轮QR跨官网img被原CSP（内容来源规则）拒绝，按一批预算把4个标准SVG原字节内置到既有允许的数据图片中，不改CSP/API或重启服务；实际QR complete/naturalWidth150/visible、电脑与390px截图通过，平台链接仍官网。回归解码内置4数据确认原SHA/URL，最终48/48、publisher3/3、类型/语法/差异通过。
+
+私有18186/PID14280与原计划任务Running（运行中），4账户/原host保持；原日常owner对象与Before-NativeDownloads备份逐字段JSON一致。仅复用原QA账号增加测试浏览器设备，无模型请求；原Native（原生）12/APK0.7.0及服务器UI0.7.1不重包。旧认证下载接口兼容保留，Mac任务已记录官网下载决定提交2b7acda3e66e6bfe70f22c5f44a5ae44e62d7d4e；完整Mac原生更新/旧签名保留、Apple续聊、真机仍未通过。现场/候选/下载/截图在Runtime，源码本地提交、不远端推送；本轮官网与账户入口冻结待用户体验。
+
+Mac最终收到真实官网/公开版本清单契约，只更新Apple任务卡第406行；文档提交8e45e1928f69b427b329cdaa8869d4da34e0c1cf、工作区干净，build4源码/包保持。专职读取在cursor `fcaf77e4-c556-4a92-965a-4e4c78d8edc9:183`结束本轮，可下轮复用；不以文档回执称原生更新已接通。
+
+最终staged（暂存区）差异检查首次发现两份新vendor上游行尾空格，普通未暂存检查此前不覆盖新文件。保留Nayuki原源码/编译字节与来源SHA，仅按Git官方文档对这两路径设置`whitespace=-blank-at-eol`，其他检查仍默认；README记录保真原因，全暂存差异检查通过，未修改行为或撤掉测试断言。

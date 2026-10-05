@@ -8,8 +8,28 @@ import test from 'node:test'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 const source = readFileSync(join(repository, 'src', 'personal-access-ui', 'app.js'), 'utf8')
+const accountHtml = readFileSync(join(repository, 'src', 'personal-access-ui', 'index.html'), 'utf8')
 const styles = readFileSync(join(repository, 'src', 'personal-access-ui', 'styles.css'), 'utf8')
 const sha = (value: string) => createHash('sha256').update(value).digest('hex')
+const qrDataDeclaration = source.match(/const publicPlatformQrData = Object\.freeze\((\{[\s\S]*?\n  \})\)/)
+assert.ok(qrDataDeclaration, 'the standard platform QR assets are embedded in app.js')
+const publicPlatformQrData = runInNewContext(`(${qrDataDeclaration[1]})`) as Record<string, string>
+
+function officialQrSvg(platform: string) {
+  const dataUri = publicPlatformQrData[platform]
+  assert.ok(dataUri?.startsWith('data:image/svg+xml;base64,'), `${platform} QR uses an allowed local data URI`)
+  const svg = Buffer.from(dataUri.slice('data:image/svg+xml;base64,'.length), 'base64')
+  const officialSha = {
+    android: 'ed0e258be84b46edb51e9f07956189c07d7ac23986019fe7631f6eaa7543d3cd',
+    macos: '8a5d544f1709db4500aea92a825ee86c6504b015df040838b5db8c790d420b7b',
+    ios: '7c174fbc316e28934c8ecbc86804f65199f0eb71a976840038d6f61d714c33cb',
+    watchos: '490c8d6894403ec3718d3f06f5284de389a9d9912a94cc14a0d46d38f0440fe4',
+  }[platform]
+  assert.equal(createHash('sha256').update(svg).digest('hex'), officialSha,
+    `${platform} QR embeds the exact standard SVG bytes`)
+  assert.match(svg.toString('utf8'), new RegExp(`<desc>https://www\\.weftmate\\.com/downloads/\\?platform=${platform}</desc>`))
+  return dataUri
+}
 
 class Element {
   id: string
@@ -879,7 +899,6 @@ test('new sync records render as read-only phone sources while an older host kee
   for (let attempt = 0; attempt < 10 && page.get('assistant-view').hidden; attempt++) await flush()
   await flush()
   assert.equal(page.get('show-phone').hidden, true, 'unified rail is the main chat entry')
-  assert.equal(page.get('android-download-row').hidden, false)
   page.get('show-phone').fire('click')
   for (let attempt = 0; attempt < 10 && !/合成手机/.test(visibleText(page.get('phone-conversations'))); attempt++) await flush()
   assert.equal(page.get('phone-pane').hidden, false)
@@ -895,7 +914,6 @@ test('new sync records render as read-only phone sources while an older host kee
   const older = harness()
   for (let attempt = 0; attempt < 10 && older.get('assistant-view').hidden; attempt++) await flush()
   assert.equal(older.get('show-phone').hidden, true)
-  assert.equal(older.get('android-download-row').hidden, true)
   assert.equal(older.requests.some((request) => request.url.includes('/sync/events')), false)
   assert.equal(older.get('conversation-pane').hidden, false)
 })
@@ -1289,6 +1307,61 @@ async function openAccount(page: ReturnType<typeof harness>) {
   for (let attempt = 0; attempt < 30 && page.get('profile-display-name').value === ''; attempt++) await flush()
   assert.equal(page.get('account-view').hidden, false)
 }
+
+test('account offers the official installer page and selected platform QR with graceful recovery', async () => {
+  const page = harness([], [], false, { profileAccounts: profileFixture(), downloadAvailable: true })
+  await ready(page)
+  await openAccount(page)
+
+  assert.match(accountHtml, /href="https:\/\/www\.weftmate\.com\/downloads\/"[^>]*>前往官网获取安装包/)
+  assert.doesNotMatch(accountHtml, /id="(?:android-download|mac-download)"/)
+  assert.equal(page.get('other-device-platform').value, 'android')
+  assert.equal(page.get('other-device-qr').src, officialQrSvg('android'))
+  assert.equal(page.get('other-device-platform-link').attributes.get('href'),
+    'https://www.weftmate.com/downloads/?platform=android')
+  assert.equal(page.requests.some((request) => request.url.endsWith('/native/manifest') ||
+    request.url.endsWith('/downloads/android')), false)
+
+  page.get('other-device-platform').value = 'macos'
+  page.get('other-device-platform').fire('change')
+  assert.equal(page.get('other-device-qr').src, officialQrSvg('macos'))
+  assert.equal(page.get('other-device-platform-link').attributes.get('href'),
+    'https://www.weftmate.com/downloads/?platform=macos')
+
+  page.get('other-device-platform').value = 'ios'
+  page.get('other-device-platform').fire('change')
+  assert.equal(page.get('other-device-platform-status').textContent, 'iPhone安装方式准备中，可扫码查看官网信息。')
+  assert.equal(page.get('other-device-qr').src, officialQrSvg('ios'))
+
+  page.get('other-device-qr').fire('error')
+  assert.equal(page.get('other-device-qr').hidden, true)
+  assert.equal(page.get('other-device-qr-status').hidden, false)
+  assert.equal(page.get('other-device-platform-link').attributes.get('href'),
+    'https://www.weftmate.com/downloads/?platform=ios')
+
+  page.get('other-device-platform').value = 'windows'
+  page.get('other-device-platform').fire('change')
+  assert.equal(page.get('other-device-platform-link').hidden, true)
+  assert.equal(page.get('other-device-qr').hidden, true)
+  assert.equal(page.get('other-device-platform-status').textContent, 'Windows 请使用网页版，前往官网查看。')
+
+  page.get('other-device-platform').value = 'watchos'
+  page.get('other-device-platform').fire('change')
+  assert.equal(page.get('other-device-qr').src, officialQrSvg('watchos'))
+  assert.equal(page.get('other-device-qr').hidden, false, 'selecting another target restores the QR display')
+  page.get('other-device-install').open = true
+  page.get('account-back').fire('click')
+  assert.equal(page.get('other-device-platform').value, 'android', 'leaving account resets the selected target')
+  assert.equal(page.get('other-device-install').open, false, 'leaving account closes the expanded QR area')
+  await openAccount(page)
+  page.get('other-device-platform').value = 'watchos'
+  page.get('other-device-platform').fire('change')
+  page.get('other-device-install').open = true
+  page.get('logout-button').fire('click')
+  for (let attempt = 0; attempt < 10 && page.get('account-view').hidden === false; attempt++) await flush()
+  assert.equal(page.get('other-device-platform').value, 'android', 'logout resets the selected target')
+  assert.equal(page.get('other-device-install').open, false, 'logout closes the expanded QR area')
+})
 
 async function switchToB(page: ReturnType<typeof harness>) {
   page.get('logout-button').fire('click')

@@ -158,8 +158,28 @@
             <div class="profile-actions"><button type="button" class="button quiet small" id="profile-reload" hidden>读取最新资料</button><button type="button" class="button quiet small" id="profile-cancel">取消修改</button><button type="submit" class="button primary small" id="profile-save">保存资料</button></div>
           </form>
           <div class="actions"><button type="button" class="button secondary" id="password-open">修改密码</button><button type="button" class="button quiet" id="logout-button">退出当前设备</button></div>
-          <p id="android-download-row" hidden><a class="button secondary" id="android-download" href="/personal/v1/downloads/android" download="WeftMate-Android.apk">下载安卓应用</a></p>
-          <p id="mac-download-row" hidden><a class="button secondary" id="mac-download">下载 Mac 试用版</a> <small class="muted" id="mac-download-meta"></small></p>
+          <div class="account-downloads">
+            <a class="button secondary" href="https://www.weftmate.com/downloads/" target="_blank" rel="noopener noreferrer">前往官网获取安装包</a>
+            <details id="other-device-install">
+              <summary>在其他设备安装</summary>
+              <div class="other-device-install-content">
+                <label for="other-device-platform">选择设备</label>
+                <select id="other-device-platform" aria-describedby="other-device-install-note">
+                  <option value="android">安卓手机或平板</option>
+                  <option value="macos">Mac</option>
+                  <option value="ios">iPhone</option>
+                  <option value="watchos">Apple Watch</option>
+                  <option value="windows">Windows 网页版</option>
+                </select>
+                <p class="field-help" id="other-device-install-note">在另一台设备上扫描二维码，查看对应安装方式。</p>
+                <a id="other-device-platform-link" href="https://www.weftmate.com/downloads/?platform=android" target="_blank" rel="noopener noreferrer" aria-label="打开安卓下载页面">
+                  <img id="other-device-qr" src="https://www.weftmate.com/downloads/qr/android.svg" alt="安卓下载页面二维码" width="168" height="168">
+                </a>
+                <p class="field-help" id="other-device-qr-status" role="status" hidden>二维码暂时无法显示，可直接打开官网继续。</p>
+                <p class="field-help" id="other-device-platform-status" hidden></p>
+              </div>
+            </details>
+          </div>
         </section>
         <section class="card group" aria-labelledby="devices-heading">
           <div class="group-heading"><div><h2 id="devices-heading">已登录设备</h2><p class="muted">“当前设备”表示正在使用这个页面；设备名称可单独修改。有效期和撤销状态来自宿主记录。</p></div><button type="button" class="button secondary small" id="devices-refresh">刷新</button></div>

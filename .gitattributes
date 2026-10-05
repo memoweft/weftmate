@@ -1,0 +1,2 @@
+scripts/vendor/qrcodegen.ts whitespace=-blank-at-eol
+scripts/vendor/qrcodegen.mjs whitespace=-blank-at-eol

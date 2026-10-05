@@ -1,0 +1,32 @@
+# Insert these locations inside the existing HTTPS server for www.weftmate.com.
+# They inherit that server's verified root; place the candidate at <root>/downloads/.
+# Keep all existing locations, proxy routes, certificates, and listen directives.
+
+location = /downloads/releases.json {
+    try_files $uri =404;
+    default_type application/json;
+    add_header Cache-Control "no-store" always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options SAMEORIGIN always;
+}
+
+location ^~ /downloads/files/ {
+    try_files $uri =404;
+    add_header Content-Disposition "attachment" always;
+    add_header Cache-Control "public, max-age=31536000, immutable" always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options SAMEORIGIN always;
+}
+
+location ^~ /downloads/ {
+    try_files $uri $uri/ =404;
+    add_header Cache-Control "no-cache" always;
+    add_header Strict-Transport-Security "max-age=31536000" always;
+    add_header X-Content-Type-Options nosniff always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+    add_header X-Frame-Options SAMEORIGIN always;
+}
