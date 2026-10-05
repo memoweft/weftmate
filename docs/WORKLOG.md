@@ -518,3 +518,17 @@ Root指定144单次下载外ZIP1689579字节/SHA6136dfc3ac3b44cc6d9d5945b7ea9164
 Android 记忆现有页面/host.business链经核存在；合法冒号ID被encodeURIComponent转为%3A，原native白名单拒绝。Terra只在Network.kt business验证允许该编码并拒编码分隔符/双编码/无效编码，receipt仍在固定memory路由；Kotlin定向成功、移动页面35/35、desktop管理3/3过。MuMu真实ADB路径已定位D:/Software/MuMuPlayer/nx_main/adb.exe，index0 Android15未启动；按既有用户调试授权继续隔离真bridge/Core流程，不把源码测试当设备通过。云memory政策仍只接受正式local目的地，下一步同账户私有云精确绑定接线待方案。
 
 附件实现者已核固定DSH公开send只有text/image；普通原件流与文本有界片段可沿真正text schema进入，未知PDF/二进制保留原件不称已读。正在源库实现与测试，Android32KiB文件旧入口及共享image-only需一起接通，尚无原件/输入新契约正式发布；未修改root依赖或DSH。证据统一Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005，用户凭据不入仓/输出。
+
+### 15.3 私有云召回与普通云聊天真实形成
+
+首轮Terra私有云许可用不存在的settings.routeFingerprint且只认current revision，4项旧测试未证明正例；Root将收口转实际GPT-5.6 Sol。Sol沿既有canonical endpoint/modelRouteFingerprint计算实际settings路由，按绑定profile查同owner精确不可变revision，保持旧有效绑定；真实vault及stop/remove fence守卫。shared-chat提示改为只用宿主明确提供的本账户上下文，仍零宿主工具，认识旧WeftMate模板且未知自定义保持冲突。类型及21项边界/preset、两个账户模型长测、IPC/宿主相关检查通过。真实Core+测试处理模型的private-cloud-recall-core.json证明A内容非空、B无内容、旧revision可用和停用拒绝，明确不证明普通聊天形成。
+
+Core RPC没有运行中模型配置更新。Sol在原owner worker管理中接按原session解析的processing route（处理路由），同owner串行关闭/重起且复用同一资料/SQLite/outbox；重放按parent_session_id再证明，不存key；停用/删除开始关闭该owner处理器，无法证明时queued/MEMORY_MODEL_UNAVAILABLE。formal local旧8081/@current保留，私有云依确切绑定/ledger/settings/credential，用该owner原会话模型处理，其他账户不共用密钥。
+
+真实MiMo验收1批、3次成功completion：普通偏好会话1、Core真实形成1、新会话召回1，MEMOWEFT_TESTING=0/无SQL seed，新回答含对应偏好；隔离宿主cleanShutdown=true。证据Memory/real-cloud-memory-428f79e7-9975-4970-b0c5-d8584407a72c.json，Root已读字段。相关组合24/24、补充3/3及typecheck通过。源码WIP检查点82f9462，处理路由/真实形成测试63e2594。滞后的6工具scope断言经HEAD证明已有第7个browser segment，仅测试名单补齐，2/2过；不是本轮并行新增浏览器源。
+
+### 15.3 管理页面实际测试及15.4界面剩余
+
+真实Core/Android bridge已过，UI实际表单前置多次失败没有冒通过。Root读source指出profile页无退出、connect页才有，未登录初始chat也不能直接填不存在表单；Luna修后实际DOM走设置/电脑账户与连接、登录、列表、详情/来源到停用。停用返回revision_conflict；Root查看failure.PNG两条同marker，detail-light.PNG实际loading不能当详情，SQL fixture与后台形成存在冲突。后续改只经Core形成唯一条目、等job applied，测试模型未在窗口内形成，停止自己的fixture；按钮停用成功/深色/重开与B UI仍未完成，旧API隔离pass不替代。
+
+附件core已接任意原件1GiB、persistent command tuple、UTF8总16KiB与准确未读元信息、Native流式上传及多文件预算；模型复合正文另记内部modelInputHash，旧工具hash守卫保留。真实分块>2MiB/复读/账户隔离、共享stage/原件引用/旧image及Kotlin编译检查过，不能称实际SDK/文件UI通过。旧Terra后续只ack未完成history层，Root将仅剩两端可发现/文件卡/下载转另一实际5.6 Sol；该Sol查adapter public text截4000，获授权在自有adapter算完整内部hash后handler校验投影，原DSH证据保留且hash不公开。候选static资源仍stage Runtime，18186/官网下载/原生包未更新；同会话工件缺口另Sol接最小fixture差分，未重发已过15.3实测。
