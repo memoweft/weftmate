@@ -532,3 +532,21 @@ Core RPC没有运行中模型配置更新。Sol在原owner worker管理中接按
 真实Core/Android bridge已过，UI实际表单前置多次失败没有冒通过。Root读source指出profile页无退出、connect页才有，未登录初始chat也不能直接填不存在表单；Luna修后实际DOM走设置/电脑账户与连接、登录、列表、详情/来源到停用。停用返回revision_conflict；Root查看failure.PNG两条同marker，detail-light.PNG实际loading不能当详情，SQL fixture与后台形成存在冲突。后续改只经Core形成唯一条目、等job applied，测试模型未在窗口内形成，停止自己的fixture；按钮停用成功/深色/重开与B UI仍未完成，旧API隔离pass不替代。
 
 附件core已接任意原件1GiB、persistent command tuple、UTF8总16KiB与准确未读元信息、Native流式上传及多文件预算；模型复合正文另记内部modelInputHash，旧工具hash守卫保留。真实分块>2MiB/复读/账户隔离、共享stage/原件引用/旧image及Kotlin编译检查过，不能称实际SDK/文件UI通过。旧Terra后续只ack未完成history层，Root将仅剩两端可发现/文件卡/下载转另一实际5.6 Sol；该Sol查adapter public text截4000，获授权在自有adapter算完整内部hash后handler校验投影，原DSH证据保留且hash不公开。候选static资源仍stage Runtime，18186/官网下载/原生包未更新；同会话工件缺口另Sol接最小fixture差分，未重发已过15.3实测。
+
+### 2026-10-06 · 第15批整版检查与电脑重启接续
+
+文件历史/Android原件保存已提交 d7844b8；MuMu下载 2,097,289 字节、SHA 与原件一致，重开真实可见。真实 MiMo 附件批严格共3次补全：第二运行有界文本标记实际进入SDK并被回答，回合 completed；验收脚本误把续写输入覆盖首次哈希导致断言中止，离线首次输入与持久哈希相同。公有投影/原件/外账户/重启分别有合成SDK及设备证据，未补写缺失的真实快照，也未发第4次。
+
+正常记忆 UI 经稳定 Core 形成单条、唯一 job applied 后跑 A 登录/详情来源/停用/立即重开/B为空通过；无SQL种子、无 revision_conflict。Root实际看图发现深浅标签对应旧过渡帧，证据主题stable字段已更正，原截图保留；测试增加真实画面明暗核对，最终整版确认待跑。
+
+Root备份正式profile后更新共同后端。旧QA create 经恢复核对为未安装的失败终态；只读官方持久Inbox证明原账户9月27日旧记事本验证仍有一条 next-turn user。session.cancel 按固定SDK保留待输入，随后只对这条已识别 occurrence 执行官方 updateQueue remove，持久pending=0，聊天/请求保留，未知会话未改。旧failed模型remove成功，新QA配置 succeeded/active/configured，目录 test 的 configured/reachable/modelListed均真且无推理；原四账户、日常对象、host和默认均保留。
+
+整版审查仍发现两项产品缺口：电脑仅有文件卡/下载，未有聊天选择上传；Android新会话草稿写入WebStorage后600ms立即重开为空。分别交实际GPT-5.6 Sol完整补Windows流式上传/有界输入和Android作用域/持久恢复，不移除失败断言、不扩大付费测试或改框架。0.8/code13候选包与min13界面未发布，正式仍0.7.1/原生12。
+
+本人随后重启电脑；源码/候选保留，旧Agent停止，重建真实5.6 Sol两侧实现者与5.6 Luna只读Apple读取者。主宿主18186自动恢复/PID20412、QA配置与原数据再核保持。入口Caddy启动失败具体为断开的Wi-Fi地址绑定；Root备份后只将两处bind改全接口并验证，原任务运行/PID14124，TLS本机200。现有公网映射还依赖原Wi-Fi地址，接回系统已有同一连接后正常HTTPS200；开机目标连接与外部独立核验继续收口。Mac主线build7仅构建/受控验证，当前尚无新DMG/hash交接，真实UI/服务调用未过，不改官网Mac5。
+
+Android接续Sol查明草稿不是原生数据库缺失，而是boot恢复conversation identity前空textarea触发updateComposer删除A:new。仅调启动恢复顺序，保留立即Activity重建原断言；69页面测试、12 Kotlin、真实MuMu A新草稿恢复/A→B→A/设置/模型/深浅/通知/设备/更新QR与返回、Memory来源停用重开和桌面回读通过。Root查看聊天/深色/更新3图，独立核APK1,988,306B/SHA一致，f9ef05e保存。正式APK与mobile current仍旧；模拟器日常旧签名与正式候选不同，覆盖被拒，保留数据与旧包，独立QA通过不冒实际覆盖。
+
+WindowsSol补原件File/Blob流上传/增量SHA/总16KiB有效UTF8与明确未读类型、固定tuple/request及取消/重试，9文件候选/8HTTP资源/2.66MiB原件精确SHA过。Root查GUI fixture恒定seq/receipt会遮蔽第二次发送，授权最小追加递增事件与独立receipt；正式product公有投影恢复原text/refs，不在fixture手填，第二回合独立验证过。Edge file chooser setFiles受扩展FileURL权限拒绝；RootSky读取窗口也被自动policy停止（无法确认浏览器URL），已停止本轮ComputerUse，未放宽权限或假记GUI通过。原码与发布候选保留，待本人启用后下一轮补证。
+
+原Caddy管理员任务Set-ScheduledTask真实拒绝访问；Luna把可选WLAN目标改为User环境入口，Root设置自己的既有连接，原task/action/主体不改，避免额外管理员动作；最多30s失败继续启动本机，parser及读配置过，未称下一次重启已验。Root准备公开下载候选只换Android13，保留Mac5/旧包，未上传；Windows大图超模型限额后应仍有原件入口的审查问题已交窄修。
