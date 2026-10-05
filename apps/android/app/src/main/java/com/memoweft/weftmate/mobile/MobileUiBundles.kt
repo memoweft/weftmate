@@ -47,7 +47,7 @@ class MobileUiBundles(private val context: Context) {
         JSONObject(File(directory, "$id/.release-manifest.json").readText(Charsets.UTF_8))
     } catch (_: Exception) { null }
 
-    private fun version(id: String): String = if (id == builtIn) "0.2.0（内置）"
+    private fun version(id: String): String = if (id == builtIn) "0.8.0（内置）"
         else manifest(id)?.optString("uiVersion")?.takeIf { it.matches(Regex("[0-9A-Za-z._-]{1,40}")) } ?: "未知"
 
     private fun response(path: String): WebResourceResponse {

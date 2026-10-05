@@ -1,6 +1,6 @@
 /** Explicit 20-minute isolated Core host for a manually observed desktop/Android memory UI pass. */
 import assert from 'node:assert/strict';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { existsSync, mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, sep } from 'node:path';
@@ -48,7 +48,7 @@ try {
   assert.equal((await manager.ingest(a.ownerId, boundaryForCompletedTurn({ id: sourceSessionId,
     header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))).state, 'accepted');
   const deadline = Date.now() + 120_000;
-  let formed;
+  let formed, stableJob;
   while (Date.now() < deadline) {
     const world = await manager.query(a.ownerId, 'query_world', { operation: 'list', object_kind: 'cognition', include_history: false });
     const matches = (world.items ?? []).filter((row) => row.value?.content?.includes(text) && row.current_state === 'current');
@@ -56,15 +56,19 @@ try {
     const sourceJobs = (jobs.jobs ?? []).filter((row) =>
       row.acceptance?.parent_session_id === sourceSessionId && row.worker?.state === 'applied');
     if (matches.length === 1 && Number.isSafeInteger(world.world_revision) && sourceJobs.length === 1) {
-      itemId = matches[0].item_id; formed = world; break;
+      itemId = matches[0].item_id; formed = world; stableJob = sourceJobs[0]; break;
     }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   assert.ok(formed, 'isolated Core did not form one stable cognition');
   mkdirSync(evidenceRoot, { recursive: true }); const expiresAt = new Date(Date.now() + 20 * 60_000).toISOString();
-  writeFileSync(privateFixture, JSON.stringify({ origin, expiresAt, accountA: a, accountB: b, itemId, text }, null, 2), { mode: 0o600 });
+  writeFileSync(privateFixture, JSON.stringify({ origin, expiresAt, accountA: a, accountB: b,
+    itemId, text, worldRevision: formed.world_revision }, null, 2), { mode: 0o600 });
   writeFileSync(publicEvidence, JSON.stringify({ startedAt: new Date().toISOString(), expiresAt, origin, fixture: 'private-stage15-memory-ui-fixture.json',
-    scope: 'isolated Core/A-B only; ordinary-chat formation and production accounts are not covered' }, null, 2));
+    scope: 'isolated Core/A-B only; ordinary-chat formation and production accounts are not covered',
+    formation: { sqlSeed: false, testingRoute: 'smart', currentItemCount: 1,
+      worldRevision: formed.world_revision, jobState: stableJob.worker.state,
+      jobIdSha256: createHash('sha256').update(stableJob.job_id).digest('hex') } }, null, 2));
   console.log(JSON.stringify({ origin, expiresAt, privateFixture, note: 'Use A in the normal login form, open Memory, list -> detail/source -> back -> mute or correct. B must not see A.' }));
   await new Promise((resolve) => setTimeout(resolve, 20 * 60_000));
 } finally { await service.close().catch(() => {}); await manager.close().catch(() => {}); rmSync(root, { recursive: true, force: true }); }

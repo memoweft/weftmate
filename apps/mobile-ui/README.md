@@ -1,6 +1,6 @@
 # WeftMate 手机界面
 
-`www/` 是同一份 Weave 0.2 页面资产：Android APK（安卓安装包）内置它作离线底版，个人宿主的版本发布也只读取这个目录。修改 `www/` 不会自动改变已经安装的底版；经审阅后由宿主发布新界面包，现有 APK 在连接时下载、校验并切换。新增原生能力、权限、数据库或 native bridge（原生连接层）版本仍需更新 APK。
+`www/` 是同一份 Weave 0.8.0 页面资产：Android APK（安卓安装包）内置它作离线底版，个人宿主的版本发布也只读取这个目录。修改 `www/` 不会自动改变已经安装的底版；经审阅后由宿主发布新界面包，现有 APK 在连接时下载、校验并切换。新增原生能力、权限、数据库或 native bridge（原生连接层）版本仍需更新 APK。
 
 ## 开发与打包
 
@@ -14,6 +14,8 @@ npm run check
 `npm run build` 只将固定依赖的 `markdown-it`、`DOMPurify`、`highlight.js` 打成 `www/vendor.js`。`www/app.js`、`www/styles.css`、原稿细线 SVG 图标和 W 品牌资源直接由 Android Gradle 的 `assets.srcDir` 收入 APK。包内 `www/licenses/` 保留所用开源库的许可证；图标来自用户指定的 MobileStyle v1.2 原件。
 
 宿主发布使用仓库的 `scripts/build-mobile-ui.mjs`，由主助手在审阅后选择独立输出目录和版本。发布器生成不可变资产与清单，手机对每个文件核对大小和 SHA-256（哈希）后才在私有目录切换。应用页面只从 `https://appassets.androidplatform.net/ui/` 加载；外部网页没有原生桥，业务请求也只允许当前账户宿主的固定业务前缀。
+
+使用普通文件选择与 `shared.attachments.save` 原生保存动作的 0.8.0 页面必须以 `minNativeVersionCode=13` 发布。旧 code12 不下载这份页面，继续运行自身已验证的兼容界面，并从设置中的更新入口手动安装新 APK。
 
 ## 页面与数据
 

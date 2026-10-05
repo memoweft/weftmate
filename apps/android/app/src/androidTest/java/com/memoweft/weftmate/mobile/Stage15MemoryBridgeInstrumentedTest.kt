@@ -2,6 +2,7 @@ package com.memoweft.weftmate.mobile
 
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.webkit.WebView
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -72,6 +73,24 @@ class Stage15MemoryBridgeInstrumentedTest {
         image.recycle()
     }
 
+    /** Wait for the Android compositor, rather than only the DOM theme attribute. */
+    private fun waitForThemeFrame(dark: Boolean) {
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(8)
+        while (System.nanoTime() < deadline) {
+            val image = instrumentation.uiAutomation.takeScreenshot()
+            if (image != null) {
+                val x = (image.width / 72).coerceIn(1, image.width - 1)
+                val y = (image.height / 6).coerceIn(1, image.height - 1)
+                val pixel = image.getPixel(x, y)
+                val luminance = (Color.red(pixel) + Color.green(pixel) + Color.blue(pixel)) / 3
+                image.recycle()
+                if ((dark && luminance < 100) || (!dark && luminance > 180)) return
+            }
+            Thread.sleep(75)
+        }
+        throw AssertionError("Composited theme pixels did not become ${if (dark) "dark" else "light"}")
+    }
+
     @Test fun realWebViewBridgeReadsSourcesMutesAndKeepsAccountIsolationAfterRestart() {
         assumeTrue("Explicit stage-15 isolated fixture only", args.getString("stage15MemoryBridge") == "1")
         val origin = args.getString("origin") ?: throw AssertionError("origin missing")
@@ -97,22 +116,36 @@ class Stage15MemoryBridgeInstrumentedTest {
             }
             assertTrue(evaluate(page, "(()=>{const i=[...document.querySelectorAll('#page-content input')],labels=[...document.querySelectorAll('#page-content .field span')].map(x=>x.textContent);return i.length>=3&&labels.some(x=>x.includes('个人服务地址'))&&labels.some(x=>x.includes('账户名'))&&labels.some(x=>x.includes('密码'))})()") == "true")
             evaluate(page, "(()=>{const i=[...document.querySelectorAll('#page-content input')];i[0].value=${JSONObject.quote(origin)};i[1].value=${JSONObject.quote(userA)};i[2].value=${JSONObject.quote(passwordA)};[...document.querySelectorAll('#page-content button')].find(b=>b.textContent.trim()==='登录').click()})()")
-            waitFor(page, "state.loggedIn===true")
-            evaluate(page, "document.querySelector('[data-page=\"memory\"]').click()")
+            waitFor(page, "state.loggedIn===true&&state.transitionPending===false&&state.page==='connect'&&document.getElementById('page-content').textContent.includes('当前账户')")
+            evaluate(page, "page('memory')")
             waitFor(page, "state.page==='memory'&&document.getElementById('page-content').textContent.includes(${JSONObject.quote(text)})")
             evaluate(page, "[...document.querySelectorAll('#page-content button')].find(b=>b.textContent.includes(${JSONObject.quote(text)})).click()")
-            capture("stage15-memory-detail-light.png")
             waitFor(page, "document.getElementById('page-content').textContent.includes('来源与读取状态')&&document.getElementById('page-content').textContent.includes('支持该理解')")
+            waitFor(page, "document.getElementById('toast').hidden===true")
+            requireOk(call(page, "settings.appearance", JSONObject().put("value", "dark")))
+            evaluate(page, "applyTheme('dark')")
+            waitFor(page, "document.documentElement.dataset.theme==='dark'&&document.getElementById('page-content').textContent.includes('来源与读取状态')")
+            waitForThemeFrame(true)
+            capture("stage15-memory-detail-dark.png")
+            requireOk(call(page, "settings.appearance", JSONObject().put("value", "light")))
+            evaluate(page, "applyTheme('light')")
+            waitFor(page, "document.documentElement.dataset.theme==='light'&&document.getElementById('page-content').textContent.includes('来源与读取状态')")
+            waitForThemeFrame(false)
+            capture("stage15-memory-detail-light.png")
             val detail = requireOk(call(page, "host.business", JSONObject().put("path",
                 "/personal/v1/memory/items/cognition/$itemId").put("method", "GET")))
             assertEquals(itemId, detail.getJSONObject("item").getString("id"))
             val sources = requireOk(call(page, "host.business", JSONObject().put("path",
                 "/personal/v1/memory/items/cognition/$itemId/sources").put("method", "GET")))
             assertTrue(sources.getJSONArray("sources").length() > 0)
+            evaluate(page, "newMemoryRequestId=()=> 'stage15:memory:mute'")
             evaluate(page, "[...document.querySelectorAll('#page-content button')].find(b=>b.textContent==='停用这项记忆').click()")
             waitFor(page, "[...document.querySelectorAll('#page-content button')].some(b=>b.textContent==='确认停用')")
             evaluate(page, "[...document.querySelectorAll('#page-content button')].find(b=>b.textContent==='确认停用').click()")
-            waitFor(page, "document.getElementById('page-content').textContent.includes('记忆已停用')")
+            val mutedStable = "state.memory&&state.memory.pendingMarker===null&&state.memory.activeOperation===null&&Boolean(state.memory.detail&&state.memory.detail.item&&state.memory.detail.item.lifecycle&&state.memory.detail.item.lifecycle.mutedAt)&&state.memory.detailLoading===false&&state.memory.sourcesLoading===false&&document.getElementById('page-content').textContent.includes('记忆已停用')&&document.getElementById('page-content').textContent.includes('来源与读取状态')&&!document.getElementById('page-content').textContent.includes('正在读取来源')&&document.getElementById('toast').hidden===true"
+            waitFor(page, mutedStable)
+            Thread.sleep(600)
+            waitFor(page, mutedStable)
             capture("stage15-memory-mute-light.png")
             instrumentation.runOnMainSync { activity.finish() }
             activity = start(); page = web(activity)

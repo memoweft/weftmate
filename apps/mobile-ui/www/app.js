@@ -91,8 +91,7 @@ async function refreshAttachmentDrafts(generation=attachmentViewGeneration){if(!
     if(!Array.isArray(result?.attachments))throw new Error('ATTACHMENT_UNSUPPORTED');
     if(owner!==state.owner||epoch!==state.authEpoch||source!==state.chatSource||generation!==attachmentViewGeneration||
       conversationId!==attachmentConversationId()||revision!==(attachmentRevisions.get(key)||0))return false;
-    const list=result.attachments.map(normalizedAttachment).filter(item=>item&&
-      (source!=='host'||item.kind==='image'&&mediaId.test(item.attachmentId)));
+    const list=result.attachments.map(normalizedAttachment).filter(item=>item&&mediaId.test(item.attachmentId));
     attachmentDrafts.set(key,list);renderAttachmentDrafts();updateComposer();return true;
   }catch(e){if(owner!==state.owner||epoch!==state.authEpoch||source!==state.chatSource||generation!==attachmentViewGeneration)return false;
     status(`附件草稿未能恢复 · ${safeError(e)}`,true);return false}}
@@ -262,7 +261,7 @@ function cancelAttachmentPick({announce=false}={}){if(!state.attachmentPick)retu
 function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){toast('这段电脑会话仅可查看，无法添加图片',true);return}
   if(state.attachmentPick)return;if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}
   closeModelMenu();state.attachmentMenu=true;const popup=$('attachment-popover');popup.hidden=false;
-  $('pick-file').hidden=state.chatSource==='host';$('attachment-note').hidden=state.chatSource!=='host';
+  $('pick-file').hidden=false;$('attachment-note').hidden=state.chatSource!=='host';
   $('plus-button').setAttribute('aria-expanded','true');requestAnimationFrame(()=>popup.classList.add('open'));placeAttachmentMenu();$('pick-image').focus()}
 function placeAttachmentMenu(){const top=$('plus-button').getBoundingClientRect().top;
   const popup=$('attachment-popover');popup.style.bottom=`${Math.max(100,window.innerHeight-top+8)}px`;
@@ -294,8 +293,8 @@ function clearAcceptedHostAttachments(attachmentIds){if(state.chatSource!=='host
 function syncChatInsets(){const height=$('composer-dock').getBoundingClientRect().height;
   if(Number.isFinite(height)&&height>0){const value=`${Math.ceil(height)}px`;
     $('chat-page').style.setProperty('--composer-height',value);document.documentElement.style.setProperty('--composer-height',value)}}
-async function pickAttachment(kind){if(state.chatSource==='host'&&(kind!=='image'||!selectedSharedSession()?.sendAvailable)){
-    toast(kind==='image'?'这段电脑会话仅可查看，无法添加图片':'电脑会话目前只支持图片；文件请在手机会话中发送',true);return}
+async function pickAttachment(kind){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){
+    toast('这段电脑会话仅可查看，无法添加附件',true);return}
   if(!state.loggedIn||state.transitionPending||state.busy||state.attachmentPick||
     state.chatSource==='host'&&state.sharedPending)return;
   const pick={owner:state.owner,epoch:state.authEpoch,source:state.chatSource,conversationId:attachmentConversationId(),
@@ -391,6 +390,28 @@ function normalizedMessageThumbnail(item,scope,messageId){if(typeof item?.attach
   if(!url&&!previewUrl)return null;
   return {url,previewUrl,displayUrl,attachmentId:item.attachmentId,
     name:String(item.name||'图片').slice(0,120),syncStatus:item.syncStatus}}
+function normalizedSharedFile(item){if(!item||typeof item.attachmentId!=='string'||!mediaId.test(item.attachmentId)||
+    typeof item.name!=='string'||!item.name.trim()||item.name.length>128||/[\x00-\x1f\\/]/.test(item.name)||
+    typeof item.contentType!=='string'||!/^[a-z0-9][a-z0-9.+-]{0,63}\/[a-z0-9][a-z0-9.+-]{0,63}$/.test(item.contentType)||
+    ['image/png','image/jpeg','image/webp','image/gif'].includes(item.contentType)||
+    !Number.isSafeInteger(item.size)||item.size<1||item.size>1024*1024*1024||
+    typeof item.sha256!=='string'||!/^[a-f0-9]{64}$/.test(item.sha256))return null;
+  return {attachmentId:item.attachmentId,name:item.name,contentType:item.contentType,size:item.size,sha256:item.sha256}}
+function attachmentSize(size){if(size>=1024*1024*1024)return `${(size/1024/1024/1024).toFixed(1)} GB`;
+  if(size>=1024*1024)return `${(size/1024/1024).toFixed(size>=10*1024*1024?0:1)} MB`;
+  if(size>=1024)return `${Math.ceil(size/1024)} KB`;return `${size} B`}
+async function saveSharedFile(sessionId,file,button){if(button.disabled)return;button.disabled=true;
+  try{const result=await call('shared.attachments.save',{sessionId,attachmentId:file.attachmentId});
+    if(result?.pending!==true)throw new Error('OPERATION_FAILED');toast('请选择保存位置')}
+  catch(e){toast(safeError(e),true)}finally{button.disabled=false}}
+function appendSharedFiles(row,event,sessionId){const refs=Array.isArray(event.data?.originalAttachments)?event.data.originalAttachments:[];
+  const files=refs.map(normalizedSharedFile).filter(Boolean);if(!files.length)return 0;
+  const list=el('div','message-thumbnails');
+  for(const file of files){const button=el('button','attachment-chip');button.type='button';
+    button.setAttribute('aria-label',`保存文件 ${file.name}`);button.append(el('span','attachment-kind','文件'),
+      el('span','attachment-name',`${file.name} · ${attachmentSize(file.size)}`));
+    button.addEventListener('click',()=>{void saveSharedFile(sessionId,file,button)});list.append(button)}
+  row.append(list);return files.length}
 function displayedPhoneMessage(text,images){const value=String(text||''),match=/(?:^|\n)\[本机附件：([^\n]*)；跨端暂不可见\]$/.exec(value);
   if(!match)return {body:value,note:''};
   const body=value.slice(0,match.index).trimEnd(),names=match[1];
@@ -469,8 +490,10 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   else if(!state.sharedHostAvailable)content.append(el('div','shared-notice','电脑暂不可达。已读取的内容仅供查看，新消息可能进入待核对状态。'));
   let lastTurn='';for(const event of state.sharedEvents){
     if(event.type==='user.message'||event.type==='assistant.message'){
-      const body=event.data?.text,images=event.type==='user.message'&&Array.isArray(event.data?.images)?event.data.images:[];
-      if(typeof body==='string'&&body||images.length){
+      const body=event.data?.text,images=event.type==='user.message'&&Array.isArray(event.data?.images)?event.data.images:[],
+        originalFiles=event.type==='user.message'&&Array.isArray(event.data?.originalAttachments)?
+          event.data.originalAttachments.map(normalizedSharedFile).filter(Boolean):[];
+      if(typeof body==='string'&&body||images.length||originalFiles.length){
         const row=messageNode(event.type==='user.message'?'user':'assistant',typeof body==='string'?body:'');
         if(images.length){const gallery=el('div','message-thumbnails');let unavailable=0;
           const scope={owner:state.owner,epoch:state.authEpoch,source:'host',conversationId:state.sharedSessionId};
@@ -486,6 +509,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
           if(gallery.children.length){row.classList.add('message-has-images');
             if(!body)row.classList.add('message-image-only');row.append(gallery)}
           if(unavailable)row.append(el('small','message-attachment-note',`${unavailable} 张历史图片暂无法预览`))}
+        if(originalFiles.length)appendSharedFiles(row,event,state.sharedSessionId);
         content.append(row);
         if(event.data?.truncated)content.append(el('p','message-state','这条电脑消息仅显示前一部分'))}}
     else if(event.type==='turn.started')lastTurn='running';
@@ -857,8 +881,6 @@ async function sendShared(){const text=$('draft').value.trim(),session=selectedS
   const items=[...currentAttachments()];
   if((!text&&!items.length)||!session?.sendAvailable||state.sharedPending||state.sharedOutboxLoading||state.transitionPending)return;
   if(text.length>16384){status('消息过长，请缩短后发送',true);return}
-  if(items.some(item=>item.kind!=='image'||!mediaId.test(item.attachmentId))){
-    status('电脑会话当前只支持图片；请移除不支持的附件后重试',true);return}
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=session.sessionId,
     requestId=newSharedRequestId(),key=sharedDraftKey(),attachmentIds=items.map(item=>item.attachmentId);
   const afterSeq=state.sharedNextSeq;state.sharedPending={requestId,state:'submitting',text,attachmentIds,afterSeq};
@@ -986,6 +1008,9 @@ function processEvent(message){const {event,data}=message;if(event==='chat.start
       if(data.status==='failed'||data.status==='cancelled')refreshAttachmentDrafts()}listConversations()}
   if(event==='tool.receipt'){status(`${toolLabel(data.toolName)} · ${receiptStatus(data.status)}`);if(state.page==='chat')renderConversation()}
   if(event==='shared.outbox.reconciled'&&state.chatSource==='host'){void loadSharedOutbox();void loadSharedHistory()}
+  if(event==='attachment.save'){
+    if(data?.status==='saved')toast('文件已保存');
+    else if(data?.status==='failed')toast(safeError({message:data.code||'OPERATION_FAILED'}),true)}
   if(event==='profile.photo'){
     if(data.status==='saved'){state.profile=data.profile;showProfile(data.profile);
       toast(data.profile?.localCacheSaved===false?'头像已在电脑保存，本机离线副本未保存':'头像已保存');
@@ -1036,7 +1061,9 @@ async function boot(){
     state.busy=info.busy;state.ui=info.ui;state.backgroundSync=info.backgroundSync||'unknown';
     state.connection=info.loggedIn?'checking':'local';
     showProfile({displayName:info.username||'本机个人空间'});
-    $('model-label').textContent=info.model?.displayName||'选择模型';updateComposer();await listConversations();
+    // Restore the selected phone/new or host session before updateComposer can persist the
+    // initially empty textarea. Otherwise a restart deletes the saved `owner:new` draft.
+    $('model-label').textContent=info.model?.displayName||'选择模型';await listConversations();
     try{state.conversationId=info.launchConversationId||localStorage.getItem(selectionKey())||state.conversations[0]?.id||null}
     catch{state.conversationId=info.launchConversationId||state.conversations[0]?.id||null}
     if(!state.conversations.some(item=>item.id===state.conversationId))state.conversationId=null;
@@ -2470,6 +2497,14 @@ function appearancePage(target){target.append(heading('外观','同一套 Weave 
 async function updatesPage(target){target.append(heading('界面更新','常规界面可从个人服务端更新；新增原生能力仍需更新应用。'));
   let details;try{details=await call('updates.status')}catch(e){target.append(notice(safeError(e)));return}
   target.append(group('版本',[row('当前界面',details.activeVersion,()=>{}),row('原生应用',details.nativeVersion,()=>{})]));
+  const install=group('本设备安装',[]),installBody=install.querySelector('.group-body'),
+    downloadUrl='https://www.weftmate.com/downloads/?platform=android',
+    link=el('a','native-download-link','在官网查看安卓安装包'),qr=el('img','native-download-qr');
+  link.setAttribute('href',downloadUrl);link.setAttribute('aria-label','打开 WeftMate 官网安卓下载页面');
+  qr.src='qr/android.svg';qr.alt='WeftMate 官网安卓下载页面二维码';qr.width=168;qr.height=168;
+  installBody.append(el('p','muted','当前是 Android 设备。原生更新需要从官网下载安装包并手动覆盖安装。'),link,qr,
+    el('p','muted native-download-qr-note','也可以用另一台设备扫描二维码打开同一个安卓下载页面。'));
+  target.append(install);
   if(!state.loggedIn){target.append(notice('登录账户后才会检查服务端界面；内置页面仍可打开登录与注册。'),
     action('连接账户',()=>page('connect')));return}
   target.append(group('更新方式',[row(`自动更新界面 · ${details.autoEnabled?'已开启':'已关闭'}`,
