@@ -98,6 +98,32 @@ async function settled(origin, auth, requestId) {
   }
   throw new Error('account model registration did not settle');
 }
+async function sessionEvents(origin, auth, sessionId) {
+  const value = await api(origin, auth, 'GET',
+    `/personal/v1/sessions/${sessionId}/events?afterSeq=-1&limit=200`);
+  assert.equal(value.status, 200); return value.body.events;
+}
+async function completedTurn(origin, auth, sessionId, receiptId) {
+  for (let attempt = 0; attempt < 900; attempt++) {
+    const rows = await sessionEvents(origin, auth, sessionId);
+    const user = rows.find((row) => row.type === 'user.message' && row.data?.receiptId === receiptId);
+    const start = rows.findLast((row) => row.type === 'turn.started' && row.seq < user?.seq);
+    const end = rows.find((row) => row.type === 'turn.ended' && row.data?.turn === start?.data?.turn);
+    if (end) { assert.equal(end.data.reason, 'completed', JSON.stringify(end.data)); return; }
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  throw new Error('synthetic account-model turn did not complete');
+}
+async function waitInferenceQuiet(stableMs = 1_000) {
+  let observed = inference, stableSince = Date.now();
+  const end = Date.now() + 10_000;
+  while (Date.now() < end) {
+    await new Promise((resolve) => setTimeout(resolve, 100));
+    if (inference !== observed) { observed = inference; stableSince = Date.now(); }
+    if (Date.now() - stableSince >= stableMs) return observed;
+  }
+  throw new Error('synthetic provider did not become quiet');
+}
 try {
   child = start();
   let accessOrigin = (await waitFor(/personal-access listening origin=(http:\/\/127\.0\.0\.1:\d+)/))[1];
@@ -146,6 +172,20 @@ try {
   assert.equal(command.state, 'accepted_by_dsh', JSON.stringify(command));
   assert.deepEqual(await defaultSelection(runtimeOrigin), before);
   assert.equal(JSON.parse(readFileSync(productSettingsFile, 'utf8')).models.activeId, productDefaultBefore);
+  const idleProbe = await api(accessOrigin, auth, 'POST', '/personal/v1/commands', {
+    requestId: 'idle-before-update', kind: 'session.message', targetDeviceId: status.hostId,
+    sessionId: command.sessionId, text: 'Complete this synthetic turn, then remain idle.' });
+  assert.equal(idleProbe.status, 202, JSON.stringify(idleProbe.body));
+  let idleCommand;
+  for (let attempt = 0; attempt < 150; attempt++) {
+    idleCommand = (await api(accessOrigin, auth, 'GET',
+      `/personal/v1/commands/${idleProbe.body.command.commandId}`)).body.command;
+    if (!['pending', 'dispatching'].includes(idleCommand.state)) break;
+    await new Promise((resolve) => setTimeout(resolve, 100));
+  }
+  assert.equal(idleCommand.state, 'accepted_by_dsh', JSON.stringify(idleCommand));
+  await completedTurn(accessOrigin, auth, command.sessionId, idleCommand.receiptId);
+  await waitInferenceQuiet();
   const changed = await api(accessOrigin, auth, 'PATCH',
     `/personal/v1/account/models/${installed.body.model.accountModelId}`, {
       requestId: 'new-runtime-revision', expectedRevision: 1, modelId: `${modelId}-v2` });
@@ -154,6 +194,10 @@ try {
   assert.equal(revised.body.operation.status, 'succeeded', JSON.stringify(revised.body));
   assert.notEqual(revised.body.model.profileId, installed.body.model.profileId);
   assert.equal(revised.body.model.revision, 2);
+  const gate = JSON.parse(readFileSync(join(profile, 'dsh-home', 'weftmate-host-state.json'), 'utf8'))
+    .accountModelRouteGate;
+  assert.deepEqual({ idle: gate?.idle, reasonCode: gate?.reasonCode },
+    { idle: true, reasonCode: 'idle' }, 'a completed turn must leave a locally diagnosable idle gate');
   const visible = (await api(accessOrigin, auth, 'GET', '/personal/v1/models')).body.models;
   assert.equal(visible.some((item) => item.id === revised.body.model.profileId), true);
   assert.equal(visible.some((item) => item.id === installed.body.model.profileId), false);
@@ -194,7 +238,7 @@ try {
   assert.ok(inference >= 1 && inference <= 3,
     'only the explicit synthetic turn and its bounded title request may call the provider');
   assert.equal(inferenceModels.every((item) => item === modelId), true);
-  const beforeColdInference = inference;
+  const beforeColdInference = await waitInferenceQuiet();
   await stop();
   output = '';
   child = start();
