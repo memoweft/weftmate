@@ -57,7 +57,7 @@ test('official ToolRuntime gives the personal-remote scope only bounded desktop 
     assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name),
       ['personal_open_notepad', 'personal_save_document',
         'personal_list_project_files', 'personal_read_project_file',
-        'personal_browser_open', 'personal_browser_follow'])
+        'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment'])
     const preStep = (turn: number) => scoped.ctx.waterfall('agent/pre-step', {
       agent, messages: [], turn, step: turn, signal: new AbortController().signal,
     }, async () => ({ kind: 'enter', messages: [] }))
@@ -77,7 +77,7 @@ test('official ToolRuntime gives the personal-remote scope only bounded desktop 
     assert.ok(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'pwsh'))
     for (const name of ['personal_open_notepad', 'personal_save_document',
       'personal_list_project_files', 'personal_read_project_file',
-      'personal_browser_open', 'personal_browser_follow']) {
+      'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
       const guarded = await ctx.get('tools').execute({ name,
         arguments: name === 'personal_open_notepad' ? { appId: 'notepad' } : { fileName: 'note.md', content: 'Hi' },
         agent: standard, callId: `guarded-${name}`, signal: new AbortController().signal })
@@ -105,7 +105,7 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
     execute: async () => ({ ok: true }) })
   for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
     'personal_list_project_files', 'personal_read_project_file',
-    'personal_browser_open', 'personal_browser_follow']) {
+    'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
     ctx.get('tools').register(fakeTool(name))
   }
   const session = ctx.sessions.create('friend-session', { meta: { agentPreset: 'personal-shared-chat' } })
@@ -118,7 +118,7 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name), [])
   for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
     'personal_list_project_files', 'personal_read_project_file',
-    'personal_browser_open', 'personal_browser_follow']) {
+    'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
     const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
       callId: `deny-${name.replaceAll('_', '-')}`, signal: new AbortController().signal })
     assert.equal(result.isError, true, `${name} must not execute in a shared-account chat`)

@@ -38,19 +38,26 @@ try {
   const { origin } = await service.start(); const suffix = randomUUID().replaceAll('-', '').slice(0, 16);
   const a = await register(origin, `stage15uia${suffix}`, `Stage15-A-${randomUUID()}-memory`);
   const b = await register(origin, `stage15uib${suffix}`, `Stage15-B-${randomUUID()}-memory`);
-  const text = `stage15-ui-memory-${suffix}`; let itemId = `cognition:stage15:${suffix}`;
+  const text = `stage15-ui-memory-${suffix}`; const sourceText = `我喜欢${text}`;
+  let itemId = `cognition:stage15:${suffix}`;
+  const sourceSessionId = `session-ui-${suffix}`;
   const events = [{ seq: 1, type: 'turn/start', data: { turn: 1 } }, { seq: 2, type: 'user/message',
-    data: { id: `stage15-ui-${suffix}`, source: { kind: 'user' }, content: [{ type: 'text', text }] } },
+    data: { id: `stage15-ui-${suffix}`, source: { kind: 'user' }, content: [{ type: 'text', text: sourceText }] } },
   { seq: 3, type: 'assistant/message', data: { message: { id: `stage15-assistant-${suffix}`, content: [{ type: 'text', text: '已记录。' }] } } },
   { seq: 4, type: 'turn/end', data: { turn: 1, reason: { kind: 'stop' } } }];
-  assert.equal((await manager.ingest(a.ownerId, boundaryForCompletedTurn({ id: `session-ui-${suffix}`,
+  assert.equal((await manager.ingest(a.ownerId, boundaryForCompletedTurn({ id: sourceSessionId,
     header: { agentPreset: 'personal-shared-chat' }, events }, events.at(-1)))).state, 'accepted');
-  const deadline = Date.now() + 30_000;
+  const deadline = Date.now() + 120_000;
   let formed;
   while (Date.now() < deadline) {
     const world = await manager.query(a.ownerId, 'query_world', { operation: 'list', object_kind: 'cognition', include_history: false });
     const matches = (world.items ?? []).filter((row) => row.value?.content?.includes(text) && row.current_state === 'current');
-    if (matches.length === 1 && Number.isSafeInteger(world.world_revision)) { itemId = matches[0].item_id; formed = world; break; }
+    const jobs = await manager.query(a.ownerId, 'query_jobs', { operation: 'list' });
+    const sourceJobs = (jobs.jobs ?? []).filter((row) =>
+      row.acceptance?.parent_session_id === sourceSessionId && row.worker?.state === 'applied');
+    if (matches.length === 1 && Number.isSafeInteger(world.world_revision) && sourceJobs.length === 1) {
+      itemId = matches[0].item_id; formed = world; break;
+    }
     await new Promise((resolve) => setTimeout(resolve, 250));
   }
   assert.ok(formed, 'isolated Core did not form one stable cognition');
