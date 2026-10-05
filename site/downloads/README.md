@@ -32,6 +32,14 @@
 node scripts/prepare-public-downloads.mjs --config /absolute/path/publish.json --output /absolute/path/candidate/downloads --allow-web-url https://home.weftmate.com:8443/personal/v1/ui
 ```
 
+需要保留已经发布的安装包 URL 时，可附加 `--previous-release-dir /absolute/path/old-downloads`。旧目录必须是既有下载候选；发布器只检查其中直接的 `files/`，只保留符合 `<sha256>-<安全文件名>.apk` 或 `.dmg` 的普通文件，并重新核对文件名摘要与字节摘要。其它旧页面、清单、二维码和目录不会复制，`files/` 之外的文件（包括账号资料）会忽略。`files/` 内出现未知文件/子目录/符号链接、摘要不符、同一摘要多个文件名或超出限制时，会在创建新候选前失败：最多 32 个文件、单件不超过 1 GiB、总量不超过 2 GiB。若旧包与当前包摘要和扩展名相同，当前 manifest（清单）复用旧文件名与 URL，只保留一份字节；manifest 仍只列当前有效版本。未传此选项时，原有输出不变。
+
+示例：
+
+```sh
+node scripts/prepare-public-downloads.mjs --config /absolute/path/publish.json --output /absolute/path/candidate/downloads --allow-web-url https://home.weftmate.com:8443/personal/v1/ui --previous-release-dir /absolute/path/old-downloads
+```
+
 输出仅有三个下载页资源、`releases.json`、五个 `qr/<id>.svg` 和两个 `files/<sha256>-<fileName>` 安装包。`releases.json` 中 `landingUrl` 指向 `siteUrl?platform=<id>`；二维码也只编码该公开页面，不含账户、会话或令牌。`downloadUrl`、`qrUrl` 均相对 `siteUrl`。只有 `available` 项包含版本、构建号、架构、字节数、摘要和 `downloadUrl`；`web` 项只有明确允许的 `webUrl`，不可用项没有下载字段。
 
 二维码使用 [Project Nayuki 的 QR Code Generator](https://github.com/nayuki/QR-Code-generator/tree/3c6d0b3cefb4e049dc337e82237c9644399716a8/typescript-javascript) MIT（宽松开源许可）实现。原始 `scripts/vendor/qrcodegen.ts` 的 SHA-256 为 `1dc03fb5a10e0e2318ea162755bbdb9977ca6ce52cff959e9c9b6deafdccda9c`；仓内 TypeScript 编译为 `scripts/vendor/qrcodegen.mjs`，保留原许可文字。发布时无需外部二维码服务或新全局依赖。

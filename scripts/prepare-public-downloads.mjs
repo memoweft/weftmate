@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { copyFile, lstat, mkdir, mkdtemp, open, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, mkdtemp, open, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { qrcodegen } from './vendor/qrcodegen.mjs';
@@ -14,6 +14,9 @@ const BUILD = /^\d+(?:\.\d+){0,2}$/;
 const SAFE_FILE = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const WEB_ENTRY = 'https://home.weftmate.com:8443/personal/v1/ui';
 const MAX_INSTALLER_BYTES = 1024 * 1024 * 1024;
+const MAX_PREVIOUS_INSTALLERS = 32;
+const MAX_PREVIOUS_TOTAL_BYTES = 2 * MAX_INSTALLER_BYTES;
+const PREVIOUS_FILE = /^([a-f0-9]{64})-([A-Za-z0-9][A-Za-z0-9._-]{0,127})$/;
 
 function exact(value, keys) {
   return value !== null && typeof value === 'object' && !Array.isArray(value) &&
@@ -64,6 +67,43 @@ async function sha256File(file, expectedBytes) {
   } finally { await handle.close(); }
 }
 
+async function previousInstallers(directory) {
+  if (directory === null) return [];
+  const root = await lstat(directory).catch(() => null);
+  if (!root?.isDirectory() || root.isSymbolicLink()) fail('previous release directory must be a real directory');
+  const filesDirectory = path.join(directory, 'files');
+  const filesEntry = await lstat(filesDirectory).catch(() => null);
+  if (!filesEntry?.isDirectory() || filesEntry.isSymbolicLink()) {
+    fail('previous release files directory must be a real directory');
+  }
+  const names = await readdir(filesDirectory);
+  if (names.length === 0) fail('previous release files directory is empty');
+  if (names.length > MAX_PREVIOUS_INSTALLERS) fail(`previous release has more than ${MAX_PREVIOUS_INSTALLERS} installers`);
+  let totalBytes = 0;
+  const seen = new Set();
+  const installers = [];
+  for (const name of names) {
+    const match = PREVIOUS_FILE.exec(name);
+    const extension = path.extname(name).toLowerCase();
+    if (!match || name.includes('..') || !['.apk', '.dmg'].includes(extension)) {
+      fail(`invalid previous installer filename: ${name}`);
+    }
+    const file = path.join(filesDirectory, name);
+    const entry = await lstat(file).catch(() => null);
+    if (!entry?.isFile() || entry.isSymbolicLink()) fail(`previous installer is not a regular file: ${name}`);
+    if (entry.size < 1 || entry.size > MAX_INSTALLER_BYTES) fail(`previous installer exceeds the per-file limit: ${name}`);
+    totalBytes += entry.size;
+    if (totalBytes > MAX_PREVIOUS_TOTAL_BYTES) fail('previous installers exceed the total-byte limit');
+    const sha256 = await sha256File(file, entry.size);
+    if (sha256 !== match[1]) fail(`previous installer filename SHA-256 differs from its bytes: ${name}`);
+    const digestKey = `${sha256}:${extension}`;
+    if (seen.has(digestKey)) fail(`duplicate previous installer digest with multiple filenames: ${sha256}`);
+    seen.add(digestKey);
+    installers.push({ file, fileName: name.slice(65), extension, bytes: entry.size, sha256 });
+  }
+  return installers;
+}
+
 function checkedPlatform(row, allowWebUrl) {
   if (!row || typeof row.id !== 'string' || !PLATFORMS.includes(row.id)) fail('unknown platform');
   if (!validNotes(row.notes)) fail(`invalid notes for ${row.id}`);
@@ -112,8 +152,9 @@ function qrSvg(payload, id) {
 }
 
 export async function preparePublicDownloads({ configPath, output, siteSource = path.resolve(HERE, '../site/downloads'),
-  allowWebUrl = null }) {
-  if (![configPath, output, siteSource].every((value) => typeof value === 'string' && path.isAbsolute(value))) {
+  allowWebUrl = null, previousReleaseDir = null }) {
+  if (![configPath, output, siteSource].every((value) => typeof value === 'string' && path.isAbsolute(value)) ||
+      (previousReleaseDir !== null && (typeof previousReleaseDir !== 'string' || !path.isAbsolute(previousReleaseDir)))) {
     fail('config, output and site source must be absolute paths');
   }
   const configFile = await regularFile(configPath, 64 * 1024);
@@ -127,6 +168,8 @@ export async function preparePublicDownloads({ configPath, output, siteSource = 
   const rows = config.platforms.map((row) => checkedPlatform(row, allowWebUrl));
   if (new Set(rows.map((row) => row.id)).size !== PLATFORMS.length ||
       PLATFORMS.some((id) => !rows.some((row) => row.id === id))) fail('platform list must contain each supported platform once');
+  const retainedInstallers = await previousInstallers(previousReleaseDir);
+  const retainedByDigest = new Map(retainedInstallers.map((item) => [`${item.sha256}:${item.extension}`, item]));
   const sourceDir = await lstat(siteSource).catch(() => null);
   if (!sourceDir?.isDirectory() || sourceDir.isSymbolicLink()) fail('site source directory is unavailable');
   for (const file of SITE_FILES) await regularFile(path.join(siteSource, file), 1024 * 1024);
@@ -147,6 +190,13 @@ export async function preparePublicDownloads({ configPath, output, siteSource = 
     await mkdir(path.join(staging, 'files'));
     await mkdir(path.join(staging, 'qr'));
     for (const file of SITE_FILES) await copyFile(path.join(siteSource, file), path.join(staging, file));
+    for (const installer of retainedInstallers) {
+      const destination = path.join(staging, 'files', `${installer.sha256}-${installer.fileName}`);
+      await copyFile(installer.file, destination);
+      if (await sha256File(destination, installer.bytes) !== installer.sha256) {
+        fail(`retained installer copy differs: ${installer.fileName}`);
+      }
+    }
     const platforms = [];
     for (const id of PLATFORMS) {
       const row = rows.find((item) => item.id === id);
@@ -155,10 +205,17 @@ export async function preparePublicDownloads({ configPath, output, siteSource = 
       await writeFile(path.join(staging, qrUrl), qrSvg(landingUrl, id), { flag: 'wx' });
       const entry = { id, name: NAMES[id], status: row.status, notes: row.notes, landingUrl, qrUrl };
       if (row.status === 'available') {
-        const file = `files/${row.expectedSha256}-${row.fileName}`;
-        await copyFile(row.source, path.join(staging, file));
-        if (await sha256File(path.join(staging, file), row.expectedBytes) !== row.expectedSha256) {
-          fail(`copied installer differs: ${id}`);
+        const extension = id === 'android' ? '.apk' : '.dmg';
+        const retained = retainedByDigest.get(`${row.expectedSha256}:${extension}`);
+        if (retained && retained.bytes !== row.expectedBytes) fail(`retained installer byte count differs: ${id}`);
+        const file = retained
+          ? `files/${retained.sha256}-${retained.fileName}`
+          : `files/${row.expectedSha256}-${row.fileName}`;
+        if (!retained) {
+          await copyFile(row.source, path.join(staging, file));
+          if (await sha256File(path.join(staging, file), row.expectedBytes) !== row.expectedSha256) {
+            fail(`copied installer differs: ${id}`);
+          }
         }
         Object.assign(entry, { version: row.version, build: row.build,
           architecture: row.architecture, bytes: row.expectedBytes,
@@ -179,13 +236,15 @@ export async function preparePublicDownloads({ configPath, output, siteSource = 
 function argumentsFrom(argv) {
   const values = {};
   for (let i = 0; i < argv.length; i += 2) {
-    if (!['--config', '--output', '--site-source', '--allow-web-url'].includes(argv[i]) ||
+    if (!['--config', '--output', '--site-source', '--allow-web-url', '--previous-release-dir'].includes(argv[i]) ||
         typeof argv[i + 1] !== 'string' || Object.hasOwn(values, argv[i])) fail('invalid arguments');
+    if (argv[i] === '--previous-release-dir' && argv[i + 1].length === 0) fail('previous release directory must not be empty');
     values[argv[i]] = argv[i + 1];
   }
   if (!values['--config'] || !values['--output']) fail('--config and --output are required');
   return { configPath: path.resolve(values['--config']), output: path.resolve(values['--output']),
     ...(values['--site-source'] ? { siteSource: path.resolve(values['--site-source']) } : {}),
+    ...(values['--previous-release-dir'] ? { previousReleaseDir: path.resolve(values['--previous-release-dir']) } : {}),
     allowWebUrl: values['--allow-web-url'] ?? null };
 }
 

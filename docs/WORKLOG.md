@@ -486,3 +486,11 @@ Mac随后仅追加正式下载发布回执，提交`cf355c1bb92ca10408b0727420a5
 Mac最终收到真实官网/公开版本清单契约，只更新Apple任务卡第406行；文档提交8e45e1928f69b427b329cdaa8869d4da34e0c1cf、工作区干净，build4源码/包保持。专职读取在cursor `fcaf77e4-c556-4a92-965a-4e4c78d8edc9:183`结束本轮，可下轮复用；不以文档回执称原生更新已接通。
 
 最终staged（暂存区）差异检查首次发现两份新vendor上游行尾空格，普通未暂存检查此前不覆盖新文件。保留Nayuki原源码/编译字节与来源SHA，仅按Git官方文档对这两路径设置`whitespace=-blank-at-eol`，其他检查仍默认；README记录保真原因，全暂存差异检查通过，未修改行为或撤掉测试断言。
+
+## 2026-10-05：Mac原生检查更新阶段开工与旧安装路径保留
+
+用户在官网下载交付后明确“继续下一阶段吧”，本轮任务APPLE_CLIENTS_02：Mac菜单/独立更新窗登录前可达，设置共用状态；真实Bundle（应用包）版本/运行架构匹配公开清单，由本人手动安装。Mac拥有Apple实现及本卡，Windows主助手管官网与全局状态，专职GPT-6 Luna只读恢复跟进。正常原生URLSession（网络会话）首次真实官网GET200/build4/SHA一致，无开发代理或私人认证；Core（共享核心）/UI（界面）/实际窗口验收分别开始，新包尚未形成或发布。
+
+Windows首位实际Sol被模型容量拒绝、未执行，Luna只读复用QA4原requestId一次得到pending/RUNTIME_BUSY/configured=false。其初报把DTO缺失default推成宿主未配置，主助手指明层次后补一次settings原字段：models.activeId仍personal-local-occamy-miniplus-v21、profile（模型档案）存在，错误结论撤回。无重复注册、生成、本地模型维护或旧队列清理；该私有MiMo前置仍未生效，B续聊本轮未开。
+
+另一实际Luna只写公共发布器/测试/README，为官网替换Mac5时保留旧Mac4下载URL。可选previous-release-dir只读旧files单层，普通文件/名称摘要/扩展和有限数量/字节核验后复制，再回读SHA（文件哈希）；根目录其他项不复制，同摘要Android复用旧URL，清单仍只列当前有效两包。主助手窄审后独立名称过滤新增5/5、语法/差异通过；子Agent先前额外完整测试2次也已如实说明，未继续补偿式验证。仓库typecheck（类型检查）不覆盖这些MJS/测试TS，未将它当本改动证明。当前保留能力仅源码，Mac5真实文件/切换和旧URL读取后再记运行通过；官网/账户仍前轮版本，无重启或部署。
