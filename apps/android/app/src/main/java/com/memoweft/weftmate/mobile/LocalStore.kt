@@ -445,7 +445,7 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         readableDatabase.rawQuery("SELECT session_id,request_id,payload,state,command_body FROM shared_commands WHERE owner_key=? AND host_id=? AND state='accepted'",
             arrayOf(owner, hostId)).use { c -> while (c.moveToNext()) {
             val payload = JSONObject(c.getString(2))
-            if (payload.optJSONArray("attachments") == null) continue
+            if (payload.optJSONArray("originalAttachments") == null && payload.optJSONArray("attachments") == null) continue
             rows += SharedCommandRow(owner, hostId, c.getString(0), c.getString(1), payload,
                 c.getString(3), if (c.isNull(4)) null else JSONObject(c.getString(4)))
         } }
@@ -521,7 +521,7 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         }
         for (image in images) {
             require(owner != null && image.owner == owner && image.conversationId == conversationId &&
-                image.kind == "image" && image.sizeBytes in 1..AttachmentStore.MAX_IMAGE_BYTES)
+                image.sizeBytes in 1..AttachmentStore.MAX_IMAGE_BYTES)
             db.insertOrThrow("message_images", null, ContentValues().apply {
                 put("owner_key", owner); put("conversation_id", conversationId); put("message_id", id)
                 put("attachment_id", image.id); put("name", image.name)

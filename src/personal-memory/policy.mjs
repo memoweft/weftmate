@@ -1,4 +1,14 @@
 import { FORMAL_LOCAL_BASE_URL } from '../local-model-config.mjs';
+import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
+import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
+
+function profileRouteFingerprint(profile) {
+  if (typeof profile?.baseUrl !== 'string' || typeof profile?.model !== 'string') return null;
+  try {
+    return modelRouteFingerprint(openAICompatibleEndpoint(profile.baseUrl, 'chat/completions').href,
+      profile.model);
+  } catch { return null; }
+}
 
 /** The session owner comes from the durable access store; model output supplies no identity. */
 export function memorySessionPolicy({ binding, described, selected, access }) {
@@ -9,9 +19,16 @@ export function memorySessionPolicy({ binding, described, selected, access }) {
   if (described?.agentPreset !== preset) return { allowed: false, reasonCode: 'MEMORY_OWNER_UNAVAILABLE' };
   if (!selected) return { allowed: true, ownerId: binding.ownerId };
   const profile = selected.profile;
-  if (binding.modelProfileId !== profile?.id || profile.baseUrl !== FORMAL_LOCAL_BASE_URL ||
-      access?.canUseModelProfile?.(binding.ownerId, profile.id) !== true ||
-      access?.isFormalLocalProfile?.(profile.id) !== true) {
+  const formal = profile?.baseUrl === FORMAL_LOCAL_BASE_URL &&
+    access?.isFormalLocalProfile?.(profile.id) === true;
+  const privateProof = access?.privateAccountModelProof?.(binding.ownerId, profile?.id);
+  const settingsRouteFingerprint = profileRouteFingerprint(profile);
+  const privateRoute = privateProof?.active === true && privateProof.profileId === profile?.id &&
+    privateProof.baseUrl === profile?.baseUrl && privateProof.modelId === profile?.model &&
+    settingsRouteFingerprint !== null && privateProof.routeFingerprint === settingsRouteFingerprint &&
+    privateProof.credential === true;
+  if (binding.modelProfileId !== profile?.id || access?.canUseModelProfile?.(binding.ownerId, profile.id) !== true ||
+      (!formal && !privateRoute)) {
     return { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
   }
   return { allowed: true, ownerId: binding.ownerId };

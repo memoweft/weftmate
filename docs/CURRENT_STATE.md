@@ -9,8 +9,8 @@
 | 流程 | 最新证据与状态 | 下一具体动作 |
 | --- | --- | --- |
 | 云模型完整运行 | 隔离真实 MiMo 注册/验证、短回复、工具终态、停止和重启保持通过；首批测试账户模式导致 tasks 404，第二批修正确通过 | 同账户双客户端接续；读取实际工件内容补足正确结果证据；生产 QA busy 仅查原因 |
-| 同会话与任务接续 | 复用现有原模型、adoption/outbox、补充/停止；15.2 联调继续 | 双向往返、按原请求断线核对及不重复执行 |
-| Android 记忆 | 已修合法冒号 ID 被原生桥拒绝的问题；Kotlin 定向测试及页面测试通过 | 启动现有 MuMu，在隔离账户/真实核心上验证 bridge、写读、重启、跨端和第二账户边界 |
+| 同会话与任务接续 | 15.2 合成联调已核唯一原模型、采用/消息去重、同session受理；工具工件段未过，未发新MiMo回合 | 最小fixture/真实工具结果差分，补读字节后再跑真实往返，不写通过 |
+| Android 记忆 | 独立QA包在MuMu真实WebView→native→服务→Core读来源、静音、回执、重开/电脑读回/B隔离通过；桌面编码路径兼容已过；同账户私有云/旧绑定召回正例、foreign/停用拒绝已过 | Luna按真实connect页面修UI测试前置再确认按钮/截图；Sol接普通云聊天真实形成，新模式未通过前不称日用记忆完成 |
 | 普通附件 | 原件泛型/流式与受支持文本输入正在实现；实际 DSH 公开输入支持 text/image | 完成两端文件桥、真实原件取回与模型有界读取，不把存储成功当模型已读 |
 | Apple 并行 | Mac 任务已接受同级总代理与连续路线，首做聊天、原请求核对和持久草稿 | 自主推进 Mac/iPhone；更新末项 GUI 仍等可见桌面；Watch 融入 iOS，健康/共养后续细设计 |
 
@@ -26,9 +26,9 @@
 
 ### 负责人、证据与恢复阅读
 
-主助手负责路线/审查/发布与全局文档；实际 GPT-5.6 Terra 实现云工作流、Android记忆和附件。实际 GPT-6 Luna 只读跟进 Apple；Apple 同级总代理只写自己的代码/任务卡，共同契约由本侧协调。Kimi 原件与 `FRONTEND.md` 保留。
+主助手负责路线/审查/发布与全局文档；实际 GPT-5.6 Terra 实现云工作流、Android记忆和附件，实际 GPT-5.6 Sol接管云记忆正向许可收口。实际 GPT-6 Luna 只读跟进 Apple；Apple 同级总代理只写自己的代码/任务卡，共同契约由本侧协调。Kimi 原件与 `FRONTEND.md` 保留。
 
-真实云证据：`Stage15-WindowsAndroid-20261005/Cloud/real-account-model-ba19b018-b9e5-457a-af01-4e2f53af2c88.json`。首批失败 `d086295f-131c-49f2-98db-1d55cdc4e054` 保留。记忆原生窄修证据：`Stage15-WindowsAndroid-20261005/Memory/android-memory-bridge-20261005.md`；真设备结论仍待后续记录。
+真实云证据：`Stage15-WindowsAndroid-20261005/Cloud/real-account-model-ba19b018-b9e5-457a-af01-4e2f53af2c88.json`。首批失败 `d086295f-131c-49f2-98db-1d55cdc4e054` 保留。记忆 bridge/Core 证据：`Stage15-WindowsAndroid-20261005/Memory/android-memory-bridge-20261005.md`；私有云召回证据 `Memory/private-cloud-recall-core.json` 是真实Core+合成处理模型，不证明普通云自动形成。UI fixture表单测试失败已存 `Memory/stage15-memory-ui-actual-qa.json`，正常App登录不能按fixture错误归因为native故障；资料页/连接页前置正在更正。正式HTTP入口本轮只读200，18186仍PID14280、443仍PID19944，8080无监听；未恢复GPU。
 
 恢复上下文读本小节和任务15进度表，再读当前流程的契约/代码。整批交付需六项检查点及完整体验清单有证据，届时固定候选、给准确操作后停；此刻继续开发。
 

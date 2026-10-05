@@ -17,6 +17,21 @@ internal fun upstreamHttpStatus(error: Throwable): Int? =
 class SyncInterrupted : Exception()
 data class HttpReply(val status: Int, val body: JSONObject, val cookie: String? = null)
 
+/** Keeps host.business on the fixed business-route allowlist after one supported path decoding. */
+internal fun validBusinessPath(path: String): Boolean {
+    if (path.length > 512) return false
+    val route = path.substringBefore('?')
+    val query = path.substringAfter('?', "")
+    if (!query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) ||
+        !route.matches(Regex("/personal/v1/(memory|mods|tasks|notifications|workspaces|capabilities)(/[A-Za-z0-9._~:/%-]*)?"))) return false
+    // Memory item IDs may contain ':'. app.js sends that character as %3A. No other
+    // encoded route character is legal, so encoded separators, malformed escapes and
+    // double-encoding remain outside the allowlist.
+    val decoded = route.replace(Regex("(?i)%3a"), ":")
+    if (decoded.contains('%') || !decoded.matches(Regex("/personal/v1/(memory|mods|tasks|notifications|workspaces|capabilities)(/[A-Za-z0-9._~:/-]*)?"))) return false
+    return decoded.split('/').none { it == "." || it == ".." } && !decoded.contains("//")
+}
+
 fun imagePreviewUrl(conversationId: String, messageId: String?, attachmentId: String): String =
     "https://appassets.androidplatform.net/media/image/$attachmentId?conversationId=$conversationId" +
         (messageId?.let { "&messageId=$it" } ?: "")
@@ -242,8 +257,11 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         require(sessionId.matches(Regex("session-[0-9a-f-]{36}")) &&
             requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) &&
             row.id.matches(Regex("attachment-[0-9a-f-]{36}")))
-        if (row.kind != "image" || row.sizeBytes !in 1..5L * 1024 * 1024 ||
-            row.file.length() != row.sizeBytes) throw ApiFailure(409, "ATTACHMENT_CHANGED")
+        val image = row.kind == "image" && row.mimeType in setOf("image/png", "image/jpeg", "image/webp", "image/gif") &&
+            row.sizeBytes in 1..5L * 1024 * 1024
+        val text = row.kind == "file" && row.mimeType in setOf("text/plain", "text/markdown", "text/csv",
+            "application/json", "application/x-ndjson") && row.sizeBytes in 1..AttachmentStore.MAX_MODEL_TEXT_BYTES
+        if ((!image && !text) || row.file.length() != row.sizeBytes) throw ApiFailure(409, "ATTACHMENT_CHANGED")
         val url = "${host.origin}/personal/v1/sessions/$sessionId/attachments/${row.id}" +
             "?requestId=${URLEncoder.encode(requestId, "UTF-8")}&name=${URLEncoder.encode(row.name, "UTF-8")}" 
         val connection = URL(url).openConnection() as HttpURLConnection
@@ -667,11 +685,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
     /** Only future business routes, never auth, credentials, model configuration or arbitrary URLs. */
     fun business(host: HostIdentity, path: String, method: String, body: JSONObject?): JSONObject {
         require(method in setOf("GET", "POST", "PATCH", "DELETE"))
-        val route = path.substringBefore('?')
-        val query = path.substringAfter('?', "")
-        require(path.length <= 512 && route.matches(Regex("/personal/v1/(memory|mods|tasks|notifications|workspaces|capabilities)(/[A-Za-z0-9._~/-]*)?")))
-        require(route.split('/').none { it == "." || it == ".." } && !route.contains("//") &&
-            query.matches(Regex("[A-Za-z0-9._~=&%+-]*")))
+        require(validBusinessPath(path))
         if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= 64 * 1024)
         return http.request("${host.origin}$path", method, body,
             if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host)).body
@@ -869,9 +883,11 @@ class SyncManager(private val store: LocalStore, private val api: PersonalApi,
                             ?: throw ApiFailure(409, "ATTACHMENT_UNAVAILABLE")
                         val receipt = api.uploadImage(host, row, file, active)
                         checkAllowed()
-                        val display = attachments.displayFileForUpload(owner, row)
-                        api.uploadDisplay(host, row, display, active)
-                        checkAllowed()
+                        if (row.contentType in setOf("image/png", "image/jpeg", "image/webp", "image/gif")) {
+                            val display = attachments.displayFileForUpload(owner, row)
+                            api.uploadDisplay(host, row, display, active)
+                            checkAllowed()
+                        }
                         store.markImageUploaded(owner, row, receipt)
                     }
                     val uploadedImages = store.uploadedImages(owner, messageId)

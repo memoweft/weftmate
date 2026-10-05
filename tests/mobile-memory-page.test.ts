@@ -419,6 +419,17 @@ test('overlong encoded paths and unsupported point-segment IDs fail visibly with
   assert.equal(app.businessPaths.some((request) => /\/\.\.(\/|$)/.test(request.path)), false)
 })
 
+test('memory IDs keep a legal colon literal so the host pathname matches the account route', async () => {
+  const id = 'memory:stage15:colon'
+  const app = harness({ items: (owner, kind) => ({ ownerId: appOwner(owner), worldRevision: 10, searchScope: 'account_snapshot',
+    items: [{ id, kind, text: 'colon memory', currentState: 'current', lifecycle: {}, sourceCount: 1 }], nextCursor: null, hasMore: false }) })
+  await openMemory(app)
+  await waitUntil(() => !!findButton(app.get('page-content'), 'colon memory'), 'colon item was not shown')
+  findButton(app.get('page-content'), 'colon memory')!.fire('click')
+  await waitUntil(() => app.businessPaths.some((request) => request.path.includes(id)), 'colon detail path was not requested')
+  assert.equal(app.businessPaths.some((request) => request.path.includes('%3A')), false)
+})
+
 test('empty state separates blocked pending sources from previously deleted-source history', async () => {
   const blocked = harness({ status: (owner) => ({ ownerId: appOwner(owner), state: 'degraded', worldRevision: 10,
     reasonCode: 'MEMORY_MODEL_UNAVAILABLE', capabilities: { list: true, source: true, inject: false },

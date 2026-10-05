@@ -13,6 +13,16 @@ const keys = (value, allowed, required = []) => {
 };
 const bounded = (value, limit) => typeof value === 'string' ? value.slice(0, limit) : '';
 const safeNumber = (value) => Number.isSafeInteger(value) && value >= 0;
+export const canonicalMemoryPathname = (pathname) => {
+  if (typeof pathname !== 'string' || !pathname.startsWith('/personal/v1/memory/')) return null;
+  if (!pathname.includes('%')) return pathname;
+  if (/%(?:2f|5c)/i.test(pathname)) return null;
+  let decoded;
+  try { decoded = decodeURIComponent(pathname); } catch { return null; }
+  if (!decoded.startsWith('/personal/v1/memory/') || decoded.includes('%') || decoded.includes('\\') ||
+      decoded.split('/').some((segment) => segment === '.' || segment === '..')) return null;
+  return decoded;
+};
 async function ownerQuery(manager, ownerId, method, params) {
   try { return await manager.query(ownerId, method, params); }
   catch (cause) {
@@ -79,11 +89,13 @@ function publicReceipt(value, requestId) {
 /** Authenticated owner has already been resolved by personal-access. */
 export async function handlePersonalMemoryHttp({ manager, ownerId, request, pathname, url, readJson }) {
   const method = request.method;
-  if (method === 'GET' && pathname === '/personal/v1/memory/status') {
+  const path = canonicalMemoryPathname(pathname);
+  if (path === null) throw failure('INVALID_REQUEST');
+  if (method === 'GET' && path === '/personal/v1/memory/status') {
     if (url.search) throw failure('INVALID_REQUEST');
     return { status: 200, body: await manager.status(ownerId) };
   }
-  if (method === 'GET' && pathname === '/personal/v1/memory/items') {
+  if (method === 'GET' && path === '/personal/v1/memory/items') {
     if ([...url.searchParams.keys()].some((key) => !['kind', 'query', 'limit', 'after'].includes(key))) {
       throw failure('INVALID_REQUEST');
     }
@@ -116,7 +128,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     return { status: 200, body: { items: page, worldRevision: result.world_revision,
       nextCursor, hasMore, searchScope: 'account_snapshot' } };
   }
-  const itemMatch = /^\/personal\/v1\/memory\/items\/(cognition|entity|relationship|event)\/([A-Za-z0-9._:-]+)(?:\/(sources|correct|mute))?$/.exec(pathname);
+  const itemMatch = /^\/personal\/v1\/memory\/items\/(cognition|entity|relationship|event)\/([A-Za-z0-9._:-]+)(?:\/(sources|correct|mute))?$/.exec(path);
   if (itemMatch) {
     const [, kind, id, action] = itemMatch;
     if (!ITEM_ID.test(id) || url.search) throw failure('INVALID_REQUEST');
@@ -185,7 +197,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
         targetId: id, payload: {} });
     }
   }
-  const evidenceMatch = /^\/personal\/v1\/memory\/evidence\/([A-Za-z0-9._:-]+)$/.exec(pathname);
+  const evidenceMatch = /^\/personal\/v1\/memory\/evidence\/([A-Za-z0-9._:-]+)$/.exec(path);
   if (method === 'DELETE' && evidenceMatch) {
     if (url.search || !ITEM_ID.test(evidenceMatch[1])) throw failure('INVALID_REQUEST');
     const body = await readJson(request, 12 * 1024);
@@ -193,7 +205,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     return submit({ manager, ownerId, body, operation: 'delete_evidence', targetKind: 'evidence',
       targetId: evidenceMatch[1], payload: {} });
   }
-  const receiptMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)$/.exec(pathname);
+  const receiptMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)$/.exec(path);
   if (method === 'GET' && receiptMatch) {
     if (url.search || !REQUEST_ID.test(receiptMatch[1])) throw failure('INVALID_REQUEST');
     try {
@@ -204,7 +216,7 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
       throw cause;
     }
   }
-  const cleanupMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)\/retry-cleanup$/.exec(pathname);
+  const cleanupMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)\/retry-cleanup$/.exec(path);
   if (method === 'POST' && cleanupMatch) {
     if (url.search || !REQUEST_ID.test(cleanupMatch[1])) throw failure('INVALID_REQUEST');
     keys(await readJson(request, 1024), [], []);

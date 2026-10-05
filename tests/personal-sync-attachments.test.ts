@@ -4,6 +4,7 @@ import { mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
 import { request as httpRequest } from 'node:http'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { Readable } from 'node:stream'
 import test from 'node:test'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 import { canonicalAttachmentMetadata, createAttachmentStore, MAX_ATTACHMENT_BYTES } from '../src/personal-sync/attachments.mjs'
@@ -194,6 +195,93 @@ test('legacy small image remains readable and failed stream leaves no temp file'
       name: 'partial.png', contentType: 'image/png', sha256, stream: interrupted() }))
     assert.equal(readdirSync(root).some((entry) => entry.includes(interruptedId)), false)
   } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+test('ordinary files stream as owner-scoped originals while model input remains separately checked', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'personal-sync-files-'))
+  let service = await createPersonalAccessService({ root, port: 0, backend })
+  try {
+    let { origin } = await service.start()
+    const register = async (username: string) => {
+      const response = await fetch(`${origin}/personal/v1/auth/register`, { method: 'POST',
+        headers: { origin, 'content-type': 'application/json' },
+        body: JSON.stringify({ username, password: 'synthetic owner password 123', deviceName: 'Desktop' }) })
+      assert.equal(response.status, 201)
+      return { cookie: response.headers.get('set-cookie')!.split(';')[0], csrf: (await response.json()).csrfToken }
+    }
+    const a = await register('FileOwnerA')
+    const b = await register('FileOwnerB')
+    const conversationId = `conversation-${uuid(40)}`
+    const messageId = `message-${uuid(41)}`
+    const attachmentId = `attachment-${uuid(42)}`
+    const name = '报告.csv'
+    const text = Buffer.from(`name,value\n${'north,42\n'.repeat(270_000)}`, 'utf8')
+    assert.ok(text.length > 2 * 1024 * 1024)
+    const hash = createHash('sha256').update(text).digest('hex')
+    const url = () => `${origin}/personal/v1/sync/attachments/${attachmentId}`
+    const query = `?conversationId=${conversationId}&messageId=${messageId}&name=${encodeURIComponent(name)}`
+    const body = () => Readable.from((function* () {
+      for (let offset = 0; offset < text.length; offset += 64 * 1024) yield text.subarray(offset, offset + 64 * 1024)
+    })())
+    const upload = (account: typeof a) => fetch(url() + query, {
+      method: 'PUT', headers: { origin, cookie: account.cookie, 'x-weftmate-csrf': account.csrf,
+        'content-type': 'text/csv', 'content-length': String(text.length), 'x-weftmate-sha256': hash },
+      body: body(), duplex: 'half',
+    } as any)
+    const saved = await upload(a)
+    assert.equal(saved.status, 201, 'a >2 MiB request is consumed as a stream by the attachment store')
+    const attachment = (await saved.json()).attachment
+    assert.deepEqual(attachment, { attachmentId, name, contentType: 'text/csv', size: text.length, sha256: hash })
+    assert.equal((await upload(a)).status, 200, 'the byte-identical stream retries idempotently')
+    const event = { events: [{ eventId: `event-${uuid(43)}`, conversationId, clientSeq: 1,
+      kind: 'message.created', occurredAt: '2026-10-05T10:00:00.000Z',
+      payload: { messageId, role: 'user', text: '', attachments: [attachment] } }] }
+    const posted = await fetch(`${origin}/personal/v1/sync/events`, { method: 'POST',
+      headers: { origin, cookie: a.cookie, 'x-weftmate-csrf': a.csrf, 'content-type': 'application/json' }, body: JSON.stringify(event) })
+    assert.equal(posted.status, 200)
+    const download = (account: typeof a) => fetch(url(), { headers: { cookie: account.cookie } })
+    const shown = await download(a)
+    assert.equal(shown.status, 200)
+    assert.equal(shown.headers.get('content-type'), 'text/csv')
+    assert.match(shown.headers.get('content-disposition') ?? '', /^attachment; filename\*=UTF-8''/)
+    assert.equal(createHash('sha256').update(Buffer.from(await shown.arrayBuffer())).digest('hex'), hash)
+    assert.equal((await download(b)).status, 404, 'another owner cannot download the referenced original')
+
+    const invalidId = `attachment-${uuid(44)}`
+    const invalid = Buffer.from([0xc3, 0x28])
+    const invalidUpload = await fetch(`${origin}/personal/v1/sync/attachments/${invalidId}` +
+      `?conversationId=${conversationId}&messageId=${`message-${uuid(45)}`}&name=broken.txt`, {
+      method: 'PUT', headers: { origin, cookie: a.cookie, 'x-weftmate-csrf': a.csrf,
+        'content-type': 'text/plain', 'x-weftmate-sha256': createHash('sha256').update(invalid).digest('hex') }, body: invalid })
+    assert.equal(invalidUpload.status, 201,
+      'the original remains available even when a later model-text excerpt cannot be decoded as UTF-8')
+
+    const pdf = Buffer.from('%PDF-1.7\nnot parsed here\n', 'ascii')
+    const pdfId = `attachment-${uuid(46)}`
+    const pdfMessage = `message-${uuid(47)}`
+    const pdfHash = createHash('sha256').update(pdf).digest('hex')
+    const pdfUpload = await fetch(`${origin}/personal/v1/sync/attachments/${pdfId}` +
+      `?conversationId=${conversationId}&messageId=${pdfMessage}&name=manual.pdf`, {
+      method: 'PUT', headers: { origin, cookie: a.cookie, 'x-weftmate-csrf': a.csrf,
+        'content-type': 'application/pdf', 'x-weftmate-sha256': pdfHash }, body: pdf })
+    assert.equal(pdfUpload.status, 201, 'unsupported-for-model formats are still retained as originals')
+    const pdfAttachment = (await pdfUpload.json()).attachment
+    const pdfEvent = { events: [{ eventId: `event-${uuid(48)}`, conversationId, clientSeq: 2,
+      kind: 'message.created', occurredAt: '2026-10-05T10:00:01.000Z',
+      payload: { messageId: pdfMessage, role: 'user', text: '', attachments: [pdfAttachment] } }] }
+    assert.equal((await fetch(`${origin}/personal/v1/sync/events`, { method: 'POST',
+      headers: { origin, cookie: a.cookie, 'x-weftmate-csrf': a.csrf, 'content-type': 'application/json' }, body: JSON.stringify(pdfEvent) })).status, 200)
+    const pdfRead = await fetch(`${origin}/personal/v1/sync/attachments/${pdfId}`, { headers: { cookie: a.cookie } })
+    assert.equal(pdfRead.status, 200)
+    assert.equal(pdfRead.headers.get('content-disposition'), "attachment; filename*=UTF-8''manual.pdf")
+    assert.deepEqual(Buffer.from(await pdfRead.arrayBuffer()), pdf)
+
+    await service.close()
+    service = await createPersonalAccessService({ root, port: 0, backend })
+    origin = (await service.start()).origin
+    assert.equal((await download(a)).status, 200, 'the referenced original survives refresh and service restart')
+    assert.equal((await download(b)).status, 404)
+  } finally { await service.close(); rmSync(root, { recursive: true, force: true }) }
 })
 
 test('attachment metadata permits exactly 1 GiB and rejects the next byte', () => {
