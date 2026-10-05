@@ -8,6 +8,7 @@ import java.net.URL
 import java.net.URLEncoder
 import java.io.File
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 import java.security.MessageDigest
 import java.util.concurrent.atomic.AtomicReference
 
@@ -340,6 +341,45 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
                 }
             }
             return mime to output.toByteArray()
+        } finally { connection.disconnect() }
+    }
+
+    fun downloadOriginalAttachment(host: HostIdentity, attachmentId: String, contentType: String,
+        expectedSize: Long, expectedSha256: String, output: OutputStream, current: () -> Boolean) {
+        require(validImageScopeId(attachmentId) &&
+            contentType.matches(Regex("[a-z0-9][a-z0-9.+-]{0,63}/[a-z0-9][a-z0-9.+-]{0,63}")) &&
+            expectedSize in 1..AttachmentStore.MAX_IMAGE_BYTES && expectedSha256.matches(Regex("[a-f0-9]{64}")))
+        val connection = URL("${host.origin}/personal/v1/sync/attachments/$attachmentId")
+            .openConnection() as HttpURLConnection
+        require(Endpoints.allowedProtocol(connection.url))
+        try {
+            connection.instanceFollowRedirects = false
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 30_000
+            connection.readTimeout = 1_800_000
+            connection.setRequestProperty("Cookie", host.cookie)
+            val status = connection.responseCode
+            if (status !in 200..299) throw ApiFailure(status, "ATTACHMENT_UNAVAILABLE")
+            if (connection.contentType?.substringBefore(';') != contentType ||
+                connection.contentLengthLong !in setOf(-1L, expectedSize))
+                throw ApiFailure(502, "ATTACHMENT_CHANGED")
+            val digest = MessageDigest.getInstance("SHA-256")
+            var count = 0L
+            connection.inputStream.use { input ->
+                val buffer = ByteArray(64 * 1024)
+                while (true) {
+                    if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+                    val read = input.read(buffer)
+                    if (read < 0) break
+                    count += read
+                    if (count > expectedSize) throw ApiFailure(502, "ATTACHMENT_CHANGED")
+                    digest.update(buffer, 0, read)
+                    output.write(buffer, 0, read)
+                }
+            }
+            output.flush()
+            val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
+            if (count != expectedSize || actualHash != expectedSha256) throw ApiFailure(502, "ATTACHMENT_CHANGED")
         } finally { connection.disconnect() }
     }
     private fun imageUrl(host: HostIdentity, conversationId: String, messageId: String,

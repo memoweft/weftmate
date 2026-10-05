@@ -1298,6 +1298,28 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         reference.attachmentId === attachment.attachmentId &&
         JSON.stringify(reference) === JSON.stringify(attachment)));
   }
+
+  function publicHistoryEvent(ownerId, sessionId, event) {
+    if (!plainObject(event.data)) return event;
+    const { messageHash, ...publicData } = event.data;
+    if (event.type !== 'user.message') return { ...event, data: publicData };
+    if (typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash) ||
+        typeof publicData.receiptId !== 'string') return { ...event, data: publicData };
+    const matching = Object.values(accountState(ownerId).commands).filter((command) =>
+      command.kind === 'session.message' && command.rootTaskId === undefined &&
+      command.sessionId === sessionId && command.state === 'accepted_by_dsh' &&
+      command.receiptId === publicData.receiptId && command.payload?.modelInputHash === messageHash &&
+      typeof command.payload.text === 'string' && Array.isArray(command.payload.originalAttachments) &&
+      typeof command.payload.attachmentMessageId === 'string');
+    if (matching.length !== 1) return { ...event, data: publicData };
+    const source = matching[0];
+    return { ...event, data: {
+      ...publicData, text: source.payload.text,
+      originalAttachments: source.payload.originalAttachments.map((item) => ({ ...item })),
+      attachmentMessageId: source.payload.attachmentMessageId,
+      truncated: false,
+    } };
+  }
   function conversationSnapshot(ownerId, conversationId) {
     if (!CONVERSATION_ID.test(conversationId)) throw failure('NOT_FOUND', 404);
     const snapshot = syncStores.get(ownerId)?.conversationSnapshot(conversationId);
@@ -3689,11 +3711,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           }
         }
         const projection = {
-          events: page.events.map((event) => ({
+          events: page.events.map((rawEvent) => {
+            const event = publicHistoryEvent(ownerId, sessionId, rawEvent);
+            const data = plainObject(event.data) && event.data.truncated === false
+              ? Object.fromEntries(Object.entries(event.data).filter(([key]) => key !== 'truncated'))
+              : event.data;
+            return ({
             seq: event.seq, type: event.type,
             ...(typeof event.at === 'string' ? { at: event.at.slice(0, 64) } : {}),
-            data: event.data,
-          })),
+            data,
+          }); }),
           nextSeq: page.nextSeq, hasMore: page.hasMore,
         };
         if (Buffer.byteLength(JSON.stringify(projection), 'utf8') > 1024 * 1024) {

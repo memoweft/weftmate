@@ -107,7 +107,8 @@ test('DSH adapter sends fixed image parts and projects only durable image refere
   assert.equal((await adapter.attachment(sessionId, durableId)).attachment.attachmentId, durableId)
   const projected = pageHistoryEvents([{ event: { seq: 5, type: 'user/message',
     data: { source: { kind: 'user' }, message: { content: [parts[0], { type: 'image', attachment: ref }] } } } }], -1, 10)
-  assert.deepEqual(projected.events[0].data, { text: 'What is shown?', images: [{ attachmentId: durableId,
+  assert.deepEqual(projected.events[0].data, { text: 'What is shown?',
+    messageHash: createHash('sha256').update('What is shown?').digest('hex'), images: [{ attachmentId: durableId,
     contentType: 'image/png', size: bytes.length, width: 256, height: 256, name }] })
   assert.doesNotMatch(JSON.stringify(projected), /iVBORw|data:image|"data":"/)
 })
@@ -163,7 +164,7 @@ test('shared session raw upload, command refs, owner read and exact command retr
     listModels: async () => [{ id: marker.id, model: marker.model, configured: true, source: 'host' }],
     preflight: async () => ({ ok: true }),
     createSession: async ({ sessionId }: { sessionId: string }) => ({ sessionId }),
-    sendMessage: async (input: unknown) => { sent.push(input); return { accepted: true } },
+    sendMessage: async (input: unknown) => { sent.push(input); return { accepted: true, receiptId: `receipt-${sent.length}` } },
     cancelSession: async () => ({ accepted: true }),
     readEvents: async ({ afterSeq }: { afterSeq: number }) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => ({ sessionId, agentPreset: 'personal-shared-chat', modelProfileId: marker.id }),
@@ -275,7 +276,9 @@ test('shared session raw upload, command refs, owner read and exact command retr
     assert.equal((await retryUpload()).status, 201, 'new request may reuse the same native draft UUID')
     assert.equal((await retryUpload()).status, 200, 'same new request still deduplicates')
     assert.equal((await secondUpload()).status, 200, 'new request does not overwrite rejected A stage')
-    ;(backend as any).sendMessage = async (input: unknown) => { sent.push(input); return { accepted: true } }
+    ;(backend as any).sendMessage = async (input: unknown) => {
+      sent.push(input); return { accepted: true, receiptId: `receipt-${sent.length}` }
+    }
     const retryCommand = await write(a, { requestId: 'retry-after-rejection', kind: 'session.message',
       targetDeviceId: hostId, sessionId, text: 'try again', attachments: [secondRef] })
     assert.equal(retryCommand.status, 202)
@@ -335,6 +338,38 @@ test('shared session raw upload, command refs, owner read and exact command retr
       await delay(10)
     }
     assert.equal(textState, 'accepted_by_dsh')
+    const acceptedTextCommand = (await (await fetch(`${origin}/personal/v1/commands/${textCommandId}`,
+      { headers: { cookie: a.cookie } })).json()).command
+    ;(backend as any).readEvents = async ({ afterSeq }: { afterSeq: number }) => afterSeq < 40
+      ? { events: [{ seq: 40, type: 'user.message', data: { text: textInput.text,
+        messageHash: createHash('sha256').update(textInput.text).digest('hex'),
+        receiptId: acceptedTextCommand.receiptId, truncated: true } }], nextSeq: 40, hasMore: false }
+      : { events: [], nextSeq: afterSeq, hasMore: false }
+    const projectedHistory = await fetch(`${origin}/personal/v1/sessions/${sessionId}/events?afterSeq=-1&limit=100`,
+      { headers: { cookie: a.cookie } })
+    assert.equal(projectedHistory.status, 200)
+    const projectedUser = (await projectedHistory.json()).events[0]
+    assert.deepEqual(projectedUser.data, { text: 'Summarize this data.',
+      receiptId: acceptedTextCommand.receiptId,
+      originalAttachments: [originalRef], attachmentMessageId })
+    assert.equal(JSON.stringify(projectedUser).includes('messageHash'), false,
+      'the proof hash remains internal to the host projection')
+    assert.equal((await fetch(`${origin}/personal/v1/sessions/${sessionId}/events`,
+      { headers: { cookie: b.cookie } })).status, 404, 'another owner cannot read projected file references')
+    ;(backend as any).readEvents = async () => ({ events: [{ seq: 41, type: 'user.message', data: {
+      text: textInput.text, messageHash: 'f'.repeat(64), receiptId: acceptedTextCommand.receiptId, truncated: true } },
+      { seq: 42, type: 'user.message', data: { text: textInput.text,
+        messageHash: createHash('sha256').update(textInput.text).digest('hex'), receiptId: 'receipt-fake', truncated: true } },
+      { seq: 43, type: 'assistant.message', data: { text: 'answer', messageHash: 'e'.repeat(64) } }],
+      nextSeq: 43, hasMore: false })
+    const unverifiedHistory = await fetch(`${origin}/personal/v1/sessions/${sessionId}/events?afterSeq=40&limit=100`,
+      { headers: { cookie: a.cookie } })
+    const unverified = (await unverifiedHistory.json()).events
+    assert.deepEqual(unverified.map((event: any) => event.data), [
+      { text: textInput.text, receiptId: acceptedTextCommand.receiptId, truncated: true },
+      { text: textInput.text, receiptId: 'receipt-fake', truncated: true },
+      { text: 'answer' },
+    ], 'wrong hash or receipt never receives visible text or permanent file references')
     assert.equal((await textUpload(a)).status, 201, 'accepted text input is released for a deliberate retry')
     const originalRead = await fetch(`${origin}/personal/v1/sync/attachments/${textId}`, { headers: { cookie: a.cookie } })
     assert.equal(originalRead.status, 200)

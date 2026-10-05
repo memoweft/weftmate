@@ -364,6 +364,36 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
             .put("historyTruncated", metadata.second && (oldest == null || afterSeq < oldest - 1))
     }
 
+    /** Resolve only an attachment reference already persisted in this owner/host/session history. */
+    @Synchronized fun sharedOriginalAttachment(owner: String, hostId: String, sessionId: String,
+        attachmentId: String): JSONObject? {
+        var found: JSONObject? = null
+        readableDatabase.rawQuery(
+            "SELECT digest,body FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? ORDER BY seq DESC",
+            arrayOf(owner, hostId, sessionId)).use { cursor -> scan@ while (cursor.moveToNext()) {
+            val body = cursor.getString(1)
+            if (sharedHistoryDigest(body) != cursor.getString(0)) throw ApiFailure(502, "HISTORY_CONFLICT")
+            val event = JSONObject(body)
+            if (event.optString("type") != "user.message") continue@scan
+            val refs = event.optJSONObject("data")?.optJSONArray("originalAttachments") ?: continue@scan
+            for (index in 0 until refs.length()) {
+                val ref = refs.getJSONObject(index)
+                if (ref.optString("attachmentId") != attachmentId) continue
+                val name = ref.optString("name")
+                val contentType = ref.optString("contentType")
+                val size = ref.optLong("size", -1)
+                val sha256 = ref.optString("sha256")
+                if (!validImageScopeId(attachmentId) || !name.matches(Regex("[^\\p{Cntrl}/\\\\]{1,128}")) ||
+                    !contentType.matches(Regex("[a-z0-9][a-z0-9.+-]{0,63}/[a-z0-9][a-z0-9.+-]{0,63}")) ||
+                    size !in 1..AttachmentStore.MAX_IMAGE_BYTES || !sha256.matches(Regex("[a-f0-9]{64}")))
+                    throw ApiFailure(502, "HISTORY_EVENT_INVALID")
+                found?.let { if (it.toString() != ref.toString()) throw ApiFailure(502, "HISTORY_CONFLICT") }
+                found = JSONObject(ref.toString())
+            }
+        } }
+        return found
+    }
+
     @Synchronized fun saveSharedSessions(owner: String, hostId: String, sessions: JSONArray) = write { db ->
         db.execSQL("DELETE FROM shared_sessions WHERE owner_key=? AND host_id=?", arrayOf(owner, hostId))
         for (i in 0 until sessions.length()) {

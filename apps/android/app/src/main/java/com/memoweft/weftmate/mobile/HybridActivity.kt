@@ -56,6 +56,10 @@ internal data class AttachmentPickAttempt(val requestId: String, val owner: Stri
 internal data class ArtifactSaveAttempt(val requestId: String, val owner: String, val epoch: Long,
     val artifactId: String, val fileName: String, val size: Int, val sha256: String)
 
+internal data class OriginalSaveAttempt(val requestId: String, val owner: String, val epoch: Long,
+    val sessionId: String, val attachmentId: String, val fileName: String, val contentType: String,
+    val size: Long, val sha256: String)
+
 internal fun attachmentPickCurrent(attempt: AttachmentPickAttempt, epoch: Long, page: Int,
     activeConversation: String?, owner: String?): Boolean = attempt.epoch == epoch &&
     attempt.page == page && attempt.activeAtStart == activeConversation && attempt.owner == owner
@@ -89,7 +93,7 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
 class HybridActivity : Activity() {
-    private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045 }
+    private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045; const val ORIGINAL_SAVE_REQUEST = 2046 }
     private val origin = "https://appassets.androidplatform.net"
     private val entry = "$origin/ui/index.html"
     private val worker = Executors.newFixedThreadPool(2)
@@ -141,6 +145,7 @@ class HybridActivity : Activity() {
     private var pendingAvatarEpoch = 0L
     @Volatile private var pendingAttachment: AttachmentPickAttempt? = null
     @Volatile private var pendingArtifactSave: ArtifactSaveAttempt? = null
+    @Volatile private var pendingOriginalSave: OriginalSaveAttempt? = null
     @Volatile private var foreground = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -867,6 +872,7 @@ class HybridActivity : Activity() {
             }
             result.put("source", "host").put("sessionId", sessionId)
         }
+        "shared.attachments.save" -> startOriginalSave(requireHost(), params)
         "shared.send" -> {
             val host = requireHost()
             val attachmentIds = params.optJSONArray("attachmentIds")?.let { array ->
@@ -1921,10 +1927,88 @@ class HybridActivity : Activity() {
         }
     }
 
+    private fun startOriginalSave(host: HostIdentity, params: JSONObject): JSONObject {
+        val sessionId = params.getString("sessionId")
+        val attachmentId = params.getString("attachmentId")
+        if (!sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) || !validImageScopeId(attachmentId))
+            throw ApiFailure(400, "INVALID_REQUEST")
+        val scope = owner(host) ?: throw ApiFailure(401, "LOGIN_REQUIRED")
+        val ref = store.sharedOriginalAttachment(scope, host.hostId, sessionId, attachmentId)
+            ?: throw ApiFailure(404, "ATTACHMENT_UNAVAILABLE")
+        val attempt = synchronized(this) {
+            if (pendingOriginalSave != null) throw ApiFailure(409, "ATTACHMENT_SAVE_IN_PROGRESS")
+            OriginalSaveAttempt(UUID.randomUUID().toString(), scope, accountEpoch.get(), sessionId,
+                attachmentId, ref.getString("name"), ref.getString("contentType"), ref.getLong("size"),
+                ref.getString("sha256")).also { pendingOriginalSave = it }
+        }
+        runOnUiThread {
+            if (!originalSaveCurrent(attempt)) {
+                if (pendingOriginalSave === attempt) pendingOriginalSave = null
+                return@runOnUiThread
+            }
+            try {
+                val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = attempt.contentType
+                    putExtra(Intent.EXTRA_TITLE, attempt.fileName)
+                    putExtra(android.provider.DocumentsContract.EXTRA_INITIAL_URI,
+                        Uri.parse("content://com.android.externalstorage.documents/document/primary%3ADownload"))
+                }
+                @Suppress("DEPRECATION")
+                startActivityForResult(intent, ORIGINAL_SAVE_REQUEST)
+            } catch (_: Exception) {
+                if (pendingOriginalSave === attempt) pendingOriginalSave = null
+                emitOriginalSave(attempt, "failed", "ATTACHMENT_SAVE_UNAVAILABLE")
+            }
+        }
+        return JSONObject().put("pending", true).put("requestId", attempt.requestId)
+    }
+
+    private fun originalSaveCurrent(attempt: OriginalSaveAttempt): Boolean =
+        !closed.get() && !accountTransition.get() && accountEpoch.get() == attempt.epoch &&
+            owner(secrets.host()) == attempt.owner
+
+    private fun emitOriginalSave(attempt: OriginalSaveAttempt, status: String, code: String? = null) {
+        val body = JSONObject().put("requestId", attempt.requestId).put("sessionId", attempt.sessionId)
+            .put("attachmentId", attempt.attachmentId).put("status", status)
+        if (code != null) body.put("code", code)
+        emitForAccount(attempt.epoch, "attachment.save", body)
+    }
+
+    private fun settleOriginalSave(attempt: OriginalSaveAttempt, uri: Uri) {
+        var saved = false
+        try {
+            if (!originalSaveCurrent(attempt)) return
+            val host = requireHost()
+            contentResolver.openOutputStream(uri, "w")?.use { output ->
+                api.downloadOriginalAttachment(host, attempt.attachmentId, attempt.contentType,
+                    attempt.size, attempt.sha256, output) { originalSaveCurrent(attempt) }
+            } ?: throw ApiFailure(500, "ATTACHMENT_SAVE_FAILED")
+            if (!originalSaveCurrent(attempt)) return
+            saved = true
+            emitOriginalSave(attempt, "saved")
+        } catch (error: Exception) {
+            if (originalSaveCurrent(attempt)) emitOriginalSave(attempt, "failed", safeCode(error))
+        } finally {
+            if (!saved) try { android.provider.DocumentsContract.deleteDocument(contentResolver, uri) }
+                catch (_: Exception) { }
+        }
+    }
+
     @Deprecated("System recognition activity uses the platform result callback")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (closed.get()) return
+        if (requestCode == ORIGINAL_SAVE_REQUEST) {
+            val attempt = pendingOriginalSave ?: return
+            pendingOriginalSave = null
+            if (resultCode != RESULT_OK || data?.data == null) {
+                emitOriginalSave(attempt, "cancelled"); return
+            }
+            try { attachmentWorker.execute { settleOriginalSave(attempt, data.data!!) } }
+            catch (_: RejectedExecutionException) { emitOriginalSave(attempt, "failed", "OPERATION_FAILED") }
+            return
+        }
         if (requestCode == ARTIFACT_SAVE_REQUEST) {
             val attempt = pendingArtifactSave ?: return
             pendingArtifactSave = null
