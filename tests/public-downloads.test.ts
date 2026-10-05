@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -35,7 +35,19 @@ function fixture() {
   ] }
   const save = () => writeFileSync(configPath, JSON.stringify(config))
   save()
-  return { root, siteSource, configPath, config, save, android, macos }
+  return { root, siteSource, configPath, config, save, android, macos, androidPath, macosPath }
+}
+
+function publishedFiles(f: ReturnType<typeof fixture>, name = 'previous-downloads') {
+  const directory = join(f.root, name)
+  const files = join(directory, 'files')
+  mkdirSync(files, { recursive: true })
+  const androidName = `${hash(f.android)}-android-candidate.apk`
+  const macosName = `${hash(f.macos)}-WeftMate-Mac-0.1.0-build4.dmg`
+  writeFileSync(join(files, androidName), f.android)
+  writeFileSync(join(files, macosName), f.macos)
+  return { directory, files, androidName, macosName,
+    androidUrl: `files/${androidName}`, macosUrl: `files/${macosName}` }
 }
 
 test('publisher emits only verified installers, scoped website files and stable landing QR codes', async () => {
@@ -127,6 +139,104 @@ test('publisher refuses unapproved web targets and fake availability', async () 
     f.save()
     await assert.rejects(preparePublicDownloads({ configPath: f.configPath, output,
       siteSource: f.siteSource, allowWebUrl: home }), /invalid available release/)
+    assert.equal(existsSync(output), false)
+  } finally { rmSync(f.root, { recursive: true, force: true }) }
+})
+
+test('previous published installers keep immutable URLs while the manifest stays current and identical Android is copied once', async () => {
+  const f = fixture()
+  try {
+    const previous = publishedFiles(f)
+    writeFileSync(join(previous.directory, 'private-sentinel.json'), '{"private":true}')
+    const mac5 = Buffer.from('new verified macOS build 5 disk image')
+    const mac5Path = join(f.root, 'WeftMate-Mac-0.1.0-build5.dmg')
+    writeFileSync(mac5Path, mac5)
+    f.config.platforms[1].source = mac5Path
+    f.config.platforms[1].expectedBytes = mac5.length
+    f.config.platforms[1].expectedSha256 = hash(mac5)
+    f.config.platforms[1].build = '5'
+    f.config.platforms[1].notes = 'Mac build 5'
+    f.save()
+
+    const output = join(f.root, 'next-downloads')
+    const manifest = await preparePublicDownloads({ configPath: f.configPath, output,
+      siteSource: f.siteSource, allowWebUrl: home, previousReleaseDir: previous.directory })
+    const android = manifest.platforms.find((item: any) => item.id === 'android')!
+    const macos = manifest.platforms.find((item: any) => item.id === 'macos')!
+    assert.equal(android.downloadUrl, previous.androidUrl, 'same Android digest retains its exact old URL')
+    assert.equal(macos.build, '5', 'the manifest advertises only the active Mac release')
+    assert.notEqual(macos.downloadUrl, previous.macosUrl)
+    assert.equal(hash(readFileSync(join(output, previous.androidUrl))), hash(f.android))
+    assert.equal(hash(readFileSync(join(output, previous.macosUrl))), hash(f.macos))
+    assert.equal(hash(readFileSync(join(output, macos.downloadUrl))), hash(mac5))
+    assert.equal(readdirSync(join(output, 'files')).length, 3, 'Mac 4, Mac 5, and one Android file are retained')
+    assert.equal(existsSync(join(output, 'private-sentinel.json')), false)
+    assert.equal(existsSync(join(output, 'files', 'private-sentinel.json')), false)
+    assert.equal(manifest.platforms.filter((item: any) => item.id === 'macos').length, 1)
+  } finally { rmSync(f.root, { recursive: true, force: true }) }
+})
+
+test('publisher refuses prior installers whose filename SHA does not match their bytes', async () => {
+  const f = fixture()
+  try {
+    const previous = publishedFiles(f)
+    writeFileSync(join(previous.files, `${'0'.repeat(64)}-misnamed.apk`), f.android)
+    const output = join(f.root, 'refused-downloads')
+    await assert.rejects(preparePublicDownloads({ configPath: f.configPath, output,
+      siteSource: f.siteSource, allowWebUrl: home, previousReleaseDir: previous.directory }), /filename SHA-256 differs/)
+    assert.equal(existsSync(output), false)
+  } finally { rmSync(f.root, { recursive: true, force: true }) }
+})
+
+test('publisher refuses prior installer files with an unsupported extension', async () => {
+  const f = fixture()
+  try {
+    const previous = publishedFiles(f)
+    writeFileSync(join(previous.files, `${hash(Buffer.from('unexpected note'))}-private.txt`), Buffer.from('unexpected note'))
+    const output = join(f.root, 'refused-downloads')
+    await assert.rejects(preparePublicDownloads({ configPath: f.configPath, output,
+      siteSource: f.siteSource, allowWebUrl: home, previousReleaseDir: previous.directory }), /invalid previous installer filename/)
+    assert.equal(existsSync(output), false)
+  } finally { rmSync(f.root, { recursive: true, force: true }) }
+})
+
+test('publisher refuses a symbolic link in the prior files directory', async (t) => {
+  const f = fixture()
+  try {
+    const previous = publishedFiles(f)
+    const linked = join(previous.files, `${hash(f.android)}-linked.apk`)
+    try {
+      if (process.platform === 'win32') {
+        const targetDirectory = join(f.root, 'link-target')
+        mkdirSync(targetDirectory)
+        symlinkSync(targetDirectory, linked, 'junction')
+      } else symlinkSync(f.androidPath, linked, 'file')
+    }
+    catch (error: any) {
+      if (['EPERM', 'EACCES', 'ENOSYS'].includes(error?.code)) {
+        t.skip('platform does not permit creating a test symlink')
+        return
+      }
+      throw error
+    }
+    const output = join(f.root, 'refused-downloads')
+    await assert.rejects(preparePublicDownloads({ configPath: f.configPath, output,
+      siteSource: f.siteSource, allowWebUrl: home, previousReleaseDir: previous.directory }), /not a regular file/)
+    assert.equal(existsSync(output), false)
+  } finally { rmSync(f.root, { recursive: true, force: true }) }
+})
+
+test('publisher enforces a finite prior installer count before staging', async () => {
+  const f = fixture()
+  try {
+    const previous = publishedFiles(f)
+    for (let index = 0; index < 31; index++) {
+      const bytes = Buffer.from(`prior installer ${index}`)
+      writeFileSync(join(previous.files, `${hash(bytes)}-extra-${index}.apk`), bytes)
+    }
+    const output = join(f.root, 'refused-downloads')
+    await assert.rejects(preparePublicDownloads({ configPath: f.configPath, output,
+      siteSource: f.siteSource, allowWebUrl: home, previousReleaseDir: previous.directory }), /more than 32 installers/)
     assert.equal(existsSync(output), false)
   } finally { rmSync(f.root, { recursive: true, force: true }) }
 })
