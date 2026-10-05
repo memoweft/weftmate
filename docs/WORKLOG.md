@@ -494,3 +494,15 @@ Mac最终收到真实官网/公开版本清单契约，只更新Apple任务卡�
 Windows首位实际Sol被模型容量拒绝、未执行，Luna只读复用QA4原requestId一次得到pending/RUNTIME_BUSY/configured=false。其初报把DTO缺失default推成宿主未配置，主助手指明层次后补一次settings原字段：models.activeId仍personal-local-occamy-miniplus-v21、profile（模型档案）存在，错误结论撤回。无重复注册、生成、本地模型维护或旧队列清理；该私有MiMo前置仍未生效，B续聊本轮未开。
 
 另一实际Luna只写公共发布器/测试/README，为官网替换Mac5时保留旧Mac4下载URL。可选previous-release-dir只读旧files单层，普通文件/名称摘要/扩展和有限数量/字节核验后复制，再回读SHA（文件哈希）；根目录其他项不复制，同摘要Android复用旧URL，清单仍只列当前有效两包。主助手窄审后独立名称过滤新增5/5、语法/差异通过；子Agent先前额外完整测试2次也已如实说明，未继续补偿式验证。仓库typecheck（类型检查）不覆盖这些MJS/测试TS，未将它当本改动证明。当前保留能力仅源码，Mac5真实文件/切换和旧URL读取后再记运行通过；官网/账户仍前轮版本，无重启或部署。
+
+### Mac构建5整合与正式官网发布，末项真实用例等待桌面
+
+Mac首次真实开发Debug4菜单/未登录更新窗口读取官网4为已最新，520×620与400×452外框/滚动/焦点已核，实际Bundle与二进制签名保持。公共Core新增13项Swift Testing定义（含参数化）通过，旧21项仅编译未执行；既有私有Client/Transport/Credentials未改。独立Root读PublicUpdates/Model/View/菜单，数字比较无固定整数溢出、网络64KiB/20秒/无个人认证、取消/迟到状态与同源链接边界已查；Native fresh Luna当前窗口范围review ship无materialfix，独立documenter核现有README/任务已覆盖，仅Git外报告，不修全局视觉。
+
+实际Release5打包/Info0.1.0/5/x86_64/最低macOS14.0/签名/DMG通过，未公证/Gatekeeper退出3、无自动安装/跨签名保留证明。真实5读取官网4为本机较新；保留带新功能的开发4（不冒原发布4）和Release5两个实例。源代码dd756380bbcb1d714d24e2e03fb6f1dc2338da38，Release来源ae72c50ec287329419a23897359a377613c610a3，交接来源b3cd4138deaeaa215d359718b6c0611808186bec，后续仅任务卡变化。
+
+Root指定144单次下载外ZIP1689579字节/SHA6136dfc3ac3b44cc6d9d5945b7ea91645d66a957b5ab986d39ffaf93ebc390bd；内源码100806字节/SHA815871344b6e7b10a7a34ba2321187b2444f25ca3ae56a56e181a3e0e484e317，路径/CRC/无链接检查及42项原SHA、copy后42/42一致。相对build4十项变化，仅Apple及本卡，无旧task1/全局/后端覆盖。原42项源码/包/6证据在AppleNativeUpdates-20261005/Received-build5，独立Root查看三窗口PNG。单次传送已消费关闭。
+
+新DMG1048583字节/SHAe2c7f92d1bf1c7cdf84382f547a16bb16eced16fecdfa7f9659ba72253ed5729。Root第一次prepare因缺输出父目录拒绝，未创建或发布候选，补明确Runtime父目录后同参数成功；旧公开4目录只保留已核installer，非Mac条目与旧JSON逐字段相同，三个安装文件。Ubuntu旧官网完整私用备份，线上旧清单SHA512d...核定；新文件同SHA后先发布不可变5、原子切清单231c67ba9198d128d5733bd1cd5ada7d18a9bf31f3a9306d47cd9472475a9a51，不改nginx/网站资源。正常TLS公网新5GET200/同SHA、旧4URL仍GET200/937054字节/原SHA；Android12和其他状态不变，无私人数据上传。
+
+官网5正式回执发Mac后，后验工具throw/&&编译错误经窄修，实际执行在窗口绑定前失败，downloadClicked=false且未发新检查。原debug4/78962/CG743和release5/80246/CG752及旧39901均保留，AXWindows0、CG原窗口非当前可见；console记录loginComplete=true/onConsole=false/locked=false，缺字段默认false不能断言锁屏。Root独立看验证子线程原始命令/失败，已请本人切回已登录可见桌面保持亮并回复；等待实际环境回执，不用脚本直读HTTP或数值模拟代替按钮。实例/编译错误/窗口失败均保留，Mac停止扩诊断；完整4→5/按钮下载与5→5最新尚未通过。版本5可从官网下载，当前整体验收未完成。
