@@ -40,7 +40,7 @@ node scripts/prepare-public-downloads.mjs --config /absolute/path/publish.json -
 node scripts/prepare-public-downloads.mjs --config /absolute/path/publish.json --output /absolute/path/candidate/downloads --allow-web-url https://home.weftmate.com:8443/personal/v1/ui --previous-release-dir /absolute/path/old-downloads
 ```
 
-输出仅有三个下载页资源、`releases.json`、五个 `qr/<id>.svg` 和两个 `files/<sha256>-<fileName>` 安装包。`releases.json` 中 `landingUrl` 指向 `siteUrl?platform=<id>`；二维码也只编码该公开页面，不含账户、会话或令牌。`downloadUrl`、`qrUrl` 均相对 `siteUrl`。只有 `available` 项包含版本、构建号、架构、字节数、摘要和 `downloadUrl`；`web` 项只有明确允许的 `webUrl`，不可用项没有下载字段。
+输出包含三个下载页资源、`releases.json`、五个 `qr/<id>.svg` 和安装文件：不传 `--previous-release-dir` 时有两份当前安装包；传入时还会保留已核验的旧安装文件。同一摘要和扩展名的当前包会复用旧文件。旧安装文件只用于保留原下载 URL，不会加入 `releases.json`；清单仍只列当前有效版本。`landingUrl` 指向 `siteUrl?platform=<id>`；二维码也只编码该公开页面，不含账户、会话或令牌。`downloadUrl`、`qrUrl` 均相对 `siteUrl`。只有 `available` 项包含版本、构建号、架构、字节数、摘要和 `downloadUrl`；`web` 项只有明确允许的 `webUrl`，不可用项没有下载字段。
 
 二维码使用 [Project Nayuki 的 QR Code Generator](https://github.com/nayuki/QR-Code-generator/tree/3c6d0b3cefb4e049dc337e82237c9644399716a8/typescript-javascript) MIT（宽松开源许可）实现。原始 `scripts/vendor/qrcodegen.ts` 的 SHA-256 为 `1dc03fb5a10e0e2318ea162755bbdb9977ca6ce52cff959e9c9b6deafdccda9c`；仓内 TypeScript 编译为 `scripts/vendor/qrcodegen.mjs`，保留原许可文字。发布时无需外部二维码服务或新全局依赖。
 两份 vendor 文件保留上游尾随空格；`.gitattributes` 只对它们关闭 Git 的 `blank-at-eol` 检查，其他文件仍按原有规则检查。

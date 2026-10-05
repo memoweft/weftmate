@@ -2,6 +2,10 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var model: AppleAppModel
+    #if os(macOS)
+    @EnvironmentObject private var updates: MacUpdateModel
+    @Environment(\.openWindow) private var openWindow
+    #endif
     @State private var confirmSignOut = false
     @State private var confirmServer = false
 
@@ -57,8 +61,19 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 13) {
                         Label("Apple 客户端", systemImage: "app").font(.headline).foregroundStyle(Weave.ink)
                         LabeledContent("外观", value: "跟随系统").font(.callout).foregroundStyle(Weave.secondary)
+                        #if os(macOS)
+                        LabeledContent("版本", value: updates.installedVersionDisplay)
+                            .font(.callout).foregroundStyle(Weave.secondary)
+                        Button("检查更新…") {
+                            openWindow(id: "updates")
+                            updates.check()
+                        }
+                        .buttonStyle(.bordered)
+                        .accessibilityIdentifier("openUpdatesButton")
+                        #else
                         LabeledContent("版本", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1")
                             .font(.callout).foregroundStyle(Weave.secondary)
+                        #endif
                         Divider()
                         Text("当前可以登录、查看设备和读取原会话。续聊、附件和独立模型正在接通；Apple Watch 暂提供独立的起步界面。")
                             .font(.caption).foregroundStyle(Weave.muted).lineSpacing(4)
