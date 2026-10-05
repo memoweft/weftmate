@@ -6,11 +6,14 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join, sep } from 'node:path';
+import { basename, dirname, isAbsolute, join, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { decryptStage12Dpapi } from './stage12-dpapi-loader.mjs';
 
-if (process.platform !== 'win32' || process.env.WEFTMATE_STAGE15_HANDOFF_SYNTHETIC_E2E !== '1') {
-  throw new Error('Set WEFTMATE_STAGE15_HANDOFF_SYNTHETIC_E2E=1 on Windows.');
+const synthetic = process.env.WEFTMATE_STAGE15_HANDOFF_SYNTHETIC_E2E === '1';
+const realRelay = process.env.WEFTMATE_STAGE15_HANDOFF_REAL_E2E === '1';
+if (process.platform !== 'win32' || synthetic === realRelay) {
+  throw new Error('Select exactly one Stage 15 handoff synthetic or real acceptance mode on Windows.');
 }
 const repository = dirname(fileURLToPath(new URL('../../package.json', import.meta.url)));
 const evidenceDir = join(repository, '..', 'Runtime', 'UnifiedAssistant', 'Stage15-WindowsAndroid-20261005', 'Handoff');
@@ -27,10 +30,24 @@ const artifactText = `# Stage 15 shared handoff\n${fact}\n`;
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const deadline = Date.now() + 360_000;
-const evidence = { classification: 'synthetic', runId, originalModelUnique: false, sameSession: false,
+const evidence = { classification: realRelay ? 'real' : 'synthetic', runId,
+  limits: realRelay ? { userTurnsMaximum: 1, providerCompletionsMaximum: 6,
+    turnMs: 240_000, runMs: 720_000 } : null,
+  providerCompletions: { attempted: 0, forwarded: 0, rejected: 0 },
+  originalModelUnique: false, sameSession: false,
   duplicateSyncEvent: false, duplicateRequestNoRegeneration: false, toolArtifactExact: false,
   supplementCompleted: false, stopObserved: false, restartNoReplay: false, failure: null };
-let modelCalls = 0, documentToolRequestSeen = false, contextSeen = false, blockResponse = null, child = null, output = '';
+let modelCalls = 0, documentToolCalls = 0, documentToolRequestSeen = false, contextSeen = false;
+let blockResponse = null, child = null, output = '', relayKey = null, fatalRelayError = null;
+if (realRelay) {
+  const keyPath = process.env.WEFTMATE_STAGE15_MIMO_DPAPI_PATH;
+  const privateRoot = realpathSync(join(repository, '..', 'Runtime', 'UnifiedAssistant', 'private-model-tests'));
+  if (!keyPath || !isAbsolute(keyPath) || basename(keyPath) !== 'mimo-v2.6-flash.dpapi' ||
+      !realpathSync(keyPath).startsWith(privateRoot + sep)) {
+    throw new Error('Stage 15 real handoff requires the authorized DPAPI MiMo fixture.');
+  }
+  relayKey = await decryptStage12Dpapi(keyPath);
+}
 function sse(response, content = null, tool = null) {
   response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
   const frame = (choice) => response.write(`data: ${JSON.stringify({ id: 'stage15-synthetic', object: 'chat.completion.chunk',
@@ -50,6 +67,46 @@ const upstream = createServer(async (request, response) => {
   let raw = ''; for await (const part of request) { raw += part; if (raw.length > 256 * 1024) { response.destroy(); return; } }
   const body = JSON.parse(raw); assert.equal(body.model, 'synthetic-stop-model'); modelCalls++;
   const text = JSON.stringify(body.messages ?? []);
+  if (realRelay) {
+    evidence.providerCompletions.attempted++;
+    if (evidence.providerCompletions.forwarded >= 6) {
+      evidence.providerCompletions.rejected++;
+      response.writeHead(429, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({ error: { code: 'REAL_PROVIDER_LIMIT' } })); return;
+    }
+    evidence.providerCompletions.forwarded++;
+    if (text.includes('stage15-save-exact')) {
+      documentToolRequestSeen ||= JSON.stringify(body.tools ?? []).includes('personal_save_document');
+      contextSeen ||= text.includes(fact);
+    }
+    const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 240_000);
+    try {
+      const upstreamResponse = await fetch('https://api.xiaomimimo.com/v1/chat/completions', {
+        method: 'POST', redirect: 'error', signal: controller.signal,
+        headers: { authorization: `Bearer ${relayKey}`, 'content-type': 'application/json',
+          accept: 'text/event-stream' },
+        body: JSON.stringify({ ...body, model: 'mimo-v2.6-flash' }),
+      });
+      if (!upstreamResponse.ok || !upstreamResponse.body ||
+          !/^text\/event-stream/i.test(upstreamResponse.headers.get('content-type') ?? '')) {
+        fatalRelayError = `provider status ${upstreamResponse.status}`;
+        response.writeHead(upstreamResponse.status || 502, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ error: { code: 'REAL_PROVIDER_UNAVAILABLE' } })); return;
+      }
+      response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-store' });
+      let bytes = 0;
+      for await (const part of upstreamResponse.body) {
+        bytes += part.byteLength;
+        if (bytes > 8 * 1024 * 1024) throw new Error('relay response too large');
+        response.write(part);
+      }
+      response.end(); return;
+    } catch {
+      fatalRelayError ??= 'provider relay failed';
+      if (!response.headersSent) response.writeHead(502, { 'content-type': 'application/json' });
+      response.end(JSON.stringify({ error: { code: 'REAL_PROVIDER_UNAVAILABLE' } })); return;
+    } finally { clearTimeout(timer); controller.abort(); }
+  }
   if (text.includes('stage15-block-until-stop')) {
     response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
     response.write(`data: ${JSON.stringify({ id: 'stage15-block', choices: [{ index: 0, delta: { content: 'working' }, finish_reason: null }] })}\n\n`);
@@ -57,7 +114,11 @@ const upstream = createServer(async (request, response) => {
   }
   if (text.includes('stage15-save-exact')) {
     const hasDocumentTool = JSON.stringify(body.tools ?? []).includes('personal_save_document');
+    const hasDocumentResult = (body.messages ?? []).some((message) => message?.role === 'tool') ||
+      text.includes('"type":"tool-result"');
+    if (hasDocumentResult) { sse(response, 'stage15 document saved'); return; }
     if (hasDocumentTool) { documentToolRequestSeen = true; contextSeen ||= text.includes(fact);
+      documentToolCalls++;
       sse(response, null, { fileName: 'stage15-handoff.md', content: artifactText }); return; }
   }
   sse(response, 'stage15 supplement completed');
@@ -103,11 +164,28 @@ async function terminal(origin, account, sessionId, receiptId, reason) { return 
   const start = rows.findLast((row) => row.type === 'turn.started' && row.seq < user?.seq);
   const end = rows.find((row) => row.type === 'turn.ended' && row.data?.turn === start?.data?.turn);
   return end?.data?.reason === reason ? end : null; }, 90_000); }
+async function terminalAny(origin, account, sessionId, receiptId) { return until(async () => {
+  const rows = await events(origin, account, sessionId), user = rows.find((row) =>
+    row.type === 'user.message' && row.data?.receiptId === receiptId);
+  const start = rows.findLast((row) => row.type === 'turn.started' && row.seq < user?.seq);
+  return rows.find((row) => row.type === 'turn.ended' && row.data?.turn === start?.data?.turn) ?? null;
+}, 240_000); }
+async function taskAfterTerminal(origin, account, taskId, cap = 10_000) {
+  const end = Date.now() + cap; let latest = null;
+  while (Date.now() < end) {
+    const value = await api(origin, account, 'GET', `/personal/v1/tasks/${taskId}`);
+    if (value.status === 200) latest = value.body;
+    if (latest?.artifacts?.some((item) => item.state === 'observed')) return latest;
+    await pause(100);
+  }
+  return latest;
+}
 async function shutdown() { if (!child || child.exitCode !== null) return child?.exitCode === 0; const closed = new Promise((resolve) => child.once('close', resolve));
   child.send({ type: 'weftmate:quit' }); const done = await Promise.race([closed.then(() => true), pause(20_000).then(() => false)]);
   if (!done && child.pid) { const killer = spawn('taskkill', ['/PID', String(child.pid), '/T', '/F'], { stdio: 'ignore', windowsHide: true }); await new Promise((resolve) => killer.once('close', resolve)); await closed; }
   return child.exitCode === 0; }
-let origin, desktop, phone, conversationId, sessionId, rootTaskId, supplementRequest, blockRequest, modelCallsBeforeRestart;
+let origin, desktop, phone, conversationId, sessionId, rootTaskId, messageRequest, phoneContinuation;
+let supplementRequest, blockRequest, modelCallsBeforeRestart;
 try {
   child = startHost(); origin = await until(() => /personal-access listening origin=(http:\/\/127\.0\.0\.1:\d+)/.exec(output)?.[1]);
   assert.equal((await manage('model.configure-synthetic-stop-fixture', { baseUrl: `http://127.0.0.1:${port}/v1` })).id, 'synthetic-stop-fixture');
@@ -130,18 +208,42 @@ try {
   const adoptCommand = await command(origin, desktop, adopted.body.command.commandId); assert.equal(adoptCommand.state, 'accepted_by_dsh'); sessionId = adoptCommand.sessionId;
   shared = await until(async () => { const value = await api(origin, desktop, 'GET', `/personal/v1/sync/conversations/${conversationId}/shared`); return value.body.status === 'active' ? value.body : null; });
   evidence.sameSession = shared.binding.sessionId === sessionId && shared.binding.modelProfileId === 'synthetic-stop-fixture'; assert.equal(evidence.sameSession, true);
+  if (!realRelay) {
   const late = { eventId: `event-${randomUUID()}`, conversationId, clientSeq: 5, kind: 'message.created', occurredAt: new Date().toISOString(), payload: { messageId: `message-${randomUUID()}`, role: 'user', text: 'stage15-phone-continuation' } };
   assert.equal((await api(origin, phone, 'POST', '/personal/v1/sync/events', { events: [late] })).status, 200);
-  const messageRequest = `stage15-phone-to-desktop-${runId}`; const sent = await api(origin, phone, 'POST', '/personal/v1/commands', { requestId: messageRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: late.payload.text, sourceSyncEventId: late.eventId }); assert.equal(sent.status, 202);
+  messageRequest = `stage15-phone-to-desktop-${runId}`; const sent = await api(origin, phone, 'POST', '/personal/v1/commands', { requestId: messageRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: late.payload.text, sourceSyncEventId: late.eventId }); assert.equal(sent.status, 202);
   const sentDuplicate = await api(origin, phone, 'POST', '/personal/v1/commands', { requestId: messageRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: late.payload.text, sourceSyncEventId: late.eventId }); assert.equal(sentDuplicate.status, 202); assert.equal(sentDuplicate.body.command.commandId, sent.body.command.commandId);
-  const phoneContinuation = await command(origin, phone, sent.body.command.commandId); assert.equal(phoneContinuation.state, 'accepted_by_dsh'); await terminal(origin, phone, sessionId, phoneContinuation.receiptId, 'completed');
-  const toolRequest = `stage15-desktop-tool-${runId}`; const toolGoal = await api(origin, desktop, 'POST', '/personal/v1/commands', { requestId: toolRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: 'stage15-save-exact：请使用 personal_save_document 保存一份简短 Markdown。' }); assert.equal(toolGoal.status, 202);
-  const root = await command(origin, desktop, toolGoal.body.command.commandId); assert.equal(root.state, 'accepted_by_dsh'); rootTaskId = root.commandId; await terminal(origin, desktop, sessionId, root.receiptId, 'completed');
+  phoneContinuation = await command(origin, phone, sent.body.command.commandId); assert.equal(phoneContinuation.state, 'accepted_by_dsh'); await terminal(origin, phone, sessionId, phoneContinuation.receiptId, 'completed');
+  }
+  const toolRequest = `stage15-desktop-tool-${runId}`; const toolGoal = await api(origin, desktop, 'POST', '/personal/v1/commands', { requestId: toolRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: `stage15-save-exact：请调用 personal_save_document，fileName 必须是 stage15-handoff.md，content 必须逐字等于下面两行（末尾保留换行）：\n# Stage 15 shared handoff\n${fact}\n完成后停止，不要再次调用工具。` }); assert.equal(toolGoal.status, 202);
+  const root = await command(origin, desktop, toolGoal.body.command.commandId); assert.equal(root.state, 'accepted_by_dsh'); rootTaskId = root.commandId;
+  const toolTerminal = realRelay ? await terminalAny(origin, desktop, sessionId, root.receiptId)
+    : await terminal(origin, desktop, sessionId, root.receiptId, 'completed');
   assert.equal(documentToolRequestSeen, true, 'the adopted task must offer the document tool to the model');
+  if (!realRelay) assert.equal(documentToolCalls, 1,
+    'the synthetic model must stop after one observed document result');
   assert.equal(contextSeen, true, 'phone-origin fact must be injected into the adopted session');
-  const detail = await until(async () => { const value = await api(origin, phone, 'GET', `/personal/v1/tasks/${rootTaskId}`); return value.body.artifacts?.some((item) => item.state === 'observed') ? value.body : null; });
-  const artifact = detail.artifacts.find((item) => item.state === 'observed'); const download = await fetch(`${origin}/personal/v1/artifacts/${artifact.artifactId}/download`, { headers: { cookie: phone.cookie } }); assert.equal(download.status, 200);
-  const bytes = Buffer.from(await download.arrayBuffer()); evidence.toolArtifactExact = bytes.toString('utf8') === artifactText && sha(bytes) === artifact.sha256; assert.equal(evidence.toolArtifactExact, true);
+  const detail = realRelay ? await taskAfterTerminal(origin, phone, rootTaskId)
+    : await until(async () => { const value = await api(origin, phone, 'GET', `/personal/v1/tasks/${rootTaskId}`); return value.body.artifacts?.some((item) => item.state === 'observed') ? value.body : null; });
+  const artifact = detail?.artifacts?.find((item) => item.state === 'observed');
+  let bytes = null;
+  if (artifact) {
+    const download = await fetch(`${origin}/personal/v1/artifacts/${artifact.artifactId}/download`,
+      { headers: { cookie: phone.cookie } }); assert.equal(download.status, 200);
+    bytes = Buffer.from(await download.arrayBuffer());
+    evidence.toolArtifactExact = bytes.toString('utf8') === artifactText && sha(bytes) === artifact.sha256;
+  }
+  if (realRelay) {
+    evidence.realScope = { userTurns: 1, terminalReason: toolTerminal?.data?.reason ?? null,
+      providerCompletions: { ...evidence.providerCompletions }, artifactObserved: Boolean(artifact),
+      exactArtifactBytes: bytes?.length ?? null, exactArtifactSha256: artifact?.sha256 ?? null };
+    assert.equal(toolTerminal?.data?.reason, 'completed', `real terminal: ${toolTerminal?.data?.reason ?? 'missing'}`);
+    assert.ok(artifact, 'the real tool turn must publish an observed artifact');
+    assert.equal(evidence.toolArtifactExact, true, 'the downloaded real artifact must have exact bytes and sha256');
+    evidence.result = 'passed';
+    console.log('[stage15-handoff] real MiMo one-turn same-session adoption and exact downloaded artifact passed');
+  } else {
+  assert.equal(evidence.toolArtifactExact, true);
   supplementRequest = `stage15-supplement-${runId}`; const supplement = await api(origin, desktop, 'POST', `/personal/v1/tasks/${rootTaskId}/supplements`, { requestId: supplementRequest, text: 'stage15-supplement' }); assert.equal(supplement.status, 202);
   const supplementCommand = await command(origin, desktop, supplement.body.command.commandId); assert.equal(supplementCommand.rootTaskId, rootTaskId); await terminal(origin, desktop, sessionId, supplementCommand.receiptId, 'completed');
   const supplementDuplicate = await api(origin, desktop, 'POST', `/personal/v1/tasks/${rootTaskId}/supplements`, { requestId: supplementRequest, text: 'stage15-supplement' }); assert.equal(supplementDuplicate.status, 202); assert.equal(supplementDuplicate.body.command.commandId, supplementCommand.commandId); evidence.supplementCompleted = true;
@@ -155,5 +257,6 @@ try {
   const original = await api(origin, desktop, 'GET', `/personal/v1/commands/by-request/${messageRequest}`); const toolOriginal = await api(origin, desktop, 'GET', `/personal/v1/commands/by-request/${toolRequest}`); const extra = await api(origin, desktop, 'GET', `/personal/v1/commands/by-request/${supplementRequest}`); assert.equal(original.body.command.commandId, phoneContinuation.commandId); assert.equal(toolOriginal.body.command.commandId, rootTaskId); assert.equal(extra.body.command.commandId, supplementCommand.commandId);
   const sessions = await api(origin, desktop, 'GET', '/personal/v1/sessions'); assert.equal(sessions.body.sessions.filter((item) => item.conversationId === conversationId).length, 1); assert.equal(modelCalls, modelCallsBeforeRestart); evidence.duplicateRequestNoRegeneration = true; evidence.restartNoReplay = true;
   evidence.result = 'passed'; console.log('[stage15-handoff] synthetic same-session adoption, exact artifact, supplement, stop, and restart dedupe passed');
+  }
 } catch (error) { evidence.failure = { code: typeof error?.code === 'string' ? error.code : 'ACCEPTANCE_FAILED', name: error?.name ?? 'Error' }; throw error; }
-finally { const outputPath = join(evidenceDir, `synthetic-handoff-${runId}.json`); try { writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx', mode: 0o600 }); } finally { await shutdown().catch(() => {}); await new Promise((resolve) => upstream.close(resolve)); if (child?.exitCode === 0 && realpathSync(root).startsWith(realpathSync(tmpdir()) + sep)) rmSync(root, { recursive: true, force: true }); } }
+finally { relayKey = null; const outputPath = join(evidenceDir, `${realRelay ? 'real' : 'synthetic'}-handoff-${runId}.json`); try { writeFileSync(outputPath, `${JSON.stringify(evidence, null, 2)}\n`, { flag: 'wx', mode: 0o600 }); } finally { await shutdown().catch(() => {}); await new Promise((resolve) => upstream.close(resolve)); if (child?.exitCode === 0 && realpathSync(root).startsWith(realpathSync(tmpdir()) + sep)) rmSync(root, { recursive: true, force: true }); } }
