@@ -6,6 +6,8 @@
  * second DSH runtime and it does not create a fictitious `session.resume` RPC.
  */
 
+import { createHash } from 'node:crypto'
+
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
   'session-conflict',
@@ -96,10 +98,11 @@ function safeHistoryText(value) {
     .replace(/(?:sk-[A-Za-z0-9_-]{8,}|(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+)/gi, '[redacted]')
   return { text, ...(raw.length > HISTORY_TEXT_LIMIT ? { truncated: true } : {}) }
 }
-function messageText(message) {
+function messageText(message, includeHash = false) {
   if (!Array.isArray(message?.content)) return null
   const text = message.content.filter((part) => part?.type === 'text' && typeof part.text === 'string').map((part) => part.text).join('')
-  return text ? safeHistoryText(text) : null
+  return text ? { ...safeHistoryText(text), ...(includeHash
+    ? { messageHash: createHash('sha256').update(text, 'utf8').digest('hex') } : {}) } : null
 }
 function messageImages(message) {
   if (!Array.isArray(message?.content)) return []
@@ -125,7 +128,7 @@ export function projectHistoryEvent(raw) {
   let projected = null
   if (type === 'user/message' && event.data?.source?.kind === 'user') {
     const message = event.data?.message ?? event.data
-    const data = messageText(message)
+    const data = messageText(message, true)
     const images = messageImages(message)
     const receiptId = typeof event.data?.source?.rpcId === 'string' &&
       /^[A-Za-z0-9._:-]{1,160}$/.test(event.data.source.rpcId) ? event.data.source.rpcId : null

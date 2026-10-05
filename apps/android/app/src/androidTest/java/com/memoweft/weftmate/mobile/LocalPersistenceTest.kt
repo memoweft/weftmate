@@ -12,6 +12,30 @@ import java.util.UUID
 
 @RunWith(AndroidJUnit4::class)
 class LocalPersistenceTest {
+    @Test fun sharedOriginalFileReferenceSurvivesRestartAndStaysOwnerScoped() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "test-${UUID.randomUUID()}.db"
+        val attachmentId = "attachment-11111111-1111-4111-8111-111111111111"
+        val sessionId = "session-22222222-2222-4222-8222-222222222222"
+        val reference = JSONObject().put("attachmentId", attachmentId).put("name", "notes.csv")
+            .put("contentType", "text/csv").put("size", 42).put("sha256", "a".repeat(64))
+        val event = JSONObject().put("seq", 7).put("type", "user.message")
+            .put("data", JSONObject().put("text", "检查文件").put("originalAttachments", JSONArray().put(reference)))
+        try {
+            LocalStore(context, name).use { first ->
+                first.saveSharedHistoryPage("owner-a", "host-a", sessionId, JSONArray().put(event), 7)
+            }
+            LocalStore(context, name).use { reopened ->
+                assertEquals(reference.toString(), reopened.sharedOriginalAttachment(
+                    "owner-a", "host-a", sessionId, attachmentId)?.toString())
+                assertNull(reopened.sharedOriginalAttachment("owner-b", "host-a", sessionId, attachmentId))
+                assertNull(reopened.sharedOriginalAttachment("owner-a", "host-b", sessionId, attachmentId))
+                assertNull(reopened.sharedOriginalAttachment("owner-a", "host-a", sessionId,
+                    "attachment-33333333-3333-4333-8333-333333333333"))
+            }
+        } finally { context.deleteDatabase(name) }
+    }
+
     @Test fun localOutboxSurvivesRestartAndRequiresExplicitOwnerBinding() {
         val context = InstrumentationRegistry.getInstrumentation().targetContext
         val name = "test-${UUID.randomUUID()}.db"

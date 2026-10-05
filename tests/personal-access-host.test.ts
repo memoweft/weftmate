@@ -44,6 +44,9 @@ test('durable history pagination keeps sparse DSH seq and excludes tools, inject
   ], -1, 10)
   assert.deepEqual(native.events.map((event: { type: string, data: { text?: string } }) =>
     [event.type, event.data.text]), [['user.message', 'native user text'], ['assistant.message', 'native final reply']])
+  assert.match(native.events[0].data.messageHash, /^[a-f0-9]{64}$/)
+  assert.equal(Object.hasOwn(native.events[1].data, 'messageHash'), false,
+    'assistant history never carries the internal user-input proof hash')
 })
 
 test('many hidden deltas advance the scanned watermark without delaying an aborted turn', () => {
