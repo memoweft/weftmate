@@ -240,7 +240,8 @@ const PERSONAL_REMOTE_PRESET_METADATA_R9 = 'name: 个人远端助手\ndescriptio
 const PERSONAL_REMOTE_PRESET_METADATA_R10 = 'name: 个人远端助手\ndescription: 允许受控记事本、项目资料读取与文档保存的远端会话。\norder: 91\n'
 const PERSONAL_REMOTE_PRESET_METADATA = 'name: 个人远端助手\ndescription: 允许受控项目与公共网页阅读及文档保存的远端会话。\norder: 91\n'
 const PERSONAL_SHARED_CHAT_PRESET_ID = 'personal-shared-chat'
-const PERSONAL_SHARED_CHAT_PRESET_METADATA = 'name: 共享模型对话\ndescription: 不访问宿主桌面、文件或记忆的独立对话。\norder: 92\n'
+const PERSONAL_SHARED_CHAT_PRESET_METADATA_LEGACY = 'name: 共享模型对话\ndescription: 不访问宿主桌面、文件或记忆的独立对话。\norder: 92\n'
+const PERSONAL_SHARED_CHAT_PRESET_METADATA = 'name: 共享模型对话\ndescription: 不访问宿主桌面、文件或项目；仅使用宿主明确注入的本账户记忆上下文。\norder: 92\n'
 /** The maintenance preset has no general model tools.  This mirrors the
  * pinned standard preset's *scoped* context lifecycle only: compaction stays
  * owned by the selected maintenance agent, never by the web host or ordinary
@@ -654,7 +655,7 @@ async function writePersonalSharedChatPreset(homeDir: string, profileName: strin
   const presetDir = join(homeDir, '.agent-presets', PERSONAL_SHARED_CHAT_PRESET_ID)
   const composition = join(presetDir, 'agent.cordis.yml')
   const metadata = join(presetDir, 'preset.yml')
-  const compositionText = `- id: persona
+  const legacyCompositionText = `- id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
     text: >-
@@ -665,11 +666,16 @@ async function writePersonalSharedChatPreset(homeDir: string, profileName: strin
     includeRuntimeContext: false
 - name: ../../profiles/${profileName}/plugins/weftmate-personal-shared-chat-preset.mjs
 `
+  const compositionText = legacyCompositionText.replace(
+    '      access to the host desktop, files, projects, or personal memory. Never\n      claim to have performed an action on the host computer.',
+    '      access to the host desktop, files, or projects. Use personal memory only\n      when the WeftMate host explicitly provides this account\'s memory context in\n      the conversation. Treat it only as background for this account, and never\n      claim memory beyond that supplied context or claim to have performed an\n      action on the host computer.')
   await mkdir(presetDir, { recursive: true })
   const existingComposition = await readFile(composition, 'utf8').catch(() => '')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if ((existingComposition && existingComposition !== compositionText) ||
-      (existingMetadata && existingMetadata !== PERSONAL_SHARED_CHAT_PRESET_METADATA)) {
+  if ((existingComposition && existingComposition !== compositionText &&
+      existingComposition !== legacyCompositionText) ||
+      (existingMetadata && existingMetadata !== PERSONAL_SHARED_CHAT_PRESET_METADATA &&
+        existingMetadata !== PERSONAL_SHARED_CHAT_PRESET_METADATA_LEGACY)) {
     throw new Error('personal-shared-chat preset conflict: existing user preset was preserved')
   }
   let changed = false

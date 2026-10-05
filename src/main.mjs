@@ -216,6 +216,7 @@ let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn �
 let personalAccessService = null;
 let personalAccessOrigin = null;
 let personalMemoryManager = null;
+let personalMemoryRuntimeConfig = null;
 let personalBrowserReader = null;
 const personalMemoryIpc = { recallAttempts: 0, recallRequests: 0,
   recallWithContext: 0, recallReplies: 0, ingestRequests: 0, rejectedBindings: 0 };
@@ -1584,6 +1585,41 @@ async function bootstrap() {
   const productDshRuntime = app.isPackaged
     ? join(process.resourcesPath, 'dsh-runtime')
     : join(app.getAppPath(), 'vendor', 'dsh-runtime');
+  function memoryPolicyAccess() {
+    return { ...personalAccessService,
+      privateAccountModelProof: (ownerId, profileId) => {
+        const proof = personalAccessService?.privateAccountModelProof?.(ownerId, profileId);
+        return proof && accountModelManager?.hasCredential(profileId) === true
+          ? { ...proof, credential: true } : null;
+      } };
+  }
+  function memoryProcessingRouteForSession(ownerId, sessionId) {
+    if (!personalAccessService || !personalMemoryRuntimeConfig) return null;
+    const binding = personalAccessService.ownerForSession(sessionId);
+    if (!binding || binding.ownerId !== ownerId) return null;
+    const described = { agentPreset: binding.origin === 'shared-chat'
+      ? 'personal-shared-chat' : binding.origin === 'personal-remote' ? 'personal-remote' : null };
+    const profiles = settingsMod.listModelProfiles().profiles;
+    const boundProfileId = settingsMod.sessionModelBinding(sessionId);
+    const destination = memoryRecallDestination({ binding, described, boundProfileId,
+      profiles, access: memoryPolicyAccess(), hasCredential: hasProfileCredential });
+    if (!destination.allowed) return null;
+    const selected = profiles.find((profile) => profile.id === boundProfileId);
+    if (!selected) return null;
+    if (selected.id.startsWith('private-model-')) {
+      const proof = personalAccessService.privateAccountModelProof(ownerId, selected.id);
+      const key = credentialForModelProfile(selected);
+      return proof && key ? { profileId: selected.id, baseUrl: selected.baseUrl,
+        model: selected.model, routeFingerprint: proof.routeFingerprint, credential: key } : null;
+    }
+    const config = personalMemoryRuntimeConfig;
+    if (!personalAccessService.canUseModelProfile(ownerId, config.authRef) ||
+        !personalAccessService.isFormalLocalProfile(config.authRef)) return null;
+    const authProfile = profiles.find((profile) => profile.id === config.authRef);
+    const key = authProfile ? credentialForModelProfile(authProfile) : null;
+    return key ? { profileId: config.authRef, baseUrl: config.baseUrl,
+      model: config.model, routeFingerprint: null, credential: key } : null;
+  }
   const createWebRuntime = () => new DshWebRuntime({
     // One process and one home are the Stage 0/1 durability boundary. Session
     // provider/model selection, not a child process, owns model affinity.
@@ -1645,20 +1681,20 @@ async function bootstrap() {
       }
       if (request.action === 'ingest') {
         const boundary = assertOwnerBoundBoundary(request.sessionId, request.boundary);
+        if (!memoryProcessingRouteForSession(binding.ownerId, request.sessionId)) {
+          throw Object.assign(new Error('memory model destination unavailable'),
+            { code: 'MEMORY_DESTINATION_BLOCKED' });
+        }
         personalMemoryIpc.ingestRequests++;
         writeHostState();
         return personalMemoryManager.ingest(binding.ownerId, boundary);
       }
       // DSH is awaiting this pre-step IPC. Calling its session/model gateway here
       // can re-enter the same active turn, so use the host's durable route only.
-      const destination = memoryRecallDestination({ binding, described,
-        boundProfileId: settingsMod.sessionModelBinding(request.sessionId),
-        profiles: settingsMod.listModelProfiles().profiles,
-        access: personalAccessService, hasCredential: hasProfileCredential });
-      if (!destination.allowed) {
+      if (!memoryProcessingRouteForSession(binding.ownerId, request.sessionId)) {
         personalMemoryIpc.recallReplies++;
         writeHostState();
-        return { state: 'withheld', reasonCode: destination.reasonCode };
+        return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
       }
       personalMemoryIpc.recallRequests++;
       const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,
@@ -2818,6 +2854,7 @@ async function bootstrap() {
 
   if (personalMemoryConfigPath !== null) {
     const memoryConfig = await loadPersonalMemoryConfig(personalMemoryConfigPath);
+    personalMemoryRuntimeConfig = memoryConfig;
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
       python: memoryConfig.python, pythonPath: memoryConfig.pythonPath,
@@ -2828,6 +2865,7 @@ async function bootstrap() {
         const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === memoryConfig.authRef);
         return profile ? credentialForModelProfile(profile) : null;
       },
+      processingRoute: (ownerId, sessionId) => memoryProcessingRouteForSession(ownerId, sessionId),
     });
   }
   const personalDesktopTask = accessPort === null ? null : createPersonalDesktopTask();
@@ -2980,14 +3018,17 @@ async function bootstrap() {
     async test({ profileId, ownerId }) {
       return accessBackend.verifyModelProfile(profileId, ownerId);
     },
-    async disable({ profileIds, stageRefs = [] }) {
+    async disable({ ownerId, profileIds, stageRefs = [] }) {
       return enqueueRouteMutation(async () => {
         configStoreMod.preflightVault();
+        await personalMemoryManager?.invalidateOwnerRoute(ownerId);
         if (profileIds.every((profileId) => /^private-model-[a-f0-9]{40}$/.test(profileId) &&
             !configStoreMod.getCredential(officialCredentialRef(routeForProfile(profileId).provider)) &&
             !configStoreMod.getCredential(profileId)) &&
             stageRefs.every((ref) => /^pending-model-[a-f0-9]{48}$/.test(ref) &&
-              !configStoreMod.getCredential(ref))) return { applied: true };
+              !configStoreMod.getCredential(ref))) {
+          return { applied: true };
+        }
         if (!runtimeOrigin || isQuitting) throw Object.assign(new Error('runtime unavailable'), { code: 'ACCOUNT_MODEL_BUSY' });
         try { await assertAccountModelReloadSafe(); }
         catch { throw Object.assign(new Error('runtime busy'), { code: 'ACCOUNT_MODEL_BUSY' }); }

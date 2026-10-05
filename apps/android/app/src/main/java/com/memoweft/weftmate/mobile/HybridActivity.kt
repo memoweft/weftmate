@@ -1476,8 +1476,6 @@ class HybridActivity : Activity() {
         val conversationId = params.optString("conversationId")
         if (conversationId.isNotEmpty() && !attachmentScopeAllowed(requireHost(), conversationId))
             throw ApiFailure(404, "SESSION_UNAVAILABLE")
-        if (conversationId.startsWith("session-") && kind != "image")
-            throw ApiFailure(415, "HOST_ATTACHMENTS_UNSUPPORTED")
         val attempt = AttachmentPickAttempt("pick-${UUID.randomUUID()}", scope, conversationId,
             accountEpoch.get(), pageGeneration, activeConversation, kind,
             if (params.has("viewGeneration")) params.optInt("viewGeneration") else null)

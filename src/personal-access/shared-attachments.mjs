@@ -2,16 +2,21 @@ import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readFile, readdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
+import { TEXT_ATTACHMENT_TYPES } from '../personal-sync/attachments.mjs';
 
 export const MAX_SHARED_IMAGE_BYTES = 5 * 1024 * 1024;
+// This is input material for one model turn, never the uploaded original.  The
+// original remains in personal-sync's streaming attachment store (up to 1 GiB).
+export const MAX_SHARED_TEXT_BYTES = 16 * 1024;
 export const MAX_SHARED_MESSAGE_IMAGES = 4;
 export const MAX_SHARED_MESSAGE_BYTES = 10 * 1024 * 1024;
+export const MAX_SHARED_MESSAGE_TEXT_BYTES = 16 * 1024;
 const MAX_OWNER_BYTES = 256 * 1024 * 1024;
 const MAX_OWNER_FILES = 1024;
 const IMAGE_ID = /^attachment-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const SESSION_ID = /^session-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUEST_ID = /^[A-Za-z0-9_.:-]{1,128}$/;
-const MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+const IMAGE_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 
 export class SharedAttachmentError extends Error {
   constructor(code, status = 400) { super(code); this.code = code; this.status = status; }
@@ -27,13 +32,20 @@ function matchesMime(type, bytes) {
   if (type === 'image/jpeg') return bytes.length >= 4 && bytes[0] === 255 && bytes[1] === 216 &&
     bytes.at(-2) === 255 && bytes.at(-1) === 217;
   if (type === 'image/webp') return bytes.toString('ascii', 0, 4) === 'RIFF' && bytes.toString('ascii', 8, 12) === 'WEBP';
-  return ['GIF87a', 'GIF89a'].includes(bytes.toString('ascii', 0, 6));
+  if (type === 'image/gif') return ['GIF87a', 'GIF89a'].includes(bytes.toString('ascii', 0, 6));
+  if (!TEXT_ATTACHMENT_TYPES.has(type)) return false;
+  try {
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    return !text.includes('\u0000');
+  } catch { return false; }
 }
 export function canonicalSharedAttachment(value) {
+  const limit = IMAGE_MIME.has(value?.contentType) ? MAX_SHARED_IMAGE_BYTES
+    : TEXT_ATTACHMENT_TYPES.has(value?.contentType) ? MAX_SHARED_TEXT_BYTES : 0;
   if (!value || typeof value !== 'object' || Array.isArray(value) ||
       Object.keys(value).sort().join(',') !== 'attachmentId,contentType,name,sha256,size' ||
-      !IMAGE_ID.test(value.attachmentId) || !validName(value.name) || !MIME.has(value.contentType) ||
-      !Number.isSafeInteger(value.size) || value.size < 1 || value.size > MAX_SHARED_IMAGE_BYTES ||
+      !IMAGE_ID.test(value.attachmentId) || !validName(value.name) || !limit ||
+      !Number.isSafeInteger(value.size) || value.size < 1 || value.size > limit ||
       typeof value.sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.sha256)) fail('INVALID_REQUEST');
   return { attachmentId: value.attachmentId, name: value.name, contentType: value.contentType,
     size: value.size, sha256: value.sha256 };
@@ -87,8 +99,8 @@ export async function createSharedAttachmentStore({ root }) {
     get,
     async put({ attachmentId, sessionId, requestId, name, contentType, sha256, bytes, authorize = () => {} }) {
       if (!IMAGE_ID.test(attachmentId) || !SESSION_ID.test(sessionId) || !REQUEST_ID.test(requestId) ||
-          !validName(name) || !MIME.has(contentType) || !Buffer.isBuffer(bytes) ||
-          bytes.length < 1 || bytes.length > MAX_SHARED_IMAGE_BYTES ||
+          !validName(name) || (!IMAGE_MIME.has(contentType) && !TEXT_ATTACHMENT_TYPES.has(contentType)) || !Buffer.isBuffer(bytes) ||
+          bytes.length < 1 || bytes.length > (IMAGE_MIME.has(contentType) ? MAX_SHARED_IMAGE_BYTES : MAX_SHARED_TEXT_BYTES) ||
           !/^[a-f0-9]{64}$/.test(sha256) || sha(bytes) !== sha256 || !matchesMime(contentType, bytes)) fail('INVALID_REQUEST');
       const attachment = canonicalSharedAttachment({ attachmentId, name, contentType, size: bytes.length, sha256 });
       return serial(async () => {
@@ -129,7 +141,9 @@ export async function createSharedAttachmentStore({ root }) {
           attachments.length < 1 || attachments.length > MAX_SHARED_MESSAGE_IMAGES) fail('INVALID_REQUEST');
       const canonical = attachments.map(canonicalSharedAttachment);
       if (new Set(canonical.map((row) => row.attachmentId)).size !== canonical.length ||
-          canonical.reduce((sum, row) => sum + row.size, 0) > MAX_SHARED_MESSAGE_BYTES) fail('INVALID_REQUEST');
+          canonical.reduce((sum, row) => sum + row.size, 0) > MAX_SHARED_MESSAGE_BYTES ||
+          canonical.filter((row) => TEXT_ATTACHMENT_TYPES.has(row.contentType))
+            .reduce((sum, row) => sum + row.size, 0) > MAX_SHARED_MESSAGE_TEXT_BYTES) fail('INVALID_REQUEST');
       const rows = [];
       for (const row of canonical) {
         const found = await get({ sessionId, requestId, attachmentId: row.attachmentId });

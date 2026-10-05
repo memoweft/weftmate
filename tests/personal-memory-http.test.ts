@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { canonicalMemoryPathname } from '../src/personal-memory/http.mjs'
 
 const backend = {
   getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready' }),
@@ -29,6 +30,8 @@ async function api(origin: string, method: string, path: string, body?: object, 
 }
 
 test('account memory routes keep health, list, source, search cursor and Trust receipts within owner', async () => {
+  assert.equal(canonicalMemoryPathname('/personal/v1/memory/items/cognition/c%3Aowner%3Aone'),
+    '/personal/v1/memory/items/cognition/c:owner:one')
   const root = mkdtempSync(join(tmpdir(), 'personal-memory-http-'))
   let aOwner = '', bOwner = ''
   let statusUnavailable = false, submitThrows = false, bStatusReady = false
@@ -153,6 +156,15 @@ test('account memory routes keep health, list, source, search cursor and Trust r
     const detail = await api(origin, 'GET', `/personal/v1/memory/items/cognition/c-${aOwner}-one`, undefined, a)
     assert.equal(detail.body.availableActions.correct.available, true)
     assert.equal(detail.body.availableActions.delete.available, true)
+    const encodedId = `c%3A${aOwner}%3Aone`
+    const encodedDetail = await api(origin, 'GET', `/personal/v1/memory/items/cognition/${encodedId}`, undefined, a)
+    assert.equal(encodedDetail.status, 200, JSON.stringify(encodedDetail.body))
+    assert.equal(encodedDetail.body.item.id, `c:${aOwner}:one`)
+    assert.equal((await api(origin, 'GET', `/personal/v1/memory/items/cognition/${encodedId}/sources`, undefined, a)).status, 200)
+    for (const unsafe of ['c%2Fother', 'c%5Cother', 'c%253Aother', 'c%ZZother', '%2E%2E']) {
+      const result = await api(origin, 'GET', `/personal/v1/memory/items/cognition/${unsafe}`, undefined, a)
+      assert.ok([400, 404].includes(result.status), unsafe)
+    }
     assert.equal((await api(origin, 'GET', `/personal/v1/memory/items/cognition/c-${aOwner}-one`,
       undefined, b)).status, 404)
     const beforeCrossDelete = calls.filter((call) => call.method === 'submit_command').length
@@ -210,6 +222,7 @@ test('account memory routes keep health, list, source, search cursor and Trust r
       'a failure after dispatch entry cannot reuse a certain pre-dispatch code')
     submitThrows = false
     assert.equal((await api(origin, 'GET', '/personal/v1/memory/commands/by-request/fix-one', undefined, a)).status, 200)
+    assert.equal((await api(origin, 'GET', '/personal/v1/memory/commands/by-request/fix%3Aone', undefined, a)).status, 200)
     const pendingCleanup = await api(origin, 'GET',
       '/personal/v1/memory/commands/by-request/delete-one', undefined, a)
     assert.equal(pendingCleanup.body.receipt.storageCleanup.state, 'pending')

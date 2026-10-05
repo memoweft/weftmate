@@ -31,7 +31,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
     private val root = File(context.filesDir, "chat-attachments").apply { mkdirs() }
     private val index = context.getSharedPreferences("chat-attachment-index", Context.MODE_PRIVATE)
     private val maxImage = MAX_IMAGE_BYTES
-    private val maxText = 32L * 1024
+    private val maxFile = MAX_IMAGE_BYTES
     private val maxThumbnail = 12_000
     private val maxDisplay = 512 * 1024
 
@@ -41,6 +41,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
 
     companion object {
         const val MAX_IMAGE_BYTES = 1024L * 1024 * 1024
+        const val MAX_MODEL_TEXT_BYTES = 16 * 1024
         const val SAFE_ORIGINAL_BYTES = 20L * 1024 * 1024
         private fun sampleFor(width: Int, height: Int, edge: Int): Int {
             val needed = maxOf(1, (maxOf(width, height).toLong() + edge - 1) / edge)
@@ -167,13 +168,21 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         return displayFile(saved.id)
     }
 
-    @Synchronized fun modelAttachment(row: ChatAttachment): ChatAttachment {
-        if (row.kind != "image") throw ApiFailure(400, "ATTACHMENT_INVALID")
+    @Synchronized fun modelAttachment(row: ChatAttachment, textBudget: Int = MAX_MODEL_TEXT_BYTES): ChatAttachment {
         val source = load(row.id)?.takeIf { it.owner == row.owner &&
             it.conversationId == row.conversationId && it.sha256 == row.sha256 }
             ?: throw ApiFailure(409, "ATTACHMENT_CHANGED")
         verify(source)
         val target = modelFile(row.id)
+        if (source.kind == "file") {
+            if (!modelTextType(source.mimeType)) throw ApiFailure(415, "ATTACHMENT_MODEL_UNSUPPORTED")
+            if (textBudget !in 1..MAX_MODEL_TEXT_BYTES) throw ApiFailure(413, "ATTACHMENT_MODEL_BUDGET")
+            val excerpt = strictText(source.file, textBudget)
+            FileOutputStream(target).use { output -> output.write(excerpt.toByteArray(Charsets.UTF_8)); output.fd.sync() }
+            val modelBytes = target.readBytes()
+            return row.copy(sizeBytes = modelBytes.size.toLong(), sha256 = digest(modelBytes), file = target)
+        }
+        if (source.kind != "image") throw ApiFailure(400, "ATTACHMENT_INVALID")
         if (!target.isFile || target.length() !in 1..(5L * 1024 * 1024)) {
             val bytes = displayBytes(source)
             FileOutputStream(target).use { output -> output.write(bytes); output.fd.sync() }
@@ -186,6 +195,9 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         return row.copy(mimeType = "image/jpeg", sizeBytes = target.length(),
             sha256 = hash.digest().joinToString("") { "%02x".format(it) }, file = target)
     }
+
+    @Synchronized fun modelReadable(row: ChatAttachment): Boolean =
+        row.kind == "image" || row.kind == "file" && modelTextType(row.mimeType)
 
     @Synchronized fun bridge(owner: String, conversationId: String, id: String): JSONObject {
         val row = load(id)?.takeIf { it.owner == owner && it.conversationId == conversationId && !it.used }
@@ -233,7 +245,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
 
     @Synchronized fun fileForUpload(owner: String, row: PendingImage): File {
         val saved = load(row.attachmentId)?.takeIf { it.owner == owner &&
-            it.conversationId == row.conversationId && it.kind == "image" &&
+            it.conversationId == row.conversationId &&
             it.name == row.name && it.mimeType == row.contentType &&
             it.sizeBytes == row.size && it.sha256 == row.sha256 }
             ?: throw ApiFailure(409, "ATTACHMENT_CHANGED")
@@ -276,7 +288,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         if (!sessionId.matches(Regex("session-[0-9a-f-]{36}")) ||
             !requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}"))) throw ApiFailure(400, "ATTACHMENT_INVALID")
         val rows = get(owner, sessionId, ids)
-        if (rows.any { it.kind != "image" || it.attemptTurnId != null && it.attemptTurnId != requestId })
+        if (rows.any { it.attemptTurnId != null && it.attemptTurnId != requestId })
             throw ApiFailure(409, "ATTACHMENT_IN_USE")
         val edit = index.edit()
         rows.forEach { row -> edit.putString(row.id,
@@ -287,7 +299,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
     @Synchronized fun consumeShared(owner: String, sessionId: String, ids: List<String>, requestId: String) {
         val rows = ids.mapNotNull { load(it) }
         if (rows.any { it.owner != owner || it.conversationId != sessionId ||
-            it.attemptTurnId != requestId || it.kind != "image" })
+            it.attemptTurnId != requestId })
             throw ApiFailure(409, "ATTACHMENT_STATE_CHANGED")
         val edit = index.edit()
         rows.forEach { edit.remove(it.id) }
@@ -372,7 +384,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         val id = "attachment-${UUID.randomUUID()}"
         val file = File(root, id)
         val thumbnail = thumbnailFile(id)
-        val limit = if (kind == "image") maxImage else maxText
+        val limit = if (kind == "image") maxImage else maxFile
         val digest = MessageDigest.getInstance("SHA-256")
         var size = 0L
         try {
@@ -392,14 +404,12 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
             } }
             if (size == 0L) throw ApiFailure(400, "ATTACHMENT_EMPTY")
             ensureCapacity(owner, size)
-            val mime = if (kind == "image") imageMime(file) else {
-                strictText(file); "text/plain"
-            }
+            val name = safeName(uri, kind)
+            val mime = if (kind == "image") imageMime(file) else fileMime(uri, name)
             val declared = context.contentResolver.getType(uri)?.lowercase()
             if (declared != null && declared != "application/octet-stream" && declared != "*/*" &&
-                declared != mime && !(kind == "file" && declared in setOf("text/plain", "text/markdown")))
+                declared != mime && !(kind == "file" && modelTextType(declared) && modelTextType(mime)))
                 throw ApiFailure(415, "ATTACHMENT_TYPE_MISMATCH")
-            val name = safeName(uri, kind)
             val thumbBytes = if (kind == "image") try {
                 makeThumbnail(file).also { bytes ->
                     FileOutputStream(thumbnail).use { output -> output.write(bytes); output.fd.sync() }
@@ -448,7 +458,11 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         }
     }
 
-    fun text(row: ChatAttachment): String { verify(row); return strictText(row.file) }
+    fun text(row: ChatAttachment): String {
+        verify(row)
+        if (row.kind != "file" || !modelTextType(row.mimeType)) throw ApiFailure(415, "ATTACHMENT_MODEL_UNSUPPORTED")
+        return strictText(row.file, MAX_MODEL_TEXT_BYTES)
+    }
     fun dataUri(row: ChatAttachment): String {
         verify(row)
         if (row.kind != "image") throw ApiFailure(400, "ATTACHMENT_INVALID")
@@ -457,7 +471,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
 
     private fun verify(row: ChatAttachment) {
         if (!row.file.canonicalPath.startsWith(root.canonicalPath + File.separator) || !row.file.isFile ||
-            row.file.length() != row.sizeBytes || row.sizeBytes > (if (row.kind == "image") maxImage else maxText))
+            row.file.length() != row.sizeBytes || row.sizeBytes > (if (row.kind == "image") maxImage else maxFile))
             throw ApiFailure(409, "ATTACHMENT_CHANGED")
         val digest = MessageDigest.getInstance("SHA-256")
         row.file.inputStream().use { input ->
@@ -470,9 +484,7 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         }
         val hash = digest.digest().joinToString("") { "%02x".format(it) }
         if (hash != row.sha256) throw ApiFailure(409, "ATTACHMENT_CHANGED")
-        if (row.kind == "image") {
-            if (imageMime(row.file) != row.mimeType) throw ApiFailure(409, "ATTACHMENT_CHANGED")
-        } else strictText(row.file)
+        if (row.kind == "image" && imageMime(row.file) != row.mimeType) throw ApiFailure(409, "ATTACHMENT_CHANGED")
     }
 
     private fun imageMime(file: File): String {
@@ -498,13 +510,37 @@ class AttachmentStore(private val context: Context, private val localStore: Loca
         return mime
     }
 
-    private fun strictText(file: File): String = try {
-        val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
-            .onUnmappableCharacter(CodingErrorAction.REPORT)
-        val text = decoder.decode(ByteBuffer.wrap(file.readBytes())).toString()
-        if (text.any { it == '\u0000' }) throw ApiFailure(415, "ATTACHMENT_UNSUPPORTED")
-        text
-    } catch (error: java.nio.charset.CharacterCodingException) { throw ApiFailure(415, "ATTACHMENT_NOT_UTF8") }
+    private fun strictText(file: File, maxBytes: Int = Int.MAX_VALUE): String {
+        val bytes = file.inputStream().use { input -> input.readNBytes(maxBytes) }
+        for (end in bytes.size downTo maxOf(0, bytes.size - 3)) try {
+            val decoder = Charsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+                .onUnmappableCharacter(CodingErrorAction.REPORT)
+            val text = decoder.decode(ByteBuffer.wrap(bytes, 0, end)).toString()
+            if (text.any { it == '\u0000' }) throw ApiFailure(415, "ATTACHMENT_UNSUPPORTED")
+            return text
+        } catch (_: java.nio.charset.CharacterCodingException) { /* A bounded excerpt may end mid-codepoint. */ }
+        throw ApiFailure(415, "ATTACHMENT_NOT_UTF8")
+    }
+
+    private fun modelTextType(mime: String) = mime in setOf("text/plain", "text/markdown", "text/csv",
+        "application/json", "application/x-ndjson")
+
+    private fun fileMime(uri: Uri, name: String): String {
+        val declared = context.contentResolver.getType(uri)?.lowercase()?.substringBefore(';')
+        if (declared != null && declared.matches(Regex("[a-z0-9!#$&^_.+-]+/[a-z0-9!#$&^_.+-]+"))) return declared
+        return when (name.substringAfterLast('.', "").lowercase()) {
+            "txt" -> "text/plain"
+            "md", "markdown" -> "text/markdown"
+            "csv" -> "text/csv"
+            "json" -> "application/json"
+            "ndjson", "jsonl" -> "application/x-ndjson"
+            "pdf" -> "application/pdf"
+            "zip" -> "application/zip"
+            "docx" -> "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            "xlsx" -> "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            else -> "application/octet-stream"
+        }
+    }
 
     private fun safeName(uri: Uri, kind: String): String {
         val raw = try { context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use {

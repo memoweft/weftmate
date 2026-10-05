@@ -1,6 +1,8 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { uniqueSessionOwner } from '../src/personal-access/index.mjs'
+import { modelRouteFingerprint } from '../src/model-route-fingerprint.mjs'
+import { openAICompatibleEndpoint } from '../src/openai-compatible-client.ts'
 import { assertOwnerBoundBoundary } from '../src/personal-memory/boundary.mjs'
 import { memoryRecallDestination, memorySessionPolicy } from '../src/personal-memory/policy.mjs'
 import { boundaryForCompletedTurn, stripPreviousPersonalMemoryMessages,
@@ -122,4 +124,69 @@ test('active pre-step resolves A and B from durable local bindings without a DSH
     { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' })
   assert.deepEqual(await preStep('session-a', [local, local]),
     { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' })
+})
+
+test('private cloud recall requires the exact owner ledger route and credential', () => {
+  const profile = { id: 'private-model-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+    baseUrl: 'https://api.xiaomimimo.com/v1', model: 'mimo-v2.6-flash' }
+  const fingerprint = modelRouteFingerprint(
+    openAICompatibleEndpoint(profile.baseUrl, 'chat/completions').href, profile.model)
+  assert.match(fingerprint!, /^[a-f0-9]{64}$/)
+  const binding = { ownerId: ownerA, origin: 'shared-chat', modelProfileId: profile.id }
+  const described = { agentPreset: 'personal-shared-chat' }
+  const proof = { active: true, profileId: profile.id, baseUrl: profile.baseUrl,
+    modelId: profile.model, routeFingerprint: fingerprint, credential: true }
+  const access = { canUseModelProfile: (ownerId: string, id: string) =>
+    ownerId === ownerA && id === profile.id,
+  privateAccountModelProof: (ownerId: string, id: string) =>
+    ownerId === ownerA && id === profile.id ? proof : null }
+  assert.deepEqual(memoryRecallDestination({ binding, described, boundProfileId: profile.id,
+    profiles: [profile], access, hasCredential: () => true }),
+  { allowed: true, ownerId: ownerA },
+  'the settings profile has no stored fingerprint; policy must derive it from its canonical wire route')
+  assert.deepEqual(memorySessionPolicy({ binding: { ...binding, ownerId: ownerB }, described,
+    selected: { profile }, access }),
+  { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' }, 'a foreign owner has no ledger proof')
+  assert.deepEqual(memorySessionPolicy({ binding: { ...binding, modelProfileId: 'shared-cloud' }, described,
+    selected: { profile: { ...profile, id: 'shared-cloud' } }, access: {
+      canUseModelProfile: () => true, privateAccountModelProof: () => null } }),
+  { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' }, 'a global cloud route is never private')
+  for (const badProof of [
+    { ...proof, baseUrl: 'https://api.other-provider.com/v1' },
+    { ...proof, modelId: 'other-model' },
+    { ...proof, routeFingerprint: '0'.repeat(64) },
+    { ...proof, credential: false },
+  ]) {
+    assert.deepEqual(memorySessionPolicy({ binding, described, selected: { profile }, access: {
+      canUseModelProfile: () => true, privateAccountModelProof: () => badProof } }),
+    { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' })
+  }
+  assert.deepEqual(memoryRecallDestination({ binding, described, boundProfileId: profile.id,
+    profiles: [profile], access, hasCredential: () => false }),
+  { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' }, 'the host vault credential is mandatory')
+})
+
+test('an immutable old private revision remains recallable until the account model is revoked', () => {
+  const oldProfile = { id: 'private-model-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+    baseUrl: 'https://api.xiaomimimo.com/v1', model: 'mimo-v1' }
+  const currentProfile = { id: 'private-model-cccccccccccccccccccccccccccccccccccccccc',
+    baseUrl: 'https://api.xiaomimimo.com/v1', model: 'mimo-v2' }
+  const oldProof = { active: true, profileId: oldProfile.id, baseUrl: oldProfile.baseUrl,
+    modelId: oldProfile.model, routeFingerprint: modelRouteFingerprint(
+      openAICompatibleEndpoint(oldProfile.baseUrl, 'chat/completions').href, oldProfile.model), credential: true }
+  const binding = { ownerId: ownerA, origin: 'personal-remote', modelProfileId: oldProfile.id }
+  const described = { agentPreset: 'personal-remote' }
+  const activeLedger = { canUseModelProfile: (_ownerId: string, id: string) =>
+    [oldProfile.id, currentProfile.id].includes(id),
+  privateAccountModelProof: (_ownerId: string, id: string) => id === oldProfile.id ? oldProof : null }
+  assert.deepEqual(memoryRecallDestination({ binding, described, boundProfileId: oldProfile.id,
+    profiles: [oldProfile, currentProfile], access: activeLedger, hasCredential: () => true }),
+  { allowed: true, ownerId: ownerA }, 'changing the account current pointer must not redirect an old session')
+  assert.deepEqual(memoryRecallDestination({ binding, described, boundProfileId: currentProfile.id,
+    profiles: [oldProfile, currentProfile], access: activeLedger, hasCredential: () => true }),
+  { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' }, 'the session binding is immutable')
+  assert.deepEqual(memoryRecallDestination({ binding, described, boundProfileId: oldProfile.id,
+    profiles: [oldProfile], access: { canUseModelProfile: () => false,
+      privateAccountModelProof: () => null }, hasCredential: () => true }),
+  { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' }, 'a stopped or removed ledger route is unavailable')
 })

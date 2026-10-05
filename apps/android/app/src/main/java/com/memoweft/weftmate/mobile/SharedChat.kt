@@ -60,7 +60,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         }
         store.updateSharedCommand(row, state, command)
         if (state == "accepted") {
-            val refs = row.payload.optJSONArray("attachments")
+            val refs = row.payload.optJSONArray("originalAttachments") ?: row.payload.optJSONArray("attachments")
             if (refs != null) attachments?.consumeShared(row.owner, row.sessionId,
                 (0 until refs.length()).map { refs.getJSONObject(it).getString("attachmentId") }, row.requestId)
         }
@@ -92,12 +92,41 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
             return checked(row, prior)
         }
         if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+        val originalRefs = row.payload.optJSONArray("originalAttachments")
         val refs = row.payload.optJSONArray("attachments")
+        val originals = originalRefs ?: refs
+        if (originals != null) {
+            val ids = (0 until originals.length()).map { originals.getJSONObject(it).getString("attachmentId") }
+            val originals = attachments ?: throw ApiFailure(409, "ATTACHMENT_UNAVAILABLE")
+            originals.bindSharedAttempt(row.owner, row.sessionId, ids, row.requestId)
+            val originalMessageId = row.payload.optString("attachmentMessageId")
+            if (originalRefs != null) {
+                if (!originalMessageId.matches(Regex("message-[0-9a-f-]{36}"))) throw ApiFailure(409, "ATTACHMENT_STATE_CHANGED")
+                val rows = originals.get(row.owner, row.sessionId, ids)
+                for (i in rows.indices) {
+                    if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
+                    val rowRef = rows[i]
+                    val uploaded = api.uploadImage(host, PendingImage(originalMessageId, row.sessionId, rowRef.id,
+                        rowRef.name, rowRef.mimeType, rowRef.sizeBytes, rowRef.sha256), rowRef.file)
+                    val expected = originalRefs.getJSONObject(i)
+                    if (uploaded.optString("attachmentId") != expected.optString("attachmentId") ||
+                        uploaded.optString("name") != expected.optString("name") ||
+                        uploaded.optString("contentType") != expected.optString("contentType") ||
+                        uploaded.optLong("size") != expected.optLong("size") ||
+                        uploaded.optString("sha256") != expected.optString("sha256"))
+                        throw ApiFailure(502, "ATTACHMENT_RECEIPT_INVALID")
+                }
+            }
+        }
         if (refs != null) {
             val ids = (0 until refs.length()).map { refs.getJSONObject(it).getString("attachmentId") }
             val originals = attachments ?: throw ApiFailure(409, "ATTACHMENT_UNAVAILABLE")
-            originals.bindSharedAttempt(row.owner, row.sessionId, ids, row.requestId)
-            val rows = originals.get(row.owner, row.sessionId, ids).map(originals::modelAttachment)
+            val sourceRows = originals.get(row.owner, row.sessionId, ids)
+            val rows = sourceRows.mapIndexed { index, source ->
+                val expected = refs.getJSONObject(index)
+                if (source.kind == "file") originals.modelAttachment(source, expected.getInt("size"))
+                else originals.modelAttachment(source)
+            }
             for (i in rows.indices) {
                 if (!current()) throw ApiFailure(409, "ACCOUNT_SWITCHED")
                 val uploaded = api.uploadSharedImage(host, row.sessionId, row.requestId, rows[i])
@@ -161,13 +190,25 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         if (attachmentIds.isNotEmpty()) {
             val rows = attachments?.get(owner, sessionId, attachmentIds)
                 ?: throw ApiFailure(409, "ATTACHMENT_UNAVAILABLE")
-            if (rows.any { it.kind != "image" || it.attemptTurnId != null && it.attemptTurnId != id })
+            if (rows.any { it.attemptTurnId != null && it.attemptTurnId != id })
                 throw ApiFailure(409, "ATTACHMENT_IN_USE")
-            payload.put("attachments", JSONArray(rows.map { original ->
-                val row = attachments!!.modelAttachment(original)
-                JSONObject()
-                .put("attachmentId", row.id).put("name", row.name).put("contentType", row.mimeType)
-                .put("size", row.sizeBytes).put("sha256", row.sha256) }))
+            val messageId = "message-${UUID.randomUUID()}"
+            payload.put("attachmentMessageId", messageId).put("originalAttachments", JSONArray(rows.map { original ->
+                JSONObject().put("attachmentId", original.id).put("name", original.name).put("contentType", original.mimeType)
+                    .put("size", original.sizeBytes).put("sha256", original.sha256) }))
+            var remainingTextBytes = AttachmentStore.MAX_MODEL_TEXT_BYTES
+            val modelRows = JSONArray()
+            for (original in rows) {
+                if (!attachments!!.modelReadable(original)) continue
+                val row = if (original.kind == "file") {
+                    if (remainingTextBytes <= 0) continue
+                    attachments.modelAttachment(original, remainingTextBytes)
+                } else attachments.modelAttachment(original)
+                if (row.kind == "file") remainingTextBytes -= row.sizeBytes.toInt()
+                modelRows.put(JSONObject().put("attachmentId", row.id).put("name", row.name)
+                    .put("contentType", row.mimeType).put("size", row.sizeBytes).put("sha256", row.sha256))
+            }
+            if (modelRows.length() > 0) payload.put("attachments", modelRows)
         }
         val row = store.queueSharedCommand(owner, host.hostId, sessionId, id, payload)
         return try {
@@ -199,7 +240,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         val owner = Endpoints.ownerKey(host.origin, host.ownerId)
         for (accepted in store.acceptedSharedImageCommands(owner, host.hostId)) {
             if (!current()) break
-            val refs = accepted.payload.getJSONArray("attachments")
+            val refs = accepted.payload.optJSONArray("originalAttachments") ?: accepted.payload.getJSONArray("attachments")
             try { attachments?.consumeShared(owner, accepted.sessionId,
                 (0 until refs.length()).map { refs.getJSONObject(it).getString("attachmentId") },
                 accepted.requestId) } catch (_: Exception) { /* The accepted command remains the durable receipt. */ }

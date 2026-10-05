@@ -9,7 +9,15 @@ export const MAX_DISPLAY_BYTES = 512 * 1024;
 const HEADER_BYTES = 2048;
 const DISK_RESERVE_BYTES = 512 * 1024 * 1024;
 const UUID = /^(?:[A-Za-z][A-Za-z0-9_-]{0,31}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-const TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+// These are deliberately the only formats that a later model-input adapter may
+// treat as text. Original-file storage remains format-agnostic: a mislabeled
+// or legacy-encoded file must remain downloadable even when it cannot be read
+// by a model.
+export const TEXT_ATTACHMENT_TYPES = new Set([
+  'text/plain', 'text/markdown', 'text/csv', 'application/json', 'application/x-ndjson',
+]);
+const CONTENT_TYPE = /^[a-z0-9!#$&^_.+-]+\/[a-z0-9!#$&^_.+-]+$/;
 
 export class AttachmentError extends Error {
   constructor(code, status = 400) { super(code); this.code = code; this.status = status; }
@@ -22,11 +30,13 @@ function validName(value) {
     Array.from(value).length <= 128 && value === value.trim() &&
     !/[\\/\u0000-\u001f\u007f]/.test(value) && value !== '.' && value !== '..';
 }
+const validContentType = (value) => typeof value === 'string' && value.length >= 3 && value.length <= 127 &&
+  value === value.toLowerCase() && CONTENT_TYPE.test(value);
 export function canonicalAttachmentMetadata(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) ||
       Object.keys(value).length !== 5 ||
       Object.keys(value).some((key) => !['attachmentId', 'name', 'contentType', 'size', 'sha256'].includes(key)) ||
-      !validUuid(value.attachmentId) || !validName(value.name) || !TYPES.has(value.contentType) ||
+      !validUuid(value.attachmentId) || !validName(value.name) || !validContentType(value.contentType) ||
       !Number.isSafeInteger(value.size) || value.size < 1 || value.size > MAX_ATTACHMENT_BYTES ||
       !validHash(value.sha256)) invalid();
   return { attachmentId: value.attachmentId, name: value.name, contentType: value.contentType,
@@ -40,7 +50,8 @@ function matchesType(type, first, last, size) {
     first[2] === 255 && last.at(-2) === 255 && last.at(-1) === 217;
   if (type === 'image/webp') return size >= 16 && first.toString('ascii', 0, 4) === 'RIFF' &&
     first.toString('ascii', 8, 12) === 'WEBP' && first.readUInt32LE(4) === size - 8;
-  return size >= 7 && ['GIF87a', 'GIF89a'].includes(first.toString('ascii', 0, 6)) && last.at(-1) === 0x3b;
+  if (type === 'image/gif') return size >= 7 && ['GIF87a', 'GIF89a'].includes(first.toString('ascii', 0, 6)) && last.at(-1) === 0x3b;
+  return !IMAGE_TYPES.has(type);
 }
 async function writeAll(handle, bytes, position) {
   for (let done = 0; done < bytes.length;) {
@@ -115,7 +126,7 @@ export async function createAttachmentStore({ root }) {
   async function put({ attachmentId, conversationId, messageId, name, contentType, sha256,
     stream, bytes, expectedSize, display = false, authorize = () => {} }) {
     if (!validUuid(conversationId) || !validUuid(messageId) || !validHash(sha256) ||
-        (display ? contentType !== 'image/jpeg' : (!validName(name) || !TYPES.has(contentType))) ||
+        (display ? contentType !== 'image/jpeg' : (!validName(name) || !validContentType(contentType))) ||
         (!stream && !Buffer.isBuffer(bytes))) invalid();
     const limit = display ? MAX_DISPLAY_BYTES : MAX_ATTACHMENT_BYTES;
     if (expectedSize !== undefined && (!Number.isSafeInteger(expectedSize) || expectedSize < 0 ||

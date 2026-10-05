@@ -22,9 +22,10 @@ const owner = (value) => {
 /** Lazily owns one MemoWeft RPC v2 process and private data root per account. */
 export function createPersonalMemoryManager({ root, enabled = false, python, pythonPath,
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
-  maxActiveOwners = MAX_ACTIVE_OWNERS }) {
+  processingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
       typeof credential !== 'function' || typeof rpcFactory !== 'function' ||
+      processingRoute !== null && typeof processingRoute !== 'function' ||
       !Number.isInteger(maxActiveOwners) || maxActiveOwners < 1 || maxActiveOwners > 16 ||
       (enabled && (typeof python !== 'string' || !path.isAbsolute(python) ||
         typeof pythonPath !== 'string' || !path.isAbsolute(pythonPath) ||
@@ -42,6 +43,35 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const commandFlights = new Map();
   let closing = false;
   let startQueue = Promise.resolve();
+
+  async function resolveProcessingRoute(ownerId, sessionId = null) {
+    let selected;
+    try {
+      selected = sessionId !== null && typeof processingRoute === 'function'
+        ? await processingRoute(ownerId, sessionId)
+        : { profileId: 'formal-local-memory-route', baseUrl, model,
+          credential: await credential(ownerId), routeFingerprint: null };
+    } catch { throw error('MEMORY_MODEL_UNAVAILABLE'); }
+    if (!selected || typeof selected !== 'object' || Array.isArray(selected) ||
+        typeof selected.profileId !== 'string' || !selected.profileId || selected.profileId.length > 160 ||
+        typeof selected.baseUrl !== 'string' || selected.baseUrl.length > 2048 ||
+        typeof selected.model !== 'string' || !/^[A-Za-z0-9._:/@-]{1,128}$/.test(selected.model) ||
+        typeof selected.credential !== 'string' || !selected.credential || selected.credential.length > 4096 ||
+        selected.routeFingerprint !== null &&
+          (typeof selected.routeFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(selected.routeFingerprint))) {
+      throw error('MEMORY_MODEL_UNAVAILABLE');
+    }
+    let parsed;
+    try { parsed = new URL(selected.baseUrl); } catch { throw error('MEMORY_MODEL_UNAVAILABLE'); }
+    const loopback = ['127.0.0.1', '[::1]', 'localhost'].includes(parsed.hostname.toLowerCase());
+    if ((!loopback && parsed.protocol !== 'https:') || (loopback && !['http:', 'https:'].includes(parsed.protocol)) ||
+        parsed.username || parsed.password || parsed.search || parsed.hash) throw error('MEMORY_MODEL_UNAVAILABLE');
+    const normalizedBaseUrl = parsed.href.replace(/\/$/, '');
+    return { profileId: selected.profileId, baseUrl: normalizedBaseUrl, model: selected.model,
+      credential: selected.credential, routeFingerprint: selected.routeFingerprint,
+      key: JSON.stringify([selected.profileId, normalizedBaseUrl, selected.model,
+        selected.routeFingerprint]) };
+  }
 
   async function preparePrivateHome(ownerId) {
     const accountRoot = await ensurePrivateDirectory(path.join(root, 'accounts', ownerId));
@@ -132,7 +162,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const boundaryFailureCode = (cause) => {
     if (cause?.code === 'hard_deleted_source') return 'MEMORY_SOURCE_DELETED';
     if (cause?.code === 'internal_error') return 'MEMORY_BOUNDARY_BLOCKED';
-    if (['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_TIMEOUT', 'MEMORY_BUSY', 'MEMORY_CLOSING'].includes(cause?.code)) {
+    if (['MEMORY_PROCESS_UNAVAILABLE', 'MEMORY_TIMEOUT', 'MEMORY_BUSY', 'MEMORY_CLOSING',
+      'MEMORY_MODEL_UNAVAILABLE'].includes(cause?.code)) {
       return cause.code;
     }
     return 'MEMORY_BOUNDARY_FAILED';
@@ -184,7 +215,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       const boundary = row.boundary;
       if (boundaryFlights.has(`${ownerId}\0${boundary.event_id}`)) continue;
       try {
-        await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }));
+        await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
+          boundary.parent_session_id);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
           latest.items = latest.items.filter((item) => item.boundary.event_id !== boundary.event_id);
@@ -204,10 +236,21 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     }
   }
 
-  async function prepare(ownerId) {
+  async function prepare(ownerId, sessionId = null) {
     if (closing) throw error('MEMORY_CLOSING');
     const existing = entries.get(ownerId);
-    if (existing?.ready && existing.rpc.child) return existing;
+    let selected = null;
+    if (sessionId !== null || !existing?.ready || !existing.rpc.child) {
+      try { selected = await resolveProcessingRoute(ownerId, sessionId); }
+      catch (cause) {
+        if (sessionId !== null && existing && existing.active === 0) {
+          entries.delete(ownerId); await existing.rpc.close().catch(() => {});
+        }
+        throw cause;
+      }
+    }
+    if (existing?.ready && existing.rpc.child &&
+        (selected === null || existing.routeKey === selected.key)) return existing;
     if (existing?.initializing) return existing.initializing;
     if (existing?.active > 0) throw error('MEMORY_BUSY');
     if (existing) { entries.delete(ownerId); await existing.rpc.close().catch(() => {}); }
@@ -219,9 +262,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       await idle[1].rpc.close();
     }
     const home = await privateHome(ownerId);
-    const rpc = rpcFactory({ python, pythonPath, env: { MEMOWEFT_BASE_URL: baseUrl, MEMOWEFT_WORLD_MODEL: model } });
+    const rpc = rpcFactory({ python, pythonPath,
+      env: { MEMOWEFT_BASE_URL: selected.baseUrl, MEMOWEFT_WORLD_MODEL: selected.model } });
     const entry = { rpc, ready: false, active: 0, lastUsed: Date.now(),
-      capabilities: null, routeReady: false, backlogCount: null, initializing: null };
+      capabilities: null, routeReady: false, backlogCount: null, initializing: null,
+      routeKey: selected.key };
     entries.set(ownerId, entry);
     entry.initializing = (async () => {
       const before = await rpc.request('capabilities');
@@ -230,11 +275,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           REQUIRED_METHODS.some((name) => !before.methods.includes(name))) {
         throw error('MEMORY_PROTOCOL_INCOMPATIBLE');
       }
-      const key = await credential(ownerId);
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
-        platform: 'dsh', model_tier: 'local', lang: 'zh', auto_route: typeof key === 'string' && !!key,
-        ...(typeof key === 'string' && key ? { model_api_key: key } : {}),
+        platform: 'dsh', model_tier: 'local', lang: 'zh', auto_route: true,
+        model_api_key: selected.credential,
       });
       if (initialized?.runtime?.subject_id !== ownerId ||
           path.resolve(initialized.runtime.db_path ?? '') !== path.join(home, 'memoweft', 'memoweft.sqlite3')) {
@@ -270,17 +314,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     return entry.initializing;
   }
 
-  function acquire(ownerId) {
+  function acquire(ownerId, sessionId = null) {
     owner(ownerId);
     if (!enabled) throw error('MEMORY_DISABLED');
     if (closing) throw error('MEMORY_CLOSING');
-    const work = startQueue.then(() => prepare(ownerId));
+    const work = startQueue.then(() => prepare(ownerId, sessionId));
     startQueue = work.catch(() => {});
     return work;
   }
 
-  async function withOwner(ownerId, work) {
-    const entry = await acquire(ownerId);
+  async function withOwner(ownerId, work, sessionId = null) {
+    const entry = await acquire(ownerId, sessionId);
     entry.active++;
     entry.lastUsed = Date.now();
     try { return await work(entry); }
@@ -380,7 +424,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         return { state: 'ready', contextText, worldRevision: Number.isSafeInteger(world?.world_revision)
           ? world.world_revision : null, sourceCount: Array.isArray(world?.preview?.selected_item_ids)
             ? world.preview.selected_item_ids.length : 0 };
-      });
+      }, sessionId);
     },
     async ingest(ownerId, boundary) {
       owner(ownerId);
@@ -408,7 +452,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       const flight = `${ownerId}\0${boundary.event_id}`;
       boundaryFlights.add(flight);
       try {
-        const result = await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }));
+        const result = await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
+          boundary.parent_session_id);
         await queueOutbox(ownerId, async () => {
           const state = await readOutbox(ownerId);
           state.items = state.items.filter((item) => item.boundary.event_id !== boundary.event_id);
@@ -492,6 +537,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     hasOperation(ownerId, operation) {
       owner(ownerId);
       return commandOperations(entries.get(ownerId)).has(operation);
+    },
+    async invalidateOwnerRoute(ownerId) {
+      owner(ownerId);
+      const work = startQueue.then(async () => {
+        const entry = entries.get(ownerId);
+        if (!entry) return;
+        entries.delete(ownerId);
+        await entry.rpc.close().catch(() => {});
+      });
+      startQueue = work.catch(() => {});
+      await work;
     },
     async close() {
       if (closing) return;

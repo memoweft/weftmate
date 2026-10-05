@@ -1172,7 +1172,7 @@ function memoryFail(token,error,target=state.memory?.target,{keepItems=false}={}
 function memoryOwnerMatches(value,memory=state.memory){return !!value&&typeof value.ownerId==='string'&&value.ownerId.length>0&&
   !!memory?.boundOwnerId&&value.ownerId===memory.boundOwnerId&&memory.boundScope===memory.scope}
 function memoryRevisionMatches(value,memory=state.memory){return Number.isSafeInteger(value?.worldRevision)&&value.worldRevision===memory?.worldRevision}
-function memoryPathEncode(value){return encodeURIComponent(value).replace(/[!'()*]/g,c=>`%${c.charCodeAt(0).toString(16).toUpperCase()}`)}
+function memoryPathEncode(value){return encodeURIComponent(value).replace(/%3A/gi,':').replace(/[!'()*]/g,c=>`%${c.charCodeAt(0).toString(16).toUpperCase()}`)}
 function memoryItemsPath(kind,query,after){try{const params=[`kind=${memoryPathEncode(kind)}`,'limit=20'];
     if(query)params.push(`query=${memoryPathEncode(query)}`);if(after)params.push(`after=${memoryPathEncode(after)}`);
     const path=`/personal/v1/memory/items?${params.join('&')}`;return path.length<=512?path:null}catch{return null}}
