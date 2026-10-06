@@ -590,3 +590,7 @@ Root同步共同方向到既有collab/BACKEND.md，按本人既有指挥授权�
 实际6.1Sol只读核自然语言电脑能力后，接续最小计算器完整流程。已实开并核WindowsApps/Microsoft.WindowsCalculator_11.2607.0.0_x64__8wekyb3d8bbwe/CalculatorApp.exe的可信可见窗口；应用保留。新增工具沿agentPreset/ToolRuntime.schemas，非私有model修订；正在做已知旧模板精准升级和目录测试，不改用户自改preset、私有修订或默认配置。此项属于原电脑执行主线，前端轻修范围不扩大。
 
 本人明确否定固定应用专项：打开微信不应再写一套规则。Root承认沿验证任务扩展偏离目标，立即中断6.1实现者。该专项未提交/发布；由原作者核确切文件并保存diff/新测试/窗口证据后，仅撤回自身11项未提交改动，不碰91fa7a7/9fb5520前端和文档。当前转只读通用工具路由核对，优先接现有DSH/WeftMod能力到日常模型，停止扩大应用枚举和词规则。正式服务与私有模型配置均未迁移。
+
+固定专项回撤后工作区干净，证据归GeneralExecutionReview-20261006/RejectedFixedCalculator；旧前端检查点保留。只读发现官方pwsh/文件/搜索/jobs及WeftMod桌面/脚本能力已存在，personal-remote清单与提示禁止通用工具，其他owner的shared-chat无宿主能力；Android本机应用已动态查包，shared.send无需逐应用枚举。共同纠正已成功发送Apple。
+
+通用接线由实际6.1Sol实现，Root亲自给两端已有任务详情显示通用executionSteps与后台状态，工具结束不标业务已核验，不显示命令正文/hash/调试解释。两项新增语义检查过，相关前端92项全过；后台观测字段补齐后两项再过。官方真实DSH免费替身已验真实目录/shell/文件/前台停止/原receipt记录/重开不重发，后台原生jobs停止适配仍在收口，正式服务尚未加载。0.8.1页面候选先准备，未激活或重打APK。

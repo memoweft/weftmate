@@ -796,6 +796,25 @@ test('task controls follow server affordances and send a scoped stop intent', as
   assert.doesNotMatch(visibleText(control), /执行端停止已核对/)
 })
 
+test('generic tool records show execution state without claiming goal verification', async () => {
+  const source = { commandId: 'cmd-generic', requestId: 'request-generic', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
+  const execution = { executionId: 'execution-one', sourceCommandId: source.commandId, sourceReceiptId: 'receipt-one',
+    toolName: 'pwsh', state: 'completed', startedAt: '2026-10-06T06:00:00Z', finishedAt: '2026-10-06T06:00:01Z' }
+  const page = harness([source], [], false, { taskDetails: { 'cmd-generic': {
+    taskId: source.commandId, sessionId: 'A', source, sourceText: '处理我的目标', artifacts: [],
+    replyEvidence: { status: 'completed', assistantMessages: 1 },
+    executionSteps: [execution, { ...execution, executionId: 'execution-two', jobId: 'job-one', jobState: 'running' },
+      { ...execution, executionId: 'invalid-step', toolName: '错误步骤', state: 'verified' }],
+  } } })
+  for (let attempt = 0; attempt < 20 && !page.get('task-list').children.length; attempt++) await flush()
+  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
+  for (let attempt = 0; attempt < 20 && !visibleText(page.get('task-detail-control')).includes('执行结束'); attempt++) await flush()
+  assert.match(visibleText(page.get('task-detail-control')), /执行记录.*运行命令 · 执行结束/)
+  assert.match(visibleText(page.get('task-detail-control')), /运行命令 · 后台运行中/)
+  assert.doesNotMatch(visibleText(page.get('task-detail-control')), /已核验|错误步骤/)
+  assert.equal(page.get('task-detail-verification').textContent, '')
+})
+
 test('supplement and resume commands remain under the root file task card', async () => {
   const source = { commandId: 'root-task', requestId: 'root-request', kind: 'session.message',
     state: 'accepted_by_dsh', sessionId: 'A' }

@@ -2262,6 +2262,20 @@ async function submitTaskControl(taskId,action,text,current,input,section){if(!c
         const detail=el('details','task-record-id');detail.append(el('summary','','查看记录编号'),el('code','',item.commandId));
         entry.append(detail);stepsBody.append(entry)}
       target.append(section)}
+    const executionLabels={running:'正在执行',completed:'执行结束',failed:'未完成',cancelled:'已停止',uncertain:'待确认'};
+    const jobLabels={running:'后台运行中',stopping:'后台正在停止',completed:'后台已结束',killed:'后台已停止',failed:'后台未完成',
+      uncertain:'后台状态待确认',unconfirmed:'后台状态待确认'};
+    const toolNames={pwsh:'运行命令',read:'读取文件',write:'写入文件',edit:'修改文件',glob:'查找文件',grep:'搜索内容',
+      weftmod:'设备操作',weftmod_script:'运行脚本',job_output:'读取后台输出',job_list:'查看后台任务',job_kill:'停止后台任务'};
+    const executions=(Array.isArray(task.executionSteps)?task.executionSteps:[]).filter(item=>item&&
+      typeof item.executionId==='string'&&item.executionId.length>0&&item.executionId.length<=256&&
+      typeof item.sourceCommandId==='string'&&typeof item.sourceReceiptId==='string'&&
+      typeof item.toolName==='string'&&item.toolName.length>0&&item.toolName.length<=128&&Object.hasOwn(executionLabels,item.state));
+    if(executions.length){const section=group('执行记录',[]),body=section.querySelector('.group-body');
+      for(const item of executions){const entry=el('div','task-followup');
+        const status=Object.hasOwn(jobLabels,item.jobState)?jobLabels[item.jobState]:item.jobId?'后台状态待确认':executionLabels[item.state];
+        entry.append(el('p','command-fact',`${Object.hasOwn(toolNames,item.toolName)?toolNames[item.toolName]:item.toolName} · ${status} · ${commandTime(item.jobObservedAt||item.finishedAt||item.updatedAt||item.startedAt)}`));
+        body.append(entry)}target.append(section)}
     const taskSources=(Array.isArray(task.sources)?task.sources:[]).filter(item=>item?.kind==='webpage'?
       /^source-[a-f0-9]{48}$/.test(item.snapshotId||'')&&typeof item.title==='string'&&
       typeof item.url==='string'&&/^[a-f0-9]{64}$/.test(item.contentSha256||'')&&

@@ -2632,6 +2632,7 @@
       row?.state === 'observed' && row.verification?.status === 'observed' &&
       row.verification?.method === 'sha256_readback')
     if (verified.length) return `${verified.length} 个文件已由电脑写入并读回核验。`
+    if (Array.isArray(payload.executionSteps) && payload.executionSteps.length) return ''
     if (payload.control?.stopStatus === 'stopped') return '这件事已停止，当前没有已核验文件；原会话保留执行记录。'
     if (payload.control?.stopStatus === 'completed') return '回合已正常结束，当前没有已核验文件；可在原会话查看回复。'
     return payload.source?.state === 'accepted_by_dsh'
@@ -2805,6 +2806,27 @@
       detail.append(element('summary', '', '查看记录编号'), element('code', '', step.commandId))
       row.append(detail)
       section.append(row)
+    }
+    return section
+  }
+  function renderToolExecutions(payload) {
+    const labels = { running: '正在执行', completed: '执行结束', failed: '未完成', cancelled: '已停止', uncertain: '待确认' }
+    const jobs = { running: '后台运行中', stopping: '后台正在停止', completed: '后台已结束', killed: '后台已停止',
+      failed: '后台未完成', uncertain: '后台状态待确认', unconfirmed: '后台状态待确认' }
+    const names = { pwsh: '运行命令', read: '读取文件', write: '写入文件', edit: '修改文件', glob: '查找文件', grep: '搜索内容',
+      weftmod: '设备操作', weftmod_script: '运行脚本', job_output: '读取后台输出', job_list: '查看后台任务', job_kill: '停止后台任务' }
+    const rows = (Array.isArray(payload.executionSteps) ? payload.executionSteps : []).filter((row) =>
+      row && typeof row.executionId === 'string' && row.executionId.length > 0 && row.executionId.length <= 256 &&
+      typeof row.sourceCommandId === 'string' && typeof row.sourceReceiptId === 'string' &&
+      typeof row.toolName === 'string' && row.toolName.length > 0 && row.toolName.length <= 128 && Object.hasOwn(labels, row.state))
+    if (!rows.length) return null
+    const section = element('section', 'task-detail-section')
+    section.append(element('h3', '', '执行记录'))
+    for (const row of rows) {
+      const entry = element('div', 'task-followup')
+      const status = Object.hasOwn(jobs, row.jobState) ? jobs[row.jobState] : row.jobId ? '后台状态待确认' : labels[row.state]
+      entry.append(element('p', 'task-meta', `${Object.hasOwn(names, row.toolName) ? names[row.toolName] : row.toolName} · ${status} · ${formatDate(row.jobObservedAt || row.finishedAt || row.updatedAt || row.startedAt)}`))
+      section.append(entry)
     }
     return section
   }
@@ -3004,6 +3026,8 @@
       if (followUps) controlSlot.append(followUps)
       const steps = renderTaskSteps(payload)
       if (steps) controlSlot.append(steps)
+      const executions = renderToolExecutions(payload)
+      if (executions) controlSlot.append(executions)
       renderTaskSources(payload)
       const list = byId('task-detail-artifacts')
       list.replaceChildren()
