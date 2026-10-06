@@ -1,43 +1,53 @@
 # 当前状态（当前有效）
 
-## 当前批次：Windows/Android 日用助手连续交付
+## 当前批次：Windows/Android 0.8.0 已发布，待本人整套体验
 
-**授权与主任务**：2026-10-05 用户要求按总路线连续做，到可大体验收才停，并指定本侧 Windows/Android、另一侧 Apple。唯一当前总任务为 [UNIFIED_ASSISTANT_15](tasks/UNIFIED_ASSISTANT_15.md)。小项是内部检查点，旧逐候选停止规则本批不适用；用户体验尚未验收。
+用户授权按总路线连续做至大体验收；当前任务仍为 [UNIFIED_ASSISTANT_15](tasks/UNIFIED_ASSISTANT_15.md)。本侧整批候选已部署，开发检查与实际发布完成，尚未记录本人通过。现在固定该候选，按反馈修本批；Apple 独立主线继续，健康/精灵/共养仍为后续细设计。
 
-### 现在做什么
+2026-10-06 本人再次明确：前端代码、交互和界面验收由对应主助手亲自负责；其他子 Agent（子智能体）使用实际 GPT-6.1 Sol 或 GPT-6 Sol。旧 5.6 默认不再接续。主助手已亲自完成本次电脑附件 GUI（图形界面）、官网下载按钮和发布核验。
 
-| 流程 | 最新证据与状态 | 下一具体动作 |
-| --- | --- | --- |
-| 云模型完整运行 | 隔离真实 MiMo 注册、短回复、工具终态、停止和重启通过；正式 QA 的旧失败记录已移除，新登记已 succeeded/active/configured，连接与目录核对全为真 | 保留原请求失败记录；正式 GUI 与 Android 新版一起收口，不把目录核对写成新的一轮真实推理 |
-| 同会话与任务接续 | 15.2合成全链通过：原模型/同session/去重/工件字节SHA/补充/停止/重开；真实MiMo最终completed、50字节工件/SHA相符，3次转发无人工终态 | 收口正式宿主模型登记idle原因与两端页面；服务端测试不写手机GUI通过 |
-| Android 记忆 | 真 bridge/Core、合法编码、私有云召回及普通 MiMo 无 seed（手工种子）形成/新会话召回通过；正常登录 A→详情/来源→停用→重开→B 查不到，真实仪器测试通过 | 详情深浅截图标签与过渡帧已如实更正；整版最终主题截图再确认，记忆正常操作结论保留 |
-| 普通附件 | 原件 1GiB、引用及总文本预算通过；MuMu 原件精确下载/重开、真实 SDK 内容及 MiMo 标记回答/completed 已过。整版审查发现电脑输入区缺少选择上传，现已补代码 | Windows 分块哈希、流式原件、草稿/取消/重试与真实 GUI（图形界面）正在验证；三次付费补全上限已停，沿现有各层证据验证新增界面 |
-| Android 整版收口 | 草稿根因是恢复身份前空 composer（输入区）误删新对话草稿，已最小调整启动顺序。69 项页面/12 项 Kotlin 检查、MuMu 整版/草稿重开/A→B→A/深浅主题/更新 QR（二维码）及 Memory 串行确认通过 | 已保存 f9ef05e；0.8.0/code13、minNative13、1,988,306 字节 APK 候选已核，正式包与清单未切换 |
-| Apple 并行 | Mac 任务已接受同级总代理与连续路线，首做聊天、原请求核对和持久草稿 | 自主推进 Mac/iPhone；更新末项 GUI 仍等可见桌面；Watch 融入 iOS，健康/共养后续细设计 |
+### 正式入口与版本
 
-### 实际发布基线与保留边界
+| 项目 | 当前真实发布 |
+| --- | --- |
+| Windows 个人应用 | https://home.weftmate.com:8443/personal/v1/ui ，网页版与本机执行宿主 |
+| Android 安装 | https://www.weftmate.com/downloads/?platform=android ，0.8.0/code13，1,988,306 字节，手动覆盖安装 |
+| 服务端界面 | UI（界面）0.8.0，最低原生构建 13，43 个资产逐项 HTTPS（加密连接）大小/哈希核对通过 |
+| Mac 公开版本 | 0.1.0/build5 保留；build7 交接与云模型联调独立进行 |
 
-- 发布基线：个人 UI 0.7.1、Android 0.7.0/code12；官网 Mac 0.1.0/build5。第 15 批共同后端已在 2026-10-06 备份后更新；新页面与 Android 包尚未发布，整批尚未交付本人。
-- 2026-10-06 本人重启电脑后，源码及候选包仍在；旧子 Agent（子智能体）已停止，重新由实际 GPT-5.6 Sol 分别接续 Windows 附件和 Android 草稿/整版交付。现主宿主 18186/PID20412 自动运行，四账户、原日常对象、host/default 与备份核对仍一致，QA 私有云配置也保持 active/configured。
-- 本次开机 Caddy（入口转发服务）失败：两处绑定 Wi-Fi 地址，而当时只有网线上线。已备份并只改这两处为各接口监听，保留域名/证书/Mac 来源限制/其他路由；原 `WeftConsole-Caddy` 任务现运行/PID14124，TLS（加密连接）本机 200，恢复已有连接后正常 HTTPS 200。原管理员任务参数更新被 Windows 拒绝，已改原 launcher（启动器）的可选 User 环境入口，设置本用户目标连接；启动时最多等 30 秒，未连上仍启本机转发。源码解析/当前用户配置读取通过，下一次实际开机尚待，不关闭网线或改路由器。
-- Windows 附件选择/原件/有界输入、51 项前端、4 项流式边界、8 资源真实 HTTP/2,660,062 字节原件 SHA/第二独立回合投影通过。另已窄修超过模型图片限额的原件入口：仅精确 command/receipt/hash 证明下的未 stage 图片 UUID 生成通用原件下载，不显示文件名、不自动解码；6MiB 原件和小/大混合实际服务与 5 项共享附件回归通过。最终实际选文件 GUI 被 Edge 扩展的 File URL（本地文件地址）权限限制；Root 再用 Computer Use（电脑界面操作）读窗口时被自动审批拒绝，原文为无法可靠确认当前浏览器 URL 并要求本轮停止。未改扩展权限、未将这项写通过；等待本人启用扩展文件上传后下一轮补可见操作。
-- 公网下载候选已在 `Stage15-WindowsAndroid-20261005/Release/PublicDownloads` 准备，Android 0.8/code13、Mac5 及旧包保留；尚未上传官网。Android APK SHA 为 `b65d414ec95e97891ad24e7156ab5783e53f625c6dc71224024021308ab81d4a`，签名与原官网/Runtime 包一致。MuMu 日常旧包是另一旧签名，覆盖被系统拒绝，未卸载/未清资料；本次完整 GUI 用独立 QA（隔离验收）包，不改正式签名迎合模拟器。
-- 正式账户入口：[个人应用](https://home.weftmate.com:8443/personal/v1/ui)。公开安装入口：[官网下载](https://www.weftmate.com/downloads/)。版本与平台由实际清单核对，不按规划写成新版可用。
-- 正式资料仍在 `Runtime/UnifiedAssistant/personal-account-20260926`；本批隔离证据在 `Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005`。升级备份为 `Deployment/pre-stage15-20261006-06eb156a541547078725e98af66202a0`；重启后四账户、原日常账户对象、host 身份及 `models.activeId` 均核实保留，公网页面 HTTP 200。
-- 原 QA 操作 `ccf50b8f-2be3-474d-8af7-c410e5d5a778` 为 failed/ACCOUNT_MODEL_ROUTE_UNCONFIRMED/configured=false，旧失败记录保留。新诊断实际发现 inbox_pending；官方读取证明只剩原账户 9 月 27 日“打开记事本”的一条输入，旧回合为 blocked。先取消回合，再经官方单条队列接口停止该已识别验证，持久队列已为零，原聊天/请求保留；未处理其他会话或未知队列。旧模型 remove 成功，新 QA 登记 `stage15-create-confirmed-539420c6-c8dc-47ca-8a7d-7f52ecde7596` 已 succeeded/active/configured；独立目录 test 的 configured/reachable/modelListed 均为真，未发推理。核后四账户/原日常对象/host/default 再次保留。
-- 旧本地 Qwen 工具后收尾和重启显存不足失败保留；本批 MiMo 通过仅证明云路线。MuMu 路径已找到，启动前 Android 未运行；不将 Kotlin 测试称为设备通过。
-- 本人已认可的图片直显、图片预览、MiMo短聊与一加13流式滚动作为回归基线。新普通附件、双端记忆与整批体验尚未通过。
-- Apple build5 安装包已发布，更新后验末项、跨签名旧登录、iPhone/Watch 真机仍未通过；健康权限/读取与共同宠物未实施。
+Android SHA-256（文件摘要）为 `b65d414ec95e97891ad24e7156ab5783e53f625c6dc71224024021308ab81d4a`；与旧正式包同 package/certificate（包名/签名证书），已核 v2 签名和对齐。UI assetBase 为 `675f055ee6e1ac0b3b066a5fe837a68f9385fe9c2f8221da1339c95fed3c9c50`；清单源码 SHA 为 `c5ba4d98eefe22c35384e2d5beff458e34c61ce1b5483552acdcba005488caad`。旧 Android12、Mac4/Mac5 URL（网页地址）仍 HTTP200/原大小。
 
-### 负责人、证据与恢复阅读
+### 本批开发通过范围
 
-主助手负责路线/审查/发布与全局文档；Terra完成第一轮云/记忆桥/附件core，实际 GPT-5.6 Sol完成云记忆并接15.2，另一Sol接文件history/UI；实际 GPT-5.6 Luna承担独立QA页面测试。实际 GPT-6 Luna曾只读跟进Apple，最新Mac快照由主助手读取。Apple同级总代理只写自己的代码/任务卡，共同契约由本侧协调。Kimi原件与FRONTEND.md保留。
+| 用户流程 | 证据与边界 |
+| --- | --- |
+| 云聊天/电脑目标/停止/重开 | 隔离真实 MiMo 注册、短回复、工具终态、工件字节/SHA、停止和冷重启通过；正式 QA（隔离验收）配置 active/configured，目录核对通过 |
+| 同会话接续与原请求恢复 | 合成同会话/原模型/去重/补充/停止/重开全链过；真实 MiMo 工件 50 字节且 completed；协议双客户端不冒充本人双真机体验 |
+| 记忆 | 普通 MiMo→真实 Core 形成→新会话采用，无 SQL 种子/测试模型；Android 正常来源/停用/回执/重开、桌面回读、B 查询为空通过，最终深浅主题稳定截图已纠正并确认 |
+| 普通附件 | 单原件至多 1GiB，文本模型输入总预算 16KiB；不支持类型仅元信息。真实 SDK（开发工具包）与 MiMo 标记回答/completed、两端原件/隔离/重开分别有证据 |
+| 电脑实际选择上传 | 主助手亲自在内置浏览器选 2,660,062 字节 CSV、草稿/发送/文件卡、实际下载精确 SHA、刷新保留和移除不误发；源码 51 项页面/5 项共享附件/4 项流式边界过。大图超模型限额仍可取原件，不自动解码 1GiB |
+| Android 日用壳 | 草稿重开误删以恢复顺序窄修；69 项界面/12 项 Kotlin、真实 MuMu A→B→A/立即重开/资料/模型/主题/通知/设备/官网 QR（二维码）与返回通过 |
+| 发布 | 主助手实际点官网下载新 APK（安卓安装包），1,988,306 字节/同 SHA；公开清单与 Android13、Mac5核一致，私有界面43资产和5新JS模块真实200 |
 
-真实云证据：`Stage15-WindowsAndroid-20261005/Cloud/real-account-model-ba19b018-b9e5-457a-af01-4e2f53af2c88.json`。首批失败 `d086295f-131c-49f2-98db-1d55cdc4e054` 保留。记忆 bridge/Core 证据：`Stage15-WindowsAndroid-20261005/Memory/android-memory-bridge-20261005.md`；私有云召回证据 `Memory/private-cloud-recall-core.json` 是真实Core+合成处理模型，不证明普通云自动形成。UI fixture表单测试失败已存 `Memory/stage15-memory-ui-actual-qa.json`，正常App登录不能按fixture错误归因为native故障；资料页/连接页前置正在更正。正式HTTP入口本轮只读200，18186仍PID14280、443仍PID19944，8080无监听；未恢复GPU。
+### 运行、资料与恢复
 
-真实云形成记录为 `Memory/real-cloud-memory-428f79e7-9975-4970-b0c5-d8584407a72c.json`：普通偏好回合1、Core形成1、新回合召回1，共3次，cleanShutdown=true。核心WIP检查点82f9462、处理测试63e2594、接续验收0e70cea；正式新版未发布。15.2证据 `Handoff/synthetic-handoff-02ba6c64-5a69-4b8b-920a-52d6ad285b1f.json` 全路径过；`Handoff/real-handoff-557dd01f-f7ff-4e2d-bdd4-955204e3036c.json` 真实3次转发、terminal completed、exactArtifact=true。旧两批provider上限过紧失败保留，最终1个明确目标上限6/240秒通过，无fixture stop。生产QA仍只读pending，Sol正在增加无私人字段的本地gate原因。Mac最新cursor41：真实只读SDK解析过，完整发送进行中。
+正式资料根 `Runtime/UnifiedAssistant/personal-account-20260926`，18186/PID34864 原计划任务 Running（运行中）；Caddy（入口转发）PID14124。最终加载前备份 `Stage15-WindowsAndroid-20261005/Deployment/pre-final-0.8-20261006`，首次整批备份 `Deployment/pre-stage15-20261006-06eb156a541547078725e98af66202a0`。四账户、原日常账户对象、host 身份和 `models.activeId` 与首次备份再次核对保留；未用测试模型替换原默认。
 
-恢复上下文读本小节和任务15进度表，再读当前流程的契约/代码。整批交付需六项检查点及完整体验清单有证据，届时固定候选、给准确操作后停；此刻继续开发。
+重启入口绑定问题已窄修：两处 Wi-Fi 地址绑定改全接口，原域名/证书/Mac 来源限制/路由保留。原转发启动器读取可选 User 环境配置恢复已存目标连接，最多30秒，未连上也启动本机转发；源码解析/当前配置/当前运行通过，下一次实际开机仍待本人条件验证。
+
+正式旧 QA 模型登记失败记录保留；只停止已核实的9月27日一条旧记事本输入，没有清未知队列。新QA模型属 `owner-a24581f0-998c-4667-a3a6-7dc8f75bdb20`，不是Apple A/B；私有模型目录不跨账户放宽。Apple正确测试资料交接尚未完成，旧无密ZIP/LAN HTTP桥不是HTTPS凭据桥，不传密码/key到聊天或官网。
+
+### 证据、已知限制与下一动作
+
+所有本批证据在 `Runtime/UnifiedAssistant/Stage15-WindowsAndroid-20261005`。主助手 GUI 为 `Attachments/windows-upload-gui-root.json`、`windows-upload-new-card-root.png`；正式部署为 `Deployment/published-0.8-verification.json`、`official-browser-download-verified.json`；Android 整版图在 `Release/screenshots`。云模型/记忆/接续的独立真实与合成证明各保留，失败历史写 WORKLOG，不用后来通过覆盖原失败。
+
+- 本地 Qwen 工具收尾/显存故障仍保留，本批先可用云路线，不称全本地模型已恢复。
+- PDF/Office等目前保存可取回原件，尚未接全文解析；文本输入有16KiB总预算，存1GiB不代表一次全文理解。
+- MuMu 日常旧测试包是另一签名，系统拒绝覆盖；未卸载/清资料，本次用独立QA包通过。新正式包保持原官网下载签名，不能为模拟器改签破坏真机更新。
+- iPhone/Watch真机签名、后台健康读取、健康精灵与共养未交付；Mac build7已真实登录/原历史/草稿退出重開通过，模型目录0源于使用另一隔离账户，尚无新真实云回复。官网Mac5保持。
+- Edge扩展缺权限/连接和Windows原生URL识别导致的旧GUI阻点均保留。主助手改用确实可用的内置浏览器完整通过，没有再次放宽权限或冒旧图为新图。
+
+现在请本人用官网下载0.8/code13做任务15体验清单：同账户换设备接续、截图/文件、记忆、停止/重开、外观/更新。本人结果到来前冻结本侧候选；下一工作由反馈决定，不自行重开路线或重复已过付费批次。Apple侧可独立继续并回传可审交接。
 
 ## 历史状态（按需查证，不作为当前开工队列）
 
