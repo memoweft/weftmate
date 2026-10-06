@@ -2109,6 +2109,7 @@
     byId('show-phone').hidden = true
     byId('rail-phone').hidden = true
     const phoneChat = state.activeChatSource === 'phone'
+    byId('chat-intro').hidden = phoneChat || byId('transcript').children.length > 0
     const pendingPhone = phoneChat ? readPhoneOutbox() : null
     const recovery = phoneChat && !pendingPhone ? readPhoneRecovery() : null
     const pendingHere = pendingPhone?.event.conversationId === state.selectedPhoneConversationId
@@ -2457,7 +2458,7 @@
     renderAttachmentDrafts()
     closePhoneImagePreview()
     byId('chat-intro').hidden = false
-    byId('desktop-action').hidden = false
+    byId('desktop-action').hidden = true
     const selected = state.sessions.find((item) => item.sessionId === sessionId)
     byId('assistant-title').textContent = selected?.title || '新对话'
     renderSessions()
