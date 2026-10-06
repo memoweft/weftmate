@@ -46,6 +46,7 @@ class Element {
   textContent = ''
   type = ''
   className = ''
+  style = { right: '', maxHeight: '' }
   dataset: Record<string, string> = {}
   attributes = new Map<string, string>()
   files: any[] = []
@@ -63,9 +64,11 @@ class Element {
   append(...children: Element[]) { this.children.push(...children) }
   replaceChildren(...children: Element[]) { this.children = children }
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
+  getAttribute(name: string) { return this.attributes.get(name) ?? null }
   removeAttribute(name: string) { this.attributes.delete(name); if (name === 'src') this.src = '' }
   decode() { return this.decodeHandler ? this.decodeHandler() : Promise.resolve() }
   focus() { this.focused = true }
+  getBoundingClientRect() { return { left: 16, right: 366, top: 680, bottom: 724 } }
   querySelectorAll() { return [] }
   close() { this.open = false }
   showModal() { this.open = true }
@@ -300,7 +303,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     createElement: () => new Element(), querySelector: () => get('badge'), querySelectorAll: () => [], addEventListener() {} }
   const location = { hash: config.setupGrant ? `#setup=${config.setupGrant}` : '',
     pathname: '/personal/v1/ui', search: '', protocol: 'http:' }
-  const window = { location, history: { replaceState() {} }, addEventListener() {} }
+  const window = { location, innerWidth: 1280, innerHeight: 820, history: { replaceState() {} }, addEventListener() {} }
   const URLShim = class extends URL {}
   URLShim.createObjectURL = (_file: object) => { const value = `blob:synthetic-${objectUrls.created.length + 1}`; objectUrls.created.push(value); return value }
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
@@ -336,6 +339,34 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
 function visibleText(node: Element): string {
   return [node.textContent, ...node.children.map(visibleText)].join(' ')
 }
+
+test('model menu preserves the draft, selects a configured model and opens existing account settings', async () => {
+  const page = harness([], [], false, { modelCatalog: [
+    { id: 'local-model', name: '本地模型', configured: true },
+    { id: 'cloud-model', name: '云端模型', configured: true },
+    { id: 'unconfigured', name: '未配置模型', configured: false },
+  ] })
+  for (let attempt = 0; attempt < 20 && page.get('model-label').textContent !== '本地模型'; attempt++) await flush()
+  page.get('message-text').value = '继续我的目标'
+  page.get('model-trigger').fire('click')
+  const choices = page.get('model-options').children
+  assert.equal(choices.length, 2)
+  assert.equal(choices[0].getAttribute('aria-selected'), 'true')
+  assert.equal(choices[0].focused, true)
+  choices[1].fire('click')
+  assert.equal(page.get('model-select').value, 'cloud-model')
+  assert.equal(page.get('model-label').textContent, '云端模型')
+  assert.equal(page.get('model-popover').hidden, true)
+  assert.equal(page.get('model-trigger').getAttribute('aria-expanded'), 'false')
+  assert.equal(page.get('message-text').value, '继续我的目标')
+  assert.equal(page.requests.filter(({ options }) => options.method === 'POST').length, 0)
+  page.get('model-trigger').fire('click')
+  assert.equal(page.get('model-options').children[1].getAttribute('aria-selected'), 'true')
+  page.get('model-configure').fire('click')
+  await flush()
+  assert.equal(page.get('account-view').hidden, false)
+  assert.equal(page.get('model-popover').hidden, true)
+})
 
 test('desktop file composer streams a file over 2 MiB, retries the same tuple, and stages only bounded UTF-8', async () => {
   class StreamingOnlyFile extends File {
@@ -1051,7 +1082,8 @@ test('main chat rail opens the same phone MiMo conversation and its authenticate
   assert.equal(page.get('assistant-title').textContent, '路上的图片')
   assert.equal(page.get('conversation-pane').hidden, false)
   assert.equal(page.get('message-text').disabled, false)
-  assert.match(page.get('model-hint').textContent, /MiMo 回复需在手机端继续/)
+  assert.equal(page.get('model-hint').textContent, '')
+  assert.equal(page.get('model-hint').hidden, true, 'routine chat does not show implementation guidance')
   assert.match(visibleText(page.get('transcript')), /看看这张图.*看到山了.*旧图/)
   assert.doesNotMatch(visibleText(page.get('transcript')), /跨端暂不可见/)
   assert.doesNotMatch(visibleText(page.get('transcript')), /风景\.png|早期照片\.jpg|原图未包含/)
