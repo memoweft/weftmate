@@ -550,3 +550,15 @@ Android接续Sol查明草稿不是原生数据库缺失，而是boot恢复conver
 WindowsSol补原件File/Blob流上传/增量SHA/总16KiB有效UTF8与明确未读类型、固定tuple/request及取消/重试，9文件候选/8HTTP资源/2.66MiB原件精确SHA过。Root查GUI fixture恒定seq/receipt会遮蔽第二次发送，授权最小追加递增事件与独立receipt；正式product公有投影恢复原text/refs，不在fixture手填，第二回合独立验证过。Edge file chooser setFiles受扩展FileURL权限拒绝；RootSky读取窗口也被自动policy停止（无法确认浏览器URL），已停止本轮ComputerUse，未放宽权限或假记GUI通过。原码与发布候选保留，待本人启用后下一轮补证。
 
 原Caddy管理员任务Set-ScheduledTask真实拒绝访问；Luna把可选WLAN目标改为User环境入口，Root设置自己的既有连接，原task/action/主体不改，避免额外管理员动作；最多30s失败继续启动本机，parser及读配置过，未称下一次重启已验。Root准备公开下载候选只换Android13，保留Mac5/旧包，未上传；Windows大图超模型限额后应仍有原件入口的审查问题已交窄修。
+
+### 2026-10-06 · 主助手亲自补GUI并正式交付0.8
+
+本人开启上传权限后，旧Edge连接并未出现在工具清单；Root亲自核工具实际支持内置浏览器与Chrome，明确承认此前指定Edge不准确。本人再指前端自己做、子Agent6sol/6.1sol；已写AGENTS/DECISIONS并通知Apple，不再沿旧5.6默认。Root用确实可用内置浏览器正常表单登录隔离账户，实际filechooser选2,660,062B CSV，填正文→发送→独立新receipt/序号→公有原文与file card→点下载精确SHA→reload保留，移除附件后send disabled不误发，证据windows-upload-gui-root.json及new-card图；全程0paid，不用DOM测试冒GUI。
+
+0e9c930保存Windows选择上传/大图fallback及51界面/5共享附件回归。Root看到大图只原件未stage会在旧formatter隐藏，窄修command/receipt/hash核实后发布未preview原图ID，以通用下载入口保留，不自动解码1GiB，不给正常图片加filename。本人6系列约定后未再派5.6前端；既有已过代码保留复审。
+
+主宿主无running/待派发/modelOps，Root通知Mac后最终cold backup pre-final-0.8-20261006并原计划任务重启，18186/PID34864/Runtime ready；原四账户对象/host/default再次与首次备份一致。原生APK按固定哈希原子替换并保留12备份；43候选资产追加原release目录，只激活675f...0.8/min13，不重包旧客户端。官网先upload新不可变APK并HTTPS实下SHA，再原子切catalog13，Mac5/其他平台和旧URL不变；所有43资源和5新模块真实200/大小SHA一致。实际官网首载遇网络未返回，正常重读后Network录到manifest200/QR200，页面显示0.8/13/2MB；Root实际点官网下载1,988,306B且SHA b65d...d4a，截图official-android13-root.png，未绕证书或安装器。
+
+实核APK内容：3个dex原4,108,800B压1,566,754B，43界面资产原663,632B压240,214B，资源压66,559B；没有native lib目录或gguf/onnx/tflite/safetensors。包小来自系统WebView/组件复用、模型与电脑runtime未入包；不以大小宣称原生渲染/手机离线模型已实现。
+
+实际GPT-6.1 Sol只读核AppleQA模型owner/安全收到无密build7：3217461B/11fec377...2ed65、source298029B/e2e815...6dc8b、DMG2504722B/ef59bb...b15c；未合入或公开。旧A/B和qa4不同owner，目录0正确；之前说有HTTPS私人桥不准确，已澄清旧明文桥只无密ZIP，不递密码。新源码的纯file history invalidResponse及旧path丢记录交Apple Root亲自修；本人在那边要求先看iOS/讨论Watch，保持对应主线。Windows/Android候选现冻结，等待本人大体验收，下一动作只按本批反馈。
