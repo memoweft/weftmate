@@ -47,6 +47,89 @@
   const taskDetail = { taskId: null, generation: 0, selectedArtifactId: null, selectedSourceId: null,
     operation: null, unknown: null,
     drafts: new Map(), pollTimer: null, pollCount: 0, pollStartedAt: 0 }
+  let voiceInput = null
+
+  function closeModelMenu(restoreFocus = false) {
+    byId('model-popover').hidden = true
+    byId('model-trigger').setAttribute('aria-expanded', 'false')
+    if (restoreFocus) byId('model-trigger').focus()
+  }
+  function openModelMenu() {
+    const trigger = byId('model-trigger')
+    if (trigger.disabled) return
+    if (!byId('model-popover').hidden) { closeModelMenu(true); return }
+    const list = byId('model-options')
+    list.replaceChildren()
+    for (const model of state.models) {
+      const selected = model.id === state.modelProfileId
+      const option = element('button', `model-option${selected ? ' is-selected' : ''}`)
+      option.type = 'button'
+      option.setAttribute('role', 'option')
+      option.setAttribute('aria-selected', String(selected))
+      option.tabIndex = selected ? 0 : -1
+      const icon = element('span', 'model-option-icon')
+      icon.setAttribute('aria-hidden', 'true')
+      const check = element('span', 'model-option-check')
+      check.setAttribute('aria-hidden', 'true')
+      option.append(icon, element('span', 'model-option-name', model.name), check)
+      option.addEventListener('click', () => {
+        if (byId('model-trigger').disabled || !state.models.some((item) => item.id === model.id)) return
+        state.modelProfileId = model.id
+        byId('model-select').value = model.id
+        closeModelMenu(true)
+        updateAvailability()
+      })
+      list.append(option)
+    }
+    const popup = byId('model-popover')
+    popup.hidden = false
+    popup.style.right = '0px'
+    const availableHeight = trigger.getBoundingClientRect().top - byId('conversation-pane').getBoundingClientRect().top - 12
+    popup.style.maxHeight = `${Math.max(96, Math.min(460, window.innerHeight * .58, availableHeight))}px`
+    const bounds = popup.getBoundingClientRect()
+    if (bounds.left < 16) popup.style.right = `${bounds.left - 16}px`
+    else if (bounds.right > window.innerWidth - 16) popup.style.right = `${bounds.right - window.innerWidth + 16}px`
+    trigger.setAttribute('aria-expanded', 'true')
+    const selected = [...list.children].find((item) => item.getAttribute('aria-selected') === 'true')
+    const focusTarget = selected || list.children[0]
+    focusTarget?.focus()
+  }
+  function stopVoiceInput() {
+    if (voiceInput) { const input = voiceInput; voiceInput = null; input.abort() }
+    byId('voice-input').classList.remove('is-recording')
+    byId('voice-input').setAttribute('aria-pressed', 'false')
+    byId('voice-input').setAttribute('aria-label', '语音输入')
+  }
+  function startVoiceInput() {
+    if (voiceInput) { stopVoiceInput(); return }
+    if (byId('message-text').disabled) return
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    if (!Recognition) { toast('当前浏览器不支持语音输入'); return }
+    const generation = state.identityGeneration, session = state.selectedSessionId
+    const source = state.activeChatSource, conversation = state.selectedPhoneConversationId
+    const input = new Recognition()
+    voiceInput = input
+    input.lang = 'zh-CN'
+    input.interimResults = false
+    input.onresult = (event) => {
+      if (voiceInput !== input || generation !== state.identityGeneration || session !== state.selectedSessionId ||
+        source !== state.activeChatSource || conversation !== state.selectedPhoneConversationId) return
+      const text = [...event.results].map((result) => result[0]?.transcript || '').join('')
+      if (text) {
+        const draft = byId('message-text').value
+        byId('message-text').value = `${draft}${draft && !/\s$/.test(draft) ? ' ' : ''}${text}`
+        updateAvailability()
+      }
+    }
+    input.onerror = (event) => {
+      if (voiceInput === input && event.error !== 'aborted') toast(event.error === 'not-allowed' ? '请允许浏览器使用麦克风后重试' : '语音输入未完成，请重试')
+    }
+    input.onend = () => { if (voiceInput === input) { voiceInput = null; stopVoiceInput(); byId('message-text').focus() } }
+    byId('voice-input').classList.add('is-recording')
+    byId('voice-input').setAttribute('aria-pressed', 'true')
+    byId('voice-input').setAttribute('aria-label', '停止语音输入')
+    try { input.start() } catch { stopVoiceInput(); toast('无法开始语音输入，请重试') }
+  }
 
   function takeSetupGrant() {
     const hash = window.location.hash
@@ -60,6 +143,8 @@
   state.setupGrant = takeSetupGrant()
 
   function show(view) {
+    closeModelMenu()
+    if (view !== 'assistant') stopVoiceInput()
     if (view !== 'assistant' && state.currentView === 'assistant') cancelAttachmentUpload()
     if (view !== 'assistant' && taskDetail.taskId) closeTaskDetail()
     if (state.currentView === 'memory' && view !== 'memory') {
@@ -1985,16 +2070,13 @@
   function setOnline(online) {
     state.online = online
     const badge = document.querySelector('.local-badge')
-    badge.textContent = online ? (location.protocol === 'https:' ? '已连接个人宿主' : '本机候选 · 已连接') : '连接中断'
-    byId('assistant-connection').textContent = online ? '已连接个人宿主' : '无法连接电脑'
-    byId('connection-copy').textContent = online
-      ? (location.protocol === 'https:' ? '已通过安全连接接入个人宿主。电脑动作以实际核验结果为准。'
-        : '当前连接本机候选。跨设备入口以实际网络部署与连接验证为准。')
-      : '电脑暂时无法连接，重连后会先核对原请求。'
+    badge.hidden = true
+    byId('assistant-connection').hidden = true
+    byId('connection-copy').textContent = online ? '已连接' : '连接中断，可稍后重试。'
     const banner = byId('connection-banner')
     banner.hidden = online
     banner.classList.toggle('is-offline', !online)
-    banner.textContent = online ? '' : '电脑暂时无法连接。重连后会先核对原请求，不会自动重复执行。'
+    banner.textContent = online ? '' : '连接中断，正在重试…'
     updateAvailability()
   }
   function operation(message, locked = false, requestId = null, reviewable = locked) {
@@ -2043,8 +2125,12 @@
     const attachmentBusy = !!state.attachmentUpload
     byId('new-session').disabled = !chat || !model || state.submitting || attachmentBusy || state.unresolvedSubmission
     byId('model-select').disabled = phoneChat || !chat || !state.models.length
+    byId('model-trigger').disabled = byId('model-select').disabled
+    byId('model-label').textContent = state.models.find((item) => item.id === state.modelProfileId)?.name || '选择模型'
+    if (byId('model-trigger').disabled) closeModelMenu()
     byId('message-text').disabled = phoneChat ? !phoneReady || !!pendingPhone || !!recovery
       : !chat || !model || !canSendHere || attachmentBusy
+    byId('voice-input').disabled = byId('message-text').disabled || state.submitting || state.phoneSending
     byId('send-message').disabled = phoneChat ? !phoneReady || (!!pendingPhone && !pendingHere) ||
       (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !byId('message-text').value.trim())
       : !chat || !model || !canSendHere || state.submitting || attachmentBusy ||
@@ -2067,25 +2153,18 @@
     byId('cancel-turn').hidden = phoneChat || !selected?.running
     byId('cancel-turn').disabled = !state.online || !selected?.running || state.cancelSubmitting
     const hint = byId('model-hint')
-    if (phoneChat && bound) hint.textContent = state.phoneSendNotice ||
-      `后续消息由${state.models.find((item) => item.id === bound.modelProfileId)?.name || '所选电脑模型'}处理；原手机记录仍保留。`
+    if (phoneChat && bound) hint.textContent = state.phoneSendNotice || ''
     else if (phoneChat) hint.textContent = pendingPhone && !pendingHere
       ? '另一条手机对话有未确认的同步请求。请先切回原对话核对。'
       : pendingHere ? state.phoneSendNotice || '这条文字的同步结果待核对。重试会沿用同一个消息编号。'
         : recovery && !recoveryHere ? '旧设备有未确认文字，请先切回原手机对话核对。'
           : recoveryHere ? '重新登录后保留了旧文字。先核对服务器是否已接收，再决定是否重新同步。'
-        : state.phoneSendNotice || (state.online
-          ? '文字可同步到原手机对话；MiMo 回复需在手机端继续，电脑不会运行该模型。'
-          : '连接中断。草稿仍保留，重连后再同步。')
+        : state.phoneSendNotice || ''
     else if (!state.online) hint.textContent = '等待重新连接电脑。'
     else if (selected && !canSendHere) hint.textContent = '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
     else if (!chat || !model) hint.textContent = '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。'
-    else if (state.capabilities?.naturalLanguageDesktop?.available === true) hint.textContent =
-      state.capabilities?.chat?.inferenceVerified === false
-        ? '可以直接说“打开电脑上的记事本”。首次回复可能需要加载模型。'
-        : '可以直接说“打开电脑上的记事本”。'
-    else if (state.capabilities?.chat?.inferenceVerified === false) hint.textContent = '首次回复可能需要加载模型，请以会话中的实际结果为准。'
-    else hint.textContent = '消息会送到这台电脑的助手。'
+    else hint.textContent = ''
+    hint.hidden = !hint.textContent
   }
   async function refreshStatus() {
     let payload
@@ -4320,6 +4399,28 @@
     if (sessionIdPattern.test(sessionId || '')) void selectSession(sessionId)
   })
   byId('model-select').addEventListener('change', (event) => { state.modelProfileId = event.target.value; updateAvailability() })
+  byId('model-trigger').addEventListener('click', openModelMenu)
+  byId('model-trigger').addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') { event.preventDefault(); if (byId('model-popover').hidden) openModelMenu() }
+  })
+  byId('model-options').addEventListener('keydown', (event) => {
+    const options = [...byId('model-options').children], index = options.indexOf(event.target)
+    if (event.key === 'Escape') { event.preventDefault(); closeModelMenu(true); return }
+    if (!options.length || !['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+    event.preventDefault()
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? options.length - 1
+      : (index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length
+    options[next].focus()
+  })
+  byId('model-configure').addEventListener('click', () => { closeModelMenu(); openAccount() })
+  byId('voice-input').addEventListener('click', startVoiceInput)
+  window.addEventListener('resize', () => closeModelMenu())
+  document.addEventListener('click', (event) => {
+    if (!byId('model-popover').hidden && !byId('model-picker').contains(event.target)) closeModelMenu()
+  })
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && !byId('model-popover').hidden) { event.preventDefault(); closeModelMenu(true) }
+  })
   byId('message-text').addEventListener('input', updateAvailability)
   byId('message-attachments').addEventListener('change', (event) => {
     const input = event.currentTarget

@@ -12,7 +12,7 @@
   <div class="page">
     <header class="site-header">
       <div class="site-title"><span class="site-name">WeftMate</span><span class="site-subtitle">织语 · 账户与设备</span></div>
-      <span class="local-badge">个人账户</span>
+      <span class="local-badge" hidden></span>
     </header>
 
     <main class="main" id="main">
@@ -76,7 +76,7 @@
           <div class="assistant-main">
             <div class="assistant-topbar">
               <button type="button" class="icon-close menu-button" id="rail-open" aria-controls="session-rail" aria-expanded="false" aria-label="打开会话侧栏">☰</button>
-              <div class="assistant-heading"><strong id="assistant-title">新对话</strong><span id="assistant-connection">正在连接个人宿主…</span></div>
+              <div class="assistant-heading"><strong id="assistant-title">新对话</strong><span id="assistant-connection" hidden></span></div>
               <button type="button" class="button secondary small" id="show-tasks">事情</button>
               <button type="button" class="button secondary small" id="show-phone" hidden>手机记录</button>
               <button type="button" class="button secondary small account-shortcut" id="show-account">账户</button>
@@ -85,8 +85,8 @@
 
             <section class="conversation-pane" id="conversation-pane" aria-label="对话">
               <div class="chat-scroll" id="chat-scroll">
-                <div class="chat-intro" id="chat-intro"><p class="eyebrow">织语 Weave</p><h1>今天想做什么？</h1><p class="muted">对话与电脑动作由当前个人宿主处理，实际状态会回到原会话和事情记录。</p></div>
-                <div class="desktop-action card" id="desktop-action">
+                <div class="chat-intro" id="chat-intro"><h1>今天想做什么？</h1></div>
+                <div class="desktop-action card" id="desktop-action" hidden>
                   <div><h2>在电脑打开记事本</h2><p class="muted">这是电脑上的动作。只有确认窗口出现后才显示成功。</p></div>
                   <button type="button" class="button secondary" id="open-notepad" disabled>打开记事本</button>
                 </div>
@@ -96,16 +96,28 @@
               <div class="composer-area">
                 <p class="operation-status" id="operation-status" role="status" hidden></p>
                 <button type="button" class="button quiet small" id="reset-operation" hidden>已核对，重新输入</button>
-                <div class="selection-row">
-                  <label for="model-select">模型</label><select id="model-select" aria-label="模型" disabled><option>读取中…</option></select>
-                  <label for="execution-target">执行设备</label><select id="execution-target" aria-label="执行设备"><option value="computer">这台电脑</option></select>
-                </div>
-                <p class="model-hint" id="model-hint">正在读取模型状态…</p>
+                <select id="model-select" aria-label="模型" disabled hidden><option>读取中…</option></select>
+                <select id="execution-target" aria-label="执行设备" hidden><option value="computer">这台电脑</option></select>
+                <p class="model-hint" id="model-hint" role="status" hidden></p>
                 <form id="message-form" class="message-form">
                   <label for="message-text" class="sr-only">输入消息</label>
                   <textarea id="message-text" rows="2" maxlength="8192" placeholder="向 WeftMate 说说你的目标" disabled></textarea>
                   <div class="composer-attachments" id="composer-attachments" hidden><div class="attachment-draft-list" id="attachment-draft-list"></div><p class="attachment-status" id="attachment-status" role="status" aria-live="polite"></p></div>
-                  <div class="composer-actions"><input id="message-attachments" type="file" multiple hidden><label class="button quiet attachment-add" id="attachment-add" for="message-attachments" aria-label="添加图片或文件">＋ 添加图片或文件</label><button type="button" class="button quiet" id="attachment-cancel" hidden>取消上传</button><button type="button" class="button quiet" id="cancel-turn" hidden>请求停止</button><button type="submit" class="button primary" id="send-message" disabled>发送</button></div>
+                  <div class="composer-actions">
+                    <input id="message-attachments" type="file" multiple hidden>
+                    <label class="composer-icon attachment-add" id="attachment-add" for="message-attachments" aria-label="添加图片或文件" title="添加图片或文件"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></label>
+                    <button type="button" class="button quiet small" id="attachment-cancel" hidden>取消上传</button>
+                    <div class="model-picker" id="model-picker">
+                      <button type="button" class="model-trigger" id="model-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="model-options" disabled><span id="model-label">选择模型</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+                      <div class="model-popover" id="model-popover" hidden>
+                        <div class="model-options" id="model-options" role="listbox" aria-label="选择模型"></div>
+                        <button type="button" class="model-configure" id="model-configure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><circle cx="12" cy="12" r="3"/></svg>配置自定义模型</button>
+                      </div>
+                    </div>
+                    <button type="button" class="composer-icon" id="voice-input" aria-label="语音输入" aria-pressed="false" title="语音输入" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg></button>
+                    <button type="button" class="button quiet small" id="cancel-turn" hidden>请求停止</button>
+                    <button type="submit" class="composer-icon composer-send" id="send-message" aria-label="发送" disabled>发送</button>
+                  </div>
                 </form>
               </div>
             </section>
@@ -201,6 +213,7 @@
             <div class="actions"><button type="submit" class="button primary small" id="account-model-submit">保存到电脑账户</button><button type="button" class="button quiet small" id="account-model-cancel" hidden>取消编辑</button></div>
           </form>
         </section>
+        <details class="tool-settings"><summary>资料访问设置</summary>
         <section class="card group" aria-labelledby="projects-heading">
           <div class="group-heading"><div><h2 id="projects-heading">项目与成果</h2><p class="muted">电脑账户登记资料目录后，手机可选择项目和模型发起摘要任务。只读取目录中的 Markdown 和纯文本文件。</p></div><button type="button" class="button secondary small" id="projects-refresh">刷新</button></div>
           <p id="projects-status" class="muted" role="status" aria-live="polite">正在读取项目…</p>
@@ -224,6 +237,7 @@
             <button type="submit" class="button primary small">开始网页任务</button>
           </form>
         </section>
+        </details>
         <section class="card group notice"><h2>连接状态</h2><p id="connection-copy">正在读取连接状态…</p></section>
       </section>
     </main>
