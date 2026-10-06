@@ -817,6 +817,21 @@ test('mobile task detail keeps normal completion and legacy uncertainty distinct
   assert.doesNotMatch(app.get('page-content').textContent, /恢复这件事/)
 })
 
+test('mobile generic execution records do not label a tool result as verified', async () => {
+  const taskId='task-generic',source={commandId:taskId,kind:'session.message',state:'accepted_by_dsh',sessionId:'session-a'};
+  const app=harness({hostTask:{source:'host',kind:'session.message',commandId:taskId,taskId,sessionId:'session-a',
+    status:'accepted_by_dsh',title:'通用目标'},taskDetail:()=>({taskId,sessionId:'session-a',source,sourceText:'处理我的目标',artifacts:[],
+    replyEvidence:{status:'completed',assistantMessages:1},executionSteps:[{executionId:'execution-one',sourceCommandId:taskId,
+      sourceReceiptId:'receipt-one',toolName:'weftmod',state:'completed',jobId:'job-one',jobState:'running',startedAt:'2026-10-06T06:00:00Z'}]})});
+  await waitUntil(()=>app.calls.some(call=>call.method==='app.ready'),'mobile app did not boot');
+  app.nav.find(button=>button.dataset.page==='things')!.fire('click');
+  await waitUntil(()=>!!findButton(app.get('page-content'),'继续电脑会话'),'task missing');
+  findButton(app.get('page-content'),'继续电脑会话')!.fire('click');
+  await waitUntil(()=>app.get('page-content').textContent.includes('执行记录'),'execution record missing');
+  assert.match(app.get('page-content').textContent,/设备操作 · 后台运行中/);
+  assert.doesNotMatch(app.get('page-content').textContent,/已核验|电脑已核验/);
+});
+
 test('mobile late stop observation cannot update a closed detail', async () => {
   let reads = 0
   let resolveLate!: (value: object) => void
