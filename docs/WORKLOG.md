@@ -562,3 +562,13 @@ WindowsSol补原件File/Blob流上传/增量SHA/总16KiB有效UTF8与明确未�
 实核APK内容：3个dex原4,108,800B压1,566,754B，43界面资产原663,632B压240,214B，资源压66,559B；没有native lib目录或gguf/onnx/tflite/safetensors。包小来自系统WebView/组件复用、模型与电脑runtime未入包；不以大小宣称原生渲染/手机离线模型已实现。
 
 实际GPT-6.1 Sol只读核AppleQA模型owner/安全收到无密build7：3217461B/11fec377...2ed65、source298029B/e2e815...6dc8b、DMG2504722B/ef59bb...b15c；未合入或公开。旧A/B和qa4不同owner，目录0正确；之前说有HTTPS私人桥不准确，已澄清旧明文桥只无密ZIP，不递密码。新源码的纯file history invalidResponse及旧path丢记录交Apple Root亲自修；本人在那边要求先看iOS/讨论Watch，保持对应主线。Windows/Android候选现冻结，等待本人大体验收，下一动作只按本批反馈。
+
+### 2026-10-06 · 本人体验后记录对话优先整改
+
+Root按本人要求打开正式电脑入口与MuMu0.8体验副本；后者正常退出旧测试账户并检查正式服务连接，原日用包/资料未卸载或清除。电脑为网页界面加本机服务，Windows独立安装版未交付，已向本人说明。
+
+本人发四张桌面截图并列七点反馈。Root核 `src/personal-access-ui/index.html` 的原生模型/设备select、常驻宿主说明与网页资料表单；Android也有能力表单入口。用impeccable（界面设计技能）context与shape规划指导核现有产品资料，没有改UI（界面）或换视觉基线。本人补充确认当前设备/任务能力默认策略，以及辅助入口保留侧栏/账户菜单、聊天也能打开。
+
+六项整改加入原任务15.R，产品方向/前端计划/决定/当前状态同步，状态改本人体验反馈转入修复。前端仍对应主助手亲自，其他必要分工6.1Sol/6Sol；本轮仅文档规划，正式0.8/code13、后端/模型/账户资料保持，未执行新付费批次。健康/精灵共享写为后续要求，未称已接线。等待本人继续反馈，后续实现沿此表接续。
+
+Root同步共同方向到既有collab/BACKEND.md，按本人既有指挥授权给Apple总代理发消息；工具返回 `Codex app-server is not available`，未确认送达，不把协作文件更新写成Apple已接受或实施。
