@@ -17,7 +17,7 @@ systemd 用 DynamicUser 与 StateDirectory 管理专属账号/写入目录，不
 ## 后续人工执行顺序
 
 1. 确认 S0 审查通过、实际 Linux/现有网站、Node 24 路径、Caddy 配置、目标 API 域名和 DNS；保留现有网站/代理。DNS 示例为 `api.example.com → 203.0.113.10`，真实值只在服务器配置。Caddy 自动 HTTPS 需要域名正确与验证端口可达。[Caddy 官方说明](https://caddyserver.com/docs/automatic-https)
-2. 从已审查提交生成只含 `services/cloud/` 的发布包，在隔离目录运行 `node --test test/*.test.mjs`。不安装主仓 Electron/DSH，没有 npm 依赖，不需要 `npm ci`。禁止打包 `.runtime`、`.env` 或本机数据。
+2. 从已审查提交生成只含 `services/cloud/` 的发布包，执行本服务 `npm ci`，在隔离目录运行 `node --test test/*.test.mjs`。不安装主仓 Electron/DSH；S1a 独立锁定 oidc-provider/jose。禁止打包 `.runtime`、`.env`、identity-keys 或本机数据。
 3. 以管理员身份把包解到新的 release，把 `cloud.env.example` 复制到配置目录，填写专属数据目录。正式邮件启用前 file 仅供开发验证，不作为上线注册投递。
 4. 安装 unit 与当前链接。以下是**需在目标机审查后才执行**的示意，`<commit>` 由部署者替换：
 
@@ -33,7 +33,7 @@ systemd 用 DynamicUser 与 StateDirectory 管理专属账号/写入目录，不
    ```
 
 5. 把 `Caddyfile.fragment` 作为站点块导入**现有**配置，替换 example 域名；先 `caddy validate --config /etc/caddy/Caddyfile`，再按现场服务方式 reload。外部测试 `https://api.example.com/healthz`；配置防火墙仅暴露实际需要的云入口，Node 端口不公网开放。S2 另审查 frp 的控制入口、内容入口与逐宿主域名。
-6. 用 `journalctl -u weftmate-cloud` 检查 start/health/stopped 事件，验证重启后迁移不重复、SIGTERM 能退出。这里不是生产认证验收；S1 前没有账号接口。
+6. 用 `journalctl -u weftmate-cloud` 检查 start/health/stopped 事件，验证重启后迁移不重复、SIGTERM 能退出。这里不是生产认证验收；S1a 账号接口仅经隔离测试，生产 issuer/客户端 URI/邮件与代理须在部署包验证。
 
 ## 升级、回滚与备份
 
