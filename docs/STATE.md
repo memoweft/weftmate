@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
-| Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 审查修改已实现；健康待写队列不影响非健康召回，模型按地址自动判断且可用 modelTier 覆盖；相关单测/类型检查通过；三平台 CI 因 GitHub 付款/额度未启动，待恢复后重跑 |
+| Codex · Mac | MW-2 observed 桥接 | MemoWeft / WeftMate 两侧实现完成；真实 Python Core 集成场景通过，PR / CI 验证中；MemoWeft PR 先合入，部署需 observed v1 Core |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -19,6 +19,8 @@
 - H1：[PR #22](https://github.com/memoweft/weftmate/pull/22) 已合入；iPhone 健康设置、8 类只读权限、每日摘要/14 天基线、云端选择/自评频率与隔离持久队列已实现。Core 253 项、状态检查 10 组、三目标构建及 iOS 隔离模拟器 2 项场景通过；服务端接收由 H2 接续；World observed 写入待 MemoWeft 协议补齐。
 
 ## 最近一次场景结果
+
+MW-2：真实 Python Core RPC 集成 1/1、持久待办/并发撤回 1/1、健康 HTTP 回归 7/7、类型检查与发布预检通过；本地/云端过滤保留普通偏好、权限变更、覆盖清除旧指标、删除/导出/重启均通过。CI 新增固定 MemoWeft MW-2 提交的真实 Core 集成任务，所有数据为隔离合成账号。完整 CI 等待最终 PR head 验证。
 
 H2 修订：隔离健康/模型位置/账号模型/设置/模型目录测试 22/22，含有摘要 + false + 云端照常召回、LAN/loopback 地址边界、手动覆盖、位置修订/幂等/凭据复用/重开存储；既有记忆/个人访问/界面/模型凭据回归 119 通过，7 项已知主干失败与 1 项 POSIX 下 Windows 路径夹具失败均在原 CI 精确例外中；类型检查、发布预检、依赖冒烟/审计通过（0 漏洞）；模型表单隔离交互 1/1。本机 CI required：709 通过/7 跳过，唯一失败为缺 127.0.0.2 回环别名导致合成 HTTP 夹具 EADDRNOTAVAIL（现有 macOS CI 管理员步骤负责配置）。GitHub push/PR 六项 job 因付款/额度未启动，尚未全绿；见 PR #25。未连真实宿主、未碰日用数据；vendor/真实 Core observed 写入与撤回未验，CI 按精确例外运行；main `201d36a` 复现 M0-2 model-budget-runtime 缺 vendor，已补该用例到 vendorTests，未列为产品通过；CI 另发现既有 IPC 夹具读到半写 JSON，已改夹具为原子发布回执，未改生产生命周期逻辑，相关生命周期夹具 10 项通过（POSIX 整树清理仍按原例外不运行）。
 
@@ -30,6 +32,8 @@ CI-1 的三平台必过/非阻塞基线结果及最终运行链接见 [PR #23](h
 
 ## 契约变更
 
+- 2026-10-07 / MW-2：CLIENT_API 第 6 节新增 memory.state=delivered；queued/empty 区分待交付与撤回清理。DELETE 200 可带 queued，需重试/等待 Core 清理回执；宿主文件已移除健康内容，待办只含来源哈希与水位。personal-memory 使用 typed observed upsert/权限/撤回 RPC，召回向 World 与 interactions 传实际 model_tier，由 Core 按来源过滤；普通记忆保留。
+
 - 2026-10-07 / H2：CLIENT_API 第 6 节转正式：POST 同账号/设备/日期完整覆盖；GET 近 1–365 天（默认 14，查询时区默认 UTC）；DELETE 日期/全部及迟到上传水位。200 确认摘要和 observed 待写队列落盘；MemoWeft 无 observed 写入契约，尚未写 World。最新选择作用全账号；健康仅在待写队列，非健康记忆召回照常。MW-2 写入 World 后按来源过滤健康证据/衍生项并撤回，保留其余召回。CLIENT_API 3.10 新增可选 modelTier（auto/local/cloud），缺省按实际 loopback/私有网段/*.local 判定；模型配置/查询/转移兼容旧请求，位置修改生成新 runtime 修订。
 
 - 2026-10-06 / H1：CLIENT_API 第 6 节新增健康摘要草案：POST `/health/daily-summaries` 按账号/来源设备/日期幂等，含云端使用选择与自评频率；DELETE 按日期/全部；Apple 404/501 静默保留本地队列。待 Windows 接收、MemoWeft observed 与模型使用/删除闭环实现。
@@ -40,7 +44,7 @@ CI-1 的三平台必过/非阻塞基线结果及最终运行链接见 [PR #23](h
 
 ## 已知问题
 
-- H2：当前 MemoWeft RPC 缺少 observed upsert 与来源权限/撤回协议；健康事实仍在可回放队列，未进入 World。MW-2 需在写入 World 时补齐按来源过滤健康证据/衍生项，当前非健康记忆召回照常；需求见 `src/personal-health/README.md`。
+- MW-2：部署需升级到具备 observed v1 的 MemoWeft Core；先合入 MemoWeft PR，再合入/部署 WeftMate PR。真实 Core 集成使用测试解释路由；真机健康上传、日用宿主及真实模型尚未验证。
 
 - 长会话打开时报「历史超出当前可读取范围」：`src/runtime/dsh-adapter/sessions.mjs` `historyPage` 每页从尾部倒扫，超过 24×50 条即失败（M0-3）。
 - M0-2 预算来源已修复并通过隔离场景；真实 Qwen 长任务回归待服务可用。剩余上下文极少时输出预算会降到 1 token（`outputBudget` 下限），应先触发压缩——归 M1-3 处理。

@@ -390,7 +390,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 ## 6. 健康摘要（H2 正式接口）
 
-> **H2 已实现服务端接收、读取、删除与 observed 待写队列。** 遵循 `COMPANION.md` 第 4、5、11 节；原始样本只在设备内计算，不上传原始流。当前 MemoWeft RPC 缺少 observed 写入契约，健康证据尚未进入 World；接口返回 queued 明确说明此状态。补充能力与模型限制见 6.4 及 `src/personal-health/README.md`。
+> **H2 / MW-2 已接通服务端摘要与 MemoWeft observed。** 遵循 `COMPANION.md` 第 4、5、11 节；原始样本只在设备内计算。依赖支持 observed v1 的 MemoWeft Core；已交付/待交付与撤回状态由回执明确区分。模型目的地按来源过滤健康与衍生项，其他记忆照常召回。
 
 ### 6.1 上传与幂等
 
@@ -435,14 +435,14 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 `readStates` 为 `disabled / notRequested / dataAvailable / noDataOrReadDenied / unavailable / failed`。Apple 不公开读取授权是否被拒绝/撤销，空结果不能据此断言拒绝；`dataAvailable` 只代表此次读到数据。应用内逐类关闭会停止该类查询、移除本地与排队摘要的指标并重新上传替换。系统撤权后再次读取为空，会更新近期摘要，既有摘要不会因此自动等同用户要求全部删除；删除需明确操作。查询失败保留此前已读取数值并标注 failed。
 
-POST 固定返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"memory":{"state":"queued","pendingObservedCount":1,"reasonCode":"MEMORY_OBSERVED_UNSUPPORTED"}}`。200 表示摘要与 observed 队列已原子持久化，尚未表示 World 写入完成。请求只接受上述字段；各指标要求对应 readState 为 dataAvailable/failed、单位匹配、非负有限数值与 0–14 baselineDays；拒绝原始样本和任意追加文本。`metrics.workouts`（如提供）单位 min，`metrics.respiratoryRate` 单位 breaths/min。账号由凭据确定，来源设备必须是本账号签发过的 ID，已撤销设备仍可标记其历史离线摘要。较新汇总完整覆盖同来源/日期记录。
+POST 返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"memory":{"state":"queued","pendingObservedCount":1,"reasonCode":"MEMORY_OBSERVED_UNSUPPORTED"}}`。200 表示摘要与 observed 待办已原子持久化；`memory.state=delivered`、`pendingObservedCount=0` 表示 Core 写入及来源权限已确认。queued 表示待交付，原因可能为 MEMORY_OBSERVED_UNSUPPORTED（旧 Core/未启用）或 MEMORY_OBSERVED_PENDING（传输/清理待重试）；200 本身不保证 Core 已完成。请求只接受上述字段；各指标要求对应 readState 为 dataAvailable/failed、单位匹配、非负有限数值与 0–14 baselineDays；拒绝原始样本和任意追加文本。`metrics.workouts`（如提供）单位 min，`metrics.respiratoryRate` 单位 breaths/min。账号由凭据确定，来源设备必须是本账号签发过的 ID，已撤销设备仍可标记其历史离线摘要。较新汇总完整覆盖同来源/日期记录。
 
 ### 6.2 撤权与删除
 
 | 方法与路径 | 请求 / 返回 | 客户端行为 |
 |---|---|---|
-| DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及其 observed 待写证据；200 `{"deleted":true,"date":"2026-10-06"}` （另含 deletedCount） | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
-| DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及 observed 待写证据；200 `{"deleted":true,"scope":"all"}` （另含 deletedCount） | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
+| DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及 observed，并级联撤回 Core 衍生项与索引；200 `{"deleted":true,"date":"2026-10-06"}` （另含 deletedCount、memory；empty 表示 Core 撤回及清理已确认，queued 表示待重试） | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
+| DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及 observed，并级联撤回 Core 衍生项与索引；200 `{"deleted":true,"scope":"all"}` （另含 deletedCount、memory；empty 表示 Core 撤回及清理已确认，queued 表示待重试） | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
 
 撤销系统读取权限在 Apple “健康”应用完成；WeftMate 不写/删 HealthKit 原始记录。关闭读取和删除已上传证据分别表达；服务器删除不是移除用户对话或非健康记忆。服务端原子移除摘要及其 observed 待写内容，只留无健康内容的日期/全部删除时间水位（服务器删除时间与已知汇总时间的较大值）。旧汇总时间不大于水位时 POST 返回 409，重新读取生成的较新摘要可上传；全部删除合并各日期水位。DELETE 同样要求 application/json `{}`、同源 Origin 和 CSRF，JSON ≤12 KiB。当前没有本包写入的 Core 证据，因而不宣称已完成真实 Core 撤回。
 
@@ -474,8 +474,8 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 }
 ```
 
-示例摘要为简化投影；真实 summaries 返回完整已存摘要。memory.pendingObservedCount 是本账号全部待写数量，与查询日期窗口无关；没有摘要时 memory.state=empty、pendingObservedCount=0。健康文件在宿主 `<personal-access-root>/accounts/<ownerId>/health/daily-summaries.json`，沿用私有目录/文件保护与原子写入。
+示例摘要为简化投影；真实 summaries 返回完整已存摘要。memory.pendingObservedCount 是本账号全部待交付来源和待撤回来源的数量，与查询日期窗口无关。已写入 Core 时 memory.state=delivered；没有摘要且撤回清理已确认时为 empty；待交付/待撤回时为 queued。健康文件在宿主 `<personal-access-root>/accounts/<ownerId>/health/daily-summaries.json`，沿用私有目录/文件保护与原子写入。
 
-每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期，含设备描述、时区与汇总时间；不会构造 user 对话 boundary。当前已有 `personal-memory` 桥接缺少 observed 写入能力，故先保存可回放的待写证据，覆盖和删除同步替换/移除队列内容。MemoWeft 需补 observed upsert、来源权限更新/真实撤回（含衍生项/索引）、按目标模型过滤的召回契约与回执，然后经现有桥接回放；不得直接另写数据库或把 observed 伪装为发言。
+每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期。现有 `personal-memory` 管理器通过正式 observed upsert / 来源权限更新 / 真正撤回 RPC 交付，不构造 user/assistant boundary，不另写 SQLite。摘要和交付标记同一宿主文件保存；收到 Core 回执后才清除待办。进程中断或 Core 不可用时，后续健康写入、记忆 status / recall 会重放；DELETE 先移除宿主内容，保留仅含来源哈希与水位的撤回待办，清理完成后移除。
 
-H2 当前未将健康 observed 证据写入 World，故不依据“存在摘要”限制个人记忆召回：`cloudModelAllowed=false` 的账号在云端模型下仍照常召回非健康 World/interactions。待写健康事实不会被发给召回 RPC，本地模型也尚不能通过 World 召回这些事实；GET 可供客户端与后续精灵使用。**MW-2 将 observed 写入 World 时，须按来源排除云端无权限的健康证据及其衍生项，保留其余记忆召回**，并让选择更新/DELETE 覆盖索引与衍生项；过滤仅适用于确有已写入的健康证据。模型位置按 3.10 的实际地址与用户 `modelTier` 覆盖判断，RPC initialize 使用最终 local/cloud。已有用户/助手历史仍按原契约管理。
+召回使用 3.10 的实际地址及用户 `modelTier` 覆盖判断，initialize 与每次 World / interactions 召回使用最终 local/cloud。`cloudModelAllowed=false` 排除已写入的健康证据及其衍生项、依赖它们的助手历史，保留其他可读记忆；true 后云端可用，撤销选择后立即作用于全账号来源。来源同步失败时该次注入暂缓，待同步成功恢复，不使用旧授权数据。GET 提供客户端读取摘要，客户端不得把本地专用摘要自行注入云端模型。

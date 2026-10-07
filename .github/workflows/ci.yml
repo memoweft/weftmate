@@ -108,3 +108,36 @@ jobs:
           else
             node .github/scripts/ci-unit-tests.mjs known
           fi
+
+  observed-core:
+    name: Observed bridge (real MemoWeft Core)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout WeftMate
+        uses: actions/checkout@v4
+      - name: Checkout pinned MemoWeft MW-2 candidate
+        uses: actions/checkout@v4
+        with:
+          repository: memoweft/memoweft
+          # Candidate for the dependent Core PR; merge Core before this bridge.
+          ref: 7d78ecdd2053abdc851ffe1fb91973123bcab507
+          path: memoweft-core
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install WeftMate and real Core dependencies
+        run: |
+          npm ci
+          python -m pip install ./memoweft-core/py
+          python -c "import sys; print('WEFTMATE_TEST_MEMOWEFT_PYTHON=' + sys.executable)" >> "$GITHUB_ENV"
+      - name: Real observed lifecycle integration
+        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts
+        env:
+          WEFTMATE_TEST_MEMOWEFT_SOURCE: ${{ github.workspace }}/memoweft-core/py/src
