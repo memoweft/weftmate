@@ -53,7 +53,7 @@ function sse(response, content = null, tool = null) {
   const frame = (choice) => response.write(`data: ${JSON.stringify({ id: 'stage15-synthetic', object: 'chat.completion.chunk',
     created: Math.floor(Date.now() / 1000), model: 'synthetic-stop-model', choices: [choice] })}\n\n`);
   frame(tool ? { index: 0, delta: { role: 'assistant', tool_calls: [{ index: 0, id: `call-${randomUUID()}`,
-    type: 'function', function: { name: 'personal_save_document', arguments: JSON.stringify(tool) } }] }, finish_reason: null }
+    type: 'function', function: { name: 'write', arguments: JSON.stringify({ file_path: tool.fileName, content: tool.content }) } }] }, finish_reason: null }
     : { index: 0, delta: { role: 'assistant', content }, finish_reason: null });
   frame({ index: 0, delta: {}, finish_reason: tool ? 'tool_calls' : 'stop' });
   response.end('data: [DONE]\n\n');
@@ -76,7 +76,7 @@ const upstream = createServer(async (request, response) => {
     }
     evidence.providerCompletions.forwarded++;
     if (text.includes('stage15-save-exact')) {
-      documentToolRequestSeen ||= JSON.stringify(body.tools ?? []).includes('personal_save_document');
+      documentToolRequestSeen ||= JSON.stringify(body.tools ?? []).includes('write');
       contextSeen ||= text.includes(fact);
     }
     const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 240_000);
@@ -113,7 +113,7 @@ const upstream = createServer(async (request, response) => {
     blockResponse = response; response.once('close', () => { blockResponse = null; }); return;
   }
   if (text.includes('stage15-save-exact')) {
-    const hasDocumentTool = JSON.stringify(body.tools ?? []).includes('personal_save_document');
+    const hasDocumentTool = JSON.stringify(body.tools ?? []).includes('write');
     const hasDocumentResult = (body.messages ?? []).some((message) => message?.role === 'tool') ||
       text.includes('"type":"tool-result"');
     if (hasDocumentResult) { sse(response, 'stage15 document saved'); return; }
@@ -215,7 +215,7 @@ try {
   const sentDuplicate = await api(origin, phone, 'POST', '/personal/v1/commands', { requestId: messageRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: late.payload.text, sourceSyncEventId: late.eventId }); assert.equal(sentDuplicate.status, 202); assert.equal(sentDuplicate.body.command.commandId, sent.body.command.commandId);
   phoneContinuation = await command(origin, phone, sent.body.command.commandId); assert.equal(phoneContinuation.state, 'accepted_by_dsh'); await terminal(origin, phone, sessionId, phoneContinuation.receiptId, 'completed');
   }
-  const toolRequest = `stage15-desktop-tool-${runId}`; const toolGoal = await api(origin, desktop, 'POST', '/personal/v1/commands', { requestId: toolRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: `stage15-save-exact：请调用 personal_save_document，fileName 必须是 stage15-handoff.md，content 必须逐字等于下面两行（末尾保留换行）：\n# Stage 15 shared handoff\n${fact}\n完成后停止，不要再次调用工具。` }); assert.equal(toolGoal.status, 202);
+  const toolRequest = `stage15-desktop-tool-${runId}`; const toolGoal = await api(origin, desktop, 'POST', '/personal/v1/commands', { requestId: toolRequest, kind: 'session.message', targetDeviceId: shared.hostId, sessionId, mode: 'queue', text: `stage15-save-exact：请调用 write，file_path 必须是 stage15-handoff.md，content 必须逐字等于下面两行（末尾保留换行）：\n# Stage 15 shared handoff\n${fact}\n完成后停止，不要再次调用工具。` }); assert.equal(toolGoal.status, 202);
   const root = await command(origin, desktop, toolGoal.body.command.commandId); assert.equal(root.state, 'accepted_by_dsh'); rootTaskId = root.commandId;
   const toolTerminal = realRelay ? await terminalAny(origin, desktop, sessionId, root.receiptId)
     : await terminal(origin, desktop, sessionId, root.receiptId, 'completed');

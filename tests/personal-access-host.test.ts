@@ -126,7 +126,7 @@ test('native lifecycle, interactions, artifact results and reserved queue projec
       content: [{ type: 'tool-result', toolCallId: 'c1', content: [{ type: 'reasoning', text: 'private tool reasoning' }, { type: 'text', text: '42 tests passed' }] }] } } },
     { seq: 5, type: 'tool/call', data: { turn: 1, callId: 'q1', name: 'ask_user_question', arguments: '{"questions":[{"id":"q","question":"保存到哪里？"}]}' } },
     { seq: 6, type: 'tool/result', data: { turn: 1, message: { source: { callId: 'q1' }, content: [{ type: 'tool-result', toolCallId: 'q1' }] } } },
-    { seq: 7, type: 'tool/call', data: { turn: 1, callId: 'save1', name: 'personal_save_document', arguments: '{"fileName":"报告.md"}' } },
+    { seq: 7, type: 'tool/call', data: { turn: 1, callId: 'save1', name: 'write', arguments: '{"fileName":"报告.md"}' } },
     { seq: 8, type: 'tool/result', data: { turn: 1, message: { source: { callId: 'save1' }, content: [{ type: 'tool-result', toolCallId: 'save1', content: [{ type: 'text', text: '{"artifactId":"file-1","fileName":"报告.md","size":20}' }] }] } } },
     { seq: 9, type: 'task.queued', data: { taskId: 'reserved-task' } },
     { seq: 10, type: 'step/end', data: { turn: 1, step: 1 } },

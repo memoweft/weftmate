@@ -17,7 +17,7 @@ function events() {
     { seq: 4, time: time + 3, type: 'assistant/chunk', data: { turn: 1, step: 1,
       chunk: { type: 'reasoning-delta', text: 'private thought' } } },
     { seq: 5, time: time + 4, type: 'tool/call', data: { turn: 1, step: 1,
-      callId: 'save-1', name: 'personal_save_document' } },
+      callId: 'save-1', name: 'write' } },
     { seq: 6, time: time + 5, type: 'tool/result', data: { turn: 1,
       message: { source: { kind: 'tool', callId: 'save-1' }, content: [{ type: 'tool-result',
         toolCallId: 'save-1', content: [{ type: 'text', text: saved }] }] } } },

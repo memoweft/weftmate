@@ -1683,20 +1683,9 @@ async function bootstrap() {
       if (['authorize_execution', 'finish_execution', 'observe_execution_job'].includes(request.action)) {
         return personalAccessService.trackToolExecution(request);
       }
-      if (request.action === 'write_document') {
-        return personalAccessService.submitToolArtifact({ sessionId: request.sessionId, turn: request.turn,
-          callId: request.callId, messageHash: request.messageHash, receiptId: request.receiptId,
-          fileName: request.fileName, content: request.content,
-          sourceSnapshotIds: request.sourceSnapshotIds });
-      }
-      if (request.action === 'list_project' || request.action === 'read_project') {
-        return personalAccessService.submitToolProject(request);
-      }
-      if (request.action === 'open_page' || request.action === 'follow_link' ||
-          request.action === 'read_segment') {
-        return personalAccessService.submitToolBrowser(request);
-      }
-      return personalAccessService.submitToolDesktop(request);
+      if (request.action === 'register_file') return personalAccessService.registerNativeFile(request);
+      if (request.action === 'browse') return personalAccessService.browse(request);
+      throw Object.assign(new Error('unsupported personal tool action'), { code: 'INVALID_COMMAND' });
     } : undefined,
     personalApprovalRuntimeClosedHandler: personalHostMode ? ({ runtimeId }) =>
       personalAccessService?.invalidateToolApprovals({ runtimeId, outcome: 'unavailable',
@@ -2944,6 +2933,7 @@ async function bootstrap() {
     queue: enqueueRouteMutation,
     bindSession: (sessionId, profileId) => settingsMod.bindSessionModel(sessionId, profileId),
     desktopTask: personalDesktopTask,
+    sessionWorkspaceRoot: join(userDataDir, 'conversations'),
     taskStop: (input) => webRuntime?.stopPersonalTask(input) ?? Promise.resolve({ status: 'unconfirmed',
       outcomes: input.receiptIds.map((receiptId) => ({ receiptId, status: 'unconfirmed' })) }),
     toolResultProof: (input) => webRuntime?.verifyPersonalToolResult(input) ?? Promise.resolve(false),

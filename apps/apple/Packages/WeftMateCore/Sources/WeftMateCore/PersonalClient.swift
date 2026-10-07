@@ -186,6 +186,66 @@ public actor PersonalClient {
         return verified.session
     }
 
+    public func pendingCloudDevices() async throws -> [PendingCloudDevice] {
+        struct Reply: Decodable { let devices: [PendingCloudDevice] }
+        let (auth, generation) = try snapshot()
+        let reply: Reply = try await authorized(auth, generation, path: "/cloud/devices/pending")
+        return reply.devices
+    }
+    public func decideCloudDevice(id: String, allow: Bool) async throws {
+        guard validID(id) else { throw APIFailure.invalidResponse }
+        let (auth, generation) = try snapshot()
+        _ = try await sharedAuthorizedRequest(auth, generation, path: "/cloud/devices/\(id)/decision", method: "POST",
+            body: JSONEncoder().encode(["decision": allow ? "allow" : "deny"]))
+    }
+    public func createCloudPairing() async throws -> HostPairing {
+        let (auth, generation) = try snapshot()
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/cloud/pairings", method: "POST", body: Data("{}".utf8))
+        return try HostPairing.parse(response.body)
+    }
+    /// Cloud tokens only enter the dedicated exchange endpoints. Pending never creates a content identity.
+    public func exchangeCloudSession(server: ServerConfiguration, hostID: String, accessToken: String,
+                                    deviceName: String, key: CloudDeviceKey, pairing: HostPairing? = nil) async throws -> CloudSessionExchange {
+        let generation = try transition(server: server, clearSaved: true)
+        struct Nonce: Decodable { let nonce: String }
+        let nonceResponse = try await rawRequest(server: server, path: "/auth/cloud-nonce", method: "POST", body: Data("{}".utf8))
+        try check(generation); try Task.checkCancellation()
+        let nonce: Nonce = try decode(nonceResponse.body)
+        let path = pairing == nil ? "/auth/cloud-session" : "/cloud/pairings/redeem"
+        var body = ["accessToken": accessToken, "deviceName": deviceName]
+        if let pairing {
+            guard pairing.hostId == hostID else { throw APIFailure.identityMismatch }
+            body["challenge"] = pairing.challenge
+        }
+        let proof = try key.proof(url: URL(string: server.originString + "/personal/v1" + path)!, accessToken: accessToken, nonce: nonce.nonce)
+        let response = try await rawRequest(server: server, path: path, method: "POST", body: JSONEncoder().encode(body),
+            extraHeaders: ["DPoP": proof])
+        try check(generation); try Task.checkCancellation()
+        if response.status == 202 {
+            struct Pending: Decodable { let status: String; let requestId: String }
+            let pending: Pending = try decode(response.body)
+            guard pending.status == "pending_approval", validID(pending.requestId) else { throw APIFailure.invalidResponse }
+            return .pending(requestID: pending.requestId)
+        }
+        guard response.status == 200 else { throw APIFailure.invalidResponse }
+        let reply: AuthReply = try decode(response.body)
+        let cookie = response.headers.first { $0.key.lowercased() == "set-cookie" }?.value.components(separatedBy: ";").first ?? ""
+        guard validCookie(cookie), validCSRF(reply.csrfToken), validID(reply.account.ownerId), validID(reply.device.id) else { throw APIFailure.invalidResponse }
+        let provisional = Credential(session: AccountSession(server: server, account: reply.account,
+            device: currentDevice(reply.device), hostId: hostID, verification: .verified), cookie: cookie, csrf: reply.csrfToken)
+        let status: StatusReply = try await request(server: server, path: "/status", auth: provisional)
+        try check(generation); try Task.checkCancellation()
+        guard status.ownerId == reply.account.ownerId, status.hostId == hostID else { throw APIFailure.identityMismatch }
+        try persist(provisional); credential = provisional
+        return .authenticated(provisional.session)
+    }
+
+    /// A cancelled browser callback may only discard the exact session it just produced.
+    public func discardCloudSession(_ expected: AccountSession) async {
+        guard credential?.session == expected else { return }
+        try? await logout()
+    }
+
     /// Immediately removes local access. A network failure reports that server logout remains unconfirmed.
     public func logout() async throws {
         let old = credential
@@ -1169,7 +1229,7 @@ public actor PersonalClient {
         do { return try decoder.decode(T.self, from: data) } catch { throw APIFailure.invalidResponse }
     }
     private func rawRequest(server: ServerConfiguration, path: String, method: String = "GET",
-                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = []) async throws -> HTTPResponse {
+                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:]) async throws -> HTTPResponse {
         guard let url = URL(string: server.originString + "/personal/v1" + path),
               body?.count ?? 0 <= 262_144 else { throw APIFailure.invalidResponse }
         var request = URLRequest(url: url)
@@ -1181,6 +1241,7 @@ public actor PersonalClient {
             request.setValue(server.originString, forHTTPHeaderField: "Origin")
             if let auth { request.setValue(auth.csrf, forHTTPHeaderField: "X-WeftMate-CSRF") }
         }
+        for (header, value) in extraHeaders { request.setValue(value, forHTTPHeaderField: header) }
         let response: HTTPResponse
         do { response = try await transport.send(request) }
         catch let e as APIFailure { throw e }

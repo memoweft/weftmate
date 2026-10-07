@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <meta name="color-scheme" content="light">
-  <title>账户与设备 · WeftMate</title>
+  <meta name="color-scheme" content="light dark">
+  <title>WeftMate</title>
   <link rel="stylesheet" href="/personal/v1/ui/styles.css">
+  <script src="/personal/v1/ui/format-vendor.js" defer></script>
+  <script src="/personal/v1/ui/desktop.js" defer></script>
   <script src="/personal/v1/ui/timeline.js" defer></script>
   <script src="/personal/v1/ui/cloud-vendor.js" defer></script>
   <script src="/personal/v1/ui/cloud-login.js" defer></script>
@@ -15,7 +17,7 @@
 <body>
   <div class="page">
     <header class="site-header">
-      <div class="site-title"><span class="site-name">WeftMate</span><span class="site-subtitle">织语 · 账户与设备</span></div>
+      <div class="site-title"><span class="site-name">WeftMate</span></div>
       <span class="local-badge" hidden></span>
     </header>
 
@@ -79,16 +81,16 @@
         <div class="assistant-shell">
           <button type="button" class="rail-backdrop" id="rail-backdrop" aria-label="关闭会话侧栏" hidden></button>
           <aside class="session-rail" id="session-rail" aria-label="会话导航">
-            <div class="rail-heading"><strong>WeftMate</strong><button type="button" class="icon-close rail-close" id="rail-close" aria-label="关闭会话侧栏">×</button></div>
-            <button type="button" class="button primary rail-new" id="new-session">新对话</button>
-            <p class="rail-label">最近会话</p>
+            <div class="rail-heading"><strong>WeftMate</strong><button type="button" class="icon-close rail-close" id="rail-close" aria-label="收起会话侧栏"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button></div>
+            <button type="button" class="button quiet rail-new" id="new-session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新对话<kbd>Ctrl N</kbd></button>
+            <div class="rail-search"><button type="button" class="composer-icon" id="search-sessions" aria-label="搜索会话"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg></button><input id="session-search" type="search" placeholder="搜索会话" aria-label="搜索会话"><kbd>Ctrl K</kbd></div>
             <p class="muted rail-message" id="sessions-status">正在读取会话…</p>
             <ul class="session-list" id="session-list"></ul>
-            <div class="rail-footer"><button type="button" class="rail-link" id="rail-memory">记忆</button><button type="button" class="rail-link" id="rail-phone" hidden>手机记录</button><button type="button" class="rail-link" id="rail-account">账户与设备<span id="pending-device-badge" hidden> · 有设备等待批准</span></button></div>
+            <div class="rail-footer"><button type="button" class="rail-link" id="rail-phone" hidden>手机记录</button><div id="account-menu" class="account-menu" hidden><button type="button" class="rail-link" id="rail-account">设置</button><button type="button" class="rail-link" id="rail-memory">记忆</button><button type="button" class="rail-link" id="rail-devices">设备</button></div><button type="button" class="rail-link account-menu-trigger" id="account-menu-trigger" aria-expanded="false" aria-controls="account-menu"><span class="rail-avatar"><img id="rail-avatar-image" alt="" hidden><span id="rail-avatar-initial">W</span></span><span id="rail-account-name">我的账户</span><span id="pending-device-badge" class="account-pending" aria-label="有设备等待批准" hidden></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button></div>
           </aside>
           <div class="assistant-main">
             <div class="assistant-topbar">
-              <button type="button" class="icon-close menu-button" id="rail-open" aria-controls="session-rail" aria-expanded="false" aria-label="打开会话侧栏">☰</button>
+              <button type="button" class="icon-close menu-button" id="rail-open" aria-controls="session-rail" aria-expanded="true" aria-label="切换会话侧栏"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
               <div class="assistant-heading"><strong id="assistant-title">新对话</strong><span id="assistant-connection" hidden></span></div>
               <button type="button" class="button secondary small" id="show-phone" hidden>手机记录</button>
               <button type="button" class="button secondary small account-shortcut" id="show-account">账户</button>
@@ -104,9 +106,9 @@
                 </div>
                 <button type="button" class="button quiet small" id="load-older" hidden>加载更早内容</button>
                 <ol class="transcript" id="transcript" aria-live="polite"></ol>
-                <p class="timeline-status" id="timeline-status" role="status"></p>
               </div>
               <div class="composer-area">
+                <p class="timeline-status" id="timeline-status" role="status"></p>
                 <p class="operation-status" id="operation-status" role="status" hidden></p>
                 <button type="button" class="button quiet small" id="reset-operation" hidden>已核对，重新输入</button>
                 <select id="model-select" aria-label="模型" disabled hidden><option>读取中…</option></select>
@@ -124,11 +126,13 @@
                       <button type="button" class="model-trigger" id="model-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="model-options" disabled><span id="model-label">选择模型</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
                       <div class="model-popover" id="model-popover" hidden>
                         <div class="model-options" id="model-options" role="listbox" aria-label="选择模型"></div>
-                        <button type="button" class="model-configure" id="model-configure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><circle cx="12" cy="12" r="3"/></svg>配置自定义模型</button>
+                        <button type="button" class="model-configure" id="model-configure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><circle cx="12" cy="12" r="3"/></svg>配置模型</button>
                       </div>
                     </div>
                     <button type="button" class="composer-icon" id="voice-input" aria-label="语音输入" aria-pressed="false" title="语音输入" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg></button>
-                    <button type="button" class="button quiet small" id="cancel-turn" hidden>请求停止</button>
+                    <span class="approval-mode-slot" hidden></span>
+                    <select id="message-mode" aria-label="运行中输入方式" hidden><option value="steer">插话</option><option value="queue">新目标排队</option></select>
+                    <button type="button" class="button quiet small" id="cancel-turn" hidden>停止</button>
                     <button type="submit" class="composer-icon composer-send" id="send-message" aria-label="发送" disabled>发送</button>
                   </div>
                 </form>
@@ -162,6 +166,7 @@
       </section>
 
       <section id="account-view" hidden>
+        <section class="card group appearance-settings" aria-labelledby="appearance-heading"><h2 id="appearance-heading">外观</h2><p class="muted">保存到这台设备。</p><div class="appearance-controls"><label>颜色模式<select id="appearance-theme"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></label><label>主题色<select id="appearance-accent"><option value="neutral">石墨</option><option value="blue">蓝色</option><option value="green">松绿</option><option value="purple">紫色</option></select></label><label>字号<select id="appearance-fontSize"><option value="14">小 · 14</option><option value="15">标准 · 15</option><option value="17">大 · 17</option><option value="19">特大 · 19</option></select></label></div></section>
         <div class="page-heading"><button type="button" class="button quiet account-back" id="account-back">← 返回对话</button><p class="eyebrow">个人设置</p><h1>账户与设备</h1><p class="muted">编辑显示资料，管理已登录设备和账户密码。撤销设备后，它需要重新登录。</p></div>
         <section class="card group" aria-labelledby="account-heading">
           <div class="group-heading"><div><h2 id="account-heading">账户</h2><p class="muted">同一个账户在多台设备之间使用。</p></div></div>
@@ -191,7 +196,7 @@
                 </select>
                 <p class="field-help" id="other-device-install-note">在另一台设备上扫描二维码，查看对应安装方式。</p>
                 <a id="other-device-platform-link" href="https://www.weftmate.com/downloads/?platform=android" target="_blank" rel="noopener noreferrer" aria-label="打开安卓下载页面">
-                  <img id="other-device-qr" src="https://www.weftmate.com/downloads/qr/android.svg" alt="安卓下载页面二维码" width="168" height="168">
+                  <img id="other-device-qr" alt="安卓下载页面二维码" width="168" height="168">
                 </a>
                 <p class="field-help" id="other-device-qr-status" role="status" hidden>二维码暂时无法显示，可直接打开官网继续。</p>
                 <p class="field-help" id="other-device-platform-status" hidden></p>

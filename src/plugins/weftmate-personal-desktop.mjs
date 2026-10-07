@@ -1,23 +1,23 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { defineTool } from '@deepseek-ai/dsh-tools';
+import { installModelSelection } from '@deepseek-ai/dsh-agent';
+import { trackNativeFiles, appendNativeArtifacts } from './personal-native-files.mjs';
+import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 
 export const name = 'weftmate-personal-desktop';
 export const PERSONAL_DESKTOP_PROTOCOL = 'weftmate.personal-desktop.v1';
-export const PERSONAL_DESKTOP_TOOL = 'personal_open_notepad';
-export const PERSONAL_DOCUMENT_TOOL = 'personal_save_document';
-export const PERSONAL_PROJECT_LIST_TOOL = 'personal_list_project_files';
-export const PERSONAL_PROJECT_READ_TOOL = 'personal_read_project_file';
-export const PERSONAL_BROWSER_OPEN_TOOL = 'personal_browser_open';
-export const PERSONAL_BROWSER_FOLLOW_TOOL = 'personal_browser_follow';
-export const PERSONAL_BROWSER_SEGMENT_TOOL = 'personal_browser_read_segment';
+// Names retained only to verify previously persisted project/browser evidence.
+const LEGACY_DOCUMENT_TOOL = 'personal_save_document';
+const LEGACY_PROJECT_READ_TOOL = 'personal_read_project_file';
+const LEGACY_BROWSER_OPEN_TOOL = 'personal_browser_open';
+const LEGACY_BROWSER_FOLLOW_TOOL = 'personal_browser_follow';
+const LEGACY_BROWSER_SEGMENT_TOOL = 'personal_browser_read_segment';
 const NATIVE_SESSION_TOOLS = new Set(['get_goal', 'create_goal', 'update_goal', 'ask_user_question']);
-const LEGACY_PERSONAL_TOOLS = new Set([PERSONAL_DESKTOP_TOOL, PERSONAL_DOCUMENT_TOOL, PERSONAL_PROJECT_LIST_TOOL,
-  PERSONAL_PROJECT_READ_TOOL, PERSONAL_BROWSER_OPEN_TOOL, PERSONAL_BROWSER_FOLLOW_TOOL, PERSONAL_BROWSER_SEGMENT_TOOL]);
 const executionToolName = name => typeof name === 'string' && /^[A-Za-z][A-Za-z0-9_.:-]{0,159}$/.test(name);
 export const PERSONAL_PROJECT_PROOF_PROTOCOL = 'weftmate.personal-project-proof.v1';
-export const inject = ['tools'];
+export const inject = ['tools', 'web'];
 const SAFE_ID = /^[A-Za-z0-9._:-]{1,160}$/;
 const SNAPSHOT_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 const SAFE_TOOL_ERRORS = new Set(['PERSONAL_TOOL_UNAVAILABLE', 'PERSONAL_TOOL_TIMEOUT',
@@ -37,52 +37,13 @@ const SAFE_TOOL_ERRORS = new Set(['PERSONAL_TOOL_UNAVAILABLE', 'PERSONAL_TOOL_TI
   'BROWSER_RENDERER_FAILED', 'BROWSER_TARGET_BLOCKED', 'BROWSER_URL_INVALID',
   'BROWSER_LINK_UNAVAILABLE', 'BROWSER_SOURCE_UNVERIFIED', 'BROWSER_DNS_TIMEOUT',
   'BROWSER_DOWNGRADE_BLOCKED', 'BROWSER_PAGE_CHANGED', 'BROWSER_CLEANUP_FAILED']);
-const READ_TOOLS = new Set([PERSONAL_PROJECT_READ_TOOL, PERSONAL_BROWSER_OPEN_TOOL,
-  PERSONAL_BROWSER_FOLLOW_TOOL, PERSONAL_BROWSER_SEGMENT_TOOL]);
+const READ_TOOLS = new Set([LEGACY_PROJECT_READ_TOOL, LEGACY_BROWSER_OPEN_TOOL,
+  LEGACY_BROWSER_FOLLOW_TOOL, LEGACY_BROWSER_SEGMENT_TOOL]);
 
 function refused(code) {
   const error = new Error(code);
   error.code = code;
   return error;
-}
-
-export function safeDocumentName(value) {
-  if (typeof value !== 'string') return null;
-  const fileName = value.normalize('NFC');
-  if (!fileName || Buffer.byteLength(fileName, 'utf8') > 160 || fileName.includes('..') ||
-      !/^[\p{L}\p{N}][\p{L}\p{N} _.-]*\.[\p{L}\p{N}][\p{L}\p{N}_-]*$/u.test(fileName)) return null;
-  const stem = fileName.slice(0, fileName.lastIndexOf('.'));
-  if (/[ .]$/.test(stem) || /^(?:CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?$/i.test(stem)) return null;
-  return fileName;
-}
-
-/** Identity comes from durable DSH events, never from model-provided arguments. */
-export function personalToolIdentity(exec) {
-  const session = exec?.agent?.session;
-  if (session?.header?.agentPreset !== 'personal-remote' || typeof session.id !== 'string' ||
-      !Array.isArray(session.events) || typeof exec.callId !== 'string' ||
-      !/^[A-Za-z0-9._:-]{1,160}$/.test(exec.callId)) throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  const events = session.events;
-  const callIndex = events.findLastIndex((event) => event?.type === 'tool/call' && event.data?.callId === exec.callId);
-  if (callIndex < 0) throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  const turn = events[callIndex]?.data?.turn;
-  if (!Number.isSafeInteger(turn) || turn < 0) throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  const startIndex = events.findLastIndex((event, index) => index < callIndex &&
-    event?.type === 'turn/start' && event.data?.turn === turn);
-  if (startIndex < 0) throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  const users = events.slice(startIndex + 1, callIndex).filter((event) =>
-    event?.type === 'user/message' && event.data?.source?.kind === 'user');
-  if (users.length !== 1) throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  const parts = users[0].data?.content;
-  if (!Array.isArray(parts) || !parts.length || parts.some((part) => part?.type !== 'text' || typeof part.text !== 'string')) {
-    throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  }
-  const text = parts.map((part) => part.text).join('');
-  if (!text.trim() || text.length > 8_192) throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  const receiptId = users[0].data?.source?.rpcId;
-  return { sessionId: session.id, turn, callId: exec.callId,
-    messageHash: createHash('sha256').update(text).digest('hex'),
-    ...(typeof receiptId === 'string' && SAFE_ID.test(receiptId) ? { receiptId } : {}) };
 }
 
 /** Nested script calls inherit only their real root tool call and original user receipt. */
@@ -141,7 +102,8 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250 }
   const disposers = [];
   let closed = false;
   const keyOf = (sessionId, approvalId) => `${sessionId}\u0000${approvalId}`;
-  const liveAgent = agent => agent?.session?.header?.agentPreset === 'personal-remote' &&
+  const liveAgent = agent => agent?.session?.header?.origin !== 'subagent' &&
+    agent?.session?.header?.agentPreset === 'personal-remote' &&
     ctx.get('agents')?.get(agent.session.id) === agent;
   const currentBinding = binding => {
     if (closed || !liveAgent(binding.agent)) return false;
@@ -160,14 +122,15 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250 }
         const identity = personalExecutionIdentity(exec);
         let calls = callsByAgent.get(exec.agent);
         if (!calls) { calls = new Map(); callsByAgent.set(exec.agent, calls); }
-        if (calls.size < 256) calls.set(exec.callId, { ...identity, toolName: exec.name,
+        calls.set(exec.callId, { ...identity, toolName: exec.name,
           argumentsHash: executionHash(exec.arguments) });
       } catch { /* Missing real tool/receipt identity cannot become an approval request. */ }
     }
     return next();
   }));
   disposers.push(ctx.on('approval/request', async (request, next) => {
-    if (request.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
+    if (request.agent?.session?.header?.origin === 'subagent' ||
+        request.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
     if (closed || !liveAgent(request.agent)) return 'unavailable';
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
     // The shipped WeftMod script producer asks through its shared "weftmod" approval seam.
@@ -280,8 +243,10 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250 }
 
 /** Runs after the original sandbox/approval gate. The host grants identity, never model arguments. */
 export async function trackPersonalExecution(bridge, exec, next, background = null, approvals = null) {
-  if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || NATIVE_SESSION_TOOLS.has(exec.name) ||
-      LEGACY_PERSONAL_TOOLS.has(exec.name)) return next();
+  // DSH owns delegated execution. The portal receipt authorizes the parent subagent call;
+  // the child's native prompt is not another personal/v1 command or account boundary.
+  if (exec.agent?.session?.header?.origin === 'subagent' ||
+      exec.agent?.session?.header?.agentPreset !== 'personal-remote' || NATIVE_SESSION_TOOLS.has(exec.name)) return next();
   if (!executionToolName(exec.name)) throw refused('TOOL_SOURCE_UNAVAILABLE');
   const identity = personalExecutionIdentity(exec);
   const payload = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments) };
@@ -442,12 +407,6 @@ export function createPersonalBackgroundTracker(ctx, bridge) {
   };
 }
 
-function projectIdentity(exec) {
-  const identity = personalToolIdentity(exec);
-  if (!identity.receiptId) throw refused('PERSONAL_TOOL_SOURCE_UNAVAILABLE');
-  return identity;
-}
-
 function safePublicUrl(value) {
   if (typeof value !== 'string' || Buffer.byteLength(value, 'utf8') > 2_048 ||
       /[\x00-\x1f\x7f]/.test(value)) return null;
@@ -455,17 +414,6 @@ function safePublicUrl(value) {
   try { parsed = new URL(value); } catch { return null; }
   return ['http:', 'https:'].includes(parsed.protocol) && !parsed.username && !parsed.password &&
     parsed.hostname ? value : null;
-}
-
-function safeQuery(value) {
-  return value === undefined ? '' : typeof value === 'string' &&
-    Buffer.byteLength(value, 'utf8') <= 200 && !/[\x00-\x1f\x7f]/.test(value) ? value : null;
-}
-
-function safeSnapshotIds(value) {
-  return value === undefined ? undefined : Array.isArray(value) && value.length <= 16 &&
-    value.every((id) => typeof id === 'string' && SNAPSHOT_ID.test(id)) &&
-    new Set(value).size === value.length ? value : null;
 }
 
 function proofRequest(frame) {
@@ -476,7 +424,7 @@ function proofRequest(frame) {
       ...(frame.beforeTool === undefined ? [] : ['beforeTool'])].sort().join(',') &&
     (frame.readTool === undefined || READ_TOOLS.has(frame.readTool)) &&
     (frame.beforeTool === undefined || ['personal_save_document',
-      PERSONAL_BROWSER_FOLLOW_TOOL, PERSONAL_BROWSER_SEGMENT_TOOL].includes(frame.beforeTool)) &&
+      LEGACY_BROWSER_FOLLOW_TOOL, LEGACY_BROWSER_SEGMENT_TOOL].includes(frame.beforeTool)) &&
     frame.protocol === PERSONAL_PROJECT_PROOF_PROTOCOL && typeof frame.id === 'string' &&
     /^proof-[0-9a-f-]{36}$/.test(frame.id) &&
     typeof frame.sessionId === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(frame.sessionId) &&
@@ -497,8 +445,8 @@ export function verifyStoredProjectRead(content, request) {
   let readResult = 0;
   let saveCall = 0;
   let previousSeq = -1;
-  const readTool = request.readTool ?? PERSONAL_PROJECT_READ_TOOL;
-  const beforeTool = request.beforeTool ?? PERSONAL_DOCUMENT_TOOL;
+  const readTool = request.readTool ?? LEGACY_PROJECT_READ_TOOL;
+  const beforeTool = request.beforeTool ?? LEGACY_DOCUMENT_TOOL;
   for (const line of Array.isArray(content) ? content : content.split('\n')) {
     if (typeof line === 'string' && !line.trim()) continue;
     let event;
@@ -542,7 +490,7 @@ export function verifyStoredProjectRead(content, request) {
       let value;
       try { value = JSON.parse(block.content[0].text); } catch { return false; }
       if (value?.snapshotId !== request.snapshotId || typeof value?.text !== 'string') return false;
-      if (readTool === PERSONAL_PROJECT_READ_TOOL) {
+      if (readTool === LEGACY_PROJECT_READ_TOOL) {
         if (typeof value.fileSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(value.fileSha256)) return false;
       } else if (typeof value.contentSha256 !== 'string' ||
           !/^[a-f0-9]{64}$/.test(value.contentSha256) ||
@@ -614,7 +562,7 @@ export class PersonalDesktopBridge {
         signal?.removeEventListener?.('abort', entry.abort);
         reject(error);
       };
-      const timeout = ['list_project', 'read_project', 'open_page', 'follow_link', 'read_segment'].includes(payload.action) ||
+      const timeout = ['browse', 'register_file', 'list_project', 'read_project', 'open_page', 'follow_link', 'read_segment'].includes(payload.action) ||
         payload.action === 'write_document' && payload.sourceSnapshotIds?.length > 0 ? 20_000 : 12_000;
       const timer = setTimeout(() => finish(refused('PERSONAL_TOOL_TIMEOUT')), timeout);
       const abort = () => finish(refused('PERSONAL_TOOL_CANCELLED'));
@@ -642,122 +590,48 @@ export class PersonalDesktopBridge {
   }
 }
 
+export function registerPersonalBrowserTool(ctx, bridge) {
+  return ctx.tools.register(defineTool({
+    name: 'browser',
+    description: 'Open a web page, read a captured segment, or follow a captured link.',
+    parameters: {
+      action: { type: 'string', required: true, enum: ['open', 'read', 'follow'] },
+      url: { type: 'string', description: 'URL to open.' },
+      snapshotId: { type: 'string', description: 'Capture returned by browser.' },
+      segmentIndex: { type: 'integer', description: 'Zero-based segment to read.' },
+      linkId: { type: 'string', description: 'Link from the capture to follow.' },
+    },
+    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
+    execute: (args, exec) => bridge.request({ ...args, ...personalExecutionIdentity(exec),
+      browserAction: args.action, action: 'browse' }, exec.signal),
+    presentCall: () => ({ card: 'generic', title: '浏览网页', kind: 'execute' }),
+  }));
+}
+
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
+  const webExecution = new AsyncLocalStorage();
+  const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge,
+    () => webExecution.getStore(), personalExecutionIdentity));
+  // The pinned driver copies static AgentOptions, while the personal UI selects
+  // models through DSH's scoped selection. Initialize a native child before its
+  // loop starts, using the parent's actual request configuration and DSH's helper.
+  ctx.on('agent/created', ({ agent }) => {
+    if (agent?.session?.header?.origin !== 'subagent' || agent.session.header.agentPreset !== 'personal-remote') return;
+    const parent = ctx.get('agents')?.get(agent.session.header.parentSession);
+    const config = agent.session.requestHeader?.()?.config ?? parent?.session?.requestHeader?.()?.config;
+    if (typeof config?.provider !== 'string' || typeof config?.model !== 'string') throw refused('MODEL_UNAVAILABLE');
+    installModelSelection(agent.ctx, { current: { provider: config.provider, model: config.model,
+      ...(config.reasoningEffort === undefined ? {} : { reasoningEffort: config.reasoningEffort }) }, assembled: undefined });
+  });
   const disposeProof = installProofBridge(ctx);
   const background = createPersonalBackgroundTracker(ctx, bridge);
   const approvals = installPersonalApprovalBridge(ctx, bridge);
-  ctx.on('tools/execute', (exec, next) => trackPersonalExecution(bridge, exec, next, background, approvals));
-  const disposeTool = ctx.tools.register(defineTool({
-    name: PERSONAL_DESKTOP_TOOL,
-    description: 'Only when the latest user explicitly asks to open Notepad on their computer. Opens the fixed Notepad app and returns a durable command state; never accepts a path or shell command.',
-    parameters: { appId: { type: 'string', required: true, enum: ['notepad'] } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: async (args, exec) => {
-      if (args?.appId !== 'notepad') throw refused('PERSONAL_TOOL_INVALID');
-      const identity = personalToolIdentity(exec);
-      return bridge.request({ ...identity, appId: 'notepad' }, exec.signal);
-    },
-    presentCall: () => ({ card: 'generic', title: '打开记事本', kind: 'execute' }),
-  }));
-  const disposeDocument = ctx.tools.register(defineTool({
-    name: PERSONAL_DOCUMENT_TOOL,
-    description: 'Save one UTF-8 text document requested by the current user. Give a simple Chinese or English filename with its original extension (for example .md, .txt, .csv, .tsv, .json or .xml) and the complete text, up to 128 KiB. The content must be nonempty text without NUL characters; the extension does not enable binary files. The host chooses the storage path, preserves the filename and verifies the saved text. CSV and TSV use their text media types; other extensions use text/plain.',
-    parameters: { fileName: { type: 'string', required: true }, content: { type: 'string', required: true },
-      sourceSnapshotIds: { type: 'array', items: { type: 'string' },
-        description: 'For project or browser summaries, provide snapshot IDs returned by successful reads in this same turn.' } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: async (args, exec) => {
-      const fileName = safeDocumentName(args?.fileName);
-      if (!fileName || typeof args?.content !== 'string' || !args.content.length ||
-          Buffer.byteLength(args.content, 'utf8') > 128 * 1024 || args.content.includes('\0') ||
-          Buffer.from(args.content, 'utf8').toString('utf8') !== args.content) throw refused('PERSONAL_TOOL_INVALID');
-      const sourceSnapshotIds = safeSnapshotIds(args?.sourceSnapshotIds);
-      if (sourceSnapshotIds === null) throw refused('PERSONAL_TOOL_INVALID');
-      const identity = personalToolIdentity(exec);
-      return bridge.request({ action: 'write_document', ...identity, fileName,
-        content: args.content, ...(sourceSnapshotIds === undefined ? {} : { sourceSnapshotIds }) }, exec.signal);
-    },
-    presentCall: () => ({ card: 'generic', title: '保存文档', kind: 'execute' }),
-  }));
-  const disposeList = ctx.tools.register(defineTool({
-    name: PERSONAL_PROJECT_LIST_TOOL,
-    description: 'List a bounded set of UTF-8 Markdown/plain-text files in the project selected by the user. Use an optional short search query. Returns opaque fileId values; never pass or request an absolute path.',
-    parameters: { query: { type: 'string', description: 'Optional short filename query (up to 200 UTF-8 bytes).' } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: async (args, exec) => {
-      const query = safeQuery(args?.query);
-      if (query === null) throw refused('PERSONAL_TOOL_INVALID');
-      return bridge.request({ action: 'list_project', ...projectIdentity(exec), query }, exec.signal);
-    },
-    presentCall: () => ({ card: 'generic', title: '查找项目资料', kind: 'execute' }),
-  }));
-  const disposeRead = ctx.tools.register(defineTool({
-    name: PERSONAL_PROJECT_READ_TOOL,
-    description: 'Read one bounded page of a project file selected by opaque fileId from personal_list_project_files. Specify a 1-based startLine for later pages. Read every needed page before citing or summarizing its contents.',
-    parameters: { fileId: { type: 'string', required: true },
-      startLine: { type: 'integer', description: '1-based first line; omit for the first page.' } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: async (args, exec) => {
-      if (typeof args?.fileId !== 'string' || !/^file-[a-f0-9]{48}$/.test(args.fileId) ||
-          (args.startLine !== undefined && (!Number.isSafeInteger(args.startLine) ||
-            args.startLine < 1 || args.startLine > 1_000_000))) throw refused('PERSONAL_TOOL_INVALID');
-      return bridge.request({ action: 'read_project', ...projectIdentity(exec), fileId: args.fileId,
-        ...(args.startLine === undefined ? {} : { startLine: args.startLine }) }, exec.signal);
-    },
-    presentCall: () => ({ card: 'generic', title: '读取项目资料', kind: 'execute' }),
-  }));
-  const disposeBrowserOpen = ctx.tools.register(defineTool({
-    name: PERSONAL_BROWSER_OPEN_TOOL,
-    description: 'Read one public HTTP/HTTPS page that belongs to the current user browser task. The host checks the user-submitted URL, public network destination and real rendered page. Returns bounded visible text and observed link IDs. Never accepts JavaScript, cookies or browser actions.',
-    parameters: { url: { type: 'string', required: true,
-      description: 'Public page URL from the current user request; no local or private address.' } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: async (args, exec) => {
-      const url = safePublicUrl(args?.url);
-      if (!url) throw refused('PERSONAL_TOOL_INVALID');
-      return bridge.request({ action: 'open_page', ...projectIdentity(exec), url }, exec.signal);
-    },
-    presentCall: () => ({ card: 'generic', title: '阅读公共网页', kind: 'execute' }),
-  }));
-  const disposeBrowserFollow = ctx.tools.register(defineTool({
-    name: PERSONAL_BROWSER_FOLLOW_TOOL,
-    description: 'Follow one link ID actually observed in a successful page snapshot of this same browser task. Pass only the prior snapshotId and linkId; the host resolves the URL. Never invent a link or provide a script, click target, form or download.',
-    parameters: { snapshotId: { type: 'string', required: true },
-      linkId: { type: 'string', required: true } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: async (args, exec) => {
-      if (typeof args?.snapshotId !== 'string' || !/^source-[a-f0-9]{48}$/.test(args.snapshotId) ||
-          typeof args?.linkId !== 'string' || !/^link-[a-f0-9]{40}$/.test(args.linkId)) {
-        throw refused('PERSONAL_TOOL_INVALID');
-      }
-      return bridge.request({ action: 'follow_link', ...projectIdentity(exec),
-        snapshotId: args.snapshotId, linkId: args.linkId }, exec.signal);
-    },
-    presentCall: () => ({ card: 'generic', title: '沿已读链接继续阅读', kind: 'execute' }),
-  }));
-  const disposeBrowserSegment = ctx.tools.register(defineTool({
-    name: PERSONAL_BROWSER_SEGMENT_TOOL,
-    description: 'Read one 0-based segment (0..31) from a frozen page capture already read in this same turn. Pass its exact source snapshotId and segmentIndex. The host checks the committed parent read, owner, task, receipt and capture version; this cannot navigate to a new URL. Cite only segments actually returned.',
-    parameters: { snapshotId: { type: 'string', required: true },
-      segmentIndex: { type: 'integer', required: true } },
-    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
-    execute: async (args, exec) => {
-      if (typeof args?.snapshotId !== 'string' || !/^source-[a-f0-9]{48}$/.test(args.snapshotId) ||
-          !Number.isSafeInteger(args.segmentIndex) || args.segmentIndex < 0 || args.segmentIndex > 31) {
-        throw refused('PERSONAL_TOOL_INVALID');
-      }
-      return bridge.request({ action: 'read_segment', ...projectIdentity(exec),
-        snapshotId: args.snapshotId, segmentIndex: args.segmentIndex }, exec.signal);
-    },
-    presentCall: () => ({ card: 'generic', title: '读取网页段落', kind: 'execute' }),
-  }));
-  const disposeGuard = ctx.tools.guard((exec) => [PERSONAL_DESKTOP_TOOL, PERSONAL_DOCUMENT_TOOL,
-    PERSONAL_PROJECT_LIST_TOOL, PERSONAL_PROJECT_READ_TOOL,
-    PERSONAL_BROWSER_OPEN_TOOL, PERSONAL_BROWSER_FOLLOW_TOOL, PERSONAL_BROWSER_SEGMENT_TOOL].includes(exec.name) &&
-    exec.agent?.session?.header?.agentPreset !== 'personal-remote' ? 'PERSONAL_TOOL_SCOPE_DENIED' : undefined);
-  ctx.effect(() => () => { disposeGuard(); disposeBrowserSegment(); disposeBrowserFollow(); disposeBrowserOpen(); disposeRead();
-    disposeList(); disposeDocument(); disposeTool(); disposeProof(); approvals.close(); background.close(); bridge.close(); }, 'weftmate-personal-desktop: lifecycle');
+  ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
+    () => trackPersonalExecution(bridge, exec, next, background, approvals), personalExecutionIdentity)));
+  ctx.on('tools/post-execute', appendNativeArtifacts);
+  ctx.effect(() => () => { disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
+    'weftmate-personal-desktop: lifecycle');
 }
 
 export default { name, inject, apply };

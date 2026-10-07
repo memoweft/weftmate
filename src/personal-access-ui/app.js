@@ -145,6 +145,8 @@
   state.setupGrant = takeSetupGrant()
 
   function show(view) {
+    if (view !== state.currentView) window.WeftDesktop?.closePreview(false)
+    byId('account-menu').hidden = true
     closeModelMenu()
     if (view !== 'assistant') stopVoiceInput()
     if (view !== 'assistant' && state.currentView === 'assistant') cancelAttachmentUpload()
@@ -233,6 +235,10 @@
     state.account = null
     state.device = null
     byId('account-name').textContent = ''
+    byId('rail-account-name').textContent = '我的账户'
+    byId('rail-avatar-image').removeAttribute('src'); byId('rail-avatar-image').hidden = true
+    byId('rail-avatar-initial').textContent = 'W'; byId('rail-avatar-initial').hidden = false
+    byId('session-search').value = ''
     byId('device-list').replaceChildren()
     if (byId('password-dialog').open) byId('password-dialog').close()
     if (byId('revoke-dialog').open) byId('revoke-dialog').close()
@@ -385,6 +391,13 @@
     state.csrfToken = payload.csrfToken
     void refreshPendingDevices()
     byId('account-name').textContent = payload.account.username
+    const name = payload.account.displayName || payload.account.username
+    byId('rail-account-name').textContent = name
+    byId('rail-avatar-initial').textContent = Array.from(name)[0] || 'W'
+    const avatar = payload.account.avatar, image = byId('rail-avatar-image')
+    image.hidden = !avatar; byId('rail-avatar-initial').hidden = !!avatar
+    if (avatar) image.src = `data:${avatar.mimeType};base64,${avatar.dataBase64}`
+    else image.removeAttribute('src')
     if (state.currentView === 'account') resetProfileDraft()
   }
   function accountToken() {
@@ -1998,7 +2011,7 @@
       state.attachmentUpload = null
       setAttachmentStatus('原件已保存，正在发送消息…')
       updateAvailability()
-      return await submitCommand('session.message', { sessionId, text, mode: 'queue',
+      return await submitCommand('session.message', { sessionId, text, mode: composerInputMode(sessionId),
         ...(staged.length ? { attachments: staged } : {}), attachmentMessageId: messageId,
         originalAttachments: originals }, sessionId, attempt.requestId)
     } catch (error) {
@@ -2216,6 +2229,14 @@
       !state.capabilities.desktopOpenApp.appIds?.includes('notepad') || state.submitting || state.unresolvedSubmission
     byId('cancel-turn').hidden = phoneChat || !selected?.running
     byId('cancel-turn').disabled = !state.online || !selected?.running || state.cancelSubmitting
+    const running = (phoneChat ? boundSession : selected)?.running === true
+    byId('message-mode').hidden = !running
+    const send = byId('send-message')
+    send.classList.toggle('is-stop', running)
+    send.dataset.action = running ? 'stop' : 'send'
+    send.setAttribute('aria-label', running ? '停止' : '发送')
+    send.title = running ? '停止 · Esc' : '发送 · Enter'
+    if (running) { send.textContent = '停止'; send.disabled = !state.online || state.cancelSubmitting }
     const hint = byId('model-hint')
     if (phoneChat && bound) hint.textContent = state.phoneSendNotice || ''
     else if (phoneChat) hint.textContent = pendingPhone && !pendingHere
@@ -2280,33 +2301,42 @@
     const linkedSessionIds = new Set(phone.map((record) => phoneBinding(record.id)?.sessionId).filter(Boolean))
     if (!state.sessions.length && !phone.length) { byId('sessions-status').textContent = '还没有会话。'; return }
     byId('sessions-status').textContent = ''
-    for (const session of state.sessions) {
+    const query = (byId('session-search').value || '').normalize('NFKC').trim().toLocaleLowerCase()
+    let currentGroup = null, matches = 0
+    for (const session of window.WeftDesktop?.sortSessions(state.sessions) || state.sessions) {
       if (!sessionIdPattern.test(session.sessionId) || linkedSessionIds.has(session.sessionId)) continue
+      const title = typeof session.title === 'string' && session.title ? session.title : '新对话'
+      if (query && !title.normalize('NFKC').toLocaleLowerCase().includes(query)) continue
+      const group = window.WeftDesktop?.sessionGroup(session) || '会话'
+      if (window.WeftDesktop && group !== currentGroup) { list.append(element('li', 'session-group', group)); currentGroup = group }
+      matches++
       const row = element('li')
       const button = element('button', state.activeChatSource === 'desktop' &&
         session.sessionId === state.selectedSessionId ? 'is-current' : '')
       button.type = 'button'
-      const model = state.models.find((item) => item.id === session.modelProfileId)
-      button.append(element('span', 'session-title', typeof session.title === 'string' && session.title ? session.title : '新对话'),
-        element('small', 'session-source', `电脑 · ${model?.name || '电脑模型'}`))
+      const label = element('span', 'session-title')
+      label.append(element('span', 'session-title-text', title)); button.append(label)
       if (session.running) { const dot = element('span', 'session-running-dot'); dot.setAttribute('aria-label', '正在运行'); button.children[0].append(dot) }
+      if ([...conversationApprovals.entries.values()].some(entry => entry.row.sessionId === session.sessionId && entry.row.status === 'pending')) {
+        const dot = element('span', 'session-pending-dot'); dot.setAttribute('aria-label', '等待审批'); label.append(dot)
+      }
       button.addEventListener('click', () => { void selectSession(session.sessionId) })
       row.append(button)
       list.append(row)
     }
     for (const record of phone) {
+      if (query && !phoneDisplayTitle(record).normalize('NFKC').toLocaleLowerCase().includes(query)) continue
+      matches++
       const row = element('li')
       const button = element('button', state.activeChatSource === 'phone' &&
         record.id === state.selectedPhoneConversationId ? 'is-current' : '')
       button.type = 'button'
-      button.append(element('span', 'session-title', phoneDisplayTitle(record)),
-        element('small', 'session-source', phoneBinding(record.id)
-          ? `手机起步 · ${state.models.find((item) => item.id === phoneBinding(record.id).modelProfileId)?.name || '电脑模型'}续聊`
-          : '手机 · MiMo'))
+      button.append(element('span', 'session-title', phoneDisplayTitle(record)))
       button.addEventListener('click', () => { selectPhoneConversation(record.id) })
       row.append(button)
       list.append(row)
     }
+    byId('sessions-status').textContent = matches ? '' : '没有找到会话。'
   }
   async function refreshSessions() {
     const payload = await accessApi('/sessions')
@@ -2407,8 +2437,8 @@
       const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
       if (event.type === 'user.message' && receiptIdPattern.test(event.data?.receiptId || '')) row.dataset.receiptId = event.data.receiptId
       row.dataset.seq = String(event.seq)
-      row.append(element('span', 'message-label', event.type === 'user.message' ? '你' : 'WeftMate'))
-      if (typeof event.data?.text === 'string' && event.data.text) row.append(element('span', 'message-text', event.data.text))
+      if (typeof event.data?.text === 'string' && event.data.text) row.append(event.type === 'assistant.message' && window.WeftDesktop
+        ? window.WeftDesktop.markdown(event.data.text, 'message-text markdown-body') : element('span', 'message-text', event.data.text))
       if (images.length) {
         const gallery = element('div', 'synced-image-gallery')
         const previewScope = { ownerId: state.ownerId, identityGeneration: state.identityGeneration,
@@ -2455,17 +2485,32 @@
   function renderTurnStatus() {
     if (state.activeChatSource === 'phone') return
     const status = byId('timeline-status')
+    const isRunning = state.turnStatus === 'running' && state.sessions.find(item => item.sessionId === state.selectedSessionId)?.running === true
+    status.classList.toggle('is-running', isRunning)
     if (state.historyHasMore) {
       status.textContent = '正在补读会话历史，尚未核对到本轮结束。'
       return
     }
     switch (state.turnStatus) {
-      case 'running': status.textContent = state.sessions.find((item) => item.sessionId === state.selectedSessionId)?.running === true
-        ? '助手正在处理，结果以会话历史为准。' : '这轮对话尚无结束记录，请核对实际结果。'; break
+      case 'running': {
+        if (!isRunning) { status.textContent = '这轮对话尚无结束记录。请核对结果后继续。'; break }
+        const events = [...state.historyEvents.values()].sort((a, b) => a.seq - b.seq)
+        const started = events.filter(e => e.type === 'turn.started').at(-1)
+        const elapsed = Date.now() - Date.parse(started?.at)
+        const duration = Number.isFinite(elapsed) && elapsed >= 0 ? ` ${Math.floor(elapsed / 60000)}分${Math.floor(elapsed % 60000 / 1000)}秒` : ''
+        const steps = new Map()
+        for (const event of events) {
+          const data = event.type.startsWith('step.') ? event.data : event.data?.completedStep
+          if (data?.stepId && (!started || event.seq > started.seq)) steps.set(data.stepId, data)
+        }
+        const currentStep = [...steps.values()].filter(step => step.state === 'running').at(-1)
+        status.textContent = `正在处理…${duration}${currentStep?.summary ? ` · ${currentStep.summary}` : ''}`
+        break
+      }
       case 'aborted': status.textContent = '本轮已停止。如需继续，请重新发送。'; break
       case 'blocked': status.textContent = '本轮因执行受限而停止，目标尚未确认完成。'; break
       case 'error': status.textContent = state.turnEndReasonKind === 'max-tokens'
-        ? '本轮因输出限制结束，可继续对话。' : '本轮运行失败，未看到完整回复。请在电脑核对后再试。'; break
+        ? '回复达到长度限制。发送“继续”接着处理。' : '这次处理未完成。请重试，或到设置检查模型。'; break
       case 'unknown': status.textContent = '本轮结束状态尚不明确，请在电脑核对。'; break
       default: status.textContent = ''
     }
@@ -2542,6 +2587,7 @@
   }
   async function selectSession(sessionId) {
     if (!sessionIdPattern.test(sessionId)) return
+    window.WeftDesktop?.closePreview(false)
     const linked = phoneConversations().find((record) => phoneBinding(record.id)?.sessionId === sessionId)
     if (linked) { selectPhoneConversation(linked.id); return }
     const fromPhone = state.activeChatSource === 'phone'
@@ -2834,6 +2880,7 @@
       card.dataset.signature = signature; card.dataset.scope = scope
       card.replaceChildren()
       card.append(element('strong', 'conversation-task-title', `${executionName(row)} · ${row.status === 'pending' ? '需要你批准' : '审批回执'}`))
+      card.classList.toggle('is-resolved', row.status !== 'pending')
       const reason = element('p', 'conversation-approval-reason', row.reason.trim() || '执行端请求你批准这次操作。'); reason.hidden = row.status !== 'pending'; card.append(reason)
       const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，请重新核对答复。' : '')
       const status = element('p', 'conversation-approval-status', row.status === 'pending' && operation ? '正在提交本次决定…'
@@ -3213,7 +3260,8 @@
         row?.taskId === entry.taskId && row.sessionId === context.sessionId && sessionIdPattern.test(row.artifactId || ''))
       const control = payload?.control
       const outputLimited = payload?.replyEvidence?.status === 'failed' && payload.replyEvidence.endReasonKind === 'max-tokens'
-      const hasTimeline = timelineEventsForContext(context).some(e => e.type.startsWith('step.') && e.data?.taskId === `turn-${payload?.source?.dshTurn}`)
+      const turn = payload?.source?.dshTurn ?? payload?.replyEvidence?.turn
+      const hasTimeline = Number.isSafeInteger(turn) && timelineEventsForContext(context).some(e => e.type.startsWith('step.') && e.data?.taskId === `turn-${turn}`)
       const visible = entry.notice || !hasTimeline && steps.length || artifacts.length || payload?.sources?.length || control?.canStop || control && control.state !== 'active' || outputLimited
       let card = [...list.children].find((row) => row.dataset?.conversationTask === entry.taskId)
       if (!visible) { card?.remove(); continue }
@@ -3238,6 +3286,7 @@
       const expanded = card.querySelector?.('details')?.open === true
       card.dataset.signature = signature
       card.dataset.scope = scope
+      card.classList.toggle('has-timeline', hasTimeline && !entry.notice && !outputLimited && control?.state === 'active')
       card.replaceChildren()
       card.append(element('strong', 'conversation-task-title', entry.notice ? '工具进展 · 待更新'
         : outputLimited && !steps.length && !artifacts.length ? '回复状态' : '工具进展'))
@@ -3403,10 +3452,19 @@
     open.type = 'button'; open.addEventListener('click', () => { void openTimelinePreview(context,
       `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件') })
     const download = element('a', 'button quiet small', '下载'); download.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; download.download = artifact.fileName || '成果文件'
-    line.append(open, element('small', '', `${artifact.contentType || '文件'} · ${artifact.size || 0} 字节`), download); parent.append(line)
+    line.append(open, element('small', '', window.WeftDesktop?.fileLabel(artifact) || `文件 · ${artifact.size || 0} 字节`), download); parent.append(line)
   }
   async function openTimelinePreview(context, path, title) {
     if (!conversationTaskCurrent(context)) return
+    if (window.WeftDesktop) {
+      const preview = window.WeftDesktop.openPreview(title)
+      try { const data = await accessApi(path)
+        if (!conversationTaskCurrent(context) || !preview.panel.isConnected) return
+        const text = data.text || data.preview?.text || data.source?.text || '暂时没有可预览内容'
+        preview.content.replaceChildren(window.WeftDesktop.markdown(text))
+      } catch { if (preview.panel.isConnected) preview.content.textContent = '暂时无法读取。关闭后重试。' }
+      return
+    }
     document.querySelector('.timeline-preview')?.remove()
     const panel = element('aside', 'timeline-preview'), close = element('button', 'button quiet small', '关闭预览'), text = element('pre', 'timeline-raw', '正在读取…')
     close.type = 'button'; close.addEventListener('click', () => panel.remove())
@@ -3421,6 +3479,7 @@
     if (!window.WeftTimeline) return
     const context = conversationTaskContext(), sessionId = context.sessionId
     window.WeftTimeline.render(events, byId('transcript'), {
+      fileLabel: window.WeftDesktop?.fileLabel,
       mobile: window.matchMedia?.('(max-width: 640px)').matches === true,
       readDetail: seq => accessApi(`/sessions/${encodeURIComponent(sessionId)}/events/${seq}/detail`),
       openArtifact: artifact => openTimelinePreview(context, `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件'),
@@ -3469,7 +3528,7 @@
       forgetMarker(command.requestId)
     }
     const locked = command.kind !== 'desktop.open_app' && (pending || command.state === 'uncertain')
-    operation(commandStatus(command), locked, command.requestId, command.state === 'uncertain')
+    operation(command.state === 'accepted_by_dsh' && ['session.create', 'session.message'].includes(command.kind) ? '' : commandStatus(command), locked, command.requestId, command.state === 'uncertain')
     if (command.kind === 'session.create' && command.state === 'accepted_by_dsh' && command.sessionId) {
       void refreshSessions().then(() => selectSession(command.sessionId))
     }
@@ -3679,7 +3738,7 @@
       updateAvailability()
       try {
         const command = await submitCommand('session.message',
-          { sessionId: bound.sessionId, text, mode: 'queue' }, bound.sessionId)
+          { sessionId: bound.sessionId, text, mode: composerInputMode(bound.sessionId) }, bound.sessionId)
         if (state.ownerId !== owner || state.identityGeneration !== generation ||
             state.selectedPhoneConversationId !== conversationId || state.activeChatSource !== 'phone') return
         if (command?.state === 'accepted_by_dsh') {
@@ -3829,6 +3888,7 @@
     if (!scope || scope.ownerId !== state.ownerId || scope.identityGeneration !== state.identityGeneration ||
         scope.source !== state.activeChatSource || scope.conversationId !==
           (scope.source === 'phone' ? state.selectedPhoneConversationId : state.selectedSessionId)) return
+    if (window.WeftDesktop) { window.WeftDesktop.showImage(url, name, button); return }
     const preview = ensurePhoneImagePreview()
     preview.returnFocus = button
     preview.scope = scope
@@ -4015,7 +4075,8 @@
         ? event.sourceDeviceId === state.device?.id ? '你 · 电脑同步' : '你 · 手机 MiMo'
         : 'WeftMate · 手机 MiMo'))
       const display = phoneMessageText(event.payload.text)
-      if (display.text) row.append(element('span', 'message-text', display.text))
+      if (display.text) row.append(event.payload.role === 'assistant' && window.WeftDesktop
+        ? window.WeftDesktop.markdown(display.text, 'message-text markdown-body') : element('span', 'message-text', display.text))
       const attachments = Array.isArray(event.payload.attachments) ? event.payload.attachments : []
       const gallery = element('div', 'synced-image-gallery')
       for (const attachment of attachments) {
@@ -4082,7 +4143,8 @@
         row.dataset.seq = String(event.seq)
       row.append(element('span', 'message-label', event.type === 'user.message'
           ? '你 · 电脑续聊' : 'WeftMate · 电脑模型'))
-        if (text) row.append(element('span', 'message-text', text))
+        if (text) row.append(event.type === 'assistant.message' && window.WeftDesktop
+          ? window.WeftDesktop.markdown(text, 'message-text markdown-body') : element('span', 'message-text', text))
         for (const image of images) {
           const url = /^sha256:[a-f0-9]{64}$/.test(image?.attachmentId || '') &&
             ['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(image?.contentType)
@@ -4107,6 +4169,7 @@
     updateAvailability()
   }
   function selectPhoneConversation(conversationId) {
+    window.WeftDesktop?.closePreview(false)
     if (!syncIdPattern.test(conversationId) || !phoneConversations().some((item) => item.id === conversationId)) return
     if (state.activeChatSource === 'desktop') {
       state.desktopDraft = byId('message-text').value
@@ -4777,13 +4840,15 @@
   })
   byId('memory-confirm-action').addEventListener('click', () => { void submitMemoryAction() })
   byId('rail-open').addEventListener('click', () => {
+    if (window.WeftDesktop && !window.matchMedia?.('(max-width: 640px)').matches) { window.WeftDesktop.toggleRail(); return }
+    window.WeftDesktop?.toggleRail(false)
     byId('session-rail').classList.add('is-open')
     byId('rail-backdrop').hidden = false
     byId('rail-open').setAttribute('aria-expanded', 'true')
   })
   byId('load-older').addEventListener('click', () => { void loadOlderHistory() })
   byId('chat-scroll').addEventListener('scroll', () => { if (byId('chat-scroll').scrollTop < 40) void loadOlderHistory() })
-  byId('rail-close').addEventListener('click', closeRail)
+  byId('rail-close').addEventListener('click', () => { closeRail(); window.WeftDesktop?.toggleRail(true) })
   byId('rail-backdrop').addEventListener('click', closeRail)
   byId('show-phone').addEventListener('click', () => { void showPhonePane() })
   byId('rail-phone').addEventListener('click', () => { void showPhonePane() })
@@ -4814,11 +4879,8 @@
     if (event.key === 'Escape' && !byId('model-popover').hidden) { event.preventDefault(); closeModelMenu(true) }
   })
   byId('message-text').addEventListener('input', updateAvailability)
-  byId('message-attachments').addEventListener('change', (event) => {
-    const input = event.currentTarget
+  function addAttachmentFiles(selected) {
     const key = attachmentDraftKey()
-    const selected = [...(input.files || [])]
-    input.value = ''
     if (!key || state.activeChatSource !== 'desktop' || state.attachmentUpload || selected.length === 0) return
     const drafts = [...currentAttachmentDrafts()]
     let rejected = 0
@@ -4839,6 +4901,10 @@
     state.attachmentStatus = rejected ? '部分文件未添加：每次最多 4 个，单个须为 1 B–1 GiB，名称不能含路径字符。' : ''
     renderAttachmentDrafts()
     updateAvailability()
+  }
+  byId('message-attachments').addEventListener('change', (event) => {
+    const input = event.currentTarget, selected = [...(input.files || [])]
+    input.value = ''; addAttachmentFiles(selected)
   })
   byId('attachment-cancel').addEventListener('click', () => cancelAttachmentUpload(true))
   byId('new-session').addEventListener('click', async () => {
@@ -4846,8 +4912,10 @@
     closeRail()
     await submitCommand('session.create', { modelProfileId: state.modelProfileId })
   })
-  byId('message-form').addEventListener('submit', async (event) => {
-    event.preventDefault()
+  function composerInputMode(sessionId) {
+    return state.sessions.find(item => item.sessionId === sessionId)?.running ? byId('message-mode').value || 'steer' : 'queue'
+  }
+  async function sendDraft() {
     if (state.activeChatSource === 'phone') return sendPhoneMessage()
     const text = byId('message-text').value
     const attachments = currentAttachmentDrafts()
@@ -4855,13 +4923,24 @@
       state.capabilities?.chat?.available !== true ||
       state.sessions.find((item) => item.sessionId === state.selectedSessionId)?.sendAvailable !== true) return
     if (attachments.length) return sendDesktopMessageWithAttachments(text)
-    const sent = await submitCommand('session.message', { sessionId: state.selectedSessionId, text, mode: 'queue' }, state.selectedSessionId)
+    const sent = await submitCommand('session.message', { sessionId: state.selectedSessionId, text,
+      mode: composerInputMode(state.selectedSessionId) }, state.selectedSessionId)
     if (sent) { byId('message-text').value = ''; updateAvailability() }
+  }
+  byId('message-form').addEventListener('submit', async (event) => {
+    event.preventDefault()
+    if (event.submitter?.id === 'send-message' && byId('send-message').dataset.action === 'stop') return stopCurrentTurn()
+    return sendDraft()
   })
-  byId('cancel-turn').addEventListener('click', async () => {
-    if (state.activeChatSource === 'desktop' && state.selectedSessionId)
-      await submitCommand('session.cancel', { sessionId: state.selectedSessionId }, state.selectedSessionId)
-  })
+  async function stopCurrentTurn() {
+    const session = state.activeChatSource === 'phone' ? phoneBinding()?.sessionId : state.selectedSessionId
+    if (session && state.sessions.find(item => item.sessionId === session)?.running && !state.cancelSubmitting)
+      await submitCommand('session.cancel', { sessionId: session }, session)
+  }
+  byId('cancel-turn').addEventListener('click', stopCurrentTurn)
+  window.WeftDesktop?.init({ renderSessions, openAccount, sendDraft, addFiles: addAttachmentFiles,
+    stop: stopCurrentTurn, isAssistant: () => state.currentView === 'assistant' })
+  if (window.WeftDesktop) setInterval(() => { if (state.currentView === 'assistant' && state.turnStatus === 'running') renderTurnStatus() }, 1000)
   byId('open-notepad').addEventListener('click', async () => {
     const blocker = desktopBlocker()
     if (blocker) {
