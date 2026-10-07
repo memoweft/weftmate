@@ -16,7 +16,7 @@ async function signed(route, data) {
   const proof = await new SignJWT({ action: route, ...data }).setProtectedHeader({ alg: 'ES256', typ: 'wm-host-request+jwt' })
     .setIssuer(state.hostId).setAudience(issuer).setIssuedAt().setExpirationTime('60s').setJti(randomUUID())
     .sign(await importJWK(state.installation.privateJwk, 'ES256'));
-  const result = await fetch(`${issuer.slice(0, -5)}${route}`, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(15_000),
+  const result = await fetch(`${issuer.slice(0, -5)}${route}`, { method: 'POST', redirect: 'error', signal: AbortSignal.timeout(125_000),
     headers: { 'content-type': 'application/json', origin: new URL(issuer).origin }, body: JSON.stringify({ hostId: state.hostId, proof }) });
   if (!result.ok) throw new Error(`ACME cloud operation failed: ${result.status}`);
   return result.json();
