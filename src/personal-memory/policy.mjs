@@ -1,6 +1,7 @@
 import { FORMAL_LOCAL_BASE_URL } from '../local-model-config.mjs';
 import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
 import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
+import { modelTierFor } from '../model-tier.ts';
 
 function profileRouteFingerprint(profile) {
   if (typeof profile?.baseUrl !== 'string' || typeof profile?.model !== 'string') return null;
@@ -47,4 +48,9 @@ export function memoryRecallDestination({ binding, described, boundProfileId, pr
     return { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
   }
   return memorySessionPolicy({ binding, described, selected: { profile: matches[0] }, access });
+}
+
+/** Use the saved endpoint and explicit user override; route authorization is separate. */
+export function memoryRecallModelTier(profile) {
+  return modelTierFor(profile);
 }
