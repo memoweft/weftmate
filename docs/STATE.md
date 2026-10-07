@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows | M0-3 历史分页 + M1-0a 时间线完成 | `wp/m0-3-timeline` 待审：首屏尾页 / 上翻 / 增量、原生时间线投影、桌面 / 手机对话内执行；任务页与详情弹窗已删除；Android code14 / UI 0.8.1 |
+| Codex · Windows | M0-3 历史分页 + M1-0a 时间线完成 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 待审：首屏尾页 / 上翻 / 增量、原生时间线投影、桌面 / 手机对话内执行；任务页与详情弹窗已删除；Android code14 / UI 0.8.1 |
 | Codex · Mac | H1 HealthKit 读取与每日健康摘要 | `wp/h1-healthkit`：iPhone 账号菜单健康设置、8 类只读权限、本地每日摘要/14 天基线、云端选择/自评频率、隔离持久队列与删除待办已实现；Core 253 项、状态检查 10 组及三目标构建通过；iOS 隔离模拟器 HealthKit 合成样本与设置 UI 场景 2 项通过；服务端草案待 Windows 实现；仓库 CI 在 release:preflight 因现有 npm 依赖审计失败（main 同样失败）；[PR #22](https://github.com/memoweft/weftmate/pull/22) 待审 |
 
 已完成：
