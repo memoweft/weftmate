@@ -161,6 +161,11 @@ class HybridActivity : Activity() {
         sharedChat = SharedChat(store, api, attachments)
         conversationHandoff = ConversationHandoff(store, api, attachments)
         secrets = SecureSettings(this)
+        secrets.cloudValue("login")?.let { value ->
+            val saved = JSONObject(value)
+            CloudPins.install(saved.getString("host"), saved.getString("pin"))
+        }
+        receiveCloudCallback(intent)
         accountModels = AccountModels(store, api, secrets)
         worker.execute {
             try { if (!closed.get()) {
@@ -288,7 +293,7 @@ class HybridActivity : Activity() {
                 } } catch (_: RejectedExecutionException) { updateChecking.set(false) }
                 return@addWebMessageListener
             }
-            val authMutation = method in setOf("auth.login", "auth.register", "auth.logout", "auth.changePassword", "auth.revokeDevice")
+            val authMutation = method in setOf("auth.login", "cloud.adopt", "auth.register", "auth.logout", "auth.changePassword", "auth.revokeDevice")
             if (authMutation && !authInFlight.compareAndSet(false, true)) {
                 respond(reply, id, false, JSONObject().put("code", "AUTH_IN_PROGRESS"))
                 return@addWebMessageListener
@@ -455,7 +460,7 @@ class HybridActivity : Activity() {
                 while (foreground && !isDestroyed && !closed.get() &&
                     subscription == updateSubscriptionEpoch.get()) {
                     val host = try { secrets.host() } catch (_: Exception) { null } ?: break
-                    val connection = URL("${host.origin}/personal/v1/app/updates").openConnection() as HttpURLConnection
+                    val connection = URL("${host.origin}/personal/v1/app/updates").openPinnedConnection()
                     updateConnection.set(connection)
                     if (subscription != updateSubscriptionEpoch.get() || !foreground || closed.get()) {
                         updateConnection.compareAndSet(connection, null)
@@ -1337,15 +1342,23 @@ class HybridActivity : Activity() {
             activeConversation = null
             savedIdentityView(identity).put("backgroundSync", SyncJobService.status(this))
         }
-        "auth.login" -> {
+        "auth.login", "cloud.adopt" -> {
             val previous = secrets.host()
-            val identity = api.login(params.getString("origin"), params.getString("username"),
-                params.getString("password"), params.optString("deviceName", "Android"))
+            val identity = if (method == "cloud.adopt") CloudLogin(secrets, api).result()
+                else api.login(params.getString("origin"), params.getString("username"),
+                    params.getString("password"), params.optString("deviceName", "Android"))
             ensureOpen()
             synchronized(syncRegistrationLock) {
                 ensureOpen()
                 if (previous != null) SyncJobService.cancel(this)
                 secrets.saveHost(identity)
+                if (method == "cloud.adopt") {
+                    val login = JSONObject(secrets.cloudValue("login")!!)
+                    val pins = JSONObject(secrets.cloudValue("pins") ?: "{}")
+                    pins.put(identity.origin, login.getString("pin"))
+                    secrets.saveCloudValue("pins", pins.toString())
+                    secrets.saveCloudValue("result", null)
+                }
                 SyncJobService.schedule(this)
             }
             useScope(identity)
@@ -1356,6 +1369,32 @@ class HybridActivity : Activity() {
             activeConversation = null
             savedIdentityView(identity).put("backgroundSync", SyncJobService.status(this))
         }
+        "cloud.configure" -> CloudLogin(secrets, api).configure(params.getString("origin"), params.getString("pin"))
+        "cloud.request" -> CloudLogin(secrets, api).request(params)
+        "cloud.tokens" -> {
+            if (params.has("value")) secrets.saveCloudValue("tokens", params.optString("value").takeIf { it.isNotEmpty() })
+            JSONObject().put("value", secrets.cloudValue("tokens") ?: JSONObject.NULL)
+        }
+        "cloud.authorize" -> {
+            val saved = JSONObject(secrets.cloudValue("login") ?: throw ApiFailure(401, "LOGIN_REQUIRED"))
+            val url = Uri.parse(params.getString("url"))
+            require(url.toString().substringBefore('?') == saved.getString("issuer") + "/auth" &&
+                url.getQueryParameter("redirect_uri") == CLOUD_CALLBACK)
+            val state = url.getQueryParameter("state") ?: throw IllegalArgumentException()
+            require(state.matches(Regex("[A-Za-z0-9_-]{43}")))
+            secrets.saveCloudValue("state", state)
+            runOnUiThread { startActivity(Intent(Intent.ACTION_VIEW, url)) }
+            JSONObject().put("opened", true)
+        }
+        "cloud.cancel" -> {
+            for (name in listOf("state", "callback", "tokens", "result")) secrets.saveCloudValue(name, null)
+            JSONObject().put("cancelled", true)
+        }
+        "cloud.callback" -> JSONObject().put("url", secrets.cloudValue("callback") ?: JSONObject.NULL).also {
+            secrets.saveCloudValue("callback", null)
+        }
+        "cloud.pending" -> api.cloudPending(requireHost())
+        "cloud.decision" -> api.cloudDecision(requireHost(), params.getString("id"), params.getString("decision"))
         "auth.me" -> secrets.host()?.let { profileFor(it).put("owner", owner(it)) }
             ?: JSONObject().put("loggedIn", false)
         "auth.profile" -> {
@@ -1841,10 +1880,19 @@ class HybridActivity : Activity() {
         updateConnection.getAndSet(null)?.disconnect()
         super.onPause()
     }
+    private fun receiveCloudCallback(intent: Intent) {
+        val value = intent.data?.toString() ?: return
+        val expected = secrets.cloudValue("state") ?: return
+        if (!cloudCallbackMatches(value, expected)) return
+        secrets.saveCloudValue("state", null)
+        secrets.saveCloudValue("callback", value)
+        emit("cloud.callback", JSONObject())
+    }
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         if (closed.get()) return
         setIntent(intent)
+        receiveCloudCallback(intent)
         val id = intent.getStringExtra("conversationId")?.takeIf { it.isNotBlank() }
         val notificationScope = intent.getStringExtra("ownerScope")
         if (id != null && notificationScope == (owner(secrets.host()) ?: "local"))
