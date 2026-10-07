@@ -97,6 +97,8 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.1",
+    "@root/acme": "3.1.0",
+    "@root/csr": "0.8.1",
     "electron-updater": "^6.8.9",
     "get-windows": "^9.3.0",
     "jose": "6.2.12"

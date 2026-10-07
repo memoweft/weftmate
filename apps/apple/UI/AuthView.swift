@@ -35,6 +35,10 @@ struct AuthView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                             SpiritView(size: 76)
                         }
+                        Button { model.cloudLogin.showLogin = true } label: {
+                            Label("用 WeftMate 账号登录", systemImage: "person.crop.circle")
+                        }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("cloudLoginEntry")
+                        Text("直接连接电脑（用户名 + 密码）").font(.headline)
                         Picker("账户操作", selection: $register) {
                             Text("登录").tag(false)
                             Text("注册").tag(true)
