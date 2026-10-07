@@ -39,7 +39,7 @@ npm start
 
 每次授权要求密码交互，SSO Cookie 不能绕过当前设备确认。新标识或同标识下的新公钥均发确认邮件，确认后才产生授权码。设备公钥只登记公开 JWK，拒绝私钥字段。S1a 的标识/公钥来自调用方，此处没有设备私钥持有证明；不能当成宿主内容信任或 DPoP。
 
-密码重置事务递增 `auth_epoch`，撤销该账号旧云会话、授权码、刷新族与 pending 验证码。已发 JWT 最多 5 分钟有效；本服务 `/account` 和邮箱变更接口还检查实时 epoch，因此重置立即拒绝旧 access token。本地宿主密码和数据不变。重置后尝试发送「密码已更改」；通知服务失败不回滚已提交的重置，响应 `notificationAccepted=false` 并记录无邮箱的操作错误。本包未实现通知补投递队列。
+密码重置与换邮箱事务递增 `auth_epoch`，撤销该账号旧云会话、授权码、刷新族与 pending 验证码。已发 JWT 最多 5 分钟有效；本服务 `/account` 和邮箱变更接口还检查实时 epoch，因此重置立即拒绝旧 access token。本地宿主密码和数据不变。重置后尝试发送「密码已更改」；通知服务失败不回滚已提交的重置，响应 `notificationAccepted=false` 并记录无邮箱的操作错误。本包未实现通知补投递队列。
 
 `createMailer(config).send({to,subject,text}) → {id}`：file 每封写独立 JSON 并 fsync，供查看验证码，**不会发送真实邮件**。Resend 固定 HTTPS API、10 秒超时、幂等请求标识，凭据与明确发件人缺任一项不可启用。返回 provider id 表示服务商接受，不保证送达。模板覆盖注册、找回、新设备确认、新邮箱验证、密码已更改。测试 Resend 使用注入 mock fetch，不连接服务商。[Resend API](https://resend.com/docs/api-reference/emails/send-email)
 
@@ -70,6 +70,6 @@ npm audit --audit-level=high
 
 30 项使用临时目录、example.com 邮箱和随机回环端口：注册→验证→新设备确认→授权码/PKCE→登录/刷新→找回→新设备→重开；验证码过期/重放/错误上限，账号/来源/邮件限速，issuer/audience/算法/type/到期，刷新轮换/复用/并发，JWKS kid 轮换/旧 key 验签/重开，邮箱变更/唯一/ID 不可变，HTTPS Cookie、Origin/CSRF/redirect URI、通知失败、Resend mock 与原 S0 健康/迁移/权限/进程测试。输出实际 runner 的 scrypt 耗时，Linux CI 用相同测试。依赖缺失时测试 helper 通过互斥锁执行本服务 `npm ci --ignore-scripts`，适配既有 Linux cloud 步骤在主仓安装前直接调用 `node --test`；不在生产入口自动安装，不依赖主仓锁文件。
 
-Mac Node 24.21.0 本地 30/30 通过，独立依赖审计 0 漏洞。远端 Linux cloud 结果见本包 PR；不能将其他主仓 job 或待运行状态称为云测试通过。
+Mac Node 24.21.0 本地 30/30 通过，独立依赖审计 0 漏洞。[Linux Cloud foundation tests](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 通过（同一套 30 项测试）；主仓后续检查另见 PR，不与 cloud 结果混算。
 
 未做：五端客户端接入、宿主验签/认领/DPoP/会话交换/内容设备授权（S1b）、中继/推送/备份/共享；真实邮件投递、服务器/systemd/Caddy/DNS 部署。本包未连接服务器、未发真实邮件。部署文件仍是 [审查草稿](deploy/README.md)。
