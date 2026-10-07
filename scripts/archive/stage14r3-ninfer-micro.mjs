@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 export const ACCEPTANCE_ROOT = path.resolve(HERE,
-  '../../Runtime/UnifiedAssistant/Stage14R3Acceptance-20261004');
+  '../../../Runtime/UnifiedAssistant/Stage14R3Acceptance-20261004');
 const MODEL = 'qwen3.8-27b';
 const PATH = '/v1/chat/completions';
 const MAX_FRAME_CHARS = 64 * 1024;

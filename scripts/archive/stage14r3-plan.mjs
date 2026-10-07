@@ -184,7 +184,7 @@ export function planStage14R3(inventory, { inventoryFile, acceptanceRoot,
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [inventoryFile, outputFile, tokenProofFile, option] = process.argv.slice(2)
   if (!inventoryFile || !outputFile || !tokenProofFile) throw new Error('usage: node stage14r3-plan.mjs <inventory.json> <manifest.json> <preflight-controller.json>')
-  const acceptanceRoot = resolve(join(import.meta.dirname, '..', '..', 'Runtime',
+  const acceptanceRoot = resolve(join(import.meta.dirname, '..', '..', '..', 'Runtime',
     'UnifiedAssistant', relativeRoot))
   if (resolve(outputFile).toLowerCase() !==
       join(acceptanceRoot, basename(outputFile)).toLowerCase() ||

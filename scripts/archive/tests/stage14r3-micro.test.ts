@@ -6,7 +6,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { setTimeout as pause } from 'node:timers/promises'
-import { runMicroOnce, validateOutputPath, writeMicroResult } from '../scripts/stage14r3-ninfer-micro.mjs'
+import { runMicroOnce, validateOutputPath, writeMicroResult } from '../stage14r3-ninfer-micro.mjs'
 
 async function fixture(reply: (request: IncomingMessage, response: ServerResponse) => void) {
   const server = createServer(reply)
@@ -144,9 +144,9 @@ test('non-200, timeout and caller cancellation close only the owned request with
 test('destination cannot be changed and output stays directly inside the named directory', async () => {
   assert.throws(() => runMicroOnce({ mode: 'mtp3', host: 'example.com' }), /INVALID_MICRO_CONFIGURATION/)
   assert.throws(() => runMicroOnce({ mode: 'mtp3', port: 0 }), /INVALID_MICRO_CONFIGURATION/)
-  const refused = spawnSync(process.execPath, ['scripts/stage14r3-ninfer-micro.mjs',
+  const refused = spawnSync(process.execPath, ['scripts/archive/stage14r3-ninfer-micro.mjs',
     '--run', '--mode', 'mtp3', '--output', 'micro-mtp3.json'], {
-    cwd: new URL('../', import.meta.url), encoding: 'utf8', timeout: 5_000,
+    cwd: new URL('../../../', import.meta.url), encoding: 'utf8', timeout: 5_000,
     env: { ...process.env, WEFTMATE_STAGE14R3_MICRO: '0' },
   })
   assert.notEqual(refused.status, 0)

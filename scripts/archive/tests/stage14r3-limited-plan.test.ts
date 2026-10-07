@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
-import { deriveLimited8kPlan } from '../scripts/stage14r3-limited-plan.mjs'
+import { deriveLimited8kPlan } from '../stage14r3-limited-plan.mjs'
 
 test('8K review plan changes only two runtime limits and does not claim daily chat compatibility', () => {
   const argv = ['C:\\Synthetic\\ninfer-serve.exe', 'C:\\Synthetic\\model.ninfer',

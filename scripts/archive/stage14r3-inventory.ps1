@@ -3,7 +3,7 @@ param([switch]$SelfTest)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$repo = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $aiRoot = 'D:\AI'
 $configFile = Join-Path $aiRoot 'Config\qwen3.8-27b-ninfer.json'
 $launcherFile = Join-Path $aiRoot 'Control\Scripts\qwen38-ninfer.ps1'

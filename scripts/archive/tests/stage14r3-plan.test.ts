@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { planStage14R3 } from '../scripts/stage14r3-plan.mjs'
+import { planStage14R3 } from '../stage14r3-plan.mjs'
 
 const sha = (bytes: Buffer) => createHash('sha256').update(bytes).digest('hex')
 test('maintenance plan changes exactly the three MTP switches and retains precise identities', () => {

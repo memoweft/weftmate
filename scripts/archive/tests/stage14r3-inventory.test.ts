@@ -6,8 +6,8 @@ import { fileURLToPath } from 'node:url'
 
 test('read-only inventory classifier permits draft tokens and rejects credential arguments',
   { skip: process.platform !== 'win32' }, () => {
-    const repository = dirname(fileURLToPath(new URL('../package.json', import.meta.url)))
-    const script = join(repository, 'scripts', 'stage14r3-inventory.ps1')
+    const repository = dirname(fileURLToPath(new URL('../../../package.json', import.meta.url)))
+    const script = join(repository, 'scripts', 'archive', 'stage14r3-inventory.ps1')
     const powershell = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32',
       'WindowsPowerShell', 'v1.0', 'powershell.exe')
     const output = execFileSync(powershell,

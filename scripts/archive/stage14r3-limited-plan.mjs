@@ -40,7 +40,7 @@ export function deriveLimited8kPlan(manifest) {
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const [manifestFile, outputFile] = process.argv.slice(2)
-  const acceptance = resolve(join(import.meta.dirname, '..', '..', 'Runtime',
+  const acceptance = resolve(join(import.meta.dirname, '..', '..', '..', 'Runtime',
     'UnifiedAssistant', 'Stage14R3Acceptance-20261004'))
   if (!manifestFile || !outputFile ||
       resolve(manifestFile).toLowerCase() !== join(acceptance, basename(manifestFile)).toLowerCase() ||
