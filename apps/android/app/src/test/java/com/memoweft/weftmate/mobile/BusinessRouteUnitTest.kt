@@ -5,6 +5,14 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class BusinessRouteUnitTest {
+    @Test fun approvalModeUsesOnlyTheAccountDefaultAndExactConversationRoutes() {
+        assertTrue(validBusinessPath("/personal/v1/settings/approvals"))
+        assertTrue(validBusinessPath("/personal/v1/sessions/session-one/approval-mode"))
+        for (path in listOf("/personal/v1/settings/approvals/secret", "/personal/v1/settings/approvals?mode=ask",
+            "/personal/v1/sessions/session-one/approval-mode?mode=ask", "/personal/v1/sessions/../approval-mode",
+            "/personal/v1/sessions/session%2fone/approval-mode", "/personal/v1/sessions/session-one/events"))
+            assertFalse(path, validBusinessPath(path))
+    }
     @Test fun systemStatusAndRestartUseOnlyTheirExplicitRoutes() {
         assertTrue(validBusinessPath("/personal/v1/system"))
         assertTrue(validBusinessPath("/personal/v1/settings/models"))

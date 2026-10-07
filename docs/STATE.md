@@ -10,16 +10,18 @@
 |---|---|---|
 | Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
-| Codex · Windows-3 | UI-1c 右侧面板小修 | [PR #43](https://github.com/memoweft/weftmate/pull/43)（`wp/ui-1c-panel-polish`）：来源先显示每次调用的可读摘要与时间，按需展开原始参数 / 输出并复制；输出按文件名保留最新项；程序侧栏收起按钮与新对话同排。真实 Electron（桌面程序框架）主程序 + 隔离账号 / 固定 DSH / 合成模型浅深色验收见 [UI-1c](../tests/evidence/ui-1c/README.md)；相关测试与类型检查通过，完整门禁交 PR CI（持续集成），待 Claude 审查 |
+| Codex · Windows-3 | UI-2a 手机审批模式 | `wp/ui-2a-mobile-approval`：手机五种模式、全部允许风险确认、按电脑对话保存与账户默认、三按钮风险审批及处理后一行已完成；Android 0.8.3/code16 桥接 scope（授权范围），发布最低 code16。手机交互94/94、真实 Chromium（浏览器引擎）390×844、Android JVM（Java 虚拟机）26/26与 assembleDebug、类型检查通过；[合成截图与边界](../tests/evidence/ui-2a/README.md)，完整门禁交 PR CI（持续集成），待 Claude 审查 |
 | Codex · Windows-2 | M1-2 审批模式与危险操作识别 | [PR #44](https://github.com/memoweft/weftmate/pull/44)（`wp/m1-2-approval-modes`）：依赖 #41，二者一起合并。五种模式、对话内分类授权、原生计划确认、桌面菜单与账户默认已实现；真实 Electron（桌面程序框架）+ 固定 DSH 验证通过，接口见 CLIENT_API 3.7，截图见 [M1-2](../tests/evidence/m1-2/README.md)。Qwen 整理通过，删除第一轮批准通过，完整批准/拒绝原场景与独立拒绝补验仍超时；不能宣称真实模型双轮通过。完整门禁交 PR CI（持续集成），待 Claude 审查 |
 | Codex · Mac | S1c-Apple 云账号与设备授权 | [PR #37](https://github.com/memoweft/weftmate/pull/37)（`wp/s1c-apple-cloud-login`） 原生客户端接线与隔离验收完成，待 PR 审查；系统认证浏览器/PKCE、P-256/DPoP、Keychain 刷新、等待/允许/拒绝、iPhone QR、配对 SPKI 已实现。已接最新 7.7 设备公钥 bootstrap 与标准 QR/复制码；生产首次无配对材料登录仍受账号页、宿主枚举与可信 pin 转交缺口阻塞；[验收说明](../apps/apple/Tests/S1c-README.md) |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
 | Codex · Cloud | S2b 宿主内容证书自动签发 | [PR #38](https://github.com/memoweft/weftmate/pull/38)（`wp/s2b-host-certs`）：阿里云 V3 DNS-01/provider 私有环境接线与 RecordId 所有权、宿主 Node ACME/原内容 key CSR、每天检查/<30天续期/原子安装/热载、状态到期与错误已实现；本机真实 Pebble/challtestsrv→签名宿主/云/假 AliDNS API→配对 pin/TLS 热载与模拟到期续期通过；交付待 Claude 审查，最终 CI 门禁见 PR checks，本包未部署 |
-| Codex · Windows-3 | D1 云服务与中继部署 | [PR #35](https://github.com/memoweft/weftmate/pull/35)（`wp/d1-cloud-deploy`）：Node 24.21.0 / frp 0.71.0 / nginx stream（TCP 流代理）443 已上线；API/OIDC（身份协议）公网、Windows 隔离宿主 `/status`、撤销断流通过；既有 12 个入口与原服务基线一致；私有备份与一键回滚就绪。file 邮件暂不发信，内容生产证书待 DNS-01（DNS TXT 证书验证）provider（服务商适配器）与 RAM 凭据；运维见 deploy README |
+| Codex · Windows-3 | UI-2a 手机审批模式 | `wp/ui-2a-mobile-approval`：手机五种模式、全部允许风险确认、按电脑对话保存与账户默认、三按钮风险审批及处理后一行已完成；Android 0.8.3/code16 桥接 scope（授权范围），发布最低 code16。手机交互94/94、真实 Chromium（浏览器引擎）390×844、Android JVM（Java 虚拟机）26/26与 assembleDebug、类型检查通过；[合成截图与边界](../tests/evidence/ui-2a/README.md)，完整门禁交 PR CI（持续集成），待 Claude 审查 |
 
 已完成：文档/规则重置、M0-1b 清理与拆分、M0-2 容量与动态预算（#24）、H1 健康设置/摘要/隔离队列（#22）、S0/S1a/S1b（#27/#29/#30）、CI 分组与依赖审计。
 
 ## 最近一次验证
+
+- **UI-2a**：手机交互94/94、真实 Chromium（浏览器引擎）390×844五种模式/风险确认/默认重新读取/三种决定、发布回归1/1、类型检查通过；Android 本机 JVM（Java 虚拟机）26/26与 assembleDebug通过，0.8.3/code16。合成截图见 tests/evidence/ui-2a/；没有安装本人设备、发布手机包或执行真实脚本，完整门禁交 PR CI（持续集成）。
 
 - **M1-2**：模式/风险与原生审批19/19、界面59/59、模式接口/授权恢复/十分钟超时3/3通过，另有原生执行与来源回归；类型检查通过。真实主程序验证五种模式、数字键、批准/拒绝、总是允许此类、同对话新任务重新计划及计划拒绝、设置默认与重载；模型请求确认含模式通知及系统提示中的口头检查点。已合入最新 main 的 UI-1c，不修改其面板实现。
 - **M1-2 Qwen**：仅8081 / `qwen3.8-27b-original`，原目标、检查、时限保持。action-01 **通过130.84秒**，八项检查满足且移动无审批；action-06 前两次180.45/180.46秒超时，第三次180.37秒总限失败但第一轮审批允许、文件删除、completed三项通过；第二轮未得到决定。独立删除拒绝补验180.37秒超时，仅读取、没有到达拒绝卡，不能计通过。首次请求/回合切换有无助手与工具事件的停滞，尚未定位，不归因纯模型能力。原生合成批准/拒绝/超时链路通过不替代这项真实模型缺口。证据见 tests/evidence/m1-2/。
@@ -62,7 +64,9 @@ M0-7 **不作为基线**：慢配置与旧工具的结果为通过 0、超时失
 
 ## 契约变更
 
-- **M1-2**：CLIENT_API 3.7 新增 GET/PATCH `/sessions/{sessionId}/approval-mode`、GET/PATCH `/settings/approvals`；审批新增可选 `scope` 和返回 `decisionScope,riskCategories`，旧客户端省略 scope 仍允许一次。分类授权仅本对话；待答复十分钟失效并返回原生 unavailable。原生计划使用已有 questions 的 plan-review（计划确认）意图。手机 Web（网页界面）/Android/Apple 菜单另包，接口可用。
+- **UI-2a 客户端接入**：复用 CLIENT_API 3.7，服务端契约无改动；手机 Web（网页界面）/Android 已接会话模式、账户默认与 scope/decisionScope/riskCategories。Android新增精确模式桥接，最低原生code16；Apple由另包接入。
+
+- **M1-2**：CLIENT_API 3.7 新增 GET/PATCH `/sessions/{sessionId}/approval-mode`、GET/PATCH `/settings/approvals`；审批新增可选 `scope` 和返回 `decisionScope,riskCategories`，旧客户端省略 scope 仍允许一次。分类授权仅本对话；待答复十分钟失效并返回原生 unavailable。原生计划使用已有 questions 的 plan-review（计划确认）意图。手机 Web（网页界面）/Android 菜单已在 UI-2a 接入；Apple 菜单另包，接口可用。
 
 - **UI-1c**：CLIENT_API 3.16 的 `outputs` 按同会话 `fileName` 保留 `createdAt` 最新项，旧成果按原 ID 仍可访问；`uses[].summary` 优先动作 / 文件名 / 可读调用描述。字段与详情端点不变。
 
@@ -85,7 +89,7 @@ M0-7 **不作为基线**：慢配置与旧工具的结果为通过 0、超时失
 
 ## 已知问题与未做
 
-- **M1-2**：真实 Qwen 的完整 action-06 与独立拒绝仍未通过，保留正式失败；手机/Android/Apple 菜单、跨端验收及长期稳定性另包。风险判断集中在可见参数、常见命令、内联与本地脚本源，动态生成/未知二进制副作用没有静态识别保证；没有新增沙盒范围、白名单、限次或审计层。
+- **M1-2**：真实 Qwen 的完整 action-06 与独立拒绝仍未通过，保留正式失败；手机/Android 菜单已在 UI-2a 完成；Apple 菜单、真机/跨端验收及长期稳定性另包。风险判断集中在可见参数、常见命令、内联与本地脚本源，动态生成/未知二进制副作用没有静态识别保证；没有新增沙盒范围、白名单、限次或审计层。
 
 - **UI-1 契约缺口**：`GET /sessions` 缺少日期、未读及跨会话审批汇总；有真实时间时可分组，无日期时显示「会话」，审批点只来自已读取的真实审批。未提供会话重命名/删除/归档、删除关联记忆、可取消排队、记忆引用、成果在文件夹显示及任意网页/成果图片预览接口，不造按钮或数据；已有 queue/steer（排队/插话）参数已接。助手文字使用持久消息，原生文字 chunk（片段）目前不在契约中，真正逐字流式输出另包。外观按设备保存；字体、自定义色、密度及账号同步不在本包。截图来自独立 Electron 验收入口，不代表 `src/main.mjs` 全套启动或 macOS 原生 App 已验收。
 - M1-1c（依赖 #41）：电脑文件范围、不同根并行与子任务网页已修复；原六场景正式1/6（03），未达 M1 出口。D12 五种模式与常见危险操作判断由 M1-2 接入，真实 Qwen 拒绝缺口见上；未做其它模型对照、跨端与长期稳定性。
