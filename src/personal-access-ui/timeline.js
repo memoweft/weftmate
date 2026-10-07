@@ -1,4 +1,4 @@
-/* Shared timeline renderer. The mobile bundle carries the same source. */
+/* Desktop timeline renderer. Mobile maintains its own presentation bundle. */
 (() => {
   'use strict'
   const node = (tag, cls, text) => { const n = document.createElement(tag); n.className = cls || ''; if (text) n.textContent = text; return n }
@@ -38,34 +38,34 @@
       const signature = JSON.stringify([block, terminal, running])
       if (row.dataset.signature === signature) return
       row.dataset.signature = signature
+      const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
       const details = node('details', 'execution-block')
       details.open = previous ? wasRunning && !running ? false : running && !wasRunning ? !options.mobile : previous.open : running && !options.mobile
       row.dataset.running = String(running)
       const summary = node('summary', '', `${running ? '正在执行' : '执行了'} ${block.steps.length} 步${!running && Number.isFinite(end - start) ? ` · 用时 ${elapsed(end - start)}` : ''}`)
       details.append(summary)
-      const labels = { read: '读取文件', read_file: '读取文件', personal_read_project_file: '读取文件', shell: '运行命令', bash: '运行命令', pwsh: '运行命令', exec_command: '运行命令' }
-      const runs = []
-      for (const step of block.steps) { const hint = step.groupHint || step.toolName || 'tool'; const kind = labels[hint] || `执行工具 ${hint}`
-        const last = runs.at(-1); if (last?.kind === kind) last.steps.push(step); else runs.push({ kind, steps: [step] }) }
-      for (const run of runs) {
-        let holder = details
-        if (run.steps.length > 1) { holder = node('details', 'execution-same-type'); holder.open = running && !options.mobile
-          holder.append(node('summary', '', `${run.kind} · ${run.steps.length} 步`)); details.append(holder) }
-      for (const step of run.steps) {
+      for (const step of block.steps) {
         const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.state === 'failed' ? ' · 未完成' : step.state === 'running' && running ? ' · 运行中' : ''}`)
         const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', '复制')
+        detail.dataset.step = String(step.stepId)
+        const saved = savedSteps.get(detail.dataset.step)
+        if (saved) {
+          detail.open = saved.open
+          if (saved.dataset.loaded === 'true') { detail.dataset.loaded = 'true'; output.textContent = saved.querySelector('pre')?.textContent || '' }
+        }
         copy.type = 'button'; copy.hidden = true
+        if (detail.dataset.loaded === 'true') copy.hidden = false
         copy.addEventListener('click', async () => { try { if (options.copyText) await options.copyText(output.textContent); else await navigator.clipboard.writeText(output.textContent); copy.textContent = '已复制' } catch { copy.textContent = '复制未完成' } })
         detail.append(label, output, copy)
         detail.addEventListener('toggle', async () => {
           if (!detail.open || detail.dataset.loaded || !step.detailRef) return
           detail.dataset.loaded = 'loading'; output.textContent = '正在读取…'
           try { const data = await options.readDetail(step.detailRef.seq)
+            if (!detail.isConnected) return
             output.textContent = `${data.text || ''}${data.truncated ? '\n[内容已截断]' : ''}`; copy.hidden = false; detail.dataset.loaded = 'true'
           } catch { output.textContent = '暂时无法读取，收起后可重试。'; delete detail.dataset.loaded }
         })
-        holder.append(detail)
-      }
+        details.append(detail)
       }
       row.replaceChildren(details)
     })
@@ -85,7 +85,7 @@
         row.replaceChildren(node('strong', '', family === 'approval' ? resolved ? '审批已处理' : '需要审批'
           : family === 'question' ? resolved ? '已回答' : '需要补充信息' : family === 'artifact' ? data.fileName || '成果文件' : '排队中'))
         if (family === 'artifact') {
-          row.append(node('p', '', `${data.contentType || '文件'} · ${data.size || 0} 字节`))
+          row.append(node('p', '', options.fileLabel ? options.fileLabel(data) : `${data.contentType || '文件'} · ${data.size || 0} 字节`))
           const open = node('button', 'timeline-action', '打开成果'); open.type = 'button'
           open.addEventListener('click', () => options.openArtifact?.(data, open)); row.append(open)
           if (options.downloadArtifact) { const download = node('button', 'timeline-action', '下载'); download.type = 'button'

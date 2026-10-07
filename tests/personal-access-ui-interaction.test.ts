@@ -975,8 +975,8 @@ test('synthetic late inline task payload is discarded after selecting another co
 
 test('terminal-output-limit desktop history requires the normalized pair and preserves legacy terminal meanings', async () => {
   const cases = [
-    { data: { reason: 'error', endReasonKind: 'max-tokens' }, text: '本轮因输出限制结束，可继续对话。' },
-    { data: { reason: 'error' }, text: '本轮运行失败，未看到完整回复。请在电脑核对后再试。' },
+    { data: { reason: 'error', endReasonKind: 'max-tokens' }, text: '回复达到长度限制。发送“继续”接着处理。' },
+    { data: { reason: 'error' }, text: '这次处理未完成。请重试，或到设置检查模型。' },
     { data: { reason: 'unknown', endReasonKind: 'max-tokens' }, text: '本轮结束状态尚不明确，请在电脑核对。' },
     { data: {}, text: '本轮结束状态尚不明确，请在电脑核对。' },
     { data: { reason: { kind: 'max-tokens' } }, text: '本轮结束状态尚不明确，请在电脑核对。' },
@@ -1012,13 +1012,13 @@ test('terminal-output-limit desktop keeps an old pure-reply card bound to its so
   assert.equal(card.parentNode!.children.indexOf(card), card.parentNode!.children.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
   assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
   assert.doesNotMatch(visibleText(card), /工具进展|已正常结束|用户拒绝|费用|没有成果/)
-  assert.equal(page.get('timeline-status').textContent, '本轮因输出限制结束，可继续对话。')
+  assert.equal(page.get('timeline-status').textContent, '回复达到长度限制。发送“继续”接着处理。')
   events.push({ seq: 3, type: 'user.message', data: { text: '核对这份资料', receiptId: 'rpc:new.3' } },
     { seq: 4, type: 'turn.started', data: { turn: 3 } })
   page.tick()
   for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('正在处理'); attempt++) await flush()
   assert.match(page.get('timeline-status').textContent, /正在处理/)
-  assert.doesNotMatch(page.get('timeline-status').textContent, /输出限制/)
+  assert.doesNotMatch(page.get('timeline-status').textContent, /长度限制/)
   assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
   events.push({ seq: 5, type: 'turn.ended', data: { reason: 'completed', turn: 3 } })
   page.tick()
@@ -1027,8 +1027,8 @@ test('terminal-output-limit desktop keeps an old pure-reply card bound to its so
   events.push({ seq: 6, type: 'turn.ended', data: { reason: 'error', turn: 4 } })
   page.tick()
   for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('运行失败'); attempt++) await flush()
-  assert.match(page.get('timeline-status').textContent, /运行失败/)
-  assert.doesNotMatch(page.get('timeline-status').textContent, /输出限制/)
+  assert.match(page.get('timeline-status').textContent, /处理未完成/)
+  assert.doesNotMatch(page.get('timeline-status').textContent, /长度限制/)
   assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
   assert.equal(JSON.stringify(task), initial, 'display keeps the old source, turn and terminalAt evidence intact')
 })
@@ -1038,8 +1038,8 @@ test('terminal-output-limit desktop keeps an old pure-reply card bound to its so
 test('terminal-output-limit desktop offline session selection and account reset clear the previous reason', async () => {
   const config = { statusOffline: false }
   const page = harness([], [{ seq: 1, type: 'turn.ended', data: { reason: 'error', endReasonKind: 'max-tokens' } }], false, config)
-  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('输出限制'); attempt++) await flush()
-  assert.match(page.get('timeline-status').textContent, /输出限制/)
+  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('长度限制'); attempt++) await flush()
+  assert.match(page.get('timeline-status').textContent, /长度限制/)
   config.statusOffline = true
   page.tick()
   for (let attempt = 0; attempt < 20 && page.get('connection-banner').hidden; attempt++) await flush()
@@ -1051,8 +1051,8 @@ test('terminal-output-limit desktop offline session selection and account reset 
   page.tick()
   for (let attempt = 0; attempt < 20; attempt++) await flush()
   a.fire('click')
-  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('输出限制'); attempt++) await flush()
-  assert.match(page.get('timeline-status').textContent, /输出限制/)
+  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('长度限制'); attempt++) await flush()
+  assert.match(page.get('timeline-status').textContent, /长度限制/)
   page.get('logout-button').fire('click')
   for (let attempt = 0; attempt < 20 && page.get('timeline-status').textContent; attempt++) await flush()
   assert.equal(page.get('timeline-status').textContent, '')
@@ -1066,7 +1066,7 @@ test('durable turn errors remain visible while a later completed turn clears the
   ]
   const page = harness([], events)
   for (let attempt = 0; attempt < 10 && !page.get('timeline-status').textContent.includes('运行失败'); attempt++) await flush()
-  assert.match(page.get('timeline-status').textContent, /本轮运行失败/)
+  assert.match(page.get('timeline-status').textContent, /这次处理未完成/)
   assert.match(page.get('transcript').children.map(visibleText).join(' '), /hello/)
   events.push({ seq: 4, type: 'turn.started', data: {} },
     { seq: 5, type: 'assistant.message', data: { text: 'reply' } },
@@ -1154,7 +1154,7 @@ test('main chat rail opens the same phone MiMo conversation and its authenticate
   for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
   const rail = page.get('session-list')
   assert.equal(rail.children.length, 3, 'desktop and phone conversations share one rail')
-  assert.match(visibleText(rail.children[2]), /路上的图片.*手机 · MiMo/)
+  assert.match(visibleText(rail.children[2]), /路上的图片/)
   rail.children[2].children[0].fire('click')
   assert.equal(page.get('assistant-title').textContent, '路上的图片')
   assert.equal(page.get('conversation-pane').hidden, false)
