@@ -86,7 +86,7 @@ export function userQuestions(account) {
 }
 
 export function publicUserQuestion(row) {
-  return structuredClone(Object.fromEntries(QUESTION_PUBLIC_FIELDS.filter(key => row[key] !== undefined).map(key => [key, row[key]])));
+  return structuredClone(Object.fromEntries([...QUESTION_PUBLIC_FIELDS, 'observedSeq'].filter(key => row[key] !== undefined).map(key => [key, row[key]])));
 }
 
 export function userQuestionAnswerReceipt(row) {

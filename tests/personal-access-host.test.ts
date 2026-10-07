@@ -64,153 +64,95 @@ test('many hidden deltas advance the scanned watermark without delaying an abort
   assert.equal(page.hasMore, false)
 })
 
-test('history reads the official persisted API and refuses subagent sessions', async () => {
-  let historyReads = 0
-  const client = { sessions: {
-    list: async () => ok({ items: [{ sessionId: 'ordinary', origin: 'user' }, { sessionId: 'child', origin: 'subagent' }] }),
-    history: async () => { historyReads += 1; return ok({ events: [{ event: { seq: 11, type: 'turn/end', data: { reason: { kind: 'completed' } } } }], hasMore: false }) },
-  }, events: {} }
-  const adapter = createDshSessionAdapter(client)
-  const page = await adapter.historyPage('ordinary', { afterSeq: 5, limit: 10 })
-  assert.deepEqual(page.events.map((event: { seq: number }) => event.seq), [11])
-  assert.equal(historyReads, 1)
-  await assert.rejects(adapter.historyPage('child'), /resume failed/)
-  assert.equal(historyReads, 1)
-})
+const rawMessage = (seq: number) => ({ seq, type: 'assistant/message', time: seq * 1000,
+  data: { turn: 1, content: [{ type: 'text', text: `reply ${seq}` }] } })
+function timelineAdapter(entries: any[]) {
+  return createDshSessionAdapter({ sessions: { list: async () => ok({ items: [
+    { sessionId: 'ordinary', origin: 'user' }, { sessionId: 'child', origin: 'subagent' } ] }) }, events: {} },
+    { readLog: async () => entries })
+}
 
-test('history walks older native pages and stops at the requested cursor without skipping the first page', async () => {
-  const requested: Array<number | undefined> = []
-  const entry = (seq: number) => ({ event: { seq, type: 'turn/end', data: { reason: { kind: 'completed' } } } })
-  const client = { sessions: {
-    list: async () => ok({ items: [{ sessionId: 'ordinary', origin: 'user' }] }),
-    history: async ({ beforeSeq }: { beforeSeq?: number }) => {
-      requested.push(beforeSeq)
-      return ok(beforeSeq === undefined
-        ? { events: [entry(20), entry(30)], hasMore: true }
-        : { events: [entry(2), entry(5), entry(10)], hasMore: false })
-    },
-  }, events: {} }
-  const adapter = createDshSessionAdapter(client)
-  const first = await adapter.historyPage('ordinary', { afterSeq: -1, limit: 2 })
-  assert.deepEqual(first.events.map((event: { seq: number }) => event.seq), [2, 5])
-  assert.equal(first.nextSeq, 5)
-  assert.equal(first.hasMore, true)
-  assert.deepEqual(requested, [undefined, 20])
-  requested.length = 0
-  const middle = await adapter.historyPage('ordinary', { afterSeq: 10, limit: 2 })
-  assert.deepEqual(middle.events.map((event: { seq: number }) => event.seq), [20, 30])
-  assert.equal(middle.hasMore, false)
-  assert.deepEqual(requested, [undefined, 20])
-  requested.length = 0
-  const tail = await adapter.historyPage('ordinary', { afterSeq: 20, limit: 2 })
-  assert.deepEqual(tail.events.map((event: { seq: number }) => event.seq), [30])
-  assert.deepEqual(requested, [undefined])
-})
-
-test('bounded native history refuses a truncated range and text truncation is explicit', async () => {
-  const client = { sessions: {
-    list: async () => ok({ items: [{ sessionId: 'ordinary', origin: 'user' }] }),
-    history: async ({ beforeSeq }: { beforeSeq?: number }) => ok({ events: [{ event: {
-      seq: beforeSeq === undefined ? 1000 : beforeSeq - 1,
-      type: 'user/message', data: { source: { kind: 'user' }, message: { content: [{ type: 'text', text: 'x'.repeat(5000) }] } },
-    } }], hasMore: true }),
-  }, events: {} }
-  await assert.rejects(createDshSessionAdapter(client).historyPage('ordinary', { afterSeq: -1, limit: 2 }),
-    (error: Error & { code?: string }) => error.code === 'history-window-limited')
-  const row = pageHistoryEvents([{ event: { seq: 1, type: 'user/message', data: { source: { kind: 'user' },
-    message: { content: [{ type: 'text', text: 'x'.repeat(5000) }] } } } }], -1, 10).events[0]
-  assert.equal(row.data.truncated, true)
-  assert.equal(row.data.text.length, 4000)
-})
-
-test('public history remains readable past 12000 hidden chunks for initial and incremental cursors', async () => {
-  const entries: any[] = Array.from({ length: 14893 }, (_, seq) => ({ event: {
-    seq, type: 'assistant/chunk', data: { turn: 4, chunk: { type: 'reasoning-delta', text: 'hidden' } },
-  } }))
-  for (let index = 0; index < 27; index++) entries[index * 250 + 10] = { event: {
-    seq: index * 250 + 10, type: 'assistant/message', data: { turn: 2, content: [{ type: 'text', text: 'public ' + index }] },
-  } }
-  entries[10] = { event: { seq: 10, type: 'user/message', time: 500, data: {
-    source: { kind: 'user', rpcId: 'original-root-receipt' },
-    content: [{ type: 'text', text: 'the original user request' }],
-  } } }
-  entries[7019] = { event: { seq: 7019, type: 'turn/end', time: 1000, data: { turn: 3, reason: { kind: 'max-tokens' } } } }
-  entries[14890] = { event: { seq: 14890, type: 'assistant/message', time: 2000, data: {
-    turn: 4, content: [{ type: 'text', text: 'actual final reply' }],
-  } } }
-  entries[14892] = { event: { seq: 14892, type: 'turn/end', time: 3000, data: { turn: 4, reason: { kind: 'completed' } } } }
-  const adapter = createDshSessionAdapter({ sessions: {
-    list: async () => ok({ items: [{ sessionId: 'ordinary', origin: 'user' }] }),
-    history: async () => ok({ events: entries, hasMore: false }),
-  }, events: {} })
-  const initial = await adapter.historyPage('ordinary', { afterSeq: -1, limit: 100 })
-  assert.equal(initial.events.length, 30)
-  assert.deepEqual(initial, pageHistoryEvents(entries, -1, 100))
-  assert.equal(initial.events[0].type, 'user.message')
-  assert.equal(initial.events[0].data.receiptId, 'original-root-receipt')
-  assert.match(initial.events[0].data.messageHash, /^[a-f0-9]{64}$/)
-  assert.equal(initial.events[0].at, new Date(500).toISOString())
-  const incremental = await adapter.historyPage('ordinary', { afterSeq: 7019, limit: 100 })
-  assert.deepEqual(incremental.events.map((event: any) => event.seq), [14890, 14892])
-  assert.equal(incremental.events[0].data.text, 'actual final reply')
-  assert.equal(incremental.events[1].data.turn, 4)
-  assert.equal(incremental.events[1].data.reason, 'completed')
-  assert.equal(incremental.events[1].at, new Date(3000).toISOString())
-  assert.equal(incremental.nextSeq, 14892)
-  assert.equal(incremental.hasMore, false)
-  assert.equal(initial.events.find((event: any) => event.seq === 7019).data.endReasonKind, 'max-tokens')
-  assert.doesNotMatch(JSON.stringify(initial), /hidden|reasoning-delta/)
-})
-
-test('forward history keeps its initial tail cut and sparse filtered scan watermarks', async () => {
-  const raw = (seq: number, visible = true) => ({ event: { seq,
-    type: visible ? 'assistant/message' : 'tool/result',
-    data: visible ? { content: [{ type: 'text', text: 'reply ' + seq }] } : { text: 'private' },
+test('2400+ event session opens the recent tail without inspecting its beginning and pages older/incremental', async () => {
+  const entries = Array.from({ length: 2600 }, (_, seq) => rawMessage(seq)), reads: number[] = []
+  const observed = new Proxy(entries, { get(target, key, receiver) {
+    if (typeof key === 'string' && /^\d+$/.test(key)) reads.push(Number(key))
+    return Reflect.get(target, key, receiver)
   } })
-  const adapter = createDshSessionAdapter({ sessions: {
-    list: async () => ok({ items: [{ sessionId: 'ordinary' }] }),
-    history: async ({ beforeSeq }: any) => ok(beforeSeq === undefined
-      ? { events: [raw(20), raw(21, false), raw(30)], hasMore: true }
-      : { events: [raw(2), raw(5), raw(9, false), raw(40)], hasMore: false }),
-  }, events: {} })
-  const first = await adapter.historyPage('ordinary', { limit: 2 })
-  assert.deepEqual(first.events.map((event: any) => event.seq), [2, 5])
-  assert.equal(first.nextSeq, 9)
-  assert.equal(first.hasMore, true)
-  const second = await adapter.historyPage('ordinary', { afterSeq: 9, limit: 2 })
-  assert.deepEqual(second.events.map((event: any) => event.seq), [20, 30])
-  assert.equal(second.nextSeq, 30)
-  assert.equal(second.hasMore, false)
+  const adapter = timelineAdapter(observed)
+  const tail = await adapter.historyPage('ordinary', { limit: 50 })
+  assert.deepEqual(tail.events.map((e: any) => e.seq), Array.from({ length: 50 }, (_, i) => 2550 + i))
+  assert.equal(tail.nextSeq, 2599); assert.equal(tail.hasOlder, true); assert.equal(tail.hasMore, false)
+  assert.equal(tail.nextBeforeSeq, 2550); assert.ok(Math.min(...reads.filter(seq => seq !== 0)) >= 2549); assert.ok(reads.filter(seq => seq === 0).length <= 2)
+  const older = await adapter.historyPage('ordinary', { beforeSeq: tail.nextBeforeSeq, limit: 50 })
+  assert.equal(older.events[0].seq, 2500); assert.equal(older.events.at(-1).seq, 2549)
+  assert.equal(older.nextSeq, 2599)
+  entries.push(rawMessage(2600), rawMessage(2601))
+  const increment = await adapter.historyPage('ordinary', { afterSeq: tail.nextSeq, limit: 50 })
+  assert.deepEqual(increment.events.map((e: any) => e.seq), [2600, 2601]); assert.equal(increment.hasMore, false)
+  await assert.rejects(adapter.historyPage('child'), /resume failed/)
 })
 
-test('history response byte paging stays bounded and native failures retain their real source', async () => {
-  const entries = Array.from({ length: 200 }, (_, seq) => ({ event: { seq, type: 'assistant/message',
-    data: { content: [{ type: 'text', text: '中'.repeat(4000) }] },
-  } }))
-  const client = { sessions: {
-    list: async () => ok({ items: [{ sessionId: 'ordinary' }] }),
-    history: async () => ok({ events: entries, hasMore: false }),
-  }, events: {} }
-  const adapter = createDshSessionAdapter(client)
-  const seen: number[] = []
-  let afterSeq = -1
-  for (let pageNo = 0; pageNo < 5; pageNo++) {
-    const page = await adapter.historyPage('ordinary', { afterSeq, limit: 200 })
-    assert.ok(Buffer.byteLength(JSON.stringify(page), 'utf8') < 1024 * 1024)
-    assert.ok(page.events.every((event: any) => event.data.text === '中'.repeat(4000)))
-    seen.push(...page.events.map((event: any) => event.seq))
-    if (!page.hasMore) break
-    assert.ok(page.nextSeq > afterSeq)
-    afterSeq = page.nextSeq
-  }
-  assert.deepEqual(seen, Array.from({ length: 200 }, (_, seq) => seq))
-  client.sessions.history = async () => ({ result: { ok: false, error: { code: 'internal', message: 'private native failure' } } }) as any
-  await assert.rejects(adapter.historyPage('ordinary'),
-    (error: any) => error.code === 'internal' && error.operation === 'history' &&
-      !error.message.includes('private native failure'))
-  client.sessions.history = async () => ok({ events: [], hasMore: true })
-  await assert.rejects(adapter.historyPage('ordinary', { afterSeq: 20 }),
-    (error: any) => error.code === 'history-window-limited')
+test('old explicit afterSeq=-1 reads every page forwards, keeping sparse hidden seq watermarks', async () => {
+  const entries = Array.from({ length: 2500 }, (_, seq) => seq % 3 === 0 ? rawMessage(seq)
+    : ({ seq, type: 'assistant/chunk', data: { chunk: { type: 'reasoning-delta', text: 'private' } } }))
+  const adapter = timelineAdapter(entries); let cursor = -1; const seen: number[] = []
+  while (true) { const page = await adapter.historyPage('ordinary', { afterSeq: cursor, limit: 51 })
+    seen.push(...page.events.map((e: any) => e.seq)); assert.ok(page.nextSeq > cursor)
+    cursor = page.nextSeq; if (!page.hasMore) break }
+  assert.deepEqual(seen, entries.filter(e => e.type === 'assistant/message').map(e => e.seq))
+  assert.equal(cursor, 2499)
+  assert.deepEqual((await adapter.historyPage('ordinary', { afterSeq: cursor })).events, [])
+})
+
+test('byte paging truncates a huge event and returns all 200 large messages without a failed page', async () => {
+  const entries = Array.from({ length: 200 }, (_, seq) => ({ ...rawMessage(seq),
+    data: { content: [{ type: 'text', text: '中'.repeat(seq === 0 ? 2_000_000 : 4000) }] } }))
+  const adapter = timelineAdapter(entries); const seen: number[] = []; let afterSeq = -1
+  while (true) { const page = await adapter.historyPage('ordinary', { afterSeq, limit: 200 })
+    assert.ok(Buffer.byteLength(JSON.stringify(page)) < 1024 * 1024)
+    seen.push(...page.events.map((e: any) => e.seq)); if (!page.hasMore) break; afterSeq = page.nextSeq }
+  assert.equal(seen.length, 200)
+  const first = await adapter.historyPage('ordinary', { afterSeq: -1, limit: 1 })
+  assert.equal(first.events[0].data.truncated, true); assert.equal(first.events[0].data.text.length, 4000)
+})
+
+test('native lifecycle, interactions, artifact results and reserved queue projection share distinct seq', async () => {
+  const entries: any[] = [
+    { seq: 0, type: 'step/start', data: { turn: 1, step: 1 } },
+    { seq: 1, type: 'tool/call', time: 1000, data: { turn: 1, callId: 'c1', name: 'shell', arguments: '{"command":"npm test"}' } },
+    { seq: 2, type: 'approval/asked', data: { id: 'a1', callId: 'c1', toolName: 'shell', reason: '删除临时文件' } },
+    { seq: 3, type: 'approval/decided', data: { id: 'a1', outcome: 'allowed-once' } },
+    { seq: 4, type: 'tool/result', time: 2500, data: { turn: 1, message: { source: { kind: 'tool', callId: 'c1' },
+      content: [{ type: 'tool-result', toolCallId: 'c1', content: [{ type: 'reasoning', text: 'private tool reasoning' }, { type: 'text', text: '42 tests passed' }] }] } } },
+    { seq: 5, type: 'tool/call', data: { turn: 1, callId: 'q1', name: 'ask_user_question', arguments: '{"questions":[{"id":"q","question":"保存到哪里？"}]}' } },
+    { seq: 6, type: 'tool/result', data: { turn: 1, message: { source: { callId: 'q1' }, content: [{ type: 'tool-result', toolCallId: 'q1' }] } } },
+    { seq: 7, type: 'tool/call', data: { turn: 1, callId: 'save1', name: 'personal_save_document', arguments: '{"fileName":"报告.md"}' } },
+    { seq: 8, type: 'tool/result', data: { turn: 1, message: { source: { callId: 'save1' }, content: [{ type: 'tool-result', toolCallId: 'save1', content: [{ type: 'text', text: '{"artifactId":"file-1","fileName":"报告.md","size":20}' }] }] } } },
+    { seq: 9, type: 'task.queued', data: { taskId: 'reserved-task' } },
+    { seq: 10, type: 'step/end', data: { turn: 1, step: 1 } },
+    { seq: 11, type: 'turn/end', data: { turn: 1, reason: { kind: 'completed' } } },
+  ]
+  const adapter = timelineAdapter(entries), page = await adapter.historyPage('ordinary', { afterSeq: -1 })
+  assert.deepEqual(page.events.map((e: any) => e.type), ['task.started', 'step.started', 'approval.requested', 'approval.resolved',
+    'step.completed', 'question.asked', 'question.answered', 'step.started', 'artifact.created', 'task.queued', 'task.ended', 'turn.ended'])
+  assert.equal(page.events[1].data.summary, '运行命令 npm test')
+  assert.equal(page.events[4].data.stepId, page.events[1].data.stepId)
+  assert.equal(page.events[4].data.summary, page.events[1].data.summary)
+  assert.equal(page.events[8].data.completedStep.stepId, 'save1')
+  assert.doesNotMatch(JSON.stringify(page), /42 tests passed/)
+  const detail = await adapter.historyDetail('ordinary', 4)
+  assert.match(detail.text, /npm test.*42 tests passed/s)
+  assert.doesNotMatch(detail.text, /private tool reasoning/)
+  await assert.rejects(adapter.historyDetail('ordinary', 11))
+  await assert.rejects(adapter.historyPage('ordinary', { afterSeq: -1, beforeSeq: 2 }))
+})
+
+test('empty/hidden histories advance correctly and zero beforeSeq is an empty older page', async () => {
+  const adapter = timelineAdapter([{ seq: 0, type: 'assistant/chunk', data: {} }, { seq: 1, type: 'request/header', data: {} }])
+  const tail = await adapter.historyPage('ordinary')
+  assert.equal(tail.events.length, 0); assert.equal(tail.hasOlder, false); assert.equal(tail.nextSeq, 1)
+  assert.equal((await adapter.historyPage('ordinary', { beforeSeq: 0 })).events.length, 0)
+  assert.equal((await adapter.historyPage('ordinary', { afterSeq: -1 })).nextSeq, 1)
 })
 
 test('host callbacks preflight selected model and ownership before dispatch; create binds then selects', async () => {
@@ -307,4 +249,44 @@ test('document artifact preflight permits only the original owner and restricted
   await assert.rejects(backend.preflight({ kind: 'desktop.write_artifact',
     ownerId: 'owner-a', sessionId: 'legacy-session' }),
   (error: Error & { code?: string }) => error.code === 'SESSION_READ_ONLY')
+})
+
+
+test('parallel tool completion metadata visits source ranges once across 3000-event pagination', async () => {
+  const entries = [
+    ...Array.from({ length: 1500 }, (_, seq) => ({ seq, type: 'tool/call', data: { turn: 1, callId: `c${seq}`, name: 'pwsh', arguments: '{"command":"npm test"}' } })),
+    ...Array.from({ length: 1500 }, (_, i) => ({ seq: 1500+i, type: 'tool/result', data: { turn: 1, message: { source: { callId: `c${i}` }, content: [{ type: 'tool-result', toolCallId: `c${i}` }] } } })),
+  ]
+  let reads = 0
+  const observed = new Proxy(entries, { get(target, key, receiver) { if (typeof key === 'string' && /^\d+$/.test(key)) reads++; return Reflect.get(target,key,receiver) } })
+  const adapter = timelineAdapter(observed); let afterSeq = 1499, count = 0
+  while (true) { const page = await adapter.historyPage('ordinary', { afterSeq, limit: 100 })
+    assert.ok(page.events.every((e: any) => e.data.summary === '运行命令 npm test'))
+    count += page.events.length; if (!page.hasMore) break; afterSeq = page.nextSeq }
+  assert.equal(count, 1500); assert.ok(reads < 20_000, `source reads ${reads} must stay linear`)
+})
+
+
+test('incremental cursor waits for a pending native step end, then publishes the correct terminal without skipping seq', async () => {
+  const entries: any[] = [{ seq: 0, type: 'turn/start', data: { turn: 1 } },
+    { seq: 1, type: 'step/start', data: { turn: 1, step: 1 } }, rawMessage(2),
+    { seq: 3, type: 'step/end', data: { turn: 1, step: 1 } }]
+  const adapter = timelineAdapter(entries)
+  const first = await adapter.historyPage('ordinary')
+  assert.equal(first.nextSeq, 2); assert.equal(first.latestSeq, 3)
+  assert.equal((await adapter.historyPage('ordinary', { afterSeq: 2 })).nextSeq, 2)
+  entries.push({ seq: 4, type: 'turn/end', data: { turn: 1, reason: { kind: 'aborted' } } })
+  const closed = await adapter.historyPage('ordinary', { afterSeq: 2 })
+  assert.deepEqual(closed.events.map((e: any) => [e.seq,e.type]), [[3,'task.ended'],[4,'turn.ended']])
+  assert.equal(closed.events[0].data.reason, 'aborted'); assert.equal(closed.nextSeq, 4)
+})
+
+test('an intermediate model step end does not end its task and only new raw events update the lifecycle cut', async () => {
+  const entries: any[] = [{ seq: 0, type: 'step/start', data: { turn: 1, step: 1 } },
+    { seq: 1, type: 'step/end', data: { turn: 1, step: 1 } }]
+  const adapter = timelineAdapter(entries)
+  assert.equal((await adapter.historyPage('ordinary')).nextSeq, 0)
+  entries.push({ seq: 2, type: 'step/start', data: { turn: 1, step: 2 } })
+  const next = await adapter.historyPage('ordinary', { afterSeq: 0 })
+  assert.equal(next.events.length, 0); assert.equal(next.nextSeq, 2)
 })

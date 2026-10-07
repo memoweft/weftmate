@@ -222,3 +222,20 @@ main{min-height:0;flex:1;position:relative;display:flex;flex-direction:column}.p
 @keyframes preview-in{from{opacity:0}to{opacity:1}}@keyframes preview-out{from{opacity:1}to{opacity:0}}
 @media(prefers-reduced-motion:reduce){.image-preview,.image-preview.closing{animation:none}.attachment-preview-trigger,.message-thumbnail{transition:none}}
 
+
+.timeline-entry { color: var(--ink, #303630); padding: 12px 0; overflow-wrap: anywhere; }
+.execution-block { border: 1px solid var(--line, #d9ddd7); border-radius: 12px; padding: 12px 16px; background: var(--surface-soft, var(--soft, #f5f6f3)); }
+.execution-block > summary { font-weight: 600; cursor: pointer; }
+.execution-step { margin-top: 12px; }
+.execution-step > summary { cursor: pointer; font-size: 14px; line-height: 1.6; }
+.timeline-raw { font: 13px/1.65 ui-monospace, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; overflow: auto; max-height: 48dvh; user-select: text; }
+.timeline-action { margin: 8px 10px 0 0; padding: 8px 12px; border: 1px solid var(--line, #cdd3ca); border-radius: 8px; color: inherit; background: var(--surface, white); cursor: pointer; font: inherit; }
+.timeline-action:focus-visible { outline: 2px solid var(--accent, #466247); outline-offset: 3px; }
+.timeline-task-info { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line, #d9ddd7); }
+.timeline-artifact { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.timeline-preview { position: fixed; inset: 68px 0 0 auto; width: min(520px, 45vw); z-index: 30; padding: 24px; overflow: auto; background: var(--surface, white); border-left: 1px solid var(--line, #d9ddd7); color: var(--ink, #303630); }
+.session-running-dot { display: inline-block; flex: 0 0 7px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent, #466247); margin-right: 8px; }
+@media (max-width: 640px) { .timeline-preview { inset: 0; width: 100%; padding: 24px 16px; } .timeline-action { min-height: 44px; } }
+
+.conversation-approval.is-resolved, .conversation-question.is-resolved { padding: 8px 12px; background: transparent; border: 0; }
+.conversation-approval.is-resolved > strong, .conversation-question.is-resolved > strong { font-weight: 500; }

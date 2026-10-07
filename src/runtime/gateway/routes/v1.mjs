@@ -43,9 +43,9 @@ function promptContent(value) {
   return value
 }
 
-export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
+export function createGatewayV1({ client, readLog, diagnostics: diagnosticsDeps } = {}) {
   if (client === undefined) throw new TypeError('supported DSH client is required')
-  const sessions = createDshSessionAdapter(client)
+  const sessions = createDshSessionAdapter(client, { readLog })
   const agents = createDshAgentAdapter(sessions)
   const workspaces = createDshWorkspaceAdapter(client)
   const models = createDshModelAdapter(client)
@@ -224,10 +224,15 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
       if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
       const [, sessionId, action] = match
       if (action === 'history' && req.method === 'GET') {
-        const afterRaw = requestUrl.searchParams.get('afterSeq') ?? '-1'
+        const afterRaw = requestUrl.searchParams.get('afterSeq')
+        const beforeRaw = requestUrl.searchParams.get('beforeSeq')
         const limitRaw = requestUrl.searchParams.get('limit') ?? '50'
-        if (!/^-?\d+$/.test(afterRaw) || !/^\d+$/.test(limitRaw)) throw new TypeError('invalid history cursor')
-        return writeJson(res, 200, await sessions.historyPage(sessionId, { afterSeq: Number(afterRaw), limit: Number(limitRaw) }))
+        if (afterRaw !== null && !/^-?\d+$/.test(afterRaw) || beforeRaw !== null && !/^\d+$/.test(beforeRaw) || !/^\d+$/.test(limitRaw)) throw new TypeError('invalid history cursor')
+        if (requestUrl.searchParams.has('detailSeq')) return writeJson(res, 200,
+          await sessions.historyDetail(sessionId, Number(requestUrl.searchParams.get('detailSeq'))))
+        return writeJson(res, 200, await sessions.historyPage(sessionId, {
+          ...(afterRaw === null ? {} : { afterSeq: Number(afterRaw) }),
+          ...(beforeRaw === null ? {} : { beforeSeq: Number(beforeRaw) }), limit: Number(limitRaw) }))
       }
       if (action === 'resume' && req.method === 'POST') {
         const resumed = await sessions.resume(sessionId)

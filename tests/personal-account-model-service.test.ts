@@ -61,7 +61,7 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
       return { sessionId } },
     sendMessage: async () => { sentCount++; return { accepted: true, receiptId: 'rpc-synthetic' } },
     cancelSession: async () => ({ accepted: true }),
-    readEvents: async ({ afterSeq }: any) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
+    readEvents: async ({ afterSeq = -1 }: any) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => sessions.has(sessionId)
       ? { sessionId, agentPreset: 'personal-remote', modelProfileId: sessions.get(sessionId) } : null,
   }
@@ -308,7 +308,7 @@ test('busy registration keeps its request ID; lost success is reconciled without
     listModels: async () => [], preflight: async () => ({ ok: true }),
     createSession: async ({ sessionId }: any) => ({ sessionId }),
     sendMessage: async () => ({ accepted: true }), cancelSession: async () => ({ accepted: true }),
-    readEvents: async ({ afterSeq }: any) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
+    readEvents: async ({ afterSeq = -1 }: any) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
     describeSession: async () => null,
   }
   const service = await createPersonalAccessService({ root, port: 0, backend, accountModelManager: manager })

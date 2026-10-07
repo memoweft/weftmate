@@ -2,7 +2,7 @@ const $ = id => document.getElementById(id);
 const state = { page:'chat', conversationId:null, conversations:[], model:null, busy:false, modelSwitching:false, transitionPending:false,
   phase:'idle', progressText:'', loggedIn:false, connection:'local',backgroundSync:'unknown',authEpoch:0,booted:false,
   username:'', owner:'', deviceId:'', ui:null, draft:'', models:[], menu:false, attachmentMenu:false, attachmentPick:null, previewScope:null, previewReturnFocus:null, drawer:false, scrollPinned:true, generation:0,memory:null,lastTerminal:null,sendUncertain:false,
-  chatSource:'phone',thingsDetail:null,taskControlAttempt:null,taskControlDrafts:new Map(),taskControlPollTimer:null,taskControlPollGeneration:0,taskControlPollCount:0,taskControlPollStartedAt:0,taskLabels:new Map(),taskLabelOwner:null,taskLabelEpoch:-1,restorePending:false,sharedSessionId:null,sharedSessions:[],sharedHostAvailable:false,sharedEvents:[],sharedNextSeq:-1,
+  chatSource:'phone',restorePending:false,sharedSessionId:null,sharedSessions:[],sharedHostAvailable:false,sharedEvents:[],sharedNextSeq:-1,sharedHasOlder:false,sharedNextBeforeSeq:null,sharedOlderLoading:false,
   sharedRunning:false,sharedError:'',sharedPending:null,sharedOutboxLoading:false,sharedAwaiting:null,sharedChecking:null,sharedStopping:false,sharedGeneration:0,sharedLoading:false,sharedPollTimer:null };
 const pending = new Map();
 const attachmentDrafts = new Map();
@@ -24,7 +24,7 @@ state.accountModelCredentialConflict=null;
 const conversationTasks={owner:null,epoch:-1,entries:new Map(),inFlight:null};
 const toolApprovals={owner:null,epoch:-1,deviceId:null,sessions:new Map(),attempts:new Map(),inFlight:new Map(),detail:null,pollTimer:null};
 const toolQuestions={owner:null,epoch:-1,deviceId:null,sessions:new Map(),attempts:new Map(),drafts:new Map(),inFlight:new Map(),detail:null,pollTimer:null};
-state.taskReturn=null;state.chatRestore=null;
+
 function draftKey(id=state.conversationId){return `weftmate-draft:${state.owner||'local'}:${id||'new'}`}
 function sharedDraftKey(id=state.sharedSessionId){return `weftmate-shared-draft:${state.owner||'local'}:${id||'none'}`}
 function attachmentConversationId(){return state.chatSource==='host'?state.sharedSessionId||'':state.conversationId||''}
@@ -343,12 +343,11 @@ function placeModelMenu(){const top=$('model-button').getBoundingClientRect().to
   popup.style.bottom=`${Math.max(110,window.innerHeight-top+8)}px`;
   popup.style.maxHeight=`${Math.min(300,Math.max(160,top-24),Math.floor(window.innerHeight*.46))}px`}
 function page(name){
-  if(name!=='things'&&name!=='chat'){state.taskReturn=null;state.chatRestore=null}
-  stopTaskControlObservation();stopApprovalObservation();stopQuestionObservation();const previousPage=state.page;closeDrawer();closeModelMenu();closeAttachmentMenu();if(name!=='chat'){
+  stopApprovalObservation();stopQuestionObservation();const previousPage=state.page;closeDrawer();closeModelMenu();closeAttachmentMenu();if(name!=='chat'){
     closeImagePreview({restoreFocus:false});invalidateLiveProgress();cancelAttachmentPick();stopSharedPoll();if(state.restorePending){state.restorePending=false;loadDraft();updateComposer()}}state.page=name;state.generation++;
   $('chat-page').classList.toggle('active',name==='chat');$('generic-page').classList.toggle('active',name!=='chat');
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    things:'正在做的事',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'我的资料',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
@@ -386,6 +385,7 @@ function scrollBottom(force=false){if(!force&&!state.scrollPinned)return;
   if(!Number.isFinite(box.scrollTop)||Math.abs(box.scrollTop-bottom)>1)box.scrollTop=bottom;
   $('jump-latest').hidden=true}
 function handleChatScroll(){const box=$('chat-scroll');
+  if(box.scrollTop<40)void loadOlderHistory();
   if(state.busy&&state.scrollPinned&&liveFollowTop!==null){
     if(Math.abs(box.scrollTop-liveFollowTop)<=2)return;
     if(box.scrollTop<liveFollowTop-2){state.scrollPinned=false;liveFollowTop=null;
@@ -474,7 +474,7 @@ function selectSharedSession(sessionId){if(!state.sharedSessions.some(item=>item
   if(linked){selectConversation(linked.id);return}
   closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.sharedGeneration++;state.chatSource='host';state.restorePending=false;state.sharedSessionId=sessionId;state.scrollPinned=true;
   try{localStorage.setItem(chatSourceKey(),JSON.stringify({source:'host',sessionId}))}catch{}status('');closeToast();
-  state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedLoading=false;state.sharedRunning=!!selectedSharedSession()?.running;
+  state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedHasOlder=false;state.sharedNextBeforeSeq=null;state.sharedOlderLoading=false;state.sharedLoading=false;state.sharedRunning=!!selectedSharedSession()?.running;
   state.sharedError='';state.sharedPending=null;state.sharedOutboxLoading=true;state.sharedAwaiting=null;state.sharedChecking=null;
   loadDraft();page('chat');void loadSharedOutbox()}
 function sharedViewCurrent(owner,epoch,generation,sessionId){return state.owner===owner&&state.authEpoch===epoch&&
@@ -495,7 +495,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
   const scroll=$('chat-scroll'),previousScroll=scroll.scrollTop,content=$('chat-content');clear(content);
   const session=selectedSharedSession(),heading=el('div','shared-heading');
   heading.append(el('strong','',session?.title||'电脑共享会话'),el('small','',session?.sendAvailable?'沿用这段会话在电脑上绑定的模型':'这段电脑会话仅可查看'));
-  content.append(heading);
+  content.append(heading);olderControl(content);
   if(state.sharedError)content.append(el('div','shared-notice',state.sharedError));
   else if(!state.sharedHostAvailable)content.append(el('div','shared-notice','电脑暂不可达。已读取的内容仅供查看，新消息可能进入待核对状态。'));
   let lastTurn='',lastEndReasonKind='';for(const event of state.sharedEvents){
@@ -521,7 +521,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
           if(unavailable)row.append(el('small','message-attachment-note',`${unavailable} 张历史图片暂无法预览`))}
         if(originalFiles.length)appendSharedFiles(row,event,state.sharedSessionId);
         if(event.type==='user.message'&&receiptIdPattern.test(event.data?.receiptId||''))row.dataset.receiptId=event.data.receiptId;
-        content.append(row);
+        row.dataset.seq=String(event.seq);content.append(row);
         if(event.data?.truncated)content.append(el('p','message-state','这条电脑消息仅显示前一部分'))}}
     else if(event.type==='turn.started'){lastTurn='running';lastEndReasonKind=''}
     else if(event.type==='turn.ended'){lastTurn=event.data?.reason||'unknown';
@@ -537,17 +537,18 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
     if(state.sharedPending.state==='uncertain'){const check=el('button','shared-check',state.sharedChecking?'正在核对…':'检查状态');
       check.disabled=!!state.sharedChecking;check.addEventListener('click',()=>{void checkSharedPending()});box.append(check)}content.append(box)}
   if(!state.sharedEvents.length&&!state.sharedError)content.append(el('p','muted',state.sharedLoading?'正在读取电脑会话…':'这段会话还没有可显示的文字记录'));
-  renderConversationTasks();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;restoreTaskChat()}
+  renderTimeline();renderConversationTasks();updateComposer();if(state.scrollPinned)scrollBottom();else scroll.scrollTop=previousScroll;}
 async function loadSharedHistory(){if(state.chatSource!=='host'||!state.sharedSessionId||state.sharedLoading||document.visibilityState==='hidden')return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=state.sharedSessionId;
   state.sharedLoading=true;try{let after=state.sharedNextSeq,more=true;
-    while(more){const result=await call('shared.sessions.events',{sessionId,afterSeq:after});
+    while(more){const initial=after===-1;const result=await call('shared.sessions.events',{sessionId,...(initial?{}:{afterSeq:after})});
       if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
       if(result?.source!=='host'||result.sessionId!==sessionId||!Array.isArray(result.events)||!Number.isSafeInteger(result.nextSeq))
         throw new Error('OPERATION_FAILED');
+      if(initial){state.sharedHasOlder=result.hasOlder===true;state.sharedNextBeforeSeq=result.nextBeforeSeq}
       const next=result.nextSeq;if(next<after||result.hasMore&&next<=after)throw new Error('OPERATION_FAILED');
       for(const event of result.events)if(Number.isSafeInteger(event?.seq)&&event.seq>after&&
-        ['user.message','assistant.message','turn.started','turn.ended'].includes(event.type)){
+        typeof event.type==='string'){
           state.sharedEvents.push(event);trackSharedAcceptedTurn(event)}
       state.sharedEvents.sort((a,b)=>a.seq-b.seq);after=next;state.sharedNextSeq=next;more=result.hasMore===true;
     }
@@ -626,13 +627,13 @@ async function renderConversation({silent=false}={}){if(state.page!=='chat')retu
         const body=event.data?.text;if(typeof body!=='string'||!body.trim())continue;
         const row=messageNode(event.type==='user.message'?'user':'assistant',body);
         if(event.type==='user.message'&&receiptIdPattern.test(event.data?.receiptId||''))row.dataset.receiptId=event.data.receiptId;
-        content.append(row);
+        row.dataset.seq=String(event.seq);content.append(row);
       }
       const late=result.messages.filter(m=>Number.isSafeInteger(m.serverSeq)&&
         m.serverSeq>binding.cutoverSyncSeq&&!shown.has(m.sourceEventId)||m.serverSeq==null);
       if(late.length){content.append(el('div','handoff-divider','交接后才同步的手机记录 · 已保留，尚未自动并入电脑上下文'));
         for(const m of late)content.append(messageNode(m.role,m.text,m.thumbnails,previewScope,m.messageId||m.id))}
-      content.append(handoffCard(id));
+      const older=state.linkedEvents.get(id);if(older){state.sharedHasOlder=older.hasOlder===true;state.sharedNextBeforeSeq=older.nextBeforeSeq;olderControl(content)}content.append(handoffCard(id));
     }else content.append(handoffCard(id));
     for(const receipt of result.receipts||[]){const card=el('div','receipt');card.append(el('strong','',toolLabel(receipt.toolName)+' · '+receiptStatus(receipt.status)),el('p','',receipt.summary||''));content.append(card)}
     if(result.turnStatus==='running'&&state.busy)renderLiveProgress();
@@ -646,10 +647,11 @@ async function renderConversation({silent=false}={}){if(state.page!=='chat')retu
         if(!draft.value.trim()&&prior)draft.value=prior;updateComposer();draft.focus()});card.append(retry);content.append(card);
       refreshAttachmentDrafts();
     }
+    if(binding)renderTimeline(state.linkedEvents.get(id)?.events||[]);
     renderConversationTasks();
     if(binding)void refreshConversationTasks();
     if(result.turnStatus==='running'&&state.busy){if(state.scrollPinned)scheduleLiveMotion()}
-    else scrollBottom();restoreTaskChat();
+    else scrollBottom();
   }catch(e){if(!silent&&state.owner===owner&&state.authEpoch===epoch&&state.page==='chat'&&
       state.chatSource==='phone'&&state.conversationId===id&&state.generation===gen)status(safeError(e),true)}}
 function phaseLabel(value){return {waiting:'等待模型回复…',reasoning:'模型正在思考…',answering:'正在回复…',tool:'正在处理手机动作…'}[value]||'正在回复…'}
@@ -751,16 +753,16 @@ async function refreshHandoff(conversationId=state.conversationId){if(!state.log
 async function loadLinkedHistory(conversationId=state.conversationId){const binding=selectedBinding();
   if(!binding||state.linkedLoading)return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.generation,sessionId=binding.sessionId;
-  state.linkedLoading=true;let after=-1;const events=[];
+  state.linkedLoading=true;let after=state.linkedEvents.get(conversationId)?.nextSeq??-1;const events=[...(state.linkedEvents.get(conversationId)?.events||[])];
   try{for(let pageNo=0;pageNo<20;pageNo++){
-      const result=await call('shared.sessions.events',{sessionId,afterSeq:after});
+      const initial=after===-1;const result=await call('shared.sessions.events',{sessionId,...(initial?{}:{afterSeq:after})});
       if(state.owner!==owner||state.authEpoch!==epoch||state.generation!==generation||
         state.conversationId!==conversationId||selectedBinding()?.sessionId!==sessionId)return;
       if(result?.sessionId!==sessionId||!Array.isArray(result.events)||!Number.isSafeInteger(result.nextSeq)||
         result.nextSeq<after)throw new Error('COMMAND_RECEIPT_INVALID');
       events.push(...result.events.filter(event=>Number.isSafeInteger(event?.seq)&&
-        ['user.message','assistant.message','turn.started','turn.ended'].includes(event.type)));
-      if(result.hasMore!==true){state.linkedEvents.set(conversationId,{events,cached:result.cached===true,
+        typeof event.type==='string'));
+      if(result.hasMore!==true){state.linkedEvents.set(conversationId,{events,nextSeq:result.nextSeq,hasOlder:result.hasOlder,nextBeforeSeq:result.nextBeforeSeq,cached:result.cached===true,
         tailUnknown:result.tailUnknown===true,historyTruncated:result.historyTruncated===true,
         oldestSeq:result.oldestSeq});break}
       if(result.nextSeq<=after)throw new Error('COMMAND_RECEIPT_INVALID');after=result.nextSeq}
@@ -782,8 +784,8 @@ function handoffCard(id){const view=state.handoffViews.get(id),binding=selectedB
       const owner=state.owner,epoch=state.authEpoch;
       try{const result=await call('activity.list');if(state.owner!==owner||state.authEpoch!==epoch)return;
         const found=groupTaskActivities(result.activities||[]).find(item=>item.source==='host'&&item.conversationId===id);
-        if(found)showHostCommandDetail(found);else page('things')
-      }catch{page('things')}});card.append(tasks);
+        if(found)inlineTaskInfo(found.taskId||found.commandId,tasks);else page('chat')
+      }catch{page('chat')}});card.append(tasks);
   }else if(view?.status==='creating'||view?.status==='uncertain'){
     card.append(el('strong','','正在核对电脑交接'),el('p','','原请求编号已保留；核对完成前不会再建一段会话。'));
     const retry=el('button','secondary','检查原请求');retry.addEventListener('click',()=>void refreshHandoff(id));card.append(retry);
@@ -877,6 +879,7 @@ function renderConversationList(){const target=$('conversation-list'),previousSc
       el('small','',item.source==='phone'&&
         (state.handoffViews.get(item.id)?.status==='active'||item.record?.binding)
         ? '手机起步 · 电脑续聊' : `${item.model?`${item.model} · `:''}${item.source==='phone'?'手机执行':'电脑执行'}`));
+    if(item.record.running||item.source==='phone'&&state.conversationId===item.id&&state.busy){const dot=el('span','session-running-dot');dot.setAttribute('aria-label','正在运行');b.children[0].append(dot)}
     b.addEventListener('click',()=>item.source==='phone'?selectConversation(item.id):selectSharedSession(item.id));target.append(b)}
   if(!entries.length)target.append(el('p','muted',filter?'没有匹配的对话':state.loggedIn?'还没有对话':'登录后查看对话'));
   target.scrollTop=previousScroll;
@@ -994,8 +997,8 @@ function processEvent(message){const {event,data}=message;if(event==='chat.start
       data.conversationId===state.conversationId&&!state.handoffPickerOpen.has(state.conversationId))
     void renderConversation({silent:true});
   if(event==='account.transition'){
-    if(data.pending){resetToolApprovals();resetToolQuestions();conversationTasks.entries.clear();conversationTasks.inFlight=null;state.taskReturn=null;state.chatRestore=null}
-    if(data.pending){closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.accountModelCredentialConflict=null;state.handoffModelLastCheck=0;state.linkedPending=null;state.sharedGeneration++;state.chatSource='phone';state.thingsDetail=null;state.taskControlAttempt=null;state.taskControlDrafts.clear();state.restorePending=false;state.sharedSessionId=null;state.sharedLoading=false;
+    if(data.pending){resetToolApprovals();resetToolQuestions();conversationTasks.entries.clear();conversationTasks.inFlight=null;}
+    if(data.pending){closeImagePreview({restoreFocus:false});invalidateLiveProgress();stopSharedPoll();clearTimeout(state.linkedPollTimer);state.linkedPollTimer=null;state.handoffViews.clear();state.linkedEvents.clear();state.handoffModelNames.clear();state.handoffPickerOpen.clear();state.handoffSelections.clear();state.accountModelCredentialConflict=null;state.handoffModelLastCheck=0;state.linkedPending=null;state.sharedGeneration++;state.chatSource='phone';state.restorePending=false;state.sharedSessionId=null;state.sharedLoading=false;
       state.sharedSessions=[];state.sharedEvents=[];state.sharedPending=null;state.sharedOutboxLoading=false;state.sharedAwaiting=null;state.sharedChecking=null;state.sharedHostAvailable=false;
       state.conversations=[];state.artifactSaveRequest=null;state.artifactSaveLabel=null;renderConversationList();clear($('chat-content'));
       activeSend=null;state.sendUncertain=false;state.authEpoch++;state.transitionPending=true;state.busy=false;state.models=[];closeModelMenu();closeAttachmentMenu();cancelAttachmentPick();resetMemoryForAuthBoundary('正在切换账户，已清除上一个账户的记忆显示。');
@@ -1149,7 +1152,6 @@ function renderModels(){const list=$('model-options');clear(list);if(!state.mode
     closeModelMenu();page('models')});list.append(manage)
 }
 function renderPage(name){const target=$('page-content');clear(target);switch(name){
-  case 'things':return thingsPage(target);
   case 'memory':return memoryPage(target);
   case 'capabilities':return capabilitiesPage(target);
   case 'devices':return devicesPage(target);
@@ -2036,28 +2038,6 @@ function modelsPage(target){target.append(heading('对话模型','手机直连�
     }).catch(error=>{if(modelPageCurrent(owner,epoch,generation)){
       clear(accountBody);accountBody.append(el('p','inline-error',safeError(error)))}})}
 }
-function thingsPage(target){stopTaskControlObservation();state.thingsDetail=null;state.taskReturn=null;
-  if(state.taskLabelOwner!==state.owner||state.taskLabelEpoch!==state.authEpoch){
-    state.taskLabels.clear();state.taskLabelOwner=state.owner;state.taskLabelEpoch=state.authEpoch}
-  target.append(heading('正在做的事','这里汇总手机回合与电脑命令。命令已受理不代表回复或动作已经完成。'));
-  if(!state.loggedIn){target.append(notice('请登录自己的账户后查看任务与手机回合。其他账户的记录不会在这里显示。'));return}
-  if(state.busy)target.append(group('进行中',[row('手机模型正在回复','可以返回对话停止',()=>page('chat'))]));
-  const loading=notice('正在读取手机与电脑的活动…');target.append(loading);
-  const gen=state.generation,owner=state.owner,epoch=state.authEpoch;
-  call('activity.list').then(result=>{if(state.page!=='things'||state.generation!==gen||
-    state.owner!==owner||state.authEpoch!==epoch||state.thingsDetail)return;loading.remove();
-    const activities=groupTaskActivities(result.activities||[]);if(!activities.length)target.append(notice('当前没有可显示的活动。手机回合与电脑任务会按当前账户分别记录。'));
-    else {const entries=activities.map(item=>({item,button:row(item.source==='host'?hostActivityTitle(item):item.title,
-      `${item.source==='host'?'电脑':'手机'} · ${item.source==='host'?taskActivityStatus(item):activityStatus(item.status)}${item.summary?' · '+item.summary:''}`,
-      ()=>{if(item.source==='phone'&&item.conversationId)selectConversation(item.conversationId);
-        else if(item.source==='host'&&item.commandId)showHostCommandDetail(item);
-        else toast('这条活动没有可读取的详情',true)})}));
-      target.append(group('最近活动',entries.map(entry=>entry.button)));
-      void loadVisibleTaskLabels(entries,target,gen,owner,epoch)}
-    if(state.loggedIn&&!result.hostAvailable)target.append(notice('电脑活动暂时无法读取；手机记录仍可查看。'));
-  }).catch(e=>{if(state.page!=='things'||state.generation!==gen||state.owner!==owner||state.authEpoch!==epoch||state.thingsDetail)return;
-    loading.textContent=safeError(e);loading.className='inline-error'});
-}
 function verifiedArtifact(item){return item?.kind==='desktop.write_artifact'&&item.status==='observed'&&
   item.verification?.status==='observed'&&!!item.artifactId}
 function groupTaskActivities(activities){const byTask=new Map(),result=[];
@@ -2068,65 +2048,6 @@ function groupTaskActivities(activities){const byTask=new Map(),result=[];
     if(item.kind==='session.message'&&!item.rootTaskId){task.status=item.status;task.sessionId=item.sessionId||task.sessionId}
     else task.children.push(item);
   }return result}
-function taskActivityStatus(item){if(item.kind!=='session.message')return hostCommandStatus(item.status);
-  const followUp=item.children?.find(child=>child.kind==='session.message'&&child.rootTaskId&&
-    ['supplement','resume'].includes(child.taskAction));
-  if(followUp)return `${followUp.taskAction==='resume'?'恢复要求':'补充'}${hostCommandStatus(followUp.status)==='已交给电脑会话'?'已送达':' · '+hostCommandStatus(followUp.status)} · 结果待核对`;
-  if(item.children?.some(verifiedArtifact))return '文件已在电脑核验';
-  if(item.children?.some(child=>child.kind==='desktop.write_artifact'&&child.status==='uncertain'))return '文件结果待确认';
-  if(item.children?.some(child=>child.kind==='desktop.write_artifact'&&child.status==='rejected'))return '文件未完成';
-  return `${hostCommandStatus(item.status)}${item.children?.some(child=>child.kind==='desktop.write_artifact')?' · 文件处理中':''}`}
-function activityStatus(value){return {running:'正在回复',completed:'已结束',cancelled:'已停止',failed:'未完成',interrupted:'中断',
-  pending:'待处理',dispatching:'执行中',accepted_by_dsh:'已受理',observed:'已观察',uncertain:'结果待确认',rejected:'已拒绝',tool:'手机动作'}[value]||'状态待确认'}
-function hostActionLabel(kind){return {'desktop.open_app':'打开电脑应用','desktop.write_artifact':'生成文件','session.create':'新建电脑会话','session.message':'继续电脑会话','session.cancel':'停止电脑会话'}[kind]||'电脑命令'}
-function hostActivityTitle(item){const session=state.sharedSessions.find(row=>row.sessionId===item.sessionId);
-  const file=item.kind==='session.message'&&item.children?.find(child=>verifiedArtifact(child)&&
-    typeof child.fileName==='string'&&child.fileName.trim());
-  if(file)return `生成：${file.fileName.trim()}`;
-  const label=item.kind==='session.message'&&state.taskLabels.get(item.taskId||item.commandId);
-  if(label)return `电脑任务：${label}`;
-  return item.kind==='session.message'&&session?.title?`电脑任务：${session.title}`:hostActionLabel(item.kind)}
- async function loadVisibleTaskLabels(entries,target,generation,owner,epoch){
-   const current=()=>state.page==='things'&&!state.thingsDetail&&state.generation===generation&&
-     state.owner===owner&&state.authEpoch===epoch&&state.taskLabelOwner===owner&&state.taskLabelEpoch===epoch;
-   const candidates=entries.filter(({item})=>item.source==='host'&&item.kind==='session.message'&&
-     sessionIdPattern.test(item.taskId||item.commandId||'')&&!item.children?.some(verifiedArtifact)&&
-     !state.taskLabels.has(item.taskId||item.commandId)).slice(0,8);
-   let next=0;
-   const worker=async()=>{while(current()&&next<candidates.length){const entry=candidates[next++];
-     const taskId=entry.item.taskId||entry.item.commandId;
-     try{const result=await call('shared.commands.detail',{commandId:taskId});
-       if(!current())return;
-       const command=result?.command;
-       if(command?.commandId!==taskId||command.kind!=='session.message'||command.rootTaskId||
-         typeof command.taskLabel!=='string'||!command.taskLabel.trim()||command.taskLabel.length>100)continue;
-       state.taskLabels.set(taskId,command.taskLabel);
-       if(target.contains(entry.button))entry.button.children[0].children[0].textContent=hostActivityTitle(entry.item)
-     }catch{ /* The existing title remains usable when a label is unavailable. */ }
-   }};
-   await Promise.all([worker(),worker()])}
-function hostCommandStatus(value){return {pending:'等待电脑受理',dispatching:'正在派发',accepted_by_dsh:'已交给电脑会话',
-  accepted_by_host:'电脑已受理',observed:'已观察到结果',uncertain:'结果待确认',rejected:'未受理'}[value]||'状态待确认'}
-function commandTime(value){const date=new Date(value);return Number.isFinite(date.getTime())?
-  new Intl.DateTimeFormat('zh-CN',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}).format(date):'时间待确认'}
-function hostCommandMeaning(command){if(command.state==='accepted_by_dsh')return command.kind==='session.cancel'?
-  '停止命令已交给电脑会话。回合是否停止，请查看原会话记录。':command.kind==='session.create'?
-  '新建会话请求已由电脑受理；是否可续聊，请查看会话列表。':
-  '命令已交给电脑会话。回复是否完成，请查看原会话记录。';
-  if(command.state==='accepted_by_host')return '电脑已受理请求，实际结果仍待核对。';
-  if(command.state==='observed')return command.verification?.status==='observed'?
-    '已观察到电脑应用窗口。':'已收到观察回执；请结合原会话核对结果。';
-  if(command.state==='uncertain')return '结果尚不明确；先核对电脑状态，避免重复提交。';
-  if(command.state==='rejected')return '电脑未受理这条命令。';
-  return {pending:'命令等待电脑受理。',dispatching:'命令正在派发到电脑。'}[command.state]||'命令状态等待核对。'}
-async function openHostCommandSession(sessionId){if(!sessionId)return;
-  const owner=state.owner,epoch=state.authEpoch,gen=state.generation;
-  if(!state.sharedSessions.some(item=>item.sessionId===sessionId))await listSharedSessions();
-  if(state.page!=='things'||state.owner!==owner||state.authEpoch!==epoch||state.generation!==gen)return;
-  if(!state.sharedSessions.some(item=>item.sessionId===sessionId)){toast('原电脑会话当前不可访问，请检查连接或账户权限',true);return}
-  selectSharedSession(sessionId)}
-function artifactSize(value){return Number.isSafeInteger(value)&&value>=0?
-  value<1024?`${value} 字节`:`${(value/1024).toFixed(1)} KiB`:'大小待确认'}
 function taskControlMeaning(control){if(control?.state==='stop_requested'&&typeof control.stopStatus==='string'){
   if(control.stopStatus==='stopped')return '电脑已核对这件事的实际停止。已执行的步骤与成果会保留。';
   if(control.stopStatus==='completed')return '这件事的回合已正常结束；停止请求没有已证实的中断结果。核对成果后可写明下一步。';
@@ -2139,10 +2060,6 @@ function taskControlMeaning(control){if(control?.state==='stop_requested'&&typeo
   return {active:'事情仍可继续处理；文件完成以电脑读回核验为准。',
   stop_requested:'停止意图已记录，执行端状态仍待核对。',stopped:'执行端停止已核对。',
   uncertain:'事情结果尚不明确，请先核对原会话和成果。'}[control?.state]||'任务控制状态待核对。'}
-function taskStepStatus(step){if(step.state==='observed')return step.verification?.status==='observed'&&
-  step.verification?.method==='visible_window'?'电脑窗口已观察':'动作状态已更新，窗口仍待核对';
-  return {pending:'等待电脑受理',dispatching:'正在派发',accepted_by_host:'电脑已受理，窗口待核对',
-    uncertain:'结果待确认',rejected:'未执行'}[step.state]||'状态待确认'}
 function conversationTaskContext(){const conversationId=state.chatSource==='phone'?state.conversationId:null;
   return {owner:state.owner,epoch:state.authEpoch,generation:state.generation,source:state.chatSource,
     conversationId,sessionId:conversationId?selectedBinding()?.sessionId:state.sharedSessionId}}
@@ -2157,7 +2074,7 @@ function approvalContext(sessionId=conversationTaskContext().sessionId,taskId=nu
 function approvalViewCurrent(context){return state.loggedIn&&!state.transitionPending&&state.owner===context.owner&&
   state.authEpoch===context.epoch&&approvalDeviceId()===context.deviceId&&state.generation===context.generation&&
   state.page===context.page&&(context.page==='chat'?conversationTaskCurrent(context):
-    context.page==='things'&&state.thingsDetail===context.taskId)}
+    false)}
 function stopApprovalObservation(){clearTimeout(toolApprovals.pollTimer);toolApprovals.pollTimer=null;toolApprovals.detail=null}
 function resetToolApprovals(){stopApprovalObservation();toolApprovals.owner=null;toolApprovals.epoch=-1;toolApprovals.deviceId=null;
   toolApprovals.sessions.clear();toolApprovals.attempts.clear();toolApprovals.inFlight.clear()}
@@ -2227,7 +2144,8 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
   const hadFocus=focusChoice&&focused.parent===card.querySelector('.approval-actions')||focused?.closest?.('.tool-approval')===card;
   card.dataset.signature=signature;clear(card);card.dataset.approvalId=row.approvalId;card.dataset.taskId=row.taskId;
   card.append(el('strong','approval-title',`${row.status==='pending'?'需要审批':'审批记录'} · ${approvalOperation(row)}`));
-  if(row.reason)card.append(el('p','approval-reason',row.reason));
+  if(row.reason&&row.status==='pending')card.append(el('p','approval-reason',row.reason));
+  card.classList.toggle('is-resolved',approvalTerminal(row));
   const message=el('p','approval-status',approvalMeaning(row,cache,attempt));message.setAttribute('role','status');message.setAttribute('aria-live','polite');
   card.append(message);
   if(row.status==='pending'||row.status==='answered'&&cache.error){const controls=el('div','approval-actions');
@@ -2253,25 +2171,16 @@ function renderConversationApprovals(){const context=approvalContext(),content=$
   for(const row of [...cache.rows.values()].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.approvalId.localeCompare(b.approvalId))){
     const task=conversationTasks.entries.get(row.taskId)?.task;
     if(!relatedTaskApproval(task,row))continue;
-    const anchor=[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(!anchor)continue;
+    const timelineAnchor=[...content.children].find(node=>node.dataset?.timelineApproval===row.approvalId);
+    const anchor=timelineAnchor||[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(!anchor)continue;
     visible.add(row.approvalId);let card=[...content.children].find(node=>node.dataset?.approvalId===row.approvalId);
     if(!card)card=el('section','tool-approval conversation-approval');
     let next=anchor.nextSibling;while(next&&(next.dataset?.conversationTask||next.dataset?.approvalId&&next.dataset.approvalId!==row.approvalId))next=next.nextSibling;
-    if(card!==next)content.insertBefore(card,next);fillApprovalCard(card,row,context,cache)}
+    if(timelineAnchor){timelineAnchor.hidden=true;card.dataset.seq=timelineAnchor.dataset.seq;next=timelineAnchor}if(card!==next)content.insertBefore(card,next);fillApprovalCard(card,row,context,cache)}
   for(const node of [...content.children])if(node.dataset?.approvalId&&!visible.has(node.dataset.approvalId))node.remove();
   if(state.scrollPinned)scrollBottom();else if(scroll.scrollTop!==scrollTop)scroll.scrollTop=scrollTop}
-function renderApprovalView(context){if(!approvalViewCurrent(context))return;
-  if(context.page==='chat'){renderConversationApprovals();return}
-  const detail=toolApprovals.detail;if(!detail||detail.context!==context)return;
-  const cache=toolApprovals.sessions.get(context.sessionId),rows=taskApprovals(detail.task,context);detail.section.hidden=!rows.length;
-  const body=detail.section.querySelector('.group-body');
-  for(const child of [...body.children])if(!rows.some(row=>row.approvalId===child.dataset?.approvalId))child.remove();
-  for(const row of rows){let card=[...body.children].find(node=>node.dataset?.approvalId===row.approvalId);
-    if(!card){card=el('section','tool-approval task-approval');body.append(card)}fillApprovalCard(card,row,context,cache)}}
-function scheduleApprovalObservation(context){clearTimeout(toolApprovals.pollTimer);toolApprovals.pollTimer=null;
-  if(context.page!=='things'||!approvalViewCurrent(context)||document.visibilityState==='hidden'||
-    !taskApprovals(toolApprovals.detail?.task,context).some(row=>['pending','answered'].includes(row.status)))return;
-  toolApprovals.pollTimer=setTimeout(()=>{toolApprovals.pollTimer=null;if(approvalViewCurrent(context))void refreshToolApprovals(context)},3000)}
+function renderApprovalView(context){if(approvalViewCurrent(context))renderConversationApprovals()}
+function scheduleApprovalObservation(){}
 async function refreshToolApprovals(context=approvalContext(),{force=false}={}){
   if(!approvalViewCurrent(context)||!sessionIdPattern.test(context.sessionId||''))return false;
   const cache=approvalCache(context),key=JSON.stringify(context),prior=toolApprovals.inFlight.get(key);
@@ -2359,7 +2268,7 @@ function normalizedQuestionBatch(item){if(!item||!approvalIdPattern.test(item.qu
     item.status==='resolved'&&(!['answered','cancelled'].includes(item.outcome)||typeof item.resolvedAt!=='string'||!Number.isFinite(Date.parse(item.resolvedAt)))||
     item.status==='unavailable'&&(typeof item.reasonCode!=='string'||typeof item.unavailableAt!=='string'||!Number.isFinite(Date.parse(item.unavailableAt)))||
     item.answerAcceptedAt!==undefined&&(!answer||typeof item.answerAcceptedAt!=='string'||!Number.isFinite(Date.parse(item.answerAcceptedAt))))return null;
-  const fields=['questionRpcId','sessionId','taskId','sourceCommandId','sourceReceiptId','turn','createdAt','status','answerRequestId',
+  const fields=['questionRpcId','sessionId','taskId','sourceCommandId','sourceReceiptId','turn','observedSeq','createdAt','status','answerRequestId',
     'answeredAt','outcome','resolvedAt','answerAcceptedAt','reasonCode','unavailableAt'];
   return {...Object.fromEntries(fields.filter(key=>item[key]!==undefined).map(key=>[key,item[key]])),questions,...(answer?{answer}:{})}}
 function questionIdentity(row){return JSON.stringify([row.questionRpcId,row.sessionId,row.taskId,row.sourceCommandId,row.sourceReceiptId,row.turn,row.questions,row.createdAt])}
@@ -2447,29 +2356,23 @@ function fillQuestionCard(card,row,context,cache){const attempt=questionAttempt(
   if(cache.error||attempt?.unknown||row.status==='answered'){
     const check=el('button','secondary','检查问题状态');check.type='button';check.disabled=!!attempt?.busy;
     check.addEventListener('click',()=>{if(approvalViewCurrent(context))void refreshToolQuestions(context,{force:true})});controls.append(check)}
-  if(controls.children.length)form.append(controls);card.append(form);
+  if(controls.children.length)form.append(controls);form.hidden=approvalTerminal(row);card.classList.toggle('is-resolved',form.hidden);card.append(form);
   if(ownsFocus&&focusedField==='custom'){const next=fields.find(input=>input.dataset.questionIndex===focusedIndex);if(next&&!next.disabled&&editable)next.focus({preventScroll:true})}}
 function renderConversationQuestions(){const context=approvalContext(),content=$('chat-content');if(!approvalViewCurrent(context)||!questionScopeCurrent(context))return;
   const cache=toolQuestions.sessions.get(context.sessionId);if(!cache)return;const scroll=$('chat-scroll'),scrollTop=scroll.scrollTop,visible=new Set();
   for(const row of [...cache.rows.values()].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)||a.questionRpcId.localeCompare(b.questionRpcId))){
     if(!relatedTaskApproval(conversationTasks.entries.get(row.taskId)?.task,row))continue;
-    const anchor=[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(!anchor)continue;
+    const questionEvent=(state.chatSource==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents).filter(e=>e.type==='question.asked'&&e.data?.turn===row.turn&&Number.isSafeInteger(row.observedSeq)&&e.seq<=row.observedSeq).sort((a,b)=>b.seq-a.seq)[0];
+    const timelineAnchor=questionEvent&&[...content.children].find(node=>node.dataset?.timelineQuestion===questionEvent.data.callId);
+    const anchor=timelineAnchor||[...content.children].find(node=>node.dataset?.receiptId===row.sourceReceiptId);if(!anchor)continue;
     visible.add(row.questionRpcId);let card=[...content.children].find(node=>node.dataset?.questionRpcId===row.questionRpcId);
     if(!card)card=el('section','tool-question conversation-question');let next=anchor.nextSibling;
     while(next&&(next.dataset?.conversationTask||next.dataset?.approvalId||next.dataset?.questionRpcId&&next.dataset.questionRpcId!==row.questionRpcId))next=next.nextSibling;
-    if(card!==next)content.insertBefore(card,next);fillQuestionCard(card,row,context,cache)}
+    if(timelineAnchor){timelineAnchor.hidden=true;card.dataset.seq=timelineAnchor.dataset.seq;next=timelineAnchor}if(card!==next)content.insertBefore(card,next);fillQuestionCard(card,row,context,cache)}
   for(const child of [...content.children])if(child.dataset?.questionRpcId&&!visible.has(child.dataset.questionRpcId))child.remove();
   if(state.scrollPinned)scrollBottom();else if(scroll.scrollTop!==scrollTop)scroll.scrollTop=scrollTop}
-function renderQuestionView(context){if(!approvalViewCurrent(context))return;if(context.page==='chat'){renderConversationQuestions();return}
-  const detail=toolQuestions.detail;if(!detail||detail.context!==context)return;const cache=toolQuestions.sessions.get(context.sessionId),rows=taskQuestions(detail.task,context);
-  detail.section.hidden=!rows.length;const body=detail.section.querySelector('.group-body');
-  for(const child of [...body.children])if(!rows.some(row=>row.questionRpcId===child.dataset?.questionRpcId))child.remove();
-  for(const row of rows){let card=[...body.children].find(node=>node.dataset?.questionRpcId===row.questionRpcId);
-    if(!card){card=el('section','tool-question task-question');body.append(card)}fillQuestionCard(card,row,context,cache)}}
-function scheduleQuestionObservation(context){clearTimeout(toolQuestions.pollTimer);toolQuestions.pollTimer=null;
-  if(context.page!=='things'||!approvalViewCurrent(context)||document.visibilityState==='hidden'||
-    !taskQuestions(toolQuestions.detail?.task,context).some(row=>['pending','answered'].includes(row.status)))return;
-  toolQuestions.pollTimer=setTimeout(()=>{toolQuestions.pollTimer=null;if(approvalViewCurrent(context))void refreshToolQuestions(context)},3000)}
+function renderQuestionView(context){if(approvalViewCurrent(context))renderConversationQuestions()}
+function scheduleQuestionObservation(){}
 async function refreshToolQuestions(context=approvalContext(),{force=false}={}){
   if(!approvalViewCurrent(context)||!sessionIdPattern.test(context.sessionId||''))return false;
   const cache=questionCache(context),key=JSON.stringify(context),prior=toolQuestions.inFlight.get(key);
@@ -2559,11 +2462,12 @@ function renderConversationTasks(){const context=conversationTaskContext(),conte
     if(!entry.notice&&control&&control.state!=='active')card.append(el('p','conversation-task-state',taskControlMeaning(control)));
     if(!entry.notice&&task?.replyEvidence)card.append(el('p','conversation-task-reply',taskReplyProgress(task.replyEvidence)));
     const verified=artifacts.filter(item=>item.state==='observed'&&item.verification?.status==='observed'&&item.verification?.method==='sha256_readback');
+    for(const artifact of artifacts)appendTimelineArtifact(card,artifact,context);
     if(artifacts.length)card.append(el('p','conversation-task-result',verified.length?`${verified.length} 个成果文件已读回核验`:'成果文件仍待核验'));
-    const controls=el('div','conversation-task-actions'),detail=el('button','secondary',verified.length?'查看成果与详情':'查看事情详情');detail.type='button';
+    const controls=el('div','conversation-task-actions'),detail=el('button','secondary',verified.length?'查看来源与成果':'查看来源与成果');detail.type='button';
     detail.addEventListener('pointerdown',()=>{detail.dataset.restoreFocus=document.activeElement===$('draft')?'1':'0'});
     detail.addEventListener('pointercancel',()=>{delete detail.dataset.restoreFocus});
-    detail.addEventListener('click',()=>{const restoreFocus=detail.dataset.restoreFocus==='1';delete detail.dataset.restoreFocus;if(conversationTaskCurrent(context))openConversationTaskDetail(entry.taskId,restoreFocus)});controls.append(detail);
+    detail.addEventListener('click',()=>{const restoreFocus=detail.dataset.restoreFocus==='1';delete detail.dataset.restoreFocus;if(conversationTaskCurrent(context))inlineTaskInfo(entry.taskId,detail)});controls.append(detail);
     if(entry.notice){const retry=el('button','quiet','重新核对进展');retry.type='button';
       retry.addEventListener('click',()=>{if(conversationTaskCurrent(context))void refreshConversationTasks()});controls.append(retry)}card.append(controls)
   }renderConversationApprovals();renderConversationQuestions();if(state.scrollPinned)scrollBottom();else if(scroll.scrollTop!==previousScroll)scroll.scrollTop=previousScroll}
@@ -2596,313 +2500,40 @@ async function refreshConversationTasks(){const context=conversationTaskContext(
       conversationTasks.entries.set(taskId,entry);renderConversationTasks()}};await Promise.all([worker(),worker()])};
   const promise=run();conversationTasks.inFlight={key,promise};try{await promise}finally{
     if(conversationTasks.inFlight?.promise===promise)conversationTasks.inFlight=null}}
-function openConversationTaskDetail(taskId,focusIntent){const context=conversationTaskContext();if(!conversationTaskCurrent(context))return;
-  const snapshot={...context,scrollTop:$('chat-scroll').scrollTop,pinned:state.scrollPinned,focus:focusIntent===undefined?document.activeElement===$('draft'):focusIntent};
-  updateComposer();page('things');state.taskReturn=snapshot;showTaskDetail(taskId)}
-function returnFromTaskDetail(){const snapshot=state.taskReturn,current=conversationTaskContext();state.taskReturn=null;
-  if(!snapshot||snapshot.owner!==current.owner||snapshot.epoch!==current.epoch||snapshot.source!==current.source||
-    snapshot.sessionId!==current.sessionId||snapshot.conversationId!==current.conversationId){page('things');return}
-  state.scrollPinned=snapshot.pinned;state.chatRestore=snapshot;page('chat')}
-function restoreTaskChat(){const snapshot=state.chatRestore;if(!snapshot)return;const current=conversationTaskContext();
-  if(snapshot.owner!==current.owner||snapshot.epoch!==current.epoch||snapshot.source!==current.source||
-    snapshot.sessionId!==current.sessionId||snapshot.conversationId!==current.conversationId){state.chatRestore=null;return}
-  state.chatRestore=null;state.scrollPinned=snapshot.pinned;$('chat-scroll').scrollTop=snapshot.scrollTop;
-  if(snapshot.focus)$('draft').focus({preventScroll:true})}
-function taskControlGroup(taskId,control,current){const section=group('补充与控制',[]),body=section.querySelector('.group-body');
-  body.append(el('p','task-control-state',taskControlMeaning(control)));
-  if(control?.stopRequestedAt)body.append(el('p','command-fact',`停止意图：${commandTime(control.stopRequestedAt)}`));
-  if(control?.stopStatus==='stopped'&&control.stopObservedAt)body.append(el('p','command-fact',`停止核对：${commandTime(control.stopObservedAt)}`));
-  else if(control?.stoppedAt)body.append(el('p','command-fact',`停止核对：${commandTime(control.stoppedAt)}`));
-  if(control?.state==='stop_requested'&&Number.isSafeInteger(control.pendingReceipts)&&control.pendingReceipts>0)
-    body.append(el('p','command-fact','仍有回合或执行结果待核对。'));
-  const attempt=state.taskControlAttempt;
-  if(attempt?.taskId===taskId&&attempt.owner===state.owner&&attempt.epoch===state.authEpoch&&attempt.unknown){
-    body.append(notice('上次操作回执尚不明确。请先刷新任务；重试会沿用同一请求编号。'));
-    body.append(action('重试同一请求',()=>submitTaskControl(taskId,attempt.action,attempt.text,current,null,section),false));
-    return section}
-  if(control?.canSupplement===true){const input=el('textarea','task-supplement-input');input.placeholder='补充这件事需要的信息或调整';
-    input.setAttribute('aria-label','补充任务要求');input.maxLength=8192;
-    const draftKey=`${state.owner}:${taskId}`;input.value=state.taskControlDrafts.get(draftKey)||'';
-    input.addEventListener('input',()=>state.taskControlDrafts.set(draftKey,input.value));
-    body.append(input,action('提交补充',()=>submitTaskControl(taskId,'supplement',input.value,current,input,section),false))}
-  if(control?.canStop===true)body.append(action('请求停止这件事',()=>submitTaskControl(taskId,'stop',null,current,null,section),false));
-  if(control?.canResume===true){const input=el('textarea','task-supplement-input');
-    input.placeholder='说明恢复后要做什么，例如先核对现有文件再继续修改';
-    input.setAttribute('aria-label','恢复任务后的明确要求');input.maxLength=8192;
-    const draftKey=`${state.owner}:${taskId}:resume`;input.value=state.taskControlDrafts.get(draftKey)||'';
-    input.addEventListener('input',()=>state.taskControlDrafts.set(draftKey,input.value));
-    body.append(input,action('恢复这件事',()=>submitTaskControl(taskId,'resume',input.value,current,input,section),false))}
-  return section}
-async function submitTaskControl(taskId,action,text,current,input,section){if(!current())return;
-  const value=typeof text==='string'?text.trim():null;
-  if((action==='supplement'||action==='resume')&&!value){toast(action==='resume'?'请先写明恢复后要做什么':'先填写补充内容',true);return}
-  if(value&&value.length>8192){toast('内容过长，请缩短后重试',true);return}
-  const owner=state.owner,epoch=state.authEpoch,existing=state.taskControlAttempt;
-  if(existing?.busy)return;
-  if(existing?.unknown&&(existing.taskId!==taskId||existing.owner!==owner||existing.epoch!==epoch||
-    existing.action!==action||existing.text!==value)){toast('先核对上一项操作结果',true);return}
-  const attempt=existing?.unknown?existing:{taskId,owner,epoch,action,text:value,requestId:newSharedRequestId()};
-  attempt.busy=true;attempt.unknown=false;state.taskControlAttempt=attempt;
-  for(const control of section?.querySelectorAll?.('button,textarea')||[])control.disabled=true;
-  toast('请求正在提交；结果以任务记录为准');
-  try{const result=await call(`shared.tasks.${action}`,{taskId,requestId:attempt.requestId,...(value?{text:value}:{})});
-    if(!current()||state.taskControlAttempt!==attempt)return;
-    if(result?.task?.taskId!==taskId||!result.task.control)throw new Error('COMMAND_RECEIPT_INVALID');
-    state.taskControlAttempt=null;if(action==='supplement')state.taskControlDrafts.delete(`${owner}:${taskId}`);
-    if(action==='resume')state.taskControlDrafts.delete(`${owner}:${taskId}:resume`);
-    if(input)input.value='';
-    toast(action==='stop'?'停止意图已记录，正在核对执行端状态':'请求已记录，正在核对任务状态');
-    showTaskDetail(taskId)
-  }catch(e){if(!current()||state.taskControlAttempt!==attempt)return;
-    attempt.unknown=e?.message==='TIMEOUT'||e?.message==='RECEIPT_TIMEOUT';
-    toast(attempt.unknown?'操作结果待核对；刷新任务或重试同一请求':safeError(e),true);
-    if(attempt.unknown&&section){const body=section.querySelector('.group-body');
-      body.append(notice('回执尚不明确，请先刷新任务；重试会沿用同一请求编号。'),
-        action('重试同一请求',()=>submitTaskControl(taskId,action,value,current,null,section),false))}
-  }finally{attempt.busy=false;if(!attempt.unknown&&current())for(const control of section?.querySelectorAll?.('button,textarea')||[])control.disabled=false}}
- function stopTaskControlObservation(){clearTimeout(state.taskControlPollTimer);state.taskControlPollTimer=null;state.taskControlPollGeneration++}
- function scheduleTaskControlObservation(taskId,control,current,statusNode,pollGeneration){
-   clearTimeout(state.taskControlPollTimer);state.taskControlPollTimer=null;
-   if(control?.state!=='stop_requested'||typeof control.stopStatus!=='string'||control.canResume===true||
-     ['stopped','completed'].includes(control.stopStatus)||state.taskControlAttempt?.unknown)return;
-   if(state.taskControlPollCount>=8||Date.now()-state.taskControlPollStartedAt>=20000){
-     statusNode.textContent+=' 自动核对已暂停，可点“刷新任务”。';return}
-   state.taskControlPollTimer=setTimeout(async()=>{state.taskControlPollTimer=null;
-     if(!current()||state.taskControlPollGeneration!==pollGeneration)return;
-     state.taskControlPollCount++;
-     try{const task=await call('shared.tasks.detail',{taskId});
-       if(!current()||state.taskControlPollGeneration!==pollGeneration)return;
-       if(task?.taskId!==taskId||!task.control)throw new Error('COMMAND_RECEIPT_INVALID');
-       if(task.control.canResume===true||['stopped','completed'].includes(task.control.stopStatus)||task.control.state!=='stop_requested'){
-         showTaskDetail(taskId);return}
-       statusNode.textContent=taskControlMeaning(task.control);
-       scheduleTaskControlObservation(taskId,task.control,current,statusNode,pollGeneration);
-     }catch(e){if(current()&&state.taskControlPollGeneration===pollGeneration)
-       statusNode.textContent='暂时无法连接电脑核对停止结果。可点“刷新任务”；原请求编号会保留。'}
-   },2000)}
- function showTaskDetail(taskId){if(!taskId||state.page!=='things')return;
-   stopTaskControlObservation();stopApprovalObservation();stopQuestionObservation();state.taskControlPollCount=0;state.taskControlPollStartedAt=Date.now();
-   const pollGeneration=state.taskControlPollGeneration;
-  state.thingsDetail=taskId;const target=$('page-content');clear(target);
-  const back=()=>returnFromTaskDetail(),backLabel=state.taskReturn?'返回对话':'返回最近活动';
-  target.append(action(backLabel,back,false),heading('电脑任务','正在核对任务与文件成果…'));
-  const owner=state.owner,epoch=state.authEpoch,gen=state.generation;
-  const current=()=>state.page==='things'&&state.thingsDetail===taskId&&state.owner===owner&&
-    state.authEpoch===epoch&&state.generation===gen;
-  call('shared.tasks.detail',{taskId}).then(task=>{
-    if(!current())return;
-    if(task?.taskId!==taskId||task.source?.commandId!==taskId||!Array.isArray(task.artifacts))
-      throw new Error('COMMAND_RECEIPT_INVALID');
-    clear(target);target.append(action(backLabel,back,false),
-      heading('电脑任务','同一会话中的要求、执行与成果。'));
-    const source=task.source,artifacts=task.artifacts;
-    const inline=conversationTasks.entries.get(taskId);if(inline&&inline.sessionId===task.sessionId&&
-      (!inline.receiptId||inline.receiptId===source.receiptId))conversationTasks.entries.set(taskId,{...inline,task,notice:''});
-    const verified=artifacts.filter(item=>item.state==='observed'&&item.verification?.status==='observed'&&
-      item.artifactId&&item.sha256&&Number.isSafeInteger(item.size));
-    const uncertain=artifacts.some(item=>item.state==='uncertain');
-    const rejected=artifacts.some(item=>item.state==='rejected');
-    const summary=group('任务进度',[]),body=summary.querySelector('.group-body');
-    const stopStatus=task.control?.state==='stop_requested'?task.control.stopStatus:null;
-    body.append(el('p','command-status',stopStatus==='stopped'?'这件事已停止':
-      stopStatus==='completed'?'回合已正常结束':stopStatus?'停止状态待核对':
-      verified.length?`${verified.length} 个文件已在电脑核验`:
-      uncertain?'文件结果待确认':rejected?'文件生成未完成':hostCommandStatus(source.state)));
-    body.append(el('p','command-explanation',stopStatus==='stopped'?
-      '电脑已核对这件事的实际停止。已经完成的步骤与文件会保留。':
-      stopStatus==='completed'?'电脑回合已正常结束；停止请求没有已证实的中断结果。':
-      stopStatus?taskControlMeaning(task.control):verified.length?
-      '电脑已经重新读取文件并核对大小和 SHA-256。保存到手机后还会再次核对。':
-      uncertain?'电脑尚不能确定文件是否写成。请查看原会话，避免重复执行。':
-      rejected?'电脑未能完成文件生成；原会话保留具体回复。':hostCommandMeaning(source)));
-    const reply=task.replyEvidence;
-    const replyLabel=reply?.status==='waiting'?'电脑会话正在等待模型输出':
-      reply?.status==='streaming'?'模型正在生成回复，尚未见到结束记录':
-      reply?.status==='completed'?reply.assistantMessages>0?'回复回合已正常结束':'回合已结束，但未见最终文字回复':
-      reply?.status==='aborted'?'回复回合已中断':
-      reply?.status==='blocked'?'模型请求被阻断':
-      reply?.status==='failed'?reply.endReasonKind==='max-tokens'?'因输出限制结束，尚未确认完整交付':'模型回合未完成':'回复是否结束尚无法核对';
-    body.append(el('p','command-fact',`回复：${replyLabel}。`));
-    body.append(el('p','command-fact','聊天中的“停止”只停止当前回复；事情的停止状态在这里单独记录。'));
-    if(source.errorCode)body.append(el('p','command-error',safeError(new Error(source.errorCode))));
-    target.append(summary);
-    const approvalSection=group('操作审批',[]),approvalView=approvalContext(task.sessionId,taskId);
-    approvalSection.hidden=true;approvalCache(approvalView);
-    toolApprovals.detail={context:approvalView,task,section:approvalSection};target.append(approvalSection);
-    renderApprovalView(approvalView);void refreshToolApprovals(approvalView);
-    const questionSection=group('需要你的回答',[]),questionView=approvalContext(task.sessionId,taskId);
-    questionSection.hidden=true;questionCache(questionView);
-    toolQuestions.detail={context:questionView,task,section:questionSection};target.append(questionSection);
-    renderQuestionView(questionView);void refreshToolQuestions(questionView);
-    if(typeof task.sourceText==='string'&&task.sourceText.trim()){
-      const goal=group('原目标',[]);goal.querySelector('.group-body').append(el('p','task-source-text',task.sourceText));
-      target.append(goal)}
-     if(task.control&&typeof task.control.state==='string'){
-       const controls=taskControlGroup(taskId,task.control,current);target.append(controls);
-       scheduleTaskControlObservation(taskId,task.control,current,controls.querySelector('.task-control-state'),pollGeneration)}
-    const followUps=[...(Array.isArray(task.supplements)?task.supplements:[]),
-      ...(Array.isArray(task.resumes)?task.resumes:[])]
-      .filter(item=>item?.rootTaskId===taskId&&sessionIdPattern.test(item.commandId||''))
-      .sort((a,b)=>String(b.createdAt||'').localeCompare(String(a.createdAt||'')));
-    if(followUps.length){const updates=group('后续要求',[]),updatesBody=updates.querySelector('.group-body');
-      for(const item of followUps){const entry=el('div','task-followup');
-        entry.append(el('p','command-fact',`${item.taskAction==='resume'?'恢复':'补充'} · ${hostCommandStatus(item.state)} · ${commandTime(item.createdAt)}`));
-        const detail=el('details','task-record-id');detail.append(el('summary','','查看记录编号'),el('code','',item.commandId));
-        entry.append(detail);updatesBody.append(entry)}
-      target.append(updates)}
-    const steps=(Array.isArray(task.steps)?task.steps:[]).filter(item=>item?.kind==='desktop.open_app'&&
-      sessionIdPattern.test(item.commandId||'')&&(item.taskId===undefined||item.taskId===taskId));
-    if(steps.length){const section=group('执行步骤',[]),stepsBody=section.querySelector('.group-body');
-      for(const item of steps){const entry=el('div','task-followup');
-        const at=item.verification?.status==='observed'&&item.verification?.observedAt||item.updatedAt||item.createdAt;
-        entry.append(el('p','command-fact',`${item.appId==='notepad'?'打开记事本':'打开电脑应用'} · ${taskStepStatus(item)} · ${commandTime(at)}`));
-        const detail=el('details','task-record-id');detail.append(el('summary','','查看记录编号'),el('code','',item.commandId));
-        entry.append(detail);stepsBody.append(entry)}
-      target.append(section)}
-    const executionLabels={running:'正在执行',completed:'执行结束',failed:'未完成',cancelled:'已停止',uncertain:'待确认'};
-    const jobLabels={running:'后台运行中',stopping:'后台正在停止',completed:'后台已结束',killed:'后台已停止',failed:'后台未完成',
-      uncertain:'后台状态待确认',unconfirmed:'后台状态待确认'};
-    const toolNames={pwsh:'运行命令',read:'读取文件',write:'写入文件',edit:'修改文件',glob:'查找文件',grep:'搜索内容',
-      weftmod:'设备操作',weftmod_script:'运行脚本',job_output:'读取后台输出',job_list:'查看后台任务',job_kill:'停止后台任务'};
-    const executions=(Array.isArray(task.executionSteps)?task.executionSteps:[]).filter(item=>item&&
-      typeof item.executionId==='string'&&item.executionId.length>0&&item.executionId.length<=256&&
-      typeof item.sourceCommandId==='string'&&typeof item.sourceReceiptId==='string'&&
-      typeof item.toolName==='string'&&item.toolName.length>0&&item.toolName.length<=128&&Object.hasOwn(executionLabels,item.state));
-    if(executions.length){const section=group('执行记录',[]),body=section.querySelector('.group-body');
-      for(const item of executions){const entry=el('div','task-followup');
-        const status=Object.hasOwn(jobLabels,item.jobState)?jobLabels[item.jobState]:item.jobId?'后台状态待确认':executionLabels[item.state];
-        entry.append(el('p','command-fact',`${Object.hasOwn(toolNames,item.toolName)?toolNames[item.toolName]:item.toolName} · ${status} · ${commandTime(item.jobObservedAt||item.finishedAt||item.updatedAt||item.startedAt)}`));
-        body.append(entry)}target.append(section)}
-    const taskSources=(Array.isArray(task.sources)?task.sources:[]).filter(item=>item?.kind==='webpage'?
-      /^source-[a-f0-9]{48}$/.test(item.snapshotId||'')&&typeof item.title==='string'&&
-      typeof item.url==='string'&&/^[a-f0-9]{64}$/.test(item.contentSha256||'')&&
-      (item.versionHash===undefined||/^[a-f0-9]{64}$/.test(item.versionHash)&&
-        Number.isSafeInteger(item.segmentIndex)&&item.segmentIndex>=0&&
-        Number.isSafeInteger(item.segmentCount)&&item.segmentCount>=1&&item.segmentCount<=32&&
-        item.segmentIndex<item.segmentCount&&Number.isSafeInteger(item.byteStart)&&item.byteStart>=0&&
-        Number.isSafeInteger(item.byteEnd)&&item.byteEnd>item.byteStart&&
-        item.byteEnd-item.byteStart<=8192&&Number.isSafeInteger(item.totalCapturedBytes)&&
-        item.totalCapturedBytes<=256*1024&&typeof item.captureTruncated==='boolean'&&
-        (item.outline===undefined||typeof item.outline==='string'&&
-          new TextEncoder().encode(item.outline).length<=2048)):
-      /^source-[a-f0-9]{48}$/.test(item?.snapshotId||'')&&typeof item.relativePath==='string'&&
-      Number.isSafeInteger(item.lineStart)&&Number.isSafeInteger(item.lineEnd)&&
-      /^[a-f0-9]{64}$/.test(item.fileSha256||''));
-    if(task.project||task.workspace?.kind==='browser'||taskSources.length){const sourceGroup=group('读取的来源',[]),sourceBody=sourceGroup.querySelector('.group-body');
-      sourceBody.append(el('p','muted',task.project?`项目：${task.project.name}${task.project.revoked?' · 已撤销；历史来源仍保留':''}`:
-        task.workspace?.kind==='browser'?'公共网页实际渲染并读取时保存的正文与链接。':'这些是任务读取时保存的资料版本。'));
-      if(!taskSources.length)sourceBody.append(el('p','muted',task.workspace?.kind==='browser'?
-        '尚无已核验的网页来源；未读页面不能作为摘要依据。':'尚无已核验的读取来源；不能把未读内容当作摘要依据。'));
-      const captureGroups=new Map();for(const source of taskSources)if(source.kind==='webpage'&&/^[a-f0-9]{64}$/.test(source.versionHash||'')){
-        const root=source.parentSnapshotId||source.snapshotId;if(!captureGroups.has(root))captureGroups.set(root,[]);
-        captureGroups.get(root).push(source)}
-      const ordered=[...taskSources].sort((a,b)=>(a.parentSnapshotId||a.snapshotId).localeCompare(b.parentSnapshotId||b.snapshotId)||
-        (a.segmentIndex??0)-(b.segmentIndex??0));let shownGroup=null;
-      for(const source of ordered){const wrap=el('div','project-source-entry'),web=source.kind==='webpage';
-        const root=source.parentSnapshotId||source.snapshotId;
-        if(web&&captureGroups.has(root)&&shownGroup!==root){const siblings=captureGroups.get(root),readCount=new Set(siblings.map(x=>x.segmentIndex)).size;
-          sourceBody.append(el('p','artifact-name',`${source.title||source.url} · 已读 ${readCount}/${source.segmentCount} 段${
-            source.captureTruncated?' · 本次捕获未覆盖全文':readCount<source.segmentCount?' · 还有未读段':' · 已读完本次捕获'}`));shownGroup=root}
-        wrap.append(el('p','artifact-name',web&&source.versionHash?`第 ${source.segmentIndex+1}/${source.segmentCount} 段`:web?source.title||source.url:source.relativePath),
-          el('p','artifact-meta',web?`${source.url} · ${commandTime(source.readAt)}${source.versionHash?
-            ` · 已读字节 ${source.byteStart+1}–${source.byteEnd}`:source.truncated?' · 只读到部分正文':''} · ${
-            source.cited?'已用于成果':'已读取，未被成果引用'}`:
-            `第 ${source.lineStart}–${source.lineEnd} 行 · ${commandTime(source.readAt)} · ${
-              source.cited?'已用于成果':'已读取，未被成果引用'}`));
-        const preview=el('div','artifact-preview');preview.hidden=true;
-        const detail=el('details','task-record-id');detail.append(el('summary','',web?'查看网页来源与内容版本':'查看文件版本与来源编号'),
-          el('code','',web?`本段 SHA-256 ${source.contentSha256}${source.versionHash?
-            `\n捕获版本 SHA-256 ${source.versionHash}\n本段字节 ${source.byteStart}–${source.byteEnd}（结束位置不含）${source.outline?`\n页面标题目录\n${source.outline}`:''}`:''}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length??0} 条`:
-            `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`));
-        wrap.append(action('查看来源正文',async()=>{
-          preview.hidden=false;preview.textContent='正在读取来源正文…';
-          try{const result=await call('shared.sources.detail',{taskId,snapshotId:source.snapshotId});
-            if(!current())return;
-            const actual=result?.source,same=web?actual?.kind==='webpage'&&actual.url===source.url&&
-              actual.contentSha256===source.contentSha256&&actual.truncated===source.truncated&&
-              (!source.versionHash||actual.versionHash===source.versionHash&&
-                actual.segmentIndex===source.segmentIndex&&actual.byteStart===source.byteStart&&
-                actual.byteEnd===source.byteEnd):
-              actual?.fileSha256===source.fileSha256&&actual.lineStart===source.lineStart&&actual.lineEnd===source.lineEnd;
-            if(actual?.snapshotId!==source.snapshotId||!same||typeof actual.text!=='string'||
-              new TextEncoder().encode(actual.text).length>32*1024)throw new Error('SOURCE_INVALID');
-            preview.textContent=actual.text;
-          }catch(e){if(current())preview.textContent=['NOT_FOUND','UNAUTHORIZED'].includes(e?.message)?
-            '当前账户无法读取这份来源。':`来源正文未能核对：${safeError(e)}`}
-        },false),preview,detail);sourceBody.append(wrap)}
-      target.append(sourceGroup)}
-    if(artifacts.length){const fileGroup=group('成果文件',[]),fileBody=fileGroup.querySelector('.group-body');
-      for(const item of artifacts){const wrap=el('div','artifact-entry');
-        wrap.append(el('p','artifact-name',item.fileName||'未命名文件'),
-          el('p','artifact-meta',`${artifactSize(item.size)} · ${item.state==='observed'&&item.verification?.status==='observed'?'电脑已核验':
-            item.state==='uncertain'?'结果待确认':item.state==='rejected'?'生成失败':'等待电脑核验'}`));
-        if(item.state==='observed'&&item.verification?.status==='observed'&&item.artifactId){
-          const preview=el('div','artifact-preview');preview.hidden=true;
-          let saveStatus=null;
-          wrap.append(action('查看内容',async()=>{
-            preview.hidden=false;preview.textContent='正在读取内容…';try{const result=await call('shared.artifacts.preview',{artifactId:item.artifactId});
-              if(!current())return;
-              if(result?.artifact?.artifactId!==item.artifactId||result.artifact?.sha256!==item.sha256||
-                result.artifact?.size!==item.size||typeof result.text!=='string')throw new Error('ARTIFACT_CHANGED');
-              preview.textContent=result.text;
-            }catch(e){if(current())preview.textContent=safeError(e)}}),preview,
-            action('保存到手机',async()=>{
-              try{const result=await call('shared.artifacts.save',{artifactId:item.artifactId});if(!current())return;
-                state.artifactSaveRequest=result.requestId;
-                if(!saveStatus){saveStatus=el('p','artifact-save-state');wrap.append(saveStatus)}
-                saveStatus.textContent='请选择保存位置；保存后会核对文件内容。';
-                state.artifactSaveLabel=saveStatus;
-              }catch(e){if(current())toast(safeError(e),true)}
-            }));
-        }wrap.append(el('p','command-fact',`更新：${commandTime(item.updatedAt)}`));fileBody.append(wrap)}
-      target.append(fileGroup)
-    }else target.append(notice('这件事目前没有可查看的文件成果。回复与执行过程可在原电脑会话查看。'));
-    const facts=group('记录',[]),factsBody=facts.querySelector('.group-body');
-    factsBody.append(el('p','command-fact',`发往电脑：${commandTime(source.createdAt)}`),
-      el('p','command-fact',`最近更新：${commandTime(source.updatedAt)}`));
-    const rootId=el('details','task-record-id');
-    rootId.append(el('summary','','查看记录编号'),el('code','',taskId));
-    factsBody.append(rootId);
-    target.append(facts);
-    if(task.sessionId)target.append(action('打开原电脑会话',()=>openHostCommandSession(task.sessionId),false));
-    target.append(action('刷新任务',()=>showTaskDetail(taskId),false));
-  }).catch(e=>{if(!current())return;clear(target);target.append(action(backLabel,back,false),
-    heading('电脑任务'),notice(['NOT_FOUND','UNAUTHORIZED','FORBIDDEN'].includes(e?.message)?
-      '这项任务当前账户无法读取。请检查登录和电脑连接。':safeError(e),'详情不可用'))})
-}
-function showHostCommandDetail(item){if(item.kind==='session.message'||item.taskId)return showTaskDetail(item.taskId||item.commandId);
-  const commandId=item.commandId;if(!commandId||state.page!=='things')return;
-  state.thingsDetail=commandId;const target=$('page-content');clear(target);
-  const back=action('返回最近活动',()=>page('things'),false);back.classList.add('things-back');target.append(back,
-    heading(hostActionLabel(item.kind),'电脑命令的受理与实际结果分别记录。'));
-  const loading=notice('正在读取电脑命令详情…');target.append(loading);
-  const owner=state.owner,epoch=state.authEpoch,gen=state.generation;
-  call('shared.commands.detail',{commandId}).then(result=>{
-    if(state.page!=='things'||state.thingsDetail!==commandId||state.owner!==owner||state.authEpoch!==epoch||state.generation!==gen)return;
-    const command=result?.command;
-    if(result?.source!=='host'||command?.commandId!==commandId||
-      (item.sessionId&&command.sessionId!==item.sessionId))throw new Error('COMMAND_RECEIPT_INVALID');
-    clear(target);target.append(action('返回最近活动',()=>page('things'),false),heading(hostActionLabel(command.kind),
-      '这条命令的状态来自当前账户的电脑记录。'));
-    const summary=group('命令状态',[]),body=summary.querySelector('.group-body');
-    body.append(el('p','command-status',hostCommandStatus(command.state)),
-      el('p','command-explanation',hostCommandMeaning(command)));
-    if(command.errorCode)body.append(el('p','command-error',safeError(new Error(command.errorCode))));
-    target.append(summary);
-    const facts=group('记录',[]),factsBody=facts.querySelector('.group-body');
-    factsBody.append(el('p','command-fact',`命令编号：${command.commandId}`),
-      el('p','command-fact',`类型：${hostActionLabel(command.kind)}`),
-      el('p','command-fact',`创建：${commandTime(command.createdAt)}`),
-      el('p','command-fact',`更新：${commandTime(command.updatedAt)}`));
-    if(command.verification){factsBody.append(el('p','command-fact',`核验：${command.verification.status==='observed'?'已观察到应用窗口':'尚未确认应用窗口'}`));
-      if(command.verification.observedAt)factsBody.append(el('p','command-fact',`观察时间：${commandTime(command.verification.observedAt)}`))}
-    target.append(facts);
-    if(command.sessionId)target.append(action('打开原电脑会话',()=>openHostCommandSession(command.sessionId),false));
-  }).catch(e=>{if(state.page!=='things'||state.thingsDetail!==commandId||state.owner!==owner||state.authEpoch!==epoch||state.generation!==gen)return;
-    clear(target);target.append(action('返回最近活动',()=>page('things'),false),
-      heading('电脑命令'),notice(['NOT_FOUND','UNAUTHORIZED','FORBIDDEN'].includes(e?.message)?
-        '这条命令目前无法读取。它可能已移除，或当前账户已无权查看。':safeError(e),'详情不可用'))});
-}
+function inlineTaskInfo(taskId,button){const context=conversationTaskContext(),entry=conversationTasks.entries.get(taskId);
+  if(!conversationTaskCurrent(context)||!entry?.task)return;const card=button.closest('.conversation-task, .conversation-approval, .conversation-question')||button.parentNode;
+  const existing=card.querySelector('.timeline-task-info');if(existing){existing.remove();return}
+  const info=el('section','timeline-task-info'),task=entry.task;info.append(el('p','',task.sourceText||''));
+  for(const source of task.sources||[]){const read=el('button','secondary',`查看来源 ${source.relativePath||source.title||'正文'}`);read.type='button';
+    read.addEventListener('click',()=>openTimelinePreview(context,()=>call('shared.sources.detail',{taskId,snapshotId:source.snapshotId}),source.title||source.relativePath||'来源'));info.append(read)}
+  for(const artifact of task.artifacts||[])appendTimelineArtifact(info,artifact,context);
+  if(task.control?.canStop){const stop=el('button','secondary','请求停止这件事');stop.type='button';
+    stop.addEventListener('click',async()=>{if(!conversationTaskCurrent(context)||stop.disabled)return;stop.disabled=true;entry.stopRequestId ||= newSharedRequestId();
+      try{await call('shared.tasks.stop',{taskId,requestId:entry.stopRequestId});if(conversationTaskCurrent(context)){stop.textContent='停止请求已记录';void refreshConversationTasks()}}
+      catch{if(conversationTaskCurrent(context)){stop.disabled=false;stop.textContent='重试停止请求'}}});info.append(stop)}card.append(info)}
+function appendTimelineArtifact(parent,artifact,context=conversationTaskContext()){const wrap=el('div','timeline-artifact'),open=el('button','secondary',artifact.fileName||'打开成果'),save=el('button','quiet','保存到手机');
+  open.type='button';save.type='button';open.addEventListener('click',()=>openTimelinePreview(context,()=>call('shared.artifacts.preview',{artifactId:artifact.artifactId}),artifact.fileName||'成果'));
+  save.addEventListener('click',async()=>{try{const result=await call('shared.artifacts.save',{artifactId:artifact.artifactId});if(conversationTaskCurrent(context)){state.artifactSaveRequest=result.requestId;toast('请选择保存位置')}}catch(e){toast(safeError(e),true)}});
+  wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${artifact.size||0} 字节`),save);parent.append(wrap)}
+async function openTimelinePreview(context,read,title){if(!conversationTaskCurrent(context))return;document.querySelector('.timeline-preview')?.remove();
+  const panel=el('aside','timeline-preview'),close=el('button','secondary','关闭预览'),text=el('pre','timeline-raw','正在读取…');close.type='button';
+  close.addEventListener('click',()=>panel.remove());panel.append(close,el('h2','',title),text);$('chat-page').append(panel);
+  try{const data=await read();if(!conversationTaskCurrent(context)||!panel.isConnected){panel.remove();return}text.textContent=data.text||data.source?.text||'暂时没有可预览内容'}
+  catch{if(panel.isConnected)text.textContent='暂时无法读取，请关闭后重试。'}}
+function renderTimeline(events=state.sharedEvents){if(!window.WeftTimeline)return;const context=conversationTaskContext();
+  window.WeftTimeline.render(events,$('chat-content'),{tag:'section',mobile:true,copyText:text=>call('clipboard.copy',{text}),
+    readDetail:seq=>call('shared.sessions.eventDetail',{sessionId:context.sessionId,seq}),
+    openArtifact:artifact=>openTimelinePreview(context,()=>call('shared.artifacts.preview',{artifactId:artifact.artifactId}),artifact.fileName||'成果'),
+    downloadArtifact:artifact=>call('shared.artifacts.save',{artifactId:artifact.artifactId})})}
+function olderControl(content){if(!state.sharedHasOlder)return;const button=el('button','quiet',state.sharedOlderLoading?'正在读取…':'加载更早内容');button.type='button';button.disabled=state.sharedOlderLoading;
+  button.addEventListener('click',()=>{void loadOlderHistory()});content.append(button)}
+async function loadOlderHistory(){if(!state.sharedHasOlder||state.sharedOlderLoading)return;
+  const context=conversationTaskContext(),scroll=$('chat-scroll'),height=scroll.scrollHeight,top=scroll.scrollTop;state.sharedOlderLoading=true;
+  try{const result=await call('shared.sessions.events',{sessionId:context.sessionId,beforeSeq:state.sharedNextBeforeSeq});
+    if(!conversationTaskCurrent(context))return;state.sharedHasOlder=result.hasOlder===true;state.sharedNextBeforeSeq=result.nextBeforeSeq;
+    const prior=context.source==='phone'?state.linkedEvents.get(context.conversationId)?.events||[]:state.sharedEvents;const merged=new Map(prior.map(e=>[e.seq,e]));for(const event of result.events)merged.set(event.seq,event);state.sharedEvents=[...merged.values()].sort((a,b)=>a.seq-b.seq);
+    state.scrollPinned=false;if(context.source==='phone'){const view=state.linkedEvents.get(context.conversationId);if(view){view.events=state.sharedEvents;view.hasOlder=result.hasOlder;view.nextBeforeSeq=result.nextBeforeSeq}await renderConversation({silent:true})}else renderSharedConversation();scroll.scrollTop=top+scroll.scrollHeight-height;void refreshConversationTasks()
+  }catch{if(conversationTaskCurrent(context))toast('更早内容暂时无法读取，请重试',true)}finally{if(conversationTaskCurrent(context))state.sharedOlderLoading=false}}
 function devicesPage(target){target.append(heading('设备','同一账户下登录过的设备会列在这里。'));
   if(!state.loggedIn){target.append(notice('请先登录电脑账户，再查看或移除设备。'));return}
   const summary=notice('正在读取设备…');target.append(summary);const gen=state.generation;
@@ -2940,7 +2571,7 @@ function notificationPage(target){target.append(heading('通知','回复、手�
       detail,async()=>{try{await call('notifications.set',{category:key,enabled:!settings.categories[key]});page('notifications')}
       catch(e){toast(safeError(e),true)}}))));
     const items=history.items||[];target.append(group('最近记录',items.length?items.map(item=>row(item.title,
-      `${item.summary} · ${timeLabel(item.createdAt)}`,()=>{if(item.conversationId)selectConversation(item.conversationId);else page('things')})):
+      `${item.summary} · ${timeLabel(item.createdAt)}`,()=>{if(item.conversationId)selectConversation(item.conversationId);else page('chat')})):
       [el('p','muted','还没有新的回复或同步提醒')]));
   }).catch(e=>{loading.textContent=safeError(e);loading.className='inline-error'});
 }
@@ -3056,11 +2687,11 @@ async function phoneAction(kind){if(kind==='settings'){
 }
 function handleBack(){if(!$('image-preview').hidden){closeImagePreview();return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
-  if(state.drawer){closeDrawer();$('menu-button').focus();return}if(state.page==='things'&&state.thingsDetail){returnFromTaskDetail();return}
+  if(state.drawer){closeDrawer();$('menu-button').focus();return}
   if(state.page!=='chat'){page('chat');return}if(document.activeElement===$('draft'))$('draft').blur()}
 document.addEventListener('DOMContentLoaded',()=>{
   $('menu-button').addEventListener('click',openDrawer);$('drawer-close').addEventListener('click',closeDrawer);$('drawer-scrim').addEventListener('click',closeDrawer);
-  $('things-button').addEventListener('click',()=>page('things'));$('profile-link').addEventListener('click',()=>page('settings'));
+  $('profile-link').addEventListener('click',()=>page('settings'));
   document.querySelectorAll('[data-page]').forEach(button=>button.addEventListener('click',()=>page(button.dataset.page)));
   document.querySelector('[data-action="new-chat"]').addEventListener('click',()=>selectConversation(null));
   $('conversation-search').addEventListener('input',renderConversationList);

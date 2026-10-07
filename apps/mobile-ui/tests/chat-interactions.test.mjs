@@ -28,6 +28,8 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     set scrollTop(value){this._scrollTop=value;this.scrollWrites++;this.scrollHistory.push(value)}
     append(...children){for(const child of children)if(child instanceof Node||child instanceof TextNode)child.parent=this;
       this.children.push(...children)}
+    get parentNode(){return this.parent}
+    closest(selector){return selector.split(',').some(part=>part.trim().startsWith('.')&&this.className?.split(' ').includes(part.trim().slice(1)))?this:this.parent?.closest(selector)||null}
     get childNodes(){return this.children}
     get nextSibling(){return this.parent?.children[this.parent.children.indexOf(this)+1]||null}
     insertBefore(child,next){child.remove();child.parent=this;const index=next?this.children.indexOf(next):-1;
@@ -69,6 +71,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const context=vm.createContext({document,window,localStorage,URL,
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
+  vm.runInContext(readFileSync(new URL('../www/timeline.js',import.meta.url),'utf8'),context);
   vm.runInContext(source,context);
   const run=code=>vm.runInContext(code,context);
   const node=id=>document.getElementById(id);
@@ -524,35 +527,9 @@ test('accepted shared send clears its draft and shared stop uses the selected se
   assert.equal(h.bridge.some(item=>item.method==='chat.stop'),false);
 });
 
-test('task stop is separate from chat stop and waits for task control evidence',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things";state.thingsDetail="task-1"');
-  const section=h.run('taskControlGroup("task-1",{state:"active",canSupplement:true,canStop:true,canResume:false},()=>true)');
-  assert.match(allText(section),/请求停止这件事/);
-  assert.doesNotMatch(allText(section),/恢复这件事/);
-  const controls=section.querySelector('.group-body');
-  controls.children.find(item=>item.textContent==='请求停止这件事').fire('click');
-  const request=h.bridge.find(item=>item.method==='shared.tasks.stop');assert.ok(request);
-  assert.equal(request.params.taskId,'task-1');assert.ok(request.params.requestId);
-  assert.equal(h.bridge.some(item=>item.method==='shared.stop'),false);
-  assert.doesNotMatch(h.node('toast').textContent,/已停止/);
-  h.reply(h.bridge.indexOf(request),{task:{taskId:'task-1',control:{state:'stop_requested'}}});await h.flush();
-  assert.match(h.node('toast').textContent,/停止意图已记录/);
-});
 
-test('task resume requires a new explicit instruction',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things";state.thingsDetail="task-1"');
-  const section=h.run('taskControlGroup("task-1",{state:"stop_requested",reasonCode:"TURN_ENDED_AFTER_STOP_REQUEST",canSupplement:false,canStop:false,canResume:true},()=>true)');
-  assert.match(allText(section),/上一回合已结束.*尚不能确认是停止请求.*请写明下一步/);
-  assert.doesNotMatch(allText(section),/执行端状态仍待核对/);
-  const body=section.querySelector('.group-body');
-  const input=body.children.find(item=>item.className==='task-supplement-input');
-  const resume=body.children.find(item=>item.textContent==='恢复这件事');
-  resume.fire('click');assert.equal(h.bridge.length,0);
-  assert.match(h.node('toast').textContent,/先写明/);
-  input.value='先核对已有文件，再补上摘要';input.fire('input');
-  resume.fire('click');const request=h.bridge.find(item=>item.method==='shared.tasks.resume');
-  assert.ok(request);assert.equal(request.params.text,'先核对已有文件，再补上摘要');
-});
+
+
 
 test('supplement and resume commands stay in their root file task card',()=>{
   const h=harness();h.run('state.sharedSessions=[{sessionId:"pc1",title:"新对话"}]');
@@ -563,8 +540,6 @@ test('supplement and resume commands stay in their root file task card',()=>{
     {source:'host',kind:'session.message',commandId:'root-1',status:'accepted_by_dsh',sessionId:'pc1'}])`);
   assert.equal(grouped.length,1);
   assert.equal(grouped[0].commandId,'root-1');
-  assert.equal(h.run('hostActivityTitle(groupTaskActivities([{source:"host",kind:"session.message",commandId:"follow-1",rootTaskId:"root-1",taskAction:"supplement",status:"accepted_by_dsh"},{source:"host",kind:"desktop.write_artifact",commandId:"file-1",taskId:"root-1",status:"observed",artifactId:"artifact-1",fileName:"结果.md",verification:{status:"observed"}}])[0])'),'生成：结果.md');
-  assert.match(h.run('taskActivityStatus(groupTaskActivities([{source:"host",kind:"session.message",commandId:"follow-1",rootTaskId:"root-1",taskAction:"supplement",status:"accepted_by_dsh"}])[0])'),/补充已送达.*待核对/);
 });
 
 test('older outbox snapshot cannot clear a newly submitted shared request',async()=>{
@@ -1101,19 +1076,7 @@ test('task15-question-client closing a view preserves question drafts and late a
   h.reply(request,{questions:[row],nextBefore:null,hasMore:false});await checking;assert.equal(questionCard(h),undefined);
 });
 
-test('task15-question-client task detail answer updates keep supplement input and return to the same draft scroll and focus',async()=>{
-  const h=harness(),fixture=prepareApprovalChat(h),row=syntheticQuestionBatch({questions:[{id:'q',question:'说明'}]});await readQuestions(h,[row]);
-  h.node('draft').value='未发送的聊天内容';h.run('updateComposer();state.scrollPinned=false');h.node('chat-scroll').scrollTop=181;h.node('draft').focus();
-  h.run("openConversationTaskDetail('root-inline')");let request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();
-  request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');h.reply(request,{questions:[row],nextBefore:null,hasMore:false});await h.flush();
-  const input=h.node('page-content').querySelector('.task-supplement-input');input.value='尚未提交的任务补充';
-  const answer={answers:[{id:'q',selected:[],custom:'信息回答'}]},deciding=h.run(`answerToolQuestion([...toolQuestions.sessions.get('s1').rows.values()][0],${JSON.stringify(answer)},toolQuestions.detail.context)`);
-  request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer');const requestId=h.bridge[request].params.requestId,answered=answeredQuestion(row,requestId,answer);
-  h.reply(request,{question:answered,requestId});await h.flush();h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),
-    {questions:[{...answered,status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'}],nextBefore:null,hasMore:false});await deciding;
-  assert.equal(h.node('page-content').querySelector('.task-supplement-input'),input);assert.equal(input.value,'尚未提交的任务补充');
-  h.run('handleBack()');assert.equal(h.node('draft').value,'未发送的聊天内容');assert.equal(h.node('chat-scroll').scrollTop,181);assert.equal(h.document.activeElement,h.node('draft'));
-});
+
 
 test('task15-question-client native answer uses a dedicated route with requestId and answer under the existing identity guards',()=>{
   const native=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt',import.meta.url),'utf8'),
@@ -1248,22 +1211,7 @@ test('task15-approval-client leaving during a decision retains its marker and re
   assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
 });
 
-test('task15-approval-client the task detail updates only approval state and returns with the same draft scroll and input focus',async()=>{
-  const h=harness(),fixture=prepareApprovalChat(h),row=syntheticApproval();await readApprovals(h,[row]);
-  h.node('draft').value='尚未发送的审批补充';h.run('updateComposer();state.scrollPinned=false');h.node('chat-scroll').scrollTop=117;h.node('draft').focus();
-  h.run("openConversationTaskDetail('root-inline')");
-  let request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();
-  request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');h.reply(request,{approvals:[row],nextBefore:null,hasMore:false});await h.flush();
-  const input=h.node('page-content').querySelector('.task-supplement-input');assert.ok(input);input.value='详情内尚未提交的说明';
-  const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'rejected',toolApprovals.detail.context)");
-  request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');const requestId=h.bridge[request].params.requestId;
-  const answered=answeredApproval(row,requestId,'rejected');h.reply(request,{approval:answered,requestId});await h.flush();
-  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[answered],nextBefore:null,hasMore:false});await deciding;
-  assert.equal(h.node('page-content').querySelector('.task-supplement-input'),input);assert.equal(input.value,'详情内尚未提交的说明');
-  assert.match(allText(h.node('page-content').querySelector('.task-approval')),/等待执行端处理/);
-  h.run('handleBack()');assert.equal(h.run('state.page'),'chat');assert.equal(h.node('draft').value,'尚未发送的审批补充');
-  assert.equal(h.node('chat-scroll').scrollTop,117);assert.equal(h.document.activeElement,h.node('draft'));
-});
+
 
 test('task15-approval-client native methods use dedicated authenticated routes and keep both account guards',()=>{
   const native=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt',import.meta.url),'utf8');
@@ -1335,30 +1283,7 @@ test('terminal-output-limit mobile keeps an old pure-reply card bound to its sou
   assert.equal(JSON.stringify(fixture.task),initial,'display keeps the old source, turn and terminalAt evidence intact');
 });
 
-test('terminal-output-limit mobile card and detail preserve file verification and old reply statuses',async()=>{
-  const cases=[
-    {evidence:{status:'failed',endReasonKind:'max-tokens'},card:'因输出限制结束，尚未确认完整交付',detail:'因输出限制结束，尚未确认完整交付'},
-    {evidence:{status:'failed'},card:'模型回合未完成',detail:'模型回合未完成'},
-    {evidence:{status:'unconfirmed',endReasonKind:'max-tokens'},card:'回复结束状态待核对',detail:'回复是否结束尚无法核对'},
-    {evidence:{status:'completed',endReasonKind:'max-tokens'},card:'回复回合已正常结束',detail:'回复回合已正常结束'},
-    {evidence:{status:'aborted',endReasonKind:'max-tokens'},card:'回复回合已中断',detail:'回复回合已中断'},
-    {evidence:{status:'blocked',endReasonKind:'max-tokens'},card:'模型请求被阻断',detail:'模型请求被阻断'},
-  ];
-  for(const item of cases){const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
-    fixture.task.executionSteps=[];fixture.task.replyEvidence={...item.evidence,assistantMessages:1,turn:2,terminalAt:'2026-10-07T00:35:29.769Z'};
-    fixture.task.artifacts=[{artifactId:'artifact-limit-file',taskId:fixture.task.taskId,sessionId:'s1',kind:'desktop.write_artifact',
-      fileName:'已保存的部分结果.txt',state:'observed',size:8,sha256:'a'.repeat(64),verification:{status:'observed',method:'sha256_readback'}}];
-    await feedSyntheticTask(h,fixture.task,fixture.activity);
-    const card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
-    assert.ok(card);assert.equal(card.children.find(node=>node.className==='conversation-task-reply').textContent,item.card);
-    assert.match(allText(card),/1 个成果文件已读回核验/);
-    card.querySelector('.conversation-task-actions').children[0].fire('click');
-    const detail=h.bridge.findLastIndex(request=>request.method==='shared.tasks.detail');h.reply(detail,fixture.task);await h.flush();
-    assert.match(allText(h.node('page-content')),new RegExp(`回复：${item.detail}。`));
-    assert.match(allText(h.node('page-content')),/1 个文件已在电脑核验/);
-    assert.doesNotMatch(item.card,/没有成果|成果未交齐|用户拒绝|费用耗尽/);
-  }
-});
+
 
 test('terminal-output-limit mobile session and account boundaries reject late old reasons',async()=>{
   for(const boundary of ['session','account']){const h=harness();prepareSyntheticTaskChat(h);
@@ -1400,30 +1325,9 @@ test('synthetic ordinary mobile chat and invalid RPC IDs do not show execution c
   }
 });
 
-test('synthetic mobile task detail returns to the same draft, manual scroll and input focus through system Back',async()=>{
-  const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
-  await feedSyntheticTask(h,fixture.task,fixture.activity);
-  h.node('draft').value='尚未发送的长中文草稿';h.run('updateComposer();state.scrollPinned=false');
-  h.node('chat-scroll').scrollTop=144;h.node('draft').focus();
-  h.node('chat-content').querySelector('.conversation-task-actions').children[0].fire('click');
-  assert.equal(h.run('state.page'),'things');assert.equal(h.run('state.thingsDetail'),fixture.task.taskId);
-  const request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();
-  assert.match(allText(h.node('page-content')),/返回对话.*电脑任务/);
-  h.run('handleBack()');
-  assert.equal(h.run('state.page'),'chat');assert.equal(h.run('state.sharedSessionId'),'s1');
-  assert.equal(h.node('draft').value,'尚未发送的长中文草稿');assert.equal(h.storage.get('weftmate-shared-draft:A:s1'),'尚未发送的长中文草稿');
-  assert.equal(h.node('chat-scroll').scrollTop,144);assert.equal(h.run('state.scrollPinned'),false);
-  assert.equal(h.document.activeElement,h.node('draft'));
-});
 
-test('task15-focus-new mobile pointer intent restores only the current chat',async()=>{
-  const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);await feedSyntheticTask(h,fixture.task,fixture.activity);
-  h.node('draft').value='保留草稿';h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=91;h.node('draft').focus();
-  const detail=h.node('chat-content').querySelector('.conversation-task-actions').children[0];detail.fire('pointerdown');h.document.activeElement=detail;detail.fire('click');
-  let request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();h.run('handleBack()');
-  assert.equal(h.node('draft').value,'保留草稿');assert.equal(h.node('chat-scroll').scrollTop,91);assert.equal(h.document.activeElement,h.node('draft'));
-  const currentDetail=h.node('chat-content').querySelector('.conversation-task-actions').children[0];h.node('draft').focus();currentDetail.fire('pointerdown');currentDetail.fire('pointercancel');assert.equal(currentDetail.dataset.restoreFocus,undefined);
-});
+
+
 
 test('synthetic mobile failed detail stays recoverable, and a late receipt relocates its unchanged failure card',async()=>{
   const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
@@ -1459,81 +1363,13 @@ test('synthetic late mobile task payload cannot cross account epoch or conversat
 function findNode(node,predicate){if(predicate(node))return node;for(const child of node.children||[]){const match=findNode(child,predicate);if(match)return match}return null}
 function countNodes(node,predicate){return Number(predicate(node))+(node.children||[]).reduce((count,child)=>count+countNodes(child,predicate),0)}
 
-test('Things combines source and file receipt, and only a verified file gets save controls',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things"');
-  const grouped=h.run('groupTaskActivities([{source:"host",commandId:"child",taskId:"cmd-1",kind:"desktop.write_artifact",status:"observed",artifactId:"artifact-1",fileName:"stage08-repeat.md",verification:{status:"observed"}}, {source:"host",commandId:"cmd-1",kind:"session.message",status:"accepted_by_dsh",sessionId:"s1"}])');
-  assert.equal(grouped.length,1);assert.equal(grouped[0].taskId,'cmd-1');
-  assert.equal(h.run('hostActivityTitle(groupTaskActivities([{source:"host",commandId:"child",taskId:"cmd-1",kind:"desktop.write_artifact",status:"observed",artifactId:"artifact-1",fileName:"stage08-repeat.md",verification:{status:"observed"}}])[0])'),'生成：stage08-repeat.md');
-  assert.equal(h.run('taskActivityStatus(groupTaskActivities([{source:"host",commandId:"child",taskId:"cmd-1",kind:"desktop.write_artifact",status:"accepted_by_host",artifactId:"artifact-1"}])[0])'),'等待电脑受理 · 文件处理中');
-  h.run('showTaskDetail("cmd-1")');
-  const artifact={artifactId:'artifact-1',taskId:'cmd-1',kind:'desktop.write_artifact',state:'observed',
-    fileName:'结果.md',size:8,sha256:'a'.repeat(64),verification:{status:'observed'},updatedAt:'2026-09-27T10:00:00Z'};
-  h.reply(0,{taskId:'cmd-1',sessionId:'s1',source:{commandId:'cmd-1',kind:'session.message',state:'accepted_by_dsh'},artifacts:[artifact],
-    supplements:[{commandId:'follow-1',rootTaskId:'cmd-1',taskAction:'supplement',kind:'session.message',state:'accepted_by_dsh',createdAt:'2026-09-27T10:01:00Z'}],
-    steps:[{commandId:'step-observed',kind:'desktop.open_app',taskId:'cmd-1',appId:'notepad',state:'observed',verification:{status:'observed',method:'visible_window',observedAt:'2026-09-27T10:02:00Z'}},
-      {commandId:'step-uncertain',kind:'desktop.open_app',taskId:'cmd-1',appId:'notepad',state:'uncertain',updatedAt:'2026-09-27T10:03:00Z'}]});await h.flush();
-  assert.match(allText(h.node('page-content')),/文件已在电脑核验|电脑已核验/);
-  assert.match(allText(h.node('page-content')),/结果.md/);
-  assert.match(allText(h.node('page-content')),/保存到手机/);
-  assert.match(allText(h.node('page-content')),/事情的停止状态在这里单独记录/);
-  const followUp=findNode(h.node('page-content'),node=>node.className==='task-followup');
-  assert.ok(followUp);assert.doesNotMatch(followUp.children[0].textContent,/follow-1/);
-  assert.match(allText(followUp.children[1]),/查看记录编号.*follow-1/);
-  const steps=findNode(h.node('page-content'),node=>node.className==='group'&&allText(node).includes('执行步骤'));
-  assert.ok(steps);assert.match(allText(steps),/打开记事本.*电脑窗口已观察.*结果待确认/);
-  const stepRows=steps.querySelector('.group-body').children;
-  assert.doesNotMatch(stepRows.map(item=>item.children[0].textContent).join(' '),/step-observed|step-uncertain/);
-  assert.equal(findNode(h.node('page-content'),node=>node.textContent==='请求停止这件事'),null);
-  const saveButton=findNode(h.node('page-content'),node=>node.textContent==='保存到手机');
-  assert.ok(saveButton);
-  saveButton.fire('click');h.reply(1,{pending:true,requestId:'save-1'});await h.flush();
-  h.run('processEvent({event:"artifact.save",data:{requestId:"save-1",status:"saved"}})');
-  saveButton.fire('click');h.reply(2,{pending:true,requestId:'save-2'});await h.flush();
-  h.run('processEvent({event:"artifact.save",data:{requestId:"save-2",status:"saved"}})');
-  assert.equal(countNodes(h.node('page-content'),node=>node.className==='artifact-save-state'),1);
-  assert.match(allText(h.node('page-content')),/已保存到手机并核对内容/);
-  h.run('showTaskDetail("cmd-2")');
-  h.reply(3,{taskId:'cmd-2',source:{commandId:'cmd-2',kind:'session.message',state:'accepted_by_dsh'},artifacts:[
-    {...artifact,taskId:'cmd-2',state:'uncertain',verification:null}]});await h.flush();
-  assert.doesNotMatch(allText(h.node('page-content')),/保存到手机/);
-});
 
-test('host activity detail reads its exact command and distinguishes DSH acceptance from completion',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things";state.generation=3');
-  h.run('showHostCommandDetail({source:"host",commandId:"cmd-1",kind:"session.message",sessionId:"session-1"})');
-  assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[0].params)),{taskId:'cmd-1'});
-  h.reply(0,{taskId:'cmd-1',sessionId:'session-1',source:{commandId:'cmd-1',kind:'session.message',sessionId:'session-1',state:'accepted_by_dsh',
-    createdAt:'2026-09-27T10:00:00Z',updatedAt:'2026-09-27T10:00:02Z'},artifacts:[]});await h.flush();
-  const content=allText(h.node('page-content'));
-  assert.match(content,/已交给电脑会话/);assert.match(content,/回复是否完成，请查看原会话/);
-  const record=findNode(h.node('page-content'),node=>node.className==='group'&&node.children[0]?.textContent==='记录');
-  assert.ok(record);
-  assert.doesNotMatch(record.querySelector('.group-body').children.filter(node=>node.className==='command-fact')
-    .map(node=>node.textContent).join(' '),/cmd-1/);
-  assert.match(allText(findNode(record,node=>node.className==='task-record-id')),/查看记录编号.*cmd-1/);
-  assert.match(content,/打开原电脑会话/);
-  assert.doesNotMatch(content,/已完成回复/);
-});
 
-test('stale or revoked host detail does not reveal a command after account change',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things";state.generation=5');
-  h.run('showHostCommandDetail({source:"host",commandId:"cmd-secret",kind:"session.message",sessionId:"s1"})');
-  h.run('state.authEpoch++;state.owner="B"');
-  h.reply(0,{taskId:'cmd-secret',sessionId:'s1',source:{commandId:'cmd-secret',kind:'session.message',sessionId:'s1',state:'accepted_by_dsh'},artifacts:[]});
-  await h.flush();assert.doesNotMatch(allText(h.node('page-content')),/已交给电脑会话|cmd-secret/);
-  h.run('state.owner="A";state.page="things";state.generation++');
-  h.run('showHostCommandDetail({source:"host",commandId:"gone",kind:"session.message",sessionId:"s1"})');
-  h.reply(1,null,'NOT_FOUND');await h.flush();
-  assert.match(allText(h.node('page-content')),/无法读取/);
-  assert.doesNotMatch(allText(h.node('page-content')),/打开原电脑会话/);
-});
 
-test('host command detail links to its exact shared session',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things";state.sharedSessions=[{sessionId:"session-exact",title:"原会话",sendAvailable:true,source:"host"}]');
-  await h.run('openHostCommandSession("session-exact")');
-  assert.equal(h.run('state.chatSource'),'host');assert.equal(h.run('state.sharedSessionId'),'session-exact');
-  assert.equal(h.bridge.some(item=>item.method==='shared.send'),false);
-});
+
+
+
+
 
 test('manual shared status check reconciles the saved request once and refreshes connectivity',async()=>{
   const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="chat";state.chatSource="host";state.sharedSessionId="pc1";state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}];state.sharedPending={requestId:"saved-1",state:"uncertain",text:"离线消息"}');
@@ -1555,27 +1391,9 @@ test('manual shared status check reconciles the saved request once and refreshes
   assert.equal(h.bridge.some(item=>item.method==='shared.send'),false);
 });
 
-test('Things list names phone activity and the bound computer conversation truthfully',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things";state.sharedSessions=[{sessionId:"pc1",title:"原会话",source:"host"}];thingsPage(document.getElementById("page-content"))');
-  h.reply(0,{hostAvailable:true,activities:[{source:'phone',conversationId:'phone1',title:'手机提问',status:'completed'},
-    {source:'host',commandId:'cmd-1',sessionId:'pc1',kind:'session.message',status:'accepted_by_dsh'}]});await h.flush();
-  const content=allText(h.node('page-content'));
-  assert.match(content,/手机提问/);assert.match(content,/电脑任务：原会话/);
-  assert.match(content,/已交给电脑会话/);assert.match(content,/命令已受理不代表回复或动作已经完成/);
-});
 
-test('Things detail shows verified desktop observation and safe rejection reason',async()=>{
-  const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="things"');
-  h.run('showHostCommandDetail({source:"host",commandId:"cmd-observed",kind:"desktop.open_app"})');
-  h.reply(0,{source:'host',command:{commandId:'cmd-observed',kind:'desktop.open_app',state:'observed',
-    createdAt:'2026-09-27T10:00:00Z',updatedAt:'2026-09-27T10:00:02Z',verification:{status:'observed',method:'visible_window',observedAt:'2026-09-27T10:00:02Z'}}});await h.flush();
-  assert.match(allText(h.node('page-content')),/已观察到电脑应用窗口|已观察到应用窗口/);
-  h.run('showHostCommandDetail({source:"host",commandId:"cmd-rejected",kind:"session.message"})');
-  h.reply(1,{taskId:'cmd-rejected',source:{commandId:'cmd-rejected',kind:'session.message',state:'rejected',errorCode:'SESSION_EXPIRED',
-    createdAt:'2026-09-27T10:00:00Z',updatedAt:'2026-09-27T10:00:02Z'},artifacts:[]});await h.flush();
-  assert.match(allText(h.node('page-content')),/未受理/);
-  assert.match(allText(h.node('page-content')),/登录已失效/);
-});
+
+
 
 test('restart restores only a live owner-scoped shared session',async()=>{
   const h=harness({autoBoot:true,storage:{'weftmate-chat-source:A':JSON.stringify({source:'host',sessionId:'pc-A'})},
@@ -1617,3 +1435,48 @@ test('switching chat source clears transient acceptance and matching turn end cl
   h.run('status("电脑已受理消息，等待会话记录更新");selectConversation("phone1")');
   assert.equal(h.node('chat-status').textContent,'');
 });
+
+
+test('M1-0 mobile execution is collapsed by default, groups calls once, and ends across a card boundary',()=>{
+  const h=harness();prepareSyntheticTaskChat(h);
+  h.run(`state.sharedEvents=[
+    {seq:1,type:'step.started',at:'2026-10-07T00:00:00Z',data:{taskId:'turn-1',stepId:'s1',summary:'读取文件',state:'running',detailRef:{seq:1}}},
+    {seq:2,type:'approval.requested',data:{approvalId:'approval-one',summary:'覆盖报告文件'}},
+    {seq:3,type:'step.completed',at:'2026-10-07T00:00:02Z',data:{taskId:'turn-1',stepId:'s1',summary:'读取文件',state:'completed',detailRef:{seq:3}}},
+    {seq:4,type:'step.started',data:{taskId:'turn-1',stepId:'s2',summary:'运行命令 npm test',state:'running'}},
+    {seq:5,type:'task.ended',data:{taskId:'turn-1'}}];renderSharedConversation()`);
+  const blocks=h.node('chat-content').children.filter(node=>node.dataset.timeline?.startsWith('steps-'));
+  assert.equal(blocks.length,2);assert.equal(blocks[0].querySelector('details').open,false);
+  assert.match(allText(blocks[0]),/执行了 1 步.*用时 2 秒/);assert.match(allText(blocks[1]),/执行了 1 步/);
+  assert.equal(h.node('chat-content').children.some(node=>node.dataset.timelineApproval==='approval-one'),true);
+  const counts=h.node('chat-content').children.length;h.run('renderTimeline()');assert.equal(h.node('chat-content').children.length,counts);
+})
+
+test('M0-3 mobile requests the tail first, prepends older events, and preserves the forward cursor',async()=>{
+  const h=harness();prepareSyntheticTaskChat(h);h.run('state.sharedEvents=[];state.sharedNextSeq=-1;state.sharedLoading=false');
+  const first=h.run('loadSharedHistory()');let i=h.bridge.findLastIndex(r=>r.method==='shared.sessions.events');
+  assert.equal(h.bridge[i].params.afterSeq,undefined);
+  h.reply(i,{source:'host',sessionId:'s1',events:[{seq:2400,type:'assistant.message',data:{text:'最新回复'}}],nextSeq:2400,hasMore:false,hasOlder:true,nextBeforeSeq:2400});await first;
+  assert.equal(h.run('state.sharedNextSeq'),2400);const older=h.run('loadOlderHistory()');i=h.bridge.findLastIndex(r=>r.method==='shared.sessions.events');
+  assert.equal(h.bridge[i].params.beforeSeq,2400);h.reply(i,{events:[{seq:2399,type:'assistant.message',data:{text:'较早回复'}}],nextSeq:2400,hasMore:false,hasOlder:false,nextBeforeSeq:2399});await older;
+  assert.equal(h.run('state.sharedEvents.map(e=>e.seq).join(",")'),'2399,2400');assert.equal(h.run('state.sharedNextSeq'),2400);
+})
+
+test('M1-0 mobile native bridge preserves beforeSeq and accepts the shared timeline event families',()=>{
+  const native=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt',import.meta.url),'utf8');
+  const store=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/LocalStore.kt',import.meta.url),'utf8');
+  assert.match(native,/params.has\("beforeSeq"\)/);assert.match(native,/shared.sessions.eventDetail/);
+  for(const type of ['step.started','approval.requested','question.answered','artifact.created','task.ended'])assert.ok(store.includes(type));
+  assert.doesNotMatch(html,/things-button|data-page="things"/);
+})
+
+
+test('M1-0 consecutive same-kind steps use one subgroup and retain each original detail reference',()=>{
+  const h=harness();prepareSyntheticTaskChat(h);
+  h.run(`state.sharedEvents=[
+    {seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'read-a',toolName:'read',groupHint:'read',summary:'读取文件',state:'completed',detailRef:{seq:1}}},
+    {seq:2,type:'step.completed',data:{taskId:'turn-1',stepId:'read-b',toolName:'read_file',groupHint:'read_file',summary:'读取文件',state:'completed',detailRef:{seq:2}}}];renderSharedConversation()`);
+  const subgroup=h.node('chat-content').querySelector('.execution-same-type');assert.ok(subgroup);
+  assert.match(allText(subgroup),/读取文件 · 2 步/);assert.equal(subgroup.open,false);
+  assert.equal(subgroup.children.filter(node=>node.className==='execution-step').length,2);
+})

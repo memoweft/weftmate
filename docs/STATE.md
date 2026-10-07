@@ -8,21 +8,24 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows | M0-2 模型预算完成 | [PR（拉取请求）#24](https://github.com/memoweft/weftmate/pull/24) 待审；配置/启动读取实际容量，逐请求计算输出预算，personal-remote 接入原生压缩 |
+| Codex · Windows | M0-3 历史分页 + M1-0a 时间线完成 | `wp/m0-3-timeline` 待审：首屏尾页 / 上翻 / 增量、原生时间线投影、桌面 / 手机对话内执行；任务页与详情弹窗已删除；Android code14 / UI 0.8.1 |
 | Codex · Mac | H1 HealthKit 读取与每日健康摘要 | `wp/h1-healthkit`：iPhone 账号菜单健康设置、8 类只读权限、本地每日摘要/14 天基线、云端选择/自评频率、隔离持久队列与删除待办已实现；Core 253 项、状态检查 10 组及三目标构建通过；iOS 隔离模拟器 HealthKit 合成样本与设置 UI 场景 2 项通过；服务端草案待 Windows 实现；仓库 CI 在 release:preflight 因现有 npm 依赖审计失败（main 同样失败）；[PR #22](https://github.com/memoweft/weftmate/pull/22) 待审 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
 - 任务 15 在途改动已作 checkpoint 提交 `1f922a5`（通用执行、审批、用户提问、Android 文本成果 MIME，未经独立验收）。
 - M0-1b：旧 alpha2 路径清理、一次性脚本归档；`personal-access/index.mjs` 6160 → 614 行，导出、接口和存储行为兼容。
+- M0-2：配置 / 启动读取实际容量，逐请求计算输出预算，personal-remote 接入原生压缩；[PR #24](https://github.com/memoweft/weftmate/pull/24)。
 
 ## 最近一次场景结果
 
 M0-7 场景集已建立；Qwen / MiMo 实测基线尚未跑。
 
-M0-2 工程检查：类型检查通过；相关单测 46/46；完整单测 855/868 通过、11 原有失败、2 跳过，新增失败 0。隔离 DSH（模型运行时）完成 10 次原生文件读取及最终回复；服务容量截断、配置/密钥刷新和实际请求输出预算通过。真实 Qwen 场景未跑，已知本机端口的只读元数据接口均不可用。
+M0-3 / M1-0a：类型检查通过；完整单测 843/850 通过、5 项原有静态契约失败、2 跳过，新增失败 0（交接基线 11）；相关 81/81、手机界面 89/89、固定 DSH 冷恢复 5/5。Android JVM（本地测试运行时）22/22、调试包及测试包构建通过；缓存上翻仪器场景已编译，未在设备运行。隔离宿主 + 合成原生日志完成桌面 1280 / 手机 390 截图、原始输出和成果预览，见 PR 的 `tests/evidence/m0-3/`。
 
 ## 契约变更
+
+- 2026-10-07 / M0-3、M1-0a：CLIENT_API 第 3.4 / 4 节正式；无游标尾页、beforeSeq 上翻、afterSeq 正向（显式 -1 兼容），追加 nextBeforeSeq/hasOlder/latestSeq 与按 seq 详情；执行 / 审批 / 提问 / 成果同原生序列。task 从原生 step 标记投影，成果含 completedStep，不写 DSH 私有事件；末步待确认时 nextSeq 可暂低于 latestSeq。taskId 为回合键，不是 /tasks 根命令 ID。Apple A1 / M1-0d 待接入；排队 / 插话另包；手机界面需原生 code14。
 
 - 2026-10-06 / H1：CLIENT_API 第 6 节新增健康摘要草案：POST `/health/daily-summaries` 按账号/来源设备/日期幂等，含云端使用选择与自评频率；DELETE 按日期/全部；Apple 404/501 静默保留本地队列。待 Windows 接收、MemoWeft observed 与模型使用/删除闭环实现。
 
@@ -32,7 +35,6 @@ M0-2 工程检查：类型检查通过；相关单测 46/46；完整单测 855/8
 
 ## 已知问题
 
-- 长会话打开时报「历史超出当前可读取范围」：`src/runtime/dsh-adapter/sessions.mjs` `historyPage` 每页从尾部倒扫，超过 24×50 条即失败（M0-3）。
 - M0-2 预算来源已修复并通过隔离场景；真实 Qwen 长任务回归待服务可用，日用宿主和模型进程未改动或重启。
 - 本地 Qwen 服务曾多次显存不足（OOM），启动方式不统一（M0-6）。
 - 模型路由只合并两个薄封装；跨文件恢复、串行队列和历史会话引用保护保留，进一步简化仍需协调持久化与重载路径（见 PR #20）。

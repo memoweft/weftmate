@@ -85,6 +85,7 @@ class Element {
     ])
   }
   querySelector(selector: string) { return this.querySelectorAll(selector)[0] ?? null }
+  closest(selector: string): Element | null { return selector.split(',').some(part => matchesTestSelector(this, part.trim())) ? this : this.parentNode?.closest(selector) ?? null }
   contains(node: Element | null): boolean { return !!node && (node === this || this.children.some((child) => child.contains(node))) }
   get isConnected(): boolean { return this.root || this.parentNode?.isConnected === true }
   close() { this.open = false; if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body }
@@ -109,9 +110,14 @@ class Element {
 
 function matchesTestSelector(node: Element, selector: string) {
   if (selector === 'dialog[open]') return node.tagName === 'DIALOG' && node.open
+  if (/^(button|form|pre|a|textarea)$/.test(selector)) return node.tagName === selector.toUpperCase()
+  if (selector.startsWith('.')) return node.className.split(' ').includes(selector.slice(1))
+  if (selector === '[data-conversation-task], [data-conversation-approval], [data-conversation-question]') return !!(node.dataset.conversationTask || node.dataset.conversationApproval || node.dataset.conversationQuestion)
   if (selector === 'details') return node.tagName === 'DETAILS'
   if (selector === 'button.secondary.small') return node.tagName === 'BUTTON' &&
     ['secondary', 'small'].every((name) => node.className.split(' ').includes(name))
+  const bare = /^\[data-conversation-(task|approval|question)\]$/.exec(selector)
+  if (bare) return !!node.dataset[`conversation${bare[1][0].toUpperCase() + bare[1].slice(1)}`]
   const data = /^\[data-conversation-(task|approval|question)(-action)?="([^"]+)"\]$/.exec(selector)
   return !!data && node.dataset[`conversation${data[1][0].toUpperCase() + data[1].slice(1)}${data[2] ? 'Action' : ''}`] === data[3]
 }
@@ -306,10 +312,16 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     if (url.includes('/sessions/') && url.includes('/events?')) {
       const id = url.includes('/sessions/A/') ? 'A' : 'B'
       if (deferHistory) { const wait = deferred<ReturnType<typeof reply>>(); history[id].push(wait); return wait.promise }
-      const afterSeq = Number(new URL(url, 'http://local.test').searchParams.get('afterSeq') ?? '-1')
-      const remaining = id === 'A' ? durableEvents.filter((entry) => entry.seq > afterSeq) : []
-      const events = remaining.slice(0, config.eventPageSize ?? remaining.length)
-      return Promise.resolve(reply({ events, nextSeq: events.at(-1)?.seq ?? afterSeq, hasMore: remaining.length > events.length }))
+      const query = new URL(url, 'http://local.test').searchParams
+      const after = query.has('afterSeq') ? Number(query.get('afterSeq')) : null
+      const before = query.has('beforeSeq') ? Number(query.get('beforeSeq')) : null
+      const rows = id === 'A' ? durableEvents : []
+      const limit = config.eventPageSize ?? Number(query.get('limit') || 100)
+      const remaining = rows.filter(entry => after !== null ? entry.seq > after : before === null || entry.seq < before)
+      const events = after !== null ? remaining.slice(0, limit) : remaining.slice(-limit)
+      return Promise.resolve(reply({ events, nextSeq: after !== null ? events.at(-1)?.seq ?? after : rows.at(-1)?.seq ?? -1,
+        hasMore: after !== null && remaining.length > events.length, nextBeforeSeq: events[0]?.seq ?? null,
+        hasOlder: after === null && remaining.length > events.length, latestSeq: rows.at(-1)?.seq ?? -1 }))
     }
     if (url.includes('/sync/attachments/') && options.method === 'PUT') {
       originalAttachmentAttempts++
@@ -404,6 +416,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
      if (config.taskPollTimers && delay === 2_000) taskTimers.set(id, callback)
      return id
    }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
+  runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8'), context)
   runInNewContext(executableSource, context)
   return { get, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
@@ -631,34 +644,7 @@ test('an older accepted receipt cannot unlock a later missing receipt, and ackno
   assert.equal(page.requests.filter((request) => request.url.includes('/commands/by-request/')).length, lookupsBefore)
 })
 
-test('a durable pending desktop action stays locked across reload; unconfirmed action needs explicit review', async () => {
-  const command = { commandId: 'cmd-desktop', requestId: 'request-desktop', kind: 'desktop.open_app',
-    appId: 'notepad', state: 'pending', createdAt: '2026-09-26T00:00:00.000Z' }
-  const tasks = [command]
-  const first = harness(tasks)
-  for (let attempt = 0; attempt < 10 && first.get('task-list').children.length === 0; attempt++) await flush()
-  assert.equal(first.get('open-notepad').textContent, '查看原事情')
-  first.get('open-notepad').fire('click')
-  await flush()
-  assert.equal(first.get('tasks-pane').hidden, false)
-  assert.equal(first.requests.filter((request) => request.url.endsWith('/commands') && request.options.method === 'POST').length, 0)
-  assert.doesNotMatch(visibleText(first.get('task-list')), /允许再次发起/, 'pending work cannot be acknowledged early')
 
-  command.state = 'accepted_by_host'
-  first.tick()
-  for (let attempt = 0; attempt < 10 && !visibleText(first.get('task-list')).includes('允许再次发起'); attempt++) await flush()
-  assert.equal(first.get('open-notepad').textContent, '查看原事情')
-  const acknowledge = first.get('task-list').children[0].children.find((item) => item.textContent.includes('允许再次发起'))!
-  acknowledge.fire('click')
-  assert.equal(first.get('open-notepad').textContent, '打开记事本')
-  assert.equal(first.get('open-notepad').disabled, false)
-  assert.match(first.storage.get('weftmate:desktop-ack:v1:owner-test')!, /cmd-desktop/)
-
-  const restored = harness(tasks, [], true, { storage: first.storage })
-  for (let attempt = 0; attempt < 10 && restored.get('task-list').children.length === 0; attempt++) await flush()
-  assert.equal(restored.get('open-notepad').textContent, '打开记事本', 'explicit review survives refresh')
-  assert.equal(restored.get('open-notepad').disabled, false)
-})
 
 test('a pending desktop receipt outside the first task page remains locked by its saved ID', async () => {
   const first = harness()
@@ -754,153 +740,19 @@ test('A to B to A discards old history responses even when the session ID matche
   assert.doesNotMatch(transcript, /stale A|stale B/)
 })
 
-test('desktop task wording requires visible-window verification before claiming success', async () => {
-  const page = harness([
-    { commandId: 'cmd-pending', requestId: 'request-pending', kind: 'desktop.open_app', state: 'accepted_by_host',
-      verification: { status: 'unconfirmed', method: 'visible_window' } },
-    { commandId: 'cmd-done', requestId: 'request-done', kind: 'desktop.open_app', state: 'observed',
-      verification: { status: 'observed', method: 'visible_window', outcome: 'opened', observedAt: '2026-09-26T00:00:00.000Z' } },
-    { commandId: 'cmd-uncertain', requestId: 'request-uncertain', kind: 'desktop.open_app', state: 'uncertain' },
-  ])
-  for (let attempt = 0; attempt < 10 && page.get('task-list').children.length < 3; attempt++) await flush()
-  const [pending, done, uncertain] = page.get('task-list').children.map(visibleText)
-  assert.match(pending, /窗口尚未核验/)
-  assert.doesNotMatch(pending, /已打开并核验/)
-  assert.match(done, /记事本窗口已打开并核验/)
-  assert.match(uncertain, /不会自动重复执行/)
-})
 
-test('accepted DSH receipts show delivery or creation without claiming work is still running', async () => {
-  const page = harness([
-    { commandId: 'cmd-create', requestId: 'request-create', kind: 'session.create', state: 'accepted_by_dsh', sessionId: 'A' },
-    { commandId: 'cmd-message', requestId: 'request-message', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' },
-    { commandId: 'cmd-cancel', requestId: 'request-cancel', kind: 'session.cancel', state: 'accepted_by_dsh', sessionId: 'A' },
-    { commandId: 'cmd-desktop', requestId: 'request-desktop', kind: 'desktop.open_app', appId: 'notepad', state: 'accepted_by_host' },
-  ])
-  for (let attempt = 0; attempt < 10 && page.get('task-list').children.length < 4; attempt++) await flush()
-  const [created, delivered, stopped, desktop] = page.get('task-list').children.map(visibleText)
-  assert.match(created, /已创建.*新对话已创建/)
-  assert.match(delivered, /已送达.*消息已送达，回复见原会话/)
-  assert.match(stopped, /已受理.*停止请求已受理，实际状态见会话/)
-  assert.doesNotMatch([created, delivered, stopped].join(' '), /进行中|等待会话中的实际结果/)
-  assert.match(desktop, /进行中.*窗口尚未核验/)
-})
 
-test('file task groups source and verified child, shows the original goal and checked preview', async () => {
-  const source = { commandId: 'cmd-source', requestId: 'source-request', kind: 'session.message',
-    state: 'accepted_by_dsh', sessionId: 'A' }
-  const artifact = { commandId: 'cmd-file', requestId: 'file-request', kind: 'desktop.write_artifact',
-    taskId: 'cmd-source', artifactId: 'artifact-one', fileName: '周计划.md', size: 22, sessionId: 'A',
-    state: 'observed', verification: { status: 'observed', method: 'sha256_readback' } }
-  const page = harness([artifact, source], [], true, {
-    taskDetails: { 'cmd-source': { taskId: 'cmd-source', sessionId: 'A', source, sourceText: '请在电脑生成周计划', artifacts: [artifact],
-      replyEvidence: { status: 'streaming', turn: 1, assistantChunks: 7, textChunks: 5,
-        reasoningChunks: 2, assistantMessages: 0, toolSaveObserved: true } } },
-    artifactPreviews: { 'artifact-one': { artifact, text: '# 周计划\n已完成。' } },
-  })
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length !== 1; attempt++) await flush()
-  assert.equal(page.get('task-list').children.length, 1)
-  assert.match(visibleText(page.get('task-list')), /周计划\.md.*文件已核验/)
-  assert.doesNotMatch(visibleText(page.get('task-list')), /仅已送达.*已核验/)
-  const details = page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!
-  details.fire('click')
-  for (let attempt = 0; attempt < 15 && page.get('task-preview-text').hidden; attempt++) await flush()
-  assert.equal(page.get('task-detail-source').textContent, '请在电脑生成周计划')
-  assert.match(page.get('task-detail-verification').textContent, /读回核验/)
-  assert.match(page.get('task-detail-reply').textContent, /正在生成.*尚未见到结束记录/)
-  assert.equal(page.get('task-preview-text').textContent, '# 周计划\n已完成。')
-  assert.match(visibleText(page.get('task-preview-status')), /下载文件/)
-})
 
-test('desktop groups only read browser segments and keeps reply state separate from file status', async () => {
-  const parentId = `source-${'a'.repeat(48)}`, segmentId = `source-${'b'.repeat(48)}`
-  const versionHash = 'c'.repeat(64), text = '后续段的实际正文'
-  const common = { kind: 'webpage', title: '长页面', url: 'https://public.example/long',
-    requestedUrl: 'https://public.example/long', readAt: '2026-10-04T00:00:00Z',
-    truncated: true, links: [], versionHash, segmentCount: 4, totalCapturedBytes: 22_000,
-    captureTruncated: false }
-  const parent = { ...common, snapshotId: parentId, segmentIndex: 0, byteStart: 0,
-    byteEnd: 10, contentSha256: sha('开头已读正文'), cited: false }
-  const segment = { ...common, snapshotId: segmentId, parentSnapshotId: parentId,
-    segmentIndex: 2, byteStart: 16_384, byteEnd: 16_384 + Buffer.byteLength(text),
-    contentSha256: sha(text), cited: true }
-  const source = { commandId: 'cmd-source', requestId: 'browser-request', kind: 'session.message',
-    state: 'accepted_by_dsh', sessionId: 'A' }
-  const page = harness([source], [], true, { taskDetails: { 'cmd-source': {
-    taskId: 'cmd-source', sessionId: 'A', source, artifacts: [], sources: [parent, segment],
-    workspace: { kind: 'browser' }, replyEvidence: { status: 'unconfirmed', turn: null,
-      assistantChunks: 0, textChunks: 0, reasoningChunks: 0,
-      assistantMessages: 0, toolSaveObserved: false } } },
-  sourceDetails: { [segmentId]: { ...segment, text } } })
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let attempt = 0; attempt < 20 && !visibleText(page.get('task-detail-sources')).includes('已读 2/4 段'); attempt++) await flush()
-  assert.match(visibleText(page.get('task-detail-sources')), /已读 2\/4 段.*第 1\/4 段.*第 3\/4 段/s)
-  assert.match(page.get('task-detail-reply').textContent, /是否结束尚无法核对/)
-  const rows = page.get('task-detail-sources').children
-  rows.at(-1)!.children.find((item) => item.textContent === '查看读取正文')!.fire('click')
-  for (let attempt = 0; attempt < 20 && !page.get('task-source-preview').textContent.includes(text); attempt++) await flush()
-  assert.equal(page.get('task-source-preview').textContent, text,
-    `status=${page.get('task-source-preview-status').textContent}; requests=${page.requests.filter((item) => item.url.includes('/sources/')).map((item) => item.url).join(',')}`)
-})
 
-test('file task detail handles missing task and tampered file without claiming completion', async () => {
-  const artifact = { commandId: 'cmd-file', requestId: 'file-request', kind: 'desktop.write_artifact',
-    taskId: 'cmd-source', artifactId: 'artifact-one', fileName: '说明.txt', size: 4, sessionId: 'A',
-    state: 'observed', verification: { status: 'observed', method: 'sha256_readback' } }
-  const page = harness([artifact], [], true, { taskDetails: {
-    'cmd-source': { taskId: 'cmd-source', sessionId: 'A', source: { state: 'accepted_by_dsh' }, artifacts: [artifact] },
-  }, artifactPreviews: { 'artifact-one': { status: 409, error: { code: 'ARTIFACT_UNVERIFIED' } } } })
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let attempt = 0; attempt < 15 && !/校验失败/.test(page.get('task-preview-status').textContent); attempt++) await flush()
-  assert.match(page.get('task-detail-source').textContent, /回到会话查看/)
-  assert.match(page.get('task-preview-status').textContent, /校验失败/)
-  assert.equal(page.get('task-preview-text').hidden, true)
-  assert.doesNotMatch(visibleText(page.get('task-preview-status')), /下载文件/)
-})
 
-test('task controls follow server affordances and send a scoped stop intent', async () => {
-  const source = { commandId: 'cmd-source', requestId: 'request-source', kind: 'session.message',
-    state: 'accepted_by_dsh', sessionId: 'A' }
-  const detail = { taskId: 'cmd-source', sessionId: 'A', source, sourceText: '生成文件', artifacts: [],
-    control: { state: 'active', canSupplement: true, canStop: true, canResume: false } }
-  const page = harness([source], [], true, { taskDetails: { 'cmd-source': detail } })
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
-  const details = page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!
-  details.fire('click')
-  for (let attempt = 0; attempt < 15 && page.get('task-detail-control').children.length === 0; attempt++) await flush()
-  const control = page.get('task-detail-control').children[0]
-  assert.match(visibleText(control), /任务可继续处理/)
-  assert.doesNotMatch(visibleText(control), /恢复这件事/)
-  const stop = control.children.find((item) => item.textContent === '请求停止这件事')!
-  stop.fire('click')
-  for (let attempt = 0; attempt < 15 && !page.requests.some((item) => item.url.endsWith('/tasks/cmd-source/stop')); attempt++) await flush()
-  const request = page.requests.find((item) => item.url.endsWith('/tasks/cmd-source/stop'))!
-  assert.equal(request.options.method, 'POST')
-  assert.equal(request.options.headers['X-WeftMate-CSRF'], 'synthetic-csrf')
-  assert.ok(JSON.parse(request.options.body).requestId)
-  assert.doesNotMatch(visibleText(control), /执行端停止已核对/)
-})
 
-test('generic tool records show execution state without claiming goal verification', async () => {
-  const source = { commandId: 'cmd-generic', requestId: 'request-generic', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
-  const execution = { executionId: 'execution-one', sourceCommandId: source.commandId, sourceReceiptId: 'receipt-one',
-    toolName: 'pwsh', state: 'completed', startedAt: '2026-10-06T06:00:00Z', finishedAt: '2026-10-06T06:00:01Z' }
-  const page = harness([source], [], false, { taskDetails: { 'cmd-generic': {
-    taskId: source.commandId, sessionId: 'A', source, sourceText: '处理我的目标', artifacts: [],
-    replyEvidence: { status: 'completed', assistantMessages: 1 },
-    executionSteps: [execution, { ...execution, executionId: 'execution-two', jobId: 'job-one', jobState: 'running' },
-      { ...execution, executionId: 'invalid-step', toolName: '错误步骤', state: 'verified' }],
-  } } })
-  for (let attempt = 0; attempt < 20 && !page.get('task-list').children.length; attempt++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let attempt = 0; attempt < 20 && !visibleText(page.get('task-detail-control')).includes('执行结束'); attempt++) await flush()
-  assert.match(visibleText(page.get('task-detail-control')), /执行记录.*运行命令 · 执行结束/)
-  assert.match(visibleText(page.get('task-detail-control')), /运行命令 · 后台运行中/)
-  assert.doesNotMatch(visibleText(page.get('task-detail-control')), /已核验|错误步骤/)
-  assert.equal(page.get('task-detail-verification').textContent, '')
-})
+
+
+
+
+
+
+
 
 test('synthetic conversation progress attaches to the exact dotted RPC receipt and aggregates only its own tool sources', async () => {
   const source = { commandId: 'root-inline', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: 'rpc:root.1' }
@@ -931,7 +783,8 @@ test('synthetic conversation progress attaches to the exact dotted RPC receipt a
   assert.equal(page.requests.some((row) => row.url.endsWith('/tasks/follow-inline')), false)
   card.children.at(-1)!.children[0].fire('click')
   await flush()
-  assert.equal(page.get('task-detail-dialog').open, true)
+  assert.ok(card.querySelector('.timeline-task-info'))
+  assert.doesNotMatch(accountHtml, /task-detail-dialog|tasks-pane/)
   assert.equal(page.requests.filter((row) => row.options.method === 'POST').length, 0)
 })
 
@@ -957,12 +810,8 @@ function task15NarrowCard(page: ReturnType<typeof harness>) {
 
 async function task15NarrowClose(page: ReturnType<typeof harness>) {
   const trigger = task15NarrowCard(page)!.querySelector('button.secondary.small')!
-  trigger.focus(); trigger.fire('click')
-  for (let i = 0; i < 15 && !page.get('task-detail-control').children.length; i++) await flush()
-  assert.equal(page.get('task-detail-dialog').open, true)
-  page.get('task-detail-close').fire('click'); await flush()
-  assert.equal(page.get('task-detail-dialog').open, false)
-  assert.equal(page.document.activeElement, task15NarrowCard(page)!.querySelector('button.secondary.small'))
+  trigger.focus(); trigger.fire('click'); await flush(); trigger.fire('click'); await flush()
+  assert.equal(page.document.activeElement, trigger)
 }
 
 async function task15NarrowRefresh(page: ReturnType<typeof harness>, task: Record<string, any>) {
@@ -973,33 +822,7 @@ async function task15NarrowRefresh(page: ReturnType<typeof harness>, task: Recor
   assert.notEqual(card.dataset.signature, signature, 'one background refresh changed the payload signature')
 }
 
-test('task15-narrow task entry retains focus immediately after stopping and closing, then after the next signature refresh', async () => {
-  const { page, task, command } = await task15NarrowPage()
-  const first = task15NarrowCard(page)!.querySelector('button.secondary.small')!
-  first.focus(); first.fire('click')
-  for (let i = 0; i < 15 && !page.get('task-detail-control').children.length; i++) await flush()
-  const stop = page.get('task-detail-control').children[0].children.find((row) => row.textContent === '请求停止这件事')!
-  assert.ok(stop, 'the real task affordance offers stop')
-  task.control = { state: 'stop_requested', stopStatus: 'requested', canStop: false, canSupplement: false, canResume: false }
-  stop.fire('click'); await flush()
-  assert.equal(page.requests.filter((row) => row.url.endsWith(`/tasks/${command.commandId}/stop`) && row.options.method === 'POST').length, 1)
-  page.get('task-detail-close').fire('click'); await flush()
-  const immediatelyAfterClose = task15NarrowCard(page)!.querySelector('button.secondary.small')!
-  assert.equal(page.get('task-detail-dialog').open, false)
-  assert.equal(page.document.activeElement, immediatelyAfterClose, 'close immediately returns to the current task action')
-  page.get('message-text').value = '保留我的下一步草稿'
-  task.control = { state: 'stop_requested', stopStatus: 'stopped', canResume: true }
-  task.executionSteps[0].state = 'cancelled'
-  task.artifacts = [{ artifactId: 'artifact-narrow', taskId: command.commandId, sessionId: 'A', state: 'observed',
-    verification: { status: 'observed', method: 'sha256_readback' } }]
-  await task15NarrowRefresh(page, task)
-  const afterRefresh = task15NarrowCard(page)!.querySelector('button.secondary.small')!
-  assert.notEqual(afterRefresh, immediatelyAfterClose, 'the changed signature actually rebuilt the action')
-  assert.equal(afterRefresh.textContent, '查看成果与详情', 'the logical action survives a label change')
-  assert.equal(page.document.activeElement, afterRefresh, 'the next refresh preserves the same task entry')
-  assert.equal(afterRefresh.focusOptions?.preventScroll, true, 'background focus restoration does not scroll the chat')
-  assert.equal(page.get('message-text').value, '保留我的下一步草稿')
-})
+
 
 test('task15-narrow task refresh respects an input or another button chosen after close', async () => {
   for (const targetId of ['message-text', 'show-account']) {
@@ -1123,191 +946,23 @@ test('synthetic late inline task payload is discarded after selecting another co
   assert.equal(page.get('transcript').children.some((row) => row.dataset.conversationTask), false)
 })
 
-test('supplement and resume commands remain under the root file task card', async () => {
-  const source = { commandId: 'root-task', requestId: 'root-request', kind: 'session.message',
-    state: 'accepted_by_dsh', sessionId: 'A' }
-  const file = { commandId: 'file-command', requestId: 'file-request', kind: 'desktop.write_artifact',
-    taskId: 'root-task', artifactId: 'artifact-one', fileName: '结果.md', state: 'observed',
-    verification: { status: 'observed', method: 'sha256_readback' } }
-  const supplement = { commandId: 'follow-one', requestId: 'follow-request', kind: 'session.message',
-    rootTaskId: 'root-task', taskAction: 'supplement', state: 'accepted_by_dsh', sessionId: 'A' }
-  const resume = { commandId: 'follow-two', requestId: 'resume-request', kind: 'session.message',
-    rootTaskId: 'root-task', taskAction: 'resume', state: 'accepted_by_dsh', sessionId: 'A' }
-  const page = harness([resume, supplement, file, source], [], true, { taskDetails: {
-    'root-task': { taskId: 'root-task', sessionId: 'A', source, artifacts: [file],
-      supplements: [supplement], resumes: [resume], control: { state: 'active',
-        canSupplement: true, canStop: true, canResume: false } },
-  } })
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length !== 1; attempt++) await flush()
-  assert.equal(page.get('task-list').children.length, 1)
-  assert.match(visibleText(page.get('task-list')), /结果\.md.*后续要求 2 条/)
-  const details = page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!
-  details.fire('click')
-  for (let attempt = 0; attempt < 15 && page.get('task-detail-control').children.length < 2; attempt++) await flush()
-  assert.equal(page.requests.some((item) => item.url.endsWith('/tasks/follow-two')), false)
-  const followSection = page.get('task-detail-control').children[1]
-  const rows = followSection.children.filter((item) => item.className === 'task-followup')
-  assert.equal(rows.length, 2)
-  assert.doesNotMatch(rows.map((item) => item.children[0].textContent).join(' '), /follow-one|follow-two/)
-  assert.match(visibleText(followSection), /查看记录编号.*follow-one/)
-  assert.match(visibleText(followSection), /查看记录编号.*follow-two/)
-})
 
-test('desktop task cards use bounded goal labels to distinguish the same session', async () => {
-  const first = { commandId: 'root-one', requestId: 'request-one', kind: 'session.message',
-    state: 'accepted_by_dsh', sessionId: 'A', taskLabel: '整理本周工作并标注来源' }
-  const second = { commandId: 'root-two', requestId: 'request-two', kind: 'session.message',
-    state: 'accepted_by_dsh', sessionId: 'A', taskLabel: '检查另一份清单' }
-  const page = harness([first, second], [], true)
-  for (let i = 0; i < 15 && page.get('task-list').children.length < 2; i++) await flush()
-  const list = visibleText(page.get('task-list'))
-  assert.match(list, /整理本周工作并标注来源/)
-  assert.match(list, /检查另一份清单/)
-  assert.doesNotMatch(list, /root-one|root-two/)
-})
 
-test('observed prior turn offers resume without claiming the stop caused it', async () => {
-  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
-  const page = harness([source], [], true, { taskDetails: { 'root-task': {
-    taskId: 'root-task', sessionId: 'A', source, artifacts: [], control: { state: 'stop_requested',
-      reasonCode: 'TURN_ENDED_AFTER_STOP_REQUEST', canSupplement: false, canStop: false, canResume: true },
-  } } })
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let attempt = 0; attempt < 15 && page.get('task-detail-control').children.length === 0; attempt++) await flush()
-  const control = visibleText(page.get('task-detail-control'))
-  assert.match(control, /上一回合已结束.*尚不能确认是停止请求.*请写明下一步/)
-  assert.doesNotMatch(control, /仍在等待执行端状态核对/)
-  assert.match(control, /恢复这件事/)
-})
 
-test('task stop observation shows request, cancel request, and proven terminal without another POST', async () => {
-  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
-  const taskDetails: Record<string, any> = { 'root-task': {
-    taskId: 'root-task', sessionId: 'A', source, artifacts: [], control: {
-      state: 'stop_requested', stopStatus: 'requested', pendingReceipts: 1,
-      canSupplement: false, canStop: false, canResume: false },
-  } }
-  const page = harness([source], [], true, { taskDetails, taskPollTimers: true })
-  for (let i = 0; i < 15 && page.get('task-list').children.length === 0; i++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let i = 0; i < 15 && page.get('task-detail-control').children.length === 0; i++) await flush()
-  assert.match(visibleText(page.get('task-detail-control')), /目前还不能确认已停止/)
-  assert.equal(page.pendingTaskTimers(), 1)
-  const readsBeforeObservation = page.requests.filter((item) => item.url.endsWith('/tasks/root-task')).length
-  taskDetails['root-task'] = { ...taskDetails['root-task'], control: {
-    state: 'stop_requested', stopStatus: 'cancel_requested', pendingReceipts: 1,
-    canSupplement: false, canStop: false, canResume: false } }
-  page.runTaskTimer(); await flush()
-  assert.match(visibleText(page.get('task-detail-control')), /发起取消.*等待实际结束记录/)
-  assert.equal(page.pendingTaskTimers(), 1)
-  taskDetails['root-task'] = { ...taskDetails['root-task'], control: {
-    state: 'stop_requested', stopStatus: 'stopped', pendingReceipts: 0,
-    stopObservedAt: '2026-10-03T10:00:00.000Z', canSupplement: false, canStop: false, canResume: true } }
-  page.runTaskTimer(); await flush()
-  assert.match(visibleText(page.get('task-detail-control')), /实际停止.*停止核对.*恢复这件事/)
-  assert.match(page.get('task-detail-verification').textContent, /这件事已停止/)
-  assert.doesNotMatch(page.get('task-detail-verification').textContent, /原消息已送达/)
-  assert.equal(page.pendingTaskTimers(), 0)
-  assert.equal(page.requests.filter((item) => item.url.endsWith('/tasks/root-task/stop')).length, 0)
-  assert.equal(page.requests.filter((item) => item.url.endsWith('/tasks/root-task')).length, readsBeforeObservation + 2)
-})
 
-test('task stop observation is bounded and ignores a late result after close or account switch', async () => {
-  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
-  const taskDetails: Record<string, any> = { 'root-task': {
-    taskId: 'root-task', sessionId: 'A', source, artifacts: [], control: {
-      state: 'stop_requested', stopStatus: 'unconfirmed', pendingReceipts: 1,
-      canSupplement: false, canStop: false, canResume: false },
-  } }
-  const page = harness([source], [], true, { taskDetails, taskPollTimers: true, profileAccounts: profileFixture() })
-  await ready(page)
-  for (let i = 0; i < 15 && page.get('task-list').children.length === 0; i++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let i = 0; i < 15 && page.pendingTaskTimers() === 0; i++) await flush()
-  for (let i = 0; i < 8; i++) { assert.equal(page.runTaskTimer(), true); await flush() }
-  assert.equal(page.pendingTaskTimers(), 0)
-  assert.match(visibleText(page.get('task-detail-control')), /自动核对已暂停/)
-  page.get('task-detail-refresh').fire('click')
-  for (let i = 0; i < 15 && page.pendingTaskTimers() === 0; i++) await flush()
-  page.deferOneTaskDetail()
-  page.runTaskTimer(); await flush()
-  await switchToB(page)
-  page.resolveTaskDetail({ ...taskDetails['root-task'], control: { state: 'stop_requested', stopStatus: 'stopped', canResume: true } })
-  await flush()
-  assert.equal(page.get('task-detail-dialog').open, false)
-  assert.doesNotMatch(visibleText(page.get('task-detail-control')), /实际停止/)
-  assert.equal(page.pendingTaskTimers(), 0)
-})
 
-test('normal completion and legacy stop keep honest copy and explicit resume', async () => {
-  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
-  const taskDetails: Record<string, any> = { 'root-task': {
-    taskId: 'root-task', sessionId: 'A', source, artifacts: [], control: {
-      state: 'stop_requested', stopStatus: 'completed', canResume: true, canStop: false, canSupplement: false },
-  } }
-  const page = harness([source], [], true, { taskDetails })
-  for (let i = 0; i < 15 && page.get('task-list').children.length === 0; i++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let i = 0; i < 15 && page.get('task-detail-control').children.length === 0; i++) await flush()
-  assert.match(visibleText(page.get('task-detail-control')), /正常结束.*没有已证实的中断结果.*恢复这件事/)
-  taskDetails['root-task'] = { ...taskDetails['root-task'], control: {
-    state: 'stop_requested', stopStatus: 'unconfirmed', legacyStopIntent: true, pendingReceipts: 1,
-    canResume: false, canStop: false, canSupplement: false } }
-  page.get('task-detail-refresh').fire('click')
-  await flush()
-  assert.match(visibleText(page.get('task-detail-control')), /旧停止记录.*结果仍待核对/)
-  assert.doesNotMatch(visibleText(page.get('task-detail-control')), /恢复这件事/)
-})
 
-test('task detail shows model desktop steps with evidence-bound status and hidden IDs', async () => {
-  const source = { commandId: 'root-task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A' }
-  const steps = [
-    { commandId: 'step-observed', kind: 'desktop.open_app', appId: 'notepad', state: 'observed',
-      verification: { status: 'observed', method: 'visible_window', observedAt: '2026-09-28T00:00:00Z' } },
-    { commandId: 'step-pending', kind: 'desktop.open_app', appId: 'notepad', state: 'pending', createdAt: '2026-09-28T00:01:00Z' },
-    { commandId: 'step-uncertain', kind: 'desktop.open_app', appId: 'notepad', state: 'uncertain', updatedAt: '2026-09-28T00:02:00Z' },
-  ]
-  const page = harness([source], [], true, { taskDetails: { 'root-task': {
-    taskId: 'root-task', sessionId: 'A', source, artifacts: [], steps,
-  } } })
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let attempt = 0; attempt < 15 && page.get('task-detail-control').children.length === 0; attempt++) await flush()
-  const section = page.get('task-detail-control').children[0]
-  assert.match(visibleText(section), /执行步骤.*打开记事本.*电脑窗口已观察.*等待电脑受理.*结果待确认/)
-  const mainCopy = section.children.filter((item) => item.className === 'task-followup')
-    .map((item) => item.children[0].textContent).join(' ')
-  assert.doesNotMatch(mainCopy, /step-observed|step-pending|step-uncertain/)
-  assert.match(visibleText(section), /查看记录编号.*step-observed/)
-})
 
-test('a late task detail from account A cannot appear after account B signs in', async () => {
-  const artifact = { commandId: 'cmd-file', requestId: 'file-request', kind: 'desktop.write_artifact',
-    taskId: 'cmd-source', artifactId: 'artifact-one', fileName: 'A私有.txt', size: 4, sessionId: 'A',
-    state: 'observed', verification: { status: 'observed', method: 'sha256_readback' } }
-  const page = harness([artifact], [], true, { profileAccounts: profileFixture(), deferTaskDetail: true })
-  await ready(page)
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  await flush()
-  await switchToB(page)
-  page.resolveTaskDetail({ taskId: 'cmd-source', sessionId: 'A', sourceText: 'A 的私人目标', artifacts: [artifact] })
-  for (let attempt = 0; attempt < 10; attempt++) await flush()
-  assert.equal(page.get('task-detail-dialog').open, false)
-  assert.doesNotMatch(page.get('task-detail-source').textContent, /A 的私人目标/)
-})
 
-test('stale task list cannot open a task missing from the current account', async () => {
-  const page = harness([{ commandId: 'cmd-file', requestId: 'file-request', kind: 'desktop.write_artifact',
-    taskId: 'cmd-source', artifactId: 'artifact-one', fileName: '旧成果.md', state: 'observed',
-    verification: { status: 'observed', method: 'sha256_readback' } }])
-  for (let attempt = 0; attempt < 15 && page.get('task-list').children.length === 0; attempt++) await flush()
-  page.get('task-list').children[0].children.find((item) => item.textContent === '查看事情与成果')!.fire('click')
-  for (let attempt = 0; attempt < 15 && !/找不到/.test(page.get('task-detail-status').textContent); attempt++) await flush()
-  assert.match(page.get('task-detail-status').textContent, /当前账户找不到/)
-  assert.equal(page.get('task-detail-body').hidden, true)
-})
+
+
+
+
+
+
+
+
+
 
 test('terminal-output-limit desktop history requires the normalized pair and preserves legacy terminal meanings', async () => {
   const cases = [
@@ -1369,38 +1024,7 @@ test('terminal-output-limit desktop keeps an old pure-reply card bound to its so
   assert.equal(JSON.stringify(task), initial, 'display keeps the old source, turn and terminalAt evidence intact')
 })
 
-test('terminal-output-limit desktop card and detail preserve file verification and old reply statuses', async () => {
-  const cases = [
-    { evidence: { status: 'failed', endReasonKind: 'max-tokens' }, text: '回复：因输出限制结束，尚未确认完整交付。' },
-    { evidence: { status: 'failed' }, text: '回复：模型回合未完成；请查看原会话的错误。' },
-    { evidence: { status: 'unconfirmed', endReasonKind: 'max-tokens' }, text: '回复：是否结束尚无法核对；请勿把已核验文件当作回复完成。' },
-    { evidence: { status: 'completed', endReasonKind: 'max-tokens' }, text: '回复：电脑会话已正常结束。' },
-    { evidence: { status: 'aborted', endReasonKind: 'max-tokens' }, text: '回复：回合已中断；已核验的文件仍可查看。' },
-    { evidence: { status: 'blocked', endReasonKind: 'max-tokens' }, text: '回复：模型请求被阻断，尚无正常结束记录。' },
-  ]
-  for (const item of cases) {
-    const source = { commandId: 'root-limit-file', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: 'rpc:limit-file.2' }
-    const artifact = { commandId: 'cmd-limit-file', artifactId: 'artifact-limit-file', taskId: source.commandId, sessionId: 'A',
-      kind: 'desktop.write_artifact', fileName: '已保存的部分结果.txt', size: 8, sha256: 'a'.repeat(64),
-      state: 'observed', verification: { status: 'observed', method: 'sha256_readback' } }
-    const task = { taskId: source.commandId, sessionId: 'A', source, artifacts: [artifact],
-      replyEvidence: { ...item.evidence, assistantMessages: 1, turn: 2, terminalAt: '2026-10-07T00:35:29.769Z' } }
-    const page = harness([source], [{ seq: 1, type: 'user.message', data: { text: '核对文件', receiptId: source.receiptId } }], true,
-      { taskDetails: { [source.commandId]: task } })
-    await flush()
-    page.tick()
-    for (let attempt = 0; attempt < 30 && !page.get('transcript').children.some((row) => row.dataset.conversationTask); attempt++) await flush()
-    const card = page.get('transcript').children.find((row) => row.dataset.conversationTask === source.commandId)!
-    assert.ok(card)
-    assert.equal(card.children.find((row) => row.className === 'conversation-task-reply')!.textContent, item.text)
-    assert.match(visibleText(card), /1 个成果文件已读回核验/)
-    card.children.at(-1)!.children[0].fire('click')
-    for (let attempt = 0; attempt < 20 && page.get('task-detail-reply').textContent !== item.text; attempt++) await flush()
-    assert.equal(page.get('task-detail-reply').textContent, item.text)
-    assert.match(page.get('task-detail-verification').textContent, /1 个文件已由电脑写入并读回核验/)
-    assert.doesNotMatch(item.text, /没有成果|成果未交齐|用户拒绝|费用耗尽/)
-  }
-})
+
 
 test('terminal-output-limit desktop offline session selection and account reset clear the previous reason', async () => {
   const config = { statusOffline: false }
@@ -1970,9 +1594,8 @@ test('task15-approval-client shows only real receipt-bound requests and distingu
   const rows = f.page.get('transcript').children
   const pending = approvalCard(f.page)!, resolved = approvalCard(f.page, '00000000-0000-4000-8000-000000000003')!
   assert.equal(rows[0].dataset.receiptId, f.source.receiptId)
-  assert.equal(rows[1], pending, 'the request follows its exact source, despite identical message text')
-  assert.equal(rows[rows.indexOf(resolved) - 1].dataset.receiptId, f.supplement.receiptId,
-    'a supplement approval belongs under that supplement, with its call identity retained')
+  assert.equal(pending.dataset.sourceReceiptId, f.source.receiptId)
+  assert.equal(resolved.dataset.sourceReceiptId, f.supplement.receiptId)
   assert.equal(approvalAction(f.page, 'allowed-once')?.textContent, '允许本次')
   assert.equal(approvalAction(f.page, 'rejected')?.textContent, '拒绝')
   assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000002')!), /决定已登记.*等待执行端确认/)
@@ -1986,10 +1609,8 @@ test('task15-approval-client shows only real receipt-bound requests and distingu
   f.page.get('chat-scroll').scrollTop = 312
   const detail = approvalAction(f.page, 'detail')!
   detail.focus(); detail.fire('click')
-  for (let i = 0; i < 15 && !f.page.get('task-detail-control').children.length; i++) await flush()
-  f.page.get('task-detail-close').fire('click'); await flush()
+  detail.fire('click'); await flush()
   assert.equal(f.page.document.activeElement, approvalAction(f.page, 'detail'))
-  assert.equal(f.page.document.activeElement.focusOptions?.preventScroll, true)
   assert.equal(f.page.get('message-text').value, '保留草稿')
   assert.equal(f.page.get('chat-scroll').scrollTop, 312)
 })
@@ -2116,7 +1737,7 @@ function questionCard(page: ReturnType<typeof harness>, id = questionFixtureId) 
 function questionAction(page: ReturnType<typeof harness>, action: string) {
   return questionCard(page)?.querySelector(`[data-conversation-question-action="${action}"]`)
 }
-function questionForm(page: ReturnType<typeof harness>) { return questionCard(page)!.children.at(-1)! }
+function questionForm(page: ReturnType<typeof harness>) { return questionCard(page)!.querySelector('form')! }
 async function questionReady(page: ReturnType<typeof harness>) {
   await ready(page); for (let i = 0; i < 40 && !questionCard(page); i++) await flush(); assert.ok(questionCard(page))
 }
@@ -2137,7 +1758,7 @@ test('task15-question-client preserves native question order, exact labels, sour
   f.questions.A.push(cancelled)
   await questionReady(f.page)
   const rows = f.page.get('transcript').children, card = questionCard(f.page)!
-  assert.equal(rows[rows.indexOf(card) - 1].dataset.receiptId, f.supplement.receiptId)
+  assert.equal(card.dataset.sourceReceiptId, f.supplement.receiptId)
   assert.match(visibleText(card), /仅处理合成资料/)
   assert.match(visibleText(questionCard(f.page, cancelled.questionRpcId)!), /曾确认接收本入口回答.*随后确认.*取消/)
   const single = questionAction(f.page, 'option-0-0')!, customSingle = questionAction(f.page, 'custom-0')!
@@ -2156,8 +1777,7 @@ test('task15-question-client preserves native question order, exact labels, sour
   assert.equal(f.page.document.activeElement, free)
   assert.equal(questionAction(f.page, 'custom-2')!.value, '合成备注')
   const detail = questionAction(f.page, 'detail')!; detail.focus(); detail.fire('click')
-  for (let i = 0; i < 15 && !f.page.get('task-detail-control').children.length; i++) await flush()
-  f.page.get('task-detail-close').fire('click'); await flush()
+  detail.fire('click'); await flush()
   assert.equal(f.page.document.activeElement, questionAction(f.page, 'detail'))
   assert.equal(f.page.get('chat-scroll').scrollTop, 284)
   assert.equal(f.page.get('message-text').value, '聊天草稿保留')
@@ -2486,4 +2106,41 @@ test('a password-change finally from A cannot clear B password fields after acco
   assert.equal(page.get('current-password').value, 'synthetic B current password')
   assert.equal(page.get('new-password').value, 'synthetic B new password')
   assert.equal(page.get('new-confirm').value, 'synthetic B new password')
+})
+
+
+test('M0-3 desktop opens latest content, prepends older rows, and polls from the tail watermark', async () => {
+  const events = Array.from({ length: 2200 }, (_, seq) => ({ seq, type: 'assistant.message', data: { text: `message ${seq}` } }))
+  const app = harness([], events, false, { eventPageSize: 3 })
+  for (let i = 0; i < 20; i++) await flush()
+  const rows = app.get('transcript').children.filter(n => n.dataset.seq)
+  assert.deepEqual(rows.map(n => Number(n.dataset.seq)), [2197,2198,2199])
+  assert.equal(app.get('load-older').hidden, false)
+  const first = app.requests.find(r => r.url.includes('/events?'))!
+  assert.doesNotMatch(first.url, /afterSeq/)
+  app.get('load-older').fire('click'); for (let i = 0; i < 8; i++) await flush()
+  assert.deepEqual(app.get('transcript').children.filter(n => n.dataset.seq).map(n => Number(n.dataset.seq)), [2194,2195,2196,2197,2198,2199])
+  assert.ok(app.requests.some(r => r.url.includes('beforeSeq=2197')))
+  events.push({ seq: 2200, type: 'assistant.message', data: { text: 'new response' } }); app.tick()
+  for (let i = 0; i < 12; i++) await flush()
+  assert.match(visibleText(app.get('transcript')), /new response/)
+  assert.ok(app.requests.some(r => r.url.includes('afterSeq=2199')))
+})
+
+test('M1-0 inline source, artifact and stop controls use the receipt-bound task without a task page', async () => {
+  const source = { commandId: 'inline-task', kind: 'session.message', sessionId: 'A', state: 'accepted_by_dsh', receiptId: 'rpc:inline' }
+  const artifact = { taskId: source.commandId, sessionId: 'A', artifactId: 'inline-file', fileName: '报告.md', size: 24, state: 'observed', verification: { status: 'observed', method: 'sha256_readback' } }
+  const app = harness([source], [{ seq: 0, type: 'user.message', data: { text: '整理报告', receiptId: source.receiptId } }], false, {
+    taskDetails: { [source.commandId]: { taskId: source.commandId, sessionId: 'A', source, sourceText: '整理报告', artifacts: [artifact],
+      sources: [{ snapshotId: 'source-inline', relativePath: 'notes.md' }], control: { state: 'active', canStop: true } } },
+  })
+  for (let i = 0; i < 20; i++) await flush()
+  const card = app.get('transcript').children.find(n => n.dataset.conversationTask === source.commandId)!
+  assert.ok(card, JSON.stringify({text:visibleText(app.get('transcript')),requests:app.requests.map(r=>r.url)})); assert.match(visibleText(card), /报告.md/)
+  card.querySelector('[data-conversation-task-action="detail"]')!.fire('click')
+  const info = card.querySelector('.timeline-task-info')!; assert.ok(info)
+  assert.match(visibleText(info), /整理报告.*查看来源 notes.md.*请求停止这件事/)
+  info.querySelectorAll('button').find(n => n.textContent === '请求停止这件事')!.fire('click')
+  await flush(); assert.ok(app.requests.some(r => r.url.endsWith('/tasks/inline-task/stop') && r.options.method === 'POST'))
+  assert.doesNotMatch(accountHtml, /tasks-pane|task-detail-dialog|rail-tasks|show-tasks/)
 })
