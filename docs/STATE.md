@@ -6,14 +6,13 @@
 
 ## 当前里程碑：M0 重置（见 PLAN.md 第 6 节）
 
-| 轨道 | 当前工作包 | 状态 |
+| 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| W-Core | C3 代码瘦身 → M0-2 预算 → M0-3 历史分页 | 待开工 |
-| W-UI | M0-3 前端部分 | 待 W-Core |
-| A-UI | 迁到 GitHub 工作流；对照 CLIENT_API 草案核对 | 待开工 |
+| Codex · Windows | M0-1b 代码瘦身 | 待开工 |
+| Codex · Mac | A0 Apple 迁到 GitHub → M0-5 契约文档 | 待开工 |
 
 已完成：
-- 规则松绑与文档归档（Claude，2026-10-07）。
+- 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
 - 任务 15 在途改动已作 checkpoint 提交 `1f922a5`（通用执行、审批、用户提问、Android 文本成果 MIME，未经独立验收）。
 
 ## 最近一次场景结果
