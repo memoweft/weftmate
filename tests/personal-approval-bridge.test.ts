@@ -115,24 +115,6 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
       await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }) } }
 }
 
-test('all allowed still uses native approval outcomes but bypasses human cards, and unavailable never executes', async () => {
-  const all = await nativeFixture({ initialStatus: 'pending', allowAll: true })
-  try {
-    const result = await all.execute()
-    assert.equal(result.isError, false)
-    assert.equal(all.effects, 1)
-    assert.equal(all.frames.some(frame => frame.action === 'register_approval'), false)
-    assert.ok(all.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'allowed-once'))
-  } finally { await all.close() }
-  const expired = await nativeFixture({ initialStatus: 'unavailable' })
-  try {
-    const result = await expired.execute()
-    assert.equal(result.isError, true)
-    assert.equal(expired.effects, 0)
-    assert.ok(expired.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'unavailable'))
-  } finally { await expired.close() }
-})
-
 test('fixed ApprovalService and ToolRuntime deliver approved/rejected native decisions without forcing automatic tools to ask', async () => {
   for (const stage of ['gate', 'body']) for (const decision of ['allowed-once', 'rejected']) {
     const f = await nativeFixture({ stage, decision })
@@ -154,6 +136,22 @@ test('fixed ApprovalService and ToolRuntime deliver approved/rejected native dec
     assert.equal((await automatic.execute()).isError, false); assert.equal(automatic.effects, 1)
     assert.equal(automatic.frames.some(frame => frame.action.includes('approval')), false)
   } finally { await automatic.close() }
+  // Same fixed-runtime contract: all-allowed and unavailable outcomes.
+  const all = await nativeFixture({ initialStatus: 'pending', allowAll: true })
+  try {
+    const result = await all.execute()
+    assert.equal(result.isError, false)
+    assert.equal(all.effects, 1)
+    assert.equal(all.frames.some(frame => frame.action === 'register_approval'), false)
+    assert.ok(all.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'allowed-once'))
+  } finally { await all.close() }
+  const expired = await nativeFixture({ initialStatus: 'unavailable' })
+  try {
+    const result = await expired.execute()
+    assert.equal(result.isError, true)
+    assert.equal(expired.effects, 0)
+    assert.ok(expired.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'unavailable'))
+  } finally { await expired.close() }
   const never = await nativeFixture({ policy: 'never' })
   try {
     assert.equal((await never.execute()).isError, true); assert.equal(never.effects, 0)
