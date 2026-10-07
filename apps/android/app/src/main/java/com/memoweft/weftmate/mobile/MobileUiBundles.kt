@@ -212,7 +212,7 @@ class MobileUiBundles(private val context: Context) {
 
     private fun bytes(url: String, limit: Int, cookie: String): ByteArray {
         if (closed.get()) throw ApiFailure(503, "SERVICE_CLOSING")
-        val connection = URL(url).openConnection() as HttpURLConnection
+        val connection = URL(url).openPinnedConnection()
         activeConnection.set(connection)
         try {
             if (closed.get()) throw ApiFailure(503, "SERVICE_CLOSING")

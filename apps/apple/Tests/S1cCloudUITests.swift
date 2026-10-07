@@ -3,7 +3,7 @@ import XCTest
 /// Real cloud main/SQLite/file email and real isolated host; browser protocol interactions use a test driver.
 final class S1cCloudUITests: XCTestCase {
     private let driver = "http://127.0.0.1:18765"
-    @MainActor private func launch() async throws -> XCUIApplication {
+    @MainActor private func launch(systemBrowser: Bool = false) async throws -> XCUIApplication {
         let data: Data
         do { (data, _) = try await URLSession.shared.data(from: URL(string: driver + "/ready")!) }
         catch { throw XCTSkip("Start apps/apple/Tests/s1c_cloud_fixture.mjs first") }
@@ -12,6 +12,7 @@ final class S1cCloudUITests: XCTestCase {
         app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "s1c-" + UUID().uuidString.prefix(8),
             "--server-url", ready["host"]!, "--s1c-cloud-url", ready["cloud"]!,
             "--s1c-browser-driver", driver + "/browser", "--s1c-qr-url", driver + "/pairing.png"]
+        if systemBrowser { app.launchArguments.append("--s1c-system-browser") }
         app.launch()
         let entry = app.buttons["cloudLoginEntry"]
         XCTAssertTrue(entry.waitForExistence(timeout: 20)); entry.tap()
@@ -19,6 +20,7 @@ final class S1cCloudUITests: XCTestCase {
             XCTFail("Synthetic QR image did not decode: " + app.debugDescription); throw NSError(domain: "S1cQR", code: 1)
         }
         app.buttons["cloudBrowserLogin"].tap()
+        if systemBrowser { try await completeSystemBrowser(app) }
         guard app.descendants(matching: .any)["cloudWaiting"].firstMatch.waitForExistence(timeout: 30) else {
             XCTFail(app.debugDescription); throw NSError(domain: "S1cWaiting", code: 1)
         }
@@ -79,6 +81,35 @@ final class S1cCloudUITests: XCTestCase {
         redeem.tap()
         XCTAssertTrue(app.descendants(matching: .any)["conversationRow.session-synthetic-cloud"].firstMatch.waitForExistence(timeout: 30), app.debugDescription)
         keep(app, "S1c-QR-authorized")
+    }
+    @MainActor func testSystemAuthenticationBrowserKeyBootstrapAndEmailConfirmation() async throws {
+        let app = try await launch(systemBrowser: true)
+        XCTAssertFalse(app.descendants(matching: .any)["conversationList"].firstMatch.exists)
+        keep(app, "S1c-system-browser-pending")
+        app.buttons["cloudCancel"].tap()
+    }
+    @MainActor private func completeSystemBrowser(_ app: XCUIApplication) async throws {
+        var web = app.webViews.firstMatch
+        if !web.waitForExistence(timeout: 12) {
+            web = XCUIApplication(bundleIdentifier: "com.apple.SafariViewService").webViews.firstMatch
+        }
+        guard web.waitForExistence(timeout: 15) else { XCTFail(app.debugDescription); throw NSError(domain: "S1cBrowser", code: 1) }
+        let email = web.textFields.firstMatch
+        XCTAssertTrue(email.waitForExistence(timeout: 10)); email.tap(); email.typeText("s1c-synthetic@example.com")
+        let password = web.secureTextFields.firstMatch
+        XCTAssertTrue(password.exists)
+        // Safari scrolls the focused email above its keyboard; expose the next HTML input before tapping.
+        web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.4)).press(forDuration: 0.05,
+            thenDragTo: web.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.1)))
+        password.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        password.typeText("synthetic cloud password only")
+        web.buttons["登录"].tap()
+        let codeField = web.textFields.matching(NSPredicate(format: "label CONTAINS %@", "验证码")).firstMatch
+        guard codeField.waitForExistence(timeout: 20) else { XCTFail(app.debugDescription); throw NSError(domain: "S1cBrowserOTP", code: 1) }
+        let (data, _) = try await URLSession.shared.data(from: URL(string: driver + "/browser-code")!)
+        let fields = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: String])
+        codeField.tap(); codeField.typeText(try XCTUnwrap(fields["code"]))
+        web.buttons["确认登录"].tap()
     }
     @MainActor private func keep(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = name; attachment.lifetime = .keepAlways; add(attachment)

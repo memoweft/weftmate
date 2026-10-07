@@ -27,3 +27,6 @@ npm run check
 
 
 历史与执行使用 CLIENT_API 第 3.4 / 4 节：首次读尾页、上滑读更早、正向游标独立；手机执行块默认收起，审批 / 提问 / 成果留在原对话。独立事情页与任务详情已删除。`www/timeline.js` 与桌面时间线组件保持相同源码；原生连接层新增 beforeSeq 和按 seq 读取步骤详情，本版需与更新后的 Android 壳一起交付，不能把旧 APK 的连接层视为已支持新分页。
+
+
+S1c-Web 的共享云登录与 QR bundle：根目录 `npm ci`、本目录 `npm ci` 后运行 `npm run build:cloud`。它使用锁定的 jose 6.2.12 / qrcode 1.5.4，将 bundle 与共享 cloud-login.js 同步到桌面和手机静态目录，许可证在 www/licenses/cloud.txt。云登录单测为 `node --test tests/cloud-login.test.mjs`；真实 Chromium 场景由 S1c Web CI 单独运行。新版 UI 的 Android 最低 native code 为 15。

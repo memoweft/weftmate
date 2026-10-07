@@ -39,12 +39,16 @@ private func cloudAuthReply(host: String = "host-one") throws -> HTTPResponse {
     }
     @Test func callbackAndPKCE() throws {
         let configuration = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
-        let flow = try CloudAuthorization(configuration: configuration, hostID: "host-one")
+        let jwk = try CloudDeviceKey(softwareStore: MemoryStore()).publicJwk
+        let flow = try CloudAuthorization(configuration: configuration, hostID: "host-one", deviceID: "apple-synthetic", publicJwk: jwk)
         let query = URLComponents(url: flow.url, resolvingAgainstBaseURL: false)!.queryItems!
         #expect(query.first { $0.name == "code_challenge" }?.value == cloudBase64(Data(SHA256.hash(data: Data(flow.verifier.utf8)))))
         #expect(query.first { $0.name == "code_challenge_method" }?.value == "S256")
         #expect(query.filter { $0.name == "resource" }.count == 2)
         #expect(query.allSatisfy { $0.name != "client_secret" })
+        #expect(query.first { $0.name == "wm_device_id" }?.value == "apple-synthetic")
+        let publicJSON = query.first { $0.name == "wm_public_jwk" }!.value!
+        #expect(try JSONDecoder().decode([String: String].self, from: Data(publicJSON.utf8)) == jwk)
         let callback = configuration.redirectURI + "?state=\(flow.state)&code=synthetic"
         #expect(try flow.code(from: URL(string: callback)!) == "synthetic")
         for bad in [callback + "&state=other", callback + "&code=other", callback + "&error=denied", callback + "#fragment",
@@ -81,7 +85,10 @@ private func cloudAuthReply(host: String = "host-one") throws -> HTTPResponse {
         var fields: [String: Any] = ["hostId": "host-one", "challenge": String(repeating: "a", count: 43), "tlsSpki": String(repeating: "a", count: 43),
             "expiresIn": 120, "origin": "https://host.example.com", "publicJwk": key.publicJwk,
             "relay": ["state": "online", "baseUrl": origin]]
-        #expect(try HostPairing.parse(JSONSerialization.data(withJSONObject: fields)).hostId == "host-one")
+        let json = try JSONSerialization.data(withJSONObject: fields)
+        #expect(try HostPairing.parse(json).hostId == "host-one")
+        #expect(try HostPairing.parse(Data(("wm1." + cloudBase64(json)).utf8)).hostId == "host-one")
+        #expect(try HostPairing.parse(Data((origin + "/personal/v1/ui/#pair=" + cloudBase64(json)).utf8)).hostId == "host-one")
         fields["publicJwk"] = ["kty": "EC", "crv": "P-256", "d": "private"]
         #expect(throws: CloudLoginFailure.pairing) { try HostPairing.parse(JSONSerialization.data(withJSONObject: fields)) }
     }

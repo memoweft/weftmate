@@ -340,7 +340,7 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | POST `/auth/register`；POST `/auth/login` | 请求 `username,password,deviceName,displayName?` 与服务端一致；读取Cookie/CSRF再用status核对owner/host |
 | GET `/auth/me`；GET `/status` | `account.ownerId,device.id,csrfToken` 与 `ownerId,hostId` 一致；身份不匹配或401清凭据，5xx/超时保留离线身份便于恢复 |
 | POST `/auth/logout`；GET `/auth/devices` | `{}`注销体、Cookie/Origin/CSRF一致；设备createdAt/lastSeenAt等可选字段兼容。注销先清本地身份，服务端失败仍报告未确认 |
-| 云 OIDC discovery/auth/token/jwks（7.2） | S1c-Apple：系统 ASWebAuthenticationSession；Code + PKCE S256、精确 callback/state、ID token nonce/issuer/aud/RS256/exp 验证，JOSESwift 3.0.0 签验 JWS。公开 client `weftmate-apple`、redirect `com.weftmate.apple:/oauth/callback` 须在云端登记；无 client secret。轮换 refresh token 存 ThisDeviceOnly Keychain，恢复时取新 access token |
+| 云 OIDC discovery/auth/token/jwks（7.2） | S1c-Apple：系统 ASWebAuthenticationSession；Code + PKCE S256、精确 callback/state、ID token nonce/issuer/aud/RS256/exp 验证，JOSESwift 3.0.0 签验 JWS。按 7.7 发送 `wm_device_id=apple-<公钥指纹>`、`wm_public_jwk`，云浏览器隐藏字段仍需邮件确认；公开 client `weftmate-apple`、redirect `com.weftmate.apple:/oauth/callback` 须在云端登记；无 client secret。轮换 refresh token 存 ThisDeviceOnly Keychain，恢复时取新 access token |
 | POST `/auth/cloud-nonce`；POST `/auth/cloud-session`；POST `/cloud/pairings/redeem` | S1c-Apple：host:session resource + 设备 P-256 DPoP；每次新 nonce/jti/ath/精确 htu，无 Authorization；202 保持等待，不建立内容 session，允许/拒绝与重试/取消有明确界面；200 Cookie/CSRF 后再核对 status 的 ownerId/hostId |
 | GET `/cloud/devices/pending`；POST `/cloud/devices/{id}/decision` | S1c-Apple：已登录前台读取，显示设备名、平台（官方客户端在 deviceName 中带 Mac/iPhone）、请求时间，允许/拒绝使用当前 Cookie/CSRF；现有响应无独立 platform 字段，其他名称显示「平台未提供」 |
 | POST 云 `/personal/v1/cloud/hosts/relay/discover` | S1c-Apple：cloud:account Bearer + hostId 取得 relay base URL；offline/revoked/网络断流显示连接不可用，保留云登录。目录不含 pin；HTTPS 用系统 CA/域名验证再比较当面配对得到的 P-256 SPKI，上传/下载沿用同一验证；不接受目录覆盖旧 pin |
@@ -377,8 +377,8 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 附件 | Apple能解码原件元数据并计数，但没有上述四个附件PUT/GET；SharedCommandPayload无attachments、originalAttachments、attachmentMessageId，无法从该client上传/发送/下载附件或仅发附件 | 已在 A2 修复：四个 PUT/GET 与显示版、附件引用/仅附件发送、历史原件及旧图片下载接入；Mac/iPhone「+」、缩略图、侧栏/全屏 Quick Look、保存/分享；原件大小/hash 校验 |
 | 任务输入 | Apple message mode固定queue，无steer；无supplements/resume；Task读取未呈现executionSteps/background job全部字段。不能把现有session.cancel当可取消排队卡片 | M1-0b/M1-0d/M1-4 |
 | 账号/设备 | 无auth/state/setup/profile/change-password、设备PATCH/DELETE；登录/注册/列设备已有能力 | Apple账号设置接入（setup仍是宿主专属流程） |
-| 云浏览器/目录接线（真实缺口） | 当前云 HTML 登录表单要求手填 deviceId，未把原生安装 JWK 绑定进邮件确认；没有注册/找回密码浏览器页面。目录 discover 必须传 hostId，尚无账号宿主列表；已受信设备批准也没有原生可信 pin 转交接口。只凭首次云账号登录无法完成无配对材料的原生登录 | 云/Windows 轨道补正式浏览器 bootstrap、账号页、宿主目录与已有信任通道的 pin 交付；本包不猜造接口、不用云提供的 pin 降级验证。已实现系统浏览器入口；协议/状态/真实云宿主测试使用隔离浏览器驱动提交现有 7.1 JSON 交互，不能记录为生产浏览器 UI 已通过 |
-| Apple 配对/密钥 | iPhone 相机或图片二维码读取 7.4/7.6 完整 pairing JSON；Mac 粘贴电脑配对信息或在另一设备批准。P-256 优先 Secure Enclave，不可用用 Keychain；不跨设备同步。二维码过期/已用由宿主最终拒绝，重试不隐式允许 | S1c-Apple 已接入；真机 Secure Enclave/相机、正式电脑 QR 展示、可信 pin 转交与生产中继部署仍待对应轨道验证。Watch 无变更 |
+| 云账号页/目录（剩余缺口） | S1c-Web 已正式提供 7.7 原生 deviceId/JWK 浏览器 bootstrap，Apple 已接入；注册/找回密码尚无云浏览器页面。discover 必须传 hostId，尚无账号宿主列表；已有设备批准也没有原生可信 pin 转交接口。首次无配对材料的云登录仍不能自动发现宿主并固定可信 pin | 云轨道补账号页与账号宿主目录/已有信任通道的 pin 交付；部署登记 Apple client 并更新 S1c-Web 服务。Apple 不猜造接口、不信云目录替换 pin；系统浏览器与已取得配对信息的登录按现有正式契约实现 |
+| Apple 配对/密钥 | iPhone 相机或图片二维码读取 7.7 标准 URL `#pair=<base64url JSON>`、`wm1.` 复制码，兼容 7.4/7.6 裸 pairing JSON；Mac 粘贴电脑配对信息或在另一设备批准。P-256 优先 Secure Enclave，不可用用 Keychain；不跨设备同步。二维码过期/已用由宿主最终拒绝，重试不隐式允许 | S1c-Apple 已接入；真机 Secure Enclave/相机、可信 pin 转交与生产内容证书仍待对应轨道验证；电脑 QR 展示已由 S1c-Web 实现。Watch 无变更 |
 | 模型 | 有GET models与create选择modelProfileId；无verify、模型代理chat/completions、account/models九项管理/转移接口。未声明密钥转移，符合当前权限范围 | Apple模型设置/手机独立对话后续包 |
 | 项目/浏览器 | 无projects/workspaces/browser六项独立请求；已有会话可列/读/发送，但无法在此client登记项目、撤销或创建对应会话 | Apple工作区接入 |
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
@@ -480,9 +480,9 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 
 召回使用 3.10 的实际地址及用户 `modelTier` 覆盖判断，initialize 与每次 World / interactions 召回使用最终 local/cloud。`cloudModelAllowed=false` 排除已写入的健康证据及其衍生项、依赖它们的助手历史，保留其他可读记忆；true 后云端可用，撤销选择后立即作用于全账号来源。来源同步失败时该次注入暂缓，待同步成功恢复，不使用旧授权数据。GET 提供客户端读取摘要，客户端不得把本地专用摘要自行注入云端模型。
 
-## 7. 云端账号与宿主云身份（S1a / S1b；完整客户端接入在 S1c）
+## 7. 云端账号与宿主云身份（S1a / S1b / S1c-Web）
 
-7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。**五端的完整云登录接入仍在 S1c**，桌面 Web 已提供内容设备待批准列表。云账号只授予云控制面访问，不授予宿主内容、shell 或备份解密权限；S1b 已实现宿主验签、DPoP、认领和 `/auth/cloud-session`。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
+7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。桌面/手机浏览器与 Android 壳已接入 S1c-Web；Apple 客户端另包。云账号只授予云控制面访问，不授予宿主内容、shell 或备份解密权限；S1b 已实现宿主验签、DPoP、认领和 `/auth/cloud-session`。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
 
 ### 7.1 账号交互接口
 
@@ -564,7 +564,7 @@ file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量�
 
 DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 秒 `iat`、`htm=POST`、**精确宿主 origin + 本次入口路径** `htu`（无 query/fragment）、`ath=base64url(SHA-256(accessToken))` 与宿主 nonce。nonce 与 `(公钥指纹,jti)` 提交后不可复用，重启不清空。宿主检查固定 issuer、RS256、固定 JWKS、`typ=at+jwt`、aud/host_id、host:session、sub/device_id/auth_epoch/iat/exp/jti/cnf.jkt；不接受 ID token，不读取 token jku/x5u，不把 JWT 送旧 Bearer tokenHash 路径。仅 DPoP 有效不构成内容信任；未知公钥仍返回等待批准。
 
-桌面 Web 在设置的设备卡中提供待批准列表与允许/拒绝，打开应用读取后在账户入口提示。手机/原生完整登录、二维码展示/扫描在 S1c，推送提醒在 S3。这里的 tlsSpki 已有本机内容密钥，实际 TLS listener/证书/原生 pin 连接验收在 S2。
+桌面/手机 Web 与 Android 在打开应用及前台每 15 秒读取待批准设备，可允许/拒绝；桌面设备卡展示一次性二维码并在两分钟后刷新。Android 本包用输入配对码，相机扫描另包；推送提醒在 S3。这里的 tlsSpki 已有本机内容密钥，实际 TLS listener/证书/原生 pin 连接验收在 S2。
 
 新增宿主业务码：401 `CLOUD_TOKEN_INVALID / DPOP_INVALID / DPOP_REPLAY / PAIRING_INVALID`；403 `LOCAL_SESSION_REQUIRED / CLOUD_NOT_BOUND / DEVICE_NOT_TRUSTED`；400 `CLAIM_INVALID`；409 `CLOUD_BINDING_CONFLICT / DEVICE_DECISION_CONFLICT`；503 `CLOUD_UNAVAILABLE / STORAGE_UNAVAILABLE`。Origin、CSRF、媒体类型、大小与原宿主约定一致。等待批准是正常 202，禁止当作已登录内容账户；拒绝/撤销返回 403，需电脑/受信设备重新明确批准，不能自动用邮箱恢复信任。
 
@@ -607,3 +607,21 @@ DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 �
 **离线与断流不是云伪造的宿主响应**：透传入口无法在不终止内容 TLS 的情况下保证返回宿主 JSON。离线/撤销/未就绪时可能 TLS 握手失败、EOF/连接重置、超时；已开始的 SSE/下载会直接断流。客户端将这些网络错误呈现为「宿主离线 / 连接不可用」，结合 discover 的 offline/revoked 状态；不可当作正常 200 或自动退出云账号。若 TLS adapter 已收到请求但本机 HTTP 入口不可用，可返回 HTTP 502（空体）。请求到达宿主后的 401/403/503 仍按原契约；云接口自身不可用为 503，和内容路径网络失败区分。online 仅为最近 15 秒连接/心跳指示，不是请求完成证明。
 
 重连后继续使用未过期宿主 Cookie，历史用 beforeSeq/afterSeq 与原水位，SSE 重新订阅；附件断流须按大小/SHA256 重取，未见终止标记不得认定已完成。原生端先执行标准 CA/域名验证，再比较配对得到的 SPKI；错误 pin 或同域另一合法证书均拒绝，不能以云目录覆盖 pin。证书续期使用同一内容 key；换 key 的可信更新另包。普通浏览器远程访问已由 D24 允许，接受云/DNS 完全主动控制时可被冒充的边界。
+
+
+### 7.7 浏览器与 Android 云登录（S1c-Web）
+
+| 提供者 / 方法与路径 | 请求 / 响应 |
+|---|---|
+| 宿主 GET `/personal/v1/cloud/config` | 无认证；200 `{issuer,hostId,clientId}`。只公开固定发行者与公开客户端 ID，不含绑定账号、公钥、凭据；未启用云为原 404 |
+| 宿主 GET `/personal/v1/cloud/binding` | 本账号 Cookie；200 `{status:"unbound"\|"pending"\|"active",canManage,hostId}`。只返回当前账号；canManage 仅电脑直接地址的本地密码 Cookie 为 true，实际写权限仍按 7.4 检查 |
+
+浏览器从宿主同 origin 的 `/personal/v1/ui/` 登录。`WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 `weftmate-web`；云 `CLOUD_OIDC_CLIENTS` 增加可选 `application_type:"web"\|"native"`（旧配置默认 native），**预登记精确回调 URI**。浏览器回调固定 `<宿主 origin>/personal/v1/ui/`，包括实际直接地址与中继地址；禁止通配符。Android 客户端 ID 为 `weftmate-android`，回调为 `com.memoweft.weftmate:/oauth`。部署配置需同时登记两个公开客户端；开发的回环 HTTP 仅在已有隔离测试开关下使用。
+
+授权请求仍为 7.2 Code + S256 PKCE，浏览器用标准 `response_mode=fragment`，Android 用 query。附加 `wm_device_id` 和 `wm_public_jwk`（仅公钥 JSON）给云同源登录表单自动填入隐藏字段；设备标识、公钥仍经过原邮件确认，不能因此获得内容信任。表单 publicJwk JSON 字符串由服务器解析后走原验证，JSON 调用方仍可传对象。OIDC CORS 只允许该客户端已登记回调 origin（公开 JWKS 按已登记 origin），云账号业务写仍只接受云同源 Origin；宿主不开放内容 CORS。云表单 CSP 的 form-action 仅允许 self 和该次已登记回调的 origin/scheme，防止浏览器拦截成功授权的返回跳转。
+
+WebCrypto 生成不可导出的 P-256 私钥，CryptoKey 与公开设备标识存 IndexedDB。校验 state、nonce、回调、固定 issuer/JWKS、RS256、audience、期限及 ID/access token 同一 sub；不使用 ID token 访问内容。等待批准时保留云凭据在 IndexedDB、正常每 3 秒用新 nonce/DPoP 重试；网络失败显示连接不可用并减慢重试，拒绝不自动重新排队。刷新原子替换旧 refresh token；得到宿主 HttpOnly Cookie 后删除临时云令牌。本地密码和云表单密码均不持久化，刷新令牌不进入 localStorage。
+
+桌面「添加新设备」二维码是 `<relay.baseUrl 或直接 origin>/personal/v1/ui/#pair=<base64url 配对 JSON>`；可复制码为 `wm1.<同一 base64url>`。内容完全来自 7.4/7.6 配对响应（包括 challenge、hostId、origin、tlsSpki、publicJwk、relay），两分钟单次使用，消费仍走 `/cloud/pairings/redeem` 与原 DPoP 验证。二维码持有者仍需登录同一云账号；短码不是独立认证。浏览器遵循 D24，不能在 WebCrypto 中声称实现 TLS pin。
+
+Android 0.8.2 / native code 15 的 WebView 保持本地界面，OIDC 在系统认证浏览器打开，经自定义 scheme 回到同一 Activity；只接收匹配原 state 的回调。首次云登录用输入配对码取得宿主 pin，无相机权限；密钥仍由 WebCrypto/IndexedDB 保存，刷新凭据与宿主 Cookie 存原生 Keystore 加密设置。原生所有宿主 HTTP/SSE/下载/更新连接先完成系统 CA/域名验证，再比较当面配对的 SPKI；不接受云目录替换已有 pin。电脑 key 轮换、相机扫描、Android 真机往返与 Apple 接入另包。此版手机 UI 发布时需 `--min-native-version-code 15`，旧壳保留原本地登录。
