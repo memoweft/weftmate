@@ -10,7 +10,7 @@
 
 第一次启用云模块时，在原 access store 迁移之前将根目录已有 store、sync、账号/健康、附件等复制到 `cloud-identity/backup/`，完成后原子写入 `backup-complete.json`。备份仅留本机私有目录，包含原本机数据和凭据，不进 Git、不上传。复制失败不进入云初始化；中断后重新复制，完成标记存在后不覆盖最初快照。
 
-`cloud-identity/identity.json` 是原子写入的独立日志，保留原 `hostId`，分别生成安装 ES256 与内容 TLS EC 私钥。认领顺序为 pending claim → 云挑战 → 本地 pending `(issuer,sub,ownerId,hostId,claimId)` → 安装密钥签名/云幂等 membership → 本地 active。云确认后断网或关机，再以相同本地账号请求 claims 得到原 claimId，重新云登录并提交 binding 可续做；不将云 access/refresh token 持久化来自动重试。云 pending challenge 过期后相同 claimId 可取新挑战。已 active 的相同绑定也幂等。冲突返回 409，不建空内容账号、不改目录、密码、Cookie、同步/健康删除水位或记忆。
+`cloud-identity/identity.json` 是原子写入的独立日志，保留原 `hostId`，分别生成安装 ES256 与内容 TLS EC 私钥。认领顺序为 pending claim → 云挑战 → 本地 pending `(issuer,sub,ownerId,hostId,claimId)` → 安装密钥签名/云幂等 membership → 本地 active。云确认后断网或关机，再以相同本地账号请求 claims 得到原 claimId，重新云登录并提交 binding 可续做；不将云 access/refresh token 持久化来自动重试。云 pending challenge 过期后相同 claimId 可取新挑战。激活时保存新鲜云证明的 epoch 基线，不等待首次轮询才拒绝绑定前的旧 epoch。已 active 的相同绑定也幂等。冲突返回 409，不建空内容账号、不改目录、密码、Cookie、同步/健康删除水位或记忆。
 
 ## 内容授权与会话
 

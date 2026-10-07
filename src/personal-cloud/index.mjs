@@ -211,12 +211,17 @@ export async function createHostCloudIdentity(context, options) {
           .setProtectedHeader({ alg: 'ES256', typ: 'wm-host-claim+jwt' }).setIssuer(hostId)
           .setAudience(config.issuer).setIssuedAt().setExpirationTime('60s').sign(installationKey);
         await callCloud('/hosts/claims/confirm', { claimId: body.claimId, proof }, body.accessToken);
-        await context.serial(() => edit(next => {
-          local(request, true);
-          if (next.bindings[key]?.claimId !== body.claimId || next.bindings[key].status === 'unbound')
-            throw failure('CLOUD_BINDING_CONFLICT', 409);
-          next.bindings[key].status = 'active'; next.claims[body.claimId].status = 'active';
-        }));
+        await context.serial(async () => {
+          await edit(next => {
+            local(request, true);
+            if (next.bindings[key]?.claimId !== body.claimId || next.bindings[key].status === 'unbound')
+              throw failure('CLOUD_BINDING_CONFLICT', 409);
+            next.bindings[key].status = 'active'; next.claims[body.claimId].status = 'active';
+            next.epochs[key] = Math.max(next.epochs[key] ?? 0, identity.auth_epoch);
+          });
+          await revokeInvalidSessions();
+          closeInvalidResponses();
+        });
         context.json(response, 200, { bound: true, ownerId: current.ownerId, hostId }); return true;
       }
       if (route === '/cloud/binding' && request.method === 'DELETE') {
