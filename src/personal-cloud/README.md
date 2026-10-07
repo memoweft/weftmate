@@ -26,7 +26,7 @@
 
 宿主启动后及每 60 秒用安装密钥签名主动取 `/cloud/hosts/revocations`，先提交 outbox；`syncCloudRevocations()` 可主动同步，`receiveCloudRevocations(eventToken)` 供后续通道交付。云密码重置/换邮箱的 epoch 和设备撤销事件均用固定云 key 签名，宿主检查 audience 与递增水位后持久化，并把失效会话在 access store 标为 revoked，使排队任务也不能再派给 DSH。epoch 撤销保留已批准公钥，新 epoch 的合法登录可重新换 Cookie；本地账号 Cookie 不受影响。云服务只存宿主公钥/member/最小撤销元数据，不接收本地 ownerId 或内容。
 
-没有即时推送（S3）和中继（S2）；在线轮询至多约一分钟加网络延迟，签名事件到达宿主后立即拒绝并关闭活跃流。云离线期间不能宣称收到最新撤权；仍有效的宿主 Cookie、本地密码与合法旧 Bearer 可直连，过期云 JWT 不延长。
+S2 中继/TLS 已在 `../personal-relay/` 实现，见 CLIENT_API 7.6；本模块继续负责身份。没有即时推送（S3）；在线轮询至多约一分钟加网络延迟，签名事件到达宿主后立即拒绝并关闭活跃流。云离线期间不能宣称收到最新撤权；仍有效的宿主 Cookie、本地密码与合法旧 Bearer 可直连，过期云 JWT 不延长。
 
 ## 验证
 
@@ -35,3 +35,5 @@
 - `node --test --test-name-pattern=S1b tests/personal-access-ui-interaction.test.ts`：应用启动提示、允许/拒绝 CSRF 写入、退出清除。
 
 数据目录一律临时且规范化；不连服务器、不发送真实邮件、不部署。
+
+S2 的 `/cloud/pairings` 响应增添 relay 状态/baseUrl；原 tlsSpki 与实际 TLS adapter 复用同一内容 key。云目录不提供可替代配对 pin 的信任。

@@ -80,7 +80,23 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
     throw new Error('Invalid CLOUD_OIDC_CLIENTS');
   if (new Set(clients.map((client) => client.client_id)).size !== clients.length)
     throw new Error('Duplicate cloud client');
+  let relay = null;
+  if (env.CLOUD_RELAY_DOMAIN) {
+    const domain = env.CLOUD_RELAY_DOMAIN;
+    const serverName = env.CLOUD_RELAY_SERVER_NAME ?? 'relay.example.com';
+    if (![domain, serverName].every(value => /^[a-z0-9]+(?:[.-][a-z0-9]+)*\.[a-z]{2,}$/.test(value)))
+      throw new Error('Relay requires lowercase DNS names');
+    const ports = { frpsPort: 7000, frpsHttpsPort: 7443, controlPort: 7001, contentPort: 7444, pluginPort: 8788 };
+    for (const key of Object.keys(ports)) {
+      const value = env[`CLOUD_RELAY_${key.replace(/[A-Z]/g, c => `_${c}`).toUpperCase()}`] ?? String(ports[key]);
+      if (!/^\d+$/.test(value) || Number(value) < 1 || Number(value) > 65535) throw new Error('Invalid relay port');
+      ports[key] = Number(value);
+    }
+    if (new Set(Object.values(ports)).size !== 5) throw new Error('Relay ports must differ');
+    relay = { domain, serverName, ...ports };
+  }
   return Object.freeze({
+    relay,
     host,
     port: Number(portText),
     dataDir,
