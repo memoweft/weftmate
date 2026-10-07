@@ -985,7 +985,8 @@ async function stop(){if(state.chatSource==='host'||selectedBinding()){
     catch(e){if(sharedViewCurrent(owner,epoch,generation,sessionId))status(e?.message==='TIMEOUT'?'停止结果待核对，请查看电脑会话':safeError(e),e?.message!=='TIMEOUT')}
     finally{state.sharedStopping=false;if(sharedViewCurrent(owner,epoch,generation,sessionId))scheduleSharedPoll()}return}
   try{await call('chat.stop');status('已请求停止，等待本轮状态')}catch(e){status(safeError(e),true)}}
-function processEvent(message){const {event,data}=message;if(event==='chat.started'){
+function processEvent(message){const {event,data}=message;
+  if(event==='cloud.callback')void resumeCloudLogin();if(event==='chat.started'){
     invalidateLiveProgress();
     if(activeSend)acceptSend(activeSend,data.conversationId,data.turnId);
     state.busy=true;state.phase='waiting';state.progressText='';updateComposer();
@@ -1075,6 +1076,21 @@ async function restoreSharedSelection(sessionId,owner,epoch){await listSharedSes
     selectSharedSession(sessionId);return}
   if(state.sharedHostAvailable)try{localStorage.removeItem(chatSourceKey())}catch{}
   loadDraft();updateComposer();if(state.conversationId)await renderConversation();else showWelcome()}
+async function resumeCloudLogin(){
+  if(!globalThis.WeftCloudMobile)return;
+  await WeftCloudMobile.resume({call,adopt:async account=>{
+    state.authEpoch++;state.loggedIn=true;state.connection='connected';state.username=account.username;
+    state.owner=account.owner||'';state.deviceId=account.deviceId||'';state.profile=account;state.conversationId=null;
+    resetMemoryForAuthBoundary('账户已切换。');showProfile(account);
+    const info=await call('app.bootstrap');state.model=info.model?.source?info.model:null;
+    state.backgroundSync=account.backgroundSync||'unknown';$('model-label').textContent=state.model?.displayName||'选择模型';
+    page('chat');await listConversations();loadDraft();await call('app.ready',{owner:state.owner,hasDraft:hasAnyDraft()});toast('已登录');
+  }});
+}
+function refreshCloudDevices(){const owner=state.owner,epoch=state.authEpoch;
+  return globalThis.WeftCloudMobile?.pending({call,loggedIn:state.loggedIn,owner,
+    current:value=>value===state.owner&&epoch===state.authEpoch});
+}
 async function boot(){
   if(!window.weftNative){status('当前网页环境没有原生能力，请在 WeftMate 应用中打开',true);return}
   window.weftNative.onmessage=event=>{let message;try{message=JSON.parse(event.data)}catch{return}
@@ -1099,6 +1115,8 @@ async function boot(){
     else{loadDraft();if(state.conversationId){await renderConversation();void refreshHandoff(state.conversationId)}else showWelcome();void listSharedSessions()}
     try{applyTheme((await call('settings.appearance')).value)}catch{applyTheme('system')}
     await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
+    void resumeCloudLogin();void refreshCloudDevices();
+    globalThis.WeftCloudMobile?.observe(refreshCloudDevices);
     if(info.notificationOtherAccount)toast('这条提醒属于另一账户，请切回对应账户查看');
     {const owner=state.owner,authEpoch=state.authEpoch;
       call('auth.me').then(profile=>{if(state.authEpoch!==authEpoch||state.owner!==owner)return;
@@ -1813,7 +1831,7 @@ function workspacesPage(target){target.append(heading('项目与成果'));
     '当前电脑服务还没有项目目录入口，原有聊天和历史仍可使用。':'电脑暂时不可达；原项目会话请求会保留，重连后继续核对。';
     clear(projectBody);clear(modelBody)})
 }
-function connectPage(target){target.append(heading('电脑账户与连接','手机离线时仍可使用本机对话；连接后可同步记录和管理设备。'));
+function connectPage(target){globalThis.WeftCloudMobile?.mount(target,{call,loggedIn:state.loggedIn});target.append(heading('电脑账户与连接','手机离线时仍可使用本机对话；连接后可同步记录和管理设备。'));
   if(state.loggedIn){target.append(notice(`当前账户：${state.username}。${connectionLabel()}。`,
     state.connection==='connected'?'连接正常':'登录已保存'),group('连接操作',[
     row('检查账户','核对当前会话是否仍有效',async()=>{

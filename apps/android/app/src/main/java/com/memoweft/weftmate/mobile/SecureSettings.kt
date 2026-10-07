@@ -22,6 +22,12 @@ data class ModelImportResult(val status: String, val model: ModelSettings? = nul
 class SecureSettings(context: Context, storageName: String = "private-settings", keyAlias: String = "weftmate-mobile-v1") {
     private val prefs = context.getSharedPreferences(storageName, Context.MODE_PRIVATE)
     private val alias = keyAlias
+    init {
+        // Background sync also constructs SecureSettings before opening any host connection.
+        JSONObject(cloudValue("pins") ?: "{}").let { pins ->
+            for (origin in pins.keys()) CloudPins.install(origin, pins.getString(origin))
+        }
+    }
 
     private fun key(): SecretKey {
         val store = KeyStore.getInstance("AndroidKeyStore").apply { load(null) }
@@ -49,6 +55,14 @@ class SecureSettings(context: Context, storageName: String = "private-settings",
         cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, bytes.copyOfRange(0, 12)))
         return String(cipher.doFinal(bytes.copyOfRange(12, bytes.size)), Charsets.UTF_8)
     }
+
+    @Synchronized fun saveCloudValue(name: String, value: String?) {
+        require(name in setOf("login", "result", "callback", "state", "tokens", "pins"))
+        val editor = prefs.edit()
+        if (value == null) editor.remove("cloud-$name") else editor.putString("cloud-$name", encrypt(value))
+        check(editor.commit())
+    }
+    fun cloudValue(name: String): String? = prefs.getString("cloud-$name", null)?.let { decrypt(it) }
 
     @Synchronized fun saveHost(value: HostIdentity) {
         captureLegacyOwner()

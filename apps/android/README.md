@@ -71,3 +71,10 @@ adb -s <confirmed-serial> shell am instrument -w -e class com.memoweft.weftmate.
 ## 可选真实 MiniPlus 模型联调
 
 `test-support/miniplus-relay.mjs` 只供主助手管理的隔离 MuMu 验证。它需要显式 `--enable-real-model-relay` 和启动进程中的 `MODEL_SWITCH_UNIFIED_KEY` 环境变量；缺一拒绝启动。仅监听 `127.0.0.1:18189`、接受固定 `occamy-miniplus-v21` 的 `/v1/chat/completions`，只转发至本机 `8081`，不预加载模型、不接受任意目标地址或命令；客户端断线中止上游请求，stdin `q` 退出。密钥不写入 APK、源码或日志。主助手可在确认端口与模型服务后执行 ADB reverse `tcp:18189 tcp:18189`，从侧栏底部“个人设置”进入“对话模型”，填入调试地址 `http://127.0.0.1:18189/v1`。该模型仍运行在电脑上，所以此验证只能证明安卓原生聊天与工具循环，不能证明电脑断电时独立推理；手机自己的 HTTPS 模型提供方需要另行配置与真实验收。
+
+
+### S1c-Web 云登录（0.8.2 / native code 15）
+
+连接页可输入电脑设置中复制的一次性配对码，再点「用 WeftMate 账号登录」。WebView 不承载云密码页面：系统浏览器完成 Code+PKCE 和邮件确认，通过 `com.memoweft.weftmate:/oauth` 返回应用。云端预登记 weftmate-android 的上述回调。配对码提供内容 TLS pin；所有原生宿主请求在系统 CA/域名验证后校验 SPKI，刷新凭据与 Cookie 使用现有 Keystore 加密设置。扫码相机另包，不新增权限。
+
+GitHub `S1c Web and Android / Android debug and JVM tests` 执行 Gradle 8.9、Java 17 的 `:app:assembleDebug :app:testDebugUnitTest`，包括回调路径/重复或不匹配 state 的 JVM 测试。本机无 SDK 时使用此 runner，不重建开发环境。系统浏览器返回和实际 TLS pin 的 Android 真机测试仍需隔离模拟器/测试设备。手机 UI 发布需 `--min-native-version-code 15`。

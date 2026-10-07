@@ -4,7 +4,7 @@
   const authBase = '/personal/v1/auth'
   const accessBase = '/personal/v1'
   const receiptIdPattern = /^[A-Za-z0-9._:-]{1,160}$/
-  const views = ['loading', 'owner', 'setup', 'login', 'assistant', 'memory', 'account']
+  const views = ['loading', 'owner', 'setup', 'login', 'cloud-wait', 'assistant', 'memory', 'account']
   const byId = (id) => document.getElementById(id)
   const state = { csrfToken: null, account: null, device: null, setupGrant: null, revokeId: null, toastTimer: null,
     ownerId: null, hostId: null, online: false, capabilities: null, models: [], modelProfileId: null,
@@ -139,7 +139,7 @@
     if (hash.startsWith('#setup=')) {
       try { grant = decodeURIComponent(hash.slice(7)) } catch { /* Invalid grant remains unusable. */ }
     }
-    if (hash) window.history.replaceState(null, '', window.location.pathname + window.location.search)
+    if (hash.startsWith('#setup=')) window.history.replaceState(null, '', window.location.pathname + window.location.search)
     return grant && /^[A-Za-z0-9_-]{16,256}$/.test(grant) ? grant : null
   }
   state.setupGrant = takeSetupGrant()
@@ -154,6 +154,7 @@
     }
     if (view === 'memory' && state.currentView !== 'memory') memory.viewGeneration++
     if (state.currentView === 'account' && view !== 'account') {
+      cloudUi?.stopPairing()
       resetOtherDeviceInstall()
       state.profileOperationGeneration++
       state.profileSaving = false
@@ -187,6 +188,7 @@
     }
   }
   function clearSession() {
+    cloudUi?.cancel()
     document.querySelector('.timeline-preview')?.remove()
     cancelAttachmentUpload()
     stopAssistantRefresh()
@@ -296,7 +298,6 @@
     byId('transcript').replaceChildren()
     byId('session-list').replaceChildren()
     byId('assistant-title').textContent = '新对话'
-    byId('task-list').replaceChildren()
     byId('projects-list').replaceChildren()
     byId('project-register-form').hidden = true
     byId('browser-workspace-form').hidden = true
@@ -4637,6 +4638,7 @@
     stopAssistantRefresh(); closeRail(); show('account')
     state.deviceEditing = null
     resetProfileDraft()
+    void cloudUi?.refreshBinding()
     void refreshProfile()
     void refreshDevices()
     resetOtherDeviceInstall()
@@ -4914,5 +4916,8 @@
     const grant = takeSetupGrant()
     if (grant) { state.setupGrant = grant; void load() }
   })
-  void load()
+  const cloudUi = globalThis.WeftCloudUi?.create({ acceptSession, enterAssistant, openAccount, show, accessApi, toast })
+  if (cloudUi) void cloudUi.boot().then(handled => { if (!handled) void load() })
+  else void load()
+  setInterval(() => { if (state.account && document.visibilityState === 'visible') void refreshPendingDevices() }, 15000)
 })()
