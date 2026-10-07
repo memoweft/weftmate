@@ -1,3 +1,4 @@
+import { readSourceEvents } from './source-history.mjs';
 import {
   digest,
   exactKeys,
@@ -75,15 +76,15 @@ export function createTaskOperations(context) {
     if (described?.sessionId !== source.sessionId || described.agentPreset !== 'personal-remote') {
       return { ready: false, status: 'unconfirmed', pendingCount: targets.length };
     }
-    let afterSeq = -1;
     let openTurn = null;
     try {
-      for (let pageNo = 0; pageNo < 50; pageNo++) {
-        const page = await observe(() => context.backend.readEvents({ sessionId: source.sessionId,
-          afterSeq, limit: 200, ownerId: account.ownerId }));
-        if (!Array.isArray(page?.events) || !Number.isSafeInteger(page.nextSeq) ||
-            page.nextSeq < afterSeq) break;
-        for (const event of page.events) {
+      const scoped = await Promise.all(targets.filter(target => target.receiptId && target.ack !== 'queue_removed')
+        .map(target => readSourceEvents(context, { sessionId: source.sessionId, ownerId: account.ownerId,
+          receiptId: target.receiptId, turn: account.commands[target.commandId]?.dshTurn }, observe)));
+      const bySeq = new Map();
+      for (const range of scoped) for (const event of range.events) bySeq.set(event.seq, event);
+      const events = [...bySeq.values()].sort((a, b) => a.seq - b.seq);
+        for (const event of events) {
           if (event.type === 'turn.started') {
             const turn = event.data?.turn;
             if (!Number.isSafeInteger(turn) || turn < 0 || openTurn !== null || turns.has(turn)) {
@@ -111,11 +112,7 @@ export function createTaskOperations(context) {
             }
           }
         }
-        if (invalidHistory) break;
-        if (!page.hasMore) { historyComplete = true; break; }
-        if (page.nextSeq === afterSeq) break;
-        afterSeq = page.nextSeq;
-      }
+      historyComplete = true;
     } catch { /* Incomplete history is not proof of a closed turn. */ }
     }
     let pendingCount = 0;
@@ -205,7 +202,7 @@ export function createTaskOperations(context) {
       try {
         const reported = await withDeadline(() => context.backend.getTaskReplyEvidence({
           sessionId: latestAccepted.sessionId, rootTaskId: taskId,
-          receiptId: latestAccepted.receiptId, ownerId: account.ownerId,
+          receiptId: latestAccepted.receiptId, turn: latestAccepted.dshTurn, ownerId: account.ownerId,
         }), 3_000);
         if (reported && ['waiting', 'streaming', 'completed', 'aborted', 'blocked',
           'failed', 'unconfirmed'].includes(reported.status) &&

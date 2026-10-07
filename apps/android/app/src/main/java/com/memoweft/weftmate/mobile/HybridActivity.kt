@@ -861,8 +861,9 @@ class HybridActivity : Activity() {
         "shared.sessions.events" -> {
             val host = requireHost()
             val sessionId = params.getString("sessionId")
-            val after = params.optLong("afterSeq", -1)
-            val result = sharedChat.history(host, sessionId, after)
+            val after = if (params.has("afterSeq")) params.getLong("afterSeq") else null
+            val before = if (params.has("beforeSeq")) params.getLong("beforeSeq") else null
+            val result = sharedChat.history(host, sessionId, after, before)
             val events = result.getJSONArray("events")
             for (i in 0 until events.length()) {
                 val images = events.getJSONObject(i).optJSONObject("data")?.optJSONArray("images") ?: continue
@@ -874,6 +875,10 @@ class HybridActivity : Activity() {
                 }
             }
             result.put("source", "host").put("sessionId", sessionId)
+        }
+        "shared.sessions.eventDetail" -> {
+            val host = requireHost()
+            api.remoteEventDetail(host, params.getString("sessionId"), params.getLong("seq"))
         }
         "shared.attachments.save" -> startOriginalSave(requireHost(), params)
         "shared.send" -> {

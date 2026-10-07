@@ -1,6 +1,4 @@
 const RECEIPT = /^[A-Za-z0-9._:-]{1,160}$/
-const MAX_BYTES = 4_000_000
-const MAX_ROWS = 12_000
 const statuses = new Set(['completed', 'aborted', 'blocked', 'failed'])
 const empty = () => ({ status: 'unconfirmed', turn: null, assistantChunks: 0,
   textChunks: 0, reasoningChunks: 0, assistantMessages: 0, toolSaveObserved: false })
@@ -29,15 +27,14 @@ function observedSave(event, calls) {
 /** Project only committed native metadata. `live` is current-child agent evidence. */
 export function projectReplyEvidence(content, { receiptId, live = false } = {}) {
   const result = empty()
-  if (typeof content !== 'string' || Buffer.byteLength(content, 'utf8') > MAX_BYTES ||
+  if (!(typeof content === 'string' || Array.isArray(content)) ||
       typeof receiptId !== 'string' || !RECEIPT.test(receiptId)) return result
   const rows = []
   let priorSeq = -1
-  for (const line of content.split('\n')) {
-    if (!line.trim()) continue
-    if (rows.length >= MAX_ROWS) return result
+  for (const line of Array.isArray(content) ? content : content.split('\n')) {
+    if (typeof line === 'string' && !line.trim()) continue
     let event
-    try { event = JSON.parse(line) } catch { return result }
+    try { event = typeof line === 'string' ? JSON.parse(line) : line.event ?? line } catch { return result }
     if (event.type === 'session' || ['text-chunks', 'reasoning-chunks',
       'tool-call-chunks'].includes(event.type)) continue
     if (!Number.isSafeInteger(event.seq) || event.seq <= priorSeq) return result
