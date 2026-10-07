@@ -69,7 +69,9 @@
       }
       row.replaceChildren(details)
     })
-    for (const event of ordered) {
+    const cards = ordered.flatMap(event => event.type === 'artifact.created' && event.data?.artifacts?.length
+      ? event.data.artifacts.map(artifact => ({ ...event, data: { ...event.data, ...artifact } })) : [event])
+    for (const event of cards) {
       if (!/^(approval\.|question\.|artifact\.|task\.queued)/.test(event.type)) continue
       const data = event.data || {}, family = event.type.split('.')[0]
       const key = family === 'approval' ? data.approvalId : family === 'question' ? data.callId || data.stepId : data.artifactId || event.seq
