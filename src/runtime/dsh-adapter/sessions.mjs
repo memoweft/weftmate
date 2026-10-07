@@ -7,6 +7,7 @@
  */
 
 import { createHash } from 'node:crypto'
+import { describeTool, toolArguments } from './timeline.mjs'
 
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
@@ -86,9 +87,6 @@ function requireOrdinarySummary(item, sessionId) {
 
 const HISTORY_TEXT_LIMIT = 4_000
 const HISTORY_PAGE_LIMIT = 200
-const HISTORY_NATIVE_PAGE_LIMIT = 24
-const HISTORY_RAW_EVENT_LIMIT = 12_000
-const HISTORY_PROJECTED_EVENT_LIMIT = 12_000
 const HISTORY_RESPONSE_BYTES_LIMIT = 900_000
 function safeHistoryText(value) {
   const raw = String(value ?? '')
@@ -120,8 +118,8 @@ function messageImages(message) {
       ...(typeof part.attachment.name === 'string' ? { name: safeHistoryText(part.attachment.name.slice(0, 120)).text } : {}) }))
 }
 
-/** The remote timeline contains only user-visible text and closed turn states. */
-export function projectHistoryEvent(raw) {
+/** Stable public timeline; private reasoning and injected messages stay private. */
+export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null) {
   const event = raw?.event ?? raw
   const seq = event?.seq
   if (!Number.isSafeInteger(seq) || seq < 0) return null
@@ -152,8 +150,70 @@ export function projectHistoryEvent(raw) {
       ...(kind === 'max-tokens' ? { endReasonKind: 'max-tokens' } : {}),
       ...(Number.isSafeInteger(event.data?.turn) && event.data.turn > 0 ? { turn: event.data.turn } : {}) } }
   }
+  const data = event.data ?? {}
+  const taskId = typeof data.taskId === 'string' ? data.taskId : `turn-${data.turn ?? call?.data?.turn ?? contextTurn ?? 'unknown'}`
+  if (type === 'tool/call' || type === 'tool/result') {
+    const part = data.message?.content?.find(part => part.type === 'tool-result')
+    const stepId = data.callId ?? data.message?.source?.callId ?? part?.toolCallId
+    const toolName = data.name ?? call?.data?.name ?? 'tool'
+    if (typeof stepId === 'string') {
+      const asked = toolName === 'ask_user_question'
+      projected = { seq, type: asked ? type === 'tool/call' ? 'question.asked' : 'question.answered'
+        : type === 'tool/call' ? 'step.started' : 'step.completed', data: {
+        taskId, stepId, callId: stepId, toolName,
+        summary: safeHistoryText(describeTool(toolName, data.arguments ?? call?.data?.arguments)).text,
+        groupHint: toolName, detailRef: { seq },
+        ...(Number.isSafeInteger(data.turn) ? { turn: data.turn } : {}),
+        ...(type === 'tool/result' ? { state: data.error || part?.isError ? 'failed' : 'completed' } : { state: 'running' }),
+        ...(asked && type === 'tool/call' ? { questions: boundedTimelineValue(toolArguments(data.arguments).questions ?? []) } : {}),
+      } }
+    }
+
+    if (type === 'tool/result' && projected?.type === 'step.completed') {
+      const artifact = part?.content?.filter(p => p.type === 'text').map(p => toolArguments(p.text))
+        .map(value => value.artifact ?? value).find(value => typeof value?.artifactId === 'string')
+      if (artifact) projected = { seq, type: 'artifact.created', data: {
+        taskId: artifact.taskId ?? taskId, artifactId: artifact.artifactId,
+        fileName: safeHistoryText(artifact.fileName ?? '成果文件').text,
+        contentType: artifact.contentType ?? 'text/plain', size: artifact.size ?? 0,
+        detailSeq: seq, completedStep: projected.data,
+      } }
+    }
+  } else if (type === 'approval/asked' || type === 'approval/decided') {
+    projected = { seq, type: type === 'approval/asked' ? 'approval.requested' : 'approval.resolved', data: {
+      taskId, approvalId: data.id, ...(data.callId ? { stepId: data.callId } : {}),
+      ...(data.toolName ? { toolName: data.toolName } : {}),
+      ...(Number.isSafeInteger(contextTurn) ? { turn: contextTurn } : {}),
+      summary: safeHistoryText(data.reason ?? (data.toolName ? describeTool(data.toolName) : '执行审批')).text,
+      ...(data.outcome ? { outcome: data.outcome } : {}), detailRef: { seq },
+    } }
+  } else if (type === 'step/start' && data.step === 1) {
+    projected = { seq, type: 'task.started', data: { taskId, turn: data.turn } }
+  } else if (type === 'step/end' && closingTurn) {
+    const kind = closingTurn.data?.reason?.kind
+    projected = { seq, type: 'task.ended', data: { taskId, turn: data.turn,
+      reason: kind === 'max-tokens' ? 'error' : kind ?? 'unknown', nativeTurnEndSeq: closingTurn.seq,
+      ...(kind === 'max-tokens' ? { endReasonKind: kind } : {}) } }
+  } else if (type === 'task.queued') {
+    // Reserved read projection for a future native queue producer; never write
+    // unknown event types into this fixed DSH runtime's durable log.
+    projected = { seq, type, data: boundedTimelineValue({ ...data, taskId }) }
+  }
+  if (projected && Buffer.byteLength(JSON.stringify(projected), 'utf8') > 32_000) {
+    const { taskId, stepId, callId, toolName, summary, state, artifactId, fileName, size, contentType } = projected.data
+    projected.data = { taskId, stepId, callId, toolName, summary, state, artifactId, fileName, size, contentType,
+      detailRef: { seq }, truncated: true }
+  }
   if (projected && Number.isFinite(event.time) && Math.abs(event.time) <= 8.64e15) projected.at = new Date(event.time).toISOString()
   return projected
+}
+
+function boundedTimelineValue(value, depth = 0) {
+  if (typeof value === 'string') return safeHistoryText(value).text
+  if (value === null || typeof value !== 'object') return value
+  if (depth > 6) return '[truncated]'
+  if (Array.isArray(value)) return value.slice(0, 20).map(item => boundedTimelineValue(item, depth + 1))
+  return Object.fromEntries(Object.entries(value).slice(0, 40).map(([key, item]) => [key, boundedTimelineValue(item, depth + 1)]))
 }
 
 export function pageHistoryEvents(entries, afterSeq = -1, limit = 50) {
@@ -182,51 +242,116 @@ export function pageHistoryEvents(entries, afterSeq = -1, limit = 50) {
   return { events, nextSeq, hasMore }
 }
 
-function historyWindow(entries, beforeSeq, tailWatermark = Infinity) {
-  const rows = entries.map((entry) => ({ entry, seq: (entry?.event ?? entry)?.seq }))
-    .filter((row) => Number.isSafeInteger(row.seq) && row.seq >= 0 && row.seq <= tailWatermark &&
-      (beforeSeq === undefined || row.seq < beforeSeq))
-    .sort((a, b) => a.seq - b.seq)
-  const projected = []
-  let previousSeq = null
-  for (const row of rows) {
-    if (row.seq === previousSeq) continue
-    const event = projectHistoryEvent(row.entry)
-    if (event) projected.push({ event, scannedBeforeSeq: previousSeq })
-    previousSeq = row.seq
+// Native logs are ordered by seq; a binary lookup avoids rescanning skipped history.
+function lowerBound(entries, seq) {
+  let lo = 0, hi = entries.length
+  while (lo < hi) { const mid = (lo + hi) >>> 1
+    if ((entries[mid]?.event ?? entries[mid]).seq < seq) lo = mid + 1; else hi = mid }
+  return lo
+}
+function relatedCall(entries, index, cache) {
+  const event = entries[index]?.event ?? entries[index]
+  if (event.type !== 'tool/result') return null
+  const id = event.data?.message?.source?.callId ?? event.data?.message?.content?.find(p => p.type === 'tool-result')?.toolCallId
+  const key = `${event.data?.turn}:${id}`
+  if (cache.calls.has(key)) return cache.calls.get(key)
+  const end = index; let start = index
+  for (let i = index - 1; i >= 0; i--) {
+    const covered = cache.ranges.find(range => i >= range[0] && i < range[1])
+    if (covered) {
+      const boundary = cache.turns.get(event.data?.turn)
+      if (boundary !== undefined && boundary >= covered[0] && boundary <= i) { start = boundary; break }
+      start = covered[0]; i = covered[0]; continue
+    }
+    start = i
+    const candidate = entries[i]?.event ?? entries[i]
+    if (candidate.type === 'tool/call') cache.calls.set(`${candidate.data?.turn}:${candidate.data?.callId}`, candidate)
+    if (candidate.type === 'turn/start') { cache.turns.set(candidate.data?.turn, i); break }
+    if (cache.calls.has(key)) break
   }
-  return { projected, oldest: rows[0]?.seq ?? null, newest: rows.at(-1)?.seq ?? -1 }
+  const ranges = [...cache.ranges, [start, end]].sort((a,b) => a[0]-b[0]); cache.ranges = []
+  for (const range of ranges) {
+    const last = cache.ranges.at(-1)
+    if (last && range[0] <= last[1]) last[1] = Math.max(last[1], range[1]); else cache.ranges.push(range)
+  }
+  return cache.calls.get(key) ?? null
 }
 
-function pageProjectedHistory(rows, afterSeq, limit, tailWatermark, windowEnds) {
-  const events = []
-  let nextSeq = afterSeq, bytes = 0, hasMore = false
-  for (const row of [...rows.values()].sort((a, b) => a.event.seq - b.event.seq)) {
-    const event = row.event
-    const eventBytes = Buffer.byteLength(JSON.stringify(event), 'utf8')
-    if (eventBytes > HISTORY_RESPONSE_BYTES_LIMIT) {
-      throw Object.assign(new Error('history event exceeds response bound'), { code: 'history-window-limited' })
-    }
-    if (events.length >= limit || bytes + eventBytes > HISTORY_RESPONSE_BYTES_LIMIT) {
-      nextSeq = Math.max(nextSeq, row.scannedBeforeSeq ?? afterSeq,
-        ...windowEnds.filter((seq) => seq < event.seq))
-      hasMore = true
-      break
-    }
-    events.push(event); bytes += eventBytes; nextSeq = event.seq
+function resolveStepEnd(entries, index, cache) {
+  if (cache.ends.has(index)) return cache.ends.get(index)
+  for (let i = index + 1; i < entries.length; i++) {
+    const next = entries[i]?.event ?? entries[i]
+    if (next.type === 'step/start') { cache.ends.set(index, null); return null }
+    if (next.type === 'turn/end') { cache.ends.set(index, next); return next }
   }
-  if (!hasMore) nextSeq = Math.max(nextSeq, tailWatermark)
-  return { events, nextSeq, hasMore }
+  return null
+}
+function stableHistoryEnd(entries, cache) {
+  if (cache.length === undefined) {
+    cache.marker = null
+    const tail = entries.at(-1)?.event ?? entries.at(-1)
+    // Surface/tool records are written inside an open native step. Bootstrap
+    // logs may contain only messages, and need no lifecycle scan at all.
+    if (!['user/message','assistant/message','assistant/chunk','tool/call','tool/result'].includes(tail?.type)) {
+      for (let i = entries.length - 1; i >= 0; i--) {
+        const event = entries[i]?.event ?? entries[i]
+        if (['step/start','step/end','turn/end'].includes(event.type)) { cache.marker = { type: event.type, index: i }; break }
+      }
+    }
+    cache.length = entries.length
+  } else {
+    for (let i = cache.length; i < entries.length; i++) {
+      const event = entries[i]?.event ?? entries[i]
+      if (['step/start','step/end','turn/end'].includes(event.type)) cache.marker = { type: event.type, index: i }
+    }
+    cache.length = entries.length
+  }
+  return cache.marker?.type === 'step/end' ? cache.marker.index : entries.length
 }
 
 /**
- * Build the session-side adapter around the supported client methods only.
+ * Build the adapter around the supported client and native immutable-log seam.
  * Ownership is gateway-local and is intentionally not inferred from a stream
  * disconnect; a resume explicitly re-establishes it after list + history.
  */
-export function createDshSessionAdapter(client) {
+export function createDshSessionAdapter(client, { readLog } = {}) {
   if (!client?.sessions || !client?.events) throw new TypeError('supported DSH client is required')
   const owned = new Map()
+  // Lazy call metadata index. Each visited source range is indexed once, including
+  // parallel calls whose completion is far away from its start. No full-log fold.
+  const callIndexes = new Map()
+  function callIndex(sessionId, entries) {
+    let cache = callIndexes.get(sessionId)
+    const first = entries[0]?.event ?? entries[0]
+    if (!cache || cache.first !== first) { cache = { first, calls: new Map(), turns: new Map(), ranges: [], ends: new Map() }; callIndexes.set(sessionId, cache) }
+    return cache
+  }
+
+  // Compatibility for compositions that only expose the old backwards RPC:
+  // materialize once, then append just the changed suffix on subsequent reads.
+  const logs = new Map()
+  async function logFor(sessionId) {
+    if (readLog) return readLog(sessionId)
+    const previous = logs.get(sessionId)
+    const collected = []; let beforeSeq
+    while (true) {
+      const page = await unwrap(await client.sessions.history({ sessionId, maxMessages: 200,
+        ...(beforeSeq === undefined ? {} : { beforeSeq }) }), 'history')
+      if (!Array.isArray(page?.events) || typeof page.hasMore !== 'boolean') throw new DshAdapterError('internal', 'history')
+      const rows = page.events.filter(row => Number.isSafeInteger((row.event ?? row).seq) &&
+        (beforeSeq === undefined || (row.event ?? row).seq < beforeSeq))
+      if (!rows.length && page.hasMore) throw new DshAdapterError('internal', 'history')
+      collected.push(...rows)
+      const oldest = rows.length ? Math.min(...rows.map(row => (row.event ?? row).seq)) : null
+      if (!page.hasMore || previous && oldest !== null && oldest <= (previous.at(-1)?.event ?? previous.at(-1))?.seq) break
+      beforeSeq = oldest
+    }
+    const merged = new Map((previous ?? []).map(row => [(row.event ?? row).seq, row]))
+    for (const row of collected) merged.set((row.event ?? row).seq, row)
+    const ordered = [...merged.values()].sort((a, b) => (a.event ?? a).seq - (b.event ?? b).seq)
+    logs.set(sessionId, ordered); return ordered
+  }
+
 
   function assertOwned(sessionId, operation) {
     if (!owned.has(sessionId)) throw new DshAdapterError('session-not-found', operation)
@@ -269,42 +394,58 @@ export function createDshSessionAdapter(client) {
       return { sessionId, events, lastSeq }
     },
 
-    async historyPage(sessionId, { afterSeq = -1, limit = 50 } = {}) {
-      if (typeof sessionId !== 'string' || sessionId.length === 0) throw new TypeError('sessionId is required')
-      pageHistoryEvents([], afterSeq, limit)
+    async historyPage(sessionId, options = {}) {
+      const { afterSeq, beforeSeq, limit = 50 } = options
+      if (typeof sessionId !== 'string' || !sessionId) throw new TypeError('sessionId is required')
+      if (afterSeq !== undefined && beforeSeq !== undefined ||
+          afterSeq !== undefined && (!Number.isSafeInteger(afterSeq) || afterSeq < -1) ||
+          beforeSeq !== undefined && (!Number.isSafeInteger(beforeSeq) || beforeSeq < 0)) throw new TypeError('invalid history cursor')
+      pageHistoryEvents([], afterSeq ?? -1, limit)
       const listed = await unwrap(await client.sessions.list({}), 'list')
-      const item = (Array.isArray(listed?.items) ? listed.items : []).find((candidate) => sessionIdOf(candidate) === sessionId)
-      requireOrdinarySummary(item, sessionId)
-      const projected = new Map()
-      const windowEnds = []
-      let beforeSeq
-      let tailWatermark = null
-      let complete = false
-      for (let page = 0; page < HISTORY_NATIVE_PAGE_LIMIT; page += 1) {
-        const history = await unwrap(await client.sessions.history({ sessionId, maxMessages: 50,
-          ...(beforeSeq === undefined ? {} : { beforeSeq }) }), 'history')
-        if (!Array.isArray(history?.events) || typeof history.hasMore !== 'boolean') throw new DshAdapterError('internal', 'history')
-        const window = historyWindow(history.events, beforeSeq, tailWatermark ?? Infinity)
-        const oldest = window.oldest
-        if (history.hasMore && oldest === null) throw Object.assign(new Error('history window cannot advance'), { code: 'history-window-limited' })
-        if (tailWatermark === null) tailWatermark = window.newest
-        windowEnds.push(window.newest)
-        for (const row of window.projected) {
-          if (row.event.seq <= afterSeq) continue
-          const previous = projected.get(row.event.seq)
-          if (!previous || (row.scannedBeforeSeq ?? -1) > (previous.scannedBeforeSeq ?? -1)) projected.set(row.event.seq, row)
+      requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
+      const entries = await logFor(sessionId)
+      const latestSeq = (entries.at(-1)?.event ?? entries.at(-1))?.seq ?? -1
+      const cache = callIndex(sessionId, entries), stableEnd = stableHistoryEnd(entries, cache)
+      const stableSeq = (entries[stableEnd - 1]?.event ?? entries[stableEnd - 1])?.seq ?? -1
+      const forward = afterSeq !== undefined
+      let index = forward ? lowerBound(entries, afterSeq + 1)
+        : beforeSeq === undefined ? stableEnd - 1 : Math.min(stableEnd, lowerBound(entries, beforeSeq)) - 1
+      let scanned = forward ? afterSeq : beforeSeq ?? stableSeq + 1
+      const events = []; let bytes = 0, hasMore = false
+      for (; index >= 0 && index < stableEnd; index += forward ? 1 : -1) {
+        const raw = entries[index]?.event ?? entries[index]
+        let contextTurn = null
+        if (typeof raw.type === 'string' && raw.type.startsWith('approval/')) for (let i = index; i >= 0; i--) {
+          const previous = entries[i]?.event ?? entries[i]
+          if (Number.isSafeInteger(previous.data?.turn)) { contextTurn = previous.data.turn; break }
         }
-        // Public history capacity counts public projection, not chunk/tool
-        // records that will never be returned to the conversation timeline.
-        if (projected.size > HISTORY_PROJECTED_EVENT_LIMIT) throw Object.assign(new Error('history window exceeds bounded scan'), { code: 'history-window-limited' })
-        if (!history.hasMore || tailWatermark <= afterSeq || (oldest !== null && oldest <= afterSeq)) { complete = true; break }
-        if (oldest === null || (beforeSeq !== undefined && oldest >= beforeSeq)) {
-          throw Object.assign(new Error('history window did not advance'), { code: 'history-window-limited' })
-        }
-        beforeSeq = oldest
+        const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null)
+        const size = event ? Buffer.byteLength(JSON.stringify(event), 'utf8') : 0
+        if (event && (events.length === limit || bytes + size > HISTORY_RESPONSE_BYTES_LIMIT)) { hasMore = true; break }
+        scanned = raw.seq
+        if (event) { events.push(event); bytes += size }
       }
-      if (!complete) throw Object.assign(new Error('history window exceeds page bound'), { code: 'history-window-limited' })
-      return pageProjectedHistory(projected, afterSeq, limit, tailWatermark, windowEnds)
+      if (!forward) events.reverse()
+      return { events, nextSeq: forward ? scanned : stableSeq, hasMore: forward && hasMore,
+        nextBeforeSeq: forward ? events[0]?.seq ?? null : scanned <= latestSeq ? scanned : null,
+        hasOlder: !forward && hasMore, latestSeq }
+    },
+
+    async historyDetail(sessionId, seq) {
+      if (!Number.isSafeInteger(seq) || seq < 0) throw new TypeError('invalid detail seq')
+      const listed = await unwrap(await client.sessions.list({}), 'list')
+      requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
+      const entries = await logFor(sessionId), index = lowerBound(entries, seq)
+      const event = entries[index]?.event ?? entries[index]
+      if (event?.seq !== seq || !['tool/call', 'tool/result', 'approval/asked', 'approval/decided'].includes(event.type))
+        throw new DshAdapterError('session-not-found', 'history.detail')
+      const call = event.type === 'tool/call' ? event : relatedCall(entries, index, callIndex(sessionId, entries))
+      const visibleParts = parts => Array.isArray(parts) ? parts.filter(part => !['reasoning', 'reasoning-delta'].includes(part?.type))
+        .map(part => Array.isArray(part.content) ? { ...part, content: visibleParts(part.content) } : part) : parts
+      const output = event.type === 'tool/result' ? visibleParts(event.data?.message?.content) : undefined
+      const raw = JSON.stringify({ arguments: call?.data?.arguments, output, approval: event.type.startsWith('approval/') ? event.data : undefined }, null, 2)
+      const text = raw.slice(0, 64_000)
+      return { seq, text, ...(raw.length > text.length ? { truncated: true } : {}) }
     },
 
     /** Internal source evidence cut at the original subscribed/question watermark. */
@@ -312,27 +453,13 @@ export function createDshSessionAdapter(client) {
       if (typeof sessionId !== 'string' || !sessionId || !Number.isSafeInteger(observedSeq) || observedSeq < 0) {
         throw new TypeError('invalid question source watermark')
       }
-      const entries = []
-      let beforeSeq = observedSeq + 1, complete = false, bytes = 0
-      for (let page = 0; page < HISTORY_NATIVE_PAGE_LIMIT; page++) {
-        const history = await unwrap(await client.sessions.history({ sessionId, beforeSeq, maxMessages: 50 }), 'question.history')
-        if (!Array.isArray(history?.events) || typeof history.hasMore !== 'boolean') throw new DshAdapterError('internal', 'question.history')
-        const selected = history.events.filter(entry => {
-          const seq = (entry?.event ?? entry)?.seq
-          return Number.isSafeInteger(seq) && seq >= 0 && seq <= observedSeq && seq < beforeSeq
-        })
-        bytes += Buffer.byteLength(JSON.stringify(selected), 'utf8'); entries.push(...selected)
-        if (entries.length > HISTORY_RAW_EVENT_LIMIT || bytes > HISTORY_RESPONSE_BYTES_LIMIT) {
-          throw Object.assign(new Error('question source evidence exceeds bounded scan'), { code: 'history-window-limited' })
-        }
-        if (selected.some(entry => (entry?.event ?? entry)?.type === 'turn/start') || !history.hasMore) { complete = true; break }
-        const sequences = selected.map(entry => (entry?.event ?? entry)?.seq)
-        const oldest = sequences.length ? Math.min(...sequences) : null
-        if (oldest === null || oldest >= beforeSeq) throw new DshAdapterError('internal', 'question.history')
-        beforeSeq = oldest
+      const log = await logFor(sessionId), end = lowerBound(log, observedSeq + 1)
+      let start = end
+      while (start > 0) {
+        start--
+        if ((log[start]?.event ?? log[start]).type === 'turn/start') break
       }
-      if (!complete) throw Object.assign(new Error('question source evidence exceeds page bound'), { code: 'history-window-limited' })
-      return entries
+      return log.slice(start, end)
     },
 
     async send(sessionId, content, mode = 'queue') {

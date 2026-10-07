@@ -9,14 +9,14 @@
   const state = { csrfToken: null, account: null, device: null, setupGrant: null, revokeId: null, toastTimer: null,
     ownerId: null, hostId: null, online: false, capabilities: null, models: [], modelProfileId: null,
     sessions: [], selectedSessionId: null, activeChatSource: 'desktop', afterSeq: -1, seenSeq: new Set(), tasks: [], nextBefore: null,
-    taskPane: false, unresolvedSubmission: false, unresolvedRequests: new Set(), reviewableRequests: new Set(), reviewRequestId: null,
+    unresolvedSubmission: false, unresolvedRequests: new Set(), reviewableRequests: new Set(), reviewRequestId: null,
     acknowledgedDesktop: new Set(),
     syncAvailable: false, phonePane: false, phoneEvents: [], phoneAfterSeq: 0, phoneHasMore: true,
     phoneLoading: false, selectedPhoneConversationId: null, phoneDeviceNames: new Map(),
     phoneSending: false, phoneSendNotice: '', phoneDrafts: new Map(), desktopDraft: '',
     refreshTimer: null, refreshing: false,
     submitting: false, cancelSubmitting: false, lastSubmissionMs: 0,
-    historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null, turnEndReasonKind: null,
+    historyEvents: new Map(), nextBeforeSeq: null, hasOlder: false, olderLoading: false, historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null, turnEndReasonKind: null,
     identityGeneration: 0, accountViewGeneration: 0, currentView: null,
     attachmentDrafts: new Map(), attachmentGroups: new Map(), attachmentAttempts: new Map(),
     attachmentUpload: null, attachmentHasher: null, attachmentStatus: '',
@@ -38,6 +38,7 @@
   state.browserFetchGeneration = 0
   state.phoneBindings = new Map()
   state.phoneHostEvents = new Map()
+  state.phoneHistoryCursors = new Map()
   state.phoneHandoffBusy = false
   state.phoneHandoffSelections = new Map()
   const memory = { viewGeneration: 0, entryGeneration: 0, queryGeneration: 0, selectedGeneration: 0, operationGeneration: 0,
@@ -45,9 +46,6 @@
     selected: null, sources: [], mode: 'detail', drafts: new Map(), activeOperation: null,
     unresolvedMarker: null, cleanupMarker: null, cleanupRetrying: false, receiptNotice: null }
   let phonePreview = null
-  const taskDetail = { taskId: null, generation: 0, selectedArtifactId: null, selectedSourceId: null,
-    operation: null, unknown: null,
-    drafts: new Map(), pollTimer: null, pollCount: 0, pollStartedAt: 0, returnFocus: null }
   const conversationTasks = { ownerId: null, identity: -1, generation: 0, entries: new Map(), inFlight: null }
   const conversationApprovals = { scope: null, entries: new Map(), reads: new Map(), operations: new Map(), readGeneration: 0 }
   const conversationQuestions = { scope: null, entries: new Map(), reads: new Map(), operations: new Map(), drafts: new Map(), readGeneration: 0 }
@@ -150,7 +148,6 @@
     closeModelMenu()
     if (view !== 'assistant') stopVoiceInput()
     if (view !== 'assistant' && state.currentView === 'assistant') cancelAttachmentUpload()
-    if (view !== 'assistant' && taskDetail.taskId) closeTaskDetail()
     if (state.currentView === 'memory' && view !== 'memory') {
       memory.viewGeneration++
       closeMemoryDetail()
@@ -190,11 +187,9 @@
     }
   }
   function clearSession() {
+    document.querySelector('.timeline-preview')?.remove()
     cancelAttachmentUpload()
     stopAssistantRefresh()
-    closeTaskDetail()
-    taskDetail.drafts.clear()
-    taskDetail.unknown = null
     conversationTasks.generation++
     conversationTasks.entries.clear()
     conversationTasks.inFlight = null
@@ -255,6 +250,7 @@
     state.phoneDrafts.clear()
     state.phoneBindings.clear()
     state.phoneHostEvents.clear()
+    state.phoneHistoryCursors.clear()
     state.phoneHandoffBusy = false
     state.phoneHandoffSelections.clear()
     state.accountModels = []
@@ -2043,7 +2039,7 @@
     catch { /* In private browsing the current page still records the acknowledgement. */ }
     forgetMarker(command.requestId)
     operation('已记录你的核对，可重新发起记事本动作。', false, command.requestId)
-    renderTasks()
+    renderConversationTasks()
     updateAvailability()
   }
   function readMarkers() {
@@ -2198,7 +2194,7 @@
     state.hostId = payload.hostId
     state.capabilities = payload.backend?.capabilities ?? null
     state.syncAvailable = payload.sync?.available === true
-    if (!state.syncAvailable && state.phonePane) showTaskPane(false)
+    if (!state.syncAvailable && state.phonePane) showConversation()
     updateAvailability()
   }
   async function refreshModels() {
@@ -2239,6 +2235,7 @@
       const model = state.models.find((item) => item.id === session.modelProfileId)
       button.append(element('span', 'session-title', typeof session.title === 'string' && session.title ? session.title : '新对话'),
         element('small', 'session-source', `电脑 · ${model?.name || '电脑模型'}`))
+      if (session.running) { const dot = element('span', 'session-running-dot'); dot.setAttribute('aria-label', '正在运行'); button.children[0].append(dot) }
       button.addEventListener('click', () => { void selectSession(session.sessionId) })
       row.append(button)
       list.append(row)
@@ -2340,6 +2337,7 @@
       if (!Number.isSafeInteger(event?.seq) || state.seenSeq.has(event.seq)) continue
       if (typeof event.sessionId === 'string' && event.sessionId !== sessionId) continue
       state.seenSeq.add(event.seq)
+      state.historyEvents.set(event.seq, event)
       if (event.type === 'turn.started') { state.turnStatus = 'running'; state.turnEndReasonKind = null; continue }
       if (event.type === 'turn.ended') {
         state.turnStatus = ['completed', 'aborted', 'error', 'blocked'].includes(event.data?.reason) ? event.data.reason : 'unknown'
@@ -2354,6 +2352,7 @@
       if (typeof event.data?.text !== 'string' && images.length === 0 && files.length === 0 && originalImages.length === 0) continue
       const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
       if (event.type === 'user.message' && receiptIdPattern.test(event.data?.receiptId || '')) row.dataset.receiptId = event.data.receiptId
+      row.dataset.seq = String(event.seq)
       row.append(element('span', 'message-label', event.type === 'user.message' ? '你' : 'WeftMate'))
       if (typeof event.data?.text === 'string' && event.data.text) row.append(element('span', 'message-text', event.data.text))
       if (images.length) {
@@ -2390,8 +2389,12 @@
       if (files.length) appendOriginalFiles(row, event)
       if (originalImages.length) appendUnpreviewedOriginalImages(row, originalImages)
       if (event.data.truncated === true) row.append(element('span', 'truncated', '这条记录已截断，可在电脑查看完整来源。'))
-      list.append(row)
+      const next = [...list.children].find(n => Number(n.dataset.seq) > event.seq)
+      if (next) list.insertBefore(row, next); else list.append(row)
     }
+    const terminal = [...state.historyEvents.values()].filter(e => ['turn.started', 'turn.ended'].includes(e.type)).sort((a,b) => a.seq-b.seq).at(-1)
+    if (terminal) { state.turnStatus = terminal.type === 'turn.started' ? 'running' : ['completed', 'aborted', 'error', 'blocked'].includes(terminal.data?.reason) ? terminal.data.reason : 'unknown'; state.turnEndReasonKind = state.turnStatus === 'error' && terminal.data?.endReasonKind === 'max-tokens' ? 'max-tokens' : null }
+    renderTimeline()
     renderTurnStatus()
     renderConversationTasks()
   }
@@ -2421,6 +2424,8 @@
       state.afterSeq = -1
       state.historyHasMore = false
       state.seenSeq.clear()
+      state.historyEvents.clear()
+      state.nextBeforeSeq = null; state.hasOlder = false; state.olderLoading = false
       state.turnStatus = null
       state.turnEndReasonKind = null
       byId('transcript').replaceChildren()
@@ -2437,10 +2442,11 @@
         const maxPages = reset ? 10 : 5
         for (let pageNo = 0; pageNo < maxPages; pageNo++) {
           const cursor = state.afterSeq
-          const page = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/events?afterSeq=${cursor}&limit=200`)
+          const page = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/events?${reset && pageNo === 0 ? '' : `afterSeq=${cursor}&`}limit=100`)
           if (!stillCurrent()) return
           if (!Array.isArray(page.events) || !Number.isSafeInteger(page.nextSeq) || page.nextSeq < cursor) throw { code: 'REQUEST_FAILED' }
           state.historyHasMore = page.hasMore === true
+          if (reset && pageNo === 0) { state.nextBeforeSeq = page.nextBeforeSeq; state.hasOlder = page.hasOlder === true; renderOlderControl() }
           appendHistory(page.events)
           state.afterSeq = page.nextSeq
           if (!page.hasMore) { renderTurnStatus(); break }
@@ -2448,8 +2454,7 @@
         }
       } catch (error) {
         if (!stillCurrent()) return
-        if (error.code === 'HISTORY_WINDOW_LIMIT') status.textContent = '这段历史超出当前可读取范围，请在电脑查看完整会话。'
-        else if (error.code === 'NETWORK') status.textContent = '连接中断，稍后将从原位置续读。'
+        if (error.code === 'NETWORK') status.textContent = '连接中断，稍后将从原位置续读。'
         else if (error.code !== 'UNAUTHORIZED') status.textContent = '历史暂时无法读取，请稍后重试。'
       }
     }
@@ -2458,6 +2463,28 @@
     try { await promise } finally {
       if (state.historyInFlight?.promise === promise) state.historyInFlight = null
     }
+  }
+  function renderOlderControl() {
+    const button = byId('load-older'); button.hidden = !state.hasOlder
+    button.disabled = state.olderLoading; button.textContent = state.olderLoading ? '正在读取…' : '加载更早内容'
+  }
+  async function loadOlderHistory() {
+    if (!state.hasOlder || state.olderLoading) return
+    const context = conversationTaskContext(), generation = state.historyGeneration, scroll = byId('chat-scroll')
+    const top = scroll.scrollTop, height = scroll.scrollHeight; state.olderLoading = true; renderOlderControl()
+    try { const page = await accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/events?beforeSeq=${state.nextBeforeSeq}&limit=100`)
+      if (!conversationTaskCurrent(context) || generation !== state.historyGeneration) return
+      state.nextBeforeSeq = page.nextBeforeSeq; state.hasOlder = page.hasOlder === true
+      if (context.source === 'phone') {
+        const merged = new Map((state.phoneHostEvents.get(context.conversationId) || []).map(e => [e.seq, e])); for (const e of page.events) merged.set(e.seq,e)
+        state.phoneHostEvents.set(context.conversationId, [...merged.values()].sort((a,b) => a.seq-b.seq));
+        const cursor = state.phoneHistoryCursors.get(context.conversationId); if (cursor) { cursor.nextBeforeSeq = page.nextBeforeSeq; cursor.hasOlder = page.hasOlder }
+        renderSelectedPhoneConversation()
+      } else appendHistory(page.events)
+      renderOlderControl(); scroll.scrollTop = top + scroll.scrollHeight - height
+      void refreshConversationTasks()
+    } catch { if (conversationTaskCurrent(context)) byId('timeline-status').textContent = '更早内容暂时无法读取，请重试。' }
+    finally { if (generation === state.historyGeneration) { state.olderLoading = false; renderOlderControl() } }
   }
   async function selectSession(sessionId) {
     if (!sessionIdPattern.test(sessionId)) return
@@ -2483,10 +2510,12 @@
     const selected = state.sessions.find((item) => item.sessionId === sessionId)
     byId('assistant-title').textContent = selected?.title || '新对话'
     renderSessions()
-    showTaskPane(false)
+    showConversation()
     closeRail()
     if (state.ownerId) { try { localStorage.setItem(sessionKey(), sessionId) } catch { /* optional preference */ } }
+    document.querySelector('.timeline-preview')?.remove()
     await refreshHistory(true)
+    byId('chat-scroll').scrollTop = byId('chat-scroll').scrollHeight
     void refreshConversationTasks()
     updateAvailability()
   }
@@ -2532,149 +2561,6 @@
         return '请求未执行，请核对电脑状态。'
       default: return '正在核对请求状态。'
     }
-  }
-  function renderTasks() {
-    const list = byId('task-list')
-    list.replaceChildren()
-    byId('tasks-status').textContent = state.tasks.length ? '' : '还没有事情记录。'
-    const children = new Map()
-    const followUps = new Map()
-    const roots = new Map()
-    for (const command of state.tasks) if (command?.kind === 'session.message' &&
-      !command.rootTaskId && sessionIdPattern.test(command.commandId || '')) roots.set(command.commandId, command)
-    for (const command of state.tasks) if (command?.kind === 'desktop.write_artifact' &&
-      sessionIdPattern.test(command.taskId || '')) {
-      const rows = children.get(command.taskId) || []
-      rows.push(command)
-      children.set(command.taskId, rows)
-    }
-    for (const command of state.tasks) if (command?.kind === 'session.message' &&
-      sessionIdPattern.test(command.rootTaskId || '')) {
-      const rows = followUps.get(command.rootTaskId) || []
-      rows.push(command)
-      followUps.set(command.rootTaskId, rows)
-    }
-    const shown = new Set()
-    for (const entry of state.tasks) {
-      const rootTaskId = entry?.rootTaskId || (entry?.kind === 'desktop.write_artifact' ? entry.taskId :
-        entry?.kind === 'session.message' ? entry.commandId : null)
-      const grouped = !!rootTaskId && sessionIdPattern.test(rootTaskId)
-      if (grouped && shown.has(rootTaskId)) continue
-      const command = grouped ? roots.get(rootTaskId) || entry : entry
-      if (!command || typeof command.commandId !== 'string') continue
-      if (grouped) shown.add(rootTaskId)
-      const artifacts = grouped ? children.get(rootTaskId) || [] : []
-      const updates = grouped ? followUps.get(rootTaskId) || [] : []
-      const item = element('li', 'task-item')
-      const head = element('div', 'task-heading')
-      head.append(element('strong', '', artifacts.length ? artifacts.map((row) => row.fileName || '成果文件').join('、') :
-        command.rootTaskId ? '电脑任务的后续要求' : commandTitle(command)))
-      const verified = artifacts.some((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
-        row.verification?.method === 'sha256_readback')
-      const latestUpdate = updates[0]
-      const badge = element('span', `badge ${!latestUpdate && (verified || command.state === 'observed') ? 'is-done' :
-        command.state === 'rejected' || command.state === 'uncertain' ? 'is-failed' : ''}`,
-        latestUpdate ? latestUpdate.state === 'accepted_by_dsh' ? '后续已送达' : '后续待核对' :
-        artifacts.length ? verified ? '文件已核验' : '待核验' :
-        command.state === 'observed' && command.kind === 'desktop.open_app' && command.verification?.status !== 'observed'
-          ? '待核对' : command.state === 'observed' ? '已核验' : command.state === 'rejected' ? '未执行'
-            : command.state === 'uncertain' ? '待确认' : command.state === 'accepted_by_dsh'
-              ? command.kind === 'session.create' ? '已创建' : command.kind === 'session.message' ? '已送达' : '已受理'
-                : '进行中')
-      head.append(badge)
-      item.append(head, element('p', '', artifacts.length ? verified
-        ? `${artifacts.length} 个成果文件已记录；打开后可核对内容和下载。` : '文件尚未完成读回核验，请打开核对。'
-        : commandStatus(command)))
-      if (updates.length) item.append(element('p', 'task-meta',
-        `后续要求 ${updates.length} 条，最新${updates[0].taskAction === 'resume' ? '恢复' : '补充'}${
-          updates[0].state === 'accepted_by_dsh' ? '已送达，结果待核对' : '状态待核对'}。`))
-      if (command.verification?.status === 'observed' && command.verification?.method === 'visible_window' && command.verification.observedAt) {
-        item.append(element('p', 'task-meta', `窗口核验时间 ${formatDate(command.verification.observedAt)}`))
-      } else if (command.updatedAt) item.append(element('p', 'task-meta', `更新时间 ${formatDate(command.updatedAt)}`))
-      if (typeof command.sessionId === 'string' && state.sessions.some((row) => row.sessionId === command.sessionId)) {
-        const link = element('button', 'button quiet small', '回到原会话')
-        link.type = 'button'
-        link.addEventListener('click', () => { void selectSession(command.sessionId) })
-        item.append(link)
-      }
-      if (command.kind === 'desktop.open_app' && ['accepted_by_host', 'uncertain'].includes(command.state) &&
-        !state.acknowledgedDesktop.has(command.commandId)) {
-        const acknowledge = element('button', 'button quiet small', '已在电脑核对，允许再次发起')
-        acknowledge.type = 'button'
-        acknowledge.addEventListener('click', () => acknowledgeDesktop(command))
-        item.append(acknowledge)
-      }
-      const taskId = grouped ? rootTaskId : null
-      if (taskId && sessionIdPattern.test(taskId)) {
-        const details = element('button', 'button secondary small', '查看事情与成果')
-        details.type = 'button'
-        details.addEventListener('click', () => { void openTaskDetail(taskId) })
-        item.append(details)
-      }
-      list.append(item)
-    }
-    byId('more-tasks').hidden = !state.nextBefore
-  }
-  function closeTaskDetail() {
-    const returnFocus = taskDetail.returnFocus
-    stopTaskObservation()
-    taskDetail.generation++
-    taskDetail.taskId = null
-    taskDetail.selectedArtifactId = null
-    taskDetail.selectedSourceId = null
-    taskDetail.operation = null
-    taskDetail.returnFocus = null
-    const dialog = byId('task-detail-dialog')
-    if (dialog.open) dialog.close()
-    byId('task-detail-source').textContent = ''
-    byId('task-detail-verification').textContent = ''
-    byId('task-detail-artifacts').replaceChildren()
-    byId('task-detail-sources').replaceChildren()
-    byId('task-source-preview').hidden = true
-    byId('task-source-preview').textContent = ''
-    byId('task-source-preview-status').textContent = ''
-    byId('task-detail-control').replaceChildren()
-    byId('task-preview-text').hidden = true
-    byId('task-preview-text').textContent = ''
-    const currentContext = conversationTaskContext()
-    if (returnFocus && returnFocus.ownerId === currentContext.ownerId && returnFocus.identity === currentContext.identity &&
-      returnFocus.source === currentContext.source && returnFocus.sessionId === currentContext.sessionId &&
-      returnFocus.conversationId === currentContext.conversationId) {
-      queueMicrotask(() => { const current = conversationTaskContext(); if (state.currentView !== 'assistant' ||
-        returnFocus.ownerId !== current.ownerId || returnFocus.identity !== current.identity || returnFocus.source !== current.source ||
-        returnFocus.sessionId !== current.sessionId || returnFocus.conversationId !== current.conversationId) return;
-        const button = returnFocus.button?.isConnected ? returnFocus.button : returnFocus.questionRpcId
-          ? document.querySelector(`[data-conversation-question="${returnFocus.questionRpcId}"] [data-conversation-question-action="detail"]`)
-          : returnFocus.approvalId
-          ? document.querySelector(`[data-conversation-approval="${returnFocus.approvalId}"] [data-conversation-approval-action="detail"]`)
-          : document.querySelector(`[data-conversation-task="${returnFocus.taskId}"] button.secondary.small`);
-        if (button?.isConnected) button.focus({ preventScroll: true }) })
-    }
-  }
-  function stopTaskObservation() {
-    if (taskDetail.pollTimer) clearTimeout(taskDetail.pollTimer)
-    taskDetail.pollTimer = null
-  }
-  function taskDetailCurrent(generation, taskId) {
-    return generation === taskDetail.generation && taskDetail.taskId === taskId &&
-      state.currentView === 'assistant' && !!state.csrfToken
-  }
-  function artifactStatus(error) {
-    if (error.code === 'NETWORK') return '连接中断，文件尚未核对。重连后点“重新核对”。'
-    if (error.status === 404) return '当前账户找不到这件事或文件，无法预览或下载。'
-    if (error.status === 409 || error.code === 'ARTIFACT_UNVERIFIED') return '文件读回校验失败，无法预览或下载。请在电脑核对原文件。'
-    return '文件暂时无法读取，请稍后重新核对。'
-  }
-  function taskVerificationText(payload) {
-    const verified = (Array.isArray(payload.artifacts) ? payload.artifacts : []).filter((row) =>
-      row?.state === 'observed' && row.verification?.status === 'observed' &&
-      row.verification?.method === 'sha256_readback')
-    if (verified.length) return `${verified.length} 个文件已由电脑写入并读回核验。`
-    if (Array.isArray(payload.executionSteps) && payload.executionSteps.length) return ''
-    if (payload.control?.stopStatus === 'stopped') return '这件事已停止，当前没有已核验文件；原会话保留执行记录。'
-    if (payload.control?.stopStatus === 'completed') return '回合已正常结束，当前没有已核验文件；可在原会话查看回复。'
-    return payload.source?.state === 'accepted_by_dsh'
-      ? '原消息已送达电脑，当前没有已核验文件。' : '当前没有已核验文件，请稍后重新核对。'
   }
   function taskReplyText(evidence) {
     switch (evidence?.status) {
@@ -2869,14 +2755,16 @@
     for (const entry of conversationApprovals.entries.values()) {
       const row = entry.row
       if (row.sessionId !== context.sessionId || !approvalSource(row)) continue
-      const anchor = [...list.children].find((node) => node.dataset?.receiptId === row.sourceReceiptId)
+      const timelineAnchor = [...list.children].find(node => node.dataset?.timelineApproval === row.approvalId)
+      const anchor = timelineAnchor || [...list.children].find((node) => node.dataset?.receiptId === row.sourceReceiptId)
       if (!anchor) continue
       visible.add(row.approvalId)
       const marker = approvalMarker(context, row), operation = conversationApprovals.operations.get(row.approvalId)
-      const sourceNotice = conversationTasks.entries.get(row.taskId)?.notice
+      const sourceNotice = conversationTasks.entries.get(row.taskId)?.notice || ''
       const signature = JSON.stringify([row, entry.notice, sourceNotice, entry.authoritative, marker, operation?.requestId])
       const scope = JSON.stringify(context)
       let card = [...list.children].find((node) => node.dataset?.conversationApproval === row.approvalId)
+      if (timelineAnchor) { timelineAnchor.hidden = true; if (card) { card.dataset.seq = timelineAnchor.dataset.seq; list.insertBefore(card, timelineAnchor) } }
       if (card?.dataset.signature === signature && card.dataset.scope === scope) continue
       const active = document.activeElement, focusAction = card?.dataset.scope === scope && card.contains(active) &&
         !document.querySelector('dialog[open]') ? active.dataset?.conversationApprovalAction : null
@@ -2887,11 +2775,12 @@
         while (next?.dataset?.conversationTask || next?.dataset?.conversationApproval && next.dataset.sourceReceiptId === row.sourceReceiptId) next = next.nextSibling
         list.insertBefore(card, next)
       }
+      if (timelineAnchor) { card.dataset.seq = timelineAnchor.dataset.seq; list.insertBefore(card, timelineAnchor) }
       card.dataset.sourceReceiptId = row.sourceReceiptId
       card.dataset.signature = signature; card.dataset.scope = scope
       card.replaceChildren()
       card.append(element('strong', 'conversation-task-title', `${executionName(row)} · ${row.status === 'pending' ? '需要你批准' : '审批回执'}`))
-      card.append(element('p', 'conversation-approval-reason', row.reason.trim() || '执行端请求你批准这次操作。'))
+      const reason = element('p', 'conversation-approval-reason', row.reason.trim() || '执行端请求你批准这次操作。'); reason.hidden = row.status !== 'pending'; card.append(reason)
       const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，请重新核对答复。' : '')
       const status = element('p', 'conversation-approval-status', row.status === 'pending' && operation ? '正在提交本次决定…'
         : notice || (row.status === 'pending' && marker ? '上次答复结果尚未确认。已核对仍在等待，可用原答复重试。' : approvalStatusText(row)))
@@ -2914,12 +2803,11 @@
         } })
         actions.append(check)
       }
-      const detail = element('button', 'button secondary small', '查看事情详情')
+      const detail = element('button', 'button secondary small', '查看来源与成果')
       detail.type = 'button'; detail.dataset.conversationApprovalAction = 'detail'
-      detail.addEventListener('click', () => { if (approvalContextCurrent(context)) {
-        taskDetail.returnFocus = { ...context, button: detail, taskId: row.taskId, approvalId: row.approvalId }
-        void openTaskDetail(row.taskId)
-      } })
+      detail.addEventListener('click', () => inlineTaskInfo(row.taskId, detail))
+      actions.hidden = ['resolved', 'unavailable'].includes(row.status)
+      card.classList.toggle('is-resolved', ['resolved', 'unavailable'].includes(row.status))
       actions.append(detail); card.append(actions)
       if (focusAction && !document.querySelector('dialog[open]') &&
           (document.activeElement === active || document.activeElement === document.body)) {
@@ -3115,16 +3003,20 @@
     for (const entry of conversationQuestions.entries.values()) {
       const row = entry.row
       if (row.sessionId !== context.sessionId || !approvalSource(row)) continue
-      const anchor = [...list.children].find((node) => node.dataset?.receiptId === row.sourceReceiptId)
+      const questionEvent = [...(state.activeChatSource === 'phone' ? state.phoneHostEvents.get(context.conversationId) || [] : state.historyEvents.values())]
+        .filter(e => e.type === 'question.asked' && e.data?.turn === row.turn && Number.isSafeInteger(row.observedSeq) && e.seq <= row.observedSeq).sort((a,b) => b.seq-a.seq)[0]
+      const timelineAnchor = questionEvent && [...list.children].find(node => node.dataset?.timelineQuestion === questionEvent.data.callId)
+      const anchor = timelineAnchor || [...list.children].find((node) => node.dataset?.receiptId === row.sourceReceiptId)
       if (!anchor) continue
       visible.add(row.questionRpcId)
       const marker = questionMarker(context, row), operation = conversationQuestions.operations.get(row.questionRpcId)
-      const sourceNotice = conversationTasks.entries.get(row.taskId)?.notice
+      const sourceNotice = conversationTasks.entries.get(row.taskId)?.notice || ''
       const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，已填写内容保留。请重新核对。' : '') ||
         (marker && !sameQuestion(marker, row) ? '问题内容已变化，无法重发原回答。请重新核对原对话。' : '')
       const signature = JSON.stringify([row, notice, entry.authoritative, entry.validation, marker, operation?.requestId])
       const scope = JSON.stringify(context)
       let card = [...list.children].find((node) => node.dataset?.conversationQuestion === row.questionRpcId)
+      if (timelineAnchor) { timelineAnchor.hidden = true; if (card) { card.dataset.seq = timelineAnchor.dataset.seq; list.insertBefore(card, timelineAnchor) } }
       if (card?.dataset.signature === signature && card.dataset.scope === scope) continue
       const active = document.activeElement, focusAction = card?.dataset.scope === scope && card.contains(active) &&
         !document.querySelector('dialog[open]') ? active.dataset?.conversationQuestionAction : null
@@ -3136,6 +3028,7 @@
           next.dataset.sourceReceiptId === row.sourceReceiptId) next = next.nextSibling
         list.insertBefore(card, next)
       }
+      if (timelineAnchor) { card.dataset.seq = timelineAnchor.dataset.seq; list.insertBefore(card, timelineAnchor) }
       card.dataset.sourceReceiptId = row.sourceReceiptId; card.dataset.signature = signature; card.dataset.scope = scope
       card.replaceChildren(); card.append(element('strong', 'conversation-task-title', row.status === 'pending' ? '需要补充信息' : '信息回答回执'))
       const status = element('p', 'conversation-question-status', row.status === 'pending' && operation ? '正在提交本次回答…'
@@ -3192,11 +3085,9 @@
           if (sourceNotice) void refreshConversationTasks(); else void refreshConversationQuestions(context, true)
         } }); actions.append(check)
       }
-      const detail = element('button', 'button secondary small', '查看事情详情'); detail.type = 'button'
+      const detail = element('button', 'button secondary small', '查看来源与成果'); detail.type = 'button'
       detail.dataset.conversationQuestionAction = 'detail'
-      detail.addEventListener('click', () => { if (approvalContextCurrent(context)) {
-        taskDetail.returnFocus = { ...context, button: detail, taskId: row.taskId, questionRpcId: row.questionRpcId }; void openTaskDetail(row.taskId)
-      } }); actions.append(detail); form.append(actions); card.append(form)
+      detail.addEventListener('click', () => inlineTaskInfo(row.taskId, detail)); actions.append(detail); form.append(actions); form.hidden = ['resolved', 'unavailable'].includes(row.status); card.classList.toggle('is-resolved', form.hidden); card.append(form)
       form.addEventListener('submit', (event) => { event.preventDefault(); if (approvalContextCurrent(context)) void submitQuestion(context, row) })
       if (focusAction && !document.querySelector('dialog[open]') && (document.activeElement === active || document.activeElement === document.body)) {
         const replacement = card.querySelector(`[data-conversation-question-action="${focusAction}"]`)
@@ -3244,7 +3135,21 @@
       if (approvalContextCurrent(context)) renderConversationQuestions()
     }
   }
+  function renderDesktopActionReview() {
+    const list = byId('transcript')
+    for (const node of [...list.children]) if (node.dataset?.commandReview) node.remove()
+    const command = desktopBlocker()
+    if (!command || state.activeChatSource !== 'desktop') return
+    const row = element('li', 'conversation-task'); row.dataset.commandReview = command.commandId
+    row.append(element('p', '', commandStatus(command)))
+    if (command.kind === 'desktop.open_app' && ['accepted_by_host', 'uncertain'].includes(command.state)) {
+      const acknowledge = element('button', 'button quiet small', '已在电脑核对，允许再次发起'); acknowledge.type = 'button'
+      acknowledge.addEventListener('click', () => acknowledgeDesktop(command)); row.append(acknowledge)
+    }
+    list.append(row)
+  }
   function renderConversationTasks() {
+    renderDesktopActionReview()
     const context = conversationTaskContext(), list = byId('transcript')
     if (!context.sessionId || conversationTasks.ownerId !== context.ownerId || conversationTasks.identity !== context.identity) return
     for (const entry of conversationTasks.entries.values()) {
@@ -3254,7 +3159,8 @@
         row?.taskId === entry.taskId && row.sessionId === context.sessionId && sessionIdPattern.test(row.artifactId || ''))
       const control = payload?.control
       const outputLimited = payload?.replyEvidence?.status === 'failed' && payload.replyEvidence.endReasonKind === 'max-tokens'
-      const visible = entry.notice || steps.length || artifacts.length || control && control.state !== 'active' || outputLimited
+      const hasTimeline = timelineEventsForContext(context).some(e => e.type.startsWith('step.') && e.data?.taskId === `turn-${payload?.source?.dshTurn}`)
+      const visible = entry.notice || !hasTimeline && steps.length || artifacts.length || payload?.sources?.length || control?.canStop || control && control.state !== 'active' || outputLimited
       let card = [...list.children].find((row) => row.dataset?.conversationTask === entry.taskId)
       if (!visible) { card?.remove(); continue }
       const receiptId = payload?.source?.receiptId || entry.receiptId
@@ -3282,7 +3188,7 @@
       card.append(element('strong', 'conversation-task-title', entry.notice ? '工具进展 · 待更新'
         : outputLimited && !steps.length && !artifacts.length ? '回复状态' : '工具进展'))
       if (entry.notice) card.append(element('p', 'conversation-task-notice', entry.notice))
-      if (steps.length) {
+      if (steps.length && !hasTimeline) {
         const latest = steps.slice(-3), records = element('ul', 'conversation-task-steps')
         for (const step of latest) records.append(element('li', '', `${entry.notice ? '上次记录：' : ''}${executionName(step)} · ${executionProgress(step)}`))
         card.append(records)
@@ -3300,14 +3206,14 @@
       if (!entry.notice && payload?.replyEvidence) card.append(element('p', 'conversation-task-reply', taskReplyText(payload.replyEvidence)))
       const verified = artifacts.filter((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
         row.verification?.method === 'sha256_readback')
+      for (const artifact of artifacts) appendTimelineArtifact(card, artifact, context)
       if (artifacts.length) card.append(element('p', 'conversation-task-result', verified.length
         ? `${verified.length} 个成果文件已读回核验` : '成果文件仍待核验'))
       const actions = element('div', 'conversation-task-actions')
-      const detail = element('button', 'button secondary small', verified.length ? '查看成果与详情' : '查看事情详情')
+      const detail = element('button', 'button secondary small', verified.length ? '查看来源与成果' : '查看来源与成果')
       detail.type = 'button'
       detail.dataset.conversationTaskAction = 'detail'
-      detail.addEventListener('click', () => { if (conversationTaskCurrent(context)) { taskDetail.returnFocus = { button: detail, taskId: entry.taskId,
-        ownerId: context.ownerId, identity: context.identity, source: context.source, sessionId: context.sessionId, conversationId: context.conversationId }; void openTaskDetail(entry.taskId) } })
+      detail.addEventListener('click', () => inlineTaskInfo(entry.taskId, detail))
       actions.append(detail)
       if (entry.notice) {
         const retry = element('button', 'button secondary small', '重新核对进展')
@@ -3346,12 +3252,12 @@
       if (!conversationTaskCurrent(context)) return
       const receipts = new Set([...byId('transcript').children].map((row) => row.dataset?.receiptId).filter(Boolean))
       for (const entry of conversationApprovals.entries.values()) if (entry.row.sessionId === context.sessionId &&
-          receipts.has(entry.row.sourceReceiptId) && !roots.some((row) => row.commandId === entry.row.taskId)) {
+          (receipts.has(entry.row.sourceReceiptId) || timelineEventsForContext(context).some(e => entry.row.approvalId && e.data?.approvalId === entry.row.approvalId || entry.row.callId && e.data?.callId === entry.row.callId || e.type === 'question.asked' && e.data?.turn === entry.row.turn)) && !roots.some((row) => row.commandId === entry.row.taskId)) {
         roots.push({ commandId: entry.row.taskId, sessionId: context.sessionId,
           ...(context.conversationId ? { conversationId: context.conversationId } : {}) })
       }
       for (const entry of conversationQuestions.entries.values()) if (entry.row.sessionId === context.sessionId &&
-          receipts.has(entry.row.sourceReceiptId) && !roots.some((row) => row.commandId === entry.row.taskId)) {
+          (receipts.has(entry.row.sourceReceiptId) || timelineEventsForContext(context).some(e => entry.row.approvalId && e.data?.approvalId === entry.row.approvalId || entry.row.callId && e.data?.callId === entry.row.callId || e.type === 'question.asked' && e.data?.turn === entry.row.turn)) && !roots.some((row) => row.commandId === entry.row.taskId)) {
         roots.push({ commandId: entry.row.taskId, sessionId: context.sessionId,
           ...(context.conversationId ? { conversationId: context.conversationId } : {}) })
       }
@@ -3411,452 +3317,61 @@
     if (error.status === 403 || error.status === 404) return '当前账户或设备无法操作这件事。'
     return '操作尚未确认，请重新核对任务记录。'
   }
-  function renderTaskControls(taskId, control) {
-    const section = element('section', 'task-detail-section task-control')
-    section.append(element('h3', '', '继续与停止'))
-    const message = element('p', 'task-control-state', taskControlStatus(control))
-    message.setAttribute('role', 'status')
-    section.append(message)
-    if (control.stopStatus === 'stopped' && control.stopObservedAt) {
-      section.append(element('p', 'task-control-proof', `停止核对：${formatDate(control.stopObservedAt)}`))
-    } else if (control.state === 'stop_requested' && Number.isSafeInteger(control.pendingReceipts) && control.pendingReceipts > 0) {
-      section.append(element('p', 'task-control-proof', '仍有回合或执行结果待核对。'))
+  function inlineTaskInfo(taskId, button) {
+    const context = conversationTaskContext(), entry = conversationTasks.entries.get(taskId)
+    if (!conversationTaskCurrent(context) || !entry?.payload) return
+    const card = button.closest('[data-conversation-task], [data-conversation-approval], [data-conversation-question]') || button.parentNode
+    const existing = card.querySelector('.timeline-task-info')
+    if (existing) { existing.remove(); return }
+    const payload = entry.payload, info = element('section', 'timeline-task-info')
+    info.append(element('p', '', payload.sourceText || payload.source?.taskLabel || ''))
+    for (const source of payload.sources || []) {
+      const read = element('button', 'button quiet small', `查看来源 ${source.relativePath || source.fileName || source.title || source.snapshotId}`)
+      read.type = 'button'; read.addEventListener('click', () => { void openTimelinePreview(context,
+        `/tasks/${encodeURIComponent(taskId)}/sources/${encodeURIComponent(source.snapshotId)}`, source.fileName || source.title || '读取的来源') })
+      info.append(read)
     }
-    const unknown = taskDetail.unknown
-    if (unknown?.taskId === taskId && unknown.ownerId === state.ownerId &&
-      unknown.identity === state.identityGeneration) {
-      message.textContent = '上次操作回执不明。请先核对任务；重试会沿用原请求编号。'
-      const retry = element('button', 'button secondary', '重试同一请求')
-      retry.type = 'button'
-      retry.addEventListener('click', () => { void submitTaskControl(taskId, unknown.action, unknown.text, message) })
-      section.append(retry)
-      return section
+    for (const artifact of payload.artifacts || []) appendTimelineArtifact(info, artifact, context)
+    if (payload.control?.canStop) {
+      const stop = element('button', 'button secondary small', '请求停止这件事'); stop.type = 'button'
+      stop.addEventListener('click', async () => {
+        if (!conversationTaskCurrent(context) || stop.disabled) return
+        stop.disabled = true; entry.stopRequestId ||= crypto.randomUUID()
+        try { await accessApi(`/tasks/${encodeURIComponent(taskId)}/stop`, { method: 'POST', body: JSON.stringify({ requestId: entry.stopRequestId }) })
+          if (conversationTaskCurrent(context)) { stop.textContent = '停止请求已记录'; void refreshConversationTasks() }
+        } catch { if (conversationTaskCurrent(context)) { stop.textContent = '重试停止请求'; stop.disabled = false } }
+      }); info.append(stop)
     }
-    const canSupplement = control.canSupplement === true
-    const canStop = control.canStop === true
-    const canResume = control.canResume === true
-    if (canSupplement) {
-      const input = element('textarea', 'task-supplement-input')
-      input.placeholder = '补充这件事需要的信息或调整'
-      input.setAttribute('aria-label', '补充任务要求')
-      input.maxLength = 8192
-      input.value = taskDetail.drafts.get(taskId) || ''
-      input.addEventListener('input', () => taskDetail.drafts.set(taskId, input.value))
-      const submit = element('button', 'button secondary', '提交补充')
-      submit.type = 'button'
-      submit.addEventListener('click', () => { void submitTaskControl(taskId, 'supplements', input.value, message) })
-      section.append(input, submit)
-    }
-    if (canStop) {
-      const stop = element('button', 'button secondary', '请求停止这件事')
-      stop.type = 'button'
-      stop.addEventListener('click', () => { void submitTaskControl(taskId, 'stop', null, message) })
-      section.append(stop)
-    }
-    if (canResume) {
-      const input = element('textarea', 'task-supplement-input')
-      input.placeholder = '说明恢复后要做什么，例如先核对现有文件再继续修改'
-      input.setAttribute('aria-label', '恢复任务后的明确要求')
-      input.maxLength = 8192
-      input.value = taskDetail.drafts.get(`${taskId}:resume`) || ''
-      input.addEventListener('input', () => taskDetail.drafts.set(`${taskId}:resume`, input.value))
-      const resume = element('button', 'button secondary', '恢复这件事')
-      resume.type = 'button'
-      resume.addEventListener('click', () => { void submitTaskControl(taskId, 'resume', input.value, message) })
-      section.append(input, resume)
-    }
-    return section
+    card.append(info)
   }
-  function scheduleTaskObservation(taskId, generation, ownerId, identity, control) {
-    stopTaskObservation()
-    if (control?.state !== 'stop_requested' || typeof control.stopStatus !== 'string' || control.canResume === true ||
-        ['stopped', 'completed'].includes(control.stopStatus) || taskDetail.unknown) return
-    if (taskDetail.pollCount >= 8 || Date.now() - taskDetail.pollStartedAt >= 20_000) {
-      const section = byId('task-detail-control').children[0]
-      const status = section?.children?.[1]
-      if (status) status.textContent += ' 自动核对已暂停，可点“重新核对”。'
-      return
-    }
-    taskDetail.pollTimer = setTimeout(async () => {
-      taskDetail.pollTimer = null
-      if (!taskDetailCurrent(generation, taskId) || state.ownerId !== ownerId ||
-          state.identityGeneration !== identity) return
-      taskDetail.pollCount++
-      let payload
-      try { payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}`) }
-      catch {
-        if (taskDetailCurrent(generation, taskId) && state.ownerId === ownerId &&
-            state.identityGeneration === identity) {
-          const status = byId('task-detail-control').children[0]?.children?.[1]
-          if (status) status.textContent = '暂时无法连接电脑核对停止结果。可点“重新核对”；原请求编号会保留。'
-        }
-        return
-      }
-      if (!taskDetailCurrent(generation, taskId) || state.ownerId !== ownerId ||
-          state.identityGeneration !== identity || payload?.taskId !== taskId || !payload.control) return
-      const section = byId('task-detail-control').children[0]
-      if (section?.className?.includes('task-control')) section.replaceChildren(...renderTaskControls(taskId, payload.control).children)
-      byId('task-detail-verification').textContent = taskVerificationText(payload)
-      scheduleTaskObservation(taskId, generation, ownerId, identity, payload.control)
-    }, 2_000)
+  function appendTimelineArtifact(parent, artifact, context = conversationTaskContext()) {
+    const line = element('div', 'timeline-artifact'), open = element('button', 'button secondary small', artifact.fileName || '打开成果')
+    open.type = 'button'; open.addEventListener('click', () => { void openTimelinePreview(context,
+      `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件') })
+    const download = element('a', 'button quiet small', '下载'); download.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; download.download = artifact.fileName || '成果文件'
+    line.append(open, element('small', '', `${artifact.contentType || '文件'} · ${artifact.size || 0} 字节`), download); parent.append(line)
   }
-  function renderTaskFollowUps(payload) {
-    const commands = [...(Array.isArray(payload.supplements) ? payload.supplements : []),
-      ...(Array.isArray(payload.resumes) ? payload.resumes : [])]
-      .filter((row) => row?.rootTaskId === payload.taskId && sessionIdPattern.test(row.commandId || ''))
-      .sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')))
-    if (!commands.length) return null
-    const section = element('section', 'task-detail-section')
-    section.append(element('h3', '', '后续要求'))
-    for (const command of commands) {
-      const row = element('div', 'task-followup')
-      row.append(element('p', 'task-meta',
-        `${command.taskAction === 'resume' ? '恢复' : '补充'} · ${commandStatus(command)} · ${formatDate(command.createdAt)}`))
-      const detail = element('details', 'task-record-id')
-      detail.append(element('summary', '', '查看记录编号'), element('code', '', command.commandId))
-      row.append(detail)
-      section.append(row)
-    }
-    return section
+  async function openTimelinePreview(context, path, title) {
+    if (!conversationTaskCurrent(context)) return
+    document.querySelector('.timeline-preview')?.remove()
+    const panel = element('aside', 'timeline-preview'), close = element('button', 'button quiet small', '关闭预览'), text = element('pre', 'timeline-raw', '正在读取…')
+    close.type = 'button'; close.addEventListener('click', () => panel.remove())
+    panel.append(close, element('h2', '', title), text); byId('conversation-pane').append(panel)
+    try { const data = await accessApi(path)
+      if (!conversationTaskCurrent(context) || !panel.isConnected) { panel.remove(); return }
+      text.textContent = data.text || data.preview?.text || data.source?.text || '暂时没有可预览内容'
+    } catch { if (panel.isConnected) text.textContent = '暂时无法读取，请关闭后重试。' }
   }
-  function taskStepStatus(step) {
-    if (step.state === 'observed') return step.verification?.status === 'observed' &&
-      step.verification?.method === 'visible_window' ? '电脑窗口已观察' : '动作状态已更新，窗口仍待核对'
-    return { pending: '等待电脑受理', dispatching: '正在派发', accepted_by_host: '电脑已受理，窗口待核对',
-      uncertain: '结果待确认', rejected: '未执行' }[step.state] || '状态待确认'
-  }
-  function renderTaskSteps(payload) {
-    const steps = (Array.isArray(payload.steps) ? payload.steps : []).filter((step) =>
-      step?.kind === 'desktop.open_app' && sessionIdPattern.test(step.commandId || '') &&
-      (step.taskId === undefined || step.taskId === payload.taskId))
-    if (!steps.length) return null
-    const section = element('section', 'task-detail-section')
-    section.append(element('h3', '', '执行步骤'))
-    for (const step of steps) {
-      const row = element('div', 'task-followup')
-      const at = step.verification?.status === 'observed' && step.verification?.observedAt ||
-        step.updatedAt || step.createdAt
-      row.append(element('p', 'task-meta',
-        `${step.appId === 'notepad' ? '打开记事本' : '打开电脑应用'} · ${taskStepStatus(step)} · ${formatDate(at)}`))
-      const detail = element('details', 'task-record-id')
-      detail.append(element('summary', '', '查看记录编号'), element('code', '', step.commandId))
-      row.append(detail)
-      section.append(row)
-    }
-    return section
-  }
-  function renderToolExecutions(payload) {
-    const labels = { running: '正在执行', completed: '执行结束', failed: '未完成', cancelled: '已停止', uncertain: '待确认' }
-    const jobs = { running: '后台运行中', stopping: '后台正在停止', completed: '后台已结束', killed: '后台已停止',
-      failed: '后台未完成', uncertain: '后台状态待确认', unconfirmed: '后台状态待确认' }
-    const names = { pwsh: '运行命令', read: '读取文件', write: '写入文件', edit: '修改文件', glob: '查找文件', grep: '搜索内容',
-      weftmod: '设备操作', weftmod_script: '运行脚本', job_output: '读取后台输出', job_list: '查看后台任务', job_kill: '停止后台任务' }
-    const rows = (Array.isArray(payload.executionSteps) ? payload.executionSteps : []).filter((row) =>
-      row && typeof row.executionId === 'string' && row.executionId.length > 0 && row.executionId.length <= 256 &&
-      typeof row.sourceCommandId === 'string' && typeof row.sourceReceiptId === 'string' &&
-      typeof row.toolName === 'string' && row.toolName.length > 0 && row.toolName.length <= 128 && Object.hasOwn(labels, row.state))
-    if (!rows.length) return null
-    const section = element('section', 'task-detail-section')
-    section.append(element('h3', '', '执行记录'))
-    for (const row of rows) {
-      const entry = element('div', 'task-followup')
-      const status = Object.hasOwn(jobs, row.jobState) ? jobs[row.jobState] : row.jobId ? '后台状态待确认' : labels[row.state]
-      entry.append(element('p', 'task-meta', `${Object.hasOwn(names, row.toolName) ? names[row.toolName] : row.toolName} · ${status} · ${formatDate(row.jobObservedAt || row.finishedAt || row.updatedAt || row.startedAt)}`))
-      section.append(entry)
-    }
-    return section
-  }
-  function renderTaskSources(payload) {
-    const list = byId('task-detail-sources')
-    list.replaceChildren()
-    const sources = Array.isArray(payload.sources) ? payload.sources.filter((source) =>
-      source?.kind === 'webpage' ? /^source-[a-f0-9]{48}$/.test(source.snapshotId ?? '') &&
-        typeof source.title === 'string' && typeof source.url === 'string' &&
-        /^[a-f0-9]{64}$/.test(source.contentSha256 ?? '') &&
-        (source.versionHash === undefined || /^[a-f0-9]{64}$/.test(source.versionHash) &&
-          Number.isSafeInteger(source.segmentIndex) && source.segmentIndex >= 0 &&
-          Number.isSafeInteger(source.segmentCount) && source.segmentCount >= 1 &&
-          source.segmentCount <= 32 && source.segmentIndex < source.segmentCount &&
-          Number.isSafeInteger(source.byteStart) && source.byteStart >= 0 &&
-          Number.isSafeInteger(source.byteEnd) && source.byteEnd > source.byteStart &&
-          source.byteEnd - source.byteStart <= 8192 &&
-          Number.isSafeInteger(source.totalCapturedBytes) &&
-          source.totalCapturedBytes <= 256 * 1024 &&
-          typeof source.captureTruncated === 'boolean' &&
-          (source.outline === undefined || typeof source.outline === 'string' &&
-            new TextEncoder().encode(source.outline).length <= 2048)) :
-        /^source-[a-f0-9]{48}$/.test(source?.snapshotId ?? '') &&
-        typeof source.relativePath === 'string' && Number.isSafeInteger(source.lineStart) &&
-        Number.isSafeInteger(source.lineEnd) && /^[a-f0-9]{64}$/.test(source.fileSha256 ?? '')) : []
-    if (!sources.length) {
-      list.append(element('li', 'task-artifact-empty', payload.workspace?.kind === 'browser'
-        ? '尚无已核验的网页阅读来源；未读页面不能作为摘要依据。' : payload.project
-          ? '尚无已核验的读取来源。摘要必须先读取项目文件。' : '这件事没有项目资料来源。'))
-      return
-    }
-    const captureGroups = new Map()
-    for (const source of sources) if (source.kind === 'webpage' && /^[a-f0-9]{64}$/.test(source.versionHash ?? '')) {
-      const root = source.parentSnapshotId || source.snapshotId
-      if (!captureGroups.has(root)) captureGroups.set(root, [])
-      captureGroups.get(root).push(source)
-    }
-    const ordered = [...sources].sort((a, b) => {
-      const rootA = a.parentSnapshotId || a.snapshotId
-      const rootB = b.parentSnapshotId || b.snapshotId
-      return rootA.localeCompare(rootB) || (a.segmentIndex ?? 0) - (b.segmentIndex ?? 0)
+  function timelineEventsForContext(context = conversationTaskContext()) { return context.source === 'phone' ? state.phoneHostEvents.get(context.conversationId) || [] : [...state.historyEvents.values()] }
+  function renderTimeline(events = timelineEventsForContext()) {
+    if (!window.WeftTimeline) return
+    const context = conversationTaskContext(), sessionId = context.sessionId
+    window.WeftTimeline.render(events, byId('transcript'), {
+      mobile: window.matchMedia?.('(max-width: 640px)').matches === true,
+      readDetail: seq => accessApi(`/sessions/${encodeURIComponent(sessionId)}/events/${seq}/detail`),
+      openArtifact: artifact => openTimelinePreview(context, `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件'),
+      downloadArtifact: artifact => { const link = element('a'); link.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; link.download = artifact.fileName || '成果文件'; link.click() },
     })
-    let shownGroup = null
-    for (const source of ordered) {
-      const item = element('li', 'task-source-item')
-      const web = source.kind === 'webpage'
-      const groupId = source.parentSnapshotId || source.snapshotId
-      if (web && captureGroups.has(groupId) && shownGroup !== groupId) {
-        const siblings = captureGroups.get(groupId)
-        const readCount = new Set(siblings.map((row) => row.segmentIndex)).size
-        const group = element('li', 'task-source-item')
-        group.append(element('strong', '', source.title || source.url),
-          element('small', '', `已读 ${readCount}/${source.segmentCount} 段${source.captureTruncated
-            ? ' · 本次捕获未覆盖全文' : readCount < source.segmentCount ? ' · 还有未读段' : ' · 已读完本次捕获'}`))
-        list.append(group)
-        shownGroup = groupId
-      }
-      const title = element('strong', '', web && source.versionHash
-        ? `第 ${source.segmentIndex + 1}/${source.segmentCount} 段`
-        : web ? source.title || source.url : source.relativePath)
-      const meta = element('small', '', web
-        ? `${source.url} · ${formatDate(source.readAt)}${source.versionHash
-          ? ` · 已读字节 ${source.byteStart + 1}–${source.byteEnd}`
-          : source.truncated ? ' · 只读取了部分正文' : ''}${
-          source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`
-        : `第 ${source.lineStart}–${source.lineEnd} 行 · ${formatDate(source.readAt)}${
-          source.cited ? ' · 已用于成果' : ' · 已读取，未被成果引用'}`)
-      const view = element('button', 'button secondary small', '查看读取正文')
-      view.type = 'button'
-      view.addEventListener('click', () => { void previewTaskSource(payload.taskId, source) })
-      const technical = element('details', 'task-record-id')
-      technical.append(element('summary', '', web ? '查看网页来源编号与内容版本' : '查看文件版本与来源编号'),
-        element('code', '', web ? `本段 SHA-256 ${source.contentSha256}${source.versionHash
-          ? `\n捕获版本 SHA-256 ${source.versionHash}\n本段字节 ${source.byteStart}–${source.byteEnd}（结束位置不含）${source.outline ? `\n页面标题目录\n${source.outline}` : ''}` : ''}\n请求 ${source.requestedUrl}\n来源 ${source.snapshotId}\n已观察链接 ${source.links?.length ?? 0} 条`
-          : `SHA-256 ${source.fileSha256}\n来源 ${source.snapshotId}`))
-      item.append(title, meta, view, technical)
-      list.append(item)
-    }
-  }
-
-  async function previewTaskSource(taskId, source) {
-    if (taskDetail.taskId !== taskId) return
-    const generation = taskDetail.generation, identity = state.identityGeneration
-    taskDetail.selectedSourceId = source.snapshotId
-    const status = byId('task-source-preview-status'), preview = byId('task-source-preview')
-    status.textContent = '正在读取这次保存的来源正文…'
-    preview.hidden = true
-    preview.textContent = ''
-    try {
-      const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}/sources/${encodeURIComponent(source.snapshotId)}`)
-      if (!taskDetailCurrent(generation, taskId) || identity !== state.identityGeneration ||
-          taskDetail.selectedSourceId !== source.snapshotId) return
-      const actual = payload?.source
-      const same = source.kind === 'webpage'
-        ? actual?.kind === 'webpage' && actual.url === source.url &&
-          actual.contentSha256 === source.contentSha256 && actual.truncated === source.truncated &&
-          (!source.versionHash || actual.versionHash === source.versionHash &&
-            actual.segmentIndex === source.segmentIndex && actual.byteStart === source.byteStart &&
-            actual.byteEnd === source.byteEnd)
-        : actual?.fileSha256 === source.fileSha256 && actual.lineStart === source.lineStart &&
-          actual.lineEnd === source.lineEnd
-      if (actual?.snapshotId !== source.snapshotId || !same || typeof actual.text !== 'string' ||
-          new TextEncoder().encode(actual.text).length > 32 * 1024) {
-        throw { code: 'SOURCE_CHANGED' }
-      }
-      preview.textContent = actual.text
-      preview.hidden = false
-      status.textContent = `${source.kind === 'webpage' ? source.versionHash
-        ? `第 ${source.segmentIndex + 1}/${source.segmentCount} 段` : source.title || source.url
-        : source.relativePath} · 读取时的正文与版本已核对。`
-    } catch (error) {
-      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedSourceId !== source.snapshotId) return
-      status.textContent = error.code === 'NETWORK' ? '连接中断，来源正文尚未确认；请重试。'
-        : error.status === 404 ? '当前账户找不到这份来源。' : '来源无法核对，请刷新任务后重试。'
-    }
-  }
-  async function submitTaskControl(taskId, action, text, message) {
-    if (taskDetail.taskId !== taskId || taskDetail.operation) return
-    const value = typeof text === 'string' ? text.trim() : null
-    if ((action === 'supplements' || action === 'resume') && !value) {
-      message.textContent = action === 'resume' ? '请先写明恢复后要做什么。' : '先填写补充内容。'; return
-    }
-    if (value && value.length > 8192) { message.textContent = '内容过长，请缩短后重试。'; return }
-    const generation = taskDetail.generation, identity = state.identityGeneration, ownerId = state.ownerId
-    const previous = taskDetail.unknown
-    if (previous?.taskId === taskId && previous.ownerId === ownerId && previous.identity === identity &&
-      (previous.action !== action || previous.text !== value)) {
-      message.textContent = '请先核对上一项操作结果。'; return
-    }
-    const operation = previous?.taskId === taskId && previous.ownerId === ownerId && previous.identity === identity
-      ? previous : { taskId, ownerId, identity, action, text: value, requestId: crypto.randomUUID() }
-    taskDetail.operation = operation
-    message.textContent = '正在提交；结果以任务记录为准…'
-    for (const control of message.parentNode?.querySelectorAll?.('button, textarea') || []) control.disabled = true
-    try {
-      const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}/${action}`, {
-        method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, ...(value ? { text: value } : {}) },
-      })
-      if (!taskDetailCurrent(generation, taskId) || state.identityGeneration !== identity ||
-        state.ownerId !== ownerId || taskDetail.operation !== operation) return
-      if (payload?.task?.taskId !== taskId || !payload.task.control) throw { code: 'REQUEST_FAILED' }
-      taskDetail.unknown = null
-      if (action === 'supplements') taskDetail.drafts.delete(taskId)
-      if (action === 'resume') taskDetail.drafts.delete(`${taskId}:resume`)
-      message.textContent = action === 'stop' ? '停止意图已记录，正在重新核对执行端状态。' :
-        '请求已记录，正在重新核对任务状态。'
-      void openTaskDetail(taskId)
-    } catch (error) {
-      if (taskDetailCurrent(generation, taskId) && state.identityGeneration === identity &&
-        state.ownerId === ownerId && taskDetail.operation === operation) {
-        taskDetail.unknown = error.code === 'NETWORK' ? operation : null
-        message.textContent = taskControlError(error)
-      }
-    } finally {
-      if (taskDetail.operation === operation) taskDetail.operation = null
-      if (taskDetailCurrent(generation, taskId)) for (const control of message.parentNode?.querySelectorAll?.('button, textarea') || []) control.disabled = false
-    }
-  }
-  async function openTaskDetail(taskId) {
-    if (!sessionIdPattern.test(taskId)) return
-    stopTaskObservation()
-    taskDetail.pollCount = 0
-    taskDetail.pollStartedAt = Date.now()
-    taskDetail.taskId = taskId
-    const generation = ++taskDetail.generation
-    const ownerId = state.ownerId, identity = state.identityGeneration
-    taskDetail.selectedArtifactId = null
-    taskDetail.selectedSourceId = null
-    byId('task-detail-title').textContent = '事情详情'
-    byId('task-detail-status').textContent = '正在核对原任务与成果…'
-    byId('task-detail-reply').textContent = ''
-    byId('task-detail-body').hidden = true
-    byId('task-detail-session').hidden = true
-    byId('task-preview-text').hidden = true
-    byId('task-preview-text').textContent = ''
-    byId('task-preview-status').textContent = ''
-    if (!byId('task-detail-dialog').open) byId('task-detail-dialog').showModal()
-    try {
-      const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}`)
-      if (!taskDetailCurrent(generation, taskId)) return
-      if (payload.taskId !== taskId || !Array.isArray(payload.artifacts)) throw { code: 'REQUEST_FAILED' }
-      const inline = conversationTasks.entries.get(taskId)
-      if (inline && inline.sessionId === payload.sessionId && payload.source?.commandId === taskId &&
-          (!inline.receiptId || payload.source.receiptId === inline.receiptId)) {
-        conversationTasks.entries.set(taskId, { ...inline, payload, notice: '' })
-        renderConversationTasks()
-      }
-      const artifacts = payload.artifacts.filter((row) => row?.taskId === taskId &&
-        sessionIdPattern.test(row.artifactId || ''))
-      byId('task-detail-title').textContent = artifacts.length === 1 ? artifacts[0].fileName || '事情详情' : '事情详情'
-      byId('task-detail-source').textContent = typeof payload.sourceText === 'string' && payload.sourceText
-        ? payload.sourceText : '原消息请回到会话查看。'
-      const verified = artifacts.filter((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
-        row.verification?.method === 'sha256_readback')
-      byId('task-detail-verification').textContent = taskVerificationText(payload)
-      byId('task-detail-reply').textContent = taskReplyText(payload.replyEvidence)
-      const controlSlot = byId('task-detail-control')
-      controlSlot.replaceChildren()
-      if (payload.control && typeof payload.control.state === 'string') {
-        controlSlot.append(renderTaskControls(taskId, payload.control))
-      }
-      const followUps = renderTaskFollowUps(payload)
-      if (followUps) controlSlot.append(followUps)
-      const steps = renderTaskSteps(payload)
-      if (steps) controlSlot.append(steps)
-      const executions = renderToolExecutions(payload)
-      if (executions) controlSlot.append(executions)
-      renderTaskSources(payload)
-      const list = byId('task-detail-artifacts')
-      list.replaceChildren()
-      for (const artifact of artifacts) {
-        const row = element('li', 'task-artifact')
-        const name = element('strong', '', artifact.fileName || '成果文件')
-        const okay = artifact.state === 'observed' && artifact.verification?.status === 'observed' &&
-          artifact.verification?.method === 'sha256_readback'
-        row.append(name, element('span', `badge ${okay ? 'is-done' : 'is-failed'}`, okay ? '已读回核验' : '待核验'))
-        if (Number.isSafeInteger(artifact.size)) row.append(element('small', '', `${artifact.size.toLocaleString('zh-CN')} 字节`))
-        if (okay) {
-          const preview = element('button', 'button secondary small', '查看内容')
-          preview.type = 'button'
-          preview.addEventListener('click', () => { void previewArtifact(taskId, artifact.artifactId) })
-          row.append(preview)
-        }
-        list.append(row)
-      }
-      if (!artifacts.length) list.append(element('li', 'task-artifact-empty', '这件事尚无成果文件。'))
-      byId('task-detail-session').hidden = !sessionIdPattern.test(payload.sessionId || '')
-      byId('task-detail-session').dataset.sessionId = payload.sessionId || ''
-      byId('task-detail-body').hidden = false
-      byId('task-detail-status').textContent = ''
-      scheduleTaskObservation(taskId, generation, ownerId, identity, payload.control)
-      if (verified.length === 1) void previewArtifact(taskId, verified[0].artifactId)
-      else byId('task-preview-status').textContent = verified.length ? '选择一个文件查看内容。' : '文件核验完成后可查看内容。'
-    } catch (error) {
-      if (!taskDetailCurrent(generation, taskId)) return
-      byId('task-detail-status').textContent = artifactStatus(error)
-      byId('task-detail-body').hidden = true
-    }
-  }
-  async function previewArtifact(taskId, artifactId) {
-    if (!sessionIdPattern.test(artifactId) || taskDetail.taskId !== taskId) return
-    const generation = taskDetail.generation
-    taskDetail.selectedArtifactId = artifactId
-    byId('task-preview-text').hidden = true
-    byId('task-preview-text').textContent = ''
-    byId('task-preview-status').textContent = '正在读回并核对文件…'
-    try {
-      const payload = await accessApi(`/artifacts/${encodeURIComponent(artifactId)}/preview`)
-      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedArtifactId !== artifactId) return
-      if (payload.artifact?.artifactId !== artifactId || payload.artifact?.taskId !== taskId ||
-        payload.artifact?.verification?.status !== 'observed' || typeof payload.text !== 'string') throw { code: 'REQUEST_FAILED' }
-      byId('task-preview-text').textContent = payload.text
-      byId('task-preview-text').hidden = false
-      byId('task-preview-status').textContent = '内容已通过读回校验。'
-      const link = element('a', 'button secondary small', '下载文件')
-      link.href = `${accessBase}/artifacts/${encodeURIComponent(artifactId)}/download`
-      link.setAttribute('download', payload.artifact.fileName || 'WeftMate-artifact.txt')
-      link.addEventListener('click', (event) => {
-        event.preventDefault()
-        void downloadArtifact(taskId, artifactId, payload.artifact.fileName || 'WeftMate-artifact.txt')
-      })
-      byId('task-preview-status').replaceChildren(element('span', '', '内容已通过读回校验。'), link)
-    } catch (error) {
-      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedArtifactId !== artifactId) return
-      byId('task-preview-status').textContent = artifactStatus(error)
-    }
-  }
-  async function downloadArtifact(taskId, artifactId, fileName) {
-    const generation = taskDetail.generation
-    const identityAtStart = state.csrfToken
-    byId('task-preview-status').textContent = '正在重新核验并下载文件…'
-    try {
-      const response = await fetch(`${accessBase}/artifacts/${encodeURIComponent(artifactId)}/download`, {
-        credentials: 'same-origin', cache: 'no-store', signal: AbortSignal.timeout(15_000),
-      })
-      if (!response.ok) {
-        const payload = await response.json().catch(() => ({}))
-        throw { status: response.status, code: payload?.error?.code || 'REQUEST_FAILED' }
-      }
-      const blob = await response.blob()
-      if (!taskDetailCurrent(generation, taskId) || taskDetail.selectedArtifactId !== artifactId) return
-      const url = URL.createObjectURL(blob)
-      const anchor = element('a')
-      anchor.href = url
-      anchor.download = fileName
-      document.body.append(anchor)
-      anchor.click()
-      anchor.remove()
-      setTimeout(() => URL.revokeObjectURL(url), 60_000)
-      byId('task-preview-status').textContent = '文件已通过服务器核验，下载已开始。'
-    } catch (error) {
-      if (error.status === 401 && state.csrfToken === identityAtStart) return sessionExpired()
-      if (taskDetailCurrent(generation, taskId)) byId('task-preview-status').textContent = artifactStatus(error)
-    }
   }
   async function refreshTasks(append = false) {
     const identity = state.identityGeneration
@@ -3869,16 +3384,18 @@
       state.tasks = append ? [...state.tasks, ...payload.commands.filter((item) =>
         !state.tasks.some((previous) => previous.commandId === item.commandId))] : payload.commands
       state.nextBefore = typeof payload.nextBefore === 'string' ? payload.nextBefore : null
-      renderTasks()
+      renderConversationTasks()
       for (const marker of readMarkers()) {
         const found = state.tasks.find((item) => item.requestId === marker.requestId)
         if (found) updateFromCommand(found)
       }
       updateAvailability()
+      await conversationTasks.inFlight?.promise
+      if (identity === state.identityGeneration && ownerId === state.ownerId) void refreshConversationTasks()
     } catch (error) {
       if (identity !== state.identityGeneration || ownerId !== state.ownerId) return
       if (error.code === 'UNAUTHORIZED') return
-      byId('tasks-status').textContent = error.code === 'NETWORK'
+      byId('timeline-status').textContent = error.code === 'NETWORK'
         ? '连接中断，重连后会查询原有事情记录。' : '事情记录暂时无法读取，请点击刷新。'
     }
   }
@@ -3911,7 +3428,7 @@
         updateFromCommand(payload.command)
         if (!state.tasks.some((item) => item.commandId === payload.command.commandId)) {
           state.tasks.unshift(payload.command)
-          renderTasks()
+          renderConversationTasks()
         }
       }
     } catch (error) {
@@ -3966,19 +3483,12 @@
       updateAvailability()
     }
   }
-  function showTaskPane(tasks) {
-    if (!tasks) closeTaskDetail()
-    state.taskPane = tasks
+  function showConversation() {
     state.phonePane = false
-    byId('conversation-pane').hidden = tasks
-    byId('tasks-pane').hidden = !tasks
+    byId('conversation-pane').hidden = false
     byId('phone-pane').hidden = true
-    byId('assistant-title').textContent = tasks ? '事情' : state.activeChatSource === 'phone'
-      ? phoneDisplayTitle(phoneConversations().find((item) => item.id === state.selectedPhoneConversationId) || { title: '手机对话', events: [] })
-      : state.sessions.find((item) => item.sessionId === state.selectedSessionId)?.title || '新对话'
     closeRail()
-    if (tasks) void refreshTasks()
-    else if (state.activeChatSource === 'phone') renderSelectedPhoneConversation()
+    if (state.activeChatSource === 'phone') renderSelectedPhoneConversation()
   }
   function phoneSource(deviceId) {
     return state.phoneDeviceNames.get(deviceId) ?? '同步设备（名称未读取）'
@@ -4042,16 +3552,19 @@
     const binding = phoneBinding(conversationId)
     if (!binding || !state.online) return
     const owner = state.ownerId, generation = state.identityGeneration, sessionId = binding.sessionId
-    const events = []
-    let afterSeq = -1
+    const events = [...(state.phoneHostEvents.get(conversationId) || [])]
+    let afterSeq = state.phoneHistoryCursors.get(conversationId)?.nextSeq ?? -1
     try {
       for (let pageNo = 0; pageNo < 20; pageNo++) {
-        const page = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/events?afterSeq=${afterSeq}&limit=100`)
+        const page = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/events?${afterSeq === -1 ? '' : `afterSeq=${afterSeq}&`}limit=100`)
         if (state.ownerId !== owner || state.identityGeneration !== generation ||
             phoneBinding(conversationId)?.sessionId !== sessionId || !Array.isArray(page?.events) ||
             !Number.isSafeInteger(page.nextSeq) || page.nextSeq < afterSeq) return
         events.push(...page.events.filter((event) => Number.isSafeInteger(event?.seq) &&
-          ['user.message', 'assistant.message', 'turn.started', 'turn.ended'].includes(event.type)))
+          typeof event.type === 'string'))
+        const cursor = state.phoneHistoryCursors.get(conversationId) || {}
+        if (afterSeq === -1) { cursor.nextBeforeSeq = page.nextBeforeSeq; cursor.hasOlder = page.hasOlder === true }
+        cursor.nextSeq = page.nextSeq; state.phoneHistoryCursors.set(conversationId, cursor)
         if (page.hasMore !== true) break
         if (page.nextSeq <= afterSeq) return
         afterSeq = page.nextSeq
@@ -4364,7 +3877,6 @@
         sessionIdPattern.test(item.taskId || item.commandId || ''))
       if (linkedTask) {
         const task = element('button', '', '查看这段的事情与成果')
-        task.addEventListener('click', () => { void openTaskDetail(linkedTask.taskId || linkedTask.commandId) })
         row.append(task)
       }
     } else if (view?.status === 'creating' || view?.status === 'uncertain') {
@@ -4431,7 +3943,7 @@
     list.append(row)
   }
   function renderSelectedPhoneConversation() {
-    if (state.activeChatSource !== 'phone' || state.phonePane || state.taskPane) return
+    if (state.activeChatSource !== 'phone' || state.phonePane) return
     const record = phoneConversations().find((item) => item.id === state.selectedPhoneConversationId)
     if (!record) { byId('transcript').replaceChildren(); byId('timeline-status').textContent = '这条手机对话尚未同步完成。'; return }
     byId('assistant-title').textContent = phoneDisplayTitle(record)
@@ -4444,6 +3956,7 @@
       if (event.kind !== 'message.created' || !['user', 'assistant'].includes(event.payload?.role)) return
       const row = element('li', `message ${event.payload.role}`)
       if (event.payload.role === 'user' && receiptIdPattern.test(receiptId || '')) row.dataset.receiptId = receiptId
+      row.dataset.seq = String(event.seq)
       row.append(element('span', 'message-label', event.payload.role === 'user'
         ? event.sourceDeviceId === state.device?.id ? '你 · 电脑同步' : '你 · 手机 MiMo'
         : 'WeftMate · 手机 MiMo'))
@@ -4512,7 +4025,8 @@
         if (!text && !images.length) continue
         const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
         if (event.type === 'user.message' && receiptIdPattern.test(event.data?.receiptId || '')) row.dataset.receiptId = event.data.receiptId
-        row.append(element('span', 'message-label', event.type === 'user.message'
+        row.dataset.seq = String(event.seq)
+      row.append(element('span', 'message-label', event.type === 'user.message'
           ? '你 · 电脑续聊' : 'WeftMate · 电脑模型'))
         if (text) row.append(element('span', 'message-text', text))
         for (const image of images) {
@@ -4532,6 +4046,7 @@
       for (const event of late) appendPhoneMessage(event)
     }
     phoneHandoffControls(list, record, view)
+    if (binding) { const cursor = state.phoneHistoryCursors.get(record.id); state.hasOlder = cursor?.hasOlder === true; state.nextBeforeSeq = cursor?.nextBeforeSeq; renderOlderControl(); renderTimeline(state.phoneHostEvents.get(record.id) || []) }
     renderConversationTasks()
     void refreshConversationTasks()
     byId('timeline-status').textContent = state.phoneHasMore ? '仍有手机同步记录未读完，连接后会继续读取。' : ''
@@ -4563,7 +4078,7 @@
     closePhoneImagePreview()
     byId('chat-intro').hidden = true
     byId('desktop-action').hidden = true
-    showTaskPane(false)
+    showConversation()
     renderSessions()
     closeRail()
     void refreshPhoneBinding(conversationId)
@@ -4605,6 +4120,7 @@
       }
       if (!content) continue
       const row = element('li', 'message')
+      row.dataset.seq = String(event.seq)
       row.append(element('span', 'message-label', label), element('span', 'message-text', content))
       history.append(row)
     }
@@ -4648,9 +4164,7 @@
   async function showPhonePane() {
     if (!state.syncAvailable) return
     state.phonePane = true
-    state.taskPane = false
     byId('conversation-pane').hidden = true
-    byId('tasks-pane').hidden = true
     byId('phone-pane').hidden = false
     byId('assistant-title').textContent = '手机来源'
     closeRail()
@@ -5156,27 +4670,15 @@
     byId('rail-backdrop').hidden = false
     byId('rail-open').setAttribute('aria-expanded', 'true')
   })
+  byId('load-older').addEventListener('click', () => { void loadOlderHistory() })
+  byId('chat-scroll').addEventListener('scroll', () => { if (byId('chat-scroll').scrollTop < 40) void loadOlderHistory() })
   byId('rail-close').addEventListener('click', closeRail)
   byId('rail-backdrop').addEventListener('click', closeRail)
-  byId('show-tasks').addEventListener('click', () => showTaskPane(true))
-  byId('rail-tasks').addEventListener('click', () => showTaskPane(true))
   byId('show-phone').addEventListener('click', () => { void showPhonePane() })
   byId('rail-phone').addEventListener('click', () => { void showPhonePane() })
-  byId('phone-back').addEventListener('click', () => showTaskPane(false))
+  byId('phone-back').addEventListener('click', () => showConversation())
   byId('phone-refresh').addEventListener('click', () => { void refreshPhoneRecords() })
   byId('phone-more').addEventListener('click', () => { void refreshPhoneRecords() })
-  byId('back-to-chat').addEventListener('click', () => showTaskPane(false))
-  byId('refresh-tasks').addEventListener('click', () => { void refreshTasks() })
-  byId('more-tasks').addEventListener('click', () => { void refreshTasks(true) })
-  byId('task-detail-close').addEventListener('click', closeTaskDetail)
-  byId('task-detail-dialog').addEventListener('cancel', (event) => { event.preventDefault(); closeTaskDetail() })
-  byId('task-detail-dialog').addEventListener('close', () => { if (taskDetail.taskId) closeTaskDetail() })
-  byId('task-detail-refresh').addEventListener('click', () => { if (taskDetail.taskId) void openTaskDetail(taskDetail.taskId) })
-  byId('task-detail-session').addEventListener('click', () => {
-    const sessionId = byId('task-detail-session').dataset.sessionId
-    closeTaskDetail()
-    if (sessionIdPattern.test(sessionId || '')) void selectSession(sessionId)
-  })
   byId('model-select').addEventListener('change', (event) => { state.modelProfileId = event.target.value; updateAvailability() })
   byId('model-trigger').addEventListener('click', openModelMenu)
   byId('model-trigger').addEventListener('keydown', (event) => {
@@ -5252,11 +4754,11 @@
   byId('open-notepad').addEventListener('click', async () => {
     const blocker = desktopBlocker()
     if (blocker) {
-      showTaskPane(true)
+      showConversation()
       if (blocker.commandId && !state.tasks.some((item) => item.commandId === blocker.commandId)) {
         try {
           const payload = await accessApi(`/commands/${encodeURIComponent(blocker.commandId)}`)
-          if (payload.command) { state.tasks.unshift(payload.command); renderTasks(); updateAvailability() }
+          if (payload.command) { state.tasks.unshift(payload.command); renderConversationTasks(); updateAvailability() }
         } catch { /* The task pane can still show its cached record or refresh state. */ }
       }
       return
