@@ -119,7 +119,7 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250 }
         const identity = personalExecutionIdentity(exec);
         let calls = callsByAgent.get(exec.agent);
         if (!calls) { calls = new Map(); callsByAgent.set(exec.agent, calls); }
-        if (calls.size < 256) calls.set(exec.callId, { ...identity, toolName: exec.name,
+        calls.set(exec.callId, { ...identity, toolName: exec.name,
           argumentsHash: executionHash(exec.arguments) });
       } catch { /* Missing real tool/receipt identity cannot become an approval request. */ }
     }
