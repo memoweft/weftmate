@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | 待开工 |
-| Codex · Mac | A2 Apple 客户端契约对齐 | `wp/a2-apple-contract`：发送/纠正体与 UTF-16 上限、明确接管确认、personal-remote 任务范围、图片/文件附件上传与历史预览已实现；Core 243 项、状态检查 10 组与三目标构建通过；iPhone 隔离 UI 内容可见场景通过；Mac UI 受本机自动化/辅助功能授权阻塞，待 PR 审查 |
+| Codex · Mac | A2 Apple 客户端契约对齐完成 | `wp/a2-apple-contract`：发送/纠正体与 UTF-16 上限、明确接管确认、personal-remote 任务范围、图片/文件附件上传与历史预览已实现；Core 243 项、状态检查 10 组与三目标构建通过；iPhone 隔离 UI 内容可见场景通过；Mac UI 受本机自动化/辅助功能授权阻塞；[PR #21](https://github.com/memoweft/weftmate/pull/21) 待审 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
