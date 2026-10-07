@@ -11,3 +11,5 @@
 .weftmate-desktop[data-native-workspace="full"] .assistant-shell { height: calc(100dvh - 44px); }
 .weftmate-desktop #desktop-auto-start { width: auto; margin-right: 8px; }
 .weftmate-desktop .desktop-startup { display: flex; align-items: center; }
+.weftmate-desktop .rail-heading > strong { display: none; }
+.weftmate-desktop .rail-heading { justify-content: flex-end; }

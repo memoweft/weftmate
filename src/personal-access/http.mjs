@@ -21,6 +21,7 @@ import {
   writeStreamPart
 } from './common.mjs';
 import { canonicalMemoryPathname } from '../personal-memory/http.mjs';
+import { conversationResources } from './resources.mjs';
 import { handlePersonalHealthHttp } from '../personal-health/http.mjs';
 import {
   IMAGE_CONTENT_TYPES,
@@ -1077,6 +1078,18 @@ export function createHttpHandler(context) {
         const sessionId = id(approvalMatch[1]);
         return context.json(response, 200, await context.answerToolApproval(request, ownerId, deviceId, sessionId,
           approvalMatch[2], await context.readJson(request)));
+      }
+      const resourcesMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/resources$/.exec(pathname);
+      if (request.method === 'GET' && resourcesMatch) {
+        const sessionId = id(resourcesMatch[1]);
+        if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
+        const cursor = url.searchParams.get('afterSeq') ?? '-1';
+        if ([...url.searchParams.keys()].some(key => key !== 'afterSeq') || url.searchParams.getAll('afterSeq').length > 1 ||
+            !/^-?\d+$/.test(cursor) || !Number.isSafeInteger(Number(cursor)) || Number(cursor) < -1) throw failure('INVALID_REQUEST');
+        const result = await conversationResources(context, state, sessionId, ownerId, Number(cursor));
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return context.json(response, 200, result);
       }
       const detailMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events\/(\d+)\/detail$/.exec(pathname);
       if (request.method === 'GET' && detailMatch) {

@@ -2837,13 +2837,10 @@
   }
   function approvalStatusText(row) {
     if (row.status === 'pending') return '等待你决定是否允许这次操作。'
-    if (row.status === 'answered') return row.decisionOutcome === 'allowed-once'
-      ? '允许本次的决定已登记，正在等待执行端确认。' : '拒绝的决定已登记，正在等待执行端确认。'
+    if (row.status === 'answered') return `${row.decisionOutcome === 'allowed-once' ? '已提交允许' : '已提交拒绝'} · ${executionName(row)}`
     if (row.status === 'unavailable') return row.outcome === 'cancelled'
-      ? '本次审批已随停止请求取消；任务停止结果见原对话。' : '本次审批已失效，无法继续答复。请查看原对话。'
-    return { 'allowed-once': '执行端已确认允许本次。任务结果请继续查看原对话。',
-      rejected: '执行端已确认拒绝。请在原对话查看后续结果。', cancelled: '执行端已确认审批取消。任务进展见原对话。',
-      unavailable: '执行端已确认审批失效。请查看原对话。' }[row.outcome]
+      ? `已取消 · ${executionName(row)}` : `已失效 · ${executionName(row)}`
+    return `${{ 'allowed-once': '已允许', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' }[row.outcome] || '已处理'} · ${executionName(row)}`
   }
   function renderConversationApprovals() {
     const context = approvalContext(), list = byId('transcript')
@@ -3084,16 +3081,13 @@
     try { return await promise } finally { if (conversationQuestions.reads.get(key)?.promise === promise) conversationQuestions.reads.delete(key) }
   }
   function questionStatusText(row) {
-    if (row.status === 'unavailable') return row.answerAcceptedAt
-      ? '执行端曾确认接收本入口回答，但本次信息问题现已失效。任务进展请查看原对话。'
-      : '本次信息问题已失效，不能再提交。任务进展请查看原对话。'
-    if (row.status === 'resolved' && row.outcome === 'cancelled') return row.answerAcceptedAt
-      ? '执行端曾确认接收本入口回答，随后确认本次信息问题取消。任务进展见原对话。'
-      : '执行端已确认本次信息问题取消。任务进展见原对话。'
-    if (row.answerAcceptedAt) return '执行端已确认接收本入口提交的回答。任务结果请继续查看原对话。'
+    const label = row.questions?.[0]?.header || row.questions?.[0]?.question || '补充信息'
+    if (row.status === 'unavailable') return `已失效 · ${label}`
+    if (row.status === 'resolved' && row.outcome === 'cancelled') return `已取消 · ${label}`
+    if (row.answerAcceptedAt) return `已回答 · ${label}`
     if (row.status === 'pending') return '请补充这次任务需要的信息。'
-    if (row.status === 'answered') return '回答已登记，正在等待执行端确认接收。'
-    return '原生问答已结束，尚未确认采用本入口回答。任务结果见原对话。'
+    if (row.status === 'answered') return `已提交回答 · ${label}`
+    return `已结束 · ${label}`
   }
   function renderConversationQuestions() {
     const context = approvalContext(), list = byId('transcript')
@@ -3423,6 +3417,7 @@
   function inlineTaskInfo(taskId, button) {
     const context = conversationTaskContext(), entry = conversationTasks.entries.get(taskId)
     if (!conversationTaskCurrent(context) || !entry?.payload) return
+    if (window.WeftDesktop) { void window.WeftDesktop.openCollection(null, button); return }
     const card = button.closest('[data-conversation-task], [data-conversation-approval], [data-conversation-question]') || button.parentNode
     const existing = card.querySelector('.timeline-task-info')
     if (existing) { existing.remove(); return }
@@ -3448,10 +3443,10 @@
     card.append(info)
   }
   function appendTimelineArtifact(parent, artifact, context = conversationTaskContext()) {
-    const line = element('div', 'timeline-artifact'), open = element('button', 'button secondary small', artifact.fileName || '打开成果')
+    const line = element('div', 'timeline-artifact'), open = element('button', 'artifact-action', artifact.fileName || '打开成果')
     open.type = 'button'; open.addEventListener('click', () => { void openTimelinePreview(context,
       `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件') })
-    const download = element('a', 'button quiet small', '下载'); download.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; download.download = artifact.fileName || '成果文件'
+    const download = element('a', 'artifact-action', '下载'); download.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; download.download = artifact.fileName || '成果文件'
     line.append(open, element('small', '', window.WeftDesktop?.fileLabel(artifact) || `文件 · ${artifact.size || 0} 字节`), download)
     globalThis.WeftDesktopUI?.appendArtifactActions(line, artifact, toast)
     parent.append(line)
@@ -3459,12 +3454,15 @@
   async function openTimelinePreview(context, path, title) {
     if (!conversationTaskCurrent(context)) return
     if (window.WeftDesktop) {
-      const preview = window.WeftDesktop.openPreview(title)
+      const preview = window.WeftDesktop.openPreview(title, document.activeElement, path)
       try { const data = await accessApi(path)
-        if (!conversationTaskCurrent(context) || !preview.panel.isConnected) return
+        if (!conversationTaskCurrent(context) || !preview.content.isConnected) return
         const text = data.text || data.preview?.text || data.source?.text || '暂时没有可预览内容'
-        preview.content.replaceChildren(window.WeftDesktop.markdown(text))
-      } catch { if (preview.panel.isConnected) preview.content.textContent = '暂时无法读取。关闭后重试。' }
+        preview.content.replaceChildren()
+        const artifact = data.artifact || data.preview?.artifact
+        if (artifact?.artifactId) appendResourceArtifactActions(preview.content, artifact)
+        preview.content.append(window.WeftDesktop.markdown(text))
+      } catch { if (preview.content.isConnected) preview.content.textContent = '暂时无法读取。关闭后重试。' }
       return
     }
     document.querySelector('.timeline-preview')?.remove()
@@ -3477,6 +3475,69 @@
     } catch { if (panel.isConnected) text.textContent = '暂时无法读取，请关闭后重试。' }
   }
   function timelineEventsForContext(context = conversationTaskContext()) { return context.source === 'phone' ? state.phoneHostEvents.get(context.conversationId) || [] : [...state.historyEvents.values()] }
+  let resourceCache = null
+  async function loadConversationResources() {
+    const context = conversationTaskContext(), key = JSON.stringify(context)
+    if (!conversationTaskCurrent(context) || !context.sessionId) return { outputs: [], sources: [] }
+    if (resourceCache?.key !== key) resourceCache = { key, sources: new Map(), cursor: -1, outputs: [] }
+    const cache = resourceCache
+    if (cache.pending) return cache.pending
+    const read = async () => {
+      let more
+      do {
+        const page = await accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/resources?afterSeq=${cache.cursor}`)
+        if (!conversationTaskCurrent(context) || resourceCache !== cache) throw { code: 'STALE_CONTEXT' }
+        cache.outputs = page.outputs.map(artifact => ({ key: `artifact:${artifact.artifactId}`, kind: 'file', name: artifact.fileName || '成果文件', artifact }))
+        for (const source of page.sources) {
+          const prior = cache.sources.get(source.key) || { ...source, uses: [] }
+          const uses = new Map(prior.uses.map(use => [use.callId || use.id, use]))
+          for (const use of source.uses) {
+            const id = use.callId || use.id, previous = uses.get(id)
+            // Prefer captured content over a raw invocation for the same read.
+            uses.set(id, previous?.path.startsWith('/tasks/') && !use.path.startsWith('/tasks/') ? { ...use, path: previous.path } : use)
+          }
+          cache.sources.set(source.key, { ...prior, ...source, uses: [...uses.values()] })
+        }
+        more = page.hasMore
+        if (more && page.nextSeq <= cache.cursor) throw { code: 'REQUEST_FAILED' }
+        cache.cursor = page.nextSeq
+      } while (more)
+      return { outputs: cache.outputs, sources: [...cache.sources.values()] }
+    }
+    cache.pending = read()
+    try { return await cache.pending } finally { cache.pending = null }
+  }
+  function appendResourceArtifactActions(parent, artifact) {
+    const actions = element('div', 'resource-actions'), download = element('a', 'artifact-action', '下载')
+    download.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; download.download = artifact.fileName || '成果文件'
+    actions.append(download); globalThis.WeftDesktopUI?.appendArtifactActions(actions, artifact, toast); parent.append(actions)
+  }
+  function openConversationResource(item, trigger = document.activeElement) {
+    const context = conversationTaskContext()
+    if (!conversationTaskCurrent(context)) return
+    if (item.artifact) { void openTimelinePreview(context, `/artifacts/${encodeURIComponent(item.artifact.artifactId)}/preview`, item.name); return }
+    const target = window.WeftDesktop.openPreview(item.name, trigger, item.key, item.kind)
+    target.content.replaceChildren(element('h2', '', item.name), element('p', 'muted', window.WeftDesktop.usageText(item)))
+    if (item.location) target.content.append(element('p', 'muted resource-location', item.location))
+    if (item.url) { const address = element('input'); address.readOnly = true; address.value = item.url; address.setAttribute('aria-label', '网页地址'); target.content.append(address) }
+    for (const use of item.uses) {
+      const line = element('section', 'resource-usage')
+      line.append(element('p', '', `${use.summary}${use.at ? ` · ${new Date(use.at).toLocaleString()}` : ''}`))
+      const read = element('button', 'button secondary small', item.kind === 'tool' ? '查看调用内容' : '查看具体内容'); read.type = 'button'
+      read.addEventListener('click', async () => {
+        if (!conversationTaskCurrent(context)) return
+        read.disabled = true
+        try {
+          const data = await accessApi(use.path)
+          if (!conversationTaskCurrent(context) || !line.isConnected) return
+          const text = data.source?.text || data.text || '暂时没有可预览内容'
+          const content = element('pre', 'timeline-raw', text); content.tabIndex = 0
+          line.querySelector('pre')?.remove(); line.append(content); read.textContent = '重新读取'
+        } catch { if (line.isConnected) read.textContent = '读取失败，重试' }
+        finally { read.disabled = false }
+      }); line.append(read); target.content.append(line)
+    }
+  }
   function renderTimeline(events = timelineEventsForContext()) {
     if (!window.WeftTimeline) return
     const context = conversationTaskContext(), sessionId = context.sessionId
@@ -3484,6 +3545,19 @@
       fileLabel: window.WeftDesktop?.fileLabel,
       mobile: window.matchMedia?.('(max-width: 640px)').matches === true,
       readDetail: seq => accessApi(`/sessions/${encodeURIComponent(sessionId)}/events/${seq}/detail`),
+      openStep: async (step, trigger) => {
+        try { const items = await loadConversationResources()
+          if (!conversationTaskCurrent(context)) return
+          window.WeftDesktop?.openCollection({ outputs: [], sources: items.sources.filter(item => item.uses.some(use => use.id === `${step.taskId}/${step.stepId}`)) }, trigger)
+        } catch { if (conversationTaskCurrent(context)) toast('暂时无法读取来源，请重试。') }
+      },
+      openReference: async (key, trigger) => {
+        try { const items = await loadConversationResources()
+          if (!conversationTaskCurrent(context)) return
+          const item = items.sources.find(item => item.key === key)
+          if (item) openConversationResource(item, trigger)
+        } catch { if (conversationTaskCurrent(context)) toast('暂时无法读取来源，请重试。') }
+      },
       openArtifact: artifact => openTimelinePreview(context, `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件'),
       appendArtifactActions: (parent, artifact) => globalThis.WeftDesktopUI?.appendArtifactActions(parent, artifact, toast),
       downloadArtifact: artifact => { const link = element('a'); link.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; link.download = artifact.fileName || '成果文件'; link.click() },
@@ -4942,7 +5016,7 @@
   }
   byId('cancel-turn').addEventListener('click', stopCurrentTurn)
   window.WeftDesktop?.init({ renderSessions, openAccount, sendDraft, addFiles: addAttachmentFiles,
-    stop: stopCurrentTurn, isAssistant: () => state.currentView === 'assistant' })
+    stop: stopCurrentTurn, isAssistant: () => state.currentView === 'assistant', resources: loadConversationResources, openResource: openConversationResource })
   if (window.WeftDesktop) setInterval(() => { if (state.currentView === 'assistant' && state.turnStatus === 'running') renderTurnStatus() }, 1000)
   byId('open-notepad').addEventListener('click', async () => {
     const blocker = desktopBlocker()
