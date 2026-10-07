@@ -1,0 +1,12 @@
+/* Reserve native Windows caption buttons and a dedicated non-interactive drag area. */
+.weftmate-desktop body { padding-top: 44px; }
+.weftmate-desktop .desktop-titlebar {
+  position: fixed; inset: 0 0 auto; height: 44px; box-sizing: border-box;
+  padding: 12px 160px 12px 16px; z-index: 1000;
+  -webkit-app-region: drag; user-select: none;
+  color: var(--ink); background: var(--surface); font: 14px/20px system-ui;
+}
+.weftmate-desktop .page { min-height: calc(100dvh - 44px); }
+.weftmate-desktop .assistant-shell { height: min(820px, calc(100dvh - 176px)); }
+.weftmate-desktop #desktop-auto-start { width: auto; margin-right: 8px; }
+.weftmate-desktop .desktop-startup { display: flex; align-items: center; }

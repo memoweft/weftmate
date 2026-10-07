@@ -3403,7 +3403,9 @@
     open.type = 'button'; open.addEventListener('click', () => { void openTimelinePreview(context,
       `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件') })
     const download = element('a', 'button quiet small', '下载'); download.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; download.download = artifact.fileName || '成果文件'
-    line.append(open, element('small', '', `${artifact.contentType || '文件'} · ${artifact.size || 0} 字节`), download); parent.append(line)
+    line.append(open, element('small', '', `${artifact.contentType || '文件'} · ${artifact.size || 0} 字节`), download)
+    globalThis.WeftDesktopUI?.appendArtifactActions(line, artifact, toast)
+    parent.append(line)
   }
   async function openTimelinePreview(context, path, title) {
     if (!conversationTaskCurrent(context)) return
@@ -3424,6 +3426,7 @@
       mobile: window.matchMedia?.('(max-width: 640px)').matches === true,
       readDetail: seq => accessApi(`/sessions/${encodeURIComponent(sessionId)}/events/${seq}/detail`),
       openArtifact: artifact => openTimelinePreview(context, `/artifacts/${encodeURIComponent(artifact.artifactId)}/preview`, artifact.fileName || '成果文件'),
+      appendArtifactActions: (parent, artifact) => globalThis.WeftDesktopUI?.appendArtifactActions(parent, artifact, toast),
       downloadArtifact: artifact => { const link = element('a'); link.href = `${accessBase}/artifacts/${encodeURIComponent(artifact.artifactId)}/download`; link.download = artifact.fileName || '成果文件'; link.click() },
     })
   }
@@ -4917,6 +4920,9 @@
     if (grant) { state.setupGrant = grant; void load() }
   })
   const cloudUi = globalThis.WeftCloudUi?.create({ acceptSession, enterAssistant, openAccount, show, accessApi, toast })
+  globalThis.WeftDesktopUI?.init({ error: toast, openConversation: async sessionId => {
+    await enterAssistant(); await refreshSessions(); await selectSession(sessionId)
+  } })
   if (cloudUi) void cloudUi.boot().then(handled => { if (!handled) void load() })
   else void load()
   setInterval(() => { if (state.account && document.visibilityState === 'visible') void refreshPendingDevices() }, 15000)
