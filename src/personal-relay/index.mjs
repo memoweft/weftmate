@@ -3,15 +3,17 @@ import { fileURLToPath } from 'node:url';
 import { promisify } from 'node:util';
 import { createServer } from 'node:net';
 import { randomBytes } from 'node:crypto';
-import { writeFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { createHostTlsAdapter, developmentCertificate } from './tls.mjs';
+import { createCertificateManager, certificateInfo } from './certificates.mjs';
 
 export function relayFromEnvironment(env = process.env) {
   if (env.WEFTMATE_RELAY_ENABLED !== 'true') return null;
   return { binary: env.WEFTMATE_FRPC_FILE, transportCaFile: env.WEFTMATE_RELAY_CA_FILE,
-    certFile: env.WEFTMATE_RELAY_CERT_FILE, developmentTls: env.WEFTMATE_RELAY_DEVELOPMENT_TLS === 'true' };
+    certFile: env.WEFTMATE_RELAY_CERT_FILE, acme: env.WEFTMATE_RELAY_ACME_ENABLED === 'true' ? {
+      directoryUrl: env.WEFTMATE_ACME_DIRECTORY_URL, email: env.WEFTMATE_ACME_EMAIL } : null, developmentTls: env.WEFTMATE_RELAY_DEVELOPMENT_TLS === 'true' };
 }
 async function unusedPort() {
   const server = createServer();
@@ -48,13 +50,13 @@ customDomains = [${str(new URL(c.baseUrl).hostname)}]
 `;
 }
 export async function createHostRelay({ root, identity, options, setPublicOrigin }) {
-  if (!identity || !options?.binary || !options?.transportCaFile || (!options.certFile && !options.developmentTls))
+  if (!identity || !options?.binary || !options?.transportCaFile || (!options.certFile && !options.developmentTls && !options.acme))
     throw new Error('Relay requires cloud identity, frpc, transport CA and host certificate');
   const { stdout } = await promisify(execFile)(options.binary, ['-v']);
   if (stdout.trim() !== '0.71.0') throw new Error('Relay requires official frpc 0.71.0');
   const dir = path.join(root, 'relay'); await ensurePrivateDirectory(dir);
   let origin, child, adapter, timer, polling, closed = false, state = 'stopped', publicOrigin = null, failure = null;
-  let credentials, adminPort, adminPassword;
+  let credentials, adminPort, adminPassword, certificates, activeCertFile, certificateExpiresAt = null;
   const configFile = path.join(dir, 'frpc.toml');
   async function stopChild() {
     const current = child; child = null;
@@ -71,8 +73,17 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
     publicOrigin = next.baseUrl; credentials = { ...next, serverAddr: options.connectAddress ?? next.serverAddr, serverPort: options.connectPort ?? next.serverPort };
     if (!adapter) {
       const domain = new URL(publicOrigin).hostname, tls = identity.tls();
+      if (options.acme && !options.developmentTls) {
+        certificates ??= await createCertificateManager({ root, domain, identity, certFile: options.certFile,
+          ...options.acme, onInstalled: async () => { await adapter?.reload(); } });
+        if (closed) { await certificates.close(); return; }
+        certificates.start();
+        await certificates.check();
+      }
       const certificate = options.developmentTls
-        ? await developmentCertificate({ root, domain, privateJwk: tls.privateJwk }) : { certFile: options.certFile };
+        ? await developmentCertificate({ root, domain, privateJwk: tls.privateJwk }) : { certFile: certificates?.certFile ?? options.certFile };
+      activeCertFile = certificate.certFile;
+      certificateExpiresAt = certificateInfo(await readFile(certificate.certFile), { domain, spki: tls.spki }).certificateExpiresAt;
       if (closed) return;
       adapter = await createHostTlsAdapter({ origin, publicOrigin, ...tls, certFile: certificate.certFile });
       setPublicOrigin(publicOrigin);
@@ -111,15 +122,20 @@ export async function createHostRelay({ root, identity, options, setPublicOrigin
   }
   return {
     start(localOrigin) { origin = localOrigin; void tick(); timer = setInterval(() => { void tick(); }, 2000); timer.unref(); },
-    status() { return { state, baseUrl: publicOrigin, ...(failure ? { errorCode: failure } : {}) }; },
+    status() { return { state, baseUrl: publicOrigin, certificateExpiresAt, certificateErrorCode: null, ...certificates?.status(), ...(failure ? { errorCode: failure } : {}) }; },
     async rotate(requestId) {
       await polling;
       const next = await identity.relayRequest('/hosts/relay/rotate', { requestId });
       await launch(next); return this.status();
     },
-    reloadCertificate: () => adapter?.reload(),
+    async reloadCertificate() {
+      await adapter?.reload();
+      await certificates?.refresh();
+      if (adapter) certificateExpiresAt = certificateInfo(await readFile(activeCertFile),
+        { domain: new URL(publicOrigin).hostname, spki: identity.tls().spki }).certificateExpiresAt;
+    },
     async close() {
-      closed = true; clearInterval(timer); await polling;
+      closed = true; clearInterval(timer); await certificates?.close(); await polling;
       await stopChild(); await adapter?.close(); state = 'stopped';
     },
   };

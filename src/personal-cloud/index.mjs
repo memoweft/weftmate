@@ -45,15 +45,16 @@ export async function createHostCloudIdentity(context, options) {
     let response;
     try {
       response = await fetch(`${config.base}${route}`, { method: 'POST', redirect: 'error',
-        signal: AbortSignal.timeout(5000), headers: { 'content-type': 'application/json',
+        signal: AbortSignal.timeout(route.startsWith('/hosts/relay/dns/') ? 125_000 : 5000), headers: { 'content-type': 'application/json',
           origin: new URL(config.issuer).origin, ...(token ? { authorization: `Bearer ${token}` } : {}) },
         body: JSON.stringify(body) });
       const result = await response.json();
+      if (!response.ok && route.startsWith('/hosts/relay/dns/')) throw failure(result?.error?.code ?? 'CLOUD_UNAVAILABLE', 503);
       if (!response.ok) throw failure(result?.error?.code === 'CLAIM_CONFLICT' ? 'CLOUD_BINDING_CONFLICT' : 'CLOUD_UNAVAILABLE',
         response.status === 409 ? 409 : 503);
       return result;
     } catch (error) {
-      if (error.code === 'CLOUD_BINDING_CONFLICT') throw error;
+      if (error.code === 'CLOUD_BINDING_CONFLICT' || route.startsWith('/hosts/relay/dns/') && error.code) throw error;
       throw failure('CLOUD_UNAVAILABLE', 503);
     }
   }
