@@ -99,6 +99,12 @@
   ],
   "vendorTests": [
     {
+      "file": "tests/model-budget-runtime.test.ts",
+      "name": "service context reaches native compaction and ten tool steps use changing wire budgets",
+      "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners. Reproduced unchanged on main 201d36a during H2; M0-2 added this case after CI-1 cataloging.",
+      "tracking": "https://github.com/memoweft/weftmate/pull/25"
+    },
+    {
       "file": "tests/ai-game-tool-contract.test.ts",
       "name": "DSH turn stop looks up an ambiguous submit and requests one idempotent cancel",
       "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners."
