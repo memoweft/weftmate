@@ -1,8 +1,12 @@
 [Unit]
 Description=WeftMate official frps relay
 After=network-online.target weftmate-cloud.service
+Requires=weftmate-cloud.service
 [Service]
 DynamicUser=yes
+User=weftmate-frps
+LoadCredential=relay-cert.pem:/etc/letsencrypt/live/weftmate-cloud/fullchain.pem
+LoadCredential=relay-key.pem:/etc/letsencrypt/live/weftmate-cloud/privkey.pem
 ExecStart=/opt/weftmate/frp/frps -c /etc/weftmate/frps.toml
 Restart=on-failure
 RestartSec=3

@@ -4,7 +4,7 @@ import WeftMateCore
 @MainActor
 final class CloudLoginModel: ObservableObject {
     @Published var showLogin = false
-    @Published var cloudAddress = "https://weftmate.com"
+    @Published var cloudAddress = "https://api.weftmate.com"
     @Published var pairingText = ""
     @Published private(set) var hasPairing = false
     @Published private(set) var busy = false
