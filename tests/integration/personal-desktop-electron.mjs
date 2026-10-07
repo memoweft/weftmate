@@ -145,9 +145,8 @@ try {
     shell.openPath = async path => { const error = await open(path); globalThis.w1NativeFiles.push({ action: 'open', path, error }); return error; };
     shell.showItemInFolder = path => { reveal(path); globalThis.w1NativeFiles.push({ action: 'show', path }); };
   });
-  const artifactCard = page.locator('.timeline-artifact').filter({ hasText: 'w1-result.txt' }).first();
-  await artifactCard.getByRole('button', { name: '用默认程序打开', exact: true }).click();
-  await artifactCard.getByRole('button', { name: '在文件夹中显示', exact: true }).click();
+  await page.getByRole('button', { name: '用默认程序打开', exact: true }).first().click();
+  await page.getByRole('button', { name: '在文件夹中显示', exact: true }).first().click();
   const files = await until(() => application.evaluate(() => globalThis.w1NativeFiles.length === 2 && globalThis.w1NativeFiles));
   assert.equal(readFileSync(files[0].path, 'utf8'), 'W1 synthetic desktop artifact');
   assert.equal(files[0].error, ''); report.nativeArtifactBridge = true; report.realNativeFileCalls = true;
