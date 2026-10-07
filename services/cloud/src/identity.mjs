@@ -1,6 +1,7 @@
 import { Provider, interactionPolicy, errors } from 'oidc-provider';
 import { calculateJwkThumbprint, createLocalJWKSet, jwtVerify } from 'jose';
 import { createHosts } from './hosts.mjs';
+import { createRelay } from './relay.mjs';
 import { randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
 import { sqliteAdapter } from './oidc-adapter.mjs';
@@ -53,7 +54,7 @@ async function bodyOf(req) {
   }
 }
 
-export async function createIdentity({ database, config, mailer, logger, now = Date.now }) {
+export async function createIdentity({ database, config, mailer, logger, now = Date.now, relayDns = null }) {
   const keys = await loadKeys(config.dataDir);
   const accounts = new Accounts(database, mailer, keys.cookieSecret, { now, logger });
   const policy = interactionPolicy.base();
@@ -308,9 +309,11 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/account`, 'account'],
     [`${CLOUD_PATH}/auth/devices/revoke`, 'deviceRevoke'],
   ]);
-  const hosts = createHosts({ database, config, keys, authenticate, now });
+  const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
+  const hosts = createHosts({ database, config, keys, authenticate, now, relay });
   return {
     provider,
+    relay,
     accounts,
     keys,
     async handle(req, res) {
