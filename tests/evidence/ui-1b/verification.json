@@ -1,0 +1,19 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "syntheticAccount": true,
+  "paidModelRequests": 0,
+  "nativeOpenAndReveal": true,
+  "nativePanelFlow": [
+    "light",
+    "dark"
+  ],
+  "oneLineApproval": true,
+  "remotePanelFlow": [
+    "light",
+    "dark"
+  ],
+  "remoteDownload": true,
+  "conversationIsolationAndEmpty": true,
+  "oneLineQuestion": true
+}
