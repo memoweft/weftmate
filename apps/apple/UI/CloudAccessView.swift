@@ -49,7 +49,7 @@ struct CloudAccessView: View {
                     }
                 }
                 Section("云服务") {
-                    TextField("https://weftmate.com", text: $model.cloudAddress)
+                    TextField("https://api.weftmate.com", text: $model.cloudAddress)
                         .serverInput().disabled(model.busy || model.cloudSignedIn).accessibilityIdentifier("cloudAddress")
                 }
                 if let error = model.error {
