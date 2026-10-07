@@ -121,12 +121,12 @@ jobs:
     steps:
       - name: Checkout WeftMate
         uses: actions/checkout@v4
-      - name: Checkout pinned MemoWeft MW-2 candidate
+      - name: Checkout pinned MemoWeft Core (MW-2)
         uses: actions/checkout@v4
         with:
           repository: memoweft/memoweft
-          # Candidate for the dependent Core PR; merge Core before this bridge.
-          ref: 7d78ecdd2053abdc851ffe1fb91973123bcab507
+          # MemoWeft main after MW-2 (memoweft/memoweft#84).
+          ref: 0f786cd60663d447c8276200ec69fecae4d5d7bb
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
