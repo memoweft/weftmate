@@ -21,6 +21,7 @@ import {
   writeStreamPart
 } from './common.mjs';
 import { canonicalMemoryPathname } from '../personal-memory/http.mjs';
+import { handlePersonalHealthHttp } from '../personal-health/http.mjs';
 import {
   IMAGE_CONTENT_TYPES,
   INTERNAL_ARTIFACT_KIND,
@@ -208,6 +209,11 @@ export function createHttpHandler(context) {
       const { deviceId, ownerId: authenticatedOwnerId } = context.authenticate(request,
         write ? 'commands:write' : 'sessions:read');
       if (authenticatedOwnerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+      if (pathname.startsWith('/personal/v1/health/')) {
+        const result = await handlePersonalHealthHttp({ store: context.healthStore, context, request,
+          url, pathname, ownerId, deviceId });
+        return context.json(response, result.status, result.body);
+      }
       if (pathname.startsWith('/personal/v1/memory/')) {
         return await context.handleMemoryHttp(request, response, url, pathname, ownerId, deviceId);
       }

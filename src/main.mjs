@@ -76,7 +76,7 @@ import { servePersonalAccessUi } from './personal-access-ui/index.mjs';
 import { loadPersonalMemoryConfig } from './personal-memory/config.mjs';
 import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
-import { memoryRecallDestination, memorySessionPolicy } from './personal-memory/policy.mjs';
+import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } from './personal-memory/policy.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
@@ -1621,7 +1621,8 @@ async function bootstrap() {
       const proof = personalAccessService.privateAccountModelProof(ownerId, selected.id);
       const key = credentialForModelProfile(selected);
       return proof && key ? { profileId: selected.id, baseUrl: selected.baseUrl,
-        model: selected.model, routeFingerprint: proof.routeFingerprint, credential: key } : null;
+        model: selected.model, modelTier: memoryRecallModelTier(selected, memoryPolicyAccess()),
+        routeFingerprint: proof.routeFingerprint, credential: key } : null;
     }
     const config = personalMemoryRuntimeConfig;
     if (!personalAccessService.canUseModelProfile(ownerId, config.authRef) ||
@@ -1629,7 +1630,8 @@ async function bootstrap() {
     const authProfile = profiles.find((profile) => profile.id === config.authRef);
     const key = authProfile ? credentialForModelProfile(authProfile) : null;
     return key ? { profileId: config.authRef, baseUrl: config.baseUrl,
-      model: config.model, routeFingerprint: null, credential: key } : null;
+      model: config.model, modelTier: memoryRecallModelTier(selected, memoryPolicyAccess()),
+      routeFingerprint: null, credential: key } : null;
   }
   const createWebRuntime = () => new DshWebRuntime({
     // One process and one home are the Stage 0/1 durability boundary. Session

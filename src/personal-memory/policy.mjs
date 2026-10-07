@@ -48,3 +48,10 @@ export function memoryRecallDestination({ binding, described, boundProfileId, pr
   }
   return memorySessionPolicy({ binding, described, selected: { profile: matches[0] }, access });
 }
+
+/** Only the host's verified formal local catalog proves local processing.
+ * An owner-private URL (even loopback, which may be a cloud proxy) is cloud. */
+export function memoryRecallModelTier(profile, access) {
+  return profile?.baseUrl === FORMAL_LOCAL_BASE_URL &&
+    access?.isFormalLocalProfile?.(profile.id) === true ? 'local' : 'cloud';
+}
