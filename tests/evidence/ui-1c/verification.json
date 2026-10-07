@@ -1,0 +1,17 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "syntheticAccount": true,
+  "paidModelRequests": 0,
+  "nativeThemes": [
+    "light",
+    "dark"
+  ],
+  "latestOutputs": true,
+  "readableCalls": true,
+  "collapsibleRawDetails": true,
+  "copyExactRawDetails": true,
+  "sidebarAligned": true,
+  "connectorKeyboardAndRetry": true,
+  "conversationIsolationAndEmpty": true
+}

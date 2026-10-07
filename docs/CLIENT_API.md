@@ -321,7 +321,7 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 |---|---|---|---|---|
 | GET `/sessions/{sessionId}/resources` | 可选单值 `afterSeq`，默认 -1，安全整数 ≥ -1；无其他查询参数 | 200 `{outputs,sources,nextSeq,hasMore}`；每次按现有时间线读取最多 200 条 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE` | 桌、远程浏览器 |
 
-`outputs` 是当前账号、当前会话的完整成果 `Command` 元数据数组；预览、下载仍走 3.8。`sources` 是这一页工具调用以及会话已有网页 / 项目文件快照的只读聚合，不新增存储、不读取任意磁盘路径、不改变执行或工具权限。客户端从 -1 开始读取，按 `nextSeq` 正向继续到 `hasMore:false`，随后沿同一水位增量读取；不需要用户先加载更早的消息。快照与成果每次重取现有记录，工具参数 / 输出原文留在既有详情接口。
+`outputs` 是当前账号、当前会话的成果 `Command` 元数据数组；同一 `fileName` 只返回按 `createdAt` 最新的一项，缺少文件名时按 `artifactId` 区分；旧成果仍可通过原 ID 访问。预览、下载仍走 3.8。`sources` 是这一页工具调用以及会话已有网页 / 项目文件快照的只读聚合，不新增存储、不读取任意磁盘路径、不改变执行或工具权限。客户端从 -1 开始读取，按 `nextSeq` 正向继续到 `hasMore:false`，随后沿同一水位增量读取；不需要用户先加载更早的消息。快照与成果每次重取现有记录，工具参数 / 输出原文留在既有详情接口；`uses[].summary` 优先描述动作、文件名或调用方提供的可读描述。
 
 来源形状：`{key,kind,name,location?,url?,uses,source?}`。`kind` 为 `file / webpage / tool`；`key` 以类别与路径 / URL / 工具名组成，供同一会话内聚合，文件 `name` 为短文件名、`location` 为原调用路径。网页只接受 HTTP(S) 参数。现有快照 `source` 沿用 `publicSource` 字段。`uses` 每项为 `{id,callId?,seq?,at?,summary,path,verb?}`：`path` 是省略 `/personal/v1` 的已授权快照或 seq 详情路径；`verb` 可为 `读取 / 写入`。同一调用的开始、完成及快照按 `callId`（无则 `id`）去重，完成记录更新原使用记录；已有内容快照优先于调用原文。次数是调用 / 使用次数，执行成功仍看具体内容中的实际结果，不能当作任务完成证明。
 
