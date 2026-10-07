@@ -41,14 +41,26 @@ final class A3TimelineUITests: XCTestCase {
         app.buttons["关闭预览"].tap()
         // Navigate to the beginning of the loaded tail; explicit upward paging retains the current conversation.
         let older = app.buttons["loadOlderTimeline"]
-        for _ in 0..<35 { if older.exists && older.isHittable { break }; app.swipeDown(velocity: .fast) }
+        for _ in 0..<35 {
+            if older.exists && older.isHittable && older.frame.minY > app.navigationBars.firstMatch.frame.maxY &&
+                older.frame.maxY < draft.frame.minY - 60 { break }
+            scrollEarlier(app)
+        }
         XCTAssertTrue(older.exists && older.isHittable)
+        let readingAnchor = app.staticTexts.matching(NSPredicate(format: "label BEGINSWITH %@", "旧记录 ")).allElementsBoundByIndex.first {
+            $0.frame.minY > app.navigationBars.firstMatch.frame.maxY && $0.frame.maxY < draft.frame.minY - 60
+        }
+        let anchorLabel = try XCTUnwrap(readingAnchor?.label)
+        let anchorY = app.staticTexts[anchorLabel].frame.minY
         older.tap()
         let (data, _) = try await URLSession.shared.data(from: URL(string: "http://127.0.0.1:18763/personal/v1/test/report")!)
         let report = try XCTUnwrap(JSONSerialization.jsonObject(with: data) as? [String: Any])
         let requests = try XCTUnwrap(report["requests"] as? [[String: Any]])
         XCTAssertTrue(requests.contains { ($0["query"] as? [String: [String]])?["beforeSeq"]?.first == "21906" })
         XCTAssertFalse(requests.contains { ($0["query"] as? [String: [String]])?["afterSeq"]?.first == "-1" })
+        let retainedAnchor = app.staticTexts[anchorLabel]
+        print("A3 reading anchor \(anchorLabel): before=\(anchorY), after=\(retainedAnchor.frame.minY)")
+        XCTAssertEqual(retainedAnchor.frame.minY, anchorY, accuracy: 48, "Prepending a page moved the reading anchor")
         let earlier = app.staticTexts["旧记录 21806"]
         for _ in 0..<16 {
             if earlier.exists && earlier.isHittable { break }
@@ -79,7 +91,8 @@ final class A3TimelineUITests: XCTestCase {
         let bottom = app.textFields["conversationDraft"].frame.minY - 80
         let origin = window.coordinate(withNormalizedOffset: .zero)
         origin.withOffset(CGVector(dx: window.frame.midX, dy: top)).press(forDuration: 0.05,
-            thenDragTo: origin.withOffset(CGVector(dx: window.frame.midX, dy: bottom)))
+            thenDragTo: origin.withOffset(CGVector(dx: window.frame.midX, dy: bottom)),
+            withVelocity: .slow, thenHoldForDuration: 0.2)
     }
     @MainActor private func screenshot(_ app: XCUIApplication, _ name: String) {
         let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = "A3-" + name

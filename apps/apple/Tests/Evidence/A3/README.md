@@ -8,7 +8,7 @@
 | `make test-state` | 11 组全部通过，含实际 AppleAppModel 的尾页、before/after 水位、迟到响应、离线尾页/上翻检查，以及审批轮询期间的可回应状态 |
 | macOS / iOS / watchOS `xcodebuild` | 三目标 Debug 构建通过 |
 | iOS XCTest | A3 完整时间线场景及 A2 附件回归，2/2 通过 |
-| 长会话 | 22,000 条合成旧记录；打开尾页，`beforeSeq=21906` 上翻；没有 `afterSeq=-1` 请求 |
+| 长会话 | 22,000 条合成旧记录；打开尾页，`beforeSeq=21906` 上翻；没有 `afterSeq=-1` 请求；上翻前后同一文字记录的 y 位置差约 32pt（断言容差 48pt） |
 | 原始步骤详情 | 展开第二层后才 GET `/events/22004/detail`；收起/展开可复制 |
 | 审批 / 提问 | 允许一次、选择回答并提交；各一次 POST；原生解决事件更新原位置 |
 | 成果 | 完整 UTF-8 文件大小/SHA-256 校验后全屏预览；保存/分享入口可见 |
