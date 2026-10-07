@@ -1,46 +1,46 @@
-# Linux 部署草稿 · 待 S0 审查后使用
+# Linux 部署草稿 · S0–S2
 
-**S0 不执行这些命令，不 SSH、不修改 DNS、不连服务器。** 文件仅供后续部署工作包审查。现有 weftmate.com 服务器的发行版、现有代理/网站、磁盘与 Node 路径本包均未实查，不能把草稿称为已兼容现场。
+本工作包没有 SSH、部署、修改 DNS 或使用生产 CA。配置须在部署包结合实际 Linux、现有网站/代理、域名与 Node 24 路径核实。草稿使用 example.com / 203.0.113.10，不包含真实地址、账号或秘密。
 
-## 目录与进程
+## 拓扑与端口
 
-| 路径 | 内容 |
-|---|---|
-| `/opt/weftmate-cloud/releases/<commit>/` | 发布包：`services/cloud/` 的内容，root 管理，只读代码 |
-| `/opt/weftmate-cloud/current` | 指向当前 release 的链接 |
-| `/etc/weftmate-cloud/cloud.env` | root 管理，0600，真实环境配置，不进 Git |
-| `/var/lib/weftmate-cloud/` | systemd StateDirectory，数据库/开发邮件；S4 才加密文对象 |
-| systemd journal | JSON 操作日志，按系统策略轮转 |
+公网只有 **TCP 443** 由 HAProxy 拥有，按 ClientHello SNI 分流（`haproxy.cfg`）：
 
-systemd 用 DynamicUser 与 StateDirectory 管理专属账号/写入目录，不用 root 跑 Node。unit 里的 `/usr/bin/node` 必须在目标 Linux 验证为 **Node 24.x** 后再使用；如安装路径不同，修改 unit。S0 只有一个 Node 进程，不装 PM2/Docker/Kubernetes。Caddy 的域名片段只服务控制面；S2 的 frps 内容入口独立 TLS 透传，不能加到此 reverse_proxy 中。
+| SNI | 回环路径 | TLS 终止 |
+|---|---|---|
+| api.example.com | Caddy 9443 → Node 8787 | Caddy；控制面允许云读 |
+| relay.example.com | cloud control ingress 7001 → frps 7000 | 官方 frps；外层 transport TLS |
+| h-<32hex>.hosts.example.com | cloud content ingress 7444 → frps HTTPS mux 7443 → frpc → 宿主 adapter → HTTP | **宿主**；云只转 TLS 密文 |
 
-## 后续人工执行顺序
+8788 是 frps 的私有 HTTP plugin；宿主 adapter 和原宿主 HTTP 仅绑定 127.0.0.1。所有内部端口不对公网开放。未知 SNI 拒绝；内容不使用 HAProxy `ssl`、Caddy HTTP 反向代理或 CDN TLS 终止。外层 frpc transport 强制 TLS、CA 验证和 relay.example.com 的 serverName，标准 TLS 首字节使 SNI 可被前置读取。
 
-1. 确认 S0 审查通过、实际 Linux/现有网站、Node 24 路径、Caddy 配置、目标 API 域名和 DNS；保留现有网站/代理。DNS 示例为 `api.example.com → 203.0.113.10`，真实值只在服务器配置。Caddy 自动 HTTPS 需要域名正确与验证端口可达。[Caddy 官方说明](https://caddyserver.com/docs/automatic-https)
-2. 从已审查提交生成只含 `services/cloud/` 的发布包，执行本服务 `npm ci`，在隔离目录运行 `node --test test/*.test.mjs`。不安装主仓 Electron/DSH；S1a 独立锁定 oidc-provider/jose。禁止打包 `.runtime`、`.env`、identity-keys 或本机数据。
-3. 以管理员身份把包解到新的 release，把 `cloud.env.example` 复制到配置目录，填写专属数据目录。正式邮件启用前 file 仅供开发验证，不作为上线注册投递。
-4. 安装 unit 与当前链接。以下是**需在目标机审查后才执行**的示意，`<commit>` 由部署者替换：
+API 后端的 `send-proxy-v2` 仅交给 Caddy，Caddy 全局 options 的回环受信 proxy_protocol wrapper 必须先于 tls。它传递真实客户端来源给已有 cloud 限速，Caddy 覆盖 Host/X-Forwarded-Host/Proto/For 并删除 Forwarded；云 `CLOUD_TRUST_PROXY=true`。内容/control ingress 不发送 PROXY 协议，插件需要它们自己的 upstream socket 地址关联宿主。
 
-   ```sh
-   sudo install -d -m 0755 /etc/weftmate-cloud
-   sudo install -m 0600 cloud.env.example /etc/weftmate-cloud/cloud.env
-   sudo install -m 0644 weftmate-cloud.service /etc/systemd/system/weftmate-cloud.service
-   sudo ln -sfn /opt/weftmate-cloud/releases/<commit> /opt/weftmate-cloud/current
-   sudo systemd-analyze verify /etc/systemd/system/weftmate-cloud.service
-   sudo systemctl daemon-reload
-   sudo systemctl enable --now weftmate-cloud
-   curl --fail http://127.0.0.1:8787/healthz
-   ```
+## 部署前所需
 
-5. 把 `Caddyfile.fragment` 作为站点块导入**现有**配置，替换 example 域名；先 `caddy validate --config /etc/caddy/Caddyfile`，再按现场服务方式 reload。外部测试 `https://api.example.com/healthz`；配置防火墙仅暴露实际需要的云入口，Node 端口不公网开放。S2 另审查 frp 的控制入口、内容入口与逐宿主域名。
-6. 用 `journalctl -u weftmate-cloud` 检查 start/health/stopped 事件，验证重启后迁移不重复、SIGTERM 能退出。这里不是生产认证验收；S1a 账号接口仅经隔离测试，生产 issuer/客户端 URI/邮件与代理须在部署包验证。
+1. 服务器：可绑定公网 TCP 443，原本的 Caddy/网站/代理需先协调到 HAProxy 的相应 backend。需要 Node 24、HAProxy、Caddy（内置 proxy_protocol listener wrapper 的版本）、官方 frps 0.71.0。保留既有非本项目服务的路由；本草稿的三个 SNI 不能覆盖它们。
+2. DNS：`api.example.com`、`relay.example.com`、`*.hosts.example.com` 的 A/AAAA 指向部署地址（文档示例 203.0.113.10）。内容记录仅 DNS，不开启 CDN/边缘 TLS 代理。
+3. 云证书：API 与 relay 域名的合法 fullchain/key；分别只有 Caddy/frps 可读。因唯一 443 已做 SNI，控制证书取得/续期按部署现场选择 DNS-01 或专门验证路由；不能假设 Caddy 自动 HTTP-01 已能穿前置。宿主内容私钥绝不放云。
+4. 内容证书：宿主保存 S1b 内容 key，使用 `relay-csr.mjs` 导出 CSR、成熟 certbot DNS-01 + `relay-acme-hook.mjs` 签发；定时重签相同 CSR、安装 fullchain 并 reload/重启宿主。详见 src/personal-relay/README。
+5. DNS provider：部署 `createIdentity({relayDns:{present,cleanup}})` adapter，只增删指定 TXT 值并在权威记录发布后返回；记录名云计算为 `_acme-challenge.<已认领宿主域名>`。可逐宿主 CNAME 委托验证区；整区密钥只存在云私有配置，宿主只持安装 key，不持 DNS 密钥。默认 provider 未连接返回 503，真实 CA 签发不能提前宣称成功。
 
-## 升级、回滚与备份
+## 文件与启动顺序
 
-更新前保留旧发布与数据库一致快照。迁移为启动时向前执行；不提供自动向下迁移或覆盖新库。只改变代码而 schema 未变时可停止服务、切回旧 release、重启；已升级 schema 时旧发布会拒绝打开新库，必须用匹配版本或经过确认的恢复流程。恢复快照可能丢失快照后的账号/撤权等写入，由本人确认，不能自动回滚用户数据。
+cloud 发布目录沿用 `/opt/weftmate-cloud/releases/<commit>/` 与 current 链接；数据 `/var/lib/weftmate-cloud/` 由 systemd StateDirectory 管理，0700；`/etc/weftmate-cloud/cloud.env` 0600。云 unit 使用 DynamicUser，不以 root 运行 Node。relay/frps 证书示例在 `/etc/weftmate/relay/`；独立 frps DynamicUser unit 需通过 systemd 凭据/权限提供只读 transport key，具体属主/证书权限在部署包设置，不能把 key 改成 world-readable。
 
-在线快照用 Node 24 `node:sqlite` 的 `backup()` 或 SQLite Online Backup API；不能在 WAL 运行时只 `cp cloud.sqlite`。离线停服务且确认 WAL checkpoint 后也可用一致文件快照。S0 只说明，不建自动备份任务。后续备份脚本需同样使用专属权限，检验快照 `PRAGMA integrity_check`，在隔离目录恢复启动；数据库快照、S4 密文对象、对象清单和控制面签名密钥分别备份。签名私钥/邮件/推送凭据存入独立加密运维备份，禁止进入客户端内容备份。[SQLite 备份说明](https://www.sqlite.org/backup.html)
+- 安装已审查发布的 cloud 锁文件依赖，跑 `npm test`；迁移 004 在启动时向前执行，不改旧迁移。
+- 从仓库根跑 `node scripts/download-frp.mjs`，官方资产按内置 SHA256 验证；将解压后的 frps 放 `/opt/weftmate/frp/`（二进制只在部署环境）。无代理镜像/自行编译 frp 产物。
+- 编辑 `cloud.env.example`、frps.toml 的保留示例。启动 cloud，它开启必经的控制/内容 TCP ingress 与 plugin；随后启动 `weftmate-frps.service`。
+- 合并 `Caddyfile.fragment` 的 global options 到现有**唯一**全局块，保留既有站点，Caddy 只在回环 9443 终止本控制面的 TLS。先 validate，再 reload；不在本包执行。
+- 用 `haproxy -c -f haproxy.cfg` 检查，审查既有 443 路由后启用 HAProxy。示例配置已用真实 HAProxy 检查并用于隔离 E2E；systemd/Caddy 的真实现场配置仍由部署包验收。
+- 宿主先直接登录与 S1b 认领绑定，取得随机域名/签发内容证书，再启用 relay 环境。验证浏览器与已配对原生端，确认 Host/Origin/CSRF/setup、TLS pin、断网重连和撤销断流。
 
-建议每日一致快照、升级前快照、至少一份异机加密副本；保留周期和异机存储费用待本人决定。日志不写请求体、Cookie、令牌、邮件正文、邮箱或任意 URL；暂不启用 Caddy access log。监控先用 systemd 失败状态、外部 `/healthz`、磁盘/WAL 增长、TLS 到期与备份恢复检查；S1–S3 再加投递/中继断连/推送失败计数。告警渠道、监控外部账号待开通，不自建审计平台。
+**两个 cloud TCP ingress 是撤销能力的必要组成**：官方 frps 0.71.0 没有踢在线 client 的管理 API。插件根据 Login.client_address / NewUserConn.remote_addr 关联入口 socket，撤销/轮换立即销毁它们；不是仅拒绝下一次登录。禁止让公网直达 frps 7000/7443，plugin 也不可被公网反代。第一认领成员的 transport owner 只能管理中继，不能因此读取其他本地账号内容。撤销是持久状态，客户端重取凭据不会自动复活。
 
-本包在 Mac 上只验证 Node 服务；systemd/Caddy 草稿未在目标 Linux 运行，frp、APNs、FCM、真实邮件均未接入。
+## 升级、回滚与验证
+
+迁移只向前，已升级 schema 的旧版本拒绝开新库。上线前分别备份一致 SQLite 快照与云身份签名/HMAC key；WAL 在线库不能只 cp 主 db。[SQLite 官方备份](https://www.sqlite.org/backup.html) 恢复旧快照会丢失后续账号/撤权，须本人决定，不自动恢复用户数据。
+
+独立 frp transport 证书续期在云；每宿主内容证书续期在自己宿主，保持同一 key/pin。日志不记录请求体、Cookie、令牌、邮件/正文/真实邮箱或完整 URL；Caddy 未启用 access log。云 `/healthz` 仅表示 DB 健康，不能代替 relay discover 与真实端点请求。
+
+Mac 本地隔离链路已通过（18443，当前用户没有低端口授权）；CI `Relay full chain (443)` 使用真实 443、官方 frps/frpc、HAProxy 和宿主 TLS，上传只含合成计数的 JSON 证据。真实服务器端口、DNS provider、生产 CA、systemd 权限、现有服务共存、Windows/原生端真机仍需部署/S1c 工作包验证。本包无部署、真实发信或生产数据访问。
