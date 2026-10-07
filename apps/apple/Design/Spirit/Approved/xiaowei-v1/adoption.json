@@ -1,0 +1,49 @@
+{
+  "userInstruction": "Use this set from codex://threads/01a10fe1-c15c-7f80-a8e2-ffb130b3fedf",
+  "sourceThreadTitle": "设计 Weftmate 小精灵",
+  "sourceDirectory": "/Users/yun/Desktop/WeftMate/Design/Spirit/xiaowei-v1",
+  "selectedSuite": "xiaowei-v1",
+  "name": "小纬 / Xiao Wei",
+  "selectedForWeftmateApple": true,
+  "canonicalMaster": "weftmate-xiaowei-master.png",
+  "referenceStates": [
+    "idle",
+    "listening",
+    "thinking",
+    "done"
+  ],
+  "stateSheetIsAnimationAtlas": false,
+  "nativeResource": "WeftMateSpiritMaster",
+  "masterSize": [
+    1254,
+    1254
+  ],
+  "masterMode": "RGBA",
+  "alphaExtrema": [
+    0,
+    255
+  ],
+  "fileCopiesPixelIdentical": true,
+  "files": [
+    {
+      "name": "weftmate-xiaowei-master.png",
+      "bytes": 695312,
+      "sha256": "d7cb09cf7ee5536e22f905456a575a43758dfb42d8257a64a8fc18f3edcdb911"
+    },
+    {
+      "name": "weftmate-xiaowei-states.png",
+      "bytes": 1061613,
+      "sha256": "70ac4622de748aa08b2a386e4e94b4f2d51f7c61faded5107df6ea4d9575d414"
+    },
+    {
+      "name": "design-notes.txt",
+      "bytes": 1944,
+      "sha256": "85fbf47856a09ba07babcbb726a3cb5f8545ddfc6e270a62954f7221746042b1"
+    },
+    {
+      "name": "generation-prompts.txt",
+      "bytes": 3972,
+      "sha256": "9f8e6a6bf702e12dd163384b8016cd88530cc2898edb214ca47cbcace0f8065b"
+    }
+  ]
+}

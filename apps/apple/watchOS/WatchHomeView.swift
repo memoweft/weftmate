@@ -10,8 +10,10 @@ struct WatchHomeView: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Image(systemName: "bubble.left.and.text.bubble.right")
-                        .font(.system(size: 27, weight: .light)).foregroundStyle(accent)
+                    Image("WeftMateSpiritMaster")
+                        .resizable().scaledToFit()
+                        .frame(width: 76, height: 76)
+                        .accessibilityHidden(true)
                     Text("话题，随身接续。")
                         .font(.title3.weight(.semibold)).fixedSize(horizontal: false, vertical: true)
                     Label("尚未连接账户", systemImage: "person.crop.circle.badge.questionmark")

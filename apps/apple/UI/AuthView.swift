@@ -25,11 +25,15 @@ struct AuthView: View {
 
                 WeaveCard {
                     VStack(alignment: .leading, spacing: 20) {
-                        VStack(alignment: .leading, spacing: 9) {
-                            Text(register ? "创建你的账户" : "欢迎回来")
-                                .font(.system(size: 28, weight: .semibold)).tracking(-0.7)
-                            Text("用同一个账户，在 Mac、iPhone 和其他设备上查看原来的对话。")
-                                .font(.callout).foregroundStyle(Weave.muted).lineSpacing(4)
+                        HStack(alignment: .center, spacing: 12) {
+                            VStack(alignment: .leading, spacing: 9) {
+                                Text(register ? "创建你的账户" : "欢迎回来")
+                                    .font(.system(size: 28, weight: .semibold)).tracking(-0.7)
+                                Text("用同一个账户，接上原来的对话。")
+                                    .font(.callout).foregroundStyle(Weave.muted).lineSpacing(4)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            SpiritView(size: 76)
                         }
                         Picker("账户操作", selection: $register) {
                             Text("登录").tag(false)
