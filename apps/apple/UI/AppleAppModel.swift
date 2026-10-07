@@ -703,7 +703,7 @@ final class AppleAppModel: ObservableObject {
     private var offlineTimeline = false
     private var timelinePolling: UUID?
     private var timelineCache: LocalTimelineCache? {
-        localStateDirectory.map { LocalTimelineCache(directory: $0.appendingPathComponent("Timeline")) }
+        timelineStateDirectory.map { LocalTimelineCache(directory: $0.appendingPathComponent("Timeline")) }
     }
     @Published private(set) var historyBusy = false
     @Published private(set) var historyError: String?
@@ -757,6 +757,7 @@ final class AppleAppModel: ObservableObject {
     private let commandStore: LocalConversationStore?
     private let endpointStore: LocalEndpointOperationStore?
     private let localStateDirectory: URL?
+    private let timelineStateDirectory: URL?
     private var adoptionProjections: [String: SharedConversationProjection] = [:]
     private var adoptionWorkers: [String: Task<Void, Never>] = [:]
     private var preparingAdoptions = Set<String>()
@@ -874,7 +875,8 @@ final class AppleAppModel: ObservableObject {
         }
         draftError = initialDraftError
         adoptionError = initialAdoptionError
-        localStateDirectory = localDirectory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+        localStateDirectory = localDirectory
+        timelineStateDirectory = localDirectory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("WeftMate/LocalState", isDirectory: true)
     }
 
@@ -885,7 +887,7 @@ final class AppleAppModel: ObservableObject {
         self.draftPersistence = draftPersistence
         self.commandStore = commandStore
         self.endpointStore = endpointStore
-        localStateDirectory = stateDirectory
+        localStateDirectory = stateDirectory; timelineStateDirectory = stateDirectory
         defaults = nil
         launchConfigurationError = nil
         developmentRouteEnabled = false
@@ -1203,20 +1205,28 @@ final class AppleAppModel: ObservableObject {
     private lazy var watchBridge = PhoneWatchTimelineBridge(model: self)
     func watchSnapshotBytes() async -> Data? {
         let actionEpoch = epoch
-        guard let session, session.verification == .verified,
-              let conversation = selectedConversation ?? conversations.first(where: \.running) ?? conversations.first,
-              let sessionID = conversation.sessionId else { return nil }
+        guard let session, session.verification == .verified else { return nil }
         do {
+            let live = try await client.sharedSessions()
+            guard actionEpoch == epoch,
+                  let currentSession = live.first(where: { $0.running && $0.sessionId == selectedConversation?.sessionId })
+                    ?? live.first(where: \.running)
+                    ?? live.first(where: { $0.sessionId == selectedConversation?.sessionId })
+                    ?? live.first else { return nil }
+            let sessionID = currentSession.sessionId
             let page = try await client.timelinePage(sessionID: sessionID)
             let approvals = try await client.approvals(sessionID: sessionID)
             guard actionEpoch == epoch else { return nil }
             let entries = TimelineProjection.entries(page.events)
             let current = entries.last(where: { !$0.steps.isEmpty })
             let completed = page.events.filter { $0.type == "task.ended" }.compactMap { $0.data["taskId"]?.string }
+            let running = TimelineProjection.taskRunning(page.events, fallback: currentSession.running)
+            let ending = page.events.last(where: { $0.type == "task.ended" || $0.type == "turn.ended" })?.data["reason"]?.string
+            let endLabel = ending == "completed" ? "已完成" : ending == "aborted" ? "已停止" : ending == "error" || ending == "blocked" ? "需要处理" : "结果待核对"
             let account = try LocalAccountScope(server: session.server, ownerId: session.account.ownerId)
             let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,
-                taskID: current?.steps.last?.taskID, progress: current?.steps.last?.summary ?? "等待新任务",
-                running: current?.running ?? conversation.running,
+                taskID: current?.steps.last?.taskID, progress: running ? current?.steps.last?.summary ?? "正在处理" : ending == nil && current == nil ? "等待新任务" : endLabel,
+                running: running,
                 assistantSummary: String((page.events.last(where: { $0.type == "assistant.message" })?.data["text"]?.string ?? "").prefix(240)),
                 approvals: approvals.approvals.filter(\.canDecide).map { WatchApproval(id: $0.id, summary: $0.reason) }, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
@@ -1224,8 +1234,7 @@ final class AppleAppModel: ObservableObject {
     }
     func respondFromWatch(sessionID: String, approvalID: String, outcome: String) async -> Bool {
         let actionEpoch = epoch
-        guard selectedConversation?.sessionId == sessionID || conversations.contains(where: { $0.sessionId == sessionID }),
-              let value = ApprovalDecisionOutcome(rawValue: outcome) else { return false }
+        guard let value = ApprovalDecisionOutcome(rawValue: outcome) else { return false }
         let responder = TaskInteractionModel(client: client, account: session, epoch: epoch, stateDirectory: assistantStateDirectory,
             currentEpoch: { [weak self] in self?.accountEpoch ?? UUID() }, currentSession: { [weak self] in self?.session })
         await responder.refreshTimeline(sessionID: sessionID)

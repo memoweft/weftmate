@@ -57,6 +57,9 @@ private func page(_ events: [TimelineEvent], next: Int, older: Bool = false) -> 
     #expect(entries[0].steps.count == 2 && !entries[0].running)
     #expect(entries[1].resolved?.seq == 7)
     #expect(!entries[2].running && entries[3].running)
+    #expect(TimelineProjection.taskRunning([event(1, "task.started"), event(2, "step.completed")], fallback: false))
+    #expect(TimelineProjection.taskRunning([event(2, "step.completed")], fallback: true))
+    #expect(!TimelineProjection.taskRunning([event(1, "task.started"), event(3, "task.ended")], fallback: true))
 }
 @Test func offlineTimelineOpensTailThenPagesOlderAndStaysAccountScoped() async throws {
     let folder = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
@@ -85,5 +88,8 @@ private func page(_ events: [TimelineEvent], next: Int, older: Bool = false) -> 
     #expect(tracker.apply(snapshot(["old-task", "turn-1"])).completed)
     #expect(!tracker.apply(snapshot(["old-task", "turn-1"])).completed)
     #expect(tracker.apply(snapshot(["turn-1"], approvals: [.init(id: "approval-a", summary: "写入文件")])).approval)
+    _ = tracker.apply(snapshot([]))
+    let replay = tracker.apply(snapshot(["old-task", "turn-1"], approvals: [.init(id: "approval-a", summary: "写入文件")]))
+    #expect(!replay.completed && !replay.approval)
     #expect(!tracker.apply(snapshot(["turn-1"], account: "account-b")).completed)
 }
