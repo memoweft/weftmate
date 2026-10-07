@@ -13,10 +13,20 @@
       const newClient = () => new WeftCloud.Client();
       function stopPairing() { pairingGeneration++; clearTimeout(pairingTimer); $('pairing-panel').hidden = true; $('pairing-code').value = ''; $('pairing-qr').removeAttribute('src'); }
       function cancel() { generation++; clearTimeout(waitTimer); stopPairing(); if (client) void client.forget().catch(() => {}); client = null; }
+      function failure(error) {
+        const code = error.message || error.code;
+        const terminal = ['DEVICE_NOT_TRUSTED', 'CLOUD_TOKEN_INVALID', 'PAIRING_INVALID', 'CLOUD_NOT_BOUND'].includes(code);
+        $('cloud-wait-title').textContent = code === 'DEVICE_NOT_TRUSTED' ? '未获允许' : terminal ? '请重新登录' : '连接不可用';
+        $('cloud-wait-status').textContent = message(error);
+        $('cloud-wait-retry').hidden = terminal;
+        if (terminal) void client?.forget().catch(() => {});
+        return terminal;
+      }
       async function session(result, ticket) {
         if (ticket !== generation) return;
         if (result.status === 'pending_approval') {
-          show('cloud-wait'); $('cloud-wait-status').textContent = '在已登录的电脑或手机上点“允许”。';
+          show('cloud-wait'); $('cloud-wait-title').textContent = '等待已有设备允许';
+          $('cloud-wait-retry').hidden = false; $('cloud-wait-status').textContent = '在已登录的电脑或手机上点“允许”。';
           waitTimer = setTimeout(() => retry(ticket), 3000); return;
         }
         acceptSession(result); await enterAssistant();
@@ -26,9 +36,8 @@
         try { await session(await client.exchange(), ticket); }
         catch (error) {
           if (ticket !== generation) return;
-          $('cloud-wait-status').textContent = message(error);
           // Denied and expired logins require an explicit new attempt.
-          if (!['DEVICE_NOT_TRUSTED', 'CLOUD_TOKEN_INVALID', 'PAIRING_INVALID', 'CLOUD_NOT_BOUND'].includes(error.message))
+          if (!failure(error))
             waitTimer = setTimeout(() => retry(ticket), 10000);
         }
       }
@@ -101,17 +110,17 @@
           catch (error) { if (error.message !== 'UNAUTHORIZED') { client = null; return false; } }
           const ticket = ++generation; show('cloud-wait');
           try { await session(await client.exchange(), ticket); }
-          catch (error) { $('cloud-wait-status').textContent = message(error); }
+          catch (error) { failure(error); }
           return true;
         }
         const callback = location.href; history.replaceState(null, '', location.pathname);
         client = newClient(); const ticket = ++generation;
-        show('cloud-wait'); $('cloud-wait-status').textContent = '正在完成登录…';
+        show('cloud-wait'); $('cloud-wait-title').textContent = '正在登录'; $('cloud-wait-status').textContent = '正在完成登录…';
         try {
           const result = await client.complete(callback);
           if (result.binding) { acceptSession(await client.json('/auth/me')); openAccount(); toast('已绑定 WeftMate 账号。'); }
           else await session(result, ticket);
-        } catch (error) { $('cloud-wait-status').textContent = message(error); }
+        } catch (error) { failure(error); }
         return true;
       } };
     }
