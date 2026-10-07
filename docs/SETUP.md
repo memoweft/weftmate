@@ -25,6 +25,16 @@
 - Apple（macOS / iOS / watchOS）：[apps/apple/README](../apps/apple/README.md)
 - 设备与验证环境：[DEVELOPMENT_ENVIRONMENT](DEVELOPMENT_ENVIRONMENT.md)
 
+## GitHub CI
+
+三平台使用 Node 24 和锁文件安装；生产发布预检、完整依赖高危审计、依赖兼容冒烟、类型检查与必过单测都阻塞合入。普通 `npm test` 仍保留完整单测与 vendor 契约门。
+
+- `.github/scripts/ci-unit-tests.mjs required` 运行必过用例；`known` 单独观察 13 项主干失败（PR #20 的 11 项，以及 CI-1 在未改动 main 上复现的停止回执重试、图片消息原请求重试两项）。该观察步骤非阻塞，同文件里的其他用例仍必须通过。
+- 精确文件/用例、原因与追踪项见 [CI 例外清单](../.github/ci-test-exceptions.json)，每次运行也写入 Actions 摘要；不自动把新失败加入清单。
+- 测试目录使用规范化的 `RUNNER_TEMP`，避免 macOS 符号链接和 Windows `RUNNER~1` 短路径。macOS runner 为合成 HTTP 夹具配置 `127.0.0.2` 回环别名；Linux 使用 Xvfb，并在 Electron 延迟下载完成后配置 `chrome-sandbox` 的 root 属主与 4755 权限。
+- `vendor:dsh`、`vendor:verify`、`test:contract` 明确显示为跳过；103 个依赖 vendor 的单测用例及 3 个文件也不验证，另有 1 个文件顶层读取仓库外 `Design`。固定 DSH 来源可以获取，但无所需 `lib/dist`；vendor 脚本只消费外部已编译 checkout，不负责构建。恢复条件：提供与 pin 一致的可重复编译产物，再恢复 workflow 的三个步骤并移除相应例外；发布前仍须在完整环境运行这些门。
+- Windows 继续验证进程树清理及 Windows 绝对路径夹具；Linux/macOS 明确跳过这两项。外部平台 optional 包夹具只在非 Linux 验证。POSIX 进程树清理与可移植夹具路径列为后续项。
+
 ## 本机数据
 
 账户、会话、模型配置、凭据和运行日志都在仓库外的 `D:\AIProjects\WeftMate\Runtime`（或启动参数指定的数据目录），不进 Git。测试使用隔离的数据目录和测试账号，不碰日用数据。
