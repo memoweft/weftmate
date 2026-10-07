@@ -1637,7 +1637,7 @@ test('desktop account model form sends a typed secret once and recovers only pub
       const body = JSON.parse(options.body)
       writes.push({ url, body })
       const model = { accountModelId: 'account-model-one', revision: 1, profileId: 'private-one',
-        name: '我的 MiMo', provider: 'openai-compatible', baseUrl: 'https://api.xiaomimimo.com/v1',
+        name: '我的 MiMo', provider: 'openai-compatible', baseUrl: 'http://192.168.1.10:18080/v1', modelTier: 'cloud',
         modelId: 'mimo-v2.6-flash', routeFingerprint: 'a'.repeat(64), configured: true,
         status: 'active', createdAt: '2026-10-03T00:00:00Z', updatedAt: '2026-10-03T00:00:00Z' }
       if (url.endsWith('/account/models')) models.push(model)
@@ -1654,7 +1654,8 @@ test('desktop account model form sends a typed secret once and recovers only pub
       !page.get('account-models-status').textContent.includes('可把手机已保存'); attempt++) await flush()
   assert.equal(page.get('account-model-form').hidden, false)
   page.get('account-model-name').value = '我的 MiMo'
-  page.get('account-model-base-url').value = 'https://api.xiaomimimo.com/v1'
+  page.get('account-model-base-url').value = 'http://192.168.1.10:18080/v1'
+  page.get('account-model-tier').value = 'cloud'
   page.get('account-model-id').value = 'mimo-v2.6-flash'
   page.get('account-model-key').value = 'synthetic-private-key'
   assert.ok(page.get('account-model-form').listeners.get('submit')?.length)
@@ -1662,9 +1663,15 @@ test('desktop account model form sends a typed secret once and recovers only pub
   for (let attempt = 0; attempt < 35 && models.length < 1; attempt++) await flush()
   assert.equal(writes.length, 1, `form=${page.get('account-model-form-status').textContent}; list=${page.get('account-models-status').textContent}; requests=${page.requests.filter((item) => item.url.includes('/account/models')).map((item) => item.url).join(',')}`)
   assert.equal(writes[0].body.apiKey, 'synthetic-private-key')
+  assert.equal(writes[0].body.modelTier, 'cloud')
+  assert.equal(writes[0].body.baseUrl, 'http://192.168.1.10:18080/v1')
   assert.equal([...page.storage.values()].some((value) => value.includes('synthetic-private-key')), false)
   for (let attempt = 0; attempt < 25 && !visibleText(page.get('account-models-list')).includes('我的 MiMo'); attempt++) await flush()
   assert.match(visibleText(page.get('account-models-list')), /我的 MiMo/)
+  const edit = page.get('account-models-list').children[0].children[1].children
+    .find((item) => item.textContent === '编辑')!
+  edit.fire('click')
+  assert.equal(page.get('account-model-tier').value, 'cloud', 'editing restores the saved override')
   const test = page.get('account-models-list').children[0].children[1].children
     .find((item) => item.textContent === '测试连接')!
   test.fire('click')
