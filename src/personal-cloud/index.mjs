@@ -269,7 +269,9 @@ export async function createHostCloudIdentity(context, options) {
       if (route === '/auth/cloud-session' || route === '/cloud/pairings/redeem') {
         const fields = ['accessToken', 'deviceName', ...(route.endsWith('/redeem') ? ['challenge'] : [])];
         exactKeys(body, fields, fields);
-        if (request.headers.cookie || request.headers.authorization) throw failure('AMBIGUOUS_AUTH');
+        // Browsers cannot remove a revoked HttpOnly Cookie. It is never used as
+        // exchange authority; only the verified cloud token and device proof count.
+        if (request.headers.authorization) throw failure('AMBIGUOUS_AUTH');
         const name = context.deviceName(body.deviceName);
         const identity = await verifier.verify(body.accessToken);
         const proof = await verifier.proof(body.accessToken, request.headers.dpop, request.method,
