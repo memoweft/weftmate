@@ -10,6 +10,7 @@
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
 | Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 审查修改已实现；健康待写队列不影响非健康召回，模型按地址自动判断且可用 modelTier 覆盖；相关单测/类型检查通过；三平台 CI 因 GitHub 付款/额度未启动，待恢复后重跑 |
+| Codex · Cloud | S0 轻云架构与骨架 | [PR #27](https://github.com/memoweft/weftmate/pull/27) 待审查；见 [CLOUD.md](CLOUD.md)。Node 24 零依赖骨架、本地测试 14/14；Linux CI 加独立 cloud 步骤；未连接/部署服务器，未改客户端契约，S1 未开始 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
