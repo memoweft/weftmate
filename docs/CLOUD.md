@@ -31,7 +31,7 @@ flowchart LR
 
 ### 2.1 云账号与令牌
 
-云账号用不可变 `cloudAccountId`（OIDC `sub`），邮箱是可变登录名，不拿邮箱或用户名推导 ID。邮箱验证注册：发一次性验证码，验证邮箱所有权后完成账号创建；密码仅存带独立盐与参数的 scrypt 验证记录，复用现有宿主的参数设计并在 Linux 上测容量，不把本地密码哈希上传。公开登录面需要现有 PLAN 已要求的失败限速和验证码过期/单次使用，防撞库与验证码重放；不引入全局设备数上限或新审计框架。
+云账号用不可变 `cloudAccountId`（OIDC `sub`，发行策略用 public subject，让同账号各官方客户端/宿主看到相同 sub），邮箱是可变登录名，不拿邮箱或用户名推导 ID。邮箱验证注册：发一次性验证码，验证邮箱所有权后完成账号创建；密码仅存带独立盐与参数的 scrypt 验证记录，复用现有宿主的参数设计并在 Linux 上测容量，不把本地密码哈希上传。公开登录面需要现有 PLAN 已要求的失败限速和验证码过期/单次使用，防撞库与验证码重放；不引入全局设备数上限或新审计框架。
 
 推荐 **OIDC/OAuth 2.0 Authorization Code + PKCE（S256）**，用成熟 `oidc-provider` 实现协议，用 `jose` 验 JWT/JWK；WeftMate 只写账号、邮件交互与 SQLite adapter，不手写 OAuth/JWT 编解码。原生端用系统认证浏览器，公开客户端不嵌入 client secret；校验 state/nonce 和已登记 redirect URI，不用密码授权模式。浏览器云会话用 host-only Secure/HttpOnly Cookie 与 Origin/CSRF；原生刷新凭据放 Keychain/Keystore/系统凭据库，浏览器不把刷新凭据写 localStorage。依据 [OIDC 实现](https://github.com/panva/node-oidc-provider)、[jose](https://github.com/panva/jose)、[原生 OAuth 标准](https://www.rfc-editor.org/rfc/rfc8252)、[OAuth 安全最佳实践](https://www.rfc-editor.org/rfc/rfc9700)。
 
@@ -122,7 +122,9 @@ frps 不使用分发给所有人的共享 token：用成熟 server plugin 的 Lo
 
 推荐内容密钥**独立于云登录密码**：宿主首次启用备份生成随机 256-bit 用户恢复主密钥 R，保存 OS 凭据库，给用户导出恢复码/QR 离线保管；默认云不托管 R。用标准 HKDF-SHA256、明确目的字符串与账号/密钥版本上下文派生备份包裹密钥；每份快照另随机生成 DEK，避免备份、手机副本与共享对象复用同一数据密钥。新设备获得密钥须来自已受信设备的认证配对或用户输入恢复码，不能来自邮件确认后的任意云公钥。
 
-宿主先生成一致快照、再加密上传；不直接打包运行中的 SQLite/JSON 半写状态，不将 DSH 活跃任务当作可自动续执行的状态。推荐成熟 libsodium **secretstream XChaCha20-Poly1305** 做分块认证加密，包内 manifest/文件名/对话标题同样加密，验证 FINAL 标志防截断；DEK 用标准 AEAD 包裹、设备分发用成熟公钥密钥封装库，不自写密码协议。算法/版本/随机 salt/header、密钥版本及对象 ID 可公开；manifest 中的归属/快照版本需被认证。跨语言实现和损坏/截断/换账号用例是 S4 门槛。[libsodium secretstream](https://libsodium.gitbook.io/doc/secret-key_cryptography/secretstream)
+宿主先生成一致快照、再加密上传；不直接打包运行中的 SQLite/JSON 半写状态，不将 DSH 活跃任务当作可自动续执行的状态。快照按 **ownerId 隔离导出**，不能把含其他成员的根 store 整个打包给单个账号；只保留该账号必要的 ID/来源映射、内容与其自有凭据，排除其他账号、宿主共用安装/TLS 私钥和未授权的共享模型凭据。恢复到新电脑生成新的宿主安装密钥，已有内容设备需重新建立对新宿主的信任。
+
+推荐成熟 libsodium **secretstream XChaCha20-Poly1305** 做分块认证加密，包内 manifest/文件名/对话标题同样加密，验证 FINAL 标志防截断；DEK 用标准 AEAD 包裹、设备分发用成熟公钥密钥封装库，不自写密码协议。算法/版本/随机 salt/header、密钥版本及对象 ID 可公开；manifest 中的归属/快照版本需被认证。跨语言实现和损坏/截断/换账号用例是 S4 门槛。[libsodium secretstream](https://libsodium.gitbook.io/doc/secret-key_cryptography/secretstream)
 
 如用户选择单独的“备份口令”包裹 R，使用 libsodium Argon2id 与随机 salt，保存算法/内存/计算参数；以库交互基线起步，在最低支持手机/电脑实测后固定参数，不拿云密码的 scrypt 哈希充当解密密钥。此口令不上传云；低熵口令在云密文泄露后仍会被离线猜测，随机恢复码更稳妥。[libsodium 密钥派生](https://libsodium.gitbook.io/doc/password_hashing/default_phf)
 
