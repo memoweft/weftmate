@@ -14,6 +14,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
   try {
     const source = readFileSync(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop.mjs'), 'utf8')
       .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`)
+    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
     const staged = join(root, 'weftmate-personal-desktop.mjs')
     writeFileSync(staged, source)
     const [{ Context }, SystemPrompt, Sessions, tools, { createScope }, globalPlugin, preset] = await Promise.all([

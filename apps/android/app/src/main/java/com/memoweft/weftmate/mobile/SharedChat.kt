@@ -25,23 +25,23 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         }
     }
 
-    fun history(host: HostIdentity, sessionId: String, afterSeq: Long): JSONObject {
-        if (!sessionIdPattern.matches(sessionId) || afterSeq < -1) throw ApiFailure(400, "INVALID_REQUEST")
+    fun history(host: HostIdentity, sessionId: String, afterSeq: Long? = null, beforeSeq: Long? = null): JSONObject {
+        if (!sessionIdPattern.matches(sessionId) || afterSeq != null && afterSeq < -1 || beforeSeq != null && beforeSeq < 0 || afterSeq != null && beforeSeq != null) throw ApiFailure(400, "INVALID_REQUEST")
         val owner = Endpoints.ownerKey(host.origin, host.ownerId)
         return try {
             api.me(host)
-            val result = api.remoteHistory(host, sessionId, afterSeq)
+            val result = api.remoteHistory(host, sessionId, afterSeq, beforeSeq)
             val events = result.getJSONArray("events")
             val next = result.getLong("nextSeq")
-            if (next < afterSeq || events.length() > 100 ||
+            if (next < (afterSeq ?: -1) || events.length() > 100 ||
                 result.optBoolean("hasMore") && next == afterSeq)
                 throw ApiFailure(502, "HISTORY_CURSOR_INVALID")
-            store.saveSharedHistoryPage(owner, host.hostId, sessionId, events, next)
+            store.saveSharedHistoryPage(owner, host.hostId, sessionId, events, next, result.optBoolean("hasOlder"))
             result.put("source", "host").put("sessionId", sessionId)
                 .put("hostAvailable", true).put("cached", false)
         } catch (error: Exception) {
             if (error is ApiFailure && error.status in 400..499) throw error
-            store.cachedSharedHistory(owner, host.hostId, sessionId, afterSeq)
+            store.cachedSharedHistory(owner, host.hostId, sessionId, afterSeq, beforeSeq)
                 .put("source", "host").put("sessionId", sessionId)
         }
     }

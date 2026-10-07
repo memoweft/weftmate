@@ -5,6 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs'
+import { questionSourceAsOf } from '../src/runtime/dsh-adapter/agents.mjs'
 
 const hash = (value: string) => createHash('sha256').update(value).digest('hex')
 const sourceText = '完成当前合成账户的一项通用工作，并在需要时请求批准'
@@ -33,9 +35,13 @@ async function fixture({ useReplyEvidence = true, clockFn = Date.now } = {}) {
     stopTask: async ({ receiptIds }: any) => ({ status: 'cancel_requested',
       outcomes: receiptIds.map((receiptId: string) => ({ receiptId, status: 'cancel_requested' })) }),
     cancelSession: async () => ({ accepted: true }),
-    readEvents: async ({ afterSeq, limit }: any) => {
-      const remaining = events.filter(event => event.seq > afterSeq), page = remaining.slice(0, limit)
-      return { events: page, nextSeq: page.at(-1)?.seq ?? afterSeq, hasMore: remaining.length > page.length }
+    readEvents: async ({ afterSeq, beforeSeq, limit }: any) => {
+      const forward = afterSeq !== undefined
+      const remaining = events.filter(event => forward ? event.seq > afterSeq : beforeSeq === undefined || event.seq < beforeSeq)
+      const page = forward ? remaining.slice(0, limit) : remaining.slice(-limit)
+      return { events: page, nextSeq: page.at(-1)?.seq ?? afterSeq ?? -1,
+        nextBeforeSeq: page[0]?.seq ?? null, hasMore: forward && remaining.length > page.length,
+        hasOlder: !forward && remaining.length > page.length }
     },
     describeSession: async (sessionId: string) => {
       await describeHook()
@@ -423,4 +429,76 @@ test('execution and approval ownership use the canonical model input digest when
     assert.equal(f.raw(), stored)
     assert.equal((await f.service.trackToolExecution({ ...finish, messageHash: canonicalHash })).state, 'completed')
   } finally { await f.close() }
+})
+
+
+test('22000+ step-heavy history approves the exact current source using only its bounded turn range', async () => {
+  for (const native of [false, true]) {
+    const f = await fixture({ useReplyEvidence: false })
+    try {
+      const current = f.events.splice(0), prefix: any[] = []
+      for (let turn = 1; turn <= 1000; turn++) {
+        prefix.push({ type: 'turn.started', data: { turn } },
+          { type: 'user.message', data: { receiptId: `old-${turn}`, text: 'old goal' } })
+        for (let step = 1; step <= 10; step++) prefix.push(
+          { type: 'step.started', data: { turn, step } }, { type: 'step.completed', data: { turn, step } })
+        prefix.push({ type: 'turn.ended', data: { turn, reason: 'completed' } })
+      }
+      f.input.turn = 1001; current[0].data.turn = 1001
+      f.events.push(...prefix, ...current)
+      for (let step = 1; step <= 400; step++) f.events.push({ type: 'step.completed', data: { turn: 1001, step } })
+      f.events.forEach((event, seq) => { event.seq = seq })
+      const reads: any[] = [], original = f.backend.readEvents
+      f.backend.readEvents = (args: any) => { reads.push(args); return original(args) }
+      let nativeReads = 0, sourceAdapter: any
+      if (native) {
+        const rows = f.events.map(event => ({ ...event, type: ({ 'turn.started': 'turn/start', 'turn.ended': 'turn/end',
+          'user.message': 'user/message', 'step.started': 'step/start', 'step.completed': 'step/end' } as any)[event.type],
+          data: event.type === 'user.message' ? { source: { kind: 'user', rpcId: event.data.receiptId },
+            content: [{ type: 'text', text: event.data.text }] } : event.data }))
+        const observed = new Proxy(rows, { get(target, key, receiver) {
+          if (typeof key === 'string' && /^\d+$/.test(key)) nativeReads++
+          return Reflect.get(target, key, receiver)
+        } })
+        const adapter = createDshSessionAdapter({ sessions: { list: async () => ({ result: { ok: true,
+          value: { items: [{ sessionId: f.input.sessionId, origin: 'user', agentPreset: 'personal-remote' }] } } }) }, events: {} },
+          { readLog: async () => observed })
+        f.backend.readSourceEvents = ({ sessionId, turn, receiptId }: any) => adapter.sourceEvents(sessionId, { turn, receiptId })
+        sourceAdapter = adapter
+      }
+      assert.equal((await f.register()).status, 'pending')
+      const answer = await f.request(`${f.approvalsPath}/${f.input.approvalId}`,
+        { requestId: 'long-history-answer', outcome: 'allowed-once' })
+      assert.equal(answer.status, 200, JSON.stringify(answer.body))
+      assert.equal((await f.resolve('allowed-once')).status, 'resolved')
+      if (native) {
+        assert.equal(reads.length, 0); assert.ok(nativeReads < 1000, `${nativeReads} native entry reads for two checks`)
+      } else {
+        assert.equal(reads.length, 6, 'three tail pages per fresh source check, independent of the 23000 old events')
+        assert.ok(reads.every(args => args.afterSeq === undefined))
+        assert.ok(reads.every(args => args.beforeSeq === undefined || args.beforeSeq >= prefix.length - 200))
+      }
+      if (native) {
+        // The same long session also registers and answers a native question;
+        // its binding is derived at the original question watermark.
+        const watermark = f.events.length - 1
+        const proof = questionSourceAsOf(await sourceAdapter.questionHistoryAsOf(f.input.sessionId, watermark), watermark)!
+        const frame = { ...proof, sessionId: f.input.sessionId, questionRpcId: randomUUID(), sourceReady: true,
+          questions: [{ id: 'format', header: 'Format', question: 'Which format?',
+            options: [{ label: 'Markdown' }, { label: 'Text' }] }], nativeState: 'pending' }
+        f.backend.listUserQuestions = async () => ({ runtimeId: f.input.runtimeId, questions: [frame] })
+        f.backend.respondUserQuestion = async () => { frame.nativeState = 'answered'; return { accepted: true } }
+        const { nativeState: _state, ...snapshot } = frame
+        assert.equal((await f.service.trackUserQuestion({ ...snapshot,
+          runtimeId: f.input.runtimeId, action: 'register_question' })).status, 'pending')
+        const answered = await f.request(`sessions/${f.input.sessionId}/questions/${frame.questionRpcId}`,
+          { requestId: 'long-history-question-answer', answer: { answers: [{ id: 'format', selected: ['Markdown'] }] } })
+        assert.equal(answered.status, 200, JSON.stringify(answered.body))
+        assert.equal(proof.sourceReceiptId, f.source.receiptId); assert.equal(proof.turn, 1001)
+        assert.equal(reads.length, 0, 'neither interaction replays timeline pages')
+        assert.ok(nativeReads < 2000, 'question source lookup also stays inside the current turn')
+      }
+      await assert.rejects(f.register({ approvalId: randomUUID(), turn: 1000 }), code('TOOL_SOURCE_UNAVAILABLE'))
+    } finally { await f.close() }
+  }
 })

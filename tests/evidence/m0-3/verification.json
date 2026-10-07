@@ -1,0 +1,43 @@
+{
+  "synthetic": true,
+  "desktopWidth": 1280,
+  "mobileWidth": 390,
+  "findings": [
+    {
+      "blocks": [
+        {
+          "open": false,
+          "text": "执行了 2 步 · 用时 2 秒"
+        },
+        {
+          "open": false,
+          "text": "执行了 2 步 · 用时 3 秒"
+        }
+      ],
+      "approvals": 1,
+      "questions": 1,
+      "artifacts": 1,
+      "overflow": false
+    },
+    {
+      "blocks": [
+        {
+          "open": false,
+          "text": "执行了 2 步 · 用时 2 秒"
+        },
+        {
+          "open": false,
+          "text": "执行了 2 步 · 用时 3 秒"
+        }
+      ],
+      "approvals": 1,
+      "questions": 1,
+      "artifacts": 1,
+      "overflow": false
+    }
+  ],
+  "dark": {
+    "background": "rgb(29, 42, 63)",
+    "color": "rgb(233, 239, 251)"
+  }
+}

@@ -1,3 +1,4 @@
+import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
 import {
@@ -65,61 +66,28 @@ export function createApprovalOperations(context) {
     return null;
   }
 
-  async function liveApprovalTurn(ownerId, sessionId) {
-    const deadline = context.timestamp() + 2_500;
-    let afterSeq = -1, openTurn = null;
-    const turns = new Set(), receipts = new Map();
-    for (let pageNo = 0; pageNo < 50; pageNo++) {
-      const remaining = deadline - context.timestamp();
-      if (remaining <= 0) throw failure('BACKEND_TIMEOUT', 503);
-      const page = await withDeadline(() => {
-        context.requireOpen();
-        return context.backend.readEvents({ sessionId, afterSeq, limit: 200, ownerId });
-      }, remaining);
-      if (!Array.isArray(page?.events) || page.events.length > 200 || typeof page.hasMore !== 'boolean' ||
-          !Number.isSafeInteger(page.nextSeq) || page.nextSeq < afterSeq) throw failure('BACKEND_UNAVAILABLE', 503);
-      let last = afterSeq;
-      for (const event of page.events) {
-        if (!Number.isSafeInteger(event?.seq) || event.seq <= last || event.seq > page.nextSeq) {
-          throw failure('BACKEND_UNAVAILABLE', 503);
-        }
-        last = event.seq;
-        if (event.type === 'turn.started') {
-          const turn = event.data?.turn;
-          if (!Number.isSafeInteger(turn) || turn < 1) { openTurn = null; continue; }
-          if (turns.has(turn)) {
-            throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
-          }
-          turns.add(turn); openTurn = turn;
-        } else if (event.type === 'user.message') {
-          const receiptId = event.data?.receiptId;
-          // Old ordinary history may predate receipt projection. It cannot claim this source.
-          if (openTurn === null || !validId(receiptId)) continue;
-          receipts.set(receiptId, receipts.has(receiptId) ? null :
-            { turn: openTurn, messageHash: event.data.messageHash });
-        } else if (event.type === 'turn.ended') {
-          if (event.data?.turn === openTurn) openTurn = null;
-        }
-      }
-      if (!page.hasMore) return { openTurn, receipts };
-      if (page.nextSeq === afterSeq) throw failure('BACKEND_UNAVAILABLE', 503);
-      afterSeq = page.nextSeq;
-    }
-    throw failure('HISTORY_WINDOW_LIMIT', 422);
-  }
-
   async function liveToolApprovalSource(ownerId, row, fresh = false) {
     const inspect = async () => {
-      if (typeof context.backend.getTaskReplyEvidence === 'function') {
+      if (typeof context.backend.readSourceEvents !== 'function' && typeof context.backend.getTaskReplyEvidence === 'function') {
         const evidence = await withDeadline(() => {
           context.requireOpen();
           return context.backend.getTaskReplyEvidence({ sessionId: row.sessionId, ownerId,
-            rootTaskId: row.taskId, receiptId: row.sourceReceiptId });
+            rootTaskId: row.taskId, receiptId: row.sourceReceiptId, turn: row.turn });
         }, 2_500);
         return evidence?.turn === row.turn && ['waiting', 'streaming'].includes(evidence.status);
       }
-      const live = await liveApprovalTurn(ownerId, row.sessionId), receipt = live.receipts.get(row.sourceReceiptId);
-      return live.openTurn === row.turn && receipt?.turn === row.turn && receipt.messageHash === row.messageHash;
+      const deadline = context.timestamp() + 2_500;
+      const live = await readSourceEvents(context, { ownerId, sessionId: row.sessionId,
+        turn: row.turn, receiptId: row.sourceReceiptId }, work => {
+          const remaining = deadline - context.timestamp();
+          if (remaining <= 0) throw failure('BACKEND_TIMEOUT', 503);
+          return withDeadline(() => { context.requireOpen(); return work(); }, remaining);
+        });
+      const starts = live.events.filter(event => event.type === 'turn.started');
+      const receipts = live.events.filter(event => event.type === 'user.message' && event.data?.receiptId === row.sourceReceiptId);
+      return live.current === true && starts.length === 1 && starts[0].data?.turn === row.turn &&
+        !live.events.some(event => event.type === 'turn.ended') && receipts.length === 1 &&
+        receipts[0].data?.messageHash === row.messageHash;
     };
     // The production callback reads current-child evidence; coalesce normal polling, never user answers.
     const key = `${ownerId}|${row.sessionId}|${row.runtimeId}|${row.sourceReceiptId}`;
@@ -210,7 +178,6 @@ export function createApprovalOperations(context) {
     personalExecutionSource,
     approvalMatches,
     approvalUnavailableReason,
-    liveApprovalTurn,
     liveToolApprovalSource,
     refreshToolApprovals,
     answerToolApproval,

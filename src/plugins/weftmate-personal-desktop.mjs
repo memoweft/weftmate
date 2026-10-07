@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { defineTool } from '@deepseek-ai/dsh-tools';
+import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 
 export const name = 'weftmate-personal-desktop';
 export const PERSONAL_DESKTOP_PROTOCOL = 'weftmate.personal-desktop.v1';
@@ -485,25 +486,23 @@ function proofRequest(frame) {
     typeof frame.snapshotId === 'string' && SNAPSHOT_ID.test(frame.snapshotId);
 }
 
-/** Inspect only a physically committed DSH JSONL artifact, never live session.events. */
+/** Inspect only durable native events, never unflushed live session.events. */
 export function verifyStoredProjectRead(content, request) {
   if (!proofRequest({ ...request, protocol: PERSONAL_PROJECT_PROOF_PROTOCOL,
     id: 'proof-00000000-0000-4000-8000-000000000000' }) ||
-      typeof content !== 'string' || Buffer.byteLength(content, 'utf8') > 4_000_000) return false;
+      !(typeof content === 'string' || Array.isArray(content))) return false;
   let open = null;
   let userCount = 0;
   let readCall = 0;
   let readResult = 0;
   let saveCall = 0;
   let previousSeq = -1;
-  let rows = 0;
   const readTool = request.readTool ?? PERSONAL_PROJECT_READ_TOOL;
   const beforeTool = request.beforeTool ?? PERSONAL_DOCUMENT_TOOL;
-  for (const line of content.split('\n')) {
-    if (!line.trim()) continue;
-    if (++rows > 12_000) return false;
+  for (const line of Array.isArray(content) ? content : content.split('\n')) {
+    if (typeof line === 'string' && !line.trim()) continue;
     let event;
-    try { event = JSON.parse(line); } catch { return false; }
+    try { event = typeof line === 'string' ? JSON.parse(line) : line.event ?? line; } catch { return false; }
     if (event.type === 'session' || ['text-chunks', 'reasoning-chunks',
       'tool-call-chunks'].includes(event.type)) continue;
     if (!Number.isSafeInteger(event.seq) || event.seq <= previousSeq) return false;
@@ -564,13 +563,13 @@ function installProofBridge(ctx) {
     };
     void (async () => {
       const persistence = ctx.get?.('sessionPersistence');
-      if (typeof persistence?.readRaw !== 'function') return false;
+      if (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function') return false;
       const deadline = Date.now() + 2_200;
       do {
-        const artifact = await persistence.readRaw(frame.sessionId);
+        const artifact = await durableSourceRange(persistence, frame.sessionId, { turn: frame.turn });
         if (artifact?.meta?.id === frame.sessionId &&
             artifact.meta.agentPreset === 'personal-remote' &&
-            verifyStoredProjectRead(artifact.content, frame)) return true;
+            verifyStoredProjectRead(artifact.events, frame)) return true;
         await new Promise((resolve) => setTimeout(resolve, 60));
       } while (Date.now() < deadline);
       return false;
