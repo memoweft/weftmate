@@ -1,5 +1,6 @@
 import { Provider, interactionPolicy, errors } from 'oidc-provider';
-import { createLocalJWKSet, jwtVerify } from 'jose';
+import { calculateJwkThumbprint, createLocalJWKSet, jwtVerify } from 'jose';
+import { createHosts } from './hosts.mjs';
 import { randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
 import { sqliteAdapter } from './oidc-adapter.mjs';
@@ -80,7 +81,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     })),
     subjectTypes: ['public'],
     responseTypes: ['code'],
-    scopes: ['openid', 'offline_access', 'cloud:account'],
+    scopes: ['openid', 'offline_access', 'cloud:account', 'host:session'],
     claims: { openid: ['sub'] },
     enabledJWA: { idTokenSigningAlgValues: ['RS256'], userinfoSigningAlgValues: ['RS256'] },
     cookies: {
@@ -113,15 +114,18 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       userinfo: { enabled: false },
       rpInitiatedLogout: { enabled: false },
       revocation: { enabled: true },
+      dPoP: { enabled: true },
       resourceIndicators: {
         enabled: true,
         defaultResource: () => config.audience,
         useGrantedResource: () => true,
         getResourceServerInfo: (_ctx, resource) => {
-          if (resource !== config.audience) throw new errors.InvalidTarget();
+          const hostId = resource.startsWith(`${config.audience}/hosts/`) ? resource.slice(`${config.audience}/hosts/`.length) : null;
+          if (resource !== config.audience && (!hostId || !database.prepare('SELECT 1 FROM cloud_hosts WHERE host_id=?').get(hostId)))
+            throw new errors.InvalidTarget();
           return {
-            scope: 'cloud:account',
-            audience: config.audience,
+            scope: hostId ? 'host:session' : 'cloud:account',
+            audience: resource,
             accessTokenTTL: 300,
             accessTokenFormat: 'jwt',
             jwt: { sign: { alg: 'RS256', kid: keys.privateJwks.keys[0].kid } },
@@ -151,17 +155,27 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       }
       return { accountId: id, claims: () => ({ sub: id }) };
     },
-    extraTokenClaims: (_ctx, token) => {
+    extraTokenClaims: async (_ctx, token) => {
       const binding = database
         .prepare('SELECT * FROM grant_bindings WHERE grant_id=?')
         .get(token.grantId);
       const account = binding ? accounts.get(binding.account_id) : undefined;
       if (!binding || !account?.active || account.auth_epoch !== binding.auth_epoch)
         throw new errors.InvalidGrant('grant revoked');
+      const hostId = token.resourceServer?.audience?.startsWith(`${config.audience}/hosts/`)
+        ? token.resourceServer.audience.slice(`${config.audience}/hosts/`.length) : null;
+      if (hostId) {
+        const device = database.prepare('SELECT public_jwk FROM cloud_devices WHERE account_id=? AND fingerprint=?')
+          .get(account.id, binding.fingerprint);
+        if (!database.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(hostId, account.id) ||
+            !device?.public_jwk || !token.jkt || token.jkt !== await calculateJwkThumbprint(JSON.parse(device.public_jwk)))
+          throw new errors.InvalidGrant('host or device not authorized');
+      }
       return {
         device_id: binding.device_id,
         device_fingerprint: binding.fingerprint,
         auth_epoch: binding.auth_epoch,
+        ...(hostId ? { host_id: hostId } : {}),
       };
     },
     renderError: (ctx) => {
@@ -247,7 +261,17 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       clientId: interaction.params.client_id,
     });
     grant.addOIDCScope(interaction.params.scope);
-    grant.addResourceScope(config.audience, 'cloud:account');
+    const resources = interaction.params.resource ? [interaction.params.resource].flat() : [config.audience];
+    for (const resource of resources) {
+      if (resource === config.audience) grant.addResourceScope(resource, 'cloud:account');
+      else {
+        const hostId = resource.slice(`${config.audience}/hosts/`.length);
+        if (!resource.startsWith(`${config.audience}/hosts/`) ||
+            !database.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(hostId, account.id))
+          throw new CloudError(403, 'FORBIDDEN');
+        grant.addResourceScope(resource, 'host:session');
+      }
+    }
     const grantId = await grant.save();
     if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch) {
       await grant.destroy();
@@ -282,7 +306,9 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/auth/email/request`, 'emailRequest'],
     [`${CLOUD_PATH}/auth/email/confirm`, 'emailConfirm'],
     [`${CLOUD_PATH}/account`, 'account'],
+    [`${CLOUD_PATH}/auth/devices/revoke`, 'deviceRevoke'],
   ]);
+  const hosts = createHosts({ database, config, keys, authenticate, now });
   return {
     provider,
     accounts,
@@ -313,10 +339,17 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       }
       const match = new RegExp(`^${CLOUD_PATH}/interactions/([A-Za-z0-9_-]+)$`).exec(url.pathname);
       const route = routes.get(url.pathname);
-      if (!route && !match) return false;
+      const hostRoute = url.pathname.startsWith(`${CLOUD_PATH}/hosts/`);
+      if (!route && !match && !hostRoute) return false;
       try {
         if (req.headers.origin && req.headers.origin !== new URL(config.issuer).origin)
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+        if (hostRoute) {
+          if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
+          if (url.search || req.headers.origin !== new URL(config.issuer).origin) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+          reply(res, 200, await hosts.handle(url.pathname.slice(CLOUD_PATH.length), req, await bodyOf(req)));
+          return true;
+        }
         if (match) {
           if (req.method !== 'GET') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
           const interaction = await details(req, res, match[1]);
@@ -364,6 +397,23 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         } else {
           let result;
           switch (route) {
+            case 'deviceRevoke': {
+              const account = await authenticate(req);
+              if (Object.keys(body).join(',') !== 'deviceId' || typeof body.deviceId !== 'string')
+                throw new CloudError(400, 'INVALID_REQUEST');
+              database.exec('BEGIN IMMEDIATE');
+              try {
+                database.prepare('DELETE FROM cloud_devices WHERE account_id=? AND device_id=?').run(account.id, body.deviceId);
+                const grants = database.prepare('SELECT grant_id FROM grant_bindings WHERE account_id=? AND device_id=?').all(account.id, body.deviceId);
+                for (const grant of grants) {
+                  database.prepare("DELETE FROM oidc_records WHERE grant_id=? OR (model='Grant' AND id=?)").run(grant.grant_id, grant.grant_id);
+                  database.prepare('DELETE FROM grant_bindings WHERE grant_id=?').run(grant.grant_id);
+                }
+                database.prepare('INSERT INTO cloud_revocations(account_id,kind,device_id) VALUES(?,?,?)').run(account.id, 'device', body.deviceId);
+                database.exec('COMMIT');
+              } catch (error) { database.exec('ROLLBACK'); throw error; }
+              result = { revoked: true }; break;
+            }
             case 'register':
               result = await accounts.register(body, from);
               break;
