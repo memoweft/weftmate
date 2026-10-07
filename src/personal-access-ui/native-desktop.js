@@ -43,7 +43,7 @@
     appendArtifactActions(parent, artifact, error) {
       for (const [action, text] of [['open', '用默认程序打开'], ['show', '在文件夹中显示']]) {
         const button = document.createElement('button'); button.type = 'button';
-        button.className = 'button quiet small'; button.textContent = text;
+        button.className = 'artifact-action'; button.textContent = text;
         button.addEventListener('click', async () => {
           button.disabled = true;
           try { await native.artifact(artifact.artifactId, action); }
