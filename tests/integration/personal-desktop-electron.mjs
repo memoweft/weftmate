@@ -226,10 +226,18 @@ try {
   await application.close(); application = null;
   const firstRunProfile = join(root, 'first-run-profile'); mkdirSync(firstRunProfile);
   writeFileSync(join(firstRunProfile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
-  application = await _electron.launch({ executablePath, args: ['.', `--user-data-dir=${firstRunProfile}`], cwd: repository, env, timeout: 90000 });
+  const localModelConfig = join(root, 'unused-local-controller.json');
+  application = await _electron.launch({ executablePath, args: ['.', `--user-data-dir=${firstRunProfile}`, `--local-model-config=${localModelConfig}`], cwd: repository, env, timeout: 90000 });
+  await application.evaluate(({ app }) => {
+    app.setLoginItemSettings = options => { globalThis.w1ModelStartupOptions = options; };
+    app.getLoginItemSettings = () => ({ openAtLogin: false });
+  });
   page = await application.firstWindow({ timeout: 90000 });
   await page.locator('#setup-form').waitFor({ state: 'visible' });
   assert.ok((await page.locator('#setup-title').textContent()).includes('原账户')); report.defaultDesktopFirstRun = true;
+  await page.evaluate(() => window.weftmateDesktop.setAutoStart(true));
+  assert.ok((await application.evaluate(() => globalThis.w1ModelStartupOptions.args)).includes(`--local-model-config=${localModelConfig}`));
+  report.startupModelConfigPreserved = true;
   await application.close(); application = null;
   const legacyProfile = join(root, 'legacy-diagnostics'); mkdirSync(legacyProfile);
   application = await _electron.launch({ executablePath, args: ['.', `--user-data-dir=${legacyProfile}`, '--dsh-window'], cwd: repository, env, timeout: 90000 });

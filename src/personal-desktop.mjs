@@ -61,7 +61,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const loginArgs = [
     ...(!app.isPackaged ? [app.getAppPath()] : []), '--personal-host', '--start-in-tray',
     `--user-data-dir=${app.getPath('userData')}`,
-    ...process.argv.filter(arg => /^--(?:access-port|workspace-dir|public-origin|personal-memory-config|android-package-path|mobile-ui-dir)=/.test(arg) || arg === '--trust-loopback-proxy'),
+    ...process.argv.filter(arg => /^--(?:access-port|workspace-dir|public-origin|personal-memory-config|local-model-config|android-package-path|mobile-ui-dir)=/.test(arg) || arg === '--trust-loopback-proxy'),
   ];
   const loginOptions = { path: process.execPath, args: loginArgs };
   const settings = () => ({ autoStart: app.getLoginItemSettings(loginOptions).openAtLogin,
