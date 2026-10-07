@@ -73,3 +73,7 @@ npm audit --audit-level=high
 Mac Node 24.21.0 本地 30/30 通过，独立依赖审计 0 漏洞。[Linux Cloud foundation tests](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 通过（同一套 30 项测试）；主仓后续检查另见 PR，不与 cloud 结果混算。
 
 未做：五端客户端接入、宿主验签/认领/DPoP/会话交换/内容设备授权（S1b）、中继/推送/备份/共享；真实邮件投递、服务器/systemd/Caddy/DNS 部署。本包未连接服务器、未发真实邮件。部署文件仍是 [审查草稿](deploy/README.md)。
+
+## S1b 宿主身份配合
+
+迁移 003 增加宿主安装公钥、认领挑战、membership 与最小撤销事件；`src/hosts.mjs` 处理安装签名与签名事件 feed。OIDC host resource 只为已认领成员签发，token endpoint DPoP key 必须匹配邮件已确认设备公钥；无内容授权自动继承。宿主实现/隔离测试见 `../../src/personal-cloud/README.md`，正式接口见 CLIENT_API 7.4–7.5。云密码/邮箱 epoch 更新在同一 SQLite 事务产生撤销事件；宿主离线不宣称已收到。

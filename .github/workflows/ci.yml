@@ -35,17 +35,17 @@ jobs:
           node-version: 24
           cache: npm
 
-      # Independent zero-dependency cloud suite; no Electron or DSH needed.
-      - name: Cloud foundation tests (Linux)
-        if: runner.os == 'Linux'
-        working-directory: services/cloud
-        run: node --test test/*.test.mjs
-
       # npm ci installs from package-lock.json. get-windows v9 ships N-API
       # prebuilds so no native toolchain is normally needed; if a prebuild is
       # ever missing for a runner, add the platform's build deps here.
       - name: Install dependencies
         run: npm ci
+
+      # Cloud + host identity integration; isolated services, no Electron or DSH runtime.
+      - name: Cloud identity tests (Linux)
+        if: runner.os == 'Linux'
+        working-directory: services/cloud
+        run: node --test test/*.test.mjs
 
       - name: Release preflight
         run: npm run release:preflight

@@ -127,10 +127,12 @@ export function createCommandOperations(context) {
           return;
         }
       }
-      if (context.accountState(ownerId).devices[pending.sourceDeviceId]?.revoked ||
+      if ((context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind === 'cloud' &&
+          context.cloudIdentity?.validSession(ownerId, pending.sourceDeviceId) !== true) ||
+          context.accountState(ownerId).devices[pending.sourceDeviceId]?.revoked ||
           (pending.sourceAuthEpoch !== undefined &&
             context.accountState(ownerId).devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch) ||
-          (context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind === 'password' &&
+          (['password', 'cloud'].includes(context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind) &&
             Date.parse(context.accountState(ownerId).devices[pending.sourceDeviceId].expiresAt) <= context.timestamp())) {
         await context.serial(() => context.mutate(ownerId, (next) => {
           if (next.commands[commandId]?.state !== 'pending') return;
@@ -249,10 +251,12 @@ export function createCommandOperations(context) {
           });
           return;
         }
-        if (context.accountState(ownerId).devices[command.sourceDeviceId]?.revoked ||
+        if ((context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind === 'cloud' &&
+            context.cloudIdentity?.validSession(ownerId, command.sourceDeviceId) !== true) ||
+            context.accountState(ownerId).devices[command.sourceDeviceId]?.revoked ||
             (command.sourceAuthEpoch !== undefined &&
               context.accountState(ownerId).devices[command.sourceDeviceId]?.authEpoch !== command.sourceAuthEpoch) ||
-            (context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind === 'password' &&
+            (['password', 'cloud'].includes(context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind) &&
               Date.parse(context.accountState(ownerId).devices[command.sourceDeviceId].expiresAt) <= context.timestamp())) {
           await context.mutate(ownerId, (next) => {
             next.commands[commandId].state = 'rejected';
@@ -327,7 +331,7 @@ export function createCommandOperations(context) {
             : 'accepted_by_dsh';
           if (snapshot.kind === 'session.create') {
             next.sessions[snapshot.sessionId] = { ownerId: next.ownerId, attachedAt: new Date().toISOString(),
-              origin: next.devices[snapshot.sourceDeviceId]?.authKind !== 'password'
+              origin: !['password', 'cloud'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
               modelProfileId: snapshot.payload.modelProfileId,
               ...(snapshot.payload.conversationId ? { conversationId: snapshot.payload.conversationId } : {}),
@@ -436,7 +440,7 @@ export function createCommandOperations(context) {
               (item.dshTurn !== undefined && item.dshTurn !== turn) ||
               !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
           const device = next.devices[item.sourceDeviceId];
-          return device?.authKind === 'password' && !device.revoked &&
+          return ['password', 'cloud'].includes(device?.authKind) && !device.revoked &&
             device.authEpoch === item.sourceAuthEpoch && Date.parse(device.expiresAt) > context.timestamp();
         });
         if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
