@@ -765,8 +765,10 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         require(method in setOf("GET", "POST", "PATCH", "DELETE"))
         require(validBusinessPath(path))
         if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= 64 * 1024)
+        val restarting = method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))
         return http.request("${host.origin}$path", method, body,
-            if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host)).body
+            if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),
+            readTimeoutMs = if (restarting) 360_000 else 20_000).body
     }
 
     private fun authWriteHeaders(host: HostIdentity) = mapOf("Cookie" to host.cookie,

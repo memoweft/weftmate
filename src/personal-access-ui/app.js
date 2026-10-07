@@ -329,7 +329,7 @@
       default: return context === 'network' ? '暂时无法连接宿主，请稍后重试。' : '操作未完成，请重试。'
     }
   }
-  async function requestJson(url, { method = 'GET', body, protectedWrite = false } = {}) {
+  async function requestJson(url, { method = 'GET', body, protectedWrite = false, timeoutMs = 15_000 } = {}) {
     const headers = {}
     if (body !== undefined) headers['content-type'] = 'application/json'
     if (protectedWrite) {
@@ -340,7 +340,7 @@
     try {
       response = await fetch(url, {
         method, headers, credentials: 'same-origin', cache: 'no-store',
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(timeoutMs),
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       })
     } catch { throw { code: 'NETWORK' } }
@@ -4574,7 +4574,7 @@
         restart.disabled = !system.canRestart || !value.canRestart
         restart.addEventListener('click', async () => {
           restart.disabled = true; restart.textContent = '重启中…'
-          try { await accessApi(`/system/${key}/restart`, { method: 'POST', body: {}, protectedWrite: true })
+          try { await accessApi(`/system/${key}/restart`, { method: 'POST', body: {}, protectedWrite: true, timeoutMs: 360_000 })
             if (accountCurrent(token)) await refreshSystem()
           } catch { if (accountCurrent(token)) { byId('system-notice').textContent = '重启未确认，请刷新查看实际状态。'
             restart.disabled = false; restart.textContent = '重启' } }

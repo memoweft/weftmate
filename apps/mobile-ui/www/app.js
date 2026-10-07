@@ -104,11 +104,11 @@ function selectConversation(id){closeImagePreview({restoreFocus:false});invalida
   try{localStorage.removeItem(chatSourceKey())}catch{}status('');closeToast();
   activeSend=null;state.sendUncertain=false;state.conversationId=id;try{if(id)localStorage.setItem(selectionKey(),id);else localStorage.removeItem(selectionKey())}catch{}
   closeAttachmentMenu();loadDraft();page('chat');if(id)void refreshHandoff(id)}
-function call(method, params={}) {
+function call(method, params={}, timeoutMs=45000) {
   if (!window.weftNative?.postMessage) return Promise.reject(new Error('NATIVE_UNAVAILABLE'));
   const id = `r${++sequence}`;
   return new Promise((resolve,reject)=>{
-    const timer = setTimeout(()=>{pending.delete(id);reject(new Error('TIMEOUT'))},45000);
+    const timer = setTimeout(()=>{pending.delete(id);reject(new Error('TIMEOUT'))},timeoutMs);
     pending.set(id,{resolve,reject,timer});
     window.weftNative.postMessage(JSON.stringify({id,method,params}));
   });
@@ -1220,7 +1220,7 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
       const item=el('div','row'),text=el('span');text.append(el('strong','',name),el('small','',detail));item.append(text);section.append(item);
       const button=el('button','secondary',`重启${name}`);button.disabled=!system.canRestart||!value.canRestart;
       button.addEventListener('click',async()=>{button.disabled=true;button.textContent='重启中…';
-        try{await call('host.business',{path:`/personal/v1/system/${key}/restart`,method:'POST',body:{}});
+        try{await call('host.business',{path:`/personal/v1/system/${key}/restart`,method:'POST',body:{}},360000);
           if(current())page('settings')
         }catch(e){if(current()){status.textContent='重启未确认，请刷新查看实际状态。';button.disabled=false;button.textContent=`重启${name}`}}});
       section.append(button)

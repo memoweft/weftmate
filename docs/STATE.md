@@ -2,13 +2,13 @@
 
 > 只写现在，整页覆盖。路线见 PLAN.md；旧记录见 archive/2026-10-07/。
 
-更新：2026-10-07
+更新：2026-10-08
 
 ## 当前里程碑：M0 重置 / 轻云并行
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 审查方向调整：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；单槽排队依实际 /props；冒烟与 CI（持续集成）验证中 |
+| Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Mac | A3（A1 + M1-0d）Apple 对话时间线 | [PR #32](https://github.com/memoweft/weftmate/pull/32) 待审查，本地验收通过：在线/离线尾页与上翻、增量、执行/审批/提问/成果卡、删除独立任务页面、Watch 手机桥接及前台触感；[合成证据](../apps/apple/Tests/Evidence/A3/README.md) |
 | Codex · Cloud | S2 中继、单一 443 SNI、宿主 TLS | [PR #34](https://github.com/memoweft/weftmate/pull/34)（`wp/s2-relay`）：官方 frp 0.71.0 + SHA256 下载、逐宿主授权/轮换/撤销断流、HAProxy TCP 443 草稿、宿主 TLS/IPC sidecar/状态、受限 DNS-01 hook 与实际 SPKI 已实现；本机全链路通过；等待规划审查，最新 CI 见 PR checks；无部署 |
 
@@ -19,8 +19,8 @@
 
 ## 最近一次验证
 
-- M0-6：运行参数唯一来源为仓库外 D:\AI\Config；WeftMate 只读当前模型、最近切换、真实上下文与槽数，经代理调用现有控制脚本重启当前模型；不另起服务、不重新调参。
-- M0-6 首版完整单测 873：866 通过、5 既有静态失败、2 跳过；后续本地模型/队列/云身份/记忆/中继定向通过。合并中本地二次全量受瞬时冲突与依赖修复影响，不作为最终门禁；最终以 PR CI 为准；Windows 的忙碌注册、预检重试、云设备创建三项测试改为实际状态/调用次数断言，未放宽产品超时。类型检查/预检通过；手机 Web（网页界面）89 项、Android JVM（Java 虚拟机）测试/构建通过。界面见 tests/evidence/m0-6/。
+- M0-6：运行参数唯一来源为仓库外 D:\AI\Config；现有 8081、`qwen3.8-27b-original`，隔离宿主 / 原生请求实读 98,304、单槽；12 次链式读取返回校验字，非空 completed、无 max-tokens，后台在主对话结束后返回。GPU（图形处理器）协调标记到达后真实按钮重启通过，进程更换、模型与容量保持；不调参或浸泡。
+- M0-6 状态/容量/排队/系统权限定向测试、桌面 59 项、手机 Web（网页界面）90 项、Android BusinessRoute 定向编译/测试与类型检查通过；修复两分钟重启被普通短请求提前中断的问题，系统重启专用等待窗 6 分钟。实现提交 d185695 的五项 CI 全绿，最终以 PR 当前提交检查为准；既有例外未变。截图见 tests/evidence/m0-6/。Windows EPERM rename 偶发不在本包。
 - 已同步 MW-2、S1b、S2；真实固定 Core 集成通过；召回按主对话的实际 local/cloud（本地/云端）过滤，与后台形成模型分开。S2 上游：Mac 18443 与 Linux CI 实际 443 全链路通过；cloud 常规 36/36、相关宿主 16/16、下载/TLS/IPC 3/3。未把这些结果当作 Windows 真机验证。
 - **S1c-Web**：桌面相关 **65/65**、手机交互 **89/89**、新密钥/PKCE/状态/凭据轮换/配对与公开配置 **5/5**、云认证/配置/宿主 **22/22**、类型检查通过；真实 Chromium 使用 file 邮件、SQLite 与隔离宿主验证本地登录→绑定→新手机浏览器等待→桌面允许→进入对话、二维码过期自动刷新/配对、拒绝、解绑与本地登录保留。合成截图 `.local/s1c-web/` 不进仓库；等待页刷新恢复也已通过；首轮 CI 五项通过：Android assembleDebug / JVM、Web Chromium 闭环、根完整必过套件、真实 MemoWeft Core、实际 443 中继；最终门禁见 PR checks。现有 public account shell 静态正则将 context 当 text 的例外仍按 CI 清单处理。
 
@@ -74,5 +74,5 @@ M0-7 **不作为基线**：以下结果使用慢配置与旧工具，基线在 M
 
 - D1 已完成真实云/systemd（系统服务管理）私有证书权限、既有443共存与 API/relay 生产 CA；API/relay/hosts DNS 已就绪。内容 DNS provider 尚未接线，RAM 凭据待本人提供；逐宿主 CSR（证书签名请求）定时签发/安装/热载、内容 key 轮换、已撤销宿主重新启用、五端原生 pin（证书固定）真机留后续包。Windows 验收使用隔离 CA，不能代表普通浏览器生产内容证书已就绪。
 - frp 此版无踢在线 client 的管理 API；本包用云必经 TCP socket 所有权立即断流。部署不可绕过入口或公网暴露 frps/plugin。D24 普通浏览器允许，云/DNS 主动完全控制时仍可能被冒充；原生另 pin。
-- MW-2 部署需升级 observed v1 Core；真机上传/日用模型/vendor 未验。M0-6 现有入口冒烟待完成；M1-3 极少上下文先压缩待做。
+- MW-2 部署需升级 observed v1 Core；真机上传/日用模型/vendor 未验。M1-3 极少上下文先压缩待做。
 - 根单测已有已登记例外、外部 vendor/Design 夹具及部分跨平台适配；Mac 127.0.0.2 回环别名缺失的既有环境失败以 CI 为准，未在 S2 改写例外。Windows 中继打包/真机与 S1c 客户端留后续包。
