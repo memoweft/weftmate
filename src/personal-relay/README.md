@@ -42,7 +42,7 @@ certbot certonly --manual --preferred-challenges dns \
 ```
 
 3. hook 先确认 CERTBOT_DOMAIN 是自己已认领域名，再以安装 ES256 proof 提交 TXT 值。云计算记录名，宿主没有整区 DNS 凭据；云部署的 provider 只增删本次值，并确保权威记录可见后返回。没有 provider 时 503，ACME 必须失败。
-4. 安装 certbot 取得的 fullchain 到 CERT_FILE；定时使用相同 CSR 重新签发。`--csr` 模式的定时签发与文件安装、reload/宿主重启由部署包负责（不能假设普通 `certbot renew` 自动维护外部 CSR）。首次域名分配可在仅 S1b 启用的宿主先取目录后签发，再启用 relay；本包没有联系生产 CA。
+4. 安装 certbot 取得的 fullchain 到 CERT_FILE；定时使用相同 CSR 重新签发。`--csr` 模式的定时签发与文件安装、reload/宿主重启由部署包负责（不能假设普通 `certbot renew` 自动维护外部 CSR）。首次签发时可先启用 relay、CERT_FILE 指向将安装的路径：直接地址 `/status.relay.baseUrl` 会先返回已分配域名，证书未就绪状态为 offline，adapter 不发布内容。用该域名签发并安装后，生命周期重试自动启动 adapter/frpc；本包没有联系生产 CA。
 
 开发 TLS、sidecar 和宿主 HTTP 全部仅监听回环。TLS adapter 拒绝外来转发头并写自己的固定值；同源 Cookie/CSRF 原样，setup 与本地认领只能直接访问。
 
