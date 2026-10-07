@@ -83,8 +83,10 @@
         <div class="assistant-shell">
           <button type="button" class="rail-backdrop" id="rail-backdrop" aria-label="关闭会话侧栏" hidden></button>
           <aside class="session-rail" id="session-rail" aria-label="会话导航">
+            <div class="rail-top">
             <div class="rail-heading"><strong>WeftMate</strong><button type="button" class="icon-close rail-close" id="rail-close" aria-label="收起会话侧栏"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button></div>
             <button type="button" class="button quiet rail-new" id="new-session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新对话<kbd>Ctrl N</kbd></button>
+            </div>
             <div class="rail-search"><button type="button" class="composer-icon" id="search-sessions" aria-label="搜索会话"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg></button><input id="session-search" type="search" placeholder="搜索会话" aria-label="搜索会话"><kbd>Ctrl K</kbd></div>
             <p class="muted rail-message" id="sessions-status">正在读取会话…</p>
             <ul class="session-list" id="session-list"></ul>

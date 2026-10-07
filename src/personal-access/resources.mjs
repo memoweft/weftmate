@@ -1,9 +1,24 @@
 import { failure, publicSource } from './common.mjs';
 import { publicCommand } from './command-policy.mjs';
 import { INTERNAL_ARTIFACT_KIND } from './constants.mjs';
+import { describeTool } from '../runtime/dsh-adapter/timeline.mjs';
 
 const parsed = value => { if (typeof value !== 'string') return value ?? {}; try { return JSON.parse(value); } catch { return {}; } };
 const strings = value => (Array.isArray(value) ? value : [value]).filter(value => typeof value === 'string' && value.trim());
+
+function describeUse(tool, args, fallback) {
+  const short = value => String(value ?? '').replace(/\s+/g, ' ').trim().slice(0, 100);
+  if (/^(weftmod_script|run_code)$/.test(tool)) return `运行脚本${args.description ? `：${short(args.description)}` : ''}`;
+  const description = describeTool(tool, args);
+  const file = strings(args.file_path ?? args.filePath ?? args.path)[0]?.split(/[\\/]/).at(-1);
+  if (file && /^(读取文件|写入文件|修改文件)$/.test(description)) return `${description}：${short(file)}`;
+  if (description.startsWith('执行工具 ')) {
+    if (args.description) return short(args.description);
+    if (fallback && fallback !== description && fallback !== tool) return short(fallback);
+    return `调用 ${short(tool)}${args.query ? `：${short(args.query)}` : ''}`;
+  }
+  return description;
+}
 
 /** Read-only projection of existing account records and one directional timeline page. */
 export async function conversationResources(context, account, sessionId, ownerId, afterSeq) {
@@ -20,7 +35,14 @@ export async function conversationResources(context, account, sessionId, ownerId
     if (!Number.isSafeInteger(event?.seq) || event.seq <= last) throw failure('BACKEND_UNAVAILABLE', 503);
     last = event.seq;
   }
-  const outputs = Object.values(account.commands).filter(row => row.sessionId === sessionId && row.kind === INTERNAL_ARTIFACT_KIND).map(publicCommand);
+  // Artifacts are named exports within a conversation. Keep the newest version;
+  // creation time, not later status updates, determines the write order.
+  const latest = new Map();
+  for (const row of Object.values(account.commands).filter(row => row.sessionId === sessionId && row.kind === INTERNAL_ARTIFACT_KIND)) {
+    const key = row.fileName || row.artifactId, previous = latest.get(key);
+    if (!previous || Date.parse(row.createdAt) >= Date.parse(previous.createdAt) || !previous.createdAt) latest.set(key, row);
+  }
+  const outputs = [...latest.values()].map(publicCommand);
   const sources = [...Object.values(account.projectSources ?? {}), ...Object.values(account.browserSources ?? {})]
     .filter(row => row.sessionId === sessionId && row.ownerId === ownerId).map(row => ({
       key: `${row.kind === 'webpage' ? 'webpage' : 'file'}:${row.url || row.relativePath}`,
@@ -42,6 +64,7 @@ export async function conversationResources(context, account, sessionId, ownerId
     let args;
     try { const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, ownerId, seq: step.detailRef.seq }));
       args = parsed(parsed(detail.text).arguments); } catch { continue; }
+    use.summary = describeUse(tool, args, step.summary);
     const paths = [...strings(args.file_path), ...strings(args.path), ...strings(args.paths), ...strings(args.filePath)];
     for (const file of new Set(paths)) sources.push({ key: `file:${file}`, kind: 'file', name: file.split(/[\\/]/).at(-1), location: file,
       uses: [{ ...use, verb: /write|save|edit/i.test(tool) ? '写入' : '读取' }] });
