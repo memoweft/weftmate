@@ -24,12 +24,14 @@ async function until(check: () => unknown) {
 
 async function nativeFixture({ toolName = 'fixture_action', askedName = toolName, stage = 'gate',
   initialStatus = 'answered', decision = 'allowed-once', holdResolution = false, failResolution = false,
-  failUncertainObservation = false, failFinish = false, cancelledStatus = 'resolved', policy = 'ask' } = {}) {
+  failUncertainObservation = false, failFinish = false, cancelledStatus = 'resolved', policy = 'ask', allowAll = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'personal-native-approval-'))
   const staged = join(root, 'desktop.mjs')
   writeFileSync(staged, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
     .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`)
     .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
+    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
+    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
     .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
     .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
     .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
@@ -87,7 +89,8 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
     if (frame.action === 'authorize_execution' && uncertainObserved) throw Object.assign(new Error('unknown effect'), { code: 'TASK_NOT_READY' })
     return { executionId: 'exec-' + 'a'.repeat(48), state: frame.state ?? 'running' }
   } }
-  const approvals = plugin.installPersonalApprovalBridge(ctx, bridge, { pollDelayMs: 2 })
+  const approvals = plugin.installPersonalApprovalBridge(ctx, bridge, { pollDelayMs: 2,
+    ...(allowAll ? { policyFor: async () => ({ mode: 'allow-all' }) } : {}) })
   ctx.on('tools/execute', (exec: any, next: any) => plugin.trackPersonalExecution(bridge, exec, next, null, approvals))
   ctx.on('tools/pre-execute', (exec: any, next: any) => stage === 'gate' && exec.name === toolName
     ? { kind: 'ask', reason: 'Allow exactly this fixture action' } : next())
@@ -111,6 +114,24 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
     close: async () => { approvals.close(); assert.equal(transport.listenerCount('disconnect'), 0);
       await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }) } }
 }
+
+test('all allowed still uses native approval outcomes but bypasses human cards, and unavailable never executes', async () => {
+  const all = await nativeFixture({ initialStatus: 'pending', allowAll: true })
+  try {
+    const result = await all.execute()
+    assert.equal(result.isError, false)
+    assert.equal(all.effects, 1)
+    assert.equal(all.frames.some(frame => frame.action === 'register_approval'), false)
+    assert.ok(all.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'allowed-once'))
+  } finally { await all.close() }
+  const expired = await nativeFixture({ initialStatus: 'unavailable' })
+  try {
+    const result = await expired.execute()
+    assert.equal(result.isError, true)
+    assert.equal(expired.effects, 0)
+    assert.ok(expired.session.events.some(event => event.type === 'approval/decided' && event.data.outcome === 'unavailable'))
+  } finally { await expired.close() }
+})
 
 test('fixed ApprovalService and ToolRuntime deliver approved/rejected native decisions without forcing automatic tools to ask', async () => {
   for (const stage of ['gate', 'body']) for (const decision of ['allowed-once', 'rejected']) {

@@ -1694,6 +1694,7 @@ async function bootstrap() {
       if (described?.agentPreset !== 'personal-remote') {
         throw Object.assign(new Error('unsafe preset'), { code: 'SESSION_READ_ONLY' });
       }
+      if (request.action === 'approval_policy') return personalAccessService.getApprovalPolicy(request);
       if (['register_approval', 'read_approval', 'resolve_approval'].includes(request.action)) {
         return personalAccessService.trackToolApproval(request);
       }

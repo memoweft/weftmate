@@ -98,6 +98,7 @@ export function effectivePermissionPreset(session) {
 async function requireApproval(ctx, exec, action) {
   if (!EFFECTS.has(action)) return
   if (exec.agent === undefined) throw toolError('AI_GAME_CALLER_UNAVAILABLE', 'Approval requires an owning DSH agent.')
+  if (exec.agent.session.header.agentPreset === 'personal-remote') return 'full-access'
   if (effectivePermissionPreset(exec.agent.session) === 'danger-full-access') return 'full-access'
   const outcome = await ctx.approval.request({
     agent: exec.agent,

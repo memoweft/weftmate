@@ -393,6 +393,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [AI_GAME_HOST_PLUGIN_SRC, aiGameHostDest],
     [join(PLUGINS_DIR, 'weftmate-weftmod.mjs'), join(dir, 'plugins', 'weftmate-weftmod.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
+    [join(PLUGINS_DIR, 'personal-approval-policy.mjs'), join(dir, 'plugins', 'personal-approval-policy.mjs')],
     [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
@@ -726,6 +727,7 @@ export interface DshWebRuntimeOptions {
   credentialRequestHandler?: WeftMateCredentialRequestHandler
   /** Restricted personal desktop tool requests from this exact managed DSH child. */
   personalDesktopRequestHandler?: (request: Readonly<
+    { id: string, action: 'approval_policy', sessionId: string, turn: number, callId: string, messageHash: string } |
     { id: string, action: 'authorize_execution' | 'finish_execution' | 'observe_execution_job', sessionId: string, turn: number,
       callId: string, rootCallId: string, receiptId: string, messageHash: string, toolName: string,
       argumentsHash: string, runtimeId: string, executionId?: string, state?: 'completed' | 'failed' | 'cancelled' | 'uncertain', resultHash?: string,
@@ -794,7 +796,7 @@ export interface PersonalTaskStopResult {
 const TASK_STOP_PROTOCOL = 'weftmate.personal-task-control.v1'
 const PERSONAL_APPROVAL_PUBLIC_FIELDS = ['approvalId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId',
   'turn', 'callId', 'rootCallId', 'toolName', 'reason', 'createdAt', 'status',
-  'decisionOutcome', 'decisionRequestId', 'answeredAt', 'outcome', 'resolvedAt'] as const
+  'decisionOutcome', 'decisionRequestId', 'decisionScope', 'riskCategories', 'answeredAt', 'outcome', 'resolvedAt'] as const
 const PERSONAL_APPROVAL_OUTCOMES = ['allowed-once', 'rejected', 'cancelled', 'unavailable'] as const
 
 function personalApprovalReceipt(value: Record<string, unknown> | null, request: Record<string, unknown>): Record<string, unknown> | null {
@@ -1724,6 +1726,7 @@ export class DshWebRuntime {
         !Number.isSafeInteger(row.turn) || (row.turn as number) < 0 ||
         typeof row.callId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(row.callId) ||
         typeof row.messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(row.messageHash)) return
+    const approvalPolicy = row.action === 'approval_policy'
     const nativeFile = row.action === 'register_file'
     const nativeBrowser = row.action === 'browse'
     const writeDocument = row.action === 'write_document'
@@ -1738,7 +1741,9 @@ export class DshWebRuntime {
         (typeof row.receiptId !== 'string' || !TASK_STOP_RECEIPT.test(row.receiptId))) return
     if ((listProject || readProject || browserOpen || browserFollow || browserSegment) &&
         typeof row.receiptId !== 'string') return
-    if (toolApproval) {
+    if (approvalPolicy) {
+      if (Object.keys(row).some(key => !['protocol', 'id', 'action', 'sessionId', 'turn', 'callId', 'messageHash'].includes(key))) return
+    } else if (toolApproval) {
       const fields = ['protocol', 'id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId',
         'messageHash', 'toolName', 'argumentsHash', 'approvalId',
         ...(row.action === 'register_approval' ? ['reason'] : []),
@@ -1853,7 +1858,9 @@ export class DshWebRuntime {
     const identity = { id: row.id, sessionId: row.sessionId, turn: row.turn as number,
       callId: row.callId as string, messageHash: row.messageHash as string,
       ...(typeof row.receiptId === 'string' ? { receiptId: row.receiptId } : {}) }
-    const request = Object.freeze(nativeFile
+    const request = Object.freeze(approvalPolicy
+      ? { ...identity, action: 'approval_policy' as const }
+      : nativeFile
       ? { ...identity, action: 'register_file' as const, receiptId: row.receiptId as string,
         filePath: row.filePath as string, sha256: row.sha256 as string }
       : nativeBrowser
@@ -1904,6 +1911,12 @@ export class DshWebRuntime {
     }).then(
       (command: unknown) => {
         const value = command as Record<string, unknown> | null
+        if (approvalPolicy) {
+          if (!value || !['auto','ask','accept-edits','plan','allow-all'].includes(value.mode as string) || !Array.isArray(value.allowedCategories)) {
+            settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return
+          }
+          settle({ ok: true, command: { mode: value.mode, allowedCategories: value.allowedCategories } }); return
+        }
         if (nativeFile || nativeBrowser) {
           if (!value || typeof value !== 'object') { settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return }
           // Results from these host-owned operations are already public projections; discard paths.

@@ -19,6 +19,7 @@ import {
   REQUEST_ID,
   TOOL_RUNTIME_ID
 } from './constants.mjs';
+import { RISK_CATEGORIES } from '../plugins/personal-approval-policy.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
 
 export function questionText(value) {
@@ -150,6 +151,9 @@ export function validToolApprovals(command, store) {
       !Array.isArray(rows) || rows.length > MAX_COMMAND_TOOL_APPROVALS ||
       new Set(rows.map(row => row?.approvalId)).size !== rows.length) return false;
   return rows.every(row => {
+    if (row?.decisionScope !== undefined && (!['once', 'conversation-category'].includes(row.decisionScope) ||
+        row.decisionScope === 'conversation-category' && row.decisionOutcome !== 'allowed-once') ||
+        row?.riskCategories !== undefined && (!Array.isArray(row.riskCategories) || row.riskCategories.some(x => !RISK_CATEGORIES.includes(x)))) return false;
     if (!plainObject(row) || Object.keys(row).some(key => !APPROVAL_FIELDS.includes(key)) ||
         !TOOL_RUNTIME_ID.test(row.approvalId ?? '') || row.sessionId !== command.sessionId ||
         row.taskId !== (command.rootTaskId ?? command.commandId) ||

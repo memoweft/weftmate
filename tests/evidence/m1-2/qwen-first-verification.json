@@ -1,0 +1,65 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "isolatedAccount": true,
+  "realModel": true,
+  "scenarios": [
+    {
+      "id": "action-06-delete-approval",
+      "status": "failed",
+      "durationMs": 180452,
+      "checks": [],
+      "reason": "Scenario timed out"
+    },
+    {
+      "id": "action-01-organize",
+      "status": "passed",
+      "durationMs": 130840,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ]
+    }
+  ]
+}

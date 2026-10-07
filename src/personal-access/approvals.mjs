@@ -1,6 +1,7 @@
 import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
+import { approvalCategories } from '../plugins/personal-approval-policy.mjs';
 import {
   approvalDecisionReceipt,
   invalidateToolApproval,
@@ -57,6 +58,7 @@ export function createApprovalOperations(context) {
   }
 
   function approvalUnavailableReason(account, row) {
+    if (row.status === 'pending' && context.timestamp() - Date.parse(row.createdAt) >= 600_000) return 'approval_timeout';
     if (context.closedToolRuntimeIds.has(row.runtimeId)) return 'runtime_unavailable';
     try { personalExecutionSource(account, { ...row, receiptId: row.sourceReceiptId }, true); }
     catch (error) {
@@ -143,7 +145,8 @@ export function createApprovalOperations(context) {
   }
 
   async function answerToolApproval(request, ownerId, deviceId, sessionId, approvalId, body) {
-    exactKeys(body, ['requestId', 'outcome'], ['requestId', 'outcome']);
+    exactKeys(body, ['requestId', 'outcome', 'scope'], ['requestId', 'outcome']);
+    if (body.scope !== undefined && (!['once', 'conversation-category'].includes(body.scope) || body.outcome !== 'allowed-once')) throw failure('INVALID_REQUEST');
     if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || !APPROVAL_DECISIONS.has(body.outcome)) throw failure('INVALID_REQUEST');
     const account = context.accountState(ownerId);
     if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
@@ -160,12 +163,18 @@ export function createApprovalOperations(context) {
       const row = toolApprovals(next).find(item => item.sessionId === sessionId && item.approvalId === approvalId);
       if (!row) throw failure('NOT_FOUND', 404);
       if (row.decisionRequestId === body.requestId) {
-        if (row.decisionOutcome !== body.outcome) throw failure('REQUEST_CONFLICT', 409);
+        if (row.decisionOutcome !== body.outcome || (row.decisionScope ?? 'once') !== (body.scope ?? 'once')) throw failure('REQUEST_CONFLICT', 409);
         return approvalDecisionReceipt(row);
       }
       if (context.requestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
       if (row.status !== 'pending' || approvalUnavailableReason(next, row)) throw failure('APPROVAL_NOT_PENDING', 409);
       row.status = 'answered'; row.decisionOutcome = body.outcome; row.decisionRequestId = body.requestId;
+      row.decisionScope = body.scope ?? 'once';
+      if (row.decisionScope === 'conversation-category') {
+        if (!row.riskCategories?.length) throw failure('INVALID_REQUEST');
+        const session = next.sessions[sessionId];
+        session.allowedApprovalCategories = [...new Set([...(session.allowedApprovalCategories ?? []), ...row.riskCategories])];
+      }
       row.answeredAt = new Date(context.timestamp()).toISOString();
       return approvalDecisionReceipt(row);
     }, assertCurrent));
@@ -270,7 +279,7 @@ export function createApprovalOperations(context) {
         const row = { approvalId, runtimeId, sessionId, taskId: checked.root.commandId,
           sourceCommandId: checked.source.commandId, sourceReceiptId: receiptId, turn, callId, rootCallId,
           toolName: input.toolName, messageHash: input.messageHash, argumentsHash: input.argumentsHash,
-          reason: input.reason, status: 'pending', createdAt: new Date(context.timestamp()).toISOString() };
+          reason: input.reason, riskCategories: approvalCategories(input.reason), status: 'pending', createdAt: new Date(context.timestamp()).toISOString() };
         checked.source.toolApprovals = [...rows, row];
         return publicToolApproval(row);
       }, () => requireToolRuntime(runtimeId)));
