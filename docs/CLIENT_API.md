@@ -388,7 +388,8 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 | GET `/commands/by-request/{id}`；POST `/commands` | 404且code为NOT_FOUND才认定未登记；持久requestId与原体核对一致。create/message/cancel字段一致，但message长度、附件/steer范围有差异（见下） |
 | GET `/tasks/{id}`；POST `/tasks/{id}/stop` | GET裸Task、POST202的task外壳、requestId一致；停止先查canStop，仅把匹配202当登记证据，后续Task状态不伪称该请求已确认。尚未接入补充/续做与executionSteps详情 |
 | GET `/tasks/{id}/sources/{snapshotId}` | 项目/网页来源字段与文本响应一致；区分项目原文件hash与网页文本hash |
-| GET `/sessions/{id}/approvals`；POST `/sessions/{id}/approvals/{approvalId}` | before/limit/approvalId、两种outcome与requestId一致；POST200为answered回执，不能覆盖后续resolved列表事实 |
+| GET `/sessions/{id}/approvals`；POST `/sessions/{id}/approvals/{approvalId}` | A4a：接入可选 riskCategories / decisionScope 与允许 scope；允许一次 / 本对话总是允许此类 / 拒绝，分类 scope 保存在原请求中用于重试；旧记录省略 scope 保持 once。POST200为answered登记，resolved才显示已允许/已拒绝；Watch仍只允许一次/拒绝 |
+| GET/PATCH `/sessions/{id}/approval-mode`；GET/PATCH `/settings/approvals` | A4a：macOS / iOS 输入区五种模式菜单、全部允许风险提示与账户默认；按对话保存，默认只影响新对话。分类授权仅本对话；风险类别用于显示后果，接口没有独立撤销能力字段 |
 | GET `/sessions/{id}/questions`；POST `/sessions/{id}/questions/{questionRpcId}` | questions数组、answer.answers中的id/selected/custom、多选与plan-review字段一致；以answerAcceptedAt区分登记与消费；已在 A3 修复：按 approvalId 或同 turn 内不晚于 observedSeq 的最后一次提问定位时间线卡；200 登记与原生消费保持区分 |
 | GET `/artifacts/{id}`；GET `/artifacts/{id}/preview`；GET `/artifacts/{id}/download` | 元数据、preview.text、download字节一致；Apple核对task绑定、size/sha256与UTF-8，符合当前≤128KiB文本成果范围；不可据此认为支持未来任意二进制成果 |
 | GET `/memory/status`；GET `/memory/items`；GET `/memory/items/{kind}/{id}`；GET `/memory/items/{kind}/{id}/sources` | kind/query/after游标、owner/worldRevision与availableActions一致；详情/来源可由Apple额外传本地expectedWorldRevision校验，未将其臆造为HTTP查询字段 |
@@ -422,7 +423,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
 | 分发更新 | 无认证app/native/downloads六项请求；Apple公开更新另有PublicUpdates，不能宣称缺所有更新能力 | 当前保持已有公开分发；本契约只记录认证入口 |
 | Watch | 旧首页没有任务进度、审批或完成触感 | 已在 A3 修复：通过 iPhone WatchConnectivity 读取一行进度、允许一次/拒绝、最近回复；前台/刷新观察到新完成才触感提醒。尚无远程推送，审批须手机可达，未验收真机配对 |
-| 五端共同待实现 | 「总是允许此类」没有接口，Apple 不显示；排队取消、消息 chunk 流、D9 插话调度仍待实现；现有 timeline task.queued 不新增生产者 | Windows M1-0b / D9，Apple 随正式契约接入 |
+| 五端共同待实现 | M1-2 已有分类授权接口，Apple 在 A4a 接入（Watch保持允许一次）；排队取消、消息 chunk 流、D9 插话调度仍待实现；现有 timeline task.queued 不新增生产者 | Windows M1-0b / D9，Apple 随正式契约接入 |
 
 本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a已更新此文档与STATE契约栏。
 

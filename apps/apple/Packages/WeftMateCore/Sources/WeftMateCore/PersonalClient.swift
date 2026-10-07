@@ -444,6 +444,27 @@ public actor PersonalClient {
         return try TaskCommandPage.decode(response.body, scope: scope, sessionID: session, limit: limit, previous: before)
     }
 
+    /// A nil session addresses the account default, which applies only to new conversations.
+    public func approvalMode(sessionID: String? = nil) async throws -> ApprovalModeSettings {
+        try await requestApprovalMode(sessionID: sessionID, mode: nil)
+    }
+    public func setApprovalMode(_ mode: ApprovalMode, sessionID: String? = nil) async throws -> ApprovalModeSettings {
+        try await requestApprovalMode(sessionID: sessionID, mode: mode)
+    }
+    private func requestApprovalMode(sessionID: String?, mode: ApprovalMode?) async throws -> ApprovalModeSettings {
+        let (auth, generation) = try snapshot()
+        let path: String
+        if let sessionID { path = "/sessions/\(try checkedID(sessionID))/approval-mode" }
+        else { path = "/settings/approvals" }
+        struct Body: Encodable { let mode: ApprovalMode }
+        let body = try mode.map { try JSONEncoder().encode(Body(mode: $0)) }
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: path,
+            method: mode == nil ? "GET" : "PATCH", body: body)
+        try SharedValidation.require(response.status == 200)
+        return try decode(response.body)
+    }
+
     public func approvals(sessionID: String, limit: Int = 50,
                           before: ApprovalPageCursor? = nil) async throws -> ApprovalPage {
         let (auth, generation) = try snapshot()
