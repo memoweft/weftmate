@@ -66,6 +66,7 @@ import { buildConversationContext } from '../personal-conversations/context.mjs'
 
 export function createHttpHandler(context) {
   function handle(request, response) {
+    context.cloudIdentity?.track(request, response);
     const largeUpload = request.method === 'PUT' &&
       /^\/personal\/v1\/sync\/attachments\/[^/?]+(?:\?.*)?$/.test(request.url ?? '');
     if (!largeUpload && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
@@ -95,6 +96,7 @@ export function createHttpHandler(context) {
           (request.headers.origin !== undefined && !context.matchingOrigin(request))) {
         throw failure('ORIGIN_NOT_ALLOWED', 403);
       }
+      if (context.cloudIdentity && await context.cloudIdentity.handle(request, response, url)) return;
       const staticPaths = new Set(['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
         '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
         '/personal/v1/ui/file-sha256.js', '/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js',
@@ -176,13 +178,16 @@ export function createHttpHandler(context) {
         const current = context.authenticate(request, 'account:manage');
         const target = id(deviceMatch[1]);
         const matched = context.matchingOrigin(request);
-        await context.serial(() => context.mutate(current.ownerId, (next) => {
-          const latest = context.authenticate(request, 'account:manage');
-          if (latest.ownerId !== current.ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
-          if (!Object.hasOwn(next.devices, target)) throw failure('NOT_FOUND', 404);
-          next.devices[target].revoked = true;
-          next.devices[target].revokedAt = new Date(context.timestamp()).toISOString();
-        }));
+        await context.serial(async () => {
+          await context.mutate(current.ownerId, (next) => {
+            const latest = context.authenticate(request, 'account:manage');
+            if (latest.ownerId !== current.ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
+            if (!Object.hasOwn(next.devices, target)) throw failure('NOT_FOUND', 404);
+            next.devices[target].revoked = true;
+            next.devices[target].revokedAt = new Date(context.timestamp()).toISOString();
+          });
+          await context.cloudIdentity?.revokeLocalDevice(current.ownerId, target);
+        });
         return context.json(response, 200, { revoked: true },
           target === current.deviceId ? { 'set-cookie': context.clearCookie(matched.startsWith('https://')) } : {});
       }
@@ -387,7 +392,7 @@ export function createHttpHandler(context) {
       if (pathname === '/personal/v1/sync/capabilities' && request.method === 'POST') {
         if (url.search) throw failure('INVALID_REQUEST');
         const current = context.authenticate(request, 'commands:write');
-        if (current.via !== 'cookie' || current.device.authKind !== 'password') {
+        if (current.via !== 'cookie' || !['password', 'cloud'].includes(current.device.authKind)) {
           throw failure('FORBIDDEN', 403);
         }
         const body = await context.readJson(request);
@@ -405,7 +410,7 @@ export function createHttpHandler(context) {
           await context.serial(() => {
             const latest = context.authenticate(request, 'commands:write');
             if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
-                latest.via !== 'cookie' || latest.device.authKind !== 'password') {
+                latest.via !== 'cookie' || !['password', 'cloud'].includes(latest.device.authKind)) {
               throw failure('UNAUTHORIZED', 401);
             }
             if (latest.device.syncCapabilities?.nativeVersionCode !== level) {
@@ -430,7 +435,7 @@ export function createHttpHandler(context) {
         const recorded = await context.serial(() => context.mutate(ownerId, (next) => {
           const latest = context.authenticate(request, 'commands:write');
           if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
-              latest.via !== 'cookie' || latest.device.authKind !== 'password') {
+              latest.via !== 'cookie' || !['password', 'cloud'].includes(latest.device.authKind)) {
             throw failure('UNAUTHORIZED', 401);
           }
           const existing = next.devices[deviceId].syncCapabilities;
@@ -622,7 +627,7 @@ export function createHttpHandler(context) {
           (accountModelMatch && ['PATCH', 'POST', 'DELETE'].includes(request.method))) {
         if (url.search || !context.accountModelManager) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 503);
         const current = context.authenticate(request, 'account:manage');
-        if (current.via !== 'cookie' || current.device.authKind !== 'password') {
+        if (current.via !== 'cookie' || !['password', 'cloud'].includes(current.device.authKind)) {
           throw failure('FORBIDDEN', 403);
         }
         const action = !accountModelMatch ? 'create' : request.method === 'PATCH' ? 'update'
@@ -660,7 +665,7 @@ export function createHttpHandler(context) {
           const latest = context.authenticate(request, 'account:manage');
           const newest = context.accountState(ownerId).accountModels?.[accountModelId];
           if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
-              latest.via !== 'cookie' || latest.device.authKind !== 'password' ||
+              latest.via !== 'cookie' || !['password', 'cloud'].includes(latest.device.authKind) ||
               latest.device.authEpoch !== current.device.authEpoch ||
               latest.device.syncCapabilities?.nativeVersionCode < 12 ||
               newest?.ownerId !== ownerId || newest.status !== 'active' ||
@@ -1533,7 +1538,7 @@ export function createHttpHandler(context) {
             next.commands[commandId] = {
               commandId, ownerId: next.ownerId, requestId: payload.requestId,
               payloadHash, payload, sourceDeviceId: deviceId,
-              ...(latest.devices[deviceId].authKind === 'password'
+              ...(['password', 'cloud'].includes(latest.devices[deviceId].authKind)
                 ? { sourceAuthEpoch: latest.devices[deviceId].authEpoch } : {}),
               targetDeviceId: payload.targetDeviceId, kind: payload.kind,
               ...(taskAction ? { rootTaskId, taskAction } : {}),

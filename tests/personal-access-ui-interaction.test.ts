@@ -142,6 +142,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     syncPost?: 'timeout-no-commit' | 'timeout-committed' | 'conflict'; uuidForSync?: boolean; deviceSuffix?: string;
     configured?: boolean; authenticated?: boolean; setupGrant?: string; statusOffline?: boolean;
     profileAccounts?: Record<string, any>; initialProfileOwner?: string;
+    pendingDevices?: Record<string, any[]>;
     taskDetails?: Record<string, object>; sourceDetails?: Record<string, object>;
     artifactPreviews?: Record<string, object | { error: { code: string }; status: number }>;
     deferTaskDetail?: boolean; taskPollTimers?: boolean;
@@ -191,6 +192,14 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   let refreshTick = () => {}
   const fetch = (url: string, options: any = {}) => {
     requests.push({ url, options })
+    if (url.endsWith('/cloud/devices/pending')) return Promise.resolve(reply({ devices: config.pendingDevices?.[profileOwner] ?? [] }))
+    if (/\/cloud\/devices\/[^/]+\/decision$/.test(url) && options.method === 'POST') {
+      const id = url.split('/').at(-2)
+      const devices = config.pendingDevices?.[profileOwner] ?? []
+      const index = devices.findIndex(device => device.id === id)
+      if (index >= 0) devices.splice(index, 1)
+      return Promise.resolve(reply({ decision: JSON.parse(options.body).decision }))
+    }
     if (url.endsWith('/auth/state')) return Promise.resolve(reply({
       configured: config.configured ?? true, registrationAvailable: true }))
     if (url.endsWith('/auth/me') && config.authenticated === false) return Promise.resolve(reply({ error: { code: 'UNAUTHORIZED' } }, 401))
@@ -2150,4 +2159,34 @@ test('M1-0 inline source, artifact and stop controls use the receipt-bound task 
   info.querySelectorAll('button').find(n => n.textContent === '请求停止这件事')!.fire('click')
   await flush(); assert.ok(app.requests.some(r => r.url.endsWith('/tasks/inline-task/stop') && r.options.method === 'POST'))
   assert.doesNotMatch(accountHtml, /tasks-pane|task-detail-dialog|rail-tasks|show-tasks/)
+})
+
+
+test('S1b opening the application shows pending device notice; settings allows or denies with CSRF and clears account data on logout', async () => {
+  const pendingDevices = { A: [{ id: 'pending-one', name: 'Synthetic phone', fingerprint: 'synthetic-key', requestedAt: '2026-10-07T00:00:00Z' }], B: [] }
+  const page = harness([], [], true, { profileAccounts: {
+    A: { ownerId: 'owner-a', username: 'Account A', displayName: 'A', avatar: null, profileRevision: 0 },
+    B: { ownerId: 'owner-b', username: 'Account B', displayName: 'B', avatar: null, profileRevision: 0 },
+  }, pendingDevices })
+  await flush()
+  assert.equal(page.get('pending-device-badge').hidden, false)
+  assert.equal(page.get('pending-devices').hidden, false)
+  assert.equal(page.get('pending-device-list').children.length, 1)
+  const allow = page.get('pending-device-list').querySelectorAll('button').find(button => button.textContent === '允许')!
+  allow.fire('click')
+  await flush()
+  const write = page.requests.find(request => request.url.endsWith('/pending-one/decision'))!
+  assert.equal(JSON.parse(write.options.body).decision, 'allow')
+  assert.equal(write.options.headers['X-WeftMate-CSRF'], 'csrf-A')
+  assert.equal(page.get('pending-device-badge').hidden, true)
+  pendingDevices.A.push({ id: 'pending-two', name: 'Another phone', fingerprint: 'other-key', requestedAt: '2026-10-07T00:00:00Z' })
+  page.get('devices-refresh').fire('click')
+  await flush()
+  page.get('pending-device-list').querySelectorAll('button').find(button => button.textContent === '拒绝')!.fire('click')
+  await flush()
+  assert.equal(JSON.parse(page.requests.find(request => request.url.endsWith('/pending-two/decision'))!.options.body).decision, 'deny')
+  page.get('logout-button').fire('click')
+  await flush()
+  assert.equal(page.get('pending-device-list').children.length, 0)
+  assert.equal(page.get('pending-device-badge').hidden, true)
 })
