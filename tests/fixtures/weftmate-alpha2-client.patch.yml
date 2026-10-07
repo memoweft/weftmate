@@ -1,5 +1,0 @@
-# Test-only profile overlay. The package is installed through the official
-# profile manifest; this row mounts its documented Web client entry.
-- insert:
-    - id: '@weftmate/alpha2-client'
-      name: '@weftmate/alpha2-client'

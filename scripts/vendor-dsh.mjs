@@ -62,21 +62,6 @@ const RUNTIME_DIR = process.env.WEFTMATE_DSH_RUNTIME_DIR === undefined || proces
   ? join(repoRoot, 'vendor', 'dsh-runtime')
   : resolve(repoRoot, process.env.WEFTMATE_DSH_RUNTIME_DIR)
 const TARBALLS_DIR = join(RUNTIME_DIR, 'tarballs')
-const ALPHA2_NATIVE_FRONTEND_FILES = [
-  'packages/client/ui-brand-official/src/client/Brand.tsx',
-  'packages/client/ui-brand-official/src/client/index.ts',
-  'packages/client/ui-layout/src/client/AppFrame.module.css',
-  'packages/client/ui-sidebar/src/client/SidebarRoot.tsx',
-  'packages/client/ui-sidebar/src/client/SidebarRoot.module.css',
-  'packages/client/ui-conversation/src/client/skeleton/HeroShell.module.css',
-  'packages/client/ui-conversation/src/client/skeleton/ConversationRoot.module.css',
-  'packages/client/ui-conversation/src/client/skeleton/EmptyHero.tsx',
-  'packages/client/ui-conversation/src/client/skeleton/ConversationContent.tsx',
-  'packages/client/ui-conversation/tests/skeleton.client.spec.tsx',
-  'packages/client/ui-layout/src/client/AppFrame.tsx',
-  'packages/client/ui-layout/src/client/weftmate-v2/skeleton-v2.scoped.css',
-  'packages/client/ui-layout/src/client/weftmate-v2/pages-v2.scoped.css',
-]
 
 /** 发货子集·直接行（行集合变更需 owner 拍板；R1 起 = 官方 web 运行时 + v2 直接行保留）。 */
 const LEGACY_SUBSET = [
@@ -126,23 +111,6 @@ const LEGACY_SUBSET = [
   // @earendil-works/pi-ai 等非 @deepseek-ai 依赖由 tarball 依赖图在装配时从 registry 解析。
   { name: '@deepseek-ai/dsh-llm-pi-ai', why: 'pi-ai 多供应商适配器（视觉模型路由 wm-active；无档 dormant）' },
 ]
-
-/** Alpha.2's old direct rows were reorganized; these four official roots own
- * the entire Web closure. Keep the legacy list intact for the pinned rc5
- * vendor and select this only from the isolated candidate launcher. */
-const ALPHA2_SUBSET = [
-  { name: '@deepseek-ai/dsh', why: 'official CLI and profile launcher' },
-  { name: '@deepseek-ai/dsh-base', why: 'official base bundle' },
-  { name: '@deepseek-ai/dsh-web-app', why: 'official Web V4 bundle' },
-  { name: '@deepseek-ai/dsh-web-frontend', why: 'official Web frontend assets' },
-]
-
-function selectedSubset() {
-  const profile = process.env.WEFTMATE_DSH_VENDOR_PROFILE ?? 'legacy'
-  if (profile === 'legacy') return LEGACY_SUBSET
-  if (profile === 'alpha2') return ALPHA2_SUBSET
-  throw new Error(`未知 WEFTMATE_DSH_VENDOR_PROFILE：${profile}`)
-}
 
 /**
  * R1（2026-08-16）起 carriedButNotMounted 恒为空：v3 重构后发货组合 = 官方 web profile
@@ -214,33 +182,6 @@ function run(command, args, cwd, label, env = process.env) {
 
 function sha256Of(file) {
   return createHash('sha256').update(readFileSync(file)).digest('hex')
-}
-
-function alpha2LocalPatch(checkout, pin) {
-  if (process.env.WEFTMATE_DSH_VENDOR_PROFILE !== 'alpha2') return undefined
-  const expected = [...ALPHA2_NATIVE_FRONTEND_FILES].sort()
-  const status = spawnSync('git', ['-C', checkout, '-c', 'core.quotepath=false', 'status', '--porcelain=v1', '--untracked-files=all'], { encoding: 'utf8' })
-  if (status.status !== 0) throw new Error('alpha2 local frontend patch identity could not be read')
-  const files = status.stdout.split(/\r?\n/).filter(Boolean).map((line) => line.slice(3)).sort()
-  if (files.length !== expected.length || files.some((file, index) => file !== expected[index])) {
-    throw new Error(`alpha2 vendor requires exactly the declared native frontend patch files; found: ${files.join(', ') || '(none)'}`)
-  }
-  const patchParts = []
-  for (const file of expected) {
-    const tracked = spawnSync('git', ['-C', checkout, 'ls-files', '--error-unmatch', '--', file], { encoding: 'utf8' })
-    if (tracked.status === 0) {
-      const binary = spawnSync('git', ['-C', checkout, 'diff', 'HEAD', '--binary', '--', file], { encoding: 'utf8' })
-      if (binary.status !== 0) throw new Error(`alpha2 native frontend patch could not be read: ${file}`)
-      patchParts.push(binary.stdout)
-    } else {
-      const binary = spawnSync('git', ['-C', checkout, 'diff', '--no-index', '--binary', '--', '/dev/null', file], { encoding: 'utf8' })
-      if (binary.status !== 0 && binary.status !== 1) throw new Error(`alpha2 untracked frontend patch could not be read: ${file}`)
-      patchParts.push(binary.stdout)
-    }
-  }
-  const patch = patchParts.join('')
-  if (!patch) throw new Error('alpha2 vendor requires a non-empty native frontend patch')
-  return { kind: 'weftmate-native-frontend', officialBaseCommit: pin.commit, files: expected, sha256: createHash('sha256').update(patch).digest('hex') }
 }
 
 /** 运行时装配沿用已验证 checkout 声明的 Corepack pnpm 版本，避免 PATH 上的全局 pnpm 漂移。 */
@@ -327,11 +268,10 @@ async function assertSingleInstance(nodeModulesDir) {
 
 async function main() {
   const dryRun = process.argv.includes('--dry-run')
-  const subset = selectedSubset()
+  const subset = LEGACY_SUBSET
   const pin = await loadPin()
   const checkout = await resolveCheckout(pin)
   const packageManager = checkoutPackageManager(checkout)
-  const localPatch = alpha2LocalPatch(checkout, pin)
   console.log(`[vendor-dsh] checkout ${checkout} @ ${pin.commit}（${pin.packageVersion}）`)
   console.log(`[vendor-dsh] Corepack packageManager：${packageManager}`)
 
@@ -430,7 +370,6 @@ async function main() {
     generatedAt: new Date().toISOString(),
     scriptVersion: VENDOR_SCRIPT_VERSION,
     dsh: { repo: pin.repo, packageVersion: pin.packageVersion, commit: pin.commit },
-    ...(localPatch === undefined ? {} : { localPatch }),
     toolchain: { node: process.version, pnpm: pnpmVersion },
     subset: subset.map(({ name, why }) => ({ name, why })),
     closure: manifestClosure,
@@ -451,8 +390,6 @@ async function main() {
 
   console.log(`[vendor-dsh] 完成：${packed.length} 包 → ${RUNTIME_DIR}`)
 }
-
-export { ALPHA2_NATIVE_FRONTEND_FILES, alpha2LocalPatch }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   main().catch((error) => {

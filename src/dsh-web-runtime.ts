@@ -21,7 +21,7 @@ import { existsSync } from 'node:fs'
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { dirname, join } from 'node:path'
-import { fileURLToPath, pathToFileURL } from 'node:url'
+import { fileURLToPath } from 'node:url'
 import { artifactContentType, validArtifactFileName } from './personal-artifacts/index.mjs'
 
 /** 官方 web profile 的 bundle 层（dsh --profile 组装顺序 = 本列表顺序 + cordis.patch.yml）。 */
@@ -302,7 +302,7 @@ export type WriteProfileResult = 'created' | 'repaired' | 'unchanged'
  * DSH generation: it proves the official runtime and profile boot without
  * mounting plugins that were compiled against the older generation.
  */
-export type DshProfilePolicy = 'weftmate' | 'upstream' | 'alpha2'
+export type DshProfilePolicy = 'weftmate' | 'upstream'
 
 /** 幂等复制：源/目标内容一致不重写；返回是否发生了写入。 */
 async function copyFileIfChanged(src: string, dest: string): Promise<boolean> {
@@ -356,85 +356,6 @@ async function writeProfilePatch(patchPath: string): Promise<boolean> {
   }
   return false // owner 手改（非任何已知模板）→ 保留
 }
-
-/** Candidate overlays use an independent profile and never overwrite a hand-authored patch. */
-async function writeCandidateProfilePatch(patchPath: string, template: string, generatedLegacy: readonly string[] = []): Promise<boolean> {
-  const existing = await readFile(patchPath, 'utf8').catch(() => undefined)
-  if (existing === template) return false
-  if (existing !== undefined && !generatedLegacy.includes(existing)) return false
-  await writeFile(patchPath, template, 'utf8')
-  return true
-}
-
-const PROFILE_PATCH_TEMPLATE_ALPHA2_LEGACY = `# WeftMate alpha.2 candidate: official DSH V4 with a minimal product seam.
-- insert:
-    - id: weftmate-alpha2-host
-      name: ./plugins/weftmate-alpha2-host.mjs
-    - id: '@weftmate/alpha2-client'
-      name: '@weftmate/alpha2-client'
-`
-
-const PROFILE_PATCH_TEMPLATE_ALPHA2 = `# WeftMate alpha.2 candidate: official DSH V4 with a minimal product seam.
-- id: credentials
-  disabled: true
-- id: hmr
-  disabled: true
-- insert:
-    - id: weftmate-alpha2-host
-      name: ./plugins/weftmate-alpha2-host.mjs
-    - id: weftmate-alpha2-safe-credentials
-      name: ./plugins/weftmate-credentials.mjs
-    - id: weftmate-alpha2-credential-probe
-      name: ./plugins/weftmate-alpha2-credential-probe.mjs
-    - id: weftmate-alpha2-model-settings
-      name: ./plugins/weftmate-alpha2-model-settings.mjs
-    - id: weftmate-alpha2-memoweft
-      name: ./plugins/weftmate-alpha2-memoweft.mjs
-    - id: weftmate-alpha2-mods
-      name: ./plugins/weftmate-alpha2-mods.mjs
-    - id: weftmate-alpha2-mod-maintainer-preset
-      name: '@deepseek-ai/dsh-agent-preset'
-      config:
-        id: mod-maintainer
-        order: 90
-        plugins:
-          - id: weftmate-alpha2-mod-maintainer
-            name: ./plugins/weftmate-alpha2-mod-maintainer.mjs
-    - id: '@weftmate/alpha2-client'
-      name: '@weftmate/alpha2-client'
-`
-
-/** Candidate patch emitted before the model settings seam existed. */
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
-  "    - id: weftmate-alpha2-model-settings\n      name: ./plugins/weftmate-alpha2-model-settings.mjs\n",
-  '',
-)
-/** Previous generated candidate patch before the isolated MemoWeft seam. */
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MEMORY = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
-  "    - id: weftmate-alpha2-memoweft\n      name: ./plugins/weftmate-alpha2-memoweft.mjs\n",
-  '',
-)
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODS = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
-  "    - id: weftmate-alpha2-mods\n      name: ./plugins/weftmate-alpha2-mods.mjs\n",
-  '',
-)
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_HMR = PROFILE_PATCH_TEMPLATE_ALPHA2.replace('- id: hmr\n  disabled: true\n', '')
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MOD_MAINTAINER = PROFILE_PATCH_TEMPLATE_ALPHA2.replace(
-  "    - id: weftmate-alpha2-mod-maintainer-preset\n      name: '@deepseek-ai/dsh-agent-preset'\n      config:\n        id: mod-maintainer\n        order: 90\n        plugins:\n          - id: weftmate-alpha2-mod-maintainer\n            name: ./plugins/weftmate-alpha2-mod-maintainer.mjs\n",
-  '',
-)
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MEMORY = PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS.replace(
-  "    - id: weftmate-alpha2-memoweft\n      name: ./plugins/weftmate-alpha2-memoweft.mjs\n",
-  '',
-)
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MODS = PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS.replace(
-  "    - id: weftmate-alpha2-mods\n      name: ./plugins/weftmate-alpha2-mods.mjs\n",
-  '',
-)
-const PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MOD_MAINTAINER = PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS.replace(
-  "    - id: weftmate-alpha2-mod-maintainer-preset\n      name: '@deepseek-ai/dsh-agent-preset'\n      config:\n        id: mod-maintainer\n        order: 90\n        plugins:\n          - id: weftmate-alpha2-mod-maintainer\n            name: ./plugins/weftmate-alpha2-mod-maintainer.mjs\n",
-  '',
-)
 
 /**
  * 落位插件资产：客户端包 → `profiles/<name>/node_modules/@weftmate/client/`（profile 自己的 node_modules，
@@ -498,76 +419,6 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   if (await copyDirIfChanged(join(here, 'runtime', 'weftmod'), join(dir, 'runtime', 'weftmod'))) changed = true
   if (await copyDirIfChanged(join(here, 'runtime', 'mod-projects'), join(dir, 'runtime', 'mod-projects'))) changed = true
   return changed
-}
-
-/** Alpha.2 copies only generation-compatible product seams into its own profile. */
-async function writeAlpha2PluginAssets(dir: string): Promise<boolean> {
-  const clientDest = join(dir, 'node_modules', '@weftmate', 'alpha2-client')
-  const files: Array<[string, string]> = [
-    [join(PLUGINS_DIR, 'weftmate-alpha2-client', 'package.json'), join(clientDest, 'package.json')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-client', 'index.js'), join(clientDest, 'index.js')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-client', 'client.js'), join(clientDest, 'client.js')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-host.mjs'), join(dir, 'plugins', 'weftmate-alpha2-host.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-session-bridge.mjs'), join(dir, 'plugins', 'weftmate-alpha2-session-bridge.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-model-settings.mjs'), join(dir, 'plugins', 'weftmate-alpha2-model-settings.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-memoweft.mjs'), join(dir, 'plugins', 'weftmate-alpha2-memoweft.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-memory.mjs'), join(dir, 'plugins', 'weftmate-memory.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-mods.mjs'), join(dir, 'plugins', 'weftmate-alpha2-mods.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-mod-maintainer.mjs'), join(dir, 'plugins', 'weftmate-alpha2-mod-maintainer.mjs')],
-    [CREDENTIALS_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-credentials.mjs')],
-    [join(PLUGINS_DIR, 'weftmate-alpha2-credential-probe.mjs'), join(dir, 'plugins', 'weftmate-alpha2-credential-probe.mjs')],
-    [SECURE_SNAPSHOT_BOOTSTRAP_SRC, join(dir, 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs')],
-  ]
-  let changed = false
-  for (const [src, dest] of files) {
-    if (await copyFileIfChanged(src, dest)) changed = true
-  }
-  if (await copyDirIfChanged(join(here, 'runtime', 'mod-projects'), join(dir, 'runtime', 'mod-projects'))) changed = true
-  if (await copyDirIfChanged(join(PLUGINS_DIR, 'weftmate-client', 'mod-window'), join(dir, 'plugins', 'weftmate-client', 'mod-window'))) changed = true
-  return changed
-}
-
-/** Derive the launch-only DSH overlay from the single offline settings document. */
-async function materializeAlpha2SettingsOverlay(dir: string): Promise<boolean> {
-  const documentPath = join(dir, 'weftmate-alpha2-model-settings.json')
-  const patchPath = join(dir, 'weftmate-alpha2-model-settings.patch.yml')
-  const raw = await readFile(documentPath, 'utf8').catch(error => {
-    if ((error as NodeJS.ErrnoException).code === 'ENOENT') return undefined
-    throw error
-  })
-  if (raw === undefined) return false
-  let document: unknown
-  try { document = JSON.parse(raw) } catch { throw new Error('alpha2 offline model settings document is not JSON') }
-  const moduleUrl = pathToFileURL(join(PLUGINS_DIR, 'weftmate-alpha2-model-settings.mjs')).href
-  const normalizer = await import(moduleUrl) as { normalizeAlpha2OfflineSettingsDocument: (value: unknown) => { providers: unknown } }
-  let normalized: { providers: unknown }
-  try { normalized = normalizer.normalizeAlpha2OfflineSettingsDocument(document) }
-  catch { throw new Error('alpha2 offline model settings document has an invalid schema') }
-  // JSON is valid YAML. The profile patch is generated on every launch from
-  // the single document, never independently authored or edited in-process.
-  const content = `${JSON.stringify([{ id: 'llm-pi-ai', config: { providers: normalized.providers } }], null, 2)}\n`
-  return copyFileIfChangedFromContent(content, patchPath)
-}
-
-async function materializeAlpha2WelcomeOverlay(dir: string): Promise<boolean> {
-  const document = join(dir, 'weftmate-alpha2-welcome.json')
-  const patch = join(dir, 'weftmate-alpha2-welcome.patch.yml')
-  const raw = await readFile(document, 'utf8').catch(error => (error as NodeJS.ErrnoException).code === 'ENOENT' ? undefined : Promise.reject(error))
-  if (raw === undefined) return false
-  let value: unknown
-  try { value = JSON.parse(raw) } catch { throw new Error('alpha2 welcome document is not JSON') }
-  if (value === null || typeof value !== 'object' || Array.isArray(value)
-    || (value as Record<string, unknown>).schemaVersion !== 1 || typeof (value as Record<string, unknown>).welcomeNoticeVersion !== 'string') {
-    throw new Error('alpha2 welcome document has an invalid schema')
-  }
-  return copyFileIfChangedFromContent(`${JSON.stringify([{ id: 'ui-settings-general', config: { welcomeNoticeVersion: (value as Record<string, unknown>).welcomeNoticeVersion } }], null, 2)}\n`, patch)
-}
-
-async function copyFileIfChangedFromContent(content: string, dest: string): Promise<boolean> {
-  const current = await readFile(dest, 'utf8').catch(() => undefined)
-  if (current === content) return false
-  await writeFile(dest, content, 'utf8')
-  return true
 }
 
 /** Write the deployment-owned preset consumed before a maintenance agent is published. */
@@ -769,17 +620,6 @@ export async function writeWebProfile(
     manifest.dependencies = {}
     dirty = true
   }
-  // The Alpha.2 profile owns this unpacked client asset. Declaring it in the
-  // profile manifest lets the official runtime resolver preserve one DSH
-  // package graph when that profile-local package imports DSH peers. This is
-  // metadata only: no package-manager install or registry resolution occurs.
-  if (policy === 'alpha2') {
-    const dependencies = manifest.dependencies as Record<string, unknown>
-    if (dependencies['@weftmate/alpha2-client'] !== 'file:node_modules/@weftmate/alpha2-client') {
-      dependencies['@weftmate/alpha2-client'] = 'file:node_modules/@weftmate/alpha2-client'
-      dirty = true
-    }
-  }
   if (dirty) {
     await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, 'utf8')
   }
@@ -791,12 +631,6 @@ export async function writeWebProfile(
     if (await writeModMaintainerPreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
     if (await writePersonalRemotePreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
     if (await writePersonalSharedChatPreset(homeDir, profileName) && result === 'unchanged') result = 'repaired'
-  }
-  if (policy === 'alpha2') {
-    if (await writeCandidateProfilePatch(join(dir, 'cordis.patch.yml'), PROFILE_PATCH_TEMPLATE_ALPHA2, [PROFILE_PATCH_TEMPLATE_ALPHA2_LEGACY, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MEMORY, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODS, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MOD_MAINTAINER, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MEMORY, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MODS, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_MODEL_SETTINGS_PRE_MOD_MAINTAINER, PROFILE_PATCH_TEMPLATE_ALPHA2_PRE_HMR]) && result === 'unchanged') result = 'repaired'
-    if (await writeAlpha2PluginAssets(dir) && result === 'unchanged') result = 'repaired'
-    if (await materializeAlpha2SettingsOverlay(dir) && result === 'unchanged') result = 'repaired'
-    if (await materializeAlpha2WelcomeOverlay(dir) && result === 'unchanged') result = 'repaired'
   }
   return result
 }
@@ -1383,16 +1217,7 @@ export class DshWebRuntime {
       for (const child of Object.values(row)) visit(child)
     }
     visit(finalized)
-    assertSecureCredentialComposition(
-      finalized,
-      this.opts.profilePolicy === 'alpha2' ? 'weftmate-alpha2-safe-credentials' : 'weftmate-safe-credentials',
-      this.opts.profilePolicy === 'alpha2'
-        ? pathToFileURL(join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-credentials.mjs')).href
-        : './plugins/weftmate-credentials.mjs',
-      this.opts.profilePolicy === 'alpha2'
-        ? join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-credentials.mjs')
-        : undefined,
-    )
+    assertSecureCredentialComposition(finalized, 'weftmate-safe-credentials', './plugins/weftmate-credentials.mjs')
     if (this.opts.personalHostApiProxy) {
       assertPersonalApiProxyComposition(finalized,
         join(this.opts.homeDir, 'profiles', this.opts.profileName, 'plugins', 'weftmate-personal-api-proxy.mjs'))
@@ -1417,7 +1242,7 @@ export class DshWebRuntime {
     }
     const spec = this.launchSpec()
     const args = [...spec.nodeArgs, spec.bin, '--profile', this.opts.profileName,
-      ...this.launchPatchFiles().flatMap((file) => ['--patch', file]), '--dump-config']
+      ...this.opts.patchFiles.flatMap((file) => ['--patch', file]), '--dump-config']
     const stdout = await new Promise<string>((resolve, reject) => {
       execFile(spec.command, args, {
         cwd: spec.cwd,
@@ -1478,14 +1303,6 @@ export class DshWebRuntime {
 
   private tail(): string {
     return this.logTail.slice(-40).join('\n')
-  }
-
-  /** Candidate-only generated settings overlay, prepared while the child is stopped. */
-  private launchPatchFiles(): readonly string[] {
-    if (this.opts.profilePolicy !== 'alpha2') return this.opts.patchFiles
-    const profile = join(this.opts.homeDir, 'profiles', this.opts.profileName)
-    return [join(profile, 'weftmate-alpha2-model-settings.patch.yml'), join(profile, 'weftmate-alpha2-welcome.patch.yml')]
-      .filter(existsSync).reduce((files, file) => [...files, file], [...this.opts.patchFiles])
   }
 
   private rememberLine(line: string): void {
@@ -2399,7 +2216,7 @@ export class DshWebRuntime {
       const args = secureBootstrap === undefined
         // `--patch` is the pinned DSH CLI's formal, repeatable extra-overlay seam.
         ? [...spec.nodeArgs, spec.bin, '--profile', this.opts.profileName,
-            ...this.launchPatchFiles().flatMap((file) => ['--patch', file]), '--port', String(this.opts.port),
+            ...this.opts.patchFiles.flatMap((file) => ['--patch', file]), '--port', String(this.opts.port),
             ...(this.opts.noOpen ? ['--no-open'] : [])]
         : [...spec.nodeArgs, secureBootstrap]
       const env = secureBootstrap === undefined ? this.childEnv() : {
