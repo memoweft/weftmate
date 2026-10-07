@@ -110,6 +110,11 @@ export function createAuthenticationOperations(context) {
     });
     if (!selected || selected[1].revoked) throw failure('UNAUTHORIZED', 401);
     const [deviceId, device] = selected;
+    if (device.authKind === 'cloud') {
+      if (!context.cloudIdentity || Date.parse(device.expiresAt) <= context.timestamp() ||
+          state.account === null || device.authEpoch !== state.account.authEpoch) throw failure('UNAUTHORIZED', 401);
+      context.cloudIdentity.assertSession(ownerId, deviceId);
+    }
     if (device.authKind === 'password' &&
         (Date.parse(device.expiresAt) <= context.timestamp() || state.account === null ||
           device.authEpoch !== state.account.authEpoch)) throw failure('UNAUTHORIZED', 401);

@@ -52,4 +52,4 @@ xcodebuild -project WeftMate.xcodeproj -scheme WeftMatePhone \
 
 合成服务只实现本场景需要的 `/personal/v1`，不代表真实 DSH、宿主、云中继或模型验收。Debug 的回环 HTTP 只在同时传入 `--ui-testing --a3-local-server` 时使用；Release 仍要求 HTTPS。
 
-Watch 通过 iPhone WatchConnectivity 取摘要/登记审批，宿主 Cookie/CSRF 不传到手表。手机 App 可达时才可审批；推送尚未接通，仅 Watch 前台/刷新观察到新完成时触感提醒，首次读取旧完成记录不震动。「总是允许此类」、排队取消和 D9 插话调度等待后续服务端契约。
+Watch 通过 iPhone WatchConnectivity 取摘要/登记审批，宿主 Cookie/CSRF 不传到手表。手机 App 可达时才可审批；推送尚未接通，仅 Watch 前台/刷新观察到新完成时触感提醒，首次读取旧完成记录不震动；后台收到的完成在下一次前台刷新提醒，旧快照不会重复震动。「总是允许此类」、排队取消和 D9 插话调度等待后续服务端契约。
