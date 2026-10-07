@@ -1,0 +1,9 @@
+{
+  "executable": "D:/AI/Runtime/LlamaCpp/B10724Cuda/llama-server.exe",
+  "model": "D:/AI/Assets/Models/Qwen/Qwen3.8-27B/GGUF/ggml-org/Qwen3.8-27B-Q4_K_M.gguf",
+  "alias": "qwen3.8-27b",
+  "port": 18081,
+  "contextSize": 32768,
+  "cacheType": "q8_0",
+  "gpuLayers": 48
+}

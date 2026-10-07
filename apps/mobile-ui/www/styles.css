@@ -239,3 +239,6 @@ main{min-height:0;flex:1;position:relative;display:flex;flex-direction:column}.p
 
 .conversation-approval.is-resolved, .conversation-question.is-resolved { padding: 8px 12px; background: transparent; border: 0; }
 .conversation-approval.is-resolved > strong, .conversation-question.is-resolved > strong { font-weight: 500; }
+#page-content .group>.row { padding: 12px 16px; }
+#page-content .group>.secondary { margin: 0 16px 16px; min-height: 44px; }
+#page-content .group>.hint { padding: 0 16px; overflow-wrap: anywhere; }

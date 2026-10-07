@@ -5,7 +5,7 @@
 
 ## 1. 范围与通用约定
 
-本文覆盖 **82 个业务方法/路径组合**（第 3 节 78 项 + 第 6 节健康 4 项），另列 **12 个桌面 UI 静态路径**。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
+本文覆盖 **88 个业务方法/路径组合**（第 3 节 84 项 + 第 6 节健康 4 项），另列 **12 个桌面 UI 静态路径**。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
 
 | 客户端标记 | 本次核对来源与含义 |
 |---|---|
@@ -290,7 +290,7 @@
 
 macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64/x86_64",channel:"trial",notes,fileName,downloadUrl`。不要把native manifest与Android mobile UI manifest混用。Apple独立 `PublicUpdates.swift` 使用公开分发入口，本次所核对 `PersonalClient.swift` 没有调用上述认证下载接口。
 
-### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入82业务接口）
+### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入88业务接口）
 
 | GET路径（都无查询） | 响应 / 错误 | 使用端 |
 |---|---|---|
@@ -299,6 +299,21 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | `/ui/vendor/noble-hashes-2.3.0/sha2.js`、`/ui/vendor/noble-hashes-2.3.0/_md.js`、`/ui/vendor/noble-hashes-2.3.0/_u64.js`、`/ui/vendor/noble-hashes-2.3.0/utils.js` | JS资源；不存在404 | 桌（哈希模块导入） |
 
 这些路由在认证前提供宿主登录UI，仍受Host/Origin校验。Android bridge中的本机模型、通知、剪贴板、语音等操作不是同名服务端API；`mods/notifications/capabilities` 等字符串出现在bridge允许路径中，也不能证明服务端实现了这些路由。
+
+### 3.15 系统状态与后台模型（M0-6，6）
+
+| 方法与路径 | 请求 | 成功响应 | 权限 / 错误 | 使用端 |
+|---|---|---|---|---|
+| GET `/system` | 无查询 | 200 `{model,host,memory,queue,canRestart}` | `sessions:read`；未接入管理器为 503 `CAPABILITY_UNAVAILABLE` | 桌、手（Android code15 起） |
+| POST `/system/model/restart` | `{}` | 200，同 `/system`，操作完成后读取实际状态 | `commands:write`，仅宿主原账户；其他账户 403 `FORBIDDEN`；未配置本地启动器 503 | 桌、手 |
+| POST `/system/host/restart` | `{}` | 200，同 `/system`；替换 DSH（模型运行时），个人 API 保持可达 | 同上；进行中的运行会中断 | 桌、手 |
+| POST `/system/memory/restart` | `{}` | 200，同 `/system`；关闭并重新初始化当前账户的 MemoWeft（记忆服务）进程，保留数据库与待写队列 | 同上；记忆未启用 503 | 桌、手 |
+| GET `/settings/models` | 无查询 | 200 `{"backgroundModelProfileId":null}` 或已保存的模型配置 ID | `sessions:read`；按账户隔离 | 桌、手（只读） |
+| PATCH `/settings/models` | `{"backgroundModelProfileId":"private-model-example"}`；`null` 恢复跟随主模型 | 200，同 GET；只影响后续后台请求 | `account:manage`；须为当前账户可见、已配置的模型，否则 409 `MODEL_UNAVAILABLE` | 桌 |
+
+每项服务有 `state`、`version`（未知为 `null`）、`lastError`（最近安全错误码或 `null`）、`canRestart`。模型服务另有实际 `contextWindow` 与 `slots`。宿主版本来自应用包；模型版本来自 llama.cpp `/props`；MemoWeft 优先用服务版本，再用其 Python（运行环境）源码包的声明版本；两者均未知时返回 `null`。`queue` 含 `active: "foreground"|"background"|null`、`foregroundPending`、`backgroundPending`，不包含提示或账户信息。手机只显示后台配置，不提供修改控件；重启仍走相同认证与 CSRF（跨站请求伪造防护）规则。
+
+主模型由每个对话选择。后台配置默认跟随该对话的主模型；标题、记忆整理以及后续关心/健康归纳按后台路由。主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。
 
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
