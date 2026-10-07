@@ -89,7 +89,7 @@ app.whenReady().then(async () => {
       await wait(win, "!!document.querySelector('.resource-picker [data-resource-key=\"file:README.md\"]')")
       await win.webContents.executeJavaScript("document.querySelector('.resource-picker [data-resource-key=\"file:README.md\"]').click()")
       await wait(win, "document.querySelector('.preview-content')?.textContent.includes('读取 1 次')")
-      await win.webContents.executeJavaScript("document.querySelector('.resource-usage button').click()")
+      await win.webContents.executeJavaScript("document.querySelector('.resource-usage summary').click()")
       await wait(win, "document.querySelector('.resource-usage pre')?.textContent.includes('Read 3 files successfully')")
       await win.webContents.executeJavaScript("document.querySelector('.preview-add').click()")
       await wait(win, "!!document.querySelector('.resource-picker [data-resource-key^=\"artifact:\"]')")
