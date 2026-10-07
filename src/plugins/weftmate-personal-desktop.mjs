@@ -1,6 +1,7 @@
 import { createHash, randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { defineTool } from '@deepseek-ai/dsh-tools';
+import { installModelSelection } from '@deepseek-ai/dsh-agent';
 import { trackNativeFiles, appendNativeArtifacts } from './personal-native-files.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 
@@ -100,7 +101,8 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250 }
   const disposers = [];
   let closed = false;
   const keyOf = (sessionId, approvalId) => `${sessionId}\u0000${approvalId}`;
-  const liveAgent = agent => agent?.session?.header?.agentPreset === 'personal-remote' &&
+  const liveAgent = agent => agent?.session?.header?.origin !== 'subagent' &&
+    agent?.session?.header?.agentPreset === 'personal-remote' &&
     ctx.get('agents')?.get(agent.session.id) === agent;
   const currentBinding = binding => {
     if (closed || !liveAgent(binding.agent)) return false;
@@ -126,7 +128,8 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250 }
     return next();
   }));
   disposers.push(ctx.on('approval/request', async (request, next) => {
-    if (request.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
+    if (request.agent?.session?.header?.origin === 'subagent' ||
+        request.agent?.session?.header?.agentPreset !== 'personal-remote') return next();
     if (closed || !liveAgent(request.agent)) return 'unavailable';
     const identity = callsByAgent.get(request.agent)?.get(request.callId);
     // The shipped WeftMod script producer asks through its shared "weftmod" approval seam.
@@ -239,7 +242,10 @@ export function installPersonalApprovalBridge(ctx, bridge, { pollDelayMs = 250 }
 
 /** Runs after the original sandbox/approval gate. The host grants identity, never model arguments. */
 export async function trackPersonalExecution(bridge, exec, next, background = null, approvals = null) {
-  if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || NATIVE_SESSION_TOOLS.has(exec.name)) return next();
+  // DSH owns delegated execution. The portal receipt authorizes the parent subagent call;
+  // the child's native prompt is not another personal/v1 command or account boundary.
+  if (exec.agent?.session?.header?.origin === 'subagent' ||
+      exec.agent?.session?.header?.agentPreset !== 'personal-remote' || NATIVE_SESSION_TOOLS.has(exec.name)) return next();
   if (!executionToolName(exec.name)) throw refused('TOOL_SOURCE_UNAVAILABLE');
   const identity = personalExecutionIdentity(exec);
   const payload = { ...identity, toolName: exec.name, argumentsHash: executionHash(exec.arguments) };
@@ -603,6 +609,17 @@ export function registerPersonalBrowserTool(ctx, bridge) {
 
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
+  // The pinned driver copies static AgentOptions, while the personal UI selects
+  // models through DSH's scoped selection. Initialize a native child before its
+  // loop starts, using the parent's actual request configuration and DSH's helper.
+  ctx.on('agent/created', ({ agent }) => {
+    if (agent?.session?.header?.origin !== 'subagent' || agent.session.header.agentPreset !== 'personal-remote') return;
+    const parent = ctx.get('agents')?.get(agent.session.header.parentSession);
+    const config = agent.session.requestHeader?.()?.config ?? parent?.session?.requestHeader?.()?.config;
+    if (typeof config?.provider !== 'string' || typeof config?.model !== 'string') throw refused('MODEL_UNAVAILABLE');
+    installModelSelection(agent.ctx, { current: { provider: config.provider, model: config.model,
+      ...(config.reasoningEffort === undefined ? {} : { reasoningEffort: config.reasoningEffort }) }, assembled: undefined });
+  });
   const disposeProof = installProofBridge(ctx);
   const background = createPersonalBackgroundTracker(ctx, bridge);
   const approvals = installPersonalApprovalBridge(ctx, bridge);

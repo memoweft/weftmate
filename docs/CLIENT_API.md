@@ -323,7 +323,7 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 
 M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows 的 `pwsh`、其他桌面平台的 `bash`，以及 `read/write/edit`、`grep/glob`、`web_fetch`、`todo_write`、`subagent`。浏览器统一为 `browser` 的 open/read/follow 动作，不要求专用浏览器工作区或用户原文含 URL。旧 `personal_open_notepad`、`personal_save_document`、项目读取与三个浏览器工具不再注册，也没有个人预设的回合调用限次。既有日志及来源读取仍兼容。
 
-新个人对话的 cwd（工作目录）为宿主数据目录下 `conversations/<sessionId>`，相对文件路径、命令与原生子任务使用该目录；旧会话保留其原生 cwd。工作目录不进入客户端接口。文件修改观察器在真实工具执行后读取磁盘，登记新增或内容变化的文件，并在原生工具结果中附上宿主成果引用。显式 write/edit 文件路径及 shell 的 workdir（命令工作目录）也可登记；无需额外保存工具或来源参数。当前成果预览沿用 3.8 的非空 UTF-8 文本、128 KiB 和安全文件名范围，其他文件仍可由原生工具写出，工具结果会说明成果格式暂不支持。审批沿用 DSH 默认机制，五种用户审批模式属于 M1-2。
+新个人对话的 cwd（工作目录）为宿主数据目录下 `conversations/<sessionId>`，相对文件路径、命令与原生子任务使用该目录；旧会话保留其原生 cwd。工作目录不进入客户端接口。文件修改观察器在真实工具执行后读取磁盘，登记新增或内容变化的文件，并在原生工具结果中附上宿主成果引用。显式 write/edit 文件路径及 shell 的 workdir（命令工作目录）也可登记；无需额外保存工具或来源参数。当前成果预览沿用 3.8 的非空 UTF-8 文本、128 KiB 和安全文件名范围，其他文件仍可由原生工具写出，工具结果会说明成果格式暂不支持。审批沿用 DSH 默认机制，五种用户审批模式属于 M1-2。 原生子任务继承父模型和工作目录，委派消息使用 DSH 自身执行/审批，不要求另一个入口回执。需要取得文件成果时以 run_in_background:false 等待；父调用结束时登记这些文件。子任务直接使用原生 web_fetch，browser 的渲染交付留在原始入口对话。
 
 ### 4.2 分组、分页与各端呈现
 

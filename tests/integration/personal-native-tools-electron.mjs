@@ -41,8 +41,21 @@ const model = createServer(async (req, res) => {
   }
   let raw = ''; for await (const chunk of req) raw += chunk;
   const body = JSON.parse(raw);
+  assert.equal(body.model, 'synthetic-stop-model');
   const names = (body.tools ?? []).map(tool => tool.function?.name ?? tool.name);
   if (!names.length || body.tool_choice === 'none') { respond(res, body.model); return; }
+  const isChild = body.messages.some(message => message.role === 'user' && JSON.stringify(message.content).includes('NATIVE_CHILD_READ'));
+  if (isChild) {
+    report.childSchemas = names;
+    const executed = body.messages.filter(message => message.role === 'assistant').flatMap(message => message.tool_calls ?? []).map(call => call.function.name);
+    if (!executed.includes('read')) respond(res, body.model, 'read', { file_path: 'report.md' });
+    else if (!executed.includes('write')) respond(res, body.model, 'write', { file_path: 'child-result.md', content: '# Child result\nNative delegation verified.\n' });
+    else {
+      report.childReadVerified = body.messages.some(message => message.role === 'tool' && JSON.stringify(message.content).includes('Written by DSH write'));
+      respond(res, body.model);
+    }
+    return;
+  }
   report.schemas = names;
 
   const invoke = (name, args) => {
@@ -63,6 +76,7 @@ const model = createServer(async (req, res) => {
     }).filter(value => value?.snapshotId && value?.links);
     if (!executed.includes('browser')) invoke('browser', { action: 'open', url: `http://page-a.weftmate.invalid:${model.address().port}/first` });
     else if (reads.length === 1 && executed.filter(name => name === 'browser').length === 1) invoke('browser', { action: 'follow', snapshotId: reads[0].snapshotId, linkId: reads[0].links[0].linkId });
+    else if (!executed.includes('subagent')) invoke('subagent', { description: 'Read generated report', prompt: 'NATIVE_CHILD_READ: Read report.md and verify its text.', run_in_background: false });
     else respond(res, body.model);
   }
 });
@@ -125,14 +139,17 @@ try {
   report.details = []
   for (const event of events.filter(event => event.type === 'step.completed' || event.type === 'artifact.created')) report.details.push((await request('GET', `sessions/${session.sessionId}/events/${event.seq}/detail`)).value)
   const artifacts = events.filter(event => event.type === 'artifact.created').flatMap(event => event.data.artifacts ?? [event.data]);
-  assert.deepEqual(artifacts.map(artifact => artifact.fileName).sort(), ['report.md', 'shell-one.txt', 'shell-two.txt']);
+  assert.deepEqual(artifacts.map(artifact => artifact.fileName).sort(), ['child-result.md', 'report.md', 'shell-one.txt', 'shell-two.txt']);
   for (const artifact of artifacts) {
     const preview = (await request('GET', `artifacts/${artifact.artifactId}/preview`)).value;
     assert.equal(preview.artifact.taskId, source.commandId); assert.ok(preview.text.trim());
   }
   report.modelToolRequests = report.toolCalls
   report.toolCalls = events.filter(event => event.type === 'step.started').map(event => event.data.toolName)
-  assert.deepEqual(report.toolCalls, ['write', 'pwsh', 'read', 'browser', 'browser']);
+  assert.deepEqual(report.toolCalls, ['write', 'pwsh', 'read', 'browser', 'browser', 'subagent']);
+  assert.equal(report.childReadVerified, true, 'the real native subagent reads in the parent conversation directory');
+  assert.ok(report.childSchemas.includes('web_fetch'));
+  assert.equal(report.childSchemas.includes('browser'), false, 'native children use web_fetch; rendered browser delivery belongs to the portal conversation');
   for (const name of ['read', 'write', 'edit', 'grep', 'glob', 'web_fetch', 'todo_write', 'subagent', 'browser'])
     assert.ok(report.schemas.includes(name), `Missing native tool ${name}`);
   assert.ok(report.schemas.every(name => !/^personal_(?:open|save|list|read|browser)/.test(name)));
@@ -140,7 +157,18 @@ try {
   assert.match(readFileSync(join(cwd, 'report.md'), 'utf8'), /Written by DSH write/);
   assert.equal(events.find(event => event.type === 'turn.ended').data.reason, 'completed');
   report.artifacts = artifacts; report.status = 'passed';
-} catch (error) { report.status = 'failed'; report.error = error.stack; process.exitCode = 1; }
+} catch (error) {
+  report.status = 'failed'; report.error = error.stack; process.exitCode = 1;
+  try {
+    const native = [...output.matchAll(/dsh web: (http:\/\/127\.0\.0\.1:\d+)/g)].at(-1)[1];
+    const rpc = async (method, payload) => (await (await fetch(native + '/api/' + method, { method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ type: 'client-request', rpcId: randomUUID(), method, payload }) })).json()).result;
+    const listed = await rpc('session.list', {});
+    report.nativeChildren = [];
+    for (const item of listed.value?.items ?? []) if (item.origin === 'subagent') report.nativeChildren.push({ item,
+      history: await rpc('session.history', { sessionId: item.sessionId }) });
+  } catch (diagnosticError) { report.diagnosticError = diagnosticError.message; }
+}
 finally {
   if (child && child.exitCode === null) {
     const closed = new Promise(resolve => child.once('close', resolve)); child.send({ type: 'weftmate:quit' });
