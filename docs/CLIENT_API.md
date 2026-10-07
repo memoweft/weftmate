@@ -305,7 +305,7 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | 方法与路径 | 请求 | 成功响应 | 权限 / 错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/system` | 无查询 | 200 `{model,host,memory,queue,canRestart}` | `sessions:read`；未接入管理器为 503 `CAPABILITY_UNAVAILABLE` | 桌、手（Android code15 起） |
-| POST `/system/model/restart` | `{}` | 200，同 `/system`，操作完成后读取实际状态 | `commands:write`，仅宿主原账户；其他账户 403 `FORBIDDEN`；未配置入口维护能力 503 | 桌、手 |
+| POST `/system/model/restart` | `{}` | 200，同 `/system`，操作完成后读取实际状态；客户端使用维护等待窗口（桌面 / 手机 / Android 为 6 分钟），不按普通短请求提前中断 | `commands:write`，仅宿主原账户；其他账户 403 `FORBIDDEN`；未配置入口维护能力 503 | 桌、手 |
 | POST `/system/host/restart` | `{}` | 200，同 `/system`；替换 DSH（模型运行时），个人 API 保持可达 | 同上；进行中的运行会中断 | 桌、手 |
 | POST `/system/memory/restart` | `{}` | 200，同 `/system`；关闭并重新初始化当前账户的 MemoWeft（记忆服务）进程，保留数据库与待写队列 | 同上；记忆未启用 503 | 桌、手 |
 | GET `/settings/models` | 无查询 | 200 `{"backgroundModelProfileId":null}` 或已保存的模型配置 ID | `sessions:read`；按账户隔离 | 桌、手（只读） |
