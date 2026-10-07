@@ -36,7 +36,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         model !== '@current'))) {
     throw error('MEMORY_CONFIGURATION_INVALID');
   }
-  const healthStore = createPersonalHealthStore({ root });
+  const healthStore = createPersonalHealthStore({ root, onChange: flushObserved });
   const entries = new Map();
   const failures = new Map();
   const boundaryFailures = new Map();
@@ -340,6 +340,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     } finally { entry.active--; entry.lastUsed = Date.now(); }
   }
 
+  async function flushObserved(ownerId) {
+    if (!enabled) return healthStore.memoryStatus(ownerId);
+    return withOwner(ownerId, (entry) => flushObservedEntry(ownerId, entry));
+  }
+  async function flushObservedEntry(ownerId, entry) {
+    if (entry.capabilities?.observed_evidence !== 1 || entry.capabilities?.recall_model_tier !== true) {
+      return healthStore.memoryStatus(ownerId);
+    }
+    return healthStore.flushObserved(ownerId, (method, params) => entry.rpc.request(method, params));
+  }
+
   const commandOperations = (entry) => new Set(entry?.capabilities?.services?.command?.operations ?? []);
   const capabilities = (entry) => ({ list: Boolean(entry?.ready), source: Boolean(entry?.ready),
     inject: Boolean(entry?.ready && entry.routeReady),
@@ -365,8 +376,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   return {
     enabled,
     healthStore,
-    // The current RPC contract has only conversation ingest_boundary, no typed
-    // observed upsert/retraction. Expose replayable input without claiming a World write.
+    flushObserved,
+    // Expose remaining replay inputs; delivered revisions are acknowledged durably.
     async observedOutbox(ownerId) {
       const items = await healthStore.pendingObserved(ownerId);
       return { state: items.length ? 'queued' : 'empty',
@@ -387,6 +398,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         lastFailureCode: null };
       try {
         return await withOwner(ownerId, async (entry) => {
+          await flushObservedEntry(ownerId, entry);
           const health = await entry.rpc.request('health');
           const revisionResult = await entry.rpc.request('query_world', { operation: 'revision' });
           const backlog = await outboxStatus(ownerId);
@@ -413,15 +425,20 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           lastFailureCode: code, reasonCode: code };
       }
     },
-    query(ownerId, method, params) { return withOwner(ownerId, (entry) => entry.rpc.request(method, params)); },
+    query(ownerId, method, params) { return withOwner(ownerId, async (entry) => {
+      const observed = await flushObservedEntry(ownerId, entry);
+      if (observed.state === 'queued' && entry.capabilities?.observed_evidence === 1) {
+        throw error('MEMORY_OBSERVED_PENDING');
+      }
+      return entry.rpc.request(method, params);
+    }); },
     async recall(ownerId, { query, sessionId }) {
       owner(ownerId);
       if (!enabled) throw error('MEMORY_DISABLED');
       if (typeof query !== 'string' || !query.trim() || query.length > 500 ||
           typeof sessionId !== 'string' || sessionId.length > 128) throw error('MEMORY_REQUEST_INVALID');
       const route = await resolveProcessingRoute(ownerId, sessionId);
-      // Health observed evidence is queued, never written to World by this bridge.
-      // MW-2 must filter health sources after observed writes, preserving other recall.
+      // Core owns source filtering for this resolved destination.
       return withOwner(ownerId, async (entry) => {
         // Recheck the worker route too: a host route may have changed during acquire.
         if (entry.modelTier !== route.modelTier) return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
@@ -430,9 +447,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         if (backlog.pendingBoundaryCount > 0) return { state: 'withheld',
           reasonCode: backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
             ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING' };
+        const observed = await flushObservedEntry(ownerId, entry);
+        if (observed.state === 'queued' && entry.capabilities?.observed_evidence === 1) {
+          return { state: 'withheld', reasonCode: 'MEMORY_OBSERVED_PENDING' };
+        }
         const [world, interaction] = await Promise.all([
-          entry.rpc.request('preview_recall', { query }),
-          entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model' }),
+          entry.rpc.request('preview_recall', { query, model_tier: route.modelTier }),
+          entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: route.modelTier }),
         ]);
         const fragments = [world?.preview?.rendered_recall, interaction?.rendered_context]
           .filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim());
