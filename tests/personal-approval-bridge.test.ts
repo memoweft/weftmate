@@ -29,6 +29,9 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   const staged = join(root, 'desktop.mjs')
   writeFileSync(staged, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
     .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`)
+    .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
+    .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
+    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
     .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`))
   const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, tools,
     { default: ApprovalService }, { createScope }] = await Promise.all([
@@ -101,7 +104,7 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   session.append('user/message', { id: 'source-message-1', source: { kind: 'user', rpcId: 'source-receipt-1' },
     content: [{ type: 'text', text: 'same fixture goal' }] }, { surfaceOp: 'append' })
   session.append('tool/call', { turn: 1, step: 1, callId: 'fixture-call', name: toolName, arguments: '{}' })
-  const execute = () => ctx.get('tools').execute({ name: toolName, arguments: {}, agent, callId: 'fixture-call', signal: controller.signal })
+  const execute = (callId = 'fixture-call') => ctx.get('tools').execute({ name: toolName, arguments: {}, agent, callId, signal: controller.signal })
   return { ctx, plugin, agent, agents, session, frames, states, controller, transport, approvals, execute, resolution,
     get effects() { return effects }, get committedCompletion() { return committedCompletion },
     close: async () => { approvals.close(); assert.equal(transport.listenerCount('disconnect'), 0);
@@ -135,6 +138,20 @@ test('fixed ApprovalService and ToolRuntime deliver approved/rejected native dec
     assert.equal(never.frames.some(frame => frame.action.includes('approval')), false)
     assert.equal(never.session.events.find((event: any) => event.type === 'approval/decided').data.outcome, 'rejected')
   } finally { await never.close() }
+})
+
+test('native approvals still work after 256 tool calls in the same personal turn', async () => {
+  const f = await nativeFixture({ stage: 'body' })
+  try {
+    for (let index = 0; index < 258; index++) {
+      const callId = `long-turn-call-${index}`
+      f.session.append('tool/call', { turn: 1, step: index + 1, callId, name: 'fixture_action', arguments: '{}' })
+      const result = await f.execute(callId)
+      assert.equal(result.isError, false, `native approval must still work for call ${index + 1}`)
+    }
+    assert.equal(f.effects, 258)
+    assert.equal(f.frames.filter(frame => frame.action === 'register_approval').length, 258)
+  } finally { await f.close() }
 })
 
 test('a tool-body ask waits for the native committed decision receipt before finishing its execution receipt', async () => {

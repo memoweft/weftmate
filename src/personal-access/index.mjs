@@ -29,6 +29,7 @@ import { createWorkspaceOperations } from './workspaces.mjs';
 import { createCommandOperations } from './commands.mjs';
 import { createAccountModelOperations } from './account-models.mjs';
 import { createArtifactOperations } from './artifacts.mjs';
+import { createNativeBrowserOperations } from './native-browser.mjs';
 import { createHttpHandler } from './http.mjs';
 import { createMemoryHttpHandler } from './memory-http.mjs';
 import { createPersonalHealthStore } from '../personal-health/index.mjs';
@@ -253,6 +254,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     scheduleModelOperation,
   } = accountModels;
   const artifacts = createArtifactOperations(context);
+  const nativeBrowser = createNativeBrowserOperations(context);
   const http = createHttpHandler(context);
   const { handle, handleScoped } = http;
   const { handleMemoryHttp } = createMemoryHttpHandler(context);
@@ -581,6 +583,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     trackToolExecution: tasks.trackToolExecution,
     submitToolDesktop: commands.submitToolDesktop,
     submitToolArtifact: artifacts.submitToolArtifact,
+    registerNativeFile: artifacts.registerNativeFile,
+    browse: nativeBrowser.browse,
     close() {
       if (closePromise) return closePromise;
       closing = true;

@@ -2,6 +2,8 @@
 import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './openai-compatible-client.ts'
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
+import path from 'node:path'
+import { mkdir } from 'node:fs/promises'
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/
 const fail = (code) => { const error = new Error(code); error.code = code; throw error }
 
@@ -13,6 +15,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   modelAllowed = () => true,
   moduleStatus = () => ({}),
   desktopTask = null, taskStop = null, toolResultProof = null, replyEvidence = null,
+  sessionWorkspaceRoot = null,
   naturalLanguageDesktopReady = () => false,
   naturalLanguageDesktopVerified = () => false, inferenceVerified = () => false }) {
   const requireRuntime = () => { if (!currentOrigin()) fail('RUNTIME_UNAVAILABLE') }
@@ -154,8 +157,11 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         requireModelAllowed(ownerId, modelProfileId, 'new')
         const profile = modelProfile(modelProfileId)
         await requireCatalogRoute(profile)
+        const cwd = preset === 'personal-remote' && sessionWorkspaceRoot
+          ? path.join(sessionWorkspaceRoot, sessionId) : undefined
+        if (cwd) await mkdir(cwd, { recursive: true, mode: 0o700 })
         const created = await gateway('/sessions', { method: 'POST',
-          body: JSON.stringify({ sessionId, agentPreset: preset }) })
+          body: JSON.stringify({ sessionId, agentPreset: preset, ...(cwd ? { cwd } : {}) }) })
         if (created?.sessionId !== sessionId) fail('SESSION_UNAVAILABLE')
         const listed = await listSessions()
         if (!listed?.items?.some((item) => item.sessionId === sessionId && item.agentPreset === preset)) {

@@ -22,6 +22,9 @@ struct PhoneAccountMenu: View {
                 .accessibilityIdentifier("phoneMenu.spirit")
             Button { open(.health) } label: { Label("健康", systemImage: "heart") }
                 .accessibilityIdentifier("phoneMenu.health")
+            Button("用 WeftMate 账号登录") {
+                Task { await model.signOut(); if model.session == nil { model.cloudLogin.showLogin = true } }
+            }
             Divider()
             Button { open(.devices) } label: { Label("设备", systemImage: "laptopcomputer.and.iphone") }
                 .accessibilityIdentifier("phoneMenu.devices")

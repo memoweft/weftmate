@@ -66,7 +66,8 @@ if (accountMemoryConfig !== null) {
   accountMemoryConfig = resolve(accountMemoryConfig);
 }
 const env = { ...process.env };
-for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_')) delete env[key];
+for (const key of Object.keys(env)) if ((key.startsWith('WEFTMATE_') && !key.startsWith('WEFTMATE_RELAY_') && !key.startsWith('WEFTMATE_ACME_') &&
+    !key.startsWith('WEFTMATE_CLOUD_') && key !== 'WEFTMATE_FRPC_FILE') || key.startsWith('MEMOWEFT_')) delete env[key];
 try { configureMemoWeft(memoryConfig, env); }
 catch (error) { console.error('[personal-host] ' + error.message); process.exit(2); }
 const candidate = resolve(requestedProfile);
