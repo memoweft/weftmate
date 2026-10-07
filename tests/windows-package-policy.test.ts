@@ -9,18 +9,20 @@ import {
 } from '../scripts/windows-package-policy.mjs';
 import { sanitizeUpdateFailure } from '../src/update-policy.ts';
 
-describe('Stage 3 Windows package policy', () => {
-  it('accepts only explicit Stage 3 prerelease versions', () => {
+describe('Windows candidate package policy', () => {
+  it('accepts explicit candidate revisions independently of the old Stage 3 name', () => {
     assert.equal(assertCandidateVersion('0.1.0-stage3.1'), '0.1.0-stage3.1');
-    for (const value of ['0.1.0', '0.1.0-stage3', '1.0.0-stage3.1', '0.1.0-stage3.01']) {
-      assert.throws(() => assertCandidateVersion(value), /0\.1\.0-stage3\.N/);
+    assert.equal(assertCandidateVersion('0.1.0-candidate.1'), '0.1.0-candidate.1');
+    assert.equal(assertCandidateVersion('1.2.3-preview.2'), '1.2.3-preview.2');
+    for (const value of ['0.1.0', '0.1.0-candidate', '1.0.0-candidate.01', '0.1.0-stage3.01']) {
+      assert.throws(() => assertCandidateVersion(value), /major\.minor\.patch-label\.N/);
     }
   });
 
   it('allows external isolated output and only dist below the repository', () => {
     const repo = resolve('D:/AIProjects/WeftMate/Repository');
-    assert.equal(assertIsolatedOutput(repo, resolve('D:/AIProjects/WeftMate/Runtime/Stage3/builds/a')), resolve('D:/AIProjects/WeftMate/Runtime/Stage3/builds/a'));
-    assert.equal(assertIsolatedOutput(repo, resolve(repo, 'dist/stage3-a')), resolve(repo, 'dist/stage3-a'));
+    assert.equal(assertIsolatedOutput(repo, resolve('D:/isolated-weftmate-builds/a')), resolve('D:/isolated-weftmate-builds/a'));
+    assert.equal(assertIsolatedOutput(repo, resolve(repo, 'dist/candidate-a')), resolve(repo, 'dist/candidate-a'));
     assert.throws(() => assertIsolatedOutput(repo, resolve(repo, 'src/build-output')), /below dist/);
   });
 

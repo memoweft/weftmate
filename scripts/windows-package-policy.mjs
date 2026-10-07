@@ -1,10 +1,10 @@
 import { isAbsolute, parse, relative, resolve, sep } from 'node:path'
 
-export const CANDIDATE_VERSION_RE = /^0\.1\.0-stage3\.(?:0|[1-9]\d*)$/
+export const CANDIDATE_VERSION_RE = /^(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)\.(?:0|[1-9]\d*)-[a-z][a-z0-9-]*\.(?:0|[1-9]\d*)$/i
 
 export function assertCandidateVersion(value) {
   if (typeof value !== 'string' || !CANDIDATE_VERSION_RE.test(value)) {
-    throw new Error('candidate version must match 0.1.0-stage3.N')
+    throw new Error('candidate version must match major.minor.patch-label.N')
   }
   return value
 }
