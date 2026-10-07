@@ -35,6 +35,9 @@ jobs:
       - name: Audit development dependencies
         run: npm audit --audit-level=high --registry=https://registry.npmjs.org
 
+      - name: Dependency compatibility smoke
+        run: node .github/scripts/dependency-smoke.mjs
+
       - name: Typecheck
         run: npm run typecheck
 
