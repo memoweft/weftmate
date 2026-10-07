@@ -244,10 +244,10 @@ const PERSONAL_REMOTE_PRESET_METADATA = 'name: 个人远端助手\ndescription: 
 const PERSONAL_SHARED_CHAT_PRESET_ID = 'personal-shared-chat'
 const PERSONAL_SHARED_CHAT_PRESET_METADATA_LEGACY = 'name: 共享模型对话\ndescription: 不访问宿主桌面、文件或记忆的独立对话。\norder: 92\n'
 const PERSONAL_SHARED_CHAT_PRESET_METADATA = 'name: 共享模型对话\ndescription: 不访问宿主桌面、文件或项目；仅使用宿主明确注入的本账户记忆上下文。\norder: 92\n'
-/** The maintenance preset has no general model tools.  This mirrors the
- * pinned standard preset's *scoped* context lifecycle only: compaction stays
- * owned by the selected maintenance agent, never by the web host or ordinary
- * sessions.  At a 102,400-token route, retainRatio 0.16 keeps 16,384 recent
+/** Mirror the pinned standard preset's scoped context lifecycle for generated
+ * maintenance and personal-remote agents. Compaction stays owned by the
+ * selected agent rather than the web host. At a 102,400-token route,
+ * retainRatio 0.16 keeps 16,384 recent
  * tokens; a ratio keeps the policy valid for smaller routed context windows. */
 const MOD_MAINTAINER_PRESET_COMPACTION = `
 - id: compaction
@@ -373,6 +373,8 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   const secureBootstrapDest = join(dir, 'plugins', 'weftmate-secure-snapshot-bootstrap.mjs')
   const gatewayDest = join(dir, 'runtime', 'gateway')
   const tasks: Array<[string, string]> = [
+    [join(here, 'model-budget.mjs'), join(dir, 'model-budget.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-model-budget.mjs'), join(dir, 'plugins', 'weftmate-model-budget.mjs')],
     [join(CLIENT_PLUGIN_SRC, 'package.json'), join(clientDest, 'package.json')],
     [join(CLIENT_PLUGIN_SRC, 'index.js'), join(clientDest, 'index.js')],
     [join(CLIENT_PLUGIN_SRC, 'client.js'), join(clientDest, 'client.js')],
@@ -512,10 +514,11 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
 - name: '@deepseek-ai/dsh-tool-ask-user'
 - name: ../../profiles/${profileName}/plugins/weftmate-personal-desktop-preset.mjs
 `
+  const contextAwareComposition = `${compositionText}${MOD_MAINTAINER_PRESET_COMPACTION}`
   await mkdir(presetDir, { recursive: true })
   const existingComposition = await readFile(composition, 'utf8').catch(() => '')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if ((existingComposition && existingComposition !== compositionText &&
+  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== compositionText &&
       existingComposition !== boundedCompositionText &&
       existingComposition !== browserCompositionText &&
       existingComposition !== projectCompositionText && existingComposition !== previousCompositionText &&
@@ -528,7 +531,7 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
     throw new Error('personal-remote preset conflict: existing user preset was preserved')
   }
   let changed = false
-  if (existingComposition !== compositionText) { await writeFile(composition, compositionText, 'utf8'); changed = true }
+  if (existingComposition !== contextAwareComposition) { await writeFile(composition, contextAwareComposition, 'utf8'); changed = true }
   if (existingMetadata !== PERSONAL_REMOTE_PRESET_METADATA) {
     await writeFile(metadata, PERSONAL_REMOTE_PRESET_METADATA, 'utf8'); changed = true
   }
@@ -1206,6 +1209,9 @@ export class DshWebRuntime {
       if (value === null || typeof value !== 'object') return
       if (Array.isArray(value)) { for (const child of value) visit(child); return }
       const row = value as Record<string, unknown>
+      // The final owned snapshot selects the budget decorator while preserving
+      // the native adapter's merged provider/settings configuration.
+      if (this.opts.profilePolicy === 'weftmate' && row.id === 'llm-pi-ai') row.name = './plugins/weftmate-model-budget.mjs'
       if (row.id === 'agent-presets') {
         const config = row.config !== null && typeof row.config === 'object' && !Array.isArray(row.config)
           ? row.config as Record<string, unknown> : {}

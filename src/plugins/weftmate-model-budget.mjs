@@ -1,0 +1,128 @@
+/** Decorate the native pi-ai adapter; its protocols, settings and credentials remain native. */
+import { Config, apply as applyPiAi } from '@deepseek-ai/dsh-llm-pi-ai';
+import { readModelCapacity, modelCapacityFor, outputBudget } from '../model-budget.mjs';
+
+export { Config };
+export const name = 'llm-pi-ai';
+export const inject = ['llm', 'tokenMeter'];
+
+export function apply(ctx, config) {
+  const probes = new Map();
+  const capacities = new Map();
+  let rawSource = () => config;
+  let lastRaw, lastVersion, projected;
+  let version = 0;
+  const identity = (provider, row, model) => JSON.stringify([provider, row.baseURL, row.apiKeyEnv, model]);
+  const compatible = row => row?.baseURL && (!row.api || row.api === 'openai-completions');
+
+  async function capacity(provider, row, model) {
+    const key = identity(provider, row, model);
+    if (!probes.has(key)) probes.set(key, (async () => {
+      let apiKey;
+      try { apiKey = row.apiKeyEnv ? (await ctx.get('credentials')?.resolve(row.apiKeyEnv))?.value : undefined; }
+      catch { /* Metadata reads fall back even while the credential service is unavailable. */ }
+      const value = await readModelCapacity({ baseUrl: row.baseURL, modelId: model.id,
+        contextWindow: model.contextWindow, maxTokens: model.maxTokens, apiKey });
+      capacities.set(key, value);
+      version++;
+      return value;
+    })());
+    return probes.get(key);
+  }
+  async function refresh() {
+    await Promise.all(Object.entries(rawSource().providers ?? {}).flatMap(([provider, row]) =>
+      compatible(row) ? (row.models ?? []).map(model => capacity(provider, row, model)) : []));
+  }
+  ctx.on('credentials/updated', async ref => {
+    const pending = [];
+    for (const [provider, row] of Object.entries(rawSource().providers ?? {})) {
+      if (!compatible(row) || row.apiKeyEnv !== ref) continue;
+      for (const model of row.models ?? []) {
+        const key = identity(provider, row, model);
+        probes.delete(key); capacities.delete(key); version++;
+        pending.push(capacity(provider, row, model));
+      }
+    }
+    await Promise.all(pending);
+  });
+  function source() {
+    const raw = rawSource();
+    if (raw === lastRaw && lastVersion === version) return projected;
+    lastRaw = raw; lastVersion = version;
+    projected = { ...raw, providers: Object.fromEntries(Object.entries(raw.providers ?? {}).map(([provider, row]) => {
+      if (!compatible(row) || !row.models) return [provider, row];
+      return [provider, { ...row, models: row.models.map(model => {
+        const value = capacities.get(identity(provider, row, model)) ?? modelCapacityFor({
+          baseUrl: row.baseURL, modelId: model.id, contextWindow: model.contextWindow, maxTokens: model.maxTokens });
+        return { ...model, contextWindow: value.contextWindow, maxTokens: value.maxTokens };
+      }) }];
+    })) };
+    return projected;
+  }
+  // The native settings consumer reads a projected scope. Stored configuration
+  // remains the fallback, so a later restart probes the service again.
+  const settingsContext = sctx => new Proxy(sctx, { get(target, prop) {
+    if (prop !== 'settings') return Reflect.get(target, prop);
+    return new Proxy(target.settings, { get(settings, method) {
+      if (method !== 'register') return Reflect.get(settings, method);
+      return (...args) => {
+        const scope = settings.register(...args);
+        rawSource = () => scope.get();
+        scope.watch(() => { probes.clear(); capacities.clear(); version++; return refresh(); });
+        sctx.effect(async () => { await refresh(); });
+        return { ...scope, get: source };
+      };
+    } });
+  } });
+  const llm = new Proxy(ctx.llm, { get(service, method) {
+    if (method === 'registerAdapter') return (providers, adapter) => {
+      const wrapped = new Proxy(adapter, { get(target, operation) {
+        if (operation === 'resolveModel') return async (provider, model, signal) => {
+          const row = rawSource().providers?.[provider];
+          const entry = row?.models?.find(item => item.id === model);
+          if (compatible(row) && entry) await capacity(provider, row, entry);
+          const info = await target.resolveModel(provider, model, signal);
+          // Output capability must not become a fixed request default.
+          if (compatible(row)) { const { defaultMaxTokens, ...rest } = info; return rest; }
+          return info;
+        };
+        if (operation === 'stream') return async function* (options) {
+          const row = rawSource().providers?.[options.provider];
+          const entry = row?.models?.find(item => item.id === options.model);
+          if (!compatible(row) || !entry) { yield* target.stream(options); return; }
+          const limits = await capacity(options.provider, row, entry);
+          let inputTokens = options.messages.reduce((sum, message) => sum + ctx.tokenMeter.estimateMessage(message), 0) +
+            (options.system ? Math.ceil(options.system.length / 4) + 4 : 0) +
+            (options.tools?.length ? Math.ceil(JSON.stringify(options.tools).length / 4) + 4 : 0);
+          const session = options.sessionId ? ctx.get('sessions')?.get(options.sessionId) : undefined;
+          const header = session?.requestHeader();
+          const visible = messages => JSON.stringify(messages.map(message => [message.role, message.content]));
+          // Reuse DSH's provider-usage anchor for the conversation envelope;
+          // auxiliary summaries carry different messages and use the native estimate.
+          if (session && options.system === header?.system &&
+              JSON.stringify(options.tools) === JSON.stringify(header?.tools) &&
+              visible(options.messages) === visible(session.deriveMessages())) {
+            inputTokens = ctx.tokenMeter.measure(session).totalTokens;
+          }
+          const maxTokens = outputBudget({ ...limits, inputTokens,
+            maxTokens: Math.min(limits.maxTokens, options.maxTokens ?? limits.maxTokens) });
+          yield* target.stream({ ...options, maxTokens });
+        };
+        const value = Reflect.get(target, operation);
+        return typeof value === 'function' ? value.bind(target) : value;
+      } });
+      return service.registerAdapter(providers, wrapped);
+    };
+    const value = Reflect.get(service, method);
+    return typeof value === 'function' ? value.bind(service) : value;
+  } });
+  const nativeContext = new Proxy(ctx, { get(target, prop) {
+    if (prop === 'llm') return llm;
+    if (prop === 'inject') return (names, callback) => target.inject(names,
+      sctx => callback(names.includes('settings') ? settingsContext(sctx) : sctx));
+    return Reflect.get(target, prop);
+  } });
+  applyPiAi(nativeContext, config);
+}
+
+export default { name, inject, Config, apply };
