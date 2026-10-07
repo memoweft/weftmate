@@ -200,3 +200,31 @@ struct AdoptionSDKTests {
         #expect(await transport.requests().allSatisfy { $0.httpMethod != "POST" || !($0.url?.path.hasSuffix("/shared") ?? false) })
     }
 }
+
+extension AdoptionSDKTests {
+    @Test func uncertainLocalTurnRequiresExplicitAcknowledgmentAndPersistsIt() async throws {
+        var unbound = adoptionProjection(status: "unbound")
+        unbound["canAdopt"] = false; unbound["reasonCode"] = "LOCAL_TURN_UNCONFIRMED"
+        let transport = AdoptionScriptTransport(adoptionLoginSteps() + [
+            .init(path: "/auth/me", response: adoptionAuth()),
+            .init(path: "/commands/by-request/adopt-request", response: adoptionJSON(["error": ["code": "NOT_FOUND"]], status: 404)),
+            .init(path: adoptionPath, response: adoptionJSON(unbound)),
+            .init(path: "/auth/me", response: adoptionAuth()),
+            .init(path: "/commands/by-request/confirmed-request", response: adoptionJSON(["error": ["code": "NOT_FOUND"]], status: 404)),
+            .init(path: adoptionPath, response: adoptionJSON(unbound)),
+            .init(path: adoptionPath, response: adoptionJSON(adoptionProjection().merging(["command": adoptionCommand(changes: ["requestId": "confirmed-request"])], uniquingKeysWith: { _, new in new }), status: 202), method: "POST")])
+        let client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+        let session = try await adoptionLogin(client)
+        let normal = try adoptionIntent(session)
+        #expect(!normal.acknowledgeUncertainLocalTurn)
+        #expect((try JSONSerialization.jsonObject(with: normal.payload) as! [String: Any])["acknowledgeUncertainLocalTurn"] == nil)
+        await #expect(throws: APIFailure.server(status: 409, code: "LOCAL_TURN_UNCONFIRMED")) { try await client.reconcileAdoption(normal, allowSubmission: true) }
+        #expect(await transport.requests().filter { $0.httpMethod == "POST" && $0.url!.path.contains("/shared") }.isEmpty)
+        let confirmed = try SharedAdoptionIntent(session: session, conversationID: "conversation-test", requestID: "confirmed-request", modelProfileID: "explicit-profile", expectedSyncSeq: 4, acknowledgeUncertainLocalTurn: true)
+        #expect(try JSONDecoder().decode(SharedAdoptionIntent.self, from: JSONEncoder().encode(confirmed)) == confirmed)
+        _ = try await client.reconcileAdoption(confirmed, allowSubmission: true)
+        let posts = await transport.requests().filter { $0.httpMethod == "POST" && $0.url!.path.contains("/shared") }
+        #expect(posts.count == 1 && posts[0].httpBody == confirmed.payload)
+        #expect((try JSONSerialization.jsonObject(with: posts[0].httpBody!) as! [String: Any])["acknowledgeUncertainLocalTurn"] as? Bool == true)
+    }
+}

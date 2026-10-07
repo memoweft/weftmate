@@ -10,7 +10,10 @@ struct TaskDirectoryView: View {
         _model = StateObject(wrappedValue: TaskDirectoryModel(client: appModel.assistantClient,
             sessionId: sessionId, expectedHostId: expectedHostId, accountEpoch: appModel.accountEpoch,
             currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() },
-            currentSession: { [weak appModel] in appModel?.session }))
+            currentSession: { [weak appModel] in
+                guard let appModel, appModel.taskControlSessions.contains(sessionId) else { return nil }
+                return appModel.session
+            }))
     }
     var body: some View {
         ScrollView {

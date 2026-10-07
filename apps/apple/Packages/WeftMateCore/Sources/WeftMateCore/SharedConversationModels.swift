@@ -99,6 +99,8 @@ public struct SharedConversationProjection: Codable, Equatable, Sendable {
     public let status: SharedBindingStatus
     public let canAdopt: Bool
     public let reasonCode: String?
+    public var requiresLocalTurnConfirmation: Bool { status == .unbound && reasonCode == "LOCAL_TURN_UNCONFIRMED" }
+    public var canAdoptWithConfirmation: Bool { status == .unbound && (canAdopt || requiresLocalTurnConfirmation) }
     public let binding: SharedConversationBinding?
     public let adoptedMessages: [SharedAdoptedMessage]?
     func validate(conversationID: String, hostID: String) throws {
@@ -134,23 +136,34 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public let mode: String?
     public let modelProfileId: String?
     public let sourceSyncEventId: String?
+    public let attachments: [OriginalAttachment]?
+    public let originalAttachments: [OriginalAttachment]?
+    public let attachmentMessageId: String?
     public init(requestId: String, kind: SharedCommandKind, targetDeviceId: String,
                 sessionId: String? = nil, text: String? = nil, modelProfileId: String? = nil,
-                sourceSyncEventId: String? = nil) throws {
+                sourceSyncEventId: String? = nil, attachments: [OriginalAttachment]? = nil,
+                originalAttachments: [OriginalAttachment]? = nil, attachmentMessageId: String? = nil) throws {
         self.requestId = requestId; self.kind = kind; self.targetDeviceId = targetDeviceId
         self.sessionId = sessionId; self.text = text; self.modelProfileId = modelProfileId
         self.sourceSyncEventId = sourceSyncEventId; mode = kind == .message ? "queue" : nil
+        self.attachments = attachments; self.originalAttachments = originalAttachments
+        self.attachmentMessageId = attachmentMessageId
         try validate()
     }
     func validate() throws {
+        if let text, text.utf16.count > 8_192 { throw ClientInputFailure.messageTooLong }
         try SharedValidation.require(SharedValidation.request(requestId) && SharedValidation.id(targetDeviceId))
+        if kind != .message {
+            try SharedValidation.require(attachments == nil && originalAttachments == nil && attachmentMessageId == nil)
+        }
+        try AttachmentLimits.validate(staged: attachments, originals: originalAttachments, messageID: attachmentMessageId)
         switch kind {
         case .create:
             try SharedValidation.require(modelProfileId.map(SharedValidation.profile) == true && sessionId == nil &&
                 text == nil && mode == nil && sourceSyncEventId == nil)
         case .message:
             try SharedValidation.require(sessionId.map(SharedValidation.id) == true && modelProfileId == nil &&
-                text.map { !$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && $0.utf16.count <= 16_384 } == true &&
+                text.map { (!$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || attachments != nil || originalAttachments != nil) && $0.utf16.count <= 8_192 } == true &&
                 mode == "queue" && sourceSyncEventId.map(SharedValidation.id) ?? true)
         case .cancel:
             try SharedValidation.require(sessionId.map(SharedValidation.id) == true && modelProfileId == nil &&
@@ -160,12 +173,14 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public func encoded() throws -> Data {
         try validate()
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-        return try encoder.encode(self)
+        let bytes = try encoder.encode(self)
+        guard bytes.count <= 12_288 else { throw ClientInputFailure.requestTooLarge }
+        return bytes
     }
     static func decode(_ data: Data) throws -> Self {
-        try SharedValidation.require(data.count <= 262_144)
+        try SharedValidation.require(data.count <= 12_288)
         guard let keys = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "modelProfileId", "sourceSyncEventId"]) else {
+              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "modelProfileId", "sourceSyncEventId", "attachments", "originalAttachments", "attachmentMessageId"]) else {
             throw APIFailure.invalidResponse
         }
         let payload: Self
@@ -175,7 +190,13 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
         try SharedValidation.require(keys["requestId"] as? String == payload.requestId && keys["kind"] as? String == payload.kind.rawValue &&
             keys["targetDeviceId"] as? String == payload.targetDeviceId && keys["sessionId"] as? String == payload.sessionId &&
             keys["text"] as? String == payload.text && keys["mode"] as? String == payload.mode &&
-            keys["modelProfileId"] as? String == payload.modelProfileId && keys["sourceSyncEventId"] as? String == payload.sourceSyncEventId)
+            keys["modelProfileId"] as? String == payload.modelProfileId && keys["sourceSyncEventId"] as? String == payload.sourceSyncEventId &&
+            keys["attachmentMessageId"] as? String == payload.attachmentMessageId)
+        for key in ["attachments", "originalAttachments"] {
+            let raw = keys[key].map { try? JSONSerialization.data(withJSONObject: $0) } ?? nil
+            let parsed = try raw.map { try JSONDecoder().decode([OriginalAttachment].self, from: $0) }
+            try SharedValidation.require(parsed == (key == "attachments" ? payload.attachments : payload.originalAttachments))
+        }
         return payload
     }
 }
@@ -290,7 +311,7 @@ public struct SharedHistoryEvent: Codable, Equatable, Sendable, Identifiable {
             text: data.text ?? "", occurredAt: at, sourceDeviceId: nil,
             attachmentCount: OriginalAttachmentValidation.count(originals: data.originalAttachments,
                 previewCount: data.images?.count ?? 0, unpreviewedIDs: data.unpreviewedOriginalImageIds),
-            truncated: data.truncated ?? false, pendingContext: false, originalAttachments: data.originalAttachments ?? [],
+            truncated: data.truncated ?? false, pendingContext: false, images: data.images ?? [], originalAttachments: data.originalAttachments ?? [],
             attachmentMessageId: data.attachmentMessageId, unpreviewedOriginalImageIds: data.unpreviewedOriginalImageIds ?? [])
     }
 }

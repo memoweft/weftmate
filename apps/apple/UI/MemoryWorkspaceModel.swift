@@ -108,6 +108,17 @@ final class MemoryWorkspaceModel: ObservableObject {
         operations.values.sorted { $0.record.createdAt < $1.record.createdAt }
     }
     var editorToken: UUID { detailRequest }
+    var correctionValidationMessage: String? {
+        guard !correctionText.isEmpty, let detail, let session = currentSession() else { return nil }
+        if correctionText.utf16.count > 4_000 { return "纠正内容太长，请缩短后保存。" }
+        do {
+            _ = try MemoryMutationIntent(session: session, operation: .correct, itemKind: detail.item.kind,
+                targetID: detail.item.id, requestID: "apple-memory-00000000-0000-0000-0000-000000000000",
+                expectedWorldRevision: detail.worldRevision, correction: correctionText)
+            return nil
+        } catch let error as ClientInputFailure { return error.errorDescription }
+        catch { return nil }
+    }
     func setCorrection(_ text: String, token: UUID) {
         guard validScope, token == detailRequest, detail != nil else { return }
         correctionText = text
@@ -315,6 +326,7 @@ final class MemoryWorkspaceModel: ObservableObject {
 
     private func performMutation(_ context: MemoryActionContext) async {
         guard canMutate, matches(context), let journal else { return }
+        if context.operation == .correct, let error = correctionValidationMessage { notice = error; return }
         let operation = context.operation
         let target = context.evidenceId ?? context.itemId
         guard !operations.values.contains(where: { $0.record.identity.targetId == target &&

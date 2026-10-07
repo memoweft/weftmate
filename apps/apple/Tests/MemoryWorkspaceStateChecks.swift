@@ -156,6 +156,19 @@ private func receipt(_ intent: MemoryMutationIntent, revision: Int, cleanup: Boo
         read.closeSources(); try check(read.sources == nil, "Collapsed sources retained visible body")
         pass("PASS bounded read, explicit sources and local permission getters")
 
+        let (limitHTTP, _, _, _, limit) = try await setup("correction-limits")
+        await limit.open(limit.items[0])
+        limit.setCorrection(String(repeating: "\u{1}", count: 2_050), token: limit.editorToken)
+        let correctionContext = try action(limit, .correct)
+        let requestsBeforeLimit = await limitHTTP.allRequests().count
+        try check(limit.correctionValidationMessage?.contains("太长") == true, "Correction JSON byte overflow lacked input notice")
+        await limit.mutate(correctionContext)
+        try check(await limitHTTP.allRequests().count == requestsBeforeLimit && limit.operations.isEmpty,
+            "Over-limit correction was persisted or sent")
+        limit.setCorrection(String(repeating: "中", count: 4_000), token: limit.editorToken)
+        try check(limit.correctionValidationMessage == nil, "Valid 4000 UTF-16 correction rejected")
+        pass("PASS correction 12 KiB JSON body: inline notice, no journal or HTTP mutation")
+
         let pageHTTP = MemoryHTTP(); await pageHTTP.configure(pagination: true)
         let (_, _, _, _, page) = try await setup("pagination", http: pageHTTP)
         await page.loadMore(); try check(page.items.count == 2 && !page.hasMore, "Explicit second page missing")

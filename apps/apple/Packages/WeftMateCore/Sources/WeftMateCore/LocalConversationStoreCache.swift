@@ -71,6 +71,7 @@ public struct LocalCachedMessage: Codable, Equatable, Sendable, Identifiable {
     public let truncated: Bool
     public let pendingContext: Bool
     /// Optional additions keep existing schema-2 cache records readable.
+    public let images: [SharedHistoryImage]?
     public let originalAttachments: [OriginalAttachment]?
     public let attachmentMessageId: String?
     public let unpreviewedOriginalImageIds: [String]?
@@ -80,13 +81,14 @@ public struct LocalCachedMessage: Codable, Equatable, Sendable, Identifiable {
     public var message: ChatMessage {
         .init(id: id, role: role, text: text, occurredAt: occurredAt, sourceDeviceId: sourceDeviceId,
               attachmentCount: attachmentCount, truncated: truncated, pendingContext: pendingContext,
-              originalAttachments: originalAttachments ?? [], attachmentMessageId: attachmentMessageId,
+              images: images ?? [], originalAttachments: originalAttachments ?? [], attachmentMessageId: attachmentMessageId,
               unpreviewedOriginalImageIds: unpreviewedOriginalImageIds ?? [])
     }
     init(_ message: ChatMessage) {
         id = message.id; role = message.role; text = message.text; occurredAt = message.occurredAt
         sourceDeviceId = message.sourceDeviceId; attachmentCount = message.attachmentCount
         truncated = message.truncated; pendingContext = message.pendingContext
+        images = message.images.isEmpty ? nil : message.images
         originalAttachments = message.originalAttachments.isEmpty ? nil : message.originalAttachments
         attachmentMessageId = message.attachmentMessageId
         unpreviewedOriginalImageIds = message.unpreviewedOriginalImageIds.isEmpty ? nil : message.unpreviewedOriginalImageIds
@@ -99,7 +101,7 @@ public struct LocalCachedMessage: Codable, Equatable, Sendable, Identifiable {
     func validate(sessionId: String?) throws {
         do {
             try OriginalAttachmentValidation.validate(originalAttachments, messageID: attachmentMessageId,
-                unpreviewedIDs: unpreviewedOriginalImageIds)
+                unpreviewedIDs: unpreviewedOriginalImageIds, maximumCount: 8)
         } catch { throw LocalConversationStoreFailure.invalidCache }
         guard localCacheIdentifier(id), occurredAt.map({ $0.utf8.count <= 128 }) ?? true,
               sourceDeviceId.map(SharedValidation.id) ?? true, (0...1_000).contains(attachmentCount),
