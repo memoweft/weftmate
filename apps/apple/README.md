@@ -1,8 +1,10 @@
 # WeftMate Apple 客户端
 
-此目录属于源码快照 `844429c32a866c53145b9a8ba00fc3ca1e653779` 上的 Apple 工作历史。源码 ZIP 没有原仓库 Git 历史；本机后续提交不能称作原提交的 HEAD。
+此目录是 WeftMate 主仓的 Apple 客户端。A0 已将旧独立工作副本截至 `278bc6c` 的 Apple 成果合入主仓；后续开发直接在主仓工作，旧任务卡不作为开工入口。
 
-原生 SwiftUI 工程包括 `WeftMateMac`、`WeftMatePhone` 与手机伴随 `WeftMateWatch`，通过本地包 `Packages/WeftMateCore` 共用正式网络接口、模型与账户凭据。macOS 14、iOS 17、watchOS 10 是当前工程最低部署设置；实际构建和运行环境以任务卡记录为准。
+原生 SwiftUI 工程包括 `WeftMateMac`、`WeftMatePhone` 与手机伴随 `WeftMateWatch`，通过本地包 `Packages/WeftMateCore` 共用 `/personal/v1` 网络接口、模型与凭据存储实现。macOS 14、iOS 17、watchOS 10 是当前工程最低部署设置；当前源码版本为 `0.1.0 / build 11`。
+
+Mac/iPhone 已包含账户与原会话读取、按账户保存草稿和离线缓存、明确选择模型后续聊、记忆页面、跨设备任务发现与进度、停止、审批与信息问答，以及 UTF-8 文本成果预览/导出。Watch 当前仍是未连接账户的基础首页；任务进度、审批、完成震动及真机联网属于后续工作。源码接入和离线测试通过不等于真实后端或设备验收。
 
 ## 构建与打开
 
@@ -14,19 +16,22 @@ make build-mac
 make build-phone
 make build-watch
 make test-core
+make test-state
 make test-mac
 make test-phone
 ```
 
 工程和共享 Scheme 已提交，普通构建不用先生成。添加 Swift 源码后执行 `make project` 同步项目文件；生成器仅使用 Python 标准库，不下载依赖。默认 iPhone 是已安装 iOS 26.3 的 iPhone 17，Watch 是 watchOS 26.2 的 Series 11（46mm）。通过 `PHONE_ID=<UUID>` 和 `WATCH_ID=<UUID>` 指定其他可用模拟器，使用 `xcrun simctl list devices available` 取得 UUID。
 
-`make run-mac`、`make run-phone`、`make run-watch` 构建、安装并启动对应候选。模拟器首次启动需要等待系统初始化；脚本等待实际启动结果。Mac App 只申请沙盒网络客户端权限，真实系统操作按后续正式能力逐项接入。
+`make test-core` 执行共享包 Swift 单元测试；`make test-state` 编译并运行 `Tests/*Checks.swift` 的九组状态检查，使用合成账户、受控 HTTP 和独立临时目录，不访问日用数据、后端或系统钥匙串。每次的编译/执行日志与 `results.json` 保存到受忽略的 `Build/StateChecks/apple-state-*`。需要源码外的证据目录时运行 `python3 Scripts/run_state_checks.py --artifacts <目录>`；`--core-build <隔离的 SwiftPM scratch 目录>` 可复用已构建的核心对象。`make test-mac` / `make test-phone` 属于 UI 验证，真实服务用例另需隔离 fixture。
+
+`make run-mac`、`make run-phone`、`make run-watch` 构建、安装并启动对应候选。模拟器首次启动需要等待系统初始化；脚本等待实际启动结果。Mac App 使用沙盒网络客户端权限，以及用户在系统文件窗口选定位置的读写权限，用于保存已校验的成果。真实系统操作按后续正式能力逐项接入。
 
 ## Mac 检查更新
 
 Mac 标准 App 菜单的“检查更新…”在登录前即可打开独立更新窗口；登录后的设置页进入同一窗口。检查读取官网公开版本清单，与个人服务器和登录状态独立，按真实安装版本、构建号和运行架构判断。读取失败或暂无匹配包时保留真实说明。
 
-有新版时，“下载新版 DMG”在浏览器打开已校验的官网安装包地址；其他设备从官网页面查看对应安装入口。下载后由本人手动安装，不自动覆盖、卸载或清除资料。官网发布与本机临时签名、公证和旧 Keychain 保留是不同验证项；当前本机试用包仍未公证，旧签名资料保留与草稿持久化按任务卡记录。
+有新版时，“下载新版 DMG”在浏览器打开已校验的官网安装包地址；其他设备从官网页面查看对应安装入口。下载后由本人手动安装，不自动覆盖、卸载或清除资料。官网发布与本机临时签名、公证和跨版本 Keychain 保留是不同验证项；本机试用包未公证，跨签名升级保留尚需实际验证。
 
 ## 真实服务与凭据
 
@@ -82,7 +87,9 @@ python3 Scripts/development_tls_relay.py
 python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 ```
 
-输出包括 `.dmg`、`TrialInstall/WeftMateMac.app`、构建与签名日志以及 `manifest.json`。每次使用独立目录，保留旧候选。DMG 中的安装说明要求本人手动安装或覆盖。本地签名未公证，不能当作公众分发或其他 Mac 的免提示安装版本。安装目录变更不清理资料，但跨版本 Keychain 访问仍需真实验证：ad-hoc 的签名要求绑定代码哈希，bundle ID 相同不足以证明凭据保留。当前草稿仅在内存，不能承诺退出或覆盖安装后保留。
+输出包括 `.dmg`、`TrialInstall/WeftMateMac.app`、构建与签名日志以及 `manifest.json`。每次使用独立目录，保留旧候选。DMG 中的安装说明要求本人手动安装或覆盖。本地签名未公证，不能当作公众分发或其他 Mac 的免提示安装版本。安装目录变更不清理资料，但跨版本 Keychain 访问仍需真实验证：ad-hoc 的签名要求绑定代码哈希，bundle ID 相同不足以证明凭据保留。
+
+当前源码按服务器和账户保存草稿、已读取的会话缓存与不可变请求记录。界面分别显示保存状态、缓存读取时间和服务端回执；未知请求重开时先查询原身份，用户明确继续才复用原内容。主仓源码合并不会自动发布或更新官网安装包。
 
 ### iPhone 与 Watch 真实设备的最后准备
 
@@ -90,4 +97,4 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 
 [Apple 真实设备运行说明](https://developer.apple.com/documentation/Xcode/running-your-app-on-simulated-or-physical-devices)、[签名和团队流程](https://help.apple.com/xcode/mac/current/en.lproj/dev60b6fbbc7.html)。
 
-当前运行证据、服务接口缺口和本人试用操作统一写在 `docs/tasks/APPLE_CLIENTS_01.md`，本说明不替代实际联调或用户验收。
+当前工作包与进度见主仓 `docs/PLAN.md` 和 `docs/STATE.md`；本说明不替代实际联调或用户验收。
