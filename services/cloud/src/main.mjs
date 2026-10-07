@@ -4,6 +4,7 @@ import { createLogger } from './log.mjs';
 import { createMailer } from './mail.mjs';
 import { createCloudServer } from './server.mjs';
 import { createIdentity } from './identity.mjs';
+import { dnsFromEnvironment } from './dns-aliyun.mjs';
 
 // WAL sidecars and any future service files inherit private permissions.
 process.umask(0o077);
@@ -30,7 +31,7 @@ try {
   const opened = await openDatabase(config.databasePath);
   database = opened.database;
   const mailer = createMailer(config, { logger });
-  const identity = await createIdentity({ database, config, mailer, logger });
+  const identity = await createIdentity({ database, config, mailer, logger, relayDns: dnsFromEnvironment({ database }) });
   relay = identity.relay;
   await relay.start();
   server = createCloudServer({ ...opened, logger, identity });
