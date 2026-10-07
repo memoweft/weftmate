@@ -26,7 +26,7 @@
 
 宿主启动后及每 60 秒用安装密钥签名主动取 `/cloud/hosts/revocations`，先提交 outbox；`syncCloudRevocations()` 可主动同步，`receiveCloudRevocations(eventToken)` 供后续通道交付。云密码重置/换邮箱的 epoch 和设备撤销事件均用固定云 key 签名，宿主检查 audience 与递增水位后持久化，并把失效会话在 access store 标为 revoked，使排队任务也不能再派给 DSH。epoch 撤销保留已批准公钥，新 epoch 的合法登录可重新换 Cookie；本地账号 Cookie 不受影响。云服务只存宿主公钥/member/最小撤销元数据，不接收本地 ownerId 或内容。
 
-没有即时推送（S3）和中继（S2）；在线轮询至多约一分钟加网络延迟，签名事件到达宿主后立即拒绝并关闭活跃流。云离线期间不能宣称收到最新撤权；仍有效的宿主 Cookie、本地密码与合法旧 Bearer 可直连，过期云 JWT 不延长。
+S2 中继/TLS 已在 `../personal-relay/` 实现，见 CLIENT_API 7.6；本模块继续负责身份。没有即时推送（S3）；在线轮询至多约一分钟加网络延迟，签名事件到达宿主后立即拒绝并关闭活跃流。云离线期间不能宣称收到最新撤权；仍有效的宿主 Cookie、本地密码与合法旧 Bearer 可直连，过期云 JWT 不延长。
 
 ## 验证
 
@@ -35,3 +35,14 @@
 - `node --test --test-name-pattern=S1b tests/personal-access-ui-interaction.test.ts`：应用启动提示、允许/拒绝 CSRF 写入、退出清除。
 
 数据目录一律临时且规范化；不连服务器、不发送真实邮件、不部署。
+
+S2 的 `/cloud/pairings` 响应增添 relay 状态/baseUrl；原 tlsSpki 与实际 TLS adapter 复用同一内容 key。云目录不提供可替代配对 pin 的信任。
+
+
+## S1c-Web 登录接线
+
+`GET /cloud/config` 公开固定 issuer/hostId/clientId，`GET /cloud/binding` 只读当前 Cookie 的绑定状态与直接地址管理资格。浏览器界面在 `../personal-access-ui/cloud-login.js` / `cloud-ui.js`；Android 的共享 JS 与系统浏览器桥见 `apps/mobile-ui/www/cloud-native.js` 和 `apps/android/.../CloudLogin.kt`。CLIENT_API 7.7 是正式契约。
+
+宿主 `WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 weftmate-web。云端需预登记精确的直接地址/中继回调 `<origin>/personal/v1/ui/`，application_type=web；Android 另登记 weftmate-android 的 `com.memoweft.weftmate:/oauth`。没有注册回调的部署不能登录，不动态放开 origin。浏览器凭据只在等待内容批准期间保存 IndexedDB，交换宿主 Cookie 后删除，设备 CryptoKey 保留供下次证明。
+
+`WEFTMATE_WEB_E2E=true node --test services/cloud/test/web-login.test.mjs` 使用真实 Chromium、file 邮件、隔离宿主与 SQLite 云验证绑定、等待/批准、二维码自动刷新/输入码、拒绝、解绑与本地会话保留。合成截图在忽略的 `.local/s1c-web/`；完整根测试只交 CI。

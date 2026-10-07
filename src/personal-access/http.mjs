@@ -99,12 +99,14 @@ export function createHttpHandler(context) {
       if (context.cloudIdentity && await context.cloudIdentity.handle(request, response, url)) return;
       const staticPaths = new Set(['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
         '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
+        '/personal/v1/ui/cloud-ui.js', '/personal/v1/ui/cloud-login.js', '/personal/v1/ui/cloud-vendor.js',
         '/personal/v1/ui/file-sha256.js', '/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js',
         '/personal/v1/ui/vendor/noble-hashes-2.3.0/_md.js',
         '/personal/v1/ui/vendor/noble-hashes-2.3.0/_u64.js',
         '/personal/v1/ui/vendor/noble-hashes-2.3.0/utils.js']);
       if (request.method === 'GET' && !url.search && staticPaths.has(pathname)) {
-        if (context.uiHandler && await context.uiHandler(request, response) === true) return;
+        if (context.uiHandler && await context.uiHandler(request, response,
+          context.cloudIdentity?.browserConfiguration()) === true) return;
         throw failure('NOT_FOUND', 404);
       }
       if (request.method === 'GET' && pathname === '/personal/v1/auth/state') {

@@ -1,7 +1,8 @@
 import { Provider, interactionPolicy, errors } from 'oidc-provider';
 import { calculateJwkThumbprint, createLocalJWKSet, jwtVerify } from 'jose';
 import { createHosts } from './hosts.mjs';
-import { randomBytes } from 'node:crypto';
+import { createRelay } from './relay.mjs';
+import { createHash, randomBytes } from 'node:crypto';
 import { isIP } from 'node:net';
 import { sqliteAdapter } from './oidc-adapter.mjs';
 import { Accounts } from './accounts.mjs';
@@ -15,13 +16,17 @@ const escape = (value) =>
     /[&<>"']/g,
     (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char],
   );
+const formCss = 'body{font-family:system-ui,sans-serif;color:#202020;background:#f5f4f2;margin:0;padding:24px}main{max-width:380px;margin:8vh auto;background:white;padding:32px;border-radius:16px}h1{font-size:24px}p{color:#666;line-height:1.6}label{display:block;margin:16px 0}input{box-sizing:border-box;width:100%;padding:12px;border:1px solid #ddd;border-radius:8px;margin-top:8px;font:inherit}button{width:100%;padding:12px;border:0;border-radius:8px;background:#282828;color:white;font:inherit;cursor:pointer}';
 const html = (body) =>
-  `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>WeftMate 云账号</title><body><h1>WeftMate 云账号</h1>${body}</body></html>`;
+  `<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>WeftMate 云账号</title><style>${formCss}</style><body><main><h1>WeftMate 云账号</h1>${body}</main></body></html>`;
 function reply(res, status, body, headers = {}) {
   res.writeHead(status, { 'content-type': 'application/json; charset=utf-8', ...headers });
   res.end(JSON.stringify(body));
 }
-function formReply(res, body) {
+function formReply(res, body, redirectUri) {
+  const callback = redirectUri ? new URL(redirectUri) : null;
+  const target = callback ? callback.origin === 'null' ? callback.protocol : callback.origin : '';
+  res.setHeader('content-security-policy', `default-src 'none'; style-src 'sha256-${createHash('sha256').update(formCss).digest('base64')}'; form-action 'self' ${target}; frame-ancestors 'none'; base-uri 'none'`);
   res.writeHead(200, { 'content-type': 'text/html; charset=utf-8' });
   res.end(html(body));
 }
@@ -53,7 +58,7 @@ async function bodyOf(req) {
   }
 }
 
-export async function createIdentity({ database, config, mailer, logger, now = Date.now }) {
+export async function createIdentity({ database, config, mailer, logger, now = Date.now, relayDns = null }) {
   const keys = await loadKeys(config.dataDir);
   const accounts = new Accounts(database, mailer, keys.cookieSecret, { now, logger });
   const policy = interactionPolicy.base();
@@ -72,7 +77,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     jwks: keys.privateJwks,
     clients: config.clients.map((client) => ({
       ...client,
-      application_type: 'native',
+      application_type: client.application_type || 'native',
       token_endpoint_auth_method: 'none',
       response_types: ['code'],
       grant_types: ['authorization_code', 'refresh_token'],
@@ -105,6 +110,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       },
     },
     pkce: { required: () => true },
+    extraParams: ['wm_device_id', 'wm_public_jwk'],
     interactions: {
       policy,
       url: (_ctx, interaction) => `${CLOUD_PATH}/interactions/${interaction.uid}`,
@@ -143,7 +149,9 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       Interaction: 600,
     },
     rotateRefreshToken: true,
-    clientBasedCORS: (_ctx, origin) => origin === new URL(config.issuer).origin,
+    clientBasedCORS: (ctx, origin, client) => origin === new URL(config.issuer).origin ||
+      (client ? client.redirectUris : config.clients.flatMap(c => c.redirect_uris))
+        .some(uri => new URL(uri).origin !== 'null' && new URL(uri).origin === origin),
     findAccount: (_ctx, id, token) => {
       const account = accounts.get(id);
       if (!account?.active) return undefined;
@@ -308,9 +316,11 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/account`, 'account'],
     [`${CLOUD_PATH}/auth/devices/revoke`, 'deviceRevoke'],
   ]);
-  const hosts = createHosts({ database, config, keys, authenticate, now });
+  const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
+  const hosts = createHosts({ database, config, keys, authenticate, now, relay });
   return {
     provider,
+    relay,
     accounts,
     keys,
     async handle(req, res) {
@@ -368,7 +378,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           else
             formReply(
               res,
-              `<p>登录客户端：${escape(interaction.params.client_id)}</p><form method="post" action="${CLOUD_PATH}/auth/login">${field('interactionUid', interaction.uid)}${field('csrfToken', csrfToken)}<p><label>邮箱 <input type="email" name="email" required autocomplete="username"></label></p><p><label>密码 <input type="password" name="password" required autocomplete="current-password"></label></p><p><label>设备标识 <input name="deviceId" required></label></p><button>登录</button></form>`,
+              `<p>登录 WeftMate 账号</p><form method="post" action="${CLOUD_PATH}/auth/login">${field('interactionUid', interaction.uid)}${field('csrfToken', csrfToken)}${interaction.params.wm_device_id ? field('deviceId', interaction.params.wm_device_id) : '<p><label>设备标识 <input name="deviceId" required></label></p>'}${interaction.params.wm_public_jwk ? field('publicJwk', interaction.params.wm_public_jwk) : ''}<p><label>邮箱 <input type="email" name="email" required autocomplete="username"></label></p><p><label>密码 <input type="password" name="password" required autocomplete="current-password"></label></p><button>登录</button></form>`, interaction.params.redirect_uri,
             );
           return true;
         }
@@ -382,6 +392,10 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         if (req.headers.origin !== new URL(config.issuer).origin)
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
         const body = await bodyOf(req);
+        if (route === 'login' && typeof body.publicJwk === 'string') {
+          try { body.publicJwk = JSON.parse(body.publicJwk); }
+          catch { throw new CloudError(400, 'INVALID_DEVICE_KEY'); }
+        }
         const from = source(req);
         if (route === 'login' || route === 'device') {
           const interaction = await checkedInteraction(req, res, body);
@@ -391,7 +405,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
               : accounts.confirmDevice(body, from, interaction.uid);
           if (result.confirmationRequired) {
             if (req.headers['content-type'].startsWith('application/x-www-form-urlencoded'))
-              formReply(res, confirmationForm(interaction.uid, body.csrfToken, result.challengeId));
+              formReply(res, confirmationForm(interaction.uid, body.csrfToken, result.challengeId), interaction.params.redirect_uri);
             else reply(res, 202, result);
           } else await complete(req, res, body, interaction, result);
         } else {

@@ -7,7 +7,8 @@ import { openIdentity } from './storage.mjs';
 
 const bindingKey = (issuer, sub) => JSON.stringify([issuer, sub]);
 export function cloudIdentityFromEnvironment(env = process.env) {
-  return env.WEFTMATE_CLOUD_ISSUER ? { issuer: env.WEFTMATE_CLOUD_ISSUER } : null;
+  return env.WEFTMATE_CLOUD_ISSUER ? { issuer: env.WEFTMATE_CLOUD_ISSUER,
+    clientId: env.WEFTMATE_CLOUD_WEB_CLIENT_ID || 'weftmate-web' } : null;
 }
 
 export async function createHostCloudIdentity(context, options) {
@@ -152,6 +153,18 @@ export async function createHostCloudIdentity(context, options) {
     try {
       if (url.search) throw failure('INVALID_REQUEST');
       const route = pathname.replace('/personal/v1', '');
+      if (route === '/cloud/config' && request.method === 'GET') {
+        context.json(response, 200, { issuer: config.issuer, hostId,
+          clientId: options.clientId || 'weftmate-web' }); return true;
+      }
+      if (route === '/cloud/binding' && request.method === 'GET') {
+        const current = local(request);
+        const binding = Object.values(store.state.bindings).find(b => b.ownerId === current.ownerId && b.status !== 'unbound');
+        context.json(response, 200, { status: binding?.status || 'unbound',
+          canManage: current.via === 'cookie' && current.device.authKind === 'password' &&
+            context.requestAuthority(request) === context.origin &&
+            !Object.keys(request.headers).some(k => k === 'forwarded' || k.startsWith('x-forwarded-')), hostId }); return true;
+      }
       if (route === '/cloud/devices/pending' && request.method === 'GET') {
         const current = local(request);
         const devices = Object.entries(store.state.devices).filter(([, d]) => d.ownerId === current.ownerId && d.status === 'pending')
@@ -264,7 +277,8 @@ export async function createHostCloudIdentity(context, options) {
           next.pairings[digest(challenge)] = { ownerId: current.ownerId, expiresAt: context.timestamp() + 120_000 };
         }));
         context.json(response, 201, { challenge, expiresIn: 120, hostId, tlsSpki: store.state.tls.spki,
-          publicJwk: store.state.installation.publicJwk, origin: context.requestAuthority(request) }); return true;
+          publicJwk: store.state.installation.publicJwk, origin: context.requestAuthority(request),
+          relay: context.service.relayStatus() }); return true;
       }
       if (route === '/auth/cloud-session' || route === '/cloud/pairings/redeem') {
         const fields = ['accessToken', 'deviceName', ...(route.endsWith('/redeem') ? ['challenge'] : [])];
@@ -334,7 +348,8 @@ export async function createHostCloudIdentity(context, options) {
         { error: { code: known ? error.code : 'SERVICE_UNAVAILABLE' } }); return true;
     }
   }
-  return { handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
+  return { browserConfiguration: () => ({ issuer: config.issuer }),
+    tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
     validSession(ownerId, deviceId) {
       try { assertSession(ownerId, deviceId); return true; } catch { return false; }
     },
