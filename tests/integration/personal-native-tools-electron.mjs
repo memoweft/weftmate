@@ -70,8 +70,8 @@ const model = createServer(async (req, res) => {
   const executed = body.messages.filter(message => message.role === 'assistant').flatMap(message => message.tool_calls ?? []).map(call => call.function.name)
   count++;
   if (!executed.includes('write')) invoke('write', { file_path: 'report.md', content: '# Native report\nWritten by DSH write.\n' });
-  else if (!executed.includes('pwsh')) invoke('pwsh', { command: `Set-Content -LiteralPath shell-one.txt -Value 'one'; Set-Content -LiteralPath shell-two.txt -Value 'two'; Set-Content -LiteralPath '${join(root, 'outside.txt').replaceAll("'", "''")}' -Value 'outside conversation'`,
-    description: 'Create two files with the native shell' });
+  else if (!executed.includes('pwsh')) invoke('pwsh', { command: `Set-Content -LiteralPath shell-one.txt -Value 'one'; Set-Content -LiteralPath shell-two.txt -Value 'two'; node -e 'require("node:fs").writeFileSync(process.argv[1], "outside conversation")' '${join(root, 'outside.txt').replaceAll("'", "''")}'`,
+    description: 'Create files with the native shell and Node outside the conversation' });
   else if (!executed.includes('read')) respond(res, body.model, [
     { name: 'read', args: { file_path: 'report.md' } },
     { name: 'read', args: { file_path: 'shell-one.txt' } },
