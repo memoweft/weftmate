@@ -3,6 +3,7 @@ import WeftMateCore
 
 struct WeftMateRootView: View {
     @ObservedObject var model: AppleAppModel
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,13 +33,16 @@ struct WeftMateRootView: View {
         }
         .tint(Weave.accent)
         .task { await model.start() }
+        .onAppear { model.setForeground(scenePhase == .active) }
+        .onChange(of: scenePhase) { _, phase in model.setForeground(phase == .active) }
+        .onDisappear { model.setForeground(false) }
         .accessibilityIdentifier("weftmateRoot")
     }
 }
 
 #if os(macOS)
 private enum SidebarSelection: Hashable {
-    case conversation(String), devices, settings
+    case conversation(String), memory, devices, settings
 }
 
 private struct MacWorkspace: View {
@@ -101,6 +105,8 @@ private struct MacWorkspace: View {
                     }
                 }
                 Section {
+                    Label("记忆", systemImage: "brain.head.profile").tag(SidebarSelection.memory)
+                        .accessibilityIdentifier("memoryNavigation")
                     Label("设备", systemImage: "laptopcomputer.and.iphone").tag(SidebarSelection.devices)
                         .accessibilityIdentifier("devicesNavigation")
                     Label("设置", systemImage: "slider.horizontal.3").tag(SidebarSelection.settings)
@@ -141,6 +147,7 @@ private struct MacWorkspace: View {
             } else {
                 WelcomeView(model: model)
             }
+        case .memory: MemoryWorkspaceView(appModel: model).id(model.accountEpoch)
         case .devices: DevicesView(model: model)
         case .settings: SettingsView(model: model)
         case nil: WelcomeView(model: model)
@@ -156,19 +163,24 @@ private struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
     @State private var search = ""
     var body: some View {
-        TabView {
-            NavigationStack {
+        NavigationStack {
                 List {
                     Section {
-                        HStack(spacing: 12) {
-                            BrandMark(size: 35)
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("接上之前的话题").font(.headline).foregroundStyle(Weave.ink)
-                                Text(model.accountName).font(.caption).foregroundStyle(Weave.muted)
-                            }
-                        }.padding(.vertical, 6)
+                        NavigationLink {
+                            SpiritProfileView()
+                        } label: {
+                            HStack(spacing: 12) {
+                                SpiritView(size: 48)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text("接上之前的话题").font(.headline).foregroundStyle(Weave.ink)
+                                    Text(model.accountName).font(.caption).foregroundStyle(Weave.muted)
+                                }
+                            }.padding(.vertical, 6)
+                        }
+                        .accessibilityLabel("小纬，接上之前的话题")
+                        .accessibilityIdentifier("spiritNavigation")
                     }.listRowBackground(Weave.surface)
-                    Section("原会话") {
+                    Section("最近对话") {
                         ConversationListContent(model: model, search: $search)
                         ForEach(filteredConversations) { conversation in
                             NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }
@@ -177,7 +189,7 @@ private struct PhoneWorkspace: View {
                     }
                 }
                 .listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Weave.canvas)
-                .searchable(text: $search, prompt: "搜索原会话")
+                .searchable(text: $search, prompt: "搜索对话")
                 .navigationTitle("对话")
                 .navigationDestination(for: String.self) { id in
                     if let conversation = model.conversations.first(where: { $0.id == id }) {
@@ -188,6 +200,9 @@ private struct PhoneWorkspace: View {
                 }
                 .toolbar {
                     ToolbarItem(placement: .primaryAction) {
+                        PhoneAccountMenu(model: model)
+                    }
+                    ToolbarItem(placement: .primaryAction) {
                         Button { Task { await model.refresh() } } label: {
                             Label("刷新会话", systemImage: "arrow.clockwise")
                         }.disabled(model.refreshing)
@@ -195,12 +210,6 @@ private struct PhoneWorkspace: View {
                 }
                 .refreshable { await model.refresh() }
                 .accessibilityIdentifier("conversationList")
-            }
-            .tabItem { Label("对话", systemImage: "bubble.left.and.bubble.right") }
-            NavigationStack { DevicesView(model: model) }
-                .tabItem { Label("设备", systemImage: "laptopcomputer.and.iphone") }
-            NavigationStack { SettingsView(model: model) }
-                .tabItem { Label("设置", systemImage: "slider.horizontal.3") }
         }
     }
 
@@ -214,6 +223,7 @@ private struct WelcomeView: View {
     @ObservedObject var model: AppleAppModel
     var body: some View {
         VStack(alignment: .leading, spacing: 23) {
+            SpiritView(size: 108)
             HStack(spacing: 9) {
                 BrandMark(size: 25)
                 Text("WeftMate").font(.callout.weight(.medium)).foregroundStyle(Weave.muted)

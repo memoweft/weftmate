@@ -98,10 +98,24 @@ func fixture(_ url: URL, required: [String]) throws -> [String: String] {
         throw Failure(message: "Fixture must be a user-owned regular file with permissions 0600.")
     }
     let json = try JSONSerialization.jsonObject(with: Data(contentsOf: url))
-    guard let result = json as? [String: String], required.allSatisfy({ !(result[$0] ?? "").isEmpty }) else {
+    guard let object = json as? [String: Any] else {
+        throw Failure(message: "Private fixture must be a JSON object.")
+    }
+    let result = object.compactMapValues { $0 as? String }
+    guard required.allSatisfy({ !(result[$0] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }) else {
         throw Failure(message: "Private fixture is missing required fields.")
     }
     return result
+}
+
+func candidateOrigin(_ input: String) throws -> String {
+    guard let parts = URLComponents(string: input), parts.scheme?.lowercased() == "https",
+          parts.host?.lowercased() == "home.weftmate.com", let port = parts.port,
+          (1024...65535).contains(port), port != 8443, parts.user == nil, parts.password == nil,
+          parts.query == nil, parts.fragment == nil, parts.path.isEmpty || parts.path == "/" else {
+        throw Failure(message: "Candidate origin must be the explicitly handed-over home.weftmate.com HTTPS temporary port, distinct from formal 8443.")
+    }
+    return "https://home.weftmate.com:\(port)"
 }
 
 var activeApp: NSRunningApplication?
@@ -118,6 +132,22 @@ func record(_ event: String, _ extras: [String: Any] = [:]) throws {
 }
 
 do {
+    if arguments.contains("--describe-input-contract") {
+        let contract: [String: Any] = [
+            "mode": "input-contract-only; no credentials read, GUI, or network",
+            "candidateOriginArgument": "--candidate-origin",
+            "candidateOrigin": "https://home.weftmate.com:<coordinator-assigned temporary port>",
+            "candidateOriginMustMatchCredentialServer": true,
+            "credentialArgument": "--credentials", "credentialRequiredStrings": ["server", "username", "password"],
+            "scenarioArgument": "--scenario-file", "scenarioRequiredStrings": ["sessionId (or conversationID)", "marker"],
+            "markerSource": "actual candidate session/task source text; never synthesized to satisfy this harness",
+            "optionalScenarioStrings": ["conversationTitle", "taskId", "sourceReceiptId", "approvalId", "questionRpcId"],
+            "fileMode": "user-owned 0600 JSON outside repository", "transport": "normal App URLSession and certificate validation",
+            "legacyDefaultOrigin": "https://home.weftmate.com:8443"
+        ]
+        print(String(decoding: try JSONSerialization.data(withJSONObject: contract, options: [.prettyPrinted, .sortedKeys]), as: UTF8.self))
+        exit(0)
+    }
     guard AXIsProcessTrusted() else { throw Failure(message: "Existing host Accessibility permission is unavailable; no grant was requested.") }
     let appURL = URL(fileURLWithPath: try argument("--debug-app")).standardizedFileURL
     let credentialURL = URL(fileURLWithPath: try argument("--credentials")).standardizedFileURL.resolvingSymlinksInPath()
@@ -154,15 +184,52 @@ do {
     }
     try require(supportsIsolation,
                 "This harness requires the Debug app with isolated test namespace support.")
-    let primary = try fixture(credentialURL, required: ["server", "username", "password", "conversationID", "marker"])
+    let candidate = arguments.contains("--candidate-origin") ? try candidateOrigin(argument("--candidate-origin")) : nil
+    var candidateScenario: [String: String] = [:]
+    var primary = try fixture(credentialURL, required: candidate == nil
+        ? ["server", "username", "password", "conversationID", "marker"] : ["server", "username", "password"])
+    if let candidate {
+        try require(primary["server"] == candidate || primary["server"] == candidate + "/",
+                    "Credential server must exactly match the handed-over candidate origin; no silent rewrite.")
+        let scenarioURL = URL(fileURLWithPath: try argument("--scenario-file")).standardizedFileURL.resolvingSymlinksInPath()
+        try require(!scenarioURL.path.hasPrefix(sourceRoot.path + "/"), "Scenario file must be outside the source tree.")
+        let scenario = try fixture(scenarioURL, required: ["marker"])
+        candidateScenario = scenario
+        guard let session = scenario["sessionId"] ?? scenario["conversationID"],
+              !session.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            throw Failure(message: "Scenario requires the actual candidate sessionId or conversationID.")
+        }
+        if let a = scenario["sessionId"], let b = scenario["conversationID"] {
+            try require(a == b, "Scenario session identities must agree.")
+        }
+        if let origin = scenario["server"] {
+            try require(origin == candidate || origin == candidate + "/", "Scenario belongs to a different origin.")
+        }
+        primary["conversationID"] = session; primary["marker"] = scenario["marker"]
+        if let title = scenario["conversationTitle"] { primary["conversationTitle"] = title }
+    } else {
+        try require(!arguments.contains("--scenario-file"), "A candidate scenario requires an explicit candidate origin.")
+        try require(primary["server"] == "https://home.weftmate.com:8443" || primary["server"] == "https://home.weftmate.com:8443/",
+                    "Legacy mode uses the existing formal server origin and default transport.")
+    }
     let secondaryURL = URL(fileURLWithPath: credentialURL.path + ".second-account.json")
     let secondary = FileManager.default.fileExists(atPath: secondaryURL.path)
         ? try fixture(secondaryURL, required: ["server", "username", "password"]) : nil
-    try require(primary["server"] == "https://home.weftmate.com:8443" || primary["server"] == "https://home.weftmate.com:8443/",
-                "Use the existing formal server origin and default transport.")
-    if let secondary { try require(secondary["server"] == primary["server"], "Fixture accounts must use the same formal server.") }
+    if let secondary {
+        let same = candidate.map { secondary["server"] == $0 || secondary["server"] == $0 + "/" }
+            ?? (secondary["server"] == primary["server"])
+        try require(same, "Fixture accounts must use the same expected origin.")
+    }
     let namespace = try argument("--namespace")
     try require(namespace.range(of: "^[A-Za-z0-9._-]{1,64}$", options: .regularExpression) != nil, "Invalid isolated namespace.")
+    if arguments.contains("--observe-pending-only") {
+        try require(candidate != nil && !(candidateScenario["taskId"] ?? "").isEmpty &&
+            !(candidateScenario["questionRpcId"] ?? "").isEmpty, "Read-only observation requires the handed-over candidate task and question.")
+    }
+    if arguments.contains("--artifact-read-only") || arguments.contains("--artifact-save-only") {
+        try require(candidate != nil && !(candidateScenario["artifactId"] ?? "").isEmpty,
+                    "Artifact observation requires the new candidate's registered artifact.")
+    }
     var resumeDevice: String?
     if arguments.contains("--resume-after-primary-logout") {
         let priorURL = URL(fileURLWithPath: try argument("--resume-from"))
@@ -259,6 +326,65 @@ do {
     try record("started", ["method": "native Accessibility", "namespace": namespace, "proxy": false,
                            "configuration": "Debug", "bundleVersion": info["CFBundleVersion"] ?? "unknown"])
     var process = try launch()
+    if arguments.contains("--artifact-read-only") || arguments.contains("--artifact-save-only") {
+        try wait(30) {
+            allNodes(process).contains { ["username", "conversationList"].contains(identifier($0)) }
+        }
+        if allNodes(process).contains(where: { identifier($0) == "username" }) {
+            try login(process, primary)
+        } else {
+            _ = try find(process, "conversationList")
+        }
+        try readHistory(process)
+        try press(try find(process, "inlineTaskDetailsButton"))
+        _ = try find(process, "taskWorkspace")
+        let artifactID = candidateScenario["artifactId"]!
+        try wait(30) {
+            allNodes(process).contains { identifier($0) == "taskArtifact." + artifactID }
+        }
+        let rows = allNodes(process).filter { identifier($0) == "taskArtifact." + artifactID }
+        try require(!rows.isEmpty && allNodes(process).contains { text($0).contains("information.txt") }, "The registered artifact row must match this file.")
+        if arguments.contains("--artifact-read-only") {
+            guard let preview = rows.first(where: { string($0.element, kAXRoleAttribute) == kAXButtonRole && text($0).contains("预览成果") }) else {
+                throw Failure(message: "The current artifact has no native preview action.")
+            }
+            try press(preview)
+            let expected = try String(contentsOfFile: argument("--expected-body"), encoding: .utf8)
+            var fullBody = false
+            try wait(30) {
+                fullBody = allNodes(process).contains { node in
+                    [kAXValueAttribute, kAXTitleAttribute, kAXDescriptionAttribute].contains {
+                        string(node.element, $0).trimmingCharacters(in: .whitespacesAndNewlines) == expected.trimmingCharacters(in: .whitespacesAndNewlines)
+                    }
+                }
+                return fullBody
+            }
+            try record("artifact-native-preview", ["fullRenderedBodyMatched": fullBody, "sameArtifact": true, "contentLogged": false])
+        } else {
+            try record("artifact-save-only-resume", ["sameArtifact": true, "previewRepeated": false])
+        }
+        guard let save = allNodes(process).first(where: { identifier($0) == "taskArtifact." + artifactID &&
+            string($0.element, kAXRoleAttribute) == kAXButtonRole && text($0).contains("保存文件") }) else {
+            try record("artifact-native-save-action", ["present": false]); exit(0)
+        }
+        try press(save)
+        try wait(20) { allNodes(process).contains { string($0.element, kAXRoleAttribute) == kAXSheetRole || string($0.element, kAXSubroleAttribute) == "AXDialog" } }
+        try record("artifact-native-save-panel", ["present": true, "appKeptRunning": true, "process": process])
+        exit(0)
+    }
+    if arguments.contains("--observe-pending-only") {
+        try login(process, primary)
+        try readHistory(process)
+        _ = try find(process, "taskInteractions." + candidateScenario["taskId"]!, timeout: 45)
+        _ = try find(process, "questionCard." + candidateScenario["questionRpcId"]!, timeout: 45)
+        let submit = try find(process, "submitQuestion." + candidateScenario["questionRpcId"]!)
+        let enabled = attribute(submit.element, kAXEnabledAttribute) as? NSNumber
+        try require(enabled?.boolValue == false, "The pending question must remain unanswered.")
+        try require(!allNodes(process).contains { identifier($0).hasPrefix("approveOnce.") }, "No approval is expected before the information answer.")
+        try record("candidate-pending-readonly-ready", ["sameTask": true, "pendingQuestionVisible": true,
+            "answerUntouched": true, "approvalCreated": false, "appKeptRunning": true, "process": process])
+        exit(0)
+    }
     let firstDevice: String
     if let resumeDevice {
         _ = try find(process, "username")

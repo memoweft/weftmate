@@ -1,0 +1,42 @@
+[
+  {
+    "direction": "light",
+    "file": "/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate/apps/apple/Design/Spirit/weftmate-spirit-v3-light.png",
+    "source": "/Users/yun/.codex/generated_images/01a106a1-c996-7e12-a93d-4441c14e530b/exec-4a37a82a-1171-4688-9daa-3c550e76d844.png",
+    "bytes": 264211,
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "sha256": "8380403a633a247b08b183af3aa9136f6c917de770df2accf6cc28ecdaa6b218",
+    "tool": "built-in image_gen generate",
+    "imageEditedAfterGeneration": false,
+    "nativeAppBundled": false,
+    "userSelected": false
+  },
+  {
+    "direction": "paper",
+    "file": "/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate/apps/apple/Design/Spirit/weftmate-spirit-v3-paper.png",
+    "source": "/Users/yun/.codex/generated_images/01a106a1-c996-7e12-a93d-4441c14e530b/exec-7de3fdff-3b2e-4930-81ae-f4560a4e6c99.png",
+    "bytes": 306730,
+    "size": [
+      1254,
+      1254
+    ],
+    "mode": "RGBA",
+    "alphaExtrema": [
+      0,
+      255
+    ],
+    "sha256": "162043b3bb41eb8c38ccf6290517f2f0958e9f72600e53b03b756249a0038cfb",
+    "tool": "built-in image_gen generate",
+    "imageEditedAfterGeneration": false,
+    "nativeAppBundled": false,
+    "userSelected": false
+  }
+]

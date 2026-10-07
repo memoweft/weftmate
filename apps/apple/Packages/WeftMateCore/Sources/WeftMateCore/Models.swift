@@ -110,6 +110,20 @@ public struct ChatMessage: Identifiable, Sendable, Equatable {
     public let truncated: Bool
     /// Late phone records remain visible, without implying they entered host context.
     public let pendingContext: Bool
+    public let originalAttachments: [OriginalAttachment]
+    public let attachmentMessageId: String?
+    public let unpreviewedOriginalImageIds: [String]
+
+    public init(id: String, role: MessageRole, text: String, occurredAt: String?, sourceDeviceId: String?,
+                attachmentCount: Int, truncated: Bool, pendingContext: Bool,
+                originalAttachments: [OriginalAttachment] = [], attachmentMessageId: String? = nil,
+                unpreviewedOriginalImageIds: [String] = []) {
+        self.id = id; self.role = role; self.text = text; self.occurredAt = occurredAt
+        self.sourceDeviceId = sourceDeviceId; self.attachmentCount = attachmentCount
+        self.truncated = truncated; self.pendingContext = pendingContext
+        self.originalAttachments = originalAttachments; self.attachmentMessageId = attachmentMessageId
+        self.unpreviewedOriginalImageIds = unpreviewedOriginalImageIds
+    }
 }
 
 public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
@@ -118,6 +132,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
     case server(status: Int, code: String)
     case invalidResponse, responseTooLarge, historyLimit, credentialStorage
     case platformCapabilityUnavailable
+    case requestLedgerLimit
     case logoutIncomplete(credentialRemoved: Bool, remoteConfirmed: Bool)
 
     public var safeCode: String {
@@ -133,6 +148,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .historyLimit: "HISTORY_WINDOW_LIMIT"
         case .credentialStorage: "CREDENTIAL_STORAGE_UNAVAILABLE"
         case .platformCapabilityUnavailable: "APPLE_CAPABILITY_UNAVAILABLE"
+        case .requestLedgerLimit: "LOCAL_REQUEST_LEDGER_LIMIT"
         case .logoutIncomplete: "LOGOUT_UNCONFIRMED"
         }
     }
@@ -159,6 +175,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .historyLimit: "记录超过本次读取上限，尚未显示完整历史。"
         case .credentialStorage: "无法安全保存登录凭据，请检查钥匙串访问。"
         case .platformCapabilityUnavailable: "服务器尚未接通 Apple 设备的续聊能力；当前可读取原会话。"
+        case .requestLedgerLimit: "本机请求记录已达到保存上限，请先核对已有请求。"
         case .logoutIncomplete(false, true): "服务器已退出，但钥匙串中的旧凭据未能清除。请检查钥匙串访问。"
         case .logoutIncomplete(false, false): "钥匙串中的凭据未能清除，服务器退出也未确认。请恢复连接并检查钥匙串访问后重试。"
         case .logoutIncomplete(true, false): "已清除本机登录，服务器暂不可达，远端退出尚未确认。"

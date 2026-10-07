@@ -1,0 +1,24 @@
+Built-in image_gen
+
+MASTER
+Use case: stylized-concept.
+Asset type: canonical mascot for Weftmate, a personal AI assistant across desktop and mobile.
+Primary request: Design one original endearing little companion spirit named Xiao Wei, refined and memorable, adult-friendly, calm, attentive and quietly clever. The supplied image is an earlier unselected concept and serves only as palette and simplicity reference; evolve it into a stronger distinct character.
+Subject: a small plump floating woven-paper spirit, one compact rounded body formed by TWO broad soft interwoven ribbon planes, warm ivory front face and cornflower/periwinkle blue wrapping side. A small gently bent folded tip at the crown gives its silhouette personality. Two tiny dark navy oval eyes, a very small subtle smile, gaze slightly curious. One short attached rounded side flap lifts like a greeting, other side remains part of body. NO separate fingers or legs. A single elegant curved overlap seam suggests weaving and connection without intricate textile detail. Make the body visibly balanced and charming, neither a plain teardrop nor a generic ghost.
+Style/medium: premium minimal 2.5D matte paper/clay illustration, restrained soft volume, exceptionally clean silhouette and edge quality, broad smooth color areas, no visible fibers, no complex texture. Keep eyes highly legible at 32-64 px.
+Composition: one complete character only, near frontal with gentle three-quarter depth, centered with generous clear margins, fills about 70% of square canvas. No additional copies or props.
+Color palette: warm ivory #F7F3E9, soft cornflower blue #7AA9ED, dark navy #24324E; limited soft shading in these same hues.
+Background: genuine transparent alpha, no ground plane, no cast shadow or halo.
+Avoid: words, letters, logos, watermarks, UI, scenery, sparkles, detached particles, rings, holes, antennas, robot screens, fur, yarn ball, baby styling, blush cheeks, glossy plastic, intricate folds, thin dangling elements.
+Preserve the minimal approachable palette of the reference while improving expression and silhouette. This is a static character master, not a sprite sheet.
+
+STATES
+Use case: stylized-concept. Asset type: four-state mascot visual design sheet for the Weftmate app.
+Use attached canonical character as strict identity reference: same warm ivory front, cornflower blue wrapping body, two navy oval eyes, tiny smile, folded crown tip, one blue rounded greeting flap. Keep identical proportions and materials. Minimal refined matte 2.5D volume.
+Create a beautifully composed square design sheet on a pale warm off-white background with four equally sized portraits in a precise 2x2 grid, generous whitespace and no panels or borders. Each character completely visible. These are four key pose illustrations, NOT an animation sprite sheet.
+Top left: IDLE, calmly floating straight, greeting flap resting close to side, attentive neutral tiny smile.
+Top right: LISTENING, entire body tilted only slightly 8 degrees toward viewer, gaze attentive, side flap near its body, crown tip softly inclines, curious expression.
+Bottom left: THINKING, body upright, gaze looking subtly up and left through purposeful face/eye placement preserving eye design, tiny mouth pursed, side flap touching its lower cheek. No thought bubbles or symbols.
+Bottom right: DONE, joyful eyes curved closed, broad but small smile, same blue flap raised in a celebratory greeting, body slightly raised within its area.
+Below each portrait use small restrained navy uppercase sans-serif labels exactly: "IDLE", "LISTENING", "THINKING", "DONE", respectively. At very top one subtle title "WEFTMATE / XIAOWEI". No additional text.
+No redesign, no extra appendages, feet, fingers, props, blush, particles, halos, glow or shadows cast on background. Keep four poses clearly distinct, clean edges, coherent scale and palette. Crisp polished presentation, mascot fills each quadrant enough to inspect its expression.

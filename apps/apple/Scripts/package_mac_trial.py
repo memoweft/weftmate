@@ -68,8 +68,10 @@ def main():
     start = signed_entitlements.find(b"<?xml")
     end = signed_entitlements.find(b"</plist>", start)
     entitlements = plistlib.loads(signed_entitlements[start:end + len(b"</plist>")]) if start >= 0 and end >= 0 else {}
-    if entitlements.get("com.apple.security.app-sandbox") is not True or entitlements.get("com.apple.security.network.client") is not True:
-        raise SystemExit("Required sandbox/network entitlements missing.")
+    if (entitlements.get("com.apple.security.app-sandbox") is not True
+            or entitlements.get("com.apple.security.network.client") is not True
+            or entitlements.get("com.apple.security.files.user-selected.read-write") is not True):
+        raise SystemExit("Required sandbox/network/user-selected file entitlements missing.")
     run(["lipo", "-archs", str(executable)], "architecture.log")
     if (run_dir / "architecture.log").read_text().strip() != architecture:
         raise SystemExit("Unexpected executable architecture.")
@@ -85,7 +87,9 @@ def main():
 默认服务器为 https://home.weftmate.com:8443，使用正常 TLS 校验。
 没有签名的公网分发许可或公证，不能据此声称可在其他 Mac 无提示安装。
 
-当前草稿只保存在内存，退出应用会丢失未保存草稿。
+本版按账户和服务器保存本机草稿、已读取的聊天缓存与原请求记录。
+界面显示保存失败时，请先重试或复制未保存文字；离线缓存有读取时间，
+不能据此判断电脑当前在线或请求已经完成。
 保持 bundle ID 不等于已验证跨版本 Keychain 访问：本地 ad-hoc 签名要求随代码变化，
 账户与设备身份保留需另行真实覆盖验证。原历史由同一账户从服务端读取。
 """
@@ -129,7 +133,10 @@ def main():
         "defaultServer": "https://home.weftmate.com:8443",
         "launched": False, "installedOverExistingApp": False,
         "crossVersionCredentialRetentionVerified": False,
-        "persistentDraftsImplemented": False,
+        "persistentDraftsImplemented": True,
+        "persistentDraftsVerifiedInThisPackagingRun": False,
+        "userSelectedFileReadWriteEntitlementVerified": True,
+        "nativeSavePanelVerifiedInThisPackagingRun": False,
     }
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
     print(json.dumps(manifest, indent=2, ensure_ascii=False), flush=True)
