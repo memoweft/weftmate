@@ -32,15 +32,17 @@
 
 ## 4. 分工与并行方式
 
-| 轨道 | 执行 | 负责 |
+| 执行者 | 轨道 | 负责 |
 |---|---|---|
-| 核心（W-Core） | Codex · Windows | 个人宿主、DSH 接线、工具与审批、记忆接入、本地模型服务、场景集 |
-| Windows/Android 端（W-UI） | Codex · Windows（同一个或第二个会话，文件不重叠） | 桌面 Web UI / Electron、Android 原生壳 |
-| Apple 端（A-UI） | Codex · Mac | macOS、iOS、Apple Watch 原生客户端 |
-| 规划与审查 | Claude | 路线、工作包卡、代码审查、场景结果判断 |
+| **Codex · Windows**（1 个会话） | W-Core + W-UI | 个人宿主、DSH 接线、工具与审批、记忆接入、本地 Qwen 服务；桌面 Web UI / Electron、Android 原生壳 |
+| **Codex · Mac**（1 个会话） | A-UI + 跨平台文档/工具 | macOS、iOS、Apple Watch 原生客户端；`CLIENT_API.md`（它是契约的使用方，最适合写）；场景评测集（纯 Node 脚本，平台无关） |
+| Claude | 规划与审查 | 路线、工作包卡、PR 审查、场景结果判断 |
 
-- 同一里程碑内三条轨道并行；W-Core 先出契约（或契约草案 + 假数据），两侧 UI 不等后端完成。
-- 契约变更流程：W-Core 改 `CLIENT_API.md` 并在 `STATE.md`「契约变更」一栏记一行；A-UI / W-UI 下次开工先读这一栏。
+Windows 只有一个执行会话，所以凡是与平台无关、不改 `src/` 的工作优先分给 Mac 侧，让两边都满载且不改同一批文件。
+
+- 两个执行者并行；契约先行（M0-5），UI 不等后端完成。
+- **文件归属**：Windows 侧改 `src/`、`apps/android/`、`apps/mobile-ui/`、`scripts/`（除 `scripts/eval*`）；Mac 侧改 `apps/apple/`、`docs/CLIENT_API.md`、`eval/`、`scripts/eval*`。需要改对方的文件时，在 PR 里说明并请对方先合入自己的在途分支。
+- 契约变更流程：改接口的一方同时改 `CLIENT_API.md` 并在 `STATE.md`「契约变更」一栏记一行；A-UI / W-UI 下次开工先读这一栏。
 - 交接：Codex 完成工作包后推送分支并开 PR 到 `main`，PR 描述写做了什么 / 怎么验证 / 遗留；同时更新 `STATE.md`。本人把 PR 链接交 Claude 审查，通过后合并。
 - **Git 与 GitHub**：`memoweft/weftmate`（私有）是唯一主仓，五端代码都在里面（Apple 在 `apps/apple`）。Windows 与 Mac 各自 clone，按工作包开分支 `wp/<编号>-<短名>`，经 PR 合入 `main`；开工前先 `git pull` 拿最新 `main`。不再在本地复制目录或手工搬运代码。
 
@@ -56,6 +58,17 @@
 | **M5 共同空间（E）** | 共养、共享对话与任务、退出后记得过去 | 待细化，开工前需本人确认退出规则 |
 
 ## 6. M0 重置（详细工作包）
+
+### M0 执行顺序
+
+| 顺序 | Codex · Windows | Codex · Mac |
+|---|---|---|
+| 1 | M0-1b 代码瘦身 | A0 Apple 迁到 GitHub（旧工作副本的提交与改动迁入 `wp/apple-sync`） |
+| 2 | M0-2 模型预算 | M0-5 客户端契约文档 + 对照 Apple 客户端列缺口 |
+| 3 | M0-3 历史分页（后端 + 桌面 + Android） | M0-7 场景评测集（编写场景与 `scripts/eval.mjs`；基线在 Windows 跑） |
+| 4 | M0-6 本地 Qwen 稳定；跑 M0-7 基线 | A1 Apple 接入 M0-3 新历史分页，真机可装 |
+
+M0-1b 会拆分 `personal-access/index.mjs`，M0-5 以拆分前的行为为准记录接口，路径与语义不因拆分改变。
 
 ### M0-1 现有改动落盘 · ✅ WeftMate 已完成（`1f922a5`）
 - WeftMate 已 checkpoint 提交。其余仓库（AIGame、MemoWeft/Core、WeftLearn、DeepSeekHarness 本地修改）待同样处理。
@@ -85,10 +98,10 @@
 ### M0-4 文档重置 · ✅ 已完成（Claude，2026-10-07）
 - 旧文档、任务卡、证据移入 `docs/archive/2026-10-07/`；新 `AGENTS.md`、`README.md`、`docs/VISION.md`、`docs/STATE.md`、`docs/SETUP.md`。全局 `~/.codex/AGENTS.md` 已去掉「主助手不编码、必须派子 Agent」。
 
-### M0-5 客户端契约文档 · W-Core（A-UI 审阅）
+### M0-5 客户端契约文档 · Codex Mac（Windows 侧审阅）
 - 从现有 `/personal/v1`（`src/personal-access/index.mjs`、`src/personal-access-backend.mjs`）整理出 `docs/CLIENT_API.md`：认证/设备、会话列表、历史分页（按 M0-3 新语义）、发送消息、事件流、停止、审批、任务进度、成果下载、记忆、模型选择、版本更新。
 - 每个接口：路径、请求、响应示例、错误码、哪些端已使用。
-- Mac 侧 Codex 对照现有 Apple 客户端标出不一致与缺口，写进 `STATE.md` 契约栏。
+- 同时对照现有 Apple 客户端标出不一致与缺口，写进 `STATE.md` 契约栏。
 - 完成：三条轨道都只引用这一份文档。
 
 ### M0-6 本地 Qwen 服务稳定 · W-Core
@@ -97,7 +110,7 @@
 - 单槽并发：标题生成、记忆形成等后台请求进队列，在主对话空闲时执行，不与主循环抢槽。
 - 完成：重启电脑后一键起模型，WeftMate 显示就绪；连续 2 小时日用不 OOM。
 
-### M0-7 场景评测集 · W-Core
+### M0-7 场景评测集 · Codex Mac 编写，Windows 跑基线
 - `eval/scenarios/*.yaml`：每条 = 目标文本 + 前置条件 + 检查方式（文件存在/内容包含/回复包含/记忆被采用/LLM 评判）。首批 12 条：
   - 办事 6：整理指定目录的文件；搜网页并总结成文档保存；读项目代码回答问题；多步：查资料→写脚本→运行→汇报；中途停止再继续；需要审批的删除操作（批准一次、拒绝一次）。
   - 记忆 4：告诉偏好→新对话里被采用；纠正一条理解→后续按纠正走；换模型后仍记得；提到某人→之后提到时能联系上。
@@ -105,8 +118,9 @@
 - `scripts/eval.mjs`：通过个人 API 驱动、隔离测试账号与数据目录、输出 Markdown 结果表；`--model qwen|mimo` 切换。
 - 完成：Qwen 与 MiMo 各跑一次基线写入 `STATE.md`（预计 M0 时很多不过，这正是基线）。
 
-### M0 Apple 轨道（并行）
-- A-UI：对照 M0-5 草案核对 macOS/iOS/Watch 现有调用；接入 M0-3 新历史分页；构建可在真机安装。
+### A0 / A1 Apple 轨道 · Codex Mac
+- A0：在新 clone 中建 `wp/apple-sync`，迁入旧工作副本 `~/Desktop/WeftMate/AppleWork-844429c/WeftMate` 尚未进 `main` 的提交（含 `278bc6c`）与未提交改动，PR 合入。之后只在新 clone 工作。
+- A1：M0-3 合入后，macOS/iOS 接入新历史分页（先显示最新，上滑加载更早）；Mac 与 iPhone 真机可安装运行。
 
 ## 7. M1 自主办事（A）
 
