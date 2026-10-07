@@ -555,13 +555,17 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
     provider: spawn
     toolName: subagent
     backgroundMode: continuable
+    toolFilter:
+      deny: [browser]
 - name: ../../profiles/${profileName}/plugins/weftmate-personal-desktop-preset.mjs
 `
+  const previousM1Composition = compositionText.replace('    toolFilter:\n      deny: [browser]\n', '')
   const contextAwareComposition = `${compositionText}${MOD_MAINTAINER_PRESET_COMPACTION}`
   await mkdir(presetDir, { recursive: true })
   const existingComposition = (await readFile(composition, 'utf8').catch(() => '')).replace(/\r\n/g, '\n')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
   if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== compositionText &&
+      existingComposition !== previousM1Composition && existingComposition !== `${previousM1Composition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
       existingComposition !== previousNativeComposition && existingComposition !== `${previousNativeComposition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
       existingComposition !== boundedCompositionText &&
       existingComposition !== browserCompositionText &&

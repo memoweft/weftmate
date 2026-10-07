@@ -14,7 +14,7 @@ const descriptions = {
   grep: 'Search file contents.',
   web_fetch: 'Fetch and read a URL.',
   todo_write: 'Maintain the task plan and mark completed steps.',
-  subagent: 'Delegate a task to a native subagent.',
+  subagent: 'Delegate a task. Set run_in_background to false to wait for its result and files.',
 };
 
 export function apply(ctx) {

@@ -46,7 +46,8 @@ async function snapshotFor(exec) {
 /** Keep the native outcome and add host-owned references to files it changed. */
 export async function trackNativeFiles(bridge, exec, next, identity) {
   const cwd = exec.agent?.session?.header?.cwd;
-  if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || !cwd) return next();
+  if (exec.agent?.session?.header?.origin === 'subagent' ||
+      exec.agent?.session?.header?.agentPreset !== 'personal-remote' || !cwd) return next();
   const before = await snapshotFor(exec);
   const result = await next();
   const after = await snapshotFor(exec);

@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
-| Codex · Windows-2 | M1-1 个人入口原生工具 | [草稿 PR #31](https://github.com/memoweft/weftmate/pull/31)：实现与离线验证完成，首版 CI（持续集成）全绿；补充 258 次原生审批回归通过，完整单测复跑中；等待 M0-6 标记后跑 Qwen 办事场景 |
+| Codex · Windows-2 | M1-1 个人入口原生工具 | [草稿 PR #31](https://github.com/memoweft/weftmate/pull/31)：原生工具、对话目录、通用浏览器和文件成果已实现；真实子任务同模型读写/4 个成果、258 次审批通过；最终完整单测与 CI 验证中，等待 M0-6 后跑 Qwen 场景 |
 | Codex · Mac | MW-2 observed 桥接 | MemoWeft #84 已合并，WeftMate #28 合入中：[MemoWeft #84](https://github.com/memoweft/memoweft/pull/84)（CI Gate 已绿）→ [WeftMate #28](https://github.com/memoweft/weftmate/pull/28)；真实 Core 集成通过；按此顺序合入，部署需升级 observed v1 Core |
 | Codex · Cloud | S1b 宿主云身份、绑定与设备授权 | [PR #30](https://github.com/memoweft/weftmate/pull/30)：已实现认领恢复/版本化绑定/迁移前备份、RS256+DPoP 换宿主 Cookie、待批准设备最小 Web UI、签名撤销/轮询与 outbox；宿主 7/7、cloud 34/34、UI 场景通过，类型检查/审计通过；待规划审查，PR CI 为门禁，未部署/真实发信；完整客户端接入留 S1c |
 
@@ -17,7 +17,7 @@
 
 ## 最近一次验证
 
-- M1-1：类型检查、vendor 核对、针对性测试和真实 Electron + 固定 DSH 通用工具集成通过；完整单测 **845 项：836 通过、6 既有失败、3 跳过，新增失败 0**。6 项均在未改动基线 b2a7321 的隔离副本复现，4 项为已知静态断言、2 项为既有 vendor / 外部 Design 夹具问题；契约测试 8 通过、1 跳过、2 既有静态失败，同基线复现。首版 PR CI 全绿；同回合 258 次原生审批通过，隐含 256 次正常调用缓存上限已删除。完整单测复跑中；Qwen 办事场景等待 M0-6 统一启动方式。
+- M1-1：类型检查、vendor 核对、针对性回归、真实 Electron + 固定 DSH 集成通过（原生读写/命令、浏览器打开/跟随、子任务继承模型与目录、4 个成果预览）。完整单测 846 项：837 通过、6 既有失败、3 跳过；六项在未改动 b2a7321 复现。最新 main 与子任务修正后的完整单测复跑中；同回合 258 次原生审批通过。契约 8 通过/1 跳过/2 既有静态失败，同基线复现；S1b Windows CI 的 500 ms 落盘轮询已修正并本地通过，待新 CI。Qwen 场景等待 M0-6。
 
 - S1b：宿主身份 7/7、实际 cloud OIDC/SQLite→宿主完整流程含在 cloud 34/34、桌面设备批准交互 1/1；旧 store/ID/密码/Cookie/非零同步水位与备份验证通过，A/B 隔离、DPoP 拒绝与 SSE 撤销、云离线本地登录通过。类型检查/根依赖审计（0 漏洞）通过。本机完整 required 712 项：704 通过、7 跳过、1 项既有回环别名环境失败；PR CI 为最终门禁。当前 CUA 无可用浏览器，未取得实际 UI 截图；完整客户端/扫码/TLS listener/推送另包。
 
