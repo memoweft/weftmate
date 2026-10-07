@@ -39,6 +39,7 @@ import { validConversationContext } from '../personal-conversations/context.mjs'
 import { MAX_CAPTURE_BYTES, MAX_SEGMENT_BYTES } from '../personal-browser/index.mjs';
 import { toolApprovals, userQuestions, validToolApprovals, validToolExecutions, validUserQuestions } from './interaction-policy.mjs';
 import { canonicalCommand } from './command-policy.mjs';
+import { APPROVAL_MODES, RISK_CATEGORIES } from '../plugins/personal-approval-policy.mjs';
 import { artifactContentType } from '../personal-artifacts/index.mjs';
 
 export async function durableWrite(file, state, shouldCommit = () => true) {
@@ -73,6 +74,14 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
 }
 
 export function validateSingleStore(store) {
+  if (!plainObject(store)) throw failure('STORE_CORRUPT', 500);
+  if (store.defaultApprovalMode !== undefined && !APPROVAL_MODES.includes(store.defaultApprovalMode)) throw failure('STORE_CORRUPT', 500);
+  for (const session of Object.values(store.sessions ?? {})) {
+    if (!plainObject(session)) throw failure('STORE_CORRUPT', 500);
+    if (session.approvalMode !== undefined && !APPROVAL_MODES.includes(session.approvalMode) ||
+        session.allowedApprovalCategories !== undefined && (!Array.isArray(session.allowedApprovalCategories) ||
+          session.allowedApprovalCategories.some(x => !RISK_CATEGORIES.includes(x)))) throw failure('STORE_CORRUPT', 500);
+  }
   if (!plainObject(store) || ![SINGLE_ACCOUNT_VERSION, LEGACY_VERSION].includes(store.version) || !validId(store.hostId) ||
       !validId(store.ownerId) || !plainObject(store.devices) ||
       !plainObject(store.sessions) || !plainObject(store.commands)) throw failure('STORE_CORRUPT', 500);

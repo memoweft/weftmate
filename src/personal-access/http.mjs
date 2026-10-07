@@ -22,6 +22,7 @@ import {
 } from './common.mjs';
 import { canonicalMemoryPathname } from '../personal-memory/http.mjs';
 import { conversationResources } from './resources.mjs';
+import { APPROVAL_MODES } from '../plugins/personal-approval-policy.mjs';
 import { handlePersonalHealthHttp } from '../personal-health/http.mjs';
 import {
   IMAGE_CONTENT_TYPES,
@@ -570,6 +571,29 @@ export function createHttpHandler(context) {
           }));
           return context.json(response, 200, record);
         }
+      }
+      const modeMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/approval-mode$/.exec(pathname);
+      if ((modeMatch || pathname === '/personal/v1/settings/approvals') && ['GET', 'PATCH'].includes(request.method)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, request.method === 'PATCH' ? 'commands:write' : 'sessions:read');
+        const sessionId = modeMatch?.[1], account = context.accountState(ownerId);
+        if (sessionId && account.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_UNAVAILABLE', 404);
+        if (request.method === 'PATCH') {
+          const body = await context.readJson(request);
+          exactKeys(body, ['mode'], ['mode']);
+          if (!APPROVAL_MODES.includes(body.mode)) throw failure('INVALID_REQUEST');
+          await context.serial(() => context.mutate(ownerId, next => {
+            context.authenticate(request, 'commands:write');
+            if (sessionId) next.sessions[sessionId].approvalMode = body.mode;
+            else {
+              for (const session of Object.values(next.sessions)) session.approvalMode ??= next.defaultApprovalMode ?? 'auto';
+              next.defaultApprovalMode = body.mode;
+            }
+          }));
+        }
+        const saved = context.accountState(ownerId);
+        return context.json(response, 200, { mode: sessionId ? saved.sessions[sessionId].approvalMode ?? saved.defaultApprovalMode ?? 'auto'
+          : saved.defaultApprovalMode ?? 'auto', ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
       }
       if (pathname === '/personal/v1/settings/models' && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');

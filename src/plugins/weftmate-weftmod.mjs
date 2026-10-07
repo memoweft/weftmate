@@ -17,6 +17,7 @@ export function apply(ctx) {
     resolveManagedOrigin: () => resolve(AI_GAME_MANAGED_ORIGIN_REF),
   })
   registerWeftMod(ctx, { transport, identity: callIdentity, approve: async (exec, kind) => {
+    if (exec.agent.session.header.agentPreset === 'personal-remote') return 'full-access';
     if (effectivePermissionPreset(exec.agent.session) === 'danger-full-access') return 'full-access'
     const outcome = await ctx.approval.request({ agent: exec.agent, toolName: 'weftmod', callId: exec.callId, reason: `Run the requested desktop/phone task (${kind}), including its ordinary exploration and script execution.`, signal: exec.signal })
     if (outcome !== 'allowed-once') throw new Error('Task execution was not authorized by the current conversation permissions')

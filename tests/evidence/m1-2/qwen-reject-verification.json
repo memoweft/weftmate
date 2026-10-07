@@ -1,0 +1,16 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "isolatedAccount": true,
+  "realModel": true,
+  "scenarios": [
+    {
+      "id": "m1-2-delete-rejection-supplement",
+      "status": "failed",
+      "durationMs": 180367,
+      "checks": [],
+      "reason": "Scenario timed out"
+    }
+  ],
+  "readinessReason": "aborted"
+}

@@ -1618,7 +1618,7 @@ test('task15-approval-client shows only real receipt-bound requests and distingu
   assert.equal(rows[0].dataset.receiptId, f.source.receiptId)
   assert.equal(pending.dataset.sourceReceiptId, f.source.receiptId)
   assert.equal(resolved.dataset.sourceReceiptId, f.supplement.receiptId)
-  assert.equal(approvalAction(f.page, 'allowed-once')?.textContent, '允许本次')
+  assert.equal(approvalAction(f.page, 'allowed-once')?.textContent, '允许一次')
   assert.equal(approvalAction(f.page, 'rejected')?.textContent, '拒绝')
   assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000002')!), /已提交拒绝/)
   assert.match(visibleText(resolved), /已允许/)

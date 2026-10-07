@@ -1,0 +1,34 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "isolatedAccount": true,
+  "realModel": true,
+  "scenarios": [
+    {
+      "id": "action-06-delete-approval",
+      "status": "failed",
+      "durationMs": 180368,
+      "checks": [
+        {
+          "type": "approval_seen",
+          "turn": 1,
+          "outcome": "allowed-once",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "turn": 1,
+          "path": "过期草稿.txt",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        }
+      ],
+      "reason": "Scenario timed out"
+    }
+  ],
+  "readinessReason": "aborted"
+}
