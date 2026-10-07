@@ -21,7 +21,7 @@ test('WeftMate 保持专有授权，外部系统保持独立授权', () => {
   assert.match(license, /does not\s+cover MemoWeft or any third-party component/);
   assert.match(license, /do not retroactively change the authorization/);
 
-  assert.match(readme, /专有的桌面集成中心和图形界面/);
+  assert.match(readme, /WeftMate 自有代码、二进制、视觉资产和文档遵循本仓库 LICENSE/);
   // 产品授权边界：WeftMate 专有，外部系统保持各自授权。
   assert.match(product, /WeftMate 自有代码、二进制、视觉资产和文档受本仓库 `LICENSE` 专有授权约束/);
   assert.match(product, /DSH 按 MIT 与上游许可证执行/);

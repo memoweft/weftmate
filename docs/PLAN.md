@@ -1,6 +1,6 @@
 # WeftMate 整体规划（2026-10-07 起，当前有效）
 
-> 本文件是唯一的路线与工作包来源。愿景见 `PROJECT_DIRECTION.md` 顶部「2026-10-06 最新整体定义」；进度只写 `STATE.md`（见 M0-4）。
+> 本文件是唯一的路线与工作包来源。愿景见 `VISION.md`；进度只写 `STATE.md`。
 > 规划：Claude（整体规划与审查）。执行：Codex（Windows 侧一个，Mac 侧一个）。拍板：本人。
 
 ## 1. 为什么重做规划
@@ -41,7 +41,8 @@
 
 - 同一里程碑内三条轨道并行；W-Core 先出契约（或契约草案 + 假数据），两侧 UI 不等后端完成。
 - 契约变更流程：W-Core 改 `CLIENT_API.md` 并在 `STATE.md`「契约变更」一栏记一行；A-UI / W-UI 下次开工先读这一栏。
-- 交接：Codex 完成工作包后，在 `STATE.md` 写 3–5 行（做了什么 / 场景结果 / 遗留），本人把分支名交 Claude 审查。
+- 交接：Codex 完成工作包后推送分支并开 PR 到 `main`，PR 描述写做了什么 / 怎么验证 / 遗留；同时更新 `STATE.md`。本人把 PR 链接交 Claude 审查，通过后合并。
+- **Git 与 GitHub**：`memoweft/weftmate`（私有）是唯一主仓，五端代码都在里面（Apple 在 `apps/apple`）。Windows 与 Mac 各自 clone，按工作包开分支 `wp/<编号>-<短名>`，经 PR 合入 `main`；开工前先 `git pull` 拿最新 `main`。不再在本地复制目录或手工搬运代码。
 
 ## 5. 里程碑总览
 
@@ -56,9 +57,18 @@
 
 ## 6. M0 重置（详细工作包）
 
-### M0-1 现有改动落盘 · W-Core
-- 五个仓库（WeftMate、AIGame、MemoWeft/Core、WeftLearn、DeepSeekHarness 本地修改）各自把未提交改动提交到 `checkpoint/2026-10-07` 分支（不推送、不改历史）。WeftLearn 未跟踪的 `apps/ backend/ content/` 一并纳入。
-- 完成：各仓库 `git status` 干净；`STATE.md` 列出各仓 checkpoint 提交号。
+### M0-1 现有改动落盘 · ✅ WeftMate 已完成（`1f922a5`）
+- WeftMate 已 checkpoint 提交。其余仓库（AIGame、MemoWeft/Core、WeftLearn、DeepSeekHarness 本地修改）待同样处理。
+
+### M0-1b 代码瘦身（原 C3）· W-Core
+每项单独提交，删除前用 `grep`/测试确认无引用，删后 `npm run typecheck && npm run test:unit` 通过。
+- **死代码**：`src/alpha2-electron-main.mjs`、`src/plugins/weftmate-alpha2-*` 及对应 `scripts/*alpha2*`、`package.json` 中 `dsh:alpha2*` 脚本——确认不在 `main.mjs` 加载链与打包中后删除。
+- **一次性脚本**：`scripts/stage14r3-*`、`scripts/stage3-*` 与对应 `tests/stage14r3-*`、`tests/stage3-*` 移到 `scripts/archive/`（解开 `build-windows-candidate.mjs`、`windows-package-policy` 的依赖）。
+- **测试/观测代码移出生产加载链**：`synthetic-*-fixture-policy.mjs`、`personal-model-observation/`（`stage14R2ObservationProfile`）由 `main.mjs` 直接加载；改为只在测试或显式开关下加载。
+- **模型切换四层合一**：`route-mutation-journal`、`route-mutation-queue`、`model-mutation-transaction`、`model-profile-guard`、`stage2-session-guards` 评估合并为一个简单的「保存配置 → 重载路由」流程，保留真实需要的并发保护。
+- **拆分 `src/personal-access/index.mjs`（6160 行）**：按 认证/设备、会话与历史、命令与任务、审批、成果、记忆代理 拆成模块；行为不变，测试不改断言。
+- **仓库根杂物**：`TEMP/`、`test-output.txt` 删除；`tools/` 中仅测试用的预览/证据脚本移到 `tests/tools/` 或归档。
+- 完成：`src` 不再引用任何 `stage*`/`alpha2`/`synthetic` 模块；`personal-access/index.mjs` < 1500 行；全部单测通过。
 
 ### M0-2 模型预算从实际服务读取 · W-Core
 - 删除任何写死的 `contextWindow=32768 / maxTokens=8192`（见 CURRENT_STATE 10-07 预算记录）。
@@ -72,12 +82,8 @@
 - UI（`src/personal-access-ui/app.js` 约 2437 行起）：打开会话先显示最新内容，上滑加载更早历史；删除「请在电脑查看完整会话」提示路径。
 - 完成：现存长会话 `session-6846f2c1-…` 在桌面与 Android 都能打开并看到最新回复；单测覆盖 2000+ 事件会话。
 
-### M0-4 文档重置 · W-Core
-- 新建 `docs/archive/2026-10-07/`，移入：`CURRENT_STATE.md`、`WORKLOG.md`、`DEVELOPMENT_LOOP.md`、`START_HERE.md`、`FRONTEND_PLAN.md`、全部 `docs/tasks/*`、`collab/` 相关。`PROJECT_DIRECTION.md` 只保留顶部「最新整体定义」，其余移入归档。`DECISIONS.md` 保留。
-- 新写 `AGENTS.md`（≤1 页）：读 `PLAN.md` → `STATE.md` → 当前工作包；第 3 节原则；提交规则；不得登记线程 ID / 授权原文。
-- 新写 `STATE.md`（≤1 页）：各轨道当前工作包、上次场景结果表、契约变更栏、已知阻塞。只覆盖，不追加日记。
-- 外层 `D:\AIProjects\README.md`、`WeftMate/AGENTS.md` 改为指向新入口。
-- 完成：一个全新 Codex 会话只读 AGENTS/PLAN/STATE 就能说清当前该做什么。
+### M0-4 文档重置 · ✅ 已完成（Claude，2026-10-07）
+- 旧文档、任务卡、证据移入 `docs/archive/2026-10-07/`；新 `AGENTS.md`、`README.md`、`docs/VISION.md`、`docs/STATE.md`、`docs/SETUP.md`。全局 `~/.codex/AGENTS.md` 已去掉「主助手不编码、必须派子 Agent」。
 
 ### M0-5 客户端契约文档 · W-Core（A-UI 审阅）
 - 从现有 `/personal/v1`（`src/personal-access/index.mjs`、`src/personal-access-backend.mjs`）整理出 `docs/CLIENT_API.md`：认证/设备、会话列表、历史分页（按 M0-3 新语义）、发送消息、事件流、停止、审批、任务进度、成果下载、记忆、模型选择、版本更新。
