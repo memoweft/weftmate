@@ -19,12 +19,13 @@ const roots: string[] = [];
 afterEach(async () => { await Promise.all(roots.splice(0).map((root) => rm(root, { recursive: true, force: true }))); });
 
 type Hit = { path: string; authorization: string | undefined; model: string | undefined };
-async function fixture(key: string): Promise<{ baseUrl: string; requests: Hit[]; close: () => Promise<void> }> {
+async function fixture(key: string): Promise<{ baseUrl: string; requests: Hit[]; metadataRequests: string[]; close: () => Promise<void> }> {
   const requests: Hit[] = [];
+  const metadataRequests: string[] = [];
   const server = createServer((req, res) => {
     const hit: Hit = { path: `${req.method} ${req.url}`, authorization: req.headers.authorization, model: undefined };
-    requests.push(hit);
     if (req.method !== 'POST' || !req.url?.startsWith('/v1/chat/completions')) { res.writeHead(404).end(); return; }
+    requests.push(hit);
     let raw = '';
     const observeBody = () => { try { const body = JSON.parse(raw || '{}'); hit.model = typeof body.model === 'string' ? body.model : undefined; } catch { /* incomplete chunk */ } };
     req.on('data', (part) => { raw += String(part); observeBody(); });
@@ -40,7 +41,8 @@ async function fixture(key: string): Promise<{ baseUrl: string; requests: Hit[];
   await new Promise<void>((resolve, reject) => { server.once('error', reject); server.listen(0, '127.0.0.1', () => resolve()); });
   const address = server.address();
   if (!address || typeof address === 'string') throw new Error('fixture did not bind');
-  return { baseUrl: `http://127.0.0.1:${address.port}/v1`, requests, close: () => new Promise((resolve) => server.close(() => resolve())) };
+  server.prependListener('request', req => { if (req.method === 'GET') metadataRequests.push(req.url ?? ''); });
+  return { baseUrl: `http://127.0.0.1:${address.port}/v1`, requests, metadataRequests, close: () => new Promise((resolve) => server.close(() => resolve())) };
 }
 
 async function request(origin: string, path: string, method = 'GET', body?: unknown): Promise<any> {
@@ -274,6 +276,7 @@ describe('shared DSH_HOME vendor routes', () => {
         await waitFor(() => a.requests.length > aAfterOwnTurn);
         firstAgainPump.controller.abort();
         assert.equal(b.requests.length, bAfterOwnTurn, 'continuing A must not reach B after the active profile changed');
+        assert.ok(a.metadataRequests.includes('/props'), 'startup must read service metadata');
         assert.equal(a.requests.every((hit) => hit.path === 'POST /v1/chat/completions' && hit.authorization === `Bearer ${keyA}`), true);
         assert.equal(b.requests.every((hit) => hit.path === 'POST /v1/chat/completions' && hit.authorization === `Bearer ${keyB}`), true);
         assert.equal(a.requests.every((hit) => hit.model === 'same-model'), true);
