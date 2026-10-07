@@ -106,12 +106,12 @@ async function fixture(t: any) {
     const result = await requests('POST', '/cloud/binding', { claimId: claim.claimId, accessToken: await control(sub, epoch) }, auth)
     return { claim, result }
   }
-  async function exchange(token: string, key: any, route = '/auth/cloud-session', extra: any = {}, proofOverrides: any = {}) {
+  async function exchange(token: string, key: any, route = '/auth/cloud-session', extra: any = {}, proofOverrides: any = {}, cookieAuth: any = undefined) {
     const nonce = await requests('POST', '/auth/cloud-nonce', {})
     const proof = await new SignJWT({ htm: 'POST', htu: `${origin}${P}${route}`, ath: hash(token), nonce: nonce.nonce,
       ...proofOverrides }).setProtectedHeader({ alg: 'ES256', typ: 'dpop+jwt', jwk: await exportJWK(key.publicKey) })
       .setIssuedAt(Math.floor((Date.now() + timeOffset) / 1000)).setJti(proofOverrides.jti ?? randomUUID()).sign(key.privateKey)
-    return { result: await requests('POST', route, { accessToken: token, deviceName: 'New browser', ...extra }, undefined, { dpop: proof }), proof }
+    return { result: await requests('POST', route, { accessToken: token, deviceName: 'New browser', ...extra }, cookieAuth, { dpop: proof }), proof }
   }
   return { root, a, b, oldStore, oldSync, requests, access, control, bind, exchange, issuer, backend,
     stream: async (auth: any) => {
@@ -223,6 +223,7 @@ test('JWT signature/audience/algorithm/expiry/type and DPoP possession/method/UR
   assert.equal((await f.exchange(fake, key)).result.status, 401)
   assert.equal((await f.exchange(await f.control(), key)).result.status, 401)
   assert.equal((await f.requests('POST', '/auth/cloud-session', { accessToken: token, deviceName: 'No key' })).status, 401)
+  assert.equal((await f.requests('POST', '/auth/cloud-session', { accessToken: token, deviceName: 'Cookie alone' }, f.a)).error.code, 'DPOP_INVALID')
   assert.equal((await f.exchange(token, wrong)).result.status, 401)
   for (const override of [{ htm: 'GET' }, { htu: 'https://other.example.com/' }, { nonce: 'unknown' }, { ath: 'wrong' }])
     assert.equal((await f.exchange(token, key, '/auth/cloud-session', {}, override)).result.status, 401)
@@ -280,8 +281,10 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
   assert.equal((await f.requests('GET', '/sessions', undefined, second)).status, 401)
   assert.equal((await f.requests('GET', '/auth/me', undefined, f.a)).status, 200)
   assert.equal((await f.requests('GET', '/auth/me', undefined, f.b)).status, 200)
-  const refreshed = (await f.exchange(await f.access('cloud-a', 'second-phone', fresh, { auth_epoch: 1 }), fresh)).result
+  const refreshed = (await f.exchange(await f.access('cloud-a', 'second-phone', fresh, { auth_epoch: 1 }), fresh,
+    '/auth/cloud-session', {}, {}, second)).result
   assert.equal(refreshed.status, 200, 'epoch update preserves the existing approved device key')
+  assert.notEqual(refreshed.cookie, second.cookie, 'revoked HttpOnly Cookie does not prevent browser sign-in')
   await f.offline()
   const login = await f.requests('POST', '/auth/login', { username: 'account-a', password: PASSWORD, deviceName: 'Offline computer' })
   assert.equal(login.status, 200)

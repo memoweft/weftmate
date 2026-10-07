@@ -18,7 +18,7 @@
 
 陌生设备仅形成本账号的 pending 请求，返回 202，没有 Cookie。原本已认证的本地 Cookie 或已批准云设备 Cookie 可查看并决定；绑定和创建当面配对挑战只允许电脑直接地址的本地密码会话。拒绝不自动重新排队；如需重新配对，由电脑重新授权一次性挑战。配对材料含宿主安装公钥与本机 TLS SPKI，S1c/S2 负责实际二维码展示、扫码和 TLS 适配器/原生 pin 接入；本包桌面最小界面提供待批准列表、允许/拒绝与打开应用时提示。
 
-批准后的云会话仍是宿主生成的随机 `wm_personal_session` Cookie/CSRF，原 API 的账号、DSH 任务/审批和来源 epoch 语义一致。新增设备 authKind=cloud，authEpoch 使用原本地账号 epoch，云 auth_epoch 单独保存在身份日志；云事件不修改本地账号 authEpoch/密码。身份日志先记 session 引用，原 store 再保存 tokenHash：中断只留下无凭据的引用。云未启用或日志缺失时 cloud 类型会话拒绝，原本地密码/legacy Bearer 照常。
+批准后的云会话仍是宿主生成的随机 `wm_personal_session` Cookie/CSRF，原 API 的账号、DSH 任务/审批和来源 epoch 语义一致。新增设备 authKind=cloud，authEpoch 使用原本地账号 epoch，云 auth_epoch 单独保存在身份日志；云事件不修改本地账号 authEpoch/密码。身份日志先记 session 引用，原 store 再保存 tokenHash：中断只留下无凭据的引用。交换忽略浏览器自动携带的旧 HttpOnly Cookie（包括已撤销 Cookie），只使用云 JWT/DPoP/本机信任；Cookie 本身不能批准交换。云未启用或日志缺失时 cloud 类型会话拒绝，原本地密码/legacy Bearer 照常。
 
 ## 撤销与离线
 
