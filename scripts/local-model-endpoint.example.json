@@ -1,0 +1,5 @@
+{
+  "baseUrl": "http://127.0.0.1:<model-switcher-port>/v1",
+  "apiKeyEnv": "MODEL_SWITCH_UNIFIED_KEY",
+  "restartPath": "/switch/restart"
+}

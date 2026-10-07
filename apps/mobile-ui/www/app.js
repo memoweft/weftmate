@@ -1211,8 +1211,11 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
       unavailable:'不可用',unconfigured:'尚未配置',degraded:'需要处理'};
     status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'已更新';
     for(const [key,name] of [['model','模型服务'],['host','宿主'],['memory','记忆']]){const value=system[key];
-      const detail=[labels[value.state]||'状态未知',value.version?`版本 ${value.version}`:['disabled','unconfigured','stopped'].includes(value.state)?'':'版本未知',
+      const detail=[labels[value.state]||'状态未知',value.currentModelId?`当前模型 ${value.currentModelId}`:'',
+        value.version?`版本 ${value.version}`:['disabled','unconfigured','stopped'].includes(value.state)?'':'版本未知',
         value.contextWindow?`上下文 ${value.contextWindow.toLocaleString()}`:'',
+        value.slots?`槽数 ${value.slots}`:'',
+        value.lastSwitch?.at?`最近切换 ${new Date(value.lastSwitch.at).toLocaleString()}${value.lastSwitch.ok?'':'（未成功）'}`:'',
         value.lastError?`最近错误：${value.lastError}`:''].filter(Boolean).join(' · ');
       const item=el('div','row'),text=el('span');text.append(el('strong','',name),el('small','',detail));item.append(text);section.append(item);
       const button=el('button','secondary',`重启${name}`);button.disabled=!system.canRestart||!value.canRestart;

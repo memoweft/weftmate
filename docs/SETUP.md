@@ -41,18 +41,9 @@
 
 ## 本地模型
 
-日用入口只有 `scripts/local-model.mjs`。把 `scripts/local-model.example.json` 复制到仓库外的 Runtime/LocalModel/config.json，再按实际文件位置修改；模型与 llama.cpp 文件只读使用，进程记录与日志写在配置旁边。脚本排除继承的 `LLAMA_*` 环境变量，避免旧服务的参数或密钥影响本次启动。模型监听 `127.0.0.1:18081`，不向局域网开放。
+本机使用 D:\AI 已有的 ModelSwitcher（模型切换代理），动态入口为 `http://127.0.0.1:8081/v1`。请求的 `model` 决定实际装载模型；代理管理 8080 后端与请求租约。运行参数的唯一来源是仓库外 `D:\AI\Config\*.json`，WeftMate 不启动 llama-server，也不维护模型参数。启动与维护按 D:\AI 的 README 和正式控制脚本执行。
 
-```powershell
-node scripts/local-model.mjs start D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
-node scripts/local-model.mjs status D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
-node scripts/local-model.mjs restart D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
-node scripts/local-model.mjs stop D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
-```
-
-当前 24 GiB RTX 3090 的默认采用 WeftLearn 本机已实测组合：Qwen3.8 27B Q4_K_M、92,160 上下文、单槽、全部层上 GPU（图形处理器，`gpuLayers: 99`），Flash Attention（快速注意力计算）开启，K/V 均为 q4_0，batch（批大小）4096 / ubatch（微批大小）512，threads（线程数）8 / threads-batch（批处理线程数）16，`--fit off`。配置字段 `batchSize`、`ubatchSize`、`threads`、`threadsBatch` 可覆盖默认；K/V 可分别用 `cacheTypeK` / `cacheTypeV` 覆盖 `cacheType`。`cacheRamMiB` / `contextCheckpoints` 可选；缓存是否关闭待新参数的多轮首字延迟对比，实测数字见 STATE。该默认针对本机，不作为其他模型容量上限；真实 `n_ctx` 仍由 `/props` 读取。
-
-`GET /health` 返回就绪状态，`GET /props` 返回实际版本、上下文与槽数，`/v1` 为 OpenAI（模型接口）兼容入口。设置 → 我的电脑模型：地址 `http://127.0.0.1:18081/v1`，模型 ID `qwen3.8-27b`；本机服务无需密钥鉴权，当前模型表单可填非秘密的本地占位值。如需鉴权，应另行扩展配置中的密钥文件，不在仓库中保存密钥。
+将 `scripts/local-model-endpoint.example.json` 复制到仓库外 `Runtime/LocalModel/config.json`，把占位端口替换为本机入口端口。配置只包含 `baseUrl`、`apiKeyEnv` 和可选的 `restartPath`，没有模型权重、上下文或 GPU（图形处理器）参数。`apiKeyEnv` 指定凭据环境变量名；本机 `MODEL_SWITCH_UNIFIED_KEY` 从 Windows 用户环境读取，仅在进程中使用，不在配置、日志或仓库中保存其值。省略 `restartPath` 时只读状态。
 
 宿主用 `--local-model-config` 接入状态与重启：
 
@@ -62,9 +53,9 @@ node scripts/run-personal-host.mjs --user-data-dir <隔离宿主目录> --access
 npm start -- --local-model-config=D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
 ```
 
-脚本只停止进程记录中的相同 PID（进程标识）、可执行文件与启动时间的服务；未知监听者不被接管。`18080` 本机已被 SSH（安全远程连接）监听，旧 `8080` NInfer / `8081` 切换代理均不作为本包日用入口。历史脚本见 `scripts/archive/`，禁止据其恢复多套并行模型。
+系统状态读取受鉴权的 `GET /switch/status`（当前模型与最近切换）和 `GET /props`（真实 `n_ctx` 与 `total_slots`）；读取失败显示「不可用」，未指定配置或文件不存在显示「尚未配置」。重启调用 `POST /switch/restart`：代理等待现有请求租约结束，再用当前模型在 D:\AI\Config 中的配置调用现有控制脚本，不修改参数、不重启代理。此入口负责选择当前模型的 `launcher_profile`，WeftMate 无需另配脚本路径。完成后宿主重建容量缓存并重新读取 `/props`。
 
-后台模型默认跟随当前对话，可在桌面设置中单独选择；仅单槽本地服务按地址排队，主对话整轮（包括工具执行间隙）优先，标题与记忆推理等待空闲。槽数优先读 `/props.total_slots`，读取失败时仅已配置的受管单槽服务按配置判断；云 API（应用接口）、多槽或未知槽数服务直接并行。MemoWeft 配置的 `authRef` 可以引用当前账户可见的 Qwen 配置，`baseUrl` 填该本机地址、`model` 保持 `@current`；实际推理走宿主的共享队列和已授权后台路由。召回只查记忆，不调用模型。Android 0.8.2 / code15 支持手机只读状态与重启请求；发布新 Web UI 时使用最低原生版本 15。
+设置 → 我的电脑模型使用 8081 动态入口及正式模型 ID（标识）；本包冒烟使用 `qwen3.8-27b-original`。后台模型默认跟随当前对话，可在桌面设置中单独选择；只有本机回环入口且 `/props.total_slots=1` 时按地址排队：主对话整轮（包括工具间隙）优先，标题与记忆推理等待空闲。云 API（应用接口）、多槽或未知槽数服务直接并行。MemoWeft 配置的 `authRef` 可以引用当前账户可见的模型配置，`baseUrl` 填动态入口、`model` 保持 `@current`；实际推理走宿主的共享队列和已授权后台路由。召回只查记忆，不调用模型。Android 0.8.2 / code15 支持手机只读状态与重启请求；发布新 Web UI（网页界面）时使用最低原生版本 15。
 
 ## 云服务运维
 
