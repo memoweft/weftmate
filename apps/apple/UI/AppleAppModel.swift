@@ -687,6 +687,8 @@ private struct LocalAppleDraftPersistence: AppleDraftPersisting {
 /// Keeps every visible record and draft within one authenticated account epoch.
 @MainActor
 final class AppleAppModel: ObservableObject {
+    private var cloudNamespace = "com.weftmate.apple.cloud"
+    lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
     @Published var serverInput: String
     @Published private(set) var session: AccountSession?
     @Published private(set) var restoring = true
@@ -813,7 +815,8 @@ final class AppleAppModel: ObservableObject {
         defaults = preferences
         let store = KeychainCredentialStore(service: uiTesting
             ? "\(testService).credentials" : "com.weftmate.apple.credentials")
-        var transport = URLSessionTransport()
+        cloudNamespace = uiTesting ? testService + ".cloud" : "com.weftmate.apple.cloud"
+        var transport = URLSessionTransport(hostPins: HostPinStore(store: KeychainCredentialStore(service: cloudNamespace + ".pins")))
         var routeEnabled = false
         #if DEBUG
         if let index = args.firstIndex(of: "--development-proxy-port") {
@@ -885,6 +888,7 @@ final class AppleAppModel: ObservableObject {
     init(client: PersonalClient, draftPersistence: any AppleDraftPersisting, server: ServerConfiguration,
          commandStore: LocalConversationStore? = nil, endpointStore: LocalEndpointOperationStore? = nil, stateDirectory: URL? = nil) {
         self.client = client
+        cloudNamespace = "com.weftmate.apple.unit-tests." + UUID().uuidString
         self.draftPersistence = draftPersistence
         self.commandStore = commandStore
         self.endpointStore = endpointStore
@@ -897,7 +901,7 @@ final class AppleAppModel: ObservableObject {
 
     private var permitsSyntheticLoopback: Bool {
         #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--a3-local-server")
+        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver"))
         #else
         false
         #endif
@@ -939,7 +943,7 @@ final class AppleAppModel: ObservableObject {
             await authenticate(username: "tester", password: "synthetic-only", displayName: nil, register: false)
             return
         }
-        if permitsSyntheticLoopback {
+        if permitsSyntheticLoopback && fixtureArguments.contains("--a3-local-server") {
             await authenticate(username: "a3-tester", password: "synthetic-test-only", displayName: nil, register: false)
             return
         }
@@ -947,6 +951,7 @@ final class AppleAppModel: ObservableObject {
         do {
             let server = try ServerConfiguration(input: serverInput, allowLoopbackHTTP: permitsSyntheticLoopback)
             session = try await client.restoreSession(server: server)
+            if session == nil { await cloudLogin.restore() }
             if let session {
                 await loadScopedDrafts(session)
                 await refresh()
@@ -999,6 +1004,13 @@ final class AppleAppModel: ObservableObject {
             guard actionEpoch == epoch else { return }
             authError = friendly(error)
         }
+    }
+
+    func acceptCloudSession(_ result: AccountSession) async {
+        session = result; verificationPending = false
+        defaults?.set(result.server.originString, forKey: "weftmate.server")
+        serverInput = result.server.originString
+        await loadScopedDrafts(result); await refresh()
     }
 
     func refresh() async {
@@ -1442,6 +1454,8 @@ final class AppleAppModel: ObservableObject {
             return
         }
         clearVisibleAccount()
+        var cloudCleanupFailure = false
+        do { try await cloudLogin.signOut() } catch { cloudCleanupFailure = true }
         do { try await client.logout() }
         catch let failure as APIFailure {
             switch failure {
@@ -1454,6 +1468,7 @@ final class AppleAppModel: ObservableObject {
             }
         }
         catch { authError = "已在这台设备退出。服务器暂不可达，远端退出结果尚未确认。" }
+        if cloudCleanupFailure { authError = "当前页面已退出，但云刷新凭据未能从钥匙串清除，请检查钥匙串访问。" }
         authBusy = false
     }
 
