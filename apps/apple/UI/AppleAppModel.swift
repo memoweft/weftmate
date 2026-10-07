@@ -901,7 +901,7 @@ final class AppleAppModel: ObservableObject {
 
     private var permitsSyntheticLoopback: Bool {
         #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver"))
+        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--a4a-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver"))
         #else
         false
         #endif
@@ -943,7 +943,7 @@ final class AppleAppModel: ObservableObject {
             await authenticate(username: "tester", password: "synthetic-only", displayName: nil, register: false)
             return
         }
-        if permitsSyntheticLoopback && fixtureArguments.contains("--a3-local-server") {
+        if permitsSyntheticLoopback && (fixtureArguments.contains("--a3-local-server") || fixtureArguments.contains("--a4a-local-server")) {
             await authenticate(username: "a3-tester", password: "synthetic-test-only", displayName: nil, register: false)
             return
         }
@@ -1260,10 +1260,10 @@ final class AppleAppModel: ObservableObject {
         guard let approval = responder.approvals.first(where: { $0.id == approvalID && $0.canDecide }) else { return false }
         let key = "approval:" + approvalID
         if responder.hasSaved(key) {
-            guard responder.savedApprovalOutcome(approval) == value else { return false }
+            guard responder.savedApprovalOutcome(approval) == value, responder.savedApprovalScope(approval) != .conversationCategory else { return false }
             await responder.continueOriginal(key)
         }
-        else { await responder.decide(approval, outcome: value) }
+        else { await responder.decide(approval, outcome: value, decisionScope: value == .allowedOnce ? .once : nil) }
         guard actionEpoch == epoch else { return false }
         _ = await watchSnapshotBytes()
         return responder.errors[key] == nil && responder.hasSaved(key)

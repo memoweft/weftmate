@@ -74,6 +74,16 @@ struct SettingsView: View {
                 }
 
                 WeaveCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Label("审批", systemImage: "hand.raised").font(.headline).foregroundStyle(Weave.ink)
+                        Text("新对话的默认模式").font(.callout)
+                        ApprovalModeControl(model: model, sessionID: nil).id(model.accountEpoch)
+                        Text("按账户保存，只影响新建对话。已有对话在输入区切换审批模式。")
+                            .font(.caption).foregroundStyle(Weave.muted)
+                    }
+                }
+
+                WeaveCard {
                     VStack(alignment: .leading, spacing: 15) {
                         Label("服务器", systemImage: "network").font(.headline).foregroundStyle(Weave.ink)
                         Text(model.session?.server.originString ?? model.serverInput)
