@@ -5,11 +5,11 @@ import { existsSync } from 'node:fs';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { servePersonalAccessUi } from '../src/personal-access-ui/index.mjs';
+import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs';
 import { handleMobileMemoryPreview } from './mobile-memory-preview.mjs';
 import { handleFixtureEvidence } from './mobile-evidence-handler.mjs';
 
-const candidateRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
+const candidateRoot = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const repositoryRoot = resolve(process.env.WEFTMATE_REPO_ROOT || candidateRoot);
 const personalAccessModule = join(repositoryRoot, 'src', 'personal-access', 'index.mjs');
 if (!existsSync(personalAccessModule)) throw new Error('Set WEFTMATE_REPO_ROOT to the WeftMate repository when running an isolated candidate.');

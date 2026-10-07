@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url'
 import { handleMobileMemoryPreview } from './mobile-memory-preview.mjs'
 import { handleFixtureEvidence } from './mobile-evidence-handler.mjs'
 
-const candidateRoot = fileURLToPath(new URL('../', import.meta.url))
+const candidateRoot = fileURLToPath(new URL('../../', import.meta.url))
 const mobileRoot = join(candidateRoot, 'apps', 'mobile-ui', 'www')
 const ownerId = 'synthetic-owner-A'
 const now = '2026-09-27T00:00:00.000Z'
