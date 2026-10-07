@@ -1,0 +1,59 @@
+{
+  "synthetic": true,
+  "findings": [
+    {
+      "theme": "light",
+      "initial": {
+        "theme": "light",
+        "headerHidden": true,
+        "markdown": true,
+        "stop": "停止",
+        "singleButton": true,
+        "placeholder": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
+        "overflow": false,
+        "group": "会话"
+      },
+      "panel": {
+        "markdown": true,
+        "label": [
+          "Markdown · 68 字节"
+        ],
+        "bounds": 950.40625,
+        "mainRight": 950.40625
+      },
+      "queue": true,
+      "steer": true,
+      "appearancePersists": true,
+      "width1024": true
+    },
+    {
+      "theme": "dark",
+      "initial": {
+        "theme": "dark",
+        "headerHidden": true,
+        "markdown": true,
+        "stop": "停止",
+        "singleButton": true,
+        "placeholder": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
+        "overflow": false,
+        "group": "会话"
+      },
+      "panel": {
+        "markdown": true,
+        "label": [
+          "Markdown · 68 字节"
+        ],
+        "bounds": 950.40625,
+        "mainRight": 950.40625
+      },
+      "queue": true,
+      "steer": true,
+      "appearancePersists": true,
+      "width1024": true
+    }
+  ],
+  "stopButton": true,
+  "escapeStop": true,
+  "newShortcut": true,
+  "errors": []
+}

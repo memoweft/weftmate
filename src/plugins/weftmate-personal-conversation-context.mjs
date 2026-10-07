@@ -76,7 +76,7 @@ class ContextBridge {
 
 export function contextIdentity(payload) {
   const session = payload?.agent?.session;
-  if (!['personal-shared-chat', 'personal-remote'].includes(session?.header?.agentPreset) ||
+  if (session?.header?.origin === 'subagent' || !['personal-shared-chat', 'personal-remote'].includes(session?.header?.agentPreset) ||
       typeof session.id !== 'string' || !Array.isArray(payload?.messages) ||
       !Number.isSafeInteger(payload.turn) || payload.turn < 1 || payload.step !== 1) return null;
   const users = payload.messages.filter((message) => message?.source?.kind === 'user');
@@ -99,7 +99,8 @@ export function apply(ctx) {
     const decision = await next();
     if (decision.kind !== 'enter') return decision;
     const session = payload?.agent?.session;
-    const applicable = ['personal-shared-chat', 'personal-remote'].includes(session?.header?.agentPreset) &&
+    const applicable = session?.header?.origin !== 'subagent' &&
+      ['personal-shared-chat', 'personal-remote'].includes(session?.header?.agentPreset) &&
       payload?.step === 1 && Array.isArray(payload.messages) &&
       payload.messages.some((message) => message?.source?.kind === 'user');
     if (!applicable || alreadyInjected(session, decision.messages)) return decision;

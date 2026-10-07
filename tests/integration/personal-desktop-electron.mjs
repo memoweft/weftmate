@@ -48,7 +48,7 @@ const model = createServer(async (request, response) => {
     if (workflowCalls === 1) { tool = 'weftmod_script'; args = { action: 'run', description: 'W1 合成文件写入审批',
       code: 'return await tools.write({file_path: params.path, content: "W1 synthetic approval result"});',
       params: { path: join(profile, 'workspace', 'approval.txt') } }; }
-    else if (workflowCalls === 2) { tool = 'personal_save_document'; args = { fileName: 'w1-result.txt', content: 'W1 synthetic desktop artifact' }; }
+    else if (workflowCalls === 2) { tool = 'write'; args = { file_path: join(profile, 'workspace', 'w1-result.txt'), content: 'W1 synthetic desktop artifact' }; }
   }
   if (tool && names.includes('run_code')) { args = { code: `return await tools.${tool}(${JSON.stringify(args)});`, description: 'W1 synthetic tool call' }; tool = 'run_code'; }
   response.writeHead(200, { 'content-type': 'text/event-stream' });
@@ -145,8 +145,9 @@ try {
     shell.openPath = async path => { const error = await open(path); globalThis.w1NativeFiles.push({ action: 'open', path, error }); return error; };
     shell.showItemInFolder = path => { reveal(path); globalThis.w1NativeFiles.push({ action: 'show', path }); };
   });
-  await page.getByRole('button', { name: '用默认程序打开', exact: true }).first().click();
-  await page.getByRole('button', { name: '在文件夹中显示', exact: true }).first().click();
+  const artifactCard = page.locator('.timeline-artifact').filter({ hasText: 'w1-result.txt' }).first();
+  await artifactCard.getByRole('button', { name: '用默认程序打开', exact: true }).click();
+  await artifactCard.getByRole('button', { name: '在文件夹中显示', exact: true }).click();
   const files = await until(() => application.evaluate(() => globalThis.w1NativeFiles.length === 2 && globalThis.w1NativeFiles));
   assert.equal(readFileSync(files[0].path, 'utf8'), 'W1 synthetic desktop artifact');
   assert.equal(files[0].error, ''); report.nativeArtifactBridge = true; report.realNativeFileCalls = true;
@@ -195,7 +196,9 @@ try {
   assert.ok(report.nativeNotificationShown.includes('approval.requested'));
   assert.ok(report.nativeNotificationShown.includes('question.asked'));
   assert.ok(report.nativeNotificationShown.includes('turn.ended'));
-  await page.locator('#show-account').click(); await page.locator('#desktop-auto-start').waitFor();
+  if (await page.locator('#show-account').isVisible()) await page.locator('#show-account').click();
+  else { await page.locator('#account-menu-trigger').click(); await page.locator('#rail-account').click(); }
+  await page.locator('#desktop-auto-start').waitFor();
   await page.locator('#desktop-auto-start').check();
   const loginOptions = await application.evaluate(() => globalThis.w1LoginOptions);
   assert.equal(loginOptions.openAtLogin, true); assert.ok(loginOptions.args.includes('--start-in-tray'));
