@@ -22,6 +22,13 @@ jobs:
           gradle-version: '8.9'
       - working-directory: apps/android
         run: gradle --no-daemon :app:assembleDebug :app:testDebugUnitTest
+      - name: Publish JVM results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: s1c-android-jvm
+          path: apps/android/app/build/test-results/testDebugUnitTest/*.xml
+          if-no-files-found: ignore
   browser:
     name: Web cloud login interactions
     runs-on: ubuntu-latest

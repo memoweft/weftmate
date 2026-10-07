@@ -62,6 +62,7 @@ test('S1c real browser: local login → bind → new mobile browser waits → de
   await phone.goto(origin + '/personal/v1/ui/'); await visible(phone, '#cloud-login');
   await phone.locator('#login-device').fill('Mobile browser'); await phone.locator('#cloud-login').click(); await cloudForm(phone);
   await visible(phone, '#cloud-wait-view');
+  await phone.getByText('在已登录的电脑或手机上点“允许”。', {exact:true}).waitFor();
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
   await phone.screenshot({ path: '.local/s1c-web/mobile-wait.png' });
   await phone.reload(); await visible(phone, '#cloud-wait-view');
