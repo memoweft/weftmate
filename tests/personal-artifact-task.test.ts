@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { createHash } from 'node:crypto'
-import { linkSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
+import { linkSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -53,8 +53,10 @@ async function waitCommand(origin: string, headers: Record<string, string>, comm
 async function artifactSourceFixture() {
   const root = mkdtempSync(join(tmpdir(), 'personal-artifact-source-'))
   const b = backend({ receipts: true })
+  const workspace = join(root, 'conversation')
+  mkdirSync(workspace)
   let service = await createPersonalAccessService({ root, port: 0, backend: b })
-  const { origin, hostId } = await service.start()
+  let { origin, hostId } = await service.start()
   const grant = await service.issueSetupGrant()
   await api(origin, 'POST', '/personal/v1/auth/setup',
     { grant: grant.grant, username: 'SourceOwner', password: PASSWORD, deviceName: 'Fixture' }, { origin })
@@ -68,7 +70,9 @@ async function artifactSourceFixture() {
   await waitCommand(origin, auth, opened.body.command.commandId)
   const sessionId = opened.body.command.sessionId
   return {
-    root, origin, auth, sessionId,
+    root, get origin() { return origin }, auth, sessionId, workspace,
+    registerFile(input: object) { return service.registerNativeFile({ sessionId, turn: 4,
+      callId: 'native-write-call', ...input }) },
     async send(requestId: string, text: string) {
       const sent = await api(origin, 'POST', '/personal/v1/commands',
         { requestId, kind: 'session.message', targetDeviceId: hostId, sessionId, text }, auth)
@@ -76,6 +80,13 @@ async function artifactSourceFixture() {
     },
     save(input: object) { return service.submitToolArtifact({ sessionId, turn: 4,
       callId: 'source-fixture-call', fileName: 'source-result.csv', content: 'marker\nfixture\n', ...input }) },
+    async restart() {
+      await service.close()
+      service = await createPersonalAccessService({ root, port: 0, backend: b })
+      const restarted = await service.start()
+      origin = restarted.origin
+      auth.origin = origin
+    },
     async preparedHash(commandId: string, modelInputHash: string) {
       await service.close()
       const file = join(root, 'store.json')
@@ -362,4 +373,38 @@ test('private artifact storage rejects linked files, changed bytes and unsafe na
       // Windows without Developer Mode cannot create this synthetic link.
     }
   } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
+
+test('native files become verified artifacts without source snapshot arguments and survive restart', async () => {
+  const fixture = await artifactSourceFixture()
+  try {
+    const text = 'Create two deliverables.'
+    const command = await fixture.send('native-artifact-source', text)
+    const identity = { receiptId: command.receiptId,
+      messageHash: createHash('sha256').update(text).digest('hex') }
+    const refs = []
+    for (const name of ['report.md', 'analyze.py']) {
+      const filePath = join(fixture.workspace, name)
+      const content = name === 'report.md' ? '# Verified native report\n' : 'print("ready")\n'
+      writeFileSync(filePath, content)
+      const reference = await fixture.registerFile({ ...identity, filePath,
+        sha256: createHash('sha256').update(content).digest('hex') })
+      assert.equal(reference.state, 'observed')
+      assert.equal(reference.fileName, name)
+      assert.equal(reference.taskId, command.commandId)
+      const downloaded = await api(fixture.origin, 'GET', `/personal/v1/artifacts/${reference.artifactId}/download`, undefined, fixture.auth)
+      assert.equal(downloaded.status, 200)
+      assert.equal(downloaded.bytes.toString('utf8'), content)
+      const repeated = await fixture.registerFile({ ...identity, filePath,
+        sha256: createHash('sha256').update(content).digest('hex') })
+      assert.equal(repeated.artifactId, reference.artifactId)
+      refs.push(reference)
+    }
+    assert.notEqual(refs[0].artifactId, refs[1].artifactId, 'one tool call may publish multiple files')
+    await fixture.restart()
+    assert.equal((await api(fixture.origin, 'GET', `/personal/v1/artifacts/${refs[0].artifactId}/preview`, undefined, fixture.auth)).status, 200)
+    await assert.rejects(fixture.registerFile({ ...identity, filePath: join(fixture.workspace, 'report.md'), sha256: 'a'.repeat(64) }),
+      (error: any) => error.code === 'ARTIFACT_UNVERIFIED')
+  } finally { await fixture.close() }
 })
