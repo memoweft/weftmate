@@ -5,7 +5,8 @@
   const node = (tag, cls = '', text = '') => { const n = document.createElement(tag); n.className = cls; n.textContent = text; return n }
   const appearanceKey = 'weftmate.desktop.appearance.v1'
   const defaults = { theme: 'system', accent: 'neutral', fontSize: '15' }
-  let appearance = { ...defaults }, preview = null, returnFocus = null, actions = null
+  let appearance = { ...defaults }, preview = null, returnFocus = null, actions = null, picker = null
+  const tabs = new Map()
   const media = window.matchMedia?.('(prefers-color-scheme: dark)')
   function applyAppearance(value = appearance) {
     appearance = { ...defaults, ...value }
@@ -29,12 +30,12 @@
         let url
         try { url = new URL(link.getAttribute('href'), location.href) } catch { return }
         if (!['https:', 'http:'].includes(url.protocol)) return
-        openPreview(link.textContent || '网页', link)
+        const target = openPreview(link.textContent || '网页', link, `url:${url.href}`, 'webpage')
         const description = node('p', 'muted', '查看网页地址，或让助手读取网页内容。')
         const address = node('input'); address.readOnly = true; address.value = url.href; address.setAttribute('aria-label', '网页地址')
         const copy = node('button', 'button secondary small', '复制地址'); copy.type = 'button'
         copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(url.href); copy.textContent = '已复制' } catch { copy.textContent = '请选择地址复制' } })
-        preview.content.replaceChildren(description, address, copy)
+        target.content.replaceChildren(description, address, copy)
       })
     }
     for (const image of content.querySelectorAll('img')) {
@@ -56,21 +57,118 @@
     return `${type}${size ? ` · ${size}` : ''}`
   }
   function closePreview(restore = true) {
-    preview?.panel.remove(); preview = null
-    document.body.classList.remove('preview-open')
+    hidePicker(); preview?.panel.remove(); preview = null; tabs.clear()
+    document.body.classList.remove('preview-open', 'preview-expanded')
     if (restore && returnFocus?.isConnected) returnFocus.focus()
     returnFocus = null
   }
-  function openPreview(title, trigger = document.activeElement) {
-    closePreview(false); returnFocus = trigger
+  function icon(kind) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true')
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
+    path.setAttribute('d', ({ webpage: 'M3 12h18M12 3c6 5 6 13 0 18C6 16 6 8 12 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
+      tool: 'm8 5-5 7 5 7m8-14 5 7-5 7m-3-16-2 18', memory: 'M8 4a4 4 0 0 0-5 5 4 4 0 0 0 0 6 4 4 0 0 0 5 5h4V4Zm4 0h4a4 4 0 0 1 5 5 4 4 0 0 1 0 6 4 4 0 0 1-5 5h-4',
+      file: 'M14 3H5v18h14V8Zm0 0v5h5M8 12h8M8 16h8', collection: 'M4 5h16M4 12h16M4 19h16' })[kind] || 'M14 3H5v18h14V8Zm0 0v5h5')
+    svg.append(path); return svg
+  }
+  function hidePicker() {
+    picker?.remove(); picker = null; byId('conversation-resources')?.setAttribute('aria-expanded', 'false')
+  }
+  async function showPicker(trigger = byId('conversation-resources')) {
+    if (picker) { hidePicker(); return }
+    const menu = node('div', 'resource-picker'); menu.setAttribute('role', 'dialog'); menu.setAttribute('aria-label', '输出与来源')
+    const close = node('button', 'button quiet small resource-picker-close', '关闭列表'); close.type = 'button'; close.addEventListener('click', hidePicker)
+    menu.append(close, node('p', 'muted', '正在读取…')); picker = menu
+    byId('assistant-view').querySelector('.assistant-shell').append(menu)
+    trigger.setAttribute('aria-expanded', 'true'); close.focus({ preventScroll: true })
+    try {
+      const items = await actions.resources()
+      if (picker !== menu) return
+      menu.replaceChildren(close)
+      const group = (title, rows, empty) => {
+        menu.append(node('h2', '', title))
+        if (!rows.length) menu.append(node('p', 'muted resource-empty', empty))
+        for (const item of rows) {
+          const button = node('button', 'resource-item'); button.type = 'button'; button.dataset.resourceKey = item.key
+          button.append(icon(item.kind), node('span', '', item.name)); button.title = item.location || item.url || item.name
+          if (item.uses) button.append(node('small', 'muted', usageText(item)))
+          button.addEventListener('click', () => { hidePicker(); actions.openResource(item, trigger) }); menu.append(button)
+        }
+      }
+      group('输出内容', items.outputs, '这段对话还没有生成输出内容。')
+      group('来源', items.sources.slice(0, 6), '这段对话还没有使用来源。')
+      const all = node('button', 'button quiet small resource-all', '查看全部'); all.type = 'button'
+      all.addEventListener('click', () => { hidePicker(); openCollection(items, trigger) }); menu.append(all)
+    } catch { if (picker === menu) { menu.replaceChildren(close, node('p', 'muted', '暂时无法读取，请关闭后重试。')) } }
+  }
+  const usageText = item => `${item.kind === 'tool' ? '调用' : item.kind === 'memory' ? '引用' : item.uses.every(use => use.verb === '写入') ? '写入' : item.uses.some(use => use.verb === '写入') ? '使用' : '读取'} ${item.uses.length} 次`
+  async function openCollection(items, trigger = document.activeElement) {
+    const target = openPreview('输出与来源', trigger, 'collection', 'collection')
+    target.content.textContent = '正在读取…'
+    try {
+      items ||= await actions.resources()
+      if (!target.content.isConnected) return
+      target.content.replaceChildren()
+      for (const [title, rows] of [['输出内容', items.outputs], ['来源', items.sources]]) {
+        target.content.append(node('h2', '', title))
+        if (!rows.length) target.content.append(node('p', 'muted', title === '来源' ? '这段对话还没有使用来源。' : '这段对话还没有生成输出内容。'))
+        for (const item of rows) {
+          const button = node('button', 'resource-item'); button.type = 'button'; button.dataset.resourceKey = item.key
+          button.append(icon(item.kind), node('span', '', item.name)); button.title = item.location || item.url || item.name
+          if (item.uses) button.append(node('small', 'muted', usageText(item)))
+          button.addEventListener('click', () => actions.openResource(item, button)); target.content.append(button)
+        }
+      }
+    } catch { if (target.content.isConnected) target.content.textContent = '暂时无法读取，请关闭标签后重试。' }
+  }
+  function selectTab(key, focus = false) {
+    const selected = tabs.get(key); if (!selected || !preview) return
+    preview.panel.hidden = false; document.body.classList.add('preview-open')
+    preview.active = key; preview.content = selected.content
+    for (const [id, tab] of tabs) {
+      tab.content.hidden = id !== key; tab.select.setAttribute('aria-selected', String(id === key)); tab.select.tabIndex = id === key ? 0 : -1
+    }
+    if (focus) selected.select.focus({ preventScroll: true })
+  }
+  function openPreview(title, trigger = document.activeElement, key = title, kind = 'file') {
+    hidePicker(); returnFocus = trigger
+    if (tabs.has(key)) { selectTab(key, true); return { panel: preview.panel, content: tabs.get(key).content } }
+    if (!preview) createPreview()
+    const tab = node('div', 'preview-tab'), select = node('button', 'preview-tab-select'), close = node('button', 'preview-tab-close', '×')
+    select.type = close.type = 'button'; select.setAttribute('role', 'tab'); select.title = title
+    const content = node('div', 'preview-content', '正在读取…'), id = `resource-tab-${crypto.randomUUID()}`
+    select.id = id; content.setAttribute('role', 'tabpanel'); content.setAttribute('aria-labelledby', id); content.id = `${id}-content`; select.setAttribute('aria-controls', content.id)
+    select.append(icon(kind), node('span', '', title)); close.setAttribute('aria-label', `关闭标签 ${title}`)
+    select.addEventListener('click', () => selectTab(key))
+    select.addEventListener('keydown', e => {
+      const keys = [...tabs.keys()], index = keys.indexOf(key)
+      if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) { e.preventDefault(); selectTab(keys[e.key === 'Home' ? 0 : e.key === 'End' ? keys.length - 1 : (index + (e.key === 'ArrowRight' ? 1 : -1) + keys.length) % keys.length], true) }
+      if (e.key === 'Delete') { e.preventDefault(); close.click() }
+    })
+    close.addEventListener('click', () => {
+      const keys = [...tabs.keys()], index = keys.indexOf(key), active = preview.active === key
+      tab.remove(); content.remove(); tabs.delete(key)
+      if (!tabs.size) closePreview(); else if (active) selectTab([...tabs.keys()][Math.min(index, tabs.size - 1)], true)
+    })
+    tab.append(select, close); preview.tablist.append(tab); preview.panel.append(content)
+    tabs.set(key, { tab, select, content }); selectTab(key, true)
+    return { panel: preview.panel, content }
+  }
+  function createPreview() {
     const panel = node('aside', 'timeline-preview'); panel.setAttribute('aria-label', '成果与来源预览')
     const resize = node('div', 'preview-resize'); resize.setAttribute('role', 'separator'); resize.setAttribute('aria-orientation', 'vertical'); resize.setAttribute('aria-label', '调整预览宽度'); resize.tabIndex = 0
-    const header = node('div', 'preview-heading'), close = node('button', 'button quiet small', '关闭预览'); close.type = 'button'
-    close.addEventListener('click', () => closePreview())
-    const heading = node('h2', '', title), content = node('div', 'preview-content', '正在读取…')
-    header.append(heading, close); panel.append(resize, header, content)
+    const header = node('div', 'preview-heading'), close = node('button', 'button quiet small', '收起'); close.type = 'button'; close.setAttribute('aria-label', '收起右侧面板')
+    close.addEventListener('click', () => { panel.hidden = true; document.body.classList.remove('preview-open', 'preview-expanded'); returnFocus?.isConnected && returnFocus.focus() })
+    const tablist = node('div', 'preview-tabs'); tablist.setAttribute('role', 'tablist'); tablist.setAttribute('aria-label', '输出与来源标签页')
+    const add = node('button', 'button quiet small preview-add', '+'); add.type = 'button'; add.setAttribute('aria-label', '再打开一项'); add.setAttribute('aria-haspopup', 'dialog')
+    add.addEventListener('click', () => { void showPicker(add) })
+    const expand = node('button', 'button quiet small', '放大'); expand.type = 'button'; expand.setAttribute('aria-label', '放大右侧面板'); expand.setAttribute('aria-pressed', 'false')
+    expand.addEventListener('click', () => { const expanded = document.body.classList.toggle('preview-expanded'); expand.textContent = expanded ? '还原' : '放大'; expand.setAttribute('aria-pressed', String(expanded)) })
+    header.append(tablist, add, expand, close); panel.append(resize, header)
     byId('assistant-view').querySelector('.assistant-shell').append(panel)
     document.body.classList.add('preview-open')
+    resize.setAttribute('aria-valuemin', '280'); resize.setAttribute('aria-valuemax', String(Math.round(window.innerWidth * .6)))
+    resize.setAttribute('aria-valuenow', String(Math.round(panel.getBoundingClientRect().width)))
     const width = value => {
       const next = Math.max(280, Math.min(value, window.innerWidth * .6))
       panel.style.width = `${next}px`; resize.setAttribute('aria-valuenow', String(Math.round(next)))
@@ -82,9 +180,7 @@
       resize.addEventListener('pointermove', move); resize.addEventListener('pointerup', end); resize.addEventListener('pointercancel', end)
     })
     resize.addEventListener('keydown', e => { if (['ArrowLeft', 'ArrowRight'].includes(e.key)) { e.preventDefault(); width(panel.getBoundingClientRect().width + (e.key === 'ArrowLeft' ? 32 : -32)) } })
-    close.focus({ preventScroll: true })
-    preview = { panel, content }
-    return preview
+    preview = { panel, tablist }
   }
   function showImage(url, name, trigger) {
     const panel = openPreview(name, trigger), image = node('img', 'preview-image'); image.src = url; image.alt = name
@@ -109,6 +205,8 @@
   }
   function init(callbacks) {
     actions = callbacks
+    byId('conversation-resources')?.addEventListener('click', () => { void showPicker() })
+    document.addEventListener('click', e => { if (picker && !picker.contains(e.target) && !e.target.closest('#conversation-resources, .preview-add')) hidePicker() })
     for (const key of Object.keys(defaults)) byId(`appearance-${key}`).addEventListener('change', e => {
       appearance[key] = e.target.value; applyAppearance()
       try { localStorage.setItem(appearanceKey, JSON.stringify(appearance)) } catch { /* device storage can be unavailable */ }
@@ -146,12 +244,13 @@
         if (key === 'b') { e.preventDefault(); toggleRail() }
       } else if (e.key === 'Escape' && !e.defaultPrevented) {
         e.preventDefault()
-        if (preview) closePreview()
+        if (picker) { hidePicker(); byId('conversation-resources').focus() }
+        else if (preview && !preview.panel.hidden) closePreview()
         else if (!byId('account-menu').hidden) { byId('account-menu').hidden = true; byId('account-menu-trigger').setAttribute('aria-expanded', 'false'); byId('account-menu-trigger').focus() }
         else actions.stop()
       }
     })
     applyAppearance()
   }
-  window.WeftDesktop = { init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, openPreview, closePreview, showImage }
+  window.WeftDesktop = { init, markdown, fileLabel, sessionGroup, sortSessions, toggleRail, openPreview, closePreview, showImage, openCollection, usageText, icon }
 })()

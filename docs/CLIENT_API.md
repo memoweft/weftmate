@@ -5,7 +5,7 @@
 
 ## 1. 范围与通用约定
 
-第 3、6 节覆盖 **88 个本机业务方法/路径组合**（第 3 节 84 项 + 第 6 节健康 4 项）与 **12 个桌面 UI 静态路径**；第 7 节另列云账号、宿主身份与中继。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
+第 3、6 节覆盖 **89 个本机业务方法/路径组合**（第 3 节 85 项 + 第 6 节健康 4 项）与 **12 个桌面 UI 静态路径**；第 7 节另列云账号、宿主身份与中继。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
 
 | 客户端标记 | 本次核对来源与含义 |
 |---|---|
@@ -290,7 +290,7 @@
 
 macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64/x86_64",channel:"trial",notes,fileName,downloadUrl`。不要把native manifest与Android mobile UI manifest混用。Apple独立 `PublicUpdates.swift` 使用公开分发入口，本次所核对 `PersonalClient.swift` 没有调用上述认证下载接口。
 
-### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入88业务接口）
+### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入89业务接口）
 
 | GET路径（都无查询） | 响应 / 错误 | 使用端 |
 |---|---|---|
@@ -314,6 +314,18 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 每项服务有 `state`、`version`（未知为 `null`）、`lastError`（最近安全错误码或 `null`）、`canRestart`。模型服务另有实际 `contextWindow` 与 `slots`、`currentModelId`（当前装载模型或 `null`）、`lastSwitch`（`{action,modelId,at,ok}` 或 `null`）。状态来自配置入口的 `/switch/status` 与 `/props`；未配置为 `unconfigured`，读取失败为 `unavailable`。模型重启经入口 `/switch/restart` 等待请求租约结束后调用现有控制脚本，保留当前模型与配置。不返回模型文件路径、控制脚本输出或入口凭据。宿主版本来自应用包；模型版本来自 llama.cpp `/props`；MemoWeft 优先用服务版本，再用其 Python（运行环境）源码包的声明版本；两者均未知时返回 `null`。`queue` 含 `active: "foreground"|"background"|null`、`foregroundPending`、`backgroundPending`，不包含提示或账户信息。手机只显示后台配置，不提供修改控件；重启仍走相同认证与 CSRF（跨站请求伪造防护）规则。
 
 主模型由每个对话选择。后台配置默认跟随该对话的主模型；标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
+
+### 3.16 对话输出与来源（UI-1b，1）
+
+| 方法与路径 | 请求参数 | 响应 / 状态 | 主要领域错误 | 使用端 |
+|---|---|---|---|---|
+| GET `/sessions/{sessionId}/resources` | 可选单值 `afterSeq`，默认 -1，安全整数 ≥ -1；无其他查询参数 | 200 `{outputs,sources,nextSeq,hasMore}`；每次按现有时间线读取最多 200 条 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE` | 桌、远程浏览器 |
+
+`outputs` 是当前账号、当前会话的完整成果 `Command` 元数据数组；预览、下载仍走 3.8。`sources` 是这一页工具调用以及会话已有网页 / 项目文件快照的只读聚合，不新增存储、不读取任意磁盘路径、不改变执行或工具权限。客户端从 -1 开始读取，按 `nextSeq` 正向继续到 `hasMore:false`，随后沿同一水位增量读取；不需要用户先加载更早的消息。快照与成果每次重取现有记录，工具参数 / 输出原文留在既有详情接口。
+
+来源形状：`{key,kind,name,location?,url?,uses,source?}`。`kind` 为 `file / webpage / tool`；`key` 以类别与路径 / URL / 工具名组成，供同一会话内聚合，文件 `name` 为短文件名、`location` 为原调用路径。网页只接受 HTTP(S) 参数。现有快照 `source` 沿用 `publicSource` 字段。`uses` 每项为 `{id,callId?,seq?,at?,summary,path,verb?}`：`path` 是省略 `/personal/v1` 的已授权快照或 seq 详情路径；`verb` 可为 `读取 / 写入`。同一调用的开始、完成及快照按 `callId`（无则 `id`）去重，完成记录更新原使用记录；已有内容快照优先于调用原文。次数是调用 / 使用次数，执行成功仍看具体内容中的实际结果，不能当作任务完成证明。
+
+文件引用来自公开工具详情中的 `file_path / filePath / path / paths`，网页来自 `url / urls`，不猜测脚本代码里的未执行路径。无法读取参数时仍保留工具来源；列表不返回原始输出。现有记忆自动注入只在模型请求内，公开时间线没有逐条召回引用；本接口不将记忆查询工具调用冒充为「引用了某条记忆」。逐条记忆引用与「用到了 N 条记忆」入口需由记忆工作包提供真实引用字段，届时追加兼容来源类别。
 
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
