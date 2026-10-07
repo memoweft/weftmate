@@ -8,19 +8,23 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows | M0-2 模型预算完成 | [PR（拉取请求）#24](https://github.com/memoweft/weftmate/pull/24) 待审；配置/启动读取实际容量，逐请求计算输出预算，personal-remote 接入原生压缩 |
-| Codex · Mac | H1 HealthKit 读取与每日健康摘要 | `wp/h1-healthkit`：iPhone 账号菜单健康设置、8 类只读权限、本地每日摘要/14 天基线、云端选择/自评频率、隔离持久队列与删除待办已实现；Core 253 项、状态检查 10 组及三目标构建通过；iOS 隔离模拟器 HealthKit 合成样本与设置 UI 场景 2 项通过；服务端草案待 Windows 实现；仓库 CI 在 release:preflight 因现有 npm 依赖审计失败（main 同样失败）；[PR #22](https://github.com/memoweft/weftmate/pull/22) 待审 |
+| Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
+| Codex · Mac | CI-1 GitHub CI | [PR #23](https://github.com/memoweft/weftmate/pull/23)：npm 审计 0 漏洞，三平台 CI 全绿；13 项已知失败按精确名称非阻塞运行，vendor/契约检查明确跳过，见 SETUP 与 `.github/ci-test-exceptions.json` |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
 - 任务 15 在途改动已作 checkpoint 提交 `1f922a5`（通用执行、审批、用户提问、Android 文本成果 MIME，未经独立验收）。
 - M0-1b：旧 alpha2 路径清理、一次性脚本归档；`personal-access/index.mjs` 6160 → 614 行，导出、接口和存储行为兼容。
+- M0-2：[PR #24](https://github.com/memoweft/weftmate/pull/24) 已合入；预算按服务实际上下文计算，personal-remote 接入原生压缩。
+- H1：[PR #22](https://github.com/memoweft/weftmate/pull/22) 已合入；iPhone 健康设置、8 类只读权限、每日摘要/14 天基线、云端选择/自评频率与隔离持久队列已实现。Core 253 项、状态检查 10 组、三目标构建及 iOS 隔离模拟器 2 项场景通过；服务端草案待 Windows 实现。
 
 ## 最近一次场景结果
 
 M0-7 场景集已建立；Qwen / MiMo 实测基线尚未跑。
 
 M0-2 工程检查：类型检查通过；相关单测 46/46；完整单测 855/868 通过、11 原有失败、2 跳过，新增失败 0。隔离 DSH（模型运行时）完成 10 次原生文件读取及最终回复；服务容量截断、配置/密钥刷新和实际请求输出预算通过。真实 Qwen 场景未跑，已知本机端口的只读元数据接口均不可用。
+
+CI-1 的三平台必过/非阻塞基线结果及最终运行链接见 [PR #23](https://github.com/memoweft/weftmate/pull/23)。原 11 项基线外，在未改动 main `855044d` 上确认图片消息原请求重试（偶发 404）与重启后的停止回执重试两项失败；不改产品逻辑，13 项按精确名称单独非阻塞运行，同文件其他用例仍必须通过。
 
 ## 契约变更
 
@@ -33,7 +37,7 @@ M0-2 工程检查：类型检查通过；相关单测 46/46；完整单测 855/8
 ## 已知问题
 
 - 长会话打开时报「历史超出当前可读取范围」：`src/runtime/dsh-adapter/sessions.mjs` `historyPage` 每页从尾部倒扫，超过 24×50 条即失败（M0-3）。
-- M0-2 预算来源已修复并通过隔离场景；真实 Qwen 长任务回归待服务可用，日用宿主和模型进程未改动或重启。
+- M0-2 预算来源已修复并通过隔离场景；真实 Qwen 长任务回归待服务可用。剩余上下文极少时输出预算会降到 1 token（`outputBudget` 下限），应先触发压缩——归 M1-3 处理。
 - 本地 Qwen 服务曾多次显存不足（OOM），启动方式不统一（M0-6）。
 - 模型路由只合并两个薄封装；跨文件恢复、串行队列和历史会话引用保护保留，进一步简化仍需协调持久化与重载路径（见 PR #20）。
-- PR #20 云端 CI（持续集成）在 `release:preflight` 的依赖审查中失败；锁文件未改动，本包未升级依赖。
+- CI-1 待续：固定 DSH 的可重复编译产物未提供，vendor 生成/验证、契约及 103 个依赖 vendor 的用例与 3 个文件明确未验证；另缺外部 Design 夹具。POSIX 整树清理、Windows 写死路径夹具与 Linux optional 夹具平台适配列为后续；13 项主干失败仍待产品修复。依赖审计漏洞已全部解除。
