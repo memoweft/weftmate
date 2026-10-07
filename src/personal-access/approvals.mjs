@@ -259,8 +259,6 @@ export function createApprovalOperations(context) {
           if (!approvalMatches(existing, input, checked.source) || existing.reason !== input.reason) throw failure('REQUEST_CONFLICT', 409);
           return publicToolApproval(existing);
         }
-        const executions = [checked.root, ...context.taskChildren(next, checked.root.commandId)].flatMap(command => command.toolExecutions ?? []);
-        if (executions.some(row => row.state === 'running' && row.rootCallId !== rootCallId)) throw failure('TASK_NOT_READY', 409);
         // Native tools can ask during execute; that exact running row has not yet performed the approved action.
         const running = checked.source.toolExecutions?.find(row => row.callId === callId);
         if (running && (running.state !== 'running' || running.rootCallId !== rootCallId || running.turn !== turn ||

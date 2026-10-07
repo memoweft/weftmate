@@ -2,6 +2,7 @@ import { createHash, randomUUID } from 'node:crypto';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import { installModelSelection } from '@deepseek-ai/dsh-agent';
+import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy';
 import { trackNativeFiles, appendNativeArtifacts } from './personal-native-files.mjs';
 import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
@@ -608,16 +609,41 @@ export function registerPersonalBrowserTool(ctx, bridge) {
   }));
 }
 
+/** Replace the pinned initial file boundary, independently of native approval policy. */
+export function initializePersonalFilePolicy(agent, sandboxPolicy) {
+  if (agent?.session?.header?.agentPreset !== 'personal-remote') return;
+  const session = agent.session;
+  const mode = sandboxPolicy?.overrideOf(session);
+  const initial = session.events.findIndex(event => event.type === 'sandbox/mode');
+  const firstTurn = session.events.findIndex(event => event.type === 'turn/start');
+  // DSH pins workspace-write during session creation, before the personal preset runs.
+  // Upgrade that initial default, retaining later native permission switches.
+  if (mode === undefined || mode === 'workspace-write' && initial >= 0 &&
+      (firstTurn < 0 || initial < firstTurn) &&
+      session.events.filter(event => event.type === 'sandbox/mode').length === 1)
+    setSandboxMode(session, 'danger-full-access');
+}
+
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
   const webExecution = new AsyncLocalStorage();
+  const delegatedExecutions = new WeakMap();
   const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge,
-    () => webExecution.getStore(), personalExecutionIdentity));
+    () => webExecution.getStore(), exec => personalExecutionIdentity(
+      delegatedExecutions.get(exec.agent) ?? exec)));
+  const initializeFilePolicy = agent => initializePersonalFilePolicy(agent, ctx.get('sandboxPolicy'));
+  // Presets can be selected after agent/created, before the first native step.
+  ctx.on('agent/pre-step', (step, next) => { initializeFilePolicy(step.agent); return next(); });
   // The pinned driver copies static AgentOptions, while the personal UI selects
   // models through DSH's scoped selection. Initialize a native child before its
   // loop starts, using the parent's actual request configuration and DSH's helper.
   ctx.on('agent/created', ({ agent }) => {
+    if (agent?.session?.header?.agentPreset !== 'personal-remote') return;
+    // D2: computer file access is unrestricted; approval is a separate native policy.
+    initializeFilePolicy(agent);
     if (agent?.session?.header?.origin !== 'subagent' || agent.session.header.agentPreset !== 'personal-remote') return;
+    const dispatch = webExecution.getStore();
+    if (dispatch) delegatedExecutions.set(agent, delegatedExecutions.get(dispatch.agent) ?? dispatch);
     const parent = ctx.get('agents')?.get(agent.session.header.parentSession);
     const config = agent.session.requestHeader?.()?.config ?? parent?.session?.requestHeader?.()?.config;
     if (typeof config?.provider !== 'string' || typeof config?.model !== 'string') throw refused('MODEL_UNAVAILABLE');
