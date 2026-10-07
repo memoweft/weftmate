@@ -8,6 +8,33 @@ export const RISK_LABELS = { delete: '删除文件，可能无法撤销', overwr
   external: '对外发送或发布内容，对方可能已接收，撤回不保证',
   spend: '付款或购买，退款不保证', execute: '执行工具操作，影响与可撤销性见操作详情' };
 
+// A printed arrow is data, not shell redirection. Expandable $(...) bodies
+// remain executable, including when they occur inside a double-quoted string.
+function quotedPowerShellText(source, offset) {
+  // An explicitly launched inner shell parses its quoted command again. Keep
+  // the existing conservative scan for that form rather than hiding its writes.
+  if (/\b(?:pwsh|powershell|bash|sh)\b[^\n]*\s(?:-Command|-c)\s/i.test(source)) return false;
+  let quote = null;
+  const expansions = [];
+  for (let i = 0; i < offset; i++) {
+    const char = source[i], next = source[i + 1];
+    if (char === '`' && quote !== "'") { i++; continue; }
+    if (quote) {
+      if (char === quote) {
+        if (next === quote) i++; else quote = null;
+      } else if (quote === '"' && char === '$' && next === '(') {
+        expansions.push({ quote, depth: 1 }); quote = null; i++;
+      }
+    } else if (char === "'" || char === '"') quote = char;
+    else if (expansions.length) {
+      const expansion = expansions.at(-1);
+      if (char === '(') expansion.depth++;
+      if (char === ')' && --expansion.depth === 0) { quote = expansion.quote; expansions.pop(); }
+    }
+  }
+  return quote !== null;
+}
+
 // One policy for all personal tools, including nested code-mode calls. Ordinary moves
 // and reads are allowed; force-replacing a destination is an overwrite.
 export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspected = new Set()) {
@@ -52,7 +79,8 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
     if (existsSync(target)) categories.add('overwrite');
   }
   // Literal output targets can be checked locally. Dynamic write targets need a decision.
-  for (const match of source.matchAll(/(?:\b(?:Set-Content|Out-File)\s+(?:(?:-LiteralPath|-FilePath|-Path)\s+)?|(?<![>])>(?!>)\s*)(?:'([^']+)'|"([^"]+)"|([^\s;|]+))/gi)) {
+  for (const match of source.matchAll(/(?:\b(?:Set-Content|Out-File)\s+(?:(?:-LiteralPath|-FilePath|-Path)\s+)?|(?<![>])>(?!>)\s*)(?:'([^']+)'|"([^"]+)"|([^\s;|(){}'"]+))/gi)) {
+    if (source[match.index] === '>' && /^(?:pwsh|powershell)$/.test(name) && quotedPowerShellText(source, match.index)) continue;
     const target = match[1] ?? match[2] ?? match[3];
     if (target.includes('$') || existsSync(resolve(cwd, target))) categories.add('overwrite');
   }

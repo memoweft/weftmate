@@ -2,6 +2,16 @@
 
 这份评测使用 Node 24 和 `/personal/v1`，没有新依赖。首批定义共 12 条：办事 6、记忆 4、跨端 2。Mac 用假 HTTP 服务自测 runner；Qwen / MiMo 的真实基线由 Windows 跑，不能把假服务通过率当作模型或产品通过率。
 
+## M0-7b 正式基线
+
+Windows 可运行 `node tests/integration/personal-scenario-baseline.mjs`（Qwen）与 `node tests/integration/personal-scenario-baseline.mjs --mimo`。每次启动真实 Electron（桌面程序框架）和固定 DSH（执行框架），新建隔离所有者账号和独立 MemoWeft Core（记忆核心）数据目录。两个模型都只登记指定入口和模型；记忆换模型场景的第二轮使用另一模型。密钥直接读取 Windows 用户环境中的 `MODEL_SWITCH_UNIFIED_KEY` / `MIMO_API_KEY`，通过账户 API（应用接口）传入仅内存的测试凭据适配；不读取日用保险库。程序退出后删除本次测试凭据、Cookie（会话凭据）与设置授权文件，并扫描隔离产物是否含明文模型密钥。
+
+`--diagnostic` 仅补验 action-06，不计正式基线。测试入口为主进程和原生 DSH 添加只记录时间与计数的 fetch（网络请求）观测：开始、响应头、首块、完成/取消、令牌用量；不记录请求头、目标文本、推理文本或密钥。私有产物位于 `C:/Temp/weftmate-m0-7b-*`。正式报告仍由 `/personal/v1` 的 `turn.ended` 判定完成；请求结束不等于场景通过。
+
+场景文件是 JSON 子集，校准依据写在 `notes`（说明字段）中，作为可由评测器保留的注释。2026-10-08 实测本地 27B 首轮 8,468 令牌预填充约82秒，生成约6–13 tokens/s（每秒令牌数）。时限涵盖全部回合：整理/读代码360秒；联网资料/脚本900秒；停止续做/删除两轮600秒；两轮记忆600秒、三轮纠正900秒。人工跨端600秒。目标、检查、审批次数与决定保持；不对未声明审批自动放行。时限是正式失败的截止线，不保证模型一定完成。
+
+报告中的每轮 `startedAt` / `endedAt` / `durationMs` 和 `timeline`（事件时间线）只保存公开事件类型、序号及时间，便于与8081和后端日志对齐。超时轮也保留已观察事件及耗时。
+
 ## Windows：先启动隔离宿主
 
 **runner 必须与宿主在同一台机器运行**，因为测试文件由 runner 写进这台机器的系统临时目录，检查也读取这些临时文件。`--host` 是宿主的 origin，不带 `/personal/v1`。跨端场景需要真人拿手机验收，自动运行只列为「需人工」。

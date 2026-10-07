@@ -42,3 +42,22 @@ test('risk recognition covers PowerShell, native file tools, code and launched s
     assert.match(approvalPrompt('auto'), /verbal instructions/)
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
+
+test('printed arrows do not request overwrite approval; actual redirections and quoted substitutions still do', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-risk-arrow-'))
+  try {
+    writeFileSync(join(cwd, 'existing.txt'), 'keep')
+    const command = `foreach ($u in @('https://nodejs.org/api/')) { $r = Invoke-WebRequest -Uri $u; Write-Output ("$u -> " + $r.StatusCode + " LEN:" + $r.Content.Length) }`
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command }, cwd), [])
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: String.raw`Write-Output (\"$u -> \" + $r.StatusCode)` }, cwd), [])
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: `Write-Output 'status -> $target'` }, cwd), [])
+    for (const command of [
+      `Write-Output "$u -> ok" > existing.txt`,
+      `Write-Output 'ok' > $target`,
+      `Write-Output "$(Write-Output ok > existing.txt)"`,
+      `powershell -Command "Write-Output ok > existing.txt"`,
+      `powershell -NoProfile -Command "Write-Output ok > existing.txt"`,
+      `Write-Output "$(Remove-Item existing.txt)"`,
+    ]) assert.ok(classifyPersonalRisk('pwsh', { command }, cwd).length > 0, command)
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
+})
