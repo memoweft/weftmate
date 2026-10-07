@@ -1,0 +1,52 @@
+{
+  "id": "action-05-stop-resume",
+  "category": "action",
+  "title": "中途停下再接着办",
+  "setup": {
+    "files": [
+      {
+        "path": "records.csv",
+        "content": "日期,金额\n2026-09-01,10\n2026-09-02,20\n"
+      }
+    ],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "帮我整理 {{testDir}}/records.csv 这份记录，我想先看到 {{testDir}}/进度.txt 写着「开始整理」。我这边还在核对资料，等半分钟再生成 {{testDir}}/汇总.md 就好，汇总里写上总金额。",
+      "stopAfterMs": 1000
+    },
+    {
+      "user": "核对好了，接着把刚才那份汇总做完吧，还是放在原来的地方。",
+      "resume": true
+    }
+  ],
+  "checks": [
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "aborted"
+    },
+    {
+      "type": "file_absent",
+      "turn": 1,
+      "path": "汇总.md"
+    },
+    {
+      "type": "file_contains",
+      "turn": 2,
+      "path": "汇总.md",
+      "text": "30"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "第一轮发送后 1 秒由 runner 调用任务 stop，等待 aborted，再调用同一根任务 resume；不把 HTTP 202 当停止完成。非 personal-remote 账号的任务接口可能不支持。"
+}

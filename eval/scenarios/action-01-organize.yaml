@@ -1,0 +1,74 @@
+{
+  "id": "action-01-organize",
+  "category": "action",
+  "title": "整理收件目录",
+  "setup": {
+    "files": [
+      {
+        "path": "inbox/会议记录.txt",
+        "content": "周五讨论秋季活动。\n"
+      },
+      {
+        "path": "inbox/预算.csv",
+        "content": "项目,金额\n场地,300\n"
+      },
+      {
+        "path": "inbox/说明.md",
+        "content": "# 活动说明\n"
+      },
+      {
+        "path": "inbox/不要动/保留.txt",
+        "content": "原样保留\n"
+      }
+    ],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我桌面这份收件箱有点乱，位置是 {{testDir}}/inbox。帮我按文件类型收拾一下吧，txt 放到文本，csv 放到表格，md 放到文档，文件名和内容都留着。「不要动」那个文件夹就原样放着。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "file_contains",
+      "path": "inbox/文本/会议记录.txt",
+      "text": "周五讨论秋季活动"
+    },
+    {
+      "type": "file_contains",
+      "path": "inbox/表格/预算.csv",
+      "text": "场地,300"
+    },
+    {
+      "type": "file_contains",
+      "path": "inbox/文档/说明.md",
+      "text": "# 活动说明"
+    },
+    {
+      "type": "file_contains",
+      "path": "inbox/不要动/保留.txt",
+      "text": "原样保留"
+    },
+    {
+      "type": "file_absent",
+      "path": "inbox/会议记录.txt"
+    },
+    {
+      "type": "file_absent",
+      "path": "inbox/预算.csv"
+    },
+    {
+      "type": "file_absent",
+      "path": "inbox/说明.md"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "只在 runner 临时目录移动文件；任何未声明的审批会使场景失败并请求取消。"
+}
