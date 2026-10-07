@@ -1,0 +1,48 @@
+{
+  "id": "memory-01-preference",
+  "category": "memory",
+  "title": "新对话采用表达偏好",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。我看到一大段术语就头疼。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "缓存到底是怎么回事？"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_matches",
+      "pattern": "买菜|菜市场|蔬菜|菜摊"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "在没有当前会话重复偏好的情况下，回复应中文为主，先用买菜相关日常例子解释缓存，再讲原理，避免上来堆术语。"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "需要第一轮形成并可注入测试账号记忆。新会话不复制偏好；回复匹配只是行为证据，memory_used 单独 unsupported。"
+}

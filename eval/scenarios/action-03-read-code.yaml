@@ -1,0 +1,55 @@
+{
+  "id": "action-03-read-code",
+  "category": "action",
+  "title": "读小项目解释金额计算",
+  "setup": {
+    "files": [
+      {
+        "path": "project/package.json",
+        "content": "{\"type\":\"module\"}\n"
+      },
+      {
+        "path": "project/pricing.mjs",
+        "content": "export function total(items, discount = 0) {\n  const cents = items.reduce((sum, x) => sum + Math.round(x.price * 100) * x.quantity, 0);\n  return Math.round(cents * (1 - discount)) / 100;\n}\n"
+      },
+      {
+        "path": "project/README.md",
+        "content": "# 小票金额\n折扣参数是 0 到 1 的比例。\n"
+      }
+    ],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "这个小项目在 {{testDir}}/project，我没看懂金额怎么算。两件单价 12.50 的东西，再打八折，最后会是多少钱？顺便说说它为什么先乘 100，代码先别改。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_matches",
+      "pattern": "20(?:\\.0{1,2})?"
+    },
+    {
+      "type": "reply_matches",
+      "pattern": "浮点|精度|分为|整数|分单位"
+    },
+    {
+      "type": "file_contains",
+      "path": "project/pricing.mjs",
+      "text": "Math.round(cents * (1 - discount)) / 100"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "固定项目由 runner 生成；评测读取代码与解释，文件内容检查验证关键代码仍在。"
+}
