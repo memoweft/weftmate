@@ -474,9 +474,9 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 
 召回使用 3.10 的实际地址及用户 `modelTier` 覆盖判断，initialize 与每次 World / interactions 召回使用最终 local/cloud。`cloudModelAllowed=false` 排除已写入的健康证据及其衍生项、依赖它们的助手历史，保留其他可读记忆；true 后云端可用，撤销选择后立即作用于全账号来源。来源同步失败时该次注入暂缓，待同步成功恢复，不使用旧授权数据。GET 提供客户端读取摘要，客户端不得把本地专用摘要自行注入云端模型。
 
-## 7. 云端账号与宿主云身份（S1a / S1b；完整客户端接入在 S1c）
+## 7. 云端账号与宿主云身份（S1a / S1b / S1c-Web）
 
-7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。**五端的完整云登录接入仍在 S1c**，桌面 Web 已提供内容设备待批准列表。云账号只授予云控制面访问，不授予宿主内容、shell 或备份解密权限；S1b 已实现宿主验签、DPoP、认领和 `/auth/cloud-session`。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
+7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。桌面/手机浏览器与 Android 壳已接入 S1c-Web；Apple 客户端另包。云账号只授予云控制面访问，不授予宿主内容、shell 或备份解密权限；S1b 已实现宿主验签、DPoP、认领和 `/auth/cloud-session`。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
 
 ### 7.1 账号交互接口
 
@@ -558,7 +558,7 @@ file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量�
 
 DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 秒 `iat`、`htm=POST`、**精确宿主 origin + 本次入口路径** `htu`（无 query/fragment）、`ath=base64url(SHA-256(accessToken))` 与宿主 nonce。nonce 与 `(公钥指纹,jti)` 提交后不可复用，重启不清空。宿主检查固定 issuer、RS256、固定 JWKS、`typ=at+jwt`、aud/host_id、host:session、sub/device_id/auth_epoch/iat/exp/jti/cnf.jkt；不接受 ID token，不读取 token jku/x5u，不把 JWT 送旧 Bearer tokenHash 路径。仅 DPoP 有效不构成内容信任；未知公钥仍返回等待批准。
 
-桌面 Web 在设置的设备卡中提供待批准列表与允许/拒绝，打开应用读取后在账户入口提示。手机/原生完整登录、二维码展示/扫描在 S1c，推送提醒在 S3。这里的 tlsSpki 已有本机内容密钥，实际 TLS listener/证书/原生 pin 连接验收在 S2。
+桌面/手机 Web 与 Android 在打开应用及前台每 15 秒读取待批准设备，可允许/拒绝；桌面设备卡展示一次性二维码并在两分钟后刷新。Android 本包用输入配对码，相机扫描另包；推送提醒在 S3。这里的 tlsSpki 已有本机内容密钥，实际 TLS listener/证书/原生 pin 连接验收在 S2。
 
 新增宿主业务码：401 `CLOUD_TOKEN_INVALID / DPOP_INVALID / DPOP_REPLAY / PAIRING_INVALID`；403 `LOCAL_SESSION_REQUIRED / CLOUD_NOT_BOUND / DEVICE_NOT_TRUSTED`；400 `CLAIM_INVALID`；409 `CLOUD_BINDING_CONFLICT / DEVICE_DECISION_CONFLICT`；503 `CLOUD_UNAVAILABLE / STORAGE_UNAVAILABLE`。Origin、CSRF、媒体类型、大小与原宿主约定一致。等待批准是正常 202，禁止当作已登录内容账户；拒绝/撤销返回 403，需电脑/受信设备重新明确批准，不能自动用邮箱恢复信任。
 
@@ -601,3 +601,21 @@ DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 �
 **离线与断流不是云伪造的宿主响应**：透传入口无法在不终止内容 TLS 的情况下保证返回宿主 JSON。离线/撤销/未就绪时可能 TLS 握手失败、EOF/连接重置、超时；已开始的 SSE/下载会直接断流。客户端将这些网络错误呈现为「宿主离线 / 连接不可用」，结合 discover 的 offline/revoked 状态；不可当作正常 200 或自动退出云账号。若 TLS adapter 已收到请求但本机 HTTP 入口不可用，可返回 HTTP 502（空体）。请求到达宿主后的 401/403/503 仍按原契约；云接口自身不可用为 503，和内容路径网络失败区分。online 仅为最近 15 秒连接/心跳指示，不是请求完成证明。
 
 重连后继续使用未过期宿主 Cookie，历史用 beforeSeq/afterSeq 与原水位，SSE 重新订阅；附件断流须按大小/SHA256 重取，未见终止标记不得认定已完成。原生端先执行标准 CA/域名验证，再比较配对得到的 SPKI；错误 pin 或同域另一合法证书均拒绝，不能以云目录覆盖 pin。证书续期使用同一内容 key；换 key 的可信更新另包。普通浏览器远程访问已由 D24 允许，接受云/DNS 完全主动控制时可被冒充的边界。
+
+
+### 7.7 浏览器与 Android 云登录（S1c-Web）
+
+| 提供者 / 方法与路径 | 请求 / 响应 |
+|---|---|
+| 宿主 GET `/personal/v1/cloud/config` | 无认证；200 `{issuer,hostId,clientId}`。只公开固定发行者与公开客户端 ID，不含绑定账号、公钥、凭据；未启用云为原 404 |
+| 宿主 GET `/personal/v1/cloud/binding` | 本账号 Cookie；200 `{status:"unbound"\|"pending"\|"active",canManage,hostId}`。只返回当前账号；canManage 仅电脑直接地址的本地密码 Cookie 为 true，实际写权限仍按 7.4 检查 |
+
+浏览器从宿主同 origin 的 `/personal/v1/ui/` 登录。`WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 `weftmate-web`；云 `CLOUD_OIDC_CLIENTS` 增加可选 `application_type:"web"\|"native"`（旧配置默认 native），**预登记精确回调 URI**。浏览器回调固定 `<宿主 origin>/personal/v1/ui/`，包括实际直接地址与中继地址；禁止通配符。Android 客户端 ID 为 `weftmate-android`，回调为 `com.memoweft.weftmate:/oauth`。部署配置需同时登记两个公开客户端；开发的回环 HTTP 仅在已有隔离测试开关下使用。
+
+授权请求仍为 7.2 Code + S256 PKCE，浏览器用标准 `response_mode=fragment`，Android 用 query。附加 `wm_device_id` 和 `wm_public_jwk`（仅公钥 JSON）给云同源登录表单自动填入隐藏字段；设备标识、公钥仍经过原邮件确认，不能因此获得内容信任。表单 publicJwk JSON 字符串由服务器解析后走原验证，JSON 调用方仍可传对象。OIDC CORS 只允许该客户端已登记回调 origin（公开 JWKS 按已登记 origin），云账号业务写仍只接受云同源 Origin；宿主不开放内容 CORS。云表单 CSP 的 form-action 仅允许 self 和该次已登记回调的 origin/scheme，防止浏览器拦截成功授权的返回跳转。
+
+WebCrypto 生成不可导出的 P-256 私钥，CryptoKey 与公开设备标识存 IndexedDB。校验 state、nonce、回调、固定 issuer/JWKS、RS256、audience、期限及 ID/access token 同一 sub；不使用 ID token 访问内容。等待批准时保留云凭据在 IndexedDB、正常每 3 秒用新 nonce/DPoP 重试；网络失败显示连接不可用并减慢重试，拒绝不自动重新排队。刷新原子替换旧 refresh token；得到宿主 HttpOnly Cookie 后删除临时云令牌。本地密码和云表单密码均不持久化，刷新令牌不进入 localStorage。
+
+桌面「添加新设备」二维码是 `<relay.baseUrl 或直接 origin>/personal/v1/ui/#pair=<base64url 配对 JSON>`；可复制码为 `wm1.<同一 base64url>`。内容完全来自 7.4/7.6 配对响应（包括 challenge、hostId、origin、tlsSpki、publicJwk、relay），两分钟单次使用，消费仍走 `/cloud/pairings/redeem` 与原 DPoP 验证。二维码持有者仍需登录同一云账号；短码不是独立认证。浏览器遵循 D24，不能在 WebCrypto 中声称实现 TLS pin。
+
+Android 0.8.2 / native code 15 的 WebView 保持本地界面，OIDC 在系统认证浏览器打开，经自定义 scheme 回到同一 Activity；只接收匹配原 state 的回调。首次云登录用输入配对码取得宿主 pin，无相机权限；密钥仍由 WebCrypto/IndexedDB 保存，刷新凭据与宿主 Cookie 存原生 Keystore 加密设置。原生所有宿主 HTTP/SSE/下载/更新连接先完成系统 CA/域名验证，再比较当面配对的 SPKI；不接受云目录替换已有 pin。电脑 key 轮换、相机扫描、Android 真机往返与 Apple 接入另包。此版手机 UI 发布时需 `--min-native-version-code 15`，旧壳保留原本地登录。

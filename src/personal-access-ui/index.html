@@ -7,6 +7,9 @@
   <title>账户与设备 · WeftMate</title>
   <link rel="stylesheet" href="/personal/v1/ui/styles.css">
   <script src="/personal/v1/ui/timeline.js" defer></script>
+  <script src="/personal/v1/ui/cloud-vendor.js" defer></script>
+  <script src="/personal/v1/ui/cloud-login.js" defer></script>
+  <script src="/personal/v1/ui/cloud-ui.js" defer></script>
   <script src="/personal/v1/ui/app.js" defer></script>
 </head>
 <body>
@@ -50,6 +53,11 @@
       <section class="card auth-card" id="login-view" hidden>
         <p class="eyebrow">欢迎回来</p><h1>登录 WeftMate</h1>
         <p class="muted intro">使用同一个账户，在这台设备上接续你的会话。</p>
+        <div id="cloud-login-section" hidden>
+          <button type="button" class="button primary submit" id="cloud-login">用 WeftMate 账号登录</button>
+          <details><summary>输入配对码</summary><label for="cloud-pairing-input" class="sr-only">配对码</label><textarea id="cloud-pairing-input" rows="2" placeholder="粘贴电脑上的配对码"></textarea></details>
+          <p class="muted">或直连这台电脑</p>
+        </div>
         <form id="login-form" novalidate>
           <label for="login-name">账户名</label>
           <input id="login-name" name="username" type="text" autocomplete="username" maxlength="128" required>
@@ -63,6 +71,10 @@
         <button type="button" class="button quiet" id="login-to-register">注册新账户</button>
       </section>
 
+      <section class="card auth-card" id="cloud-wait-view" hidden>
+        <h1>等待已有设备允许</h1><p id="cloud-wait-status" class="muted" role="status" aria-live="polite"></p>
+        <div class="actions"><button type="button" class="button secondary" id="cloud-wait-retry">重试</button><button type="button" class="button quiet" id="cloud-wait-cancel">返回登录</button></div>
+      </section>
       <section id="assistant-view" hidden>
         <div class="assistant-shell">
           <button type="button" class="rail-backdrop" id="rail-backdrop" aria-label="关闭会话侧栏" hidden></button>
@@ -187,8 +199,19 @@
             </details>
           </div>
         </section>
+        <section class="card group" id="cloud-account" hidden>
+          <h2>WeftMate 账号</h2><p id="cloud-binding-status" class="muted" role="status"></p>
+          <div class="actions"><button type="button" class="button primary" id="cloud-bind">绑定 WeftMate 账号</button><button type="button" class="button quiet" id="cloud-unbind" hidden>解绑</button></div>
+        </section>
         <section class="card group" aria-labelledby="devices-heading">
           <div class="group-heading"><div><h2 id="devices-heading">已登录设备</h2><p class="muted">“当前设备”表示正在使用这个页面；设备名称可单独修改。有效期和撤销状态来自宿主记录。</p></div><button type="button" class="button secondary small" id="devices-refresh">刷新</button></div>
+          <button type="button" class="button secondary" id="pairing-open" hidden>添加新设备</button>
+          <div id="pairing-panel" hidden>
+            <img id="pairing-qr" alt="一次性设备配对二维码" width="280" height="280">
+            <p id="pairing-status" class="muted" role="status" aria-live="polite"></p>
+            <label for="pairing-code" class="sr-only">一次性配对码</label><textarea id="pairing-code" rows="2" readonly></textarea>
+            <div class="actions"><button type="button" class="button secondary small" id="pairing-copy">复制配对码</button><button type="button" class="button quiet small" id="pairing-close">关闭</button></div>
+          </div>
           <p class="muted" id="devices-loading">正在读取设备…</p>
           <ul class="device-list" id="device-list" aria-live="polite"></ul>
           <div id="pending-devices" hidden>
