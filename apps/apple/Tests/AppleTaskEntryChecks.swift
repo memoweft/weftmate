@@ -28,14 +28,14 @@ private actor ReadOnlyHTTP: HTTPTransport {
         switch path {
         case "/personal/v1/auth/login": object = auth; headers["set-cookie"] = "wm_personal_session=" + String(repeating: "a", count: 43)
         case "/personal/v1/auth/me": object = auth
-        case "/personal/v1/status": object = ["ownerId": "owner-A", "hostId": "host-test"]
+        case "/personal/v1/status": object = ["ownerId": "owner-A", "hostId": "host-test", "backend": ["capabilities": ["desktopOpenApp": ["available": true]]]]
         case "/personal/v1/auth/devices": object = ["devices": [["id": "device-Mac", "name": "Fixture", "current": true]]]
         case "/personal/v1/sync/capabilities": object = ["deviceId": "device-Mac", "platform": "macos", "sharedConversations": 1]
         case "/personal/v1/sync/events": object = ["events": [], "nextSeq": 0, "hasMore": false]
         case "/personal/v1/sessions":
             object = ["sessions": [
-                ["sessionId": "session-remote", "title": "From another device", "running": false, "sendAvailable": false],
-                ["sessionId": "session-other", "title": "Other", "running": false, "sendAvailable": false]]]
+                ["sessionId": "session-remote", "title": "From another device", "running": false, "sendAvailable": true],
+                ["sessionId": "session-other", "title": "Other", "running": false, "sendAvailable": true]]]
         case "/personal/v1/sessions/session-remote/events", "/personal/v1/sessions/session-other/events":
             object = ["events": [], "nextSeq": -1, "hasMore": false]
         default:

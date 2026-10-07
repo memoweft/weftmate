@@ -163,7 +163,7 @@ public actor PersonalClient {
                               deviceName: String, displayName: String?) async throws -> AccountSession {
         let generation = try transition(server: server, clearSaved: true)
         let name = deviceName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !name.isEmpty, name.count <= 128 else { throw APIFailure.server(status: 400, code: "INVALID_REQUEST") }
+        guard !name.isEmpty, name.utf16.count <= 128 else { throw ClientInputFailure.deviceNameTooLong }
         var body = ["username": username, "password": password, "deviceName": name]
         if path == "/auth/register", let displayName, !displayName.isEmpty { body["displayName"] = displayName }
         let response: HTTPResponse
@@ -745,7 +745,8 @@ public actor PersonalClient {
         guard allowSubmission else { return .notFound }
         let initial: SharedConversationProjection = try await authorized(auth, generation, path: endpoint)
         try initial.validate(conversationID: intent.conversationId, hostID: intent.hostId)
-        guard initial.status == .unbound, initial.canAdopt else {
+        guard initial.status == .unbound, initial.canAdopt ||
+            (initial.requiresLocalTurnConfirmation && intent.acknowledgeUncertainLocalTurn) else {
             throw APIFailure.server(status: 409, code: initial.reasonCode ?? "CONVERSATION_NOT_READY")
         }
         guard initial.syncThroughSeq == intent.expectedSyncSeq else { throw APIFailure.server(status: 409, code: "CONVERSATION_SYNC_CHANGED") }
@@ -755,6 +756,134 @@ public actor PersonalClient {
         let projection: SharedConversationProjection = try decode(response.body)
         return .found(try SharedAdoptionReceipt(command: reply.command, projection: projection,
             intent: intent, knownBindingRevision: knownBindingRevision))
+    }
+
+    /// The current API omits session origin. A positive owner-only desktop capability plus
+    /// sendAvailable proves personal-remote; shared accounts are forced unavailable by /status.
+    public func taskControlSessionIDs() async throws -> Set<String> {
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        struct Capability: Decodable { let available: Bool }
+        struct Capabilities: Decodable { let desktopOpenApp: Capability? }
+        struct Backend: Decodable { let capabilities: Capabilities? }
+        struct Status: Decodable { let ownerId: String; let hostId: String; let backend: Backend? }
+        let status: Status = try await authorized(auth, generation, path: "/status")
+        guard status.ownerId == auth.session.account.ownerId, status.hostId == auth.session.hostId else { throw APIFailure.identityMismatch }
+        guard status.backend?.capabilities?.desktopOpenApp?.available == true else { return [] }
+        let sessions: SessionsReply = try await authorized(auth, generation, path: "/sessions")
+        return Set(sessions.sessions.filter { $0.sendAvailable && $0.unavailable != true }.map(\.sessionId))
+    }
+
+    public func uploadOriginalAttachment(_ metadata: OriginalAttachment, file: URL, conversationID: String,
+                                         messageID: String) async throws {
+        try metadata.validate()
+        try SharedValidation.require(OriginalAttachmentValidation.syncID(conversationID) && OriginalAttachmentValidation.syncID(messageID))
+        let path = try attachmentPath("/sync/attachments/" + metadata.id,
+            query: ["conversationId": conversationID, "messageId": messageID, "name": metadata.name])
+        let response = try await uploadAttachment(path: path, metadata: metadata, file: file)
+        struct Reply: Decodable { let attachment: OriginalAttachment }
+        let reply: Reply = try decode(response.body)
+        guard reply.attachment == metadata else { throw APIFailure.identityMismatch }
+    }
+    public func uploadSessionAttachment(_ metadata: OriginalAttachment, file: URL, sessionID: String,
+                                        requestID: String) async throws {
+        try SharedValidation.require(SharedValidation.id(sessionID) && SharedValidation.request(requestID))
+        try AttachmentLimits.validate(staged: [metadata], originals: nil, messageID: nil)
+        let path = try attachmentPath("/sessions/" + sessionID + "/attachments/" + metadata.id,
+            query: ["requestId": requestID, "name": metadata.name])
+        let response = try await uploadAttachment(path: path, metadata: metadata, file: file)
+        struct Reply: Decodable { let attachment: OriginalAttachment }
+        let reply: Reply = try decode(response.body)
+        guard reply.attachment == metadata else { throw APIFailure.identityMismatch }
+    }
+    public func uploadAttachmentDisplay(_ original: OriginalAttachment, file: URL, conversationID: String,
+                                        messageID: String) async throws {
+        try original.validate()
+        try SharedValidation.require(original.isImage && OriginalAttachmentValidation.syncID(conversationID) && OriginalAttachmentValidation.syncID(messageID))
+        let metadata = try OriginalAttachment.fromFile(file, name: original.name, contentType: "image/jpeg", attachmentID: original.id)
+        guard metadata.size <= AttachmentLimits.displayBytes else { throw ClientInputFailure.attachmentTooLarge }
+        let path = try attachmentPath("/sync/attachments/" + original.id,
+            query: ["conversationId": conversationID, "messageId": messageID, "variant": "display"])
+        let response = try await uploadAttachment(path: path, metadata: metadata, file: file)
+        struct Display: Decodable { let attachmentId: String; let contentType: String; let size: Int; let sha256: String }
+        struct Reply: Decodable { let display: Display }
+        let reply: Reply = try decode(response.body)
+        guard reply.display.attachmentId == original.id, reply.display.contentType == metadata.contentType,
+              reply.display.size == metadata.size, reply.display.sha256 == metadata.sha256 else { throw APIFailure.identityMismatch }
+    }
+    public func downloadOriginalAttachment(_ metadata: OriginalAttachment, to file: URL) async throws {
+        try metadata.validate()
+        try await downloadAttachment(path: "/sync/attachments/" + metadata.id, to: file,
+            maximumBytes: metadata.size, contentType: metadata.contentType, expectedHash: metadata.sha256, expectedSize: metadata.size)
+    }
+    public func downloadAttachmentDisplay(_ metadata: OriginalAttachment, to file: URL) async throws {
+        try metadata.validate()
+        try await downloadAttachment(path: "/sync/attachments/" + metadata.id + "?variant=display", to: file,
+            maximumBytes: AttachmentLimits.displayBytes, contentType: "image/jpeg")
+    }
+    public func downloadSessionImage(_ image: SharedHistoryImage, sessionID: String, to file: URL) async throws {
+        try SharedValidation.require(SharedValidation.id(sessionID) && image.attachmentId.hasPrefix("sha256:") &&
+            SharedValidation.hash(String(image.attachmentId.dropFirst(7))) && image.size > 0 && image.size <= AttachmentLimits.imageBytes &&
+            ["image/png", "image/jpeg", "image/webp", "image/gif"].contains(image.contentType))
+        try await downloadAttachment(path: "/sessions/" + sessionID + "/attachments/" + image.attachmentId.replacingOccurrences(of: ":", with: "%3A"),
+            to: file, maximumBytes: image.size, contentType: image.contentType,
+            expectedHash: String(image.attachmentId.dropFirst(7)), expectedSize: image.size)
+    }
+    private func attachmentPath(_ path: String, query: [String: String]) throws -> String {
+        var components = URLComponents(); components.path = path
+        components.queryItems = query.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
+        guard let value = components.string else { throw APIFailure.invalidResponse }; return value
+    }
+    private func uploadAttachment(path: String, metadata: OriginalAttachment, file: URL) async throws -> HTTPResponse {
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        guard try file.resourceValues(forKeys: [.fileSizeKey]).fileSize == metadata.size,
+              try AttachmentLimits.sha256(file: file) == metadata.sha256 else { throw ClientInputFailure.invalidAttachment }
+        var request = URLRequest(url: URL(string: auth.session.server.originString + "/personal/v1" + path)!)
+        request.httpMethod = "PUT"; request.setValue(auth.cookie, forHTTPHeaderField: "Cookie")
+        request.setValue(auth.csrf, forHTTPHeaderField: "X-WeftMate-CSRF")
+        request.setValue(auth.session.server.originString, forHTTPHeaderField: "Origin")
+        request.setValue(metadata.contentType, forHTTPHeaderField: "Content-Type")
+        request.setValue(String(metadata.size), forHTTPHeaderField: "Content-Length")
+        request.setValue(metadata.sha256, forHTTPHeaderField: "X-WeftMate-SHA256")
+        let response = try await attachmentResponse(auth, generation) { try await self.transport.upload(request, file: file) }
+        guard [200, 201].contains(response.status) else { throw APIFailure.invalidResponse }
+        return response
+    }
+    private func downloadAttachment(path: String, to file: URL, maximumBytes: Int, contentType: String,
+                                     expectedHash: String? = nil, expectedSize: Int? = nil) async throws {
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        var request = URLRequest(url: URL(string: auth.session.server.originString + "/personal/v1" + path)!)
+        request.setValue(auth.cookie, forHTTPHeaderField: "Cookie")
+        var success = false
+        defer { if !success { try? FileManager.default.removeItem(at: file) } }
+        let response = try await attachmentResponse(auth, generation) {
+            try await self.transport.download(request, to: file, maximumBytes: maximumBytes)
+        }
+        let size = try file.resourceValues(forKeys: [.fileSizeKey]).fileSize ?? 0
+        guard response.status == 200, size > 0, size <= maximumBytes,
+              response.headers["content-type"]?.components(separatedBy: ";").first == contentType,
+              expectedSize == nil || size == expectedSize,
+              try expectedHash == nil || AttachmentLimits.sha256(file: file) == expectedHash else { throw APIFailure.invalidResponse }
+        success = true
+    }
+    private func attachmentResponse(_ auth: Credential, _ generation: UInt64,
+                                    operation: () async throws -> HTTPResponse) async throws -> HTTPResponse {
+        do {
+            try check(generation)
+            let response = try await operation(); try check(generation)
+            if (300...399).contains(response.status) { throw APIFailure.transport(.redirect) }
+            guard (200...299).contains(response.status) else { throw serverFailure(response) }
+            return response
+        } catch {
+            try check(generation)
+            if shouldForget(error) {
+                credential = nil; clearCaches(); epoch &+= 1
+                try store.delete(key: credentialKey(server: auth.session.server, platform: platform))
+            }
+            throw error
+        }
     }
 
     private func retainSharedIntent(requestID: String, payload: Data, endpoint: String) throws {
@@ -886,10 +1015,10 @@ public actor PersonalClient {
     private func syncMessage(_ event: SyncEvent, pending: Bool) throws -> ChatMessage {
         guard let role = event.payload.role, let id = event.payload.messageId, validID(id),
               let text = event.payload.text, text.count <= 16_384 else { throw APIFailure.invalidResponse }
-        try OriginalAttachmentValidation.validate(event.payload.attachments, messageID: nil, unpreviewedIDs: nil)
+        try OriginalAttachmentValidation.validate(event.payload.attachments, messageID: nil, unpreviewedIDs: nil, maximumCount: 8)
         let originals = event.payload.originalAttachments ?? event.payload.attachments ?? []
         try OriginalAttachmentValidation.validate(originals, messageID: event.payload.attachmentMessageId,
-            unpreviewedIDs: event.payload.unpreviewedOriginalImageIds)
+            unpreviewedIDs: event.payload.unpreviewedOriginalImageIds, maximumCount: 8)
         return .init(id: "sync|\(event.sourceDeviceId)|\(id)", role: role, text: text,
             occurredAt: event.occurredAt, sourceDeviceId: event.sourceDeviceId,
             attachmentCount: OriginalAttachmentValidation.count(originals: originals, previewCount: event.payload.attachments?.count ?? 0,
@@ -900,7 +1029,8 @@ public actor PersonalClient {
     private func hostMessage(_ event: HistoryEvent, sessionID: String) throws -> ChatMessage? {
         guard ["user.message", "assistant.message"].contains(event.type) else { return nil }
         let text = event.data["text"]?.string ?? ""
-        let images = event.data["images"]?.count ?? 0
+        let imageMetadata: [SharedHistoryImage]? = try optionalHistoryField(event.data["images"])
+        let images = imageMetadata?.count ?? 0
         let originals: [OriginalAttachment]? = try optionalHistoryField(event.data["originalAttachments"])
         let messageID: String? = try optionalHistoryField(event.data["attachmentMessageId"])
         let unpreviewedIDs: [String]? = try optionalHistoryField(event.data["unpreviewedOriginalImageIds"])
@@ -909,7 +1039,7 @@ public actor PersonalClient {
         return .init(id: "host|\(sessionID)|\(event.seq)", role: event.type == "user.message" ? .user : .assistant,
             text: text, occurredAt: event.at, sourceDeviceId: nil,
             attachmentCount: OriginalAttachmentValidation.count(originals: originals, previewCount: images, unpreviewedIDs: unpreviewedIDs),
-            truncated: event.data["truncated"]?.bool ?? false, pendingContext: false, originalAttachments: originals ?? [],
+            truncated: event.data["truncated"]?.bool ?? false, pendingContext: false, images: imageMetadata ?? [], originalAttachments: originals ?? [],
             attachmentMessageId: messageID, unpreviewedOriginalImageIds: unpreviewedIDs ?? [])
     }
     private func optionalHistoryField<T: Decodable>(_ value: JSONValue?) throws -> T? {

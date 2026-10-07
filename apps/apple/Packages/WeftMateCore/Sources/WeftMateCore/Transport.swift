@@ -14,6 +14,21 @@ public struct HTTPResponse: Sendable {
 
 public protocol HTTPTransport: Sendable {
     func send(_ request: URLRequest) async throws -> HTTPResponse
+    func upload(_ request: URLRequest, file: URL) async throws -> HTTPResponse
+    func download(_ request: URLRequest, to file: URL, maximumBytes: Int) async throws -> HTTPResponse
+}
+
+extension HTTPTransport {
+    public func upload(_ request: URLRequest, file: URL) async throws -> HTTPResponse {
+        var request = request; request.httpBody = try Data(contentsOf: file)
+        return try await send(request)
+    }
+    public func download(_ request: URLRequest, to file: URL, maximumBytes: Int) async throws -> HTTPResponse {
+        let response = try await send(request)
+        guard response.body.count <= maximumBytes else { throw APIFailure.responseTooLarge }
+        if (200...299).contains(response.status) { try response.body.write(to: file) }
+        return response
+    }
 }
 
 private final class RedirectRefuser: NSObject, URLSessionTaskDelegate, Sendable {
@@ -24,6 +39,7 @@ private final class RedirectRefuser: NSObject, URLSessionTaskDelegate, Sendable 
 
 public final class URLSessionTransport: HTTPTransport, Sendable {
     private let session: URLSession
+    private let transferSession: URLSession
     #if DEBUG
     private let developmentRoute: DevelopmentProxyRoute?
     #endif
@@ -32,11 +48,12 @@ public final class URLSessionTransport: HTTPTransport, Sendable {
         developmentRoute = nil
         #endif
         session = URLSession(configuration: Self.standardConfiguration(), delegate: RedirectRefuser(), delegateQueue: nil)
+        transferSession = URLSession(configuration: Self.standardConfiguration(fileTransfer: true), delegate: RedirectRefuser(), delegateQueue: nil)
     }
-    private static func standardConfiguration() -> URLSessionConfiguration {
+    private static func standardConfiguration(fileTransfer: Bool = false) -> URLSessionConfiguration {
         let config = URLSessionConfiguration.ephemeral
         config.httpCookieStorage = nil; config.httpShouldSetCookies = false; config.urlCache = nil
-        config.timeoutIntervalForRequest = 20; config.timeoutIntervalForResource = 30
+        if !fileTransfer { config.timeoutIntervalForRequest = 20; config.timeoutIntervalForResource = 30 }
         return config
     }
     #if DEBUG
@@ -52,8 +69,51 @@ public final class URLSessionTransport: HTTPTransport, Sendable {
         config.proxyConfigurations = [proxy]
         developmentRoute = route
         session = URLSession(configuration: config, delegate: RedirectRefuser(), delegateQueue: nil)
+        let transferConfig = Self.standardConfiguration(fileTransfer: true)
+        transferConfig.proxyConfigurations = [proxy]
+        transferSession = URLSession(configuration: transferConfig, delegate: RedirectRefuser(), delegateQueue: nil)
     }
     #endif
+    public func upload(_ request: URLRequest, file: URL) async throws -> HTTPResponse {
+        #if DEBUG
+        if let developmentRoute { try developmentRoute.validate(request.url) }
+        #endif
+        let (data, response) = try await transferSession.upload(for: request, fromFile: file)
+        guard let http = response as? HTTPURLResponse else { throw APIFailure.invalidResponse }
+        guard data.count <= 1_048_576 else { throw APIFailure.responseTooLarge }
+        return .init(status: http.statusCode, headers: Self.headers(http), body: data)
+    }
+    public func download(_ request: URLRequest, to file: URL, maximumBytes: Int) async throws -> HTTPResponse {
+        #if DEBUG
+        if let developmentRoute { try developmentRoute.validate(request.url) }
+        #endif
+        let (bytes, response) = try await transferSession.bytes(for: request)
+        guard let http = response as? HTTPURLResponse else { throw APIFailure.invalidResponse }
+        guard !(300...399).contains(http.statusCode) else { throw APIFailure.transport(.redirect) }
+        guard (200...299).contains(http.statusCode) else {
+            var error = Data()
+            for try await byte in bytes { guard error.count < 1_048_576 else { throw APIFailure.responseTooLarge }; error.append(byte) }
+            return .init(status: http.statusCode, headers: Self.headers(http), body: error)
+        }
+        guard response.expectedContentLength <= maximumBytes else { throw APIFailure.responseTooLarge }
+        FileManager.default.createFile(atPath: file.path, contents: nil)
+        let output = try FileHandle(forWritingTo: file)
+        var success = false
+        defer { try? output.close(); if !success { try? FileManager.default.removeItem(at: file) } }
+        var buffer = Data(), count = 0
+        for try await byte in bytes {
+            guard count < maximumBytes else { throw APIFailure.responseTooLarge }
+            count += 1; buffer.append(byte)
+            if buffer.count == 65_536 { try output.write(contentsOf: buffer); buffer.removeAll(keepingCapacity: true) }
+        }
+        try output.write(contentsOf: buffer); success = true
+        return .init(status: http.statusCode, headers: Self.headers(http), body: Data())
+    }
+    private static func headers(_ http: HTTPURLResponse) -> [String: String] {
+        var headers: [String: String] = [:]
+        for (key, value) in http.allHeaderFields { headers[String(describing: key).lowercased()] = String(describing: value) }
+        return headers
+    }
     public func send(_ request: URLRequest) async throws -> HTTPResponse {
         #if DEBUG
         if let developmentRoute { try developmentRoute.validate(request.url) }

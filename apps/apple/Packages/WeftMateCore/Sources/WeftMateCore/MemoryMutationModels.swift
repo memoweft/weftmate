@@ -40,7 +40,7 @@ public struct MemoryMutationIntent: Codable, Equatable, Sendable {
         struct Body: Encodable { let requestId: String; let expectedWorldRevision: Int; let text: String? }
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
         let payload = try encoder.encode(Body(requestId: requestId, expectedWorldRevision: expectedWorldRevision, text: correction))
-        try SharedValidation.require(payload.count <= (operation == .correct ? 16_384 : 12_288))
+        guard payload.count <= 12_288 else { throw ClientInputFailure.correctionTooLarge }
         self.server = server; self.ownerId = ownerId; self.hostId = hostId; self.operation = operation; self.itemKind = itemKind
         self.targetId = targetId; self.requestId = requestId; self.expectedWorldRevision = expectedWorldRevision; self.correction = correction; self.payload = payload
     }
