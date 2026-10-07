@@ -1621,7 +1621,7 @@ async function bootstrap() {
       const proof = personalAccessService.privateAccountModelProof(ownerId, selected.id);
       const key = credentialForModelProfile(selected);
       return proof && key ? { profileId: selected.id, baseUrl: selected.baseUrl,
-        model: selected.model, modelTier: memoryRecallModelTier(selected, memoryPolicyAccess()),
+        model: selected.model, modelTier: memoryRecallModelTier(selected),
         routeFingerprint: proof.routeFingerprint, credential: key } : null;
     }
     const config = personalMemoryRuntimeConfig;
@@ -1630,7 +1630,7 @@ async function bootstrap() {
     const authProfile = profiles.find((profile) => profile.id === config.authRef);
     const key = authProfile ? credentialForModelProfile(authProfile) : null;
     return key ? { profileId: config.authRef, baseUrl: config.baseUrl,
-      model: config.model, modelTier: memoryRecallModelTier(selected, memoryPolicyAccess()),
+      model: config.model, modelTier: memoryRecallModelTier(selected),
       routeFingerprint: null, credential: key } : null;
   }
   const createWebRuntime = () => new DshWebRuntime({
@@ -2208,15 +2208,20 @@ async function bootstrap() {
     const providedKey = String(input?.apiKey ?? '').trim();
     const baseUrl = normalizeApiBaseUrl(String(input?.baseUrl ?? '').trim());
     const nextModel = String(input?.model ?? '').trim();
-    if (!baseUrl) throw new TypeError('API 地址必须是 HTTPS，或不含凭据、查询参数或片段的本机 HTTP 地址');
+    if (input?.modelTier !== undefined && !['auto', 'local', 'cloud'].includes(input.modelTier)) {
+      throw new TypeError('模型位置必须是 auto、local 或 cloud');
+    }
+    if (!baseUrl) throw new TypeError('API 地址必须是 HTTPS，或不含凭据、查询参数或片段的本机/局域网 HTTP 地址');
     return enqueueRouteMutation(async () => {
       const profilesBefore = settingsMod.listModelProfiles().profiles;
       const wasUnconfigured = profilesBefore.length === 0;
       const prior = profilesBefore.find((item) => item.id === id);
       const publicName = String(input?.name ?? '').trim() || nextModel;
+      const modelTier = input.modelTier ?? prior?.modelTier;
+      const tierSetting = modelTier !== undefined ? { modelTier } : {};
       const officialRoute = routeForProfile(id);
       const exactLocalRepair = catalogOnly && prior && prior.baseUrl === baseUrl &&
-        prior.model === nextModel && prior.name === publicName &&
+        prior.model === nextModel && prior.name === publicName && prior.modelTier === modelTier &&
         providedKey.length > 0 &&
         providedKey === (configStoreMod.getCredential(id) ??
           configStoreMod.getCredential(officialCredentialRef(officialRoute.provider)));
@@ -2278,7 +2283,7 @@ async function bootstrap() {
             const installed = await migrateLegacyRoutes(client, [projection]);
             addedOfficialRoute = installed.mutated;
             const saved = exactLocalRepair ? prior : settingsMod.upsertModelProfile({
-              id, name: publicName, provider: 'openai-compatible', baseUrl, model: clean.model, reasoningEffort: 'off',
+              id, name: publicName, provider: 'openai-compatible', baseUrl, model: clean.model, reasoningEffort: 'off', ...tierSetting,
             });
             await ensureSharedRuntime({ reload: true });
             const restarted = createOfficialDshSettingsClient({ origin: runtimeOrigin });
@@ -2326,7 +2331,7 @@ async function bootstrap() {
       await validateStageOneModel(clean);
       const profile = await mutateModelRouteTransaction(async () => {
         configStoreMod.saveCredential(id, apiKey);
-        const saved = settingsMod.upsertModelProfile({ id, name: clean.name || clean.model, provider: 'openai-compatible', baseUrl, model: clean.model, reasoningEffort: 'off' });
+        const saved = settingsMod.upsertModelProfile({ id, name: clean.name || clean.model, provider: 'openai-compatible', baseUrl, model: clean.model, reasoningEffort: 'off', ...tierSetting });
         if (childEnvironmentChanged) await ensureSharedRuntime({ reload: true });
         return saved;
       });
@@ -2370,7 +2375,7 @@ async function bootstrap() {
     const activeBefore = settingsMod.listModelProfiles().activeId;
     const updated = settingsMod.upsertModelProfile({ id: profile.id, name: profile.name,
       provider: 'openai-compatible', baseUrl: profile.baseUrl, model: profile.model,
-      reasoningEffort: 'low' });
+      reasoningEffort: 'low', ...(profile.modelTier !== undefined ? { modelTier: profile.modelTier } : {}) });
     if (settingsMod.listModelProfiles().activeId !== activeBefore) {
       throw new Error('observed low profile changed active model');
     }
@@ -3015,7 +3020,8 @@ async function bootstrap() {
             addedOfficialRoute = installed.mutated;
             settingsMod.upsertModelProfile({ id: target.profileId, name: target.name,
               provider: 'openai-compatible', baseUrl: target.baseUrl,
-              model: target.modelId, reasoningEffort: 'off' }, { preserveActive: true });
+              model: target.modelId, reasoningEffort: 'off',
+              ...(target.modelTier !== undefined ? { modelTier: target.modelTier } : {}) }, { preserveActive: true });
             if (settingsMod.listModelProfiles().activeId !== previousActive) {
               throw new Error('product default model changed while registering account route');
             }
@@ -3068,7 +3074,7 @@ async function bootstrap() {
             contextWindow: installed?.contextWindow, maxTokens: installed?.maxTokens }) }] };
         const exact = isDeepStrictEqual(snapshot.userProviders[route.provider],
           projectOfficialProviderConfig(projection)) && profile?.baseUrl === target.baseUrl &&
-          profile.model === target.modelId && !!configStoreMod.getCredential(ref);
+          profile.model === target.modelId && profile.modelTier === target.modelTier && !!configStoreMod.getCredential(ref);
         const clean = !Object.hasOwn(snapshot.userProviders, route.provider) && !profile &&
           !configStoreMod.getCredential(ref);
         return { applied: exact, clean };

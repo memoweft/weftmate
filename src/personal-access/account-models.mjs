@@ -58,6 +58,7 @@ export function createAccountModelOperations(context) {
         model.revisions[String(target.runtimeRevision)] = {
           revision: target.runtimeRevision, profileId: target.profileId,
           baseUrl: target.baseUrl, modelId: target.modelId,
+          ...(target.modelTier !== undefined ? { modelTier: target.modelTier } : {}),
           routeFingerprint: target.routeFingerprint, createdAt: now,
         };
         model.runtimeRevision = target.runtimeRevision;

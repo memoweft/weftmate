@@ -143,14 +143,5 @@ export function createPersonalHealthStore({ root, clock = Date.now }) {
         evidence: row.evidence,
       })));
     },
-    withRecallPolicy(ownerId, modelTier, work) {
-      return serial(ownerId, async () => {
-        const state = await read(ownerId);
-        if (modelTier !== 'local' && state.summaries.length && !state.preferences.cloudModelAllowed) {
-          return { state: 'withheld', reasonCode: 'MEMORY_HEALTH_CLOUD_BLOCKED' };
-        }
-        return work();
-      });
-    },
   };
 }

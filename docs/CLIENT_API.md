@@ -220,16 +220,18 @@
 | POST `/models/{modelProfileId}/verify` | `{}` | 200 `{"configured":true,"reachable":true,"modelListed":true,"inferenceVerified":false}` | 422 `MODEL_UNAVAILABLE`；503 `CAPABILITY_UNAVAILABLE` | 手、安 |
 | POST `/models/{modelProfileId}/chat/completions` | `model,messages`；可选 `tools,tool_choice,stream,max_tokens,temperature`；≤256 KiB | 200 `{"choices":[{"message":{"role":"assistant","content":"你好"},"finish_reason":"stop"}],"usage":{"total_tokens":10}}`；`stream:true` 为 SSE `data: …`，以 `data: [DONE]` 结束 | 422 `MODEL_UNAVAILABLE`；503 `CAPABILITY_UNAVAILABLE / BACKEND_UNAVAILABLE` | 手、安 |
 | GET `/account/models` | 无 | 200 `{"models":[AccountModel],"canManage":true}` | — | 桌、手、安 |
-| POST `/account/models` | `requestId,name,baseUrl,modelId,apiKey`；≤12 KiB | 202 `ModelOperation`；重放完成请求可200 | 400 `ACCOUNT_MODEL_SECRET_REQUIRED`；409 `REQUEST_CONFLICT`；503 `ACCOUNT_MODEL_UNAVAILABLE` | 桌、手、安 |
+| POST `/account/models` | `requestId,name,baseUrl,modelId,apiKey`；可选 `modelTier`；≤12 KiB | 202 `ModelOperation`；重放完成请求可200 | 400 `ACCOUNT_MODEL_SECRET_REQUIRED`；409 `REQUEST_CONFLICT`；503 `ACCOUNT_MODEL_UNAVAILABLE` | 桌、手、安 |
 | GET `/account/models/{accountModelId}` | 无 | 200 `{"model":AccountModel}` | 404 `NOT_FOUND` | 手（转移前核对）、安 |
-| PATCH `/account/models/{accountModelId}` | `requestId,expectedRevision`；至少一个 `name,baseUrl,modelId,apiKey`；≤12 KiB | 202/200 `ModelOperation` | 409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_BUSY / REQUEST_CONFLICT`；400 `ACCOUNT_MODEL_SECRET_REQUIRED` | 桌、安（能力） |
+| PATCH `/account/models/{accountModelId}` | `requestId,expectedRevision`；至少一个 `name,baseUrl,modelId,apiKey,modelTier`；≤12 KiB | 202/200 `ModelOperation` | 409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_BUSY / REQUEST_CONFLICT`；400 `ACCOUNT_MODEL_SECRET_REQUIRED` | 桌、安（能力） |
 | DELETE `/account/models/{accountModelId}` | `requestId,expectedRevision`（JSON体） | 202/200 `ModelOperation` | 409修订/忙/请求冲突 | 桌、安（能力） |
 | POST `/account/models/{accountModelId}/test` | `requestId,expectedRevision` | 202/200 `ModelOperation`，后续 `operation.testResult` | 409修订/忙/请求冲突 | 桌、手、安 |
 | POST `/account/models/{accountModelId}/stop-using` | `requestId,expectedRevision` | 202/200 `ModelOperation` | 409修订/忙/请求冲突 | 桌、安（能力） |
 | POST `/account/models/{accountModelId}/transfer` | `requestId,expectedRevision`；Cookie密码设备且已声明转移能力 | 200 `{"model":AccountModel,"apiKey":"<secret>"}` | 403 `FORBIDDEN`；409 `ACCOUNT_MODEL_REVISION_CHANGED / ACCOUNT_MODEL_UNAVAILABLE / REQUEST_CONFLICT` | 手、安 |
 | GET `/account/models/by-request/{requestId}` | 无 | 200 `ModelOperation` | 404 `NOT_FOUND` | 桌、手、安 |
 
-`AccountModel`：`{"accountModelId":"account-model-<uuid>","revision":1,"profileId":"private-model-…","name":"自用","provider":"openai-compatible","baseUrl":"https://model.example/v1","modelId":"model","routeFingerprint":"…","configured":true,"status":"active","createdAt":"…","updatedAt":"…"}`。列表不含密钥；`transfer` 是已有的显式传密钥接口，重复 `requestId` 不作为可重放的密钥回执。改 `baseUrl` 必须同时给新 `apiKey`。账号模型变更要求密码Cookie管理权限，登记后由 `by-request` 核对。
+`AccountModel`：`{"accountModelId":"account-model-<uuid>","revision":1,"profileId":"private-model-…","name":"自用","provider":"openai-compatible","baseUrl":"https://model.example/v1","modelId":"model","modelTier":"auto","sourceKind":"cloud","routeFingerprint":"…","configured":true,"status":"active","createdAt":"…","updatedAt":"…"}`。列表不含密钥；`transfer` 是已有的显式传密钥接口，重复 `requestId` 不作为可重放的密钥回执。改 `baseUrl` 必须同时给新 `apiKey`。账号模型变更要求密码Cookie管理权限，登记后由 `by-request` 核对。
+
+模型配置的可选 `modelTier` 为 `auto / local / cloud`：POST 省略或设 auto 按地址判断，PATCH 省略保留原值、auto 恢复自动判断，local/cloud 为用户覆盖（例如把 loopback 云端代理设为 cloud）。`AccountModel` 与 GET `/models` 返回 modelTier（旧配置显示 auto）和最终 `sourceKind: local | cloud`。自动判断使用实际 base URL 主机：127.0.0.0/8、::1、localhost、10/8、172.16/12、192.168/16、`*.local` 为 local，其余为 cloud；不要求正式本地 profile。HTTP 地址可用于上述本机/局域网范围，其他地址仍要求 HTTPS。字段跟随模型 runtime 修订持久化、可转移；仅改变位置也生成新的 profileId，旧会话保留原配置。无字段的旧请求/存储继续兼容，非法值返回 400 `INVALID_REQUEST`。
 
 `ModelOperation`：`{"operation":{"requestId":"model-1","kind":"create","accountModelId":"account-model-…","status":"pending","createdAt":"…","updatedAt":"…"},"model":AccountModel}`；状态 `pending / applying / succeeded / failed / uncertain`，可有 `expectedRevision,resultRevision,reasonCode,errorCode,testResult`。模型选择是创建会话时的 `modelProfileId`，当前没有独立的会话换模型 `/personal/v1` 路由。
 
@@ -476,4 +478,4 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 
 每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期，含设备描述、时区与汇总时间；不会构造 user 对话 boundary。当前已有 `personal-memory` 桥接缺少 observed 写入能力，故先保存可回放的待写证据，覆盖和删除同步替换/移除队列内容。MemoWeft 需补 observed upsert、来源权限更新/真实撤回（含衍生项/索引）、按目标模型过滤的召回契约与回执，然后经现有桥接回放；不得直接另写数据库或把 observed 伪装为发言。
 
-`cloudModelAllowed=false` 时，在每次个人记忆召回 RPC 前拒绝 cloud/未知目的地：返回内部 `withheld / MEMORY_HEALTH_CLOUD_BLOCKED`，插件清除旧记忆 snapshot。当前混合召回缺少来源过滤，限制会暂时阻止该账号的**整段个人记忆召回**，直到来源过滤能力补齐；本地路由仍可召回，true 可恢复 cloud 召回。仅宿主验证的正式本地 profile（固定 FORMAL_LOCAL_BASE_URL + isFormalLocalProfile）被视为 local；私有路由含 loopback 代理均按 cloud，客户端不能指定 modelTier。当前 observed 待写事实尚未进入 World，本地模型也尚不能通过 World 召回这些事实；GET 可供客户端与后续精灵使用。已有用户/助手历史不会被删改。
+H2 当前未将健康 observed 证据写入 World，故不依据“存在摘要”限制个人记忆召回：`cloudModelAllowed=false` 的账号在云端模型下仍照常召回非健康 World/interactions。待写健康事实不会被发给召回 RPC，本地模型也尚不能通过 World 召回这些事实；GET 可供客户端与后续精灵使用。**MW-2 将 observed 写入 World 时，须按来源排除云端无权限的健康证据及其衍生项，保留其余记忆召回**，并让选择更新/DELETE 覆盖索引与衍生项；过滤仅适用于确有已写入的健康证据。模型位置按 3.10 的实际地址与用户 `modelTier` 覆盖判断，RPC initialize 使用最终 local/cloud。已有用户/助手历史仍按原契约管理。

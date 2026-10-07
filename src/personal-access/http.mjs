@@ -631,10 +631,10 @@ export function createHttpHandler(context) {
               : accountModelMatch[2] === 'transfer' ? 'transfer' : null;
         if (!action) throw failure('NOT_FOUND', 404);
         const body = await context.readJson(request, action === 'create' || action === 'update' ? 12 * 1024 : MAX_BODY);
-        if (action === 'create') exactKeys(body, ['requestId', 'name', 'baseUrl', 'modelId', 'apiKey'],
+        if (action === 'create') exactKeys(body, ['requestId', 'name', 'baseUrl', 'modelId', 'apiKey', 'modelTier'],
           ['requestId', 'name', 'baseUrl', 'modelId', 'apiKey']);
         else if (action === 'update') exactKeys(body,
-          ['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey'],
+          ['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey', 'modelTier'],
           ['requestId', 'expectedRevision']);
         else exactKeys(body, ['requestId', 'expectedRevision'], ['requestId', 'expectedRevision']);
         if (!REQUEST_ID.test(body.requestId ?? '') ||
@@ -673,15 +673,20 @@ export function createHttpHandler(context) {
         }
         const priorModel = accountModelId ? state.accountModels?.[accountModelId] : null;
         if (accountModelId && !priorModel) throw failure('NOT_FOUND', 404);
-        let name = body.name, baseUrl = body.baseUrl, modelId = body.modelId;
+        let name = body.name, baseUrl = body.baseUrl, modelId = body.modelId, modelTier = body.modelTier;
         if (action === 'create' || action === 'update') {
-          if (action === 'update' && !['name', 'baseUrl', 'modelId', 'apiKey'].some((key) =>
+          if (action === 'update' && !['name', 'baseUrl', 'modelId', 'apiKey', 'modelTier'].some((key) =>
             Object.hasOwn(body, key))) throw failure('INVALID_REQUEST');
           name = action === 'create' || body.name !== undefined ? body.name : priorModel.name;
           baseUrl = canonicalAccountBaseUrl(action === 'create' || body.baseUrl !== undefined
             ? body.baseUrl : priorModel.revisions[String(priorModel.runtimeRevision)].baseUrl);
           modelId = action === 'create' || body.modelId !== undefined
             ? body.modelId : priorModel.revisions[String(priorModel.runtimeRevision)].modelId;
+          modelTier = body.modelTier ?? (action === 'update'
+            ? priorModel.revisions[String(priorModel.runtimeRevision)].modelTier : undefined);
+          if (body.modelTier !== undefined && !['auto', 'local', 'cloud'].includes(body.modelTier)) {
+            throw failure('INVALID_REQUEST');
+          }
           if (typeof name !== 'string' || !name.trim() || name.length > 120 ||
               !baseUrl || typeof modelId !== 'string' || !ACCOUNT_MODEL_NAME_ID.test(modelId) ||
               (body.apiKey !== undefined && (typeof body.apiKey !== 'string' ||
@@ -693,7 +698,7 @@ export function createHttpHandler(context) {
         }
         const hash = digest(JSON.stringify({ action, accountModelId,
           request: action === 'create' || action === 'update'
-            ? Object.fromEntries(['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey']
+            ? Object.fromEntries(['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey', 'modelTier']
               .filter((key) => Object.hasOwn(body, key))
               .map((key) => [key, key === 'baseUrl' ? canonicalAccountBaseUrl(body[key]) : body[key]]))
             : { requestId: body.requestId, expectedRevision: body.expectedRevision } }));
@@ -718,12 +723,12 @@ export function createHttpHandler(context) {
         const newId = accountModelId ?? `account-model-${randomUUID()}`;
         const currentRuntime = priorModel?.revisions[String(priorModel.runtimeRevision)];
         const routeChange = action === 'create' || action === 'update' &&
-          (baseUrl !== currentRuntime.baseUrl || modelId !== currentRuntime.modelId || body.apiKey !== undefined);
+          (baseUrl !== currentRuntime.baseUrl || modelId !== currentRuntime.modelId || modelTier !== currentRuntime.modelTier || body.apiKey !== undefined);
         const target = routeChange ? {
           runtimeRevision: action === 'create' ? 1 : priorModel.runtimeRevision + 1,
           profileId: privateProfileId(ownerId, newId,
             action === 'create' ? 1 : priorModel.runtimeRevision + 1),
-          baseUrl, modelId, name, routeFingerprint: modelRouteFingerprint(
+          baseUrl, modelId, name, ...(modelTier !== undefined ? { modelTier } : {}), routeFingerprint: modelRouteFingerprint(
             openAICompatibleEndpoint(baseUrl, 'chat/completions').href, modelId),
         } : null;
         const stageRef = body.apiKey !== undefined
@@ -760,7 +765,7 @@ export function createHttpHandler(context) {
           if (action === 'create') next.accountModels[newId] = { accountModelId: newId,
             ownerId, revision: 1, runtimeRevision: 1, name, status: 'pending',
             revisions: { '1': { revision: 1, profileId: target.profileId,
-              baseUrl, modelId, routeFingerprint: target.routeFingerprint, createdAt: now } },
+              baseUrl, modelId, ...(modelTier !== undefined ? { modelTier } : {}), routeFingerprint: target.routeFingerprint, createdAt: now } },
             createdAt: now, updatedAt: now };
           const saved = { ownerId, requestId: body.requestId, kind: action,
             accountModelId: newId, payloadHash: hash, status: 'pending',

@@ -1,5 +1,6 @@
 /** Thin host callbacks for the authenticated personal access service. */
 import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './openai-compatible-client.ts'
+import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/
 const fail = (code) => { const error = new Error(code); error.code = code; throw error }
@@ -91,8 +92,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       routeFingerprint: (() => { try { return modelRouteFingerprint(
         openAICompatibleEndpoint(profile.baseUrl, 'chat/completions').href, profile.model) }
       catch { return null } })(),
-      sourceKind: (() => { try { return ['localhost', '127.0.0.1', '[::1]'].includes(new URL(profile.baseUrl).hostname)
-        ? 'local' : 'cloud' } catch { return 'cloud' } })() })) },
+      modelTier: profile.modelTier ?? 'auto', sourceKind: modelTierFor(profile) })) },
     async verifyModelProfile(profileId, ownerId) {
       requireModelAllowed(ownerId, profileId, 'new')
       const profile = modelProfile(profileId)

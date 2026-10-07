@@ -7,7 +7,6 @@ import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 import { createPersonalHealthStore } from '../src/personal-health/index.mjs'
 import { healthSummary, observedHealthEvidence } from '../src/personal-health/summary.mjs'
 import { createPersonalMemoryManager } from '../src/personal-memory/index.mjs'
-import { memoryRecallModelTier } from '../src/personal-memory/policy.mjs'
 import { FORMAL_LOCAL_BASE_URL } from '../src/local-model-config.mjs'
 
 const ownerA = 'owner-00000000-0000-4000-8000-000000000001'
@@ -184,13 +183,14 @@ test('observed outbox has stable source identity and Chinese facts, never invent
 const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary', 'preview_recall',
   'query_interactions', 'query_world', 'query_evidence', 'query_provenance', 'submit_command',
   'query_command_receipt', 'retry_delete_storage_cleanup']
-test('existing memory bridge withholds cloud recall before RPC, permits local, rechecks opt-out each step and exposes replay queue', async t => {
+test('queued health with cloud opt-out preserves non-health recall on every route and exposes replay queue', async t => {
   const root = await temp(t)
   let modelTier: string | undefined = 'cloud'
+  let routeBaseUrl = 'https://synthetic.invalid/v1'
   const calls: any[] = []
   const manager = createPersonalMemoryManager({ root, enabled: true, python: path.join(root, 'fixture-python'),
     pythonPath: root, baseUrl: FORMAL_LOCAL_BASE_URL, model: '@current', credential: () => 'fixture-key',
-    processingRoute: () => ({ profileId: 'fixture-route', baseUrl: 'https://synthetic.invalid/v1',
+    processingRoute: () => ({ profileId: 'fixture-route', baseUrl: routeBaseUrl,
       model: 'fixture', credential: 'fixture-key', routeFingerprint: 'a'.repeat(64), modelTier }),
     rpcFactory: () => {
       let initialized: any
@@ -203,28 +203,38 @@ test('existing memory bridge withholds cloud recall before RPC, permits local, r
         capabilities: { subject_id: params.subject_id, services: { command: { operations: [] } } } } }
         if (method === 'health') return { runtime: { subject_id: initialized.subject_id, route_ready: true } }
         if (method === 'preview_recall') return { world_revision: 1, preview: {
-          rendered_recall: '合成混合记忆', selected_item_ids: ['c-fixture'] } }
+          rendered_recall: '偏好：回答使用中文', selected_item_ids: ['c-fixture'] } }
         if (method === 'query_interactions') return { rendered_context: '合成历史' }
         return {}
       } }
     } })
   t.after(() => manager.close())
   await manager.healthStore.upsert(ownerA, summary())
-  assert.deepEqual(await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' }),
-    { state: 'withheld', reasonCode: 'MEMORY_HEALTH_CLOUD_BLOCKED' })
-  assert.equal(calls.length, 0, 'do not send a private query or start a cloud worker')
+  const cloudRecall = await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })
+  assert.equal(cloudRecall.state, 'ready')
+  assert.equal(cloudRecall.contextText, '偏好：回答使用中文\n\n合成历史')
+  assert.equal(calls.findLast((row: any) => row.method === 'initialize').params.model_tier, 'cloud')
+  assert.equal(calls.some((row: any) => row.method === 'preview_recall'), true)
   modelTier = undefined
-  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).state, 'withheld')
+  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).state, 'ready')
   modelTier = 'local'
-  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).contextText, '合成混合记忆\n\n合成历史')
+  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).contextText, '偏好：回答使用中文\n\n合成历史')
   modelTier = 'cloud'
   await manager.healthStore.upsert(ownerA, summary({ cloudModelAllowed: true, summarizedAt: '2026-10-07T02:00:00Z' }))
   assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).state, 'ready')
   assert.equal(calls.findLast((row: any) => row.method === 'initialize').params.model_tier, 'cloud')
   await manager.healthStore.upsert(ownerA, summary({ cloudModelAllowed: false, summarizedAt: '2026-10-07T03:00:00Z' }))
   const before = calls.length
-  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).state, 'withheld')
-  assert.equal(calls.length, before, 'a later step cannot reuse a previously allowed World snapshot')
+  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).state, 'ready')
+  assert.ok(calls.length > before, 'a later step still recalls non-health World content')
+  assert.equal(calls.some((row: any) => JSON.stringify(row.params).includes('健康观察')), false)
+  routeBaseUrl = 'http://192.168.1.10:18080/v1'
+  modelTier = undefined
+  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).state, 'ready')
+  assert.equal(calls.findLast((row: any) => row.method === 'initialize').params.model_tier, 'local')
+  modelTier = 'cloud'
+  assert.equal((await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })).state, 'ready')
+  assert.equal(calls.findLast((row: any) => row.method === 'initialize').params.model_tier, 'cloud')
   assert.equal((await manager.recall(ownerB, { query: 'test', sessionId: 'session-b' })).state, 'ready')
   const replay = await manager.observedOutbox(ownerA)
   assert.equal(replay.state, 'queued')
@@ -235,37 +245,13 @@ test('existing memory bridge withholds cloud recall before RPC, permits local, r
   assert.equal((await manager.observedOutbox(ownerA)).items.length, 0)
 })
 
-test('local/cloud classification requires the verified formal host catalog, never a URL label or loopback proxy', () => {
-  const access = { isFormalLocalProfile: (id: string) => id === 'formal-local' }
-  assert.equal(memoryRecallModelTier({ id: 'formal-local', baseUrl: FORMAL_LOCAL_BASE_URL }, access), 'local')
-  for (const profile of [{ id: 'private-model-proxy', baseUrl: FORMAL_LOCAL_BASE_URL },
-    { id: 'formal-local', baseUrl: 'https://cloud.invalid/v1' },
-    { id: 'private-model-local-name', baseUrl: 'http://127.0.0.1:9000/v1' }, null]) {
-    assert.equal(memoryRecallModelTier(profile, access), 'cloud')
-  }
-})
-
-test('health policy serializes an in-flight recall with opt-out and refuses corrupted stored evidence', async t => {
+test('health queue rejects corrupted stored evidence', async t => {
   const root = await temp(t), store = createPersonalHealthStore({ root, clock: () => now })
-  await store.upsert(ownerA, summary({ cloudModelAllowed: true }))
-  let release: any, entered: any
-  const started = new Promise<void>(resolve => { entered = resolve })
-  const gate = new Promise<void>(resolve => { release = resolve })
-  const recall = store.withRecallPolicy(ownerA, 'cloud', async () => { entered(); await gate; return { state: 'ready' } })
-  await started
-  const optOut = store.upsert(ownerA, summary({ summarizedAt: '2026-10-07T02:00:00Z' }))
-  release()
-  assert.equal((await recall).state, 'ready', 'already authorized recall finishes before the choice commits')
-  await optOut
-  let invoked = false
-  assert.equal((await store.withRecallPolicy(ownerA, 'cloud', () => { invoked = true })).state, 'withheld')
-  assert.equal(invoked, false, 'after opt-out succeeds, the next recall cannot enter RPC')
+  await store.upsert(ownerA, summary())
   const target = path.join(root, 'accounts', ownerA, 'health', 'daily-summaries.json')
   const state = JSON.parse(await readFile(target, 'utf8'))
   state.summaries[0].evidence.permissions.allow_cloud_read = true
   const { writeFile } = await import('node:fs/promises')
   await writeFile(target, JSON.stringify(state))
-  await assert.rejects(store.withRecallPolicy(ownerA, 'cloud', () => { invoked = true }),
-    { code: 'STORAGE_UNAVAILABLE' })
-  assert.equal(invoked, false, 'malformed permissions cannot fail open')
+  await assert.rejects(store.pendingObserved(ownerA), { code: 'STORAGE_UNAVAILABLE' })
 })

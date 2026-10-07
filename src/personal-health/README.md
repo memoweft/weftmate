@@ -20,18 +20,16 @@ MemoWeft 侧需先补充并发布：
 
 - 类型明确的 observed 写入/更新协议：账号 subject、稳定来源 ID、版本与幂等键；不经过对话角色；更新撤回被省略的旧事实/索引。
 - 按来源更新权限与撤回/真实删除协议及回执：覆盖衍生 World 项、证据、索引与存储清理；同来源删除后可接受新的合法版本。
-- 按模型目的地执行证据和衍生项权限过滤的召回协议，返回可验证的来源与过滤结果（包括 interactions），避免旧派生记忆绕过 opt-out。
+- **MW-2：仅在确有健康 observed 证据写入 World 后，按来源过滤健康证据及其衍生项**。云端且 cloudModelAllowed=false 时排除这些健康来源，保留非健康 World/interactions 召回；不得因账号存在摘要而禁用整个召回。协议需返回来源与过滤结果（包括 interactions），避免旧派生记忆绕过 opt-out。
 
 补齐后在 **现有 `personal-memory` 管理器**内消费 `observedOutbox`，落盘已应用版本/回执并给覆盖和 DELETE 接上 Core 撤回。不得将该待写列表发送给不受本地/云端策略约束的写入模型。需要真实 Core 的更新/撤回/重启/权限集成测试；当前 RPC 夹具测试不能替代这些验收。
 
 ## 模型使用边界
 
-`memoryRecallModelTier` 使用宿主设置中的真实 profile，并要求 `baseUrl === FORMAL_LOCAL_BASE_URL` 且 `isFormalLocalProfile(profile.id) === true`，才能判断为 local。该目录本来就由宿主校验正式本地服务来源；名字中出现 local、私有 loopback URL 或 localhost 不能证明本地（可能为云端代理），其余按 cloud 处理。账号路由权限仍由现有 `memoryRecallDestination` 校验。`main.mjs` 把此结论作为可信 processingRoute 属性传给管理器，客户端和模型不能指定它；RPC initialize 的 `model_tier` 同步使用该结论。
+`memoryRecallModelTier` 按实际模型配置的 `baseUrl` 自动判定：loopback（127.0.0.0/8、::1、localhost）、私有网段（10/8、172.16/12、192.168/16）和 `*.local` 为 local，其余为 cloud。现有模型配置可保存可选 `modelTier: auto | local | cloud`；缺省/auto 使用地址，local/cloud 覆盖自动判定，可把本地地址的云端代理标为 cloud。账号模型 POST/PATCH、查询/转移、宿主设置与桌面表单保留此字段；仅修改位置也生成独立 runtime 修订，历史会话保留旧配置。账号路由权限仍由现有 `memoryRecallDestination` 校验。`main.mjs` 将最终位置传给 `processingRoute`，RPC initialize 使用同一 `model_tier`；它不是模型输出或召回请求中可自报的值。
 
-`personal-memory.recall` 在开始 RPC 前经过 `healthStore.withRecallPolicy`。当前 RPC 只提供 World/interactions 混合文本，没有可靠的逐条健康来源过滤，因此账号仍有健康摘要且最新选择为 false 时，cloud/未知目的地的**整段个人记忆召回**返回 `withheld / MEMORY_HEALTH_CLOUD_BLOCKED`。local 可继续召回；明确选择 true 可恢复 cloud 召回。待写健康事实尚未进入 World，故当前本地模型也不会从 World 召回到这些待写事实；GET 可供客户端读取。MemoWeft 补齐过滤协议后才能恢复云端的非健康记忆，同时确保衍生健康项被排除。
-
-同一账号的召回/写入使用同一事务队列，opt-out 提交成功后的后续 pre-step 会重新检查；现有 personal-memory 插件每个 pre-step 清除旧的插件记忆消息，拒绝后不会复用旧 snapshot。这里约束的是宿主自动召回；不删除或改写用户对话与助手历史文本。
+H2 的健康 observed 证据只有待写队列，**已写入 World 的健康证据目前不存在**；个人记忆召回因此照常执行，即使账号有摘要且 `cloudModelAllowed=false`，云端也可召回非健康记忆。待写健康事实不会被注入召回 RPC 或模型上下文，当前本地模型同样不能从 World 召回这些事实；GET 可供客户端读取。MW-2 写入 World 时须同时实现上述按来源权限过滤，只有实际存在已写入健康证据时才需要排除其云端召回；用户/助手历史的管理仍走现有契约。
 
 ## 验证
 
-`tests/personal-health.test.ts` 使用临时目录、测试账号、合成 RPC；覆盖认证/CSRF/同源、请求限制、幂等与陈旧覆盖、来源隔离、多设备、最新选择、日期/全部删除与队列撤回、删除水位、重开存储、私有权限、中文 observed 格式和云端召回拒绝。
+`tests/personal-health.test.ts` 使用临时目录、测试账号、合成 RPC；覆盖认证/CSRF/同源、请求限制、幂等与陈旧覆盖、来源隔离、多设备、最新选择、日期/全部删除与队列撤回、删除水位、重开存储、私有权限、中文 observed 格式及有摘要/false/云端下非健康记忆照常召回。`tests/model-tier.test.ts` 覆盖各地址范围边界、名称、手动覆盖与目录一致性；账号模型/设置测试覆盖位置保存、仅位置修订、凭据复用、幂等冲突与重开存储。

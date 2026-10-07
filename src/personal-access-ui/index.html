@@ -200,12 +200,14 @@
           <ul class="device-list" id="device-list" aria-live="polite"></ul>
         </section>
         <section class="card group" id="account-model-section" aria-labelledby="account-models-heading" hidden>
-          <div class="group-heading"><div><h2 id="account-models-heading">我的电脑云模型</h2><p class="muted">只管理当前账户明确保存的云模型。新配置不会改变已有对话选用的模型；测试连接只核目录与鉴权，不发送推理消息。</p></div><button type="button" class="button secondary small" id="account-models-refresh">刷新</button></div>
+          <div class="group-heading"><div><h2 id="account-models-heading">我的电脑模型</h2><p class="muted">管理当前账户保存的本地和云端模型。新配置不会改变已有对话选用的模型；测试连接只核目录与鉴权，不发送推理消息。</p></div><button type="button" class="button secondary small" id="account-models-refresh">刷新</button></div>
           <p id="account-models-status" class="muted" role="status" aria-live="polite">正在读取账户模型…</p>
           <ul id="account-models-list" class="project-list" aria-live="polite"></ul>
           <form id="account-model-form" class="project-register" autocomplete="off" hidden>
             <label for="account-model-name">显示名称</label><input id="account-model-name" maxlength="100" placeholder="例如：我的 MiMo">
             <label for="account-model-base-url">提供方地址</label><input id="account-model-base-url" type="url" placeholder="https://api.example.com/v1">
+            <label for="account-model-tier">模型位置</label><select id="account-model-tier"><option value="auto">自动（按地址判断）</option><option value="local">本地</option><option value="cloud">云端</option></select>
+            <p class="field-help">本机和局域网地址自动视为本地；如果地址实际转发到云端，请选“云端”。</p>
             <label for="account-model-id">模型 ID</label><input id="account-model-id" maxlength="128" placeholder="例如：mimo-v2.6-flash">
             <label for="account-model-key">API Key</label><input id="account-model-key" type="password" autocomplete="new-password" placeholder="新建时填写；编辑留空沿用原密钥">
             <p class="field-help">密钥仅在这次提交中发送到当前账户的电脑，不会从目录回填。修改服务地址时必须输入该新地址的密钥；手机本机原配置不会自动改变。</p>

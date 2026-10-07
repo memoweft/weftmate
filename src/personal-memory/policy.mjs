@@ -1,6 +1,7 @@
 import { FORMAL_LOCAL_BASE_URL } from '../local-model-config.mjs';
 import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
 import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
+import { modelTierFor } from '../model-tier.ts';
 
 function profileRouteFingerprint(profile) {
   if (typeof profile?.baseUrl !== 'string' || typeof profile?.model !== 'string') return null;
@@ -49,9 +50,7 @@ export function memoryRecallDestination({ binding, described, boundProfileId, pr
   return memorySessionPolicy({ binding, described, selected: { profile: matches[0] }, access });
 }
 
-/** Only the host's verified formal local catalog proves local processing.
- * An owner-private URL (even loopback, which may be a cloud proxy) is cloud. */
-export function memoryRecallModelTier(profile, access) {
-  return profile?.baseUrl === FORMAL_LOCAL_BASE_URL &&
-    access?.isFormalLocalProfile?.(profile.id) === true ? 'local' : 'cloud';
+/** Use the saved endpoint and explicit user override; route authorization is separate. */
+export function memoryRecallModelTier(profile) {
+  return modelTierFor(profile);
 }
