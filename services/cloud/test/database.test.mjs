@@ -17,14 +17,14 @@ test('initialization is durable, idempotent, and enables SQLite foreign keys/WAL
   const file = path.join(root, 'state', 'cloud.sqlite');
   let opened = await openDatabase(file);
   try {
-    assert.equal(opened.schemaVersion, 1);
+    assert.equal(opened.schemaVersion, 3);
     assert.equal(opened.database.prepare('PRAGMA foreign_keys').get().foreign_keys, 1);
     assert.equal(opened.database.prepare('PRAGMA journal_mode').get().journal_mode, 'wal');
     opened.database.prepare('INSERT INTO service_metadata VALUES (?, ?)').run('fixture', 'preserved');
   } finally { opened.database.close(); }
   opened = await openDatabase(file);
   try {
-    assert.equal(opened.database.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 1);
+    assert.equal(opened.database.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 3);
     assert.equal(opened.database.prepare('SELECT value FROM service_metadata WHERE key = ?').get('fixture').value, 'preserved');
     if (process.platform !== 'win32') {
       assert.equal((await stat(path.dirname(file))).mode & 0o777, 0o700);

@@ -398,7 +398,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 ## 6. 健康摘要（H2 正式接口）
 
-> **H2 已实现服务端接收、读取、删除与 observed 待写队列。** 遵循 `COMPANION.md` 第 4、5、11 节；原始样本只在设备内计算，不上传原始流。当前 MemoWeft RPC 缺少 observed 写入契约，健康证据尚未进入 World；接口返回 queued 明确说明此状态。补充能力与模型限制见 6.4 及 `src/personal-health/README.md`。
+> **H2 / MW-2 已接通服务端摘要与 MemoWeft observed。** 遵循 `COMPANION.md` 第 4、5、11 节；原始样本只在设备内计算。依赖支持 observed v1 的 MemoWeft Core；已交付/待交付与撤回状态由回执明确区分。模型目的地按来源过滤健康与衍生项，其他记忆照常召回。
 
 ### 6.1 上传与幂等
 
@@ -443,14 +443,14 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 `readStates` 为 `disabled / notRequested / dataAvailable / noDataOrReadDenied / unavailable / failed`。Apple 不公开读取授权是否被拒绝/撤销，空结果不能据此断言拒绝；`dataAvailable` 只代表此次读到数据。应用内逐类关闭会停止该类查询、移除本地与排队摘要的指标并重新上传替换。系统撤权后再次读取为空，会更新近期摘要，既有摘要不会因此自动等同用户要求全部删除；删除需明确操作。查询失败保留此前已读取数值并标注 failed。
 
-POST 固定返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"memory":{"state":"queued","pendingObservedCount":1,"reasonCode":"MEMORY_OBSERVED_UNSUPPORTED"}}`。200 表示摘要与 observed 队列已原子持久化，尚未表示 World 写入完成。请求只接受上述字段；各指标要求对应 readState 为 dataAvailable/failed、单位匹配、非负有限数值与 0–14 baselineDays；拒绝原始样本和任意追加文本。`metrics.workouts`（如提供）单位 min，`metrics.respiratoryRate` 单位 breaths/min。账号由凭据确定，来源设备必须是本账号签发过的 ID，已撤销设备仍可标记其历史离线摘要。较新汇总完整覆盖同来源/日期记录。
+POST 返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"memory":{"state":"queued","pendingObservedCount":1,"reasonCode":"MEMORY_OBSERVED_UNSUPPORTED"}}`。200 表示摘要与 observed 待办已原子持久化；`memory.state=delivered`、`pendingObservedCount=0` 表示 Core 写入及来源权限已确认。queued 表示待交付，原因可能为 MEMORY_OBSERVED_UNSUPPORTED（旧 Core/未启用）或 MEMORY_OBSERVED_PENDING（传输/清理待重试）；200 本身不保证 Core 已完成。请求只接受上述字段；各指标要求对应 readState 为 dataAvailable/failed、单位匹配、非负有限数值与 0–14 baselineDays；拒绝原始样本和任意追加文本。`metrics.workouts`（如提供）单位 min，`metrics.respiratoryRate` 单位 breaths/min。账号由凭据确定，来源设备必须是本账号签发过的 ID，已撤销设备仍可标记其历史离线摘要。较新汇总完整覆盖同来源/日期记录。
 
 ### 6.2 撤权与删除
 
 | 方法与路径 | 请求 / 返回 | 客户端行为 |
 |---|---|---|
-| DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及其 observed 待写证据；200 `{"deleted":true,"date":"2026-10-06"}` （另含 deletedCount） | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
-| DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及 observed 待写证据；200 `{"deleted":true,"scope":"all"}` （另含 deletedCount） | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
+| DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及 observed，并级联撤回 Core 衍生项与索引；200 `{"deleted":true,"date":"2026-10-06"}` （另含 deletedCount、memory；empty 表示 Core 撤回及清理已确认，queued 表示待重试） | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
+| DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及 observed，并级联撤回 Core 衍生项与索引；200 `{"deleted":true,"scope":"all"}` （另含 deletedCount、memory；empty 表示 Core 撤回及清理已确认，queued 表示待重试） | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
 
 撤销系统读取权限在 Apple “健康”应用完成；WeftMate 不写/删 HealthKit 原始记录。关闭读取和删除已上传证据分别表达；服务器删除不是移除用户对话或非健康记忆。服务端原子移除摘要及其 observed 待写内容，只留无健康内容的日期/全部删除时间水位（服务器删除时间与已知汇总时间的较大值）。旧汇总时间不大于水位时 POST 返回 409，重新读取生成的较新摘要可上传；全部删除合并各日期水位。DELETE 同样要求 application/json `{}`、同源 Origin 和 CSRF，JSON ≤12 KiB。当前没有本包写入的 Core 证据，因而不宣称已完成真实 Core 撤回。
 
@@ -465,7 +465,7 @@ POST 固定返回 200：`{"summary":{…当前持久化版本…},"duplicate":fa
 | 413 `BODY_TOO_LARGE`；415 `UNSUPPORTED_MEDIA_TYPE` | 沿用通用约定；不丢摘要、不截断健康内容 |
 | 429 `RATE_LIMITED`；503 `STORAGE_UNAVAILABLE` / `SERVICE_UNAVAILABLE`；网络错误 | 安静保留队列，下一次运行重试；不阻塞聊天 |
 
-H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。H2 使用隔离账号与合成 RPC 验证；真实宿主/跨设备及 MemoWeft observed 写入、权限变更、衍生项删除仍需在 Core 能力补齐后集成验收。
+H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。H2 验证客户端 HTTP 边界；MW-2 已用真实 Python Core 与隔离账号通过 observed 写入、目的地过滤、权限变更、衍生项删除/导出/重启集成验收。真实日用宿主与跨设备上传仍未验证。
 
 
 ### 6.4 读取与记忆使用状态
@@ -482,8 +482,113 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 }
 ```
 
-示例摘要为简化投影；真实 summaries 返回完整已存摘要。memory.pendingObservedCount 是本账号全部待写数量，与查询日期窗口无关；没有摘要时 memory.state=empty、pendingObservedCount=0。健康文件在宿主 `<personal-access-root>/accounts/<ownerId>/health/daily-summaries.json`，沿用私有目录/文件保护与原子写入。
+示例摘要为简化投影；真实 summaries 返回完整已存摘要。memory.pendingObservedCount 是本账号全部待交付来源和待撤回来源的数量，与查询日期窗口无关。已写入 Core 时 memory.state=delivered；没有摘要且撤回清理已确认时为 empty；待交付/待撤回时为 queued。健康文件在宿主 `<personal-access-root>/accounts/<ownerId>/health/daily-summaries.json`，沿用私有目录/文件保护与原子写入。
 
-每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期，含设备描述、时区与汇总时间；不会构造 user 对话 boundary。当前已有 `personal-memory` 桥接缺少 observed 写入能力，故先保存可回放的待写证据，覆盖和删除同步替换/移除队列内容。MemoWeft 需补 observed upsert、来源权限更新/真实撤回（含衍生项/索引）、按目标模型过滤的召回契约与回执，然后经现有桥接回放；不得直接另写数据库或把 observed 伪装为发言。
+每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期。现有 `personal-memory` 管理器通过正式 observed upsert / 来源权限更新 / 真正撤回 RPC 交付，不构造 user/assistant boundary，不另写 SQLite。摘要和交付标记同一宿主文件保存；收到 Core 回执后才清除待办。进程中断或 Core 不可用时，后续健康写入、记忆 status / recall 会重放；DELETE 先移除宿主内容，保留仅含来源哈希与水位的撤回待办，清理完成后移除。
 
-H2 当前未将健康 observed 证据写入 World，故不依据“存在摘要”限制个人记忆召回：`cloudModelAllowed=false` 的账号在云端模型下仍照常召回非健康 World/interactions。待写健康事实不会被发给召回 RPC，本地模型也尚不能通过 World 召回这些事实；GET 可供客户端与后续精灵使用。**MW-2 将 observed 写入 World 时，须按来源排除云端无权限的健康证据及其衍生项，保留其余记忆召回**，并让选择更新/DELETE 覆盖索引与衍生项；过滤仅适用于确有已写入的健康证据。模型位置按 3.10 的实际地址与用户 `modelTier` 覆盖判断，RPC initialize 使用最终 local/cloud。已有用户/助手历史仍按原契约管理。
+召回使用 3.10 的实际地址及用户 `modelTier` 覆盖判断，initialize 与每次 World / interactions 召回使用最终 local/cloud。`cloudModelAllowed=false` 排除已写入的健康证据及其衍生项、依赖它们的助手历史，保留其他可读记忆；true 后云端可用，撤销选择后立即作用于全账号来源。来源同步失败时该次注入暂缓，待同步成功恢复，不使用旧授权数据。GET 提供客户端读取摘要，客户端不得把本地专用摘要自行注入云端模型。
+
+## 7. 云端账号与宿主云身份（S1a / S1b；完整客户端接入在 S1c）
+
+7.1–7.3 由独立 `services/cloud/` 提供；7.4 是电脑宿主接口。**五端的完整云登录接入仍在 S1c**，桌面 Web 已提供内容设备待批准列表。云账号只授予云控制面访问，不授予宿主内容、shell 或备份解密权限；S1b 已实现宿主验签、DPoP、认领和 `/auth/cloud-session`。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
+
+### 7.1 账号交互接口
+
+issuer 示例 `https://api.example.com/personal/v1/cloud/oidc`；账号接口 origin 为 `https://api.example.com`。除标准 OIDC token/revocation 外，所有 POST 要求此同源 `Origin`；JSON 或同源表单、体 ≤16 KiB。GET `/account` 只接受云 access token Bearer，不接受本地 Cookie/ID token。登录 Cookie 用于 OIDC 交互，host-only、HttpOnly、SameSite=Lax，HTTPS 下 Secure；登录与设备确认额外绑定 Cookie/interaction/CSRF。
+
+`Account` = `{"cloudAccountId":"<UUID>","email":"account@example.com","auth_epoch":0}`。ID 永久不变且作为 OIDC public `sub`；邮箱 trim/NFKC/ASCII 小写、唯一，不折叠加号或服务商特定点号。密码 15–128 个 Unicode code points。`Challenge` = `{"challengeId":"<UUID>","expiresIn":600}`；验证码只有开发 outbox 或实际邮箱可见，接口不回传。
+
+| 方法与路径 | 请求 | 响应 / 语义 |
+|---|---|---|
+| POST `/personal/v1/cloud/auth/register` | `{email,password}` | 201 Challenge；只建 pending 账号，验证后激活。邮箱占用 409 `EMAIL_IN_USE` |
+| POST `/personal/v1/cloud/auth/register/resend` | `{email}` | 200 Challenge；不替换原密码，不存在/已激活邮箱返回同形随机 challenge，不发邮件 |
+| POST `/personal/v1/cloud/auth/register/verify` | `{challengeId,code}` | 200 `{account:Account,verified:true}`；一次性激活，未验证账号不能登录 |
+| GET `/personal/v1/cloud/interactions/{uid}` | OIDC 授权重定向得到的地址，携带交互 Cookie | `Accept: application/json` 返回 `{interactionUid,csrfToken,clientId}`；否则是最小登录表单。uid 不由客户端自造 |
+| POST `/personal/v1/cloud/auth/login` | `{interactionUid,csrfToken,email,password,deviceId,publicJwk?}`，携带交互 Cookie | 已确认设备 200 `{account:Account,resumeUrl}`；新设备 202 `{confirmationRequired:true,challengeId,expiresIn:600}`，此时没有令牌/授权码 |
+| POST `/personal/v1/cloud/auth/device/confirm` | `{interactionUid,csrfToken,challengeId,code}`，同一交互 Cookie | 200 `{account:Account,resumeUrl}`；验证码须来自该登录交互。浏览器表单成功时 303 到 resumeUrl |
+| POST `/personal/v1/cloud/auth/password/request` | `{email}` | 200 Challenge；未激活/不存在邮箱返回同形随机 challenge，不发邮件 |
+| POST `/personal/v1/cloud/auth/password/reset` | `{challengeId,code,password}` | 200 `{passwordChanged:true,notificationAccepted:true}`；更新密码、epoch +1，撤销旧刷新族/云会话/授权码/pending 验证码；通知服务失败时 notificationAccepted=false，重置已提交，不回滚 |
+| GET `/personal/v1/cloud/account` | `Authorization: Bearer <cloud access token>` | 200 `{account:Account}`；校验 issuer/audience/RS256/type/exp/实时 epoch/设备/scope |
+| POST `/personal/v1/cloud/auth/email/request` | 云 Bearer + `{email,password}` | 200 Challenge；验证当前密码后给新邮箱发验证码，已占用 409 |
+| POST `/personal/v1/cloud/auth/email/confirm` | 云 Bearer + `{challengeId,code}` | 200 `{account:Account}`；ID 不变，新邮箱生效、epoch +1，撤销旧会话/刷新族及旧邮箱验证码，需重新登录 |
+
+`deviceId` 格式 `[A-Za-z0-9_.:-]{1,128}`。可选 `publicJwk` 为 RSA/EC/OKP 公钥 JWK，不得含任何私钥字段；新标识或同标识的新公钥均要求邮件确认，无全局设备数上限。S1a 登记的是调用方声明的标识/公钥，**尚无私钥持有证明**，不能当成宿主信任设备。每次新的 OIDC 授权都要求密码交互，旧 SSO Cookie 不能跳过本次设备检查。
+
+200 resumeUrl 是恢复 OIDC 授权的云同源地址，客户端继续用原认证浏览器打开；不是 access token。原生客户端保存收到的最终授权码并用原 PKCE verifier 交换，保留且校验原 state 与 nonce。JSON 交互供后续客户端接入；本包最小浏览器表单只覆盖登录/新设备确认，不代表五端账号页面已完成。
+
+### 7.2 OIDC 与令牌
+
+| 方法与路径 | 契约 |
+|---|---|
+| GET `/personal/v1/cloud/oidc/.well-known/openid-configuration` | 标准 OIDC discovery；固定 issuer、授权/token/JWKS/revocation 地址 |
+| GET `/personal/v1/cloud/oidc/.well-known/oauth-authorization-server` | provider 的 OAuth metadata 同路径挂载 |
+| GET `/personal/v1/cloud/oidc/auth` | `client_id,redirect_uri,response_type=code,scope=openid offline_access cloud:account,prompt=consent,state,nonce,code_challenge,code_challenge_method=S256`；公开客户端须预登记 redirect URI。offline_access 须明确 consent |
+| GET `/personal/v1/cloud/oidc/auth/{uid}` | provider 内部恢复路由，只沿交互返回的 resumeUrl 使用 |
+| POST `/personal/v1/cloud/oidc/token` | 标准 `application/x-www-form-urlencoded`：code 交换用 `grant_type=authorization_code,client_id,redirect_uri,code,code_verifier`；刷新用 `grant_type=refresh_token,client_id,refresh_token` |
+| POST `/personal/v1/cloud/oidc/token/revocation` | 标准 RFC7009 form：`client_id,token,token_type_hint?`；撤销 provider 管理的刷新授权族 |
+| GET `/personal/v1/cloud/oidc/jwks` | 公开 RSA JWKS，kid 轮换；不含私钥，旧 key 保留至已发 token 过期与时钟余量结束 |
+
+不支持 password grant、implicit response、动态客户端注册或未登记宿主 audience。客户端是 public/native、无 client secret。授权码 60 秒且单次使用；PKCE 只接受 S256。标准 token 响应包含 `access_token,token_type=Bearer,expires_in=300,id_token,refresh_token,scope`，openid/离线范围请求决定 ID/refresh 字段是否出现。每次刷新须原子替换已保存的 refresh token；旧 token 复用会撤销整个族及后继，族绝对寿命 30 天。
+
+访问令牌是 RS256、`typ=at+jwt`，包含 `iss,aud,sub,device_id,device_fingerprint,scope,auth_epoch,iat,exp,jti,client_id`。控制面 aud 为 `<issuer origin>/personal/v1/cloud`。S1b 另支持显式 `resource=<cloud audience>/hosts/<hostId>`、`scope=openid offline_access host:session`；仅已登记宿主的成员可授权。宿主 access token 增加 `host_id` 和 DPoP `cnf.jkt`，aud 为该确定宿主 resource，scope 含 host:session；token endpoint 必须提交标准 DPoP 证明，密钥须与该登录交互的邮件已确认设备公钥一致，返回 token_type=DPoP。云与宿主 token 均不含邮箱/用户内容。ID token 的 aud 是 client_id、含 nonce；不可用它授权 API。未知 kid 从固定 JWKS 地址刷新一次；issuer/aud/算法/有效期不匹配或获取失败时拒绝，不信 JWT 自带 jku/x5u。原生刷新凭据放 Keychain/Keystore/系统凭据库；浏览器不放 localStorage。
+
+复用/撤销让刷新与授权码失效；已发自包含 JWT 仍有最多 5 分钟的离线有效窗口。密码重置与换邮箱同时递增 epoch，本服务实时检查立即拒绝旧 JWT；S1b 宿主通过签名撤销事件与轮询接收，事件到达后关闭活跃流并拒绝旧会话；离线宿主不能称立即生效。
+
+### 7.3 错误、限速与邮件
+
+业务错误形状 `{error:{code:"CODE_INVALID"}}`；标准 OIDC token 错误遵循 OAuth `{error:"invalid_grant",error_description:"…"}`，不能用宿主错误解析器混读。
+
+| 状态 / 业务码 | 含义 |
+|---|---|
+| 400 `INVALID_EMAIL / INVALID_PASSWORD / INVALID_DEVICE / INVALID_DEVICE_KEY / INVALID_REQUEST` | 输入无效；邮箱不接受非 ASCII 登录字符，支持 NFKC 后合法形式 |
+| 400 `CODE_INVALID / CHALLENGE_INVALID / INTERACTION_INVALID / HOST_NOT_ALLOWED` | 错验证码；challenge 过期/已用/错误次数用尽/用途或 epoch 不符；交互 Cookie 不符；Host 不匹配 issuer |
+| 401 `INVALID_CREDENTIALS / UNAUTHORIZED` | 密码错误、云令牌无效或已撤销 epoch |
+| 403 `EMAIL_NOT_VERIFIED / CSRF_INVALID / ORIGIN_NOT_ALLOWED / FORBIDDEN` | 未激活、交互 CSRF 错、Origin 错、不是同账号 challenge |
+| 409 `EMAIL_IN_USE` | 邮箱规范化后占用，包括 pending 注册 |
+| 413 / 415 / 405 | `BODY_TOO_LARGE / UNSUPPORTED_MEDIA_TYPE / METHOD_NOT_ALLOWED` |
+| 429 `RATE_LIMITED` | 遵循整数秒 `Retry-After`，不得立即忙重试 |
+| 503 `MAIL_UNAVAILABLE / SERVICE_UNAVAILABLE` | 验证邮件投递失败 / 服务存储不可用；密码已提交但通知失败通过 notificationAccepted 单独表达 |
+
+六位验证码有效 10 分钟、单次使用、每 challenge 最多 5 次错误。失败按账号和来源分别计数，跨接口共享小时窗口，第 5 次起 1 秒指数退避、最多 1 小时；验证码与登录均覆盖。邮件请求另按账号/来源限制，第 5 次后 10 分钟退避。限速状态重开保留，来源地址只存 HMAC 桶，默认不信调用方 X-Forwarded-For；部署时由显式回环代理设置真实来源。
+
+file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量密钥与发件人。模板含注册验证码、找回、新设备确认、新邮箱验证、密码已更改；provider 接受不等于邮箱已送达。本包只验 file 与 Resend mock，无真实发信、客户端/宿主或公网验收。
+
+
+### 7.4 宿主认领、会话交换与内容设备（S1b）
+
+以下路径由**个人电脑宿主**提供，仍在 `/personal/v1`。先在宿主原本地账号登录，使用原 Cookie + `X-WeftMate-CSRF`；任何写操作要求同源 Origin、JSON ≤16 KiB，拒绝多余字段与 query。认领/绑定/解绑/生成当面配对挑战还要求原**电脑直接地址**的本地密码 Cookie（不接受已交换云 Cookie 或管理 Bearer）；无密码 legacy 账号先沿用原 setup grant，不新增远程 setup。调用方不传 ownerId，账号从 Cookie 确定。
+
+| 方法与路径 | 请求 | 返回 / 语义 |
+|---|---|---|
+| POST `/personal/v1/cloud/claims` | `{}` + 本地 Cookie/CSRF | 200 `{claimId,hostId,challenge}`；生成/保留安装与内容 TLS 密钥，主动向云取挑战；中断后同本地账号取回原 claimId，已完成相同绑定也幂等 |
+| POST `/personal/v1/cloud/binding` | `{claimId,accessToken}` + 本地 Cookie/CSRF；accessToken 为新鲜 cloud:account 控制面令牌 | 200 `{bound:true,ownerId,hostId}`；保存 pending，安装密钥签名，云确认成员后 active；可用原 claimId、新云登录重试。冲突不合并账号，不上传 ownerId/内容 |
+| DELETE `/personal/v1/cloud/binding` | `{}` + 本地 Cookie/CSRF | 200 `{unbound:true}`；撤销当前账号云映射与内容设备，异步幂等撤销云 membership；保留本地账号、密码与所有数据 |
+| POST `/personal/v1/auth/cloud-nonce` | `{}`；无 Cookie/Bearer 要求，但需同源 Origin | 200 `{nonce,expiresIn:120}`，同时返回 `DPoP-Nonce`；宿主随机 nonce 单次使用，保存在本机日志 |
+| POST `/personal/v1/auth/cloud-session` | `{accessToken,deviceName}` + `DPoP: <proof JWT>`；**不得带 Authorization**；旧 Cookie 可随浏览器自动携带但不参与授权 | 已受信 200，响应形状与 `/auth/login` 相同：`{account,device,csrfToken}` + 宿主 HttpOnly/SameSite=Strict Cookie（HTTPS Secure）；未受信 202 `{status:"pending_approval",requestId}`，无 Cookie/内容 |
+| GET `/personal/v1/cloud/devices/pending` | 已认证本账号本地/云 Cookie（account:manage） | 200 `{devices:[{id,name,requestedAt,fingerprint}]}`；仅当前 owner 的待批准设备公钥指纹，不含另一账号的数据 |
+| POST `/personal/v1/cloud/devices/{id}/decision` | `{decision:"allow"}` 或 `{decision:"deny"}` + 同账号 Cookie/CSRF | 200 `{decision}`；同一决定幂等。允许后该设备以**新 nonce/新 DPoP** 重试交换；相反决定 409，跨账号 404 |
+| POST `/personal/v1/cloud/pairings` | `{}` + 电脑直接地址本地 Cookie/CSRF | 201 `{challenge,expiresIn:120,hostId,tlsSpki,publicJwk,origin}`；一次性当面配对材料，供 S1c 二维码展示/扫描；pub 为安装公钥，pin 来自宿主本机 |
+| POST `/personal/v1/cloud/pairings/redeem` | `{challenge,accessToken,deviceName}` + DPoP；无 Authorization；旧 Cookie 忽略 | 校验该云 sub 已绑定且 challenge 属于相同 owner、未过期/未用；本地登记 DPoP 公钥并返回 200 宿主 Cookie/CSRF，响应与交换相同 |
+
+DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 秒 `iat`、`htm=POST`、**精确宿主 origin + 本次入口路径** `htu`（无 query/fragment）、`ath=base64url(SHA-256(accessToken))` 与宿主 nonce。nonce 与 `(公钥指纹,jti)` 提交后不可复用，重启不清空。宿主检查固定 issuer、RS256、固定 JWKS、`typ=at+jwt`、aud/host_id、host:session、sub/device_id/auth_epoch/iat/exp/jti/cnf.jkt；不接受 ID token，不读取 token jku/x5u，不把 JWT 送旧 Bearer tokenHash 路径。仅 DPoP 有效不构成内容信任；未知公钥仍返回等待批准。
+
+桌面 Web 在设置的设备卡中提供待批准列表与允许/拒绝，打开应用读取后在账户入口提示。手机/原生完整登录、二维码展示/扫描在 S1c，推送提醒在 S3。这里的 tlsSpki 已有本机内容密钥，实际 TLS listener/证书/原生 pin 连接验收在 S2。
+
+新增宿主业务码：401 `CLOUD_TOKEN_INVALID / DPOP_INVALID / DPOP_REPLAY / PAIRING_INVALID`；403 `LOCAL_SESSION_REQUIRED / CLOUD_NOT_BOUND / DEVICE_NOT_TRUSTED`；400 `CLAIM_INVALID`；409 `CLOUD_BINDING_CONFLICT / DEVICE_DECISION_CONFLICT`；503 `CLOUD_UNAVAILABLE / STORAGE_UNAVAILABLE`。Origin、CSRF、媒体类型、大小与原宿主约定一致。等待批准是正常 202，禁止当作已登录内容账户；拒绝/撤销返回 403，需电脑/受信设备重新明确批准，不能自动用邮箱恢复信任。
+
+显式 DELETE 原 `/auth/devices/{localDeviceId}` 也撤销其对应云内容公钥及全部该公钥会话；当前流立即关闭，本地 outbox 等联网后同步。logout 只退出当前 Cookie。云 epoch 撤销与本地 authEpoch 分开；新的云 epoch 不自动撤销既有公钥信任，旧 Cookie 无效，本地密码/旧合法本地 Cookie/Bearer 不变。云已发 JWT 尚有最多 5 分钟有效窗；宿主每 60 秒轮询及启动同步，收到签名事件后立即失效；断网不能承诺取得最新撤权。有效宿主 Cookie 不要求每次请求联网，云离线不阻断本地登录。
+
+### 7.5 云控制面的宿主配合接口
+
+此表仍由 `services/cloud/` 提供，全部 POST/同源 Origin/JSON ≤16 KiB。云只保存安装公钥、内容 TLS 公钥 pin、cloudAccountId/hostId/member 与最小撤权元数据。
+
+| 方法与路径 | 请求 / 授权 | 响应 / 语义 |
+|---|---|---|
+| POST `/personal/v1/cloud/hosts/claims` | `{claimId,hostId,publicJwk,tlsSpki}` | 200 `{claimId,challenge,status}`；相同内容幂等，公钥/hostId/pin 冲突 409；pending 挑战 10 分钟，过期可用相同 claimId 更新 |
+| POST `/personal/v1/cloud/hosts/claims/confirm` | cloud:account Bearer + `{claimId,proof}` | 200 `{confirmed:true,hostId,sub}`；proof 为安装密钥 ES256、typ=wm-host-claim+jwt、iss=hostId、aud=issuer、iat/exp 与 claimId/challenge/sub；仅已验证且实时 epoch 有效账号可确认；相同 claimId/sub 幂等 |
+| POST `/personal/v1/cloud/hosts/revocations` | `{hostId,proof}`；安装密钥 ES256 typ=wm-host-request+jwt，iss=hostId/aud=issuer、iat/exp/jti、action=/hosts/revocations、afterSeq | 200 `{eventToken}`；RS256 typ=wm-cloud-revocations+jwt、iss=issuer/aud=该宿主 resource，含有序 events 与 watermark；只含此宿主成员的 epoch/device 事件，批次最多 1000，水位可续取 |
+| POST `/personal/v1/cloud/hosts/devices/revoke` | 同上安装 proof，action=/hosts/devices/revoke、sub/deviceId/jkt/requestId | 200 `{revoked:true}`；确认 member，按 requestId 幂等登记该宿主内容设备撤销；不删除账号/内容 |
+| POST `/personal/v1/cloud/hosts/memberships/unbind` | 同上安装 proof，action=/hosts/memberships/unbind、sub/claimId/requestId | 200 `{unbound:true}`；仅删除匹配 claimId 的旧 membership，旧重试不能撤销新绑定 |
+| POST `/personal/v1/cloud/auth/devices/revoke` | cloud:account Bearer + `{deviceId}` | 200 `{revoked:true}`；仅本云账号，撤销该设备云登录/刷新族，写 device 事件，供所有已绑定宿主同步 |
+
+安装请求 proof 有效 60 秒、允许 30 秒时钟差，jti 重放记录在云 SQLite；每次重试生成新 proof，业务 requestId/claimId 保持不变。eventToken 有效 300 秒，事件形状为 `{seq,sub,kind:"epoch",epoch}` 或 `{seq,sub,kind:"device",deviceId,jkt?}`；不含内容、邮箱、本地 ownerId。密码重置/换邮箱递增 epoch 的事件与原云操作同一数据库事务提交。宿主只从固定 JWKS 验证事件；后续推送/中继通道可交付相同签名 envelope。

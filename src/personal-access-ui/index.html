@@ -72,7 +72,7 @@
             <p class="rail-label">最近会话</p>
             <p class="muted rail-message" id="sessions-status">正在读取会话…</p>
             <ul class="session-list" id="session-list"></ul>
-            <div class="rail-footer"><button type="button" class="rail-link" id="rail-memory">记忆</button><button type="button" class="rail-link" id="rail-phone" hidden>手机记录</button><button type="button" class="rail-link" id="rail-account">账户与设备</button></div>
+            <div class="rail-footer"><button type="button" class="rail-link" id="rail-memory">记忆</button><button type="button" class="rail-link" id="rail-phone" hidden>手机记录</button><button type="button" class="rail-link" id="rail-account">账户与设备<span id="pending-device-badge" hidden> · 有设备等待批准</span></button></div>
           </aside>
           <div class="assistant-main">
             <div class="assistant-topbar">
@@ -191,6 +191,12 @@
           <div class="group-heading"><div><h2 id="devices-heading">已登录设备</h2><p class="muted">“当前设备”表示正在使用这个页面；设备名称可单独修改。有效期和撤销状态来自宿主记录。</p></div><button type="button" class="button secondary small" id="devices-refresh">刷新</button></div>
           <p class="muted" id="devices-loading">正在读取设备…</p>
           <ul class="device-list" id="device-list" aria-live="polite"></ul>
+          <div id="pending-devices" hidden>
+            <h3>待批准设备</h3>
+            <p class="muted">只允许你正在登录的设备。允许后，它可访问本账户的对话和记忆。</p>
+            <p id="pending-device-error" role="alert" class="form-error" hidden></p>
+            <ul class="device-list" id="pending-device-list" aria-live="polite"></ul>
+          </div>
         </section>
         <section class="card group" aria-labelledby="system-heading">
           <div class="group-heading"><h2 id="system-heading">系统状态</h2><button type="button" class="button secondary small" id="system-refresh">刷新</button></div>

@@ -179,7 +179,7 @@ export function createSessionOperations(context) {
               account.commands[source.rootTaskId]?.taskControl?.state === 'stop_requested' ||
               !device || device.revoked ||
               (source.sourceAuthEpoch !== undefined && device.authEpoch !== source.sourceAuthEpoch) ||
-              (device.authKind === 'password' && Date.parse(device.expiresAt) <= context.timestamp())) {
+              (['password', 'cloud'].includes(device.authKind) && Date.parse(device.expiresAt) <= context.timestamp())) {
             throw failure('CONVERSATION_CONTEXT_UNAVAILABLE', 409);
           }
           return { state: 'ready', contextText: bound.contextText,

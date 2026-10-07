@@ -41,9 +41,10 @@ test('account memory workers follow only the owner session route and restart wit
           ? { world_revision: 0 } : { world_revision: 0, items: [] }
         if (method === 'ingest_boundary') { this.ingested.push(params.boundary.event_id)
           return { job_state: 'pending' } }
-        if (method === 'preview_recall') return { world_revision: 0, preview: {
+        if (method === 'preview_recall') { this.lastRecallTier = params.model_tier; return { world_revision: 0, preview: {
           rendered_recall: `context:${this.env.MEMOWEFT_WORLD_MODEL}`, selected_item_ids: [] } }
-        if (method === 'query_interactions') return { rendered_context: '' }
+        }
+        if (method === 'query_interactions') { this.lastInteractionTier = params.model_tier; return { rendered_context: '' } }
         if (method === 'shutdown') return { ok: true }
         return {}
       },
@@ -105,5 +106,9 @@ test('account memory workers follow only the owner session route and restart wit
   assert.equal(backgroundStatus.state, 'ready')
   assert.equal(backgroundStatus.version, '2.0.0-synthetic')
   assert.equal(instances.at(-1).env.MEMOWEFT_WORLD_MODEL, 'background-model')
+  routes.set(`${ownerA}\0background-session`, backgroundRoutes.get(ownerA))
+  await manager.recall(ownerA, { query: 'cloud main with local background', sessionId: 'background-session', modelTier: 'cloud' })
+  assert.equal(instances.at(-1).lastRecallTier, 'cloud', 'local formation model cannot grant raw recall to a cloud main model')
+  assert.equal(instances.at(-1).lastInteractionTier, 'cloud')
   assert.equal(instances[1].closed, false, 'changing A background model does not restart B memory')
 })
