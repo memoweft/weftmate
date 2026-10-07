@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | 待开工 |
-| Codex · Mac | A0 已完成本地合并；下一包 M0-5 契约文档 | `wp/apple-sync`：build 11；macOS/iOS/watchOS 构建、Core 233 项测试 + 状态 91 项检查通过；待 Claude 经 SSH 取分支并代推送/PR |
+| Codex · Mac | M0-5 客户端契约文档完成 | `wp/m0-5-client-api`：77 项业务接口 + 11 个静态路径；Apple 对照与 M1-0a 草案已写；66/68 项相关测试通过，停止恢复断言失败、模型代理受缺少 vendor 阻塞；已推送并开 PR 待审（A0 已合入） |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -21,7 +21,7 @@
 
 ## 契约变更
 
-（W-Core 修改 `/personal/v1` 时在此记一行：日期 / 接口 / 变化 / 是否兼容。）
+- 2026-10-07 / M0-5：CLIENT_API 建立77项现有业务接口基线；Apple消息/纠正体上限、shared-chat任务控制、接管确认字段及分页/附件/模型等缺口已列；M0-3分页与M1-0a十种时间线事件为待Windows确认草案。仅文档，现有接口兼容性不变。
 
 ## 已知问题
 
