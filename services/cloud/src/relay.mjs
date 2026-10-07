@@ -18,10 +18,10 @@ export function createRelayIngress(targetPort, onClose = () => {}) {
     const upstream = connect({ host: '127.0.0.1', port: targetPort });
     const entry = { client, upstream, hostId: null };
     pending.add(entry);
-    let closed = false;
+    let closed = false, upstreamPort;
     const close = () => {
       if (closed) return; closed = true;
-      connections.delete(upstream.localPort); pending.delete(entry);
+      connections.delete(upstreamPort); pending.delete(entry);
       if (entry.hostId && ![...connections.values()].some(c => c.hostId === entry.hostId)) onClose(entry.hostId);
       client.destroy(); upstream.destroy();
     };
@@ -29,7 +29,8 @@ export function createRelayIngress(targetPort, onClose = () => {}) {
     client.once('close', close); upstream.once('close', close);
     client.pause();
     upstream.once('connect', () => {
-      pending.delete(entry); connections.set(upstream.localPort, entry);
+      upstreamPort = upstream.localPort;
+      pending.delete(entry); connections.set(upstreamPort, entry);
       client.pipe(upstream); upstream.pipe(client); client.resume();
     });
   });
