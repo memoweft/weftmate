@@ -32,6 +32,7 @@ export function createCloudVerifier(config, hostId, clock) {
         currentDate: new Date(clock()),
       });
       if (typeof payload.sub !== 'string' || !payload.sub || typeof payload.device_id !== 'string' ||
+          typeof payload.jti !== 'string' || !payload.jti || !Number.isSafeInteger(payload.iat) ||
           !/^[A-Za-z0-9_.:-]{1,128}$/.test(payload.device_id) ||
           !Number.isSafeInteger(payload.auth_epoch) || payload.auth_epoch < 0 ||
           typeof payload.scope !== 'string' || !payload.scope.split(' ').includes(scope) ||

@@ -57,8 +57,8 @@ export async function createHostCloudIdentity(context, options) {
     }
   }
   function closeInvalidResponses() {
-    for (const [response, { ownerId, deviceId }] of activeResponses) {
-      try { assertSession(ownerId, deviceId); }
+    for (const [response, request] of activeResponses) {
+      try { context.authenticate(request, 'sessions:read'); }
       catch { response.destroy(); }
     }
   }
@@ -262,8 +262,8 @@ export async function createHostCloudIdentity(context, options) {
           publicJwk: store.state.installation.publicJwk, origin: context.requestAuthority(request) }); return true;
       }
       if (route === '/auth/cloud-session' || route === '/cloud/pairings/redeem') {
-        exactKeys(body, ['accessToken', 'deviceName', 'challenge'], ['accessToken', 'deviceName',
-          ...(route.endsWith('/redeem') ? ['challenge'] : [])]);
+        const fields = ['accessToken', 'deviceName', ...(route.endsWith('/redeem') ? ['challenge'] : [])];
+        exactKeys(body, fields, fields);
         if (request.headers.cookie || request.headers.authorization) throw failure('AMBIGUOUS_AUTH');
         const name = context.deviceName(body.deviceName);
         const identity = await verifier.verify(body.accessToken);
@@ -334,9 +334,8 @@ export async function createHostCloudIdentity(context, options) {
     track(request, response) {
       if (request.method !== 'GET' && !/^\/personal\/v1\/models\/[^/]+\/chat\/completions$/.test(request.url ?? '')) return;
       try {
-        const current = context.authenticate(request, 'sessions:read');
-        if (current.device.authKind !== 'cloud') return;
-        activeResponses.set(response, current); response.once('close', () => activeResponses.delete(response));
+        context.authenticate(request, 'sessions:read');
+        activeResponses.set(response, request); response.once('close', () => activeResponses.delete(response));
       } catch { /* Handler returns the authentication error. */ }
     },
     start() { void syncRevocations().catch(() => {});

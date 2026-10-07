@@ -10,7 +10,7 @@
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
 | Codex · Mac | MW-2 observed 桥接 | MemoWeft #84 已合并，WeftMate #28 合入中：[MemoWeft #84](https://github.com/memoweft/memoweft/pull/84)（CI Gate 已绿）→ [WeftMate #28](https://github.com/memoweft/weftmate/pull/28)；真实 Core 集成通过；按此顺序合入，部署需升级 observed v1 Core |
-| Codex · Cloud | S1b 宿主云身份、绑定与设备授权 | [PR #30](https://github.com/memoweft/weftmate/pull/30)：已实现认领恢复/版本化绑定/迁移前备份、RS256+DPoP 换宿主 Cookie、待批准设备最小 Web UI、签名撤销/轮询与 outbox；宿主 7/7、cloud 34/34、UI 场景通过，类型检查/审计通过；待 PR CI，未部署/真实发信；完整客户端接入留 S1c |
+| Codex · Cloud | S1b 宿主云身份、绑定与设备授权 | [PR #30](https://github.com/memoweft/weftmate/pull/30)：已实现认领恢复/版本化绑定/迁移前备份、RS256+DPoP 换宿主 Cookie、待批准设备最小 Web UI、签名撤销/轮询与 outbox；宿主 7/7、cloud 34/34、UI 场景通过，类型检查/审计通过；待规划审查，PR CI 为门禁，未部署/真实发信；完整客户端接入留 S1c |
 
 已完成：文档/规则重置、M0-1b 清理与模块拆分、M0-2 服务容量与动态预算（PR #24）、H1 iPhone 健康设置/摘要/隔离队列（PR #22）、CI 依赖审计与省钱分组。
 
