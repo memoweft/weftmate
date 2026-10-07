@@ -363,6 +363,42 @@ final class WeftMateUITests: XCTestCase {
         #endif
     }
 
+    @MainActor func testA2AttachmentHistoryComposerAndPreview() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "a2-" + UUID().uuidString,
+            "--apple-contract-fixture", "--server-url", "https://a2-ui.unit.example"]
+        app.launch()
+        XCTAssertTrue(element(app, "conversationList").waitForExistence(timeout: 15))
+        let row = element(app, "conversationRow.session-11111111-1111-4111-8111-111111111111")
+        XCTAssertTrue(row.waitForExistence(timeout: 15)); row.tap()
+        let detail = element(app, "conversationDraft")
+        XCTAssertTrue(detail.waitForExistence(timeout: 10))
+        XCTAssertFalse(element(app, "conversationTasksButton").exists)
+        let history = app.buttons.matching(NSPredicate(format: "label == %@", "预览 历史图片.png")).firstMatch
+        XCTAssertTrue(history.waitForExistence(timeout: 10)); history.tap()
+        let panel = element(app, "attachmentPreviewPanel")
+        XCTAssertTrue(panel.waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["保存文件"].waitForExistence(timeout: 10))
+        XCTAssertTrue(element(app, "attachmentImageContent").waitForExistence(timeout: 10))
+        retainScreenshot(app, name: "a2-history-image-preview")
+        app.buttons["关闭预览"].tap()
+        XCTAssertTrue(element(app, "conversationDraft").waitForExistence(timeout: 5))
+        element(app, "addAttachmentButton").tap()
+        app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", "添加测试文件")).firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["A2-测试文件.txt"].waitForExistence(timeout: 10))
+        XCTAssertTrue(element(app, "sendButton").isEnabled)
+        retainScreenshot(app, name: "a2-attachment-only-composer")
+        element(app, "sendButton").tap()
+        XCTAssertTrue(app.staticTexts["已收到测试文件。"].waitForExistence(timeout: 10))
+        retainScreenshot(app, name: "a2-sent-file-in-history")
+        let file = app.buttons.matching(NSPredicate(format: "label == %@", "预览 A2-测试文件.txt")).firstMatch
+        XCTAssertTrue(file.waitForExistence(timeout: 5)); file.tap()
+        XCTAssertTrue(app.buttons["保存文件"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "A2 controlled attachment file 中文")).firstMatch.waitForExistence(timeout: 10))
+        retainScreenshot(app, name: "a2-history-file-preview")
+        app.buttons["关闭预览"].tap()
+    }
+
     @MainActor func testControlledArtifactPreviewAndReturnDraft() throws {
         try controlledArtifactFlow(interactions: false)
     }

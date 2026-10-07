@@ -118,7 +118,7 @@ mac = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "macOS").rglob("*.swift")
 phone = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "iOS").rglob("*.swift"))
 watch = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "watchOS").rglob("*.swift"))
 target("WeftMateWatch", "watchos", watch)
-debug_fixture = ["Tests/TaskProgressUIFixture.swift"]
+debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift"]
 target("WeftMateMac", "macosx", ui + mac + debug_fixture)
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture)
 target("WeftMateMacUITests", "macosx", ["Tests/WeftMateUITests.swift"], "WeftMateMac")
