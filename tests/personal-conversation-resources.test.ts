@@ -49,6 +49,40 @@ test('resource projection keeps a tool record when detail is unavailable and rej
   await assert.rejects(conversationResources(context, { commands: {} }, 'session-test', 'owner-test', 1), { code: 'BACKEND_UNAVAILABLE' })
 })
 
+test('output list keeps the latest named export even when records arrive out of order or an old status updates later', async () => {
+  const { INTERNAL_ARTIFACT_KIND } = await import('../src/personal-access/constants.mjs')
+  const artifact = (artifactId: string, fileName: string, createdAt: string, updatedAt = createdAt) =>
+    ({ kind: INTERNAL_ARTIFACT_KIND, sessionId: 'session-test', artifactId, fileName, createdAt, updatedAt })
+  const context = { callBackend: async (read: any) => read(), backend: {
+    readEvents: async () => ({ events: [], nextSeq: 10, hasMore: false }),
+  } }
+  const result = await conversationResources(context, { commands: {
+    latest: artifact('latest', 'approval.txt', '2026-10-08T02:29:00Z'),
+    old: artifact('old', 'approval.txt', '2026-10-08T02:28:00Z', '2026-10-08T02:30:00Z'),
+    other: artifact('other', 'report.txt', '2026-10-08T02:28:00Z'),
+    unrelated: { ...artifact('unrelated', 'approval.txt', '2026-10-08T02:31:00Z'), sessionId: 'session-other' },
+  } }, 'session-test', 'owner-test', 10)
+  assert.deepEqual(result.outputs.map(row => row.artifactId), ['latest', 'other'])
+})
+
+test('resource call summaries describe scripts, named files and connector searches without exposing raw code or output', async () => {
+  const fixtures = [
+    { tool: 'weftmod_script', args: { description: '写入 approval.txt', code: 'private code', params: { path: 'approval.txt' } }, expected: '运行脚本：写入 approval.txt' },
+    { tool: 'write', args: { file_path: 'C:\\synthetic\\approval.txt', content: 'private content' }, expected: '写入文件：approval.txt' },
+    { tool: 'read', args: { path: 'docs/PLAN.md' }, expected: '读取文件：PLAN.md' },
+    { tool: 'connector.search', args: { query: '会议安排' }, expected: '调用 connector.search：会议安排' },
+    { tool: 'connector.lookup', args: { description: '查找日历里的下次会议' }, expected: '查找日历里的下次会议' },
+  ]
+  const context = { callBackend: async (read: any) => read(), backend: {
+    readEvents: async () => ({ events: fixtures.map((fixture, index) => ({ seq: index + 1, type: 'step.completed',
+      data: { taskId: 'turn-1', stepId: `call-${index}`, toolName: fixture.tool, detailRef: { seq: index + 1 } } })), nextSeq: fixtures.length, hasMore: false }),
+    readEventDetail: async ({ seq }: any) => ({ text: JSON.stringify({ arguments: JSON.stringify(fixtures[seq - 1].args), output: 'private output' }) }),
+  } }
+  const result = await conversationResources(context, { commands: {} }, 'session-test', 'owner-test', -1)
+  assert.deepEqual(result.sources.filter(row => row.kind === 'tool').map(row => row.uses[0].summary), fixtures.map(row => row.expected))
+  assert.doesNotMatch(JSON.stringify(result), /private code|private content|private output/)
+})
+
 test('resources HTTP API requires account session ownership, validates cursors and preserves incremental pagination', async () => {
   const sessions = new Set<string>(), inputs: any[] = []
   const backend = {

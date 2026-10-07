@@ -3521,21 +3521,26 @@
     if (item.location) target.content.append(element('p', 'muted resource-location', item.location))
     if (item.url) { const address = element('input'); address.readOnly = true; address.value = item.url; address.setAttribute('aria-label', '网页地址'); target.content.append(address) }
     for (const use of item.uses) {
-      const line = element('section', 'resource-usage')
-      line.append(element('p', '', `${use.summary}${use.at ? ` · ${new Date(use.at).toLocaleString()}` : ''}`))
-      const read = element('button', 'button secondary small', item.kind === 'tool' ? '查看调用内容' : '查看具体内容'); read.type = 'button'
-      read.addEventListener('click', async () => {
-        if (!conversationTaskCurrent(context)) return
-        read.disabled = true
+      const line = element('details', 'resource-usage')
+      const time = use.at && Number.isFinite(Date.parse(use.at)) ? new Date(use.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : ''
+      line.append(element('summary', '', `${use.summary}${time ? ` · ${time}` : ''}`))
+      line.addEventListener('toggle', async () => {
+        if (!line.open || line.dataset.loaded || !conversationTaskCurrent(context)) return
+        line.dataset.loaded = 'loading'
+        line.querySelector('pre')?.remove()
+        const content = element('pre', 'timeline-raw', '正在读取…'); content.tabIndex = 0; line.append(content)
         try {
           const data = await accessApi(use.path)
           if (!conversationTaskCurrent(context) || !line.isConnected) return
           const text = data.source?.text || data.text || '暂时没有可预览内容'
-          const content = element('pre', 'timeline-raw', text); content.tabIndex = 0
-          line.querySelector('pre')?.remove(); line.append(content); read.textContent = '重新读取'
-        } catch { if (line.isConnected) read.textContent = '读取失败，重试' }
-        finally { read.disabled = false }
-      }); line.append(read); target.content.append(line)
+          content.textContent = `${text}${data.truncated || data.source?.truncated ? '\n[内容已截断]' : ''}`
+          const copy = element('button', 'timeline-action', '复制'); copy.type = 'button'
+          copy.addEventListener('click', async () => { try { await navigator.clipboard.writeText(content.textContent); copy.textContent = '已复制' } catch { copy.textContent = '请选择文字复制' } })
+          line.append(copy); line.dataset.loaded = 'true'
+        } catch {
+          if (line.isConnected) { content.textContent = '暂时无法读取，收起后可重试。'; delete line.dataset.loaded }
+        }
+      }); target.content.append(line)
     }
   }
   function renderTimeline(events = timelineEventsForContext()) {
