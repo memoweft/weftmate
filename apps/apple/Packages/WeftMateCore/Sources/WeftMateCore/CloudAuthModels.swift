@@ -88,6 +88,16 @@ public struct HostPairing: Codable, Sendable, Equatable {
     }
 }
 
+/// Host names use a 128 UTF-16 unit contract; preserve whole characters (including emoji).
+public func cloudDeviceName(_ name: String, platform: ApplePlatform = .current) -> String {
+    var result = ""
+    for character in platform.deviceLabel + " · " + name {
+        if result.utf16.count + String(character).utf16.count > 128 { break }
+        result.append(character)
+    }
+    return result
+}
+
 public struct PendingCloudDevice: Codable, Sendable, Identifiable, Equatable {
     public let id: String
     public let name: String
