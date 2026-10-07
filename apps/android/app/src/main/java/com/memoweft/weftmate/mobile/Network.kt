@@ -23,6 +23,8 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > 512) return false
     val route = path.substringBefore('?')
     val query = path.substringAfter('?', "")
+    if (query.isEmpty() && (route == "/personal/v1/system" || route == "/personal/v1/settings/models" ||
+        route.matches(Regex("/personal/v1/system/(model|host|memory)/restart")))) return true
     if (!query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) ||
         !route.matches(Regex("/personal/v1/(memory|mods|tasks|notifications|workspaces|capabilities)(/[A-Za-z0-9._~:/%-]*)?"))) return false
     // Memory item IDs may contain ':'. app.js sends that character as %3A. No other

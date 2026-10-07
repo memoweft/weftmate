@@ -1,6 +1,7 @@
 /** Decorate the native pi-ai adapter; its protocols, settings and credentials remain native. */
 import { Config, apply as applyPiAi } from '@deepseek-ai/dsh-llm-pi-ai';
 import { readModelCapacity, modelCapacityFor, outputBudget } from '../model-budget.mjs';
+import { acquireModelSlot, isBackgroundPurpose } from '../model-scheduler-client.mjs';
 
 export { Config };
 export const name = 'llm-pi-ai';
@@ -87,6 +88,17 @@ export function apply(ctx, config) {
           return info;
         };
         if (operation === 'stream') return async function* (options) {
+          const background = isBackgroundPurpose(options.purpose);
+          const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
+          if (background && scheduler) {
+            const query = new URLSearchParams({ sessionId: options.sessionId ?? '',
+              profileId: options.provider, model: options.model });
+            const response = await fetch(`${scheduler}/route?${query}`, { signal: options.signal });
+            if (!response.ok) throw new Error('BACKGROUND_MODEL_UNAVAILABLE');
+            options = { ...options, ...await response.json() };
+          }
+          const release = await acquireModelSlot(background ? 'background' : 'foreground', options.signal);
+          try {
           const row = rawSource().providers?.[options.provider];
           const entry = row?.models?.find(item => item.id === options.model);
           if (!compatible(row) || !entry) { yield* target.stream(options); return; }
@@ -107,6 +119,7 @@ export function apply(ctx, config) {
           const maxTokens = outputBudget({ ...limits, inputTokens,
             maxTokens: Math.min(limits.maxTokens, options.maxTokens ?? limits.maxTokens) });
           yield* target.stream({ ...options, maxTokens });
+          } finally { await release(); }
         };
         const value = Reflect.get(target, operation);
         return typeof value === 'function' ? value.bind(target) : value;

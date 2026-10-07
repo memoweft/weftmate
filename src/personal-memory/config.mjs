@@ -16,9 +16,9 @@ export async function loadPersonalMemoryConfig(file) {
       Object.keys(value).sort().join(',') !== 'authRef,baseUrl,model,python,pythonPath' ||
       typeof value.python !== 'string' || !path.isAbsolute(value.python) ||
       typeof value.pythonPath !== 'string' || !path.isAbsolute(value.pythonPath) ||
-      value.baseUrl !== 'http://127.0.0.1:8081/v1' ||
+      typeof value.baseUrl !== 'string' || !/^http:\/\/127\.0\.0\.1:\d{1,5}\/v1$/.test(value.baseUrl) ||
       value.model !== '@current' ||
-      value.authRef !== 'personal-local-occamy-miniplus-v21') {
+      typeof value.authRef !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value.authRef)) {
     throw invalid();
   }
   const [python, bridge] = await Promise.all([

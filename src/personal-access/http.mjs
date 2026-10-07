@@ -561,6 +561,43 @@ export function createHttpHandler(context) {
           return context.json(response, 200, record);
         }
       }
+      if (pathname === '/personal/v1/settings/models' && ['GET', 'PATCH'].includes(request.method)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, request.method === 'PATCH' ? 'account:manage' : 'sessions:read');
+        if (request.method === 'PATCH') {
+          const body = await context.readJson(request);
+          exactKeys(body, ['backgroundModelProfileId'], ['backgroundModelProfileId']);
+          const catalog = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })));
+          if (body.backgroundModelProfileId !== null && !catalog.some(model =>
+            model.id === body.backgroundModelProfileId && model.configured)) throw failure('MODEL_UNAVAILABLE', 409);
+          if (body.backgroundModelProfileId !== null && !context.modelSelectable(ownerId, body.backgroundModelProfileId)) {
+            throw failure('MODEL_UNAVAILABLE', 409);
+          }
+          await context.serial(() => context.mutate(ownerId, next => {
+            context.authenticate(request, 'account:manage');
+            if (body.backgroundModelProfileId !== null && !context.modelSelectable(ownerId, body.backgroundModelProfileId)) {
+              throw failure('MODEL_UNAVAILABLE', 409);
+            }
+            next.backgroundModelProfileId = body.backgroundModelProfileId;
+          }));
+          await context.memoryManager?.invalidateOwnerRoute?.(ownerId);
+        }
+        return context.json(response, 200, { backgroundModelProfileId: context.accountState(ownerId).backgroundModelProfileId ?? null });
+      }
+      const restartMatch = /^\/personal\/v1\/system\/(model|host|memory)\/restart$/.exec(pathname);
+      if ((pathname === '/personal/v1/system' && request.method === 'GET') ||
+          (restartMatch && request.method === 'POST')) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, restartMatch ? 'commands:write' : 'sessions:read');
+        if (!context.systemManager) throw failure('CAPABILITY_UNAVAILABLE', 503);
+        if (restartMatch) {
+          if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
+          exactKeys(await context.readJson(request), []);
+          await context.systemManager.restart(restartMatch[1], ownerId);
+        }
+        const value = await context.systemManager.status(ownerId);
+        return context.json(response, 200, { ...value, canRestart: context.hostOwner(ownerId) });
+      }
       if (request.method === 'GET' && pathname === '/personal/v1/status') {
         if (url.search) throw failure('INVALID_REQUEST');
         const backendStatus = statusProjection(await context.callBackend(() => context.backend.getStatus({ ownerId })));

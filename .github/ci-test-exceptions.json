@@ -644,16 +644,6 @@
       "tracking": "https://github.com/memoweft/weftmate/pull/23"
     },
     {
-      "file": "tests/personal-memory-processing-route.test.ts",
-      "name": "account memory workers follow only the owner session route and restart without losing the outbox",
-      "platforms": [
-        "darwin",
-        "linux"
-      ],
-      "reason": "Fixture supplies C:/synthetic/python.exe and pythonPath; these fail the absolute-path contract on POSIX. Windows still runs this test. Track portable fixture paths in CI-1 follow-up.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/23"
-    },
-    {
       "file": "tests/dsh-vendor-closure.test.ts",
       "name": "当前平台可把未构建的外部平台 optional 包留在闭包 manifest 中",
       "platforms": [
