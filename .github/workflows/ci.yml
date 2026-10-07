@@ -47,6 +47,9 @@ jobs:
       - name: Configure Linux Electron sandbox
         if: runner.os == 'Linux'
         run: |
+          # Electron 43 downloads lazily on first require; materialize it
+          # before configuring the helper, rather than during a test import.
+          node node_modules/electron/install.js
           sudo chown root:root node_modules/electron/dist/chrome-sandbox
           sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
 
