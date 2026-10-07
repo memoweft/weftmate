@@ -154,16 +154,16 @@ describe('writeWebProfile（R1-02：profile 由 main 写进 dsh-home）', () => 
     assert.ok(upgraded.includes('id: weftmate-personal-desktop'))
   })
 
-  test('personal-remote upgrades owned preset to bounded project reading and document saving', async t => {
+  test('personal-remote upgrades owned presets to native tools and conversation artifacts', async t => {
     const root = await mkdtemp(join(tmpdir(), 'weftmate-personal-preset-'))
     t.after(() => rm(root, { recursive: true, force: true }))
     await writeWebProfile(root, 'weftmate')
     const composition = join(root, '.agent-presets', 'personal-remote', 'agent.cordis.yml')
     const metadata = join(root, '.agent-presets', 'personal-remote', 'preset.yml')
     const current = await readFile(composition, 'utf8')
-    assert.match(current, /weftmod desktop open/)
-    assert.match(current, /Tool success, a model turn ending, and a verified user goal are separate/)
-    for (const plugin of ['dsh-tool-pwsh', 'dsh-tool-fs', 'dsh-tool-fs-search', 'dsh-tool-jobs']) assert.ok(current.includes(plugin))
+    assert.match(current, /Write deliverables there/)
+    assert.match(current, /includeRuntimeContext: true/)
+    for (const plugin of ['dsh-tool-pwsh', 'dsh-tool-bash', 'dsh-tool-fs', 'dsh-tool-fs-search', 'dsh-tool-jobs', 'dsh-tool-web', 'dsh-tool-todo', 'dsh-tool-subagent']) assert.ok(current.includes(plugin))
     assert.equal(current.includes('explicitly asks to open Notepad'), false)
     const bounded = await readFile(join(process.cwd(), 'tests/fixtures/personal-remote-bounded.cordis.yml'), 'utf8')
     await writeFile(composition, bounded, 'utf8')

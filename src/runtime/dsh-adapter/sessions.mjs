@@ -171,14 +171,16 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     }
 
     if (type === 'tool/result' && projected?.type === 'step.completed') {
-      const artifact = part?.content?.filter(p => p.type === 'text').map(p => toolArguments(p.text))
-        .map(value => value.artifact ?? value).find(value => typeof value?.artifactId === 'string')
-      if (artifact) projected = { seq, type: 'artifact.created', data: {
-        taskId: artifact.taskId ?? taskId, artifactId: artifact.artifactId,
-        fileName: safeHistoryText(artifact.fileName ?? '成果文件').text,
-        contentType: artifact.contentType ?? 'text/plain', size: artifact.size ?? 0,
+      const artifacts = (part?.content?.filter(p => p.type === 'text').map(p => toolArguments(p.text)) ?? [])
+        .map(value => value.artifact ?? value).filter(value => typeof value?.artifactId === 'string')
+        .map(value => ({ taskId: value.taskId ?? taskId, artifactId: value.artifactId,
+          fileName: safeHistoryText(value.fileName ?? '成果文件').text,
+          contentType: value.contentType ?? 'text/plain', size: value.size ?? 0 }))
+      if (artifacts.length) projected = { seq, type: 'artifact.created', data: {
+        ...artifacts[0], ...(artifacts.length > 1 ? { artifacts } : {}),
         detailSeq: seq, completedStep: projected.data,
       } }
+
     }
   } else if (type === 'approval/asked' || type === 'approval/decided') {
     projected = { seq, type: type === 'approval/asked' ? 'approval.requested' : 'approval.resolved', data: {

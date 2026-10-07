@@ -29,6 +29,7 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   const staged = join(root, 'desktop.mjs')
   writeFileSync(staged, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
     .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`)
+    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
     .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`))
   const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, tools,
     { default: ApprovalService }, { createScope }] = await Promise.all([
