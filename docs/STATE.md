@@ -8,19 +8,22 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows | M0-1b 代码瘦身 | [PR（拉取请求）#20](https://github.com/memoweft/weftmate/pull/20) 待审；5 项完成，模型切换部分简化 |
-| Codex · Mac | H1 HealthKit 读取与每日健康摘要 | `wp/h1-healthkit`：iPhone 账号菜单健康设置、8 类只读权限、本地每日摘要/14 天基线、云端选择/自评频率、隔离持久队列与删除待办已实现；Core 253 项、状态检查 10 组及三目标构建通过；iOS 隔离模拟器 HealthKit 合成样本与设置 UI 场景 2 项通过；服务端草案待 Windows 实现；仓库 CI 在 release:preflight 因现有 npm 依赖审计失败（main 同样失败）；[PR #22](https://github.com/memoweft/weftmate/pull/22) 待审 |
+| Codex · Windows | M0-1b 代码瘦身 | [PR #20](https://github.com/memoweft/weftmate/pull/20) 已合入；5 项完成，模型切换部分简化 |
+| Codex · Mac | CI-1 GitHub CI | [PR #23](https://github.com/memoweft/weftmate/pull/23)：生产与完整 npm 审计 0 漏洞，依赖兼容冒烟、运行环境修复与透明测试分层已提交；三平台最终验证结果见 PR；13 项主干失败单独观察，外部 vendor/Design 与平台例外逐项注明，见 SETUP 与 `.github/ci-test-exceptions.json` |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
 - 任务 15 在途改动已作 checkpoint 提交 `1f922a5`（通用执行、审批、用户提问、Android 文本成果 MIME，未经独立验收）。
 - M0-1b：旧 alpha2 路径清理、一次性脚本归档；`personal-access/index.mjs` 6160 → 614 行，导出、接口和存储行为兼容。
+- H1：[PR #22](https://github.com/memoweft/weftmate/pull/22) 已合入；iPhone 健康设置、8 类只读权限、每日摘要/14 天基线、云端选择/自评频率与隔离持久队列已实现。Core 253 项、状态检查 10 组、三目标构建及 iOS 隔离模拟器 2 项场景通过；服务端草案待 Windows 实现。
 
 ## 最近一次场景结果
 
 M0-7 场景集已建立；Qwen / MiMo 实测基线尚未跑。
 
 M0-1b 工程检查：类型检查通过；完整单测基线 873/890 通过、15 失败、2 跳过 → 当前 843/856 通过、11 原有失败、2 跳过（含主干新增评测测试）；新增失败 0。分项检查与完整失败用例见 PR。
+
+CI-1 的三平台必过/非阻塞基线结果及最终运行链接见 [PR #23](https://github.com/memoweft/weftmate/pull/23)。原 11 项基线外，在未改动 main `855044d` 上确认图片消息原请求重试（偶发 404）与重启后的停止回执重试两项失败；不改产品逻辑，13 项按精确名称单独非阻塞运行，同文件其他用例仍必须通过。
 
 ## 契约变更
 
@@ -36,4 +39,4 @@ M0-1b 工程检查：类型检查通过；完整单测基线 873/890 通过、15
 - 长任务以 `max-tokens` 空结束：上下文/输出预算未按实际模型服务计算（M0-2）。
 - 本地 Qwen 服务曾多次显存不足（OOM），启动方式不统一（M0-6）。
 - 模型路由只合并两个薄封装；跨文件恢复、串行队列和历史会话引用保护保留，进一步简化仍需协调持久化与重载路径（见 PR #20）。
-- PR #20 云端 CI（持续集成）在 `release:preflight` 的依赖审查中失败；锁文件未改动，本包未升级依赖。
+- CI-1 待续：固定 DSH 的可重复编译产物未提供，vendor 生成/验证、契约及 103 个依赖 vendor 的用例与 3 个文件明确未验证；另缺外部 Design 夹具。POSIX 整树清理、Windows 写死路径夹具与 Linux optional 夹具平台适配列为后续；13 项主干失败仍待产品修复。依赖审计漏洞已全部解除。
