@@ -127,6 +127,10 @@ public struct TimelineEntry: Equatable, Sendable, Identifiable {
     }
 }
 public enum TimelineProjection {
+    public static func taskRunning(_ events: [TimelineEvent], fallback: Bool) -> Bool {
+        events.last(where: { ["task.started", "turn.started", "task.ended", "turn.ended"].contains($0.type) })
+            .map { $0.type.hasSuffix("started") } ?? fallback
+    }
     public static func entries(_ events: [TimelineEvent]) -> [TimelineEntry] {
         let ordered = events.sorted { $0.seq < $1.seq }
         var result: [TimelineEntry] = [], steps: [String: (Int, Int)] = [:], cards: [String: Int] = [:]

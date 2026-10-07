@@ -34,14 +34,19 @@ import WeftMateCore
     private func apply(_ data: Data?, clear: Bool = false) {
         if clear { snapshot = nil; feedback = WatchFeedbackTracker(); return }
         guard let data, let value = try? JSONDecoder().decode(WatchTimelineSnapshot.self, from: data) else { return }
-        let effects = feedback.apply(value); snapshot = value
+        snapshot = value
         // No remote push yet: feedback is emitted only while this Watch app is active or refreshed.
         if WKExtension.shared().applicationState == .active {
+            let effects = feedback.apply(value)
             if effects.completed { WKInterfaceDevice.current().play(.success) }
             else if effects.approval { WKInterfaceDevice.current().play(.notification) }
         }
     }
-    func refresh() { send(["action": "refresh"]) }
+    func refresh() {
+        // A completion received in the background is announced on the next foreground refresh.
+        if let snapshot, let bytes = try? JSONEncoder().encode(snapshot) { apply(bytes) }
+        send(["action": "refresh"])
+    }
     func decide(_ approval: WatchApproval, allowed: Bool) {
         guard let snapshot else { return }
         send(["action": "approval", "sessionID": snapshot.sessionID, "approvalID": approval.id,

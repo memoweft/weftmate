@@ -29,8 +29,13 @@ public struct WatchFeedbackTracker: Sendable {
     public mutating func apply(_ snapshot: WatchTimelineSnapshot) -> (completed: Bool, approval: Bool) {
         let key = snapshot.accountKey + "|" + snapshot.sessionID
         let nextCompleted = Set(snapshot.completedTaskIDs), nextApprovals = Set(snapshot.approvals.map(\.id))
-        defer { identity = key; completed = nextCompleted; approvals = nextApprovals }
-        guard identity == key else { return (false, !nextApprovals.isEmpty) }
-        return (!nextCompleted.subtracting(completed).isEmpty, !nextApprovals.subtracting(approvals).isEmpty)
+        guard identity == key else {
+            identity = key; completed = nextCompleted; approvals = nextApprovals
+            return (false, !nextApprovals.isEmpty)
+        }
+        let effects = (!nextCompleted.subtracting(completed).isEmpty, !nextApprovals.subtracting(approvals).isEmpty)
+        // Old applicationContext/message snapshots cannot replay an already observed alert.
+        completed.formUnion(nextCompleted); approvals.formUnion(nextApprovals)
+        return effects
     }
 }
