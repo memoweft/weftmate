@@ -2,7 +2,7 @@
 import { spawnSync } from 'node:child_process';
 import { appendFileSync, mkdtempSync, readFileSync, readdirSync, realpathSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, parse } from 'node:path';
 
 const mode = process.argv[2];
 if (!['required', 'known'].includes(mode)) throw new Error('Use required or known');
@@ -24,9 +24,13 @@ if (mode === 'required') {
 }
 // macOS /var and /tmp are symlinks. Private storage and Node's permission
 // model require canonical paths, including for isolated child fixtures.
-// Windows' default TEMP uses RUNNER~1, an 8.3 alias which does not satisfy the
-// private-store realpath comparison. RUNNER_TEMP has a stable full path.
-const temp = mkdtempSync(join(realpathSync(process.env.RUNNER_TEMP || tmpdir()), 'weftmate-ci-'));
+// Windows' default TEMP uses RUNNER~1; RUNNER_TEMP is on the checkout's D:
+// drive. Use a fresh full path on the system drive so the C: versus D:
+// isolation fixture is actually exercised as well as the realpath contract.
+const tempBase = process.platform === 'win32'
+  ? parse(process.env.SystemRoot || 'C:\\Windows').root
+  : realpathSync(process.env.RUNNER_TEMP || tmpdir());
+const temp = mkdtempSync(join(tempBase, 'weftmate-ci-'));
 const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp };
 const lines = [
   `### Unit tests (${mode})`,
