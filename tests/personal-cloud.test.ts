@@ -192,11 +192,15 @@ test('two local accounts bind independently; pending devices cannot see content;
     targetDeviceId: f.hostId, modelProfileId: 'synthetic' }, session)
   assert.equal(created.status, 202, JSON.stringify(created))
   let stored: any
-  for (let i = 0; i < 50; i++) {
+  // Windows ACL writes can take longer than the previous 500 ms polling window.
+  const createdDeadline = Date.now() + 10_000
+  while (Date.now() < createdDeadline) {
     stored = JSON.parse(await readFile(join(f.root, 'store.json'), 'utf8'))
     if (stored.accounts[f.a.account.ownerId].sessions[created.command.sessionId]) break
-    await new Promise(resolve => setTimeout(resolve, 10))
+    await new Promise(resolve => setTimeout(resolve, 50))
   }
+  assert.ok(stored.accounts[f.a.account.ownerId].sessions[created.command.sessionId],
+    JSON.stringify(stored.accounts[f.a.account.ownerId].commands[created.command.commandId]))
   assert.equal(stored.accounts[f.a.account.ownerId].sessions[created.command.sessionId].origin, 'personal-remote')
   assert.equal(stored.accounts[f.a.account.ownerId].commands[created.command.commandId].sourceAuthEpoch,
     stored.accounts[f.a.account.ownerId].account.authEpoch)

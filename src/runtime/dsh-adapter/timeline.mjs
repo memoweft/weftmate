@@ -28,6 +28,6 @@ export function describeTool(name, value) {
     return host ? `打开网页 ${host}` : /search/.test(name) ? '搜索网页' : '读取网页'
   }
   return ({ write: '写入文件', write_file: '写入文件', edit: '修改文件', str_replace_editor: '修改文件',
-    glob: '查找文件', grep: '搜索内容', todo: '更新计划', subagent: '启动子任务',
-    personal_save_document: '保存成果文件', ask_user_question: '请求补充信息' })[name] ?? `执行工具 ${short(name)}`
+    glob: '查找文件', grep: '搜索内容', todo: '更新计划', todo_write: '更新计划', subagent: '启动子任务',
+    ask_user_question: '请求补充信息' })[name] ?? `执行工具 ${short(name)}`
 }
