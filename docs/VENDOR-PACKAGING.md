@@ -37,7 +37,7 @@ npm run dist:win:candidate -- `
 - API key 由 Electron `safeStorage` 保存；固定 DSH provider 只通过受管 Node child IPC（Node 子进程进程间通信）按 ref 获取密钥，密钥不进入普通配置、子进程环境、日志或诊断；
 - 发布包不能依赖开发机器上的绝对源码路径。
 
-Windows 安装、更新、卸载、数据保留、诊断和恢复的当前边界见 [WINDOWS-PREVIEW.md](WINDOWS-PREVIEW.md)。
+Windows 安装、更新、卸载、数据保留、诊断和恢复的当前边界见 [WINDOWS-PREVIEW.md](archive/2026-10-07/WINDOWS-PREVIEW.md)。
 
 ## 当前边界
 

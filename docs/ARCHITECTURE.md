@@ -38,8 +38,8 @@
 | 受保护的安卓候选下载 | [personal-access/index.mjs](../src/personal-access/index.mjs)、[宿主启动器](../scripts/run-personal-host.mjs)；仅显式配置的固定APK文件、既有账户鉴权、固定下载路由和禁止缓存；文件不存在时不宣传为可下载 |
 | 受限远端预设与模型桌面工具 | [personal-desktop插件](../src/plugins/weftmate-personal-desktop.mjs)、[专用预设限制](../src/plugins/weftmate-personal-desktop-preset.mjs)、[DSH宿主接线](../src/dsh-web-runtime.ts)；正式工具范围限制、确切子进程IPC、turn/call/原消息来源与设备授权校验 |
 | 记事本动作与窗口核验 | [personal-desktop-task.mjs](../src/personal-desktop-task.mjs)、[命令账本](../src/personal-access/index.mjs)；固定应用路径、持久受理/去重、可见窗口证据与结果不明不重放 |
-| 受控文档成果与跨端任务详情 | [personal-artifacts/index.mjs](../src/personal-artifacts/index.mjs)、[个人接入路由](../src/personal-access/index.mjs)、[电脑工具](../src/plugins/weftmate-personal-desktop.mjs)、[安卓网络层](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt)；仅原owner受限会话的可信工具来源写入账户/任务隔离的`.md/.txt`成果，写后读回并核哈希，详情/预览/下载重新鉴权；现行候选与任务控制边界见[任务08](tasks/UNIFIED_ASSISTANT_08.md) |
-| 同一任务的补充、准确停止、恢复与执行步骤 | [个人任务账本/路由](../src/personal-access/index.mjs)、[同进程停止插件](../src/plugins/weftmate-personal-task-control.mjs)、[宿主IPC](../src/dsh-web-runtime.ts)、[历史身份投影](../src/runtime/dsh-adapter/sessions.mjs)、[手机界面](../apps/mobile-ui/www/app.js)、[电脑界面](../src/personal-access-ui/app.js)；冻结根任务命令/receiptId，同进程核source.rpcId和当前回合后取消，精确队列删除及持久终态分别证明；恢复须已核对前态/副作用并明确下一步，旧/混合身份保留未知，验证见[任务09](tasks/UNIFIED_ASSISTANT_09.md) |
+| 受控文档成果与跨端任务详情 | [personal-artifacts/index.mjs](../src/personal-artifacts/index.mjs)、[个人接入路由](../src/personal-access/index.mjs)、[电脑工具](../src/plugins/weftmate-personal-desktop.mjs)、[安卓网络层](../apps/android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt)；仅原owner受限会话的可信工具来源写入账户/任务隔离的`.md/.txt`成果，写后读回并核哈希，详情/预览/下载重新鉴权；现行候选与任务控制边界见[任务08](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_08.md) |
+| 同一任务的补充、准确停止、恢复与执行步骤 | [个人任务账本/路由](../src/personal-access/index.mjs)、[同进程停止插件](../src/plugins/weftmate-personal-task-control.mjs)、[宿主IPC](../src/dsh-web-runtime.ts)、[历史身份投影](../src/runtime/dsh-adapter/sessions.mjs)、[手机界面](../apps/mobile-ui/www/app.js)、[电脑界面](../src/personal-access-ui/app.js)；冻结根任务命令/receiptId，同进程核source.rpcId和当前回合后取消，精确队列删除及持久终态分别证明；恢复须已核对前态/副作用并明确下一步，旧/混合身份保留未知，验证见[任务09](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_09.md) |
 | 原宿主通用工具与执行记录 | [自有预设](../src/plugins/weftmate-personal-desktop-preset.mjs)、[生命周期桥](../src/plugins/weftmate-personal-desktop.mjs)、[可信账户/原请求账本](../src/personal-access/index.mjs)、[停止与原生后台工作](../src/plugins/weftmate-personal-task-control.mjs)、[官方工具挂载](../src/dsh-web-runtime.ts)；复用官方命令/文件/搜索/工作工具与WeftMod，模型按目标自主执行，执行记录由宿主关联原会话/回执，不按应用名写规则。`executionSteps`仅表示工具/后台工作的观测状态，与业务核验分开；原owner与其他账户既有边界保留。当前接线与真实验证回任务15/当前状态 |
 | 个人宿主独立监督入口 | [run-personal-host-task.ps1](../scripts/run-personal-host-task.ps1)、[原启动器](../scripts/run-personal-host.mjs)；当前Windows登录用户的计划任务以前台进程监督宿主，异常退出按退避重启，隔离故障恢复已验；停计划任务后子进程清理仍需按profile核实，正式运行状态见CURRENT_STATE |
 | 本机模型目录与正式DSH路由 | [local-model-config.mjs](../src/local-model-config.mjs)、[main.mjs](../src/main.mjs)、[dsh-settings-migration.ts](../src/dsh-settings-migration.ts)；只从本机正式Config取模型限制，仅查目录的配置、系统加密凭据、官方user layer及持久归属标记、版本校验的窄修复；已核实的Occamy路由通过官方设置修订接口幂等补图片输入，不按显示名扩给其他模型 |
@@ -59,23 +59,23 @@
 | MemoWeft 模型记忆与历史查看边界 | [正式理解召回匹配](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/hermes/recall.py)、[依赖校验](D:/AIProjects/MemoWeft/Core/py/src/memoweft/model_context_dependencies.py)、[交互投影](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/dsh_bridge/interactions.py)、[来源查询与权限](D:/AIProjects/MemoWeft/Core/py/src/memoweft/integrations/trust/query_service.py)、[精确依赖补链](D:/AIProjects/MemoWeft/Core/py/src/memoweft/store/interaction_context.py) |
 | MemoWeft 备份的规范化、校验与恢复 | [portable/model.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/portable/model.py)、[portable/validate.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/portable/validate.py)、[portable/importer.py](D:/AIProjects/MemoWeft/Core/py/src/memoweft/portable/importer.py) |
 
-2026-09-26：第二段的独立 `/personal/v1` 接入已在本机隔离验证，公网配置未应用。发送回调经过宿主模型归属判断；内部 [Gateway 消息路径](../src/runtime/gateway/routes/v1.mjs) 仍只供本机使用。请求记录先持久写入，DSH 受理与最终结果分别记录，回执不明不自动重放。历史补读使用原生分页和持久序号，不能以尾页冒充全部历史。详情和未验证边界见 [UNIFIED_ASSISTANT_02](tasks/UNIFIED_ASSISTANT_02.md)。第一段无窗口/降级启动结果保留在 [UNIFIED_ASSISTANT_01](tasks/UNIFIED_ASSISTANT_01.md)。
+2026-09-26：第二段的独立 `/personal/v1` 接入已在本机隔离验证，公网配置未应用。发送回调经过宿主模型归属判断；内部 [Gateway 消息路径](../src/runtime/gateway/routes/v1.mjs) 仍只供本机使用。请求记录先持久写入，DSH 受理与最终结果分别记录，回执不明不自动重放。历史补读使用原生分页和持久序号，不能以尾页冒充全部历史。详情和未验证边界见 [UNIFIED_ASSISTANT_02](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_02.md)。第一段无窗口/降级启动结果保留在 [UNIFIED_ASSISTANT_01](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_01.md)。
 
 2026-09-23：记忆交互与来源查询已按 model/history projection（模型输入与历史查看投影）划分；该语义用于当前性、依赖失效和权限控制，不是旧星球图谱或向量相似度接口。模型消费者必须显式选择模型投影，历史管理界面保留原话及来源状态。该记录发生时云模型目的地尚未定义；现行账户云模型政策以本表及 `personal-memory/policy.mjs` 为准。
 
 Mod SDK 的 settings/contributes 与 `ui.shared` 仍不是已交付能力；图谱、embedding（向量嵌入）和 similarity（相似度）也不能凭本轮投影命名视为已实现。实际验证状态详见 `CURRENT_STATE`。更新接口须先读正式文件和 `collab/BACKEND.md`，由既有负责人在唯一协作通道协调。
 
-2026-09-26 账户补充：`/personal/v1/ui` 与 `/personal/v1/auth/*` 的账户验证见 [UNIFIED_ASSISTANT_03](tasks/UNIFIED_ASSISTANT_03.md)。现main/启动器支持显式公开HTTPS来源与可信回环代理；用户处理系统拦截后，正式Caddy已将`/personal/v1/*`转发至回环18186，本机正式HTTPS检查通过，真实手机登录与按钮任务已核实，手机对话反馈与来源核对边界见 [UNIFIED_ASSISTANT_04](tasks/UNIFIED_ASSISTANT_04.md)。修改密码保留当前设备ID，轮换其会话并拒绝旧待派发命令；已开始派发的状态如实保留。
+2026-09-26 账户补充：`/personal/v1/ui` 与 `/personal/v1/auth/*` 的账户验证见 [UNIFIED_ASSISTANT_03](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_03.md)。现main/启动器支持显式公开HTTPS来源与可信回环代理；用户处理系统拦截后，正式Caddy已将`/personal/v1/*`转发至回环18186，本机正式HTTPS检查通过，真实手机登录与按钮任务已核实，手机对话反馈与来源核对边界见 [UNIFIED_ASSISTANT_04](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_04.md)。修改密码保留当前设备ID，轮换其会话并拒绝旧待派发命令；已开始派发的状态如实保留。
 
-2026-09-26 任务补充：命令列表、按requestId找回、受限`personal-remote`会话、实际MiniPlus工具调用和Notepad窗口已完成本机真实验证，准确范围见 [UNIFIED_ASSISTANT_04](tasks/UNIFIED_ASSISTANT_04.md)。旧本机接管会话保持历史可读，远端发送须核实际受限预设；只读模型查询不依赖Gateway重启后丢失的内存记录。正式消息历史兼容固定rc.5的直接消息结构，不以旧嵌套测试形态代替。
+2026-09-26 任务补充：命令列表、按requestId找回、受限`personal-remote`会话、实际MiniPlus工具调用和Notepad窗口已完成本机真实验证，准确范围见 [UNIFIED_ASSISTANT_04](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_04.md)。旧本机接管会话保持历史可读，远端发送须核实际受限预设；只读模型查询不依赖Gateway重启后丢失的内存记录。正式消息历史兼容固定rc.5的直接消息结构，不以旧嵌套测试形态代替。
 
-2026-09-26 安卓与同步补充：原生客户端位于主仓`apps/android`，正式契约定位如上；电脑页面以明确的手机来源展示同步历史，目前为只读，不等同于跨端继续同一个DSH会话。个人受限预设已在正式回合生命周期增加重复工具收敛；历史投影跳过页面未使用的逐字增量但保留原生序号水位，追尾后显示持久终态。构建、真实MuMu运行、公网下载与未验层次分别见 [UNIFIED_ASSISTANT_05](tasks/UNIFIED_ASSISTANT_05.md) 和当前状态。
+2026-09-26 安卓与同步补充：原生客户端位于主仓`apps/android`，正式契约定位如上；电脑页面以明确的手机来源展示同步历史，目前为只读，不等同于跨端继续同一个DSH会话。个人受限预设已在正式回合生命周期增加重复工具收敛；历史投影跳过页面未使用的逐字增量但保留原生序号水位，追尾后显示持久终态。构建、真实MuMu运行、公网下载与未验层次分别见 [UNIFIED_ASSISTANT_05](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_05.md) 和当前状态。
 
 ## 现用补充定位
 
-2026-09-27 多账户与记忆边界：公开注册建立独立 owner（账户归属标识），已配置 v2 原账户无损迁移；未知归属的旧资料不能由公开首注册认领。宿主模型只允许明确登记且当前配置仍一致的本机目录共享，新账户不继承宿主文件、桌面执行权或私人云模型配置。个人宿主通过 `--personal-memory-config` 启用账户化 MemoWeft：每个 owner 有独立数据目录、Core 进程、作业与来源账本；认证、会话归属及实际模型目的地一起核对。目的地可为正式共享本地模型或具有本人账户确切修订证明的云模型，归属/路由/凭据不明、停用或删除时关闭对应处理与召回。`forget_evidence` 仍是软删除；账户页面的删除走真删除命令。成功真删后清除当前 Core 数据库、索引和作业结果的正文；原始 WeftMate 聊天、Core 交互归档及既存独立备份不在该操作的清理范围。早期验证见[任务 06](tasks/UNIFIED_ASSISTANT_06.md)，账户云模型实际形成、采用与管理证据见[任务 15](tasks/UNIFIED_ASSISTANT_15.md)和 CURRENT_STATE。
+2026-09-27 多账户与记忆边界：公开注册建立独立 owner（账户归属标识），已配置 v2 原账户无损迁移；未知归属的旧资料不能由公开首注册认领。宿主模型只允许明确登记且当前配置仍一致的本机目录共享，新账户不继承宿主文件、桌面执行权或私人云模型配置。个人宿主通过 `--personal-memory-config` 启用账户化 MemoWeft：每个 owner 有独立数据目录、Core 进程、作业与来源账本；认证、会话归属及实际模型目的地一起核对。目的地可为正式共享本地模型或具有本人账户确切修订证明的云模型，归属/路由/凭据不明、停用或删除时关闭对应处理与召回。`forget_evidence` 仍是软删除；账户页面的删除走真删除命令。成功真删后清除当前 Core 数据库、索引和作业结果的正文；原始 WeftMate 聊天、Core 交互归档及既存独立备份不在该操作的清理范围。早期验证见[任务 06](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_06.md)，账户云模型实际形成、采用与管理证据见[任务 15](archive/2026-10-07/tasks/UNIFIED_ASSISTANT_15.md)和 CURRENT_STATE。
 
-方向见 [PROJECT_DIRECTION.md](PROJECT_DIRECTION.md)，当前验证状态见 [CURRENT_STATE.md](CURRENT_STATE.md)。本文件保留既有源码注释与契约测试引用路径；旧章节编号和旧阶段描述已退役。
+方向见 [PROJECT_DIRECTION.md](VISION.md)，当前验证状态见 [CURRENT_STATE.md](STATE.md)。本文件保留既有源码注释与契约测试引用路径；旧章节编号和旧阶段描述已退役。
 
 | 现有路径 | 定位 |
 | --- | --- |
