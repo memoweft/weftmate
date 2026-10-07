@@ -55,6 +55,7 @@ public actor PersonalClient {
     private var epoch: UInt64 = 0
     private var syncEvents: [SyncEvent] = []
     private var summaries: [ConversationSummary] = []
+    private var adoptedSyncMessages: [String: [String: ChatMessage]] = [:]
     private var timelineMessageIDs: [String: [Int: String]] = [:]
     private var timelinePages: [String: TimelinePage] = [:]
     private var historyCache: [String: [ChatMessage]] = [:]
@@ -267,6 +268,10 @@ public actor PersonalClient {
                     if let prior = adopted[receipt], prior != item.sourceSyncEventId { throw APIFailure.invalidResponse }
                     adopted[receipt] = item.sourceSyncEventId
                 }
+                adoptedSyncMessages[binding.sessionId] = try Dictionary(uniqueKeysWithValues: adopted.compactMap { receipt, eventID in
+                    guard let original = originals.first(where: { $0.eventId == eventID }) else { return nil }
+                    return (receipt, try syncMessage(original, pending: false))
+                })
                 var shown = Set<String>()
                 var mapped: [Int: String] = [:]
                 for event in hostEvents {
@@ -277,7 +282,7 @@ public actor PersonalClient {
                     } else if let message = try hostMessage(event, sessionID: binding.sessionId) { result.append(message) }
                 }
                 timelineMessageIDs[binding.sessionId] = mapped
-                for original in originals where original.seq > binding.cutoverSyncSeq && !shown.contains(original.eventId) {
+                for original in originals where original.seq > binding.cutoverSyncSeq && !shown.contains(original.eventId) && !adopted.values.contains(original.eventId) {
                     result.append(try syncMessage(original, pending: true))
                 }
             }
@@ -1015,7 +1020,14 @@ public actor PersonalClient {
     public func cachedTimelineMessageIDs(sessionID: String) -> [Int: String] { credential == nil ? [:] : timelineMessageIDs[sessionID] ?? [:] }
     public func cachedTimelinePage(sessionID: String) -> TimelinePage? { credential == nil ? nil : timelinePages[sessionID] }
     public func timelineMessages(_ events: [TimelineEvent], sessionID: String) throws -> [ChatMessage] {
-        try events.compactMap { try hostMessage($0, sessionID: sessionID) }
+        try events.compactMap { event in
+            if event.type == "user.message", let receipt = event.data["receiptId"]?.string,
+               let message = adoptedSyncMessages[sessionID]?[receipt] {
+                timelineMessageIDs[sessionID, default: [:]][event.seq] = message.id
+                return message
+            }
+            return try hostMessage(event, sessionID: sessionID)
+        }
     }
     public func timelineDetail(sessionID: String, seq: Int) async throws -> TimelineDetail {
         let (auth, generation) = try snapshot()
@@ -1115,7 +1127,7 @@ public actor PersonalClient {
         return epoch
     }
     private func clearCaches() {
-        syncEvents = []; summaries = []; historyCache = [:]; timelinePages = [:]; timelineMessageIDs = [:]; sharedIntentBytes = [:]; sharedIntentEndpoints = [:]; sharedOperations = []
+        syncEvents = []; summaries = []; historyCache = [:]; timelinePages = [:]; timelineMessageIDs = [:]; adoptedSyncMessages = [:]; sharedIntentBytes = [:]; sharedIntentEndpoints = [:]; sharedOperations = []
         memoryIntentBytes = [:]; memoryIntentEndpoints = [:]; memoryOperations = []
         memoryIntentIdentities = [:]; memoryKnownReceipts = [:]; memoryRedactedProofs = [:]
         taskStopIntents = [:]

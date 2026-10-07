@@ -599,7 +599,8 @@ extension AppleAppModel {
                     let progress = tracker.progress(for: currentReceipt)
                     self.commandPresentations[id] = .init(record: currentRecord, receipt: currentReceipt, progress: progress,
                         note: nil, lookupNotFound: false)
-                    if self.selectedConversation?.id == conversation.id {
+                    // Bound sync transcripts are merged by the paged timeline, not a second host-only alias.
+                    if self.selectedConversation?.id == conversation.id, conversation.conversationId == nil {
                         let known = Set(self.messages.map(\.id))
                         self.messages.append(contentsOf: tracker.messages.filter { !known.contains($0.id) })
                         self.historyCachedAt = nil
@@ -1149,7 +1150,9 @@ final class AppleAppModel: ObservableObject {
             guard actionEpoch == epoch, request == historyRequest else { return }
             timeline.apply(page, older: true)
             let old = try await client.timelineMessages(page.events, sessionID: sessionID)
+            let mapped = await client.cachedTimelineMessageIDs(sessionID: sessionID)
             guard actionEpoch == epoch, request == historyRequest else { return }
+            timelineMessageIDs = mapped
             let known = Set(messages.map(\.id)); messages.insert(contentsOf: old.filter { !known.contains($0.id) }, at: 0)
             await persistTimeline(conversation)
         } catch { if actionEpoch == epoch, request == historyRequest { historyError = friendly(error) } }
@@ -1168,7 +1171,11 @@ final class AppleAppModel: ObservableObject {
                 timeline.apply(page)
                 updateTimelineActivity(conversation)
                 let new = try await client.timelineMessages(page.events, sessionID: sessionID)
+                let mapped = await client.cachedTimelineMessageIDs(sessionID: sessionID)
                 guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
+                timelineMessageIDs = mapped
+                let newIDs = Set(new.map(\.id))
+                messages.removeAll { $0.pendingContext && newIDs.contains($0.id) }
                 let known = Set(messages.map(\.id)); messages.append(contentsOf: new.filter { !known.contains($0.id) })
                 if !page.events.isEmpty {
                     await persistTimeline(conversation)

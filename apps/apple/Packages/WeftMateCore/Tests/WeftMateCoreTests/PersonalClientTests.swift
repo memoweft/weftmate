@@ -176,6 +176,27 @@ private func login(_ client: PersonalClient) async throws -> AccountSession {
     #expect(messages.last?.pendingContext == true)
     #expect(messages.filter { $0.text == "adopted user" }.count == 1)
     #expect(await transport.remaining() == 0)
+    // The accepted source message lies outside the initial native tail. Upward paging must recover
+    // its original identity/text, rather than leave a second "pending" copy at the conversation end.
+    let tail = json(#"{"events":[{"seq":1,"type":"assistant.message","data":{"text":"host answer"}}],"nextSeq":1,"hasMore":false,"hasOlder":true,"nextBeforeSeq":1}"#)
+    let older = json(#"{"events":[{"seq":0,"type":"user.message","data":{"text":"adopted user truncated","receiptId":"receipt-4"}}],"nextSeq":1,"hasMore":false,"hasOlder":false,"nextBeforeSeq":0}"#)
+    let paged = ScriptTransport([step("/auth/login", auth()), step("/status", status()),
+        step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync), step("/sessions", sessions),
+        step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync),
+        step("/sync/conversations/\(conversationID)/shared", projection), step("/sessions/session-host/events?limit=100", tail),
+        step("/auth/me", auth()), step("/sessions/session-host/events?beforeSeq=1&limit=100", older)])
+    let pagedClient = PersonalClient(credentialStore: MemoryStore(), transport: paged)
+    _ = try await login(pagedClient)
+    let pagedConversation = try #require(await pagedClient.conversations().first)
+    let tailMessages = try await pagedClient.history(conversation: pagedConversation)
+    #expect(!tailMessages.contains { $0.text == "adopted user" })
+    #expect(tailMessages.filter(\.pendingContext).map(\.text) == ["late branch"])
+    let oldPage = try await pagedClient.timelinePage(sessionID: "session-host", beforeSeq: 1)
+    let restored = try #require(await pagedClient.timelineMessages(oldPage.events, sessionID: "session-host").first)
+    #expect(restored.text == "adopted user" && !restored.pendingContext)
+    #expect(await pagedClient.cachedTimelineMessageIDs(sessionID: "session-host")[0] == restored.id)
+    #expect(await paged.remaining() == 0)
+
 }
 
 @Test func malformedPaginationFailsWithoutClaimingCompleteHistory() async throws {

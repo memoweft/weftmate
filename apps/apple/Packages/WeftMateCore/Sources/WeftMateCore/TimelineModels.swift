@@ -118,10 +118,17 @@ public struct TimelineEntry: Equatable, Sendable, Identifiable {
     public var resolved: TimelineEvent?
     public var running = false
     public var elapsed: String {
-        let formatter = ISO8601DateFormatter()
-        let start = steps.compactMap { $0.at.flatMap(formatter.date) }.min()
-        let end = steps.compactMap { ($0.endAt ?? $0.at).flatMap(formatter.date) }.max()
-        guard let start, let end else { return "时间待确认" }
+        func date(_ value: String?) -> Date? {
+            guard let value else { return nil }
+            let formatter = ISO8601DateFormatter()
+            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = formatter.date(from: value) { return date }
+            formatter.formatOptions = [.withInternetDateTime]
+            return formatter.date(from: value)
+        }
+        let starts = steps.compactMap { date($0.at) }, ends = steps.compactMap { date($0.endAt) }
+        guard starts.count == steps.count, ends.count == steps.count,
+              let start = starts.min(), let end = ends.max() else { return "时间待确认" }
         let seconds = max(0, Int(end.timeIntervalSince(start)))
         return seconds < 60 ? "\(seconds) 秒" : "\(seconds / 60) 分 \(seconds % 60) 秒"
     }
@@ -155,7 +162,7 @@ public enum TimelineProjection {
                     let row = group!
                     steps[key] = (row, result[row].steps.count)
                     result[row].steps.append(.init(id: key, taskID: task, seq: event.seq, data: event.data,
-                        at: event.at, endAt: event.type == "step.completed" ? event.at : nil))
+                        at: event.type == "step.started" ? event.at : nil, endAt: event.type == "step.completed" ? event.at : nil))
                 }
                 if raw.type != "artifact.created" { continue }
             }
