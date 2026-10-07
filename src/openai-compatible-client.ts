@@ -5,7 +5,7 @@ type FetchLike = (url: URL, init: Record<string, unknown>) => Promise<{ ok: bool
 
 export function openAICompatibleEndpoint(baseUrl: unknown, suffix: string): URL {
   const normalized = normalizeApiBaseUrl(baseUrl);
-  if (!normalized) throw new TypeError('API 地址必须是 HTTPS，或不含凭据/查询参数/片段的本机 HTTP 地址');
+  if (!normalized) throw new TypeError('API 地址必须是 HTTPS，或不含凭据/查询参数/片段的本机/局域网 HTTP 地址');
   return new URL(`${normalized}/${suffix}`);
 }
 

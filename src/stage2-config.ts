@@ -8,6 +8,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import { randomUUID } from 'node:crypto';
+import { isLocalModelUrl } from './model-tier.ts';
 
 export const PRODUCT_CONFIG_SCHEMA_VERSION = 3;
 export type ThemePreference = 'system' | 'light' | 'dark';
@@ -20,6 +21,8 @@ export interface PublicModelProfile {
   baseUrl: string;
   model: string;
   reasoningEffort?: 'off' | 'low' | 'medium' | 'high';
+  /** Missing/auto uses the endpoint; explicit local/cloud overrides proxies. */
+  modelTier?: 'auto' | 'local' | 'cloud';
 }
 
 export interface SessionModelBinding {
@@ -69,9 +72,7 @@ export function normalizeApiBaseUrl(value: unknown): string | null {
     const parsed = new URL(candidate);
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return null;
     if (parsed.username || parsed.password || parsed.search || parsed.hash) return null;
-    const hostname = parsed.hostname.toLowerCase();
-    const loopback = hostname === 'localhost' || hostname === '[::1]' || /^127(?:\.(?:25[0-5]|2[0-4]\d|1?\d?\d)){3}$/.test(hostname);
-    if (parsed.protocol === 'http:' && !loopback) return null;
+    if (parsed.protocol === 'http:' && !isLocalModelUrl(candidate)) return null;
     return parsed.toString().replace(/\/+$/, '');
   } catch { return null; }
 }
@@ -85,7 +86,10 @@ function validProfile(value: unknown): PublicModelProfile | null {
   if (!id || !name || !baseUrl || !model || value.provider !== 'openai-compatible') return null;
   const reasoningEffort = ['off', 'low', 'medium', 'high'].includes(String(value.reasoningEffort))
     ? value.reasoningEffort as PublicModelProfile['reasoningEffort'] : undefined;
-  return { id, name, provider: 'openai-compatible', baseUrl, model, ...(reasoningEffort ? { reasoningEffort } : {}) };
+  const modelTier = ['auto', 'local', 'cloud'].includes(String(value.modelTier))
+    ? value.modelTier as PublicModelProfile['modelTier'] : undefined;
+  return { id, name, provider: 'openai-compatible', baseUrl, model,
+    ...(reasoningEffort ? { reasoningEffort } : {}), ...(modelTier ? { modelTier } : {}) };
 }
 
 /** Validate and migrate v0 (legacy settings) / v1 into the current schema. */

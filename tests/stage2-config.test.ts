@@ -18,6 +18,16 @@ afterEach(() => { for (const root of roots.splice(0)) rmSync(root, { recursive: 
 function store() { const root = mkdtempSync(join(tmpdir(), 'weftmate-stage2-settings-')); roots.push(root); return { root, file: join(root, 'weftmate-settings.json'), store: new ProductConfigStore(join(root, 'weftmate-settings.json')) }; }
 
 describe('Stage 2 non-secret configuration', () => {
+  it('persists model tier overrides and auto while old profiles remain compatible after reopening', () => {
+    const { file, store: settings } = store();
+    const profile = { name: 'Local', provider: 'openai-compatible', baseUrl: 'http://192.168.1.10:18080/v1', model: 'qwen' };
+    settings.write(normalizeProductConfig({ models: { profiles: [
+      { ...profile, id: 'legacy' }, { ...profile, id: 'automatic', modelTier: 'auto' },
+      { ...profile, id: 'local', modelTier: 'local' }, { ...profile, id: 'proxy', modelTier: 'cloud' },
+    ] } }));
+    assert.deepEqual(new ProductConfigStore(file).read().models.profiles.map(p => p.modelTier),
+      [undefined, 'auto', 'local', 'cloud']);
+  });
   it('provides a schema-versioned default and preserves legacy non-secret preferences', () => {
     const { store: settings } = store();
     assert.deepEqual(settings.read().appearance, { theme: 'system' });

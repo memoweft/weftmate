@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
-| Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 待审查；POST/GET/DELETE、私有存储、observed 待写队列及云端召回限制已实现，相关检查通过；三平台 CI 见 PR checks |
+| Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 审查修改已实现；健康待写队列不影响非健康召回，模型按地址自动判断且可用 modelTier 覆盖；相关单测/类型检查通过；三平台 CI 见 PR checks |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -20,7 +20,7 @@
 
 ## 最近一次场景结果
 
-H2：隔离健康 HTTP/存储/RPC 场景 8/8，通过幂等、设备/账号隔离、删除与待写证据撤回、迟到上传、云端选择/召回、认证/CSRF/超大请求及重开存储；既有记忆/个人访问回归 43 通过、1 个需显式 TLS 夹具的场景跳过；类型检查通过。未连真实宿主、未碰日用数据；vendor/真实 Core observed 写入与撤回未验，CI 按精确例外运行；main `201d36a` 复现 M0-2 model-budget-runtime 缺 vendor，已补该用例到 vendorTests，未列为产品通过；CI 另发现既有 IPC 夹具读到半写 JSON，已改夹具为原子发布回执，未改生产生命周期逻辑，相关生命周期夹具 10 项通过（POSIX 整树清理仍按原例外不运行）。
+H2 修订：隔离健康/模型位置/账号模型/设置/模型目录测试 22/22，含有摘要 + false + 云端照常召回、LAN/loopback 地址边界、手动覆盖、位置修订/幂等/凭据复用/重开存储；既有记忆/个人访问/界面/模型凭据回归 119 通过，7 项已知主干失败与 1 项 POSIX 下 Windows 路径夹具失败均在原 CI 精确例外中；类型检查通过。未连真实宿主、未碰日用数据；vendor/真实 Core observed 写入与撤回未验，CI 按精确例外运行；main `201d36a` 复现 M0-2 model-budget-runtime 缺 vendor，已补该用例到 vendorTests，未列为产品通过；CI 另发现既有 IPC 夹具读到半写 JSON，已改夹具为原子发布回执，未改生产生命周期逻辑，相关生命周期夹具 10 项通过（POSIX 整树清理仍按原例外不运行）。
 
 M0-7 场景集已建立；Qwen / MiMo 实测基线尚未跑。
 
@@ -30,7 +30,7 @@ CI-1 的三平台必过/非阻塞基线结果及最终运行链接见 [PR #23](h
 
 ## 契约变更
 
-- 2026-10-07 / H2：CLIENT_API 第 6 节转正式：POST 同账号/设备/日期完整覆盖；GET 近 1–365 天（默认 14，查询时区默认 UTC）；DELETE 日期/全部及迟到上传水位。200 确认摘要和 observed 待写队列落盘；MemoWeft 无 observed 写入契约，尚未写 World。最新选择作用全账号；false 时 cloud/未知路由的整段个人记忆召回 withheld，本地由正式宿主 profile 证明；后续需 Core 来源权限过滤/撤回协议。
+- 2026-10-07 / H2：CLIENT_API 第 6 节转正式：POST 同账号/设备/日期完整覆盖；GET 近 1–365 天（默认 14，查询时区默认 UTC）；DELETE 日期/全部及迟到上传水位。200 确认摘要和 observed 待写队列落盘；MemoWeft 无 observed 写入契约，尚未写 World。最新选择作用全账号；健康仅在待写队列，非健康记忆召回照常。MW-2 写入 World 后按来源过滤健康证据/衍生项并撤回，保留其余召回。CLIENT_API 3.10 新增可选 modelTier（auto/local/cloud），缺省按实际 loopback/私有网段/*.local 判定；模型配置/查询/转移兼容旧请求，位置修改生成新 runtime 修订。
 
 - 2026-10-06 / H1：CLIENT_API 第 6 节新增健康摘要草案：POST `/health/daily-summaries` 按账号/来源设备/日期幂等，含云端使用选择与自评频率；DELETE 按日期/全部；Apple 404/501 静默保留本地队列。待 Windows 接收、MemoWeft observed 与模型使用/删除闭环实现。
 
@@ -40,7 +40,7 @@ CI-1 的三平台必过/非阻塞基线结果及最终运行链接见 [PR #23](h
 
 ## 已知问题
 
-- H2：当前 MemoWeft RPC 缺少 observed upsert 与来源权限/撤回协议；健康事实仍在可回放队列，未进入 World。混合召回不能可靠过滤衍生来源，opt-out 暂时阻止整段云端个人记忆召回；需求见 `src/personal-health/README.md`。
+- H2：当前 MemoWeft RPC 缺少 observed upsert 与来源权限/撤回协议；健康事实仍在可回放队列，未进入 World。MW-2 需在写入 World 时补齐按来源过滤健康证据/衍生项，当前非健康记忆召回照常；需求见 `src/personal-health/README.md`。
 
 - 长会话打开时报「历史超出当前可读取范围」：`src/runtime/dsh-adapter/sessions.mjs` `historyPage` 每页从尾部倒扫，超过 24×50 条即失败（M0-3）。
 - M0-2 预算来源已修复并通过隔离场景；真实 Qwen 长任务回归待服务可用。剩余上下文极少时输出预算会降到 1 token（`outputBudget` 下限），应先触发压缩——归 M1-3 处理。

@@ -5,6 +5,8 @@ import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-stora
 import { MemoWeftRpc } from './rpc.mjs';
 import { createMemoryCommandJournal } from './journal.mjs';
 import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/index.mjs';
+import { normalizeApiBaseUrl } from '../stage2-config.ts';
+import { modelTierFor } from '../model-tier.ts';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -63,17 +65,14 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           (typeof selected.routeFingerprint !== 'string' || !/^[a-f0-9]{64}$/.test(selected.routeFingerprint))) {
       throw error('MEMORY_MODEL_UNAVAILABLE');
     }
-    let parsed;
-    try { parsed = new URL(selected.baseUrl); } catch { throw error('MEMORY_MODEL_UNAVAILABLE'); }
-    const loopback = ['127.0.0.1', '[::1]', 'localhost'].includes(parsed.hostname.toLowerCase());
-    if ((!loopback && parsed.protocol !== 'https:') || (loopback && !['http:', 'https:'].includes(parsed.protocol)) ||
-        parsed.username || parsed.password || parsed.search || parsed.hash) throw error('MEMORY_MODEL_UNAVAILABLE');
-    const normalizedBaseUrl = parsed.href.replace(/\/$/, '');
+    const normalizedBaseUrl = normalizeApiBaseUrl(selected.baseUrl);
+    if (!normalizedBaseUrl) throw error('MEMORY_MODEL_UNAVAILABLE');
+    const modelTier = modelTierFor(selected);
     return { profileId: selected.profileId, baseUrl: normalizedBaseUrl, model: selected.model,
       credential: selected.credential, routeFingerprint: selected.routeFingerprint,
-      modelTier: selected.modelTier === 'local' ? 'local' : 'cloud',
+      modelTier,
       key: JSON.stringify([selected.profileId, normalizedBaseUrl, selected.model,
-        selected.routeFingerprint, selected.modelTier]) };
+        selected.routeFingerprint, modelTier]) };
   }
 
   async function preparePrivateHome(ownerId) {
@@ -421,7 +420,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (typeof query !== 'string' || !query.trim() || query.length > 500 ||
           typeof sessionId !== 'string' || sessionId.length > 128) throw error('MEMORY_REQUEST_INVALID');
       const route = await resolveProcessingRoute(ownerId, sessionId);
-      return healthStore.withRecallPolicy(ownerId, route.modelTier, () => withOwner(ownerId, async (entry) => {
+      // Health observed evidence is queued, never written to World by this bridge.
+      // MW-2 must filter health sources after observed writes, preserving other recall.
+      return withOwner(ownerId, async (entry) => {
         // Recheck the worker route too: a host route may have changed during acquire.
         if (entry.modelTier !== route.modelTier) return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
         if (!entry.routeReady) return { state: 'withheld', reasonCode: 'MEMORY_MODEL_UNAVAILABLE' };
@@ -439,7 +440,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         return { state: 'ready', contextText, worldRevision: Number.isSafeInteger(world?.world_revision)
           ? world.world_revision : null, sourceCount: Array.isArray(world?.preview?.selected_item_ids)
             ? world.preview.selected_item_ids.length : 0 };
-      }, sessionId));
+      }, sessionId);
     },
     async ingest(ownerId, boundary) {
       owner(ownerId);
