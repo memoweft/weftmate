@@ -1,5 +1,7 @@
 # WeftMate 手机界面
 
+UI-2a：0.8.3 页面新增输入区五种审批模式、全部允许风险确认、设置中的新电脑对话默认模式，以及允许一次 / 总是允许此类 / 拒绝审批卡。模式按 CLIENT_API 3.7 保存在电脑会话上；共享会话和已交给电脑的手机对话均可使用，手机直连模型未绑定电脑时显示适用范围。同类授权只限当前对话，断网重试保留原请求与范围。Android 壳需 code16，发布使用 `--min-native-version-code 16`（发布器默认值已更新）。验收见 [UI-2a](../../tests/evidence/ui-2a/README.md)；`node --test tests/approval-interactions.test.mjs` 使用 Chromium（浏览器引擎）验证 390×844 的真实页面，截图默认写仓库忽略的 `.local/ui-2a/`。
+
 `www/` 是同一份 Weave 0.8.1 页面资产：Android APK（安卓安装包）内置它作离线底版，个人宿主的版本发布也只读取这个目录。修改 `www/` 不会自动改变已经安装的底版；经审阅后由宿主发布新界面包，现有 APK 在连接时下载、校验并切换。新增原生能力、权限、数据库或 native bridge（原生连接层）版本仍需更新 APK。
 
 ## 开发与打包

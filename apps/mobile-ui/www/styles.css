@@ -113,6 +113,34 @@ main{min-height:0;flex:1;position:relative;display:flex;flex-direction:column}.p
 .approval-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
 .approval-actions button{min-height:44px;padding:9px 14px;font-size:15px;line-height:1.4}
 .approval-actions button:disabled{opacity:.55;cursor:wait}
+.approval-risk-copy{margin:8px 0;color:var(--secondary);font-size:14px;line-height:1.6}
+.approval-actions{display:grid;grid-template-columns:1fr 1fr}
+.approval-actions button{min-height:48px;padding:10px 8px}
+.approval-actions button[data-approval-choice="rejected"]{grid-column:1/-1}
+.approval-mode-button{display:flex;align-items:center;gap:3px;flex:none;min-height:48px;padding:0 6px;font-size:13px;border-radius:10px}
+.approval-mode-button .icon{width:14px;height:14px}
+#chat-page .model-button{min-width:0;flex:1;padding:0 4px}
+#model-label{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#chat-page .composer-actions{gap:0}
+#chat-page .composer-actions .icon-button{width:44px;min-width:44px}
+.approval-mode-popover{position:fixed;left:12px;right:12px;width:auto;max-width:440px;margin:0 auto;padding:12px;overflow-y:auto;overscroll-behavior:contain;z-index:40;border-radius:16px;border:0;box-shadow:0 12px 32px rgba(0,0,0,.16)}
+.approval-mode-popover h3{margin:4px 8px 8px;font-size:15px}
+.approval-mode-popover .approval-mode-option{display:flex;align-items:center;gap:12px;width:100%;min-height:68px;padding:10px 8px;text-align:left;border:0;margin:0;color:var(--ink)}
+.approval-mode-copy{flex:1;min-width:0}
+.approval-mode-copy strong{display:block;font-size:15px;line-height:1.4;font-weight:600}
+.approval-mode-copy small{display:block;margin-top:4px;font-size:13px;line-height:1.5;color:var(--secondary)}
+.approval-mode-option[aria-checked="true"]{background:var(--accent-soft)}
+.approval-mode-option .icon,.mode-check-space{width:18px;height:18px;flex:none}
+.approval-mode-option .icon{color:var(--accent)}
+.approval-risk-dialog{position:fixed;inset:0;z-index:50;background:rgba(20,30,50,.4);display:flex;align-items:flex-end;justify-content:center;padding:12px 12px max(12px,env(safe-area-inset-bottom))}
+.approval-risk-sheet{width:100%;max-width:440px;border-radius:16px;padding:20px;background:var(--surface);color:var(--ink)}
+.approval-risk-sheet h2{margin:0 0 14px;font-size:20px;line-height:1.4}
+.approval-risk-sheet p{margin:12px 0;font-size:16px;line-height:1.65}
+.approval-risk-actions{display:flex;gap:10px;margin-top:20px}
+.approval-risk-actions button{flex:1;min-height:48px;padding:10px;font-size:15px}
+:root[data-theme=dark] .approval-actions .primary,:root[data-theme=dark] .approval-risk-actions .primary{color:var(--canvas)}
+.approval-mode-button:focus-visible,.approval-mode-popover button:focus-visible,.approval-risk-sheet button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.conversation-approval.is-resolved .approval-status{margin:0;font-size:14px;color:var(--secondary)}
 .approval-actions button:focus-visible,.approval-status:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:8px}
 .task-approval{padding:12px 0;overflow-wrap:anywhere}
 .task-approval+.task-approval{border-top:1px solid var(--line)}

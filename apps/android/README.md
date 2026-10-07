@@ -1,5 +1,7 @@
 # WeftMate Android 客户端
 
+UI-2a 当前壳为 **0.8.3 / code16**：内置手机审批模式界面，新增精确 `/settings/approvals` 与 `/sessions/{sessionId}/approval-mode` 业务路由；审批决定可传 `scope: once / conversation-category`，拒绝不带 scope（授权范围）。继续使用原 Cookie（会话凭据）、CSRF（跨站请求伪造防护）和 TLS pin（证书公钥固定）连接，没有新增系统权限。发布新版手机 UI（网页界面）需 `--min-native-version-code 16`；合成截图与本机 JVM（Java 虚拟机）/调试包构建结果见 [UI-2a](../../tests/evidence/ui-2a/README.md)。
+
 0.8.0/code13 采用 hybrid（混合式应用）：`HybridActivity` 用 WebView（网页视图）显示可由个人宿主更新的 Weave 页面，Kotlin（安卓语言）继续保存账户与模型凭据、SQLite（本地数据库）对话和待同步事件，并执行手机模型调用及受限 Android Intent（系统意图）。旧 `MainActivity` 原生 Views（原生视图）页保留作兼容入口。最低 Android 8（API 26），调试包名仍是 `com.memoweft.weftmate.mobile.debug`，更新时沿用原应用数据与签名。
 
 ## 能力与边界
