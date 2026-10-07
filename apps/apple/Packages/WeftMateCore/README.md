@@ -2,7 +2,7 @@
 
 Shared native Swift core for macOS 14+, iOS 17+ and watchOS 10+, without external dependencies. `PersonalClient` owns account state; views own their presentation generation and keep passwords out of preferences.
 
-The package uses the existing `/personal/v1` contracts indexed by `docs/ARCHITECTURE.md`. Auth/device routes are implemented in `src/personal-access/index.mjs`; source event paging comes from `src/personal-sync/index.mjs`; the original phone/host history merge follows `apps/mobile-ui/www/app.js` and the Android conversation handoff. These remain the authority for protocol changes.
+The package uses the existing `/personal/v1` client contracts. The main repository's `docs/PLAN.md` tracks their consolidation in M0-5. Auth/device routes are implemented in `src/personal-access/index.mjs`; source event paging comes from `src/personal-sync/index.mjs`. Protocol changes must be coordinated with the host; local transport tests do not establish deployed compatibility.
 
 ## Current candidate
 
@@ -16,7 +16,7 @@ The package uses the existing `/personal/v1` contracts indexed by `docs/ARCHITEC
 - Strict certificates, no redirects, no shared cookie jar, bounded response bytes and monotonic paginated history. A network/protocol error cannot become an empty successful list.
 - Logout reports both local credential removal and remote acknowledgement. A Keychain failure is not reported as persisted logout success.
 
-Sending, model selection/secret transfer, attachments and durable offline history are later milestones. `sendAvailable` is false in this read candidate. Windows published the Apple platform capability adaptation at `cb08461`; the acceptance executable checks it on its isolated test devices. Apple does not supply an Android `nativeVersionCode` or declare model-secret transfer. The regular App does not use this acceptance SPI to advertise a send flow. Existing bound host commands and new-source adoption have different requirements; see the actual backend routes before extending the write flow.
+The merged candidate also includes typed shared send/adoption requests and receipts, per-account durable drafts/history caches and operation records, memory reads/mutations, task discovery/detail/stop, permission approvals, information answers, original attachment metadata and UTF-8 text artifact downloads. The App declares Apple shared-conversation capabilities through the public client method when continuing a conversation; it never supplies an Android `nativeVersionCode` or declares model-secret transfer. Existing bound host commands and new-source adoption retain distinct identities. Availability comes from the authenticated server projection, rather than a hard-coded claim that sending is ready. Model-secret transfer and general attachment upload are still outside this candidate.
 
 ## Temporary DEBUG network route
 
@@ -27,10 +27,10 @@ This uses Apple's [URLSession proxy configuration](https://developer.apple.com/d
 ## Tests
 
 ```sh
-swift test --scratch-path /tmp/weftmate-apple-core-tests-844429c
+swift test --scratch-path "$(mktemp -d /tmp/weftmate-apple-core.XXXXXX)"
 ```
 
-The existing 16 Swift Testing cases cover valid/invalid server settings, distinct stable platform identity, issued-device restoration, cookie/owner checks, account changes with late responses, revocation, valid/bad cursors, exact original-history merging, safe errors, offline restore and both local/remote logout failures. Five additional DEBUG/acceptance cases cover development port/origin limits, the authenticated three-platform declaration, mismatched device/platform and undeclared capability replies, and a late capability response after account switching. Scripted transport tests validate the client; they do not prove a deployed service or physical device.
+Swift Testing covers account/device restoration and isolation, history/attachment decoding, shared send/adoption, durable stores and recovery, memory changes/redaction, task reads/stops, approval/question receipts, UTF-8 text artifacts and public update/download validation. Scripted transports and temporary storage keep these checks independent of the backend and daily data. The App's standalone state checks are run from `apps/apple` with `make test-state`; neither group proves a deployed service, physical device or GUI flow.
 
 ## Native acceptance executable
 
