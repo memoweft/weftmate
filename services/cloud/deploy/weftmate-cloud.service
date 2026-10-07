@@ -1,4 +1,4 @@
-# Review draft: /opt/weftmate-cloud/current contains services/cloud contents.
+# /opt/weftmate-cloud/current contains the independently installed cloud service.
 [Unit]
 Description=WeftMate cloud control plane
 After=network.target
@@ -8,7 +8,7 @@ Type=simple
 DynamicUser=yes
 User=weftmate-cloud
 WorkingDirectory=/opt/weftmate-cloud/current
-ExecStart=/usr/bin/node src/main.mjs
+ExecStart=/opt/weftmate-node/bin/node src/main.mjs
 EnvironmentFile=/etc/weftmate-cloud/cloud.env
 StateDirectory=weftmate-cloud
 StateDirectoryMode=0700
