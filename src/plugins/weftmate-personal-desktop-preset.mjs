@@ -24,7 +24,8 @@ export function apply(ctx) {
   const dispose = ctx.tools.restrict({ deny: ['mod_sdk'] });
   ctx.on('system-prompt/assemble', async (_assembly, _context, next) => {
     const assembly = await next();
-    return { ...assembly, tools: assembly.tools.map(tool => descriptions[tool.name]
+    return { ...assembly, sections: [...assembly.sections, { name: 'weftmate:approval-guidance',
+      text: "Respect the user's verbal instructions for this task: work independently when asked, and stop at any requested checkpoint. Use ask_user_question for requested checkpoints or missing information. Follow the current WeftMate approval-mode notice. A rejected operation is final; do not retry through another tool or command." }], tools: assembly.tools.map(tool => descriptions[tool.name]
       ? { ...tool, description: descriptions[tool.name] } : tool) };
   });
   ctx.effect(() => () => { disposeBrowser(); dispose(); bridge.close(); },

@@ -170,18 +170,25 @@
 
 任务控制当前仅适用于 `personal-remote` 会话根消息；已接管的 `shared-chat` 会话命令仍可读/发/取消，但 `/tasks` 不提供它的任务详情（404 NOT_FOUND）。停止先登记 `stop_requested` 并使未处理审批/提问失效，再驱动取消与后台 job 停止；HTTP 202 不证明副作用已停止。`stopStatus` 可为 `requested / cancel_requested / stopped / completed / unconfirmed`，结合 `canResume,pendingReceipts,backgroundJobs` 呈现。M1-0 的任务卡、取消排队尚未作为独立契约落地；现有任务读取接口保留给对话内展示。
 
-### 3.7 审批与提问（4）
+### 3.7 审批模式、审批与提问（8）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/sessions/{sessionId}/approvals` | `before=<approvalId>`；`limit` 默认50、1–100 | 200 `{"approvals":[{"approvalId":"<uuid>","sessionId":"session-…","taskId":"cmd-…","toolName":"shell","reason":"覆盖文件","status":"pending","createdAt":"…"}],"nextBefore":null,"hasMore":false}` | 404 `SESSION_UNAVAILABLE / NOT_FOUND` | 桌、手、安、苹 |
-| POST `/sessions/{sessionId}/approvals/{approvalId}` | `requestId,outcome`；仅 `allowed-once / rejected` | 200 `{"approval":{"approvalId":"<uuid>","status":"answered","decisionOutcome":"allowed-once","decisionRequestId":"approve-1","answeredAt":"…"},"requestId":"approve-1"}` | 409 `APPROVAL_NOT_PENDING / REQUEST_CONFLICT`；404 `NOT_FOUND` | 桌、手、安、苹 |
+| POST `/sessions/{sessionId}/approvals/{approvalId}` | `requestId,outcome`；仅 `allowed-once / rejected`；允许时可带 `scope:"once" / "conversation-category"`，默认 `once` | 200 `{"approval":{"approvalId":"<uuid>","status":"answered","decisionOutcome":"allowed-once","decisionScope":"once","decisionRequestId":"approve-1","answeredAt":"…"},"requestId":"approve-1"}` | 409 `APPROVAL_NOT_PENDING / REQUEST_CONFLICT`；404 `NOT_FOUND` | 桌、手、安、苹 |
 | GET `/sessions/{sessionId}/questions` | `before=<questionRpcId>`；`limit` 默认50、1–100 | 200 `{"questions":[{"questionRpcId":"<uuid>","status":"pending","questions":[{"id":"destination","question":"保存到哪里？","options":[{"label":"Downloads"}]}],"createdAt":"…"}],"nextBefore":null,"hasMore":false}` | 404 `SESSION_UNAVAILABLE / NOT_FOUND` | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/questions/{questionRpcId}` | `{"requestId":"answer-1","answer":{"answers":[{"id":"destination","selected":["Downloads"]}]}}` | 200 `{"question":{"questionRpcId":"<uuid>","status":"answered","answer":{…},"answerRequestId":"answer-1","answeredAt":"…"},"requestId":"answer-1"}` | 409 `QUESTION_NOT_PENDING / REQUEST_CONFLICT`；404 `NOT_FOUND` | 桌、手、安、苹 |
 
-列表新到旧，返回所有状态：`pending / answered / resolved / unavailable`。审批记录另含 `sourceCommandId,sourceReceiptId,turn,callId,rootCallId`，处理后可有 `outcome,resolvedAt`；列表读取会刷新实时状态。POST回执保持登记时的 `answered`，重放旧回执不能覆盖较新的 `resolved`。
+| GET `/sessions/{sessionId}/approval-mode` | 无 | 200 `{"mode":"auto","allowedCategories":[]}` | 404 `SESSION_UNAVAILABLE` | 桌；手机/Android/Apple 菜单另包，接口可用 |
+| PATCH `/sessions/{sessionId}/approval-mode` | `{"mode":"ask"}` | 200 同上；对话内持久保存，下次工具调用采用最新值 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE` | 桌 |
+| GET `/settings/approvals` | 无 | 200 `{"mode":"auto"}` | — | 桌 |
+| PATCH `/settings/approvals` | `{"mode":"auto"}` | 200 同上；按账户保存，只改变新对话默认值 | 400 `INVALID_REQUEST` | 桌 |
 
-每批问题按原顺序完整作答：`answers` 数量与问题数量相同、`id` 对应；`selected` 选项标签不可重复，可带非空 `custom`。单选不能同时给选项与自定义；多选由 `multiSelect` 标记。问题可含 `header,detail,intent:{kind:"plan-review",approve:"<label>"}`；它仍是信息提问，回答不授权工具。`answerAcceptedAt` 才是个人入口答案被消费的确认，200/`outcome:"answered"` 本身不是。UI_SPEC 的「总是允许此类」目前无提交值/策略接口，不能发送臆造 outcome。
+模式枚举：`auto` 自动（推荐，有风险才问）；`ask` 每次询问（普通读取/执行也询问）；`accept-edits` 自动接受文件修改（创建、编辑、覆盖文件直接做，删除和其它危险类别仍询问）；`plan` 先出计划（DSH 原生 `exit_plan_mode` 经本节提问接口确认后按自动执行）；`allow-all` 全部允许（客户端选中前必须明确提示删除/覆盖、系统修改、安装、发送/发布、付款可能直接执行且无法撤销）。口头检查点由系统提示让模型遵守，不改保存的模式。
+
+列表新到旧，返回所有状态：`pending / answered / resolved / unavailable`。审批记录另含 `sourceCommandId,sourceReceiptId,turn,callId,rootCallId`，可有 `riskCategories`，枚举为 `delete / overwrite / system / install / external / spend / execute`；处理后可有 `decisionScope,outcome,resolvedAt`。`conversation-category` 仅用于允许有类别的审批，把这张卡包含的类别授权给本对话后续操作，其它对话不继承；拒绝不能带 scope。重试使用原 requestId、outcome、scope，不同 scope 也报冲突。旧客户端省略 scope 仍为允许一次。列表读取会刷新实时状态；待答复超过十分钟变为 `unavailable`，原生工具收到 unavailable 并将失败返回模型，迟到答复报409。POST回执保持登记时的 `answered`，重放旧回执不能覆盖较新的 `resolved`。
+
+每批问题按原顺序完整作答：`answers` 数量与问题数量相同、`id` 对应；`selected` 选项标签不可重复，可带非空 `custom`。单选不能同时给选项与自定义；多选由 `multiSelect` 标记。问题可含 `header,detail,intent:{kind:"plan-review",approve:"<label>"}`；计划确认只退出原生计划状态，之后仍执行自动风险审批，不授予危险工具权限。`answerAcceptedAt` 才是个人入口答案被消费的确认，200/`outcome:"answered"` 本身不是。
 
 ### 3.8 成果下载（3）
 

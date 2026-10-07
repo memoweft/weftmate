@@ -1,0 +1,28 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "isolatedAccount": true,
+  "realModel": false,
+  "scenarios": [],
+  "numericShortcut": true,
+  "promptModes": {
+    "M12_AUTO_ONCE": "auto",
+    "M12_AUTO_DENY": "auto",
+    "M12_CATEGORY": "auto",
+    "M12_ASK": "ask",
+    "M12_EDIT": "accept-edits",
+    "M12_PLAN": "plan",
+    "M12_PLAN_REJECT": "plan",
+    "M12_ALL": "allow-all"
+  },
+  "verbalCheckpointsAdvertised": true,
+  "systemVerbalGuidance": true,
+  "approvedAndRejected": true,
+  "alwaysThisCategory": true,
+  "ask": true,
+  "acceptEdits": true,
+  "plan": true,
+  "nextTaskPlanAndRejection": true,
+  "allowAll": true,
+  "defaultAndReload": true
+}

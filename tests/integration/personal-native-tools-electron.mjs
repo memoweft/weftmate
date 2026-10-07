@@ -19,8 +19,9 @@ function respond(response, model, tool, args) {
   response.writeHead(200, { 'content-type': 'text/event-stream' });
   const frame = (delta, finish_reason = null) => response.write(`data: ${JSON.stringify({ id: randomUUID(),
     object: 'chat.completion.chunk', model, choices: [{ index: 0, delta, finish_reason }] })}\n\n`);
-  frame(tool ? { role: 'assistant', tool_calls: [{ index: 0, id: 'call-' + randomUUID(), type: 'function',
-    function: { name: tool, arguments: JSON.stringify(args) } }] } : { role: 'assistant', content: 'Native deliverables verified.' });
+  const calls = Array.isArray(tool) ? tool : tool ? [{ name: tool, args }] : [];
+  frame(tool ? { role: 'assistant', tool_calls: calls.map((call, index) => ({ index, id: 'call-' + randomUUID(), type: 'function',
+    function: { name: call.name, arguments: JSON.stringify(call.args) } })) } : { role: 'assistant', content: 'Native deliverables verified.' });
   frame({}, tool ? 'tool_calls' : 'stop'); response.end('data: [DONE]\n\n');
 }
 const model = createServer(async (req, res) => {
@@ -50,8 +51,10 @@ const model = createServer(async (req, res) => {
     const executed = body.messages.filter(message => message.role === 'assistant').flatMap(message => message.tool_calls ?? []).map(call => call.function.name);
     if (!executed.includes('read')) respond(res, body.model, 'read', { file_path: 'report.md' });
     else if (!executed.includes('write')) respond(res, body.model, 'write', { file_path: 'child-result.md', content: '# Child result\nNative delegation verified.\n' });
+    else if (!executed.includes('web_fetch')) respond(res, body.model, 'web_fetch', { url: `http://page-a.weftmate.invalid:${model.address().port}/first` });
     else {
       report.childReadVerified = body.messages.some(message => message.role === 'tool' && JSON.stringify(message.content).includes('Written by DSH write'));
+      report.childWebVerified = body.messages.some(message => message.role === 'tool' && JSON.stringify(message.content).includes('Public rendered fixture'));
       respond(res, body.model);
     }
     return;
@@ -67,9 +70,12 @@ const model = createServer(async (req, res) => {
   const executed = body.messages.filter(message => message.role === 'assistant').flatMap(message => message.tool_calls ?? []).map(call => call.function.name)
   count++;
   if (!executed.includes('write')) invoke('write', { file_path: 'report.md', content: '# Native report\nWritten by DSH write.\n' });
-  else if (!executed.includes('pwsh')) invoke('pwsh', { command: "Set-Content -LiteralPath shell-one.txt -Value 'one'; Set-Content -LiteralPath shell-two.txt -Value 'two'",
-    description: 'Create two files with the native shell' });
-  else if (!executed.includes('read')) invoke('read', { file_path: 'report.md' });
+  else if (!executed.includes('pwsh')) invoke('pwsh', { command: `Set-Content -LiteralPath shell-one.txt -Value 'one'; Set-Content -LiteralPath shell-two.txt -Value 'two'; node -e 'require("node:fs").writeFileSync(process.argv[1], "outside conversation")' '${join(root, 'outside.txt').replaceAll("'", "''")}'`,
+    description: 'Create files with the native shell and Node outside the conversation' });
+  else if (!executed.includes('read')) respond(res, body.model, [
+    { name: 'read', args: { file_path: 'report.md' } },
+    { name: 'read', args: { file_path: 'shell-one.txt' } },
+  ]);
   else {
     const reads = body.messages.filter(message => message.role === 'tool').map(message => {
       try { return JSON.parse(message.content); } catch { return null; }
@@ -147,12 +153,16 @@ try {
   }
   report.modelToolRequests = report.toolCalls
   report.toolCalls = events.filter(event => event.type === 'step.started').map(event => event.data.toolName)
-  assert.deepEqual(report.toolCalls, ['write', 'pwsh', 'read', 'browser', 'browser', 'web_fetch', 'subagent']);
+  assert.deepEqual(report.toolCalls, ['write', 'pwsh', 'read', 'read', 'browser', 'browser', 'web_fetch', 'subagent']);
+  assert.ok(events.filter(event => event.type === 'step.completed' && event.data.toolName === 'read')
+    .every(event => event.data.state === 'completed'), 'both parallel roots complete through the real host');
   const fetched = events.find(event => event.type === 'step.completed' && event.data.toolName === 'web_fetch');
   assert.equal(fetched.data.state, 'completed');
   const fetchedDetail = (await request('GET', `sessions/${session.sessionId}/events/${fetched.seq}/detail`)).value;
   assert.match(fetchedDetail.text, /Public rendered fixture/);
   assert.equal(report.childReadVerified, true, 'the real native subagent reads in the parent conversation directory');
+  assert.equal(report.childWebVerified, true, 'the real native subagent fetches with the parent authorized page provider');
+  assert.match(readFileSync(join(root, 'outside.txt'), 'utf8'), /outside conversation/);
   assert.ok(report.childSchemas.includes('web_fetch'));
   assert.equal(report.childSchemas.includes('browser'), false, 'native children use web_fetch; rendered browser delivery belongs to the portal conversation');
   for (const name of ['read', 'write', 'edit', 'grep', 'glob', 'web_fetch', 'todo_write', 'subagent', 'browser'])

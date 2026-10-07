@@ -2585,6 +2585,106 @@
     } catch { if (conversationTaskCurrent(context)) byId('timeline-status').textContent = '更早内容暂时无法读取，请重试。' }
     finally { if (generation === state.historyGeneration) { state.olderLoading = false; renderOlderControl() } }
   }
+  const approvalModes = [
+    ['auto', '自动（推荐）', '由 WeftMate 判断，有风险才问你'],
+    ['ask', '每次询问', '执行和修改前都先问'],
+    ['accept-edits', '自动接受文件修改', '改文件直接做，其他风险照常询问'],
+    ['plan', '先出计划', '先给计划，你确认后再做'],
+    ['allow-all', '全部允许', '不再询问，删除、发布和付款也会直接执行'],
+  ]
+  let currentApprovalMode = 'auto'
+  function closeApprovalMenu() {
+    if (!byId('approval-mode-menu')) return
+    byId('approval-mode-menu').hidden = true
+    byId('approval-mode-trigger').setAttribute('aria-expanded', 'false')
+  }
+  function renderApprovalMode() {
+    const menu = byId('approval-mode-menu'), trigger = byId('approval-mode-trigger')
+    if (!menu || !trigger) return
+    byId('approval-mode-label').textContent = approvalModes.find(row => row[0] === currentApprovalMode)?.[1].replace('（推荐）', '') ?? '自动'
+    trigger.title = approvalModes.find(row => row[0] === currentApprovalMode)?.[2] ?? ''
+    menu.replaceChildren()
+    approvalModes.forEach(([mode, label, description], index) => {
+      const button = element('button', 'approval-mode-option')
+      button.type = 'button'; button.dataset.mode = mode; button.setAttribute('role', 'menuitemradio')
+      button.setAttribute('aria-checked', String(mode === currentApprovalMode))
+      const copy = element('span', 'approval-mode-copy')
+      copy.append(element('strong', '', label), element('span', 'muted', description))
+      button.append(element('span', 'approval-mode-check', mode === currentApprovalMode ? '✓' : ''), copy, element('kbd', '', String(index + 1)))
+      button.addEventListener('click', () => { void saveApprovalMode(mode) })
+      menu.append(button)
+    })
+  }
+  function acceptApprovalRisk(mode) {
+    return mode !== 'allow-all' || window.confirm('全部允许会直接执行删除或覆盖文件、修改系统、安装软件、对外发送或发布和付款等操作，可能无法撤销。确定启用？')
+  }
+  async function refreshApprovalMode(sessionId) {
+    const trigger = byId('approval-mode-trigger')
+    if (!trigger) return
+    const generation = state.identityGeneration
+    trigger.disabled = true; closeApprovalMenu()
+    try {
+      const value = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`)
+      if (state.identityGeneration !== generation || state.selectedSessionId !== sessionId || state.activeChatSource !== 'desktop') return
+      currentApprovalMode = value.mode; renderApprovalMode(); trigger.disabled = false
+    } catch { if (state.selectedSessionId === sessionId) trigger.title = '无法读取审批模式，请重新打开对话' }
+  }
+  async function saveApprovalMode(mode) {
+    if (!acceptApprovalRisk(mode)) return
+    const sessionId = state.selectedSessionId, trigger = byId('approval-mode-trigger')
+    const generation = state.identityGeneration
+    if (!sessionId || trigger.disabled || state.activeChatSource !== 'desktop') return
+    trigger.disabled = true
+    try {
+      const value = await accessApi(`/sessions/${encodeURIComponent(sessionId)}/approval-mode`, { method: 'PATCH', protectedWrite: true, body: { mode } })
+      if (state.identityGeneration !== generation || state.selectedSessionId !== sessionId || state.activeChatSource !== 'desktop') return
+      currentApprovalMode = value.mode; renderApprovalMode(); closeApprovalMenu(); trigger.focus()
+    } catch { byId('timeline-status').textContent = '审批模式未保存，请重试。' }
+    finally { if (state.selectedSessionId === sessionId) trigger.disabled = false }
+  }
+  byId('approval-mode-trigger')?.addEventListener('click', () => {
+    const menu = byId('approval-mode-menu'), opening = menu.hidden
+    renderApprovalMode(); menu.hidden = !opening
+    byId('approval-mode-trigger').setAttribute('aria-expanded', String(opening))
+    if (opening) menu.querySelector('[aria-checked="true"]')?.focus()
+  })
+  document.addEventListener('click', event => { if (!byId('approval-picker')?.contains(event.target)) closeApprovalMenu() })
+  document.addEventListener('keydown', event => {
+    const menu = byId('approval-mode-menu')
+    if (!menu || menu.hidden) return
+    if (/^[1-5]$/.test(event.key)) { event.preventDefault(); void saveApprovalMode(approvalModes[Number(event.key) - 1][0]) }
+    if (event.key === 'Escape') { event.preventDefault(); closeApprovalMenu(); byId('approval-mode-trigger').focus() }
+    if (['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) {
+      event.preventDefault()
+      const buttons = [...menu.querySelectorAll('button')], at = buttons.indexOf(document.activeElement)
+      const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (at + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
+      buttons[next].focus()
+    }
+  })
+  async function refreshApprovalSettings() {
+    const select = byId('default-approval-mode')
+    if (!select) return
+    const token = accountToken()
+    select.disabled = true
+    try {
+      const settings = await accessApi('/settings/approvals')
+      if (!accountCurrent(token)) return
+      select.replaceChildren(...approvalModes.map(([mode, label]) => new Option(label, mode)))
+      select.value = settings.mode; select.disabled = false
+    } catch { if (accountCurrent(token)) byId('approval-settings-notice').textContent = '无法读取默认模式，请刷新设置。' }
+  }
+  byId('default-approval-mode')?.addEventListener('change', async event => {
+    const token = accountToken()
+    const mode = event.target.value
+    if (!acceptApprovalRisk(mode)) { void refreshApprovalSettings(); return }
+    event.target.disabled = true
+    try {
+      await accessApi('/settings/approvals', { method: 'PATCH', protectedWrite: true, body: { mode } })
+      if (!accountCurrent(token)) return
+      byId('approval-settings-notice').textContent = '已保存，下次新建对话时生效。'
+    } catch { if (accountCurrent(token)) byId('approval-settings-notice').textContent = '默认模式未保存，请重试。' }
+    finally { if (accountCurrent(token)) void refreshApprovalSettings() }
+  })
   async function selectSession(sessionId) {
     if (!sessionIdPattern.test(sessionId)) return
     window.WeftDesktop?.closePreview(false)
@@ -2599,6 +2699,7 @@
     if (fromPhone) byId('message-text').value = state.desktopDraft
     byId('message-text').placeholder = '向 WeftMate 说说你的目标'
     state.selectedSessionId = sessionId
+    void refreshApprovalMode(sessionId)
     state.turnStatus = null
     state.turnEndReasonKind = null
     byId('timeline-status').textContent = ''
@@ -2878,18 +2979,20 @@
       card.replaceChildren()
       card.append(element('strong', 'conversation-task-title', `${executionName(row)} · ${row.status === 'pending' ? '需要你批准' : '审批回执'}`))
       card.classList.toggle('is-resolved', row.status !== 'pending')
-      const reason = element('p', 'conversation-approval-reason', row.reason.trim() || '执行端请求你批准这次操作。'); reason.hidden = row.status !== 'pending'; card.append(reason)
+      const reason = element('p', 'conversation-approval-reason', row.reason.replace(/^\[weftmate:[a-z,\-]+\]\s*/, '').trim() || '执行端请求你批准这次操作。'); reason.hidden = row.status !== 'pending'; card.append(reason)
       const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，请重新核对答复。' : '')
       const status = element('p', 'conversation-approval-status', row.status === 'pending' && operation ? '正在提交本次决定…'
         : notice || (row.status === 'pending' && marker ? '上次答复结果尚未确认。已核对仍在等待，可用原答复重试。' : approvalStatusText(row)))
       status.setAttribute('role', 'status'); status.tabIndex = -1; status.dataset.conversationApprovalAction = 'status'
       card.append(status)
       const actions = element('div', 'conversation-task-actions')
-      if (row.status === 'pending') for (const outcome of ['allowed-once', 'rejected']) {
-        const button = element('button', `button ${outcome === 'allowed-once' ? 'primary' : 'secondary'} small`, outcome === 'allowed-once' ? '允许本次' : '拒绝')
-        button.type = 'button'; button.dataset.conversationApprovalAction = outcome
-        button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && marker.outcome !== outcome
-        button.addEventListener('click', () => { if (approvalContextCurrent(context)) void submitApproval(context, row, outcome) })
+      if (row.status === 'pending') for (const action of ['allowed-once', ...(row.riskCategories?.length ? ['allowed-always'] : []), 'rejected']) {
+        const outcome = action === 'allowed-always' ? 'allowed-once' : action
+        const button = element('button', `button ${action === 'allowed-once' ? 'primary' : 'secondary'} small`, action === 'allowed-once' ? '允许一次' : action === 'allowed-always' ? '总是允许此类' : '拒绝')
+        button.type = 'button'; button.dataset.conversationApprovalAction = action
+        button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== outcome ||
+          (marker.scope ?? 'once') !== (action === 'allowed-always' ? 'conversation-category' : 'once'))
+        button.addEventListener('click', () => { if (approvalContextCurrent(context)) void submitApproval(context, row, outcome, action === 'allowed-always' ? 'conversation-category' : 'once') })
         actions.append(button)
       }
       if (notice || marker || row.status === 'answered') {
@@ -2918,14 +3021,14 @@
       scroll.scrollTop += reading.getBoundingClientRect().top - readingTop
     else if (Number.isFinite(top)) scroll.scrollTop = top
   }
-  async function submitApproval(context, original, outcome) {
+  async function submitApproval(context, original, outcome, scope = 'once') {
     const id = original.approvalId
     if (!approvalContextCurrent(context) || conversationApprovals.operations.has(id)) return
     let entry = conversationApprovals.entries.get(id)
     if (!entry?.authoritative || entry.notice || entry.row.status !== 'pending' || !sameApproval(entry.row, original) || !approvalSource(entry.row, true)) return
     let marker = approvalMarker(context, original)
-    if (marker && marker.outcome !== outcome) return
-    const operation = marker || { ...approvalIdentity(original), requestId: crypto.randomUUID(), outcome }
+    if (marker && (marker.outcome !== outcome || (marker.scope ?? 'once') !== scope)) return
+    const operation = marker || { ...approvalIdentity(original), requestId: crypto.randomUUID(), outcome, scope }
     try { saveApprovalMarker(context, operation) } catch {
       entry.notice = '无法保留本次答复，请稍后重试。'; renderConversationApprovals(); return
     }
@@ -2938,7 +3041,8 @@
         if (!entry?.authoritative || entry.notice || entry.row.status !== 'pending' || !sameApproval(entry.row, original) || !approvalSource(entry.row, true)) return
       }
       const receipt = await accessApi(`/sessions/${encodeURIComponent(original.sessionId)}/approvals/${encodeURIComponent(id)}`,
-        { method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, outcome: operation.outcome } })
+        { method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, outcome: operation.outcome,
+          ...(operation.scope === 'conversation-category' ? { scope: operation.scope } : {}) } })
       if (!approvalContextCurrent(context) || conversationApprovals.operations.get(id) !== operation) return
       if (receipt?.requestId !== operation.requestId || !validApproval(receipt.approval, original.sessionId) ||
           !sameApproval(receipt.approval, original) || receipt.approval.status !== 'answered' ||
@@ -3125,25 +3229,28 @@
       }
       if (timelineAnchor) { card.dataset.seq = timelineAnchor.dataset.seq; list.insertBefore(card, timelineAnchor) }
       card.dataset.sourceReceiptId = row.sourceReceiptId; card.dataset.signature = signature; card.dataset.scope = scope
-      card.replaceChildren(); card.append(element('strong', 'conversation-task-title', row.status === 'pending' ? '需要补充信息' : '信息回答回执'))
+      const planReview = row.questions.some(question => question.intent?.kind === 'plan-review')
+      card.classList.toggle('conversation-plan', planReview)
+      card.replaceChildren(); card.append(element('strong', 'conversation-task-title', row.status === 'pending' ? planReview ? '确认执行计划' : '需要补充信息' : planReview ? '计划确认回执' : '信息回答回执'))
       const status = element('p', 'conversation-question-status', row.status === 'pending' && operation ? '正在提交本次回答…'
-        : notice || entry.validation || (row.status === 'pending' && marker ? '上次回答结果尚未确认。已核对仍在等待，可重试原回答。' : questionStatusText(row)))
+        : notice || entry.validation || (row.status === 'pending' && marker ? '上次回答结果尚未确认。已核对仍在等待，可重试原回答。' : planReview && row.status === 'pending' ? '确认计划后开始执行；危险操作仍会询问。' : questionStatusText(row)))
       status.setAttribute('role', 'status'); status.tabIndex = -1; status.dataset.conversationQuestionAction = 'status'; card.append(status)
       const draft = questionDraft(context, row), answer = row.status === 'pending' ? draft : row.answer
       const locked = row.status !== 'pending' || !!operation || !!marker || !entry.authoritative || !!notice
       const form = element('form', 'conversation-question-form')
       row.questions.forEach((question, index) => {
+        const isPlan = question.intent?.kind === 'plan-review'
         const item = element('fieldset', 'question-item'), controls = [], customLabel = element('label', 'question-custom')
-        item.append(element('legend', '', question.header || question.question || '补充信息'))
-        if (question.header && question.question) item.append(element('p', 'question-text', question.question))
-        if (question.detail) item.append(element('p', 'question-detail', question.detail))
+        item.append(element('legend', '', isPlan ? '执行计划' : question.header || question.question || '补充信息'))
+        if (!isPlan && question.header && question.question) item.append(element('p', 'question-text', question.question))
+        if (question.detail) item.append(isPlan && window.WeftDesktop?.markdown ? window.WeftDesktop.markdown(question.detail, 'question-detail markdown-body') : element('p', 'question-detail', question.detail))
         for (const [optionIndex, option] of (question.options || []).entries()) {
           const label = element('label', 'question-option'), input = element('input')
           input.type = question.multiSelect === true ? 'checkbox' : 'radio'; input.name = `question-${row.questionRpcId}-${index}`
           input.checked = !!answer?.answers[index]?.selected?.includes(option.label); input.disabled = locked
           input.dataset.conversationQuestionAction = `option-${index}-${optionIndex}`
-          const text = element('span', 'question-option-text', option.label || '空白选项')
-          if (option.description) text.append(element('small', '', option.description))
+          const text = element('span', 'question-option-text', isPlan ? option.label === question.intent.approve ? '确认并执行' : '继续修改计划' : option.label || '空白选项')
+          if (!isPlan && option.description) text.append(element('small', '', option.description))
           input.addEventListener('change', () => {
             if (!approvalContextCurrent(context) || locked || conversationQuestions.operations.has(row.questionRpcId) || questionMarker(context, row)) return
             const selected = new Set(draft.answers[index].selected)
@@ -4696,6 +4803,7 @@
   const serviceStateLabels = { ready: '运行中', connected: '运行中', stopped: '已停止', starting: '启动中',
     disabled: '未启用', unavailable: '不可用', unconfigured: '尚未配置', degraded: '需要处理' }
   async function refreshSystem() {
+    void refreshApprovalSettings()
     const token = accountToken()
     byId('system-notice').textContent = '正在读取…'
     byId('system-services').replaceChildren()

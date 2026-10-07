@@ -63,8 +63,8 @@ async function fixture({ useReplyEvidence = true, clockFn = Date.now } = {}) {
       username: 'SyntheticApprovalOwner', password: 'synthetic approval fixture password', deviceName: 'Synthetic phone' }) })
   assert.equal(setup.status, 201)
   const auth = await setup.json(), cookie = setup.headers.get('set-cookie')!.split(';')[0]
-  const request = async (path: string, body?: object, headers: Record<string, string> = {}) => {
-    const response = await fetch(`${origin}/personal/v1/${path}`, { method: body ? 'POST' : 'GET',
+  const request = async (path: string, body?: object, headers: Record<string, string> = {}, method = body ? 'POST' : 'GET') => {
+    const response = await fetch(`${origin}/personal/v1/${path}`, { method,
       headers: { origin, cookie, 'x-weftmate-csrf': auth.csrfToken, 'content-type': 'application/json', ...headers },
       body: body ? JSON.stringify(body) : undefined })
     return { status: response.status, body: await response.json(), cookie: response.headers.get('set-cookie')?.split(';')[0] }
@@ -107,6 +107,60 @@ async function fixture({ useReplyEvidence = true, clockFn = Date.now } = {}) {
     close: async () => { await service.close(); rmSync(root, { recursive: true, force: true }) },
   }
 }
+
+test('five mode endpoints persist per conversation and account defaults apply only to new conversations', async () => {
+  const f = await fixture()
+  try {
+    const path = `sessions/${f.input.sessionId}/approval-mode`
+    for (const mode of ['auto', 'ask', 'accept-edits', 'plan', 'allow-all']) {
+      assert.equal((await f.request(path, { mode }, {}, 'PATCH')).status, 200)
+      assert.equal((await f.request(path)).body.mode, mode)
+      assert.equal(f.service.getApprovalPolicy({ sessionId: f.input.sessionId }).mode, mode)
+    }
+    assert.equal((await f.request(path, { mode: 'invalid' }, {}, 'PATCH')).status, 400)
+    assert.equal((await f.request('settings/approvals', { mode: 'ask' }, {}, 'PATCH')).status, 200)
+    assert.equal((await f.request(path)).body.mode, 'allow-all')
+    const created = await f.command({ requestId: 'default-approval-session', kind: 'session.create', targetDeviceId: f.hostId, modelProfileId: 'local' })
+    assert.equal(f.service.getApprovalPolicy({ sessionId: created.sessionId }).mode, 'ask')
+    await f.restart()
+    assert.equal((await f.request(path)).body.mode, 'allow-all')
+    assert.equal((await f.request('settings/approvals')).body.mode, 'ask')
+  } finally { await f.close() }
+})
+
+test('always allow categories is scoped to this conversation, survives reload, and keeps decision retries exact', async () => {
+  const f = await fixture()
+  try {
+    const registered = await f.register({ reason: '[weftmate:delete] 删除合成文件' })
+    assert.deepEqual(registered.riskCategories, ['delete'])
+    const answer = { requestId: 'category-answer', outcome: 'allowed-once', scope: 'conversation-category' }
+    const reply = await f.request(`${f.approvalsPath}/${f.input.approvalId}`, answer)
+    assert.equal(reply.status, 200, JSON.stringify(reply.body))
+    assert.equal(reply.body.approval.decisionScope, 'conversation-category')
+    assert.deepEqual(f.service.getApprovalPolicy({ sessionId: f.input.sessionId }).allowedCategories, ['delete'])
+    assert.equal((await f.request(`${f.approvalsPath}/${f.input.approvalId}`, { ...answer, scope: 'once' })).status, 409)
+    await f.resolve('allowed-once')
+    await f.restart()
+    assert.deepEqual(f.service.getApprovalPolicy({ sessionId: f.input.sessionId }).allowedCategories, ['delete'])
+    const other = await f.command({ requestId: 'other-category-session', kind: 'session.create', targetDeviceId: f.hostId, modelProfileId: 'local' })
+    assert.deepEqual(f.service.getApprovalPolicy({ sessionId: other.sessionId }).allowedCategories, [])
+  } finally { await f.close() }
+})
+
+test('pending approval expires after ten minutes and the native model receives unavailable rather than a grant', async () => {
+  let now = Date.now()
+  const f = await fixture({ clockFn: () => now })
+  try {
+    await f.register({ reason: '[weftmate:delete] 删除合成文件' })
+    now += 600_001
+    const expired = await f.read()
+    assert.equal(expired.status, 'unavailable')
+    assert.equal(expired.outcome, 'unavailable')
+    assert.equal((await f.request(`${f.approvalsPath}/${f.input.approvalId}`, { requestId: 'late-answer', outcome: 'allowed-once' })).status, 409)
+    assert.equal((await f.resolve('unavailable')).outcome, 'unavailable')
+    await assert.rejects(f.authorize(), code('TASK_NOT_READY'))
+  } finally { await f.close() }
+})
 
 test('HTTP answers have stable receipts; only the native final decision permits the exact tool call', async () => {
   const f = await fixture()
@@ -234,7 +288,7 @@ test('native execution-body and script-nested approvals may register beside the 
     await assert.rejects(f.register({ argumentsHash: hash('changed'), approvalId: randomUUID() }), code('REQUEST_CONFLICT'))
     const nested = { callId: 'script-nested', toolName: 'pwsh', argumentsHash: hash('nested arguments'), approvalId: randomUUID() }
     assert.equal((await f.register(nested)).status, 'pending')
-    await assert.rejects(f.register({ callId: 'different-root', rootCallId: 'different-root', approvalId: randomUUID() }), code('TASK_NOT_READY'))
+    assert.equal((await f.register({ callId: 'different-root', rootCallId: 'different-root', approvalId: randomUUID() })).status, 'pending')
     const detail = await f.request(`tasks/${f.source.commandId}`)
     assert.equal(detail.body.executionSteps[0].toolName, 'weftmod_script')
   } finally { await f.close() }
