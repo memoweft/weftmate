@@ -10,23 +10,30 @@ import { servePersonalAccessUi } from '../../src/personal-access-ui/index.mjs'
 import { createDshSessionAdapter } from '../../src/runtime/dsh-adapter/sessions.mjs'
 const hash = value => createHash('sha256').update(value).digest('hex')
 const ok = value => ({ result: { ok: true, value } })
-export async function startTimelineCandidate() {
+export async function startTimelineCandidate(options = {}) {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-m0-3-')), events = []
   let sessionId, taskId, running = true, artifact, service, questionFrame
   const receiptId = 'timeline-synthetic-receipt', runtimeId = randomUUID(), approvalId = randomUUID()
   const goal = '读取项目资料，运行测试，并保存一份进度报告。'
-  const append = (type, data) => { const event = { seq: events.length, time: Date.parse('2026-10-07T08:00:00Z') + events.length * 500, type, data }; events.push(event); return event }
+  const operations = [], baseTime = options.baseTime || Date.parse('2026-10-07T08:00:00Z')
+  const append = (type, data) => { const event = { seq: events.length, time: baseTime + events.length * 500, type, data }; events.push(event); return event }
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError: false, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const backend = {
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: 'synthetic', configured: true }], preflight: async () => ({ ok: true }),
-    createSession: async input => { sessionId = input.sessionId; return { sessionId } },
-    sendMessage: async () => {
-      for (let i = 0; i < 2100; i++) append('assistant/message', { content: [{ type: 'text', text: `历史记录 ${i + 1}：已核对项目资料。` }] })
+    createSession: async input => { operations.push({ kind: 'create' }); sessionId = input.sessionId; return { sessionId } },
+    sendMessage: async input => {
+      operations.push({ kind: 'message', mode: input.mode, text: input.text })
+      if (events.length && options.interactive) {
+        const rpc = `synthetic-${randomUUID()}`
+        append('user/message', { source: { kind: 'user', rpcId: rpc }, content: [{ type: 'text', text: input.text }] })
+        return { accepted: true, receiptId: rpc }
+      }
+      for (let i = 0; i < (options.historyCount ?? 2100); i++) append('assistant/message', { content: [{ type: 'text', text: `历史记录 ${i + 1}：已核对项目资料。` }] })
       append('turn/start', { turn: 1 }); const user = append('user/message', { source: { kind: 'user', rpcId: receiptId }, content: [{ type: 'text', text: goal }] })
       append('step/start', { turn: 1, step: 1 })
-      append('assistant/message', { content: [{ type: 'text', text: '我会先读取资料并运行测试。覆盖现有报告前，需要你批准。' }] })
+      append('assistant/message', { content: [{ type: 'text', text: options.interactive ? '我会先读取资料并运行测试，再整理 **项目进度报告**。\n\n覆盖现有报告前，需要你批准。' : '我会先读取资料并运行测试。覆盖现有报告前，需要你批准。' }] })
       call('read', 'read-1', { paths: ['README.md', 'docs/PLAN.md', 'docs/STATE.md'] }); result('read-1', 'Read 3 files successfully.')
       call('pwsh', 'test-1', { command: 'npm test' }); result('test-1', 'Tests: 42 passed, 0 failed.')
       append('approval/asked', { id: approvalId, toolName: 'pwsh', callId: 'write-1', reason: '覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。' })
@@ -36,11 +43,12 @@ export async function startTimelineCandidate() {
       call('pwsh', 'write-1', { command: 'node scripts/report.mjs' })
       return { accepted: true, receiptId }
     },
-    cancelSession: async () => ({ accepted: true }),
+    cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
     describeSession: async id => id === sessionId ? { sessionId, running, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告' } : null,
     readEvents: async ({ sessionId: id, ...options }) => adapter.historyPage(id, options),
     readEventDetail: async ({ sessionId: id, seq }) => adapter.historyDetail(id, seq),
-    getTaskReplyEvidence: async () => ({ status: running ? 'waiting' : 'completed', turn: 1, assistantMessages: running ? 1 : 2 }),
+    getTaskReplyEvidence: async () => ({ status: running ? 'waiting' : 'completed', turn: 1,
+      assistantChunks: 0, textChunks: 0, reasoningChunks: 0, assistantMessages: running ? 1 : 2, toolSaveObserved: !!artifact }),
     listUserQuestions: async () => ({ runtimeId, questions: questionFrame ? [questionFrame] : [] }),
     respondUserQuestion: async () => { questionFrame.nativeState = 'answered'; result('question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
@@ -91,7 +99,7 @@ export async function startTimelineCandidate() {
   const bridgeCode = `window.weftNative={postMessage(raw){const m=JSON.parse(raw);fetch('/bridge',{method:'POST',body:JSON.stringify(m)}).then(r=>r.json()).then(v=>window.weftNative.onmessage({data:JSON.stringify({id:m.id,ok:!v.error,result:v.result,error:v.error})}))},onmessage:null}`
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
-  return { root, origin, credentials, sessionId, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
-    complete: async () => { await request(`/sessions/${sessionId}/approvals/${approvalId}`, { requestId:'fixture-allow-once',outcome:'allowed-once' });await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), outcome:'allowed-once' });append('approval/decided',{id:approvalId,outcome:'allowed-once'});questionFrame.nativeState='answered';result('question-1','{"answers":[{"id":"format","selected":["简要报告"]}]}');result('write-1','Report saved.'); append('step/end',{turn:1,step:1});append('assistant/message',{content:[{type:'text',text:'报告已保存，测试全部通过。'}]});append('turn/end',{turn:1,reason:{kind:'completed'}});running=false },
+  return { root, origin, credentials, sessionId, operations, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
+    complete: async (handled = false) => { if (!handled) await request(`/sessions/${sessionId}/approvals/${approvalId}`, { requestId:'fixture-allow-once',outcome:'allowed-once' });await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), outcome:'allowed-once' });append('approval/decided',{id:approvalId,outcome:'allowed-once'});questionFrame.nativeState='answered';if (!handled) result('question-1','{"answers":[{"id":"format","selected":["简要报告"]}]}');result('write-1','Report saved.'); append('step/end',{turn:1,step:1});append('assistant/message',{content:[{type:'text',text:'报告已保存，测试全部通过。'}]});append('turn/end',{turn:1,reason:{kind:'completed'}});running=false },
     close: async () => { await service.close();await new Promise(done=>server.close(done)) } }
 }
