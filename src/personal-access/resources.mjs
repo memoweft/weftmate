@@ -31,7 +31,8 @@ export async function conversationResources(context, account, sessionId, ownerId
       source: publicSource(row),
     }));
   for (const event of page.events) {
-    const step = event.type === 'artifact.created' ? event.data?.completedStep : event.type.startsWith('step.') ? event.data : null;
+    const step = event.type === 'artifact.created' ? event.data?.completedStep
+      : event.type.startsWith('step.') || ['question.asked', 'question.answered'].includes(event.type) ? event.data : null;
     if (!step?.toolName || !step.detailRef) continue;
     const tool = step.toolName, use = { id: `${step.taskId}/${step.stepId}`, callId: step.callId || step.stepId, seq: event.seq, at: event.at,
       summary: step.summary || tool, path: `/sessions/${encodeURIComponent(sessionId)}/events/${step.detailRef.seq}/detail` };

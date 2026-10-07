@@ -10,11 +10,12 @@ import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 test('conversation resources project files, webpages and tools without returning raw output or other sessions', async () => {
   const step = { taskId: 'turn-1', stepId: 'read-1', toolName: 'read', summary: '读取 2 个文件', detailRef: { seq: 1 } }
   const events = [{ seq: 1, type: 'step.started', data: step }, { seq: 2, type: 'step.completed', data: { ...step, detailRef: { seq: 2 } } },
-    { seq: 3, type: 'step.started', data: { ...step, stepId: 'web-1', toolName: 'web_fetch', detailRef: { seq: 3 } } }]
+    { seq: 3, type: 'step.started', data: { ...step, stepId: 'web-1', toolName: 'web_fetch', detailRef: { seq: 3 } } },
+    { seq: 4, type: 'question.asked', data: { ...step, stepId: 'question-1', toolName: 'ask_user_question', detailRef: { seq: 4 } } }]
   const calls: any[] = []
   const context = { callBackend: async (read: any) => read(), backend: {
-    readEvents: async (input: any) => { calls.push(input); return { events, nextSeq: 3, hasMore: false } },
-    readEventDetail: async ({ seq }: any) => ({ text: JSON.stringify({ arguments: seq === 3 ? { url: 'https://example.com/reference' } :
+    readEvents: async (input: any) => { calls.push(input); return { events, nextSeq: 4, hasMore: false } },
+    readEventDetail: async ({ seq }: any) => ({ text: JSON.stringify({ arguments: seq === 4 ? { questions: [] } : seq === 3 ? { url: 'https://example.com/reference' } :
       JSON.stringify({ paths: ['README.md', 'docs/PLAN.md', 'README.md'] }), output: 'private output omitted from list' }) }),
   } }
   const account = { commands: {
@@ -30,6 +31,7 @@ test('conversation resources project files, webpages and tools without returning
   assert.ok(result.sources.some(row => row.key === 'file:README.md'))
   assert.ok(result.sources.some(row => row.key === 'file:docs/PLAN.md'))
   assert.ok(result.sources.some(row => row.key === 'webpage:https://example.com/reference'))
+  assert.ok(result.sources.some(row => row.key === 'tool:ask_user_question'), 'question projection remains a real tool source')
   const reads = result.sources.filter(row => row.key === 'file:README.md')
   assert.equal(new Set(reads.flatMap(row => row.uses.map(use => use.id))).size, 1, 'start and completion are one use')
   assert.equal(reads.at(-1)!.uses[0].path, '/sessions/session-test/events/2/detail')
