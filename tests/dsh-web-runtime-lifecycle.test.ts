@@ -19,7 +19,7 @@ after(async () => {
 
 const fakeCli = `
 const { spawn } = require('node:child_process')
-const { writeFileSync } = require('node:fs')
+const { writeFileSync, renameSync } = require('node:fs')
 const mode = process.env.WEFTMATE_TEST_MODE || 'ready'
 if (process.env.WEFTMATE_TEST_ROOT_PID) writeFileSync(process.env.WEFTMATE_TEST_ROOT_PID, String(process.pid))
 const envOutput = process.env.WEFTMATE_TEST_ENV_OUTPUT
@@ -30,7 +30,13 @@ const observed = {
   inheritedSigningKey: process.env.WEFTMATE_TEST_SIGNING_KEY ?? null,
   inheritedOrdinary: process.env.WEFTMATE_TEST_ORDINARY ?? null,
 }
-const saveObserved = () => { if (envOutput) writeFileSync(envOutput, JSON.stringify(observed)) }
+// The parent polls this file concurrently with IPC updates. Publish a complete
+// snapshot so a reader cannot observe the truncate-before-write interval.
+const saveObserved = () => {
+  if (!envOutput) return
+  writeFileSync(envOutput + '.tmp', JSON.stringify(observed))
+  renameSync(envOutput + '.tmp', envOutput)
+}
 saveObserved()
 if (mode === 'descendant') {
   const descendant = spawn(process.execPath, ['-e', 'setInterval(() => {}, 1000)'], { stdio: 'ignore' })
