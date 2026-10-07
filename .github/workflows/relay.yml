@@ -1,0 +1,41 @@
+name: S2 Relay
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: relay-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  relay:
+    name: Relay full chain (443)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install TCP SNI frontend
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y haproxy
+          sudo setcap cap_net_bind_service=+ep /usr/sbin/haproxy
+      - name: Download official pinned frp (SHA256 checked)
+        run: node scripts/download-frp.mjs
+      - name: Real relay, TLS and revocation on 443
+        run: node --test services/cloud/test/relay-e2e.test.mjs
+        env:
+          WEFTMATE_RELAY_E2E: 'true'
+          WEFTMATE_RELAY_FRONT_PORT: '443'
+          WEFTMATE_FRP_DIR: ${{ github.workspace }}/.local/frp/frp_0.71.0_linux_amd64
+          WEFTMATE_HAPROXY: /usr/sbin/haproxy
+          WEFTMATE_RELAY_REPORT: ${{ runner.temp }}/s2-relay-verification.json
+      - name: Publish synthetic verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: s2-relay-verification
+          path: ${{ runner.temp }}/s2-relay-verification.json
+          if-no-files-found: error
