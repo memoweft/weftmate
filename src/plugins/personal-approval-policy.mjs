@@ -3,9 +3,10 @@ import { basename, resolve } from 'node:path';
 
 export const APPROVAL_MODES = ['auto', 'ask', 'accept-edits', 'plan', 'allow-all'];
 export const RISK_CATEGORIES = ['delete', 'overwrite', 'system', 'install', 'external', 'spend', 'execute'];
-export const RISK_LABELS = { delete: '删除文件，可能无法撤销', overwrite: '修改或覆盖已有文件',
-  system: '修改系统设置', install: '安装或卸载软件', external: '对外发送或发布内容',
-  spend: '付款或购买', execute: '执行工具操作' };
+export const RISK_LABELS = { delete: '删除文件，可能无法撤销', overwrite: '修改或覆盖已有文件，恢复需要原内容或备份',
+  system: '修改系统设置，可能影响其他程序，恢复需要原配置', install: '安装或卸载软件，撤销需卸载或重装',
+  external: '对外发送或发布内容，对方可能已接收，撤回不保证',
+  spend: '付款或购买，退款不保证', execute: '执行工具操作，影响与可撤销性见操作详情' };
 
 // One policy for all personal tools, including nested code-mode calls. Ordinary moves
 // and reads are allowed; force-replacing a destination is an overwrite.
