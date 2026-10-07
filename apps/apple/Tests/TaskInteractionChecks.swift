@@ -14,6 +14,11 @@ private final class InteractionCredentials: CredentialStore, @unchecked Sendable
 }
 private actor InteractionHTTP: HTTPTransport {
     var lostQuestion = false, denyQuestions = false, withholdACK = false, oldSnapshot = false
+    private var pause = false
+    private var paused: CheckedContinuation<Void, Never>?
+    func pauseRead() { pause = true }
+    func waitForRead() async { while paused == nil { await Task.yield() } }
+    func releaseRead() { pause = false; paused?.resume(); paused = nil }
     private var decision: [String: String]?
     private var answer: [String: Any]?
     private var answerRequest: String?
@@ -45,7 +50,9 @@ private actor InteractionHTTP: HTTPTransport {
             answer = body["answer"] as? [String: Any]; answerRequest = body["requestId"] as? String
             return try json(["question": question(resolved: false), "requestId": answerRequest!])
         }
-        if path.hasSuffix("/approvals") { return try json(["approvals": [approval(resolved: !oldSnapshot)], "hasMore": false]) }
+        if path.hasSuffix("/approvals") {
+            if pause { await withCheckedContinuation { paused = $0 } }
+            return try json(["approvals": [approval(resolved: !oldSnapshot)], "hasMore": false]) }
         if path.hasSuffix("/questions") {
             if denyQuestions { return try json(["error": ["code": "SOURCE_UNCONFIRMED"]], status: 403) }
             return try json(["questions": [question(resolved: !oldSnapshot && !withholdACK)], "hasMore": false])
@@ -116,6 +123,14 @@ private actor InteractionHTTP: HTTPTransport {
         try require(model.approvals.count == 1 && model.questions.count == 1, "Prompt projection failed")
         print("PASS 1 same task and source receipt")
 
+        await transport.pauseRead()
+        let reading = Task { await model.refresh(snapshot) }
+        await transport.waitForRead()
+        try require(model.loading && model.canRespond("question:" + model.questions[0].id),
+                    "A background read erased an already verified response action")
+        await transport.releaseRead(); await reading.value
+        print("PASS 9 background polling retains verified response actions")
+
         let key = "question:" + model.questions[0].id
         await transport.configure(lostQuestion: true)
         await model.answer(model.questions[0], answers: [.init(id: "information", selected: [], custom: "同意")])
@@ -163,6 +178,6 @@ private actor InteractionHTTP: HTTPTransport {
         let finalCounts = await transport.submissions()
         try require(finalCounts.0.count == 1 && finalCounts.1.count == 2, "Unexpected duplicate or account-stale mutation")
         print("PASS 8 account epoch retires actions; provider=0 externalHTTP=0")
-        print("TaskInteractionChecks: 8/8 passed; journal=" + directory.path)
+        print("TaskInteractionChecks: 9/9 passed; journal=" + directory.path)
     }
 }

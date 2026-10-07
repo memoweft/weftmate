@@ -113,15 +113,15 @@
 
 | 方法与路径 | 请求参数 | 响应 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/sessions/{sessionId}/events` | 无游标：最近 N 条；`beforeSeq` 非负，排除边界向前翻页；`afterSeq` ≥ -1，排除边界正向增量。两者互斥。`limit` 默认 100，1–200 | 200 `{events,nextSeq,hasMore,nextBeforeSeq,hasOlder,latestSeq}`；事件按 seq 升序 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE` | 桌、手、安、苹（旧正向） |
-| GET `/sessions/{sessionId}/events/{seq}/detail` | 非负安全整数 seq；无查询 | 200 `{"seq":42,"text":"原始参数与工具输出的 JSON 文本","truncated":true}`；`truncated` 仅截断时出现 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE`（无该工具详情时） | 桌、手、安 |
+| GET `/sessions/{sessionId}/events` | 无游标：最近 N 条；`beforeSeq` 非负，排除边界向前翻页；`afterSeq` ≥ -1，排除边界正向增量。两者互斥。`limit` 默认 100，1–200 | 200 `{events,nextSeq,hasMore,nextBeforeSeq,hasOlder,latestSeq}`；事件按 seq 升序 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE` | 桌、手、安、苹 |
+| GET `/sessions/{sessionId}/events/{seq}/detail` | 非负安全整数 seq；无查询 | 200 `{"seq":42,"text":"原始参数与工具输出的 JSON 文本","truncated":true}`；`truncated` 仅截断时出现 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE`（无该工具详情时） | 桌、手、安、苹 |
 
 这是 JSON（结构化数据）分页 / 轮询，不是 SSE（服务端推送事件）。每页事件 seq 严格递增，但不保证连续；消息、执行与交互共用 DSH 原生 seq。`limit` 按公开时间线条目计数，过滤的文字 chunk（片段）、推理和注入上下文不占条目数。
 
 - 首屏 `?limit=100` 只投影最新条目，不要求扫到会话开头。`nextSeq` 是稳定投影水位，`latestSeq` 是此次读取的原生日志尾部水位。通常相同；当最后一个 step/end 尚未由下一次 step/start 或 turn/end 确认时，nextSeq 会暂时停在它之前，避免漏掉随后确认的 task.ended。`hasMore:false`；`hasOlder` 表示是否还有更早公开条目，`nextBeforeSeq` 是下次排除的向前边界。
 - 上翻 `?beforeSeq=<nextBeforeSeq>&limit=100` 返回更早条目，仍按 seq 升序。用新的 `nextBeforeSeq` 继续上翻；`hasOlder:false` 表示已到开头。**上翻响应不能覆盖客户端的正向增量游标**：它的 `nextSeq/latestSeq` 可能包含尚未增量读到的新事件。
 - 增量 `?afterSeq=<nextSeq>&limit=100` 正向读取，`hasMore` 表示尚有后续条目。继续读取必须使用返回的 `nextSeq`，它可跨过过滤的内部事件；空页也可推进水位。此方向的 `nextBeforeSeq` 只是本页最早条目，`hasOlder:false` 不用于判断完整历史。
-- **旧 `afterSeq=-1` 兼容**：继续从会话开头正向分页，绝不改成尾页。Apple 当前客户端可以照常读取文字和回合状态，新事件及字段均为追加。
+- **旧 `afterSeq=-1` 兼容**：继续从会话开头正向分页，绝不改成尾页。A3 后 Apple 首屏使用无游标尾页；该兼容路径仍供旧客户端使用，新事件及字段均为追加。
 - 空日志 `events:[],nextSeq:-1,latestSeq:-1,nextBeforeSeq:null,hasMore:false,hasOlder:false`。`beforeSeq=0` 可返回空页。客户端按 `(sessionId,seq)` 去重，开始/完成按 stepId 更新，禁止自行给 seq 加一。
 - 消息最多显示 4,000 个 UTF-16（字符串编码）单元；工具投影不带原始参数 / 输出。单条大记录截断并标记 `truncated`，整页按字节分页；长会话不再返回 `HISTORY_WINDOW_LIMIT`。用户原件消息仍可由原有附件登记恢复显示文本。
 - 详情只读取工具调用、工具结果和审批原始记录；推理、注入上下文不开放。返回最多 64,000 个 UTF-16 单元，超出标记截断。详情与历史使用同一账号 / 会话读取权限，不公开本机路径形式的下载引用。
@@ -346,7 +346,7 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 
 ## 5. 客户端差异（Apple逐项对照）
 
-以下结论来自当前 `PersonalClient.swift` 和相关Codable/intent模型与上述服务端路径/字段对照；不修改Swift。表中的「一致」只确认静态请求/响应契约，不代表真机/部署连通性已验收。
+以下结论来自当前 `PersonalClient.swift` 和相关Codable/intent模型与上述服务端路径/字段对照；A2/A3 已同步修复 Swift 客户端。表中的「一致」只确认静态请求/响应契约，不代表真机/部署连通性已验收。
 
 ### 5.1 已调用接口的逐项核对
 
@@ -356,13 +356,13 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | GET `/auth/me`；GET `/status` | `account.ownerId,device.id,csrfToken` 与 `ownerId,hostId` 一致；身份不匹配或401清凭据，5xx/超时保留离线身份便于恢复 |
 | POST `/auth/logout`；GET `/auth/devices` | `{}`注销体、Cookie/Origin/CSRF一致；设备createdAt/lastSeenAt等可选字段兼容。注销先清本地身份，服务端失败仍报告未确认 |
 | GET `/sessions`；GET `/models` | 会话 `running,sendAvailable,unavailable?,conversationId?,modelProfileId?` 与模型 `id,name,model,configured,routeFingerprint` 一致；Apple限制会话≤20,000、模型≤500 |
-| GET `/sessions/{id}/events` | 路径/afterSeq/nextSeq一致；Apple单页limit≤100（服务端≤200）。旧打开会话从-1累计读到无hasMore，累计>20,000报客户端historyLimit；缺尾页/beforeSeq。消息转换仅保留user/assistant；共享类型丢弃 `endReasonKind`，工具/新时间线data未建模 |
+| GET `/sessions/{id}/events` | 已在 A3 修复：无游标尾页、beforeSeq 上翻、afterSeq 增量；上翻不覆盖正向水位，按 seq 去重。公开事件 data（含 endReasonKind）完整缓存/投影；步骤详情走按 seq 详情接口，historyLimit 枚举与全量扫描路径已移除 |
 | GET `/commands` | before/limit/nextBefore一致；服务端按账号列全部命令，Apple读一页后过滤选中会话根任务，不是服务端按session过滤；可能需继续翻页才找到当前会话任务 |
 | GET `/commands/by-request/{id}`；POST `/commands` | 404且code为NOT_FOUND才认定未登记；持久requestId与原体核对一致。create/message/cancel字段一致，但message长度、附件/steer范围有差异（见下） |
 | GET `/tasks/{id}`；POST `/tasks/{id}/stop` | GET裸Task、POST202的task外壳、requestId一致；停止先查canStop，仅把匹配202当登记证据，后续Task状态不伪称该请求已确认。尚未接入补充/续做与executionSteps详情 |
 | GET `/tasks/{id}/sources/{snapshotId}` | 项目/网页来源字段与文本响应一致；区分项目原文件hash与网页文本hash |
 | GET `/sessions/{id}/approvals`；POST `/sessions/{id}/approvals/{approvalId}` | before/limit/approvalId、两种outcome与requestId一致；POST200为answered回执，不能覆盖后续resolved列表事实 |
-| GET `/sessions/{id}/questions`；POST `/sessions/{id}/questions/{questionRpcId}` | questions数组、answer.answers中的id/selected/custom、多选与plan-review字段一致；以answerAcceptedAt区分登记与消费；当前无同名时间线事件 |
+| GET `/sessions/{id}/questions`；POST `/sessions/{id}/questions/{questionRpcId}` | questions数组、answer.answers中的id/selected/custom、多选与plan-review字段一致；以answerAcceptedAt区分登记与消费；已在 A3 修复：按 approvalId 或同 turn 内不晚于 observedSeq 的最后一次提问定位时间线卡；200 登记与原生消费保持区分 |
 | GET `/artifacts/{id}`；GET `/artifacts/{id}/preview`；GET `/artifacts/{id}/download` | 元数据、preview.text、download字节一致；Apple核对task绑定、size/sha256与UTF-8，符合当前≤128KiB文本成果范围；不可据此认为支持未来任意二进制成果 |
 | GET `/memory/status`；GET `/memory/items`；GET `/memory/items/{kind}/{id}`；GET `/memory/items/{kind}/{id}/sources` | kind/query/after游标、owner/worldRevision与availableActions一致；详情/来源可由Apple额外传本地expectedWorldRevision校验，未将其臆造为HTTP查询字段 |
 | POST `/memory/items/{kind}/{id}/correct`；POST `…/mute`；DELETE `/memory/items/{kind}/{id}`；DELETE `/memory/evidence/{id}` | requestId/expectedWorldRevision/text一致；允许读取409 receipt并区分error外壳；同requestID原体重放。纠正体字节上限不一致（见下） |
@@ -375,7 +375,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 ### 5.2 明确不一致与后续缺口
 
-差异列保留 M0-5 核对时的现象；「已在 A2 修复」标注当前 Apple 客户端结果。服务端接口未变。
+差异列保留 M0-5 核对时的现象；「已在 A2 / A3 修复」标注当前 Apple 客户端结果。服务端接口未变。
 
 | 分类 | 差异 / 可观察后果 | 对应工作 |
 |---|---|---|
@@ -384,7 +384,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 名称计数不一致 | Apple认证时deviceName用Swift字符串count≤128（扩展字素），服务端按UTF-16长度≤128；含emoji/组合字符的长名称可通过Apple本地检查后400 INVALID_REQUEST | 已在 A2 修复：deviceName 按 UTF-16 ≤128 校验，超限不发送认证请求 |
 | 接管字段缺口 | 服务端允许 `acknowledgeUncertainLocalTurn:true`；Apple接管intent没有该字段，并要求canAdopt。已有uncertain本地turn无法在Apple确认后接管，返回/显示LOCAL_TURN_UNCONFIRMED | 已在 A2 修复：仅用户明确点击「确认并继续」后发送该字段；普通接管省略，确认写入原 intent 供重放 |
 | 任务适用范围 | Apple可给任何列出的会话查询根任务，但服务端/tasks只接受personal-remote；接管后shared-chat的任务详情/停止会404 NOT_FOUND。应按实际可用范围呈现，不能推定所有可发送会话都有任务控制 | 已在 A2 修复：结合账号桌面能力与实时会话可发送状态确认 personal-remote；shared-chat 隐藏任务详情/停止，不请求 /tasks；范围不明时隐藏 |
-| 历史与时间线 | Apple从头全量读历史，未实现M0-3尾页/上滑更早；只转文字消息。共享HistoryData忽略endReasonKind及新工具/审批/成果data，即使未来服务端添加字段也不会自动渲染 | A1、M1-0d（待M0-3/M1-0a确认） |
+| 历史与时间线 | Apple从头全量读历史，未实现M0-3尾页/上滑更早；只转文字消息。共享HistoryData忽略endReasonKind及新工具/审批/成果data，即使未来服务端添加字段也不会自动渲染 | 已在 A3 修复：在线/离线尾页与上翻、增量合并；可折叠执行块、按 seq 详情、审批/提问/成果卡；来源/停止回到原对话，独立任务目录/详情页面已删除 |
 | 附件 | Apple能解码原件元数据并计数，但没有上述四个附件PUT/GET；SharedCommandPayload无attachments、originalAttachments、attachmentMessageId，无法从该client上传/发送/下载附件或仅发附件 | 已在 A2 修复：四个 PUT/GET 与显示版、附件引用/仅附件发送、历史原件及旧图片下载接入；Mac/iPhone「+」、缩略图、侧栏/全屏 Quick Look、保存/分享；原件大小/hash 校验 |
 | 任务输入 | Apple message mode固定queue，无steer；无supplements/resume；Task读取未呈现executionSteps/background job全部字段。不能把现有session.cancel当可取消排队卡片 | M1-0b/M1-0d/M1-4 |
 | 账号/设备 | 无auth/state/setup/profile/change-password、设备PATCH/DELETE；登录/注册/列设备已有能力 | Apple账号设置接入（setup仍是宿主专属流程） |
@@ -392,7 +392,8 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 项目/浏览器 | 无projects/workspaces/browser六项独立请求；已有会话可列/读/发送，但无法在此client登记项目、撤销或创建对应会话 | Apple工作区接入 |
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
 | 分发更新 | 无认证app/native/downloads六项请求；Apple公开更新另有PublicUpdates，不能宣称缺所有更新能力 | 当前保持已有公开分发；本契约只记录认证入口 |
-| 五端共同待实现 | 「总是允许此类」、步骤原始详情与十种时间线投影已正式；排队取消、消息chunk流待实现；运行中插话/排队默认行为已按 D9 确定，调度另包实现 | Windows M1-0a/b、Mac审阅与M1-0d |
+| Watch | 旧首页没有任务进度、审批或完成触感 | 已在 A3 修复：通过 iPhone WatchConnectivity 读取一行进度、允许一次/拒绝、最近回复；前台/刷新观察到新完成才触感提醒。尚无远程推送，审批须手机可达，未验收真机配对 |
+| 五端共同待实现 | 「总是允许此类」没有接口，Apple 不显示；排队取消、消息 chunk 流、D9 插话调度仍待实现；现有 timeline task.queued 不新增生产者 | Windows M1-0b / D9，Apple 随正式契约接入 |
 
 本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a已更新此文档与STATE契约栏。
 
