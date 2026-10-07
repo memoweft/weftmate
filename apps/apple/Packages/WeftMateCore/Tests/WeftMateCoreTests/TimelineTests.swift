@@ -33,9 +33,9 @@ private func page(_ events: [TimelineEvent], next: Int, older: Bool = false) -> 
 @Test func timelineLateCompletionDoesNotMoveStepsAndArtifactCompletesSameCall() {
     let started: [String: JSONValue] = ["taskId": .string("turn-1"), "stepId": .string("call-a"), "state": .string("running"), "summary": .string("读取文件")]
     var ended = started; ended["state"] = .string("completed")
-    let events = [event(1, "step.started", started, at: "2026-10-07T00:00:00Z"),
+    let events = [event(1, "step.started", started, at: "2026-10-07T00:00:00.100Z"),
                   event(2, "approval.requested", ["approvalId": .string("approval-a")]),
-                  event(3, "artifact.created", ["artifactId": .string("artifact-a"), "completedStep": .object(ended)], at: "2026-10-07T00:00:10Z"),
+                  event(3, "artifact.created", ["artifactId": .string("artifact-a"), "completedStep": .object(ended)], at: "2026-10-07T00:00:10.100Z"),
                   event(4, "approval.resolved", ["approvalId": .string("approval-a"), "outcome": .string("allowed-once")])]
     let entries = TimelineProjection.entries(events)
     #expect(entries.map(\.seq) == [1, 2, 3])
@@ -44,6 +44,7 @@ private func page(_ events: [TimelineEvent], next: Int, older: Bool = false) -> 
     // Start arrives on upward pagination after completion was already displayed.
     let partial = TimelineProjection.entries(Array(events.dropFirst()))
     #expect(partial.first(where: { !$0.steps.isEmpty })?.steps.count == 1)
+    #expect(partial.first(where: { !$0.steps.isEmpty })?.elapsed == "时间待确认")
 }
 @Test func timelineBoundariesAndTerminalTurnKeepTasksSeparate() {
     func step(_ seq: Int, task: String, id: String) -> TimelineEvent {

@@ -18,14 +18,14 @@ struct TimelineTaskControl: View {
         VStack(alignment: .leading, spacing: 10) {
             if let task = model.snapshot {
                 if task.control.canStop {
-                    Button("停止") { Task { await model.requestStop() } }
+                    Button(model.stopActionLabel) { Task { await model.requestStop() } }
                         .buttonStyle(.bordered).disabled(model.stopBusy || !model.canRequestStop || appModel.historyCachedAt != nil)
                         .accessibilityIdentifier("stopTask.\(task.taskId)")
                 }
-                if let record = model.stopRecord {
-                    Text(record.state == .acknowledged ? "停止已确认" : "已请求停止，等待执行回执。")
+                if model.stopRecord != nil {
+                    Text(TaskPresentation.controlLabel(task.control))
                         .font(.caption).foregroundStyle(Weave.muted)
-                    if record.state != .acknowledged {
+                    if ![.stopped, .completed].contains(task.control.stopStatus) {
                         Button("核对停止状态") { Task { await model.reconcileStop() } }.font(.caption).disabled(model.stopBusy)
                     }
                 }
