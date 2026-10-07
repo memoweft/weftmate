@@ -198,11 +198,12 @@ struct MemoryWorkspaceView: View {
                     .background(Weave.surface, in: RoundedRectangle(cornerRadius: 10))
                     .disabled(!model.canMutate)
                     .accessibilityIdentifier("memoryCorrectionEditor")
+                if let error = model.correctionValidationMessage { Text(error).font(.caption).foregroundStyle(Weave.danger) }
                 Button("提交纠正") {
                     if let context = model.actionContext(.correct) { Task { await model.mutate(context) } }
                 }
                     .buttonStyle(.borderedProminent)
-                    .disabled(!model.canMutate || model.correctionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .disabled(!model.canMutate || model.correctionValidationMessage != nil || model.correctionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .accessibilityIdentifier("correctMemoryButton")
             }
             HStack {

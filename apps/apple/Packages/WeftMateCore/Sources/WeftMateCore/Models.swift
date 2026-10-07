@@ -110,18 +110,19 @@ public struct ChatMessage: Identifiable, Sendable, Equatable {
     public let truncated: Bool
     /// Late phone records remain visible, without implying they entered host context.
     public let pendingContext: Bool
+    public let images: [SharedHistoryImage]
     public let originalAttachments: [OriginalAttachment]
     public let attachmentMessageId: String?
     public let unpreviewedOriginalImageIds: [String]
 
     public init(id: String, role: MessageRole, text: String, occurredAt: String?, sourceDeviceId: String?,
                 attachmentCount: Int, truncated: Bool, pendingContext: Bool,
-                originalAttachments: [OriginalAttachment] = [], attachmentMessageId: String? = nil,
+                images: [SharedHistoryImage] = [], originalAttachments: [OriginalAttachment] = [], attachmentMessageId: String? = nil,
                 unpreviewedOriginalImageIds: [String] = []) {
         self.id = id; self.role = role; self.text = text; self.occurredAt = occurredAt
         self.sourceDeviceId = sourceDeviceId; self.attachmentCount = attachmentCount
         self.truncated = truncated; self.pendingContext = pendingContext
-        self.originalAttachments = originalAttachments; self.attachmentMessageId = attachmentMessageId
+        self.images = images; self.originalAttachments = originalAttachments; self.attachmentMessageId = attachmentMessageId
         self.unpreviewedOriginalImageIds = unpreviewedOriginalImageIds
     }
 }

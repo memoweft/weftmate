@@ -9,7 +9,7 @@ public struct OriginalAttachment: Codable, Equatable, Sendable, Identifiable {
     public let contentType: String
     public let size: Int
     public let sha256: String
-    public var isImage: Bool { ["image/png", "image/jpeg", "image/webp", "image/gif"].contains(contentType) }
+    public var isImage: Bool { contentType.hasPrefix("image/") }
 
     func validate() throws {
         try SharedValidation.require(OriginalAttachmentValidation.syncID(attachmentId) &&
@@ -27,10 +27,10 @@ enum OriginalAttachmentValidation {
         SharedValidation.matches(value,
             "^(?:[A-Za-z][A-Za-z0-9_-]{0,31}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
     }
-    static func validate(_ originals: [OriginalAttachment]?, messageID: String?, unpreviewedIDs: [String]?) throws {
+    static func validate(_ originals: [OriginalAttachment]?, messageID: String?, unpreviewedIDs: [String]?, maximumCount: Int = 4) throws {
         let originals = originals ?? [], unpreviewedIDs = unpreviewedIDs ?? []
-        try SharedValidation.require(originals.count <= 4 && Set(originals.map(\.attachmentId)).count == originals.count &&
-            messageID.map(syncID) ?? true && unpreviewedIDs.count <= 4 &&
+        try SharedValidation.require(originals.count <= maximumCount && Set(originals.map(\.attachmentId)).count == originals.count &&
+            messageID.map(syncID) ?? true && unpreviewedIDs.count <= maximumCount &&
             Set(unpreviewedIDs).count == unpreviewedIDs.count && unpreviewedIDs.allSatisfy(syncID))
         for original in originals { try original.validate() }
     }

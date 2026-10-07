@@ -89,7 +89,7 @@ enum TaskProgressUIFixture {
             guard method == "GET" else { throw APIFailure.invalidResponse }
             switch path {
             case "/personal/v1/auth/me": return try json(auth())
-            case "/personal/v1/status": return try json(["ownerId": "owner-fixture", "hostId": "host-fixture"])
+            case "/personal/v1/status": return try json(["ownerId": "owner-fixture", "hostId": "host-fixture", "backend": ["capabilities": ["desktopOpenApp": ["available": true]]]])
             case "/personal/v1/auth/devices":
                 return try json(["devices": [["id": "device-fixture", "name": "受控测试设备", "current": true]]])
             case "/personal/v1/sync/events": return try json(["events": [], "nextSeq": 0, "hasMore": false])

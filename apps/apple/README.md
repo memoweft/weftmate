@@ -4,7 +4,7 @@
 
 原生 SwiftUI 工程包括 `WeftMateMac`、`WeftMatePhone` 与手机伴随 `WeftMateWatch`，通过本地包 `Packages/WeftMateCore` 共用 `/personal/v1` 网络接口、模型与凭据存储实现。macOS 14、iOS 17、watchOS 10 是当前工程最低部署设置；当前源码版本为 `0.1.0 / build 11`。
 
-Mac/iPhone 已包含账户与原会话读取、按账户保存草稿和离线缓存、明确选择模型后续聊、记忆页面、跨设备任务发现与进度、停止、审批与信息问答，以及 UTF-8 文本成果预览/导出。Watch 当前仍是未连接账户的基础首页；任务进度、审批、完成震动及真机联网属于后续工作。源码接入和离线测试通过不等于真实后端或设备验收。
+Mac/iPhone 已包含对话附件上传、历史附件预览/保存、明确确认不确定本地消息后接管、账户与原会话读取、按账户保存草稿和离线缓存、明确选择模型后续聊、记忆页面、跨设备任务发现与进度、停止、审批与信息问答，以及 UTF-8 文本成果预览/导出。Watch 当前仍是未连接账户的基础首页；任务进度、审批、完成震动及真机联网属于后续工作。源码接入和离线测试通过不等于真实后端或设备验收。
 
 ## 构建与打开
 
@@ -23,9 +23,23 @@ make test-phone
 
 工程和共享 Scheme 已提交，普通构建不用先生成。添加 Swift 源码后执行 `make project` 同步项目文件；生成器仅使用 Python 标准库，不下载依赖。默认 iPhone 是已安装 iOS 26.3 的 iPhone 17，Watch 是 watchOS 26.2 的 Series 11（46mm）。通过 `PHONE_ID=<UUID>` 和 `WATCH_ID=<UUID>` 指定其他可用模拟器，使用 `xcrun simctl list devices available` 取得 UUID。
 
-`make test-core` 执行共享包 Swift 单元测试；`make test-state` 编译并运行 `Tests/*Checks.swift` 的九组状态检查，使用合成账户、受控 HTTP 和独立临时目录，不访问日用数据、后端或系统钥匙串。每次的编译/执行日志与 `results.json` 保存到受忽略的 `Build/StateChecks/apple-state-*`。需要源码外的证据目录时运行 `python3 Scripts/run_state_checks.py --artifacts <目录>`；`--core-build <隔离的 SwiftPM scratch 目录>` 可复用已构建的核心对象。`make test-mac` / `make test-phone` 属于 UI 验证，真实服务用例另需隔离 fixture。
+`make test-core` 执行共享包 Swift 单元测试；`make test-state` 编译并运行 `Tests/*Checks.swift` 的十组状态检查，使用合成账户、受控 HTTP 和独立临时目录，不访问日用数据、后端或系统钥匙串。每次的编译/执行日志与 `results.json` 保存到受忽略的 `Build/StateChecks/apple-state-*`。需要源码外的证据目录时运行 `python3 Scripts/run_state_checks.py --artifacts <目录>`；`--core-build <隔离的 SwiftPM scratch 目录>` 可复用已构建的核心对象。`make test-mac` / `make test-phone` 属于 UI 验证，真实服务用例另需隔离 fixture。
 
 `make run-mac`、`make run-phone`、`make run-watch` 构建、安装并启动对应候选。模拟器首次启动需要等待系统初始化；脚本等待实际启动结果。Mac App 使用沙盒网络客户端权限，以及用户在系统文件窗口选定位置的读写权限，用于保存已校验的成果。真实系统操作按后续正式能力逐项接入。
+
+## A2 发送与附件
+
+消息按 8,192 个 UTF-16 单元和实际编码 JSON 的 12 KiB 上限检查；记忆纠正按 4,000 UTF-16 / 12 KiB JSON 检查。超限提示在输入区，草稿保留，不提交必然失败的请求。设备名按 UTF-16 计数。接管遇到 `LOCAL_TURN_UNCONFIRMED` 时，只有用户点击「确认并继续」才登记并发送带 `acknowledgeUncertainLocalTurn:true` 的原请求；普通接管不发送该字段。
+
+输入区「+」可选文件/图片或系统照片，最多 4 个；Mac 支持拖入文件和菜单粘贴图片/文件。原件沿用服务端单个 1 GiB 上限，上传/下载通过文件传输，不把大文件全量放入 JSON 或内存。图片生成 JPEG 显示版；服务端支持的图片/文本按 5 MiB 图片、16 KiB 合计文本、10 MiB 合计输入准备模型内容，其余格式仍保留原件。上传失败后所选文件保留；相同发送尝试使用原附件 ID、messageId、requestId。上传回执丢失后修改文字或增减文件时，保留原件的 messageId 绑定，为新命令使用新的 requestId。附件引用在上传完成后写入可重放的发送请求，允许仅发附件。尚未发送的文件选择只保留在当前 app 会话，重启/离线持久化属于后续工作。
+
+历史附件点开后，Mac 在右侧面板、iPhone 在全屏页预览，可保存或分享原文件。原件核对大小及 SHA-256；旧历史图片通过会话图片接口读取。图片在预览区直接显示；文本预览至多 128 KiB，其余格式使用系统 Quick Look，保存原件仍保留完整内容。预览支持不代表模型可读取任意格式。同步历史可读取/缓存 8 个附件，发送命令仍最多 4 个。
+
+当前 `/sessions` 不返回 `origin`。A2 结合 `/status` 中仅宿主所有者可用的 `desktopOpenApp.available` 和实时 `sendAvailable` 确认 personal-remote 任务入口；shared-chat 没有该桌面能力，不请求 `/tasks`。服务不可用或权限范围无法确认时隐藏任务入口；是否支持任务控制仍与能否续聊分别判断。
+
+离线界面验收可只运行 `WeftMateUITests/testA2AttachmentHistoryComposerAndPreview`。该测试使用双重 Debug 开关 `--ui-testing --apple-contract-fixture`、内存凭据与专用测试 namespace，不走 URLSession，也不连接默认服务；截图保存在 XCTest 结果包内。该夹具自动登录内存测试账号，跳过系统密码保存及键盘焦点环节，只验证附件界面。
+
+Mac XCTest 初始化不成功时，已有辅助功能授权的宿主可运行 `swift Scripts/run_mac_ax_test.swift --a2-synthetic --debug-app <Debug app> --artifacts <新证据目录>` 完成同一隔离流程；没有授权时会退出，不申请权限。
 
 ## Mac 检查更新
 

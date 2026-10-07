@@ -355,9 +355,10 @@ struct SharedConversationSDKTests {
         let freshSession = try await sharedLogin(fresh)
         var oversized = try sharedIntent(freshSession).payload
         oversized.append(Data(repeating: 32, count: 131_073 - oversized.count))
-        let oversizedIntent = try SharedCommandIntent(server: freshSession.server, ownerId: freshSession.account.ownerId,
-            hostId: freshSession.hostId, payload: oversized)
-        await #expect(throws: APIFailure.requestLedgerLimit) { try await fresh.reconcileCommand(oversizedIntent) }
+        #expect(throws: APIFailure.invalidResponse) {
+            try SharedCommandIntent(server: freshSession.server, ownerId: freshSession.account.ownerId,
+                hostId: freshSession.hostId, payload: oversized)
+        }
         #expect(await freshTransport.requests().count == 2)
     }
 }
