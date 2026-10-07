@@ -1,35 +1,15 @@
-# 健康日摘要（H2）
+# 健康日摘要与 MemoWeft observed（H2 / MW-2）
 
-客户端只调用 `/personal/v1/health/daily-summaries`，契约见 `docs/CLIENT_API.md` 第 6 节。`http.mjs` 在个人访问服务完成认证后分发；写操作进入原有 `context.serial` 并重新认证，继承 Cookie/Bearer、账号设备范围、Origin 与 CSRF 行为。历史、桌面 UI、手机 UI 未改动。
+客户端只调用 `/personal/v1/health/daily-summaries`，契约见 `docs/CLIENT_API.md` 第 6 节。`http.mjs` 在个人访问服务认证后分发；写操作进入原有 `context.serial` 并重新认证，继承 Cookie/Bearer、账号设备范围、Origin 与 CSRF 行为。
 
-## 私有存储与 observed 待写队列
+摘要和 observed 交付状态位于 `<personal-access-root>/accounts/<ownerId>/health/daily-summaries.json`。使用私有目录/文件保护及 fsync + 原子替换；账号/设备/日期产生稳定的来源哈希。新版本完整覆盖，省略的指标真正消失；旧版本及同时间不同内容拒绝，同版本相同内容幂等。账号最新 `summarizedAt` 的云端选择作用于全部摘要；同时间 false 优先，回填与重试不能放宽新选择。
 
-文件位于 `<personal-access-root>/accounts/<ownerId>/health/daily-summaries.json`。使用 `private-host-storage` 的 POSIX 0700/0600 或 Windows 当前用户 ACL，复用 `durableWrite` 的 fsync + 原子替换。同一个文件事务保存摘要、账号使用选择和每条摘要的 observed 待写证据；没有日志副本或原始样本流。
+MW-2 已在现有 `personal-memory` 管理器消费队列：`upsert_observed` 写 exact observed 证据及其状态投影，`update_observed_permissions` 更新来源权限，`retract_observed` 撤回来源。数据不通过 user/assistant 摄取，不发送给写入或嵌入模型。MemoWeft 能力要求 `observed_evidence: 1`、`recall_model_tier: true`；需先合入 MemoWeft 的 MW-2 PR，再安装含此契约的 Core。CI 的真实 Core 集成任务使用固定候选提交验证同一接口。
 
-账号/来源设备/日期对应一条记录，证据 `source_id/evidence_id` 由该三元组哈希生成，版本 `payload_hash` 根据规范化摘要计算。新版本覆盖整个摘要及其待写证据，省略的指标真正消失；不同手机不会相加。较旧汇总时间拒绝；同一汇总时间的不同内容拒绝，相同内容幂等成功。云端选择和自评频率按账号最新 `summarizedAt` 应用于全部摘要及证据；相同时间出现冲突时 false 优先，旧回填和重试不能放宽新选择。
+摘要写入与账号选择变更后自动交付。每条记录保存内容版本、已应用权限哈希、证据 ID 和 World 修订；收到 Core 成功回执才标记交付。同一来源锁串行处理交付与后续更新/DELETE，防止晚到写入复活。进程中断、Core 不可用或存储清理未完成时保留可重放状态；管理器的 status、recall 与 `flushObserved` 会重试。POST 返回 `memory.state=delivered` 表示交付已确认；queued 表示宿主已持久化，Core 待交付。`observedOutbox` 只返回剩余待写输入。
 
-DELETE 真正移除目标摘要与对应待写证据，留存的只有无健康内容的删除时间水位。水位为服务器删除时间与已有汇总时间的较大值；晚到的 `summarizedAt <= 水位` 被拒绝，重新读取生成的较新版本可以上传。全部删除包含所有日期水位；多次删除幂等。这里的真实删除指当前宿主文件的内容移除，不宣称安全擦除文件系统/备份。
+DELETE 先移除宿主摘要、设备及健康文本，保存无健康内容的来源哈希/删除水位待办，然后请求 Core 真正遗忘。撤回覆盖证据、混合来源的衍生 World 项、索引、形成/审查台账、缓存快照及依赖健康来源的助手历史；独立记忆保留。清理失败时 `memory.state=queued`，同一 DELETE 可重试；没有健康内容的撤回待办跨重启保存，Core 确认 `storage_cleanup.state=complete` 后移除。迟到 `summarizedAt <= 水位` 拒绝，更晚的合法版本可重新上传。当前存储清理不宣称擦除文件系统快照或外部备份。
 
-## MemoWeft 桥接现状与后续接线
+召回将实际模型的 `modelTierFor` 结果通过 `model_tier` 传给 World 和 interactions RPC。local 只读允许本地的来源；cloud 只读允许云端的来源，并检查衍生项及助手历史的记忆依赖。健康云端选择 false 时，其他可读记忆照常召回。来源权限同步失败时暂停该次上下文注入，待重试成功后恢复，避免注入旧授权数据。模型层级继续按地址自动判定，并保留 `modelTier: auto|local|cloud` 手动覆盖。
 
-现有写入链是 `main.mjs` 的账号绑定 → `personal-memory/index.mjs` → `MemoWeftRpc` → `memoweft.integrations.dsh_bridge`（RPC v2）。当前桥接只定义对话 `ingest_boundary` 和 World 纠正/静音/删除命令；`boundary.mjs` 只允许 user/assistant 消息。没有正式的 observed upsert 契约；H2 不把健康数据伪装为用户发言、不猜测新的 RPC 方法，也不绕过桥接直写 SQLite。
-
-因此 H2 落地的是任务允许的待写队列分支，**尚未把健康证据写入 MemoWeft World**。POST 的 `memory.state=queued` / `reasonCode=MEMORY_OBSERVED_UNSUPPORTED` 明确反映这一点；200 表示摘要与队列已持久化，Apple 可清除上传待办。`personal-memory` 管理器持有同一个 `healthStore`，宿主方法 `observedOutbox(ownerId)` 读取可回放的 `{operation:"upsert",idempotencyKey,evidence}` 列表；每条证据含 `source_kind=observed`、中文事实、设备/日期/时区/汇总时间及 local/cloud 权限。此方法仅导出待写输入，不宣称已回放。删除级联验证的是已落盘队列撤回，当前不存在本包写入的 Core 证据。
-
-MemoWeft 侧需先补充并发布：
-
-- 类型明确的 observed 写入/更新协议：账号 subject、稳定来源 ID、版本与幂等键；不经过对话角色；更新撤回被省略的旧事实/索引。
-- 按来源更新权限与撤回/真实删除协议及回执：覆盖衍生 World 项、证据、索引与存储清理；同来源删除后可接受新的合法版本。
-- **MW-2：仅在确有健康 observed 证据写入 World 后，按来源过滤健康证据及其衍生项**。云端且 cloudModelAllowed=false 时排除这些健康来源，保留非健康 World/interactions 召回；不得因账号存在摘要而禁用整个召回。协议需返回来源与过滤结果（包括 interactions），避免旧派生记忆绕过 opt-out。
-
-补齐后在 **现有 `personal-memory` 管理器**内消费 `observedOutbox`，落盘已应用版本/回执并给覆盖和 DELETE 接上 Core 撤回。不得将该待写列表发送给不受本地/云端策略约束的写入模型。需要真实 Core 的更新/撤回/重启/权限集成测试；当前 RPC 夹具测试不能替代这些验收。
-
-## 模型使用边界
-
-`memoryRecallModelTier` 按实际模型配置的 `baseUrl` 自动判定：loopback（127.0.0.0/8、::1、localhost）、私有网段（10/8、172.16/12、192.168/16）和 `*.local` 为 local，其余为 cloud。现有模型配置可保存可选 `modelTier: auto | local | cloud`；缺省/auto 使用地址，local/cloud 覆盖自动判定，可把本地地址的云端代理标为 cloud。账号模型 POST/PATCH、查询/转移、宿主设置与桌面表单保留此字段；仅修改位置也生成独立 runtime 修订，历史会话保留旧配置。账号路由权限仍由现有 `memoryRecallDestination` 校验。`main.mjs` 将最终位置传给 `processingRoute`，RPC initialize 使用同一 `model_tier`；它不是模型输出或召回请求中可自报的值。
-
-H2 的健康 observed 证据只有待写队列，**已写入 World 的健康证据目前不存在**；个人记忆召回因此照常执行，即使账号有摘要且 `cloudModelAllowed=false`，云端也可召回非健康记忆。待写健康事实不会被注入召回 RPC 或模型上下文，当前本地模型同样不能从 World 召回这些事实；GET 可供客户端读取。MW-2 写入 World 时须同时实现上述按来源权限过滤，只有实际存在已写入健康证据时才需要排除其云端召回；用户/助手历史的管理仍走现有契约。
-
-## 验证
-
-`tests/personal-health.test.ts` 使用临时目录、测试账号、合成 RPC；覆盖认证/CSRF/同源、请求限制、幂等与陈旧覆盖、来源隔离、多设备、最新选择、日期/全部删除与队列撤回、删除水位、重开存储、私有权限、中文 observed 格式及有摘要/false/云端下非健康记忆照常召回。`tests/model-tier.test.ts` 覆盖各地址范围边界、名称、手动覆盖与目录一致性；账号模型/设置测试覆盖位置保存、仅位置修订、凭据复用、幂等冲突与重开存储。
+`tests/personal-memory-observed.integration.test.ts` 使用真实 Python Core + stdio RPC + 隔离测试账号/目录，覆盖普通对话偏好与健康 observed 共存、本地/云端过滤、全账号权限变化、覆盖清除旧指标、删除/导出和重启。解释模型使用显式测试路由，不访问真实模型服务；Core 存储、World、召回和真正遗忘均是真实实现。`personal-memory-observed-outbox.test.ts` 覆盖失败重试、交付确认、无内容撤回待办、清理 pending、重启、水位与并发删除。既有健康 HTTP、权限和模型位置测试继续验证客户端边界。
