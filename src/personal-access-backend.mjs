@@ -7,7 +7,7 @@ const fail = (code) => { const error = new Error(code); error.code = code; throw
 export function createPersonalAccessBackend({ currentOrigin, referenceScan, profiles, hasCredential,
   routeForProfile, listSessions, resolveSession, ensureKnownSession, gateway, queue, bindSession,
   credentialForProfile = null, modelFetch = fetch,
-  hostOwnerId = () => null,
+  hostOwnerId = () => null, getRuntimeId = () => null,
   ownerForSession = () => null,
   modelAllowed = () => true,
   moduleStatus = () => ({}),
@@ -15,6 +15,14 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
   naturalLanguageDesktopReady = () => false,
   naturalLanguageDesktopVerified = () => false, inferenceVerified = () => false }) {
   const requireRuntime = () => { if (!currentOrigin()) fail('RUNTIME_UNAVAILABLE') }
+  const captureQuestionRuntime = () => {
+    const runtimeId = getRuntimeId(), origin = currentOrigin();
+    if (!origin || typeof runtimeId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(runtimeId)) fail('RUNTIME_UNAVAILABLE');
+    return { runtimeId, origin };
+  }
+  const requireQuestionRuntime = snapshot => {
+    if (getRuntimeId() !== snapshot.runtimeId || currentOrigin() !== snapshot.origin) fail('RUNTIME_UNAVAILABLE');
+  }
   const presetForOwner = (ownerId) => {
     const originalOwner = hostOwnerId()
     if (originalOwner === null) return 'personal-remote' // Standalone backend fixtures.
@@ -249,6 +257,36 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         return await toolResultProof({ sessionId, turn, readCallId, snapshotId,
           sourceReceiptId, beforeCallId, readTool, beforeTool }) === true
       } catch { return false }
+    },
+    async listUserQuestions({ sessionId, ownerId, modelProfileId }) {
+      const runtime = captureQuestionRuntime();
+      if (hostOwnerId() !== null && ownerId !== hostOwnerId()) fail('SESSION_READ_ONLY');
+      const session = await requireSession(sessionId, ownerId);
+      requireQuestionRuntime(runtime);
+      requireModelAllowed(ownerId, session.profile?.id);
+      if (modelProfileId !== undefined && session.profile?.id !== modelProfileId) fail('MODEL_UNAVAILABLE');
+      const page = await gateway(`/sessions/${encodeURIComponent(sessionId)}/questions`);
+      requireQuestionRuntime(runtime);
+      if (!Array.isArray(page?.questions)) fail('BACKEND_UNAVAILABLE');
+      return { runtimeId: runtime.runtimeId, questions: page.questions };
+    },
+    async respondUserQuestion({ ownerId, runtimeId, sessionId, questionRpcId, answer, modelProfileId }) {
+      const runtime = captureQuestionRuntime();
+      if (runtimeId !== runtime.runtimeId) fail('RUNTIME_UNAVAILABLE');
+      if (hostOwnerId() !== null && ownerId !== hostOwnerId()) fail('SESSION_READ_ONLY');
+      if (typeof questionRpcId !== 'string' || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(questionRpcId) ||
+          !answer || !Array.isArray(answer.answers)) fail('INVALID_COMMAND');
+      const session = await requireSession(sessionId, ownerId);
+      requireQuestionRuntime(runtime);
+      requireModelAllowed(ownerId, session.profile?.id);
+      if (modelProfileId !== undefined && session.profile?.id !== modelProfileId) fail('MODEL_UNAVAILABLE');
+      const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/questions/${encodeURIComponent(questionRpcId)}`, {
+        method: 'POST', body: JSON.stringify({ answer }),
+      });
+      requireQuestionRuntime(runtime);
+      if (result?.accepted === true) return { accepted: true };
+      if (result?.accepted === false && ['not-pending', 'bad-response'].includes(result.reason)) return { accepted: false, reason: result.reason };
+      fail('BACKEND_UNAVAILABLE');
     },
     async getTaskReplyEvidence({ sessionId, rootTaskId, receiptId, ownerId }) {
       const unknown = { status: 'unconfirmed', turn: null, assistantChunks: 0,

@@ -20,7 +20,7 @@ import { switchActiveModel } from './model-switch-transaction.ts';
 import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './openai-compatible-client.ts';
 import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
-import { routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
+import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
 import { assertModelProfileMutationAllowed } from './model-profile-guard.ts';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
@@ -30,7 +30,7 @@ import { createRouteMutationJournal, recoverRouteMutationJournalFiles } from './
 import { createRouteMutationQueue } from './route-mutation-queue.ts';
 import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from './renderer-trust.ts';
 import { basename, isAbsolute, join, resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { appendFileSync, writeFileSync, statSync, mkdirSync, readFileSync, existsSync, renameSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
@@ -83,7 +83,7 @@ import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { memoryRecallDestination, memorySessionPolicy } from './personal-memory/policy.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
-import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
+import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
 const personalHostMode = personalHostRequested(process.argv);
 if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {
@@ -1339,8 +1339,8 @@ async function bootstrap() {
   //   凭据接缝:DSH provider 经受管 child IPC 按 ref 请求 safeStorage；密钥不进 child env 或普通文件。
   //   Electron 里用 process.execPath + ELECTRON_RUN_AS_NODE=1 当 node 用(不依赖 PATH 里的 node)。
   // R2-02：工作区默认值 = userData/workspace（REQUIREMENTS 口径）。子进程 cwd = 此目录 →
-  // sandbox-policy workspaceRoot = process.cwd()，沙箱 workspace-write 以它为界；官方 UI 工作区选择器可换。
-  const workspaceDir = join(app.getPath('userData'), 'workspace');
+  // 显式个人宿主目录沿同一 cwd 通路；sandbox-policy 与新会话仍使用正常工作区边界。
+  const workspaceDir = personalWorkspaceDirectory(process.argv, personalHostMode, app.getPath('userData'));
   try { mkdirSync(workspaceDir, { recursive: true }); } catch { /* 已有 */ }
 
   // ── R3-02 · 品牌壳/托盘联动/数据目录/更新接缝：main ↔ 运行时子进程的本地文件双工 ──
@@ -1588,6 +1588,15 @@ async function bootstrap() {
   const productDshRuntime = app.isPackaged
     ? join(process.resourcesPath, 'dsh-runtime')
     : join(app.getAppPath(), 'vendor', 'dsh-runtime');
+  if (personalHostMode && process.env.WEFTMATE_SYNTHETIC_STOP_FIXTURE === '1') {
+    console.log('[weftmate] synthetic source provenance=' + JSON.stringify({
+      appPath: app.getAppPath(), mainModule: fileURLToPath(import.meta.url),
+      runtimeModule: fileURLToPath(new URL('./dsh-web-runtime.ts', import.meta.url)),
+      gatewaySource: fileURLToPath(new URL('./runtime/gateway/routes/v1.mjs', import.meta.url)),
+      adapterSource: fileURLToPath(new URL('./runtime/dsh-adapter/agents.mjs', import.meta.url)),
+      fixedDshRuntime: productDshRuntime,
+    }));
+  }
   function memoryPolicyAccess() {
     return { ...personalAccessService,
       privateAccountModelProof: (ownerId, profileId) => {
@@ -1649,6 +1658,12 @@ async function bootstrap() {
       if (described?.agentPreset !== 'personal-remote') {
         throw Object.assign(new Error('unsafe preset'), { code: 'SESSION_READ_ONLY' });
       }
+      if (['register_approval', 'read_approval', 'resolve_approval'].includes(request.action)) {
+        return personalAccessService.trackToolApproval(request);
+      }
+      if (['authorize_execution', 'finish_execution', 'observe_execution_job'].includes(request.action)) {
+        return personalAccessService.trackToolExecution(request);
+      }
       if (request.action === 'write_document') {
         return personalAccessService.submitToolArtifact({ sessionId: request.sessionId, turn: request.turn,
           callId: request.callId, messageHash: request.messageHash, receiptId: request.receiptId,
@@ -1664,6 +1679,9 @@ async function bootstrap() {
       }
       return personalAccessService.submitToolDesktop(request);
     } : undefined,
+    personalApprovalRuntimeClosedHandler: personalHostMode ? ({ runtimeId }) =>
+      personalAccessService?.invalidateToolApprovals({ runtimeId, outcome: 'unavailable',
+        reasonCode: 'RUNTIME_UNAVAILABLE' }) : undefined,
     personalMemoryRequestHandler: personalHostMode && personalMemoryConfigPath ? async (request) => {
       if (request.action === 'recall') personalMemoryIpc.recallAttempts++;
       writeHostState();
@@ -2877,6 +2895,7 @@ async function bootstrap() {
       ...syntheticBrowserFixtureSettings(process.env, userDataDir) });
   const accessBackend = accessPort === null ? null : createPersonalAccessBackend({
     currentOrigin: () => runtimeOrigin,
+    getRuntimeId: () => webRuntime?.currentPersonalRuntimeId() ?? null,
     referenceScan: () => sessionReferenceScan,
     profiles: () => settingsMod.listModelProfiles().profiles,
     hasCredential: hasProfileCredential,
@@ -2979,7 +2998,7 @@ async function bootstrap() {
         if (!secret) throw Object.assign(new Error('model credential unavailable'),
           { code: 'ACCOUNT_MODEL_SECRET_REQUIRED', definite: true });
         const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
-          models: [{ id: target.modelId, name: target.name, contextWindow: 32768, maxTokens: 8192 }] };
+          models: [{ id: target.modelId, name: target.name, ...modelCapacityFor(target) }] };
         const previousActive = settingsMod.listModelProfiles().activeId;
         const routeBefore = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
         let addedOfficialRoute = false;
@@ -3036,7 +3055,7 @@ async function bootstrap() {
         const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === target.profileId);
         const snapshot = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
         const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
-          models: [{ id: target.modelId, name: target.name, contextWindow: 32768, maxTokens: 8192 }] };
+          models: [{ id: target.modelId, name: target.name, ...modelCapacityFor(target) }] };
         const exact = isDeepStrictEqual(snapshot.userProviders[route.provider],
           projectOfficialProviderConfig(projection)) && profile?.baseUrl === target.baseUrl &&
           profile.model === target.modelId && !!configStoreMod.getCredential(ref);

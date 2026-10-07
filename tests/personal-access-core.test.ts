@@ -454,6 +454,30 @@ test('event cursor advances across fully filtered and trailing hidden history', 
   }
 })
 
+test('history retains the existing 1MiB public response boundary', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'personal-access-history-bytes-'))
+  const f = fixture()
+  f.sessions.add('history-session')
+  f.backend.readEvents = async ({ afterSeq }: any) => {
+    const events = Array.from({ length: 200 }, (_, seq) => ({ seq, type: 'assistant.message',
+      data: { text: 'x'.repeat(6000) } })).filter((event) => event.seq > afterSeq)
+    return { events, nextSeq: events.at(-1)?.seq ?? afterSeq, hasMore: false }
+  }
+  const service = await createPersonalAccessService({ root, port: 0, backend: f.backend })
+  try {
+    const { origin } = await service.start()
+    const { token } = await service.enrollDevice({ name: 'phone' })
+    await service.attachSession('history-session')
+    const path = '/personal/v1/sessions/history-session/events'
+    assert.deepEqual(await request(origin, token, 'GET', path + '?afterSeq=-1&limit=200'),
+      { status: 503, body: { error: { code: 'BACKEND_UNAVAILABLE' } } })
+    assert.equal((await request(origin, token, 'GET', path + '?afterSeq=99&limit=200')).status, 200)
+  } finally {
+    await service.close()
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
 test('backend errors and malformed event data never expose arbitrary codes or content', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-access-output-'))
   const f = fixture()

@@ -301,13 +301,14 @@ class HybridActivity : Activity() {
                 emit("account.transition", JSONObject().put("pending", true))
             }
             val requestEpoch = accountEpoch.get()
+            val requestHost = secrets.host()
             try { worker.execute {
                 if (closed.get()) {
                     if (authMutation) { accountTransition.set(false); authInFlight.set(false) }
                     return@execute
                 }
                 try {
-                    val result = handle(method, request.optJSONObject("params") ?: JSONObject())
+                    val result = handle(method, request.optJSONObject("params") ?: JSONObject(), requestEpoch, requestHost)
                     if (!authMutation && requestEpoch != accountEpoch.get())
                         respond(reply, id, false, JSONObject().put("code", "ACCOUNT_SWITCHED"))
                     else respond(reply, id, true, result)
@@ -687,10 +688,11 @@ class HybridActivity : Activity() {
         return rememberProfile(host, remote).put("connectionVerified", true)
     }
     private fun savedIdentityView(identity: HostIdentity): JSONObject = try {
-        profileFor(identity).put("owner", owner(identity))
+        profileFor(identity).put("owner", owner(identity)).put("deviceId", identity.deviceId)
     } catch (_: Exception) {
         JSONObject().put("loggedIn", true).put("username", identity.username)
             .put("displayName", identity.username).put("owner", owner(identity))
+            .put("deviceId", identity.deviceId)
             .put("connectionVerified", false)
     }
     private fun publicBusiness(value: Any?, depth: Int = 0): Any {
@@ -752,7 +754,7 @@ class HybridActivity : Activity() {
         } finally { original.recycle() }
     }
 
-    private fun handle(method: String, params: JSONObject): JSONObject = when (method) {
+    private fun handle(method: String, params: JSONObject, requestEpoch: Long, requestHost: HostIdentity?): JSONObject = when (method) {
         "app.ready" -> {
             ensureOpen()
             val host = secrets.host()
@@ -796,6 +798,7 @@ class HybridActivity : Activity() {
                 intent?.getStringExtra("conversationId") ?: "" else ""
             JSONObject().put("loggedIn", host != null).put("username", host?.username ?: "")
                 .put("owner", scope.takeUnless { it == "local" } ?: "").put("model", modelStatus(host))
+                .put("deviceId", host?.deviceId ?: "")
                 .put("busy", busy.get() && host != null && activeTurnScope == scope)
                 .put("backgroundSync", SyncJobService.status(this))
                 .put("ui", uiState(bundles.state()))
@@ -917,6 +920,31 @@ class HybridActivity : Activity() {
         "shared.tasks.detail" -> {
             val host = requireHost()
             api.taskDetail(host, params.getString("taskId"))
+        }
+        "shared.approvals.list", "shared.approvals.decide", "shared.questions.list", "shared.questions.answer" -> {
+            val host = requireHost()
+            val epoch = requestEpoch
+            val scope = owner(host)
+            fun ensureCurrent() {
+                if (closed.get() || accountTransition.get() || epoch != accountEpoch.get() ||
+                    owner(secrets.host()) != scope || secrets.host() != host || host != requestHost)
+                    throw ApiFailure(403, "ACCOUNT_SWITCHED")
+            }
+            ensureCurrent()
+            val result = when (method) {
+                "shared.approvals.list" -> api.approvals(host, params.getString("sessionId"),
+                    if (params.has("before")) params.getString("before") else null,
+                    params.optInt("limit", 50))
+                "shared.approvals.decide" -> api.decideApproval(host, params.getString("sessionId"), params.getString("approvalId"),
+                    params.getString("requestId"), params.getString("outcome"))
+                "shared.questions.list" -> api.questions(host, params.getString("sessionId"),
+                    if (params.has("before")) params.getString("before") else null,
+                    params.optInt("limit", 50))
+                else -> api.answerQuestion(host, params.getString("sessionId"), params.getString("questionRpcId"),
+                    params.getString("requestId"), params.getJSONObject("answer"))
+            }
+            ensureCurrent()
+            result
         }
         "shared.sources.detail" -> {
             val host = requireHost()
@@ -1848,11 +1876,7 @@ class HybridActivity : Activity() {
             !fileName.matches(Regex("[^\\p{Cntrl}/\\\\]{1,180}")) ||
             size !in 1..131072 || !sha.matches(Regex("[0-9a-fA-F]{64}")))
             throw ApiFailure(409, "ARTIFACT_UNVERIFIED")
-        val mimeType = when {
-            fileName.endsWith(".md", ignoreCase = true) -> "text/markdown"
-            fileName.endsWith(".txt", ignoreCase = true) -> "text/plain"
-            else -> throw ApiFailure(409, "ARTIFACT_UNVERIFIED")
-        }
+        val mimeType = artifactSaveMimeType(fileName, record.optString("contentType"))
         val attempt = synchronized(this) {
             if (pendingArtifactSave != null) throw ApiFailure(409, "ARTIFACT_SAVE_IN_PROGRESS")
             ArtifactSaveAttempt(UUID.randomUUID().toString(), owner(host)!!, accountEpoch.get(),

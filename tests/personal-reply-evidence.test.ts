@@ -67,6 +67,53 @@ test('open turn needs current live proof for waiting or streaming; restart stays
     'aborted')
 })
 
+test('known output limits keep each old root terminal even after a later turn starts', () => {
+  const rows = [
+    { seq: 6999, time, type: 'turn/start', data: { turn: 2 } },
+    { seq: 7000, time: time + 1, type: 'user/message',
+      data: { source: { kind: 'user', rpcId: 'receipt-turn2' } } },
+    { seq: 7009, time: time + 2, type: 'turn/end',
+      data: { turn: 2, reason: { kind: 'max-tokens' } } },
+    { seq: 7010, time: time + 3, type: 'turn/start', data: { turn: 3 } },
+    { seq: 7011, time: time + 4, type: 'user/message',
+      data: { source: { kind: 'user', rpcId: 'receipt-turn3' } } },
+    { seq: 7012, time: time + 5, type: 'assistant/message',
+      data: { turn: 3, message: { content: [] } } },
+    { seq: 7019, time: time + 6, type: 'turn/end',
+      data: { turn: 3, reason: { kind: 'max-tokens' } } },
+  ]
+  for (const [turn, receiptId, endedOffset] of [[2, 'receipt-turn2', 2], [3, 'receipt-turn3', 6]] as const) {
+    const evidence = projectReplyEvidence(encoded(rows), { receiptId, live: true })
+    assert.equal(evidence.status, 'failed')
+    assert.equal(evidence.endReasonKind, 'max-tokens')
+    assert.equal(evidence.turn, turn)
+    assert.equal(evidence.terminalAt, new Date(time + endedOffset).toISOString())
+    assert.equal(evidence.toolSaveObserved, false)
+  }
+})
+
+test('limited end preserves observed saves and leaves old or genuinely unknown reasons unchanged', () => {
+  const rows = events()
+  ;(rows.at(-1) as any).data.reason.kind = 'max-tokens'
+  const limited = projectReplyEvidence(encoded(rows), { receiptId: 'receipt-a' })
+  assert.equal(limited.status, 'failed')
+  assert.equal(limited.endReasonKind, 'max-tokens')
+  assert.equal(limited.toolSaveObserved, true)
+  for (const reason of ['completed', 'aborted', 'blocked', 'failed']) {
+    ;(rows.at(-1) as any).data.reason.kind = reason
+    const legacy = projectReplyEvidence(encoded(rows), { receiptId: 'receipt-a' })
+    assert.equal(legacy.status, reason)
+    assert.equal(legacy.endReasonKind, undefined)
+  }
+  for (const reason of ['vendor-limit', 'max-tokens-unknown']) {
+    ;(rows.at(-1) as any).data.reason.kind = reason
+    const unknown = projectReplyEvidence(encoded(rows), { receiptId: 'receipt-a', live: true })
+    assert.equal(unknown.status, 'unconfirmed')
+    assert.equal(unknown.endReasonKind, undefined)
+    assert.ok(unknown.terminalAt)
+  }
+})
+
 test('a late receipt and duplicate or conflicting native ends cannot inherit completed', () => {
   const late = events().filter((row: any) => row.seq !== 3)
   late.push({ seq: 13, time: time + 12, type: 'user/message', data: {

@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
 import { describe, it } from 'node:test';
-import { credentialEnvironment, renderModelRoutesPatch, routeForProfile } from '../src/harness-model-routes.ts';
+import { credentialEnvironment, DEFAULT_MODEL_CAPACITY, modelCapacityFor, renderModelRoutesPatch, routeForProfile } from '../src/harness-model-routes.ts';
+import { clampMaxTokensToContext } from '../vendor/dsh-runtime/node_modules/@earendil-works/pi-ai/dist/api/simple-options.js';
 
 const profiles = [
   { id: 'alpha/unsafe', name: 'Alpha', provider: 'openai-compatible' as const, baseUrl: 'http://127.0.0.1:8080/v1', model: 'same-model' },
@@ -9,6 +10,32 @@ const profiles = [
 ];
 
 describe('shared DSH model-route projection', () => {
+  it('resolves model capacity from its official destination and retains generic defaults elsewhere', () => {
+    assert.deepEqual(modelCapacityFor({ baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'mimo-v2.6-flash' }),
+      { contextWindow: 1_000_000, maxTokens: 128_000 });
+    assert.deepEqual(modelCapacityFor({ baseUrl: 'https://example.invalid/v1', modelId: 'mimo-v2.6-flash' }), DEFAULT_MODEL_CAPACITY);
+    assert.deepEqual(modelCapacityFor({ baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'another-model' }), DEFAULT_MODEL_CAPACITY);
+    const patch = renderModelRoutesPatch(profiles);
+    assert.ok(patch.includes(`contextWindow: ${DEFAULT_MODEL_CAPACITY.contextWindow}`));
+    assert.ok(patch.includes(`maxTokens: ${DEFAULT_MODEL_CAPACITY.maxTokens}`));
+  });
+
+  it('respects explicit model capacity fields before metadata defaults', () => {
+    const identity = { baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'mimo-v2.6-flash' };
+    assert.deepEqual(modelCapacityFor({ ...identity, contextWindow: 65536, maxTokens: 4096 }),
+      { contextWindow: 65536, maxTokens: 4096 });
+    assert.deepEqual(modelCapacityFor({ ...identity, maxTokens: 8192 }),
+      { contextWindow: 1_000_000, maxTokens: 8192 });
+  });
+
+  it('keeps a useful SDK request budget when history exceeds the old account capacity', () => {
+    const context = { messages: [{ role: 'user', content: 'x'.repeat(160_000), timestamp: 0 }] };
+    assert.equal(clampMaxTokensToContext({ contextWindow: 32768 }, context, 8192), 1);
+    const official = modelCapacityFor({ baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'mimo-v2.6-flash' });
+    assert.equal(clampMaxTokensToContext(official, context, official.maxTokens), official.maxTokens);
+    assert.equal(clampMaxTokensToContext(DEFAULT_MODEL_CAPACITY, context, DEFAULT_MODEL_CAPACITY.maxTokens), DEFAULT_MODEL_CAPACITY.maxTokens);
+  });
+
   it('keeps the official Models namespace valid before any private profile exists', () => {
     const patch = renderModelRoutesPatch([]);
     assert.match(patch, /providers: \{\}/);

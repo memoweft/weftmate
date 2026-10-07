@@ -1,9 +1,8 @@
-/** The personal-remote DSH agent inherits only bounded host tools. */
+/** The personal-remote DSH agent uses the existing native tool capabilities. */
 export const name = 'weftmate-personal-desktop-preset';
 export const inject = ['tools'];
 
 const MAX_NOTEPAD_CALLS_PER_TURN = 2;
-const MAX_DOCUMENT_CALLS_PER_TURN = 2;
 const MAX_PROJECT_LIST_CALLS_PER_TURN = 3;
 const MAX_PROJECT_READ_CALLS_PER_TURN = 12;
 const MAX_BROWSER_OPEN_CALLS_PER_TURN = 5;
@@ -26,17 +25,17 @@ export function repeatedDocumentCalls(events, turn) {
 }
 
 export function apply(ctx) {
-  const dispose = ctx.tools.restrict({ allow: ['personal_open_notepad', 'personal_save_document',
-    'personal_list_project_files', 'personal_read_project_file',
-    'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment'] });
-  // The official loop records a blocked turn/end when pre-step rejects. A
-  // repeated receipt is not progress on the user's goal; stop before another
-  // model/tool step, while leaving every prior command and its outcome intact.
+  // Keep native capability and authority checks. Do not freeze the assistant's tool roster.
+  // These two globals belong to the privileged Mod editor and retired fixed-app path.
+  const denied = new Set(['mod_sdk', 'personal_open_notepad']);
+  const dispose = ctx.tools.restrict({ deny: [...denied] });
+  const disposeGuard = ctx.tools.guard(exec => denied.has(exec.name) ? 'PERSONAL_TOOL_SCOPE_DENIED' : undefined);
+  // Preserve the existing non-document bounds. Text saves can include retries
+  // or multiple deliverables and must allow the next model step and final reply.
   ctx.on('agent/pre-step', async (payload, next) => {
     const decision = await next();
     if (decision.kind !== 'enter' || payload.agent?.session?.header?.agentPreset !== 'personal-remote') return decision;
     return repeatedNotepadCalls(payload.agent.session.events, payload.turn) >= MAX_NOTEPAD_CALLS_PER_TURN ||
-      repeatedDocumentCalls(payload.agent.session.events, payload.turn) >= MAX_DOCUMENT_CALLS_PER_TURN ||
       distinctCalls(payload.agent.session.events, payload.turn, 'personal_list_project_files') >= MAX_PROJECT_LIST_CALLS_PER_TURN ||
       distinctCalls(payload.agent.session.events, payload.turn, 'personal_read_project_file') >= MAX_PROJECT_READ_CALLS_PER_TURN ||
       distinctCalls(payload.agent.session.events, payload.turn, 'personal_browser_open') >= MAX_BROWSER_OPEN_CALLS_PER_TURN ||
@@ -44,7 +43,7 @@ export function apply(ctx) {
       distinctCalls(payload.agent.session.events, payload.turn, 'personal_browser_read_segment') >= MAX_BROWSER_SEGMENT_CALLS_PER_TURN
       ? { kind: 'reject' } : decision;
   });
-  ctx.effect(() => () => dispose(), 'weftmate-personal-desktop-preset: restricted tool roster');
+  ctx.effect(() => () => { disposeGuard(); dispose(); }, 'weftmate-personal-desktop-preset: restricted tool roster');
 }
 
 export default { name, inject, apply };

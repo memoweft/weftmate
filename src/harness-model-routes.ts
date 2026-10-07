@@ -16,6 +16,48 @@ export interface HarnessRoute {
   apiKeyEnv: string;
 }
 
+export interface ModelCapacity {
+  contextWindow: number;
+  maxTokens: number;
+}
+
+export const DEFAULT_MODEL_CAPACITY: Readonly<ModelCapacity> = Object.freeze({
+  contextWindow: 262144,
+  maxTokens: 32768,
+});
+
+/** Conservative decimal bounds within Xiaomi's published 1M context / 128K output.
+ * Source: https://mimo.mi.com/models/mimo-v2.6-flash . These are model metadata,
+ * not a turn budget, and explicit configured fields retain precedence. */
+const MIMO_V26_FLASH_CAPACITY: Readonly<ModelCapacity> = Object.freeze({
+  contextWindow: 1_000_000,
+  maxTokens: 128_000,
+});
+
+export function modelCapacityFor(input: {
+  baseUrl: string;
+  modelId: string;
+  contextWindow?: number;
+  maxTokens?: number;
+}): ModelCapacity {
+  let officialMiMo = false;
+  try {
+    const destination = new URL(input.baseUrl);
+    officialMiMo = destination.protocol === 'https:' &&
+      destination.hostname === 'api.xiaomimimo.com' && destination.port === '';
+  } catch { /* Unknown destinations retain the existing generic defaults. */ }
+  const defaults = officialMiMo && input.modelId === 'mimo-v2.6-flash'
+    ? MIMO_V26_FLASH_CAPACITY : DEFAULT_MODEL_CAPACITY;
+  const capacity = {
+    contextWindow: input.contextWindow ?? defaults.contextWindow,
+    maxTokens: input.maxTokens ?? defaults.maxTokens,
+  };
+  for (const value of Object.values(capacity)) {
+    if (!Number.isSafeInteger(value) || value <= 0) throw new TypeError('model capacity must contain positive safe integers');
+  }
+  return capacity;
+}
+
 function digest(profileId: string): string {
   return createHash('sha256').update(profileId, 'utf8').digest('hex');
 }
@@ -73,8 +115,8 @@ export function renderModelRoutesPatch(profiles: readonly PublicModelProfile[]):
       '        models:',
       `          - id: ${yaml(profile.model)}`,
       `            name: ${yaml(profile.name)}`,
-      '            contextWindow: 262144',
-      '            maxTokens: 32768',
+      `            contextWindow: ${DEFAULT_MODEL_CAPACITY.contextWindow}`,
+      `            maxTokens: ${DEFAULT_MODEL_CAPACITY.maxTokens}`,
     );
   }
   return `${lines.join('\n')}\n`;

@@ -29,6 +29,9 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     append(...children){for(const child of children)if(child instanceof Node||child instanceof TextNode)child.parent=this;
       this.children.push(...children)}
     get childNodes(){return this.children}
+    get nextSibling(){return this.parent?.children[this.parent.children.indexOf(this)+1]||null}
+    insertBefore(child,next){child.remove();child.parent=this;const index=next?this.children.indexOf(next):-1;
+      if(index<0)this.children.push(child);else this.children.splice(index,0,child)}
     replaceChildren(...children){this.children=[];this.append(...children)}
     remove(){if(this.parent)this.parent.children=this.parent.children.filter(child=>child!==this)}
     setAttribute(key,value){this.attrs[key]=value}
@@ -36,7 +39,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     focus(){document.activeElement=this}
     addEventListener(event,handler){this.listeners.set(event,[...(this.listeners.get(event)||[]),handler])}
     fire(event){for(const handler of this.listeners.get(event)||[])handler({target:this})}
-    querySelector(selector){if(selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
+    querySelector(selector){if(selector===this.tagName||selector.startsWith('.')&&this.className?.split(' ').includes(selector.slice(1)))return this;
       for(const child of this.children){const found=child.querySelector?.(selector);if(found)return found}return null}
     querySelectorAll(){return []}
   }
@@ -46,7 +49,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
       if(!htmlIds.has(id))return null;
       if(!nodes.has(id)){const node=new Node(id);
         if(['toast','attachment-drafts','attachment-popover','model-popover','image-preview'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
-    createElement:()=>new Node(),createTextNode:value=>new TextNode(value),
+    createElement:tagName=>{const node=new Node();node.tagName=tagName;return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
     querySelectorAll:()=>[],querySelector:()=>new Node()};
   const bridge=[];
@@ -959,6 +962,500 @@ test('sync completion refreshes only the current phone conversation and drops an
 });
 
 function allText(node){return [node.textContent,...node.children.flatMap(allText)].join(' ')}
+
+function syntheticConversationTask(){
+  const source={commandId:'root-inline',kind:'session.message',state:'accepted_by_dsh',sessionId:'s1',receiptId:'rpc:root.1'};
+  const supplement={commandId:'follow-inline',kind:'session.message',rootTaskId:source.commandId,taskAction:'supplement',
+    state:'accepted_by_dsh',sessionId:'s1',receiptId:'rpc:follow.2'};
+  const execution={executionId:'exec-one',sourceCommandId:source.commandId,sourceReceiptId:source.receiptId,
+    toolName:'pwsh',state:'completed',jobId:'job-one',jobState:'running'};
+  const task={taskId:source.commandId,sessionId:'s1',source,sourceText:'相同的目标',artifacts:[],supplements:[supplement],
+    control:{state:'active',canStop:true,canSupplement:true},replyEvidence:{status:'completed',assistantMessages:1},
+    executionSteps:[execution,{...execution,executionId:'exec-two',toolName:'read',jobId:undefined,jobState:undefined,
+      sourceCommandId:supplement.commandId,sourceReceiptId:supplement.receiptId},
+      {...execution,executionId:'exec-foreign',toolName:'grep',sourceCommandId:'foreign',sourceReceiptId:source.receiptId}]};
+  return {source,task,activity:{source:'host',kind:'session.message',commandId:source.commandId,sessionId:'s1',status:'accepted_by_dsh'}};
+}
+function syntheticApproval(overrides={}){return {approvalId:'12345678-1234-4234-8234-123456789abc',sessionId:'s1',taskId:'root-inline',
+  sourceCommandId:'root-inline',sourceReceiptId:'rpc:root.1',turn:1,callId:'call:root.1',rootCallId:'root:call.1',
+  toolName:'pwsh',reason:'需要执行这次命令，等待你的决定。',createdAt:'2026-10-06T13:00:00.000Z',status:'pending',...overrides}}
+function prepareApprovalChat(h,{deviceId='phone-a'}={}){prepareSyntheticTaskChat(h);const fixture=syntheticConversationTask();
+  h.run(`state.deviceId=${JSON.stringify(deviceId)};conversationTasks.owner=state.owner;conversationTasks.epoch=state.authEpoch;
+    conversationTasks.entries.set('root-inline',{taskId:'root-inline',sessionId:'s1',receiptId:'rpc:root.1',task:${JSON.stringify(fixture.task)}});
+    renderConversationTasks()`);return fixture}
+async function readApprovals(h,rows,context='approvalContext()'){const reading=h.run(`refreshToolApprovals(${context})`);
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');
+  h.reply(request,{approvals:rows,nextBefore:null,hasMore:false});await reading;return request}
+function approvalCard(h){return h.node('chat-content').children.find(node=>node.dataset.approvalId)}
+function answeredApproval(row,requestId,outcome){return {...row,status:'answered',decisionRequestId:requestId,decisionOutcome:outcome,
+  answeredAt:'2026-10-06T13:01:00.000Z'}}
+function syntheticQuestionBatch(overrides={}){return {questionRpcId:'52345678-1234-4234-8234-123456789abc',sessionId:'s1',taskId:'root-inline',
+  sourceCommandId:'root-inline',sourceReceiptId:'rpc:root.1',turn:1,createdAt:'2026-10-06T14:00:00.000Z',status:'pending',questions:[
+    {id:'plan',header:'确认计划',question:'是否按这份计划继续？',detail:'先整理资料，再核对文件内容。',intent:{kind:'plan-review',approve:'同意'},
+      options:[{label:'同意',description:'按上面的计划继续'},{label:'调整计划'}]},
+    {id:'repeated-id',question:'需要保留哪些成果？',multiSelect:true,options:[{label:'文字记录'},{label:'源文件'}]},
+    {id:'repeated-id',question:'补充一个说明'}],...overrides}}
+async function readQuestions(h,rows,context='approvalContext()'){const reading=h.run(`refreshToolQuestions(${context})`);
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');
+  h.reply(request,{questions:rows,nextBefore:null,hasMore:false});await reading;return request}
+function questionCard(h){return h.node('chat-content').children.find(node=>node.dataset.questionRpcId)}
+function answeredQuestion(row,requestId,answer){return {...row,status:'answered',answerRequestId:requestId,answer,
+  answeredAt:'2026-10-06T14:01:00.000Z'}}
+
+test('task15-question-client natural single multiple and free answers preserve original position and plan intent without granting a tool permission',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch();
+  await readQuestions(h,[row,syntheticQuestionBatch({questionRpcId:'62345678-1234-4234-8234-123456789abc',sourceReceiptId:'rpc:other.2',
+    questions:[{id:'foreign',question:'错误来源不应出现'}]})]);
+  const card=questionCard(h),form=card.querySelector('.question-form'),fields=form.children.filter(node=>node.tagName==='fieldset');
+  assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,1);
+  assert.match(allText(card),/确认计划.*是否按这份计划继续.*先整理资料，再核对文件内容.*同意.*按上面的计划继续/);
+  assert.doesNotMatch(allText(h.node('chat-content')),/错误来源|永久允许|允许本次/);assert.equal(fields.length,3);
+  const selected=fields[0].querySelector('input');assert.equal(selected.type,'radio');selected.checked=true;selected.fire('change');
+  const multi=fields[1].children.filter(node=>node.className==='question-option').map(node=>node.querySelector('input'));
+  assert.equal(multi.every(input=>input.type==='checkbox'),true);for(const input of multi){input.checked=true;input.fire('change')}
+  const mixed=fields[1].querySelector('.question-custom');mixed.value='保留一份简短目录';mixed.fire('input');
+  const custom=fields[2].querySelector('.question-custom');custom.value='按这段原话填写';custom.fire('input');
+  h.node('draft').value='聊天草稿仍在';h.node('draft').focus();h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=163;
+  form.fire('submit');const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer'),params=h.bridge[request].params;
+  assert.deepEqual(Object.keys(params).sort(),['answer','questionRpcId','requestId','sessionId']);assert.equal(params.questionRpcId,row.questionRpcId);
+  assert.deepEqual(params.answer,{answers:[{id:'plan',selected:['同意']},{id:'repeated-id',selected:['文字记录','源文件'],custom:'保留一份简短目录'},
+    {id:'repeated-id',selected:[],custom:'按这段原话填写'}]});
+  assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false,'plan-review is an information answer');
+  const answered=answeredQuestion(row,params.requestId,params.answer);h.reply(request,{question:answered,requestId:params.requestId});await h.flush();
+  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[answered],nextBefore:null,hasMore:false});await h.flush();
+  assert.match(allText(questionCard(h)),/回答已登记，等待执行端确认/);assert.doesNotMatch(allText(questionCard(h)),/已确认接收/);
+  await readQuestions(h,[{...answered,status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T14:02:00.000Z',reasonCode:'QUESTION_NOT_PENDING'}]);
+  assert.match(allText(questionCard(h)),/这份登记回答是否被接收尚未确认/);
+  await readQuestions(h,[{...answered,status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'}]);
+  assert.match(allText(questionCard(h)),/执行端已确认接收这份回答/);assert.equal(h.node('draft').value,'聊天草稿仍在');assert.equal(h.node('chat-scroll').scrollTop,163);
+});
+
+test('task15-question-client original repeated or empty IDs and empty selections remain legal while answer shape follows each original question',()=>{
+  const h=harness(),row=syntheticQuestionBatch({questions:[{id:'',question:'单选',options:[{label:''},{label:'原标签'}]},
+    {id:'',question:'多选',multiSelect:true,options:[{label:'甲'},{label:'乙'}]}]});
+  assert.ok(h.run(`normalizedQuestionBatch(${JSON.stringify(row)})`));
+  const check=answer=>h.run(`canonicalQuestionAnswer(${JSON.stringify(answer)},${JSON.stringify(row.questions)})`);
+  assert.ok(check({answers:[{id:'',selected:[]},{id:'',selected:[],custom:'说明'}]}));
+  assert.ok(check({answers:[{id:'',selected:['']},{id:'',selected:['甲','乙'],custom:'补充'}]}));
+  for(const answer of [{answers:[{id:'other',selected:[]},{id:'',selected:[]}]},
+    {answers:[{id:'',selected:['原标签'],custom:'不能与单选并存'},{id:'',selected:[]}]},
+    {answers:[{id:'',selected:[]},{id:'',selected:['甲','甲']}]},
+    {answers:[{id:'',selected:[],custom:'   '},{id:'',selected:[]}]},
+    {answers:[{id:'',selected:['被改写的标签']},{id:'',selected:[]}]}])assert.equal(check(answer),null);
+});
+
+test('task15-question-client an uncertain source or network result keeps the same batch and can explicitly retry its persisted original answer',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch({questions:[{id:'question-one',question:'补充说明'}]});await readQuestions(h,[row]);
+  const input=questionCard(h).querySelector('.question-custom');input.value='同一份原回答';input.fire('input');
+  const answer={answers:[{id:'question-one',selected:[],custom:'同一份原回答'}]},deciding=h.run(`answerToolQuestion([...toolQuestions.sessions.get('s1').rows.values()][0],${JSON.stringify(answer)})`);
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer'),requestId=h.bridge[request].params.requestId;
+  h.reply(request,null,'TOOL_SOURCE_UNAVAILABLE');await h.flush();
+  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[row],nextBefore:null,hasMore:false});await deciding;
+  assert.equal(h.run("toolQuestions.sessions.get('s1').rows.values().next().value.status"),'pending');
+  assert.match(allText(questionCard(h)),/上次回答尚未登记.*同一份原回答.*重试原回答/);
+  const restored=harness({storage:Object.fromEntries(h.storage)});prepareApprovalChat(restored);await readQuestions(restored,[row]);
+  assert.match(allText(questionCard(restored)),/同一份原回答.*重试原回答/);
+  const retry=restored.run(`answerToolQuestion([...toolQuestions.sessions.get('s1').rows.values()][0],${JSON.stringify(answer)})`);
+  const repeated=restored.bridge.findLastIndex(item=>item.method==='shared.questions.answer');assert.equal(restored.bridge[repeated].params.requestId,requestId);
+  const answered=answeredQuestion(row,requestId,answer);restored.reply(repeated,{question:answered,requestId});await restored.flush();
+  restored.reply(restored.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[{...answered,status:'resolved',outcome:'answered',
+    resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'}],nextBefore:null,hasMore:false});await retry;
+  assert.equal([...restored.storage.keys()].some(key=>key.startsWith('weftmate-question-request:')),false);
+});
+
+test('task15-question-client a replayed answered snapshot cannot downgrade native completion and task cancellation does not submit another answer',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch({questions:[{id:'q',question:'补充'}]});await readQuestions(h,[row]);
+  const answer={answers:[{id:'q',selected:[]}]},deciding=h.run(`answerToolQuestion([...toolQuestions.sessions.get('s1').rows.values()][0],${JSON.stringify(answer)})`);
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer'),requestId=h.bridge[request].params.requestId;
+  const answered=answeredQuestion(row,requestId,answer),final={...answered,status:'resolved',outcome:'answered',
+    resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'};
+  await readQuestions(h,[final]);h.reply(request,{question:answered,requestId});await h.flush();
+  assert.match(allText(questionCard(h)),/已确认接收这份回答/);
+  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[final],nextBefore:null,hasMore:false});await deciding;
+  const cancelled=harness();prepareApprovalChat(cancelled);await readQuestions(cancelled,[{...row,status:'resolved',outcome:'cancelled',resolvedAt:'2026-10-06T14:02:00.000Z'}]);
+  assert.match(allText(questionCard(cancelled)),/任务已停止，这个问题不再等待回答/);assert.equal(questionCard(cancelled).querySelector('.question-actions'),null);
+  assert.equal(cancelled.bridge.some(item=>item.method==='shared.questions.answer'||item.method==='shared.approvals.decide'),false);
+});
+
+test('task15-question-client pagination uses the batch UUID and reads an older pending task by its original source identity',async()=>{
+  const h=harness(),fixture=prepareApprovalChat(h),row=syntheticQuestionBatch({questions:[{id:'q',question:'说明'}]}),
+    older=syntheticQuestionBatch({questionRpcId:'72345678-1234-4234-8234-123456789abc',questions:[{id:'q',question:'另一批说明'}]});
+  h.run('conversationTasks.entries.clear()');const reading=h.run('refreshToolQuestions()');
+  let request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');assert.deepEqual(h.bridge[request].params,{sessionId:'s1'});
+  h.reply(request,{questions:[row],nextBefore:row.questionRpcId,hasMore:true});await h.flush();
+  request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');assert.deepEqual(h.bridge[request].params,{sessionId:'s1',before:row.questionRpcId});
+  h.reply(request,{questions:[older],nextBefore:null,hasMore:false});await h.flush();
+  request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await reading;
+  assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,2);
+});
+
+test('task15-question-client closing a view preserves question drafts and late account replies cannot display another account answer',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch({questions:[{id:'q',question:'说明'}]});await readQuestions(h,[row]);
+  const custom=questionCard(h).querySelector('.question-custom');custom.value='返回以后继续填写';custom.fire('input');
+  custom.focus();await readQuestions(h,[row,syntheticQuestionBatch({questionRpcId:'82345678-1234-4234-8234-123456789abc',questions:[{id:'q',question:'另一批问题'}]})]);
+  assert.equal(h.document.activeElement,custom,'a new batch cannot steal focus from the first batch answer');
+  h.run("page('settings');page('chat')");assert.equal(questionCard(h).querySelector('.question-custom').value,'返回以后继续填写');
+  assert.equal(h.bridge.some(item=>['shared.stop','shared.tasks.stop','shared.questions.answer'].includes(item.method)),false);
+  const checking=h.run('refreshToolQuestions()'),request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');
+  h.run("resetMemoryForAuthBoundary=()=>{};processEvent({event:'account.transition',data:{pending:true}});state.owner='B';state.transitionPending=false");
+  h.reply(request,{questions:[row],nextBefore:null,hasMore:false});await checking;assert.equal(questionCard(h),undefined);
+});
+
+test('task15-question-client task detail answer updates keep supplement input and return to the same draft scroll and focus',async()=>{
+  const h=harness(),fixture=prepareApprovalChat(h),row=syntheticQuestionBatch({questions:[{id:'q',question:'说明'}]});await readQuestions(h,[row]);
+  h.node('draft').value='未发送的聊天内容';h.run('updateComposer();state.scrollPinned=false');h.node('chat-scroll').scrollTop=181;h.node('draft').focus();
+  h.run("openConversationTaskDetail('root-inline')");let request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();
+  request=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');h.reply(request,{questions:[row],nextBefore:null,hasMore:false});await h.flush();
+  const input=h.node('page-content').querySelector('.task-supplement-input');input.value='尚未提交的任务补充';
+  const answer={answers:[{id:'q',selected:[],custom:'信息回答'}]},deciding=h.run(`answerToolQuestion([...toolQuestions.sessions.get('s1').rows.values()][0],${JSON.stringify(answer)},toolQuestions.detail.context)`);
+  request=h.bridge.findLastIndex(item=>item.method==='shared.questions.answer');const requestId=h.bridge[request].params.requestId,answered=answeredQuestion(row,requestId,answer);
+  h.reply(request,{question:answered,requestId});await h.flush();h.reply(h.bridge.findLastIndex(item=>item.method==='shared.questions.list'),
+    {questions:[{...answered,status:'resolved',outcome:'answered',resolvedAt:'2026-10-06T14:02:00.000Z',answerAcceptedAt:'2026-10-06T14:02:00.000Z'}],nextBefore:null,hasMore:false});await deciding;
+  assert.equal(h.node('page-content').querySelector('.task-supplement-input'),input);assert.equal(input.value,'尚未提交的任务补充');
+  h.run('handleBack()');assert.equal(h.node('draft').value,'未发送的聊天内容');assert.equal(h.node('chat-scroll').scrollTop,181);assert.equal(h.document.activeElement,h.node('draft'));
+});
+
+test('task15-question-client native answer uses a dedicated route with requestId and answer under the existing identity guards',()=>{
+  const native=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt',import.meta.url),'utf8'),
+    network=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt',import.meta.url),'utf8');
+  const bridge=native.slice(native.indexOf('"shared.approvals.list", "shared.approvals.decide"'),native.indexOf('"shared.sources.detail"'));
+  assert.match(bridge,/"shared.questions.list" -> api.questions\(host/);assert.match(bridge,/api.answerQuestion\(host[\s\S]*?getString\("questionRpcId"\)[\s\S]*?getJSONObject\("answer"\)/);
+  assert.match(bridge,/epoch != accountEpoch.get\(\)/);assert.match(bridge,/host != requestHost/);assert.equal([...bridge.matchAll(/\n\s+ensureCurrent\(\)/g)].length,2);
+  assert.doesNotMatch(bridge,/api\.business/);assert.match(network,/fun answerQuestion\([\s\S]*?questionAnswerPath\(sessionId, questionRpcId, requestId\)\}[\s\S]*?"POST",\s*JSONObject\(\)\.put\("requestId", requestId\)\.put\("answer", answer\), authWriteHeaders\(host\)/);
+});
+
+test('task15-approval-client pending approvals follow exact root and supplement receipts without persistent ordinary-chat controls',async()=>{
+  const h=harness(),fixture=prepareApprovalChat(h),row=syntheticApproval();
+  const supplement=syntheticApproval({approvalId:'22345678-1234-4234-8234-123456789abc',sourceCommandId:'follow-inline',
+    sourceReceiptId:'rpc:follow.2',turn:2,callId:'call:follow.2',rootCallId:'root:follow.2',toolName:'write',reason:'保存这次生成的文件。'});
+  h.run("state.sharedEvents.push({seq:3,type:'user.message',data:{text:'相同的目标',receiptId:'rpc:follow.2'}});renderSharedConversation()");
+  h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=151;h.node('draft').value='保留尚未发送的要求';h.node('draft').focus();
+  await readApprovals(h,[row,supplement,syntheticApproval({approvalId:'32345678-1234-4234-8234-123456789abc',
+    sourceCommandId:'foreign-source',reason:'错误来源不应可审批'}),syntheticApproval({approvalId:'42345678-1234-4234-8234-123456789abc',
+    sourceReceiptId:'rpc:other.2',reason:'错误回执不应可审批'})]);
+  const cards=h.node('chat-content').children.filter(node=>node.dataset.approvalId);
+  assert.equal(cards.length,2);assert.match(allText(cards[0]),/需要审批 · 运行命令.*需要执行这次命令.*允许本次.*拒绝/);
+  assert.match(allText(cards[1]),/需要审批 · 写入文件.*保存这次生成的文件/);
+  const children=h.node('chat-content').children;
+  assert.ok(children.indexOf(cards[0])>children.findIndex(node=>node.dataset.receiptId===fixture.source.receiptId));
+  assert.equal(children.indexOf(cards[1]),children.findIndex(node=>node.dataset.receiptId===supplement.sourceReceiptId)+1);
+  assert.doesNotMatch(allText(h.node('chat-content')),/错误来源|错误回执|永久允许|长期偏好/);
+  assert.equal(h.node('chat-scroll').scrollTop,151);assert.equal(h.node('draft').value,'保留尚未发送的要求');
+  assert.equal(h.document.activeElement,h.node('draft'));
+  await readApprovals(h,[]);assert.equal(approvalCard(h),undefined,'no approval controls when there is no approval');
+});
+
+for(const outcome of ['allowed-once','rejected'])test(`task15-approval-client ${outcome} records the decision once and waits for native processing`,async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticApproval();await readApprovals(h,[row]);
+  h.node('draft').value='审批期间也保留草稿';h.node('draft').focus();h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=143;
+  const deciding=h.run(`decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],${JSON.stringify(outcome)},approvalContext(),true)`);
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),params=h.bridge[request].params;
+  assert.deepEqual(Object.keys(params).sort(),['approvalId','outcome','requestId','sessionId']);
+  assert.equal(params.sessionId,row.sessionId);assert.equal(params.approvalId,row.approvalId);assert.equal(params.outcome,outcome);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children.every(button=>button.disabled),true);
+  await h.run(`decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],${JSON.stringify(outcome)})`);
+  assert.equal(h.bridge.filter(item=>item.method==='shared.approvals.decide').length,1,'rapid repeat cannot submit another decision');
+  const answered=answeredApproval(row,params.requestId,outcome);h.reply(request,{approval:answered,requestId:params.requestId});await h.flush();
+  const checking=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');assert.ok(checking>request);
+  h.reply(checking,{approvals:[answered],nextBefore:null,hasMore:false});await deciding;
+  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/已登记“允许本次”，等待执行端处理/:/已登记“拒绝”，等待执行端处理/);
+  assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
+  assert.equal(h.node('draft').value,'审批期间也保留草稿');assert.equal(h.document.activeElement,h.node('draft'));assert.equal(h.node('chat-scroll').scrollTop,143);
+  await readApprovals(h,[{...answered,status:'resolved',outcome,resolvedAt:'2026-10-06T13:02:00.000Z'}]);
+  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/执行端已处理本次允许；任务结果仍以执行记录为准/:/执行端已处理本次拒绝/);
+  assert.doesNotMatch(allText(approvalCard(h)),/目标已完成|任务已完成/);
+});
+
+test('task15-approval-client an unknown network reply is read back and can retry only its persisted request on the same device',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticApproval();await readApprovals(h,[row]);
+  const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),requestId=h.bridge[request].params.requestId;
+  h.reply(request,null,'TIMEOUT');await h.flush();const check=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');
+  assert.ok(check>request);h.reply(check,{approvals:[row],nextBefore:null,hasMore:false});await deciding;
+  assert.match(allText(approvalCard(h)),/上次决定尚未登记.*重试允许本次.*检查审批状态/);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children.some(button=>button.textContent==='拒绝'),false);
+  const saved=Object.fromEntries(h.storage),restarted=harness({storage:saved});prepareApprovalChat(restarted);await readApprovals(restarted,[row]);
+  assert.match(allText(approvalCard(restarted)),/重试允许本次/);
+  const retry=restarted.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
+  const repeated=restarted.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');assert.equal(restarted.bridge[repeated].params.requestId,requestId);
+  const answered=answeredApproval(row,requestId,'allowed-once');restarted.reply(repeated,{approval:answered,requestId});await restarted.flush();
+  restarted.reply(restarted.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),
+    {approvals:[{...answered,status:'resolved',outcome:'allowed-once',resolvedAt:'2026-10-06T13:02:00.000Z'}],nextBefore:null,hasMore:false});await retry;
+  assert.equal([...restarted.storage.keys()].some(key=>key.startsWith('weftmate-approval:')),false);
+  const other=harness({storage:saved});prepareApprovalChat(other,{deviceId:'phone-b'});await readApprovals(other,[row]);
+  assert.match(allText(approvalCard(other)),/允许本次.*拒绝/);assert.doesNotMatch(allText(approvalCard(other)),/重试允许/);
+});
+
+test('task15-approval-client replayed answered receipts cannot regress an already-read resolved or unavailable approval',async()=>{
+  for(const terminal of ['resolved','unavailable']){
+    const h=harness();prepareApprovalChat(h);const row=syntheticApproval();await readApprovals(h,[row]);
+    const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'rejected')");
+    const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),requestId=h.bridge[request].params.requestId;
+    const answered=answeredApproval(row,requestId,'rejected'),final={...answered,status:terminal,
+      outcome:terminal==='resolved'?'rejected':'cancelled',...(terminal==='resolved'?{resolvedAt:'2026-10-06T13:02:00.000Z'}:{})};
+    await readApprovals(h,[final]);h.reply(request,{approval:answered,requestId});await h.flush();
+    assert.equal(h.run("toolApprovals.sessions.get('s1').rows.values().next().value.status"),terminal);
+    h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[final],nextBefore:null,hasMore:false});await deciding;
+    assert.equal(approvalCard(h).querySelector('.approval-actions'),null);assert.doesNotMatch(allText(approvalCard(h)),/等待执行端处理/);
+  }
+});
+
+test('task15-approval-client task cancellation and other invalidation have different messages and no decision buttons',async()=>{
+  for(const outcome of ['cancelled','unavailable']){
+    const h=harness();prepareApprovalChat(h);await readApprovals(h,[syntheticApproval({status:'unavailable',outcome})]);
+    assert.match(allText(approvalCard(h)),outcome==='cancelled'?/任务已停止，此次审批不再可用/:/此次审批已失效，请核对原任务/);
+    assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
+  }
+});
+
+test('task15-approval-client paging omits the first cursor and loads older pending tasks by their exact task identity',async()=>{
+  const h=harness(),fixture=prepareApprovalChat(h),first=syntheticApproval(),second=syntheticApproval({approvalId:'22345678-1234-4234-8234-123456789abc',
+    callId:'call:root.2',rootCallId:'root:call.2',reason:'另一项独立审批'});
+  h.run('conversationTasks.entries.clear()');const reading=h.run('refreshToolApprovals()');
+  let request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');assert.deepEqual(h.bridge[request].params,{sessionId:'s1'});
+  h.reply(request,{approvals:[first],nextBefore:first.approvalId,hasMore:true});await h.flush();
+  request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');assert.deepEqual(h.bridge[request].params,{sessionId:'s1',before:first.approvalId});
+  h.reply(request,{approvals:[second],nextBefore:null,hasMore:false});await h.flush();
+  request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');assert.deepEqual(h.bridge[request].params,{taskId:'root-inline'});
+  h.reply(request,fixture.task);await reading;
+  assert.equal(h.node('chat-content').children.filter(node=>node.dataset.approvalId).length,2);
+});
+
+test('task15-approval-client a changed call tuple cannot update a known approval and late account/device/session results stay out of the new view',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticApproval();await readApprovals(h,[row]);
+  await readApprovals(h,[{...row,callId:'different-call',reason:'错误替换'}]);
+  assert.equal(h.run("toolApprovals.sessions.get('s1').rows.values().next().value.callId"),row.callId);
+  assert.doesNotMatch(allText(approvalCard(h)),/错误替换/);assert.match(allText(approvalCard(h)),/审批状态待更新.*检查审批状态/);
+  for(const boundary of ['account','device','session']){
+    const late=harness();prepareApprovalChat(late);const reading=late.run('refreshToolApprovals()');const request=late.bridge.length-1;
+    late.run(boundary==='account'?"resetMemoryForAuthBoundary=()=>{};processEvent({event:'account.transition',data:{pending:true}});state.owner='B';state.transitionPending=false":
+      boundary==='device'?"state.deviceId='phone-b';clear(document.getElementById('chat-content'))":
+      "state.sharedSessionId='s2';state.generation++;clear(document.getElementById('chat-content'))");
+    late.reply(request,{approvals:[row],nextBefore:null,hasMore:false});await reading;
+    assert.equal(late.node('chat-content').children.some(node=>node.dataset.approvalId),false,boundary);
+  }
+});
+
+test('task15-approval-client leaving during a decision retains its marker and returning to the original task reads native processing',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticApproval();await readApprovals(h,[row]);
+  const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),requestId=h.bridge[request].params.requestId;
+  h.run("state.sharedSessionId='s2';state.generation++;clear(document.getElementById('chat-content'))");
+  const answered=answeredApproval(row,requestId,'allowed-once');h.reply(request,{approval:answered,requestId});await deciding;
+  assert.equal(h.node('chat-content').children.length,0);assert.equal(h.run("toolApprovals.attempts.values().next().value.busy"),false);
+  h.run("state.sharedSessionId='s1';state.generation++;renderSharedConversation()");
+  await readApprovals(h,[answered]);assert.match(allText(approvalCard(h)),/已登记“允许本次”，等待执行端处理/);
+  assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
+});
+
+test('task15-approval-client the task detail updates only approval state and returns with the same draft scroll and input focus',async()=>{
+  const h=harness(),fixture=prepareApprovalChat(h),row=syntheticApproval();await readApprovals(h,[row]);
+  h.node('draft').value='尚未发送的审批补充';h.run('updateComposer();state.scrollPinned=false');h.node('chat-scroll').scrollTop=117;h.node('draft').focus();
+  h.run("openConversationTaskDetail('root-inline')");
+  let request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();
+  request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');h.reply(request,{approvals:[row],nextBefore:null,hasMore:false});await h.flush();
+  const input=h.node('page-content').querySelector('.task-supplement-input');assert.ok(input);input.value='详情内尚未提交的说明';
+  const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'rejected',toolApprovals.detail.context)");
+  request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');const requestId=h.bridge[request].params.requestId;
+  const answered=answeredApproval(row,requestId,'rejected');h.reply(request,{approval:answered,requestId});await h.flush();
+  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[answered],nextBefore:null,hasMore:false});await deciding;
+  assert.equal(h.node('page-content').querySelector('.task-supplement-input'),input);assert.equal(input.value,'详情内尚未提交的说明');
+  assert.match(allText(h.node('page-content').querySelector('.task-approval')),/等待执行端处理/);
+  h.run('handleBack()');assert.equal(h.run('state.page'),'chat');assert.equal(h.node('draft').value,'尚未发送的审批补充');
+  assert.equal(h.node('chat-scroll').scrollTop,117);assert.equal(h.document.activeElement,h.node('draft'));
+});
+
+test('task15-approval-client native methods use dedicated authenticated routes and keep both account guards',()=>{
+  const native=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/HybridActivity.kt',import.meta.url),'utf8');
+  const network=readFileSync(new URL('../../android/app/src/main/java/com/memoweft/weftmate/mobile/Network.kt',import.meta.url),'utf8');
+  const bridge=native.slice(native.indexOf('"shared.approvals.list", "shared.approvals.decide"'),native.indexOf('"shared.sources.detail"'));
+  assert.match(bridge,/val host = requireHost\(\)/);assert.match(bridge,/val epoch = requestEpoch/);
+  assert.match(bridge,/owner\(secrets.host\(\)\) != scope/);assert.match(bridge,/secrets.host\(\) != host/);
+  assert.match(bridge,/host != requestHost/);assert.match(native,/val requestEpoch = accountEpoch.get\(\)\s+val requestHost = secrets.host\(\)/);
+  assert.match(native,/handle\(method, request.optJSONObject\("params"\) \?: JSONObject\(\), requestEpoch, requestHost\)/);
+  assert.equal([...bridge.matchAll(/\n\s+ensureCurrent\(\)/g)].length,2);
+  assert.match(bridge,/api\.approvals\(host/);assert.match(bridge,/api\.decideApproval\(host/);assert.doesNotMatch(bridge,/api\.business/);
+  assert.match(network,/fun approvals\([\s\S]*?approvalListPath\(sessionId, before, limit\)\}[\s\S]*?"GET"[\s\S]*?"Cookie" to host.cookie/);
+  assert.match(network,/fun decideApproval\([\s\S]*?approvalDecisionPath\(sessionId, approvalId, requestId, outcome\)\}[\s\S]*?"POST",\s*JSONObject\(\)\.put\("requestId", requestId\)\.put\("outcome", outcome\), authWriteHeaders\(host\)/);
+  assert.match(native,/\.put\("deviceId", host\?\.deviceId/);
+});
+function prepareSyntheticTaskChat(h){h.run(`state.loggedIn=true;state.owner='A';state.chatSource='host';state.sharedSessionId='s1';
+  state.sharedHostAvailable=true;state.sharedSessions=[{sessionId:'s1',title:'合成对话',sendAvailable:true}];
+  state.sharedEvents=[{seq:0,type:'user.message',data:{text:'相同的目标',receiptId:'rpc:root.1'}},
+    {seq:1,type:'assistant.message',data:{text:'请结合成果核对目标。'}},
+    {seq:2,type:'user.message',data:{text:'相同的目标',receiptId:'rpc:other.2'}}];renderSharedConversation()`)}
+async function feedSyntheticTask(h,task,activity){const refreshing=h.run('refreshConversationTasks()');
+  const activityIndex=h.bridge.findLastIndex(request=>request.method==='activity.list');
+  h.reply(activityIndex,{activities:[activity],hostAvailable:true});await h.flush();
+  const detailIndex=h.bridge.findLastIndex(request=>request.method==='shared.tasks.detail');
+  h.reply(detailIndex,task);await refreshing;return detailIndex}
+
+test('terminal-output-limit mobile history requires the normalized pair and preserves legacy terminal meanings',()=>{
+  const cases=[
+    {data:{reason:'error',endReasonKind:'max-tokens'},text:'本轮因输出限制结束，可继续对话。'},
+    {data:{reason:'error'},text:'电脑回合未完成'},
+    {data:{reason:'unknown',endReasonKind:'max-tokens'},text:'电脑回合状态待确认'},
+    {data:{},text:'电脑回合状态待确认'},
+    {data:{reason:{kind:'max-tokens'}},text:'电脑回合状态待确认'},
+    {data:{reason:'completed',endReasonKind:'max-tokens'},text:''},
+    {data:{reason:'aborted',endReasonKind:'max-tokens'},text:'电脑回合已停止'},
+    {data:{reason:'blocked',endReasonKind:'max-tokens'},text:'电脑回合等待处理'},
+  ];
+  for(const item of cases){const h=harness();prepareSyntheticTaskChat(h);
+    h.run(`state.sharedEvents=[{seq:1,type:'turn.ended',data:${JSON.stringify(item.data)}}];renderSharedConversation()`);
+    const text=h.node('chat-content').children.find(node=>node.className==='shared-turn-state')?.textContent||'';
+    assert.equal(text,item.text,JSON.stringify(item.data));
+  }
+});
+
+test('terminal-output-limit mobile keeps an old pure-reply card bound to its source while newer turns clear the timeline',async()=>{
+  const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
+  fixture.task.executionSteps=[];fixture.task.replyEvidence={status:'failed',endReasonKind:'max-tokens',turn:2,
+    sourceCommandId:fixture.source.commandId,sourceReceiptId:fixture.source.receiptId,terminalAt:'2026-10-07T00:35:29.769Z'};
+  const initial=JSON.stringify(fixture.task);
+  h.run(`state.sharedEvents=[state.sharedEvents[0],{seq:1,type:'turn.ended',data:{reason:'error',endReasonKind:'max-tokens',turn:2}}];renderSharedConversation()`);
+  await feedSyntheticTask(h,fixture.task,fixture.activity);
+  let card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
+  assert.ok(card);assert.equal(card.children[0].textContent,'回复状态');
+  assert.equal(h.node('chat-content').children.indexOf(card),h.node('chat-content').children.findIndex(node=>node.dataset.receiptId===fixture.source.receiptId)+1);
+  assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
+  assert.doesNotMatch(allText(card),/工具进展|已正常结束|用户拒绝|费用|没有成果/);
+  assert.match(allText(h.node('chat-content')),/本轮因输出限制结束，可继续对话/);
+  h.run(`state.sharedSessions[0].running=true;state.sharedEvents.push({seq:2,type:'user.message',data:{text:'相同的目标',receiptId:'rpc:new.3'}},
+    {seq:3,type:'turn.started',data:{turn:3}});renderSharedConversation()`);
+  card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
+  assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
+  assert.equal(h.node('chat-content').children.find(node=>node.className==='shared-turn-state').textContent,'电脑正在处理这段会话…');
+  h.run("state.sharedSessions[0].running=false;state.sharedEvents.push({seq:4,type:'turn.ended',data:{reason:'completed',turn:3}});renderSharedConversation()");
+  assert.equal(h.node('chat-content').children.some(node=>node.className==='shared-turn-state'),false);
+  h.run("state.sharedEvents.push({seq:5,type:'turn.ended',data:{reason:'error',turn:4}});renderSharedConversation()");
+  assert.equal(h.node('chat-content').children.find(node=>node.className==='shared-turn-state').textContent,'电脑回合未完成');
+  card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
+  assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
+  assert.equal(JSON.stringify(fixture.task),initial,'display keeps the old source, turn and terminalAt evidence intact');
+});
+
+test('terminal-output-limit mobile card and detail preserve file verification and old reply statuses',async()=>{
+  const cases=[
+    {evidence:{status:'failed',endReasonKind:'max-tokens'},card:'因输出限制结束，尚未确认完整交付',detail:'因输出限制结束，尚未确认完整交付'},
+    {evidence:{status:'failed'},card:'模型回合未完成',detail:'模型回合未完成'},
+    {evidence:{status:'unconfirmed',endReasonKind:'max-tokens'},card:'回复结束状态待核对',detail:'回复是否结束尚无法核对'},
+    {evidence:{status:'completed',endReasonKind:'max-tokens'},card:'回复回合已正常结束',detail:'回复回合已正常结束'},
+    {evidence:{status:'aborted',endReasonKind:'max-tokens'},card:'回复回合已中断',detail:'回复回合已中断'},
+    {evidence:{status:'blocked',endReasonKind:'max-tokens'},card:'模型请求被阻断',detail:'模型请求被阻断'},
+  ];
+  for(const item of cases){const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
+    fixture.task.executionSteps=[];fixture.task.replyEvidence={...item.evidence,assistantMessages:1,turn:2,terminalAt:'2026-10-07T00:35:29.769Z'};
+    fixture.task.artifacts=[{artifactId:'artifact-limit-file',taskId:fixture.task.taskId,sessionId:'s1',kind:'desktop.write_artifact',
+      fileName:'已保存的部分结果.txt',state:'observed',size:8,sha256:'a'.repeat(64),verification:{status:'observed',method:'sha256_readback'}}];
+    await feedSyntheticTask(h,fixture.task,fixture.activity);
+    const card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
+    assert.ok(card);assert.equal(card.children.find(node=>node.className==='conversation-task-reply').textContent,item.card);
+    assert.match(allText(card),/1 个成果文件已读回核验/);
+    card.querySelector('.conversation-task-actions').children[0].fire('click');
+    const detail=h.bridge.findLastIndex(request=>request.method==='shared.tasks.detail');h.reply(detail,fixture.task);await h.flush();
+    assert.match(allText(h.node('page-content')),new RegExp(`回复：${item.detail}。`));
+    assert.match(allText(h.node('page-content')),/1 个文件已在电脑核验/);
+    assert.doesNotMatch(item.card,/没有成果|成果未交齐|用户拒绝|费用耗尽/);
+  }
+});
+
+test('terminal-output-limit mobile session and account boundaries reject late old reasons',async()=>{
+  for(const boundary of ['session','account']){const h=harness();prepareSyntheticTaskChat(h);
+    h.run(`state.sharedSessions.push({sessionId:'s2',title:'另一段会话',sendAvailable:true});
+      state.sharedEvents.push({seq:3,type:'turn.ended',data:{reason:'error',endReasonKind:'max-tokens'}});renderSharedConversation()`);
+    assert.match(allText(h.node('chat-content')),/本轮因输出限制结束，可继续对话/);
+    const reading=h.run('loadSharedHistory()'),request=h.bridge.findLastIndex(item=>item.method==='shared.sessions.events');
+    if(boundary==='session')h.run("selectSharedSession('s2');renderSharedConversation()");
+    else h.run(`resetMemoryForAuthBoundary=()=>{};processEvent({event:'account.transition',data:{pending:true}});
+      state.owner='B';state.transitionPending=false;state.loggedIn=true;state.chatSource='host';state.sharedSessionId='s2';
+      state.sharedSessions=[{sessionId:'s2',title:'B 的会话',sendAvailable:true}];state.page='chat';renderSharedConversation()`);
+    h.reply(request,{source:'host',sessionId:'s1',events:[{seq:4,type:'turn.ended',data:{reason:'error',endReasonKind:'max-tokens'}}],nextSeq:4,hasMore:false});
+    await reading;
+    assert.equal(h.run('state.sharedEvents.length'),0);
+    assert.doesNotMatch(allText(h.node('chat-content')),/输出限制/);
+  }
+});
+
+test('synthetic mobile tool progress follows dotted RPC identity and keeps unrelated execution receipts hidden',async()=>{
+  const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
+  h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=180;
+  await feedSyntheticTask(h,fixture.task,fixture.activity);
+  const children=h.node('chat-content').children,card=children.find(node=>node.dataset.conversationTask);
+  assert.ok(card);assert.equal(children.indexOf(card),children.findIndex(node=>node.dataset.receiptId===fixture.source.receiptId)+1);
+  assert.match(allText(card),/运行命令 · 后台运行中.*读取文件 · 执行结束.*回复回合已正常结束/);
+  assert.doesNotMatch(allText(card),/搜索内容|rpc:|exec-|目标已完成|已核验/);
+  assert.equal(h.node('chat-scroll').scrollTop,180,'a tool update preserves manual scroll-back');
+  assert.equal(h.bridge.filter(request=>request.method.startsWith('shared.tasks.')&&request.method!=='shared.tasks.detail').length,0);
+});
+
+test('synthetic ordinary mobile chat and invalid RPC IDs do not show execution cards',async()=>{
+  for(const receiptId of ['rpc:root.1','invalid receipt','x'.repeat(161)]){
+    const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
+    fixture.task.source.receiptId=receiptId;
+    fixture.task.executionSteps=receiptId==='rpc:root.1'?[]:[{...fixture.task.executionSteps[0],sourceReceiptId:receiptId}];
+    h.run(`state.sharedEvents[0].data.receiptId=${JSON.stringify(receiptId)};renderSharedConversation()`);
+    await feedSyntheticTask(h,fixture.task,fixture.activity);
+    assert.equal(h.node('chat-content').children.some(node=>node.dataset.conversationTask),false);
+  }
+});
+
+test('synthetic mobile task detail returns to the same draft, manual scroll and input focus through system Back',async()=>{
+  const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
+  await feedSyntheticTask(h,fixture.task,fixture.activity);
+  h.node('draft').value='尚未发送的长中文草稿';h.run('updateComposer();state.scrollPinned=false');
+  h.node('chat-scroll').scrollTop=144;h.node('draft').focus();
+  h.node('chat-content').querySelector('.conversation-task-actions').children[0].fire('click');
+  assert.equal(h.run('state.page'),'things');assert.equal(h.run('state.thingsDetail'),fixture.task.taskId);
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();
+  assert.match(allText(h.node('page-content')),/返回对话.*电脑任务/);
+  h.run('handleBack()');
+  assert.equal(h.run('state.page'),'chat');assert.equal(h.run('state.sharedSessionId'),'s1');
+  assert.equal(h.node('draft').value,'尚未发送的长中文草稿');assert.equal(h.storage.get('weftmate-shared-draft:A:s1'),'尚未发送的长中文草稿');
+  assert.equal(h.node('chat-scroll').scrollTop,144);assert.equal(h.run('state.scrollPinned'),false);
+  assert.equal(h.document.activeElement,h.node('draft'));
+});
+
+test('task15-focus-new mobile pointer intent restores only the current chat',async()=>{
+  const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);await feedSyntheticTask(h,fixture.task,fixture.activity);
+  h.node('draft').value='保留草稿';h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=91;h.node('draft').focus();
+  const detail=h.node('chat-content').querySelector('.conversation-task-actions').children[0];detail.fire('pointerdown');h.document.activeElement=detail;detail.fire('click');
+  let request=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');h.reply(request,fixture.task);await h.flush();h.run('handleBack()');
+  assert.equal(h.node('draft').value,'保留草稿');assert.equal(h.node('chat-scroll').scrollTop,91);assert.equal(h.document.activeElement,h.node('draft'));
+  const currentDetail=h.node('chat-content').querySelector('.conversation-task-actions').children[0];h.node('draft').focus();currentDetail.fire('pointerdown');currentDetail.fire('pointercancel');assert.equal(currentDetail.dataset.restoreFocus,undefined);
+});
+
+test('synthetic mobile failed detail stays recoverable, and a late receipt relocates its unchanged failure card',async()=>{
+  const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
+  h.run("state.sharedEvents=[];renderSharedConversation()");
+  await feedSyntheticTask(h,fixture.task,fixture.activity);
+  assert.equal(h.node('chat-content').children.some(node=>node.dataset.conversationTask),false,'no guessed message anchor before its receipt appears');
+  const refreshing=h.run('refreshConversationTasks()');h.reply(h.bridge.length-1,{activities:[fixture.activity],hostAvailable:true});await h.flush();
+  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail'),null,'HOST_UNAVAILABLE');await refreshing;
+  const card=h.node('chat-content').children.find(node=>node.dataset.conversationTask);assert.match(allText(card),/待更新.*重新核对进展/);
+  h.run("state.sharedEvents=[{seq:0,type:'user.message',data:{text:'相同目标',receiptId:'rpc:root.1'}},{seq:1,type:'assistant.message',data:{text:'稍后核对'}}];renderSharedConversation()");
+  const rows=h.node('chat-content').children;assert.equal(rows.findIndex(node=>node.dataset.conversationTask),rows.findIndex(node=>node.dataset.receiptId==='rpc:root.1')+1);
+  await feedSyntheticTask(h,fixture.task,fixture.activity);
+  const offline=h.run('refreshConversationTasks()');h.reply(h.bridge.length-1,{activities:[],hostAvailable:false});await offline;
+  const stale=h.node('chat-content').children.find(node=>node.dataset.conversationTask);
+  assert.match(allText(stale),/待更新.*电脑暂不可达.*上次记录：运行命令 · 后台运行中/);
+  assert.doesNotMatch(allText(stale),/回复回合已正常结束/);
+  fixture.task.control={state:'stop_requested',stopStatus:'cancel_requested'};
+  fixture.task.executionSteps[0].jobState='stopping';await feedSyntheticTask(h,fixture.task,fixture.activity);
+  assert.match(allText(stale),/后台正在停止.*等待实际结束记录/);
+  fixture.task.control.stopStatus='stopped';fixture.task.executionSteps[0].jobState='killed';
+  await feedSyntheticTask(h,fixture.task,fixture.activity);assert.match(allText(stale),/后台已停止.*实际停止/);
+});
+
+test('synthetic late mobile task payload cannot cross account epoch or conversation boundaries',async()=>{
+  for(const boundary of ["state.authEpoch++;state.owner='B'","state.sharedSessionId='s2'"]){
+    const h=harness(),fixture=syntheticConversationTask();prepareSyntheticTaskChat(h);
+    const refreshing=h.run('refreshConversationTasks()');h.reply(h.bridge.length-1,{activities:[fixture.activity],hostAvailable:true});await h.flush();
+    const detail=h.bridge.findLastIndex(item=>item.method==='shared.tasks.detail');
+    h.run(`${boundary};renderSharedConversation()`);h.reply(detail,fixture.task);await refreshing;
+    assert.equal(h.node('chat-content').children.some(node=>node.dataset.conversationTask),false);
+  }
+});
 function findNode(node,predicate){if(predicate(node))return node;for(const child of node.children||[]){const match=findNode(child,predicate);if(match)return match}return null}
 function countNodes(node,predicate){return Number(predicate(node))+(node.children||[]).reduce((count,child)=>count+countNodes(child,predicate),0)}
 

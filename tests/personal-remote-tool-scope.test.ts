@@ -9,7 +9,7 @@ import test from 'node:test'
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
 
-test('official ToolRuntime gives the personal-remote scope only bounded desktop and project tools', async () => {
+test('official ToolRuntime gives the original personal-remote scope general tools while denying forged execution identity', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-scope-'))
   try {
     const source = readFileSync(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop.mjs'), 'utf8')
@@ -32,13 +32,17 @@ test('official ToolRuntime gives the personal-remote scope only bounded desktop 
     const fakeTool = (name: string) => tools.defineTool({ name, description: name,
       parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
       execute: async () => ({ ok: true }) })
-    for (const name of ['pwsh', 'weftmod', 'mod_sdk']) ctx.get('tools').register(fakeTool(name))
+    for (const name of ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
+      'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'mod_sdk']) ctx.get('tools').register(fakeTool(name))
     await ctx.plugin(globalPlugin.default)
     const remoteSession = ctx.sessions.create('remote-session', { meta: { agentPreset: 'personal-remote' } })
     assert.equal(globalPlugin.safeDocumentName('会议纪要.md'), '会议纪要.md')
     assert.equal(globalPlugin.safeDocumentName('Cafe\u0301.md'), 'Café.md')
+    for (const fileName of ['说明.txt', '表格.csv', 'rows.tsv', 'state.json', 'notes.pdf']) {
+      assert.equal(globalPlugin.safeDocumentName(fileName), fileName)
+    }
     for (const fileName of ['../secret.md', 'CON.md', 'COM1.md', 'a..b.md', 'a .md', 'a\\b.md',
-      'bad\nname.md', 'notes.pdf', 'a'.repeat(161) + '.md']) {
+      'bad\nname.md', 'notes.', 'name. ext', 'a'.repeat(161) + '.md']) {
       assert.equal(globalPlugin.safeDocumentName(fileName), null, fileName)
     }
     remoteSession.append('turn/start', { turn: 1 })
@@ -54,8 +58,13 @@ test('official ToolRuntime gives the personal-remote scope only bounded desktop 
     const scoped = createScope(ctx, agent)
     agent.ctx = scoped.ctx
     await scoped.ctx.plugin(preset.default)
+    const documentSchema = scoped.ctx.get('tools').schemas(agent).find((item: { name: string }) =>
+      item.name === 'personal_save_document')
+    assert.ok(documentSchema.description.includes('UTF-8 text'))
+    assert.ok(documentSchema.description.includes('.csv'))
     assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name),
-      ['personal_open_notepad', 'personal_save_document',
+      ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill', 'weftmod', 'weftmod_script',
+        'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'personal_save_document',
         'personal_list_project_files', 'personal_read_project_file',
         'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment'])
     const preStep = (turn: number) => scoped.ctx.waterfall('agent/pre-step', {
@@ -67,11 +76,11 @@ test('official ToolRuntime gives the personal-remote scope only bounded desktop 
     assert.equal((await preStep(2)).kind, 'enter', 'the next user turn has a fresh bound')
     remoteSession.append('tool/call', { turn: 2, callId: 'document-one', name: 'personal_save_document' })
     remoteSession.append('tool/call', { turn: 2, callId: 'document-two', name: 'personal_save_document' })
-    assert.equal((await preStep(2)).kind, 'reject', 'a third model step is blocked after two document calls')
+    assert.equal((await preStep(2)).kind, 'enter', 'two document calls allow the next model step and final reply')
     for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'run_code']) {
       const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
         callId: `deny-${name.replace('_', '-')}`, signal: new AbortController().signal })
-      assert.equal(result.isError, true, `${name} must not execute in the remote scope`)
+      assert.equal(result.isError, true, `${name} cannot execute with a forged or missing source in the remote scope`)
     }
     const standard = { ...agent, id: 'standard', session: ctx.sessions.create('standard', { meta: { agentPreset: 'standard' } }) }
     assert.ok(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'pwsh'))
@@ -103,7 +112,8 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   const fakeTool = (name: string) => tools.defineTool({ name, description: name,
     parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
     execute: async () => ({ ok: true }) })
-  for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
+  for (const name of ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
+    'weftmod', 'weftmod_script', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
     'personal_list_project_files', 'personal_read_project_file',
     'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
     ctx.get('tools').register(fakeTool(name))
@@ -116,7 +126,8 @@ test('official ToolRuntime gives a shared-account chat no inherited host tools',
   agent.ctx = scoped.ctx
   await scoped.ctx.plugin(preset.default)
   assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name), [])
-  for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
+  for (const name of ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
+    'weftmod', 'weftmod_script', 'mod_sdk', 'personal_open_notepad', 'personal_save_document',
     'personal_list_project_files', 'personal_read_project_file',
     'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
     const result = await ctx.get('tools').execute({ name, arguments: {}, agent,

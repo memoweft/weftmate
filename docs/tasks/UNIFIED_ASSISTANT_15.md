@@ -1,5 +1,98 @@
 # Windows 与 Android 日用助手连续交付
 
+## 2026-10-07 当前：原会话turn4真实续验运行中，长历史读取缺口只读定位与修复准备
+
+据独立窗口转交，原会话 `session-6846f2c1-7089-459e-9a47-4c59dd5f6cfb` / 52430的turn4真实续验运行中，ABC后已恢复实际>1 token（词元）及工具执行，UI（界面）已见13条执行记录。
+
+出现长历史读取提示“这段历史超出当前可读取范围，请在电脑查看完整会话”，是否影响最新最终答复仍待核，已转只读定位与修复准备，turn4最终参数、用量及成果尚未核验，当前不记业务通过，原ABC容量/字段/部署、19条用量历史基线、端侧兼容表与旧失败保持。
+
+## 2026-10-07 ABC统一加载与续验准备记录（历史）
+
+据运行窗口统一就绪交接，同候选、`Profile`（运行资料目录）、账户、MiMo、原会话与 `WorkArea` 保持，个人API（应用程序接口）/UI（界面）仍为 `http://127.0.0.1:52430` / `http://127.0.0.1:52430/personal/v1/ui`，DSH（对话运行时）新地址为 `http://127.0.0.1:56176`，A容量1,000,000/128,000经 `revision` 0→1已即时生效，B旧turn2/3失败投影与C桌面文案已加载、手机C仅静态同步未服务，精确运行身份与集中就绪证据见[统一交接](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/UnifiedABC-20261007/A-B-C-handoff.json)。
+
+原turn1 `blocked`、turn2/3 `max-tokens`、已保存MD（Markdown文档）6,610字节/原摘要及原日志前缀保留，SDK（开发工具包）构造的128000不代表新实际模型请求，本批真实推理新增0，既有19条主响应及标题用量/未知费用等记录仍属相应历史基线。QA（独立验收）待刷新原UI并在同一原会话自然追加新回合/新请求，保留旧失败根任务；Android新包未安装、Apple无真实CSV（逗号分隔文本）GUI（图形界面）领取与端侧兼容表保持，当前未确认CSV交付或整阶段通过。
+
+## 2026-10-07 预算与终态修复准备记录（历史）
+
+QA（独立验收）已停止原会话 `session-6846f2c1-7089-459e-9a47-4c59dd5f6cfb` 的真实续验，turn2与turn3分别在上海时间08:35:29.769、08:41:15.918以 `max-tokens` 自然结束，turn3仅一步、记录输出1 token（词元）/空助手消息且无工具或保存调用，两回合无新成果、未通过，当前候选尚未载入A/B或前端改动。
+
+A的[固定SDK（开发工具包）预算重建](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Turn2Limit-20261007-6846f2c1/sdk-effective-budget-reconstruction.json)确认正常账号硬编码 `contextWindow=32768` / `maxTokens=8192` 配合同一历史，使两个末步逐请求重建有效预算均为1，历史实际请求未持久化、不能将重建称为实际抓包，当前正沿[官方MiMo能力记录](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/Turn2Limit-20261007-6846f2c1/official-mimo-capability.json)以1,000,000上下文/128,000输出准备正常容量元数据修复并保留原模型与会话；B共享源码已准备将已知终态投影为错误/回复失败及可选 `endReasonKind=max-tokens`，未知终态与成果事实保持，定向10项与类型检查退出码0见[B实现交接](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/Turn2TerminalAnalysis-20261007/B-implementation-handoff.json)，前端输出限制与交付未确认文案仍在准备。
+
+当前整个case（验收案例）已记录19条主循环用量及1个标题逻辑请求，`inputTokens` 77,424/`outputTokens` 25,910/已知缓存读取词元362,624，至少2条缓存字段缺值，金额、真实HTTP（超文本传输协议）尝试次数与标题词元未知，此次只读诊断和修复新增真实推理0，既有12/6/1批次及原失败只作各自历史保留，模型费用授权持续、Android标准载体待选和旧65031/58450/正式8443保护保持，仍属任务15同阶段；下方端侧兼容与此前续验状态保留为历史快照，新同签名Android包未安装、Apple无真实CSV（逗号分隔文本）GUI（图形界面）领取的边界保持。
+
+## 2026-10-07 端侧兼容与真实续验记录（历史快照）
+
+据运行窗口最终交接，同候选 `480f27d2-ec4b-4a57-9df5-d44d0b8228b9`、同 `Profile`（运行资料目录）、账户、MiMo与 `WorkArea` 保持；6份源码按冻结前后摘要同步，冻结输入187，UTF-8（统一字符编码）原扩展名说明与文档次数拒绝条件移除已实际加载，定向修复验证通过。API（应用程序接口）/UI（界面）仍为 `http://127.0.0.1:52430` / `http://127.0.0.1:52430/personal/v1/ui`，DSH（对话运行时）改为 `http://127.0.0.1:50565`；runner（运行器）46708、launcher（启动器）33892、Electron（桌面宿主）46096、官方DSH43044，上海时间2026-10-07 08:21:18—19创建，精确UTC（协调世界时）身份见[运行交接](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/TextDeliveryFix-20261007/runtime-fix-handoff.json)。旧41500等退出码0，旧65031/58450/正式8443保持；[同步与恢复证明](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/TextDeliveryFix-20261007/runtime-upgrade-proof.json)、[冻结清单](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/TextDeliveryFix-20261007/manifest.json)保存升级事实。QA（独立验收）已在同一原会话开展真实模型纠错与阶段2续验，CSV（逗号分隔文本）交付和整阶段通过尚无新结论。
+
+原 session（会话）`session-6846f2c1-7089-459e-9a47-4c59dd5f6cfb` 的升级读取基线为 `running=false`；原根任务 `cmd-11a5ac99-d00c-4e54-b457-8786d3cbbfb2` 的回合1仍为 `blocked`（被阻断）且 `control.canResume=false`，原阶段1未过。QA沿同会话自然追加新回合/新请求，不恢复旧根任务、不重建会话或重放阶段1。原MD（Markdown 文档）仍为 `observed`（已观察）、6,610字节/原摘要，老无 `contentType` 记录派生纯文本。原日志222,271字节前缀/SHA-256（文件摘要）`9f94237005fb1ce8b48d03762632630220101cc0293e15a0d755f11dacbc88e1`原样与seq4312内容/时间保持；正常冷恢复只追加无 `data` 的seq4313 `session/end-seed`系统事件，升级时读取基线222,354字节/4,314事件，整体日志摘要在升级时随追加变化，该升级没有新增用户消息、模型响应或手写日志。共同修复升级本身新增真实推理0；升级前阶段1已记录12条主响应 `inputTokens` 25,939/`outputTokens` 17,592、缓存读取词元142,336（首条缺值），标题请求用量、HTTP（超文本传输协议）总数及费用未知。这些数字仅属历史批次与升级基线，当前独立续验总用量尚无新实数报告。Windows52430原会话续验继续，不等待Android标准载体；仍属任务15原阶段。端侧按下表总代转交事实记录，本次未重验或安装。下方同步待执行段落保留为修复准备历史。
+
+| 端侧 | 源码或候选兼容状态（总代转交） | 尚未验证与证据 |
+| --- | --- | --- |
+| Android | 3文件适配 `ArtifactSaveMimeType`；有 `contentType` 时规范化MIME（媒体类型），缺字段按CSV/TSV（制表符分隔文本）/纯文本派生，保原名。定向4/4、`assembleDebug`、独立只读审查通过。 | 新同签名[QA APK（验收安装包）](D:/AIProjects/WeftMate/Runtime/AndroidTextArtifactContract-20261007/APK/weftmate-task15approvalqa-text-contract-0.8.0-code13.apk)已构建、未安装，SHA `753735288f06a75cb07b26fc543096c552e554e823b80fa23d4ffa9280a967d2`；设备仍旧QA包SHA `1085ce4178a7d495322d655114ec3c3d6676aea1d914e8ad4e52250c56dda87a`。真实SAF（存储访问框架）未验，原MuMu问题保持。[端侧交接](D:/AIProjects/WeftMate/Runtime/AndroidTextArtifactContract-20261007/handoff.json)。 |
+| Apple | 本地commit（提交）`278bc6c`，Apple工作区干净；移除md/txt封闭名单，按原名/字节导出CSV/TSV与其他UTF-8文本，旧无 `contentType` 字段或响应头也兼容；临时NFC（标准组合形式）逐字节收紧已撤回，原Unicode（统一码）接受行为保持。SDK（开发工具包）3/3、受控导出11/11，真实Swift模型/检查程序编译、`View`语法与独立冻结源码/日志审查通过。 | 本工作包已结束；无新Apple包，无真实CSV GUI（图形界面）领取。旧`26da62e/build11`与`199396c`的206B GUI证据保留为原范围，实际CSV原生领取待成果就绪后由总代另派。[最终结果](/Users/yun/Desktop/WeftMate/AppleValidation-Mainline-20261006/UTF8TextContract/Implementation/final-result.json)、[Apple任务卡](/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate/docs/tasks/APPLE_MAINLINE_01.md)。 |
+
+## 2026-10-07 修复准备记录（历史）：文本成果与文档次数提前终止已定向验证，候选同步与独立续验待执行
+
+独立窗口已运行真实 MiMo 阶段1，原 session（会话）`session-6846f2c1-7089-459e-9a47-4c59dd5f6cfb`、root task（根任务）`cmd-11a5ac99-d00c-4e54-b457-8786d3cbbfb2` 的原 `turn/end` 为 `blocked`，时间 `2026-10-07T07:38:13.802+08:00`，未通过整阶段。旧 `personal_save_document` 的 `.md/.txt` 声明与验证拒绝模型自主生成的 CSV（逗号分隔文本），当前仅在 `Results`，不可作为任务成果领取；MD（Markdown 文档）`artifact-5c070ec3-08cd-4cbd-8264-b48c02a15352` 已从 UI（界面）下载，6,610 字节，SHA-256（文件摘要）`607a1edc8fea81c9de18e2afba96b3c791b8d1f79adc498b6ce28a03c72402cb`。文档保存调用达到2次就拒绝后续模型步骤是第二项实际缺口：原 CSV 失败与 MD 成功两调用满足此条件，足以阻断最终答复；日志未指明唯一终止监听器。早期已恢复的 `TASK_NOT_READY` / `ParserError` 单列保留，业务修订由独立窗口与模型负责。
+
+源码已统一通用 UTF-8（统一字符编码）文本保存、登记、预览和下载：取消后缀白名单，保留原名与正文；`.csv` / `.tsv` 使用对应文本媒体类型，其他安全后缀为纯文本，老无媒体类型记录同函数派生。仅移除文档次数的模型步前拒绝条件，其他守卫保持。非业务文本定向检查12/12、固定官方循环与预设检查4/4、5份生产源码语法和类型检查通过。下一步由运行窗口同步冻结源码并在同候选、同 `Profile` 正常重启，再由独立窗口沿原会话续验；当前未完成候选运行同步或独立续验，不重写原阶段1失败。证据：[源码增量与验证目录](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/TextDeliveryFix-20261007)、[阶段1原始结果](D:/AIProjects/WeftMate/Runtime/IndependentAcceptance/Task15-20261006-01a110a7-c951-7963-85c3-25c9395bae0c/real-model-autonomous-20261007-c0c496e160/Evidence/phase1-real-model-result.json)。
+
+本人真实模型及正常费用授权继续有效。运行窗口归因的阶段1主循环标准响应12条，`inputTokens` 25,939、`outputTokens` 17,592；另1条标题 LLM（大语言模型）请求的用量、上游 HTTP（超文本传输协议）总数与费用未知。下方“验收待执行”与推理0只作准备历史，当前以本节为准；原账户、模型、会话、结果与失败记录，旧读取服务、正式入口和 Android 保存载体待选状态保留。
+
+## 2026-10-07 最新授权：真实隔离候选已就绪，独立自然任务验收待执行
+
+授权来源（由本侧协调助手直接核实并转交）：总代理窗口原始本人 `turn 01a11375-a28f-7bf1-984a-543786582d35` / `userMessage 01a11375-a2d8-7940-b6b4-402590fe506b`。本人原话：“可以使用真实的模型测试，不受限制，本地模型或者mimo都可以”。现有 MiMo 正常推理费及真实本地/MiMo 测试现已授权；原“未授权/等待费用”及曾提 6 次请求/12 分钟限制失效，不逐次调用请示。
+
+真实隔离候选 `480f27d2-ec4b-4a57-9df5-d44d0b8228b9` 已就绪，独立自然任务验收待执行，准备通过不代表任务通过。当前 API（应用程序接口）为 `http://127.0.0.1:52430`，UI（界面）为 `http://127.0.0.1:52430/personal/v1/ui`，DSH（对话运行时）为 `52427`；最初 `58948` 已正常退出不用。MiMo provider（提供商）为 `https://api.xiaomimimo.com/v1`，模型 `mimo-v2.6-flash`、菜单 `MiMo v2.6 Flash QA`，状态 `active/configured`。独立验收窗口 `01a110a7-c951-7963-85c3-25c9395bae0c` 从外部 Chrome/Edge 登录此 UI，选择唯一 MiMo 模型、新建会话自主提出自然任务并在同会话追加修订；模型目录待该新会话初始化，没有自动回答、批准或硬编码调用。
+
+本轮仍属任务15现有阶段的真实模型隔离验证，不启动下一产品阶段。通用 `--workspace-dir` 已沿正常启动路径传入 `main→DSH`，公开 `WorkArea` 与 `host-state.dataDirs.workspace`、真实 `host.describe.cwd` 一致，正常 QA（质量验收）新会话沿默认 cwd（当前工作目录）；仅涉及三份生产源码与一个通用参数测试，3 份源码语法检查、现有参数定向 1/1 已过，186 输入候选冻结。未注册验收场景父目录，未读 `Inputs` 内容、未填 `Results`、未访问 `VerifierPrivate`。准备基线为推理 0、tokens（词元数）0、`newModelTurns` 0；catalog（模型目录）内部请求总次数及费用未读取，未知，不作为自然任务验收结果。原 Android 成果读取服务与正式 `8443` 保留；新真实候选不得覆盖旧 `pUPeTz` 现场。
+
+固定候选的根目录、`Profile`、受保护 `Private/qa-login.json` 路径、进程、启动时间、源码身份与既有凭据恢复方式详见 [handoff.json](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/handoff.json)、[ready-verification.json](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/ready-verification.json)、[WorkspaceSetup/incremental.diff](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/RealModel-20261007/candidate-480f27d2-ec4b-4a57-9df5-d44d0b8228b9/WorkspaceSetup/incremental.diff)。本次仅按协调助手已审查的交接补记，没有新增查询、测试、凭据读取、提交、推送、部署或 WHPX 变更。
+
+Android 保存标准载体仍待选择，不阻塞真实模型工作。WHPX（Windows 虚拟机监控平台加速）启用、宿主重启、正式发布、购买新订阅及使用日用私密资料仍未授权。原读取 API/UI（界面）`65031`、host（宿主）`12508`、HTTPS（加密连接）`58450`/Caddy（入口转发）`34136` 及 `pUPeTz` profile 保留给 Android 成果补验，新真实候选不得覆盖。paid0（付费调用为零）只属此前合成批次，不作为新模型用量。
+
+> 真实模型授权前的合成阶段收口快照（历史事实，非当前授权）：以下合成段及原历史全文保留；其中“未授权/下一阶段未开”只描述当时状态，当前授权以上方最新段为准。
+
+## 2026-10-07 当前收口：合成跨端流程与文本成果读取，Android 保存载体待选
+
+目标仍是日常个人入口提出完整目标，工具执行、信息问答、单次审批、进展与成果回原会话。本轮已结束下述隔离合成技术验收；事实由总代理经 `read_thread` 读取后转交，本次文档执行方没有新增测试、模型调用、保存操作、GUI（图形界面）、跨机传输或轮询。产品方向与五平台规划继续沿原路线；本轮合成 paid0（付费调用为零）不证明真实模型自主行动。
+
+| 工作与身份 | 当前真实结果 |
+| --- | --- |
+| 旧信息/审批/写入/同步 | `live-5f0146c81966425d8127e03a09c2654f`；原 task（任务）`cmd-93d90ace-ce9c-4acd-a373-cc6910d58dad`、session（会话）`session-36a4a8e7-a361-43bd-a668-95c43cb74761`，Android 信息答案、iOS 单次许可、206B 写入、多端同步通过；artifactCount 0 |
+| 独立文本成果补充 | `live-2c8d509f305e4ebb802ea9c55d15e1f8`；同补充 task `cmd-3f583862-7ac3-49a8-9bf1-1390710062f8`、session `session-747f2417-d9f3-4812-b797-6bedfcf2d88c`，生产 `personal_save_document` 已注册 `artifact-475b99e8-1033-4ca9-9b79-8f919ad946c5`，`information.txt` 206B、`observed`（已观察） |
+| 预览与恢复交互 | Windows 外部 Chrome 预览/下载，Android 原生预览/返回草稿焦点/继续编辑，Mac 原生与 iOS 模拟器原 task 预览/产品原生保存入口实际落盘到 Mac 桌面/iOS 本机文件存储/返回草稿与重新聚焦继续编辑均通过 |
+| Apple 产品与验收 | 产品 `26da62e`、0.1.0/build11；脚本/记录本地 commit（提交）199396c、Apple 工作区干净；两端保存206B/同SHA，iOS 保存/返回1/1、57.817秒，有独立 GPT-6.1 Sol / max 复核；不外推Windows工作树或iPhone真机/Watch |
+| Android 保存 | MuMu 环境未通过，标准载体待选择；独立复核支持 DocumentsUI（系统文档界面）UID1000 的 URI（资源标识符）授权拒绝机制，未实施生产修复 |
+
+成果 SHA-256（文件摘要）为 `ac61c4ece8a9a5a906d6fc73e46a3a76d4b8ff60b3bcd47d199d20143d0c1953`。首次 fixture（测试夹具）误判 `SAVE_RESULT_NOT_OBSERVED`、最终模型交付语义 `unconfirmed`（未确认）和原失败候选保留；compact tool result（精简工具回执）与 REST API（表述性状态转移接口）的完整成果记录存在差异，仅两个 fixture 源文件最小修正、实际返回值定向检查通过，未重跑最终模型分支。恢复同 `pUPeTz` profile（运行资料目录）读取已登记成果，不人工补旧任务登记，不把两任务拼为同一次无失败全链。
+
+Apple 系统弹层定位失败与重试保留；iOS 重复 `.txt` 后缀只静态修正脚本，未增加 GUI 轮次。Android 临时7行诊断已撤回，193输入一致/源码净差异0，原 QA APK（隔离验收安装包）SHA `1085ce4178a7d495322d655114ec3c3d6676aea1d914e8ad4e52250c56dda87a` 恢复。标准 Android 预检只读完成，WHPX（Windows 虚拟机监控平台加速）/`HypervisorPlatform` Disabled（禁用），需管理员宿主改动及可能重启；仅下载官方 metadata（元数据），组件/镜像/AVD（安卓虚拟设备）/系统变更0。官方最小计划为一个 emulator（模拟器）37.2.12 + API35 AOSP/default x86_64 r2，压缩1,237,746,891B；总代理已向本人询问载体选择，等待明确回复，沉默不授权安装、启用系统功能或重启。
+
+当前保留与下一责任动作：API（应用程序接口）/UI（界面）65031、host（宿主）12508、HTTPS（加密连接）58450/Caddy（入口转发）34136及同 profile/来源登录资料/成果/证据保留；f690两派生文件与精确路由已撤回。可选旧live5f退出本轮skip（跳过），不影响读取。由总代理收取本人Android载体决定，再派相应有界工作；本阶段真实模型端到端未授权/未验，真实设备/Watch未验，非全量发布完成，下一产品阶段未开。保留所有已过检查，不重放已消费场景、不为文档收口新增模型、测试、部署或治理文件。
+
+必要交接：[当前状态及精确读取恢复入口](../CURRENT_STATE.md)、[读取恢复](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/TextArtifactDelivery-20261007/readonly-recovery-handoff.json)、[成果补充/失败原义](D:/AIProjects/WeftMate/Runtime/UnifiedAssistant/CrossHostCombined-20261006-01a110a9/TextArtifactDelivery-20261007/delivery-handoff.json)、[独立验收目录](D:/AIProjects/WeftMate/Runtime/IndependentAcceptance/Task15-20261006-01a110a7-c951-7963-85c3-25c9395bae0c/combined-stage-acceptance-20261006-685313b7ff5146c4a6f62c650bf6a692/android-shared-live5f0146)、[标准载体预检](D:/AIProjects/WeftMate/Runtime/IndependentAcceptance/Task15-20261006-01a110a7-c951-7963-85c3-25c9395bae0c/combined-stage-acceptance-20261006-685313b7ff5146c4a6f62c650bf6a692/standard-android-api35-preparation-20261007/standard-carrier-preflight-result.json)。Apple报告 `/Users/yun/Desktop/WeftMate/AppleValidation-Mainline-20261006/CrossHost-20261007/live-2c8d509f305e4ebb802ea9c55d15e1f8/apple-artifact-final-result.json`，任务卡 `/Users/yun/Desktop/WeftMate/AppleWork-844429c/WeftMate/docs/tasks/APPLE_MAINLINE_01.md`。
+
+> 2026-10-06 接管快照（历史，不作为当前队列）：以下“最新工作包”完整原文保留；当前范围以上方 2026-10-07 小节为准，不从旧文字恢复执行或发布。
+
+## 2026-10-06 最新工作包：在途通用执行候选接管与收口
+
+目标：用户在日常个人入口提出完整目标后，模型自主使用通用工具，审批到用户并返回模型，进展与可查证结果回原对话。沿用已有账户、跨端现场、任务与工具；本轮只写接管计划，不改产品代码、不测试/跑模型、不部署。
+
+先后顺序：先核个人入口实际可见工具及模型自主行动，再核审批往返与原对话结果；已有后台停止仅补影响该用户流程的缺口，不衍生全部后台框架、无限诊断或引擎升级。
+
+责任：总代理管路线、上下文、用户决定、范围/依赖与分派，依据报告作产品一致性结论；实际 GPT-6.1 Sol 执行负责人负责本轮文档，另一名实际 GPT-6.1 Sol 独立验收。下一代码工作包建议由同一实现负责人统一拥有 `src/dsh-web-runtime.ts`、`src/main.mjs`、`src/personal-access/index.mjs`、必要的 `src/personal-access-backend.mjs`、`src/plugins/weftmate-personal-desktop*.mjs`、`src/plugins/weftmate-personal-task-control.mjs` 及相关测试；个人页面/Android 仅按实际闭环缺口明确文件后接入。此为建议范围，尚未派发代码；确需并行再拆不重叠所有权，不虚构第三实现者。
+
+候选：`84fff09` 工作树已有 9 个已跟踪源码/测试修改和 3 个未跟踪通用执行测试，保留不覆盖。合成证据不证明真实自主办事，个人界面审批闭环未证实；新预设未发布沿历史记录保留。候选只在隔离账户/运行目录推进，正式发布另列方案、证据与恢复办法。
+
+完成判断：独立验收者从真实个人入口使用真实模型，独立读取成果；批准/拒绝按已定偏好生效，停止和重开不误伤或重复动作，改变目标/起始条件不新增应用枚举。验收方选择代表性样例，用户例子不指定或限制能力，有限覆盖只证明对应范围；既有 Windows/Android 接续随本包保留验证。
+
+停止条件：归属、审批或停止范围无法证明时不进下一门槛；结果不明先观察不重放。同一阻点两次无新证据则换最小方法或做独立工作，回报缺口。B/C 按稳定接口可与 A 并行准备，不等所有工具边界修完；本人体验另标，已授权范围无需重复请求“继续”。下一动作：本轮文档交独立验收，总代理据报告派明确实施包。
+
+## 中断前任务与证据（历史，不作为当前队列）
+
+以下保留旧授权、发布、本人体验、分工与检查点；旧“当前/继续”、主助手亲自实现/验收和自动发布安排由置顶最新范围覆盖，历史事实仍按当时证据读取。
+
 ## 授权、结果与当前进度
 
 用户在 2026-10-05 要求按总路线设计兼顾上下文的整段开发，调整容易漂移的执行方式，做到可以大体验收才停。本侧负责 Windows、Android 和共同服务端；Apple 侧是同级总代理，负责 Mac、iOS 和融入 iOS 的 Apple Watch。内部检查点自主接续，整批候选交付后停下等待本人体验。

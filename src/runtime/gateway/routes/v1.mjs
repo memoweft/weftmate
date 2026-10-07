@@ -1,4 +1,4 @@
-import { createDshAgentAdapter } from '../../dsh-adapter/agents.mjs'
+import { createDshAgentAdapter, createNativeQuestionSnapshots, questionSourceAsOf } from '../../dsh-adapter/agents.mjs'
 import { createDshModelAdapter } from '../../dsh-adapter/models.mjs'
 import { createDshPermissionAdapter } from '../../dsh-adapter/permissions.mjs'
 import { createDshSessionAdapter, DshAdapterError } from '../../dsh-adapter/sessions.mjs'
@@ -52,6 +52,33 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
   const permissions = createDshPermissionAdapter(client)
   const diagnostics = diagnosticsDeps === undefined ? null : createDiagnostics({ client, ...diagnosticsDeps })
   const records = new Map()
+  const questions = createNativeQuestionSnapshots({ readSourceAsOf: async (sessionId, observedSeq) =>
+    questionSourceAsOf(await sessions.questionHistoryAsOf(sessionId, observedSeq), observedSeq) })
+  let questionPump = null
+
+  function ensureQuestionPump() {
+    if (questionPump) return questionPump.ready
+    const controller = new AbortController(), connection = questions.beginConnection()
+    let resolveReady, rejectReady, first = true
+    const ready = new Promise((resolve, reject) => { resolveReady = resolve; rejectReady = reject })
+    const owned = { controller, connection, ready }
+    questionPump = owned
+    void (async () => {
+      try {
+        for await (const frame of agents.openMux(controller.signal)) {
+          questions.observe(frame, connection)
+          if (first) { first = false; resolveReady() }
+        }
+        if (first) rejectReady(new Error('native question stream unavailable'))
+      } catch (error) { if (first) rejectReady(error) }
+      finally {
+        questions.connectionLost(connection)
+        if (questionPump === owned) questionPump = null
+      }
+    })()
+    ready.catch(() => {})
+    return ready
+  }
 
   function record(sessionId) {
     const value = records.get(sessionId)
@@ -118,6 +145,7 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
     const pathname = decodeURIComponent(requestUrl.pathname)
     const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history))?$/.exec(pathname)
     const attachmentMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/attachments\/(sha256:[a-f0-9]{64})$/.exec(pathname)
+    const questionMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/questions(?:\/([0-9a-f-]{36}))?$/i.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
     try {
       if (pathname === `${BASE}/sessions` && req.method === 'POST') {
@@ -170,6 +198,28 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
         const [, sessionId, attachmentId] = attachmentMatch
         record(sessionId)
         return writeJson(res, 200, await sessions.attachment(sessionId, attachmentId))
+      }
+      if (questionMatch && req.method === 'GET' && !questionMatch[2]) {
+        const sessionId = questionMatch[1]
+        const listed = await sessions.list()
+        if (!listed.some(item => item.sessionId === sessionId && item.agentPreset === 'personal-remote')) {
+          throw Object.assign(new Error('question source unavailable'), { code: 'session-not-found' })
+        }
+        await ensureQuestionPump()
+        return writeJson(res, 200, { questions: await questions.list(sessionId) })
+      }
+      if (questionMatch && req.method === 'POST' && questionMatch[2]) {
+        const sessionId = questionMatch[1], questionRpcId = questionMatch[2], payload = await readJson(req)
+        if (!payload || typeof payload !== 'object' || Array.isArray(payload) ||
+            Object.keys(payload).join(',') !== 'answer') throw new TypeError('invalid question response body')
+        const listed = await sessions.list()
+        if (!listed.some(item => item.sessionId === sessionId && item.agentPreset === 'personal-remote')) {
+          throw Object.assign(new Error('question source unavailable'), { code: 'session-not-found' })
+        }
+        await ensureQuestionPump()
+        await questions.list(sessionId)
+        if (!questions.pending(sessionId, questionRpcId)) return writeJson(res, 200, { accepted: false, reason: 'not-pending' })
+        return writeJson(res, 200, await sessions.respondUserQuestion({ sessionId, questionRpcId, answer: payload.answer }))
       }
       if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
       const [, sessionId, action] = match
@@ -241,5 +291,7 @@ export function createGatewayV1({ client, diagnostics: diagnosticsDeps } = {}) {
       return writeJson(res, notFound ? 404 : 400, { error: safe })
     }
   }
-  return { handle, emitForTest: emit, reconcileForTest: reconcile }
+  return { handle, emitForTest: emit, reconcileForTest: reconcile, close() {
+    questionPump?.controller.abort(); questionPump = null; questions.close()
+  } }
 }

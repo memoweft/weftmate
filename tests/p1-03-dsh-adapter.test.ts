@@ -145,6 +145,21 @@ describe('P1-03 · DSH session / agent adapter', () => {
     assert.equal(JSON.stringify(turnError).includes('sk-live-789'), false)
   })
 
+  it('output limit is a non-success terminal and seals late chunks without guessing unknown kinds', async () => {
+    const state = createEventState()
+    const limited = await normalizeDshEvent({ sessionId: 's-limit',
+      event: { type: 'turn/end', seq: 7009, data: { turn: 2, reason: { kind: 'max-tokens' } } } }, state)
+    assert.equal(limited?.type, 'error')
+    assert.equal(limited?.data.code, 'dsh-turn-max-tokens')
+    assert.equal(limited?.data.details.endReasonKind, 'max-tokens')
+    assert.equal(await normalizeDshEvent({ sessionId: 's-limit',
+      event: { type: 'assistant/chunk', seq: 7010,
+        data: { turn: 2, chunk: { type: 'text-delta', text: 'late' } } } }, state), null)
+    const unknown = await normalizeDshEvent({ sessionId: 's-other',
+      event: { type: 'turn/end', seq: 1, data: { turn: 1, reason: { kind: 'max-tokens-unknown' } } } })
+    assert.equal(unknown?.type, 'dsh.unknown')
+  })
+
   it('dedupes raw seq per session, not across two ordinary sessions', async () => {
     const result = await reconcileDshEvents([
       { sessionId: 's-a', event: { type: 'assistant/chunk', seq: 1, data: { turn: 1, chunk: { type: 'text-delta', text: 'A' } } } },
