@@ -3,7 +3,7 @@ DERIVED_DATA ?= Build/DerivedData
 PHONE_ID ?= F5A389E4-13FC-41B1-A758-7750883D2022
 WATCH_ID ?= 35E9800F-8F39-432C-8F51-03A88309A386
 
-.PHONY: project build-mac build-phone build-watch test-core test-mac test-phone run-mac run-phone run-watch
+.PHONY: project build-mac build-phone build-watch test-core test-state test-mac test-phone run-mac run-phone run-watch
 
 project:
 	python3 Scripts/generate_project.py
@@ -19,6 +19,9 @@ build-watch:
 
 test-core:
 	cd Packages/WeftMateCore && swift test
+
+test-state:
+	python3 Scripts/run_state_checks.py --artifacts Build/StateChecks
 
 test-mac:
 	xcodebuild -project $(PROJECT) -scheme WeftMateMac -configuration Debug -destination 'platform=macOS' -derivedDataPath $(DERIVED_DATA) test
