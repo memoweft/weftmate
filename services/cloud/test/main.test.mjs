@@ -43,7 +43,7 @@ test('real entrypoint starts on an isolated port, serves health, and closes on S
   child.kill('SIGTERM');
   assert.deepEqual(await exited, [0, null]);
   const db = new DatabaseSync(path.join(root, 'cloud.sqlite'));
-  try { assert.equal(db.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 4); }
+  try { assert.equal(db.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 5); }
   finally { db.close(); }
 });
 
