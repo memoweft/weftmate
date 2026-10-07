@@ -1,6 +1,6 @@
-# WeftMate 轻云架构 · S0 待审查
+# WeftMate 轻云架构 · S0 已审查 / S1a 实现
 
-依据：`VISION.md`「数据在哪里」、`PLAN.md` D20/D21 与第 9b 节 S1–S6、`CLIENT_API.md` 认证/设备/同步/健康、`COMPANION.md` 共养。核对基线为 main `0b3d7d6`。**这是设计提案；只有第 11 节的 S0 骨架已实现。审查后另派 S1，不从本包继续实现或部署。**
+依据：`VISION.md`「数据在哪里」、`PLAN.md` D20/D21 与第 9b 节 S1–S6、`CLIENT_API.md` 认证/设备/同步/健康、`COMPANION.md` 共养。S0 设计已审查合入；S1a 按第 2 节实现云账号与邮箱/OIDC，当前交付见第 12 节。宿主接线、内容授权与后续云能力仍按工作包派发，本包不部署。
 
 ## 0. 本人已定的取舍（2026-10-07）
 
@@ -87,7 +87,7 @@ S1 宿主接线按以下次序做，全部用隔离夹具验收：
 
 短 JWT 到期不能离线续签。已有本地会话仍用本地凭据，云 revocation 尚不可达的暴露窗口以本地会话有效期与已缓存撤权水位为限；需离线继续可用与立即云撤销不能同时保证，界面明确显示状态。无本地密码/有效会话的新设备等待联网与本地批准。
 
-**现有契约没有云认证/备份/共享目录接口。** S0 不改变 `CLIENT_API.md` 或宿主行为。S1–S6 业务接口均放 `/personal/v1`，拟云命名空间 `/personal/v1/cloud/…`，OIDC issuer/发现/授权/JWKS 也挂该命名空间；宿主会话交换拟 `/personal/v1/auth/cloud-session`。这些路径和字段仅为提案，实施包须同时协调契约文档与五端，记录 STATE 契约变更。中继只改变宿主 base URL，不改原有路径/错误/Origin/CSRF；`auth/setup` 仍只允许直接地址。不得把已有 `auth/login(username)` 静默改成云 `email` 登录。
+S1a 的云账号/OIDC 正式契约见 `CLIENT_API.md` 第 7 节，业务路径 `/personal/v1/cloud/…`，issuer 为 `/personal/v1/cloud/oidc`，客户端接入在后续包。备份/共享目录与宿主会话交换 `/personal/v1/auth/cloud-session` 尚未实现。后续实施包须协调五端并记录 STATE 契约变更。中继只改变宿主 base URL，不改原有路径/错误/Origin/CSRF；`auth/setup` 仍只允许直接地址。已有 `auth/login(username)` 与云 `email` 登录独立。
 
 ## 3. 中继方案与 TLS（S2）
 
@@ -234,3 +234,15 @@ Node 24 `node:sqlite` 起步仅存控制面小记录，WAL/FK/事务迁移，密
 本地 Node 24.21.0 `node --test test/*.test.mjs`：**14/14 通过**，全部使用临时数据/测试邮箱/随机端口；包含真实 Node 进程的启动、HTTP 健康与 SIGTERM。Linux CI 在主仓现有 Linux job 增加独立 cloud 步骤，不增加其他 OS cloud 测试。远端 CI 状态看本包 PR，不把付款/额度导致未启动称作测试失败或通过。
 
 未验证：目标 Linux/systemd/Caddy 实际部署、公网 frp/SSE/TLS/pin、真实邮件/APNs/FCM、账号无损绑定、备份加解密、共享与手机副本。这些都是后续包的实现与验收，本包无服务器连接/部署，完成后停在 S0 等审查。
+
+## 12. S1a 当前交付与边界
+
+独立 `services/cloud/` 按第 2 节实现云账号，契约在 `CLIENT_API.md` 第 7 节，客户端接入在后续包。不可变随机 cloudAccountId/public sub、规范化唯一可变邮箱、独立盐和参数的 scrypt；pending 注册验证后激活，密码找回与换邮箱递增 epoch、撤销旧云会话/授权码/刷新族/旧验证码；新设备标识或公钥经邮箱确认后才签发授权码。设备标识/公钥目前由客户端声明，无私钥持有证明，不自动授权内容。
+
+协议使用锁定 `oidc-provider 9.12.2` / `jose 6.2.12` 和 SQLite adapter，强制 Code+PKCE S256、登记 redirect、public/native 无 secret；RS256 access/ID token 300 秒，code 60 秒，refresh 轮换/复用检测且族绝对寿命 30 天。audience 只为云 `/personal/v1/cloud`，不发宿主 token/host_id/DPoP cnf。签名私钥与 Cookie/验证码秘密独立私有文件，停服务轮换并重启，旧 key 保留 300+60 秒；具体命令见 cloud README。
+
+验证码六位、10 分钟、单次使用/5 次错误，绑定用途、账号 epoch 与登录交互；账号及来源的失败桶持久化，第 5 次起指数退避，邮件请求另限速。HTTPS host-only Secure/HttpOnly Cookie、同源 Origin、交互 Cookie/CSRF 与固定 Host；代理来源只在显式可信回环设置启用。没有全局设备数上限或审计框架。file 开发邮件与环境变量配置的 Resend/五类模板已实现；Resend 未配置不可启用，测试仅 mock fetch。密码更改通知失败时响应 notificationAccepted=false，已提交重置保持有效；未做通知补投递。
+
+Mac Node 24.21.0 隔离 `node --test test/*.test.mjs` **30/30**，cloud npm audit **0 漏洞**；覆盖完整账号/授权码/刷新/恢复/新设备、验证码/限速、令牌校验/轮换/并发复用、JWKS 轮换/重开、邮箱变更、HTTPS Cookie 与原 S0 测试。[Linux cloud CI](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 独立步骤通过，使用同一套 30 项测试；缺依赖时测试 helper 只安装 cloud 的锁文件。scrypt N=131072/r=8/p=1 的实际 runner 耗时在测试输出记录，不推断生产吞吐。
+
+未做/未验证：五端登录接线、宿主验签/DPoP/会话交换/认领/内容设备授权（S1b；按 D23 后续派发）、真实邮件送达、服务器/systemd/Caddy/DNS 部署、S2–S6。未连接服务器、不发真实邮件、不碰日用数据。外部离线验证的 JWT 在刷新撤销后仍有最多 5 分钟有效窗口；本服务检查实时 epoch，但宿主即时撤销尚未接线。

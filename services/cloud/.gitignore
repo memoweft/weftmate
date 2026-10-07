@@ -1,9 +1,13 @@
 .runtime/
+identity-keys/
+.test-dependencies.lock/
 .env
 .env.*
 !.env.example
 node_modules/
-*.sqlite
-*.sqlite-shm
-*.sqlite-wal
 mail-outbox/
+*.sqlite
+*.sqlite-journal
+*.sqlite-wal
+*.sqlite-shm
+*.log
