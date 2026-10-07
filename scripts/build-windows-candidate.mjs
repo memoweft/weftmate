@@ -59,8 +59,8 @@ if (existsSync(outputDir) && (await readdir(outputDir)).length > 0) {
 await mkdir(outputDir, { recursive: true })
 await mkdir(stageRoot, { recursive: true })
 
-console.log(`[stage3-build] candidate ${version}`)
-console.log('[stage3-build] verifying the existing vendor runtime; regeneration is intentionally disabled')
+console.log(`[windows-candidate] candidate ${version}`)
+console.log('[windows-candidate] verifying the existing vendor runtime; regeneration is intentionally disabled')
 run(process.execPath, ['scripts/verify-dsh-vendor.mjs'], 'vendor verification')
 run(process.execPath, ['scripts/stage-dsh-runtime.mjs', '--stage-root', stageRoot], 'vendor staging')
 

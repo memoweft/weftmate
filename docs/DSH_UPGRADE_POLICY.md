@@ -1,19 +1,8 @@
 # DSH 依赖维护与受控升级
 
-2026-09-23 用户最新决定先开始升级，目标改为 GitHub 官方 [v0.1.7-alpha.2](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.7-alpha.2)，tag `dsh-v0.1.7-alpha.2` 指向 `00102833dfaee1da9f48a3a8eae9d34005a75218`。先在独立代码、运行与测试数据候选中适配；不覆盖当前内嵌 `rc.5`、正在运行的 dogfood 实例或脏的 Shared checkout。下方“先验证 rc.2”的文字是此前只读评估建议，不再作为本轮目标。alpha.2 是预发布版本，是否替换日常版取决于候选的实际兼容与恢复验证。
+当前内嵌运行时仍以 `tests/contract/dsh-pin.json` 和 `vendor/dsh-runtime/VENDOR-MANIFEST.json` 为准（`0.1.0-rc.5 @47f943859bef60e4160492346772ded9b24f765a`）。M0-1b 已移除旧 alpha.2 候选宿主、插件、构建与 `dsh:upgrade` 入口；正式 pin 与 vendor 未变。旧候选实现可从 Git 历史查阅，运行目录未迁移或删除。
 
-本轮已建立独立 alpha.2 checkout、pin、vendor、运行目录与最小 WeftMate profile；候选启动及身份认证、客户端 boot graph、状态路由的无模型冒烟通过。正式 rc.5 pin/vendor 未变。原 `dsh:upgrade` 已收窄为只接受命名的隔离候选，不再切换 Shared checkout 或预先写正式 pin。此结果仅为升级底座；旧 gateway、MemoWeft、Mods、设备、完整前端与用户会话迁移仍需新版接口适配。准确状态和验证见 CURRENT_STATE。
-
-深度适配后，候选已在隔离 alpha.2 vendor 中接通正式会话/权限、安全凭据 IPC、Weave 对话页合成发送与停止、MemoWeft 当前 World 召回与回合交接、受维护预设约束的合成 Mod 生命周期，并通过压缩 V3 会话的合成 V4 迁移测试。安全 snapshot 下的 V4 ConfigEditor 运行期写入会使一次性签名树丢失；候选对此明确拒绝并返回 `alpha2_model_settings_requires_restart`，后续须由宿主完成窄配置持久化、重新签名和受控重启。真实用户会话和模型未迁移、未测试，不以合成通过替代正式切换依据；CURRENT_STATE 保持唯一准确进度。
-
-Alpha.2 已有独立的最小 Electron 宿主和离线非秘密模型配置准备入口。候选在空 HOME、独立 userData 中启动、显示窗口并干净退出；正式 rc.5 Electron `main.mjs` 未切换版本。离线配置从单一 JSON 文档派生启动 overlay，启动前再次严格校验并与官方 profile 一起预检签名；运行中不热写这份快照。停止前提当前靠调用方确认，尚无跨进程互斥。独立桌面可见不等于完整 WeftMate 页面/用户数据/真实模型已验收，准确边界仍见 CURRENT_STATE。
-
-> 当前原则：固定身份用于复现，不构成永久冻结。2026-09-14 只读核对 `tests/contract/dsh-pin.json` 与 `vendor/dsh-runtime/VENDOR-MANIFEST.json.dsh` 均为 `0.1.0-rc.5 @47f943859bef60e4160492346772ded9b24f765a`；未验证运行可用性或上游最新状态。更新前比较上游、升级、适配、移植和自研，候选必须检查普通对话、MemoWeft、Mod、权限、数据兼容与独立宿主恢复，交付后待云验证。下方提及 2026-09-08 清理/不备份的内容仅为历史授权，不延续本轮。
-
-2026-09-23 只读补核：WeftMate 的 pin 与实际 vendor 清单仍为 `0.1.0-rc.5 @47f943859bef60e4160492346772ded9b24f765a`；`D:\AI\Runtime\DeepSeekHarness\0.1.5-rc.2` 有独立安装包与 CLI 产物，但尚未验证其可作为 WeftMate vendor 启动。GitHub 官方已有 [v0.1.5-rc.2](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.5-rc.2)；[v0.1.7-alpha.1](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.7-alpha.1) 更新但仍是 alpha。跨越当前固定版本涉及 [Session Format V3（会话格式第三版）的升级与不支持回退读取](https://github.com/deepseek-ai/deepseek-harness/releases/tag/dsh-v0.1.5-rc.1)，较新 alpha 又采用 V4，并调整插件插槽、设置和预设配置。推荐先用隔离的 DSH 版候选验证本机 rc.2 的 Web、凭据桥、消息/停止、记忆交接、Mod、旧会话复制后的升级与恢复；V4 另作后续候选。不能因 `D:\AI` 已安装 rc.2 就把当前 WeftMate 进程记成已升级，也不触及正在运行的用户任务。
-
-> 本文件采用用户指定累计包中的方向与安排。包内实现描述不代表本机已合并或验证；本机进度唯一见 CURRENT_STATE.md。2026-09-08 清理按用户要求不备份，旧归档不再作为开工材料。
-2026-09-06。**本轮写入政策，没有升级依赖或修复升级脚本。** 这是针对本源码的维护要求，不是官方最新版或当前兼容性的网络核验报告。
+后续升级按下面的原则在独立候选中验证；当前没有自动升级命令。项目路线与进度以 `PLAN.md`、`STATE.md` 为准。
 
 ## 1. 已确认原则
 
@@ -70,15 +59,9 @@ WeftMate 复用 DSH，但不自动跟随每次上游更新。固定一个可追�
 
 迁移在测试副本验证，停止/崩溃中断和重试也检查。恢复的是匹配旧版本的数据副本，避免覆盖用户新的正式资料。真实外部动作（发消息等）不属于代码回退能够撤销的范围。
 
-## 7. 现有升级脚本和探针：已知与未知
+## 7. 现有构建入口
 
-脚本路径 `WeftMate/Repository/scripts/upgrade-dsh.mjs`，由 package.json 的 `dsh:upgrade` 指向。它尝试取 checkout、切提交、写 pin、跑测试、重建 vendor；并不构成经过本次验证的事务式一键升级。
-
-本轮未运行升级探针，也未引入旧探针报告。升级入口和数据迁移能力由实际升级任务重新验证。
-
-附件的只读观察还记载以下待本机核实线索：`.mjs` 入口在候选目录检查中使用未在本文件定义的 `require('node:fs')`，异常被 catch 转成找不到目录；后续脚本会先改 pin，测试失败时未见自动恢复 pin。**这是需在目标工具链隔离复现/修复的静态线索，本轮未修，不能让用户直接运行升级命令当完成。** 不得通过绕过 pin 或删测试解决。
-
-首次 S00-B 只核对固定依赖，不调用此脚本。遇到实际升级任务才做入口成功/失败、原改动保留、失败回退的专项检查。
+`npm run vendor:dsh` 按固定 pin 生成内嵌产物，`npm run vendor:verify` 核对已有产物；它们不负责选择新的 DSH 版本。旧 alpha.2 候选升级入口已删除。新的升级工作包需要准备自己的隔离候选和兼容验证。
 
 ## 8. 成功记录必须含什么
 
