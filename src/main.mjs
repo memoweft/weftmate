@@ -3168,10 +3168,12 @@ async function bootstrap() {
       });
       if (accessPort !== null) {
         const { createPersonalAccessService } = await import('./personal-access/index.mjs');
+        const { relayFromEnvironment } = await import('./personal-relay/index.mjs');
         const { cloudIdentityFromEnvironment } = await import('./personal-cloud/index.mjs');
         personalAccessService = await createPersonalAccessService({
           root: join(userDataDir, 'personal-access'), port: accessPort, backend: accessBackend,
           cloudIdentity: cloudIdentityFromEnvironment(),
+          relay: relayFromEnvironment(),
           verifyToolResult: (input) => accessBackend.verifyToolResult(input),
           uiHandler: servePersonalAccessUi,
           androidPackagePath,

@@ -10,12 +10,14 @@ process.umask(0o077);
 const logger = createLogger();
 let database;
 let server;
+let relay;
 let stopping = false;
 
-function shutdown(signal) {
+async function shutdown(signal) {
   if (stopping) return;
   stopping = true;
   logger.info('service.stopping', { signal });
+  await relay?.close();
   server.close(() => {
     database.close();
     logger.info('service.stopped');
@@ -29,6 +31,8 @@ try {
   database = opened.database;
   const mailer = createMailer(config, { logger });
   const identity = await createIdentity({ database, config, mailer, logger });
+  relay = identity.relay;
+  await relay.start();
   server = createCloudServer({ ...opened, logger, identity });
   await new Promise((resolve, reject) => {
     server.once('error', reject);
@@ -49,6 +53,7 @@ try {
     schemaVersion: opened.schemaVersion,
   });
 } catch (error) {
+  await relay?.close();
   database?.close();
   logger.error('service.start_failed', { code: error.code ?? 'STARTUP_FAILED' });
   process.exitCode = 1;

@@ -592,3 +592,26 @@ DPoP proof 是 ES256 `typ=dpop+jwt`、仅公钥 `jwk`；含随机 `jti`、±60 �
 | POST `/personal/v1/cloud/auth/devices/revoke` | cloud:account Bearer + `{deviceId}` | 200 `{revoked:true}`；仅本云账号，撤销该设备云登录/刷新族，写 device 事件，供所有已绑定宿主同步 |
 
 安装请求 proof 有效 60 秒、允许 30 秒时钟差，jti 重放记录在云 SQLite；每次重试生成新 proof，业务 requestId/claimId 保持不变。eventToken 有效 300 秒，事件形状为 `{seq,sub,kind:"epoch",epoch}` 或 `{seq,sub,kind:"device",deviceId,jkt?}`；不含内容、邮箱、本地 ownerId。密码重置/换邮箱递增 epoch 的事件与原云操作同一数据库事务提交。宿主只从固定 JWKS 验证事件；后续推送/中继通道可交付相同签名 envelope。
+
+### 7.6 经中继访问宿主（S2）
+
+云控制面与内容宿主是不同 origin。客户端先以 cloud:account Bearer 调用下表 discover，选择确定的 hostId，然后将**宿主** base URL 改为 `https://h-<32 位随机 hex>.hosts.example.com`（TCP 443）；原 `/personal/v1/…` 路径、账号与 ownerId、历史游标、requestId、附件校验保持。内容、宿主密码与宿主 Cookie 只发宿主 origin，不送 `api.example.com`。宿主提供同 origin 的 Web UI/静态资源；不开放跨 origin 内容 CORS。
+
+| 提供者 / 方法与完整路径 | 请求 / 授权 | 响应 / 语义 |
+|---|---|---|
+| 云 POST `/personal/v1/cloud/hosts/relay/discover` | `{hostId}` + cloud:account Bearer；同源云 Origin | 200 `{hostId,baseUrl,status:"online"\|"offline"\|"revoked"}`；尚未建立中继时 baseUrl=null；非成员 404 `NOT_FOUND`；无 pin/凭据 |
+| 云 POST `/personal/v1/cloud/hosts/relay/account-revoke` | `{hostId}` + cloud:account Bearer；同源云 Origin；仅原认领成员的 transport owner | 200 `{revoked:true,closedConnections}`；先持久撤销，再关闭该宿主现有控制与内容连接；普通成员 403，不影响宿主本地账号/数据/直连 |
+| 云 POST `/personal/v1/cloud/hosts/relay/credentials` | `{hostId,proof}`，沿用 7.5 安装签名，action 对应路径 | 200 `{hostId,baseUrl,status,credential,generation,serverAddr,serverPort:443,serverName,proxyName}`；仅已认领安装。首次分配随机域名、重复取回幂等；credential 是秘密，只供宿主 frpc，不给客户端 |
+| 云 POST `/personal/v1/cloud/hosts/relay/rotate` | 同上安装 proof，额外签入稳定 requestId | 200 同 credentials；同 requestId 幂等；新 generation 关闭旧连接，域名与内容 pin 不变；宿主 `rotateRelayCredential(requestId)` 同时重启 sidecar |
+| 云 POST `/personal/v1/cloud/hosts/relay/revoke` | 同上安装 proof | 200 `{revoked:true,closedConnections}`；安装本身也可撤销；撤销记录重开后仍有效，取凭据不会自动恢复 |
+| 云 POST `/personal/v1/cloud/hosts/relay/dns/present`、`…/dns/cleanup` | 同上安装 proof，额外签入 `{value:"<43 字符 base64url ACME TXT>"}` | 200 `{name:"_acme-challenge.<自己的宿主域名>",updated:true}`；name/type/zone/TTL 不可由调用方指定；云 provider 未接入时 503 `DNS_NOT_CONFIGURED`，输入错误 400 `INVALID_DNS_CHALLENGE` |
+| 宿主 GET `/personal/v1/status` | 原宿主 Cookie / 合法 Bearer | 新增 `relay:{state:"disabled"\|"stopped"\|"connecting"\|"online"\|"offline",baseUrl:string\|null,errorCode?:"RELAY_UNAVAILABLE"\|"FRPC_START_FAILED"}`；来自私有 frpc 代理状态，不含秘密 |
+| 宿主 POST `/personal/v1/cloud/pairings` | 沿用 7.4 的**已认证直接地址**本地密码 Cookie/CSRF | 原响应额外含 `relay`（同上状态/baseUrl）；`tlsSpki` 是实际 TLS listener 同一把内容公钥的 DER SPKI SHA256、base64url 无 padding。已有信任/当面配对通道是 pin 来源 |
+
+安装请求仍要求有效 60 秒、允许 30 秒偏差、云持久防重放 jti 与同源 Origin；不得把凭据取回接口当作公开目录。新增云错误：503 `RELAY_NOT_CONFIGURED / DNS_NOT_CONFIGURED`，403 `HOST_NOT_CLAIMED / RELAY_REVOKED`。最初认领的成员只具有宿主**传输**管理权；不会获得其他本地账号内容权限；既有 S1b 宿主迁移保留其原首个 membership 作为 transport owner。最后一个成员解绑也撤销中继。重新启用已撤销宿主的管理/客户端流程留给后续包，本包不自动复活凭据。
+
+浏览器同源写入必须带该宿主 public `Origin`、JSON 与原 `X-WeftMate-CSRF`；Cookie host-only/HttpOnly/SameSite=Strict/HTTPS Secure。adapter 拒绝客户端 Forwarded/X-Forwarded-*，覆盖宿主可信转发头；Host/SNI 必须是认领域名。`auth/setup`、认领/绑定/解绑/生成当面配对仍只允许电脑直接地址，不通过中继执行。DPoP 的 htu 使用本次实际宿主 HTTPS origin + 完整入口路径；既有配对、nonce 与 CSRF 规则不变。
+
+**离线与断流不是云伪造的宿主响应**：透传入口无法在不终止内容 TLS 的情况下保证返回宿主 JSON。离线/撤销/未就绪时可能 TLS 握手失败、EOF/连接重置、超时；已开始的 SSE/下载会直接断流。客户端将这些网络错误呈现为「宿主离线 / 连接不可用」，结合 discover 的 offline/revoked 状态；不可当作正常 200 或自动退出云账号。若 TLS adapter 已收到请求但本机 HTTP 入口不可用，可返回 HTTP 502（空体）。请求到达宿主后的 401/403/503 仍按原契约；云接口自身不可用为 503，和内容路径网络失败区分。online 仅为最近 15 秒连接/心跳指示，不是请求完成证明。
+
+重连后继续使用未过期宿主 Cookie，历史用 beforeSeq/afterSeq 与原水位，SSE 重新订阅；附件断流须按大小/SHA256 重取，未见终止标记不得认定已完成。原生端先执行标准 CA/域名验证，再比较配对得到的 SPKI；错误 pin 或同域另一合法证书均拒绝，不能以云目录覆盖 pin。证书续期使用同一内容 key；换 key 的可信更新另包。普通浏览器远程访问已由 D24 允许，接受云/DNS 完全主动控制时可被冒充的边界。

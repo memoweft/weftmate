@@ -1,6 +1,6 @@
-# WeftMate Cloud · S1a
+# WeftMate Cloud · S1a–S2
 
-独立的 Node **24.x** ESM 服务。S1a 实现云账号、邮箱验证、密码找回、新云设备邮件确认和 OIDC；设计见 [CLOUD.md](../../docs/CLOUD.md)，接口见 [CLIENT_API.md 第 7 节](../../docs/CLIENT_API.md#7-云端账号s1a客户端接入在后续包)。**客户端与个人宿主接入在后续包**。不接收对话、记忆、健康或宿主密码，不实现宿主认领、内容授权、DPoP 或会话交换。
+独立的 Node **24.x** ESM 服务。S1a 实现云账号、邮箱验证、密码找回、新云设备邮件确认和 OIDC；设计见 [CLOUD.md](../../docs/CLOUD.md)，接口见 [CLIENT_API.md 第 7 节](../../docs/CLIENT_API.md#7-云端账号s1a客户端接入在后续包)。S1b 已接宿主认领、安装签名与设备撤权；S2 已接官方 frp 授权与 TLS 透传。五端完整客户端在 S1c。不接收对话、记忆、健康或宿主密码。
 
 ## 本地运行
 
@@ -13,7 +13,7 @@ npm test
 npm start
 ```
 
-默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":2}`。Ctrl+C / SIGTERM 关闭 HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
+默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":4}`。Ctrl+C / SIGTERM 关闭中继入口、HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
 
 配置只读环境变量，不自动加载 `.env`。可复制 `.env.example` 到被忽略的 `.env`，使用 `node --env-file=.env src/main.mjs`。没有登记客户端时仍可注册/验证，但不能开始 OIDC 授权；不会默认开放生产 redirect URI。
 
@@ -59,7 +59,7 @@ node --env-file=.env src/rotate-keys.mjs
 
 然后重启服务；新 `kid` 用于 access/ID token 签名，旧 JWKS 公钥保留至少 300 秒 + 60 秒时钟余量，再次加载时移除到期旧 key。轮换不改变 Cookie 秘密或刷新族。不可在旧进程仍签发 token 时运行轮换，否则旧 key 的保留时间会计算错误。密钥与数据库须分别做加密运维备份，不能提交或放进内容备份。
 
-日志只有操作 ID、状态、固定路由标签、耗时和错误代码；不记录 URL/query/body/headers、邮箱、来源地址、token、验证码或邮件内容。`/healthz` 只代表 DB 可读，不代表邮件送达或宿主在线。没有审计框架、全局设备上限或宿主 token。
+日志只有操作 ID、状态、固定路由标签、耗时和错误代码；不记录 URL/query/body/headers、邮箱、来源地址、token、验证码或邮件内容。`/healthz` 只代表 DB 可读，不代表邮件送达或宿主在线。没有审计框架或全局设备上限；S1b 的宿主 resource token 与 S2 中继凭据见 CLIENT_API。
 
 ## 验证与未做项
 
@@ -72,8 +72,18 @@ npm audit --audit-level=high
 
 Mac Node 24.21.0 本地 30/30 通过，独立依赖审计 0 漏洞。[Linux Cloud foundation tests](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 通过（同一套 30 项测试）；主仓后续检查另见 PR，不与 cloud 结果混算。
 
-未做：五端客户端接入、宿主验签/认领/DPoP/会话交换/内容设备授权（S1b）、中继/推送/备份/共享；真实邮件投递、服务器/systemd/Caddy/DNS 部署。本包未连接服务器、未发真实邮件。部署文件仍是 [审查草稿](deploy/README.md)。
+未做：五端完整客户端接入（S1c）、推送/备份/共享；真实邮件投递、服务器/systemd/Caddy/DNS 部署。本包未连接服务器、未发真实邮件。部署文件仍是 [审查草稿](deploy/README.md)。
 
 ## S1b 宿主身份配合
 
 迁移 003 增加宿主安装公钥、认领挑战、membership 与最小撤销事件；`src/hosts.mjs` 处理安装签名与签名事件 feed。OIDC host resource 只为已认领成员签发，token endpoint DPoP key 必须匹配邮件已确认设备公钥；无内容授权自动继承。宿主实现/隔离测试见 `../../src/personal-cloud/README.md`，正式接口见 CLIENT_API 7.4–7.5。云密码/邮箱 epoch 更新在同一 SQLite 事务产生撤销事件；宿主离线不宣称已收到。
+
+## S2 中继配合
+
+`CLOUD_RELAY_DOMAIN=hosts.example.com` 启用 S2，`CLOUD_RELAY_SERVER_NAME=relay.example.com` 固定 frpc 传输 SNI。默认回环端口：frps 7000 / HTTPS mux 7443，云 control/content ingress 7001/7444，plugin 8788；可用 deploy/cloud.env.example 的五项端口覆盖，端口必须彼此不同。HAProxy 才监听公网 443。未配置 domain 时不开中继端口，不影响 S1。
+
+迁移 004 保存随机域名、独立 credential generation 与撤销状态，不保存内容。Plugin 单独回环 listener，接受 Login/NewProxy/Ping/NewWorkConn/NewUserConn，仅批准已认领宿主自己的 HTTPS 域名。云拥有 mandatory TCP ingress，用官方插件报告的地址关联控制/内容 socket，撤销或轮换立即关闭已存在连接；frps 官方管理 API 不能踢在线 client，不能把拒绝 Ping 当成立即关闭。见 CLOUD 3 与 CLIENT_API 7.6。
+
+真实 DNS 在部署包接 `createIdentity({relayDns:{present,cleanup}})`；宿主安装签名只允许自己 `_acme-challenge` 的 TXT 值，不接受指定记录名/类型/zone，默认 DNS_NOT_CONFIGURED。安装证书、私钥与 DNS key 不进 Git。
+
+`npm test` 当前常规 cloud 测试 36/36（全链路 E2E 默认显式跳过）；`.github/workflows/relay.yml` 下载已校验的官方 frp，单独跑实际 TCP 443 全链路，不使用用户运行数据。Mac 相同链路在 18443 通过，示例域名全部用 --resolve / 测试连接地址覆盖；见 `../../src/personal-relay/README.md`。
