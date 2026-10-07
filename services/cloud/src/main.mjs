@@ -3,6 +3,7 @@ import { openDatabase } from './database.mjs';
 import { createLogger } from './log.mjs';
 import { createMailer } from './mail.mjs';
 import { createCloudServer } from './server.mjs';
+import { createIdentity } from './identity.mjs';
 
 // WAL sidecars and any future service files inherit private permissions.
 process.umask(0o077);
@@ -26,8 +27,9 @@ try {
   const config = loadConfig();
   const opened = await openDatabase(config.databasePath);
   database = opened.database;
-  createMailer(config, { logger });
-  server = createCloudServer({ ...opened, logger });
+  const mailer = createMailer(config, { logger });
+  const identity = await createIdentity({ database, config, mailer, logger });
+  server = createCloudServer({ ...opened, logger, identity });
   await new Promise((resolve, reject) => {
     server.once('error', reject);
     server.listen(config.port, config.host, () => {
@@ -42,7 +44,10 @@ try {
   });
   process.once('SIGTERM', () => shutdown('SIGTERM'));
   process.once('SIGINT', () => shutdown('SIGINT'));
-  logger.info('service.started', { port: server.address().port, schemaVersion: opened.schemaVersion });
+  logger.info('service.started', {
+    port: server.address().port,
+    schemaVersion: opened.schemaVersion,
+  });
 } catch (error) {
   database?.close();
   logger.error('service.start_failed', { code: error.code ?? 'STARTUP_FAILED' });

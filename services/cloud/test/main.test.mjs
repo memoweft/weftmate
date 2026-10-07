@@ -8,6 +8,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createInterface } from 'node:readline';
 import { DatabaseSync } from 'node:sqlite';
+import './dependencies.mjs';
 
 const serviceDir = fileURLToPath(new URL('../', import.meta.url));
 
@@ -42,7 +43,7 @@ test('real entrypoint starts on an isolated port, serves health, and closes on S
   child.kill('SIGTERM');
   assert.deepEqual(await exited, [0, null]);
   const db = new DatabaseSync(path.join(root, 'cloud.sqlite'));
-  try { assert.equal(db.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 1); }
+  try { assert.equal(db.prepare('SELECT count(*) AS count FROM schema_migrations').get().count, 3); }
   finally { db.close(); }
 });
 

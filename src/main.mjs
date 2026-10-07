@@ -1736,8 +1736,10 @@ async function bootstrap() {
         return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
       }
       personalMemoryIpc.recallRequests++;
+      const foregroundProfile = settingsMod.listModelProfiles().profiles.find(profile =>
+        profile.id === settingsMod.sessionModelBinding(request.sessionId));
       const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,
-        sessionId: request.sessionId });
+        sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) });
       if (recalled?.state === 'ready' && typeof recalled.contextText === 'string' && recalled.contextText.trim()) {
         personalMemoryIpc.recallWithContext++;
       }
@@ -3166,8 +3168,10 @@ async function bootstrap() {
       });
       if (accessPort !== null) {
         const { createPersonalAccessService } = await import('./personal-access/index.mjs');
+        const { cloudIdentityFromEnvironment } = await import('./personal-cloud/index.mjs');
         personalAccessService = await createPersonalAccessService({
           root: join(userDataDir, 'personal-access'), port: accessPort, backend: accessBackend,
+          cloudIdentity: cloudIdentityFromEnvironment(),
           verifyToolResult: (input) => accessBackend.verifyToolResult(input),
           uiHandler: servePersonalAccessUi,
           androidPackagePath,

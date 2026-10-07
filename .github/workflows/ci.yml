@@ -35,17 +35,17 @@ jobs:
           node-version: 24
           cache: npm
 
-      # Independent zero-dependency cloud suite; no Electron or DSH needed.
-      - name: Cloud foundation tests (Linux)
-        if: runner.os == 'Linux'
-        working-directory: services/cloud
-        run: node --test test/*.test.mjs
-
       # npm ci installs from package-lock.json. get-windows v9 ships N-API
       # prebuilds so no native toolchain is normally needed; if a prebuild is
       # ever missing for a runner, add the platform's build deps here.
       - name: Install dependencies
         run: npm ci
+
+      # Cloud + host identity integration; isolated services, no Electron or DSH runtime.
+      - name: Cloud identity tests (Linux)
+        if: runner.os == 'Linux'
+        working-directory: services/cloud
+        run: node --test test/*.test.mjs
 
       - name: Release preflight
         run: npm run release:preflight
@@ -114,3 +114,36 @@ jobs:
           else
             node .github/scripts/ci-unit-tests.mjs known
           fi
+
+  observed-core:
+    name: Observed bridge (real MemoWeft Core)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout WeftMate
+        uses: actions/checkout@v4
+      - name: Checkout pinned MemoWeft Core (MW-2)
+        uses: actions/checkout@v4
+        with:
+          repository: memoweft/memoweft
+          # MemoWeft main after MW-2 (memoweft/memoweft#84).
+          ref: 0f786cd60663d447c8276200ec69fecae4d5d7bb
+          path: memoweft-core
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install WeftMate and real Core dependencies
+        run: |
+          npm ci
+          python -m pip install ./memoweft-core/py
+          python -c "import sys; print('WEFTMATE_TEST_MEMOWEFT_PYTHON=' + sys.executable)" >> "$GITHUB_ENV"
+      - name: Real observed lifecycle integration
+        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts
+        env:
+          WEFTMATE_TEST_MEMOWEFT_SOURCE: ${{ github.workspace }}/memoweft-core/py/src

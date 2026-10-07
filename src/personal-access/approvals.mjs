@@ -38,7 +38,7 @@ export function createApprovalOperations(context) {
     }
     if (activeSource) {
       const device = account.devices[source.sourceDeviceId];
-      if (!device || device.authKind !== 'password' || device.revoked || !Number.isSafeInteger(source.sourceAuthEpoch) ||
+      if (!device || !['password', 'cloud'].includes(device.authKind) || device.revoked || !Number.isSafeInteger(source.sourceAuthEpoch) ||
           device.authEpoch !== source.sourceAuthEpoch || Date.parse(device.expiresAt) <= context.timestamp()) {
         throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       }

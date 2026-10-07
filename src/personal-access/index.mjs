@@ -32,6 +32,8 @@ import { createArtifactOperations } from './artifacts.mjs';
 import { createHttpHandler } from './http.mjs';
 import { createMemoryHttpHandler } from './memory-http.mjs';
 import { createPersonalHealthStore } from '../personal-health/index.mjs';
+import { createHostCloudIdentity } from '../personal-cloud/index.mjs';
+import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -52,7 +54,7 @@ export { uniqueSessionOwner } from './store.mjs';
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, systemManager = null }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -90,10 +92,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   if (backend.getTaskReplyEvidence !== undefined &&
       typeof backend.getTaskReplyEvidence !== 'function') throw failure('INVALID_CONFIGURATION');
   await ensurePrivateDirectory(root);
+  if (cloudIdentity) await backupBeforeCloud(root);
   const storeFile = path.join(root, 'store.json');
   let rootState;
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get root() { return root; },
+    get cloudIdentity() { return hostCloudIdentity; },
     get accountModelForProfile() { return accountModelForProfile; },
     get accountModelManager() { return accountModelManager; },
     get systemManager() { return systemManager; },
@@ -397,6 +402,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   let storageFault = false;
   let hashQueue = Promise.resolve();
   let queuedHashes = 0;
+  let hostCloudIdentity = null;
   const active = new Set();
   const activeByCommand = new Map();
   const scheduled = new Set();
@@ -464,6 +470,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       throw error;
     }
     rootState = next;
+    hostCloudIdentity?.closeInvalidResponses();
     return value;
   }
 
@@ -505,6 +512,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
       server = candidate;
       origin = `http://127.0.0.1:${candidate.address().port}`;
+      hostCloudIdentity?.start();
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
         for (const operation of Object.values(account.modelOperations ?? {})) {
           if (operation.status === 'pending') scheduleModelOperation(ownerId, operation.requestId);
@@ -547,6 +555,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     issueSetupGrant: authentication.issueSetupGrant,
     enrollDevice: authentication.enrollDevice,
     revokeDevice: authentication.revokeDevice,
+    syncCloudRevocations: () => hostCloudIdentity?.syncRevocations(),
+    receiveCloudRevocations: (token) => hostCloudIdentity?.applyEvents(token),
     listDevices: authentication.listDevices,
     hasVerifiedPersonalTool() {
       return Object.values(accountState(rootState.legacyOwnerId).commands).some((command) => command.kind === 'desktop.open_app' &&
@@ -573,6 +583,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        hostCloudIdentity?.close();
         mobileUi?.close();
         const browserClosed = Promise.resolve(browserReader?.close());
         const syncClosed = Promise.all([...syncStores.values()].map((store) => store.close()));
@@ -619,5 +630,6 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       return closePromise;
     },
   };
+  if (cloudIdentity) hostCloudIdentity = await createHostCloudIdentity(context, cloudIdentity);
   return service;
 }

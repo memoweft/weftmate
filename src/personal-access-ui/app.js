@@ -23,7 +23,7 @@
     avatarGeneration: 0, avatarSelectionGeneration: 0,
     profileDraftAvatar: undefined, profileConflict: false, profileSaving: false, profileOperationGeneration: 0, profileDraftGeneration: 0,
     avatarChecking: false, avatarObjectUrl: null,
-    profileFetchGeneration: 0, deviceFetchGeneration: 0, deviceEditing: null, deviceNotice: '', cachedDevices: [] }
+    profileFetchGeneration: 0, deviceFetchGeneration: 0, pendingDeviceFetchGeneration: 0, deviceEditing: null, deviceNotice: '', cachedDevices: [] }
   state.projects = []
   state.projectCanManage = false
   state.projectPending = null
@@ -211,6 +211,9 @@
     state.deviceEditing = null
     state.deviceNotice = ''
     state.cachedDevices = []
+    byId('pending-device-list').replaceChildren()
+    byId('pending-devices').hidden = true
+    byId('pending-device-badge').hidden = true
     byId('profile-display-name').value = ''
     byId('profile-avatar-file').value = ''
     byId('profile-avatar-image').removeAttribute?.('src')
@@ -379,6 +382,7 @@
     state.account = payload.account
     state.device = payload.device
     state.csrfToken = payload.csrfToken
+    void refreshPendingDevices()
     byId('account-name').textContent = payload.account.username
     if (state.currentView === 'account') resetProfileDraft()
   }
@@ -677,6 +681,7 @@
     }
   }
   async function refreshDevices() {
+    void refreshPendingDevices()
     const loading = byId('devices-loading')
     const token = accountToken()
     if (!accountCurrent(token)) return
@@ -705,6 +710,53 @@
       if (error.code === 'UNAUTHORIZED') return sessionExpired()
       loading.textContent = state.deviceNotice ? `${state.deviceNotice}但列表暂时无法刷新，请稍后重试。` : '设备记录暂时无法读取。请点击刷新重试。'
       state.deviceNotice = ''
+    }
+  }
+
+  async function refreshPendingDevices() {
+    const generation = state.identityGeneration
+    const ownerId = state.account?.ownerId
+    if (!state.csrfToken || !ownerId) return
+    const fetchGeneration = ++state.pendingDeviceFetchGeneration
+    const current = () => state.identityGeneration === generation && state.account?.ownerId === ownerId
+      && state.pendingDeviceFetchGeneration === fetchGeneration
+    try {
+      const payload = await accessApi('/cloud/devices/pending')
+      if (!current() || !Array.isArray(payload.devices)) return
+      const list = byId('pending-device-list')
+      list.replaceChildren()
+      byId('pending-devices').hidden = payload.devices.length === 0
+      byId('pending-device-badge').hidden = payload.devices.length === 0
+      errorAt('pending-device-error', '')
+      for (const device of payload.devices) {
+        const item = element('li', 'device-item')
+        const content = element('div', 'device-content')
+        content.append(element('strong', '', device.name || '新设备'),
+          element('p', 'device-meta', `请求于 ${formatDate(device.requestedAt)}`),
+          element('code', 'device-meta', device.fingerprint))
+        const actions = element('div', 'actions')
+        for (const [decision, label] of [['allow', '允许'], ['deny', '拒绝']]) {
+          const button = element('button', decision === 'allow' ? 'button primary small' : 'button secondary small', label)
+          button.type = 'button'
+          button.addEventListener('click', async () => {
+            for (const control of actions.children) control.disabled = true
+            try {
+              await accessApi(`/cloud/devices/${encodeURIComponent(device.id)}/decision`, { method: 'POST', protectedWrite: true, body: { decision } })
+              if (current()) await refreshPendingDevices()
+            } catch (error) {
+              if (!current()) return
+              errorAt('pending-device-error', failureMessage(error))
+              for (const control of actions.children) control.disabled = false
+            }
+          })
+          actions.append(button)
+        }
+        item.append(content, actions)
+        list.append(item)
+      }
+    } catch (error) {
+      if (!current() || error.code === 'NOT_FOUND') return
+      errorAt('pending-device-error', '待批准设备暂时无法读取，请点击刷新重试。')
     }
   }
 
