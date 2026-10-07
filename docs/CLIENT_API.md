@@ -335,7 +335,7 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 
 ## 5. 客户端差异（Apple逐项对照）
 
-以下结论来自当前 `PersonalClient.swift` 和相关Codable/intent模型与上述服务端路径/字段对照；A2/A3 已同步修复 Swift 客户端。表中的「一致」只确认静态请求/响应契约，不代表真机/部署连通性已验收。
+以下结论来自当前 `PersonalClient.swift` 和相关Codable/intent模型与上述服务端路径/字段对照；A2/A3 已同步修复 Swift 客户端；S1c-Apple 已加入云账号与内容设备客户端（云浏览器接线缺口见 5.2）。表中的「一致」只确认静态请求/响应契约，不代表真机/部署连通性已验收。
 
 ### 5.1 已调用接口的逐项核对
 
@@ -344,6 +344,10 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 | POST `/auth/register`；POST `/auth/login` | 请求 `username,password,deviceName,displayName?` 与服务端一致；读取Cookie/CSRF再用status核对owner/host |
 | GET `/auth/me`；GET `/status` | `account.ownerId,device.id,csrfToken` 与 `ownerId,hostId` 一致；身份不匹配或401清凭据，5xx/超时保留离线身份便于恢复 |
 | POST `/auth/logout`；GET `/auth/devices` | `{}`注销体、Cookie/Origin/CSRF一致；设备createdAt/lastSeenAt等可选字段兼容。注销先清本地身份，服务端失败仍报告未确认 |
+| 云 OIDC discovery/auth/token/jwks（7.2） | S1c-Apple：系统 ASWebAuthenticationSession；Code + PKCE S256、精确 callback/state、ID token nonce/issuer/aud/RS256/exp 验证，JOSESwift 3.0.0 签验 JWS。按 7.7 发送 `wm_device_id=apple-<公钥指纹>`、`wm_public_jwk`，云浏览器隐藏字段仍需邮件确认；公开 client `weftmate-apple`、redirect `com.weftmate.apple:/oauth/callback` 须在云端登记；无 client secret。轮换 refresh token 存 ThisDeviceOnly Keychain，恢复时取新 access token |
+| POST `/auth/cloud-nonce`；POST `/auth/cloud-session`；POST `/cloud/pairings/redeem` | S1c-Apple：host:session resource + 设备 P-256 DPoP；每次新 nonce/jti/ath/精确 htu，无 Authorization；202 保持等待，不建立内容 session，允许/拒绝与重试/取消有明确界面；200 Cookie/CSRF 后再核对 status 的 ownerId/hostId |
+| GET `/cloud/devices/pending`；POST `/cloud/devices/{id}/decision` | S1c-Apple：已登录前台读取，显示设备名、平台（官方客户端在 deviceName 中带 Mac/iPhone）、请求时间，允许/拒绝使用当前 Cookie/CSRF；现有响应无独立 platform 字段，其他名称显示「平台未提供」 |
+| POST 云 `/personal/v1/cloud/hosts/relay/discover` | S1c-Apple：cloud:account Bearer + hostId 取得 relay base URL；offline/revoked/网络断流显示连接不可用，保留云登录。目录不含 pin；HTTPS 用系统 CA/域名验证再比较当面配对得到的 P-256 SPKI，上传/下载沿用同一验证；不接受目录覆盖旧 pin |
 | GET `/sessions`；GET `/models` | 会话 `running,sendAvailable,unavailable?,conversationId?,modelProfileId?` 与模型 `id,name,model,configured,routeFingerprint` 一致；Apple限制会话≤20,000、模型≤500 |
 | GET `/sessions/{id}/events` | 已在 A3 修复：无游标尾页、beforeSeq 上翻、afterSeq 增量；上翻不覆盖正向水位，按 seq 去重。公开事件 data（含 endReasonKind）完整缓存/投影；步骤详情走按 seq 详情接口，historyLimit 枚举与全量扫描路径已移除 |
 | GET `/commands` | before/limit/nextBefore一致；服务端按账号列全部命令，Apple读一页后过滤选中会话根任务，不是服务端按session过滤；可能需继续翻页才找到当前会话任务 |
@@ -377,6 +381,8 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 附件 | Apple能解码原件元数据并计数，但没有上述四个附件PUT/GET；SharedCommandPayload无attachments、originalAttachments、attachmentMessageId，无法从该client上传/发送/下载附件或仅发附件 | 已在 A2 修复：四个 PUT/GET 与显示版、附件引用/仅附件发送、历史原件及旧图片下载接入；Mac/iPhone「+」、缩略图、侧栏/全屏 Quick Look、保存/分享；原件大小/hash 校验 |
 | 任务输入 | Apple message mode固定queue，无steer；无supplements/resume；Task读取未呈现executionSteps/background job全部字段。不能把现有session.cancel当可取消排队卡片 | M1-0b/M1-0d/M1-4 |
 | 账号/设备 | 无auth/state/setup/profile/change-password、设备PATCH/DELETE；登录/注册/列设备已有能力 | Apple账号设置接入（setup仍是宿主专属流程） |
+| 云账号页/目录（剩余缺口） | S1c-Web 已正式提供 7.7 原生 deviceId/JWK 浏览器 bootstrap，Apple 已接入；注册/找回密码尚无云浏览器页面。discover 必须传 hostId，尚无账号宿主列表；已有设备批准也没有原生可信 pin 转交接口。首次无配对材料的云登录仍不能自动发现宿主并固定可信 pin | 云轨道补账号页与账号宿主目录/已有信任通道的 pin 交付；部署登记 Apple client 并更新 S1c-Web 服务。Apple 不猜造接口、不信云目录替换 pin；系统浏览器与已取得配对信息的登录按现有正式契约实现 |
+| Apple 配对/密钥 | iPhone 相机或图片二维码读取 7.7 标准 URL `#pair=<base64url JSON>`、`wm1.` 复制码，兼容 7.4/7.6 裸 pairing JSON；Mac 粘贴电脑配对信息或在另一设备批准。P-256 优先 Secure Enclave，不可用用 Keychain；不跨设备同步。二维码过期/已用由宿主最终拒绝，重试不隐式允许 | S1c-Apple 已接入；真机 Secure Enclave/相机、可信 pin 转交与生产内容证书仍待对应轨道验证；电脑 QR 展示已由 S1c-Web 实现。Watch 无变更 |
 | 模型 | 有GET models与create选择modelProfileId；无verify、模型代理chat/completions、account/models九项管理/转移接口。未声明密钥转移，符合当前权限范围 | Apple模型设置/手机独立对话后续包 |
 | 项目/浏览器 | 无projects/workspaces/browser六项独立请求；已有会话可列/读/发送，但无法在此client登记项目、撤销或创建对应会话 | Apple工作区接入 |
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |

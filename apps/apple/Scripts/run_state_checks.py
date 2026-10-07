@@ -9,7 +9,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_MODEL = ["AppleAppModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState"]
+APP_MODEL = ["CloudBrowser", "CloudLoginModel", "AppleAppModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState"]
 CHECKS = {
     "AppleContractStateChecks": APP_MODEL,
     "AppleAdoptionStateChecks": APP_MODEL,
@@ -29,6 +29,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--artifacts", type=Path, required=True)
     parser.add_argument("--core-build", type=Path, help="Reuse an isolated SwiftPM scratch directory.")
+    parser.add_argument("--check", choices=list(CHECKS), action="append", help="Run only a related state check; omit for CI full state suite.")
     args = parser.parse_args()
     args.artifacts.mkdir(parents=True, exist_ok=True)
     run = Path(tempfile.mkdtemp(prefix="apple-state-", dir=args.artifacts.resolve()))
@@ -38,10 +39,12 @@ def main():
     with (run / "core-build.log").open("w") as log:
         subprocess.run(build, stdout=log, stderr=subprocess.STDOUT, check=True)
     products = Path(subprocess.check_output(build + ["--show-bin-path"], text=True).strip())
-    objects = sorted((products / "WeftMateCore.build").glob("*.swift.o"))
+    objects = sorted((products / "WeftMateCore.build").glob("*.swift.o")) + sorted((products / "JOSESwift.build").glob("*.swift.o"))
     results = []
     print(f"Artifacts: {run}", flush=True)
     for name, models in CHECKS.items():
+        if args.check and name not in args.check:
+            continue
         executable = run / name
         sources = [ROOT / "UI" / (model + ".swift") for model in models]
         if models == APP_MODEL:
