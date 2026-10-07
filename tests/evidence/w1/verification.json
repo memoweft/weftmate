@@ -31,5 +31,6 @@
   "maximizedTrayStartup": true,
   "headless": true,
   "defaultDesktopFirstRun": true,
+  "startupModelConfigPreserved": true,
   "explicitDshDiagnostics": true
 }

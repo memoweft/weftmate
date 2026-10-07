@@ -9,7 +9,7 @@
 | 原生窗口打开并登录 | [01-login.png](01-login.png)；在程序表单输入已有测试账号的密码 |
 | 消息、真实 DSH 审批与处理 | [02-approval.png](02-approval.png)；程序内允许本次，原工具继续执行 |
 | 时间线与成果 | [03-timeline.png](03-timeline.png)；成果经已有存储校验与下载接口读取 |
-| 桌面启动设置 | [04-settings.png](04-settings.png)；开关调用主进程，参数含当前数据目录与 `--start-in-tray` |
+| 桌面启动设置 | [04-settings.png](04-settings.png)；开关调用主进程，参数含当前数据目录、`--start-in-tray`，并保留 M0-6 的 `--local-model-config` |
 | 真实 DSH 提问与回答 | [05-question.png](05-question.png)；程序内选择答案并提交 |
 | 三类系统通知 | 捕获原生 `Notification` 的 `show` 事件：审批、提问、完成；见 [verification.json](verification.json) |
 | 通知打开对应对话 | 在第二段对话中触发第一段的通知点击事件，窗口唤出并切换到第一段消息 |
@@ -22,6 +22,6 @@
 
 开机设置测试拦截了 Windows 注册表写入，避免覆盖日用启动项；真实系统登录周期和安装形态留 W-2。通知/托盘的点击由测试向真实原生对象发出点击事件，系统通知的展示则通过实际 `show` 事件独立确认；没有用假通知代替。默认程序打开与资源管理器调用均委托真实系统 API（应用程序接口）。
 
-`npm run typecheck` 通过；`node --test tests/personal-host.test.ts tests/personal-access-ui-interaction.test.ts tests/personal-desktop-ui.test.ts` **71/71**。另跑 `tests/personal-access-ui.test.ts` 时，其固定静态资源检查通过；该文件既有「public account shell keeps secrets out of markup and code-generated HTML」失败仍属于 `.github/ci-test-exceptions.json` 登记例外。完整测试由 GitHub CI 执行。
+`npm run typecheck` 通过；`node --test tests/personal-host.test.ts tests/personal-access-ui-interaction.test.ts` **69/69**（合入 M0-6 后）。另跑 `tests/personal-access-ui.test.ts` 时，其固定静态资源检查通过；该文件既有「public account shell keeps secrets out of markup and code-generated HTML」失败仍属于 `.github/ci-test-exceptions.json` 登记例外。完整测试由 GitHub CI 执行。
 
 旧 DSH 窗口保留为显式 `--dsh-window`：它仍承担运行时设置、模型路由诊断和旧精灵管理，不作为默认界面。桌面精灵窗口和托盘唤醒/休息代码保留。安装包、桌面快捷方式、原生云登录回跳及真实开机登录周期不在本包。
