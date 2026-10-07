@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
-| Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 审查修改已实现；健康待写队列不影响非健康召回，模型按地址自动判断且可用 modelTier 覆盖；相关单测/类型检查通过；三平台 CI 见 PR checks |
+| Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 审查修改已实现；健康待写队列不影响非健康召回，模型按地址自动判断且可用 modelTier 覆盖；相关单测/类型检查通过；三平台 CI 因 GitHub 付款/额度未启动，待恢复后重跑 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -20,7 +20,7 @@
 
 ## 最近一次场景结果
 
-H2 修订：隔离健康/模型位置/账号模型/设置/模型目录测试 22/22，含有摘要 + false + 云端照常召回、LAN/loopback 地址边界、手动覆盖、位置修订/幂等/凭据复用/重开存储；既有记忆/个人访问/界面/模型凭据回归 119 通过，7 项已知主干失败与 1 项 POSIX 下 Windows 路径夹具失败均在原 CI 精确例外中；类型检查通过。未连真实宿主、未碰日用数据；vendor/真实 Core observed 写入与撤回未验，CI 按精确例外运行；main `201d36a` 复现 M0-2 model-budget-runtime 缺 vendor，已补该用例到 vendorTests，未列为产品通过；CI 另发现既有 IPC 夹具读到半写 JSON，已改夹具为原子发布回执，未改生产生命周期逻辑，相关生命周期夹具 10 项通过（POSIX 整树清理仍按原例外不运行）。
+H2 修订：隔离健康/模型位置/账号模型/设置/模型目录测试 22/22，含有摘要 + false + 云端照常召回、LAN/loopback 地址边界、手动覆盖、位置修订/幂等/凭据复用/重开存储；既有记忆/个人访问/界面/模型凭据回归 119 通过，7 项已知主干失败与 1 项 POSIX 下 Windows 路径夹具失败均在原 CI 精确例外中；类型检查、发布预检、依赖冒烟/审计通过（0 漏洞）；模型表单隔离交互 1/1。本机 CI required：709 通过/7 跳过，唯一失败为缺 127.0.0.2 回环别名导致合成 HTTP 夹具 EADDRNOTAVAIL（现有 macOS CI 管理员步骤负责配置）。GitHub push/PR 六项 job 因付款/额度未启动，尚未全绿；见 PR #25。未连真实宿主、未碰日用数据；vendor/真实 Core observed 写入与撤回未验，CI 按精确例外运行；main `201d36a` 复现 M0-2 model-budget-runtime 缺 vendor，已补该用例到 vendorTests，未列为产品通过；CI 另发现既有 IPC 夹具读到半写 JSON，已改夹具为原子发布回执，未改生产生命周期逻辑，相关生命周期夹具 10 项通过（POSIX 整树清理仍按原例外不运行）。
 
 M0-7 场景集已建立；Qwen / MiMo 实测基线尚未跑。
 
