@@ -79,7 +79,7 @@ private actor ContractHTTP: HTTPTransport {
             if let command, request.url!.lastPathComponent == command["requestId"] as? String { object = ["command": command] }
             else { status = 404; object = ["error": ["code": "NOT_FOUND"]] }
         case "/personal/v1/sessions/" + sessionID + "/events":
-            let after = Int(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }!.value!)!
+            let after = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }?.value.flatMap(Int.init) ?? -1
             let events: [[String: Any]] = message.map { [
                 ["seq": 0, "type": "turn.started", "data": ["turn": 1]], ["seq": 1, "type": "user.message", "data": $0],
                 ["seq": 2, "type": "turn.ended", "data": ["turn": 1, "reason": "completed"]]] } ?? []

@@ -96,6 +96,12 @@ public struct ConversationSummary: Identifiable, Sendable, Equatable {
     public let running: Bool
     public let sendAvailable: Bool
     public let originalModelLabel: String?
+    public init(id: String, title: String, conversationId: String?, sessionId: String?, running: Bool,
+                sendAvailable: Bool, originalModelLabel: String?) {
+        self.id = id; self.title = title; self.conversationId = conversationId; self.sessionId = sessionId
+        self.running = running; self.sendAvailable = sendAvailable; self.originalModelLabel = originalModelLabel
+    }
+
 }
 
 public enum MessageRole: String, Codable, Sendable { case user, assistant }
@@ -131,7 +137,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
     case invalidServer, notAuthenticated, accountChanged, identityMismatch
     case transport(TransportFailure)
     case server(status: Int, code: String)
-    case invalidResponse, responseTooLarge, historyLimit, credentialStorage
+    case invalidResponse, responseTooLarge, credentialStorage
     case platformCapabilityUnavailable
     case requestLedgerLimit
     case logoutIncomplete(credentialRemoved: Bool, remoteConfirmed: Bool)
@@ -146,7 +152,6 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .server(_, let code): code
         case .invalidResponse: "INVALID_RESPONSE"
         case .responseTooLarge: "RESPONSE_TOO_LARGE"
-        case .historyLimit: "HISTORY_WINDOW_LIMIT"
         case .credentialStorage: "CREDENTIAL_STORAGE_UNAVAILABLE"
         case .platformCapabilityUnavailable: "APPLE_CAPABILITY_UNAVAILABLE"
         case .requestLedgerLimit: "LOCAL_REQUEST_LEDGER_LIMIT"
@@ -173,7 +178,6 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .server(_, let code): "服务器暂时无法完成操作（\(code)）。"
         case .invalidResponse: "服务器响应格式不符合接口约定。"
         case .responseTooLarge: "服务器响应超过读取上限。"
-        case .historyLimit: "记录超过本次读取上限，尚未显示完整历史。"
         case .credentialStorage: "无法安全保存登录凭据，请检查钥匙串访问。"
         case .platformCapabilityUnavailable: "服务器尚未接通 Apple 设备的续聊能力；当前可读取原会话。"
         case .requestLedgerLimit: "本机请求记录已达到保存上限，请先核对已有请求。"
