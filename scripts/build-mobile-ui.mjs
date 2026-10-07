@@ -23,7 +23,7 @@ if (!outputDir || !path.isAbsolute(outputDir) ||
 const manifest = options.has('--activate-release')
   ? await activateMobileUiRelease({ outputDir, releaseId: options.get('--activate-release') })
   : await publishMobileUi({ sourceDir, outputDir,
-    uiVersion: options.get('--ui-version') ?? '0.8.1',
-    minNativeVersionCode: Number(options.get('--min-native-version-code') ?? '14'),
+    uiVersion: options.get('--ui-version') ?? '0.8.2',
+    minNativeVersionCode: Number(options.get('--min-native-version-code') ?? '15'),
     releaseNotes: options.get('--release-notes') ?? '' });
 console.log(`[mobile-ui] active uiVersion=${manifest.uiVersion} assetBase=${manifest.assetBase}`);

@@ -41,7 +41,21 @@
 
 ## 本地模型
 
-日用主力是本地 Qwen3.8 27B（OpenAI 兼容接口）。统一的启动方式与健康检查由 PLAN M0-6 确定后写在这里。
+本机使用 D:\AI 已有的 ModelSwitcher（模型切换代理），动态入口为 `http://127.0.0.1:8081/v1`。请求的 `model` 决定实际装载模型；代理管理 8080 后端与请求租约。运行参数的唯一来源是仓库外 `D:\AI\Config\*.json`，WeftMate 不启动 llama-server，也不维护模型参数。启动与维护按 D:\AI 的 README 和正式控制脚本执行。
+
+将 `scripts/local-model-endpoint.example.json` 复制到仓库外 `Runtime/LocalModel/config.json`，把占位端口替换为本机入口端口。配置只包含 `baseUrl`、`apiKeyEnv` 和可选的 `restartPath`，没有模型权重、上下文或 GPU（图形处理器）参数。`apiKeyEnv` 指定凭据环境变量名；本机 `MODEL_SWITCH_UNIFIED_KEY` 从 Windows 用户环境读取，仅在进程中使用，不在配置、日志或仓库中保存其值。省略 `restartPath` 时只读状态。
+
+宿主用 `--local-model-config` 接入状态与重启：
+
+```powershell
+node scripts/run-personal-host.mjs --user-data-dir <隔离宿主目录> --access-port 0 --local-model-config D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
+# 桌面应用可使用同一配置
+npm start -- --local-model-config=D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
+```
+
+系统状态读取受鉴权的 `GET /switch/status`（当前模型与最近切换）和 `GET /props`（真实 `n_ctx` 与 `total_slots`）；读取失败显示「不可用」，未指定配置或文件不存在显示「尚未配置」。重启调用 `POST /switch/restart`：代理等待现有请求租约结束，再用当前模型在 D:\AI\Config 中的配置调用现有控制脚本，不修改参数、不重启代理。此入口负责选择当前模型的 `launcher_profile`，WeftMate 无需另配脚本路径。完成后宿主重建容量缓存并重新读取 `/props`。实测模型重启约两分钟；系统重启请求使用 6 分钟维护等待窗口，普通请求仍用原有短超时。手机需使用包含此原生网络修正的 APK（安卓安装包）。
+
+设置 → 我的电脑模型使用 8081 动态入口及正式模型 ID（标识）；本包冒烟使用 `qwen3.8-27b-original`。后台模型默认跟随当前对话，可在桌面设置中单独选择；只有本机回环入口且 `/props.total_slots=1` 时按地址排队：主对话整轮（包括工具间隙）优先，标题与记忆推理等待空闲。云 API（应用接口）、多槽或未知槽数服务直接并行。MemoWeft 配置的 `authRef` 可以引用当前账户可见的模型配置，`baseUrl` 填动态入口、`model` 保持 `@current`；实际推理走宿主的共享队列和已授权后台路由。召回只查记忆，不调用模型。Android 0.8.2 / code15 支持手机只读状态与重启请求；发布新 Web UI（网页界面）时使用最低原生版本 15。
 
 ## 云服务运维
 

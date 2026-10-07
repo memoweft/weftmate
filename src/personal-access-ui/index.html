@@ -226,6 +226,15 @@
             <ul class="device-list" id="pending-device-list" aria-live="polite"></ul>
           </div>
         </section>
+        <section class="card group" aria-labelledby="system-heading">
+          <div class="group-heading"><h2 id="system-heading">系统状态</h2><button type="button" class="button secondary small" id="system-refresh">刷新</button></div>
+          <p id="system-notice" class="muted" role="status" aria-live="polite">正在读取…</p>
+          <ul id="system-services" class="system-services"></ul>
+          <label for="background-model-select">后台模型</label>
+          <select id="background-model-select" disabled><option value="">跟随主模型</option></select>
+          <p class="field-help">主模型在对话中选择。标题、记忆整理和关心使用后台模型，主对话空闲时执行。</p>
+          <p id="background-model-notice" class="muted" role="status" aria-live="polite"></p>
+        </section>
         <section class="card group" id="account-model-section" aria-labelledby="account-models-heading" hidden>
           <div class="group-heading"><div><h2 id="account-models-heading">我的电脑模型</h2><p class="muted">管理当前账户保存的本地和云端模型。新配置不会改变已有对话选用的模型；测试连接只核目录与鉴权，不发送推理消息。</p></div><button type="button" class="button secondary small" id="account-models-refresh">刷新</button></div>
           <p id="account-models-status" class="muted" role="status" aria-live="polite">正在读取账户模型…</p>

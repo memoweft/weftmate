@@ -137,6 +137,8 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     eventPageSize?: number; syncAvailable?: boolean; syncEvents?: object[]; downloadAvailable?: boolean;
     conversationViews?: Record<string, object>;
     modelCatalog?: object[];
+    systemRead?: object; restartRead?: (url: string, options: any) => Promise<ReturnType<typeof reply>>;
+    abortSignal?: { timeout: (ms: number) => AbortSignal };
     accountModels?: object[]; accountModelWrite?: (url: string, options: any) => object;
     accountModelByRequest?: Record<string, object>;
     syncPost?: 'timeout-no-commit' | 'timeout-committed' | 'conflict'; uuidForSync?: boolean; deviceSuffix?: string;
@@ -192,6 +194,9 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   let refreshTick = () => {}
   const fetch = (url: string, options: any = {}) => {
     requests.push({ url, options })
+    if (url.endsWith('/system') && config.systemRead) return Promise.resolve(reply(config.systemRead))
+    if (url.endsWith('/settings/models')) return Promise.resolve(reply({ backgroundModelProfileId: null }))
+    if (/\/system\/(model|host|memory)\/restart$/.test(url) && config.restartRead) return config.restartRead(url, options)
     if (url.endsWith('/cloud/devices/pending')) return Promise.resolve(reply({ devices: config.pendingDevices?.[profileOwner] ?? [] }))
     if (/\/cloud\/devices\/[^/]+\/decision$/.test(url) && options.method === 'POST') {
       const id = url.split('/').at(-2)
@@ -418,8 +423,9 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   const context = { document, window, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
   TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask,
+  Option: class extends Element { constructor(text: string, value: string) { super('', 'option'); this.textContent = text; this.value = value } },
   __weftmateTestHashBlobSha256: hashBlobSha256, crypto: { randomUUID: () => config.uuidForSync
-    ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal, Intl, Date, btoa,
+    ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal: config.abortSignal ?? AbortSignal, Intl, Date, btoa,
    setTimeout: (callback: () => void, delay: number) => {
      const id = ++timerId
      if (config.taskPollTimers && delay === 2_000) taskTimers.set(id, callback)
@@ -2190,3 +2196,26 @@ test('S1b opening the application shows pending device notice; settings allows o
   assert.equal(page.get('pending-device-list').children.length, 0)
   assert.equal(page.get('pending-device-badge').hidden, true)
 })
+
+test('model maintenance keeps the desktop button waiting through a two-minute load and sends one restart', async () => {
+  let now = 0;
+  const deadlines: Array<{ due: number; controller: AbortController }> = [];
+  const restart = deferred<ReturnType<typeof reply>>();
+  const system = { canRestart: true, queue: {}, model: { state: 'ready', canRestart: true, contextWindow: 98304 },
+    host: { state: 'ready', canRestart: true }, memory: { state: 'disabled', canRestart: false } };
+  const page = harness([], [], false, { systemRead: system,
+    abortSignal: { timeout(ms) { const controller = new AbortController(); deadlines.push({ due: now + ms, controller }); return controller.signal } },
+    restartRead: (_url, options) => new Promise((resolve, reject) => {
+      options.signal.addEventListener('abort', () => reject(new Error('timeout')), { once: true });
+      restart.promise.then(resolve, reject);
+    }) });
+  await flush(); page.get('show-account').fire('click'); await flush(); await flush();
+  const button = page.get('system-services').children[0].children[1];
+  button.fire('click'); await flush();
+  now = 120_000; for (const entry of deadlines) if (entry.due <= now) entry.controller.abort();
+  await flush(); assert.equal(button.disabled, true); assert.equal(button.textContent, '重启中…');
+  assert.equal(page.requests.filter(row => row.url.endsWith('/system/model/restart')).length, 1);
+  restart.resolve(reply(system)); await flush(); await flush();
+  assert.equal(page.get('system-notice').textContent, '已更新');
+  assert.equal(page.get('system-services').children[0].children[1].disabled, false);
+});

@@ -185,15 +185,15 @@ describe('DshWebRuntime lifecycle fences（阶段 0）', () => {
     await web.close()
   })
 
-  test('checkout 缺 CLI 编译入口时直接归为外部预检阻断，不重试或建议跨项目构建', async () => {
+  test('checkout 缺 CLI 编译入口时直接归为外部预检阻断，不重试或建议跨项目构建', async t => {
     const checkout = join(root, 'missing-cli-checkout')
     const web = runtime(checkout, { WEFTMATE_TEST_MODE: 'ready' })
-    const startedAt = Date.now()
+    const preflight = t.mock.method(web as any, 'preflightThenSpawn')
     await assert.rejects(
       web.start(),
       /checkout 编译产物不完整[\s\S]*需 Harness 所有者提供已构建 checkout/,
     )
-    assert.ok(Date.now() - startedAt < 500, '不可恢复的 checkout preflight 不应做三次重试')
+    assert.equal(preflight.mock.callCount(), 1, '不可恢复的 checkout preflight 不应做三次重试')
     await web.close()
   })
 

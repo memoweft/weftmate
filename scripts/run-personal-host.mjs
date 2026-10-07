@@ -25,6 +25,7 @@ let publicOrigin = null;
 let androidPackagePath = null;
 let mobileUiDir = null;
 let requestedWorkspaceDir = null;
+let localModelConfig = null;
 for (let index = 0; index < args.length; index += 2) {
   const flag = args[index];
   const value = args[index + 1];
@@ -38,6 +39,7 @@ for (let index = 0; index < args.length; index += 2) {
     basename(value).toLowerCase() === 'android-candidate.apk') androidPackagePath = resolve(value);
   else if (flag === '--mobile-ui-dir' && mobileUiDir === null && isAbsolute(value)) mobileUiDir = resolve(value);
   else if (flag === '--workspace-dir' && requestedWorkspaceDir === null) requestedWorkspaceDir = value;
+  else if (flag === '--local-model-config' && localModelConfig === null && isAbsolute(value)) localModelConfig = resolve(value);
   else { console.error(`[personal-host] unknown or duplicate option: ${flag}`); process.exit(2); }
 }
 try {
@@ -113,6 +115,7 @@ const child = spawn(electron, ['.', `--user-data-dir=${profile}`, '--personal-ho
   ...(publicOrigin === null ? [] : [`--public-origin=${publicOrigin}`, '--trust-loopback-proxy']),
   ...(androidPackagePath === null ? [] : [`--android-package-path=${androidPackagePath}`]),
   ...(mobileUiDir === null ? [] : [`--mobile-ui-dir=${mobileUiDir}`]),
+  ...(localModelConfig === null ? [] : [`--local-model-config=${localModelConfig}`]),
   ...(accountMemoryConfig === null ? [] : [`--personal-memory-config=${accountMemoryConfig}`])], {
   cwd: repository,
   env,

@@ -23,6 +23,8 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > 512) return false
     val route = path.substringBefore('?')
     val query = path.substringAfter('?', "")
+    if (query.isEmpty() && (route == "/personal/v1/system" || route == "/personal/v1/settings/models" ||
+        route.matches(Regex("/personal/v1/system/(model|host|memory)/restart")))) return true
     if (!query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) ||
         !route.matches(Regex("/personal/v1/(memory|mods|tasks|notifications|workspaces|capabilities)(/[A-Za-z0-9._~:/%-]*)?"))) return false
     // Memory item IDs may contain ':'. app.js sends that character as %3A. No other
@@ -763,8 +765,10 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         require(method in setOf("GET", "POST", "PATCH", "DELETE"))
         require(validBusinessPath(path))
         if (body != null) require(body.toString().toByteArray(Charsets.UTF_8).size <= 64 * 1024)
+        val restarting = method == "POST" && path.matches(Regex("/personal/v1/system/(model|host|memory)/restart"))
         return http.request("${host.origin}$path", method, body,
-            if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host)).body
+            if (method == "GET") mapOf("Cookie" to host.cookie) else authWriteHeaders(host),
+            readTimeoutMs = if (restarting) 360_000 else 20_000).body
     }
 
     private fun authWriteHeaders(host: HostIdentity) = mapOf("Cookie" to host.cookie,

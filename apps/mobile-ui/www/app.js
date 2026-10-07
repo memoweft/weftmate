@@ -104,11 +104,11 @@ function selectConversation(id){closeImagePreview({restoreFocus:false});invalida
   try{localStorage.removeItem(chatSourceKey())}catch{}status('');closeToast();
   activeSend=null;state.sendUncertain=false;state.conversationId=id;try{if(id)localStorage.setItem(selectionKey(),id);else localStorage.removeItem(selectionKey())}catch{}
   closeAttachmentMenu();loadDraft();page('chat');if(id)void refreshHandoff(id)}
-function call(method, params={}) {
+function call(method, params={}, timeoutMs=45000) {
   if (!window.weftNative?.postMessage) return Promise.reject(new Error('NATIVE_UNAVAILABLE'));
   const id = `r${++sequence}`;
   return new Promise((resolve,reject)=>{
-    const timer = setTimeout(()=>{pending.delete(id);reject(new Error('TIMEOUT'))},45000);
+    const timer = setTimeout(()=>{pending.delete(id);reject(new Error('TIMEOUT'))},timeoutMs);
     pending.set(id,{resolve,reject,timer});
     window.weftNative.postMessage(JSON.stringify({id,method,params}));
   });
@@ -1197,6 +1197,37 @@ function settingsPage(target){target.append(heading('设置'),group('个人空�
     row('离线与同步',state.loggedIn?'当前账户的记录与状态':'登录后查看本机与同步状态',()=>page('sync'))]),
   group('应用',[row('界面更新',state.ui?.activeVersion||'内置页面',()=>page('updates')),
     row('原生兼容界面','仅供排查当前系统网页组件',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
+  void systemStatusSection(target);
+}
+async function systemStatusSection(target){const owner=state.owner,epoch=state.authEpoch;
+  const section=el('section','group');section.append(el('h2','','系统状态'));
+  const status=el('p','hint','正在读取…');section.append(status);target.append(section);
+  const current=()=>state.owner===owner&&state.authEpoch===epoch&&target.isConnected&&state.page==='settings';
+  try{const [system,settings]=await Promise.all([
+    call('host.business',{path:'/personal/v1/system',method:'GET'}),
+    call('host.business',{path:'/personal/v1/settings/models',method:'GET'})]);
+    if(!current())return;
+    const labels={ready:'运行中',connected:'运行中',stopped:'已停止',starting:'启动中',disabled:'未启用',
+      unavailable:'不可用',unconfigured:'尚未配置',degraded:'需要处理'};
+    status.textContent=system.queue?.backgroundPending?`${system.queue.backgroundPending} 项后台请求排队中`:'已更新';
+    for(const [key,name] of [['model','模型服务'],['host','宿主'],['memory','记忆']]){const value=system[key];
+      const detail=[labels[value.state]||'状态未知',value.currentModelId?`当前模型 ${value.currentModelId}`:'',
+        value.version?`版本 ${value.version}`:['disabled','unconfigured','stopped'].includes(value.state)?'':'版本未知',
+        value.contextWindow?`上下文 ${value.contextWindow.toLocaleString()}`:'',
+        value.slots?`槽数 ${value.slots}`:'',
+        value.lastSwitch?.at?`最近切换 ${new Date(value.lastSwitch.at).toLocaleString()}${value.lastSwitch.ok?'':'（未成功）'}`:'',
+        value.lastError?`最近错误：${value.lastError}`:''].filter(Boolean).join(' · ');
+      const item=el('div','row'),text=el('span');text.append(el('strong','',name),el('small','',detail));item.append(text);section.append(item);
+      const button=el('button','secondary',`重启${name}`);button.disabled=!system.canRestart||!value.canRestart;
+      button.addEventListener('click',async()=>{button.disabled=true;button.textContent='重启中…';
+        try{await call('host.business',{path:`/personal/v1/system/${key}/restart`,method:'POST',body:{}},360000);
+          if(current())page('settings')
+        }catch(e){if(current()){status.textContent='重启未确认，请刷新查看实际状态。';button.disabled=false;button.textContent=`重启${name}`}}});
+      section.append(button)
+    }
+    const background=el('p','hint',settings.backgroundModelProfileId?'后台模型已单独配置 · 在电脑设置中修改':'后台模型跟随主模型 · 在电脑设置中修改');section.append(background);
+    const refresh=el('button','secondary','刷新状态');refresh.addEventListener('click',()=>page('settings'));section.append(refresh);
+  }catch(e){if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
 }
 const MEMORY_KINDS={cognition:'理解',entity:'人物与对象',relationship:'关系',event:'共同经历'};
 function emptyMemoryState(scope=''){return {scope,flow:0,view:'list',target:null,kind:'cognition',query:'',queryDraft:'',
