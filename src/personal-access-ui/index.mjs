@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const files = new Map([
-  ['/personal/v1/ui/desktop.js', ['desktop.js', 'text/javascript; charset=utf-8']],
-  ['/personal/v1/ui/desktop.css', ['desktop.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/native-desktop.js', ['native-desktop.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/native-desktop.css', ['native-desktop.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/cloud-ui.js', ['cloud-ui.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/cloud-login.js', ['cloud-login.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/cloud-vendor.js', ['cloud-vendor.js', 'text/javascript; charset=utf-8']],

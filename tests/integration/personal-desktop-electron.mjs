@@ -175,6 +175,10 @@ try {
   });
   assert.equal(tray.visible, true); assert.ok(tray.labels.includes('打开 WeftMate')); assert.ok(tray.labels.includes('退出')); report.trayOpen = true;
   assert.ok(tray.labels.some(label => label.includes('模型：W1 Synthetic'))); report.trayModelStatus = true;
+  await application.evaluate(() => globalThis.w1TrayMenu.items.find(item => item.label === '唤醒桌面宠物').click());
+  await until(() => application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().some(win => win.webContents.getURL().endsWith('/desktop-pet.html') && win.isVisible())));
+  await application.evaluate(() => globalThis.w1TrayMenu.items.find(item => item.label === '让桌面宠物休息').click());
+  report.desktopPet = true;
   await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows().find(win => win.getTitle() === 'WeftMate').hide());
   const second = spawn(executablePath, args, { cwd: repository, env, windowsHide: true, stdio: 'ignore' });
   assert.equal(await new Promise(resolve => second.once('exit', resolve)), 0);
@@ -224,6 +228,12 @@ try {
   page = await application.firstWindow({ timeout: 90000 });
   await page.locator('#setup-form').waitFor({ state: 'visible' });
   assert.ok((await page.locator('#setup-title').textContent()).includes('原账户')); report.defaultDesktopFirstRun = true;
+  await application.close(); application = null;
+  const legacyProfile = join(root, 'legacy-diagnostics'); mkdirSync(legacyProfile);
+  application = await _electron.launch({ executablePath, args: ['.', `--user-data-dir=${legacyProfile}`, '--dsh-window'], cwd: repository, env, timeout: 90000 });
+  page = await application.firstWindow({ timeout: 90000 });
+  await page.waitForURL(/^http:\/\/127\.0\.0\.1:\d+\/$/);
+  report.explicitDshDiagnostics = true;
   writeFileSync(join(evidence, 'verification.json'), JSON.stringify(report, null, 2) + '\n');
   console.log(JSON.stringify(report));
 } catch (error) {
