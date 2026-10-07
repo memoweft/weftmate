@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | 待开工 |
-| Codex · Mac | M0-7 场景评测集编写完成 | `wp/m0-7-eval`：12 条场景（办事 6 / 记忆 4 / 跨端人工 2）；无依赖 Node 24 runner 与隔离启动说明；假 `/personal/v1` 自测 11/11 通过；`memory_used` 缺公开回复依据，标 unsupported，LLM judge 可选；待 Windows 跑 Qwen / MiMo 基线 |
+| Codex · Mac | M0-7 场景评测集编写完成 | `wp/m0-7-eval`：12 条场景（办事 6 / 记忆 4 / 跨端人工 2）；无依赖 Node 24 runner 与隔离启动说明；假 `/personal/v1` 自测 11/11 通过；`memory_used` 缺公开回复依据，标 unsupported，LLM judge 可选；[PR #19](https://github.com/memoweft/weftmate/pull/19) 待审，待 Windows 跑 Qwen / MiMo 基线 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
