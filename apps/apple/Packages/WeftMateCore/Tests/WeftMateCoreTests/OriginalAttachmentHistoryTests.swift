@@ -206,6 +206,26 @@ struct OriginalAttachmentHistoryTests {
         #expect(await transport.remaining() == 0)
     }
 
+    @Test func syncHistoryRetainsEightOriginalsWhileCommandsStayAtFour() async throws {
+        let originals = (0..<8).map { index in originalFile(["attachmentId": "attachment-" + UUID().uuidString.lowercased(), "name": "file-\(index).csv"]) }
+        let payload: [String: Any] = ["messageId": originalMessageID, "role": "user", "text": "", "attachments": originals]
+        let events: [[String: Any]] = [
+            ["seq": 1, "sourceDeviceId": "device-Phone", "eventId": "event-created", "conversationId": attachmentConversationID,
+             "kind": "conversation.created", "occurredAt": "2026-10-05T00:00:00Z", "payload": ["title": "Phone"]],
+            ["seq": 2, "sourceDeviceId": "device-Phone", "eventId": "event-eight", "conversationId": attachmentConversationID,
+             "kind": "message.created", "occurredAt": "2026-10-05T00:00:01Z", "payload": payload]]
+        let (client, conversation, _) = try await attachmentLegacyClient(syncPage: attachmentJSON(["events": events, "nextSeq": 2, "hasMore": false]))
+        let messages = try await client.history(conversation: conversation)
+        let message = try #require(messages.first)
+        #expect(message.originalAttachments.count == 8 && message.attachmentCount == 8)
+        let directory = try attachmentCacheDirectory(); defer { try? FileManager.default.removeItem(at: directory) }
+        let store = try LocalConversationStore(directory: directory), account = try attachmentScope()
+        _ = try await store.cacheHistory(account: account, conversationKey: "conversation:" + attachmentConversationID, hostId: "host-test", sessionId: nil, messages: messages)
+        let reopened = try LocalConversationStore(directory: directory)
+        #expect(try await reopened.cachedHistory(account: account, conversationKey: "conversation:" + attachmentConversationID, hostId: "host-test", sessionId: nil)?.messages.first?.originalAttachments.count == 8)
+        #expect(throws: APIFailure.invalidResponse) { try AttachmentLimits.validate(staged: nil, originals: message.originalAttachments, messageID: originalMessageID) }
+    }
+
     @Test func legacyInvalidNewMetadataFailsWithoutCachingPartialHistory() async throws {
         for invalid in [["originalAttachments": [originalFile(["size": 1.5])]],
                         ["attachmentMessageId": 123], ["unpreviewedOriginalImageIds": ["invalid"]]] as [[String: Any]] {

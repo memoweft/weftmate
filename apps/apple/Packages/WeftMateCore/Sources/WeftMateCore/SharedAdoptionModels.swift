@@ -9,31 +9,34 @@ public struct SharedAdoptionIntent: Codable, Equatable, Sendable {
     public let requestId: String
     public let modelProfileId: String
     public let expectedSyncSeq: Int
+    public let acknowledgeUncertainLocalTurn: Bool
     public let payload: Data
 
     public init(session: AccountSession, conversationID: String, requestID: String,
-                modelProfileID: String, expectedSyncSeq: Int) throws {
+                modelProfileID: String, expectedSyncSeq: Int, acknowledgeUncertainLocalTurn: Bool = false) throws {
         try self.init(server: session.server, ownerId: session.account.ownerId, hostId: session.hostId,
-            conversationId: conversationID, requestId: requestID, modelProfileId: modelProfileID, expectedSyncSeq: expectedSyncSeq)
+            conversationId: conversationID, requestId: requestID, modelProfileId: modelProfileID, expectedSyncSeq: expectedSyncSeq, acknowledgeUncertainLocalTurn: acknowledgeUncertainLocalTurn)
     }
     private init(server: ServerConfiguration, ownerId: String, hostId: String, conversationId: String,
-                 requestId: String, modelProfileId: String, expectedSyncSeq: Int) throws {
+                 requestId: String, modelProfileId: String, expectedSyncSeq: Int, acknowledgeUncertainLocalTurn: Bool) throws {
         try SharedValidation.require(SharedValidation.id(ownerId) && SharedValidation.id(hostId) &&
             SharedValidation.id(conversationId) && SharedValidation.request(requestId) && SharedValidation.profile(modelProfileId) &&
             expectedSyncSeq > 0 && expectedSyncSeq <= SharedValidation.maximumSequence)
-        struct Body: Encodable { let requestId: String; let modelProfileId: String; let expectedSyncSeq: Int }
+        struct Body: Encodable { let requestId: String; let modelProfileId: String; let expectedSyncSeq: Int; let acknowledgeUncertainLocalTurn: Bool? }
         let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
-        payload = try encoder.encode(Body(requestId: requestId, modelProfileId: modelProfileId, expectedSyncSeq: expectedSyncSeq))
+        payload = try encoder.encode(Body(requestId: requestId, modelProfileId: modelProfileId, expectedSyncSeq: expectedSyncSeq, acknowledgeUncertainLocalTurn: acknowledgeUncertainLocalTurn ? true : nil))
         self.server = server; self.ownerId = ownerId; self.hostId = hostId; self.conversationId = conversationId
         self.requestId = requestId; self.modelProfileId = modelProfileId; self.expectedSyncSeq = expectedSyncSeq
+        self.acknowledgeUncertainLocalTurn = acknowledgeUncertainLocalTurn
     }
-    enum CodingKeys: String, CodingKey { case server, ownerId, hostId, conversationId, requestId, modelProfileId, expectedSyncSeq, payload }
+    enum CodingKeys: String, CodingKey { case server, ownerId, hostId, conversationId, requestId, modelProfileId, expectedSyncSeq, acknowledgeUncertainLocalTurn, payload }
     public init(from decoder: any Decoder) throws {
         let box = try decoder.container(keyedBy: CodingKeys.self)
         try self.init(server: box.decode(ServerConfiguration.self, forKey: .server), ownerId: box.decode(String.self, forKey: .ownerId),
             hostId: box.decode(String.self, forKey: .hostId), conversationId: box.decode(String.self, forKey: .conversationId),
             requestId: box.decode(String.self, forKey: .requestId), modelProfileId: box.decode(String.self, forKey: .modelProfileId),
-            expectedSyncSeq: box.decode(Int.self, forKey: .expectedSyncSeq))
+            expectedSyncSeq: box.decode(Int.self, forKey: .expectedSyncSeq),
+            acknowledgeUncertainLocalTurn: box.decodeIfPresent(Bool.self, forKey: .acknowledgeUncertainLocalTurn) ?? false)
         guard try box.decode(Data.self, forKey: .payload) == payload else { throw APIFailure.invalidResponse }
     }
 }

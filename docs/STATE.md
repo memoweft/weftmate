@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | 待开工 |
-| Codex · Mac | M0-7 场景评测集编写完成 | `wp/m0-7-eval`：12 条场景（办事 6 / 记忆 4 / 跨端人工 2）；无依赖 Node 24 runner 与隔离启动说明；假 `/personal/v1` 自测 11/11 通过；`memory_used` 缺公开回复依据，标 unsupported，LLM judge 可选；[PR #19](https://github.com/memoweft/weftmate/pull/19) 待审，待 Windows 跑 Qwen / MiMo 基线 |
+| Codex · Mac | A2 Apple 客户端契约对齐完成 | `wp/a2-apple-contract`：发送/纠正体与 UTF-16 上限、明确接管确认、personal-remote 任务范围、图片/文件附件上传与历史预览已实现；Core 243 项、状态检查 10 组与三目标构建通过；iPhone 隔离 UI 内容可见场景通过；Mac UI 受本机自动化/辅助功能授权阻塞；[PR #21](https://github.com/memoweft/weftmate/pull/21) 待审 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -20,6 +20,8 @@
 尚无（M0-7 建立）。
 
 ## 契约变更
+
+- 2026-10-07 / A2：服务端不变；Apple 对齐 8,192 UTF-16 / 12 KiB JSON、确认接管和附件现有接口。`/sessions` 无 origin，任务入口以 `/status` 的仅所有者桌面能力 + 实时 sendAvailable 确认 personal-remote；shared-chat 与范围不明会话不请求 /tasks。
 
 - 2026-10-07 / M0-5：CLIENT_API 建立77项现有业务接口基线；Apple消息/纠正体上限、shared-chat任务控制、接管确认字段及分页/附件/模型等缺口已列；M0-3分页与M1-0a十种时间线事件为待Windows确认草案。仅文档，现有接口兼容性不变。
 

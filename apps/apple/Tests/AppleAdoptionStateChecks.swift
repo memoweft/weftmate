@@ -27,12 +27,14 @@ private actor AdoptionHTTP: HTTPTransport {
     var reject = false
     var configured = true
     var lookupCalls = 0
+    var uncertainLocalTurn = false
     var creating = false
     var pauseLookup = false
     var lookupGate: CheckedContinuation<Void, Never>?
     func options(lose: Bool = false, discard: Bool = false, reject: Bool = false, configured: Bool = true,
-                 creating: Bool = false, pauseLookup: Bool = false) {
+                 creating: Bool = false, pauseLookup: Bool = false, uncertainLocalTurn: Bool = false) {
         loseReply = lose; discardLostRecord = discard; self.reject = reject; self.configured = configured
+        self.uncertainLocalTurn = uncertainLocalTurn
         self.creating = creating
         self.pauseLookup = pauseLookup
     }
@@ -44,7 +46,8 @@ private actor AdoptionHTTP: HTTPTransport {
     func releaseLookup() { lookupGate?.resume(); lookupGate = nil }
     func projection() -> [String: Any] {
         var result: [String: Any] = ["source": "host", "hostId": "host-test", "conversationId": "original-conversation",
-            "syncThroughSeq": through, "status": active ? (creating ? "creating" : "active") : "unbound", "canAdopt": !active, "originalModel": NSNull()]
+            "syncThroughSeq": through, "status": active ? (creating ? "creating" : "active") : "unbound", "canAdopt": !active && !uncertainLocalTurn, "originalModel": NSNull()]
+        if !active && uncertainLocalTurn { result["reasonCode"] = "LOCAL_TURN_UNCONFIRMED" }
         if active {
             result["binding"] = ["conversationId": "original-conversation", "sessionId": "session-adopted", "modelProfileId": profile,
                 "revision": 1, "cutoverSyncSeq": 3, "contextHash": String(repeating: "a", count: 64),
@@ -81,6 +84,7 @@ private actor AdoptionHTTP: HTTPTransport {
             if request.httpMethod == "POST" {
                 let bytes = request.httpBody!; posts.append(bytes)
                 let payload = try JSONSerialization.jsonObject(with: bytes) as! [String: Any]
+                if uncertainLocalTurn { try check(payload["acknowledgeUncertainLocalTurn"] as? Bool == true, "Uncertain turn submitted without user confirmation") }
                 profile = payload["modelProfileId"] as! String
                 command = ["commandId": "command-adopt", "requestId": payload["requestId"] as! String,
                     "kind": "session.create", "targetDeviceId": "host-test", "sessionId": "session-adopted",
@@ -260,6 +264,23 @@ private actor AdoptionHTTP: HTTPTransport {
                   "Serialized observer restart failed to establish fresh binding")
         try check(await inflightHTTP.submitted().count == 1, "Observer lock recovery re-posted adoption")
         print("PASS foreground observer waits for retired inflight request without overlapping SDK lock")
-        print("9 controlled adoption-flow checks passed; actual HTTP/model/GUI/Keychain: 0")
+        let uncertainHTTP = AdoptionHTTP(); await uncertainHTTP.options(uncertainLocalTurn: true)
+        let uncertain = try model(uncertainHTTP, directory: base.appendingPathComponent("uncertain-local-turn"))
+        let uncertainConversation = try await open(uncertain)
+        try check(uncertain.canAdopt(uncertainConversation) && uncertain.adoptionNeedsConfirmation(uncertainConversation),
+            "Uncertain local turn lacked confirmation path")
+        await uncertain.adopt(uncertainConversation, profileID: "chosen-profile", accountEpoch: uncertain.accountEpoch)
+        try check(await uncertainHTTP.submitted().isEmpty && uncertain.adoptionRows(for: uncertainConversation).isEmpty,
+            "Unconfirmed user action persisted or submitted adoption")
+        await uncertain.adopt(uncertainConversation, profileID: "chosen-profile", accountEpoch: uncertain.accountEpoch,
+            acknowledgeUncertainLocalTurn: true)
+        let uncertainPosts = await uncertainHTTP.submitted()
+        try check(uncertainPosts.count == 1 &&
+            (try JSONSerialization.jsonObject(with: uncertainPosts[0]) as! [String: Any])["acknowledgeUncertainLocalTurn"] as? Bool == true,
+            "Explicit confirmation was not transmitted")
+        try check(uncertain.adoptionRows(for: uncertainConversation).first?.record.intent.acknowledgeUncertainLocalTurn == true,
+            "Journal lost confirmation for replay")
+        print("PASS uncertain local turn: explicit confirmation required before persistence and HTTP; confirmation survives journal")
+        print("10 controlled adoption-flow checks passed; actual HTTP/model/GUI/Keychain: 0")
     }
 }
