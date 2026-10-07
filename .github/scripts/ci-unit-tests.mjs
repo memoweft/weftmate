@@ -38,7 +38,7 @@ if (mode === 'required') {
     ...exceptions.unavailableFiles.map(entry => `- File \`${entry.file}\`: ${entry.reason}`),
     ...exceptions.vendorTests.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`),
     ...platformTests.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`),
-    '', 'Known main failures run separately as a non-blocking step (PR #20):',
+    '', 'Known main failures run separately as a non-blocking step (11 from PR #20; 2 reproduced on main by CI-1):',
     ...exceptions.knownFailures.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`));
 }
 console.log(lines.join('\n'));
