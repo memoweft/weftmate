@@ -10,7 +10,7 @@ import { stagePersonalPlugins } from './support/personal-plugins.ts'
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
 
-test('personal initial file policy permits computer writes while native approval and later switches remain independent', async () => {
+async function assertInitialFilePolicy() {
   const root = mkdtempSync(join(tmpdir(), 'personal-policy-'))
   try {
     const { initializePersonalFilePolicy } = await import(stagePersonalPlugins(root).plugin)
@@ -43,9 +43,10 @@ test('personal initial file policy permits computer writes while native approval
     initializePersonalFilePolicy(standard, policy)
     assert.deepEqual(standard.session.events, [])
   } finally { rmSync(root, { recursive: true, force: true }) }
-})
+}
 
 test('official ToolRuntime gives the original personal-remote scope general tools while denying forged execution identity', async () => {
+  await assertInitialFilePolicy()
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-scope-'))
   try {
     const staged = stagePersonalPlugins(root)
