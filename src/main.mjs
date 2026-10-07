@@ -21,12 +21,10 @@ import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './o
 import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
 import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
-import { assertModelProfileMutationAllowed } from './model-profile-guard.ts';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
-import { runRecoverableProfileMutation } from './model-mutation-transaction.ts';
-import { assertAuthoritativeSessionsIdle, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
-import { createRouteMutationJournal, recoverRouteMutationJournalFiles } from './route-mutation-journal.ts';
+import { assertAuthoritativeSessionsIdle, assertModelProfileMutationAllowed, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
+import { createRouteMutationJournal, recoverRouteMutationJournalFiles, runRecoverableProfileMutation } from './route-mutation-journal.ts';
 import { createRouteMutationQueue } from './route-mutation-queue.ts';
 import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from './renderer-trust.ts';
 import { basename, isAbsolute, join, resolve } from 'node:path';
