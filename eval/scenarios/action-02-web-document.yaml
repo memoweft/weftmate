@@ -1,0 +1,42 @@
+{
+  "id": "action-02-web-document",
+  "category": "action",
+  "title": "查网页并保存说明",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我想弄清 Node.js 24 相比 22 有哪些值得留意的变化，帮我看看官方资料，用中文写一份简短说明，附上来源链接，存到 {{testDir}}/node24说明.md，方便我下班后看。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "file_exists",
+      "path": "node24说明.md"
+    },
+    {
+      "type": "file_contains",
+      "path": "node24说明.md",
+      "text": "https://nodejs.org/"
+    },
+    {
+      "type": "reply_matches",
+      "pattern": "说明|保存|写好"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。"
+    }
+  ],
+  "timeoutSec": 240,
+  "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。"
+}

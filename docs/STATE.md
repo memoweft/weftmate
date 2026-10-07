@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | [PR（拉取请求）#20](https://github.com/memoweft/weftmate/pull/20) 待审；5 项完成，模型切换部分简化 |
-| Codex · Mac | M0-5 客户端契约文档完成 | `wp/m0-5-client-api`：77 项业务接口 + 11 个静态路径；Apple 对照与 M1-0a 草案已写；66/68 项相关测试通过，停止恢复断言失败、模型代理受缺少 vendor 阻塞；已推送并开 PR 待审（A0 已合入） |
+| Codex · Mac | M0-7 场景评测集编写完成 | `wp/m0-7-eval`：12 条场景（办事 6 / 记忆 4 / 跨端人工 2）；无依赖 Node 24 runner 与隔离启动说明；假 `/personal/v1` 自测 11/11 通过；`memory_used` 缺公开回复依据，标 unsupported，LLM judge 可选；[PR #19](https://github.com/memoweft/weftmate/pull/19) 待审，待 Windows 跑 Qwen / MiMo 基线 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。

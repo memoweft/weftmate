@@ -1,0 +1,56 @@
+{
+  "id": "memory-02-correction",
+  "category": "memory",
+  "title": "纠正后按新理解走",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我最近只能周三晚上锻炼，安排运动时帮我记着。"
+    },
+    {
+      "user": "刚才说错了，现在固定空出来的是周五晚上，周三已经没空了，以后按周五来安排。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "下周给我安排一次锻炼，放在哪天比较合适？"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_contains",
+      "text": "周五"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "应以周五晚上为当前空闲时间安排锻炼，不应仍建议周三。可以说明偏好被纠正，不能把旧时间当当前事实。"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "测试从日常纠正形成理解，使用三轮对话而非直接编辑底层记忆。等待 1 秒只是形成窗口，基线失败可能反映记忆形成/调度未接通。"
+}
