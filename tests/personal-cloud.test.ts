@@ -167,7 +167,7 @@ test('binding requires local Cookie/CSRF; unknown subjects cannot select an owne
   assert.equal((await f.exchange(await f.access('stranger', 'unknown', key), key)).result.status, 403)
 })
 
-test('two local accounts bind independently; pending devices cannot see content; only their own account can approve; deny is durable', async t => {
+test('two local accounts bind independently; pending devices cannot see content; only their own account can approve; deny is durable', { timeout: 60_000 }, async t => {
   const f = await fixture(t)
   assert.equal((await f.bind()).result.status, 200)
   assert.equal((await f.bind(f.b, 'cloud-b', 1)).result.status, 200)
@@ -191,12 +191,16 @@ test('two local accounts bind independently; pending devices cannot see content;
   const created = await f.requests('POST', '/commands', { requestId: randomUUID(), kind: 'session.create',
     targetDeviceId: f.hostId, modelProfileId: 'synthetic' }, session)
   assert.equal(created.status, 202, JSON.stringify(created))
-  let stored: any
-  for (let i = 0; i < 50; i++) {
-    stored = JSON.parse(await readFile(join(f.root, 'store.json'), 'utf8'))
-    if (stored.accounts[f.a.account.ownerId].sessions[created.command.sessionId]) break
-    await new Promise(resolve => setTimeout(resolve, 10))
-  }
+  // A Windows durable commit includes ACL verification. The HTTP operation
+  // state is the completion boundary; 500 ms of disk polling is not one.
+  let operation: any
+  do {
+    if (t.signal.aborted) throw t.signal.reason
+    operation = await f.requests('GET', `/commands/${created.command.commandId}`, undefined, session)
+    assert.equal(operation.status, 200)
+  } while (['pending', 'dispatching'].includes(operation.command.state))
+  assert.equal(operation.command.state, 'accepted_by_dsh', JSON.stringify(operation.command))
+  const stored = JSON.parse(await readFile(join(f.root, 'store.json'), 'utf8'))
   assert.equal(stored.accounts[f.a.account.ownerId].sessions[created.command.sessionId].origin, 'personal-remote')
   assert.equal(stored.accounts[f.a.account.ownerId].commands[created.command.commandId].sourceAuthEpoch,
     stored.accounts[f.a.account.ownerId].account.authEpoch)
