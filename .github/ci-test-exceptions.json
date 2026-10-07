@@ -618,6 +618,18 @@
       "file": "tests/personal-memory-plugin-ipc.test.ts",
       "name": "forked plugin hook callbacks use owner-bound IPC and replace stale account memory",
       "reason": "Child hook imports vendored dsh-llm/message; child reports only a generic failure when the vendor is missing."
+    },
+    {
+      "file": "tests/personal-project-tool-proof.test.ts",
+      "name": "artifact provenance in a 23000+ event history reads only its bound native turn",
+      "reason": "Requires the prebuilt pinned DSH vendor (dsh-tools), absent on clean runners. Added by M0-3 review fix; passes locally with vendor.",
+      "tracking": "https://github.com/memoweft/weftmate/pull/26"
+    },
+    {
+      "file": "tests/personal-timeline-native.test.ts",
+      "name": "timeline reads official live session events without adding unsupported durable types or reentering publication",
+      "reason": "Requires the prebuilt pinned DSH vendor (cordis), absent on clean runners. Added by M0-3; passes locally with vendor.",
+      "tracking": "https://github.com/memoweft/weftmate/pull/26"
     }
   ],
   "platformTests": [
