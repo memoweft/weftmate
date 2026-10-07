@@ -4,7 +4,7 @@
 
 原生 SwiftUI 工程包括 `WeftMateMac`、`WeftMatePhone` 与手机伴随 `WeftMateWatch`，通过本地包 `Packages/WeftMateCore` 共用 `/personal/v1` 网络接口、模型与凭据存储实现。macOS 14、iOS 17、watchOS 10 是当前工程最低部署设置；当前源码版本为 `0.1.0 / build 11`。
 
-Mac/iPhone 已包含对话附件上传、历史附件预览/保存、明确确认不确定本地消息后接管、账户与原会话读取、按账户保存草稿和离线缓存、明确选择模型后续聊、记忆页面、跨设备任务发现与进度、停止、审批与信息问答，以及 UTF-8 文本成果预览/导出。Watch 当前仍是未连接账户的基础首页；任务进度、审批、完成震动及真机联网属于后续工作。源码接入和离线测试通过不等于真实后端或设备验收。
+Mac/iPhone 已包含对话附件上传、历史附件预览/保存、明确确认不确定本地消息后接管、账户与原会话读取、按账户保存草稿和离线缓存、明确选择模型后续聊、记忆页面、对话内执行时间线、来源/停止、审批与信息问答，以及 UTF-8 文本成果预览/保存/分享。Watch 通过 iPhone 原生连接显示当前进度、审批与最近回复，前台/刷新观察到任务完成时触感反馈；远程推送与真机配对验证尚未完成。源码接入和离线测试通过不等于真实后端或设备验收。
 
 ## 构建与打开
 
@@ -23,9 +23,21 @@ make test-phone
 
 工程和共享 Scheme 已提交，普通构建不用先生成。添加 Swift 源码后执行 `make project` 同步项目文件；生成器仅使用 Python 标准库，不下载依赖。默认 iPhone 是已安装 iOS 26.3 的 iPhone 17，Watch 是 watchOS 26.2 的 Series 11（46mm）。通过 `PHONE_ID=<UUID>` 和 `WATCH_ID=<UUID>` 指定其他可用模拟器，使用 `xcrun simctl list devices available` 取得 UUID。
 
-`make test-core` 执行共享包 Swift 单元测试；`make test-state` 编译并运行 `Tests/*Checks.swift` 的十组状态检查，使用合成账户、受控 HTTP 和独立临时目录，不访问日用数据、后端或系统钥匙串。每次的编译/执行日志与 `results.json` 保存到受忽略的 `Build/StateChecks/apple-state-*`。需要源码外的证据目录时运行 `python3 Scripts/run_state_checks.py --artifacts <目录>`；`--core-build <隔离的 SwiftPM scratch 目录>` 可复用已构建的核心对象。`make test-mac` / `make test-phone` 属于 UI 验证，真实服务用例另需隔离 fixture。
+`make test-core` 执行共享包 Swift 单元测试；`make test-state` 编译并运行 `Tests/*Checks.swift` 的十一组状态检查，使用合成账户、受控 HTTP 和独立临时目录，不访问日用数据、后端或系统钥匙串。每次的编译/执行日志与 `results.json` 保存到受忽略的 `Build/StateChecks/apple-state-*`。需要源码外的证据目录时运行 `python3 Scripts/run_state_checks.py --artifacts <目录>`；`--core-build <隔离的 SwiftPM scratch 目录>` 可复用已构建的核心对象。`make test-mac` / `make test-phone` 属于 UI 验证，真实服务用例另需隔离 fixture。
 
 `make run-mac`、`make run-phone`、`make run-watch` 构建、安装并启动对应候选。模拟器首次启动需要等待系统初始化；脚本等待实际启动结果。Mac App 使用沙盒网络客户端权限，以及用户在系统文件窗口选定位置的读写权限，用于保存已校验的成果。真实系统操作按后续正式能力逐项接入。
+
+## A3 对话时间线
+
+打开会话只读最近 100 条公开事件；滚到顶部或点击「读取更早的记录」使用 `beforeSeq`。实时增量使用独立的 `afterSeq` 水位，空页也推进水位，上翻响应不改变它。无从 -1 全量扫描、20,000 条上限或 historyLimit 错误。原同步记录与 DSH 事件保留各自 seq 空间，已接管的同步消息按回执去重。
+
+macOS 运行块默认展开，iPhone 步骤默认收起；完成后自动收成步骤数/用时摘要。步骤第二层展开才请求原始命令/输出，可复制。审批和提问沿用持久请求与原生消费确认，卡片在开始位置更新；提问按 turn 和 observedSeq 关联最新一次调用。成果核对账号/会话绑定及完整大小/SHA-256 后打开桌面侧面板或手机全屏，可保存和分享；当前服务端成果仍限 128 KiB UTF-8 文本。停止和来源位于对应用户消息下，不再有独立任务页面；停止登记与实际停止状态分开显示。缺少步骤开始时间时显示待确认，支持带毫秒的 RFC3339 时间戳。
+
+事件缓存按账号、宿主和会话隔离，仅保存公开投影，不缓存原始工具输出。离线重开只展示缓存尾页，再向上翻已访问的分页；未访问的历史须联网读取。旧文字缓存仍可显示尾部记录，不能恢复缺失的执行详情或提供离线审批。
+
+Watch 不传宿主 Cookie/CSRF：通过 WatchConnectivity 向 iPhone 请求公开摘要，手机用既有审批接口和持久提交记录登记决定。前台/刷新时核对活动会话，手机 App 可达时才能审批；尚无远程推送，触感只在 Watch 前台或刷新时生效，首次读取旧完成记录不震动；后台收到的完成在下一次前台刷新提醒，旧快照不会重复震动。跨设备真机配对仍待验证。
+
+合成 iOS XCTest、截图与可复现命令见 [A3 验证证据](Tests/Evidence/A3/README.md)。Mac 当前辅助功能检查未授权，未请求授权或修改 TCC。
 
 ## A2 发送与附件
 
@@ -35,7 +47,7 @@ make test-phone
 
 历史附件点开后，Mac 在右侧面板、iPhone 在全屏页预览，可保存或分享原文件。原件核对大小及 SHA-256；旧历史图片通过会话图片接口读取。图片在预览区直接显示；文本预览至多 128 KiB，其余格式使用系统 Quick Look，保存原件仍保留完整内容。预览支持不代表模型可读取任意格式。同步历史可读取/缓存 8 个附件，发送命令仍最多 4 个。
 
-当前 `/sessions` 不返回 `origin`。A2 结合 `/status` 中仅宿主所有者可用的 `desktopOpenApp.available` 和实时 `sendAvailable` 确认 personal-remote 任务入口；shared-chat 没有该桌面能力，不请求 `/tasks`。服务不可用或权限范围无法确认时隐藏任务入口；是否支持任务控制仍与能否续聊分别判断。
+当前 `/sessions` 不返回 `origin`。A2 结合 `/status` 中仅宿主所有者可用的 `desktopOpenApp.available` 和实时 `sendAvailable` 确认 personal-remote 对话内任务控制范围；shared-chat 没有该桌面能力，不请求 `/tasks`。服务不可用或权限范围无法确认时隐藏来源与停止控制；是否支持任务控制仍与能否续聊分别判断。
 
 离线界面验收可只运行 `WeftMateUITests/testA2AttachmentHistoryComposerAndPreview`。该测试使用双重 Debug 开关 `--ui-testing --apple-contract-fixture`、内存凭据与专用测试 namespace，不走 URLSession，也不连接默认服务；截图保存在 XCTest 结果包内。该夹具自动登录内存测试账号，跳过系统密码保存及键盘焦点环节，只验证附件界面。
 

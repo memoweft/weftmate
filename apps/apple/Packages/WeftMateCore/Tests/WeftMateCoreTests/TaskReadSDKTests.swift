@@ -214,6 +214,27 @@ struct TaskReadSDKTests {
         #expect(downloaded.data == Data(text.utf8) && downloaded.scope.ownerId == "owner-A")
     }
 
+    @Test func timelineArtifactUsesAuthenticatedMetadataRootAndRequiresSameSession() async throws {
+        let text = "# synthetic\n", artifact = taskArtifact(text: "# synthetic\n")
+        let transport = TaskScriptTransport(taskLoginSteps() + [.init(path: "/auth/me", response: taskAuth()),
+            .init(path: "/artifacts/artifact-test", response: taskJSON(["artifact": artifact])),
+            .init(path: "/artifacts/artifact-test/download", response: .init(status: 200, body: Data(text.utf8)))])
+        let client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+        _ = try await taskLogin(client)
+        let download = try await client.timelineArtifactBytes(sessionID: "session-test", artifactID: "artifact-test")
+        #expect(download.data == Data(text.utf8) && download.artifact.taskId == "cmd-task")
+        #expect(await transport.requests().allSatisfy { !$0.url!.path.contains("/tasks/") })
+
+        let wrong = TaskScriptTransport(taskLoginSteps() + [.init(path: "/auth/me", response: taskAuth()),
+            .init(path: "/artifacts/artifact-test", response: taskJSON(["artifact": artifact]))])
+        let wrongClient = PersonalClient(credentialStore: MemoryStore(), transport: wrong)
+        _ = try await taskLogin(wrongClient)
+        await #expect(throws: APIFailure.identityMismatch) {
+            try await wrongClient.timelineArtifactBytes(sessionID: "session-other", artifactID: "artifact-test")
+        }
+        #expect(await wrong.requests().allSatisfy { !$0.url!.path.hasSuffix("/download") })
+    }
+
     @Test func artifactHashSizeFilenameAndOversizeFailWithoutTruncation() throws {
         for name in ["../x.md", ".md", "CON.txt", "result .md"] { #expect(!TaskReadValidation.fileName(name)) }
         #expect(TaskReadValidation.fileName("结果.md"))

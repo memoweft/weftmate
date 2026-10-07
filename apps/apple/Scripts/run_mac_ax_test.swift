@@ -402,16 +402,14 @@ do {
             _ = try find(process, "conversationList")
         }
         try readHistory(process)
-        try press(try find(process, "inlineTaskDetailsButton"))
-        _ = try find(process, "taskWorkspace")
         let artifactID = candidateScenario["artifactId"]!
         try wait(30) {
-            allNodes(process).contains { identifier($0) == "taskArtifact." + artifactID }
+            allNodes(process).contains { identifier($0) == "artifactCard." + artifactID }
         }
-        let rows = allNodes(process).filter { identifier($0) == "taskArtifact." + artifactID }
+        let rows = allNodes(process).filter { identifier($0) == "artifactCard." + artifactID }.flatMap { descendants($0.element) }
         try require(!rows.isEmpty && allNodes(process).contains { text($0).contains("information.txt") }, "The registered artifact row must match this file.")
         if arguments.contains("--artifact-read-only") {
-            guard let preview = rows.first(where: { string($0.element, kAXRoleAttribute) == kAXButtonRole && text($0).contains("预览成果") }) else {
+            guard let preview = rows.first(where: { string($0.element, kAXRoleAttribute) == kAXButtonRole && text($0).contains("预览") }) else {
                 throw Failure(message: "The current artifact has no native preview action.")
             }
             try press(preview)
@@ -429,8 +427,8 @@ do {
         } else {
             try record("artifact-save-only-resume", ["sameArtifact": true, "previewRepeated": false])
         }
-        guard let save = allNodes(process).first(where: { identifier($0) == "taskArtifact." + artifactID &&
-            string($0.element, kAXRoleAttribute) == kAXButtonRole && text($0).contains("保存文件") }) else {
+        guard let save = rows.first(where: {
+            string($0.element, kAXRoleAttribute) == kAXButtonRole && text($0).contains("保存") }) else {
             try record("artifact-native-save-action", ["present": false]); exit(0)
         }
         try press(save)
@@ -441,7 +439,6 @@ do {
     if arguments.contains("--observe-pending-only") {
         try login(process, primary)
         try readHistory(process)
-        _ = try find(process, "taskInteractions." + candidateScenario["taskId"]!, timeout: 45)
         _ = try find(process, "questionCard." + candidateScenario["questionRpcId"]!, timeout: 45)
         let submit = try find(process, "submitQuestion." + candidateScenario["questionRpcId"]!)
         let enabled = attribute(submit.element, kAXEnabledAttribute) as? NSNumber
