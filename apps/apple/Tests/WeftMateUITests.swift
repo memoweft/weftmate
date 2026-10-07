@@ -964,3 +964,61 @@ final class WeftMateUITests: XCTestCase {
         signOut(app)
     }
 }
+
+#if os(iOS)
+extension WeftMateUITests {
+    @MainActor func testHealthSettingsDefaultsAndReturnToConversation() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "h1-settings-" + UUID().uuidString,
+            "--apple-contract-fixture", "--server-url", "https://a2-ui.unit.example"]
+        app.launch()
+        XCTAssertTrue(app.buttons["phoneAccountMenu"].waitForExistence(timeout: 20))
+        app.buttons["phoneAccountMenu"].tap()
+        app.buttons["phoneMenu.health"].tap()
+        XCTAssertTrue(app.buttons["healthAuthorize"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label == %@", "尚未请求读取权限")).firstMatch.exists)
+        let cloud = app.descendants(matching: .any).matching(identifier: "healthCloudAllowed").firstMatch
+        for _ in 0..<4 {
+            if cloud.exists && cloud.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(cloud.exists)
+        XCTAssertEqual(cloud.value as? String, "0")
+        let screenshot = XCTAttachment(screenshot: app.screenshot()); screenshot.name = "h1-health-settings-defaults"
+        screenshot.lifetime = .keepAlways; add(screenshot)
+        app.buttons["closeAuxiliarySheetButton"].tap()
+        XCTAssertTrue(app.buttons["phoneAccountMenu"].waitForExistence(timeout: 10))
+        app.buttons["phoneAccountMenu"].tap(); app.buttons["phoneMenu.health"].tap()
+        app.buttons["healthAuthorize"].tap()
+        XCTAssertTrue(app.buttons["仅供本地模型使用（默认）"].waitForExistence(timeout: 5))
+        app.terminate() // Dismiss the consent prompt without requesting any system authorization.
+    }
+
+    @MainActor func testHealthKitSyntheticDailySummary() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "h1-isolated", "--h1-healthkit-fixture"]
+        app.launch()
+        XCTAssertTrue(app.buttons["healthFixtureStart"].waitForExistence(timeout: 20))
+        app.buttons["healthFixtureStart"].tap()
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deadline = Date().addingTimeInterval(60)
+        while Date() < deadline {
+            let result = app.staticTexts["healthFixtureResult"]
+            if result.exists && (result.label.hasPrefix("PASS:") || result.label.hasPrefix("FAIL:") || result.label == "UNAVAILABLE") { break }
+            let allCategories = app.cells["UIA.Health.AuthSheet.AllCategoryButton"]
+            if allCategories.exists && allCategories.isHittable { allCategories.tap() }
+            for surface in [app, springboard] {
+                for label in ["Turn On All", "全部打开", "Allow", "允许", "Done", "完成"] {
+                    let control = surface.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+                    if control.exists && control.isHittable && control.isEnabled { control.tap() }
+                }
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        let result = app.staticTexts["healthFixtureResult"]
+        if result.label == "UNAVAILABLE" { throw XCTSkip("HealthKit is unavailable on this simulator") }
+        XCTAssertTrue(result.label.hasPrefix("PASS:"), result.label + "\n" + app.debugDescription)
+        let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.lifetime = .keepAlways; add(attachment)
+    }
+}
+#endif

@@ -728,6 +728,17 @@ final class AppleAppModel: ObservableObject {
     private var attachmentMessageIDs: [String: String] = [:]
     private var attachmentSessionIDs: [String: String] = [:]
 
+    var healthStateDirectory: URL {
+        (localStateDirectory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0])
+            .appendingPathComponent("Health", isDirectory: true)
+    }
+    func uploadHealthSummary(_ summary: HealthDailySummary, account: LocalAccountScope) async throws -> HealthUploadResult {
+        try await client.uploadHealthSummary(summary, account: account)
+    }
+    func deleteHealthSummaries(account: LocalAccountScope) async throws -> HealthUploadResult {
+        try await client.deleteHealthSummaries(account: account)
+    }
+
     let developmentRouteEnabled: Bool
 
     private let client: PersonalClient

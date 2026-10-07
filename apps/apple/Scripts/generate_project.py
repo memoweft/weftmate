@@ -51,6 +51,8 @@ def configs(name, settings, is_project=False):
         build = dict(settings)
         if config == "Debug":
             build.update(SWIFT_OPTIMIZATION_LEVEL="-Onone", DEBUG_INFORMATION_FORMAT="dwarf", SWIFT_ACTIVE_COMPILATION_CONDITIONS="$(inherited) DEBUG", ENABLE_TESTABILITY="YES", ONLY_ACTIVE_ARCH="YES")
+            if name == "WeftMatePhone":
+                build["INFOPLIST_KEY_NSHealthUpdateUsageDescription"] = "仅在隔离模拟器 XCTest 中写入合成样本，日用功能不写健康数据。"
         else:
             build.update(SWIFT_OPTIMIZATION_LEVEL="-O", DEBUG_INFORMATION_FORMAT="dwarf-with-dsym", ONLY_ACTIVE_ARCH="NO")
         fields = dict(isa="XCBuildConfiguration", buildSettings=build, name=config)
@@ -105,6 +107,9 @@ def target(name, platform, sources, testing=None):
         settings.update(TEST_TARGET_NAME=testing, INFOPLIST_KEY_CFBundleDisplayName=name)
     elif platform in ["macosx", "iphoneos"]:
         settings["INFOPLIST_KEY_NSLocalNetworkUsageDescription"] = "WeftMate 连接你选择的个人服务器，以便同步账户和会话。"
+    if not is_test and platform in ["iphoneos", "watchos"]:
+        settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateHealth.entitlements"
+        settings["INFOPLIST_KEY_NSHealthShareUsageDescription"] = "WeftMate 只读取你选择的健康项目，在设备上汇总每日摘要，用于个人陪伴。"
     cfg = configs(name, settings)
     tid = obj("target:" + name, isa="PBXNativeTarget", buildConfigurationList=cfg, buildPhases=phases, buildRules=[], dependencies=deps, name=name, packageProductDependencies=packages, productName=name, productReference=product, productType="com.apple.product-type.bundle.ui-testing" if is_test else "com.apple.product-type.application")
     targets.append(tid)
@@ -118,7 +123,7 @@ mac = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "macOS").rglob("*.swift")
 phone = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "iOS").rglob("*.swift"))
 watch = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "watchOS").rglob("*.swift"))
 target("WeftMateWatch", "watchos", watch)
-debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift"]
+debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift", "Tests/HealthKitUIFixture.swift"]
 target("WeftMateMac", "macosx", ui + mac + debug_fixture)
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture)
 target("WeftMateMacUITests", "macosx", ["Tests/WeftMateUITests.swift"], "WeftMateMac")
