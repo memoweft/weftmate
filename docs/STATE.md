@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
-| Codex · Mac | H2 健康摘要服务端 | `wp/h2-health-server` 已实现；POST/GET/DELETE、私有存储、observed 待写队列及云端召回限制；相关检查通过，CI 与审查见本包 PR |
+| Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 待审查；POST/GET/DELETE、私有存储、observed 待写队列及云端召回限制已实现，相关检查通过；三平台 CI 见 PR checks |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
