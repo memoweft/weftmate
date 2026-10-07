@@ -2712,7 +2712,7 @@ window.__ModuleLoader__.load({
           baseURL: 'http://127.0.0.1:8080/v1',
           apiKeyEnv: '',
           apiKey: '',
-          models: [{ id: 'qwen-model', name: 'qwen-model', contextWindow: 131072 }]
+          models: [{ id: 'qwen-model', name: 'qwen-model', contextWindow: 32768 }]
         })
       }
 
@@ -2730,7 +2730,7 @@ window.__ModuleLoader__.load({
         var item = Object.assign({}, editingProvider, {
           displayName: name,
           online: null,
-          models: (editingProvider.models && editingProvider.models.length) ? editingProvider.models : [{ id: 'default-model', name: 'default-model', contextWindow: 131072 }]
+          models: (editingProvider.models && editingProvider.models.length) ? editingProvider.models : [{ id: 'default-model', name: 'default-model', contextWindow: 32768 }]
         })
         delete item.isNew
         var api = props && props.connection && props.connection.api
@@ -2854,6 +2854,7 @@ window.__ModuleLoader__.load({
               )
             ),
             React.createElement('div', { className: 'fc-subheading' }, '包含的模型列表'),
+            React.createElement('p', { className: 'fc-label' }, '优先使用服务实际上下文；无法读取时使用下方配置。请填写服务的实际窗口，未填写时按 32768 处理。'),
             React.createElement('div', { className: 'fc-models-list' },
               (item.models || []).map(function (m, mIdx) {
                 return React.createElement('div', { className: 'fc-model-row', key: mIdx },
@@ -2877,10 +2878,10 @@ window.__ModuleLoader__.load({
                     id: formId + '-context-' + mIdx, 'aria-label': '上下文窗口',
                     style: { width: '120px' },
                     type: 'number',
-                    placeholder: '131072',
-                    value: m.contextWindow || 131072,
+                    placeholder: '32768',
+                    value: m.contextWindow || 32768,
                     onChange: function (e) {
-                      var v = parseInt(e.target.value, 10) || 131072
+                      var v = parseInt(e.target.value, 10) || 32768
                       setEditingProvider(function (p) {
                         var nextM = p.models.slice()
                         nextM[mIdx] = Object.assign({}, nextM[mIdx], { contextWindow: v })
@@ -2906,7 +2907,7 @@ window.__ModuleLoader__.load({
                 style: { marginTop: '6px' },
                 onClick: function () {
                   setEditingProvider(function (p) {
-                    return Object.assign({}, p, { models: (p.models || []).concat([{ id: '', name: '', contextWindow: 131072 }]) })
+                    return Object.assign({}, p, { models: (p.models || []).concat([{ id: '', name: '', contextWindow: 32768 }]) })
                   })
                 }
               }, '＋ 添加模型行')

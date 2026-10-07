@@ -33,7 +33,7 @@ describe('shared DSH model-route projection', () => {
     assert.equal(clampMaxTokensToContext({ contextWindow: 32768 }, context, 8192), 1);
     const official = modelCapacityFor({ baseUrl: 'https://api.xiaomimimo.com/v1', modelId: 'mimo-v2.6-flash' });
     assert.equal(clampMaxTokensToContext(official, context, official.maxTokens), official.maxTokens);
-    assert.equal(clampMaxTokensToContext(DEFAULT_MODEL_CAPACITY, context, DEFAULT_MODEL_CAPACITY.maxTokens), DEFAULT_MODEL_CAPACITY.maxTokens);
+    assert.equal(clampMaxTokensToContext(DEFAULT_MODEL_CAPACITY, context, DEFAULT_MODEL_CAPACITY.maxTokens), 1);
   });
 
   it('keeps the official Models namespace valid before any private profile exists', () => {
