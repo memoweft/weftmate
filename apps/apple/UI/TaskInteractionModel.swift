@@ -56,6 +56,8 @@ private struct SavedTaskResponse: Codable {
     private var active = true
     private var generation = UUID()
     private var task: TaskSnapshot?
+    private var timelineSessionID: String?
+    private var sessionID: String? { timelineSessionID ?? task?.sessionId }
     private var approvalCursor: ApprovalPageCursor?
     private var questionCursor: QuestionPageCursor?
     private var approvalDepth = 1
@@ -86,74 +88,89 @@ private struct SavedTaskResponse: Codable {
     }
     func refresh(_ snapshot: TaskSnapshot) async {
         guard isCurrent, !loading, matches(snapshot.scope) else { return }
-        task = snapshot; loadJournal()
-        currentApprovals = []; currentQuestions = []
+        task = snapshot; timelineSessionID = nil
+        await refreshSession(snapshot.sessionId)
+    }
+    func refreshTimeline(sessionID: String) async {
+        guard isCurrent, !loading else { return }
+        task = nil; timelineSessionID = sessionID
+        await refreshSession(sessionID)
+    }
+    private func refreshSession(_ sessionID: String) async {
+        loadJournal()
         loading = true; let token = generation
         defer { if token == generation { loading = false } }
         do {
-            var page = try await client.approvals(sessionID: snapshot.sessionId)
+            var page = try await client.approvals(sessionID: sessionID)
             guard isCurrent, token == generation, matches(page.scope) else { return }
             var readDepth = 0
+            var observed = Set<String>()
             while true {
                 let rows = page.approvals.filter { belongs($0.taskId, command: $0.sourceCommandId, receipt: $0.sourceReceiptId) }
-                currentApprovals.formUnion(rows.map(\.id)); mergeApprovals(rows); readDepth += 1
+                observed.formUnion(rows.map(\.id)); mergeApprovals(rows); readDepth += 1
                 guard readDepth < approvalDepth, let cursor = page.nextCursor else { break }
-                page = try await client.approvals(sessionID: snapshot.sessionId, before: cursor)
+                page = try await client.approvals(sessionID: sessionID, before: cursor)
                 guard isCurrent, token == generation, matches(page.scope) else { return }
             }
+            currentApprovals = observed
             approvalDepth = readDepth
             approvalCursor = page.nextCursor; hasMoreApprovals = page.hasMore; approvalError = nil
             updateResponseNotices()
-        } catch { if isCurrent && token == generation { approvalError = message(error) } }
+        } catch { if isCurrent && token == generation { approvalError = message(error); currentApprovals = [] } }
         do {
-            var page = try await client.questions(sessionID: snapshot.sessionId)
+            var page = try await client.questions(sessionID: sessionID)
             guard isCurrent, token == generation, matches(page.scope) else { return }
             var readDepth = 0
+            var observed = Set<String>()
             while true {
                 let rows = page.questions.filter { belongs($0.taskId, command: $0.sourceCommandId, receipt: $0.sourceReceiptId) }
-                currentQuestions.formUnion(rows.map(\.id)); mergeQuestions(rows); readDepth += 1
+                observed.formUnion(rows.map(\.id)); mergeQuestions(rows); readDepth += 1
                 guard readDepth < questionDepth, let cursor = page.nextCursor else { break }
-                page = try await client.questions(sessionID: snapshot.sessionId, before: cursor)
+                page = try await client.questions(sessionID: sessionID, before: cursor)
                 guard isCurrent, token == generation, matches(page.scope) else { return }
             }
+            currentQuestions = observed
             questionDepth = readDepth
             questionCursor = page.nextCursor; hasMoreQuestions = page.hasMore; questionError = nil
             updateResponseNotices()
-        } catch { if isCurrent && token == generation { questionError = message(error) } }
+        } catch { if isCurrent && token == generation { questionError = message(error); currentQuestions = [] } }
     }
     func loadMoreApprovals() async {
-        guard isCurrent, !loading, let task, let cursor = approvalCursor else { return }
+        guard isCurrent, !loading, let sessionID, let cursor = approvalCursor else { return }
         loading = true; let token = generation
         defer { if token == generation { loading = false } }
         do {
-            let page = try await client.approvals(sessionID: task.sessionId, before: cursor)
+            let page = try await client.approvals(sessionID: sessionID, before: cursor)
             guard isCurrent, token == generation, matches(page.scope) else { return }
             let rows = page.approvals.filter { belongs($0.taskId, command: $0.sourceCommandId, receipt: $0.sourceReceiptId) }
             currentApprovals.formUnion(rows.map(\.id)); mergeApprovals(rows)
             approvalDepth += 1
             approvalCursor = page.nextCursor; hasMoreApprovals = page.hasMore; approvalError = nil
             updateResponseNotices()
-        } catch { if isCurrent && token == generation { approvalError = message(error) } }
+        } catch { if isCurrent && token == generation { approvalError = message(error); currentApprovals = [] } }
     }
     func loadMoreQuestions() async {
-        guard isCurrent, !loading, let task, let cursor = questionCursor else { return }
+        guard isCurrent, !loading, let sessionID, let cursor = questionCursor else { return }
         loading = true; let token = generation
         defer { if token == generation { loading = false } }
         do {
-            let page = try await client.questions(sessionID: task.sessionId, before: cursor)
+            let page = try await client.questions(sessionID: sessionID, before: cursor)
             guard isCurrent, token == generation, matches(page.scope) else { return }
             let rows = page.questions.filter { belongs($0.taskId, command: $0.sourceCommandId, receipt: $0.sourceReceiptId) }
             currentQuestions.formUnion(rows.map(\.id)); mergeQuestions(rows)
             questionDepth += 1
             questionCursor = page.nextCursor; hasMoreQuestions = page.hasMore; questionError = nil
             updateResponseNotices()
-        } catch { if isCurrent && token == generation { questionError = message(error) } }
+        } catch { if isCurrent && token == generation { questionError = message(error); currentQuestions = [] } }
     }
     func hasSaved(_ key: String) -> Bool { response(key) != nil }
     func canRespond(_ key: String) -> Bool {
-        guard isCurrent, !loading, journalError == nil, !busy.contains(key), response(key) == nil else { return false }
+        guard isCurrent, journalError == nil, !busy.contains(key), response(key) == nil else { return false }
         if key.hasPrefix("approval:") { return approvalError == nil && currentApprovals.contains(String(key.dropFirst(9))) }
         return questionError == nil && currentQuestions.contains(String(key.dropFirst(9)))
+    }
+    func savedApprovalOutcome(_ approval: SessionApproval) -> ApprovalDecisionOutcome? {
+        response("approval:" + approval.id)?.approval?.outcome
     }
     func savedAnswers(_ batch: SessionQuestionBatch) -> [QuestionAnswerItem]? {
         response("question:" + batch.id)?.question?.answer.answers ?? batch.answer?.answers
@@ -182,8 +199,8 @@ private struct SavedTaskResponse: Codable {
     }
     /// A lost response is first read back. Only an explicit retry can reuse the same persisted payload.
     func continueOriginal(_ key: String) async {
-        guard isCurrent, !busy.contains(key), let task else { return }
-        await refresh(task)
+        guard isCurrent, !busy.contains(key) else { return }
+        await refreshCurrent()
         guard isCurrent, let record = response(key) else { return }
         if let intent = record.approval {
             guard approvalError == nil, currentApprovals.contains(intent.approvalId),
@@ -211,24 +228,29 @@ private struct SavedTaskResponse: Codable {
             }
             record.registered = true; try save(record)
             notices[key] = record.approval != nil ? "决定已登记，等待执行端确认。" : "回答已登记，等待原生接收确认。"
-            if let task { await refresh(task) }
+            await refreshCurrent()
         } catch {
             guard isCurrent, token == generation else { return }
             notices[key] = "提交结果待核对，原请求已保留。"; errors[key] = message(error)
-            if let task { await refresh(task) }
+            await refreshCurrent()
         }
     }
+    private func refreshCurrent() async {
+        if let timelineSessionID { await refreshTimeline(sessionID: timelineSessionID) }
+        else if let task { await refresh(task) }
+    }
     private func scope() throws -> SessionInteractionScope {
-        guard let account, let task else { throw APIFailure.notAuthenticated }
-        return try SessionInteractionScope(session: account, sessionID: task.sessionId)
+        guard let account, let sessionID else { throw APIFailure.notAuthenticated }
+        return try SessionInteractionScope(session: account, sessionID: sessionID)
     }
     private func matches(_ value: TaskReadScope) -> Bool {
         account.map { $0.server == value.server && $0.account.ownerId == value.ownerId && $0.hostId == value.hostId } ?? false
     }
     private func matches(_ value: SessionInteractionScope) -> Bool {
-        account.map { $0.server == value.server && $0.account.ownerId == value.ownerId && $0.hostId == value.hostId && task?.sessionId == value.sessionId } ?? false
+        account.map { $0.server == value.server && $0.account.ownerId == value.ownerId && $0.hostId == value.hostId && sessionID == value.sessionId } ?? false
     }
     private func belongs(_ root: String, command: String, receipt: String) -> Bool {
+        if timelineSessionID != nil { return true }
         guard let task, root == task.taskId else { return false }
         return ([task.source] + task.supplements + task.resumes).contains { $0.commandId == command && $0.receiptId == receipt }
     }

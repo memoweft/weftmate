@@ -4,84 +4,45 @@ import WeftMateCore
 import UIKit
 #endif
 
-/// The same task's permission and information prompts, in its conversation and detail.
-struct TaskInteractionView: View {
-    @ObservedObject private var appModel: AppleAppModel
-    @StateObject private var model: TaskInteractionModel
-    @Environment(\.scenePhase) private var scenePhase
-    @State private var refreshRevision = 0
+/// An authenticated interaction projected at its original timeline position.
+struct TimelineInteractionCard: View {
+    @ObservedObject var model: TaskInteractionModel
+    let entry: TimelineEntry
+    let events: [TimelineEvent]
     @State private var choices: [String: Set<String>] = [:]
     @State private var text: [String: String] = [:]
     @FocusState private var focusedQuestion: String?
-    private let snapshot: TaskSnapshot
-
-    init(appModel: AppleAppModel, snapshot: TaskSnapshot) {
-        self.appModel = appModel; self.snapshot = snapshot
-        _model = StateObject(wrappedValue: TaskInteractionModel(client: appModel.assistantClient,
-            account: appModel.session, epoch: appModel.accountEpoch, stateDirectory: appModel.assistantStateDirectory,
-            currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() },
-            currentSession: { [weak appModel] in appModel?.session }))
-    }
-
-    private struct ReadIdentity: Equatable {
-        let phase: ScenePhase
-        let revision: Int
-        let snapshot: TaskSnapshot
-    }
-    private var observationKey: ReadIdentity {
-        .init(phase: scenePhase, revision: refreshRevision, snapshot: snapshot)
-    }
-    private var hasContent: Bool {
-        !model.approvals.isEmpty || !model.questions.isEmpty || model.approvalError != nil || model.questionError != nil ||
-            model.hasMoreApprovals || model.hasMoreQuestions
-    }
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            if model.isCurrent, hasContent {
-                HStack {
-                    Text(model.approvals.contains(where: { $0.canDecide }) || model.questions.contains(where: { $0.canAnswer })
-                         ? "需要你的回应" : "回应记录").font(.headline).foregroundStyle(Weave.ink)
-                    Spacer()
-                    Button { refreshRevision += 1 } label: { Image(systemName: "arrow.clockwise") }
-                        .accessibilityLabel("核对任务中的审批和问题")
-                        .accessibilityIdentifier("refreshTaskInteractions")
-                        .disabled(model.loading || !model.busy.isEmpty)
-                    if model.loading { ProgressView().controlSize(.small) }
-                }
-                ForEach(model.approvals) { approval in approvalCard(approval) }
-                ForEach(model.questions) { question in questionCard(question) }
-                if let error = model.approvalError { Text("审批：" + error).font(.caption).foregroundStyle(Weave.muted) }
-                if let error = model.questionError { Text("信息问答：" + error).font(.caption).foregroundStyle(Weave.muted) }
-                if let error = model.persistenceError { InlineNotice(message: error, isError: true) }
-                if model.hasMoreApprovals {
-                    Button("读取更早的审批") { Task { await model.loadMoreApprovals() } }.disabled(model.loading)
-                }
-                if model.hasMoreQuestions {
-                    Button("读取更早的问题") { Task { await model.loadMoreQuestions() } }.disabled(model.loading)
-                }
+        VStack(alignment: .leading, spacing: 12) {
+            if entry.event.type.hasPrefix("approval.") {
+                if let approval = model.approvals.first(where: { $0.id == entry.event.data["approvalId"]?.string }) {
+                    if approval.canDecide && entry.resolved == nil { approvalCard(approval) }
+                    else { Label(model.notices["approval:" + approval.id] ?? "审批已处理", systemImage: "hand.raised").font(.caption) }
+                } else { unavailableCard }
+            } else if let batch = questionBatch {
+                if batch.canAnswer && entry.resolved == nil { questionCard(batch) }
+                else { Label(model.notices["question:" + batch.id] ?? "已回答", systemImage: "text.bubble").font(.caption) }
+            } else { unavailableCard }
+        }
+    }
+    private var questionBatch: SessionQuestionBatch? {
+        // A session may ask repeatedly within a turn. Only bind to the last ask not later than observedSeq.
+        model.questions.first { batch in
+            guard batch.turn == entry.event.data["turn"]?.int, let observed = batch.observedSeq else { return false }
+            return events.last(where: { $0.type == "question.asked" && $0.data["turn"]?.int == batch.turn && $0.seq <= observed })?.seq == entry.event.seq
+        }
+    }
+    private var unavailableCard: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(entry.resolved != nil ? "已处理" : entry.event.type.hasPrefix("approval.") ? "需要审批" : "需要补充信息").font(.headline)
+            Text(entry.event.data["summary"]?.string ?? "").font(.callout)
+            if entry.resolved == nil {
+                Text("回应状态尚未核对。" ).font(.caption).foregroundStyle(Weave.muted)
+                if model.hasMoreApprovals && entry.event.type.hasPrefix("approval.") {
+                    Button("读取更早的审批") { Task { await model.loadMoreApprovals() } }
+                } else if model.hasMoreQuestions { Button("读取更早的问题") { Task { await model.loadMoreQuestions() } } }
             }
-        }
-        .task(id: observationKey) {
-            model.suspend()
-            guard scenePhase == .active else { return }
-            model.activate()
-            var policy = ConversationPollingPolicy()
-            while !Task.isCancelled && model.isCurrent {
-                let oldApprovals = model.approvals, oldQuestions = model.questions
-                await model.refresh(snapshot)
-                guard !Task.isCancelled, model.isCurrent, model.approvalError == nil, model.questionError == nil,
-                      model.needsObservation || TaskPresentation.needsObservation(snapshot) else { return }
-                do { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress:
-                    oldApprovals != model.approvals || oldQuestions != model.questions)) }
-                catch { return }
-            }
-        }
-        .onDisappear { focusedQuestion = nil; model.suspend() }
-        .onChange(of: appModel.accountEpoch) { _, _ in
-            focusedQuestion = nil; choices = [:]; text = [:]; model.cancel()
-        }
-        .accessibilityElement(children: .contain)
-        .accessibilityIdentifier("taskInteractions.\(snapshot.taskId)")
+        }.padding(14).background(Weave.soft, in: RoundedRectangle(cornerRadius: 14))
     }
 
     private func approvalCard(_ approval: SessionApproval) -> some View {
@@ -92,7 +53,7 @@ struct TaskInteractionView: View {
             Text(approval.toolName).font(.caption).foregroundStyle(Weave.muted)
             if approval.canDecide, !model.hasSaved(key) {
                 HStack(spacing: 12) {
-                    Button("仅允许这一次") { endInput(); Task { await model.decide(approval, outcome: .allowedOnce) } }
+                    Button("允许一次") { endInput(); Task { await model.decide(approval, outcome: .allowedOnce) } }
                         .accessibilityIdentifier("approveOnce.\(approval.id)")
                     Button("拒绝") { endInput(); Task { await model.decide(approval, outcome: .rejected) } }
                         .accessibilityIdentifier("rejectApproval.\(approval.id)")

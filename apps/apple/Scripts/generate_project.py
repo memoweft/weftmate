@@ -52,6 +52,7 @@ def configs(name, settings, is_project=False):
         if config == "Debug":
             build.update(SWIFT_OPTIMIZATION_LEVEL="-Onone", DEBUG_INFORMATION_FORMAT="dwarf", SWIFT_ACTIVE_COMPILATION_CONDITIONS="$(inherited) DEBUG", ENABLE_TESTABILITY="YES", ONLY_ACTIVE_ARCH="YES")
             if name == "WeftMatePhone":
+                build["INFOPLIST_FILE"] = "Config/SimulatorTestInfo.plist"
                 build["INFOPLIST_KEY_NSHealthUpdateUsageDescription"] = "仅在隔离模拟器 XCTest 中写入合成样本，日用功能不写健康数据。"
         else:
             build.update(SWIFT_OPTIMIZATION_LEVEL="-O", DEBUG_INFORMATION_FORMAT="dwarf-with-dsym", ONLY_ACTIVE_ARCH="NO")
@@ -127,7 +128,7 @@ debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixt
 target("WeftMateMac", "macosx", ui + mac + debug_fixture)
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture)
 target("WeftMateMacUITests", "macosx", ["Tests/WeftMateUITests.swift"], "WeftMateMac")
-target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift"], "WeftMatePhone")
+target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift", "Tests/A3TimelineUITests.swift"], "WeftMatePhone")
 product_group = obj("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")
 group = obj("group", isa="PBXGroup", children=all_files+[product_group], sourceTree="<group>")
 project_config = configs("project", {"CLANG_WARN_DOCUMENTATION_COMMENTS": "YES", "CLANG_WARN_UNGUARDED_AVAILABILITY": "YES_AGGRESSIVE", "SWIFT_VERSION": "6.0"}, True)
