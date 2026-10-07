@@ -1,41 +1,32 @@
 # 当前状态
 
-> 只写现在，整页覆盖更新，不追加日记。≤1 页。旧状态记录见 `archive/2026-10-07/CURRENT_STATE.md`。
+> 只写现在，整页覆盖更新，不追加日记。≤1 页；路线见 PLAN.md，旧记录见 archive/2026-10-07/。
 
 更新：2026-10-07
 
-## 当前里程碑：M0 重置（见 PLAN.md 第 6 节）
+## 当前里程碑：M0 重置
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows | M0-3 历史分页 + M1-0a 时间线完成 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 待审：首屏尾页 / 上翻 / 增量、原生时间线投影、桌面 / 手机对话内执行；任务页与详情弹窗已删除；Android code14 / UI 0.8.1 |
-| Codex · Mac | H1 HealthKit 读取与每日健康摘要 | `wp/h1-healthkit`：iPhone 账号菜单健康设置、8 类只读权限、本地每日摘要/14 天基线、云端选择/自评频率、隔离持久队列与删除待办已实现；Core 253 项、状态检查 10 组及三目标构建通过；iOS 隔离模拟器 HealthKit 合成样本与设置 UI 场景 2 项通过；服务端草案待 Windows 实现；仓库 CI 在 release:preflight 因现有 npm 依赖审计失败（main 同样失败）；[PR #22](https://github.com/memoweft/weftmate/pull/22) 待审 |
+| Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改中；已合入最新 main，修复长会话来源校验；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
+| Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 已合入；接收/读取/删除、observed（观测证据）待写队列、模型位置自动判断及 modelTier 手动覆盖已实现；World 写入待 MemoWeft 协议补齐 |
 
-已完成：
-- 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
-- 任务 15 在途改动已作 checkpoint 提交 `1f922a5`（通用执行、审批、用户提问、Android 文本成果 MIME，未经独立验收）。
-- M0-1b：旧 alpha2 路径清理、一次性脚本归档；`personal-access/index.mjs` 6160 → 614 行，导出、接口和存储行为兼容。
-- M0-2：配置 / 启动读取实际容量，逐请求计算输出预算，personal-remote 接入原生压缩；[PR #24](https://github.com/memoweft/weftmate/pull/24)。
+已完成：文档与规则重置；M0-1b 旧路径清理/模块拆分；M0-2 服务容量与动态输出预算（PR #24）；H1 iPhone 健康设置、8 类只读权限、每日摘要/14 天基线与隔离队列（PR #22）；CI（持续集成）依赖审计及按用例分组、减少三平台重复运行（PR #23 与主干修订）。
 
 ## 最近一次场景结果
 
-M0-7 场景集已建立；Qwen / MiMo 实测基线尚未跑。
-
-M0-3 / M1-0a：类型检查通过；完整单测 843/850 通过、5 项原有静态契约失败、2 跳过，新增失败 0（交接基线 11）；相关 81/81、手机界面 89/89、固定 DSH 冷恢复 5/5。Android JVM（本地测试运行时）22/22、调试包及测试包构建通过；缓存上翻仪器场景已编译，未在设备运行。隔离宿主 + 合成原生日志完成桌面 1280 / 手机 390 截图、原始输出和成果预览，见 PR 的 `tests/evidence/m0-3/`。
+- M0-3 原交付：类型检查通过；完整单测 843/850 通过、5 项原有静态契约失败、2 跳过；相关 81/81、手机界面 89/89、DSH 冷恢复 5/5、Android JVM（Java 虚拟机）22/22，调试包/测试包构建通过。隔离桌面/手机截图及成果预览见 PR 的 tests/evidence/m0-3/；仪器场景未在设备运行。
+- H2：相关隔离测试 22/22、类型检查/发布预检/依赖审计通过（0 漏洞）；本机必过组 709 通过/7 跳过，另有 macOS 回环别名夹具问题；详见 PR #25。GitHub Actions（自动化工作流）因付款/额度暂停，以本地结果为准。
+- M0-7 场景集已建立；Qwen / MiMo 基线与真实 Qwen 长任务回归尚未跑。
 
 ## 契约变更
 
-- 2026-10-07 / M0-3、M1-0a：CLIENT_API 第 3.4 / 4 节正式；无游标尾页、beforeSeq 上翻、afterSeq 正向（显式 -1 兼容），追加 nextBeforeSeq/hasOlder/latestSeq 与按 seq 详情；执行 / 审批 / 提问 / 成果同原生序列。task 从原生 step 标记投影，成果含 completedStep，不写 DSH 私有事件；末步待确认时 nextSeq 可暂低于 latestSeq。taskId 为回合键，不是 /tasks 根命令 ID。Apple A1 / M1-0d 待接入；排队 / 插话另包；手机界面需原生 code14。
-
-- 2026-10-06 / H1：CLIENT_API 第 6 节新增健康摘要草案：POST `/health/daily-summaries` 按账号/来源设备/日期幂等，含云端使用选择与自评频率；DELETE 按日期/全部；Apple 404/501 静默保留本地队列。待 Windows 接收、MemoWeft observed 与模型使用/删除闭环实现。
-
-- 2026-10-07 / A2：服务端不变；Apple 对齐 8,192 UTF-16 / 12 KiB JSON、确认接管和附件现有接口。`/sessions` 无 origin，任务入口以 `/status` 的仅所有者桌面能力 + 实时 sendAvailable 确认 personal-remote；shared-chat 与范围不明会话不请求 /tasks。
-
-- 2026-10-07 / M0-5：CLIENT_API 建立77项现有业务接口基线；Apple消息/纠正体上限、shared-chat任务控制、接管确认字段及分页/附件/模型等缺口已列；M0-3分页与M1-0a十种时间线事件为待Windows确认草案。仅文档，现有接口兼容性不变。
+- M0-3 / M1-0a：CLIENT_API 第 3.4 / 4 节正式：无游标尾页、beforeSeq 上翻、afterSeq 正向、nextBeforeSeq/hasOlder/latestSeq、按 seq 详情；执行/审批/提问/成果共用原生序列，taskId 是回合键。Apple A1 / M1-0d 待接入；排队/插话另包。
+- H2：CLIENT_API 第 6 节正式，健康上传/读取/删除及迟到上传水位；200 确认摘要和待写队列落盘，未写 World。第 3.10 节可选 modelTier（auto/local/cloud），缺省按实际地址判断，位置修订生成新 runtime（运行时）修订；桌面表单保留本地/云端覆盖。非健康记忆召回照常。
+- A2：Apple 对齐消息/JSON 上限、接管和附件接口；任务能力按 /status 与实时 sendAvailable 判断。M0-5 接口基线已由以上正式契约更新。
 
 ## 已知问题
 
-- M0-2 预算来源已修复并通过隔离场景；真实 Qwen 长任务回归待服务可用，日用宿主和模型进程未改动或重启。
-- 本地 Qwen 服务曾多次显存不足（OOM），启动方式不统一（M0-6）。
-- 模型路由只合并两个薄封装；跨文件恢复、串行队列和历史会话引用保护保留，进一步简化仍需协调持久化与重载路径（见 PR #20）。
-- PR #20 云端 CI（持续集成）在 `release:preflight` 的依赖审查中失败；锁文件未改动，本包未升级依赖。
+- H2 / MW-2：MemoWeft 缺 observed 写入、按来源过滤与撤回协议，健康仍在可回放队列；见 src/personal-health/README.md。
+- M0-6：本地 Qwen 启动方式不统一，曾多次 OOM（内存不足）；真实模型与手机真机验收待跑。M1-3 待在剩余上下文极少时先触发压缩。
+- 主干既有失败、固定 DSH 产物/外部 Design 夹具与跨平台测试适配未全部解决；CI 当前计费暂停。模型路由进一步简化仍需协调恢复/队列/引用保护（PR #20）。
