@@ -1465,9 +1465,10 @@ export class DshWebRuntime {
     pending.resolve(valid ? value : unknownReplyEvidence())
   }
 
-  readPersonalReplyEvidence(input: { sessionId: string, receiptId: string }): Promise<unknown> {
+  readPersonalReplyEvidence(input: { sessionId: string, receiptId: string, turn?: number }): Promise<unknown> {
     if (!input || typeof input.sessionId !== 'string' || !/^[A-Za-z0-9_-]{1,128}$/.test(input.sessionId) ||
-        typeof input.receiptId !== 'string' || !TASK_STOP_RECEIPT.test(input.receiptId)) {
+        typeof input.receiptId !== 'string' || !TASK_STOP_RECEIPT.test(input.receiptId) ||
+        input.turn !== undefined && (!Number.isSafeInteger(input.turn) || input.turn < 1)) {
       return Promise.resolve(unknownReplyEvidence())
     }
     const child = this.child
@@ -1484,7 +1485,8 @@ export class DshWebRuntime {
       this.replyEvidencePending.set(id, { child, timer, resolve })
       try {
         child.send({ protocol: REPLY_EVIDENCE_PROTOCOL, id,
-          sessionId: input.sessionId, receiptId: input.receiptId }, (error) => {
+          sessionId: input.sessionId, receiptId: input.receiptId,
+          ...(input.turn === undefined ? {} : { turn: input.turn }) }, (error) => {
           if (!error || !this.replyEvidencePending.has(id)) return
           this.replyEvidencePending.delete(id)
           clearTimeout(timer)

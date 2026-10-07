@@ -301,7 +301,7 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
 
     /** Cache only projected native events, under their exact owner/host/session identity. */
     @Synchronized fun saveSharedHistoryPage(owner: String, hostId: String, sessionId: String,
-        events: JSONArray, nextSeq: Long) = write { db ->
+        events: JSONArray, nextSeq: Long, hasOlder: Boolean = false) = write { db ->
         require(owner.isNotBlank() && hostId.isNotBlank() && sessionId.isNotBlank() &&
             events.length() <= 100 && nextSeq >= -1)
         val priorCursor = db.rawQuery("SELECT next_seq FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?",
@@ -311,7 +311,9 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
             val event = events.getJSONObject(index)
             val seq = event.getLong("seq")
             if (seq < 0 || seq <= previous || seq > nextSeq ||
-                event.optString("type") !in setOf("user.message", "assistant.message", "turn.started", "turn.ended"))
+                event.optString("type") !in setOf("user.message", "assistant.message", "turn.started", "turn.ended",
+                    "step.started", "step.completed", "approval.requested", "approval.resolved", "question.asked",
+                    "question.answered", "artifact.created", "task.queued", "task.started", "task.ended"))
                 throw ApiFailure(502, "HISTORY_CURSOR_INVALID")
             previous = seq
             val body = event.toString()
@@ -332,21 +334,27 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         val oldTruncated = db.rawQuery("SELECT truncated FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?",
             arrayOf(owner, hostId, sessionId)).use { if (it.moveToFirst()) it.getInt(0) else 0 }
         db.execSQL("INSERT OR REPLACE INTO shared_history_cursors(owner_key,host_id,session_id,next_seq,truncated,updated_at) VALUES(?,?,?,?,?,?)",
-            arrayOf(owner, hostId, sessionId, maxOf(nextSeq, priorCursor), oldTruncated, System.currentTimeMillis()))
+            arrayOf(owner, hostId, sessionId, maxOf(nextSeq, priorCursor), if (hasOlder) 1 else oldTruncated, System.currentTimeMillis()))
         pruneSharedHistory(db, owner, hostId, sessionId)
     }
 
     @Synchronized fun cachedSharedHistory(owner: String, hostId: String, sessionId: String,
-        afterSeq: Long): JSONObject {
-        val events = JSONArray()
-        readableDatabase.rawQuery("SELECT seq,digest,body FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq>? ORDER BY seq LIMIT 100",
-            arrayOf(owner, hostId, sessionId, afterSeq.toString())).use { cursor ->
+        afterSeq: Long? = null, beforeSeq: Long? = null): JSONObject {
+        val forward = afterSeq != null
+        val comparison = if (forward) ">" else "<"
+        val order = if (forward) "ASC" else "DESC"
+        val boundary = afterSeq ?: beforeSeq ?: Long.MAX_VALUE
+        val selected = mutableListOf<JSONObject>()
+        readableDatabase.rawQuery("SELECT seq,digest,body FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq$comparison? ORDER BY seq $order LIMIT 100",
+            arrayOf(owner, hostId, sessionId, boundary.toString())).use { cursor ->
             while (cursor.moveToNext()) {
                 val body = cursor.getString(2)
                 if (sharedHistoryDigest(body) != cursor.getString(1)) throw ApiFailure(502, "HISTORY_CONFLICT")
-                events.put(JSONObject(body))
+                selected.add(JSONObject(body))
             }
         }
+        if (!forward) selected.reverse()
+        val events = JSONArray(); for (event in selected) events.put(event)
         val metadata = readableDatabase.rawQuery("SELECT next_seq,truncated FROM shared_history_cursors WHERE owner_key=? AND host_id=? AND session_id=?",
             arrayOf(owner, hostId, sessionId)).use {
             if (it.moveToFirst()) it.getLong(0) to (it.getInt(1) != 0) else -1L to false }
@@ -354,14 +362,17 @@ class LocalStore(context: Context, databaseName: String = "weftmate-mobile.db") 
         val oldest = readableDatabase.rawQuery("SELECT MIN(seq) FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=?",
             arrayOf(owner, hostId, sessionId)).use {
             if (it.moveToFirst() && !it.isNull(0)) it.getLong(0) else null }
-        val last = if (events.length() > 0) events.getJSONObject(events.length() - 1).getLong("seq") else afterSeq
-        val hasMore = last < watermark && readableDatabase.rawQuery(
+        val last = selected.lastOrNull()?.getLong("seq") ?: afterSeq ?: -1L
+        val hasMore = forward && last < watermark && readableDatabase.rawQuery(
             "SELECT 1 FROM shared_history_events WHERE owner_key=? AND host_id=? AND session_id=? AND seq>? LIMIT 1",
             arrayOf(owner, hostId, sessionId, last.toString())).use { it.moveToFirst() }
+        val first = selected.firstOrNull()?.getLong("seq")
         return JSONObject().put("events", events).put("nextSeq", if (hasMore) last else maxOf(last, watermark))
             .put("hasMore", hasMore).put("cached", true).put("hostAvailable", false)
             .put("tailUnknown", true).put("oldestSeq", oldest ?: JSONObject.NULL)
-            .put("historyTruncated", metadata.second && (oldest == null || afterSeq < oldest - 1))
+            .put("historyTruncated", metadata.second && (oldest == null || (afterSeq ?: -1) < oldest - 1))
+            .put("latestSeq", watermark).put("nextBeforeSeq", first ?: JSONObject.NULL)
+            .put("hasOlder", !forward && first != null && oldest != null && oldest < first)
     }
 
     /** Resolve only an attachment reference already persisted in this owner/host/session history. */

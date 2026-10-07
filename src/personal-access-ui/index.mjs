@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const files = new Map([
+  ['/personal/v1/ui/timeline.js', ['timeline.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui', ['index.html', 'text/html; charset=utf-8']],
   ['/personal/v1/ui/', ['index.html', 'text/html; charset=utf-8']],
   ['/personal/v1/ui/index.html', ['index.html', 'text/html; charset=utf-8']],
