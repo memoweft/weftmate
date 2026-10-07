@@ -45,4 +45,8 @@ console.log(lines.join('\n'));
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, `${lines.join('\n')}\n`);
 const result = spawnSync(process.execPath, [...args, ...selected], { env, stdio: 'inherit' });
 if (result.error) throw result.error;
+if (process.env.GITHUB_STEP_SUMMARY) {
+  appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+    `\n${mode === 'required' ? 'Required gate' : 'Non-blocking baseline observation'} exit status: **${result.status ?? 'terminated'}**. See this step's test log for pass/fail counts and assertions.\n`);
+}
 process.exitCode = result.status ?? 1;
