@@ -1,0 +1,50 @@
+import { loadConfig } from './config.mjs';
+import { openDatabase } from './database.mjs';
+import { createLogger } from './log.mjs';
+import { createMailer } from './mail.mjs';
+import { createCloudServer } from './server.mjs';
+
+// WAL sidecars and any future service files inherit private permissions.
+process.umask(0o077);
+const logger = createLogger();
+let database;
+let server;
+let stopping = false;
+
+function shutdown(signal) {
+  if (stopping) return;
+  stopping = true;
+  logger.info('service.stopping', { signal });
+  server.close(() => {
+    database.close();
+    logger.info('service.stopped');
+  });
+  server.closeIdleConnections();
+}
+
+try {
+  const config = loadConfig();
+  const opened = await openDatabase(config.databasePath);
+  database = opened.database;
+  createMailer(config, { logger });
+  server = createCloudServer({ ...opened, logger });
+  await new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(config.port, config.host, () => {
+      server.off('error', reject);
+      resolve();
+    });
+  });
+  server.on('error', (error) => {
+    logger.error('service.error', { code: error.code ?? 'SERVER_ERROR' });
+    process.exitCode = 1;
+    shutdown('server-error');
+  });
+  process.once('SIGTERM', () => shutdown('SIGTERM'));
+  process.once('SIGINT', () => shutdown('SIGINT'));
+  logger.info('service.started', { port: server.address().port, schemaVersion: opened.schemaVersion });
+} catch (error) {
+  database?.close();
+  logger.error('service.start_failed', { code: error.code ?? 'STARTUP_FAILED' });
+  process.exitCode = 1;
+}

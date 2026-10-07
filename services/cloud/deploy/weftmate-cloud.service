@@ -1,0 +1,27 @@
+# Review draft: /opt/weftmate-cloud/current contains services/cloud contents.
+[Unit]
+Description=WeftMate cloud control plane
+After=network.target
+
+[Service]
+Type=simple
+DynamicUser=yes
+User=weftmate-cloud
+WorkingDirectory=/opt/weftmate-cloud/current
+ExecStart=/usr/bin/node src/main.mjs
+EnvironmentFile=/etc/weftmate-cloud/cloud.env
+StateDirectory=weftmate-cloud
+StateDirectoryMode=0700
+UMask=0077
+Restart=on-failure
+RestartSec=3
+TimeoutStopSec=30
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
