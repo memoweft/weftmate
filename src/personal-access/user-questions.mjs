@@ -27,7 +27,7 @@ export function createUserQuestionOperations(context) {
     const checked = context.personalExecutionSource(account, { ...input, receiptId: input.sourceReceiptId });
     if (activeSource) {
       const device = account.devices[checked.source.sourceDeviceId];
-      if (!device || device.authKind !== 'password' || device.revoked ||
+      if (!device || !['password', 'cloud'].includes(device.authKind) || device.revoked ||
           !Number.isSafeInteger(checked.source.sourceAuthEpoch) || device.authEpoch !== checked.source.sourceAuthEpoch ||
           Date.parse(device.expiresAt) <= context.timestamp()) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       if (!context.messageModelUsable(account.ownerId, account.sessions[input.sessionId], account)) throw failure('MODEL_UNAVAILABLE', 409);
