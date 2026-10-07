@@ -161,6 +161,10 @@ test('register/login, create/send, cursor-based polling, file and reply checks, 
   ])], { out });
   assert.equal(report.results[0].status, 'passed');
   assert.equal(report.results[0].turns[0].reply, '完成 49 小禾 周五 海报 买菜');
+  const turn = report.results[0].turns[0];
+  assert.ok(Date.parse(turn.endedAt) >= Date.parse(turn.startedAt));
+  assert.ok(turn.timeline.some(event => event.type === 'turn.ended'));
+  assert.deepEqual(Object.keys(turn.timeline[0]).sort(), ['at', 'seq', 'type'], 'timings omit event payloads');
   assert.equal(report.results[0].checks.at(-1).status, 'skipped');
   assert.equal(report.summary.passRate, 1);
   assert.ok(host.calls.some(c => c.path === '/auth/register'));

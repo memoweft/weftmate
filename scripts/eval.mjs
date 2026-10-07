@@ -288,7 +288,8 @@ async function runScenario(scenario, context) {
         rootTask = cmd.commandId;
       }
       if (!cmd?.commandId) throw new Error('Message/resume did not return commandId');
-      const turn = { sessionId: session, modelProfileId: model.id, commandId: cmd.commandId, reply: '', status: 'running', approvals: [] };
+      const turn = { sessionId: session, modelProfileId: model.id, commandId: cmd.commandId,
+        startedAt: new Date().toISOString(), reply: '', status: 'running', approvals: [], timeline: [] };
       const turnStarted = Date.now();
       if (!input.seed) { result.turns.push(turn); turnNumber++; }
       let stopped = false, approvalIndex = 0, terminal = null;
@@ -299,6 +300,7 @@ async function runScenario(scenario, context) {
         const page = await drain(context.client, session, cursor, deadline);
         cursor = page.cursor;
         for (const event of page.events) {
+          turn.timeline.push({ seq: event.seq, type: event.type, at: event.at });
           if (event.type === 'assistant.message') turn.reply += `${turn.reply ? '\n' : ''}${event.data.text ?? ''}`;
           if (event.type === 'turn.ended') terminal = event;
         }
@@ -324,6 +326,7 @@ async function runScenario(scenario, context) {
       turn.status = terminal.data.reason === 'error' ? 'failed' : terminal.data.reason;
       turn.endReasonKind = terminal.data.endReasonKind;
       turn.durationMs = Date.now() - turnStarted;
+      turn.endedAt = new Date().toISOString();
       if (input.stopAfterMs !== undefined && !stopped) throw new Error('Task completed before declared stop could be exercised');
       if (approvalIndex !== (input.approvals?.length ?? 0)) throw new Error('Expected approval was not observed');
       if (input.seed && turn.status !== 'completed') throw new Error(`Memory seed ended ${turn.status}`);
@@ -346,6 +349,8 @@ async function runScenario(scenario, context) {
     result.status = error instanceof Unsupported ? 'unsupported' : 'failed';
     result.reason = error.message;
     result.timedOut = error instanceof Timeout;
+    const unfinished = result.turns.at(-1);
+    if (unfinished?.status === 'running') unfinished.durationMs = Date.now() - Date.parse(unfinished.startedAt);
     if (session) {
       try { await command(context.client, context.hostId, 'session.cancel', { sessionId: session }, Date.now() + 2000); result.cleanup = 'cancel requested; stopping side effects is unconfirmed'; }
       catch { result.cleanup = 'cancel request failed; isolated host may still be running'; }
@@ -395,6 +400,7 @@ export async function runEvaluation(options) {
   for (const scenario of scenarios) {
     const result = error && !scenario.manual ? { id: scenario.id, title: scenario.title, category: scenario.category, status: 'failed', reason: error.message, durationMs: 0, checks: [], turns: [], replySummary: '', notes: scenario.notes } : await runScenario(scenario, { client, hostId, models, model: options.model, switchModel: options.switchModel, judgeModel: options.judgeModel, pollMs: options.pollMs ?? 250 });
     report.results.push(result);
+    await options.onScenarioResult?.(result);
   }
   const counts = status => report.results.filter(r => r.status === status).length;
   report.summary = { passed: counts('passed'), failed: counts('failed'), manual: counts('manual'), unsupported: counts('unsupported'),
