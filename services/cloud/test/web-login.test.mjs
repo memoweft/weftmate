@@ -53,7 +53,7 @@ test('S1c real browser: local login → bind → new mobile browser waits → de
   await owner.goto(origin + '/personal/v1/ui/'); await visible(owner, '#login-view');
   await owner.locator('#login-name').fill('synthetic-local'); await owner.locator('#login-password').fill(localPassword);
   await owner.locator('#login-device').fill('Desktop'); await owner.locator('#login-form button[type=submit]').click();
-  await visible(owner, '#assistant-view'); await owner.locator('#rail-account').click();
+  await visible(owner, '#assistant-view'); await owner.locator('#account-menu-trigger').click(); await owner.locator('#rail-account').click();
   await visible(owner, '#cloud-bind'); await owner.locator('#cloud-bind').click(); await cloudForm(owner);
   await visible(owner, '#account-view');
   await owner.getByText('已绑定 WeftMate 账号', { exact: true }).waitFor();
@@ -67,7 +67,7 @@ test('S1c real browser: local login → bind → new mobile browser waits → de
   await phone.screenshot({ path: '.local/s1c-web/mobile-wait.png' });
   await phone.reload(); await visible(phone, '#cloud-wait-view');
   // Opening settings performs the foreground pending read; no push service is involved.
-  await owner.locator('#account-back').click(); await owner.locator('#rail-account').click();
+  await owner.locator('#account-back').click(); await owner.locator('#account-menu-trigger').click(); await owner.locator('#rail-account').click();
   await visible(owner, '#pending-devices');
   await owner.locator('#pending-device-list button').filter({ hasText: /^允许$/ }).click();
   await visible(phone, '#assistant-view');
