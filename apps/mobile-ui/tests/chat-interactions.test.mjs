@@ -1480,3 +1480,19 @@ test('M1-0 consecutive same-kind steps use one subgroup and retain each original
   assert.match(allText(subgroup),/读取文件 · 2 步/);assert.equal(subgroup.open,false);
   assert.equal(subgroup.children.filter(node=>node.className==='execution-step').length,2);
 })
+
+test('model restart stays pending on mobile through a two-minute native load and is not resubmitted',async()=>{
+  const h=harness();
+  h.run(`state.page='settings';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'))`);
+  const system={canRestart:true,queue:{},model:{state:'ready',canRestart:true,contextWindow:98304},
+    host:{state:'ready',canRestart:true},memory:{state:'disabled',canRestart:false}};
+  h.reply(0,system);h.reply(1,{backgroundModelProfileId:null});await h.flush();await h.flush();
+  const walk=node=>[node,...node.children.flatMap(child=>child.children?walk(child):[])];
+  const target=h.node('page-content');const button=walk(target).find(node=>node.tagName==='button'&&node.textContent==='重启模型服务');
+  assert.ok(button);button.fire('click');await h.flush();
+  h.advance(120000);await h.flush();
+  assert.equal(button.disabled,true);assert.equal(button.textContent,'重启中…');
+  assert.equal(h.bridge.filter(row=>row.params.path==='/personal/v1/system/model/restart').length,1);
+  h.reply(2,system);await h.flush();await h.flush();
+  assert.equal(walk(target).some(node=>node.textContent==='重启未确认，请刷新查看实际状态。'),false);
+});

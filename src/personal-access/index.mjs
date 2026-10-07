@@ -56,7 +56,7 @@ export { uniqueSessionOwner } from './store.mjs';
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, cloudIdentity = null, relay = null }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -104,6 +104,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get cloudIdentity() { return hostCloudIdentity; },
     get accountModelForProfile() { return accountModelForProfile; },
     get accountModelManager() { return accountModelManager; },
+    get systemManager() { return systemManager; },
     get accountModelView() { return accountModelView; },
     get accountState() { return accountState; },
     get active() { return active; },
@@ -491,6 +492,11 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   }
 
   const service = {
+    backgroundModelProfile(ownerId) {
+      const selected = accountState(ownerId).backgroundModelProfileId ?? null;
+      if (selected && !modelSelectable(ownerId, selected)) throw failure('MODEL_UNAVAILABLE', 503);
+      return selected;
+    },
     async start() {
       if (closing) throw failure('SERVICE_CLOSING', 503);
       if (server) return { origin, hostId: rootState.hostId, ownerId: rootState.legacyOwnerId };

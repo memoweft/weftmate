@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, rmSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -13,6 +13,7 @@ const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_bo
 
 test('account memory workers follow only the owner session route and restart without losing the outbox', async t => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-processing-route-'))
+  writeFileSync(join(root, 'pyproject.toml'), '[project]\nversion = "2.0.0-synthetic"\n')
   t.after(() => rmSync(root, { recursive: true, force: true }))
   const routes = new Map<string, any>([
     [`${ownerA}\0session-a-old`, { profileId: 'private-model-a-old',
@@ -23,6 +24,7 @@ test('account memory workers follow only the owner session route and restart wit
       routeFingerprint: 'b'.repeat(64), credential: 'secret-b' }],
   ])
   const instances: any[] = []
+  const backgroundRoutes = new Map<string, any>()
   const rpcFactory = ({ env }: any) => {
     const rpc: any = { env, child: null, closed: false, initialized: null, ingested: [] as string[],
       async request(method: string, params: any = {}) {
@@ -39,9 +41,10 @@ test('account memory workers follow only the owner session route and restart wit
           ? { world_revision: 0 } : { world_revision: 0, items: [] }
         if (method === 'ingest_boundary') { this.ingested.push(params.boundary.event_id)
           return { job_state: 'pending' } }
-        if (method === 'preview_recall') return { world_revision: 0, preview: {
+        if (method === 'preview_recall') { this.lastRecallTier = params.model_tier; return { world_revision: 0, preview: {
           rendered_recall: `context:${this.env.MEMOWEFT_WORLD_MODEL}`, selected_item_ids: [] } }
-        if (method === 'query_interactions') return { rendered_context: '' }
+        }
+        if (method === 'query_interactions') { this.lastInteractionTier = params.model_tier; return { rendered_context: '' } }
         if (method === 'shutdown') return { ok: true }
         return {}
       },
@@ -50,9 +53,10 @@ test('account memory workers follow only the owner session route and restart wit
     instances.push(rpc); return rpc
   }
   const manager = createPersonalMemoryManager({ root, enabled: true,
-    python: 'C:/synthetic/python.exe', pythonPath: 'C:/synthetic/pythonpath',
+    python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
     baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'formal-key',
     processingRoute: (ownerId: string, sessionId: string) => routes.get(`${ownerId}\0${sessionId}`) ?? null,
+    defaultProcessingRoute: ownerId => backgroundRoutes.get(ownerId) ?? null,
     rpcFactory })
   t.after(() => manager.close())
   const boundary = (sessionId: string, event: string) => ({ event_id: event,
@@ -94,4 +98,17 @@ test('account memory workers follow only the owner session route and restart wit
   assert.deepEqual(instances[3].ingested, ['event-a-revoked'],
     'the durable boundary resumes through the same proved session route')
   assert.equal((await manager.status(ownerA)).pendingBoundaryCount, 0)
+  backgroundRoutes.set(ownerA, { profileId: 'private-model-a-background',
+    baseUrl: 'http://127.0.0.1:18081/v1', model: 'background-model',
+    routeFingerprint: null, credential: 'synthetic-background-key', modelTier: 'local' })
+  await manager.invalidateOwnerRoute(ownerA)
+  const backgroundStatus = await manager.status(ownerA)
+  assert.equal(backgroundStatus.state, 'ready')
+  assert.equal(backgroundStatus.version, '2.0.0-synthetic')
+  assert.equal(instances.at(-1).env.MEMOWEFT_WORLD_MODEL, 'background-model')
+  routes.set(`${ownerA}\0background-session`, backgroundRoutes.get(ownerA))
+  await manager.recall(ownerA, { query: 'cloud main with local background', sessionId: 'background-session', modelTier: 'cloud' })
+  assert.equal(instances.at(-1).lastRecallTier, 'cloud', 'local formation model cannot grant raw recall to a cloud main model')
+  assert.equal(instances.at(-1).lastInteractionTier, 'cloud')
+  assert.equal(instances[1].closed, false, 'changing A background model does not restart B memory')
 })

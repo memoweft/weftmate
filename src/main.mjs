@@ -22,6 +22,9 @@ import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
 import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
 import { readModelCapacity } from './model-budget.mjs';
+import { createModelScheduler } from './model-scheduler.mjs';
+import { scheduledModelFetch } from './model-scheduler-client.mjs';
+import { createLocalModelController } from './local-model-service.mjs';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
 import { assertAuthoritativeSessionsIdle, assertModelProfileMutationAllowed, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
@@ -231,6 +234,7 @@ let personalAccessOrigin = null;
 let personalDesktop = null;
 let desktopStatus = { host: '启动中', model: '未选择' };
 let personalMemoryManager = null;
+let modelScheduler = null;
 let personalMemoryRuntimeConfig = null;
 let personalBrowserReader = null;
 let accountModelRouteGate = { idle: false, reasonCode: 'unknown', changedAt: null };
@@ -1234,6 +1238,8 @@ async function bootstrap() {
       '- insert:',
       '    - id: weftmate-safe-credentials',
       '      name: ./plugins/weftmate-credentials.mjs',
+      '    - id: weftmate-personal-model-idle',
+      '      name: ./plugins/weftmate-personal-model-idle.mjs',
       ...(personalHostMode ? [
         '# Personal host retains one ApiProxy but omits its default-model write callback.',
         '- id: api-gateway',
@@ -1241,9 +1247,6 @@ async function bootstrap() {
         '- insert:',
         '    - id: weftmate-personal-api-gateway',
         '      name: ./plugins/weftmate-personal-api-proxy.mjs',
-        '- insert:',
-        '    - id: weftmate-personal-model-idle',
-        '      name: ./plugins/weftmate-personal-model-idle.mjs',
         '- insert:',
         '    - id: weftmate-personal-reply-evidence',
         '      name: ./plugins/weftmate-personal-reply-evidence.mjs',
@@ -1622,33 +1625,48 @@ async function bootstrap() {
   }
   function memoryProcessingRouteForSession(ownerId, sessionId) {
     if (!personalAccessService || !personalMemoryRuntimeConfig) return null;
-    const binding = personalAccessService.ownerForSession(sessionId);
-    if (!binding || binding.ownerId !== ownerId) return null;
-    const described = { agentPreset: binding.origin === 'shared-chat'
-      ? 'personal-shared-chat' : binding.origin === 'personal-remote' ? 'personal-remote' : null };
     const profiles = settingsMod.listModelProfiles().profiles;
-    const boundProfileId = settingsMod.sessionModelBinding(sessionId);
-    const destination = memoryRecallDestination({ binding, described, boundProfileId,
-      profiles, access: memoryPolicyAccess(), hasCredential: hasProfileCredential });
-    if (!destination.allowed) return null;
-    const selected = profiles.find((profile) => profile.id === boundProfileId);
-    if (!selected) return null;
-    if (selected.id.startsWith('private-model-')) {
-      const proof = personalAccessService.privateAccountModelProof(ownerId, selected.id);
-      const key = credentialForModelProfile(selected);
-      return proof && key ? { profileId: selected.id, baseUrl: selected.baseUrl,
-        model: selected.model, modelTier: memoryRecallModelTier(selected),
-        routeFingerprint: proof.routeFingerprint, credential: key } : null;
+    let boundProfileId = personalMemoryRuntimeConfig.authRef;
+    if (sessionId !== null) {
+      const binding = personalAccessService.ownerForSession(sessionId);
+      if (!binding || binding.ownerId !== ownerId) return null;
+      const described = { agentPreset: binding.origin === 'shared-chat'
+        ? 'personal-shared-chat' : binding.origin === 'personal-remote' ? 'personal-remote' : null };
+      boundProfileId = settingsMod.sessionModelBinding(sessionId);
+      const destination = memoryRecallDestination({ binding, described, boundProfileId,
+        profiles, access: memoryPolicyAccess(), hasCredential: hasProfileCredential });
+      if (!destination.allowed) return null;
     }
-    const config = personalMemoryRuntimeConfig;
-    if (!personalAccessService.canUseModelProfile(ownerId, config.authRef) ||
-        !personalAccessService.isFormalLocalProfile(config.authRef)) return null;
-    const authProfile = profiles.find((profile) => profile.id === config.authRef);
-    const key = authProfile ? credentialForModelProfile(authProfile) : null;
-    return key ? { profileId: config.authRef, baseUrl: config.baseUrl,
-      model: config.model, modelTier: memoryRecallModelTier(selected),
-      routeFingerprint: null, credential: key } : null;
+    const backgroundProfileId = personalAccessService.backgroundModelProfile(ownerId);
+    const selected = profiles.find((profile) => profile.id === (backgroundProfileId ?? boundProfileId));
+    if (!selected || !personalAccessService.canUseModelProfile(ownerId, selected.id, 'new')) return null;
+    const key = credentialForModelProfile(selected);
+    return key ? { profileId: selected.id, baseUrl: modelScheduler.memoryBaseUrl(selected.id),
+      model: selected.model, modelTier: memoryRecallModelTier(selected),
+      routeFingerprint: personalAccessService.privateAccountModelProof(ownerId, selected.id)?.routeFingerprint ?? null,
+      credential: key } : null;
   }
+  const localModelFlag = process.argv.find(arg => arg.startsWith('--local-model-config='));
+  const localModelController = localModelFlag
+    ? createLocalModelController(localModelFlag.slice('--local-model-config='.length)) : null;
+  modelScheduler = await createModelScheduler({
+    isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
+      (await webRuntime?.personalModelQueueIdle?.())?.idle === true,
+    profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||
+      routeForProfile(profile.id).provider === id || profile.baseUrl?.replace(/\/+$/, '') === id?.replace(/\/+$/, '')),
+    credentialFor: credentialForModelProfile,
+    backgroundRoute: (sessionId, profileId) => {
+      const binding = personalAccessService?.ownerForSession(sessionId);
+      const selectedId = binding ? personalAccessService.backgroundModelProfile(binding.ownerId) : null;
+      const profile = settingsMod.listModelProfiles().profiles.find(row => selectedId
+        ? row.id === selectedId : row.id === profileId || routeForProfile(row.id).provider === profileId);
+      if (!profile || binding && !personalAccessService.canUseModelProfile(binding.ownerId, profile.id, 'new')) {
+        throw new Error('MODEL_UNAVAILABLE');
+      }
+      return { provider: routeForProfile(profile.id).provider, model: profile.model };
+    },
+  });
+  process.env.WEFTMATE_MODEL_SCHEDULER_URL = modelScheduler.url;
   const createWebRuntime = () => new DshWebRuntime({
     // One process and one home are the Stage 0/1 durability boundary. Session
     // provider/model selection, not a child process, owns model affinity.
@@ -1657,6 +1675,7 @@ async function bootstrap() {
     nodeElectron: true,
     noOpen: personalHostMode,
     personalHostApiProxy: personalHostMode,
+    modelScheduling: true,
     // WeftMate 始终使用产品自有的固定 vendor runtime。开发版来自仓内
     // vendor/dsh-runtime，安装版来自 resources/dsh-runtime；显式传值也会压过
     // shell 中遗留的 WEFTMATE_DSH_CHECKOUT/WEFTMATE_DSH_RUNTIME，绝不启动个人 DSH checkout。
@@ -1724,8 +1743,10 @@ async function bootstrap() {
         return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
       }
       personalMemoryIpc.recallRequests++;
+      const foregroundProfile = settingsMod.listModelProfiles().profiles.find(profile =>
+        profile.id === settingsMod.sessionModelBinding(request.sessionId));
       const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,
-        sessionId: request.sessionId });
+        sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) });
       if (recalled?.state === 'ready' && typeof recalled.contextText === 'string' && recalled.contextText.trim()) {
         personalMemoryIpc.recallWithContext++;
       }
@@ -2894,14 +2915,14 @@ async function bootstrap() {
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
       python: memoryConfig.python, pythonPath: memoryConfig.pythonPath,
-      baseUrl: memoryConfig.baseUrl, model: memoryConfig.model,
+      baseUrl: modelScheduler.memoryBaseUrl(memoryConfig.authRef), model: memoryConfig.model,
       credential: (ownerId) => {
-        if (!personalAccessService?.canUseModelProfile?.(ownerId, memoryConfig.authRef) ||
-            !personalAccessService?.isFormalLocalProfile?.(memoryConfig.authRef)) return null;
+        if (!personalAccessService?.canUseModelProfile?.(ownerId, memoryConfig.authRef)) return null;
         const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === memoryConfig.authRef);
         return profile ? credentialForModelProfile(profile) : null;
       },
       processingRoute: (ownerId, sessionId) => memoryProcessingRouteForSession(ownerId, sessionId),
+      defaultProcessingRoute: ownerId => memoryProcessingRouteForSession(ownerId, null),
     });
   }
   const personalDesktopTask = accessPort === null ? null : createPersonalDesktopTask();
@@ -2915,6 +2936,8 @@ async function bootstrap() {
     profiles: () => settingsMod.listModelProfiles().profiles,
     hasCredential: hasProfileCredential,
     credentialForProfile: credentialForModelProfile,
+    modelFetch: (url, options) => options?.method === 'POST'
+      ? scheduledModelFetch(url, options, modelScheduler.url) : fetch(url, options),
     hostOwnerId: () => personalAccessService?.legacyOwnerId?.() ?? null,
     ownerForSession: (sessionId) => personalAccessService?.ownerForSession?.(sessionId)?.ownerId ?? null,
     modelAllowed: (ownerId, profileId, usage) => personalAccessService?.canUseModelProfile?.(ownerId, profileId, usage) === true,
@@ -3166,6 +3189,32 @@ async function bootstrap() {
            memoryManager: personalMemoryManager,
           browserReader: personalBrowserReader,
           accountModelManager,
+          systemManager: {
+            async status(ownerId) {
+              const model = localModelController ? await localModelController.status()
+                : { state: 'unconfigured', version: null, contextWindow: null, slots: null,
+                  currentModelId: null, lastSwitch: null, canRestart: false, lastError: null };
+              const memory = personalMemoryManager ? await personalMemoryManager.status(ownerId)
+                : { state: 'disabled', lastFailureCode: null };
+              return { model,
+                host: { state: runtimeOrigin ? 'ready' : 'unavailable', version: appVersion,
+                  lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true },
+                memory: { state: memory.state, version: memory.version ?? null,
+                  lastError: memory.lastFailureCode ?? memory.reasonCode ?? null, canRestart: !!personalMemoryManager },
+                queue: modelScheduler.queue.status() };
+            },
+            async restart(component, ownerId) {
+              if (component === 'model') {
+                if (!localModelController) throw Object.assign(new Error('unconfigured'), { code: 'CAPABILITY_UNAVAILABLE' });
+                await localModelController.control('restart');
+                // A restarted service may have a different n_ctx. Recreate the
+                // native adapter so its capacity cache is probed before inference.
+                await enqueueRouteMutation(() => replaceSharedRuntime());
+              } else if (component === 'host') await enqueueRouteMutation(() => replaceSharedRuntime());
+              else if (personalMemoryManager) await personalMemoryManager.invalidateOwnerRoute(ownerId);
+              else throw Object.assign(new Error('disabled'), { code: 'CAPABILITY_UNAVAILABLE' });
+            },
+          },
            sharedProfileIsFormal: (marker) => {
              const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === marker.id);
              if (profile?.provider !== marker.provider || profile.baseUrl !== marker.baseUrl ||
@@ -3412,6 +3461,7 @@ app.on('before-quit', (e) => {
       try { await observer.close(); ownedModelObservationProxies.delete(observer); }
       catch { /* Preserve host shutdown; owned sockets were destroyed by close entry. */ }
     }
+    await modelScheduler?.close(); modelScheduler = null;
     modelObservationProxy = null;
     modelObservationRecorder?.close?.();
     modelObservationRecorder = null;
