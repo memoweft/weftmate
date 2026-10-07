@@ -10,13 +10,13 @@
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
 | Codex · Mac | MW-2 observed 桥接 | MemoWeft #84 已合并，WeftMate #28 合入中：[MemoWeft #84](https://github.com/memoweft/memoweft/pull/84)（CI Gate 已绿）→ [WeftMate #28](https://github.com/memoweft/weftmate/pull/28)；真实 Core 集成通过；按此顺序合入，部署需升级 observed v1 Core |
-| Codex · Cloud | S1b 宿主云身份、绑定与设备授权 | 已实现认领恢复/版本化绑定/迁移前备份、RS256+DPoP 换宿主 Cookie、待批准设备最小 Web UI、签名撤销/轮询与 outbox；宿主 7/7、cloud 34/34、UI 场景通过，类型检查/审计通过；待 PR CI，未部署/真实发信；完整客户端接入留 S1c |
+| Codex · Cloud | S1b 宿主云身份、绑定与设备授权 | [PR #30](https://github.com/memoweft/weftmate/pull/30)：已实现认领恢复/版本化绑定/迁移前备份、RS256+DPoP 换宿主 Cookie、待批准设备最小 Web UI、签名撤销/轮询与 outbox；宿主 7/7、cloud 34/34、UI 场景通过，类型检查/审计通过；待 PR CI，未部署/真实发信；完整客户端接入留 S1c |
 
 已完成：文档/规则重置、M0-1b 清理与模块拆分、M0-2 服务容量与动态预算（PR #24）、H1 iPhone 健康设置/摘要/隔离队列（PR #22）、CI 依赖审计与省钱分组。
 
 ## 最近一次验证
 
-- S1b：宿主身份 7/7、实际 cloud OIDC/SQLite→宿主完整流程含在 cloud 34/34、桌面设备批准交互 1/1；旧 store/ID/密码/Cookie/非零同步水位与备份验证通过，A/B 隔离、DPoP 拒绝与 SSE 撤销、云离线本地登录通过。类型检查/根依赖审计（0 漏洞）通过。本机完整 required 712 项中 1 项既有回环别名环境失败；PR CI 为最终门禁。当前 CUA 无可用浏览器，未取得实际 UI 截图；完整客户端/扫码/TLS listener/推送另包。
+- S1b：宿主身份 7/7、实际 cloud OIDC/SQLite→宿主完整流程含在 cloud 34/34、桌面设备批准交互 1/1；旧 store/ID/密码/Cookie/非零同步水位与备份验证通过，A/B 隔离、DPoP 拒绝与 SSE 撤销、云离线本地登录通过。类型检查/根依赖审计（0 漏洞）通过。本机完整 required 712 项：704 通过、7 跳过、1 项既有回环别名环境失败；PR CI 为最终门禁。当前 CUA 无可用浏览器，未取得实际 UI 截图；完整客户端/扫码/TLS listener/推送另包。
 
 - MW-2：真实 Python Core RPC 集成与持久待办/并发撤回 2/2、健康 HTTP 回归 7/7、类型检查/发布预检通过；本地/云端过滤保留普通偏好、账号权限变更、覆盖清除旧指标、删除/导出/重启均通过。CI 新增固定 Core 提交的真实集成任务；本机 required 710 通过/8 跳过，既有 127.0.0.2 回环别名缺失导致 1 项环境失败，最终 PR CI 为门禁。
 
