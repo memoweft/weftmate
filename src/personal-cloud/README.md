@@ -37,3 +37,12 @@ S2 中继/TLS 已在 `../personal-relay/` 实现，见 CLIENT_API 7.6；本模�
 数据目录一律临时且规范化；不连服务器、不发送真实邮件、不部署。
 
 S2 的 `/cloud/pairings` 响应增添 relay 状态/baseUrl；原 tlsSpki 与实际 TLS adapter 复用同一内容 key。云目录不提供可替代配对 pin 的信任。
+
+
+## S1c-Web 登录接线
+
+`GET /cloud/config` 公开固定 issuer/hostId/clientId，`GET /cloud/binding` 只读当前 Cookie 的绑定状态与直接地址管理资格。浏览器界面在 `../personal-access-ui/cloud-login.js` / `cloud-ui.js`；Android 的共享 JS 与系统浏览器桥见 `apps/mobile-ui/www/cloud-native.js` 和 `apps/android/.../CloudLogin.kt`。CLIENT_API 7.7 是正式契约。
+
+宿主 `WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 weftmate-web。云端需预登记精确的直接地址/中继回调 `<origin>/personal/v1/ui/`，application_type=web；Android 另登记 weftmate-android 的 `com.memoweft.weftmate:/oauth`。没有注册回调的部署不能登录，不动态放开 origin。浏览器凭据只在等待内容批准期间保存 IndexedDB，交换宿主 Cookie 后删除，设备 CryptoKey 保留供下次证明。
+
+`WEFTMATE_WEB_E2E=true node --test services/cloud/test/web-login.test.mjs` 使用真实 Chromium、file 邮件、隔离宿主与 SQLite 云验证绑定、等待/批准、二维码自动刷新/输入码、拒绝、解绑与本地会话保留。合成截图在忽略的 `.local/s1c-web/`；完整根测试只交 CI。

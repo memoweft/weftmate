@@ -10,8 +10,11 @@ export async function loadLocalModelConfig(file) {
   const config = JSON.parse(await readFile(file, 'utf8'));
   if (!isAbsolute(config.executable ?? '') || !isAbsolute(config.model ?? '') ||
       !Number.isInteger(config.port) || config.port < 1 || config.port > 65535 ||
-      !Number.isInteger(config.contextSize) || config.contextSize < 4096 ||
-      !['q8_0', 'q4_0', 'f16'].includes(config.cacheType ?? 'q8_0') ||
+      config.contextSize !== undefined && (!Number.isInteger(config.contextSize) || config.contextSize < 4096) ||
+      !['q8_0', 'q4_0', 'f16'].includes(config.cacheType ?? 'q4_0') ||
+      ['cacheTypeK', 'cacheTypeV'].some(key => config[key] !== undefined && !['q8_0', 'q4_0', 'f16'].includes(config[key])) ||
+      ['batchSize', 'ubatchSize', 'threads', 'threadsBatch'].some(key => config[key] !== undefined && (!Number.isInteger(config[key]) || config[key] <= 0)) ||
+      ['cacheRamMiB', 'contextCheckpoints'].some(key => config[key] !== undefined && (!Number.isInteger(config[key]) || config[key] < 0)) ||
       config.gpuLayers !== undefined && (!Number.isInteger(config.gpuLayers) || config.gpuLayers < 0) ||
       config.mmproj !== undefined && !isAbsolute(config.mmproj) ||
       typeof config.alias !== 'string' || !/^[A-Za-z0-9._-]+$/.test(config.alias)) {
@@ -21,10 +24,14 @@ export async function loadLocalModelConfig(file) {
 }
 export function localModelArguments(config) {
   return ['--model', config.model, '--alias', config.alias, '--host', '127.0.0.1',
-    '--port', String(config.port), '--ctx-size', String(config.contextSize),
-    '--parallel', '1', '--n-gpu-layers', String(config.gpuLayers ?? 48), '--flash-attn', 'on',
-    '--cache-type-k', config.cacheType ?? 'q8_0', '--cache-type-v', config.cacheType ?? 'q8_0',
-    '--batch-size', '512', '--ubatch-size', '128', '--fit', 'off', '--jinja',
+    '--port', String(config.port), '--ctx-size', String(config.contextSize ?? 92160),
+    '--parallel', '1', '--n-gpu-layers', String(config.gpuLayers ?? 99), '--flash-attn', 'on',
+    '--cache-type-k', config.cacheTypeK ?? config.cacheType ?? 'q4_0', '--cache-type-v', config.cacheTypeV ?? config.cacheType ?? 'q4_0',
+    '--batch-size', String(config.batchSize ?? 4096), '--ubatch-size', String(config.ubatchSize ?? 512),
+    '--threads', String(config.threads ?? 8), '--threads-batch', String(config.threadsBatch ?? 16),
+    '--fit', 'off', '--jinja',
+    ...(config.cacheRamMiB !== undefined ? ['--cache-ram', String(config.cacheRamMiB)] : []),
+    ...(config.contextCheckpoints !== undefined ? ['--ctx-checkpoints', String(config.contextCheckpoints)] : []),
     '--reasoning-format', 'deepseek', '--verbosity', '4',
     ...(config.mmproj ? ['--mmproj', config.mmproj] : []),
   ];

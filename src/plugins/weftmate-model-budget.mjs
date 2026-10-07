@@ -97,7 +97,8 @@ export function apply(ctx, config) {
             if (!response.ok) throw new Error('BACKGROUND_MODEL_UNAVAILABLE');
             options = { ...options, ...await response.json() };
           }
-          const release = await acquireModelSlot(background ? 'background' : 'foreground', options.signal);
+          const release = await acquireModelSlot(background ? 'background' : 'foreground', options.signal,
+            scheduler, { profileId: options.provider });
           try {
           const row = rawSource().providers?.[options.provider];
           const entry = row?.models?.find(item => item.id === options.model);

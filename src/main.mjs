@@ -24,7 +24,7 @@ import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harn
 import { readModelCapacity } from './model-budget.mjs';
 import { createModelScheduler } from './model-scheduler.mjs';
 import { scheduledModelFetch } from './model-scheduler-client.mjs';
-import { createLocalModelController } from './local-model-service.mjs';
+import { createLocalModelController, loadLocalModelConfig } from './local-model-service.mjs';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
 import { assertAuthoritativeSessionsIdle, assertModelProfileMutationAllowed, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
@@ -1635,7 +1635,12 @@ async function bootstrap() {
   modelScheduler = await createModelScheduler({
     isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
       (await webRuntime?.personalModelQueueIdle?.())?.idle === true,
-    profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id),
+    profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id || routeForProfile(profile.id).provider === id),
+    localSlotsFor: async endpoint => {
+      if (!localModelFlag) return undefined;
+      const config = await loadLocalModelConfig(localModelFlag.slice('--local-model-config='.length));
+      return endpoint.origin === `http://127.0.0.1:${config.port}` && endpoint.pathname === '/props' ? 1 : undefined;
+    },
     credentialFor: credentialForModelProfile,
     backgroundRoute: (sessionId, profileId) => {
       const binding = personalAccessService?.ownerForSession(sessionId);

@@ -54,8 +54,35 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
 
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
-  heartbeatMs = 15_000 }) {
-  const queue = createInferenceQueue({ isIdle });
+  localSlotsFor = async () => undefined, heartbeatMs = 15_000 }) {
+  const queues = new Map();
+  async function queueFor(destination) {
+    const profile = destination.profileId ? profileFor(destination.profileId) : undefined;
+    const baseUrl = profile?.baseUrl ?? destination.baseUrl;
+    if (!baseUrl) return null;
+    const endpoint = new URL(baseUrl);
+    if (!['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname) && profile?.modelTier !== 'local') return null;
+    endpoint.pathname = endpoint.pathname.replace(/\/?(?:v1\/?)?$/, '/props');
+    endpoint.search = ''; endpoint.hash = '';
+    let slots;
+    try {
+      const key = profile && credentialFor(profile);
+      const response = await fetchImpl(endpoint, { signal: AbortSignal.timeout(2000),
+        headers: key ? { authorization: `Bearer ${key}` } : {} });
+      if (response.ok) slots = (await response.json()).total_slots;
+    } catch { /* A managed service's configuration also identifies its single slot. */ }
+    if (!Number.isInteger(slots) || slots < 1) slots = await localSlotsFor(endpoint);
+    if (slots !== 1) return null;
+    const identity = endpoint.href;
+    if (!queues.has(identity)) queues.set(identity, createInferenceQueue({ isIdle }));
+    return queues.get(identity);
+  }
+  const queue = { status: () => {
+    const rows = [...queues.values()].map(value => value.status());
+    return { active: rows.find(row => row.active === 'foreground')?.active ?? rows.find(row => row.active)?.active ?? null,
+      foregroundPending: rows.reduce((sum, row) => sum + row.foregroundPending, 0),
+      backgroundPending: rows.reduce((sum, row) => sum + row.backgroundPending, 0) };
+  }, close: () => { for (const value of queues.values()) value.close(); } };
   const token = randomBytes(24).toString('hex');
   const controllers = new Set();
   const server = createServer(async (request, response) => {
@@ -73,7 +100,9 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       }
       if (route === '/lease' && request.method === 'POST') {
         const priority = url.searchParams.get('priority') === 'background' ? 'background' : 'foreground';
-        release = await queue.acquire(priority, controller.signal);
+        const selectedQueue = await queueFor({ profileId: url.searchParams.get('profileId'), baseUrl: url.searchParams.get('baseUrl') });
+        if (!selectedQueue) { response.writeHead(204).end(); return; }
+        release = await selectedQueue.acquire(priority, controller.signal);
         response.once('close', release);
         response.writeHead(200, { 'content-type': 'text/plain' }); response.write('granted\n');
         return; // Socket lifetime owns the lease, including a crashed DSH child.
@@ -87,7 +116,8 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         // MemoWeft's HTTP timeout measures transport inactivity. Informational
         // responses keep queued work alive without changing the final status/body.
         const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
-        try { release = await queue.acquire('background', controller.signal); }
+        try { const selectedQueue = await queueFor({ profileId: match[1] });
+          if (selectedQueue) release = await selectedQueue.acquire('background', controller.signal); }
         finally { clearInterval(heartbeat); }
       }
       let body;
