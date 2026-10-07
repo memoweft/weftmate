@@ -595,6 +595,31 @@
       "file": "tests/weftmod-plugin.test.ts",
       "name": "same-origin panel control stops a running script and rejects other-session or cross-origin control",
       "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners."
+    },
+    {
+      "file": "tests/personal-memory-plugin-ipc.test.ts",
+      "name": "forked plugin hook callbacks use owner-bound IPC and replace stale account memory",
+      "reason": "Child hook imports vendored dsh-llm/message; child reports only a generic failure when the vendor is missing."
+    }
+  ],
+  "platformTests": [
+    {
+      "file": "tests/dsh-web-runtime-lifecycle.test.ts",
+      "name": "ready child 与 descendant 都随 close 退出，且迟到 close 事件不触发 respawn",
+      "platforms": [
+        "darwin",
+        "linux"
+      ],
+      "reason": "This assertion verifies Windows taskkill /T /F. POSIX terminateChild currently signals only the root PID; full process-tree cleanup remains a product follow-up (M3 Mac execution), outside CI-1."
+    },
+    {
+      "file": "tests/personal-memory-processing-route.test.ts",
+      "name": "account memory workers follow only the owner session route and restart without losing the outbox",
+      "platforms": [
+        "darwin",
+        "linux"
+      ],
+      "reason": "Fixture supplies C:/synthetic/python.exe and pythonPath; these fail the absolute-path contract on POSIX. Windows still runs this test. Track portable fixture paths in CI-1 follow-up."
     }
   ]
 }

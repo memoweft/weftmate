@@ -10,6 +10,7 @@ const exceptions = JSON.parse(readFileSync('.github/ci-test-exceptions.json', 'u
 const files = readdirSync('tests').filter(file => file.endsWith('.test.ts')).map(file => `tests/${file}`).sort();
 const unavailable = new Set(exceptions.unavailableFiles.map(entry => entry.file));
 const knownFiles = new Set(exceptions.knownFailures.map(entry => entry.file));
+const platformTests = exceptions.platformTests.filter(entry => entry.platforms.includes(process.platform));
 const selected = files.filter(file => !unavailable.has(file) && (mode === 'required' || knownFiles.has(file)));
 const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Node matches both leaf names and suite-qualified names. Only exact recorded
@@ -17,7 +18,7 @@ const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 const pattern = entries => `(?:^| )(?:(?:${entries.map(entry => escape(entry.name)).join(')|(?:')}))$`;
 const args = ['--test', '--test-concurrency=1'];
 if (mode === 'required') {
-  args.push(`--test-skip-pattern=${pattern([...exceptions.knownFailures, ...exceptions.vendorTests])}`);
+  args.push(`--test-skip-pattern=${pattern([...exceptions.knownFailures, ...exceptions.vendorTests, ...platformTests])}`);
 } else {
   args.push(`--test-name-pattern=${pattern(exceptions.knownFailures)}`);
 }
@@ -34,6 +35,7 @@ if (mode === 'required') {
     '- `vendor:dsh`, `vendor:verify`, and `test:contract`: vendor requires a separately prebuilt DSH checkout; fetching source alone does not provide it.',
     ...exceptions.unavailableFiles.map(entry => `- File \`${entry.file}\`: ${entry.reason}`),
     ...exceptions.vendorTests.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`),
+    ...platformTests.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`),
     '', 'Known main failures run separately as a non-blocking step (PR #20):',
     ...exceptions.knownFailures.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`));
 }
