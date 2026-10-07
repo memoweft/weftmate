@@ -24,7 +24,7 @@ import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harn
 import { readModelCapacity } from './model-budget.mjs';
 import { createModelScheduler } from './model-scheduler.mjs';
 import { scheduledModelFetch } from './model-scheduler-client.mjs';
-import { createLocalModelController, loadLocalModelConfig } from './local-model-service.mjs';
+import { createLocalModelController } from './local-model-service.mjs';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
 import { assertAuthoritativeSessionsIdle, assertModelProfileMutationAllowed, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
@@ -1635,12 +1635,8 @@ async function bootstrap() {
   modelScheduler = await createModelScheduler({
     isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
       (await webRuntime?.personalModelQueueIdle?.())?.idle === true,
-    profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id || routeForProfile(profile.id).provider === id),
-    localSlotsFor: async endpoint => {
-      if (!localModelFlag) return undefined;
-      const config = await loadLocalModelConfig(localModelFlag.slice('--local-model-config='.length));
-      return endpoint.origin === `http://127.0.0.1:${config.port}` && endpoint.pathname === '/props' ? 1 : undefined;
-    },
+    profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||
+      routeForProfile(profile.id).provider === id || profile.baseUrl?.replace(/\/+$/, '') === id?.replace(/\/+$/, '')),
     credentialFor: credentialForModelProfile,
     backgroundRoute: (sessionId, profileId) => {
       const binding = personalAccessService?.ownerForSession(sessionId);
@@ -3188,30 +3184,12 @@ async function bootstrap() {
           accountModelManager,
           systemManager: {
             async status(ownerId) {
-              let model = localModelController ? await localModelController.status().catch(() =>
-                ({ state: 'unavailable', version: null, contextWindow: null, lastError: 'LOCAL_MODEL_CONFIGURATION_INVALID' }))
-                : { state: 'unconfigured', version: null, contextWindow: null, lastError: null };
-              if (!localModelController) {
-                const catalog = settingsMod.listModelProfiles();
-                const visible = catalog.profiles.filter(profile => hasProfileCredential(profile) &&
-                  personalAccessService.canUseModelProfile(ownerId, profile.id, 'new'));
-                const selected = visible.find(profile => profile.id === catalog.activeId) ?? visible[0];
-                if (selected) {
-                  const apiKey = credentialForModelProfile(selected);
-                  const [listing, capacity] = await Promise.allSettled([
-                    discoverOpenAICompatibleModels({ baseUrl: selected.baseUrl, apiKey }),
-                    readModelCapacity({ baseUrl: selected.baseUrl, modelId: selected.model, apiKey }),
-                  ]);
-                  const ready = listing.status === 'fulfilled' && listing.value.includes(selected.model);
-                  model = { state: ready ? 'ready' : 'unavailable', version: null,
-                    contextWindow: capacity.status === 'fulfilled' && capacity.value.source !== 'default'
-                      ? capacity.value.contextWindow : null,
-                    lastError: ready ? null : 'MODEL_UNAVAILABLE' };
-                }
-              }
+              const model = localModelController ? await localModelController.status()
+                : { state: 'unconfigured', version: null, contextWindow: null, slots: null,
+                  currentModelId: null, lastSwitch: null, canRestart: false, lastError: null };
               const memory = personalMemoryManager ? await personalMemoryManager.status(ownerId)
                 : { state: 'disabled', lastFailureCode: null };
-              return { model: { ...model, canRestart: !!localModelController },
+              return { model,
                 host: { state: runtimeOrigin ? 'ready' : 'unavailable', version: appVersion,
                   lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true },
                 memory: { state: memory.state, version: memory.version ?? null,

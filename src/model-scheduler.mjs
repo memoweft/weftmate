@@ -54,14 +54,14 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
 
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
-  localSlotsFor = async () => undefined, heartbeatMs = 15_000 }) {
+  heartbeatMs = 15_000 }) {
   const queues = new Map();
   async function queueFor(destination) {
-    const profile = destination.profileId ? profileFor(destination.profileId) : undefined;
+    const profile = profileFor(destination.profileId ?? destination.baseUrl);
     const baseUrl = profile?.baseUrl ?? destination.baseUrl;
     if (!baseUrl) return null;
     const endpoint = new URL(baseUrl);
-    if (!['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname) && profile?.modelTier !== 'local') return null;
+    if (!['127.0.0.1', 'localhost', '[::1]'].includes(endpoint.hostname)) return null;
     endpoint.pathname = endpoint.pathname.replace(/\/?(?:v1\/?)?$/, '/props');
     endpoint.search = ''; endpoint.hash = '';
     let slots;
@@ -70,8 +70,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       const response = await fetchImpl(endpoint, { signal: AbortSignal.timeout(2000),
         headers: key ? { authorization: `Bearer ${key}` } : {} });
       if (response.ok) slots = (await response.json()).total_slots;
-    } catch { /* A managed service's configuration also identifies its single slot. */ }
-    if (!Number.isInteger(slots) || slots < 1) slots = await localSlotsFor(endpoint);
+    } catch { /* Unknown capacity does not establish a single-slot service. */ }
     if (slots !== 1) return null;
     const identity = endpoint.href;
     if (!queues.has(identity)) queues.set(identity, createInferenceQueue({ isIdle }));

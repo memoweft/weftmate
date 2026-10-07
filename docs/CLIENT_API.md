@@ -305,15 +305,15 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | 方法与路径 | 请求 | 成功响应 | 权限 / 错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/system` | 无查询 | 200 `{model,host,memory,queue,canRestart}` | `sessions:read`；未接入管理器为 503 `CAPABILITY_UNAVAILABLE` | 桌、手（Android code15 起） |
-| POST `/system/model/restart` | `{}` | 200，同 `/system`，操作完成后读取实际状态 | `commands:write`，仅宿主原账户；其他账户 403 `FORBIDDEN`；未配置本地启动器 503 | 桌、手 |
+| POST `/system/model/restart` | `{}` | 200，同 `/system`，操作完成后读取实际状态 | `commands:write`，仅宿主原账户；其他账户 403 `FORBIDDEN`；未配置入口维护能力 503 | 桌、手 |
 | POST `/system/host/restart` | `{}` | 200，同 `/system`；替换 DSH（模型运行时），个人 API 保持可达 | 同上；进行中的运行会中断 | 桌、手 |
 | POST `/system/memory/restart` | `{}` | 200，同 `/system`；关闭并重新初始化当前账户的 MemoWeft（记忆服务）进程，保留数据库与待写队列 | 同上；记忆未启用 503 | 桌、手 |
 | GET `/settings/models` | 无查询 | 200 `{"backgroundModelProfileId":null}` 或已保存的模型配置 ID | `sessions:read`；按账户隔离 | 桌、手（只读） |
 | PATCH `/settings/models` | `{"backgroundModelProfileId":"private-model-example"}`；`null` 恢复跟随主模型 | 200，同 GET；只影响后续后台请求 | `account:manage`；须为当前账户可见、已配置的模型，否则 409 `MODEL_UNAVAILABLE` | 桌 |
 
-每项服务有 `state`、`version`（未知为 `null`）、`lastError`（最近安全错误码或 `null`）、`canRestart`。模型服务另有实际 `contextWindow` 与 `slots`。宿主版本来自应用包；模型版本来自 llama.cpp `/props`；MemoWeft 优先用服务版本，再用其 Python（运行环境）源码包的声明版本；两者均未知时返回 `null`。`queue` 含 `active: "foreground"|"background"|null`、`foregroundPending`、`backgroundPending`，不包含提示或账户信息。手机只显示后台配置，不提供修改控件；重启仍走相同认证与 CSRF（跨站请求伪造防护）规则。
+每项服务有 `state`、`version`（未知为 `null`）、`lastError`（最近安全错误码或 `null`）、`canRestart`。模型服务另有实际 `contextWindow` 与 `slots`、`currentModelId`（当前装载模型或 `null`）、`lastSwitch`（`{action,modelId,at,ok}` 或 `null`）。状态来自配置入口的 `/switch/status` 与 `/props`；未配置为 `unconfigured`，读取失败为 `unavailable`。模型重启经入口 `/switch/restart` 等待请求租约结束后调用现有控制脚本，保留当前模型与配置。不返回模型文件路径、控制脚本输出或入口凭据。宿主版本来自应用包；模型版本来自 llama.cpp `/props`；MemoWeft 优先用服务版本，再用其 Python（运行环境）源码包的声明版本；两者均未知时返回 `null`。`queue` 含 `active: "foreground"|"background"|null`、`foregroundPending`、`backgroundPending`，不包含提示或账户信息。手机只显示后台配置，不提供修改控件；重启仍走相同认证与 CSRF（跨站请求伪造防护）规则。
 
-主模型由每个对话选择。后台配置默认跟随该对话的主模型；标题、记忆整理以及后续关心/健康归纳按后台路由。主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
+主模型由每个对话选择。后台配置默认跟随该对话的主模型；标题、记忆整理以及后续关心/健康归纳按后台路由。仅本机回环且 `/props.total_slots=1` 的入口排队，云 API、多槽和未知槽数直接并行。单槽主对话整轮运行（含工具间隙）时后台推理等待，主请求在等待队列中优先；已开始的后台推理会完成后释放单槽。原生 compaction（上下文压缩）属于当前主请求，继续按主模型执行。记忆形成使用后台路由；World/interactions（记忆与经历）召回的来源权限按接收内容的主模型 modelTier 判定。
 
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
