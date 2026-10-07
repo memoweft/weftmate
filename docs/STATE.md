@@ -10,7 +10,7 @@
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
 | Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 已合入；摘要接收/读取/删除、observed（观测证据）待写队列、模型位置自动判断及 modelTier 覆盖已实现 |
-| Codex · Cloud | S1a 云账号、邮箱验证与令牌 | [PR #29](https://github.com/memoweft/weftmate/pull/29)：账号/邮件验证/找回/新设备确认、OIDC Code+PKCE、SQLite adapter、JWKS/刷新轮换已实现；隔离测试 30/30、依赖审计 0 漏洞；Linux cloud CI 待验证；未部署/真实发信，客户端与宿主接入留 S1b |
+| Codex · Cloud | S1a 云账号、邮箱验证与令牌 | [PR #29](https://github.com/memoweft/weftmate/pull/29)：账号/邮件验证/找回/新设备确认、OIDC Code+PKCE、SQLite adapter、JWKS/刷新轮换已实现；隔离测试 30/30、依赖审计 0 漏洞；[Linux cloud CI](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 通过；未部署/真实发信，客户端与宿主接入留 S1b |
 
 已完成：文档/规则重置、M0-1b 清理与模块拆分、M0-2 服务容量与动态预算（PR #24）、H1 iPhone 健康设置/摘要/隔离队列（PR #22）、CI 依赖审计与省钱分组。
 

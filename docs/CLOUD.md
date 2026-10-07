@@ -243,6 +243,6 @@ Node 24 `node:sqlite` 起步仅存控制面小记录，WAL/FK/事务迁移，密
 
 验证码六位、10 分钟、单次使用/5 次错误，绑定用途、账号 epoch 与登录交互；账号及来源的失败桶持久化，第 5 次起指数退避，邮件请求另限速。HTTPS host-only Secure/HttpOnly Cookie、同源 Origin、交互 Cookie/CSRF 与固定 Host；代理来源只在显式可信回环设置启用。没有全局设备数上限或审计框架。file 开发邮件与环境变量配置的 Resend/五类模板已实现；Resend 未配置不可启用，测试仅 mock fetch。密码更改通知失败时响应 notificationAccepted=false，已提交重置保持有效；未做通知补投递。
 
-Mac Node 24.21.0 隔离 `node --test test/*.test.mjs` **30/30**，cloud npm audit **0 漏洞**；覆盖完整账号/授权码/刷新/恢复/新设备、验证码/限速、令牌校验/轮换/并发复用、JWKS 轮换/重开、邮箱变更、HTTPS Cookie 与原 S0 测试。Linux cloud 使用现有独立步骤，缺依赖时测试 helper 只安装 cloud 的锁文件；远端结果见本包 PR。scrypt N=131072/r=8/p=1 的实际 runner 耗时在测试输出记录，不推断生产吞吐。
+Mac Node 24.21.0 隔离 `node --test test/*.test.mjs` **30/30**，cloud npm audit **0 漏洞**；覆盖完整账号/授权码/刷新/恢复/新设备、验证码/限速、令牌校验/轮换/并发复用、JWKS 轮换/重开、邮箱变更、HTTPS Cookie 与原 S0 测试。[Linux cloud CI](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 独立步骤通过，使用同一套 30 项测试；缺依赖时测试 helper 只安装 cloud 的锁文件。scrypt N=131072/r=8/p=1 的实际 runner 耗时在测试输出记录，不推断生产吞吐。
 
-未做/未验证：五端登录接线、宿主验签/DPoP/会话交换/认领/内容设备授权（S1b，待新设备体验决定）、真实邮件送达、服务器/systemd/Caddy/DNS 部署、S2–S6。未连接服务器、不发真实邮件、不碰日用数据。外部离线验证的 JWT 在刷新撤销后仍有最多 5 分钟有效窗口；本服务检查实时 epoch，但宿主即时撤销尚未接线。
+未做/未验证：五端登录接线、宿主验签/DPoP/会话交换/认领/内容设备授权（S1b；按 D23 后续派发）、真实邮件送达、服务器/systemd/Caddy/DNS 部署、S2–S6。未连接服务器、不发真实邮件、不碰日用数据。外部离线验证的 JWT 在刷新撤销后仍有最多 5 分钟有效窗口；本服务检查实时 epoch，但宿主即时撤销尚未接线。
