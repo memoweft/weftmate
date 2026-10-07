@@ -8,6 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
+| Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | UI-1 桌面界面 | [PR #39](https://github.com/memoweft/weftmate/pull/39)（`wp/ui-1-desktop`）：可收起侧栏、搜索、Markdown（格式化文本）正文、两级步骤、发送/停止、插话/排队参数、右侧预览与缩放、外观设备保存已实现；相关测试 65/65、类型检查与独立只读审查通过；Electron（桌面程序框架）窗口 + 隔离宿主浅/深色验收见 [UI-1](../tests/evidence/ui-1/README.md)；最终门禁见 PR checks（检查），待 Claude 审查 |
 | Codex · Windows-2 | M1-1 个人入口原生工具 | [PR #31](https://github.com/memoweft/weftmate/pull/31)：合入 main `99b66b5`，修复 native web_fetch（原生网页获取）提供方；隔离 Qwen 原版 27B 办事场景 **2/6 通过（03、05）**，结果与未做项见下；类型/相关回归通过，最终 CI 门禁见 PR checks（检查） |

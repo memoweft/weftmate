@@ -1,5 +1,5 @@
 /**
- * WeftMate · Electron 主进程（R1 · 官方 DSH web 基座）。
+ * WeftMate · Electron 主进程：个人宿主 + 原生桌面窗口。
  *
  * 职责（docs/ARCHITECTURE.md v3 §2）：
  *   ① 凭据接缝：safeStorage 解密按 ref 请求的模型密钥 → 只经受管 Node child IPC 返回给
@@ -7,8 +7,8 @@
  *   ② 运行时：boot 时把 profile `weftmate` 写进 dsh-home（bundles [dsh-base, dsh-web-app]
  *     + cordis.patch.yml 补丁层），spawn 官方 CLI `dsh --profile weftmate --port 0`
  *     （ELECTRON_RUN_AS_NODE=1，Node 用 Electron 自带，不依赖 PATH 里的 node）。
- *   ③ 窗口：等官方 URL 行（`dsh web: http://127.0.0.1:<port>`）→ BrowserWindow 加载官方前端
- *     origin（loopback + 官方 trust fence；受信 webContents 只留在运行时 origin）。
+ *   ③ 窗口：默认加载个人宿主的 WeftMate /personal/v1/ui；--headless 不创建窗口，
+ *     --dsh-window 显式保留官方 DSH 管理/诊断页面。
  *   ④ 桌面壳遗产（v2 保留）：托盘常驻、单实例、关窗收托盘、before-quit 收口、更新接缝、
  *     桌面宠物窗口（R4 收口为「托盘+主窗口」，宠物代码保留在盘上待 R6 恢复完整桌宠）。
  *
@@ -76,18 +76,22 @@ import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels,
   projectOccamyImageInput, reconcileOccamyImageInput,
   readUserModelSwitcherKey } from './local-model-config.mjs';
 import { servePersonalAccessUi } from './personal-access-ui/index.mjs';
+import { createPersonalDesktop } from './personal-desktop.mjs';
 import { loadPersonalMemoryConfig } from './personal-memory/config.mjs';
 import { createPersonalMemoryManager } from './personal-memory/index.mjs';
 import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { memoryRecallDestination, memoryRecallModelTier, memorySessionPolicy } from './personal-memory/policy.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
-import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
+import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
 
 const { syntheticStopFixtureRoute, syntheticBrowserFixtureSettings,
   createObservationRecorder, createPersonalModelObservationProxy,
   stage14R2ObservationProfile } = await loadPersonalDevelopmentTools();
 
-const personalHostMode = personalHostRequested(process.argv);
+// The old DSH window remains an explicit diagnostics/development surface.
+const personalHostMode = !process.argv.includes('--dsh-window');
+const headless = process.argv.includes('--headless');
+const desktopRequested = personalHostMode && !headless;
 if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {
   console.error('[weftmate] personal-host refused: account-scoped memory is not connected');
   process.exit(2);
@@ -95,6 +99,7 @@ if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {
 let accessPort = null;
 try { accessPort = personalAccessPort(process.argv, personalHostMode); }
 catch (error) { console.error('[weftmate] personal access refused:', error.message); process.exit(2); }
+if (desktopRequested && accessPort === null) accessPort = 0;
 let personalPublicOrigin = null;
 try { personalPublicOrigin = parsePersonalPublicOrigin(process.argv, personalHostMode, accessPort); }
 catch (error) { console.error('[weftmate] public access refused:', error.message); process.exit(2); }
@@ -133,8 +138,18 @@ if (memoryArgs.length) {
   personalMemoryConfigPath = resolve(value);
 }
 let personalHostUserData = null;
+const profileArgument = process.argv.find(arg => arg.startsWith('--user-data-dir='))?.slice('--user-data-dir='.length);
+if (profileArgument) process.env.WEFTMATE_USER_DATA = profileArgument;
 if (personalHostMode) {
-  try { personalHostUserData = validatePersonalHostProfile(process.env.WEFTMATE_USER_DATA?.trim()); }
+  try {
+    let candidate = process.env.WEFTMATE_USER_DATA?.trim();
+    if (!candidate && !personalHostRequested(process.argv)) {
+      candidate = join(app.getPath('appData'), 'com.memoweft.weftmate');
+      mkdirSync(candidate, { recursive: true });
+      if (!existsSync(join(candidate, PERSONAL_HOST_MARKER))) writeFileSync(join(candidate, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT), { flag: 'wx' });
+    }
+    personalHostUserData = validatePersonalHostProfile(candidate);
+  }
   catch (error) {
     console.error('[weftmate] personal-host refused:', error.message);
     process.exit(2);
@@ -146,9 +161,7 @@ if (personalHostMode) {
 // 大小写不敏感冲突——Windows 上 'WeftMate' ≡ 'weftmate' 是同一目录，产品名命名无效）。
 // 隔离目的：① 单实例锁不再互斥（dev 与打包可同时跑）；② v2 遗留的开发数据
 // （weftmate.db/旧画像/旧设置）不进产品目录。必须在任何 userData 读取（含顶部擦除请求）之前设置。
-const requestedUserData = typeof process.env.WEFTMATE_USER_DATA === 'string'
-  ? (personalHostUserData ?? process.env.WEFTMATE_USER_DATA.trim())
-  : '';
+const requestedUserData = personalHostUserData ?? process.env.WEFTMATE_USER_DATA?.trim() ?? '';
 if (requestedUserData) {
   // dogfood/自动化使用专用目录；必须早于 wipe、单实例锁和任何设置读取。
   app.setPath('userData', resolve(requestedUserData));
@@ -174,6 +187,7 @@ if (wipeLaunch) {
 
 // 去掉 Electron 默认应用菜单(顶栏那条 File/Edit/View/Window)——桌面产品不该露原生菜单,不像成品。
 Menu.setApplicationMenu(null);
+if (process.platform === 'win32') app.setAppUserModelId(app.isPackaged ? 'com.memoweft.weftmate' : process.execPath);
 
 // ── B4·崩溃/错误上报最小闭环（v2 遗产）──
 function redactSecretText(value) {
@@ -199,13 +213,13 @@ const TRAY_ICON =
 
 // 单实例锁:桌面常驻防开多份进程抢同一个数据目录。抢不到 = 已有一个在跑,退出自己,让那个把窗口唤前台。
 if (!app.requestSingleInstanceLock()) {
-  if (personalHostMode) {
+  if (personalHostMode && headless) {
     console.error('[weftmate] personal-host refused: this userData already has a WeftMate instance');
     app.exit(2);
   } else app.quit();
 } else {
   // 第二个实例被拉起(用户又点了图标):把已在跑的窗口唤到前台。
-  app.on('second-instance', () => { if (!personalHostMode) showWindow(); });
+  app.on('second-instance', () => { if (!headless) showWindow(); });
   console.log(`[weftmate] startup mode=${personalHostMode ? 'personal-host' : 'desktop'}`);
   app.whenReady().then(bootstrap).catch((error) => failBootstrap(error));
 }
@@ -217,6 +231,8 @@ let configStoreMod = null; // config-store.ts 模块(模型档 safeStorage 存�
 let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn 官方 CLI→URL 行→退出收口)
 let personalAccessService = null;
 let personalAccessOrigin = null;
+let personalDesktop = null;
+let desktopStatus = { host: '启动中', model: '未选择' };
 let personalMemoryManager = null;
 let modelScheduler = null;
 let personalMemoryRuntimeConfig = null;
@@ -400,6 +416,7 @@ function startStageOneEvents(sessionId) {
 
 /** 把窗口唤到前台(托盘点击 / 第二实例 / 菜单"显示")。 */
 function showWindow() {
+  if (personalDesktop) { personalDesktop.show(); return; }
   if (!win || win.isDestroyed()) return;
   if (win.isMinimized()) win.restore();
   win.show();
@@ -1375,7 +1392,7 @@ async function bootstrap() {
         schemaVersion: 1,
         app: { name: 'WeftMate', version: appVersion },
         mode: personalHostMode ? 'personal-host' : 'desktop',
-        tray: { resident: !personalHostMode }, // 只有可视模式创建托盘。
+        tray: { resident: !headless },
         runtime: hostRuntimeState(hostLifecycleState, runtimeOrigin),
         referenceScan: {
           state: sessionReferenceScan.state,
@@ -1458,7 +1475,7 @@ async function bootstrap() {
   // ── R6-02 · 桌宠动作请求面：官方 UI 胶囊 → 宿主插件写请求文件 → main 消费 ──
   const PET_REQUEST_FILE = join(dshHome, 'weftmate-pet-request.json');
   function handlePetRequests() {
-    if (personalHostMode) return; // No renderer or pet window may appear in host mode.
+    if (headless) return;
     let raw = null;
     try {
       if (existsSync(PET_REQUEST_FILE)) raw = JSON.parse(readFileSync(PET_REQUEST_FILE, 'utf8'));
@@ -3213,6 +3230,18 @@ async function bootstrap() {
         personalAccessOrigin = assertLoopbackOrigin(started.origin);
         writeHostState();
         console.log(`[weftmate] ✓ personal-access listening origin=${personalAccessOrigin}`);
+        if (desktopRequested) {
+          const accountState = await (await fetch(new URL('/personal/v1/auth/state', personalAccessOrigin))).json();
+          // First run uses the existing local-owner setup grant and password form.
+          // Existing accounts always go through the ordinary local login/session.
+          const setupGrant = accountState.configured === false ? (await personalAccessService.issueSetupGrant()).grant : null;
+          personalDesktop = createPersonalDesktop({ origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
+            startInTray: process.argv.includes('--start-in-tray'),
+            onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
+          win = personalDesktop.window;
+          setupTray();
+          await personalDesktop.ready;
+        }
       }
     } else {
       // DSH is the complete first-run and conversation surface.
@@ -3231,7 +3260,7 @@ async function bootstrap() {
   }
 
   // R6-02 · 桌宠自愈：上次可见（设置里 visible=true）→ 启动补唤醒（v2 等价路径的恢复）。
-  if (!personalHostMode && desktopCompanion && settingsMod?.getDesktopPetWindowState?.().visible) {
+  if (!headless && desktopCompanion && settingsMod?.getDesktopPetWindowState?.().visible) {
     void wakeDesktopPet().catch((error) => logCrash('desktop-pet-autowake', error));
   }
 
@@ -3321,7 +3350,8 @@ function refreshTrayMenu() {
         ? '检查更新…'
         : '检查更新（未配置预览源）';
   tray.setContextMenu(Menu.buildFromTemplate([
-    { label: '显示 WeftMate', click: showWindow },
+    { label: '打开 WeftMate', click: showWindow },
+    ...(personalHostMode ? [{ label: `宿主：${desktopStatus.host} · 模型：${desktopStatus.model}`, enabled: false }] : []),
     { type: 'separator' },
     { label: updateLabel, enabled: updateReady || (update.enabled && !updateBusy), click: updateReady ? installPreviewUpdateFromTray : () => { void checkPreviewUpdateFromTray(); } },
     { label: '导出脱敏诊断…', click: () => { void exportRedactedDiagnosticsFromMain().catch((error) => logCrash('diagnostics-export', error)); } },
@@ -3346,6 +3376,8 @@ app.on('before-quit', (e) => {
   writeHostStateForLifecycle?.();
 
   shutdownPromise = (async () => {
+    try { await personalDesktop?.close(); }
+    catch (error) { logCrash('shutdown-desktop-session', error); }
     let accessClosing = null;
     try { accessClosing = personalAccessService?.close?.() ?? null; }
     catch (error) { logCrash('shutdown-personal-access', error); }

@@ -92,6 +92,7 @@
           open.addEventListener('click', () => options.openArtifact?.(data, open)); row.append(open)
           if (options.downloadArtifact) { const download = node('button', 'timeline-action', '下载'); download.type = 'button'
             download.addEventListener('click', () => options.downloadArtifact(data)); row.append(download) }
+          options.appendArtifactActions?.(row, data)
         } else row.append(node('p', '', ({ 'allowed-once': '已允许本次', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[resolved?.data?.outcome] || (family === 'question' ? data.questions?.map(q => q.question).join('\n') : '') || data.summary || ''))
       })
     }

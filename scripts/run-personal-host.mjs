@@ -12,6 +12,8 @@ import { loadPersonalMemoryConfig } from '../src/personal-memory/config.mjs';
 
 const repository = dirname(dirname(fileURLToPath(import.meta.url)));
 const args = process.argv.slice(2);
+const desktopFlags = args.filter(value => value === '--headless' || value === '--start-in-tray');
+for (const flag of desktopFlags) args.splice(args.indexOf(flag), 1);
 const dryRun = args.includes('--dry-run');
 if (dryRun) args.splice(args.indexOf('--dry-run'), 1);
 const trustFlags = args.filter((value) => value === '--trust-loopback-proxy');
@@ -97,7 +99,7 @@ console.log(`[personal-host] workspace=${workspaceDir}`);
 console.log('[personal-host] mode=personal-host; DSH address will be OS-assigned loopback');
 console.log(`[personal-host] memoweft=${memoryConfig ? 'explicit-config' : 'disabled'} aiGame=not-configured phoneExecution=disabled`);
 console.log(`[personal-host] accountMemory=${accountMemoryConfig ? 'explicit-config' : 'disabled'}`);
-console.log(`[personal-host] personalAccess=${accessPort === null ? 'disabled' : `loopback-port-${accessPort}`}`);
+console.log(`[personal-host] personalAccess=${accessPort === null ? desktopFlags.includes('--headless') ? 'disabled' : 'automatic-desktop-loopback' : `loopback-port-${accessPort}`}`);
 console.log(`[personal-host] publicOrigin=${publicOrigin ?? 'disabled'}`);
 console.log(`[personal-host] androidPackage=${androidPackagePath ? 'explicit-candidate' : 'disabled'}`);
 console.log(`[personal-host] mobileUi=${mobileUiDir ? 'explicit-release-directory' : 'disabled'}`);
@@ -110,6 +112,7 @@ const electron = require('electron');
 env.WEFTMATE_USER_DATA = profile;
 env.WEFTMATE_DOGFOOD_CONTROL = '1';
 const child = spawn(electron, ['.', `--user-data-dir=${profile}`, '--personal-host',
+  ...desktopFlags,
   ...(requestedWorkspaceDir === null ? [] : [`--workspace-dir=${workspaceDir}`]),
   ...(accessPort === null ? [] : [`--access-port=${accessPort}`]),
   ...(publicOrigin === null ? [] : [`--public-origin=${publicOrigin}`, '--trust-loopback-proxy']),
@@ -134,7 +137,7 @@ child.on('message', (message) => {
   else pending.reject(Object.assign(new Error('management failed'), { code: message.code ?? 'MANAGEMENT_FAILED' }));
 });
 function manage(action, payload = {}) {
-  if (accessPort === null || stopping || !child.connected) return Promise.reject(Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' }));
+  if (accessPort === null && desktopFlags.includes('--headless') || stopping || !child.connected) return Promise.reject(Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' }));
   const requestId = randomUUID();
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
