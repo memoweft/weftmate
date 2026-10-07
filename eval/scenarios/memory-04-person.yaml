@@ -1,0 +1,52 @@
+{
+  "id": "memory-04-person",
+  "category": "memory",
+  "title": "之后提到某人能联系上",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "阿岚是跟我一起准备秋季展览的朋友，她负责海报，我们周六要碰一下进度。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "我准备找阿岚聊聊，帮我写一句自然点的开场白。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_contains",
+      "text": "阿岚"
+    },
+    {
+      "type": "reply_matches",
+      "pattern": "海报|展览"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "给阿岚的开场白应自然联系准备秋季展览、海报或周六进度，不捏造其他关系或事项。"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "新会话只提名字，不复制原背景；独立测试账号，不接触本人联系人。"
+}
