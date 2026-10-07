@@ -27,6 +27,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     await ctx.plugin(SystemPrompt.default, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
     await ctx.plugin(Sessions.default)
     await ctx.plugin(tools.default, { mode: 'native', maxParallelSubCalls: 1 })
+    await ctx.plugin((await import(vendor('dsh-web'))).default)
     const fakeTool = (name: string) => tools.defineTool({ name, description: name,
       parameters: {}, output: { schema: { type: 'json' }, render: () => [{ type: 'text', text: '{}' }] },
       execute: async () => ({ ok: true }) })

@@ -31,7 +31,8 @@ export function createNativeBrowserOperations(context) {
       const segments = browserCaptureSegments(Buffer.from(read.capturedText, 'utf8'));
       const result = { snapshotId: captureId, url: read.url, title: read.title,
         text: segments[0].text, links: read.links, outline: read.outline,
-        segmentIndex: 0, segmentCount: segments.length, truncated: read.truncated };
+        segmentIndex: 0, segmentCount: segments.length, truncated: read.truncated,
+        captureTruncated: read.captureTruncated === true, httpStatus: read.httpStatus ?? 200 };
       captures.set(captureId, { sessionId, segments, result });
       return result;
     },

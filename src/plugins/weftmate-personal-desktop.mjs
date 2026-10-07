@@ -3,6 +3,7 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import { installModelSelection } from '@deepseek-ai/dsh-agent';
 import { trackNativeFiles, appendNativeArtifacts } from './personal-native-files.mjs';
+import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 
 export const name = 'weftmate-personal-desktop';
@@ -16,7 +17,7 @@ const LEGACY_BROWSER_SEGMENT_TOOL = 'personal_browser_read_segment';
 const NATIVE_SESSION_TOOLS = new Set(['get_goal', 'create_goal', 'update_goal', 'ask_user_question']);
 const executionToolName = name => typeof name === 'string' && /^[A-Za-z][A-Za-z0-9_.:-]{0,159}$/.test(name);
 export const PERSONAL_PROJECT_PROOF_PROTOCOL = 'weftmate.personal-project-proof.v1';
-export const inject = ['tools'];
+export const inject = ['tools', 'web'];
 const SAFE_ID = /^[A-Za-z0-9._:-]{1,160}$/;
 const SNAPSHOT_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/;
 const SAFE_TOOL_ERRORS = new Set(['PERSONAL_TOOL_UNAVAILABLE', 'PERSONAL_TOOL_TIMEOUT',
@@ -609,6 +610,9 @@ export function registerPersonalBrowserTool(ctx, bridge) {
 
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
+  const webExecution = new AsyncLocalStorage();
+  const disposeFetch = ctx.web.registerFetchProvider(personalWebFetchProvider(bridge,
+    () => webExecution.getStore(), personalExecutionIdentity));
   // The pinned driver copies static AgentOptions, while the personal UI selects
   // models through DSH's scoped selection. Initialize a native child before its
   // loop starts, using the parent's actual request configuration and DSH's helper.
@@ -623,10 +627,10 @@ export function apply(ctx) {
   const disposeProof = installProofBridge(ctx);
   const background = createPersonalBackgroundTracker(ctx, bridge);
   const approvals = installPersonalApprovalBridge(ctx, bridge);
-  ctx.on('tools/execute', (exec, next) => trackNativeFiles(bridge, exec,
-    () => trackPersonalExecution(bridge, exec, next, background, approvals), personalExecutionIdentity));
+  ctx.on('tools/execute', (exec, next) => webExecution.run(exec, () => trackNativeFiles(bridge, exec,
+    () => trackPersonalExecution(bridge, exec, next, background, approvals), personalExecutionIdentity)));
   ctx.on('tools/post-execute', appendNativeArtifacts);
-  ctx.effect(() => () => { disposeProof(); approvals.close(); background.close(); bridge.close(); },
+  ctx.effect(() => () => { disposeFetch(); disposeProof(); approvals.close(); background.close(); bridge.close(); },
     'weftmate-personal-desktop: lifecycle');
 }
 

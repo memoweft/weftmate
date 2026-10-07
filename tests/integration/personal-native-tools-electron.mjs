@@ -76,6 +76,7 @@ const model = createServer(async (req, res) => {
     }).filter(value => value?.snapshotId && value?.links);
     if (!executed.includes('browser')) invoke('browser', { action: 'open', url: `http://page-a.weftmate.invalid:${model.address().port}/first` });
     else if (reads.length === 1 && executed.filter(name => name === 'browser').length === 1) invoke('browser', { action: 'follow', snapshotId: reads[0].snapshotId, linkId: reads[0].links[0].linkId });
+    else if (!executed.includes('web_fetch')) invoke('web_fetch', { url: `http://page-a.weftmate.invalid:${model.address().port}/first` });
     else if (!executed.includes('subagent')) invoke('subagent', { description: 'Read generated report', prompt: 'NATIVE_CHILD_READ: Read report.md and verify its text.', run_in_background: false });
     else respond(res, body.model);
   }
@@ -146,7 +147,11 @@ try {
   }
   report.modelToolRequests = report.toolCalls
   report.toolCalls = events.filter(event => event.type === 'step.started').map(event => event.data.toolName)
-  assert.deepEqual(report.toolCalls, ['write', 'pwsh', 'read', 'browser', 'browser', 'subagent']);
+  assert.deepEqual(report.toolCalls, ['write', 'pwsh', 'read', 'browser', 'browser', 'web_fetch', 'subagent']);
+  const fetched = events.find(event => event.type === 'step.completed' && event.data.toolName === 'web_fetch');
+  assert.equal(fetched.data.state, 'completed');
+  const fetchedDetail = (await request('GET', `sessions/${session.sessionId}/events/${fetched.seq}/detail`)).value;
+  assert.match(fetchedDetail.text, /Public rendered fixture/);
   assert.equal(report.childReadVerified, true, 'the real native subagent reads in the parent conversation directory');
   assert.ok(report.childSchemas.includes('web_fetch'));
   assert.equal(report.childSchemas.includes('browser'), false, 'native children use web_fetch; rendered browser delivery belongs to the portal conversation');
