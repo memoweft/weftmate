@@ -109,6 +109,33 @@ public actor PersonalClient {
                 transport: any HTTPTransport = URLSessionTransport(), platform: ApplePlatform = .current) {
         self.store = credentialStore; self.transport = transport; self.platform = platform
     }
+    /// H1 draft: never send to a different account after an asynchronous account switch.
+    public func uploadHealthSummary(_ summary: HealthDailySummary, account: LocalAccountScope) async throws -> HealthUploadResult {
+        let (auth, generation) = try snapshot()
+        guard try LocalAccountScope(server: auth.session.server, ownerId: auth.session.account.ownerId) == account else { throw APIFailure.identityMismatch }
+        try await verify(auth, generation)
+        let encoder = JSONEncoder(); encoder.outputFormatting = [.sortedKeys]
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/health/daily-summaries", method: "POST",
+            body: encoder.encode(summary), acceptedErrorStatuses: [404, 501])
+        if [404, 501].contains(response.status) { return .deferred }
+        guard [200, 201, 204].contains(response.status) else { throw APIFailure.invalidResponse }
+        return .uploaded
+    }
+    public func deleteHealthSummaries(account: LocalAccountScope, date: String? = nil) async throws -> HealthUploadResult {
+        let (auth, generation) = try snapshot()
+        guard try LocalAccountScope(server: auth.session.server, ownerId: auth.session.account.ownerId) == account else {
+            throw APIFailure.identityMismatch
+        }
+        if let date { guard date.range(of: "^[0-9]{4}-[0-9]{2}-[0-9]{2}$", options: .regularExpression) != nil else { throw APIFailure.invalidResponse } }
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation,
+            path: "/health/daily-summaries" + (date.map { "/" + $0 } ?? ""), method: "DELETE",
+            body: Data("{}".utf8), acceptedErrorStatuses: [404, 501])
+        if [404, 501].contains(response.status) { return .deferred }
+        guard [200, 201, 204].contains(response.status) else { throw APIFailure.invalidResponse }
+        return .uploaded
+    }
+
     public func currentSession() -> AccountSession? { credential?.session }
 
     public func restoreSession(server: ServerConfiguration) async throws -> AccountSession? {

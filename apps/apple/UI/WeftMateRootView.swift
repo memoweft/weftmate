@@ -161,6 +161,8 @@ private struct MacWorkspace: View {
 #else
 private struct PhoneWorkspace: View {
     @ObservedObject var model: AppleAppModel
+    @StateObject private var health = HealthSettingsModel()
+    @Environment(\.scenePhase) private var scenePhase
     @State private var search = ""
     var body: some View {
         NavigationStack {
@@ -210,6 +212,14 @@ private struct PhoneWorkspace: View {
                 }
                 .refreshable { await model.refresh() }
                 .accessibilityIdentifier("conversationList")
+        }
+        .environmentObject(health)
+        .task(id: "\(model.accountEpoch)-\(scenePhase)-\(model.session?.verification.rawValue ?? "none")") {
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                await health.activate(app: model)
+                do { try await Task.sleep(for: .seconds(900)) } catch { return }
+            }
         }
     }
 
