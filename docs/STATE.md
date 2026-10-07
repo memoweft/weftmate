@@ -8,16 +8,19 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows | M0-1b 代码瘦身 | 待开工 |
-| Codex · Mac | A2 Apple 客户端契约对齐完成 | `wp/a2-apple-contract`：发送/纠正体与 UTF-16 上限、明确接管确认、personal-remote 任务范围、图片/文件附件上传与历史预览已实现；Core 243 项、状态检查 10 组与三目标构建通过；iPhone 隔离 UI 内容可见场景通过；Mac UI 受本机自动化/辅助功能授权阻塞；[PR #21](https://github.com/memoweft/weftmate/pull/21) 待审 |
+| Codex · Windows | M0-1b 代码瘦身 | [PR（拉取请求）#20](https://github.com/memoweft/weftmate/pull/20) 待审；5 项完成，模型切换部分简化 |
+| Codex · Mac | A2 Apple 客户端契约对齐完成 | `wp/a2-apple-contract`：发送/纠正体与 UTF-16 上限、明确接管确认、personal-remote 任务范围、图片/文件附件上传与历史预览已实现；Core 243 项、状态检查 10 组与三目标构建通过；iPhone 隔离 UI 内容可见场景通过；Mac UI 受本机自动化/辅助功能授权阻塞；[PR #21](https://github.com/memoweft/weftmate/pull/21) 已合入 main |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
 - 任务 15 在途改动已作 checkpoint 提交 `1f922a5`（通用执行、审批、用户提问、Android 文本成果 MIME，未经独立验收）。
+- M0-1b：旧 alpha2 路径清理、一次性脚本归档；`personal-access/index.mjs` 6160 → 614 行，导出、接口和存储行为兼容。
 
 ## 最近一次场景结果
 
-尚无（M0-7 建立）。
+M0-7 场景集已建立；Qwen / MiMo 实测基线尚未跑。
+
+M0-1b 工程检查：类型检查通过；完整单测基线 873/890 通过、15 失败、2 跳过 → 当前 843/856 通过、11 原有失败、2 跳过（含主干新增评测测试）；新增失败 0。分项检查与完整失败用例见 PR。
 
 ## 契约变更
 
@@ -30,3 +33,5 @@
 - 长会话打开时报「历史超出当前可读取范围」：`src/runtime/dsh-adapter/sessions.mjs` `historyPage` 每页从尾部倒扫，超过 24×50 条即失败（M0-3）。
 - 长任务以 `max-tokens` 空结束：上下文/输出预算未按实际模型服务计算（M0-2）。
 - 本地 Qwen 服务曾多次显存不足（OOM），启动方式不统一（M0-6）。
+- 模型路由只合并两个薄封装；跨文件恢复、串行队列和历史会话引用保护保留，进一步简化仍需协调持久化与重载路径（见 PR #20）。
+- PR #20 云端 CI（持续集成）在 `release:preflight` 的依赖审查中失败；锁文件未改动，本包未升级依赖。

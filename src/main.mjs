@@ -21,12 +21,10 @@ import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './o
 import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
 import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
-import { assertModelProfileMutationAllowed } from './model-profile-guard.ts';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
-import { runRecoverableProfileMutation } from './model-mutation-transaction.ts';
-import { assertAuthoritativeSessionsIdle, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
-import { createRouteMutationJournal, recoverRouteMutationJournalFiles } from './route-mutation-journal.ts';
+import { assertAuthoritativeSessionsIdle, assertModelProfileMutationAllowed, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
+import { createRouteMutationJournal, recoverRouteMutationJournalFiles, runRecoverableProfileMutation } from './route-mutation-journal.ts';
 import { createRouteMutationQueue } from './route-mutation-queue.ts';
 import { blocksUnexpectedRendererNavigation, isTrustedRendererInvocation } from './renderer-trust.ts';
 import { basename, isAbsolute, join, resolve } from 'node:path';
@@ -68,12 +66,8 @@ import { initDevices } from './devices.ts';
 import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
 import { ModWindowManager } from './mod-window-manager.mjs';
 import { createPersonalAccessBackend } from './personal-access-backend.mjs';
-import { createObservationRecorder } from './personal-model-observation/record.mjs';
-import { createPersonalModelObservationProxy } from './personal-model-observation/proxy.mjs';
-import { stage14R2ObservationProfile } from './personal-model-observation/policy.mjs';
+import { loadPersonalDevelopmentTools } from './personal-development-tools.mjs';
 import { createPersonalDesktopTask } from './personal-desktop-task.mjs';
-import { syntheticStopFixtureRoute } from './synthetic-stop-fixture-policy.mjs';
-import { syntheticBrowserFixtureSettings } from './synthetic-browser-fixture-policy.mjs';
 import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels, prepareLocalModelConfig,
   projectOccamyImageInput, reconcileOccamyImageInput,
   readUserModelSwitcherKey } from './local-model-config.mjs';
@@ -84,6 +78,10 @@ import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { memoryRecallDestination, memorySessionPolicy } from './personal-memory/policy.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
+
+const { syntheticStopFixtureRoute, syntheticBrowserFixtureSettings,
+  createObservationRecorder, createPersonalModelObservationProxy,
+  stage14R2ObservationProfile } = await loadPersonalDevelopmentTools();
 
 const personalHostMode = personalHostRequested(process.argv);
 if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {

@@ -13,7 +13,7 @@ test('isolated synthetic memory HTTP contract keeps owners, cursors and receipts
   const repositoryRoot = process.env.WEFTMATE_REPO_ROOT ?? root
   assert.ok(existsSync(join(repositoryRoot, 'src', 'personal-access', 'index.mjs')),
     'Set WEFTMATE_REPO_ROOT when running this isolated candidate; an integrated repository needs no override')
-  const child = spawn(process.execPath, [join(root, 'tools', 'memory-ui-fixture.mjs')], {
+  const child = spawn(process.execPath, [join(root, 'tests', 'tools', 'memory-ui-fixture.mjs')], {
     cwd: root, stdio: ['ignore', 'pipe', 'pipe'], windowsHide: true,
     env: { ...process.env, WEFTMATE_REPO_ROOT: repositoryRoot },
   })
