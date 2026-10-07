@@ -183,7 +183,7 @@ if ($SelfTest) {
   exit 0
 }
 
-$repository = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..')).Path
+$repository = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot '..\..')).Path
 $statusRoot = Join-Path (Split-Path -Parent $repository) 'Runtime\UnifiedAssistant\Stage14R3Acceptance-20261004'
 $statusAllowed = $StatusFile -and
   [IO.Path]::GetFullPath($StatusFile) -eq [IO.Path]::GetFullPath((Join-Path $statusRoot (Split-Path -Leaf $StatusFile))) -and

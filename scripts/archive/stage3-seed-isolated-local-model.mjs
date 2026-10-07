@@ -92,8 +92,8 @@ async function run() {
     throw new Error('local model completion did not finish cleanly')
   }
 
-  const configStore = await import('../src/config-store.ts')
-  const settings = await import('../src/settings.ts')
+  const configStore = await import('../../src/config-store.ts')
+  const settings = await import('../../src/settings.ts')
   configStore.saveCredential(profileId, apiKey)
   settings.upsertModelProfile({
     id: profileId,
