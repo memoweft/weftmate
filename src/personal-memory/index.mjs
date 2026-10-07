@@ -4,6 +4,7 @@ import path from 'node:path';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { MemoWeftRpc } from './rpc.mjs';
 import { createMemoryCommandJournal } from './journal.mjs';
+import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/index.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
@@ -33,6 +34,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         model !== '@current'))) {
     throw error('MEMORY_CONFIGURATION_INVALID');
   }
+  const healthStore = createPersonalHealthStore({ root });
   const entries = new Map();
   const failures = new Map();
   const boundaryFailures = new Map();
@@ -50,7 +52,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       selected = sessionId !== null && typeof processingRoute === 'function'
         ? await processingRoute(ownerId, sessionId)
         : { profileId: 'formal-local-memory-route', baseUrl, model,
-          credential: await credential(ownerId), routeFingerprint: null };
+          credential: await credential(ownerId), routeFingerprint: null, modelTier: 'local' };
     } catch { throw error('MEMORY_MODEL_UNAVAILABLE'); }
     if (!selected || typeof selected !== 'object' || Array.isArray(selected) ||
         typeof selected.profileId !== 'string' || !selected.profileId || selected.profileId.length > 160 ||
@@ -69,8 +71,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const normalizedBaseUrl = parsed.href.replace(/\/$/, '');
     return { profileId: selected.profileId, baseUrl: normalizedBaseUrl, model: selected.model,
       credential: selected.credential, routeFingerprint: selected.routeFingerprint,
+      modelTier: selected.modelTier === 'local' ? 'local' : 'cloud',
       key: JSON.stringify([selected.profileId, normalizedBaseUrl, selected.model,
-        selected.routeFingerprint]) };
+        selected.routeFingerprint, selected.modelTier]) };
   }
 
   async function preparePrivateHome(ownerId) {
@@ -266,7 +269,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       env: { MEMOWEFT_BASE_URL: selected.baseUrl, MEMOWEFT_WORLD_MODEL: selected.model } });
     const entry = { rpc, ready: false, active: 0, lastUsed: Date.now(),
       capabilities: null, routeReady: false, backlogCount: null, initializing: null,
-      routeKey: selected.key };
+      routeKey: selected.key, modelTier: selected.modelTier };
     entries.set(ownerId, entry);
     entry.initializing = (async () => {
       const before = await rpc.request('capabilities');
@@ -277,7 +280,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       const initialized = await rpc.request('initialize', {
         session_id: 'weftmate-personal-host', dsh_home: home, subject_id: ownerId,
-        platform: 'dsh', model_tier: 'local', lang: 'zh', auto_route: true,
+        platform: 'dsh', model_tier: selected.modelTier, lang: 'zh', auto_route: true,
         model_api_key: selected.credential,
       });
       if (initialized?.runtime?.subject_id !== ownerId ||
@@ -362,6 +365,14 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
 
   return {
     enabled,
+    healthStore,
+    // The current RPC contract has only conversation ingest_boundary, no typed
+    // observed upsert/retraction. Expose replayable input without claiming a World write.
+    async observedOutbox(ownerId) {
+      const items = await healthStore.pendingObserved(ownerId);
+      return { state: items.length ? 'queued' : 'empty',
+        ...(items.length ? { reasonCode: OBSERVED_PENDING } : {}), items };
+    },
     peek(ownerId) {
       owner(ownerId);
       if (!enabled) return 'disabled';
@@ -406,9 +417,13 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     query(ownerId, method, params) { return withOwner(ownerId, (entry) => entry.rpc.request(method, params)); },
     async recall(ownerId, { query, sessionId }) {
       owner(ownerId);
+      if (!enabled) throw error('MEMORY_DISABLED');
       if (typeof query !== 'string' || !query.trim() || query.length > 500 ||
           typeof sessionId !== 'string' || sessionId.length > 128) throw error('MEMORY_REQUEST_INVALID');
-      return withOwner(ownerId, async (entry) => {
+      const route = await resolveProcessingRoute(ownerId, sessionId);
+      return healthStore.withRecallPolicy(ownerId, route.modelTier, () => withOwner(ownerId, async (entry) => {
+        // Recheck the worker route too: a host route may have changed during acquire.
+        if (entry.modelTier !== route.modelTier) return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
         if (!entry.routeReady) return { state: 'withheld', reasonCode: 'MEMORY_MODEL_UNAVAILABLE' };
         const backlog = await outboxStatus(ownerId);
         if (backlog.pendingBoundaryCount > 0) return { state: 'withheld',
@@ -424,7 +439,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         return { state: 'ready', contextText, worldRevision: Number.isSafeInteger(world?.world_revision)
           ? world.world_revision : null, sourceCount: Array.isArray(world?.preview?.selected_item_ids)
             ? world.preview.selected_item_ids.length : 0 };
-      }, sessionId);
+      }, sessionId));
     },
     async ingest(ownerId, boundary) {
       owner(ownerId);

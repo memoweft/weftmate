@@ -5,7 +5,7 @@
 
 ## 1. 范围与通用约定
 
-本文覆盖 **77 个业务方法/路径组合**，另列 **11 个桌面 UI 静态路径**。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
+本文覆盖 **81 个业务方法/路径组合**（第 3 节 77 项 + 第 6 节健康 4 项），另列 **11 个桌面 UI 静态路径**。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
 
 | 客户端标记 | 本次核对来源与含义 |
 |---|---|
@@ -288,7 +288,7 @@
 
 macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64/x86_64",channel:"trial",notes,fileName,downloadUrl`。不要把native manifest与Android mobile UI manifest混用。Apple独立 `PublicUpdates.swift` 使用公开分发入口，本次所核对 `PersonalClient.swift` 没有调用上述认证下载接口。
 
-### 3.14 桌面 UI 静态资源（11个 GET 路径，不计入77业务接口）
+### 3.14 桌面 UI 静态资源（11个 GET 路径，不计入81业务接口）
 
 | GET路径（都无查询） | 响应 / 错误 | 使用端 |
 |---|---|---|
@@ -386,15 +386,15 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a落地时须更新此文档与STATE契约栏。
 
-## 6. 草案：健康摘要
+## 6. 健康摘要（H2 正式接口）
 
-> **草案，待 Windows 实现。** H1 只实现 Apple 客户端，本节不表示服务端已接通。遵循 `COMPANION.md` 第 4、5、11 节；原始 HealthKit 样本只在设备内计算，不持久化或上传原始样本流。服务端后续将摘要作为带设备、时间来源的 `observed` 证据接入 MemoWeft；模型使用必须遵守用户的云端选择。
+> **H2 已实现服务端接收、读取、删除与 observed 待写队列。** 遵循 `COMPANION.md` 第 4、5、11 节；原始样本只在设备内计算，不上传原始流。当前 MemoWeft RPC 缺少 observed 写入契约，健康证据尚未进入 World；接口返回 queued 明确说明此状态。补充能力与模型限制见 6.4 及 `src/personal-health/README.md`。
 
 ### 6.1 上传与幂等
 
-建议 `POST /personal/v1/health/daily-summaries`，Cookie 账号认证、同源 Origin、CSRF（继承第 1 节）。每次一个日摘要，JSON ≤12 KiB；日期是 `timeZone` 中的 `YYYY-MM-DD`，时间戳为 UTC ISO 8601。账号从凭据确定，不从体中的字段选择。
+`POST /personal/v1/health/daily-summaries`，Cookie 账号认证、同源 Origin、CSRF（继承第 1 节）。每次一个日摘要，JSON ≤12 KiB；日期是 `timeZone` 中的 `YYYY-MM-DD`，时间戳为 UTC ISO 8601。账号从凭据确定，不从体中的字段选择。
 
-按 **账号 + sourceDeviceId + date** 幂等 upsert：同日重试不新增证据；新的摘要替换该日原版本，删除省略的指标，更新云端使用策略及自评频率。不同采集设备保留来源，服务端不能将两部手机的同一天步数相加。`sourceDeviceId` 是汇总设备的账号设备 ID（离线队列可能使用当前账号之前签发的设备 ID）；服务端验证来源归属账号。`summarizedAt` 较旧的迟到提交不得覆盖新版本；返回当前已持久化版本或明确冲突。Apple 单设备上传顺序串行，收到 200 / 201 / 204 才移出本地队列；202 尚未确认持久化，保留重试。
+按 **账号 + sourceDeviceId + date** 幂等 upsert：同日重试不新增证据；新的摘要替换该日原版本，删除省略的指标，更新云端使用策略及自评频率。不同采集设备保留来源，服务端不能将两部手机的同一天步数相加。`sourceDeviceId` 是汇总设备的账号设备 ID（离线队列可能使用当前账号之前签发的设备 ID）；服务端验证来源归属账号。`summarizedAt` 较旧的迟到提交返回 409 `STALE_HEALTH_SUMMARY`；相同时间、相同规范化内容返回 duplicate=true，相同时间不同内容同样返回 409。Apple 单设备上传顺序串行，收到 200 / 201 / 204 才移出本地队列；202 尚未确认持久化，保留重试。
 
 ```json
 {
@@ -429,22 +429,24 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 基线为当前日期**之前 14 个本地日历日**内有数据日期的均值，排除当日及缺数据日，`baselineDays` 表示实际天数（首次回填的较早日期可能不足 14 天）。偏离为 `(value / baselineMean - 1) * 100`；无基线或均值为 0 时省略 `baselineMean/deviationPercent` 中无法计算的字段。没有医疗诊断或分数。`sourceDevices` 是去重的 HealthKit 来源应用/设备描述，统计来源未提供硬件名时使用来源应用名；不是原始样本 ID、设备序列号或样本时间线。
 
-`cloudModelAllowed` 必传，默认 false；首次请求健康授权前询问，设置可随时改。true 只允许云端使用摘要，不扩大原始数据权限；false 要从云端召回、提示词与后续云端模型请求中排除这些摘要，仍可供本地模型使用。已上传的摘要在使用选择改变时重新上传替换；服务端应把最新明确选择用于账号已有健康证据，并确保旧索引/衍生记忆不绕过该选择。用户离线改为 false 后，本地即采用新选择，服务器只能在联网提交成功后生效。`selfAssessmentFrequency` 为 `off / low / moderate`，默认 low；本包只保存频率，不上传自评答案、不实现询问界面。
+`cloudModelAllowed` 必传，默认 false；首次请求健康授权前询问，设置可随时改。true 只允许云端使用摘要，不扩大原始数据权限；false 要从云端召回、提示词与后续云端模型请求中排除这些摘要，仍可供本地模型使用。已上传的摘要在使用选择改变时重新上传替换；服务端应把最新明确选择用于账号已有健康证据，并确保旧索引/衍生记忆不绕过该选择。用户离线改为 false 后，本地即采用新选择，服务器只能在联网提交成功后生效。`selfAssessmentFrequency` 为 `off / low / moderate`，省略时为 low；服务端按账号最新汇总时间将选择与频率应用到全部摘要/待写证据（相同时间 false 优先），旧回填和幂等重试不能覆盖更新的选择。本包只保存频率，不上传自评答案、不实现询问界面。
 
 `readStates` 为 `disabled / notRequested / dataAvailable / noDataOrReadDenied / unavailable / failed`。Apple 不公开读取授权是否被拒绝/撤销，空结果不能据此断言拒绝；`dataAvailable` 只代表此次读到数据。应用内逐类关闭会停止该类查询、移除本地与排队摘要的指标并重新上传替换。系统撤权后再次读取为空，会更新近期摘要，既有摘要不会因此自动等同用户要求全部删除；删除需明确操作。查询失败保留此前已读取数值并标注 failed。
 
+POST 固定返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"memory":{"state":"queued","pendingObservedCount":1,"reasonCode":"MEMORY_OBSERVED_UNSUPPORTED"}}`。200 表示摘要与 observed 队列已原子持久化，尚未表示 World 写入完成。请求只接受上述字段；各指标要求对应 readState 为 dataAvailable/failed、单位匹配、非负有限数值与 0–14 baselineDays；拒绝原始样本和任意追加文本。`metrics.workouts`（如提供）单位 min，`metrics.respiratoryRate` 单位 breaths/min。账号由凭据确定，来源设备必须是本账号签发过的 ID，已撤销设备仍可标记其历史离线摘要。较新汇总完整覆盖同来源/日期记录。
+
 ### 6.2 撤权与删除
 
-| 建议方法与路径 | 请求 / 返回 | 客户端行为 |
+| 方法与路径 | 请求 / 返回 | 客户端行为 |
 |---|---|---|
-| DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及其健康证据/索引；200 `{"deleted":true,"date":"2026-10-06"}` 或 204 | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
-| DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及衍生健康证据/索引；200 `{"deleted":true,"scope":"all"}` 或 204 | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
+| DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及其 observed 待写证据；200 `{"deleted":true,"date":"2026-10-06"}` （另含 deletedCount） | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
+| DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及 observed 待写证据；200 `{"deleted":true,"scope":"all"}` （另含 deletedCount） | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
 
-撤销系统读取权限在 Apple “健康”应用完成；WeftMate 不写/删 HealthKit 原始记录。关闭读取和删除已上传证据分别表达；服务器删除不是移除用户对话或非健康记忆。幂等删除需有防止迟到上传复活数据的服务端策略，具体实现由 Windows 确认。
+撤销系统读取权限在 Apple “健康”应用完成；WeftMate 不写/删 HealthKit 原始记录。关闭读取和删除已上传证据分别表达；服务器删除不是移除用户对话或非健康记忆。服务端原子移除摘要及其 observed 待写内容，只留无健康内容的日期/全部删除时间水位（服务器删除时间与已知汇总时间的较大值）。旧汇总时间不大于水位时 POST 返回 409，重新读取生成的较新摘要可上传；全部删除合并各日期水位。DELETE 同样要求 application/json `{}`、同源 Origin 和 CSRF，JSON ≤12 KiB。当前没有本包写入的 Core 证据，因而不宣称已完成真实 Core 撤回。
 
 ### 6.3 错误与重试
 
-| 状态 / 建议错误码 | 语义 / Apple 行为 |
+| 状态 / 错误码（含兼容旧宿主的客户端重试约定） | 语义 / Apple 行为 |
 |---|---|
 | 400 `INVALID_HEALTH_SUMMARY` / `INVALID_DATE` | schema、日期、单位或值不合法；保留本地摘要，不宣称上传成功 |
 | 401 `UNAUTHORIZED`；403 `FORBIDDEN` / `ORIGIN_NOT_ALLOWED` | 沿用账号认证，账号不匹配不发送；离线队列绝不跨账号上传 |
@@ -453,4 +455,25 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 413 `BODY_TOO_LARGE`；415 `UNSUPPORTED_MEDIA_TYPE` | 沿用通用约定；不丢摘要、不截断健康内容 |
 | 429 `RATE_LIMITED`；503 `STORAGE_UNAVAILABLE` / `SERVICE_UNAVAILABLE`；网络错误 | 安静保留队列，下一次运行重试；不阻塞聊天 |
 
-H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。Windows 实现后仍需补真实账号/跨设备/撤销云端使用与 MemoWeft 删除闭环的集成验收。
+H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。H2 使用隔离账号与合成 RPC 验证；真实宿主/跨设备及 MemoWeft observed 写入、权限变更、衍生项删除仍需在 Core 能力补齐后集成验收。
+
+
+### 6.4 读取与记忆使用状态
+
+`GET /personal/v1/health/daily-summaries?days=14&timeZone=UTC`：days 默认 14，整数 1–365；timeZone 默认 UTC，必须为系统认可时区。返回该查询时区今日及此前 days-1 日（含两端）的记录，不含未来日期；按日期降序、来源设备 ID 升序，所有来源分别返回。重复或未知查询参数拒绝为 400。账号从凭据确定，GET 不要求 CSRF（如带 Origin 仍需同源）。
+
+```json
+{
+  "summaries": [{"schemaVersion": 1, "date": "2026-10-06", "sourceDeviceId": "device-phone", "metrics": {"sleep": {"value": 340, "unit": "min", "baselineDays": 0}}, "cloudModelAllowed": false}],
+  "days": 14,
+  "timeZone": "UTC",
+  "preferences": {"cloudModelAllowed": false, "selfAssessmentFrequency": "low", "summarizedAt": "2026-10-07T01:00:00.000Z"},
+  "memory": {"state": "queued", "pendingObservedCount": 1, "reasonCode": "MEMORY_OBSERVED_UNSUPPORTED"}
+}
+```
+
+示例摘要为简化投影；真实 summaries 返回完整已存摘要。memory.pendingObservedCount 是本账号全部待写数量，与查询日期窗口无关；没有摘要时 memory.state=empty、pendingObservedCount=0。健康文件在宿主 `<personal-access-root>/accounts/<ownerId>/health/daily-summaries.json`，沿用私有目录/文件保护与原子写入。
+
+每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期，含设备描述、时区与汇总时间；不会构造 user 对话 boundary。当前已有 `personal-memory` 桥接缺少 observed 写入能力，故先保存可回放的待写证据，覆盖和删除同步替换/移除队列内容。MemoWeft 需补 observed upsert、来源权限更新/真实撤回（含衍生项/索引）、按目标模型过滤的召回契约与回执，然后经现有桥接回放；不得直接另写数据库或把 observed 伪装为发言。
+
+`cloudModelAllowed=false` 时，在每次个人记忆召回 RPC 前拒绝 cloud/未知目的地：返回内部 `withheld / MEMORY_HEALTH_CLOUD_BLOCKED`，插件清除旧记忆 snapshot。当前混合召回缺少来源过滤，限制会暂时阻止该账号的**整段个人记忆召回**，直到来源过滤能力补齐；本地路由仍可召回，true 可恢复 cloud 召回。仅宿主验证的正式本地 profile（固定 FORMAL_LOCAL_BASE_URL + isFormalLocalProfile）被视为 local；私有路由含 loopback 代理均按 cloud，客户端不能指定 modelTier。当前 observed 待写事实尚未进入 World，本地模型也尚不能通过 World 召回这些事实；GET 可供客户端与后续精灵使用。已有用户/助手历史不会被删改。
