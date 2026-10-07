@@ -1,5 +1,7 @@
 import SwiftUI
 import WeftMateCore
+import UniformTypeIdentifiers
+import PhotosUI
 #if os(iOS)
 import UIKit
 #endif
@@ -67,6 +69,18 @@ struct ConversationView: View {
     @State private var visibleMessageID: String?
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
+    @State private var importingAttachments = false
+    @State private var photoSelection: [PhotosPickerItem] = []
+    @State private var pendingAdoptionProfile: String?
+    @State private var confirmingLocalTurn = false
+    @State private var previewReference: ConversationAttachmentReference?
+    @State private var previewFile: URL?
+    @State private var previewDirectory: URL?
+    @State private var attachmentInputError: String?
+    @State private var previewError: String?
+    @State private var previewBusy = false
+    @State private var previewWorker: Task<Void, Never>?
+    @State private var showingPreview = false
 
     private var draft: Binding<String> {
         let accountEpoch = model.accountEpoch
@@ -75,6 +89,83 @@ struct ConversationView: View {
     }
 
     var body: some View {
+        HStack(spacing: 0) {
+            conversationContent
+            #if os(macOS)
+            if showingPreview { Divider(); attachmentPreview.frame(minWidth: 320, idealWidth: 400, maxWidth: 480) }
+            #endif
+        }
+        .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
+            if case .success(let files) = result {
+                let epoch = model.accountEpoch
+                Task { await model.addAttachments(files, to: conversation, accountEpoch: epoch) }
+            }
+        }
+        .onChange(of: photoSelection) { _, selection in
+            let epoch = model.accountEpoch
+            Task {
+                var files: [URL] = []
+                defer { files.forEach { try? FileManager.default.removeItem(at: $0) }; photoSelection = [] }
+                do {
+                    for photo in selection {
+                        guard let data = try await photo.loadTransferable(type: Data.self) else { continue }
+                        let ext = photo.supportedContentTypes.first?.preferredFilenameExtension ?? "jpg"
+                        let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + ext)
+                        try data.write(to: file); files.append(file)
+                    }
+                    await model.addAttachments(files, to: conversation, accountEpoch: epoch)
+                } catch { attachmentInputError = "图片未添加，请重试。" }
+            }
+        }
+        .confirmationDialog("上一条本地消息是否已送达无法确定。确认后继续。", isPresented: $confirmingLocalTurn, titleVisibility: .visible) {
+            Button("确认并继续") {
+                guard let profile = pendingAdoptionProfile else { return }
+                let epoch = model.accountEpoch
+                Task { await model.adopt(conversation, profileID: profile, accountEpoch: epoch, acknowledgeUncertainLocalTurn: true) }
+                pendingAdoptionProfile = nil
+            }
+            Button("取消", role: .cancel) { pendingAdoptionProfile = nil }
+        }
+        #if os(iOS)
+        .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
+        #endif
+        .onChange(of: model.accountEpoch) { _, _ in closePreview(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: conversation.id) { _, _ in closePreview(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onDisappear { closePreview() }
+    }
+
+    private var attachmentPreview: some View {
+        ConversationAttachmentPreview(file: previewFile, name: previewReference?.name ?? "附件",
+            contentType: previewReference?.contentType ?? "application/octet-stream", loading: previewBusy,
+            error: previewError, close: closePreview)
+    }
+    private func closePreview() {
+        previewWorker?.cancel(); previewWorker = nil; showingPreview = false
+        previewReference = nil; previewFile = nil; previewError = nil; previewBusy = false
+        if let previewDirectory { try? FileManager.default.removeItem(at: previewDirectory) }; previewDirectory = nil
+    }
+    private func openAttachment(_ reference: ConversationAttachmentReference) {
+        closePreview(); previewReference = reference; showingPreview = true; previewBusy = true
+        let epoch = model.accountEpoch
+        previewWorker = Task {
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("weftmate-preview-" + UUID().uuidString)
+            do {
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let file = folder.appendingPathComponent(reference.name)
+                try await reference.download(using: model.assistantClient, to: file)
+                guard !Task.isCancelled, model.accountEpoch == epoch, previewReference == reference else {
+                    try? FileManager.default.removeItem(at: folder); return
+                }
+                previewDirectory = folder; previewFile = file; previewBusy = false
+            } catch {
+                try? FileManager.default.removeItem(at: folder)
+                guard !Task.isCancelled, model.accountEpoch == epoch, previewReference == reference else { return }
+                previewError = "附件未下载，请关闭后重试。"; previewBusy = false
+            }
+        }
+    }
+
+    private var conversationContent: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 22) {
@@ -100,7 +191,7 @@ struct ConversationView: View {
                             .frame(minHeight: 240)
                     }
                     ForEach(model.messages) { message in
-                        MessageView(message: message).id(message.id)
+                        MessageView(model: model, message: message, openAttachment: openAttachment).id(message.id)
                     }
                     if let sessionId = model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch),
                        let hostId = model.session?.hostId {
@@ -155,9 +246,6 @@ struct ConversationView: View {
                         }
                     } label: { Label("会话任务", systemImage: "checklist").labelStyle(.titleAndIcon) }
                     .accessibilityIdentifier("conversationTasksButton")
-                } else {
-                    Label("会话任务待确认", systemImage: "checklist").font(.caption).foregroundStyle(Weave.muted)
-                        .accessibilityIdentifier("conversationTasksUnavailable")
                 }
             }
             ToolbarItem(placement: .primaryAction) {
@@ -216,6 +304,7 @@ struct ConversationView: View {
                     }
                     if row.record.intent.kind == .message,
                        let sessionId = row.record.intent.sessionId,
+                       model.taskSessionID(for: conversation, accountEpoch: accountEpoch) == sessionId,
                        let commandId = row.record.receipt?.commandId {
                         NavigationLink {
                             if model.taskSessionID(for: conversation, accountEpoch: accountEpoch) == sessionId,
@@ -263,7 +352,42 @@ struct ConversationView: View {
                     .focused($draftFocused).padding(.horizontal, 9).padding(.top, 7)
                     .disabled(!model.canEditDraft(for: conversation))
                     .accessibilityIdentifier("conversationDraft")
+                if let files = model.attachmentDrafts[key], !files.isEmpty {
+                    ScrollView(.horizontal) {
+                        HStack(spacing: 10) {
+                            ForEach(files) { file in
+                                VStack(spacing: 4) {
+                                    AttachmentThumbnail(file: file.display, isImage: file.original.isImage)
+                                    Text(file.original.name).font(.caption).lineLimit(1).frame(width: 90)
+                                    Button("移除") { model.removeAttachment(file.id, from: conversation, accountEpoch: accountEpoch) }
+                                        .font(.caption).disabled(model.preparingConversations.contains(key))
+                                }
+                            }
+                        }
+                    }
+                }
                 HStack(spacing: 12) {
+                    Menu {
+                        Button("添加文件或图片") { importingAttachments = true }
+                        #if DEBUG
+                        if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--apple-contract-fixture") {
+                            Button("添加测试文件") {
+                                if let file = try? AppleContractUIFixture.selectedFile() {
+                                    Task { await model.addAttachments([file], to: conversation, accountEpoch: accountEpoch) }
+                                }
+                            }
+                        }
+                        #endif
+                        PhotosPicker(selection: $photoSelection, maxSelectionCount: 4 - (model.attachmentDrafts[key]?.count ?? 0), matching: .images) {
+                            Label("从照片选择", systemImage: "photo")
+                        }
+                        #if os(macOS)
+                        Button("粘贴图片或文件") { pasteAttachments(accountEpoch: accountEpoch) }
+                        #endif
+                    } label: { Image(systemName: "plus").frame(width: 32, height: 32) }
+                    .disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
+                    .accessibilityIdentifier("addAttachmentButton")
+                    if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
                     Text(model.draftStatus(for: conversation))
                         .font(.caption).foregroundStyle(Weave.muted)
                         .accessibilityIdentifier("draftSaveStatus")
@@ -281,6 +405,7 @@ struct ConversationView: View {
             .background(Weave.soft, in: RoundedRectangle(cornerRadius: 20))
             .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Weave.line))
 
+            if let attachmentInputError { Text(attachmentInputError).font(.caption).foregroundStyle(Weave.danger) }
             if let error = model.draftError {
                 InlineNotice(message: error, isError: true).accessibilityIdentifier("draftStorageError")
             }
@@ -301,7 +426,11 @@ struct ConversationView: View {
                 Menu("选择模型并接通原会话") {
                     ForEach(choices) { choice in
                         Button("\(choice.name) · \(choice.model)") {
-                            Task { await model.adopt(conversation, profileID: choice.id, accountEpoch: accountEpoch) }
+                            if model.adoptionNeedsConfirmation(conversation) {
+                                pendingAdoptionProfile = choice.id; confirmingLocalTurn = true
+                            } else {
+                                Task { await model.adopt(conversation, profileID: choice.id, accountEpoch: accountEpoch) }
+                            }
                         }
                     }
                 }
@@ -313,10 +442,29 @@ struct ConversationView: View {
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
+        .dropDestination(for: URL.self) { urls, _ in
+            guard model.canAddAttachments(conversation) else { return false }
+            Task { await model.addAttachments(urls, to: conversation, accountEpoch: accountEpoch) }; return true
+        }
         .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 12)
         .frame(maxWidth: 792).frame(maxWidth: .infinity)
         .background(Weave.surface)
     }
+
+    #if os(macOS)
+    private func pasteAttachments(accountEpoch: UUID) {
+        let pasteboard = NSPasteboard.general
+        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty {
+            Task { await model.addAttachments(urls, to: conversation, accountEpoch: accountEpoch) }
+        } else if let data = pasteboard.data(forType: .tiff) {
+            let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".tiff")
+            do {
+                try data.write(to: file)
+                Task { await model.addAttachments([file], to: conversation, accountEpoch: accountEpoch); try? FileManager.default.removeItem(at: file) }
+            } catch { attachmentInputError = "图片未添加，请重试。" }
+        }
+    }
+    #endif
 
     private var adoptionStatusCards: some View {
         let accountEpoch = model.accountEpoch
@@ -353,7 +501,9 @@ struct ConversationView: View {
 }
 
 private struct MessageView: View {
+    @ObservedObject var model: AppleAppModel
     let message: ChatMessage
+    let openAttachment: (ConversationAttachmentReference) -> Void
     var body: some View {
         VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 7) {
             if message.role == .user {
@@ -370,27 +520,17 @@ private struct MessageView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             ForEach(message.originalAttachments) { attachment in
-                HStack(alignment: .top, spacing: 10) {
-                    Image(systemName: attachment.isImage ? "photo" : "doc")
-                        .foregroundStyle(Weave.secondary)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(attachment.name).font(.callout).textSelection(.enabled)
-                            .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                        Text("\(attachment.isImage ? "图片原件" : "文件原件") · \(ByteCountFormatter.string(fromByteCount: Int64(attachment.size), countStyle: .file))")
-                            .font(.caption).foregroundStyle(Weave.secondary)
-                        if message.unpreviewedOriginalImageIds.contains(attachment.attachmentId) {
-                            Text("图片暂无预览").font(.caption).foregroundStyle(Weave.muted)
-                        }
-                        Text("原件下载暂不可用").font(.caption).foregroundStyle(Weave.muted)
-                    }
-                    Spacer(minLength: 0)
-                }
-                .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-                .background(Weave.surface, in: RoundedRectangle(cornerRadius: 12))
-                .accessibilityElement(children: .combine)
-                .accessibilityIdentifier("originalAttachment.\(message.id).\(attachment.attachmentId)")
+                ConversationAttachmentTile(model: model, reference: .original(attachment)) { openAttachment(.original(attachment)) }
             }
-            let remainingAttachments = max(0, message.attachmentCount - message.originalAttachments.count)
+            if message.originalAttachments.isEmpty,
+               let sessionID = message.id.split(separator: "|").dropFirst().first.map(String.init), message.id.hasPrefix("host|") {
+                ForEach(message.images, id: \.attachmentId) { image in
+                    ConversationAttachmentTile(model: model, reference: .sessionImage(image, sessionID)) {
+                        openAttachment(.sessionImage(image, sessionID))
+                    }
+                }
+            }
+            let remainingAttachments = max(0, message.attachmentCount - max(message.originalAttachments.count, message.images.count))
             if remainingAttachments > 0 {
                 Label("\(remainingAttachments) 个附件 · 此版本尚未展开", systemImage: "paperclip")
                     .font(.caption).foregroundStyle(Weave.muted)
@@ -406,6 +546,7 @@ private struct MessageView: View {
         }
         .font(.body).foregroundStyle(Weave.ink)
         .padding(.vertical, 2)
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message.\(message.id)")
     }
 }

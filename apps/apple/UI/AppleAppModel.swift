@@ -18,22 +18,28 @@ extension AppleAppModel {
         let key = Self.draftKey(for: conversation)
         guard session?.verification == .verified, !verificationPending, endpointStore != nil,
               selectedConversation?.id == conversation.id,
-              !authBusy, !preparingAdoptions.contains(key), adoptionProjections[key]?.canAdopt == true else { return false }
+              !authBusy, !preparingAdoptions.contains(key), adoptionProjections[key]?.canAdoptWithConfirmation == true else { return false }
         return !adoptionRows(for: conversation).contains { $0.record.state != .rejected }
     }
 
-    func adopt(_ conversation: ConversationSummary, profileID: String, accountEpoch: UUID) async {
+    func adoptionNeedsConfirmation(_ conversation: ConversationSummary) -> Bool {
+        adoptionProjections[Self.draftKey(for: conversation)]?.requiresLocalTurnConfirmation == true
+    }
+
+    func adopt(_ conversation: ConversationSummary, profileID: String, accountEpoch: UUID,
+               acknowledgeUncertainLocalTurn: Bool = false) async {
         guard accountEpoch == epoch, canAdopt(conversation), let session, let local = endpointStore,
               let conversationID = conversation.conversationId else { return }
         let key = Self.draftKey(for: conversation)
         guard adoptionChoices[key]?.contains(where: { $0.id == profileID && $0.configured }) == true,
               let projection = adoptionProjections[key] else { return }
+        guard !projection.requiresLocalTurnConfirmation || acknowledgeUncertainLocalTurn else { return }
         preparingAdoptions.insert(key)
         defer { if accountEpoch == epoch { preparingAdoptions.remove(key) } }
         do {
             let intent = try SharedAdoptionIntent(session: session, conversationID: conversationID,
                 requestID: "apple-adopt-" + UUID().uuidString.lowercased(), modelProfileID: profileID,
-                expectedSyncSeq: projection.syncThroughSeq)
+                expectedSyncSeq: projection.syncThroughSeq, acknowledgeUncertainLocalTurn: acknowledgeUncertainLocalTurn)
             let record = try await local.persist(intent)
             guard accountEpoch == epoch else { return }
             publishAdoption(record, note: "已保存明确选择的模型和原采用请求。", accountEpoch: accountEpoch)
@@ -96,10 +102,11 @@ extension AppleAppModel {
                 }
             } catch {
                 var saved = (try? await local.operation(for: record.intent)) ?? record
-                if case APIFailure.server(409, "CONVERSATION_SYNC_CHANGED") = error, saved.knownCommandId == nil {
+                if case APIFailure.server(409, let code) = error,
+                   ["CONVERSATION_SYNC_CHANGED", "LOCAL_TURN_UNCONFIRMED"].contains(code), saved.knownCommandId == nil {
                     if let updated = try? await local.markRejected(saved.intent, expectedRevision: saved.revision,
-                        errorCode: "CONVERSATION_SYNC_CHANGED") { saved = updated }
-                    self.publishAdoption(saved, note: "原上下文已更新，旧请求未提交。请重新核对并明确选择模型。",
+                        errorCode: code) { saved = updated }
+                    self.publishAdoption(saved, note: code == "LOCAL_TURN_UNCONFIRMED" ? "上一条本地消息是否已送达无法确定，请确认后继续。" : "原上下文已更新，请重新选择模型。",
                                          freshlyVerified: true, accountEpoch: accountEpoch)
                     if self.epoch == accountEpoch { await self.prepareContinuation(conversation, accountEpoch: accountEpoch) }
                     return
@@ -194,6 +201,8 @@ extension AppleAppModel {
         guard accountEpoch == epoch, let session, let selected = selectedConversation,
               selected.id == conversation.id, selected.conversationId == conversation.conversationId,
               selected.sessionId == conversation.sessionId else { return nil }
+        let candidate = knownBoundSessions[Self.draftKey(for: selected)] ?? selected.sessionId
+        guard let candidate, taskControlSessions.contains(candidate) else { return nil }
         if let bound = knownBoundSessions[Self.draftKey(for: selected)] { return bound }
         if let cachedHost = cachedConversationHosts[selected.id], cachedHost != session.hostId { return nil }
         return selected.sessionId
@@ -204,7 +213,8 @@ extension AppleAppModel {
         guard canEditDraft(for: conversation), commandStore != nil, session?.verification == .verified,
               selectedConversation?.id == conversation.id,
               !verificationPending, sendTargets[key] != nil, !preparingConversations.contains(key),
-              !(drafts[key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return false }
+              (!(drafts[key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(attachmentDrafts[key] ?? []).isEmpty),
+              !loadingAttachments.contains(key) else { return false }
         return !commandRows(for: conversation).contains { $0.record.state == .queued || $0.record.state == .uncertain }
     }
 
@@ -232,7 +242,7 @@ extension AppleAppModel {
                 let projection = try await client.sharedConversation(conversationID: conversationID)
                 guard accountEpoch == epoch else { return }
                 guard projection.status == .active, let binding = projection.binding else {
-                    if projection.status == .unbound, projection.canAdopt, projection.syncThroughSeq > 0 {
+                    if projection.status == .unbound, projection.canAdoptWithConfirmation, projection.syncThroughSeq > 0 {
                         let catalogue = try await client.hostModels()
                         guard accountEpoch == epoch else { return }
                         let choices = catalogue.filter { model in
@@ -263,6 +273,8 @@ extension AppleAppModel {
                 }
                 sessionID = id; profileID = profile
             }
+            taskControlSessions = try await client.taskControlSessionIDs()
+            guard accountEpoch == epoch else { return }
             knownBoundSessions[key] = sessionID
             adoptionChoices[key] = nil
             adoptionProjections[key] = nil
@@ -303,24 +315,121 @@ extension AppleAppModel {
         }
     }
 
+    func canAddAttachments(_ conversation: ConversationSummary) -> Bool {
+        let key = Self.draftKey(for: conversation)
+        return canEditDraft(for: conversation) && selectedConversation?.id == conversation.id &&
+            sendTargets[key] != nil && !preparingConversations.contains(key) && !loadingAttachments.contains(key) &&
+            (attachmentDrafts[key]?.count ?? 0) < 4
+    }
+    func addAttachments(_ files: [URL], to conversation: ConversationSummary, accountEpoch: UUID) async {
+        guard accountEpoch == epoch, canAddAttachments(conversation) else { return }
+        let key = Self.draftKey(for: conversation)
+        guard (attachmentDrafts[key]?.count ?? 0) + files.count <= 4 else {
+            continuationNotices[key] = "每条消息最多添加 4 个附件。"; return
+        }
+        loadingAttachments.insert(key)
+        defer { if accountEpoch == epoch { loadingAttachments.remove(key) } }
+        do {
+            let prepared = try await Task.detached { () throws -> [ConversationAttachmentDraft] in
+                var drafts: [ConversationAttachmentDraft] = []
+                do { for file in files { drafts.append(try .prepare(file: file)) }; return drafts }
+                catch { drafts.forEach { $0.removeTemporaryFiles() }; throw error }
+            }.value
+            guard accountEpoch == epoch else { prepared.forEach { $0.removeTemporaryFiles() }; return }
+            attachmentDrafts[key, default: []].append(contentsOf: prepared)
+            attachmentAttempts[key] = nil; continuationNotices[key] = nil
+        } catch {
+            guard accountEpoch == epoch else { return }
+            continuationNotices[key] = (error as? LocalizedError)?.errorDescription ?? "文件未添加，请重新选择。"
+        }
+    }
+    func removeAttachment(_ id: String, from conversation: ConversationSummary, accountEpoch: UUID) {
+        guard accountEpoch == epoch, !preparingConversations.contains(Self.draftKey(for: conversation)) else { return }
+        let key = Self.draftKey(for: conversation)
+        attachmentDrafts[key]?.first { $0.id == id }?.removeTemporaryFiles()
+        attachmentDrafts[key]?.removeAll { $0.id == id }; attachmentAttempts[key] = nil
+        if attachmentDrafts[key]?.isEmpty == true { attachmentMessageIDs[key] = nil; attachmentSessionIDs[key] = nil }
+    }
+
     func send(_ conversation: ConversationSummary, accountEpoch: UUID) async {
         guard accountEpoch == epoch, canSend(conversation), let accountSession = session,
               let local = commandStore, let target = sendTargets[Self.draftKey(for: conversation)] else { return }
         let key = Self.draftKey(for: conversation)
         let text = drafts[key] ?? ""
-        guard text.utf16.count <= 16_384 else {
-            continuationNotices[key] = "这条消息过长，请缩短后再发送。完整草稿仍保留在本机。"
+        guard text.utf16.count <= 8_192 else {
+            continuationNotices[key] = "消息太长，请缩短后发送。"
             return
         }
         preparingConversations.insert(key)
         defer { if accountEpoch == epoch { preparingConversations.remove(key) } }
         do {
             guard await flushDrafts(), accountEpoch == epoch else { return }
-            let payload = try SharedCommandPayload(requestId: "apple-" + UUID().uuidString.lowercased(), kind: .message,
-                targetDeviceId: accountSession.hostId, sessionId: target.sessionID, text: text)
+            var selectedFiles = attachmentDrafts[key] ?? []
+            if !selectedFiles.isEmpty {
+                if let previousSession = attachmentSessionIDs[key], previousSession != target.sessionID {
+                    selectedFiles = try selectedFiles.map { file in
+                        .init(original: try OriginalAttachment(attachmentID: "attachment-" + UUID().uuidString.lowercased(),
+                            name: file.original.name, contentType: file.original.contentType, size: file.original.size, sha256: file.original.sha256),
+                            file: file.file, display: file.display)
+                    }
+                    attachmentDrafts[key] = selectedFiles; attachmentAttempts[key] = nil; attachmentMessageIDs[key] = nil
+                }
+                attachmentSessionIDs[key] = target.sessionID
+                if attachmentMessageIDs[key] == nil { attachmentMessageIDs[key] = UUID().uuidString.lowercased() }
+            }
+            var payload: SharedCommandPayload
+            if selectedFiles.isEmpty {
+                payload = try SharedCommandPayload(requestId: "apple-" + UUID().uuidString.lowercased(), kind: .message,
+                    targetDeviceId: accountSession.hostId, sessionId: target.sessionID, text: text)
+            } else {
+                let attempt: ConversationAttachmentAttempt
+                if let prior = attachmentAttempts[key], prior.drafts == selectedFiles, prior.payload.text == text,
+                   prior.payload.sessionId == target.sessionID { attempt = prior }
+                else {
+                    var staged: [StagedConversationAttachment] = [], textBytes = 0, bytes = 0
+                    for file in selectedFiles {
+                        if let item = try file.stage(remainingTextBytes: AttachmentLimits.textBytes - textBytes,
+                                                     remainingBytes: AttachmentLimits.messageBytes - bytes) {
+                            staged.append(item); bytes += item.metadata.size
+                            if AttachmentLimits.textTypes.contains(item.metadata.contentType) { textBytes += item.metadata.size }
+                        }
+                    }
+                    let messageID = attachmentMessageIDs[key]!
+                    let body = try SharedCommandPayload(requestId: "apple-" + UUID().uuidString.lowercased(), kind: .message,
+                        targetDeviceId: accountSession.hostId, sessionId: target.sessionID, text: text,
+                        attachments: staged.isEmpty ? nil : staged.map(\.metadata),
+                        originalAttachments: selectedFiles.map(\.original), attachmentMessageId: messageID)
+                    _ = try body.encoded() // Byte check before any upload or command request.
+                    attempt = .init(requestID: body.requestId, messageID: messageID, drafts: selectedFiles, staged: staged, payload: body)
+                    attachmentAttempts[key] = attempt
+                }
+                continuationNotices[key] = "正在上传附件…"
+                // The existing desktop contract scopes originals to the host session ID.
+                for file in attempt.drafts {
+                    try await client.uploadOriginalAttachment(file.original, file: file.file,
+                        conversationID: target.sessionID, messageID: attempt.messageID)
+                    guard accountEpoch == epoch else { return }
+                    if let display = file.display, file.original.isImage {
+                        try await client.uploadAttachmentDisplay(file.original, file: display,
+                            conversationID: target.sessionID, messageID: attempt.messageID)
+                        guard accountEpoch == epoch else { return }
+                    }
+                }
+                for item in attempt.staged {
+                    try await client.uploadSessionAttachment(item.metadata, file: item.file,
+                        sessionID: target.sessionID, requestID: attempt.requestID)
+                    guard accountEpoch == epoch else { return }
+                }
+                payload = attempt.payload
+            }
             let intent = try SharedCommandIntent(session: accountSession, command: payload)
             let record = try await local.persist(intent)
             guard accountEpoch == epoch else { return }
+            if !selectedFiles.isEmpty {
+                attachmentDrafts[key] = nil; attachmentAttempts[key] = nil
+                attachmentMessageIDs[key] = nil; attachmentSessionIDs[key] = nil
+                selectedFiles.forEach { $0.removeTemporaryFiles() }
+            }
             publish(record, note: "已保存原请求，正在核对服务端。", accountEpoch: accountEpoch)
             await runCommand(record, allowSubmission: true, conversation: conversation, accountEpoch: accountEpoch)
         } catch {
@@ -612,6 +721,12 @@ final class AppleAppModel: ObservableObject {
     @Published private(set) var adoptionPresentations: [String: ConversationAdoptionPresentation] = [:]
     @Published private(set) var adoptingRequests = Set<String>()
     @Published private(set) var adoptionError: String?
+    @Published private(set) var attachmentDrafts: [String: [ConversationAttachmentDraft]] = [:]
+    @Published private(set) var loadingAttachments = Set<String>()
+    @Published private(set) var taskControlSessions = Set<String>()
+    private var attachmentAttempts: [String: ConversationAttachmentAttempt] = [:]
+    private var attachmentMessageIDs: [String: String] = [:]
+    private var attachmentSessionIDs: [String: String] = [:]
 
     let developmentRouteEnabled: Bool
 
@@ -695,7 +810,9 @@ final class AppleAppModel: ObservableObject {
         developmentRouteEnabled = routeEnabled
         launchConfigurationError = configurationError
         #if DEBUG
-        if uiTesting && args.contains("--task-progress-fixture") {
+        if uiTesting && args.contains("--apple-contract-fixture") {
+            client = AppleContractUIFixture.makeClient()
+        } else if uiTesting && args.contains("--task-progress-fixture") {
             client = TaskProgressUIFixture.makeClient()
         } else {
             client = PersonalClient(credentialStore: store, transport: transport)
@@ -782,6 +899,13 @@ final class AppleAppModel: ObservableObject {
             authError = launchConfigurationError
             return
         }
+        #if DEBUG
+        let fixtureArguments = ProcessInfo.processInfo.arguments
+        if fixtureArguments.contains("--ui-testing") && fixtureArguments.contains("--apple-contract-fixture") {
+            await authenticate(username: "tester", password: "synthetic-only", displayName: nil, register: false)
+            return
+        }
+        #endif
         do {
             let server = try ServerConfiguration(input: serverInput)
             session = try await client.restoreSession(server: server)
@@ -869,6 +993,8 @@ final class AppleAppModel: ObservableObject {
         guard actionEpoch == epoch else { return }
         do {
             let result = try await client.conversations()
+            guard actionEpoch == epoch else { return }
+            taskControlSessions = try await client.taskControlSessionIDs()
             guard actionEpoch == epoch else { return }
             conversations = result
             liveConversations = Dictionary(uniqueKeysWithValues: result.map { ($0.id, $0) })
@@ -1150,6 +1276,9 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func clearVisibleAccount() {
+        attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }
+        attachmentDrafts = [:]; attachmentAttempts = [:]; attachmentMessageIDs = [:]; attachmentSessionIDs = [:]
+        loadingAttachments = []; taskControlSessions = []
         retiringHistoryWorkers.values.forEach { $0.cancel() }
         retiringHistoryWorkers = [:]
         commandWorkers.values.forEach { $0.cancel() }
@@ -1227,6 +1356,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func friendly(_ error: Error) -> String {
+        if let input = error as? ClientInputFailure { return input.errorDescription ?? "请检查输入。" }
         guard let failure = error as? APIFailure else { return "操作未完成，请稍后重试。" }
         switch failure {
         case .server(_, "INVALID_REQUEST"):

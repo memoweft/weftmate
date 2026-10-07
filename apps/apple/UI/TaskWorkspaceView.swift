@@ -17,7 +17,10 @@ struct TaskWorkspaceView: View {
             expectedHostId: expectedHostId, expectedSessionId: expectedSessionId, expectedRequestId: expectedRequestId,
             accountEpoch: appModel.accountEpoch, stateDirectory: appModel.assistantStateDirectory,
             currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() },
-            currentSession: { [weak appModel] in appModel?.session }))
+            currentSession: { [weak appModel] in
+                guard let appModel, appModel.taskControlSessions.contains(expectedSessionId) else { return nil }
+                return appModel.session
+            }))
     }
 
     var body: some View {

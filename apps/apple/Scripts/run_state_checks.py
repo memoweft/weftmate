@@ -9,8 +9,9 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_MODEL = ["AppleAppModel", "ConversationSendState", "ConversationAdoptionState"]
+APP_MODEL = ["AppleAppModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState"]
 CHECKS = {
+    "AppleContractStateChecks": APP_MODEL,
     "AppleAdoptionStateChecks": APP_MODEL,
     "AppleDraftStateChecks": APP_MODEL,
     "AppleSendStateChecks": APP_MODEL,
@@ -44,6 +45,7 @@ def main():
         sources = [ROOT / "UI" / (model + ".swift") for model in models]
         if models == APP_MODEL:
             sources.append(ROOT / "Tests/TaskProgressUIFixture.swift")
+            sources.append(ROOT / "Tests/AppleContractUIFixture.swift")
         sources.append(ROOT / "Tests" / (name + ".swift"))
         compile_command = ["swiftc", "-swift-version", "6", "-D", "DEBUG", "-parse-as-library",
                            "-I", str(products / "Modules"), *map(str, sources),

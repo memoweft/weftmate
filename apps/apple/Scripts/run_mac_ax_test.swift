@@ -149,6 +149,72 @@ do {
         exit(0)
     }
     guard AXIsProcessTrusted() else { throw Failure(message: "Existing host Accessibility permission is unavailable; no grant was requested.") }
+    if arguments.contains("--a2-synthetic") {
+        let appURL = URL(fileURLWithPath: try argument("--debug-app")).standardizedFileURL
+        let artifactURL = URL(fileURLWithPath: try argument("--artifacts")).standardizedFileURL
+        guard let info = NSDictionary(contentsOf: appURL.appendingPathComponent("Contents/Info.plist")) as? [String: Any],
+              info["CFBundleIdentifier"] as? String == "com.weftmate.apple.weftmatemac",
+              let executable = info["CFBundleExecutable"] as? String,
+              FileManager.default.fileExists(atPath: appURL.appendingPathComponent("Contents/MacOS/" + executable + ".debug.dylib").path) else {
+            throw Failure(message: "A2 synthetic UI validation requires the Debug Mac app.")
+        }
+        try FileManager.default.createDirectory(at: artifactURL, withIntermediateDirectories: true)
+        reportURL = artifactURL.appendingPathComponent("mac-a2-ax-events.json")
+        try require(!FileManager.default.fileExists(atPath: reportURL!.path), "Choose a new evidence directory.")
+        let launchedAt = Date(), launcher = Process()
+        launcher.executableURL = URL(fileURLWithPath: "/usr/bin/open")
+        launcher.arguments = ["-n", appURL.path, "--args", "-NSTreatUnknownArgumentsAsOpen", "NO",
+            "--ui-testing", "--ui-testing-namespace", "a2-ax-" + UUID().uuidString,
+            "--apple-contract-fixture", "--server-url", "https://a2-ui.unit.example"]
+        try launcher.run(); launcher.waitUntilExit()
+        try require(launcher.terminationStatus == 0, "Synthetic app failed to launch.")
+        try wait(15) {
+            activeApp = NSRunningApplication.runningApplications(withBundleIdentifier: "com.weftmate.apple.weftmatemac")
+                .first { ($0.launchDate ?? .distantPast) >= launchedAt.addingTimeInterval(-1) }
+            return activeApp != nil
+        }
+        let process = activeApp!.processIdentifier
+        activeApp!.activate(options: [.activateAllWindows])
+        func nodes() -> [Node] { descendants(AXUIElementCreateApplication(process)) }
+        func named(_ name: String) throws -> Node {
+            var match: Node?
+            try wait(15) { match = nodes().first { text($0).contains(name) && [kAXButtonRole, kAXMenuItemRole].contains(string($0.element, kAXRoleAttribute)) }; return match != nil }
+            return match!
+        }
+        func capture(_ name: String) throws {
+            let items = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID) as? [[String: Any]] ?? []
+            guard let item = items.first(where: { ($0[kCGWindowOwnerPID as String] as? NSNumber)?.int32Value == process &&
+                ($0[kCGWindowLayer as String] as? NSNumber)?.intValue == 0 }), let number = item[kCGWindowNumber as String] as? NSNumber else {
+                throw Failure(message: "Synthetic window unavailable for capture.")
+            }
+            let capture = Process(); capture.executableURL = URL(fileURLWithPath: "/usr/sbin/screencapture")
+            capture.arguments = ["-x", "-l", number.stringValue, artifactURL.appendingPathComponent(name + ".png").path]
+            try capture.run(); capture.waitUntilExit()
+            try require(capture.terminationStatus == 0, "App capture unavailable; no grant requested.")
+        }
+        try press(try find(process, "conversationRow.session-11111111-1111-4111-8111-111111111111"))
+        _ = try find(process, "conversationDraft")
+        try require(!nodes().contains { identifier($0) == "conversationTasksButton" }, "Shared-chat incorrectly exposes tasks.")
+        try press(try find(process, "attachmentPreview.attachment-33333333-3333-4333-8333-333333333333"))
+        _ = try named("保存文件")
+        try capture("a2-history-image-preview")
+        try press(try named("关闭预览"))
+        try press(try find(process, "addAttachmentButton"))
+        try press(try named("添加测试文件"))
+        try wait(15) { nodes().contains { text($0).contains("A2-测试文件.txt") } }
+        try capture("a2-attachment-only-composer")
+        try press(try find(process, "sendButton"))
+        try wait(15) { nodes().contains { text($0).contains("已收到测试文件。") } }
+        try capture("a2-sent-file-in-history")
+        try press(try named("预览 A2-测试文件.txt"))
+        _ = try named("保存文件")
+        try capture("a2-history-file-preview")
+        try press(try named("关闭预览"))
+        try record("a2-synthetic-passed", ["transport": "in-memory fixture", "realHostRequests": 0, "dailyData": false,
+            "checks": ["shared task entry hidden", "image preview", "plus attachment", "attachment-only send", "file preview", "return to composer"]])
+        activeApp?.terminate(); activeApp = nil
+        exit(0)
+    }
     let appURL = URL(fileURLWithPath: try argument("--debug-app")).standardizedFileURL
     let credentialURL = URL(fileURLWithPath: try argument("--credentials")).standardizedFileURL.resolvingSymlinksInPath()
     let artifactURL = URL(fileURLWithPath: try argument("--artifacts")).standardizedFileURL.resolvingSymlinksInPath()
