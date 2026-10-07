@@ -837,11 +837,18 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
     fun recentCommands(host: HostIdentity): JSONObject = http.request(
         "${host.origin}/personal/v1/commands?limit=50", "GET", headers = mapOf("Cookie" to host.cookie)).body
 
-    fun remoteHistory(host: HostIdentity, sessionId: String, after: Long): JSONObject {
+    fun remoteHistory(host: HostIdentity, sessionId: String, after: Long? = null, before: Long? = null): JSONObject {
         require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")))
-        require(after >= -1)
-        return http.request("${host.origin}/personal/v1/sessions/$sessionId/events?afterSeq=$after&limit=100",
+        require((after == null || after >= -1) && (before == null || before >= 0) && !(after != null && before != null))
+        val cursor = after?.let { "&afterSeq=$it" } ?: before?.let { "&beforeSeq=$it" } ?: ""
+        return http.request("${host.origin}/personal/v1/sessions/$sessionId/events?limit=100$cursor",
             "GET", headers = mapOf("Cookie" to host.cookie)).body
+    }
+
+    fun remoteEventDetail(host: HostIdentity, sessionId: String, seq: Long): JSONObject {
+        require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) && seq >= 0)
+        return http.request("${host.origin}/personal/v1/sessions/$sessionId/events/$seq/detail", "GET",
+            headers = mapOf("Cookie" to host.cookie)).body
     }
 
     fun commandByRequest(host: HostIdentity, requestId: String): JSONObject {

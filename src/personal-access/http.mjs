@@ -96,7 +96,7 @@ export function createHttpHandler(context) {
         throw failure('ORIGIN_NOT_ALLOWED', 403);
       }
       const staticPaths = new Set(['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
-        '/personal/v1/ui/app.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
+        '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
         '/personal/v1/ui/file-sha256.js', '/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js',
         '/personal/v1/ui/vendor/noble-hashes-2.3.0/_md.js',
         '/personal/v1/ui/vendor/noble-hashes-2.3.0/_u64.js',
@@ -1032,38 +1032,43 @@ export function createHttpHandler(context) {
         return context.json(response, 200, await context.answerToolApproval(request, ownerId, deviceId, sessionId,
           approvalMatch[2], await context.readJson(request)));
       }
+      const detailMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events\/(\d+)\/detail$/.exec(pathname);
+      if (request.method === 'GET' && detailMatch) {
+        const sessionId = id(detailMatch[1]), seq = Number(detailMatch[2]);
+        if (url.search || !Number.isSafeInteger(seq)) throw failure('INVALID_REQUEST');
+        if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
+        if (typeof context.backend.readEventDetail !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
+        return context.json(response, 200, await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId })));
+      }
       const eventMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events$/.exec(pathname);
       if (request.method === 'GET' && eventMatch) {
         const sessionId = id(eventMatch[1]);
         if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
-        if ([...url.searchParams.keys()].some((key) => !['afterSeq', 'limit'].includes(key)) ||
-            url.searchParams.getAll('afterSeq').length > 1 || url.searchParams.getAll('limit').length > 1) {
-          throw failure('INVALID_REQUEST');
-        }
-        const afterText = url.searchParams.get('afterSeq') ?? '-1';
+        if ([...url.searchParams.keys()].some(key => !['afterSeq', 'beforeSeq', 'limit'].includes(key)) ||
+            ['afterSeq', 'beforeSeq', 'limit'].some(key => url.searchParams.getAll(key).length > 1) ||
+            url.searchParams.has('afterSeq') && url.searchParams.has('beforeSeq')) throw failure('INVALID_REQUEST');
+        const afterText = url.searchParams.get('afterSeq'), beforeText = url.searchParams.get('beforeSeq');
         const limitText = url.searchParams.get('limit') ?? '100';
-        if (!/^-?\d+$/.test(afterText) || !/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
-        const afterSeq = Number(afterText), limit = Number(limitText);
-        if (!Number.isSafeInteger(afterSeq) || afterSeq < -1 || !Number.isSafeInteger(limit) || limit < 1 || limit > MAX_PAGE) {
-          throw failure('INVALID_REQUEST');
-        }
-        let page;
-        try { page = await context.callBackend(() => context.backend.readEvents({ sessionId, afterSeq, limit, ownerId })); }
-        catch (error) {
-          if (error?.code === 'HISTORY_WINDOW_LIMIT') throw failure('HISTORY_WINDOW_LIMIT', 422);
-          throw error;
-        }
+        if (afterText !== null && !/^-?\d+$/.test(afterText) || beforeText !== null && !/^\d+$/.test(beforeText) ||
+            !/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
+        const afterSeq = afterText === null ? undefined : Number(afterText),
+          beforeSeq = beforeText === null ? undefined : Number(beforeText), limit = Number(limitText);
+        if (afterSeq !== undefined && (!Number.isSafeInteger(afterSeq) || afterSeq < -1) ||
+            beforeSeq !== undefined && (!Number.isSafeInteger(beforeSeq) || beforeSeq < 0) ||
+            !Number.isSafeInteger(limit) || limit < 1 || limit > MAX_PAGE) throw failure('INVALID_REQUEST');
+        const page = await context.callBackend(() => context.backend.readEvents({ sessionId,
+          ...(afterSeq === undefined ? {} : { afterSeq }), ...(beforeSeq === undefined ? {} : { beforeSeq }), limit, ownerId }));
         if (!plainObject(page) || !Array.isArray(page.events) || page.events.length > limit ||
             typeof page.hasMore !== 'boolean' || !Number.isSafeInteger(page.nextSeq)) {
           throw failure('BACKEND_UNAVAILABLE', 503);
         }
-        let last = afterSeq;
+        let last = afterSeq ?? -1;
         for (const event of page.events) {
           if (!plainObject(event) || !Number.isSafeInteger(event.seq) || event.seq <= last ||
               typeof event.type !== 'string' || event.type.length > 128) throw failure('BACKEND_UNAVAILABLE', 503);
           last = event.seq;
         }
-        if (page.nextSeq < last || page.nextSeq < afterSeq ||
+        if (page.nextSeq < last || page.nextSeq < (afterSeq ?? -1) ||
             (page.hasMore && page.nextSeq === afterSeq)) throw failure('BACKEND_UNAVAILABLE', 503);
         for (const event of page.events) {
           if (!Object.hasOwn(event, 'data') || event.seq > page.nextSeq ||
@@ -1084,9 +1089,22 @@ export function createHttpHandler(context) {
             data,
           }); }),
           nextSeq: page.nextSeq, hasMore: page.hasMore,
+          ...(Object.hasOwn(page, 'nextBeforeSeq') ? { nextBeforeSeq: page.nextBeforeSeq, hasOlder: page.hasOlder, latestSeq: page.latestSeq } : {}),
         };
-        if (Buffer.byteLength(JSON.stringify(projection), 'utf8') > 1024 * 1024) {
-          throw failure('BACKEND_UNAVAILABLE', 503);
+        // Attachment-backed message restoration can grow the adapter's text.
+        // Keep the same directional page semantics after the public projection.
+        while (projection.events.length > 1 && Buffer.byteLength(JSON.stringify(projection), 'utf8') > 960_000) {
+          if (afterSeq !== undefined) {
+            projection.events.pop(); projection.hasMore = true;
+            projection.nextSeq = projection.events.at(-1).seq;
+          } else {
+            projection.events.shift(); projection.hasOlder = true;
+            projection.nextBeforeSeq = projection.events[0].seq;
+          }
+        }
+        if (Buffer.byteLength(JSON.stringify(projection), 'utf8') > 960_000) {
+          const event = projection.events[0];
+          if (event) event.data = { text: typeof event.data?.text === 'string' ? event.data.text.slice(0, 4000) : '', truncated: true };
         }
         return context.json(response, 200, projection);
       }

@@ -8,6 +8,7 @@
   <title>WeftMate</title>
   <link rel="stylesheet" href="styles.css">
   <script defer src="vendor.js"></script>
+  <script defer src="timeline.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -15,7 +16,7 @@
     <header class="topbar">
       <button id="menu-button" class="icon-button" aria-label="打开导航"><span class="icon icon-menu"></span></button>
       <div class="brand"><strong>WeftMate</strong><small id="header-subtitle">同一个助手，接着聊。</small></div>
-      <button id="things-button" class="header-action">事情</button>
+
     </header>
     <div id="drawer-scrim" class="scrim" hidden></div>
     <nav id="drawer" class="drawer" aria-label="主导航">
@@ -26,7 +27,7 @@
       <div id="conversation-list" class="conversation-list" aria-label="最近对话" aria-live="polite"></div>
       <div class="drawer-section-label drawer-function-label">功能</div>
       <div class="drawer-links">
-        <button data-page="chat">对话</button><button data-page="things">事情</button><button data-page="memory">记忆</button>
+        <button data-page="chat">对话</button><button data-page="memory">记忆</button>
         <button data-page="capabilities">能力与扩展</button><button data-page="workspaces">项目与成果</button><button data-page="devices">设备</button>
         <button data-page="notifications">通知</button><button data-page="settings">设置</button>
       </div>

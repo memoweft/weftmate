@@ -1,11 +1,11 @@
 # 客户端契约：`/personal/v1`
 
-> M0-5 基线：`main` 提交 `28b5d36`，按当前服务端行为整理；以后拆文件不改变这里的路径与语义。本次只写文档，不修改接口或 Swift。实现核对来源：`src/personal-access/`、`src/personal-access-backend.mjs`、`src/personal-memory/http.mjs`、`src/personal-sync/`；客户端来源见下表。
-> M0-3 分页、M1-0a 时间线均单独标成建议，不能当作已实现功能。产品决定见 [PLAN.md](PLAN.md) D5–D8、M0-5、M1-0；呈现规则见 [UI_SPEC.md](UI_SPEC.md)。
+> M0-5 基线：`main` 提交 `28b5d36`，按当前服务端行为整理；以后拆文件不改变这里的路径与语义。M0-5 首次建立文档基线；M0-3 / M1-0a 更新历史与时间线实现，不修改 Swift。实现核对来源：`src/personal-access/`、`src/personal-access-backend.mjs`、`src/personal-memory/http.mjs`、`src/personal-sync/`；客户端来源见下表。
+> M0-3 / M1-0a 已实现：历史尾页、向前翻页、正向增量与对话时间线；Apple 保留旧正向读取，待 A1 / M1-0d 接入。产品决定见 [PLAN.md](PLAN.md) D5–D8、M0-5、M1-0；呈现规则见 [UI_SPEC.md](UI_SPEC.md)。
 
 ## 1. 范围与通用约定
 
-本文覆盖 **81 个业务方法/路径组合**（第 3 节 77 项 + 第 6 节健康 4 项），另列 **11 个桌面 UI 静态路径**。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
+本文覆盖 **82 个业务方法/路径组合**（第 3 节 78 项 + 第 6 节健康 4 项），另列 **12 个桌面 UI 静态路径**。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
 
 | 客户端标记 | 本次核对来源与含义 |
 |---|---|
@@ -109,24 +109,24 @@
 
 项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表当前按会话 ID 遍历，客户端自行呈现排序。创建走 `/commands`，没有 POST `/sessions`。
 
-### 3.4 历史与事件流（1）
+### 3.4 历史与事件流（2）
 
-| 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
+| 方法与路径 | 请求参数 | 响应 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/sessions/{sessionId}/events` | `afterSeq` 默认 `-1`、最小 `-1`；`limit` 默认100、1–200；仅这两个参数 | 200 `{"events":[{"seq":12,"type":"assistant.message","at":"…","data":{"text":"已完成"}}],"nextSeq":15,"hasMore":false}` | 404 `SESSION_UNAVAILABLE`；422 `HISTORY_WINDOW_LIMIT`；503 `BACKEND_UNAVAILABLE` | 桌、手、安、苹 |
+| GET `/sessions/{sessionId}/events` | 无游标：最近 N 条；`beforeSeq` 非负，排除边界向前翻页；`afterSeq` ≥ -1，排除边界正向增量。两者互斥。`limit` 默认 100，1–200 | 200 `{events,nextSeq,hasMore,nextBeforeSeq,hasOlder,latestSeq}`；事件按 seq 升序 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE` | 桌、手、安、苹（旧正向） |
+| GET `/sessions/{sessionId}/events/{seq}/detail` | 非负安全整数 seq；无查询 | 200 `{"seq":42,"text":"原始参数与工具输出的 JSON 文本","truncated":true}`；`truncated` 仅截断时出现 | 400 `INVALID_REQUEST`；404 `SESSION_UNAVAILABLE`；503 `BACKEND_UNAVAILABLE`（无该工具详情时） | 桌、手、安 |
 
-这是 **JSON 正向分页/轮询**，不是 SSE。每页 `seq` 严格递增，排除 `afterSeq` 本身；取下一页必须用服务端 `nextSeq`（可越过未公开的内部事件），不能用条目数量或自行 `+1`。空页仍可能推进水位，`hasMore` 表示同一读取范围尚有后续，不表示任务仍在运行。当前 DSH 后端每次由尾部倒扫有限窗口，因此从 `-1` 打开长会话会失败。
+这是 JSON（结构化数据）分页 / 轮询，不是 SSE（服务端推送事件）。每页事件 seq 严格递增，但不保证连续；消息、执行与交互共用 DSH 原生 seq。`limit` 按公开时间线条目计数，过滤的文字 chunk（片段）、推理和注入上下文不占条目数。
 
-| 当前公开类型 | `data` 关键字段 |
-|---|---|
-| `user.message` | `text`；可有 `truncated,messageHash,receiptId,images,originalAttachments,attachmentMessageId,unpreviewedOriginalImageIds` |
-| `assistant.message` | `text`；可有 `truncated,images` |
-| `turn.started` | 可有 `turn` |
-| `turn.ended` | `reason:"completed / aborted / error / blocked / unknown"`，可有 `turn`；输出耗尽 `reason:"error",endReasonKind:"max-tokens"` |
+- 首屏 `?limit=100` 只投影最新条目，不要求扫到会话开头。`nextSeq` 是稳定投影水位，`latestSeq` 是此次读取的原生日志尾部水位。通常相同；当最后一个 step/end 尚未由下一次 step/start 或 turn/end 确认时，nextSeq 会暂时停在它之前，避免漏掉随后确认的 task.ended。`hasMore:false`；`hasOlder` 表示是否还有更早公开条目，`nextBeforeSeq` 是下次排除的向前边界。
+- 上翻 `?beforeSeq=<nextBeforeSeq>&limit=100` 返回更早条目，仍按 seq 升序。用新的 `nextBeforeSeq` 继续上翻；`hasOlder:false` 表示已到开头。**上翻响应不能覆盖客户端的正向增量游标**：它的 `nextSeq/latestSeq` 可能包含尚未增量读到的新事件。
+- 增量 `?afterSeq=<nextSeq>&limit=100` 正向读取，`hasMore` 表示尚有后续条目。继续读取必须使用返回的 `nextSeq`，它可跨过过滤的内部事件；空页也可推进水位。此方向的 `nextBeforeSeq` 只是本页最早条目，`hasOlder:false` 不用于判断完整历史。
+- **旧 `afterSeq=-1` 兼容**：继续从会话开头正向分页，绝不改成尾页。Apple 当前客户端可以照常读取文字和回合状态，新事件及字段均为追加。
+- 空日志 `events:[],nextSeq:-1,latestSeq:-1,nextBeforeSeq:null,hasMore:false,hasOlder:false`。`beforeSeq=0` 可返回空页。客户端按 `(sessionId,seq)` 去重，开始/完成按 stepId 更新，禁止自行给 seq 加一。
+- 消息最多显示 4,000 个 UTF-16（字符串编码）单元；工具投影不带原始参数 / 输出。单条大记录截断并标记 `truncated`，整页按字节分页；长会话不再返回 `HISTORY_WINDOW_LIMIT`。用户原件消息仍可由原有附件登记恢复显示文本。
+- 详情只读取工具调用、工具结果和审批原始记录；推理、注入上下文不开放。返回最多 64,000 个 UTF-16 单元，超出标记截断。详情与历史使用同一账号 / 会话读取权限，不公开本机路径形式的下载引用。
 
-`images` 元数据为 `attachmentId,contentType,size,width,height`（可有 `name`），持久图片 ID 是 `sha256:<64 hex>`；下载见 3.5。当前文字投影最多4,000个 UTF-16 单元并可能脱敏；`truncated` 仅在截断时出现。工具记录、增量文字 chunk 尚不从此接口返回；实时文字/执行进度不能凭内部网关事件冒充本契约。
-
-**M0-3 建议，未实现**：同一路径无游标时取最新 N 条；`beforeSeq=<当前最早 seq>` 取更早条目，排除边界；`afterSeq` 保留作向前增量。三种读取都按 `seq` 升序返回，游标按时间线条目计数，不按内部 chunk 计数。建议响应增添 `nextBeforeSeq,hasOlder,latestSeq`，继续保留 `nextSeq,hasMore` 的增量水位语义；方向与空页游标必须由 Windows 实现时确认。旧 `afterSeq=-1` 请求需保留兼容语义，不能悄悄变成尾页。Apple A1 在 M0-3 合入后接入。
+保留既有类型：`user.message`（`text,receiptId,images,originalAttachments,attachmentMessageId` 等）、`assistant.message`（`text,images`）、`turn.started`（`turn`）、`turn.ended`（`reason`，可有 `turn,endReasonKind`）。输出预算耗尽仍为 `reason:"error",endReasonKind:"max-tokens"`。执行事件见第 4 节。历史图片下载仍见 3.5。
 
 ### 3.5 发送消息与附件（5）
 
@@ -290,51 +290,44 @@
 
 macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64/x86_64",channel:"trial",notes,fileName,downloadUrl`。不要把native manifest与Android mobile UI manifest混用。Apple独立 `PublicUpdates.swift` 使用公开分发入口，本次所核对 `PersonalClient.swift` 没有调用上述认证下载接口。
 
-### 3.14 桌面 UI 静态资源（11个 GET 路径，不计入81业务接口）
+### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入82业务接口）
 
 | GET路径（都无查询） | 响应 / 错误 | 使用端 |
 |---|---|---|
 | `/ui`、`/ui/`、`/ui/index.html` | HTML；未装UI handler为404 `NOT_FOUND` | 桌（宿主页） |
-| `/ui/app.js`、`/ui/styles.css`、`/ui/favicon.svg`、`/ui/file-sha256.js` | 对应JS/CSS/SVG资源；不存在404 | 桌（宿主页/导入） |
+| `/ui/app.js`、`/ui/timeline.js`、`/ui/styles.css`、`/ui/favicon.svg`、`/ui/file-sha256.js` | 对应JS/CSS/SVG资源；不存在404 | 桌（宿主页/导入） |
 | `/ui/vendor/noble-hashes-2.3.0/sha2.js`、`/ui/vendor/noble-hashes-2.3.0/_md.js`、`/ui/vendor/noble-hashes-2.3.0/_u64.js`、`/ui/vendor/noble-hashes-2.3.0/utils.js` | JS资源；不存在404 | 桌（哈希模块导入） |
 
 这些路由在认证前提供宿主登录UI，仍受Host/Origin校验。Android bridge中的本机模型、通知、剪贴板、语音等操作不是同名服务端API；`mods/notifications/capabilities` 等字符串出现在bridge允许路径中，也不能证明服务端实现了这些路由。
 
-## 4. 草案：对话时间线事件
+## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
-> **草案，待 Windows 侧在 M1-0a 实现时确认。** 当前 `/sessions/{id}/events` 不返回以下十种事件。基线没有 `vendor/dsh-runtime`，本次参考 `src/runtime/dsh-adapter/` 的事件映射；DSH web前端组件复用仍需Windows侧评估。本节不新增真实接口/权限，不替代DSH的执行、调度或审批。
+### 4.1 事件结构与原生来源
 
-### 4.1 建议事件结构与来源
+沿用 `{seq,type,at?,data}`。所有 ID 在会话 / 账号范围解释。步骤的 `taskId` 是稳定的原生回合键 `turn-<turn>`，不是 `/tasks/{id}` 的根消息命令 ID；两者不要混用。`stepId/callId` 是 DSH callId（工具调用标识），`groupHint` 是工具名称。`detailRef:{seq}` 指向 3.4 的按需详情接口。正文描述为 `summary`，例如「读取 3 个文件」「运行命令 npm test」「打开网页 example.com」。同一条目的字段只追加，不修改原生 seq。
 
-沿用公共包络 `{seq,type,at,data}`，建议 `data` 共用 `sessionId,taskId`，工具生命周期用稳定 `stepId`（建议映射DSH callId），`sourceReceiptId` 可选。`seq` 为公开时间线有序水位，不承诺连续；客户端用 `(sessionId,seq)` 去重，同一步的开始/完成用 `stepId` 关联。下面各行都是建议 `data` JSON；完整事件为 `{"seq":42,"type":"step.started","at":"2026-10-07T00:00:00.000Z","data":<行内对象>}`。所有ID引用按账号范围解释。
-
-| 建议 `type` | 建议 `data` JSON | 现有DSH/宿主来源与待确认点 |
+| type | data 关键字段 | 来源 / 语义 |
 |---|---|---|
-| `step.started` | `{"sessionId":"session-…","taskId":"cmd-…","stepId":"call-…","turn":1,"toolName":"shell","description":"列出 Downloads 目录","deviceId":"host-…","detailsRef":{"stepId":"call-…"}}` | `tool/call` 已映射内部 `tool.started`；当前映射只有callId/tool，需生成可读描述 |
-| `step.completed` | `{"sessionId":"session-…","taskId":"cmd-…","stepId":"call-…","status":"completed","summary":"列出 Downloads 目录 · 213 个文件","durationMs":1200,"detailsRef":{"stepId":"call-…"}}` | `tool/result` → 内部 `tool.completed/tool.failed`；建议status支持 `completed/failed/cancelled/uncertain`，不要把后台job启动等同完成 |
-| `approval.requested` | `{"sessionId":"session-…","taskId":"cmd-…","approvalId":"<uuid>","stepId":"call-…","description":"删除重复文件","scopeSummary":"Downloads 内的 3 个文件","reversible":false,"decisions":["allowed-once","rejected"]}` | DSH `approval/requested` → 内部 `tool.approval-requested`；影响范围/可撤销性需事实支持，无信息可省略reversible |
-| `approval.resolved` | `{"sessionId":"session-…","taskId":"cmd-…","approvalId":"<uuid>","outcome":"allowed-once","decisionRequestId":"approve-1"}` | `approval/resolved` → 内部 `tool.approval-resolved`；只有最终消费/失效事实才记resolved，保留取消/不可用结果 |
-| `question.asked` | `{"sessionId":"session-…","taskId":"cmd-…","questionRpcId":"<uuid>","questions":[{"id":"destination","question":"保存到哪里？","options":[{"label":"Downloads"}]}]}` | DSH原生user-question carrier与个人入口待答记录；没有现成同名公共事件 |
-| `question.answered` | `{"sessionId":"session-…","taskId":"cmd-…","questionRpcId":"<uuid>","answerRequestId":"answer-1","answer":{"answers":[{"id":"destination","selected":["Downloads"]}]},"answerAcceptedAt":"…"}` | 对应个人入口答案消费确认；提交登记与消费不能混为一谈，失效/未确认终态的载体需确认 |
-| `artifact.created` | `{"sessionId":"session-…","taskId":"cmd-…","artifactId":"artifact-…","fileName":"整理报告.md","contentType":"text/markdown","size":128,"sha256":"<64 hex>"}` | 宿主已校验的成果登记；现有下载路径可由artifactId构造，不公开本机绝对路径 |
-| `task.queued` | `{"sessionId":"session-…","taskId":"cmd-…","requestId":"send-2","description":"整理另一份资料","position":1,"canCancel":true}` | 根消息命令登记+DSH队列/调度；取消排队操作契约由M1-0b确定，不能拿session.cancel代替 |
-| `task.started` | `{"sessionId":"session-…","taskId":"cmd-…","sourceReceiptId":"rpc-…","description":"整理资料","deviceId":"host-…"}` | DSH真正开始执行的turn/receipt事实，非HTTP202；一个任务可跨补充/续做turn |
-| `task.ended` | `{"sessionId":"session-…","taskId":"cmd-…","status":"completed","summary":"已生成整理报告","stepCount":5,"durationMs":4500}` | 综合DSH turn终态和宿主后台job；建议status `completed/failed/cancelled/blocked/uncertain`，需确认多turn任务结束规则；失败可有errorCode |
+| `step.started` | `taskId,stepId,callId,toolName,summary,groupHint,detailRef,state:"running",turn?` | 原生 `tool/call`，包含本次调用请求；审批前也可出现 |
+| `step.completed` | 同上，`state:"completed/failed"` | 原生 `tool/result`；按 callId 补齐工具名和描述。工具结束不等于用户目标已验证 |
+| `approval.requested` | `taskId,approvalId,stepId?,toolName?,summary,detailRef` | 原生 `approval/asked`。可读 reason（理由）保留影响范围说明；可操作状态与回执从 3.7 审批接口读取 |
+| `approval.resolved` | `taskId,approvalId,summary,outcome,detailRef` | 原生 `approval/decided`。以 approvalId 更新原请求卡，保留开始位置 |
+| `question.asked` | `taskId,stepId,callId,toolName,summary,questions,turn,detailRef,state` | 原生 `ask_user_question` 工具调用；具体提问操作使用 3.7 的原生问题批次 UUID。问题列表追加 `observedSeq`，用于定位该 turn 内不晚于水位的最后一个提问调用 |
+| `question.answered` | `taskId,stepId,callId,summary,turn,detailRef,state` | `ask_user_question` 的原生工具结果；答案原文从详情取。提交答案登记仍以问题接口的 answered / answerAcceptedAt / resolved 区分，不能把登记当成执行端消费 |
+| `artifact.created` | `taskId,artifactId,fileName,contentType,size,detailSeq,completedStep` | 原生 tool/result 含成果引用时，该 seq 投影为成果条目；completedStep 带同一步的完成字段，客户端同时结束该 stepId。此 taskId 可为根命令 ID，completedStep.taskId 仍是原生回合键。预览、下载和验证元数据仍使用 3.8 成果接口 |
+| `task.started` | `taskId,turn` | 原生 step/start 的 step=1；保留独立 seq 的既有 turn.started |
+| `task.ended` | `taskId,turn,reason,nativeTurnEndSeq,endReasonKind?` | 原生最终 step/end，后续 turn/end 确认其结束原因；中间模型 step 不结束任务。保留独立 seq 的既有 turn.ended；未真正进入 step 的阻断回合仍只返回 turn.ended |
+| `task.queued` | `taskId`，可附请求信息 | 保留该公开类型的投影；当前固定 DSH 不产生此事件，本包不新增队列生产者、排队取消或插话调度；M1-0b / D9 另包确认原生来源 |
 
-`detailsRef` 只是不含原始数据的稳定引用草案；当前没有 `/steps/{id}` 详情接口，`executionSteps` 也没有命令/输出原文。M1-0a须确认详情是随页按需嵌入还是增加账号范围详情读取接口，并同时更新本文件。折叠摘要不需要读取原始命令/输出；展开需可复制原文并处理大输出截断。用户可见工具结果与模型内部推理分别处理，不能借时间线暴露reasoning chunk。
+既有日志不会被回写，也不向固定 DSH 追加私有事件类型：生命周期来自原生 step 标记，成果来自工具结果，所以旧日志同样可投影。固定 DSH 的持久事件目录不支持注册外部类型；读取必须保持原生恢复兼容。原有成果与控制信息仍可通过根任务快照补充到原对话。DSH 自带工具界面按 callId 关联调用与结果、用可折叠原始详情展示；本实现复用这一呈现方式，独立 Web 界面保持自身组件和样式。
 
-### 4.2 历史、事件流与连续步骤分组
+### 4.2 分组、分页与各端呈现
 
-| 场景 | 建议规则 |
-|---|---|
-| 历史分页 | 与 `user.message / assistant.message / turn.started / turn.ended` 处于同一seq序列，M0-3尾页/向前翻页都保留上述事件。审批/提问/成果记录持久化，重启/换端可还原；分页不因UI把10步折成1组就只计1条 |
-| 增量事件流 | 当前沿用 `GET …/events?afterSeq=…` 轮询，返回与历史完全相同的稳定事件。若以后选SSE，需在契约中确认路径/游标与重连规则；不要直接公开内部mux帧。流式文字chunk也需另行确认与最终message的合并语义 |
-| 跨页/重连 | 同一seq去重；开始/完成以stepId合并，完成先到时可用summary显示已完成步骤，随后加载开始事件补全。不能只看本页判断任务结束；可用Task快照补充当前状态 |
-| 一组连续step | 同task相邻的工具步骤合成执行块，started/completed只算同一步一次；用稳定stepId集合计N步。跨页继续合并相同块；审批、提问、成果、用户/助手消息、任务切换形成边界，插入卡片保持真实时间顺序，不把两侧步骤跨卡合并 |
-| 多步骤并行 | 按seq呈现开始顺序，用stepId更新对应行；迟到的完成事件不会另建一行或重排历史。taskId不同绝不并组；原始call关系保留给展开详情 |
-| 桌面 | 活跃执行块展开，描述实时追加；该块全部终态且无待处理交互后收起成「执行了 N 步 · 用时 X」。原始命令/输出再点开；执行设备在摘要中显示 |
-| 手机 / Watch | 手机步骤默认收起，同一审批/提问卡足够大可就地操作；成果全屏打开后回到原位置。Watch按PLAN M1-0d只展示简进度、审批与完成/需处理提醒，不要求全量原始详情 |
-| 排队 / 交互 | `task.queued`显示「排队中」和取消，`task.started`替换其状态；处理卡片收成结果一行。`answered`登记期间应显示等待消费，不伪称已允许/已继续。输入区停止针对当前任务；「插话/排队」区分仍是UI_SPEC待定项 |
+连续相邻步骤在同一 taskId 下合成执行块，开始 / 完成只计同一 stepId 一次；artifact.created.completedStep 同样合并到该步，成果卡仍形成分组边界。迟到完成事件更新原行，不另建一行、不重排开始顺序；完成先到时先显示可读完成描述，随后上翻补齐开始。审批、提问、成果、用户 / 助手消息和任务切换形成边界；不同任务绝不合并。分页按原始时间线条目计数，不因折叠改变游标。
+
+桌面运行块默认展开，手机默认收起。完成或该任务结束后自动收为「执行了 N 步 · 用时 X」；可以再次展开。步骤详情再次点开才请求原始参数 / 输出，并提供复制。审批 / 提问卡使用原有账号、来源、回执检查和操作接口，已处理记录保留在原位置；不新增「总是允许此类」权限。
+
+成果通过桌面右侧面板 / 手机全屏页打开，关闭回到原对话，可下载 / 保存。来源、成果及原有任务停止控制位于对话内；独立任务页、任务详情弹窗和侧栏入口已删除，运行会话显示状态点。输入区停止保持既有语义；排队和插话不属于本包。
 
 ## 5. 客户端差异（Apple逐项对照）
 
@@ -348,7 +341,7 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | GET `/auth/me`；GET `/status` | `account.ownerId,device.id,csrfToken` 与 `ownerId,hostId` 一致；身份不匹配或401清凭据，5xx/超时保留离线身份便于恢复 |
 | POST `/auth/logout`；GET `/auth/devices` | `{}`注销体、Cookie/Origin/CSRF一致；设备createdAt/lastSeenAt等可选字段兼容。注销先清本地身份，服务端失败仍报告未确认 |
 | GET `/sessions`；GET `/models` | 会话 `running,sendAvailable,unavailable?,conversationId?,modelProfileId?` 与模型 `id,name,model,configured,routeFingerprint` 一致；Apple限制会话≤20,000、模型≤500 |
-| GET `/sessions/{id}/events` | 路径/afterSeq/nextSeq一致；Apple单页limit≤100（服务端≤200）。旧打开会话从-1累计读到无hasMore，累计>20,000报客户端historyLimit；缺尾页/beforeSeq。消息转换仅保留user/assistant；共享类型丢弃 `endReasonKind`，工具/新草案data未建模 |
+| GET `/sessions/{id}/events` | 路径/afterSeq/nextSeq一致；Apple单页limit≤100（服务端≤200）。旧打开会话从-1累计读到无hasMore，累计>20,000报客户端historyLimit；缺尾页/beforeSeq。消息转换仅保留user/assistant；共享类型丢弃 `endReasonKind`，工具/新时间线data未建模 |
 | GET `/commands` | before/limit/nextBefore一致；服务端按账号列全部命令，Apple读一页后过滤选中会话根任务，不是服务端按session过滤；可能需继续翻页才找到当前会话任务 |
 | GET `/commands/by-request/{id}`；POST `/commands` | 404且code为NOT_FOUND才认定未登记；持久requestId与原体核对一致。create/message/cancel字段一致，但message长度、附件/steer范围有差异（见下） |
 | GET `/tasks/{id}`；POST `/tasks/{id}/stop` | GET裸Task、POST202的task外壳、requestId一致；停止先查canStop，仅把匹配202当登记证据，后续Task状态不伪称该请求已确认。尚未接入补充/续做与executionSteps详情 |
@@ -384,9 +377,9 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 项目/浏览器 | 无projects/workspaces/browser六项独立请求；已有会话可列/读/发送，但无法在此client登记项目、撤销或创建对应会话 | Apple工作区接入 |
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
 | 分发更新 | 无认证app/native/downloads六项请求；Apple公开更新另有PublicUpdates，不能宣称缺所有更新能力 | 当前保持已有公开分发；本契约只记录认证入口 |
-| 五端共同待实现 | 「总是允许此类」、步骤原始详情读取、对话内完整十种事件、排队取消、消息chunk流均没有已确认的公共契约；UI_SPEC运行中插话/排队默认行为仍待产品决定 | Windows M1-0a/b、Mac审阅与M1-0d |
+| 五端共同待实现 | 「总是允许此类」、步骤原始详情与十种时间线投影已正式；排队取消、消息chunk流待实现；运行中插话/排队默认行为已按 D9 确定，调度另包实现 | Windows M1-0a/b、Mac审阅与M1-0d |
 
-本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a落地时须更新此文档与STATE契约栏。
+本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a已更新此文档与STATE契约栏。
 
 ## 6. 健康摘要（H2 正式接口）
 
@@ -457,7 +450,7 @@ POST 返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"m
 | 413 `BODY_TOO_LARGE`；415 `UNSUPPORTED_MEDIA_TYPE` | 沿用通用约定；不丢摘要、不截断健康内容 |
 | 429 `RATE_LIMITED`；503 `STORAGE_UNAVAILABLE` / `SERVICE_UNAVAILABLE`；网络错误 | 安静保留队列，下一次运行重试；不阻塞聊天 |
 
-H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。H2 使用隔离账号与合成 RPC 验证；真实宿主/跨设备及 MemoWeft observed 写入、权限变更、衍生项删除仍需在 Core 能力补齐后集成验收。
+H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。H2 验证客户端 HTTP 边界；MW-2 已用真实 Python Core 与隔离账号通过 observed 写入、目的地过滤、权限变更、衍生项删除/导出/重启集成验收。真实日用宿主与跨设备上传仍未验证。
 
 
 ### 6.4 读取与记忆使用状态
