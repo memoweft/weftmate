@@ -264,7 +264,8 @@ export async function createHostCloudIdentity(context, options) {
           next.pairings[digest(challenge)] = { ownerId: current.ownerId, expiresAt: context.timestamp() + 120_000 };
         }));
         context.json(response, 201, { challenge, expiresIn: 120, hostId, tlsSpki: store.state.tls.spki,
-          publicJwk: store.state.installation.publicJwk, origin: context.requestAuthority(request) }); return true;
+          publicJwk: store.state.installation.publicJwk, origin: context.requestAuthority(request),
+          relay: context.service.relayStatus() }); return true;
       }
       if (route === '/auth/cloud-session' || route === '/cloud/pairings/redeem') {
         const fields = ['accessToken', 'deviceName', ...(route.endsWith('/redeem') ? ['challenge'] : [])];
@@ -334,7 +335,7 @@ export async function createHostCloudIdentity(context, options) {
         { error: { code: known ? error.code : 'SERVICE_UNAVAILABLE' } }); return true;
     }
   }
-  return { handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
+  return { tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
     validSession(ownerId, deviceId) {
       try { assertSession(ownerId, deviceId); return true; } catch { return false; }
     },

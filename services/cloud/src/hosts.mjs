@@ -10,7 +10,7 @@ const requireFields = (body, fields) => {
 };
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
 
-export function createHosts({ database: db, config, keys, authenticate, now }) {
+export function createHosts({ database: db, config, keys, authenticate, now, relay }) {
   async function signed(body) {
     requireFields(body, ['hostId', 'proof']);
     const host = db.prepare('SELECT * FROM cloud_hosts WHERE host_id=?').get(body.hostId);
@@ -71,19 +71,34 @@ export function createHosts({ database: db, config, keys, authenticate, now }) {
         const host = db.prepare('SELECT * FROM cloud_hosts WHERE host_id=?').get(claim.host_id);
         if (host && host.jkt !== claim.jkt) throw new CloudError(409, 'CLAIM_CONFLICT');
         db.prepare('INSERT OR IGNORE INTO cloud_hosts VALUES(?,?,?,?)').run(claim.host_id, claim.public_jwk, claim.jkt, claim.tls_spki);
+        const firstMember = !db.prepare('SELECT 1 FROM host_memberships WHERE host_id=?').get(claim.host_id);
         db.prepare(`INSERT INTO host_memberships(host_id,account_id,claim_id) VALUES(?,?,?)
           ON CONFLICT(host_id,account_id) DO UPDATE SET claim_id=excluded.claim_id`).run(claim.host_id, account.id, claim.claim_id);
+        if (firstMember) db.prepare("UPDATE host_memberships SET role='owner' WHERE host_id=? AND account_id=?").run(claim.host_id, account.id);
         db.prepare("UPDATE host_claims SET status='active',account_id=? WHERE claim_id=?").run(account.id, body.claimId);
         db.exec('COMMIT');
       } catch (error) { db.exec('ROLLBACK'); throw error; }
       return { confirmed: true, hostId: claim.host_id, sub: account.id };
     }
+    if (['/hosts/relay/discover', '/hosts/relay/account-revoke'].includes(route)) {
+      requireFields(body, ['hostId']);
+      const account = await authenticate(req);
+      const result = relay.discover(body.hostId, account.id);
+      if (route.endsWith('/account-revoke')) {
+        const membership = db.prepare('SELECT role FROM host_memberships WHERE host_id=? AND account_id=?').get(body.hostId, account.id);
+        if (membership.role !== 'owner') throw new CloudError(403, 'FORBIDDEN');
+        return relay.revoke(body.hostId);
+      }
+      return result;
+    }
     const payload = await signed(body);
     if (payload.action !== route) throw new CloudError(401, 'UNAUTHORIZED');
+    if (route.startsWith('/hosts/relay/')) return relay.hostRequest(route, body.hostId, payload);
     if (route === '/hosts/memberships/unbind') {
       if (typeof payload.sub !== 'string' || !validId(payload.claimId)) throw new CloudError(400, 'INVALID_REQUEST');
       db.prepare('DELETE FROM host_memberships WHERE host_id=? AND account_id=? AND claim_id=?')
         .run(body.hostId, payload.sub, payload.claimId);
+      if (!db.prepare('SELECT 1 FROM host_memberships WHERE host_id=?').get(body.hostId)) relay.revoke(body.hostId);
       return { unbound: true };
     }
     if (route === '/hosts/devices/revoke') {
