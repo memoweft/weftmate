@@ -5,6 +5,7 @@ import { readFile, writeFile, access } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
+import CSR from '@root/csr';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 
 const run = promisify(execFile);
@@ -22,7 +23,8 @@ export async function createHostCsr({ root, domain, privateJwk }) {
   await ensurePrivateFile(keyFile);
   const configFile = path.join(dir, 'csr.cnf');
   await writeFile(configFile, `[req]\nprompt=no\ndistinguished_name=dn\nreq_extensions=ext\n[dn]\nCN=${domain}\n[ext]\nsubjectAltName=DNS:${domain}\nextendedKeyUsage=serverAuth\n`, { mode: 0o600 });
-  await run('openssl', ['req', '-new', '-key', keyFile, '-out', csrFile, '-config', configFile]);
+  await writeFile(csrFile, await CSR.csr({ jwk: privateJwk, domains: [domain], encoding: 'pem' }), { mode: 0o600 });
+  await ensurePrivateFile(csrFile);
   return { keyFile, csrFile, configFile, dir };
 }
 export async function developmentCertificate(options) {

@@ -31,6 +31,10 @@ struct WeftMateRootView: View {
                 }
             }
         }
+        .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
+        .task(id: "\(scenePhase)-\(model.accountEpoch)-\(model.session?.verification.rawValue ?? "none")") {
+            if scenePhase == .active { await model.cloudLogin.checkPending() }
+        }
         .tint(Weave.accent)
         .task { await model.start() }
         .onAppear { model.setForeground(scenePhase == .active) }

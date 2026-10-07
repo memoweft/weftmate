@@ -126,7 +126,71 @@ certbot renew --cert-name weftmate-cloud --dry-run
 
 API 与 relay 共用本次双名称证书，2027-01-05 到期，续期由现有 certbot timer（定时器）负责。deploy hook（签发后钩子）只处理该 lineage（证书系列），验证并 reload nginx、重启 frps 以刷新 LoadCredential 快照。frpc 原生重连恢复隧道，续期重启期间会短暂断开中继连接。
 
-**内容证书仍待开通**：hosts DNS 已就绪，但 cloud 的生产 DNS-01 provider 尚未接线，RAM DNS 子账号密钥也未提供。`main.mjs` 不会因放入 RAM 环境变量就自动启用 provider；须后续实施包把受限 `relayDns.present/cleanup` 接到阿里云，再由本人把最小 DNS 权限凭据放服务器私有配置。不能把整区密钥交给宿主，也不能给内容域名在 nginx 终止 TLS。内容 CSR（证书签名请求）、相同 key 的定时重签/安装/热载步骤见 [宿主中继 README](../../../src/personal-relay/README.md#生产-dns-01)。普通 `certbot renew` 不维护外部 CSR。
+## 宿主内容证书（S2b）：阿里云 DNS-01
+
+**本包只交付代码和说明，没有部署，也没有联系真实阿里云或生产 CA。** hosts 的 A 记录已经就绪；本人完成以下私有配置并升级 cloud/宿主后，才能取得普通浏览器认可的宿主内容证书。nginx/frps 仍透传内容 TLS，内容私钥始终留在宿主。
+
+1. 本人登录阿里云 RAM 控制台，创建专用 RAM 用户，例如 `weftmate-dns`，只开 OpenAPI AccessKey 使用，不授予管理员或其他服务权限。不要用阿里云主账号密钥。
+2. 新建自定义权限策略，只允许 `alidns:AddDomainRecord` 与 `alidns:DeleteDomainRecord`，资源限定到自己的 DNS 区。下面是公开示例；本人把 `example.com` 替换为 weftmate.com、账号占位符替换为自己的阿里云主账号 ID，再只授权给该 RAM 用户：
+
+```json
+{
+  "Version": "1",
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["alidns:AddDomainRecord", "alidns:DeleteDomainRecord"],
+    "Resource": ["acs:alidns:*:<ALIYUN_ACCOUNT_ID>:domain/example.com"]
+  }]
+}
+```
+
+AliDNS 的 RAM 资源授权粒度是域名区，不能把此区的权限策略直接缩到某条 TXT；宿主的实际可写范围仍由已有安装签名接口限定到 `_acme-challenge.<自己认领的完整宿主域名>`。本适配器不需要列举或批量删除记录的权限，也不更新 A/AAAA/CNAME。授权语法与域名资源说明见 [AliDNS 自定义策略](https://www.alibabacloud.com/help/tc/doc-detail/2852374.html)、[AddDomainRecord](https://www.alibabacloud.com/help/en/dns/api-alidns-2015-01-09-adddomainrecord)、[DeleteDomainRecord](https://www.alibabacloud.com/help/en/dns/api-alidns-2015-01-09-deletedomainrecord)。
+
+3. 在该 RAM 用户页面创建 AccessKey。本人保存在自己的私有凭据管理器，并亲自登录服务器编辑已有 `/etc/weftmate-cloud/cloud.env`；不要发到聊天、PR、Git 或工单，不执行会把内容打印到终端/日志的命令：
+
+```sh
+sudo chmod 0600 /etc/weftmate-cloud/cloud.env
+sudoedit /etc/weftmate-cloud/cloud.env
+# 编辑器中补充，真实值仅写在该私有文件：
+# CLOUD_DNS_PROVIDER=aliyun
+# ALIYUN_DNS_ZONE=example.com
+# ALIYUN_DNS_ACCESS_KEY_ID=<本人私下填写>
+# ALIYUN_DNS_ACCESS_KEY_SECRET=<本人私下填写>
+sudo stat -c '%a %U:%G' /etc/weftmate-cloud/cloud.env
+```
+
+实际 DNS 区填写 weftmate.com；权限应为 600、root 所有。provider、zone、AccessKey 任一缺失时仍返回 `DNS_NOT_CONFIGURED`，不会声称发布成功。凭据只在 cloud 进程环境里读取，不给宿主。
+
+4. 按「升级与回滚」先保存完整 StateDirectory 一致备份，再安装审查通过的 S2b cloud release。独立 cloud 依赖仍用 `services/cloud/package-lock.json`，无需安装根仓库的宿主依赖。schema 从 4 升到 **5**，新增 `relay_dns_records` 保存本服务创建的 RecordId；旧 schema 4 release 无法直接打开 schema 5 库，回滚需本人决定恢复升级前一致备份。重启并检查：
+
+```sh
+sudo systemctl restart weftmate-cloud
+sudo systemctl is-active weftmate-cloud
+curl -fsS http://127.0.0.1:8787/healthz
+# 预期 schemaVersion=5
+sudo journalctl -u weftmate-cloud --since '5 minutes ago' --no-pager
+```
+
+5. 宿主升级 S2b 后，先在电脑直接地址登录/认领/绑定账号，配置已有 frpc/外层 CA 与下列宿主私有环境。建议先用 **独立隔离宿主与 staging 证书路径**验证，再对正式宿主使用生产目录。不要复制本人日用运行数据到仓库。
+
+```sh
+WEFTMATE_RELAY_ENABLED=true
+WEFTMATE_RELAY_ACME_ENABLED=true
+WEFTMATE_ACME_DIRECTORY_URL=https://acme-v02.api.letsencrypt.org/directory
+# 可选 CA 通知邮箱；真实值只在宿主私有环境里。
+WEFTMATE_ACME_EMAIL=account@example.com
+# 可选；默认 <personal-access root>/relay-tls/host-fullchain.pem。
+WEFTMATE_RELAY_CERT_FILE=/opt/weftmate/private/host-fullchain.pem
+```
+
+自动签发使用 Node ACME.js 与宿主已有内容 key，不需要 Windows certbot/OpenSSL。首次签发约需等待 DNS 发布；present 每个权威 NS 都查到值才返回，90 秒内未齐返回 `DNS_PROPAGATION_TIMEOUT`，API 拒绝/网络失败返回 `DNS_PROVIDER_ERROR`。免费 AliDNS 区使用最低 **600 秒 TTL**；签名接口的内部 60 秒提示被适配器提升，不更改域名 A 记录。系统/网络需允许 cloud 出站 HTTPS 与权威 DNS UDP/TCP 53。
+
+6. 从已认证的**直接宿主地址**查 `/personal/v1/status`：`relay.certificateExpiresAt` 应有 UTC 到期日期，`certificateErrorCode` 为 null；签发完成后 frpc 联通时 state=online。从普通浏览器打开自己获配的 hosts HTTPS 地址，确认系统 CA 验证成功；原生端还应核对配对的 tlsSpki。不要用 `curl -k` 代替验证成功。staging 证书不能通过浏览器 CA 验证；正式签发需切生产目录和独立生产证书路径。
+
+续期不依赖服务器 certbot：宿主每天检查、剩余 <30 天签发，失败按天重试（重启也保留日期），签发后原子安装并热载，不重启宿主或 frpc，SPKI 保持。API/relay 的既有 certbot timer 继续负责外层证书。RAM 凭据轮换只需本人在私有 env 替换后重启 cloud；不用重建宿主内容 key。可观察本机状态/正常握手验证续期，长时间浸泡与真实 Windows/Apple 客户端验收另包。
+
+TXT 清理只使用 SQLite 中归本服务所有的 RecordId；保留同名的其他挑战，清理不存在的记录幂等。失败或宿主掉电可能留下记录：本人可在云数据库 `relay_dns_records` 私下核对 RecordId 与 RAM 控制台后清理；本包没有后台残留清扫，不批量删除挑战区。
+
 
 ## 验证与运维
 

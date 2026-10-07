@@ -99,7 +99,9 @@ def target(name, platform, sources, testing=None):
         settings.update(MACOSX_DEPLOYMENT_TARGET="14.0", SUPPORTED_PLATFORMS="macosx", COMBINE_HIDPI_IMAGES="YES")
         if not is_test:
             settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateMac.entitlements"
-    elif platform == "iphoneos":
+    if not is_test and platform in ["macosx", "iphoneos"]:
+        settings["INFOPLIST_FILE"] = "Config/NativeInfo.plist"
+    if platform == "iphoneos":
         settings.update(IPHONEOS_DEPLOYMENT_TARGET="17.0", SUPPORTED_PLATFORMS="iphoneos iphonesimulator", TARGETED_DEVICE_FAMILY="1,2", SUPPORTS_MACCATALYST="NO", INFOPLIST_KEY_UILaunchScreen_Generation="YES", INFOPLIST_KEY_UIApplicationSceneManifest_Generation="YES", INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents="YES")
     elif platform == "watchos":
         settings["PRODUCT_BUNDLE_IDENTIFIER"] = "com.weftmate.apple.weftmatephone.watch"
@@ -107,6 +109,8 @@ def target(name, platform, sources, testing=None):
     if is_test:
         settings.update(TEST_TARGET_NAME=testing, INFOPLIST_KEY_CFBundleDisplayName=name)
     elif platform in ["macosx", "iphoneos"]:
+        if platform == "iphoneos":
+            settings["INFOPLIST_KEY_NSCameraUsageDescription"] = "扫描你电脑上的一次性配对二维码，授权这台 iPhone 访问你的 WeftMate 对话。"
         settings["INFOPLIST_KEY_NSLocalNetworkUsageDescription"] = "WeftMate 连接你选择的个人服务器，以便同步账户和会话。"
     if not is_test and platform in ["iphoneos", "watchos"]:
         settings["CODE_SIGN_ENTITLEMENTS"] = "Config/WeftMateHealth.entitlements"
@@ -128,7 +132,7 @@ debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixt
 target("WeftMateMac", "macosx", ui + mac + debug_fixture)
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture)
 target("WeftMateMacUITests", "macosx", ["Tests/WeftMateUITests.swift"], "WeftMateMac")
-target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift", "Tests/A3TimelineUITests.swift"], "WeftMatePhone")
+target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift"], "WeftMatePhone")
 product_group = obj("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")
 group = obj("group", isa="PBXGroup", children=all_files+[product_group], sourceTree="<group>")
 project_config = configs("project", {"CLANG_WARN_DOCUMENTATION_COMMENTS": "YES", "CLANG_WARN_UNGUARDED_AVAILABILITY": "YES_AGGRESSIVE", "SWIFT_VERSION": "6.0"}, True)

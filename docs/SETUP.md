@@ -83,4 +83,4 @@ ssh weftmate-cloud '/root/weftmate-deploy/rollback.sh'
 
 私有环境文件 `/etc/weftmate-cloud/cloud.env` 为0600；DynamicUser（动态服务用户）与 StateDirectory（服务数据目录）保存 `/var/lib/weftmate-cloud`，数据库/身份 key/邮件不进发布目录。API 与 relay 的 certbot（自动证书客户端）证书和续期已配置，frps 用 LoadCredential（服务私有凭据）读取私钥快照。基线与备份在 `/root/weftmate-deploy`；完整本地报告在仓库外 `Runtime/Orchestrator/d1.result.md`。
 
-当前邮件为 file transport（文件邮件传输），只写服务器私有 outbox（邮件输出目录），不发信。本人需配置 Resend 私有 key/发件域及 SPF/DKIM（发件来源与签名验证）。三个新 DNS（域名解析）A 记录已就绪；生产宿主内容证书仍需实现阿里云 DNS-01（DNS TXT 证书验证）provider（服务商适配器），本人把仅限 DNS 的 RAM 子账号凭据放服务器，再接宿主 CSR（证书签名请求）定时签发/安装/热载。仅加入 RAM 环境变量不会自动启用 provider。
+当前邮件为 file transport（文件邮件传输），只写服务器私有 outbox（邮件输出目录），不发信。本人需配置 Resend 私有 key/发件域及 SPF/DKIM（发件来源与签名验证）。三个新 DNS（域名解析）A 记录已就绪；S2b 已实现阿里云 DNS-01 provider 和宿主 Node ACME 自动签发/续期/热载；本人仍需按 deploy README 创建仅限指定 DNS 区增删权限的 RAM 用户、私下填写服务器环境，升级 cloud schema 5 与宿主、开启宿主 ACME。S2b 尚未部署，不能据此声称生产内容证书已就绪。

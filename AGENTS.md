@@ -11,8 +11,8 @@ WeftMate 是跨设备、跨对话的个人 AI 助手（Windows / macOS / Android
 
 | 路径 | 内容 |
 |---|---|
-| `src/` | Electron 主进程、个人宿主（`personal-*`）、DSH 插件（`plugins/`）、网关（`runtime/`） |
-| `src/personal-access-ui/` | 桌面 / 浏览器端 Web 界面 |
+| `src/` | Electron 主进程（Windows 桌面程序）、个人宿主（`personal-*`）、DSH 插件（`plugins/`）、网关（`runtime/`） |
+| `src/personal-access-ui/` | WeftMate 界面：Windows 桌面程序窗口（主）与远程浏览器共用 |
 | `apps/android/` | Android 原生壳 |
 | `apps/apple/` | macOS / iOS / watchOS 原生客户端 |
 | `apps/mobile-ui/` | 手机端可更新的 Web 界面 |
@@ -23,6 +23,7 @@ WeftMate 是跨设备、跨对话的个人 AI 助手（Windows / macOS / Android
 
 - **直接做**：读代码、改代码、跑测试、提交，都由你完成。日常技术选择自己决定。
 - **用 DSH，不重造**：工具、上下文压缩、子任务、调度、审批优先用 DSH 原生能力。
+- **桌面以程序为主**（D27）：Windows 桌面是 WeftMate 程序（Electron 窗口），macOS 是原生 App；浏览器网页只用于手机和其他电脑远程访问。前端改动在真实程序里验收（Playwright 可直接驱动 Electron），不要只在浏览器里验证。
 - **只为真实问题加限制**：没出现过的失败，不加白名单、限次、guard 或审计层。
 - **契约**：客户端只依赖 `/personal/v1`（`docs/CLIENT_API.md`）。改了接口，在 `docs/STATE.md` 的「契约变更」记一行。
 - **测试**：开发中只跑与改动相关的测试（`node --test <文件>`、单个 Swift 测试 / 单个 scheme）。**完整测试交给 CI**：推送后用 `gh pr checks` / `gh run watch` 看结果，不在本地反复跑全量单测。测试用隔离数据目录和测试账号，不碰本人日用数据（`D:\AIProjects\WeftMate\Runtime`）。
