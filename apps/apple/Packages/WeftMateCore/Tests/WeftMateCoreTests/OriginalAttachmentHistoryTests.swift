@@ -62,7 +62,7 @@ private func attachmentLegacyClient(hostPage: Data? = nil, syncPage: Data? = nil
         .init(path: "/auth/me", response: auth), step("/sync/events?afterSeq=0&limit=100", sync),
         step("/sessions", sessions), .init(path: "/auth/me", response: auth)]
     if let hostPage {
-        steps.append(step("/sessions/session-test/events?afterSeq=-1&limit=100", hostPage))
+        steps.append(step("/sessions/session-test/events?limit=100", hostPage))
     } else {
         steps.append(step("/sync/events?afterSeq=0&limit=100", sync))
         steps.append(step("/sync/conversations/\(attachmentConversationID)/shared",
