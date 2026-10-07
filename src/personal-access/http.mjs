@@ -1,0 +1,1541 @@
+import {
+  attachmentDisposition,
+  bounded,
+  boundedUpstreamBody,
+  canonicalAccountBaseUrl,
+  digest,
+  exactKeys,
+  failure,
+  id,
+  initialBrowserUrls,
+  modelProfileId,
+  modelProjection,
+  modelTextWithAttachments,
+  plainObject,
+  publicProject,
+  publicSource,
+  safeCode,
+  statusProjection,
+  validId,
+  validProjectName,
+  writeStreamPart
+} from './common.mjs';
+import { canonicalMemoryPathname } from '../personal-memory/http.mjs';
+import {
+  IMAGE_CONTENT_TYPES,
+  INTERNAL_ARTIFACT_KIND,
+  MAX_ACCOUNTS,
+  MAX_BODY,
+  MAX_COMMANDS,
+  MAX_LOCAL_TURNS,
+  MAX_PAGE,
+  MAX_PROJECTS,
+  MAX_UNRECONCILED_TEXT_BYTES,
+  MODEL_JSON_MAX,
+  MODEL_PROFILE_ID,
+  MODEL_SSE_MAX,
+  MODEL_TIMEOUT_MS,
+  PUBLIC_CODES,
+  REQUEST_ID,
+  SYNC_EVENT_ID,
+  TOOL_RUNTIME_ID
+} from './constants.mjs';
+import { open } from 'node:fs/promises';
+import { pipeline } from 'node:stream/promises';
+import { MAX_SHARED_IMAGE_BYTES } from './shared-attachments.mjs';
+import { MAX_ATTACHMENT_BYTES, MAX_DISPLAY_BYTES } from '../personal-sync/attachments.mjs';
+import { createReadStream } from 'node:fs';
+import { MODEL_ID as ACCOUNT_MODEL_NAME_ID, privateProfileId } from '../personal-account-models/index.mjs';
+import { randomBytes, randomUUID } from 'node:crypto';
+import { modelRouteFingerprint } from '../model-route-fingerprint.mjs';
+import { openAICompatibleEndpoint } from '../openai-compatible-client.ts';
+import { inspectProjectRoot } from '../personal-projects/index.mjs';
+import { canonicalCompletion, projectCompletion } from './model-completion.mjs';
+import {
+  invalidateToolApproval,
+  invalidateUserQuestion,
+  publicToolApproval,
+  publicUserQuestion,
+  toolApprovals,
+  userQuestions
+} from './interaction-policy.mjs';
+import { canonicalCommand, publicCommand } from './command-policy.mjs';
+import { artifactContentType } from '../personal-artifacts/index.mjs';
+import { buildConversationContext } from '../personal-conversations/context.mjs';
+
+export function createHttpHandler(context) {
+  function handle(request, response) {
+    const largeUpload = request.method === 'PUT' &&
+      /^\/personal\/v1\/sync\/attachments\/[^/?]+(?:\?.*)?$/.test(request.url ?? '');
+    if (!largeUpload && ['POST', 'PUT', 'PATCH'].includes(request.method)) {
+      // Small control bodies retain the previous ten-second total receive deadline.
+      const timer = setTimeout(() => { request.destroy(); response.destroy(); }, 10_000);
+      request.once('end', () => clearTimeout(timer));
+      request.once('close', () => clearTimeout(timer));
+    }
+    const ownerId = context.ownerForRequest(request);
+    return handleScoped(request, response, ownerId);
+  }
+
+  async function handleScoped(request, response, ownerId) {
+    const state = ownerId === null ? null : context.accountState(ownerId);
+    try {
+      if (context.closing) throw failure('SERVICE_CLOSING', 503);
+      const url = new URL(request.url, 'http://127.0.0.1');
+      const encodedDshImageId = /^\/personal\/v1\/sessions\/[A-Za-z0-9_-]{1,128}\/attachments\/sha256%3A[a-f0-9]{64}$/i.test(url.pathname);
+      const encodedMemoryPathname = canonicalMemoryPathname(url.pathname);
+      if ((url.pathname.includes('%') && !encodedDshImageId && encodedMemoryPathname === null) ||
+          url.pathname.includes('//') || url.searchParams.has('token')) {
+        throw failure('INVALID_REQUEST');
+      }
+      const pathname = encodedMemoryPathname ?? url.pathname;
+      if (!pathname.startsWith('/personal/v1/')) throw failure('NOT_FOUND', 404);
+      if (!context.requestAuthority(request) ||
+          (request.headers.origin !== undefined && !context.matchingOrigin(request))) {
+        throw failure('ORIGIN_NOT_ALLOWED', 403);
+      }
+      const staticPaths = new Set(['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
+        '/personal/v1/ui/app.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
+        '/personal/v1/ui/file-sha256.js', '/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js',
+        '/personal/v1/ui/vendor/noble-hashes-2.3.0/_md.js',
+        '/personal/v1/ui/vendor/noble-hashes-2.3.0/_u64.js',
+        '/personal/v1/ui/vendor/noble-hashes-2.3.0/utils.js']);
+      if (request.method === 'GET' && !url.search && staticPaths.has(pathname)) {
+        if (context.uiHandler && await context.uiHandler(request, response) === true) return;
+        throw failure('NOT_FOUND', 404);
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/auth/state') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, { configured: context.registeredAccountCount() > 0,
+          registrationAvailable: context.registeredAccountCount() < MAX_ACCOUNTS });
+      }
+      if (request.method === 'POST' && pathname === '/personal/v1/auth/setup') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const matched = context.requireBrowserOrigin(request, true);
+        const setupBody = await context.readJson(request);
+        const result = await context.setupAccount(setupBody);
+        const { token, ...publicResult } = result;
+        return context.json(response, 201, publicResult, { 'set-cookie': context.sessionCookie(token, matched.startsWith('https://')) });
+      }
+      if (request.method === 'POST' && pathname === '/personal/v1/auth/register') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const matched = context.requireBrowserOrigin(request);
+        const result = await context.registerAccount(await context.readJson(request));
+        const { token, ...publicResult } = result;
+        return context.json(response, 201, publicResult, { 'set-cookie': context.sessionCookie(token, matched.startsWith('https://')) });
+      }
+      if (request.method === 'POST' && pathname === '/personal/v1/auth/login') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const matched = context.requireBrowserOrigin(request);
+        const result = await context.loginAccount(await context.readJson(request));
+        const { token, ...publicResult } = result;
+        return context.json(response, 200, publicResult, { 'set-cookie': context.sessionCookie(token, matched.startsWith('https://')) });
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/auth/me') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        return context.json(response, 200, context.publicAuth(current.ownerId, current.deviceId,
+          current.device, current.csrfToken));
+      }
+      if (request.method === 'PATCH' && pathname === '/personal/v1/auth/profile') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'account:manage');
+        return context.json(response, 200, { account: await context.updateAccountProfile(request, await context.readJson(request, 192 * 1024)) });
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/auth/devices') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        const devices = Object.entries(state.devices).map(([deviceId, device]) => ({
+          id: deviceId, name: device.name, createdAt: device.enrolledAt,
+          ...(device.lastSeenAt ? { lastSeenAt: device.lastSeenAt } : {}),
+          expiresAt: device.expiresAt ?? null, revoked: device.revoked,
+          current: deviceId === current.deviceId,
+        }));
+        return context.json(response, 200, { devices });
+      }
+      const deviceMatch = /^\/personal\/v1\/auth\/devices\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      if (request.method === 'PATCH' && deviceMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        const target = id(deviceMatch[1]);
+        const body = await context.readJson(request);
+        exactKeys(body, ['name'], ['name']);
+        const name = context.deviceName(body.name);
+        const renamed = await context.serial(() => context.mutate(current.ownerId, (next) => {
+          const latest = context.authenticate(request, 'account:manage');
+          if (latest.ownerId !== current.ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
+          if (!Object.hasOwn(next.devices, target)) throw failure('NOT_FOUND', 404);
+          next.devices[target].name = name;
+          return { id: target, name, revoked: next.devices[target].revoked };
+        }));
+        return context.json(response, 200, { device: renamed });
+      }
+      if (request.method === 'DELETE' && deviceMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        const target = id(deviceMatch[1]);
+        const matched = context.matchingOrigin(request);
+        await context.serial(() => context.mutate(current.ownerId, (next) => {
+          const latest = context.authenticate(request, 'account:manage');
+          if (latest.ownerId !== current.ownerId || latest.deviceId !== current.deviceId) throw failure('UNAUTHORIZED', 401);
+          if (!Object.hasOwn(next.devices, target)) throw failure('NOT_FOUND', 404);
+          next.devices[target].revoked = true;
+          next.devices[target].revokedAt = new Date(context.timestamp()).toISOString();
+        }));
+        return context.json(response, 200, { revoked: true },
+          target === current.deviceId ? { 'set-cookie': context.clearCookie(matched.startsWith('https://')) } : {});
+      }
+      if (request.method === 'POST' && pathname === '/personal/v1/auth/logout') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        const matched = context.matchingOrigin(request);
+        await context.serial(() => context.mutate(current.ownerId, (next) => {
+          if (context.authenticate(request, 'account:manage').ownerId !== current.ownerId) throw failure('UNAUTHORIZED', 401);
+          next.devices[current.deviceId].revoked = true;
+          next.devices[current.deviceId].revokedAt = new Date(context.timestamp()).toISOString();
+        }));
+        return context.json(response, 200, { ok: true }, { 'set-cookie': context.clearCookie(matched.startsWith('https://')) });
+      }
+      if (request.method === 'POST' && pathname === '/personal/v1/auth/change-password') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'account:manage');
+        const matched = context.matchingOrigin(request);
+        const result = await context.changeAccountPassword(request, await context.readJson(request));
+        const { token, ...publicResult } = result;
+        return context.json(response, 200, publicResult, { 'set-cookie': context.sessionCookie(token, matched.startsWith('https://')) });
+      }
+      const write = ['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method);
+      const { deviceId, ownerId: authenticatedOwnerId } = context.authenticate(request,
+        write ? 'commands:write' : 'sessions:read');
+      if (authenticatedOwnerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+      if (pathname.startsWith('/personal/v1/memory/')) {
+        return await context.handleMemoryHttp(request, response, url, pathname, ownerId, deviceId);
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/app/manifest') {
+        if (url.search || !context.mobileUi) throw failure('NOT_FOUND', 404);
+        const manifest = await context.mobileUi.current();
+        if (!manifest) throw failure('NOT_FOUND', 404);
+        return context.json(response, 200, manifest);
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/app/updates') {
+        if (url.search || !context.mobileUi) throw failure('NOT_FOUND', 404);
+        await context.mobileUi.updates(response, () => context.authenticate(request, 'sessions:read'));
+        return;
+      }
+      const mobileAsset = /^\/personal\/v1\/app\/assets\/([a-f0-9]{64})\/(.+)$/.exec(pathname);
+      if (request.method === 'GET' && mobileAsset) {
+        if (url.search || !context.mobileUi) throw failure('NOT_FOUND', 404);
+        const asset = await context.mobileUi.asset(mobileAsset[1], mobileAsset[2]).catch(() => null);
+        if (!asset) throw failure('NOT_FOUND', 404);
+        if (request.headers['if-none-match'] === asset.etag) {
+          response.writeHead(304, { etag: asset.etag,
+            'cache-control': 'private, max-age=31536000, immutable' });
+          return response.end();
+        }
+        response.writeHead(200, { 'content-type': asset.contentType,
+          'content-length': String(asset.bytes.length), etag: asset.etag,
+          'cache-control': 'private, max-age=31536000, immutable',
+          'x-content-type-options': 'nosniff' });
+        return response.end(asset.bytes);
+      }
+      if (pathname === '/personal/v1/downloads/android' && request.method === 'GET') {
+        if (url.search || !context.androidPackagePath) throw failure('NOT_FOUND', 404);
+        const entry = await context.androidPackageEntry();
+        if (!entry) throw failure('NOT_FOUND', 404);
+        const handle = await open(context.androidPackagePath, 'r').catch(() => { throw failure('NOT_FOUND', 404); });
+        try {
+          const opened = await handle.stat();
+          if (!opened.isFile() || opened.size !== entry.size) throw failure('NOT_FOUND', 404);
+          response.writeHead(200, { 'content-type': 'application/vnd.android.package-archive',
+            'content-disposition': 'attachment; filename="WeftMate-Android.apk"',
+            'content-length': String(opened.size), 'cache-control': 'no-store',
+            'x-content-type-options': 'nosniff' });
+          await new Promise((resolve, reject) => {
+            const stream = handle.createReadStream({ autoClose: false });
+            const stopped = () => { stream.destroy(); reject(failure('SERVICE_UNAVAILABLE', 503)); };
+            response.once('close', stopped);
+            stream.once('error', (error) => { response.off('close', stopped); reject(error); });
+            stream.once('end', () => { response.off('close', stopped); resolve(); });
+            stream.pipe(response);
+          });
+          return;
+        } finally { await handle.close(); }
+      }
+      if (pathname === '/personal/v1/native/manifest' && request.method === 'GET') {
+        if (url.search) throw failure('NOT_FOUND', 404);
+        const manifest = await context.nativeDownloads.manifest();
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return context.json(response, 200, manifest);
+      }
+      const nativeMacosMatch = /^\/personal\/v1\/downloads\/native\/macos\/([a-f0-9]{64})$/.exec(pathname);
+      if (nativeMacosMatch && request.method === 'GET') {
+        if (url.search) throw failure('NOT_FOUND', 404);
+        const opened = await context.nativeDownloads.openMacos(nativeMacosMatch[1]);
+        if (!opened) throw failure('NOT_FOUND', 404);
+        try {
+          const current = context.authenticate(request, 'sessions:read');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          response.writeHead(200, { 'content-type': 'application/x-apple-diskimage',
+            'content-disposition': `attachment; filename="WeftMate-Mac-${opened.release.version}-build${opened.release.build}.dmg"`,
+            'content-length': String(opened.release.bytes), 'cache-control': 'no-store',
+            'x-content-type-options': 'nosniff' });
+          await pipeline(opened.handle.createReadStream({ start: 0, autoClose: false }), response);
+          return;
+        } finally { await opened.handle.close(); }
+      }
+      const sharedImageMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]{1,128})\/attachments\/((?:attachment-[0-9a-f-]{36})|(?:sha256:[a-f0-9]{64}))$/i.exec(pathname.replace(/%3a/ig, ':'));
+      if (sharedImageMatch) {
+        const [, sessionId, attachmentId] = sharedImageMatch;
+        const ownedSession = () => {
+          const session = context.accountState(ownerId).sessions[sessionId];
+          if (!session || session.ownerId !== ownerId ||
+              !['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_UNAVAILABLE', 404);
+        };
+        ownedSession();
+        if (request.method === 'PUT') {
+          if ([...url.searchParams.keys()].some((key) => !['requestId', 'name'].includes(key)) ||
+              ['requestId', 'name'].some((key) => url.searchParams.getAll(key).length !== 1)) throw failure('INVALID_REQUEST');
+          const lengthHeader = request.headers['content-length'];
+          if (lengthHeader !== undefined && (!/^\d+$/.test(lengthHeader) ||
+              Number(lengthHeader) > MAX_SHARED_IMAGE_BYTES)) throw failure('BODY_TOO_LARGE', 413);
+          const chunks = []; let total = 0;
+          for await (const chunk of request) {
+            total += chunk.length;
+            if (total > MAX_SHARED_IMAGE_BYTES) throw failure('BODY_TOO_LARGE', 413);
+            chunks.push(chunk);
+          }
+          const authorize = () => {
+            const current = context.authenticate(request, 'commands:write');
+            if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+            ownedSession();
+          };
+          const result = await context.sharedAttachmentStores.get(ownerId).put({ sessionId, attachmentId,
+            requestId: url.searchParams.get('requestId'), name: url.searchParams.get('name'),
+            contentType: request.headers['content-type'], sha256: request.headers['x-weftmate-sha256'],
+            bytes: Buffer.concat(chunks), authorize });
+          return context.json(response, result.duplicate ? 200 : 201, result);
+        }
+        if (request.method === 'GET') {
+          if (url.search || typeof context.backend.readAttachment !== 'function') throw failure('INVALID_REQUEST');
+          const found = await context.callBackend(() => context.backend.readAttachment({ sessionId, attachmentId, ownerId }));
+          const current = context.authenticate(request, 'sessions:read');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          ownedSession();
+          if (!Buffer.isBuffer(found?.bytes) || found.bytes.length < 1 ||
+              found.bytes.length > MAX_SHARED_IMAGE_BYTES ||
+              !['image/png', 'image/jpeg', 'image/webp', 'image/gif'].includes(found?.contentType)) {
+            throw failure('BACKEND_UNAVAILABLE', 503);
+          }
+          response.writeHead(200, { 'content-type': found.contentType,
+            'content-length': String(found.bytes.length), 'cache-control': 'no-store',
+            'x-content-type-options': 'nosniff' });
+          return response.end(found.bytes);
+        }
+      }
+      const attachmentMatch = /^\/personal\/v1\/sync\/attachments\/((?:[A-Za-z][A-Za-z0-9_-]{0,31}-)?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})$/.exec(pathname);
+      if (attachmentMatch && request.method === 'PUT') {
+        const display = url.searchParams.get('variant') === 'display';
+        const nameCount = url.searchParams.getAll('name').length;
+        if ([...url.searchParams.keys()].some((key) => !['conversationId', 'messageId', 'name', 'variant'].includes(key)) ||
+            ['conversationId', 'messageId'].some((key) => url.searchParams.getAll(key).length !== 1) ||
+            (display ? nameCount > 1 : nameCount !== 1) ||
+            url.searchParams.getAll('variant').length > 1 ||
+            (url.searchParams.has('variant') && !display)) {
+          throw failure('INVALID_REQUEST');
+        }
+        const lengthHeader = request.headers['content-length'];
+        if (lengthHeader !== undefined && (!/^\d+$/.test(lengthHeader) ||
+            Number(lengthHeader) > (display ? MAX_DISPLAY_BYTES : MAX_ATTACHMENT_BYTES))) {
+          throw failure('BODY_TOO_LARGE', 413);
+        }
+        const authorize = () => {
+          const latest = context.authenticate(request, 'commands:write');
+          if (latest.ownerId !== ownerId || latest.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        };
+        const result = await context.attachmentStores.get(ownerId).put({ attachmentId: attachmentMatch[1],
+          conversationId: url.searchParams.get('conversationId'),
+          messageId: url.searchParams.get('messageId'), name: url.searchParams.get('name'),
+          contentType: request.headers['content-type'], sha256: request.headers['x-weftmate-sha256'],
+          stream: request, expectedSize: lengthHeader === undefined ? undefined : Number(lengthHeader),
+          display, authorize });
+        return context.json(response, result.duplicate ? 200 : 201, result);
+      }
+      if (attachmentMatch && request.method === 'GET') {
+        const display = url.search === '?variant=display';
+        if (url.search && !display) throw failure('INVALID_REQUEST');
+        const stored = await context.attachmentStores.get(ownerId).get(attachmentMatch[1], display);
+        if (!context.syncStores.get(ownerId).references(attachmentMatch[1], stored.conversationId, stored.messageId) &&
+            !context.commandReferencesOriginal(ownerId, stored.conversationId, stored.messageId, stored.meta)) {
+          throw failure('NOT_FOUND', 404);
+        }
+        context.authenticate(request, 'sessions:read');
+        response.writeHead(200, { 'content-type': stored.meta.contentType,
+          'content-length': String(stored.meta.size), 'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+          ...(!IMAGE_CONTENT_TYPES.has(stored.meta.contentType)
+            ? { 'content-disposition': attachmentDisposition(stored.meta.name) } : {}) });
+        await pipeline(createReadStream(stored.file, { start: stored.offset }), response);
+        return;
+      }
+      if (pathname === '/personal/v1/sync/capabilities' && request.method === 'POST') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'commands:write');
+        if (current.via !== 'cookie' || current.device.authKind !== 'password') {
+          throw failure('FORBIDDEN', 403);
+        }
+        const body = await context.readJson(request);
+        if (plainObject(body) && Object.hasOwn(body, 'platform')) {
+          exactKeys(body, ['platform', 'sharedConversations', 'accountModelTransfer'],
+            ['platform', 'sharedConversations']);
+          if (!['macos', 'ios', 'watchos'].includes(body.platform) ||
+              body.sharedConversations !== 1 ||
+              (body.accountModelTransfer !== undefined && body.accountModelTransfer !== 1)) {
+            throw failure('INVALID_REQUEST');
+          }
+          // Apple has no Android build number. Persist 11/12 as server compatibility
+          // levels so existing stores and gates remain readable by older releases.
+          const level = body.accountModelTransfer === 1 ? 12 : 11;
+          await context.serial(() => {
+            const latest = context.authenticate(request, 'commands:write');
+            if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
+                latest.via !== 'cookie' || latest.device.authKind !== 'password') {
+              throw failure('UNAUTHORIZED', 401);
+            }
+            if (latest.device.syncCapabilities?.nativeVersionCode !== level) {
+              return context.mutate(ownerId, (next) => {
+                next.devices[deviceId].syncCapabilities = { sharedConversations: 1,
+                  nativeVersionCode: level, declaredAt: new Date(context.timestamp()).toISOString() };
+              });
+            }
+          });
+          return context.json(response, 200, { deviceId, platform: body.platform, sharedConversations: 1,
+            ...(level === 12 ? { accountModelTransfer: 1 } : {}) });
+        }
+        exactKeys(body, ['sharedConversations', 'nativeVersionCode'],
+          ['sharedConversations', 'nativeVersionCode']);
+        if (body.sharedConversations !== 1 || !Number.isSafeInteger(body.nativeVersionCode) ||
+            body.nativeVersionCode < 11 || body.nativeVersionCode > 10_000) throw failure('INVALID_REQUEST');
+        const prior = current.device.syncCapabilities;
+        if (prior && prior.nativeVersionCode >= body.nativeVersionCode) {
+          return context.json(response, 200, { deviceId, sharedConversations: 1,
+            nativeVersionCode: prior.nativeVersionCode });
+        }
+        const recorded = await context.serial(() => context.mutate(ownerId, (next) => {
+          const latest = context.authenticate(request, 'commands:write');
+          if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
+              latest.via !== 'cookie' || latest.device.authKind !== 'password') {
+            throw failure('UNAUTHORIZED', 401);
+          }
+          const existing = next.devices[deviceId].syncCapabilities;
+          if (!existing || existing.nativeVersionCode < body.nativeVersionCode) {
+            next.devices[deviceId].syncCapabilities = { sharedConversations: 1,
+              nativeVersionCode: body.nativeVersionCode,
+              declaredAt: new Date(context.timestamp()).toISOString() };
+          }
+          return next.devices[deviceId].syncCapabilities.nativeVersionCode;
+        }));
+        return context.json(response, 200, { deviceId, sharedConversations: 1,
+          nativeVersionCode: recorded });
+      }
+      if (pathname === '/personal/v1/sync/events' && request.method === 'POST') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const body = await context.readJson(request, 256 * 1024);
+        exactKeys(body, ['events'], ['events']);
+        const accepted = await context.serial(async () => {
+          const authorize = () => {
+            const latest = context.authenticate(request, 'commands:write');
+            if (latest.ownerId !== ownerId || latest.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          };
+          authorize();
+          return context.syncStores.get(ownerId).append({ events: body.events, sourceDeviceId: deviceId, authorize,
+            validateAttachment: (reference) => context.attachmentStores.get(ownerId).referenced(reference) });
+        });
+        return context.json(response, 200, accepted);
+      }
+      if (pathname === '/personal/v1/sync/events' && request.method === 'GET') {
+        if ([...url.searchParams.keys()].some((key) => !['afterSeq', 'limit'].includes(key)) ||
+            url.searchParams.getAll('afterSeq').length > 1 || url.searchParams.getAll('limit').length > 1) {
+          throw failure('INVALID_REQUEST');
+        }
+        const afterText = url.searchParams.get('afterSeq') ?? '0';
+        const limitText = url.searchParams.get('limit') ?? '100';
+        if (!/^\d+$/.test(afterText) || !/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, context.syncStores.get(ownerId).page({ afterSeq: Number(afterText), limit: Number(limitText) }));
+      }
+      const sharedConversationMatch = /^\/personal\/v1\/sync\/conversations\/([A-Za-z0-9_-]{1,128})\/shared$/.exec(pathname);
+      if (sharedConversationMatch && request.method === 'GET') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, context.conversationProjection(ownerId, sharedConversationMatch[1]));
+      }
+      const localTurnMatch = /^\/personal\/v1\/sync\/conversations\/([A-Za-z0-9_-]{1,128})\/local-turns(?:\/([A-Za-z0-9_-]{1,128})(?:\/(renew|finish))?)?$/.exec(pathname);
+      if (localTurnMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const conversationId = localTurnMatch[1], turnId = localTurnMatch[2];
+        const snapshot = context.conversationSnapshot(ownerId, conversationId);
+        if (request.method === 'GET' && turnId && !localTurnMatch[3]) {
+          const turn = state.conversationLocalTurns?.[turnId];
+          if (!turn || turn.conversationId !== conversationId || turn.deviceId !== deviceId) {
+            throw failure('NOT_FOUND', 404);
+          }
+          return context.json(response, 200, { turnId, state: context.localTurnState(snapshot, turn),
+            expiresAt: turn.expiresAt, requestId: turn.requestId });
+        }
+        if (request.method === 'POST') {
+          const body = await context.readJson(request);
+          if (!turnId) exactKeys(body, ['requestId', 'turnId', 'sourceSyncEventId'],
+            ['requestId', 'turnId', 'sourceSyncEventId']);
+          else exactKeys(body, ['requestId'], ['requestId']);
+          if (!REQUEST_ID.test(body.requestId ?? '') ||
+              (!turnId && (!SYNC_EVENT_ID.test(body.turnId ?? '') ||
+                !SYNC_EVENT_ID.test(body.sourceSyncEventId ?? ''))) ||
+              (turnId && !SYNC_EVENT_ID.test(turnId))) throw failure('INVALID_REQUEST');
+          const record = await context.serial(() => context.mutate(ownerId, (next) => {
+            const current = context.authenticate(request, 'commands:write');
+            if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+            const fresh = context.conversationSnapshot(ownerId, conversationId);
+            next.conversationLocalTurns ??= {};
+            const id = turnId ?? body.turnId;
+            const existing = next.conversationLocalTurns[id];
+            const now = new Date(context.timestamp()).toISOString();
+            if (!turnId) {
+              if (existing) {
+                if (existing.conversationId !== conversationId || existing.deviceId !== deviceId ||
+                    existing.requestId !== body.requestId ||
+                    existing.sourceSyncEventId !== body.sourceSyncEventId) throw failure('REQUEST_CONFLICT', 409);
+                return { turnId: id, state: context.localTurnState(fresh, existing),
+                  expiresAt: existing.expiresAt, requestId: existing.requestId };
+              }
+              if (next.conversationBindings?.[conversationId]) throw failure('CONVERSATION_NOT_READY', 409);
+              const source = fresh.events.find((event) => event.eventId === body.sourceSyncEventId);
+              if (source?.kind !== 'message.created' || source.payload.role !== 'user' ||
+                  source.sourceDeviceId !== deviceId || source.seq !== fresh.latestSeq ||
+                  Object.values(next.conversationLocalTurns).some((item) =>
+                    item.sourceSyncEventId === body.sourceSyncEventId) ||
+                  Object.values(next.conversationLocalTurns).some((item) =>
+                    item.requestId === body.requestId)) throw failure('CONVERSATION_NOT_READY', 409);
+              if (Object.keys(next.conversationLocalTurns).length >= MAX_LOCAL_TURNS) {
+                for (const [oldId, old] of Object.entries(next.conversationLocalTurns)) {
+                  if (old.state === 'finished' && Date.parse(old.updatedAt) < context.timestamp() - 30 * 86_400_000) {
+                    delete next.conversationLocalTurns[oldId];
+                  }
+                }
+                if (Object.keys(next.conversationLocalTurns).length >= MAX_LOCAL_TURNS) {
+                  throw failure('CAPACITY_LIMIT', 429);
+                }
+              }
+              const other = Object.values(next.conversationLocalTurns).some((item) =>
+                item.conversationId === conversationId && context.localTurnState(fresh, item) === 'running');
+              if (other) throw failure('LOCAL_TURN_RUNNING', 409);
+              const expiresAt = new Date(context.timestamp() + 60_000).toISOString();
+              next.conversationLocalTurns[id] = { turnId: id, conversationId,
+                ownerId, requestId: body.requestId, sourceSyncEventId: body.sourceSyncEventId,
+                deviceId, state: 'running', createdAt: now, updatedAt: now, expiresAt };
+              return { turnId: id, state: 'running', expiresAt, requestId: body.requestId };
+            }
+            if (!existing || existing.conversationId !== conversationId || existing.deviceId !== deviceId ||
+                existing.requestId !== body.requestId) throw failure('NOT_FOUND', 404);
+            const state = context.localTurnState(fresh, existing);
+            if (localTurnMatch[3] === 'renew') {
+              if (state !== 'running' || next.conversationBindings?.[conversationId]) {
+                throw failure('LOCAL_TURN_UNCONFIRMED', 409);
+              }
+              existing.expiresAt = new Date(context.timestamp() + 60_000).toISOString();
+              existing.updatedAt = now;
+              return { turnId: id, state: 'running', expiresAt: existing.expiresAt,
+                requestId: existing.requestId };
+            }
+            if (localTurnMatch[3] !== 'finish' || state !== 'finished') {
+              throw failure('CONVERSATION_NOT_READY', 409);
+            }
+            existing.state = 'finished'; existing.updatedAt = now;
+            return { turnId: id, state: 'finished', expiresAt: existing.expiresAt,
+              requestId: existing.requestId };
+          }));
+          return context.json(response, 200, record);
+        }
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/status') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const backendStatus = statusProjection(await context.callBackend(() => context.backend.getStatus({ ownerId })));
+        backendStatus.modules.memory = context.memoryManager?.peek(ownerId) ?? 'disabled';
+        if (!context.hostOwner(ownerId)) {
+          const models = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })))
+            .filter((item) => context.modelSelectable(ownerId, item.id));
+          if (!models.some((item) => item.configured)) {
+            backendStatus.capabilities.chat = { available: false, reasonCode: 'MODEL_UNAVAILABLE' };
+          }
+          backendStatus.capabilities.desktopOpenApp = {
+            available: false, reasonCode: 'CAPABILITY_UNAVAILABLE', appIds: [],
+          };
+          backendStatus.capabilities.naturalLanguageDesktop = {
+            available: false, reasonCode: 'CAPABILITY_UNAVAILABLE',
+          };
+        }
+        return context.json(response, 200, {
+          ...context.service.status(ownerId),
+          sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
+          backend: backendStatus,
+        });
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/models') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, { models: modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })))
+          .filter((item) => context.modelSelectable(ownerId, item.id))
+          .map((item) => {
+            const owned = item.id.startsWith('private-model-') ? context.accountModelForProfile(ownerId, item.id) : null;
+            return owned ? { ...item, name: owned.name, accountModelId: owned.accountModelId,
+              revision: owned.revision } : item;
+          }) });
+      }
+      if (pathname === '/personal/v1/account/models' && request.method === 'GET') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'sessions:read');
+        return context.json(response, 200, { models: Object.values(state.accountModels ?? {})
+          .filter((item) => item.status !== 'removed').map((item) => context.accountModelView(ownerId, item))
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          canManage: current.via === 'cookie' && current.device.scopes.includes('account:manage') });
+      }
+      const modelOperationMatch = /^\/personal\/v1\/account\/models\/by-request\/([A-Za-z0-9_.:-]{1,128})$/.exec(pathname);
+      if (modelOperationMatch && request.method === 'GET') {
+        if (url.search || !REQUEST_ID.test(modelOperationMatch[1])) throw failure('INVALID_REQUEST');
+        const operation = state.modelOperations?.[modelOperationMatch[1]];
+        if (!operation) throw failure('NOT_FOUND', 404);
+        if (operation.status === 'uncertain') await context.reconcileModelOperation(ownerId, operation.requestId);
+        return context.json(response, 200, context.modelOperationResponse(ownerId,
+          context.accountState(ownerId).modelOperations[operation.requestId]));
+      }
+      const accountModelMatch = /^\/personal\/v1\/account\/models\/(account-model-[0-9a-f-]{36})(?:\/(test|stop-using|transfer))?$/.exec(pathname);
+      if (accountModelMatch && request.method === 'GET' && !accountModelMatch[2]) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const record = state.accountModels?.[accountModelMatch[1]];
+        if (!record) throw failure('NOT_FOUND', 404);
+        return context.json(response, 200, { model: context.accountModelView(ownerId, record) });
+      }
+      if ((pathname === '/personal/v1/account/models' && request.method === 'POST') ||
+          (accountModelMatch && ['PATCH', 'POST', 'DELETE'].includes(request.method))) {
+        if (url.search || !context.accountModelManager) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 503);
+        const current = context.authenticate(request, 'account:manage');
+        if (current.via !== 'cookie' || current.device.authKind !== 'password') {
+          throw failure('FORBIDDEN', 403);
+        }
+        const action = !accountModelMatch ? 'create' : request.method === 'PATCH' ? 'update'
+          : request.method === 'DELETE' ? 'remove' : accountModelMatch[2] === 'test' ? 'test'
+            : accountModelMatch[2] === 'stop-using' ? 'stop_using'
+              : accountModelMatch[2] === 'transfer' ? 'transfer' : null;
+        if (!action) throw failure('NOT_FOUND', 404);
+        const body = await context.readJson(request, action === 'create' || action === 'update' ? 12 * 1024 : MAX_BODY);
+        if (action === 'create') exactKeys(body, ['requestId', 'name', 'baseUrl', 'modelId', 'apiKey'],
+          ['requestId', 'name', 'baseUrl', 'modelId', 'apiKey']);
+        else if (action === 'update') exactKeys(body,
+          ['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey'],
+          ['requestId', 'expectedRevision']);
+        else exactKeys(body, ['requestId', 'expectedRevision'], ['requestId', 'expectedRevision']);
+        if (!REQUEST_ID.test(body.requestId ?? '') ||
+            (action !== 'create' && (!Number.isSafeInteger(body.expectedRevision) ||
+              body.expectedRevision < 1))) throw failure('INVALID_REQUEST');
+        const accountModelId = action === 'create' ? null : accountModelMatch[1];
+        if (context.interactionRequestIdUsed(state, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
+        const prior = state.modelOperations?.[body.requestId];
+        if (action === 'transfer') {
+          if (prior) throw failure('REQUEST_CONFLICT', 409);
+          const record = state.accountModels?.[accountModelId];
+          if (!record) throw failure('NOT_FOUND', 404);
+          if (record.status !== 'active' || record.revision !== body.expectedRevision) {
+            throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
+          }
+          if (current.device.syncCapabilities?.nativeVersionCode < 12 ||
+              current.device.syncCapabilities?.sharedConversations !== 1) throw failure('FORBIDDEN', 403);
+          const profileId = record.revisions[String(record.runtimeRevision)].profileId;
+          if (record.ownerId !== ownerId || !context.modelVisible(ownerId, profileId)) {
+            throw failure('ACCOUNT_MODEL_UNAVAILABLE', 409);
+          }
+          const secret = await context.accountModelManager.readSecret({ ownerId, profileId });
+          const latest = context.authenticate(request, 'account:manage');
+          const newest = context.accountState(ownerId).accountModels?.[accountModelId];
+          if (latest.ownerId !== ownerId || latest.deviceId !== deviceId ||
+              latest.via !== 'cookie' || latest.device.authKind !== 'password' ||
+              latest.device.authEpoch !== current.device.authEpoch ||
+              latest.device.syncCapabilities?.nativeVersionCode < 12 ||
+              newest?.ownerId !== ownerId || newest.status !== 'active' ||
+              newest.revision !== body.expectedRevision ||
+              newest.revisions[String(newest.runtimeRevision)]?.profileId !== profileId ||
+              !context.modelVisible(ownerId, profileId) ||
+              typeof secret !== 'string' || !secret) throw failure('ACCOUNT_MODEL_UNAVAILABLE', 409);
+          return context.json(response, 200, { model: context.accountModelView(ownerId,
+            context.accountState(ownerId).accountModels[accountModelId]), apiKey: secret });
+        }
+        const priorModel = accountModelId ? state.accountModels?.[accountModelId] : null;
+        if (accountModelId && !priorModel) throw failure('NOT_FOUND', 404);
+        let name = body.name, baseUrl = body.baseUrl, modelId = body.modelId;
+        if (action === 'create' || action === 'update') {
+          if (action === 'update' && !['name', 'baseUrl', 'modelId', 'apiKey'].some((key) =>
+            Object.hasOwn(body, key))) throw failure('INVALID_REQUEST');
+          name = action === 'create' || body.name !== undefined ? body.name : priorModel.name;
+          baseUrl = canonicalAccountBaseUrl(action === 'create' || body.baseUrl !== undefined
+            ? body.baseUrl : priorModel.revisions[String(priorModel.runtimeRevision)].baseUrl);
+          modelId = action === 'create' || body.modelId !== undefined
+            ? body.modelId : priorModel.revisions[String(priorModel.runtimeRevision)].modelId;
+          if (typeof name !== 'string' || !name.trim() || name.length > 120 ||
+              !baseUrl || typeof modelId !== 'string' || !ACCOUNT_MODEL_NAME_ID.test(modelId) ||
+              (body.apiKey !== undefined && (typeof body.apiKey !== 'string' ||
+                !body.apiKey || body.apiKey.length > 4096))) throw failure('INVALID_REQUEST');
+          if (action === 'create' && !body.apiKey) throw failure('ACCOUNT_MODEL_SECRET_REQUIRED', 400);
+          if (action === 'update' && body.baseUrl !== undefined &&
+              baseUrl !== priorModel.revisions[String(priorModel.runtimeRevision)].baseUrl &&
+              body.apiKey === undefined) throw failure('ACCOUNT_MODEL_SECRET_REQUIRED', 400);
+        }
+        const hash = digest(JSON.stringify({ action, accountModelId,
+          request: action === 'create' || action === 'update'
+            ? Object.fromEntries(['requestId', 'expectedRevision', 'name', 'baseUrl', 'modelId', 'apiKey']
+              .filter((key) => Object.hasOwn(body, key))
+              .map((key) => [key, key === 'baseUrl' ? canonicalAccountBaseUrl(body[key]) : body[key]]))
+            : { requestId: body.requestId, expectedRevision: body.expectedRevision } }));
+        if (prior) {
+          if (prior.kind !== action || prior.accountModelId !== accountModelId && accountModelId !== null ||
+              prior.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
+          return context.json(response, ['pending', 'applying'].includes(prior.status) ? 202 : 200,
+            context.modelOperationResponse(ownerId, prior));
+        }
+        if (Object.values(state.commands).some((item) => item.requestId === body.requestId) ||
+            state.projectOperations?.[body.requestId]) throw failure('REQUEST_CONFLICT', 409);
+        if (priorModel && (priorModel.revision !== body.expectedRevision ||
+            !(action === 'remove' ? ['active', 'stopped', 'failed'].includes(priorModel.status)
+              : priorModel.status === 'active'))) {
+          throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
+        }
+        if (accountModelId && Object.values(state.modelOperations ?? {}).some((item) =>
+          item.accountModelId === accountModelId &&
+          ['pending', 'applying', 'uncertain'].includes(item.status))) {
+          throw failure('ACCOUNT_MODEL_BUSY', 409);
+        }
+        const newId = accountModelId ?? `account-model-${randomUUID()}`;
+        const currentRuntime = priorModel?.revisions[String(priorModel.runtimeRevision)];
+        const routeChange = action === 'create' || action === 'update' &&
+          (baseUrl !== currentRuntime.baseUrl || modelId !== currentRuntime.modelId || body.apiKey !== undefined);
+        const target = routeChange ? {
+          runtimeRevision: action === 'create' ? 1 : priorModel.runtimeRevision + 1,
+          profileId: privateProfileId(ownerId, newId,
+            action === 'create' ? 1 : priorModel.runtimeRevision + 1),
+          baseUrl, modelId, name, routeFingerprint: modelRouteFingerprint(
+            openAICompatibleEndpoint(baseUrl, 'chat/completions').href, modelId),
+        } : null;
+        const stageRef = body.apiKey !== undefined
+          ? `pending-model-${digest(`${ownerId}|${body.requestId}|${hash}`).slice(0, 48)}` : null;
+        if (stageRef) await context.accountModelManager.stageSecret({ ownerId, stageRef, apiKey: body.apiKey });
+        const operation = await context.serial(() => context.mutate(ownerId, (next) => {
+          const latest = context.authenticate(request, 'account:manage');
+          if (latest.ownerId !== ownerId || latest.deviceId !== deviceId || latest.via !== 'cookie') {
+            throw failure('UNAUTHORIZED', 401);
+          }
+          next.accountModels ??= {}; next.modelOperations ??= {};
+          if (context.interactionRequestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
+          const existing = next.modelOperations[body.requestId];
+          if (existing) {
+            if (existing.payloadHash !== hash || existing.kind !== action) throw failure('REQUEST_CONFLICT', 409);
+            return existing;
+          }
+          if (Object.keys(next.modelOperations).length >= 1000 ||
+              (action === 'create' && (Object.keys(next.accountModels).length >= 1000 ||
+                Object.values(next.accountModels).filter((item) => item.status !== 'removed').length >= 100))) {
+            throw failure('CAPACITY_LIMIT', 429);
+          }
+          const found = accountModelId ? next.accountModels[accountModelId] : null;
+          if (accountModelId && (!found ||
+              !(action === 'remove' ? ['active', 'stopped', 'failed'].includes(found.status)
+                : found.status === 'active') ||
+              found.revision !== body.expectedRevision)) throw failure('ACCOUNT_MODEL_REVISION_CHANGED', 409);
+          if (accountModelId && Object.values(next.modelOperations).some((item) =>
+            item.accountModelId === accountModelId &&
+            ['pending', 'applying', 'uncertain'].includes(item.status))) {
+            throw failure('ACCOUNT_MODEL_BUSY', 409);
+          }
+          const now = new Date(context.timestamp()).toISOString();
+          if (action === 'create') next.accountModels[newId] = { accountModelId: newId,
+            ownerId, revision: 1, runtimeRevision: 1, name, status: 'pending',
+            revisions: { '1': { revision: 1, profileId: target.profileId,
+              baseUrl, modelId, routeFingerprint: target.routeFingerprint, createdAt: now } },
+            createdAt: now, updatedAt: now };
+          const saved = { ownerId, requestId: body.requestId, kind: action,
+            accountModelId: newId, payloadHash: hash, status: 'pending',
+            ...(body.expectedRevision ? { expectedRevision: body.expectedRevision } : {}),
+            ...(target ? { target } : {}), ...(stageRef ? { stageRef } : {}),
+            ...(action === 'update' ? { name } : {}),
+            ...(currentRuntime && target ? { previousProfileId: currentRuntime.profileId } : {}),
+            createdAt: now, updatedAt: now };
+          next.modelOperations[body.requestId] = saved;
+          return saved;
+        }));
+        context.scheduleModelOperation(ownerId, operation.requestId);
+        return context.json(response, 202, context.modelOperationResponse(ownerId, operation));
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/projects') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'sessions:read');
+        return context.json(response, 200, { projects: Object.values(state.projects ?? {}).map(publicProject)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+          canManage: context.hostOwner(ownerId) && current.via === 'cookie' && current.device.scopes.includes('account:manage') });
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/workspaces/browser') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'sessions:read');
+        const readerStatus = context.hostOwner(ownerId) ? context.browserReader?.status() : null;
+        return context.json(response, 200, { available: readerStatus?.available === true,
+          hostId: state.hostId, workspaceKind: 'browser',
+          ...(readerStatus?.lastFailure ? { reasonCode: readerStatus.lastFailure } : {}) });
+      }
+      if (request.method === 'POST' && pathname === '/personal/v1/projects') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
+        const body = await context.readJson(request);
+        exactKeys(body, ['requestId', 'name', 'rootPath'], ['requestId', 'name', 'rootPath']);
+        if (!REQUEST_ID.test(body.requestId ?? '') || !validProjectName(body.name)) throw failure('INVALID_REQUEST');
+        const hash = digest(JSON.stringify({ name: body.name, rootPath: body.rootPath }));
+        if (context.interactionRequestIdUsed(state, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
+        const prior = state.projectOperations?.[body.requestId];
+        if (prior) {
+          if (prior.kind !== 'register' || prior.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
+          return context.json(response, 200, { project: publicProject(state.projects[prior.projectId]) });
+        }
+        const inspected = await inspectProjectRoot(body.rootPath);
+        const project = await context.serial(() => context.mutate(ownerId, (next) => {
+          const latest = context.authenticate(request, 'account:manage');
+          if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId || !context.hostOwner(ownerId)) {
+            throw failure('UNAUTHORIZED', 401);
+          }
+          next.projects ??= {}; next.projectOperations ??= {};
+          if (context.interactionRequestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
+          const existing = next.projectOperations[body.requestId];
+          if (existing) {
+            if (existing.kind !== 'register' || existing.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
+            return publicProject(next.projects[existing.projectId]);
+          }
+          if (Object.keys(next.projects).length >= MAX_PROJECTS || Object.keys(next.projectOperations).length >= 500 ||
+              Object.values(next.commands).some((command) => command.requestId === body.requestId)) {
+            throw failure('CAPACITY_LIMIT', 429);
+          }
+          const projectId = `project-${randomUUID()}`;
+          const now = new Date(context.timestamp()).toISOString();
+          next.projects[projectId] = { projectId, ownerId, name: body.name, ...inspected,
+            fileSecret: randomBytes(32).toString('hex'), revision: 1, revoked: false,
+            createdAt: now, updatedAt: now, files: {} };
+          next.projectOperations[body.requestId] = { kind: 'register', projectId, payloadHash: hash, at: now };
+          return publicProject(next.projects[projectId]);
+        }));
+        return context.json(response, 201, { project });
+      }
+      const projectRevokeMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)\/revoke$/.exec(pathname);
+      if (request.method === 'POST' && projectRevokeMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const current = context.authenticate(request, 'account:manage');
+        if (!context.hostOwner(ownerId)) throw failure('FORBIDDEN', 403);
+        const projectId = id(projectRevokeMatch[1]);
+        const body = await context.readJson(request);
+        exactKeys(body, ['requestId'], ['requestId']);
+        if (!REQUEST_ID.test(body.requestId ?? '')) throw failure('INVALID_REQUEST');
+        const project = await context.serial(() => context.mutate(ownerId, (next) => {
+          const latest = context.authenticate(request, 'account:manage');
+          if (latest.ownerId !== ownerId || latest.deviceId !== current.deviceId || !context.hostOwner(ownerId)) {
+            throw failure('UNAUTHORIZED', 401);
+          }
+          const found = next.projects?.[projectId];
+          if (!found) throw failure('NOT_FOUND', 404);
+          next.projectOperations ??= {};
+          const hash = digest(projectId);
+          if (context.interactionRequestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
+          const prior = next.projectOperations[body.requestId];
+          if (prior) {
+            if (prior.kind !== 'revoke' || prior.projectId !== projectId || prior.payloadHash !== hash) {
+              throw failure('REQUEST_CONFLICT', 409);
+            }
+            return publicProject(found);
+          }
+          if (found.revoked) throw failure('PROJECT_REVOKED', 409);
+          if (Object.keys(next.projectOperations).length >= 500 ||
+              Object.values(next.commands).some((command) => command.requestId === body.requestId)) {
+            throw failure('CAPACITY_LIMIT', 429);
+          }
+          const now = new Date(context.timestamp()).toISOString();
+          found.revoked = true; found.revision++; found.revokedAt = now; found.updatedAt = now;
+          next.projectOperations[body.requestId] = { kind: 'revoke', projectId, payloadHash: hash, at: now };
+          return publicProject(found);
+        }));
+        return context.json(response, 200, { project });
+      }
+      const modelMatch = /^\/personal\/v1\/models\/([A-Za-z0-9._-]+)\/(verify|chat\/completions)$/.exec(pathname);
+      if (request.method === 'POST' && modelMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const profileId = modelProfileId(modelMatch[1]);
+        if (!context.modelSelectable(ownerId, profileId)) throw failure('MODEL_UNAVAILABLE', 422);
+        if (modelMatch[2] === 'verify') {
+          if (typeof context.backend.verifyModelProfile !== 'function') throw failure('CAPABILITY_UNAVAILABLE', 503);
+          exactKeys(await context.readJson(request), [], []);
+          context.authenticate(request, 'commands:write');
+          let value;
+          try { value = await context.callBackend(() => context.backend.verifyModelProfile(profileId, ownerId)); }
+          catch (error) { throw error?.code === 'MODEL_UNAVAILABLE'
+            ? failure('MODEL_UNAVAILABLE', 422) : error; }
+          if (!plainObject(value)) throw failure('BACKEND_UNAVAILABLE', 503);
+          return context.json(response, 200, { configured: value.configured === true,
+            reachable: value.reachable === true, modelListed: value.modelListed === true,
+            inferenceVerified: false });
+        }
+        if (typeof context.backend.modelCompletion !== 'function') throw failure('CAPABILITY_UNAVAILABLE', 503);
+        const body = canonicalCompletion(await context.readJson(request, 256 * 1024));
+        const current = context.authenticate(request, 'commands:write');
+        if (current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        const controller = new AbortController();
+        const disconnected = () => controller.abort();
+        const timer = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
+        const authWatch = setInterval(() => {
+          try { context.authenticate(request, 'commands:write'); }
+          catch { controller.abort(); }
+        }, 1000);
+        response.once('close', disconnected);
+        try {
+          let upstream;
+          try { upstream = await context.backend.modelCompletion({ profileId, body, signal: controller.signal, ownerId }); }
+          catch (error) { throw error?.code === 'MODEL_UNAVAILABLE'
+            ? failure('MODEL_UNAVAILABLE', 422) : error; }
+          if (controller.signal.aborted || !upstream?.ok || !upstream.body) throw failure('BACKEND_UNAVAILABLE', 503);
+          if (!body.stream) {
+            const raw = await boundedUpstreamBody(upstream, MODEL_JSON_MAX);
+            let value;
+            try { value = JSON.parse(raw); } catch { throw failure('BACKEND_UNAVAILABLE', 503); }
+            let projected;
+            try { projected = projectCompletion(value); }
+            catch { throw failure('BACKEND_UNAVAILABLE', 503); }
+            return context.json(response, 200, projected);
+          }
+          if (!/^text\/event-stream(?:\s*;|$)/i.test(upstream.headers?.get?.('content-type') ?? '')) {
+            throw failure('BACKEND_UNAVAILABLE', 503);
+          }
+          response.writeHead(200, { 'content-type': 'text/event-stream; charset=utf-8',
+            'cache-control': 'no-store', 'x-content-type-options': 'nosniff', 'x-accel-buffering': 'no' });
+          let bytes = 0;
+          let tail = '';
+          for await (const part of upstream.body) {
+            if (controller.signal.aborted) throw failure('SERVICE_UNAVAILABLE', 503);
+            bytes += part.byteLength;
+            if (bytes > MODEL_SSE_MAX) throw failure('BACKEND_UNAVAILABLE', 503);
+            tail = (tail + Buffer.from(part).toString('utf8')).slice(-256);
+            await writeStreamPart(response, part);
+          }
+          if (!tail.includes('data: [DONE]')) throw failure('BACKEND_UNAVAILABLE', 503);
+          response.end();
+          return;
+        } finally {
+          clearTimeout(timer);
+          clearInterval(authWatch);
+          response.off('close', disconnected);
+          controller.abort();
+        }
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/sessions') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const sessions = [];
+        for (const sessionId of Object.keys(state.sessions).sort()) {
+          try {
+            const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
+            if (described?.sessionId === sessionId) sessions.push({
+              sessionId,
+              title: bounded(described.title, 256) ?? '',
+              running: described.running === true,
+              ...(state.sessions[sessionId].workspaceKind ? {
+                workspaceKind: state.sessions[sessionId].workspaceKind,
+                modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
+              ...(state.sessions[sessionId].conversationId ? {
+                conversationId: state.sessions[sessionId].conversationId,
+                modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
+              ...(state.sessions[sessionId].projectId ? {
+                projectId: state.sessions[sessionId].projectId,
+                projectRevision: state.sessions[sessionId].projectRevision,
+                projectName: state.projects?.[state.sessions[sessionId].projectId]?.name ?? '已登记项目',
+                projectRevoked: state.projects?.[state.sessions[sessionId].projectId]?.revoked === true,
+                modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
+              sendAvailable: (state.sessions[sessionId].origin === 'personal-remote' &&
+                described.agentPreset === 'personal-remote' &&
+                (!state.sessions[sessionId].projectId ||
+                  (state.projects?.[state.sessions[sessionId].projectId]?.revoked === false &&
+                    state.projects[state.sessions[sessionId].projectId].revision === state.sessions[sessionId].projectRevision &&
+                    described.modelProfileId === state.sessions[sessionId].modelProfileId)) &&
+                (!state.sessions[sessionId].workspaceKind ||
+                  (context.browserReader?.status()?.available === true &&
+                    described.modelProfileId === state.sessions[sessionId].modelProfileId))) ||
+                (state.sessions[sessionId].origin === 'shared-chat' &&
+                described.agentPreset === 'personal-shared-chat' &&
+                context.modelVisible(ownerId, state.sessions[sessionId].modelProfileId)),
+            });
+          } catch { sessions.push({ sessionId, title: '', running: false, sendAvailable: false, unavailable: true }); }
+        }
+        return context.json(response, 200, { sessions });
+      }
+      const questionMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/questions(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
+      if (request.method === 'GET' && questionMatch && !questionMatch[2]) {
+        const sessionId = id(questionMatch[1]);
+        if ([...url.searchParams.keys()].some(key => !['before', 'limit'].includes(key)) ||
+            url.searchParams.getAll('before').length > 1 || url.searchParams.getAll('limit').length > 1) throw failure('INVALID_REQUEST');
+        const before = url.searchParams.get('before'), limitText = url.searchParams.get('limit') ?? '50';
+        if (!/^\d+$/.test(limitText) || !Number.isSafeInteger(Number(limitText)) || Number(limitText) < 1 || Number(limitText) > 100 ||
+            before !== null && !TOOL_RUNTIME_ID.test(before)) throw failure('INVALID_REQUEST');
+        await context.syncUserQuestions(ownerId, sessionId);
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        const ordered = userQuestions(context.accountState(ownerId)).filter(row => row.sessionId === sessionId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.questionRpcId.localeCompare(a.questionRpcId));
+        const cursor = before === null ? -1 : ordered.findIndex(row => row.questionRpcId === before);
+        if (before !== null && cursor < 0) throw failure('NOT_FOUND', 404);
+        const start = cursor + 1, page = ordered.slice(start, start + Number(limitText)), hasMore = start + Number(limitText) < ordered.length;
+        return context.json(response, 200, { questions: page.map(publicUserQuestion), nextBefore: hasMore ? page.at(-1).questionRpcId : null, hasMore });
+      }
+      if (request.method === 'POST' && questionMatch?.[2]) {
+        if (url.search || !TOOL_RUNTIME_ID.test(questionMatch[2])) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, await context.answerUserQuestion(request, ownerId, deviceId, id(questionMatch[1]),
+          questionMatch[2], await context.readJson(request)));
+      }
+      const approvalMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/approvals(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
+      if (request.method === 'GET' && approvalMatch && !approvalMatch[2]) {
+        const sessionId = id(approvalMatch[1]);
+        if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
+        if ([...url.searchParams.keys()].some(key => !['before', 'limit'].includes(key)) ||
+            url.searchParams.getAll('before').length > 1 || url.searchParams.getAll('limit').length > 1) throw failure('INVALID_REQUEST');
+        const before = url.searchParams.get('before'), limitText = url.searchParams.get('limit') ?? '50';
+        if (!/^\d+$/.test(limitText) || !Number.isSafeInteger(Number(limitText)) || Number(limitText) < 1 || Number(limitText) > 100 ||
+            before !== null && !TOOL_RUNTIME_ID.test(before)) throw failure('INVALID_REQUEST');
+        await context.refreshToolApprovals(ownerId, sessionId);
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        const ordered = toolApprovals(context.accountState(ownerId)).filter(row => row.sessionId === sessionId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.approvalId.localeCompare(a.approvalId));
+        const cursor = before === null ? -1 : ordered.findIndex(row => row.approvalId === before);
+        if (before !== null && cursor < 0) throw failure('NOT_FOUND', 404);
+        const start = cursor + 1, page = ordered.slice(start, start + Number(limitText));
+        const hasMore = start + Number(limitText) < ordered.length;
+        return context.json(response, 200, { approvals: page.map(publicToolApproval),
+          nextBefore: hasMore ? page.at(-1).approvalId : null, hasMore });
+      }
+      if (request.method === 'POST' && approvalMatch?.[2]) {
+        if (url.search || !TOOL_RUNTIME_ID.test(approvalMatch[2])) throw failure('INVALID_REQUEST');
+        const sessionId = id(approvalMatch[1]);
+        return context.json(response, 200, await context.answerToolApproval(request, ownerId, deviceId, sessionId,
+          approvalMatch[2], await context.readJson(request)));
+      }
+      const eventMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events$/.exec(pathname);
+      if (request.method === 'GET' && eventMatch) {
+        const sessionId = id(eventMatch[1]);
+        if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
+        if ([...url.searchParams.keys()].some((key) => !['afterSeq', 'limit'].includes(key)) ||
+            url.searchParams.getAll('afterSeq').length > 1 || url.searchParams.getAll('limit').length > 1) {
+          throw failure('INVALID_REQUEST');
+        }
+        const afterText = url.searchParams.get('afterSeq') ?? '-1';
+        const limitText = url.searchParams.get('limit') ?? '100';
+        if (!/^-?\d+$/.test(afterText) || !/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
+        const afterSeq = Number(afterText), limit = Number(limitText);
+        if (!Number.isSafeInteger(afterSeq) || afterSeq < -1 || !Number.isSafeInteger(limit) || limit < 1 || limit > MAX_PAGE) {
+          throw failure('INVALID_REQUEST');
+        }
+        let page;
+        try { page = await context.callBackend(() => context.backend.readEvents({ sessionId, afterSeq, limit, ownerId })); }
+        catch (error) {
+          if (error?.code === 'HISTORY_WINDOW_LIMIT') throw failure('HISTORY_WINDOW_LIMIT', 422);
+          throw error;
+        }
+        if (!plainObject(page) || !Array.isArray(page.events) || page.events.length > limit ||
+            typeof page.hasMore !== 'boolean' || !Number.isSafeInteger(page.nextSeq)) {
+          throw failure('BACKEND_UNAVAILABLE', 503);
+        }
+        let last = afterSeq;
+        for (const event of page.events) {
+          if (!plainObject(event) || !Number.isSafeInteger(event.seq) || event.seq <= last ||
+              typeof event.type !== 'string' || event.type.length > 128) throw failure('BACKEND_UNAVAILABLE', 503);
+          last = event.seq;
+        }
+        if (page.nextSeq < last || page.nextSeq < afterSeq ||
+            (page.hasMore && page.nextSeq === afterSeq)) throw failure('BACKEND_UNAVAILABLE', 503);
+        for (const event of page.events) {
+          if (!Object.hasOwn(event, 'data') || event.seq > page.nextSeq ||
+              (event.at !== undefined && (typeof event.at !== 'string' || event.at.length > 64)) ||
+              !(event.data === null || plainObject(event.data) || Array.isArray(event.data))) {
+            throw failure('BACKEND_UNAVAILABLE', 503);
+          }
+        }
+        const projection = {
+          events: page.events.map((rawEvent) => {
+            const event = context.publicHistoryEvent(ownerId, sessionId, rawEvent);
+            const data = plainObject(event.data) && event.data.truncated === false
+              ? Object.fromEntries(Object.entries(event.data).filter(([key]) => key !== 'truncated'))
+              : event.data;
+            return ({
+            seq: event.seq, type: event.type,
+            ...(typeof event.at === 'string' ? { at: event.at.slice(0, 64) } : {}),
+            data,
+          }); }),
+          nextSeq: page.nextSeq, hasMore: page.hasMore,
+        };
+        if (Buffer.byteLength(JSON.stringify(projection), 'utf8') > 1024 * 1024) {
+          throw failure('BACKEND_UNAVAILABLE', 503);
+        }
+        return context.json(response, 200, projection);
+      }
+      const taskMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      if (request.method === 'GET' && taskMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const taskId = id(taskMatch[1]);
+        context.taskSource(state, taskId);
+        await context.driveTaskStop(ownerId, taskId);
+        return context.json(response, 200, await context.taskDetail(context.accountState(ownerId), taskId));
+      }
+      const taskSourceMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/sources\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      if (request.method === 'GET' && taskSourceMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const taskId = id(taskSourceMatch[1]), snapshotId = id(taskSourceMatch[2]);
+        context.taskSource(state, taskId);
+        const source = state.projectSources?.[snapshotId] ?? state.browserSources?.[snapshotId];
+        if (!source || source.taskId !== taskId || source.ownerId !== ownerId) throw failure('NOT_FOUND', 404);
+        const bytes = await context.artifactStore.inspect(ownerId, taskId, snapshotId,
+          { size: source.textSize, sha256: source.textSha256 });
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        return context.json(response, 200, { source: { ...publicSource(source), text: bytes.toString('utf8'),
+          // Native v10 source preview verifies fileSha256 over delivered text.
+          // For a webpage this is the same captured-body hash, not a project-file claim.
+          ...(source.kind === 'webpage' ? { fileSha256: source.textSha256 } : {}) } });
+      }
+      const taskActionMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/(supplements|stop|resume)$/.exec(pathname);
+      const projectSessionMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)\/sessions$/.exec(pathname);
+      const browserSessionPath = pathname === '/personal/v1/workspaces/browser/sessions';
+      if (request.method === 'POST' && taskActionMatch?.[2] === 'stop') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const taskId = id(taskActionMatch[1]);
+        const body = await context.readJson(request);
+        exactKeys(body, ['requestId'], ['requestId']);
+        if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId)) throw failure('INVALID_REQUEST');
+        await context.serial(() => context.mutate(ownerId, (next) => {
+          const current = context.authenticate(request, 'commands:write');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          const source = context.taskSource(next, taskId);
+          const usedByCommand = Object.values(next.commands).some((item) => item.requestId === body.requestId);
+          const priorTask = Object.values(next.commands).find((item) =>
+            item.taskControl?.stopRequests.some((entry) => entry.requestId === body.requestId));
+          if (usedByCommand || next.modelOperations?.[body.requestId] || next.projectOperations?.[body.requestId] ||
+              context.interactionRequestIdUsed(next, body.requestId) ||
+              (priorTask && priorTask.commandId !== taskId)) throw failure('REQUEST_CONFLICT', 409);
+          if (priorTask) return;
+          const now = new Date(context.timestamp()).toISOString();
+          const control = source.taskControl ?? { state: 'active', stopRequests: [], updatedAt: now };
+          if (control.state === 'stop_requested' || control.stopRequests.length >= 100) {
+            throw failure('TASK_NOT_READY', 409);
+          }
+          control.state = 'stop_requested';
+          control.stopRequests.push({ requestId: body.requestId, at: now,
+            targets: context.stopTargets(next, taskId) });
+          control.updatedAt = now;
+          source.taskControl = control;
+          for (const item of [source, ...context.taskChildren(next, taskId)]) {
+            for (const row of item.toolApprovals ?? []) invalidateToolApproval(row, 'task_stopped', now);
+            for (const row of item.userQuestions ?? []) invalidateUserQuestion(row, 'TASK_NOT_READY', now);
+            if (item.state === 'pending') {
+              item.state = 'rejected'; item.errorCode = 'TASK_NOT_READY'; item.updatedAt = now;
+            }
+          }
+        }));
+        if (context.accountState(ownerId).commands[taskId]?.taskControl?.state === 'stop_requested' &&
+            context.accountState(ownerId).sessions[context.accountState(ownerId).commands[taskId].sessionId]?.workspaceKind === 'browser') {
+          context.browserReader?.cancelTask(ownerId, taskId);
+        }
+        await context.driveTaskStop(ownerId, taskId, true);
+        return context.json(response, 202, { task: await context.taskDetail(context.accountState(ownerId), taskId) });
+      }
+      const artifactMatch = /^\/personal\/v1\/artifacts\/([A-Za-z0-9_-]+)(?:\/(preview|download))?$/.exec(pathname);
+      if (request.method === 'GET' && artifactMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const artifactId = id(artifactMatch[1]);
+        const command = Object.values(state.commands).find((item) =>
+          item.kind === INTERNAL_ARTIFACT_KIND && item.artifactId === artifactId);
+        if (!command || command.state !== 'observed' ||
+            command.verification?.status !== 'observed' ||
+            state.sessions[command.sessionId]?.origin !== 'personal-remote' ||
+            state.commands[command.taskId]?.kind !== 'session.message') throw failure('NOT_FOUND', 404);
+        let bytes;
+        try { bytes = await context.artifactStore.inspect(ownerId, command.taskId, artifactId, command); }
+        catch { throw failure('ARTIFACT_UNVERIFIED', 409); }
+        // Credentials may be revoked while the private file is being read.
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        if (!artifactMatch[2]) return context.json(response, 200, { artifact: publicCommand(command) });
+        if (artifactMatch[2] === 'preview') return context.json(response, 200,
+          { artifact: publicCommand(command), text: bytes.toString('utf8') });
+        response.writeHead(200, {
+          'content-type': artifactContentType(command.fileName),
+          'content-disposition': attachmentDisposition(command.fileName),
+          'content-length': String(bytes.length), 'cache-control': 'no-store',
+          'x-content-type-options': 'nosniff',
+        });
+        return response.end(bytes);
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/commands') {
+        if ([...url.searchParams.keys()].some((key) => !['before', 'limit'].includes(key)) ||
+            url.searchParams.getAll('before').length > 1 || url.searchParams.getAll('limit').length > 1) {
+          throw failure('INVALID_REQUEST');
+        }
+        const before = url.searchParams.get('before');
+        const limitText = url.searchParams.get('limit') ?? '50';
+        if (!/^\d+$/.test(limitText)) throw failure('INVALID_REQUEST');
+        const limit = Number(limitText);
+        if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100) throw failure('INVALID_REQUEST');
+        if (before !== null && (!validId(before) || !Object.hasOwn(state.commands, before))) {
+          throw failure('NOT_FOUND', 404);
+        }
+        const ordered = Object.values(state.commands).sort((a, b) =>
+          b.createdAt.localeCompare(a.createdAt) || b.commandId.localeCompare(a.commandId));
+        const start = before === null ? 0 : ordered.findIndex((item) => item.commandId === before) + 1;
+        const page = ordered.slice(start, start + limit);
+        const hasMore = start + limit < ordered.length;
+        return context.json(response, 200, { commands: page.map(publicCommand),
+          nextBefore: hasMore ? page.at(-1).commandId : null, hasMore });
+      }
+      const requestMatch = /^\/personal\/v1\/commands\/by-request\/([A-Za-z0-9_.:-]+)$/.exec(pathname);
+      if (request.method === 'GET' && requestMatch) {
+        if (url.search || requestMatch[1].length > 128 || !REQUEST_ID.test(requestMatch[1])) {
+          throw failure('INVALID_REQUEST');
+        }
+        const command = Object.values(state.commands).find((item) => item.requestId === requestMatch[1]);
+        if (!command) throw failure('NOT_FOUND', 404);
+        return context.json(response, 200, { command: publicCommand(command) });
+      }
+      if (request.method === 'GET' && /^\/personal\/v1\/commands\/[A-Za-z0-9_-]+$/.test(pathname)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const commandId = pathname.split('/').at(-1);
+        if (!Object.hasOwn(state.commands, commandId)) throw failure('NOT_FOUND', 404);
+        const command = state.commands[commandId];
+        return context.json(response, 200, { command: publicCommand(command) });
+      }
+      if (request.method === 'POST' && (pathname === '/personal/v1/commands' ||
+          (taskActionMatch && taskActionMatch[2] !== 'stop') || projectSessionMatch || browserSessionPath ||
+          sharedConversationMatch)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const taskAction = taskActionMatch?.[2] === 'supplements' ? 'supplement'
+          : taskActionMatch?.[2] === 'resume' ? 'resume' : null;
+        const rootTaskId = taskAction ? id(taskActionMatch[1]) : null;
+        const body = await context.readJson(request);
+        if (taskAction) exactKeys(body, ['requestId', 'text'], ['requestId', 'text']);
+        if (projectSessionMatch) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
+        if (browserSessionPath) exactKeys(body, ['requestId', 'modelProfileId'], ['requestId', 'modelProfileId']);
+        if (sharedConversationMatch) exactKeys(body, ['requestId', 'modelProfileId', 'expectedSyncSeq',
+          'acknowledgeUncertainLocalTurn'],
+          ['requestId', 'modelProfileId', 'expectedSyncSeq']);
+        const rootSource = taskAction ? context.taskSource(state, rootTaskId) : null;
+        const requestedProjectId = projectSessionMatch ? id(projectSessionMatch[1]) : null;
+        const requestedProject = requestedProjectId ? state.projects?.[requestedProjectId] : null;
+        const adoptionId = sharedConversationMatch?.[1] ?? null;
+        const adoptionSnapshot = adoptionId ? context.conversationSnapshot(ownerId, adoptionId) : null;
+        const priorAdoptionCommand = adoptionId ? Object.values(state.commands).find((item) =>
+          item.requestId === body.requestId) : null;
+        if (adoptionId && (!REQUEST_ID.test(body.requestId ?? '') ||
+            !Number.isSafeInteger(body.expectedSyncSeq) || body.expectedSyncSeq < 1 ||
+            !MODEL_PROFILE_ID.test(body.modelProfileId ?? '') ||
+            (body.acknowledgeUncertainLocalTurn !== undefined &&
+              body.acknowledgeUncertainLocalTurn !== true))) throw failure('INVALID_REQUEST');
+        if (adoptionId && priorAdoptionCommand &&
+            (priorAdoptionCommand.kind !== 'session.create' ||
+              priorAdoptionCommand.payload.conversationId !== adoptionId ||
+              priorAdoptionCommand.payload.modelProfileId !== body.modelProfileId ||
+              priorAdoptionCommand.payload.cutoverSyncSeq !== body.expectedSyncSeq ||
+              Boolean(priorAdoptionCommand.payload.acknowledgeUncertainLocalTurn) !==
+                Boolean(body.acknowledgeUncertainLocalTurn))) {
+          throw failure('REQUEST_CONFLICT', 409);
+        }
+        if (adoptionId && !priorAdoptionCommand && state.conversationBindings?.[adoptionId]) {
+          throw failure('CONVERSATION_NOT_READY', 409);
+        }
+        if (adoptionId && !priorAdoptionCommand) {
+          if (!context.sourceDevicesUpgraded(ownerId, adoptionSnapshot)) {
+            throw failure('SOURCE_DEVICE_UPGRADE_REQUIRED', 409);
+          }
+          const turns = Object.values(state.conversationLocalTurns ?? {})
+            .filter((item) => item.conversationId === adoptionId);
+          if (turns.some((item) => context.localTurnState(adoptionSnapshot, item) === 'running')) {
+            throw failure('LOCAL_TURN_RUNNING', 409);
+          }
+          const uncertain = turns.some((item) => context.localTurnState(adoptionSnapshot, item) === 'uncertain');
+          if (uncertain && body.acknowledgeUncertainLocalTurn !== true) {
+            throw failure('LOCAL_TURN_UNCONFIRMED', 409);
+          }
+          if (adoptionSnapshot.unfinished && !(uncertain && body.acknowledgeUncertainLocalTurn === true)) {
+            throw failure('CONVERSATION_NOT_READY', 409);
+          }
+        }
+        if (adoptionId && !priorAdoptionCommand && adoptionSnapshot.latestSeq !== body.expectedSyncSeq) {
+          throw failure('CONVERSATION_SYNC_CHANGED', 409);
+        }
+        if (requestedProjectId && (!context.hostOwner(ownerId) || !requestedProject)) throw failure('NOT_FOUND', 404);
+        if (browserSessionPath && (!context.hostOwner(ownerId) || context.browserReader?.status()?.available !== true)) {
+          throw failure(context.browserReader?.status()?.lastFailure === 'BROWSER_CLEANUP_FAILED'
+            ? 'BROWSER_CLEANUP_FAILED' : 'BROWSER_UNAVAILABLE', 503);
+        }
+        const priorProjectCommand = requestedProjectId ? Object.values(state.commands).find((item) =>
+          item.requestId === body.requestId && item.kind === 'session.create' &&
+          item.payload.projectId === requestedProjectId && item.payload.modelProfileId === body.modelProfileId) : null;
+        const adoptionContext = adoptionId && !priorAdoptionCommand
+          ? buildConversationContext(adoptionSnapshot) : null;
+        const rawPayload = adoptionId ? {
+          requestId: body.requestId, kind: 'session.create', targetDeviceId: state.hostId,
+          modelProfileId: body.modelProfileId, conversationId: adoptionId,
+          cutoverSyncSeq: priorAdoptionCommand?.payload.cutoverSyncSeq ?? body.expectedSyncSeq,
+          contextHash: priorAdoptionCommand?.payload.contextHash ?? adoptionContext.contextHash,
+          ...(body.acknowledgeUncertainLocalTurn ? { acknowledgeUncertainLocalTurn: true } : {}),
+        } : browserSessionPath ? {
+          requestId: body.requestId, kind: 'session.create', targetDeviceId: state.hostId,
+          modelProfileId: body.modelProfileId, workspaceKind: 'browser',
+        } : projectSessionMatch ? {
+          requestId: body.requestId, kind: 'session.create', targetDeviceId: state.hostId,
+          modelProfileId: body.modelProfileId, projectId: requestedProjectId,
+          projectRevision: priorProjectCommand?.payload.projectRevision ?? requestedProject.revision,
+        } : taskAction ? {
+          requestId: body.requestId, kind: 'session.message', targetDeviceId: state.hostId,
+          sessionId: rootSource.sessionId, text: body.text,
+          mode: 'queue', rootTaskId, taskAction,
+        } : canonicalCommand(body, state.hostId);
+        const projectBinding = rawPayload.kind === 'session.message' ? taskAction
+          ? rootSource.payload : state.sessions[rawPayload.sessionId] : null;
+        const conversationBinding = rawPayload.kind === 'session.message' ? taskAction
+          ? rootSource.payload.conversationId : state.sessions[rawPayload.sessionId]?.conversationId : null;
+        const browserBinding = rawPayload.kind === 'session.message' &&
+          (taskAction ? rootSource.payload.workspaceKind : state.sessions[rawPayload.sessionId]?.workspaceKind) === 'browser';
+        let payload = canonicalCommand({ ...rawPayload,
+          ...(projectBinding?.projectId ? { projectId: projectBinding.projectId,
+            projectRevision: projectBinding.projectRevision } : {}),
+          ...(conversationBinding ? { conversationId: conversationBinding } : {}),
+          ...(browserBinding ? { workspaceKind: 'browser', initialUrls: taskAction
+            ? rootSource.payload.initialUrls : initialBrowserUrls(rawPayload.text, context.browserReader) } : {}) }, state.hostId, true);
+        if (payload.kind === 'session.message' && (payload.attachments || payload.originalAttachments)) {
+          const staged = payload.attachments ? await context.sharedAttachmentStores.get(ownerId).resolve({
+            sessionId: payload.sessionId, requestId: payload.requestId, attachments: payload.attachments }) : [];
+          payload = canonicalCommand({ ...payload, modelInputHash: digest(modelTextWithAttachments(
+            payload.text, staged, payload.originalAttachments)) }, state.hostId, true);
+        }
+        context.requireOpen();
+        if (context.storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
+        if (payload.kind === 'desktop.open_app' && typeof context.backend.openDesktopApp !== 'function') {
+          throw failure('CAPABILITY_UNAVAILABLE', 503);
+        }
+        if (payload.kind === 'desktop.open_app' && !context.hostOwner(ownerId)) {
+          throw failure('CAPABILITY_UNAVAILABLE', 403);
+        }
+        if (payload.kind === 'session.create' && !context.modelSelectable(ownerId, payload.modelProfileId)) {
+          throw failure('MODEL_UNAVAILABLE', 422);
+        }
+        const payloadHash = digest(JSON.stringify(payload));
+        if (context.interactionRequestIdUsed(state, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
+        if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+        if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+        if (Object.values(state.commands).some((command) =>
+          command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
+          throw failure('REQUEST_CONFLICT', 409);
+        }
+        const prior = Object.values(state.commands).find((command) => command.requestId === payload.requestId);
+        if (prior) {
+          if (prior.payloadHash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
+          return context.json(response, 202, taskAction
+            ? { task: await context.taskDetail(state, rootTaskId), command: publicCommand(prior) }
+            : adoptionId ? { ...context.conversationProjection(ownerId, adoptionId), command: publicCommand(prior) }
+              : { command: publicCommand(prior) });
+        }
+        if (payload.projectId && (state.projects?.[payload.projectId]?.revoked ||
+            state.projects?.[payload.projectId]?.revision !== payload.projectRevision)) {
+          throw failure('PROJECT_REVOKED', 409);
+        }
+        if (taskAction === 'supplement' &&
+            (rootSource.taskControl?.state === 'stop_requested' || context.taskHasUnknownEffects(state, rootTaskId))) {
+          throw failure('TASK_NOT_READY', 409);
+        }
+        const resumeReady = taskAction === 'resume' && rootSource.taskControl?.state === 'stop_requested'
+          ? (await context.taskStopEvidence(state, rootTaskId)).ready : false;
+        if (taskAction === 'resume' && !resumeReady) throw failure('TASK_NOT_READY', 409);
+        // A session must be bound to this owner before even the read-only
+        // backend preflight can inspect its model or history.
+        if (payload.sessionId && (!Object.hasOwn(state.sessions, payload.sessionId) ||
+            state.sessions[payload.sessionId].ownerId !== state.ownerId)) {
+          throw failure('SESSION_UNAVAILABLE', 404);
+        }
+        if (payload.kind === 'session.message' &&
+            !['personal-remote', 'shared-chat'].includes(state.sessions[payload.sessionId].origin)) {
+          throw failure('SESSION_READ_ONLY', 409);
+        }
+        if (payload.kind === 'session.message' &&
+            !context.messageModelUsable(ownerId, state.sessions[payload.sessionId])) {
+          throw failure('MODEL_UNAVAILABLE', 422);
+        }
+        if (payload.kind === 'session.message' && payload.sourceSyncEventId &&
+            (!payload.conversationId || !context.verifiedSyncUserEvent(ownerId, payload.conversationId,
+              payload.sourceSyncEventId, payload.text, deviceId) ||
+              Object.values(state.commands).some((item) =>
+                item.payload.sourceSyncEventId === payload.sourceSyncEventId))) {
+          throw failure('REQUEST_CONFLICT', 409);
+        }
+        if (payload.kind === 'session.message' && payload.attachments) {
+          await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: payload.sessionId,
+            requestId: payload.requestId, attachments: payload.attachments });
+        }
+        if (payload.kind === 'session.message' && payload.originalAttachments) {
+          await context.requireOriginalAttachments(ownerId, payload.sessionId, payload.attachmentMessageId,
+            payload.originalAttachments);
+        }
+        const preflightKey = `${ownerId}|${payload.requestId}`;
+        const pendingPreflight = context.pendingPreflights.get(preflightKey);
+        if (pendingPreflight && pendingPreflight.hash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
+        let preflight;
+        if (pendingPreflight) preflight = pendingPreflight.promise;
+        else {
+          preflight = context.callBackend(() => context.backend.preflight({ ...payload, ownerId }));
+          context.pendingPreflights.set(preflightKey, { hash: payloadHash, promise: preflight });
+          preflight.finally(() => {
+            if (context.pendingPreflights.get(preflightKey)?.promise === preflight) {
+              context.pendingPreflights.delete(preflightKey);
+            }
+          }).catch(() => {});
+        }
+        try { await preflight; }
+        catch (error) { throw failure(safeCode(error), error?.code === 'MODEL_UNAVAILABLE' ? 422
+          : error?.code === 'SESSION_READ_ONLY' ? 409 : 503); }
+        context.requireOpen();
+        const result = await context.serial(async () => {
+          context.requireOpen();
+          const current = context.authenticate(request, 'commands:write');
+          if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+          const latest = context.accountState(ownerId);
+          if (context.interactionRequestIdUsed(latest, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
+          if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+          if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+          if (Object.values(latest.commands).some((command) =>
+            command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
+            throw failure('REQUEST_CONFLICT', 409);
+          }
+          const existing = Object.values(latest.commands).find((command) =>
+            command.ownerId === ownerId && command.requestId === payload.requestId);
+          if (existing) {
+            if (existing.payloadHash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
+            return publicCommand(existing);
+          }
+          if (adoptionId) {
+            const fresh = context.conversationSnapshot(ownerId, adoptionId);
+            if (!context.sourceDevicesUpgraded(ownerId, fresh)) {
+              throw failure('SOURCE_DEVICE_UPGRADE_REQUIRED', 409);
+            }
+            const turns = Object.values(latest.conversationLocalTurns ?? {})
+              .filter((item) => item.conversationId === adoptionId);
+            const running = turns.some((item) => context.localTurnState(fresh, item) === 'running');
+            const uncertain = turns.some((item) => context.localTurnState(fresh, item) === 'uncertain');
+            if (latest.conversationBindings?.[adoptionId] || running ||
+                (uncertain && body.acknowledgeUncertainLocalTurn !== true) ||
+                (fresh.unfinished && !(uncertain && body.acknowledgeUncertainLocalTurn === true))) {
+              throw failure('CONVERSATION_NOT_READY', 409);
+            }
+            if (fresh.latestSeq !== body.expectedSyncSeq ||
+                buildConversationContext(fresh).contextHash !== payload.contextHash) {
+              throw failure('CONVERSATION_SYNC_CHANGED', 409);
+            }
+          }
+          if (payload.projectId && (latest.projects?.[payload.projectId]?.revoked ||
+              latest.projects?.[payload.projectId]?.revision !== payload.projectRevision)) {
+            throw failure('PROJECT_REVOKED', 409);
+          }
+          if (taskAction) {
+            const source = context.taskSource(latest, rootTaskId);
+            if (source.sessionId !== payload.sessionId ||
+                (taskAction === 'supplement' && (source.taskControl?.state === 'stop_requested' ||
+                  context.taskHasUnknownEffects(latest, rootTaskId))) ||
+                (taskAction === 'resume' &&
+                  (source.taskControl?.state !== 'stop_requested' ||
+                    source.taskControl.updatedAt !== rootSource.taskControl.updatedAt ||
+                    source.taskControl.stopRequests.length !== rootSource.taskControl.stopRequests.length))) {
+              throw failure('TASK_NOT_READY', 409);
+            }
+          }
+          if (!Object.hasOwn(latest.devices, deviceId) || latest.devices[deviceId].revoked ||
+              !latest.devices[deviceId].scopes.includes('commands:write')) throw failure('UNAUTHORIZED', 401);
+          if (payload.sessionId && (!Object.hasOwn(latest.sessions, payload.sessionId) ||
+              latest.sessions[payload.sessionId].ownerId !== ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
+          if (payload.kind === 'session.message' &&
+              !['personal-remote', 'shared-chat'].includes(latest.sessions[payload.sessionId].origin)) {
+            throw failure('SESSION_READ_ONLY', 409);
+          }
+          if (payload.kind === 'session.message' &&
+              !context.messageModelUsable(ownerId, latest.sessions[payload.sessionId])) {
+            throw failure('MODEL_UNAVAILABLE', 422);
+          }
+          if (payload.kind === 'session.message' && payload.sourceSyncEventId &&
+              (!context.verifiedSyncUserEvent(ownerId, payload.conversationId,
+                payload.sourceSyncEventId, payload.text, deviceId) ||
+                Object.values(latest.commands).some((item) =>
+                  item.payload.sourceSyncEventId === payload.sourceSyncEventId))) {
+            throw failure('REQUEST_CONFLICT', 409);
+          }
+          if (payload.kind === 'session.message' && payload.attachments) {
+            await context.sharedAttachmentStores.get(ownerId).resolve({ sessionId: payload.sessionId,
+              requestId: payload.requestId, attachments: payload.attachments });
+          }
+          if (payload.kind === 'session.message' && payload.originalAttachments) {
+            await context.requireOriginalAttachments(ownerId, payload.sessionId, payload.attachmentMessageId,
+              payload.originalAttachments);
+          }
+          const recorded = Object.values(latest.commands);
+          if (recorded.length >= MAX_COMMANDS ||
+              recorded.reduce((bytes, command) => bytes +
+                (typeof command.payload.text === 'string' ? Buffer.byteLength(command.payload.text, 'utf8') : 0), 0) +
+                (typeof payload.text === 'string' ? Buffer.byteLength(payload.text, 'utf8') : 0) > MAX_UNRECONCILED_TEXT_BYTES) {
+            throw failure('CAPACITY_LIMIT', 429);
+          }
+          const commandId = `cmd-${randomUUID()}`;
+          const sessionId = payload.kind === 'session.create' ? `session-${randomUUID()}` : payload.sessionId;
+          const now = new Date().toISOString();
+          await context.mutate(ownerId, (next) => {
+            if (adoptionId) {
+              next.conversationBindings ??= {};
+              if (Object.keys(next.conversationBindings).length >= 500) throw failure('CAPACITY_LIMIT', 429);
+              next.conversationBindings[adoptionId] = { conversationId: adoptionId,
+                ownerId, sessionId, modelProfileId: payload.modelProfileId, revision: 1,
+                status: 'creating', cutoverSyncSeq: body.expectedSyncSeq,
+                ...adoptionContext, adoptRequestId: payload.requestId,
+                adoptCommandId: commandId, createdAt: now, updatedAt: now };
+            }
+            next.commands[commandId] = {
+              commandId, ownerId: next.ownerId, requestId: payload.requestId,
+              payloadHash, payload, sourceDeviceId: deviceId,
+              ...(latest.devices[deviceId].authKind === 'password'
+                ? { sourceAuthEpoch: latest.devices[deviceId].authEpoch } : {}),
+              targetDeviceId: payload.targetDeviceId, kind: payload.kind,
+              ...(taskAction ? { rootTaskId, taskAction } : {}),
+              ...(sessionId ? { sessionId } : {}), ...(payload.appId ? { appId: payload.appId } : {}),
+              state: 'pending', createdAt: now, updatedAt: now,
+            };
+            if (taskAction === 'resume') {
+              const control = next.commands[rootTaskId].taskControl;
+              control.state = 'active'; control.updatedAt = now;
+            }
+          });
+          context.schedule(ownerId, commandId);
+          return publicCommand(context.accountState(ownerId).commands[commandId]);
+        });
+        return context.json(response, 202, taskAction
+          ? { task: await context.taskDetail(context.accountState(ownerId), rootTaskId), command: result }
+          : adoptionId ? { ...context.conversationProjection(ownerId, adoptionId), command: result }
+            : { command: result });
+      }
+      throw failure('NOT_FOUND', 404);
+    } catch (error) {
+      if (response.headersSent) return response.destroy();
+      const code = PUBLIC_CODES.has(error?.code) ? error.code : 'SERVICE_UNAVAILABLE';
+      const status = code === 'SERVICE_UNAVAILABLE' ? 503
+        : Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599 ? error.status : 503;
+      context.json(response, status, { error: { code } });
+    }
+  }
+
+  return {
+    handle,
+    handleScoped
+  };
+}

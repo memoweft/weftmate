@@ -267,7 +267,10 @@ test('every deterministic check fails correctly; traversal and symlinks cannot r
     assert.equal((await checkOne(check, context)).status, 'failed', check.type);
   }
   for (const path of ['../outside', '/etc/passwd', 'C:\\daily.txt', 'folder\\file']) assert.throws(() => safePath(root, path));
-  await symlink(join(root, 'present.txt'), join(root, 'link'));
+  // Windows 用 junction（目录联接点）覆盖同一拒绝分支，无需提升权限。
+  const linkedTarget = process.platform === 'win32' ? join(root, 'linked-target') : join(root, 'present.txt');
+  if (process.platform === 'win32') await mkdir(linkedTarget);
+  await symlink(linkedTarget, join(root, 'link'), process.platform === 'win32' ? 'junction' : 'file');
   assert.match((await checkOne({ type: 'file_contains', path: 'link', text: 'actual' }, context)).reason, /Symlink/);
   assert.equal((await checkOne({ type: 'file_absent', path: 'link' }, context)).status, 'failed');
 });
