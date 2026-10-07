@@ -1,0 +1,45 @@
+{
+  "id": "memory-03-switch-model",
+  "category": "memory",
+  "title": "换模型后还记得称呼",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我习惯大家叫我小禾，不用叫全名，以后你也这么叫我吧。",
+      "after": {
+        "newSession": true,
+        "model": "$alternate",
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "今天事情有点多，跟我打个招呼，鼓励我一下吧。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_contains",
+      "text": "小禾"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "$alternate 默认 qwen → mimo，否则 → qwen，可用 --switch-model 指定；当前契约换模型通过新会话实现。第二模型必须配置在同一个 eval 账号里。"
+}

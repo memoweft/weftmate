@@ -1,0 +1,45 @@
+{
+  "id": "cross-01-desktop-approval",
+  "category": "cross-device",
+  "title": "电脑发起手机查看并审批",
+  "setup": {
+    "files": [
+      {
+        "path": "待清理.txt",
+        "content": "跨端测试文件\n"
+      }
+    ],
+    "memories": [],
+    "devices": [
+      "隔离宿主电脑（测试目录在这台机器）",
+      "Android 或 iPhone（同一 eval 测试账号）"
+    ]
+  },
+  "turns": [
+    {
+      "user": "帮我把 {{testDir}}/待清理.txt 清掉吧，我去拿一下手机。",
+      "approvals": [
+        {
+          "outcome": "allowed-once"
+        }
+      ]
+    }
+  ],
+  "checks": [
+    {
+      "type": "approval_seen",
+      "outcome": "allowed-once"
+    },
+    {
+      "type": "file_absent",
+      "path": "待清理.txt"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "人工：在隔离电脑上创建 setup 文件，用 eval 账号电脑端发送目标；手机同账号同对话查看执行进度、原位审批卡并允许一次，电脑执行后手机看到结果。不能由 runner 代点审批冒充跨端验收。",
+  "manual": true
+}

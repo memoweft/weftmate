@@ -1,0 +1,61 @@
+{
+  "id": "action-04-research-script",
+  "category": "action",
+  "title": "查资料写脚本并实际运行",
+  "setup": {
+    "files": [
+      {
+        "path": "sales.csv",
+        "content": "商品,单价,数量\n茶,12.5,2\n咖啡,8,3\n"
+      }
+    ],
+    "memories": [],
+    "devices": [
+      "宿主电脑；runner 与宿主在同一机器运行"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我这份 {{testDir}}/sales.csv 想以后反复算营业额。帮我找一下 Node.js 官方关于读文本文件的资料，写个不需要装额外包的小脚本放在 {{testDir}}/sum.mjs，实际跑一下，把商品各自的小计和合计存成 {{testDir}}/result.json，最后告诉我算出来多少以及参考了哪页资料。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "file_exists",
+      "path": "sum.mjs"
+    },
+    {
+      "type": "file_contains",
+      "path": "result.json",
+      "text": "49"
+    },
+    {
+      "type": "file_contains",
+      "path": "result.json",
+      "text": "25"
+    },
+    {
+      "type": "file_contains",
+      "path": "result.json",
+      "text": "24"
+    },
+    {
+      "type": "reply_contains",
+      "text": "49"
+    },
+    {
+      "type": "reply_matches",
+      "pattern": "https://nodejs\\.org/"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "回复需报告实际运行结果：茶 25、咖啡 24、总计 49，并给出 Node.js 官方参考资料链接。应区分实际执行和预计结果。"
+    }
+  ],
+  "timeoutSec": 300,
+  "notes": "需要联网和宿主 Node；输出数字字符串检查配合回复检查，实际脚本可在 Windows 复查。"
+}

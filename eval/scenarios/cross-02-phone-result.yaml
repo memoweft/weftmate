@@ -1,0 +1,42 @@
+{
+  "id": "cross-02-phone-result",
+  "category": "cross-device",
+  "title": "手机发起电脑执行手机看成果",
+  "setup": {
+    "files": [
+      {
+        "path": "备忘.txt",
+        "content": "牛奶\n面包\n鸡蛋\n"
+      }
+    ],
+    "memories": [],
+    "devices": [
+      "隔离宿主电脑（测试目录在这台机器）",
+      "Android 或 iPhone（同一 eval 测试账号）"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我回家路上想看看购物单，{{testDir}}/备忘.txt 里那些东西帮我整理成一份带勾选框的清单，存到 {{testDir}}/购物清单.md，然后把成果给我看看。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "file_contains",
+      "path": "购物清单.md",
+      "text": "牛奶"
+    },
+    {
+      "type": "file_contains",
+      "path": "购物清单.md",
+      "text": "- [ ]"
+    },
+    {
+      "type": "turn_status",
+      "status": "completed"
+    }
+  ],
+  "timeoutSec": 180,
+  "notes": "人工：在宿主电脑隔离临时目录创建 setup 文件；手机用 eval 账号发起，电脑执行；手机在同一对话成果卡打开实际文件核对，再回原位置。除文件检查外还需验证成果显示和打开，不凭回复代替。",
+  "manual": true
+}
