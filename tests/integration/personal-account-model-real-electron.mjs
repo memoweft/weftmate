@@ -245,7 +245,7 @@ try {
 
   const tool = await api(origin, account, 'POST', '/personal/v1/commands', {
     requestId: `stage15-tool-${runId}`, kind: 'session.message', targetDeviceId: status.body.hostId,
-    sessionId, mode: 'queue', text: '请使用 personal_save_document 保存一个名为 stage15-cloud-probe.md 的 Markdown 文件，内容只写“stage15 cloud tool verified”。完成后用一句中文确认。',
+    sessionId, mode: 'queue', text: '请使用 write 保存一个名为 stage15-cloud-probe.md 的 Markdown 文件，内容只写“stage15 cloud tool verified”。完成后用一句中文确认。',
   });
   assert.equal(tool.status, 202);
   const toolCommand = await settledCommand(origin, account, tool.body.command.commandId);

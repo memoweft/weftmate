@@ -64,7 +64,7 @@ export async function startTimelineCandidate(options = {}) {
   const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
   await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: '覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。' })
   artifact = await service.submitToolArtifact({ sessionId, turn: 1, callId: 'artifact-1', messageHash: hash(goal), fileName: '项目进度报告.md', content: '# 项目进度报告\n\n已读取 3 个文件。42 项测试通过。\n' })
-  call('personal_save_document', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))
+  call('write', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))
   const bridge = async (method, params) => {
     if (['app.ready', 'app.activity', 'events.subscribe'].includes(method)) return {}
     if (method === 'app.bootstrap') return { loggedIn: true, username: credentials.username, owner: hash(`${origin}|${auth.account.ownerId}`), busy: false, model: { source: 'host', displayName: '合成会话' } }

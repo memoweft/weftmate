@@ -161,7 +161,8 @@ export function apply(ctx) {
     const clearedDecision = { ...decision, messages };
     if (payload?.signal?.aborted) return clearedDecision;
     const session = payload?.agent?.session;
-    if (!PRESETS.has(session?.header?.agentPreset) || typeof session.id !== 'string') return clearedDecision;
+    if (session?.header?.origin === 'subagent' ||
+        !PRESETS.has(session?.header?.agentPreset) || typeof session.id !== 'string') return clearedDecision;
     const turn = payload.turn;
     const user = userForPreStep(session, turn, payload.messages);
     if (!user) return clearedDecision;

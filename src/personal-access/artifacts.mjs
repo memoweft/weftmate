@@ -3,12 +3,37 @@ import { canonicalArtifact } from '../personal-artifacts/index.mjs';
 import { INTERNAL_ARTIFACT_KIND, MAX_COMMANDS, SNAPSHOT_ID, WEB_SNAPSHOT_ID } from './constants.mjs';
 import { canonicalCommand, publicCommand, sourceMessageHash } from './command-policy.mjs';
 import { randomUUID } from 'node:crypto';
+import path from 'node:path';
+import { lstat, readFile, realpath } from 'node:fs/promises';
+import { MAX_ARTIFACT_BYTES, validArtifactFileName } from '../personal-artifacts/index.mjs';
 
 export function createArtifactOperations(context) {
-  return {
+  const operations = {
+    /** Only the trusted native-tool observer calls this; file bytes come from disk. */
+    async registerNativeFile(input) {
+      const { filePath, sha256, sessionId } = input;
+      id(sessionId);
+      if (typeof filePath !== 'string' || !path.isAbsolute(filePath) ||
+          typeof sha256 !== 'string' || !/^[a-f0-9]{64}$/.test(sha256)) throw failure('INVALID_COMMAND');
+      const file = await realpath(filePath);
+      const stat = await lstat(filePath);
+      if (!stat.isFile() || stat.isSymbolicLink()) throw failure('INVALID_COMMAND');
+      const fileName = path.basename(file).normalize('NFC');
+      // Keep the current clients' text artifact contract; native tools can still write any file.
+      if (!validArtifactFileName(fileName) || !stat.size || stat.size > MAX_ARTIFACT_BYTES)
+        return { state: 'unavailable', reasonCode: 'ARTIFACT_FORMAT_UNSUPPORTED' };
+      const bytes = await readFile(file);
+      const content = bytes.toString('utf8');
+      if (content.includes('\0') || !Buffer.from(content, 'utf8').equals(bytes))
+        return { state: 'unavailable', reasonCode: 'ARTIFACT_FORMAT_UNSUPPORTED' };
+      const artifact = canonicalArtifact(fileName, content);
+      if (artifact.sha256 !== sha256) throw failure('ARTIFACT_UNVERIFIED', 409);
+      return operations.submitToolArtifact({ ...input, fileName, content,
+        nativeFile: file });
+    },
     /** Main-process only: create a bounded document from one accepted owner turn. */
     async submitToolArtifact({ sessionId, turn, callId, messageHash, receiptId,
-      sourceSnapshotIds, fileName, content }) {
+      sourceSnapshotIds, fileName, content, nativeFile }) {
       const ownerId = context.rootState.legacyOwnerId;
       id(sessionId);
       if (!Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
@@ -19,8 +44,8 @@ export function createArtifactOperations(context) {
       let artifact = canonicalArtifact(fileName, content);
       const state = context.accountState(ownerId);
       if (state.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
-      const projectSession = state.sessions[sessionId]?.projectId ? await context.checkedProjectSession(ownerId, sessionId) : null;
-      const browserSession = state.sessions[sessionId]?.workspaceKind === 'browser'
+      const projectSession = nativeFile === undefined && state.sessions[sessionId]?.projectId ? await context.checkedProjectSession(ownerId, sessionId) : null;
+      const browserSession = nativeFile === undefined && state.sessions[sessionId]?.workspaceKind === 'browser'
         ? await context.checkedBrowserSession(ownerId, sessionId) : null;
       let citedSources = null;
       if (projectSession) {
@@ -87,7 +112,7 @@ export function createArtifactOperations(context) {
       }
       await context.callBackend(() => context.backend.preflight({ kind: INTERNAL_ARTIFACT_KIND,
         targetDeviceId: state.hostId, sessionId, ownerId }));
-      const requestId = `artifact-${digest(`${ownerId}|${sessionId}|${turn}|${callId}`).slice(0, 48)}`;
+      const requestId = `artifact-${digest(`${ownerId}|${sessionId}|${turn}|${callId}${nativeFile === undefined ? '' : `|${nativeFile}|${artifact.sha256}`}`).slice(0, 48)}`;
       const sourceCandidates = () => Object.values(context.accountState(ownerId).commands).filter((item) =>
         item.kind === 'session.message' && item.sessionId === sessionId &&
         typeof item.payload.text === 'string' && sourceMessageHash(item) === messageHash &&
@@ -201,4 +226,5 @@ export function createArtifactOperations(context) {
       return publicCommand(context.accountState(ownerId).commands[commandId]);
     }
   };
+  return operations;
 }

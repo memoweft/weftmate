@@ -11,17 +11,18 @@ function observedSave(event, calls) {
       typeof source.callId !== 'string' || !calls.has(source.callId) ||
       event.data?.error !== undefined) return false
   const block = event.data?.message?.content?.[0]
-  const body = block?.content?.[0]?.text
-  if (block?.type !== 'tool-result' || block.toolCallId !== source.callId ||
-      block.isError === true || typeof body !== 'string' || body.length > 4096) return false
-  try {
-    const receipt = JSON.parse(body)
-    return receipt?.state === 'observed' &&
-      typeof receipt.artifactId === 'string' && /^artifact-[A-Za-z0-9-]{1,120}$/.test(receipt.artifactId) &&
-      typeof receipt.taskId === 'string' && /^cmd-[0-9a-f-]{36}$/.test(receipt.taskId) &&
-      Number.isSafeInteger(receipt.size) && receipt.size >= 1 && receipt.size <= 128 * 1024 &&
-      typeof receipt.sha256 === 'string' && /^[a-f0-9]{64}$/.test(receipt.sha256)
-  } catch { return false }
+  if (block?.type !== 'tool-result' || block.toolCallId !== source.callId || block.isError === true) return false
+  return (block.content ?? []).some(part => {
+    if (part.type !== 'text' || typeof part.text !== 'string' || part.text.length > 4096) return false
+    try {
+      const parsed = JSON.parse(part.text), receipt = parsed.artifact ?? parsed
+      return receipt?.state === 'observed' &&
+        typeof receipt.artifactId === 'string' && /^artifact-[A-Za-z0-9-]{1,120}$/.test(receipt.artifactId) &&
+        typeof receipt.taskId === 'string' && /^cmd-[0-9a-f-]{36}$/.test(receipt.taskId) &&
+        Number.isSafeInteger(receipt.size) && receipt.size >= 1 && receipt.size <= 128 * 1024 &&
+        typeof receipt.sha256 === 'string' && /^[a-f0-9]{64}$/.test(receipt.sha256)
+    } catch { return false }
+  })
 }
 
 /** Project only committed native metadata. `live` is current-child agent evidence. */
@@ -71,7 +72,7 @@ export function projectReplyEvidence(content, { receiptId, live = false } = {}) 
     if (event.type === 'step/start' && event.data?.turn === turn &&
         Number.isSafeInteger(event.data.step)) step = Math.max(step, event.data.step)
     if (event.type === 'tool/call' && event.data?.turn === turn &&
-        event.data.name === 'personal_save_document' && typeof event.data.callId === 'string') {
+        typeof event.data.name === 'string' && typeof event.data.callId === 'string') {
       calls.add(event.data.callId)
     }
     if (observedSave(event, calls)) toolSaveObserved = true
