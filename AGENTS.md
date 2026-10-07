@@ -5,7 +5,7 @@ WeftMate 是跨设备、跨对话的个人 AI 助手（Windows / macOS / Android
 ## 开工
 
 1. 读 [docs/PLAN.md](docs/PLAN.md)（路线与工作包）和 [docs/STATE.md](docs/STATE.md)（现在做到哪）。
-2. 找到分给你的工作包，直接开始。环境与命令见 [docs/SETUP.md](docs/SETUP.md)。
+2. 找到分给你的工作包，直接开始。环境与命令见 [docs/SETUP.md](docs/SETUP.md)；做前端先读 [docs/UI_SPEC.md](docs/UI_SPEC.md)。
 
 ## 目录
 
