@@ -32,7 +32,7 @@ test('health is public, reports the initialized schema, and never caches', async
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.match(response.headers.get('x-request-id'), /^[a-f0-9-]{36}$/);
-  assert.deepEqual(await response.json(), { status: 'ok', service: 'weftmate-cloud', schemaVersion: 3 });
+  assert.deepEqual(await response.json(), { status: 'ok', service: 'weftmate-cloud', schemaVersion: 4 });
 });
 
 test('only health exists; method errors and unknown routes expose no credentials in logs', async (t) => {

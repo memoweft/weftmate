@@ -1,6 +1,6 @@
-# WeftMate 轻云架构 · S0 已审查 / S1a–S1b 实现
+# WeftMate 轻云架构 · S0 已审查 / S1a–S2 实现
 
-依据：`VISION.md`「数据在哪里」、`PLAN.md` D20/D21 与第 9b 节 S1–S6、`CLIENT_API.md` 认证/设备/同步/健康、`COMPANION.md` 共养。S0 设计已审查合入；S1a 云账号/邮箱/OIDC 与 S1b 宿主身份/内容设备授权已实现，当前交付见第 12–13 节。完整客户端与后续云能力仍按工作包派发，本包不部署。
+依据：`VISION.md`「数据在哪里」、`PLAN.md` D20/D21 与第 9b 节 S1–S6、`CLIENT_API.md` 认证/设备/同步/健康、`COMPANION.md` 共养。S0 设计已审查合入；S1a 云账号/邮箱/OIDC 与 S1b 宿主身份/内容设备授权已实现，当前交付见第 3、12–13 节。完整客户端与后续云能力仍按工作包派发，本包不部署。
 
 ## 0. 本人已定的取舍（2026-10-07）
 
@@ -89,35 +89,62 @@ S1 宿主接线按以下次序做，全部用隔离夹具验收：
 
 S1a 的云账号/OIDC 正式契约见 `CLIENT_API.md` 第 7 节，业务路径 `/personal/v1/cloud/…`，issuer 为 `/personal/v1/cloud/oidc`，客户端接入在后续包。S1b 已实现宿主认领/绑定/DPoP 与 `/personal/v1/auth/cloud-session`，具体见 CLIENT_API 7.4–7.5；备份/共享目录仍在后续包。后续实施包须协调五端并记录 STATE 契约变更。中继只改变宿主 base URL，不改原有路径/错误/Origin/CSRF；`auth/setup` 仍只允许直接地址。已有 `auth/login(username)` 与云 `email` 登录独立。
 
-## 3. 中继方案与 TLS（S2）
+## 3. 中继方案与 TLS（S2 已实现，本包不部署）
 
-以下为本项目接入成本与信任边界的判断，不是已跑的性能比较。
+固定使用官方 [frp v0.71.0](https://github.com/fatedier/frp/releases/tag/v0.71.0)。`scripts/download-frp.mjs` 只从 fatedier/frp GitHub Releases 下载，内置 macOS/Linux/Windows x64/arm64 的 SHA256（取自该发布资产 digest），校验后解压到被忽略的 `.local/frp/`；二进制、密钥、运行目录不进 Git。此版 HTTPS mux 只按 ClientHello SNI 路由，内层 TLS 在宿主终止。[官方 HTTPS 说明](https://gofrp.org/en/docs/features/http-https/)
 
-| 方案 | 优点 | 本项目代价与明文边界 | 结论 |
-|---|---|---|---|
-| 自写 WebSocket 反向 HTTP 通道 | 可复用单个 443，表面接入简单 | 需实现流复用/背压/重连/SSE/下载语义；普通云 HTTP 入口会看明文，套另一层 TLS 后仍需维护隧道协议 | 不推荐自研 |
-| **frp HTTPS/SNI 透传** | 成熟跨平台 frpc/frps；宿主外连；多域名复用一个入口；直接承载已有 HTTPS/SSE/下载 | 额外 sidecar/端口、注册授权插件与宿主证书；正确透传时云只有 TLS 字节/元数据 | **推荐第一版** |
-| WireGuard + headscale/Tailscale | 成熟设备间加密与穿 NAT；适合运维、受控设备网络 | headscale 是自托管 Tailscale 控制面；手机需 VPN/客户端与系统权限，普通浏览器/Watch 接入更复杂，多用户商业服务需额外网络管理 | 留作运维/高级直连选项 |
-| Cloudflare Tunnel 发布 HTTP 应用 | 主动外连、托管边缘、少维护 | 常规 HTTP 发布在 Cloudflare 边缘终止 TLS，提供者可处理明文；private-network 模式另需客户端/网络方案 | 可用于无内容官网/控制面；不作内容默认入口 |
+### 3.1 单一公网 443
 
-核对来源：[frp HTTP/HTTPS](https://gofrp.org/en/docs/features/http-https/)、[frp SNI 读取实现](https://github.com/fatedier/frp/blob/dev/pkg/util/vhost/https.go)、[headscale 说明](https://github.com/juanfont/headscale)、[Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/)、[Cloudflare TLS 边界](https://developers.cloudflare.com/ssl/concepts/)。
+```mermaid
+flowchart LR
+    C[浏览器 / 原生客户端] -->|TLS · TCP 443| L[HAProxy TCP / SNI]
+    H[宿主 frpc] -->|外层 TLS · relay.example.com:443| L
+    L -->|api.example.com| A[Caddy · 127.0.0.1:9443]
+    A -->|控制面 HTTP| N[cloud Node · 127.0.0.1:8787]
+    L -->|relay.example.com · 原 TLS 字节| G[控制 TCP 入口 · 127.0.0.1:7001]
+    G --> F[官方 frps · 127.0.0.1:7000]
+    L -->|h-随机.hosts.example.com · 原 TLS 字节| I[内容 TCP 入口 · 127.0.0.1:7444]
+    I --> V[frps HTTPS mux · 127.0.0.1:7443]
+    V -->|内层 TLS 密文 / 外层 frp TLS| H
+    H --> T[宿主 TLS adapter · 127.0.0.1:动态端口]
+    T --> P[宿主 personal/v1 · 127.0.0.1:原端口]
+    F -->|Login / NewProxy / Ping / NewWorkConn / NewUserConn| X[cloud plugin · 127.0.0.1:8788]
+```
 
-推荐拓扑分成两条连接：
+部署草稿在 `services/cloud/deploy/`：HAProxy 拥有公网 TCP 443，未知/缺少 SNI 拒绝；内容与 frpc 控制传输均为 TCP 透传。控制 API 才由 Caddy 解密；API 后端使用 PROXY v2 + Caddy 的回环受信 listener wrapper 保留真实来源，覆盖 HTTP 转发头供云限速使用。内容路径不发送 PROXY 协议，不进入 Caddy HTTP reverse_proxy。只需一个公网 TCP 443，不开放 frps/Node/plugin/adapter 回环端口，也不需要公网 8443。QUIC、KCP、HTTP 代理、TCP 发布和 CDN TLS 终止均未启用。
 
-1. **控制面**：`api.example.com:443 → Caddy → cloud Node 回环端口`。账号、邮件、目录由云处理，本来就会在云解密；不能携带内容。
-2. **内容面**：客户端 `https://h-<opaque>.hosts.example.com:8443/personal/v1/… → frps vhostHTTPSPort → 宿主 frpc → 宿主本机 TLS 适配器 → 宿主 HTTP 回环入口`。宿主主动连 `relay.example.com` 的 frps 控制端口，frpc↔frps 强制 TLS 并验服务端证书；**内层内容 TLS 在宿主终止**。SNI 是公开的不含账号姓名的随机路由名。首次可用独立 8443，后续是否用 L4 SNI 分流统一 443 再据真实网络可达性决定，不能假设现有 Caddy HTTP reverse_proxy 能透传。
+### 3.2 目录、凭据与撤销
 
-frps HTTPS mux 读取 ClientHello 的 ServerName 路由，不能解密 TLS 应用数据；外层 frp transport TLS 本身只能保护宿主到 frps，**单独开它不足以挡云读明文**。[frp 传输加密说明](https://gofrp.org/en/docs/features/common/network/network/) 第一版不使用云 HTTP reverse_proxy 转内容、不在云安装宿主内容私钥；不使用将内容 HTTPS 在云解密的插件或 CDN 橙云代理。
+`services/cloud/src/relay.mjs` 接 S1b 的安装公钥与 membership，数据库迁移 004 保存宿主随机域名、凭据 generation、撤销状态与连接水位。已认领安装使用原 ES256、短期且防重放的 host proof 取凭据；云 HMAC 派生每宿主/generation 的独立秘密，不向用户分发共享 frp token。宿主本机 `relay/frpc.toml` 使用私有权限，云不在响应日志中记录秘密。
 
-宿主本机 TLS 适配器可用 Caddy sidecar，私钥在宿主；适配器和宿主监听回环，不改成公网绑定。现有 `authentication.mjs` 仅接受配置的 allowedOrigin、loopback trustedProxy、匹配的 Host/X-Forwarded-Host/https；S2 将认领域名作为显式 public origin 配置，适配器覆盖转发头、拒绝客户端伪造，保留同源 Cookie 写入与 CSRF。内容 UI/静态资源也经同一宿主 TLS origin 提供，不能由中央云页面拿明文内容再渲染。
+Login 校验安装对应的独立凭据；NewProxy 仅批准 `<hostId>.content`、`type=https` 和该宿主唯一的 `h-<128-bit 随机>.hosts.example.com`，拒绝他人域名、大小写绕过、子域替代、共享组和任意 TCP 服务。Ping/NewWorkConn/NewUserConn 重新检查 generation、active 与 membership。最后一个成员解绑也撤销中继；仅某个成员解绑不切断其他成员的宿主路由。
 
-frps 不使用分发给所有人的共享 token：用成熟 server plugin 的 Login/NewProxy/Ping 等接注册目录，验证每宿主独立、可轮换的中继凭据；只批准属于该宿主的随机域名与 HTTPS 代理，防另一宿主抢域名或发布任意 TCP 服务。这是路由所有权验证，不限制模型工具。插件仅监听受控本机接口，撤销宿主时断开现有中继连接，不能只拒绝下一次 Login；S2 需验证所选 frp 版本的管理关闭接口。[frp server plugin](https://gofrp.org/en/docs/features/common/server-plugin/)
+**主动关闭的实测结论**：此版 frps 没有踢在线 client 的管理接口，`DELETE /api/proxies` 仅清理 offline；Ping 插件拒绝只回错误 Pong，不能据此宣称立即断流。[固定版管理路由](https://github.com/fatedier/frp/blob/v0.71.0/server/api_router.go)、[管理删除实现](https://github.com/fatedier/frp/blob/v0.71.0/server/http/controller.go)、[Ping 处理](https://github.com/fatedier/frp/blob/v0.71.0/server/control.go)
 
-证书：宿主生成私钥，ACME 客户端在宿主完成证书取得/续期；云仅为认领域名提供 DNS-01 挑战记录的受权更新，不下发整个 DNS 管理密钥。可将每宿主 `_acme-challenge` 委托给受限验证区。原生端额外 pin 宿主 SPKI。CA 证书不能防域名控制者作恶：攻破云/DNS后攻击者可能申请另一个合法证书；已配对原生端的 pin 拒绝它。[DNS-01 官方说明](https://letsencrypt.org/docs/challenge-types/)
+因此云拥有两个必经、**不解析 TLS / 不实现隧道协议**的 TCP 入口。官方插件 Login 的 `client_address` 与 NewUserConn 的 `remote_addr` 对应入口连到 frps 的回环 socket；插件将 socket 关联到已验证宿主。撤销先落盘，随后销毁该宿主的控制和内容 socket，立即关闭已有 SSE/下载；其他宿主连接保留。凭据轮换递增 generation、关闭旧连接，宿主重启 frpc 使用新秘密，域名与 TLS pin 保持。所有 frps 内部 listener 必须只监听回环且仅受信服务进程可访问；绕过这两个入口不是受支持部署。
 
-**浏览器边界**：普通浏览器无法用应用代码可靠 pin 初始 TLS 证书，云/DNS 被主动攻破后可冒充宿主网页并替换脚本。正常运营下云仍看不到透传内容，但不能承诺“云主动攻击时远程浏览器也绝对不可读”。S2 隔离测试/优先支持原生已配对客户端；远程浏览器是否接受此边界，或改用受信客户端/私网入口，由本人审查确认，不能对用户隐瞒。
+目录 discover 只向该宿主成员返回 base URL 与 online/offline/revoked，不返回 pin/秘密。online 表示最近 15 秒收到有效连接/心跳，控制连接关闭或 cloud 重启即清除水位；不保证请求已经送达宿主。宿主 `/status.relay` 根据 frpc 私有管理接口的代理 running 状态返回实际连接情况。
 
-第一版**必须**做端点 TLS、宿主 pin 与独立内容设备信任，才能满足轻云目标。额外的应用层消息 E2EE（JWE/MLS 等）、流量填充与私有 DNS 不在首版；不以“以后加 E2EE”为由先部署能看正文的云 HTTP 中继。传输成功不是任务完成，保留现有 SSE 重连、分页游标、requestId/附件校验；宿主离线按明确连接不可用呈现。
+### 3.3 宿主 TLS、生命周期与证书
+
+`src/personal-relay/` 随个人访问服务启动、退出；frpc 自带断线重连，本包只管理进程生命周期与状态。IPC sidecar 在宿主意外退出时也停止 frpc；正常退出等待子进程关闭并销毁 adapter socket。宿主原 HTTP 与 TLS adapter 均监听 `127.0.0.1`。adapter 仅接受已认领域名的 SNI/Host，拒绝客户端 Forwarded/X-Forwarded-*，移除 hop-by-hop 头，写入固定 `Host/X-Forwarded-Host/X-Forwarded-Proto=https`。认领 origin 加入显式允许列表；Cookie 同源写入、Secure、CSRF 与 `/auth/setup` 仅直连语义保持。
+
+TLS adapter 直接使用 **S1b identity.json 已生成的内容私钥**，校验证书域名及 SPKI 匹配；不会生成另一把不匹配配对 pin 的 key。已认证、电脑直接地址的 `/cloud/pairings` 返回原 `tlsSpki` 和新增 `relay` 状态/baseUrl，原生端从当面配对/已有信任通道保存 pin，不能信云目录替代。证书正常续期保留同一密钥，`reloadRelayCertificate()` 可热换证书；换密钥的旧钥签名/客户端更新流程留给后续包，当前拒绝 pin 不一致的证书。
+
+- 开发/测试：`WEFTMATE_RELAY_DEVELOPMENT_TLS=true`，OpenSSL 在隔离宿主目录生成 7 天开发 CA，签署原内容 key 的 CSR；测试客户端显式信这份 CA，不改系统信任。
+- 生产：关闭开发开关，`scripts/relay-csr.mjs` 导出原内容 key 的 CSR。成熟 ACME 客户端 certbot 以 DNS-01 完成签发，`scripts/relay-acme-hook.mjs` 用安装 proof 调用云的 `dns/present` / `dns/cleanup`。部署包配置定期 CSR 签发/续期、安装 fullchain、调用 reload 或重启宿主，设置 `WEFTMATE_RELAY_CERT_FILE`。私钥从不送云。
+- 云 DNS 权限：只接受 43 字符 base64url TXT 值，记录名固定为 `_acme-challenge.<此宿主认领的完整域名>`，TTL=60；不接受 caller 指定 zone/name/type/TTL，不给宿主全区 DNS API key。可由部署包将此记录 CNAME 委托到受限验证区；`createIdentity({relayDns:{present,cleanup}})` provider 应只增删本次值，保留并发挑战，并在权威 TXT 已发布后返回。清理须幂等；掉电残留值由部署定期清理。provider 整区凭据仅在云部署的私有配置中。
+- 真实 DNS provider 尚未接入；默认 `DNS_NOT_CONFIGURED`（503），绝不假装 TXT 已更新。测试以隔离 provider 检查受限记录名和权限。[DNS-01 官方流程](https://letsencrypt.org/docs/challenge-types/)
+
+D24 已允许普通浏览器：正常透传时云只有密文；若云/DNS 被完全主动控制，普通浏览器可能被合法新证书和被替换页面冒充。已配对原生端还验证宿主 SPKI；云目录不获权更改 pin。S1c 负责真实客户端保存/校验。本包不新增应用层 JWE/MLS、模型任务调度或消息 E2EE。
+
+### 3.4 可重复验证与部署界线
+
+隔离全链路测试 `services/cloud/test/relay-e2e.test.mjs` 使用官方 frps/frpc、真实 HAProxy、cloud OIDC/SQLite、真实宿主 TLS adapter；`--resolve` 与测试连接地址覆盖模拟示例域名。覆盖远程本地密码登录/CSRF/setup 拒绝、SSE 更新、2,200 事件尾页/上翻、附件 SHA256 下载、切断控制通道后重连、凭据轮换、已认领另一宿主抢域名拒绝、错误 pin/同域受信 CA 伪造证书拒绝及云撤销立即断流、直连继续可用。云内容入口采集双向原始 TLS 字节，搜索测试正文/密码/Cookie 明文，结合 frps/cloud 日志检查；这是测试流量证据，不声称隐藏 SNI、流量大小和时间。
+
+Mac 无免密码 443 绑定权限，本机用 18443 跑完全相同 SNI 拓扑与 443 TLS authority；不改 hosts、不获取管理员密码。`.github/workflows/relay.yml` 在隔离 Linux 给 HAProxy 绑定能力，默认**实际 TCP 443**，重复完整场景并上传无秘密 JSON 报告。类型检查、cloud 测试、Origin/绑定/附件/SSE 回归另跑。最新结果见 STATE 与 PR checks。
+
+本包没有访问真实服务器、DNS、邮件、生产 CA 或用户日用数据；部署需要服务器 TCP 443、示例域名对应 A/AAAA（内容不可开启 CDN TLS 代理）、API/relay 服务端证书、宿主 DNS-01 委托/provider 与宿主 certbot/续期接线。Windows 原生进程、打包分发与五端原生 pin 真机验收在部署/S1c 包。
 
 ## 4. 推送转发（S3）
 
