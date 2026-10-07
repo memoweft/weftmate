@@ -946,7 +946,8 @@ class HybridActivity : Activity() {
                     if (params.has("before")) params.getString("before") else null,
                     params.optInt("limit", 50))
                 "shared.approvals.decide" -> api.decideApproval(host, params.getString("sessionId"), params.getString("approvalId"),
-                    params.getString("requestId"), params.getString("outcome"))
+                    params.getString("requestId"), params.getString("outcome"),
+                    if (params.has("scope")) params.getString("scope") else null)
                 "shared.questions.list" -> api.questions(host, params.getString("sessionId"),
                     if (params.has("before")) params.getString("before") else null,
                     params.optInt("limit", 50))

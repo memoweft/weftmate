@@ -49,6 +49,7 @@
             <div class="composer-actions">
               <button id="plus-button" class="icon-button" aria-label="添加图片或文件" aria-expanded="false" aria-controls="attachment-popover"><span class="icon icon-plus"></span></button>
               <button id="model-button" class="model-button" aria-label="选择模型" aria-expanded="false" aria-controls="model-popover"><span id="model-label">选择模型</span><span class="icon icon-down"></span></button>
+              <button id="approval-mode-button" class="approval-mode-button" type="button" aria-label="审批模式" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-popover"><span id="approval-mode-label">审批</span><span class="icon icon-down" aria-hidden="true"></span></button>
               <button id="voice-button" class="icon-button" aria-label="语音输入"><span class="icon icon-mic"></span></button>
               <button id="send-button" class="send-button" aria-label="发送"><span class="icon icon-arrow"></span></button>
               <button id="stop-button" class="send-button" aria-label="停止" hidden><span class="icon icon-stop"></span></button>
@@ -81,6 +82,15 @@
       </footer>
     </div>
     <button id="toast" class="toast" type="button" aria-live="polite" aria-description="轻点关闭" hidden></button>
+    <div id="approval-mode-popover" class="popover approval-mode-popover" role="menu" aria-label="审批模式" hidden></div>
+    <div id="approval-risk-dialog" class="approval-risk-dialog" role="dialog" aria-modal="true" aria-labelledby="approval-risk-title" hidden>
+      <section class="approval-risk-sheet">
+        <h2 id="approval-risk-title">允许所有操作？</h2>
+        <p>删除或覆盖文件、修改系统、安装软件、发送或发布内容、付款都可能直接执行，不再询问你。部分操作无法撤销。</p>
+        <p id="approval-risk-scope"></p>
+        <div class="approval-risk-actions"><button id="approval-risk-cancel" class="secondary" type="button">取消</button><button id="approval-risk-confirm" class="primary" type="button">确认全部允许</button></div>
+      </section>
+    </div>
   </div>
 </body>
 </html>
