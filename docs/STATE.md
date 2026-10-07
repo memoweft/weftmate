@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
-| Codex · Mac | A3（A1 + M1-0d）Apple 对话时间线 | 已实现并通过本地验收，待 PR 审查：在线/离线尾页与上翻、增量、执行/审批/提问/成果卡、删除独立任务页面、Watch 手机桥接及前台触感；[合成证据](../apps/apple/Tests/Evidence/A3/README.md) |
+| Codex · Mac | A3（A1 + M1-0d）Apple 对话时间线 | [PR #32](https://github.com/memoweft/weftmate/pull/32) 待审查，本地验收通过：在线/离线尾页与上翻、增量、执行/审批/提问/成果卡、删除独立任务页面、Watch 手机桥接及前台触感；[合成证据](../apps/apple/Tests/Evidence/A3/README.md) |
 | Codex · Cloud | S1a 云账号、邮箱验证与令牌 | [PR #29](https://github.com/memoweft/weftmate/pull/29)：账号/邮件验证/找回/新设备确认、OIDC Code+PKCE、SQLite adapter、JWKS/刷新轮换已实现；隔离测试 30/30、依赖审计 0 漏洞；[Linux cloud CI](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 通过；未部署/真实发信，客户端与宿主接入留 S1b |
 
 已完成：文档/规则重置、M0-1b 清理与模块拆分、M0-2 服务容量与动态预算（PR #24）、H1 iPhone 健康设置/摘要/隔离队列（PR #22）、H2（PR #25）与 MW-2（PR #28）、CI 依赖审计与省钱分组。
