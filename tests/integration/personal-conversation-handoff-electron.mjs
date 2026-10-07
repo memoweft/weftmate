@@ -54,8 +54,8 @@ function sse(response, model, tool = null) {
     object: 'chat.completion.chunk', created: Math.floor(Date.now() / 1000), model,
     choices: [choice] })}\n\n`);
   frame(tool ? { index: 0, delta: { role: 'assistant', tool_calls: [{ index: 0,
-    id: `call-${randomUUID()}`, type: 'function', function: { name: 'personal_save_document',
-      arguments: JSON.stringify({ fileName: '接续摘要.md', content: `# 接续摘要\n${uniqueFact}\n` }) } }] },
+    id: `call-${randomUUID()}`, type: 'function', function: { name: 'write',
+      arguments: JSON.stringify({ file_path: '接续摘要.md', content: `# 接续摘要\n${uniqueFact}\n` }) } }] },
     finish_reason: null } : { index: 0, delta: { role: 'assistant', content:
       `电脑已接上手机记录：${uniqueFact}` }, finish_reason: null });
   frame({ index: 0, delta: {}, finish_reason: tool ? 'tool_calls' : 'stop' });
@@ -84,7 +84,7 @@ const modelServer = createServer(async (request, response) => {
   let body;
   try { body = JSON.parse(raw); } catch { response.writeHead(400); response.end(); return; }
   if (body.model !== 'synthetic-stop-model') { response.writeHead(400); response.end(); return; }
-  const hasDocumentTool = JSON.stringify(body.tools ?? []).includes('personal_save_document');
+  const hasDocumentTool = JSON.stringify(body.tools ?? []).includes('write');
   if (hasDocumentTool) {
     modelCalls++;
     contextSeen ||= JSON.stringify(body.messages).includes(uniqueFact);

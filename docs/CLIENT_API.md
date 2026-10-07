@@ -314,12 +314,16 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | `approval.resolved` | `taskId,approvalId,summary,outcome,detailRef` | 原生 `approval/decided`。以 approvalId 更新原请求卡，保留开始位置 |
 | `question.asked` | `taskId,stepId,callId,toolName,summary,questions,turn,detailRef,state` | 原生 `ask_user_question` 工具调用；具体提问操作使用 3.7 的原生问题批次 UUID。问题列表追加 `observedSeq`，用于定位该 turn 内不晚于水位的最后一个提问调用 |
 | `question.answered` | `taskId,stepId,callId,summary,turn,detailRef,state` | `ask_user_question` 的原生工具结果；答案原文从详情取。提交答案登记仍以问题接口的 answered / answerAcceptedAt / resolved 区分，不能把登记当成执行端消费 |
-| `artifact.created` | `taskId,artifactId,fileName,contentType,size,detailSeq,completedStep` | 原生 tool/result 含成果引用时，该 seq 投影为成果条目；completedStep 带同一步的完成字段，客户端同时结束该 stepId。此 taskId 可为根命令 ID，completedStep.taskId 仍是原生回合键。预览、下载和验证元数据仍使用 3.8 成果接口 |
+| `artifact.created` | `taskId,artifactId,fileName,contentType,size,detailSeq,completedStep,artifacts?` | 原生 tool/result 含成果引用时，该 seq 投影为成果条目；completedStep 带同一步的完成字段，客户端同时结束该 stepId。同一步生成多个文件时，artifacts 数组逐项含 taskId、artifactId、fileName、contentType、size；顶层字段保留首项供旧客户端读取。每项以 artifactId 渲染卡片，共享原生 seq。此 taskId 可为根命令 ID，completedStep.taskId 仍是原生回合键。预览、下载和验证元数据仍使用 3.8 成果接口 |
 | `task.started` | `taskId,turn` | 原生 step/start 的 step=1；保留独立 seq 的既有 turn.started |
 | `task.ended` | `taskId,turn,reason,nativeTurnEndSeq,endReasonKind?` | 原生最终 step/end，后续 turn/end 确认其结束原因；中间模型 step 不结束任务。保留独立 seq 的既有 turn.ended；未真正进入 step 的阻断回合仍只返回 turn.ended |
 | `task.queued` | `taskId`，可附请求信息 | 保留该公开类型的投影；当前固定 DSH 不产生此事件，本包不新增队列生产者、排队取消或插话调度；M1-0b / D9 另包确认原生来源 |
 
 既有日志不会被回写，也不向固定 DSH 追加私有事件类型：生命周期来自原生 step 标记，成果来自工具结果，所以旧日志同样可投影。固定 DSH 的持久事件目录不支持注册外部类型；读取必须保持原生恢复兼容。原有成果与控制信息仍可通过根任务快照补充到原对话。DSH 自带工具界面按 callId 关联调用与结果、用可折叠原始详情展示；本实现复用这一呈现方式，独立 Web 界面保持自身组件和样式。
+
+M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows 的 `pwsh`、其他桌面平台的 `bash`，以及 `read/write/edit`、`grep/glob`、`web_fetch`、`todo_write`、`subagent`。浏览器统一为 `browser` 的 open/read/follow 动作，不要求专用浏览器工作区或用户原文含 URL。旧 `personal_open_notepad`、`personal_save_document`、项目读取与三个浏览器工具不再注册，也没有个人预设的回合调用限次。既有日志及来源读取仍兼容。
+
+新个人对话的 cwd（工作目录）为宿主数据目录下 `conversations/<sessionId>`，相对文件路径、命令与原生子任务使用该目录；旧会话保留其原生 cwd。工作目录不进入客户端接口。文件修改观察器在真实工具执行后读取磁盘，登记新增或内容变化的文件，并在原生工具结果中附上宿主成果引用。显式 write/edit 文件路径及 shell 的 workdir（命令工作目录）也可登记；无需额外保存工具或来源参数。当前成果预览沿用 3.8 的非空 UTF-8 文本、128 KiB 和安全文件名范围，其他文件仍可由原生工具写出，工具结果会说明成果格式暂不支持。审批沿用 DSH 默认机制，五种用户审批模式属于 M1-2。
 
 ### 4.2 分组、分页与各端呈现
 

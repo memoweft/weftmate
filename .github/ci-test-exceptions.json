@@ -1,12 +1,6 @@
 {
   "knownFailures": [
     {
-      "file": "tests/dsh-web-profile.test.ts",
-      "name": "personal-remote upgrades owned preset to bounded project reading and document saving",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
       "file": "tests/main-shutdown-contract.test.ts",
       "name": "显式 dogfood userData 在 wipe 和单实例锁之前生效，且 IPC 仅在控制开关开启时退出",
       "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
@@ -496,12 +490,12 @@
     },
     {
       "file": "tests/personal-remote-loop.test.ts",
-      "name": "official rc.5 agent loop persists a blocked turn after two repeated restricted calls",
+      "name": "official rc.5 native loop completes after eight tool calls without a personal quota",
       "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners."
     },
     {
       "file": "tests/personal-remote-loop.test.ts",
-      "name": "official rc.5 document loop reaches its final reply after two saves, including a failed first save",
+      "name": "official rc.5 write loop reaches its final reply after two writes, including a failed first write",
       "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners."
     },
     {

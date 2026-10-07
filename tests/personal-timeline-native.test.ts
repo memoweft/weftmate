@@ -28,7 +28,7 @@ test('timeline reads official live session events without adding unsupported dur
     const session = ctx.sessions.create('timeline-publication')
     session.append('turn/start', { turn: 1 })
     session.append('step/start', { turn: 1, step: 1 })
-    session.append('tool/call', { turn: 1, step: 1, callId: 'save', name: 'personal_save_document', arguments: '{"fileName":"报告.md"}' })
+    session.append('tool/call', { turn: 1, step: 1, callId: 'save', name: 'write', arguments: '{"fileName":"报告.md"}' })
     session.append('tool/result', { turn: 1, step: 1, message: { role: 'user', id: 'result-message', source: { kind: 'tool', callId: 'save' },
       content: [{ type: 'tool-result', toolCallId: 'save', content: [{ type: 'text', text: '{"artifactId":"file-native","fileName":"报告.md","size":20}' }] }] } }, { surfaceOp: 'append' })
     session.append('step/end', { turn: 1, step: 1 })

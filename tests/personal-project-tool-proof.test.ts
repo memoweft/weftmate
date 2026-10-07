@@ -14,6 +14,7 @@ async function loadPlugin() {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-project-proof-'))
   const source = readFileSync(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop.mjs'), 'utf8')
     .replace("from '@deepseek-ai/dsh-tools'", `from '${vendorTools}'`)
+    .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
     .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
   const file = join(root, 'weftmate-personal-desktop.mjs')
   writeFileSync(file, source)

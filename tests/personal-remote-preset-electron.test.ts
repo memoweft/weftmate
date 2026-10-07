@@ -38,7 +38,7 @@ test('real rc.5 keeps a personal-remote preset on a new empty session across res
           listeners.delete(inspect); clearTimeout(timer); reject(new Error(`exit ${code}: ${output.slice(-800)}`))
         })
       })
-      return { child, origin }
+      return { child, origin, output: () => output }
     }
     const stop = async (child: ChildProcess) => {
       if (child.exitCode !== null || child.signalCode !== null) return
@@ -54,7 +54,7 @@ test('real rc.5 keeps a personal-remote preset on a new empty session across res
       const sessionId = `session-${randomUUID()}`
       const created = await fetch(`${first.origin}/weftmate/api/v1/sessions`, { method: 'POST',
         headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionId, agentPreset: 'personal-remote' }) })
-      assert.equal(created.status, 201, JSON.stringify(await created.json()))
+      assert.equal(created.status, 201, JSON.stringify(await created.json()) + first.output().slice(-6000))
       const list = await (await fetch(`${first.origin}/weftmate/api/v1/sessions`)).json()
       assert.equal(list.items.find((item: { sessionId: string }) => item.sessionId === sessionId)?.agentPreset,
         'personal-remote')

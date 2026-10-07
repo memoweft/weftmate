@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { pathToFileURL } from 'node:url'
 import test from 'node:test'
+import { stagePersonalPlugins } from './support/personal-plugins.ts'
 
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
@@ -12,19 +13,15 @@ const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'ds
 test('official ToolRuntime gives the original personal-remote scope general tools while denying forged execution identity', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-scope-'))
   try {
-    const source = readFileSync(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop.mjs'), 'utf8')
-      .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`)
-    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
-    const staged = join(root, 'weftmate-personal-desktop.mjs')
-    writeFileSync(staged, source)
+    const staged = stagePersonalPlugins(root)
     const [{ Context }, SystemPrompt, Sessions, tools, { createScope }, globalPlugin, preset] = await Promise.all([
       import(vendor('cordis')),
       import(vendor('dsh-system-prompt')),
       import(vendor('dsh-session')),
       import(vendor('dsh-tools')),
       import(vendor('dsh-scope')),
-      import(pathToFileURL(staged).href),
-      import(pathToFileURL(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop-preset.mjs')).href),
+      import(staged.plugin),
+      import(staged.preset),
     ])
     const ctx = new Context()
     await ctx.plugin(SystemPrompt.default, { includeHarnessIdentity: false, includeRuntimeContext: false, persona: '' })
@@ -37,47 +34,31 @@ test('official ToolRuntime gives the original personal-remote scope general tool
       'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'mod_sdk']) ctx.get('tools').register(fakeTool(name))
     await ctx.plugin(globalPlugin.default)
     const remoteSession = ctx.sessions.create('remote-session', { meta: { agentPreset: 'personal-remote' } })
-    assert.equal(globalPlugin.safeDocumentName('会议纪要.md'), '会议纪要.md')
-    assert.equal(globalPlugin.safeDocumentName('Cafe\u0301.md'), 'Café.md')
-    for (const fileName of ['说明.txt', '表格.csv', 'rows.tsv', 'state.json', 'notes.pdf']) {
-      assert.equal(globalPlugin.safeDocumentName(fileName), fileName)
-    }
-    for (const fileName of ['../secret.md', 'CON.md', 'COM1.md', 'a..b.md', 'a .md', 'a\\b.md',
-      'bad\nname.md', 'notes.', 'name. ext', 'a'.repeat(161) + '.md']) {
-      assert.equal(globalPlugin.safeDocumentName(fileName), null, fileName)
-    }
     remoteSession.append('turn/start', { turn: 1 })
-    remoteSession.append('user/message', { source: { kind: 'user' },
-      content: [{ type: 'text', text: '请在这台电脑上打开记事本' }] }, { surfaceOp: 'append' })
-    remoteSession.append('tool/call', { turn: 1, callId: 'call-one', name: 'personal_open_notepad' })
-    assert.deepEqual(globalPlugin.personalToolIdentity({ agent: { session: remoteSession }, callId: 'call-one' }), {
-      sessionId: remoteSession.id, turn: 1, callId: 'call-one',
-      messageHash: createHash('sha256').update('请在这台电脑上打开记事本').digest('hex'),
-    })
+    remoteSession.append('user/message', { source: { kind: 'user', rpcId: 'fixture-receipt' },
+      content: [{ type: 'text', text: 'Create a report.' }] }, { surfaceOp: 'append' })
     const agent = { id: remoteSession.id, session: remoteSession, ctx: null,
       options: {}, status: 'running', inbox: {}, cancel() {}, whenIdle: async () => {}, send() {}, followup() {}, steer() {}, inject() {} }
     const scoped = createScope(ctx, agent)
     agent.ctx = scoped.ctx
     await scoped.ctx.plugin(preset.default)
-    const documentSchema = scoped.ctx.get('tools').schemas(agent).find((item: { name: string }) =>
-      item.name === 'personal_save_document')
-    assert.ok(documentSchema.description.includes('UTF-8 text'))
-    assert.ok(documentSchema.description.includes('.csv'))
-    assert.deepEqual(scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name),
-      ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill', 'weftmod', 'weftmod_script',
-        'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'personal_save_document',
-        'personal_list_project_files', 'personal_read_project_file',
-        'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment'])
-    const preStep = (turn: number) => scoped.ctx.waterfall('agent/pre-step', {
-      agent, messages: [], turn, step: turn, signal: new AbortController().signal,
+    const names = scoped.ctx.get('tools').schemas(agent).map((item: { name: string }) => item.name)
+    assert.deepEqual(names, ['pwsh', 'read', 'write', 'edit', 'glob', 'grep', 'job_output', 'job_list', 'job_kill',
+      'weftmod', 'weftmod_script', 'get_goal', 'create_goal', 'update_goal', 'ask_user_question', 'future_native_capability', 'browser'])
+    for (const name of ['personal_open_notepad', 'personal_save_document', 'personal_list_project_files',
+      'personal_read_project_file', 'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
+      assert.equal(names.includes(name), false)
+    }
+    const rawSchema = ctx.get('tools').schemas(agent).find((item: any) => item.name === 'pwsh')
+    const assembled = await scoped.ctx.waterfall('system-prompt/assemble', { tools: [rawSchema] }, {},
+      async () => ({ tools: [rawSchema] }))
+    assert.equal(assembled.tools[0].description, 'Run a PowerShell command in this conversation or an explicit workdir.')
+    assert.equal(rawSchema.description, 'pwsh', 'the native registry and other presets keep their descriptions')
+    for (let i = 0; i < 150; i++) remoteSession.append('tool/call', { turn: 1, callId: `call-${i}`, name: 'read' })
+    const decision = await scoped.ctx.waterfall('agent/pre-step', {
+      agent, messages: [], turn: 1, step: 151, signal: new AbortController().signal,
     }, async () => ({ kind: 'enter', messages: [] }))
-    assert.equal((await preStep(1)).kind, 'enter')
-    remoteSession.append('tool/call', { turn: 1, callId: 'call-two', name: 'personal_open_notepad' })
-    assert.equal((await preStep(1)).kind, 'reject', 'a third model step is blocked after two same-turn Notepad calls')
-    assert.equal((await preStep(2)).kind, 'enter', 'the next user turn has a fresh bound')
-    remoteSession.append('tool/call', { turn: 2, callId: 'document-one', name: 'personal_save_document' })
-    remoteSession.append('tool/call', { turn: 2, callId: 'document-two', name: 'personal_save_document' })
-    assert.equal((await preStep(2)).kind, 'enter', 'two document calls allow the next model step and final reply')
+    assert.equal(decision.kind, 'enter', 'native calls never trigger a personal turn quota')
     for (const name of ['pwsh', 'weftmod', 'mod_sdk', 'run_code']) {
       const result = await ctx.get('tools').execute({ name, arguments: {}, agent,
         callId: `deny-${name.replace('_', '-')}`, signal: new AbortController().signal })
@@ -85,14 +66,7 @@ test('official ToolRuntime gives the original personal-remote scope general tool
     }
     const standard = { ...agent, id: 'standard', session: ctx.sessions.create('standard', { meta: { agentPreset: 'standard' } }) }
     assert.ok(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'pwsh'))
-    for (const name of ['personal_open_notepad', 'personal_save_document',
-      'personal_list_project_files', 'personal_read_project_file',
-      'personal_browser_open', 'personal_browser_follow', 'personal_browser_read_segment']) {
-      const guarded = await ctx.get('tools').execute({ name,
-        arguments: name === 'personal_open_notepad' ? { appId: 'notepad' } : { fileName: 'note.md', content: 'Hi' },
-        agent: standard, callId: `guarded-${name}`, signal: new AbortController().signal })
-      assert.equal(guarded.isError, true)
-    }
+    assert.equal(ctx.get('tools').schemas(standard).some((item: { name: string }) => item.name === 'browser'), false)
     await ctx.fiber.dispose()
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
