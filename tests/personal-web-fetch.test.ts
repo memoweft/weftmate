@@ -26,7 +26,7 @@ test('native web fetch reads every segment with one source identity and preserve
   assert.deepEqual(frames.slice(1).map(frame => [frame.snapshotId, frame.segmentIndex]), [['capture-one', 1], ['capture-one', 2]])
 })
 
-test('native web fetch does not supply other presets or delegated sessions and propagates cancellation', async () => {
+test('native web fetch supplies delegated personal sessions, excludes other presets and propagates cancellation', async () => {
   let exec: any
   const controller = new AbortController()
   const provider = personalWebFetchProvider({ request: async (_frame: any, signal: AbortSignal) => {
@@ -37,7 +37,7 @@ test('native web fetch does not supply other presets or delegated sessions and p
   exec = { agent: { session: { header: { agentPreset: 'standard' } } } }
   assert.equal(provider.available(), false)
   exec.agent.session.header = { agentPreset: 'personal-remote', origin: 'subagent' }
-  assert.equal(provider.available(), false)
+  assert.equal(provider.available(), true)
   exec.agent.session.header = { agentPreset: 'personal-remote' }
   assert.equal(provider.available(), true)
   controller.abort()

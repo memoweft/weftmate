@@ -59,6 +59,22 @@ async function fixture() {
     close: async () => { await service.close(); rmSync(root, { recursive: true, force: true }) } }
 }
 
+test('parallel native roots finish independently through their original account receipt', async () => {
+  const f = await fixture()
+  try {
+    const calls = ['parallel-first', 'parallel-second'].map(callId => ({ ...f.input, callId, rootCallId: callId }))
+    const grants = await Promise.all(calls.map(input => f.service.trackToolExecution({ ...input, action: 'authorize_execution' })))
+    assert.ok(grants.every(grant => grant.state === 'running' && grant.taskId === f.source.commandId))
+    assert.notEqual(grants[0].executionId, grants[1].executionId)
+    assert.equal((await f.request(`tasks/${f.source.commandId}`)).body.executionSteps.filter((row: any) => row.state === 'running').length, 2)
+    for (const index of [1, 0]) {
+      await f.service.trackToolExecution({ ...calls[index], action: 'finish_execution', executionId: grants[index].executionId,
+        state: 'completed', resultHash: hash(`result-${index}`) })
+    }
+    assert.ok((await f.request(`tasks/${f.source.commandId}`)).body.executionSteps.every((row: any) => row.state === 'completed'))
+  } finally { await f.close() }
+})
+
 test('generic execution uses the original account receipt, returns metadata only and never claims the goal verified', async () => {
   const f = await fixture()
   try {
@@ -182,6 +198,9 @@ async function withDesktopPlugin(run: (plugin: any) => Promise<void>) {
     const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
       .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
     .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
+    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
+    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
+    .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
     .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
     .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
     .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
@@ -384,6 +403,9 @@ test('tool lifecycle derives a nested call from the real root event and records 
     const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
       .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
     .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
+    .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
+    .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
+    .replace("from '@deepseek-ai/dsh-sandbox-policy'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-sandbox-policy/lib/index.js")).href}'`)
     .replace("from './personal-web-fetch.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-web-fetch.mjs")).href}'`)
     .replace("from './personal-native-files.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-native-files.mjs")).href}'`)
     .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)

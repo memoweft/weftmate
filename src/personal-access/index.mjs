@@ -551,6 +551,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     isFormalLocalProfile: accountModels.isFormalLocalProfile,
     privateAccountModelProof: accountModels.privateAccountModelProof,
     ownerForSession: sessions.ownerForSession,
+    getApprovalPolicy({ sessionId }) {
+      const match = sessions.ownerForSession(sessionId);
+      if (!match) throw failure('SESSION_UNAVAILABLE', 404);
+      const account = accountState(match.ownerId), session = account.sessions[sessionId];
+      return { mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
+        allowedCategories: session.allowedApprovalCategories ?? [] };
+    },
     hasUnissuedDshCommands: commands.hasUnissuedDshCommands,
     getConversationContext: sessions.getConversationContext,
     async setSharedModelProfiles(profileIds) {

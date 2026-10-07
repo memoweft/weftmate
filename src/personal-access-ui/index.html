@@ -135,7 +135,10 @@
                       </div>
                     </div>
                     <button type="button" class="composer-icon" id="voice-input" aria-label="语音输入" aria-pressed="false" title="语音输入" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg></button>
-                    <span class="approval-mode-slot" hidden></span>
+                    <div class="approval-picker" id="approval-picker">
+                      <button type="button" class="model-trigger" id="approval-mode-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-menu" disabled><span id="approval-mode-label">自动</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+                      <div class="model-popover approval-popover" id="approval-mode-menu" role="menu" aria-label="审批模式" hidden></div>
+                    </div>
                     <select id="message-mode" aria-label="运行中输入方式" hidden><option value="steer">插话</option><option value="queue">新目标排队</option></select>
                     <button type="button" class="button quiet small" id="cancel-turn" hidden>停止</button>
                     <button type="submit" class="composer-icon composer-send" id="send-message" aria-label="发送" disabled>发送</button>
@@ -171,6 +174,7 @@
       </section>
 
       <section id="account-view" hidden>
+        <section class="card group appearance-settings" aria-labelledby="approval-settings-heading"><h2 id="approval-settings-heading">审批</h2><div class="appearance-controls"><label for="default-approval-mode">新对话的默认模式<select id="default-approval-mode" disabled></select></label></div><p id="approval-settings-notice" class="muted" role="status"></p></section>
         <section class="card group appearance-settings" aria-labelledby="appearance-heading"><h2 id="appearance-heading">外观</h2><p class="muted">保存到这台设备。</p><div class="appearance-controls"><label>颜色模式<select id="appearance-theme"><option value="system">跟随系统</option><option value="light">浅色</option><option value="dark">深色</option></select></label><label>主题色<select id="appearance-accent"><option value="neutral">石墨</option><option value="blue">蓝色</option><option value="green">松绿</option><option value="purple">紫色</option></select></label><label>字号<select id="appearance-fontSize"><option value="14">小 · 14</option><option value="15">标准 · 15</option><option value="17">大 · 17</option><option value="19">特大 · 19</option></select></label></div></section>
         <div class="page-heading"><button type="button" class="button quiet account-back" id="account-back">← 返回对话</button><p class="eyebrow">个人设置</p><h1>账户与设备</h1><p class="muted">编辑显示资料，管理已登录设备和账户密码。撤销设备后，它需要重新登录。</p></div>
         <section class="card group" aria-labelledby="account-heading">

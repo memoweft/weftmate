@@ -1,0 +1,15 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "isolatedAccount": true,
+  "realModel": true,
+  "scenarios": [
+    {
+      "id": "action-06-delete-approval",
+      "status": "failed",
+      "durationMs": 180456,
+      "checks": [],
+      "reason": "Scenario timed out"
+    }
+  ]
+}

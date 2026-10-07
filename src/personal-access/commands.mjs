@@ -331,6 +331,7 @@ export function createCommandOperations(context) {
             : 'accepted_by_dsh';
           if (snapshot.kind === 'session.create') {
             next.sessions[snapshot.sessionId] = { ownerId: next.ownerId, attachedAt: new Date().toISOString(),
+              approvalMode: next.defaultApprovalMode ?? 'auto',
               origin: !['password', 'cloud'].includes(next.devices[snapshot.sourceDeviceId]?.authKind)
                 ? 'legacy-local' : context.hostOwner(ownerId) ? 'personal-remote' : 'shared-chat',
               modelProfileId: snapshot.payload.modelProfileId,
