@@ -1,4 +1,9 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#else
+import UIKit
+#endif
 
 struct SettingsView: View {
     @ObservedObject var model: AppleAppModel
@@ -8,6 +13,7 @@ struct SettingsView: View {
     #endif
     @State private var confirmSignOut = false
     @State private var confirmServer = false
+    @State private var draftCopyResult: String?
 
     var body: some View {
         ScrollView {
@@ -15,6 +21,27 @@ struct SettingsView: View {
                 Text("账户与设置").font(.title2.weight(.semibold)).foregroundStyle(Weave.ink)
                 if model.verificationPending {
                     InlineNotice(message: "服务器暂不可达，正在显示上次保存的账户身份。重新连接后会验证登录状态。")
+                }
+                if let error = model.draftError {
+                    InlineNotice(message: error, isError: true)
+                }
+                if model.needsUnsavedDraftDecision {
+                    WeaveCard {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("有改动尚未保存").font(.headline).foregroundStyle(Weave.ink)
+                            Button("复制未保存草稿") { copyUnsavedDrafts() }
+                                .buttonStyle(.bordered)
+                            Button("重试保存并退出") { Task { await model.signOut() } }
+                                .buttonStyle(.bordered).disabled(model.authBusy)
+                            Button("仍然退出（未保存的改动会丢失）", role: .destructive) {
+                                Task { await model.signOut(discardUnsavedChanges: true) }
+                            }
+                            .buttonStyle(.bordered).disabled(model.authBusy)
+                            if let draftCopyResult {
+                                Text(draftCopyResult).font(.caption).foregroundStyle(Weave.muted)
+                            }
+                        }
+                    }
                 }
                 WeaveCard {
                     VStack(alignment: .leading, spacing: 20) {
@@ -88,14 +115,26 @@ struct SettingsView: View {
             Button("退出登录", role: .destructive) { Task { await model.signOut() } }
             Button("取消", role: .cancel) {}
         } message: {
-            Text("这台设备上的会话列表和草稿将清空。服务器上的原记录会保留。")
+            Text("当前会话列表会关闭。未发送草稿保留在本机对应账户，服务器原记录也会保留。")
         }
         .confirmationDialog("更换服务器？", isPresented: $confirmServer, titleVisibility: .visible) {
             Button("退出并更换", role: .destructive) { Task { await model.signOut() } }
             Button("取消", role: .cancel) {}
         } message: {
-            Text("退出后，在登录页更改服务器地址。这台设备上的当前草稿将清空。")
+            Text("退出后，在登录页更改服务器地址。草稿仍归原服务器的原账户保留。")
         }
         .accessibilityIdentifier("settingsRoot")
+    }
+
+    private func copyUnsavedDrafts() {
+        let text = model.unsavedDraftTextForCopy
+        guard !text.isEmpty else { draftCopyResult = "没有尚未保存的文字。"; return }
+        #if os(macOS)
+        NSPasteboard.general.clearContents()
+        draftCopyResult = NSPasteboard.general.setString(text, forType: .string) ? "已复制未保存草稿。" : "复制未完成，请重试。"
+        #else
+        UIPasteboard.general.string = text
+        draftCopyResult = "已复制未保存草稿。"
+        #endif
     }
 }

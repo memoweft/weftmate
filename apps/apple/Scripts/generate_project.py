@@ -77,7 +77,13 @@ def target(name, platform, sources, testing=None):
         packages.append(core)
         framework_files.append(obj(name + ":framework:core", isa="PBXBuildFile", productRef=core))
     phases.append(obj(name + ":frameworks", isa="PBXFrameworksBuildPhase", buildActionMask=2147483647, files=framework_files, runOnlyForDeploymentPostprocessing=0))
-    phases.append(obj(name + ":resources", isa="PBXResourcesBuildPhase", buildActionMask=2147483647, files=[], runOnlyForDeploymentPostprocessing=0))
+    resource_files = []
+    if not is_test:
+        catalog = "Resources/Spirit.xcassets"
+        resource_files.append(obj(name + ":resource:" + catalog, isa="PBXBuildFile",
+                                  fileRef=file(catalog, "folder.assetcatalog")))
+    phases.append(obj(name + ":resources", isa="PBXResourcesBuildPhase", buildActionMask=2147483647,
+                      files=resource_files, runOnlyForDeploymentPostprocessing=0))
     deps = []
     if name == "WeftMatePhone":
         embed = obj(name + ":watch-embed-build", isa="PBXBuildFile", fileRef=ref("product:WeftMateWatch"), settings={"ATTRIBUTES": ["RemoveHeadersOnCopy"]})
@@ -112,8 +118,9 @@ mac = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "macOS").rglob("*.swift")
 phone = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "iOS").rglob("*.swift"))
 watch = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "watchOS").rglob("*.swift"))
 target("WeftMateWatch", "watchos", watch)
-target("WeftMateMac", "macosx", ui + mac)
-target("WeftMatePhone", "iphoneos", ui + phone)
+debug_fixture = ["Tests/TaskProgressUIFixture.swift"]
+target("WeftMateMac", "macosx", ui + mac + debug_fixture)
+target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture)
 target("WeftMateMacUITests", "macosx", ["Tests/WeftMateUITests.swift"], "WeftMateMac")
 target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift"], "WeftMatePhone")
 product_group = obj("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")

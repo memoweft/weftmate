@@ -16,7 +16,10 @@ private struct SessionsReply: Decodable { let sessions: [RemoteSession] }
 private struct OriginalModel: Decodable { let modelId: String; let displayName: String }
 private struct SyncPayload: Decodable {
     let title: String?; let messageId: String?; let role: MessageRole?; let text: String?
-    let attachments: [JSONValue]?; let originalModel: OriginalModel?
+    let attachments: [OriginalAttachment]?; let originalModel: OriginalModel?
+    let originalAttachments: [OriginalAttachment]?
+    let attachmentMessageId: String?
+    let unpreviewedOriginalImageIds: [String]?
 }
 private struct SyncEvent: Decodable {
     let seq: Int; let sourceDeviceId: String; let eventId: String; let conversationId: String
@@ -46,7 +49,7 @@ private struct AcceptanceCapabilitiesReply: Decodable {
     let sharedConversations: Int
 }
 
-private enum JSONValue: Decodable {
+private enum JSONValue: Codable {
     case object([String: JSONValue]), array([JSONValue]), string(String), number(Double), bool(Bool), null
     init(from decoder: any Decoder) throws {
         let c = try decoder.singleValueContainer()
@@ -61,10 +64,21 @@ private enum JSONValue: Decodable {
     var string: String? { if case .string(let x) = self { x } else { nil } }
     var count: Int { if case .array(let x) = self { x.count } else { 0 } }
     var bool: Bool { if case .bool(let x) = self { x } else { false } }
+    func encode(to encoder: any Encoder) throws {
+        var box = encoder.singleValueContainer()
+        switch self {
+        case .object(let value): try box.encode(value)
+        case .array(let value): try box.encode(value)
+        case .string(let value): try box.encode(value)
+        case .number(let value): try box.encode(value)
+        case .bool(let value): try box.encode(value)
+        case .null: try box.encodeNil()
+        }
+    }
 }
 
 /// Owner-scoped client. Async callbacks are checked against a generation before publishing or persisting.
-/// This first milestone only reads existing conversations; no Android capability/version is asserted.
+/// Shared commands reuse a persisted request identity; no Android capability/version is asserted.
 public actor PersonalClient {
     private let store: any CredentialStore
     private let transport: any HTTPTransport
@@ -74,6 +88,21 @@ public actor PersonalClient {
     private var syncEvents: [SyncEvent] = []
     private var summaries: [ConversationSummary] = []
     private var historyCache: [String: [ChatMessage]] = [:]
+    private var sharedIntentBytes: [String: Data] = [:]
+    private var sharedIntentEndpoints: [String: String] = [:]
+    private var sharedOperations = Set<String>()
+    private var memoryIntentBytes: [String: Data] = [:]
+    private var memoryIntentEndpoints: [String: String] = [:]
+    private var memoryOperations = Set<String>()
+    private var memoryIntentIdentities: [String: MemoryRAMIntentIdentity] = [:]
+    private var memoryKnownReceipts: [String: MemoryMutationReceipt] = [:]
+    private var memoryRedactedProofs: [String: MemoryCorrectionRedactionProof] = [:]
+    private var taskStopIntents: [String: TaskStopIntent] = [:]
+    private enum InteractionIntent: Equatable, Sendable { case approval(ApprovalDecisionIntent), question(QuestionAnswerIntent) }
+    private var interactionIntents: [String: InteractionIntent] = [:]
+    private var interactionOperations = Set<String>()
+    private var approvalDecisionReceipts: [String: ApprovalDecisionReceipt] = [:]
+    private var questionAnswerReceipts: [String: QuestionAnswerReceipt] = [:]
     private let decoder = JSONDecoder()
 
     public init(credentialStore: any CredentialStore = KeychainCredentialStore(),
@@ -246,7 +275,7 @@ public actor PersonalClient {
                     if event.type == "user.message", let receipt = event.data["receiptId"]?.string,
                        let eventID = adopted[receipt], let original = originals.first(where: { $0.eventId == eventID }) {
                         result.append(try syncMessage(original, pending: false)); shown.insert(eventID)
-                    } else if let message = hostMessage(event, sessionID: binding.sessionId) { result.append(message) }
+                    } else if let message = try hostMessage(event, sessionID: binding.sessionId) { result.append(message) }
                 }
                 for original in originals where original.seq > binding.cutoverSyncSeq && !shown.contains(original.eventId) {
                     result.append(try syncMessage(original, pending: true))
@@ -254,7 +283,7 @@ public actor PersonalClient {
             }
             try check(generation); syncEvents = events
         } else if let sessionID = conversation.sessionId {
-            result = try await readHistory(auth, generation, sessionID: sessionID).compactMap { hostMessage($0, sessionID: sessionID) }
+            result = try await readHistory(auth, generation, sessionID: sessionID).compactMap { try hostMessage($0, sessionID: sessionID) }
         } else { throw APIFailure.invalidResponse }
         try check(generation)
         guard Set(result.map(\.id)).count == result.count else { throw APIFailure.invalidResponse }
@@ -264,6 +293,514 @@ public actor PersonalClient {
 
     /// Cache belongs only to the currently authenticated generation; no fallback is represented as fresh data.
     public func cachedHistory(conversationID: String) -> [ChatMessage]? { credential == nil ? nil : historyCache[conversationID] }
+
+    public func sharedSessions() async throws -> [SharedSessionRecord] {
+        struct Reply: Decodable { let sessions: [SharedSessionRecord] }
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        let reply: Reply = try await authorized(auth, generation, path: "/sessions")
+        guard reply.sessions.count <= 20_000,
+              Set(reply.sessions.map(\.sessionId)).count == reply.sessions.count else { throw APIFailure.invalidResponse }
+        for session in reply.sessions { try session.validate() }
+        return reply.sessions
+    }
+
+    /// Only explicit user selection or a confirmed original identity may choose from this catalogue.
+    public func hostModels() async throws -> [SharedHostModel] {
+        struct Reply: Decodable { let models: [SharedHostModel] }
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        let reply: Reply = try await authorized(auth, generation, path: "/models")
+        guard reply.models.count <= 500, Set(reply.models.map(\.id)).count == reply.models.count else { throw APIFailure.invalidResponse }
+        for model in reply.models { try model.validate() }
+        return reply.models
+    }
+
+    public func memoryStatus() async throws -> MemoryStatusSnapshot {
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        let status: MemoryServiceStatus = try await authorized(auth, generation, path: "/memory/status")
+        try status.validate()
+        return .init(scope: MemoryReadScope(auth.session), status: status)
+    }
+
+    /// One page only; no automatic account-wide or source-body reads.
+    public func memoryItems(kind: MemoryKind = .cognition, query: String = "", limit: Int = 50,
+                            after: MemoryPageCursor? = nil) async throws -> MemoryItemsPage {
+        let (auth, generation) = try snapshot()
+        let scope = MemoryReadScope(auth.session)
+        let normalized = try MemoryValidation.normalizedQuery(query)
+        try after?.validate(scope: scope, kind: kind, query: normalized)
+        let path = try MemoryValidation.queryPath(kind: kind, rawQuery: query, limit: limit, cursor: after)
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: path)
+        return try MemoryItemsPage.decode(response.body, scope: scope, kind: kind, query: normalized, limit: limit, previous: after)
+    }
+
+    public func memoryDetail(kind: MemoryKind, itemID: String,
+                             expectedWorldRevision: Int? = nil) async throws -> MemoryItemDetail {
+        let (auth, generation) = try snapshot()
+        try MemoryValidation.require(MemoryValidation.itemID(itemID) && (expectedWorldRevision.map(MemoryValidation.revision) ?? true))
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/memory/items/\(kind.rawValue)/\(itemID)")
+        return try MemoryItemDetail.decode(response.body, scope: MemoryReadScope(auth.session), kind: kind,
+            itemID: itemID, expectedRevision: expectedWorldRevision)
+    }
+
+    /// Explicit item expansion. Source allowCloudRead does not enable or authorize model recall.
+    public func memorySources(kind: MemoryKind, itemID: String,
+                              expectedWorldRevision: Int? = nil) async throws -> MemorySourcesSnapshot {
+        let (auth, generation) = try snapshot()
+        try MemoryValidation.require(MemoryValidation.itemID(itemID) && (expectedWorldRevision.map(MemoryValidation.revision) ?? true))
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/memory/items/\(kind.rawValue)/\(itemID)/sources")
+        return try MemorySourcesSnapshot.decode(response.body, scope: MemoryReadScope(auth.session), kind: kind,
+            itemID: itemID, expectedRevision: expectedWorldRevision)
+    }
+
+    public func taskDetail(taskID: String) async throws -> TaskSnapshot {
+        let (auth, generation) = try snapshot()
+        let id = try checkedID(taskID)
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/tasks/\(id)")
+        return try TaskSnapshot.decode(response.body, scope: TaskReadScope(auth.session), taskID: id)
+    }
+
+    /// Reads exactly one owner-command metadata page and exposes only roots of the selected session.
+    public func taskCommands(sessionID: String, limit: Int = 50,
+                             before: TaskCommandPageCursor? = nil) async throws -> TaskCommandPage {
+        let (auth, generation) = try snapshot()
+        let session = try checkedID(sessionID), scope = TaskReadScope(auth.session)
+        try SharedValidation.require((1...100).contains(limit))
+        try before?.validate(scope: scope, sessionID: session)
+        let path = before.map { "/commands?before=\($0.beforeID)&limit=\(limit)" } ?? "/commands?limit=\(limit)"
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: path)
+        return try TaskCommandPage.decode(response.body, scope: scope, sessionID: session, limit: limit, previous: before)
+    }
+
+    public func approvals(sessionID: String, limit: Int = 50,
+                          before: ApprovalPageCursor? = nil) async throws -> ApprovalPage {
+        let (auth, generation) = try snapshot()
+        let session = try checkedID(sessionID), scope = try SessionInteractionScope(session: auth.session, sessionID: session)
+        try SharedValidation.require((1...100).contains(limit)); try before?.validate(scope: scope)
+        let query = try before.map { "before=\(try checkedID($0.beforeID))&limit=\(limit)" } ?? "limit=\(limit)"
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/sessions/\(session)/approvals?\(query)")
+        return try ApprovalPage.decode(response.body, scope: scope, limit: limit, previous: before)
+    }
+
+    public func questions(sessionID: String, limit: Int = 50,
+                          before: QuestionPageCursor? = nil) async throws -> QuestionPage {
+        let (auth, generation) = try snapshot()
+        let session = try checkedID(sessionID), scope = try SessionInteractionScope(session: auth.session, sessionID: session)
+        try SharedValidation.require((1...100).contains(limit)); try before?.validate(scope: scope)
+        let query = try before.map { "before=\(try checkedID($0.beforeID))&limit=\(limit)" } ?? "limit=\(limit)"
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/sessions/\(session)/questions?\(query)")
+        return try QuestionPage.decode(response.body, scope: scope, limit: limit, previous: before)
+    }
+
+    /// Submit only after the caller has saved the intent. A duplicate successful request returns its original receipt.
+    /// The answered receipt must not overwrite a later resolved/unavailable record; reread the approval list.
+    public func submitApproval(_ intent: ApprovalDecisionIntent) async throws -> ApprovalDecisionReceipt {
+        let (auth, generation) = try snapshot()
+        try intent.scope.validate(session: auth.session)
+        let session = try checkedID(intent.sessionId), approval = try checkedID(intent.approvalId)
+        try retainInteractionIntent(.approval(intent), requestID: intent.requestId)
+        let key = "\(generation)|\(intent.requestId)"
+        guard interactionOperations.insert(key).inserted else { throw APIFailure.server(status: 409, code: "REQUEST_IN_PROGRESS") }
+        defer { interactionOperations.remove(key) }
+        try await verify(auth, generation)
+        if let receipt = approvalDecisionReceipts[intent.requestId] { return receipt }
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/sessions/\(session)/approvals/\(approval)",
+            method: "POST", body: intent.payload)
+        try SharedValidation.require(response.status == 200)
+        let receipt = try ApprovalDecisionReceipt.decode(response.body, intent: intent)
+        approvalDecisionReceipts[intent.requestId] = receipt
+        return receipt
+    }
+
+    /// Answers information questions only. An answer never grants permission to a tool.
+    /// A 200 is registration; answerAcceptedAt is the separate personal-entry consumption acknowledgment.
+    public func submitQuestionAnswer(_ intent: QuestionAnswerIntent) async throws -> QuestionAnswerReceipt {
+        let (auth, generation) = try snapshot()
+        try intent.scope.validate(session: auth.session)
+        let session = try checkedID(intent.sessionId), question = try checkedID(intent.questionRpcId)
+        try retainInteractionIntent(.question(intent), requestID: intent.requestId)
+        let key = "\(generation)|\(intent.requestId)"
+        guard interactionOperations.insert(key).inserted else { throw APIFailure.server(status: 409, code: "REQUEST_IN_PROGRESS") }
+        defer { interactionOperations.remove(key) }
+        try await verify(auth, generation)
+        if let receipt = questionAnswerReceipts[intent.requestId] { return receipt }
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/sessions/\(session)/questions/\(question)",
+            method: "POST", body: intent.payload)
+        try SharedValidation.require(response.status == 200)
+        let receipt = try QuestionAnswerReceipt.decode(response.body, intent: intent)
+        questionAnswerReceipts[intent.requestId] = receipt
+        return receipt
+    }
+
+    private func retainInteractionIntent(_ intent: InteractionIntent, requestID: String) throws {
+        if let prior = interactionIntents[requestID] {
+            guard prior == intent else { throw APIFailure.server(status: 409, code: "REQUEST_CONFLICT") }
+        } else { interactionIntents[requestID] = intent }
+    }
+
+    /// Explicit source expansion only. A project file hash is not proof of the excerpt's own bytes.
+    public func taskSourcePreview(taskID: String, sourceID: String) async throws -> TaskSourcePreview {
+        let (auth, generation) = try snapshot()
+        let task = try checkedID(taskID), source = try checkedID(sourceID)
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/tasks/\(task)/sources/\(source)")
+        return try TaskSourcePreview.decode(response.body, scope: TaskReadScope(auth.session), taskID: task, sourceID: source)
+    }
+
+    public func taskArtifactPreview(taskID: String, artifactID: String) async throws -> TaskArtifactPreview {
+        let (auth, generation) = try snapshot()
+        let task = try checkedID(taskID), artifact = try checkedID(artifactID)
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/artifacts/\(artifact)/preview")
+        struct Reply: Decodable { let artifact: TaskCommandRecord; let text: String }
+        let reply: Reply = try decode(response.body)
+        let scope = TaskReadScope(auth.session)
+        try TaskReadValidation.artifact(reply.artifact, scope: scope, taskID: task, artifactID: artifact)
+        try TaskReadValidation.artifactBytes(Data(reply.text.utf8), record: reply.artifact)
+        return .init(scope: scope, artifact: reply.artifact, text: reply.text)
+    }
+
+    /// Called by an explicit download action. No file is installed, opened, or executed here.
+    public func taskArtifactBytes(taskID: String, artifactID: String) async throws -> TaskArtifactDownload {
+        let (auth, generation) = try snapshot()
+        let task = try checkedID(taskID), artifact = try checkedID(artifactID)
+        try await verify(auth, generation)
+        let scope = TaskReadScope(auth.session)
+        struct Reply: Decodable { let artifact: TaskCommandRecord }
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/artifacts/\(artifact)")
+        let reply: Reply = try decode(response.body)
+        try TaskReadValidation.artifact(reply.artifact, scope: scope, taskID: task, artifactID: artifact)
+        let downloaded = try await sharedAuthorizedRequest(auth, generation, path: "/artifacts/\(artifact)/download")
+        try TaskReadValidation.artifactBytes(downloaded.body, record: reply.artifact)
+        return .init(scope: scope, artifact: reply.artifact, data: downloaded.body)
+    }
+
+    /// Only a durable journal's unused permit may submit. The permit is consumed before the unique POST.
+    public func submitTaskStop(_ permit: TaskStopSubmissionPermit) async throws -> TaskStopObservation {
+        let intent = permit.intent
+        let (auth, generation) = try snapshot()
+        try retainTaskStopIntent(intent, auth: auth)
+        try await permit.checkPrepared()
+        try check(generation)
+        try await verify(auth, generation)
+        let currentResponse = try await sharedAuthorizedRequest(auth, generation, path: "/tasks/\(intent.rootCommandId)")
+        let current = try TaskSnapshot.decode(currentResponse.body, scope: TaskReadScope(auth.session), taskID: intent.rootCommandId)
+        try intent.validate(snapshot: current, phase: .preflight)
+        guard current.control.canStop else { throw APIFailure.server(status: 409, code: "TASK_NOT_READY") }
+        try await permit.consume()
+        try check(generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/tasks/\(intent.rootCommandId)/stop", method: "POST", body: intent.payload)
+        guard response.status == 202 else { throw APIFailure.invalidResponse }
+        guard let fields = (try? JSONSerialization.jsonObject(with: response.body)) as? [String: Any], let task = fields["task"] as? [String: Any] else { throw APIFailure.invalidResponse }
+        let stopped = try TaskSnapshot.decode(JSONSerialization.data(withJSONObject: task), scope: TaskReadScope(auth.session), taskID: intent.rootCommandId)
+        try intent.validate(snapshot: stopped, phase: .response)
+        guard stopped.control.state == .stopRequested, stopped.control.stopStatus != nil else {
+            return .init(task: stopped, proofLevel: .taskStateOnly, journalAcknowledgmentSaved: false)
+        }
+        let acknowledgment = try TaskStopAcknowledgment(stopped, intent: intent)
+        var saved = true
+        do { try await permit.acknowledge(acknowledgment) } catch { saved = false }
+        try check(generation)
+        return .init(task: stopped, proofLevel: .response202MatchedRoot, journalAcknowledgmentSaved: saved)
+    }
+
+    /// Current task state never proves that this stop request was acknowledged, or that a POST was absent.
+    public func reconcileTaskStop(_ intent: TaskStopIntent) async throws -> TaskStopObservation {
+        let (auth, generation) = try snapshot()
+        try retainTaskStopIntent(intent, auth: auth)
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/tasks/\(intent.rootCommandId)")
+        let task = try TaskSnapshot.decode(response.body, scope: TaskReadScope(auth.session), taskID: intent.rootCommandId)
+        try intent.validate(snapshot: task, phase: .observation)
+        return .init(task: task, proofLevel: .taskStateOnly, journalAcknowledgmentSaved: false)
+    }
+    private func retainTaskStopIntent(_ intent: TaskStopIntent, auth: Credential) throws {
+        guard intent.server == auth.session.server, intent.ownerId == auth.session.account.ownerId, intent.hostId == auth.session.hostId else { throw APIFailure.accountChanged }
+        if let prior = taskStopIntents[intent.requestId] {
+            guard prior == intent else { throw APIFailure.server(status: 409, code: "TASK_STOP_REQUEST_CONFLICT") }
+        } else {
+            guard taskStopIntents.count < 256 else { throw APIFailure.requestLedgerLimit }
+            taskStopIntents[intent.requestId] = intent
+        }
+    }
+
+    /// The caller persists a typed memory intent before explicitly permitting a same-request mutation.
+    public func reconcileMemoryMutation(_ intent: MemoryMutationIntent, allowSubmission: Bool = false,
+                                        knownReceipt: MemoryMutationReceipt? = nil) async throws -> MemoryMutationReconciliation {
+        let (auth, generation) = try snapshot()
+        try validateMemoryScope(intent, auth: auth)
+        let knownReceipt = knownReceipt ?? memoryKnownReceipts[intent.requestId]
+        try knownReceipt?.validate(intent: intent)
+        try retainMemoryIntent(intent)
+        let key = "\(generation)|\(intent.requestId)"
+        guard memoryOperations.insert(key).inserted else { throw APIFailure.server(status: 409, code: "MEMORY_REQUEST_IN_PROGRESS") }
+        defer { memoryOperations.remove(key) }
+        try await verify(auth, generation)
+        if let prior = try await lookupMemoryReceipt(intent, auth: auth, generation: generation, knownReceipt: knownReceipt) { return .found(prior) }
+        // A previously proved terminal receipt cannot be downgraded to "never submitted" by a later 404.
+        guard knownReceipt == nil, allowSubmission else { return .notFound }
+        let response = try await sharedAuthorizedRequest(auth, generation, path: intent.endpointPath, method: intent.httpMethod,
+            body: intent.payload, acceptedErrorStatuses: [409])
+        return .found(try decodeMemoryReceipt(response, intent: intent, knownReceipt: knownReceipt, submission: true))
+    }
+
+    /// Cleanup retries query the original deletion receipt first and only retry storage cleanup, never deletion.
+    public func retryMemoryCleanup(_ intent: MemoryMutationIntent, knownReceipt: MemoryMutationReceipt,
+                                   allowSubmission: Bool = false) async throws -> MemoryMutationReconciliation {
+        let (auth, generation) = try snapshot()
+        try validateMemoryScope(intent, auth: auth)
+        try SharedValidation.require(intent.operation.isDeletion)
+        try knownReceipt.validate(intent: intent)
+        try retainMemoryIntent(intent)
+        let key = "\(generation)|\(intent.requestId)"
+        guard memoryOperations.insert(key).inserted else { throw APIFailure.server(status: 409, code: "MEMORY_REQUEST_IN_PROGRESS") }
+        defer { memoryOperations.remove(key) }
+        try await verify(auth, generation)
+        guard let current = try await lookupMemoryReceipt(intent, auth: auth, generation: generation, knownReceipt: knownReceipt) else { return .notFound }
+        guard current.effectApplied, current.cleanupPending, allowSubmission else { return .found(current) }
+        let response = try await sharedAuthorizedRequest(auth, generation,
+            path: "/memory/commands/by-request/\(intent.requestId)/retry-cleanup", method: "POST", body: Data("{}".utf8))
+        return .found(try decodeMemoryReceipt(response, intent: intent, knownReceipt: current, submission: false))
+    }
+
+    private func validateMemoryScope(_ intent: MemoryMutationIntent, auth: Credential) throws {
+        guard intent.server == auth.session.server, intent.ownerId == auth.session.account.ownerId,
+              intent.hostId == auth.session.hostId else { throw APIFailure.accountChanged }
+    }
+    private func retainMemoryIntent(_ intent: MemoryMutationIntent) throws {
+        guard memoryRedactedProofs[intent.requestId] == nil else { throw APIFailure.server(status: 409, code: "MEMORY_LOCAL_REQUEST_REDACTED") }
+        let endpoint = intent.httpMethod + " " + intent.endpointPath
+        if let prior = memoryIntentBytes[intent.requestId], prior != intent.payload || memoryIntentEndpoints[intent.requestId] != endpoint {
+            throw APIFailure.server(status: 409, code: "MEMORY_REQUEST_CONFLICT")
+        }
+        if memoryIntentBytes[intent.requestId] == nil {
+            guard memoryIntentIdentities.count < 256, intent.payload.count <= 16_384,
+                  memoryIntentBytes.values.reduce(0, { $0 + $1.count }) + intent.payload.count <= 4_194_304 else { throw APIFailure.requestLedgerLimit }
+        }
+        memoryIntentBytes[intent.requestId] = intent.payload; memoryIntentEndpoints[intent.requestId] = endpoint
+        memoryIntentIdentities[intent.requestId] = MemoryRAMIntentIdentity(intent)
+    }
+    private func lookupMemoryReceipt(_ intent: MemoryMutationIntent, auth: Credential, generation: UInt64,
+                                     knownReceipt: MemoryMutationReceipt?) async throws -> MemoryMutationReceipt? {
+        let response: HTTPResponse
+        do { response = try await sharedAuthorizedRequest(auth, generation, path: "/memory/commands/by-request/\(intent.requestId)") }
+        catch APIFailure.server(404, "NOT_FOUND") { return nil }
+        return try decodeMemoryReceipt(response, intent: intent, knownReceipt: knownReceipt, submission: false)
+    }
+    private func decodeMemoryReceipt(_ response: HTTPResponse, intent: MemoryMutationIntent,
+                                     knownReceipt: MemoryMutationReceipt?, submission: Bool) throws -> MemoryMutationReceipt {
+        struct Reply: Decodable { let receipt: MemoryMutationReceipt }
+        guard response.body.count <= 65_536 else { throw APIFailure.responseTooLarge }
+        guard let fields = (try? JSONSerialization.jsonObject(with: response.body)) as? [String: Any], fields["receipt"] != nil else {
+            if response.status == 409 { throw serverFailure(response) }
+            throw APIFailure.invalidResponse
+        }
+        let reply: Reply = try decode(response.body)
+        try reply.receipt.validate(intent: intent, knownReceipt: knownReceipt)
+        if let cached = memoryKnownReceipts[intent.requestId] { try reply.receipt.validate(intent: intent, knownReceipt: cached) }
+        if submission {
+            try SharedValidation.require(reply.receipt.effectApplied ? response.status == 200 : response.status == 409)
+        } else { try SharedValidation.require(response.status == 200) }
+        memoryKnownReceipts[intent.requestId] = reply.receipt
+        return reply.receipt
+    }
+
+    /// Purges only a proved, matching correction body. No body or body hash is retained in the tombstone.
+    public func redactMemoryCorrection(_ proof: MemoryCorrectionRedactionProof) throws -> MemoryRAMRedaction {
+        let (auth, generation) = try snapshot()
+        try check(generation)
+        try proof.validate()
+        guard try proof.correction.sameScope(server: auth.session.server, ownerID: auth.session.account.ownerId, hostID: auth.session.hostId) else {
+            throw APIFailure.accountChanged
+        }
+        let request = proof.correction.requestId
+        if let identity = memoryIntentIdentities[request] {
+            guard try identity.matches(proof.correction) else { throw APIFailure.identityMismatch }
+        }
+        if let known = memoryKnownReceipts[request] { try proof.validateCorrectionReceipt(proof.correctionReceipt, known: known) }
+        if let deletion = memoryKnownReceipts[proof.deletionIntent.requestId] { try proof.deletionReceipt.validate(intent: proof.deletionIntent, knownReceipt: deletion) }
+        guard !memoryOperations.contains("\(generation)|\(request)") else { return .deferredInFlight }
+        if let prior = memoryRedactedProofs[request] {
+            try proof.validateCorrectionReceipt(proof.correctionReceipt, known: prior.correctionReceipt)
+            return .alreadyRedacted
+        }
+        if memoryIntentIdentities[request] == nil {
+            guard memoryIntentIdentities.count < 256 else { throw APIFailure.requestLedgerLimit }
+        }
+        memoryIntentBytes[request] = nil
+        memoryIntentIdentities[request] = MemoryRAMIntentIdentity(proof.correction)
+        memoryIntentEndpoints[request] = "POST /memory/items/\(proof.correction.itemKind.rawValue)/\(proof.correction.targetId)/correct"
+        memoryKnownReceipts[request] = proof.correctionReceipt
+        memoryRedactedProofs[request] = proof
+        return .redacted
+    }
+
+    /// A persisted no-body proof can re-establish the RAM tombstone after login and only query the original request.
+    public func reconcileRedactedMemoryCorrection(_ proof: MemoryCorrectionRedactionProof) async throws -> MemoryMutationReconciliation {
+        let result = try redactMemoryCorrection(proof)
+        guard result != .deferredInFlight else { throw APIFailure.server(status: 409, code: "MEMORY_REQUEST_IN_PROGRESS") }
+        let (auth, generation) = try snapshot()
+        let request = proof.correction.requestId
+        let key = "\(generation)|\(request)"
+        guard memoryOperations.insert(key).inserted else { throw APIFailure.server(status: 409, code: "MEMORY_REQUEST_IN_PROGRESS") }
+        defer { memoryOperations.remove(key) }
+        try await verify(auth, generation)
+        let response: HTTPResponse
+        do { response = try await sharedAuthorizedRequest(auth, generation, path: "/memory/commands/by-request/\(request)") }
+        catch APIFailure.server(404, "NOT_FOUND") { return .notFound }
+        struct Reply: Decodable { let receipt: MemoryMutationReceipt }
+        let reply: Reply = try MemoryValidation.decode(response.body, maximum: 65_536)
+        try proof.validateCorrectionReceipt(reply.receipt, known: proof.correctionReceipt)
+        return .found(reply.receipt)
+    }
+
+    // Non-body diagnostics for privacy-boundary tests; not exported as an application API.
+    func memoryRAMRedactionState(requestID: String) -> (holdsBody: Bool, tombstoned: Bool, recordCount: Int) {
+        (memoryIntentBytes[requestID] != nil, memoryRedactedProofs[requestID] != nil, memoryIntentIdentities.count)
+    }
+
+    public func sharedConversation(conversationID: String) async throws -> SharedConversationProjection {
+        let (auth, generation) = try snapshot()
+        let id = try checkedID(conversationID)
+        try await verify(auth, generation)
+        let projection: SharedConversationProjection = try await authorized(auth, generation,
+            path: "/sync/conversations/\(id)/shared")
+        try projection.validate(conversationID: id, hostID: auth.session.hostId)
+        return projection
+    }
+
+    /// nextSeq is the backend scan watermark, including omitted non-visible events.
+    public func sharedHistory(sessionID: String, afterSeq: Int, limit: Int = 100) async throws -> SharedHistoryPage {
+        let (auth, generation) = try snapshot()
+        let id = try checkedID(sessionID)
+        try SharedValidation.require(afterSeq >= -1 && afterSeq <= SharedValidation.maximumSequence && (1...100).contains(limit))
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation,
+            path: "/sessions/\(id)/events?afterSeq=\(afterSeq)&limit=\(limit)")
+        return try SharedHistoryPage.decode(response.body, sessionID: id, afterSeq: afterSeq, limit: limit)
+    }
+
+    /// Absence means exactly the official 404 NOT_FOUND response, never an offline or malformed reply.
+    public func commandByRequest(requestID: String) async throws -> SharedCommandReceipt? {
+        let (auth, generation) = try snapshot()
+        try SharedValidation.require(SharedValidation.request(requestID))
+        try await verify(auth, generation)
+        return try await lookupSharedCommand(auth, generation, requestID: requestID)
+    }
+
+    /// The caller must durably persist intent before permitting a POST. An uncertain POST is never retried here.
+    /// A session.cancel payload cancels the session; it is not proof of stopping a specific message receipt.
+    public func reconcileCommand(_ intent: SharedCommandIntent,
+                                 allowSubmission: Bool = false) async throws -> SharedCommandReconciliation {
+        let (auth, generation) = try snapshot()
+        guard intent.server == auth.session.server, intent.ownerId == auth.session.account.ownerId,
+              intent.hostId == auth.session.hostId else { throw APIFailure.accountChanged }
+        let key = "\(generation)|\(intent.requestId)"
+        try retainSharedIntent(requestID: intent.requestId, payload: intent.payload, endpoint: "/commands")
+        guard sharedOperations.insert(key).inserted else {
+            throw APIFailure.server(status: 409, code: "REQUEST_IN_PROGRESS")
+        }
+        defer { sharedOperations.remove(key) }
+        try await verify(auth, generation)
+        if let prior = try await lookupSharedCommand(auth, generation, requestID: intent.requestId) {
+            try prior.validate(intent: intent)
+            return .found(prior)
+        }
+        guard allowSubmission else { return .notFound }
+        try check(generation)
+        struct Reply: Decodable { let command: SharedCommandReceipt }
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/commands", method: "POST", body: intent.payload)
+        let reply: Reply = try decode(response.body)
+        try reply.command.validate(intent: intent)
+        return .found(reply.command)
+    }
+
+    /// The independently persisted adoption intent is the only body reused for this endpoint.
+    public func reconcileAdoption(_ intent: SharedAdoptionIntent, allowSubmission: Bool = false,
+                                  knownBindingRevision: Int? = nil) async throws -> SharedAdoptionReconciliation {
+        let (auth, generation) = try snapshot()
+        guard intent.server == auth.session.server, intent.ownerId == auth.session.account.ownerId,
+              intent.hostId == auth.session.hostId else { throw APIFailure.accountChanged }
+        try SharedValidation.require(knownBindingRevision.map { $0 > 0 && $0 <= SharedValidation.maximumSequence } ?? true)
+        let endpoint = "/sync/conversations/\(intent.conversationId)/shared"
+        try retainSharedIntent(requestID: intent.requestId, payload: intent.payload, endpoint: endpoint)
+        let key = "\(generation)|\(intent.requestId)"
+        guard sharedOperations.insert(key).inserted else { throw APIFailure.server(status: 409, code: "REQUEST_IN_PROGRESS") }
+        defer { sharedOperations.remove(key) }
+        try await verify(auth, generation)
+        if let command = try await lookupSharedCommand(auth, generation, requestID: intent.requestId) {
+            let projection: SharedConversationProjection = try await authorized(auth, generation, path: endpoint)
+            return .found(try SharedAdoptionReceipt(command: command, projection: projection,
+                intent: intent, knownBindingRevision: knownBindingRevision))
+        }
+        guard allowSubmission else { return .notFound }
+        let initial: SharedConversationProjection = try await authorized(auth, generation, path: endpoint)
+        try initial.validate(conversationID: intent.conversationId, hostID: intent.hostId)
+        guard initial.status == .unbound, initial.canAdopt else {
+            throw APIFailure.server(status: 409, code: initial.reasonCode ?? "CONVERSATION_NOT_READY")
+        }
+        guard initial.syncThroughSeq == intent.expectedSyncSeq else { throw APIFailure.server(status: 409, code: "CONVERSATION_SYNC_CHANGED") }
+        let response = try await sharedAuthorizedRequest(auth, generation, path: endpoint, method: "POST", body: intent.payload)
+        struct Reply: Decodable { let command: SharedCommandReceipt }
+        let reply: Reply = try decode(response.body)
+        let projection: SharedConversationProjection = try decode(response.body)
+        return .found(try SharedAdoptionReceipt(command: reply.command, projection: projection,
+            intent: intent, knownBindingRevision: knownBindingRevision))
+    }
+
+    private func retainSharedIntent(requestID: String, payload: Data, endpoint: String) throws {
+        if let prior = sharedIntentBytes[requestID], prior != payload || sharedIntentEndpoints[requestID] != endpoint {
+            throw APIFailure.server(status: 409, code: "REQUEST_CONFLICT")
+        }
+        // Match durable defaults and bind the path too: adoption bodies omit conversation identity.
+        if sharedIntentBytes[requestID] == nil {
+            guard payload.count <= 131_072, sharedIntentBytes.count < 256,
+                  sharedIntentBytes.values.reduce(0, { $0 + $1.count }) + payload.count <= 4_194_304 else { throw APIFailure.requestLedgerLimit }
+        }
+        sharedIntentBytes[requestID] = payload; sharedIntentEndpoints[requestID] = endpoint
+    }
+
+    private func lookupSharedCommand(_ auth: Credential, _ generation: UInt64,
+                                     requestID: String) async throws -> SharedCommandReceipt? {
+        struct Reply: Decodable { let command: SharedCommandReceipt }
+        let response: HTTPResponse
+        do { response = try await sharedAuthorizedRequest(auth, generation, path: "/commands/by-request/\(requestID)") }
+        catch APIFailure.server(404, "NOT_FOUND") { return nil }
+        let reply: Reply = try decode(response.body)
+        try reply.command.validateStructure()
+        guard reply.command.requestId == requestID, reply.command.targetDeviceId == auth.session.hostId else {
+            throw APIFailure.identityMismatch
+        }
+        return reply.command
+    }
+
+    private func sharedAuthorizedRequest(_ auth: Credential, _ generation: UInt64,
+                                         path: String, method: String = "GET", body: Data? = nil,
+                                         acceptedErrorStatuses: Set<Int> = []) async throws -> HTTPResponse {
+        do {
+            try check(generation)
+            let response = try await rawRequest(server: auth.session.server, path: path, method: method, body: body, auth: auth,
+                acceptedErrorStatuses: acceptedErrorStatuses)
+            try check(generation)
+            return response
+        } catch {
+            try check(generation)
+            if shouldForget(error) {
+                credential = nil; clearCaches(); epoch &+= 1
+                try store.delete(key: credentialKey(server: auth.session.server, platform: platform))
+            }
+            throw error
+        }
+    }
 
     /// Only the native acceptance executable imports this SPI. The fixture writes records, not a model request.
     /// IDs are supplied before the POST so a lost reply never causes a new fixture/request identity.
@@ -295,12 +832,16 @@ public actor PersonalClient {
     /// Checks the deployed Apple declaration contract for an isolated test device only.
     /// This read milestone does not receive model secrets and therefore never declares transfer capability.
     @_spi(Acceptance) public func declareAcceptanceCapabilities() async throws {
+        try await declareSharedCapabilities()
+    }
+
+    /// Apple sharing capability only. Model credential transfer is never declared by this method.
+    public func declareSharedCapabilities() async throws {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
         let platformName = platform.rawValue.lowercased()
-        let response = try await rawRequest(server: auth.session.server, path: "/sync/capabilities", method: "POST",
-            body: try JSONSerialization.data(withJSONObject: ["platform": platformName, "sharedConversations": 1], options: [.sortedKeys]), auth: auth)
-        try check(generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/sync/capabilities", method: "POST",
+            body: try JSONSerialization.data(withJSONObject: ["platform": platformName, "sharedConversations": 1], options: [.sortedKeys]))
         let reply: AcceptanceCapabilitiesReply = try decode(response.body)
         guard let fields = try? JSONSerialization.jsonObject(with: response.body) as? [String: Any],
               Set(fields.keys) == Set(["deviceId", "platform", "sharedConversations"]), reply.sharedConversations == 1 else {
@@ -345,18 +886,37 @@ public actor PersonalClient {
     private func syncMessage(_ event: SyncEvent, pending: Bool) throws -> ChatMessage {
         guard let role = event.payload.role, let id = event.payload.messageId, validID(id),
               let text = event.payload.text, text.count <= 16_384 else { throw APIFailure.invalidResponse }
+        try OriginalAttachmentValidation.validate(event.payload.attachments, messageID: nil, unpreviewedIDs: nil)
+        let originals = event.payload.originalAttachments ?? event.payload.attachments ?? []
+        try OriginalAttachmentValidation.validate(originals, messageID: event.payload.attachmentMessageId,
+            unpreviewedIDs: event.payload.unpreviewedOriginalImageIds)
         return .init(id: "sync|\(event.sourceDeviceId)|\(id)", role: role, text: text,
             occurredAt: event.occurredAt, sourceDeviceId: event.sourceDeviceId,
-            attachmentCount: event.payload.attachments?.count ?? 0, truncated: false, pendingContext: pending)
+            attachmentCount: OriginalAttachmentValidation.count(originals: originals, previewCount: event.payload.attachments?.count ?? 0,
+                unpreviewedIDs: event.payload.unpreviewedOriginalImageIds), truncated: false, pendingContext: pending,
+            originalAttachments: originals, attachmentMessageId: event.payload.attachmentMessageId,
+            unpreviewedOriginalImageIds: event.payload.unpreviewedOriginalImageIds ?? [])
     }
-    private func hostMessage(_ event: HistoryEvent, sessionID: String) -> ChatMessage? {
+    private func hostMessage(_ event: HistoryEvent, sessionID: String) throws -> ChatMessage? {
         guard ["user.message", "assistant.message"].contains(event.type) else { return nil }
         let text = event.data["text"]?.string ?? ""
         let images = event.data["images"]?.count ?? 0
-        guard !text.isEmpty || images > 0 else { return nil }
+        let originals: [OriginalAttachment]? = try optionalHistoryField(event.data["originalAttachments"])
+        let messageID: String? = try optionalHistoryField(event.data["attachmentMessageId"])
+        let unpreviewedIDs: [String]? = try optionalHistoryField(event.data["unpreviewedOriginalImageIds"])
+        try OriginalAttachmentValidation.validate(originals, messageID: messageID, unpreviewedIDs: unpreviewedIDs)
+        guard !text.isEmpty || images > 0 || (event.type == "user.message" && !(originals ?? []).isEmpty) else { return nil }
         return .init(id: "host|\(sessionID)|\(event.seq)", role: event.type == "user.message" ? .user : .assistant,
-            text: text, occurredAt: event.at, sourceDeviceId: nil, attachmentCount: images,
-            truncated: event.data["truncated"]?.bool ?? false, pendingContext: false)
+            text: text, occurredAt: event.at, sourceDeviceId: nil,
+            attachmentCount: OriginalAttachmentValidation.count(originals: originals, previewCount: images, unpreviewedIDs: unpreviewedIDs),
+            truncated: event.data["truncated"]?.bool ?? false, pendingContext: false, originalAttachments: originals ?? [],
+            attachmentMessageId: messageID, unpreviewedOriginalImageIds: unpreviewedIDs ?? [])
+    }
+    private func optionalHistoryField<T: Decodable>(_ value: JSONValue?) throws -> T? {
+        guard let value else { return nil }
+        if case .null = value { return nil }
+        // Decode only the documented metadata field; no route or download permission is inferred.
+        return try decode(JSONEncoder().encode(value))
     }
     private func verify(_ auth: Credential, _ generation: UInt64) async throws {
         let me: AuthReply = try await authorized(auth, generation, path: "/auth/me")
@@ -392,7 +952,13 @@ public actor PersonalClient {
         if clearSaved { try store.delete(key: credentialKey(server: server, platform: platform)) }
         return epoch
     }
-    private func clearCaches() { syncEvents = []; summaries = []; historyCache = [:] }
+    private func clearCaches() {
+        syncEvents = []; summaries = []; historyCache = [:]; sharedIntentBytes = [:]; sharedIntentEndpoints = [:]; sharedOperations = []
+        memoryIntentBytes = [:]; memoryIntentEndpoints = [:]; memoryOperations = []
+        memoryIntentIdentities = [:]; memoryKnownReceipts = [:]; memoryRedactedProofs = [:]
+        taskStopIntents = [:]
+        interactionIntents = [:]; interactionOperations = []; approvalDecisionReceipts = [:]; questionAnswerReceipts = [:]
+    }
     private func persist(_ auth: Credential) throws {
         try store.save(JSONEncoder().encode(auth), key: credentialKey(server: auth.session.server, platform: platform))
     }
@@ -429,7 +995,7 @@ public actor PersonalClient {
         do { return try decoder.decode(T.self, from: data) } catch { throw APIFailure.invalidResponse }
     }
     private func rawRequest(server: ServerConfiguration, path: String, method: String = "GET",
-                            body: Data? = nil, auth: Credential? = nil) async throws -> HTTPResponse {
+                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = []) async throws -> HTTPResponse {
         guard let url = URL(string: server.originString + "/personal/v1" + path),
               body?.count ?? 0 <= 262_144 else { throw APIFailure.invalidResponse }
         var request = URLRequest(url: url)
@@ -448,12 +1014,13 @@ public actor PersonalClient {
         catch { throw APIFailure.transport(.unavailable) }
         guard response.body.count <= 1_048_576 else { throw APIFailure.responseTooLarge }
         if (300...399).contains(response.status) { throw APIFailure.transport(.redirect) }
-        guard (200...299).contains(response.status) else {
-            let candidate = (try? decoder.decode(ErrorReply.self, from: response.body))?.error?.code ?? ""
-            let code = candidate.range(of: "^[A-Z][A-Z0-9_]{0,63}$", options: .regularExpression) != nil ? candidate : "HTTP_\(response.status)"
-            throw APIFailure.server(status: response.status, code: code)
-        }
+        guard (200...299).contains(response.status) || acceptedErrorStatuses.contains(response.status) else { throw serverFailure(response) }
         return response
+    }
+    private func serverFailure(_ response: HTTPResponse) -> APIFailure {
+        let candidate = (try? decoder.decode(ErrorReply.self, from: response.body))?.error?.code ?? ""
+        let code = candidate.range(of: "^[A-Z][A-Z0-9_]{0,63}$", options: .regularExpression) != nil ? candidate : "HTTP_\(response.status)"
+        return .server(status: response.status, code: code)
     }
     private func currentDevice(_ d: DeviceRecord) -> DeviceRecord {
         .init(id: d.id, name: d.name, createdAt: d.createdAt, lastSeenAt: d.lastSeenAt,
