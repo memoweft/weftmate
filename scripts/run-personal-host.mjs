@@ -97,7 +97,7 @@ console.log(`[personal-host] workspace=${workspaceDir}`);
 console.log('[personal-host] mode=personal-host; DSH address will be OS-assigned loopback');
 console.log(`[personal-host] memoweft=${memoryConfig ? 'explicit-config' : 'disabled'} aiGame=not-configured phoneExecution=disabled`);
 console.log(`[personal-host] accountMemory=${accountMemoryConfig ? 'explicit-config' : 'disabled'}`);
-console.log(`[personal-host] personalAccess=${accessPort === null ? 'disabled' : `loopback-port-${accessPort}`}`);
+console.log(`[personal-host] personalAccess=${accessPort === null ? desktopFlags.includes('--headless') ? 'disabled' : 'automatic-desktop-loopback' : `loopback-port-${accessPort}`}`);
 console.log(`[personal-host] publicOrigin=${publicOrigin ?? 'disabled'}`);
 console.log(`[personal-host] androidPackage=${androidPackagePath ? 'explicit-candidate' : 'disabled'}`);
 console.log(`[personal-host] mobileUi=${mobileUiDir ? 'explicit-release-directory' : 'disabled'}`);
@@ -134,7 +134,7 @@ child.on('message', (message) => {
   else pending.reject(Object.assign(new Error('management failed'), { code: message.code ?? 'MANAGEMENT_FAILED' }));
 });
 function manage(action, payload = {}) {
-  if (accessPort === null || stopping || !child.connected) return Promise.reject(Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' }));
+  if (accessPort === null && desktopFlags.includes('--headless') || stopping || !child.connected) return Promise.reject(Object.assign(new Error('unavailable'), { code: 'RUNTIME_UNAVAILABLE' }));
   const requestId = randomUUID();
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {

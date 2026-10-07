@@ -7,6 +7,10 @@
   bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate'; bar.setAttribute('aria-hidden', 'true');
   document.body.prepend(bar);
   const updateTheme = () => {
+    // UI-1 hides the site header in its full-height workspace. Reserve only the native bar there.
+    const header = document.querySelector('.site-header');
+    const workspace = header && getComputedStyle(header).display === 'none' ? 'full' : 'classic';
+    if (document.documentElement.dataset.nativeWorkspace !== workspace) document.documentElement.dataset.nativeWorkspace = workspace;
     const style = getComputedStyle(bar);
     void native.setTheme({ color: style.backgroundColor, symbolColor: style.color }).catch(() => {});
   };

@@ -13,6 +13,7 @@
   "closeToTray": true,
   "trayOpen": true,
   "trayModelStatus": true,
+  "desktopPet": true,
   "singleInstance": true,
   "notificationClick": true,
   "notificationConversation": true,
@@ -29,5 +30,6 @@
   "startInTray": true,
   "maximizedTrayStartup": true,
   "headless": true,
-  "defaultDesktopFirstRun": true
+  "defaultDesktopFirstRun": true,
+  "explicitDshDiagnostics": true
 }
