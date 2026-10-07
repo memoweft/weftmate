@@ -13,11 +13,33 @@
 | 命令 | 作用 |
 |---|---|
 | `npm start` | 启动 Electron 桌面应用 |
-| `node scripts/run-personal-host.mjs` | 启动个人宿主（`/personal/v1`）；`--user-data-dir` 复用已有账户数据，`--access-port` 指定端口 |
+| `node scripts/run-personal-host.mjs` | 启动个人宿主与 WeftMate 程序窗口；`--user-data-dir` 复用已标记的账户目录，`--access-port` 指定远程网页端口，`--headless` 无窗口运行 |
 | `npm run typecheck` | 类型检查 |
 | `npm run test:unit` | 单元测试（`tests/*.test.ts`） |
 | `npm run test:contract` | 契约测试 |
 | `npm run dist:win` | 打 Windows 安装包 |
+
+## Windows 桌面程序（W-1）
+
+`npm start` 默认在同一个 Electron（桌面程序框架）进程中启动个人宿主与 WeftMate 对话窗口。默认数据目录为 `%APPDATA%\com.memoweft.weftmate`；远程网页和程序共用 `src/personal-access-ui/`，桌面窗口使用独立的 persistent session（持久会话），通过已有的本地账号密码登录后记住登录。首次没有账号时，程序使用现有本机原账户设置链接进入密码设置表单，不绕过登录。
+
+复用已有的个人宿主启动方式（必须指定带 `.weftmate-personal-host-profile.json` 标记的目录；测试只使用隔离目录）：
+
+```powershell
+node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --access-port 18080
+# 无窗口、无托盘的测试/服务器运行；原有终端管理命令与 q 退出仍可用：
+node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --access-port 18080 --headless
+# 启动到托盘；点击托盘或再次启动同一数据目录唤出已有窗口：
+node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --access-port 18080 --start-in-tray
+```
+
+未指定接入端口的桌面运行自动选择空闲本机端口。`--headless` 保留未指定端口时禁用个人 HTTP 接入的原有语义。关窗收托盘，托盘「退出」才关闭宿主。窗口大小、位置与最大化状态按数据目录保存；设置中的「开机自启（启动到托盘）」保存当前程序路径、数据目录和宿主参数。开发环境移动仓库或 Electron 路径后应关闭再重新启用该开关。
+
+审批、提问和任务完成通过 Windows Notification（系统通知）提示；点击打开对应对话。成果的「用默认程序打开 / 在文件夹中显示」经 preload（预加载桥）传递成果 ID，主进程使用现有账号授权和校验下载接口导出到该数据目录的 `desktop-artifacts`，再调用系统默认程序或资源管理器。网页不拥有这些原生入口。
+
+旧 DSH 页面只在 `npm start -- --dsh-window` 中显式打开，供运行时设置、模型路由诊断及旧精灵管理使用；它不再是默认界面。桌面精灵仍由托盘唤醒/休息。安装包、快捷方式与开机后的完整安装形态验收属于 W-2。
+
+真实程序验证：在 Windows、依赖与固定 DSH vendor（运行时依赖）就绪后执行 `node tests/integration/personal-desktop-electron.mjs`。它用 Playwright Electron support（Electron 自动化支持）启动程序，使用临时标记目录、合成账号和本机合成模型；截图位于 `tests/evidence/w1/`，通过操作系统窗口捕获包含原生标题栏。测试拦截开机设置注册表写入，避免覆盖本人日用启动项。
 
 ## 各端
 
