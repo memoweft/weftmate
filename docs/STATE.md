@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | [PR（拉取请求）#20](https://github.com/memoweft/weftmate/pull/20) 待审；5 项完成，模型切换部分简化 |
-| Codex · Mac | M0-7 场景评测集编写完成 | `wp/m0-7-eval`：12 条场景（办事 6 / 记忆 4 / 跨端人工 2）；无依赖 Node 24 runner 与隔离启动说明；假 `/personal/v1` 自测 11/11 通过；`memory_used` 缺公开回复依据，标 unsupported，LLM judge 可选；[PR #19](https://github.com/memoweft/weftmate/pull/19) 待审，待 Windows 跑 Qwen / MiMo 基线 |
+| Codex · Mac | M0-7 场景评测集编写完成 | `wp/m0-7-eval`：12 条场景（办事 6 / 记忆 4 / 跨端人工 2）；无依赖 Node 24 runner 与隔离启动说明；假 `/personal/v1` 自测 11/11 通过；`memory_used` 缺公开回复依据，标 unsupported，LLM judge 可选；[PR #19](https://github.com/memoweft/weftmate/pull/19) 已合入 main，待 Windows 跑 Qwen / MiMo 基线 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -20,7 +20,7 @@
 
 尚无（M0-7 建立）。
 
-M0-1b 工程检查：类型检查通过；完整单测基线 873/890 通过、15 失败、2 跳过 → 当前 832/845 通过、11 原有失败、2 跳过；新增失败 0。分项检查与完整失败用例见 PR。
+M0-1b 工程检查：类型检查通过；完整单测基线 873/890 通过、15 失败、2 跳过 → 当前 843/856 通过、11 原有失败、2 跳过（含主干新增评测测试）；新增失败 0。分项检查与完整失败用例见 PR。
 
 ## 契约变更
 
