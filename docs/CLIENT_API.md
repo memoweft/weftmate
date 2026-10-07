@@ -472,3 +472,68 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期。现有 `personal-memory` 管理器通过正式 observed upsert / 来源权限更新 / 真正撤回 RPC 交付，不构造 user/assistant boundary，不另写 SQLite。摘要和交付标记同一宿主文件保存；收到 Core 回执后才清除待办。进程中断或 Core 不可用时，后续健康写入、记忆 status / recall 会重放；DELETE 先移除宿主内容，保留仅含来源哈希与水位的撤回待办，清理完成后移除。
 
 召回使用 3.10 的实际地址及用户 `modelTier` 覆盖判断，initialize 与每次 World / interactions 召回使用最终 local/cloud。`cloudModelAllowed=false` 排除已写入的健康证据及其衍生项、依赖它们的助手历史，保留其他可读记忆；true 后云端可用，撤销选择后立即作用于全账号来源。来源同步失败时该次注入暂缓，待同步成功恢复，不使用旧授权数据。GET 提供客户端读取摘要，客户端不得把本地专用摘要自行注入云端模型。
+
+## 7. 云端账号（S1a；客户端接入在后续包）
+
+本节由独立 `services/cloud/` 提供，**当前五端均未接入**。云账号只授予云控制面访问，不授予宿主内容、shell 或备份解密权限；宿主验签、DPoP、认领和 `/auth/cloud-session` 属于 S1b。现有本地 `/auth/login(username)`、Cookie、ownerId 和数据不变。本节路径使用完整前缀，不计入第 1 节原宿主 81 项基线。
+
+### 7.1 账号交互接口
+
+issuer 示例 `https://api.example.com/personal/v1/cloud/oidc`；账号接口 origin 为 `https://api.example.com`。除标准 OIDC token/revocation 外，所有 POST 要求此同源 `Origin`；JSON 或同源表单、体 ≤16 KiB。GET `/account` 只接受云 access token Bearer，不接受本地 Cookie/ID token。登录 Cookie 用于 OIDC 交互，host-only、HttpOnly、SameSite=Lax，HTTPS 下 Secure；登录与设备确认额外绑定 Cookie/interaction/CSRF。
+
+`Account` = `{"cloudAccountId":"<UUID>","email":"account@example.com","auth_epoch":0}`。ID 永久不变且作为 OIDC public `sub`；邮箱 trim/NFKC/ASCII 小写、唯一，不折叠加号或服务商特定点号。密码 15–128 个 Unicode code points。`Challenge` = `{"challengeId":"<UUID>","expiresIn":600}`；验证码只有开发 outbox 或实际邮箱可见，接口不回传。
+
+| 方法与路径 | 请求 | 响应 / 语义 |
+|---|---|---|
+| POST `/personal/v1/cloud/auth/register` | `{email,password}` | 201 Challenge；只建 pending 账号，验证后激活。邮箱占用 409 `EMAIL_IN_USE` |
+| POST `/personal/v1/cloud/auth/register/resend` | `{email}` | 200 Challenge；不替换原密码，不存在/已激活邮箱返回同形随机 challenge，不发邮件 |
+| POST `/personal/v1/cloud/auth/register/verify` | `{challengeId,code}` | 200 `{account:Account,verified:true}`；一次性激活，未验证账号不能登录 |
+| GET `/personal/v1/cloud/interactions/{uid}` | OIDC 授权重定向得到的地址，携带交互 Cookie | `Accept: application/json` 返回 `{interactionUid,csrfToken,clientId}`；否则是最小登录表单。uid 不由客户端自造 |
+| POST `/personal/v1/cloud/auth/login` | `{interactionUid,csrfToken,email,password,deviceId,publicJwk?}`，携带交互 Cookie | 已确认设备 200 `{account:Account,resumeUrl}`；新设备 202 `{confirmationRequired:true,challengeId,expiresIn:600}`，此时没有令牌/授权码 |
+| POST `/personal/v1/cloud/auth/device/confirm` | `{interactionUid,csrfToken,challengeId,code}`，同一交互 Cookie | 200 `{account:Account,resumeUrl}`；验证码须来自该登录交互。浏览器表单成功时 303 到 resumeUrl |
+| POST `/personal/v1/cloud/auth/password/request` | `{email}` | 200 Challenge；未激活/不存在邮箱返回同形随机 challenge，不发邮件 |
+| POST `/personal/v1/cloud/auth/password/reset` | `{challengeId,code,password}` | 200 `{passwordChanged:true,notificationAccepted:true}`；更新密码、epoch +1，撤销旧刷新族/云会话/授权码/pending 验证码；通知服务失败时 notificationAccepted=false，重置已提交，不回滚 |
+| GET `/personal/v1/cloud/account` | `Authorization: Bearer <cloud access token>` | 200 `{account:Account}`；校验 issuer/audience/RS256/type/exp/实时 epoch/设备/scope |
+| POST `/personal/v1/cloud/auth/email/request` | 云 Bearer + `{email,password}` | 200 Challenge；验证当前密码后给新邮箱发验证码，已占用 409 |
+| POST `/personal/v1/cloud/auth/email/confirm` | 云 Bearer + `{challengeId,code}` | 200 `{account:Account}`；ID 不变，新邮箱生效、epoch +1，撤销旧会话/刷新族及旧邮箱验证码，需重新登录 |
+
+`deviceId` 格式 `[A-Za-z0-9_.:-]{1,128}`。可选 `publicJwk` 为 RSA/EC/OKP 公钥 JWK，不得含任何私钥字段；新标识或同标识的新公钥均要求邮件确认，无全局设备数上限。S1a 登记的是调用方声明的标识/公钥，**尚无私钥持有证明**，不能当成宿主信任设备。每次新的 OIDC 授权都要求密码交互，旧 SSO Cookie 不能跳过本次设备检查。
+
+200 resumeUrl 是恢复 OIDC 授权的云同源地址，客户端继续用原认证浏览器打开；不是 access token。原生客户端保存收到的最终授权码并用原 PKCE verifier 交换，保留且校验原 state 与 nonce。JSON 交互供后续客户端接入；本包最小浏览器表单只覆盖登录/新设备确认，不代表五端账号页面已完成。
+
+### 7.2 OIDC 与令牌
+
+| 方法与路径 | 契约 |
+|---|---|
+| GET `/personal/v1/cloud/oidc/.well-known/openid-configuration` | 标准 OIDC discovery；固定 issuer、授权/token/JWKS/revocation 地址 |
+| GET `/personal/v1/cloud/oidc/.well-known/oauth-authorization-server` | provider 的 OAuth metadata 同路径挂载 |
+| GET `/personal/v1/cloud/oidc/auth` | `client_id,redirect_uri,response_type=code,scope=openid offline_access cloud:account,prompt=consent,state,nonce,code_challenge,code_challenge_method=S256`；公开客户端须预登记 redirect URI。offline_access 须明确 consent |
+| GET `/personal/v1/cloud/oidc/auth/{uid}` | provider 内部恢复路由，只沿交互返回的 resumeUrl 使用 |
+| POST `/personal/v1/cloud/oidc/token` | 标准 `application/x-www-form-urlencoded`：code 交换用 `grant_type=authorization_code,client_id,redirect_uri,code,code_verifier`；刷新用 `grant_type=refresh_token,client_id,refresh_token` |
+| POST `/personal/v1/cloud/oidc/token/revocation` | 标准 RFC7009 form：`client_id,token,token_type_hint?`；撤销 provider 管理的刷新授权族 |
+| GET `/personal/v1/cloud/oidc/jwks` | 公开 RSA JWKS，kid 轮换；不含私钥，旧 key 保留至已发 token 过期与时钟余量结束 |
+
+不支持 password grant、implicit response、动态客户端注册或任意宿主 audience。客户端是 public/native、无 client secret。授权码 60 秒且单次使用；PKCE 只接受 S256。标准 token 响应包含 `access_token,token_type=Bearer,expires_in=300,id_token,refresh_token,scope`，openid/离线范围请求决定 ID/refresh 字段是否出现。每次刷新须原子替换已保存的 refresh token；旧 token 复用会撤销整个族及后继，族绝对寿命 30 天。
+
+访问令牌是 RS256、`typ=at+jwt`，包含 `iss,aud,sub,device_id,device_fingerprint,scope,auth_epoch,iat,exp,jti,client_id`。aud 仅 `<issuer origin>/personal/v1/cloud`；不含邮箱/用户内容，`host_id` 和 DPoP `cnf.jkt` 尚未签发。ID token 的 aud 是 client_id、含 nonce；不可用它授权 API。未知 kid 从固定 JWKS 地址刷新一次；issuer/aud/算法/有效期不匹配或获取失败时拒绝，不信 JWT 自带 jku/x5u。原生刷新凭据放 Keychain/Keystore/系统凭据库；浏览器不放 localStorage。
+
+复用/撤销让刷新与授权码失效；已发自包含 JWT 仍有最多 5 分钟的离线有效窗口。密码重置与换邮箱同时递增 epoch，本服务实时检查立即拒绝旧 JWT；宿主如何读取撤权状态留给 S1b，不能称已在宿主生效。
+
+### 7.3 错误、限速与邮件
+
+业务错误形状 `{error:{code:"CODE_INVALID"}}`；标准 OIDC token 错误遵循 OAuth `{error:"invalid_grant",error_description:"…"}`，不能用宿主错误解析器混读。
+
+| 状态 / 业务码 | 含义 |
+|---|---|
+| 400 `INVALID_EMAIL / INVALID_PASSWORD / INVALID_DEVICE / INVALID_DEVICE_KEY / INVALID_REQUEST` | 输入无效；邮箱不接受非 ASCII 登录字符，支持 NFKC 后合法形式 |
+| 400 `CODE_INVALID / CHALLENGE_INVALID / INTERACTION_INVALID / HOST_NOT_ALLOWED` | 错验证码；challenge 过期/已用/错误次数用尽/用途或 epoch 不符；交互 Cookie 不符；Host 不匹配 issuer |
+| 401 `INVALID_CREDENTIALS / UNAUTHORIZED` | 密码错误、云令牌无效或已撤销 epoch |
+| 403 `EMAIL_NOT_VERIFIED / CSRF_INVALID / ORIGIN_NOT_ALLOWED / FORBIDDEN` | 未激活、交互 CSRF 错、Origin 错、不是同账号 challenge |
+| 409 `EMAIL_IN_USE` | 邮箱规范化后占用，包括 pending 注册 |
+| 413 / 415 / 405 | `BODY_TOO_LARGE / UNSUPPORTED_MEDIA_TYPE / METHOD_NOT_ALLOWED` |
+| 429 `RATE_LIMITED` | 遵循整数秒 `Retry-After`，不得立即忙重试 |
+| 503 `MAIL_UNAVAILABLE / SERVICE_UNAVAILABLE` | 验证邮件投递失败 / 服务存储不可用；密码已提交但通知失败通过 notificationAccepted 单独表达 |
+
+六位验证码有效 10 分钟、单次使用、每 challenge 最多 5 次错误。失败按账号和来源分别计数，跨接口共享小时窗口，第 5 次起 1 秒指数退避、最多 1 小时；验证码与登录均覆盖。邮件请求另按账号/来源限制，第 5 次后 10 分钟退避。限速状态重开保留，来源地址只存 HMAC 桶，默认不信调用方 X-Forwarded-For；部署时由显式回环代理设置真实来源。
+
+file 开发传输只写专属私有 JSON outbox；Resend 要显式环境变量密钥与发件人。模板含注册验证码、找回、新设备确认、新邮箱验证、密码已更改；provider 接受不等于邮箱已送达。本包只验 file 与 Resend mock，无真实发信、客户端/宿主或公网验收。
