@@ -15,3 +15,5 @@
 | `constants.mjs`、`common.mjs`、`command-policy.mjs`、`interaction-policy.mjs` | 原有常量、公共函数与输入/回执验证 |
 
 模块工厂接收同一个 context（上下文对象）。其中的 getter（取值访问器）和 setter（赋值访问器）连接原服务中的实时状态，保证账户更新、队列、关闭和恢复仍读取当前值。各模块创建时只组装函数；实际操作仍由原来的调用时机和队列驱动。
+
+云身份接线集中在 `../personal-cloud/`（见其 README）；原 store 只增加 cloud 会话设备类型，不在账号结构塞云映射。原认证/同步/DSH 来源检查接受已批准云 Cookie，并保留本地 epoch；云 epoch/设备信任与绑定恢复由独立日志负责。
