@@ -10,7 +10,7 @@
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
 | Codex · Mac | H2 健康摘要服务端 | [PR #25](https://github.com/memoweft/weftmate/pull/25) 审查修改已实现；健康待写队列不影响非健康召回，模型按地址自动判断且可用 modelTier 覆盖；相关单测/类型检查通过；三平台 CI 因 GitHub 付款/额度未启动，待恢复后重跑 |
-| Codex · Cloud | S0 轻云架构与骨架 | [PR #27](https://github.com/memoweft/weftmate/pull/27) 待审查；见 [CLOUD.md](CLOUD.md)。Node 24 零依赖骨架、本地测试 14/14；Linux CI 加独立 cloud 步骤；未连接/部署服务器，未改客户端契约，S1 未开始 |
+| Codex · Cloud | S1a 云账号、邮箱验证与令牌 | `wp/s1a-cloud-accounts`：账号/邮件验证/找回/新设备确认、OIDC Code+PKCE、SQLite adapter、JWKS 与刷新轮换已实现；隔离测试 30/30、cloud 依赖审计 0 漏洞；Linux cloud CI 待推送验证；未部署/发真实邮件，客户端与宿主接入留 S1b |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -30,6 +30,8 @@ M0-2 工程检查：类型检查通过；相关单测 46/46；完整单测 855/8
 CI-1 的三平台必过/非阻塞基线结果及最终运行链接见 [PR #23](https://github.com/memoweft/weftmate/pull/23)。原 11 项基线外，在未改动 main `855044d` 上确认图片消息原请求重试（偶发 404）与重启后的停止回执重试两项失败；不改产品逻辑，13 项按精确名称单独非阻塞运行，同文件其他用例仍必须通过。
 
 ## 契约变更
+
+- 2026-10-07 / S1a：CLIENT_API 第 7 节新增云账号 `/personal/v1/cloud/auth/*`、`/cloud/account` 与 `/cloud/oidc/*`（发现/授权/token/撤销/JWKS）；邮箱验证、找回/换邮箱 epoch 撤销、新设备邮件确认、公开客户端 PKCE S256 与云 audience。现有宿主接口不变；客户端接入与宿主验签/DPoP/认领/会话交换在后续包。
 
 - 2026-10-07 / H2：CLIENT_API 第 6 节转正式：POST 同账号/设备/日期完整覆盖；GET 近 1–365 天（默认 14，查询时区默认 UTC）；DELETE 日期/全部及迟到上传水位。200 确认摘要和 observed 待写队列落盘；MemoWeft 无 observed 写入契约，尚未写 World。最新选择作用全账号；健康仅在待写队列，非健康记忆召回照常。MW-2 写入 World 后按来源过滤健康证据/衍生项并撤回，保留其余召回。CLIENT_API 3.10 新增可选 modelTier（auto/local/cloud），缺省按实际 loopback/私有网段/*.local 判定；模型配置/查询/转移兼容旧请求，位置修改生成新 runtime 修订。
 
