@@ -95,15 +95,15 @@ async function fixture(t: any) {
       .setAudience(audience ?? `${cloudBase}/hosts/${hostId}`).setIssuedAt().setJti(randomUUID())
       .setExpirationTime(overrides.exp ?? '300s').sign(signing.privateKey)
   }
-  async function control(sub = 'cloud-a') {
-    return new SignJWT({ sub, device_id: 'test-control', auth_epoch: 0, scope: 'cloud:account' })
+  async function control(sub = 'cloud-a', epoch = 0) {
+    return new SignJWT({ sub, device_id: 'test-control', auth_epoch: epoch, scope: 'cloud:account' })
       .setProtectedHeader({ alg: 'RS256', typ: 'at+jwt', kid: jwk.kid }).setIssuer(issuer)
       .setAudience(cloudBase).setIssuedAt().setJti(randomUUID()).setExpirationTime('300s').sign(signing.privateKey)
   }
-  async function bind(auth = a, sub = 'cloud-a') {
+  async function bind(auth = a, sub = 'cloud-a', epoch = 0) {
     const claim = await requests('POST', '/cloud/claims', {}, auth)
     assert.equal(claim.status, 200)
-    const result = await requests('POST', '/cloud/binding', { claimId: claim.claimId, accessToken: await control(sub) }, auth)
+    const result = await requests('POST', '/cloud/binding', { claimId: claim.claimId, accessToken: await control(sub, epoch) }, auth)
     return { claim, result }
   }
   async function exchange(token: string, key: any, route = '/auth/cloud-session', extra: any = {}, proofOverrides: any = {}) {
@@ -170,7 +170,7 @@ test('binding requires local Cookie/CSRF; unknown subjects cannot select an owne
 test('two local accounts bind independently; pending devices cannot see content; only their own account can approve; deny is durable', async t => {
   const f = await fixture(t)
   assert.equal((await f.bind()).result.status, 200)
-  assert.equal((await f.bind(f.b, 'cloud-b')).result.status, 200)
+  assert.equal((await f.bind(f.b, 'cloud-b', 1)).result.status, 200)
   const key = await generateKeyPair('ES256'), other = await generateKeyPair('ES256')
   const token = await f.access('cloud-a', 'phone-a', key)
   const pending = (await f.exchange(token, key)).result
@@ -201,7 +201,8 @@ test('two local accounts bind independently; pending devices cannot see content;
   assert.equal(stored.accounts[f.a.account.ownerId].commands[created.command.commandId].sourceAuthEpoch,
     stored.accounts[f.a.account.ownerId].account.authEpoch)
 
-  const deniedToken = await f.access('cloud-b', 'phone-b', other)
+  assert.equal((await f.exchange(await f.access('cloud-b', 'phone-b', other), other)).result.status, 401, 'fresh binding checkpoints cloud epoch before the next revocation poll')
+  const deniedToken = await f.access('cloud-b', 'phone-b', other, { auth_epoch: 1 })
   const denied = (await f.exchange(deniedToken, other)).result
   assert.equal((await f.requests('POST', `/cloud/devices/${denied.requestId}/decision`, { decision: 'deny' }, f.b)).status, 200)
   await f.restart()
