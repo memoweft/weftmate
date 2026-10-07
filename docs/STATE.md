@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
-| Codex · Windows-2 | M1-1 个人入口原生工具 | 实现与离线验证完成：DSH 原生工具、每对话目录、通用浏览器、文件成果时间线；完整单测运行中，等待 M0-6 标记后跑 Qwen 办事场景 |
+| Codex · Windows-2 | M1-1 个人入口原生工具 | [草稿 PR #31](https://github.com/memoweft/weftmate/pull/31)：实现与离线验证完成，首版 CI（持续集成）全绿；补充 258 次原生审批回归通过，完整单测复跑中；等待 M0-6 标记后跑 Qwen 办事场景 |
 | Codex · Mac | MW-2 observed 桥接 | MemoWeft #84 已合并，WeftMate #28 合入中：[MemoWeft #84](https://github.com/memoweft/memoweft/pull/84)（CI Gate 已绿）→ [WeftMate #28](https://github.com/memoweft/weftmate/pull/28)；真实 Core 集成通过；按此顺序合入，部署需升级 observed v1 Core |
 | Codex · Cloud | S1a 云账号、邮箱验证与令牌 | [PR #29](https://github.com/memoweft/weftmate/pull/29)：账号/邮件验证/找回/新设备确认、OIDC Code+PKCE、SQLite adapter、JWKS/刷新轮换已实现；隔离测试 30/30、依赖审计 0 漏洞；[Linux cloud CI](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 通过；未部署/真实发信，客户端与宿主接入留 S1b |
 
@@ -17,7 +17,7 @@
 
 ## 最近一次验证
 
-- M1-1：类型检查通过；原生工具/预设/文件成果针对性测试通过；真实 Electron + 固定 DSH 集成通过：原生 write/pwsh/read、三个成果预览、同一步多成果、browser 打开与跟随链接。Qwen 办事场景等待 M0-6 统一启动方式。
+- M1-1：类型检查、vendor 核对、针对性测试和真实 Electron + 固定 DSH 通用工具集成通过；完整单测 **845 项：836 通过、6 既有失败、3 跳过，新增失败 0**。6 项均在未改动基线 b2a7321 的隔离副本复现，4 项为已知静态断言、2 项为既有 vendor / 外部 Design 夹具问题；契约测试 8 通过、1 跳过、2 既有静态失败，同基线复现。首版 PR CI 全绿；同回合 258 次原生审批通过，隐含 256 次正常调用缓存上限已删除。完整单测复跑中；Qwen 办事场景等待 M0-6 统一启动方式。
 
 - MW-2：真实 Python Core RPC 集成与持久待办/并发撤回 2/2、健康 HTTP 回归 7/7、类型检查/发布预检通过；本地/云端过滤保留普通偏好、账号权限变更、覆盖清除旧指标、删除/导出/重启均通过。CI 新增固定 Core 提交的真实集成任务；本机 required 710 通过/8 跳过，既有 127.0.0.2 回环别名缺失导致 1 项环境失败，最终 PR CI 为门禁。
 

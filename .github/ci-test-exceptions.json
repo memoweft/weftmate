@@ -624,6 +624,11 @@
       "name": "timeline reads official live session events without adding unsupported durable types or reentering publication",
       "reason": "Requires the prebuilt pinned DSH vendor (cordis), absent on clean runners. Added by M0-3; passes locally with vendor.",
       "tracking": "https://github.com/memoweft/weftmate/pull/26"
+    },
+    {
+      "file": "tests/personal-approval-bridge.test.ts",
+      "name": "native approvals still work after 256 tool calls in the same personal turn",
+      "reason": "Requires the prebuilt pinned DSH vendor, absent on clean runners; native ApprovalService/ToolRuntime integration."
     }
   ],
   "platformTests": [
