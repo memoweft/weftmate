@@ -1,4 +1,5 @@
 import Foundation
+import Security
 #if DEBUG
 import Network
 #endif
@@ -32,6 +33,36 @@ extension HTTPTransport {
 }
 
 private final class RedirectRefuser: NSObject, URLSessionTaskDelegate, Sendable {
+    let pins: HostPinStore
+    #if DEBUG
+    let testAnchor: Data?
+    init(pins: HostPinStore = HostPinStore(), testAnchor: Data? = nil) { self.pins = pins; self.testAnchor = testAnchor }
+    #else
+    init(pins: HostPinStore = HostPinStore()) { self.pins = pins }
+    #endif
+    func urlSession(_ session: URLSession, task: URLSessionTask, didReceive challenge: URLAuthenticationChallenge,
+                    completionHandler: @escaping @Sendable (URLSession.AuthChallengeDisposition, URLCredential?) -> Void) {
+        guard challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust else {
+            completionHandler(.performDefaultHandling, nil); return
+        }
+        let space = challenge.protectionSpace
+        let origin = "https://" + space.host.lowercased() + (space.port == 443 ? "" : ":\(space.port)")
+        do {
+            guard let expected = try pins.pin(for: origin) else { completionHandler(.performDefaultHandling, nil); return }
+            guard let trust = space.serverTrust else { completionHandler(.cancelAuthenticationChallenge, nil); return }
+            #if DEBUG
+            if let testAnchor, let anchor = SecCertificateCreateWithData(nil, testAnchor as CFData) {
+                SecTrustSetAnchorCertificates(trust, [anchor] as CFArray)
+                SecTrustSetAnchorCertificatesOnly(trust, true)
+            }
+            #endif
+            guard SecTrustEvaluateWithError(trust, nil), let key = SecTrustCopyKey(trust),
+                  try HostPinStore.spkiFingerprint(key) == expected else {
+                completionHandler(.cancelAuthenticationChallenge, nil); return
+            }
+            completionHandler(.useCredential, URLCredential(trust: trust))
+        } catch { completionHandler(.cancelAuthenticationChallenge, nil) }
+    }
     func urlSession(_ session: URLSession, task: URLSessionTask,
                     willPerformHTTPRedirection response: HTTPURLResponse, newRequest request: URLRequest,
                     completionHandler: @escaping @Sendable (URLRequest?) -> Void) { completionHandler(nil) }
@@ -43,13 +74,21 @@ public final class URLSessionTransport: HTTPTransport, Sendable {
     #if DEBUG
     private let developmentRoute: DevelopmentProxyRoute?
     #endif
-    public init() {
+    public init(hostPins: HostPinStore = HostPinStore()) {
         #if DEBUG
         developmentRoute = nil
         #endif
-        session = URLSession(configuration: Self.standardConfiguration(), delegate: RedirectRefuser(), delegateQueue: nil)
-        transferSession = URLSession(configuration: Self.standardConfiguration(fileTransfer: true), delegate: RedirectRefuser(), delegateQueue: nil)
+        session = URLSession(configuration: Self.standardConfiguration(), delegate: RedirectRefuser(pins: hostPins), delegateQueue: nil)
+        transferSession = URLSession(configuration: Self.standardConfiguration(fileTransfer: true), delegate: RedirectRefuser(pins: hostPins), delegateQueue: nil)
     }
+    #if DEBUG
+    /// Internal XCTest-only CA anchor. No system trust changes; normal CA/domain evaluation still runs.
+    init(testHostPins: HostPinStore, testAnchorDER: Data) {
+        developmentRoute = nil
+        session = URLSession(configuration: Self.standardConfiguration(), delegate: RedirectRefuser(pins: testHostPins, testAnchor: testAnchorDER), delegateQueue: nil)
+        transferSession = URLSession(configuration: Self.standardConfiguration(fileTransfer: true), delegate: RedirectRefuser(pins: testHostPins, testAnchor: testAnchorDER), delegateQueue: nil)
+    }
+    #endif
     private static func standardConfiguration(fileTransfer: Bool = false) -> URLSessionConfiguration {
         let config = URLSessionConfiguration.ephemeral
         config.httpCookieStorage = nil; config.httpShouldSetCookies = false; config.urlCache = nil
