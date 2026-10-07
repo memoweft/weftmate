@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | 待开工 |
-| Codex · Mac | A0 Apple 迁到 GitHub → M0-5 契约文档 | 待开工 |
+| Codex · Mac | A0 已完成本地合并；下一包 M0-5 契约文档 | `wp/apple-sync`：build 11；macOS/iOS/watchOS 构建、Core 233 项测试 + 状态 91 项检查通过；待 Claude 经 SSH 取分支并代推送/PR |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
