@@ -219,6 +219,7 @@ public struct QuestionOutcome: RawRepresentable, Codable, Equatable, Sendable {
 public struct SessionQuestionBatch: Codable, Equatable, Sendable, Identifiable {
     public var id: String { questionRpcId }
     public let questionRpcId: String
+    public let observedSeq: Int?
     public let sessionId: String
     public let taskId: String
     public let sourceCommandId: String
