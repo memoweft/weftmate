@@ -26,10 +26,6 @@ private struct SyncEvent: Decodable {
     let kind: String; let occurredAt: String; let payload: SyncPayload
 }
 private struct SyncPage: Decodable { let events: [SyncEvent]; let nextSeq: Int; let hasMore: Bool }
-private struct HistoryEvent: Decodable {
-    let seq: Int; let type: String; let at: String?; let data: JSONValue
-}
-private struct HistoryPage: Decodable { let events: [HistoryEvent]; let nextSeq: Int; let hasMore: Bool }
 private struct Binding: Decodable { let sessionId: String; let cutoverSyncSeq: Int }
 private struct AdoptedMessage: Decodable {
     let sourceSyncEventId: String; let state: String; let receiptId: String?
@@ -49,34 +45,6 @@ private struct AcceptanceCapabilitiesReply: Decodable {
     let sharedConversations: Int
 }
 
-private enum JSONValue: Codable {
-    case object([String: JSONValue]), array([JSONValue]), string(String), number(Double), bool(Bool), null
-    init(from decoder: any Decoder) throws {
-        let c = try decoder.singleValueContainer()
-        if c.decodeNil() { self = .null }
-        else if let x = try? c.decode(Bool.self) { self = .bool(x) }
-        else if let x = try? c.decode(String.self) { self = .string(x) }
-        else if let x = try? c.decode(Double.self) { self = .number(x) }
-        else if let x = try? c.decode([JSONValue].self) { self = .array(x) }
-        else { self = .object(try c.decode([String: JSONValue].self)) }
-    }
-    subscript(_ key: String) -> JSONValue? { if case .object(let x) = self { x[key] } else { nil } }
-    var string: String? { if case .string(let x) = self { x } else { nil } }
-    var count: Int { if case .array(let x) = self { x.count } else { 0 } }
-    var bool: Bool { if case .bool(let x) = self { x } else { false } }
-    func encode(to encoder: any Encoder) throws {
-        var box = encoder.singleValueContainer()
-        switch self {
-        case .object(let value): try box.encode(value)
-        case .array(let value): try box.encode(value)
-        case .string(let value): try box.encode(value)
-        case .number(let value): try box.encode(value)
-        case .bool(let value): try box.encode(value)
-        case .null: try box.encodeNil()
-        }
-    }
-}
-
 /// Owner-scoped client. Async callbacks are checked against a generation before publishing or persisting.
 /// Shared commands reuse a persisted request identity; no Android capability/version is asserted.
 public actor PersonalClient {
@@ -87,6 +55,8 @@ public actor PersonalClient {
     private var epoch: UInt64 = 0
     private var syncEvents: [SyncEvent] = []
     private var summaries: [ConversationSummary] = []
+    private var timelineMessageIDs: [String: [Int: String]] = [:]
+    private var timelinePages: [String: TimelinePage] = [:]
     private var historyCache: [String: [ChatMessage]] = [:]
     private var sharedIntentBytes: [String: Data] = [:]
     private var sharedIntentEndpoints: [String: String] = [:]
@@ -298,12 +268,15 @@ public actor PersonalClient {
                     adopted[receipt] = item.sourceSyncEventId
                 }
                 var shown = Set<String>()
+                var mapped: [Int: String] = [:]
                 for event in hostEvents {
                     if event.type == "user.message", let receipt = event.data["receiptId"]?.string,
                        let eventID = adopted[receipt], let original = originals.first(where: { $0.eventId == eventID }) {
-                        result.append(try syncMessage(original, pending: false)); shown.insert(eventID)
+                        let message = try syncMessage(original, pending: false)
+                        result.append(message); mapped[event.seq] = message.id; shown.insert(eventID)
                     } else if let message = try hostMessage(event, sessionID: binding.sessionId) { result.append(message) }
                 }
+                timelineMessageIDs[binding.sessionId] = mapped
                 for original in originals where original.seq > binding.cutoverSyncSeq && !shown.contains(original.eventId) {
                     result.append(try syncMessage(original, pending: true))
                 }
@@ -496,17 +469,30 @@ public actor PersonalClient {
         return .init(scope: scope, artifact: reply.artifact, text: reply.text)
     }
 
+    /// Metadata supplies the root command key; a timeline turn-N key is never used as a /tasks ID.
+    public func timelineArtifactBytes(sessionID: String, artifactID: String) async throws -> TaskArtifactDownload {
+        let (auth, generation) = try snapshot()
+        let session = try checkedID(sessionID), artifact = try checkedID(artifactID)
+        try await verify(auth, generation)
+        return try await downloadArtifact(auth, generation, artifactID: artifact, taskID: nil, sessionID: session)
+    }
     /// Called by an explicit download action. No file is installed, opened, or executed here.
     public func taskArtifactBytes(taskID: String, artifactID: String) async throws -> TaskArtifactDownload {
         let (auth, generation) = try snapshot()
         let task = try checkedID(taskID), artifact = try checkedID(artifactID)
         try await verify(auth, generation)
+        return try await downloadArtifact(auth, generation, artifactID: artifact, taskID: task, sessionID: nil)
+    }
+    private func downloadArtifact(_ auth: Credential, _ generation: UInt64, artifactID: String,
+                                  taskID: String?, sessionID: String?) async throws -> TaskArtifactDownload {
         let scope = TaskReadScope(auth.session)
         struct Reply: Decodable { let artifact: TaskCommandRecord }
-        let response = try await sharedAuthorizedRequest(auth, generation, path: "/artifacts/\(artifact)")
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/artifacts/\(artifactID)")
         let reply: Reply = try decode(response.body)
-        try TaskReadValidation.artifact(reply.artifact, scope: scope, taskID: task, artifactID: artifact)
-        let downloaded = try await sharedAuthorizedRequest(auth, generation, path: "/artifacts/\(artifact)/download")
+        if let sessionID { guard reply.artifact.sessionId == sessionID else { throw APIFailure.identityMismatch } }
+        guard let root = taskID ?? reply.artifact.taskId else { throw APIFailure.invalidResponse }
+        try TaskReadValidation.artifact(reply.artifact, scope: scope, taskID: root, artifactID: artifactID)
+        let downloaded = try await sharedAuthorizedRequest(auth, generation, path: "/artifacts/\(artifactID)/download")
         try TaskReadValidation.artifactBytes(downloaded.body, record: reply.artifact)
         return .init(scope: scope, artifact: reply.artifact, data: downloaded.body)
     }
@@ -1016,22 +1002,41 @@ public actor PersonalClient {
                       ids.insert("\(event.sourceDeviceId)|\(event.eventId)").inserted else { throw APIFailure.invalidResponse }
             }
             all.append(contentsOf: page.events)
-            guard all.count <= 20_000 else { throw APIFailure.historyLimit }
+
             if !page.hasMore { return all }
             after = page.nextSeq
         }
     }
-    private func readHistory(_ auth: Credential, _ generation: UInt64, sessionID: String) async throws -> [HistoryEvent] {
+    public func timelinePage(sessionID: String, beforeSeq: Int? = nil, afterSeq: Int? = nil, limit: Int = 100) async throws -> TimelinePage {
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        return try await readTimeline(auth, generation, sessionID: sessionID, beforeSeq: beforeSeq, afterSeq: afterSeq, limit: limit)
+    }
+    public func cachedTimelineMessageIDs(sessionID: String) -> [Int: String] { credential == nil ? [:] : timelineMessageIDs[sessionID] ?? [:] }
+    public func cachedTimelinePage(sessionID: String) -> TimelinePage? { credential == nil ? nil : timelinePages[sessionID] }
+    public func timelineMessages(_ events: [TimelineEvent], sessionID: String) throws -> [ChatMessage] {
+        try events.compactMap { try hostMessage($0, sessionID: sessionID) }
+    }
+    public func timelineDetail(sessionID: String, seq: Int) async throws -> TimelineDetail {
+        let (auth, generation) = try snapshot()
         let id = try checkedID(sessionID)
-        var after = -1, all: [HistoryEvent] = []
-        while true {
-            let page: HistoryPage = try await authorized(auth, generation, path: "/sessions/\(id)/events?afterSeq=\(after)&limit=100")
-            try validateCursor(page.events.map(\.seq), after: after, next: page.nextSeq, hasMore: page.hasMore)
-            all.append(contentsOf: page.events)
-            guard all.count <= 20_000 else { throw APIFailure.historyLimit }
-            if !page.hasMore { return all }
-            after = page.nextSeq
-        }
+        guard (0...SharedValidation.maximumSequence).contains(seq) else { throw APIFailure.invalidResponse }
+        try await verify(auth, generation)
+        let reply: TimelineDetail = try await authorized(auth, generation, path: "/sessions/\(id)/events/\(seq)/detail")
+        guard reply.seq == seq, reply.text.utf16.count <= 64_000 else { throw APIFailure.invalidResponse }
+        return reply
+    }
+    private func readTimeline(_ auth: Credential, _ generation: UInt64, sessionID: String,
+                              beforeSeq: Int? = nil, afterSeq: Int? = nil, limit: Int = 100) async throws -> TimelinePage {
+        let id = try checkedID(sessionID)
+        let query = try TimelinePage.query(beforeSeq: beforeSeq, afterSeq: afterSeq, limit: limit)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/sessions/\(id)/events?\(query)")
+        let page = try TimelinePage.decode(response.body, beforeSeq: beforeSeq, afterSeq: afterSeq, limit: limit)
+        if beforeSeq == nil && afterSeq == nil { timelinePages[id] = page }
+        return page
+    }
+    private func readHistory(_ auth: Credential, _ generation: UInt64, sessionID: String) async throws -> [TimelineEvent] {
+        try await readTimeline(auth, generation, sessionID: sessionID).events
     }
     private func validateCursor(_ seqs: [Int], after: Int, next: Int, hasMore: Bool) throws {
         var prior = after
@@ -1053,7 +1058,7 @@ public actor PersonalClient {
             originalAttachments: originals, attachmentMessageId: event.payload.attachmentMessageId,
             unpreviewedOriginalImageIds: event.payload.unpreviewedOriginalImageIds ?? [])
     }
-    private func hostMessage(_ event: HistoryEvent, sessionID: String) throws -> ChatMessage? {
+    private func hostMessage(_ event: TimelineEvent, sessionID: String) throws -> ChatMessage? {
         guard ["user.message", "assistant.message"].contains(event.type) else { return nil }
         let text = event.data["text"]?.string ?? ""
         let imageMetadata: [SharedHistoryImage]? = try optionalHistoryField(event.data["images"])
@@ -1110,7 +1115,7 @@ public actor PersonalClient {
         return epoch
     }
     private func clearCaches() {
-        syncEvents = []; summaries = []; historyCache = [:]; sharedIntentBytes = [:]; sharedIntentEndpoints = [:]; sharedOperations = []
+        syncEvents = []; summaries = []; historyCache = [:]; timelinePages = [:]; timelineMessageIDs = [:]; sharedIntentBytes = [:]; sharedIntentEndpoints = [:]; sharedOperations = []
         memoryIntentBytes = [:]; memoryIntentEndpoints = [:]; memoryOperations = []
         memoryIntentIdentities = [:]; memoryKnownReceipts = [:]; memoryRedactedProofs = [:]
         taskStopIntents = [:]

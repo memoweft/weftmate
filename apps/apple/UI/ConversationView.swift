@@ -65,6 +65,7 @@ struct ConversationRow: View {
 struct ConversationView: View {
     @ObservedObject var model: AppleAppModel
     let conversation: ConversationSummary
+    @Environment(\.scenePhase) private var scenePhase
     @FocusState private var draftFocused: Bool
     @State private var visibleMessageID: String?
     @State private var previousTailID: String?
@@ -73,6 +74,8 @@ struct ConversationView: View {
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var pendingAdoptionProfile: String?
     @State private var confirmingLocalTurn = false
+    @State private var artifactPreviewName: String?
+    @State private var artifactPreviewType: String?
     @State private var previewReference: ConversationAttachmentReference?
     @State private var previewFile: URL?
     @State private var previewDirectory: URL?
@@ -135,12 +138,13 @@ struct ConversationView: View {
     }
 
     private var attachmentPreview: some View {
-        ConversationAttachmentPreview(file: previewFile, name: previewReference?.name ?? "附件",
-            contentType: previewReference?.contentType ?? "application/octet-stream", loading: previewBusy,
+        ConversationAttachmentPreview(file: previewFile, name: artifactPreviewName ?? previewReference?.name ?? "附件",
+            contentType: artifactPreviewType ?? previewReference?.contentType ?? "application/octet-stream", loading: previewBusy,
             error: previewError, close: closePreview)
     }
     private func closePreview() {
         previewWorker?.cancel(); previewWorker = nil; showingPreview = false
+        artifactPreviewName = nil; artifactPreviewType = nil
         previewReference = nil; previewFile = nil; previewError = nil; previewBusy = false
         if let previewDirectory { try? FileManager.default.removeItem(at: previewDirectory) }; previewDirectory = nil
     }
@@ -165,10 +169,42 @@ struct ConversationView: View {
         }
     }
 
+    private func openArtifact(_ event: TimelineEvent) {
+        closePreview(); showingPreview = true; previewBusy = true
+        let epoch = model.accountEpoch
+        previewWorker = Task {
+            guard let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: epoch),
+                  let artifact = event.data["artifactId"]?.string else { previewError = "成果引用尚未核对。"; previewBusy = false; return }
+            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("weftmate-preview-" + UUID().uuidString)
+            do {
+                let value = try await model.assistantClient.timelineArtifactBytes(sessionID: sessionID, artifactID: artifact)
+                guard !Task.isCancelled, model.accountEpoch == epoch else { return }
+                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                let file = folder.appendingPathComponent(value.artifact.fileName ?? "成果.txt")
+                try value.data.write(to: file)
+                artifactPreviewName = value.artifact.fileName; artifactPreviewType = event.data["contentType"]?.string ?? "text/plain"
+                previewDirectory = folder; previewFile = file; previewBusy = false
+            } catch {
+                try? FileManager.default.removeItem(at: folder)
+                if !Task.isCancelled, model.accountEpoch == epoch { previewError = "成果未下载，请关闭后重试。"; previewBusy = false }
+            }
+        }
+    }
+
     private var conversationContent: some View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 22) {
+                    if model.timeline.hasOlder {
+                        Button(model.olderBusy ? "正在读取…" : "读取更早的记录") {
+                            let anchor = visibleMessageID
+                            Task {
+                                await model.loadOlder(conversation)
+                                if let anchor { proxy.scrollTo(anchor, anchor: .top) }
+                            }
+                        }.disabled(model.olderBusy).accessibilityIdentifier("loadOlderTimeline")
+                        .id("older")
+                    }
                     if let cachedAt = model.historyCachedAt {
                         Text("离线记录 · \(cachedAt.formatted(date: .abbreviated, time: .shortened))，等待核对最新状态。")
                             .font(.caption).foregroundStyle(Weave.muted)
@@ -190,13 +226,13 @@ struct ConversationView: View {
                                    message: "这段原会话还没有可显示的文字记录。")
                             .frame(minHeight: 240)
                     }
-                    ForEach(model.messages) { message in
-                        MessageView(model: model, message: message, openAttachment: openAttachment).id(message.id)
-                    }
-                    if let sessionId = model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch),
-                       let hostId = model.session?.hostId {
-                        ConversationTaskOverviewView(appModel: model, conversation: conversation, hostId: hostId, sessionId: sessionId)
-                            .id(sessionId + ":" + hostId + ":" + model.accountEpoch.uuidString)
+                    if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
+                        ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, openAttachment: openAttachment, openArtifact: openArtifact)
+                            .id(sessionID + model.accountEpoch.uuidString)
+                    } else {
+                        ForEach(model.messages) { message in
+                            MessageView(model: model, message: message, openAttachment: openAttachment).id(message.id)
+                        }
                     }
                     commandStatusCards
                     adoptionStatusCards
@@ -211,9 +247,9 @@ struct ConversationView: View {
             .scrollDismissesKeyboard(.interactively)
             #endif
             .safeAreaInset(edge: .bottom, spacing: 0) { composer.id(composerIdentity) }
-            .onChange(of: model.messages.count) { _, _ in
+            .onChange(of: model.timeline.events.last?.seq) { _, _ in
                 let oldTail = previousTailID
-                previousTailID = model.messages.last?.id
+                previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
                 // Follow new messages only when already at the end; preserve reading position otherwise.
                 if !draftFocused, previousTailID != nil,
                    oldTail == nil || visibleMessageID == "latest" || visibleMessageID == oldTail {
@@ -233,22 +269,6 @@ struct ConversationView: View {
             }
             #endif
             ToolbarItem(placement: .primaryAction) {
-                let accountEpoch = model.accountEpoch
-                if let sessionID = model.taskSessionID(for: conversation, accountEpoch: accountEpoch),
-                   let hostID = model.session?.hostId {
-                    NavigationLink {
-                        if model.taskSessionID(for: conversation, accountEpoch: accountEpoch) == sessionID,
-                           model.session?.hostId == hostID {
-                            TaskDirectoryView(appModel: model, sessionId: sessionID, expectedHostId: hostID)
-                                .id(sessionID + ":" + hostID + ":" + accountEpoch.uuidString)
-                        } else {
-                            EmptyState(symbol: "checklist", title: "会话已变更", message: "返回当前会话后重新打开任务。")
-                        }
-                    } label: { Label("会话任务", systemImage: "checklist").labelStyle(.titleAndIcon) }
-                    .accessibilityIdentifier("conversationTasksButton")
-                }
-            }
-            ToolbarItem(placement: .primaryAction) {
                 Button {
                     Task { await model.open(conversation) }
                 } label: { Label("刷新记录", systemImage: "arrow.clockwise") }
@@ -257,6 +277,13 @@ struct ConversationView: View {
             }
         }
         .task(id: conversation.id) { await model.open(conversation) }
+        .task(id: "\(scenePhase)|\(model.historyBusy)") {
+            guard scenePhase == .active, !model.historyBusy else { return }
+            await model.pollTimeline(conversation)
+        }
+        .onChange(of: visibleMessageID) { _, value in
+            if value == "older", !model.olderBusy { Task { await model.loadOlder(conversation) } }
+        }
         // End this view's keyboard focus when navigating away. Retaining the old responder
         // can restore the keyboard without the safe-area composer after a task detail returns.
         .onDisappear { endDraftFocus(); composerIdentity = UUID() }
@@ -301,28 +328,6 @@ struct ConversationView: View {
                             Button("继续发送") {
                             Task { await model.continueSavedRequest(row.id, accountEpoch: accountEpoch) }
                         }.disabled(model.reconcilingRequests.contains(row.id) || model.sendTargets[key] == nil)
-                    }
-                    if row.record.intent.kind == .message,
-                       let sessionId = row.record.intent.sessionId,
-                       model.taskSessionID(for: conversation, accountEpoch: accountEpoch) == sessionId,
-                       let commandId = row.record.receipt?.commandId {
-                        NavigationLink {
-                            if model.taskSessionID(for: conversation, accountEpoch: accountEpoch) == sessionId,
-                               model.session?.server == row.record.intent.server,
-                               model.session?.account.ownerId == row.record.intent.ownerId,
-                               model.session?.hostId == row.record.intent.hostId,
-                               model.commandRows(for: conversation).contains(where: {
-                                   $0.id == row.id && $0.record.intent == row.record.intent && $0.record.receipt?.commandId == commandId
-                               }) {
-                                TaskWorkspaceView(appModel: model, taskId: commandId,
-                                    expectedHostId: row.record.intent.hostId,
-                                    expectedSessionId: sessionId, expectedRequestId: row.record.intent.requestId)
-                                    .id(commandId + ":" + accountEpoch.uuidString)
-                            } else {
-                                EmptyState(symbol: "checklist", title: "会话已变更", message: "返回当前会话后重新打开任务。")
-                            }
-                        } label: { Label("查看任务与成果", systemImage: "checklist") }
-                        .accessibilityIdentifier("openTask.\(row.id)")
                     }
                 }.buttonStyle(.bordered).font(.caption)
             }
@@ -500,7 +505,7 @@ struct ConversationView: View {
     }
 }
 
-private struct MessageView: View {
+struct MessageView: View {
     @ObservedObject var model: AppleAppModel
     let message: ChatMessage
     let openAttachment: (ConversationAttachmentReference) -> Void

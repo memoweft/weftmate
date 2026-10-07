@@ -16,6 +16,7 @@ CHECKS = {
     "AppleDraftStateChecks": APP_MODEL,
     "AppleSendStateChecks": APP_MODEL,
     "AppleTaskEntryChecks": APP_MODEL,
+    "AppleTimelineStateChecks": APP_MODEL,
     "MemoryWorkspaceStateChecks": ["MemoryWorkspaceModel"],
     "MessageMarkdownChecks": ["MessageMarkdown"],
     "TaskDirectoryChecks": ["TaskDirectoryModel"],
