@@ -101,6 +101,7 @@ export function createHttpHandler(context) {
         '/personal/v1/ui/native-desktop.js', '/personal/v1/ui/native-desktop.css',
         '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
         '/personal/v1/ui/cloud-ui.js', '/personal/v1/ui/cloud-login.js', '/personal/v1/ui/cloud-vendor.js',
+        '/personal/v1/ui/desktop.js', '/personal/v1/ui/format-vendor.js',
         '/personal/v1/ui/file-sha256.js', '/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js',
         '/personal/v1/ui/vendor/noble-hashes-2.3.0/_md.js',
         '/personal/v1/ui/vendor/noble-hashes-2.3.0/_u64.js',
