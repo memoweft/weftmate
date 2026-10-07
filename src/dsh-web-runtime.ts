@@ -391,6 +391,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [AI_GAME_HOST_PLUGIN_SRC, aiGameHostDest],
     [join(PLUGINS_DIR, 'weftmate-weftmod.mjs'), join(dir, 'plugins', 'weftmate-weftmod.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop.mjs')],
+    [join(PLUGINS_DIR, 'personal-web-fetch.mjs'), join(dir, 'plugins', 'personal-web-fetch.mjs')],
     [join(PLUGINS_DIR, 'personal-native-files.mjs'), join(dir, 'plugins', 'personal-native-files.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-desktop-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-desktop-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
@@ -1901,7 +1902,7 @@ export class DshWebRuntime {
           if (!value || typeof value !== 'object') { settle({ ok: false, error: 'PERSONAL_TOOL_UNAVAILABLE' }); return }
           // Results from these host-owned operations are already public projections; discard paths.
           const fields = nativeFile ? ['taskId', 'artifactId', 'fileName', 'contentType', 'size', 'sha256', 'state', 'reasonCode']
-            : ['snapshotId', 'url', 'title', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated']
+            : ['snapshotId', 'url', 'title', 'text', 'links', 'outline', 'segmentIndex', 'segmentCount', 'truncated', 'captureTruncated', 'httpStatus']
           settle({ ok: true, command: Object.fromEntries(fields.filter(key => value[key] !== undefined).map(key => [key, value[key]])) })
           return
         }
