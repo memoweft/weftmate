@@ -87,7 +87,7 @@ S1 宿主接线按以下次序做，全部用隔离夹具验收：
 
 短 JWT 到期不能离线续签。已有本地会话仍用本地凭据，云 revocation 尚不可达的暴露窗口以本地会话有效期与已缓存撤权水位为限；需离线继续可用与立即云撤销不能同时保证，界面明确显示状态。无本地密码/有效会话的新设备等待联网与本地批准。
 
-S1a 的云账号/OIDC 正式契约见 `CLIENT_API.md` 第 7 节，业务路径 `/personal/v1/cloud/…`，issuer 为 `/personal/v1/cloud/oidc`，客户端接入在后续包。备份/共享目录与宿主会话交换 `/personal/v1/auth/cloud-session` 尚未实现。后续实施包须协调五端并记录 STATE 契约变更。中继只改变宿主 base URL，不改原有路径/错误/Origin/CSRF；`auth/setup` 仍只允许直接地址。已有 `auth/login(username)` 与云 `email` 登录独立。
+S1a 的云账号/OIDC 正式契约见 `CLIENT_API.md` 第 7 节，业务路径 `/personal/v1/cloud/…`，issuer 为 `/personal/v1/cloud/oidc`，客户端接入在后续包。S1b 已实现宿主认领/绑定/DPoP 与 `/personal/v1/auth/cloud-session`，具体见 CLIENT_API 7.4–7.5；备份/共享目录仍在后续包。后续实施包须协调五端并记录 STATE 契约变更。中继只改变宿主 base URL，不改原有路径/错误/Origin/CSRF；`auth/setup` 仍只允许直接地址。已有 `auth/login(username)` 与云 `email` 登录独立。
 
 ## 3. 中继方案与 TLS（S2）
 
@@ -239,10 +239,18 @@ Node 24 `node:sqlite` 起步仅存控制面小记录，WAL/FK/事务迁移，密
 
 独立 `services/cloud/` 按第 2 节实现云账号，契约在 `CLIENT_API.md` 第 7 节，客户端接入在后续包。不可变随机 cloudAccountId/public sub、规范化唯一可变邮箱、独立盐和参数的 scrypt；pending 注册验证后激活，密码找回与换邮箱递增 epoch、撤销旧云会话/授权码/刷新族/旧验证码；新设备标识或公钥经邮箱确认后才签发授权码。设备标识/公钥目前由客户端声明，无私钥持有证明，不自动授权内容。
 
-协议使用锁定 `oidc-provider 9.12.2` / `jose 6.2.12` 和 SQLite adapter，强制 Code+PKCE S256、登记 redirect、public/native 无 secret；RS256 access/ID token 300 秒，code 60 秒，refresh 轮换/复用检测且族绝对寿命 30 天。audience 只为云 `/personal/v1/cloud`，不发宿主 token/host_id/DPoP cnf。签名私钥与 Cookie/验证码秘密独立私有文件，停服务轮换并重启，旧 key 保留 300+60 秒；具体命令见 cloud README。
+协议使用锁定 `oidc-provider 9.12.2` / `jose 6.2.12` 和 SQLite adapter，强制 Code+PKCE S256、登记 redirect、public/native 无 secret；RS256 access/ID token 300 秒，code 60 秒，refresh 轮换/复用检测且族绝对寿命 30 天。S1a 的控制面 audience 为云 `/personal/v1/cloud`；S1b 追加受 membership/设备密钥约束的指定宿主 resource 与 DPoP。签名私钥与 Cookie/验证码秘密独立私有文件，停服务轮换并重启，旧 key 保留 300+60 秒；具体命令见 cloud README。
 
 验证码六位、10 分钟、单次使用/5 次错误，绑定用途、账号 epoch 与登录交互；账号及来源的失败桶持久化，第 5 次起指数退避，邮件请求另限速。HTTPS host-only Secure/HttpOnly Cookie、同源 Origin、交互 Cookie/CSRF 与固定 Host；代理来源只在显式可信回环设置启用。没有全局设备数上限或审计框架。file 开发邮件与环境变量配置的 Resend/五类模板已实现；Resend 未配置不可启用，测试仅 mock fetch。密码更改通知失败时响应 notificationAccepted=false，已提交重置保持有效；未做通知补投递。
 
 Mac Node 24.21.0 隔离 `node --test test/*.test.mjs` **30/30**，cloud npm audit **0 漏洞**；覆盖完整账号/授权码/刷新/恢复/新设备、验证码/限速、令牌校验/轮换/并发复用、JWKS 轮换/重开、邮箱变更、HTTPS Cookie 与原 S0 测试。[Linux cloud CI](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 独立步骤通过，使用同一套 30 项测试；缺依赖时测试 helper 只安装 cloud 的锁文件。scrypt N=131072/r=8/p=1 的实际 runner 耗时在测试输出记录，不推断生产吞吐。
 
-未做/未验证：五端登录接线、宿主验签/DPoP/会话交换/认领/内容设备授权（S1b；按 D23 后续派发）、真实邮件送达、服务器/systemd/Caddy/DNS 部署、S2–S6。未连接服务器、不发真实邮件、不碰日用数据。外部离线验证的 JWT 在刷新撤销后仍有最多 5 分钟有效窗口；本服务检查实时 epoch，但宿主即时撤销尚未接线。
+未做/未验证：五端完整登录接线（S1c）、真实邮件送达、服务器/systemd/Caddy/DNS 部署、S2–S6。宿主 S1b 的当前交付见下一节。未连接服务器、不发真实邮件、不碰日用数据。外部离线验证的 JWT 在刷新撤销后仍有最多 5 分钟有效窗口；本服务检查实时 epoch，S1b 宿主已接签名事件/轮询；云离线时无法保证即时撤销。
+
+## 13. S1b 当前交付与边界
+
+`src/personal-cloud/` 已实现安装/内容 TLS 密钥、迁移前本机备份、版本化 pending/active 绑定、claimId 幂等恢复、固定 JWKS/RS256 验签与 ES256 DPoP、独立内容设备批准/拒绝/一次性配对挑战、宿主 Cookie/CSRF 交换、签名撤权水位与本地同步 outbox。原本地账号/密码/ID/Cookie/数据路径保持；云会话接入原同步与 DSH 来源/审批路径，同机多账号各自批准、互不可读。桌面 Web 已提供待批准列表及启动提示，保留原模型/设置功能。
+
+云配合增加宿主 challenges/公钥/member、已登记宿主 OAuth resource、邮件已确认设备的 DPoP key 约束、设备/epoch 撤销事件；不存本地 ownerId/内容。宿主在线启动与每 60 秒轮询，已到达事件立即关闭 SSE/拒绝会话，离线仍允许原本地登录。解绑只删映射/member 与云内容设备信任，old claimId outbox 不误撤新 member。
+
+隔离验收与运行说明见 `src/personal-cloud/README.md`。S1c 仍需完整云登录/认领/绑定页面与手机接入、二维码展示/扫描；S2 负责内容 TLS 适配器/证书与原生 pin 的真实连接，中继未部署；S3 推送未接通。当前电脑本地密码登录可作为首次内容批准者；云邮件确认独立于此授权。本包无公网/真实邮件/真实账号验收。
