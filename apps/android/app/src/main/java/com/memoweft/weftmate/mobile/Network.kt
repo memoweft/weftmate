@@ -24,6 +24,8 @@ internal fun validBusinessPath(path: String): Boolean {
     val route = path.substringBefore('?')
     val query = path.substringAfter('?', "")
     if (query.isEmpty() && (route == "/personal/v1/system" || route == "/personal/v1/settings/models" ||
+        route == "/personal/v1/settings/approvals" ||
+        route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/approval-mode")) ||
         route.matches(Regex("/personal/v1/system/(model|host|memory)/restart")))) return true
     if (!query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) ||
         !route.matches(Regex("/personal/v1/(memory|mods|tasks|notifications|workspaces|capabilities)(/[A-Za-z0-9._~:/%-]*)?"))) return false
@@ -41,10 +43,11 @@ internal fun approvalListPath(sessionId: String, before: String? = null, limit: 
     return "/personal/v1/sessions/$sessionId/approvals?limit=$limit" + (before?.let { "&before=$it" } ?: "")
 }
 
-internal fun approvalDecisionPath(sessionId: String, approvalId: String, requestId: String, outcome: String): String {
+internal fun approvalDecisionPath(sessionId: String, approvalId: String, requestId: String, outcome: String, scope: String? = null): String {
     require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) &&
         approvalId.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) &&
         requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) && outcome in setOf("allowed-once", "rejected"))
+    require(scope == null || outcome == "allowed-once" && scope in setOf("once", "conversation-category"))
     return "/personal/v1/sessions/$sessionId/approvals/$approvalId"
 }
 
@@ -888,9 +891,11 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
             headers = mapOf("Cookie" to host.cookie)).body
 
     fun decideApproval(host: HostIdentity, sessionId: String, approvalId: String,
-        requestId: String, outcome: String): JSONObject = http.request(
-        "${host.origin}${approvalDecisionPath(sessionId, approvalId, requestId, outcome)}", "POST",
-        JSONObject().put("requestId", requestId).put("outcome", outcome), authWriteHeaders(host)).body
+        requestId: String, outcome: String, scope: String? = null): JSONObject = http.request(
+        "${host.origin}${approvalDecisionPath(sessionId, approvalId, requestId, outcome, scope)}", "POST",
+        JSONObject().put("requestId", requestId).put("outcome", outcome).apply {
+            if (scope != null) put("scope", scope)
+        }, authWriteHeaders(host)).body
 
     fun questions(host: HostIdentity, sessionId: String, before: String? = null, limit: Int = 50): JSONObject =
         http.request("${host.origin}${questionListPath(sessionId, before, limit)}", "GET",
