@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-3 | UI-1 桌面界面 | `wp/ui-1-desktop`：可收起侧栏、搜索、Markdown（格式化文本）正文、两级步骤、发送/停止、插话/排队参数、右侧预览与缩放、外观设备保存已实现；Electron（桌面程序框架）窗口 + 隔离宿主合成验收，浅/深色截图见 [UI-1](../tests/evidence/ui-1/README.md)；待 Claude 审查 |
+| Codex · Windows-3 | UI-1 桌面界面 | [PR #39](https://github.com/memoweft/weftmate/pull/39)（`wp/ui-1-desktop`）：可收起侧栏、搜索、Markdown（格式化文本）正文、两级步骤、发送/停止、插话/排队参数、右侧预览与缩放、外观设备保存已实现；相关测试 65/65、类型检查与独立只读审查通过；Electron（桌面程序框架）窗口 + 隔离宿主浅/深色验收见 [UI-1](../tests/evidence/ui-1/README.md)；最终门禁见 PR checks（检查），待 Claude 审查 |
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR #26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
 | Codex · Mac | S1c-Apple 云账号与设备授权 | [PR #37](https://github.com/memoweft/weftmate/pull/37)（`wp/s1c-apple-cloud-login`） 原生客户端接线与隔离验收完成，待 PR 审查；系统认证浏览器/PKCE、P-256/DPoP、Keychain 刷新、等待/允许/拒绝、iPhone QR、配对 SPKI 已实现。已接最新 7.7 设备公钥 bootstrap 与标准 QR/复制码；生产首次无配对材料登录仍受账号页、宿主枚举与可信 pin 转交缺口阻塞；[验收说明](../apps/apple/Tests/S1c-README.md) |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
