@@ -9,6 +9,9 @@
   <link rel="stylesheet" href="styles.css">
   <script defer src="vendor.js"></script>
   <script defer src="timeline.js"></script>
+  <script defer src="cloud-vendor.js"></script>
+  <script defer src="cloud-login.js"></script>
+  <script defer src="cloud-native.js"></script>
   <script defer src="app.js"></script>
 </head>
 <body>
@@ -31,6 +34,7 @@
         <button data-page="capabilities">能力与扩展</button><button data-page="workspaces">项目与成果</button><button data-page="devices">设备</button>
         <button data-page="notifications">通知</button><button data-page="settings">设置</button>
       </div>
+      <div id="cloud-device-banner" class="cloud-device-banner" role="status" aria-live="polite" hidden></div>
       <button id="profile-link" class="profile-link"><span class="avatar" id="drawer-avatar">我</span><span><strong id="drawer-name">本机个人空间</strong><small>个人资料与设置</small></span><span class="icon icon-settings"></span></button>
     </nav>
     <main id="main">

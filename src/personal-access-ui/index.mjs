@@ -3,6 +3,9 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const files = new Map([
+  ['/personal/v1/ui/cloud-ui.js', ['cloud-ui.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/cloud-login.js', ['cloud-login.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/cloud-vendor.js', ['cloud-vendor.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/timeline.js', ['timeline.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui', ['index.html', 'text/html; charset=utf-8']],
   ['/personal/v1/ui/', ['index.html', 'text/html; charset=utf-8']],
@@ -25,7 +28,7 @@ const securityHeaders = {
   'cross-origin-resource-policy': 'same-origin',
 }
 
-export async function servePersonalAccessUi(request, response) {
+export async function servePersonalAccessUi(request, response, cloud = null) {
   if (request.method !== 'GET' || typeof request.url !== 'string') return false
   let url
   try { url = new URL(request.url, 'http://127.0.0.1') } catch { return false }
@@ -34,7 +37,10 @@ export async function servePersonalAccessUi(request, response) {
   if (!asset) return false
   try {
     const body = await readFile(join(import.meta.dirname, asset[0]))
-    response.writeHead(200, { ...securityHeaders, 'content-type': asset[1], 'content-length': String(body.length) })
+    const headers = { ...securityHeaders };
+    if (cloud?.issuer) headers['content-security-policy'] = headers['content-security-policy']
+      .replace("connect-src 'self'", `connect-src 'self' ${new URL(cloud.issuer).origin}`);
+    response.writeHead(200, { ...headers, 'content-type': asset[1], 'content-length': String(body.length) })
     response.end(body)
   } catch {
     response.writeHead(503, { ...securityHeaders, 'content-type': 'text/plain; charset=utf-8' })
