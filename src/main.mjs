@@ -21,6 +21,7 @@ import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './o
 import { resolveModelDiscoveryRequest } from './model-discovery-policy.ts';
 import { resolveModelSaveCredential } from './model-save-policy.ts';
 import { modelCapacityFor, routeForProfile, writeModelRoutesPatch } from './harness-model-routes.ts';
+import { readModelCapacity } from './model-budget.mjs';
 import { buildRedactedDiagnostics } from './diagnostics-export.ts';
 import { restoreInternalSessionRoute } from './session-model-route-restore.ts';
 import { assertAuthoritativeSessionsIdle, assertModelProfileMutationAllowed, assertSessionReferenceScanReady, resolveSafeSessionBinding, scanSharedSessionBindings } from './stage2-session-guards.ts';
@@ -1818,7 +1819,7 @@ async function bootstrap() {
       return runtimeOrigin;
     }
     await assertRouteReloadSafe();
-    const expectedRoutes = profiles.map((profile) => {
+    const expectedRoutes = await Promise.all(profiles.map(async (profile) => {
       const route = routeForProfile(profile.id);
       const targetRef = officialCredentialRef(route.provider);
       return {
@@ -1827,10 +1828,12 @@ async function bootstrap() {
           route: route.provider,
           displayName: profile.name,
           baseURL: profile.baseUrl,
-          models: [{ id: profile.model, name: profile.name, contextWindow: 262144, maxTokens: 32768 }],
+          models: [{ id: profile.model, name: profile.name, ...await readModelCapacity({
+            baseUrl: profile.baseUrl, modelId: profile.model,
+            apiKey: configStoreMod.getCredential(profile.id) ?? undefined }) }],
         },
       };
-    });
+    }));
     // Copy first; if the process stops before the official mutation, the old
     // base route and original key remain valid. We remove aliases only after
     // restart verification below.
@@ -2252,8 +2255,9 @@ async function bootstrap() {
         if (!models.includes(clean.model)) throw new Error('selected model was not returned by local catalog');
         if (!runtimeOrigin) throw new Error('official DSH runtime unavailable');
         const projection = { route: officialRoute.provider, displayName: publicName, baseURL: baseUrl,
-          models: [{ id: clean.model, name: publicName,
-            contextWindow: input.contextWindow, maxTokens: input.outputReserve }] };
+          models: [{ id: clean.model, name: publicName, ...await readModelCapacity({
+            baseUrl, modelId: clean.model, apiKey,
+            contextWindow: input.contextWindow, maxTokens: input.outputReserve }) }] };
         const visionProjection = id === OCCAMY_VISION_PROFILE_ID
           ? projectOccamyImageInput(projectOfficialProviderConfig(projection),
             { route: officialRoute.provider, modelId: clean.model }) : null;
@@ -2486,12 +2490,13 @@ async function bootstrap() {
           reused: formal.length, reloads: 0, modelIds: formal.map((item) => item.modelId),
           verification: 'catalog_only', inferenceVerified: false };
       }
-      const projections = additions.map((input) => {
+      const projections = await Promise.all(additions.map(async (input) => {
         const route = routeForProfile(input.id);
         return { route: route.provider, displayName: input.name, baseURL: input.baseUrl,
-          models: [{ id: input.model, name: input.name,
-            contextWindow: input.contextWindow, maxTokens: input.outputReserve }] };
-      });
+          models: [{ id: input.model, name: input.name, ...await readModelCapacity({
+            baseUrl: input.baseUrl, modelId: input.model, apiKey,
+            contextWindow: input.contextWindow, maxTokens: input.outputReserve }) }] };
+      }));
       const occamyRoute = routeForProfile(OCCAMY_VISION_PROFILE_ID).provider;
       const freshOccamy = additions.some((item) => item.id === OCCAMY_VISION_PROFILE_ID);
       if (!freshOccamy) {
@@ -2996,7 +3001,7 @@ async function bootstrap() {
         if (!secret) throw Object.assign(new Error('model credential unavailable'),
           { code: 'ACCOUNT_MODEL_SECRET_REQUIRED', definite: true });
         const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
-          models: [{ id: target.modelId, name: target.name, ...modelCapacityFor(target) }] };
+          models: [{ id: target.modelId, name: target.name, ...await readModelCapacity({ ...target, apiKey: secret }) }] };
         const previousActive = settingsMod.listModelProfiles().activeId;
         const routeBefore = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
         let addedOfficialRoute = false;
@@ -3052,8 +3057,13 @@ async function bootstrap() {
         const ref = officialCredentialRef(route.provider);
         const profile = settingsMod.listModelProfiles().profiles.find((item) => item.id === target.profileId);
         const snapshot = await createOfficialDshSettingsClient({ origin: runtimeOrigin }).describeSettings();
+        // Capacity is service metadata, not account-model identity. Recovery
+        // compares the installed limits; a temporarily offline service must not
+        // make an already committed route look unapplied.
+        const installed = snapshot.userProviders[route.provider]?.models?.[0];
         const projection = { route: route.provider, displayName: target.name, baseURL: target.baseUrl,
-          models: [{ id: target.modelId, name: target.name, ...modelCapacityFor(target) }] };
+          models: [{ id: target.modelId, name: target.name, ...modelCapacityFor({ ...target,
+            contextWindow: installed?.contextWindow, maxTokens: installed?.maxTokens }) }] };
         const exact = isDeepStrictEqual(snapshot.userProviders[route.provider],
           projectOfficialProviderConfig(projection)) && profile?.baseUrl === target.baseUrl &&
           profile.model === target.modelId && !!configStoreMod.getCredential(ref);
