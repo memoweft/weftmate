@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto'
+import { modelTierFor } from '../model-tier.ts'
 
 export const ACCOUNT_MODEL_ID = /^account-model-[0-9a-f-]{36}$/
 export const PRIVATE_PROFILE_ID = /^private-model-[a-f0-9]{40}$/
@@ -18,6 +19,7 @@ export function publicAccountModel(record, configured = false) {
   return { accountModelId: record.accountModelId, revision: record.revision,
     profileId: selected.profileId, name: record.name, provider: 'openai-compatible',
     baseUrl: selected.baseUrl, modelId: selected.modelId,
+    modelTier: selected.modelTier ?? 'auto', sourceKind: modelTierFor(selected),
     routeFingerprint: selected.routeFingerprint, configured: configured === true,
     status: record.status, createdAt: record.createdAt, updatedAt: record.updatedAt }
 }
@@ -47,9 +49,10 @@ export function validAccountModel(record, ownerId, accountModelId) {
         typeof row.baseUrl !== 'string' || row.baseUrl.length > 2048 ||
         !/^https?:\/\//.test(row.baseUrl) || !MODEL_ID.test(row.modelId ?? '') ||
         row.routeFingerprint !== null && !HASH.test(row.routeFingerprint ?? '') ||
+        row.modelTier !== undefined && !['auto', 'local', 'cloud'].includes(row.modelTier) ||
         !TIME.test(row.createdAt ?? '') ||
         Object.keys(row).some((key) => !['revision', 'profileId', 'baseUrl', 'modelId',
-          'routeFingerprint', 'createdAt'].includes(key))) return false
+          'routeFingerprint', 'modelTier', 'createdAt'].includes(key))) return false
   }
   return true
 }
@@ -84,9 +87,10 @@ export function validModelOperation(record, ownerId, requestId, models) {
         !/^https?:\/\//.test(record.target.baseUrl) || !MODEL_ID.test(record.target.modelId ?? '') ||
         typeof record.target.name !== 'string' || !record.target.name.trim() ||
         record.target.name.length > 120 ||
+        record.target.modelTier !== undefined && !['auto', 'local', 'cloud'].includes(record.target.modelTier) ||
         record.target.routeFingerprint !== null && !HASH.test(record.target.routeFingerprint ?? '') ||
         Object.keys(record.target).some((key) => !['runtimeRevision', 'profileId', 'baseUrl',
-          'modelId', 'name', 'routeFingerprint'].includes(key))) ||
+          'modelId', 'name', 'routeFingerprint', 'modelTier'].includes(key))) ||
       Object.keys(record).some((key) => !['ownerId', 'requestId', 'kind', 'accountModelId',
         'payloadHash', 'status', 'expectedRevision', 'resultRevision', 'reasonCode',
         'errorCode', 'testResult', 'createdAt', 'updatedAt', 'target', 'stageRef',

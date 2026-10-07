@@ -31,6 +31,7 @@ import { createAccountModelOperations } from './account-models.mjs';
 import { createArtifactOperations } from './artifacts.mjs';
 import { createHttpHandler } from './http.mjs';
 import { createMemoryHttpHandler } from './memory-http.mjs';
+import { createPersonalHealthStore } from '../personal-health/index.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -135,6 +136,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get loginAccount() { return loginAccount; },
     get matchingOrigin() { return matchingOrigin; },
     get memoryManager() { return memoryManager; },
+    get healthStore() { return healthStore; },
     get messageModelUsable() { return messageModelUsable; },
     get mobileUi() { return mobileUi; },
     get modelOperationResponse() { return modelOperationResponse; },
@@ -301,6 +303,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     if (!account) throw failure('UNAUTHORIZED', 401);
     return { version: SINGLE_ACCOUNT_VERSION, hostId: rootState.hostId, ownerId, ...account };
   };
+  const healthStore = memoryManager?.healthStore ?? createPersonalHealthStore({ root, clock });
   const artifactStore = createPersonalArtifactStore(path.join(root, 'artifacts'));
   const hostOwner = (ownerId) => ownerId === rootState.legacyOwnerId;
   const registeredAccountCount = () => Object.values(rootState.accounts)

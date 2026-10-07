@@ -772,7 +772,7 @@
     const form = byId('account-model-form')
     form.hidden = !state.accountModelsCanManage
     if (!state.accountModels.length) {
-      list.append(element('li', 'muted', '当前账户尚无已配置的电脑云模型。手机原模型不会自动上传。'))
+      list.append(element('li', 'muted', '当前账户尚无已配置的电脑模型。手机原模型不会自动上传。'))
     }
     for (const model of state.accountModels) {
       const row = element('li', 'project-row')
@@ -787,6 +787,7 @@
         byId('account-model-name').value = model.name || ''
         byId('account-model-base-url').value = model.baseUrl || ''
         byId('account-model-id').value = model.modelId || ''
+        byId('account-model-tier').value = model.modelTier || 'auto'
         byId('account-model-key').value = ''
         byId('account-model-submit').textContent = '保存修改'
         byId('account-model-cancel').hidden = false
@@ -4512,15 +4513,16 @@
     const name = byId('account-model-name').value.trim().normalize('NFC')
     const baseUrl = byId('account-model-base-url').value.trim()
     const modelId = byId('account-model-id').value.trim()
+    const modelTier = byId('account-model-tier').value
     const apiKey = byId('account-model-key').value
     if (!name || !/^[A-Za-z0-9._:/-]{1,128}$/.test(modelId) || !baseUrl) {
       error.textContent = '请填写名称、提供方地址和有效模型 ID。'; return
     }
     let route
-    try { route = new URL(baseUrl) } catch { error.textContent = '请输入完整的 HTTPS 提供方地址。'; return }
-    if (route.protocol !== 'https:' || route.username || route.password || route.search || route.hash ||
+    try { route = new URL(baseUrl) } catch { error.textContent = '请输入完整的模型服务地址。'; return }
+    if (!['http:', 'https:'].includes(route.protocol) || route.username || route.password || route.search || route.hash ||
         !route.pathname.replace(/\/+$/, '').endsWith('/v1')) {
-      error.textContent = '电脑云模型需要 HTTPS 的 /v1 地址，不能包含账号、参数或片段。'; return
+      error.textContent = '请输入 HTTPS 或本机/局域网 HTTP 的 /v1 地址，不能包含账号、参数或片段。'; return
     }
     const editing = state.accountModelEditing
     const priorModel = editing && state.accountModels.find((item) => item.accountModelId === editing.id)
@@ -4534,12 +4536,13 @@
     const existing = savedAccountModelMarker()
     if (existing && (existing.kind !== kind || existing.accountModelId !== (editing?.id ?? undefined) ||
         existing.name !== name || existing.baseUrl !== baseUrl || existing.modelId !== modelId ||
+        (existing.modelTier ?? 'auto') !== modelTier ||
         existing.expectedRevision !== (editing?.revision ?? undefined))) {
       error.textContent = '上一项账户模型操作仍待核对；请保持原输入并刷新请求状态。'; return
     }
     const marker = existing || { ownerId: state.ownerId, hostId: state.hostId,
       requestId: crypto.randomUUID(), kind, ...(editing ? { accountModelId: editing.id,
-        expectedRevision: editing.revision } : {}), name, baseUrl, modelId }
+        expectedRevision: editing.revision } : {}), name, baseUrl, modelId, modelTier }
     if (!storeAccountModelMarker(marker)) {
       error.textContent = '无法保存请求编号，本次没有提交。'; return
     }
@@ -4551,7 +4554,7 @@
       if (!accountCurrent(token)) return
       if (!known?.operation) {
         const body = { requestId: marker.requestId, ...(editing ? { expectedRevision: editing.revision } : {}),
-          name, baseUrl, modelId, ...(apiKey ? { apiKey } : {}) }
+          name, baseUrl, modelId, ...(marker.modelTier !== undefined ? { modelTier } : {}), ...(apiKey ? { apiKey } : {}) }
         const result = await accessApi(editing
           ? `/account/models/${encodeURIComponent(editing.id)}` : '/account/models', {
           method: editing ? 'PATCH' : 'POST', protectedWrite: true, body })

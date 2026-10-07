@@ -36,7 +36,7 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
       if (!key) throw Object.assign(new Error('missing'), { code: 'ACCOUNT_MODEL_SECRET_REQUIRED', definite: true })
       credentials.set(target.profileId, key)
       profiles.set(target.profileId, { id: target.profileId, name: target.name,
-        model: target.modelId, baseUrl: target.baseUrl })
+        model: target.modelId, baseUrl: target.baseUrl, modelTier: target.modelTier })
       return { applied: true }
     },
     inspect: async ({ kind, target, profileIds }: any) => ({ applied: kind === 'stop_using' || kind === 'remove'
@@ -85,6 +85,8 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
     assert.equal(created.model.baseUrl, 'https://api.example.test/v1')
     assert.equal(created.model.revision, 1)
     assert.equal(created.model.configured, true)
+    assert.equal(created.model.modelTier, 'auto')
+    assert.equal(created.model.sourceKind, 'cloud')
     assert.equal(JSON.stringify(created).includes('synthetic-key-one'), false)
     const accountModelId = created.model.accountModelId
     const oldProfileId = created.model.profileId
@@ -105,11 +107,35 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
       requestId: 'other-private-create', kind: 'session.create', targetDeviceId: hostId,
       modelProfileId: oldProfileId })).status, 422)
     const otherCreated = await api(origin, otherAuth, 'POST', '/personal/v1/account/models', {
-      requestId: 'other-own-model', name: 'Other private', baseUrl: 'https://api.other.test/v1',
-      modelId: 'other-v1', apiKey: 'synthetic-other-key' })
+      requestId: 'other-own-model', name: 'Other private', baseUrl: 'http://192.168.1.10:18080/v1',
+      modelId: 'other-v1', modelTier: 'cloud', apiKey: 'synthetic-other-key' })
     assert.equal(otherCreated.status, 202)
     const otherPrivate = await settled(origin, otherAuth, 'other-own-model')
     assert.equal(otherPrivate.operation.status, 'succeeded')
+    assert.equal(otherPrivate.model.modelTier, 'cloud')
+    assert.equal(otherPrivate.model.sourceKind, 'cloud', 'explicit cloud overrides a LAN address')
+    const otherRoute = `/personal/v1/account/models/${otherPrivate.model.accountModelId}`
+    assert.equal((await api(origin, otherAuth, 'PATCH', otherRoute, {
+      requestId: 'invalid-tier', expectedRevision: 1, modelTier: 'invalid' })).status, 400)
+    assert.equal((await api(origin, otherAuth, 'PATCH', otherRoute, {
+      requestId: 'other-tier-local', expectedRevision: 1, modelTier: 'local' })).status, 202)
+    const local = await settled(origin, otherAuth, 'other-tier-local')
+    assert.equal(local.model.modelTier, 'local')
+    assert.equal(local.model.sourceKind, 'local')
+    assert.notEqual(local.model.profileId, otherPrivate.model.profileId)
+    assert.equal(profiles.get(local.model.profileId).modelTier, 'local', 'runtime apply receives the override')
+    assert.equal(credentials.get(local.model.profileId), 'synthetic-other-key', 'tier-only update reuses credential')
+    assert.equal((await api(origin, otherAuth, 'PATCH', otherRoute, {
+      requestId: 'other-tier-local', expectedRevision: 1, modelTier: 'cloud' })).status, 409)
+    assert.equal((await api(origin, otherAuth, 'PATCH', otherRoute, {
+      requestId: 'other-tier-auto', expectedRevision: 2, modelTier: 'auto' })).status, 202)
+    const automatic = await settled(origin, otherAuth, 'other-tier-auto')
+    assert.equal(automatic.model.modelTier, 'auto')
+    assert.equal(automatic.model.sourceKind, 'local')
+    assert.equal((await api(origin, otherAuth, 'PATCH', otherRoute, {
+      requestId: 'other-rename', expectedRevision: 3, name: 'LAN renamed' })).status, 202)
+    assert.equal((await settled(origin, otherAuth, 'other-rename')).model.modelTier, 'auto')
+
     assert.equal((await api(origin, owner, 'GET', `/personal/v1/account/models/${otherPrivate.model.accountModelId}`)).status, 404)
     assert.equal((await api(origin, owner, 'GET', '/personal/v1/models')).body.models
       .some((item: any) => item.id === otherPrivate.model.profileId), false,
@@ -343,7 +369,7 @@ test('busy registration keeps its request ID; lost success is reconciled without
     assert.equal((await settled(origin, auth, one.requestId)).operation.status, 'succeeded')
     lostReply = true
     const two = { requestId: 'lost-create', name: 'Cloud B', baseUrl: 'https://api.example.test/v1',
-      modelId: 'b', apiKey: 'synthetic-b' }
+      modelId: 'b', modelTier: 'local', apiKey: 'synthetic-b' }
     assert.equal((await api(origin, auth, 'POST', route, two)).status, 202)
     for (let attempt = 0; attempt < 80; attempt++) {
       const state = (await api(origin, auth, 'GET', `${route}/by-request/${two.requestId}`)).body
@@ -366,6 +392,8 @@ test('busy registration keeps its request ID; lost success is reconciled without
       `${route}/by-request/${two.requestId}`)).body
     assert.equal(resumed.operation.status, 'succeeded')
     assert.equal(resumed.model.status, 'active')
+    assert.equal(resumed.model.modelTier, 'local', 'cold store reopening retains override')
+    assert.equal(resumed.model.sourceKind, 'local')
     assert.equal(applies, 3, 'restart observes the installed route without replaying the operation')
     const bad = await api(cold.origin, { ...auth, origin: cold.origin }, 'POST', route, {
       requestId: 'failed-create', name: 'Bad', baseUrl: 'https://api.example.test/v1',
