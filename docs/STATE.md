@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-1b 代码瘦身 | [PR（拉取请求）#20](https://github.com/memoweft/weftmate/pull/20) 待审；5 项完成，模型切换部分简化 |
-| Codex · Mac | H1 HealthKit 读取与每日健康摘要 | `wp/h1-healthkit`：iPhone 账号菜单健康设置、8 类只读权限、本地每日摘要/14 天基线、云端选择/自评频率、隔离持久队列与删除待办已实现；Core 253 项、状态检查 10 组及三目标构建通过；iOS 隔离模拟器 HealthKit 合成样本与设置 UI 场景 2 项通过；服务端草案待 Windows 实现；[PR #22](https://github.com/memoweft/weftmate/pull/22) 待审 |
+| Codex · Mac | H1 HealthKit 读取与每日健康摘要 | `wp/h1-healthkit`：iPhone 账号菜单健康设置、8 类只读权限、本地每日摘要/14 天基线、云端选择/自评频率、隔离持久队列与删除待办已实现；Core 253 项、状态检查 10 组及三目标构建通过；iOS 隔离模拟器 HealthKit 合成样本与设置 UI 场景 2 项通过；服务端草案待 Windows 实现；仓库 CI 在 release:preflight 因现有 npm 依赖审计失败（main 同样失败）；[PR #22](https://github.com/memoweft/weftmate/pull/22) 待审 |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
