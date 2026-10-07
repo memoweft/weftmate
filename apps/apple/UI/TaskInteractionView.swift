@@ -17,7 +17,8 @@ struct TimelineInteractionCard: View {
             if entry.event.type.hasPrefix("approval.") {
                 if let approval = model.approvals.first(where: { $0.id == entry.event.data["approvalId"]?.string }) {
                     if approval.canDecide && entry.resolved == nil { approvalCard(approval) }
-                    else { Label(model.notices["approval:" + approval.id] ?? "审批已处理", systemImage: "hand.raised").font(.caption) }
+                    else { Label(approval.decisionSummary, systemImage: "hand.raised").font(.caption)
+                            .accessibilityIdentifier("approvalSummary.\(approval.id)") }
                 } else { unavailableCard }
             } else if let batch = questionBatch {
                 if batch.canAnswer && entry.resolved == nil { questionCard(batch) }
@@ -50,15 +51,20 @@ struct TimelineInteractionCard: View {
         return VStack(alignment: .leading, spacing: 10) {
             Label("操作审批", systemImage: "hand.raised").font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
             Text(approval.reason).font(.callout).foregroundStyle(Weave.ink).textSelection(.enabled)
-            Text(approval.toolName).font(.caption).foregroundStyle(Weave.muted)
+            if !approval.riskLabels.isEmpty {
+                Text("风险类别：" + approval.riskLabels.joined(separator: "、"))
+                    .font(.caption).foregroundStyle(Weave.secondary)
+            }
+            Text(approval.reversalNotice).font(.caption).foregroundStyle(Weave.muted)
+            if !(approval.riskCategories ?? []).isEmpty {
+                Text("总是允许此类：仅授权本对话后续同类操作，其他对话不继承。")
+                    .font(.caption).foregroundStyle(Weave.muted)
+            }
             if approval.canDecide, !model.hasSaved(key) {
-                HStack(spacing: 12) {
-                    Button("允许一次") { endInput(); Task { await model.decide(approval, outcome: .allowedOnce) } }
-                        .accessibilityIdentifier("approveOnce.\(approval.id)")
-                    Button("拒绝") { endInput(); Task { await model.decide(approval, outcome: .rejected) } }
-                        .accessibilityIdentifier("rejectApproval.\(approval.id)")
+                ViewThatFits(in: .horizontal) {
+                    approvalButtons(approval, key: key, vertical: false)
+                    approvalButtons(approval, key: key, vertical: true)
                 }
-                .buttonStyle(.bordered).tint(Weave.accent).disabled(!model.canRespond(key))
             }
             responseState(key, status: approval.status,
                 observed: model.currentApprovals.contains(approval.id))
@@ -69,11 +75,36 @@ struct TimelineInteractionCard: View {
         .accessibilityIdentifier("approvalCard.\(approval.id)")
     }
 
+    private func approvalButtons(_ approval: SessionApproval, key: String, vertical: Bool) -> some View {
+        let layout = vertical ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8)) : AnyLayout(HStackLayout(spacing: 10))
+        return layout {
+            Button("允许一次") {
+                endInput()
+                Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .once) }
+            }.accessibilityIdentifier("approveOnce.\(approval.id)")
+            Button("总是允许此类") {
+                endInput()
+                Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .conversationCategory) }
+            }
+            .disabled((approval.riskCategories ?? []).isEmpty)
+            .accessibilityIdentifier("approveCategory.\(approval.id)")
+            Button("拒绝") { endInput(); Task { await model.decide(approval, outcome: .rejected) } }
+                .accessibilityIdentifier("rejectApproval.\(approval.id)")
+        }
+        .buttonStyle(.bordered).tint(Weave.accent).disabled(!model.canRespond(key))
+    }
+
     private func questionCard(_ batch: SessionQuestionBatch) -> some View {
         let key = "question:" + batch.id
+        let planReview = batch.questions.contains { $0.intent?["kind"]?.string == "plan-review" }
         let editable = batch.canAnswer && !model.hasSaved(key)
         return VStack(alignment: .leading, spacing: 14) {
-            Label("补充信息", systemImage: "text.bubble").font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
+            Label(planReview ? "确认执行计划" : "补充信息", systemImage: "text.bubble")
+                .font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
+            if planReview {
+                Text("确认计划后开始执行；危险操作仍会询问。")
+                    .font(.caption).foregroundStyle(Weave.muted)
+            }
             ForEach(batch.questions) { question in
                 VStack(alignment: .leading, spacing: 8) {
                     if let header = question.header, !header.isEmpty {
