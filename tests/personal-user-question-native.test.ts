@@ -124,7 +124,7 @@ test('cold reconnect with source B already in the subscribed watermark cannot co
   tracker.close()
 })
 
-test('native source reader uses the original beforeSeq cut and direct question receipts never unwrap ordinary RPC', async () => {
+test('native source reader cuts the immutable log at the original observed seq and direct question receipts stay unchanged', async () => {
   const historyCalls: any[] = [], answers: any[] = []
   let receipt: any = { accepted: true }
   const adapter = createDshSessionAdapter({
@@ -133,9 +133,9 @@ test('native source reader uses the original beforeSeq cut and direct question r
       return { result: { ok: true, value: { events: [...sourceA, ...sourceB].map(event => ({ event })), hasMore: false } } }
     } },
     events: {}, respond: async (value: any) => { answers.push(value); return receipt },
-  })
+  }, { readLog: async (sessionId: string) => { assert.equal(sessionId, sid); return [...sourceA, ...sourceB] } })
   const source = questionSourceAsOf(await adapter.questionHistoryAsOf(sid, 2), 2)
-  assert.equal(source?.sourceReceiptId, 'receipt-a'); assert.deepEqual(historyCalls, [{ sessionId: sid, beforeSeq: 3, maxMessages: 50 }])
+  assert.equal(source?.sourceReceiptId, 'receipt-a'); assert.deepEqual(historyCalls, [])
   const qid = randomUUID(), answer = { answers: [{ id: 'mode', selected: ['Summary'] }] }
   assert.deepEqual(await adapter.respondUserQuestion({ sessionId: sid, questionRpcId: qid, answer }), { accepted: true })
   assert.deepEqual(answers[0], { type: 'client-response', rpcId: qid, result: { ok: true, value: { sessionId: sid, answer } } })

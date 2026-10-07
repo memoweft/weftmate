@@ -48,7 +48,7 @@ function syntheticBackend() {
     modelCompletion: async () => { effects.completion++; return new Response(JSON.stringify({
       choices: [{ message: { role: 'assistant', content: 'synthetic' } }],
     }), { headers: { 'content-type': 'application/json' } }) },
-    readEvents: async ({ afterSeq }: { afterSeq: number }) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
+    readEvents: async ({ afterSeq = -1 }: { afterSeq: number }) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => sessions.has(sessionId)
       ? { sessionId, title: 'Synthetic', running: false,
         agentPreset: sessionPresets.get(sessionId) ?? 'personal-shared-chat',

@@ -375,7 +375,6 @@ async function stageOneGateway(path, init = {}) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error('gateway request failed');
-    if (body?.error?.code === 'history-window-limited') error.code = 'HISTORY_WINDOW_LIMIT';
     throw error;
   }
   return body;

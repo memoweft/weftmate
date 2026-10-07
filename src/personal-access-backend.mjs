@@ -288,7 +288,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (result?.accepted === false && ['not-pending', 'bad-response'].includes(result.reason)) return { accepted: false, reason: result.reason };
       fail('BACKEND_UNAVAILABLE');
     },
-    async getTaskReplyEvidence({ sessionId, rootTaskId, receiptId, ownerId }) {
+    async getTaskReplyEvidence({ sessionId, rootTaskId, receiptId, turn, ownerId }) {
       const unknown = { status: 'unconfirmed', turn: null, assistantChunks: 0,
         textChunks: 0, reasoningChunks: 0, assistantMessages: 0, toolSaveObserved: false }
       if (typeof replyEvidence !== 'function' || typeof sessionId !== 'string' ||
@@ -300,7 +300,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         const listed = await listSessions()
         if (!Array.isArray(listed?.items) || !listed.items.some((item) =>
           item?.sessionId === sessionId && item.agentPreset === presetForOwner(ownerId))) return unknown
-        return await replyEvidence({ sessionId, receiptId }) ?? unknown
+        return await replyEvidence({ sessionId, receiptId, ...(turn === undefined ? {} : { turn }) }) ?? unknown
       } catch { return unknown }
     },
     async openDesktopApp({ appId, ownerId }) {
@@ -309,12 +309,28 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       if (appId !== 'notepad' || !desktopTask) fail('CAPABILITY_UNAVAILABLE')
       return queue(() => desktopTask.open({ appId }))
     },
-    async readEvents({ sessionId, afterSeq = -1, limit = 50 }) {
+    async readSourceEvents({ sessionId, receiptId, turn, ownerId }) {
+      requireRuntime()
+      if (!idPattern.test(sessionId) || !idPattern.test(receiptId) ||
+          turn !== undefined && (!Number.isSafeInteger(turn) || turn < 1)) fail('INVALID_COMMAND')
+      const listed = await listSessions()
+      if (!listed?.items?.some(item => item.sessionId === sessionId && item.agentPreset === presetForOwner(ownerId)) ||
+          hostOwnerId() !== null && ownerForSession(sessionId) !== ownerId) fail('SESSION_UNAVAILABLE')
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/source?receiptId=${encodeURIComponent(receiptId)}${turn === undefined ? '' : `&turn=${turn}`}`)
+    },
+    async readEvents({ sessionId, afterSeq, beforeSeq, limit = 50 }) {
       requireRuntime()
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)
-        || !Number.isSafeInteger(afterSeq) || afterSeq < -1 || !Number.isInteger(limit) || limit < 1 || limit > 200) fail('INVALID_COMMAND')
-      const query = `afterSeq=${afterSeq}&limit=${limit}`
+        || afterSeq !== undefined && (!Number.isSafeInteger(afterSeq) || afterSeq < -1)
+        || beforeSeq !== undefined && (!Number.isSafeInteger(beforeSeq) || beforeSeq < 0)
+        || afterSeq !== undefined && beforeSeq !== undefined || !Number.isInteger(limit) || limit < 1 || limit > 200) fail('INVALID_COMMAND')
+      const query = `limit=${limit}${afterSeq === undefined ? '' : `&afterSeq=${afterSeq}`}${beforeSeq === undefined ? '' : `&beforeSeq=${beforeSeq}`}`
       return gateway(`/sessions/${encodeURIComponent(sessionId)}/history?${query}`)
+    },
+    async readEventDetail({ sessionId, seq }) {
+      requireRuntime()
+      if (!idPattern.test(sessionId) || !Number.isSafeInteger(seq) || seq < 0) fail('INVALID_COMMAND')
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/history?detailSeq=${seq}`)
     },
     async describeSession(sessionId) {
       requireRuntime()

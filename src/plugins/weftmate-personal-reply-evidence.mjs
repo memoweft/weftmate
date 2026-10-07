@@ -1,4 +1,5 @@
 import { projectReplyEvidence } from '../personal-reply-evidence/index.mjs'
+import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs'
 
 export const name = 'weftmate-personal-reply-evidence'
 export const inject = ['agents']
@@ -28,15 +29,15 @@ export async function savedDocumentReplyHint(ctx, payload, decision, messageFact
   let artifact
   try {
     const persistence = ctx.get?.('sessionPersistence') ?? ctx.sessionPersistence
-    if (typeof persistence?.readRaw !== 'function') return decision
+    if (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function') return decision
     artifact = await Promise.race([
-      persistence.readRaw(session.id, payload.signal).catch(() => null),
+      durableSourceRange(persistence, session.id, { turn: payload.turn }, payload.signal).catch(() => null),
       new Promise((resolve) => { deadlineTimer = setTimeout(() => resolve(null), 1_500) }),
     ])
   } finally { clearTimeout(deadlineTimer) }
   if (artifact?.meta?.id !== session.id || artifact.meta.agentPreset !== 'personal-remote' ||
-      typeof artifact.content !== 'string') return decision
-  const evidence = projectReplyEvidence(artifact.content,
+      !Array.isArray(artifact.events)) return decision
+  const evidence = projectReplyEvidence(artifact.events,
     { receiptId: users[0].data.source.rpcId, live: false })
   if (!evidence.toolSaveObserved || evidence.turn !== payload.turn ||
       evidence.status !== 'unconfirmed') return decision
@@ -51,21 +52,23 @@ export function apply(ctx) {
     { prepend: true })
   const receive = (frame) => {
     if (!frame || typeof frame !== 'object' || Array.isArray(frame) ||
-        Object.keys(frame).sort().join(',') !== 'id,protocol,receiptId,sessionId' ||
+        Object.keys(frame).filter(key => key !== 'turn').sort().join(',') !== 'id,protocol,receiptId,sessionId' ||
+        frame.turn !== undefined && (!Number.isSafeInteger(frame.turn) || frame.turn < 1) ||
         frame.protocol !== PROTOCOL || typeof frame.id !== 'string' || !ID.test(frame.id) ||
         typeof frame.sessionId !== 'string' || !SESSION.test(frame.sessionId) ||
         typeof frame.receiptId !== 'string' || !RECEIPT.test(frame.receiptId)) return
     void Promise.resolve().then(async () => {
       const persistence = ctx.get?.('sessionPersistence') ?? ctx.sessionPersistence
-      if (typeof persistence?.readRaw !== 'function') return unknown()
-      const artifact = await persistence.readRaw(frame.sessionId)
+      if (typeof persistence?.readFrom !== 'function' || typeof persistence?.inspect !== 'function') return unknown()
+      const artifact = await durableSourceRange(persistence, frame.sessionId,
+        { receiptId: frame.receiptId, turn: frame.turn })
       if (artifact?.meta?.id !== frame.sessionId ||
           !['personal-remote', 'personal-shared-chat'].includes(artifact.meta.agentPreset) ||
-          typeof artifact.content !== 'string') return unknown()
+          !Array.isArray(artifact.events)) return unknown()
       const agent = ctx.agents.get(frame.sessionId)
-      const live = agent?.id === frame.sessionId && agent.status === 'running' &&
+      const live = artifact.current && agent?.id === frame.sessionId && agent.status === 'running' &&
         agent.session?.header?.agentPreset === artifact.meta.agentPreset
-      return projectReplyEvidence(artifact.content, { receiptId: frame.receiptId, live })
+      return projectReplyEvidence(artifact.events, { receiptId: frame.receiptId, live })
     }).then((result) => {
       try { process.send?.({ protocol: PROTOCOL, id: frame.id, result }) }
       catch { /* Parent timeout is unconfirmed. */ }

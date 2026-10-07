@@ -58,7 +58,7 @@ const backend = {
     return { outcomes: receiptIds.map(receiptId => ({ receiptId, status: 'cancel_requested' })) };
   },
   readEvents: async ({ sessionId, afterSeq, limit }) => {
-    if (!state.historyReadable) { const error = new Error('candidate history read deliberately unavailable'); error.code = 'HISTORY_WINDOW_LIMIT'; throw error; }
+    if (!state.historyReadable) { const error = new Error('candidate history read deliberately unavailable'); error.code = 'BACKEND_UNAVAILABLE'; error.status = 503; throw error; }
     assert.equal(sessionId, state.sessionId);
     const events = state.events.filter(event => event.seq > afterSeq).slice(0, limit);
     const nextSeq = events.at(-1)?.seq ?? afterSeq;

@@ -454,7 +454,7 @@ test('event cursor advances across fully filtered and trailing hidden history', 
   }
 })
 
-test('history retains the existing 1MiB public response boundary', async () => {
+test('history byte paging preserves the public response boundary without failing a large page', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-access-history-bytes-'))
   const f = fixture()
   f.sessions.add('history-session')
@@ -469,8 +469,13 @@ test('history retains the existing 1MiB public response boundary', async () => {
     const { token } = await service.enrollDevice({ name: 'phone' })
     await service.attachSession('history-session')
     const path = '/personal/v1/sessions/history-session/events'
-    assert.deepEqual(await request(origin, token, 'GET', path + '?afterSeq=-1&limit=200'),
-      { status: 503, body: { error: { code: 'BACKEND_UNAVAILABLE' } } })
+    const first = await request(origin, token, 'GET', path + '?afterSeq=-1&limit=200')
+    assert.equal(first.status, 200)
+    assert.ok(Buffer.byteLength(JSON.stringify(first.body)) < 1024 * 1024)
+    assert.equal(first.body.hasMore, true)
+    assert.ok(first.body.events.length < 200)
+    const next = await request(origin, token, 'GET', path + `?afterSeq=${first.body.nextSeq}&limit=200`)
+    assert.equal(next.body.events[0].seq, first.body.nextSeq + 1)
     assert.equal((await request(origin, token, 'GET', path + '?afterSeq=99&limit=200')).status, 200)
   } finally {
     await service.close()
@@ -496,9 +501,9 @@ test('backend errors and malformed event data never expose arbitrary codes or co
     assert.equal(JSON.stringify(status.body).includes('private failure'), false)
     assert.equal((await request(origin, token, 'GET', '/personal/v1/sessions/known-session/events')).status, 503)
     f.backend.readEvents = async () => { throw Object.assign(new Error('private history text'),
-      { code: 'HISTORY_WINDOW_LIMIT', status: 409 }) }
+      { code: 'obsolete-history-error', status: 409 }) }
     const limited = await request(origin, token, 'GET', '/personal/v1/sessions/known-session/events')
-    assert.deepEqual(limited, { status: 422, body: { error: { code: 'HISTORY_WINDOW_LIMIT' } } })
+    assert.deepEqual(limited, { status: 503, body: { error: { code: 'SERVICE_UNAVAILABLE' } } })
   } finally {
     await service.close()
     rmSync(root, { recursive: true, force: true })

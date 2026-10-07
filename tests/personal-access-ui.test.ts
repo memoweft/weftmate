@@ -17,7 +17,7 @@ function response() {
 
 test('account UI serves only its fixed public GET assets with restrictive headers', async () => {
   for (const path of ['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
-    '/personal/v1/ui/app.js', '/personal/v1/ui/styles.css']) {
+    '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css']) {
     const res = response()
     assert.equal(await servePersonalAccessUi({ method: 'GET', url: path }, res), true)
     assert.equal(res.result.status, 200)

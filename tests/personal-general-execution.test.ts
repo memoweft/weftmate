@@ -181,6 +181,7 @@ async function withDesktopPlugin(run: (plugin: any) => Promise<void>) {
     const vendor = pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href
     const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
       .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
+    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
     const staged = join(root, 'desktop.mjs'); writeFileSync(staged, source)
     await run(await import(pathToFileURL(staged).href))
   } finally { rmSync(root, { recursive: true, force: true }) }
@@ -379,6 +380,7 @@ test('tool lifecycle derives a nested call from the real root event and records 
     const vendor = pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href
     const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
       .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
+    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
     const staged = join(root, 'desktop.mjs'); writeFileSync(staged, source)
     const { personalExecutionIdentity, trackPersonalExecution } = await import(pathToFileURL(staged).href)
     const controller = new AbortController(), frames: any[] = []

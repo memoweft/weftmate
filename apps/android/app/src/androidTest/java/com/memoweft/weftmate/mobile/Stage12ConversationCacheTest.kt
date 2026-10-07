@@ -18,6 +18,32 @@ class Stage12ConversationCacheTest {
     private val context = InstrumentationRegistry.getInstrumentation().targetContext
     private fun id(prefix: String) = "$prefix-${UUID.randomUUID()}"
 
+    @Test fun timelineCacheOpensTailPagesOlderAndKeepsLegacyForwardReading() {
+        val database = "timeline-pages-${UUID.randomUUID()}.db"
+        val owner = id("owner"); val host = id("host"); val session = id("session")
+        val store = LocalStore(context, database)
+        try {
+            for (batch in 0 until 3) {
+                val events = JSONArray()
+                for (index in 0 until 100) events.put(JSONObject().put("seq", batch * 100 + index)
+                    .put("type", if (index == 0) "step.started" else "assistant.message")
+                    .put("data", JSONObject().put("text", "synthetic timeline")))
+                store.saveSharedHistoryPage(owner, host, session, events, batch * 100L + 99)
+            }
+            val tail = store.cachedSharedHistory(owner, host, session)
+            assertEquals(200, tail.getJSONArray("events").getJSONObject(0).getLong("seq"))
+            assertEquals(299, tail.getLong("nextSeq")); assertTrue(tail.getBoolean("hasOlder"))
+            val older = store.cachedSharedHistory(owner, host, session, beforeSeq = tail.getLong("nextBeforeSeq"))
+            assertEquals(100, older.getJSONArray("events").getJSONObject(0).getLong("seq"))
+            assertEquals(199, older.getJSONArray("events").getJSONObject(99).getLong("seq"))
+            assertEquals(299, older.getLong("nextSeq"))
+            val forward = store.cachedSharedHistory(owner, host, session, -1)
+            assertEquals(0, forward.getJSONArray("events").getJSONObject(0).getLong("seq"))
+            assertTrue(forward.getBoolean("hasMore"))
+            assertEquals(0, store.cachedSharedHistory(id("other"), host, session).getJSONArray("events").length())
+        } finally { store.close(); context.deleteDatabase(database) }
+    }
+
     @Test fun ownerScopedHandoffAndHistoryTailSurviveRestartWithoutReplayingSync() {
         val database = "stage12-cache-${UUID.randomUUID()}.db"
         val owner = id("owner")
