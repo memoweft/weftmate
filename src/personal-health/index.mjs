@@ -8,10 +8,10 @@ const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{1
 export const OBSERVED_PENDING = 'MEMORY_OBSERVED_UNSUPPORTED';
 const empty = (ownerId) => ({ version: 1, ownerId, revision: 0, summaries: [],
   preferences: { cloudModelAllowed: false, selfAssessmentFrequency: 'low', summarizedAt: null },
-  deletedThrough: { all: null, dates: {} } });
+  pendingRetractions: [], deletedThrough: { all: null, dates: {} } });
 
 /** Summary + observed outbox share one atomic file and one owner transaction. */
-export function createPersonalHealthStore({ root, clock = Date.now }) {
+export function createPersonalHealthStore({ root, clock = Date.now, onChange = null }) {
   const queues = new Map();
   function file(ownerId) {
     if (typeof ownerId !== 'string' || !OWNER.test(ownerId)) throw healthFailure('UNAUTHORIZED', 401);
@@ -40,6 +40,9 @@ export function createPersonalHealthStore({ root, clock = Date.now }) {
             summaryHash(row.evidence) !== summaryHash(observedHealthEvidence(ownerId, healthSummary(row.summary))))) {
         throw healthFailure('STORAGE_UNAVAILABLE', 503);
       }
+      state.pendingRetractions ??= [];
+      if (!Array.isArray(state.pendingRetractions) || state.pendingRetractions.some((item) =>
+        typeof item.source_key !== 'string' || typeof item.withdrawn_through !== 'string')) throw healthFailure('STORAGE_UNAVAILABLE', 503);
       return state;
     } catch (cause) {
       if (cause?.code === 'ENOENT') return empty(ownerId);
@@ -54,15 +57,28 @@ export function createPersonalHealthStore({ root, clock = Date.now }) {
       await durableWrite(file(ownerId), state);
     } catch { throw healthFailure('STORAGE_UNAVAILABLE', 503); }
   }
-  const memoryStatus = (state) => ({ state: state.summaries.length ? 'queued' : 'empty',
-    pendingObservedCount: state.summaries.length,
-    ...(state.summaries.length ? { reasonCode: OBSERVED_PENDING } : {}) });
+  const contentHash = (row) => summaryHash([row.evidence.content, row.evidence.source]);
+  const permissionsHash = (row) => summaryHash(row.evidence.permissions);
+  const pending = (row) => row.delivery?.contentHash !== contentHash(row) ||
+    row.delivery?.permissionsHash !== permissionsHash(row);
+  const memoryStatus = (state) => {
+    const count = state.summaries.filter(pending).length + state.pendingRetractions.length;
+    return { state: count ? 'queued' : state.summaries.length ? 'delivered' : 'empty',
+      pendingObservedCount: count, ...(count ? { reasonCode: OBSERVED_PENDING } : {}) };
+  };
+  async function changed(ownerId, result) {
+    if (typeof onChange === 'function') {
+      try { result.memory = await onChange(ownerId); }
+      catch { result.memory = { ...await api.memoryStatus(ownerId), reasonCode: 'MEMORY_OBSERVED_PENDING' }; }
+    }
+    return result;
+  }
 
-  return {
+  const api = {
     async upsert(ownerId, input, authorize = () => {}) {
       const summary = healthSummary(input);
       const requestHash = summaryHash(summary);
-      return serial(ownerId, async () => {
+      const result = await serial(ownerId, async () => {
         await authorize(summary.sourceDeviceId);
         const state = await read(ownerId);
         const cutoff = [state.deletedThrough.all, state.deletedThrough.dates[summary.date]]
@@ -89,7 +105,7 @@ export function createPersonalHealthStore({ root, clock = Date.now }) {
             selfAssessmentFrequency: summary.selfAssessmentFrequency, summarizedAt: summary.summarizedAt };
         }
         state.summaries = state.summaries.filter((row) => row !== previous);
-        state.summaries.push({ summary, requestHash });
+        state.summaries.push({ summary, requestHash, delivery: previous?.delivery });
         for (const row of state.summaries) {
           row.summary.cloudModelAllowed = state.preferences.cloudModelAllowed;
           row.summary.selfAssessmentFrequency = state.preferences.selfAssessmentFrequency;
@@ -99,6 +115,7 @@ export function createPersonalHealthStore({ root, clock = Date.now }) {
         return { summary: state.summaries.find((row) => row.summary.sourceDeviceId === summary.sourceDeviceId &&
           row.summary.date === summary.date).summary, duplicate: false, memory: memoryStatus(state) };
       });
+      return changed(ownerId, result);
     },
     async list(ownerId, { days = 14, timeZone = 'UTC' } = {}) {
       if (!Number.isInteger(days) || days < 1 || days > 365) throw healthFailure('INVALID_REQUEST');
@@ -120,7 +137,7 @@ export function createPersonalHealthStore({ root, clock = Date.now }) {
     },
     async delete(ownerId, date = null, authorize = () => {}) {
       if (date !== null) healthDate(date);
-      return serial(ownerId, async () => {
+      const result = await serial(ownerId, async () => {
         await authorize();
         const state = await read(ownerId);
         const removed = state.summaries.filter((row) => date === null || row.summary.date === date);
@@ -128,20 +145,70 @@ export function createPersonalHealthStore({ root, clock = Date.now }) {
           Date.parse(state.deletedThrough.all ?? '') || 0,
           ...(date === null ? Object.values(state.deletedThrough.dates).map(Date.parse)
             : [Date.parse(state.deletedThrough.dates[date] ?? '') || 0]))).toISOString();
+        for (const row of removed) {
+          const entry = { source_key: row.evidence.source_id, withdrawn_through: cutoff };
+          state.pendingRetractions = state.pendingRetractions.filter((item) => item.source_key !== entry.source_key);
+          state.pendingRetractions.push(entry);
+        }
         state.summaries = state.summaries.filter((row) => !removed.includes(row));
         if (date === null) state.deletedThrough = { all: cutoff, dates: {} };
         else state.deletedThrough.dates[date] = cutoff;
-        // Actual removal also removes queued content, devices and metrics; only a time fence remains.
+        // Content is removed; source hashes and time fences alone remain pending Core cleanup.
         await write(ownerId, state);
         return { deleted: true, ...(date === null ? { scope: 'all' } : { date }), deletedCount: removed.length };
       });
+      return changed(ownerId, result);
     },
-    // Replay input for a future typed observed writer in personal-memory, not ingest_boundary.
+    // Holds the same owner lock across RPC + acknowledgement: DELETE and consent
+    // cannot race a late write, and crashes replay through Core's durable identities.
+    flushObserved(ownerId, dispatch) {
+      return serial(ownerId, async () => {
+        const state = await read(ownerId);
+        while (state.pendingRetractions.length) {
+          const item = state.pendingRetractions[0];
+          const receipt = await dispatch('retract_observed', item);
+          if (!['applied', 'no_change'].includes(receipt?.result_state) ||
+              receipt?.storage_cleanup?.state !== 'complete') throw healthFailure('MEMORY_OBSERVED_PENDING', 503);
+          state.pendingRetractions.shift();
+          await write(ownerId, state);
+        }
+        for (const row of state.summaries) {
+          if (!pending(row)) continue;
+          const evidence = row.evidence;
+          if (row.delivery?.contentHash !== contentHash(row)) {
+            const receipt = await dispatch('upsert_observed', { evidence: {
+              source_key: evidence.source_id, version: evidence.source.summarized_at,
+              content: evidence.content, occurred_at: `${evidence.source.date}T00:00:00.000Z`,
+              valid_at: `${evidence.source.date}T00:00:00.000Z`, permissions: evidence.permissions,
+            } });
+            if (!['applied', 'no_change'].includes(receipt?.result_state) ||
+                receipt.storage_cleanup && receipt.storage_cleanup.state !== 'complete') {
+              throw healthFailure('MEMORY_OBSERVED_PENDING', 503);
+            }
+            row.delivery = { contentHash: contentHash(row), evidenceId: receipt.evidence_id };
+            await write(ownerId, state);
+          }
+          const permissionVersion = new Date(Math.max(Date.parse(state.preferences.summarizedAt),
+            Date.parse(evidence.source.summarized_at))).toISOString();
+          const receipt = await dispatch('update_observed_permissions', { source_key: evidence.source_id,
+            permission_version: permissionVersion, permissions: evidence.permissions });
+          if (!['applied', 'no_change'].includes(receipt?.result_state)) throw healthFailure('MEMORY_OBSERVED_PENDING', 503);
+          row.delivery.permissionsHash = permissionsHash(row);
+          row.delivery.permissionVersion = permissionVersion;
+          row.delivery.worldRevision = receipt.world_revision;
+          await write(ownerId, state);
+        }
+        return memoryStatus(state);
+      });
+    },
+    memoryStatus(ownerId) { return serial(ownerId, async () => memoryStatus(await read(ownerId))); },
+    // Conversation boundaries never consume this observed queue.
     pendingObserved(ownerId) {
-      return serial(ownerId, async () => (await read(ownerId)).summaries.map((row) => ({
+      return serial(ownerId, async () => (await read(ownerId)).summaries.filter(pending).map((row) => ({
         operation: 'upsert', idempotencyKey: `${row.evidence.source_id}:${row.evidence.payload_hash}`,
         evidence: row.evidence,
       })));
     },
   };
+  return api;
 }
