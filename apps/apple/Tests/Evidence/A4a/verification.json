@@ -1,0 +1,65 @@
+{
+  "workPackage": "A4a",
+  "provider": "synthetic-loopback",
+  "dailyDataUsed": false,
+  "realShellExecuted": false,
+  "platform": "Intel Mac / Xcode 26.3",
+  "swift": {
+    "passed": 20,
+    "failed": 0,
+    "filter": "AppleApprovalModeTests|ApprovalQuestionSDKTests|watchFeedback"
+  },
+  "stateChecks": {
+    "TaskInteractionChecks": {
+      "passed": 10,
+      "failed": 0
+    }
+  },
+  "iosXCTest": {
+    "passed": 2,
+    "failed": 0,
+    "runtime": "iOS 26.3",
+    "modeSwitches": [
+      "auto",
+      "ask",
+      "accept-edits",
+      "plan",
+      "allow-all"
+    ],
+    "allowAllCancelDoesNotPatch": true,
+    "conversationModesAreIndependent": true,
+    "accountDefaultDoesNotOverwriteExistingConversation": true,
+    "relaunchReadsSavedConversationMode": true,
+    "approvalPosts": 3,
+    "approvalScopes": [
+      "once",
+      "conversation-category",
+      null
+    ],
+    "rejectedHasNoScope": true
+  },
+  "debugBuilds": {
+    "macOS": "passed",
+    "iOSSimulator": "passed",
+    "watchOSSimulator": "passed"
+  },
+  "watch": {
+    "buttons": [
+      "允许",
+      "拒绝"
+    ],
+    "allowScope": "once",
+    "newApprovalFieldsCompatible": true,
+    "physicalPairingVerified": false
+  },
+  "macXCTest": {
+    "result": "unavailable-before-test-execution",
+    "reason": "Timed out while enabling automation mode.",
+    "newPermissionsRequested": false
+  },
+  "notVerified": [
+    "physical devices / Watch haptics",
+    "real host / DSH / models / cloud relay",
+    "macOS UI interaction"
+  ]
+}

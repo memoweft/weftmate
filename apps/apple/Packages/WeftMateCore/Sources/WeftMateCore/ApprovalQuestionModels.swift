@@ -74,6 +74,8 @@ public struct SessionApproval: Codable, Equatable, Sendable, Identifiable {
     public let reason: String
     public let createdAt: String
     public let status: SessionInteractionStatus
+    public let riskCategories: [String]?
+    public let decisionScope: String?
     public let decisionOutcome: ApprovalOutcome?
     public let decisionRequestId: String?
     public let answeredAt: String?
@@ -128,6 +130,7 @@ public struct ApprovalDecisionIntent: Codable, Equatable, Sendable {
     public let scope: SessionInteractionScope
     public let approval: SessionApproval
     public let outcome: ApprovalDecisionOutcome
+    public let decisionScope: ApprovalDecisionScope?
     public let requestId: String
     public let payload: Data
     public var approvalId: String { approval.approvalId }
@@ -135,19 +138,23 @@ public struct ApprovalDecisionIntent: Codable, Equatable, Sendable {
     public var taskId: String { approval.taskId }
     public var sourceCommandId: String { approval.sourceCommandId }
     public var sourceReceiptId: String { approval.sourceReceiptId }
-    public init(scope: SessionInteractionScope, approval: SessionApproval, outcome: ApprovalDecisionOutcome, requestID: String) throws {
+    public init(scope: SessionInteractionScope, approval: SessionApproval, outcome: ApprovalDecisionOutcome, requestID: String, decisionScope: ApprovalDecisionScope? = nil) throws {
         try scope.validate(); try approval.validate(scope: scope)
         try SharedValidation.require(approval.canDecide && SharedValidation.request(requestID))
+        try SharedValidation.require(decisionScope == nil || outcome == .allowedOnce)
+        if decisionScope == .conversationCategory { try SharedValidation.require(!(approval.riskCategories ?? []).isEmpty) }
         self.scope = scope; self.approval = approval; self.outcome = outcome; requestId = requestID
-        struct Body: Encodable { let requestId: String; let outcome: ApprovalDecisionOutcome }
-        payload = try InteractionValidation.encode(Body(requestId: requestID, outcome: outcome))
+        self.decisionScope = decisionScope
+        struct Body: Encodable { let requestId: String; let outcome: ApprovalDecisionOutcome; let scope: ApprovalDecisionScope? }
+        payload = try InteractionValidation.encode(Body(requestId: requestID, outcome: outcome, scope: decisionScope))
     }
-    enum CodingKeys: String, CodingKey { case scope, approval, outcome, requestId, payload }
+    enum CodingKeys: String, CodingKey { case scope, approval, outcome, requestId, payload, decisionScope }
     public init(from decoder: any Decoder) throws {
         let box = try decoder.container(keyedBy: CodingKeys.self)
         try self.init(scope: box.decode(SessionInteractionScope.self, forKey: .scope),
             approval: box.decode(SessionApproval.self, forKey: .approval), outcome: box.decode(ApprovalDecisionOutcome.self, forKey: .outcome),
-            requestID: box.decode(String.self, forKey: .requestId))
+            requestID: box.decode(String.self, forKey: .requestId),
+            decisionScope: box.decodeIfPresent(ApprovalDecisionScope.self, forKey: .decisionScope))
         guard try box.decode(Data.self, forKey: .payload) == payload else { throw APIFailure.invalidResponse }
     }
 }
@@ -162,7 +169,8 @@ public struct ApprovalDecisionReceipt: Codable, Equatable, Sendable {
         try wire.approval.validate(scope: intent.scope)
         guard wire.requestId == intent.requestId, wire.approval.matchesIdentity(intent.approval) else { throw APIFailure.identityMismatch }
         try SharedValidation.require(wire.approval.status == .answered && wire.approval.decisionRequestId == intent.requestId &&
-            wire.approval.decisionOutcome?.rawValue == intent.outcome.rawValue && wire.approval.answeredAt != nil)
+            wire.approval.decisionOutcome?.rawValue == intent.outcome.rawValue && wire.approval.answeredAt != nil &&
+            (wire.approval.decisionScope ?? "once") == (intent.decisionScope ?? .once).rawValue)
         return .init(scope: intent.scope, approval: wire.approval, requestId: wire.requestId)
     }
 }
@@ -178,7 +186,7 @@ public struct SessionQuestion: Codable, Equatable, Sendable, Identifiable {
     public let options: [QuestionOption]?
     public let multiSelect: Bool?
     public let detail: String?
-    public let intent: String?
+    public let intent: JSONValue?
     func validate() throws {
         let labels = (options ?? []).map(\.label)
         try SharedValidation.require(!id.isEmpty && !question.isEmpty && labels.allSatisfy { !$0.isEmpty } && Set(labels).count == labels.count)
