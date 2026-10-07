@@ -374,7 +374,9 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   const gatewayDest = join(dir, 'runtime', 'gateway')
   const tasks: Array<[string, string]> = [
     [join(here, 'model-budget.mjs'), join(dir, 'model-budget.mjs')],
+    [join(here, 'model-scheduler-client.mjs'), join(dir, 'model-scheduler-client.mjs')],
     [join(PLUGINS_DIR, 'weftmate-model-budget.mjs'), join(dir, 'plugins', 'weftmate-model-budget.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-background-title.mjs'), join(dir, 'plugins', 'weftmate-background-title.mjs')],
     [join(CLIENT_PLUGIN_SRC, 'package.json'), join(clientDest, 'package.json')],
     [join(CLIENT_PLUGIN_SRC, 'index.js'), join(clientDest, 'index.js')],
     [join(CLIENT_PLUGIN_SRC, 'client.js'), join(clientDest, 'client.js')],
@@ -705,6 +707,7 @@ export interface DshWebRuntimeOptions {
   noOpen?: boolean
   /** The personal host replaces the sole official ApiProxy with a no-default-write wrapper. */
   personalHostApiProxy?: boolean
+  modelScheduling?: boolean
   /** dev 形态的 checkout 路径（缺省只认显式 WEFTMATE_DSH_CHECKOUT；安装版不使用此路径）。 */
   checkoutPath?: string
   /** vendor 形态的 vendor/dsh-runtime 路径（缺省 WEFTMATE_DSH_RUNTIME；空 = dev 形态）。 */
@@ -1104,6 +1107,7 @@ export class DshWebRuntime {
     port: number
     noOpen: boolean
     personalHostApiProxy: boolean
+    modelScheduling: boolean
     checkoutPath: string
     runtimePath: string
     nodeElectron: boolean
@@ -1161,6 +1165,7 @@ export class DshWebRuntime {
       port: options.port ?? 0,
       noOpen: options.noOpen ?? false,
       personalHostApiProxy: options.personalHostApiProxy ?? false,
+      modelScheduling: options.modelScheduling ?? false,
       // 显式 options 是 Electron/main 的确定性配置，必须压过开发 shell 遗留环境变量。
       checkoutPath: options.checkoutPath ?? process.env.WEFTMATE_DSH_CHECKOUT ?? '',
       runtimePath: options.runtimePath ?? process.env.WEFTMATE_DSH_RUNTIME ?? '',
@@ -1266,6 +1271,7 @@ export class DshWebRuntime {
       // The final owned snapshot selects the budget decorator while preserving
       // the native adapter's merged provider/settings configuration.
       if (this.opts.profilePolicy === 'weftmate' && row.id === 'llm-pi-ai') row.name = './plugins/weftmate-model-budget.mjs'
+      if (this.opts.profilePolicy === 'weftmate' && row.id === 'session-title-llm') row.name = './plugins/weftmate-background-title.mjs'
       if (row.id === 'agent-presets') {
         const config = row.config !== null && typeof row.config === 'object' && !Array.isArray(row.config)
           ? row.config as Record<string, unknown> : {}
@@ -1574,7 +1580,7 @@ export class DshWebRuntime {
   /** Exact current-child, in-process DSH running/inbox snapshot. Unknown is busy. */
   personalModelQueueIdle(): Promise<PersonalModelIdleResult> {
     const child = this.child
-    if (!this.opts.personalHostApiProxy || this.closed || !child ||
+    if ((!this.opts.personalHostApiProxy && !this.opts.modelScheduling) || this.closed || !child ||
         this.closedChildren.has(child) || !child.connected || this.originValue === null) {
       return Promise.resolve(modelIdleResult('runtime_unavailable'))
     }

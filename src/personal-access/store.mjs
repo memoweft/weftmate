@@ -128,6 +128,10 @@ export function validateSingleStore(store) {
           ? accountDeviceInvalid(device, store.account)
         : true)) throw failure('STORE_CORRUPT', 500);
   }
+  if (store.backgroundModelProfileId !== undefined && store.backgroundModelProfileId !== null &&
+      (typeof store.backgroundModelProfileId !== 'string' || !MODEL_PROFILE_ID.test(store.backgroundModelProfileId))) {
+    throw failure('STORE_CORRUPT', 500);
+  }
   if (store.accountModels !== undefined && (!plainObject(store.accountModels) ||
       Object.keys(store.accountModels).length > 1000)) throw failure('STORE_CORRUPT', 500);
   for (const [accountModelId, record] of Object.entries(store.accountModels ?? {})) {

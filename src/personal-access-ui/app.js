@@ -335,7 +335,7 @@
       default: return context === 'network' ? '暂时无法连接宿主，请稍后重试。' : '操作未完成，请重试。'
     }
   }
-  async function requestJson(url, { method = 'GET', body, protectedWrite = false } = {}) {
+  async function requestJson(url, { method = 'GET', body, protectedWrite = false, timeoutMs = 15_000 } = {}) {
     const headers = {}
     if (body !== undefined) headers['content-type'] = 'application/json'
     if (protectedWrite) {
@@ -346,7 +346,7 @@
     try {
       response = await fetch(url, {
         method, headers, credentials: 'same-origin', cache: 'no-store',
-        signal: AbortSignal.timeout(15_000),
+        signal: AbortSignal.timeout(timeoutMs),
         ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
       })
     } catch { throw { code: 'NETWORK' } }
@@ -4614,6 +4614,59 @@
             : '登记未完成，请检查目录并重试。'
     } finally { if (accountCurrent(token)) button.disabled = false }
   })
+  const serviceStateLabels = { ready: '运行中', connected: '运行中', stopped: '已停止', starting: '启动中',
+    disabled: '未启用', unavailable: '不可用', unconfigured: '尚未配置', degraded: '需要处理' }
+  async function refreshSystem() {
+    const token = accountToken()
+    byId('system-notice').textContent = '正在读取…'
+    byId('system-services').replaceChildren()
+    byId('background-model-select').disabled = true
+    try {
+      const [system, settings, catalog] = await Promise.all([accessApi('/system'),
+        accessApi('/settings/models'), accessApi('/models')])
+      if (!accountCurrent(token)) return
+      for (const [key, label] of [['model', '模型服务'], ['host', '宿主'], ['memory', '记忆']]) {
+        const value = system[key], item = element('li', 'system-service')
+        const details = element('div', 'system-service-detail')
+        details.append(element('strong', '', label), element('span', '', serviceStateLabels[value.state] ?? '状态未知'))
+        const info = [value.currentModelId ? `当前模型 ${value.currentModelId}` : '',
+          value.version ? `版本 ${value.version}` : ['disabled', 'unconfigured', 'stopped'].includes(value.state) ? '' : '版本未知',
+          value.contextWindow ? `上下文 ${value.contextWindow.toLocaleString()}` : '',
+          value.slots ? `槽数 ${value.slots}` : '',
+          value.lastSwitch?.at ? `最近切换 ${new Date(value.lastSwitch.at).toLocaleString()}${value.lastSwitch.ok ? '' : '（未成功）'}` : '',
+          value.lastError ? `最近错误：${value.lastError}` : ''].filter(Boolean).join(' · ')
+        details.append(element('small', 'muted', info))
+        const restart = element('button', 'button secondary small', '重启')
+        restart.disabled = !system.canRestart || !value.canRestart
+        restart.addEventListener('click', async () => {
+          restart.disabled = true; restart.textContent = '重启中…'
+          try { await accessApi(`/system/${key}/restart`, { method: 'POST', body: {}, protectedWrite: true, timeoutMs: 360_000 })
+            if (accountCurrent(token)) await refreshSystem()
+          } catch { if (accountCurrent(token)) { byId('system-notice').textContent = '重启未确认，请刷新查看实际状态。'
+            restart.disabled = false; restart.textContent = '重启' } }
+        })
+        item.append(details, restart); byId('system-services').append(item)
+      }
+      const select = byId('background-model-select')
+      select.replaceChildren(new Option('跟随主模型', ''))
+      for (const model of catalog.models.filter(model => model.configured)) select.append(new Option(model.name, model.id))
+      if (settings.backgroundModelProfileId && ![...select.options].some(option => option.value === settings.backgroundModelProfileId)) {
+        select.append(new Option('原后台模型不可用，请重新选择', settings.backgroundModelProfileId))
+      }
+      select.value = settings.backgroundModelProfileId ?? ''; select.disabled = false
+      byId('system-notice').textContent = system.queue?.backgroundPending
+        ? `${system.queue.backgroundPending} 项后台请求排队中` : '已更新'
+    } catch { if (accountCurrent(token)) byId('system-notice').textContent = '系统状态暂时无法读取，请刷新重试。' }
+  }
+  byId('system-refresh').addEventListener('click', () => { void refreshSystem() })
+  byId('background-model-select').addEventListener('change', async event => {
+    const token = accountToken(), select = event.target; select.disabled = true
+    try { await accessApi('/settings/models', { method: 'PATCH', protectedWrite: true,
+      body: { backgroundModelProfileId: select.value || null } })
+      if (accountCurrent(token)) byId('background-model-notice').textContent = '后台模型已保存'
+    } catch { if (accountCurrent(token)) byId('background-model-notice').textContent = '保存失败，请刷新后重试。' }
+    finally { if (accountCurrent(token)) select.disabled = false }
+  })
   byId('account-models-refresh').addEventListener('click', () => { void refreshAccountModels() })
   byId('account-model-cancel').addEventListener('click', () => {
     state.accountModelEditing = null
@@ -4709,6 +4762,7 @@
     void refreshDevices()
     resetOtherDeviceInstall()
     void refreshAccountModels()
+    void refreshSystem()
     void refreshProjects()
     void refreshModels()
     void refreshBrowserWorkspace()
