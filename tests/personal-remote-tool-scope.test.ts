@@ -10,6 +10,41 @@ import { stagePersonalPlugins } from './support/personal-plugins.ts'
 const vendor = (name: string) => pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', name, 'lib', 'index.js')).href
 
+test('personal initial file policy permits computer writes while native approval and later switches remain independent', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'personal-policy-'))
+  try {
+    const { initializePersonalFilePolicy } = await import(stagePersonalPlugins(root).plugin)
+    const { effectiveSandboxMode } = await import(vendor('dsh-sandbox-policy'))
+    const policy = { overrideOf: (session: any) => effectiveSandboxMode(session.events) }
+    const agent = (preset: string, origin?: string) => ({ session: {
+      header: { agentPreset: preset, origin }, events: [] as any[],
+      append(type: string, data: any) { this.events.push({ type, data }) },
+    } })
+    for (const origin of [undefined, 'subagent']) {
+      const personal = agent('personal-remote', origin)
+      personal.session.append('sandbox/mode', { mode: 'workspace-write' })
+      personal.session.append('approval/policy', { policy: 'ask' })
+      personal.session.append('turn/start', { turn: 1 })
+      initializePersonalFilePolicy(personal, policy)
+      assert.equal(effectiveSandboxMode(personal.session.events), 'danger-full-access')
+      assert.equal(personal.session.events.filter(event => event.type === 'approval/policy').at(-1).data.policy, 'ask')
+      const count = personal.session.events.length
+      initializePersonalFilePolicy(personal, policy)
+      assert.equal(personal.session.events.length, count)
+      personal.session.append('sandbox/mode', { mode: 'workspace-write' })
+      initializePersonalFilePolicy(personal, policy)
+      assert.equal(effectiveSandboxMode(personal.session.events), 'workspace-write')
+    }
+    const restricted = agent('personal-remote')
+    restricted.session.append('sandbox/mode', { mode: 'read-only' })
+    initializePersonalFilePolicy(restricted, policy)
+    assert.equal(effectiveSandboxMode(restricted.session.events), 'read-only')
+    const standard = agent('standard')
+    initializePersonalFilePolicy(standard, policy)
+    assert.deepEqual(standard.session.events, [])
+  } finally { rmSync(root, { recursive: true, force: true }) }
+})
+
 test('official ToolRuntime gives the original personal-remote scope general tools while denying forged execution identity', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-tool-scope-'))
   try {

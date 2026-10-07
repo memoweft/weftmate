@@ -401,9 +401,7 @@ export function createTaskOperations(context) {
           return { executionId, taskId: root.commandId, state: prior.state };
         }
         context.personalExecutionSource(next, input, true);
-        if (root.taskControl?.state === 'stop_requested' || taskHasUnknownEffects(next, root.commandId) ||
-            [root, ...taskChildren(next, root.commandId)].some(command => command.toolExecutions?.some(row =>
-              row.state === 'running' && row.rootCallId !== rootCallId))) throw failure('TASK_NOT_READY', 409);
+        if (root.taskControl?.state === 'stop_requested' || taskHasUnknownEffects(next, root.commandId)) throw failure('TASK_NOT_READY', 409);
         if (prior) throw failure('REQUEST_CONFLICT', 409); // Unknown or completed calls are never executed twice.
         for (const row of source.toolApprovals ?? []) if (row.turn === turn &&
             (row.callId === callId || row.rootCallId === rootCallId)) {

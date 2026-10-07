@@ -4,8 +4,7 @@ export function personalWebFetchProvider(bridge, currentExecution, executionIden
     id: 'weftmate-public-page',
     available: () => {
       const exec = currentExecution();
-      return exec?.agent?.session?.header?.agentPreset === 'personal-remote' &&
-        exec.agent.session.header.origin !== 'subagent';
+      return exec?.agent?.session?.header?.agentPreset === 'personal-remote';
     },
     async fetch({ url }, signal) {
       const identity = executionIdentity(currentExecution());

@@ -234,7 +234,7 @@ test('native execution-body and script-nested approvals may register beside the 
     await assert.rejects(f.register({ argumentsHash: hash('changed'), approvalId: randomUUID() }), code('REQUEST_CONFLICT'))
     const nested = { callId: 'script-nested', toolName: 'pwsh', argumentsHash: hash('nested arguments'), approvalId: randomUUID() }
     assert.equal((await f.register(nested)).status, 'pending')
-    await assert.rejects(f.register({ callId: 'different-root', rootCallId: 'different-root', approvalId: randomUUID() }), code('TASK_NOT_READY'))
+    assert.equal((await f.register({ callId: 'different-root', rootCallId: 'different-root', approvalId: randomUUID() })).status, 'pending')
     const detail = await f.request(`tasks/${f.source.commandId}`)
     assert.equal(detail.body.executionSteps[0].toolName, 'weftmod_script')
   } finally { await f.close() }
