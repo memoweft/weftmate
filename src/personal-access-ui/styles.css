@@ -440,3 +440,10 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 
 .conversation-approval.is-resolved, .conversation-question.is-resolved { padding: 8px 12px; background: transparent; border: 0; }
 .conversation-approval.is-resolved > strong, .conversation-question.is-resolved > strong { font-weight: 500; }
+
+#cloud-login-section { margin-bottom: 24px; }
+#cloud-login-section details { margin-top: 12px; }
+#pairing-panel { max-width: 420px; margin: 16px 0; }
+#pairing-qr { display: block; max-width: 100%; height: auto; background: white; }
+#pairing-code, #cloud-pairing-input { width: 100%; overflow-wrap: anywhere; }
+#cloud-wait-status { min-height: 48px; }

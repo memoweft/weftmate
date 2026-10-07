@@ -42,3 +42,23 @@
 ## 本地模型
 
 日用主力是本地 Qwen3.8 27B（OpenAI 兼容接口）。统一的启动方式与健康检查由 PLAN M0-6 确定后写在这里。
+
+## 云服务运维
+
+D1 已部署，复现部署、升级、来源地址配置和证书续期见 [deploy README](../services/cloud/deploy/README.md)。SSH（安全远程登录）别名 `weftmate-cloud` 由本机私有配置管理；地址、邮箱、密钥、密码不写仓库。Node 24.21.0 在 `/opt/weftmate-node`，cloud 发布代码在 `/opt/weftmate-cloud/current`，独立锁定依赖；官方 frp 0.71.0 在 `/opt/weftmate/frp`。
+
+```powershell
+ssh weftmate-cloud 'systemctl is-active weftmate-cloud weftmate-frps nginx'
+curl.exe -fsS https://api.weftmate.com/healthz
+curl.exe -fsS https://api.weftmate.com/personal/v1/cloud/oidc/.well-known/openid-configuration
+ssh weftmate-cloud 'journalctl -u weftmate-cloud -u weftmate-frps --since "10 minutes ago" --no-pager'
+ssh weftmate-cloud '/root/weftmate-deploy/rollback.sh --dry-run'
+# 出现部署引入的旧站点差异，立即恢复 nginx 并停用新增服务，保留数据：
+ssh weftmate-cloud '/root/weftmate-deploy/rollback.sh'
+```
+
+公网 TCP（传输控制协议）443 由 nginx stream（TCP 流代理）按 SNI（服务器名称指示）分流；旧 HTTPS（加密网页连接）站点在回环9443，PROXY protocol（代理来源协议）保留来源地址。cloud/frps/plugin（授权插件）端口全部私有，80、原有服务、SSH 与防火墙配置保持原样。
+
+私有环境文件 `/etc/weftmate-cloud/cloud.env` 为0600；DynamicUser（动态服务用户）与 StateDirectory（服务数据目录）保存 `/var/lib/weftmate-cloud`，数据库/身份 key/邮件不进发布目录。API 与 relay 的 certbot（自动证书客户端）证书和续期已配置，frps 用 LoadCredential（服务私有凭据）读取私钥快照。基线与备份在 `/root/weftmate-deploy`；完整本地报告在仓库外 `Runtime/Orchestrator/d1.result.md`。
+
+当前邮件为 file transport（文件邮件传输），只写服务器私有 outbox（邮件输出目录），不发信。本人需配置 Resend 私有 key/发件域及 SPF/DKIM（发件来源与签名验证）。三个新 DNS（域名解析）A 记录已就绪；生产宿主内容证书仍需实现阿里云 DNS-01（DNS TXT 证书验证）provider（服务商适配器），本人把仅限 DNS 的 RAM 子账号凭据放服务器，再接宿主 CSR（证书签名请求）定时签发/安装/热载。仅加入 RAM 环境变量不会自动启用 provider。
