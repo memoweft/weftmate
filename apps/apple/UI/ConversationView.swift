@@ -197,11 +197,8 @@ struct ConversationView: View {
                 LazyVStack(alignment: .leading, spacing: 22) {
                     if model.timeline.hasOlder {
                         Button(model.olderBusy ? "正在读取…" : "读取更早的记录") {
-                            let anchor = visibleMessageID
-                            Task {
-                                await model.loadOlder(conversation)
-                                if let anchor { proxy.scrollTo(anchor, anchor: .top) }
-                            }
+                            // scrollPosition retains the visible target while records are prepended.
+                            Task { await model.loadOlder(conversation) }
                         }.disabled(model.olderBusy).accessibilityIdentifier("loadOlderTimeline")
                         .id("older")
                     }

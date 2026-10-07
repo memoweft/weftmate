@@ -20,5 +20,12 @@
   "answerRegistered": true,
   "macAccessibilityGranted": false,
   "watchDeviceValidation": false,
-  "remotePush": false
+  "remotePush": false,
+  "readingAnchor": {
+    "label": "旧记录 21906",
+    "beforeY": 186.33333333333334,
+    "afterY": 154.57583616091142,
+    "tolerancePoints": 48,
+    "passed": true
+  }
 }
