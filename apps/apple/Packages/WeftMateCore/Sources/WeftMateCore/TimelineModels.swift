@@ -97,16 +97,7 @@ public struct TimelineWindow: Codable, Equatable, Sendable {
             hasOlder = page.hasOlder ?? false
         }
     }
-    public mutating func merge(_ window: TimelineWindow) {
-        var bySeq = Dictionary(uniqueKeysWithValues: events.map { ($0.seq, $0) })
-        for event in window.events { bySeq[event.seq] = event }
-        events = bySeq.values.sorted { $0.seq < $1.seq }; nextSeq = window.nextSeq
-    }
-    public func cachedPage(before: Int? = nil, limit: Int = 100) -> TimelinePage {
-        let slice = Array(events.filter { event in before.map { event.seq < $0 } ?? true }.suffix(limit))
-        return .init(events: slice, nextSeq: nextSeq, hasMore: false, nextBeforeSeq: slice.first?.seq,
-                     hasOlder: events.contains { $0.seq < (slice.first?.seq ?? -1) }, latestSeq: nextSeq)
-    }
+
 }
 public struct TimelineStep: Equatable, Sendable, Identifiable {
     public let id: String

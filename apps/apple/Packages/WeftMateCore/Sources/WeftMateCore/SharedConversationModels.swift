@@ -354,7 +354,6 @@ public struct SharedTurnTracker: Sendable {
     private var runningTurns = Set<Int>()
     private var seenTurns = Set<Int>()
     private var ambiguousTurns = Set<Int>()
-    private var eventCount = 0
     public init(sessionID: String, afterSeq: Int = -1) throws {
         try SharedValidation.require(SharedValidation.id(sessionID) && afterSeq >= -1); sessionId = sessionID; nextSeq = afterSeq
     }
@@ -383,7 +382,6 @@ public struct SharedTurnTracker: Sendable {
                 openTurn = nil
             }
         }
-        eventCount += page.events.count
         nextSeq = page.nextSeq
     }
     public func progress(for receipt: SharedCommandReceipt) -> SharedTurnProgress {

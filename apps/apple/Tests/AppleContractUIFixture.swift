@@ -70,6 +70,7 @@ enum AppleContractUIFixture {
                 }
                 return try json(["events": events.filter { ($0["seq"] as! Int) > after }, "nextSeq": max(after, events.last!["seq"] as! Int), "hasMore": false])
             case "/personal/v1/commands":
+                if request.httpMethod == "GET" { return try json(["commands": [], "hasMore": false]) }
                 sent = try JSONSerialization.jsonObject(with: request.httpBody!) as? [String: Any]
                 command = ["commandId": "cmd-fixture", "kind": "session.message", "targetDeviceId": "host-fixture", "sessionId": AppleContractUIFixture.sessionID,
                     "requestId": sent!["requestId"]!, "state": "accepted_by_dsh", "receiptId": "receipt-fixture"]

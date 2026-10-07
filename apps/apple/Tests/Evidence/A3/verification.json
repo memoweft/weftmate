@@ -1,0 +1,24 @@
+{
+  "coreTests": 260,
+  "stateGroups": 11,
+  "iOSXCTests": {
+    "A3Timeline": true,
+    "A2AttachmentRegression": true
+  },
+  "syntheticHistoricEvents": 22000,
+  "tailRequests": 4,
+  "olderBoundaries": [
+    "21906"
+  ],
+  "legacyFullHistoryRequests": 0,
+  "onDemandDetails": [
+    "/sessions/session-fixture/events/22004/detail"
+  ],
+  "approvalPOSTs": 1,
+  "questionPOSTs": 1,
+  "approvalRegistered": true,
+  "answerRegistered": true,
+  "macAccessibilityGranted": false,
+  "watchDeviceValidation": false,
+  "remotePush": false
+}

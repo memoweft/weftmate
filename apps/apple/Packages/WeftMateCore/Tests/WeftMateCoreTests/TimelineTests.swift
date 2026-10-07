@@ -67,11 +67,12 @@ private func page(_ events: [TimelineEvent], next: Int, older: Bool = false) -> 
     var window = TimelineWindow()
     window.apply(page((0..<250).map { event($0, "assistant.message") }, next: 249), replace: true)
     try await cache.save(account: account, hostID: "host-fixture", sessionID: "session-fixture", window: window)
-    let record = try #require(await cache.read(account: account, hostID: "host-fixture", sessionID: "session-fixture"))
-    let tail = record.window.cachedPage(), older = record.window.cachedPage(before: 150)
+    let record = try #require(await cache.readPage(account: account, hostID: "host-fixture", sessionID: "session-fixture"))
+    let tail = record.page
+    let older = try #require(await cache.readPage(account: account, hostID: "host-fixture", sessionID: "session-fixture", beforeSeq: 150)).page
     #expect(tail.events.first?.seq == 150 && tail.events.last?.seq == 249 && tail.hasOlder == true)
     #expect(older.events.first?.seq == 50 && older.events.last?.seq == 149)
-    #expect(try await cache.read(account: other, hostID: "host-fixture", sessionID: "session-fixture") == nil)
+    #expect(try await cache.readPage(account: other, hostID: "host-fixture", sessionID: "session-fixture") == nil)
 }
 @Test func watchFeedbackUsesObservedCompletionsOnceAndResetsAcrossAccounts() {
     func snapshot(_ completions: [String], approvals: [WatchApproval] = [], account: String = "account-a") -> WatchTimelineSnapshot {
