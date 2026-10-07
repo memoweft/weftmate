@@ -123,14 +123,15 @@ const driver=createServer(async(req,res)=>{
     let result;
     if(url.pathname==='/browser'){
       const publicJwk=data.publicJwk;
-      const id='apple-'+createHash('sha256').update(JSON.stringify(publicJwk)).digest('hex').slice(0,20);
+      const id=new URL(data.authorizationURL).searchParams.get('wm_device_id')??'apple-'+createHash('sha256').update(JSON.stringify(publicJwk)).digest('hex').slice(0,20);
       result={callback:await authorize(data.authorizationURL,publicJwk,id)};
     } else if(url.pathname==='/pairing.png'){
       const pair=await direct('/cloud/pairings',{},local);
       const png=join(root,'pairing.png');
-      await new Promise((resolve,reject)=>{const c=spawn(qrBinary,[png]);c.stdin.end(JSON.stringify(pair.data));c.once('exit',n=>n===0?resolve():reject(new Error('QR failed')));});
+      await new Promise((resolve,reject)=>{const c=spawn(qrBinary,[png]);c.stdin.end((pair.data.relay?.baseUrl??pair.data.origin)+'/personal/v1/ui/#pair='+Buffer.from(JSON.stringify(pair.data)).toString('base64url'));c.once('exit',n=>n===0?resolve():reject(new Error('QR failed')));});
       res.writeHead(200,{'content-type':'image/png'});res.end(await readFile(png));return;
-    } else if(url.pathname==='/pending'){result=(await direct('/cloud/devices/pending',undefined,local)).data;}
+    } else if(url.pathname==='/browser-code'){const challenge=db.prepare("SELECT id FROM email_challenges WHERE purpose='device' AND consumed=0 ORDER BY rowid DESC LIMIT 1").get(); result={code:await challengeCode(challenge.id)};}
+    else if(url.pathname==='/pending'){result=(await direct('/cloud/devices/pending',undefined,local)).data;}
     else if(url.pathname==='/decision'){
       const pending=await direct('/cloud/devices/pending',undefined,local);
       const device=pending.data.devices.at(-1);if(!device)throw new Error('No pending device');

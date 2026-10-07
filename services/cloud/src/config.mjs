@@ -56,7 +56,8 @@ export function loadConfig(env = process.env, cwd = process.cwd()) {
         typeof client.client_id !== 'string' ||
         !Array.isArray(client.redirect_uris) ||
         !client.redirect_uris.length ||
-        Object.keys(client).some((key) => !['client_id', 'redirect_uris'].includes(key)) ||
+        Object.keys(client).some((key) => !['client_id', 'redirect_uris', 'application_type'].includes(key)) ||
+        (client.application_type !== undefined && !['web', 'native'].includes(client.application_type)) ||
         client.redirect_uris.some((uri) => {
           try {
             const url = new URL(uri);

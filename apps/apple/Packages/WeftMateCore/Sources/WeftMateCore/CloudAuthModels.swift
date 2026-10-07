@@ -34,7 +34,7 @@ public struct CloudAuthorization: Sendable {
     public let state: String
     public let nonce: String
     public let configuration: CloudConfiguration
-    public init(configuration: CloudConfiguration, hostID: String? = nil) throws {
+    public init(configuration: CloudConfiguration, hostID: String? = nil, deviceID: String? = nil, publicJwk: [String: String]? = nil) throws {
         self.configuration = configuration
         verifier = cloudBase64(Data((0..<32).map { _ in UInt8.random(in: 0...255) }))
         state = UUID().uuidString; nonce = UUID().uuidString
@@ -46,6 +46,10 @@ public struct CloudAuthorization: Sendable {
         if let hostID {
             guard hostID.range(of: "^[A-Za-z0-9_.:-]{1,128}$", options: .regularExpression) != nil else { throw CloudLoginFailure.pairing }
             fields["resource"] = configuration.audience + "/hosts/" + hostID
+        }
+        if let deviceID, let publicJwk {
+            fields["wm_device_id"] = deviceID
+            fields["wm_public_jwk"] = String(data: try JSONSerialization.data(withJSONObject: publicJwk, options: [.sortedKeys]), encoding: .utf8)
         }
         parts.queryItems = fields.map { URLQueryItem(name: $0.key, value: $0.value) }
         if hostID != nil { parts.queryItems!.append(URLQueryItem(name: "resource", value: configuration.audience)) }
@@ -76,7 +80,23 @@ public struct HostPairing: Codable, Sendable, Equatable {
     public let relay: Relay?
     public struct Relay: Codable, Sendable, Equatable { public let state: String; public let baseUrl: String? }
     public static func parse(_ data: Data, allowLoopbackHTTP: Bool = false) throws -> Self {
-        guard let pair = try? JSONDecoder().decode(Self.self, from: data),
+        let input = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        var encoded: String?
+        if input.hasPrefix("wm1.") { encoded = String(input.dropFirst(4)) }
+        else if let url = URLComponents(string: input), let fragment = url.fragment,
+                let fields = URLComponents(string: "https://pair.invalid/?" + fragment)?.queryItems {
+            let matches = fields.filter { $0.name == "pair" }
+            guard matches.count == 1 else { throw CloudLoginFailure.pairing }
+            encoded = matches[0].value
+        }
+        var json = data
+        if let encoded {
+            guard encoded.range(of: "^[A-Za-z0-9_-]+$", options: .regularExpression) != nil else { throw CloudLoginFailure.pairing }
+            let base = encoded.replacingOccurrences(of: "-", with: "+").replacingOccurrences(of: "_", with: "/")
+            guard let bytes = Data(base64Encoded: base + String(repeating: "=", count: (4 - base.count % 4) % 4)) else { throw CloudLoginFailure.pairing }
+            json = bytes
+        }
+        guard let pair = try? JSONDecoder().decode(Self.self, from: json),
               pair.expiresIn > 0, pair.expiresIn <= 120,
               pair.challenge.range(of: "^[A-Za-z0-9_-]{20,256}$", options: .regularExpression) != nil,
               pair.hostId.range(of: "^[A-Za-z0-9_.:-]{1,128}$", options: .regularExpression) != nil,

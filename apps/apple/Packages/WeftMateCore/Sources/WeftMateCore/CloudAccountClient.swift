@@ -52,7 +52,7 @@ public actor CloudAccountClient {
               metadata["authorization_endpoint"] as? String == configuration.issuer + "/auth",
               metadata["token_endpoint"] as? String == configuration.issuer + "/token",
               metadata["jwks_uri"] as? String == configuration.issuer + "/jwks" else { throw CloudLoginFailure.token }
-        let flow = try CloudAuthorization(configuration: configuration, hostID: hostID)
+        let flow = try CloudAuthorization(configuration: configuration, hostID: hostID, deviceID: "apple-" + key.thumbprint, publicJwk: key.publicJwk)
         let callback = try await browser(flow, key.publicJwk)
         try check(epoch)
         let code = try flow.code(from: callback)

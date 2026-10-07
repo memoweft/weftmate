@@ -10,11 +10,10 @@ import UIKit
 final class CloudBrowser: NSObject, ASWebAuthenticationPresentationContextProviding {
     private var session: ASWebAuthenticationSession?
     func open(_ authorization: CloudAuthorization, publicJwk: [String: String]) async throws -> URL {
-        // The cloud browser must bind this installation's public JWK during its email-confirmed interaction.
-        // S1a's current HTML form does not do so yet; no native password form bypass is provided.
+        // CLIENT_API 7.7 carries the installation JWK/device ID to the cloud's email-confirmed form.
         #if DEBUG
         let args = ProcessInfo.processInfo.arguments
-        if args.contains("--ui-testing"), let index = args.firstIndex(of: "--s1c-browser-driver"), args.indices.contains(index + 1),
+        if args.contains("--ui-testing"), !args.contains("--s1c-system-browser"), let index = args.firstIndex(of: "--s1c-browser-driver"), args.indices.contains(index + 1),
            let base = URL(string: args[index + 1]), ["localhost", "127.0.0.1"].contains(base.host), base.scheme == "http" {
             var request = URLRequest(url: base); request.httpMethod = "POST"
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")

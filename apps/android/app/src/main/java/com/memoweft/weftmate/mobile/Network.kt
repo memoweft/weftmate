@@ -160,7 +160,7 @@ class JsonHttp : SseTransport {
     override fun request(url: String, method: String, body: JSONObject?,
         headers: Map<String, String>, active: AtomicReference<HttpURLConnection?>?,
         readTimeoutMs: Int): HttpReply {
-        val connection = URL(url).openConnection() as HttpURLConnection
+        val connection = URL(url).openPinnedConnection()
             require(Endpoints.allowedModelProtocol(connection.url))
         active?.set(connection)
         try {
@@ -208,7 +208,7 @@ class JsonHttp : SseTransport {
 
     override fun streamRequest(url: String, body: JSONObject, headers: Map<String, String>,
         active: AtomicReference<HttpURLConnection?>, readTimeoutMs: Int, onData: (String) -> Unit): JSONObject? {
-        val connection = URL(url).openConnection() as HttpURLConnection
+        val connection = URL(url).openPinnedConnection()
         require(Endpoints.allowedModelProtocol(connection.url))
         active.set(connection)
         try {
@@ -291,7 +291,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         if ((!image && !text) || row.file.length() != row.sizeBytes) throw ApiFailure(409, "ATTACHMENT_CHANGED")
         val url = "${host.origin}/personal/v1/sessions/$sessionId/attachments/${row.id}" +
             "?requestId=${URLEncoder.encode(requestId, "UTF-8")}&name=${URLEncoder.encode(row.name, "UTF-8")}" 
-        val connection = URL(url).openConnection() as HttpURLConnection
+        val connection = URL(url).openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))
         try {
             connection.instanceFollowRedirects = false
@@ -343,7 +343,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         require(sessionId.matches(Regex("session-[0-9a-f-]{36}")) &&
             durableId.matches(Regex("sha256:[a-f0-9]{64}")))
         val connection = URL("${host.origin}/personal/v1/sessions/$sessionId/attachments/$durableId")
-            .openConnection() as HttpURLConnection
+            .openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))
         try {
             connection.instanceFollowRedirects = false
@@ -376,7 +376,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
             contentType.matches(Regex("[a-z0-9][a-z0-9.+-]{0,63}/[a-z0-9][a-z0-9.+-]{0,63}")) &&
             expectedSize in 1..AttachmentStore.MAX_IMAGE_BYTES && expectedSha256.matches(Regex("[a-f0-9]{64}")))
         val connection = URL("${host.origin}/personal/v1/sync/attachments/$attachmentId")
-            .openConnection() as HttpURLConnection
+            .openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))
         try {
             connection.instanceFollowRedirects = false
@@ -422,7 +422,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         if (file.length() != row.size || row.size !in 1..AttachmentStore.MAX_IMAGE_BYTES)
             throw ApiFailure(409, "ATTACHMENT_CHANGED")
         val connection = URL(imageUrl(host, row.conversationId, row.messageId, row.attachmentId, row.name))
-            .openConnection() as HttpURLConnection
+            .openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))
         active?.set(connection)
         try {
@@ -478,7 +478,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         }
         val hash = digest.digest().joinToString("") { "%02x".format(it) }
         val connection = URL(imageUrl(host, row.conversationId, row.messageId, row.attachmentId) + "&variant=display")
-            .openConnection() as HttpURLConnection
+            .openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))
         active?.set(connection)
         try {
@@ -532,7 +532,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
             validImageScopeId(attachmentId))
         val connection = URL("${host.origin}/personal/v1/sync/attachments/$attachmentId" +
             if (display) "?variant=display" else "")
-            .openConnection() as HttpURLConnection
+            .openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))
         try {
             connection.instanceFollowRedirects = false
@@ -593,6 +593,8 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         return identityFromAuth(origin, response)
     }
 
+    fun cloudIdentity(origin: String, response: HttpReply): HostIdentity = identityFromAuth(origin, response)
+
     private fun identityFromAuth(origin: String, response: HttpReply): HostIdentity {
         val cookie = response.cookie?.substringBefore(';') ?: throw ApiFailure(502, "COOKIE_MISSING")
         if (!cookie.matches(Regex("wm_personal_session=[A-Za-z0-9_-]{40,128}"))) throw ApiFailure(502, "COOKIE_INVALID")
@@ -621,6 +623,14 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         if (includeAvatar) body.put("avatar", avatar ?: JSONObject.NULL)
         return http.request("${host.origin}/personal/v1/auth/profile", "PATCH", body,
             authWriteHeaders(host)).body
+    }
+
+    fun cloudPending(host: HostIdentity): JSONObject = http.request("${host.origin}/personal/v1/cloud/devices/pending", "GET",
+        headers = mapOf("Cookie" to host.cookie)).body
+    fun cloudDecision(host: HostIdentity, id: String, decision: String): JSONObject {
+        require(id.matches(Regex("[a-f0-9-]{36}")) && decision in setOf("allow", "deny"))
+        return http.request("${host.origin}/personal/v1/cloud/devices/$id/decision", "POST",
+            JSONObject().put("decision", decision), authWriteHeaders(host)).body
     }
 
     fun devices(host: HostIdentity): JSONObject = http.request("${host.origin}/personal/v1/auth/devices", "GET",
@@ -906,7 +916,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
 
     fun artifactBytes(host: HostIdentity, artifactId: String): ByteArray {
         require(artifactId.matches(Regex("[A-Za-z0-9_-]{1,128}")))
-        val connection = URL("${host.origin}/personal/v1/artifacts/$artifactId/download").openConnection() as HttpURLConnection
+        val connection = URL("${host.origin}/personal/v1/artifacts/$artifactId/download").openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))
         try {
             connection.instanceFollowRedirects = false

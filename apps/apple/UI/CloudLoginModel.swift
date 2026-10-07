@@ -208,8 +208,9 @@ final class CloudLoginModel: ObservableObject {
     private func message(_ error: Error) -> String {
         if let cloud = error as? CloudLoginFailure { return cloud.localizedDescription }
         if let api = error as? APIFailure {
+            if case .server(401, "PAIRING_INVALID") = api { return CloudLoginFailure.pairing.localizedDescription }
             if case .server(403, "DEVICE_NOT_TRUSTED") = api { return "这台设备的授权已被拒绝或撤销，请在电脑上重新配对。" }
-            if case .server(400, "invalid_grant") = api { return "云端尚未确认此设备公钥，请完成云端原生登录接线后重试。" }
+            if case .server(400, "invalid_grant") = api { return "云端未能确认此设备，请检查客户端登记与云服务版本后重新登录。" }
             return api.localizedDescription
         }
         return "连接不可用，请检查云端与电脑连接后重试。"
