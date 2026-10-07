@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 对话时间线 | 进行中（`wp/m0-3-timeline`）；M0-2 已合入 [PR #24](https://github.com/memoweft/weftmate/pull/24) |
-| Codex · Mac | MW-2 observed 桥接 | MemoWeft / WeftMate 两侧实现完成；真实 Python Core 集成场景通过，PR / CI 验证中；MemoWeft PR 先合入，部署需 observed v1 Core |
+| Codex · Mac | MW-2 observed 桥接 | 实现完成待 Claude 审查：[MemoWeft #84](https://github.com/memoweft/memoweft/pull/84)（CI Gate 已绿）→ [WeftMate #28](https://github.com/memoweft/weftmate/pull/28)；真实 Core 集成通过；按此顺序合入，部署需升级 observed v1 Core |
 
 已完成：
 - 规则松绑与文档归档；GitHub `memoweft/weftmate` 已用本地历史重置（旧仓库备份在 `WeftMate/References/_archive/github-weftmate-2026-10-07.bundle`）。
@@ -20,7 +20,7 @@
 
 ## 最近一次场景结果
 
-MW-2：真实 Python Core RPC 集成 1/1、持久待办/并发撤回 1/1、健康 HTTP 回归 7/7、类型检查与发布预检通过；本地/云端过滤保留普通偏好、权限变更、覆盖清除旧指标、删除/导出/重启均通过。CI 新增固定 MemoWeft MW-2 提交的真实 Core 集成任务，所有数据为隔离合成账号。完整 CI 等待最终 PR head 验证。
+MW-2：真实 Python Core RPC 集成 1/1、持久待办/并发撤回 1/1、健康 HTTP 回归 7/7、类型检查与发布预检通过；本地/云端过滤保留普通偏好、权限变更、覆盖清除旧指标、删除/导出/重启均通过。CI 新增固定 MemoWeft MW-2 提交的真实 Core 集成任务，所有数据为隔离合成账号。本机 required：710 通过/8 跳过，既有 127.0.0.2 回环别名缺失导致 1 项环境失败；PR 的干净 Linux CI 为最终门禁，既有精确例外清单未改。
 
 H2 修订：隔离健康/模型位置/账号模型/设置/模型目录测试 22/22，含有摘要 + false + 云端照常召回、LAN/loopback 地址边界、手动覆盖、位置修订/幂等/凭据复用/重开存储；既有记忆/个人访问/界面/模型凭据回归 119 通过，7 项已知主干失败与 1 项 POSIX 下 Windows 路径夹具失败均在原 CI 精确例外中；类型检查、发布预检、依赖冒烟/审计通过（0 漏洞）；模型表单隔离交互 1/1。本机 CI required：709 通过/7 跳过，唯一失败为缺 127.0.0.2 回环别名导致合成 HTTP 夹具 EADDRNOTAVAIL（现有 macOS CI 管理员步骤负责配置）。GitHub push/PR 六项 job 因付款/额度未启动，尚未全绿；见 PR #25。未连真实宿主、未碰日用数据；vendor/真实 Core observed 写入与撤回未验，CI 按精确例外运行；main `201d36a` 复现 M0-2 model-budget-runtime 缺 vendor，已补该用例到 vendorTests，未列为产品通过；CI 另发现既有 IPC 夹具读到半写 JSON，已改夹具为原子发布回执，未改生产生命周期逻辑，相关生命周期夹具 10 项通过（POSIX 整树清理仍按原例外不运行）。
 
