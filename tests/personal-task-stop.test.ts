@@ -58,7 +58,7 @@ test('stop freezes exact receipts, ignores same-text unrelated turns, and withdr
         ({ receiptId, status: 'cancel_requested' })) }
     },
     readEvents: async ({ afterSeq }: { afterSeq: number }) => ({
-      events: events.filter((event) => event.seq > afterSeq),
+      events: events.filter((event) => afterSeq === undefined || event.seq > afterSeq),
       nextSeq: events.length ? events.at(-1).seq : afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => sessions.has(sessionId)
       ? { sessionId, agentPreset: 'personal-remote', running: false } : null,

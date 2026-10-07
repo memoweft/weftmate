@@ -57,7 +57,7 @@ test('task supplement, stop intent and observed resume keep one root across rest
     cancelSession: async () => { throw new Error('task stop must not use session-wide cancel') },
     openDesktopApp: async () => { appCalls++; return { accepted: true, observed: true, outcome: 'opened' } },
     readEvents: async ({ afterSeq }: { afterSeq: number }) => ({
-      events: events.filter((event: any) => event.seq > afterSeq),
+      events: events.filter((event: any) => afterSeq === undefined || event.seq > afterSeq),
       nextSeq: events.length ? (events.at(-1) as any).seq : afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => sessions.has(sessionId)
       ? { sessionId, title: 'Synthetic', running, agentPreset: 'personal-remote' } : null,

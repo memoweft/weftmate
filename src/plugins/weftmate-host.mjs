@@ -27,6 +27,7 @@ import {
   createPerceptionInjector,
 } from '../runtime/gateway/index.mjs'
 import { InProcessApiClient, toFetchHandler } from '@deepseek-ai/dsh-host-apiproxy'
+import { nativeTimelineLog } from '../runtime/dsh-adapter/timeline.mjs'
 
 export const name = 'weftmate-host'
 // apiProxy is a hard composition dependency: Gateway v1 constructs its
@@ -40,6 +41,7 @@ export function apply(ctx) {
   // Required supported seam: same composed runtime only, never a second DSH client/runtime.
   const gatewayV1 = createGatewayV1({
     client: new InProcessApiClient(toFetchHandler(apiProxy)),
+    readLog: nativeTimelineLog(ctx),
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。
     diagnostics: {
       runtime: { version: process.env.WEFTMATE_APP_VERSION ?? 'dev', startedAt: Date.now() },

@@ -1,0 +1,7 @@
+# Review draft. Import into the existing Caddyfile, preserving other sites.
+# Change only this reserved example name to the approved API domain at deploy.
+# This terminates TLS for the control plane ONLY, never host content traffic.
+api.example.com {
+    reverse_proxy 127.0.0.1:8787
+    # No HTTP access log: future auth requests may contain authorization codes.
+}

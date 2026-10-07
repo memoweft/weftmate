@@ -159,7 +159,7 @@ test('task15-narrow candidate bridge rejects invalid and mismatched owner, sourc
 test('task15-narrow candidate bridge propagates a real history read failure and recovers only after it is readable', async () => {
   await control('history.fail')
   try { const response = await bridge('shared.sessions.events', { sessionId: candidate.sessionId, afterSeq: -1 })
-    assert.equal(response.status, 422); assert.equal(response.body.error.code, 'HISTORY_WINDOW_LIMIT')
+    assert.equal(response.status, 503); assert.equal(response.body.error.code, 'BACKEND_UNAVAILABLE')
     assert.equal(response.body.result, undefined)
   } finally { await control('history.readable') }
   const recovered = await bridge('shared.sessions.events', { sessionId: candidate.sessionId, afterSeq: -1 })
