@@ -7,7 +7,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
-import { assertLoopbackOrigin, hostRuntimeState, observeHostChild, personalHostRequested, startPersonalHost,
+import { assertLoopbackOrigin, hostRuntimeState, observeHostChild, personalHostRequested, personalWorkspaceDirectory, startPersonalHost,
   validatePersonalHostProfile, PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../src/host-mode.mjs'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
@@ -60,6 +60,28 @@ test('launcher refuses any existing unmarked profile and main validation uses th
     const dry = spawnSync(process.execPath, [launcher, '--user-data-dir', fresh, '--dry-run'], { encoding: 'utf8' })
     assert.equal(dry.status, 0, dry.stderr)
     assert.throws(() => validatePersonalHostProfile(fresh))
+  } finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test('personal host accepts an existing explicit workspace while keeping the profile default', () => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-host-workspace-test-'))
+  try {
+    const profile = join(root, 'profile')
+    const workspace = join(root, 'selected-workspace')
+    mkdirSync(workspace)
+    assert.equal(personalWorkspaceDirectory([], true, profile), join(profile, 'workspace'))
+    assert.equal(personalWorkspaceDirectory([`--workspace-dir=${workspace}`], true, profile), workspace)
+    assert.throws(() => personalWorkspaceDirectory([`--workspace-dir=${workspace}`], false, profile))
+    assert.throws(() => personalWorkspaceDirectory([`--workspace-dir=${join(root, 'missing')}`], true, profile))
+    const explicit = spawnSync(process.execPath, [launcher, '--user-data-dir', profile,
+      '--workspace-dir', workspace, '--dry-run'], { encoding: 'utf8' })
+    assert.equal(explicit.status, 0, explicit.stderr)
+    assert.ok(explicit.stdout.includes(`workspace=${workspace}`))
+    const defaulted = spawnSync(process.execPath, [launcher, '--user-data-dir', profile, '--dry-run'], { encoding: 'utf8' })
+    assert.equal(defaulted.status, 0, defaulted.stderr)
+    assert.ok(defaulted.stdout.includes(`workspace=${join(profile, 'workspace')}`))
   } finally {
     rmSync(root, { recursive: true, force: true })
   }

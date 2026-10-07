@@ -293,6 +293,33 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .task-detail-dialog { width: min(760px, calc(100% - 32px)); }
 .task-detail-dialog .dialog-body { min-height: 240px; }
 .task-detail-status { color: var(--ink-secondary); }
+.conversation-task { align-self: stretch; list-style: none; padding: 13px 15px; border: 1px solid var(--line); border-radius: 14px; color: var(--ink-secondary); font-size: 13px; line-height: 1.65; overflow-wrap: anywhere; }
+.conversation-task-title { display: block; color: var(--ink); font-size: 13px; font-weight: 600; }
+.conversation-task-steps { list-style: none; margin: 7px 0; padding: 0; }
+.conversation-task-steps li + li { margin-top: 3px; }
+.conversation-task p { margin: 7px 0 0; }
+.conversation-task-notice { color: var(--ink); }
+.conversation-task-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.conversation-task-more { margin-top: 7px; }
+.conversation-task-more summary { cursor: pointer; color: var(--ink); min-height: 44px; box-sizing: border-box; display: flex; align-items: center; padding: 5px 0; }
+.conversation-task-more summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.conversation-task-more p { padding-left: 10px; }
+.conversation-approval { background: var(--surface-soft); }
+.conversation-approval .conversation-approval-reason { color: var(--ink); white-space: pre-wrap; }
+.conversation-approval .conversation-approval-status { color: var(--ink-secondary); }
+.conversation-approval-status:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 4px; }
+.conversation-approval .button { min-height: 44px; }
+.conversation-question .question-item { min-width: 0; margin: 16px 0 0; padding: 0; border: 0; }
+.question-item legend { color: var(--ink); font-weight: 600; white-space: pre-wrap; }
+.conversation-question .question-text, .conversation-question .question-detail { white-space: pre-wrap; }
+.question-option { display: flex; gap: 10px; align-items: flex-start; padding-block: 8px; color: var(--ink); cursor: pointer; }
+.question-option input { flex: 0 0 auto; width: 16px; margin-top: 4px; accent-color: var(--accent); }
+.question-option-text small { display: block; color: var(--ink-secondary); }
+.question-custom { display: block; margin-top: 9px; color: var(--ink-secondary); }
+.question-custom textarea { display: block; box-sizing: border-box; width: 100%; margin-top: 6px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink); font: inherit; font-size: 16px; resize: vertical; caret-color: var(--accent); }
+.question-custom textarea:focus-visible, .conversation-question-status:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.question-custom textarea:disabled { color: var(--ink-secondary); opacity: 1; }
+.conversation-question .button { min-height: 44px; }
 .task-detail-section + .task-detail-section { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--line); }
 .task-detail-section h3 { margin: 0 0 7px; font-size: 14px; font-weight: 600; }
 #task-detail-source { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -362,6 +389,7 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 .memory-detail-dialog textarea { display: block; width: 100%; resize: vertical; min-height: 130px; padding: 10px 12px; border: 1px solid #cdd7e7; border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; }
 .memory-detail-actions { flex-wrap: wrap; }
 @media (max-width: 640px) {
+  .conversation-task-actions .button { min-height: 44px; }
   .site-header { min-height: 68px; padding: 12px 20px; align-items: flex-start; }
   .site-title { flex-direction: column; align-items: flex-start; gap: 0; }
   .site-subtitle { font-size: 11px; }

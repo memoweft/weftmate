@@ -5,21 +5,23 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
-import { canonicalArtifact, createPersonalArtifactStore } from '../src/personal-artifacts/index.mjs'
+import { artifactContentType, canonicalArtifact, createPersonalArtifactStore } from '../src/personal-artifacts/index.mjs'
 
 const PASSWORD = 'correct horse battery staple'
 const sha = (value: string) => createHash('sha256').update(value).digest('hex')
 
-function backend() {
+function backend(options: { receipts?: boolean } = {}) {
   const sessions = new Set<string>()
   const calls: string[] = []
+  let messageSequence = 0
   return {
     calls, sessions,
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready' }),
     listModels: async () => [{ id: 'local', name: 'Local', model: 'synthetic', configured: true }],
     preflight: async ({ kind }: { kind: string }) => { calls.push(kind); return { ok: true } },
     createSession: async ({ sessionId }: { sessionId: string }) => { sessions.add(sessionId); return { sessionId } },
-    sendMessage: async () => ({ accepted: true }),
+    sendMessage: async () => ({ accepted: true,
+      ...(options.receipts ? { receiptId: `fixture-receipt-${++messageSequence}` } : {}) }),
     cancelSession: async () => ({ accepted: true }),
     readEvents: async ({ afterSeq }: { afterSeq: number }) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => sessions.has(sessionId)
@@ -34,6 +36,7 @@ async function api(origin: string, method: string, route: string, body?: object,
     body: body ? JSON.stringify(body) : undefined })
   const bytes = Buffer.from(await response.arrayBuffer())
   return { status: response.status, disposition: response.headers.get('content-disposition'),
+    contentType: response.headers.get('content-type'), bytes,
     body: response.headers.get('content-type')?.includes('json')
       ? JSON.parse(bytes.toString('utf8')) : bytes.toString('utf8') }
 }
@@ -46,6 +49,113 @@ async function waitCommand(origin: string, headers: Record<string, string>, comm
   }
   throw new Error('command did not settle')
 }
+
+async function artifactSourceFixture() {
+  const root = mkdtempSync(join(tmpdir(), 'personal-artifact-source-'))
+  const b = backend({ receipts: true })
+  let service = await createPersonalAccessService({ root, port: 0, backend: b })
+  const { origin, hostId } = await service.start()
+  const grant = await service.issueSetupGrant()
+  await api(origin, 'POST', '/personal/v1/auth/setup',
+    { grant: grant.grant, username: 'SourceOwner', password: PASSWORD, deviceName: 'Fixture' }, { origin })
+  const login = await fetch(`${origin}/personal/v1/auth/login`, { method: 'POST',
+    headers: { origin, 'content-type': 'application/json' },
+    body: JSON.stringify({ username: 'SourceOwner', password: PASSWORD, deviceName: 'Fixture caller' }) })
+  const auth = { origin, cookie: login.headers.get('set-cookie')!.split(';')[0],
+    'x-weftmate-csrf': (await login.json()).csrfToken }
+  const opened = await api(origin, 'POST', '/personal/v1/commands',
+    { requestId: 'source-fixture-session', kind: 'session.create', targetDeviceId: hostId, modelProfileId: 'local' }, auth)
+  await waitCommand(origin, auth, opened.body.command.commandId)
+  const sessionId = opened.body.command.sessionId
+  return {
+    root, origin, auth, sessionId,
+    async send(requestId: string, text: string) {
+      const sent = await api(origin, 'POST', '/personal/v1/commands',
+        { requestId, kind: 'session.message', targetDeviceId: hostId, sessionId, text }, auth)
+      return waitCommand(origin, auth, sent.body.command.commandId)
+    },
+    save(input: object) { return service.submitToolArtifact({ sessionId, turn: 4,
+      callId: 'source-fixture-call', fileName: 'source-result.csv', content: 'marker\nfixture\n', ...input }) },
+    async preparedHash(commandId: string, modelInputHash: string) {
+      await service.close()
+      const file = join(root, 'store.json')
+      const stored = JSON.parse(readFileSync(file, 'utf8'))
+      // The isolated record models a trusted prepared-input field, preserving its payload digest.
+      const command = stored.accounts[stored.legacyOwnerId].commands[commandId]
+      command.payload.modelInputHash = modelInputHash
+      command.payloadHash = sha(JSON.stringify(command.payload))
+      writeFileSync(file, JSON.stringify(stored))
+      service = await createPersonalAccessService({ root, port: 0, backend: b })
+      await service.start()
+    },
+    async close() { await service.close(); rmSync(root, { recursive: true, force: true }) },
+  }
+}
+
+test('artifact source receipt selects the current accepted root when earlier same text has no turn binding', async () => {
+  const f = await artifactSourceFixture()
+  try {
+    const text = 'Repeated fixture request.'
+    const previous = await f.send('source-prior', text)
+    const current = await f.send('source-current', text)
+    const result = await f.save({ receiptId: current.receiptId, messageHash: sha(text) })
+    assert.equal(result.state, 'observed')
+    assert.equal(result.taskId, current.commandId)
+    assert.notEqual(result.taskId, previous.commandId)
+    const stored = JSON.parse(readFileSync(join(f.root, 'store.json'), 'utf8'))
+    const commands = stored.accounts[stored.legacyOwnerId].commands
+    assert.equal(commands[previous.commandId].dshTurn, undefined)
+    assert.equal(commands[current.commandId].dshTurn, 4)
+    assert.equal(commands[result.commandId].toolSource.sourceCommandId, current.commandId)
+  } finally { await f.close() }
+})
+
+test('artifact source rejects a forged receipt even when its text hash has one candidate', async () => {
+  const f = await artifactSourceFixture()
+  try {
+    const text = 'Unique fixture request.'
+    await f.send('source-unique', text)
+    await assert.rejects(f.save({ receiptId: 'fixture-forged-receipt', messageHash: sha(text) }),
+      (error: { code: string }) => error.code === 'TOOL_SOURCE_UNAVAILABLE')
+  } finally { await f.close() }
+})
+
+test('artifact source uses the trusted prepared model input hash before the original text digest', async () => {
+  const f = await artifactSourceFixture()
+  try {
+    const text = 'Fixture attachment source.'
+    const source = await f.send('source-prepared', text)
+    const prepared = sha('Canonical fixture model input with prepared attachment text.')
+    await f.preparedHash(source.commandId, prepared)
+    await assert.rejects(f.save({ receiptId: source.receiptId, messageHash: sha(text) }),
+      (error: { code: string }) => error.code === 'TOOL_SOURCE_UNAVAILABLE')
+    const result = await f.save({ receiptId: source.receiptId, messageHash: prepared })
+    assert.equal(result.state, 'observed')
+    assert.equal(result.taskId, source.commandId)
+  } finally { await f.close() }
+})
+
+test('artifact source retains a unique legacy source without a receipt', async () => {
+  const f = await artifactSourceFixture()
+  try {
+    const text = 'Legacy unique fixture request.'
+    const source = await f.send('source-legacy', text)
+    const result = await f.save({ messageHash: sha(text) })
+    assert.equal(result.state, 'observed')
+    assert.equal(result.taskId, source.commandId)
+  } finally { await f.close() }
+})
+
+test('artifact source refuses ambiguous legacy same text without selecting the latest request', async () => {
+  const f = await artifactSourceFixture()
+  try {
+    const text = 'Legacy repeated fixture request.'
+    await f.send('source-legacy-prior', text)
+    await f.send('source-legacy-current', text)
+    await assert.rejects(f.save({ messageHash: sha(text) }),
+      (error: { code: string }) => error.code === 'TOOL_SOURCE_UNAVAILABLE')
+  } finally { await f.close() }
+})
 
 test('owner turn writes and verifies one file; retry, conflict, account and revoked reads stay bounded', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-artifact-'))
@@ -98,12 +208,47 @@ test('owner turn writes and verifies one file; retry, conflict, account and revo
     assert.equal(task.body.artifacts[0].artifactId, result.artifactId)
     assert.equal('sourceText' in (await api(origin, 'GET', '/personal/v1/commands',
       undefined, phoneAuth)).body.commands[0], false)
-    assert.equal((await api(origin, 'GET', `/personal/v1/artifacts/${result.artifactId}/preview`,
-      undefined, phoneAuth)).body.text, request.content)
+    const preview = await api(origin, 'GET', `/personal/v1/artifacts/${result.artifactId}/preview`,
+      undefined, phoneAuth)
+    assert.equal(preview.body.text, request.content)
+    assert.equal(preview.body.artifact.contentType, 'text/plain; charset=utf-8')
     const downloaded = await api(origin, 'GET', `/personal/v1/artifacts/${result.artifactId}/download`,
       undefined, phoneAuth)
     assert.equal(downloaded.body, request.content)
+    assert.equal(downloaded.contentType, 'text/plain; charset=utf-8')
     assert.equal(downloaded.disposition?.includes(`filename*=UTF-8''${encodeURIComponent(request.fileName)}`), true)
+    const textSamples = [
+      { fileName: '说明.txt', content: 'Plain UTF-8 text.\n', contentType: 'text/plain; charset=utf-8' },
+      { fileName: '表格.csv', content: '\uFEFFname,note\r\n示例,"quoted, value"\r\n', contentType: 'text/csv; charset=utf-8' },
+      { fileName: 'rows.tsv', content: 'name\tnote\n示例\tTabbed text\n', contentType: 'text/tab-separated-values; charset=utf-8' },
+      { fileName: 'state.json', content: '{"name":"示例"}\n', contentType: 'text/plain; charset=utf-8' },
+      { fileName: 'notes.pdf', content: 'This artifact contains text.\n', contentType: 'text/plain; charset=utf-8' },
+    ]
+    const textArtifacts: any[] = []
+    for (const [index, sample] of textSamples.entries()) {
+      const artifact = await service.submitToolArtifact({ ...request, callId: `text-${index}`,
+        fileName: sample.fileName, content: sample.content })
+      textArtifacts.push(artifact)
+      assert.equal(artifact.state, 'observed')
+      assert.equal(artifact.fileName, sample.fileName)
+      assert.equal(artifact.contentType, sample.contentType)
+      assert.equal(artifact.size, Buffer.byteLength(sample.content, 'utf8'))
+      assert.equal(artifact.sha256, sha(sample.content))
+      assert.equal(artifact.taskId, taskId)
+      const delivered = await api(origin, 'GET', `/personal/v1/artifacts/${artifact.artifactId}/preview`,
+        undefined, phoneAuth)
+      assert.equal(delivered.body.text, sample.content)
+      assert.equal(delivered.body.artifact.contentType, sample.contentType)
+      const original = await api(origin, 'GET', `/personal/v1/artifacts/${artifact.artifactId}/download`,
+        undefined, phoneAuth)
+      assert.equal(original.status, 200)
+      assert.deepEqual(original.bytes, Buffer.from(sample.content, 'utf8'))
+      assert.equal(original.contentType, sample.contentType)
+      assert.equal(original.disposition, `attachment; filename*=UTF-8''${encodeURIComponent(sample.fileName)}`)
+    }
+    const allArtifacts = (await api(origin, 'GET', `/personal/v1/tasks/${taskId}`, undefined, phoneAuth)).body.artifacts
+    assert.deepEqual(allArtifacts.map((artifact: any) => artifact.fileName).sort(),
+      [request.fileName, ...textSamples.map(sample => sample.fileName)].sort())
     const artifactPath = join(root, 'artifacts', setup.body.account.ownerId, taskId,
       `${result.artifactId}.artifact`)
     writeFileSync(artifactPath, 'tampered')
@@ -137,8 +282,14 @@ test('owner turn writes and verifies one file; retry, conflict, account and revo
     const stateFile = join(root, 'store.json')
     const stored = JSON.parse(readFileSync(stateFile, 'utf8'))
     const saved = stored.accounts[stored.legacyOwnerId].commands[result.commandId]
+    assert.equal(saved.contentType, 'text/plain; charset=utf-8')
+    for (const [index, artifact] of textArtifacts.entries()) {
+      assert.equal(stored.accounts[stored.legacyOwnerId].commands[artifact.commandId].contentType,
+        textSamples[index].contentType)
+    }
     saved.state = 'dispatching'
     delete saved.verification
+    delete saved.contentType // Legacy text records have no stored media type.
     writeFileSync(stateFile, JSON.stringify(stored))
     const recovered = await createPersonalAccessService({ root, port: 0, backend: b })
     try {
@@ -147,8 +298,15 @@ test('owner turn writes and verifies one file; retry, conflict, account and revo
         undefined, { cookie: ownerAuth.cookie })).body.command.state, 'observed')
       assert.equal((await api(nextOrigin, 'GET', `/personal/v1/tasks/${taskId}`,
         undefined, { cookie: ownerAuth.cookie })).body.sourceText, message)
-      assert.equal((await api(nextOrigin, 'GET', `/personal/v1/artifacts/${result.artifactId}/preview`,
-        undefined, { cookie: ownerAuth.cookie })).body.text, request.content)
+      const legacyPreview = await api(nextOrigin, 'GET', `/personal/v1/artifacts/${result.artifactId}/preview`,
+        undefined, { cookie: ownerAuth.cookie })
+      assert.equal(legacyPreview.body.text, request.content)
+      assert.equal(legacyPreview.body.artifact.contentType, 'text/plain; charset=utf-8')
+      const csv = textArtifacts[1], csvSample = textSamples[1]
+      const csvOriginal = await api(nextOrigin, 'GET', `/personal/v1/artifacts/${csv.artifactId}/download`,
+        undefined, { cookie: ownerAuth.cookie })
+      assert.deepEqual(csvOriginal.bytes, Buffer.from(csvSample.content, 'utf8'))
+      assert.equal(csvOriginal.contentType, csvSample.contentType)
     } finally { await recovered.close() }
     const missingFile = join(root, 'artifacts', stored.legacyOwnerId, taskId, `${result.artifactId}.artifact`)
     rmSync(missingFile)
@@ -174,10 +332,14 @@ test('private artifact storage rejects linked files, changed bytes and unsafe na
   const artifact = canonicalArtifact('notes.md', 'First line\n')
   const file = join(root, 'artifacts', ownerId, taskId, `${artifactId}.artifact`)
   try {
-    for (const name of ['../bad.md', 'C:\\bad.md', 'bad.txt/child', 'a..md', 'CON.md']) {
+    for (const name of ['../bad.md', 'C:\\bad.md', 'bad.txt/child', 'a..md', 'CON.md', 'notes.', 'name. ext']) {
       assert.throws(() => canonicalArtifact(name, 'text'), { code: 'INVALID_COMMAND' })
     }
     assert.equal(canonicalArtifact('方案记录.md', '内容').fileName, '方案记录.md')
+    assert.equal(canonicalArtifact('tables.CSV', 'a,b\n1,2\n').contentType, 'text/csv; charset=utf-8')
+    assert.equal(artifactContentType('notes.pdf'), 'text/plain; charset=utf-8')
+    assert.throws(() => canonicalArtifact('good.csv', ''), { code: 'INVALID_COMMAND' })
+    assert.throws(() => canonicalArtifact('good.csv', 'a\0b'), { code: 'INVALID_COMMAND' })
     assert.throws(() => canonicalArtifact('good.md', '\ud800'), { code: 'INVALID_COMMAND' })
     assert.throws(() => canonicalArtifact('good.md', 'x'.repeat(128 * 1024 + 1)), { code: 'INVALID_COMMAND' })
     await store.write(ownerId, taskId, artifactId, artifact)

@@ -16,7 +16,7 @@ import { canonicalCompletion, projectCompletion } from './model-completion.mjs';
 import { createMobileUiPublisher } from './mobile-ui-release.mjs';
 import { createNativeDownloadPublisher } from './native-downloads.mjs';
 import { canonicalMemoryPathname, handlePersonalMemoryHttp } from '../personal-memory/http.mjs';
-import { canonicalArtifact, createPersonalArtifactStore, validArtifactFileName,
+import { artifactContentType, canonicalArtifact, createPersonalArtifactStore, validArtifactFileName,
   MAX_ARTIFACT_BYTES } from '../personal-artifacts/index.mjs';
 import { inspectProjectRoot, listProjectFiles, readProjectFile } from '../personal-projects/index.mjs';
 import { canonicalPublicUrl } from '../personal-browser/network.mjs';
@@ -41,6 +41,8 @@ const MAX_BODY = 12 * 1024;
 const MAX_TEXT = 8 * 1024;
 const MAX_PAGE = 200;
 const MAX_COMMANDS = 5_000;
+const MAX_TOOL_APPROVALS = 5_000;
+const MAX_COMMAND_TOOL_APPROVALS = 256;
 const MAX_ACTIVE_PASSWORD_DEVICES = 32;
 const MAX_ACCOUNTS = 64;
 const MAX_UNRECONCILED_TEXT_BYTES = 8 * 1024 * 1024;
@@ -58,6 +60,7 @@ const MODEL_SSE_MAX = 8 * 1024 * 1024;
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
 const MODEL_PROFILE_ID = /^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/;
 const REQUEST_ID = /^[A-Za-z0-9_.:-]{1,128}$/;
+const TOOL_RUNTIME_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/;
 const SAFE_CODES = new Set([
   'RUNTIME_UNAVAILABLE', 'MODEL_UNAVAILABLE', 'SESSION_UNAVAILABLE',
   'CAPABILITY_UNAVAILABLE', 'TARGET_UNAVAILABLE', 'MODEL_ROUTE_BLOCKED',
@@ -71,7 +74,7 @@ const PUBLIC_CODES = new Set([
   'LOGIN_RATE_LIMITED', 'ACCOUNT_ALREADY_CONFIGURED', 'ACCOUNT_ALREADY_EXISTS',
   'ACCOUNT_LOGIN_REQUIRED', 'AMBIGUOUS_AUTH',
   'DEVICE_LIMIT', 'SESSION_REPLACED', 'SESSION_READ_ONLY', 'SESSION_EXPIRED',
-  'TOOL_SOURCE_UNAVAILABLE',
+  'TOOL_SOURCE_UNAVAILABLE', 'APPROVAL_NOT_PENDING', 'QUESTION_NOT_PENDING', 'QUESTION_OUTCOME_UNCONFIRMED',
   'TOOL_INTENT_UNCONFIRMED',
   'MEMORY_DISABLED', 'MEMORY_UNAVAILABLE', 'MEMORY_DELETE_UNAVAILABLE',
   'MEMORY_ACTION_UNSUPPORTED', 'MEMORY_SEARCH_LIMIT', 'MEMORY_REVISION_CHANGED',
@@ -104,6 +107,244 @@ const LEGACY_SCOPES = new Set(['sessions:read', 'commands:write']);
 const SCOPES = new Set([...LEGACY_SCOPES, 'account:manage']);
 const KINDS = new Set(['session.create', 'session.message', 'session.cancel', 'desktop.open_app']);
 const INTERNAL_ARTIFACT_KIND = 'desktop.write_artifact';
+const GENERAL_TOOL_NAME = /^[A-Za-z][A-Za-z0-9_.:-]{0,159}$/;
+const EXECUTION_STATES = new Set(['running', 'completed', 'failed', 'cancelled', 'uncertain']);
+const JOB_STATES = new Set(['running', 'stopping', 'completed', 'killed', 'failed', 'uncertain', 'unconfirmed']);
+const EXECUTION_FIELDS = ['executionId', 'sourceCommandId', 'sourceReceiptId', 'rootCallId', 'callId',
+  'toolName', 'turn', 'state', 'argumentsHash', 'runtimeId', 'startedAt', 'updatedAt', 'finishedAt', 'resultHash', 'jobId', 'jobState', 'jobObservedAt'];
+const APPROVAL_OUTCOMES = new Set(['allowed-once', 'rejected', 'cancelled', 'unavailable']);
+const APPROVAL_DECISIONS = new Set(['allowed-once', 'rejected']);
+const APPROVAL_STATES = new Set(['pending', 'answered', 'resolved', 'unavailable']);
+const APPROVAL_PUBLIC_FIELDS = ['approvalId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId',
+  'turn', 'callId', 'rootCallId', 'toolName', 'reason', 'createdAt', 'status',
+  'decisionOutcome', 'decisionRequestId', 'answeredAt', 'outcome', 'resolvedAt'];
+const APPROVAL_FIELDS = [...APPROVAL_PUBLIC_FIELDS, 'messageHash', 'argumentsHash', 'runtimeId',
+  'invalidatedAt', 'invalidationReason'];
+const APPROVAL_INVALIDATION_REASONS = new Set(['runtime_unavailable', 'runtime_replaced',
+  'service_recovered', 'service_closing', 'source_unavailable', 'task_stopped', 'model_unavailable']);
+const QUESTION_PUBLIC_FIELDS = ['questionRpcId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId',
+  'turn', 'questions', 'createdAt', 'status', 'answer', 'answerRequestId', 'answeredAt', 'outcome',
+  'resolvedAt', 'answerAcceptedAt', 'reasonCode', 'unavailableAt'];
+const QUESTION_FIELDS = [...QUESTION_PUBLIC_FIELDS, 'runtimeId', 'messageHash', 'sourceSeq', 'observedSeq',
+  'questionsHash', 'answerHash', 'deliveryState', 'deliveryAttemptedAt'];
+const QUESTION_REASONS = new Set(['RUNTIME_UNAVAILABLE', 'SESSION_REPLACED', 'SERVICE_CLOSING',
+  'TOOL_SOURCE_UNAVAILABLE', 'TASK_NOT_READY', 'MODEL_UNAVAILABLE', 'QUESTION_NOT_PENDING', 'QUESTION_OUTCOME_UNCONFIRMED']);
+const QUESTION_DELIVERY_STATES = new Set(['ready', 'dispatching', 'accepted', 'not-pending', 'unconfirmed']);
+
+function questionText(value) {
+  return typeof value === 'string';
+}
+
+function canonicalUserQuestions(value) {
+  if (!Array.isArray(value) || value.length < 1) throw failure('INVALID_REQUEST');
+  if (Buffer.byteLength(JSON.stringify(value), 'utf8') > MAX_BODY) throw failure('BODY_TOO_LARGE', 413);
+  const questions = value.map(question => {
+    exactKeys(question, ['id', 'question', 'header', 'detail', 'options', 'multiSelect', 'intent'], ['id', 'question']);
+    if (!questionText(question.id) || !questionText(question.question) ||
+        ['header', 'detail'].some(key => question[key] !== undefined && !questionText(question[key])) ||
+        question.multiSelect !== undefined && typeof question.multiSelect !== 'boolean') throw failure('INVALID_REQUEST');
+    let options;
+    if (question.options !== undefined) {
+      if (!Array.isArray(question.options)) throw failure('INVALID_REQUEST');
+      options = question.options.map(option => {
+        exactKeys(option, ['label', 'description'], ['label']);
+        if (!questionText(option.label) || option.description !== undefined && !questionText(option.description)) throw failure('INVALID_REQUEST');
+        return { label: option.label, ...(option.description !== undefined ? { description: option.description } : {}) };
+      });
+    }
+    let intent;
+    if (question.intent !== undefined) {
+      exactKeys(question.intent, ['kind', 'approve'], ['kind', 'approve']);
+      if (question.intent.kind !== 'plan-review' || !questionText(question.intent.approve) ||
+          question.detail === undefined || !options?.some(option => option.label === question.intent.approve)) throw failure('INVALID_REQUEST');
+      intent = { kind: 'plan-review', approve: question.intent.approve };
+    }
+    return { id: question.id, question: question.question,
+      ...(question.header !== undefined ? { header: question.header } : {}),
+      ...(question.detail !== undefined ? { detail: question.detail } : {}),
+      ...(options !== undefined ? { options } : {}),
+      ...(question.multiSelect !== undefined ? { multiSelect: question.multiSelect } : {}),
+      ...(intent !== undefined ? { intent } : {}) };
+  });
+  if (Buffer.byteLength(JSON.stringify(questions), 'utf8') > MAX_BODY) throw failure('BODY_TOO_LARGE', 413);
+  return questions;
+}
+
+function canonicalUserQuestionAnswer(value, questions) {
+  exactKeys(value, ['answers'], ['answers']);
+  if (!Array.isArray(value.answers) || value.answers.length !== questions.length) throw failure('INVALID_REQUEST');
+  const answers = value.answers.map((answer, index) => {
+    exactKeys(answer, ['id', 'selected', 'custom'], ['id', 'selected']);
+    const question = questions[index];
+    if (answer.id !== question.id || !Array.isArray(answer.selected) ||
+        answer.selected.some(label => !questionText(label)) || new Set(answer.selected).size !== answer.selected.length ||
+        answer.custom !== undefined && (!questionText(answer.custom) || !answer.custom.trim()) ||
+        question.multiSelect !== true && (answer.selected.length > 1 || answer.custom !== undefined && answer.selected.length > 0)) {
+      throw failure('INVALID_REQUEST');
+    }
+    const labels = new Set((question.options ?? []).map(option => option.label));
+    if (answer.selected.some(label => !labels.has(label))) throw failure('INVALID_REQUEST');
+    return { id: answer.id, selected: [...answer.selected], ...(answer.custom !== undefined ? { custom: answer.custom } : {}) };
+  });
+  const answer = { answers };
+  if (Buffer.byteLength(JSON.stringify(answer), 'utf8') > MAX_BODY) throw failure('BODY_TOO_LARGE', 413);
+  return answer;
+}
+
+function userQuestions(account) {
+  return Object.values(account.commands).flatMap(command => command.userQuestions ?? []);
+}
+
+function publicUserQuestion(row) {
+  return structuredClone(Object.fromEntries(QUESTION_PUBLIC_FIELDS.filter(key => row[key] !== undefined).map(key => [key, row[key]])));
+}
+
+function userQuestionAnswerReceipt(row) {
+  const question = publicUserQuestion(row);
+  question.status = 'answered';
+  for (const key of ['outcome', 'resolvedAt', 'answerAcceptedAt', 'reasonCode', 'unavailableAt']) delete question[key];
+  return { question, requestId: row.answerRequestId };
+}
+
+function invalidateUserQuestion(row, reasonCode, at) {
+  if (!['pending', 'answered'].includes(row.status)) return false;
+  row.status = 'unavailable'; row.reasonCode = reasonCode; row.unavailableAt = at;
+  return true;
+}
+
+function validUserQuestions(command, store) {
+  const rows = command.userQuestions;
+  if (rows === undefined) return true;
+  if (command.kind !== 'session.message' || store.sessions[command.sessionId]?.origin !== 'personal-remote' ||
+      !Array.isArray(rows) || rows.length > MAX_COMMAND_TOOL_APPROVALS ||
+      new Set(rows.map(row => row?.questionRpcId)).size !== rows.length) return false;
+  return rows.every(row => {
+    if (!plainObject(row) || Object.keys(row).some(key => !QUESTION_FIELDS.includes(key)) ||
+        typeof row.questionRpcId !== 'string' || !TOOL_RUNTIME_ID.test(row.questionRpcId) ||
+        typeof row.runtimeId !== 'string' || !TOOL_RUNTIME_ID.test(row.runtimeId) || row.sessionId !== command.sessionId ||
+        row.sourceCommandId !== command.commandId || row.sourceReceiptId !== command.receiptId || !validId(row.sourceReceiptId) ||
+        row.taskId !== (command.rootTaskId ?? command.commandId) || store.commands[row.taskId]?.kind !== 'session.message' ||
+        store.commands[row.taskId]?.rootTaskId !== undefined || store.commands[row.taskId]?.sessionId !== row.sessionId ||
+        !Number.isSafeInteger(row.turn) || row.turn < 1 || row.turn !== command.dshTurn ||
+        row.messageHash !== sourceMessageHash(command) || !Number.isSafeInteger(row.sourceSeq) || row.sourceSeq < 0 ||
+        !Number.isSafeInteger(row.observedSeq) || row.observedSeq < row.sourceSeq ||
+        !validTime(row.createdAt) || !APPROVAL_STATES.has(row.status)) return false;
+    try {
+      if (JSON.stringify(canonicalUserQuestions(row.questions)) !== JSON.stringify(row.questions) ||
+          digest(JSON.stringify(row.questions)) !== row.questionsHash) return false;
+      const hasAnswer = [row.answer, row.answerRequestId, row.answeredAt, row.answerHash].some(value => value !== undefined);
+      if (hasAnswer && (typeof row.answerRequestId !== 'string' || !REQUEST_ID.test(row.answerRequestId) || !validTime(row.answeredAt) ||
+          JSON.stringify(canonicalUserQuestionAnswer(row.answer, row.questions)) !== JSON.stringify(row.answer) ||
+          digest(JSON.stringify(row.answer)) !== row.answerHash || !QUESTION_DELIVERY_STATES.has(row.deliveryState))) return false;
+      if (row.status === 'pending' && (hasAnswer || row.deliveryState !== undefined || row.deliveryAttemptedAt !== undefined) ||
+          row.status === 'answered' && !hasAnswer ||
+          row.status === 'resolved' && (!['answered', 'cancelled'].includes(row.outcome) || !validTime(row.resolvedAt)) ||
+          row.status !== 'resolved' && (row.outcome !== undefined || row.resolvedAt !== undefined) ||
+          row.status === 'unavailable' && (!QUESTION_REASONS.has(row.reasonCode) || !validTime(row.unavailableAt)) ||
+          row.answerAcceptedAt !== undefined && (!hasAnswer || row.deliveryState !== 'accepted' || !validTime(row.answerAcceptedAt)) ||
+          row.status !== 'unavailable' && (row.unavailableAt !== undefined || row.reasonCode !== undefined &&
+            !(row.status === 'resolved' && hasAnswer && row.answerAcceptedAt === undefined &&
+              QUESTION_REASONS.has(row.reasonCode))) ||
+          row.deliveryAttemptedAt !== undefined && !validTime(row.deliveryAttemptedAt) ||
+          !hasAnswer && (row.deliveryState !== undefined || row.deliveryAttemptedAt !== undefined) ||
+          hasAnswer && (row.deliveryState === 'ready' ? row.deliveryAttemptedAt !== undefined : !validTime(row.deliveryAttemptedAt))) return false;
+      return true;
+    } catch { return false; }
+  });
+}
+
+function sourceMessageHash(command) {
+  return command.payload.modelInputHash ?? digest(command.payload.text);
+}
+
+function validToolApprovals(command, store) {
+  const rows = command.toolApprovals;
+  if (rows === undefined) return true;
+  if (command.kind !== 'session.message' || store.sessions[command.sessionId]?.origin !== 'personal-remote' ||
+      !Array.isArray(rows) || rows.length > MAX_COMMAND_TOOL_APPROVALS ||
+      new Set(rows.map(row => row?.approvalId)).size !== rows.length) return false;
+  return rows.every(row => {
+    if (!plainObject(row) || Object.keys(row).some(key => !APPROVAL_FIELDS.includes(key)) ||
+        !TOOL_RUNTIME_ID.test(row.approvalId ?? '') || row.sessionId !== command.sessionId ||
+        row.taskId !== (command.rootTaskId ?? command.commandId) ||
+        store.commands[row.taskId]?.kind !== 'session.message' ||
+        store.commands[row.taskId]?.rootTaskId !== undefined ||
+        store.commands[row.taskId]?.sessionId !== row.sessionId ||
+        row.sourceCommandId !== command.commandId || row.sourceReceiptId !== command.receiptId ||
+        !validId(row.sourceReceiptId) || typeof row.callId !== 'string' || typeof row.rootCallId !== 'string' ||
+        !REQUEST_ID.test(row.callId) || !REQUEST_ID.test(row.rootCallId) ||
+        typeof row.toolName !== 'string' || !GENERAL_TOOL_NAME.test(row.toolName) ||
+        !Number.isSafeInteger(row.turn) || row.turn < 1 || row.turn !== command.dshTurn ||
+        typeof row.reason !== 'string' || row.reason.length > 1000 ||
+        !validTime(row.createdAt) || !APPROVAL_STATES.has(row.status) ||
+        !/^[a-f0-9]{64}$/.test(row.messageHash ?? '') || row.messageHash !== sourceMessageHash(command) ||
+        !/^[a-f0-9]{64}$/.test(row.argumentsHash ?? '') ||
+        !TOOL_RUNTIME_ID.test(row.runtimeId ?? '')) return false;
+    const hasDecision = [row.decisionOutcome, row.decisionRequestId, row.answeredAt].some(value => value !== undefined);
+    if (hasDecision && (!APPROVAL_DECISIONS.has(row.decisionOutcome) ||
+        typeof row.decisionRequestId !== 'string' || !REQUEST_ID.test(row.decisionRequestId) || !validTime(row.answeredAt))) return false;
+    if (row.status === 'pending' && (hasDecision || row.outcome !== undefined || row.resolvedAt !== undefined) ||
+        row.status === 'answered' && (!hasDecision || row.outcome !== undefined || row.resolvedAt !== undefined) ||
+        row.status === 'resolved' && (!APPROVAL_OUTCOMES.has(row.outcome) || !validTime(row.resolvedAt)) ||
+        row.status === 'unavailable' && (!['cancelled', 'unavailable'].includes(row.outcome) ||
+          !validTime(row.invalidatedAt) || !APPROVAL_INVALIDATION_REASONS.has(row.invalidationReason))) return false;
+    if (row.outcome !== undefined && !APPROVAL_OUTCOMES.has(row.outcome) ||
+        row.resolvedAt !== undefined && !validTime(row.resolvedAt) ||
+        row.status === 'resolved' && APPROVAL_DECISIONS.has(row.outcome) && !hasDecision ||
+        row.status !== 'unavailable' && (row.invalidatedAt !== undefined || row.invalidationReason !== undefined) ||
+        hasDecision && row.status === 'resolved' && APPROVAL_DECISIONS.has(row.outcome) &&
+          row.decisionOutcome !== row.outcome) return false;
+    return true;
+  });
+}
+
+function publicToolApproval(row) {
+  return Object.fromEntries(APPROVAL_PUBLIC_FIELDS.filter(key => row[key] !== undefined)
+    .map(key => [key, row[key]]));
+}
+
+function approvalDecisionReceipt(row) {
+  const approval = publicToolApproval(row);
+  approval.status = 'answered';
+  delete approval.outcome;
+  delete approval.resolvedAt;
+  return { approval, requestId: row.decisionRequestId };
+}
+
+function toolApprovals(account) {
+  return Object.values(account.commands).flatMap(command => command.toolApprovals ?? []);
+}
+
+function invalidateToolApproval(row, reason, at) {
+  if (!['pending', 'answered'].includes(row.status)) return false;
+  row.status = 'unavailable';
+  row.outcome = reason === 'task_stopped' ? 'cancelled' : 'unavailable';
+  row.invalidatedAt = at;
+  row.invalidationReason = reason;
+  return true;
+}
+
+function validToolExecutions(command, store) {
+  const rows = command.toolExecutions;
+  if (rows === undefined) return true;
+  if (command.kind !== 'session.message' || store.sessions[command.sessionId]?.origin !== 'personal-remote' ||
+      !Array.isArray(rows) || rows.length > 256 || new Set(rows.map(row => row?.executionId)).size !== rows.length ||
+      new Set(rows.map(row => row?.callId)).size !== rows.length) return false;
+  return rows.every(row => plainObject(row) && Object.keys(row).every(key => EXECUTION_FIELDS.includes(key)) &&
+    /^exec-[a-f0-9]{48}$/.test(row.executionId ?? '') && row.sourceCommandId === command.commandId &&
+    row.sourceReceiptId === command.receiptId && typeof row.rootCallId === 'string' && typeof row.callId === 'string' &&
+    REQUEST_ID.test(row.rootCallId) && REQUEST_ID.test(row.callId) &&
+    typeof row.toolName === 'string' && GENERAL_TOOL_NAME.test(row.toolName) && Number.isSafeInteger(row.turn) && row.turn > 0 && row.turn === command.dshTurn &&
+    EXECUTION_STATES.has(row.state) && /^[a-f0-9]{64}$/.test(row.argumentsHash ?? '') &&
+    (row.runtimeId === undefined || TOOL_RUNTIME_ID.test(row.runtimeId)) &&
+    validTime(row.startedAt) && validTime(row.updatedAt) &&
+    (row.finishedAt === undefined || validTime(row.finishedAt)) &&
+    (row.resultHash === undefined || /^[a-f0-9]{64}$/.test(row.resultHash)) &&
+    ((row.jobId === undefined && row.jobState === undefined && row.jobObservedAt === undefined) ||
+      row.toolName === 'pwsh' && REQUEST_ID.test(row.jobId ?? '') && JOB_STATES.has(row.jobState) && validTime(row.jobObservedAt)) &&
+    (['running', 'uncertain'].includes(row.state) ? row.finishedAt === undefined && row.resultHash === undefined
+      : row.finishedAt !== undefined && row.resultHash !== undefined));
+}
 const IMAGE_REASONS = new Set(['MODEL_DOES_NOT_SUPPORT_IMAGES', 'INVALID_IMAGE_BASE64',
   'TOO_MANY_IMAGES', 'IMAGES_TOO_LARGE', 'INVALID_IMAGE', 'IMAGE_TYPE_MISMATCH',
   'IMAGE_TOO_LARGE', 'IMAGE_TOO_MANY_PIXELS']);
@@ -694,6 +935,20 @@ function validateSingleStore(store) {
       throw failure('STORE_CORRUPT', 500);
     }
   }
+  const approvalRows = toolApprovals(store);
+  const questionRows = userQuestions(store);
+  const decisionIds = [...approvalRows.map(row => row?.decisionRequestId), ...questionRows.map(row => row?.answerRequestId)]
+    .filter(value => value !== undefined);
+  if (approvalRows.length > MAX_TOOL_APPROVALS ||
+      questionRows.length > MAX_TOOL_APPROVALS ||
+      new Set(questionRows.map(row => row?.questionRpcId)).size !== questionRows.length ||
+      new Set(approvalRows.map(row => row?.approvalId)).size !== approvalRows.length ||
+      new Set(decisionIds).size !== decisionIds.length || decisionIds.some(requestId =>
+        store.modelOperations?.[requestId] || store.projectOperations?.[requestId] ||
+        Object.values(store.commands).some(command => command?.requestId === requestId ||
+          command?.taskControl?.stopRequests?.some(entry => entry.requestId === requestId)))) {
+    throw failure('STORE_CORRUPT', 500);
+  }
   const requestIds = new Set();
   for (const [commandId, command] of Object.entries(store.commands)) {
     if (!validId(commandId) || !plainObject(command) || command.commandId !== commandId ||
@@ -702,7 +957,8 @@ function validateSingleStore(store) {
         !(KINDS.has(command.kind) || command.kind === INTERNAL_ARTIFACT_KIND) ||
         !['pending', 'dispatching', 'accepted_by_dsh', 'accepted_by_host', 'observed', 'uncertain', 'rejected'].includes(command.state) ||
         !validId(command.sourceDeviceId) || !Object.hasOwn(store.devices, command.sourceDeviceId) ||
-        !plainObject(command.payload) || requestIds.has(command.requestId)) {
+        !plainObject(command.payload) || requestIds.has(command.requestId) || !validToolExecutions(command, store) ||
+        !validToolApprovals(command, store) || !validUserQuestions(command, store)) {
       throw failure('STORE_CORRUPT', 500);
     }
     requestIds.add(command.requestId);
@@ -736,6 +992,7 @@ function validateSingleStore(store) {
             (command.sessionId !== payload.sessionId || command.taskId !== payload.taskId ||
               command.artifactId !== payload.artifactId || command.fileName !== payload.fileName ||
               command.size !== payload.size || command.sha256 !== payload.sha256 ||
+              (command.contentType !== undefined && command.contentType !== artifactContentType(command.fileName)) ||
                JSON.stringify(command.sourceSnapshotIds ?? null) !== JSON.stringify(payload.sourceSnapshotIds ?? null) ||
                (command.sourceReceiptId ?? null) !== (payload.sourceReceiptId ?? null) ||
                (store.sessions[command.sessionId]?.projectId !== undefined &&
@@ -976,6 +1233,7 @@ function publicCommand(command) {
   if (command.taskAction) result.taskAction = command.taskAction;
   if (command.artifactId) result.artifactId = command.artifactId;
   if (command.fileName) result.fileName = command.fileName;
+  if (command.kind === INTERNAL_ARTIFACT_KIND) result.contentType = artifactContentType(command.fileName);
   if (command.size !== undefined) result.size = command.size;
   if (command.sha256) result.sha256 = command.sha256;
   if (command.payload?.projectId) {
@@ -1196,14 +1454,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     } catch { throw failure('BROWSER_SOURCE_UNVERIFIED', 409); }
   };
   const hostOwner = (ownerId) => ownerId === rootState.legacyOwnerId;
-  const accountModelForProfile = (ownerId, profileId) => Object.values(accountState(ownerId).accountModels ?? {})
+  const accountModelForProfile = (ownerId, profileId, account = accountState(ownerId)) => Object.values(account.accountModels ?? {})
     .find((model) => Object.values(model.revisions).some((revision) => revision.profileId === profileId));
-  const modelVisible = (ownerId, profileId) => {
+  const modelVisible = (ownerId, profileId, account = accountState(ownerId)) => {
     if (typeof profileId !== 'string') return false;
     if (profileId.startsWith('private-model-')) {
-      const model = PRIVATE_PROFILE_ID.test(profileId) ? accountModelForProfile(ownerId, profileId) : null;
+      const model = PRIVATE_PROFILE_ID.test(profileId) ? accountModelForProfile(ownerId, profileId, account) : null;
       if (model?.status !== 'active') return false;
-      return !Object.values(accountState(ownerId).modelOperations ?? {}).some((operation) =>
+      return !Object.values(account.modelOperations ?? {}).some((operation) =>
         operation.accountModelId === model.accountModelId &&
         ['stop_using', 'remove'].includes(operation.kind) &&
         ['pending', 'applying', 'uncertain'].includes(operation.status));
@@ -1219,18 +1477,31 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const model = accountModelForProfile(ownerId, profileId);
     return model?.revisions[String(model.runtimeRevision)]?.profileId === profileId;
   };
-  const messageModelUsable = (ownerId, session) => !!session &&
-    (modelVisible(ownerId, session.modelProfileId) ||
+  const messageModelUsable = (ownerId, session, account = accountState(ownerId)) => !!session &&
+    (modelVisible(ownerId, session.modelProfileId, account) ||
       (hostOwner(ownerId) && session.modelProfileId === undefined));
   const registeredAccountCount = () => Object.values(rootState.accounts)
     .filter((entry) => entry.account !== null).length;
   // A callback may have run before the process died. Never replay these commands.
   if (Object.values(rootState.accounts).some((account) =>
-    Object.values(account.commands).some((command) => command.state === 'dispatching') ||
+    Object.values(account.commands).some((command) => command.state === 'dispatching' ||
+      command.toolExecutions?.some(row => row.state === 'running' || ['running', 'stopping'].includes(row.jobState)) ||
+      command.toolApprovals?.some(row => ['pending', 'answered'].includes(row.status)) ||
+      command.userQuestions?.some(row => ['pending', 'answered'].includes(row.status))) ||
     Object.values(account.modelOperations ?? {}).some((operation) => operation.status === 'applying'))) {
     const recovered = structuredClone(rootState);
     for (const [ownerId, account] of Object.entries(recovered.accounts)) {
       for (const command of Object.values(account.commands)) {
+        for (const row of command.userQuestions ?? []) invalidateUserQuestion(row, 'RUNTIME_UNAVAILABLE', new Date(timestamp()).toISOString());
+        for (const row of command.toolApprovals ?? []) {
+          invalidateToolApproval(row, 'service_recovered', new Date(timestamp()).toISOString());
+        }
+        for (const row of command.toolExecutions ?? []) {
+          if (row.state === 'running') { row.state = 'uncertain'; row.updatedAt = new Date(timestamp()).toISOString(); }
+          if (['running', 'stopping'].includes(row.jobState)) {
+            row.jobState = 'uncertain'; row.jobObservedAt = row.updatedAt = new Date(timestamp()).toISOString();
+          }
+        }
         if (command.state === 'dispatching') {
           let observed = false;
           if (command.kind === INTERNAL_ARTIFACT_KIND) {
@@ -1434,6 +1705,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const stopping = new Map();
   const pendingPreflights = new Map();
   const activeModelOperations = new Map();
+  const approvalLivenessChecks = new Map();
+  const questionNativeTerminals = new Map();
+  const questionDeliveries = new Map();
+  // Persisted approvals belong to a previous process, including historical grants.
+  const closedToolRuntimeIds = new Set(Object.values(rootState.accounts).flatMap(account =>
+    Object.values(account.commands).flatMap(command => [
+      ...(command.toolApprovals ?? []).map(row => row.runtimeId),
+      ...(command.toolExecutions ?? []).map(row => row.runtimeId),
+      ...(command.userQuestions ?? []).map(row => row.runtimeId),
+    ])).filter(Boolean));
 
   function timestamp() {
     const value = clock();
@@ -1455,6 +1736,512 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
 
   function callBackend(task) {
     return withDeadline(() => { requireOpen(); return task(); }, DISPATCH_TIMEOUT_MS);
+  }
+
+  function requireToolRuntime(runtimeId) {
+    requireOpen();
+    if (runtimeId !== undefined && closedToolRuntimeIds.has(runtimeId)) {
+      throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+    }
+  }
+
+  function requestIdUsed(account, requestId) {
+    return !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
+      Object.values(account.commands).some(command => command.requestId === requestId ||
+        command.taskControl?.stopRequests.some(entry => entry.requestId === requestId) ||
+        command.toolApprovals?.some(row => row.decisionRequestId === requestId) ||
+        command.userQuestions?.some(row => row.answerRequestId === requestId));
+  }
+
+  function interactionRequestIdUsed(account, requestId) {
+    return toolApprovals(account).some(row => row.decisionRequestId === requestId) ||
+      userQuestions(account).some(row => row.answerRequestId === requestId);
+  }
+
+  const questionKey = row => `${row.runtimeId}|${row.questionRpcId}`;
+  const questionIdentityFields = ['runtimeId', 'sessionId', 'questionRpcId', 'sourceReceiptId', 'messageHash',
+    'turn', 'sourceSeq', 'observedSeq'];
+  const questionMatches = (row, input) => questionIdentityFields.every(key => row[key] === input[key]);
+
+  function questionSource(account, input, activeSource = true) {
+    const checked = personalExecutionSource(account, { ...input, receiptId: input.sourceReceiptId });
+    if (activeSource) {
+      const device = account.devices[checked.source.sourceDeviceId];
+      if (!device || device.authKind !== 'password' || device.revoked ||
+          !Number.isSafeInteger(checked.source.sourceAuthEpoch) || device.authEpoch !== checked.source.sourceAuthEpoch ||
+          Date.parse(device.expiresAt) <= timestamp()) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      if (!messageModelUsable(account.ownerId, account.sessions[input.sessionId], account)) throw failure('MODEL_UNAVAILABLE', 409);
+      if (checked.root.taskControl?.state === 'stop_requested') throw failure('TASK_NOT_READY', 409);
+      // Providing information does not authorize execution, and can help clarify an unknown result.
+    }
+    return checked;
+  }
+
+  function questionUnavailableReason(account, row) {
+    if (closedToolRuntimeIds.has(row.runtimeId)) return 'RUNTIME_UNAVAILABLE';
+    try { questionSource(account, row); }
+    catch (error) {
+      return ['TOOL_SOURCE_UNAVAILABLE', 'MODEL_UNAVAILABLE', 'TASK_NOT_READY'].includes(error.code)
+        ? error.code : 'TOOL_SOURCE_UNAVAILABLE';
+    }
+    return null;
+  }
+
+  function requireQuestionPending(row) {
+    requireToolRuntime(row.runtimeId);
+    if (questionNativeTerminals.has(questionKey(row))) throw failure('QUESTION_NOT_PENDING', 409);
+  }
+
+  function validateQuestionIdentity(input) {
+    if (input.sourceReady !== true || !validId(input.sessionId) || typeof input.runtimeId !== 'string' ||
+        !TOOL_RUNTIME_ID.test(input.runtimeId) || typeof input.questionRpcId !== 'string' || !TOOL_RUNTIME_ID.test(input.questionRpcId) ||
+        !validId(input.sourceReceiptId) || typeof input.messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(input.messageHash) ||
+        !Number.isSafeInteger(input.turn) || input.turn < 1 || !Number.isSafeInteger(input.sourceSeq) || input.sourceSeq < 0 ||
+        !Number.isSafeInteger(input.observedSeq) || input.observedSeq < input.sourceSeq) throw failure('INVALID_REQUEST');
+  }
+
+  async function nativeUserQuestionSnapshot(ownerId, input) {
+    if (typeof backend.listUserQuestions !== 'function') throw failure('CAPABILITY_UNAVAILABLE', 503);
+    const page = await callBackend(() => backend.listUserQuestions({ sessionId: input.sessionId, ownerId,
+      modelProfileId: accountState(ownerId).sessions[input.sessionId]?.modelProfileId }));
+    requireToolRuntime(input.runtimeId);
+    if (page?.runtimeId !== input.runtimeId || !Array.isArray(page.questions)) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+    const snapshot = page.questions.find(row => row.questionRpcId === input.questionRpcId);
+    if (!snapshot) throw failure('QUESTION_NOT_PENDING', 409);
+    validateQuestionIdentity({ ...snapshot, runtimeId: page.runtimeId });
+    if (!questionMatches(input, { ...snapshot, runtimeId: page.runtimeId })) throw failure('REQUEST_CONFLICT', 409);
+    if (snapshot.nativeState !== 'pending') {
+      if (['answered', 'cancelled'].includes(snapshot.nativeState)) questionNativeTerminals.set(questionKey(input), snapshot.nativeState);
+      throw failure('QUESTION_NOT_PENDING', 409);
+    }
+    return snapshot;
+  }
+
+  async function trackUserQuestion(input) {
+    exactKeys(input, ['action', 'runtimeId', 'sessionId', 'questionRpcId', 'sourceReady', 'sourceReceiptId', 'messageHash',
+      'turn', 'sourceSeq', 'observedSeq', 'questions', 'outcome']);
+    validateQuestionIdentity(input);
+    if (!['register_question', 'resolve_question'].includes(input.action) ||
+        (input.action === 'register_question' ? input.outcome !== undefined : input.questions !== undefined ||
+          !['answered', 'cancelled'].includes(input.outcome))) throw failure('INVALID_REQUEST');
+    requireToolRuntime(input.runtimeId);
+    const ownerId = rootState.legacyOwnerId;
+    const account = accountState(ownerId);
+    if (account.sessions[input.sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+    const prior = userQuestions(account).find(row => row.questionRpcId === input.questionRpcId);
+    if (prior && !questionMatches(prior, input)) throw failure('REQUEST_CONFLICT', 409);
+    if (input.action === 'resolve_question') {
+      questionSource(account, input, false);
+      questionNativeTerminals.set(questionKey(input), input.outcome);
+      if (!prior) return null; // A native terminal fact cannot reconstruct a historical pending batch.
+      return serial(() => mutate(ownerId, next => {
+        const row = userQuestions(next).find(item => item.questionRpcId === input.questionRpcId);
+        if (!row || !questionMatches(row, input)) throw failure('REQUEST_CONFLICT', 409);
+        if (row.status === 'resolved') {
+          if (row.outcome !== input.outcome) throw failure('REQUEST_CONFLICT', 409);
+        } else {
+          const reason = questionUnavailableReason(next, row);
+          if (reason) invalidateUserQuestion(row, reason, new Date(timestamp()).toISOString());
+          else if (row.status !== 'unavailable' || ['QUESTION_NOT_PENDING', 'QUESTION_OUTCOME_UNCONFIRMED'].includes(row.reasonCode)) {
+            row.status = 'resolved'; row.outcome = input.outcome; row.resolvedAt = new Date(timestamp()).toISOString();
+            delete row.unavailableAt;
+            if (row.answer !== undefined && row.answerAcceptedAt === undefined) {
+              row.reasonCode = row.deliveryState === 'not-pending' || input.outcome === 'cancelled'
+                ? 'QUESTION_NOT_PENDING' : 'QUESTION_OUTCOME_UNCONFIRMED';
+            } else delete row.reasonCode;
+          }
+        }
+        return publicUserQuestion(row);
+      }, () => requireToolRuntime(input.runtimeId)));
+    }
+    const questions = canonicalUserQuestions(input.questions), questionsHash = digest(JSON.stringify(questions));
+    if (prior) {
+      if (prior.questionsHash !== questionsHash) throw failure('REQUEST_CONFLICT', 409);
+      return publicUserQuestion(prior);
+    }
+    requireQuestionPending(input);
+    for (let attempt = 0; attempt < 20 && Object.values(accountState(ownerId).commands).some(command =>
+      command.kind === 'session.message' && command.sessionId === input.sessionId && command.state === 'dispatching'); attempt++) {
+      await new Promise(resolve => setTimeout(resolve, 100));
+      requireQuestionPending(input);
+    }
+    questionSource(accountState(ownerId), input);
+    const described = await callBackend(() => backend.describeSession(input.sessionId, ownerId));
+    requireQuestionPending(input);
+    const session = accountState(ownerId).sessions[input.sessionId];
+    if (described?.sessionId !== input.sessionId || described.agentPreset !== 'personal-remote' || described.running !== true ||
+        session.modelProfileId !== undefined && described.modelProfileId !== session.modelProfileId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+    const native = await nativeUserQuestionSnapshot(ownerId, input);
+    if (digest(JSON.stringify(canonicalUserQuestions(native.questions))) !== questionsHash) throw failure('REQUEST_CONFLICT', 409);
+    const saved = await serial(() => mutate(ownerId, next => {
+      requireQuestionPending(input);
+      const checked = questionSource(next, input), existing = userQuestions(next).find(row => row.questionRpcId === input.questionRpcId);
+      if (existing) {
+        if (!questionMatches(existing, input) || existing.questionsHash !== questionsHash) throw failure('REQUEST_CONFLICT', 409);
+        return publicUserQuestion(existing);
+      }
+      const rows = checked.source.userQuestions ?? [];
+      if (rows.length >= MAX_COMMAND_TOOL_APPROVALS || userQuestions(next).length >= MAX_TOOL_APPROVALS) throw failure('CAPACITY_LIMIT', 429);
+      checked.source.dshTurn = input.turn;
+      const row = { ...Object.fromEntries(questionIdentityFields.map(key => [key, input[key]])),
+        taskId: checked.root.commandId, sourceCommandId: checked.source.commandId, questions, questionsHash,
+        status: 'pending', createdAt: new Date(timestamp()).toISOString() };
+      checked.source.userQuestions = [...rows, row];
+      return publicUserQuestion(row);
+    }, () => requireQuestionPending(input)));
+    requireQuestionPending(input);
+    return saved;
+  }
+
+  async function syncUserQuestions(ownerId, sessionId) {
+    const account = accountState(ownerId);
+    if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
+    if (account.sessions[sessionId].origin !== 'personal-remote' || !hostOwner(ownerId)) return;
+    if (typeof backend.listUserQuestions !== 'function') throw failure('CAPABILITY_UNAVAILABLE', 503);
+    const localInvalid = userQuestions(account).filter(row => row.sessionId === sessionId &&
+      ['pending', 'answered'].includes(row.status) && questionUnavailableReason(account, row));
+    if (localInvalid.length) await serial(() => mutate(ownerId, next => {
+      for (const snapshot of localInvalid) {
+        const row = userQuestions(next).find(item => questionMatches(item, snapshot));
+        const reason = row && questionUnavailableReason(next, row);
+        if (reason) invalidateUserQuestion(row, reason, new Date(timestamp()).toISOString());
+      }
+    }));
+    let page;
+    try { page = await callBackend(() => backend.listUserQuestions({ sessionId, ownerId,
+      modelProfileId: accountState(ownerId).sessions[sessionId]?.modelProfileId })); }
+    catch (error) {
+      const rows = userQuestions(accountState(ownerId)).filter(row => row.sessionId === sessionId && ['pending', 'answered'].includes(row.status));
+      if (!rows.length) throw error;
+      await serial(() => mutate(ownerId, next => {
+        for (const row of userQuestions(next)) if (rows.some(snapshot => questionMatches(row, snapshot))) {
+          invalidateUserQuestion(row, ['MODEL_UNAVAILABLE', 'TOOL_SOURCE_UNAVAILABLE'].includes(error.code) ? error.code : 'RUNTIME_UNAVAILABLE', new Date(timestamp()).toISOString());
+        }
+      }));
+      return;
+    }
+    if (typeof page?.runtimeId !== 'string' || !TOOL_RUNTIME_ID.test(page.runtimeId) || !Array.isArray(page.questions) ||
+        page.questions.length > MAX_TOOL_APPROVALS || new Set(page.questions.map(row => row?.questionRpcId)).size !== page.questions.length) {
+      throw failure('BACKEND_UNAVAILABLE', 503);
+    }
+    requireToolRuntime(page.runtimeId);
+    const snapshots = page.questions.map(snapshot => {
+      exactKeys(snapshot, ['sessionId', 'questionRpcId', 'sourceReady', 'sourceReceiptId', 'messageHash', 'turn', 'sourceSeq',
+        'observedSeq', 'questions', 'nativeState'], ['sessionId', 'questionRpcId', 'sourceReady', 'nativeState']);
+      if (snapshot.sessionId !== sessionId || typeof snapshot.questionRpcId !== 'string' || !TOOL_RUNTIME_ID.test(snapshot.questionRpcId) ||
+          !['pending', 'answered', 'cancelled'].includes(snapshot.nativeState) || typeof snapshot.sourceReady !== 'boolean') throw failure('BACKEND_UNAVAILABLE', 503);
+      if (!snapshot.sourceReady) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      const row = { ...snapshot, runtimeId: page.runtimeId };
+      validateQuestionIdentity(row);
+      if (row.nativeState !== 'pending') questionNativeTerminals.set(questionKey(row), row.nativeState);
+      return row;
+    });
+    // A temporarily incomplete reconnect snapshot is not proof that a native wait has gone.
+    if (userQuestions(accountState(ownerId)).some(row => row.sessionId === sessionId && row.runtimeId === page.runtimeId &&
+        ['pending', 'answered'].includes(row.status) && !snapshots.some(snapshot => snapshot.questionRpcId === row.questionRpcId))) {
+      throw failure('BACKEND_UNAVAILABLE', 503);
+    }
+    // Native terminals seal IDs before pending registrations reach their awaits.
+    for (const row of snapshots.filter(row => row.nativeState !== 'pending')) {
+      const { questions: _questions, nativeState, ...identity } = row;
+      await trackUserQuestion({ ...identity, action: 'resolve_question', outcome: nativeState });
+    }
+    let modelReason = null;
+    if (snapshots.some(row => row.nativeState === 'pending')) {
+      const described = await callBackend(() => backend.describeSession(sessionId, ownerId));
+      requireToolRuntime(page.runtimeId);
+      const session = accountState(ownerId).sessions[sessionId];
+      if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' || described.running !== true) modelReason = 'TOOL_SOURCE_UNAVAILABLE';
+      else if (session.modelProfileId !== undefined && described.modelProfileId !== session.modelProfileId) modelReason = 'MODEL_UNAVAILABLE';
+      if (modelReason) {
+        const activeRows = userQuestions(accountState(ownerId)).filter(row => row.sessionId === sessionId && ['pending', 'answered'].includes(row.status));
+        if (!activeRows.length && !userQuestions(accountState(ownerId)).some(row => row.sessionId === sessionId)) throw failure(modelReason, 409);
+        if (activeRows.length) await serial(() => mutate(ownerId, next => {
+          for (const row of userQuestions(next)) if (activeRows.some(snapshot => questionMatches(row, snapshot))) {
+            invalidateUserQuestion(row, modelReason, new Date(timestamp()).toISOString());
+          }
+        }));
+      }
+    }
+    for (const row of snapshots.filter(row => row.nativeState === 'pending' && !modelReason)) {
+      const { nativeState: _nativeState, ...identity } = row;
+      await trackUserQuestion({ ...identity, action: 'register_question' });
+    }
+    const affected = userQuestions(accountState(ownerId)).filter(row => row.sessionId === sessionId &&
+      ['pending', 'answered'].includes(row.status) && (questionUnavailableReason(accountState(ownerId), row) ||
+        row.runtimeId !== page.runtimeId));
+    if (affected.length) await serial(() => mutate(ownerId, next => {
+      for (const snapshot of affected) {
+        const row = userQuestions(next).find(item => questionMatches(item, snapshot));
+        if (!row) continue;
+        const reason = questionUnavailableReason(next, row) ?? 'SESSION_REPLACED';
+        invalidateUserQuestion(row, reason, new Date(timestamp()).toISOString());
+      }
+    }));
+  }
+
+  function scheduleUserQuestionDelivery(ownerId, questionRpcId) {
+    const key = `${ownerId}|${questionRpcId}`;
+    if (closing || questionDeliveries.has(key)) return;
+    const work = Promise.resolve().then(async () => {
+      const row = userQuestions(accountState(ownerId)).find(item => item.questionRpcId === questionRpcId);
+      if (!row || row.status !== 'answered' || row.deliveryState !== 'ready') return;
+      const dispatch = await serial(() => mutate(ownerId, next => {
+        const current = userQuestions(next).find(item => item.questionRpcId === questionRpcId);
+        if (!current || current.status !== 'answered' || current.deliveryState !== 'ready') return null;
+        const reason = questionUnavailableReason(next, current);
+        if (reason) { invalidateUserQuestion(current, reason, new Date(timestamp()).toISOString()); return null; }
+        requireQuestionPending(current);
+        current.deliveryState = 'dispatching'; current.deliveryAttemptedAt = new Date(timestamp()).toISOString();
+        return structuredClone(current);
+      }, () => requireToolRuntime(row.runtimeId)));
+      if (!dispatch) return;
+      let result, reason = 'QUESTION_OUTCOME_UNCONFIRMED';
+      try {
+        requireToolRuntime(dispatch.runtimeId);
+        if (typeof backend.respondUserQuestion !== 'function') throw failure('CAPABILITY_UNAVAILABLE', 503);
+        result = await callBackend(() => backend.respondUserQuestion({ ownerId, runtimeId: dispatch.runtimeId,
+          sessionId: dispatch.sessionId, questionRpcId, answer: dispatch.answer,
+          modelProfileId: accountState(ownerId).sessions[dispatch.sessionId]?.modelProfileId }));
+        if (result?.accepted === false && result.reason === 'not-pending') reason = 'QUESTION_NOT_PENDING';
+      } catch (error) {
+        if (QUESTION_REASONS.has(error.code)) reason = error.code;
+      }
+      await serial(() => mutate(ownerId, next => {
+        const current = userQuestions(next).find(item => item.questionRpcId === questionRpcId);
+        if (!current || !['answered', 'resolved'].includes(current.status) || current.deliveryState !== 'dispatching') return;
+        const local = questionUnavailableReason(next, current);
+        if (local) { invalidateUserQuestion(current, local, new Date(timestamp()).toISOString()); return; }
+        if (result?.accepted === true) {
+          current.deliveryState = 'accepted'; current.status = 'resolved'; current.outcome = 'answered';
+          current.resolvedAt = current.answerAcceptedAt = new Date(timestamp()).toISOString();
+          delete current.reasonCode; delete current.unavailableAt;
+          questionNativeTerminals.set(questionKey(current), 'answered');
+        } else {
+          current.deliveryState = reason === 'QUESTION_NOT_PENDING' ? 'not-pending' : 'unconfirmed';
+          if (current.status === 'resolved') current.reasonCode = reason;
+          else invalidateUserQuestion(current, reason, new Date(timestamp()).toISOString());
+        }
+      }));
+    }).catch(async error => {
+      if (closing) return;
+      await serial(() => mutate(ownerId, next => {
+        const row = userQuestions(next).find(item => item.questionRpcId === questionRpcId);
+        if (row) invalidateUserQuestion(row, QUESTION_REASONS.has(error.code) ? error.code : 'QUESTION_OUTCOME_UNCONFIRMED', new Date(timestamp()).toISOString());
+      })).catch(() => {});
+    }).finally(() => { questionDeliveries.delete(key); active.delete(work); });
+    questionDeliveries.set(key, work); active.add(work);
+  }
+
+  async function answerUserQuestion(request, ownerId, deviceId, sessionId, questionRpcId, body) {
+    exactKeys(body, ['requestId', 'answer'], ['requestId', 'answer']);
+    if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId)) throw failure('INVALID_REQUEST');
+    if (!accountState(ownerId).sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
+    let prior = userQuestions(accountState(ownerId)).find(row => row.sessionId === sessionId && row.questionRpcId === questionRpcId);
+    if (!prior || prior.answerRequestId !== body.requestId) await syncUserQuestions(ownerId, sessionId);
+    prior = userQuestions(accountState(ownerId)).find(row => row.sessionId === sessionId && row.questionRpcId === questionRpcId);
+    if (!prior) throw failure('NOT_FOUND', 404);
+    const answer = canonicalUserQuestionAnswer(body.answer, prior.questions), answerHash = digest(JSON.stringify(answer));
+    const replay = prior.answerRequestId === body.requestId;
+    const assertCurrent = () => { if (!replay) requireQuestionPending(prior); };
+    const receipt = await serial(() => mutate(ownerId, next => {
+      const current = authenticate(request, 'commands:write');
+      if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+      const row = userQuestions(next).find(item => item.sessionId === sessionId && item.questionRpcId === questionRpcId);
+      if (!row) throw failure('NOT_FOUND', 404);
+      if (row.answerRequestId === body.requestId) {
+        if (row.answerHash !== answerHash) throw failure('REQUEST_CONFLICT', 409);
+        return userQuestionAnswerReceipt(row);
+      }
+      if (requestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
+      if (row.status !== 'pending' || questionUnavailableReason(next, row)) throw failure('QUESTION_NOT_PENDING', 409);
+      row.answer = answer; row.answerHash = answerHash; row.answerRequestId = body.requestId;
+      row.answeredAt = new Date(timestamp()).toISOString(); row.status = 'answered'; row.deliveryState = 'ready';
+      return userQuestionAnswerReceipt(row);
+    }, assertCurrent));
+    assertCurrent();
+    if (!replay) scheduleUserQuestionDelivery(ownerId, questionRpcId);
+    return receipt;
+  }
+
+  function personalExecutionSource(account, { sessionId, turn, receiptId, messageHash }, activeSource = false) {
+    if (account.sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+    const candidates = Object.values(account.commands).filter(command => command.kind === 'session.message' &&
+      command.sessionId === sessionId && command.receiptId === receiptId && command.state === 'accepted_by_dsh');
+    if (candidates.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+    const source = candidates[0], root = account.commands[source.rootTaskId ?? source.commandId];
+    if (sourceMessageHash(source) !== messageHash || source.dshTurn !== undefined && source.dshTurn !== turn ||
+        !root || root.kind !== 'session.message' || root.rootTaskId !== undefined || root.sessionId !== sessionId) {
+      throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+    }
+    if (activeSource) {
+      const device = account.devices[source.sourceDeviceId];
+      if (!device || device.authKind !== 'password' || device.revoked || !Number.isSafeInteger(source.sourceAuthEpoch) ||
+          device.authEpoch !== source.sourceAuthEpoch || Date.parse(device.expiresAt) <= timestamp()) {
+        throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      }
+      if (!messageModelUsable(account.ownerId, account.sessions[sessionId], account)) throw failure('MODEL_UNAVAILABLE', 409);
+      if (root.taskControl?.state === 'stop_requested' || taskHasUnknownEffects(account, root.commandId)) {
+        throw failure('TASK_NOT_READY', 409);
+      }
+    }
+    return { source, root };
+  }
+
+  function approvalMatches(row, input, source) {
+    return row.sourceCommandId === source.commandId && row.sourceReceiptId === input.receiptId &&
+      ['sessionId', 'turn', 'callId', 'rootCallId', 'toolName', 'messageHash', 'argumentsHash', 'runtimeId']
+        .every(key => row[key] === input[key]);
+  }
+
+  function approvalUnavailableReason(account, row) {
+    if (closedToolRuntimeIds.has(row.runtimeId)) return 'runtime_unavailable';
+    try { personalExecutionSource(account, { ...row, receiptId: row.sourceReceiptId }, true); }
+    catch (error) {
+      return error.code === 'TASK_NOT_READY' && account.commands[row.taskId]?.taskControl?.state === 'stop_requested' ? 'task_stopped'
+        : error.code === 'MODEL_UNAVAILABLE' ? 'model_unavailable' : 'source_unavailable';
+    }
+    return null;
+  }
+
+  async function liveApprovalTurn(ownerId, sessionId) {
+    const deadline = timestamp() + 2_500;
+    let afterSeq = -1, openTurn = null;
+    const turns = new Set(), receipts = new Map();
+    for (let pageNo = 0; pageNo < 50; pageNo++) {
+      const remaining = deadline - timestamp();
+      if (remaining <= 0) throw failure('BACKEND_TIMEOUT', 503);
+      const page = await withDeadline(() => {
+        requireOpen();
+        return backend.readEvents({ sessionId, afterSeq, limit: 200, ownerId });
+      }, remaining);
+      if (!Array.isArray(page?.events) || page.events.length > 200 || typeof page.hasMore !== 'boolean' ||
+          !Number.isSafeInteger(page.nextSeq) || page.nextSeq < afterSeq) throw failure('BACKEND_UNAVAILABLE', 503);
+      let last = afterSeq;
+      for (const event of page.events) {
+        if (!Number.isSafeInteger(event?.seq) || event.seq <= last || event.seq > page.nextSeq) {
+          throw failure('BACKEND_UNAVAILABLE', 503);
+        }
+        last = event.seq;
+        if (event.type === 'turn.started') {
+          const turn = event.data?.turn;
+          if (!Number.isSafeInteger(turn) || turn < 1) { openTurn = null; continue; }
+          if (turns.has(turn)) {
+            throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+          }
+          turns.add(turn); openTurn = turn;
+        } else if (event.type === 'user.message') {
+          const receiptId = event.data?.receiptId;
+          // Old ordinary history may predate receipt projection. It cannot claim this source.
+          if (openTurn === null || !validId(receiptId)) continue;
+          receipts.set(receiptId, receipts.has(receiptId) ? null :
+            { turn: openTurn, messageHash: event.data.messageHash });
+        } else if (event.type === 'turn.ended') {
+          if (event.data?.turn === openTurn) openTurn = null;
+        }
+      }
+      if (!page.hasMore) return { openTurn, receipts };
+      if (page.nextSeq === afterSeq) throw failure('BACKEND_UNAVAILABLE', 503);
+      afterSeq = page.nextSeq;
+    }
+    throw failure('HISTORY_WINDOW_LIMIT', 422);
+  }
+
+  async function liveToolApprovalSource(ownerId, row, fresh = false) {
+    const inspect = async () => {
+      if (typeof backend.getTaskReplyEvidence === 'function') {
+        const evidence = await withDeadline(() => {
+          requireOpen();
+          return backend.getTaskReplyEvidence({ sessionId: row.sessionId, ownerId,
+            rootTaskId: row.taskId, receiptId: row.sourceReceiptId });
+        }, 2_500);
+        return evidence?.turn === row.turn && ['waiting', 'streaming'].includes(evidence.status);
+      }
+      const live = await liveApprovalTurn(ownerId, row.sessionId), receipt = live.receipts.get(row.sourceReceiptId);
+      return live.openTurn === row.turn && receipt?.turn === row.turn && receipt.messageHash === row.messageHash;
+    };
+    // The production callback reads current-child evidence; coalesce normal polling, never user answers.
+    const key = `${ownerId}|${row.sessionId}|${row.runtimeId}|${row.sourceReceiptId}`;
+    const now = timestamp(), prior = approvalLivenessChecks.get(key);
+    if (!fresh && prior?.expiresAt > now) return prior.work;
+    for (const [entryKey, entry] of approvalLivenessChecks) if (entry.expiresAt <= now) approvalLivenessChecks.delete(entryKey);
+    if (approvalLivenessChecks.size >= 256) approvalLivenessChecks.delete(approvalLivenessChecks.keys().next().value);
+    const work = inspect();
+    approvalLivenessChecks.set(key, { work, expiresAt: now + 500 });
+    work.catch(() => { if (approvalLivenessChecks.get(key)?.work === work) approvalLivenessChecks.delete(key); });
+    return work;
+  }
+
+  // Check only the snapshotted IDs: a delayed check must never invalidate a new child.
+  async function refreshToolApprovals(ownerId, sessionId, fresh = false) {
+    const account = accountState(ownerId);
+    if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
+    const rows = toolApprovals(account).filter(row => row.sessionId === sessionId &&
+      ['pending', 'answered'].includes(row.status));
+    if (!rows.length) return;
+    let described, unavailable = null;
+    const live = new Map();
+    if (rows.some(row => !approvalUnavailableReason(account, row))) {
+      try {
+        described = await callBackend(() => backend.describeSession(sessionId, ownerId));
+        if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' || described.running !== true) {
+          unavailable = 'source_unavailable';
+        } else {
+          const sources = new Map(rows.filter(row => !approvalUnavailableReason(account, row))
+            .map(row => [`${row.runtimeId}|${row.sourceReceiptId}`, row]));
+          await Promise.all([...sources].map(async ([key, row]) => live.set(key, await liveToolApprovalSource(ownerId, row, fresh))));
+        }
+      } catch { unavailable = 'runtime_unavailable'; }
+    }
+    const observedReason = (next, row) => {
+      const local = approvalUnavailableReason(next, row) ?? unavailable;
+      if (local) return local;
+      const session = next.sessions[sessionId];
+      if (session.modelProfileId !== undefined && described?.modelProfileId !== session.modelProfileId) return 'model_unavailable';
+      return live.get(`${row.runtimeId}|${row.sourceReceiptId}`) === true ? null : 'source_unavailable';
+    };
+    const affected = rows.filter(row => observedReason(accountState(ownerId), row));
+    if (!affected.length) return;
+    await serial(() => mutate(ownerId, next => {
+      const at = new Date(timestamp()).toISOString();
+      for (const snapshot of affected) {
+        const row = next.commands[snapshot.sourceCommandId]?.toolApprovals?.find(item => item.approvalId === snapshot.approvalId);
+        if (!row || row.runtimeId !== snapshot.runtimeId || !['pending', 'answered'].includes(row.status)) continue;
+        const reason = observedReason(next, row);
+        if (reason) invalidateToolApproval(row, reason, at);
+      }
+    }));
+  }
+
+  async function answerToolApproval(request, ownerId, deviceId, sessionId, approvalId, body) {
+    exactKeys(body, ['requestId', 'outcome'], ['requestId', 'outcome']);
+    if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || !APPROVAL_DECISIONS.has(body.outcome)) throw failure('INVALID_REQUEST');
+    const account = accountState(ownerId);
+    if (!account.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
+    const prior = toolApprovals(account).find(row => row.sessionId === sessionId && row.approvalId === approvalId);
+    if (!prior) throw failure('NOT_FOUND', 404);
+    const replay = prior.decisionRequestId === body.requestId;
+    if (!replay) await refreshToolApprovals(ownerId, sessionId, true);
+    const assertCurrent = () => {
+      if (!replay && closedToolRuntimeIds.has(prior.runtimeId)) throw failure('APPROVAL_NOT_PENDING', 409);
+    };
+    const receipt = await serial(() => mutate(ownerId, next => {
+      const current = authenticate(request, 'commands:write');
+      if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+      const row = toolApprovals(next).find(item => item.sessionId === sessionId && item.approvalId === approvalId);
+      if (!row) throw failure('NOT_FOUND', 404);
+      if (row.decisionRequestId === body.requestId) {
+        if (row.decisionOutcome !== body.outcome) throw failure('REQUEST_CONFLICT', 409);
+        return approvalDecisionReceipt(row);
+      }
+      if (requestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
+      if (row.status !== 'pending' || approvalUnavailableReason(next, row)) throw failure('APPROVAL_NOT_PENDING', 409);
+      row.status = 'answered'; row.decisionOutcome = body.outcome; row.decisionRequestId = body.requestId;
+      row.answeredAt = new Date(timestamp()).toISOString();
+      return approvalDecisionReceipt(row);
+    }, assertCurrent));
+    assertCurrent();
+    return receipt;
   }
 
   function taskSource(account, taskId) {
@@ -1552,7 +2339,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   function taskHasUnknownEffects(account, taskId) {
     const messageIds = new Set([taskId, ...taskChildren(account, taskId).map((item) => item.commandId)]);
     return Object.values(account.commands).some((item) =>
-      (messageIds.has(item.commandId) && ['dispatching', 'uncertain'].includes(item.state)) ||
+      (messageIds.has(item.commandId) && (['dispatching', 'uncertain'].includes(item.state) ||
+        item.toolExecutions?.some(row => row.state === 'uncertain' || ['uncertain', 'unconfirmed'].includes(row.jobState)))) ||
       ((item.taskId === taskId || messageIds.has(item.toolSource?.sourceCommandId)) &&
         ['pending', 'dispatching', 'uncertain', 'accepted_by_host'].includes(item.state)));
   }
@@ -1683,10 +2471,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (validTime(turn.endedAt)) terminalTimes.push(turn.endedAt);
     }
     const effectsUnknown = taskHasUnknownEffects(account, taskId);
+    const jobSteps = [taskSource(account, taskId), ...taskChildren(account, taskId)].flatMap(command => command.toolExecutions ?? [])
+      .filter(row => row.jobId);
+    if (jobSteps.some(row => ['running', 'stopping'].includes(row.jobState))) { pendingCount++; uncertain = true; }
+    for (const row of jobSteps) if (row.jobState === 'killed' && validTime(row.jobObservedAt)) terminalTimes.push(row.jobObservedAt);
     if (effectsUnknown) { pendingCount++; uncertain = true; }
     if (targets.some((target) => target.attemptAt || target.ack === 'unconfirmed')) uncertain = true;
     const status = pendingCount ? cancelRequested ? 'cancel_requested' : uncertain || legacy ? 'unconfirmed' : 'requested'
-      : aborted || removed ? 'stopped' : completed ? 'completed' : 'unconfirmed';
+      : aborted || removed || jobSteps.some(row => row.jobState === 'killed') ? 'stopped' : completed ? 'completed' : 'unconfirmed';
     return { ready: pendingCount === 0, legacy,
       ...(status === 'stopped' && terminalTimes.length ? {
         observedAt: terminalTimes.sort((a, b) => Date.parse(a) - Date.parse(b)).at(-1) } : {}),
@@ -1708,6 +2500,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const steps = Object.values(account.commands).filter((item) =>
       item.kind === 'desktop.open_app' && item.toolSource &&
       (item.taskId === taskId || messageIds.has(item.toolSource.sourceCommandId))).map(publicCommand);
+    const executionSteps = [source, ...children].flatMap(command => command.toolExecutions ?? []).map(row => ({ ...row }));
     const storedState = source.taskControl?.state ?? 'active';
     const state = storedState === 'active' && taskHasUnknownEffects(account, taskId)
       ? 'uncertain' : storedState;
@@ -1736,6 +2529,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           assistantChunks: reported.assistantChunks, textChunks: reported.textChunks,
           reasoningChunks: reported.reasoningChunks, assistantMessages: reported.assistantMessages,
           toolSaveObserved: reported.toolSaveObserved,
+          ...(reported.status === 'failed' && reported.endReasonKind === 'max-tokens' &&
+            Number.isSafeInteger(reported.turn) && validTime(reported.terminalAt)
+            ? { endReasonKind: 'max-tokens' } : {}),
           ...(Number.isSafeInteger(reported.step) && reported.step >= 0 ? { step: reported.step } : {}),
           ...Object.fromEntries(['observedAt', 'terminalAt', 'firstChunkAt', 'lastChunkAt']
             .filter((key) => validTime(reported[key])).map((key) => [key, reported[key]])),
@@ -1744,12 +2540,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     }
     return { taskId, sessionId: source.sessionId, sourceText: source.payload.text,
       ...(source.payload.conversationId ? { conversationId: source.payload.conversationId } : {}),
-      source: publicCommand(source), artifacts, steps, sources, replyEvidence,
+      source: publicCommand(source), artifacts, steps, executionSteps, sources, replyEvidence,
       ...(source.payload.workspaceKind === 'browser' ? { workspace: { kind: 'browser' } } : {}),
       ...(projectRecord ? { project: publicProject(projectRecord) } : {}),
       supplements: children.filter((item) => item.taskAction === 'supplement').map(publicCommand),
       resumes: children.filter((item) => item.taskAction === 'resume').map(publicCommand),
       control: { state, updatedAt: source.taskControl?.updatedAt ?? source.updatedAt,
+        backgroundJobs: { active: executionSteps.filter(row => ['running', 'stopping'].includes(row.jobState)).length,
+          unconfirmed: executionSteps.filter(row => ['uncertain', 'unconfirmed'].includes(row.jobState)).length },
         ...(state === 'stop_requested' && source.taskControl?.stopRequests?.length ? {
           stopRequestedAt: source.taskControl.stopRequests.at(-1).at } : {}),
         canSupplement: state === 'active', canStop: storedState === 'active',
@@ -1818,6 +2616,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             if (!target || target.ack === 'queue_removed') continue;
             target.ack = outcome.status;
             target.ackAt = at;
+            for (const observed of outcome.backgroundJobs ?? []) {
+              if (!plainObject(observed) || !REQUEST_ID.test(observed.jobId ?? '') || !JOB_STATES.has(observed.state)) continue;
+              for (const command of [taskSource(next, taskId), ...taskChildren(next, taskId)]) {
+                for (const row of command.toolExecutions ?? []) {
+                  if (row.sourceReceiptId !== outcome.receiptId || row.jobId !== observed.jobId) continue;
+                  if (['completed', 'killed', 'failed'].includes(row.jobState) && row.jobState !== observed.state) continue;
+                  row.jobState = observed.state; row.jobObservedAt = row.updatedAt = at;
+                }
+              }
+            }
           }
         }));
       }
@@ -1832,12 +2640,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     return result;
   }
 
-  async function mutateRoot(change) {
+  async function mutateRoot(change, assertCurrent = () => {}) {
     requireOpen();
+    assertCurrent();
     if (storageFault) throw failure('STORAGE_UNAVAILABLE', 503);
     const next = structuredClone(rootState);
     const value = await change(next);
     requireOpen();
+    assertCurrent();
     for (const account of Object.values(next.accounts)) {
       for (const [conversationId, binding] of Object.entries(account.conversationBindings ?? {})) {
         const state = account.commands[binding.adoptCommandId]?.state;
@@ -1850,16 +2660,20 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
     }
     validateStore(next);
-    try { await durableWrite(storeFile, next, () => !closing); }
+    try { await durableWrite(storeFile, next, () => {
+      if (closing) return false;
+      assertCurrent();
+      return true;
+    }); }
     catch (error) {
-      if (error?.code !== 'SERVICE_CLOSING') storageFault = true;
+      if (!['SERVICE_CLOSING', 'TOOL_SOURCE_UNAVAILABLE', 'APPROVAL_NOT_PENDING', 'QUESTION_NOT_PENDING'].includes(error?.code)) storageFault = true;
       throw error;
     }
     rootState = next;
     return value;
   }
 
-  async function mutate(ownerId, change) {
+  async function mutate(ownerId, change, assertCurrent) {
     return mutateRoot(async (nextRoot) => {
       const account = nextRoot.accounts[ownerId];
       if (!account) throw failure('UNAUTHORIZED', 401);
@@ -1869,7 +2683,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const { version: _version, hostId: _hostId, ownerId: _ownerId, ...updated } = next;
       nextRoot.accounts[ownerId] = updated;
       return value;
-    });
+    }, assertCurrent);
   }
 
   function accountModelView(ownerId, record) {
@@ -3348,6 +4162,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             (action !== 'create' && (!Number.isSafeInteger(body.expectedRevision) ||
               body.expectedRevision < 1))) throw failure('INVALID_REQUEST');
         const accountModelId = action === 'create' ? null : accountModelMatch[1];
+        if (interactionRequestIdUsed(state, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
         const prior = state.modelOperations?.[body.requestId];
         if (action === 'transfer') {
           if (prior) throw failure('REQUEST_CONFLICT', 409);
@@ -3441,6 +4256,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             throw failure('UNAUTHORIZED', 401);
           }
           next.accountModels ??= {}; next.modelOperations ??= {};
+          if (interactionRequestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
           const existing = next.modelOperations[body.requestId];
           if (existing) {
             if (existing.payloadHash !== hash || existing.kind !== action) throw failure('REQUEST_CONFLICT', 409);
@@ -3503,6 +4319,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         exactKeys(body, ['requestId', 'name', 'rootPath'], ['requestId', 'name', 'rootPath']);
         if (!REQUEST_ID.test(body.requestId ?? '') || !validProjectName(body.name)) throw failure('INVALID_REQUEST');
         const hash = digest(JSON.stringify({ name: body.name, rootPath: body.rootPath }));
+        if (interactionRequestIdUsed(state, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
         const prior = state.projectOperations?.[body.requestId];
         if (prior) {
           if (prior.kind !== 'register' || prior.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
@@ -3515,6 +4332,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
             throw failure('UNAUTHORIZED', 401);
           }
           next.projects ??= {}; next.projectOperations ??= {};
+          if (interactionRequestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
           const existing = next.projectOperations[body.requestId];
           if (existing) {
             if (existing.kind !== 'register' || existing.payloadHash !== hash) throw failure('REQUEST_CONFLICT', 409);
@@ -3552,6 +4370,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           if (!found) throw failure('NOT_FOUND', 404);
           next.projectOperations ??= {};
           const hash = digest(projectId);
+          if (interactionRequestIdUsed(next, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
           const prior = next.projectOperations[body.requestId];
           if (prior) {
             if (prior.kind !== 'revoke' || prior.projectId !== projectId || prior.payloadHash !== hash) {
@@ -3679,6 +4498,56 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
         return json(response, 200, { sessions });
       }
+      const questionMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/questions(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
+      if (request.method === 'GET' && questionMatch && !questionMatch[2]) {
+        const sessionId = id(questionMatch[1]);
+        if ([...url.searchParams.keys()].some(key => !['before', 'limit'].includes(key)) ||
+            url.searchParams.getAll('before').length > 1 || url.searchParams.getAll('limit').length > 1) throw failure('INVALID_REQUEST');
+        const before = url.searchParams.get('before'), limitText = url.searchParams.get('limit') ?? '50';
+        if (!/^\d+$/.test(limitText) || !Number.isSafeInteger(Number(limitText)) || Number(limitText) < 1 || Number(limitText) > 100 ||
+            before !== null && !TOOL_RUNTIME_ID.test(before)) throw failure('INVALID_REQUEST');
+        await syncUserQuestions(ownerId, sessionId);
+        const current = authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        const ordered = userQuestions(accountState(ownerId)).filter(row => row.sessionId === sessionId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.questionRpcId.localeCompare(a.questionRpcId));
+        const cursor = before === null ? -1 : ordered.findIndex(row => row.questionRpcId === before);
+        if (before !== null && cursor < 0) throw failure('NOT_FOUND', 404);
+        const start = cursor + 1, page = ordered.slice(start, start + Number(limitText)), hasMore = start + Number(limitText) < ordered.length;
+        return json(response, 200, { questions: page.map(publicUserQuestion), nextBefore: hasMore ? page.at(-1).questionRpcId : null, hasMore });
+      }
+      if (request.method === 'POST' && questionMatch?.[2]) {
+        if (url.search || !TOOL_RUNTIME_ID.test(questionMatch[2])) throw failure('INVALID_REQUEST');
+        return json(response, 200, await answerUserQuestion(request, ownerId, deviceId, id(questionMatch[1]),
+          questionMatch[2], await readJson(request)));
+      }
+      const approvalMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/approvals(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
+      if (request.method === 'GET' && approvalMatch && !approvalMatch[2]) {
+        const sessionId = id(approvalMatch[1]);
+        if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
+        if ([...url.searchParams.keys()].some(key => !['before', 'limit'].includes(key)) ||
+            url.searchParams.getAll('before').length > 1 || url.searchParams.getAll('limit').length > 1) throw failure('INVALID_REQUEST');
+        const before = url.searchParams.get('before'), limitText = url.searchParams.get('limit') ?? '50';
+        if (!/^\d+$/.test(limitText) || !Number.isSafeInteger(Number(limitText)) || Number(limitText) < 1 || Number(limitText) > 100 ||
+            before !== null && !TOOL_RUNTIME_ID.test(before)) throw failure('INVALID_REQUEST');
+        await refreshToolApprovals(ownerId, sessionId);
+        const current = authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        const ordered = toolApprovals(accountState(ownerId)).filter(row => row.sessionId === sessionId)
+          .sort((a, b) => b.createdAt.localeCompare(a.createdAt) || b.approvalId.localeCompare(a.approvalId));
+        const cursor = before === null ? -1 : ordered.findIndex(row => row.approvalId === before);
+        if (before !== null && cursor < 0) throw failure('NOT_FOUND', 404);
+        const start = cursor + 1, page = ordered.slice(start, start + Number(limitText));
+        const hasMore = start + Number(limitText) < ordered.length;
+        return json(response, 200, { approvals: page.map(publicToolApproval),
+          nextBefore: hasMore ? page.at(-1).approvalId : null, hasMore });
+      }
+      if (request.method === 'POST' && approvalMatch?.[2]) {
+        if (url.search || !TOOL_RUNTIME_ID.test(approvalMatch[2])) throw failure('INVALID_REQUEST');
+        const sessionId = id(approvalMatch[1]);
+        return json(response, 200, await answerToolApproval(request, ownerId, deviceId, sessionId,
+          approvalMatch[2], await readJson(request)));
+      }
       const eventMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events$/.exec(pathname);
       if (request.method === 'GET' && eventMatch) {
         const sessionId = id(eventMatch[1]);
@@ -3777,7 +4646,9 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           const usedByCommand = Object.values(next.commands).some((item) => item.requestId === body.requestId);
           const priorTask = Object.values(next.commands).find((item) =>
             item.taskControl?.stopRequests.some((entry) => entry.requestId === body.requestId));
-          if (usedByCommand || (priorTask && priorTask.commandId !== taskId)) throw failure('REQUEST_CONFLICT', 409);
+          if (usedByCommand || next.modelOperations?.[body.requestId] || next.projectOperations?.[body.requestId] ||
+              interactionRequestIdUsed(next, body.requestId) ||
+              (priorTask && priorTask.commandId !== taskId)) throw failure('REQUEST_CONFLICT', 409);
           if (priorTask) return;
           const now = new Date(timestamp()).toISOString();
           const control = source.taskControl ?? { state: 'active', stopRequests: [], updatedAt: now };
@@ -3790,6 +4661,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           control.updatedAt = now;
           source.taskControl = control;
           for (const item of [source, ...taskChildren(next, taskId)]) {
+            for (const row of item.toolApprovals ?? []) invalidateToolApproval(row, 'task_stopped', now);
+            for (const row of item.userQuestions ?? []) invalidateUserQuestion(row, 'TASK_NOT_READY', now);
             if (item.state === 'pending') {
               item.state = 'rejected'; item.errorCode = 'TASK_NOT_READY'; item.updatedAt = now;
             }
@@ -3822,8 +4695,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         if (artifactMatch[2] === 'preview') return json(response, 200,
           { artifact: publicCommand(command), text: bytes.toString('utf8') });
         response.writeHead(200, {
-          'content-type': 'text/plain; charset=utf-8',
-          'content-disposition': `attachment; filename="WeftMate-artifact.${command.fileName.endsWith('.md') ? 'md' : 'txt'}"; filename*=UTF-8''${encodeURIComponent(command.fileName)}`,
+          'content-type': artifactContentType(command.fileName),
+          'content-disposition': attachmentDisposition(command.fileName),
           'content-length': String(bytes.length), 'cache-control': 'no-store',
           'x-content-type-options': 'nosniff',
         });
@@ -3982,6 +4855,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           throw failure('MODEL_UNAVAILABLE', 422);
         }
         const payloadHash = digest(JSON.stringify(payload));
+        if (interactionRequestIdUsed(state, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
         if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (Object.values(state.commands).some((command) =>
@@ -4059,6 +4933,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           const current = authenticate(request, 'commands:write');
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
           const latest = accountState(ownerId);
+          if (interactionRequestIdUsed(latest, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
           if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (Object.values(latest.commands).some((command) =>
@@ -4730,6 +5605,229 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       if (checked.source.commandId !== source.commandId) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       return { ...publicSource(saved), text: read.text };
     },
+    /** Trusted current-child snapshots only; information answers never grant execution authority. */
+    trackUserQuestion,
+    /** Managed-child only: native approvals are bound to the exact original tool call. */
+    async trackToolApproval(input) {
+      exactKeys(input, ['id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId', 'messageHash',
+        'toolName', 'argumentsHash', 'approvalId', 'runtimeId', 'reason', 'outcome']);
+      const { action, sessionId, turn, callId, rootCallId, receiptId, approvalId, runtimeId } = input;
+      if (!['register_approval', 'read_approval', 'resolve_approval'].includes(action) || !validId(sessionId) ||
+          !Number.isSafeInteger(turn) || turn < 1 || typeof callId !== 'string' || typeof rootCallId !== 'string' ||
+          !REQUEST_ID.test(callId) || !REQUEST_ID.test(rootCallId) ||
+          !validId(receiptId) || !TOOL_RUNTIME_ID.test(approvalId ?? '') || !TOOL_RUNTIME_ID.test(runtimeId ?? '') ||
+          typeof input.toolName !== 'string' || !GENERAL_TOOL_NAME.test(input.toolName) ||
+          typeof input.messageHash !== 'string' || typeof input.argumentsHash !== 'string' ||
+          !/^[a-f0-9]{64}$/.test(input.messageHash) || !/^[a-f0-9]{64}$/.test(input.argumentsHash) ||
+          (action === 'register_approval' ? typeof input.reason !== 'string' || input.reason.length > 1000 || input.outcome !== undefined
+            : input.reason !== undefined || (action === 'read_approval' ? input.outcome !== undefined : !APPROVAL_OUTCOMES.has(input.outcome)))) {
+        throw failure('INVALID_COMMAND');
+      }
+      requireOpen();
+      const ownerId = rootState.legacyOwnerId;
+      if (accountState(ownerId).sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+      if (action === 'register_approval') {
+        requireToolRuntime(runtimeId);
+        // A real tool can ask before sendMessage has returned the native receipt.
+        for (let attempt = 0; attempt < 20 && Object.values(accountState(ownerId).commands).some(command =>
+          command.kind === 'session.message' && command.sessionId === sessionId && command.state === 'dispatching'); attempt++) {
+          await new Promise(resolve => setTimeout(resolve, 100));
+          requireToolRuntime(runtimeId);
+        }
+      }
+      const { source } = personalExecutionSource(accountState(ownerId), input);
+      const prior = toolApprovals(accountState(ownerId)).find(row => row.approvalId === approvalId);
+      if (prior && (!approvalMatches(prior, input, source) || action === 'register_approval' && prior.reason !== input.reason)) {
+        throw failure('REQUEST_CONFLICT', 409);
+      }
+      if (action !== 'register_approval' && !prior) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      if (action === 'read_approval' || action === 'register_approval' && prior) {
+        if (['pending', 'answered'].includes(prior.status)) await refreshToolApprovals(ownerId, sessionId);
+        requireOpen();
+        return publicToolApproval(toolApprovals(accountState(ownerId)).find(row => row.approvalId === approvalId));
+      }
+      if (action === 'resolve_approval') return serial(() => mutate(ownerId, next => {
+        const checked = personalExecutionSource(next, input);
+        const row = checked.source.toolApprovals?.find(item => item.approvalId === approvalId);
+        if (!row || !approvalMatches(row, input, checked.source)) throw failure('REQUEST_CONFLICT', 409);
+        if (row.status === 'resolved') {
+          if (row.outcome !== input.outcome) throw failure('REQUEST_CONFLICT', 409);
+        } else if (row.status !== 'unavailable') {
+          const at = new Date(timestamp()).toISOString(), reason = approvalUnavailableReason(next, row);
+          if (reason) invalidateToolApproval(row, reason, at);
+          else {
+            if (APPROVAL_DECISIONS.has(input.outcome) &&
+                (row.status !== 'answered' || row.decisionOutcome !== input.outcome)) throw failure('REQUEST_CONFLICT', 409);
+            row.status = 'resolved'; row.outcome = input.outcome; row.resolvedAt = at;
+          }
+        }
+        return publicToolApproval(row);
+      }));
+      personalExecutionSource(accountState(ownerId), input, true);
+      const described = await callBackend(() => backend.describeSession(sessionId, ownerId));
+      requireToolRuntime(runtimeId);
+      const session = accountState(ownerId).sessions[sessionId];
+      if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote' || described.running !== true ||
+          session.modelProfileId !== undefined && described.modelProfileId !== session.modelProfileId) {
+        throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      }
+      const live = await liveToolApprovalSource(ownerId, { ...input, sourceReceiptId: receiptId,
+        taskId: source.rootTaskId ?? source.commandId }, true);
+      requireToolRuntime(runtimeId);
+      if (!live) {
+        throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+      }
+      const saved = await serial(() => mutate(ownerId, next => {
+        requireToolRuntime(runtimeId);
+        const checked = personalExecutionSource(next, input, true);
+        const existing = toolApprovals(next).find(row => row.approvalId === approvalId);
+        if (existing) {
+          if (!approvalMatches(existing, input, checked.source) || existing.reason !== input.reason) throw failure('REQUEST_CONFLICT', 409);
+          return publicToolApproval(existing);
+        }
+        const executions = [checked.root, ...taskChildren(next, checked.root.commandId)].flatMap(command => command.toolExecutions ?? []);
+        if (executions.some(row => row.state === 'running' && row.rootCallId !== rootCallId)) throw failure('TASK_NOT_READY', 409);
+        // Native tools can ask during execute; that exact running row has not yet performed the approved action.
+        const running = checked.source.toolExecutions?.find(row => row.callId === callId);
+        if (running && (running.state !== 'running' || running.rootCallId !== rootCallId || running.turn !== turn ||
+            running.toolName !== input.toolName || running.argumentsHash !== input.argumentsHash ||
+            running.runtimeId !== undefined && running.runtimeId !== runtimeId)) throw failure('REQUEST_CONFLICT', 409);
+        const rows = checked.source.toolApprovals ?? [];
+        if (rows.length >= MAX_COMMAND_TOOL_APPROVALS || toolApprovals(next).length >= MAX_TOOL_APPROVALS) throw failure('CAPACITY_LIMIT', 429);
+        checked.source.dshTurn = turn;
+        const row = { approvalId, runtimeId, sessionId, taskId: checked.root.commandId,
+          sourceCommandId: checked.source.commandId, sourceReceiptId: receiptId, turn, callId, rootCallId,
+          toolName: input.toolName, messageHash: input.messageHash, argumentsHash: input.argumentsHash,
+          reason: input.reason, status: 'pending', createdAt: new Date(timestamp()).toISOString() };
+        checked.source.toolApprovals = [...rows, row];
+        return publicToolApproval(row);
+      }, () => requireToolRuntime(runtimeId)));
+      requireToolRuntime(runtimeId);
+      return saved;
+    },
+    /** Trusted parent lifecycle only. Seal synchronously before any pending registration can commit. */
+    async invalidateToolApprovals(input) {
+      exactKeys(input, ['runtimeId', 'outcome', 'reasonCode'], ['runtimeId']);
+      const { runtimeId, outcome = 'unavailable', reasonCode = 'RUNTIME_UNAVAILABLE' } = input;
+      const reasons = { RUNTIME_UNAVAILABLE: 'runtime_unavailable', SESSION_REPLACED: 'runtime_replaced', SERVICE_CLOSING: 'service_closing' };
+      if (!TOOL_RUNTIME_ID.test(runtimeId ?? '') || outcome !== 'unavailable' || !Object.hasOwn(reasons, reasonCode)) {
+        throw failure('INVALID_REQUEST');
+      }
+      closedToolRuntimeIds.add(runtimeId);
+      for (const key of questionNativeTerminals.keys()) if (key.startsWith(`${runtimeId}|`)) questionNativeTerminals.delete(key);
+      return serial(() => mutateRoot(nextRoot => {
+        const at = new Date(timestamp()).toISOString();
+        let invalidatedCount = 0;
+        for (const account of Object.values(nextRoot.accounts)) for (const command of Object.values(account.commands)) {
+          for (const row of command.userQuestions ?? []) if (row.runtimeId === runtimeId) invalidateUserQuestion(row, reasonCode, at);
+          for (const row of command.toolApprovals ?? []) if (row.runtimeId === runtimeId &&
+              invalidateToolApproval(row, reasons[reasonCode], at)) invalidatedCount++;
+          for (const row of command.toolExecutions ?? []) if (row.runtimeId === runtimeId) {
+            if (row.state === 'running') { row.state = 'uncertain'; row.updatedAt = at; }
+            if (['running', 'stopping'].includes(row.jobState)) { row.jobState = 'uncertain'; row.jobObservedAt = row.updatedAt = at; }
+          }
+        }
+        return { runtimeId, invalidatedCount };
+      }));
+    },
+    /** Managed-child only: bind generic tools to the original authorized receipt, with no new scheduler. */
+    async trackToolExecution(input) {
+      exactKeys(input, ['id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId', 'messageHash',
+        'toolName', 'argumentsHash', 'executionId', 'state', 'resultHash', 'jobId', 'jobState', 'runtimeId']);
+      const { action, sessionId, turn, callId, rootCallId, receiptId, toolName, argumentsHash } = input;
+      if (action === 'authorize_execution' && [input.executionId, input.state, input.resultHash, input.jobId, input.jobState].some(value => value !== undefined) ||
+          action === 'observe_execution_job' && [input.state, input.resultHash].some(value => value !== undefined)) throw failure('INVALID_COMMAND');
+      if (!['authorize_execution', 'finish_execution', 'observe_execution_job'].includes(action) || !validId(sessionId) ||
+          !Number.isSafeInteger(turn) || turn < 1 || typeof callId !== 'string' || typeof rootCallId !== 'string' ||
+          !REQUEST_ID.test(callId) || !REQUEST_ID.test(rootCallId) ||
+          !validId(receiptId) || typeof toolName !== 'string' || !GENERAL_TOOL_NAME.test(toolName) ||
+          typeof input.messageHash !== 'string' || typeof argumentsHash !== 'string' ||
+          !/^[a-f0-9]{64}$/.test(input.messageHash) || !/^[a-f0-9]{64}$/.test(argumentsHash) ||
+          input.runtimeId !== undefined && !TOOL_RUNTIME_ID.test(input.runtimeId)) {
+        throw failure('INVALID_COMMAND');
+      }
+      requireToolRuntime(input.runtimeId);
+      const ownerId = rootState.legacyOwnerId;
+      if (accountState(ownerId).sessions[sessionId]?.origin !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+      const executionId = `exec-${digest(`${ownerId}|${sessionId}|${callId}`).slice(0, 48)}`;
+      if (action === 'authorize_execution') {
+        const described = await callBackend(() => backend.describeSession(sessionId, ownerId));
+        if (described?.sessionId !== sessionId || described.agentPreset !== 'personal-remote') throw failure('SESSION_READ_ONLY', 409);
+        // Native execution may begin before the send callback has durably recorded its receipt.
+        for (let attempt = 0; attempt < 20 && Object.values(accountState(ownerId).commands).some(command =>
+          command.kind === 'session.message' && command.sessionId === sessionId && command.state === 'dispatching'); attempt++) {
+          if (closing) throw failure('SERVICE_CLOSING', 503);
+          await new Promise(resolve => setTimeout(resolve, 100));
+        }
+      }
+      const result = await serial(() => mutate(ownerId, next => {
+        requireToolRuntime(input.runtimeId);
+        const { source, root } = personalExecutionSource(next, input);
+        const rows = source.toolExecutions ?? [];
+        const prior = rows.find(row => row.executionId === executionId);
+        if (action === 'observe_execution_job') {
+          if (!prior || input.executionId !== executionId || prior.jobId !== input.jobId || prior.rootCallId !== rootCallId || prior.turn !== turn ||
+              prior.toolName !== toolName || prior.argumentsHash !== argumentsHash || prior.runtimeId !== input.runtimeId ||
+              !['running', 'stopping', 'completed', 'killed', 'failed'].includes(input.jobState)) throw failure('REQUEST_CONFLICT', 409);
+          if (!(['completed', 'killed', 'failed'].includes(prior.jobState) && prior.jobState !== input.jobState)) {
+            prior.jobState = input.jobState; prior.jobObservedAt = prior.updatedAt = new Date(timestamp()).toISOString();
+          }
+          return { executionId, taskId: root.commandId, state: prior.state };
+        }
+        if (action === 'finish_execution') {
+          if (!prior || input.executionId !== executionId || prior.callId !== callId || prior.rootCallId !== rootCallId ||
+              prior.turn !== turn || prior.toolName !== toolName || prior.argumentsHash !== argumentsHash || prior.runtimeId !== input.runtimeId ||
+              !['completed', 'failed', 'cancelled', 'uncertain'].includes(input.state) ||
+              (input.state !== 'uncertain' && !/^[a-f0-9]{64}$/.test(input.resultHash ?? ''))) {
+            throw failure('REQUEST_CONFLICT', 409);
+          }
+          if (input.state === 'uncertain') {
+            if ([input.resultHash, input.jobId, input.jobState].some(value => value !== undefined)) throw failure('INVALID_COMMAND');
+            if (!['running', 'uncertain'].includes(prior.state)) throw failure('REQUEST_CONFLICT', 409);
+            if (prior.state === 'running') { prior.state = 'uncertain'; prior.updatedAt = new Date(timestamp()).toISOString(); }
+            return { executionId, taskId: root.commandId, state: prior.state };
+          }
+          // An execute-body approval can be awaiting its durable native resolution after side effects.
+          if (source.toolApprovals?.some(row => row.callId === callId && row.turn === turn &&
+              ['pending', 'answered'].includes(row.status))) throw failure('TASK_NOT_READY', 409);
+          if (prior.state !== 'running') {
+            if (prior.state !== input.state || prior.resultHash !== input.resultHash || prior.jobId !== input.jobId) throw failure('REQUEST_CONFLICT', 409);
+          } else {
+            if (input.jobId !== undefined) {
+              if (toolName !== 'pwsh' || !REQUEST_ID.test(input.jobId) || !JOB_STATES.has(input.jobState)) throw failure('INVALID_COMMAND');
+              prior.jobId = input.jobId; prior.jobState = input.jobState; prior.jobObservedAt = new Date(timestamp()).toISOString();
+            }
+            prior.state = input.state; prior.resultHash = input.resultHash;
+            prior.finishedAt = prior.updatedAt = new Date(timestamp()).toISOString();
+          }
+          return { executionId, taskId: root.commandId, state: prior.state };
+        }
+        personalExecutionSource(next, input, true);
+        if (root.taskControl?.state === 'stop_requested' || taskHasUnknownEffects(next, root.commandId) ||
+            [root, ...taskChildren(next, root.commandId)].some(command => command.toolExecutions?.some(row =>
+              row.state === 'running' && row.rootCallId !== rootCallId))) throw failure('TASK_NOT_READY', 409);
+        if (prior) throw failure('REQUEST_CONFLICT', 409); // Unknown or completed calls are never executed twice.
+        for (const row of source.toolApprovals ?? []) if (row.turn === turn &&
+            (row.callId === callId || row.rootCallId === rootCallId)) {
+          if (row.callId === callId && (row.toolName !== toolName || row.argumentsHash !== argumentsHash ||
+              row.rootCallId !== rootCallId || input.runtimeId !== undefined && row.runtimeId !== input.runtimeId)) {
+            throw failure('REQUEST_CONFLICT', 409);
+          }
+          if (row.status !== 'resolved' || row.outcome !== 'allowed-once' || closedToolRuntimeIds.has(row.runtimeId)) {
+            throw failure('TASK_NOT_READY', 409);
+          }
+        }
+        if (rows.length >= 256) throw failure('CAPACITY_LIMIT', 429);
+        const now = new Date(timestamp()).toISOString();
+        source.dshTurn = turn;
+        source.toolExecutions = [...rows, { executionId, sourceCommandId: source.commandId, sourceReceiptId: receiptId,
+          rootCallId, callId, toolName, turn, state: 'running', argumentsHash,
+          ...(input.runtimeId !== undefined ? { runtimeId: input.runtimeId } : {}), startedAt: now, updatedAt: now }];
+        return { executionId, taskId: root.commandId, state: 'running' };
+      }, () => requireToolRuntime(input.runtimeId)));
+      requireToolRuntime(input.runtimeId);
+      return result;
+    },
     /** Main-process only: a DSH tool call from an owner-bound restricted turn. */
     async submitToolDesktop({ sessionId, turn, callId, messageHash, appId }) {
       const ownerId = rootState.legacyOwnerId;
@@ -4763,6 +5861,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const commandId = await serial(() => mutate(ownerId, (next) => {
         const existing = Object.values(next.commands).find((item) => item.requestId === requestId);
         if (existing) return existing.commandId;
+        if (requestIdUsed(next, requestId)) throw failure('REQUEST_CONFLICT', 409);
         if (!Object.hasOwn(next.sessions, sessionId) || next.sessions[sessionId].origin !== 'personal-remote') {
           throw failure('SESSION_READ_ONLY', 409);
         }
@@ -4892,7 +5991,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const requestId = `artifact-${digest(`${ownerId}|${sessionId}|${turn}|${callId}`).slice(0, 48)}`;
       const sourceCandidates = () => Object.values(accountState(ownerId).commands).filter((item) =>
         item.kind === 'session.message' && item.sessionId === sessionId &&
-        typeof item.payload.text === 'string' && digest(item.payload.text) === messageHash);
+        typeof item.payload.text === 'string' && sourceMessageHash(item) === messageHash &&
+        (receiptId === undefined || item.receiptId === receiptId));
       if (!sourceCandidates().length) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       for (let attempt = 0; attempt < 20 && sourceCandidates().some((item) => item.state === 'dispatching'); attempt++) {
         if (closing) throw failure('SERVICE_CLOSING', 503);
@@ -4903,8 +6003,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         const eligible = Object.values(next.commands).filter((item) => {
           if (item.kind !== 'session.message' || item.sessionId !== sessionId ||
               item.state !== 'accepted_by_dsh' || typeof item.payload.text !== 'string' ||
-              digest(item.payload.text) !== messageHash ||
-              ((projectSession || browserSession) && item.receiptId !== receiptId) ||
+              sourceMessageHash(item) !== messageHash ||
+              (receiptId !== undefined && item.receiptId !== receiptId) ||
               (item.dshTurn !== undefined && item.dshTurn !== turn) ||
               !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
           const device = next.devices[item.sourceDeviceId];
@@ -4942,6 +6042,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           }
           return existing.commandId;
         }
+        if (requestIdUsed(next, requestId)) throw failure('REQUEST_CONFLICT', 409);
         if (next.commands[rootTaskId]?.taskControl?.state === 'stop_requested') {
           throw failure('TASK_NOT_READY', 409);
         }
@@ -4959,7 +6060,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           sourceDeviceId: source.sourceDeviceId, sourceAuthEpoch: source.sourceAuthEpoch,
           targetDeviceId: next.hostId, kind: INTERNAL_ARTIFACT_KIND, sessionId,
           taskId: rootTaskId, artifactId, fileName: artifact.fileName,
-          size: artifact.size, sha256: artifact.sha256,
+          contentType: artifact.contentType, size: artifact.size, sha256: artifact.sha256,
           ...(projectSession || browserSession ? { sourceReceiptId: receiptId, sourceSnapshotIds } : {}),
           toolSource: { sessionId, turn, callId, sourceCommandId: source.commandId },
           state: 'dispatching', createdAt: now, updatedAt: now };
@@ -5003,10 +6104,28 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     close() {
       if (closePromise) return closePromise;
       closing = true;
+      for (const account of Object.values(rootState.accounts)) for (const command of Object.values(account.commands)) {
+        for (const row of [...(command.toolApprovals ?? []), ...(command.toolExecutions ?? []), ...(command.userQuestions ?? [])]) {
+          if (row.runtimeId) closedToolRuntimeIds.add(row.runtimeId);
+        }
+      }
       closePromise = (async () => {
         mobileUi?.close();
         const browserClosed = Promise.resolve(browserReader?.close());
         const syncClosed = Promise.all([...syncStores.values()].map((store) => store.close()));
+        const approvalsClosed = queue.then(async () => {
+          const next = structuredClone(rootState), at = new Date(timestamp()).toISOString();
+          let changed = false;
+          for (const account of Object.values(next.accounts)) for (const command of Object.values(account.commands)) {
+            for (const row of command.toolApprovals ?? []) changed = invalidateToolApproval(row, 'service_closing', at) || changed;
+            for (const row of command.userQuestions ?? []) changed = invalidateUserQuestion(row, 'SERVICE_CLOSING', at) || changed;
+          }
+          if (changed) {
+            validateStore(next);
+            await durableWrite(storeFile, next);
+            rootState = next;
+          }
+        });
         const current = server;
         server = undefined;
         origin = undefined;
@@ -5020,7 +6139,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           // Store transactions contain no backend await. Successful close waits
           // for the last atomic write before another instance may open this root.
           await Promise.race([
-            Promise.all([queue, syncClosed, browserClosed]),
+            Promise.all([approvalsClosed, syncClosed, browserClosed]),
             new Promise((_, reject) => { timer = setTimeout(() => reject(failure('CLOSE_TIMEOUT', 503)), CLOSE_TIMEOUT_MS); }),
           ]);
           clearTimeout(timer);

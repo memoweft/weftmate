@@ -93,33 +93,101 @@ export function stopExactTask(agents, claimedBySession, input) {
     : outcomes.some((item) => item.status === 'cancel_requested') ? 'cancel_requested' : 'queue_removed', outcomes };
 }
 
-export function createTaskStopHandler(agents, claimedBySession, send) {
+/** Cancel and await only native jobs claimed by this exact session and original receipt. */
+export async function stopReceiptBackgroundJobs(jobs, claims, input) {
+  return Promise.all(input.receiptIds.map(async receiptId => {
+    const owned = claims.get(`${input.sessionId}\u0000${receiptId}`) ?? new Map();
+    const backgroundJobs = await Promise.all([...owned.entries()].map(async ([jobId, owner]) => {
+      try {
+        if (owner.session?.id !== input.sessionId) return { jobId, state: 'unconfirmed' };
+        const initial = jobs.get(jobId, owner);
+        if (initial.ownerSession !== input.sessionId || initial.kind !== 'pwsh') return { jobId, state: 'unconfirmed' };
+        if (['running', 'stopping'].includes(initial.status)) {
+          jobs.kill(jobId, owner, 'personal task stop');
+          await jobs.wait(jobId, 2_000, owner);
+        }
+        const state = jobs.get(jobId, owner).status;
+        return { jobId, state: ['running', 'stopping', 'completed', 'killed', 'failed'].includes(state) ? state : 'unconfirmed' };
+      } catch { return { jobId, state: 'unconfirmed' }; }
+    }));
+    return { receiptId, backgroundJobs };
+  }));
+}
+
+/** Bind the native record before awaiting anything; a prior stop applies to late registration too. */
+export function claimReceiptBackgroundJob(agents, jobs, claims, stoppedReceipts, claim) {
+  const owner = agents.get(claim.sessionId);
+  if (owner !== claim.owner || owner?.id !== claim.sessionId ||
+      owner?.session?.header?.agentPreset !== 'personal-remote' ||
+      typeof claim.receiptId !== 'string' || !RECEIPT.test(claim.receiptId) ||
+      typeof claim.jobId !== 'string' || !RECEIPT.test(claim.jobId) || !jobs) return false;
+  let snapshot;
+  try { snapshot = jobs.get(claim.jobId, owner); } catch { return false; }
+  if (snapshot.ownerSession !== claim.sessionId || snapshot.kind !== 'pwsh') return false;
+  const key = `${claim.sessionId}\u0000${claim.receiptId}`;
+  let table = claims.get(key);
+  if (!table) {
+    if (claims.size >= recentLimit) return false;
+    table = new Map(); claims.set(key, table);
+  }
+  if (!table.has(claim.jobId) && table.size >= 32) return false;
+  table.set(claim.jobId, owner);
+  return stoppedReceipts.has(key)
+    ? stopReceiptBackgroundJobs(jobs, claims, { sessionId: claim.sessionId, receiptIds: [claim.receiptId] }).then(() => true)
+    : true;
+}
+
+export function createTaskStopHandler(agents, claimedBySession, send, stopJobs = null, onStop = null) {
   const recent = new Map();
   return (frame) => {
     if (frame?.protocol !== PERSONAL_TASK_CONTROL_PROTOCOL || !validRequest(frame)) return;
     const key = `${frame.sessionId}\u0000${frame.requestId}`;
     const stable = recent.get(key) ?? new Map();
-    let result;
-    try { result = stopExactTask(agents, claimedBySession, frame); }
-    catch { result = { status: 'unconfirmed', outcomes: frame.receiptIds.map((receiptId) =>
-      ({ receiptId, status: 'unconfirmed' })) }; }
-    result.outcomes = result.outcomes.map((outcome) => {
-      const previous = stable.get(outcome.receiptId);
-      if (previous) return previous;
-      if (outcome.status !== 'unconfirmed') stable.set(outcome.receiptId, outcome);
-      return outcome;
-    });
-    result.status = result.outcomes.some((item) => item.status === 'unconfirmed') ? 'unconfirmed'
-      : result.outcomes.some((item) => item.status === 'cancel_requested') ? 'cancel_requested' : 'queue_removed';
     recent.delete(key);
     recent.set(key, stable);
     if (recent.size > recentLimit) recent.delete(recent.keys().next().value);
-    send({ protocol: PERSONAL_TASK_CONTROL_PROTOCOL, id: frame.id, ...result });
+    let result;
+    try { onStop?.(frame); result = stopExactTask(agents, claimedBySession, frame); }
+    catch { result = { status: 'unconfirmed', outcomes: frame.receiptIds.map((receiptId) =>
+      ({ receiptId, status: 'unconfirmed' })) }; }
+    const finish = (jobs = [], forceUnconfirmed = false) => {
+      result.outcomes = result.outcomes.map((outcome) => {
+        const backgroundJobs = jobs.find(item => item.receiptId === outcome.receiptId)?.backgroundJobs ?? [];
+        const previous = stable.get(outcome.receiptId);
+        if (previous && !forceUnconfirmed) outcome = { ...previous };
+        if (backgroundJobs.length) {
+          outcome = { ...outcome, backgroundJobs,
+            status: backgroundJobs.some(job => job.state === 'unconfirmed') ? 'unconfirmed' : 'cancel_requested' };
+          if (outcome.status === 'unconfirmed') delete outcome.turn;
+        }
+        if (outcome.status !== 'unconfirmed') stable.set(outcome.receiptId, outcome);
+        return outcome;
+      });
+      result.status = result.outcomes.some((item) => item.status === 'unconfirmed') ? 'unconfirmed'
+        : result.outcomes.some((item) => item.status === 'cancel_requested') ? 'cancel_requested' : 'queue_removed';
+      recent.delete(key);
+      recent.set(key, stable);
+      if (recent.size > recentLimit) recent.delete(recent.keys().next().value);
+      send({ protocol: PERSONAL_TASK_CONTROL_PROTOCOL, id: frame.id, ...result });
+    };
+    let work;
+    try { work = stopJobs?.(frame); } catch (error) { work = Promise.reject(error); }
+    if (work) Promise.resolve(work).then(finish, () => {
+      result.outcomes = result.outcomes.map(outcome => ({ ...outcome, status: 'unconfirmed' }));
+      finish([], true);
+    });
+    else finish();
   };
 }
 
 export function apply(ctx) {
   const claimedBySession = new Map();
+  const backgroundClaims = new Map();
+  const stoppedReceipts = new Map();
+  ctx.on('weftmate/personal-job', (claim, next) => {
+    const result = claimReceiptBackgroundJob(ctx.agents, ctx.get('jobs'), backgroundClaims, stoppedReceipts, claim);
+    return result === false ? next() : Promise.resolve(result);
+  });
   const onClaimed = ({ agent, message, turn }) => {
     if (agent?.session?.header?.agentPreset !== 'personal-remote' ||
         typeof agent.session.id !== 'string' || !Number.isSafeInteger(turn)) return;
@@ -141,11 +209,20 @@ export function apply(ctx) {
       try { process.send(frame); }
       catch { /* Parent will time out and preserve the stop intent. */ }
     }
-  });
+  }, frame => frame.receiptIds.some(receiptId => backgroundClaims.has(`${frame.sessionId}\u0000${receiptId}`))
+    ? stopReceiptBackgroundJobs(ctx.get('jobs'), backgroundClaims, frame) : null, frame => {
+      for (const receiptId of frame.receiptIds) {
+        const key = `${frame.sessionId}\u0000${receiptId}`;
+        stoppedReceipts.delete(key); stoppedReceipts.set(key, true);
+      }
+      while (stoppedReceipts.size > recentLimit * MAX_TARGETS) stoppedReceipts.delete(stoppedReceipts.keys().next().value);
+    });
   process.on('message', onMessage);
   ctx.effect(() => () => {
     process.off('message', onMessage);
     claimedBySession.clear();
+    backgroundClaims.clear();
+    stoppedReceipts.clear();
   }, 'weftmate-personal-task-control: exact stop IPC lifecycle');
 }
 

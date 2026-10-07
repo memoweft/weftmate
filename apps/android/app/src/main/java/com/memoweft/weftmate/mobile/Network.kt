@@ -33,6 +33,32 @@ internal fun validBusinessPath(path: String): Boolean {
     return decoded.split('/').none { it == "." || it == ".." } && !decoded.contains("//")
 }
 
+internal fun approvalListPath(sessionId: String, before: String? = null, limit: Int = 50): String {
+    require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) && limit in 1..100)
+    require(before == null || before.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")))
+    return "/personal/v1/sessions/$sessionId/approvals?limit=$limit" + (before?.let { "&before=$it" } ?: "")
+}
+
+internal fun approvalDecisionPath(sessionId: String, approvalId: String, requestId: String, outcome: String): String {
+    require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) &&
+        approvalId.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) &&
+        requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) && outcome in setOf("allowed-once", "rejected"))
+    return "/personal/v1/sessions/$sessionId/approvals/$approvalId"
+}
+
+internal fun questionListPath(sessionId: String, before: String? = null, limit: Int = 50): String {
+    require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) && limit in 1..100)
+    require(before == null || before.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")))
+    return "/personal/v1/sessions/$sessionId/questions?limit=$limit" + (before?.let { "&before=$it" } ?: "")
+}
+
+internal fun questionAnswerPath(sessionId: String, questionRpcId: String, requestId: String): String {
+    require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) &&
+        questionRpcId.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")) &&
+        requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")))
+    return "/personal/v1/sessions/$sessionId/questions/$questionRpcId"
+}
+
 fun imagePreviewUrl(conversationId: String, messageId: String?, attachmentId: String): String =
     "https://appassets.androidplatform.net/media/image/$attachmentId?conversationId=$conversationId" +
         (messageId?.let { "&messageId=$it" } ?: "")
@@ -835,6 +861,24 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         return http.request("${host.origin}/personal/v1/tasks/$taskId", "GET",
             headers = mapOf("Cookie" to host.cookie)).body
     }
+
+    fun approvals(host: HostIdentity, sessionId: String, before: String? = null, limit: Int = 50): JSONObject =
+        http.request("${host.origin}${approvalListPath(sessionId, before, limit)}", "GET",
+            headers = mapOf("Cookie" to host.cookie)).body
+
+    fun decideApproval(host: HostIdentity, sessionId: String, approvalId: String,
+        requestId: String, outcome: String): JSONObject = http.request(
+        "${host.origin}${approvalDecisionPath(sessionId, approvalId, requestId, outcome)}", "POST",
+        JSONObject().put("requestId", requestId).put("outcome", outcome), authWriteHeaders(host)).body
+
+    fun questions(host: HostIdentity, sessionId: String, before: String? = null, limit: Int = 50): JSONObject =
+        http.request("${host.origin}${questionListPath(sessionId, before, limit)}", "GET",
+            headers = mapOf("Cookie" to host.cookie)).body
+
+    fun answerQuestion(host: HostIdentity, sessionId: String, questionRpcId: String,
+        requestId: String, answer: JSONObject): JSONObject = http.request(
+        "${host.origin}${questionAnswerPath(sessionId, questionRpcId, requestId)}", "POST",
+        JSONObject().put("requestId", requestId).put("answer", answer), authWriteHeaders(host)).body
 
     fun taskControl(host: HostIdentity, taskId: String, action: String, requestId: String,
         text: String? = null): JSONObject {

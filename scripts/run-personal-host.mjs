@@ -6,7 +6,7 @@ import { randomUUID } from 'node:crypto';
 import { basename, dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { configureMemoWeft } from '../dogfood/memoweft-config.mjs';
-import { assertLoopbackOrigin, observeHostChild, personalPublicOrigin, PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, validatePersonalHostProfile } from '../src/host-mode.mjs';
+import { assertLoopbackOrigin, observeHostChild, personalPublicOrigin, personalWorkspaceDirectory, PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT, validatePersonalHostProfile } from '../src/host-mode.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../src/private-host-storage.mjs';
 import { loadPersonalMemoryConfig } from '../src/personal-memory/config.mjs';
 
@@ -24,6 +24,7 @@ let accessPort = null;
 let publicOrigin = null;
 let androidPackagePath = null;
 let mobileUiDir = null;
+let requestedWorkspaceDir = null;
 for (let index = 0; index < args.length; index += 2) {
   const flag = args[index];
   const value = args[index + 1];
@@ -36,6 +37,7 @@ for (let index = 0; index < args.length; index += 2) {
   else if (flag === '--android-package-path' && androidPackagePath === null && isAbsolute(value) &&
     basename(value).toLowerCase() === 'android-candidate.apk') androidPackagePath = resolve(value);
   else if (flag === '--mobile-ui-dir' && mobileUiDir === null && isAbsolute(value)) mobileUiDir = resolve(value);
+  else if (flag === '--workspace-dir' && requestedWorkspaceDir === null) requestedWorkspaceDir = value;
   else { console.error(`[personal-host] unknown or duplicate option: ${flag}`); process.exit(2); }
 }
 try {
@@ -49,7 +51,7 @@ if ((androidPackagePath || mobileUiDir || accountMemoryConfig) && accessPort ===
   process.exit(2);
 }
 if (!requestedProfile || !isAbsolute(requestedProfile)) {
-  console.error('usage: node scripts/run-personal-host.mjs --user-data-dir <absolute isolated directory> [--access-port <0..65535>] [--public-origin <https-origin> --trust-loopback-proxy] [--android-package-path <absolute android-candidate.apk>] [--mobile-ui-dir <absolute release directory>] [--personal-memory-config <absolute config.json>] [--dry-run]');
+  console.error('usage: node scripts/run-personal-host.mjs --user-data-dir <absolute isolated directory> [--workspace-dir <absolute existing directory>] [--access-port <0..65535>] [--public-origin <https-origin> --trust-loopback-proxy] [--android-package-path <absolute android-candidate.apk>] [--mobile-ui-dir <absolute release directory>] [--personal-memory-config <absolute config.json>] [--dry-run]');
   process.exit(2);
 }
 if (memoryConfig !== null) {
@@ -66,6 +68,14 @@ for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.start
 try { configureMemoWeft(memoryConfig, env); }
 catch (error) { console.error('[personal-host] ' + error.message); process.exit(2); }
 const candidate = resolve(requestedProfile);
+let workspaceDir;
+try {
+  workspaceDir = personalWorkspaceDirectory(
+    requestedWorkspaceDir === null ? [] : [`--workspace-dir=${requestedWorkspaceDir}`], true, candidate);
+} catch (error) {
+  console.error('[personal-host] workspace directory refused:', error.message);
+  process.exit(2);
+}
 let profile = candidate;
 try {
   if (existsSync(candidate)) profile = validatePersonalHostProfile(candidate);
@@ -80,6 +90,7 @@ try {
   process.exit(2);
 }
 console.log(`[personal-host] profile=${profile}`);
+console.log(`[personal-host] workspace=${workspaceDir}`);
 console.log('[personal-host] mode=personal-host; DSH address will be OS-assigned loopback');
 console.log(`[personal-host] memoweft=${memoryConfig ? 'explicit-config' : 'disabled'} aiGame=not-configured phoneExecution=disabled`);
 console.log(`[personal-host] accountMemory=${accountMemoryConfig ? 'explicit-config' : 'disabled'}`);
@@ -96,6 +107,7 @@ const electron = require('electron');
 env.WEFTMATE_USER_DATA = profile;
 env.WEFTMATE_DOGFOOD_CONTROL = '1';
 const child = spawn(electron, ['.', `--user-data-dir=${profile}`, '--personal-host',
+  ...(requestedWorkspaceDir === null ? [] : [`--workspace-dir=${workspaceDir}`]),
   ...(accessPort === null ? [] : [`--access-port=${accessPort}`]),
   ...(publicOrigin === null ? [] : [`--public-origin=${publicOrigin}`, '--trust-loopback-proxy']),
   ...(androidPackagePath === null ? [] : [`--android-package-path=${androidPackagePath}`]),

@@ -38,10 +38,14 @@ function officialQrSvg(platform: string) {
 
 class Element {
   id: string
+  tagName: string
+  ownerDocument: { body: Element; activeElement: Element } | null = null
+  root = false
   children: Element[] = []
   listeners = new Map<string, Array<(event: any) => unknown>>()
   hidden = false
   disabled = false
+  checked = false
   value = ''
   textContent = ''
   type = ''
@@ -52,28 +56,64 @@ class Element {
   files: any[] = []
   src = ''
   focused = false
+  focusOptions: { preventScroll?: boolean } | undefined
+  scrollTop = 0
   decodeHandler: (() => Promise<void>) | null = null
   classList = { add() {}, remove() {}, toggle() {} }
-  constructor(id = '') { this.id = id }
+  constructor(id = '', tagName = 'div') { this.id = id; this.tagName = tagName.toUpperCase() }
   addEventListener(name: string, listener: (event: any) => unknown) {
     this.listeners.set(name, [...(this.listeners.get(name) ?? []), listener])
   }
   fire(name: string, extra: Record<string, unknown> = {}) {
     for (const listener of this.listeners.get(name) ?? []) listener({ currentTarget: this, target: this, preventDefault() {}, ...extra })
   }
-  append(...children: Element[]) { this.children.push(...children) }
-  replaceChildren(...children: Element[]) { this.children = children }
+  append(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.push(...children) }
+  replaceChildren(...children: Element[]) { for (const child of [...this.children]) child.remove(); this.children = []; this.append(...children) }
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
   removeAttribute(name: string) { this.attributes.delete(name); if (name === 'src') this.src = '' }
   decode() { return this.decodeHandler ? this.decodeHandler() : Promise.resolve() }
-  focus() { this.focused = true }
+  focus(options?: { preventScroll?: boolean }) {
+    if (!this.isConnected) return
+    if (this.ownerDocument) { this.ownerDocument.activeElement.focused = false; this.ownerDocument.activeElement = this }
+    this.focused = true; this.focusOptions = options
+  }
   getBoundingClientRect() { return { left: 16, right: 366, top: 680, bottom: 724 } }
-  querySelectorAll() { return [] }
-  close() { this.open = false }
-  showModal() { this.open = true }
+  querySelectorAll(selector = ''): Element[] {
+    return this.children.flatMap((child) => [
+      ...(matchesTestSelector(child, selector) ? [child] : []), ...child.querySelectorAll(selector),
+    ])
+  }
+  querySelector(selector: string) { return this.querySelectorAll(selector)[0] ?? null }
+  contains(node: Element | null): boolean { return !!node && (node === this || this.children.some((child) => child.contains(node))) }
+  get isConnected(): boolean { return this.root || this.parentNode?.isConnected === true }
+  close() { this.open = false; if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body }
+  showModal() { this.open = true; this.focus() }
   reset() { this.value = '' }
   open = false
+  parentNode: Element | null = null
+  get nextSibling() { return this.parentNode?.children[this.parentNode.children.indexOf(this) + 1] ?? null }
+  insertBefore(child: Element, next: Element | null) {
+    child.remove()
+    const index = next ? this.children.indexOf(next) : -1
+    child.parentNode = this
+    if (index < 0) this.children.push(child)
+    else this.children.splice(index, 0, child)
+  }
+  remove() {
+    if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body
+    if (this.parentNode) this.parentNode.children = this.parentNode.children.filter((item) => item !== this)
+    this.parentNode = null
+  }
+}
+
+function matchesTestSelector(node: Element, selector: string) {
+  if (selector === 'dialog[open]') return node.tagName === 'DIALOG' && node.open
+  if (selector === 'details') return node.tagName === 'DETAILS'
+  if (selector === 'button.secondary.small') return node.tagName === 'BUTTON' &&
+    ['secondary', 'small'].every((name) => node.className.split(' ').includes(name))
+  const data = /^\[data-conversation-(task|approval|question)(-action)?="([^"]+)"\]$/.exec(selector)
+  return !!data && node.dataset[`conversation${data[1][0].toUpperCase() + data[1].slice(1)}${data[2] ? 'Action' : ''}`] === data[3]
 }
 
 const reply = (body: object, status = 200) => ({ ok: status < 400, status, json: async () => body })
@@ -94,16 +134,27 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     accountModels?: object[]; accountModelWrite?: (url: string, options: any) => object;
     accountModelByRequest?: Record<string, object>;
     syncPost?: 'timeout-no-commit' | 'timeout-committed' | 'conflict'; uuidForSync?: boolean; deviceSuffix?: string;
-    configured?: boolean; authenticated?: boolean; setupGrant?: string;
+    configured?: boolean; authenticated?: boolean; setupGrant?: string; statusOffline?: boolean;
     profileAccounts?: Record<string, any>; initialProfileOwner?: string;
     taskDetails?: Record<string, object>; sourceDetails?: Record<string, object>;
     artifactPreviews?: Record<string, object | { error: { code: string }; status: number }>;
     deferTaskDetail?: boolean; taskPollTimers?: boolean;
     deferOriginalAttachment?: boolean;
     failOriginalAttachmentOnce?: boolean;
+    approvals?: Record<string, any[]>;
+    approvalRead?: (url: string, options: any) => ReturnType<typeof reply> | Promise<ReturnType<typeof reply>>;
+    approvalDecide?: (url: string, options: any) => ReturnType<typeof reply> | Promise<ReturnType<typeof reply>>;
+    questions?: Record<string, any[]>;
+    questionRead?: (url: string, options: any) => ReturnType<typeof reply> | Promise<ReturnType<typeof reply>>;
+    questionAnswer?: (url: string, options: any) => ReturnType<typeof reply> | Promise<ReturnType<typeof reply>>;
   } = {}) {
   const nodes = new Map<string, Element>()
-  const get = (id: string) => { if (!nodes.has(id)) nodes.set(id, new Element(id)); return nodes.get(id)! }
+  let focusDocument: { body: Element; activeElement: Element } | null = null
+  const get = (id: string) => {
+    if (!nodes.has(id)) { const node = new Element(id, id.endsWith('-dialog') ? 'dialog' : 'div');
+      node.root = true; node.ownerDocument = focusDocument; nodes.set(id, node) }
+    return nodes.get(id)!
+  }
   const storage = config.storage ?? new Map<string, string>()
   if (config.markers) storage.set('weftmate:requests:v1:owner-test', JSON.stringify(config.markers))
   const requests: Array<{ url: string; options: any }> = []
@@ -182,6 +233,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     if (url.endsWith('/auth/devices')) return Promise.resolve(reply({ devices: [
       { id: 'device-phone', name: '合成手机', createdAt: '2026-09-26T00:00:00.000Z', revoked: false },
     ] }))
+    if (url.endsWith('/status') && config.statusOffline) return Promise.reject(new Error('synthetic status disconnect'))
     if (url.endsWith('/status')) return Promise.resolve(reply({ ownerId: config.profileAccounts ? profileAccounts[profileOwner].ownerId : 'owner-test', hostId: 'host-test',
       ...(config.syncAvailable ? { sync: { available: true } } : {}),
       ...(config.downloadAvailable ? { downloads: { android: true } } : {}),
@@ -229,6 +281,28 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     if (url.endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
       { sessionId: 'A', title: 'A', sendAvailable: true, running: aRunning }, { sessionId: 'B', title: 'B', sendAvailable: true },
     ] }))
+    if (/\/sessions\/[^/]+\/approvals\//.test(url) && options.method === 'POST') return Promise.resolve(
+      config.approvalDecide?.(url, options) ?? reply({ error: { code: 'NOT_FOUND' } }, 404))
+    if (/\/sessions\/[^/]+\/approvals\?/.test(url)) {
+      if (config.approvalRead) return Promise.resolve(config.approvalRead(url, options))
+      const parsed = new URL(url, 'http://local.test'), sessionId = parsed.pathname.split('/').at(-2)!
+      const before = parsed.searchParams.get('before'), all = config.approvals?.[sessionId] ?? []
+      const start = before ? all.findIndex((row) => row.approvalId === before) + 1 : 0
+      const approvals = all.slice(start, start + Number(parsed.searchParams.get('limit') || 50))
+      const hasMore = start + approvals.length < all.length
+      return Promise.resolve(reply({ approvals: approvals.map((row) => ({ ...row })), nextBefore: hasMore ? approvals.at(-1).approvalId : null, hasMore }))
+    }
+    if (/\/sessions\/[^/]+\/questions\//.test(url) && options.method === 'POST') return Promise.resolve(
+      config.questionAnswer?.(url, options) ?? reply({ error: { code: 'NOT_FOUND' } }, 404))
+    if (/\/sessions\/[^/]+\/questions\?/.test(url)) {
+      if (config.questionRead) return Promise.resolve(config.questionRead(url, options))
+      const parsed = new URL(url, 'http://local.test'), sessionId = parsed.pathname.split('/').at(-2)!
+      const before = parsed.searchParams.get('before'), all = config.questions?.[sessionId] ?? []
+      const start = before ? all.findIndex((row) => row.questionRpcId === before) + 1 : 0
+      const questions = all.slice(start, start + Number(parsed.searchParams.get('limit') || 50))
+      const hasMore = start + questions.length < all.length
+      return Promise.resolve(reply({ questions: questions.map((row) => ({ ...row })), nextBefore: hasMore ? questions.at(-1).questionRpcId : null, hasMore }))
+    }
     if (url.includes('/sessions/') && url.includes('/events?')) {
       const id = url.includes('/sessions/A/') ? 'A' : 'B'
       if (deferHistory) { const wait = deferred<ReturnType<typeof reply>>(); history[id].push(wait); return wait.promise }
@@ -299,8 +373,21 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
     }
     throw new Error(`unexpected test URL ${url}`)
   }
-  const document = { body: get('body'), visibilityState: 'visible', getElementById: get,
-    createElement: () => new Element(), querySelector: () => get('badge'), querySelectorAll: () => [], addEventListener() {} }
+  const body = get('body')
+  const document = { body, activeElement: body, visibilityState: 'visible', getElementById: get,
+    createElement: (tagName: string) => { const node = new Element('', tagName); node.ownerDocument = document; return node },
+    querySelector: (selector: string): Element | null => {
+      if (selector === 'dialog[open]') return [...nodes.values()].find((node) => matchesTestSelector(node, selector)) ?? null
+      const task = /^(\[data-conversation-task="[^"]+"\]) button\.secondary\.small$/.exec(selector)
+      if (task) return get('transcript').querySelector(task[1])?.querySelector('button.secondary.small') ?? null
+      const approval = /^(\[data-conversation-approval="[^"]+"\]) (\[data-conversation-approval-action="[^"]+"\])$/.exec(selector)
+      if (approval) return get('transcript').querySelector(approval[1])?.querySelector(approval[2]) ?? null
+      const question = /^(\[data-conversation-question="[^"]+"\]) (\[data-conversation-question-action="[^"]+"\])$/.exec(selector)
+      if (question) return get('transcript').querySelector(question[1])?.querySelector(question[2]) ?? null
+      return get('badge')
+    }, querySelectorAll: () => [], addEventListener() {} }
+  focusDocument = document
+  for (const node of nodes.values()) node.ownerDocument = document
   const location = { hash: config.setupGrant ? `#setup=${config.setupGrant}` : '',
     pathname: '/personal/v1/ui', search: '', protocol: 'http:' }
   const window = { location, innerWidth: 1280, innerHeight: 820, history: { replaceState() {} }, addEventListener() {} }
@@ -309,7 +396,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
   const context = { document, window, location, fetch, URL: URLShim, localStorage: { getItem: (key: string) => storage.get(key) ?? null,
     setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
-  TextEncoder, TextDecoder, Blob, File, AbortController, DOMException,
+  TextEncoder, TextDecoder, Blob, File, AbortController, DOMException, queueMicrotask,
   __weftmateTestHashBlobSha256: hashBlobSha256, crypto: { randomUUID: () => config.uuidForSync
     ? `00000000-0000-4000-8000-${(++sequence).toString(16).padStart(12, '0')}` : `request-${++sequence}` }, AbortSignal, Intl, Date, btoa,
    setTimeout: (callback: () => void, delay: number) => {
@@ -318,7 +405,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
      return id
    }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
   runInNewContext(executableSource, context)
-  return { get, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
+  return { get, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
     deferDevices: () => { deferNextDevices = true }, resolveDevices: (value: object) => { deferredDevices?.resolve(reply(value)); deferredDevices = null },
     resolveTaskDetail: (value: object, status = 200) => { deferredTaskDetail?.resolve(reply(value, status)); deferredTaskDetail = null },
@@ -815,6 +902,227 @@ test('generic tool records show execution state without claiming goal verificati
   assert.equal(page.get('task-detail-verification').textContent, '')
 })
 
+test('synthetic conversation progress attaches to the exact dotted RPC receipt and aggregates only its own tool sources', async () => {
+  const source = { commandId: 'root-inline', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: 'rpc:root.1' }
+  const follow = { commandId: 'follow-inline', kind: 'session.message', rootTaskId: source.commandId,
+    state: 'accepted_by_dsh', taskAction: 'supplement', sessionId: 'A', receiptId: 'rpc:follow.2' }
+  const step = { executionId: 'exec-inline-one', toolName: 'pwsh', state: 'completed',
+    sourceCommandId: source.commandId, sourceReceiptId: source.receiptId, jobId: 'job-one', jobState: 'running' }
+  const task = { taskId: source.commandId, sessionId: 'A', source, artifacts: [], supplements: [follow],
+    replyEvidence: { status: 'completed', assistantMessages: 1 }, control: { state: 'active' }, executionSteps: [step,
+      { ...step, executionId: 'exec-inline-two', toolName: 'read', jobId: undefined, jobState: undefined,
+        sourceCommandId: follow.commandId, sourceReceiptId: follow.receiptId },
+      { ...step, executionId: 'exec-foreign', toolName: 'grep', sourceCommandId: 'foreign', sourceReceiptId: source.receiptId }] }
+  const page = harness([follow, source], [
+    { seq: 0, type: 'user.message', data: { text: '相同的目标', receiptId: source.receiptId } },
+    { seq: 1, type: 'assistant.message', data: { text: '先观察结果，再核对你的目标。' } },
+    { seq: 2, type: 'user.message', data: { text: '相同的目标', receiptId: 'rpc:other.3' } },
+  ], false, { taskDetails: { [source.commandId]: task } })
+  await flush()
+  page.tick() // The existing refresh reads roots after the command list has loaded.
+  for (let i = 0; i < 30 && !page.get('transcript').children.some((row) => row.dataset.conversationTask); i++) await flush()
+  const rows = page.get('transcript').children
+  const card = rows.find((row) => row.dataset.conversationTask === source.commandId)!
+  assert.ok(card)
+  assert.equal(rows[0].dataset.receiptId, source.receiptId)
+  assert.equal(rows[1], card, 'progress belongs to the exact receipt, even when message text repeats')
+  assert.match(visibleText(card), /运行命令 · 后台运行中.*读取文件 · 执行结束.*回复.*已正常结束/)
+  assert.doesNotMatch(visibleText(card), /搜索内容|目标已完成|已核验|rpc:|exec-/)
+  assert.equal(page.requests.some((row) => row.url.endsWith('/tasks/follow-inline')), false)
+  card.children.at(-1)!.children[0].fire('click')
+  await flush()
+  assert.equal(page.get('task-detail-dialog').open, true)
+  assert.equal(page.requests.filter((row) => row.options.method === 'POST').length, 0)
+})
+
+async function task15NarrowPage(config: NonNullable<Parameters<typeof harness>[3]> = {}) {
+  const command = { commandId: 'root-narrow', kind: 'session.message', state: 'accepted_by_dsh',
+    sessionId: 'A', receiptId: 'rpc:narrow.1' }
+  const task: Record<string, any> = { taskId: command.commandId, sessionId: 'A', source: command, artifacts: [],
+    executionSteps: [{ executionId: 'exec-narrow', toolName: 'pwsh', state: 'running',
+      sourceCommandId: command.commandId, sourceReceiptId: command.receiptId }],
+    control: { state: 'active', canStop: true, canSupplement: true, canResume: false }, replyEvidence: { status: 'streaming' } }
+  const taskDetails = { [command.commandId]: task }
+  const page = harness([command], [{ seq: 0, type: 'user.message', data: { text: '核对当前目标', receiptId: command.receiptId } }],
+    false, { ...config, profileAccounts: profileFixture(), taskDetails })
+  await ready(page)
+  for (let i = 0; i < 30 && !task15NarrowCard(page); i++) await flush()
+  assert.ok(task15NarrowCard(page), 'the receipt-bound progress card exists')
+  return { page, task, taskDetails, command }
+}
+
+function task15NarrowCard(page: ReturnType<typeof harness>) {
+  return page.get('transcript').children.find((row) => row.dataset.conversationTask === 'root-narrow')
+}
+
+async function task15NarrowClose(page: ReturnType<typeof harness>) {
+  const trigger = task15NarrowCard(page)!.querySelector('button.secondary.small')!
+  trigger.focus(); trigger.fire('click')
+  for (let i = 0; i < 15 && !page.get('task-detail-control').children.length; i++) await flush()
+  assert.equal(page.get('task-detail-dialog').open, true)
+  page.get('task-detail-close').fire('click'); await flush()
+  assert.equal(page.get('task-detail-dialog').open, false)
+  assert.equal(page.document.activeElement, task15NarrowCard(page)!.querySelector('button.secondary.small'))
+}
+
+async function task15NarrowRefresh(page: ReturnType<typeof harness>, task: Record<string, any>) {
+  const card = task15NarrowCard(page)!, signature = card.dataset.signature
+  task.replyEvidence = { status: 'aborted', assistantMessages: 1 }
+  page.tick()
+  for (let i = 0; i < 20 && card.dataset.signature === signature; i++) await flush()
+  assert.notEqual(card.dataset.signature, signature, 'one background refresh changed the payload signature')
+}
+
+test('task15-narrow task entry retains focus immediately after stopping and closing, then after the next signature refresh', async () => {
+  const { page, task, command } = await task15NarrowPage()
+  const first = task15NarrowCard(page)!.querySelector('button.secondary.small')!
+  first.focus(); first.fire('click')
+  for (let i = 0; i < 15 && !page.get('task-detail-control').children.length; i++) await flush()
+  const stop = page.get('task-detail-control').children[0].children.find((row) => row.textContent === '请求停止这件事')!
+  assert.ok(stop, 'the real task affordance offers stop')
+  task.control = { state: 'stop_requested', stopStatus: 'requested', canStop: false, canSupplement: false, canResume: false }
+  stop.fire('click'); await flush()
+  assert.equal(page.requests.filter((row) => row.url.endsWith(`/tasks/${command.commandId}/stop`) && row.options.method === 'POST').length, 1)
+  page.get('task-detail-close').fire('click'); await flush()
+  const immediatelyAfterClose = task15NarrowCard(page)!.querySelector('button.secondary.small')!
+  assert.equal(page.get('task-detail-dialog').open, false)
+  assert.equal(page.document.activeElement, immediatelyAfterClose, 'close immediately returns to the current task action')
+  page.get('message-text').value = '保留我的下一步草稿'
+  task.control = { state: 'stop_requested', stopStatus: 'stopped', canResume: true }
+  task.executionSteps[0].state = 'cancelled'
+  task.artifacts = [{ artifactId: 'artifact-narrow', taskId: command.commandId, sessionId: 'A', state: 'observed',
+    verification: { status: 'observed', method: 'sha256_readback' } }]
+  await task15NarrowRefresh(page, task)
+  const afterRefresh = task15NarrowCard(page)!.querySelector('button.secondary.small')!
+  assert.notEqual(afterRefresh, immediatelyAfterClose, 'the changed signature actually rebuilt the action')
+  assert.equal(afterRefresh.textContent, '查看成果与详情', 'the logical action survives a label change')
+  assert.equal(page.document.activeElement, afterRefresh, 'the next refresh preserves the same task entry')
+  assert.equal(afterRefresh.focusOptions?.preventScroll, true, 'background focus restoration does not scroll the chat')
+  assert.equal(page.get('message-text').value, '保留我的下一步草稿')
+})
+
+test('task15-narrow task refresh respects an input or another button chosen after close', async () => {
+  for (const targetId of ['message-text', 'show-account']) {
+    const { page, task } = await task15NarrowPage()
+    await task15NarrowClose(page)
+    const target = page.get(targetId); target.focus()
+    await task15NarrowRefresh(page, task)
+    assert.equal(page.document.activeElement, target, `refresh keeps the user's focus on ${targetId}`)
+  }
+})
+
+test('task15-narrow task refresh respects another open dialog', async () => {
+  const { page, task } = await task15NarrowPage()
+  await task15NarrowClose(page)
+  const dialog = page.get('revoke-dialog'); dialog.showModal()
+  await task15NarrowRefresh(page, task)
+  assert.equal(dialog.open, true)
+  assert.equal(page.document.activeElement, dialog, 'an open dialog retains protected focus')
+})
+
+test('task15-narrow late task refresh cannot reclaim focus after switching sessions', async () => {
+  const { page, task } = await task15NarrowPage()
+  await task15NarrowClose(page)
+  const oldEntry = page.document.activeElement
+  page.deferOneTaskDetail(); page.tick(); await flush()
+  page.get('session-list').children[1].children[0].fire('click'); await flush()
+  page.get('message-text').focus()
+  page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
+  assert.equal(page.get('assistant-title').textContent, 'B')
+  assert.equal(oldEntry.isConnected, false)
+  assert.equal(page.document.activeElement, page.get('message-text'))
+  assert.equal(task15NarrowCard(page), undefined)
+})
+
+test('task15-narrow late task refresh cannot reclaim focus after switching account identity', async () => {
+  const { page, task } = await task15NarrowPage()
+  await task15NarrowClose(page)
+  const oldEntry = page.document.activeElement
+  page.deferOneTaskDetail(); page.tick(); await flush()
+  await switchToB(page)
+  page.get('message-text').focus()
+  page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
+  assert.equal(oldEntry.isConnected, false)
+  assert.equal(page.document.activeElement, page.get('message-text'))
+  assert.equal(page.get('account-name').textContent, 'ProfileB')
+})
+
+test('task15-narrow late task refresh cannot reclaim focus after switching to the phone source', async () => {
+  const conversationId = 'conversation-00000000-0000-4000-8000-000000000010'
+  const { page, task } = await task15NarrowPage({ syncAvailable: true, syncEvents: [
+    { seq: 1, conversationId, sourceDeviceId: 'device-phone', kind: 'conversation.created', payload: { title: '另一来源' } },
+    { seq: 2, conversationId, sourceDeviceId: 'device-phone', kind: 'message.created', payload: {
+      messageId: 'message-00000000-0000-4000-8000-000000000011', role: 'user', text: '手机原消息' } },
+  ] })
+  await task15NarrowClose(page)
+  const oldEntry = page.document.activeElement
+  page.deferOneTaskDetail(); page.tick(); await flush()
+  const phone = page.get('session-list').children.find((row) => visibleText(row).includes('另一来源'))!
+  assert.ok(phone); phone.children[0].fire('click'); await flush()
+  page.get('message-text').focus()
+  page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
+  assert.match(page.get('assistant-title').textContent, /另一来源/)
+  assert.equal(oldEntry.isConnected, false)
+  assert.equal(page.document.activeElement, page.get('message-text'))
+  assert.equal(task15NarrowCard(page), undefined)
+})
+
+test('synthetic ordinary chat and invalid receipt IDs never acquire a tool progress card', async () => {
+  for (const receiptId of ['rpc:plain.1', 'invalid receipt', 'x'.repeat(161)]) {
+    const source = { commandId: 'plain', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId }
+    const executionSteps = receiptId === 'rpc:plain.1' ? [] : [{ executionId: 'execution', toolName: 'pwsh', state: 'completed',
+      sourceCommandId: source.commandId, sourceReceiptId: receiptId }]
+    const page = harness([source], [{ seq: 0, type: 'user.message', data: { text: '普通对话', receiptId } }], false,
+      { taskDetails: { plain: { taskId: 'plain', sessionId: 'A', source, artifacts: [], control: { state: 'active' }, executionSteps } } })
+    for (let i = 0; i < 15; i++) await flush()
+    assert.equal(page.get('transcript').children.some((row) => row.dataset.conversationTask), false)
+  }
+})
+
+test('synthetic cached progress becomes visibly stale and a late receipt moves its failure card to the original message', async () => {
+  const source = { commandId: 'root-stale', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: 'rpc:stale.1' }
+  const events: any[] = [{ seq: 0, type: 'assistant.message', data: { text: '已有回复' } }]
+  const taskDetails: Record<string, any> = {}
+  const page = harness([source], events, false, { taskDetails })
+  for (let i = 0; i < 20 && !page.get('transcript').children.some((row) => row.dataset.conversationTask); i++) await flush()
+  const card = page.get('transcript').children.find((row) => row.dataset.conversationTask)!
+  assert.match(visibleText(card), /待更新.*暂时无法读取.*重新核对进展/)
+  events.push({ seq: 1, type: 'user.message', data: { text: '真实目标', receiptId: source.receiptId } },
+    { seq: 2, type: 'assistant.message', data: { text: '继续观察' } })
+  page.tick(); for (let i = 0; i < 15; i++) await flush()
+  const rows = page.get('transcript').children
+  assert.equal(rows.indexOf(card), rows.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
+  taskDetails[source.commandId] = { taskId: source.commandId, sessionId: 'A', source, artifacts: [],
+    control: { state: 'stop_requested', stopStatus: 'cancel_requested' }, replyEvidence: { status: 'streaming' },
+    executionSteps: [{ executionId: 'exec-stale', toolName: 'pwsh', state: 'completed', sourceCommandId: source.commandId,
+      sourceReceiptId: source.receiptId, jobId: 'job-stale', jobState: 'stopping' }] }
+  page.tick(); for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(card), /后台正在停止.*等待实际结束记录/)
+  assert.doesNotMatch(visibleText(card), /实际停止|待更新/)
+  taskDetails[source.commandId].control.stopStatus = 'stopped'
+  taskDetails[source.commandId].executionSteps[0].jobState = 'killed'
+  page.tick(); for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(card), /后台已停止.*实际停止/)
+  delete taskDetails[source.commandId]
+  page.tick(); for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(card), /待更新.*上次记录：运行命令 · 后台已停止/)
+  assert.doesNotMatch(visibleText(card), /电脑已核对这件事的实际停止/)
+  assert.equal(page.requests.filter((row) => row.options.method === 'POST').length, 0)
+})
+
+test('synthetic late inline task payload is discarded after selecting another conversation', async () => {
+  const source = { commandId: 'late-inline', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: 'rpc:late.1' }
+  const page = harness([source], [{ seq: 0, type: 'user.message', data: { text: 'A目标', receiptId: source.receiptId } }], false,
+    { deferTaskDetail: true })
+  for (let i = 0; i < 20 && !page.requests.some((row) => row.url.endsWith('/tasks/late-inline')); i++) await flush()
+  page.get('session-list').children[1].children[0].fire('click'); await flush()
+  page.resolveTaskDetail({ taskId: source.commandId, sessionId: 'A', source, artifacts: [], executionSteps: [{ executionId: 'exec-late',
+    toolName: 'pwsh', state: 'completed', sourceCommandId: source.commandId, sourceReceiptId: source.receiptId }] })
+  await flush()
+  assert.equal(page.get('assistant-title').textContent, 'B')
+  assert.equal(page.get('transcript').children.some((row) => row.dataset.conversationTask), false)
+})
+
 test('supplement and resume commands remain under the root file task card', async () => {
   const source = { commandId: 'root-task', requestId: 'root-request', kind: 'session.message',
     state: 'accepted_by_dsh', sessionId: 'A' }
@@ -886,6 +1194,7 @@ test('task stop observation shows request, cancel request, and proven terminal w
   for (let i = 0; i < 15 && page.get('task-detail-control').children.length === 0; i++) await flush()
   assert.match(visibleText(page.get('task-detail-control')), /目前还不能确认已停止/)
   assert.equal(page.pendingTaskTimers(), 1)
+  const readsBeforeObservation = page.requests.filter((item) => item.url.endsWith('/tasks/root-task')).length
   taskDetails['root-task'] = { ...taskDetails['root-task'], control: {
     state: 'stop_requested', stopStatus: 'cancel_requested', pendingReceipts: 1,
     canSupplement: false, canStop: false, canResume: false } }
@@ -901,7 +1210,7 @@ test('task stop observation shows request, cancel request, and proven terminal w
   assert.doesNotMatch(page.get('task-detail-verification').textContent, /原消息已送达/)
   assert.equal(page.pendingTaskTimers(), 0)
   assert.equal(page.requests.filter((item) => item.url.endsWith('/tasks/root-task/stop')).length, 0)
-  assert.equal(page.requests.filter((item) => item.url.endsWith('/tasks/root-task')).length, 3)
+  assert.equal(page.requests.filter((item) => item.url.endsWith('/tasks/root-task')).length, readsBeforeObservation + 2)
 })
 
 test('task stop observation is bounded and ignores a late result after close or account switch', async () => {
@@ -998,6 +1307,122 @@ test('stale task list cannot open a task missing from the current account', asyn
   for (let attempt = 0; attempt < 15 && !/找不到/.test(page.get('task-detail-status').textContent); attempt++) await flush()
   assert.match(page.get('task-detail-status').textContent, /当前账户找不到/)
   assert.equal(page.get('task-detail-body').hidden, true)
+})
+
+test('terminal-output-limit desktop history requires the normalized pair and preserves legacy terminal meanings', async () => {
+  const cases = [
+    { data: { reason: 'error', endReasonKind: 'max-tokens' }, text: '本轮因输出限制结束，可继续对话。' },
+    { data: { reason: 'error' }, text: '本轮运行失败，未看到完整回复。请在电脑核对后再试。' },
+    { data: { reason: 'unknown', endReasonKind: 'max-tokens' }, text: '本轮结束状态尚不明确，请在电脑核对。' },
+    { data: {}, text: '本轮结束状态尚不明确，请在电脑核对。' },
+    { data: { reason: { kind: 'max-tokens' } }, text: '本轮结束状态尚不明确，请在电脑核对。' },
+    { data: { reason: 'completed', endReasonKind: 'max-tokens' }, text: '' },
+    { data: { reason: 'aborted', endReasonKind: 'max-tokens' }, text: '本轮已停止。如需继续，请重新发送。' },
+    { data: { reason: 'blocked', endReasonKind: 'max-tokens' }, text: '本轮因执行受限而停止，目标尚未确认完成。' },
+  ]
+  for (const item of cases) {
+    const page = harness([], [{ seq: 1, type: 'turn.ended', data: item.data }], false)
+    for (let attempt = 0; attempt < 15; attempt++) await flush()
+    assert.equal(page.get('timeline-status').textContent, item.text, JSON.stringify(item.data))
+  }
+})
+
+test('terminal-output-limit desktop keeps an old pure-reply card bound to its source while newer turns clear the timeline', async () => {
+  const source = { commandId: 'root-limit', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: 'rpc:limit.2' }
+  const evidence = { status: 'failed', endReasonKind: 'max-tokens', turn: 2, assistantMessages: 0,
+    sourceCommandId: source.commandId, sourceReceiptId: source.receiptId, terminalAt: '2026-10-07T00:35:29.769Z' }
+  const task = { taskId: source.commandId, sessionId: 'A', source, artifacts: [], executionSteps: [],
+    control: { state: 'active' }, replyEvidence: evidence }
+  const initial = JSON.stringify(task)
+  const events = [
+    { seq: 1, type: 'user.message', data: { text: '核对这份资料', receiptId: source.receiptId } },
+    { seq: 2, type: 'turn.ended', data: { reason: 'error', endReasonKind: 'max-tokens', turn: 2 } },
+  ]
+  const page = harness([source], events, true, { taskDetails: { [source.commandId]: task } })
+  await flush()
+  page.tick()
+  for (let attempt = 0; attempt < 30 && !page.get('transcript').children.some((row) => row.dataset.conversationTask); attempt++) await flush()
+  const card = page.get('transcript').children.find((row) => row.dataset.conversationTask === source.commandId)!
+  assert.ok(card)
+  assert.equal(card.children[0].textContent, '回复状态')
+  assert.equal(card.parentNode!.children.indexOf(card), card.parentNode!.children.findIndex((row) => row.dataset.receiptId === source.receiptId) + 1)
+  assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
+  assert.doesNotMatch(visibleText(card), /工具进展|已正常结束|用户拒绝|费用|没有成果/)
+  assert.equal(page.get('timeline-status').textContent, '本轮因输出限制结束，可继续对话。')
+  events.push({ seq: 3, type: 'user.message', data: { text: '核对这份资料', receiptId: 'rpc:new.3' } },
+    { seq: 4, type: 'turn.started', data: { turn: 3 } })
+  page.tick()
+  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('正在处理'); attempt++) await flush()
+  assert.match(page.get('timeline-status').textContent, /正在处理/)
+  assert.doesNotMatch(page.get('timeline-status').textContent, /输出限制/)
+  assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
+  events.push({ seq: 5, type: 'turn.ended', data: { reason: 'completed', turn: 3 } })
+  page.tick()
+  for (let attempt = 0; attempt < 20 && page.get('timeline-status').textContent; attempt++) await flush()
+  assert.equal(page.get('timeline-status').textContent, '')
+  events.push({ seq: 6, type: 'turn.ended', data: { reason: 'error', turn: 4 } })
+  page.tick()
+  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('运行失败'); attempt++) await flush()
+  assert.match(page.get('timeline-status').textContent, /运行失败/)
+  assert.doesNotMatch(page.get('timeline-status').textContent, /输出限制/)
+  assert.match(visibleText(card), /因输出限制结束，尚未确认完整交付/)
+  assert.equal(JSON.stringify(task), initial, 'display keeps the old source, turn and terminalAt evidence intact')
+})
+
+test('terminal-output-limit desktop card and detail preserve file verification and old reply statuses', async () => {
+  const cases = [
+    { evidence: { status: 'failed', endReasonKind: 'max-tokens' }, text: '回复：因输出限制结束，尚未确认完整交付。' },
+    { evidence: { status: 'failed' }, text: '回复：模型回合未完成；请查看原会话的错误。' },
+    { evidence: { status: 'unconfirmed', endReasonKind: 'max-tokens' }, text: '回复：是否结束尚无法核对；请勿把已核验文件当作回复完成。' },
+    { evidence: { status: 'completed', endReasonKind: 'max-tokens' }, text: '回复：电脑会话已正常结束。' },
+    { evidence: { status: 'aborted', endReasonKind: 'max-tokens' }, text: '回复：回合已中断；已核验的文件仍可查看。' },
+    { evidence: { status: 'blocked', endReasonKind: 'max-tokens' }, text: '回复：模型请求被阻断，尚无正常结束记录。' },
+  ]
+  for (const item of cases) {
+    const source = { commandId: 'root-limit-file', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'A', receiptId: 'rpc:limit-file.2' }
+    const artifact = { commandId: 'cmd-limit-file', artifactId: 'artifact-limit-file', taskId: source.commandId, sessionId: 'A',
+      kind: 'desktop.write_artifact', fileName: '已保存的部分结果.txt', size: 8, sha256: 'a'.repeat(64),
+      state: 'observed', verification: { status: 'observed', method: 'sha256_readback' } }
+    const task = { taskId: source.commandId, sessionId: 'A', source, artifacts: [artifact],
+      replyEvidence: { ...item.evidence, assistantMessages: 1, turn: 2, terminalAt: '2026-10-07T00:35:29.769Z' } }
+    const page = harness([source], [{ seq: 1, type: 'user.message', data: { text: '核对文件', receiptId: source.receiptId } }], true,
+      { taskDetails: { [source.commandId]: task } })
+    await flush()
+    page.tick()
+    for (let attempt = 0; attempt < 30 && !page.get('transcript').children.some((row) => row.dataset.conversationTask); attempt++) await flush()
+    const card = page.get('transcript').children.find((row) => row.dataset.conversationTask === source.commandId)!
+    assert.ok(card)
+    assert.equal(card.children.find((row) => row.className === 'conversation-task-reply')!.textContent, item.text)
+    assert.match(visibleText(card), /1 个成果文件已读回核验/)
+    card.children.at(-1)!.children[0].fire('click')
+    for (let attempt = 0; attempt < 20 && page.get('task-detail-reply').textContent !== item.text; attempt++) await flush()
+    assert.equal(page.get('task-detail-reply').textContent, item.text)
+    assert.match(page.get('task-detail-verification').textContent, /1 个文件已由电脑写入并读回核验/)
+    assert.doesNotMatch(item.text, /没有成果|成果未交齐|用户拒绝|费用耗尽/)
+  }
+})
+
+test('terminal-output-limit desktop offline session selection and account reset clear the previous reason', async () => {
+  const config = { statusOffline: false }
+  const page = harness([], [{ seq: 1, type: 'turn.ended', data: { reason: 'error', endReasonKind: 'max-tokens' } }], false, config)
+  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('输出限制'); attempt++) await flush()
+  assert.match(page.get('timeline-status').textContent, /输出限制/)
+  config.statusOffline = true
+  page.tick()
+  for (let attempt = 0; attempt < 20 && page.get('connection-banner').hidden; attempt++) await flush()
+  assert.equal(page.get('connection-banner').hidden, false)
+  const [a, b] = page.get('session-list').children.map((row) => row.children[0])
+  b.fire('click')
+  assert.equal(page.get('timeline-status').textContent, '', 'selection clears even when refreshHistory exits before its reset branch')
+  config.statusOffline = false
+  page.tick()
+  for (let attempt = 0; attempt < 20; attempt++) await flush()
+  a.fire('click')
+  for (let attempt = 0; attempt < 20 && !page.get('timeline-status').textContent.includes('输出限制'); attempt++) await flush()
+  assert.match(page.get('timeline-status').textContent, /输出限制/)
+  page.get('logout-button').fire('click')
+  for (let attempt = 0; attempt < 20 && page.get('timeline-status').textContent; attempt++) await flush()
+  assert.equal(page.get('timeline-status').textContent, '')
 })
 
 test('durable turn errors remain visible while a later completed turn clears the warning and keeps messages', async () => {
@@ -1485,6 +1910,340 @@ test('default phone conversation titles use a short first-user summary while cus
   const titles = page.get('phone-conversations').children.map((row) => row.children[0].children[0].textContent)
   assert.deepEqual(titles, ['打开手机设置并 查看蓝牙状态', '旅行笔记', '第三段手机本地记录，稍后再同步'])
   assert.equal(rows[0].payload.title, '新对话', 'display fallback leaves the synchronized event unchanged')
+})
+
+const approvalFixtureId = '00000000-0000-4000-8000-000000000001'
+function task15ApprovalFixture(config: NonNullable<Parameters<typeof harness>[3]> = {}) {
+  const source = { commandId: 'root-approval-client', kind: 'session.message', state: 'accepted_by_dsh',
+    sessionId: 'A', receiptId: 'rpc:approval.root' }
+  const supplement = { commandId: 'follow-approval-client', kind: 'session.message', state: 'accepted_by_dsh',
+    sessionId: 'A', rootTaskId: source.commandId, receiptId: 'rpc:approval.follow', taskAction: 'supplement' }
+  const task = { taskId: source.commandId, sessionId: 'A', source, supplements: [supplement], artifacts: [],
+    control: { state: 'active', canStop: true, canSupplement: true } }
+  const approval = { approvalId: approvalFixtureId, sessionId: 'A', taskId: source.commandId,
+    sourceCommandId: source.commandId, sourceReceiptId: source.receiptId, turn: 1,
+    callId: 'approval-call', rootCallId: 'approval-root-call', toolName: 'weftmod_script',
+    reason: '这次脚本会写入隔离目标文件。', createdAt: '2026-10-06T12:00:00.000Z', status: 'pending' }
+  const approvals = config.approvals ?? { A: [approval] }
+  const page = harness([supplement, source], [
+    { seq: 0, type: 'user.message', data: { text: '相同的目标', receiptId: source.receiptId } },
+    { seq: 1, type: 'assistant.message', data: { text: '等待本次批准。' } },
+    { seq: 2, type: 'user.message', data: { text: '相同的目标', receiptId: supplement.receiptId } },
+    { seq: 3, type: 'user.message', data: { text: '相同的目标', receiptId: 'rpc:approval.unrelated' } },
+  ], true, { profileAccounts: profileFixture(), taskDetails: { [source.commandId]: task }, ...config, approvals })
+  return { page, source, supplement, task, approval, approvals }
+}
+function approvalCard(page: ReturnType<typeof harness>, approvalId = approvalFixtureId) {
+  return page.get('transcript').children.find((row) => row.dataset.conversationApproval === approvalId)
+}
+function approvalAction(page: ReturnType<typeof harness>, action: string, approvalId = approvalFixtureId) {
+  return approvalCard(page, approvalId)?.querySelector(`[data-conversation-approval-action="${action}"]`)
+}
+async function approvalReady(page: ReturnType<typeof harness>) {
+  await ready(page)
+  for (let i = 0; i < 40 && !approvalCard(page); i++) await flush()
+  assert.ok(approvalCard(page))
+}
+function approvalAnswered(approval: Record<string, any>, requestId: string, outcome = 'allowed-once') {
+  return { ...approval, status: 'answered', decisionRequestId: requestId, decisionOutcome: outcome,
+    answeredAt: '2026-10-06T12:01:00.000Z' }
+}
+
+test('task15-approval-client shows only real receipt-bound requests and distinguishes all receipt stages', async () => {
+  const empty = task15ApprovalFixture({ approvals: { A: [] } })
+  await ready(empty.page)
+  for (let i = 0; i < 15; i++) await flush()
+  assert.equal(empty.page.get('transcript').children.some((row) => row.dataset.conversationApproval), false)
+  const f = task15ApprovalFixture()
+  const answer = approvalAnswered(f.approval, 'other-device-answer', 'rejected')
+  f.approvals.A.push(
+    { ...answer, approvalId: '00000000-0000-4000-8000-000000000002' },
+    { ...approvalAnswered(f.approval, 'native-answer'), approvalId: '00000000-0000-4000-8000-000000000003',
+      sourceCommandId: f.supplement.commandId, sourceReceiptId: f.supplement.receiptId, turn: 2,
+      status: 'resolved', outcome: 'allowed-once', resolvedAt: '2026-10-06T12:02:00.000Z' },
+    { ...f.approval, approvalId: '00000000-0000-4000-8000-000000000004', status: 'unavailable', outcome: 'cancelled' },
+    { ...f.approval, approvalId: '00000000-0000-4000-8000-000000000005', status: 'unavailable', outcome: 'unavailable' },
+    { ...f.approval, approvalId: '00000000-0000-4000-8000-000000000006', sourceCommandId: 'wrong-command' },
+    { ...f.approval, approvalId: '00000000-0000-4000-8000-000000000007', sourceReceiptId: 'rpc:approval.unrelated' },
+  )
+  await approvalReady(f.page)
+  const rows = f.page.get('transcript').children
+  const pending = approvalCard(f.page)!, resolved = approvalCard(f.page, '00000000-0000-4000-8000-000000000003')!
+  assert.equal(rows[0].dataset.receiptId, f.source.receiptId)
+  assert.equal(rows[1], pending, 'the request follows its exact source, despite identical message text')
+  assert.equal(rows[rows.indexOf(resolved) - 1].dataset.receiptId, f.supplement.receiptId,
+    'a supplement approval belongs under that supplement, with its call identity retained')
+  assert.equal(approvalAction(f.page, 'allowed-once')?.textContent, '允许本次')
+  assert.equal(approvalAction(f.page, 'rejected')?.textContent, '拒绝')
+  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000002')!), /决定已登记.*等待执行端确认/)
+  assert.match(visibleText(resolved), /执行端已确认允许本次/)
+  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000004')!), /随停止请求取消/)
+  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000005')!), /已失效/)
+  assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000006'), undefined)
+  assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000007'), undefined)
+  assert.doesNotMatch(visibleText(f.page.get('transcript')), /永久允许|目标已完成|approval-call|rpc:approval/)
+  f.page.get('message-text').value = '保留草稿'
+  f.page.get('chat-scroll').scrollTop = 312
+  const detail = approvalAction(f.page, 'detail')!
+  detail.focus(); detail.fire('click')
+  for (let i = 0; i < 15 && !f.page.get('task-detail-control').children.length; i++) await flush()
+  f.page.get('task-detail-close').fire('click'); await flush()
+  assert.equal(f.page.document.activeElement, approvalAction(f.page, 'detail'))
+  assert.equal(f.page.document.activeElement.focusOptions?.preventScroll, true)
+  assert.equal(f.page.get('message-text').value, '保留草稿')
+  assert.equal(f.page.get('chat-scroll').scrollTop, 312)
+})
+
+test('task15-approval-client retries an uncertain answer with the same request after authoritative reads and preserves terminal state', async () => {
+  const firstPost = deferred<ReturnType<typeof reply>>(), secondPost = deferred<ReturnType<typeof reply>>()
+  const bodies: any[] = [], storage = new Map<string, string>()
+  const config: NonNullable<Parameters<typeof harness>[3]> = { storage,
+    approvalDecide: (_url, options) => { bodies.push(JSON.parse(options.body)); return bodies.length === 1 ? firstPost.promise : secondPost.promise } }
+  const first = task15ApprovalFixture(config)
+  await approvalReady(first.page)
+  first.page.get('message-text').value = '提交期间继续写草稿'
+  first.page.get('chat-scroll').scrollTop = 217
+  const allow = approvalAction(first.page, 'allowed-once')!, reject = approvalAction(first.page, 'rejected')!
+  allow.focus(); allow.fire('click'); allow.fire('click'); reject.fire('click')
+  await flush()
+  assert.equal(bodies.length, 1)
+  assert.equal(approvalAction(first.page, 'allowed-once')!.disabled, true)
+  assert.equal(approvalAction(first.page, 'rejected')!.disabled, true)
+  first.page.get('message-text').focus()
+  firstPost.reject(new Error('synthetic uncertain network'))
+  for (let i = 0; i < 25 && approvalAction(first.page, 'allowed-once')?.disabled; i++) await flush()
+  assert.match(visibleText(approvalCard(first.page)!), /上次答复结果尚未确认/)
+  assert.equal(approvalAction(first.page, 'rejected')!.disabled, true)
+  assert.equal(first.page.document.activeElement, first.page.get('message-text'))
+  assert.equal(first.page.get('message-text').value, '提交期间继续写草稿')
+  assert.equal(first.page.get('chat-scroll').scrollTop, 217)
+  const writes = first.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/approvals/'))
+  const firstWrite = first.page.requests.indexOf(writes[0])
+  assert.ok(first.page.requests.slice(firstWrite + 1).some((row) => row.url.includes('/approvals?')))
+  assert.equal(bodies.length, 1, 'the uncertain network result causes a read, never automatic replay')
+
+  const second = task15ApprovalFixture({ ...config, approvals: first.approvals })
+  await approvalReady(second.page)
+  const beforeRetry = second.page.requests.length
+  approvalAction(second.page, 'allowed-once')!.fire('click')
+  for (let i = 0; i < 20 && bodies.length !== 2; i++) await flush()
+  assert.deepEqual(bodies[1], bodies[0], 'reload retains the exact request ID and original outcome')
+  const retryRequests = second.page.requests.slice(beforeRetry)
+  assert.ok(retryRequests[0].url.includes('/approvals?'), 'retry rereads the authoritative list before POST')
+  assert.ok(retryRequests[1].url.endsWith(`/approvals/${approvalFixtureId}`))
+  assert.deepEqual(Object.keys(bodies[1]).sort(), ['outcome', 'requestId'])
+  assert.equal(retryRequests[1].options.headers['X-WeftMate-CSRF'], 'csrf-A')
+  first.approvals.A[0] = { ...approvalAnswered(first.approval, bodies[1].requestId), status: 'resolved',
+    outcome: 'allowed-once', resolvedAt: '2026-10-06T12:02:00.000Z' }
+  second.page.tick()
+  for (let i = 0; i < 25 && !visibleText(approvalCard(second.page)!).includes('执行端已确认允许本次'); i++) await flush()
+  assert.match(visibleText(approvalCard(second.page)!), /执行端已确认允许本次/)
+  secondPost.resolve(reply({ approval: approvalAnswered(first.approval, bodies[1].requestId), requestId: bodies[1].requestId }))
+  for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(approvalCard(second.page)!), /执行端已确认允许本次/)
+  assert.doesNotMatch(visibleText(approvalCard(second.page)!), /等待执行端确认|目标已完成/)
+  assert.equal(approvalAction(second.page, 'allowed-once'), null)
+})
+
+test('task15-approval-client ignores old list callbacks after switching conversations', async () => {
+  const oldRead = deferred<ReturnType<typeof reply>>()
+  let hold = false
+  const f = task15ApprovalFixture({ approvalRead: (url) => url.includes('/sessions/A/') && hold ? oldRead.promise
+    : reply({ approvals: [], nextBefore: null, hasMore: false }) })
+  await ready(f.page)
+  for (let i = 0; i < 15; i++) await flush()
+  hold = true; f.page.tick()
+  for (let i = 0; i < 15 && !f.page.requests.at(-1)?.url.includes('/approvals?'); i++) await flush()
+  const sessionB = f.page.get('session-list').children.find((row) => visibleText(row).includes('B'))!
+  sessionB.children[0].fire('click')
+  await flush()
+  oldRead.resolve(reply({ approvals: [f.approval], nextBefore: null, hasMore: false }))
+  for (let i = 0; i < 20; i++) await flush()
+  assert.equal(f.page.get('assistant-title').textContent, 'B')
+  assert.equal(approvalCard(f.page), undefined)
+  assert.equal(f.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/approvals/')).length, 0)
+})
+
+test('task15-approval-client ignores a pending POST and old controls after account and device replacement', async () => {
+  const oldPost = deferred<ReturnType<typeof reply>>()
+  let body: any
+  const f = task15ApprovalFixture({ approvalDecide: (_url, options) => { body = JSON.parse(options.body); return oldPost.promise } })
+  await approvalReady(f.page)
+  const oldButton = approvalAction(f.page, 'allowed-once')!
+  oldButton.fire('click'); await flush()
+  f.approvals.A = []
+  await switchToB(f.page)
+  f.page.get('message-text').value = 'B 的新草稿'
+  f.page.get('message-text').focus()
+  oldPost.resolve(reply({ approval: approvalAnswered(f.approval, body.requestId), requestId: body.requestId }))
+  for (let i = 0; i < 15; i++) await flush()
+  oldButton.fire('click')
+  await flush()
+  assert.equal(approvalCard(f.page), undefined)
+  assert.equal(f.page.get('message-text').value, 'B 的新草稿')
+  assert.equal(f.page.document.activeElement, f.page.get('message-text'))
+  assert.equal(f.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/approvals/')).length, 1)
+})
+
+const questionFixtureId = '00000000-0000-4000-8000-000000000011'
+function task15QuestionFixture(config: NonNullable<Parameters<typeof harness>[3]> = {}) {
+  const source = { commandId: 'root-question-client', kind: 'session.message', state: 'accepted_by_dsh',
+    sessionId: 'A', receiptId: 'rpc:question.root' }
+  const supplement = { commandId: 'follow-question-client', kind: 'session.message', state: 'accepted_by_dsh',
+    sessionId: 'A', rootTaskId: source.commandId, receiptId: 'rpc:question.follow', taskAction: 'supplement' }
+  const task = { taskId: source.commandId, sessionId: 'A', source, supplements: [supplement], artifacts: [], control: { state: 'active', canStop: true } }
+  const question = { questionRpcId: questionFixtureId, sessionId: 'A', taskId: source.commandId,
+    sourceCommandId: supplement.commandId, sourceReceiptId: supplement.receiptId, turn: 2,
+    createdAt: '2026-10-06T13:00:00.000Z', status: 'pending', questions: [
+      { id: 'single', header: '信息选择', question: '选择报告说明用词。', options: [{ label: '同意' }, { label: '不同意', description: '先修改说明' }] },
+      { id: 'multi', question: '选择报告内容。', multiSelect: true, options: [{ label: '来源' }, { label: '步骤' }] },
+      { id: 'free', question: '补充备注。' },
+      { id: 'single', question: '这个计划如何？', detail: '仅处理合成资料。', options: [{ label: '继续' }, { label: '修改' }],
+        intent: { kind: 'plan-review', approve: '继续' } },
+    ] }
+  const questions = config.questions ?? { A: [question] }
+  const page = harness([supplement, source], [
+    { seq: 0, type: 'user.message', data: { text: '相同的目标', receiptId: source.receiptId } },
+    { seq: 1, type: 'assistant.message', data: { text: '请补充信息。' } },
+    { seq: 2, type: 'user.message', data: { text: '相同的目标', receiptId: supplement.receiptId } },
+    { seq: 3, type: 'user.message', data: { text: '相同的目标', receiptId: 'rpc:question.unrelated' } },
+  ], true, { profileAccounts: profileFixture(), taskDetails: { [source.commandId]: task }, ...config, questions })
+  return { page, question, questions, source, supplement }
+}
+function questionCard(page: ReturnType<typeof harness>, id = questionFixtureId) {
+  return page.get('transcript').children.find((row) => row.dataset.conversationQuestion === id)
+}
+function questionAction(page: ReturnType<typeof harness>, action: string) {
+  return questionCard(page)?.querySelector(`[data-conversation-question-action="${action}"]`)
+}
+function questionForm(page: ReturnType<typeof harness>) { return questionCard(page)!.children.at(-1)! }
+async function questionReady(page: ReturnType<typeof harness>) {
+  await ready(page); for (let i = 0; i < 40 && !questionCard(page); i++) await flush(); assert.ok(questionCard(page))
+}
+function questionAnswered(question: Record<string, any>, requestId: string, answer: any) {
+  return { ...question, status: 'answered', answerRequestId: requestId, answer, answeredAt: '2026-10-06T13:01:00.000Z' }
+}
+
+test('task15-question-client preserves native question order, exact labels, source receipt, drafts and information-only submission', async () => {
+  const empty = task15QuestionFixture({ questions: { A: [] } })
+  await ready(empty.page); for (let i = 0; i < 15; i++) await flush()
+  assert.equal(questionCard(empty.page), undefined)
+  const post = deferred<ReturnType<typeof reply>>()
+  const bodies: any[] = []
+  const f = task15QuestionFixture({ questionAnswer: (_url, options) => { bodies.push(JSON.parse(options.body)); return post.promise } })
+  const cancelled = { ...questionAnswered(f.question, 'cancelled-answer', { answers: f.question.questions.map((item) => ({ id: item.id, selected: [] })) }),
+    questionRpcId: '00000000-0000-4000-8000-000000000012', status: 'resolved', outcome: 'cancelled',
+    resolvedAt: '2026-10-06T13:02:00.000Z', answerAcceptedAt: '2026-10-06T13:01:30.000Z' }
+  f.questions.A.push(cancelled)
+  await questionReady(f.page)
+  const rows = f.page.get('transcript').children, card = questionCard(f.page)!
+  assert.equal(rows[rows.indexOf(card) - 1].dataset.receiptId, f.supplement.receiptId)
+  assert.match(visibleText(card), /仅处理合成资料/)
+  assert.match(visibleText(questionCard(f.page, cancelled.questionRpcId)!), /曾确认接收本入口回答.*随后确认.*取消/)
+  const single = questionAction(f.page, 'option-0-0')!, customSingle = questionAction(f.page, 'custom-0')!
+  single.checked = true; single.fire('change')
+  customSingle.value = '自定义说明'; customSingle.fire('input')
+  assert.equal(single.checked, false, 'single choice is replaced by custom text')
+  single.checked = true; single.fire('change')
+  assert.equal(customSingle.value, '', 'single choice clears its mutually exclusive custom text')
+  for (const action of ['option-1-0', 'option-1-1']) { const option = questionAction(f.page, action)!; option.checked = true; option.fire('change') }
+  questionAction(f.page, 'custom-1')!.value = '额外信息'; questionAction(f.page, 'custom-1')!.fire('input')
+  const free = questionAction(f.page, 'custom-2')!; free.value = '合成备注'; free.fire('input'); free.focus()
+  const plan = questionAction(f.page, 'option-3-0')!; plan.checked = true; plan.fire('change')
+  f.page.get('message-text').value = '聊天草稿保留'
+  f.page.get('chat-scroll').scrollTop = 284
+  f.page.tick(); for (let i = 0; i < 15; i++) await flush()
+  assert.equal(f.page.document.activeElement, free)
+  assert.equal(questionAction(f.page, 'custom-2')!.value, '合成备注')
+  const detail = questionAction(f.page, 'detail')!; detail.focus(); detail.fire('click')
+  for (let i = 0; i < 15 && !f.page.get('task-detail-control').children.length; i++) await flush()
+  f.page.get('task-detail-close').fire('click'); await flush()
+  assert.equal(f.page.document.activeElement, questionAction(f.page, 'detail'))
+  assert.equal(f.page.get('chat-scroll').scrollTop, 284)
+  assert.equal(f.page.get('message-text').value, '聊天草稿保留')
+  questionForm(f.page).fire('submit'); questionForm(f.page).fire('submit')
+  for (let i = 0; i < 15 && bodies.length === 0; i++) await flush()
+  assert.equal(bodies.length, 1)
+  assert.deepEqual(Object.keys(bodies[0]).sort(), ['answer', 'requestId'])
+  assert.deepEqual(bodies[0].answer, { answers: [
+    { id: 'single', selected: ['同意'] }, { id: 'multi', selected: ['来源', '步骤'], custom: '额外信息' },
+    { id: 'free', selected: [], custom: '合成备注' }, { id: 'single', selected: ['继续'] },
+  ] }, 'batch position remains authoritative even when question IDs repeat')
+  assert.equal(f.page.requests.some((row) => row.options.method === 'POST' && row.url.includes('/approvals/')), false)
+  const answered = questionAnswered(f.question, bodies[0].requestId, bodies[0].answer)
+  f.questions.A[0] = answered
+  post.resolve(reply({ question: answered, requestId: bodies[0].requestId }))
+  for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(questionCard(f.page)!), /回答已登记.*等待执行端确认接收/)
+  assert.doesNotMatch(visibleText(questionCard(f.page)!), /已确认接收|允许本次|目标已完成/)
+  f.questions.A[0] = { ...answered, status: 'resolved', outcome: 'answered', resolvedAt: '2026-10-06T13:02:00.000Z' }
+  f.page.tick(); for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(questionCard(f.page)!), /原生问答已结束.*尚未确认采用本入口回答/)
+})
+
+test('task15-question-client rereads temporary uncertainty and reuses the exact answer request without losing native acceptance', async () => {
+  const firstPost = deferred<ReturnType<typeof reply>>(), secondPost = deferred<ReturnType<typeof reply>>()
+  const bodies: any[] = [], storage = new Map<string, string>()
+  let temporary = false
+  const f = task15QuestionFixture({ storage, questionAnswer: (_url, options) => {
+    bodies.push(JSON.parse(options.body)); return bodies.length === 1 ? firstPost.promise : secondPost.promise
+  }, questionRead: () => temporary ? reply({ error: { code: 'RUNTIME_UNAVAILABLE' } }, 503)
+    : reply({ questions: f.questions.A.map((row) => ({ ...row })), nextBefore: null, hasMore: false }) })
+  await questionReady(f.page)
+  questionAction(f.page, 'custom-2')!.value = '网络前的回答'; questionAction(f.page, 'custom-2')!.fire('input')
+  questionForm(f.page).fire('submit'); await flush()
+  temporary = true; firstPost.reject(new Error('synthetic uncertain network'))
+  for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(questionCard(f.page)!), /暂时无法核对.*已填写内容保留/)
+  assert.equal(questionAction(f.page, 'submit')!.disabled, true)
+  assert.doesNotMatch(visibleText(questionCard(f.page)!), /已失效/)
+  temporary = false; questionAction(f.page, 'check')!.fire('click')
+  for (let i = 0; i < 15 && questionAction(f.page, 'submit')?.disabled; i++) await flush()
+  assert.equal(questionAction(f.page, 'submit')!.textContent, '重试原回答')
+  assert.equal(bodies.length, 1)
+  const before = f.page.requests.length
+  questionForm(f.page).fire('submit')
+  for (let i = 0; i < 15 && bodies.length !== 2; i++) await flush()
+  assert.deepEqual(bodies[1], bodies[0])
+  assert.ok(f.page.requests[before].url.includes('/questions?'))
+  assert.ok(f.page.requests[before + 1].url.endsWith(`/questions/${questionFixtureId}`))
+  const accepted = { ...questionAnswered(f.question, bodies[1].requestId, bodies[1].answer), status: 'resolved', outcome: 'answered',
+    resolvedAt: '2026-10-06T13:02:00.000Z', answerAcceptedAt: '2026-10-06T13:01:30.000Z' }
+  f.questions.A[0] = accepted; f.page.tick()
+  for (let i = 0; i < 20 && !visibleText(questionCard(f.page)!).includes('已确认接收'); i++) await flush()
+  secondPost.resolve(reply({ question: questionAnswered(f.question, bodies[1].requestId, bodies[1].answer), requestId: bodies[1].requestId }))
+  for (let i = 0; i < 15; i++) await flush()
+  assert.match(visibleText(questionCard(f.page)!), /执行端已确认接收本入口提交的回答/)
+  assert.doesNotMatch(visibleText(questionCard(f.page)!), /等待执行端确认接收|尚未确认采用/)
+  assert.equal(questionAction(f.page, 'submit'), null)
+})
+
+test('task15-question-client ignores old conversation reads and account-device answer callbacks', async () => {
+  const oldRead = deferred<ReturnType<typeof reply>>()
+  let hold = false
+  const reading = task15QuestionFixture({ questionRead: (url) => hold && url.includes('/sessions/A/') ? oldRead.promise
+    : reply({ questions: [], nextBefore: null, hasMore: false }) })
+  await ready(reading.page); for (let i = 0; i < 15; i++) await flush()
+  hold = true; reading.page.tick()
+  for (let i = 0; i < 15 && !reading.page.requests.at(-1)?.url.includes('/questions?'); i++) await flush()
+  reading.page.get('session-list').children.find((row) => visibleText(row).includes('B'))!.children[0].fire('click')
+  oldRead.resolve(reply({ questions: [reading.question], nextBefore: null, hasMore: false }))
+  for (let i = 0; i < 15; i++) await flush()
+  assert.equal(questionCard(reading.page), undefined)
+  const oldPost = deferred<ReturnType<typeof reply>>()
+  let body: any
+  const posting = task15QuestionFixture({ questionAnswer: (_url, options) => { body = JSON.parse(options.body); return oldPost.promise } })
+  await questionReady(posting.page)
+  const oldForm = questionForm(posting.page); oldForm.fire('submit'); await flush()
+  posting.questions.A = []; await switchToB(posting.page)
+  posting.page.get('message-text').value = 'B 的草稿'; posting.page.get('message-text').focus()
+  oldPost.resolve(reply({ question: questionAnswered(posting.question, body.requestId, body.answer), requestId: body.requestId }))
+  for (let i = 0; i < 15; i++) await flush()
+  oldForm.fire('submit'); await flush()
+  assert.equal(questionCard(posting.page), undefined)
+  assert.equal(posting.page.get('message-text').value, 'B 的草稿')
+  assert.equal(posting.page.document.activeElement, posting.page.get('message-text'))
+  assert.equal(posting.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/questions/')).length, 1)
 })
 
 const profileFixture = () => ({

@@ -149,6 +149,23 @@ test('history exposes validated receipt and native turn without source secrets',
     data: message('m2', 'invalid receipt') })?.data?.receiptId, undefined)
 })
 
+test('history classifies only the known output limit as a legacy error with optional cause', () => {
+  const at = Date.parse('2026-10-07T00:35:29.769Z')
+  for (const turn of [2, 3]) {
+    const limited = projectHistoryEvent({ seq: 7009 + turn, time: at,
+      type: 'turn/end', data: { turn, reason: { kind: 'max-tokens' } } })
+    assert.deepEqual(limited?.data, { reason: 'error', endReasonKind: 'max-tokens', turn })
+    assert.equal(limited?.at, new Date(at).toISOString())
+  }
+  for (const reason of ['completed', 'aborted', 'error', 'blocked']) {
+    assert.deepEqual(projectHistoryEvent({ seq: 1, type: 'turn/end',
+      data: { turn: 1, reason: { kind: reason } } })?.data, { reason, turn: 1 })
+  }
+  assert.deepEqual(projectHistoryEvent({ seq: 1, type: 'turn/end',
+    data: { turn: 1, reason: { kind: 'max-tokens-unknown' } } })?.data,
+  { reason: 'unknown', turn: 1 })
+})
+
 test('parent stop IPC validates replies, times out, and rejects replaced children', async () => {
   const runtime = new DshWebRuntime({ homeDir: 'C:\\synthetic\\dsh-home',
     workspaceDir: 'C:\\synthetic\\work' }) as any

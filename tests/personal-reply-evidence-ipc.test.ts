@@ -32,3 +32,26 @@ test('reply evidence IPC accepts only current child metadata and fails closed on
   runtime.failReplyEvidenceRequests(child)
   assert.deepEqual(await third, unknown)
 })
+
+test('reply evidence IPC accepts a known limit cause only with a failed bound terminal', async () => {
+  const runtime = new DshWebRuntime({ homeDir: 'C:\\synthetic\\home',
+    workspaceDir: 'C:\\synthetic\\workspace', personalHostApiProxy: true }) as any
+  const sent: any[] = []
+  const child = { connected: true, send: (frame: any, done: any) => { sent.push(frame); done?.(null) } }
+  runtime.child = child
+  runtime.originValue = 'http://127.0.0.1:12345'
+  const read = async (result: object) => {
+    const pending = runtime.readPersonalReplyEvidence({ sessionId: 'session-a', receiptId: 'rpc-a' })
+    const frame = sent.at(-1)
+    runtime.handleReplyEvidenceMessage(child, { protocol: frame.protocol, id: frame.id, result })
+    return pending
+  }
+  const limited = { ...unknown, status: 'failed', turn: 2,
+    terminalAt: '2026-10-07T00:35:29.769Z', endReasonKind: 'max-tokens', toolSaveObserved: true }
+  assert.deepEqual(await read(limited), limited)
+  assert.deepEqual(await read({ ...limited, endReasonKind: 'vendor-limit' }), unknown)
+  assert.deepEqual(await read({ ...limited, status: 'completed' }), unknown)
+  assert.deepEqual(await read({ ...limited, terminalAt: undefined }), unknown)
+  const legacy = { ...limited, endReasonKind: undefined }
+  assert.equal((await read(legacy)).status, 'failed')
+})

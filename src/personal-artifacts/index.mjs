@@ -5,8 +5,16 @@ import path from 'node:path';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 
 export const MAX_ARTIFACT_BYTES = 128 * 1024;
-const FILE_NAME = /^[\p{L}\p{N}][\p{L}\p{N} ._-]*\.(?:md|txt)$/u;
+const FILE_NAME = /^[\p{L}\p{N}][\p{L}\p{N} ._-]*\.[\p{L}\p{N}][\p{L}\p{N}_-]*$/u;
 const ID = /^[A-Za-z0-9_-]{1,128}$/;
+
+/** Content is always verified UTF-8 text; the suffix never implies a binary format. */
+export function artifactContentType(fileName) {
+  const extension = path.extname(fileName).toLowerCase();
+  const type = extension === '.csv' ? 'text/csv'
+    : extension === '.tsv' ? 'text/tab-separated-values' : 'text/plain';
+  return `${type}; charset=utf-8`;
+}
 
 export function validArtifactFileName(fileName) {
   if (typeof fileName !== 'string' || !FILE_NAME.test(fileName) ||
@@ -26,7 +34,7 @@ export function canonicalArtifact(fileName, content) {
   if (bytes.length < 1 || bytes.length > MAX_ARTIFACT_BYTES || bytes.toString('utf8') !== content) {
     throw Object.assign(new Error('INVALID_COMMAND'), { code: 'INVALID_COMMAND' });
   }
-  return { fileName, bytes, size: bytes.length,
+  return { fileName, contentType: artifactContentType(fileName), bytes, size: bytes.length,
     sha256: createHash('sha256').update(bytes).digest('hex') };
 }
 

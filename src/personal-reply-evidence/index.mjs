@@ -90,10 +90,12 @@ export function projectReplyEvidence(content, { receiptId, live = false } = {}) 
   }
   let status = 'unconfirmed'
   const reason = end?.data?.reason?.kind
-  if (end && statuses.has(reason)) status = reason
+  if (end && reason === 'max-tokens') status = 'failed'
+  else if (end && statuses.has(reason)) status = reason
   else if (!end && !nextStart && live === true) status = assistantChunks > 0 ? 'streaming' : 'waiting'
   return { status, turn, step, assistantChunks, textChunks, reasoningChunks,
     assistantMessages, toolSaveObserved,
+    ...(end && reason === 'max-tokens' ? { endReasonKind: 'max-tokens' } : {}),
     ...(observedAt ? { observedAt } : {}),
     ...(firstChunkAt ? { firstChunkAt } : {}),
     ...(lastChunkAt ? { lastChunkAt } : {}),

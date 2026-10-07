@@ -44,6 +44,24 @@ export function personalHostRequested(argv) {
   return argv.includes('--personal-host');
 }
 
+/** Select the normal cwd for new personal-host sessions; policies remain unchanged. */
+export function personalWorkspaceDirectory(argv, hostMode, userData) {
+  const values = argv.filter((arg) => arg.startsWith('--workspace-dir'));
+  if (!values.length) return join(userData, 'workspace');
+  if (!hostMode || values.length !== 1 || !values[0].startsWith('--workspace-dir=')) {
+    throw new Error('workspace directory requires one explicit personal-host option');
+  }
+  const requested = values[0].slice('--workspace-dir='.length);
+  if (!isAbsolute(requested)) throw new Error('workspace directory must be absolute');
+  try {
+    const canonical = realpathSync(requested);
+    if (!statSync(canonical).isDirectory()) throw new Error('not a directory');
+    return canonical;
+  } catch {
+    throw new Error('workspace directory must be an existing directory');
+  }
+}
+
 export function personalAccessPort(argv, hostMode) {
   const values = argv.filter((arg) => arg.startsWith('--access-port'))
   if (!values.length) return null

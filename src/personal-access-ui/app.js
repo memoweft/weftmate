@@ -3,6 +3,7 @@
 
   const authBase = '/personal/v1/auth'
   const accessBase = '/personal/v1'
+  const receiptIdPattern = /^[A-Za-z0-9._:-]{1,160}$/
   const views = ['loading', 'owner', 'setup', 'login', 'assistant', 'memory', 'account']
   const byId = (id) => document.getElementById(id)
   const state = { csrfToken: null, account: null, device: null, setupGrant: null, revokeId: null, toastTimer: null,
@@ -15,7 +16,7 @@
     phoneSending: false, phoneSendNotice: '', phoneDrafts: new Map(), desktopDraft: '',
     refreshTimer: null, refreshing: false,
     submitting: false, cancelSubmitting: false, lastSubmissionMs: 0,
-    historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null,
+    historyGeneration: 0, historyInFlight: null, historyHasMore: false, turnStatus: null, turnEndReasonKind: null,
     identityGeneration: 0, accountViewGeneration: 0, currentView: null,
     attachmentDrafts: new Map(), attachmentGroups: new Map(), attachmentAttempts: new Map(),
     attachmentUpload: null, attachmentHasher: null, attachmentStatus: '',
@@ -46,7 +47,10 @@
   let phonePreview = null
   const taskDetail = { taskId: null, generation: 0, selectedArtifactId: null, selectedSourceId: null,
     operation: null, unknown: null,
-    drafts: new Map(), pollTimer: null, pollCount: 0, pollStartedAt: 0 }
+    drafts: new Map(), pollTimer: null, pollCount: 0, pollStartedAt: 0, returnFocus: null }
+  const conversationTasks = { ownerId: null, identity: -1, generation: 0, entries: new Map(), inFlight: null }
+  const conversationApprovals = { scope: null, entries: new Map(), reads: new Map(), operations: new Map(), readGeneration: 0 }
+  const conversationQuestions = { scope: null, entries: new Map(), reads: new Map(), operations: new Map(), drafts: new Map(), readGeneration: 0 }
   let voiceInput = null
 
   function closeModelMenu(restoreFocus = false) {
@@ -191,6 +195,11 @@
     closeTaskDetail()
     taskDetail.drafts.clear()
     taskDetail.unknown = null
+    conversationTasks.generation++
+    conversationTasks.entries.clear()
+    conversationTasks.inFlight = null
+    resetConversationApprovals()
+    resetConversationQuestions()
     resetMemoryIdentity()
     state.identityGeneration++
     state.avatarGeneration++
@@ -282,7 +291,9 @@
     state.historyInFlight = null
     state.historyHasMore = false
     state.turnStatus = null
+    state.turnEndReasonKind = null
     state.seenSeq.clear()
+    byId('timeline-status').textContent = ''
     byId('transcript').replaceChildren()
     byId('session-list').replaceChildren()
     byId('assistant-title').textContent = '新对话'
@@ -345,7 +356,7 @@
       if (state.csrfToken === identityAtStart && identityAtStart) setOnline(true)
       return value
     } catch (error) {
-      if (error.code === 'NETWORK') setOnline(false)
+      if (error.code === 'NETWORK' && state.csrfToken === identityAtStart) setOnline(false)
       if (error.code === 'UNAUTHORIZED' && state.csrfToken === identityAtStart) sessionExpired()
       throw error
     }
@@ -354,6 +365,8 @@
     if (typeof payload?.account?.username !== 'string' || typeof payload?.device?.id !== 'string'
       || typeof payload?.csrfToken !== 'string' || !payload.csrfToken) throw { code: 'REQUEST_FAILED' }
     state.identityGeneration++
+    resetConversationApprovals()
+    resetConversationQuestions()
     resetMemoryIdentity()
     state.avatarGeneration++
     state.avatarSelectionGeneration++
@@ -2327,9 +2340,10 @@
       if (!Number.isSafeInteger(event?.seq) || state.seenSeq.has(event.seq)) continue
       if (typeof event.sessionId === 'string' && event.sessionId !== sessionId) continue
       state.seenSeq.add(event.seq)
-      if (event.type === 'turn.started') { state.turnStatus = 'running'; continue }
+      if (event.type === 'turn.started') { state.turnStatus = 'running'; state.turnEndReasonKind = null; continue }
       if (event.type === 'turn.ended') {
         state.turnStatus = ['completed', 'aborted', 'error', 'blocked'].includes(event.data?.reason) ? event.data.reason : 'unknown'
+        state.turnEndReasonKind = state.turnStatus === 'error' && event.data?.endReasonKind === 'max-tokens' ? 'max-tokens' : null
         continue
       }
       if (!['user.message', 'assistant.message'].includes(event.type)) continue
@@ -2339,6 +2353,7 @@
       const originalImages = event.type === 'user.message' ? unpreviewedOriginalImages(event) : []
       if (typeof event.data?.text !== 'string' && images.length === 0 && files.length === 0 && originalImages.length === 0) continue
       const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
+      if (event.type === 'user.message' && receiptIdPattern.test(event.data?.receiptId || '')) row.dataset.receiptId = event.data.receiptId
       row.append(element('span', 'message-label', event.type === 'user.message' ? '你' : 'WeftMate'))
       if (typeof event.data?.text === 'string' && event.data.text) row.append(element('span', 'message-text', event.data.text))
       if (images.length) {
@@ -2378,6 +2393,7 @@
       list.append(row)
     }
     renderTurnStatus()
+    renderConversationTasks()
   }
   function renderTurnStatus() {
     if (state.activeChatSource === 'phone') return
@@ -2391,7 +2407,8 @@
         ? '助手正在处理，结果以会话历史为准。' : '这轮对话尚无结束记录，请核对实际结果。'; break
       case 'aborted': status.textContent = '本轮已停止。如需继续，请重新发送。'; break
       case 'blocked': status.textContent = '本轮因执行受限而停止，目标尚未确认完成。'; break
-      case 'error': status.textContent = '本轮运行失败，未看到完整回复。请在电脑核对后再试。'; break
+      case 'error': status.textContent = state.turnEndReasonKind === 'max-tokens'
+        ? '本轮因输出限制结束，可继续对话。' : '本轮运行失败，未看到完整回复。请在电脑核对后再试。'; break
       case 'unknown': status.textContent = '本轮结束状态尚不明确，请在电脑核对。'; break
       default: status.textContent = ''
     }
@@ -2405,6 +2422,7 @@
       state.historyHasMore = false
       state.seenSeq.clear()
       state.turnStatus = null
+      state.turnEndReasonKind = null
       byId('transcript').replaceChildren()
       renderTurnStatus()
     }
@@ -2454,6 +2472,9 @@
     if (fromPhone) byId('message-text').value = state.desktopDraft
     byId('message-text').placeholder = '向 WeftMate 说说你的目标'
     state.selectedSessionId = sessionId
+    state.turnStatus = null
+    state.turnEndReasonKind = null
+    byId('timeline-status').textContent = ''
     state.attachmentStatus = ''
     renderAttachmentDrafts()
     closePhoneImagePreview()
@@ -2466,6 +2487,7 @@
     closeRail()
     if (state.ownerId) { try { localStorage.setItem(sessionKey(), sessionId) } catch { /* optional preference */ } }
     await refreshHistory(true)
+    void refreshConversationTasks()
     updateAvailability()
   }
   function commandTitle(command) {
@@ -2594,12 +2616,14 @@
     byId('more-tasks').hidden = !state.nextBefore
   }
   function closeTaskDetail() {
+    const returnFocus = taskDetail.returnFocus
     stopTaskObservation()
     taskDetail.generation++
     taskDetail.taskId = null
     taskDetail.selectedArtifactId = null
     taskDetail.selectedSourceId = null
     taskDetail.operation = null
+    taskDetail.returnFocus = null
     const dialog = byId('task-detail-dialog')
     if (dialog.open) dialog.close()
     byId('task-detail-source').textContent = ''
@@ -2612,6 +2636,20 @@
     byId('task-detail-control').replaceChildren()
     byId('task-preview-text').hidden = true
     byId('task-preview-text').textContent = ''
+    const currentContext = conversationTaskContext()
+    if (returnFocus && returnFocus.ownerId === currentContext.ownerId && returnFocus.identity === currentContext.identity &&
+      returnFocus.source === currentContext.source && returnFocus.sessionId === currentContext.sessionId &&
+      returnFocus.conversationId === currentContext.conversationId) {
+      queueMicrotask(() => { const current = conversationTaskContext(); if (state.currentView !== 'assistant' ||
+        returnFocus.ownerId !== current.ownerId || returnFocus.identity !== current.identity || returnFocus.source !== current.source ||
+        returnFocus.sessionId !== current.sessionId || returnFocus.conversationId !== current.conversationId) return;
+        const button = returnFocus.button?.isConnected ? returnFocus.button : returnFocus.questionRpcId
+          ? document.querySelector(`[data-conversation-question="${returnFocus.questionRpcId}"] [data-conversation-question-action="detail"]`)
+          : returnFocus.approvalId
+          ? document.querySelector(`[data-conversation-approval="${returnFocus.approvalId}"] [data-conversation-approval-action="detail"]`)
+          : document.querySelector(`[data-conversation-task="${returnFocus.taskId}"] button.secondary.small`);
+        if (button?.isConnected) button.focus({ preventScroll: true }) })
+    }
   }
   function stopTaskObservation() {
     if (taskDetail.pollTimer) clearTimeout(taskDetail.pollTimer)
@@ -2646,9 +2684,707 @@
         ? '回复：电脑会话已正常结束。' : '回复：回合已结束，但没有已核对的最终文字回复。'
       case 'aborted': return '回复：回合已中断；已核验的文件仍可查看。'
       case 'blocked': return '回复：模型请求被阻断，尚无正常结束记录。'
-      case 'failed': return '回复：模型回合未完成；请查看原会话的错误。'
+      case 'failed': return evidence.endReasonKind === 'max-tokens'
+        ? '回复：因输出限制结束，尚未确认完整交付。' : '回复：模型回合未完成；请查看原会话的错误。'
       default: return '回复：是否结束尚无法核对；请勿把已核验文件当作回复完成。'
     }
+  }
+  function conversationTaskContext() {
+    const conversationId = state.activeChatSource === 'phone' ? state.selectedPhoneConversationId : null
+    const sessionId = conversationId ? phoneBinding(conversationId)?.sessionId : state.selectedSessionId
+    return { sessionId, conversationId, source: state.activeChatSource,
+      ownerId: state.ownerId, identity: state.identityGeneration, history: state.historyGeneration }
+  }
+  function conversationTaskCurrent(context) {
+    const current = conversationTaskContext()
+    return state.currentView === 'assistant' && !!state.csrfToken && context.ownerId === current.ownerId &&
+      context.identity === current.identity && context.sessionId === current.sessionId &&
+      context.conversationId === current.conversationId && context.source === current.source && context.history === current.history
+  }
+  function relatedExecutionSteps(payload) {
+    const commands = [payload.source, ...(Array.isArray(payload.supplements) ? payload.supplements : []),
+      ...(Array.isArray(payload.resumes) ? payload.resumes : [])].filter((row) => row?.kind === 'session.message' &&
+      row.sessionId === payload.sessionId && (row.commandId === payload.taskId && !row.rootTaskId || row.rootTaskId === payload.taskId))
+    return (Array.isArray(payload.executionSteps) ? payload.executionSteps : []).filter((row) => row &&
+      typeof row.executionId === 'string' && row.executionId.length > 0 && row.executionId.length <= 256 &&
+      typeof row.toolName === 'string' && /^[A-Za-z][A-Za-z0-9_.:-]{0,159}$/.test(row.toolName) &&
+      ['running', 'completed', 'failed', 'cancelled', 'uncertain'].includes(row.state) &&
+      commands.some((command) => command.commandId === row.sourceCommandId &&
+        receiptIdPattern.test(command.receiptId || '') && command.receiptId === row.sourceReceiptId))
+  }
+  function executionProgress(row) {
+    const jobs = { running: '后台运行中', stopping: '后台正在停止', completed: '后台已结束', killed: '后台已停止',
+      failed: '后台未完成', uncertain: '后台状态待确认', unconfirmed: '后台状态待确认' }
+    return Object.hasOwn(jobs, row.jobState) ? jobs[row.jobState] : row.jobId ? '后台状态待确认'
+      : { running: '正在执行', completed: '执行结束', failed: '未完成', cancelled: '已停止', uncertain: '待确认' }[row.state]
+  }
+  function executionName(row) {
+    return { pwsh: '运行命令', read: '读取文件', write: '写入文件', edit: '修改文件', glob: '查找文件', grep: '搜索内容',
+      weftmod: '设备操作', weftmod_script: '运行脚本', job_output: '读取后台输出', job_list: '查看后台任务', job_kill: '停止后台任务' }[row.toolName] || '工具操作'
+  }
+  const approvalIdPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
+  const approvalRequestPattern = /^[A-Za-z0-9_.:-]{1,128}$/
+  const approvalIdentityFields = ['approvalId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId',
+    'turn', 'callId', 'rootCallId', 'toolName', 'createdAt']
+  function resetConversationApprovals() {
+    conversationApprovals.scope = null
+    conversationApprovals.entries.clear()
+    conversationApprovals.reads.clear()
+    conversationApprovals.operations.clear()
+    conversationApprovals.readGeneration++
+  }
+  function approvalContext() { return { ...conversationTaskContext(), deviceId: state.device?.id } }
+  function approvalContextCurrent(context) {
+    return conversationTaskCurrent(context) && context.deviceId === state.device?.id
+  }
+  function approvalIdentity(row) { return Object.fromEntries(approvalIdentityFields.map((field) => [field, row[field]])) }
+  function sameApproval(left, right) {
+    return approvalIdentityFields.every((field) => left?.[field] === right?.[field])
+  }
+  function validApproval(row, sessionId) {
+    const time = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value))
+    if (!row || !approvalIdentityFields.every((field) => field === 'turn' || typeof row[field] === 'string') ||
+        !approvalIdPattern.test(row.approvalId || '') || row.sessionId !== sessionId ||
+        !sessionIdPattern.test(row.taskId || '') || !sessionIdPattern.test(row.sourceCommandId || '') ||
+        !receiptIdPattern.test(row.sourceReceiptId || '') || !Number.isSafeInteger(row.turn) || row.turn < 1 ||
+        !approvalRequestPattern.test(row.callId || '') || !approvalRequestPattern.test(row.rootCallId || '') ||
+        typeof row.toolName !== 'string' || !/^[A-Za-z][A-Za-z0-9_.:-]{0,159}$/.test(row.toolName) ||
+        typeof row.reason !== 'string' || row.reason.length > 1000 || !time(row.createdAt) ||
+        !['pending', 'answered', 'resolved', 'unavailable'].includes(row.status)) return false
+    const hasDecision = [row.decisionOutcome, row.decisionRequestId, row.answeredAt].some((value) => value !== undefined)
+    if (hasDecision && (!['allowed-once', 'rejected'].includes(row.decisionOutcome) ||
+        !approvalRequestPattern.test(row.decisionRequestId || '') || !time(row.answeredAt))) return false
+    if (row.status === 'pending') return !hasDecision && row.outcome === undefined && row.resolvedAt === undefined
+    if (row.status === 'answered') return hasDecision && row.outcome === undefined && row.resolvedAt === undefined
+    if (row.status === 'unavailable') return ['cancelled', 'unavailable'].includes(row.outcome)
+    return ['allowed-once', 'rejected', 'cancelled', 'unavailable'].includes(row.outcome) && time(row.resolvedAt) &&
+      (!['allowed-once', 'rejected'].includes(row.outcome) || hasDecision && row.decisionOutcome === row.outcome)
+  }
+  function approvalMarkerKey(context) { return `weftmate:approval-decisions:v1:${context.ownerId}:${context.deviceId}` }
+  function approvalMarkers(context) {
+    try {
+      const rows = JSON.parse(localStorage.getItem(approvalMarkerKey(context)) || '[]')
+      return Array.isArray(rows) ? rows.filter((row) => row && approvalIdPattern.test(row.approvalId || '') &&
+        sessionIdPattern.test(row.sessionId || '') && sessionIdPattern.test(row.taskId || '') &&
+        sessionIdPattern.test(row.sourceCommandId || '') && receiptIdPattern.test(row.sourceReceiptId || '') &&
+        Number.isSafeInteger(row.turn) && row.turn > 0 && approvalRequestPattern.test(row.callId || '') &&
+        approvalRequestPattern.test(row.rootCallId || '') && approvalRequestPattern.test(row.requestId || '') &&
+        ['allowed-once', 'rejected'].includes(row.outcome)) : []
+    } catch { return [] }
+  }
+  function approvalMarker(context, row) { return approvalMarkers(context).find((marker) => sameApproval(marker, row)) }
+  function saveApprovalMarker(context, marker) {
+    const rows = approvalMarkers(context).filter((row) => row.approvalId !== marker.approvalId)
+    localStorage.setItem(approvalMarkerKey(context), JSON.stringify([...rows, marker]))
+  }
+  function clearApprovalMarker(context, approvalId) {
+    try { localStorage.setItem(approvalMarkerKey(context), JSON.stringify(approvalMarkers(context)
+      .filter((row) => row.approvalId !== approvalId))) } catch { /* The authoritative record still prevents a new answer. */ }
+  }
+  function approvalSource(row, fresh = false) {
+    const entry = conversationTasks.entries.get(row.taskId), payload = entry?.payload
+    if (!payload || fresh && entry.notice || payload.taskId !== row.taskId || payload.sessionId !== row.sessionId ||
+        payload.source?.commandId !== row.taskId || payload.source.kind !== 'session.message' || payload.source.rootTaskId) return null
+    return [payload.source, ...(Array.isArray(payload.supplements) ? payload.supplements : []),
+      ...(Array.isArray(payload.resumes) ? payload.resumes : [])].find((command) => command?.kind === 'session.message' &&
+      command.sessionId === row.sessionId && command.commandId === row.sourceCommandId &&
+      command.receiptId === row.sourceReceiptId && (command.commandId === row.taskId && !command.rootTaskId ||
+        command.rootTaskId === row.taskId) && (!Number.isSafeInteger(command.dshTurn) || command.dshTurn === row.turn)) || null
+  }
+  function mergeApproval(entry, row) {
+    if (entry && !sameApproval(entry.row, row)) return { ...entry, authoritative: false,
+      notice: '审批来源已变化，无法继续答复。请重新核对原对话。' }
+    const rank = { pending: 0, answered: 1, resolved: 2, unavailable: 2 }
+    return { ...entry, row: entry && rank[entry.row.status] > rank[row.status] ? entry.row : row,
+      authoritative: true, notice: '' }
+  }
+  async function refreshConversationApprovals(context = approvalContext(), force = false) {
+    if (!approvalContextCurrent(context) || !sessionIdPattern.test(context.sessionId || '')) return false
+    const scope = JSON.stringify([context.ownerId, context.identity, context.deviceId])
+    if (conversationApprovals.scope !== scope) { resetConversationApprovals(); conversationApprovals.scope = scope }
+    const key = JSON.stringify(context), prior = conversationApprovals.reads.get(key)
+    if (!force && prior) return prior.promise
+    const generation = ++conversationApprovals.readGeneration
+    const run = async () => {
+      const rows = new Map(), cursors = new Set()
+      let before = null
+      try {
+        do {
+          const page = await accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/approvals?limit=100${before ? `&before=${encodeURIComponent(before)}` : ''}`)
+          if (!approvalContextCurrent(context) || conversationApprovals.reads.get(key)?.generation !== generation) return false
+          if (!Array.isArray(page?.approvals) || typeof page.hasMore !== 'boolean' ||
+              page.hasMore && (!approvalIdPattern.test(page.nextBefore || '') || cursors.has(page.nextBefore) || !page.approvals.length) ||
+              !page.hasMore && page.nextBefore !== null) throw { code: 'REQUEST_FAILED' }
+          for (const row of page.approvals) if (validApproval(row, context.sessionId)) {
+            if (rows.has(row.approvalId)) throw { code: 'REQUEST_FAILED' }
+            rows.set(row.approvalId, row)
+          }
+          before = page.hasMore ? page.nextBefore : null
+          if (before) cursors.add(before)
+        } while (before)
+        for (const [id, entry] of conversationApprovals.entries) if (entry.row.sessionId === context.sessionId && !rows.has(id)) {
+          entry.authoritative = false; entry.notice = '这条审批暂时无法核对，请重新核对原对话。'
+        }
+        for (const [id, row] of rows) {
+          const entry = mergeApproval(conversationApprovals.entries.get(id), row)
+          conversationApprovals.entries.set(id, entry)
+          if (entry.authoritative && row.status !== 'pending') clearApprovalMarker(context, id)
+        }
+        renderConversationApprovals()
+        return true
+      } catch (error) {
+        if (!approvalContextCurrent(context) || conversationApprovals.reads.get(key)?.generation !== generation) return false
+        for (const entry of conversationApprovals.entries.values()) if (entry.row.sessionId === context.sessionId) {
+          entry.authoritative = false
+          entry.notice = error.code === 'NETWORK' ? '连接中断，审批状态待核对。重连后请重新核对答复。'
+            : '审批状态暂时无法读取，请重新核对答复。'
+        }
+        renderConversationApprovals()
+        return false
+      }
+    }
+    const promise = run()
+    conversationApprovals.reads.set(key, { generation, promise })
+    try { return await promise } finally {
+      if (conversationApprovals.reads.get(key)?.promise === promise) conversationApprovals.reads.delete(key)
+    }
+  }
+  function approvalStatusText(row) {
+    if (row.status === 'pending') return '等待你决定是否允许这次操作。'
+    if (row.status === 'answered') return row.decisionOutcome === 'allowed-once'
+      ? '允许本次的决定已登记，正在等待执行端确认。' : '拒绝的决定已登记，正在等待执行端确认。'
+    if (row.status === 'unavailable') return row.outcome === 'cancelled'
+      ? '本次审批已随停止请求取消；任务停止结果见原对话。' : '本次审批已失效，无法继续答复。请查看原对话。'
+    return { 'allowed-once': '执行端已确认允许本次。任务结果请继续查看原对话。',
+      rejected: '执行端已确认拒绝。请在原对话查看后续结果。', cancelled: '执行端已确认审批取消。任务进展见原对话。',
+      unavailable: '执行端已确认审批失效。请查看原对话。' }[row.outcome]
+  }
+  function renderConversationApprovals() {
+    const context = approvalContext(), list = byId('transcript')
+    if (!approvalContextCurrent(context)) return
+    const scroll = byId('chat-scroll'), top = scroll.scrollTop
+    const reading = [...list.children].find((node) => node.getBoundingClientRect().bottom > scroll.getBoundingClientRect().top)
+    const readingTop = reading?.getBoundingClientRect().top
+    const visible = new Set()
+    for (const entry of conversationApprovals.entries.values()) {
+      const row = entry.row
+      if (row.sessionId !== context.sessionId || !approvalSource(row)) continue
+      const anchor = [...list.children].find((node) => node.dataset?.receiptId === row.sourceReceiptId)
+      if (!anchor) continue
+      visible.add(row.approvalId)
+      const marker = approvalMarker(context, row), operation = conversationApprovals.operations.get(row.approvalId)
+      const sourceNotice = conversationTasks.entries.get(row.taskId)?.notice
+      const signature = JSON.stringify([row, entry.notice, sourceNotice, entry.authoritative, marker, operation?.requestId])
+      const scope = JSON.stringify(context)
+      let card = [...list.children].find((node) => node.dataset?.conversationApproval === row.approvalId)
+      if (card?.dataset.signature === signature && card.dataset.scope === scope) continue
+      const active = document.activeElement, focusAction = card?.dataset.scope === scope && card.contains(active) &&
+        !document.querySelector('dialog[open]') ? active.dataset?.conversationApprovalAction : null
+      if (!card) {
+        card = element('li', 'conversation-task conversation-approval')
+        card.dataset.conversationApproval = row.approvalId
+        let next = anchor.nextSibling
+        while (next?.dataset?.conversationTask || next?.dataset?.conversationApproval && next.dataset.sourceReceiptId === row.sourceReceiptId) next = next.nextSibling
+        list.insertBefore(card, next)
+      }
+      card.dataset.sourceReceiptId = row.sourceReceiptId
+      card.dataset.signature = signature; card.dataset.scope = scope
+      card.replaceChildren()
+      card.append(element('strong', 'conversation-task-title', `${executionName(row)} · ${row.status === 'pending' ? '需要你批准' : '审批回执'}`))
+      card.append(element('p', 'conversation-approval-reason', row.reason.trim() || '执行端请求你批准这次操作。'))
+      const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，请重新核对答复。' : '')
+      const status = element('p', 'conversation-approval-status', row.status === 'pending' && operation ? '正在提交本次决定…'
+        : notice || (row.status === 'pending' && marker ? '上次答复结果尚未确认。已核对仍在等待，可用原答复重试。' : approvalStatusText(row)))
+      status.setAttribute('role', 'status'); status.tabIndex = -1; status.dataset.conversationApprovalAction = 'status'
+      card.append(status)
+      const actions = element('div', 'conversation-task-actions')
+      if (row.status === 'pending') for (const outcome of ['allowed-once', 'rejected']) {
+        const button = element('button', `button ${outcome === 'allowed-once' ? 'primary' : 'secondary'} small`, outcome === 'allowed-once' ? '允许本次' : '拒绝')
+        button.type = 'button'; button.dataset.conversationApprovalAction = outcome
+        button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && marker.outcome !== outcome
+        button.addEventListener('click', () => { if (approvalContextCurrent(context)) void submitApproval(context, row, outcome) })
+        actions.append(button)
+      }
+      if (notice || marker || row.status === 'answered') {
+        const check = element('button', 'button secondary small', '重新核对答复')
+        check.type = 'button'; check.dataset.conversationApprovalAction = 'check'; check.disabled = !!operation
+        check.addEventListener('click', () => { if (approvalContextCurrent(context)) {
+          if (sourceNotice) void refreshConversationTasks()
+          else void refreshConversationApprovals(context, true)
+        } })
+        actions.append(check)
+      }
+      const detail = element('button', 'button secondary small', '查看事情详情')
+      detail.type = 'button'; detail.dataset.conversationApprovalAction = 'detail'
+      detail.addEventListener('click', () => { if (approvalContextCurrent(context)) {
+        taskDetail.returnFocus = { ...context, button: detail, taskId: row.taskId, approvalId: row.approvalId }
+        void openTaskDetail(row.taskId)
+      } })
+      actions.append(detail); card.append(actions)
+      if (focusAction && !document.querySelector('dialog[open]') &&
+          (document.activeElement === active || document.activeElement === document.body)) {
+        const replacement = card.querySelector(`[data-conversation-approval-action="${focusAction}"]`)
+        ;(replacement && !replacement.disabled ? replacement : status).focus({ preventScroll: true })
+      }
+    }
+    for (const card of [...list.children]) if (card.dataset?.conversationApproval && !visible.has(card.dataset.conversationApproval)) card.remove()
+    if (reading?.isConnected && Number.isFinite(readingTop) && Number.isFinite(scroll.scrollTop))
+      scroll.scrollTop += reading.getBoundingClientRect().top - readingTop
+    else if (Number.isFinite(top)) scroll.scrollTop = top
+  }
+  async function submitApproval(context, original, outcome) {
+    const id = original.approvalId
+    if (!approvalContextCurrent(context) || conversationApprovals.operations.has(id)) return
+    let entry = conversationApprovals.entries.get(id)
+    if (!entry?.authoritative || entry.notice || entry.row.status !== 'pending' || !sameApproval(entry.row, original) || !approvalSource(entry.row, true)) return
+    let marker = approvalMarker(context, original)
+    if (marker && marker.outcome !== outcome) return
+    const operation = marker || { ...approvalIdentity(original), requestId: crypto.randomUUID(), outcome }
+    try { saveApprovalMarker(context, operation) } catch {
+      entry.notice = '无法保留本次答复，请稍后重试。'; renderConversationApprovals(); return
+    }
+    conversationApprovals.operations.set(id, operation)
+    renderConversationApprovals()
+    try {
+      if (marker) {
+        if (!await refreshConversationApprovals(context, true) || !approvalContextCurrent(context)) return
+        entry = conversationApprovals.entries.get(id)
+        if (!entry?.authoritative || entry.notice || entry.row.status !== 'pending' || !sameApproval(entry.row, original) || !approvalSource(entry.row, true)) return
+      }
+      const receipt = await accessApi(`/sessions/${encodeURIComponent(original.sessionId)}/approvals/${encodeURIComponent(id)}`,
+        { method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, outcome: operation.outcome } })
+      if (!approvalContextCurrent(context) || conversationApprovals.operations.get(id) !== operation) return
+      if (receipt?.requestId !== operation.requestId || !validApproval(receipt.approval, original.sessionId) ||
+          !sameApproval(receipt.approval, original) || receipt.approval.status !== 'answered' ||
+          receipt.approval.decisionRequestId !== operation.requestId || receipt.approval.decisionOutcome !== operation.outcome) throw { code: 'REQUEST_FAILED' }
+      conversationApprovals.entries.set(id, mergeApproval(conversationApprovals.entries.get(id), receipt.approval))
+      renderConversationApprovals()
+      await refreshConversationApprovals(context, true)
+    } catch (error) {
+      if (!approvalContextCurrent(context) || conversationApprovals.operations.get(id) !== operation) return
+      entry = conversationApprovals.entries.get(id)
+      if (entry) { entry.authoritative = false; entry.notice = error.status === 409
+        ? '审批已变化，正在重新核对答复。' : '答复结果尚未确认，正在读取实际审批状态。' }
+      renderConversationApprovals()
+      await refreshConversationApprovals(context, true)
+    } finally {
+      if (conversationApprovals.operations.get(id) === operation) conversationApprovals.operations.delete(id)
+      if (approvalContextCurrent(context)) renderConversationApprovals()
+    }
+  }
+  const questionIdentityFields = ['questionRpcId', 'sessionId', 'taskId', 'sourceCommandId', 'sourceReceiptId', 'turn', 'createdAt']
+  function resetConversationQuestions() {
+    conversationQuestions.scope = null; conversationQuestions.entries.clear(); conversationQuestions.reads.clear()
+    conversationQuestions.operations.clear(); conversationQuestions.drafts.clear(); conversationQuestions.readGeneration++
+  }
+  function questionIdentity(row) { return { ...Object.fromEntries(questionIdentityFields.map((field) => [field, row[field]])), questions: row.questions } }
+  function sameQuestion(left, right) {
+    return questionIdentityFields.every((field) => left?.[field] === right?.[field]) && JSON.stringify(left?.questions) === JSON.stringify(right?.questions)
+  }
+  function validQuestionItems(questions) {
+    return Array.isArray(questions) && questions.length > 0 && questions.every((question) => question &&
+      typeof question.id === 'string' && typeof question.question === 'string' &&
+      ['header', 'detail'].every((field) => question[field] === undefined || typeof question[field] === 'string') &&
+      (question.multiSelect === undefined || typeof question.multiSelect === 'boolean') &&
+      (question.options === undefined || Array.isArray(question.options) && question.options.every((option) => option &&
+        typeof option.label === 'string' && (option.description === undefined || typeof option.description === 'string'))) &&
+      (question.intent === undefined || question.intent?.kind === 'plan-review' && typeof question.intent.approve === 'string' &&
+        typeof question.detail === 'string' && question.options?.some((option) => option.label === question.intent.approve)))
+  }
+  function validQuestionAnswer(answer, questions) {
+    return !!answer && Object.keys(answer).length === 1 && Array.isArray(answer.answers) && answer.answers.length === questions.length &&
+      answer.answers.every((item, index) => item && Object.keys(item).every((key) => ['id', 'selected', 'custom'].includes(key)) &&
+        item.id === questions[index].id && Array.isArray(item.selected) && item.selected.every((label) => typeof label === 'string' &&
+          (questions[index].options || []).some((option) => option.label === label)) && new Set(item.selected).size === item.selected.length &&
+        (item.custom === undefined || typeof item.custom === 'string' && !!item.custom.trim()) &&
+        (questions[index].multiSelect === true || item.selected.length <= 1 && (item.custom === undefined || item.selected.length === 0)))
+  }
+  function validQuestion(row, sessionId) {
+    const time = (value) => typeof value === 'string' && Number.isFinite(Date.parse(value))
+    if (!row || !questionIdentityFields.every((field) => field === 'turn' || typeof row[field] === 'string') ||
+        !approvalIdPattern.test(row.questionRpcId) || row.sessionId !== sessionId || !sessionIdPattern.test(row.taskId) ||
+        !sessionIdPattern.test(row.sourceCommandId) || !receiptIdPattern.test(row.sourceReceiptId) ||
+        !Number.isSafeInteger(row.turn) || row.turn < 1 || !time(row.createdAt) || !validQuestionItems(row.questions) ||
+        !['pending', 'answered', 'resolved', 'unavailable'].includes(row.status)) return false
+    const hasAnswer = [row.answer, row.answerRequestId, row.answeredAt].some((value) => value !== undefined)
+    if (hasAnswer && (!approvalRequestPattern.test(row.answerRequestId || '') || !time(row.answeredAt) ||
+        !validQuestionAnswer(row.answer, row.questions))) return false
+    if (row.answerAcceptedAt !== undefined && (!hasAnswer || !time(row.answerAcceptedAt))) return false
+    if (row.status === 'pending') return !hasAnswer && row.answerAcceptedAt === undefined && row.outcome === undefined && row.resolvedAt === undefined
+    if (row.status === 'answered') return hasAnswer && row.outcome === undefined && row.resolvedAt === undefined
+    if (row.status === 'unavailable') return typeof row.reasonCode === 'string' && time(row.unavailableAt)
+    return ['answered', 'cancelled'].includes(row.outcome) && time(row.resolvedAt)
+  }
+  function questionMarkerKey(context) { return `weftmate:question-answers:v1:${context.ownerId}:${context.deviceId}` }
+  function questionMarkers(context) {
+    try {
+      const rows = JSON.parse(localStorage.getItem(questionMarkerKey(context)) || '[]')
+      return Array.isArray(rows) ? rows.filter((row) => row && approvalIdPattern.test(row.questionRpcId || '') &&
+        approvalRequestPattern.test(row.requestId || '') && validQuestionItems(row.questions) && validQuestionAnswer(row.answer, row.questions)) : []
+    } catch { return [] }
+  }
+  function questionMarker(context, row) { return questionMarkers(context).find((marker) => marker.questionRpcId === row.questionRpcId) }
+  function saveQuestionMarker(context, marker) {
+    localStorage.setItem(questionMarkerKey(context), JSON.stringify([...questionMarkers(context)
+      .filter((row) => row.questionRpcId !== marker.questionRpcId), marker]))
+  }
+  function clearQuestionMarker(context, id) {
+    try { localStorage.setItem(questionMarkerKey(context), JSON.stringify(questionMarkers(context).filter((row) => row.questionRpcId !== id))) } catch { /* GET remains authoritative. */ }
+  }
+  function questionDraft(context, row) {
+    const key = JSON.stringify([context.ownerId, context.deviceId, row.questionRpcId])
+    let draft = conversationQuestions.drafts.get(key)
+    if (!draft || !sameQuestion(draft, row)) {
+      const marker = questionMarker(context, row), answer = marker && sameQuestion(marker, row) ? marker.answer : row.answer
+      draft = { ...questionIdentity(row), answers: row.questions.map((question, index) => ({ id: question.id,
+        selected: [...(answer?.answers[index]?.selected || [])], custom: answer?.answers[index]?.custom || '' })) }
+      conversationQuestions.drafts.set(key, draft)
+    }
+    return draft
+  }
+  function mergeQuestion(entry, row) {
+    if (entry && !sameQuestion(entry.row, row)) return { ...entry, authoritative: false, notice: '问题来源已变化，请重新核对原对话。' }
+    const rank = { pending: 0, answered: 1, resolved: 2, unavailable: 2 }
+    let next = entry && rank[entry.row.status] > rank[row.status] ? entry.row : row
+    if (entry?.row.answerAcceptedAt && !next.answerAcceptedAt && next.answerRequestId === entry.row.answerRequestId &&
+        JSON.stringify(next.answer) === JSON.stringify(entry.row.answer)) next = { ...next, answerAcceptedAt: entry.row.answerAcceptedAt }
+    return { ...entry, row: next, authoritative: true, notice: '', validation: '' }
+  }
+  async function refreshConversationQuestions(context = approvalContext(), force = false) {
+    if (!approvalContextCurrent(context) || !sessionIdPattern.test(context.sessionId || '')) return false
+    const scope = JSON.stringify([context.ownerId, context.identity, context.deviceId])
+    if (conversationQuestions.scope !== scope) { resetConversationQuestions(); conversationQuestions.scope = scope }
+    const key = JSON.stringify(context), prior = conversationQuestions.reads.get(key)
+    if (!force && prior) return prior.promise
+    const generation = ++conversationQuestions.readGeneration
+    const run = async () => {
+      const rows = new Map(), cursors = new Set()
+      let before = null
+      try {
+        do {
+          const page = await accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/questions?limit=100${before ? `&before=${encodeURIComponent(before)}` : ''}`)
+          if (!approvalContextCurrent(context) || conversationQuestions.reads.get(key)?.generation !== generation) return false
+          if (!Array.isArray(page?.questions) || typeof page.hasMore !== 'boolean' ||
+              page.hasMore && (!approvalIdPattern.test(page.nextBefore || '') || cursors.has(page.nextBefore) || !page.questions.length) ||
+              !page.hasMore && page.nextBefore !== null) throw { code: 'REQUEST_FAILED' }
+          for (const row of page.questions) if (validQuestion(row, context.sessionId)) {
+            if (rows.has(row.questionRpcId)) throw { code: 'REQUEST_FAILED' }
+            rows.set(row.questionRpcId, row)
+          }
+          before = page.hasMore ? page.nextBefore : null
+          if (before) cursors.add(before)
+        } while (before)
+        for (const [id, entry] of conversationQuestions.entries) if (entry.row.sessionId === context.sessionId && !rows.has(id)) {
+          entry.authoritative = false; entry.notice = '这批问题暂时无法核对，已填写内容保留。请重新核对。'
+        }
+        for (const [id, row] of rows) {
+          const entry = mergeQuestion(conversationQuestions.entries.get(id), row)
+          conversationQuestions.entries.set(id, entry)
+          if (entry.authoritative && row.status !== 'pending') clearQuestionMarker(context, id)
+        }
+        renderConversationQuestions(); return true
+      } catch (error) {
+        if (!approvalContextCurrent(context) || conversationQuestions.reads.get(key)?.generation !== generation) return false
+        for (const entry of conversationQuestions.entries.values()) if (entry.row.sessionId === context.sessionId) {
+          entry.authoritative = false; entry.notice = '信息问题暂时无法核对，已填写内容保留。连接恢复后请重新核对。'
+        }
+        renderConversationQuestions(); return false
+      }
+    }
+    const promise = run(); conversationQuestions.reads.set(key, { generation, promise })
+    try { return await promise } finally { if (conversationQuestions.reads.get(key)?.promise === promise) conversationQuestions.reads.delete(key) }
+  }
+  function questionStatusText(row) {
+    if (row.status === 'unavailable') return row.answerAcceptedAt
+      ? '执行端曾确认接收本入口回答，但本次信息问题现已失效。任务进展请查看原对话。'
+      : '本次信息问题已失效，不能再提交。任务进展请查看原对话。'
+    if (row.status === 'resolved' && row.outcome === 'cancelled') return row.answerAcceptedAt
+      ? '执行端曾确认接收本入口回答，随后确认本次信息问题取消。任务进展见原对话。'
+      : '执行端已确认本次信息问题取消。任务进展见原对话。'
+    if (row.answerAcceptedAt) return '执行端已确认接收本入口提交的回答。任务结果请继续查看原对话。'
+    if (row.status === 'pending') return '请补充这次任务需要的信息。'
+    if (row.status === 'answered') return '回答已登记，正在等待执行端确认接收。'
+    return '原生问答已结束，尚未确认采用本入口回答。任务结果见原对话。'
+  }
+  function renderConversationQuestions() {
+    const context = approvalContext(), list = byId('transcript')
+    if (!approvalContextCurrent(context)) return
+    const scroll = byId('chat-scroll'), top = scroll.scrollTop
+    const reading = [...list.children].find((node) => node.getBoundingClientRect().bottom > scroll.getBoundingClientRect().top)
+    const readingTop = reading?.getBoundingClientRect().top, visible = new Set()
+    for (const entry of conversationQuestions.entries.values()) {
+      const row = entry.row
+      if (row.sessionId !== context.sessionId || !approvalSource(row)) continue
+      const anchor = [...list.children].find((node) => node.dataset?.receiptId === row.sourceReceiptId)
+      if (!anchor) continue
+      visible.add(row.questionRpcId)
+      const marker = questionMarker(context, row), operation = conversationQuestions.operations.get(row.questionRpcId)
+      const sourceNotice = conversationTasks.entries.get(row.taskId)?.notice
+      const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，已填写内容保留。请重新核对。' : '') ||
+        (marker && !sameQuestion(marker, row) ? '问题内容已变化，无法重发原回答。请重新核对原对话。' : '')
+      const signature = JSON.stringify([row, notice, entry.authoritative, entry.validation, marker, operation?.requestId])
+      const scope = JSON.stringify(context)
+      let card = [...list.children].find((node) => node.dataset?.conversationQuestion === row.questionRpcId)
+      if (card?.dataset.signature === signature && card.dataset.scope === scope) continue
+      const active = document.activeElement, focusAction = card?.dataset.scope === scope && card.contains(active) &&
+        !document.querySelector('dialog[open]') ? active.dataset?.conversationQuestionAction : null
+      const selection = focusAction?.startsWith('custom-') ? [active.selectionStart, active.selectionEnd] : null
+      if (!card) {
+        card = element('li', 'conversation-task conversation-question'); card.dataset.conversationQuestion = row.questionRpcId
+        let next = anchor.nextSibling
+        while (next?.dataset?.conversationTask || (next?.dataset?.conversationApproval || next?.dataset?.conversationQuestion) &&
+          next.dataset.sourceReceiptId === row.sourceReceiptId) next = next.nextSibling
+        list.insertBefore(card, next)
+      }
+      card.dataset.sourceReceiptId = row.sourceReceiptId; card.dataset.signature = signature; card.dataset.scope = scope
+      card.replaceChildren(); card.append(element('strong', 'conversation-task-title', row.status === 'pending' ? '需要补充信息' : '信息回答回执'))
+      const status = element('p', 'conversation-question-status', row.status === 'pending' && operation ? '正在提交本次回答…'
+        : notice || entry.validation || (row.status === 'pending' && marker ? '上次回答结果尚未确认。已核对仍在等待，可重试原回答。' : questionStatusText(row)))
+      status.setAttribute('role', 'status'); status.tabIndex = -1; status.dataset.conversationQuestionAction = 'status'; card.append(status)
+      const draft = questionDraft(context, row), answer = row.status === 'pending' ? draft : row.answer
+      const locked = row.status !== 'pending' || !!operation || !!marker || !entry.authoritative || !!notice
+      const form = element('form', 'conversation-question-form')
+      row.questions.forEach((question, index) => {
+        const item = element('fieldset', 'question-item'), controls = [], customLabel = element('label', 'question-custom')
+        item.append(element('legend', '', question.header || question.question || '补充信息'))
+        if (question.header && question.question) item.append(element('p', 'question-text', question.question))
+        if (question.detail) item.append(element('p', 'question-detail', question.detail))
+        for (const [optionIndex, option] of (question.options || []).entries()) {
+          const label = element('label', 'question-option'), input = element('input')
+          input.type = question.multiSelect === true ? 'checkbox' : 'radio'; input.name = `question-${row.questionRpcId}-${index}`
+          input.checked = !!answer?.answers[index]?.selected?.includes(option.label); input.disabled = locked
+          input.dataset.conversationQuestionAction = `option-${index}-${optionIndex}`
+          const text = element('span', 'question-option-text', option.label || '空白选项')
+          if (option.description) text.append(element('small', '', option.description))
+          input.addEventListener('change', () => {
+            if (!approvalContextCurrent(context) || locked || conversationQuestions.operations.has(row.questionRpcId) || questionMarker(context, row)) return
+            const selected = new Set(draft.answers[index].selected)
+            if (question.multiSelect === true) { if (input.checked) selected.add(option.label); else selected.delete(option.label) }
+            else { selected.clear(); if (input.checked) selected.add(option.label); draft.answers[index].custom = ''; custom.value = '' }
+            draft.answers[index].selected = (question.options || []).map((option) => option.label).filter((label, i, labels) => selected.has(label) && labels.indexOf(label) === i)
+            for (const control of controls) control.input.checked = selected.has(control.label)
+          })
+          controls.push({ input, label: option.label }); label.append(input, text); item.append(label)
+        }
+        customLabel.append(element('span', '', question.options?.length ? question.multiSelect === true ? '补充说明（可选）' : '填写其他回答' : '你的回答'))
+        const custom = element('textarea'); custom.rows = 3; custom.value = answer?.answers[index]?.custom || ''; custom.disabled = locked
+        custom.dataset.conversationQuestionAction = `custom-${index}`
+        custom.addEventListener('input', () => {
+          if (!approvalContextCurrent(context) || locked || conversationQuestions.operations.has(row.questionRpcId) || questionMarker(context, row)) return
+          draft.answers[index].custom = custom.value
+          if (question.multiSelect !== true && custom.value.trim()) {
+            draft.answers[index].selected = []; for (const control of controls) control.input.checked = false
+          }
+        })
+        customLabel.append(custom); item.append(customLabel); form.append(item)
+      })
+      const actions = element('div', 'conversation-task-actions')
+      if (row.status === 'pending') {
+        const submit = element('button', 'button small', marker ? '重试原回答' : '提交回答')
+        submit.type = 'submit'; submit.dataset.conversationQuestionAction = 'submit'
+        submit.disabled = !!operation || !entry.authoritative || !!notice
+        actions.append(submit)
+      }
+      if (notice || marker || row.status === 'answered') {
+        const check = element('button', 'button secondary small', '重新核对回答'); check.type = 'button'; check.disabled = !!operation
+        check.dataset.conversationQuestionAction = 'check'
+        check.addEventListener('click', () => { if (approvalContextCurrent(context)) {
+          if (sourceNotice) void refreshConversationTasks(); else void refreshConversationQuestions(context, true)
+        } }); actions.append(check)
+      }
+      const detail = element('button', 'button secondary small', '查看事情详情'); detail.type = 'button'
+      detail.dataset.conversationQuestionAction = 'detail'
+      detail.addEventListener('click', () => { if (approvalContextCurrent(context)) {
+        taskDetail.returnFocus = { ...context, button: detail, taskId: row.taskId, questionRpcId: row.questionRpcId }; void openTaskDetail(row.taskId)
+      } }); actions.append(detail); form.append(actions); card.append(form)
+      form.addEventListener('submit', (event) => { event.preventDefault(); if (approvalContextCurrent(context)) void submitQuestion(context, row) })
+      if (focusAction && !document.querySelector('dialog[open]') && (document.activeElement === active || document.activeElement === document.body)) {
+        const replacement = card.querySelector(`[data-conversation-question-action="${focusAction}"]`)
+        const target = replacement && !replacement.disabled ? replacement : status; target.focus({ preventScroll: true })
+        if (target === replacement && selection && Number.isInteger(selection[0])) replacement.setSelectionRange?.(...selection)
+      }
+    }
+    for (const card of [...list.children]) if (card.dataset?.conversationQuestion && !visible.has(card.dataset.conversationQuestion)) card.remove()
+    if (reading?.isConnected && Number.isFinite(readingTop) && Number.isFinite(scroll.scrollTop)) scroll.scrollTop += reading.getBoundingClientRect().top - readingTop
+    else if (Number.isFinite(top)) scroll.scrollTop = top
+  }
+  async function submitQuestion(context, original) {
+    const id = original.questionRpcId
+    if (!approvalContextCurrent(context) || conversationQuestions.operations.has(id)) return
+    let entry = conversationQuestions.entries.get(id)
+    if (!entry?.authoritative || entry.notice || entry.row.status !== 'pending' || !sameQuestion(entry.row, original) || !approvalSource(entry.row, true)) return
+    const marker = questionMarker(context, original), draft = questionDraft(context, original)
+    if (marker && !sameQuestion(marker, original)) return
+    const answer = marker?.answer || { answers: draft.answers.map((item) => ({ id: item.id, selected: [...item.selected], ...(item.custom.trim() ? { custom: item.custom } : {}) })) }
+    if (!validQuestionAnswer(answer, original.questions)) { entry.validation = '请核对每题的选择与填写内容，再提交回答。'; renderConversationQuestions(); return }
+    const operation = marker || { ...questionIdentity(original), requestId: crypto.randomUUID(), answer }
+    try { saveQuestionMarker(context, operation) } catch { entry.notice = '无法保留本次回答，请稍后重试。'; renderConversationQuestions(); return }
+    conversationQuestions.operations.set(id, operation); renderConversationQuestions()
+    try {
+      if (marker) {
+        if (!await refreshConversationQuestions(context, true) || !approvalContextCurrent(context)) return
+        entry = conversationQuestions.entries.get(id)
+        if (!entry?.authoritative || entry.notice || entry.row.status !== 'pending' || !sameQuestion(entry.row, original) || !approvalSource(entry.row, true)) return
+      }
+      const receipt = await accessApi(`/sessions/${encodeURIComponent(original.sessionId)}/questions/${encodeURIComponent(id)}`,
+        { method: 'POST', protectedWrite: true, body: { requestId: operation.requestId, answer: operation.answer } })
+      if (!approvalContextCurrent(context) || conversationQuestions.operations.get(id) !== operation) return
+      if (receipt?.requestId !== operation.requestId || !validQuestion(receipt.question, original.sessionId) || !sameQuestion(receipt.question, original) ||
+          receipt.question.status !== 'answered' || receipt.question.answerRequestId !== operation.requestId ||
+          JSON.stringify(receipt.question.answer) !== JSON.stringify(operation.answer)) throw { code: 'REQUEST_FAILED' }
+      conversationQuestions.entries.set(id, mergeQuestion(conversationQuestions.entries.get(id), receipt.question)); renderConversationQuestions()
+      await refreshConversationQuestions(context, true)
+    } catch (error) {
+      if (!approvalContextCurrent(context) || conversationQuestions.operations.get(id) !== operation) return
+      entry = conversationQuestions.entries.get(id)
+      if (entry) { entry.authoritative = false; entry.notice = '回答结果尚未确认，正在读取实际问题状态。' }
+      renderConversationQuestions(); await refreshConversationQuestions(context, true)
+    } finally {
+      if (conversationQuestions.operations.get(id) === operation) conversationQuestions.operations.delete(id)
+      if (approvalContextCurrent(context)) renderConversationQuestions()
+    }
+  }
+  function renderConversationTasks() {
+    const context = conversationTaskContext(), list = byId('transcript')
+    if (!context.sessionId || conversationTasks.ownerId !== context.ownerId || conversationTasks.identity !== context.identity) return
+    for (const entry of conversationTasks.entries.values()) {
+      if (entry.sessionId !== context.sessionId || entry.conversationId && entry.conversationId !== context.conversationId) continue
+      const payload = entry.payload, steps = payload ? relatedExecutionSteps(payload) : []
+      const artifacts = (Array.isArray(payload?.artifacts) ? payload.artifacts : []).filter((row) =>
+        row?.taskId === entry.taskId && row.sessionId === context.sessionId && sessionIdPattern.test(row.artifactId || ''))
+      const control = payload?.control
+      const outputLimited = payload?.replyEvidence?.status === 'failed' && payload.replyEvidence.endReasonKind === 'max-tokens'
+      const visible = entry.notice || steps.length || artifacts.length || control && control.state !== 'active' || outputLimited
+      let card = [...list.children].find((row) => row.dataset?.conversationTask === entry.taskId)
+      if (!visible) { card?.remove(); continue }
+      const receiptId = payload?.source?.receiptId || entry.receiptId
+      const anchor = [...list.children].find((row) => row.dataset?.receiptId === receiptId)
+      if (!anchor && !entry.notice) continue
+      if (card && anchor && anchor.nextSibling !== card) list.insertBefore(card, anchor.nextSibling)
+      const signature = JSON.stringify([payload, entry.notice])
+      const scope = JSON.stringify([context.ownerId, context.identity, context.source, context.sessionId,
+        context.conversationId, entry.taskId])
+      if (card?.dataset.signature === signature && card.dataset.scope === scope) continue
+      const active = document.activeElement
+      const focusAction = card?.dataset.scope === scope && conversationTaskCurrent(context) &&
+        card.contains(active) && !document.querySelector('dialog[open]')
+        ? active.dataset?.conversationTaskAction : null
+      if (!card) {
+        card = element('li', 'conversation-task')
+        card.dataset.conversationTask = entry.taskId
+        if (anchor) list.insertBefore(card, anchor.nextSibling)
+        else list.append(card)
+      }
+      const expanded = card.querySelector?.('details')?.open === true
+      card.dataset.signature = signature
+      card.dataset.scope = scope
+      card.replaceChildren()
+      card.append(element('strong', 'conversation-task-title', entry.notice ? '工具进展 · 待更新'
+        : outputLimited && !steps.length && !artifacts.length ? '回复状态' : '工具进展'))
+      if (entry.notice) card.append(element('p', 'conversation-task-notice', entry.notice))
+      if (steps.length) {
+        const latest = steps.slice(-3), records = element('ul', 'conversation-task-steps')
+        for (const step of latest) records.append(element('li', '', `${entry.notice ? '上次记录：' : ''}${executionName(step)} · ${executionProgress(step)}`))
+        card.append(records)
+        if (steps.length > 3) {
+          const details = element('details', 'conversation-task-more')
+          details.open = expanded
+          const summary = element('summary', '', `查看全部 ${steps.length} 条执行记录`)
+          summary.dataset.conversationTaskAction = 'more'
+          details.append(summary)
+          for (const step of steps) details.append(element('p', '', `${executionName(step)} · ${executionProgress(step)}`))
+          card.append(details)
+        }
+      }
+      if (!entry.notice && control && control.state !== 'active') card.append(element('p', 'conversation-task-state', taskControlStatus(control)))
+      if (!entry.notice && payload?.replyEvidence) card.append(element('p', 'conversation-task-reply', taskReplyText(payload.replyEvidence)))
+      const verified = artifacts.filter((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
+        row.verification?.method === 'sha256_readback')
+      if (artifacts.length) card.append(element('p', 'conversation-task-result', verified.length
+        ? `${verified.length} 个成果文件已读回核验` : '成果文件仍待核验'))
+      const actions = element('div', 'conversation-task-actions')
+      const detail = element('button', 'button secondary small', verified.length ? '查看成果与详情' : '查看事情详情')
+      detail.type = 'button'
+      detail.dataset.conversationTaskAction = 'detail'
+      detail.addEventListener('click', () => { if (conversationTaskCurrent(context)) { taskDetail.returnFocus = { button: detail, taskId: entry.taskId,
+        ownerId: context.ownerId, identity: context.identity, source: context.source, sessionId: context.sessionId, conversationId: context.conversationId }; void openTaskDetail(entry.taskId) } })
+      actions.append(detail)
+      if (entry.notice) {
+        const retry = element('button', 'button secondary small', '重新核对进展')
+        retry.type = 'button'
+        retry.dataset.conversationTaskAction = 'retry'
+        retry.addEventListener('click', () => { if (conversationTaskCurrent(context)) void refreshConversationTasks() })
+        actions.append(retry)
+      }
+      card.append(actions)
+      if (['detail', 'retry', 'more'].includes(focusAction) && conversationTaskCurrent(context) &&
+          card.dataset.scope === scope && !document.querySelector('dialog[open]') &&
+          (document.activeElement === active || document.activeElement === document.body)) {
+        const replacement = card.querySelector(`[data-conversation-task-action="${focusAction}"]`)
+        if (replacement?.isConnected && !replacement.disabled && !replacement.hidden) replacement.focus({ preventScroll: true })
+      }
+    }
+    renderConversationApprovals()
+    renderConversationQuestions()
+  }
+  async function refreshConversationTasks() {
+    const context = conversationTaskContext()
+    if (!conversationTaskCurrent(context) || !sessionIdPattern.test(context.sessionId || '')) return
+    if (conversationTasks.ownerId !== context.ownerId || conversationTasks.identity !== context.identity) {
+      conversationTasks.entries.clear()
+      conversationTasks.ownerId = context.ownerId
+      conversationTasks.identity = context.identity
+    }
+    const key = JSON.stringify(context)
+    if (conversationTasks.inFlight?.key === key) return conversationTasks.inFlight.promise
+    const roots = state.tasks.filter((row) => row?.kind === 'session.message' && !row.rootTaskId &&
+      row.sessionId === context.sessionId && sessionIdPattern.test(row.commandId || '') &&
+      (!row.conversationId || row.conversationId === context.conversationId)).slice(0, 8)
+    const run = async () => {
+      await refreshConversationApprovals({ ...context, deviceId: state.device?.id })
+      await refreshConversationQuestions({ ...context, deviceId: state.device?.id })
+      if (!conversationTaskCurrent(context)) return
+      const receipts = new Set([...byId('transcript').children].map((row) => row.dataset?.receiptId).filter(Boolean))
+      for (const entry of conversationApprovals.entries.values()) if (entry.row.sessionId === context.sessionId &&
+          receipts.has(entry.row.sourceReceiptId) && !roots.some((row) => row.commandId === entry.row.taskId)) {
+        roots.push({ commandId: entry.row.taskId, sessionId: context.sessionId,
+          ...(context.conversationId ? { conversationId: context.conversationId } : {}) })
+      }
+      for (const entry of conversationQuestions.entries.values()) if (entry.row.sessionId === context.sessionId &&
+          receipts.has(entry.row.sourceReceiptId) && !roots.some((row) => row.commandId === entry.row.taskId)) {
+        roots.push({ commandId: entry.row.taskId, sessionId: context.sessionId,
+          ...(context.conversationId ? { conversationId: context.conversationId } : {}) })
+      }
+      let next = 0
+      const worker = async () => {
+        while (conversationTaskCurrent(context) && next < roots.length) {
+          const command = roots[next++], taskId = command.commandId
+          const previous = conversationTasks.entries.get(taskId)
+          const entry = { ...previous, taskId, sessionId: context.sessionId, conversationId: command.conversationId,
+            receiptId: command.receiptId, notice: '' }
+          try {
+            const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}`)
+            if (!conversationTaskCurrent(context)) return
+            if (payload?.taskId !== taskId || payload.sessionId !== context.sessionId ||
+                payload.source?.commandId !== taskId || payload.source.kind !== 'session.message' || payload.source.rootTaskId ||
+                payload.source.sessionId !== context.sessionId || !Array.isArray(payload.artifacts) ||
+                command.receiptId && payload.source.receiptId !== command.receiptId ||
+                payload.conversationId && payload.conversationId !== context.conversationId) throw { code: 'REQUEST_FAILED' }
+            entry.payload = payload
+          } catch (error) {
+            if (!conversationTaskCurrent(context) || error.code === 'UNAUTHORIZED') return
+            entry.notice = error.code === 'NETWORK' ? '连接中断，执行进展待更新。重连后可重新核对。'
+              : '执行进展暂时无法读取，已有记录待更新。请重新核对。'
+          }
+          conversationTasks.entries.set(taskId, entry)
+          renderConversationTasks()
+        }
+      }
+      await Promise.all([worker(), worker()])
+    }
+    const promise = run()
+    conversationTasks.inFlight = { key, promise }
+    try { await promise } finally { if (conversationTasks.inFlight?.promise === promise) conversationTasks.inFlight = null }
   }
   function taskControlStatus(control) {
     if (control?.state === 'stop_requested' && typeof control.stopStatus === 'string') {
@@ -3008,6 +3744,12 @@
       const payload = await accessApi(`/tasks/${encodeURIComponent(taskId)}`)
       if (!taskDetailCurrent(generation, taskId)) return
       if (payload.taskId !== taskId || !Array.isArray(payload.artifacts)) throw { code: 'REQUEST_FAILED' }
+      const inline = conversationTasks.entries.get(taskId)
+      if (inline && inline.sessionId === payload.sessionId && payload.source?.commandId === taskId &&
+          (!inline.receiptId || payload.source.receiptId === inline.receiptId)) {
+        conversationTasks.entries.set(taskId, { ...inline, payload, notice: '' })
+        renderConversationTasks()
+      }
       const artifacts = payload.artifacts.filter((row) => row?.taskId === taskId &&
         sessionIdPattern.test(row.artifactId || ''))
       byId('task-detail-title').textContent = artifacts.length === 1 ? artifacts[0].fileName || '事情详情' : '事情详情'
@@ -3698,9 +4440,10 @@
     const previewScope = { ownerId: state.ownerId, identityGeneration: state.identityGeneration,
       source: 'phone', conversationId: state.selectedPhoneConversationId }
     const view = state.phoneBindings.get(record.id)
-    const appendPhoneMessage = (event) => {
+      const appendPhoneMessage = (event, receiptId = null) => {
       if (event.kind !== 'message.created' || !['user', 'assistant'].includes(event.payload?.role)) return
       const row = element('li', `message ${event.payload.role}`)
+      if (event.payload.role === 'user' && receiptIdPattern.test(receiptId || '')) row.dataset.receiptId = receiptId
       row.append(element('span', 'message-label', event.payload.role === 'user'
         ? event.sourceDeviceId === state.device?.id ? '你 · 电脑同步' : '你 · 手机 MiMo'
         : 'WeftMate · 手机 MiMo'))
@@ -3761,13 +4504,14 @@
         if (event.type === 'user.message') {
           const exactId = adopted.get(event.data?.receiptId)
           const original = exactId && record.events.find((item) => item.eventId === exactId)
-          if (original) { appendPhoneMessage(original); shownSync.add(exactId); continue }
+          if (original) { appendPhoneMessage(original, event.data?.receiptId); shownSync.add(exactId); continue }
         }
         if (!['user.message', 'assistant.message'].includes(event.type)) continue
         const text = typeof event.data?.text === 'string' ? event.data.text : ''
         const images = Array.isArray(event.data?.images) ? event.data.images : []
         if (!text && !images.length) continue
         const row = element('li', `message ${event.type === 'user.message' ? 'user' : 'assistant'}`)
+        if (event.type === 'user.message' && receiptIdPattern.test(event.data?.receiptId || '')) row.dataset.receiptId = event.data.receiptId
         row.append(element('span', 'message-label', event.type === 'user.message'
           ? '你 · 电脑续聊' : 'WeftMate · 电脑模型'))
         if (text) row.append(element('span', 'message-text', text))
@@ -3788,6 +4532,8 @@
       for (const event of late) appendPhoneMessage(event)
     }
     phoneHandoffControls(list, record, view)
+    renderConversationTasks()
+    void refreshConversationTasks()
     byId('timeline-status').textContent = state.phoneHasMore ? '仍有手机同步记录未读完，连接后会继续读取。' : ''
     updateAvailability()
   }
@@ -3800,6 +4546,8 @@
     else if (state.selectedPhoneConversationId && !readPhoneOutbox())
       state.phoneDrafts.set(state.selectedPhoneConversationId, byId('message-text').value)
     state.activeChatSource = 'phone'
+    state.turnStatus = null
+    state.turnEndReasonKind = null
     state.selectedPhoneConversationId = conversationId
     state.phoneSendNotice = ''
     const pending = readPhoneOutbox()
@@ -3935,8 +4683,14 @@
       await refreshTasks()
       await refreshHistory()
       if (state.syncAvailable) await refreshPhoneRecords()
+      await refreshConversationTasks()
       await restoreRequests()
-    } catch (error) { if (error.code !== 'UNAUTHORIZED' && error.code !== 'NETWORK') toast('部分状态暂时无法读取，稍后会重试。') }
+    } catch (error) {
+      if (error.code === 'NETWORK') {
+        for (const entry of conversationTasks.entries.values()) entry.notice = '连接中断，执行进展待更新。重连后可重新核对。'
+        renderConversationTasks()
+      } else if (error.code !== 'UNAUTHORIZED') toast('部分状态暂时无法读取，稍后会重试。')
+    }
     finally { state.refreshing = false }
   }
   async function enterAssistant() {
