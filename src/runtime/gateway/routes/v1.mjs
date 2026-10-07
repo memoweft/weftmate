@@ -143,7 +143,7 @@ export function createGatewayV1({ client, readLog, diagnostics: diagnosticsDeps 
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
     const requestUrl = new URL(req.url ?? '/', 'http://gateway')
     const pathname = decodeURIComponent(requestUrl.pathname)
-    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history))?$/.exec(pathname)
+    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history|source))?$/.exec(pathname)
     const attachmentMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/attachments\/(sha256:[a-f0-9]{64})$/.exec(pathname)
     const questionMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/questions(?:\/([0-9a-f-]{36}))?$/i.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
@@ -223,6 +223,13 @@ export function createGatewayV1({ client, readLog, diagnostics: diagnosticsDeps 
       }
       if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
       const [, sessionId, action] = match
+      if (action === 'source' && req.method === 'GET') {
+        const turn = requestUrl.searchParams.get('turn'), receiptId = requestUrl.searchParams.get('receiptId')
+        if (turn !== null && (!/^\d+$/.test(turn) || !Number.isSafeInteger(Number(turn)) || Number(turn) < 1) ||
+            !/^[A-Za-z0-9._:-]{1,160}$/.test(receiptId ?? '')) throw new TypeError('invalid source identity')
+        return writeJson(res, 200, await sessions.sourceEvents(sessionId,
+          { receiptId, ...(turn === null ? {} : { turn: Number(turn) }) }))
+      }
       if (action === 'history' && req.method === 'GET') {
         const afterRaw = requestUrl.searchParams.get('afterSeq')
         const beforeRaw = requestUrl.searchParams.get('beforeSeq')

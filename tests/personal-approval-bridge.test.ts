@@ -28,7 +28,8 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   const root = mkdtempSync(join(tmpdir(), 'personal-native-approval-'))
   const staged = join(root, 'desktop.mjs')
   writeFileSync(staged, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
-    .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`))
+    .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor('dsh-tools')}'`)
+    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`))
   const [plugin, { Context, Service }, { default: SystemPrompt }, { default: Sessions }, tools,
     { default: ApprovalService }, { createScope }] = await Promise.all([
     import(pathToFileURL(staged).href), import(vendor('cordis')), import(vendor('dsh-system-prompt')),

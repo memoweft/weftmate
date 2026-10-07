@@ -8,6 +8,7 @@
 
 import { createHash } from 'node:crypto'
 import { describeTool, toolArguments } from './timeline.mjs'
+import { sourceRange } from './source-range.mjs'
 
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
@@ -352,6 +353,28 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
     logs.set(sessionId, ordered); return ordered
   }
 
+  // Source checks do not need the compatibility reader's materialized log.
+  // The legacy RPC has only beforeSeq; stop once the binding's boundary is in
+  // hand, including a cold question reconnect at its original watermark.
+  async function sourceLogFor(sessionId, options) {
+    if (readLog) return readLog(sessionId)
+    let beforeSeq = options.observedSeq === undefined ? undefined : options.observedSeq + 1
+    const suffix = []
+    while (true) {
+      const page = await unwrap(await client.sessions.history({ sessionId, maxMessages: 200,
+        ...(beforeSeq === undefined ? {} : { beforeSeq }) }), 'history')
+      if (!Array.isArray(page?.events) || typeof page.hasMore !== 'boolean') throw new DshAdapterError('internal', 'source')
+      const rows = page.events.filter(entry => beforeSeq === undefined || (entry.event ?? entry).seq < beforeSeq)
+        .sort((a, b) => (a.event ?? a).seq - (b.event ?? b).seq)
+      if (!rows.length && page.hasMore) throw new DshAdapterError('internal', 'source')
+      suffix.unshift(...rows)
+      const range = sourceRange(suffix, options)
+      if (range && (options.turn !== undefined || !options.receiptId || range.events.some(entry =>
+          (entry.event ?? entry).data?.source?.rpcId === options.receiptId)) || !page.hasMore) return suffix
+      beforeSeq = (rows[0]?.event ?? rows[0])?.seq
+    }
+  }
+
 
   function assertOwned(sessionId, operation) {
     if (!owned.has(sessionId)) throw new DshAdapterError('session-not-found', operation)
@@ -453,13 +476,17 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
       if (typeof sessionId !== 'string' || !sessionId || !Number.isSafeInteger(observedSeq) || observedSeq < 0) {
         throw new TypeError('invalid question source watermark')
       }
-      const log = await logFor(sessionId), end = lowerBound(log, observedSeq + 1)
-      let start = end
-      while (start > 0) {
-        start--
-        if ((log[start]?.event ?? log[start]).type === 'turn/start') break
-      }
-      return log.slice(start, end)
+      return sourceRange(await sourceLogFor(sessionId, { observedSeq }), { observedSeq })?.events ?? []
+    },
+
+    /** Internal binding evidence, excluding all tool/step/output payloads. */
+    async sourceEvents(sessionId, { turn, receiptId } = {}) {
+      const listed = await unwrap(await client.sessions.list({}), 'list')
+      requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
+      const range = sourceRange(await sourceLogFor(sessionId, { turn, receiptId }), { turn, receiptId })
+      return { current: range?.current === true, events: (range?.events ?? [])
+        .filter(entry => ['turn/start', 'user/message', 'turn/end'].includes((entry.event ?? entry).type))
+        .map(entry => projectHistoryEvent(entry)).filter(Boolean) }
     },
 
     async send(sessionId, content, mode = 'queue') {

@@ -1056,12 +1056,8 @@ export function createHttpHandler(context) {
         if (afterSeq !== undefined && (!Number.isSafeInteger(afterSeq) || afterSeq < -1) ||
             beforeSeq !== undefined && (!Number.isSafeInteger(beforeSeq) || beforeSeq < 0) ||
             !Number.isSafeInteger(limit) || limit < 1 || limit > MAX_PAGE) throw failure('INVALID_REQUEST');
-        let page;
-        try { page = await context.callBackend(() => context.backend.readEvents({ sessionId, ...(afterSeq === undefined ? {} : { afterSeq }), ...(beforeSeq === undefined ? {} : { beforeSeq }), limit, ownerId })); }
-        catch (error) {
-          if (error?.code === 'HISTORY_WINDOW_LIMIT') throw failure('HISTORY_WINDOW_LIMIT', 422);
-          throw error;
-        }
+        const page = await context.callBackend(() => context.backend.readEvents({ sessionId,
+          ...(afterSeq === undefined ? {} : { afterSeq }), ...(beforeSeq === undefined ? {} : { beforeSeq }), limit, ownerId }));
         if (!plainObject(page) || !Array.isArray(page.events) || page.events.length > limit ||
             typeof page.hasMore !== 'boolean' || !Number.isSafeInteger(page.nextSeq)) {
           throw failure('BACKEND_UNAVAILABLE', 503);

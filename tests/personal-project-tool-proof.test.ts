@@ -6,6 +6,7 @@ import { pathToFileURL } from 'node:url'
 import { EventEmitter } from 'node:events'
 import test from 'node:test'
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts'
+import { sourceRange } from '../src/runtime/dsh-adapter/source-range.mjs'
 
 const vendorTools = pathToFileURL(join(process.cwd(), 'vendor', 'dsh-runtime', 'node_modules',
   '@deepseek-ai', 'dsh-tools', 'lib', 'index.js')).href
@@ -13,6 +14,7 @@ async function loadPlugin() {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-project-proof-'))
   const source = readFileSync(join(process.cwd(), 'src', 'plugins', 'weftmate-personal-desktop.mjs'), 'utf8')
     .replace("from '@deepseek-ai/dsh-tools'", `from '${vendorTools}'`)
+    .replace("from '../runtime/dsh-adapter/source-range.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/runtime/dsh-adapter/source-range.mjs")).href}'`)
   const file = join(root, 'weftmate-personal-desktop.mjs')
   writeFileSync(file, source)
   try { return await import(pathToFileURL(file).href) }
@@ -34,6 +36,30 @@ function storedEvents() {
   ]
 }
 const encoded = (events: any[]) => `${events.map((event) => JSON.stringify(event)).join('\n')}\n`
+
+test('artifact provenance in a 23000+ event history reads only its bound native turn', async () => {
+  const plugin = await loadPlugin(), events: any[] = []
+  const push = (type: string, data: object) => events.push({ seq: events.length, type, data })
+  for (let turn = 1; turn <= 1000; turn++) {
+    push('turn/start', { turn })
+    push('user/message', { source: { kind: 'user', rpcId: `old-${turn}` } })
+    for (let step = 1; step <= 10; step++) { push('step/start', { turn, step }); push('step/end', { turn, step }) }
+    push('turn/end', { turn, reason: { kind: 'completed' } })
+  }
+  const start = events.length
+  for (const event of storedEvents().slice(1)) events.push({ ...event, seq: events.length,
+    data: { ...event.data, ...(event.data.turn === undefined ? {} : { turn: 1001 }) } })
+  const visited: number[] = []
+  const log = new Proxy(events, { get(target, key, receiver) {
+    if (typeof key === 'string' && /^\d+$/.test(key)) visited.push(Number(key))
+    return Reflect.get(target, key, receiver)
+  } })
+  const range = sourceRange(log, { turn: 1001 })!
+  assert.equal(range.start, start); assert.equal(range.events.length, 5)
+  assert.ok(visited.length < 80, `${visited.length} lookups, no old turn replay`)
+  assert.equal(plugin.verifyStoredProjectRead(range.events, { ...proof, turn: 1001 }), true)
+  assert.equal(plugin.verifyStoredProjectRead(range.events, { ...proof, turn: 1001, sourceReceiptId: 'old-1' }), false)
+})
 
 test('physical DSH read result proves only its exact source receipt, snapshot and earlier call', async () => {
   const plugin = await loadPlugin()

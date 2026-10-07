@@ -224,7 +224,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const approvals = createApprovalOperations(context);
   const {
     requireToolRuntime, personalExecutionSource, approvalMatches, approvalUnavailableReason,
-    liveApprovalTurn, liveToolApprovalSource, refreshToolApprovals, answerToolApproval,
+    liveToolApprovalSource, refreshToolApprovals, answerToolApproval,
   } = approvals;
   const tasks = createTaskOperations(context);
   const {
