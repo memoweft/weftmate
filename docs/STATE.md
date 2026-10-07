@@ -9,8 +9,8 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows | M0-3 历史分页 + M1-0a 时间线 | [PR（合并请求）#26](https://github.com/memoweft/weftmate/pull/26) 审查修改完成，待复审；已合入 main `061b0fe`（H2 / S0 / D23–D25），来源校验按回合；桌面/手机时间线、任务页删除、Android code14 / UI 0.8.1 已实现 |
-| Codex · Mac | MW-2 observed 桥接 | 实现完成待 Claude 审查：[MemoWeft #84](https://github.com/memoweft/memoweft/pull/84)（CI Gate 已绿）→ [WeftMate #28](https://github.com/memoweft/weftmate/pull/28)；真实 Core 集成通过；按此顺序合入，部署需升级 observed v1 Core |
-| Codex · Cloud | S0 轻云架构与骨架 | [PR #27](https://github.com/memoweft/weftmate/pull/27) 已合入；Node 24 零依赖骨架、Linux CI（持续集成）独立步骤；D23–D25 / 443 中继要求见 CLOUD.md。未部署，S1 未开始 |
+| Codex · Mac | MW-2 observed 桥接 | MemoWeft #84 已合并，WeftMate #28 合入中：[MemoWeft #84](https://github.com/memoweft/memoweft/pull/84)（CI Gate 已绿）→ [WeftMate #28](https://github.com/memoweft/weftmate/pull/28)；真实 Core 集成通过；按此顺序合入，部署需升级 observed v1 Core |
+| Codex · Cloud | S1a 云账号、邮箱验证与令牌 | [PR #29](https://github.com/memoweft/weftmate/pull/29)：账号/邮件验证/找回/新设备确认、OIDC Code+PKCE、SQLite adapter、JWKS/刷新轮换已实现；隔离测试 30/30、依赖审计 0 漏洞；[Linux cloud CI](https://github.com/memoweft/weftmate/actions/runs/37617343451/job/112778774483) 通过；未部署/真实发信，客户端与宿主接入留 S1b |
 
 已完成：文档/规则重置、M0-1b 清理与模块拆分、M0-2 服务容量与动态预算（PR #24）、H1 iPhone 健康设置/摘要/隔离队列（PR #22）、CI 依赖审计与省钱分组。
 
@@ -26,7 +26,7 @@
 ## 契约变更
 
 - MW-2：CLIENT_API 第 6 节新增 memory.state=delivered；queued/empty 区分待交付与撤回清理。DELETE 200 可带 queued，需重试/等待 Core 清理回执；宿主内容已移除，待办只含来源哈希与水位。personal-memory 使用 observed upsert/权限/撤回 RPC；World 与 interactions 召回传实际 model_tier，由 Core 按来源过滤，其他记忆保留。
-
+- S1a：CLIENT_API 第 7 节新增 `/personal/v1/cloud/auth/*`、`/cloud/account`、`/cloud/oidc/*`；邮箱验证/找回/换邮箱 epoch 撤销、新设备邮件确认、PKCE S256/云 audience。宿主接口不变，客户端与宿主验签/DPoP/认领/会话交换在后续包。
 - M0-3 / M1-0a：CLIENT_API 3.4 / 4 正式；尾页、beforeSeq 上翻、afterSeq 正向、seq 详情与原生时间线，taskId 为回合键。删除无生产方的 HISTORY_WINDOW_LIMIT 及网关映射；Apple historyLimit 枚举未改，A1 / M1-0d 待接入，排队/插话另包。
 - H2：CLIENT_API 第 6 节正式，摘要上传/读取/删除及迟到水位；200 确认摘要和 observed 待办落盘；MW-2 交付后写入 World。3.10 可选 modelTier（auto/local/cloud）；桌面表单保留覆盖，非健康召回照常。A2 现有消息/接管/附件对齐记录继续有效。
 
