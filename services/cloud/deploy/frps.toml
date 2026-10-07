@@ -1,12 +1,12 @@
 # Official frps 0.71.0, installed using scripts/download-frp.mjs.
-# All listeners private; HAProxy -> cloud ingress -> frps is mandatory.
+# All listeners private; nginx stream -> cloud ingress -> frps is mandatory.
 bindAddr = "127.0.0.1"
 bindPort = 7000
 proxyBindAddr = "127.0.0.1"
 vhostHTTPSPort = 7443
 transport.tls.force = true
-transport.tls.certFile = "/etc/weftmate/relay/fullchain.pem"
-transport.tls.keyFile = "/etc/weftmate/relay/key.pem"
+transport.tls.certFile = "/run/credentials/weftmate-frps.service/relay-cert.pem"
+transport.tls.keyFile = "/run/credentials/weftmate-frps.service/relay-key.pem"
 transport.tcpMux = true
 transport.heartbeatTimeout = 15
 # No shared user token. HTTP plugin validates per-host credentials.
