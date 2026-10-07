@@ -72,5 +72,6 @@ test('opaque ingress binds only reported loopback sockets and closes one host wh
     assert.equal(ingress.associate('203.0.113.1:1', 'host-a'), false);
     const closed = once(a, 'close'); assert.equal(ingress.disconnect('host-a'), 1); await closed;
     b.write('still-private'); assert.equal((await once(b, 'data'))[0].toString(), 'still-private');
+    assert.equal(ingress.disconnect('host-a'), 0, 'closed sockets must leave no retained ingress entries');
   } finally { a.destroy(); b.destroy(); await ingress.close(); await new Promise(resolve => echo.close(resolve)); }
 });
