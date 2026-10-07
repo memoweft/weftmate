@@ -56,13 +56,17 @@
         copy.type = 'button'; copy.hidden = true
         if (detail.dataset.loaded === 'true') copy.hidden = false
         copy.addEventListener('click', async () => { try { if (options.copyText) await options.copyText(output.textContent); else await navigator.clipboard.writeText(output.textContent); copy.textContent = '已复制' } catch { copy.textContent = '复制未完成' } })
-        detail.append(label, output, copy)
+        const resources = node('button', 'timeline-action step-resources', '查看使用的来源'); resources.type = 'button'
+        resources.addEventListener('click', () => options.openStep?.(step, resources))
+        detail.append(label, resources, output, copy)
+        if (detail.dataset.loaded === 'true') appendReferences(output.textContent, detail, options)
         detail.addEventListener('toggle', async () => {
           if (!detail.open || detail.dataset.loaded || !step.detailRef) return
           detail.dataset.loaded = 'loading'; output.textContent = '正在读取…'
           try { const data = await options.readDetail(step.detailRef.seq)
             if (!detail.isConnected) return
             output.textContent = `${data.text || ''}${data.truncated ? '\n[内容已截断]' : ''}`; copy.hidden = false; detail.dataset.loaded = 'true'
+            appendReferences(data.text, detail, options)
           } catch { output.textContent = '暂时无法读取，收起后可重试。'; delete detail.dataset.loaded }
         })
         details.append(detail)
@@ -88,15 +92,28 @@
           : family === 'question' ? resolved ? '已回答' : '需要补充信息' : family === 'artifact' ? data.fileName || '成果文件' : '排队中'))
         if (family === 'artifact') {
           row.append(node('p', '', options.fileLabel ? options.fileLabel(data) : `${data.contentType || '文件'} · ${data.size || 0} 字节`))
-          const open = node('button', 'timeline-action', '打开成果'); open.type = 'button'
+          const open = node('button', 'artifact-action', '打开成果'); open.type = 'button'
           open.addEventListener('click', () => options.openArtifact?.(data, open)); row.append(open)
-          if (options.downloadArtifact) { const download = node('button', 'timeline-action', '下载'); download.type = 'button'
+          if (options.downloadArtifact) { const download = node('button', 'artifact-action', '下载'); download.type = 'button'
             download.addEventListener('click', () => options.downloadArtifact(data)); row.append(download) }
           options.appendArtifactActions?.(row, data)
         } else row.append(node('p', '', ({ 'allowed-once': '已允许本次', rejected: '已拒绝', cancelled: '已取消', unavailable: '已失效' })[resolved?.data?.outcome] || (family === 'question' ? data.questions?.map(q => q.question).join('\n') : '') || data.summary || ''))
       })
     }
     for (const [key, row] of existing) if (!seen.has(key)) row.remove()
+  }
+  function appendReferences(text, parent, options) {
+    if (!options.openReference) return
+    let args
+    try { args = JSON.parse(text).arguments; if (typeof args === 'string') args = JSON.parse(args) } catch { return }
+    if (!args) return
+    const strings = value => (Array.isArray(value) ? value : [value]).filter(value => typeof value === 'string' && value)
+    for (const [kind, values] of [['file', [...strings(args.file_path), ...strings(args.filePath), ...strings(args.path), ...strings(args.paths)]], ['webpage', [...strings(args.url), ...strings(args.urls)]]]) {
+      for (const value of new Set(values)) {
+        const link = node('button', 'timeline-action step-reference', value); link.type = 'button'
+        link.addEventListener('click', () => options.openReference(`${kind}:${value}`, link)); parent.append(link)
+      }
+    }
   }
   window.WeftTimeline = { render }
 })()

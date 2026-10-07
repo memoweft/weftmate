@@ -48,7 +48,7 @@ app.whenReady().then(async () => {
     await desktop.webContents.executeJavaScript("document.getElementById('chat-scroll').scrollTop=document.getElementById('chat-scroll').scrollHeight")
     await mobile.webContents.executeJavaScript("state.scrollPinned=true;scrollBottom(true)")
     await capture(desktop,'desktop-completed');await capture(mobile,'mobile-completed')
-    await desktop.webContents.executeJavaScript("[...document.querySelectorAll('.timeline-action')].find(b=>b.textContent==='打开成果').click()")
+    await desktop.webContents.executeJavaScript("[...document.querySelectorAll('.artifact-action')].find(b=>b.textContent==='打开成果').click()")
     await mobile.webContents.executeJavaScript("[...document.querySelectorAll('.timeline-action')].find(b=>b.textContent==='打开成果').click()")
     await wait(desktop,"document.querySelector('.timeline-preview')?.textContent.includes('42 项测试通过')")
     await wait(mobile,"document.querySelector('.timeline-preview')?.textContent.includes('42 项测试通过')")

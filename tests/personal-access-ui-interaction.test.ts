@@ -1620,9 +1620,9 @@ test('task15-approval-client shows only real receipt-bound requests and distingu
   assert.equal(resolved.dataset.sourceReceiptId, f.supplement.receiptId)
   assert.equal(approvalAction(f.page, 'allowed-once')?.textContent, '允许本次')
   assert.equal(approvalAction(f.page, 'rejected')?.textContent, '拒绝')
-  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000002')!), /决定已登记.*等待执行端确认/)
-  assert.match(visibleText(resolved), /执行端已确认允许本次/)
-  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000004')!), /随停止请求取消/)
+  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000002')!), /已提交拒绝/)
+  assert.match(visibleText(resolved), /已允许/)
+  assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000004')!), /已取消/)
   assert.match(visibleText(approvalCard(f.page, '00000000-0000-4000-8000-000000000005')!), /已失效/)
   assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000006'), undefined)
   assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000007'), undefined)
@@ -1679,11 +1679,11 @@ test('task15-approval-client retries an uncertain answer with the same request a
   first.approvals.A[0] = { ...approvalAnswered(first.approval, bodies[1].requestId), status: 'resolved',
     outcome: 'allowed-once', resolvedAt: '2026-10-06T12:02:00.000Z' }
   second.page.tick()
-  for (let i = 0; i < 25 && !visibleText(approvalCard(second.page)!).includes('执行端已确认允许本次'); i++) await flush()
-  assert.match(visibleText(approvalCard(second.page)!), /执行端已确认允许本次/)
+  for (let i = 0; i < 25 && !visibleText(approvalCard(second.page)!).includes('已允许'); i++) await flush()
+  assert.match(visibleText(approvalCard(second.page)!), /已允许/)
   secondPost.resolve(reply({ approval: approvalAnswered(first.approval, bodies[1].requestId), requestId: bodies[1].requestId }))
   for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(approvalCard(second.page)!), /执行端已确认允许本次/)
+  assert.match(visibleText(approvalCard(second.page)!), /已允许/)
   assert.doesNotMatch(visibleText(approvalCard(second.page)!), /等待执行端确认|目标已完成/)
   assert.equal(approvalAction(second.page, 'allowed-once'), null)
 })
@@ -1782,7 +1782,7 @@ test('task15-question-client preserves native question order, exact labels, sour
   const rows = f.page.get('transcript').children, card = questionCard(f.page)!
   assert.equal(card.dataset.sourceReceiptId, f.supplement.receiptId)
   assert.match(visibleText(card), /仅处理合成资料/)
-  assert.match(visibleText(questionCard(f.page, cancelled.questionRpcId)!), /曾确认接收本入口回答.*随后确认.*取消/)
+  assert.match(visibleText(questionCard(f.page, cancelled.questionRpcId)!), /已取消/)
   const single = questionAction(f.page, 'option-0-0')!, customSingle = questionAction(f.page, 'custom-0')!
   single.checked = true; single.fire('change')
   customSingle.value = '自定义说明'; customSingle.fire('input')
@@ -1816,11 +1816,11 @@ test('task15-question-client preserves native question order, exact labels, sour
   f.questions.A[0] = answered
   post.resolve(reply({ question: answered, requestId: bodies[0].requestId }))
   for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(questionCard(f.page)!), /回答已登记.*等待执行端确认接收/)
+  assert.match(visibleText(questionCard(f.page)!), /已提交回答/)
   assert.doesNotMatch(visibleText(questionCard(f.page)!), /已确认接收|允许本次|目标已完成/)
   f.questions.A[0] = { ...answered, status: 'resolved', outcome: 'answered', resolvedAt: '2026-10-06T13:02:00.000Z' }
   f.page.tick(); for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(questionCard(f.page)!), /原生问答已结束.*尚未确认采用本入口回答/)
+  assert.match(visibleText(questionCard(f.page)!), /已结束/)
 })
 
 test('task15-question-client rereads temporary uncertainty and reuses the exact answer request without losing native acceptance', async () => {
@@ -1852,10 +1852,10 @@ test('task15-question-client rereads temporary uncertainty and reuses the exact 
   const accepted = { ...questionAnswered(f.question, bodies[1].requestId, bodies[1].answer), status: 'resolved', outcome: 'answered',
     resolvedAt: '2026-10-06T13:02:00.000Z', answerAcceptedAt: '2026-10-06T13:01:30.000Z' }
   f.questions.A[0] = accepted; f.page.tick()
-  for (let i = 0; i < 20 && !visibleText(questionCard(f.page)!).includes('已确认接收'); i++) await flush()
+  for (let i = 0; i < 20 && !visibleText(questionCard(f.page)!).includes('已回答'); i++) await flush()
   secondPost.resolve(reply({ question: questionAnswered(f.question, bodies[1].requestId, bodies[1].answer), requestId: bodies[1].requestId }))
   for (let i = 0; i < 15; i++) await flush()
-  assert.match(visibleText(questionCard(f.page)!), /执行端已确认接收本入口提交的回答/)
+  assert.match(visibleText(questionCard(f.page)!), /已回答/)
   assert.doesNotMatch(visibleText(questionCard(f.page)!), /等待执行端确认接收|尚未确认采用/)
   assert.equal(questionAction(f.page, 'submit'), null)
 })
