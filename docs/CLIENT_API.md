@@ -385,3 +385,72 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 五端共同待实现 | 「总是允许此类」、步骤原始详情读取、对话内完整十种事件、排队取消、消息chunk流均没有已确认的公共契约；UI_SPEC运行中插话/排队默认行为仍待产品决定 | Windows M1-0a/b、Mac审阅与M1-0d |
 
 本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a落地时须更新此文档与STATE契约栏。
+
+## 6. 草案：健康摘要
+
+> **草案，待 Windows 实现。** H1 只实现 Apple 客户端，本节不表示服务端已接通。遵循 `COMPANION.md` 第 4、5、11 节；原始 HealthKit 样本只在设备内计算，不持久化或上传原始样本流。服务端后续将摘要作为带设备、时间来源的 `observed` 证据接入 MemoWeft；模型使用必须遵守用户的云端选择。
+
+### 6.1 上传与幂等
+
+建议 `POST /personal/v1/health/daily-summaries`，Cookie 账号认证、同源 Origin、CSRF（继承第 1 节）。每次一个日摘要，JSON ≤12 KiB；日期是 `timeZone` 中的 `YYYY-MM-DD`，时间戳为 UTC ISO 8601。账号从凭据确定，不从体中的字段选择。
+
+按 **账号 + sourceDeviceId + date** 幂等 upsert：同日重试不新增证据；新的摘要替换该日原版本，删除省略的指标，更新云端使用策略及自评频率。不同采集设备保留来源，服务端不能将两部手机的同一天步数相加。`sourceDeviceId` 是汇总设备的账号设备 ID（离线队列可能使用当前账号之前签发的设备 ID）；服务端验证来源归属账号。`summarizedAt` 较旧的迟到提交不得覆盖新版本；返回当前已持久化版本或明确冲突。Apple 单设备上传顺序串行，收到 200 / 201 / 204 才移出本地队列；202 尚未确认持久化，保留重试。
+
+```json
+{
+  "schemaVersion": 1,
+  "date": "2026-10-06",
+  "timeZone": "America/Los_Angeles",
+  "sourceDeviceId": "device-phone",
+  "sourceDevices": ["Apple Watch · Watch7,12", "iPhone"],
+  "summarizedAt": "2026-10-07T01:00:00Z",
+  "cloudModelAllowed": false,
+  "selfAssessmentFrequency": "low",
+  "readStates": {
+    "sleep": "dataAvailable", "steps": "dataAvailable", "activeEnergy": "dataAvailable",
+    "heartRate": "dataAvailable", "restingHeartRate": "dataAvailable", "hrv": "dataAvailable",
+    "respiratoryRate": "noDataOrReadDenied", "workouts": "dataAvailable"
+  },
+  "metrics": {
+    "sleep": {"value": 460, "unit": "min", "baselineMean": 480, "baselineDays": 12, "deviationPercent": -4.1667},
+    "steps": {"value": 6432, "unit": "count", "baselineMean": 7000, "baselineDays": 14, "deviationPercent": -8.1143},
+    "activeEnergy": {"value": 380, "unit": "kcal", "baselineDays": 0},
+    "heartRate": {"value": 72, "unit": "bpm", "baselineDays": 0},
+    "restingHeartRate": {"value": 58, "unit": "bpm", "baselineDays": 0},
+    "hrv": {"value": 40, "unit": "ms", "baselineMean": 50, "baselineDays": 10, "deviationPercent": -20}
+  },
+  "sleep": {"totalMinutes": 460, "fellAsleepAt": "2026-10-06T05:00:00Z", "wokeAt": "2026-10-06T13:00:00Z"},
+  "workoutCount": 1,
+  "workoutMinutes": 30
+}
+```
+
+`metrics` 仅包含有数据且用户启用的项目；缺数据不写 0。心率、静息心率、HRV、呼吸频率为当日样本算术均值；步数/活动能量用 HealthKit 原生累计统计处理手机与 Watch 重叠来源。睡眠仅算 asleep 阶段（不含 inBed/awake），重叠区间取并集；间隔不超过 2 小时的睡眠段作为一次睡眠，以最后起床的本地日期归属，间隔不计时长；同日起床的夜间睡眠和小睡合计。`fellAsleepAt/wokeAt` 是当日睡眠最早入睡与最后起床，不表示中间连续睡着。锻炼按开始日期计次，时长使用 HealthKit workout 的活动 duration（排除暂停），来源为 HealthKit 中已有锻炼；本包不启动实时锻炼或原始传感器采集。
+
+基线为当前日期**之前 14 个本地日历日**内有数据日期的均值，排除当日及缺数据日，`baselineDays` 表示实际天数（首次回填的较早日期可能不足 14 天）。偏离为 `(value / baselineMean - 1) * 100`；无基线或均值为 0 时省略 `baselineMean/deviationPercent` 中无法计算的字段。没有医疗诊断或分数。`sourceDevices` 是去重的 HealthKit 来源应用/设备描述，统计来源未提供硬件名时使用来源应用名；不是原始样本 ID、设备序列号或样本时间线。
+
+`cloudModelAllowed` 必传，默认 false；首次请求健康授权前询问，设置可随时改。true 只允许云端使用摘要，不扩大原始数据权限；false 要从云端召回、提示词与后续云端模型请求中排除这些摘要，仍可供本地模型使用。已上传的摘要在使用选择改变时重新上传替换；服务端应把最新明确选择用于账号已有健康证据，并确保旧索引/衍生记忆不绕过该选择。用户离线改为 false 后，本地即采用新选择，服务器只能在联网提交成功后生效。`selfAssessmentFrequency` 为 `off / low / moderate`，默认 low；本包只保存频率，不上传自评答案、不实现询问界面。
+
+`readStates` 为 `disabled / notRequested / dataAvailable / noDataOrReadDenied / unavailable / failed`。Apple 不公开读取授权是否被拒绝/撤销，空结果不能据此断言拒绝；`dataAvailable` 只代表此次读到数据。应用内逐类关闭会停止该类查询、移除本地与排队摘要的指标并重新上传替换。系统撤权后再次读取为空，会更新近期摘要，既有摘要不会因此自动等同用户要求全部删除；删除需明确操作。查询失败保留此前已读取数值并标注 failed。
+
+### 6.2 撤权与删除
+
+| 建议方法与路径 | 请求 / 返回 | 客户端行为 |
+|---|---|---|
+| DELETE `/personal/v1/health/daily-summaries/{date}` | `{}`；删除账号该日期的所有来源摘要及其健康证据/索引；200 `{"deleted":true,"date":"2026-10-06"}` 或 204 | 幂等，无记录也成功；Core 有按日期调用方法，H1 设置页只提供全部删除 |
+| DELETE `/personal/v1/health/daily-summaries` | `{}`；删除账号全部健康摘要及衍生健康证据/索引；200 `{"deleted":true,"scope":"all"}` 或 204 | 设置中明确点击后删除本地摘要、清空上传队列并关闭所有读取类别；先持久化删除待办，成功前保留重试；用户重新开启读取时先完成删除，再上传新摘要 |
+
+撤销系统读取权限在 Apple “健康”应用完成；WeftMate 不写/删 HealthKit 原始记录。关闭读取和删除已上传证据分别表达；服务器删除不是移除用户对话或非健康记忆。幂等删除需有防止迟到上传复活数据的服务端策略，具体实现由 Windows 确认。
+
+### 6.3 错误与重试
+
+| 状态 / 建议错误码 | 语义 / Apple 行为 |
+|---|---|
+| 400 `INVALID_HEALTH_SUMMARY` / `INVALID_DATE` | schema、日期、单位或值不合法；保留本地摘要，不宣称上传成功 |
+| 401 `UNAUTHORIZED`；403 `FORBIDDEN` / `ORIGIN_NOT_ALLOWED` | 沿用账号认证，账号不匹配不发送；离线队列绝不跨账号上传 |
+| 404 `NOT_FOUND`；501 `NOT_IMPLEMENTED` | 服务器尚未实现；**静默保留本地队列**，下次前台/刷新/定时重试，不弹错误 |
+| 409 `STALE_HEALTH_SUMMARY` | 旧汇总时间不得覆盖新版本；保留待办，重新读取生成新版本后重试 |
+| 413 `BODY_TOO_LARGE`；415 `UNSUPPORTED_MEDIA_TYPE` | 沿用通用约定；不丢摘要、不截断健康内容 |
+| 429 `RATE_LIMITED`；503 `STORAGE_UNAVAILABLE` / `SERVICE_UNAVAILABLE`；网络错误 | 安静保留队列，下一次运行重试；不阻塞聊天 |
+
+H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重读最近 15 天，处理迟到 Watch 同步；不承诺后台定时唤醒。每次先落本地摘要，再尝试队列；404/501 结束本轮，无忙循环。不使用真实宿主进行本包验证。Windows 实现后仍需补真实账号/跨设备/撤销云端使用与 MemoWeft 删除闭环的集成验收。

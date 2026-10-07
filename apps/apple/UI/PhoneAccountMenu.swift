@@ -4,6 +4,7 @@ import SwiftUI
 /// Auxiliary pages keep the current conversation underneath the sheet.
 struct PhoneAccountMenu: View {
     @ObservedObject var model: AppleAppModel
+    @EnvironmentObject private var health: HealthSettingsModel
     @State private var route: Route?
 
     private enum Destination { case memory, devices, settings, spirit, health }
@@ -41,10 +42,7 @@ struct PhoneAccountMenu: View {
                         case .settings: SettingsView(model: model)
                         case .spirit: SpiritProfileView()
                         case .health:
-                            EmptyState(symbol: "heart", title: "健康摘要尚未接通",
-                                message: "接通后，你可以选择要查看的健康项目。")
-                                .padding(24).navigationTitle("健康")
-                                .accessibilityIdentifier("healthUnavailable")
+                            HealthSettingsView(model: health, app: model)
                         }
                     } else {
                         EmptyState(symbol: "person.crop.circle", title: "账户已变更",
