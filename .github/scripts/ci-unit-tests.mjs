@@ -24,7 +24,9 @@ if (mode === 'required') {
 }
 // macOS /var and /tmp are symlinks. Private storage and Node's permission
 // model require canonical paths, including for isolated child fixtures.
-const temp = mkdtempSync(join(realpathSync(tmpdir()), 'weftmate-ci-'));
+// Windows' default TEMP uses RUNNER~1, an 8.3 alias which does not satisfy the
+// private-store realpath comparison. RUNNER_TEMP has a stable full path.
+const temp = mkdtempSync(join(realpathSync(process.env.RUNNER_TEMP || tmpdir()), 'weftmate-ci-'));
 const env = { ...process.env, TMPDIR: temp, TMP: temp, TEMP: temp };
 const lines = [
   `### Unit tests (${mode})`,
