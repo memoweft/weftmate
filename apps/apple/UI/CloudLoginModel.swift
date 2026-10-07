@@ -156,7 +156,7 @@ final class CloudLoginModel: ObservableObject {
             guard let pairing, let received = pairingReceived, Date().timeIntervalSince(received) < Double(pairing.expiresIn) else { throw CloudLoginFailure.pairing }
         }
         let result = try await app.assistantClient.exchangeCloudSession(server: server, hostID: hostID, accessToken: token,
-            deviceName: String((ApplePlatform.current.deviceLabel + " · " + app.deviceName).prefix(128)), key: key, pairing: redeem ? pairing : nil)
+            deviceName: cloudDeviceName(app.deviceName), key: key, pairing: redeem ? pairing : nil)
         guard operation == id else {
             if case .authenticated(let session) = result { await app.assistantClient.discardCloudSession(session) }
             return

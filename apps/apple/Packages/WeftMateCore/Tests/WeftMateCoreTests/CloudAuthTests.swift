@@ -31,6 +31,12 @@ private func cloudAuthReply(host: String = "host-one") throws -> HTTPResponse {
 }
 
 @Suite struct CloudAuthTests {
+    @Test func deviceNameKeepsPlatformAndUTF16Limit() {
+        let name = cloudDeviceName(String(repeating: "👨‍👩‍👧‍👦", count: 128), platform: .iOS)
+        #expect(name.hasPrefix("iPhone · ")); #expect(name.utf16.count <= 128)
+        #expect(!name.contains("�"))
+        #expect(cloudDeviceName("Synthetic", platform: .macOS) == "Mac · Synthetic")
+    }
     @Test func callbackAndPKCE() throws {
         let configuration = CloudConfiguration(server: try ServerConfiguration(input: "https://cloud.example.com"))
         let flow = try CloudAuthorization(configuration: configuration, hostID: "host-one")
