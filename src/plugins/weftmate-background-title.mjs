@@ -6,7 +6,7 @@ export const inject = ['sessionTitle', 'llm', 'sessions'];
 export function apply(ctx, config) {
   const title = new Proxy(ctx.sessionTitle, { get(target, method) {
     if (method === 'registerProvider') return provider => target.registerProvider({ ...provider,
-      generate: request => runWithModelSlot('background', request.signal, async () => {
+      generate: async request => {
         const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
         if (scheduler && request.route) {
           const query = new URLSearchParams({ sessionId: request.session.id, profileId: request.route.provider });
@@ -14,8 +14,9 @@ export function apply(ctx, config) {
           if (!response.ok) throw new Error('BACKGROUND_MODEL_UNAVAILABLE');
           request = { ...request, route: await response.json() };
         }
-        return provider.generate(request);
-      }),
+        return runWithModelSlot('background', request.signal, () => provider.generate(request),
+          scheduler, { profileId: request.route?.provider ?? '' });
+      },
     });
     const value = Reflect.get(target, method);
     return typeof value === 'function' ? value.bind(target) : value;

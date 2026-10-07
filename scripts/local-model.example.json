@@ -3,7 +3,11 @@
   "model": "D:/AI/Assets/Models/Qwen/Qwen3.8-27B/GGUF/ggml-org/Qwen3.8-27B-Q4_K_M.gguf",
   "alias": "qwen3.8-27b",
   "port": 18081,
-  "contextSize": 32768,
-  "cacheType": "q8_0",
-  "gpuLayers": 48
+  "contextSize": 92160,
+  "cacheType": "q4_0",
+  "gpuLayers": 99,
+  "batchSize": 4096,
+  "ubatchSize": 512,
+  "threads": 8,
+  "threadsBatch": 16
 }

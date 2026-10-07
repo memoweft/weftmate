@@ -30,14 +30,14 @@ test('native stream socket owns the slot; a cancelled or crashed owner releases 
   const bridge = await createModelScheduler({ isIdle: async () => idle,
     profileFor: id => id === profile.id ? profile : null, credentialFor: () => 'synthetic',
     backgroundRoute: () => ({ provider: 'other-provider', model: 'other-model' }),
-    fetchImpl: async (url, options) => { calls.push({ url: String(url), body: JSON.parse(options.body) });
+    fetchImpl: async (url, options) => { if (String(url).endsWith('/props')) return Response.json({ total_slots: 1 }); calls.push({ url: String(url), body: JSON.parse(options.body) });
       return Response.json({ choices: [{ message: { content: 'done' } }] }); },
   });
   try {
     const response = await fetch(`${bridge.url}/route?sessionId=one`);
     assert.deepEqual(await response.json(), { provider: 'other-provider', model: 'other-model' });
     assert.equal((await fetch(`${bridge.memoryBaseUrl('background')}/models`)).status, 403);
-    const foreground = await acquireModelSlot('foreground', undefined, bridge.url);
+    const foreground = await acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'background' });
     const memory = fetch(`${bridge.memoryBaseUrl('background')}/chat/completions`, { method: 'POST',
       headers: { authorization: 'Bearer synthetic', 'content-type': 'application/json' },
       body: JSON.stringify({ model: '@current', messages: [] }) });
@@ -47,23 +47,23 @@ test('native stream socket owns the slot; a cancelled or crashed owner releases 
     assert.equal(calls[0].body.model, 'other-model');
     assert.equal(calls.length, 1);
     const abort = new AbortController();
-    await acquireModelSlot('foreground', abort.signal, bridge.url);
+    await acquireModelSlot('foreground', abort.signal, bridge.url, { profileId: 'background' });
     abort.abort();
-    const next = await acquireModelSlot('foreground', undefined, bridge.url); await next();
+    const next = await acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'background' }); await next();
   } finally { await bridge.close(); }
 });
 
 test('background provider begins its own deadline after queueing and nested native streaming uses the same lease', async () => {
   let idle = false, began = false;
-  const bridge = await createModelScheduler({ isIdle: async () => idle, profileFor: () => null,
+  const bridge = await createModelScheduler({ isIdle: async () => idle, profileFor: () => ({ baseUrl: 'http://127.0.0.1:1/v1', model: 'qwen' }), localSlotsFor: async () => 1,
     credentialFor: () => null, backgroundRoute: () => null });
   try {
     const background = runWithModelSlot('background', undefined, async () => {
       began = true;
-      const release = await acquireModelSlot('background', undefined, bridge.url);
+      const release = await acquireModelSlot('background', undefined, bridge.url, { profileId: 'background' });
       assert.equal(bridge.queue.status().active, 'background'); await release();
       return 'title';
-    }, bridge.url);
+    }, bridge.url, { profileId: 'background' });
     await pause(); assert.equal(began, false);
     idle = true; assert.equal(await background, 'title');
     await pause(); assert.equal(bridge.queue.status().active, null);
@@ -74,7 +74,7 @@ test('queued MemoWeft HTTP receives informational keepalive without masking the 
   let idle = false, information = 0;
   const bridge = await createModelScheduler({ isIdle: async () => idle, heartbeatMs: 10,
     profileFor: () => ({ baseUrl: 'http://127.0.0.1:1/v1', model: 'qwen' }), credentialFor: () => 'synthetic',
-    backgroundRoute: () => null, fetchImpl: async () => Response.json({ error: { code: 'unavailable' } }, { status: 503 }) });
+    backgroundRoute: () => null, fetchImpl: async url => String(url).endsWith('/props') ? Response.json({ total_slots: 1 }) : Response.json({ error: { code: 'unavailable' } }, { status: 503 }) });
   const { request } = await import('node:http');
   try {
     const finished = new Promise<any>((resolve, reject) => {
@@ -95,7 +95,7 @@ test('queued MemoWeft HTTP receives informational keepalive without masking the 
 
 test('foreground HTTP completion holds its slot through the response body', async () => {
   const bridge = await createModelScheduler({ isIdle: async () => true,
-    profileFor: () => null, credentialFor: () => null, backgroundRoute: () => null });
+    profileFor: () => ({ baseUrl: 'http://127.0.0.1:1/v1', model: 'qwen' }), localSlotsFor: async () => 1, credentialFor: () => null, backgroundRoute: () => null });
   const upstream = await import('node:http');
   const server = upstream.createServer((_request, response) => { response.writeHead(200); response.write('partial'); });
   await new Promise<void>(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -112,4 +112,63 @@ test('native compaction remains foreground while titles and companion work are b
   assert.equal(isBackgroundPurpose('compaction'), false);
   assert.equal(isBackgroundPurpose(undefined), false);
   for (const purpose of ['session-title', 'memory-formation', 'health-summary', 'companion-care']) assert.equal(isBackgroundPurpose(purpose), true);
+});
+
+
+test('cloud requests run concurrently while local foreground and queued background hold their service', async () => {
+  const profiles = {
+    local: { baseUrl: 'http://127.0.0.1:18081/v1', model: 'local' },
+    alias: { baseUrl: 'http://127.0.0.1:18081/v1/', model: 'alias' },
+    cloud: { baseUrl: 'https://cloud.example/v1', model: 'cloud', modelTier: 'cloud' },
+    multi: { baseUrl: 'http://127.0.0.1:18082/v1', model: 'multi' },
+  };
+  let idle = false, started = 0;
+  let complete: () => void;
+  const gate = new Promise<void>(resolve => { complete = resolve; });
+  const bridge = await createModelScheduler({ isIdle: async () => idle,
+    profileFor: id => profiles[id], credentialFor: () => 'synthetic', backgroundRoute: () => null,
+    localSlotsFor: async () => 1,
+    fetchImpl: async (url, options) => {
+      if (String(url).endsWith('/props')) return Response.json({ total_slots: String(url).includes('18082') ? 2 : 1 });
+      started++; await gate;
+      return Response.json({ model: JSON.parse(options.body).model });
+    } });
+  const destination = { profileId: 'local' };
+  let foreground, backgroundRelease;
+  try {
+    foreground = await acquireModelSlot('foreground', undefined, bridge.url, destination);
+    let backgroundStarted = false;
+    const background = acquireModelSlot('background', undefined, bridge.url, { profileId: 'alias' })
+      .then(release => { backgroundStarted = true; backgroundRelease = release; });
+    const requests = ['cloud', 'cloud', 'multi'].map(id => fetch(`${bridge.memoryBaseUrl(id)}/chat/completions`, {
+      method: 'POST', headers: { authorization: 'Bearer synthetic', 'content-type': 'application/json' },
+      body: JSON.stringify({ messages: [] }) }));
+    const deadline = Date.now() + 2000;
+    while (started < 3 && Date.now() < deadline) await pause();
+    assert.equal(started, 3, 'two cloud requests and a multi-slot request start without the local lease');
+    assert.equal(backgroundStarted, false);
+    assert.equal(bridge.queue.status().active, 'foreground');
+    complete!();
+    assert.deepEqual(await Promise.all(requests.map(async pending => (await (await pending).json()).model)), ['cloud', 'cloud', 'multi']);
+    await foreground(); foreground = null;
+    await pause(); assert.equal(backgroundStarted, false, 'local tool gaps retain main-turn priority');
+    idle = true; await background; await backgroundRelease(); backgroundRelease = null;
+  } finally { complete!(); await foreground?.(); await backgroundRelease?.(); await bridge.close(); }
+});
+
+test('unknown slot counts bypass queueing, and service props override configured single-slot fallback', async () => {
+  let slots: number | undefined;
+  const bridge = await createModelScheduler({ isIdle: async () => false,
+    profileFor: id => ({ baseUrl: `http://127.0.0.1:${id === 'managed' ? 18081 : 18082}/v1`, model: id }),
+    credentialFor: () => 'synthetic', backgroundRoute: () => null,
+    localSlotsFor: async endpoint => endpoint.port === '18081' ? 1 : undefined,
+    fetchImpl: async () => Response.json({ total_slots: slots }) });
+  try {
+    await (await acquireModelSlot('background', undefined, bridge.url, { profileId: 'unknown' }))();
+    slots = 2;
+    await (await acquireModelSlot('background', undefined, bridge.url, { profileId: 'managed' }))();
+    slots = undefined;
+    const release = await acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'managed' });
+    assert.equal(bridge.queue.status().active, 'foreground'); await release();
+  } finally { await bridge.close(); }
 });

@@ -50,7 +50,7 @@ node scripts/local-model.mjs restart D:/AIProjects/WeftMate/Runtime/LocalModel/c
 node scripts/local-model.mjs stop D:/AIProjects/WeftMate/Runtime/LocalModel/config.json
 ```
 
-当前 24 GiB RTX 3090 的稳妥默认：Qwen3.8 27B Q4_K_M、32,768 上下文、单槽、48 个 GPU（图形处理器）层，Flash Attention（快速注意力计算）开启，K/V 均为 q8_0，batch（批大小）512 / microbatch（微批大小）128，`--fit off`。GPU 权重 13,039 MiB、GPU KV cache（键值缓存）816 MiB、CPU 权重约 5,045 MiB；给桌面、运行时与推理工作区留余量。首次全 GPU 配置占用接近 24 GiB 并持续预热，未选为日用默认；实测峰值和连续运行结果见 STATE。该默认针对本机，不作为其他用户或模型的容量上限；服务真实 `n_ctx` 仍由 `/props` 读取。
+当前 24 GiB RTX 3090 的默认采用 WeftLearn 本机已实测组合：Qwen3.8 27B Q4_K_M、92,160 上下文、单槽、全部层上 GPU（图形处理器，`gpuLayers: 99`），Flash Attention（快速注意力计算）开启，K/V 均为 q4_0，batch（批大小）4096 / ubatch（微批大小）512，threads（线程数）8 / threads-batch（批处理线程数）16，`--fit off`。配置字段 `batchSize`、`ubatchSize`、`threads`、`threadsBatch` 可覆盖默认；K/V 可分别用 `cacheTypeK` / `cacheTypeV` 覆盖 `cacheType`。`cacheRamMiB` / `contextCheckpoints` 可选；缓存是否关闭待新参数的多轮首字延迟对比，实测数字见 STATE。该默认针对本机，不作为其他模型容量上限；真实 `n_ctx` 仍由 `/props` 读取。
 
 `GET /health` 返回就绪状态，`GET /props` 返回实际版本、上下文与槽数，`/v1` 为 OpenAI（模型接口）兼容入口。设置 → 我的电脑模型：地址 `http://127.0.0.1:18081/v1`，模型 ID `qwen3.8-27b`；本机服务无需密钥鉴权，当前模型表单可填非秘密的本地占位值。如需鉴权，应另行扩展配置中的密钥文件，不在仓库中保存密钥。
 
@@ -64,7 +64,7 @@ npm start -- --local-model-config=D:/AIProjects/WeftMate/Runtime/LocalModel/conf
 
 脚本只停止进程记录中的相同 PID（进程标识）、可执行文件与启动时间的服务；未知监听者不被接管。`18080` 本机已被 SSH（安全远程连接）监听，旧 `8080` NInfer / `8081` 切换代理均不作为本包日用入口。历史脚本见 `scripts/archive/`，禁止据其恢复多套并行模型。
 
-后台模型默认跟随当前对话，可在桌面设置中单独选择；主对话整轮（包括工具执行间隙）优先，标题与记忆推理等待空闲。MemoWeft 配置的 `authRef` 可以引用当前账户可见的 Qwen 配置，`baseUrl` 填该本机地址、`model` 保持 `@current`；实际推理走宿主的共享队列和已授权后台路由。召回只查记忆，不调用模型。Android 0.8.2 / code15 支持手机只读状态与重启请求；发布新 Web UI 时使用最低原生版本 15。
+后台模型默认跟随当前对话，可在桌面设置中单独选择；仅单槽本地服务按地址排队，主对话整轮（包括工具执行间隙）优先，标题与记忆推理等待空闲。槽数优先读 `/props.total_slots`，读取失败时仅已配置的受管单槽服务按配置判断；云 API（应用接口）、多槽或未知槽数服务直接并行。MemoWeft 配置的 `authRef` 可以引用当前账户可见的 Qwen 配置，`baseUrl` 填该本机地址、`model` 保持 `@current`；实际推理走宿主的共享队列和已授权后台路由。召回只查记忆，不调用模型。Android 0.8.2 / code15 支持手机只读状态与重启请求；发布新 Web UI 时使用最低原生版本 15。
 
 ## 云服务运维
 
