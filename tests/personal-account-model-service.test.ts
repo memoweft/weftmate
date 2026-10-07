@@ -306,7 +306,19 @@ test('owner model revisions, exact private visibility, transfer and stop keep hi
   } finally { await service.close(); rmSync(root, { recursive: true, force: true }) }
 })
 
-test('busy registration keeps its request ID; lost success is reconciled without a second route write', async () => {
+test('busy registration keeps its request ID; lost success is reconciled without a second route write', { timeout: 60_000 }, async (t) => {
+  // Retry time is a product clock, not a deadline for Windows ACL persistence.
+  // Freeze it so a slow durable write cannot accidentally cause another busy apply.
+  t.mock.timers.enable({ apis: ['setTimeout'] })
+  async function until(requestId: string, condition: (value: any) => boolean) {
+    while (!t.signal.aborted) {
+      const value = (await api(origin, auth, 'GET', `${route}/by-request/${requestId}`)).body
+      if (condition(value)) return value
+      await new Promise<void>((resolve) => setImmediate(resolve))
+    }
+    throw t.signal.reason
+  }
+  let origin: string, auth: Record<string, string>, route: string
   const root = mkdtempSync(join(tmpdir(), 'personal-account-model-reconcile-'))
   let busy = true, lostReply = false, applies = 0
   const stages = new Map<string, string>(), installed = new Set<string>()
@@ -340,43 +352,31 @@ test('busy registration keeps its request ID; lost success is reconciled without
   const service = await createPersonalAccessService({ root, port: 0, backend, accountModelManager: manager })
   let reopened: Awaited<ReturnType<typeof createPersonalAccessService>> | null = null
   try {
-    const { origin } = await service.start()
+    ;({ origin } = await service.start())
     const grant = await service.issueSetupGrant()
     const setup = await fetch(`${origin}/personal/v1/auth/setup`, { method: 'POST',
       headers: { origin, 'content-type': 'application/json' },
       body: JSON.stringify({ grant: grant.grant, username: 'Owner', password, deviceName: 'Desktop' }) })
     assert.equal(setup.status, 201)
     const account = await setup.json()
-    const auth = { origin, cookie: setup.headers.get('set-cookie')!.split(';')[0],
+    auth = { origin, cookie: setup.headers.get('set-cookie')!.split(';')[0],
       'x-weftmate-csrf': account.csrfToken }
-    const route = '/personal/v1/account/models'
+    route = '/personal/v1/account/models'
     const one = { requestId: 'busy-create', name: 'Cloud A', baseUrl: 'https://api.example.test/v1',
       modelId: 'a', apiKey: 'synthetic-a' }
     assert.equal((await api(origin, auth, 'POST', route, one)).status, 202)
-    for (let attempt = 0; attempt < 40 && applies === 0; attempt++) {
-      await new Promise((resolve) => setTimeout(resolve, 20))
-    }
-    let pending: any
-    for (let attempt = 0; attempt < 50; attempt++) {
-      pending = (await api(origin, auth, 'GET', `${route}/by-request/${one.requestId}`)).body
-      if (pending.operation.status === 'pending' && pending.operation.reasonCode === 'RUNTIME_BUSY') break
-      await new Promise((resolve) => setTimeout(resolve, 20))
-    }
+    const pending = await until(one.requestId, value => value.operation.reasonCode === 'RUNTIME_BUSY')
     assert.equal(pending.operation.status, 'pending')
     assert.equal(pending.operation.reasonCode, 'RUNTIME_BUSY')
     assert.equal(pending.model.configured, false)
     busy = false
-    assert.equal((await settled(origin, auth, one.requestId)).operation.status, 'succeeded')
+    t.mock.timers.tick(2000)
+    assert.equal((await until(one.requestId, value => value.operation.status === 'succeeded')).operation.status, 'succeeded')
     lostReply = true
     const two = { requestId: 'lost-create', name: 'Cloud B', baseUrl: 'https://api.example.test/v1',
       modelId: 'b', modelTier: 'local', apiKey: 'synthetic-b' }
     assert.equal((await api(origin, auth, 'POST', route, two)).status, 202)
-    for (let attempt = 0; attempt < 80; attempt++) {
-      const state = (await api(origin, auth, 'GET', `${route}/by-request/${two.requestId}`)).body
-      if (state.operation.status === 'succeeded') break
-      await new Promise((resolve) => setTimeout(resolve, 20))
-    }
-    const recovered = (await api(origin, auth, 'GET', `${route}/by-request/${two.requestId}`)).body
+    const recovered = await until(two.requestId, value => value.operation.status === 'succeeded')
     assert.equal(recovered.operation.status, 'succeeded', JSON.stringify(recovered))
     assert.equal(applies, 3, 'busy first + one successful retry + one lost reply, no duplicate route write')
     await service.close()
@@ -399,14 +399,15 @@ test('busy registration keeps its request ID; lost success is reconciled without
       requestId: 'failed-create', name: 'Bad', baseUrl: 'https://api.example.test/v1',
       modelId: 'bad-model', apiKey: 'synthetic-bad' })
     assert.equal(bad.status, 202)
-    const failed = await settled(cold.origin, { ...auth, origin: cold.origin }, 'failed-create')
+    origin = cold.origin; auth = { ...auth, origin }
+    const failed = await until('failed-create', value => value.operation.status === 'failed')
     assert.equal(failed.operation.status, 'failed')
     assert.equal(failed.model.status, 'failed')
     const removed = await api(cold.origin, { ...auth, origin: cold.origin }, 'DELETE',
       `${route}/${failed.model.accountModelId}`, {
         requestId: 'remove-failed', expectedRevision: failed.model.revision })
     assert.equal(removed.status, 202)
-    assert.equal((await settled(cold.origin, { ...auth, origin: cold.origin }, 'remove-failed')).model.status,
+    assert.equal((await until('remove-failed', value => value.operation.status === 'succeeded')).model.status,
       'removed')
   } finally { await reopened?.close(); await service.close(); rmSync(root, { recursive: true, force: true }) }
 })

@@ -25,14 +25,15 @@ const owner = (value) => {
 /** Lazily owns one MemoWeft RPC v2 process and private data root per account. */
 export function createPersonalMemoryManager({ root, enabled = false, python, pythonPath,
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
-  processingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS }) {
+  processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
       typeof credential !== 'function' || typeof rpcFactory !== 'function' ||
       processingRoute !== null && typeof processingRoute !== 'function' ||
+      defaultProcessingRoute !== null && typeof defaultProcessingRoute !== 'function' ||
       !Number.isInteger(maxActiveOwners) || maxActiveOwners < 1 || maxActiveOwners > 16 ||
       (enabled && (typeof python !== 'string' || !path.isAbsolute(python) ||
         typeof pythonPath !== 'string' || !path.isAbsolute(pythonPath) ||
-        typeof baseUrl !== 'string' || !/^http:\/\/127\.0\.0\.1:\d{1,5}\/v1$/.test(baseUrl) ||
+        typeof baseUrl !== 'string' || !/^http:\/\/127\.0\.0\.1:\d{1,5}\/(?:[A-Za-z0-9._/-]+\/)?v1$/.test(baseUrl) ||
         model !== '@current'))) {
     throw error('MEMORY_CONFIGURATION_INVALID');
   }
@@ -47,12 +48,17 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const commandFlights = new Map();
   let closing = false;
   let startQueue = Promise.resolve();
+  let sourceVersion;
+  const readSourceVersion = () => sourceVersion ??= readFile(path.join(path.dirname(pythonPath), 'pyproject.toml'), 'utf8')
+    .then(text => text.match(/\[project\]([^]*?)(?=\n\[|$)/)?.[1]
+      .match(/^version\s*=\s*"([0-9A-Za-z.+-]+)"/m)?.[1] ?? null).catch(() => null);
 
   async function resolveProcessingRoute(ownerId, sessionId = null) {
     let selected;
     try {
       selected = sessionId !== null && typeof processingRoute === 'function'
         ? await processingRoute(ownerId, sessionId)
+        : typeof defaultProcessingRoute === 'function' ? await defaultProcessingRoute(ownerId)
         : { profileId: 'formal-local-memory-route', baseUrl, model,
           credential: await credential(ownerId), routeFingerprint: null, modelTier: 'local' };
     } catch { throw error('MEMORY_MODEL_UNAVAILABLE'); }
@@ -410,6 +416,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
             ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
           return { state: ready ? 'ready' : 'degraded',
+            version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
             capabilities: { ...capabilities(entry), inject: ready }, ...backlog,
             ...(!entry.routeReady ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
@@ -432,13 +439,16 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       }
       return entry.rpc.request(method, params);
     }); },
-    async recall(ownerId, { query, sessionId }) {
+    async recall(ownerId, { query, sessionId, modelTier }) {
       owner(ownerId);
       if (!enabled) throw error('MEMORY_DISABLED');
       if (typeof query !== 'string' || !query.trim() || query.length > 500 ||
-          typeof sessionId !== 'string' || sessionId.length > 128) throw error('MEMORY_REQUEST_INVALID');
+          typeof sessionId !== 'string' || sessionId.length > 128 ||
+          modelTier !== undefined && !['local', 'cloud'].includes(modelTier)) throw error('MEMORY_REQUEST_INVALID');
       const route = await resolveProcessingRoute(ownerId, sessionId);
-      // Core owns source filtering for this resolved destination.
+      const destinationTier = modelTier ?? route.modelTier;
+      // Formation uses the background route; recall permissions belong to the
+      // foreground model that will receive this context.
       return withOwner(ownerId, async (entry) => {
         // Recheck the worker route too: a host route may have changed during acquire.
         if (entry.modelTier !== route.modelTier) return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED' };
@@ -452,8 +462,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           return { state: 'withheld', reasonCode: 'MEMORY_OBSERVED_PENDING' };
         }
         const [world, interaction] = await Promise.all([
-          entry.rpc.request('preview_recall', { query, model_tier: route.modelTier }),
-          entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: route.modelTier }),
+            entry.rpc.request('preview_recall', { query, model_tier: destinationTier }),
+            entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: destinationTier }),
         ]);
         const fragments = [world?.preview?.rendered_recall, interaction?.rendered_context]
           .filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim());
