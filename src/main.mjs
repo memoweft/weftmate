@@ -68,12 +68,8 @@ import { initDevices } from './devices.ts';
 import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
 import { ModWindowManager } from './mod-window-manager.mjs';
 import { createPersonalAccessBackend } from './personal-access-backend.mjs';
-import { createObservationRecorder } from './personal-model-observation/record.mjs';
-import { createPersonalModelObservationProxy } from './personal-model-observation/proxy.mjs';
-import { stage14R2ObservationProfile } from './personal-model-observation/policy.mjs';
+import { loadPersonalDevelopmentTools } from './personal-development-tools.mjs';
 import { createPersonalDesktopTask } from './personal-desktop-task.mjs';
-import { syntheticStopFixtureRoute } from './synthetic-stop-fixture-policy.mjs';
-import { syntheticBrowserFixtureSettings } from './synthetic-browser-fixture-policy.mjs';
 import { FORMAL_LOCAL_BASE_URL, OCCAMY_VISION_PROFILE_ID, listFormalLocalModels, prepareLocalModelConfig,
   projectOccamyImageInput, reconcileOccamyImageInput,
   readUserModelSwitcherKey } from './local-model-config.mjs';
@@ -84,6 +80,10 @@ import { assertOwnerBoundBoundary } from './personal-memory/boundary.mjs';
 import { memoryRecallDestination, memorySessionPolicy } from './personal-memory/policy.mjs';
 import { ensurePrivateDirectory, ensurePrivateFile } from './private-host-storage.mjs';
 import { assertLoopbackOrigin, hostRuntimeState, personalAccessPort, personalPublicOrigin as parsePersonalPublicOrigin, personalHostRequested, personalWorkspaceDirectory, startPersonalHost, validatePersonalHostProfile } from './host-mode.mjs';
+
+const { syntheticStopFixtureRoute, syntheticBrowserFixtureSettings,
+  createObservationRecorder, createPersonalModelObservationProxy,
+  stage14R2ObservationProfile } = await loadPersonalDevelopmentTools();
 
 const personalHostMode = personalHostRequested(process.argv);
 if (personalHostMode && process.env.WEFTMATE_MEMOWEFT_ENABLED === '1') {
