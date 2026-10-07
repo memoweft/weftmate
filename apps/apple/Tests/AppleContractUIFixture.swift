@@ -58,7 +58,7 @@ enum AppleContractUIFixture {
                 "modelProfileId": "fixture", "running": false, "sendAvailable": true]]])
             case "/personal/v1/models": return try json(["models": [["id": "fixture", "name": "测试模型", "model": "fixture", "configured": true]]])
             case "/personal/v1/sessions/" + AppleContractUIFixture.sessionID + "/events":
-                let after = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }!.value.flatMap(Int.init)!
+                let after = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }?.value.flatMap(Int.init) ?? -1
                 let original = try originalImage()
                 var events: [[String: Any]] = [["seq": 0, "type": "user.message", "data": ["text": "历史附件 · 点开预览", "originalAttachments": [original],
                     "attachmentMessageId": "22222222-2222-4222-8222-222222222222"]]]

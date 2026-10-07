@@ -164,7 +164,7 @@ private func login(_ client: PersonalClient) async throws -> AccountSession {
     let transport = ScriptTransport([step("/auth/login", auth()), step("/status", status()),
         step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync), step("/sessions", sessions),
         step("/auth/me", auth()), step("/sync/events?afterSeq=0&limit=100", sync),
-        step("/sync/conversations/\(conversationID)/shared", projection), step("/sessions/session-host/events?afterSeq=-1&limit=100", hostPage)])
+        step("/sync/conversations/\(conversationID)/shared", projection), step("/sessions/session-host/events?limit=100", hostPage)])
     let client = PersonalClient(credentialStore: store, transport: transport)
     _ = try await login(client)
     let conversations = try await client.conversations()

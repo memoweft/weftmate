@@ -585,13 +585,15 @@ extension AppleAppModel {
                         try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: changed))
                     }
                 }
-                var tracker = try SharedTurnTracker(sessionID: sessionID)
-                var pages = 0
+                let tail = try await self.client.timelinePage(sessionID: sessionID)
+                let seedAfter = (tail.events.first?.seq ?? (tail.nextSeq + 1)) - 1
+                var tracker = try SharedTurnTracker(sessionID: sessionID, afterSeq: seedAfter)
+                let seed = try SharedHistoryPage.decode(JSONEncoder().encode(tail), sessionID: sessionID, afterSeq: seedAfter)
+                try tracker.apply(seed)
                 while self.observationVisible(conversation, accountEpoch: accountEpoch) {
                     try Task.checkCancellation()
                     let page = try await self.client.sharedHistory(sessionID: sessionID, afterSeq: tracker.nextSeq)
-                    pages += 1
-                    guard pages <= 256 else { throw APIFailure.historyLimit }
+
                     try tracker.apply(page)
                     guard self.epoch == accountEpoch, !Task.isCancelled else { return }
                     let progress = tracker.progress(for: currentReceipt)
@@ -614,7 +616,6 @@ extension AppleAppModel {
                     }
                     if [.completed, .aborted, .failed, .blocked].contains(progress) { return }
                     if !page.hasMore {
-                        pages = 0
                         try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty))
                     }
                 }
@@ -696,6 +697,14 @@ final class AppleAppModel: ObservableObject {
     @Published private(set) var conversationsError: String?
     @Published private(set) var devicesError: String?
     @Published private(set) var messages: [ChatMessage] = []
+    @Published private(set) var timelineMessageIDs: [Int: String] = [:]
+    @Published private(set) var timeline = TimelineWindow()
+    @Published private(set) var olderBusy = false
+    private var offlineTimeline: TimelineWindow?
+    private var timelinePolling: UUID?
+    private var timelineCache: LocalTimelineCache? {
+        localStateDirectory.map { LocalTimelineCache(directory: $0.appendingPathComponent("Timeline")) }
+    }
     @Published private(set) var historyBusy = false
     @Published private(set) var historyError: String?
     @Published private(set) var selectedConversation: ConversationSummary?
@@ -865,23 +874,31 @@ final class AppleAppModel: ObservableObject {
         }
         draftError = initialDraftError
         adoptionError = initialAdoptionError
-        localStateDirectory = localDirectory
+        localStateDirectory = localDirectory ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
+            .appendingPathComponent("WeftMate/LocalState", isDirectory: true)
     }
 
     /// Dependency injection for deterministic account/late-callback checks; no alternate auth path.
     init(client: PersonalClient, draftPersistence: any AppleDraftPersisting, server: ServerConfiguration,
-         commandStore: LocalConversationStore? = nil, endpointStore: LocalEndpointOperationStore? = nil) {
+         commandStore: LocalConversationStore? = nil, endpointStore: LocalEndpointOperationStore? = nil, stateDirectory: URL? = nil) {
         self.client = client
         self.draftPersistence = draftPersistence
         self.commandStore = commandStore
         self.endpointStore = endpointStore
-        localStateDirectory = nil
+        localStateDirectory = stateDirectory
         defaults = nil
         launchConfigurationError = nil
         developmentRouteEnabled = false
         serverInput = server.originString
     }
 
+    private var permitsSyntheticLoopback: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--a3-local-server")
+        #else
+        false
+        #endif
+    }
     var serverDisplayName: String {
         guard let components = URLComponents(string: serverInput), let host = components.host else {
             return "设置服务器地址"
@@ -905,6 +922,9 @@ final class AppleAppModel: ObservableObject {
     func start() async {
         guard !started else { return }
         started = true
+        #if os(iOS)
+        _ = watchBridge
+        #endif
         defer { restoring = false }
         if let launchConfigurationError {
             authError = launchConfigurationError
@@ -916,9 +936,13 @@ final class AppleAppModel: ObservableObject {
             await authenticate(username: "tester", password: "synthetic-only", displayName: nil, register: false)
             return
         }
+        if permitsSyntheticLoopback {
+            await authenticate(username: "a3-tester", password: "synthetic-test-only", displayName: nil, register: false)
+            return
+        }
         #endif
         do {
-            let server = try ServerConfiguration(input: serverInput)
+            let server = try ServerConfiguration(input: serverInput, allowLoopbackHTTP: permitsSyntheticLoopback)
             session = try await client.restoreSession(server: server)
             if let session {
                 await loadScopedDrafts(session)
@@ -949,7 +973,7 @@ final class AppleAppModel: ObservableObject {
         let actionEpoch = epoch
         defer { if actionEpoch == epoch { authBusy = false } }
         do {
-            let server = try ServerConfiguration(input: serverInput)
+            let server = try ServerConfiguration(input: serverInput, allowLoopbackHTTP: permitsSyntheticLoopback)
             let name = username.trimmingCharacters(in: .whitespacesAndNewlines)
             let result: AccountSession
             if register {
@@ -1034,10 +1058,13 @@ final class AppleAppModel: ObservableObject {
     func open(_ conversation: ConversationSummary) async {
         retireHistoryObservers()
         selectedConversation = conversation
-        messages = []
+        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = nil
         historyError = nil
         historyCachedAt = nil
         historyBusy = true
+        #if os(iOS)
+        _ = watchBridge
+        #endif
         let actionEpoch = epoch
         let request = UUID()
         historyRequest = request
@@ -1048,7 +1075,7 @@ final class AppleAppModel: ObservableObject {
                 if let cached = try await local.cachedHistory(account: account, conversationKey: key,
                                                               hostId: cacheHost, sessionId: conversation.sessionId) {
                     guard actionEpoch == epoch, historyRequest == request else { return }
-                    messages = cached.messages
+                    messages = Array(cached.messages.suffix(100))
                     historyCachedAt = cached.cachedAt
                 }
             } catch {
@@ -1056,11 +1083,22 @@ final class AppleAppModel: ObservableObject {
                 cacheError = "本机历史缓存未能读取，原文件保留。"
             }
         }
+        if let account = draftAccount, let cacheHost, let sessionID = conversation.sessionId,
+           let cached = try? await timelineCache?.read(account: account, hostID: cacheHost, sessionID: sessionID) {
+            guard actionEpoch == epoch, historyRequest == request else { return }
+            offlineTimeline = cached.window; timeline.apply(cached.window.cachedPage(), replace: true)
+            messages = (try? await client.timelineMessages(timeline.events, sessionID: sessionID)) ?? messages
+            historyCachedAt = cached.cachedAt
+        }
         do {
             guard let live = liveConversations[conversation.id] else { throw APIFailure.transport(.unavailable) }
             let result = try await client.history(conversation: live)
             guard actionEpoch == epoch, historyRequest == request else { return }
             messages = result
+            if let sessionID = live.sessionId ?? knownBoundSessions[key], let page = await client.cachedTimelinePage(sessionID: sessionID) {
+                timeline.apply(page, replace: true); offlineTimeline = nil
+                timelineMessageIDs = await client.cachedTimelineMessageIDs(sessionID: sessionID)
+            }
             historyCachedAt = nil
             historyBusy = false
         } catch {
@@ -1079,6 +1117,10 @@ final class AppleAppModel: ObservableObject {
                     sessionId: conversation.sessionId ?? knownBoundSessions[key], messages: messages)
             } catch { if actionEpoch == epoch { cacheError = "原记录已读取，但本机历史缓存尚未更新。" } }
         }
+        await persistTimeline(conversation)
+        #if os(iOS)
+        _ = await watchSnapshotBytes()
+        #endif
         for row in commandRows(for: conversation) where row.record.state != .rejected {
             await reconcileSavedRequest(row.id, accountEpoch: actionEpoch)
         }
@@ -1087,11 +1129,120 @@ final class AppleAppModel: ObservableObject {
         }
     }
 
+    func loadOlder(_ conversation: ConversationSummary) async {
+        guard selectedConversation?.id == conversation.id, !olderBusy, timeline.hasOlder, let before = timeline.beforeSeq,
+              let sessionID = conversation.sessionId ?? knownBoundSessions[Self.draftKey(for: conversation)] else { return }
+        olderBusy = true; let actionEpoch = epoch, request = historyRequest
+        defer { if actionEpoch == epoch, request == historyRequest { olderBusy = false } }
+        do {
+            let page: TimelinePage
+            if let offlineTimeline { page = offlineTimeline.cachedPage(before: before) }
+            else { page = try await client.timelinePage(sessionID: sessionID, beforeSeq: before) }
+            guard actionEpoch == epoch, request == historyRequest else { return }
+            timeline.apply(page, older: true)
+            let old = try await client.timelineMessages(page.events, sessionID: sessionID)
+            guard actionEpoch == epoch, request == historyRequest else { return }
+            let known = Set(messages.map(\.id)); messages.insert(contentsOf: old.filter { !known.contains($0.id) }, at: 0)
+            await persistTimeline(conversation)
+        } catch { if actionEpoch == epoch, request == historyRequest { historyError = friendly(error) } }
+    }
+    func pollTimeline(_ conversation: ConversationSummary) async {
+        let actionEpoch = epoch, request = historyRequest
+        guard timelinePolling != request, historyCachedAt == nil,
+              let sessionID = conversation.sessionId ?? knownBoundSessions[Self.draftKey(for: conversation)] else { return }
+        timelinePolling = request
+        defer { if timelinePolling == request { timelinePolling = nil } }
+        var policy = ConversationPollingPolicy()
+        while !Task.isCancelled, actionEpoch == epoch, request == historyRequest, foreground, selectedConversation?.id == conversation.id {
+            do {
+                let page = try await client.timelinePage(sessionID: sessionID, afterSeq: timeline.nextSeq)
+                guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
+                timeline.apply(page)
+                updateTimelineActivity(conversation)
+                let new = try await client.timelineMessages(page.events, sessionID: sessionID)
+                guard actionEpoch == epoch, request == historyRequest, !Task.isCancelled else { return }
+                let known = Set(messages.map(\.id)); messages.append(contentsOf: new.filter { !known.contains($0.id) })
+                if !page.events.isEmpty {
+                    await persistTimeline(conversation)
+                    #if os(iOS)
+                    _ = await watchSnapshotBytes()
+                    #endif
+                }
+                if !page.hasMore { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: !page.events.isEmpty)) }
+            } catch {
+                if error is CancellationError { return }
+                guard actionEpoch == epoch, request == historyRequest else { return }
+                if await expireSessionIfNeeded(error) { return }
+                historyError = friendly(error); return
+            }
+        }
+    }
+    private func updateTimelineActivity(_ conversation: ConversationSummary) {
+        guard let last = timeline.events.last(where: { ["turn.started", "task.started", "turn.ended", "task.ended"].contains($0.type) }),
+              let index = conversations.firstIndex(where: { $0.id == conversation.id }) else { return }
+        let old = conversations[index], running = last.type.hasSuffix("started")
+        guard old.running != running else { return }
+        conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
+            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel)
+    }
+    private func persistTimeline(_ conversation: ConversationSummary) async {
+        guard historyCachedAt == nil, !timeline.events.isEmpty, let timelineCache, let account = draftAccount, let session,
+              let sessionID = conversation.sessionId ?? knownBoundSessions[Self.draftKey(for: conversation)] else { return }
+        let window = timeline, actionEpoch = epoch
+        do {
+            var cached = try await timelineCache.read(account: account, hostID: session.hostId, sessionID: sessionID)?.window ?? TimelineWindow()
+            cached.merge(window)
+            try await timelineCache.save(account: account, hostID: session.hostId, sessionID: sessionID, window: cached)
+        } catch { if epoch == actionEpoch { cacheError = "当前记录已读取，但本机时间线缓存尚未更新。" } }
+    }
+    #if os(iOS)
+    private lazy var watchBridge = PhoneWatchTimelineBridge(model: self)
+    func watchSnapshotBytes() async -> Data? {
+        let actionEpoch = epoch
+        guard let session, session.verification == .verified,
+              let conversation = selectedConversation ?? conversations.first(where: \.running) ?? conversations.first,
+              let sessionID = conversation.sessionId else { return nil }
+        do {
+            let page = try await client.timelinePage(sessionID: sessionID)
+            let approvals = try await client.approvals(sessionID: sessionID)
+            guard actionEpoch == epoch else { return nil }
+            let entries = TimelineProjection.entries(page.events)
+            let current = entries.last(where: { !$0.steps.isEmpty })
+            let completed = page.events.filter { $0.type == "task.ended" }.compactMap { $0.data["taskId"]?.string }
+            let account = try LocalAccountScope(server: session.server, ownerId: session.account.ownerId)
+            let snapshot = WatchTimelineSnapshot(accountKey: account.cacheKey, sessionID: sessionID,
+                taskID: current?.steps.last?.taskID, progress: current?.steps.last?.summary ?? "等待新任务",
+                running: current?.running ?? conversation.running,
+                assistantSummary: String((page.events.last(where: { $0.type == "assistant.message" })?.data["text"]?.string ?? "").prefix(240)),
+                approvals: approvals.approvals.filter(\.canDecide).map { WatchApproval(id: $0.id, summary: $0.reason) }, completedTaskIDs: completed)
+            watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
+        } catch { return nil }
+    }
+    func respondFromWatch(sessionID: String, approvalID: String, outcome: String) async -> Bool {
+        let actionEpoch = epoch
+        guard selectedConversation?.sessionId == sessionID || conversations.contains(where: { $0.sessionId == sessionID }),
+              let value = ApprovalDecisionOutcome(rawValue: outcome) else { return false }
+        let responder = TaskInteractionModel(client: client, account: session, epoch: epoch, stateDirectory: assistantStateDirectory,
+            currentEpoch: { [weak self] in self?.accountEpoch ?? UUID() }, currentSession: { [weak self] in self?.session })
+        await responder.refreshTimeline(sessionID: sessionID)
+        guard let approval = responder.approvals.first(where: { $0.id == approvalID && $0.canDecide }) else { return false }
+        let key = "approval:" + approvalID
+        if responder.hasSaved(key) {
+            guard responder.savedApprovalOutcome(approval) == value else { return false }
+            await responder.continueOriginal(key)
+        }
+        else { await responder.decide(approval, outcome: value) }
+        guard actionEpoch == epoch else { return false }
+        _ = await watchSnapshotBytes()
+        return responder.errors[key] == nil && responder.hasSaved(key)
+    }
+    #endif
+
     func closeConversation() {
         retireHistoryObservers()
         historyRequest = UUID()
         selectedConversation = nil
-        messages = []
+        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = nil; olderBusy = false
         historyBusy = false
         historyError = nil
         historyCachedAt = nil
@@ -1324,7 +1475,10 @@ final class AppleAppModel: ObservableObject {
         session = nil
         conversations = []
         devices = []
-        messages = []
+        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = nil; olderBusy = false
+        #if os(iOS)
+        watchBridge.publish(nil)
+        #endif
         selectedConversation = nil
         drafts = [:]
         draftWorkers.values.forEach { $0.cancel() }

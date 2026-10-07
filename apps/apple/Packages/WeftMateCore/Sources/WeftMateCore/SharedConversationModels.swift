@@ -355,12 +355,12 @@ public struct SharedTurnTracker: Sendable {
     private var seenTurns = Set<Int>()
     private var ambiguousTurns = Set<Int>()
     private var eventCount = 0
-    public init(sessionID: String) throws {
-        try SharedValidation.require(SharedValidation.id(sessionID)); sessionId = sessionID
+    public init(sessionID: String, afterSeq: Int = -1) throws {
+        try SharedValidation.require(SharedValidation.id(sessionID) && afterSeq >= -1); sessionId = sessionID; nextSeq = afterSeq
     }
     public mutating func apply(_ page: SharedHistoryPage) throws {
         guard page.sessionId == sessionId, page.afterSeq == nextSeq else { throw APIFailure.identityMismatch }
-        guard eventCount + page.events.count <= 20_000 else { throw APIFailure.historyLimit }
+
         for event in page.events {
             if let message = event.chatMessage(sessionID: sessionId) { messages.append(message) }
             if event.type == "turn.started" {

@@ -86,7 +86,7 @@ private actor CommandHTTP: HTTPTransport {
             else { status = 404; object = ["error": ["code": "NOT_FOUND"]] }
         case "/personal/v1/sessions/session-host/events":
             eventReads += 1
-            let after = Int(URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }!.value!)!
+            let after = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!.queryItems!.first { $0.name == "afterSeq" }?.value.flatMap(Int.init) ?? -1
             var events: [[String: Any]] = []
             if let bytes = posts.first {
                 let payload = try JSONSerialization.jsonObject(with: bytes) as! [String: String]
