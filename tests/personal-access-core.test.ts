@@ -501,9 +501,9 @@ test('backend errors and malformed event data never expose arbitrary codes or co
     assert.equal(JSON.stringify(status.body).includes('private failure'), false)
     assert.equal((await request(origin, token, 'GET', '/personal/v1/sessions/known-session/events')).status, 503)
     f.backend.readEvents = async () => { throw Object.assign(new Error('private history text'),
-      { code: 'HISTORY_WINDOW_LIMIT', status: 409 }) }
+      { code: 'obsolete-history-error', status: 409 }) }
     const limited = await request(origin, token, 'GET', '/personal/v1/sessions/known-session/events')
-    assert.deepEqual(limited, { status: 422, body: { error: { code: 'HISTORY_WINDOW_LIMIT' } } })
+    assert.deepEqual(limited, { status: 503, body: { error: { code: 'SERVICE_UNAVAILABLE' } } })
   } finally {
     await service.close()
     rmSync(root, { recursive: true, force: true })

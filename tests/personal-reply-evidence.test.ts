@@ -139,8 +139,8 @@ test('a late receipt and duplicate or conflicting native ends cannot inherit com
 test('after a physically observed save, the next step gets one fixed plugin reminder', async () => {
   const rows = events().slice(0, 8)
   const session = { id: 'session-a', header: { agentPreset: 'personal-remote' }, events: rows.slice(1) }
-  const ctx = { sessionPersistence: { readRaw: async () => ({
-    meta: { id: session.id, agentPreset: 'personal-remote' }, content: encoded(rows) }) } }
+  const persisted = { meta: { id: session.id, agentPreset: 'personal-remote' }, events: rows.slice(1) }
+  const ctx = { sessionPersistence: { inspect: async () => persisted, readFrom: async () => persisted } }
   const payload = { agent: { session }, turn: 1, step: 2, signal: new AbortController().signal }
   const decision = { kind: 'enter', messages: [{ source: { kind: 'user' }, content: [] }] }
   const factory = (value: object) => value
@@ -166,9 +166,8 @@ test('a pending or failed save cannot produce a completion reminder', async () =
     base.map((row: any) => row.type === 'tool/result' ? {
       ...row, data: { ...row.data, error: { code: 'SAVE_FAILED' } },
     } : row)]) {
-    const ctx = { sessionPersistence: { readRaw: async () => ({
-      meta: { id: session.id, agentPreset: 'personal-remote' }, content: encoded(rows),
-    }) } }
+    const persisted = { meta: { id: session.id, agentPreset: 'personal-remote' }, events: rows.slice(1) }
+    const ctx = { sessionPersistence: { inspect: async () => persisted, readFrom: async () => persisted } }
     assert.equal((await savedDocumentReplyHint(ctx, payload, decision, (value: object) => value)).messages.length, 1)
     assert.equal(projectReplyEvidence(encoded(rows), { receiptId: 'receipt-a' }).toolSaveObserved, false)
   }
