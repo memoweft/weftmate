@@ -10,7 +10,7 @@
 |---|---|---|
 | Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
-| Codex · Windows-3 | UI-1b 输出与来源右侧面板 | [PR #42](https://github.com/memoweft/weftmate/pull/42)（`wp/ui-1b-right-panel`）：标题浮层、输出 / 来源分组、独立标签 / 关闭 / + / 拖宽 / 放大 / 收起、来源次数及详情、成果原生操作、审批 / 提问一行记录与标题去重已实现；真实 Electron（桌面程序框架）主程序 + 隔离账号 / 固定 DSH / 合成模型及 Edge（微软浏览器）浅深色验收见 [UI-1b](../tests/evidence/ui-1b/README.md)；逐条记忆引用缺公开来源字段，留记忆工作包；完整门禁交 PR CI（持续集成），待 Claude 审查 |
+| Codex · Windows-3 | UI-1c 右侧面板小修 | `wp/ui-1c-panel-polish`：来源先显示每次调用的可读摘要与时间，按需展开原始参数 / 输出并复制；输出按文件名保留最新项；程序侧栏收起按钮与新对话同排。真实 Electron（桌面程序框架）主程序 + 隔离账号 / 固定 DSH / 合成模型浅深色验收见 [UI-1c](../tests/evidence/ui-1c/README.md)；相关测试与类型检查通过，完整门禁交 PR CI（持续集成），待 Claude 审查 |
 | Codex · Windows-2 | M1-1 个人入口原生工具 | [PR #31](https://github.com/memoweft/weftmate/pull/31)：合入 main `99b66b5`，修复 native web_fetch（原生网页获取）提供方；隔离 Qwen 原版 27B 办事场景 **2/6 通过（03、05）**，结果与未做项见下；类型/相关回归通过，最终 CI 门禁见 PR checks（检查） |
 | Codex · Mac | S1c-Apple 云账号与设备授权 | [PR #37](https://github.com/memoweft/weftmate/pull/37)（`wp/s1c-apple-cloud-login`） 原生客户端接线与隔离验收完成，待 PR 审查；系统认证浏览器/PKCE、P-256/DPoP、Keychain 刷新、等待/允许/拒绝、iPhone QR、配对 SPKI 已实现。已接最新 7.7 设备公钥 bootstrap 与标准 QR/复制码；生产首次无配对材料登录仍受账号页、宿主枚举与可信 pin 转交缺口阻塞；[验收说明](../apps/apple/Tests/S1c-README.md) |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
@@ -24,7 +24,7 @@
 - M0-6：运行参数唯一来源为仓库外 D:\AI\Config；现有 8081、`qwen3.8-27b-original`，隔离宿主 / 原生请求实读 98,304、单槽；12 次链式读取返回校验字，非空 completed、无 max-tokens，后台在主对话结束后返回。GPU（图形处理器）协调标记到达后真实按钮重启通过，进程更换、模型与容量保持；不调参或浸泡。
 - M0-6 状态/容量/排队/系统权限定向测试、桌面 59 项、手机 Web（网页界面）90 项、Android BusinessRoute 定向编译/测试与类型检查通过；合入最新 main 后云测试 7 项与相关回归通过，真实 Electron（桌面程序框架）窗口补验模型状态与重启能力。修复两分钟重启被普通短请求提前中断的问题，系统重启专用等待窗 6 分钟。最终以 PR 当前提交检查为准；既有例外沿用。截图见 tests/evidence/m0-6/。Windows EPERM rename 偶发不在本包。
 
-- **UI-1b**：输出与来源面板在真实主程序及远程浏览器以合成数据验收：两标签 / 关一个 / + 再开、鼠标拖宽 / 放大 / 收起后恢复、默认程序打开 / 在文件夹显示、浏览器下载、空对话与会话隔离、审批 / 提问一行。相关测试与类型检查通过；截图及可重复脚本见 tests/evidence/ui-1b/README.md，不碰日用数据。
+- **UI-1c**：真实主程序浅 / 深色验收覆盖重复写出仅列最新项及其预览、多次调用一行摘要、原始详情按需展开 / 收起 / 等宽 / 复制、连接器键盘展开 / 失败重试 / 截断提示、侧栏对齐与收起、空对话隔离。相关测试 11/11 与类型检查通过；截图及可重复脚本见 tests/evidence/ui-1c/README.md。合成账号与模型，不碰日用数据。
 
 - **UI-1**：原有桌面交互、云配置、记忆隔离与新增真实 Electron 窗口交互验证；类型检查通过。截图覆盖浅/深色的运行、审批、提问、步骤详情、成果右侧预览、完成收起、搜索、外观与 1024px 窗口；发送/停止与 Esc、Enter/Shift+Enter、Ctrl/Cmd+N/K/B、粘贴/拖拽文件、设备偏好重载另有断言。完整套件交 CI，不碰日用数据。
 - **M1-1**：统一入口 8081 / qwen3.8-27b-original / 96K，隔离宿主与随机测试所有者；密钥仅内存，未进入保险库/结果文件。原生工具、浏览器/原生网页提供方、子任务读写与 4 个成果的真实 Electron + 固定 DSH 集成通过；相关回归 52/52、范围/循环 4/4、评测器 11/11，类型检查通过。完整必过套件交 CI，已登记例外不算本包新增失败。首轮 1/6；修复提供方并将 02–04 超时调到 600 秒后，最终 **2/6（33.3%）**，未达 M1 出口 ≥4/6。
@@ -58,6 +58,8 @@
 M0-7 **不作为基线**：慢配置与旧工具的结果为通过 0、超时失败 9、需真机人工 2、未配置 MiMo 不支持 1；无 API 对照，不据此归因。基线在 M1-1 合并后另跑，不在本包。原始逐项证据保留在仓库外的上一轮结果。
 
 ## 契约变更
+
+- **UI-1c**：CLIENT_API 3.16 的 `outputs` 按同会话 `fileName` 保留 `createdAt` 最新项，旧成果按原 ID 仍可访问；`uses[].summary` 优先动作 / 文件名 / 可读调用描述。字段与详情端点不变。
 
 - **UI-1b**：CLIENT_API 3.16 新增只读 `GET /sessions/{sessionId}/resources?afterSeq`，按已有成果 / 文件与网页快照 / 工具时间线分页聚合，不新增存储；使用记录按 callId 去重、详情仍走旧端点。Apple / 手机可忽略新接口；记忆自动注入没有公开的逐条引用，不伪造来源。
 
