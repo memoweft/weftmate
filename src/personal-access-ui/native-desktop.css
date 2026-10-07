@@ -12,4 +12,6 @@
 .weftmate-desktop #desktop-auto-start { width: auto; margin-right: 8px; }
 .weftmate-desktop .desktop-startup { display: flex; align-items: center; }
 .weftmate-desktop .rail-heading > strong { display: none; }
-.weftmate-desktop .rail-heading { justify-content: flex-end; }
+.weftmate-desktop .rail-top { display: flex; align-items: center; gap: 8px; }
+.weftmate-desktop .rail-heading { padding: 0; flex-shrink: 0; }
+.weftmate-desktop .rail-new { order: -1; flex: 1; width: auto; min-width: 0; }
