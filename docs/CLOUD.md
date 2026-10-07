@@ -133,9 +133,10 @@ Login 校验安装对应的独立凭据；NewProxy 仅批准 `<hostId>.content`�
 TLS adapter 直接使用 **S1b identity.json 已生成的内容私钥**，校验证书域名及 SPKI 匹配；不会生成另一把不匹配配对 pin 的 key。已认证、电脑直接地址的 `/cloud/pairings` 返回原 `tlsSpki` 和新增 `relay` 状态/baseUrl，原生端从当面配对/已有信任通道保存 pin，不能信云目录替代。证书正常续期保留同一密钥，`reloadRelayCertificate()` 可热换证书；换密钥的旧钥签名/客户端更新流程留给后续包，当前拒绝 pin 不一致的证书。
 
 - 开发/测试：`WEFTMATE_RELAY_DEVELOPMENT_TLS=true`，OpenSSL 在隔离宿主目录生成 7 天开发 CA，签署原内容 key 的 CSR；测试客户端显式信这份 CA，不改系统信任。
-- 生产：关闭开发开关，`scripts/relay-csr.mjs` 导出原内容 key 的 CSR。成熟 ACME 客户端 certbot 以 DNS-01 完成签发，`scripts/relay-acme-hook.mjs` 用安装 proof 调用云的 `dns/present` / `dns/cleanup`。部署包配置定期 CSR 签发/续期、安装 fullchain、调用 reload 或重启宿主，设置 `WEFTMATE_RELAY_CERT_FILE`。私钥从不送云。
-- 云 DNS 权限：只接受 43 字符 base64url TXT 值，记录名固定为 `_acme-challenge.<此宿主认领的完整域名>`，TTL=60；不接受 caller 指定 zone/name/type/TTL，不给宿主全区 DNS API key。可由部署包将此记录 CNAME 委托到受限验证区；`createIdentity({relayDns:{present,cleanup}})` provider 应只增删本次值，保留并发挑战，并在权威 TXT 已发布后返回。清理须幂等；掉电残留值由部署定期清理。provider 整区凭据仅在云部署的私有配置中。
-- 真实 DNS provider 尚未接入；默认 `DNS_NOT_CONFIGURED`（503），绝不假装 TXT 已更新。测试以隔离 provider 检查受限记录名和权限。[DNS-01 官方流程](https://letsencrypt.org/docs/challenge-types/)
+- 生产（S2b）：`WEFTMATE_RELAY_ACME_ENABLED=true` 后，宿主进程内的固定 Node ACME.js 客户端用现有内容 JWK 生成 CSR、通过安装 proof 请求 DNS-01；不依赖 Windows certbot/OpenSSL。ACME 目录可配置为生产 Let's Encrypt、staging 或隔离 Pebble，账号 key 按目录独立存在宿主私有文件，内容 key 不离开宿主。库的可选 maintainer 联系/locale 注册已关闭；旧版 processing 订单由库自身签名工具按 RFC8555 POST-as-GET 轮询，Pebble 已验证。
+- 签发/续期：启动与每天检查，剩余 <30 天重签；失败按天重试并持久化重试日期，保留已有证书。成功校验域名/SPKI/有效期后，0600 原子安装 fullchain、`setSecureContext` 热载，不重启宿主/frpc，不中断既有 TLS 连接。`WEFTMATE_RELAY_CERT_FILE` 可指定安装位置，默认私有 `relay-tls/host-fullchain.pem`；`/status.relay` 新增 `certificateExpiresAt`（UTC/null）与 `certificateErrorCode`（代码/null）。staging 与生产使用独立证书路径，staging 不被普通浏览器信任。
+- 云 DNS 权限：只接受 43 字符 base64url TXT 值，记录名固定为 `_acme-challenge.<此宿主认领的完整域名>`；不接受 caller 指定 zone/name/type/TTL，不给宿主全区 DNS API key。`services/cloud/src/dns-aliyun.mjs` 通过官方 OpenAPI V3 ACS3-HMAC-SHA256 调用 AddDomainRecord/DeleteDomainRecord，免费 AliDNS 区将内部 TTL=60 提升到最低 600 秒。每个权威 NS 都查到 TXT 后才返回，约 90 秒超时给 `DNS_PROPAGATION_TIMEOUT`；宿主允许 DNS 请求 125 秒。API 失败给 `DNS_PROVIDER_ERROR`，不返回凭据或阿里云原始错误正文。
+- RecordId 所有权保存在云 SQLite schema **5** 的 `relay_dns_records`：重试复用已写入 ID，cleanup 只删本次值对应的服务自有 ID，保留并发/预存 TXT，缺失记录幂等；掉电残留由本人私下核对清理，后台清扫未做。`main.mjs` 从私有服务器环境读取 `CLOUD_DNS_PROVIDER=aliyun`、`ALIYUN_DNS_ZONE`、`ALIYUN_DNS_ACCESS_KEY_ID/SECRET` 接线；缺任一项仍为 `DNS_NOT_CONFIGURED`（503）。RAM 仅授权指定域名区的增删 DNS 权限，本人操作步骤见 [部署说明](../services/cloud/deploy/README.md#宿主内容证书s2b阿里云-dns-01)。[DNS-01 官方流程](https://letsencrypt.org/docs/challenge-types/)
 
 D24 已允许普通浏览器：正常透传时云只有密文；若云/DNS 被完全主动控制，普通浏览器可能被合法新证书和被替换页面冒充。已配对原生端还验证宿主 SPKI；云目录不获权更改 pin。S1c 负责真实客户端保存/校验。本包不新增应用层 JWE/MLS、模型任务调度或消息 E2EE。
 
@@ -143,9 +144,9 @@ D24 已允许普通浏览器：正常透传时云只有密文；若云/DNS 被�
 
 隔离全链路测试 `services/cloud/test/relay-e2e.test.mjs` 使用官方 frps/frpc、真实 HAProxy、cloud OIDC/SQLite、真实宿主 TLS adapter；`--resolve` 与测试连接地址覆盖模拟示例域名。覆盖远程本地密码登录/CSRF/setup 拒绝、SSE 更新、2,200 事件尾页/上翻、附件 SHA256 下载、切断控制通道后重连、凭据轮换、已认领另一宿主抢域名拒绝、错误 pin/同域受信 CA 伪造证书拒绝及云撤销立即断流、直连继续可用。云内容入口采集双向原始 TLS 字节，搜索测试正文/密码/Cookie 明文，结合 frps/cloud 日志检查；这是测试流量证据，不声称隐藏 SNI、流量大小和时间。
 
-Mac 无免密码 443 绑定权限，本机用 18443 跑完全相同 SNI 拓扑与 443 TLS authority；不改 hosts、不获取管理员密码。`.github/workflows/relay.yml` 在隔离 Linux 给 HAProxy 绑定能力，默认**实际 TCP 443**，重复完整场景并上传无秘密 JSON 报告。类型检查、cloud 测试、Origin/绑定/附件/SSE 回归另跑。最新结果见 STATE 与 PR checks。
+Mac 无免密码 443 绑定权限，本机用 18443 跑完全相同 SNI 拓扑与 443 TLS authority；不改 hosts、不获取管理员密码。`.github/workflows/relay.yml` 在隔离 Linux 给 HAProxy 绑定能力，默认**实际 TCP 443**，重复完整场景并上传无秘密 JSON 报告。类型检查、cloud 测试、Origin/绑定/附件/SSE 回归另跑。S2b 另有 `Host certificates (Pebble DNS-01)`：官方固定 Pebble/challtestsrv、真实 DNS、假 AliDNS API、安装签名请求、真实配对 pin/TLS 热载与模拟到期续期；仅合成数据，报告不含秘密。最新结果见 STATE 与 PR checks。
 
-本包没有访问真实服务器、DNS、邮件、生产 CA 或用户日用数据；部署需要服务器 TCP 443、示例域名对应 A/AAAA（内容不可开启 CDN TLS 代理）、API/relay 服务端证书、宿主 DNS-01 委托/provider 与宿主 certbot/续期接线。Windows 原生进程、打包分发与五端原生 pin 真机验收在部署/S1c 包。
+S2/S2b 验证没有访问真实服务器、DNS、邮件、生产 CA 或用户日用数据；部署需要服务器 TCP 443、示例域名对应 A/AAAA（内容不可开启 CDN TLS 代理）、API/relay 服务端证书、宿主 DNS-01 provider 的 RAM 私有配置与宿主自动签发开关。Windows 原生进程、打包分发与五端原生 pin 真机验收在部署/S1c 包。
 
 ## 4. 推送转发（S3）
 

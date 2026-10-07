@@ -1,0 +1,37 @@
+name: S2b Host certificates
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+concurrency:
+  group: host-certs-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  certificates:
+    name: Host certificates (Pebble DNS-01)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Download official test tools (SHA256 checked)
+        run: |
+          node scripts/download-pebble.mjs
+          node scripts/download-frp.mjs
+      - name: Signed host DNS, issuance, hot reload and renewal
+        run: node --test services/cloud/test/dns-aliyun.test.mjs services/cloud/test/host-certificates.test.mjs services/cloud/test/host-certificates-pebble.test.mjs
+        env:
+          WEFTMATE_PEBBLE_E2E: 'true'
+          WEFTMATE_FRPC_FILE: ${{ github.workspace }}/.local/frp/frp_0.71.0_linux_amd64/frpc
+          NODE_EXTRA_CA_CERTS: ${{ github.workspace }}/.local/pebble/certs/pebble.minica.pem
+          WEFTMATE_PEBBLE_REPORT: ${{ runner.temp }}/s2b-pebble.json
+      - name: Synthetic certificate verification report
+        uses: actions/upload-artifact@v4
+        with:
+          name: s2b-pebble-verification
+          path: ${{ runner.temp }}/s2b-pebble.json
+          if-no-files-found: error
