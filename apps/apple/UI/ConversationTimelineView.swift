@@ -57,7 +57,8 @@ struct ConversationTimelineView: View {
         Color.clear.frame(height: 0)
             .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)") {
                 guard scenePhase == .active, !appModel.historyBusy, appModel.historyCachedAt == nil else { interactions.suspend(); commands.suspend(); return }
-                interactions.activate(); commands.activate(); await commands.refresh()
+                interactions.activate(); commands.activate()
+                if appModel.taskControlSessions.contains(sessionID) { await commands.refresh() }
                 var policy = ConversationPollingPolicy()
                 while !Task.isCancelled {
                     let old = interactions.approvals, oldQuestions = interactions.questions

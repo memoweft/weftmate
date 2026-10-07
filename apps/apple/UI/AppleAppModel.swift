@@ -700,7 +700,7 @@ final class AppleAppModel: ObservableObject {
     @Published private(set) var timelineMessageIDs: [Int: String] = [:]
     @Published private(set) var timeline = TimelineWindow()
     @Published private(set) var olderBusy = false
-    private var offlineTimeline: TimelineWindow?
+    private var offlineTimeline = false
     private var timelinePolling: UUID?
     private var timelineCache: LocalTimelineCache? {
         localStateDirectory.map { LocalTimelineCache(directory: $0.appendingPathComponent("Timeline")) }
@@ -1058,7 +1058,7 @@ final class AppleAppModel: ObservableObject {
     func open(_ conversation: ConversationSummary) async {
         retireHistoryObservers()
         selectedConversation = conversation
-        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = nil
+        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = false
         historyError = nil
         historyCachedAt = nil
         historyBusy = true
@@ -1084,9 +1084,9 @@ final class AppleAppModel: ObservableObject {
             }
         }
         if let account = draftAccount, let cacheHost, let sessionID = conversation.sessionId,
-           let cached = try? await timelineCache?.read(account: account, hostID: cacheHost, sessionID: sessionID) {
+           let cached = try? await timelineCache?.readPage(account: account, hostID: cacheHost, sessionID: sessionID) {
             guard actionEpoch == epoch, historyRequest == request else { return }
-            offlineTimeline = cached.window; timeline.apply(cached.window.cachedPage(), replace: true)
+            offlineTimeline = true; timeline.apply(cached.page, replace: true)
             messages = (try? await client.timelineMessages(timeline.events, sessionID: sessionID)) ?? messages
             historyCachedAt = cached.cachedAt
         }
@@ -1096,7 +1096,7 @@ final class AppleAppModel: ObservableObject {
             guard actionEpoch == epoch, historyRequest == request else { return }
             messages = result
             if let sessionID = live.sessionId ?? knownBoundSessions[key], let page = await client.cachedTimelinePage(sessionID: sessionID) {
-                timeline.apply(page, replace: true); offlineTimeline = nil
+                timeline.apply(page, replace: true); offlineTimeline = false
                 timelineMessageIDs = await client.cachedTimelineMessageIDs(sessionID: sessionID)
             }
             historyCachedAt = nil
@@ -1136,7 +1136,13 @@ final class AppleAppModel: ObservableObject {
         defer { if actionEpoch == epoch, request == historyRequest { olderBusy = false } }
         do {
             let page: TimelinePage
-            if let offlineTimeline { page = offlineTimeline.cachedPage(before: before) }
+            if offlineTimeline {
+                guard let account = draftAccount, let host = session?.hostId,
+                      let cached = try await timelineCache?.readPage(account: account, hostID: host, sessionID: sessionID, beforeSeq: before) else {
+                    throw APIFailure.invalidResponse
+                }
+                page = cached.page
+            }
             else { page = try await client.timelinePage(sessionID: sessionID, beforeSeq: before) }
             guard actionEpoch == epoch, request == historyRequest else { return }
             timeline.apply(page, older: true)
@@ -1190,9 +1196,7 @@ final class AppleAppModel: ObservableObject {
               let sessionID = conversation.sessionId ?? knownBoundSessions[Self.draftKey(for: conversation)] else { return }
         let window = timeline, actionEpoch = epoch
         do {
-            var cached = try await timelineCache.read(account: account, hostID: session.hostId, sessionID: sessionID)?.window ?? TimelineWindow()
-            cached.merge(window)
-            try await timelineCache.save(account: account, hostID: session.hostId, sessionID: sessionID, window: cached)
+            try await timelineCache.save(account: account, hostID: session.hostId, sessionID: sessionID, window: window)
         } catch { if epoch == actionEpoch { cacheError = "当前记录已读取，但本机时间线缓存尚未更新。" } }
     }
     #if os(iOS)
@@ -1242,7 +1246,7 @@ final class AppleAppModel: ObservableObject {
         retireHistoryObservers()
         historyRequest = UUID()
         selectedConversation = nil
-        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = nil; olderBusy = false
+        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = false; olderBusy = false
         historyBusy = false
         historyError = nil
         historyCachedAt = nil
@@ -1475,7 +1479,7 @@ final class AppleAppModel: ObservableObject {
         session = nil
         conversations = []
         devices = []
-        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = nil; olderBusy = false
+        messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = false; olderBusy = false
         #if os(iOS)
         watchBridge.publish(nil)
         #endif
