@@ -98,10 +98,11 @@ struct WatchHomeView: View {
                     } else { Text("在手机上打开一段对话").font(.caption) }
                     Button("刷新") { model.refresh() }.disabled(model.busy)
                     if let notice = model.notice { Text(notice).font(.caption).foregroundStyle(.secondary) }
-                    Text("前台或刷新时提醒；推送尚未接通。审批需要手机在线。")
-                        .font(.caption2).foregroundStyle(.secondary)
+                    if !model.reachable {
+                        Text("打开手机后可审批").font(.caption2).foregroundStyle(.secondary)
+                    }
                 }.padding(8)
-            }.navigationTitle("WeftMate")
+            }.navigationTitle("WeftMate").tint(.primary)
         }
         .task(id: scenePhase) { if scenePhase == .active { model.refresh() } }
         .accessibilityIdentifier("watchHome")

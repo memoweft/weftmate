@@ -49,7 +49,7 @@ struct MemoryWorkspaceView: View {
                 }
                 if model.hasMore {
                     Button("加载更多") { Task { await model.loadMore() } }
-                        .buttonStyle(.bordered).disabled(model.loading).accessibilityIdentifier("memoryLoadMoreButton")
+                        .buttonStyle(OutlineActionStyle()).disabled(model.loading).accessibilityIdentifier("memoryLoadMoreButton")
                 }
                 if !model.visibleOperations.isEmpty { operationHistory }
             }
@@ -91,7 +91,7 @@ struct MemoryWorkspaceView: View {
                     .textFieldStyle(.roundedBorder).onSubmit { Task { await model.reload() } }
                     .accessibilityIdentifier("memorySearchField")
                 Button("搜索") { Task { await model.reload() } }
-                    .buttonStyle(.bordered).disabled(model.loading).accessibilityIdentifier("memorySearchButton")
+                    .buttonStyle(OutlineActionStyle()).disabled(model.loading).accessibilityIdentifier("memorySearchButton")
             }
         }
     }
@@ -202,7 +202,7 @@ struct MemoryWorkspaceView: View {
                 Button("提交纠正") {
                     if let context = model.actionContext(.correct) { Task { await model.mutate(context) } }
                 }
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(PrimaryActionStyle(fillsWidth: false))
                     .disabled(!model.canMutate || model.correctionValidationMessage != nil || model.correctionText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     .accessibilityIdentifier("correctMemoryButton")
             }
@@ -211,7 +211,7 @@ struct MemoryWorkspaceView: View {
                     .disabled(!model.canMutate || !detail.availableActions.mute.available).accessibilityIdentifier("muteMemoryButton")
                 Button("删除记忆", role: .destructive) { pendingAction = model.actionContext(.deleteItem); confirmingItemDeletion = pendingAction != nil }
                     .disabled(!model.canMutate || !detail.availableActions.delete.available).accessibilityIdentifier("deleteMemoryButton")
-            }.buttonStyle(.bordered)
+            }.buttonStyle(OutlineActionStyle())
             if !model.canMutate { Text("当前修改暂不可用；进行中的操作会显示在最近操作中。") .font(.caption).foregroundStyle(Weave.muted) }
             Text("操作结果未确认时先重新确认；继续操作会接续同一次请求。")
                 .font(.caption).foregroundStyle(Weave.muted)
@@ -235,7 +235,7 @@ struct MemoryWorkspaceView: View {
                                 Button("继续存储清理") { Task { await model.retryCleanup(row.id) } }
                             }
                             if model.busyOperations.contains(row.id) { ProgressView().controlSize(.small) }
-                        }.buttonStyle(.bordered).disabled(model.busyOperations.contains(row.id)).font(.caption)
+                        }.buttonStyle(OutlineActionStyle()).disabled(model.busyOperations.contains(row.id)).font(.caption)
                     }
                 }.accessibilityIdentifier("memoryOperation.\(row.id)")
             }

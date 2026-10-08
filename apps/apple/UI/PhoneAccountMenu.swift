@@ -14,22 +14,23 @@ struct PhoneAccountMenu: View {
         let epoch: UUID
     }
 
+    // Native menu labels expose their title and generated template icon to UIKit accessibility.
     var body: some View {
         Menu {
-            Button { open(.memory) } label: { WeftLabel("记忆", icon: "memory") }
-                .accessibilityIdentifier("phoneMenu.memory")
-            Button { open(.spirit) } label: { WeftLabel("小纬", icon: "pet") }
-                .accessibilityIdentifier("phoneMenu.spirit")
-            Button { open(.health) } label: { WeftLabel("健康", icon: "health") }
-                .accessibilityIdentifier("phoneMenu.health")
+            Button { open(.memory) } label: { Label("记忆", image: "wm-memory") }
+                .accessibilityLabel("记忆").accessibilityIdentifier("phoneMenu.memory")
+            Button { open(.spirit) } label: { Label("小纬", image: "wm-pet") }
+                .accessibilityLabel("小纬").accessibilityIdentifier("phoneMenu.spirit")
+            Button { open(.health) } label: { Label("健康", image: "wm-health") }
+                .accessibilityLabel("健康").accessibilityIdentifier("phoneMenu.health")
             Button("用 WeftMate 账号登录") {
                 Task { await model.signOut(); if model.session == nil { model.cloudLogin.showLogin = true } }
             }
             Divider()
-            Button { open(.devices) } label: { WeftLabel("设备", icon: "desktop") }
-                .accessibilityIdentifier("phoneMenu.devices")
-            Button { open(.settings) } label: { WeftLabel("账户与设置", icon: "account") }
-                .accessibilityIdentifier("phoneMenu.settings")
+            Button { open(.devices) } label: { Label("设备", image: "wm-desktop") }
+                .accessibilityLabel("设备").accessibilityIdentifier("phoneMenu.devices")
+            Button { open(.settings) } label: { Label("账户与设置", image: "wm-account") }
+                .accessibilityLabel("账户与设置").accessibilityIdentifier("phoneMenu.settings")
         } label: {
             WeftIcon("account")
         }
@@ -59,6 +60,7 @@ struct PhoneAccountMenu: View {
                     }
                 }
             }
+            .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
         }
         .onChange(of: model.accountEpoch) { _, _ in route = nil }
     }
