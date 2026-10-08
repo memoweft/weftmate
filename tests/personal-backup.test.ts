@@ -35,7 +35,7 @@ test('BK-1 online SQLite snapshot remains consistent while another connection wr
   try { await sqliteSnapshot(file, out); } finally { clearInterval(timer); db.close(); }
   const copy = new DatabaseSync(out);
   assert.equal(copy.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
-  assert.ok(copy.prepare('SELECT count(*) AS n FROM rows').get().n >= 1500); copy.close();
+  assert.equal(copy.prepare('SELECT count(*) AS n FROM rows').get().n, 1500, 'backup retains the read view from before concurrent WAL commits'); copy.close();
   assert.ok(writes > 0, 'writes overlap the online backup');
   await assert.rejects(sqliteSnapshot(file, path.join(f.base, 'aborted.sqlite3'), () => { throw Object.assign(new Error('capture deadline'), { code: 'BACKUP_PAUSE_TIMEOUT' }); }), { code: 'BACKUP_PAUSE_TIMEOUT' });
 });
@@ -291,4 +291,25 @@ test('BK-1 upgrade and account-deletion snapshots complete online; only restore 
   const restarted = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => {}, validate: async () => {} });
   assert.equal(restarted.isRestoredStartup(), true);
   await restarted.started(); assert.equal(restarted.isRestoredStartup(), false); await restarted.finishShutdown();
+});
+
+
+test('BK-1 database copy runs after file writers resume and a pinned WAL view excludes later writes', async t => {
+  const f = await fixture(t), dbFile = path.join(f.root, 'memory.sqlite3');
+  const db = new DatabaseSync(dbFile); db.exec('PRAGMA journal_mode=WAL; CREATE TABLE rows(id INTEGER); INSERT INTO rows VALUES(1)');
+  let paused = false;
+  const row = await snapshot({ ...f, withCapture: async work => {
+    paused = true;
+    try { await work(() => {}); } finally { paused = false; }
+    // This commit occurs after file admission resumes but before online copying.
+    db.exec('INSERT INTO rows VALUES(2)');
+  } });
+  assert.equal(paused, false); assert.equal(db.prepare('SELECT count(*) AS n FROM rows').get().n, 2); db.close();
+  const stage = path.join(f.base, 'pinned'); await verify(path.join(f.directory, row.id), stage);
+  const copied = new DatabaseSync(path.join(stage, 'memory.sqlite3'));
+  assert.equal(copied.prepare('SELECT count(*) AS n FROM rows').get().n, 1); copied.close();
+  let copiedAfterRelease = false;
+  await snapshot({ ...f, withCapture: async work => { paused = true; try { await work(() => {}); } finally { paused = false; } },
+    databaseBackup: async (source, target) => { assert.equal(paused, false); copiedAfterRelease = true; await sqliteSnapshot(source, target); } });
+  assert.equal(copiedAfterRelease, true);
 });

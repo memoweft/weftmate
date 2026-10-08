@@ -3,6 +3,7 @@ import { createReadStream, createWriteStream, existsSync } from 'node:fs';
 import { copySnapshotTree } from '../runtime/dsh-adapter/snapshot-files.mjs';
 import { mkdir, readdir, lstat, readFile, writeFile, open, rename, rm, cp } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
+import { DatabaseSync, backup } from 'node:sqlite';
 import { createGzip, createGunzip } from 'node:zlib';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -61,17 +62,31 @@ export function scrubStore(document) {
   }
   return next;
 }
-// SQLite's online backup API includes committed WAL transactions; never copy live database pages.
-export async function sqliteSnapshot(source, destination, check = () => {}) {
-  const { DatabaseSync, backup } = await import('node:sqlite');
+// Pin a WAL read view at the file capture boundary. Other connections keep
+// writing while the online API copies even a large database after file admission
+// resumes. A read transaction keeps the archive at this view, not a later one.
+function pinDatabase(source) {
   const db = new DatabaseSync(source, { readOnly: true });
-  try { await backup(db, destination, { rate: 100, progress: () => check() }); check(); } finally { db.close(); }
+  let open = true;
+  const close = () => { if (open) { open = false; db.close(); } };
+  try {
+    db.exec('BEGIN');
+    db.prepare('SELECT count(*) FROM sqlite_schema').get();
+    return { async copy(destination, check = () => {}) {
+      try { await backup(db, destination, { progress: () => check() }); check(); }
+      finally { close(); }
+    }, close };
+  } catch (error) { close(); throw error; }
+}
+export async function sqliteSnapshot(source, destination, check = () => {}) {
+  return pinDatabase(source).copy(destination, check);
 }
 export async function snapshot({ root, directory, reason = 'manual', now = Date.now(), databaseBackup = sqliteSnapshot, withCapture = work => work(() => {}) }) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const id = `${new Date(now).toISOString().replace(/[:.]/g, '-')}-${randomUUID()}.wmb`;
   const stage = path.join(directory, `.${id}.stage`), temporary = path.join(directory, `.${id}.tmp`);
   await mkdir(stage, { mode: 0o700 });
+  const databases = [];
   try {
     const manifest = { format: 'weftmate-local-backup', version: 1, sourceRoot: root, createdAt: new Date(now).toISOString(), reason,
       excluded: ['model keys', 'cloud tokens and identity keys', 'device sessions and private keys', 'browser sessions/cache'], files: [] };
@@ -79,12 +94,11 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
     // native DSH admission are paused. Copy bytes, never hard-link mutable logs.
     // Check the deadline between bounded chunks, including directory traversal.
     await withCapture(async check => {
-      const databases = [];
       copySnapshotTree(root, stage, { check, included: name => included(name) &&
         // Native logs were captured in their writer's event loop, immediately
         // after flush. Do not read them a second time from this process.
         !(name === 'dsh-home/sessions' && existsSync(path.join(stage, name))),
-        database: (source, target) => databases.push([source, target]) });
+        database: (source, target) => databases.push({ source, target, pinned: databaseBackup === sqliteSnapshot ? pinDatabase(source) : null }) });
       // The ownership map is scrubbed before releasing the capture boundary.
       const identity = await readFile(path.join(root, 'personal-access/cloud-identity/identity.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
       if (identity) {
@@ -93,9 +107,14 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
           .map(({ issuer, sub, ownerId }) => ({ issuer, sub, ownerId }));
         await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, JSON.stringify(owners), { mode: 0o600 });
       }
-      for (const [source, target] of databases) { check(); await databaseBackup(source, target, check); }
       check();
     }, stage);
+    // File writers and native admission are already resumed. Each default
+    // database source was pinned before release, so this copies the same view
+    // while live WAL writes continue, without the two-second file-pause limit.
+    for (const { source, target, pinned } of databases) {
+      if (pinned) await pinned.copy(target); else await databaseBackup(source, target);
+    }
     // Hashing, sanitizing captured bytes and compression never hold the write pause.
     for (const name of await files(stage)) {
       const target = path.join(stage, name);
@@ -112,7 +131,7 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
     try { await handle.sync(); } finally { await handle.close(); }
     await rename(temporary, path.join(directory, id));
     return { id, createdAt: manifest.createdAt, reason, size: (await lstat(path.join(directory, id))).size, verification: 'valid' };
-  } finally { await rm(stage, { recursive: true, force: true }); await rm(temporary, { force: true }); }
+  } finally { for (const { pinned } of databases) pinned?.close(); await rm(stage, { recursive: true, force: true }); await rm(temporary, { force: true }); }
 }
 
 /** Stream validation/extraction. No archive path is trusted; all bytes and the manifest are hashed. */
