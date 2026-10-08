@@ -40,11 +40,13 @@ test('native stream socket owns the slot; a cancelled or crashed owner releases 
     const foreground = await acquireModelSlot('foreground', undefined, bridge.url, { profileId: 'background' });
     const memory = fetch(`${bridge.memoryBaseUrl('background')}/chat/completions`, { method: 'POST',
       headers: { authorization: 'Bearer synthetic', 'content-type': 'application/json' },
-      body: JSON.stringify({ model: '@current', messages: [] }) });
+      body: JSON.stringify({ model: '@current', messages: [], response_format: { type: 'json_object' } }) });
     await pause(); assert.equal(calls.length, 0);
     await foreground(); await pause(); assert.equal(calls.length, 0, 'native tools are still executing');
     idle = true; assert.equal((await memory).status, 200);
     assert.equal(calls[0].body.model, 'other-model');
+    assert.deepEqual(calls[0].body.response_format, { type: 'json_object' },
+      'Core structured output survives the host background queue and route rewrite');
     assert.equal(calls.length, 1);
     const abort = new AbortController();
     await acquireModelSlot('foreground', abort.signal, bridge.url, { profileId: 'background' });

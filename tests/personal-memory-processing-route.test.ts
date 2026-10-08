@@ -113,17 +113,21 @@ test('account memory workers follow only the owner session route and restart wit
   assert.equal(instances[1].closed, false, 'changing A background model does not restart B memory')
   const rpc = instances.at(-1), request = rpc.request.bind(rpc)
   let jobReads = 0
+  const recallQueries: string[] = []
   rpc.request = async (method: string, params: any) => {
     if (method === 'query_jobs') return { jobs: [{ worker: { state: ++jobReads === 1 ? 'processing' : 'done' } }] }
-    if (method === 'preview_recall') return { world_revision: 4, preview: {
+    if (method === 'preview_recall') { recallQueries.push(params.query); return { world_revision: 4, preview: {
       selected_item_ids: [['cognition', 'cog-1'], ['entity', 'entity-2']],
       rendered_recall: '记忆：安全的偏好摘要\n记忆：安全的人物名',
-    } }
+    } } }
     if (method === 'query_interactions') return { rendered_context: '' }
     return request(method, params)
   }
   const recalled = await manager.recall(ownerA, { query: 'ready after formation', sessionId: 'background-session', modelTier: 'cloud' })
   assert.equal(jobReads, 2, 'recall waits for Core accepted background jobs')
+  assert.ok(recallQueries.includes('“语言”“例子”“术语”的表达偏好？'),
+    'standing style recall probes source vocabulary through Core, without rewriting facts')
+  assert.ok(recallQueries.includes('我叫什么？'), 'identity remains a separate Core recall')
   assert.deepEqual(recalled.memories, [{ id: 'cog-1', kind: 'cognition', summary: '安全的偏好摘要' },
     { id: 'entity-2', kind: 'entity', summary: '安全的人物名' }])
 
