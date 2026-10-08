@@ -7,6 +7,27 @@ import { sourceRange } from '../src/runtime/dsh-adapter/source-range.mjs'
 
 const message = (receipt: string) => ({ id: receipt, source: { kind: 'user', rpcId: receipt }, content: [] })
 
+test('exact stop preserves interrupted claimed goal once through native append, without draining unrelated queue', () => {
+  const goal = { ...message('receipt'), content: [{ type: 'text', text: 'original goal and location' }] }
+  const session = { id: 'session', header: { agentPreset: 'personal-remote' },
+    events: [{ seq: 0, type: 'turn/start', data: { turn: 1 } }] as any[],
+    append(type: string, data: any, options: any) {
+      assert.deepEqual(options, { surfaceOp: 'append' })
+      this.events.push({ seq: this.events.length, type, data: structuredClone(data) })
+    } }
+  const unrelated = message('queued')
+  const agent = { session, phase: { kind: 'running', turn: 1, abort: new AbortController() },
+    inbox: { nextStep: [], nextTurn: [unrelated], hasPending: true },
+    cancel: () => agent.phase.abort.abort(), wakeDriver: () => {} }
+  const claims = new Map([['session', new Map([[1, new Map([['receipt', goal]])]])]])
+  const stop = () => stopExactTask({ get: () => agent }, claims, { sessionId: 'session', receiptIds: ['receipt'] })
+  assert.equal(stop().status, 'cancel_requested')
+  assert.deepEqual(session.events.filter(e => e.type === 'user/message').map(e => e.data), [goal])
+  assert.equal(stop().status, 'unconfirmed')
+  assert.equal(session.events.filter(e => e.type === 'user/message').length, 1)
+  assert.deepEqual(agent.inbox.nextTurn, [unrelated])
+})
+
 for (const reader of ['native', 'timeline']) test(`early stop before user persistence becomes resumable via ${reader} evidence`, async t => {
   t.mock.timers.enable({ apis: ['Date'], now: Date.parse('2026-10-08T00:00:00Z') })
   const entries: any[] = [

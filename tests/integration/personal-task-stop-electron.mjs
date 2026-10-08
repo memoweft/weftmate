@@ -47,6 +47,8 @@ const modelServer = createServer(async (request, response) => {
   const body = JSON.parse(raw);
   assert.equal(body.model, 'synthetic-stop-model');
   const record = { closed: false, startedAt: Date.now(),
+    compaction: raw.includes('compaction engine'),
+    originalGoal: raw.includes('synthetic blocking task'), resume: raw.includes('synthetic resume explicit next step'),
     kind: /Generate the session title|compaction engine/.test(raw) ? 'background'
       : raw.includes('synthetic unrelated next task') ? 'unrelated' : 'target' };
   requests.push(record);
@@ -58,7 +60,8 @@ const modelServer = createServer(async (request, response) => {
   write('working');
   record.complete = () => {
     if (record.closed || !completeFollowingRequests && record.kind === 'target') return;
-    write('next task completed'); write('', 'stop'); response.end('data: [DONE]\n\n');
+    write(record.compaction && record.originalGoal ? 'checkpoint: synthetic blocking task; next task completed'
+      : 'next task completed'); write('', 'stop'); response.end('data: [DONE]\n\n');
   };
   if (completeFollowingRequests || record.kind === 'background') record.complete();
 });
@@ -183,6 +186,8 @@ try {
   const later = await postCommand(origin, account, { requestId: randomUUID(), kind: 'session.message',
     targetDeviceId: hostId, sessionId: session.sessionId, text: 'synthetic unrelated next task', mode: 'queue' });
   const stopRequestId = randomUUID();
+  if (earlyStop) assert.ok(!(await history(origin, account, session.sessionId)).some(event =>
+    event.type === 'user.message' && event.data.receiptId === target.receiptId));
   const stopped = await requestJson(origin, account, 'POST',
     `/personal/v1/tasks/${target.commandId}/stop`, { requestId: stopRequestId });
   assert.equal(stopped.status, 202, JSON.stringify(stopped.body));
@@ -195,8 +200,9 @@ try {
     return end?.data?.reason === 'aborted' ? end : null;
   }, 30_000);
   if (earlyStop) {
-    assert.ok(!(await history(origin, account, session.sessionId)).some(event =>
-      event.type === 'user.message' && event.data.receiptId === target.receiptId));
+    assert.equal((await history(origin, account, session.sessionId)).filter(event =>
+      event.type === 'user.message' && event.data.receiptId === target.receiptId).length, 1,
+    'native cancellation preserves the original claimed goal exactly once');
     assert.ok(!requests.some(item => item.kind === 'target'));
   } else await until(() => requests.some((item) => item.kind === 'target' && item.closed === true), 10_000);
   assert.equal(targetTurn.data.reason, 'aborted');
@@ -247,6 +253,8 @@ try {
       event.data?.turn === start?.data?.turn && event.data?.reason === 'completed') ?? null;
   }, 30_000);
   assert.ok(resumedTurn.data.turn > laterTurn.data.turn);
+  if (earlyStop) assert.ok(requests.some(item => item.resume && item.originalGoal),
+    'the resumed model request includes the original interrupted goal');
   const finalTask = await requestJson(origin, account, 'GET', `/personal/v1/tasks/${target.commandId}`);
   assert.equal(finalTask.status, 200);
   assert.equal(finalTask.body.control.state, 'active');
@@ -257,7 +265,7 @@ try {
   assert.equal(commands.body.commands.some((item) => item.kind === 'session.cancel'), false);
   const original = commands.body.commands.find((item) => item.commandId === target.commandId);
   assert.equal(original.receiptId, target.receiptId);
-  console.log(`[synthetic-stop] ${earlyStop ? 'claimed input aborted before user persistence' : 'target aborted; upstream closed'}; unrelated turn completed; explicit resume completed`);
+  console.log(`[synthetic-stop] ${earlyStop ? 'claimed input stopped before normal persistence; native goal preserved once' : 'target aborted; upstream closed'}; unrelated turn completed; explicit resume completed`);
 } finally {
   try { await stopOwned(); }
   finally {
