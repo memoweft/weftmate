@@ -8,6 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
+| Codex · Windows-5 | M1-0b 同对话排队、取消与插话 | [PR #66](https://github.com/memoweft/weftmate/pull/66)（`wp/m1-0b-queue-steer`）：默认 steer（插话）、显式 queue（排队）、原生回执归属与 FIFO（先入先出）、取消待执行输入、停止后续队已实现；新增5项、账号/命令/多账号32项及时间线/精确停止定向回归、类型检查通过，隔离 Electron（桌面程序框架）+固定 DSH 合成模型闭环通过。Qwen action-05两轮600.61/600.48秒超时，aborted（已停止）/未提前写汇总均通过，续做受共享单槽等待与传输超时阻塞，真实模型验收未通过；约23分钟空闲轮询亦未得到空闲窗口，需独占验证窗口复验。代码提交6项CI（持续集成）全绿，最终文档提交看PR当前检查；界面等FE-1a合并后另包接入，待Claude审查 |
 | Codex · Windows-4 | S1e D30 账号生命周期 | [PR #68](https://github.com/memoweft/weftmate/pull/68)（`wp/s1e-account-lifecycle`）：DPoP（设备密钥持有证明）+ 密码注销与逐表删除/中继断流、换绑验证码与旧邮箱通知、设备改名、退出其他设备已实现；云签名归属快照撤销宿主云会话并保留本地数据/应急登录。相关云 44/44、Windows 宿主 9/9 与类型检查通过；真实云进程 + 隔离宿主换绑/注销/应急登录及在线中继断流通过，CLIENT_API 7.9；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查；不改界面、不部署、不发真实邮件 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | DS-1 设计令牌 | [PR #59](https://github.com/memoweft/weftmate/pull/59)（`wp/ds-1-design-tokens`）：唯一母版 design/tokens/ 与可重复生成脚本、桌面 / 手机 Web（网页界面）变量和 Android（安卓）资源 / 原生辅助常量接入；Apple（苹果客户端）交接产物在 design/tokens/generated/apple/，未改 apps/apple/。Android 0.8.6/code19；15 对截图逐像素一致、4,016 项样式值一致、相关交互及发布158/158、令牌2/2、Android JVM（Java 虚拟机）27/27、构建与类型检查通过。[截图与边界](../tests/evidence/ds-1/README.md)；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
@@ -84,6 +85,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- **M1-0b**：CLIENT_API 3.5 / 3.6 / 4.1 新增发送 `intent:steer|queue`（省略默认 steer，旧 mode 兼容）、Command.intent / 原生插话 rootTaskId、POST `/tasks/{taskId}/cancel`；queued/started/ended 投影原生 inbox（收件队列）/step，保留 seq / receiptId，生命周期关联根命令 ID 与 turnTaskId。停止保留其他排队目标，取消竞争已开始时409；桌面/手机/Apple 界面另包接入，未修改界面。
 - **S1e / D30**：CLIENT_API **7.9** 新增云 DPoP `/auth/account/delete`、`/auth/email/change/{request,confirm}`、`/devices/rename`、`/auth/logout/others`；撤权签名响应新增可选 `memberships:[{sub,epoch}]`，新宿主按缺失归属撤销云访问/保留本地应急登录；旧邮箱接口兼容，schema 6 不变。LG-1 / LG-2 账户设置按本节接线，删除不可恢复确认须明确云/本地范围。
 
 - **H3**：CLIENT_API 6.4 向既有 schemaVersion=1 日摘要添加可选 `derived/hourly`（算法版本、个人恢复度、相对负荷、睡眠、小时电量 / 压力区间）；最多25个UTC小时桶，12 KiB不变，H1兼容。H3来源强制禁止云读取，较新H1云许可也不得放宽；接口路径 / 账号隔离 / 删除重试不变。

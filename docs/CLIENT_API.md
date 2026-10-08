@@ -5,7 +5,7 @@
 
 ## 1. 范围与通用约定
 
-第 3、6 节覆盖 **89 个本机业务方法/路径组合**（第 3 节 85 项 + 第 6 节健康 4 项）与 **12 个桌面 UI 静态路径**；第 7 节另列云账号、宿主身份与中继。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
+第 3、6 节覆盖 **90 个本机业务方法/路径组合**（第 3 节 86 项 + 第 6 节健康 4 项）与 **12 个桌面 UI 静态路径**；第 7 节另列云账号、宿主身份与中继。同一路径的不同 HTTP 方法分别计数；`/commands` 的不同 `kind` 不重复计数，参数化资源路径计一种。表中路径均省略 `/personal/v1` 前缀，`{id}` 为调用方填入的资源标识；示例用短 ID 与示意哈希，真实请求须满足格式约束。响应示例仅保留关键字段，`Auth`、`Command`、`Task`、`Receipt` 等对象的 JSON 例子见第 2 节。未写查询参数的接口不要加查询串。
 
 | 客户端标记 | 本次核对来源与含义 |
 |---|---|
@@ -51,7 +51,7 @@
 }
 ```
 
-`Command`：`state` 为 `pending / dispatching / accepted_by_dsh / accepted_by_host / observed / uncertain / rejected`；可有 `errorCode`、`rootTaskId`、`taskAction`、`conversationId`、`sourceSyncEventId`、附件元数据、项目/浏览器字段。`desktop.write_artifact` 成果命令另含 `taskId,artifactId,fileName,contentType,size,sha256,verification`；只有 `observed` 且校验通过才可下载。模型命令不在此对象中。
+`Command`：`state` 为 `pending / dispatching / accepted_by_dsh / accepted_by_host / observed / uncertain / rejected`；可有 `errorCode`、`intent:"steer" / "queue"`、`rootTaskId`、`taskAction`、`conversationId`、`sourceSyncEventId`、附件元数据、项目/浏览器字段。`desktop.write_artifact` 成果命令另含 `taskId,artifactId,fileName,contentType,size,sha256,verification`；只有 `observed` 且校验通过才可下载。模型命令不在此对象中。
 
 ```json
 {
@@ -147,17 +147,21 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | `kind` | 其他字段与语义 |
 |---|---|
 | `session.create` | 必填 `modelProfileId`；响应命令有预分配 `sessionId`，等待其实际可用后再发消息 |
-| `session.message` | 必填 `sessionId,text`，`text` ≤8,192个 UTF-16 单元；可选 `mode:"queue" / "steer"`，默认 `queue`；可选 `attachments`、`attachmentMessageId + originalAttachments`、`sourceSyncEventId`。只在有附件时允许空文字；同步来源事件须与当前设备/会话/文字对应 |
+| `session.message` | 必填 `sessionId,text`，`text` ≤8,192个 UTF-16 单元；可选 `intent:"steer" / "queue"`，默认 `steer`（插话）；旧 `mode:"queue" / "steer"` 继续兼容，同时传两者必须一致；可选 `attachments`、`attachmentMessageId + originalAttachments`、`sourceSyncEventId`。只在有附件时允许空文字；同步来源事件须与当前设备/会话/文字对应 |
 | `session.cancel` | 必填 `sessionId`；取消会话当前执行，不等于某个根任务停止已被观察到 |
 | `desktop.open_app` | 必填 `appId:"notepad"`；现存窄能力，只宿主所有者可用，非 M1 通用工具方案；四类入口未见直接调用该命令 |
 
-发送示例：`{"requestId":"send-1","kind":"session.message","targetDeviceId":"host-…","sessionId":"session-…","text":"整理资料","mode":"queue"}`。DSH 已接收不等于完成；现有 `queue` 参数不等于 M1-0b 的可取消任务队列已完成。
+发送示例：`{"requestId":"send-1","kind":"session.message","targetDeviceId":"host-…","sessionId":"session-…","text":"整理资料","intent":"queue"}`。DSH 已接收不等于完成。运行中省略 `intent` 或传 `steer` 使用 DSH 原生 next-step（下一步）输入，在下一执行边界调整当前任务；已经发生的副作用不会被撤回。没有运行任务时直接开始一轮。明确的新目标传 `queue`，使用原生 next-turn（下一回合）队列，按发送登记顺序自动逐个开始。同一会话两个客户端同时发送，由宿主串行登记到 DSH，顺序以原生时间线 seq 为准。
+
+`Command.intent` 返回已解析的意图。当前任务中生效的插话命令另有 `rootTaskId` 与 `taskAction:"supplement"`，不生成独立目标；按原生入队时的当前回合回执关联，即使尚未持久化 user.message 也可以绑定。重试沿用原 `requestId` 与原体；`intent` 与同值旧 `mode` 归一为同一请求。显式 `mode:"queue"` 的旧客户端仍会排队；完全不传两者的旧客户端采用 D9 默认插话。
+
+客户端接入：运行中输入默认发 `intent:"steer"`；用户选择「新任务」时发 `intent:"queue"`。收到 task.queued 在原对话显示排队卡，task.started 将其转为运行状态，task.ended 将其结束；取消按钮调用 3.6 的 `/tasks/{taskId}/cancel`，停止按钮继续调用 `/stop`。界面接入另包，本包只交付后端与契约。
 
 会话暂存附件 ID 必须 `attachment-<uuid>`，`requestId` 与后续消息相同；`attachments` 元数据五字段必须齐全：`attachmentId,name,contentType,size,sha256`。最多4个，图像单个≤5 MiB，文本单个/合计≤16 KiB，总计≤10 MiB；文本 MIME 支持 `text/plain,text/markdown,text/csv,application/json,application/x-ndjson`。GET 会话附件当前只读持久图片，不能用它下载所有暂存文本。
 
 同步原件单个≤1 GiB，保留原 MIME，不意味着模型能读取其格式；显示版只收 JPEG、≤512 KiB，原件必须先存在。`originalAttachments` 最多4个，另需 `attachmentMessageId`；用于保留原件与模型输入的关系，不把1 GiB原件直接当成模型输入。同步消息的 `attachments` 数量上限为8，不能与发送命令上限混用。
 
-### 3.6 停止 / 任务控制与命令查询（8）
+### 3.6 停止 / 任务控制与命令查询（9）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
@@ -167,12 +171,13 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | GET `/tasks/{taskId}` | 无；根命令 ID | 200 `Task`（无 `task` 外壳） | 404 `NOT_FOUND` | 桌、手、安、苹 |
 | GET `/tasks/{taskId}/sources/{snapshotId}` | 无；只读该任务引用的项目/网页快照 | 200 `{"source":{"snapshotId":"snapshot-…","relativePath":"README.md","lineStart":1,"lineEnd":10,"fileSha256":"…","text":"…"}}` | 404 `NOT_FOUND`；快照校验失败 | 桌、手、安、苹 |
 | POST `/tasks/{taskId}/stop` | `{"requestId":"stop-1"}` | 202 `{"task":Task}`；重放同请求不重复发起 | 409 `TASK_NOT_READY / REQUEST_CONFLICT`；404 `NOT_FOUND` | 桌、手、安、苹 |
-| POST `/tasks/{taskId}/supplements` | `requestId,text`（沿用消息上限） | 202 `{"task":Task,"command":Command}`，子命令 `taskAction:"supplement"` | 409 `TASK_NOT_READY / REQUEST_CONFLICT` | 桌、手、安 |
+| POST `/tasks/{taskId}/cancel` | `{"requestId":"cancel-1"}`；只取消尚未开始的根任务 | 202 `{"task":Task}`；原请求可重放，`control.stopStatus:"stopped"` 表示原生队列移除已确认 | 409 `TASK_NOT_READY`（已开始/已结束/回执不确定，不会改为停止当前执行）、`REQUEST_CONFLICT`；404 `NOT_FOUND` | 后端可用，各端界面另包 |
+| POST `/tasks/{taskId}/supplements` | `requestId,text`（沿用消息上限） | 202 `{"task":Task,"command":Command}`，子命令 `taskAction:"supplement"`，使用原生 steer | 409 `TASK_NOT_READY / REQUEST_CONFLICT` | 桌、手、安 |
 | POST `/tasks/{taskId}/resume` | `requestId,text`；停止已确认且 `canResume` | 202 `{"task":Task,"command":Command}`，子命令 `taskAction:"resume"` | 409 `TASK_NOT_READY / REQUEST_CONFLICT` | 桌、手、安 |
 
 来源快照项目字段还含 `totalLines,readAt,hasMore,projectId,projectRevision`；网页字段为 `kind:"webpage",title,url,requestedUrl,readAt,contentSha256,truncated,links`，可有分段/版本字段。网页预览兼容字段 `fileSha256` 是返回文本的哈希；项目 `fileSha256` 是原文件哈希，不是摘录文本哈希。
 
-任务控制当前仅适用于 `personal-remote` 会话根消息；已接管的 `shared-chat` 会话命令仍可读/发/取消，但 `/tasks` 不提供它的任务详情（404 NOT_FOUND）。停止先登记 `stop_requested` 并使未处理审批/提问失效，再驱动取消与后台 job 停止；HTTP 202 不证明副作用已停止。`stopStatus` 可为 `requested / cancel_requested / stopped / completed / unconfirmed`，结合 `canResume,pendingReceipts,backgroundJobs` 呈现。M1-0 的任务卡、取消排队尚未作为独立契约落地；现有任务读取接口保留给对话内展示。
+任务控制当前仅适用于 `personal-remote` 会话根消息；已接管的 `shared-chat` 会话命令仍可读/发/取消，但 `/tasks` 不提供它的任务详情（404 NOT_FOUND）。停止先登记 `stop_requested` 并使未处理审批/提问失效，再驱动取消与后台 job 停止；HTTP 202 不证明副作用已停止。`stopStatus` 可为 `requested / cancel_requested / stopped / completed / unconfirmed`，结合 `canResume,pendingReceipts,backgroundJobs` 呈现。M1-0b：`/stop` 与 `/cancel` 共用原生按回执控制：停止当前任务及已归属的插话，保留其他排队目标，停止结束后下一个自动开始。取消只移除尚在原生队列中的指定目标；若它已被领取，返回 409，客户端刷新状态后提供停止按钮。取消尚未发到 DSH 的 pending 命令会在宿主撤回，之后不派发；该情形没有原生 task.queued/ended，客户端用返回 Task 更新本地登记卡。取消重放不重复移除；同 requestId 改用 stop/cancel 另一动作返回 REQUEST_CONFLICT。取消状态复用 `control.state:"stop_requested"` 与 `stopStatus:"stopped"`，不新增执行状态机。单独停止不清空队列；需要一起取消时，客户端逐个调用排队目标的 cancel。队列复用 DSH 持久 inbox（收件队列），宿主恢复后保留其原生待执行输入；仅本宿主同一对话排队，不涵盖 D17 电脑离线时云端排队。
 
 ### 3.7 审批模式、审批与提问（8）
 
@@ -353,11 +358,13 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | `question.asked` | `taskId,stepId,callId,toolName,summary,questions,turn,detailRef,state` | 原生 `ask_user_question` 工具调用；具体提问操作使用 3.7 的原生问题批次 UUID。问题列表追加 `observedSeq`，用于定位该 turn 内不晚于水位的最后一个提问调用 |
 | `question.answered` | `taskId,stepId,callId,summary,turn,detailRef,state` | `ask_user_question` 的原生工具结果；答案原文从详情取。提交答案登记仍以问题接口的 answered / answerAcceptedAt / resolved 区分，不能把登记当成执行端消费 |
 | `artifact.created` | `taskId,artifactId,fileName,contentType,size,detailSeq,completedStep,artifacts?` | 原生 tool/result 含成果引用时，该 seq 投影为成果条目；completedStep 带同一步的完成字段，客户端同时结束该 stepId。同一步生成多个文件时，artifacts 数组逐项含 taskId、artifactId、fileName、contentType、size；顶层字段保留首项供旧客户端读取。每项以 artifactId 渲染卡片，共享原生 seq。此 taskId 可为根命令 ID，completedStep.taskId 仍是原生回合键。预览、下载和验证元数据仍使用 3.8 成果接口 |
-| `task.started` | `taskId,turn` | 原生 step/start 的 step=1；保留独立 seq 的既有 turn.started |
-| `task.ended` | `taskId,turn,reason,nativeTurnEndSeq,endReasonKind?` | 原生最终 step/end，后续 turn/end 确认其结束原因；中间模型 step 不结束任务。保留独立 seq 的既有 turn.ended；未真正进入 step 的阻断回合仍只返回 turn.ended |
-| `task.queued` | `taskId`，可附请求信息 | 保留该公开类型的投影；当前固定 DSH 不产生此事件，本包不新增队列生产者、排队取消或插话调度；M1-0b / D9 另包确认原生来源 |
+| `task.started` | `taskId,turn,receiptId?,commandId?,requestId?,turnTaskId?` | 原生 step/start 的 step=1；原生输入回执关联已登记命令时 taskId 为根命令 ID，turnTaskId 为 `turn-<turn>`；保留独立 seq 的既有 turn.started |
+| `task.ended` | `taskId,turn?,reason,receiptId?,commandId?,requestId?,turnTaskId?,nativeTurnEndSeq?,endReasonKind?,tasks?` | 执行结束来自原生最终 step/end + turn/end；排队取消来自原生 inbox canceled（已取消）splice，`reason:"canceled"` 且无 turn。中间模型 step 不结束任务；保留 turn.ended，未进入 step 的阻断回合仍只返回 turn.ended |
+| `task.queued` | `taskId,receiptId,text,commandId?,requestId?,tasks?` | 投影原生 `agent/inbox/spliced` 向 next-turn 的插入；seq 保留原值，taskId 为已关联的根命令 ID。next-step 插话不生成新目标排队卡。极少数原生批量 splice 用 tasks 数组表示同 seq 的多项，顶层为首项 |
 
-既有日志不会被回写，也不向固定 DSH 追加私有事件类型：生命周期来自原生 step 标记，成果来自工具结果，所以旧日志同样可投影。固定 DSH 的持久事件目录不支持注册外部类型；读取必须保持原生恢复兼容。原有成果与控制信息仍可通过根任务快照补充到原对话。DSH 自带工具界面按 callId 关联调用与结果、用可折叠原始详情展示；本实现复用这一呈现方式，独立 Web 界面保持自身组件和样式。
+M1-0b 生命周期事件的 `receiptId` 为原生关联键。与已登记命令匹配时，`taskId` 指向 `/tasks/{id}` 根命令；步骤仍按 `turnTaskId` 或 turn 关联，不能把步骤的原生回合键发到任务控制接口。极短的派发窗口里，回执尚未写入命令表，task.queued 的 taskId 暂为 receiptId，started/ended 暂保留原生回合键；客户端通过 Command.receiptId 与 rootTaskId 补齐关联，不假造新 seq。用户消息仍仅在 DSH 实际领取时出现，以 receiptId 结束对应排队展示。取消的任务没有 user.message，保留 canceled 时间线事实。queued/started/ended 使用原生 seq，历史分页和 SSE（服务端事件流）重连水位保持不变。
+
+既有日志不会被回写，也不向固定 DSH 追加私有事件类型：生命周期来自原生 step 标记与 inbox splice（队列变更），成果来自工具结果，所以旧日志同样可投影。固定 DSH 的持久事件目录不支持注册外部类型；读取必须保持原生恢复兼容。原有成果与控制信息仍可通过根任务快照补充到原对话。DSH 自带工具界面按 callId 关联调用与结果、用可折叠原始详情展示；本实现复用这一呈现方式，独立 Web 界面保持自身组件和样式。
 
 M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows 的 `pwsh`、其他桌面平台的 `bash`，以及 `read/write/edit`、`grep/glob`、`web_fetch`、`todo_write`、`subagent`。浏览器统一为 `browser` 的 open/read/follow 动作，不要求专用浏览器工作区或用户原文含 URL。旧 `personal_open_notepad`、`personal_save_document`、项目读取与三个浏览器工具不再注册，也没有个人预设的回合调用限次。既有日志及来源读取仍兼容。
 
@@ -369,7 +376,7 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 
 桌面运行块默认展开，手机默认收起。完成或该任务结束后自动收为「执行了 N 步 · 用时 X」；可以再次展开。步骤详情再次点开才请求原始参数 / 输出，并提供复制。审批 / 提问卡使用原有账号、来源、回执检查和操作接口，已处理记录保留在原位置；不新增「总是允许此类」权限。
 
-成果通过桌面右侧面板 / 手机全屏页打开，关闭回到原对话，可下载 / 保存。来源、成果及原有任务停止控制位于对话内；独立任务页、任务详情弹窗和侧栏入口已删除，运行会话显示状态点。输入区停止保持既有语义；排队和插话不属于本包。
+成果通过桌面右侧面板 / 手机全屏页打开，关闭回到原对话，可下载 / 保存。来源、成果及原有任务停止控制位于对话内；独立任务页、任务详情弹窗和侧栏入口已删除，运行会话显示状态点。输入区停止保持既有语义；M1-0b 排队和插话后端契约见 3.5 / 3.6，界面接入另包。
 
 ## 5. 客户端差异（Apple逐项对照）
 
@@ -427,7 +434,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
 | 分发更新 | 无认证app/native/downloads六项请求；Apple公开更新另有PublicUpdates，不能宣称缺所有更新能力 | 当前保持已有公开分发；本契约只记录认证入口 |
 | Watch | 旧首页没有任务进度、审批或完成触感 | 已在 A3 修复：通过 iPhone WatchConnectivity 读取一行进度、允许一次/拒绝、最近回复；前台/刷新观察到新完成才触感提醒。尚无远程推送，审批须手机可达，未验收真机配对 |
-| 五端共同待实现 | M1-2 已有分类授权接口，Apple 在 A4a 接入（Watch保持允许一次）；排队取消、消息 chunk 流、D9 插话调度仍待实现；现有 timeline task.queued 不新增生产者 | Windows M1-0b / D9，Apple 随正式契约接入 |
+| 五端共同待实现 | M1-2 已有分类授权接口，Apple 在 A4a 接入（Watch保持允许一次）；消息 chunk（文本片段）流仍待实现；排队取消与 D9 插话客户端待接；Windows M1-0b 已投影原生队列变更与提供取消接口，Apple 待接 | Windows M1-0b / D9，Apple 随正式契约接入 |
 
 本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a已更新此文档与STATE契约栏。
 
