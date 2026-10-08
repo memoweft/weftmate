@@ -23,11 +23,11 @@ async function userKey(name) {
 }
 const keys = { qwen: await userKey('MODEL_SWITCH_UNIFIED_KEY'), mimo: await userKey('MIMO_API_KEY') };
 if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key')) {
-  console.log('MIMO_API_KEY absent; checking User environment every 10 minutes, at most one hour.');
+  console.log(`${new Date().toISOString()} MIMO_API_KEY absent; checking User environment every 10 minutes, at most one hour.`);
   for (let check = 1; check <= 6 && !keys.mimo; check++) {
     await new Promise(r => setTimeout(r, 600000));
     keys.mimo = await userKey('MIMO_API_KEY');
-    console.log(`MiMo key check ${check}/6: ${keys.mimo ? 'present' : 'absent'}`);
+    console.log(`${new Date().toISOString()} MiMo key check ${check}/6: ${keys.mimo ? 'present' : 'absent'}`);
   }
 }
 if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
@@ -82,6 +82,7 @@ try {
   assert.equal((await api('/settings/models', { backgroundModelProfileId: selected.id }, 'PATCH')).status, 200);
   const memory = (await api('/memory/status')).body;
   console.log(`Memory state: ${memory.state} ${memory.reasonCode ?? ''}`);
+  assert.equal(memory.capabilities?.inject, true, 'The isolated Core must be configured before recording memory results');
   writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'Baseline runner', provisioned: true }), { mode: 0o600 });
   let scenarios = await loadScenarios('eval/scenarios/*.yaml');
   if (diagnostic) scenarios = scenarios.filter(s => s.id === 'action-06-delete-approval').map(s => ({ ...s, timeoutSec: 600 }));
@@ -94,7 +95,7 @@ try {
 } finally {
   if (app) { await app.evaluate(({ app }) => app.quit()).catch(() => {}); await app.close().catch(() => {}); }
   writeFileSync(join(root, 'host.log'), output);
-  const sensitive = /credentials\.json$|Cookies(?:-journal)?$|setup-[^/]+\.json$|secure-snapshot.*\.yml$|security-credentials\.patch\.yml$/;
+  const sensitive = /credentials\.json$|(?:Cookies|Trust Tokens)(?:-journal)?$|setup-[^/]+\.json$|secure-snapshot.*\.yml$|security-credentials\.patch\.yml$/;
   function clean(dir) { for (const name of readdirSync(dir)) { const file = join(dir, name), info = lstatSync(file);
     if (info.isSymbolicLink()) continue;
     if (info.isDirectory()) clean(file); else if (sensitive.test(name)) rmSync(file, { force: true }); } }

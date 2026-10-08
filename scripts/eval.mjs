@@ -310,7 +310,11 @@ async function runScenario(scenario, context) {
           if (approval.status !== 'pending') continue;
           if (seenApprovals.has(approval.approvalId)) continue;
           const decision = input.approvals?.[approvalIndex];
-          if (!decision || (decision.reasonMatches && !new RegExp(decision.reasonMatches, 'u').test(approval.reason ?? ''))) throw new Error('Unexpected approval; scenario has no matching decision (left pending)');
+          if (!decision || (decision.reasonMatches && !new RegExp(decision.reasonMatches, 'u').test(approval.reason ?? ''))) {
+            turn.unexpectedApproval = { approvalId: approval.approvalId, toolName: approval.toolName,
+              reason: approval.reason, riskCategories: approval.riskCategories, status: 'pending' };
+            throw new Error('Unexpected approval; scenario has no matching decision (left pending)');
+          }
           seenApprovals.set(approval.approvalId, approval);
           await context.client.call(`/sessions/${enc(session)}/approvals/${enc(approval.approvalId)}`, { requestId: requestId(), outcome: decision.outcome }, deadline);
           turn.approvals.push({ approvalId: approval.approvalId, reason: approval.reason, decisionOutcome: decision.outcome, status: 'answered' });

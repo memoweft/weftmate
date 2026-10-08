@@ -195,6 +195,8 @@ test('approve and reject declared steps, separate per-turn snapshots; unexpected
   assert.equal(report.results[0].status, 'passed');
   assert.equal(report.results[1].status, 'failed');
   assert.match(report.results[1].reason, /Unexpected approval/);
+  assert.match(report.results[1].turns[0].unexpectedApproval.reason, /delete/);
+  assert.equal(report.results[1].turns[0].unexpectedApproval.status, 'pending');
   assert.match(report.results[2].reason, /Expected approval was not observed/);
   assert.equal(host.calls.filter(c => c.path.includes('/approvals/') && c.method === 'POST').length, 2);
   assert.ok(host.calls.some(c => c.body?.kind === 'session.cancel'));
