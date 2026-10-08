@@ -1,0 +1,164 @@
+{
+  "verifiedAt": "2026-10-08T20:44:45.703682+00:00",
+  "baseCommit": "157e907a6674edf8c8358cd811a574414974addd",
+  "sourceFiles": [
+    {
+      "file": "apps/apple/Config/Base.xcconfig",
+      "sha256": "4cf7c7bfd409a5c7d76c20763fb811e06112554c07f269bfe1c45ac0396515db"
+    },
+    {
+      "file": "apps/apple/Config/MacInfo.plist",
+      "sha256": "1952febd631ea1440f24c72222688099849c8681350fe66920e7b6fef0e0f097"
+    },
+    {
+      "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/Models.swift",
+      "sha256": "e0dc43ccdab4290e0b5797e935b484a5c83dc24d147ef5fe48ded8066efc0b8e"
+    },
+    {
+      "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/NativeUpdates.swift",
+      "sha256": "e0b72a965461fa8cabf167a3698e5348f4759ea32f6d769cb9369c26154440df"
+    },
+    {
+      "file": "apps/apple/Packages/WeftMateCore/Sources/WeftMateCore/PersonalClient.swift",
+      "sha256": "33480339cc54b012413f87cda4c8aae1fd8014ee241ec92f4935ddc3cd9a9f4e"
+    },
+    {
+      "file": "apps/apple/Packages/WeftMateCore/Tests/WeftMateCoreTests/NativeUpdateTests.swift",
+      "sha256": "d18dbb5b4f2100644a41503c236e2f2234fd994754ced3c4086f306c0f3d2e69"
+    },
+    {
+      "file": "apps/apple/Scripts/generate_project.py",
+      "sha256": "6d282e8fb6ab246006a69b9b316899babaa4eb3a4c02d81d12f8de481565b88f"
+    },
+    {
+      "file": "apps/apple/Scripts/upd2_fixture.mjs",
+      "sha256": "8dc7a07d241ed05b6adfd50bf0b5f4670b074aca5358b22fd5f2afb7b7c36795"
+    },
+    {
+      "file": "apps/apple/Tests/AppleContractUIFixture.swift",
+      "sha256": "ed64cb743664718d2caef027bd2ea63ead37cd6e3a96fb1e74ef4d4e2383aa8d"
+    },
+    {
+      "file": "apps/apple/Tests/UPD2MacCapture.swift",
+      "sha256": "7fe2fe61366f2d54da8bdb46eaa3119d9c57a4bec3cd17af14cf0bbf0c76fecf"
+    },
+    {
+      "file": "apps/apple/Tests/UPD2UITests.swift",
+      "sha256": "02a96260b3f88a1d81b345e2d68edfd5be26259ca20d7b4c22b884c952534b25"
+    },
+    {
+      "file": "apps/apple/UI/AppleSettingsModel.swift",
+      "sha256": "d24d247d646828eac8f4e3b71ff0e269eca9ad52a2d1c5a9a86834c3ea2c8150"
+    },
+    {
+      "file": "apps/apple/UI/SettingsView.swift",
+      "sha256": "6126199de73e00f5ed05f25955d4e3b2253d3efa19c118c0a502f1f158622d38"
+    },
+    {
+      "file": "apps/apple/WeftMate.xcodeproj/project.pbxproj",
+      "sha256": "d7cb23045df87daf90f3747c11c0b99e4f445c2b3b04bf56aefab906fdbbac95"
+    },
+    {
+      "file": "apps/apple/macOS/MacUpdateModel.swift",
+      "sha256": "81f9049759c689339cc1de2d7056f7d2c3e98797bbeadce3ce1ca9c9a74f7c25"
+    },
+    {
+      "file": "apps/apple/macOS/MacUpdateView.swift",
+      "sha256": "b4af4b3eb55c611abd56678c132132d366c729091a5017afcf83d6da2efe3947"
+    },
+    {
+      "file": "scripts/release/apple-manifest.mjs",
+      "sha256": "e755623a21a74f11cdbcebb959faa83959e7e899d378e40ef8a4f21b7a394892"
+    },
+    {
+      "file": "src/main.mjs",
+      "sha256": "2901850d2fb852b261d41e636d85e7d1c9b1c7ada625ccaf51fe6da4abfa55a1"
+    },
+    {
+      "file": "src/personal-access/http.mjs",
+      "sha256": "751703a7daa6f1a00a32aed92e90fa773c1825d1d40899bee54561497a866078"
+    },
+    {
+      "file": "src/personal-access/index.mjs",
+      "sha256": "d159bd093c89fd562902899de6b3f6e13bd7d2d03111daf56319f0eec75d403f"
+    },
+    {
+      "file": "tests/apple-update-release.test.ts",
+      "sha256": "ee41491d0e28626b45a2b140086514d446583bd1b1e70e0c36bc74d5252fa5d8"
+    },
+    {
+      "file": "tests/personal-access-core.test.ts",
+      "sha256": "8b36f5382b8d808aae9754bb02ed017d71458ddb2f199cb6c854e44bd1931491"
+    }
+  ],
+  "sourceTreeDigest": "75a735c67d33438113cd27b5e704294c1d06e7b0eabe113cef4d9eaa13b30b2d",
+  "swiftTests": {
+    "passed": 31,
+    "upd2": 10
+  },
+  "nodeTests": {
+    "passed": 21
+  },
+  "typecheck": "passed",
+  "macDebugBuild": "passed",
+  "iosDebugBuild": "passed",
+  "iosUITests": {
+    "passed": 2,
+    "failed": 0,
+    "skipped": 0
+  },
+  "macUITestRunner": "automation unavailable; native self-window capture used",
+  "macScenes": [
+    "unconfigured",
+    "v2 signature verified and download page visible",
+    "tampered signature rejected",
+    "minimum native version warning"
+  ],
+  "configuredProductionSource": false,
+  "realDeviceOrDeployment": false,
+  "watchSimulatorStarted": false,
+  "screenshots": [
+    {
+      "file": "iphone-compatibility.png",
+      "sha256": "72e2dca30fde91477b28570b0b3f6d1f48577cd6146304fe2555b4cac42e8b57",
+      "width": 1206,
+      "height": 2622,
+      "capturedAt": "2026-10-08T20:41:07.729095+00:00"
+    },
+    {
+      "file": "iphone-versions.png",
+      "sha256": "b44fbf6e8e99e287df2dcdec6e0163f8fda685398976a32b4a5102615f315842",
+      "width": 1206,
+      "height": 2622,
+      "capturedAt": "2026-10-08T20:41:07.733121+00:00"
+    },
+    {
+      "file": "mac-compatibility.png",
+      "sha256": "413b75de1a5195f87a4eaf6c32f7a6c0fc264bc78459894d1160a8b4c4b919f3",
+      "width": 1000,
+      "height": 760,
+      "capturedAt": "2026-10-08T20:43:20.317329+00:00"
+    },
+    {
+      "file": "mac-signature-rejected.png",
+      "sha256": "5a204633930ec435dfed2d349577507b745bc09e329ca7f73f9ae032e2eb8249",
+      "width": 1000,
+      "height": 760,
+      "capturedAt": "2026-10-08T20:43:11.446998+00:00"
+    },
+    {
+      "file": "mac-unconfigured.png",
+      "sha256": "ad58d87e98aea9b57b6918a670acc49241ac2df9e9ec04607ff103ce624c7a7f",
+      "width": 1000,
+      "height": 760,
+      "capturedAt": "2026-10-08T20:42:52.030041+00:00"
+    },
+    {
+      "file": "mac-v2-detected.png",
+      "sha256": "6eb2d19b4a1e0c31b45d8c2fece7ebb4826c46c14d56ee8595c0cfa0efd326be",
+      "width": 1000,
+      "height": 760,
+      "capturedAt": "2026-10-08T20:43:01.728370+00:00"
+    }
+  ]
+}

@@ -2,113 +2,56 @@ import Foundation
 import SwiftUI
 import WeftMateCore
 
-@MainActor
-final class MacUpdateModel: ObservableObject {
-    enum Phase {
-        case idle
-        case checking
-        case updateAvailable(PublicMacRelease)
-        case upToDate(PublicMacRelease)
-        case localIsNewer(PublicMacRelease)
-        case noCompatibleRelease
-        case failure(String)
-    }
-
-    @Published private(set) var phase: Phase = .idle
+@MainActor final class MacUpdateModel: ObservableObject {
+    @Published private(set) var statusText = "未配置更新源"
+    @Published private(set) var checking = false
+    @Published private(set) var release: NativeMacRelease?
     let architecture = PublicUpdateArchitecture.current
-    private let version: String?
-    private let build: String?
-    private let client = PublicUpdateClient()
     private var checkTask: Task<Void, Never>?
-    private var generation: UInt64 = 0
-
+    private let configuration: NativeUpdateConfiguration?
+    private let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "未知"
+    private let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "未知"
     init() {
-        version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String
-        build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String
-    }
-
-    var installedVersionDisplay: String {
-        guard let version, !version.isEmpty, let build, !build.isEmpty else {
-            return "无法读取本机版本"
+        var info = Bundle.main.infoDictionary ?? [:]
+        var loopback = false
+        #if DEBUG
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("--ui-testing"), let i = args.firstIndex(of: "--upd2-feed"), args.indices.contains(i + 1),
+           let url = URL(string: args[i + 1]), url.scheme == "http", ["127.0.0.1", "localhost"].contains(url.host),
+           let k = args.firstIndex(of: "--upd2-public-key"), args.indices.contains(k + 1) {
+            info["WeftMateMacUpdateFeed"] = args[i + 1]
+            info["WeftMateMacUpdatePublicKey"] = args[k + 1]
+            loopback = true
         }
-        return "\(version) / \(build)"
+        #endif
+        configuration = try? NativeUpdateConfiguration(feed: info["WeftMateMacUpdateFeed"] as? String,
+            publicKey: info["WeftMateMacUpdatePublicKey"] as? String, channel: info["WeftMateMacUpdateChannel"] as? String ?? "stable", allowsLoopback: loopback)
+        statusText = configuration?.statusText ?? "更新源配置无效"
     }
-
-    var checking: Bool {
-        if case .checking = phase { return true }
-        return false
-    }
-
-    var release: PublicMacRelease? {
-        switch phase {
-        case .updateAvailable(let release), .upToDate(let release), .localIsNewer(let release):
-            return release
-        default:
-            return nil
-        }
-    }
-
-    var downloadURL: URL {
-        if case .updateAvailable(let release) = phase { return release.downloadURL }
-        return PublicUpdateClient.macLandingURL
-    }
-
-    var downloadLabel: String {
-        if case .updateAvailable = phase { return "下载新版 DMG" }
-        return "查看 Mac 下载页"
-    }
-
-    var otherDevicesURL: URL { PublicUpdateClient.downloadsURL }
-
+    var installedVersionDisplay: String { "\(version) / \(build)" }
     func check() {
-        guard checkTask == nil else { return }
-        generation &+= 1
-        let request = generation
-        phase = .checking
+        guard !checking else { return }
+        release = nil
+        guard let configuration else { statusText = "更新源配置无效"; return }
+        guard configuration.feed != nil else { statusText = "未配置更新源"; return }
+        guard configuration.publicKey?.count == 32 else { statusText = "更新源公钥未配置"; return }
+        checking = true; statusText = "检查中"
         checkTask = Task { [weak self] in
             guard let self else { return }
-            defer { if self.generation == request { self.checkTask = nil } }
+            defer { self.checking = false; self.checkTask = nil }
             do {
-                let installed = try PublicInstalledVersion(version: self.version, build: self.build)
-                let result = try await self.client.check(installed: installed, architecture: self.architecture)
-                guard self.generation == request, !Task.isCancelled else { return }
-                switch result {
-                case .updateAvailable(let release): self.phase = .updateAvailable(release)
-                case .upToDate(let release): self.phase = .upToDate(release)
-                case .localIsNewer(let release): self.phase = .localIsNewer(release)
-                case .noCompatibleRelease: self.phase = .noCompatibleRelease
-                }
+                let data = try await NativeUpdateFetcher().fetch(configuration)
+                let result = try SignedNativeUpdate.evaluate(data, configuration: configuration)
+                try Task.checkCancellation()
+                if try result.isNewer(than: self.version, build: self.build) {
+                    self.release = result; self.statusText = "有新版本 \(result.version) / \(result.build)，请打开下载页"
+                } else { self.statusText = "已是最新版本" }
             } catch {
-                guard self.generation == request, !Task.isCancelled else { return }
-                self.phase = .failure(Self.message(for: error))
+                guard !Task.isCancelled else { self.statusText = configuration.statusText; return }
+                self.statusText = error as? NativeUpdateFailure == .signature
+                    ? "更新包签名校验未通过。请保留当前版本并联系维护者。" : "更新失败，请稍后重试。"
             }
         }
     }
-
-    func cancelCheck() {
-        generation &+= 1
-        checkTask?.cancel()
-        checkTask = nil
-        if checking { phase = .idle }
-    }
-
-    private static func message(for error: Error) -> String {
-        guard let failure = error as? PublicUpdateFailure else {
-            return "暂时无法检查更新，请稍后重试。"
-        }
-        switch failure {
-        case .invalidInstalledVersion:
-            return "无法读取本机版本，暂时不能比较更新。"
-        case .network, .timeout:
-            return "暂时无法连接官网，请稍后重试。"
-        case .certificate:
-            return "无法验证官网连接，请稍后重试。"
-        case .cancelled:
-            return "检查已取消，可以重新检查。"
-        case .httpStatus:
-            return "官网暂时无法响应，请稍后重试。"
-        case .invalidManifest, .unsupportedSchema, .unsafeLink, .responseTooLarge, .redirect:
-            return "官网更新信息暂时无法使用，请稍后重试。"
-        }
-    }
+    func cancelCheck() { checkTask?.cancel() }
 }
