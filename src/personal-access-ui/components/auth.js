@@ -120,5 +120,5 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         if (value.retrySeconds) ui.errorAt('cloud-auth-error', `尝试太多次，请等待 ${value.retrySeconds} 秒后重试。`);
     }
     function restoreCloudDraft(draft) { if (draft) { ui.byId('message-text').value = draft; ui.updateAvailability(); } }
-    return { paintIdentity, loginBusy, setupBusy, loginError, setupError, loginClearPasswords, setupClearPasswords, mountAuth, paintCloudAuth, restoreCloudDraft };
+    return { openLegal: showLegal, paintIdentity, loginBusy, setupBusy, loginError, setupError, loginClearPasswords, setupClearPasswords, mountAuth, paintCloudAuth, restoreCloudDraft };
 };

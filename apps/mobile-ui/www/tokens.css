@@ -174,6 +174,10 @@
   --wm-size-740: 740px;
   --wm-size-780: 780px;
   --wm-size-960: 960px;
+  --wm-size-settings-width: 1120px;
+  --wm-size-settings-height: 820px;
+  --wm-size-settings-sidebar: 224px;
+  --wm-size-settings-control: 280px;
   --wm-font-relative-body: 1rem;
   --wm-font-relative-heading1: 1.6rem;
   --wm-font-relative-heading2: 1.25rem;

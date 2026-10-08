@@ -50,7 +50,12 @@ async function launch(root = profile) {
     const settings = await api('/backups/settings', { enabled: false, directory: join(base, 'Backups'), dailyDays: 7, weeklyCopies: 4 }, 'PATCH'); assert.equal(settings.status, 200, JSON.stringify(settings.body));
 }
 async function closed() { await until(() => child.exitCode !== null, 120000); }
-async function settingsPage() { if (!await page.getByRole('button', { name: '刷新备份列表', exact: true }).isVisible()) { await page.getByRole('button', { name: '账户菜单', exact: true }).click(); await page.getByRole('button', { name: '设置', exact: true }).click(); } await page.getByRole('button', { name: '刷新备份列表', exact: true }).click(); }
+async function settingsPage() {
+    const dialog = page.getByRole('dialog', { name: '设置', exact: true });
+    if (!await dialog.isVisible()) { await page.getByRole('button', { name: '账户菜单', exact: true }).click(); await page.getByRole('button', { name: '设置', exact: true }).click(); }
+    await dialog.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '备份与恢复', exact: true }).click();
+    await page.getByRole('button', { name: '刷新备份列表', exact: true }).click();
+}
 async function captureBackup(name) {
     await page.getByRole('heading', { name: '备份与恢复', exact: true }).scrollIntoViewIfNeeded();
     await page.waitForTimeout(350); // Existing settings entrance motion completes before the viewport capture.

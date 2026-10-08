@@ -1,5 +1,6 @@
 /* Desktop backup controls, using the existing settings form and token styles. */
 globalThis.WeftUiComponents.factories.backup = (core, ui) => {
+    let showSettingsBackups;
     function mountBackup() {
         const section = ui.element('section', 'card group backup-settings'); section.setAttribute('aria-label', '备份与恢复'); section.dataset.settingsGroup = '此电脑'; section.dataset.settingsCategory = 'backups';
         section.append(ui.element('h2', '', '备份与恢复'));
@@ -9,12 +10,13 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         const form = ui.element('form'), inputs = {};
         function field(parent, name, text, type = 'text') {
             const label = ui.element('label'), input = ui.element('input'); input.name = name; input.type = type;
-            input.required = type !== 'checkbox'; if (type === 'number') input.min = '1';
-            if (type === 'checkbox') label.append(input, ui.element('span', '', text));
+            input.setAttribute('aria-label', text); input.required = type !== 'checkbox'; if (type === 'number') input.min = '1';
+            if (type === 'checkbox') label.append(ui.element('span', '', text), input);
             else label.append(ui.element('span', '', text), input);
             parent.append(label); return input;
         }
         inputs.enabled = field(form, 'enabled', '每日自动备份', 'checkbox');
+        globalThis.WeftSettingsControls.toggle(inputs.enabled);
         inputs.directory = field(form, 'directory', '备份目录');
         inputs.dailyDays = field(form, 'dailyDays', '最近保留天数', 'number');
         inputs.weeklyCopies = field(form, 'weeklyCopies', '每周保留份数', 'number');
@@ -65,8 +67,7 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         create.addEventListener('click', () => void run(async () => { await core.createBackup(); await refresh(); notice.textContent = '备份已完成。'; }));
         form.addEventListener('submit', event => { event.preventDefault(); void run(async () => { await core.saveBackupSettings({ enabled: inputs.enabled.checked, directory: inputs.directory.value, dailyDays: Number(inputs.dailyDays.value), weeklyCopies: Number(inputs.weeklyCopies.value) }); notice.textContent = '备份设置已保存。'; }); });
         importForm.addEventListener('submit', event => { event.preventDefault(); void run(async () => { await core.importBackup(importPath.value); await refresh(); notice.textContent = '备份已导入并通过校验，请在列表中选择恢复。'; }); });
-        // Read only when the settings surface becomes visible, after authentication.
-        new MutationObserver(() => { if (!ui.byId('account-view').hidden) void run(refresh); }).observe(ui.byId('account-view'), { attributes: true, attributeFilter: ['hidden'] });
+        showSettingsBackups = () => { void run(refresh); };
     }
-    return { mountBackup };
+    return { mountBackup, showSettingsBackups: () => showSettingsBackups() };
 };
