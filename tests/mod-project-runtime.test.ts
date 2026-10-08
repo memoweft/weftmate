@@ -1,11 +1,108 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 import { link, mkdtemp, readFile, symlink, writeFile } from 'node:fs/promises'
+import fs from 'node:fs/promises'
+import { syncBuiltinESMExports } from 'node:module'
 import { dirname, join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { ModProjectRuntime } from '../src/runtime/mod-projects/index.mjs'
+import { ModProjectStore, atomicJson, readJson } from '../src/runtime/mod-projects/store.mjs'
 
 const settle = (ms = 20) => new Promise(resolve => setTimeout(resolve, ms))
+
+test('Windows atomic rename retries only sharing errors within a short bound and cleans staging', { skip: process.platform !== 'win32' }, async t => {
+  const root = await mkdtemp(join(tmpdir(), 'weftmate-mod-rename-'))
+  const path = join(root, 'run.json')
+  const rename = fs.rename
+  let attempts = 0
+  let alwaysFail = false
+  let code = 'EPERM'
+  const mocked = t.mock.method(fs, 'rename', async (...args: Parameters<typeof fs.rename>) => {
+    attempts++
+    if (alwaysFail || attempts <= 2) throw Object.assign(new Error('fixture sharing error'), { code })
+    return rename(...args)
+  })
+  syncBuiltinESMExports()
+  try {
+    await atomicJson(path, { status: 'failed' })
+    assert.equal(attempts, 3)
+    assert.deepEqual(await readJson(path), { status: 'failed' })
+    for (const errorCode of ['EPERM', 'EBUSY', 'EACCES']) {
+      attempts = 0; alwaysFail = true; code = errorCode
+      await assert.rejects(atomicJson(path, { status: 'stopped' }), { code })
+      assert.equal(attempts, errorCode === 'EACCES' ? 1 : 5)
+      assert.deepEqual(await readJson(path), { status: 'failed' }, 'failed replacement retains the previous record')
+      assert.deepEqual(await fs.readdir(root), ['run.json'])
+    }
+  } finally { mocked.mock.restore(); syncBuiltinESMExports() }
+})
+
+test('run reads and updates share the pending write queue and preserve the last terminal state', async () => {
+  const store = new ModProjectStore(await mkdtemp(join(tmpdir(), 'weftmate-mod-file-queue-')))
+  await store.saveRun('project', { run_id: 'run', status: 'starting', revision: 0 })
+  let entered!: () => void, release!: () => void
+  const updating = new Promise<void>(resolve => { entered = resolve })
+  const gate = new Promise<void>(resolve => { release = resolve })
+  const failure = store.updateRun('project', 'run', async current => {
+    entered(); await gate
+    return { ...current, status: 'failed', revision: current.revision + 1 }
+  })
+  await updating
+  const observed = store.run('project', 'run')
+  const lateStart = store.updateRun('project', 'run', current => current.status === 'starting'
+    ? { ...current, status: 'running' } : current)
+  release()
+  assert.equal((await failure).status, 'failed')
+  assert.equal((await observed).revision, 1, 'read waits for the write already in progress')
+  assert.equal((await lateStart).status, 'failed')
+})
+
+test('failed start and stopped child settle only after durable lifecycle writes', async () => {
+  const f = await prepared({ validationModel: async () => 'validation', model: async () => 'ok' })
+  const updateRun = f.runtime.store.updateRun.bind(f.runtime.store)
+  let entered!: () => void, release!: () => void
+  let gatedStatus = 'stopped'
+  let reached = new Promise<void>(resolve => { entered = resolve })
+  let gate = new Promise<void>(resolve => { release = resolve })
+  f.runtime.store.updateRun = (projectId, runId, change) => updateRun(projectId, runId, async current => {
+    const next = await change(current)
+    if (next?.status === gatedStatus && current?.status !== gatedStatus) { entered(); await gate }
+    return next
+  })
+  const run = await f.runtime.start(f.project.projectId)
+  let stopped = false
+  const stop = f.runtime.stop(f.project.projectId, { expectedControlRevision: run.controlRevision }).then(value => { stopped = true; return value })
+  await reached
+  assert.equal(stopped, false, 'exit is not published before its terminal record')
+  release()
+  assert.equal((await stop).status, 'stopped')
+  await f.runtime.updateWorkspace(f.project.projectId, { files: files({ crash: true }) })
+  const broken = await f.runtime.createCandidate(f.project.projectId)
+  await f.runtime.validateVersion(f.project.projectId, broken.versionId)
+  await f.runtime.activateVersion(f.project.projectId, broken.versionId)
+  gatedStatus = 'failed'
+  reached = new Promise<void>(resolve => { entered = resolve })
+  gate = new Promise<void>(resolve => { release = resolve })
+  let rejected = false
+  const start = f.runtime.start(f.project.projectId, { userInitiated: true }).catch(error => { rejected = true; throw error })
+  const failure = assert.rejects(start, /business boom/)
+  await reached
+  assert.equal(rejected, false, 'start rejection waits for the failed run record')
+  release()
+  await failure
+  assert.equal((await f.runtime.inspectRun(f.project.projectId)).run.status, 'failed')
+  assert.equal((await f.runtime.listIncidents()).length, 1, 'incident is durable when start rejects')
+})
+
+test('event persistence errors reject the public start without an unhandled callback rejection', async () => {
+  const f = await prepared({ validationModel: async () => 'validation', model: async () => 'ok' })
+  await f.runtime.updateWorkspace(f.project.projectId, { files: files({ crash: true }) })
+  const broken = await f.runtime.createCandidate(f.project.projectId)
+  await f.runtime.validateVersion(f.project.projectId, broken.versionId)
+  await f.runtime.activateVersion(f.project.projectId, broken.versionId)
+  f.runtime.store.updateRun = async () => { throw new Error('fixture persistence failure') }
+  await assert.rejects(f.runtime.start(f.project.projectId, { userInitiated: true }), /fixture persistence failure/)
+})
 
 function files({ crash = false, badValidationState = false, stopCheckpoint = false } = {}) {
   return {
@@ -282,7 +379,6 @@ test('a real child crash has one durable incident and requirements stay independ
   await f.runtime.validateVersion(f.project.projectId, version.versionId)
   await f.runtime.activateVersion(f.project.projectId, version.versionId)
   await assert.rejects(f.runtime.start(f.project.projectId, { userInitiated: true }), /business boom/)
-  await settle(50)
   const incidents = await f.runtime.listIncidents()
   assert.equal(incidents.length, 1)
   assert.equal(incidents[0].status, 'pending')
@@ -315,7 +411,6 @@ test('resolution ignores caller supplied receipts and requires this runtime’s 
   await f.runtime.validateVersion(f.project.projectId, broken.versionId)
   await f.runtime.activateVersion(f.project.projectId, broken.versionId)
   await assert.rejects(f.runtime.start(f.project.projectId, { userInitiated: true }), /business boom/)
-  await settle(50)
   const incident = (await f.runtime.listIncidents())[0]
   await f.runtime.claimIncident(incident.incidentId, 'dsh-maintainer')
   await assert.rejects(

@@ -173,10 +173,10 @@ test('shared session raw upload, command refs, owner read and exact command retr
       return { contentType: 'image/png', bytes }
     },
   }
-  const service = await createPersonalAccessService({ root, port: 0, backend,
+  let service = await createPersonalAccessService({ root, port: 0, backend,
     sharedProfileIsFormal: (value: { id: string }) => value.id === marker.id })
   try {
-    const { origin, hostId } = await service.start()
+    let { origin, hostId } = await service.start()
     const register = async (username: string) => {
       const response = await fetch(`${origin}/personal/v1/auth/register`, { method: 'POST',
         headers: { origin, 'content-type': 'application/json' },
@@ -242,6 +242,18 @@ test('shared session raw upload, command refs, owner read and exact command retr
       await delay(10)
     }
     assert.equal(acceptedState, 'accepted_by_dsh')
+    // Close waits for dispatch cleanup, so this retry definitely runs after
+    // accepted image staging is released, independent of platform speed.
+    await service.close()
+    service = await createPersonalAccessService({ root, port: 0, backend,
+      sharedProfileIsFormal: (value: { id: string }) => value.id === marker.id })
+    origin = (await service.start()).origin
+    const exactRetry = await write(a, command)
+    assert.equal(exactRetry.status, 202)
+    assert.equal((await exactRetry.json()).command.commandId, commandId)
+    assert.equal(sent.length, 1)
+    assert.equal((await write(a, { ...command, text: 'changed' })).status, 409)
+    assert.equal((await write(a, { ...command, attachments: [{ ...attachment, name: 'changed.png' }] })).status, 409)
     const secondId = `attachment-${uuid(4)}`
     const secondUrl = `${origin}/personal/v1/sessions/${sessionId}/attachments/${secondId}` +
       `?requestId=send-rejected-image&name=${encodeURIComponent(name)}`
