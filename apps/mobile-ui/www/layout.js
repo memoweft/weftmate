@@ -26,13 +26,25 @@ const mobileMarkup = String.raw`
       <div id="cloud-device-banner" class="cloud-device-banner" role="status" aria-live="polite" hidden></div>
       <button id="profile-link" class="profile-link"><span class="avatar" id="drawer-avatar">我</span><span><strong id="drawer-name">本机个人空间</strong><small>个人资料与设置</small></span><span class="icon icon-settings"></span></button>
     </nav>
+    <div id="cloud-access-banner" class="cloud-access-banner" role="status" aria-live="polite" hidden></div>
     <main id="main">
+      <section id="cloud-auth-page" class="page active" aria-label="账号登录">
+        <div id="login-view" class="cloud-auth-card"></div>
+        <section id="cloud-wait-view" class="cloud-auth-card" hidden>
+          <span class="auth-brand" aria-hidden="true"></span>
+          <h1 id="cloud-wait-title">在你已登录的设备上允许这台设备</h1>
+          <p id="cloud-wait-status" role="status"></p>
+          <button id="cloud-wait-retry" class="button primary" type="button">检查批准状态</button>
+          <button id="cloud-wait-cancel" class="button quiet" type="button">取消并换账号</button>
+        </section>
+      </section>
+      <section id="cloud-settings-page" class="page"><div id="cloud-settings-view" class="cloud-settings"></div><div id="pending-devices"></div></section>
       <section id="home-page" class="page">
         <div class="home-search"><input id="home-search" class="search" type="search" placeholder="搜索会话" aria-label="搜索所有会话"></div>
         <div id="home-conversations" class="home-conversations conversation-list" aria-label="会话列表"></div>
         <button id="home-settings" class="profile-link"><span class="icon icon-settings"></span><span>设置与账户</span></button>
       </section>
-      <section id="chat-page" class="page active" aria-label="对话">
+      <section id="chat-page" class="page" aria-label="对话">
         <div id="chat-scroll" class="chat-scroll"><div id="chat-content" class="chat-content"></div></div>
         <button id="jump-latest" class="jump-latest" hidden>回到最新 <span class="icon icon-down"></span></button>
         <div id="composer-dock" class="composer-dock">

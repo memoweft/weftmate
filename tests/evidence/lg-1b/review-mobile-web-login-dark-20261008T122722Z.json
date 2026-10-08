@@ -1,0 +1,9 @@
+{
+  "platform": "mobile-web",
+  "scene": "login",
+  "theme": "dark",
+  "commit": "be219bc0be69156bead4089c61a4f1ad55e949ef",
+  "generatedAt": "2026-10-08T12:27:22.735Z",
+  "synthetic": true,
+  "source": "隔离真实云登录与原生手机验收"
+}
