@@ -10,6 +10,7 @@ final class TaskDirectoryModel: ObservableObject {
     let sessionId: String
     let expectedHostId: String
     let accountEpoch: UUID
+    @Published private(set) var supplementReceiptIDs = Set<String>()
     @Published private(set) var rootCommands: [TaskRootCommandMetadata] = []
     @Published private(set) var loading = false
     @Published private(set) var error: String?
@@ -84,6 +85,7 @@ final class TaskDirectoryModel: ObservableObject {
                 error = "本次显示的任务已达到上限。请刷新查看最新记录；已有记录未删除。"
                 return
             }
+            supplementReceiptIDs = (before == nil ? [] : supplementReceiptIDs).union(page.supplementReceiptIDs)
             rootCommands = existing + page.rootCommands
             unsupportedRootCount = (before == nil ? 0 : unsupportedRootCount) + page.unsupportedRootCount
             cursor = page.nextCursor; hasMore = page.hasMore; hasRead = true; lastReadAt = Date()
@@ -114,7 +116,7 @@ final class TaskDirectoryModel: ObservableObject {
         return true
     }
     private func clearContent() {
-        worker?.cancel(); worker = nil; rootCommands = []; cursor = nil; loading = false
+        worker?.cancel(); worker = nil; rootCommands = []; supplementReceiptIDs = []; cursor = nil; loading = false
         hasRead = false; hasMore = false; limitReached = false; unsupportedRootCount = 0; lastReadAt = nil; error = nil
     }
 }

@@ -14,6 +14,13 @@ struct ConversationResourceList: View {
                     Button { resources.open(.output(output.id, output.fileName ?? "成果")); onOpen() } label: {
                         WeftLabel(output.fileName ?? "成果", icon: "file")
                     }.accessibilityIdentifier("resourceOutput.\(output.id)")
+                    if !resources.window.olderVersions(of: output).isEmpty {
+                        DisclosureGroup("旧版 · \(output.fileName ?? "成果")") {
+                            ForEach(resources.window.olderVersions(of: output)) { old in
+                                Button(old.createdAt ?? "旧版") { resources.open(.output(old.id, old.fileName ?? "成果")); onOpen() }
+                            }
+                        }
+                    }
                 }
                 Divider()
                 Text("来源").font(AppleTokens.Fonts.headline)
@@ -102,30 +109,29 @@ private struct ResourceTabContent: View {
     @ObservedObject var app: AppleAppModel
     @ObservedObject var resources: ConversationResourcesModel
     let tab: ResourceTab
-    @State private var file: URL?
-    @State private var folder: URL?
-    @State private var loading = false
-    @State private var error: String?
-    @State private var sources: [String: MemorySourcesSnapshot] = [:]
-    @State private var sourceErrors: [String: String] = [:]
+    @StateObject private var detail: ResourceDetailModel
+    init(app: AppleAppModel, resources: ConversationResourcesModel, tab: ResourceTab) {
+        self.app = app; self.resources = resources; self.tab = tab
+        _detail = StateObject(wrappedValue: ResourceDetailModel(app: app, sessionID: resources.sessionID))
+    }
     @State private var expandedMemories = Set<String>()
     var body: some View {
         Group {
             switch tab {
-            case .output(_, let name):
+            case .output(let id, let name):
                 VStack(spacing: AppleTokens.Space.p8) {
-                    ConversationAttachmentPreview(file: file, name: name, contentType: "text/plain", loading: loading, error: error,
+                    ConversationAttachmentPreview(file: detail.file, name: name, contentType: "text/plain", loading: detail.loading, error: detail.error,
                         close: { resources.close(tab.id) })
-                    if error != nil { Button("重新读取") { Task { await loadOutput() } } }
+                    if detail.error != nil { Button("重新读取") { Task { await detail.loadOutput(id) } } }
                     #if os(macOS)
-                    if let file {
+                    if let file = detail.file {
                         HStack {
                             Button("用默认程序打开") { NSWorkspace.shared.open(file) }
                             Button("在文件夹中显示") { NSWorkspace.shared.activateFileViewerSelecting([file]) }
                         }.padding(.bottom, AppleTokens.Space.p14)
                     }
                     #endif
-                }.task { await loadOutput() }
+                }.task { await detail.loadOutput(id) }
             case .source(let key, let name):
                 ScrollView {
                     VStack(alignment: .leading, spacing: AppleTokens.Space.p14) {
@@ -135,7 +141,7 @@ private struct ResourceTabContent: View {
                                 .accessibilityIdentifier("resourceUseCount")
                             if let location = source.location ?? source.url { Text(location).font(AppleTokens.Fonts.caption).textSelection(.enabled) }
                             ForEach(source.uses) { use in
-                                ResourceUseView(client: app.assistantClient, sessionID: resources.sessionID, use: use)
+                                ResourceUseView(resources: resources, use: use)
                                 Divider()
                             }
                         } else if resources.loading { ProgressView() }
@@ -152,7 +158,7 @@ private struct ResourceTabContent: View {
                             VStack(alignment: .leading, spacing: AppleTokens.Space.p9) {
                                 Text(memory.summary).font(AppleTokens.Fonts.body).textSelection(.enabled)
                                 DisclosureGroup("来源原话", isExpanded: Binding(get: { expandedMemories.contains(memory.id) }, set: { if $0 { expandedMemories.insert(memory.id) } else { expandedMemories.remove(memory.id) } })) {
-                                    if let value = sources[memory.id] {
+                                    if let value = detail.memorySources[memory.id] {
                                         if value.sources.isEmpty { Text("当前没有可读取的来源。") }
                                         ForEach(value.sources, id: \.evidenceId) { source in
                                             VStack(alignment: .leading, spacing: AppleTokens.Space.p6) {
@@ -162,83 +168,46 @@ private struct ResourceTabContent: View {
                                                 if source.rawContentTruncated { Text("原话仅显示部分内容。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                                             }.padding(.vertical, AppleTokens.Space.p6)
                                         }
-                                    } else if let error = sourceErrors[memory.id] {
+                                    } else if let error = detail.memoryErrors[memory.id] {
                                         Text(error).foregroundStyle(Weave.muted)
-                                        Button("重新读取") { Task { await loadMemory(memory) } }
+                                        Button("重新读取") { Task { await detail.loadMemory(memory) } }
                                     } else { ProgressView() }
                                 }.accessibilityIdentifier("memoryOriginal.\(memory.id)")
                             }.task(id: expandedMemories.contains(memory.id)) {
-                                if expandedMemories.contains(memory.id), sources[memory.id] == nil { await loadMemory(memory) }
+                                if expandedMemories.contains(memory.id), detail.memorySources[memory.id] == nil { await detail.loadMemory(memory) }
                             }
                             Divider()
                         }
                     }.padding(AppleTokens.Space.p20).frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-        }.onDisappear { cleanup() }
+        }.onDisappear { detail.cleanup() }
     }
-    private func loadMemory(_ memory: UsedMemory) async {
-        let epoch = app.accountEpoch; sourceErrors[memory.id] = nil
-        do {
-            let result = try await app.assistantClient.memorySources(kind: memory.kind, itemID: memory.id)
-            guard !Task.isCancelled, epoch == app.accountEpoch else { return }
-            sources[memory.id] = result
-        } catch {
-            guard !Task.isCancelled, epoch == app.accountEpoch else { return }
-            sourceErrors[memory.id] = "当前来源不可读或已被忘掉，请稍后重试。"
-        }
-    }
-    private func loadOutput() async {
-        guard case .output(let id, _) = tab, !loading else { return }
-        loading = true; error = nil; let epoch = app.accountEpoch
-        defer { loading = false }
-        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("weftmate-resource-" + UUID().uuidString)
-        do {
-            let result = try await app.assistantClient.timelineArtifactBytes(sessionID: resources.sessionID, artifactID: id)
-            guard !Task.isCancelled, epoch == app.accountEpoch else { return }
-            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
-            let url = directory.appendingPathComponent(result.artifact.fileName ?? "成果.txt")
-            try result.data.write(to: url); cleanup(); folder = directory; file = url
-        } catch {
-            try? FileManager.default.removeItem(at: directory)
-            guard !Task.isCancelled, epoch == app.accountEpoch else { return }
-            self.error = "成果未读取，请重试。"
-        }
-    }
-    private func cleanup() { if let folder { try? FileManager.default.removeItem(at: folder) }; folder = nil; file = nil }
 }
 private struct ResourceUseView: View {
-    let client: PersonalClient
-    let sessionID: String
+    @ObservedObject var resources: ConversationResourcesModel
     let use: ResourceUse
     @State private var expanded = false
-    @State private var detail: TimelineDetail?
-    @State private var error: String?
-    @State private var loading = false
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
-            if loading { ProgressView() }
-            if let detail {
-                Text(detail.text).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("resourceRaw.\(use.id)")
-                if detail.truncated == true { Text("内容已截断。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-                Button("复制原始内容") {
-                    #if os(macOS)
-                    NSPasteboard.general.clearContents(); NSPasteboard.general.setString(detail.text, forType: .string)
-                    #else
-                    UIPasteboard.general.string = detail.text
-                    #endif
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+            Text(ReadableToolSummary.text(tool: "工具", raw: use.summary)).font(AppleTokens.Fonts.callout)
+            DisclosureGroup("详情", isExpanded: $expanded) {
+                if resources.loadingUses.contains(use.id) { ProgressView() }
+                if let detail = resources.useDetails[use.id] {
+                    Text(detail.text).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("resourceRaw.\(use.id)")
+                    if detail.truncated == true { Text("内容已截断。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                    Button("复制原始内容") {
+                        #if os(macOS)
+                        NSPasteboard.general.clearContents(); NSPasteboard.general.setString(detail.text, forType: .string)
+                        #else
+                        UIPasteboard.general.string = detail.text
+                        #endif
+                    }
                 }
+                if let error = resources.useErrors[use.id] { Text(error); Button("重新读取") { Task { await resources.loadUse(use) } } }
             }
-            if let error { Text(error); Button("重新读取") { Task { await load() } } }
-        } label: { Text(use.summary).font(AppleTokens.Fonts.callout).multilineTextAlignment(.leading) }
-            .accessibilityIdentifier("resourceUse.\(use.id)")
-            .task(id: expanded) { if expanded && detail == nil { await load() } }
-    }
-    private func load() async {
-        guard !loading else { return }; loading = true; error = nil
-        defer { loading = false }
-        do { let value = try await client.conversationSourceContent(use, sessionID: sessionID); if !Task.isCancelled { detail = value } }
-        catch { if !Task.isCancelled { self.error = "原始内容未读取，请重试。" } }
+        }.accessibilityIdentifier("resourceUse.\(use.id)")
+            .task(id: expanded) { if expanded && resources.useDetails[use.id] == nil { await resources.loadUse(use) } }
     }
 }
