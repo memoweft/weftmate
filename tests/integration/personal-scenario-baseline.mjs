@@ -94,7 +94,7 @@ try {
     'The isolated Core must be configured before recording memory results');
   writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'Baseline runner', provisioned: true }), { mode: 0o600 });
   let scenarios = await loadScenarios('eval/scenarios/*.yaml');
-  if (memoryUi) scenarios = [{ id: 'memory-ui', category: 'memory', title: '单条表达偏好程序验收', setup: { files: [], memories: [], devices: ['隔离桌面程序'] }, turns: [{ user: '以后回答我的问题只用中文。请只回复收到，不调用工具。', after: { newSession: true, waitMs: 1000 } }, { user: '跟我问个好。只写一句话，不调用工具。' }], checks: [{ type: 'turn_status', turn: 1, status: 'completed' }, { type: 'turn_status', status: 'completed' }, { type: 'memory_used' }], timeoutSec: 600, notes: '独立合成账号，验证真实形成/新对话采用/单条来源标签。' }];
+  if (memoryUi) scenarios = [{ id: 'memory-ui', category: 'memory', title: '单条表达偏好程序验收', setup: { files: [], memories: [], devices: ['隔离桌面程序'] }, turns: [{ user: '我希望你以后只用中文回答我的问题。请只回复收到，不调用工具。', after: { newSession: true, waitMs: 1000 } }, { user: '跟我问个好。只写一句话，不调用工具。' }], checks: [{ type: 'turn_status', turn: 1, status: 'completed' }, { type: 'turn_status', status: 'completed' }, { type: 'memory_used' }], timeoutSec: 600, notes: '独立合成账号，验证真实形成/新对话采用/单条来源标签。' }];
   if (memoryLoop) scenarios = scenarios.filter(s => s.category === 'memory');
   if (scenarioFixes) scenarios = scenarios.filter(s => /^(action-04|action-06|memory-01|memory-02|memory-04)-/.test(s.id));
   if (diagnostic) scenarios = scenarios.filter(s => s.id === 'action-06-delete-approval').map(s => ({ ...s, timeoutSec: 600 }));
