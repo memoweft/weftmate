@@ -112,7 +112,9 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   hostTask?: object; hostActivities?: object[];
   deferItemsFor?: string; deferMore?: boolean } = {}) {
   const nodes = new Map<string, FakeElement>()
-  const get = (id: string) => { if (!nodes.has(id)) nodes.set(id, new FakeElement('div', id)); return nodes.get(id)! }
+  const hiddenIds = new Set([...html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*\bhidden\b[^>]*>/g)].map(match => match[1]))
+  const get = (id: string) => { if (!nodes.has(id)) { const node = new FakeElement('div', id); node.hidden = hiddenIds.has(id); nodes.set(id, node) }; return nodes.get(id)! }
+  const brandTitle = new FakeElement('strong')
   const nav = ['chat', 'things', 'memory', 'capabilities', 'workspaces', 'devices', 'notifications', 'settings', 'connect']
     .map((page) => { const button = new FakeElement('button'); button.dataset.page = page; button.textContent = page; return button })
   const newChat = new FakeElement('button'); newChat.dataset.action = 'new-chat'
@@ -246,7 +248,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const document: any = { body: get('body'), documentElement: new FakeElement('html'), activeElement: null,
     visibilityState: 'visible', getElementById: (id: string) => htmlIds.has(id) ? get(id) : null,
     createElement: (tag: string) => new FakeElement(tag),
-    querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : null,
+    querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : selector === '.brand strong' ? brandTitle : null,
     querySelectorAll: (selector: string) => selector === '[data-page]' ? nav : [],
     addEventListener(name: string, listener: (event?: any) => unknown) { if (name === 'DOMContentLoaded') listener({}) },
   }
@@ -928,10 +930,12 @@ test('adopted phone conversation keeps one card and sends the next turn through 
         { seq: 8, type: 'assistant.message', data: { text: 'host continuation' } }] }),
   })
   await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'bootstrap ready')
+  await waitUntil(() => !!findButton(app.get('home-conversations'), 'Phone fact'), 'phone conversation on home')
+  findButton(app.get('home-conversations'), 'Phone fact').fire('click')
   await waitUntil(() => app.get('chat-content').textContent.includes('host continuation'), 'linked history')
   await waitUntil(() => app.get('chat-content').textContent.includes('合成电脑模型'), 'human model name')
   assert.match(app.get('chat-content').textContent, /old phone fact/)
-  assert.match(app.get('device-line').textContent, /已连接/)
+  assert.equal(app.get('device-line').textContent, '', 'ordinary chat does not expose connection implementation copy')
   assert.equal(app.get('draft').disabled, false, 'linked phone composer follows the async verified session list')
   assert.doesNotMatch(app.get('chat-content').textContent, /model-host/)
   assert.equal(findAll(app.get('conversation-list'), (node) => node.tagName === 'BUTTON' &&
@@ -962,6 +966,8 @@ test('an open original phone card observes a later desktop adoption without navi
       events: [{ seq: 5, type: 'assistant.message', data: { text: 'later host answer' } }] }),
   })
   await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'bootstrap ready')
+  await waitUntil(() => !!findButton(app.get('home-conversations'), 'Phone fact'), 'phone conversation on home')
+  findButton(app.get('home-conversations'), 'Phone fact').fire('click')
   await waitUntil(() => reads >= 2 && app.get('chat-content').textContent.includes('later host answer'),
     'open phone card did not observe desktop adoption')
   assert.equal(findAll(app.get('conversation-list'), (node) => node.tagName === 'BUTTON' &&

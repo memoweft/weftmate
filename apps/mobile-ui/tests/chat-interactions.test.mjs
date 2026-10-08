@@ -50,7 +50,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
       if(id==='live-progress')return nodes.get('chat-content')?.children.find(child=>child.id==='live-progress')||null;
       if(!htmlIds.has(id))return null;
       if(!nodes.has(id)){const node=new Node(id);
-        if(['toast','attachment-drafts','attachment-popover','model-popover','image-preview'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
+        if(['toast','attachment-drafts','attachment-popover','model-popover','image-preview','resource-page'].includes(id))node.hidden=true;nodes.set(id,node)}return nodes.get(id)},
     createElement:tagName=>{const node=new Node();node.tagName=tagName;return node},createTextNode:value=>new TextNode(value),
     addEventListener:(event,handler)=>{if(event==='DOMContentLoaded')domReady=handler},
     querySelectorAll:()=>[],querySelector:()=>new Node()};
@@ -1325,7 +1325,7 @@ test('terminal-output-limit mobile keeps an old pure-reply card bound to its sou
     {seq:3,type:'turn.started',data:{turn:3}});renderSharedConversation()`);
   card=h.node('chat-content').children.find(node=>node.dataset.conversationTask===fixture.task.taskId);
   assert.match(allText(card),/因输出限制结束，尚未确认完整交付/);
-  assert.equal(h.node('chat-content').children.find(node=>node.className==='shared-turn-state').textContent,'电脑正在处理这段会话…');
+  assert.equal(h.node('chat-content').children.find(node=>node.className==='shared-turn-state').textContent,'正在处理…');
   h.run("state.sharedSessions[0].running=false;state.sharedEvents.push({seq:4,type:'turn.ended',data:{reason:'completed',turn:3}});renderSharedConversation()");
   assert.equal(h.node('chat-content').children.some(node=>node.className==='shared-turn-state'),false);
   h.run("state.sharedEvents.push({seq:5,type:'turn.ended',data:{reason:'error',turn:4}});renderSharedConversation()");
@@ -1457,7 +1457,7 @@ test('restart restores only a live owner-scoped shared session',async()=>{
   h.domReady();for(let i=0;i<40&&h.run('state.chatSource')!=='host';i++)await h.flush();
   assert.equal(h.run('state.chatSource'),'host');assert.equal(h.run('state.sharedSessionId'),'pc-A');
   assert.equal(h.bridge.some(item=>item.method==='shared.sessions.events'&&item.params.sessionId==='pc-A'),true);
-  assert.equal(h.node('header-subtitle').textContent,'同一个助手，接着聊。');
+  assert.equal(h.run('state.page'),'home');
 });
 
 test('owner switch and removed shared session fall back without showing old account content',async()=>{
@@ -1523,13 +1523,13 @@ test('M1-0 mobile native bridge preserves beforeSeq and accepts the shared timel
 })
 
 
-test('M1-0 consecutive same-kind steps use one subgroup and retain each original detail reference',()=>{
+test('consecutive steps show readable descriptions before their raw detail',()=>{
   const h=harness();prepareSyntheticTaskChat(h);
   h.run(`state.sharedEvents=[
     {seq:1,type:'step.completed',data:{taskId:'turn-1',stepId:'read-a',toolName:'read',groupHint:'read',summary:'读取文件',state:'completed',detailRef:{seq:1}}},
     {seq:2,type:'step.completed',data:{taskId:'turn-1',stepId:'read-b',toolName:'read_file',groupHint:'read_file',summary:'读取文件',state:'completed',detailRef:{seq:2}}}];renderSharedConversation()`);
-  const subgroup=h.node('chat-content').querySelector('.execution-same-type');assert.ok(subgroup);
-  assert.match(allText(subgroup),/读取文件 · 2 步/);assert.equal(subgroup.open,false);
+  const subgroup=h.node('chat-content').querySelector('.execution-block');assert.ok(subgroup);
+  assert.match(allText(subgroup),/执行了 2 步/);assert.equal(subgroup.open,false);
   assert.equal(subgroup.children.filter(node=>node.className==='execution-step').length,2);
 })
 

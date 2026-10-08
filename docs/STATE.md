@@ -10,17 +10,18 @@
 |---|---|---|
 | Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
-| Codex · Windows-3 | UI-2a 手机审批模式 | [PR #45](https://github.com/memoweft/weftmate/pull/45)（`wp/ui-2a-mobile-approval`）：手机五种模式、全部允许风险确认、按电脑对话保存与账户默认、三按钮风险审批及处理后一行已完成；Android 0.8.3/code16 桥接 scope（授权范围），发布最低 code16。手机交互94/94、真实 Chromium（浏览器引擎）390×844、Android JVM（Java 虚拟机）26/26与 assembleDebug、类型检查通过；[合成截图与边界](../tests/evidence/ui-2a/README.md)，完整门禁交 PR CI（持续集成），待 Claude 审查 |
-| Codex · Windows-2 | M2a 记忆最小闭环 | `wp/m2a-memory-loop`：MemoWeft 自动形成/召回、回复 `memoryUsed` 与桌面来源标签/右侧面板、按模型声明降级截图已实现；定向62/62与类型检查通过。MiMo四场景2/4，Qwen与真实程序来源验收进行中；纠正/经验/记忆页及手机/Apple标签另包 |
+| Codex · Windows-3 | UI-2 手机界面统一 | [PR #51](https://github.com/memoweft/weftmate/pull/51)（`wp/ui-2-mobile-visual`）：会话列表首页、运行 / 待审批点、中性浅 / 深 / 跟随系统主题、安静步骤与原文两层展开、全屏输出与来源及返回位置 / 草稿已完成；保留登录、云配对、附件、审批与离线。Android 0.8.4/code17，只接既有来源列表路由与系统栏。手机100/100与相关页面回归31/31、Android JVM（Java 虚拟机）27/27、assembleDebug、类型检查与发布回归通过；[截图与边界](../tests/evidence/ui-2/README.md)。无可用模拟器，390×844 Chromium（浏览器引擎）验收；完整测试交 PR CI（持续集成），待 Claude 审查 |
+| Codex · Windows-2 | M2a 记忆最小闭环 | [PR #52](https://github.com/memoweft/weftmate/pull/52)（`wp/m2a-memory-loop`）：MemoWeft 自动形成/召回、回复 `memoryUsed` 与桌面来源标签/右侧面板、按模型声明降级截图已实现；定向62/62、健康7/7与类型检查通过。MiMo四场景2/4，Qwen与真实程序来源验收进行中；纠正/经验/记忆页及手机/Apple标签另包 |
 | Codex · Mac | A4a Apple 审批模式 | `wp/a4a-apple-approval-modes`：macOS / iOS 五种模式菜单、全部允许风险提示、对话保存与账户默认、三按钮审批/风险/收起摘要已接入 CLIENT_API 3.7；Watch仍允许一次/拒绝。定向 Swift 20/20、审批状态10/10、iOS合成 XCTest 2/2、三端 Debug 构建通过；[截图与复现](../apps/apple/Tests/Evidence/A4a/README.md)。额外 Mac XCTest 自动化模式启动超时，未申请新权限；真机/日用宿主未验，完整门禁交 PR CI，待 Claude 审查 |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
 | Codex · Cloud | S2b 宿主内容证书自动签发 | [PR #38](https://github.com/memoweft/weftmate/pull/38)（`wp/s2b-host-certs`）：阿里云 V3 DNS-01/provider 私有环境接线与 RecordId 所有权、宿主 Node ACME/原内容 key CSR、每天检查/<30天续期/原子安装/热载、状态到期与错误已实现；本机真实 Pebble/challtestsrv→签名宿主/云/假 AliDNS API→配对 pin/TLS 热载与模拟到期续期通过；交付待 Claude 审查，最终 CI 门禁见 PR checks，本包未部署 |
-| Codex · Windows-3 | UI-2a 手机审批模式 | [PR #45](https://github.com/memoweft/weftmate/pull/45)（`wp/ui-2a-mobile-approval`）：手机五种模式、全部允许风险确认、按电脑对话保存与账户默认、三按钮风险审批及处理后一行已完成；Android 0.8.3/code16 桥接 scope（授权范围），发布最低 code16。手机交互94/94、真实 Chromium（浏览器引擎）390×844、Android JVM（Java 虚拟机）26/26与 assembleDebug、类型检查通过；[合成截图与边界](../tests/evidence/ui-2a/README.md)，完整门禁交 PR CI（持续集成），待 Claude 审查 |
+| Codex · Windows-3 | UI-2 手机界面统一 | [PR #51](https://github.com/memoweft/weftmate/pull/51)（`wp/ui-2-mobile-visual`）：会话列表首页、运行 / 待审批点、中性浅 / 深 / 跟随系统主题、安静步骤与原文两层展开、全屏输出与来源及返回位置 / 草稿已完成；保留登录、云配对、附件、审批与离线。Android 0.8.4/code17，只接既有来源列表路由与系统栏。手机100/100与相关页面回归31/31、Android JVM（Java 虚拟机）27/27、assembleDebug、类型检查与发布回归通过；[截图与边界](../tests/evidence/ui-2/README.md)。无可用模拟器，390×844 Chromium（浏览器引擎）验收；完整测试交 PR CI（持续集成），待 Claude 审查 |
 
 已完成：文档/规则重置、M0-1b 清理与拆分、M0-2 容量与动态预算（#24）、H1 健康设置/摘要/隔离队列（#22）、S0/S1a/S1b（#27/#29/#30）、CI 分组与依赖审计。
 
 ## 最近一次验证
 
+- **UI-2**：手机目录100/100与相关记忆 / 项目 / 续聊回归31/31、来源分页 / 按需原文 / 失败重试 / 离线列表、全屏返回位置、草稿重启、跟随系统主题、窄屏 / 横屏与输入区视口布局通过；Android JVM 27/27与调试包、类型检查、发布回归通过。截图见 tests/evidence/ui-2/。没有设备 / 可用模拟器，真实 Android 输入法、安装与跨设备验收另包。
 - **UI-2a**：手机交互94/94、真实 Chromium（浏览器引擎）390×844五种模式/风险确认/默认重新读取/三种决定、发布回归1/1、类型检查通过；Android 本机 JVM（Java 虚拟机）26/26与 assembleDebug通过，0.8.3/code16。合成截图见 tests/evidence/ui-2a/；没有安装本人设备、发布手机包或执行真实脚本，完整门禁交 PR CI（持续集成）。
 
 - **M1-2**：模式/风险与原生审批19/19、界面59/59、模式接口/授权恢复/十分钟超时3/3通过，另有原生执行与来源回归；类型检查通过。真实主程序验证五种模式、数字键、批准/拒绝、总是允许此类、同对话新任务重新计划及计划拒绝、设置默认与重载；模型请求确认含模式通知及系统提示中的口头检查点。已合入最新 main 的 UI-1c，不修改其面板实现。
@@ -82,6 +83,7 @@ MiMo本包134个实际请求，129个有用量；输入1,502,923 token（令牌�
 
 - **M2a**：CLIENT_API 3.4 的 `assistant.message.data` 新增可选 `memoryUsed:[{id,kind,summary}]`，记录实际保留在回复请求上下文中的 MemoWeft 依据；未命中/失败/预算移除返回空数组，旧宿主可省略。来源复用3.9账户权限接口；桌面标签已接，手机/Apple（苹果客户端）标签另包。
 
+- **UI-2 客户端接入**：服务端契约无变更，手机 / Android接入既有 CLIENT_API 3.16资源列表与既有成果 / 来源详情；原生精确只读路由需 code17，发布默认已更新。记忆模块与桌面界面未修改。
 - **UI-2a 客户端接入**：复用 CLIENT_API 3.7，服务端契约无改动；手机 Web（网页界面）/Android 已接会话模式、账户默认与 scope/decisionScope/riskCategories。Android新增精确模式桥接，最低原生code16；Apple由另包接入。
 
 - **M1-2**：CLIENT_API 3.7 新增 GET/PATCH `/sessions/{sessionId}/approval-mode`、GET/PATCH `/settings/approvals`；审批新增可选 `scope` 和返回 `decisionScope,riskCategories`，旧客户端省略 scope 仍允许一次。分类授权仅本对话；待答复十分钟失效并返回原生 unavailable。原生计划使用已有 questions 的 plan-review（计划确认）意图。手机 Web（网页界面）/Android 菜单已在 UI-2a 接入；Apple 菜单另包，接口可用。

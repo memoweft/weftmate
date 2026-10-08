@@ -623,7 +623,7 @@ class HybridActivity : Activity() {
         val selected = appearance()
         val dark = selected == "dark" || selected == "system" &&
             (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val color = if (dark) Color.rgb(22, 31, 47) else Color.WHITE
+        val color = if (dark) Color.rgb(38, 39, 35) else Color.WHITE
         window.decorView.setBackgroundColor(color)
         window.statusBarColor = color
         window.navigationBarColor = color
@@ -1498,6 +1498,8 @@ class HybridActivity : Activity() {
             JSONObject().put("backgroundSync", SyncJobService.status(this))
         }
         "host.business" -> {
+            if (params.getString("path").substringBefore('?').endsWith("/resources"))
+                require(params.optString("method", "GET") == "GET")
             val host = secrets.host() ?: throw ApiFailure(401, "LOGIN_REQUIRED")
             val result = api.business(host, params.getString("path"), params.optString("method", "GET"),
                 params.optJSONObject("body"))
