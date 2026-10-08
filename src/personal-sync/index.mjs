@@ -1,3 +1,4 @@
+import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { open, readFile, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -146,6 +147,7 @@ function validateStore(store, ownerId) {
 }
 
 async function atomicWrite(file, value, shouldCommit) {
+  const releaseWrite = await enterProfileWrite(file);
   const temp = `${file}.${randomUUID()}.tmp`;
   let handle;
   try {
@@ -171,6 +173,7 @@ async function atomicWrite(file, value, shouldCommit) {
   } finally {
     await handle?.close().catch(() => {});
     await rm(temp, { force: true }).catch(() => {});
+    releaseWrite();
   }
 }
 
