@@ -8,4 +8,3 @@ function usagePage(target, sessionId = '') {
 const conversationUsage = $('conversation-usage');
 conversationUsage.type = 'button';
 conversationUsage.addEventListener('click', () => { state.usageSessionId = state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId || ''; page('usage'); });
-
