@@ -14,7 +14,12 @@
     "observedInferenceModels": [
       "local-quality",
       "mimo-v2.6-flash"
-    ]
+    ],
+    "modelMatrixWeftmateSource": "5948de8005898798e6bdca7ad74ba1d4a9b92235",
+    "mimoFirstMatrixHostSource": "9bb25ac",
+    "latestMainMergedAfterMatrix": true,
+    "modelMatrixRerunAfterFinalMainMerge": false,
+    "finalMainMemoryChange": "Backup profile write barrier around outbox/journal file writes; no formation/recall matching or plugin request ordering changes"
   },
   "runs": [
     {
@@ -13518,7 +13523,9 @@
     "dailyCoreBranch": "main",
     "allLanMaxActiveOne": true,
     "credentialFilesRemaining": 0,
-    "remainingIsolatedProcesses": 0
+    "remainingIsolatedProcesses": 0,
+    "publicChangedFilesScanned": 18,
+    "publicSecretMatches": 0
   },
   "tests": {
     "weftmateTargeted": {
@@ -13541,6 +13548,11 @@
       "failed": 0,
       "existingSkipped": 20,
       "run": "https://github.com/memoweft/weftmate/actions/runs/37801427836"
+    },
+    "weftmateTargetedAfterMainMerge": {
+      "passed": 22,
+      "failed": 0,
+      "skipped": 0
     }
   }
 }
