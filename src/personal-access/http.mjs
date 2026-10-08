@@ -88,6 +88,7 @@ export function createHttpHandler(context) {
     const state = ownerId === null ? null : context.accountState(ownerId);
     try {
       if (context.closing) throw failure('SERVICE_CLOSING', 503);
+      if (context.backupManager?.isPending() && !['GET', 'HEAD'].includes(request.method)) throw failure('SERVICE_CLOSING', 503);
       const url = new URL(request.url, 'http://127.0.0.1');
       const encodedDshImageId = /^\/personal\/v1\/sessions\/[A-Za-z0-9_-]{1,128}\/attachments\/sha256%3A[a-f0-9]{64}$/i.test(url.pathname);
       const encodedMemoryPathname = canonicalMemoryPathname(url.pathname);
@@ -139,6 +140,37 @@ export function createHttpHandler(context) {
         const current = context.authenticate(request, 'account:manage');
         return context.json(response, 200, context.publicAuth(current.ownerId, current.deviceId,
           current.device, current.csrfToken));
+      }
+      if (pathname === '/personal/v1/backups' || pathname.startsWith('/personal/v1/backups/')) {
+        const current = context.authenticate(request, 'account:manage');
+        // Backups contain the whole host, so only its local owner may manage them.
+        if (!context.backupOwner(current.ownerId)) throw failure('FORBIDDEN', 403);
+        if (!context.backupManager) throw failure('CAPABILITY_UNAVAILABLE', 503);
+        if (url.search) throw failure('INVALID_REQUEST');
+        try {
+          if (request.method === 'GET' && pathname === '/personal/v1/backups') return context.json(response, 200, await context.backupManager.view());
+          const body = await context.readJson(request);
+          if (request.method === 'PATCH' && pathname === '/personal/v1/backups/settings') return context.json(response, 200, { settings: await context.backupManager.configure(body) });
+          if (request.method === 'POST' && pathname === '/personal/v1/backups') {
+            exactKeys(body, [], []); return context.json(response, 202, await context.backupManager.request());
+          }
+          if (request.method === 'POST' && pathname === '/personal/v1/backups/import') {
+            exactKeys(body, ['path'], ['path']); return context.json(response, 201, await context.backupManager.importBackup(body.path));
+          }
+          if (request.method === 'POST' && pathname === '/personal/v1/backups/prepare-account-deletion') {
+            exactKeys(body, [], []); const result = await context.backupManager.prepareAccountDeletion();
+            return context.json(response, result.ready ? 200 : 202, result);
+          }
+          if (request.method === 'POST' && pathname === '/personal/v1/backups/restore') {
+            exactKeys(body, ['id', 'confirm'], ['id', 'confirm']);
+            if (body.confirm !== true) throw failure('INVALID_REQUEST');
+            return context.json(response, 202, await context.backupManager.restore(body.id));
+          }
+        } catch (error) {
+          if (['BACKUP_CORRUPT', 'BACKUP_SYMLINK', 'BACKUP_PAUSE_TIMEOUT'].includes(error.code)) return context.json(response, 409, { error: { code: error.code } });
+          throw error;
+        }
+        throw failure('NOT_FOUND', 404);
       }
       if (request.method === 'PATCH' && pathname === '/personal/v1/auth/profile') {
         if (url.search) throw failure('INVALID_REQUEST');

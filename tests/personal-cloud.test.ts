@@ -135,6 +135,21 @@ async function fixture(t: any) {
   }
 }
 
+test('BK-1 portable cloud ownership reconnects only after verified subject and fresh desktop claim', async t => {
+  const f = await fixture(t);
+  await writeFile(join(f.root, 'backup-cloud-owners.json'), JSON.stringify([{ issuer: f.issuer, sub: 'restored-cloud', ownerId: f.a.account.ownerId }]));
+  await f.restart();
+  const key = await generateKeyPair('ES256');
+  const token = await f.access('restored-cloud', 'new-desktop', key, { scope: 'cloud:account' }, f.issuer.slice(0, -5));
+  const result = (await f.exchange(token, key, '/auth/cloud-desktop')).result;
+  assert.equal(result.status, 200, JSON.stringify(result)); assert.equal(result.account.ownerId, f.a.account.ownerId);
+  assert.ok(f.claims.size > 0, 'new installation claim is verified instead of importing private keys');
+  const strangerKey = await generateKeyPair('ES256');
+  const stranger = await f.access('other-cloud', 'other-desktop', strangerKey, { scope: 'cloud:account' }, f.issuer.slice(0, -5));
+  const other = (await f.exchange(stranger, strangerKey, '/auth/cloud-desktop')).result;
+  assert.notEqual(other.account?.ownerId, f.a.account.ownerId);
+});
+
 test('claim interruption resumes the same claimId after restart; backup and all existing identifiers/passwords/cookies/sync/data remain intact', async t => {
   const f = await fixture(t)
   assert.equal(await readFile(join(f.root, 'cloud-identity', 'backup', 'store.json'), 'utf8'), f.oldStore)

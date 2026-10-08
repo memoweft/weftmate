@@ -1,3 +1,5 @@
+import { copySnapshotTree } from './snapshot-files.mjs';
+import { mkdirSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve, isAbsolute } from 'node:path'
 import { rm, readFile } from 'node:fs/promises'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
@@ -31,6 +33,23 @@ export function nativeSessionLifecycle(ctx) {
     handles.set(sessionId, handle)
   }
   return {
+    async flushIdle({ stage, deadline }) {
+      const agents = ctx.agents.list();
+      if (!Array.isArray(agents) || agents.some(agent => agent.status !== 'idle' || agent.inbox?.hasPending !== false))
+        throw Object.assign(new Error('session busy'), { code: 'agent-busy' });
+      await Promise.all(ctx.sessions.list().map(session => ctx.sessions.flush(session)));
+      const check = () => { if (Date.now() >= deadline) throw Object.assign(new Error('BACKUP_PAUSE_TIMEOUT'), { code: 'BACKUP_PAUSE_TIMEOUT' }); };
+      check();
+      const logs = ctx.get('sessionPersistence').config.root;
+      const profile = resolve(process.env.DSH_HOME, '..'), rel = relative(profile, logs);
+      if (!rel || rel.startsWith('..') || isAbsolute(rel)) throw new Error('native logs outside profile');
+      const destination = resolve(stage, rel);
+      if (existsSync(logs)) {
+        mkdirSync(destination, { recursive: true });
+        copySnapshotTree(logs, destination, { check, included: name => !name.endsWith('.tmp') });
+      }
+      check();
+    },
     create: options => ensure(options),
     resume: sessionId => ensure({ sessionId }, true),
     async remove(sessionId) {
