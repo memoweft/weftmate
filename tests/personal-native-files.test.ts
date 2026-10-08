@@ -3,7 +3,7 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { trackNativeFiles, appendNativeArtifacts } from '../src/plugins/personal-native-files.mjs'
+import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles } from '../src/plugins/personal-native-files.mjs'
 import { createNativeBrowserOperations } from '../src/personal-access/native-browser.mjs'
 import { createPersonalAccessBackend } from '../src/personal-access-backend.mjs'
 import { projectHistoryEvent } from '../src/runtime/dsh-adapter/sessions.mjs'
@@ -30,6 +30,9 @@ test('native file observation publishes every changed file, leaves unchanged fil
     assert.equal(frames.length, 2)
     const post = await appendNativeArtifacts(exec, result, async () => ({ kind: 'accept' }))
     assert.equal(post.content.length, 3)
+    const restored = { events: [{ type: 'tool/result', data: { message: { content: [{ type: 'tool-result', content: post.content }] } } }] }
+    assert.deepEqual([...conversationCreatedFiles(restored)].sort(), [join(root, 'outputs/report.md'), join(root, 'script.mjs')].sort())
+    assert.deepEqual([...conversationCreatedFiles({ events: [] })], [])
     const event = projectHistoryEvent({ seq: 9, type: 'tool/result', data: { turn: 1,
       message: { source: { kind: 'tool', callId: 'call-native' }, content: [{ type: 'tool-result', toolCallId: 'call-native',
         isError: false, content: post.content }] } } }, { type: 'tool/call', data: { name: 'pwsh', callId: 'call-native', turn: 1 } })
