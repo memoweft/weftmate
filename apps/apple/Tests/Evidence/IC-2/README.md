@@ -41,7 +41,7 @@
 | 编译资源 | `assetutil` 确认 Phone `Assets.car` 内的默认、`UIAppearanceDark`、`ISAppearanceTintable` 1024 px AppIcon，见 [报告](verification.json) |
 | Mac 自动化 | `AXIsProcessTrusted=false`，未申请授权；本包只声明构建与资源验证通过 |
 
-iOS 主屏幕的图标样式仍选浅色，深色截图展示深色系统外观；深色 / 着色 AppIcon 已生成并编入产物，没有把资源检查说成手动切换主屏幕样式验收。真机、iPhone–Watch 连接 / 触感、真实宿主 / 模型、生产发布与 App Store 上传不在本包内。完整测试交 PR CI；不运行本地全量测试。客户端 API 契约无变更。
+iOS 主屏幕的图标样式仍选浅色，深色截图展示深色系统外观；深色 / 着色 AppIcon 已生成并编入产物，没有把资源检查说成手动切换主屏幕样式验收。真机、iPhone–Watch 连接 / 触感、真实宿主 / 模型、生产发布与 App Store 上传不在本包内。完整 CI 门禁见 [PR #57 checks](https://github.com/memoweft/weftmate/pull/57/checks)；不运行本地全量测试。客户端 API 契约无变更。
 
 首轮截图复核发现启动参数不能设置系统深色外观，且主屏幕停在没有 WeftMate 的第一页；最终改为 `simctl ui ... appearance` 并通过 XCTest 定位到 WeftMate 所在页。Watch 从 App 回到表盘后再按一次 Crown（XCTest 的 `.home`）进入应用列表，等转场结束才截图。仅最终有效截图纳入证据。
 
