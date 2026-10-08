@@ -50,6 +50,8 @@ def main():
         if models == APP_MODEL:
             sources.append(ROOT / "Tests/TaskProgressUIFixture.swift")
             sources.append(ROOT / "Tests/AppleContractUIFixture.swift")
+        if name == "AppleTimelineStateChecks":
+            sources.append(ROOT / "UI/ConversationResourcesModel.swift")
         sources.append(ROOT / "Tests" / (name + ".swift"))
         compile_command = ["swiftc", "-swift-version", "6", "-D", "DEBUG", "-parse-as-library",
                            "-I", str(products / "Modules"), *map(str, sources),
