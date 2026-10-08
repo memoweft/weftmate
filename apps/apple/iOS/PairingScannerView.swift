@@ -12,7 +12,7 @@ struct PairingScannerView: View {
     @State private var error: String?
     var body: some View {
         NavigationStack {
-            VStack(spacing: 18) {
+            VStack(spacing: AppleTokens.Space.p18) {
                 Text("扫描电脑上刚生成的 WeftMate 配对二维码").padding()
                 if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
                     CameraScanner(receive: receive)
@@ -20,7 +20,7 @@ struct PairingScannerView: View {
                     ContentUnavailableView("相机扫描暂不可用", systemImage: "qrcode.viewfinder", description: Text("可选择二维码图片，或返回粘贴电脑配对信息。"))
                 }
                 PhotosPicker("选择二维码图片", selection: $image, matching: .images).accessibilityIdentifier("pairingImagePicker")
-                if let error { Text(error).foregroundStyle(.red) }
+                if let error { Text(error).foregroundStyle(AppleTokens.Colors.red) }
             }
             .navigationTitle("扫码配对")
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { dismiss() } } }

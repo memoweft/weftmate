@@ -1,4 +1,4 @@
-import { randomUUID, randomInt } from 'node:crypto';
+import { randomUUID, randomInt, randomBytes } from 'node:crypto';
 import { calculateJwkThumbprint, importJWK } from 'jose';
 import {
   CloudError,
@@ -60,7 +60,7 @@ export class Accounts {
     try {
       await this.mailer.send({
         to: email,
-        ...challengeMail(purpose, code, context.device?.deviceId),
+        ...challengeMail(purpose.replace('app-', ''), code, context.device?.deviceId),
       });
     } catch {
       this.db.prepare('UPDATE email_challenges SET consumed=1 WHERE id=?').run(id);
@@ -84,6 +84,82 @@ export class Accounts {
       throw error;
     }
     return this.sendChallenge(account, 'register', email);
+  }
+  async requestPassword(body, purpose, source) {
+    const email = normalizeEmail(body.email);
+    this.check(email, source);
+    this.delivery(email, source);
+    let account = this.byEmail(email);
+    if (purpose === 'register') {
+      if (account?.active) throw new CloudError(409, 'EMAIL_IN_USE');
+      if (!account) {
+        // No usable password exists until the mailbox has been verified.
+        this.db.prepare('INSERT INTO cloud_accounts(id,email,password,created_at) VALUES(?,?,?,?)')
+          .run(randomUUID(), email, 'null', this.now());
+        account = this.byEmail(email);
+      }
+    } else if (!account?.active) return { challengeId: randomUUID(), expiresIn: 600 };
+    return this.sendChallenge(account, `app-${purpose}`, email);
+  }
+  verifyPasswordCode(body, purpose, source) {
+    const { account } = this.readChallenge(body.challengeId, `app-${purpose}`, source, body.code);
+    const passwordTicket = randomBytes(32).toString('base64url');
+    transaction(this.db, () => {
+      this.consume(body.challengeId);
+      this.db.prepare('INSERT INTO password_tickets VALUES(?,?,?,?,?)')
+        .run(digest(this.secret, passwordTicket), account.id, purpose, account.auth_epoch, this.now() + 600000);
+    });
+    return { passwordTicket, expiresIn: 600 };
+  }
+  passwordTicket(token, purpose, source) {
+    const ticket = typeof token === 'string' ? this.db.prepare('SELECT * FROM password_tickets WHERE token_hash=?')
+      .get(digest(this.secret, token)) : undefined;
+    const account = ticket && this.get(ticket.account_id);
+    const keys = this.check(account?.email ?? 'password-ticket', source);
+    if (!ticket || ticket.purpose !== purpose || ticket.expires_at <= this.now() ||
+        !account || account.auth_epoch !== ticket.auth_epoch || Boolean(account.active) !== (purpose === 'reset')) {
+      this.limiter.fail(keys);
+      throw new CloudError(400, 'PASSWORD_TICKET_INVALID');
+    }
+    return { ticket, account };
+  }
+  async completePassword(body, purpose, source) {
+    this.passwordTicket(body.passwordTicket, purpose, source);
+    const record = await hashPassword(body.password);
+    const { ticket, account } = this.passwordTicket(body.passwordTicket, purpose, source);
+    transaction(this.db, () => {
+      this.db.prepare('DELETE FROM password_tickets WHERE token_hash=?').run(ticket.token_hash);
+      this.db.prepare('UPDATE cloud_accounts SET password=?,active=1,auth_epoch=auth_epoch+1 WHERE id=?')
+        .run(JSON.stringify(record), account.id);
+      this.revoke(account.id);
+    });
+    return purpose === 'register' ? { account: this.public(this.get(account.id)), verified: true } : this.passwordNotification(account);
+  }
+  async changePassword(body, source, account) {
+    const keys = this.check(account.email, source);
+    if (!await verifyPassword(body.currentPassword, JSON.parse(account.password))) {
+      this.limiter.fail(keys);
+      throw new CloudError(401, 'INVALID_CREDENTIALS');
+    }
+    const record = await hashPassword(body.password);
+    const current = this.get(account.id);
+    if (!current?.active || current.auth_epoch !== account.auth_epoch || current.password !== account.password)
+      throw new CloudError(401, 'UNAUTHORIZED');
+    transaction(this.db, () => {
+      this.db.prepare('UPDATE cloud_accounts SET password=?,auth_epoch=auth_epoch+1 WHERE id=?')
+        .run(JSON.stringify(record), account.id);
+      this.revoke(account.id);
+    });
+    return this.passwordNotification(account);
+  }
+  async passwordNotification(account) {
+    let notificationAccepted = true;
+    try { await this.mailer.send({ to: account.email, ...passwordChangedMail() }); }
+    catch {
+      notificationAccepted = false;
+      this.logger?.error('mail.notification_failed', { code: 'MAIL_UNAVAILABLE' });
+    }
+    return { passwordChanged: true, notificationAccepted };
   }
   async requestCode({ email: input }, purpose, source) {
     const email = normalizeEmail(input);
@@ -191,6 +267,11 @@ export class Accounts {
       throw new CloudError(403, 'EMAIL_NOT_VERIFIED');
     }
     const device = await this.device(body);
+    const name = body.deviceName ?? 'WeftMate device';
+    const type = body.deviceType ?? 'unknown';
+    if (typeof name !== 'string' || !name.trim() || name.length > 128 ||
+        !['windows','macos','android','ios','web','unknown'].includes(type)) throw new CloudError(400, 'INVALID_DEVICE');
+    Object.assign(device, { name: name.trim(), type });
     if (
       !this.db
         .prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?')
@@ -202,6 +283,8 @@ export class Accounts {
         ...(await this.sendChallenge(account, 'device', email, { uid, device })),
       };
     }
+    this.db.prepare('UPDATE cloud_devices SET name=?,type=?,last_seen=? WHERE account_id=? AND fingerprint=?')
+      .run(device.name, device.type, this.now(), account.id, device.fingerprint);
     return { account, device };
   }
   confirmDevice(body, source, uid) {
@@ -210,13 +293,14 @@ export class Accounts {
       this.consume(body.challengeId);
       const device = result.context.device;
       this.db
-        .prepare('INSERT OR IGNORE INTO cloud_devices VALUES(?,?,?,?,?)')
+        .prepare('INSERT OR IGNORE INTO cloud_devices(account_id,fingerprint,device_id,public_jwk,confirmed_at,name,type,last_seen) VALUES(?,?,?,?,?,?,?,?)')
         .run(
           result.account.id,
           device.fingerprint,
           device.deviceId,
           device.publicJwk ? JSON.stringify(device.publicJwk) : null,
           this.now(),
+          device.name, device.type, this.now(),
         );
     });
     return { account: result.account, device: result.context.device };
@@ -229,6 +313,7 @@ export class Accounts {
       .run(accountId, accountId, accountId);
     this.db.prepare('DELETE FROM grant_bindings WHERE account_id=?').run(accountId);
     this.db.prepare('UPDATE email_challenges SET consumed=1 WHERE account_id=?').run(accountId);
+    this.db.prepare('DELETE FROM password_tickets WHERE account_id=?').run(accountId);
   }
   async reset(body, source) {
     // Derivation is async: recheck the challenge and epoch immediately before committing.

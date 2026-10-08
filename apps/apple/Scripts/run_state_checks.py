@@ -19,6 +19,7 @@ CHECKS = {
     "AppleTimelineStateChecks": APP_MODEL,
     "MemoryWorkspaceStateChecks": ["MemoryWorkspaceModel"],
     "MessageMarkdownChecks": ["MessageMarkdown"],
+    "DesignTokenChecks": ["WeaveTheme", "WeftIcon"],
     "TaskDirectoryChecks": ["TaskDirectoryModel"],
     "TaskInteractionChecks": ["TaskInteractionModel"],
     "TaskWorkspaceChecks": ["TaskWorkspaceModel"],
@@ -52,6 +53,8 @@ def main():
             sources.append(ROOT / "Tests/AppleContractUIFixture.swift")
         if name == "AppleTimelineStateChecks":
             sources.append(ROOT / "UI/ConversationResourcesModel.swift")
+        if name == "DesignTokenChecks":
+            sources.append(ROOT.parent.parent / "design/tokens/generated/apple/DesignTokens.swift")
         sources.append(ROOT / "Tests" / (name + ".swift"))
         compile_command = ["swiftc", "-swift-version", "6", "-D", "DEBUG", "-parse-as-library",
                            "-I", str(products / "Modules"), *map(str, sources),
