@@ -27,7 +27,7 @@
         ['resources', '助手', '资料访问', 'folder', ['项目', '成果', '网页', '目录']],
         ['system', '此电脑', '系统状态', 'tool', ['服务', '宿主', '重启', '修复'], true],
         ['backups', '此电脑', '备份与恢复', 'archive', ['备份', '恢复', '自动', '保留'], true],
-        ['about', '关于', '关于', 'info', ['版本', '条款', '隐私']],
+        ['about', '关于', '关于', 'info', ['版本', '条款', '隐私', '更新']],
     ];
     function settingsRegistry(mounts = {}) {
         return createSettingsRegistry(definitions.map(([id, group, name, icon, keywords, desktopOnly]) =>

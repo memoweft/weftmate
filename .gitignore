@@ -4,6 +4,8 @@ node_modules/
 # ── Build / packaging output ──
 dist/
 release/
+!scripts/release/
+!scripts/release/**
 out/
 
 # ── DSH vendor 生成物（npm run vendor:dsh 产物；不进 git，发布时构建）──
