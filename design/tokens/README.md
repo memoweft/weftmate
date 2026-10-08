@@ -1,0 +1,110 @@
+# WeftMate 设计令牌
+
+`tokens.json` 是颜色、字体、字号、行高、间距、圆角、阴影与动效参数的唯一来源。DS-1 从实际使用的桌面、手机 Web（网页界面）与 Android（安卓）兼容原生页取值，保留它们现有的差异。本包保持外观；UI-P1 再决定动画与精修参数。
+
+## 修改与生成
+
+在仓库根运行 `npm run tokens:generate`。脚本与图标生成脚本一样，用 Node（脚本运行环境）的文件接口从母版生成并提交各端产物；没有新增依赖。用 `node scripts/generate-tokens.mjs --check` 核对生成物是否与母版逐字一致，不写文件。
+
+| 生成位置 | 消费方式 |
+|---|---|
+| `src/personal-access-ui/tokens.css` | 桌面与远程网页先加载令牌，再加载组件样式；静态资产由现有个人入口提供 |
+| `apps/mobile-ui/www/tokens.css` | 手机 Web 先加载令牌；Android 内置资源与服务器更新包自动包含该文件 |
+| `apps/android/app/src/main/res/values/design_*.xml` | 颜色、dp（密度无关像素）/ sp（字体缩放像素）尺寸、毫秒时长与曲线资源；网页背景对应显式选择的浅深模式 |
+| `apps/android/app/src/main/res/values-night/design_colors.xml` | C4 品牌色的系统深色资源 |
+| `apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTokens.kt` | 现有原生辅助函数需要的无上下文颜色与 dp / sp 数值，同一母版生成 |
+| `design/tokens/generated/apple/DesignTokens.json`、`DesignTokens.swift` | Apple（苹果客户端）接线交接：尺寸按 pt（点）、时长按毫秒输出；字体、阴影和曲线保留配方。由 Mac 工作包映射原生字体 / 颜色 / 阴影与动画 API（应用接口），本包不修改 `apps/apple/` |
+
+精修某个用途时，改下列对应字段，再生成、检查相关交互、比较真实程序截图，一并提交母版与产物。不要手改生成文件。新增用途先复用现有语义；有实际不同的用途才新增名称。与几何相关的视口断点、百分比、网格比例和功能计时器仍属于组件布局与业务逻辑。
+
+## 颜色与主题
+
+`surfaces.desktop.themes`、`surfaces.mobile.themes` 保存现有主题选择器及其语义变量。默认项为浅色，`data-theme="dark"` 为深色；桌面的蓝、绿、紫预设和各自深色项保持原优先级。主题色主按钮继续使用石墨 / 既有预设；C4 天蓝是独立的 `--brand`，浅色 `#0A7AFF`、深色 `#4DA3FF`。
+
+| 语义变量 | 用途 |
+|---|---|
+| `--canvas` | 页面 / 导航背景中性色 |
+| `--surface` | 内容、输入区与浮层表面；也用于主按钮反色文字 |
+| `--surface-soft`（桌面）、`--soft`（手机） | 次级区域、代码与执行块底色 |
+| `--ink` | 正文与标题 |
+| `--ink-secondary` / `--secondary` | 次级文字、次级操作 |
+| `--ink-muted` / `--muted` | 说明、占位、时间 |
+| `--line` | 中性色边框和分隔线 |
+| `--accent`、`--accent-hover`（桌面）、`--accent-soft` | 主题色主按钮、悬停与选中底色 |
+| `--brand` | C4 品牌强调色；不替换用户所选主题色 |
+| `--success`、`--success-soft` | 完成 / 可用状态及底色，保留现有实际颜色 |
+| `--warning` | 审批 / 待处理状态点 |
+| `--danger`、`--danger-soft`（桌面） | 错误、危险操作与提示底色 |
+| `--shadow`、`--shadow-float`（桌面） | 现有基础与浮层阴影；随主题保留原值 |
+| `--ease`（手机） | 现有手机展开曲线 |
+
+`shared.color` 中每一项输出为 `--wm-color-<名称>`：
+
+| 名称 | 用途 |
+|---|---|
+| `brand-light`、`brand-dark` | C4 浅深品牌色 |
+| `header-translucent` | 旧页头半透明白色背景 |
+| `control-border`、`control-border-hover` | 旧表单边框与悬停边框 |
+| `on-action`、`white` | 固定白色文字 / 表面，包括图片查看器 |
+| `danger-hover` | 危险按钮悬停 |
+| `desktop-scrim`、`mobile-scrim`、`approval-scrim` | 桌面抽屉 / 对话框、手机抽屉、审批风险说明遮罩 |
+| `image-canvas`、`image-close` | 桌面图片查看器背景与关闭按钮 |
+| `success`、`success-soft`、`warning` | 桌面完成标签 / 底色、审批状态点 |
+| `fallback-ink`、`fallback-line`、`fallback-soft`、`fallback-action-line`、`fallback-accent` | 共用时间线已有的颜色回退 |
+| `composer-send-icon` | 手机旧发送图标颜色 |
+| `code-canvas`、`code-ink`、`code-heading`、`code-copy` | 手机旧代码块及代码复制控件颜色；现有后续样式覆盖照常生效 |
+| `syntax-keyword`、`syntax-string`、`syntax-comment` | 手机旧代码高亮，保留现有层叠覆盖 |
+| `toast-danger` | 手机错误提示 |
+| `mobile-preview-canvas`、`mobile-preview-ink` | 手机图片查看器基础颜色 |
+| `preview-topbar-scrim` | 图片查看器顶部渐变的遮罩色 |
+| `preview-close`、`preview-close-active` | 图片关闭按钮常态与按下状态 |
+| `mobile-success`、`mobile-warning` | 手机共享回合完成点、待审批点 |
+| `mobile-image-canvas` | 手机图片查看器最终背景 |
+
+`android.colors` 保留 `Weave` 兼容原生页实际使用的 `accent / ink / secondary / muted / canvas / surface / soft / accentSoft / line / lineStrong / danger / dangerSoft / overlay / success`；`webSurfaceLight / webSurfaceDark` 对应当前手机 Web 背景。兼容页此前没有深色调色板，本包保留该行为；新入口的深浅主题由 Web 令牌与显式原生窗口背景共同控制。
+
+## 字体、字号与行高
+
+| 字段 | 用途 |
+|---|---|
+| `shared.fontFamily.body` | 当前系统正文字体栈，含中文回退 |
+| `mono` | 执行详情、原始输出、资源文档的等宽字体栈 |
+| `mono-extended` | 代码块含 SFMono-Regular（苹果等宽字体）的回退栈 |
+| `mono-desktop` | 桌面已有 Consolas 优先的代码字体栈 |
+| `system` | Windows（微软桌面系统）标题栏字体 |
+| `shared.fontSize.<数值>` | 当前实际字号阶梯；名称对应当前 px（页面像素）值，原生输出为 sp / pt |
+| `shared.lineHeight.<数值，点写作下划线>` | 无单位行高比例，例如 `1_65` 为正文 / 原始输出的 `1.65` |
+| `shared.fontRelative.body / heading1 / heading2 / heading3 / inlineCode / table` | 消息正文、Markdown（结构化文本）标题、行内代码和表格的相对字号，保持用户字号缩放 |
+
+常用字号：10–12 为紧凑说明，13–15 为控件与正文，16–19 为消息 / 小标题，20–34 为较大标题。完整阶梯以母版为准；保留实际用过的中间值，不在抽取时强制凑整。桌面 `--text-size` 引用所选字号令牌，保留原有设备偏好与任意历史字号的像素回退。
+
+## 间距、尺寸与圆角
+
+`shared.space.<数值>` 输出 `--wm-space-<数值>`，供 padding（内边距）、margin（外边距）、gap（间隙）及焦点偏移使用；数字名称表示当前阶梯位置，精修可以改变对应值。常用阶梯为 2 / 4 / 6 / 8 / 12 / 16 / 20 / 24 / 32 / 48 / 64；其余项保留现有界面的细微差异。`shared.size` 是相关布局计算的宽度基准与标题栏保留区域。
+
+`shared.radius.<数值>` 输出 `--wm-radius-<数值>`。8–12 常用于控件，14–16 常用于卡片和浮层，18–32 为已有输入区 / 抽屉 / 图片卡；`999` 为胶囊，`circle` 为 `50%` 圆形。圆角和间距分组独立，原生抽屉顶部角引用圆角值。
+
+`android.dimensions` 是原生辅助函数实际使用的布局 / 字号值，记录数值与单位；生成的整数 dp 常量保留原有截断计算，字体常量保留 Float（浮点数），不会改变现有缩放行为。`fallbackPadding / fallbackTop` 保留错误回退页原有的物理 px 内边距。
+
+## 阴影
+
+| `shared.shadow` 名称 | 用途 |
+|---|---|
+| `desktop-model-menu` | 模型选择浮层 |
+| `desktop-active-tab` | 已有标签底部内阴影指示 |
+| `desktop-composer` | 桌面输入区 |
+| `desktop-resource-picker` | 输出 / 来源选择器 |
+| `mobile-composer-focus` | 手机输入区焦点指示 |
+| `mobile-popover` | 手机旧弹层基础阴影 |
+| `mobile-composer` | 手机旧输入区阴影 |
+| `mobile-toast` | 手机提示消息 |
+| `mobile-approval-menu` | 手机审批模式菜单 |
+| `mobile-attachment-remove` | 手机附件删除按钮 |
+
+各端现有后续覆盖中的 `none` 保持有效；抽取不会重新开启已经取消的阴影。
+
+## 动效参数
+
+`shared.duration` 输出 `--wm-duration-<名称>`。`fast / base / slow` 分别为已有的 180 / 200 / 220 毫秒；数字名称保留已有 160 / 240 / 260 / 280 / 300 / 420 毫秒的用途。`working` 为现有工作状态点的 1.8 秒周期；`reduced` 为手机现有减少动态效果时的 0.01 毫秒；`0ms` 为已有零时长覆盖。Android 模型弹层保留 160 毫秒时长和原有原生默认插值。
+
+`shared.easing.standard / smooth / enter / desktop / mobile` 分别保存现有 `ease`、`ease-in-out`、`ease-in`、`cubic-bezier(.16,1,.3,1)`、`cubic-bezier(.2,.8,.2,1)`；`enter` 沿用手机图片预览关闭时的已有曲线。本包仅换参数来源，不增加动画、修改关键帧或重新设计减少动态效果行为；UI-P1 定稿时在这里调整。
