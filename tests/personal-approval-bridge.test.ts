@@ -118,7 +118,7 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
       await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }) } }
 }
 
-test('an unknown model tool name fails before approval; the registered retry runs once', async () => {
+async function checkUnknownNameBeforeApproval() {
   const f = await nativeFixture({ toolName: 'pwsh' })
   try {
     const result = await f.ctx.get('tools').execute({ name: 'pweff', arguments: { command: 'Remove-Item fixture.txt' },
@@ -132,9 +132,9 @@ test('an unknown model tool name fails before approval; the registered retry run
     assert.equal(f.frames.filter(frame => frame.action === 'register_approval').length, 1)
     assert.equal(f.frames.find(frame => frame.action === 'register_approval').toolName, 'pwsh')
   } finally { await f.close() }
-})
+}
 
-test('approval resumes the exact registered name and snapshotted arguments without replay', async () => {
+async function checkApprovalSnapshot() {
   const original = { command: 'Remove-Item -LiteralPath fixture.txt' }
   const f = await nativeFixture({ toolName: 'pwsh', initialStatus: 'pending', toolArguments: original })
   try {
@@ -148,9 +148,12 @@ test('approval resumes the exact registered name and snapshotted arguments witho
     assert.equal(f.effects, 1)
     assert.equal(f.frames.filter(frame => frame.action === 'register_approval').length, 1)
   } finally { await f.close() }
-})
+}
 
 test('fixed ApprovalService and ToolRuntime deliver approved/rejected native decisions without forcing automatic tools to ask', async () => {
+  // Same vendor-dependent native contract, including invalid names and a suspended gate.
+  await checkUnknownNameBeforeApproval()
+  await checkApprovalSnapshot()
   for (const stage of ['gate', 'body']) for (const decision of ['allowed-once', 'rejected']) {
     const f = await nativeFixture({ stage, decision })
     try {
