@@ -716,7 +716,16 @@
         "sourceCorrectionRetained": 0
       },
       "formationJobs": {},
-      "operatorCancelledOpenDemo": false
+      "operatorCancelledOpenDemo": false,
+      "interruptedDuring": "memory-02-correction",
+      "credential-scan": {
+        "scanned": 161,
+        "matches": 0,
+        "skippedLinks": 511,
+        "removed": 9,
+        "credentialFilesRemaining": 0
+      },
+      "notACompletedCorrectionScenario": true
     },
     "final-mimo-isolated": {
       "scenarios": [
@@ -824,9 +833,11 @@
         }
       ],
       "credential-scan": {
-        "scanned": 167,
+        "scanned": 168,
         "matches": 0,
-        "skippedLinks": 511
+        "skippedLinks": 511,
+        "removed": 0,
+        "credentialFilesRemaining": 0
       },
       "ui-verification": {
         "electron": true,
@@ -861,7 +872,102 @@
         "newSourceRetained": true,
         "undeclaredApprovals": 0
       },
-      "operatorCancelledOpenDemo": false
+      "operatorCancelledOpenDemo": false,
+      "replyBehavior": {
+        "recommendsNextFridayEvening": true,
+        "obsoleteWednesdayNotSuggested": true
+      }
+    },
+    "final-qwen": {
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "originalChecksStatus": "failed",
+          "durationMs": 600625,
+          "checks": [],
+          "turns": [
+            {
+              "status": "running",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "originalChecksStatus": "failed",
+          "durationMs": 900664,
+          "checks": [],
+          "turns": [
+            {
+              "status": "running",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        }
+      ],
+      "credential-scan": {
+        "scanned": 162,
+        "matches": 0,
+        "skippedLinks": 511,
+        "removed": 0,
+        "credentialFilesRemaining": 0
+      },
+      "mimoRequests": {
+        "started": 0,
+        "withUsage": 0,
+        "missingUsage": 0
+      },
+      "world": {
+        "currentFriday": 0,
+        "obsoleteWednesdayRetained": 0,
+        "sourceWednesdayRetained": 0,
+        "sourceCorrectionRetained": 0
+      },
+      "formationJobs": {},
+      "operatorCancelledOpenDemo": false,
+      "switcherSamples": [
+        {
+          "at": "2026-10-08T08:06:38.7518002Z",
+          "currentModelId": "qwen3.8-27b-original",
+          "switching": false,
+          "activeLeases": 1,
+          "queuedLeases": 1,
+          "maintenanceQueued": 0,
+          "n_ctx": 98304,
+          "total_slots": 1
+        },
+        {
+          "at": "2026-10-08T08:11:28.9728508Z",
+          "currentModelId": "qwen3.8-27b-original",
+          "switching": false,
+          "activeLeases": 1,
+          "queuedLeases": 1,
+          "maintenanceQueued": 0
+        },
+        {
+          "at": "2026-10-08T08:18:35.4245613Z",
+          "currentModelId": "qwen3.8-27b-original",
+          "switching": false,
+          "activeLeases": 1,
+          "queuedLeases": 1,
+          "maintenanceQueued": 0
+        }
+      ],
+      "requestSummary": {
+        "started": 5,
+        "responseHeaders": 1,
+        "completedRequests": 0,
+        "visibleContentStarted": 0,
+        "interpretation": "front requests waited or returned only stream keepalive before timeout; no final reply or correction behavior available"
+      }
     }
   },
   "mimoUsage": {
@@ -883,5 +989,16 @@
     "failed": 0,
     "skipped": 0,
     "typecheck": "passed"
+  },
+  "cleanup": {
+    "existingIsolatedRootsChecked": 7,
+    "filesScanned": 1161,
+    "keyMatches": 0,
+    "credentialFilesRemaining": 0,
+    "interruptedCredentialFilesRemoved": 9,
+    "isolatedHostProcessesRemaining": 0,
+    "dailyVaultRead": false,
+    "modelServerStartedOrRestarted": false,
+    "preservedModelId": "qwen3.8-27b-original"
   }
 }

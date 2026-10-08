@@ -125,5 +125,22 @@
     "requestChars": 13726,
     "requestedModel": "qwen3.8-27b-original",
     "stream": true
+  },
+  {
+    "id": "12432-8",
+    "at": "2026-10-08T07:47:48.965Z",
+    "elapsedMs": 197403,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "12432-8",
+    "at": "2026-10-08T07:47:48.966Z",
+    "elapsedMs": 197404,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
   }
 ]
