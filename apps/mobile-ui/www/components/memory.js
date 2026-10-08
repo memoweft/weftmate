@@ -179,6 +179,7 @@ function loadMemoryDetail(target,...args){if(target&&typeof target==='object')me
 
 function openMemoryConfirmation(choice,target,token){if(!memoryCurrent(token)||state.memory.view!=='detail')return;
   state.memory.confirmation=choice;renderMemoryDetail(target,token);
+  if(['deleteItem','deleteEvidence'].includes(choice.operation))void uiCore.mobilePreviewMemoryForget(choice);
   requestAnimationFrame(()=>{if(memoryCurrent(token)&&state.memory.confirmation===choice)
     target.querySelector('.memory-confirm-panel')?.scrollIntoView?.({
       behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'start'})})}
@@ -205,14 +206,21 @@ function renderMemoryActions(target,token){const memory=state.memory,detail=memo
   }else{
     body.append(el('p','memory-consequence',choice.operation==='mute'?
       '停用后，记忆和来源仍可查看，但不再参与后续召回。':choice.operation==='deleteEvidence'?
-      `将删除来源“${choice.summary}”的有效正文与关联引用；原始聊天、会话存档和既有备份仍可能保留。从同一来源形成的其他记忆也会一并遗忘。`:
-      '将从当前有效记忆与召回移除这项记忆；原始聊天、会话存档和既有备份仍可能保留。从同一来源形成的其他记忆也会一并遗忘。'));
+      `将清除来源“${choice.summary}”及以下记忆，之后的记忆导出不再包含它们。`:
+      '将清除来源及以下记忆，之后的记忆导出不再包含它们。'));
     if(choice.operation!=='mute'){
+      const preview=choice.preview,scope=el('p','',preview?`将忘掉 ${preview.itemCount} 项记忆，清除 ${preview.evidenceCount} 条来源。以下内容会一起忘掉：`:
+        choice.previewError||'正在读取将一起忘掉的记忆…');scope.setAttribute('role','status');body.append(scope);
+      if(preview){const list=el('ul','memory-sources');for(const item of preview.items)list.append(el('li','',uiCore.forgetItemSummary(item)));body.append(list)}
+      const label=el('label'),snippets=el('input');snippets.type='checkbox';snippets.checked=choice.deleteConversationSnippets===true;
+      snippets.addEventListener('change',()=>{choice.deleteConversationSnippets=snippets.checked});
+      label.append(snippets,document.createTextNode('同时删除对话里含这句话的原话'));body.append(label,
+        el('p','muted','默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。'));
       const input=field('输入“删除”以确认','text',choice.confirmText||'');input.input.maxLength=2;
       const confirm=action(choice.operation==='deleteEvidence'?'确认删除这条来源':'确认永久删除记忆',
         ()=>submitMemoryAction(choice.operation,choice.id||null),true);
-      confirm.disabled=input.input.value.trim()!=='删除';input.input.addEventListener('input',()=>{
-        choice.confirmText=input.input.value;confirm.disabled=input.input.value.trim()!=='删除'});
+      confirm.disabled=!preview||input.input.value.trim()!=='删除';input.input.addEventListener('input',()=>{
+        choice.confirmText=input.input.value;confirm.disabled=!preview||input.input.value.trim()!=='删除'});
       body.append(input.box,confirm);
     }else body.append(action('确认停用',()=>submitMemoryAction('mute'),true))}
   body.append(action('取消',()=>{memory.confirmation=null;renderMemoryDetail(target,token)},false));target.append(box)}

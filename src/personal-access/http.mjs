@@ -1115,12 +1115,22 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, { sessions });
       }
+      const forgetPreviewMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/forget-preview$/.exec(pathname);
+      if (request.method === 'GET' && forgetPreviewMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, 'account:manage');
+        return context.json(response, 200, await context.sessionOperations.previewSessionForget(ownerId, forgetPreviewMatch[1]));
+      }
       const lifecycleMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)(?:\/(archive|unarchive))?$/.exec(pathname);
       if (lifecycleMatch && (request.method === 'POST' && lifecycleMatch[2] || request.method === 'DELETE' && !lifecycleMatch[2])) {
         if (url.search) throw failure('INVALID_REQUEST');
         const body = await context.readJson(request, 1024);
-        if (!plainObject(body) || Object.keys(body).some(key => key !== 'forgetMemories') ||
-            body.forgetMemories !== undefined && (request.method !== 'DELETE' || typeof body.forgetMemories !== 'boolean'))
+        if (!plainObject(body) || Object.keys(body).some(key => !['forgetMemories', 'deleteConversationSnippets', 'memoryWorldRevision'].includes(key)) ||
+            Object.keys(body).length > 0 && request.method !== 'DELETE' ||
+            body.forgetMemories !== undefined && typeof body.forgetMemories !== 'boolean' ||
+            body.deleteConversationSnippets !== undefined && typeof body.deleteConversationSnippets !== 'boolean' ||
+            body.deleteConversationSnippets === true && body.forgetMemories !== true ||
+            body.memoryWorldRevision !== undefined && (!Number.isSafeInteger(body.memoryWorldRevision) || body.memoryWorldRevision < 0 || body.forgetMemories !== true))
           throw failure('INVALID_REQUEST');
         if (body.forgetMemories) context.authenticate(request, 'account:manage');
         const result = request.method === 'DELETE'

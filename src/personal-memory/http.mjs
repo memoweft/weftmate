@@ -31,6 +31,18 @@ async function ownerQuery(manager, ownerId, method, params) {
   }
 }
 
+export function forgetPreviewView(result) {
+  if (!record(result) || !safeNumber(result.world_revision) || !Array.isArray(result.items) ||
+      result.item_count !== result.items.length || !safeNumber(result.evidence_count) || !Array.isArray(result.evidence_ids))
+    throw failure('MEMORY_RESPONSE_INVALID', 503);
+  return { worldRevision: result.world_revision, itemCount: result.item_count, evidenceCount: result.evidence_count,
+    evidenceIds: result.evidence_ids, items: result.items.map(item => {
+      if (!KINDS.has(item.object_kind) || typeof item.item_id !== 'string' || typeof item.name !== 'string')
+        throw failure('MEMORY_RESPONSE_INVALID', 503);
+      return { kind: item.object_kind, id: item.item_id, text: item.name, itemType: item.item_type };
+    }) };
+}
+
 function itemView(value) {
   if (!record(value) || typeof value.item_id !== 'string' || !ITEM_ID.test(value.item_id) ||
       !KINDS.has(value.object_kind) || !record(value.value)) throw failure('MEMORY_RESPONSE_INVALID', 503);
@@ -94,6 +106,14 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
   if (method === 'GET' && path === '/personal/v1/memory/status') {
     if (url.search) throw failure('INVALID_REQUEST');
     return { status: 200, body: await manager.status(ownerId) };
+  }
+  const previewMatch = /^\/personal\/v1\/memory\/(?:items\/(entity|relationship|event|cognition)|(?<evidence>evidence))\/([^/]+)\/forget-preview$/.exec(path);
+  if (method === 'GET' && previewMatch) {
+    if (url.search || !ITEM_ID.test(previewMatch[3])) throw failure('INVALID_REQUEST');
+    const result = await ownerQuery(manager, ownerId, 'preview_forget', {
+      target_kind: previewMatch[1] ?? 'evidence', target_id: previewMatch[3],
+    });
+    return { status: 200, body: forgetPreviewView(result) };
   }
   if (method === 'GET' && path === '/personal/v1/memory/items') {
     if ([...url.searchParams.keys()].some((key) => !['kind', 'query', 'limit', 'after'].includes(key))) {

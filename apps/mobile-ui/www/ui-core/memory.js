@@ -427,6 +427,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         if (!core.memoryViewCurrent(token) || !selected || !['correct', 'mute', 'delete'].includes(operation)
             || !core.memoryActionAllowed(operation))
             return;
+        if (operation === 'delete' && core.memory.forgetPreview?.worldRevision !== selected.worldRevision)
+            return effects.detailError('请先读取遗忘范围，再确认忘掉。');
         const selectedGeneration = core.memory.selectedGeneration;
         let textValue = null;
         if (operation === 'correct') {
@@ -451,7 +453,8 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         effects.detailError('');
         effects.detailStatus('正在提交并等待处理结果…');
         const path = `/items/${selected.kind}/${core.memoryPathId(selected.id)}/${operation}`;
-        const body = { requestId, expectedWorldRevision: selected.worldRevision, ...(operation === 'correct' ? { text: textValue } : {}) };
+        const body = { requestId, expectedWorldRevision: selected.worldRevision, ...(operation === 'correct' ? { text: textValue } : {}),
+            ...(operation === 'delete' ? { deleteConversationSnippets: core.memory.deleteConversationSnippets === true } : {}) };
         try {
             const result = await core.submitMemoryCommand(selected, operation, body);
             if (!core.memoryIdentityCurrent(token) || operationGeneration !== core.memory.operationGeneration)
@@ -638,13 +641,36 @@ globalThis.WeftUiCore.factories.memory = (core, effects, environment) => {
         core.memory.kind = kind;
         core.memory.query = query;
     }
-    function setMemoryMode(mode) {
+    async function setMemoryMode(mode) {
         core.memory.mode = mode;
+        core.memory.forgetPreview = null;
+        core.memory.deleteConversationSnippets = false;
+        if (mode !== 'delete') return;
+        const selected = core.memory.selected, generation = core.memory.selectedGeneration, token = core.memoryIdentity();
+        core.memory.forgetPreviewError = '';
+        effects.renderMemoryMode();
+        try {
+            const preview = await core.readForgetPreview(selected.kind, selected.id);
+            if (!core.memoryViewCurrent(token) || core.memory.selectedGeneration !== generation || core.memory.mode !== 'delete') return;
+            if (preview.worldRevision !== selected.worldRevision) throw { code: 'MEMORY_REVISION_CHANGED' };
+            core.memory.forgetPreview = preview;
+        } catch (error) {
+            if (!core.memoryViewCurrent(token) || core.memory.selectedGeneration !== generation || core.memory.mode !== 'delete') return;
+            core.memory.forgetPreviewError = '无法读取遗忘范围，请返回详情并重新打开。';
+            effects.detailError(core.memoryFailure(error));
+        }
+        effects.renderMemoryMode();
     }
     function setMemoryCorrectionText(text) {
         if (core.memory.selected)
             core.memory.drafts.set(`${core.memory.selected.kind}|${core.memory.selected.id}`, text);
     }
+    function forgetItemSummary(item) {
+        const label = { entity: '人物与事物', relationship: '关系', event: '经历', cognition: '理解',
+            person: '人物', evaluation: '评价', decision: '决定', preference: '偏好' }[item.itemType ?? item.kind] ?? core.memoryKinds[item.kind];
+        return `${item.text.length > 160 ? item.text.slice(0, 160) + '…' : item.text}（${label}）`;
+    }
+    core.forgetItemSummary = forgetItemSummary;
     function showMemoryReceipt(message, requestId, action = 'none') {
         core.memory.receiptNotice = { message, requestId, action };
         effects.paintMemoryReceipt(message, requestId, action);

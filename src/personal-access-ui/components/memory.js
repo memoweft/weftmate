@@ -133,9 +133,28 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
         }
         else if (mode === 'delete') {
             ui.byId('memory-confirm-action').textContent = '确认忘掉';
-            ui.byId('memory-confirm-copy').textContent = '忘掉会清除这项记忆的来源及从这些来源形成的其他记忆，之后的记忆导出不再包含它们。对话原文和以前的备份保留。';
+            ui.byId('memory-confirm-copy').textContent = '忘掉会清除来源及以下记忆，之后的记忆导出不再包含它们。';
+            let scope = document.getElementById('memory-forget-scope');
+            if (!scope) { scope = ui.element('div'); scope.id = 'memory-forget-scope'; ui.byId('memory-confirm-panel').append(scope); }
+            scope.replaceChildren(); scope.hidden = false;
+            const preview = core.memory.forgetPreview;
+            const status = ui.element('p', '', preview ? `将忘掉 ${preview.itemCount} 项记忆，清除 ${preview.evidenceCount} 条来源。以下内容会一起忘掉：`
+                : core.memory.forgetPreviewError || '正在读取将一起忘掉的记忆…');
+            status.setAttribute('role', 'status'); scope.append(status);
+            if (preview) {
+                const list = ui.element('ul', 'memory-sources');
+                for (const item of preview.items) list.append(ui.element('li', '', core.forgetItemSummary(item)));
+                scope.append(list);
+            }
+            const label = ui.element('label'), checkbox = ui.element('input'); checkbox.type = 'checkbox';
+            checkbox.checked = core.memory.deleteConversationSnippets === true;
+            checkbox.addEventListener('change', () => { core.memory.deleteConversationSnippets = checkbox.checked; });
+            label.append(checkbox, document.createTextNode('同时删除对话里含这句话的原话')); scope.append(label);
+            ui.byId('memory-delete-boundary').textContent = '默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。';
         }
-        ui.byId('memory-confirm-action').disabled = !!core.memory.activeOperation || !!core.memory.unresolvedMarker || !!core.memory.selected?.stale;
+        const scope = document.getElementById('memory-forget-scope'); if (scope) scope.hidden = mode !== 'delete';
+        ui.byId('memory-confirm-action').disabled = !!core.memory.activeOperation || !!core.memory.unresolvedMarker || !!core.memory.selected?.stale
+            || mode === 'delete' && !core.memory.forgetPreview;
     }
     function handleMemoryReceiptAction() {
         const unknown = core.storedMemoryMarker(core.memoryMarkerKey()) ?? core.memory.unresolvedMarker;
