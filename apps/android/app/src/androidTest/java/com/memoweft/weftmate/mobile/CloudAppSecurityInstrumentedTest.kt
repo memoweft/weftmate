@@ -113,6 +113,10 @@ class CloudAppSecurityInstrumentedTest {
             assertTrue(legacy.tokens(JSONObject().put("value", "")).isNull("value"))
             assertNull(secrets.cloudValue("tokens"))
             val native = CloudAppLogin(secrets, PersonalApi())
+            val trust = native.credentials(JSONObject().put("key", "trusted-host:synthetic-host").put("value",
+                JSONObject().put("origin", origin).put("tlsSpki", cloudBase64(java.security.MessageDigest.getInstance("SHA-256").digest(suffix.toByteArray())))
+                    .put("relay", JSONObject().put("state", "disabled").put("baseUrl", JSONObject.NULL))))
+            assertEquals(origin, trust.getJSONObject("value").getString("origin"))
             fun token(form: String) = native.request(JSONObject().put("url", "$issuer/token").put("method", "POST")
                 .put("headers", JSONObject().put("content-type", "application/x-www-form-urlencoded")).put("body", form)).getJSONObject("body")
             val first = token("grant_type=authorization_code&client_id=weftmate-android&code=synthetic")
@@ -135,6 +139,7 @@ class CloudAppSecurityInstrumentedTest {
             assertFalse(keyStore.containsAlias(cloudKeyAlias(keyId)))
         } finally {
             server.close(); thread.join(10000)
+            CloudPins.clear(origin)
             keys.get(keyId, true)
             if (keyStore.containsAlias(storageAlias)) keyStore.deleteEntry(storageAlias)
             context.deleteSharedPreferences(storageName)
