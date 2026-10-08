@@ -91,8 +91,8 @@ struct CloudAccessPresenter: View {
                                 Text("\(device.platformLabel) · \(device.requestedAtLabel)").font(.caption)
                                 HStack {
                                     Button("允许") { Task { await cloud.decide(device, allow: true) } }
-                                        .buttonStyle(.borderedProminent).accessibilityIdentifier("cloudAllow.\(device.id)")
-                                    Button("拒绝", role: .destructive) { Task { await cloud.decide(device, allow: false) } }.buttonStyle(.bordered)
+                                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).accessibilityIdentifier("cloudAllow.\(device.id)")
+                                    Button("拒绝", role: .destructive) { Task { await cloud.decide(device, allow: false) } }.buttonStyle(OutlineActionStyle())
                                 }
                             }
                         }

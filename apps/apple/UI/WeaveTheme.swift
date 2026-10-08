@@ -1,16 +1,18 @@
 import SwiftUI
 
-// Match the existing Weave palette while respecting the system appearance.
+// Neutral desktop and mobile palette; the C4 brand retains its blue.
 enum Weave {
-    static let accent = adaptive(light: 0x2859D8, dark: 0x7FA7FF)
-    static let accentSoft = adaptive(light: 0xE9F0FF, dark: 0x20345A)
-    static let ink = adaptive(light: 0x1C2940, dark: 0xE9EFFB)
-    static let secondary = adaptive(light: 0x56657B, dark: 0xB9C7DF)
-    static let muted = adaptive(light: 0x64748A, dark: 0xA2B2CB)
-    static let canvas = adaptive(light: 0xF3F5FA, dark: 0x121A28)
-    static let surface = adaptive(light: 0xFFFFFF, dark: 0x161F2F)
-    static let soft = adaptive(light: 0xF7F9FD, dark: 0x1D2A3F)
-    static let line = adaptive(light: 0xE4E9F2, dark: 0x344259)
+    static let accent = adaptive(light: 0x30352F, dark: 0xE5E5DE)
+    static let accentSoft = adaptive(light: 0xF0EFEC, dark: 0x32332E)
+    static let ink = adaptive(light: 0x292B27, dark: 0xF1F1EB)
+    static let secondary = adaptive(light: 0x55574F, dark: 0xC4C5BA)
+    static let muted = adaptive(light: 0x707268, dark: 0xA6A89B)
+    static let canvas = adaptive(light: 0xFAF9F6, dark: 0x252620)
+    static let surface = adaptive(light: 0xFFFFFF, dark: 0x252620)
+    static let soft = adaptive(light: 0xF5F4F0, dark: 0x2E3029)
+    static let line = adaptive(light: 0xDDDED7, dark: 0x414338)
+    static let onAccent = adaptive(light: 0xFFFFFF, dark: 0x252620)
+    static let status = adaptive(light: 0x667E5A, dark: 0xA3B693)
     static let danger = adaptive(light: 0xB93248, dark: 0xFF8EA0)
 
     private static func adaptive(light: UInt32, dark: UInt32) -> Color {
@@ -45,22 +47,44 @@ struct WeaveCard<Content: View>: View {
     init(@ViewBuilder content: () -> Content) { self.content = content() }
     var body: some View {
         content
-            .padding(24)
-            .background(Weave.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(Weave.line, lineWidth: 1))
-            .shadow(color: .black.opacity(0.035), radius: 18, x: 0, y: 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(20)
+            .background(Weave.surface, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Weave.line, lineWidth: 1))
+    }
+}
+
+enum AppleAppearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+    var title: String { switch self { case .system: "跟随系统"; case .light: "浅色"; case .dark: "深色" } }
+    var colorScheme: ColorScheme? { switch self { case .system: nil; case .light: .light; case .dark: .dark } }
+}
+
+/// Actions grow with Dynamic Type and retain a 44 pt touch target.
+struct OutlineActionStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.font(.callout.weight(.medium))
+            .padding(.horizontal, 12).frame(minHeight: 44)
+            .foregroundStyle(Weave.ink)
+            .background(configuration.isPressed ? Weave.soft : Weave.surface, in: RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(Weave.line))
+            .opacity(enabled ? 1 : 0.45)
     }
 }
 
 struct PrimaryActionStyle: ButtonStyle {
+    var fillsWidth = true
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(.body, design: .default, weight: .semibold))
-            .frame(maxWidth: .infinity, minHeight: 46)
-            .foregroundStyle(.white)
+            .padding(.horizontal, 14)
+            .frame(maxWidth: fillsWidth ? .infinity : nil, minHeight: 44)
+            .foregroundStyle(Weave.onAccent)
             .background(Weave.accent.opacity(enabled ? (configuration.isPressed ? 0.78 : 1) : 0.45),
-                        in: RoundedRectangle(cornerRadius: 13, style: .continuous))
+                        in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             .scaleEffect(configuration.isPressed ? 0.985 : 1)
     }
 }

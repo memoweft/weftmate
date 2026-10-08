@@ -19,7 +19,7 @@ struct TimelineTaskControl: View {
             if let task = model.snapshot {
                 if task.control.canStop {
                     Button(model.stopActionLabel) { Task { await model.requestStop() } }
-                        .buttonStyle(.bordered).disabled(model.stopBusy || !model.canRequestStop || appModel.historyCachedAt != nil)
+                        .buttonStyle(OutlineActionStyle()).disabled(model.stopBusy || !model.canRequestStop || appModel.historyCachedAt != nil)
                         .accessibilityIdentifier("stopTask.\(task.taskId)")
                 }
                 if model.stopRecord != nil {

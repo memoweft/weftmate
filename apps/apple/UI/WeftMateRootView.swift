@@ -36,6 +36,7 @@ struct WeftMateRootView: View {
             if scenePhase == .active { await model.cloudLogin.checkPending() }
         }
         .tint(Weave.accent)
+        .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
         .task { await model.start() }
         .onAppear { model.setForeground(scenePhase == .active) }
         .onChange(of: scenePhase) { _, phase in model.setForeground(phase == .active) }
@@ -86,9 +87,9 @@ private struct MacWorkspace: View {
         VStack(spacing: 0) {
             HStack(spacing: 7) {
                 WeftIcon("search").foregroundStyle(Weave.muted)
-                TextField("搜索原会话", text: $search)
+                TextField("搜索对话", text: $search)
                     .textFieldStyle(.plain)
-                    .accessibilityLabel("搜索原会话")
+                    .accessibilityLabel("搜索对话")
             }
             .padding(7)
             .background(Weave.surface, in: RoundedRectangle(cornerRadius: 8))
@@ -104,8 +105,9 @@ private struct MacWorkspace: View {
                 Section("最近对话") {
                     ConversationListContent(model: model, search: $search)
                     ForEach(filteredConversations) { conversation in
-                        ConversationRow(conversation: conversation)
+                        ConversationRow(conversation: conversation, selected: selected == .conversation(conversation.id))
                             .tag(SidebarSelection.conversation(conversation.id))
+                            .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : Color.clear)
                     }
                 }
                 Section {
@@ -130,8 +132,9 @@ private struct MacWorkspace: View {
                         .frame(width: 34, height: 34).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: 11))
                     VStack(alignment: .leading, spacing: 3) {
                         Text(model.accountName).font(.callout.weight(.medium)).lineLimit(1)
-                        Text(model.verificationPending ? "等待重新验证登录" : model.serverDisplayName)
-                            .font(.caption2).foregroundStyle(Weave.muted).lineLimit(1)
+                        if model.verificationPending {
+                            Text("重新登录").font(.caption2).foregroundStyle(Weave.muted)
+                        }
                     }
                     Spacer()
                     WeftIcon("right", size: 16).font(.caption).foregroundStyle(Weave.muted)
@@ -171,21 +174,6 @@ private struct PhoneWorkspace: View {
     var body: some View {
         NavigationStack {
                 List {
-                    Section {
-                        NavigationLink {
-                            SpiritProfileView()
-                        } label: {
-                            HStack(spacing: 12) {
-                                SpiritView(size: 48)
-                                VStack(alignment: .leading, spacing: 4) {
-                                    Text("接上之前的话题").font(.headline).foregroundStyle(Weave.ink)
-                                    Text(model.accountName).font(.caption).foregroundStyle(Weave.muted)
-                                }
-                            }.padding(.vertical, 6)
-                        }
-                        .accessibilityLabel("小纬，接上之前的话题")
-                        .accessibilityIdentifier("spiritNavigation")
-                    }.listRowBackground(Weave.surface)
                     Section("最近对话") {
                         ConversationListContent(model: model, search: $search)
                         ForEach(filteredConversations) { conversation in
@@ -194,9 +182,10 @@ private struct PhoneWorkspace: View {
                         }
                     }
                 }
-                .listStyle(.insetGrouped).scrollContentBackground(.hidden).background(Weave.canvas)
+                .listStyle(.plain).scrollContentBackground(.hidden).background(Weave.canvas)
                 .searchable(text: $search, prompt: "搜索对话")
-                .navigationTitle("对话")
+                .navigationTitle("WeftMate")
+                .navigationBarTitleDisplayMode(.inline)
                 .navigationDestination(for: String.self) { id in
                     if let conversation = model.conversations.first(where: { $0.id == id }) {
                         ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString)
@@ -237,26 +226,20 @@ private struct WelcomeView: View {
     @ObservedObject var model: AppleAppModel
     var body: some View {
         VStack(alignment: .leading, spacing: 23) {
-            SpiritView(size: 108)
-            HStack(spacing: 9) {
-                BrandMark(size: 25)
-                Text("WeftMate").font(.callout.weight(.medium)).foregroundStyle(Weave.muted)
-            }
-            Text("\(model.accountName)，\n接着聊吧。")
-                .font(.system(size: 34, weight: .medium)).tracking(-1).foregroundStyle(Weave.ink)
+            BrandMark(size: 48)
+            Text("接着聊吧")
+                .font(.largeTitle.weight(.medium)).tracking(-1).foregroundStyle(Weave.ink)
                 .fixedSize(horizontal: false, vertical: true)
-            Text("从侧栏选择一段原会话。\n你在其他设备上的记录，会在同一个账户中接续。")
+            Text("选择对话，接着处理你的目标。")
                 .font(.body).lineSpacing(7).foregroundStyle(Weave.muted)
             if let error = model.conversationsError {
                 InlineNotice(message: error, isError: true)
-                Button("重新连接") { Task { await model.refresh() } }.buttonStyle(.bordered)
+                Button("重新连接") { Task { await model.refresh() } }.buttonStyle(OutlineActionStyle())
                     .disabled(model.refreshing)
             } else if model.refreshing {
-                HStack(spacing: 10) { ProgressView().controlSize(.small); Text("正在读取原会话…") }
+                HStack(spacing: 10) { ProgressView().controlSize(.small); Text("正在读取…") }
                     .font(.callout).foregroundStyle(Weave.muted)
-            } else if model.lastRefresh != nil {
-                WeftLabel("已读取 \(model.conversations.count) 段原会话", icon: "allow")
-                    .font(.callout).foregroundStyle(Weave.secondary)
+
             }
         }
         .frame(maxWidth: 440, alignment: .leading).padding(40)

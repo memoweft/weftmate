@@ -22,7 +22,7 @@ struct ConversationListContent: View {
                     .font(.caption).foregroundStyle(Weave.muted)
             }
             if model.refreshing && model.conversations.isEmpty {
-                HStack { ProgressView(); Text("正在读取原会话…").foregroundStyle(Weave.muted) }
+                HStack { ProgressView(); Text("正在读取…").foregroundStyle(Weave.muted) }
                     .padding(.vertical, 18)
             } else if let error = model.conversationsError {
                 VStack(alignment: .leading, spacing: 12) {
@@ -31,7 +31,7 @@ struct ConversationListContent: View {
                         .disabled(model.refreshing)
                 }.padding(.vertical, 10)
             } else if model.conversations.isEmpty {
-                Text("这个账户还没有已同步的对话。")
+                Text("还没有对话")
                     .font(.callout).foregroundStyle(Weave.muted).padding(.vertical, 18)
             } else if filtered.isEmpty {
                 Text("没有找到相关对话。")
@@ -43,18 +43,20 @@ struct ConversationListContent: View {
 
 struct ConversationRow: View {
     let conversation: ConversationSummary
+    var selected = false
     var body: some View {
         VStack(alignment: .leading, spacing: 5) {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(conversation.title.isEmpty ? "未命名对话" : conversation.title)
-                    .font(.body.weight(.medium)).foregroundStyle(Weave.ink).lineLimit(2)
+                    .font(.body.weight(.medium)).foregroundStyle(selected ? Weave.onAccent : Weave.ink).lineLimit(2)
                 if conversation.running {
-                    Circle().fill(Weave.accent).frame(width: 6, height: 6)
+                    Circle().fill(selected ? Weave.onAccent : Weave.status).frame(width: 6, height: 6)
                         .accessibilityLabel("正在处理")
                 }
             }
-            Text(conversation.originalModelLabel ?? "已同步的原会话")
-                .font(.caption).foregroundStyle(Weave.muted).lineLimit(1)
+            if conversation.running {
+                Text("正在处理").font(.caption).foregroundStyle(selected ? Weave.onAccent : Weave.muted)
+            }
         }
         .padding(.vertical, 5)
         .accessibilityElement(children: .combine)
@@ -72,6 +74,7 @@ struct ConversationView: View {
             sessionID: conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? ""))
     }
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var draftFocused: Bool
     @State private var visibleMessageID: String?
     @State private var previousTailID: String?
@@ -204,17 +207,17 @@ struct ConversationView: View {
                     if model.historyBusy && model.messages.isEmpty {
                         HStack(spacing: 10) {
                             ProgressView().controlSize(.small)
-                            Text("正在读取原会话…").font(.callout).foregroundStyle(Weave.muted)
+                            Text("正在读取…").font(.callout).foregroundStyle(Weave.muted)
                         }.padding(.vertical, 24).frame(maxWidth: .infinity)
                     }
                     if let error = model.historyError {
                         InlineNotice(message: error, isError: true)
                         Button("重新读取") { Task { await model.open(conversation) } }
-                            .buttonStyle(.bordered)
+                            .buttonStyle(OutlineActionStyle())
                     }
                     if !model.historyBusy && model.messages.isEmpty {
                         EmptyState(symbol: "chat", title: "还没有消息",
-                                   message: "这段原会话还没有可显示的文字记录。")
+                                   message: "说说你想完成什么。")
                             .frame(minHeight: 240)
                     }
                     if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
@@ -251,20 +254,21 @@ struct ConversationView: View {
             }
         }
         .background(Weave.surface)
-        .navigationTitle(conversation.title.isEmpty ? "原会话" : conversation.title)
+        .navigationTitle(conversation.title.isEmpty ? "对话" : conversation.title)
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button("输出与来源") {
+                Button {
                     endDraftFocus()
                         #if os(iOS)
                         resources.showingList = true; resources.visible = true
                         #else
                         resourcePopover = true
                         #endif
-                    }
+                    } label: { WeftIcon("outputs") }
+                    .accessibilityLabel("输出与来源")
                     .accessibilityIdentifier("openConversationResources")
                     #if os(macOS)
                     .popover(isPresented: $resourcePopover) {
@@ -339,7 +343,7 @@ struct ConversationView: View {
                             Task { await model.continueSavedRequest(row.id, accountEpoch: accountEpoch) }
                         }.disabled(model.reconcilingRequests.contains(row.id) || model.sendTargets[key] == nil)
                     }
-                }.buttonStyle(.bordered).font(.caption)
+                }.buttonStyle(OutlineActionStyle()).font(.caption)
             }
             .padding(12).frame(maxWidth: .infinity, alignment: .leading)
             .background(Weave.soft, in: RoundedRectangle(cornerRadius: 12))
@@ -352,17 +356,8 @@ struct ConversationView: View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
         return VStack(alignment: .leading, spacing: 9) {
-            HStack(spacing: 6) {
-                WeftIcon("chat")
-                Text("模型 · \(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "尚未确认")")
-                    .lineLimit(1)
-                Spacer(minLength: 0)
-                if conversation.running { Text("正在处理").foregroundStyle(Weave.accent) }
-            }
-            .font(.caption).foregroundStyle(Weave.muted)
-
             VStack(alignment: .leading, spacing: 8) {
-                TextField("记下要接着说的话…", text: draft, axis: .vertical)
+                TextField("向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(.body)
                     .focused($draftFocused).padding(.horizontal, 9).padding(.top, 7)
                     .disabled(!model.canEditDraft(for: conversation))
@@ -380,6 +375,9 @@ struct ConversationView: View {
                             }
                         }
                     }
+                }
+                if dynamicTypeSize.isAccessibilitySize {
+                    composerApprovalMode(accountEpoch: accountEpoch)
                 }
                 HStack(spacing: 12) {
                     Menu {
@@ -399,30 +397,29 @@ struct ConversationView: View {
                         #if os(macOS)
                         Button("粘贴图片或文件") { pasteAttachments(accountEpoch: accountEpoch) }
                         #endif
-                    } label: { WeftIcon("plus").frame(width: 32, height: 32) }
+                    } label: { WeftIcon("plus").frame(width: 44, height: 44) }
                     .disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
-                    if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: accountEpoch) {
-                        ApprovalModeControl(model: model, sessionID: sessionID)
-                            .id(sessionID + accountEpoch.uuidString)
+                    if !dynamicTypeSize.isAccessibilitySize {
+                        composerApprovalMode(accountEpoch: accountEpoch)
                     }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
-                    Text(model.draftStatus(for: conversation))
+                    Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
                         .font(.caption).foregroundStyle(Weave.muted).lineLimit(1)
-                        .accessibilityIdentifier("draftSaveStatus")
+                        .accessibilityLabel("当前模型")
                     Spacer()
                     Button { Task { await model.send(conversation, accountEpoch: accountEpoch) } } label: {
                         WeftIcon("send")
-                            .font(.body.weight(.semibold)).frame(width: 40, height: 40)
+                            .font(.body.weight(.semibold)).frame(width: 20, height: 44)
                     }
-                    .buttonStyle(.bordered).buttonBorderShape(.circle)
-                    .disabled(!model.canSend(conversation)).accessibilityLabel("发送到原会话")
+                    .buttonStyle(PrimaryActionStyle(fillsWidth: false))
+                    .disabled(!model.canSend(conversation)).accessibilityLabel("发送")
                     .accessibilityIdentifier("sendButton")
                 }
             }
             .padding(9)
-            .background(Weave.soft, in: RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).strokeBorder(Weave.line))
+            .background(Weave.surface, in: RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Weave.line))
 
             if let attachmentInputError { Text(attachmentInputError).font(.caption).foregroundStyle(Weave.danger) }
             if let error = model.draftError {
@@ -439,7 +436,7 @@ struct ConversationView: View {
             if let choice = model.modelsToConfirm[key] {
                 Button("确认使用会话已绑定的模型：\(choice.name)") {
                     Task { await model.confirmBoundModel(for: conversation, accountEpoch: accountEpoch) }
-                }.buttonStyle(.bordered).accessibilityIdentifier("confirmBoundModelButton")
+                }.buttonStyle(OutlineActionStyle()).accessibilityIdentifier("confirmBoundModelButton")
             }
             if let choices = model.adoptionChoices[key], !choices.isEmpty {
                 Menu("选择模型并接通原会话") {
@@ -468,6 +465,12 @@ struct ConversationView: View {
         .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 12)
         .frame(maxWidth: 792).frame(maxWidth: .infinity)
         .background(Weave.surface)
+    }
+
+    @ViewBuilder private func composerApprovalMode(accountEpoch: UUID) -> some View {
+        if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: accountEpoch) {
+            ApprovalModeControl(model: model, sessionID: sessionID).id(sessionID + accountEpoch.uuidString)
+        }
     }
 
     #if os(macOS)
@@ -509,7 +512,7 @@ struct ConversationView: View {
                             Task { await model.continueAdoptionRequest(row.id, accountEpoch: accountEpoch) }
                         }.disabled(model.adoptingRequests.contains(row.id))
                     }
-                }.buttonStyle(.bordered).font(.caption)
+                }.buttonStyle(OutlineActionStyle()).font(.caption)
             }
             .padding(12).frame(maxWidth: .infinity, alignment: .leading)
             .background(Weave.soft, in: RoundedRectangle(cornerRadius: 12))

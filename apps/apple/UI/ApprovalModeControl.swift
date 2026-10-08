@@ -22,30 +22,33 @@ struct ApprovalModeControl: View {
                 HStack(spacing: 5) {
                     WeftIcon("approval")
                     Text(settings?.mode.shortTitle ?? "审批模式")
-                        .lineLimit(1).fixedSize(horizontal: true, vertical: false)
+                        .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     WeftIcon("chevron", size: 16).font(.caption)
                     if busy { ProgressView().controlSize(.mini) }
                 }.font(.caption).foregroundStyle(Weave.ink)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(OutlineActionStyle())
             .disabled(busy || !isVerified)
             .accessibilityLabel(sessionID == nil ? "默认审批模式" : "审批模式")
             .accessibilityValue(settings?.mode.rawValue ?? "尚未读取")
             .accessibilityIdentifier(sessionID == nil ? "defaultApprovalMode" : "approvalMode")
             .popover(isPresented: $showingMenu, arrowEdge: .bottom) {
-                VStack(alignment: .leading, spacing: 5) {
-                    Text(sessionID == nil ? "新对话的默认模式" : "本对话的审批模式")
-                        .font(.headline).padding(.bottom, 6)
-                    ForEach(Array(ApprovalMode.allCases.enumerated()), id: \.element.id) { index, mode in
-                        modeButton(mode, number: index + 1)
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 5) {
+                        Text(sessionID == nil ? "新对话的默认模式" : "本对话的审批模式")
+                            .font(.headline).padding(.bottom, 6)
+                        ForEach(Array(ApprovalMode.allCases.enumerated()), id: \.element.id) { index, mode in
+                            modeButton(mode, number: index + 1)
+                        }
+                        if sessionID != nil, let categories = settings?.allowedCategories, !categories.isEmpty {
+                            Divider()
+                            Text("本对话已允许：" + categories.map(SessionApproval.riskLabel).joined(separator: "、"))
+                                .font(.caption).foregroundStyle(Weave.muted)
+                        }
                     }
-                    if sessionID != nil, let categories = settings?.allowedCategories, !categories.isEmpty {
-                        Divider()
-                        Text("本对话已允许：" + categories.map(SessionApproval.riskLabel).joined(separator: "、"))
-                            .font(.caption).foregroundStyle(Weave.muted)
-                    }
+                    .padding(18)
                 }
-                .padding(18).frame(width: 330)
+                .frame(idealWidth: 330, maxWidth: 330, maxHeight: 520)
                 .presentationCompactAdaptation(.popover)
                 .accessibilityElement(children: .contain)
                 .accessibilityIdentifier("approvalModeMenu")

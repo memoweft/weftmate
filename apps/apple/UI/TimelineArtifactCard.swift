@@ -23,7 +23,7 @@ struct TimelineArtifactCard: View {
                 Button("预览") { openPreview(entry.event) }.accessibilityIdentifier("previewArtifact.\(entry.seq)")
                 Button("保存") { Task { await prepare(); if file != nil { exporting = true } } }
                 Button("分享") { Task { await prepare(); if file != nil { sharing = true } } }
-            }.buttonStyle(.bordered).disabled(loading || appModel.historyCachedAt != nil)
+            }.buttonStyle(OutlineActionStyle()).disabled(loading || appModel.historyCachedAt != nil)
             if loading { ProgressView() }
             if let error { Text(error).font(.caption).foregroundStyle(Weave.danger) }
         }
