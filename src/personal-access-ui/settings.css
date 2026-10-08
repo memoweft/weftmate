@@ -72,3 +72,11 @@
 .settings-schedules-list { list-style: none; padding: 0; margin: var(--wm-space-20) 0; }
 .settings-schedule-row { display: flex; flex-wrap: wrap; gap: var(--wm-space-12); }
 .settings-schedule-row .system-service-detail { flex: 1; min-width: var(--wm-size-220); }
+
+.settings-category .backup-settings > h2 { display: none; }
+.settings-category .backup-settings form { display: block; }
+.settings-category .backup-settings form label { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, var(--wm-size-settings-control)); align-items: center; gap: var(--wm-space-24); margin: 0; padding: var(--wm-space-20) 0; border-bottom: var(--wm-space-1) solid var(--line); }
+.settings-category .backup-settings form label:has([type=checkbox]) { display: flex; justify-content: space-between; }
+.settings-category .backup-settings form button { margin-top: var(--wm-space-16); }
+.settings-dialog .backup-settings .settings-switch { width: var(--wm-space-44); height: var(--wm-space-26); min-height: var(--wm-space-26); padding: var(--wm-space-3); }
+@media (max-width: 719px) { .settings-category .backup-settings form label { grid-template-columns: 1fr; gap: var(--wm-space-8); } }

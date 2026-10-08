@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 const repository = resolve(import.meta.dirname, '../..'), evidence = join(repository, 'tests/evidence/ui-4');
 await mkdir(evidence, { recursive: true });
-const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, usageSamples: true, schedules: true });
+const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, usageSamples: true, schedules: true, backups: true });
 const profile = await mkdtemp(join(tmpdir(), 'weftmate-ui4-'));
 const env = { ...process.env, REVIEW_PROFILE: profile, REVIEW_ORIGIN: fixture.origin, REVIEW_THEME: 'light' };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
@@ -54,8 +54,9 @@ try {
   await dialog.getByRole('searchbox', { name: '搜索设置' }).fill('');
   for (const theme of ['light', 'dark']) {
     await nav.getByRole('button', { name: '外观', exact: true }).click(); await button(theme === 'light' ? '浅色' : '深色').click();
-    for (const [id, name] of [['general','常规'],['appearance','外观'],['account','账户'],['devices','设备'],['usage','用量'],['models','模型'],['approvals','审批'],['memory','记忆'],['schedules','提醒与定时任务'],['resources','资料访问'],['system','系统状态'],['about','关于']]) {
+    for (const [id, name] of [['general','常规'],['appearance','外观'],['account','账户'],['devices','设备'],['usage','用量'],['models','模型'],['approvals','审批'],['memory','记忆'],['schedules','提醒与定时任务'],['resources','资料访问'],['system','系统状态'],['backups','备份与恢复'],['about','关于']]) {
       await nav.getByRole('button', { name, exact: true }).click();
+      if (id === 'backups') await page.waitForFunction(() => document.querySelector('.backup-settings [name=directory]').value === 'D:/Synthetic/UI-4-Backups');
       if (id === 'schedules') await dialog.getByRole('listitem', {name:'提交合成报告',exact:true}).waitFor();
       if (id === 'devices') assert.equal(await dialog.getByRole('button', {name:'配对连接',exact:true}).count(),0);
       if (id === 'usage') await dialog.getByRole('button', { name: '刷新用量', exact: true }).waitFor();
@@ -63,6 +64,15 @@ try {
     }
   }
   checks.push('all desktop categories light/dark');
+  await nav.getByRole('button',{name:'备份与恢复',exact:true}).click();
+  await dialog.getByRole('spinbutton',{name:'最近保留天数',exact:true}).fill('14');await dialog.getByRole('button',{name:'保存备份设置',exact:true}).click();
+  await page.waitForFunction(async()=>{const value=await(await fetch('/personal/v1/backups')).json();return value.settings.dailyDays===14;});
+  await dialog.getByRole('button',{name:'立即备份',exact:true}).click();await dialog.getByRole('button',{name:/^恢复 /}).waitFor();
+  await dialog.getByRole('button',{name:/^恢复 /}).click();const restore=page.getByRole('dialog',{name:'恢复备份',exact:true});await restore.getByRole('button',{name:'取消',exact:true}).click();
+  assert.equal(fixture.backupOperations.some(value=>value.startsWith('restore:')),false);
+  await dialog.getByRole('textbox',{name:'另一台电脑的备份路径',exact:true}).fill('D:/Synthetic/import.wmb');await dialog.getByRole('button',{name:'导入备份',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('.backup-settings').textContent.includes('备份已导入并通过校验'));
+  assert.ok(fixture.backupOperations.includes('import'));checks.push('backup settings, create, import and restore cancellation');
   await nav.getByRole('button',{name:'提醒与定时任务',exact:true}).click();
   const reminder=dialog.getByRole('listitem',{name:'提交合成报告',exact:true});
   await reminder.getByRole('button',{name:'暂停',exact:true}).click();await reminder.getByRole('button',{name:'恢复',exact:true}).waitFor();

@@ -55,6 +55,8 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
   const questions = createNativeQuestionSnapshots({ readSourceAsOf: async (sessionId, observedSeq) =>
     questionSourceAsOf(await sessions.questionHistoryAsOf(sessionId, observedSeq), observedSeq) })
   let questionPump = null
+  let capture = null
+  const operations = new Set()
 
   function ensureQuestionPump() {
     if (questionPump) return questionPump.ready
@@ -139,7 +141,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
       }
     }
   }
-  async function handle(req, res) {
+  async function dispatch(req, res) {
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
     const requestUrl = new URL(req.url ?? '/', 'http://gateway')
     const pathname = decodeURIComponent(requestUrl.pathname)
@@ -308,6 +310,39 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
       const notFound = error?.code === 'session-not-found' || error?.code === 'workspace-not-found'
       return writeJson(res, notFound ? 404 : 400, { error: safe })
     }
+  }
+  // Private loopback boundary used only by the host. Keep streams and agents
+  // alive; queue new native requests while already admitted writes drain.
+  async function handle(req, res) {
+    const pathname = new URL(req.url ?? '/', 'http://gateway').pathname
+    if (pathname === `${BASE}/backup-pause` || pathname === `${BASE}/backup-resume`) {
+      if (req.headers.origin || !LOOPBACK.has(req.socket?.remoteAddress ?? '') || req.method !== 'POST')
+        return writeJson(res, 403, { error: { code: 'origin-forbidden' } })
+      const body = await readJson(req)
+      if (pathname.endsWith('backup-resume')) {
+        if (capture?.id === body.id) capture.release()
+        return writeJson(res, 200, {})
+      }
+      if (capture) return writeJson(res, 409, { error: { code: 'busy' } })
+      let release
+      const ready = new Promise(resolve => { release = resolve })
+      const owned = { id: body.id, ready, release: () => { clearTimeout(owned.timer); if (capture === owned) capture = null; release() } }
+      capture = owned
+      owned.timer = setTimeout(owned.release, Math.max(1, Math.min(2000, body.deadline - Date.now())))
+      try {
+        await Promise.race([Promise.allSettled([...operations]), ready.then(() => { throw Object.assign(new Error('capture expired'), { code: 'BACKUP_PAUSE_TIMEOUT' }) })])
+        await Promise.race([lifecycle.flushIdle(body), ready.then(() => { throw Object.assign(new Error('capture expired'), { code: 'BACKUP_PAUSE_TIMEOUT' }) })])
+        if (capture !== owned) throw Object.assign(new Error('capture expired'), { code: 'BACKUP_PAUSE_TIMEOUT' })
+        return writeJson(res, 200, { id: owned.id })
+      } catch (error) {
+        owned.release()
+        return writeJson(res, 409, { error: { code: error.code === 'agent-busy' ? 'SESSION_BUSY' : error.code ?? 'STORAGE_UNAVAILABLE' } })
+      }
+    }
+    if (capture) await capture.ready
+    const operation = dispatch(req, res)
+    operations.add(operation)
+    try { return await operation } finally { operations.delete(operation) }
   }
   return { handle, emitForTest: emit, reconcileForTest: reconcile, close() {
     questionPump?.controller.abort(); questionPump = null; questions.close()
