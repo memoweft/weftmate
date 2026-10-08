@@ -31,7 +31,7 @@ struct ConversationResourceList: View {
                 }
                 if resources.loading { ProgressView("正在读取…") }
                 if let error = resources.error { Text(error).font(.caption).foregroundStyle(Weave.danger) }
-                Button("查看全部 / 重新读取") { Task { await resources.refresh() } }.disabled(resources.loading)
+                Button("查看全部") { Task { await resources.refresh() } }.disabled(resources.loading)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(18)
         }.buttonStyle(.plain).frame(idealWidth: 360)
             .task { await resources.refresh() }
