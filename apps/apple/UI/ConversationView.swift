@@ -262,7 +262,7 @@ struct ConversationView: View {
                 if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
                     let type = args[index + 1] == "approval" ? "approval.requested" : args[index + 1] == "question" ? "question.asked" : "step.started"
                     if let entry = TimelineProjection.entries(model.timeline.events).first(where: { $0.event.type == type || (type == "step.started" && !$0.steps.isEmpty) }) {
-                        proxy.scrollTo(entry.id, anchor: .center)
+                        proxy.scrollTo(entry.id, anchor: .top)
                     }
                 }
             }
