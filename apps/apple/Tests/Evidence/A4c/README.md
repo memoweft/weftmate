@@ -1,6 +1,6 @@
 # A4c Apple 外观统一
 
-从最新 `main` 的 `b71df5b` 建立 `wp/a4c-apple-visual`。对照 `docs/UI_SPEC.md`、`design/icons/README.md` 与桌面 UI-1 / UI-1b / UI-1c、手机 UI-2、IC-1 截图，使用同一套中性表面、细边框与克制的状态色。C4 品牌和统一功能图标沿用 IC-2 资产，没有修改母版或生成物。
+从 `main` 的 `b71df5b` 建立 `wp/a4c-apple-visual`。对照 `docs/UI_SPEC.md`、`design/icons/README.md` 与桌面 UI-1 / UI-1b / UI-1c、手机 UI-2、IC-1 截图，使用同一套中性表面、细边框与克制的状态色。C4 品牌和统一功能图标沿用 IC-2 资产，没有修改母版或生成物。续做时完整保留中断前改动，先提交保存，再无冲突合入 `origin/main` 的 `d85e3dc`。
 
 所有新截图来自原生 iOS App 的 XCTest，使用 A4a 与 A4c 本机合成服务和随机隔离 namespace；没有日用账号、个人消息、真实文件、模型调用或付费请求。运行 / 完成场景为合成时间线，审批决定仍由原有 A4a 回归检查。
 
@@ -41,20 +41,20 @@
 
 外观切换：[深色覆盖](appearance-dark-override.png)、[浅色覆盖](appearance-light-override.png)、[跟随系统](appearance-system.png)。系统外观为深色时，设置弹层的浅色覆盖仍立即显示浅色；重启后检查深色选择保留。
 
-动态字体与 Watch 证据、最终结果见 [验证报告](verification.json)。
+动态字体：[独立模式行](accessibility-running.png)、[可滚动菜单](accessibility-modes.png)、[键盘安全区](accessibility-keyboard.png)。审批闭环：[处理后的一行记录](approval-resolved.png)。Watch：[中性待审批界面](watch-approval.png)。最终结果见 [验证报告](verification.json)。
 
 ## 验证与边界
 
-本机 Xcode 26.3，Intel Mac；iPhone 17 / iOS 26.3 隔离模拟器、Apple Watch Series 11（46 mm）/ watchOS 26.2。
+本机 Xcode 26.3，Intel Mac；iPhone 17 / iOS 26.3.1 隔离模拟器、Apple Watch Series 11（46 mm）/ watchOS 26.2。
 
 - 相关 Swift 检查：`AppleDraftStateChecks` 7/7；隔离目录、零外部模型请求。
 - 原审批回归：`A4aApprovalUITests/testThreeApprovalButtonsRiskAndHumanResolvedRows` 1/1，允许一次 / 本对话总是允许此类 / 拒绝和处理后摘要。
-- iOS 原生截图：浅色、深色、外观选择保留和跟随系统；检查资源页返回后的草稿与键盘安全区。动态字体另以 `accessibility-medium` 运行同一条原生场景，验证输入区按钮没有越出窗口。
+- iOS 原生截图：浅色、深色、外观选择保留和跟随系统；检查资源页返回后的草稿与键盘安全区。外观场景 4/4 通过；动态字体另以 `accessibility-medium` 运行同一条原生场景，验证长审批模式独占一行、菜单可滚动到第五项、输入区按钮没有越出窗口。
 - macOS / iOS / watchOS Debug 构建；Mac `AXIsProcessTrusted=false`，没有申请辅助功能授权，Mac 仅声明构建验证与静态布局检查。实际产物位于受忽略的 `Build/DerivedData/Build/Products/Debug/WeftMateMac.app`。
 - Watch 合成待审批截图的按钮保持禁用；没有伪造 iPhone 连接、审批成功或触感验收。
-- 完整测试交 PR CI；没有本地跑全量。真机、真实宿主 / 模型与跨设备主题同步、生产发布均未在本包验收。客户端 API 契约无变更。
+- DS-1 合入时提供了 Apple 令牌交接产物，其完整原生接线按交接约定留独立工作包；本包仅完成 A4c 外观与文案统一。完整测试交 PR CI；没有本地跑全量。真机、真实宿主 / 模型与跨设备主题同步、生产发布均未在本包验收。客户端 API 契约无变更。
 
-原始构建日志、访问性树、失败轮次和 xcresult 留在受忽略的 `apps/apple/Build/`。提交的文件只包含复核后的合成截图和脱敏验证摘要。
+恢复后顺序重跑三端构建、草稿 7/7、审批 1/1 和大字号 1/1，并替换大字号截图。此前共享构建数据库锁、模拟器暂不可用以及已修复的初轮 XCTest 隔离 / 菜单标题问题均记入验证报告。原始构建日志、访问性树、失败轮次和 xcresult 留在受忽略的 `apps/apple/Build/`。提交的文件只包含复核后的合成截图和脱敏验证摘要。
 
 ## 复现
 
