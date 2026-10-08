@@ -136,13 +136,15 @@ export function shellWriteTargets(source, cwd, powershell = true) {
     else if (text.includes('"') || text.includes("'")) return;
     else if (powershell && /[\s'"`]/.test(text)) return;
     if (!powershell && /[\\*?~]/.test(text)) return;
+    if (powershell) text = text.replace(/\$\(\s*(\$(?:\{[^}]+\}|[\w:]+(?:\.Path)?))\s*\)/gi,
+      (_, expression) => value([expression]) ?? '\0');
     // Only pwd is a known command substitution; all other substitutions fail.
     text = text.replace(/\$\(pwd\)/g, () => !powershell && location !== undefined ? location : '\0');
     let unknown = false;
-    text = text.replace(/\$(?:\{([^}]+)\}|([\w:]+(?:\.Path)?))/gi, (_, braced, plain) => {
-      const value = variable(braced ?? plain);
-      if (value === undefined) unknown = true;
-      return value ?? '';
+    text = text.replace(/\$(?:\{([^}]+)\}|([\w:]+))/gi, (_, braced, plain) => {
+      const result = powershell && braced?.includes('.') && !/^env:/i.test(braced) ? undefined : variable(braced ?? plain);
+      if (result === undefined) unknown = true;
+      return result ?? '';
     });
     if (unknown || /[\0$`]/.test(text) || !powershell && !quoted && expanded && /\s/.test(text)) return;
     return text;
@@ -187,6 +189,7 @@ export function shellWriteTargets(source, cwd, powershell = true) {
     if (parts.length !== 1) return;
     const variableName = /^\$(?:\{([^}]+)\}|([\w:]+(?:\.Path)?))$/i.exec(parts[0]);
     if (variableName) {
+      if (powershell && (variableName[1]?.includes('.') && !/^env:/i.test(variableName[1]) || /^env:[^.]+\./i.test(variableName[2] ?? ''))) return;
       const result = variable(variableName[1] ?? variableName[2]);
       return !powershell && result !== undefined && /\s/.test(result) ? undefined : result;
     }

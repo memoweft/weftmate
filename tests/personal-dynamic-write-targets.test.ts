@@ -6,6 +6,8 @@ import { join } from 'node:path'
 import { classifyPersonalRisk } from '../src/plugins/personal-approval-policy.mjs'
 
 const forms = [
+  ['pwsh', '$p="$($PWD.Path)/TARGET"; Set-Content $p data'],
+  ['pwsh', '$p="${PWD}/TARGET"; Set-Content $p data'],
   ['bash', 'PWD=unused; cd sub; echo data > "$PWD/TARGET"'],
   ['bash', 'OLDPWD=unused; cd sub; echo data > "$OLDPWD/TARGET"'],
   ['pwsh', "[string]$p='TARGET'; Set-Content $p data"],
@@ -210,4 +212,18 @@ test('unsupported URL literal escapes cannot grant a write to a guessed filename
       assert.ok(classifyPersonalRisk('pwsh', { command: 'node write.mjs' }, cwd).includes('overwrite'))
     }
   } finally { rmSync(cwd, { recursive: true, force: true }) }
+})
+
+test('expandable string member text stays literal while explicit subexpressions evaluate', () => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-expandable-'))
+  const cwd = join(root, 'cwd')
+  try {
+    mkdirSync(cwd); mkdirSync(cwd + '.Path')
+    writeFileSync(join(cwd + '.Path', 'user.txt'), 'user fixture')
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: '$p="$PWD.Path/user.txt"; Set-Content $p data' }, cwd), ['overwrite'])
+    assert.ok(classifyPersonalRisk('pwsh', { command: '$p="${PWD.Path}/user.txt"; Set-Content $p data' }, cwd).includes('overwrite'))
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: '$p="$($PWD.Path)/user.txt"; Set-Content $p data' }, cwd), [])
+    writeFileSync(join(cwd, 'user.txt'), 'user fixture')
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: '$p="$($PWD.Path)/user.txt"; Set-Content $p data' }, cwd), ['overwrite'])
+  } finally { rmSync(root, { recursive: true, force: true }) }
 })
