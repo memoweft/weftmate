@@ -16,7 +16,7 @@ struct TimelineArtifactCard: View {
     private var name: String { entry.event.data["fileName"]?.string ?? "成果文件" }
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Label(name, systemImage: "doc.badge.checkmark").font(.headline)
+            WeftLabel(name, icon: "outputs").font(.headline)
             Text("\(entry.event.data["contentType"]?.string ?? "文件") · \(entry.event.data["size"]?.int ?? 0) 字节")
                 .font(.caption).foregroundStyle(Weave.muted)
             HStack {
@@ -30,7 +30,7 @@ struct TimelineArtifactCard: View {
         .padding(14).background(Weave.soft, in: RoundedRectangle(cornerRadius: 14))
         .fileExporter(isPresented: $exporting, item: file.map { AttachmentExport(file: $0) }, contentTypes: [.data], defaultFilename: name,
             onCompletion: { result in if case .failure = result { error = "文件未保存，请重试。" } }, onCancellation: {})
-        .popover(isPresented: $sharing) { if let file { ShareLink(item: file) { Label("分享文件", systemImage: "square.and.arrow.up") }.padding(24) } }
+        .popover(isPresented: $sharing) { if let file { ShareLink(item: file) { WeftLabel("分享文件", icon: "open") }.padding(24) } }
         .onDisappear { cleanup() }
         .onChange(of: appModel.accountEpoch) { _, _ in cleanup() }
         .accessibilityElement(children: .contain)

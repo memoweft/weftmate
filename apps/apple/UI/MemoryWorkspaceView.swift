@@ -24,7 +24,7 @@ struct MemoryWorkspaceView: View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 12) {
-                    Image(systemName: "brain.head.profile").font(.title2).foregroundStyle(Weave.accent)
+                    WeftIcon("memory", size: 28).foregroundStyle(Weave.accent)
                     VStack(alignment: .leading, spacing: 4) {
                         Text("我的记忆").font(.title2.weight(.semibold)).foregroundStyle(Weave.ink)
                         Text("查看记住的内容与来源，也可以纠正、停用或删除。")
@@ -58,7 +58,7 @@ struct MemoryWorkspaceView: View {
         .background(Weave.canvas).navigationTitle("记忆")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Button { Task { await model.reload() } } label: { Label("刷新记忆", systemImage: "arrow.clockwise") }
+                Button { Task { await model.reload() } } label: { WeftLabel("刷新记忆", icon: "sync") }
                     .disabled(model.loading).accessibilityIdentifier("refreshMemoryButton")
             }
         }
@@ -113,7 +113,7 @@ struct MemoryWorkspaceView: View {
                     Text(item.lifecycle.mutedAt != nil ? "已停用" : item.currentState == .current ? "当前有效" : "已不是当前版本")
                     Spacer()
                     Text("\(item.sourceCount) 个来源")
-                    Image(systemName: "chevron.right")
+                    WeftIcon("right")
                 }.font(.caption).foregroundStyle(Weave.muted)
                 if item.truncated { Text("列表只显示部分内容，打开查看详情。") .font(.caption).foregroundStyle(Weave.muted) }
             }
@@ -130,7 +130,7 @@ struct MemoryWorkspaceView: View {
                             .accessibilityIdentifier("memoryDetailText")
                         if detail.item.truncated { Text("服务返回的内容有截断。") .font(.caption).foregroundStyle(Weave.muted) }
                         DisclosureGroup(isExpanded: sourceExpansion) { sourceList } label: {
-                            Label("来源 · \(detail.item.sourceCount)", systemImage: "doc.text.magnifyingglass")
+                            WeftLabel("来源 · \(detail.item.sourceCount)", icon: "source")
                         }.disabled(model.status?.status.capabilities.source != true)
                         management(detail)
                     } else if !model.detailLoading && model.detailError == nil {

@@ -213,7 +213,7 @@ struct ConversationView: View {
                             .buttonStyle(.bordered)
                     }
                     if !model.historyBusy && model.messages.isEmpty {
-                        EmptyState(symbol: "text.bubble", title: "还没有消息",
+                        EmptyState(symbol: "chat", title: "还没有消息",
                                    message: "这段原会话还没有可显示的文字记录。")
                             .frame(minHeight: 240)
                     }
@@ -281,7 +281,7 @@ struct ConversationView: View {
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     Task { await model.open(conversation) }
-                } label: { Label("刷新记录", systemImage: "arrow.clockwise") }
+                } label: { WeftLabel("刷新记录", icon: "sync") }
                 .disabled(model.historyBusy)
                 .accessibilityIdentifier("refreshHistoryButton")
             }
@@ -353,7 +353,7 @@ struct ConversationView: View {
         let key = AppleAppModel.draftKey(for: conversation)
         return VStack(alignment: .leading, spacing: 9) {
             HStack(spacing: 6) {
-                Image(systemName: "text.bubble")
+                WeftIcon("chat")
                 Text("模型 · \(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "尚未确认")")
                     .lineLimit(1)
                 Spacer(minLength: 0)
@@ -394,12 +394,12 @@ struct ConversationView: View {
                         }
                         #endif
                         PhotosPicker(selection: $photoSelection, maxSelectionCount: 4 - (model.attachmentDrafts[key]?.count ?? 0), matching: .images) {
-                            Label("从照片选择", systemImage: "photo")
+                            WeftLabel("从照片选择", icon: "image")
                         }
                         #if os(macOS)
                         Button("粘贴图片或文件") { pasteAttachments(accountEpoch: accountEpoch) }
                         #endif
-                    } label: { Image(systemName: "plus").frame(width: 32, height: 32) }
+                    } label: { WeftIcon("plus").frame(width: 32, height: 32) }
                     .disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
                     if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: accountEpoch) {
@@ -412,7 +412,7 @@ struct ConversationView: View {
                         .accessibilityIdentifier("draftSaveStatus")
                     Spacer()
                     Button { Task { await model.send(conversation, accountEpoch: accountEpoch) } } label: {
-                        Image(systemName: "arrow.up")
+                        WeftIcon("send")
                             .font(.body.weight(.semibold)).frame(width: 40, height: 40)
                     }
                     .buttonStyle(.bordered).buttonBorderShape(.circle)
@@ -551,7 +551,7 @@ struct MessageView: View {
             }
             let remainingAttachments = max(0, message.attachmentCount - max(message.originalAttachments.count, message.images.count))
             if remainingAttachments > 0 {
-                Label("\(remainingAttachments) 个附件 · 此版本尚未展开", systemImage: "paperclip")
+                WeftLabel("\(remainingAttachments) 个附件 · 此版本尚未展开", icon: "attach", size: 16)
                     .font(.caption).foregroundStyle(Weave.muted)
             }
             if message.truncated {

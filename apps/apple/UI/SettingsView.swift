@@ -65,7 +65,7 @@ struct SettingsView: View {
                             Task { await model.signOut(); if model.session == nil { model.cloudLogin.showLogin = true } }
                         }.disabled(model.authBusy).accessibilityIdentifier("settingsCloudLogin")
                         Button(role: .destructive) { confirmSignOut = true } label: {
-                            Label("退出登录 / 切换账户", systemImage: "rectangle.portrait.and.arrow.right")
+                            WeftLabel("退出登录 / 切换账户", icon: "back")
                         }
                         .buttonStyle(.bordered)
                         .disabled(model.authBusy)
@@ -75,7 +75,7 @@ struct SettingsView: View {
 
                 WeaveCard {
                     VStack(alignment: .leading, spacing: 12) {
-                        Label("审批", systemImage: "hand.raised").font(.headline).foregroundStyle(Weave.ink)
+                        WeftLabel("审批", icon: "approval").font(.headline).foregroundStyle(Weave.ink)
                         Text("新对话的默认模式").font(.callout)
                         ApprovalModeControl(model: model, sessionID: nil).id(model.accountEpoch)
                         Text("按账户保存，只影响新建对话。已有对话在输入区切换审批模式。")
@@ -85,7 +85,7 @@ struct SettingsView: View {
 
                 WeaveCard {
                     VStack(alignment: .leading, spacing: 15) {
-                        Label("服务器", systemImage: "network").font(.headline).foregroundStyle(Weave.ink)
+                        WeftLabel("服务器", icon: "cloud").font(.headline).foregroundStyle(Weave.ink)
                         Text(model.session?.server.originString ?? model.serverInput)
                             .font(.callout).foregroundStyle(Weave.secondary).textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,7 +99,7 @@ struct SettingsView: View {
 
                 WeaveCard {
                     VStack(alignment: .leading, spacing: 13) {
-                        Label("Apple 客户端", systemImage: "app").font(.headline).foregroundStyle(Weave.ink)
+                        WeftLabel("Apple 客户端", icon: "brand-monochrome").font(.headline).foregroundStyle(Weave.ink)
                         LabeledContent("外观", value: "跟随系统").font(.callout).foregroundStyle(Weave.secondary)
                         #if os(macOS)
                         LabeledContent("版本", value: updates.installedVersionDisplay)

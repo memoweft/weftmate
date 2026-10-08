@@ -4,6 +4,12 @@ import { join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { _electron } from 'playwright';
 
+// Apple-only refresh keeps the Mac work package within its platform scope.
+if (process.argv.includes('--apple-only')) {
+  await import('../apps/apple/Scripts/generate_icons.mjs');
+  process.exit(0);
+}
+
 const root = resolve(import.meta.dirname, '..');
 const source = join(root, 'design/icons');
 const put = async (name, data) => { const path = join(root, name); await mkdir(join(path, '..'), { recursive: true }); await writeFile(path, data); };
@@ -104,3 +110,5 @@ try {
   await put('src/assets/icons/notification.png', await raster(tile, 64));
   console.log(`Generated C4 app assets and ${Object.keys(icons).length} UI icons.`);
 } finally { await application.close(); }
+
+await import("../apps/apple/Scripts/generate_icons.mjs");
