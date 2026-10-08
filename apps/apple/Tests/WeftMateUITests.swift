@@ -429,3 +429,64 @@ extension WeftMateUITests {
     }
 }
 #endif
+
+#if os(iOS)
+extension WeftMateUITests {
+    @MainActor func testH3HealthKitCalculationUploadAndHealthPage() throws {
+        guard let origin = ProcessInfo.processInfo.environment["WEFTMATE_H3_HOST"], origin.hasPrefix("http://127.0.0.1:") else {
+            throw XCTSkip("Start the isolated H3 personal host and pass WEFTMATE_H3_HOST.")
+        }
+        let app = XCUIApplication()
+        app.launchArguments = ["--ui-testing", "--ui-testing-namespace", "h3-" + UUID().uuidString,
+            "--h1-healthkit-fixture", "--h3-health-metrics-fixture", "--a3-local-server", "--server-url", origin]
+        app.launch()
+        XCTAssertTrue(app.buttons["healthFixtureStart"].waitForExistence(timeout: 30))
+        app.buttons["healthFixtureStart"].tap()
+        func capture(_ name: String) {
+            let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = name
+            attachment.lifetime = .keepAlways; add(attachment)
+        }
+        var capturedAuthorization = false
+        let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
+        let deadline = Date().addingTimeInterval(150)
+        while Date() < deadline {
+            let result = app.staticTexts["healthFixtureResult"]
+            if result.exists && (result.label.hasPrefix("PASS:") || result.label.hasPrefix("FAIL:")) { break }
+            let all = app.cells["UIA.Health.AuthSheet.AllCategoryButton"]
+            if all.exists && all.isHittable {
+                all.tap()
+                if !capturedAuthorization { capture("h3-healthkit-synthetic-authorization"); capturedAuthorization = true }
+            }
+            for surface in [app, springboard] {
+                for label in ["Turn On All", "全部打开", "Allow", "允许", "Done", "完成"] {
+                    let control = surface.descendants(matching: .any).matching(NSPredicate(format: "label == %@", label)).firstMatch
+                    if control.exists && control.isHittable && control.isEnabled { control.tap() }
+                }
+            }
+            Thread.sleep(forTimeInterval: 0.5)
+        }
+        let result = app.staticTexts["healthFixtureResult"]
+        XCTAssertTrue(result.label.hasPrefix("PASS:"), result.label + "\n" + app.debugDescription)
+        for name in ["battery", "recovery", "load", "sleep"] {
+            XCTAssertTrue(app.staticTexts["healthMetric." + name].exists)
+            XCTAssertFalse(app.staticTexts["healthMetric." + name].label.contains("数据不足"))
+        }
+        XCTAssertFalse(app.staticTexts["healthMetric.stress"].label.contains("数据不足"))
+        capture("h3-health-latest")
+        let hourly = app.descendants(matching: .any).matching(identifier: "healthHourlyTrend").firstMatch
+        for _ in 0..<5 { if hourly.exists && hourly.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(hourly.exists)
+        capture("h3-health-hourly-trend")
+        let range = app.descendants(matching: .any).matching(identifier: "healthTrendRange").firstMatch
+        for _ in 0..<5 { if range.exists && range.isHittable { break }; app.swipeUp() }
+        XCTAssertTrue(range.exists)
+        capture("h3-health-7-day-trends")
+        range.tap()
+        let month = app.buttons["30 天"]
+        XCTAssertTrue(month.waitForExistence(timeout: 5)); month.tap()
+        capture("h3-health-30-day-trends")
+        // Clean only samples this fixture wrote; the runner also removes its dedicated simulator.
+        app.buttons["healthFixtureCleanup"].tap()
+    }
+}
+#endif
