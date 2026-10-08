@@ -313,6 +313,33 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64/x86_64",channel:"trial",notes,fileName,downloadUrl`。不要把native manifest与Android mobile UI manifest混用。Apple独立 `PublicUpdates.swift` 使用公开分发入口，本次所核对 `PersonalClient.swift` 没有调用上述认证下载接口。
 
+UPD-1 / D32：新版 `/app/manifest` 在上述兼容字段上增加统一签名字段，路径、认证与 SSE（服务器推送事件）通知不变。三层清单共同结构如下；桌面界面 `ui` 与程序本体 `app` 的清单来自配置的发布源，手机 `mobile-ui` 仍通过本接口提供：
+
+```json
+{
+  "schemaVersion": 1,
+  "layer": "mobile-ui",
+  "version": "0.9.0",
+  "channel": "stable",
+  "minHostVersion": "0.1.0",
+  "minNativeVersion": "0.8.8",
+  "bridgeVersion": 1,
+  "files": [{ "path": "index.html", "size": 123, "sha256": "<64 lowercase hex>" }],
+  "publishedAt": "2026-10-08T10:00:00.000Z",
+  "signature": { "algorithm": "Ed25519", "keyId": "<32 lowercase hex>", "value": "<base64 signature>" }
+}
+```
+
+`layer=ui|app|mobile-ui`；`channel=stable|preview`。兼容字段为可选 `minAppVersion` / `maxAppVersion`、`minHostVersion` / `maxHostVersion`、`minNativeVersion` / `maxNativeVersion`，采用 SemVer（语义版本）边界且包含端点；`bridgeVersion` 必须与消费者支持的版本相等。`expiresAt` 可选，存在时过期即拒绝。`ui` 必须满足当前桌面 / 宿主版本，`app` 必须满足当前程序 / 宿主版本；手机包先由宿主检查宿主范围，再由原生壳检查原生范围、原生 code 与桥版本。文件路径只能是安全相对路径，不能含上级目录、绝对路径、空目录分段或符号链接。
+
+签名覆盖除 `signature` 以外的**全部顶层字段**，包括兼容别名、`assetBase`、发布说明和未知扩展字段。编码为 UTF-8（统一字符编码）的紧凑 JSON（数据格式）：对象键递归按 UTF-16（16位字符编码）顺序排序，数组顺序不变，字符串使用标准 JSON 转义；清单数字使用安全整数。用 Ed25519（签名算法）直接签上述字节，不预哈希。`keyId` 是公钥 SPKI DER（公钥结构的二进制编码）的 SHA-256（哈希）前32个十六进制字符；客户端只使用原生程序内置可信公钥，来源不提供可新增的信任根。
+
+手机清单继续使用 `schemaVersion=1`，且 `version=uiVersion`、`files=assets`，并保留 `minNativeVersionCode`、`entry=index.html`、`assetBase` 和 `releaseNotes`；别名值不一致即拒绝。旧壳忽略新增字段，继续读取与哈希校验既有字段。新版安卓壳拒绝无签名、签名错误、渠道不同、不兼容或过期的包，保留当前已验证版本 / 内置页。已有旧清单可向旧壳提供，但新发布必须签名。
+
+下载按本设备的逐文件大小 / 哈希复用内置或活动版本；全部验证后才更新待应用指针，不留下部分更新。桌面下次打开窗口且任务空闲、无未发送草稿时切换，启动自检失败 / 崩溃恢复上一完整版本并记录失败身份。手机沿用原生下载、暂存、空闲切换和启动失败回退机制。版本目录属于 `userData`（用户数据目录）或手机私有目录，业务数据和凭据不进入版本包。
+
+桌面“关于”接入 `src/ui-core/update.js` 的 `readUpdateState()`、`checkUpdates()`、`restartForUpdate()`；这些是本机窗口的 IPC（进程间通信）动作，不新增远程安装权限或业务 HTTP（网络协议）路由。响应 `{layers:[{layer,currentVersion,availableVersion,status,error,channel}],canRestart}`；`status` 包含检查 / 下载 / 就绪 / 失败状态，手机宿主发布版本标 `scope=host-published`，手机设备本身的安装版本由原生状态返回。程序本体须先核签清单、再核对下载的安装包，用户明确重启且任务空闲才安装；正式发布源与代码签名交 UPD-3。
+
 ### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入89业务接口）
 
 | GET路径（都无查询） | 响应 / 错误 | 使用端 |
@@ -322,6 +349,8 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | `/ui/vendor/noble-hashes-2.3.0/sha2.js`、`/ui/vendor/noble-hashes-2.3.0/_md.js`、`/ui/vendor/noble-hashes-2.3.0/_u64.js`、`/ui/vendor/noble-hashes-2.3.0/utils.js` | JS资源；不存在404 | 桌（哈希模块导入） |
 
 这些路由在认证前提供宿主登录UI，仍受Host/Origin校验。Android bridge中的本机模型、通知、剪贴板、语音等操作不是同名服务端API；`mods/notifications/capabilities` 等字符串出现在bridge允许路径中，也不能证明服务端实现了这些路由。
+
+UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路径，版本未包含的资源回退内置文件；白名单、无查询 / 无百分号规则与 FE-1a 的 CSP（内容安全策略）、`no-store`、`nosniff` 等安全头保留。新增 `/ui/ui-core/update.js` 是共享更新动作资源；可热更代码只在渲染器运行，主进程与 `/personal/v1` 实现随程序本体更新。
 
 ### 3.15 系统状态与后台模型（M0-6，6）
 

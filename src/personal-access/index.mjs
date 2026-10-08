@@ -55,7 +55,7 @@ export { uniqueSessionOwner } from './store.mjs';
  * nextSeq is the scanned durable-history watermark, including filtered records.
  */
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
-  mobileUiDir = null, sharedProfileIsFormal = () => false, memoryManager = null,
+  mobileUiDir = null, mobileUiTrustedKeys = null, hostVersion = '0.1.0', sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
   browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
@@ -394,7 +394,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
     }
   }
-  const mobileUi = mobileUiDir === null ? null : createMobileUiPublisher({ root: mobileUiDir });
+  const mobileUi = mobileUiDir === null ? null : createMobileUiPublisher({ root: mobileUiDir, trustedKeys: mobileUiTrustedKeys, hostVersion });
   const nativeDownloads = createNativeDownloadPublisher(root);
   const androidPackageEntry = async () => {
     if (!androidPackagePath) return null;

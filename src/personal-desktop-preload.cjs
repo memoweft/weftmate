@@ -2,6 +2,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('weftmateDesktop', {
   platform: process.platform,
+  updateState: () => ipcRenderer.invoke('wm:desktop:update-state'),
+  checkUpdates: () => ipcRenderer.invoke('wm:desktop:update-check'),
+  restartForUpdate: () => ipcRenderer.invoke('wm:desktop:update-restart'),
   settings: () => ipcRenderer.invoke('wm:desktop:settings'),
   identity: () => ipcRenderer.invoke('wm:desktop:identity'),
   credentials: (key, value, remove) => ipcRenderer.invoke('wm:desktop:credentials', key, value, remove),
