@@ -43,6 +43,7 @@ jobs:
       - run: npx --prefix apps/mobile-ui playwright install --with-deps chromium
       - run: node --test tests/personal-cloud-web.test.ts apps/mobile-ui/tests/cloud-login.test.mjs apps/mobile-ui/tests/chat-interactions.test.mjs
       - run: node --test apps/mobile-ui/tests/approval-interactions.test.mjs
+      - run: node --test apps/mobile-ui/tests/visual-interactions.test.mjs
       - run: node --test services/cloud/test/web-login.test.mjs
         env:
           WEFTMATE_WEB_E2E: 'true'
@@ -53,4 +54,5 @@ jobs:
           path: |
             .local/s1c-web/*.png
             .local/ui-2a/*.png
+            .local/ui-2/*.png
           if-no-files-found: ignore

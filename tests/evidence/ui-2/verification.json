@@ -1,0 +1,22 @@
+{
+  "engine": "Chromium",
+  "viewport": {
+    "width": 390,
+    "height": 844
+  },
+  "synthetic": true,
+  "checks": [
+    "home/search/status",
+    "light/dark/system",
+    "three approval buttons",
+    "steps collapsed/readable/raw/lazy/poll preservation",
+    "resources forward pagination/dedup/usage/lazy/retry/offline",
+    "artifact Markdown/table",
+    "full-screen Back/scroll/draft",
+    "restart draft/new draft",
+    "older history forward cursor",
+    "small viewport composer",
+    "320px and landscape"
+  ],
+  "pageErrors": []
+}
