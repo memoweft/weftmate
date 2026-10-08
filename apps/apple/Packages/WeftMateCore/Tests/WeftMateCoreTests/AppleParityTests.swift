@@ -28,7 +28,7 @@ private func event(_ seq: Int, _ type: String, _ data: String) throws -> Timelin
     #expect(TaskQueueProjection.queued(events: events + [started, canceled], commands: commands).isEmpty)
 }
 @Test func a5BatchedQueueKeepsNativeOrder() throws {
-    let batch = try event(1,"task.queued",#"{"tasks":[{"taskId":"b","receiptId":"rb","text":"B"},{"taskId":"c","receiptId":"rc","text":"C"}]}"#)
+    let batch = try event(1,"task.queued",#"{"tasks":[{"taskId":"z","receiptId":"rb","text":"B"},{"taskId":"a","receiptId":"rc","text":"C"}]}"#)
     #expect(TaskQueueProjection.queued(events: [batch]).map(\.text) == ["B", "C"])
 }
 @Test func a5ReadableSummariesKeepRawArgumentsOutOfHeadline() throws {
@@ -64,6 +64,11 @@ private actor ParityTransport: HTTPTransport {
         else if path.hasSuffix("/status") { json = #"{"ownerId":"owner","hostId":"host"}"# }
         else if path.hasSuffix("/archive") || path.hasSuffix("/unarchive") { writes.append(request); json = "{\"sessionId\":\"session\",\"archived\":\(path.hasSuffix("/unarchive") ? "false" : "true")}" }
         else if request.httpMethod == "DELETE" { writes.append(request); json = #"{"sessionId":"session","deleted":true,"forgetMemories":false,"forgottenEvidenceCount":0}"# }
+        else if path.hasSuffix("/cancel") { writes.append(request); return .init(status:409,headers:[:],body:Data(#"{"error":{"code":"TASK_NOT_READY"}}"#.utf8)) }
+        else if path.hasSuffix("/usage"), !path.hasSuffix("/settings/usage") {
+            writes.append(request)
+            json = #"{"month":"2026-10","timeZone":"Asia/Shanghai","sessionId":"session","total":{"requests":0,"unknownRequests":0,"unpricedRequests":0,"inputTokens":0,"cachedInputTokens":0,"outputTokens":0,"cost":0},"days":[],"sessions":[],"models":[],"budget":{"state":"unlimited"}}"#
+        }
         else if path.hasSuffix("/settings/usage") { writes.append(request); json = #"{"monthlyLimit":1,"temporaryLimit":2,"temporaryMonth":"2026-10","canManage":true,"models":[]}"# }
         else { throw APIFailure.invalidResponse }
         return .init(status:200, headers:["set-cookie":"wm_personal_session=" + String(repeating:"a",count:43)], body:Data(json.utf8))
@@ -89,4 +94,20 @@ private actor ParityTransport: HTTPTransport {
 @Test func a5CancelQueuedDoesNotHideCurrentStopOrSteer() throws {
     let events = try [event(0,"task.started",#"{"taskId":"a","receiptId":"ra"}"#), event(1,"task.ended",#"{"taskId":"b","receiptId":"rb","reason":"canceled"}"#)]
     #expect(TimelineProjection.taskRunning(events, fallback:false))
+}
+
+@Test func a5UsageReportsClientTimeZoneAndCancelRaceNeverStopsAutomatically() async throws {
+    let transport = ParityTransport(), client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+    _ = try await client.login(server: ServerConfiguration(input:"https://parity.example.com"), username:"synthetic", password:"synthetic-password-long", deviceName:"iPhone")
+    _ = try await client.setUsageTimeZone("Asia/Shanghai")
+    let summary = try await client.usage(month:"2026-10",sessionID:"session",timeZone:"Asia/Shanghai")
+    #expect(summary.timeZone == "Asia/Shanghai")
+    do { _ = try await client.cancelQueuedTask(taskID:"root", requestID:"cancel-race"); Issue.record("Expected already-started conflict") }
+    catch { #expect(error as? APIFailure == .server(status:409,code:"TASK_NOT_READY")) }
+    let requests = await transport.recorded()
+    #expect(requests.count == 3)
+    #expect(URLComponents(url:requests[1].url!,resolvingAgainstBaseURL:false)?.queryItems?.first(where: { $0.name == "timeZone" })?.value == "Asia/Shanghai")
+    #expect(requests.last?.url?.path.hasSuffix("/cancel") == true)
+    #expect(!requests.contains { $0.url?.path.hasSuffix("/stop") == true })
+    #expect(APIFailure.server(status:402,code:"USAGE_LIMIT_REACHED").errorDescription?.contains("云端模型请求已暂停") == true)
 }

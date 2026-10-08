@@ -4,11 +4,12 @@ import WeftMateCore
 struct SessionActions: View {
     @ObservedObject var app: AppleAppModel
     let conversation: ConversationSummary
+    var onSelect: () -> Void = {}
     var body: some View {
         if conversation.sessionId != nil {
-            Button(conversation.archived ? "恢复对话" : "归档对话") { Task { await app.archive(conversation, archived: !conversation.archived) } }
+            Button(conversation.archived ? "恢复对话" : "归档对话") { onSelect(); Task { await app.archive(conversation, archived: !conversation.archived) } }
                 .disabled(app.lifecycleBusy)
-            Button("删除对话", role: .destructive) { app.askToDelete(conversation) }.disabled(app.lifecycleBusy)
+            Button("删除对话", role: .destructive) { onSelect(); app.askToDelete(conversation) }.disabled(app.lifecycleBusy)
         }
     }
 }

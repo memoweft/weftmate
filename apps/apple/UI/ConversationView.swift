@@ -82,6 +82,7 @@ struct ConversationView: View {
     @State private var resourcePopover = false
     @State private var sendIntent: MessageIntent = .steer
     @State private var showingUsage = false
+    @State private var showingSessionActions = false
     @State private var importingAttachments = false
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var pendingAdoptionProfile: String?
@@ -149,7 +150,7 @@ struct ConversationView: View {
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
         .fullScreenCover(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources) }
         #endif
-        .onChange(of: model.accountEpoch) { _, _ in closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: model.accountEpoch) { _, _ in showingSessionActions = false; closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: conversation.id) { _, _ in closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: resources.selected) { _, _ in resourcePopover = false }
         .onDisappear { closePreview() }
@@ -276,10 +277,16 @@ struct ConversationView: View {
         #endif
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    SessionActions(app: model, conversation: conversation)
-                    Button("对话用量") { showingUsage = true }
-                } label: { WeftIcon("more") }.accessibilityLabel("对话菜单")
+                Button { showingSessionActions.toggle() } label: { WeftIcon("more") }.accessibilityLabel("对话菜单")
+                    .popover(isPresented: $showingSessionActions) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
+                            SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false })
+                            Button("对话用量") { showingSessionActions = false; showingUsage = true }
+                        }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)
+                            #if os(iOS)
+                            .presentationCompactAdaptation(.popover)
+                            #endif
+                    }
             }
             ToolbarItem(placement: .primaryAction) {
                 Button {
@@ -316,8 +323,9 @@ struct ConversationView: View {
             await model.open(conversation)
             #if DEBUG
             let args = ProcessInfo.processInfo.arguments
-            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1), args[index + 1] == "outputs-sources" {
-                resources.showingList = true; resources.visible = true
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
+                if args[index + 1] == "outputs-sources" { resources.showingList = true; resources.visible = true }
+                if args[index + 1] == "session-menu" { showingSessionActions = true }
             }
             #endif
         }
