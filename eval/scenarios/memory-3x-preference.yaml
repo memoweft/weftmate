@@ -1,0 +1,54 @@
+{
+  "id": "memory-3x-preference",
+  "category": "memory",
+  "title": "盲测C：骑行路线偏好",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "隔离宿主与真实桌面程序"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我选骑行路线一直避开陡坡，更喜欢沿河的平缓路段。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "给我写一句挑选周末单车路线的要求。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_matches",
+      "pattern": "平缓|沿河|避开.*陡坡|不要.*陡坡"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "路线要求应采用沿河平缓或避开陡坡的长期偏好，不能推荐陡坡。"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "memoryExpectation": {
+    "kind": "cognition",
+    "currentPattern": "避开陡坡|沿河|平缓",
+    "sourceTurn": 0
+  },
+  "timeoutSec": 900,
+  "notes": "M2f返工盲测C；改代码前独立提交封存，只在固定候选最终验证运行。原话、当前正式项采用、独立会话、零审批、纠正旧项失效严格核对。"
+}

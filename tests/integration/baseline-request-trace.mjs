@@ -1,4 +1,5 @@
-// Test preload: timings and counts only; never persist headers, prompts or keys.
+// Test preload: timings and counts; optional synthetic-memory message capture.
+// Headers and credentials are never retained. The baseline scans all artifacts.
 import { appendFileSync } from 'node:fs';
 const original = globalThis.fetch;
 let serial = 0;
@@ -14,7 +15,9 @@ globalThis.fetch = async (input, options) => {
   let requestChars, requestedModel, stream, templateThinking, memoryOrder;
   if (model && typeof options?.body === 'string') {
     try { const body = JSON.parse(options.body); requestChars = JSON.stringify(body.messages ?? []).length;
-      requestedModel = body.model; stream = body.stream; templateThinking = body.chat_template_kwargs?.enable_thinking;
+      requestedModel = body.model; stream = body.stream;
+      if (process.env.WEFTMATE_BASELINE_MEMORY_TRACE) appendFileSync(process.env.WEFTMATE_BASELINE_MEMORY_TRACE,
+        JSON.stringify({ id, at: new Date().toISOString(), model: body.model, messages: body.messages }) + '\n'); templateThinking = body.chat_template_kwargs?.enable_thinking;
       // Inspect the final wire request without retaining any prompt text.
       const messages = body.messages ?? [];
       const text = message => typeof message.content === 'string' ? message.content

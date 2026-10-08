@@ -11,11 +11,14 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
 import { createLanBaselineBridge } from './baseline-lan-model.mjs';
+import { verifyMemoryHoldout, judgeMemorySemantics } from './baseline-memory-verification.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 const repository = resolve(import.meta.dirname, '../..');
 // Keep generated goals and evidence free of the Windows account's home path.
 process.env.TEMP = process.env.TMP = 'C:/Temp';
 const memoryUi = process.argv.includes('--memory-ui');
+const memorySemanticJudge = process.argv.includes('--memory-semantic-judge');
+const memoryTrace = process.argv.includes('--memory-trace');
 const memoryLoop = process.argv.includes('--memory-loop');
 const memoryAccuracy = process.argv.includes('--memory-accuracy');
 const memoryFormation = process.argv.includes('--memory-formation');
@@ -56,9 +59,10 @@ if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key'
     console.log(`${new Date().toISOString()} MiMo key check ${check}/6: ${keys.mimo ? 'present' : 'absent'}`);
   }
 }
+assert.ok(!memorySemanticJudge || keys.mimo, 'MIMO_API_KEY required for --memory-semantic-judge');
 if (!keys[modelName]) throw new Error(`${lan ? 'WEFTMATE_LAN_MODEL_KEY' : modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
 const scenarioFixes = process.argv.includes('--scenario-fixes');
-const root = join('C:/Temp', `weftmate-${memoryCorrection ? 'm2d' : memoryFormation ? 'm2c' : memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
+const root = join('C:/Temp', `weftmate-${memoryTrace ? 'm2f' : memoryCorrection ? 'm2d' : memoryFormation ? 'm2c' : memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password = `test-${randomUUID()}-password`, username = `eval-${randomUUID()}`;
@@ -74,6 +78,7 @@ writeFileSync(memoryConfig, JSON.stringify({ python: 'D:/AIProjects/MemoWeft/Cor
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE' || name === 'MIMO_API_KEY' || name === 'MODEL_SWITCH_UNIFIED_KEY') delete env[name];
 env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
+if (memoryTrace) env.WEFTMATE_BASELINE_MEMORY_TRACE = join(root, 'memory-requests.jsonl');
 let app, page, output = '';
 let lanBridge;
 const redact = value => {
@@ -165,43 +170,20 @@ try {
     await runEvaluation({ host: new URL(page.url()).origin, out, model: firstModel,
       switchModel: alternateLan ? 'lan' : lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
       onScenarioResult: async result => {
-        if (result.id.startsWith('memory-1x-')) {
-          const checks = {};
-          try {
-            assert.equal(result.status, 'passed');
-            assert.equal(new Set(result.turns.map(turn => turn.sessionId)).size, scenario.turns.length);
-            checks.distinctSessions = true;
-            assert.equal(result.turns.flatMap(turn => turn.approvals).length, 0);
-            checks.noUndeclaredApprovals = true;
-            const kind = result.id === 'memory-1x-person' ? 'relationship' : 'cognition';
-            const items = (await api(`/memory/items?kind=${kind}`)).body.items;
-            const used = result.turns.at(-1).memoryUsed;
-            const value = result.id === 'memory-1x-correction' ? '150毫升'
-              : result.id === 'memory-1x-person' ? '闻舟' : '纯器乐';
-            const adopted = items.find(item => item.text.includes(value) && item.currentState === 'current' && used.some(memory => memory.id === item.id));
-            assert.ok(adopted, 'holdout must adopt its own current formal memory');
-            checks.currentItemAdopted = true;
-            const sourceTurn = result.id === 'memory-1x-correction' ? 1 : 0;
-            const sources = (await api(`/memory/items/${kind}/${adopted.id}/sources`)).body.sources;
-            assert.ok(sources.some(source => source.rawContent === scenario.turns[sourceTurn].user));
-            checks.exactSourceRetained = true;
-            if (result.id === 'memory-1x-correction') {
-              const previous = items.filter(item => item.id !== adopted.id && item.text.includes('浇水') && item.text.includes('300毫升'));
-              assert.ok(previous.length);
-              assert.ok(previous.every(item => item.currentState === 'not_current' && item.lifecycle.invalidAt && !used.some(memory => memory.id === item.id)));
-              checks.obsoleteExcluded = true;
-              for (const item of previous) {
-                const oldSources = (await api(`/memory/items/cognition/${item.id}/sources`)).body.sources;
-                assert.ok(oldSources.some(source => source.rawContent === scenario.turns[0].user));
-              }
-              checks.originalSourceRetained = true;
-            }
-          } catch (error) {
-            result.status = 'failed';
-            result.reason = [result.reason, redact(error.message)].filter(Boolean).join('; ');
+        const expectation = scenario.memoryExpectation ?? (result.id.startsWith('memory-1x-') ? {
+          kind: result.id === 'memory-1x-person' ? 'relationship' : 'cognition',
+          currentPattern: result.id === 'memory-1x-correction' ? '150毫升' : result.id === 'memory-1x-person' ? '闻舟' : '纯器乐',
+          sourceTurn: result.id === 'memory-1x-correction' ? 1 : 0,
+          ...(result.id === 'memory-1x-correction' ? { oldPattern: '300毫升' } : {}),
+        } : null);
+        if (expectation) {
+          const proof = await verifyMemoryHoldout({ result, scenario, expectation, api });
+          result.holdoutVerification = proof.checks;
+          if (proof.status === 'failed') {
+            result.status = 'failed'; result.reason = [result.reason, proof.reason].filter(Boolean).join('; ');
           }
-          result.holdoutVerification = checks;
         }
+        if (memorySemanticJudge) result.semanticJudgement = await judgeMemorySemantics({ result, scenario, key: keys.mimo });
         results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2));
         console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`);
       } });
