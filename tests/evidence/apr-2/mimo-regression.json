@@ -1,48 +1,83 @@
 {
-  "label": "development-1",
-  "startedAt": "2026-10-08T17:01:01.932Z",
+  "label": "mimo-regression",
+  "startedAt": "2026-10-08T17:18:33.614Z",
   "model": "mimo-v2.6-flash",
   "policySnapshotSha256": {
-    "personal-write-targets.mjs": "46bb14a9715b9b68dd5ce05f3e9babe48c7d1d6b5e51b5c4a7d12c2a431d2705",
-    "personal-approval-policy.mjs": "c906f44168623c5acf2b63890e242db80bea837a595020925746e76662ad420d"
+    "personal-write-targets.mjs": "99b4b5877d16ced980c36d74159924bc9663507cc27bde76b5a902ac420822a6",
+    "personal-approval-policy.mjs": "926a773ce4055b8b66b131c6b00576cda6958d5fbc99a397aff20f350632f60f"
   },
   "summary": {
-    "passed": 4,
-    "failed": 2,
+    "passed": 6,
+    "failed": 0,
     "manual": 0,
     "unsupported": 0,
-    "skippedChecks": 2,
-    "passRate": 0.6666666666666666,
-    "coverage": 0.6666666666666666
+    "skippedChecks": 3,
+    "passRate": 1,
+    "coverage": 1
   },
   "scenarios": [
     {
       "id": "action-01-organize",
-      "status": "failed",
-      "durationMs": 53332,
-      "reason": "Unexpected approval; scenario has no matching decision (left pending)",
-      "checks": [],
+      "status": "passed",
+      "durationMs": 43721,
+      "reason": null,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
       "turns": [
         {
-          "status": "running",
-          "durationMs": 51003,
-          "approvals": [
-            {
-              "toolName": "pwsh",
-              "riskCategories": [
-                "overwrite"
-              ],
-              "status": "unavailable",
-              "outcome": "unavailable"
-            }
-          ]
+          "status": "completed",
+          "durationMs": 41916,
+          "approvals": []
         }
       ]
     },
     {
       "id": "action-02-web-document",
       "status": "passed",
-      "durationMs": 267209,
+      "durationMs": 567146,
       "reason": null,
       "checks": [
         {
@@ -75,7 +110,7 @@
       "turns": [
         {
           "status": "completed",
-          "durationMs": 265620,
+          "durationMs": 565533,
           "approvals": []
         }
       ]
@@ -83,7 +118,7 @@
     {
       "id": "action-03-read-code",
       "status": "passed",
-      "durationMs": 43813,
+      "durationMs": 359278,
       "reason": null,
       "checks": [
         {
@@ -116,38 +151,73 @@
       "turns": [
         {
           "status": "completed",
-          "durationMs": 42357,
+          "durationMs": 357758,
           "approvals": []
         }
       ]
     },
     {
       "id": "action-04-research-script",
-      "status": "failed",
-      "durationMs": 45868,
-      "reason": "Unexpected approval; scenario has no matching decision (left pending)",
-      "checks": [],
+      "status": "passed",
+      "durationMs": 396927,
+      "reason": null,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "sum.mjs",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "49",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "25",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "24",
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "49",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "https://nodejs\\.org/",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复需报告实际运行结果：茶 25、咖啡 24、总计 49，并给出 Node.js 官方参考资料链接。应区分实际执行和预计结果。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
       "turns": [
         {
-          "status": "running",
-          "durationMs": 43856,
-          "approvals": [
-            {
-              "toolName": "pwsh",
-              "riskCategories": [
-                "overwrite"
-              ],
-              "status": "unavailable",
-              "outcome": "unavailable"
-            }
-          ]
+          "status": "completed",
+          "durationMs": 395354,
+          "approvals": []
         }
       ]
     },
     {
       "id": "action-05-stop-resume",
       "status": "passed",
-      "durationMs": 172526,
+      "durationMs": 350361,
       "reason": null,
       "checks": [
         {
@@ -177,12 +247,12 @@
       "turns": [
         {
           "status": "aborted",
-          "durationMs": 4209,
+          "durationMs": 3130,
           "approvals": []
         },
         {
           "status": "completed",
-          "durationMs": 164745,
+          "durationMs": 344308,
           "approvals": []
         }
       ]
@@ -190,7 +260,7 @@
     {
       "id": "action-06-delete-approval",
       "status": "passed",
-      "durationMs": 375694,
+      "durationMs": 387143,
       "reason": null,
       "checks": [
         {
@@ -238,7 +308,7 @@
       "turns": [
         {
           "status": "completed",
-          "durationMs": 318279,
+          "durationMs": 343063,
           "approvals": [
             {
               "toolName": "pwsh",
@@ -252,7 +322,7 @@
         },
         {
           "status": "completed",
-          "durationMs": 54571,
+          "durationMs": 41150,
           "approvals": [
             {
               "toolName": "pwsh",
@@ -273,14 +343,14 @@
     "skippedLinks": 510
   },
   "usage": {
-    "requests": 39,
-    "requestsWithUsage": 36,
-    "requestsWithoutUsage": 3,
+    "requests": 45,
+    "requestsWithUsage": 39,
+    "requestsWithoutUsage": 6,
     "rejected429": 0,
-    "input": 607457,
-    "cachedInput": 260288,
-    "output": 11032,
-    "knownEstimatedCny": 0.37443876,
+    "input": 854945,
+    "cachedInput": 304896,
+    "output": 12053,
+    "knownEstimatedCny": 0.58025292,
     "kind": "Known usage estimate; lower bound when requests have no usage; not an account invoice",
     "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash"
   }

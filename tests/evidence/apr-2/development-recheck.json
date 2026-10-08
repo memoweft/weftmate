@@ -1,0 +1,11 @@
+{
+  "source": "Saved development-3 action-04 failure; offline reclassification, no execution",
+  "scriptSha256": "9a3efa6e19d607c449685973dc135030fecaa633e5f461e60c8f13d6b0169b81",
+  "targetExisted": false,
+  "previousRisk": [
+    "overwrite"
+  ],
+  "currentRisk": [],
+  "modelRequests": 0,
+  "rootCause": "The shell evaluator had been applied to JavaScript source and misread arrows/comparisons as redirections. The final policy selects shell sources before evaluating shell syntax."
+}

@@ -1,31 +1,31 @@
 {
-  "label": "development-1",
-  "startedAt": "2026-10-08T17:01:01.932Z",
+  "label": "development-2",
+  "startedAt": "2026-10-08T17:06:58.990Z",
   "model": "mimo-v2.6-flash",
   "policySnapshotSha256": {
-    "personal-write-targets.mjs": "46bb14a9715b9b68dd5ce05f3e9babe48c7d1d6b5e51b5c4a7d12c2a431d2705",
-    "personal-approval-policy.mjs": "c906f44168623c5acf2b63890e242db80bea837a595020925746e76662ad420d"
+    "personal-write-targets.mjs": "d50f265ea8cab0f087ed35d0e3d7692f2240a91d1a13815a7798d7ca93e21d59",
+    "personal-approval-policy.mjs": "b07ca321f19993d1c6ae9861d3c7e28902a842ff19a3e15fa490f144b4125e1c"
   },
   "summary": {
-    "passed": 4,
-    "failed": 2,
+    "passed": 3,
+    "failed": 3,
     "manual": 0,
     "unsupported": 0,
-    "skippedChecks": 2,
-    "passRate": 0.6666666666666666,
-    "coverage": 0.6666666666666666
+    "skippedChecks": 1,
+    "passRate": 0.5,
+    "coverage": 0.5
   },
   "scenarios": [
     {
       "id": "action-01-organize",
       "status": "failed",
-      "durationMs": 53332,
+      "durationMs": 31111,
       "reason": "Unexpected approval; scenario has no matching decision (left pending)",
       "checks": [],
       "turns": [
         {
           "status": "running",
-          "durationMs": 51003,
+          "durationMs": 28599,
           "approvals": [
             {
               "toolName": "pwsh",
@@ -42,7 +42,7 @@
     {
       "id": "action-02-web-document",
       "status": "passed",
-      "durationMs": 267209,
+      "durationMs": 636578,
       "reason": null,
       "checks": [
         {
@@ -75,48 +75,21 @@
       "turns": [
         {
           "status": "completed",
-          "durationMs": 265620,
+          "durationMs": 634964,
           "approvals": []
         }
       ]
     },
     {
       "id": "action-03-read-code",
-      "status": "passed",
-      "durationMs": 43813,
-      "reason": null,
-      "checks": [
-        {
-          "type": "reply_matches",
-          "pattern": "20(?:\\.0{1,2})?",
-          "status": "passed"
-        },
-        {
-          "type": "reply_matches",
-          "pattern": "浮点|精度|分为|整数|分单位",
-          "status": "passed"
-        },
-        {
-          "type": "file_contains",
-          "path": "project/pricing.mjs",
-          "text": "Math.round(cents * (1 - discount)) / 100",
-          "status": "passed"
-        },
-        {
-          "type": "turn_status",
-          "status": "passed"
-        },
-        {
-          "type": "llm_judge",
-          "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。",
-          "status": "skipped",
-          "reason": "No judge configured; enable --judge-model same or a configured model name."
-        }
-      ],
+      "status": "failed",
+      "durationMs": 360409,
+      "reason": "Scenario timed out",
+      "checks": [],
       "turns": [
         {
-          "status": "completed",
-          "durationMs": 42357,
+          "status": "running",
+          "durationMs": 358424,
           "approvals": []
         }
       ]
@@ -124,13 +97,13 @@
     {
       "id": "action-04-research-script",
       "status": "failed",
-      "durationMs": 45868,
+      "durationMs": 59141,
       "reason": "Unexpected approval; scenario has no matching decision (left pending)",
       "checks": [],
       "turns": [
         {
           "status": "running",
-          "durationMs": 43856,
+          "durationMs": 57160,
           "approvals": [
             {
               "toolName": "pwsh",
@@ -147,7 +120,7 @@
     {
       "id": "action-05-stop-resume",
       "status": "passed",
-      "durationMs": 172526,
+      "durationMs": 82770,
       "reason": null,
       "checks": [
         {
@@ -177,12 +150,12 @@
       "turns": [
         {
           "status": "aborted",
-          "durationMs": 4209,
+          "durationMs": 4119,
           "approvals": []
         },
         {
           "status": "completed",
-          "durationMs": 164745,
+          "durationMs": 74502,
           "approvals": []
         }
       ]
@@ -190,7 +163,7 @@
     {
       "id": "action-06-delete-approval",
       "status": "passed",
-      "durationMs": 375694,
+      "durationMs": 348324,
       "reason": null,
       "checks": [
         {
@@ -238,7 +211,7 @@
       "turns": [
         {
           "status": "completed",
-          "durationMs": 318279,
+          "durationMs": 319026,
           "approvals": [
             {
               "toolName": "pwsh",
@@ -252,7 +225,7 @@
         },
         {
           "status": "completed",
-          "durationMs": 54571,
+          "durationMs": 26566,
           "approvals": [
             {
               "toolName": "pwsh",
@@ -268,19 +241,19 @@
     }
   ],
   "credentialScan": {
-    "scanned": 249,
+    "scanned": 250,
     "matches": 0,
     "skippedLinks": 510
   },
   "usage": {
-    "requests": 39,
-    "requestsWithUsage": 36,
-    "requestsWithoutUsage": 3,
+    "requests": 43,
+    "requestsWithUsage": 38,
+    "requestsWithoutUsage": 5,
     "rejected429": 0,
-    "input": 607457,
-    "cachedInput": 260288,
-    "output": 11032,
-    "knownEstimatedCny": 0.37443876,
+    "input": 837011,
+    "cachedInput": 294656,
+    "output": 15498,
+    "knownEstimatedCny": 0.57924412,
     "kind": "Known usage estimate; lower bound when requests have no usage; not an account invoice",
     "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash"
   }
