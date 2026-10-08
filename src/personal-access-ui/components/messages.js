@@ -18,6 +18,7 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
     }
     function paintHistoryMessages(events) {
         const list = ui.byId('transcript'), sessionId = core.state.selectedSessionId;
+        const incremental = list.children.length > 0 && !core.state.olderLoading;
         for (const event of events) {
             if (!['user.message', 'assistant.message'].includes(event.type))
                 continue;
@@ -85,6 +86,10 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 list.insertBefore(row, next);
             else
                 list.append(row);
+            if (incremental && events.length <= 20 && event.type === 'assistant.message') {
+                globalThis.WeftMotion?.reveal(row.querySelector('.message-text'), '160ms');
+                globalThis.WeftMotion?.reveal(row.querySelector('.reply-memory'), '160ms');
+            }
         }
         ui.renderTimeline();
         ui.renderTurnStatus();
