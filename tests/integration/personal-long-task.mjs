@@ -12,15 +12,28 @@ import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/ho
 import { PROFILE_PATCH_TEMPLATE } from '../../src/dsh-web-runtime.ts';
 import { createOfficialDshSettingsClient } from '../../src/dsh-settings-migration.ts';
 import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
+import { createLanBaselineBridge } from './baseline-lan-model.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
 process.env.TEMP = process.env.TMP = 'C:/Temp';
-const modelName = process.argv.includes('--mimo') ? 'mimo' : 'qwen';
+const lan = process.argv.includes('--lan');
+assert.ok(!lan || !process.argv.includes('--mimo'), '--lan and --mimo are mutually exclusive');
+const modelName = lan ? 'lan' : process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const regression = process.argv.includes('--regression');
+const reasoningOff = process.argv.includes('--reasoning-off');
 const run = promisify(execFile);
-const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-  `[Console]::Out.Write([Environment]::GetEnvironmentVariable('${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'}','${modelName === 'qwen' ? 'User' : 'Machine'}'))`], { windowsHide: true });
-const key = stdout.trim(); assert.ok(key, 'Required model key absent');
+async function environmentValue(name, scope = 'User') {
+  const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
+    `[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`], { windowsHide: true });
+  return stdout.trim();
+}
+const key = await environmentValue(lan ? 'WEFTMATE_LAN_MODEL_KEY' : modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY', modelName === 'mimo' ? 'Machine' : 'User');
+assert.ok(key, 'Required model key absent');
+const lanBaseUrl = lan ? await environmentValue('WEFTMATE_LAN_MODEL_BASE_URL') : undefined;
+assert.ok(!lan || lanBaseUrl, 'Required LAN model address absent');
+const modelId = lan ? 'local-quality' : modelName === 'qwen' ? 'qwen3.8-27b-original' : 'mimo-v2.6-flash';
+const privateValues = [key, ...(lan ? [lanBaseUrl, new URL(lanBaseUrl).host] : [])];
+const redact = value => privateValues.reduce((text, secret) => text.replaceAll(secret, '[private-model]'), String(value));
 const root = join('C:/Temp', `weftmate-m1-3-${modelName}-${randomUUID()}`), profile = join(root, 'profile'), out = join(root, 'eval');
 mkdirSync(profile, { recursive: true }); mkdirSync(out);
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
@@ -47,7 +60,7 @@ writeFileSync(join(profile, 'dsh-home', 'profiles', 'weftmate', 'cordis.patch.ym
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
 env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
-let app, page, output = '';
+let app, page, lanBridge, output = '';
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function api(path, body, method = body ? 'POST' : 'GET') {
   return page.evaluate(async ({ path, body, method }) => {
@@ -59,9 +72,10 @@ async function api(path, body, method = body ? 'POST' : 'GET') {
 async function until(check) { const deadline = Date.now() + 90000; while (Date.now() < deadline) { const value = await check(); if (value) return value; await pause(250); } throw new Error('Isolated host setup timed out'); }
 console.log(`Isolated ${modelName} root: ${root}`);
 try {
+  if (lan) lanBridge = await createLanBaselineBridge({ baseUrl: lanBaseUrl, key, contextWindow: 98304 });
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'),
     args: [join(repository, 'tests/integration/personal-baseline-bootstrap.mjs'), `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'], cwd: repository, env, timeout: 90000 });
-  const capture = part => { output += String(part); writeFileSync(join(root, 'host.log'), output); };
+  const capture = part => { output += redact(part); writeFileSync(join(root, 'host.log'), output); };
   app.process().stdout?.on('data', capture); app.process().stderr?.on('data', capture);
   page = await app.firstWindow({ timeout: 90000 }); page.setDefaultTimeout(90000);
   await page.waitForURL('**/personal/v1/ui');
@@ -69,11 +83,11 @@ try {
   await page.locator('#login-form button[type=submit]').click(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
   const requestId = `long-task-model-${modelName}`;
   assert.equal((await api('/account/models', { requestId, name: modelName,
-    baseUrl: modelName === 'qwen' ? 'http://127.0.0.1:8081/v1' : 'https://api.xiaomimimo.com/v1',
-    modelId: modelName === 'qwen' ? 'qwen3.8-27b-original' : 'mimo-v2.6-flash', apiKey: key })).status, 202);
+    baseUrl: lan ? lanBridge.url : modelName === 'qwen' ? 'http://127.0.0.1:8081/v1' : 'https://api.xiaomimimo.com/v1',
+    modelId, apiKey: lan ? lanBridge.token : key })).status, 202);
   const operation = await until(async () => { const value = await api(`/account/models/by-request/${requestId}`); return !['pending', 'applying'].includes(value.body.operation?.status) && value.body.operation; });
   assert.equal(operation.status, 'succeeded');
-  if (modelName === 'qwen') {
+  if (modelName !== 'mimo') {
     // The shared single-slot endpoint can queue behind other worktrees longer
     // than DSH's five-minute first-output watchdog. This is native per-route
     // test configuration, not a production timeout or a reduced context window.
@@ -82,8 +96,10 @@ try {
     const settings = createOfficialDshSettingsClient({ origin: nativeOrigin });
     const snapshot = await settings.describeSettings();
     const routes = Object.entries({ ...snapshot.baseProviders, ...snapshot.userProviders });
-    const updates = routes.filter(([, row]) => row.models?.some(model => model.id === 'qwen3.8-27b-original'))
-      .map(([name, row]) => ({ op: 'set', path: ['providers', name], value: { ...row, streamIdleTimeoutMs: 1800000 } }));
+    const updates = routes.filter(([, row]) => row.models?.some(model => model.id === modelId))
+      .map(([name, row]) => ({ op: 'set', path: ['providers', name], value: { ...row, streamIdleTimeoutMs: 1800000,
+        ...(reasoningOff ? { reasoning: 'off', compat: { ...row.compat, thinkingFormat: 'openai', supportsReasoningEffort: true },
+          models: row.models.map(model => ({ ...model, reasoningEfforts: { off: 'none', low: 'low' } })) } : {}) } }));
     assert.ok(updates.length);
     await settings.mutateSettings(updates, snapshot.revision);
   }
@@ -127,17 +143,18 @@ try {
     assert.equal(summary.passed, 1, 'Deliverable checks must all pass'); assert.ok(stats.toolCalls > 15);
     assert.ok(stats.nativeGoalChanges >= 2 && stats.nativeTodoWrites >= 2);
     assert.equal(stats.nativeGoalPhase, 'complete'); assert.equal(stats.nativeTodosComplete, true);
-    if (modelName === 'qwen') { assert.deepEqual(stats.contextWindows, [98304]); assert.ok(stats.successfulCompactions >= 1); assert.ok(stats.goalAndTodosInCheckpoint); }
+    if (modelName !== 'mimo') { assert.deepEqual(stats.contextWindows, [98304]); assert.ok(stats.successfulCompactions >= 1); assert.ok(stats.goalAndTodosInCheckpoint); }
   }
 } finally {
   if (app) { await app.evaluate(({ app }) => app.quit()).catch(() => {}); await app.close().catch(() => {}); }
+  if (lanBridge) { await lanBridge.close(); writeFileSync(join(root, 'lan-bridge.json'), JSON.stringify(lanBridge.metrics(), null, 2)); }
   writeFileSync(join(root, 'host.log'), output);
   const sensitive = /credentials\.json$|(?:Cookies|Trust Tokens)(?:-journal)?$|setup-[^/]+\.json$|secure-snapshot.*\.yml$|security-credentials\.patch\.yml$/;
   let scanned = 0, matches = 0;
   function cleanAndScan(dir) { for (const name of readdirSync(dir)) { const file = join(dir, name), info = lstatSync(file);
     if (info.isSymbolicLink()) continue;
     if (info.isDirectory()) cleanAndScan(file); else if (sensitive.test(name)) rmSync(file, { force: true });
-    else { scanned++; if (readFileSync(file).includes(Buffer.from(key))) matches++; } } }
+    else { scanned++; const content = readFileSync(file); if (privateValues.some(secret => content.includes(Buffer.from(secret)))) matches++; } } }
   cleanAndScan(root); writeFileSync(join(root, 'credential-scan.json'), JSON.stringify({ scanned, matches }));
   assert.equal(matches, 0, 'No model key may persist in test artifacts');
 }
