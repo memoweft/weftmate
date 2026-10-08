@@ -1,0 +1,36 @@
+{
+  "scenario": "baseline-lan step07 after host restart",
+  "publicResponse": {
+    "status": 503,
+    "code": "SERVICE_UNAVAILABLE"
+  },
+  "observations": [
+    {
+      "kind": "http-error",
+      "at": "2026-10-08T20:45:52.534Z",
+      "path": "/personal/v1/sessions/session-920c7c9c-50de-45a8-9563-ffab8396aeae",
+      "code": null,
+      "name": "Error",
+      "stackFrames": [
+        "    at stageOneGateway (file:///D:/AIProjects/WeftMate/Worktrees/w4/src/main.mjs:401:19)",
+        "    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)",
+        "    at async Object.deleteSession (file:///D:/AIProjects/WeftMate/Worktrees/w4/src/personal-access-backend.mjs:183:24)",
+        "    at async Object.deleteSession (file:///D:/AIProjects/WeftMate/Worktrees/w4/src/personal-access/sessions.mjs:236:9)"
+      ]
+    },
+    {
+      "kind": "http-error",
+      "at": "2026-10-08T20:48:39.680Z",
+      "path": "/personal/v1/sessions/session-5d594621-fe60-4d17-97da-2be1f391cc4a/events",
+      "code": "RUNTIME_UNAVAILABLE",
+      "name": "Error",
+      "stackFrames": [
+        "    at fail (file:///D:/AIProjects/WeftMate/Worktrees/w4/src/personal-access-backend.mjs:9:40)",
+        "    at requireRuntime (file:///D:/AIProjects/WeftMate/Worktrees/w4/src/personal-access-backend.mjs:22:56)",
+        "    at Object.readEvents (file:///D:/AIProjects/WeftMate/Worktrees/w4/src/personal-access-backend.mjs:360:7)",
+        "    at file:///D:/AIProjects/WeftMate/Worktrees/w4/src/personal-access/http.mjs:1216:70"
+      ]
+    }
+  ],
+  "conclusion": "Failure originates in native DSH session deletion after memory preconditions, via stageOneGateway. Original native response status/code were not exposed; final root cause remains unproven."
+}
