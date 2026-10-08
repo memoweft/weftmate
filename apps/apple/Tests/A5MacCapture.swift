@@ -10,7 +10,10 @@ import Security
         let name = "a5-mac-" + UUID().uuidString.prefix(8)
         let scene = CommandLine.arguments[3], theme = CommandLine.arguments[4], host = CommandLine.arguments[5], cloud = CommandLine.arguments[6]
         let service = "com.weftmate.apple.ui-tests." + name
-        let root = FileManager.default.temporaryDirectory.resolvingSymlinksInPath().appendingPathComponent(name, isDirectory: true)
+        // Keep synthetic local state inside the signed app's sandbox container.
+        let root = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Containers/com.weftmate.apple.weftmatemac/Data/Library/Application Support/WeftMate/UITests", isDirectory: true)
+            .appendingPathComponent(name, isDirectory: true)
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let app = Process(); app.executableURL = executable
         app.arguments = ["--ui-testing", "--lg2-capture", "-ApplePersistenceIgnoreState", "YES", "--ui-testing-namespace", name,
