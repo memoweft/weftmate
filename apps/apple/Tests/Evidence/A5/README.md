@@ -9,7 +9,7 @@ iPhone / Mac 复用正式 `/personal/v1`：默认 `intent:steer`、显式新任�
 构建和 Swift 检查串行运行，所有 xcodebuild 使用 `-jobs 2`。iPhone 使用本包新建的隔离模拟器；任何时刻只启动这一个，测试结束立即 `xcrun simctl shutdown all`，不启动 Watch 模拟器。完整根测试交 PR CI。
 
 ```sh
-swift test --package-path apps/apple/Packages/WeftMateCore --jobs 2 --filter 'a5|ConversationResourcesTests|SharedConversation|TimelineTests'
+swift test --package-path apps/apple/Packages/WeftMateCore --jobs 2 --filter 'a5|ConversationResourcesTests|SharedConversation|TimelineTests|TaskReadSDKTests|TaskCommandPageSDKTests'
 python3 apps/apple/Scripts/run_state_checks.py --artifacts apps/apple/Build/A5-State --core-build apps/apple/Packages/WeftMateCore/.build --check AppleSendStateChecks
 xcodebuild -project apps/apple/WeftMate.xcodeproj -scheme WeftMatePhone -configuration Debug -destination 'platform=iOS Simulator,id=<本包隔离 iPhone>' -derivedDataPath apps/apple/Build/A5 -jobs 2 -parallel-testing-enabled NO CODE_SIGN_IDENTITY=- build-for-testing
 python3 apps/apple/Tests/run_a5_ui.py --xctestrun apps/apple/Build/A5/Build/Products/WeftMatePhone_iphonesimulator26.2-x86_64.xctestrun --simulator <本包隔离 iPhone> --result <新的 xcresult 路径> --evidence apps/apple/Tests/Evidence/A5 --phase light
@@ -17,7 +17,11 @@ python3 apps/apple/Tests/run_a5_ui.py --xctestrun apps/apple/Build/A5/Build/Prod
 xcodebuild -project apps/apple/WeftMate.xcodeproj -scheme WeftMateMac -configuration Debug -destination 'platform=macOS' -derivedDataPath apps/apple/Build/A5 -jobs 2 build
 ```
 
+`python3 apps/apple/Tests/verify_a5_host.py` 可独立重验插话根绑定、顺序排队、202 取消 / 409 竞争、停止保留队列、归档恢复、默认 / 勾选删除与合成工作目录清除。
+
 UI runner 启动真实 `services/cloud/src/main.mjs`、SQLite / file 邮件和 `createPersonalAccessService` 隔离宿主，随机回环端口 / 私有临时目录。App 内完成注册、邮件验证码、PKCE / DPoP、已有设备批准后进入对话。用量来自真实宿主账本，归档与删除调用生产 HTTP 处理器；勾选遗忘时验证宿主确实调用 `delete_evidence`，并核对合成工作目录删除。
+
+发现并修复的实际接线问题：普通 `/sessions` 曾不返回已绑定 `modelProfileId`，Apple 因无法确认原模型而拒绝发送；宿主只补这个既有字段，并加 HTTP 回归断言。任务控制不再绑在无关的 `desktopOpenApp` 能力上；按当前回执选根任务、原生水位推进时刷新元数据，取消事件不隐藏当前停止按钮。原生开始 / 结束也接入发送回执跟踪，插话标签保留在原消息旁。
 
 **运行时边界**：本机没有固定 DSH 的编译产物。`a5_synthetic_backend.mjs` 以合成模型 / inbox 日志提供运行状态，使用生产 `createDshSessionAdapter` 投影和真实宿主审批 / 控制 / 用量 / 会话处理器。UI 验证证明原生请求、界面状态与宿主结果一致；它不证明真实 DSH 引擎、shell 副作用或 MemoWeft Core 持久遗忘已经在本机验收。遗忘接口后的 Core 管理器也是合成夹具，默认删除不调用、勾选删除调用的区别单独断言。不把这个边界写成真实模型 / Core / 生产或真机成功。
 

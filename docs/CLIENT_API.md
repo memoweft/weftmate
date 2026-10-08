@@ -110,6 +110,8 @@
 | POST `/sessions/{sessionId}/unarchive` | 空对象 `{}` | 200 `{sessionId,archived:false}`；幂等恢复 | 404 `SESSION_UNAVAILABLE` | 同上 |
 | DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略） | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
 
+普通会话与项目 / 浏览器 / 接管会话均返回已绑定的 `modelProfileId`；旧会话无法确定时可为 `null`。A5 修复普通会话曾漏掉该既有字段、导致 Apple 无法确认原模型的问题。
+
 归档会话的 `sendAvailable:false`，发送新消息返回409 `SESSION_ARCHIVED`，先恢复再发送。已有运行不因归档停止。删除默认保留 MemoWeft 长期记忆；`forgetMemories:true` 需要 Cookie 与 `account:manage`，按账号及会话来源查询 Core（核心）的记忆任务证据，再走 `delete_evidence` 真正删除与储存清理。Core 不可用或遗忘失败时保留对话用于重试；已完成的证据遗忘不能撤销。再次删除已删除会话返回404。停止或后台形成未确认时不能宣称删除成功。
 
 普通对话以 DSH（助手运行时）原生 `cwd` 绑定宿主数据目录内按账号散列 / 会话 ID 隔离的工作目录。脚本与笔记默认在这里，回到原会话沿用同一目录及原生上下文；`经验.md` 存在时作为本对话资料读取。压缩仍由既有原生摘要保留方法、脚本路径、命令与踩坑记录。项目的用户目录不属于对话删除范围。
@@ -398,7 +400,7 @@ UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路
 
 原生 DSH（模型执行框架）用量事件优先；OpenAI-compatible（OpenAI 兼容协议）JSON（结构化数据）或 SSE（服务端事件流）响应 `usage` 用于手机代理 / 记忆后台。缓存输入使用 `prompt_tokens_details.cached_tokens` 或 `prompt_cache_hit_tokens`，原生适配器的缓存读写计数按实际语义合并；DSH 适配器合成的全零事件无法证明供应商提供了用量，保留未知。缺失或不完整用量的整次请求计 `unknownRequests`，该请求费用不计入 `cost`，保留请求标识与时间；没有自行估算。只存账号 / 对话 / 模型 / 请求标识、时间、数字与来源类别，不存消息正文、工具参数或响应正文。宿主账本保留已删除对话的费用统计，不恢复对话内容；历史账单 / 外部供应商账单导入未实现。
 
-桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）只需按本节接线。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
+桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）已在 A5 接入本节的统计 / 上限 / 402 提示，并同步 FIX-3 的本机时区查询与账号时区上报。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
 
 
 ### 3.18 提醒与定时任务（SCH-1，M2）
@@ -473,11 +475,11 @@ M1-1：个人入口使用 DSH native tools（原生工具），包括 Windows �
 | POST `/auth/cloud-nonce`；POST `/auth/cloud-session`；POST `/cloud/pairings/redeem` | S1c-Apple：host:session resource + 设备 P-256 DPoP；每次新 nonce/jti/ath/精确 htu，无 Authorization；202 保持等待，不建立内容 session，允许/拒绝与重试/取消有明确界面；200 Cookie/CSRF 后再核对 status 的 ownerId/hostId |
 | GET `/cloud/devices/pending`；POST `/cloud/devices/{id}/decision` | S1c-Apple：已登录前台读取，显示设备名、平台（官方客户端在 deviceName 中带 Mac/iPhone）、请求时间，允许/拒绝使用当前 Cookie/CSRF；现有响应无独立 platform 字段，其他名称显示「平台未提供」 |
 | POST 云 `/personal/v1/cloud/hosts/relay/discover` | S1c-Apple：cloud:account Bearer + hostId 取得 relay base URL；offline/revoked/网络断流显示连接不可用，保留云登录。目录不含 pin；HTTPS 用系统 CA/域名验证再比较当面配对得到的 P-256 SPKI，上传/下载沿用同一验证；不接受目录覆盖旧 pin |
-| GET `/sessions`；GET `/models` | 会话 `running,sendAvailable,unavailable?,conversationId?,modelProfileId?` 与模型 `id,name,model,configured,routeFingerprint` 一致；Apple限制会话≤20,000、模型≤500 |
+| GET `/sessions`；GET `/models` | A5 已接入 `archived`、归档 / 恢复 / 删除（默认不勾 `forgetMemories`）；会话 `running,sendAvailable,unavailable?,conversationId?,modelProfileId?` 与模型 `id,name,model,configured,routeFingerprint` 一致；Apple限制会话≤20,000、模型≤500 |
 | GET `/sessions/{id}/events` | 已在 A3 修复：无游标尾页、beforeSeq 上翻、afterSeq 增量；上翻不覆盖正向水位，按 seq 去重。公开事件 data（含 endReasonKind）完整缓存/投影；步骤详情走按 seq 详情接口，historyLimit 枚举与全量扫描路径已移除 |
 | GET `/commands` | before/limit/nextBefore一致；服务端按账号列全部命令，Apple读一页后过滤选中会话根任务，不是服务端按session过滤；可能需继续翻页才找到当前会话任务 |
-| GET `/commands/by-request/{id}`；POST `/commands` | 404且code为NOT_FOUND才认定未登记；持久requestId与原体核对一致。create/message/cancel字段一致，但message长度、附件/steer范围有差异（见下） |
-| GET `/tasks/{id}`；POST `/tasks/{id}/stop` | GET裸Task、POST202的task外壳、requestId一致；停止先查canStop，仅把匹配202当登记证据，后续Task状态不伪称该请求已确认。尚未接入补充/续做与executionSteps详情 |
+| GET `/commands/by-request/{id}`；POST `/commands` | 404且code为NOT_FOUND才认定未登记；持久requestId与原体核对一致。A5 新消息发显式 `intent:steer|queue`，省略默认插话；旧已保存 `mode:queue` 请求沿用原体重放，读取 `rootTaskId/taskAction` 并在消息旁标注插话。消息与附件上限已在 A2 对齐 |
+| GET `/tasks/{id}`；POST `/tasks/{id}/stop|cancel` | GET裸Task、POST202的task外壳、requestId一致；停止先查canStop，仅把匹配202当登记证据，后续Task状态不伪称该请求已确认。A5 接入按回执关联的排队取消 / 编辑重排、409 竞争提示、停止保留队列；任务控制不再依赖 `desktopOpenApp`，由任务响应的 `control` 决定。插话走新消息 `intent:steer`；独立续做入口另包 |
 | GET `/tasks/{id}/sources/{snapshotId}` | 项目/网页来源字段与文本响应一致；区分项目原文件hash与网页文本hash |
 | GET `/sessions/{id}/approvals`；POST `/sessions/{id}/approvals/{approvalId}` | A4a：接入可选 riskCategories / decisionScope 与允许 scope；允许一次 / 本对话总是允许此类 / 拒绝，分类 scope 保存在原请求中用于重试；旧记录省略 scope 保持 once。POST200为answered登记，resolved才显示已允许/已拒绝；Watch仍只允许一次/拒绝 |
 | GET/PATCH `/sessions/{id}/approval-mode`；GET/PATCH `/settings/approvals` | A4a：macOS / iOS 输入区五种模式菜单、全部允许风险提示与账户默认；按对话保存，默认只影响新对话。分类授权仅本对话；风险类别用于显示后果，接口没有独立撤销能力字段 |
@@ -514,7 +516,7 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 | 日常同步/本地turn | GET sync/events与共享接管已有；日常POST sync/events只有验收SPI，local-turns创建/查/续租/finish四项未接入 | M3离线对话与跨端合并 |
 | 分发更新 | 无认证app/native/downloads六项请求；Apple公开更新另有PublicUpdates，不能宣称缺所有更新能力 | 当前保持已有公开分发；本契约只记录认证入口 |
 | Watch | 旧首页没有任务进度、审批或完成触感 | 已在 A3 修复：通过 iPhone WatchConnectivity 读取一行进度、允许一次/拒绝、最近回复；前台/刷新观察到新完成才触感提醒。尚无远程推送，审批须手机可达，未验收真机配对 |
-| 五端共同待实现 | M1-2 已有分类授权接口，Apple 在 A4a 接入（Watch保持允许一次）；消息 chunk（文本片段）流仍待实现；排队取消与 D9 插话客户端待接；Windows M1-0b 已投影原生队列变更与提供取消接口，Apple 待接 | Windows M1-0b / D9，Apple 随正式契约接入 |
+| 五端共同待实现 | M1-2 已有分类授权接口，Apple 在 A4a 接入（Watch保持允许一次）；消息 chunk（文本片段）流仍待实现；排队取消与 D9 插话已在 A5 接入，使用既有原生生命周期和根命令 / 回执关联，不建立客户端执行调度器 | A5 已接入；真实 DSH 引擎 / 真机仍按各自环境验收 |
 
 本包未覆盖：内部 `/weftmate/api/v1` 网关、Electron IPC/Android全部bridge、公开官网分发、DSH原始完整事件schema、真实Windows宿主及Apple真机端到端场景。上述接口清单和使用标记来自本地源码对照，独立部署可能落后于此基线；M0-3/M1-0a已更新此文档与STATE契约栏。
 
