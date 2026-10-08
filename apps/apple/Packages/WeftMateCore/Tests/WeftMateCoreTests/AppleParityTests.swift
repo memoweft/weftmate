@@ -1,0 +1,92 @@
+import Foundation
+import Testing
+@testable import WeftMateCore
+
+private func value<T: Decodable>(_ type: T.Type, _ json: String) throws -> T { try JSONDecoder().decode(type, from: Data(json.utf8)) }
+private func event(_ seq: Int, _ type: String, _ data: String) throws -> TimelineEvent {
+    try value(TimelineEvent.self, "{\"seq\":\(seq),\"type\":\"\(type)\",\"data\":\(data)}")
+}
+@Test func a5IntentDefaultsToSteerAndPreservesLegacyQueueBytes() throws {
+    let message = try SharedCommandPayload(requestId: "send", kind: .message, targetDeviceId: "host", sessionId: "session", text: "合成补充")
+    #expect(message.intent == .steer)
+    let json = try JSONSerialization.jsonObject(with: message.encoded()) as! [String: Any]
+    #expect(json["intent"] as? String == "steer"); #expect(json["mode"] == nil)
+    let queue = try SharedCommandPayload(requestId: "queue", kind: .message, targetDeviceId: "host", sessionId: "session", text: "第二件事", intent: .queue)
+    #expect(queue.intent == .queue)
+    let old = Data(#"{"requestId":"old","kind":"session.message","targetDeviceId":"host","sessionId":"session","text":"old goal","mode":"queue"}"#.utf8)
+    #expect(try SharedCommandPayload.decode(old).mode == "queue")
+}
+@Test func a5QueueUsesReceiptIdentityAndDoesNotClearOnUnrelatedStop() throws {
+    let commands = [SharedCommandReceipt(commandId: "command-b", requestId: "request-b", kind: .message, targetDeviceId: "host", state: .acceptedByDSH, sessionId: "session", conversationId: nil, sourceSyncEventId: nil, receiptId: "receipt-b", errorCode: nil)]
+    let events = try [event(0,"task.queued",#"{"taskId":"receipt-b","receiptId":"receipt-b","text":"B"}"#),
+                     event(1,"task.queued",#"{"taskId":"command-c","receiptId":"receipt-c","text":"C"}"#),
+                     event(2,"task.ended",#"{"taskId":"command-a","receiptId":"receipt-a","reason":"aborted"}"#)]
+    #expect(TaskQueueProjection.queued(events: events, commands: commands).map(\.id) == ["command-b", "command-c"])
+    let started = try event(3,"task.started",#"{"taskId":"turn-2","receiptId":"receipt-b"}"#)
+    #expect(TaskQueueProjection.queued(events: events + [started], commands: commands).map(\.id) == ["command-c"])
+    let canceled = try event(4,"task.ended",#"{"taskId":"command-c","receiptId":"receipt-c","reason":"canceled"}"#)
+    #expect(TaskQueueProjection.queued(events: events + [started, canceled], commands: commands).isEmpty)
+}
+@Test func a5BatchedQueueKeepsNativeOrder() throws {
+    let batch = try event(1,"task.queued",#"{"tasks":[{"taskId":"b","receiptId":"rb","text":"B"},{"taskId":"c","receiptId":"rc","text":"C"}]}"#)
+    #expect(TaskQueueProjection.queued(events: [batch]).map(\.text) == ["B", "C"])
+}
+@Test func a5ReadableSummariesKeepRawArgumentsOutOfHeadline() throws {
+    #expect(ReadableToolSummary.text(tool: "read_file", raw: #"{"path":"/synthetic/project/notes.md"}"#) == "读取文件 notes.md")
+    #expect(ReadableToolSummary.text(tool: "shell", raw: #"{"command":"rm synthetic.txt","description":"删除合成临时文件"}"#) == "删除合成临时文件")
+    #expect(ReadableToolSummary.text(tool: "web_fetch", raw: #"{"url":"https://example.com/synthetic"}"#) == "打开网页 example.com")
+    #expect(ReadableToolSummary.text(tool: "shell", raw: "{broken") == "调用工具 shell")
+}
+@Test func a5OutputsRetainAlreadyReadOlderVersions() throws {
+    var window = ConversationResourcesWindow()
+    let older = try value(ConversationResourcesPage.self, #"{"outputs":[{"artifactId":"a","fileName":"notes.md","createdAt":"2026-10-08T00:00:00Z"}],"sources":[],"nextSeq":1,"hasMore":false}"#)
+    let latest = try value(ConversationResourcesPage.self, #"{"outputs":[{"artifactId":"b","fileName":"notes.md","createdAt":"2026-10-08T01:00:00Z"}],"sources":[],"nextSeq":2,"hasMore":false}"#)
+    try window.apply(older); try window.apply(latest)
+    #expect(window.outputs.map(\.id) == ["b"]); #expect(window.olderVersions(of: window.outputs[0]).map(\.id) == ["a"])
+}
+@Test func a5UsageTotalsNeverDoubleCountCacheAndBudgetUsesAccountState() throws {
+    let stats = #"{"requests":2,"unknownRequests":1,"unpricedRequests":0,"inputTokens":1000,"cachedInputTokens":700,"outputTokens":50,"cost":0.000364}"#
+    let totals = try value(UsageTotals.self, stats)
+    #expect(totals.tokenCount == 1050); #expect(totals.uncertaintyNotice != nil)
+    let summary = try value(UsageSummary.self, "{\"month\":\"2026-10\",\"timeZone\":\"UTC\",\"sessionId\":\"s\",\"total\":\(stats),\"days\":[{\"day\":\"2026-10-08\",\(stats.dropFirst().dropLast())}],\"sessions\":[],\"models\":[],\"budget\":{\"monthlyLimit\":1,\"effectiveLimit\":1,\"temporaryLimit\":null,\"state\":\"blocked\"}}")
+    #expect(summary.days.first?.totals.cost == totals.cost)
+    #expect(summary.budget.notice?.contains("云端模型请求已暂停") == true)
+    #expect(try value(UsageBudget.self,#"{"state":"warning","monthlyLimit":1,"effectiveLimit":1}"#).notice?.contains("80%") == true)
+    #expect(try value(UsageBudget.self,#"{"state":"unlimited"}"#).notice == nil)
+}
+
+private actor ParityTransport: HTTPTransport {
+    var writes: [URLRequest] = []
+    func send(_ request: URLRequest) async throws -> HTTPResponse {
+        let path = request.url!.path
+        let json: String
+        if path.hasSuffix("/auth/login") || path.hasSuffix("/auth/me") { json = #"{"account":{"ownerId":"owner","username":"synthetic","displayName":"合成","profileRevision":0},"device":{"id":"device","name":"iPhone","expiresAt":"2027-01-01T00:00:00Z"},"csrfToken":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}"# }
+        else if path.hasSuffix("/status") { json = #"{"ownerId":"owner","hostId":"host"}"# }
+        else if path.hasSuffix("/archive") || path.hasSuffix("/unarchive") { writes.append(request); json = "{\"sessionId\":\"session\",\"archived\":\(path.hasSuffix("/unarchive") ? "false" : "true")}" }
+        else if request.httpMethod == "DELETE" { writes.append(request); json = #"{"sessionId":"session","deleted":true,"forgetMemories":false,"forgottenEvidenceCount":0}"# }
+        else if path.hasSuffix("/settings/usage") { writes.append(request); json = #"{"monthlyLimit":1,"temporaryLimit":2,"temporaryMonth":"2026-10","canManage":true,"models":[]}"# }
+        else { throw APIFailure.invalidResponse }
+        return .init(status:200, headers:["set-cookie":"wm_personal_session=" + String(repeating:"a",count:43)], body:Data(json.utf8))
+    }
+    func recorded() -> [URLRequest] { writes }
+}
+@Test func a5LifecycleAndLimitRequestsUseAuthenticatedContract() async throws {
+    let transport = ParityTransport(), client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+    _ = try await client.login(server: ServerConfiguration(input:"https://parity.example.com"), username:"synthetic", password:"synthetic-password-long", deviceName:"iPhone")
+    #expect(try await client.setSessionArchived(true,sessionID:"session").archived)
+    #expect(try await !client.setSessionArchived(false,sessionID:"session").archived)
+    _ = try await client.deleteSession(sessionID:"session")
+    _ = try await client.deleteSession(sessionID:"session", forgetMemories:true)
+    _ = try await client.setUsageLimit(2, temporary:true)
+    _ = try await client.setUsageLimit(nil, temporary:false)
+    let writes = await transport.recorded()
+    let bodies = try writes.compactMap(\.httpBody).map { try JSONSerialization.jsonObject(with:$0) as! [String:Any] }
+    #expect(bodies[2]["forgetMemories"] as? Bool == false); #expect(bodies[3]["forgetMemories"] as? Bool == true)
+    #expect(bodies[4]["temporaryLimit"] as? Double == 2); #expect(bodies[5]["monthlyLimit"] is NSNull)
+    #expect(writes.allSatisfy { $0.value(forHTTPHeaderField:"X-WeftMate-CSRF") != nil && $0.value(forHTTPHeaderField:"Cookie") != nil })
+}
+
+@Test func a5CancelQueuedDoesNotHideCurrentStopOrSteer() throws {
+    let events = try [event(0,"task.started",#"{"taskId":"a","receiptId":"ra"}"#), event(1,"task.ended",#"{"taskId":"b","receiptId":"rb","reason":"canceled"}"#)]
+    #expect(TimelineProjection.taskRunning(events, fallback:false))
+}

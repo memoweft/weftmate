@@ -15,6 +15,18 @@ enum ResourceTab: Identifiable, Equatable {
 }
 @MainActor final class ConversationResourcesModel: ObservableObject {
     @Published var window = ConversationResourcesWindow()
+    @Published private(set) var useDetails: [String: TimelineDetail] = [:]
+    @Published private(set) var useErrors: [String: String] = [:]
+    @Published private(set) var loadingUses = Set<String>()
+    func loadUse(_ use: ResourceUse) async {
+        guard current, let app, !loadingUses.contains(use.id) else { return }
+        loadingUses.insert(use.id); useErrors[use.id] = nil
+        defer { loadingUses.remove(use.id) }
+        do {
+            let value = try await app.assistantClient.conversationSourceContent(use, sessionID: sessionID)
+            guard current, !Task.isCancelled else { return }; useDetails[use.id] = value
+        } catch { if current, !Task.isCancelled { useErrors[use.id] = "原始内容未读取，请重试。" } }
+    }
     @Published var tabs: [ResourceTab] = []
     @Published var selected: String?
     @Published var visible = false
@@ -37,7 +49,7 @@ enum ResourceTab: Identifiable, Equatable {
         if selected == id { selected = tabs.last?.id }
         if tabs.isEmpty { visible = false }
     }
-    func clear() { tabs = []; selected = nil; visible = false; window = .init(); error = nil }
+    func clear() { useDetails = [:]; useErrors = [:]; loadingUses = []; tabs = []; selected = nil; visible = false; window = .init(); error = nil }
     func refresh() async {
         guard !loading, current, let app else { return }
         loading = true; error = nil
@@ -47,7 +59,7 @@ enum ResourceTab: Identifiable, Equatable {
             while more && !Task.isCancelled {
                 let page = try await app.assistantClient.conversationResources(sessionID: sessionID, afterSeq: window.nextSeq)
                 guard current, !Task.isCancelled else { return }
-                try window.apply(page); more = page.hasMore
+                try window.apply(page); try window.includeTimelineOutputs(app.timeline.events); more = page.hasMore
             }
         } catch {
             guard current, !Task.isCancelled else { return }

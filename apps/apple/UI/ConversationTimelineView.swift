@@ -76,6 +76,7 @@ struct ConversationTimelineView: View {
                     catch { return }
                 }
             }
+            .onChange(of: commands.rootCommands) { _, value in appModel.timelineRootCommands = value }
             .onDisappear { interactions.suspend(); commands.suspend() }
             .onChange(of: appModel.accountEpoch) { _, _ in interactions.cancel(); commands.cancel() }
     }

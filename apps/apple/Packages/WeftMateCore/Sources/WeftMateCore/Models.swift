@@ -96,10 +96,11 @@ public struct ConversationSummary: Identifiable, Sendable, Equatable {
     public let running: Bool
     public let sendAvailable: Bool
     public let originalModelLabel: String?
+    public let archived: Bool
     public init(id: String, title: String, conversationId: String?, sessionId: String?, running: Bool,
-                sendAvailable: Bool, originalModelLabel: String?) {
+                sendAvailable: Bool, originalModelLabel: String?, archived: Bool = false) {
         self.id = id; self.title = title; self.conversationId = conversationId; self.sessionId = sessionId
-        self.running = running; self.sendAvailable = sendAvailable; self.originalModelLabel = originalModelLabel
+        self.running = running; self.sendAvailable = sendAvailable; self.originalModelLabel = originalModelLabel; self.archived = archived
     }
 
 }
@@ -173,6 +174,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .server(_, "LOGIN_RATE_LIMITED"): "尝试次数较多，请稍后再登录。"
         case .server(401, _): "登录已过期或设备已撤权，请重新登录。"
         case .server(403, _): "当前账户或设备没有这项权限。"
+        case .server(402, "USAGE_LIMIT_REACHED"): "本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型。"
         case .server(409, _): "当前记录有冲突，请刷新后重试。"
         case .server(_, "DEVICE_LIMIT"): "已登录设备达到上限，请先管理已有设备。"
         case .server(_, let code): "服务器暂时无法完成操作（\(code)）。"
