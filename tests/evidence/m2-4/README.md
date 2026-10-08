@@ -9,7 +9,7 @@ Windows-6，2026-10-08。真实 Electron（桌面程序框架）通过 `_electro
 | 桌面归档、查看已归档、恢复 | 通过；归档发送409，恢复后可发送 |
 | 删除默认不勾遗忘 | 通过；对话、目录与记录清除，已形成的蒸紫薯早餐偏好仍在 |
 | 删除勾选遗忘 | 通过；真实 Core（核心）来源证据删除，肉桂咖啡偏好不再出现在记忆列表 |
-| 手机网页与 MuMu（安卓模拟器） | 真实隔离宿主、固定 DSH 与合成模型；归档/恢复、确认框默认不勾、永久删除；长按和运行中删除另有结构化断言 |
+| 手机网页与 MuMu（安卓模拟器） | 真实隔离宿主、固定 DSH 与合成模型；归档/恢复、确认框默认不勾、永久删除；长按和运行中删除均通过结构化断言 |
 | 关闭程序后目录核对 | 通过；删除的 triangle.py / 经验.md 不会在原生实例释放或关机刷新后重建 |
 
 桌面见 [verification.json](verification.json)，手机见 [chromium-verification.json](chromium-verification.json)、[mumu-verification.json](mumu-verification.json)。截图包括浅/深手机归档与删除、真实桌面删除确认和勾选遗忘。安卓使用独立 `com.memoweft.weftmate.mobile.m24qa` 与同名测试包，不覆盖已有应用；清理见 [mumu-cleanup.json](mumu-cleanup.json)。
