@@ -1007,13 +1007,19 @@ export function createHttpHandler(context) {
         }
       }
       if (request.method === 'GET' && pathname === '/personal/v1/sessions') {
-        if (url.search) throw failure('INVALID_REQUEST');
+        if ([...url.searchParams.keys()].some(key => key !== 'archived') ||
+            url.searchParams.getAll('archived').length > 1 ||
+            url.searchParams.has('archived') && !['true', 'false', 'all'].includes(url.searchParams.get('archived')))
+          throw failure('INVALID_REQUEST');
+        const archived = url.searchParams.get('archived') ?? 'false';
         const sessions = [];
         for (const sessionId of Object.keys(state.sessions).sort()) {
+          if (archived !== 'all' && (state.sessions[sessionId].archived === true) !== (archived === 'true')) continue;
           try {
             const described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
             if (described?.sessionId === sessionId) sessions.push({
               sessionId,
+              archived: state.sessions[sessionId].archived === true,
               title: bounded(described.title, 256) ?? '',
               running: described.running === true,
               ...(state.sessions[sessionId].workspaceKind ? {
@@ -1028,7 +1034,7 @@ export function createHttpHandler(context) {
                 projectName: state.projects?.[state.sessions[sessionId].projectId]?.name ?? '已登记项目',
                 projectRevoked: state.projects?.[state.sessions[sessionId].projectId]?.revoked === true,
                 modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
-              sendAvailable: (state.sessions[sessionId].origin === 'personal-remote' &&
+              sendAvailable: state.sessions[sessionId].deleting !== true && state.sessions[sessionId].archived !== true && ((state.sessions[sessionId].origin === 'personal-remote' &&
                 described.agentPreset === 'personal-remote' &&
                 (!state.sessions[sessionId].projectId ||
                   (state.projects?.[state.sessions[sessionId].projectId]?.revoked === false &&
@@ -1039,11 +1045,24 @@ export function createHttpHandler(context) {
                     described.modelProfileId === state.sessions[sessionId].modelProfileId))) ||
                 (state.sessions[sessionId].origin === 'shared-chat' &&
                 described.agentPreset === 'personal-shared-chat' &&
-                context.modelVisible(ownerId, state.sessions[sessionId].modelProfileId)),
+                context.modelVisible(ownerId, state.sessions[sessionId].modelProfileId))),
             });
           } catch { sessions.push({ sessionId, title: '', running: false, sendAvailable: false, unavailable: true }); }
         }
         return context.json(response, 200, { sessions });
+      }
+      const lifecycleMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)(?:\/(archive|unarchive))?$/.exec(pathname);
+      if (lifecycleMatch && (request.method === 'POST' && lifecycleMatch[2] || request.method === 'DELETE' && !lifecycleMatch[2])) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        const body = await context.readJson(request, 1024);
+        if (!plainObject(body) || Object.keys(body).some(key => key !== 'forgetMemories') ||
+            body.forgetMemories !== undefined && (request.method !== 'DELETE' || typeof body.forgetMemories !== 'boolean'))
+          throw failure('INVALID_REQUEST');
+        if (body.forgetMemories) context.authenticate(request, 'account:manage');
+        const result = request.method === 'DELETE'
+          ? await context.sessionOperations.deleteSession(ownerId, lifecycleMatch[1], body)
+          : await context.sessionOperations.archiveSession(ownerId, lifecycleMatch[1], lifecycleMatch[2] === 'archive');
+        return context.json(response, 200, result);
       }
       const questionMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/questions(?:\/([A-Za-z0-9_-]+))?$/.exec(pathname);
       if (request.method === 'GET' && questionMatch && !questionMatch[2]) {
@@ -1499,6 +1518,8 @@ export function createHttpHandler(context) {
           throw failure('SESSION_UNAVAILABLE', 404);
         }
         if (payload.kind === 'session.message' &&
+            (state.sessions[payload.sessionId].archived === true || state.sessions[payload.sessionId].deleting === true)) throw failure('SESSION_ARCHIVED', 409);
+        if (payload.kind === 'session.message' &&
             !['personal-remote', 'shared-chat'].includes(state.sessions[payload.sessionId].origin)) {
           throw failure('SESSION_READ_ONLY', 409);
         }
@@ -1596,6 +1617,8 @@ export function createHttpHandler(context) {
               !latest.devices[deviceId].scopes.includes('commands:write')) throw failure('UNAUTHORIZED', 401);
           if (payload.sessionId && (!Object.hasOwn(latest.sessions, payload.sessionId) ||
               latest.sessions[payload.sessionId].ownerId !== ownerId)) throw failure('SESSION_UNAVAILABLE', 404);
+          if (payload.kind === 'session.message' && (latest.sessions[payload.sessionId].archived === true || latest.sessions[payload.sessionId].deleting === true))
+            throw failure('SESSION_ARCHIVED', 409);
           if (payload.kind === 'session.message' &&
               !['personal-remote', 'shared-chat'].includes(latest.sessions[payload.sessionId].origin)) {
             throw failure('SESSION_READ_ONLY', 409);
