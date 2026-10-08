@@ -34,6 +34,7 @@ internal object CloudPins {
         pins[origin] = pin
     }
     fun clear(origin: String) { pins.remove(origin) }
+    fun has(origin: String): Boolean = pins.containsKey(origin)
     fun open(url: URL): HttpURLConnection {
         val connection = url.openConnection() as HttpURLConnection
         val pin = pins["${url.protocol}://${url.authority}"] ?: return connection
