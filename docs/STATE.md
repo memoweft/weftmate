@@ -11,7 +11,7 @@
 | Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | UI-2 手机界面统一 | [PR #51](https://github.com/memoweft/weftmate/pull/51)（`wp/ui-2-mobile-visual`）：会话列表首页、运行 / 待审批点、中性浅 / 深 / 跟随系统主题、安静步骤与原文两层展开、全屏输出与来源及返回位置 / 草稿已完成；保留登录、云配对、附件、审批与离线。Android 0.8.4/code17，只接既有来源列表路由与系统栏。手机100/100与相关页面回归31/31、Android JVM（Java 虚拟机）27/27、assembleDebug、类型检查与发布回归通过；[截图与边界](../tests/evidence/ui-2/README.md)。无可用模拟器，390×844 Chromium（浏览器引擎）验收；完整测试交 PR CI（持续集成），待 Claude 审查 |
-| Codex · Windows-2 | M2b 记忆形成准确 | Core [PR #86](https://github.com/memoweft/memoweft/pull/86)（`wp/m2b-formation-accuracy`）：原话派生命题、具体错误重写一次与持久失败记录、JSON（结构化数据）模式已实现；WeftMate 用 Core 显式词汇查询召回原话表达偏好，相关11/11与类型检查通过。真实 Electron（桌面程序框架）Qwen/MiMo memory-01/03/04 正在复跑；M2-3纠正审批另包。Core squash（压缩合并）后须更新本仓 CI（持续集成）的固定提交 |
+| Codex · Windows-2 | M2b 记忆形成准确 | WeftMate [PR #54](https://github.com/memoweft/weftmate/pull/54)、Core [PR #86](https://github.com/memoweft/memoweft/pull/86)：原话派生命题、专名/日期约束、具体错误重写一次与持久失败记录、JSON（结构化数据）模式、原话表达偏好召回已实现。真实Electron（桌面程序框架）最终Qwen0/3超时、MiMo3/3，未写错误姓名；[证据/费用](../tests/evidence/m2b/README.md)。相关测试与类型检查通过，完整CI（持续集成）见两PR；M2出口未达，M2-3纠正审批另包。Core由Claude squash（压缩合并）后须更新本仓CI固定提交 |
 | Codex · Mac | A4b Apple 记忆标签与输出来源面板 | [PR #53](https://github.com/memoweft/weftmate/pull/53)（`wp/a4b-apple-memory-and-panel`）：macOS / iOS 回复 `memoryUsed` 标签、逐条摘要与当前来源原话、两组资源列表、逐次调用摘要 / 按需原文、成果入口共用面板已完成；Mac 多标签 / 拖宽 / 放大 / 收起，iOS 全屏返回保留位置与草稿。定向 Swift 20/20、时间线与面板状态、iOS 合成 XCTest 2/2、三端 Debug 构建通过；[八张截图与复现](../apps/apple/Tests/Evidence/A4b/README.md)。Mac 辅助功能未授权，未申请；Watch UI 未改，真机 / 日用宿主未验，完整测试交 PR CI，待 Claude 审查 |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
 | Codex · Cloud | S2b 宿主内容证书自动签发 | [PR #38](https://github.com/memoweft/weftmate/pull/38)（`wp/s2b-host-certs`）：阿里云 V3 DNS-01/provider 私有环境接线与 RecordId 所有权、宿主 Node ACME/原内容 key CSR、每天检查/<30天续期/原子安装/热载、状态到期与错误已实现；本机真实 Pebble/challtestsrv→签名宿主/云/假 AliDNS API→配对 pin/TLS 热载与模拟到期续期通过；交付待 Claude 审查，最终 CI 门禁见 PR checks，本包未部署 |
@@ -21,7 +21,7 @@
 
 ## 最近一次验证
 
-- **M2a**：相关69/69、类型检查、真实Electron（桌面程序框架）偏好→新对话采用→「用到了 1 条记忆」→右侧原话来源浅深色通过；独立短回复验收105.42秒。原场景Qwen1/4、MiMo2/4；保留错误形成姓名、缺字段及未声明审批失败，未放宽检查。完整门禁见[PR #52 CI（持续集成）](https://github.com/memoweft/weftmate/pull/52/checks)。
+- **M2b**：开发定向Core272/272，日期/事件32/32、准确性/HTTP（网络请求）43/43；WeftMate相关11/11与类型检查通过。Core完整CI（持续集成）1,710/1,710与严格类型检查202模块。真实Electron（桌面程序框架）最终Qwen三场景各600秒超时、MiMo3/3；原话姓名未抄错写入，首轮失败完整保留。完整门禁见[WeftMate #54](https://github.com/memoweft/weftmate/pull/54/checks)、[Core #86](https://github.com/memoweft/memoweft/pull/86/checks)。
 
 - **UI-2**：手机目录100/100与相关记忆 / 项目 / 续聊回归31/31、来源分页 / 按需原文 / 失败重试 / 离线列表、全屏返回位置、草稿重启、跟随系统主题、窄屏 / 横屏与输入区视口布局通过；Android JVM 27/27与调试包、类型检查、发布回归通过。截图见 tests/evidence/ui-2/。没有设备 / 可用模拟器，真实 Android 输入法、安装与跨设备验收另包。
 - **UI-2a**：手机交互94/94、真实 Chromium（浏览器引擎）390×844五种模式/风险确认/默认重新读取/三种决定、发布回归1/1、类型检查通过；Android 本机 JVM（Java 虚拟机）26/26与 assembleDebug通过，0.8.3/code16。合成截图见 tests/evidence/ui-2a/；没有安装本人设备、发布手机包或执行真实脚本，完整门禁交 PR CI（持续集成）。
@@ -61,20 +61,19 @@
 - S1b：身份 7/7、实际 cloud OIDC/SQLite→宿主流程、A/B 隔离、DPoP 拒绝与 SSE 撤权、云离线本地登录通过；旧 store/ID/密码/Cookie/非零同步水位和备份保持。
 - MW-2：真实 Python Core RPC/持久待办/并发撤回 2/2、健康 HTTP 7/7、类型检查/预检通过；M0-3 长历史 230,000+ 范围投影与审批/提问验证已通过。Qwen / MiMo 基线及真实长任务尚未跑。
 
-## 最近一次场景结果 · M2a 记忆最小闭环
+## 最近一次场景结果 · M2b 记忆形成准确
 
-2026-10-08，真实Electron（桌面程序框架）+固定DSH（执行框架）+MemoWeft Core（记忆核心，含MW-3），隔离账号和数据。Qwen仅指定8081 / `qwen3.8-27b-original`，MiMo指定官方接口 / `mimo-v2.6-flash`；memory-03分别Qwen→MiMo、MiMo→Qwen，后台保持各自所配模型。原目标、检查和M0-7b时限保持，见[完整证据/截图/费用](../tests/evidence/m2a/README.md)。
+2026-10-08，真实Electron（桌面程序框架）+固定DSH（执行框架）+隔离MemoWeft Core（记忆核心）。Qwen仅8081 / `qwen3.8-27b-original`；MiMo官方接口 / `mimo-v2.6-flash`。原目标、检查、600秒总预算保持，未启用可选模型评判，见[完整证据与费用](../tests/evidence/m2b/README.md)。
 
-| 场景 | M1-1d Qwen / MiMo | 本包 Qwen / MiMo | 核对结果 |
+| 场景 | M2a Qwen / MiMo | M2b最终 Qwen / MiMo | 核对 |
 |---|---|---|---|
-| memory-01 偏好 | 失败59.68s / 失败96.92s | **通过269.43s / 失败83.72s** | Qwen新对话买菜例子与采用依据通过；MiMo形成缺proposition，Core拒绝写入 |
-| memory-02 纠正 | 失败180.87s / 失败248.40s | 失败689.56s / 失败287.38s | 两边第三轮触发未声明审批；未自动批准；纠正另列M2-3 |
-| memory-03 换模型 | 未复跑；M0-7c混合方向失败88.11s | 失败100.73s / **通过69.28s** | Qwen后台把小禾抄成小莓；MiMo→Qwen称呼与采用依据通过 |
-| memory-04 人物背景 | 失败46.87s / 失败17.15s | 失败133.02s / **通过39.77s** | Qwen后台把阿岚抄成阿朵；MiMo展览/海报背景与采用依据通过 |
+| memory-01 偏好 | 通过269.43s / 失败83.72s | 超时600.56s / **通过59.16s** | MiMo形成/新对话买菜例子与采用依据通过；Qwen后台网络超时/原有重试积压，偏好后来准确形成 |
+| memory-03 换模型 | 失败100.73s / 通过69.28s | 超时600.64s / **通过84.33s** | Qwen→MiMo、MiMo→Qwen；最终Qwen已形成“小禾”，但采用未在预算内完成；MiMo完整通过 |
+| memory-04 人物 | 失败133.02s / 通过39.77s | 超时600.63s / **通过35.44s** | MiMo形成/采用阿岚背景；Qwen人物工作退出时仍处理中，未写错误人物 |
 
-正式Qwen1/4、MiMo2/4，**M2出口未达**。两边Core末态ready（就绪）、inject=true，worldRevision分别4/3，后台形成与召回链路已接通；失败不再统称未形成/无采用接口。错误名字来自后台模型实际输出，宿主保留原话，未代填。MiMo截图步骤未再出现UNSUPPORTED_CONTENT（不支持的输入内容）；按照原生能力声明传文字，支持图像的模型保持原输入。M1办事两边6/6沿用前包证据，本包未复跑办事或跨端审批。
+最终Qwen0/3、MiMo3/3，**M2出口未达**。首轮Qwen偏好失败432.32秒（原话召回词汇缺口）、称呼通过119.25秒、人物失败541.96秒（“阿朵”重写仍不合格，零写入）完整保留，未替换最终成绩。三个隔离World（记忆世界）均无“小莓”“阿朵”；最终Qwen有“小禾”及原话买菜偏好，MiMo有“小禾”“阿岚”。解释错误/一次重写结果持久可查；Qwen最终超时属于后台网络/重试/等待证据，不归为缺字段，也不断言单一根因。M2a `memory-02`第三轮未声明审批仅记录，未复跑或批准，纠正留M2-3。
 
-MiMo50个请求全部有用量：输入580,319 token（令牌）（缓存509,632）、输出10,991、合计591,310；按官方现价计 **¥0.102862（约¥0.10）**，不是账单。五个隔离根密钥扫描零命中，测试凭据删除、宿主退出，8081保留；未读日用保管库、未启动其他本地模型或停止/重启8080。相关69/69、类型检查通过，完整门禁见PR #52当前提交；无新增CI例外。
+MiMo全部17个请求有用量：输入75,783 token（令牌），缓存43,200，输出3,384，共79,167；按官方现价计**¥0.040215（约¥0.04）**，不是账单。三个隔离根498文件密钥扫描0、凭据/宿主进程0，8081原模型及98,304/单槽保持，无切换/活动/排队/维护租约；未读日用保管库、未自起其他模型或停止/重启8080。日期与截断字段另外以定向测试/完整Core CI验证。Core合并后本仓CI需更新固定提交；当前前版固定Core不能替代新Core自身CI及隔离程序验证。客户端接口无变更。
 
 ## 契约变更
 
