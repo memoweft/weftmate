@@ -198,7 +198,7 @@ try {
             }
           } catch (error) {
             result.status = 'failed';
-            result.reason = redact(error.message);
+            result.reason = [result.reason, redact(error.message)].filter(Boolean).join('; ');
           }
           result.holdoutVerification = checks;
         }
