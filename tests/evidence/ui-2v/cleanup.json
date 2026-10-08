@@ -1,0 +1,12 @@
+{
+  "isolatedApplicationUninstalled": true,
+  "isolatedTestApplicationUninstalled": true,
+  "previousWeftMateApplicationsPreserved": true,
+  "originalInputMethodAndSecureSettingsRestored": true,
+  "fixtureServiceStopped": true,
+  "fixturePort18187Closed": true,
+  "adbReverse18187Removed": true,
+  "adbForward19222Removed": true,
+  "personalRuntimeAccessed": false,
+  "paidOrExternalModelRequests": 0
+}
