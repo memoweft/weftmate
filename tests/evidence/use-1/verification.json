@@ -1,0 +1,28 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMiMo": true,
+  "isolatedAccount": true,
+  "checks": [
+    "native ledger equals actual MiMo usage/cache/cost",
+    "100% refused before upstream; visible recovery copy",
+    "temporary month increase restores cloud allowance",
+    "actual mobile bundle shows same host usage; no horizontal overflow",
+    "mobile price/limit controls use real account settings and MiMo official preset"
+  ],
+  "providerUsage": {
+    "inputTokens": 18047,
+    "cachedInputTokens": 12864,
+    "outputTokens": 70,
+    "cost": 0.00558028
+  },
+  "requests": 3,
+  "month": "2026-10",
+  "allValidationRequests": 24,
+  "allValidationCost": 0.04474952,
+  "allValidationUsage": {
+    "inputTokens": 144370,
+    "cachedInputTokens": 102976,
+    "outputTokens": 648
+  }
+}

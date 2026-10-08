@@ -137,8 +137,9 @@ function page(name){
   if(!['chat','home'].includes(name)&&['chat','home'].includes(previousPage))state.returnPage=previousPage;
   $('chat-page').classList.toggle('active',name==='chat');$('generic-page').classList.toggle('active',!['chat','home'].includes(name));
   $('home-page').classList.toggle('active',name==='home');updatePageHeader();
+  $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'我的资料',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
@@ -332,6 +333,7 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 function renderPage(name){const target=$('page-content');clear(target);switch(name){
+  case 'usage':return usagePage(target, state.usageSessionId || '');
   case 'memory':return memoryPage(target);
   case 'capabilities':return capabilitiesPage(target);
   case 'devices':return devicesPage(target);

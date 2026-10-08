@@ -1,5 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import assert from 'node:assert/strict';
+import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
 import { mkdirSync, mkdtempSync, writeFileSync, readFileSync } from 'node:fs';
@@ -54,10 +55,7 @@ try {
     await page.screenshot({ path: join(evidence, `${phase}-${name}.png`), animations: 'disabled' });
   }
   await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor(); await shot('login');
-  await page.getByRole('textbox', { name: '账户名', exact: true }).fill(candidate.credentials.username);
-  await page.getByLabel('密码', { exact: true }).filter({ visible: true }).fill(candidate.credentials.password);
-  await page.getByRole('textbox', { name: '这台设备的名称' }).fill('隔离桌面测试');
-  await page.getByRole('button', { name: '登录', exact: true }).click();
+  await localUiSession(page, candidate.credentials);
   await page.getByRole('button', { name: '停止', exact: true }).waitFor();
   if (moved) {
     // Override only the composition module, before initialization; production layout is never edited.
@@ -92,7 +90,7 @@ try {
   await page.getByRole('button', { name: '打开成果', exact: true }).click();
   await page.getByRole('heading', { name: '项目进度报告' }).waitFor(); await shot('artifact');
   await page.getByRole('button', { name: '收起右侧面板', exact: true }).click();
-  await page.getByRole('button', { name: /TimelineFixture/ }).click();
+  await page.getByRole('button', { name: '账户菜单' }).click();
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('combobox', { name: /^颜色模式/ }).selectOption('dark');
   await shot('appearance');
@@ -103,10 +101,7 @@ try {
     candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true });
     await page.reload(); await previous.close();
     await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor();
-    await page.getByRole('textbox', { name: '账户名', exact: true }).fill(candidate.credentials.username);
-    await page.getByLabel('密码', { exact: true }).filter({ visible: true }).fill(candidate.credentials.password);
-    await page.getByRole('textbox', { name: '这台设备的名称' }).fill('隔离桌面测试');
-    await page.getByRole('button', { name: '登录', exact: true }).click();
+    await localUiSession(page, candidate.credentials);
     await page.getByRole('button', { name: label, exact: true }).waitFor();
     const replied = page.waitForResponse(value => value.request().method() === 'POST' && /\/approvals\//.test(value.url()));
     await page.getByRole('button', { name: label, exact: true }).click();

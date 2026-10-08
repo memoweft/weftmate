@@ -36,7 +36,7 @@ def main():
     run = Path(tempfile.mkdtemp(prefix="apple-state-", dir=args.artifacts.resolve()))
     scratch = (args.core_build or run / "CoreBuild").resolve()
     build = ["swift", "build", "--package-path", str(ROOT / "Packages/WeftMateCore"),
-             "--scratch-path", str(scratch), "--jobs", "4"]
+             "--scratch-path", str(scratch), "--jobs", "2"]
     with (run / "core-build.log").open("w") as log:
         subprocess.run(build, stdout=log, stderr=subprocess.STDOUT, check=True)
     products = Path(subprocess.check_output(build + ["--show-bin-path"], text=True).strip())

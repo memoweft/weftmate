@@ -1,0 +1,21 @@
+{
+  "startedAt": "2026-10-08T10:19:01.562Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "modelRequests": 0,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Non-enumerating login error",
+    "Registration, file code, automatic login and local desktop binding",
+    "Remembered device restores login after reload",
+    "Local emergency password configured",
+    "Computer Connect uses the real hosts/connect contract",
+    "Real pairing QR renders and refreshes after two browser minutes",
+    "Second web device email confirmation, waiting and desktop approval",
+    "Trusted delivery imported by the actual recipient"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualOnly": true,
+  "passed": true,
+  "finishedAt": "2026-10-08T10:19:52.660Z"
+}

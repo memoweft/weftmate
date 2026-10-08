@@ -9,7 +9,7 @@ import { Accounts } from './accounts.mjs';
 import { loadKeys } from './keys.mjs';
 import { CloudError, digest, equalDigest, transaction } from './security.mjs';
 import { deviceProof } from './device-proof.mjs';
-import { appAuthorization } from './app-authorization.mjs';
+import { appAuthorization, widenAppResumeCookies } from './app-authorization.mjs';
 import { accountLifecycle } from './account-lifecycle.mjs';
 
 export const CLOUD_PATH = '/personal/v1/cloud';
@@ -307,6 +307,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       { mergeWithLastSubmission: false },
     );
     database.prepare('DELETE FROM interaction_forms WHERE uid=?').run(interaction.uid);
+    if (interaction.params.wm_app === '1') widenAppResumeCookies(res);
     if (req.headers['content-type']?.startsWith('application/x-www-form-urlencoded')) {
       res.writeHead(303, { location: resumeUrl });
       res.end();
@@ -486,7 +487,21 @@ export async function createIdentity({ database, config, mailer, logger, now = D
             case 'appResetRequest': result = await accounts.requestPassword(body, 'reset', from); break;
             case 'appRegisterVerify': result = accounts.verifyPasswordCode(body, 'register', from); break;
             case 'appResetVerify': result = accounts.verifyPasswordCode(body, 'reset', from); break;
-            case 'appRegisterComplete': result = await accounts.completePassword(body, 'register', from); break;
+            case 'appRegisterComplete': {
+              // The registration email has just proved possession. Bind only the
+              // device from this app's existing provider interaction cookie;
+              // subsequent devices still require their own email confirmation.
+              let registrationInteraction;
+              try { registrationInteraction = await provider.interactionDetails(req, res); } catch { /* compatible standalone registration */ }
+              result = await accounts.completePassword(body, 'register', from);
+              if (registrationInteraction?.params.wm_app === '1') {
+                const device = await accounts.device({ deviceId: registrationInteraction.params.wm_device_id,
+                  publicJwk: JSON.parse(registrationInteraction.params.wm_public_jwk) });
+                database.prepare('INSERT OR IGNORE INTO cloud_devices(account_id,fingerprint,device_id,public_jwk,confirmed_at,name,type,last_seen) VALUES(?,?,?,?,?,?,?,?)')
+                  .run(result.account.cloudAccountId, device.fingerprint, device.deviceId, JSON.stringify(device.publicJwk), now(), 'WeftMate device', 'unknown', now());
+              }
+              break;
+            }
             case 'appResetComplete': result = await accounts.completePassword(body, 'reset', from); break;
             case 'passwordChange': result = await accounts.changePassword(body, from, await authenticate(req, true)); break;
             case 'accountDelete': {

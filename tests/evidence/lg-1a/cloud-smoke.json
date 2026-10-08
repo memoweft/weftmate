@@ -1,0 +1,13 @@
+{
+  "startedAt": "2026-10-08T09:14:18.278Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "modelRequests": 0,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Real cloud registration request and file mail read"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "passed": true,
+  "finishedAt": "2026-10-08T09:14:24.057Z"
+}
