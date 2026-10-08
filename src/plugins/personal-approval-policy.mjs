@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, statSync } from 'node:fs';
 import { basename, resolve } from 'node:path';
-import { staticWriteTarget, withoutJavaScriptComments } from './personal-write-targets.mjs';
+import { staticWriteTarget, shellWriteTargets, withoutJavaScriptComments } from './personal-write-targets.mjs';
 
 export const APPROVAL_MODES = ['auto', 'ask', 'accept-edits', 'plan', 'allow-all'];
 export const RISK_CATEGORIES = ['delete', 'overwrite', 'system', 'install', 'external', 'spend', 'execute'];
@@ -63,6 +63,7 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   if (name === 'write' && typeof args.file_path === 'string' && overwrites(args.file_path)) categories.add('overwrite');
   if (/\btruncate(?:Sync)?\b(?!\s*\()/i.test(source)) categories.add('overwrite');
   for (const match of source.matchAll(/\b(?:writeFile(?:Sync)?|truncate(?:Sync)?|(?:File\]?::)?WriteAll(?:Text|Bytes|Lines))\s*\(\s*(?:'([^']+)'|"([^"]+)"|([^,\n]+))/gi)) {
+    if (/WriteAll/i.test(match[0]) && /(?:IO\.|IO\.File\]::|IO\.File::)$/i.test(source.slice(0, match.index))) continue;
     const target = match[1] ?? match[2];
     if (overwrites(target ?? staticWriteTarget(match[3], source, cwd, context.scriptPath, context.scriptArgs))) categories.add('overwrite');
   }
@@ -72,22 +73,28 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   }
   for (const match of source.matchAll(/\bopen\s*\(\s*(?:'([^']+)'|"([^"]+)"),\s*['"]w[bt]?['"]/gi))
     if (overwrites(match[1] ?? match[2])) categories.add('overwrite');
-  // Common literal move/copy commands: creating a new destination is ordinary work.
-  // A force flag alone is not a risk when the target does not already exist.
-  const word = "(?:'([^']+)'|\"([^\"]+)\"|([^\\s;|]+))";
-  const moves = new RegExp(`\\b(?:Move-Item|Copy-Item|mv|cp)\\s+(?:(?:-LiteralPath|-Path)\\s+)?${word}\\s+(?:-Destination\\s+)?${word}`, 'gi');
-  for (const match of source.matchAll(moves)) {
-    const from = match[1] ?? match[2] ?? match[3], to = match[4] ?? match[5] ?? match[6];
-    if (from.startsWith('-') || to.startsWith('-')) continue;
-    let target = resolve(cwd, to);
-    try { if (statSync(target).isDirectory()) target = resolve(target, basename(from)); } catch { /* New destination. */ }
+  const powershell = !/^(?:bash|sh)$/.test(name) && !/\.sh$/i.test(context.scriptPath ?? '');
+  const isShell = typeof args.command === 'string' || /^(?:pwsh|powershell|psh|bash|sh|shell)$/.test(name) ||
+    /\.(?:ps1|sh)$/i.test(context.scriptPath ?? '') || !context.scriptPath && typeof args.script === 'string';
+  const shellSource = isShell ? [args.command, args.code, args.script, args.action].filter(x => typeof x === 'string').join('\n') : '';
+  for (const write of shellWriteTargets(shellSource, cwd, powershell)) {
+    let target = write.target;
+    if (write.kind === 'directory' && target) {
+      try { if (statSync(target).isDirectory()) continue; } catch { /* New directory. */ }
+    }
+    if (write.kind === 'move' && target) {
+      try { if (statSync(target).isDirectory()) target = write.from ? resolve(target, basename(write.from)) : undefined; }
+      catch { /* New destination. */ }
+    }
     if (overwrites(target)) categories.add('overwrite');
   }
-  // Literal output targets can be checked locally. Dynamic write targets need a decision.
-  for (const match of source.matchAll(/(?:\b(?:Set-Content|Out-File)\s+(?:(?:-LiteralPath|-FilePath|-Path)\s+)?|(?<![>])>(?!>)\s*)(?:'([^']+)'|"([^"]+)"|([^\s;|(){}'"]+))/gi)) {
-    if (source[match.index] === '>' && /^(?:pwsh|powershell)$/.test(name) && quotedPowerShellText(source, match.index)) continue;
-    const target = match[1] ?? match[2] ?? match[3];
-    if (target.includes('$') || overwrites(target)) categories.add('overwrite');
+  // Executable substitutions and explicitly launched inner shells may contain
+  // writes hidden inside string tokens. They cannot inherit outer bindings.
+  for (const match of source.matchAll(/(?:\b(?:Set-Content|Add-Content|Out-File)\s+(?:(?:-LiteralPath|-FilePath|-Path)\s+)?|(?<![>])>>?\s*)(?:'([^']+)'|"([^"]+)"|([^\s;|(){}'"]+))/gi)) {
+    if (!quotedPowerShellText(source, match.index) && (/\b(?:pwsh|powershell|bash|sh)\b[^\n]*\s(?:-Command|-c)\s/i.test(source))) {
+      const target = match[1] ?? match[2] ?? match[3];
+      if (target.includes('$') || overwrites(target)) categories.add('overwrite');
+    }
   }
   // Inspect scripts launched from disk as well as inline commands. The source is evidence,
   // never executed by this classifier. Missing scripts remain the tool's ordinary error.

@@ -1,0 +1,49 @@
+{
+  "localTests": {
+    "command": "node --test tests/personal-dynamic-write-targets.test.ts tests/personal-approval-modes.test.ts tests/personal-tool-approvals.test.ts tests/personal-approval-bridge.test.ts",
+    "passed": 82,
+    "failed": 0,
+    "skipped": 0,
+    "outputSource": "Observed command output in APR-2 continuation session"
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "status": "passed"
+  },
+  "offlineReplay": {
+    "status": "passed",
+    "modelRequests": 0
+  },
+  "publicScope": [
+    "src/plugins/personal-approval-policy.mjs",
+    "src/plugins/personal-write-targets.mjs",
+    "tests/personal-dynamic-write-targets.test.ts",
+    "tests/evidence/apr-2/",
+    "docs/STATE.md Windows-3 row"
+  ],
+  "clientContractChanged": false,
+  "safetyRegressionCases": [
+    "typed and scoped reassignment",
+    "prefix increment/decrement",
+    "bash PWD/OLDPWD after cd",
+    "failed or non-directory Set-Location/Push-Location/cd destinations",
+    "unsupported file URL escapes remain unknown",
+    "PowerShell expandable member text versus explicit subexpression"
+  ],
+  "processScanCompletedBatches": {
+    "rootTaggedProcessesRemaining": 0,
+    "processNames": [],
+    "isolatedRoots": 9,
+    "scannerProcessExcluded": true
+  },
+  "policySnapshotSha256": {
+    "personal-write-targets.mjs": "a4da9d6e16cc760128937d5af8ed30bc780391ca42638fca305b0bfd3c499879",
+    "personal-approval-policy.mjs": "926a773ce4055b8b66b131c6b00576cda6958d5fbc99a397aff20f350632f60f"
+  },
+  "finalModelBatch": "final-repeat.json",
+  "priceVerifiedAt": "2026-10-09",
+  "publicCredentialScan": {
+    "scanned": 21,
+    "matches": 0
+  }
+}
