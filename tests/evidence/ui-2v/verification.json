@@ -1,0 +1,50 @@
+{
+  "device": "MuMu Android 15",
+  "apk": "0.8.4 / code17",
+  "testPackage": "com.memoweft.weftmate.mobile.ui2vqa",
+  "capture": "adb exec-out screencap -p",
+  "screen": {
+    "width": 720,
+    "height": 1280
+  },
+  "synthetic": true,
+  "realNativeBridge": true,
+  "realPersonalAuthentication": true,
+  "realDsh": false,
+  "modelRequests": 0,
+  "checks": [
+    "running and collapsed steps",
+    "five modes and native save",
+    "three buttons and allow once native POST",
+    "step summary and lazy native detail",
+    "fullscreen artifact/source native reads and return scroll/draft",
+    "real IME, composer above keyboard, fixed header and retained draft",
+    "dark theme persisted and draft retained across WebView reload"
+  ],
+  "keyboard": {
+    "provider": "test APK InputMethodService",
+    "before": {
+      "height": 980,
+      "header": 0,
+      "draft": "MuMu synthetic draft"
+    },
+    "opened": {
+      "height": 726,
+      "header": 0,
+      "composer": {
+        "x": 0,
+        "y": 571.5808715820312,
+        "width": 565.490234375,
+        "height": 154.69363403320312,
+        "top": 571.5808715820312,
+        "right": 565.490234375,
+        "bottom": 726.2745056152344,
+        "left": 0
+      },
+      "draft": "MuMu synthetic draftq"
+    },
+    "androidInputShown": true,
+    "frame": "type=ime frame=[0,956][720,1280] visible=true",
+    "typedByImeTap": true
+  }
+}

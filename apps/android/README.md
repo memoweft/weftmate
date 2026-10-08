@@ -2,7 +2,7 @@
 
 IC-1 当前壳为 **0.8.5 / code18**：C4 自适应启动图标、单色主题 / 通知图标与统一功能图标已接入；母版在 [design/icons](../../design/icons/README.md)，用 `npm run icons:generate` 生成。没有新增权限或原生接口，手机 UI（网页界面）的最低桥接版本仍为 code17。[真实 MuMu 验证与卸载](../../tests/evidence/ic-1/README.md)。
 
-UI-2 当前壳为 **0.8.4 / code17**：内置与桌面统一的手机会话列表、主题与全屏「输出与来源」，新增精确 `GET /sessions/{sessionId}/resources?afterSeq` 原生连接路由，系统栏改为同一中性色；内置版本显示使用 BuildConfig。没有新增权限或数据库迁移。新版 UI（网页界面）发布最低 code17；本机 JVM（Java 虚拟机）27/27与调试包构建通过，未有在线设备 / 可用模拟器，使用工作包指定的390×844 Chromium（浏览器引擎）回退。[截图与真实设备验收边界](../../tests/evidence/ui-2/README.md)。
+UI-2 当前壳为 **0.8.4 / code17**：内置与桌面统一的手机会话列表、主题与全屏「输出与来源」，新增精确 `GET /sessions/{sessionId}/resources?afterSeq` 原生连接路由，系统栏改为同一中性色；内置版本显示使用 BuildConfig。没有新增权限或数据库迁移。新版 UI（网页界面）发布最低 code17；本机 JVM（Java 虚拟机）27/27与调试包构建通过。UI-2v 已补齐 **MuMu Android 15 真实安卓壳**的列表、运行、审批、步骤、全屏成果/来源、真实系统输入法与深色验收，产品代码无修正、版本保持 code17；[安卓截图与输入法边界](../../tests/evidence/ui-2v/README.md)。原390×844 Chromium（浏览器引擎）验收保留在 [UI-2](../../tests/evidence/ui-2/README.md)。
 
 UI-2a 当前壳为 **0.8.3 / code16**：内置手机审批模式界面，新增精确 `/settings/approvals` 与 `/sessions/{sessionId}/approval-mode` 业务路由；审批决定可传 `scope: once / conversation-category`，拒绝不带 scope（授权范围）。继续使用原 Cookie（会话凭据）、CSRF（跨站请求伪造防护）和 TLS pin（证书公钥固定）连接，没有新增系统权限。发布新版手机 UI（网页界面）需 `--min-native-version-code 16`；合成截图与本机 JVM（Java 虚拟机）/调试包构建结果见 [UI-2a](../../tests/evidence/ui-2a/README.md)。
 
@@ -42,6 +42,16 @@ gradle --offline :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAnd
 产品调试 APK：`app/build/outputs/apk/debug/app-debug.apk`。独立测试 APK：`app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`。个人账户宿主的正式来源要求 HTTPS；调试构建仅可用字面 `localhost` 或 `127.0.0.1` 的 HTTP 宿主做隔离验收。手机模型允许用户显式配置局域网私有地址或 `.local` 的 HTTP `/v1` 服务；公网模型端点仍须 HTTPS。所有 HTTPS 使用系统默认的证书验证，网络客户端拒绝重定向，不把密钥带到其它来源。
 
 ## 隔离验证
+
+### 用 MuMu 模拟器验收安卓
+
+本机 ADB（安卓调试桥）：`D:\Software\MuMuPlayer\nx_main\adb.exe`；连接命令 `adb connect 127.0.0.1:7555`，后续明确 `-s 127.0.0.1:7555`。启动隔离个人宿主并创建合成账号，使用 `adb -s 127.0.0.1:7555 reverse tcp:18187 tcp:18187`，安卓壳服务地址填 `http://127.0.0.1:18187`，无需猜 MuMu 网关或开放宿主到局域网。
+
+如果模拟器已有 `com.memoweft.weftmate.mobile.debug`，通过 [UI-2v 初始化脚本](../../tests/evidence/ui-2v/isolate.gradle) 构建为独立 `com.memoweft.weftmate.mobile.ui2vqa`，不覆盖原应用。测试 APK（安卓安装包）内的 `Ui2vWebViewProbeTest` 仅在明确 `ui2vProbe=1` 且目标为这一隔离包时打开 WebView（安卓网页视图）调试；操作仍走产品原生连接层。测试包另含 `Ui2vTestIme`，用于预装输入法零高度时验证真实系统软键盘及 `InputConnection` 文字提交，不打入产品 APK。
+
+完整构建、安装、合成宿主、输入法设置保存/恢复、真实截图与卸载步骤见 [UI-2v](../../tests/evidence/ui-2v/README.md)。结束只卸载本次两个隔离包、停止隔离服务并移除本次 ADB reverse（安卓端口反向映射）与 forward（调试端口转发）；不要卸载旧调试包、清除其资料或使用全局端口清理。
+
+### 现有原生测试
 
 主助手负责确认 MuMu 的序列号、安装两个 APK 和启动测试。本仓库不自动安装或清除模拟器。测试 runner 为 `com.memoweft.weftmate.mobile.debug.test/androidx.test.runner.AndroidJUnitRunner`。以下旧原生页测试保留作兼容回归，**不能代替新 launcher 的 `HybridActivity` 验收**。
 
