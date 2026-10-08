@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-08",
+  "verification": {
+    "relatedTestsPassed": 43,
+    "lanBridgeTestsPassed": 3,
+    "typecheck": "passed",
+    "nativeRuntimeTests": "passed locally; pinned compiled DSH unavailable in CI"
+  },
+  "runs": [
+    {
+      "model": "lan",
+      "startedAt": "2026-10-08T10:21:22.140Z",
+      "summary": {
+        "passed": 0,
+        "failed": 1,
+        "manual": 0,
+        "unsupported": 0
+      },
+      "scenarios": [
+        {
+          "id": "action-07-long-directory",
+          "status": "failed",
+          "durationMs": 281584,
+          "reason": "Unexpected approval; scenario has no matching decision (left pending)"
+        }
+      ],
+      "stats": {
+        "contextWindows": [
+          98304
+        ],
+        "modelId": "local-quality",
+        "contextSource": "test-configured envelope (98304), not server capacity",
+        "reasoningOff": false,
+        "continuationChecks": [],
+        "compactions": 0,
+        "successfulCompactions": 0,
+        "nativeGoalChanges": 1,
+        "nativeGoalPhase": "active",
+        "nativeTodoWrites": 5,
+        "nativeTodosComplete": false,
+        "toolCalls": 23,
+        "goalAndTodosInCheckpoint": null
+      },
+      "credentialScan": {
+        "scanned": 202,
+        "matches": 0
+      },
+      "lanMaxActive": 1,
+      "label": "formal-lan-long-task"
+    },
+    {
+      "model": "mimo",
+      "startedAt": "2026-10-08T07:42:27.457Z",
+      "summary": {
+        "passed": 1,
+        "failed": 0,
+        "manual": 0,
+        "unsupported": 0
+      },
+      "scenarios": [
+        {
+          "id": "action-07-long-directory",
+          "status": "passed",
+          "durationMs": 641997
+        }
+      ],
+      "stats": {
+        "contextWindows": [
+          1000000
+        ],
+        "compactions": 0,
+        "nativeGoalChanges": 2,
+        "nativeTodoWrites": 7,
+        "toolCalls": 85,
+        "goalAndTodosInCheckpoint": null,
+        "successfulCompactions": 0,
+        "nativeGoalPhase": "complete",
+        "nativeTodosComplete": true
+      },
+      "credentialScan": {
+        "scanned": 184,
+        "matches": 0
+      },
+      "mimoUsage": {
+        "requests": 37,
+        "input": 3727110,
+        "cached": 3549568,
+        "output": 17442,
+        "missingUsage": 0,
+        "estimatedCny": 0.28341736
+      },
+      "label": "mimo-long-task"
+    },
+    {
+      "model": "mimo",
+      "startedAt": "2026-10-08T09:25:11.428Z",
+      "summary": {
+        "passed": 6,
+        "failed": 0,
+        "manual": 0,
+        "unsupported": 0
+      },
+      "scenarios": [
+        {
+          "id": "action-01-organize",
+          "status": "passed",
+          "durationMs": 62792
+        },
+        {
+          "id": "action-02-web-document",
+          "status": "passed",
+          "durationMs": 300629
+        },
+        {
+          "id": "action-03-read-code",
+          "status": "passed",
+          "durationMs": 209480
+        },
+        {
+          "id": "action-04-research-script",
+          "status": "passed",
+          "durationMs": 63217
+        },
+        {
+          "id": "action-05-stop-resume",
+          "status": "passed",
+          "durationMs": 60945
+        },
+        {
+          "id": "action-06-delete-approval",
+          "status": "passed",
+          "durationMs": 57356
+        }
+      ],
+      "stats": {
+        "contextWindows": [
+          1000000
+        ],
+        "compactions": 0,
+        "successfulCompactions": 0,
+        "nativeGoalChanges": 0,
+        "nativeTodoWrites": 3,
+        "nativeTodosComplete": true,
+        "toolCalls": 41,
+        "goalAndTodosInCheckpoint": null
+      },
+      "credentialScan": {
+        "scanned": 222,
+        "matches": 0
+      },
+      "mimoUsage": {
+        "requests": 46,
+        "input": 508823,
+        "cached": 441664,
+        "output": 9999,
+        "missingUsage": 0,
+        "estimatedCny": 0.09599028
+      },
+      "label": "final-mimo-regression"
+    },
+    {
+      "model": "mimo",
+      "startedAt": "2026-10-08T07:52:54.635Z",
+      "summary": {
+        "passed": 5,
+        "failed": 1,
+        "manual": 0,
+        "unsupported": 0
+      },
+      "scenarios": [
+        {
+          "id": "action-01-organize",
+          "status": "passed",
+          "durationMs": 32274
+        },
+        {
+          "id": "action-02-web-document",
+          "status": "passed",
+          "durationMs": 428923
+        },
+        {
+          "id": "action-03-read-code",
+          "status": "passed",
+          "durationMs": 68421
+        },
+        {
+          "id": "action-04-research-script",
+          "status": "failed",
+          "durationMs": 70746,
+          "reason": "Unexpected approval; scenario has no matching decision (left pending)"
+        },
+        {
+          "id": "action-05-stop-resume",
+          "status": "passed",
+          "durationMs": 161717
+        },
+        {
+          "id": "action-06-delete-approval",
+          "status": "passed",
+          "durationMs": 40538
+        }
+      ],
+      "stats": {},
+      "credentialScan": {
+        "scanned": 184,
+        "matches": 0
+      },
+      "mimoUsage": {
+        "requests": 45,
+        "input": 1196579,
+        "cached": 1046016,
+        "output": 21492,
+        "missingUsage": 0,
+        "estimatedCny": 0.21446732000000002
+      },
+      "label": "previous-mimo-regression"
+    },
+    {
+      "model": "qwen",
+      "startedAt": "2026-10-08T07:41:19.970Z",
+      "summary": {
+        "passed": 0,
+        "failed": 1,
+        "manual": 0,
+        "unsupported": 0
+      },
+      "scenarios": [
+        {
+          "id": "action-07-long-directory",
+          "status": "failed",
+          "durationMs": 5400437,
+          "reason": "Scenario timed out"
+        }
+      ],
+      "stats": {
+        "contextWindows": [
+          98304
+        ],
+        "compactions": 1,
+        "nativeGoalChanges": 1,
+        "nativeTodoWrites": 1,
+        "toolCalls": 27,
+        "goalAndTodosInCheckpoint": true
+      },
+      "credentialScan": {
+        "scanned": 172,
+        "matches": 0
+      },
+      "label": "historical-shared-8081-long-task"
+    }
+  ],
+  "lanDiagnostic": {
+    "classification": "model execution coordination failure",
+    "backgroundDelegation": {
+      "runInBackground": true,
+      "batches": "05-24"
+    },
+    "childReportWriteAt": "2026-10-08T10:25:46.318Z",
+    "parentOverwriteAttemptAt": "2026-10-08T10:26:03.639Z",
+    "file": "reviews/review-05.md",
+    "parentJobOutputCalls": 0,
+    "riskCategory": "overwrite",
+    "reportsCreated": 5,
+    "sourceFilesUnchanged": 24,
+    "sourceFileCount": 24,
+    "goalAcrossCompaction": "not verified: no compaction occurred",
+    "todosAcrossCompaction": "not verified: no compaction occurred",
+    "conclusion": "The parent continued work assigned to its background child and attempted to overwrite a report despite the explicit no-repeat instruction. No product defect was established within M1-3; formal failure retained without changing the goal, budget, checks or approvals."
+  },
+  "totalMimoEstimatedCny": 0.59387496,
+  "pricing": {
+    "currency": "CNY",
+    "perMillionTokens": {
+      "uncachedInput": 1,
+      "cachedInput": 0.02,
+      "output": 2
+    },
+    "source": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "kind": "usage estimate, not account invoice"
+  }
+}
