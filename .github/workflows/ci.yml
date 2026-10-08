@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # M2f rework candidate (Core #90); replace with the squash commit after merge.
-          ref: 5775e20643c91ac1e3c2e5afff3bde7738ded5b0
+          ref: b0776b05dc672b2c9ccd7018acd537f6229be8a8
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
