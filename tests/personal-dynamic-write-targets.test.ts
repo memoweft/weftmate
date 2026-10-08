@@ -197,3 +197,17 @@ test('failed directory switches cannot grant relative writes in a guessed direct
     ]) assert.ok(classifyPersonalRisk(shell, { command }, cwd).includes('overwrite'), command)
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
+
+test('unsupported URL literal escapes cannot grant a write to a guessed filename', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-url-escape-'))
+  try {
+    writeFileSync(join(cwd, 'user.txt'), 'user fixture')
+    for (const source of [
+      String.raw`const p=new URL('./\u0075ser.txt',import.meta.url); writeFile(p,'data');`,
+      String.raw`const p=new URL("./\x75ser.txt",import.meta.url); writeFile(p,'data');`,
+    ]) {
+      writeFileSync(join(cwd, 'write.mjs'), source)
+      assert.ok(classifyPersonalRisk('pwsh', { command: 'node write.mjs' }, cwd).includes('overwrite'))
+    }
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
+})

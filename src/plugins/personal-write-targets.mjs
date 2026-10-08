@@ -47,7 +47,11 @@ export function staticWriteTarget(expression, source, cwd, scriptPath, scriptArg
     if (scriptPath && text === 'import.meta.url') return pathToFileURL(scriptPath).href;
     const url = /^new\s+URL\(\s*('[^']*'|"[^"]*")\s*,\s*import\.meta\.url\s*\)$/.exec(text);
     if (url && scriptPath) {
-      try { return fileURLToPath(new URL(value(url[1]), pathToFileURL(scriptPath))); }
+      const reference = value(url[1]);
+      // Unsupported JS escapes cannot become another path, nor may an
+      // unresolved reference be coerced to the literal filename "undefined".
+      if (typeof reference !== 'string' || url[1][0] === "'" && /\\(?!['\\])/.test(url[1])) return;
+      try { return fileURLToPath(new URL(reference, pathToFileURL(scriptPath))); }
       catch { return; }
     }
     if (bindings.has(text) && !resolving.has(text)) {
