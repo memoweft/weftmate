@@ -355,7 +355,7 @@ summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible
 .session-row{display:flex;align-items:center;gap:var(--wm-space-4)}
 .session-row>button:first-child{flex:1;min-width:0}
 .session-row .session-more{flex:none;width:auto;font-size:var(--wm-font-size-12)}
-.session-action-dialog{width:calc(100% - var(--wm-space-24));max-width:var(--wm-size-dialog-width,480px);border:1px solid var(--line);border-radius:var(--wm-radius-16);padding:var(--wm-space-20);background:var(--surface);color:var(--ink)}
+.session-action-dialog{width:calc(100% - var(--wm-space-24));max-width:480px;border:1px solid var(--line);border-radius:var(--wm-radius-16);padding:var(--wm-space-20);background:var(--surface);color:var(--ink)}
 .session-action-dialog::backdrop{background:var(--wm-color-approval-scrim)}
 .session-action-dialog>button{display:block;width:100%;margin-top:var(--wm-space-12)}
 .session-forget{display:flex;align-items:start;gap:var(--wm-space-8);margin:var(--wm-space-16) 0}
