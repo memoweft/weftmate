@@ -35,7 +35,7 @@ try {
     await page.waitForURL(url => url.pathname.startsWith('/personal/v1/ui'));
     await page.route('**/personal/v1/**', async route => {
       const url = new URL(route.request().url());
-      if (phase === 'before' && url.pathname.includes('/ui/') && !url.pathname.includes('/ui/ui-core/')) {
+      if (phase === 'before' && url.pathname.includes('/ui/') && !url.pathname.includes('/ui/ui-core/') && !url.pathname.endsWith('/popovers.js')) {
         const path = 'src/personal-access-ui/' + url.pathname.split('/ui/')[1];
         try { const body = execFileSync('git', ['show', `${baseline}:${path}`], { cwd: root }); return route.fulfill({ body, contentType: path.endsWith('.css') ? 'text/css' : 'text/javascript' }); } catch {}
       }
