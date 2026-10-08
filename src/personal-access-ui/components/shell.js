@@ -286,8 +286,10 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         for (const name of ui.views)
             ui.byId(`${name}-view`).hidden = name !== view;
         document.body.classList.toggle('assistant-active', view === 'assistant');
+        document.body.classList.toggle('cloud-auth-active', view === 'login' || view === 'cloud-wait');
     }
     function mountShell() {
+        ui.byId('account-menu-trigger').setAttribute('aria-label', '账户菜单');
         core.state.setupGrant = ui.takeSetupGrant();
         ui.byId('account-back').addEventListener('click', () => { ui.resetProfileDraft(); core.state.deviceEditing = null; void core.enterAssistant(); });
         ui.byId('rail-account').addEventListener('click', core.openAccount);
@@ -365,19 +367,12 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
                 void core.load();
             }
         });
-        ui.cloudUi = globalThis.WeftCloudUi?.create({ acceptSession: core.acceptSession, enterAssistant: core.enterAssistant, openAccount: core.openAccount, show: core.show, accessApi: core.accessApi, toast: ui.toast });
         globalThis.WeftDesktopUI?.init({ error: ui.toast, openConversation: async (sessionId) => {
                 await core.enterAssistant();
                 await core.refreshSessions();
                 await core.selectSession(sessionId);
             } });
-        if (ui.cloudUi)
-            void ui.cloudUi.boot().then(handled => {
-                if (!handled)
-                    void core.load();
-            });
-        else
-            void core.load();
+        void core.load();
         setInterval(() => {
             if (core.state.account && document.visibilityState === 'visible')
                 void core.refreshPendingDevices();

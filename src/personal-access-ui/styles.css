@@ -31,6 +31,34 @@ h2 { font-size: var(--wm-font-size-18); }
 .muted, .field-help { color: var(--ink-muted); }
 .intro { margin-bottom: var(--wm-space-28); }
 .auth-card .button.submit { width: 100%; margin-top: var(--wm-space-24); }
+.cloud-auth-card { border-radius: var(--wm-radius-16); box-shadow: none; }
+.cloud-auth-card h1 { font-size: var(--wm-font-size-27); text-align: center; margin-bottom: var(--wm-space-24); }
+.cloud-auth-card .auth-brand { display: block; width: var(--wm-space-64); height: var(--wm-space-64); margin: 0 auto var(--wm-space-16); }
+.cloud-auth-active .site-header, .cloud-auth-active .footer { display: none; }
+.cloud-auth-active .main { width: 100%; margin: 0; display: grid; place-items: center; padding: var(--wm-space-32) var(--wm-space-24); }
+.auth-links { display: flex; justify-content: space-between; flex-wrap: wrap; gap: var(--wm-space-8); margin-top: var(--wm-space-12); }
+.auth-links .button { padding-inline: 0; font-size: var(--wm-font-size-13); }
+.auth-offline { display: block; margin: var(--wm-space-24) auto 0; font-size: var(--wm-font-size-13); }
+.auth-legal { margin-top: var(--wm-space-24); font-size: var(--wm-font-size-12); color: var(--ink-secondary); }
+.auth-legal .text-button { padding: 0; font-size: inherit; }
+.legal-reader { width: min(var(--wm-size-740), 90vw); max-height: 85dvh; padding: var(--wm-space-32); background: var(--surface); color: var(--ink); border: 1px solid var(--line); border-radius: var(--wm-radius-16); }
+.legal-reader article { margin-top: var(--wm-space-24); line-height: var(--wm-line-height-1_65); }
+.cloud-settings h2 { margin-block: var(--wm-space-20) var(--wm-space-12); }
+.cloud-settings .actions { flex-wrap: wrap; gap: var(--wm-space-8); margin-block: var(--wm-space-16); }
+.cloud-settings .device-item { flex-wrap: wrap; }
+.cloud-settings .device-content { flex: 1; min-width: 0; }
+.cloud-account-form { margin-top: var(--wm-space-24); padding-top: var(--wm-space-24); border-top: 1px solid var(--line); }
+.cloud-access-banner { padding: var(--wm-space-12) var(--wm-space-24); background: var(--accent-soft); color: var(--ink); }
+.cloud-access-banner .actions { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wm-space-12); }
+.cloud-access-banner span { flex: 1; }
+#cloud-pairing-qr { width: var(--wm-size-324); max-width: 100%; }
+.cloud-settings textarea { width: 100%; color: var(--ink); background: var(--surface); border: 1px solid var(--line); border-radius: var(--wm-radius-10); padding: var(--wm-space-12); }
+.cloud-trust-dialog { max-width: var(--wm-size-700); }
+.cloud-trust-dialog img { display: block; max-width: 100%; margin: var(--wm-space-16) auto; }
+.cloud-trust-dialog textarea, #auth-trust-input { width: 100%; color: var(--ink); background: var(--surface); padding: var(--wm-space-12); border: 1px solid var(--line); border-radius: var(--wm-radius-10); }
+.cloud-auth-card input { caret-color: var(--accent); }
+.cloud-auth-card ::selection, .cloud-settings ::selection { background: var(--accent-soft); color: var(--ink); }
+@media (prefers-reduced-motion: reduce) { .cloud-auth-card, .cloud-settings { transition-duration: var(--wm-duration-0ms); } }
 label { display: block; margin: var(--wm-space-17) 0 var(--wm-space-6); font-weight: 600; color: var(--ink-secondary); }
 input { width: 100%; min-height: 44px; padding: var(--wm-space-9) var(--wm-space-12); border: 1px solid var(--wm-color-control-border); border-radius: var(--wm-radius-10); background: var(--surface); color: var(--ink); }
 input:hover { border-color: var(--wm-color-control-border-hover); }

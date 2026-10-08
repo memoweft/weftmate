@@ -4,6 +4,7 @@ import { _electron } from 'playwright'
 import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs'
+import { localUiSession } from '../helpers/local-ui-session.mjs'
 const root = resolve(import.meta.dirname, '../..')
 const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE
 const executablePath = createRequire(import.meta.url)('electron')
@@ -15,10 +16,7 @@ async function start() {
   application = await _electron.launch({ executablePath, args: ['tests/integration/desktop-ui-1.cjs', candidate.origin + '/personal/v1/ui/'], cwd: root, env })
   const page = await application.firstWindow(); page.setDefaultTimeout(25000)
   page.on('pageerror', error => errors.push(error.message))
-  await page.getByRole('textbox', { name: '账户名', exact: true }).fill(candidate.credentials.username)
-  await page.getByLabel('密码', { exact: true }).filter({ visible: true }).fill(candidate.credentials.password)
-  await page.getByRole('textbox', { name: '这台设备的名称' }).fill('隔离交互测试')
-  await page.getByRole('button', { name: '登录', exact: true }).click()
+  await localUiSession(page, candidate.credentials)
   await page.getByRole('button', { name: '停止', exact: true }).waitFor()
   return page
 }
@@ -26,7 +24,7 @@ async function close() { await application?.close(); await candidate?.close(); a
 try {
   for (const theme of ['light', 'dark']) {
     const page = await start()
-    await page.getByRole('button', { name: /TimelineFixture/ }).click()
+    await page.getByRole('button', { name: '账户菜单' }).click()
     await page.getByRole('button', { name: '设置', exact: true }).click()
     await page.getByRole('combobox', { name: /^颜色模式/ }).selectOption(theme)
     await page.getByRole('combobox', { name: /^主题色/ }).selectOption('green')
