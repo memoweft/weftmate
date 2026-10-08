@@ -1,0 +1,4 @@
+{
+  "command": "$dir='C:\\Temp\\weftmate-eval-action-02-web-document-2YnLMK'; New-Item -ItemType Directory -Force -Path $dir | Out-Null; foreach ($v in 'v24.0.0','v22.0.0') { $u=\"https://nodejs.org/en/blog/release/$v\"; $r=Invoke-WebRequest -Uri $u -UseBasicParsing -TimeoutSec 40; $p=Join-Path $dir \"$v.html\"; [IO.File]::WriteAllText($p,$r.Content); \"$v saved LEN $($r.Content.Length)\" }",
+  "description": "Download Node 24 and 22 release notes HTML"
+}
