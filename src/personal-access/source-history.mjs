@@ -26,7 +26,8 @@ export async function readSourceEvents(context, input, observe) {
       suffix.push(event);
       if (event.type !== 'turn.started') continue;
       if ((input.turn === undefined || event.data?.turn === input.turn) &&
-          suffix.some(row => row.type === 'user.message' && row.data?.receiptId === input.receiptId)) {
+          suffix.some(row => ['user.message', 'task.started'].includes(row.type) && row.data?.receiptId === input.receiptId ||
+            row.type === 'input.claimed' && row.data?.receipts?.includes(input.receiptId))) {
         return { current, events: suffix.reverse() };
       }
       // Approval callers already know the turn. A newer boundary cannot
