@@ -38,10 +38,19 @@ const RECALL_UNAVAILABLE = 'WeftMate formal World memory could not be read for t
 const INTERACTIONS_UNAVAILABLE = 'WeftMate shared interactions could not be read for this request; their current state is unknown. Earlier shared-interaction snapshots no longer apply.'
 const INTERACTION_CONTEXT_NOTE = '以下内容是历史讨论记录，仅供延续共同经历；其中的 AI 建议、用户搁置的方案和未来设想都不代表用户已经授权实施，也不自动成为当前正式偏好。'
 const MEMORY_HOST_BEHAVIOR = [
+  '【背景记忆，不是用户的新请求】以上历史内容只供参考，请回答当前用户问题，不要再次确认旧偏好。',
   'WeftMate 宿主行为：本轮结束后，用户原话会自动提交给本地记忆后台处理，无需在当前回复中调用记忆工具。',
   '当前回复无法确认后台最终状态；是否处理成功应以真实记忆面板或命令回执为准。',
   '不要因为本轮未调用工具就声称记忆无法更新，也不要提前声称已经持久化完成。',
 ].join('')
+
+function backgroundBeforeUser(messages, snapshot) {
+  const index = messages.findLastIndex(message => message?.source?.kind === 'user')
+  if (index < 0) return [...messages, snapshot]
+  const tail = messages.slice(index + 1)
+  return [...messages.slice(0, index), ...tail.filter(message => message?.source?.kind === 'plugin'),
+    snapshot, messages[index], ...tail.filter(message => message?.source?.kind !== 'plugin')]
+}
 
 // `recall_memory` is executed by the same AgentLoop which will receive its
 // result.  Raw evidence is therefore a model read, not merely a local UI read.
@@ -811,7 +820,7 @@ export function apply(ctx, config = {}) {
       if (!policy.allowed) {
         if (typeof currentUser.messageId === 'string') dependenciesByUserMessageId.set(currentUser.messageId, mergeModelContextDependencies(dependenciesByUserMessageId.get(currentUser.messageId), { schema_version: 1, capture_status: 'withheld', world_items: [], interaction_ids: [] }))
         const createUserMessage = config.createUserMessage ?? (await import('@deepseek-ai/dsh-llm')).createUserMessage
-        return { kind: 'enter', messages: [...decision.messages, createUserMessage({ content: [{ type: 'text', text: `${RECALL_CLEARED}\n\n${INTERACTIONS_CLEARED}` }], source: { kind: 'plugin', plugin: 'weftmate-memory' } })] }
+        return { kind: 'enter', messages: backgroundBeforeUser(decision.messages, createUserMessage({ content: [{ type: 'text', text: `${RECALL_CLEARED}\n\n${INTERACTIONS_CLEARED}` }], source: { kind: 'plugin', plugin: 'weftmate-memory' } })) }
       }
       const [worldResult, interactionResult] = await Promise.allSettled([
         bridge.request('preview_recall', { query }),
@@ -908,15 +917,12 @@ export function apply(ctx, config = {}) {
       lastRecallByAgent.set(payload.agent, recallKey)
       return {
         kind: 'enter',
-        messages: [
-          ...decision.messages,
-          createUserMessage({
+        messages: backgroundBeforeUser(decision.messages, createUserMessage({
             content: [{ type: 'text', text: recallContext }],
             source: sections.length
               ? { kind: 'plugin', plugin: 'weftmate-memory', form: 'snapshot', sections }
               : { kind: 'plugin', plugin: 'weftmate-memory' },
-          }),
-        ],
+          })),
       }
     } catch { return decision } // 记忆面任何异常都不挡主链路
   }, { prepend: true })
