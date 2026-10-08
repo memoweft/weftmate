@@ -3234,10 +3234,8 @@ async function bootstrap() {
         writeHostState();
         console.log(`[weftmate] ✓ personal-access listening origin=${personalAccessOrigin}`);
         if (desktopRequested) {
-          const accountState = await (await fetch(new URL('/personal/v1/auth/state', personalAccessOrigin))).json();
-          // First run uses the existing local-owner setup grant and password form.
-          // Existing accounts always go through the ordinary local login/session.
-          const setupGrant = accountState.configured === false ? (await personalAccessService.issueSetupGrant()).grant : null;
+          // Explicit legacy setup links remain valid; the default first page is account login.
+          const setupGrant = null;
           personalDesktop = createPersonalDesktop({ origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray'),
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });

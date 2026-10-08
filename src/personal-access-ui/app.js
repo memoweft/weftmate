@@ -1,10 +1,30 @@
 /* Desktop composition entry. Feature behavior lives in ../ui-core; DOM belongs to components. */
 (() => {
     const ui = globalThis.WeftUiComponents.createContext();
-    const core = globalThis.WeftUiCore.create({ effects: ui, fetch: (...args) => fetch(...args), storage: localStorage, crypto: globalThis.crypto });
+    const native = globalThis.weftmateDesktop;
+    const initialPairing = globalThis.location?.hash.startsWith('#pair=') ? 'wm1.' + globalThis.location.hash.slice(6) : null;
+    if (initialPairing) history.replaceState(null, '', location.pathname + location.search);
+    const request = async (url, options = {}) => {
+        if (!native || !/^https?:/.test(String(url)) || new URL(url).origin === globalThis.location?.origin) return fetch(url, options);
+        if (options.signal?.aborted) throw new DOMException('Request aborted', 'AbortError');
+        const id = crypto.randomUUID(), abort = () => void native.abortPersonalFetch(id).catch(() => {});
+        options.signal?.addEventListener('abort', abort, { once: true });
+        try {
+            const body = options.body instanceof Blob ? await options.body.arrayBuffer() : options.body;
+            const result = await native.fetchPersonal(String(url), { method: options.method, headers: options.headers, body }, id);
+            return { status: result.status, ok: result.status >= 200 && result.status < 300, json: async () => result.body,
+                headers: { get: name => result.headers[name.toLowerCase()] || null } };
+        } finally { options.signal?.removeEventListener('abort', abort); }
+    };
+    const core = globalThis.WeftUiCore.create({ effects: ui, fetch: request, storage: localStorage, crypto: globalThis.crypto,
+        hostOrigin: globalThis.location?.origin, desktop: !!native, cloudVendor: globalThis.WeftCloudVendor,
+        initialPairing,
+        nativeIdentity: native ? () => native.identity() : undefined,
+        cloudCredentials: native ? (...args) => native.credentials(...args) : (...args) => globalThis.WeftCloud.storage(...args),
+        nativeCloudKey: native ? { get: scope => native.cloudKey(scope), sign: (scope, input) => native.cloudProof(scope, input), clear: scope => native.resetCloudKey(scope) } : undefined });
     ui.loadAttachmentHasher = () => import('./file-sha256.js');
     for (const factory of Object.values(globalThis.WeftUiComponents.factories))
         Object.assign(ui, factory(core, ui));
-    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountShell"])
+    for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell"])
         ui[mount]();
 })();
