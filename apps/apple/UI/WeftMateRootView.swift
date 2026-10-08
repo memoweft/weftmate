@@ -53,7 +53,7 @@ struct WeftMateRootView: View {
                 try? await Task.sleep(for: .seconds(ProcessInfo.processInfo.arguments.contains("--a5-review-scene") ? 8 : 1))
                 // Capture only this process's own displayed window; never enumerate other apps.
                 typealias WindowImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
-                if let window = NSApplication.shared.windows.first(where: { $0.title == "WeftMate" }),
+                if let window = NSApplication.shared.windows.first(where: { $0.isVisible && $0.isKeyWindow }) ?? NSApplication.shared.windows.first(where: { $0.title == "WeftMate" }),
                    let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImage") {
                     let capture = unsafeBitCast(symbol, to: WindowImage.self)
                     if let image = capture(.null, 8, UInt32(window.windowNumber), 1)?.takeRetainedValue() {
