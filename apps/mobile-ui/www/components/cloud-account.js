@@ -95,6 +95,7 @@
     core.enterAssistant = enterAssistant;
     core.authBase = hostOrigin + '/personal/v1/auth'; core.accessBase = hostOrigin + '/personal/v1';
     const client = WeftUiCore.adaptMobileCloudClient(core.initializeCloudAccount());
+    const connect = core.cloudConnect; core.cloudConnect = async hostId => WeftUiCore.resolveMobileCloudConnection(client, await connect(hostId));
     if (identity.clientId) client.clientId = identity.clientId;
     if (identity.redirectUri) client.redirectUri = identity.redirectUri;
     forms = WeftMobileCloudForms(core, ui); settings = WeftMobileCloudSettings(core, ui);

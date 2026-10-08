@@ -48,8 +48,8 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     }
     for (const kind of ['terms', 'privacy']) {
       const source = await readFile(new URL(`../../../docs/legal/${kind}-zh.md`, import.meta.url));
-      const generated = await readFile(path.join(mobileWwwDir, 'legal', `${kind}-zh.md`));
-      if (!source.equals(generated)) problems.push(`differs legal/${kind}-zh.md`);
+      const generated = await readFile(path.join(mobileWwwDir, 'legal', `${kind}-zh.txt`));
+      if (!source.equals(generated)) problems.push(`differs legal/${kind}-zh.txt`);
     }
   }
   if (problems.length) throw new Error(`ui-core assets: ${problems.join('; ')}; run npm run build in apps/mobile-ui`);
@@ -61,7 +61,7 @@ export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     await copyFile(new URL('../../../src/personal-access-ui/components/usage.js', import.meta.url), path.join(mobileWwwDir, 'components/usage-view.js'));
     await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
     await mkdir(path.join(mobileWwwDir, 'legal'), { recursive: true });
-    for (const kind of ['terms', 'privacy']) await copyFile(new URL(`../../../docs/legal/${kind}-zh.md`, import.meta.url), path.join(mobileWwwDir, 'legal', `${kind}-zh.md`));
+    for (const kind of ['terms', 'privacy']) await copyFile(new URL(`../../../docs/legal/${kind}-zh.md`, import.meta.url), path.join(mobileWwwDir, 'legal', `${kind}-zh.txt`));
   }
   await mkdir(targetDir, { recursive: true });
   const expected = new Set(uiCoreAssets);

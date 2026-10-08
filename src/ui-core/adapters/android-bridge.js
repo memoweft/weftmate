@@ -142,4 +142,13 @@
     };
     return client;
   };
+  globalThis.WeftUiCore.resolveMobileCloudConnection = async (client, connection) => {
+    if (connection.hostId !== client.config.hostId || connection.status !== 'offline') return connection;
+    // The cloud may lack a relay address while this phone already has a trusted
+    // direct channel to the selected computer. Probe that existing channel.
+    const configuration = await client.request(client.host + '/personal/v1/cloud/config');
+    if (configuration.hostId !== connection.hostId) throw { code: 'HOST_TRUST_INVALID' };
+    await client.request(client.host + '/personal/v1/auth/cloud-nonce', { method: 'POST', body: {} });
+    return { ...connection, status: 'online', baseUrl: client.host };
+  };
 })();
