@@ -11,7 +11,7 @@ export function desktopScript(path) {
   return readFileSync(resolve(root, path.startsWith('ui-core/') ? 'src' : 'src/personal-access-ui', path), 'utf8');
 }
 export function desktopFeatureSource() {
-  return 'globalThis.WeftUiLayout = { mountUsage() {}, mountSchedules() {} };\n' + desktopScriptPaths().filter(path => path.startsWith('ui-core/') || path.startsWith('components/') && path !== 'components/markup.js' || path === 'app.js').map(desktopScript).join('\n;\n');
+  return 'globalThis.WeftUiLayout = { mountUsage() {}, mountBackup() {}, mountSchedules() {} };\nvar MutationObserver = globalThis.MutationObserver ?? class { observe() {} };\n' + desktopScriptPaths().filter(path => path.startsWith('ui-core/') || path.startsWith('components/') && path !== 'components/markup.js' || path === 'app.js').map(desktopScript).join('\n;\n');
 }
 export function desktopHtml() {
   const context = { document: { body: { innerHTML: '' } } };
