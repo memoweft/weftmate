@@ -13,6 +13,7 @@ import { PROFILE_PATCH_TEMPLATE } from '../../src/dsh-web-runtime.ts';
 import { createOfficialDshSettingsClient } from '../../src/dsh-settings-migration.ts';
 import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
 import { createLanBaselineBridge } from './baseline-lan-model.mjs';
+import { delegationEvidence as summarizeDelegation } from './delegation-evidence.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
 process.env.TEMP = process.env.TMP = 'C:/Temp';
@@ -20,6 +21,7 @@ const lan = process.argv.includes('--lan');
 assert.ok(!lan || !process.argv.includes('--mimo'), '--lan and --mimo are mutually exclusive');
 const modelName = lan ? 'lan' : process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const regression = process.argv.includes('--regression');
+const delegationEvidence = process.argv.includes('--delegation-evidence');
 const reasoningOff = process.argv.includes('--reasoning-off');
 const run = promisify(execFile);
 async function environmentValue(name, scope = 'User') {
@@ -34,7 +36,7 @@ assert.ok(!lan || lanBaseUrl, 'Required LAN model address absent');
 const modelId = lan ? 'local-quality' : modelName === 'qwen' ? 'qwen3.8-27b-original' : 'mimo-v2.6-flash';
 const privateValues = [key, ...(lan ? [lanBaseUrl, new URL(lanBaseUrl).host] : [])];
 const redact = value => privateValues.reduce((text, secret) => text.replaceAll(secret, '[private-model]'), String(value));
-const root = join('C:/Temp', `weftmate-m1-3-${modelName}-${randomUUID()}`), profile = join(root, 'profile'), out = join(root, 'eval');
+const root = join('C:/Temp', `weftmate-${delegationEvidence ? 'm1-4' : 'm1-3'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile'), out = join(root, 'eval');
 mkdirSync(profile, { recursive: true }); mkdirSync(out);
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const username = `eval-${randomUUID()}`, password = `test-${randomUUID()}-password`;
@@ -52,6 +54,7 @@ export function apply(ctx) {
     let data;
     if (['request/context', 'goal/change', 'todo/write', 'compaction/start', 'compaction/summary', 'compaction/end', 'turn/end'].includes(event.type)) data = event.data;
     if (event.type === 'assistant/message') data = { usage: event.data.usage, tools: event.data.message.content.filter(part => part.type === 'tool-call').map(part => part.name) };
+    if (${delegationEvidence} && ['tool/call', 'tool/result', 'user/message', 'subagent/start', 'subagent/end'].includes(event.type)) data = event.data;
     if (data) appendFileSync(${JSON.stringify(join(root, 'native-events.jsonl'))}, JSON.stringify({ sessionId: session.id, seq: event.seq, type: event.type, data }) + '\\n');
   });
 }
@@ -79,8 +82,18 @@ try {
   app.process().stdout?.on('data', capture); app.process().stderr?.on('data', capture);
   page = await app.firstWindow({ timeout: 90000 }); page.setDefaultTimeout(90000);
   await page.waitForURL('**/personal/v1/ui');
-  await page.fill('#login-name', username); await page.fill('#login-password', password); await page.fill('#login-device', 'Long task Electron');
-  await page.locator('#login-form button[type=submit]').click(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
+  // The current desktop exposes existing synthetic local accounts through its
+  // offline login flow; older desktop builds retain the original local form.
+  await page.waitForFunction(() => !!document.querySelector('#auth-offline, #login-name'));
+  if (await page.locator('#auth-offline').count()) {
+    await page.locator('#auth-offline').click();
+    await page.fill('#auth-offline-account', username); await page.fill('#auth-password', password);
+    await page.locator('#cloud-auth-form button[type=submit]').click();
+  } else {
+    await page.fill('#login-name', username); await page.fill('#login-password', password); await page.fill('#login-device', 'Long task Electron');
+    await page.locator('#login-form button[type=submit]').click();
+  }
+  await page.locator('#assistant-view').waitFor({ state: 'visible' });
   const requestId = `long-task-model-${modelName}`;
   assert.equal((await api('/account/models', { requestId, name: modelName,
     baseUrl: lan ? lanBridge.url : modelName === 'qwen' ? 'http://127.0.0.1:8081/v1' : 'https://api.xiaomimimo.com/v1',
@@ -154,6 +167,7 @@ try {
     if (result?.scratchDir) for (const file of scenario.setup.files) assert.equal(readFileSync(join(result.scratchDir, file.path), 'utf8'), file.content, 'Source remains unchanged');
   }
   writeFileSync(join(root, 'long-task-verification.json'), JSON.stringify(stats, null, 2)); console.log(JSON.stringify({ summary, stats }));
+  if (delegationEvidence) writeFileSync(join(root, 'delegation-verification.json'), JSON.stringify(summarizeDelegation(native, sessionIds), null, 2));
   if (!regression) {
     assert.equal(summary.passed, 1, 'Deliverable checks must all pass'); assert.ok(stats.toolCalls > 15);
     assert.ok(stats.nativeGoalChanges >= 2 && stats.nativeTodoWrites >= 2);
