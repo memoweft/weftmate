@@ -35,12 +35,13 @@ test('BK-1 online SQLite snapshot remains consistent while another connection wr
 test('BK-1 snapshot covers content and removes host-managed credentials and device sessions', async t => {
   const f = await fixture(t);
   for (const [file, content] of Object.entries({ 'weftmate-model.enc': 'model-secret', 'desktop-auth.enc': 'cloud-secret', 'dsh-home/.credentials.yaml': 'dsh-secret', 'personal-access/relay/frpc.toml': 'relay-secret', 'personal-access/relay-tls/acme-account.json': 'acme-secret',
-    'personal-access/cloud-identity/identity.json': JSON.stringify({ installation: { privateJwk: { d: 'private-secret' } }, bindings: { local: { issuer: 'https://accounts.example.invalid', sub: 'cloud-subject', ownerId: 'fixture-owner', desktop: true, status: 'active' } } }), 'conversations/owner/session/experience.md': '经验', 'dsh-home/sessions/a/events.jsonl': 'history', 'personal-access/usage.json': 'ledger', 'personal-access/artifacts/result.txt': 'result' })) {
+    'personal-access/cloud-identity/identity.json': JSON.stringify({ installation: { privateJwk: { d: 'private-secret' } }, bindings: { local: { issuer: 'https://accounts.example.invalid', sub: 'cloud-subject', ownerId: 'fixture-owner', desktop: true, status: 'active' } } }), 'conversations/owner/session/experience.md': '经验', 'conversations/owner/session/Cache/credentials.md': 'user-auth-guide', 'dsh-home/sessions/a/events.jsonl': 'history', 'personal-access/usage.json': 'ledger', 'personal-access/artifacts/result.txt': 'result' })) {
     await mkdir(path.dirname(path.join(f.root, file)), { recursive: true }); await writeFile(path.join(f.root, file), content);
   }
   const row = await snapshot(f), manifest = await verify(path.join(f.directory, row.id));
   for (const name of ['experience.md', 'events.jsonl', 'usage.json', 'result.txt']) assert.ok(manifest.files.some(file => file.path.endsWith(name)));
   assert.ok(manifest.files.some(file => file.path.endsWith('backup-cloud-owners.json')));
+  assert.ok(manifest.files.some(file => file.path.endsWith('Cache/credentials.md')), 'user content names are not mistaken for framework caches or vaults');
   const bytes = gunzipSync(await readFile(path.join(f.directory, row.id))).toString();
   for (const secret of ['model-secret', 'cloud-secret', 'dsh-secret', 'private-secret', 'device-secret', 'relay-secret', 'acme-secret']) assert.ok(!bytes.includes(secret));
   assert.ok(!(await readdir(f.directory)).some(name => name.endsWith('.tmp') || name.endsWith('.stage')));

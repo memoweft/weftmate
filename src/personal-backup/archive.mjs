@@ -16,10 +16,13 @@ const omitted = new Set(['cloud-identity', 'personal-backup', 'Backups', 'Cache'
   'SingletonCookie', 'SingletonSocket', 'Local State', 'Preferences', 'DevTools Extensions', 'DevToolsActivePort']);
 export function included(relative) {
   const parts = relative.split('/');
-  if (relative === 'lockfile' || /^personal-access\/(?:relay|relay-tls)(?:\/|$)/.test(relative)) return false;
+  if (omitted.has(parts[0]) || relative === 'lockfile' || /^personal-access\/(?:cloud-identity|relay|relay-tls)(?:\/|$)/.test(relative)) return false;
   if (/^dsh-home\/profiles\/(?:[^/]+\/)?node_modules(?:\/|$)/.test(relative)) return false;
-  return !parts.some(part => omitted.has(part) || /(?:^\.env(?:\.|$)|credentials?|vault|\.enc$|\.pem$|\.key$|\.p12$|\.pfx$|(?:^|[-_.])tokens?(?:[-_.]|$))/i.test(part)) &&
-    !/(?:-wal|-shm|\.tmp)$/.test(relative) && !relative.endsWith('weftmate-host-state.json') && !relative.endsWith('weftmate-crash.log');
+  if (/\.(?:sqlite3?|db)-(?:wal|shm)$/.test(relative)) return false;
+  const userContent = ['conversations', 'workspace', 'desktop-artifacts'].includes(parts[0]) || relative.startsWith('personal-access/artifacts/');
+  if (userContent) return true;
+  return !parts.some(part => /(?:^\.env(?:\.|$)|credentials?|vault|\.enc$|\.pem$|\.key$|\.p12$|\.pfx$|(?:^|[-_.])tokens?(?:[-_.]|$))/i.test(part)) &&
+    !/(?:\.(?:sqlite3?|db)-(?:wal|shm)|\.tmp)$/.test(relative) && !relative.endsWith('weftmate-host-state.json') && !relative.endsWith('weftmate-crash.log');
 }
 function safePath(name) {
   return typeof name === 'string' && name.length > 0 && !name.includes('\\') && !name.includes(':') &&
