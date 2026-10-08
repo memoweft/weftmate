@@ -16,6 +16,18 @@ function removedMessage(entries, before, target, position) {
   return null;
 }
 
+/** Durable counterpart of agent/inbox/claimed: pure native deletions consume
+ * inputs; canceled deletions and replacements never establish turn ownership.
+ */
+export function claimedInputsAt(entries, position) {
+  const event = raw(entries[position]), data = event?.data ?? {};
+  if (event?.type !== 'agent/inbox/spliced' || !data.removedCount ||
+      data.outcome === 'canceled' || data.inserted?.length ||
+      !['next-turn', 'next-step'].includes(data.target)) return [];
+  return Array.from({ length: data.removedCount }, (_, offset) =>
+    removedMessage(entries, position, data.target, data.start + offset) ?? { receiptId: null, unavailable: true });
+}
+
 /** Receipt owning the open turn at one native input insertion, even before user/message commits. */
 export function turnReceiptAt(entries, position) {
   let receiptId = null;
