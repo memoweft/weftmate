@@ -138,6 +138,7 @@ function page(name){
   if(!['chat','home'].includes(name)&&['chat','home'].includes(previousPage))state.returnPage=previousPage;
   $('chat-page').classList.toggle('active',name==='chat');$('generic-page').classList.toggle('active',!['chat','home'].includes(name));
   $('home-page').classList.toggle('active',name==='home');updatePageHeader();
+  if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
     usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',

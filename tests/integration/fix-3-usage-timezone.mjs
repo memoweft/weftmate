@@ -47,6 +47,14 @@ try {
     await page.getByText('用量', { exact: true }).click();
     assert.equal((await (await reported).json()).timeZone, 'Asia/Shanghai');
     await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor();
+    await page.getByText('按 中国标准时间（Asia/Shanghai） 统计，金额按请求时单价计算，供参考，以服务商账单为准。', { exact: true }).waitFor();
+    await page.getByLabel('统计月份', { exact: true }).fill('2026-10');
+    const chart = page.getByRole('img', { name: '2026-10 每日费用柱状图（中国标准时间（Asia/Shanghai））', exact: true });
+    await chart.waitFor();
+    assert.match(await chart.getByTitle(/2026-10-01/).getAttribute('title'), /2026-10-01（中国标准时间（Asia\/Shanghai））/);
+    await page.getByText('每日明细', { exact: true }).click();
+    await page.getByRole('listitem').filter({ hasText: /^2026-10-01（中国标准时间（Asia\/Shanghai））/ }).waitFor();
+    await page.getByRole('listitem').filter({ hasText: /^2026-10-31（中国标准时间（Asia\/Shanghai））/ }).waitFor();
     const result = await page.evaluate(async () => {
         const summary = await (await fetch('/personal/v1/usage?month=2026-10&timeZone=Asia%2FShanghai')).json();
         const settings = await (await fetch('/personal/v1/settings/usage')).json();
@@ -59,7 +67,24 @@ try {
     const saved = page.waitForResponse(response => response.url().endsWith('/settings/usage') && response.request().method() === 'PATCH');
     await page.getByRole('button', { name: '保存月度上限', exact: true }).click();
     assert.equal((await (await saved).json()).timeZone, 'Asia/Shanghai');
-    console.log('FIX-3 real Electron: local timezone reported/persisted, October midnight/month-end grouping, settings save passed');
+    // A response in another zone must win over the renderer's Shanghai zone.
+    for (const timeZone of ['America/New_York', 'Fixture/Unavailable']) {
+        await page.evaluate(timeZone => {
+            const target = document.createElement('section'); target.setAttribute('aria-label', '时区呈现验证'); document.body.append(target);
+            const total = { cost: 1, requests: 1, inputTokens: 100, cachedInputTokens: 0, outputTokens: 10 };
+            globalThis.WeftUsageView({ loadUsage: async () => ({ summary: { month: '2026-10', timeZone,
+                total, days: [{ day: '2026-10-01', ...total, unknownRequests: 0 }], budget: { effectiveLimit: null } },
+                settings: { canManage: false }, sessions: [], models: [] }), usageMoney: value => `¥${value}` }, target);
+        }, timeZone);
+        const fixture = page.getByRole('region', { name: '时区呈现验证', exact: true });
+        await fixture.getByText(new RegExp(`^按 .*${timeZone}.* 统计，`)).waitFor();
+        await fixture.getByRole('img', { name: new RegExp(timeZone) }).waitFor();
+        await fixture.getByText('每日明细', { exact: true }).click();
+        await fixture.getByRole('listitem').filter({ hasText: new RegExp(`^2026-10-01（.*${timeZone}`) }).waitFor();
+        if (timeZone === 'Fixture/Unavailable') await fixture.getByText(/^按 Fixture\/Unavailable 统计，/).waitFor();
+        await fixture.evaluate(target => target.remove());
+    }
+    console.log('FIX-3/FIX-4 real Electron: timezone reported/persisted, October boundaries, localized labels, response timezone and IANA fallback passed');
 } catch (error) {
     if (app) console.log(await (await app.firstWindow()).locator('body').innerText());
     throw error;
