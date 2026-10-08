@@ -1,11 +1,12 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomUUID, createPublicKey } from 'node:crypto';
 import { readFile, readdir, mkdir, writeFile, rename, rm, lstat, open } from 'node:fs/promises';
 import path from 'node:path';
+import { signManifest, signingKeyFromEnvironment, validateManifest, verifyManifest, keyId, canonicalJson } from '../personal-update/manifest.mjs';
 
 const HASH = /^[a-f0-9]{64}$/;
 const ASSET_PATH = /^(?!.*(?:^|\/)\.\.?\/)[A-Za-z0-9_.\/-]{1,180}$/;
 const VERSION = /^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/;
-const MAX_ASSETS = 250;
+const MAX_ASSETS = 512;
 const MAX_ASSET_BYTES = 4 * 1024 * 1024;
 const MAX_BUNDLE_BYTES = 16 * 1024 * 1024;
 const TYPES = new Map([['.html', 'text/html; charset=utf-8'], ['.css', 'text/css; charset=utf-8'],
@@ -37,8 +38,8 @@ function validateAssets(assets) {
 }
 
 export function validateMobileManifest(value) {
-  if (!plain(value) || Object.keys(value).sort().join(',') !==
-      'assetBase,assets,bridgeVersion,entry,minNativeVersionCode,publishedAt,releaseNotes,schemaVersion,uiVersion' ||
+  if (!plain(value) || (!value.signature && Object.keys(value).sort().join(',') !==
+      'assetBase,assets,bridgeVersion,entry,minNativeVersionCode,publishedAt,releaseNotes,schemaVersion,uiVersion') ||
       value.schemaVersion !== 1 || value.bridgeVersion !== 1 ||
       !Number.isSafeInteger(value.minNativeVersionCode) || value.minNativeVersionCode < 1 ||
       value.minNativeVersionCode > 1_000_000 ||
@@ -49,6 +50,11 @@ export function validateMobileManifest(value) {
   const hash = /^\/personal\/v1\/app\/assets\/([a-f0-9]{64})\/$/.exec(value.assetBase)?.[1];
   if (!hash) fail('invalid asset base');
   const assets = validateAssets(value.assets);
+  if (assets.length > 250 && value.minNativeVersionCode < 22) fail('native code22 required for this asset count');
+  if (value.signature) {
+    validateManifest(value, { layer: 'mobile-ui' });
+    if (value.version !== value.uiVersion || JSON.stringify(value.files) !== JSON.stringify(assets)) fail('signed aliases mismatch');
+  }
   if (sha(JSON.stringify(assets)) !== hash) fail('asset index hash mismatch');
   return { manifest: value, hash, assets };
 }
@@ -111,7 +117,8 @@ async function verifyBundle(outputDir, hash, assets) {
 
 /** Build immutable bytes before publishing one tiny atomic current pointer. */
 export async function publishMobileUi({ sourceDir, outputDir, uiVersion = '0.2.0',
-  minNativeVersionCode = 2, releaseNotes = '' }) {
+  minNativeVersionCode = 2, releaseNotes = '', channel = 'stable', minHostVersion = '0.1.0',
+  minNativeVersion = '0.0.0', privateKey = null }) {
   if (typeof sourceDir !== 'string' || typeof outputDir !== 'string' ||
       !path.isAbsolute(sourceDir) || !path.isAbsolute(outputDir) ||
       typeof uiVersion !== 'string' || !VERSION.test(uiVersion) ||
@@ -128,9 +135,11 @@ export async function publishMobileUi({ sourceDir, outputDir, uiVersion = '0.2.0
   const assets = validateAssets([...contents].map(([assetPath, bytes]) =>
     ({ path: assetPath, sha256: sha(bytes), size: bytes.length })));
   const hash = sha(JSON.stringify(assets));
-  const manifest = { schemaVersion: 1, uiVersion, bridgeVersion: 1, minNativeVersionCode,
+  privateKey ||= await signingKeyFromEnvironment();
+  let manifest = signManifest({ schemaVersion: 1, layer: 'mobile-ui', version: uiVersion, channel,
+    minHostVersion, minNativeVersion, uiVersion, bridgeVersion: 1, minNativeVersionCode,
     assetBase: `/personal/v1/app/assets/${hash}/`, entry: 'index.html', assets,
-    releaseNotes, publishedAt: new Date().toISOString() };
+    files: assets, releaseNotes, publishedAt: new Date().toISOString() }, privateKey);
   validateMobileManifest(manifest);
   await mkdir(path.join(outputDir, 'bundles'), { recursive: true });
   await mkdir(path.join(outputDir, 'releases'), { recursive: true });
@@ -157,32 +166,39 @@ export async function publishMobileUi({ sourceDir, outputDir, uiVersion = '0.2.0
   else {
     const existing = JSON.parse(await readFile(releaseFile, 'utf8'));
     validateMobileManifest(existing);
-    if (existing.uiVersion !== uiVersion || existing.assetBase !== manifest.assetBase ||
-        existing.minNativeVersionCode !== minNativeVersionCode || existing.releaseNotes !== releaseNotes) {
+    verifyManifest(existing, { [keyId(privateKey)]: createPublicKey(privateKey).export({ type: 'spki', format: 'pem' }) }, { layer: 'mobile-ui', channel });
+    const metadata = value => canonicalJson(Object.fromEntries(Object.entries(value).filter(([name]) => !['publishedAt', 'signature'].includes(name))));
+    if (metadata(existing) !== metadata(manifest)) {
       fail('release identity conflict');
     }
+    manifest = existing;
   }
   await atomicJson(path.join(outputDir, 'current.json'), manifest);
   return manifest;
 }
 
-export async function activateMobileUiRelease({ outputDir, releaseId }) {
+export async function activateMobileUiRelease({ outputDir, releaseId, trustedKeys = null }) {
   if (typeof outputDir !== 'string' || !path.isAbsolute(outputDir) ||
       typeof releaseId !== 'string' || !/^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?-[a-f0-9]{64}$/.test(releaseId)) {
     fail('invalid release identity');
   }
   const manifest = JSON.parse(await readFile(path.join(outputDir, 'releases', `${releaseId}.json`), 'utf8'));
   const { hash, assets } = validateMobileManifest(manifest);
+  if (manifest.signature) verifyManifest(manifest, trustedKeys || JSON.parse(await readFile(new URL('../personal-update/trusted-keys.json', import.meta.url), 'utf8')), { layer: 'mobile-ui' });
   await verifyBundle(outputDir, hash, assets);
   await atomicJson(path.join(outputDir, 'current.json'), manifest);
   return manifest;
 }
 
-export function createMobileUiPublisher({ root }) {
+export function createMobileUiPublisher({ root, trustedKeys = null, hostVersion = '0.1.0' }) {
   if (typeof root !== 'string' || !path.isAbsolute(root)) fail('explicit absolute release directory is required');
   const clients = new Set();
   async function current() {
-    try { return validateMobileManifest(JSON.parse(await readFile(path.join(root, 'current.json'), 'utf8'))).manifest; }
+    try {
+      const manifest = validateMobileManifest(JSON.parse(await readFile(path.join(root, 'current.json'), 'utf8'))).manifest;
+      if (manifest.signature) verifyManifest(manifest, trustedKeys || JSON.parse(await readFile(new URL('../personal-update/trusted-keys.json', import.meta.url), 'utf8')), { layer: 'mobile-ui', versions: { host: hostVersion, bridge: 1 } });
+      return manifest;
+    }
     catch (error) { if (error?.code === 'ENOENT') return null; throw error; }
   }
   async function asset(hash, name) {

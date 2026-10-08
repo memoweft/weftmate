@@ -62,6 +62,12 @@ const files = new Map([
 ])
 
 export const personalAccessUiAssetPaths = new Set(files.keys())
+export const personalAccessUiResources = new Map([...files.values()].map(([name]) => {
+  const resource = name.startsWith('../ui-core/') ? name.slice(3) : `personal-access-ui/${name}`;
+  return [resource, join(import.meta.dirname, name)];
+}))
+let verifiedResource = null
+export function setPersonalAccessUiResourceReader(reader) { verifiedResource = reader }
 
 const securityHeaders = {
   'cache-control': 'no-store',
@@ -80,7 +86,8 @@ export async function servePersonalAccessUi(request, response, cloud = null) {
   const asset = files.get(url.pathname)
   if (!asset) return false
   try {
-    const body = await readFile(join(import.meta.dirname, asset[0]))
+    const resource = asset[0].startsWith('../ui-core/') ? asset[0].slice(3) : `personal-access-ui/${asset[0]}`
+    const body = await verifiedResource?.(resource) ?? await readFile(join(import.meta.dirname, asset[0]))
     const headers = { ...securityHeaders };
     if (cloud?.issuer) headers['content-security-policy'] = headers['content-security-policy']
       .replace("connect-src 'self'", `connect-src 'self' ${new URL(cloud.issuer).origin}`);
