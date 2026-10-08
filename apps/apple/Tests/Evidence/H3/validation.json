@@ -1,0 +1,13 @@
+{
+  "uiPassed": 1,
+  "uiFailed": 0,
+  "uiSkipped": 0,
+  "hostSummaryCount": 30,
+  "allCloudDenied": true,
+  "algorithmVersion": "weftmate-h3-v1",
+  "maximumSummaryBytes": 4183,
+  "recovery": 70,
+  "loadRatio": 1,
+  "sleepMinutes": 480,
+  "coreDelivered": false
+}

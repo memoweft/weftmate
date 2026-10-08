@@ -53,6 +53,7 @@ struct HealthMetricsView: View {
                         }
                     }
                 }.chartYScale(domain: 0...100)
+                    .chartXScale(range: .plotDimension(padding: AppleTokens.Space.p16))
                     .chartXAxis {
                         AxisMarks(values: .automatic) { axis in
                             AxisGridLine(); AxisTick()
@@ -76,7 +77,7 @@ struct HealthMetricsView: View {
                             PointMark(x: .value("日期", date), y: .value("数值", number))
                         }
                     }
-                }.chartXAxis {
+                }.chartXScale(range: .plotDimension(padding: AppleTokens.Space.p16)).chartXAxis {
                     AxisMarks(values: .automatic) { axis in
                         AxisGridLine(); AxisTick()
                         AxisValueLabel {
