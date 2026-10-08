@@ -120,4 +120,4 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 - D1 已完成真实云/systemd（系统服务管理）私有证书权限、既有443共存与 API/relay 生产 CA；API/relay/hosts DNS 已就绪。S2b 已交付阿里云 DNS provider 与逐宿主自动签发/续期/安装/热载，尚未部署：本人需创建指定 DNS 区增删权限 RAM 子账号并私下配置凭据、升级 cloud schema 5、开启宿主 ACME；生产 AliDNS/Let's Encrypt、真实 Windows/五端 pin 真机与长时续期尚未验。掉电残留 TXT 的后台清扫、内容 key 轮换、已撤销宿主重新启用留后续包。Windows 验收使用隔离 CA，不能代表普通浏览器生产内容证书已就绪。
 - frp 此版无踢在线 client 的管理 API；本包用云必经 TCP socket 所有权立即断流。部署不可绕过入口或公网暴露 frps/plugin。D24 普通浏览器允许，云/DNS 主动完全控制时仍可能被冒充；原生另 pin。
 - MW-2 部署需升级 observed v1 Core；真机上传/日用模型/vendor 未验。M1-3 极少上下文先压缩待做。
-- 根单测已有已登记例外、外部 vendor/Design 夹具及部分跨平台适配；Mac 127.0.0.2 回环别名缺失的既有环境失败以 CI 为准，未在 S2 改写例外。Windows 中继打包/真机与 S1c 客户端留后续包。
+- 根单测 CI-2：4 个过时静态契约断言已更新，knownFailures（已知失败）从 12 项清至 0：11 项复核通过、1 项旧用例已不存在；固定 DSH vendor（运行时依赖）/Design 外部夹具与平台例外仍保留。Windows Mod 崩溃启动期间 EPERM rename 位于产品运行记录写入/读取与退出并发路径，非测试目录清理；本包不修产品、不加例外或延长超时，完整 CI 结果见 CI-2 PR。Windows 中继打包/真机与 S1c 客户端留后续包。
