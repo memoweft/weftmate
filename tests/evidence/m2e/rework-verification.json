@@ -15,7 +15,11 @@
     "observedInferenceModels": [
       "local-quality",
       "mimo-v2.6-flash"
-    ]
+    ],
+    "weftmateFinalModelSourceEquivalentTo": "0c79527d6f6244d67541eed45aa136a7b983de99",
+    "latestMainMergedAfterModelMatrix": true,
+    "modelMatrixRerunAfterMainMerge": false,
+    "memoryHostSourceChangedByFinalMainMerge": false
   },
   "runs": [
     {
