@@ -1,0 +1,29 @@
+{
+  "baseCommit": "2719c4f",
+  "generatedUIIcons": 69,
+  "pngEntriesChecked": 437,
+  "nonMacAppIconColorType": 2,
+  "compiledPhoneAppearances": [
+    "default",
+    "UIAppearanceDark",
+    "ISAppearanceTintable"
+  ],
+  "macAccessibilityTrusted": false,
+  "clientContractChanged": false,
+  "data": "synthetic local fixtures; isolated simulator namespaces",
+  "paidModelRequests": 0,
+  "debugBuilds": {
+    "macOS": "passed",
+    "iOS": "passed",
+    "watchOS": "passed"
+  },
+  "uiTests": {
+    "iosLightAndDark": 2,
+    "iosApprovalRegression": 1,
+    "watchIcons": 1
+  },
+  "iconSystemTests": "3/3 passed (TMPDIR=/private/tmp)",
+  "watchLauncherIconVisible": true,
+  "homeIconStyle": "light; system interface captured in light and dark",
+  "darkAndTintedIconValidation": "compiled catalog verified; manual home style selection not tested"
+}

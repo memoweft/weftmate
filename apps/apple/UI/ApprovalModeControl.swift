@@ -20,10 +20,10 @@ struct ApprovalModeControl: View {
                 showingMenu = true
             } label: {
                 HStack(spacing: 5) {
-                    Image(systemName: "hand.raised")
+                    WeftIcon("approval")
                     Text(settings?.mode.shortTitle ?? "审批模式")
                         .lineLimit(1).fixedSize(horizontal: true, vertical: false)
-                    Image(systemName: "chevron.down").font(.caption2)
+                    WeftIcon("chevron", size: 16).font(.caption)
                     if busy { ProgressView().controlSize(.mini) }
                 }.font(.caption).foregroundStyle(Weave.ink)
             }
@@ -75,7 +75,7 @@ struct ApprovalModeControl: View {
             else { Task { await save(mode) } }
         } label: {
             HStack(alignment: .center, spacing: 10) {
-                Image(systemName: settings?.mode == mode ? "checkmark" : "circle")
+                WeftIcon("allow", size: 16)
                     .opacity(settings?.mode == mode ? 1 : 0).frame(width: 16)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(mode.title).font(.callout.weight(.medium)).foregroundStyle(Weave.ink)

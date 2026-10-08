@@ -329,3 +329,12 @@ html,body{overflow:hidden}#app{height:var(--viewport-height,100dvh)}
 summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
 .popover{box-shadow:none}.message-body blockquote{border-left-width:1px}.image-preview{background:#20221f}
 @media(max-width:360px){.header-action{padding:0 6px;font-size:12px}.brand strong{font-size:15px}.home-conversations{padding-left:16px;padding-right:16px}}
+
+/* IC-1: C4 colour mark and optical stroke at compact sizes. */
+.logo { background: var(--surface); }
+.logo::before { width: 100%; height: 100%; background: url(brand/color-light.svg) center / contain no-repeat; -webkit-mask-image: none; mask-image: none; }
+[data-theme="dark"] .logo::before { background-image: url(brand/color-dark.svg); }
+.icon-button{--small-icon:url(icons/16/button.svg)}.icon-menu{--small-icon:url(icons/16/menu.svg)}.icon-close{--small-icon:url(icons/16/close.svg)}.icon-plus{--small-icon:url(icons/16/plus.svg)}.icon-down{--small-icon:url(icons/16/down.svg)}.icon-mic{--small-icon:url(icons/16/mic.svg)}.icon-arrow{--small-icon:url(icons/16/arrow.svg)}.icon-stop{--small-icon:url(icons/16/stop.svg)}.icon-settings{--small-icon:url(icons/16/settings.svg)}.icon-check{--small-icon:url(icons/16/check.svg)}.icon-copy{--small-icon:url(icons/16/copy.svg)}.icon-back{--small-icon:url(icons/16/back.svg)}.icon-refresh{--small-icon:url(icons/16/refresh.svg)}
+.model-button .icon, .approval-mode-button .icon { -webkit-mask-image:var(--small-icon); mask-image:var(--small-icon); }
+
+.icon-compose{-webkit-mask-image:url(icons/compose.svg);mask-image:url(icons/compose.svg)}

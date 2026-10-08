@@ -36,7 +36,7 @@ struct AuthView: View {
                             SpiritView(size: 76)
                         }
                         Button { model.cloudLogin.showLogin = true } label: {
-                            Label("用 WeftMate 账号登录", systemImage: "person.crop.circle")
+                            WeftLabel("用 WeftMate 账号登录", icon: "account")
                         }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("cloudLoginEntry")
                         Text("直接连接电脑（用户名 + 密码）").font(.headline)
                         Picker("账户操作", selection: $register) {
@@ -87,11 +87,11 @@ struct AuthView: View {
                                 withAnimation(.easeInOut(duration: 0.18)) { showServer.toggle() }
                             } label: {
                                 HStack(spacing: 8) {
-                                    Image(systemName: "network")
+                                    WeftIcon("cloud")
                                     Text(model.serverDisplayName).lineLimit(1)
                                     Spacer()
                                     Text(showServer ? "收起" : "更改").font(.caption.weight(.medium))
-                                    Image(systemName: "chevron.down").font(.caption2).rotationEffect(.degrees(showServer ? 180 : 0))
+                                    WeftIcon("chevron", size: 16).font(.caption).rotationEffect(.degrees(showServer ? 180 : 0))
                                 }
                                 .font(.callout).foregroundStyle(Weave.secondary)
                                 .padding(.vertical, 6).contentShape(Rectangle())
