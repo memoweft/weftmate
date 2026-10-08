@@ -14,7 +14,12 @@ final class A6SettingsUITests: XCTestCase {
         if !element.exists { throw NSError(domain: "A6UI", code: 1) }
     }
     @MainActor private func tap(_ app: XCUIApplication, _ name: String) throws {
-        let element = app.buttons[name]; try expect(element); element.tap()
+        let element = app.buttons[name]; try expect(element)
+        if !element.isEnabled || !element.isHittable {
+            let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true AND hittable == true"), object: element)
+            XCTAssertEqual(XCTWaiter.wait(for: [ready], timeout: 30), .completed)
+        }
+        element.tap()
     }
     @MainActor private func fill(_ app: XCUIApplication, _ name: String, _ value: String, secure: Bool = false) throws {
         let field = secure ? app.secureTextFields[name] : app.textFields[name]
