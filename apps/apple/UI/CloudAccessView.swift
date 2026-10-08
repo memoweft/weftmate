@@ -8,7 +8,7 @@ struct CloudAccessView: View {
             Form {
                 if model.waiting {
                     Section {
-                        Label("等待设备批准", systemImage: "hourglass").font(.headline)
+                        WeftLabel("等待设备批准", icon: "clock").font(.headline)
                             .accessibilityIdentifier("cloudWaiting")
                         Text("请在已登录的设备上点允许，或扫电脑上的二维码")
                         Button("已允许，重试连接") { model.retry() }.disabled(model.busy)
@@ -34,7 +34,7 @@ struct CloudAccessView: View {
                         .accessibilityIdentifier("cloudScan")
                     #endif
                     if model.hasPairing {
-                        Label("已取得电脑配对信息", systemImage: "checkmark.shield")
+                        WeftLabel("已取得电脑配对信息", icon: "approval")
                             .accessibilityIdentifier("cloudPairingReady")
                         Button("更换配对信息") { model.editPairing() }.disabled(model.busy)
                     } else {

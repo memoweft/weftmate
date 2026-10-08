@@ -38,7 +38,7 @@ struct ConversationTimelineView: View {
                     let memories = UsedMemory.references(in: entry.event)
                     if !memories.isEmpty {
                         Button { openMemory(entry.event) } label: {
-                            Label("用到了 \(memories.count) 条记忆", systemImage: "brain")
+                            WeftLabel("用到了 \(memories.count) 条记忆", icon: "memory", size: 16)
                                 .font(.caption).foregroundStyle(Weave.muted)
                         }.buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
                     }
@@ -97,10 +97,10 @@ struct TimelineExecutionBlock: View {
         VStack(alignment: .leading, spacing: 12) {
             Button { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } } label: {
                 HStack {
-                    Label(entry.running ? "正在执行 \(entry.steps.count) 步" : "执行了 \(entry.steps.count) 步 · 用时 \(entry.elapsed)",
-                          systemImage: entry.running ? "gearshape" : "checkmark.circle")
+                    WeftLabel(entry.running ? "正在执行 \(entry.steps.count) 步" : "执行了 \(entry.steps.count) 步 · 用时 \(entry.elapsed)",
+                          icon: entry.running ? "tool" : "allow")
                     Spacer(minLength: 4)
-                    Image(systemName: expanded ? "chevron.down" : "chevron.right")
+                    WeftIcon(expanded ? "chevron" : "right")
                 }.font(.callout).foregroundStyle(Weave.secondary).contentShape(Rectangle()).frame(minHeight: 28)
             }.buttonStyle(.plain).accessibilityIdentifier("executionBlock.\(entry.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
@@ -132,7 +132,7 @@ private struct TimelineStepView: View {
                     Text(step.summary + (step.running && running ? " · 运行中" : step.data["state"]?.string == "failed" ? " · 未完成" : ""))
                         .font(.callout).multilineTextAlignment(.leading)
                     Spacer(minLength: 4)
-                    Image(systemName: expanded ? "chevron.down" : "chevron.right").font(.caption)
+                    WeftIcon(expanded ? "chevron" : "right", size: 16).font(.caption)
                 }.contentShape(Rectangle()).frame(minHeight: 32)
             }.buttonStyle(.plain).accessibilityIdentifier("executionStep.\(step.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")

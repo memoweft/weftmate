@@ -8,7 +8,7 @@ struct WeftMateRootView: View {
     var body: some View {
         VStack(spacing: 0) {
             if model.developmentRouteEnabled {
-                Label("局域网开发联调", systemImage: "network")
+                WeftLabel("局域网开发联调", icon: "cloud", size: 16)
                     .font(.caption).foregroundStyle(Weave.secondary)
                     .frame(maxWidth: .infinity).padding(.vertical, 6)
                     .background(Weave.accentSoft)
@@ -70,7 +70,7 @@ private struct MacWorkspace: View {
                 .toolbar {
                     ToolbarItem(placement: .navigation) {
                         Button { Task { await model.refresh() } } label: {
-                            Label("刷新", systemImage: "arrow.clockwise")
+                            WeftLabel("刷新", icon: "sync")
                         }.disabled(model.refreshing)
                     }
                 }
@@ -85,7 +85,7 @@ private struct MacWorkspace: View {
     private var sidebar: some View {
         VStack(spacing: 0) {
             HStack(spacing: 7) {
-                Image(systemName: "magnifyingglass").foregroundStyle(Weave.muted)
+                WeftIcon("search").foregroundStyle(Weave.muted)
                 TextField("搜索原会话", text: $search)
                     .textFieldStyle(.plain)
                     .accessibilityLabel("搜索原会话")
@@ -109,11 +109,11 @@ private struct MacWorkspace: View {
                     }
                 }
                 Section {
-                    Label("记忆", systemImage: "brain.head.profile").tag(SidebarSelection.memory)
+                    WeftLabel("记忆", icon: "memory").tag(SidebarSelection.memory)
                         .accessibilityIdentifier("memoryNavigation")
-                    Label("设备", systemImage: "laptopcomputer.and.iphone").tag(SidebarSelection.devices)
+                    WeftLabel("设备", icon: "desktop").tag(SidebarSelection.devices)
                         .accessibilityIdentifier("devicesNavigation")
-                    Label("设置", systemImage: "slider.horizontal.3").tag(SidebarSelection.settings)
+                    WeftLabel("设置", icon: "settings").tag(SidebarSelection.settings)
                         .accessibilityIdentifier("settingsNavigation")
                 }
             }
@@ -134,7 +134,7 @@ private struct MacWorkspace: View {
                             .font(.caption2).foregroundStyle(Weave.muted).lineLimit(1)
                     }
                     Spacer()
-                    Image(systemName: "chevron.right").font(.caption).foregroundStyle(Weave.muted)
+                    WeftIcon("right", size: 16).font(.caption).foregroundStyle(Weave.muted)
                 }
                 .padding(16).contentShape(Rectangle())
             }
@@ -201,7 +201,7 @@ private struct PhoneWorkspace: View {
                     if let conversation = model.conversations.first(where: { $0.id == id }) {
                         ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString)
                     } else {
-                        EmptyState(symbol: "text.bubble", title: "会话已变更", message: "返回会话列表后刷新。")
+                        EmptyState(symbol: "chat", title: "会话已变更", message: "返回会话列表后刷新。")
                     }
                 }
                 .toolbar {
@@ -210,7 +210,7 @@ private struct PhoneWorkspace: View {
                     }
                     ToolbarItem(placement: .primaryAction) {
                         Button { Task { await model.refresh() } } label: {
-                            Label("刷新会话", systemImage: "arrow.clockwise")
+                            WeftLabel("刷新会话", icon: "sync")
                         }.disabled(model.refreshing)
                     }
                 }
@@ -255,7 +255,7 @@ private struct WelcomeView: View {
                 HStack(spacing: 10) { ProgressView().controlSize(.small); Text("正在读取原会话…") }
                     .font(.callout).foregroundStyle(Weave.muted)
             } else if model.lastRefresh != nil {
-                Label("已读取 \(model.conversations.count) 段原会话", systemImage: "checkmark.circle")
+                WeftLabel("已读取 \(model.conversations.count) 段原会话", icon: "allow")
                     .font(.callout).foregroundStyle(Weave.secondary)
             }
         }

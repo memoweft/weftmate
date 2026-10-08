@@ -17,12 +17,12 @@ struct TimelineInteractionCard: View {
             if entry.event.type.hasPrefix("approval.") {
                 if let approval = model.approvals.first(where: { $0.id == entry.event.data["approvalId"]?.string }) {
                     if approval.canDecide && entry.resolved == nil { approvalCard(approval) }
-                    else { Label(approval.decisionSummary, systemImage: "hand.raised").font(.caption)
+                    else { WeftLabel(approval.decisionSummary, icon: "approval", size: 16).font(.caption)
                             .accessibilityIdentifier("approvalSummary.\(approval.id)") }
                 } else { unavailableCard }
             } else if let batch = questionBatch {
                 if batch.canAnswer && entry.resolved == nil { questionCard(batch) }
-                else { Label(model.notices["question:" + batch.id] ?? "已回答", systemImage: "text.bubble").font(.caption) }
+                else { WeftLabel(model.notices["question:" + batch.id] ?? "已回答", icon: "chat", size: 16).font(.caption) }
             } else { unavailableCard }
         }
     }
@@ -49,7 +49,7 @@ struct TimelineInteractionCard: View {
     private func approvalCard(_ approval: SessionApproval) -> some View {
         let key = "approval:" + approval.id
         return VStack(alignment: .leading, spacing: 10) {
-            Label("操作审批", systemImage: "hand.raised").font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
+            WeftLabel("操作审批", icon: "approval").font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
             Text(approval.reason).font(.callout).foregroundStyle(Weave.ink).textSelection(.enabled)
             if !approval.riskLabels.isEmpty {
                 Text("风险类别：" + approval.riskLabels.joined(separator: "、"))
@@ -99,7 +99,7 @@ struct TimelineInteractionCard: View {
         let planReview = batch.questions.contains { $0.intent?["kind"]?.string == "plan-review" }
         let editable = batch.canAnswer && !model.hasSaved(key)
         return VStack(alignment: .leading, spacing: 14) {
-            Label(planReview ? "确认执行计划" : "补充信息", systemImage: "text.bubble")
+            WeftLabel(planReview ? "确认执行计划" : "补充信息", icon: "chat")
                 .font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
             if planReview {
                 Text("确认计划后开始执行；危险操作仍会询问。")
@@ -155,8 +155,8 @@ struct TimelineInteractionCard: View {
                     choices[field] = selected; endInput()
                 } label: {
                     HStack(alignment: .top, spacing: 10) {
-                        Image(systemName: (choices[field] ?? []).contains(option.label)
-                            ? "checkmark.circle.fill" : "circle").foregroundStyle(Weave.accent)
+                        WeftIcon("allow", size: 16)
+                            .opacity((choices[field] ?? []).contains(option.label) ? 1 : 0).foregroundStyle(Weave.accent)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(option.label).foregroundStyle(Weave.ink)
                             if let description = option.description, !description.isEmpty {
