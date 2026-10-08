@@ -33,7 +33,7 @@ Windows 窗口 / 任务栏使用透明底单色 ICO（Windows 图标容器），
 - 最终桌面相关交互 / IPC（进程间通信）69/69；桌面界面 3/3 的真实 Chromium（浏览器引擎）交互检查通过；真实 Electron 图标与审批流程通过，报告见 [verification.json](verification.json)。
 - 最终手机交互、浅 / 深布局及手机发布回归 97/97。
 - Android JVM（Java 虚拟机）27/27，普通 `assembleDebug`、专属 `assembleDebugAndroidTest` 均通过；MuMu 从全新安装运行 `IconSystemVisualTest` 1/1，通过后卸载。
-- `npm run typecheck` 和 `git diff --check` 通过；完整测试交 GitHub CI（持续集成），不在本地跑全量。
+- `npm run typecheck` 和 `git diff --check` 通过；完整测试交 [PR #56 的 GitHub CI（持续集成）](https://github.com/memoweft/weftmate/pull/56/checks)，不在本地跑全量。
 - `public account shell keeps secrets out of markup and code-generated HTML` 的既有静态正则失败仍按仓库 CI 例外清单处理：其匹配的 `context` 片段在本包前后完全相同；没有新增或放宽例外。
 
 设计稿原文件的 `file:` 浏览器预览被工具协议安全策略拒绝；母版图形从本人指定 HTML（网页文档）源码精确导入，未修改仓库外设计稿。界面检测器的警告集中在既有动态图片空 `src`、既有页面样式，以及无法从绝对 HTTP（网页访问协议）路径解析本地样式；图标新资产的实际效果以上述程序 / 模拟器截图为准。
