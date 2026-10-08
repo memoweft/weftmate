@@ -199,6 +199,14 @@ extension AppleAppModel {
             .sorted { $0.record.createdAt < $1.record.createdAt }
     }
 
+    func isSupplement(_ receiptID: String, in conversation: ConversationSummary) -> Bool {
+        commandRows(for: conversation).contains { $0.receipt?.receiptId == receiptID && $0.receipt?.taskAction == "supplement" }
+    }
+    func commandStatusRows(for conversation: ConversationSummary) -> [ConversationCommandPresentation] {
+        let received = Set(timeline.events.filter { $0.type == "user.message" }.compactMap { $0.data["receiptId"]?.string })
+        return commandRows(for: conversation).filter { !$0.ended && !($0.receipt?.taskAction == "supplement" && $0.receipt?.receiptId.map { received.contains($0) } == true) }
+    }
+
     /// Read-only task navigation uses an observed session identity, independently of send/model readiness.
     func taskSessionID(for conversation: ConversationSummary, accountEpoch: UUID) -> String? {
         guard accountEpoch == epoch, let session, let selected = selectedConversation,

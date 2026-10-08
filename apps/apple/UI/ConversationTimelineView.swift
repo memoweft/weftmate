@@ -35,6 +35,11 @@ struct ConversationTimelineView: View {
                     if let message = appModel.messages.first(where: { $0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)") }) {
                         MessageView(model: appModel, message: message, openAttachment: openAttachment)
                     }
+                    if entry.event.type == "user.message", let receipt = entry.event.data["receiptId"]?.string,
+                       appModel.isSupplement(receipt, in: conversation) || commands.supplementReceiptIDs.contains(receipt) {
+                        Text("已补充到当前任务").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                            .accessibilityIdentifier("supplementNotice." + receipt)
+                    }
                     let memories = UsedMemory.references(in: entry.event)
                     if !memories.isEmpty {
                         Button { openMemory(entry.event) } label: {
