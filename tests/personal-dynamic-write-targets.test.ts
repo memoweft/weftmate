@@ -147,3 +147,13 @@ test('literal file URL in a launched Node script protects the real destination',
     assert.deepEqual(classifyPersonalRisk('pwsh', { command: 'node sum.mjs' }, cwd), ['overwrite'])
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
+
+test('JavaScript arrows and comparisons are not parsed as shell redirection', () => {
+  assert.deepEqual(classifyPersonalRisk('code', { code: 'const f = x => x > 1; return f(2);' }), [])
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-js-'))
+  try {
+    writeFileSync(join(cwd, 'read.mjs'), 'const f = x => x > 1; console.log(f(2));')
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: 'node read.mjs' }, cwd), [])
+    assert.ok(classifyPersonalRisk('bash', { command: 'P="new.txt user.txt"; curl -o $P https://example.org' }, cwd).includes('overwrite'))
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
+})
