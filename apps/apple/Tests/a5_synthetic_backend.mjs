@@ -13,7 +13,7 @@ export function syntheticBackend(root) {
   function append(s,type,data){const event={seq:s.events.length,time:Date.now(),type,data};s.events.push(event);return event;}
   function message(text,receipt=randomUUID()){return {id:randomUUID(),source:{kind:'user',rpcId:receipt},content:[{type:'text',text}]};}
   function start(s,m) {
-    s.current=m;s.turn++;s.running=true;
+    s.current=m;s.supplements=[];s.turn++;s.running=true;
     append(s,'turn/start',{turn:s.turn});
     append(s,'agent/inbox/spliced',{target:'next-turn',start:0,removedCount:1,inserted:[]});
     append(s,'user/message',m);append(s,'step/start',{turn:s.turn,step:1});
@@ -39,7 +39,7 @@ export function syntheticBackend(root) {
         append(s,'agent/inbox/spliced',{target:'next-step',start:0,removedCount:0,inserted:[m]});
         const steeredReceiptId=s.current.source.rpcId;
         append(s,'agent/inbox/spliced',{target:'next-step',start:0,removedCount:1,inserted:[]});
-        append(s,'user/message',m);
+        append(s,'user/message',m);s.supplements.push(receiptId);
         return {accepted:true,receiptId,steeredReceiptId};
       }
       const input=await service.beginUsage({sessionId,profileId:model.id});
@@ -50,11 +50,11 @@ export function syntheticBackend(root) {
     },
     stopTask:async({sessionId,receiptIds,queuedOnly})=>{
       const s=sessions.get(sessionId);operations.push({kind:queuedOnly?'cancel':'stop',sessionId,receiptIds});
-      const removed=[];
+      const removed=[],activeTurn=s.turn,activeReceipts=s.current?[s.current.source.rpcId,...(s.supplements??[])]:[];
       for(const receipt of receiptIds){const i=s.queue.findIndex(m=>m.source.rpcId===receipt);if(i>=0){s.queue.splice(i,1);append(s,'agent/inbox/spliced',{target:'next-turn',start:i,removedCount:1,inserted:[],outcome:'canceled'});removed.push(receipt);}}
-      if(queuedOnly&&removed.length===0)return {status:'unconfirmed',receiptIds:[],jobs:[],executionCancelled:false};
+      if(queuedOnly&&removed.length===0)return {status:'unconfirmed',outcomes:receiptIds.map(receiptId=>({receiptId,status:'unconfirmed'}))};
       if(!queuedOnly&&s.current&&receiptIds.includes(s.current.source.rpcId))finish(s,'aborted');
-      return {status:'stopped',receiptIds,jobs:[],executionCancelled:true};
+      return {status:queuedOnly?'queue_removed':'cancel_requested',outcomes:receiptIds.map(receiptId=>({receiptId,status:removed.includes(receiptId)?'queue_removed':activeReceipts.includes(receiptId)?'cancel_requested':'unconfirmed',...(activeReceipts.includes(receiptId)?{turn:activeTurn}:{}),backgroundJobs:[]}))};
     },
     cancelSession:async({sessionId})=>{const s=sessions.get(sessionId);s.queue=[];finish(s,'aborted');return {accepted:true};},
     describeSession:async id=>{const s=sessions.get(id);return s?{sessionId:id,title:s.title,agentPreset:'personal-remote',modelProfileId:model.id,running:s.running}:null;},
