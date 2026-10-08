@@ -27,4 +27,5 @@
         Object.assign(ui, factory(core, ui));
     for (const mount of ["mountAuth", "mountAccount", "mountSettings", "mountMemory", "mountApprovals", "mountComposer", "mountPhone", "mountSessions", "mountCloudSettings", "mountShell"])
         ui[mount]();
+    globalThis.__WeftUiStarted = true;
 })();
