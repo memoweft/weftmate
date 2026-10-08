@@ -91,9 +91,21 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             heading.prepend(window.WeftIcons.create('approval', 16));
             card.append(heading);
             card.classList.toggle('is-resolved', row.status !== 'pending');
-            const reason = ui.element('p', 'conversation-approval-reason', row.reason.replace(/^\[weftmate:[a-z,\-]+\]\s*/, '').trim() || '执行端请求你批准这次操作。');
+            const presentation = core.approvalPresentation(row);
+            const reason = ui.element('p', 'conversation-approval-reason', presentation.summary);
+            const explanation = ui.element('p', 'conversation-approval-reason');
+            const details = ui.element('details', 'conversation-task-more');
+            const raw = ui.element('pre', 'timeline-raw');
+            details.append(ui.element('summary', '', '详情'), raw);
+            const paint = value => { raw.textContent = typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw, null, 2); reason.textContent = value.summary; explanation.textContent = value.reason; explanation.hidden = !value.reason || row.status !== 'pending'; };
+            paint(presentation);
+            details.hidden = row.status !== 'pending';
+
+            void core.readApprovalPresentation(row).then(value => {
+                if (card.isConnected && card.dataset.signature === signature && core.approvalContextCurrent(context)) paint(value);
+            });
             reason.hidden = row.status !== 'pending';
-            card.append(reason);
+            card.append(reason, explanation, details);
             const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，请重新核对答复。' : '');
             const status = ui.element('p', 'conversation-approval-status', row.status === 'pending' && operation ? '正在提交本次决定…'
                 : notice || (row.status === 'pending' && marker ? '上次答复结果尚未确认。已核对仍在等待，可用原答复重试。' : core.approvalStatusText(row)));

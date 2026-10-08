@@ -44,6 +44,7 @@ export async function startTimelineCandidate(options = {}) {
       call('pwsh', 'write-1', { command: 'node scripts/report.mjs' })
       return { accepted: true, receiptId }
     },
+    stopTask: async ({ receiptIds }) => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false; } return { status: 'stopped', receiptIds, jobs: [], executionCancelled: true }; },
     cancelSession: async () => { operations.push({ kind: 'cancel' }); if (options.interactive) { append('turn/end', { turn: 1, reason: { kind: 'aborted' } }); running = false } return { accepted: true } },
     describeSession: async id => id === sessionId ? { sessionId, running, agentPreset: 'personal-remote', modelProfileId: 'local', title: '项目进度报告' } : null,
     readEvents: async ({ sessionId: id, ...options }) => adapter.historyPage(id, options),
