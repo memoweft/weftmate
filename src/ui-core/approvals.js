@@ -1,5 +1,25 @@
 /* Shared approvals state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
+    function approvalPresentation(row, detail) {
+        const fullReason = (row.reason || '').replace(/^\[weftmate:[a-z,\-]+\]\s*/, '').trim();
+        const offset = fullReason.indexOf('\n{');
+        const reason = offset >= 0 ? fullReason.slice(0, offset) : fullReason;
+        const rawArguments = offset >= 0 ? fullReason.slice(offset + 1) : fullReason;
+        const args = core.toolArguments(detail || row.arguments || row.parameters || rawArguments);
+        const hasArguments = Object.keys(args).length > 0;
+        return { summary: hasArguments ? core.toolSummary(row.toolName, args) : reason && !reason.startsWith('{') ? reason : core.toolSummary(row.toolName, args),
+            reason: hasArguments && !reason.startsWith('{') ? reason : '', raw: detail || row.arguments || row.parameters || fullReason };
+    }
+    async function readApprovalPresentation(row) {
+        const step = core.timelineEventsForContext().filter(event => event.type.startsWith('step.') || event.data?.completedStep).map(event => event.data?.completedStep || event.data)
+            .find(data => data?.detailRef && (data.callId === row.callId || data.stepId === row.callId));
+        if (!step) return core.approvalPresentation(row);
+        try {
+            const detail = await core.readTimelineDetail(row.sessionId, step.detailRef.seq);
+            return core.approvalPresentation(row, detail.text);
+        } catch { return core.approvalPresentation(row); }
+    }
+
     async function refreshApprovalMode(sessionId) {
         const generation = core.state.identityGeneration;
         core.state.approvalModeLoading = true;
@@ -57,8 +77,10 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             return;
         }
         const fromPhone = core.state.activeChatSource === 'phone';
-        if (core.state.selectedSessionId !== sessionId)
+        if (core.state.selectedSessionId !== sessionId) {
             core.cancelAttachmentUpload();
+            core.state.messageMode = 'steer';
+        }
         if (fromPhone && core.state.selectedPhoneConversationId && !core.readPhoneOutbox())
             core.state.phoneDrafts.set(core.state.selectedPhoneConversationId, effects.readMessageDraft());
         core.state.activeChatSource = 'desktop';
@@ -327,5 +349,5 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
                 effects.defaultApprovalNotice('无法读取默认模式，请刷新设置。');
         }
     }
-    return { refreshApprovalMode, saveApprovalMode, selectSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
+    return { approvalPresentation, readApprovalPresentation, refreshApprovalMode, saveApprovalMode, selectSession, resetConversationApprovals, approvalContext, approvalContextCurrent, approvalIdentity, sameApproval, validApproval, approvalMarkerKey, approvalMarkers, approvalMarker, saveApprovalMarker, clearApprovalMarker, approvalSource, mergeApproval, refreshConversationApprovals, approvalStatusText, submitApproval, refreshApprovalSettings };
 };
