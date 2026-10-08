@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # M2d candidate; replace with the actual squash commit after Core PR merges.
-          ref: 561eb090eb009ce07d16b00fc441eeb6cd808c8b
+          ref: 53f1b06f96ee78496fdcc02097c17efab8f124d8
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
