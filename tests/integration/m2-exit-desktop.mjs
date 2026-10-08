@@ -116,6 +116,7 @@ async function baseline(modelName, fourOnly = false) {
     }, { path, body, method });
   }
   async function configure(name) {
+    if (models.some(model => model.name === name && model.configured)) return;
     if (name === 'lan') await acquireLan();
     const requestId = randomUUID();
     const result = await api('/account/models', { requestId, name,
@@ -269,6 +270,7 @@ async function baseline(modelName, fourOnly = false) {
     await launch(); await configure(modelName);
     await api('/settings/models', { backgroundModelProfileId: models.find(m => m.name === modelName).id }, 'PATCH');
     report.initialMemory = (await api('/memory/status')).body; persist();
+    if (!fourOnly && ['mimo', 'lan'].includes(judgeModel) && judgeModel !== modelName) await configure(judgeModel);
     if (fourOnly) {
       await configure('mimo');
       writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'EX-2 four', provisioned: true }));
