@@ -29,7 +29,7 @@ const coreSource = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWef
 const python = option('--python', 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe');
 const evidence = resolve(option('--out', join(repository, 'tests/evidence/m2-exit')));
 const lockPath = 'D:/AIProjects/WeftMate/Runtime/Orchestrator/lan.lock';
-const lockToken = `EX-2 ${randomUUID()}`;
+const lockToken = `${option('--lock-owner', 'EX-2')} ${randomUUID()}`;
 let bridge, lockTimer, ownsLock = false;
 const roots = [], reports = [];
 process.env.TEMP = process.env.TMP = 'C:/Temp';
@@ -321,6 +321,13 @@ async function baseline(modelName, fourOnly = false) {
       result.checks = { correctionCompleted: turn.status === 'completed', ...correctionChecks(corrected, previous, turns, provenance),
         replacementReason: result.storage.relationship_transitions.some(row => row.reason && previous.some(item => item.id === row.prior_relationship_id) && corrected.some(item => item.id === row.replacement_relationship_id && /表弟/.test(item.text))) };
       result.semantic = await Promise.all(turns.map(turn => semantic(turn, '当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。')));
+      result.explanations = [];
+      for (const name of [modelName, alternate]) {
+        const explanation = await message(await session(name), '为什么之前说王小明是好兄弟，现在那个说法不算了？', name);
+        result.explanations.push(explanation);
+      }
+      result.checks.bothExplainReplacement = result.explanations.every(turn => turn.status === 'completed' &&
+        /纠正|更正|改口|修正|更改/.test(turn.reply) && /表弟/.test(turn.reply));
     });
     await step('06', '重启宿主、持久化后仍采用最新理解', async result => {
       const oldPid = app.process().pid; await settled(); await close(); await launch(true);
