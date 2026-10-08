@@ -1,0 +1,17 @@
+{
+  "chromium": "390x844",
+  "signedManifest": true,
+  "changedFiles": [
+    "components/cloud-auth.js"
+  ],
+  "downloadedBytes": 10496,
+  "reusedBytes": 1445037,
+  "totalBytes": 1455533,
+  "switched": true,
+  "native": {
+    "packageId": "com.memoweft.weftmate.mobile.upd1qa",
+    "signedDownload": true,
+    "switched": true,
+    "rollback": true
+  }
+}
