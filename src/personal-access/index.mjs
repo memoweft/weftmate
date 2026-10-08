@@ -137,6 +137,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get driveTaskStop() { return driveTaskStop; },
     get handleMemoryHttp() { return handleMemoryHttp; },
     get hashQueue() { return hashQueue; },
+    get hashWork() { return hashWork; },
     set hashQueue(value) { hashQueue = value; },
     get hostOwner() { return hostOwner; },
     get interactionRequestIdUsed() { return interactionRequestIdUsed; },
