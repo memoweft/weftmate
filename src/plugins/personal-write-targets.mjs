@@ -197,9 +197,12 @@ export function shellWriteTargets(source, cwd, powershell = true) {
   const invalidate = () => { bindings.clear(); environment.clear(); location = undefined; stack.length = 0; };
   function statement(parts, uncertain = false) {
     if (!parts.length) return;
-    const assignment = parts[1] === '=' ? (powershell ? /^\$([\w:]+)$/.exec(parts[0]) : /^(?:[A-Za-z_]\w*)$/.exec(parts[0])) : null;
+    const assignment = parts[1] === '=' ? (powershell ? /^(?:\[(?:string|System\.String)\])?\$([\w:]+)$/i.exec(parts[0]) : /^(?:[A-Za-z_]\w*)$/.exec(parts[0])) : null;
     if (assignment && parts[1] === '=') {
       const name = powershell ? assignment[1] : parts[0], result = uncertain ? undefined : value(parts.slice(2), !powershell);
+      // Scoped assignments may alias an ordinary variable in this script. Do
+      // not keep a stale ordinary binding after such a write.
+      if (powershell && name.includes(':') && !/^env:/i.test(name)) invalidate();
       if (powershell && result === undefined && !/^(?:\$[\w:]+(?:\.\w+)*|Join-Path|Invoke-WebRequest|Invoke-RestMethod|Get-Content|Get-ChildItem|Get-Item|Test-Path|Write-Output|Write-Host|\[(?:System\.)?IO\.File\]::(?:WriteAllText|WriteAllBytes|AppendAllText))$/i.test(parts[2] ?? '')) invalidate();
       if (powershell && /^env:/i.test(name)) {
         const existing = [...environment.keys()].find(k => key(k) === key(name.slice(4)));
@@ -207,7 +210,8 @@ export function shellWriteTargets(source, cwd, powershell = true) {
       }
       else bindings.set(key(name), result);
     }
-    if (/^(?:Set-Variable|Set-Item|Invoke-Expression|iex|source|eval|\.)$/i.test(parts[0]) || /^(?:\$|&)/.test(parts[0]) && !assignment) invalidate();
+    if (/^(?:Set-Variable|Set-Item|Invoke-Expression|iex|source|eval|\.)$/i.test(parts[0]) ||
+      !assignment && (/^(?:\$|&|\[[^\]]+\]\$|--\$)/.test(parts[0]) || parts[0] === '+' && parts[1] === '+')) invalidate();
     const command = parts[0].toLowerCase();
     // Unknown commands/functions can mutate the shell scope or location. A
     // known literal assignment afterwards can establish fresh evidence again.
