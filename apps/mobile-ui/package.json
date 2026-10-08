@@ -4,9 +4,9 @@
   "version": "0.8.0",
   "description": "Offline Weave UI bundled into Android and published by the personal host",
   "scripts": {
-    "build": "esbuild src/vendor.js --bundle --minify --format=iife --global-name=WeftFormat --outfile=www/vendor.js",
+    "build": "esbuild src/vendor.js --bundle --minify --format=iife --global-name=WeftFormat --outfile=www/vendor.js && node src/build-ui-core.mjs",
     "build:cloud": "node src/build-cloud.mjs",
-    "check": "node --check www/app.js",
+    "check": "node src/check.mjs",
     "test": "node --test tests/*.test.mjs"
   },
   "devDependencies": {
