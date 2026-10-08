@@ -15,6 +15,11 @@ const repository = resolve(import.meta.dirname, '../..');
 process.env.TEMP = process.env.TMP = 'C:/Temp';
 const memoryUi = process.argv.includes('--memory-ui');
 const memoryLoop = process.argv.includes('--memory-loop');
+const memoryAccuracy = process.argv.includes('--memory-accuracy');
+assert.ok(!memoryAccuracy || memoryLoop, '--memory-accuracy requires --memory-loop');
+const coreSourceIndex = process.argv.indexOf('--memory-core-source');
+const coreSource = coreSourceIndex === -1 ? 'D:/AIProjects/MemoWeft/Core/py/src'
+  : resolve(process.argv[coreSourceIndex + 1]);
 const modelName = process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const diagnostic = process.argv.includes('--diagnostic');
 const comparison = process.argv.includes('--mimo-machine');
@@ -38,7 +43,7 @@ if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key'
 }
 if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
 const scenarioFixes = process.argv.includes('--scenario-fixes');
-const root = join('C:/Temp', `weftmate-${memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
+const root = join('C:/Temp', `weftmate-${memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password = `test-${randomUUID()}-password`, username = `eval-${randomUUID()}`;
@@ -50,7 +55,7 @@ assert.equal((await fetch(`${prepared.origin}/personal/v1/auth/setup`, { method:
 await prep.close();
 const memoryConfig = join(root, 'memory-config.json');
 writeFileSync(memoryConfig, JSON.stringify({ python: 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe',
-  pythonPath: 'D:/AIProjects/MemoWeft/Core/py/src', baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', authRef: 'baseline-pending' }));
+  pythonPath: coreSource, baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', authRef: 'baseline-pending' }));
 const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE' || name === 'MIMO_API_KEY' || name === 'MODEL_SWITCH_UNIFIED_KEY') delete env[name];
 env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
@@ -96,6 +101,7 @@ try {
   let scenarios = await loadScenarios('eval/scenarios/*.yaml');
   if (memoryUi) scenarios = [{ id: 'memory-ui', category: 'memory', title: '单条表达偏好程序验收', setup: { files: [], memories: [], devices: ['隔离桌面程序'] }, turns: [{ user: '我希望你以后只用中文回答我的问题。请只回复收到，不调用工具。', after: { newSession: true, waitMs: 1000 } }, { user: '跟我问个好。只写一句话，不调用工具。' }], checks: [{ type: 'turn_status', turn: 1, status: 'completed' }, { type: 'turn_status', status: 'completed' }, { type: 'memory_used' }], timeoutSec: 600, notes: '独立合成账号，验证真实形成/新对话采用/单条来源标签。' }];
   if (memoryLoop) scenarios = scenarios.filter(s => s.category === 'memory');
+  if (memoryAccuracy) scenarios = scenarios.filter(s => /^(memory-01|memory-03|memory-04)-/.test(s.id));
   if (scenarioFixes) scenarios = scenarios.filter(s => /^(action-04|action-06|memory-01|memory-02|memory-04)-/.test(s.id));
   if (diagnostic) scenarios = scenarios.filter(s => s.id === 'action-06-delete-approval').map(s => ({ ...s, timeoutSec: 600 }));
   const onlyIndex = process.argv.indexOf('--only');
