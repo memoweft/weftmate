@@ -389,9 +389,13 @@ struct ConversationView: View {
                     } label: { Image(systemName: "plus").frame(width: 32, height: 32) }
                     .disabled(!model.canAddAttachments(conversation)).accessibilityLabel("添加附件")
                     .accessibilityIdentifier("addAttachmentButton")
+                    if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: accountEpoch) {
+                        ApprovalModeControl(model: model, sessionID: sessionID)
+                            .id(sessionID + accountEpoch.uuidString)
+                    }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
                     Text(model.draftStatus(for: conversation))
-                        .font(.caption).foregroundStyle(Weave.muted)
+                        .font(.caption).foregroundStyle(Weave.muted).lineLimit(1)
                         .accessibilityIdentifier("draftSaveStatus")
                     Spacer()
                     Button { Task { await model.send(conversation, accountEpoch: accountEpoch) } } label: {

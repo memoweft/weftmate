@@ -13,7 +13,7 @@ private final class InteractionCredentials: CredentialStore, @unchecked Sendable
     func delete(key: String) { lock.withLock { values[key] = nil } }
 }
 private actor InteractionHTTP: HTTPTransport {
-    var lostQuestion = false, denyQuestions = false, withholdACK = false, oldSnapshot = false
+    var lostQuestion = false, lostApproval = false, denyQuestions = false, withholdACK = false, oldSnapshot = false
     private var pause = false
     private var paused: CheckedContinuation<Void, Never>?
     func pauseRead() { pause = true }
@@ -24,9 +24,9 @@ private actor InteractionHTTP: HTTPTransport {
     private var answerRequest: String?
     private var questionBodies: [Data] = [], approvalBodies: [Data] = []
     private let time = "2026-10-06T00:00:00Z"
-    func configure(lostQuestion: Bool = false, denyQuestions: Bool = false,
+    func configure(lostQuestion: Bool = false, lostApproval: Bool = false, denyQuestions: Bool = false,
                    withholdACK: Bool = false, oldSnapshot: Bool = false) {
-        self.lostQuestion = lostQuestion; self.denyQuestions = denyQuestions
+        self.lostQuestion = lostQuestion; self.lostApproval = lostApproval; self.denyQuestions = denyQuestions
         self.withholdACK = withholdACK; self.oldSnapshot = oldSnapshot
     }
     func submissions() -> ([Data], [Data]) { (approvalBodies, questionBodies) }
@@ -40,6 +40,7 @@ private actor InteractionHTTP: HTTPTransport {
         if path == "/personal/v1/tasks/task-check" { return try json(task()) }
         if path.hasSuffix("/approvals/approval-check"), method == "POST" {
             approvalBodies.append(request.httpBody!)
+            if lostApproval { lostApproval = false; throw URLError(.networkConnectionLost) }
             decision = try JSONSerialization.jsonObject(with: request.httpBody!) as? [String: String]
             return try json(["approval": approval(resolved: false), "requestId": decision!["requestId"]!])
         }
@@ -69,10 +70,10 @@ private actor InteractionHTTP: HTTPTransport {
     }
     private func approval(resolved: Bool) -> [String: Any] {
         var row = identity("approval-check", field: "approvalId")
-        row["callId"] = "call-check"; row["toolName"] = "Synthetic"; row["reason"] = "Synthetic approval"
+        row["riskCategories"] = ["execute"]; row["callId"] = "call-check"; row["toolName"] = "Synthetic"; row["reason"] = "Synthetic approval"
         if let decision {
             row["status"] = resolved ? "resolved" : "answered"; row["decisionOutcome"] = decision["outcome"]
-            row["decisionRequestId"] = decision["requestId"]; row["answeredAt"] = time
+            row["decisionScope"] = decision["scope"] ?? "once"; row["decisionRequestId"] = decision["requestId"]; row["answeredAt"] = time
             if resolved { row["outcome"] = decision["outcome"]; row["resolvedAt"] = time }
         }
         return row
@@ -178,6 +179,30 @@ private actor InteractionHTTP: HTTPTransport {
         let finalCounts = await transport.submissions()
         try require(finalCounts.0.count == 1 && finalCounts.1.count == 2, "Unexpected duplicate or account-stale mutation")
         print("PASS 8 account epoch retires actions; provider=0 externalHTTP=0")
-        print("TaskInteractionChecks: 9/9 passed; journal=" + directory.path)
+        let categoryHTTP = InteractionHTTP()
+        let categoryClient = PersonalClient(credentialStore: InteractionCredentials(), transport: categoryHTTP)
+        let categoryAccount = try await categoryClient.login(server: ServerConfiguration(input: "https://interaction.unit.example:8443"),
+            username: "fixture", password: "synthetic-only", deviceName: "Synthetic")
+        let categoryEpoch = UUID()
+        func categoryModel() -> TaskInteractionModel {
+            TaskInteractionModel(client: categoryClient, account: categoryAccount, epoch: categoryEpoch,
+                stateDirectory: directory.appendingPathComponent("category"), currentEpoch: { categoryEpoch }, currentSession: { categoryAccount })
+        }
+        let categorySnapshot = try await categoryClient.taskDetail(taskID: "task-check")
+        let firstCategory = categoryModel()
+        await firstCategory.refresh(categorySnapshot)
+        await categoryHTTP.configure(lostApproval: true)
+        await firstCategory.decide(firstCategory.approvals[0], outcome: .allowedOnce, decisionScope: .conversationCategory)
+        let categoryKey = "approval:approval-check"
+        try require(firstCategory.responseNeedsReadback(categoryKey), "Lost category POST was not retained")
+        let reloadedCategory = categoryModel()
+        await reloadedCategory.refresh(categorySnapshot)
+        try require(reloadedCategory.savedApprovalScope(reloadedCategory.approvals[0]) == .conversationCategory, "Journal lost category scope")
+        await reloadedCategory.continueOriginal(categoryKey)
+        let categoryPosts = await categoryHTTP.submissions().0
+        try require(categoryPosts.count == 2 && categoryPosts[0] == categoryPosts[1], "Category retry changed request/outcome/scope bytes")
+        try require(reloadedCategory.approvals[0].decisionSummary == "已允许 · 运行脚本 · 本对话总是允许此类", "Resolved category summary is incorrect")
+        print("PASS 10 category scope survives lost response and journal reopen with exact retry bytes")
+        print("TaskInteractionChecks: 10/10 passed; journal=" + directory.path)
     }
 }

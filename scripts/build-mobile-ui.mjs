@@ -10,7 +10,7 @@ for (let index = 2; index < process.argv.length; index += 2) {
   const name = process.argv[index], value = process.argv[index + 1];
   if (!name?.startsWith('--') || !value || value.startsWith('--') || options.has(name) ||
       !['--output-dir', '--ui-version', '--min-native-version-code', '--release-notes', '--activate-release'].includes(name)) {
-    throw new Error('usage: node scripts/build-mobile-ui.mjs --output-dir <absolute release directory> [--ui-version 0.8.1] [--min-native-version-code 14] [--release-notes text] [--activate-release version-hash]');
+    throw new Error('usage: node scripts/build-mobile-ui.mjs --output-dir <absolute release directory> [--ui-version 0.8.3] [--min-native-version-code 16] [--release-notes text] [--activate-release version-hash]');
   }
   options.set(name, value);
 }
@@ -23,7 +23,7 @@ if (!outputDir || !path.isAbsolute(outputDir) ||
 const manifest = options.has('--activate-release')
   ? await activateMobileUiRelease({ outputDir, releaseId: options.get('--activate-release') })
   : await publishMobileUi({ sourceDir, outputDir,
-    uiVersion: options.get('--ui-version') ?? '0.8.2',
-    minNativeVersionCode: Number(options.get('--min-native-version-code') ?? '15'),
+    uiVersion: options.get('--ui-version') ?? '0.8.3',
+    minNativeVersionCode: Number(options.get('--min-native-version-code') ?? '16'),
     releaseNotes: options.get('--release-notes') ?? '' });
 console.log(`[mobile-ui] active uiVersion=${manifest.uiVersion} assetBase=${manifest.assetBase}`);

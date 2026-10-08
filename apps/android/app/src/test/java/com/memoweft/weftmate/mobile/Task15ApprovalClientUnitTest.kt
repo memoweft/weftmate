@@ -6,6 +6,15 @@ import org.junit.Test
 class Task15ApprovalClientUnitTest {
     private val approvalId = "12345678-1234-4234-8234-123456789abc"
 
+    @Test fun categoryPermissionKeepsTheSameDecisionRouteAndRejectsScopeOnRejection() {
+        for (scope in listOf("once", "conversation-category"))
+            assertEquals("/personal/v1/sessions/session-one/approvals/$approvalId",
+                approvalDecisionPath("session-one", approvalId, "ui:original.1", "allowed-once", scope))
+        for (scope in listOf("once", "conversation-category", "account", ""))
+            rejected { approvalDecisionPath("session-one", approvalId, "ui:original.1", "rejected", scope) }
+        rejected { approvalDecisionPath("session-one", approvalId, "ui:original.1", "allowed-once", "account") }
+    }
+
     @Test fun listUsesOnlyTheExactSessionRouteAndOptionalCursor() {
         assertEquals("/personal/v1/sessions/session-one/approvals?limit=50", approvalListPath("session-one"))
         assertEquals("/personal/v1/sessions/session-one/approvals?limit=100&before=$approvalId",

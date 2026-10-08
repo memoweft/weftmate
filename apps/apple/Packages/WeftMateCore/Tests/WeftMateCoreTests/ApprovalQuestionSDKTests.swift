@@ -327,3 +327,84 @@ struct ApprovalQuestionSDKTests {
         }
     }
 }
+
+struct AppleApprovalModeTests {
+    @Test func modeEndpointsUseAccountDefaultAndConversationWithAuthenticatedPatch() async throws {
+        let transport = InteractionScriptTransport(interactionLoginSteps() + [
+            .init(path: "/auth/me", response: interactionAuth()),
+            .init(path: "/settings/approvals", response: interactionJSON(["mode": "auto"])),
+            .init(path: "/auth/me", response: interactionAuth()),
+            .init(path: "/settings/approvals", response: interactionJSON(["mode": "plan"]), method: "PATCH"),
+            .init(path: "/auth/me", response: interactionAuth()),
+            .init(path: "/sessions/session-test/approval-mode", response: interactionJSON(["mode": "ask", "allowedCategories": ["delete"]])),
+            .init(path: "/auth/me", response: interactionAuth()),
+            .init(path: "/sessions/session-test/approval-mode", response: interactionJSON(["mode": "accept-edits", "allowedCategories": ["delete"]]), method: "PATCH")])
+        let client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+        _ = try await interactionLogin(client)
+        #expect(try await client.approvalMode().mode == .auto)
+        #expect(try await client.setApprovalMode(.plan).mode == .plan)
+        #expect(try await client.approvalMode(sessionID: interactionSession).allowedCategories == ["delete"])
+        #expect(try await client.setApprovalMode(.acceptEdits, sessionID: interactionSession).mode == .acceptEdits)
+        let patches = await transport.requests().filter { $0.httpMethod == "PATCH" }
+        #expect(patches.count == 2)
+        #expect(patches.allSatisfy { $0.value(forHTTPHeaderField: "Cookie") != nil && $0.value(forHTTPHeaderField: "X-WeftMate-CSRF") != nil })
+        #expect(String(data: patches[0].httpBody!, encoding: .utf8) == "{\"mode\":\"plan\"}")
+        #expect(String(data: patches[1].httpBody!, encoding: .utf8) == "{\"mode\":\"accept-edits\"}")
+    }
+    @Test func categoryIntentPersistsExactScopeAndRejectsDifferentScopeReceipt() throws {
+        let row = try approvalRecord(["riskCategories": ["delete", "overwrite"]])
+        let category = try ApprovalDecisionIntent(scope: interactionScope(), approval: row, outcome: .allowedOnce,
+            requestID: "category-request", decisionScope: .conversationCategory)
+        #expect(String(data: category.payload, encoding: .utf8) == "{\"outcome\":\"allowed-once\",\"requestId\":\"category-request\",\"scope\":\"conversation-category\"}")
+        #expect(try JSONDecoder().decode(ApprovalDecisionIntent.self, from: JSONEncoder().encode(category)) == category)
+        let bad = approvalAcknowledgment(category)
+        #expect(throws: APIFailure.invalidResponse) { try ApprovalDecisionReceipt.decode(bad.body, intent: category) }
+        let good = interactionJSON(["approval": approvalFields(changes: ["status": "answered", "decisionOutcome": "allowed-once",
+            "decisionScope": "conversation-category", "decisionRequestId": category.requestId, "answeredAt": interactionTime]), "requestId": category.requestId])
+        #expect(try ApprovalDecisionReceipt.decode(good.body, intent: category).approval.status == .answered)
+        #expect(throws: APIFailure.invalidResponse) {
+            try ApprovalDecisionIntent(scope: interactionScope(), approval: row, outcome: .rejected, requestID: "reject", decisionScope: .once)
+        }
+        #expect(throws: APIFailure.invalidResponse) {
+            try ApprovalDecisionIntent(scope: interactionScope(), approval: approvalRecord(), outcome: .allowedOnce,
+                requestID: "empty", decisionScope: .conversationCategory)
+        }
+    }
+    @Test func legacySavedIntentAndNewWatchOnceRemainCompatible() throws {
+        let legacy = try ApprovalDecisionIntent(scope: interactionScope(), approval: approvalRecord(), outcome: .allowedOnce, requestID: "legacy")
+        var saved = try #require(JSONSerialization.jsonObject(with: JSONEncoder().encode(legacy)) as? [String: Any])
+        saved.removeValue(forKey: "decisionScope")
+        #expect(try JSONDecoder().decode(ApprovalDecisionIntent.self, from: JSONSerialization.data(withJSONObject: saved)) == legacy)
+        let updated = try approvalRecord(["riskCategories": ["system", "install", "execute", "future-risk"], "decisionScope": "once"])
+        let watch = try ApprovalDecisionIntent(scope: interactionScope(), approval: updated, outcome: .allowedOnce, requestID: "watch", decisionScope: .once)
+        #expect(String(data: watch.payload, encoding: .utf8)?.contains("\"scope\":\"once\"") == true)
+        let projection = WatchApproval(id: updated.id, summary: updated.reason)
+        #expect(try JSONDecoder().decode(WatchApproval.self, from: JSONEncoder().encode(projection)) == projection)
+        #expect(updated.riskLabels.last == "其他风险（future-risk）")
+        #expect(updated.reversalNotice.contains("取决于具体操作"))
+    }
+    @Test func processedSummariesDoNotConfuseRegistrationWithResolution() throws {
+        #expect(try approvalRecord(["status": "answered", "decisionOutcome": "allowed-once", "riskCategories": ["execute"]]).decisionSummary == "决定已登记 · 运行脚本")
+        #expect(try approvalRecord(["status": "resolved", "outcome": "allowed-once", "riskCategories": ["execute"]]).decisionSummary == "已允许 · 运行脚本")
+        #expect(try approvalRecord(["status": "resolved", "outcome": "rejected", "riskCategories": ["delete"]]).decisionSummary == "已拒绝 · 删除文件")
+        let category = try approvalRecord(["status": "resolved", "outcome": "allowed-once", "decisionScope": "conversation-category", "riskCategories": ["overwrite"]])
+        #expect(category.decisionSummary == "已允许 · 覆盖文件 · 本对话总是允许此类")
+        #expect(category.reversalNotice.contains("可能无法撤销"))
+        #expect(try approvalRecord(["status": "unavailable"]).decisionSummary == "审批已失效 · 操作")
+    }
+    @Test func planReviewStructuredIntentAndLegacyStringBothDecode() throws {
+        var row = questionFields()
+        row["questions"] = [["id": "plan", "question": "确认执行计划", "intent": ["kind": "plan-review", "approve": "确认并执行"], "options": [["label": "确认并执行"], ["label": "拒绝"]]]]
+        let plan = try JSONDecoder().decode(SessionQuestionBatch.self, from: interactionJSON(row).body)
+        #expect(plan.questions[0].intent?["kind"]?.string == "plan-review")
+        #expect(try questionRecord().questions[0].intent?.string == "原生 intent")
+    }
+    @Test func unknownModeFailsInsteadOfShowingAutoAndInvalidSessionSendsNothing() async throws {
+        #expect(throws: DecodingError.self) { try JSONDecoder().decode(ApprovalModeSettings.self, from: Data("{\"mode\":\"future\"}".utf8)) }
+        let transport = InteractionScriptTransport(interactionLoginSteps())
+        let client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+        _ = try await interactionLogin(client)
+        await #expect(throws: APIFailure.invalidResponse) { try await client.approvalMode(sessionID: "bad/path") }
+        #expect(await transport.requests().count == 2)
+    }
+}
