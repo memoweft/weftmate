@@ -33,6 +33,7 @@
     document.body.innerHTML = page;
     globalThis.WeftUiLayout = {
         mountBackup(section) { const group = document.createElement('section'); group.setAttribute('aria-label', '此电脑'); const title = document.createElement('h2'); title.textContent = '此电脑'; group.append(title, section); document.querySelector('#account-view').append(group); },
+        mountSchedules(section) { document.querySelector('#account-view').prepend(section); },
         mountUsage(section, button, panel) { document.querySelector('#account-view').prepend(section); document.querySelector('.assistant-heading').append(button); document.querySelector('.conversation-pane').prepend(panel); },
         mountPreview(panel) { document.querySelector('.assistant-shell').append(panel); },
         mountResourcePicker(picker) { document.querySelector('.assistant-shell').append(picker); },

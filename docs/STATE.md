@@ -9,7 +9,7 @@
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
 | Codex · Windows-5 | FIX-4 用量页时区文案 | `wp/fix-4-usage-tz-label`：桌面 / 手机用量文案按接口实际时区显示 Intl.DateTimeFormat（国际化日期格式接口）中文名称与 IANA（互联网号码分配机构）名，取不到名称回退 IANA；每日日期沿用该时区已聚合的接口日期，图表说明 / 提示与每日明细标明时区。真实 Electron（桌面程序框架）按可见名称 / 角色验证上海文案、10月1日 / 31日、响应纽约时区优先与名称回退通过；手机生成资产5/5、类型检查通过。只改呈现层，无接口变更；完整 CI（持续集成）见本包 PR（合并请求），待 Claude 审查 |
-| Codex · Windows-4 | FIX-3 用量时区 | `wp/fix-3-usage-timezone`：查询支持 IANA（互联网号码分配机构）时区，按当地月 / 日聚合，UTC（协调世界时）时间戳存储不变；账号保存客户端上报时区，月度上限与临时覆盖按当地月重置；缺省宿主时区，兼容旧客户端。用量与手机生成资产相关测试15/15、类型检查通过；真实 Electron（桌面程序框架）隔离窗口验证客户端时区上报 / 保存、UTC+8 午夜 / 月末归属通过；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
+| Codex · Windows-4 | SCH-1 定时与提醒 | `wp/sch-1-reminders`：DSH（助手运行时）原生 schedule（定时调度）/ jobs（后台任务）接线；一次性/固定间隔/当地每日每周、错过补一次、原对话执行与审批、桌面通知及设置管理、手机通知列表接口完成。定向9/9、共享/资产/分类48/48、原生审批桥13/13、审批/提问39/39、成果/项目/浏览器16/16、桌面/资产13/13（批次重叠）及类型检查通过；真实 MiMo + Electron（桌面程序框架）五组场景与两次启动去重通过，[证据](../tests/evidence/sch-1/README.md)。已合 main 并再生成共享资产；累计已报告 MiMo 估算 ¥0.14967964，含失败重跑，非账单；手机管理界面/S3推送另包。完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | FIX-5 弹出菜单溢出 | `wp/fix-5-popover-overflow`：桌面 / 手机自绘模型、审批、插话 / 新任务、附件、账户和来源菜单共用定位函数；模型左对齐向上展开，贴边翻转、8px边距、窄屏收缩 / 内部滚动，窗口和可视区域变化时重新定位。会话操作对话框限制宽高。桌面相关64/64、手机交互与生成资产101/101、共享核心39/39、新边界回归1/1、类型检查通过；真实 Electron（桌面程序框架）1200×800 / 720×600 与手机网页390×844前后截图、长列表 / 缩放 / 翻转证据见[FIX-5](../tests/evidence/fix-5/README.md)。无接口变更，未改设置页；完整CI（持续集成）见本分支PR（合并请求），待Claude审查 |
 | Codex · Windows-7 | UI-P1m 手机动效与新登录审稿图 | [PR #86](https://github.com/memoweft/weftmate/pull/86)（`wp/ui-p1m-mobile-motion`）：手机执行块 / 步骤 / 审批 / 全屏来源 / 会话 / 抽屉 / 发送停止 / 队列 / 登录步骤 / 长按菜单与桌面同一套120–240毫秒令牌；布局立即完成、退出副本不可交互、超过20项不逐项动画。浏览器减少动态效果与Android（安卓）系统动画缩放为0均瞬时且运行中生效；审稿页LG-1b新登录按名称 / 角色，40格0截图失败。手机104/104、相关13/13、类型与令牌检查、Android JVM（Java虚拟机）及debug APK（调试安装包）通过；390×844 Chromium（浏览器引擎）与MuMu（安卓模拟器）18场景三组连续帧、正常运行0个>50ms长任务 / 长帧，[证据与合成边界](../tests/evidence/ui-p1m/README.md)。共享功能 / 桌面 / 业务契约未改，完整CI（持续集成）见本包PR（拉取请求），待Claude审查 |
@@ -90,6 +90,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 ## 契约变更
 
 - **BK-1**：CLIENT_API 第 8 节 `/backups` 改为在线完成并返回 `restartsHost:false`，注销前安全备份同次确认继续；只有恢复重启/重新登录，新增 `running/deferred` 与 `BACKUP_PAUSE_TIMEOUT`。每日空闲与超时重试、凭据排除/本地未加密语义明确，S4 云加密另包。
+- **SCH-1**：CLIENT_API 3.18 新增 GET `/schedules`、POST `/schedules/{sessionId}/{id}/pause|resume|run`、DELETE `/schedules/{sessionId}/{id}`、GET `/notifications`；账号/对话隔离，沿用 CSRF（跨站请求伪造）与权限，原对话 `assistant.message.data.reminder=true` 可选；纯提醒无需推理，执行继承原对话审批，保存任务不随创建登录过期、设备撤销仍拒绝。手机管理界面及 S3 远程推送另包，旧客户端兼容。
 
 - **M2-4 / D11 / D16**：CLIENT_API 3.1 新增 `GET /sessions?archived=false|true|all`、POST `/sessions/{id}/archive|unarchive`、DELETE `/sessions/{id}`（`forgetMemories` 默认false）；归档发送409，删除先停止，勾选走Core真正来源证据删除。桌面/安卓远程会话已接，Apple原生界面另包。
 - **LG-1a**：复用 CLIENT_API 7.8/7.9，无新增业务路径或请求/响应字段；云密码下限对齐 UI_SPEC 6b 的 8 位，注册已验证邮箱后登记同一 App 交互中的初始设备（第二设备仍确认），App 恢复 Cookie（会话凭据）路径修正为云桥可接收/清除。独立离线密码仍为原本机要求。

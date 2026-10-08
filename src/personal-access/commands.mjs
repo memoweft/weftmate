@@ -1,3 +1,4 @@
+import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { digest, failure, id, modelTextWithAttachments, safeCode, withDeadline } from './common.mjs';
 import { TEXT_ATTACHMENT_TYPES } from '../personal-sync/attachments.mjs';
 import { DISPATCH_TIMEOUT_MS, ID, IMAGE_REASONS, MAX_COMMANDS } from './constants.mjs';
@@ -135,7 +136,7 @@ export function createCommandOperations(context) {
           (pending.sourceAuthEpoch !== undefined &&
             context.accountState(ownerId).devices[pending.sourceDeviceId]?.authEpoch !== pending.sourceAuthEpoch) ||
           (['password', 'cloud'].includes(context.accountState(ownerId).devices[pending.sourceDeviceId]?.authKind) &&
-            Date.parse(context.accountState(ownerId).devices[pending.sourceDeviceId].expiresAt) <= context.timestamp())) {
+            !scheduledCommandSource(context.accountState(ownerId), pending) && Date.parse(context.accountState(ownerId).devices[pending.sourceDeviceId].expiresAt) <= context.timestamp())) {
         await context.serial(() => context.mutate(ownerId, (next) => {
           if (next.commands[commandId]?.state !== 'pending') return;
           next.commands[commandId].state = 'rejected';
@@ -259,7 +260,7 @@ export function createCommandOperations(context) {
             (command.sourceAuthEpoch !== undefined &&
               context.accountState(ownerId).devices[command.sourceDeviceId]?.authEpoch !== command.sourceAuthEpoch) ||
             (['password', 'cloud'].includes(context.accountState(ownerId).devices[command.sourceDeviceId]?.authKind) &&
-              Date.parse(context.accountState(ownerId).devices[command.sourceDeviceId].expiresAt) <= context.timestamp())) {
+              !scheduledCommandSource(context.accountState(ownerId), command) && Date.parse(context.accountState(ownerId).devices[command.sourceDeviceId].expiresAt) <= context.timestamp())) {
           await context.mutate(ownerId, (next) => {
             next.commands[commandId].state = 'rejected';
             next.commands[commandId].errorCode = next.devices[command.sourceDeviceId]?.revoked

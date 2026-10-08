@@ -598,6 +598,7 @@ export function createHttpHandler(context) {
           return context.json(response, 200, record);
         }
       }
+      if (await context.scheduleOperations.handleHttp(request, response, url, ownerId)) return;
       const modeMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/approval-mode$/.exec(pathname);
       if ((modeMatch || pathname === '/personal/v1/settings/approvals') && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');

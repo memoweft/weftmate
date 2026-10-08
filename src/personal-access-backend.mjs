@@ -190,6 +190,22 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         await rm(path.join(sessionWorkspaceRoot, sessionId), { recursive: true, force: true })
       return { deleted: true }
     },
+    async schedules({ sessionId, ownerId, action, id }) {
+      requireRuntime()
+      await requireSession(sessionId, ownerId)
+      const response = await fetch(new URL(`/weftmate/schedules/${encodeURIComponent(sessionId)}`, currentOrigin()), {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ action, id }) })
+      const value = await response.json()
+      if (!response.ok) throw Object.assign(new Error(value.error ?? 'BACKEND_UNAVAILABLE'), { code: value.error, status: response.status })
+      return value
+    },
+    async restoreSchedules(sessionIds) {
+      if (!sessionIds.length) return
+      requireRuntime()
+      const response = await fetch(new URL('/weftmate/schedules/restore', currentOrigin()), {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds }) })
+      if (!response.ok) fail('BACKEND_UNAVAILABLE')
+    },
     async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [] }) {
       requireRuntime()
       if (typeof text !== 'string' || (!text.trim() && attachments.length === 0) || text.length > 32_000 ||

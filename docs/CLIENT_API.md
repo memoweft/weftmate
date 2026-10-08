@@ -371,6 +371,29 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 
 桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）只需按本节接线。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
 
+
+### 3.18 提醒与定时任务（SCH-1，M2）
+
+宿主复用 DSH schedule（原生定时调度）的持久事件、计时、事务与派发，执行使用原对话命令队列和 DSH jobs（后台任务）。用户在对话中建立一次性、固定间隔、每日或每周任务；时间按 3.17 保存的账号 `timeZone` 解释，未保存时沿用宿主时区。确认用一句话复述当地时间、重复规则和内容。建立和口头取消由模型调用原生 `schedule_create/list/delete` 与管理工具完成，不增加第二个调度器或自然语言 HTTP（网络接口）解析端点。
+
+所有路径均以 `/personal/v1` 为前缀，沿用账号 Cookie（会话凭据）/设备认证、Origin（来源）和写操作 CSRF（跨站请求伪造）校验。读取要求 `sessions:read`，管理要求 `commands:write`；仅返回当前账号拥有的 `personal-remote` 对话，不允许操作其他账号或只读共享对话。
+
+| 方法与路径 | 请求 | 响应 / 语义 |
+|---|---|---|
+| GET `/schedules` | 无查询参数 | 200 `{items:Schedule[]}`；包含有效、暂停与已完成项；删除后不再返回 |
+| POST `/schedules/{sessionId}/{id}/pause` | `{}` | 200 `{ok:true}`；停止未来派发，保留管理项和规则；重复暂停幂等 |
+| POST `/schedules/{sessionId}/{id}/resume` | `{}` | 200 `{ok:true}`；暂停项重新交给 DSH，重复恢复幂等；周期项从下一次当地日历/间隔时间继续，已过期的一次性项恢复后立即提醒 |
+| DELETE `/schedules/{sessionId}/{id}` | 无请求体 | 200 `{ok:true}`；删除未来派发与管理项，保留历史提醒和已启动的对话任务；不存在项404 |
+| POST `/schedules/{sessionId}/{id}/run` | `{}` | 200 `{ok:true}`；立即提醒或将工作排入原对话，暂停状态与原下次时间保持；每次请求代表一次独立手动运行，客户端不得在响应不确定时自动重发 |
+| GET `/notifications` | 无查询参数 | 200 `{items:Notification[]}`；持久提醒/定时执行通知列表，手机可读取；S3 远程推送另包接入 |
+
+`Schedule`：`{id,nativeId,sessionId,text,kind,timeZone,repeat,state,nextRunAt,lastRunAt,approvalMode}`。`id` 是对话内稳定管理标识；日历续期或恢复时 `nativeId` 可变，客户端只使用 `sessionId/id` 管理。`kind=reminder|task`；`repeat=null|{kind:interval,seconds}|{kind:daily,time}|{kind:weekly,time,weekday}`，`time` 为 `HH:mm:ss`，`weekday` 为0–6（周日0、周一1）。`state=scheduled|paused|completed`；暂停/完成时 `nextRunAt=null`；时间戳为 UTC（协调世界时）ISO 字符串。`approvalMode` 记录建立时模式；实际执行读取原对话当时的模式和分类授权，沿用原用户回执建立的账号意图；建立时登录凭据到期不取消长期任务，设备撤销、账号授权、当前认证版本及原对话审批仍有效。
+
+`Notification`：`{id,sessionId,text,kind,scheduledAt,createdAt,missed,messageId}`。原对话历史增加 `assistant.message.data.reminder=true`（可选字段，旧客户端可忽略）；该消息采用原生持久 seq（事件序号），正常历史分页和事件订阅均可见。纯提醒无需模型推理；Windows 程序显示系统通知，点击进入所属对话；桌面按账号/会话/seq 持久去重，开机补发也显示一次。任务先在原对话提示，再按正常审批模式执行，步骤、审批和成果继续使用已有任务契约。
+
+宿主启动时恢复拥有有效任务的原对话。一次性错过后补一次；固定间隔使用 DSH 最新一次决策，不逐次重放积压；日历重复补一次后重建下一次未来日期，保留当地时间（含夏令时切换）。迟到至少一分钟时消息标明「错过了 X 的提醒/定时任务」。原生 `at` 拒绝首次选择的不存在夏令时时刻，重叠时选择较早瞬间；日历续期遇到不存在的时刻跳过该次，保留下一个有效日期。宿主关机期间不在云端执行电脑任务（D13）；手机通过通知列表等宿主恢复，远程推送留 S3。派发、模型完成和用户读到通知是不同状态；保持 DSH 原生崩溃恢复边界，不宣称外部副作用严格恰好一次。
+
+
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
 ### 4.1 事件结构与原生来源

@@ -1,3 +1,4 @@
+import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { digest, failure, id, publicProject, publicSource, validId, withDeadline } from './common.mjs';
 import { browserCaptureSegments, browserCaptureVersion, MAX_SEGMENT_BYTES } from '../personal-browser/index.mjs';
 import {
@@ -52,7 +53,7 @@ export function createWorkspaceOperations(context) {
           !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
       const device = account.devices[item.sourceDeviceId];
       return device?.authKind === 'password' && !device.revoked &&
-        device.authEpoch === item.sourceAuthEpoch && Date.parse(device.expiresAt) > context.timestamp();
+        device.authEpoch === item.sourceAuthEpoch && (scheduledCommandSource(account, item) || Date.parse(device.expiresAt) > context.timestamp());
     });
     if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
     const source = eligible[0];
@@ -100,7 +101,7 @@ export function createWorkspaceOperations(context) {
           !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
       const device = account.devices[item.sourceDeviceId];
       return device?.authKind === 'password' && !device.revoked &&
-        device.authEpoch === item.sourceAuthEpoch && Date.parse(device.expiresAt) > context.timestamp();
+        device.authEpoch === item.sourceAuthEpoch && (scheduledCommandSource(account, item) || Date.parse(device.expiresAt) > context.timestamp());
     });
     if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
     const source = eligible[0];
