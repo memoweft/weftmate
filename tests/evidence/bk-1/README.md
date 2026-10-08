@@ -12,6 +12,6 @@ Windows 真实 `src/main.mjs` / Electron（桌面程序框架）/ 固定 DSH（�
 
 截图：`desktop-backup-settings.png`、`desktop-restore-confirm.png`、`desktop-restored.png`、`desktop-other-computer.png`；机器判定见 `verification.json`。截图来自实际桌面程序页面，不是浏览器替代验收。引导仅禁止自动重新拉起进程，交由 Playwright（自动化测试工具）控制下一次启动；基线保管库只在进程内保存测试密钥，每次启动重新输入，不读取日用保管库，不把 MiMo 密钥写入磁盘。备份、关服务、校验、迁移、替换、回滚与宿主启动使用生产代码。
 
-相关备份单测 16/16，另有云身份验证后接回恢复所有者的定向测试；既有账号/云身份回归 20/20。覆盖在线 SQLite（嵌入式数据库）与并发 WAL（预写日志）写入、每天空闲触发、保留策略、凭据/中继/ACME（自动证书管理）私钥排除、CSRF（跨站请求伪造防护）/所有者授权、坏包拒绝、替换失败回滚、启动失败回滚、新安装 ID 的回执契约、Zstandard（压缩格式）事件帧逐字节保留、升级与注销前备份。`npm run typecheck` 通过。完整 CI（持续集成）交本包 PR（拉取请求）。
+相关备份单测 16/16，另有云身份验证后接回恢复所有者的定向测试；既有账号/云身份回归 20/20。覆盖在线 SQLite（嵌入式数据库）与并发 WAL（预写日志）写入、每天空闲触发、保留策略、凭据/中继/ACME（自动证书管理）私钥排除、CSRF（跨站请求伪造防护）/所有者授权、坏包拒绝、替换失败回滚、启动失败回滚、新安装 ID 的回执契约、Zstandard（压缩格式）事件帧逐字节保留、升级与注销前备份。`npm run typecheck` 通过。额外手机共享资产 / 桌面交互 / 记忆页夹具回归 65/65 通过；完整 CI（持续集成）交本包 PR（拉取请求）。
 
 复现：`node --test tests/personal-backup.test.ts`；`node tests/integration/bk-1-local-backup.mjs`。模型密钥从系统环境变量在进程内读取；数据库位置与 Python（编程语言）路径使用隔离 Core 配置，源码依赖须已安装。云端加密备份 S4、Apple 原生备份入口、远端手机的备份界面、真实硬盘损坏及长时间备份浸泡不属于本包。
