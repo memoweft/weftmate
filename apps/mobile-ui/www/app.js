@@ -2776,7 +2776,8 @@ async function conversationResources(context){const key=`weftmate-resources:${co
 }
 function openResourceSource(item,context){if(!conversationTaskCurrent(context))return;
   const view=showResourcePage(item.name||item.title||'来源',context),target=$('resource-content');
-  target.append(el('h2','',item.name||item.title||'来源'),el('p','muted',`${item.kind==='file'?'读取':item.kind==='webpage'?'引用':'调用'} ${item.uses?.length||0} 次`));
+  const uses=item.uses||[],verb=item.kind==='tool'?'调用':uses.length&&uses.every(use=>use.verb==='写入')?'写入':uses.some(use=>use.verb==='写入')?'使用':'读取';
+  target.append(el('h2','',item.name||item.title||'来源'),el('p','muted',`${verb} ${uses.length} 次`));
   if(item.location||item.url)target.append(el('p','resource-location',item.location||item.url));
   for(const use of item.uses||[]){const detail=el('details','resource-usage');detail.append(el('summary','',use.summary||'查看内容'));
     detail.addEventListener('toggle',async()=>{if(!detail.open||detail.dataset.loaded)return;detail.dataset.loaded='loading';
