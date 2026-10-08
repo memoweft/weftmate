@@ -41,6 +41,8 @@
         if (result.source !== 'host' || !Array.isArray(result.sessions)) throw new Error('OPERATION_FAILED');
         return result;
       }
+      if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)(?:\/(archive|unarchive))?$/)) && method !== 'GET')
+        return call('shared.sessions.lifecycle', { sessionId: decodeURIComponent(row[1]), action: row[2] || 'delete', ...body });
       if ((row = match(/^\/personal\/v1\/sessions\/([^/]+)\/events$/))) {
         const sessionId = decodeURIComponent(row[1]);
         const result = await call('shared.sessions.events', { sessionId,

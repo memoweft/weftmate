@@ -198,6 +198,12 @@ public actor PersonalClient {
         _ = try await sharedAuthorizedRequest(auth, generation, path: "/cloud/devices/\(id)/decision", method: "POST",
             body: JSONEncoder().encode(["decision": allow ? "allow" : "deny"]))
     }
+    public func trustedHostDelivery(requestID: String) async throws -> Data {
+        guard validID(requestID) else { throw APIFailure.invalidResponse }
+        let (auth, generation) = try snapshot()
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/cloud/devices/\(requestID)/trust", method: "POST", body: Data("{}".utf8))
+        return response.body
+    }
     public func createCloudPairing() async throws -> HostPairing {
         let (auth, generation) = try snapshot()
         let response = try await sharedAuthorizedRequest(auth, generation, path: "/cloud/pairings", method: "POST", body: Data("{}".utf8))

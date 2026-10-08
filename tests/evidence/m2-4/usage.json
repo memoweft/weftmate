@@ -1,0 +1,60 @@
+{
+  "model": "mimo-v2.6-flash",
+  "scope": "all completed external MiMo requests in this work package, including failed verification attempts and Core formation",
+  "batches": [
+    {
+      "requests": 15,
+      "inputTokens": 101798,
+      "cachedTokens": 79040,
+      "outputTokens": 1254,
+      "costCny": 0.0268468,
+      "missingUsage": 0
+    },
+    {
+      "requests": 19,
+      "inputTokens": 126157,
+      "cachedTokens": 94016,
+      "outputTokens": 2900,
+      "costCny": 0.03982132,
+      "missingUsage": 0
+    },
+    {
+      "requests": 10,
+      "inputTokens": 92348,
+      "cachedTokens": 78976,
+      "outputTokens": 1196,
+      "costCny": 0.01734352,
+      "missingUsage": 0
+    },
+    {
+      "requests": 10,
+      "inputTokens": 86734,
+      "cachedTokens": 72128,
+      "outputTokens": 661,
+      "costCny": 0.01737056,
+      "missingUsage": 0
+    },
+    {
+      "requests": 20,
+      "inputTokens": 129504,
+      "cachedTokens": 103552,
+      "outputTokens": 1282,
+      "costCny": 0.03058704,
+      "missingUsage": 0
+    }
+  ],
+  "total": {
+    "requests": 74,
+    "inputTokens": 536541,
+    "cachedTokens": 427712,
+    "outputTokens": 7293,
+    "costCny": 0.13196924,
+    "missingUsage": 0
+  },
+  "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+  "ratesPerMillionCny": {
+    "cachedInput": 0.02,
+    "uncachedInput": 1,
+    "output": 2
+  }
+}

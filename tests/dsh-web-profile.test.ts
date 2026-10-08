@@ -273,7 +273,8 @@ describe('parseWebUrlLine（官方 web-app 行就绪信号）', () => {
 
 test('P1-03：host composition 声明 apiProxy 注入依赖，避免 apply 先于官方 api-gateway', async () => {
   const host = await readFile(new URL('../src/plugins/weftmate-host.mjs', import.meta.url), 'utf8')
-  assert.match(host, /export const inject = \['webServer', 'apiProxy'\]/)
+  const dependencies = JSON.parse(host.match(/export const inject = (\[[^\n]+\])/)![1].replaceAll("'", '"'));
+  for (const dependency of ['webServer', 'apiProxy', 'agents', 'sessions', 'sessionPersistence', 'agentPresets']) assert.ok(dependencies.includes(dependency));
 })
 
 test('安全快照启动器只接收一次父进程快照，不观察 profile/home 补丁', async () => {

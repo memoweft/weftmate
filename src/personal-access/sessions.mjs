@@ -2,8 +2,11 @@ import { digest, failure, id, plainObject, validId } from './common.mjs';
 import { CONVERSATION_ID, IMAGE_CONTENT_TYPES } from './constants.mjs';
 import { uniqueSessionOwner } from './store.mjs';
 import { validConversationContext } from '../personal-conversations/context.mjs';
+import { rm } from 'node:fs/promises';
+import path from 'node:path';
 
 export function createSessionOperations(context) {
+  const deletions = new Set();
   async function requireOriginalAttachments(ownerId, sessionId, messageId, originals) {
     if (!Array.isArray(originals)) return;
     for (const reference of originals) {
@@ -150,6 +153,108 @@ export function createSessionOperations(context) {
   }
 
   return {
+    async archiveSession(ownerId, sessionId, archived) {
+      id(sessionId);
+      await context.serial(() => context.mutate(ownerId, next => {
+        if (!next.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
+        if (next.sessions[sessionId].deleting) throw failure('SESSION_BUSY', 409);
+        next.sessions[sessionId].archived = archived;
+      }));
+      return { sessionId, archived };
+    },
+    async deleteSession(ownerId, sessionId, { forgetMemories = false } = {}) {
+      id(sessionId);
+      const key = `${ownerId}\0${sessionId}`;
+      if (deletions.has(key)) throw failure('SESSION_BUSY', 409);
+      deletions.add(key);
+      try { await context.serial(async () => {
+        const account = context.accountState(ownerId), session = account.sessions[sessionId];
+        if (!session) throw failure('SESSION_UNAVAILABLE', 404);
+        if (Object.values(account.commands).some(command => command.sessionId === sessionId &&
+            ['pending', 'preflight', 'dispatching', 'uncertain'].includes(command.state)))
+          throw failure('SESSION_BUSY', 409);
+        if (typeof context.backend.deleteSession !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
+        await context.mutate(ownerId, next => { next.sessions[sessionId].deleting = true; });
+      }); } catch (error) { deletions.delete(key); throw error; }
+      try {
+        const account = context.accountState(ownerId);
+        const backgroundReceipts = [...new Set(Object.values(account.commands).filter(command =>
+          command.sessionId === sessionId && command.receiptId && command.toolExecutions?.some(row =>
+            row.jobId && !['completed', 'failed', 'killed'].includes(row.jobState))).map(command => command.receiptId))];
+        for (let offset = 0; offset < backgroundReceipts.length; offset += 16) {
+          if (typeof context.backend.stopTask !== 'function') throw failure('SESSION_BUSY', 409);
+          const receiptIds = backgroundReceipts.slice(offset, offset + 16);
+          const result = await context.callBackend(() => context.backend.stopTask({ ownerId, sessionId,
+            requestId: `delete-${sessionId}-${offset}`, receiptIds }));
+          if (!Array.isArray(result?.outcomes) || result.outcomes.length !== receiptIds.length ||
+              result.outcomes.some(outcome => outcome.status === 'unconfirmed' ||
+              outcome.backgroundJobs?.some(job => !['completed', 'failed', 'killed'].includes(job.state))))
+            throw failure('SESSION_BUSY', 409);
+          const observedJobs = new Map(result.outcomes.flatMap(outcome => outcome.backgroundJobs ?? [])
+            .map(job => [job.jobId, job.state]));
+          if (Object.values(context.accountState(ownerId).commands).some(command => command.sessionId === sessionId &&
+              receiptIds.includes(command.receiptId) && command.toolExecutions?.some(row => row.jobId &&
+                !['completed', 'failed', 'killed'].includes(row.jobState) &&
+                !['completed', 'failed', 'killed'].includes(observedJobs.get(row.jobId)))))
+            throw failure('SESSION_BUSY', 409);
+        }
+        let described;
+        try { described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId)); }
+        catch (error) { if (error.code !== 'SESSION_UNAVAILABLE') throw error; described = { running: false }; }
+        if (described.running) {
+          await context.callBackend(() => context.backend.cancelSession({ sessionId, ownerId }));
+          const deadline = Date.now() + 10000;
+          do {
+            await new Promise(resolve => setTimeout(resolve, 100));
+            described = await context.callBackend(() => context.backend.describeSession(sessionId, ownerId));
+          } while (described.running && Date.now() < deadline);
+          if (described.running) throw failure('SESSION_BUSY', 409);
+        }
+        let forgottenEvidenceCount = 0;
+        if (forgetMemories) {
+          const manager = context.memoryManager;
+          const status = await manager?.status(ownerId);
+          if (!status?.capabilities?.deleteEvidence) throw failure('MEMORY_DELETE_UNAVAILABLE', 503);
+          if (status.pendingBoundaryCount > 0 || status.blockedBoundaryCount > 0) throw failure('SESSION_BUSY', 409);
+          const jobs = await manager.query(ownerId, 'query_jobs', { operation: 'list' });
+          const evidenceIds = new Set((jobs.jobs ?? []).filter(job =>
+            job.acceptance?.parent_session_id === sessionId || job.acceptance?.result_session_id === sessionId)
+            .flatMap(job => job.acceptance.evidence_ids ?? []));
+          for (const evidenceId of evidenceIds) {
+            const revision = await manager.query(ownerId, 'query_world', { operation: 'revision' });
+            const result = await manager.submitCommand(ownerId, {
+              requestId: `session-delete-${digest(`${sessionId}\0${evidenceId}`).slice(0, 48)}`,
+              expectedWorldRevision: revision.world_revision, operation: 'delete_evidence',
+              targetKind: 'evidence', targetId: evidenceId, payload: {},
+            });
+            const receipt = result.receipt ?? result;
+            if (!['applied', 'no_change'].includes(receipt.result_state) || receipt.storage_cleanup?.state === 'pending')
+              throw failure('MEMORY_DELETE_CONFLICT', 409);
+            forgottenEvidenceCount++;
+          }
+        }
+        await context.callBackend(() => context.backend.deleteSession({ sessionId, ownerId }));
+        await context.sharedAttachmentStores?.get(ownerId)?.removeSession(sessionId);
+        await context.attachmentStores?.get(ownerId)?.removeConversation(sessionId);
+        const commands = Object.values(account.commands).filter(command => command.sessionId === sessionId);
+        for (const command of commands) {
+          if (command.taskId || command.rootTaskId || command.kind === 'session.message')
+            await rm(path.join(context.root, 'artifacts', ownerId, command.taskId ?? command.rootTaskId ?? command.commandId), { recursive: true, force: true });
+        }
+        await context.serial(() => context.mutate(ownerId, next => {
+          delete next.sessions[sessionId];
+          for (const field of ['commands', 'toolApprovals', 'userQuestions', 'projectSources', 'browserSources', 'conversationBindings'])
+            for (const [key, value] of Object.entries(next[field] ?? {}))
+              if (value.sessionId === sessionId) delete next[field][key];
+        }));
+        return { sessionId, deleted: true, forgetMemories, forgottenEvidenceCount };
+      } catch (error) {
+        await context.serial(() => context.mutate(ownerId, next => {
+          if (next.sessions[sessionId]) delete next.sessions[sessionId].deleting;
+        }));
+        throw error;
+      } finally { deletions.delete(key); }
+    },
     requireOriginalAttachments,
     commandReferencesOriginal,
     publicHistoryEvent,

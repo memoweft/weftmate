@@ -1,6 +1,9 @@
 import Combine
 import Foundation
 import WeftMateCore
+#if os(iOS)
+import UIKit
+#endif
 
 protocol AppleDraftPersisting: Sendable {
     func loadDrafts(account: LocalAccountScope) async throws -> [String: String]
@@ -856,9 +859,14 @@ final class AppleAppModel: ObservableObject {
                 guard let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else {
                     throw CocoaError(.fileNoSuchFile)
                 }
-                localDirectory = base.appendingPathComponent("WeftMate/UITests", isDirectory: true)
-                    .appendingPathComponent(testNamespace, isDirectory: true)
-                    .appendingPathComponent("LocalState", isDirectory: true)
+                if let i = args.firstIndex(of: "--ui-testing-data-dir"), args.indices.contains(i + 1) {
+                    localDirectory = URL(fileURLWithPath: args[i + 1], isDirectory: true)
+                        .appendingPathComponent("LocalState", isDirectory: true)
+                } else {
+                    localDirectory = base.appendingPathComponent("WeftMate/UITests", isDirectory: true)
+                        .appendingPathComponent(testNamespace, isDirectory: true)
+                        .appendingPathComponent("LocalState", isDirectory: true)
+                }
             }
             let local = try LocalConversationStore(directory: localDirectory)
             commandStore = local
@@ -905,7 +913,7 @@ final class AppleAppModel: ObservableObject {
 
     private var permitsSyntheticLoopback: Bool {
         #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--a4a-local-server") || ProcessInfo.processInfo.arguments.contains("--a4b-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver"))
+        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--a4a-local-server") || ProcessInfo.processInfo.arguments.contains("--a4b-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver") || ProcessInfo.processInfo.arguments.contains("--lg2-cloud"))
         #else
         false
         #endif
@@ -926,7 +934,7 @@ final class AppleAppModel: ObservableObject {
         #if os(macOS)
         return Host.current().localizedName ?? "我的 Mac"
         #else
-        return "我的 iPhone"
+        return UIDevice.current.name
         #endif
     }
 
@@ -955,7 +963,7 @@ final class AppleAppModel: ObservableObject {
         do {
             let server = try ServerConfiguration(input: serverInput, allowLoopbackHTTP: permitsSyntheticLoopback)
             session = try await client.restoreSession(server: server)
-            if session == nil { await cloudLogin.restore() }
+            await cloudLogin.restore()
             if let session {
                 await loadScopedDrafts(session)
                 await refresh()
