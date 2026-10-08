@@ -243,10 +243,9 @@ function openDrawer(){closeAttachmentMenu();closeModelMenu();state.drawer=true;
   requestAnimationFrame(()=>{if(!state.drawer||generation!==drawerFrameGeneration)return;
     $('drawer').classList.add('open');$('drawer-scrim').classList.add('open')});$('drawer-close').focus()}
 
-function closeDrawer(){state.drawer=false;drawerFrameGeneration++;
+function closeDrawer(){const wasOpen=state.drawer;const scrimCopy=wasOpen?globalThis.WeftMobileMotion?.snapshot($('drawer-scrim')):null;const copy=wasOpen?globalThis.WeftMobileMotion?.snapshot($('drawer')):null;state.drawer=false;drawerFrameGeneration++;
   $('drawer').classList.remove('open');$('drawer-scrim').classList.remove('open');
-  clearTimeout(closeDrawer.timer);closeDrawer.timer=setTimeout(()=>{if(!state.drawer)$('drawer-scrim').hidden=true},
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:300)}
+  clearTimeout(closeDrawer.timer);$('drawer-scrim').hidden=true;globalThis.WeftMobileMotion?.dismiss(scrimCopy);globalThis.WeftMobileMotion?.dismiss(copy,false,'drawer')}
 
 function closeModelMenu(){state.menu=false;$('model-popover').hidden=true;$('model-button').setAttribute('aria-expanded','false')}
 
@@ -349,12 +348,14 @@ function placeModelMenu(){const top=$('model-button').getBoundingClientRect().to
   popup.style.maxHeight=`${Math.min(300,Math.max(160,top-24),Math.floor(window.innerHeight*.46))}px`}
 
 function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
+  const controlChanged=$('stop-button').hidden!==view.stopHidden;
+  const oldControl=controlChanged?globalThis.WeftMobileMotion?.snapshot($($('stop-button').hidden?'send-button':'stop-button')):null;
   $('message-mode-control').hidden=!view.host||!state.sharedRunning;
   $('message-mode').value=uiCore.composerInputMode(state.sharedSessionId);
   $('message-mode').disabled=!state.loggedIn||view.busy||state.transitionPending;
   renderQueuedTasks();
   $('send-button').disabled=!view.ready;$('send-button').classList.toggle('ready',view.ready);$('send-button').hidden=view.sendHidden;
-  $('stop-button').hidden=view.stopHidden;$('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
+  $('stop-button').hidden=view.stopHidden;if(controlChanged){globalThis.WeftMobileMotion?.reveal($(view.stopHidden?'send-button':'stop-button'),'160ms');globalThis.WeftMobileMotion?.dismiss(oldControl);}$('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
   $('device-line').textContent='';$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
@@ -364,7 +365,10 @@ function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.c
 
 function renderQueuedTasks(){uiCore.syncMobileIdentity();const context=conversationTaskContext(),box=$('queued-tasks'),cards=$('queued-cards');
   const rows=state.page==='chat'&&context.sessionId?uiCore.taskQueue().filter(row=>row.state==='queued'):[];
-  box.hidden=!rows.length;const signature=JSON.stringify([context,rows]);if(cards.dataset.signature===signature)return;
+  const wasHidden=box.hidden,oldCards=new Map([...cards.children].map(card=>[card.dataset.taskId,card]));
+  if(!rows.length&&!box.hidden)globalThis.WeftMobileMotion?.dismiss(globalThis.WeftMobileMotion?.snapshot(box),true);
+  box.hidden=!rows.length;if(wasHidden&&rows.length&&rows.length<=20)globalThis.WeftMobileMotion?.reveal(box);const signature=JSON.stringify([context,rows]);if(cards.dataset.signature===signature)return;
+  if(rows.length&&rows.length<=20)for(const [id,card] of oldCards)if(!rows.some(row=>row.taskId===id))globalThis.WeftMobileMotion?.dismiss(globalThis.WeftMobileMotion?.snapshot(card));
   cards.dataset.signature=signature;clear(cards);$('queued-count').textContent=`${rows.length} 个排队中`;
   for(const row of rows){const card=el('article','queued-task');card.setAttribute('aria-label',`排队任务 ${row.text}`);
     card.append(el('p','queued-text',row.text));const actions=el('div','queued-actions');
@@ -373,7 +377,7 @@ function renderQueuedTasks(){uiCore.syncMobileIdentity();const context=conversat
         if(edit){const text=await uiCore.editQueuedTask(row.taskId);if(text!==null&&conversationTaskCurrent(context)){
           $('draft').value=text;uiCore.setMessageMode('queue');$('draft').focus({preventScroll:true});}}
         else await uiCore.cancelQueuedTask(row.taskId);renderQueuedTasks();});actions.append(button)}
-    card.append(actions);if(row.notice){const note=el('p','queued-notice',row.notice);note.setAttribute('role','status');card.append(note)}cards.append(card)}
+    card.dataset.taskId=row.taskId;card.append(actions);if(row.notice){const note=el('p','queued-notice',row.notice);note.setAttribute('role','status');card.append(note)}cards.append(card);if(rows.length<=20&&!oldCards.has(row.taskId))globalThis.WeftMobileMotion?.reveal(card)}
   syncChatInsets();
 }
 
