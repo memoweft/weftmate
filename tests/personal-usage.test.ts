@@ -17,6 +17,8 @@ async function fixture(t: any) {
     const root = await mkdtemp(join(tmpdir(), 'weft-usage-'));
     let time = Date.parse('2026-10-08T08:00:00Z');
     const store = await createUsageStore({ root, clock: () => time });
+    await store.configure('a', { timeZone: 'UTC' });
+    await store.configure('b', { timeZone: 'UTC' });
     t.after(async () => { await store.close(); await rm(root, { recursive: true, force: true }); });
     const record = async (owner = 'a', model = cloud, sessionId: string | null = 'one', usage: any = { prompt_tokens: 1000, completion_tokens: 100 }) => {
         const id = await store.begin(owner, { sessionId, profileId: model.id, model });
@@ -44,16 +46,64 @@ test('numeric-only ledger survives reopen; price snapshots, unknown requests and
     await f.store.configure('a', { profileId: 'mimo', price: { input: 2, cachedInput: 0.1, output: 4 } });
     await f.record('a');
     f.setTime('2026-11-01T00:00:00Z'); await f.record('a');
-    const summary = f.store.summary('a', '2026-10');
+    const summary = f.store.summary('a', '2026-10', null, 'UTC');
     assert.equal(summary.total.requests, 4); assert.equal(summary.total.unknownRequests, 1);
     assert.equal(summary.total.cost, 0.002912);
     assert.equal(summary.days.length, 31); assert.equal(summary.days[7].cost, 0.000512); assert.equal(summary.days[8].requests, 3);
     assert.equal(summary.sessions.length, 2); assert.equal(summary.models.length, 2);
-    assert.equal(f.store.summary('a', '2026-10', 'one').total.requests, 2);
-    assert.equal(f.store.summary('b', '2026-10').total.requests, 1);
-    const reopened = await createUsageStore({ root: f.root }); assert.deepEqual(reopened.summary('a', '2026-10'), summary);
+    assert.equal(f.store.summary('a', '2026-10', 'one', 'UTC').total.requests, 2);
+    assert.equal(f.store.summary('b', '2026-10', null, 'UTC').total.requests, 1);
+    const reopened = await createUsageStore({ root: f.root, clock: () => Date.parse('2026-11-01T00:00:00Z') }); assert.deepEqual(reopened.summary('a', '2026-10', null, 'UTC'), summary);
     const saved = JSON.parse(await readFile(join(f.root, 'usage.json'), 'utf8'));
     assert.deepEqual(Object.keys(saved.accounts.a.records[0]).sort(), ['at', 'cost', 'durationMs', 'price', 'profileId', 'requestId', 'sessionId', 'source', 'tokens']);
+});
+test('Shanghai local midnight and month end use local dates while timestamps stay UTC', async t => {
+    const f = await fixture(t);
+    f.setTime('2026-09-30T16:30:00Z'); await f.record(); // October 1, 00:30
+    f.setTime('2026-10-31T15:30:00Z'); await f.record(); // October 31, 23:30
+    f.setTime('2026-10-31T16:00:00Z'); await f.record(); // November 1, 00:00
+    const october = f.store.summary('a', '2026-10', null, 'Asia/Shanghai');
+    assert.equal(october.timeZone, 'Asia/Shanghai');
+    assert.equal(october.total.requests, 2);
+    assert.equal(october.days[0].requests, 1); assert.equal(october.days[30].requests, 1);
+    assert.equal(f.store.summary('a', undefined, null, 'Asia/Shanghai').month, '2026-11');
+    assert.equal(f.store.summary('a', undefined, null, 'UTC').month, '2026-10');
+    assert.equal(f.store.summary('a').timeZone, Intl.DateTimeFormat().resolvedOptions().timeZone);
+    const saved = JSON.parse(await readFile(join(f.root, 'usage.json'), 'utf8'));
+    assert.equal(saved.accounts.a.records[0].at, '2026-09-30T16:30:00.000Z');
+    for (const timeZone of ['Mars/Olympus', '', '+08:00', null]) {
+        assert.throws(() => f.store.summary('a', undefined, null, timeZone as any), { code: 'INVALID_REQUEST' });
+        await assert.rejects(f.store.configure('a', { timeZone }), { code: 'INVALID_REQUEST' });
+    }
+});
+test('New York DST spring gap and repeated autumn hour remain in their local days and months', async t => {
+    const f = await fixture(t);
+    for (const at of ['2026-03-08T04:30:00Z', '2026-03-08T06:30:00Z', '2026-03-08T07:30:00Z', '2026-04-01T03:30:00Z', '2026-04-01T04:00:00Z']) {
+        f.setTime(at); await f.record();
+    }
+    const march = f.store.summary('a', '2026-03', null, 'America/New_York');
+    assert.equal(march.total.requests, 4); assert.equal(march.days[6].requests, 1);
+    assert.equal(march.days[7].requests, 2); assert.equal(march.days[30].requests, 1);
+    for (const at of ['2026-11-01T05:30:00Z', '2026-11-01T06:30:00Z']) { f.setTime(at); await f.record(); }
+    assert.equal(f.store.summary('a', '2026-11', null, 'America/New_York').days[0].requests, 2);
+});
+test('saved account time zone resets limits and temporary overrides at local month boundary', async t => {
+    const f = await fixture(t);
+    f.setTime('2026-10-31T15:30:00Z');
+    await f.store.configure('a', { timeZone: 'Asia/Shanghai', monthlyLimit: 0.0012 }); await f.record();
+    assert.equal(f.store.summary('a', '2020-01', null, 'UTC').budget.state, 'blocked');
+    await assert.rejects(f.record(), { code: 'USAGE_LIMIT_REACHED' });
+    await f.store.configure('a', { temporaryLimit: 0.0015 });
+    assert.equal(f.store.summary('a').budget.state, 'warning');
+    assert.equal(f.store.settings('a').temporaryMonth, '2026-10');
+    f.setTime('2026-10-31T16:00:00Z');
+    assert.equal(f.store.summary('a', '2026-10', null, 'UTC').budget.state, 'ok');
+    assert.equal(f.store.summary('a').budget.effectiveLimit, 0.0012);
+    assert.equal(f.store.summary('a').budget.temporaryLimit, null);
+    await f.record(); await assert.rejects(f.record(), { code: 'USAGE_LIMIT_REACHED' });
+    const reopened = await createUsageStore({ root: f.root, clock: () => Date.parse('2026-10-31T16:00:00Z') });
+    assert.equal(reopened.settings('a').timeZone, 'Asia/Shanghai');
+    assert.throws(() => reopened.assertAllowed('a', cloud), { code: 'USAGE_LIMIT_REACHED' });
 });
 test('80% warns; 100% blocks next cloud request; local bypasses; temporary increase expires next UTC month', async t => {
     const f = await fixture(t);
@@ -127,6 +177,11 @@ test('authenticated API isolates usage/settings and refuses model proxy at limit
     assert.equal((await api('/usage?sessionId=foreign', 'GET', undefined, b)).status, 404);
     assert.equal((await api('/settings/usage', 'GET', undefined, b)).body.monthlyLimit, null);
     assert.equal((await api('/usage?month=2026-13', 'GET', undefined, a)).status, 400);
+    assert.equal((await api('/usage?timeZone=Mars%2FOlympus', 'GET', undefined, a)).status, 400);
+    assert.equal((await api('/usage?timeZone=Asia%2FShanghai', 'GET', undefined, a)).body.timeZone, 'Asia/Shanghai');
+    const configured = await api('/settings/usage', 'PATCH', { timeZone: 'America/New_York' }, a);
+    assert.equal(configured.status, 200); assert.equal(configured.body.timeZone, 'America/New_York');
+    assert.equal((await api('/settings/usage', 'GET', undefined, b)).body.timeZone, Intl.DateTimeFormat().resolvedOptions().timeZone);
 });
 test('ui-core usage reads work outside account settings, uses CSRF, discards late account responses and warns once', async () => {
     const context: any = { URL, URLSearchParams, AbortSignal, Intl, Date, setTimeout, clearTimeout, setInterval, clearInterval };
@@ -139,7 +194,9 @@ test('ui-core usage reads work outside account settings, uses CSRF, discards lat
     } });
     Object.assign(core.state, { account: { ownerId: 'a' }, device: { id: 'device' }, csrfToken: 'synthetic', currentView: 'assistant' });
     assert.ok(await core.loadUsage());
+    assert.equal(new URL(requests[0].path, 'http://fixture').searchParams.get('timeZone'), Intl.DateTimeFormat().resolvedOptions().timeZone);
     await core.saveUsageSettings({ monthlyLimit: 1 }); assert.equal(requests.at(-1).options.headers['X-WeftMate-CSRF'], 'synthetic');
+    assert.equal(JSON.parse(requests.at(-1).options.body).timeZone, Intl.DateTimeFormat().resolvedOptions().timeZone);
     await core.refreshUsageBudget(); await core.refreshUsageBudget(); assert.equal(toasts.length, 1);
     gate = new Promise(resolve => { release = resolve; });
     const pending = core.loadUsage(); await Promise.resolve(); core.state.account = { ownerId: 'b' }; core.state.identityGeneration++;
