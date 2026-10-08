@@ -388,3 +388,7 @@ html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduce
 /* Shared positioning measures the untransformed menu within the visual viewport. */
 .popover[popover] { width: 350px; animation: none; transform: none; transition: opacity var(--wm-duration-fast) var(--ease); }
 .session-action-dialog { box-sizing: border-box; min-width: 0; max-width: calc(100dvw - 16px); max-height: calc(100dvh - 16px); overflow: auto; }
+
+.settings-schedules-list { list-style: none; padding: 0; margin: var(--wm-space-20) 0; }
+.settings-schedule-row { display: flex; flex-wrap: wrap; gap: var(--wm-space-12); padding: var(--wm-space-20) 0; border-bottom: var(--wm-space-1) solid var(--line); }
+.settings-schedule-row .system-service-detail { flex-basis: 100%; display: flex; flex-direction: column; gap: var(--wm-space-8); }

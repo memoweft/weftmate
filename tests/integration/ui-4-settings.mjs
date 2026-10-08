@@ -7,7 +7,7 @@ import { join, resolve } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 const repository = resolve(import.meta.dirname, '../..'), evidence = join(repository, 'tests/evidence/ui-4');
 await mkdir(evidence, { recursive: true });
-const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, usageSamples: true });
+const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, usageSamples: true, schedules: true });
 const profile = await mkdtemp(join(tmpdir(), 'weftmate-ui4-'));
 const env = { ...process.env, REVIEW_PROFILE: profile, REVIEW_ORIGIN: fixture.origin, REVIEW_THEME: 'light' };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
@@ -54,14 +54,23 @@ try {
   await dialog.getByRole('searchbox', { name: '搜索设置' }).fill('');
   for (const theme of ['light', 'dark']) {
     await nav.getByRole('button', { name: '外观', exact: true }).click(); await button(theme === 'light' ? '浅色' : '深色').click();
-    for (const [id, name] of [['general','常规'],['appearance','外观'],['account','账户'],['devices','设备'],['usage','用量'],['models','模型'],['approvals','审批'],['memory','记忆'],['resources','资料访问'],['system','系统状态'],['about','关于']]) {
+    for (const [id, name] of [['general','常规'],['appearance','外观'],['account','账户'],['devices','设备'],['usage','用量'],['models','模型'],['approvals','审批'],['memory','记忆'],['schedules','提醒与定时任务'],['resources','资料访问'],['system','系统状态'],['about','关于']]) {
       await nav.getByRole('button', { name, exact: true }).click();
+      if (id === 'schedules') await dialog.getByRole('listitem', {name:'提交合成报告',exact:true}).waitFor();
       if (id === 'devices') assert.equal(await dialog.getByRole('button', {name:'配对连接',exact:true}).count(),0);
       if (id === 'usage') await dialog.getByRole('button', { name: '刷新用量', exact: true }).waitFor();
       await capture(`desktop-${theme}-${id}.png`);
     }
   }
   checks.push('all desktop categories light/dark');
+  await nav.getByRole('button',{name:'提醒与定时任务',exact:true}).click();
+  const reminder=dialog.getByRole('listitem',{name:'提交合成报告',exact:true});
+  await reminder.getByRole('button',{name:'暂停',exact:true}).click();await reminder.getByRole('button',{name:'恢复',exact:true}).waitFor();
+  assert.equal((await fixture.request('/schedules')).items[0].state,'paused');
+  await reminder.getByRole('button',{name:'恢复',exact:true}).click();await reminder.getByRole('button',{name:'暂停',exact:true}).waitFor();
+  await reminder.getByRole('button',{name:'立即运行',exact:true}).click();await page.waitForFunction(async()=>{const value=await(await fetch('/personal/v1/schedules')).json();return value.items[0].state==='completed';});
+  await reminder.getByRole('button',{name:'删除',exact:true}).click();await reminder.waitFor({state:'hidden'});
+  assert.equal((await fixture.request('/schedules')).items.length,0);checks.push('reminder pause, resume, run and delete');
   await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'hidden' }); checks.push('Escape close');
   await button('本对话用量').click(); await dialog.getByRole('heading', { name: '本对话用量', exact: true }).waitFor(); checks.push('conversation usage deep link');
   await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setContentSize(680, 800));
@@ -91,9 +100,10 @@ try {
   await mobile.waitForTimeout(300);
   if (!process.argv.includes('--verify-only')) await mobile.screenshot({ path: join(evidence, 'mobile-list.png'), animations: 'disabled' });
   const list = mobile.getByRole('navigation', { name: '设置分类' });
-  for (const [id, name] of [['general','常规'],['appearance','外观'],['usage','用量']]) {
+  for (const [id, name] of [['general','常规'],['appearance','外观'],['usage','用量'],['schedules','提醒与定时任务']]) {
     await list.getByRole('button', { name: new RegExp('^' + name + ' ') }).click();
     if (id === 'appearance') { await mobile.getByRole('button', { name: '深色', exact: true }).click(); await mobile.waitForFunction(() => document.documentElement.dataset.theme === 'dark'); assert.equal(await mobile.locator('html').getAttribute('data-theme'), 'dark'); }
+    if(id === 'schedules') await mobile.getByRole('button',{name:'刷新提醒',exact:true}).waitFor();
     if(id === 'usage') await mobile.getByRole('button', {name:'刷新用量',exact:true}).waitFor();
     await mobile.waitForTimeout(300);
     if (!process.argv.includes('--verify-only')) await mobile.screenshot({ path: join(evidence, `mobile-${id}.png`), animations: 'disabled' });

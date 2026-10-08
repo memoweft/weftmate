@@ -15,8 +15,8 @@ test('settings taxonomy and multiword keyword search work without a DOM', () => 
 test('a single category registration supplies metadata, search and a renderer mount', () => {
   const registry = context.WeftUiCore.settingsRegistry();
   let mounted: unknown;
-  registry.register({ id: 'schedule', group: '助手', name: '提醒与定时任务', icon: 'clock', keywords: ['定时', '提醒'], mount: (value: unknown) => { mounted = value; } });
-  const category = registry.list({ query: '定时' })[0];
+  registry.register({ id: 'schedule', group: '助手', name: '提醒与定时任务', icon: 'clock', keywords: ['扩展定时', '提醒'], mount: (value: unknown) => { mounted = value; } });
+  const category = registry.list({ query: '扩展定时' })[0];
   assert.equal(category.id, 'schedule'); category.mount({ selected: true }); assert.deepEqual(mounted, { selected: true });
   registry.register({ ...category, name: '提醒' });
   assert.equal(registry.list().filter((entry: any) => entry.id === 'schedule').length, 1);

@@ -68,3 +68,7 @@
 .settings-category .project-register > label, .settings-category .project-register > input, .settings-category .project-register > select { margin-bottom: var(--wm-space-8); }
 
 .weftmate-desktop #desktop-auto-start.settings-switch { width: var(--wm-space-44); min-height: var(--wm-space-26); height: var(--wm-space-26); margin: 0; }
+
+.settings-schedules-list { list-style: none; padding: 0; margin: var(--wm-space-20) 0; }
+.settings-schedule-row { display: flex; flex-wrap: wrap; gap: var(--wm-space-12); }
+.settings-schedule-row .system-service-detail { flex: 1; min-width: var(--wm-size-220); }

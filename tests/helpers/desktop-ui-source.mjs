@@ -13,7 +13,7 @@ export function desktopScript(path) {
 // This feature harness has no layout engine. The real Electron UI-4 suite owns modal/navigation behavior;
 // model configuration still invokes the same core action here, preserving every feature assertion.
 export function desktopFeatureSource() {
-  return 'globalThis.WeftUiLayout = { mountUsage() {} };\n' + desktopScriptPaths().filter(path => path.startsWith('ui-core/') || path.startsWith('components/') && path !== 'components/markup.js' && path !== 'components/settings-navigation.js' || path === 'app.js').map(path => desktopScript(path).replace(', "mountSettingsNavigation"', '').replace('ui.openSettings("models")', 'core.openAccount()')).join('\n;\n');
+  return 'globalThis.WeftUiLayout = { mountUsage() {}, mountSchedules() {} };\n' + desktopScriptPaths().filter(path => path.startsWith('ui-core/') || path.startsWith('components/') && path !== 'components/markup.js' && path !== 'components/settings-navigation.js' || path === 'app.js').map(path => desktopScript(path).replace(', "mountSettingsNavigation"', '').replace('ui.openSettings("models")', 'core.openAccount()')).join('\n;\n');
 }
 export function desktopHtml() {
   const context = { document: { body: { innerHTML: '' } } };

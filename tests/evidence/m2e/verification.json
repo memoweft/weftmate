@@ -1,0 +1,6683 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-08",
+  "protocol": {
+    "electron": true,
+    "isolatedAccountPerRun": true,
+    "lanModel": "local-quality",
+    "lanAtomicLock": true,
+    "warmupRequests": 1,
+    "serialLanBatches": true,
+    "goalsUnmodified": true,
+    "budgetsUnmodified": true,
+    "checksUnmodified": true,
+    "approvalDecisionsUnmodified": true,
+    "llmJudge": false,
+    "lanMemory03Order": [
+      "local-quality",
+      "mimo-v2.6-flash"
+    ],
+    "mimoMemory03Order": [
+      "mimo-v2.6-flash",
+      "local-quality"
+    ],
+    "backgroundModelFollowsConfiguredProfile": true
+  },
+  "tests": {
+    "weftmateRelated": {
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0
+    },
+    "coreRelated": {
+      "passed": 148,
+      "failed": 0
+    },
+    "coreNewRegressions": 18,
+    "coreCiPythonPassed": 1746,
+    "coreCiMypyModules": 204,
+    "typecheck": true
+  },
+  "coreCandidate": "7f1f2f420ada745a23465f75ab95e8c2c9e36e17",
+  "runs": [
+    {
+      "label": "before-mimo-original",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 75499,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 144641,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 4,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 35770,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 8,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 203,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 22,
+        "usageRequests": 22,
+        "missingUsageRequests": 0,
+        "inputTokens": 107964,
+        "cachedInputTokens": 71808,
+        "outputTokens": 7452,
+        "knownCostCny": 0.05249616
+      },
+      "coreCohort": "development-or-before",
+      "additionalAcceptance": {
+        "originalCorrectedItem": "failed",
+        "strictSourceUi": "not_run"
+      }
+    },
+    {
+      "label": "development-mimo-correction",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 49963,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 66929,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 66456,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T10:27:00.168Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:27:43.383Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:27:54.613Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:28:08.686Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:28:27.861Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:28:33.823Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:28:51.066Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:29:27.295Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:29:39.774Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 2 条记忆",
+        "sources": 2,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 208,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 23,
+        "usageRequests": 21,
+        "missingUsageRequests": 2,
+        "inputTokens": 113490,
+        "cachedInputTokens": 88448,
+        "outputTokens": 4989,
+        "knownCostCny": 0.03678896
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "fixed-host-original-core-diagnostic",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 61353,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 2,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T10:31:48.831Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 203,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 9,
+        "usageRequests": 9,
+        "missingUsageRequests": 0,
+        "inputTokens": 38828,
+        "cachedInputTokens": 27264,
+        "outputTokens": 923,
+        "knownCostCny": 0.01395528
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "before-wire-mimo-diagnostic",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "failed",
+          "durationMs": 203210,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "dead",
+          "attempts": 1,
+          "reason": "dispatch_outcome_unknown",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 3,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 200,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 10,
+        "usageRequests": 9,
+        "missingUsageRequests": 1,
+        "inputTokens": 39329,
+        "cachedInputTokens": 22336,
+        "outputTokens": 1052,
+        "knownCostCny": 0.01954372
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "before-wire-mimo-retry",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 40058,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 2,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T10:39:16.437Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 4,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 203,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 9,
+        "usageRequests": 8,
+        "missingUsageRequests": 1,
+        "inputTokens": 34868,
+        "cachedInputTokens": 20480,
+        "outputTokens": 1104,
+        "knownCostCny": 0.0170056
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "development-mimo-person-retry",
+      "scenarios": [
+        {
+          "id": "memory-04-person",
+          "status": "failed",
+          "durationMs": 45936,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "person-background",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "missing_target_entity",
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 0,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 198,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 7,
+        "usageRequests": 7,
+        "missingUsageRequests": 0,
+        "inputTokens": 30532,
+        "cachedInputTokens": 20800,
+        "outputTokens": 1758,
+        "knownCostCny": 0.013664
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "development-mimo-person-fields-fixed",
+      "scenarios": [
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 28808,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "person-background",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 1,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T10:42:38.832Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 198,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 6,
+        "usageRequests": 6,
+        "missingUsageRequests": 0,
+        "inputTokens": 26498,
+        "cachedInputTokens": 14656,
+        "outputTokens": 739,
+        "knownCostCny": 0.013613120000000001
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "mimo-correction-before-scope-guide",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 42020,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 374007,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 24,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 68692,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T10:44:26.008Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:44:58.881Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:45:15.283Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:45:29.199Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:46:09.559Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:46:16.899Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 7,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:46:53.156Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 8,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:47:38.603Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 7,
+          "lastUserIndex": 10,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 10,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:47:48.680Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 9,
+          "lastUserIndex": 11,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 11,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:48:00.264Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 10,
+          "lastUserIndex": 12,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 12,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:48:03.922Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 11,
+          "lastUserIndex": 13,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 13,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:48:08.239Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 12,
+          "lastUserIndex": 14,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 14,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:48:29.991Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 13,
+          "lastUserIndex": 15,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 15,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:48:44.542Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 14,
+          "lastUserIndex": 16,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 16,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:48:52.648Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 15,
+          "lastUserIndex": 17,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 17,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:49:07.734Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 17,
+          "lastUserIndex": 19,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 19,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:49:24.835Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 18,
+          "lastUserIndex": 20,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 20,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:49:38.423Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 19,
+          "lastUserIndex": 21,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 21,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:49:47.363Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 20,
+          "lastUserIndex": 22,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 22,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:49:55.122Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 21,
+          "lastUserIndex": 23,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 23,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:50:06.955Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 22,
+          "lastUserIndex": 24,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 24,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:50:27.033Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 23,
+          "lastUserIndex": 25,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 25,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:50:47.957Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 25,
+          "lastUserIndex": 27,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 27,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:50:58.404Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 26,
+          "lastUserIndex": 28,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 28,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:51:14.002Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:51:38.141Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:52:10.310Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 2 条记忆",
+        "sources": 2,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 221,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 41,
+        "usageRequests": 40,
+        "missingUsageRequests": 1,
+        "inputTokens": 497494,
+        "cachedInputTokens": 273728,
+        "outputTokens": 14570,
+        "knownCostCny": 0.25838056
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "mimo-scope-guide-originals",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 58088,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 116060,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 34441,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "person-background",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 4,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T10:55:03.777Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:55:32.224Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:56:04.354Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:56:37.529Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:57:09.492Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:57:12.924Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 7,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:57:29.496Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:57:54.394Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 207,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 21,
+        "usageRequests": 20,
+        "missingUsageRequests": 1,
+        "inputTokens": 106681,
+        "cachedInputTokens": 85696,
+        "outputTokens": 5047,
+        "knownCostCny": 0.032792919999999996
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "mimo-scope-guide-correction-failed",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 52457,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "failed",
+          "durationMs": 61316,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 105411,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T10:58:40.091Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:59:15.848Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:59:27.862Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T10:59:47.260Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:00:04.847Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:00:19.449Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:00:39.034Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:01:46.405Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 204,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 22,
+        "usageRequests": 22,
+        "missingUsageRequests": 0,
+        "inputTokens": 109868,
+        "cachedInputTokens": 85312,
+        "outputTokens": 5237,
+        "knownCostCny": 0.03673624
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "lan-originals-1-before-id-compat",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 74748,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 126279,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 69180,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 81795,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 3,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "nickname",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        },
+        {
+          "inputCategory": "person-background",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:04:32.321Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:05:15.103Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:06:01.817Z",
+          "model": "local-quality",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:06:50.109Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:07:22.763Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:08:02.802Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:08:36.815Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:09:25.135Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 211,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 55,
+        "inferenceCount": 23,
+        "metadataCount": 32,
+        "statusCounts": {
+          "200": 28,
+          "404": 27
+        },
+        "firstRequestedAt": "2026-10-08T11:03:28.246Z",
+        "lastEndedAt": "2026-10-08T11:09:36.469Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 1,
+        "usageRequests": 1,
+        "missingUsageRequests": 0,
+        "inputTokens": 9056,
+        "cachedInputTokens": 4096,
+        "outputTokens": 125,
+        "knownCostCny": 0.00529192
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "lan-correction-1-before-id-compat",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 86746,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 147862,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "failed",
+          "durationMs": 105850,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "correction_target_unknown",
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 4,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:11:51.403Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:12:36.389Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:13:24.864Z",
+          "model": "local-quality",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:14:09.300Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:14:23.495Z",
+          "model": "local-quality",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:14:30.151Z",
+          "model": "local-quality",
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 7,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:15:05.778Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:15:43.992Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:16:27.789Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": {
+        "status": "passed"
+      },
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 207,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 54,
+        "inferenceCount": 22,
+        "metadataCount": 32,
+        "statusCounts": {
+          "404": 27,
+          "200": 27
+        },
+        "firstRequestedAt": "2026-10-08T11:10:42.383Z",
+        "lastEndedAt": "2026-10-08T11:16:33.270Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "lan-originals-2-before-id-compat",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 77086,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 124301,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 63743,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 88954,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 3,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "nickname",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        },
+        {
+          "inputCategory": "person-background",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 4,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:17:37.945Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:18:27.666Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:19:14.832Z",
+          "model": "local-quality",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:19:59.113Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:20:33.257Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:21:09.873Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:21:42.162Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:22:38.774Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 210,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 54,
+        "inferenceCount": 22,
+        "metadataCount": 32,
+        "statusCounts": {
+          "404": 27,
+          "200": 27
+        },
+        "firstRequestedAt": "2026-10-08T11:16:43.240Z",
+        "lastEndedAt": "2026-10-08T11:22:48.017Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 1,
+        "usageRequests": 1,
+        "missingUsageRequests": 0,
+        "inputTokens": 9058,
+        "cachedInputTokens": 4096,
+        "outputTokens": 189,
+        "knownCostCny": 0.00542192
+      },
+      "coreCohort": "development-or-before"
+    },
+    {
+      "label": "final-lan-correction-1",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 79487,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 130126,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 107041,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:26:37.525Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:27:20.124Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:28:07.394Z",
+          "model": "local-quality",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:28:53.973Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:29:31.588Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:30:05.920Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:30:54.529Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": {
+        "status": "passed"
+      },
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 2 条记忆",
+        "sources": 2,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 211,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 50,
+        "inferenceCount": 20,
+        "metadataCount": 30,
+        "statusCounts": {
+          "404": 25,
+          "200": 25
+        },
+        "firstRequestedAt": "2026-10-08T11:25:32.719Z",
+        "lastEndedAt": "2026-10-08T11:30:59.712Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      },
+      "coreCohort": "50923d5"
+    },
+    {
+      "label": "final-lan-originals-1",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 75597,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 126167,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 64262,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 83969,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 4,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "nickname",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        },
+        {
+          "inputCategory": "person-background",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 6,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:32:27.888Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:33:09.740Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:33:57.048Z",
+          "model": "local-quality",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:34:43.521Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:35:17.117Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:35:53.473Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:36:26.040Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:37:18.019Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 210,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 54,
+        "inferenceCount": 22,
+        "metadataCount": 32,
+        "statusCounts": {
+          "404": 27,
+          "200": 27
+        },
+        "firstRequestedAt": "2026-10-08T11:31:26.653Z",
+        "lastEndedAt": "2026-10-08T11:37:27.878Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 1,
+        "usageRequests": 1,
+        "missingUsageRequests": 0,
+        "inputTokens": 9052,
+        "cachedInputTokens": 4096,
+        "outputTokens": 174,
+        "knownCostCny": 0.00538592
+      },
+      "coreCohort": "50923d5"
+    },
+    {
+      "label": "final-lan-correction-2",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 71539,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 145282,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 123902,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:40:35.918Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:41:21.877Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:42:16.138Z",
+          "model": "local-quality",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:43:03.751Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:43:13.309Z",
+          "model": "local-quality",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:43:48.030Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:44:39.962Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:45:22.638Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": {
+        "status": "passed"
+      },
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 2 条记忆",
+        "sources": 2,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 211,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 52,
+        "inferenceCount": 21,
+        "metadataCount": 31,
+        "statusCounts": {
+          "404": 26,
+          "200": 26
+        },
+        "firstRequestedAt": "2026-10-08T11:39:42.908Z",
+        "lastEndedAt": "2026-10-08T11:45:33.551Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      },
+      "coreCohort": "50923d5"
+    },
+    {
+      "label": "final-lan-originals-2",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 80876,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 144506,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 63260,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 75736,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 3,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "nickname",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        },
+        {
+          "inputCategory": "person-background",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:46:40.400Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:47:30.518Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:48:20.429Z",
+          "model": "local-quality",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:49:13.431Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:49:22.975Z",
+          "model": "local-quality",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:49:56.011Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:50:31.480Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:51:03.497Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:51:45.980Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 210,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 56,
+        "inferenceCount": 23,
+        "metadataCount": 33,
+        "statusCounts": {
+          "404": 28,
+          "200": 28
+        },
+        "firstRequestedAt": "2026-10-08T11:45:42.839Z",
+        "lastEndedAt": "2026-10-08T11:51:57.449Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 1,
+        "usageRequests": 1,
+        "missingUsageRequests": 0,
+        "inputTokens": 9057,
+        "cachedInputTokens": 4096,
+        "outputTokens": 183,
+        "knownCostCny": 0.00540892
+      },
+      "coreCohort": "50923d5"
+    },
+    {
+      "label": "final-mimo-originals",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 48963,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 67226,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 34704,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 70472,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 4,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "nickname",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        },
+        {
+          "inputCategory": "person-background",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 6,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:54:11.843Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:54:41.321Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:54:54.244Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:55:16.846Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:55:23.777Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:55:28.319Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 7,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:55:49.515Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:56:09.736Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:56:26.048Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:57:26.884Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 210,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 8,
+        "inferenceCount": 1,
+        "metadataCount": 7,
+        "statusCounts": {
+          "404": 4,
+          "200": 4
+        },
+        "firstRequestedAt": "2026-10-08T11:53:44.205Z",
+        "lastEndedAt": "2026-10-08T11:56:21.015Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 25,
+        "usageRequests": 24,
+        "missingUsageRequests": 1,
+        "inputTokens": 120899,
+        "cachedInputTokens": 99520,
+        "outputTokens": 6580,
+        "knownCostCny": 0.036529400000000004
+      },
+      "coreCohort": "50923d5"
+    },
+    {
+      "label": "final-mimo-correction",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 47777,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 63861,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 4,
+              "approvalCount": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 50816,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 2,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "communication-preference",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "exercise-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "exercise-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "pure_inquiry_no_declarative_facts",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 5,
+        "activeExerciseFriday": true,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T11:58:09.132Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:58:44.524Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:59:02.734Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:59:13.080Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:59:30.239Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:59:38.697Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 7,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T11:59:49.144Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T12:00:19.608Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "at": "2026-10-08T12:00:34.205Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 2 条记忆",
+        "sources": 2,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 209,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 23,
+        "usageRequests": 22,
+        "missingUsageRequests": 1,
+        "inputTokens": 116446,
+        "cachedInputTokens": 103104,
+        "outputTokens": 4263,
+        "knownCostCny": 0.023930080000000003
+      },
+      "coreCohort": "50923d5"
+    },
+    {
+      "label": "post-merge-old-login-setup-failed",
+      "scenarios": [],
+      "coreJobs": [],
+      "worldChecks": null,
+      "wireRequestOrder": [],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 191,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      },
+      "coreCohort": "50923d5",
+      "additionalAcceptance": {
+        "setup": "failed",
+        "reasonClass": "legacy_login_form_removed",
+        "modelRequests": 0
+      }
+    },
+    {
+      "label": "post-merge-scoped-route-failed",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "failed",
+          "durationMs": 338541,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "dead",
+          "attempts": 1,
+          "reason": "dispatch_outcome_unknown",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 1,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T12:11:11.907Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 209,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 9,
+        "usageRequests": 7,
+        "missingUsageRequests": 2,
+        "inputTokens": 31774,
+        "cachedInputTokens": 25536,
+        "outputTokens": 508,
+        "knownCostCny": 0.00776472
+      },
+      "coreCohort": "50923d5"
+    },
+    {
+      "label": "post-merge-scoped-mimo",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 137336,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 2,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T12:23:17.298Z",
+          "model": "mimo-v2.6-flash",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 213,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 9,
+        "usageRequests": 7,
+        "missingUsageRequests": 2,
+        "inputTokens": 36165,
+        "cachedInputTokens": 29760,
+        "outputTokens": 1285,
+        "knownCostCny": 0.009570200000000001
+      },
+      "coreCohort": "7f1f2f4"
+    },
+    {
+      "label": "post-merge-scoped-lan-1",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 100118,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "no_change",
+          "attempts": 1,
+          "reason": "model_no_change",
+          "interpretationResult": "no_change"
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 2,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T12:27:30.858Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 211,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 28,
+        "inferenceCount": 9,
+        "metadataCount": 19,
+        "statusCounts": {
+          "404": 14,
+          "200": 14
+        },
+        "firstRequestedAt": "2026-10-08T12:25:48.690Z",
+        "lastEndedAt": "2026-10-08T12:28:03.960Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      },
+      "coreCohort": "7f1f2f4",
+      "additionalAcceptance": {
+        "strictSources": "passed",
+        "uiSources": "failed",
+        "reasonClass": "reply_memory_label_not_visible"
+      }
+    },
+    {
+      "label": "post-merge-scoped-lan-2",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 101787,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 2,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T12:30:58.188Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 214,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 26,
+        "inferenceCount": 8,
+        "metadataCount": 18,
+        "statusCounts": {
+          "404": 13,
+          "200": 13
+        },
+        "firstRequestedAt": "2026-10-08T12:29:15.881Z",
+        "lastEndedAt": "2026-10-08T12:31:04.263Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      },
+      "coreCohort": "7f1f2f4"
+    },
+    {
+      "label": "post-merge-ui-selected-lan",
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 101058,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 2
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 1,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "swimming-arrangement",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "swimming-correction",
+          "state": "applied",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": "cognitions"
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "pending",
+          "attempts": 0,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 2,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": true,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": true
+      },
+      "wireRequestOrder": [
+        {
+          "at": "2026-10-08T12:42:49.263Z",
+          "model": "local-quality",
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "correctionSources": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "originalCorrection": null,
+      "uiSources": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "secretScan": {
+        "scanned": 214,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": {
+        "maxActive": 1,
+        "requestCount": 26,
+        "inferenceCount": 8,
+        "metadataCount": 18,
+        "statusCounts": {
+          "404": 13,
+          "200": 13
+        },
+        "firstRequestedAt": "2026-10-08T12:41:07.318Z",
+        "lastEndedAt": "2026-10-08T12:42:54.877Z"
+      },
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      },
+      "coreCohort": "7f1f2f4"
+    },
+    {
+      "label": "development-mimo-person",
+      "scenarios": [
+        {
+          "id": "memory-04-person",
+          "status": "failed",
+          "durationMs": 117826,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": 1
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "reply_matches",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "turn_status",
+              "status": "passed",
+              "turn": null
+            },
+            {
+              "type": "memory_used",
+              "status": "failed",
+              "turn": null
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "turn": null
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            },
+            {
+              "status": "completed",
+              "memoryUsedCount": 0,
+              "approvalCount": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "inputCategory": "person-background",
+          "state": "dead",
+          "attempts": 1,
+          "reason": "dispatch_outcome_unknown",
+          "interpretationResult": null
+        },
+        {
+          "inputCategory": "other-user-input",
+          "state": "processing",
+          "attempts": 1,
+          "reason": null,
+          "interpretationResult": null
+        }
+      ],
+      "worldChecks": {
+        "cognitionCount": 0,
+        "activeExerciseFriday": false,
+        "activeSwimmingSaturday": false,
+        "currentWednesdayExercise": false,
+        "currentTuesdaySwimming": false
+      },
+      "wireRequestOrder": [],
+      "correctionSources": null,
+      "originalCorrection": null,
+      "uiSources": null,
+      "secretScan": {
+        "scanned": 199,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "lanSerial": null,
+      "mimoUsage": {
+        "startedRequests": 6,
+        "usageRequests": 3,
+        "missingUsageRequests": 3,
+        "inputTokens": 17805,
+        "cachedInputTokens": 12608,
+        "outputTokens": 400,
+        "knownCostCny": 0.00624916
+      },
+      "coreCohort": "development-or-before"
+    }
+  ],
+  "mimoTotalUsage": {
+    "startedRequests": 246,
+    "usageRequests": 231,
+    "missingUsageRequests": 15,
+    "inputTokens": 1464864,
+    "cachedInputTokens": 997440,
+    "outputTokens": 56578,
+    "knownCostCny": 0.6005288,
+    "uncachedInputTokens": 467424,
+    "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "isLowerBound": true
+  },
+  "cleanup": {
+    "ownLanLockPresent": false,
+    "remainingTestCredentialFiles": 0,
+    "remainingProcesses": 0
+  },
+  "modelMatrixCoreCommit": "50923d5bd1a92950c0d9b952e5fa74f5c792cf36",
+  "modelMatrixWeftMateCommit": "99fa388fba06355c360a5d13c11ad0794ebb36e2",
+  "deliveryCoreCommit": "7f1f2f420ada745a23465f75ab95e8c2c9e36e17",
+  "historicalReference": "../qv-1/README.md",
+  "summary": {
+    "lanFinalMatrix": {
+      "passed": 14,
+      "failed": 0
+    },
+    "mimoFinalMatrix": {
+      "passed": 7,
+      "failed": 0
+    },
+    "postMergeSourceCases": {
+      "mimoPassed": 1,
+      "lanReplyPassed": 3,
+      "lanSourceUiPassed": 2,
+      "lanSourceUiFailed": 1
+    },
+    "setupFailures": 1,
+    "modelMatrixAfterMergeRepeated": false
+  }
+}

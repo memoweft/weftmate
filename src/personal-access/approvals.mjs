@@ -1,3 +1,4 @@
+import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { readSourceEvents } from './source-history.mjs';
 import { exactKeys, failure, validId, withDeadline } from './common.mjs';
 import { sourceMessageHash } from './command-policy.mjs';
@@ -40,7 +41,7 @@ export function createApprovalOperations(context) {
     if (activeSource) {
       const device = account.devices[source.sourceDeviceId];
       if (!device || !['password', 'cloud'].includes(device.authKind) || device.revoked || !Number.isSafeInteger(source.sourceAuthEpoch) ||
-          device.authEpoch !== source.sourceAuthEpoch || Date.parse(device.expiresAt) <= context.timestamp()) {
+          device.authEpoch !== source.sourceAuthEpoch || !scheduledCommandSource(account, source) && Date.parse(device.expiresAt) <= context.timestamp()) {
         throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       }
       if (!context.messageModelUsable(account.ownerId, account.sessions[sessionId], account)) throw failure('MODEL_UNAVAILABLE', 409);

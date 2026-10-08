@@ -48,6 +48,7 @@ const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
   general: target => generalSettingsPage(target), appearance: target => appearancePage(target),
   account: target => accountPage(target), devices: target => devicesPage(target),
   usage: target => usagePage(target, state.usageSessionId || ''), models: target => modelsPage(target),
+  schedules: target => {target.append(heading('提醒与定时任务'));const body=el('section');target.append(body);WeftSchedulesView(uiCore,body,{current:()=>body.isConnected&&state.page==='schedules',openConversation:id=>selectSharedSession(id)})},
   about: target => aboutSettingsPage(target), approvals: target => approvalSettingsPage(target), memory: target => memoryPage(target), resources: target => workspacesPage(target),
 });
 const settingsListPosition = { scroll: 0, query: '' };
@@ -58,7 +59,7 @@ function settingsPage(target){
   const draw=()=>{clear(list);let name,section;
     for(const category of mobileSettingsRegistry.list({query:search.value})){
       if(name!==category.group){name=category.group;section=group(name,[]);list.append(section)}
-      const summaries={general:'通知、离线与同步',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',approvals:'新对话的默认模式',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
+      const summaries={general:'通知、离线与同步',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'新对话的默认模式',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
       const item=row(category.name,summaries[category.id]||'',()=>{
         settingsListPosition.scroll=$('generic-page').scrollTop;settingsListPosition.query=search.value;state.settingsChild=true;page(category.id)});
       const icon=el('img','settings-category-icon');icon.src='icons/'+category.icon+'.svg';icon.alt='';item.prepend(icon);section.querySelector('.group-body').append(item);
