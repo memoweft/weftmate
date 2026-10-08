@@ -938,18 +938,15 @@ public actor PersonalClient {
 
     /// The current API omits session origin. A positive owner-only desktop capability plus
     /// sendAvailable proves personal-remote; shared accounts are forced unavailable by /status.
-    public func taskControlSessionIDs() async throws -> Set<String> {
+    public func taskControlSessionIDs(includeArchived: Bool = false) async throws -> Set<String> {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
-        struct Capability: Decodable { let available: Bool }
-        struct Capabilities: Decodable { let desktopOpenApp: Capability? }
-        struct Backend: Decodable { let capabilities: Capabilities? }
-        struct Status: Decodable { let ownerId: String; let hostId: String; let backend: Backend? }
+        struct Status: Decodable { let ownerId: String; let hostId: String }
         let status: Status = try await authorized(auth, generation, path: "/status")
         guard status.ownerId == auth.session.account.ownerId, status.hostId == auth.session.hostId else { throw APIFailure.identityMismatch }
-        guard status.backend?.capabilities?.desktopOpenApp?.available == true else { return [] }
-        let sessions: SessionsReply = try await authorized(auth, generation, path: "/sessions")
-        return Set(sessions.sessions.filter { $0.sendAvailable && $0.unavailable != true }.map(\.sessionId))
+        // Root task controls are authorized by /tasks; opening desktop apps is an unrelated capability.
+        let sessions: SessionsReply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
+        return Set(sessions.sessions.filter { ($0.sendAvailable || ($0.archived == true && $0.running)) && $0.unavailable != true }.map(\.sessionId))
     }
 
     public func uploadOriginalAttachment(_ metadata: OriginalAttachment, file: URL, conversationID: String,

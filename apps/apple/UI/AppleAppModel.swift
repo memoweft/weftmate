@@ -276,7 +276,7 @@ extension AppleAppModel {
                 }
                 sessionID = id; profileID = profile
             }
-            taskControlSessions = try await client.taskControlSessionIDs()
+            taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard accountEpoch == epoch else { return }
             knownBoundSessions[key] = sessionID
             adoptionChoices[key] = nil
@@ -1172,7 +1172,7 @@ final class AppleAppModel: ObservableObject {
         do {
             let result = try await client.conversations(includeArchived: true)
             guard actionEpoch == epoch else { return }
-            taskControlSessions = try await client.taskControlSessionIDs()
+            taskControlSessions = try await client.taskControlSessionIDs(includeArchived: true)
             guard actionEpoch == epoch else { return }
             conversations = result
             liveConversations = Dictionary(uniqueKeysWithValues: result.map { ($0.id, $0) })
@@ -1199,6 +1199,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     func open(_ conversation: ConversationSummary) async {
+        timelineRootCommands = []
         retireHistoryObservers()
         selectedConversation = conversation
         messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = false
@@ -1375,7 +1376,7 @@ final class AppleAppModel: ObservableObject {
                 taskID: current?.steps.last?.taskID, progress: running ? current?.steps.last?.summary ?? "正在处理" : ending == nil && current == nil ? "等待新任务" : endLabel,
                 running: running,
                 assistantSummary: String((page.events.last(where: { $0.type == "assistant.message" })?.data["text"]?.string ?? "").prefix(240)),
-                approvals: approvals.approvals.filter(\.canDecide).map { WatchApproval(id: $0.id, summary: $0.reason) }, completedTaskIDs: completed)
+                approvals: approvals.approvals.filter(\.canDecide).map { WatchApproval(id: $0.id, summary: $0.readableSummary) }, completedTaskIDs: completed)
             watchBridge.publish(snapshot); return try JSONEncoder().encode(snapshot)
         } catch { return nil }
     }

@@ -67,3 +67,42 @@ enum ResourceTab: Identifiable, Equatable {
         }
     }
 }
+
+/// Content transfers and account guards shared by iPhone/Mac presentation.
+@MainActor final class ResourceDetailModel: ObservableObject {
+    @Published private(set) var file: URL?
+    @Published private(set) var loading = false
+    @Published private(set) var error: String?
+    @Published private(set) var memorySources: [String: MemorySourcesSnapshot] = [:]
+    @Published private(set) var memoryErrors: [String: String] = [:]
+    private weak var app: AppleAppModel?
+    private let epoch: UUID
+    private let sessionID: String
+    private var folder: URL?
+    init(app: AppleAppModel, sessionID: String) { self.app = app; epoch = app.accountEpoch; self.sessionID = sessionID }
+    private var current: Bool { app?.accountEpoch == epoch }
+    func loadMemory(_ memory: UsedMemory) async {
+        guard current, let app else { return }; memoryErrors[memory.id] = nil
+        do {
+            let value = try await app.assistantClient.memorySources(kind: memory.kind, itemID: memory.id)
+            guard current, !Task.isCancelled else { return }; memorySources[memory.id] = value
+        } catch { if current, !Task.isCancelled { memoryErrors[memory.id] = "当前来源不可读或已被忘掉，请稍后重试。" } }
+    }
+    func loadOutput(_ id: String) async {
+        guard !loading, current, let app else { return }
+        loading = true; error = nil
+        defer { loading = false }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("weftmate-resource-" + UUID().uuidString)
+        do {
+            let value = try await app.assistantClient.timelineArtifactBytes(sessionID: sessionID, artifactID: id)
+            guard current, !Task.isCancelled else { return }
+            try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+            let url = directory.appendingPathComponent(value.artifact.fileName ?? "成果.txt")
+            try value.data.write(to: url); cleanup(); folder = directory; file = url
+        } catch {
+            try? FileManager.default.removeItem(at: directory)
+            if current, !Task.isCancelled { self.error = "成果未读取，请重试。" }
+        }
+    }
+    func cleanup() { if let folder { try? FileManager.default.removeItem(at: folder) }; folder = nil; file = nil }
+}

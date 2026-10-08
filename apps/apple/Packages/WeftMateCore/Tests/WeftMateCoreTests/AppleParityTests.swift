@@ -62,6 +62,7 @@ private actor ParityTransport: HTTPTransport {
         let json: String
         if path.hasSuffix("/auth/login") || path.hasSuffix("/auth/me") { json = #"{"account":{"ownerId":"owner","username":"synthetic","displayName":"合成","profileRevision":0},"device":{"id":"device","name":"iPhone","expiresAt":"2027-01-01T00:00:00Z"},"csrfToken":"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}"# }
         else if path.hasSuffix("/status") { json = #"{"ownerId":"owner","hostId":"host"}"# }
+        else if path.hasSuffix("/sessions") { writes.append(request); json = #"{"sessions":[{"sessionId":"session","title":"合成任务","running":true,"sendAvailable":true,"modelProfileId":"mimo"},{"sessionId":"archived","title":"归档中的任务","running":true,"sendAvailable":false,"archived":true,"modelProfileId":"mimo"}]}"# }
         else if path.hasSuffix("/archive") || path.hasSuffix("/unarchive") { writes.append(request); json = "{\"sessionId\":\"session\",\"archived\":\(path.hasSuffix("/unarchive") ? "false" : "true")}" }
         else if request.httpMethod == "DELETE" { writes.append(request); json = #"{"sessionId":"session","deleted":true,"forgetMemories":false,"forgottenEvidenceCount":0}"# }
         else if path.hasSuffix("/cancel") { writes.append(request); return .init(status:409,headers:[:],body:Data(#"{"error":{"code":"TASK_NOT_READY"}}"#.utf8)) }
@@ -110,4 +111,12 @@ private actor ParityTransport: HTTPTransport {
     #expect(requests.last?.url?.path.hasSuffix("/cancel") == true)
     #expect(!requests.contains { $0.url?.path.hasSuffix("/stop") == true })
     #expect(APIFailure.server(status:402,code:"USAGE_LIMIT_REACHED").errorDescription?.contains("云端模型请求已暂停") == true)
+}
+
+@Test func a5TaskControlsDoNotRequireDesktopOpenAppAndIncludeArchivedRunningSessions() async throws {
+    let transport = ParityTransport(), client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+    _ = try await client.login(server: ServerConfiguration(input:"https://parity.example.com"), username:"synthetic", password:"synthetic-password-long", deviceName:"iPhone")
+    #expect(try await client.taskControlSessionIDs(includeArchived:true) == Set(["session","archived"]))
+    let requests = await transport.recorded()
+    #expect(requests.first?.url?.query == "archived=all")
 }

@@ -33,7 +33,9 @@ final class A5ParityUITests: XCTestCase {
     @MainActor private func send(_ app: XCUIApplication, _ text: String) throws {
         try fill(app,"conversationDraft",text)
         let button=app.buttons["sendButton"];let ready=NSPredicate(format:"enabled == true")
-        expectation(for:ready,evaluatedWith:button);waitForExpectations(timeout:20);button.tap()
+        let enabled=XCTNSPredicateExpectation(predicate:ready,object:button)
+        let readyResult=XCTWaiter.wait(for:[enabled],timeout:20);XCTAssertEqual(readyResult,.completed)
+        guard readyResult == .completed else { throw NSError(domain:"A5SendReadiness",code:1) };button.tap()
         let empty=NSPredicate(format:"value == %@", "向 WeftMate 说说你的目标")
         // A cleared TextField reports its placeholder as value.
         let cleared=XCTNSPredicateExpectation(predicate:empty,object:app.textFields["conversationDraft"])

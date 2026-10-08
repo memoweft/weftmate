@@ -1048,6 +1048,7 @@ export function createHttpHandler(context) {
             if (described?.sessionId === sessionId) sessions.push({
               sessionId,
               archived: state.sessions[sessionId].archived === true,
+              modelProfileId: state.sessions[sessionId].modelProfileId ?? described.modelProfileId ?? null,
               title: bounded(described.title, 256) ?? '',
               running: described.running === true,
               ...(state.sessions[sessionId].workspaceKind ? {
