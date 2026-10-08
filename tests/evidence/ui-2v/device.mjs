@@ -96,7 +96,3 @@ try{
     console.log(await evaluate("JSON.stringify({text:document.body.innerText,inputs:[...document.querySelectorAll('button')].map(n=>({text:n.textContent,height:n.getBoundingClientRect().height}))})"));
   }
 }finally{ws.close();}
-
-
-
-
