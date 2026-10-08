@@ -67,6 +67,8 @@ export function validateScenario(s) {
     if (!checkTypes.includes(c.type)) throw new Error(`Unknown check: ${c.type}`);
     if (c.turn !== undefined && (!Number.isInteger(c.turn) || c.turn < 1 || c.turn > s.turns.length)) throw new Error('Invalid check.turn');
     if (c.type.startsWith('file_')) safePath('/eval', c.path);
+    if (c.numeric !== undefined && (c.type !== 'file_contains' || typeof c.numeric !== 'boolean')) throw new Error('numeric is a boolean option for file_contains only');
+    if (c.numeric === true && canonicalNumber(c.text) === undefined) throw new Error('numeric file_contains.text must be one decimal number');
     if (c.type === 'reply_matches') new RegExp(c.pattern, c.flags ?? 'u');
   }
 }
@@ -207,6 +209,36 @@ async function approvalPage(client, session, deadline) {
   return approvals;
 }
 
+// Opt-in numeric checks compare whole decimal values without floating-point
+// rounding. Full-width digits/punctuation and valid three-digit comma/space
+// groups are presentation variants; signs, fractions and boundaries still matter.
+function normalizeNumberText(text) {
+  return typeof text === 'string' ? text.replace(/[０-９]/g, digit => String(digit.charCodeAt(0) - 0xff10))
+    .replace(/[，．＋－−]/g, mark => ({ '，': ',', '．': '.', '＋': '+', '－': '-', '−': '-' })[mark]) : '';
+}
+function canonicalNumber(text) {
+  text = normalizeNumberText(text);
+  const match = /^([+-]?)(\d+(?:[, \t\u00a0\u202f]\d+)*)(?:\.(\d+))?$/.exec(text);
+  if (!match) return;
+  const integer = match[2];
+  if (/[, \t\u00a0\u202f]/.test(integer) &&
+      !/^\d{1,3}(?:,\d{3})+$/.test(integer) &&
+      !/^\d{1,3}(?:[ \t\u00a0\u202f]\d{3})+$/.test(integer)) return;
+  const digits = integer.replace(/[, \t\u00a0\u202f]/g, '').replace(/^0+(?=\d)/, '');
+  const fraction = (match[3] ?? '').replace(/0+$/, '');
+  return (match[1] === '-' && (digits !== '0' || fraction) ? '-' : '') + digits + (fraction ? `.${fraction}` : '');
+}
+function containsNumber(text, expected) {
+  const value = canonicalNumber(expected);
+  if (value === undefined) throw new Error('numeric file_contains.text must be one decimal number');
+  const source = normalizeNumberText(text);
+  // Consume malformed groups and exponents too, so they cannot yield a partial
+  // match for the expected decimal value. Never join numbers across newlines.
+  return [...source.matchAll(/[+-]?\d+(?:[, \t\u00a0\u202f]\d+)*(?:\.\d+)?(?:[eE][+-]?\d+)?/g)]
+    .some(match => !/[\w.]/.test(source[match.index - 1] ?? '') &&
+      !/[\w.]/.test(source[match.index + match[0].length] ?? '') && canonicalNumber(match[0]) === value);
+}
+
 export async function checkOne(check, context) {
   try {
     let passed;
@@ -216,7 +248,10 @@ export async function checkOne(check, context) {
       const file = await confinedFile(context.scratchDir, check.path);
       if (check.type === 'file_exists') passed = file.exists;
       if (check.type === 'file_absent') passed = !file.exists;
-      if (check.type === 'file_contains') passed = file.exists && (await readFile(file.full, 'utf8')).includes(check.text);
+      if (check.type === 'file_contains' && file.exists) {
+        const text = await readFile(file.full, 'utf8');
+        passed = check.numeric === true ? containsNumber(text, check.text) : text.includes(check.text);
+      }
     } else if (check.type === 'reply_contains') passed = reply.includes(check.text);
     else if (check.type === 'reply_matches') passed = new RegExp(check.pattern, check.flags ?? 'u').test(reply);
     else if (check.type === 'turn_status') passed = (Array.isArray(check.status) ? check.status : [check.status]).includes(turn?.status);

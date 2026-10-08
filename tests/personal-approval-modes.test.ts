@@ -99,3 +99,38 @@ test('conversation-created files can be corrected; existing user files and unres
     assert.deepEqual(classifyPersonalRisk('write', { file_path: 'mine.md' }, cwd), ['overwrite'], 'another conversation cannot inherit creation')
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
+
+test('executing a generated script resolves argv conditional targets without exempting overwrites or deletion', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-script-risk-'))
+  try {
+    writeFileSync(join(cwd, 'sales.csv'), 'tea,25\ncoffee,24')
+    writeFileSync(join(cwd, 'user.json'), 'keep')
+    const script = `import { readFileSync, writeFileSync } from 'node:fs';
+      import { fileURLToPath } from 'node:url';
+      import { dirname, join, resolve } from 'node:path';
+      const here = dirname(fileURLToPath(import.meta.url));
+      const csvPath = process.argv[2] ? resolve(process.argv[2]) : join(here, 'sales.csv');
+      const jsonPath = process.argv[3] ? resolve(process.argv[3]) : join(here, 'result.json');
+      console.log(readFileSync(csvPath, 'utf8'));
+      writeFileSync(jsonPath, '{}');`
+    writeFileSync(join(cwd, 'sum.mjs'), script)
+    writeFileSync(join(cwd, 'read-only.mjs'), script.replace("writeFileSync(jsonPath, '{}');", ''))
+    writeFileSync(join(cwd, 'read-only.ps1'), 'Get-Content sales.csv | Write-Output')
+    const risk = (command: string) => classifyPersonalRisk('pwsh', { command }, cwd)
+    for (const command of ['node sum.mjs', 'node "sum.mjs" sales.csv new.json',
+      'node read-only.mjs', 'pwsh -File read-only.ps1']) assert.deepEqual(risk(command), [], command)
+    for (const command of ['node sum.mjs sales.csv user.json', 'node sum.mjs sales.csv $unknown',
+      'node read-only.mjs > user.json', 'pwsh -File read-only.ps1 > user.json',
+      "Set-Content user.json 'changed'", "Out-File -FilePath user.json", 'Move-Item new.json -Destination user.json -Force',
+      'mv new.json user.json']) assert.ok(risk(command).includes('overwrite'), command)
+    writeFileSync(join(cwd, 'result.json'), 'keep existing result')
+    assert.deepEqual(risk('node sum.mjs'), ['overwrite'])
+    assert.deepEqual(risk('node sum.mjs sales.csv new.json'), [], 'select supplied target, not existing fallback')
+    writeFileSync(join(cwd, 'unknown.mjs'), script.replace('process.argv[3] ? resolve(process.argv[3])', "process.argv[0] ? resolve('user.json')"))
+    assert.deepEqual(risk('node unknown.mjs'), ['overwrite'], 'argv[0] is not an absent user argument')
+    for (const command of ['Remove-Item -LiteralPath user.json', 'rm user.json',
+      'node read-only.mjs; Remove-Item user.json']) assert.ok(risk(command).includes('delete'), command)
+    writeFileSync(join(cwd, 'delete.mjs'), "import { unlinkSync } from 'node:fs'; unlinkSync('user.json');")
+    assert.ok(risk('node delete.mjs').includes('delete'))
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
+})
