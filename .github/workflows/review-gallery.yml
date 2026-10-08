@@ -54,6 +54,9 @@ jobs:
         run: |
           node node_modules/electron/install.js
           npx playwright install chromium
+      - name: Prepare display for a 1200x800 Electron window
+        shell: pwsh
+        run: ./scripts/review-gallery/ci-display.ps1
       - name: Capture isolated synthetic scenes
         run: node scripts/review-gallery/capture.mjs --out .local/review-gallery
       - name: Verify evidence selection and text scan
