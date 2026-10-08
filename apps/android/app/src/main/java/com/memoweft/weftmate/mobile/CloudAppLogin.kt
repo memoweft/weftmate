@@ -64,8 +64,9 @@ internal class CloudAppLogin(private val secrets: SecureSettings, private val ap
                 val pins = JSONObject(secrets.cloudValue("pins") ?: "{}")
                 if (pins.has(host) && pins.getString(host) != pin) throw ApiFailure(403, "HOST_PIN_MISMATCH")
                 CloudPins.install(host, pin); pins.put(host, pin); secrets.saveCloudValue("pins", pins.toString())
-                value.optJSONObject("relay")?.optString("baseUrl")?.takeIf { it.isNotBlank() }?.let { relay ->
-                    val relayOrigin = Endpoints.hostOrigin(relay)
+                val relay = value.optJSONObject("relay")
+                if (relay != null && !relay.isNull("baseUrl") && relay.optString("baseUrl").isNotBlank()) {
+                    val relayOrigin = Endpoints.hostOrigin(relay.getString("baseUrl"))
                     CloudPins.install(relayOrigin, pin); pins.put(relayOrigin, pin); secrets.saveCloudValue("pins", pins.toString())
                 }
             }
