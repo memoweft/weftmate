@@ -35,7 +35,8 @@ if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key'
   }
 }
 if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
-const root = join('C:/Temp', `weftmate-${comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
+const scenarioFixes = process.argv.includes('--scenario-fixes');
+const root = join('C:/Temp', `weftmate-${scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password = `test-${randomUUID()}-password`, username = `eval-${randomUUID()}`;
@@ -91,9 +92,10 @@ try {
     'The isolated Core must be configured before recording memory results');
   writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'Baseline runner', provisioned: true }), { mode: 0o600 });
   let scenarios = await loadScenarios('eval/scenarios/*.yaml');
+  if (scenarioFixes) scenarios = scenarios.filter(s => /^(action-04|action-06|memory-01|memory-02|memory-04)-/.test(s.id));
   if (diagnostic) scenarios = scenarios.filter(s => s.id === 'action-06-delete-approval').map(s => ({ ...s, timeoutSec: 600 }));
   const onlyIndex = process.argv.indexOf('--only');
-  if (onlyIndex !== -1) scenarios = scenarios.filter(s => s.id === process.argv[onlyIndex + 1]);
+  if (onlyIndex !== -1) scenarios = scenarios.filter(s => process.argv[onlyIndex + 1].split(',').includes(s.id));
   // Each scenario runs once. Only memory-03 starts on Qwen and switches to MiMo.
   const results = [], startedAt = new Date().toISOString();
   for (const scenario of scenarios) {

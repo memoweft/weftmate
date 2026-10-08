@@ -1,0 +1,3471 @@
+{
+  "date": "2026-10-08",
+  "models": [
+    "http://127.0.0.1:8081/qwen3.8-27b-original",
+    "https://api.xiaomimimo.com/mimo-v2.6-flash"
+  ],
+  "finalResults": [
+    {
+      "id": "action-04-research-script",
+      "qwen": {
+        "id": "action-04-research-script",
+        "status": "passed",
+        "durationMs": 379983,
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "sum.mjs",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "49",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "25",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "24",
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "49",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "https://nodejs\\.org/",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:37:19.154Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:37:19.616Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:37:19.616Z"
+              },
+              {
+                "seq": 340,
+                "type": "step.started",
+                "at": "2026-10-08T02:41:47.516Z"
+              },
+              {
+                "seq": 341,
+                "type": "step.started",
+                "at": "2026-10-08T02:41:47.525Z"
+              },
+              {
+                "seq": 342,
+                "type": "step.completed",
+                "at": "2026-10-08T02:41:48.629Z"
+              },
+              {
+                "seq": 343,
+                "type": "step.completed",
+                "at": "2026-10-08T02:41:57.759Z"
+              },
+              {
+                "seq": 750,
+                "type": "step.started",
+                "at": "2026-10-08T02:42:28.121Z"
+              },
+              {
+                "seq": 751,
+                "type": "step.completed",
+                "at": "2026-10-08T02:42:28.871Z"
+              },
+              {
+                "seq": 839,
+                "type": "step.started",
+                "at": "2026-10-08T02:42:32.350Z"
+              },
+              {
+                "seq": 840,
+                "type": "step.completed",
+                "at": "2026-10-08T02:42:33.068Z"
+              },
+              {
+                "seq": 2641,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:43:16.285Z"
+              },
+              {
+                "seq": 2642,
+                "type": "step.started",
+                "at": "2026-10-08T02:43:16.287Z"
+              },
+              {
+                "seq": 2643,
+                "type": "artifact.created",
+                "at": "2026-10-08T02:43:18.976Z"
+              },
+              {
+                "seq": 2726,
+                "type": "step.started",
+                "at": "2026-10-08T02:43:22.467Z"
+              },
+              {
+                "seq": 2727,
+                "type": "step.completed",
+                "at": "2026-10-08T02:43:23.541Z"
+              },
+              {
+                "seq": 2785,
+                "type": "step.started",
+                "at": "2026-10-08T02:43:25.624Z"
+              },
+              {
+                "seq": 2786,
+                "type": "step.completed",
+                "at": "2026-10-08T02:43:26.348Z"
+              },
+              {
+                "seq": 3178,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:43:36.207Z"
+              },
+              {
+                "seq": 3179,
+                "type": "task.ended",
+                "at": "2026-10-08T02:43:36.207Z"
+              },
+              {
+                "seq": 3180,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:43:36.208Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "id": "action-04-research-script",
+        "status": "passed",
+        "durationMs": 76804,
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "sum.mjs",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "49",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "25",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "result.json",
+            "text": "24",
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "49",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "https://nodejs\\.org/",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:27:47.097Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:27:47.607Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:27:47.607Z"
+              },
+              {
+                "seq": 47,
+                "type": "step.started",
+                "at": "2026-10-08T02:28:13.017Z"
+              },
+              {
+                "seq": 48,
+                "type": "step.started",
+                "at": "2026-10-08T02:28:13.028Z"
+              },
+              {
+                "seq": 49,
+                "type": "step.completed",
+                "at": "2026-10-08T02:28:14.412Z"
+              },
+              {
+                "seq": 50,
+                "type": "step.completed",
+                "at": "2026-10-08T02:28:22.234Z"
+              },
+              {
+                "seq": 234,
+                "type": "step.started",
+                "at": "2026-10-08T02:28:31.255Z"
+              },
+              {
+                "seq": 235,
+                "type": "artifact.created",
+                "at": "2026-10-08T02:28:34.539Z"
+              },
+              {
+                "seq": 274,
+                "type": "step.started",
+                "at": "2026-10-08T02:28:41.923Z"
+              },
+              {
+                "seq": 275,
+                "type": "step.completed",
+                "at": "2026-10-08T02:28:41.924Z"
+              },
+              {
+                "seq": 312,
+                "type": "step.started",
+                "at": "2026-10-08T02:28:51.548Z"
+              },
+              {
+                "seq": 313,
+                "type": "step.completed",
+                "at": "2026-10-08T02:28:52.937Z"
+              },
+              {
+                "seq": 367,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:29:01.096Z"
+              },
+              {
+                "seq": 368,
+                "type": "task.ended",
+                "at": "2026-10-08T02:29:01.096Z"
+              },
+              {
+                "seq": 369,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:29:01.097Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "action-06-delete-approval",
+      "qwen": {
+        "id": "action-06-delete-approval",
+        "status": "passed",
+        "durationMs": 145526,
+        "checks": [
+          {
+            "type": "approval_seen",
+            "turn": 1,
+            "outcome": "allowed-once",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "过期草稿.txt",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "approval_seen",
+            "turn": 2,
+            "outcome": "rejected",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "turn": 2,
+            "path": "还要保留.txt",
+            "text": "这份拒绝删除后必须保留",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "turn": 2,
+            "pattern": "拒绝|保留|没有删|未删|没删|取消|不删|停止",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [
+              "allowed-once"
+            ],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:43:38.970Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:43:39.324Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:43:39.325Z"
+              },
+              {
+                "seq": 867,
+                "type": "step.started",
+                "at": "2026-10-08T02:44:08.647Z"
+              },
+              {
+                "seq": 868,
+                "type": "approval.requested",
+                "at": "2026-10-08T02:44:08.656Z"
+              },
+              {
+                "seq": 869,
+                "type": "approval.resolved",
+                "at": "2026-10-08T02:44:09.455Z"
+              },
+              {
+                "seq": 870,
+                "type": "step.completed",
+                "at": "2026-10-08T02:44:10.913Z"
+              },
+              {
+                "seq": 953,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:44:13.541Z"
+              },
+              {
+                "seq": 954,
+                "type": "task.ended",
+                "at": "2026-10-08T02:44:13.541Z"
+              },
+              {
+                "seq": 955,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:44:13.541Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [
+              "rejected"
+            ],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 957,
+                "type": "turn.started",
+                "at": "2026-10-08T02:44:14.467Z"
+              },
+              {
+                "seq": 959,
+                "type": "task.started",
+                "at": "2026-10-08T02:44:14.699Z"
+              },
+              {
+                "seq": 960,
+                "type": "user.message",
+                "at": "2026-10-08T02:44:14.700Z"
+              },
+              {
+                "seq": 4822,
+                "type": "step.started",
+                "at": "2026-10-08T02:45:50.672Z"
+              },
+              {
+                "seq": 4823,
+                "type": "approval.requested",
+                "at": "2026-10-08T02:45:50.682Z"
+              },
+              {
+                "seq": 4824,
+                "type": "approval.resolved",
+                "at": "2026-10-08T02:45:51.416Z"
+              },
+              {
+                "seq": 4825,
+                "type": "step.completed",
+                "at": "2026-10-08T02:45:51.416Z"
+              },
+              {
+                "seq": 5217,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:46:02.459Z"
+              },
+              {
+                "seq": 5218,
+                "type": "task.ended",
+                "at": "2026-10-08T02:46:02.459Z"
+              },
+              {
+                "seq": 5219,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:46:02.460Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "id": "action-06-delete-approval",
+        "status": "passed",
+        "durationMs": 262861,
+        "checks": [
+          {
+            "type": "approval_seen",
+            "turn": 1,
+            "outcome": "allowed-once",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "过期草稿.txt",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "approval_seen",
+            "turn": 2,
+            "outcome": "rejected",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "turn": 2,
+            "path": "还要保留.txt",
+            "text": "这份拒绝删除后必须保留",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "turn": 2,
+            "pattern": "拒绝|保留|没有删|未删|没删|取消|不删|停止",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [
+              "allowed-once"
+            ],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:33:38.192Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:33:38.693Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:33:38.694Z"
+              },
+              {
+                "seq": 97,
+                "type": "step.started",
+                "at": "2026-10-08T02:33:58.501Z"
+              },
+              {
+                "seq": 98,
+                "type": "step.completed",
+                "at": "2026-10-08T02:33:58.504Z"
+              },
+              {
+                "seq": 142,
+                "type": "step.started",
+                "at": "2026-10-08T02:34:17.324Z"
+              },
+              {
+                "seq": 143,
+                "type": "step.completed",
+                "at": "2026-10-08T02:34:17.325Z"
+              },
+              {
+                "seq": 206,
+                "type": "step.started",
+                "at": "2026-10-08T02:34:33.933Z"
+              },
+              {
+                "seq": 207,
+                "type": "step.completed",
+                "at": "2026-10-08T02:34:33.935Z"
+              },
+              {
+                "seq": 387,
+                "type": "step.started",
+                "at": "2026-10-08T02:34:54.981Z"
+              },
+              {
+                "seq": 388,
+                "type": "step.completed",
+                "at": "2026-10-08T02:34:54.983Z"
+              },
+              {
+                "seq": 466,
+                "type": "step.started",
+                "at": "2026-10-08T02:35:32.678Z"
+              },
+              {
+                "seq": 467,
+                "type": "step.completed",
+                "at": "2026-10-08T02:35:33.624Z"
+              },
+              {
+                "seq": 750,
+                "type": "step.started",
+                "at": "2026-10-08T02:35:51.336Z"
+              },
+              {
+                "seq": 751,
+                "type": "step.completed",
+                "at": "2026-10-08T02:35:52.251Z"
+              },
+              {
+                "seq": 817,
+                "type": "step.started",
+                "at": "2026-10-08T02:36:41.098Z"
+              },
+              {
+                "seq": 818,
+                "type": "approval.requested",
+                "at": "2026-10-08T02:36:41.105Z"
+              },
+              {
+                "seq": 819,
+                "type": "approval.resolved",
+                "at": "2026-10-08T02:36:42.030Z"
+              },
+              {
+                "seq": 820,
+                "type": "step.completed",
+                "at": "2026-10-08T02:36:43.845Z"
+              },
+              {
+                "seq": 853,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:36:57.509Z"
+              },
+              {
+                "seq": 854,
+                "type": "task.ended",
+                "at": "2026-10-08T02:36:57.509Z"
+              },
+              {
+                "seq": 855,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:36:57.510Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [
+              "rejected"
+            ],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 857,
+                "type": "turn.started",
+                "at": "2026-10-08T02:37:00.188Z"
+              },
+              {
+                "seq": 859,
+                "type": "task.started",
+                "at": "2026-10-08T02:37:00.652Z"
+              },
+              {
+                "seq": 860,
+                "type": "user.message",
+                "at": "2026-10-08T02:37:00.652Z"
+              },
+              {
+                "seq": 1010,
+                "type": "step.started",
+                "at": "2026-10-08T02:37:18.559Z"
+              },
+              {
+                "seq": 1011,
+                "type": "step.completed",
+                "at": "2026-10-08T02:37:19.534Z"
+              },
+              {
+                "seq": 1181,
+                "type": "step.started",
+                "at": "2026-10-08T02:37:39.840Z"
+              },
+              {
+                "seq": 1182,
+                "type": "approval.requested",
+                "at": "2026-10-08T02:37:39.849Z"
+              },
+              {
+                "seq": 1183,
+                "type": "approval.resolved",
+                "at": "2026-10-08T02:37:40.746Z"
+              },
+              {
+                "seq": 1184,
+                "type": "step.completed",
+                "at": "2026-10-08T02:37:40.747Z"
+              },
+              {
+                "seq": 1244,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:37:58.115Z"
+              },
+              {
+                "seq": 1245,
+                "type": "task.ended",
+                "at": "2026-10-08T02:37:58.115Z"
+              },
+              {
+                "seq": 1246,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:37:58.116Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "memory-01-preference",
+      "qwen": {
+        "id": "memory-01-preference",
+        "status": "failed",
+        "durationMs": 59680,
+        "reason": "reply_matches did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "买菜|菜市场|蔬菜|菜摊",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "unsupported",
+            "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:46:05.598Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:46:05.964Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:46:05.964Z"
+              },
+              {
+                "seq": 696,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:46:27.250Z"
+              },
+              {
+                "seq": 697,
+                "type": "task.ended",
+                "at": "2026-10-08T02:46:27.251Z"
+              },
+              {
+                "seq": 698,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:46:27.252Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:46:30.644Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:46:31.003Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:46:31.003Z"
+              },
+              {
+                "seq": 1172,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:47:02.977Z"
+              },
+              {
+                "seq": 1173,
+                "type": "task.ended",
+                "at": "2026-10-08T02:47:02.977Z"
+              },
+              {
+                "seq": 1174,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:47:02.978Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "id": "memory-01-preference",
+        "status": "failed",
+        "durationMs": 96917,
+        "reason": "reply_matches did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "买菜|菜市场|蔬菜|菜摊",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "unsupported",
+            "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:41:05.780Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:41:06.503Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:41:06.503Z"
+              },
+              {
+                "seq": 150,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:41:24.311Z"
+              },
+              {
+                "seq": 151,
+                "type": "task.ended",
+                "at": "2026-10-08T02:41:24.311Z"
+              },
+              {
+                "seq": 152,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:41:24.312Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T02:41:28.618Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T02:41:28.859Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T02:41:28.859Z"
+              },
+              {
+                "seq": 76,
+                "type": "step.started",
+                "at": "2026-10-08T02:42:11.722Z"
+              },
+              {
+                "seq": 77,
+                "type": "step.completed",
+                "at": "2026-10-08T02:42:12.570Z"
+              },
+              {
+                "seq": 78,
+                "type": "step.started",
+                "at": "2026-10-08T02:42:12.571Z"
+              },
+              {
+                "seq": 79,
+                "type": "step.completed",
+                "at": "2026-10-08T02:42:12.576Z"
+              },
+              {
+                "seq": 508,
+                "type": "assistant.message",
+                "at": "2026-10-08T02:42:39.527Z"
+              },
+              {
+                "seq": 509,
+                "type": "task.ended",
+                "at": "2026-10-08T02:42:39.527Z"
+              },
+              {
+                "seq": 510,
+                "type": "turn.ended",
+                "at": "2026-10-08T02:42:39.528Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "memory-02-correction",
+      "qwen": {
+        "id": "memory-02-correction",
+        "status": "failed",
+        "durationMs": 180874,
+        "reason": "reply_contains did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "周五",
+            "status": "failed",
+            "reason": "reply_contains did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "unsupported",
+            "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:12:14.200Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:12:14.416Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:12:14.416Z"
+              },
+              {
+                "seq": 331,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:12:57.862Z"
+              },
+              {
+                "seq": 332,
+                "type": "task.ended",
+                "at": "2026-10-08T03:12:57.863Z"
+              },
+              {
+                "seq": 333,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:12:57.864Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 335,
+                "type": "turn.started",
+                "at": "2026-10-08T03:12:58.874Z"
+              },
+              {
+                "seq": 337,
+                "type": "task.started",
+                "at": "2026-10-08T03:12:59.141Z"
+              },
+              {
+                "seq": 338,
+                "type": "user.message",
+                "at": "2026-10-08T03:12:59.141Z"
+              },
+              {
+                "seq": 392,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:13:06.665Z"
+              },
+              {
+                "seq": 393,
+                "type": "task.ended",
+                "at": "2026-10-08T03:13:06.665Z"
+              },
+              {
+                "seq": 394,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:13:06.666Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:13:09.895Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:13:10.090Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:13:10.090Z"
+              },
+              {
+                "seq": 1580,
+                "type": "step.started",
+                "at": "2026-10-08T03:13:53.640Z"
+              },
+              {
+                "seq": 1581,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:54.677Z"
+              },
+              {
+                "seq": 1582,
+                "type": "step.started",
+                "at": "2026-10-08T03:13:54.678Z"
+              },
+              {
+                "seq": 1583,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:55.746Z"
+              },
+              {
+                "seq": 1584,
+                "type": "step.started",
+                "at": "2026-10-08T03:13:55.747Z"
+              },
+              {
+                "seq": 1585,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:56.482Z"
+              },
+              {
+                "seq": 2289,
+                "type": "step.started",
+                "at": "2026-10-08T03:14:16.625Z"
+              },
+              {
+                "seq": 2290,
+                "type": "step.completed",
+                "at": "2026-10-08T03:14:17.877Z"
+              },
+              {
+                "seq": 2912,
+                "type": "step.started",
+                "at": "2026-10-08T03:14:37.340Z"
+              },
+              {
+                "seq": 2913,
+                "type": "step.completed",
+                "at": "2026-10-08T03:14:38.406Z"
+              },
+              {
+                "seq": 3738,
+                "type": "step.started",
+                "at": "2026-10-08T03:14:57.827Z"
+              },
+              {
+                "seq": 3739,
+                "type": "artifact.created",
+                "at": "2026-10-08T03:15:00.880Z"
+              },
+              {
+                "seq": 3878,
+                "type": "step.started",
+                "at": "2026-10-08T03:15:05.583Z"
+              },
+              {
+                "seq": 3879,
+                "type": "step.completed",
+                "at": "2026-10-08T03:15:06.303Z"
+              },
+              {
+                "seq": 4087,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:15:12.740Z"
+              },
+              {
+                "seq": 4088,
+                "type": "task.ended",
+                "at": "2026-10-08T03:15:12.740Z"
+              },
+              {
+                "seq": 4089,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:15:12.740Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "id": "memory-02-correction",
+        "status": "failed",
+        "durationMs": 248397,
+        "reason": "reply_contains did not match expected value; turn_status did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "周五",
+            "status": "failed",
+            "reason": "reply_contains did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "failed",
+            "reason": "turn_status did not match expected value"
+          },
+          {
+            "type": "memory_used",
+            "status": "unsupported",
+            "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:12:18.260Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:12:18.890Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:12:18.890Z"
+              },
+              {
+                "seq": 129,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:12:27.063Z"
+              },
+              {
+                "seq": 130,
+                "type": "task.ended",
+                "at": "2026-10-08T03:12:27.064Z"
+              },
+              {
+                "seq": 131,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:12:27.065Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 133,
+                "type": "turn.started",
+                "at": "2026-10-08T03:12:29.695Z"
+              },
+              {
+                "seq": 135,
+                "type": "task.started",
+                "at": "2026-10-08T03:12:30.213Z"
+              },
+              {
+                "seq": 136,
+                "type": "user.message",
+                "at": "2026-10-08T03:12:30.214Z"
+              },
+              {
+                "seq": 161,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:12:32.835Z"
+              },
+              {
+                "seq": 162,
+                "type": "task.ended",
+                "at": "2026-10-08T03:12:32.835Z"
+              },
+              {
+                "seq": 163,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:12:32.836Z"
+              }
+            ]
+          },
+          {
+            "status": "failed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:12:37.217Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:12:37.449Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:12:37.450Z"
+              },
+              {
+                "seq": 97,
+                "type": "step.started",
+                "at": "2026-10-08T03:12:45.625Z"
+              },
+              {
+                "seq": 98,
+                "type": "step.completed",
+                "at": "2026-10-08T03:12:46.604Z"
+              },
+              {
+                "seq": 99,
+                "type": "step.started",
+                "at": "2026-10-08T03:12:46.606Z"
+              },
+              {
+                "seq": 100,
+                "type": "step.completed",
+                "at": "2026-10-08T03:12:47.553Z"
+              },
+              {
+                "seq": 158,
+                "type": "step.started",
+                "at": "2026-10-08T03:12:51.930Z"
+              },
+              {
+                "seq": 160,
+                "type": "step.completed",
+                "at": "2026-10-08T03:12:52.967Z"
+              },
+              {
+                "seq": 161,
+                "type": "step.started",
+                "at": "2026-10-08T03:12:52.968Z"
+              },
+              {
+                "seq": 162,
+                "type": "step.completed",
+                "at": "2026-10-08T03:12:53.928Z"
+              },
+              {
+                "seq": 199,
+                "type": "step.started",
+                "at": "2026-10-08T03:12:59.982Z"
+              },
+              {
+                "seq": 200,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:00.982Z"
+              },
+              {
+                "seq": 226,
+                "type": "step.started",
+                "at": "2026-10-08T03:13:03.844Z"
+              },
+              {
+                "seq": 227,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:04.838Z"
+              },
+              {
+                "seq": 262,
+                "type": "step.started",
+                "at": "2026-10-08T03:13:09.371Z"
+              },
+              {
+                "seq": 263,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:10.125Z"
+              },
+              {
+                "seq": 341,
+                "type": "step.started",
+                "at": "2026-10-08T03:13:23.380Z"
+              },
+              {
+                "seq": 342,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:25.507Z"
+              },
+              {
+                "seq": 599,
+                "type": "step.started",
+                "at": "2026-10-08T03:13:44.386Z"
+              },
+              {
+                "seq": 600,
+                "type": "step.completed",
+                "at": "2026-10-08T03:13:45.803Z"
+              },
+              {
+                "seq": 790,
+                "type": "step.started",
+                "at": "2026-10-08T03:14:17.321Z"
+              },
+              {
+                "seq": 791,
+                "type": "step.completed",
+                "at": "2026-10-08T03:14:18.641Z"
+              },
+              {
+                "seq": 872,
+                "type": "step.started",
+                "at": "2026-10-08T03:14:22.350Z"
+              },
+              {
+                "seq": 873,
+                "type": "step.completed",
+                "at": "2026-10-08T03:14:29.534Z"
+              },
+              {
+                "seq": 925,
+                "type": "step.started",
+                "at": "2026-10-08T03:14:34.381Z"
+              },
+              {
+                "seq": 926,
+                "type": "step.completed",
+                "at": "2026-10-08T03:14:36.407Z"
+              },
+              {
+                "seq": 982,
+                "type": "step.started",
+                "at": "2026-10-08T03:14:50.030Z"
+              },
+              {
+                "seq": 983,
+                "type": "step.completed",
+                "at": "2026-10-08T03:14:58.032Z"
+              },
+              {
+                "seq": 1044,
+                "type": "step.started",
+                "at": "2026-10-08T03:15:15.606Z"
+              },
+              {
+                "seq": 1045,
+                "type": "step.completed",
+                "at": "2026-10-08T03:15:16.798Z"
+              },
+              {
+                "seq": 1082,
+                "type": "step.started",
+                "at": "2026-10-08T03:15:29.849Z"
+              },
+              {
+                "seq": 1083,
+                "type": "step.completed",
+                "at": "2026-10-08T03:15:39.166Z"
+              },
+              {
+                "seq": 1138,
+                "type": "step.started",
+                "at": "2026-10-08T03:15:54.777Z"
+              },
+              {
+                "seq": 1139,
+                "type": "step.completed",
+                "at": "2026-10-08T03:16:02.623Z"
+              },
+              {
+                "seq": 1203,
+                "type": "step.started",
+                "at": "2026-10-08T03:16:16.299Z"
+              },
+              {
+                "seq": 1204,
+                "type": "step.completed",
+                "at": "2026-10-08T03:16:18.265Z"
+              },
+              {
+                "seq": 1251,
+                "type": "step.started",
+                "at": "2026-10-08T03:16:21.845Z"
+              },
+              {
+                "seq": 1252,
+                "type": "step.completed",
+                "at": "2026-10-08T03:16:23.826Z"
+              },
+              {
+                "seq": 1260,
+                "type": "task.ended",
+                "at": "2026-10-08T03:16:23.857Z"
+              },
+              {
+                "seq": 1261,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:16:23.858Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "memory-04-person",
+      "qwen": {
+        "id": "memory-04-person",
+        "status": "failed",
+        "durationMs": 46866,
+        "reason": "reply_matches did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "阿岚",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "海报|展览",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "unsupported",
+            "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:09:46.014Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:09:46.401Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:09:46.401Z"
+              },
+              {
+                "seq": 152,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:10:18.531Z"
+              },
+              {
+                "seq": 153,
+                "type": "task.ended",
+                "at": "2026-10-08T03:10:18.532Z"
+              },
+              {
+                "seq": 154,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:10:18.533Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:10:22.457Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:10:22.833Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:10:22.833Z"
+              },
+              {
+                "seq": 211,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:10:30.578Z"
+              },
+              {
+                "seq": 212,
+                "type": "task.ended",
+                "at": "2026-10-08T03:10:30.579Z"
+              },
+              {
+                "seq": 213,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:10:30.579Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "id": "memory-04-person",
+        "status": "failed",
+        "durationMs": 17148,
+        "reason": "reply_matches did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "阿岚",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "海报|展览",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "unsupported",
+            "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:09:49.385Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:09:49.800Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:09:49.800Z"
+              },
+              {
+                "seq": 64,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:09:53.400Z"
+              },
+              {
+                "seq": 65,
+                "type": "task.ended",
+                "at": "2026-10-08T03:09:53.401Z"
+              },
+              {
+                "seq": 66,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:09:53.401Z"
+              }
+            ]
+          },
+          {
+            "status": "completed",
+            "approvalDecisions": [],
+            "questionsAsked": 0,
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T03:09:57.963Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T03:09:58.219Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T03:09:58.220Z"
+              },
+              {
+                "seq": 104,
+                "type": "assistant.message",
+                "at": "2026-10-08T03:10:03.800Z"
+              },
+              {
+                "seq": 105,
+                "type": "task.ended",
+                "at": "2026-10-08T03:10:03.801Z"
+              },
+              {
+                "seq": 106,
+                "type": "turn.ended",
+                "at": "2026-10-08T03:10:03.801Z"
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ],
+  "intermediateCompletedResults": [
+    {
+      "iteration": "initial",
+      "model": "qwen",
+      "id": "action-04-research-script",
+      "status": "failed",
+      "durationMs": 900511,
+      "reason": "Scenario timed out",
+      "timedOut": true,
+      "checks": [],
+      "turns": [
+        {
+          "status": "running",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:20:38.727Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:20:38.943Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:20:38.944Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "initial",
+      "model": "mimo",
+      "id": "action-04-research-script",
+      "status": "failed",
+      "durationMs": 110069,
+      "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+      "timedOut": false,
+      "checks": [],
+      "turns": [
+        {
+          "status": "running",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "unexpectedApproval": {
+            "toolName": "pwsh",
+            "riskCategories": [
+              "overwrite"
+            ]
+          },
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:20:54.480Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:20:55.366Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:20:55.367Z"
+            },
+            {
+              "seq": 53,
+              "type": "step.started",
+              "at": "2026-10-08T02:20:58.213Z"
+            },
+            {
+              "seq": 54,
+              "type": "step.completed",
+              "at": "2026-10-08T02:20:59.238Z"
+            },
+            {
+              "seq": 55,
+              "type": "step.started",
+              "at": "2026-10-08T02:20:59.239Z"
+            },
+            {
+              "seq": 56,
+              "type": "step.completed",
+              "at": "2026-10-08T02:21:00.273Z"
+            },
+            {
+              "seq": 138,
+              "type": "step.started",
+              "at": "2026-10-08T02:21:06.504Z"
+            },
+            {
+              "seq": 139,
+              "type": "step.started",
+              "at": "2026-10-08T02:21:06.512Z"
+            },
+            {
+              "seq": 140,
+              "type": "step.completed",
+              "at": "2026-10-08T02:21:15.258Z"
+            },
+            {
+              "seq": 141,
+              "type": "step.completed",
+              "at": "2026-10-08T02:21:15.259Z"
+            },
+            {
+              "seq": 232,
+              "type": "step.started",
+              "at": "2026-10-08T02:21:21.789Z"
+            },
+            {
+              "seq": 233,
+              "type": "step.started",
+              "at": "2026-10-08T02:21:21.800Z"
+            },
+            {
+              "seq": 234,
+              "type": "step.completed",
+              "at": "2026-10-08T02:21:25.882Z"
+            },
+            {
+              "seq": 235,
+              "type": "step.completed",
+              "at": "2026-10-08T02:21:26.384Z"
+            },
+            {
+              "seq": 299,
+              "type": "step.started",
+              "at": "2026-10-08T02:21:31.808Z"
+            },
+            {
+              "seq": 300,
+              "type": "step.completed",
+              "at": "2026-10-08T02:21:32.847Z"
+            },
+            {
+              "seq": 301,
+              "type": "step.started",
+              "at": "2026-10-08T02:21:32.848Z"
+            },
+            {
+              "seq": 302,
+              "type": "step.completed",
+              "at": "2026-10-08T02:21:41.022Z"
+            },
+            {
+              "seq": 337,
+              "type": "step.started",
+              "at": "2026-10-08T02:22:08.206Z"
+            },
+            {
+              "seq": 338,
+              "type": "step.completed",
+              "at": "2026-10-08T02:22:09.164Z"
+            },
+            {
+              "seq": 797,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:22:32.120Z"
+            },
+            {
+              "seq": 798,
+              "type": "step.started",
+              "at": "2026-10-08T02:22:32.121Z"
+            },
+            {
+              "seq": 799,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:22:35.431Z"
+            },
+            {
+              "seq": 830,
+              "type": "step.started",
+              "at": "2026-10-08T02:22:40.814Z"
+            },
+            {
+              "seq": 831,
+              "type": "approval.requested",
+              "at": "2026-10-08T02:22:40.827Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "initial",
+      "model": "mimo",
+      "id": "action-06-delete-approval",
+      "status": "failed",
+      "durationMs": 600456,
+      "reason": "Scenario timed out",
+      "timedOut": true,
+      "checks": [
+        {
+          "type": "approval_seen",
+          "turn": 1,
+          "outcome": "allowed-once",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "turn": 1,
+          "path": "过期草稿.txt",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "approvalDecisions": [
+            "allowed-once"
+          ],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:22:47.948Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:22:48.709Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:22:48.709Z"
+            },
+            {
+              "seq": 78,
+              "type": "step.started",
+              "at": "2026-10-08T02:22:54.148Z"
+            },
+            {
+              "seq": 79,
+              "type": "step.completed",
+              "at": "2026-10-08T02:22:54.148Z"
+            },
+            {
+              "seq": 120,
+              "type": "step.started",
+              "at": "2026-10-08T02:23:01.399Z"
+            },
+            {
+              "seq": 121,
+              "type": "step.completed",
+              "at": "2026-10-08T02:23:02.938Z"
+            },
+            {
+              "seq": 173,
+              "type": "step.started",
+              "at": "2026-10-08T02:23:08.536Z"
+            },
+            {
+              "seq": 174,
+              "type": "approval.requested",
+              "at": "2026-10-08T02:23:08.547Z"
+            },
+            {
+              "seq": 175,
+              "type": "approval.resolved",
+              "at": "2026-10-08T02:23:09.523Z"
+            },
+            {
+              "seq": 176,
+              "type": "step.completed",
+              "at": "2026-10-08T02:23:11.428Z"
+            },
+            {
+              "seq": 206,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:23:24.431Z"
+            },
+            {
+              "seq": 207,
+              "type": "task.ended",
+              "at": "2026-10-08T02:23:24.431Z"
+            },
+            {
+              "seq": 208,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:23:24.432Z"
+            }
+          ]
+        },
+        {
+          "status": "running",
+          "approvalDecisions": [],
+          "questionsAsked": 1,
+          "timeline": [
+            {
+              "seq": 210,
+              "type": "turn.started",
+              "at": "2026-10-08T02:23:27.009Z"
+            },
+            {
+              "seq": 212,
+              "type": "task.started",
+              "at": "2026-10-08T02:23:27.491Z"
+            },
+            {
+              "seq": 213,
+              "type": "user.message",
+              "at": "2026-10-08T02:23:27.491Z"
+            },
+            {
+              "seq": 319,
+              "type": "step.started",
+              "at": "2026-10-08T02:23:35.087Z"
+            },
+            {
+              "seq": 320,
+              "type": "step.completed",
+              "at": "2026-10-08T02:23:36.602Z"
+            },
+            {
+              "seq": 441,
+              "type": "question.asked",
+              "at": "2026-10-08T02:23:50.919Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "initial",
+      "model": "mimo",
+      "id": "memory-01-preference",
+      "status": "failed",
+      "durationMs": 366112,
+      "reason": "reply_matches did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "买菜|菜市场|蔬菜|菜摊",
+          "status": "failed",
+          "reason": "reply_matches did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "unsupported",
+          "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+        },
+        {
+          "type": "llm_judge",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:32:50.250Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:32:51.177Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:32:51.177Z"
+            },
+            {
+              "seq": 122,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:33:16.815Z"
+            },
+            {
+              "seq": 123,
+              "type": "task.ended",
+              "at": "2026-10-08T02:33:16.815Z"
+            },
+            {
+              "seq": 124,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:33:16.816Z"
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:33:21.454Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:33:21.924Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:33:21.925Z"
+            },
+            {
+              "seq": 168,
+              "type": "step.started",
+              "at": "2026-10-08T02:33:45.144Z"
+            },
+            {
+              "seq": 169,
+              "type": "step.completed",
+              "at": "2026-10-08T02:33:46.499Z"
+            },
+            {
+              "seq": 170,
+              "type": "step.started",
+              "at": "2026-10-08T02:33:46.500Z"
+            },
+            {
+              "seq": 171,
+              "type": "step.completed",
+              "at": "2026-10-08T02:33:47.475Z"
+            },
+            {
+              "seq": 245,
+              "type": "step.started",
+              "at": "2026-10-08T02:34:12.012Z"
+            },
+            {
+              "seq": 246,
+              "type": "step.completed",
+              "at": "2026-10-08T02:34:12.995Z"
+            },
+            {
+              "seq": 247,
+              "type": "step.started",
+              "at": "2026-10-08T02:34:12.996Z"
+            },
+            {
+              "seq": 248,
+              "type": "step.completed",
+              "at": "2026-10-08T02:34:14.345Z"
+            },
+            {
+              "seq": 326,
+              "type": "step.started",
+              "at": "2026-10-08T02:34:36.867Z"
+            },
+            {
+              "seq": 327,
+              "type": "step.completed",
+              "at": "2026-10-08T02:34:38.224Z"
+            },
+            {
+              "seq": 328,
+              "type": "step.started",
+              "at": "2026-10-08T02:34:38.225Z"
+            },
+            {
+              "seq": 329,
+              "type": "step.completed",
+              "at": "2026-10-08T02:34:39.218Z"
+            },
+            {
+              "seq": 432,
+              "type": "step.started",
+              "at": "2026-10-08T02:35:03.813Z"
+            },
+            {
+              "seq": 433,
+              "type": "step.completed",
+              "at": "2026-10-08T02:35:04.776Z"
+            },
+            {
+              "seq": 434,
+              "type": "step.started",
+              "at": "2026-10-08T02:35:04.776Z"
+            },
+            {
+              "seq": 435,
+              "type": "step.completed",
+              "at": "2026-10-08T02:35:06.180Z"
+            },
+            {
+              "seq": 565,
+              "type": "step.started",
+              "at": "2026-10-08T02:35:21.386Z"
+            },
+            {
+              "seq": 566,
+              "type": "step.completed",
+              "at": "2026-10-08T02:35:22.858Z"
+            },
+            {
+              "seq": 699,
+              "type": "step.started",
+              "at": "2026-10-08T02:35:52.222Z"
+            },
+            {
+              "seq": 700,
+              "type": "step.completed",
+              "at": "2026-10-08T02:35:53.340Z"
+            },
+            {
+              "seq": 701,
+              "type": "step.started",
+              "at": "2026-10-08T02:35:53.341Z"
+            },
+            {
+              "seq": 702,
+              "type": "step.completed",
+              "at": "2026-10-08T02:35:54.724Z"
+            },
+            {
+              "seq": 947,
+              "type": "step.started",
+              "at": "2026-10-08T02:36:13.286Z"
+            },
+            {
+              "seq": 948,
+              "type": "step.completed",
+              "at": "2026-10-08T02:36:14.641Z"
+            },
+            {
+              "seq": 949,
+              "type": "step.started",
+              "at": "2026-10-08T02:36:14.641Z"
+            },
+            {
+              "seq": 950,
+              "type": "step.completed",
+              "at": "2026-10-08T02:36:15.589Z"
+            },
+            {
+              "seq": 1049,
+              "type": "step.started",
+              "at": "2026-10-08T02:36:48.900Z"
+            },
+            {
+              "seq": 1050,
+              "type": "step.started",
+              "at": "2026-10-08T02:36:48.912Z"
+            },
+            {
+              "seq": 1051,
+              "type": "step.completed",
+              "at": "2026-10-08T02:36:50.293Z"
+            },
+            {
+              "seq": 1052,
+              "type": "step.completed",
+              "at": "2026-10-08T02:36:50.726Z"
+            },
+            {
+              "seq": 1195,
+              "type": "step.started",
+              "at": "2026-10-08T02:37:02.444Z"
+            },
+            {
+              "seq": 1196,
+              "type": "step.completed",
+              "at": "2026-10-08T02:37:03.500Z"
+            },
+            {
+              "seq": 1197,
+              "type": "step.started",
+              "at": "2026-10-08T02:37:03.500Z"
+            },
+            {
+              "seq": 1198,
+              "type": "step.completed",
+              "at": "2026-10-08T02:37:04.516Z"
+            },
+            {
+              "seq": 1329,
+              "type": "step.started",
+              "at": "2026-10-08T02:38:04.516Z"
+            },
+            {
+              "seq": 1330,
+              "type": "step.completed",
+              "at": "2026-10-08T02:38:05.490Z"
+            },
+            {
+              "seq": 1331,
+              "type": "step.started",
+              "at": "2026-10-08T02:38:05.491Z"
+            },
+            {
+              "seq": 1332,
+              "type": "step.completed",
+              "at": "2026-10-08T02:38:06.465Z"
+            },
+            {
+              "seq": 1973,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:38:53.454Z"
+            },
+            {
+              "seq": 1974,
+              "type": "task.ended",
+              "at": "2026-10-08T02:38:53.454Z"
+            },
+            {
+              "seq": 1975,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:38:53.455Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "argv-default-before-comment-fix",
+      "model": "mimo",
+      "id": "action-04-research-script",
+      "status": "failed",
+      "durationMs": 119677,
+      "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+      "timedOut": false,
+      "checks": [],
+      "turns": [
+        {
+          "status": "running",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "unexpectedApproval": {
+            "toolName": "pwsh",
+            "riskCategories": [
+              "overwrite"
+            ]
+          },
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:23:49.135Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:23:49.621Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:23:49.621Z"
+            },
+            {
+              "seq": 45,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:24:09.209Z"
+            },
+            {
+              "seq": 46,
+              "type": "step.started",
+              "at": "2026-10-08T02:24:09.211Z"
+            },
+            {
+              "seq": 47,
+              "type": "step.completed",
+              "at": "2026-10-08T02:24:10.098Z"
+            },
+            {
+              "seq": 48,
+              "type": "step.started",
+              "at": "2026-10-08T02:24:10.100Z"
+            },
+            {
+              "seq": 49,
+              "type": "step.completed",
+              "at": "2026-10-08T02:24:10.967Z"
+            },
+            {
+              "seq": 135,
+              "type": "step.started",
+              "at": "2026-10-08T02:24:16.368Z"
+            },
+            {
+              "seq": 137,
+              "type": "step.completed",
+              "at": "2026-10-08T02:24:24.414Z"
+            },
+            {
+              "seq": 138,
+              "type": "step.started",
+              "at": "2026-10-08T02:24:24.415Z"
+            },
+            {
+              "seq": 140,
+              "type": "step.completed",
+              "at": "2026-10-08T02:24:25.325Z"
+            },
+            {
+              "seq": 191,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:24:55.453Z"
+            },
+            {
+              "seq": 192,
+              "type": "step.started",
+              "at": "2026-10-08T02:24:55.453Z"
+            },
+            {
+              "seq": 193,
+              "type": "step.completed",
+              "at": "2026-10-08T02:24:56.384Z"
+            },
+            {
+              "seq": 223,
+              "type": "step.started",
+              "at": "2026-10-08T02:25:21.091Z"
+            },
+            {
+              "seq": 224,
+              "type": "step.completed",
+              "at": "2026-10-08T02:25:22.022Z"
+            },
+            {
+              "seq": 521,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:25:36.998Z"
+            },
+            {
+              "seq": 522,
+              "type": "step.started",
+              "at": "2026-10-08T02:25:36.999Z"
+            },
+            {
+              "seq": 523,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:25:40.133Z"
+            },
+            {
+              "seq": 554,
+              "type": "step.started",
+              "at": "2026-10-08T02:25:45.287Z"
+            },
+            {
+              "seq": 555,
+              "type": "approval.requested",
+              "at": "2026-10-08T02:25:45.297Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "before-follow-up-guidance",
+      "model": "mimo",
+      "id": "action-06-delete-approval",
+      "status": "failed",
+      "durationMs": 600520,
+      "reason": "Scenario timed out",
+      "timedOut": true,
+      "checks": [
+        {
+          "type": "approval_seen",
+          "turn": 1,
+          "outcome": "allowed-once",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "turn": 1,
+          "path": "过期草稿.txt",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "approvalDecisions": [
+            "allowed-once"
+          ],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:30:37.841Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:30:38.560Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:30:38.560Z"
+            },
+            {
+              "seq": 62,
+              "type": "step.started",
+              "at": "2026-10-08T02:30:59.466Z"
+            },
+            {
+              "seq": 63,
+              "type": "step.completed",
+              "at": "2026-10-08T02:31:00.401Z"
+            },
+            {
+              "seq": 197,
+              "type": "step.started",
+              "at": "2026-10-08T02:31:16.077Z"
+            },
+            {
+              "seq": 198,
+              "type": "step.completed",
+              "at": "2026-10-08T02:31:16.078Z"
+            },
+            {
+              "seq": 199,
+              "type": "step.started",
+              "at": "2026-10-08T02:31:16.079Z"
+            },
+            {
+              "seq": 200,
+              "type": "approval.requested",
+              "at": "2026-10-08T02:31:16.087Z"
+            },
+            {
+              "seq": 201,
+              "type": "approval.resolved",
+              "at": "2026-10-08T02:31:17.013Z"
+            },
+            {
+              "seq": 202,
+              "type": "step.completed",
+              "at": "2026-10-08T02:31:18.764Z"
+            },
+            {
+              "seq": 236,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:31:32.610Z"
+            },
+            {
+              "seq": 237,
+              "type": "task.ended",
+              "at": "2026-10-08T02:31:32.611Z"
+            },
+            {
+              "seq": 238,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:31:32.611Z"
+            }
+          ]
+        },
+        {
+          "status": "running",
+          "approvalDecisions": [],
+          "questionsAsked": 1,
+          "timeline": [
+            {
+              "seq": 240,
+              "type": "turn.started",
+              "at": "2026-10-08T02:31:34.959Z"
+            },
+            {
+              "seq": 242,
+              "type": "task.started",
+              "at": "2026-10-08T02:31:35.190Z"
+            },
+            {
+              "seq": 243,
+              "type": "user.message",
+              "at": "2026-10-08T02:31:35.190Z"
+            },
+            {
+              "seq": 354,
+              "type": "question.asked",
+              "at": "2026-10-08T02:31:45.448Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "before-Chinese-guidance",
+      "model": "qwen",
+      "id": "memory-02-correction",
+      "status": "failed",
+      "durationMs": 900369,
+      "reason": "Scenario timed out",
+      "timedOut": true,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:47:06.172Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:47:06.363Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:47:06.363Z"
+            },
+            {
+              "seq": 413,
+              "type": "step.started",
+              "at": "2026-10-08T02:47:18.783Z"
+            },
+            {
+              "seq": 414,
+              "type": "step.completed",
+              "at": "2026-10-08T02:47:19.554Z"
+            },
+            {
+              "seq": 555,
+              "type": "step.started",
+              "at": "2026-10-08T02:47:23.691Z"
+            },
+            {
+              "seq": 556,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:47:26.804Z"
+            },
+            {
+              "seq": 656,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:47:30.426Z"
+            },
+            {
+              "seq": 657,
+              "type": "task.ended",
+              "at": "2026-10-08T02:47:30.427Z"
+            },
+            {
+              "seq": 658,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:47:30.427Z"
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 660,
+              "type": "turn.started",
+              "at": "2026-10-08T02:47:31.420Z"
+            },
+            {
+              "seq": 662,
+              "type": "task.started",
+              "at": "2026-10-08T02:47:31.785Z"
+            },
+            {
+              "seq": 663,
+              "type": "user.message",
+              "at": "2026-10-08T02:47:31.786Z"
+            },
+            {
+              "seq": 941,
+              "type": "step.started",
+              "at": "2026-10-08T02:47:39.741Z"
+            },
+            {
+              "seq": 942,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:47:42.888Z"
+            },
+            {
+              "seq": 990,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:47:45.220Z"
+            },
+            {
+              "seq": 991,
+              "type": "task.ended",
+              "at": "2026-10-08T02:47:45.220Z"
+            },
+            {
+              "seq": 992,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:47:45.220Z"
+            }
+          ]
+        },
+        {
+          "status": "running",
+          "approvalDecisions": [],
+          "questionsAsked": 1,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:47:48.486Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:47:48.681Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:47:48.681Z"
+            },
+            {
+              "seq": 1233,
+              "type": "question.asked",
+              "at": "2026-10-08T02:48:23.469Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "before-Chinese-guidance",
+      "model": "qwen",
+      "id": "memory-04-person",
+      "status": "failed",
+      "durationMs": 600403,
+      "reason": "Scenario timed out",
+      "timedOut": true,
+      "checks": [],
+      "turns": [
+        {
+          "status": "running",
+          "approvalDecisions": [],
+          "questionsAsked": 1,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T03:02:08.002Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T03:02:08.373Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T03:02:08.373Z"
+            },
+            {
+              "seq": 867,
+              "type": "question.asked",
+              "at": "2026-10-08T03:02:31.362Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "before-Chinese-guidance",
+      "model": "mimo",
+      "id": "memory-02-correction",
+      "status": "unsupported",
+      "durationMs": 800132,
+      "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "周五",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "unsupported",
+          "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+        },
+        {
+          "type": "llm_judge",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:42:44.071Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:42:44.898Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:42:44.898Z"
+            },
+            {
+              "seq": 80,
+              "type": "step.started",
+              "at": "2026-10-08T02:43:10.060Z"
+            },
+            {
+              "seq": 81,
+              "type": "step.completed",
+              "at": "2026-10-08T02:43:10.898Z"
+            },
+            {
+              "seq": 82,
+              "type": "step.started",
+              "at": "2026-10-08T02:43:10.899Z"
+            },
+            {
+              "seq": 83,
+              "type": "step.completed",
+              "at": "2026-10-08T02:43:11.781Z"
+            },
+            {
+              "seq": 193,
+              "type": "step.started",
+              "at": "2026-10-08T02:48:18.565Z"
+            },
+            {
+              "seq": 194,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:48:21.908Z"
+            },
+            {
+              "seq": 233,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:48:27.403Z"
+            },
+            {
+              "seq": 234,
+              "type": "task.ended",
+              "at": "2026-10-08T02:48:27.403Z"
+            },
+            {
+              "seq": 235,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:48:27.404Z"
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 237,
+              "type": "turn.started",
+              "at": "2026-10-08T02:48:29.549Z"
+            },
+            {
+              "seq": 239,
+              "type": "task.started",
+              "at": "2026-10-08T02:48:29.905Z"
+            },
+            {
+              "seq": 240,
+              "type": "user.message",
+              "at": "2026-10-08T02:48:29.905Z"
+            },
+            {
+              "seq": 345,
+              "type": "step.started",
+              "at": "2026-10-08T02:48:37.865Z"
+            },
+            {
+              "seq": 346,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:48:40.944Z"
+            },
+            {
+              "seq": 374,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:48:48.812Z"
+            },
+            {
+              "seq": 375,
+              "type": "task.ended",
+              "at": "2026-10-08T02:48:48.812Z"
+            },
+            {
+              "seq": 376,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:48:48.813Z"
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:48:52.321Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:48:52.679Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:48:52.679Z"
+            },
+            {
+              "seq": 76,
+              "type": "step.started",
+              "at": "2026-10-08T02:49:24.818Z"
+            },
+            {
+              "seq": 77,
+              "type": "step.completed",
+              "at": "2026-10-08T02:49:25.575Z"
+            },
+            {
+              "seq": 78,
+              "type": "step.started",
+              "at": "2026-10-08T02:49:25.576Z"
+            },
+            {
+              "seq": 79,
+              "type": "step.completed",
+              "at": "2026-10-08T02:49:26.349Z"
+            },
+            {
+              "seq": 124,
+              "type": "step.started",
+              "at": "2026-10-08T02:49:34.881Z"
+            },
+            {
+              "seq": 125,
+              "type": "step.completed",
+              "at": "2026-10-08T02:49:35.637Z"
+            },
+            {
+              "seq": 178,
+              "type": "step.started",
+              "at": "2026-10-08T02:50:03.350Z"
+            },
+            {
+              "seq": 179,
+              "type": "step.completed",
+              "at": "2026-10-08T02:50:04.080Z"
+            },
+            {
+              "seq": 225,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:09.227Z"
+            },
+            {
+              "seq": 226,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:09.992Z"
+            },
+            {
+              "seq": 289,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:13.554Z"
+            },
+            {
+              "seq": 290,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:14.304Z"
+            },
+            {
+              "seq": 331,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:16.004Z"
+            },
+            {
+              "seq": 332,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:18.138Z"
+            },
+            {
+              "seq": 416,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:28.101Z"
+            },
+            {
+              "seq": 417,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:28.837Z"
+            },
+            {
+              "seq": 418,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:28.837Z"
+            },
+            {
+              "seq": 419,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:29.936Z"
+            },
+            {
+              "seq": 461,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:31.797Z"
+            },
+            {
+              "seq": 462,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:32.864Z"
+            },
+            {
+              "seq": 485,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:34.297Z"
+            },
+            {
+              "seq": 486,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:35.028Z"
+            },
+            {
+              "seq": 636,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:42.012Z"
+            },
+            {
+              "seq": 637,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:43.185Z"
+            },
+            {
+              "seq": 705,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:46.188Z"
+            },
+            {
+              "seq": 706,
+              "type": "step.completed",
+              "at": "2026-10-08T02:55:47.250Z"
+            },
+            {
+              "seq": 865,
+              "type": "step.started",
+              "at": "2026-10-08T02:55:56.115Z"
+            },
+            {
+              "seq": 866,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:55:59.243Z"
+            },
+            {
+              "seq": 896,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:56:01.773Z"
+            },
+            {
+              "seq": 897,
+              "type": "task.ended",
+              "at": "2026-10-08T02:56:01.773Z"
+            },
+            {
+              "seq": 898,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:56:01.773Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "iteration": "before-Chinese-guidance",
+      "model": "mimo",
+      "id": "memory-04-person",
+      "status": "failed",
+      "durationMs": 42271,
+      "reason": "reply_matches did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "阿岚",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "海报|展览",
+          "status": "failed",
+          "reason": "reply_matches did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "unsupported",
+          "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+        },
+        {
+          "type": "llm_judge",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:56:05.913Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:56:06.646Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:56:06.647Z"
+            },
+            {
+              "seq": 332,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:56:24.284Z"
+            },
+            {
+              "seq": 333,
+              "type": "step.started",
+              "at": "2026-10-08T02:56:24.285Z"
+            },
+            {
+              "seq": 334,
+              "type": "artifact.created",
+              "at": "2026-10-08T02:56:27.386Z"
+            },
+            {
+              "seq": 378,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:56:31.325Z"
+            },
+            {
+              "seq": 379,
+              "type": "task.ended",
+              "at": "2026-10-08T02:56:31.325Z"
+            },
+            {
+              "seq": 380,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:56:31.325Z"
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "approvalDecisions": [],
+          "questionsAsked": 0,
+          "timeline": [
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T02:56:34.782Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T02:56:35.163Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T02:56:35.164Z"
+            },
+            {
+              "seq": 80,
+              "type": "assistant.message",
+              "at": "2026-10-08T02:56:45.924Z"
+            },
+            {
+              "seq": 81,
+              "type": "task.ended",
+              "at": "2026-10-08T02:56:45.924Z"
+            },
+            {
+              "seq": 82,
+              "type": "turn.ended",
+              "at": "2026-10-08T02:56:45.924Z"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "interruptedRunsExcluded": "Old-host shutdowns interrupted Qwen action-06 and remaining memory cases, MiMo initial memory-02, and intermediate memory-01. These are not formal scenario scores. Two setup-only roots sent no scenario requests.",
+  "mimoUsage": {
+    "scope": "All M1-1d MiMo attempts, including intermediate fixes and background requests",
+    "requests": 134,
+    "reportedRequests": 129,
+    "missingUsageRequests": 5,
+    "input": 1502923,
+    "cachedInput": 1262144,
+    "uncachedInput": 240779,
+    "output": 27543,
+    "total": 1530466,
+    "reportedCostCny": 0.3211078799999999,
+    "estimatedMissingInput": 46473,
+    "estimatedMissingOutput": 1538,
+    "estimatedTotalTokens": 1578477,
+    "estimatedTotalCostCny": 0.3706568799999999,
+    "estimateMethod": "Nearest three completed requests by message characters, foreground/background separate. Missing inputs charged as uncached; not a bill or a strict bound.",
+    "pricingSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "pricingCheckedAt": "2026-10-08"
+  },
+  "memoryStates": [
+    {
+      "model": "qwen",
+      "state": "ready",
+      "worldRevision": 0,
+      "inject": true
+    },
+    {
+      "model": "mimo",
+      "state": "degraded",
+      "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+      "worldRevision": 0,
+      "inject": false
+    }
+  ],
+  "mimoMemory02NativeError": {
+    "code": "UNSUPPORTED_CONTENT",
+    "message": "pi-ai model \"mimo-v2.6-flash\" does not support image input",
+    "source": "Native persisted turn/end after weftmod_script image observation, before another model API request. This is not an approval or question failure; route modality declaration is outside the three fixes."
+  },
+  "oldApprovalDiagnosis": {
+    "nameAlreadyWrongBeforeApproval": true,
+    "argumentsPreservedAfterApproval": true,
+    "sameUnknownNameInResult": true,
+    "explanation": "The M0-7c approval reason already names pweff; seq 96 detail has structurally identical arguments and the same unknown name. Native snapshot regression also preserves the registered name and arguments after a pending approval."
+  },
+  "credentialScans": [
+    {
+      "run": 1,
+      "scanned": 92,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 2,
+      "scanned": 92,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 3,
+      "scanned": 158,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 4,
+      "scanned": 184,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 5,
+      "scanned": 175,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 6,
+      "scanned": 175,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 7,
+      "scanned": 160,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 8,
+      "scanned": 159,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 9,
+      "scanned": 185,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 10,
+      "scanned": 173,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 11,
+      "scanned": 158,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 12,
+      "scanned": 159,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 13,
+      "scanned": 161,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "run": 14,
+      "scanned": 173,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  ],
+  "validation": {
+    "relatedTestsPassed": 83,
+    "typecheck": "passed",
+    "targetsAndChecksChanged": false,
+    "calibrationChanged": false,
+    "firstCiFailure": "Two new vendor-dependent test names were not in the existing clean-runner dependency exclusions. Their assertions are now part of the existing native approval contract test; no new CI exceptions.",
+    "pr": "https://github.com/memoweft/weftmate/pull/50",
+    "ci": "Current PR checks; native-vendor exclusions unchanged"
+  },
+  "cleanup": {
+    "checkedRoots": 14,
+    "remainingCredentials": 0,
+    "ownedProcesses": 0,
+    "currentModelId": "qwen3.8-27b-original",
+    "switching": false,
+    "activeLeases": 0,
+    "queuedLeases": 0,
+    "checkedAt": "2026-10-08T03:21:47.7683786Z"
+  },
+  "summary": {
+    "finalModelScenarioResults": 10,
+    "passed": 4,
+    "failed": 6,
+    "unsupported": 0,
+    "questionsAsked": 0,
+    "declaredApprovalDecisions": 4,
+    "unexpectedApprovals": 0,
+    "totalModelTurns": 20
+  }
+}

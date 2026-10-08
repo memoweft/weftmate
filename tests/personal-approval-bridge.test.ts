@@ -24,7 +24,8 @@ async function until(check: () => unknown) {
 
 async function nativeFixture({ toolName = 'fixture_action', askedName = toolName, stage = 'gate',
   initialStatus = 'answered', decision = 'allowed-once', holdResolution = false, failResolution = false,
-  failUncertainObservation = false, failFinish = false, cancelledStatus = 'resolved', policy = 'ask', allowAll = false } = {}) {
+  failUncertainObservation = false, failFinish = false, cancelledStatus = 'resolved', policy = 'ask', allowAll = false,
+  toolArguments = {} } = {}) {
   const root = mkdtempSync(join(tmpdir(), 'personal-native-approval-'))
   const staged = join(root, 'desktop.mjs')
   writeFileSync(staged, readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
@@ -58,6 +59,7 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   agents.set(session.id, agent); agent.ctx = createScope(ctx, agent).ctx
   const controller = new AbortController(), resolution = deferred()
   let effects = 0, uncertainObserved = false, committedCompletion = false
+  const dispatched: any[] = []
   const transport = new EventEmitter()
   const bridge = { transport, request: async (frame: any) => {
     frames.push(frame)
@@ -92,11 +94,12 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   const approvals = plugin.installPersonalApprovalBridge(ctx, bridge, { pollDelayMs: 2,
     ...(allowAll ? { policyFor: async () => ({ mode: 'allow-all' }) } : {}) })
   ctx.on('tools/execute', (exec: any, next: any) => plugin.trackPersonalExecution(bridge, exec, next, null, approvals))
-  ctx.on('tools/pre-execute', (exec: any, next: any) => stage === 'gate' && exec.name === toolName
-    ? { kind: 'ask', reason: 'Allow exactly this fixture action' } : next())
-  ctx.get('tools').register(tools.defineTool({ name: toolName, description: 'Isolated approval fixture', parameters: {},
+  ctx.on('tools/pre-execute', (exec: any, next: any) => plugin.personalToolAvailability(ctx.get('tools'), exec) ??
+    (stage === 'gate' && exec.name === toolName ? { kind: 'ask', reason: 'Allow exactly this fixture action' } : next()))
+  ctx.get('tools').register(tools.defineTool({ name: toolName, description: 'Isolated approval fixture', parameters: { command: { type: 'string' } },
     output: { schema: { type: 'json' }, render: (_args: any, value: any) => [{ type: 'text', text: JSON.stringify(value) }] },
     execute: async (_args: any, exec: any) => {
+      dispatched.push({ name: exec.name, arguments: _args })
       if (stage === 'body') {
         const outcome = await ctx.get('approval').request({ agent: exec.agent, toolName: askedName,
           callId: exec.callId, reason: 'Permit this exact tool body action', signal: exec.signal })
@@ -107,15 +110,50 @@ async function nativeFixture({ toolName = 'fixture_action', askedName = toolName
   session.append('turn/start', { turn: 1 })
   session.append('user/message', { id: 'source-message-1', source: { kind: 'user', rpcId: 'source-receipt-1' },
     content: [{ type: 'text', text: 'same fixture goal' }] }, { surfaceOp: 'append' })
-  session.append('tool/call', { turn: 1, step: 1, callId: 'fixture-call', name: toolName, arguments: '{}' })
-  const execute = (callId = 'fixture-call') => ctx.get('tools').execute({ name: toolName, arguments: {}, agent, callId, signal: controller.signal })
-  return { ctx, plugin, agent, agents, session, frames, states, controller, transport, approvals, execute, resolution,
+  session.append('tool/call', { turn: 1, step: 1, callId: 'fixture-call', name: toolName, arguments: JSON.stringify(toolArguments) })
+  const execute = (callId = 'fixture-call') => ctx.get('tools').execute({ name: toolName, arguments: toolArguments, agent, callId, signal: controller.signal })
+  return { ctx, plugin, agent, agents, session, frames, states, controller, transport, approvals, execute, resolution, dispatched,
     get effects() { return effects }, get committedCompletion() { return committedCompletion },
     close: async () => { approvals.close(); assert.equal(transport.listenerCount('disconnect'), 0);
       await ctx.fiber.dispose(); rmSync(root, { recursive: true, force: true }) } }
 }
 
+async function checkUnknownNameBeforeApproval() {
+  const f = await nativeFixture({ toolName: 'pwsh' })
+  try {
+    const result = await f.ctx.get('tools').execute({ name: 'pweff', arguments: { command: 'Remove-Item fixture.txt' },
+      agent: f.agent, callId: 'bad-name', signal: f.controller.signal })
+    assert.equal(result.isError, true)
+    assert.match(JSON.stringify(result.content), /Unknown tool/)
+    assert.equal(f.frames.some(frame => frame.action === 'register_approval'), false)
+    assert.equal(f.effects, 0)
+    assert.equal((await f.execute()).isError, false)
+    assert.equal(f.effects, 1)
+    assert.equal(f.frames.filter(frame => frame.action === 'register_approval').length, 1)
+    assert.equal(f.frames.find(frame => frame.action === 'register_approval').toolName, 'pwsh')
+  } finally { await f.close() }
+}
+
+async function checkApprovalSnapshot() {
+  const original = { command: 'Remove-Item -LiteralPath fixture.txt' }
+  const f = await nativeFixture({ toolName: 'pwsh', initialStatus: 'pending', toolArguments: original })
+  try {
+    const executing = f.execute()
+    await until(() => f.frames.some(frame => frame.action === 'register_approval'))
+    original.command = 'changed after request'
+    const approvalId = f.frames.find(frame => frame.action === 'register_approval').approvalId
+    f.states.set(approvalId, { approvalId, status: 'answered', decisionOutcome: 'allowed-once' })
+    assert.equal((await executing).isError, false)
+    assert.deepEqual(f.dispatched, [{ name: 'pwsh', arguments: { command: 'Remove-Item -LiteralPath fixture.txt' } }])
+    assert.equal(f.effects, 1)
+    assert.equal(f.frames.filter(frame => frame.action === 'register_approval').length, 1)
+  } finally { await f.close() }
+}
+
 test('fixed ApprovalService and ToolRuntime deliver approved/rejected native decisions without forcing automatic tools to ask', async () => {
+  // Same vendor-dependent native contract, including invalid names and a suspended gate.
+  await checkUnknownNameBeforeApproval()
+  await checkApprovalSnapshot()
   for (const stage of ['gate', 'body']) for (const decision of ['allowed-once', 'rejected']) {
     const f = await nativeFixture({ stage, decision })
     try {
