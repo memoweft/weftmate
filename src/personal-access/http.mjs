@@ -683,6 +683,7 @@ export function createHttpHandler(context) {
       if (request.method === 'GET' && pathname === '/personal/v1/status') {
         if (url.search) throw failure('INVALID_REQUEST');
         const backendStatus = statusProjection(await context.callBackend(() => context.backend.getStatus({ ownerId })));
+        const memoryStatus = context.memoryManager ? await context.memoryManager.status(ownerId) : { state: 'disabled' };
         backendStatus.modules.memory = context.memoryManager?.peek(ownerId) ?? 'disabled';
         if (!context.hostOwner(ownerId)) {
           const models = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })))
@@ -700,7 +701,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, {
           ...context.service.status(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
-          backend: backendStatus,
+          backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
           updates: await context.updateStatus(), nativeMinimumVersions: context.nativeMinimumVersions,
         });
       }
@@ -1759,7 +1760,8 @@ export function createHttpHandler(context) {
       const code = PUBLIC_CODES.has(error?.code) ? error.code : 'SERVICE_UNAVAILABLE';
       const status = code === 'SERVICE_UNAVAILABLE' ? 503
         : Number.isInteger(error?.status) && error.status >= 400 && error.status <= 599 ? error.status : 503;
-      context.json(response, status, { error: { code } });
+      context.json(response, status, { error: { code,
+        ...(Number.isInteger(error?.nativeStatus) ? { nativeStatus: error.nativeStatus, nativeCode: error.nativeCode } : {}) } });
     }
   }
 

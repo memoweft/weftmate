@@ -78,3 +78,25 @@ test('uncertain dispatch and rejected true forgetting do not claim deletion',asy
   f.account.commands={};f.context.memoryManager.submitCommand=async()=>({result_state:'rejected'});
   await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true}),{code:'MEMORY_DELETE_CONFLICT'});assert.ok(f.account.sessions['session-a']);assert.equal(f.account.sessions['session-a'].deleting,undefined);
 });
+
+test('cold deletion acquires a native lifecycle before removing the session', async () => {
+  const calls:string[]=[];
+  const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://fixture',profiles:()=>[],listSessions:async()=>({items:[{sessionId:'session-cold'}]}),
+    gateway:async(p:string,options:any)=>{calls.push(options.method+' '+p);return {deleted:true}},referenceScan:()=>({})});
+  await backend.deleteSession({sessionId:'session-cold',ownerId:'owner'});
+  assert.deepEqual(calls,['POST /sessions/session-cold/resume','DELETE /sessions/session-cold']);
+});
+
+test('pending source erasure keeps its evidence plan when Core has removed the source jobs',async()=>{
+  const f=fixture('unused');let result:any=null,cleanupReady=false,revisionReads=0;
+  const manager=f.context.memoryManager;
+  manager.receiptByRequest=async()=>{if(result)return result;throw Object.assign(new Error('not found'),{code:'command_receipt_not_found'})};
+  manager.submitCommand=async()=>result={result_state:'applied',storage_cleanup:{state:'pending'}};
+  manager.retryCleanupByRequest=async()=>cleanupReady?{result_state:'applied',storage_cleanup:{state:'complete'}}:result;
+  manager.query=async(_owner:string,method:string)=>method==='query_jobs'?{jobs:result?[]:[{acceptance:{parent_session_id:'session-a',evidence_ids:['e-a']}}]}:{world_revision:++revisionReads};
+  await assert.rejects(f.operations.deleteSession('owner','session-a',{forgetMemories:true}),{code:'MEMORY_DELETE_CONFLICT'});
+  assert.deepEqual(f.account.sessions['session-a'].forgetEvidenceIds,['e-a']);
+  cleanupReady=true;
+  const deleted=await f.operations.deleteSession('owner','session-a',{forgetMemories:true});
+  assert.equal(deleted.forgottenEvidenceCount,1);assert.equal(revisionReads,1);assert.equal(f.deleted,true);
+});

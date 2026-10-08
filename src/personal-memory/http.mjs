@@ -128,6 +128,44 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     return { status: 200, body: { items: page, worldRevision: result.world_revision,
       nextCursor, hasMore, searchScope: 'account_snapshot' } };
   }
+  if (method === 'GET' && path === '/personal/v1/memory/export') {
+    keys(Object.fromEntries(url.searchParams), ['format']);
+    const format = url.searchParams.get('format') ?? 'json';
+    if (!['json', 'markdown'].includes(format)) throw failure('INVALID_REQUEST');
+    const exported = [];
+    let revision = null;
+    for (const kind of KINDS) {
+      const result = await ownerQuery(manager, ownerId, 'query_world', {
+        operation: 'list', object_kind: kind, include_history: true,
+      });
+      if (!safeNumber(result.world_revision) || !Array.isArray(result.items)) throw failure('MEMORY_RESPONSE_INVALID', 503);
+      if (revision !== null && revision !== result.world_revision) throw failure('MEMORY_REVISION_CHANGED', 409);
+      revision = result.world_revision;
+      for (const item of result.items) {
+        const provenance = await ownerQuery(manager, ownerId, 'query_provenance', {
+          object_kind: kind, item_id: item.item_id, projection: 'history',
+        });
+        if (provenance.world_revision !== revision || !Array.isArray(provenance.provenance)) throw failure('MEMORY_REVISION_CHANGED', 409);
+        exported.push({ ...itemView(item), value: item.value, sources: provenance.provenance.map(source => ({
+          evidenceId: source.evidence_id, currentnessState: source.currentness_state,
+          summary: source.evidence?.content_available === true
+            ? (bounded(source.evidence.summary, 2000).trim() || bounded(source.evidence.raw_content, 240) || null) : null,
+          recordedAt: source.evidence?.recorded_at ?? null,
+        })) });
+      }
+    }
+    // Check again after the final read: an export is one coherent World revision.
+    const final = await manager.query(ownerId, 'query_world', { operation: 'revision' });
+    if (final.world_revision !== revision) throw failure('MEMORY_REVISION_CHANGED', 409);
+    const bundle = { schemaVersion: 1, worldRevision: revision, exportedAt: new Date().toISOString(), items: exported };
+    const content = format === 'json' ? JSON.stringify(bundle, null, 2) :
+      ['# 我的记忆', '', `导出时间：${bundle.exportedAt}`, '', ...exported.flatMap(item => [
+        `## ${item.kind} · ${item.id}`, '', item.value.content ?? item.value.canonical_name ?? item.text, '',
+        ...item.sources.map(source => `- 来源摘要：${source.summary ?? '当前不可读'}（${source.recordedAt ?? '时间未记录'}）`), '',
+      ])].join('\n');
+    return { status: 200, body: { format, filename: `weftmate-memory.${format === 'json' ? 'json' : 'md'}`,
+      contentType: format === 'json' ? 'application/json' : 'text/markdown', content, worldRevision: revision } };
+  }
   const itemMatch = /^\/personal\/v1\/memory\/items\/(cognition|entity|relationship|event)\/([A-Za-z0-9._:-]+)(?:\/(sources|correct|mute))?$/.exec(path);
   if (itemMatch) {
     const [, kind, id, action] = itemMatch;
@@ -192,18 +230,20 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
     }
     if (method === 'DELETE' && !action) {
       const body = await readJson(request, 12 * 1024);
-      keys(body, ['requestId', 'expectedWorldRevision'], ['requestId', 'expectedWorldRevision']);
+      keys(body, ['requestId', 'expectedWorldRevision', 'deleteConversationSnippets'], ['requestId', 'expectedWorldRevision']);
+      if (body.deleteConversationSnippets !== undefined && typeof body.deleteConversationSnippets !== 'boolean') throw failure('INVALID_REQUEST');
       return submit({ manager, ownerId, body, operation: 'delete_world_item', targetKind: kind,
-        targetId: id, payload: {} });
+        targetId: id, payload: body.deleteConversationSnippets === true ? { delete_conversation_snippets: true } : {} });
     }
   }
   const evidenceMatch = /^\/personal\/v1\/memory\/evidence\/([A-Za-z0-9._:-]+)$/.exec(path);
   if (method === 'DELETE' && evidenceMatch) {
     if (url.search || !ITEM_ID.test(evidenceMatch[1])) throw failure('INVALID_REQUEST');
     const body = await readJson(request, 12 * 1024);
-    keys(body, ['requestId', 'expectedWorldRevision'], ['requestId', 'expectedWorldRevision']);
+    keys(body, ['requestId', 'expectedWorldRevision', 'deleteConversationSnippets'], ['requestId', 'expectedWorldRevision']);
+    if (body.deleteConversationSnippets !== undefined && typeof body.deleteConversationSnippets !== 'boolean') throw failure('INVALID_REQUEST');
     return submit({ manager, ownerId, body, operation: 'delete_evidence', targetKind: 'evidence',
-      targetId: evidenceMatch[1], payload: {} });
+      targetId: evidenceMatch[1], payload: body.deleteConversationSnippets === true ? { delete_conversation_snippets: true } : {} });
   }
   const receiptMatch = /^\/personal\/v1\/memory\/commands\/by-request\/([A-Za-z0-9_.:-]+)$/.exec(path);
   if (method === 'GET' && receiptMatch) {
@@ -249,7 +289,8 @@ async function submit({ manager, ownerId, body, operation, targetKind, targetId,
   let result;
   try {
     result = await manager.submitCommand(ownerId, { requestId: body.requestId,
-      expectedWorldRevision: body.expectedWorldRevision, operation, targetKind, targetId, payload });
+      expectedWorldRevision: body.expectedWorldRevision, operation, targetKind, targetId, payload,
+      ...(operation.startsWith('delete_') ? { deleteConversationSnippets: body.deleteConversationSnippets === true } : {}) });
   } catch (cause) {
     if (cause?.code === 'MEMORY_REQUEST_CONFLICT') throw failure('MEMORY_REQUEST_CONFLICT', 409);
     if (cause?.code === 'MEMORY_REPLAY_REDACTED') throw failure('MEMORY_REPLAY_REDACTED', 409);

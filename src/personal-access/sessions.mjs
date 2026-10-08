@@ -217,20 +217,39 @@ export function createSessionOperations(context) {
           if (!status?.capabilities?.deleteEvidence) throw failure('MEMORY_DELETE_UNAVAILABLE', 503);
           if (status.pendingBoundaryCount > 0 || status.blockedBoundaryCount > 0) throw failure('SESSION_BUSY', 409);
           const jobs = await manager.query(ownerId, 'query_jobs', { operation: 'list' });
-          const evidenceIds = new Set((jobs.jobs ?? []).filter(job =>
+          const evidenceIds = new Set([...(account.sessions[sessionId].forgetEvidenceIds ?? []), ...(jobs.jobs ?? []).filter(job =>
             job.acceptance?.parent_session_id === sessionId || job.acceptance?.result_session_id === sessionId)
-            .flatMap(job => job.acceptance.evidence_ids ?? []));
+            .flatMap(job => job.acceptance.evidence_ids ?? [])]);
+          // Core removes the source job during erasure. Keep identifiers only
+          // until deletion completes so a crash/pending cleanup can still retry.
+          await context.serial(() => context.mutate(ownerId, next => {
+            next.sessions[sessionId].forgetEvidenceIds = [...evidenceIds];
+          }));
           for (const evidenceId of evidenceIds) {
-            const revision = await manager.query(ownerId, 'query_world', { operation: 'revision' });
-            const result = await manager.submitCommand(ownerId, {
-              requestId: `session-delete-${digest(`${sessionId}\0${evidenceId}`).slice(0, 48)}`,
-              expectedWorldRevision: revision.world_revision, operation: 'delete_evidence',
-              targetKind: 'evidence', targetId: evidenceId, payload: {},
-            });
+            const requestId = `session-delete-${digest(`${sessionId}\0${evidenceId}`).slice(0, 48)}`;
+            let result;
+            if (manager.receiptByRequest) {
+              try { result = await manager.receiptByRequest(ownerId, requestId); }
+              catch (error) { if (error.code !== 'command_receipt_not_found') throw error; }
+            }
+            if (!result) {
+              const revision = await manager.query(ownerId, 'query_world', { operation: 'revision' });
+              result = await manager.submitCommand(ownerId, { requestId,
+                expectedWorldRevision: revision.world_revision, operation: 'delete_evidence',
+                targetKind: 'evidence', targetId: evidenceId, payload: {} });
+            }
+            if ((result.receipt ?? result).storage_cleanup?.state === 'pending' && manager.retryCleanupByRequest)
+              result = await manager.retryCleanupByRequest(ownerId, requestId);
             const receipt = result.receipt ?? result;
             if (!['applied', 'no_change'].includes(receipt.result_state) || receipt.storage_cleanup?.state === 'pending')
               throw failure('MEMORY_DELETE_CONFLICT', 409);
             forgottenEvidenceCount++;
+          }
+          if (manager.eraseConversationContext) {
+            const erased = await manager.eraseConversationContext(ownerId, sessionId);
+            forgottenEvidenceCount += erased.erased_evidence_count ?? 0;
+            if (!['applied', 'no_change'].includes(erased.result_state) || erased.storage_cleanup?.state !== 'complete')
+              throw failure('MEMORY_DELETE_CONFLICT', 409);
           }
         }
         await context.callBackend(() => context.backend.deleteSession({ sessionId, ownerId }));

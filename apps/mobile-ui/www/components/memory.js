@@ -1,3 +1,17 @@
+function paintChatMemoryAvailability(value) {
+  let node=$('chat-memory-notice');
+  if(!node){node=el('p','muted');node.id='chat-memory-notice';node.setAttribute('role','status');node.setAttribute('aria-live','polite');$('chat-page').prepend(node)}
+  node.hidden=!state.loggedIn||value?.state!=='unavailable';
+  node.textContent=node.hidden?'':'记忆暂时不可用，这次对话不会用到或记住新内容';
+}
+async function exportMyMemories(format) {
+  const owner=state.owner,epoch=state.authEpoch;
+  try { const result=await business({path:`/personal/v1/memory/export?format=${format}`,method:'GET'});
+    if(owner!==state.owner||epoch!==state.authEpoch)return;
+    const url=URL.createObjectURL(new Blob([result.content],{type:`${result.contentType};charset=utf-8`}));
+    const link=el('a');link.href=url;link.download=result.filename;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  }catch(error){if(owner===state.owner&&epoch===state.authEpoch){state.memory.error=memoryFailureText(error);renderMemoryList(memoryTarget)}}
+}
 /* Mobile memory presentation and named ui-core actions. */
 function emptyMemoryState(...args){return uiCore.mobile.emptyMemoryState(...args)}
 
@@ -72,6 +86,7 @@ function renderMemoryList(target=memoryTarget){target=memoryTarget;if(!target||s
   const actions=el('div','form-actions');const submit=action('搜索',()=>{},true);submit.type='submit';
   const refresh=action(memory.loading?'正在刷新…':'刷新',()=>startMemorySnapshot(target,memory.kind,memory.query),false);refresh.type='button';refresh.disabled=memory.loading;
   actions.append(submit,refresh);form.append(actions);target.append(form);
+  if(memoryListAllowed(memory)){target.append(action('导出我的记忆 · JSON',()=>exportMyMemories('json'),false),action('导出我的记忆 · Markdown',()=>exportMyMemories('markdown'),false))}
   if(memory.pendingBoundaryCount>0)target.append(notice(`有 ${memory.pendingBoundaryCount} 条来源尚未处理${memory.blockedBoundaryCount>0?`，其中 ${memory.blockedBoundaryCount} 条已暂停自动处理`:''}。本手机页面不会重试或管理待处理来源。`,'来源待处理'));
   if(memory.lastFailureCode==='MEMORY_SOURCE_DELETED'&&memory.discardedBoundaryCount>0)
     target.append(notice(`${memory.discardedBoundaryCount} 条来源已删除；这不表示仍有待处理来源。`,'来源状态'));
@@ -179,7 +194,7 @@ function renderMemoryActions(target,token){const memory=state.memory,detail=memo
     openMemoryConfirmation({operation:'deleteItem',confirmText:''},target,token),false));
   if(buttons.length)target.append(group('管理这项记忆',buttons));
   const choice=memory.confirmation;if(!choice)return;
-  const box=group(choice.operation==='correct'?'纠正理解':choice.operation==='mute'?'确认停用':'确认删除',[]),
+  const box=group(choice.operation==='correct'?'纠正理解':choice.operation==='mute'?'确认停用':'确认忘掉',[]),
     body=box.querySelector('.group-body');
   box.classList.add('memory-confirm-panel');
   if(choice.operation==='correct'){
@@ -190,8 +205,8 @@ function renderMemoryActions(target,token){const memory=state.memory,detail=memo
   }else{
     body.append(el('p','memory-consequence',choice.operation==='mute'?
       '停用后，记忆和来源仍可查看，但不再参与后续召回。':choice.operation==='deleteEvidence'?
-      `将删除来源“${choice.summary}”的有效正文与关联引用；原始聊天、会话存档和既有备份仍可能保留。共享来源可能使删除被拒绝。`:
-      '将从当前有效记忆与召回移除这项记忆；原始聊天、会话存档和既有备份仍可能保留。共享或不明来源可能使删除被拒绝。'));
+      `将删除来源“${choice.summary}”的有效正文与关联引用；原始聊天、会话存档和既有备份仍可能保留。从同一来源形成的其他记忆也会一并遗忘。`:
+      '将从当前有效记忆与召回移除这项记忆；原始聊天、会话存档和既有备份仍可能保留。从同一来源形成的其他记忆也会一并遗忘。'));
     if(choice.operation!=='mute'){
       const input=field('输入“删除”以确认','text',choice.confirmText||'');input.input.maxLength=2;
       const confirm=action(choice.operation==='deleteEvidence'?'确认删除这条来源':'确认永久删除记忆',

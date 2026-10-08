@@ -176,10 +176,20 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         return { sessionId }
       })
     },
+    async cleanupMemoryCopies({ sessionId, sourceTexts = [], deleteConversationSnippets = false }) {
+      requireRuntime()
+      const listed = await listSessions()
+      if (!listed?.items?.some(item => item.sessionId === sessionId)) return { cleaned: true }
+      return gateway(`/sessions/${encodeURIComponent(sessionId)}/memory-cleanup`, { method: 'POST',
+        body: JSON.stringify({ sourceTexts, deleteConversationSnippets }) })
+    },
     async deleteSession({ sessionId, ownerId }) {
       requireRuntime()
       const listed = await listSessions()
       if (listed?.items?.some(item => item.sessionId === sessionId)) {
+        // A cold session can be listed/restored without an owned AgentHandle.
+        // Resume through DSH so deletion can drain its native disposer.
+        await gateway(`/sessions/${encodeURIComponent(sessionId)}/resume`, { method: 'POST', body: '{}' })
         const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: '{}' })
         if (result?.deleted !== true) fail('SESSION_UNAVAILABLE')
       }

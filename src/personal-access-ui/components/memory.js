@@ -1,5 +1,35 @@
 /* Desktop memory component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.memory = (core, ui) => {
+    function paintMemoryAvailability(status) {
+        let node = ui.byId('chat-memory-notice');
+        if (!node) {
+            node = ui.element('p', 'connection-banner'); node.id = 'chat-memory-notice';
+            node.setAttribute('role', 'status'); node.setAttribute('aria-live', 'polite');
+            ui.byId('connection-banner').after(node);
+        }
+        node.hidden = status?.state !== 'unavailable';
+        node.textContent = node.hidden ? '' : '记忆暂时不可用，这次对话不会用到或记住新内容';
+    }
+    async function exportMemories(format) {
+        const button = ui.byId(`memory-export-${format}`); button.disabled = true;
+        try {
+            const identity = core.memoryIdentity();
+            if (globalThis.weftmateDesktop?.exportMemories) {
+                const result = await globalThis.weftmateDesktop.exportMemories(format, identity.ownerId);
+                if (!core.memoryIdentityCurrent(identity)) return;
+                if (result.canceled) { ui.toast('已取消导出。'); return; }
+            } else {
+                const result = await core.memoryRequest(`/export?format=${format}`);
+                const url = URL.createObjectURL(new Blob([result.content], { type: `${result.contentType};charset=utf-8` }));
+                const link = ui.element('a'); link.href = url; link.download = result.filename;
+                document.body.append(link); link.click(); link.remove();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+            }
+            memoryStatus('我的记忆已导出，包含来源摘要。');
+            if (core.state.currentView !== 'memory') ui.toast('我的记忆已导出，包含来源摘要。');
+        } catch (error) { memoryStatus(core.memoryFailure(error), true); if (core.state.currentView !== 'memory') ui.toast(core.memoryFailure(error)); }
+        finally { button.disabled = false; }
+    }
     function memoryStatus(message, error = false) {
         const node = ui.byId('memory-status');
         const degraded = core.memory.status?.state === 'degraded';
@@ -102,8 +132,8 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             ui.byId('memory-confirm-copy').textContent = '停用后仍可查看记忆和来源，但不再用于后续召回。';
         }
         else if (mode === 'delete') {
-            ui.byId('memory-confirm-action').textContent = '确认删除';
-            ui.byId('memory-confirm-copy').textContent = '请确认删除这项当前账户记忆。共享或不明来源可能使删除被拒绝；停用可单独选择。';
+            ui.byId('memory-confirm-action').textContent = '确认忘掉';
+            ui.byId('memory-confirm-copy').textContent = '忘掉会清除这项记忆的来源及从这些来源形成的其他记忆，之后的记忆导出不再包含它们。对话原文和以前的备份保留。';
         }
         ui.byId('memory-confirm-action').disabled = !!core.memory.activeOperation || !!core.memory.unresolvedMarker || !!core.memory.selected?.stale;
     }
@@ -182,6 +212,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             ui.byId('memory-detail-dialog').close();
     }
     function mountMemory() {
+        ui.byId('memory-delete-action').textContent = '忘掉';
         ui.byId('rail-memory').addEventListener('click', () => { void core.openMemory(); });
         ui.byId('memory-back').addEventListener('click', () => { core.closeMemoryDetail(); void core.enterAssistant(); });
         ui.byId('memory-search-form').addEventListener('submit', (event) => {
@@ -199,6 +230,14 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
             if (core.memoryKinds[core.memory.kind] && core.memory.query.length <= 120)
                 void core.loadMemoryPage();
         });
+        const exports = ui.element('div', 'form-actions');
+        for (const format of ['json', 'markdown']) {
+            const button = ui.element('button', 'button secondary small', `导出我的记忆 · ${format === 'json' ? 'JSON' : 'Markdown'}`);
+            button.type = 'button'; button.id = `memory-export-${format}`;
+            button.addEventListener('click', () => { void exportMemories(format); });
+            exports.append(button);
+        }
+        ui.byId('memory-search-form').before(exports);
         ui.byId('memory-refresh').addEventListener('click', () => { void core.openMemory(); });
         ui.byId('memory-more').addEventListener('click', () => { void core.loadMemoryPage({ more: true }); });
         ui.byId('memory-receipt-check').addEventListener('click', ui.handleMemoryReceiptAction);
@@ -246,5 +285,5 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
     function memoryFilterInput() {
         return { kind: ui.byId('memory-kind').value, query: ui.byId('memory-query').value.trim().normalize('NFKC') };
     }
-    return { memoryStatus, detailStatus, detailError, paintMemoryReceipt, renderMemoryItems, renderMemorySources, renderMemoryMode, handleMemoryReceiptAction, resetMemoryControls, clearMemoryList, setMemoryMoreBusy, beginMemoryDetail, paintMemoryDetail, memoryCommandText, setMemoryConfirmBusy, setMemoryCleanupBusy, readMemoryReceiptId, clearMemoryDetailView, mountMemory, memoryFilterInput };
+    return { paintMemoryAvailability, exportMemories, memoryStatus, detailStatus, detailError, paintMemoryReceipt, renderMemoryItems, renderMemorySources, renderMemoryMode, handleMemoryReceiptAction, resetMemoryControls, clearMemoryList, setMemoryMoreBusy, beginMemoryDetail, paintMemoryDetail, memoryCommandText, setMemoryConfirmBusy, setMemoryCleanupBusy, readMemoryReceiptId, clearMemoryDetailView, mountMemory, memoryFilterInput };
 };
