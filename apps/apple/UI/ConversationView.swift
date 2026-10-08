@@ -77,6 +77,7 @@ struct ConversationView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var draftFocused: Bool
     @State private var visibleMessageID: String?
+    @State private var nearEnd = true
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
     @State private var resourcePopover = false
@@ -200,8 +201,8 @@ struct ConversationView: View {
                 LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                     if model.timeline.hasOlder {
                         Button(model.olderBusy ? "正在读取…" : "读取更早的记录") {
-                            // scrollPosition retains the visible target while records are prepended.
-                            Task { await model.loadOlder(conversation) }
+                            // Keep the current named record in view when earlier history is prepended.
+                            Task { await readOlder(proxy: proxy) }
                         }.disabled(model.olderBusy).accessibilityIdentifier("loadOlderTimeline")
                         .id("older")
                     }
@@ -244,7 +245,10 @@ struct ConversationView: View {
                 .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p26)
                 .frame(maxWidth: 760).frame(maxWidth: .infinity)
             }
-            .scrollPosition(id: $visibleMessageID, anchor: .bottom)
+            .modifier(ConversationScrollTracking(visibleID: $visibleMessageID, nearEnd: $nearEnd))
+            .onChange(of: visibleMessageID) { _, value in
+                if value == "older", !model.olderBusy, !model.historyBusy { Task { await readOlder(proxy: proxy) } }
+            }
             #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
             #endif
@@ -265,7 +269,7 @@ struct ConversationView: View {
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
                 // Follow new messages only when already at the end; preserve reading position otherwise.
                 if !draftFocused, previousTailID != nil,
-                   oldTail == nil || visibleMessageID == "latest" || visibleMessageID == oldTail {
+                   oldTail == nil || nearEnd || visibleMessageID == "latest" || visibleMessageID == oldTail {
                     proxy.scrollTo("latest", anchor: .bottom)
                 }
             }
@@ -333,9 +337,6 @@ struct ConversationView: View {
             guard scenePhase == .active, !model.historyBusy else { return }
             await model.pollTimeline(conversation)
         }
-        .onChange(of: visibleMessageID) { _, value in
-            if value == "older", !model.olderBusy { Task { await model.loadOlder(conversation) } }
-        }
         // End this view's keyboard focus when navigating away. Retaining the old responder
         // can restore the keyboard without the safe-area composer after a task detail returns.
         .onDisappear { endDraftFocus(); composerIdentity = UUID() }
@@ -345,6 +346,14 @@ struct ConversationView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("conversationDetail")
+    }
+
+    private func readOlder(proxy: ScrollViewProxy) async {
+        let epoch = model.accountEpoch
+        let anchor = visibleMessageID == "older" ? TimelineProjection.entries(model.timeline.events).first?.id : visibleMessageID
+        await model.loadOlder(conversation)
+        guard model.accountEpoch == epoch, model.selectedConversation?.id == conversation.id else { return }
+        if let anchor { proxy.scrollTo(anchor, anchor: .top) }
     }
 
     private func endDraftFocus() {
@@ -653,5 +662,25 @@ struct MessageView: View {
         .padding(.vertical, AppleTokens.Space.p2)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message.\(message.id)")
+    }
+}
+
+/// Track visibility without feeding a changing LazyStack target back into its layout on iOS 18+.
+/// Older systems retain their existing position binding.
+private struct ConversationScrollTracking: ViewModifier {
+    @Binding var visibleID: String?
+    @Binding var nearEnd: Bool
+    func body(content: Content) -> some View {
+        if #available(iOS 18, macOS 15, *) {
+            content
+                .onScrollTargetVisibilityChange(idType: String.self) { ids in
+                    visibleID = ids.contains("older") ? "older" : ids.contains("latest") ? "latest" : ids.first
+                }
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height + geometry.contentInsets.bottom - AppleTokens.Space.p24
+                } action: { _, value in nearEnd = value }
+        } else {
+            content.scrollPosition(id: $visibleID, anchor: .bottom)
+        }
     }
 }
