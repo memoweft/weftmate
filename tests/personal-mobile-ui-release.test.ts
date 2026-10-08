@@ -3,7 +3,15 @@ import { mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { activateMobileUiRelease, publishMobileUi } from '../src/personal-access/mobile-ui-release.mjs'
+import { generateKeyPairSync } from 'node:crypto'
+import { keyId } from '../src/personal-update/manifest.mjs'
+import { activateMobileUiRelease as activate, publishMobileUi as publish } from '../src/personal-access/mobile-ui-release.mjs'
+const pair = generateKeyPairSync('ed25519')
+const privateKey = pair.privateKey.export({ type: 'pkcs8', format: 'pem' })
+const publicKey = pair.publicKey.export({ type: 'spki', format: 'pem' })
+const trustedKeys = { [keyId(publicKey)]: publicKey }
+const publishMobileUi = (options: any) => publish({ ...options, privateKey })
+const activateMobileUiRelease = (options: any) => activate({ ...options, trustedKeys })
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 
 test('authenticated mobile UI A to B and rollback use immutable assets, SSE and no host restart',
@@ -27,7 +35,7 @@ test('authenticated mobile UI A to B and rollback use immutable assets, SSE and 
       assert.equal(a.bridgeVersion, 1)
       assert.equal(a.minNativeVersionCode, 2)
       assert.equal(readFileSync(join(outputDir, 'current.json'), 'utf8').includes('Synthetic A'), true)
-      service = await createPersonalAccessService({ root: join(root, 'access'), port: 0, backend, mobileUiDir: outputDir })
+      service = await createPersonalAccessService({ root: join(root, 'access'), port: 0, backend, mobileUiDir: outputDir, mobileUiTrustedKeys: trustedKeys })
       const { origin } = await service.start()
       assert.equal((await fetch(`${origin}/personal/v1/app/manifest`)).status, 401)
       assert.equal((await fetch(`${origin}${a.assetBase}app.js`)).status, 401)

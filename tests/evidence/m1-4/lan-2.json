@@ -1,0 +1,218 @@
+{
+  "label": "lan-2",
+  "model": "lan",
+  "startedAt": "2026-10-08T15:26:18.549Z",
+  "processExitCode": 1,
+  "testedBaseCommit": "383fa13",
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "manual": 0,
+    "unsupported": 0
+  },
+  "scenarios": [
+    {
+      "id": "action-07-long-directory",
+      "status": "failed",
+      "durationMs": 769252,
+      "reason": "file_contains did not match expected value; file_contains did not match expected value",
+      "checksPassed": 98,
+      "checksTotal": 100,
+      "failedChecks": [
+        {
+          "type": "file_contains",
+          "path": "summary.md",
+          "text": "24300",
+          "status": "failed",
+          "reason": "file_contains did not match expected value"
+        },
+        {
+          "type": "file_contains",
+          "path": "summary.md",
+          "text": "2400",
+          "status": "failed",
+          "reason": "file_contains did not match expected value"
+        }
+      ],
+      "unexpectedApprovals": [],
+      "sourceFilesUnchanged": 24,
+      "sourceFileCount": 24
+    }
+  ],
+  "native": {
+    "contextWindows": [
+      98304
+    ],
+    "modelId": "local-quality",
+    "contextSource": "test-configured envelope (98304), not server capacity",
+    "reasoningOff": false,
+    "continuationChecks": [],
+    "compactions": 0,
+    "successfulCompactions": 0,
+    "nativeGoalChanges": 2,
+    "nativeGoalPhase": "complete",
+    "nativeTodoWrites": 10,
+    "nativeTodosComplete": true,
+    "toolCalls": 29,
+    "goalAndTodosInCheckpoint": null
+  },
+  "delegation": {
+    "delegations": [
+      {
+        "background": false,
+        "returnedJobId": false,
+        "error": false,
+        "foregroundResultReceived": true,
+        "collectionCalls": 0,
+        "terminalCollected": false,
+        "resultReceivedBeforeSummary": true,
+        "blockingCollection": false
+      }
+    ],
+    "parentJobOutputCalls": 0,
+    "nativeCompletionNotices": 0,
+    "reportWriteAttempts": [
+      {
+        "file": "reviews/review-01.md",
+        "owner": "parent",
+        "error": false
+      },
+      {
+        "file": "reviews/review-02.md",
+        "owner": "parent",
+        "error": false
+      },
+      {
+        "file": "reviews/review-03.md",
+        "owner": "parent",
+        "error": false
+      },
+      {
+        "file": "reviews/review-04.md",
+        "owner": "parent",
+        "error": false
+      },
+      {
+        "file": "reviews/review-05.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-06.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-07.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-08.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-09.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-10.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-11.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-12.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-13.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-14.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-15.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-16.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-17.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-18.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-19.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-20.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-21.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-22.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-23.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "reviews/review-24.md",
+        "owner": "child",
+        "error": false
+      },
+      {
+        "file": "summary.md",
+        "owner": "parent",
+        "error": false
+      }
+    ],
+    "repeatedWrites": [],
+    "childToolCalls": 50,
+    "childCompactions": 1,
+    "writeObservation": "Native write/edit attempts for reviews/review-NN.md and summary.md; arbitrary shell effects are not counted by this field."
+  },
+  "credentialScan": {
+    "scanned": 215,
+    "matches": 0
+  },
+  "bridge": {
+    "maxActive": 1,
+    "requests": 55,
+    "inferenceRequests": 55,
+    "statuses": {
+      "200": 55
+    }
+  }
+}
