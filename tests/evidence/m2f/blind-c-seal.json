@@ -1,0 +1,17 @@
+{
+  "purpose": "Before-code seal; no C runs during development; B is now regression only",
+  "scenarios": [
+    {
+      "file": "eval/scenarios/memory-3x-preference.yaml",
+      "sha256": "6fd47774b5e8afcb49f547c760454477f78d73d46991ac3e8ce862d307dd79aa"
+    },
+    {
+      "file": "eval/scenarios/memory-3x-correction.yaml",
+      "sha256": "537345e97e1fd2e54b80dffe40c75801430eff652f7a0f0a9cc2fa9a47bb31d3"
+    },
+    {
+      "file": "eval/scenarios/memory-3x-person.yaml",
+      "sha256": "3429decd36d3de5f6d165e2abc674f6c262296787a616bd53fa8baabd3dec303"
+    }
+  ]
+}

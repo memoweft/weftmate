@@ -1,0 +1,58 @@
+{
+  "id": "memory-3x-person",
+  "category": "memory",
+  "title": "盲测C：展馆志愿者关系",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "隔离宿主与真实桌面程序"
+    ]
+  },
+  "turns": [
+    {
+      "user": "顾遥和我是博物馆志愿服务的同组伙伴，我们每月一起负责展厅导览。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "替我给顾遥写一句下次碰面的招呼。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_contains",
+      "text": "顾遥"
+    },
+    {
+      "type": "reply_matches",
+      "pattern": "博物馆|志愿|展厅|导览"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "招呼应联系博物馆志愿服务同组伙伴或展厅导览，不捏造其他关系。"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "memoryExpectation": {
+    "kind": "relationship",
+    "currentPattern": "顾遥",
+    "sourceTurn": 0
+  },
+  "timeoutSec": 900,
+  "notes": "M2f返工盲测C；改代码前独立提交封存，只在固定候选最终验证运行。原话、当前正式项采用、独立会话、零审批、纠正旧项失效严格核对。"
+}
