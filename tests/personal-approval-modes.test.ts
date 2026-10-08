@@ -61,3 +61,38 @@ test('printed arrows do not request overwrite approval; actual redirections and 
     ]) assert.ok(classifyPersonalRisk('pwsh', { command }, cwd).length > 0, command)
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
+
+test('conversation-created files can be corrected; existing user files and unresolved writes still ask', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-created-'))
+  try {
+    writeFileSync(join(cwd, 'mine.md'), 'first draft')
+    writeFileSync(join(cwd, 'user.md'), 'user original')
+    const context = { createdFiles: new Set([join(cwd, 'mine.md')]) }
+    const risk = (name: string, args: any) => classifyPersonalRisk(name, args, cwd, new Set(), context)
+    assert.deepEqual(risk('write', { file_path: 'mine.md' }), [])
+    assert.deepEqual(risk('edit', { file_path: 'mine.md' }), [])
+    assert.deepEqual(risk('pwsh', { command: "Set-Content mine.md 'corrected'" }), [])
+    assert.deepEqual(risk('write', { file_path: 'user.md' }), ['overwrite'])
+    assert.deepEqual(risk('edit', { file_path: 'user.md' }), ['overwrite'])
+    assert.deepEqual(risk('pwsh', { command: "Remove-Item mine.md" }), ['delete'])
+    const script = `// fsPromises.writeFile(data[, options]) documented signature, not an operation.
+      /* writeFileSync(unknown, data); Remove-Item user.md */
+      import { writeFileSync } from 'node:fs';
+      import path from 'node:path'; import { fileURLToPath } from 'node:url';
+      const here = path.dirname(fileURLToPath(import.meta.url));
+      const outPath = path.join(here, 'result.json');
+      writeFileSync(outPath, '{}');`
+    writeFileSync(join(cwd, 'sum.mjs'), script)
+    assert.deepEqual(risk('pwsh', { command: 'node sum.mjs' }), [])
+    writeFileSync(join(cwd, 'result.json'), 'user result')
+    assert.deepEqual(risk('pwsh', { command: 'node sum.mjs' }), ['overwrite'])
+    context.createdFiles.add(join(cwd, 'result.json'))
+    assert.deepEqual(risk('pwsh', { command: 'node sum.mjs' }), [])
+    writeFileSync(join(cwd, 'sum.mjs'), script.replace("path.join(here, 'result.json')", "path.resolve(process.argv[3] ?? path.join(here, 'result.json'))"))
+    assert.deepEqual(risk('pwsh', { command: 'node sum.mjs' }), [])
+    assert.deepEqual(risk('pwsh', { command: 'node sum.mjs input.csv user.md' }), ['overwrite'])
+    assert.deepEqual(risk('pwsh', { command: 'node sum.mjs input.csv $unknown' }), ['overwrite'])
+    assert.deepEqual(risk('pwsh', { command: 'node -e "writeFileSync(process.argv[2], data)"' }), ['overwrite'])
+    assert.deepEqual(classifyPersonalRisk('write', { file_path: 'mine.md' }, cwd), ['overwrite'], 'another conversation cannot inherit creation')
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
+})

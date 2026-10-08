@@ -4,7 +4,7 @@ import { resolve } from 'node:path';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import { installModelSelection } from '@deepseek-ai/dsh-agent';
 import { setSandboxMode } from '@deepseek-ai/dsh-sandbox-policy';
-import { trackNativeFiles, appendNativeArtifacts } from './personal-native-files.mjs';
+import { trackNativeFiles, appendNativeArtifacts, conversationCreatedFiles } from './personal-native-files.mjs';
 import { personalWebFetchProvider } from './personal-web-fetch.mjs';
 import { durableSourceRange } from '../runtime/dsh-adapter/source-range.mjs';
 import PlanModeController, { foldPlanMode } from '@deepseek-ai/dsh-plan-mode';
@@ -628,6 +628,12 @@ export function initializePersonalFilePolicy(agent, sandboxPolicy) {
     setSandboxMode(session, 'danger-full-access');
 }
 
+/** Unknown calls cannot execute, so they must fail before asking for consent. */
+export function personalToolAvailability(tools, exec) {
+  return tools.get(exec.name, exec.agent) ? null : { kind: 'deny',
+    reason: `Unknown tool "${exec.name}". Use a tool name from the available tool definitions.` };
+}
+
 export function apply(ctx) {
   const bridge = new PersonalDesktopBridge();
   ctx.plugin(PlanModeController, { section: 'You are planning. Present a complete Markdown plan with exit_plan_mode before executing tools. Ask for missing information if needed. Execute only after the user approves the plan.' });
@@ -683,11 +689,14 @@ export function apply(ctx) {
     const decision = await next();
     if (exec.agent?.session?.header?.agentPreset !== 'personal-remote' || decision.kind === 'deny' ||
         NATIVE_SESSION_TOOLS.has(exec.name) || exec.name === 'exit_plan_mode' || exec.name === 'todo_write' || exec.name === 'run_code') return decision;
+    const unavailable = personalToolAvailability(ctx.tools, exec);
+    if (unavailable) return unavailable;
     const delegated = delegatedExecutions.get(exec.agent);
     const owner = delegated?.agent ?? exec.agent;
     const policy = await policyFor(owner);
     const cwd = resolve(exec.agent.session.header.cwd, exec.arguments?.workdir ?? '.');
-    const risks = classifyPersonalRisk(exec.name, exec.arguments, cwd);
+    const risks = classifyPersonalRisk(exec.name, exec.arguments, cwd, new Set(),
+      { createdFiles: conversationCreatedFiles(exec.agent.session) });
     if (policy.mode === 'plan' && foldPlanMode(owner.session.events))
       return { kind: 'deny', reason: 'Present the plan with exit_plan_mode and wait for approval before executing this operation.' };
     const required = approvalRequired(policy.mode, risks, policy.allowedCategories);
