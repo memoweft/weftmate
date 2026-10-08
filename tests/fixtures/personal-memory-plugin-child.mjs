@@ -27,9 +27,11 @@ if (!handlers.has('agent/pre-step') || !handlers.has('session/event')) {
 process.send({ type: 'ready' });
 
 function session(id, preset = 'personal-shared-chat') {
-  return { id, header: { agentPreset: preset }, events: [
+  const value = { id, header: { agentPreset: preset }, deriveMessages() { return this.events.filter(event => event.type === 'user/message').map(event => event.data); }, append(type, data) { const event = Object.freeze({ seq: this.events.length + 1, type, data }); this.events.push(event); return event; }, events: [
     { seq: 1, type: 'turn/start', data: { turn: 1 } },
   ] };
+  handlers.get('session/created')(value);
+  return value;
 }
 const userClaim = (id) => ({ id: `user-${id}`, role: 'user',
   content: [{ type: 'text', text: '合成用户提问' }], source: { kind: 'user' } });
@@ -54,10 +56,14 @@ process.on('message', async (message) => {
   try {
     const agentA = { session: session('session-a') };
     const a = await preStep('session-a', agentA);
+    agentA.session.append('user/message', a.messages.at(-1));
+    const latestContextCount = agentA.session.deriveMessages().filter(message => message.source?.plugin === 'weftmate-personal-memory').length;
+    const adopted = agentA.session.append('assistant/message', { turn: 1, message: { content: [{ type: 'text', text: '采用回复' }] } }).data.memoryUsed;
     agentA.session.events.push({ seq: 2, type: 'user/message', data: userClaim('session-a') });
     const laterClaim = [{ role: 'assistant', content: [{ type: 'text', text: 'tool continuation' }],
       source: { kind: 'plugin', plugin: 'other' } }];
     const aWithheld = await preStep('session-a', agentA, a.messages, laterClaim);
+    const withheldContextCount = agentA.session.deriveMessages().filter(message => message.source?.plugin === 'weftmate-personal-memory').length;
     const aUpdated = await preStep('session-a', agentA, aWithheld.messages, laterClaim);
     const empty = await preStep('session-empty');
     const b = await preStep('session-b');
@@ -75,6 +81,6 @@ process.on('message', async (message) => {
     current.events.push(end);
     handlers.get('session/event')(current, end);
     await new Promise((resolve) => setTimeout(resolve, 50));
-    process.send({ type: 'result', a, aWithheld, aUpdated, empty, b, ambiguous, cloud, noClaim });
+    process.send({ type: 'result', adopted, latestContextCount, withheldContextCount, a, aWithheld, aUpdated, empty, b, ambiguous, cloud, noClaim });
   } catch { process.send({ type: 'failed' }); }
 });

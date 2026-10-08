@@ -13,11 +13,13 @@ import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mj
 const repository = resolve(import.meta.dirname, '../..');
 // Keep generated goals and evidence free of the Windows account's home path.
 process.env.TEMP = process.env.TMP = 'C:/Temp';
+const memoryUi = process.argv.includes('--memory-ui');
+const memoryLoop = process.argv.includes('--memory-loop');
 const modelName = process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const diagnostic = process.argv.includes('--diagnostic');
 const comparison = process.argv.includes('--mimo-machine');
 assert.ok(!comparison || modelName === 'mimo', '--mimo-machine requires --mimo');
-const mimoKeyScope = comparison ? 'Machine' : 'User';
+const mimoKeyScope = comparison || memoryLoop || memoryUi ? 'Machine' : 'User';
 const run = promisify(execFile);
 async function environmentKey(name, scope = 'User') {
   const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
@@ -36,7 +38,7 @@ if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key'
 }
 if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
 const scenarioFixes = process.argv.includes('--scenario-fixes');
-const root = join('C:/Temp', `weftmate-${scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
+const root = join('C:/Temp', `weftmate-${memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password = `test-${randomUUID()}-password`, username = `eval-${randomUUID()}`;
@@ -92,6 +94,8 @@ try {
     'The isolated Core must be configured before recording memory results');
   writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'Baseline runner', provisioned: true }), { mode: 0o600 });
   let scenarios = await loadScenarios('eval/scenarios/*.yaml');
+  if (memoryUi) scenarios = [{ id: 'memory-ui', category: 'memory', title: '单条表达偏好程序验收', setup: { files: [], memories: [], devices: ['隔离桌面程序'] }, turns: [{ user: '我希望你以后只用中文回答我的问题。请只回复收到，不调用工具。', after: { newSession: true, waitMs: 1000 } }, { user: '跟我问个好。只写一句话，不调用工具。' }], checks: [{ type: 'turn_status', turn: 1, status: 'completed' }, { type: 'turn_status', status: 'completed' }, { type: 'memory_used' }], timeoutSec: 600, notes: '独立合成账号，验证真实形成/新对话采用/单条来源标签。' }];
+  if (memoryLoop) scenarios = scenarios.filter(s => s.category === 'memory');
   if (scenarioFixes) scenarios = scenarios.filter(s => /^(action-04|action-06|memory-01|memory-02|memory-04)-/.test(s.id));
   if (diagnostic) scenarios = scenarios.filter(s => s.id === 'action-06-delete-approval').map(s => ({ ...s, timeoutSec: 600 }));
   const onlyIndex = process.argv.indexOf('--only');
@@ -99,14 +103,41 @@ try {
   // Each scenario runs once. Only memory-03 starts on Qwen and switches to MiMo.
   const results = [], startedAt = new Date().toISOString();
   for (const scenario of scenarios) {
-    const firstModel = comparison && scenario.id === 'memory-03-switch-model' ? 'qwen' : modelName;
-    if (comparison) assert.equal((await api('/settings/models', {
+    const firstModel = !memoryLoop && comparison && scenario.id === 'memory-03-switch-model' ? 'qwen' : modelName;
+    if (comparison && !memoryLoop) assert.equal((await api('/settings/models', {
       backgroundModelProfileId: scenario.id === 'memory-03-switch-model' ? null : selected.id,
     }, 'PATCH')).status, 200);
-    console.log(`Starting ${scenario.id}: ${firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (comparison ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
+    console.log(`Starting ${scenario.id}: ${firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
     await runEvaluation({ host: new URL(page.url()).origin, out, model: firstModel,
-      switchModel: comparison ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
+      switchModel: comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
       onScenarioResult: async result => { results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
+  }
+  if (memoryLoop || memoryUi) {
+    const sample = results.find(result => result.id === (memoryUi ? 'memory-ui' : 'memory-01-preference'));
+    if (sample?.status === 'passed') {
+      const sessionId = sample.turns.at(-1).sessionId;
+      await page.evaluate(async sessionId => {
+        const status = await (await fetch('/personal/v1/status')).json();
+        localStorage.setItem(`weftmate:last-session:v1:${status.ownerId}`, sessionId);
+        localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'light' }));
+      }, sessionId);
+      await page.reload(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
+      const label = page.locator('.reply-memory').last();
+      await label.waitFor({ state: 'visible' });
+      assert.match(await label.textContent(), /用到了 \d+ 条记忆/);
+      if (memoryUi) assert.equal(await label.textContent(), '用到了 1 条记忆');
+      await label.click();
+      await page.getByRole('heading', { name: '这条回复的记忆来源' }).waitFor();
+      await until(async () => await page.locator('.memory-source-text').count());
+      await label.scrollIntoViewIfNeeded();
+      await page.screenshot({ path: join(root, 'memory-source-light.png') });
+      await page.evaluate(() => { localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'dark' })); });
+      await page.reload(); await page.locator('.reply-memory').last().click();
+      await until(async () => await page.locator('.memory-source-text').count());
+      await page.locator('.reply-memory').last().scrollIntoViewIfNeeded();
+      await page.screenshot({ path: join(root, 'memory-source-dark.png') });
+      writeFileSync(join(root, 'ui-verification.json'), JSON.stringify({ electron: true, label: await page.locator('.reply-memory').last().textContent(), sources: await page.locator('.memory-source-text').count(), themes: ['light', 'dark'] }));
+    }
   }
   const count = status => results.filter(r => r.status === status).length;
   const summary = { passed: count('passed'), failed: count('failed'), manual: count('manual'), unsupported: count('unsupported'),

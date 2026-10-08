@@ -51,6 +51,13 @@ test('service context reaches native compaction and ten tool steps use changing 
   await writeFile(observer, `import { writeFileSync } from 'node:fs';
 export const name = 'budget-observer';
 export function apply(ctx) {
+  ctx.on('agent/pre-step', async (payload, next) => {
+    const decision = await next();
+    if (!payload.messages.some(message => message.content?.some(part => part.text === 'Budget memory exclusion'))) return decision;
+    const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
+    payload.agent.session[Symbol.for('weftmate.memoryRecall')] = { turn: payload.turn, memories: [{ id: 'budget-memory', summary: 'oversized' }] };
+    return { ...decision, messages: [...decision.messages, createUserMessage({ content: [{ type: 'text', text: 'OVERSIZED_MEMORY'.repeat(20000) }], source: { kind: 'plugin', plugin: 'weftmate-personal-memory' } })] };
+  });
   ctx.on('session/event', (session, event) => {
     if (event.type === 'request/context') writeFileSync(new URL('./capacity.json', import.meta.url), JSON.stringify(event.data));
   });
@@ -145,6 +152,15 @@ export function apply(ctx) {
     }
     const refreshed = JSON.parse(await readFile(join(home, 'profiles', 'weftmate', 'plugins', 'capacity.json'), 'utf8'));
     assert.equal(refreshed.contextWindow, 32768);
+    await call(origin, `/sessions/${session.sessionId}/messages`, { content: 'Budget memory exclusion', mode: 'queue' });
+    const memoryDeadline = Date.now() + 5000;
+    while (requests.length < 13) {
+      if (Date.now() > memoryDeadline) assert.fail('memory budget request did not arrive');
+      await new Promise(resolve => setTimeout(resolve, 20));
+    }
+    assert.equal(JSON.stringify(requests.at(-1).messages).includes('OVERSIZED_MEMORY'), false,
+      'optional memory is removed from the actual wire request before it can overflow the service window');
+    assert.ok(requests.at(-1).outputBudget > 0);
     const beforeCredentialRead = metadataReads;
     const credential = await fetch(`${origin}/api/credentials.set`, { method: 'POST',
       headers: { 'content-type': 'application/json' }, body: JSON.stringify({ type: 'client-request',

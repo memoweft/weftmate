@@ -9,7 +9,7 @@ const ownerA = 'owner-00000000-0000-4000-8000-000000000001'
 const ownerB = 'owner-00000000-0000-4000-8000-000000000002'
 const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_boundary',
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
-  'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup']
+  'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
 
 test('account memory workers follow only the owner session route and restart without losing the outbox', async t => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-processing-route-'))
@@ -34,7 +34,7 @@ test('account memory workers follow only the owner session route and restart wit
         if (method === 'initialize') { this.initialized = structuredClone(params)
           return { runtime: { subject_id: params.subject_id,
             db_path: join(params.dsh_home, 'memoweft', 'memoweft.sqlite3') },
-          capabilities: { subject_id: params.subject_id, services: { command: { operations: [] } } } } }
+          capabilities: { methods: required, subject_id: params.subject_id, services: { command: { operations: [] } } } } }
         if (method === 'health') return { runtime: { subject_id: this.initialized.subject_id,
           route_ready: true } }
         if (method === 'query_world') return params.operation === 'revision'
@@ -111,4 +111,20 @@ test('account memory workers follow only the owner session route and restart wit
   assert.equal(instances.at(-1).lastRecallTier, 'cloud', 'local formation model cannot grant raw recall to a cloud main model')
   assert.equal(instances.at(-1).lastInteractionTier, 'cloud')
   assert.equal(instances[1].closed, false, 'changing A background model does not restart B memory')
+  const rpc = instances.at(-1), request = rpc.request.bind(rpc)
+  let jobReads = 0
+  rpc.request = async (method: string, params: any) => {
+    if (method === 'query_jobs') return { jobs: [{ worker: { state: ++jobReads === 1 ? 'processing' : 'done' } }] }
+    if (method === 'preview_recall') return { world_revision: 4, preview: {
+      selected_item_ids: [['cognition', 'cog-1'], ['entity', 'entity-2']],
+      rendered_recall: '记忆：安全的偏好摘要\n记忆：安全的人物名',
+    } }
+    if (method === 'query_interactions') return { rendered_context: '' }
+    return request(method, params)
+  }
+  const recalled = await manager.recall(ownerA, { query: 'ready after formation', sessionId: 'background-session', modelTier: 'cloud' })
+  assert.equal(jobReads, 2, 'recall waits for Core accepted background jobs')
+  assert.deepEqual(recalled.memories, [{ id: 'cog-1', kind: 'cognition', summary: '安全的偏好摘要' },
+    { id: 'entity-2', kind: 'entity', summary: '安全的人物名' }])
+
 })

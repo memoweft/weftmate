@@ -1,0 +1,716 @@
+{
+  "date": "2026-10-08",
+  "models": [
+    "http://127.0.0.1:8081/v1 / qwen3.8-27b-original",
+    "https://api.xiaomimimo.com/v1 / mimo-v2.6-flash"
+  ],
+  "finalResults": [
+    {
+      "id": "memory-01-preference",
+      "qwen": {
+        "id": "memory-01-preference",
+        "status": "passed",
+        "durationMs": 269426,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "买菜|菜市场|蔬菜|菜摊",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "在没有当前会话重复偏好的情况下，回复应中文为主，先用买菜相关日常例子解释缓存，再讲原理，避免上来堆术语。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 87789,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 176983,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      "mimo": {
+        "id": "memory-01-preference",
+        "status": "failed",
+        "durationMs": 83717,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "买菜|菜市场|蔬菜|菜摊",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "failed",
+            "reason": "memory_used did not match expected value"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "在没有当前会话重复偏好的情况下，回复应中文为主，先用买菜相关日常例子解释缓存，再讲原理，避免上来堆术语。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "reason": "reply_matches did not match expected value; memory_used did not match expected value",
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 10313,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 68276,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "memory-02-correction",
+      "qwen": {
+        "id": "memory-02-correction",
+        "status": "failed",
+        "durationMs": 689557,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          }
+        ],
+        "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+        "timedOut": false,
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 38773,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 62064,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "running",
+            "durationMs": 582345,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 3,
+            "unexpectedApproval": true,
+            "questionCount": 0,
+            "toolCallCount": 14
+          }
+        ]
+      },
+      "mimo": {
+        "id": "memory-02-correction",
+        "status": "failed",
+        "durationMs": 287380,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          }
+        ],
+        "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+        "timedOut": false,
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 37663,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 2
+          },
+          {
+            "status": "completed",
+            "durationMs": 37776,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 1
+          },
+          {
+            "status": "running",
+            "durationMs": 203742,
+            "memoryUsedSupported": false,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": true,
+            "questionCount": 0,
+            "toolCallCount": 24
+          }
+        ]
+      }
+    },
+    {
+      "id": "memory-03-switch-model",
+      "qwen": {
+        "id": "memory-03-switch-model",
+        "status": "failed",
+        "durationMs": 100732,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "小禾",
+            "status": "failed",
+            "reason": "reply_contains did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "reason": "reply_contains did not match expected value",
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 36945,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 58460,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      "mimo": {
+        "id": "memory-03-switch-model",
+        "status": "passed",
+        "durationMs": 69283,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "小禾",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 3740,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 58433,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    },
+    {
+      "id": "memory-04-person",
+      "qwen": {
+        "id": "memory-04-person",
+        "status": "failed",
+        "durationMs": 133024,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "阿岚",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "海报|展览",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "failed",
+            "reason": "memory_used did not match expected value"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "给阿岚的开场白应自然联系准备秋季展览、海报或周六进度，不捏造其他关系或事项。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "reason": "reply_matches did not match expected value; memory_used did not match expected value",
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 35467,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 92196,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      "mimo": {
+        "id": "memory-04-person",
+        "status": "passed",
+        "durationMs": 39765,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "text": "阿岚",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "海报|展览",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "给阿岚的开场白应自然联系准备秋季展览、海报或周六进度，不捏造其他关系或事项。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 13147,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 19222,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    }
+  ],
+  "summary": {
+    "qwen": {
+      "passed": 1,
+      "failed": 3,
+      "manual": 0,
+      "unsupported": 0,
+      "skippedChecks": 2,
+      "passRate": 0.25,
+      "coverage": 0.25
+    },
+    "mimo": {
+      "passed": 2,
+      "failed": 2,
+      "manual": 0,
+      "unsupported": 0,
+      "skippedChecks": 2,
+      "passRate": 0.5,
+      "coverage": 0.5
+    }
+  },
+  "initialIterations": [
+    {
+      "stage": "initial",
+      "results": [
+        {
+          "id": "memory-01-preference",
+          "status": "failed",
+          "durationMs": 198368,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "买菜|菜市场|蔬菜|菜摊",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "unsupported",
+              "reason": "CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only."
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "在没有当前会话重复偏好的情况下，回复应中文为主，先用买菜相关日常例子解释缓存，再讲原理，避免上来堆术语。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "reason": "reply_matches did not match expected value; CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.",
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 104268,
+              "memoryUsedSupported": false,
+              "memoryUsedCount": 0,
+              "unexpectedApproval": false,
+              "questionCount": 0,
+              "toolCallCount": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 89638,
+              "memoryUsedSupported": false,
+              "memoryUsedCount": 0,
+              "unexpectedApproval": false,
+              "questionCount": 0,
+              "toolCallCount": 0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "formation",
+      "results": [
+        {
+          "id": "memory-01-preference",
+          "status": "failed",
+          "durationMs": 342899,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "买菜|菜市场|蔬菜|菜摊",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "failed",
+              "reason": "memory_used did not match expected value"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "在没有当前会话重复偏好的情况下，回复应中文为主，先用买菜相关日常例子解释缓存，再讲原理，避免上来堆术语。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "reason": "reply_matches did not match expected value; memory_used did not match expected value",
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 92379,
+              "memoryUsedSupported": true,
+              "memoryUsedCount": 0,
+              "unexpectedApproval": false,
+              "questionCount": 0,
+              "toolCallCount": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 246123,
+              "memoryUsedSupported": true,
+              "memoryUsedCount": 0,
+              "unexpectedApproval": false,
+              "questionCount": 0,
+              "toolCallCount": 0
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "electronUi": {
+    "electron": true,
+    "label": "用到了 1 条记忆",
+    "sources": 1,
+    "themes": [
+      "light",
+      "dark"
+    ]
+  },
+  "uiScenario": {
+    "id": "memory-ui",
+    "status": "passed",
+    "durationMs": 105424,
+    "checks": [
+      {
+        "type": "turn_status",
+        "turn": 1,
+        "status": "passed"
+      },
+      {
+        "type": "turn_status",
+        "status": "passed"
+      },
+      {
+        "type": "memory_used",
+        "status": "passed"
+      }
+    ],
+    "turns": [
+      {
+        "status": "completed",
+        "durationMs": 26799,
+        "memoryUsedSupported": true,
+        "memoryUsedCount": 0,
+        "unexpectedApproval": false,
+        "questionCount": 0,
+        "toolCallCount": 0
+      },
+      {
+        "status": "completed",
+        "durationMs": 73997,
+        "memoryUsedSupported": true,
+        "memoryUsedCount": 1,
+        "unexpectedApproval": false,
+        "questionCount": 0,
+        "toolCallCount": 0
+      }
+    ]
+  },
+  "memoryStatus": {
+    "qwen": {
+      "state": "ready",
+      "version": "2.0.0",
+      "worldRevision": 4,
+      "capabilities": {
+        "list": true,
+        "source": true,
+        "inject": true,
+        "correct": true,
+        "mute": true,
+        "deleteEvidence": true,
+        "deleteWorldItem": true
+      },
+      "pendingBoundaryCount": 0,
+      "blockedBoundaryCount": 0,
+      "discardedBoundaryCount": 0,
+      "lastFailureCode": null
+    },
+    "mimo": {
+      "state": "ready",
+      "version": "2.0.0",
+      "worldRevision": 3,
+      "capabilities": {
+        "list": true,
+        "source": true,
+        "inject": true,
+        "correct": true,
+        "mute": true,
+        "deleteEvidence": true,
+        "deleteWorldItem": true
+      },
+      "pendingBoundaryCount": 0,
+      "blockedBoundaryCount": 0,
+      "discardedBoundaryCount": 0,
+      "lastFailureCode": null
+    }
+  },
+  "credentialScans": [
+    {
+      "scanned": 169,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "scanned": 185,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "scanned": 162,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "scanned": 159,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "scanned": 160,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  ],
+  "mimoCost": {
+    "requestCount": 50,
+    "reportedUsageRequests": 50,
+    "missingUsageRequests": 0,
+    "inputTokens": 580319,
+    "cachedInputTokens": 509632,
+    "outputTokens": 10991,
+    "totalReportedTokens": 591310,
+    "reportedCostCny": 0.102862,
+    "estimatedMissingInputTokens": 0,
+    "estimatedMissingOutputTokens": 0,
+    "estimatedTotalTokens": 591310,
+    "estimatedCostCny": 0.102862,
+    "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash"
+  },
+  "unitTests": {
+    "passed": 69,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "scope": "M2a; not complete M2 exit",
+  "cleanup": {
+    "testCredentialFilesRemaining": 0,
+    "isolatedHostProcessesRemaining": 0,
+    "modelFinalState": {
+      "currentModelId": "qwen3.8-27b-original",
+      "switching": false,
+      "activeLeases": 0,
+      "queuedLeases": 0,
+      "maintenanceQueued": 0,
+      "healthy": true
+    }
+  }
+}

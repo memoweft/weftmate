@@ -141,6 +141,13 @@ test('history exposes validated receipt and native turn without source secrets',
   const user = projectHistoryEvent({ seq: 2, type: 'user/message', data: message('m1', 'receipt-a') })
   const end = projectHistoryEvent({ seq: 3, type: 'turn/end',
     data: { turn: 2, reason: { kind: 'aborted' } } })
+  const reply = projectHistoryEvent({ seq: 9, type: 'assistant/message', data: { turn: 2,
+    message: { content: [{ type: 'text', text: '已采用' }] }, memoryUsed: [
+      { id: 'cog-1', kind: 'cognition', summary: '记忆摘要', privateSource: 'PRIVATE_RAW' },
+      { id: '../bad', kind: 'cognition', summary: 'bad' },
+    ] } })
+  assert.deepEqual(reply?.data.memoryUsed, [{ id: 'cog-1', kind: 'cognition', summary: '记忆摘要' }])
+  assert.equal(JSON.stringify(reply).includes('PRIVATE_RAW'), false)
   assert.deepEqual(start?.data, { turn: 2 })
   assert.equal(user?.data?.receiptId, 'receipt-a')
   assert.equal(JSON.stringify(user).includes('source'), false)

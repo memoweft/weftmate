@@ -2472,6 +2472,7 @@
       }
       if (files.length) appendOriginalFiles(row, event)
       if (originalImages.length) appendUnpreviewedOriginalImages(row, originalImages)
+      if (event.type === 'assistant.message') appendReplyMemory(row, event)
       if (event.data.truncated === true) row.append(element('span', 'truncated', '这条记录已截断，可在电脑查看完整来源。'))
       const next = [...list.children].find(n => Number(n.dataset.seq) > event.seq)
       if (next) list.insertBefore(row, next); else list.append(row)
@@ -2481,6 +2482,40 @@
     renderTimeline()
     renderTurnStatus()
     renderConversationTasks()
+  }
+  function appendReplyMemory(row, event) {
+    const memories = Array.isArray(event.data?.memoryUsed) ? event.data.memoryUsed : []
+    if (!memories.length || !window.WeftDesktop) return
+    const button = element('button', 'button quiet small reply-memory', `用到了 ${memories.length} 条记忆`)
+    button.type = 'button'
+    button.setAttribute('aria-label', `查看这条回复采用的 ${memories.length} 条记忆来源`)
+    button.addEventListener('click', async () => {
+      const context = conversationTaskContext()
+      const target = window.WeftDesktop.openPreview('记忆来源', button, `reply-memory:${context.sessionId}:${event.seq}`, 'source')
+      target.content.replaceChildren(element('h2', '', '这条回复的记忆来源'))
+      for (const item of memories) {
+        const section = element('section', 'reply-memory-source')
+        section.append(element('p', '', item.summary))
+        const status = element('p', 'muted', '正在读取来源…')
+        section.append(status); target.content.append(section)
+        try {
+          const data = await memoryRequest(`/items/${encodeURIComponent(item.kind)}/${encodeURIComponent(item.id)}/sources`)
+          if (!conversationTaskCurrent(context) || !target.content.isConnected) return
+          status.remove()
+          if (!data.sources?.length) section.append(element('p', 'muted', '当前没有可展示的来源。'))
+          for (const source of data.sources ?? []) {
+            section.append(element('p', 'muted', source.recordedAt ? `记录于 ${formatDate(source.recordedAt)}` : '对话来源'))
+            section.append(element('p', 'memory-source-text', source.contentAvailable
+              ? source.rawContent || source.summary || '此来源没有可显示的原文。' : '此来源已删除或当前不可读取。'))
+          }
+        } catch {
+          if (conversationTaskCurrent(context) && target.content.isConnected) {
+            status.textContent = '来源暂时无法读取，请重新打开。'
+          }
+        }
+      }
+    })
+    row.append(button)
   }
   function renderTurnStatus() {
     if (state.activeChatSource === 'phone') return

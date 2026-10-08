@@ -461,16 +461,51 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         if (observed.state === 'queued' && entry.capabilities?.observed_evidence === 1) {
           return { state: 'withheld', reasonCode: 'MEMORY_OBSERVED_PENDING' };
         }
-        const [world, interaction] = await Promise.all([
-            entry.rpc.request('preview_recall', { query, model_tier: destinationTier }),
-            entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: destinationTier }),
+        // Core owns the durable jobs and worker. A new turn can arrive before its
+        // previous boundary's background model request finishes (local kick: 20s).
+        // Wait only for already accepted work; ordinary chat still degrades on failure.
+        if (entry.capabilities?.methods?.includes('query_jobs')) {
+          const deadline = Date.now() + 330_000;
+          while (true) {
+            const result = await entry.rpc.request('query_jobs', { operation: 'list' });
+            const pending = result.jobs?.some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
+            if (!pending) break;
+            if (Date.now() >= deadline) return { state: 'withheld', reasonCode: 'MEMORY_FORMATION_PENDING' };
+            await new Promise(resolve => setTimeout(resolve, 250));
+          }
+        }
+        const [world, style, identity, interaction] = await Promise.all([
+          entry.rpc.request('preview_recall', { query, model_tier: destinationTier }),
+          // Standing conversational preferences apply even when today's topic
+          // shares no words with the earlier preference (e.g. a new concept).
+          entry.rpc.request('preview_recall', { query: '用户希望我如何称呼和讲解？', model_tier: destinationTier }),
+          entry.rpc.request('preview_recall', { query: '我叫什么？', model_tier: destinationTier }),
+          entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: destinationTier }),
         ]);
-        const fragments = [world?.preview?.rendered_recall, interaction?.rendered_context]
-          .filter((item) => typeof item === 'string' && item.trim()).map((item) => item.trim());
+        // Summaries come from permission-filtered rendered snapshots, never
+        // unrestricted query_world values on a cloud destination.
+        const memories = [], fragments = [], seen = new Set();
+        for (const snapshot of [world, style, identity]) {
+          const rendered = snapshot?.preview?.rendered_recall ?? '';
+          const pairs = snapshot?.preview?.selected_item_ids ?? [];
+          const claims = rendered.split(/\n(?=记忆(?:（过往）)?：)/);
+          if (!pairs.length && rendered.trim()) fragments.push(rendered.trim());
+          for (const [index, pair] of pairs.entries()) {
+            const [kind, id] = Array.isArray(pair) ? pair : [];
+            const claim = claims[index]?.trim();
+            const summary = claim?.replace(/^记忆(?:（过往）)?：/, '').trim().slice(0, 240);
+            if (!['cognition', 'entity', 'relationship', 'event'].includes(kind) ||
+                typeof id !== 'string' || !summary || seen.has(`${kind}:${id}`)) continue;
+            seen.add(`${kind}:${id}`);
+            memories.push({ id, kind, summary }); fragments.push(claim);
+          }
+        }
+        if (typeof interaction?.rendered_context === 'string' && interaction.rendered_context.trim()) {
+          fragments.push(interaction.rendered_context.trim());
+        }
         const contextText = fragments.join('\n\n').slice(0, 16_384);
-        return { state: 'ready', contextText, worldRevision: Number.isSafeInteger(world?.world_revision)
-          ? world.world_revision : null, sourceCount: Array.isArray(world?.preview?.selected_item_ids)
-            ? world.preview.selected_item_ids.length : 0 };
+        return { state: 'ready', contextText, memories, worldRevision: Number.isSafeInteger(world?.world_revision)
+          ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
     },
     async ingest(ownerId, boundary) {

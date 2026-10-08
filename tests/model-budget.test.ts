@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { readModelCapacity, outputBudget, DEFAULT_MODEL_CAPACITY } from '../src/model-budget.mjs';
+import { readModelCapacity, outputBudget, DEFAULT_MODEL_CAPACITY, messagesForModelInput } from '../src/model-budget.mjs';
 
 const model = { baseUrl: 'http://localhost:8080/v1', modelId: 'qwen' };
 function responses(bodies: Record<string, unknown>) {
@@ -61,4 +61,17 @@ describe('per-request output budget', () => {
     assert.equal(outputBudget({ contextWindow: 4096, inputTokens: 5000 }), 1);
     assert.equal(outputBudget({ contextWindow: 1, inputTokens: 0 }), 1);
   });
+});
+
+it('text-only model drops image bytes recursively while retaining tool descriptions and image metadata', () => {
+  const image = { type: 'image', data: 'PRIVATE_IMAGE_BYTES', mediaType: 'image/png', name: '截图', width: 800, height: 600 };
+  const messages = [{ role: 'tool', content: [{ type: 'tool-result', content: [
+    { type: 'text', text: '当前页面有一个保存按钮' }, image,
+  ] }] }, { role: 'user', content: [image] }];
+  const result = messagesForModelInput(messages, ['text']);
+  assert.equal(JSON.stringify(result).includes('PRIVATE_IMAGE_BYTES'), false);
+  assert.match(JSON.stringify(result), /保存按钮/);
+  assert.match(JSON.stringify(result), /800×600/);
+  assert.equal(messagesForModelInput(messages, ['text', 'image']), messages);
+  assert.equal(messages[0].content[0].content[1], image, 'durable image stays unchanged');
 });

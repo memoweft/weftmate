@@ -11,7 +11,7 @@ export const REASONS = Object.freeze({
 })
 
 /** Fixed SDK contract: agents.list() returns live Agent[], with status and Inbox.hasPending. */
-export function modelIdleSnapshot(value) {
+export function modelIdleSnapshot(value, inference = false) {
   if (!Array.isArray(value)) return { idle: false, reason: REASONS.agentListUnknown }
   let pending = false
   for (const agent of value) {
@@ -19,8 +19,8 @@ export function modelIdleSnapshot(value) {
         typeof agent.inbox?.hasPending !== 'boolean') {
       return { idle: false, reason: REASONS.agentStateUnknown }
     }
-    if (agent.status === 'running') return { idle: false, reason: REASONS.agentRunning }
-    pending ||= agent.inbox.hasPending
+    if (agent.status === 'running' && !(inference && agent[Symbol.for('weftmate.memoryRecallPending')])) return { idle: false, reason: REASONS.agentRunning }
+    pending ||= agent.inbox.hasPending && !(inference && agent[Symbol.for('weftmate.memoryRecallPending')])
   }
   return pending ? { idle: false, reason: REASONS.inboxPending }
     : { idle: true, reason: REASONS.idle }
@@ -32,7 +32,7 @@ export function apply(ctx) {
         !/^model-idle-[a-f0-9-]{36}$/.test(frame.id)) return
     let snapshot = { idle: false, reason: REASONS.agentListUnknown }
     try {
-      snapshot = modelIdleSnapshot(ctx.agents.list())
+      snapshot = modelIdleSnapshot(ctx.agents.list(), frame.inference === true)
     } catch { /* An incomplete agent view cannot prove idleness. */ }
     try { process.send?.({ protocol: PROTOCOL, id: frame.id, ...snapshot }) }
     catch { /* Parent timeout is a busy result. */ }

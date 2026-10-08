@@ -59,3 +59,18 @@ export function outputBudget({ contextWindow, inputTokens, maxTokens = 32768, sa
   const safety = safetyTokens ?? Math.max(4096, Math.ceil(contextWindow * 0.02));
   return Math.max(1, Math.floor(Math.min(maxTokens, contextWindow - Math.ceil(inputTokens) - safety)));
 }
+
+/** Keep existing tool text and durable image metadata for text-only routes. */
+export function messagesForModelInput(messages, inputModalities) {
+  if (inputModalities?.includes('image')) return messages;
+  const parts = content => Array.isArray(content) ? content.map(part => {
+    if (part?.type === 'image') {
+      const image = part.attachment ?? part;
+      const description = [image.name, image.mediaType, image.width && image.height
+        ? `${image.width}×${image.height}` : null].filter(Boolean).join(' · ');
+      return { type: 'text', text: `图片${description ? `（${description}）` : ''}：当前模型仅接收文字，请依据工具返回的文字描述处理。` };
+    }
+    return Array.isArray(part?.content) ? { ...part, content: parts(part.content) } : part;
+  }) : content;
+  return messages.map(message => ({ ...message, content: parts(message.content) }));
+}
