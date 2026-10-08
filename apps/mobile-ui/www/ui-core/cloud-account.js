@@ -12,6 +12,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return { ...auth, error, resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds };
   }
   function cloudError(error) {
+    if (error?.code === 'BACKUP_RESTART_REQUIRED') return '正在备份本机数据，程序将重新打开；备份完成后请再次确认注销。';
     const code = error?.code || error?.message;
     if (code === 'RATE_LIMITED' || code === 'LOGIN_RATE_LIMITED') { auth.retryAt = now() + Math.max(1, error.retryAfter || 60) * 1000; return `尝试太多次，请等待 ${Math.ceil((auth.retryAt - now()) / 1000)} 秒后重试。`; }
     return ({ INVALID_CREDENTIALS: '邮箱或密码不对，请重试。', INVALID_EMAIL: '请填写有效的邮箱地址。', EMAIL_IN_USE: '无法使用这个邮箱，请换一个邮箱或尝试登录。',
@@ -216,7 +217,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await expireCloudSession();
   }
   async function cloudLogoutOthers() { return client.authorized('/auth/logout/others', { method: 'POST', body: {} }); }
-  async function cloudDeleteAccount(password) { const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession(''); return result; }
+  async function cloudDeleteAccount(password) { if (auth.localDesktop) await core.prepareAccountDeletionBackup(); const result = await client.authorized('/auth/account/delete', { method: 'POST', body: { password } }); await expireCloudSession(''); return result; }
   async function cloudEmergencyPassword(password, confirmation) {
     if (Array.from(password).length < 15 || Array.from(password).length > 128) throw { code: 'EMERGENCY_PASSWORD_INVALID' };
     if (password !== confirmation) throw { code: 'PASSWORD_MISMATCH' };

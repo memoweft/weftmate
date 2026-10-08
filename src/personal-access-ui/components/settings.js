@@ -94,6 +94,7 @@ globalThis.WeftUiComponents.factories.settings = (core, ui) => {
         return node;
     }
     function mountSettings() {
+        ui.mountBackup();
         ui.mountUsage();
         ui.byId('other-device-platform').addEventListener('change', ui.updateOtherDeviceInstall);
         ui.byId('other-device-qr').addEventListener('error', () => {
