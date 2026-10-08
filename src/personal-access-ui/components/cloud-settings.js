@@ -1,6 +1,6 @@
 /* Account/device presentation; all requests and credential handling live in ui-core. */
 globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
-    let pairingTimer, directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0;
+    let pairingTimer, directoryTimer, tab = 'account', editingId = null, editingGeneration = -1, directoryGeneration = 0, pairingGeneration = 0;
     const button = (label, action, style = 'secondary') => { const node = ui.element('button', `button ${style}`, label); node.type = 'button'; node.addEventListener('click', action); return node; };
     function error(error) { ui.byId('cloud-settings-status').textContent = core.cloudError(error); }
     async function act(action) { try { ui.byId('cloud-settings-status').textContent = ''; await action(); return true; } catch (failure) { error(failure); return false; } }
@@ -39,7 +39,8 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (!ui.byId('cloud-settings')) return;
         const active = core.state.cloudAuth.mode === 'authenticated';
         ui.byId('cloud-settings').hidden = !active;
-        for (const id of ['account-heading', 'devices-heading', 'cloud-account']) ui.byId(id).closest('section').hidden = active;
+        for (const id of ['account-heading', 'devices-heading']) ui.byId(id).closest('section').hidden = active;
+        ui.byId('cloud-account').hidden = true;
         if (!active) return;
         ui.byId('cloud-email').textContent = core.state.cloudAuth.email;
         select(tab); void refreshDirectory();
@@ -113,18 +114,22 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         }).finally(() => { submit.disabled = false; if (current) current.value = ''; if (password) password.value = ''; if (confirmation) confirmation.value = ''; }); });
     }
     async function showPairing() {
+        const generation = ++pairingGeneration;
         clearTimeout(pairingTimer); ui.byId('cloud-pairing').hidden = false;
         ui.byId('cloud-pairing-qr').hidden = true;
         await act(async () => {
             const result = await core.cloudPairing();
+            if (generation !== pairingGeneration) return;
             const code = globalThis.WeftCloud.pairingCode(result);
             ui.byId('cloud-pairing-code').value = code;
-            ui.byId('cloud-pairing-qr').src = await globalThis.WeftCloudVendor.QRCode.toDataURL((result.relay?.baseUrl || result.origin) + '/personal/v1/ui/#pair=' + code.slice(4));
+            const qr = await globalThis.WeftCloudVendor.QRCode.toDataURL((result.relay?.baseUrl || result.origin) + '/personal/v1/ui/#pair=' + code.slice(4));
+            if (generation !== pairingGeneration) return;
+            ui.byId('cloud-pairing-qr').src = qr;
             ui.byId('cloud-pairing-qr').hidden = false;
             pairingTimer = setTimeout(() => { if (core.state.currentView === 'account' && tab === 'devices') void showPairing(); }, 120000);
         });
     }
-    function stopPairing() { clearTimeout(pairingTimer); if (ui.byId('cloud-pairing')) { ui.byId('cloud-pairing').hidden = true; ui.byId('cloud-pairing-code').value = ''; ui.byId('cloud-pairing-qr').removeAttribute('src'); } }
+    function stopPairing() { pairingGeneration++; clearTimeout(pairingTimer); if (ui.byId('cloud-pairing')) { ui.byId('cloud-pairing').hidden = true; ui.byId('cloud-pairing-code').value = ''; ui.byId('cloud-pairing-qr').removeAttribute('src'); } }
     function paintCloudPending(payload) {
         if (!ui.byId('cloud-access-banner')) return;
         const banner = ui.byId('cloud-access-banner'); banner.hidden = !payload.devices.length; banner.replaceChildren();
@@ -165,5 +170,5 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) throw { code: 'HOST_TRUST_INVALID' };
         location.assign(new URL('/personal/v1/ui/', url.origin).href);
     }
-    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost };
+    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, stopAccountPairing: stopPairing };
 };

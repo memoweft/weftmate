@@ -16,10 +16,10 @@ const issuer = 'https://api.example.com/personal/v1/cloud/oidc', base = issuer.r
 const response = (value: any, status = 200, retry = '') => ({ ok: status < 400, status, headers: { get: () => retry }, json: async () => value })
 async function fixture() {
   let now = Date.now(), authorization: any, sequence = 0, nonceOverride: string | null = null, subOverride: string | null = null, audienceOverride: string | null = null, callbackOverride: string | null = null, rejectRefresh = false
-  const records = new Map<string, any>(), calls: any[] = [], timers: Array<() => unknown> = []
+  const records = new Map<string, any>(), calls: any[] = [], timers: Array<() => unknown> = [], cleared: number[] = []
   const credentials = async (key: string, value?: any, remove = false) => { if (remove) records.delete(key); else if (value !== undefined) records.set(key, value); else return records.get(key) }
   const context: any = { WeftUiCore: { factories: {} }, btoa, atob, TextEncoder, TextDecoder, URL, URLSearchParams, AbortSignal,
-    Uint8Array, setTimeout: (fn: () => unknown) => { timers.push(fn); return timers.length }, clearTimeout: () => {} }
+    Uint8Array, setTimeout: (fn: () => unknown) => { timers.push(fn); return timers.length }, clearTimeout: (id: number) => { cleared.push(id) } }
   runInNewContext(source, context)
   let client: any
   const fetch = async (url: string, options: any = {}) => {
@@ -51,7 +51,7 @@ async function fixture() {
   const environment = { fetch, crypto: webcrypto, cloudCredentials: credentials, cloudVendor: jose, hostOrigin: 'https://host.example.com', now: () => now, desktop: false }
   client = new context.WeftUiCore.CloudAuthClient({ fetch, crypto: webcrypto, credentials, vendor: jose, host: environment.hostOrigin, now: environment.now })
   await client.configure()
-  return { client, records, calls, timers, context, environment, credentials, advance: (ms: number) => { now += ms },
+  return { client, records, calls, timers, cleared, context, environment, credentials, advance: (ms: number) => { now += ms },
     nonce: (value: string) => { nonceOverride = value }, sub: (value: string) => { subOverride = value }, audience: (value: string) => { audienceOverride = value },
     callback: (value: string) => { callbackOverride = value }, rejectRefresh: () => { rejectRefresh = true }, allowRefresh: () => { rejectRefresh = false }, useClient: (value: any) => { client = value } }
 }
@@ -76,6 +76,16 @@ test('callback rejects state, issuer and exact redirect mismatches before exchan
     'https://host.example.com/personal/v1/ui/?code=x&state=wrong&iss=https://other.example.com']) {
     const f = await fixture(); f.callback(callback); await assert.rejects(login(f)); assert.equal(f.calls.filter(row => row.url.endsWith('/token')).length, 0)
   }
+  const native = await fixture(); native.client.redirectUri = 'com.example.weftmate:/callback';
+  const original = native.client.fetch;
+  native.client.fetch = async (...args: any[]) => {
+    const reply = await original(...args);
+    if (!args[0].endsWith('/auth/authorization/resume')) return reply;
+    const state = native.calls.find(row => row.url.endsWith('/auth/authorization')).body.state;
+    return response({ callbackUrl: `other.example.weftmate:/callback?code=synthetic-code&state=${state}&iss=${encodeURIComponent(issuer)}` });
+  };
+  await assert.rejects(login(native));
+  assert.equal(native.calls.filter(row => row.url.endsWith('/token')).length, 0)
 })
 test('cancelled authorization cannot save late tokens, and an altered JWT never passes fixed JWKS verification', async () => {
   const f = await fixture(), original = f.client.fetch
@@ -114,6 +124,22 @@ test('registration state and 60 second resend deadline live in the shared core; 
   assert.equal(f.records.size, 1, 'only the key was persisted')
   assert.equal(core.cloudPasswordHint('short'), '至少 8 位'); assert.ok(paints.length)
 })
+test('pending approval exchanges share one request and stop polling after success without leaving Settings', async () => {
+  const f = await fixture(), original = f.environment.fetch
+  let pending = true, entries = 0
+  f.environment.fetch = async (...args: any[]) => { const reply = await original(...args); return args[0].endsWith('/auth/cloud-session') && pending
+    ? response({ status: 'pending_approval', requestId: 'request-test' }, 202) : reply }
+  const core: any = { state: { currentView: 'login' }, show: (view: string) => { core.state.currentView = view }, load: () => {}, clearSession: () => {}, sessionExpired: () => {},
+    acceptSession: () => {}, enterAssistant: async () => { entries++; core.state.currentView = 'assistant' }, refreshPendingDevices: async () => {} }
+  Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, {}, f.environment))
+  const client = core.initializeCloudAccount(); f.useClient(client); await client.configure()
+  await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') }); assert.equal(core.cloudAuthView().mode, 'waiting')
+  pending = false; await Promise.all([core.retryCloudApproval(), core.retryCloudApproval()])
+  assert.equal(entries, 1); assert.equal(f.calls.filter(row => row.url.endsWith('/auth/cloud-session')).length, 2)
+  assert.ok(f.cleared.includes(1), 'the pending timer was cancelled')
+  core.state.currentView = 'account'; await core.retryCloudApproval(); await f.timers[0]()
+  assert.equal(core.state.currentView, 'account'); assert.equal(entries, 1)
+})
 test('expired refresh returns to login, clears host cookie, and restores a draft only for the same account', async () => {
   const f = await fixture(), restored: string[] = [], views: string[] = [], hostCalls: any[] = []
   const core: any = { state: { desktopDraft: '', cloudAuth: null }, show: (view: string) => views.push(view), load: () => {}, sessionExpired: () => {},
@@ -126,12 +152,17 @@ test('expired refresh returns to login, clears host cookie, and restores a draft
   f.allowRefresh()
   await core.cloudLogin({ email: 'synthetic@example.com', password: randomBytes(24).toString('base64url') })
   assert.deepEqual(restored, ['Synthetic unsent draft']); assert.equal(f.records.has('draft:account-test'), false)
+  const original = client.fetch;
+  client.fetch = async (...args: any[]) => args[0].endsWith('/devices') ? response({ error: { code: 'UNAUTHORIZED' } }, 401) : original(...args);
+  await assert.rejects(core.cloudDirectory()); assert.equal(views.at(-1), 'login'); assert.equal(await client.saved(), undefined)
 })
 test('rate limit deadline shows remaining seconds and invalid credentials never reveal account existence', async () => {
   const f = await fixture(), core: any = { state: {} }
   Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, {}, f.environment))
   assert.equal(core.cloudError({ code: 'INVALID_CREDENTIALS' }), '邮箱或密码不对，请重试。')
-  assert.match(core.cloudError({ code: 'RATE_LIMITED', retryAfter: 91 }), /91 秒/); f.advance(1001); assert.equal(core.cloudAuthView().retrySeconds, 90)
+  core.state.cloudAuth.error = core.cloudError({ code: 'RATE_LIMITED', retryAfter: 91 })
+  assert.match(core.cloudAuthView().error, /91 秒/); f.advance(1001); assert.equal(core.cloudAuthView().retrySeconds, 90)
+  f.advance(90000); assert.equal(core.cloudAuthView().error, '等待已结束，可以重试。')
   assert.match(core.cloudError({ code: 'NETWORK' }), /重试/)
 })
 test('trusted-device delivery uses an external sender anchor and rejects another recipient, altered signature and expiry', async () => {
