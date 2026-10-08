@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-08T22:21:36.913Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "d274a80ca5a80dad12395fdb5e76ef7a9cd4df20",
+    "core": "f38424b198b4117c91ce1bdab263f715c470b21b"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "settings-export",
+      "title": "真实桌面设置里的记忆导出与下载",
+      "status": "passed",
+      "checks": {
+        "json": true,
+        "markdown": true,
+        "mobileBrowserDownload": true
+      },
+      "startedAt": "2026-10-08T22:21:48.931Z",
+      "finishedAt": "2026-10-08T22:21:51.586Z"
+    }
+  ],
+  "turns": [],
+  "initialMemory": {
+    "ownerId": "owner-82e85a08-0c2f-48ce-bc1a-d5cdd2f7c33c",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "finishedAt": "2026-10-08T22:21:51.936Z",
+  "summary": {
+    "passed": 1,
+    "failed": 0,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 0,
+    "returnedUsage": 0,
+    "missingUsage": 0,
+    "input": 0,
+    "cached": 0,
+    "output": 0,
+    "knownCnyLowerBound": 0
+  },
+  "credentialScan": {
+    "scanned": 218,
+    "matches": 0
+  }
+}
