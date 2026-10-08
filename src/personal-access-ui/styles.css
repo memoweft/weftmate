@@ -271,7 +271,7 @@ input:focus { outline: 2px solid var(--accent-soft); border-color: var(--accent)
 #model-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .model-trigger svg { flex: 0 0 14px; width: 14px; height: 14px; transition: transform var(--wm-duration-base) var(--wm-easing-desktop); }
 .model-trigger[aria-expanded="true"] svg { transform: rotate(180deg); }
-.model-popover { position: absolute; z-index: 30; right: 0; bottom: calc(100% + 10px); display: flex; flex-direction: column; width: min(350px, calc(100vw - 32px)); max-height: min(460px, 58dvh); padding: var(--wm-space-8); border-radius: var(--wm-radius-16); background: var(--surface); box-shadow: var(--wm-shadow-desktop-model-menu); animation: model-menu-in var(--wm-duration-slow) var(--wm-easing-desktop); }
+.model-popover { position: absolute; z-index: 30; left: 0; bottom: calc(100% + 10px); display: flex; flex-direction: column; width: min(350px, calc(100vw - 32px)); max-height: min(460px, 58dvh); padding: var(--wm-space-8); border-radius: var(--wm-radius-16); background: var(--surface); box-shadow: var(--wm-shadow-desktop-model-menu); animation: model-menu-in var(--wm-duration-slow) var(--wm-easing-desktop); }
 .model-options { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
 .model-option { display: flex; align-items: center; gap: var(--wm-space-12); width: 100%; min-height: 46px; padding: var(--wm-space-8) var(--wm-space-10); border: 0; border-radius: var(--wm-radius-10); background: transparent; color: var(--ink); font: inherit; text-align: left; cursor: pointer; }
 .model-option:hover, .model-option.is-selected { background: var(--surface-soft); }
@@ -708,3 +708,10 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+/* Anchored menus use shared viewport geometry; dialogs retain native focus. */
+.model-popover[popover], .account-menu[popover], .resource-picker[popover] { border: 0; overflow: auto; overscroll-behavior: contain; animation: none; }
+.confirm-dialog { box-sizing: border-box; min-width: 0; max-width: calc(100dvw - 16px); max-height: calc(100dvh - 16px); overflow: auto; }
+
+.account-menu[popover] { width: 228px; }
+.resource-picker[popover] { width: 380px; }
