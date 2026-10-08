@@ -1,0 +1,422 @@
+{
+  "label": "mimo-regression",
+  "startedAt": "2026-10-08T15:59:24.273Z",
+  "model": "mimo-v2.6-flash",
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 2,
+    "passRate": 0.8333333333333334,
+    "coverage": 0.8333333333333334
+  },
+  "scenarios": [
+    {
+      "id": "action-01-organize",
+      "status": "passed",
+      "durationMs": 48239,
+      "reason": null,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "durationMs": 46080,
+          "approvals": []
+        }
+      ]
+    },
+    {
+      "id": "action-02-web-document",
+      "status": "failed",
+      "durationMs": 452941,
+      "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+      "checks": [],
+      "turns": [
+        {
+          "status": "running",
+          "durationMs": 450474,
+          "approvals": []
+        }
+      ]
+    },
+    {
+      "id": "action-03-read-code",
+      "status": "passed",
+      "durationMs": 75326,
+      "reason": null,
+      "checks": [
+        {
+          "type": "reply_matches",
+          "pattern": "20(?:\\.0{1,2})?",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "浮点|精度|分为|整数|分单位",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "project/pricing.mjs",
+          "text": "Math.round(cents * (1 - discount)) / 100",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "durationMs": 73739,
+          "approvals": []
+        }
+      ]
+    },
+    {
+      "id": "action-04-research-script",
+      "status": "passed",
+      "durationMs": 83065,
+      "reason": null,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "sum.mjs",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "49",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "25",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "result.json",
+          "text": "24",
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "49",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "https://nodejs\\.org/",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复需报告实际运行结果：茶 25、咖啡 24、总计 49，并给出 Node.js 官方参考资料链接。应区分实际执行和预计结果。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "durationMs": 81585,
+          "approvals": []
+        }
+      ]
+    },
+    {
+      "id": "action-05-stop-resume",
+      "status": "passed",
+      "durationMs": 415200,
+      "reason": null,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "turn": 1,
+          "path": "汇总.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "turn": 2,
+          "path": "汇总.md",
+          "text": "30",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "status": "aborted",
+          "durationMs": 2984,
+          "approvals": []
+        },
+        {
+          "status": "completed",
+          "durationMs": 409227,
+          "approvals": []
+        }
+      ]
+    },
+    {
+      "id": "action-06-delete-approval",
+      "status": "passed",
+      "durationMs": 333415,
+      "reason": null,
+      "checks": [
+        {
+          "type": "approval_seen",
+          "turn": 1,
+          "outcome": "allowed-once",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "turn": 1,
+          "path": "过期草稿.txt",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "approval_seen",
+          "turn": 2,
+          "outcome": "rejected",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "turn": 2,
+          "path": "还要保留.txt",
+          "text": "这份拒绝删除后必须保留",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "turn": 2,
+          "pattern": "拒绝|保留|没有删|未删|没删|取消|不删|停止",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "durationMs": 314491,
+          "approvals": [
+            {
+              "status": "answered",
+              "decisionOutcome": "allowed-once"
+            }
+          ]
+        },
+        {
+          "status": "completed",
+          "durationMs": 16131,
+          "approvals": [
+            {
+              "status": "answered",
+              "decisionOutcome": "rejected"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "native": [
+    {
+      "scenario": "action-04-research-script",
+      "toolCalls": 5,
+      "toolNames": [
+        "read",
+        "web_fetch",
+        "write",
+        "pwsh"
+      ],
+      "approvals": [],
+      "ends": [
+        "completed"
+      ]
+    },
+    {
+      "scenario": "action-06-delete-approval",
+      "toolCalls": 2,
+      "toolNames": [
+        "pwsh"
+      ],
+      "approvals": [
+        {
+          "toolName": "pwsh",
+          "riskCategories": [
+            "delete"
+          ],
+          "outcome": "allowed-once"
+        },
+        {
+          "toolName": "pwsh",
+          "riskCategories": [
+            "delete"
+          ],
+          "outcome": "rejected"
+        }
+      ],
+      "ends": [
+        "completed",
+        "completed"
+      ]
+    },
+    {
+      "scenario": "action-03-read-code",
+      "toolCalls": 6,
+      "toolNames": [
+        "glob",
+        "read",
+        "psh",
+        "pwsh"
+      ],
+      "approvals": [],
+      "ends": [
+        "completed"
+      ]
+    },
+    {
+      "scenario": "action-05-stop-resume",
+      "toolCalls": 5,
+      "toolNames": [
+        "glob",
+        "read",
+        "write",
+        "pwsh"
+      ],
+      "approvals": [],
+      "ends": [
+        "aborted",
+        "completed"
+      ]
+    },
+    {
+      "scenario": "action-01-organize",
+      "toolCalls": 5,
+      "toolNames": [
+        "pwsh"
+      ],
+      "approvals": [],
+      "ends": [
+        "completed"
+      ]
+    },
+    {
+      "scenario": "action-02-web-document",
+      "toolCalls": 9,
+      "toolNames": [
+        "web_fetch",
+        "browser",
+        "pwsh"
+      ],
+      "approvals": [
+        {
+          "toolName": "pwsh",
+          "riskCategories": [
+            "overwrite"
+          ],
+          "outcome": "cancelled"
+        }
+      ],
+      "ends": [
+        "aborted"
+      ]
+    }
+  ],
+  "credentialScan": {
+    "scanned": 248,
+    "matches": 0,
+    "skippedLinks": 510
+  },
+  "usage": {
+    "requests": 44,
+    "requestsWithUsage": 40,
+    "requestsWithoutUsage": 4,
+    "rejected429": 0,
+    "input": 424479,
+    "cachedInput": 305152,
+    "output": 8436,
+    "knownEstimatedCny": 0.14230204,
+    "kind": "Known usage estimate; lower bound when requests have no usage; not an account invoice",
+    "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash"
+  }
+}
