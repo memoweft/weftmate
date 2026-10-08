@@ -1,0 +1,24 @@
+.usage-body { padding: var(--wm-space-16); }
+.usage-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--wm-space-8); }
+.usage-toolbar h2 { margin-right: auto; }
+.usage-toolbar input { width: auto; }
+.usage-total { font-size: var(--wm-font-size-24); font-weight: 600; font-variant-numeric: tabular-nums; }
+.usage-tokens, .usage-amount { font-variant-numeric: tabular-nums; }
+.usage-notice { color: var(--ink); background: var(--accent-soft); padding: var(--wm-space-12); border-radius: var(--wm-radius-8); }
+.usage-notice[role=alert] { color: var(--danger); }
+.usage-chart { display: flex; gap: var(--wm-space-2); height: var(--wm-size-160); min-height: 10em; overflow: hidden; }
+.usage-column { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: center; }
+.usage-column svg { height: 100%; width: 100%; color: var(--accent); fill: currentColor; }
+.usage-column small { font-size: var(--wm-font-size-10); font-variant-numeric: tabular-nums; }
+.usage-ranking { list-style: none; margin: 0; padding: 0; }
+.usage-ranking li { display: flex; flex-wrap: wrap; gap: var(--wm-space-8); padding: var(--wm-space-12) 0; border-bottom: 1px solid var(--line); }
+.usage-ranking li > span:first-child { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.usage-ranking small { flex-basis: 100%; color: var(--ink-secondary, var(--secondary)); }
+.usage-form { display: flex; flex-wrap: wrap; align-items: end; gap: var(--wm-space-12); margin-bottom: var(--wm-space-20); }
+.usage-form > label { flex: 1; min-width: 8em; display: flex; flex-direction: column; gap: var(--wm-space-6); }
+.usage-form > p, .usage-form > h4 { flex-basis: 100%; }
+.usage-form input { width: 100%; }
+.usage-pricing, .usage-daily { margin-top: var(--wm-space-16); }
+.usage-section > summary { cursor: pointer; padding: var(--wm-space-16); font-weight: 600; }
+.usage-conversation { max-height: 52vh; overflow: auto; }
+.assistant-heading .usage-title-button { width: auto; align-self: flex-start; padding: 0; background: transparent; color: var(--ink-secondary); font-size: var(--wm-font-size-12); }

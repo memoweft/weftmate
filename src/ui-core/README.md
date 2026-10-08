@@ -39,6 +39,7 @@ const core = globalThis.WeftUiCore.create({
 | 提问 | `conversationQuestions`；`questionDraft(context, row)`、`chooseQuestionOption(...)`、`setQuestionCustom(...)`、`submitQuestion(context, row)`；保留原问题顺序和完整选项文字 |
 | 成果与来源 | `loadConversationResources()`、`readTimelineDetail(sessionId, seq)`、`readResource(path)`、`resourceReferences(text)`；资源页游标与调用去重、最新成果和捕获来源优先在功能层处理 |
 | 记忆与标签 | `memory`；`readMemorySources(kind, id)`、`openMemory()`、`loadMemoryPage()`、`openMemoryDetail(kind, id)`、`submitMemoryAction()`、`recoverMemoryReceipt()`、`retryMemoryCleanup()`；保留账户身份、修订和迟到响应检查 |
+| 用量与费用 | `loadUsage({month,sessionId})`、`saveUsageSettings(input)`、`refreshUsageBudget()`；身份校验、提示文案与金额格式由共享层提供，组件绘制柱状图 / 排行 / 表单 |
 | 设置 | `appearance.value/set(value)`、`refreshSystem()`、`restartService(key)`、`saveBackgroundModel(id)`、`saveAccountModelDraft(input)`；资料、项目和网页任务表单亦使用功能层动作 |
 
 `state` 与各领域缓存用于读取当前快照和范围信息；新交互修改功能状态时应调用领域动作。账户编辑的呈现状态仍与原有视图生命周期对接，组件不可把元素位置、父节点或 CSS（层叠样式表）状态当作功能请求条件。普通字段输入与头像预览由组件收集，校验、提交、回执核对与身份检查由共享动作处理。

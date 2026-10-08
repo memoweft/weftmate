@@ -48,7 +48,7 @@ function settingsPage(target){target.append(heading('设置'),group('个人空�
   row('我的资料',state.loggedIn?`${state.username} · ${connectionLabel()}`:'未登录',()=>page('account')),
   row('电脑账户与连接',state.loggedIn?connectionLabel():'可以登录或注册',()=>page('connect')),
   row('设备',state.loggedIn?'查看或移除已登录设备':'登录后可管理设备',()=>page('devices'))]),
-  group('使用偏好',[row('对话模型',state.model?.displayName||'尚未配置手机模型',()=>page('models')),
+  group('使用偏好',[row('用量','本月费用、用量与月度上限',()=>page('usage')),row('对话模型',state.model?.displayName||'尚未配置手机模型',()=>page('models')),
     row('外观','跟随系统、浅色或深色',()=>page('appearance')),
     row('通知','回复、动作和同步状态',()=>page('notifications')),
     row('离线与同步',state.loggedIn?'当前账户的记录与状态':'登录后查看本机与同步状态',()=>page('sync'))]),
