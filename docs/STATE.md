@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-4 | S1d D29 App 内账号与设置设备服务端 | `wp/s1d-account-devices`：邮箱→验证码→设置密码、App 内 OIDC（开放身份连接协议）/PKCE（授权码校验）/DPoP（设备密钥持有证明）、改密码/退出、同账号设备目录/连接、电脑首次云登录自动绑定与受信 pin（证书公钥指纹）交付已实现；相关验证与 PR（拉取请求）见本包验收，LG-1 / LG-2 接线按 CLIENT_API 7.8；不部署 |
+| Codex · Windows-4 | S1d D29 App 内账号与设置设备服务端 | [PR #64](https://github.com/memoweft/weftmate/pull/64)（`wp/s1d-account-devices`）：邮箱→验证码→设置密码、App 内 OIDC（开放身份连接协议）/PKCE（授权码校验）/DPoP（设备密钥持有证明）、改密码/退出、同账号设备目录/连接、电脑首次云登录自动绑定与受信 pin（证书公钥指纹）交付已实现；相关云 33/33、Windows 宿主 8/8 与类型检查通过，完整 CI（持续集成）门禁见 PR 当前提交；LG-1 / LG-2 接线按 CLIENT_API 7.8，待 Claude 审查；不部署 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | DS-1 设计令牌 | [PR #59](https://github.com/memoweft/weftmate/pull/59)（`wp/ds-1-design-tokens`）：唯一母版 design/tokens/ 与可重复生成脚本、桌面 / 手机 Web（网页界面）变量和 Android（安卓）资源 / 原生辅助常量接入；Apple（苹果客户端）交接产物在 design/tokens/generated/apple/，未改 apps/apple/。Android 0.8.6/code19；15 对截图逐像素一致、4,016 项样式值一致、相关交互及发布158/158、令牌2/2、Android JVM（Java 虚拟机）27/27、构建与类型检查通过。[截图与边界](../tests/evidence/ds-1/README.md)；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
 | Codex · Windows-2 | M2c 本地单槽记忆形成 | WeftMate [PR #58](https://github.com/memoweft/weftmate/pull/58)、Core [PR #87](https://github.com/memoweft/memoweft/pull/87)：本地流式形成／正确模板思考参数、相邻原话片段完整保留／中文直读提示、召回到期读取已有记忆已实现。真实Electron（桌面程序框架）最终Qwen3/3、MiMo3/3，原600秒预算与检查保持；[定位、前后对比与费用](../tests/evidence/m2c/README.md)。相关11/11、Core214/214及补验26/26（重叠）、类型检查通过；Core完整CI（持续集成）1,719/1,719，完整门禁见两PR。Core仅Claude squash（压缩合并），之后更新本仓CI固定提交；M2-3纠正与完整八步出口另包 |
