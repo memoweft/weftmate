@@ -66,6 +66,8 @@ import {
 import { canonicalCommand, publicCommand } from './command-policy.mjs';
 import { artifactContentType } from '../personal-artifacts/index.mjs';
 import { buildConversationContext } from '../personal-conversations/context.mjs';
+import { defaultUsagePrice } from './usage.mjs';
+import { usageResponse } from './usage-response.mjs';
 
 export function createHttpHandler(context) {
   function handle(request, response) {
@@ -587,6 +589,27 @@ export function createHttpHandler(context) {
         return context.json(response, 200, { mode: sessionId ? saved.sessions[sessionId].approvalMode ?? saved.defaultApprovalMode ?? 'auto'
           : saved.defaultApprovalMode ?? 'auto', ...(sessionId ? { allowedCategories: saved.sessions[sessionId].allowedApprovalCategories ?? [] } : {}) });
       }
+      if (['/personal/v1/usage', '/personal/v1/settings/usage'].includes(pathname) && ['GET', 'PATCH'].includes(request.method)) {
+        const settingsRoute = pathname.endsWith('/settings/usage');
+        if (!settingsRoute && request.method !== 'GET') throw failure('NOT_FOUND', 404);
+        context.authenticate(request, request.method === 'PATCH' ? 'account:manage' : 'sessions:read');
+        if (settingsRoute && url.search || [...url.searchParams.keys()].some(key => !['month', 'sessionId'].includes(key))) throw failure('INVALID_REQUEST');
+        const sessionId = url.searchParams.get('sessionId');
+        if (sessionId && !state.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
+        if (!settingsRoute) return context.json(response, 200, context.usage.summary(ownerId, url.searchParams.get('month') ?? undefined, sessionId));
+        const catalog = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })));
+        if (request.method === 'PATCH') {
+          const body = await context.readJson(request);
+          if (body.profileId && !catalog.some(model => model.id === body.profileId && context.modelVisible(ownerId, model.id))) throw failure('MODEL_UNAVAILABLE', 409);
+          context.authenticate(request, 'account:manage');
+          await context.usage.configure(ownerId, body);
+        }
+        const settings = context.usage.settings(ownerId);
+        const auth = context.authenticate(request, 'sessions:read');
+        return context.json(response, 200, { ...settings, canManage: auth.via === 'cookie' && auth.device.scopes.includes('account:manage'),
+          models: catalog.filter(model => context.modelVisible(ownerId, model.id)).map(model => ({ id: model.id, name: model.name, model: model.model,
+            local: model.sourceKind === 'local', price: settings.prices[model.id] ?? defaultUsagePrice(model) })) });
+      }
       if (pathname === '/personal/v1/settings/models' && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');
         context.authenticate(request, request.method === 'PATCH' ? 'account:manage' : 'sessions:read');
@@ -969,8 +992,13 @@ export function createHttpHandler(context) {
         response.once('close', disconnected);
         try {
           let upstream;
-          try { upstream = await context.backend.modelCompletion({ profileId, body, signal: controller.signal, ownerId }); }
-          catch (error) { throw error?.code === 'MODEL_UNAVAILABLE'
+          const model = (await context.backend.listModels({ ownerId })).find(row => row.id === profileId);
+          const requestId = await context.usage.begin(ownerId, { profileId, model });
+          try {
+            upstream = await context.backend.modelCompletion({ profileId, body, signal: controller.signal, ownerId });
+            upstream = await usageResponse(upstream, value => context.usage.finish(ownerId, requestId, value));
+          }
+          catch (error) { await context.usage.finish(ownerId, requestId, null); throw error?.code === 'MODEL_UNAVAILABLE'
             ? failure('MODEL_UNAVAILABLE', 422) : error; }
           if (controller.signal.aborted || !upstream?.ok || !upstream.body) throw failure('BACKEND_UNAVAILABLE', 503);
           if (!body.stream) {
@@ -1505,6 +1533,11 @@ export function createHttpHandler(context) {
         if (payload.kind === 'session.message' &&
             !context.messageModelUsable(ownerId, state.sessions[payload.sessionId])) {
           throw failure('MODEL_UNAVAILABLE', 422);
+        }
+        if (payload.kind === 'session.message') {
+          const catalog = await context.backend.listModels({ ownerId });
+          const model = catalog.find(row => row.id === state.sessions[payload.sessionId].modelProfileId);
+          if (model) context.usage.assertAllowed(ownerId, model);
         }
         if (payload.kind === 'session.message' && payload.sourceSyncEventId &&
             (!payload.conversationId || !context.verifiedSyncUserEvent(ownerId, payload.conversationId,

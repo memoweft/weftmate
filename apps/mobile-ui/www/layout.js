@@ -5,6 +5,7 @@ const mobileMarkup = String.raw`
       <button id="menu-button" class="icon-button" aria-label="打开导航"><span class="icon icon-menu"></span></button>
       <button id="page-back" class="icon-button" aria-label="返回" hidden><span class="icon icon-back"></span></button>
       <div class="brand"><strong>WeftMate</strong><small id="header-subtitle">同一个助手，接着聊。</small></div>
+      <button id="conversation-usage" class="header-action" hidden>本对话用量</button>
       <button id="outputs-button" class="header-action" hidden>输出与来源</button>
       <button id="home-new-chat" class="icon-button" aria-label="新对话" hidden><span class="icon icon-compose"></span></button>
 
