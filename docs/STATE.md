@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
+| Codex · Windows-4 | IC-1 图标系统 | [PR #56](https://github.com/memoweft/weftmate/pull/56)（`wp/ic-1-icon-system`）：C4「天蓝」母版与45个确认功能图标、24个现有动作扩展统一至 design/icons/；单命令生成 Windows 多尺寸 ICO、系统主题单色任务栏 / 托盘、通知与安装器资产，桌面 / 手机 Web（网页界面）和 Android（安卓）图标已接入。Android 0.8.5/code18。桌面69/69、记忆页面3/3、界面3/3、手机及发布97/97、图标资产3/3、Android JVM（Java 虚拟机）27/27、构建与类型检查通过；真实 Electron（桌面程序框架）审批闭环与 MuMu 专属包1/1通过，测试包已卸载。[前后截图与边界](../tests/evidence/ic-1/README.md)；完整 CI（持续集成）门禁见 PR #56，待 Claude 审查 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | UI-2v MuMu 安卓外壳验收 | [PR #55](https://github.com/memoweft/weftmate/pull/55)（`wp/ui-2v-android-device`）：最新 main 的 Android 0.8.4/code17 在 MuMu Android 15 真实 HybridActivity 完成列表→运行→五种审批模式/三按钮/允许一次→步骤→成果与来源全屏返回→系统软键盘→深色/草稿重载；无产品修正，版本不变。相关手机96/96、Android JVM（Java 虚拟机）27/27、标准/隔离 debug（调试）与测试包构建、设备探针1/1通过；[真实安卓截图与边界](../tests/evidence/ui-2v/README.md)。隔离包已卸载、宿主已停、输入法与端口映射恢复；完整测试交 PR CI（持续集成），待 Claude 审查 |
 | Codex · Windows-2 | M2b 记忆形成准确 | WeftMate [PR #54](https://github.com/memoweft/weftmate/pull/54)、Core [PR #86](https://github.com/memoweft/memoweft/pull/86)：原话派生命题、专名/日期约束、具体错误重写一次与持久失败记录、JSON（结构化数据）模式、原话表达偏好召回已实现。真实Electron（桌面程序框架）最终Qwen0/3超时、MiMo3/3，未写错误姓名；[证据/费用](../tests/evidence/m2b/README.md)。相关测试与类型检查通过，完整CI（持续集成）见两PR；M2出口未达，M2-3纠正审批另包。Core由Claude squash（压缩合并）后须更新本仓CI固定提交 |
@@ -20,6 +20,7 @@
 
 ## 最近一次验证
 
+- **IC-1**：唯一图标来源、Windows 系统主题选择、手机及 Android code18接入完成；真实 Electron 浅 / 深审批卡、输入区与侧栏，MuMu 应用桌面图标、应用内浅 / 深、主题资源及通知均取证。窗口 / 任务栏使用单色 ICO；Windows 托盘处于溢出区，未取得其可见图标截图。仅安装并卸载本包专属 QA（质量验证）应用，没有覆盖原调试包。完整验证、既有静态正则例外及未做项见 tests/evidence/ic-1/README.md；客户端业务契约无变更。
 - **UI-2v**：MuMu Android 15 真实安卓外壳/真实个人认证/原生网络桥通过；合成任务投影、零模型请求。14张 `adb exec-out screencap -p` 截图覆盖列表/运行/审批/步骤/成果/来源/深色；真实测试输入法区域324设备像素、网页980→726 CSS px（页面像素），标题与输入区稳定、点击按键与草稿保留/重载通过。手机96/96、Android JVM27/27与构建通过；[证据](../tests/evidence/ui-2v/README.md)。预装搜狗输入法返回零高度，正常键盘兼容性未验；未宣称真实 DSH 执行或云登录。隔离包/宿主/端口清理、原输入法设置恢复。
 
 - **M2b**：开发定向Core272/272，日期/事件32/32、准确性/HTTP（网络请求）43/43；WeftMate相关11/11与类型检查通过。Core完整CI（持续集成）1,710/1,710与严格类型检查202模块。真实Electron（桌面程序框架）最终Qwen三场景各600秒超时、MiMo3/3；原话姓名未抄错写入，首轮失败完整保留。完整门禁见[WeftMate #54](https://github.com/memoweft/weftmate/pull/54/checks)、[Core #86](https://github.com/memoweft/memoweft/pull/86/checks)。

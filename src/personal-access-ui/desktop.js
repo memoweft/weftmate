@@ -62,15 +62,7 @@
     if (restore && returnFocus?.isConnected) returnFocus.focus()
     returnFocus = null
   }
-  function icon(kind) {
-    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-    svg.setAttribute('viewBox', '0 0 24 24'); svg.setAttribute('aria-hidden', 'true')
-    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path')
-    path.setAttribute('d', ({ webpage: 'M3 12h18M12 3c6 5 6 13 0 18C6 16 6 8 12 3M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',
-      tool: 'm8 5-5 7 5 7m8-14 5 7-5 7m-3-16-2 18', memory: 'M8 4a4 4 0 0 0-5 5 4 4 0 0 0 0 6 4 4 0 0 0 5 5h4V4Zm4 0h4a4 4 0 0 1 5 5 4 4 0 0 1 0 6 4 4 0 0 1-5 5h-4',
-      file: 'M14 3H5v18h14V8Zm0 0v5h5M8 12h8M8 16h8', collection: 'M4 5h16M4 12h16M4 19h16' })[kind] || 'M14 3H5v18h14V8Zm0 0v5h5')
-    svg.append(path); return svg
-  }
+  function icon(kind) { return window.WeftIcons.create(({ webpage: 'web', collection: 'outputs' })[kind] || kind, 16) }
   function hidePicker() {
     picker?.remove(); picker = null; byId('conversation-resources')?.setAttribute('aria-expanded', 'false')
   }
@@ -134,11 +126,11 @@
     hidePicker(); returnFocus = trigger
     if (tabs.has(key)) { selectTab(key, true); return { panel: preview.panel, content: tabs.get(key).content } }
     if (!preview) createPreview()
-    const tab = node('div', 'preview-tab'), select = node('button', 'preview-tab-select'), close = node('button', 'preview-tab-close', '×')
+    const tab = node('div', 'preview-tab'), select = node('button', 'preview-tab-select'), close = node('button', 'preview-tab-close')
     select.type = close.type = 'button'; select.setAttribute('role', 'tab'); select.title = title
     const content = node('div', 'preview-content', '正在读取…'), id = `resource-tab-${crypto.randomUUID()}`
     select.id = id; content.setAttribute('role', 'tabpanel'); content.setAttribute('aria-labelledby', id); content.id = `${id}-content`; select.setAttribute('aria-controls', content.id)
-    select.append(icon(kind), node('span', '', title)); close.setAttribute('aria-label', `关闭标签 ${title}`)
+    select.append(icon(kind), node('span', '', title)); close.append(window.WeftIcons.create('deny', 16)); close.setAttribute('aria-label', `关闭标签 ${title}`)
     select.addEventListener('click', () => selectTab(key))
     select.addEventListener('keydown', e => {
       const keys = [...tabs.keys()], index = keys.indexOf(key)
@@ -160,7 +152,7 @@
     const header = node('div', 'preview-heading'), close = node('button', 'button quiet small', '收起'); close.type = 'button'; close.setAttribute('aria-label', '收起右侧面板')
     close.addEventListener('click', () => { panel.hidden = true; document.body.classList.remove('preview-open', 'preview-expanded'); returnFocus?.isConnected && returnFocus.focus() })
     const tablist = node('div', 'preview-tabs'); tablist.setAttribute('role', 'tablist'); tablist.setAttribute('aria-label', '输出与来源标签页')
-    const add = node('button', 'button quiet small preview-add', '+'); add.type = 'button'; add.setAttribute('aria-label', '再打开一项'); add.setAttribute('aria-haspopup', 'dialog')
+    const add = node('button', 'button quiet small preview-add', '+'); add.type = 'button'; add.append(window.WeftIcons.create('plus', 16)); add.setAttribute('aria-label', '再打开一项'); add.setAttribute('aria-haspopup', 'dialog')
     add.addEventListener('click', () => { void showPicker(add) })
     const expand = node('button', 'button quiet small', '放大'); expand.type = 'button'; expand.setAttribute('aria-label', '放大右侧面板'); expand.setAttribute('aria-pressed', 'false')
     expand.addEventListener('click', () => { const expanded = document.body.classList.toggle('preview-expanded'); expand.textContent = expanded ? '还原' : '放大'; expand.setAttribute('aria-pressed', String(expanded)) })
