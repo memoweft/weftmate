@@ -32,6 +32,11 @@ export function staticWriteTarget(expression, source, cwd, scriptPath, scriptArg
   const resolving = new Set();
   function value(text) {
     text = text.trim();
+    // A literal script launch provides argv[2..]. Select only the branch that
+    // Node would take; unresolved shell arguments must not grant a write.
+    const conditional = /^process\.argv\[(\d+)\]\s*\?\s*([^?]+?)\s*:\s*(.+)$/.exec(text);
+    if (conditional && scriptArgs && Number(conditional[1]) >= 2)
+      return value(scriptArgs[Number(conditional[1]) - 2] ? conditional[2] : conditional[3]);
     const argument = /^process\.argv\[(\d+)\](?:\s*(?:\?\?|\|\|)\s*([\s\S]+))?$/.exec(text);
     if (argument && scriptArgs) return scriptArgs[Number(argument[1]) - 2] ?? (argument[2] ? value(argument[2]) : undefined);
     if (/^"(?:[^"\\]|\\.)*"$/.test(text)) { try { return JSON.parse(text); } catch { return; } }

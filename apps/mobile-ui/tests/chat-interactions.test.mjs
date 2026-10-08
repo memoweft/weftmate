@@ -28,6 +28,7 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
     set scrollTop(value){this._scrollTop=value;this.scrollWrites++;this.scrollHistory.push(value)}
     append(...children){for(const child of children)if(child instanceof Node||child instanceof TextNode)child.parent=this;
       this.children.push(...children)}
+    prepend(...children){for(const child of children){child.remove?.();if(child instanceof Node||child instanceof TextNode)child.parent=this;}this.children.unshift(...children)}
     get parentNode(){return this.parent}
     closest(selector){return selector.split(',').some(part=>part.trim().startsWith('.')&&this.className?.split(' ').includes(part.trim().slice(1)))?this:this.parent?.closest(selector)||null}
     get childNodes(){return this.children}
@@ -1560,7 +1561,7 @@ test('consecutive steps show readable descriptions before their raw detail',()=>
 
 test('model restart stays pending on mobile through a two-minute native load and is not resubmitted',async()=>{
   const h=harness();
-  h.run(`state.page='settings';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'))`);
+  h.run(`state.page='general';state.loggedIn=true;state.owner='fixture-owner';document.getElementById('page-content').isConnected=true;void systemStatusSection(document.getElementById('page-content'))`);
   const system={canRestart:true,queue:{},model:{state:'ready',canRestart:true,contextWindow:98304},
     host:{state:'ready',canRestart:true},memory:{state:'disabled',canRestart:false}};
   h.reply(0,system);h.reply(1,{backgroundModelProfileId:null});await h.flush();await h.flush();

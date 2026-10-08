@@ -318,3 +318,17 @@ test('a delayed lifecycle response cannot replace another account session list',
   const work=f.core.archiveSession('session-test');f.core.state.identityGeneration++;f.core.state.sessions=[{sessionId:'other-account'}];pending.resolve({ok:true,json:async()=>({archived:true})});
   assert.equal(await work,false);assert.equal(f.core.state.sessions[0].sessionId,'other-account');
 });
+
+
+test('reminder reads work in the mobile settings category and discard a late account response', async () => {
+  const pending = deferred();
+  const f = fixture(path => path === '/personal/v1/schedules' ? pending.promise : response({}));
+  f.core.state.currentView = 'schedules';
+  const read = f.core.loadSchedules(); pending.resolve(response({ items: [{ id: 'fixture-reminder' }] }));
+  assert.deepEqual(plain(await read), { items: [{ id: 'fixture-reminder' }] });
+  const late = deferred(), switched = fixture(() => late.promise);
+  switched.core.state.currentView = 'schedules'; const oldRead = switched.core.loadSchedules();
+  switched.core.state.identityGeneration++; switched.core.state.account = { ownerId: 'other-owner' };
+  late.resolve(response({ items: [{ id: 'old-owner-reminder' }] }));
+  assert.equal(await oldRead, null);
+});

@@ -3,7 +3,7 @@ globalThis.WeftUiCore.factories.schedules = core => ({
     async loadSchedules() {
         const token = core.accountToken();
         const value = await core.accessApi('/schedules');
-        return core.accountCurrent(token) ? value : null;
+        return core.accountIdentityCurrent(token) ? value : null;
     },
     async manageSchedule(row, action) {
         const base = `/schedules/${encodeURIComponent(row.sessionId)}/${encodeURIComponent(row.id)}`;

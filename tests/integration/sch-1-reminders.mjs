@@ -96,7 +96,7 @@ async function launch() {
 }
 async function schedules() { const value = await api('/schedules'); assert.equal(value.status, 200, JSON.stringify(value)); return value.body.items; }
 async function send(text) {
-    const back = desktop.getByRole('button', { name: /返回对话/ });
+    const back = desktop.getByRole('button', { name: '关闭设置', exact: true });
     if (await back.isVisible()) await back.click();
     const composer = desktop.getByRole('textbox', { name: '输入消息', exact: true });
     await until(() => composer.isEnabled()); await composer.fill(text);
@@ -134,14 +134,14 @@ try {
     await until(async () => { const value = await api(`/sessions/${task.sessionId}/resources`); return value.body.outputs?.some(row => row.fileName === 'sch-1-weekly.txt'); }, 240000);
     const taskRows = await schedules(); assert.ok(taskRows.find(row => row.id === task.id).nextRunAt);
     report.checks.push('calendar recurrence executes through original conversation and creates registered file; next local occurrence exists');
-    const backFromSettings = desktop.getByRole('button', { name: /返回对话/ });
+    const backFromSettings = desktop.getByRole('button', { name: '关闭设置', exact: true });
     if (await backFromSettings.isVisible()) await backFromSettings.click();
     await nativeScreenshot('02-periodic-file.png');
-    if (!(await desktop.getByText('提醒与定时任务', { exact: true }).isVisible())) {
+    if (!(await desktop.getByRole('button', { name: '提醒与定时任务', exact: true }).isVisible())) {
         await desktop.getByRole('button', { name: '账户菜单', exact: true }).click();
         await desktop.getByRole('button', { name: '设置', exact: true }).click();
     }
-    await desktop.getByText('提醒与定时任务', { exact: true }).click();
+    await desktop.getByRole('button', { name: '提醒与定时任务', exact: true }).click();
     const taskItem = desktop.getByRole('listitem', { name: task.text, exact: true });
     await taskItem.getByRole('button', { name: '暂停', exact: true }).click();
     await until(async () => (await schedules()).find(row => row.id === task.id)?.state === 'paused');
@@ -151,7 +151,7 @@ try {
     await taskItem.getByRole('button', { name: '删除', exact: true }).click();
     await until(async () => !(await schedules()).some(row => row.id === task.id));
     report.checks.push('management uses visible names/roles: pause, resume, delete');
-    await desktop.getByRole('button', { name: /返回对话/ }).click();
+    await desktop.getByRole('button', { name: '关闭设置', exact: true }).click();
     await send('请在 65 秒后提醒我检查 SCH-1 离线补发，只提醒。');
     const offline = await until(async () => (await schedules()).find(row => row.text.includes('离线补发')));
     await until(async () => { const value = await api('/sessions'); return value.body.sessions.find(row => row.sessionId === offline.sessionId)?.running === false; });

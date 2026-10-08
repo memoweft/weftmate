@@ -195,11 +195,11 @@ try {
     assert.equal(existsSync(declinedPlan), false); report.nextTaskPlanAndRejection = true;
     const all = join(root, 'all.txt'); writeFileSync(all, 'synthetic');
     await newConversation('allow-all'); await send('M12_ALL', [deleteAction(all)]); await completed('M12_ALL'); assert.equal(existsSync(all), false); report.allowAll = true;
-    await page.locator('#account-menu-trigger').click(); await page.locator('#rail-account').click();
+    await page.locator('#account-menu-trigger').click(); await page.locator('#rail-account').click(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '审批', exact: true }).click();
     await until(() => page.locator('#default-approval-mode').isEnabled());
     await page.locator('#default-approval-mode').selectOption('accept-edits');
     await page.getByText('已保存，下次新建对话时生效。', { exact: true }).waitFor();
-    await screenshot('06-settings.png'); await page.locator('#account-back').click();
+    await screenshot('06-settings.png'); await page.getByRole('button', { name: '关闭设置', exact: true }).click();
     await page.reload(); await newConversation(); assert.equal(await page.locator('#approval-mode-label').textContent(), '自动接受文件修改'); report.defaultAndReload = true;
     await screenshot('05-default-mode.png');
     assert.equal(report.promptModes.M12_ASK, 'ask'); assert.equal(report.promptModes.M12_EDIT, 'accept-edits');

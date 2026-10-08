@@ -313,6 +313,33 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64/x86_64",channel:"trial",notes,fileName,downloadUrl`。不要把native manifest与Android mobile UI manifest混用。Apple独立 `PublicUpdates.swift` 使用公开分发入口，本次所核对 `PersonalClient.swift` 没有调用上述认证下载接口。
 
+UPD-1 / D32：新版 `/app/manifest` 在上述兼容字段上增加统一签名字段，路径、认证与 SSE（服务器推送事件）通知不变。三层清单共同结构如下；桌面界面 `ui` 与程序本体 `app` 的清单来自配置的发布源，手机 `mobile-ui` 仍通过本接口提供：
+
+```json
+{
+  "schemaVersion": 1,
+  "layer": "mobile-ui",
+  "version": "0.9.0",
+  "channel": "stable",
+  "minHostVersion": "0.1.0",
+  "minNativeVersion": "0.8.8",
+  "bridgeVersion": 1,
+  "files": [{ "path": "index.html", "size": 123, "sha256": "<64 lowercase hex>" }],
+  "publishedAt": "2026-10-08T10:00:00.000Z",
+  "signature": { "algorithm": "Ed25519", "keyId": "<32 lowercase hex>", "value": "<base64 signature>" }
+}
+```
+
+`layer=ui|app|mobile-ui`；`channel=stable|preview`。兼容字段为可选 `minAppVersion` / `maxAppVersion`、`minHostVersion` / `maxHostVersion`、`minNativeVersion` / `maxNativeVersion`，采用 SemVer（语义版本）边界且包含端点；`bridgeVersion` 必须与消费者支持的版本相等。`expiresAt` 可选，存在时过期即拒绝。`ui` 必须满足当前桌面 / 宿主版本，`app` 必须满足当前程序 / 宿主版本；手机包先由宿主检查宿主范围，再由原生壳检查原生范围、原生 code 与桥版本。文件路径只能是安全相对路径，不能含上级目录、绝对路径、空目录分段或符号链接。
+
+签名覆盖除 `signature` 以外的**全部顶层字段**，包括兼容别名、`assetBase`、发布说明和未知扩展字段。编码为 UTF-8（统一字符编码）的紧凑 JSON（数据格式）：对象键递归按 UTF-16（16位字符编码）顺序排序，数组顺序不变，字符串使用标准 JSON 转义；清单数字使用安全整数。用 Ed25519（签名算法）直接签上述字节，不预哈希。`keyId` 是公钥 SPKI DER（公钥结构的二进制编码）的 SHA-256（哈希）前32个十六进制字符；客户端只使用原生程序内置可信公钥，来源不提供可新增的信任根。
+
+手机清单继续使用 `schemaVersion=1`，且 `version=uiVersion`、`files=assets`，并保留 `minNativeVersionCode`、`entry=index.html`、`assetBase` 和 `releaseNotes`；别名值不一致即拒绝。旧壳忽略新增字段，继续读取与哈希校验既有字段。新安卓壳 0.8.9 / code22 支持512文件；超过旧250文件容量的包必须声明 `minNativeVersionCode >= 22`，防止旧壳下载无法安装的资源集合。新版安卓壳拒绝无签名、签名错误、渠道不同、不兼容或过期的包，保留当前已验证版本 / 内置页。已有旧清单可向旧壳提供，但新发布必须签名。
+
+下载按本设备的逐文件大小 / 哈希复用内置或活动版本；全部验证后才更新待应用指针，不留下部分更新。桌面下次打开窗口且任务空闲、无未发送草稿时切换，启动自检失败 / 崩溃恢复上一完整版本并记录失败身份。手机沿用原生下载、暂存、空闲切换和启动失败回退机制。版本目录属于 `userData`（用户数据目录）或手机私有目录，业务数据和凭据不进入版本包。
+
+桌面“关于”接入 `src/ui-core/update.js` 的 `readUpdateState()`、`checkUpdates()`、`restartForUpdate()`；这些是本机窗口的 IPC（进程间通信）动作，不新增远程安装权限或业务 HTTP（网络协议）路由。响应 `{layers:[{layer,currentVersion,availableVersion,status,error,channel}],canRestart}`；`status` 包含检查 / 下载 / 就绪 / 失败状态，手机宿主发布版本标 `scope=host-published`，手机设备本身的安装版本由原生状态返回。程序本体须先核签清单、再核对下载的安装包，用户明确重启且任务空闲才安装；正式发布源与代码签名交 UPD-3。
+
 ### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入89业务接口）
 
 | GET路径（都无查询） | 响应 / 错误 | 使用端 |
@@ -322,6 +349,8 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 | `/ui/vendor/noble-hashes-2.3.0/sha2.js`、`/ui/vendor/noble-hashes-2.3.0/_md.js`、`/ui/vendor/noble-hashes-2.3.0/_u64.js`、`/ui/vendor/noble-hashes-2.3.0/utils.js` | JS资源；不存在404 | 桌（哈希模块导入） |
 
 这些路由在认证前提供宿主登录UI，仍受Host/Origin校验。Android bridge中的本机模型、通知、剪贴板、语音等操作不是同名服务端API；`mods/notifications/capabilities` 等字符串出现在bridge允许路径中，也不能证明服务端实现了这些路由。
+
+UPD-1：资源服务从当前已验证 `ui` 版本读取既有白名单中的路径，版本未包含的资源回退内置文件；白名单、无查询 / 无百分号规则与 FE-1a 的 CSP（内容安全策略）、`no-store`、`nosniff` 等安全头保留。新增 `/ui/ui-core/update.js` 是共享更新动作资源；可热更代码只在渲染器运行，主进程与 `/personal/v1` 实现随程序本体更新。
 
 ### 3.15 系统状态与后台模型（M0-6，6）
 
@@ -826,3 +855,22 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 撤权沿用宿主 `/hosts/revocations` 云签名 `wm-cloud-revocations+jwt`（撤权令牌），新增可选 `memberships:[{sub,epoch}]` 权威归属快照。新宿主验证原 issuer（发行者）/固定 JWKS（签名公钥集合）/host audience（宿主受众）后，对快照中消失的活跃绑定标为 unbound，撤销其云 Cookie、内容设备与正在进行的响应；本地账号/应急密码不变。快照先于 outbox（待同步记录）发送处理，已删除账号的旧状态记录不能阻塞撤权；发送后再拉一次事件以保持单次同步撤权。已删除安装无公钥可认证请求，只返回不含账号信息的云签名空快照，不保留账号墓碑。watermark（事件水位）取 AUTOINCREMENT（递增序列），删除不会倒退。沿用每 60 秒/启动同步的宿主撤权延迟；云端中继 socket（连接）在删除提交后立即关闭，离线宿主联网同步后撤权。
 
 业务码复用 400 CHALLENGE_INVALID / CODE_INVALID / INVALID_REQUEST / INVALID_DEVICE、401 INVALID_CREDENTIALS / UNAUTHORIZED / DPOP_INVALID、403 FORBIDDEN / ORIGIN_NOT_ALLOWED、409 EMAIL_IN_USE、429 RATE_LIMITED（Retry-After）。旧 7.1 `/auth/email/{request,confirm}` 的密码 + Bearer 形式保留兼容并补旧邮箱通知；新客户端使用本节接口。旧邮箱通知故障不回滚已完成换绑，notificationAccepted=false；发验证码失败仍为 503 MAIL_UNAVAILABLE。
+
+## 8. 本地备份与恢复（BK-1）
+
+以下接口由内容宿主提供，沿用 Cookie（会话凭据）/CSRF（跨站请求伪造防护）与 `account:manage` 权限。备份包含整个宿主，只有本地旧所有者或该安装已验证的桌面云归属账号可访问；普通配对成员返回 403 `FORBIDDEN`。路径均是宿主电脑上的路径，远程客户端不能用手机本地路径代替。无 query（查询参数），写请求字段须精确匹配。
+
+| 方法与完整路径 | 请求 | 响应 / 语义 |
+|---|---|---|
+| GET `/personal/v1/backups` | — | 200 `{settings,status,backups,excludedCredentials:true,localUnencrypted:true}`；`settings={enabled,directory,dailyDays,weeklyCopies}`，默认启用、宿主数据目录旁 `Backups/`、7 天与 4 周；每条 `backups={id,createdAt,reason,size,verification}`，大小字节，`verification=valid\|invalid` 为重新流式 SHA-256（安全哈希算法）校验结果，时间 UTC（协调世界时）ISO 8601 |
+| PATCH `/personal/v1/backups/settings` | 上述设置字段的子集 | 200 `{settings}`；目录须为绝对路径，不能位于宿主数据根内；天数与周份数均为正整数 |
+| POST `/personal/v1/backups` | `{}` | 202 `{state:"succeeded",restartsHost:false,requiresLogin:false,backup}`；拒绝活动任务，程序内完成在线快照后返回；窗口、进程和登录保持，结果持久化到 `status` |
+| POST `/personal/v1/backups/import` | `{path}` | 201 `{id}`；校验宿主电脑上的外来 `.wmb` 包，复制到当前备份目录并再次校验，原子发布，不替换数据 |
+| POST `/personal/v1/backups/restore` | `{id,confirm:true}` | 202 `{state:"pending",restartsHost:true,requiresLogin:true}`；先校验来源、备份当前状态、停写入服务、重新校验、暂存/替换、重启；新数据成功启动后提交，替换/启动失败自动回滚；按新 `GET /backups` 的 `status` 判断结果 |
+| POST `/personal/v1/backups/prepare-account-deletion` | `{}` | 本机注销前调用：程序内完成在线安全快照后返回 200 `{ready:true,restartsHost:false}`，同一次确认中继续执行 7.9 的云注销；备份失败不执行云注销，密码仅留在当次页面内存 |
+
+`status` 为 `null`，或 `{state,at?,reason?,backup?,restored?,code?}`；`state=pending\|running\|deferred\|succeeded\|failed\|rolled-back`。`succeeded` 表示上次操作成功；恢复重启的 API（应用接口）可用之前不会提交事务，启动失败回滚后报告 `rolled-back`。只有请求恢复后拒绝新的写请求，避免关闭前接收新任务；普通备份仅短暂排队文件写入，并在这一边界为 SQLite 固定只读事务视图；恢复文件写入后在线复制该视图，后续 WAL（预写日志）提交不进入该数据库快照，数据库复制、压缩和校验期间正常接收操作。每日调度遇到任务会推迟，暂停写入/排空/捕获超时（最多 2 秒）不发布包，标记 `deferred`，下个每分钟检查再试。仅恢复或升级安装重启，恢复后接入端口可能变化，客户端需重新发现连接。原机浏览器登录保持；恢复会清除包内设备会话，因此须重新登录。
+
+包包含账号/设置、DSH（助手运行时）会话与日志、对话工作目录/经验、成果、用量、健康和 MemoWeft Core（记忆核心）数据库。数据库使用 SQLite（嵌入式数据库）安全在线备份，不复制活动 WAL（预写日志）或 SHM（共享内存文件）。模型密钥、云令牌、设备私钥、浏览器登录与缓存、自动生成的 DSH 依赖链接不进包；账号密码哈希保留供重新登录，历史设备仅留撤销后的元数据与不可用的校验值以维持命令引用；来源会话不能继续使用。换机后重新填写模型密钥；云端重新验证 subject（账号标识）与 issuer（发行者）、重新认领新安装后，使用包内不含凭据的归属映射接回原账号，不能靠邮箱推断归属。当前安装 ID 与其本机私钥保持，来源安装私钥不会被导入。
+
+默认保留最近 7 天全部成功包，再加最近 4 个日历周各最新一份；UTC 周从周一开始，始终保留最新成功包，坏包不自动删除。临时文件落盘后原子改名，包内含版本、时间、原因、逐文件大小/SHA-256 与清单 SHA-256。坏包 409 `BACKUP_CORRUPT`，数据中的链接 409 `BACKUP_SYMLINK`，活动任务 409 `SESSION_BUSY`，已有操作 409 `CONFLICT`，暂停写入超时 409 `BACKUP_PAUSE_TIMEOUT`，无备份能力 503 `CAPABILITY_UNAVAILABLE`，关闭期间 503 `SERVICE_CLOSING`。本地包未加密，应保存在可信磁盘；S4 云端加密备份尚未实现。

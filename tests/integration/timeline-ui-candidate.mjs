@@ -21,8 +21,15 @@ export async function startTimelineCandidate(options = {}) {
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError: false, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
+  const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
   const backend = {
-    getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: 'synthetic', configured: true }], preflight: async () => ({ ok: true }),
+    ...(options.schedules ? { schedules: async ({action,id}) => {
+      if (['list','notifications'].includes(action)) return {items:scheduleRows.map(row=>({...row}))};
+      const row=scheduleRows.find(row=>row.id===id);assert.ok(row);
+      if(action==='delete')scheduleRows.splice(scheduleRows.indexOf(row),1);else row.state=action==='pause'?'paused':action==='resume'?'scheduled':'completed';
+      return {ok:true};
+    }} : {}),
+    getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true }], preflight: async () => ({ ok: true }),
     createSession: async input => { operations.push({ kind: 'create' }); sessionId = input.sessionId; return { sessionId } },
     sendMessage: async input => {
       operations.push({ kind: 'message', mode: input.mode, text: input.text })
@@ -54,12 +61,21 @@ export async function startTimelineCandidate(options = {}) {
     listUserQuestions: async () => ({ runtimeId, questions: questionFrame ? [questionFrame] : [] }),
     respondUserQuestion: async () => { questionFrame.nativeState = 'answered'; result('question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
-  service = await createPersonalAccessService({ root, port: 0, backend, uiHandler: servePersonalAccessUi })
+  const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
+  const backupManager = options.backups ? {
+    isPending: () => false,
+    view: async () => ({settings:{...backupSettings},backups:backupRows.map(row=>({...row})),status:{state:'idle'}}),
+    configure: async value => {Object.assign(backupSettings,value);backupOperations.push('settings');return {...backupSettings}},
+    request: async () => {const row={id:'ui4-backup',createdAt:'2026-10-08T08:00:00Z',size:1048576,verification:'valid'};backupRows.push(row);backupOperations.push('create');return {backup:row}},
+    importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
+    restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
+  } : null;
+  service = await createPersonalAccessService({ root, port: 0, backend, backupManager, uiHandler: servePersonalAccessUi })
   const { origin, hostId } = await service.start(), grant = await service.issueSetupGrant()
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
   const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, ...credentials }) })
   assert.equal(setup.status, 201); const auth = await setup.json(), cookie = setup.headers.get('set-cookie').split(';')[0]
-  const request = async (path, body) => { const response = await fetch(origin + '/personal/v1' + path, { method: body ? 'POST' : 'GET', headers: { origin, cookie, 'content-type': 'application/json', 'x-weftmate-csrf': auth.csrfToken }, ...(body ? { body: JSON.stringify(body) } : {}) }); const data = await response.json(); assert.ok(response.ok, JSON.stringify(data)); return data }
+  const request = async (path, body, method = body ? 'POST' : 'GET') => { const response = await fetch(origin + '/personal/v1' + path, { method, headers: { origin, cookie, 'content-type': 'application/json', 'x-weftmate-csrf': auth.csrfToken }, ...(body ? { body: JSON.stringify(body) } : {}) }); const data = await response.json(); assert.ok(response.ok, JSON.stringify(data)); return data }
   const command = async body => { const value = await request('/commands', body); for (let i = 0; i < 100; i++) { const row = (await request(`/commands/${value.command.commandId}`)).command; if (row.state === 'accepted_by_dsh') return row; await new Promise(done => setTimeout(done, 20)) } throw Error('command not accepted') }
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
@@ -88,6 +104,9 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'shared.questions.list') return request(`/sessions/${sessionId}/questions?limit=100`)
     throw Error(`unsupported fixture method: ${method}`)
   }
+  if (options.usageSamples) {
+    for (let index = 0; index < 3; index++) { const scope = await service.beginUsage({ sessionId, profileId: 'local' }); await service.finishUsage({ ...scope, usage: { prompt_tokens: 10000 + index * 4000, completion_tokens: 1200, prompt_tokens_details: { cached_tokens: 4000 } } }); }
+  }
   const mobileAssets = new Set(readdirSync(new URL('../../apps/mobile-ui/www/', import.meta.url), {recursive:true}).map(name=>String(name).replaceAll('\\','/')))
   const server = createServer(async (req, res) => { try {
     const path = new URL(req.url, 'http://127.0.0.1').pathname
@@ -101,7 +120,7 @@ export async function startTimelineCandidate(options = {}) {
   const bridgeCode = `window.weftNative={postMessage(raw){const m=JSON.parse(raw);fetch('/bridge',{method:'POST',body:JSON.stringify(m)}).then(r=>r.json()).then(v=>window.weftNative.onmessage({data:JSON.stringify({id:m.id,ok:!v.error,result:v.result,error:v.error})}))},onmessage:null}`
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
-  return { root, origin, credentials, sessionId, operations, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
+  return { root, origin, credentials, sessionId, operations, request, backupOperations, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
     complete: async (handled = false) => { if (!handled) await request(`/sessions/${sessionId}/approvals/${approvalId}`, { requestId:'fixture-allow-once',outcome:'allowed-once' });await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), outcome:'allowed-once' });append('approval/decided',{id:approvalId,outcome:'allowed-once'});questionFrame.nativeState='answered';if (!handled) result('question-1','{"answers":[{"id":"format","selected":["简要报告"]}]}');result('write-1','Report saved.'); append('step/end',{turn:1,step:1});append('assistant/message',{content:[{type:'text',text:'报告已保存，测试全部通过。'}]});append('turn/end',{turn:1,reason:{kind:'completed'}});running=false },
     close: async () => { await service.close();await new Promise(done=>server.close(done)) } }
 }

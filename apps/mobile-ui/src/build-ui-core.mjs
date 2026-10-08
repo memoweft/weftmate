@@ -41,7 +41,7 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     if (!source.equals(generated)) problems.push(`differs ${name}`);
   }
   if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
-    for (const [sourceName, generatedName] of [['components/usage.js', 'components/usage-view.js'], ['usage.css', 'usage.css'], ['popovers.js', 'popovers.js']]) {
+    for (const [sourceName, generatedName] of [['components/usage.js', 'components/usage-view.js'], ['components/settings-controls.js', 'components/settings-controls.js'], ['components/schedules.js', 'components/schedules-view.js'], ['usage.css', 'usage.css'], ['popovers.js', 'popovers.js']]) {
       const source = await readFile(new URL(`../../../src/personal-access-ui/${sourceName}`, import.meta.url));
       const generated = await readFile(path.join(mobileWwwDir, generatedName));
       if (!source.equals(generated)) problems.push(`differs ${generatedName}`);
@@ -59,6 +59,8 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
 export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir = mobileUiCoreDir } = {}) {
   if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
     await copyFile(new URL('../../../src/personal-access-ui/components/usage.js', import.meta.url), path.join(mobileWwwDir, 'components/usage-view.js'));
+    await copyFile(new URL('../../../src/personal-access-ui/components/schedules.js', import.meta.url), path.join(mobileWwwDir, 'components/schedules-view.js'));
+    await copyFile(new URL('../../../src/personal-access-ui/components/settings-controls.js', import.meta.url), path.join(mobileWwwDir, 'components/settings-controls.js'));
     await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
     await copyFile(new URL('../../../src/personal-access-ui/popovers.js', import.meta.url), path.join(mobileWwwDir, 'popovers.js'));
     await mkdir(path.join(mobileWwwDir, 'legal'), { recursive: true });
