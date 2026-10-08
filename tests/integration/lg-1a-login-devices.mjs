@@ -26,10 +26,29 @@ await mkdir(evidence, { recursive: true });
 await writeFile(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 let cloud, application, browser, cloudRoot, cloudData, mailDirectory, cloudProxy, cloudAccountId, currentDesktop, resumeWebPolling;
 const pageErrors = [], requests = [], failedRequests = [];
+let mainObserverInstalled = false, mainRequestOffset = 0;
+
+async function installMainNetworkObserver() {
+  await application.evaluate(({ session }) => {
+    globalThis.__lgMainRequests = [];
+    session.fromPartition('persist:weftmate-desktop').webRequest.onCompleted(details => {
+      const path = new URL(details.url).pathname;
+      if (path.startsWith('/personal/v1')) globalThis.__lgMainRequests.push({ path, status: details.statusCode });
+    });
+  });
+  mainObserverInstalled = true;
+}
+async function collectMainRequests() {
+  if (!mainObserverInstalled) return;
+  const rows = await application.evaluate((_electron, offset) => globalThis.__lgMainRequests.slice(offset), mainRequestOffset);
+  mainRequestOffset += rows.length;
+  requests.push(...rows);
+  failedRequests.push(...rows.filter(row => row.status >= 400));
+}
 
 async function until(check, message, milliseconds = 30000) {
   const end = Date.now() + milliseconds;
-  while (Date.now() < end) { const value = await check(); if (value) return value; await sleep(milliseconds > 60000 ? 1000 : 100); }
+  while (Date.now() < end) { await collectMainRequests(); const value = await check(); if (value) return value; await sleep(milliseconds > 60000 ? 1000 : 100); }
   throw new Error(message);
 }
 async function freePort() {
@@ -94,15 +113,12 @@ async function latestCode(recipient, since) {
 function observe(page) {
   page.setDefaultTimeout(30000);
   page.on('pageerror', error => pageErrors.push(error.message));
-  page.on('response', async response => {
+  page.on('response', response => {
     const url = new URL(response.url());
     if (url.pathname.startsWith('/personal/v1')) requests.push({ path: url.pathname, status: response.status() });
     if (url.pathname.startsWith('/personal/v1') && response.status() >= 400) {
-      const body = await response.json().catch(() => ({}));
-      failedRequests.push({ path: url.pathname, status: response.status(), code: typeof body.error === 'string' ? body.error : body.error?.code });
+      failedRequests.push({ path: url.pathname, status: response.status() });
     }
-    if (url.pathname === '/personal/v1/cloud/auth/registration/complete' && response.status() === 200)
-      cloudAccountId = (await response.json()).account.cloudAccountId;
   });
 }
 const button = (page, name) => page.getByRole('button', { name: name === '新对话' ? /^新对话/ : name, exact: true }).filter({ visible: true });
@@ -206,6 +222,7 @@ try {
     const env = { ...cleanEnvironment(), WEFTMATE_CLOUD_ISSUER: configuration.issuer, WEFTMATE_CLOUD_WEB_CLIENT_ID: 'weftmate-web', WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK: 'true' };
     application = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository,
       args: ['.', '--personal-host', `--access-port=${hostPort}`, `--user-data-dir=${profile}`, '--force-device-scale-factor=1'], env, timeout: 90000 });
+    await installMainNetworkObserver();
     const desktop = await application.firstWindow({ timeout: 90000 }); currentDesktop = desktop; observe(desktop);
     await desktop.waitForURL('**/personal/v1/ui*');
     await desktop.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
@@ -219,6 +236,8 @@ try {
     await desktop.getByRole('alert').filter({ hasText: '邮箱或密码' }).waitFor(); report.steps.push('Non-enumerating login error');
     await registered(desktop, email, password, '合成桌面');
     await button(desktop, '新对话').waitFor();
+    cloudAccountId = await desktop.evaluate(async () => (await globalThis.weftmateDesktop.credentials('offline-account'))?.sub);
+    assert.equal(typeof cloudAccountId, 'string', 'Registered desktop did not remember its offline account');
     await until(() => requests.some(row => row.path === '/personal/v1/auth/cloud-desktop' && row.status === 200), 'Desktop did not automatically bind local host');
     report.steps.push('Registration, file code, automatic login and local desktop binding');
     await desktop.clock.install({ time: Date.now() });
@@ -332,6 +351,7 @@ try {
     await button(desktop, '新对话').waitFor();
     await deleteAndVerifyDesktop(desktop, resetPassword);
     assert.deepEqual(pageErrors, []);
+    await collectMainRequests();
     for (const route of ['/auth/authorization', '/auth/login', '/auth/authorization/resume', '/oidc/token', '/devices', '/devices/rename', '/auth/email/change/confirm', '/auth/logout/others', '/auth/account/delete'])
       assert.ok(requests.some(row => row.path === `/personal/v1/cloud${route}` && row.status === 200), `Missing real successful cloud route: ${route}`);
     }
@@ -340,6 +360,7 @@ try {
   report.passed = true;
   await rm(join(evidence, 'failure-desktop.png'), { force: true });
 } catch (error) {
+  await collectMainRequests().catch(() => {});
   report.passed = false;
   report.failedRequests = failedRequests;
   report.pageErrors = pageErrors;
@@ -359,6 +380,7 @@ try {
   throw new Error(report.error);
 } finally {
   resumeWebPolling?.();
+  await collectMainRequests().catch(() => {}); mainObserverInstalled = false;
   await browser?.close(); await application?.close();
   if (cloud && cloud.exitCode === null) {
     if (process.platform === 'win32') cloud.stdin.end(); else cloud.kill('SIGTERM');

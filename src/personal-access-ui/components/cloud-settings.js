@@ -170,5 +170,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (url.protocol !== 'https:' || url.username || url.password || url.search || url.hash) throw { code: 'HOST_TRUST_INVALID' };
         location.assign(new URL('/personal/v1/ui/', url.origin).href);
     }
-    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, stopAccountPairing: stopPairing };
+    const activateCloudHost = target => globalThis.weftmateDesktop?.activateHost(target);
+    const clearNativeHostSessions = () => globalThis.weftmateDesktop?.clearHostSessions();
+    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, stopAccountPairing: stopPairing };
 };
