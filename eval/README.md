@@ -1,6 +1,6 @@
 # M0-7 场景评测
 
-这份评测使用 Node 24 和 `/personal/v1`，没有新依赖。首批定义共 12 条：办事 6、记忆 4、跨端 2。Mac 用假 HTTP 服务自测 runner；Qwen / MiMo 的真实基线由 Windows 跑，不能把假服务通过率当作模型或产品通过率。
+这份评测使用 Node 24 和 `/personal/v1`，没有新依赖。当前定义共 13 条：办事 7（首批 6 条 + M1-3 长任务）、记忆 4、跨端 2。Mac 用假 HTTP 服务自测 runner；Qwen / MiMo 的真实基线由 Windows 跑，不能把假服务通过率当作模型或产品通过率。
 
 ## M0-7b 正式基线
 
@@ -15,6 +15,10 @@ Windows 可运行 `node tests/integration/personal-scenario-baseline.mjs`（Qwen
 报告中的每轮 `startedAt` / `endedAt` / `durationMs` 和 `timeline`（事件时间线）只保存公开事件类型、序号及时间，便于与8081和后端日志对齐。超时轮也保留已观察事件及耗时。
 
 ## Windows：先启动隔离宿主
+
+M1-3 长任务单独运行 `node tests/integration/personal-long-task.mjs`（Qwen）与 `node tests/integration/personal-long-task.mjs --mimo`（MiMo）。入口启动真实 Electron（桌面程序框架）和固定 DSH，读取用户环境 `MODEL_SWITCH_UNIFIED_KEY` / 系统环境 `MIMO_API_KEY`，只在内存配置模型；使用随机端口和系统临时目录，不连接记忆或读取日用保险库。`--regression` 跑原有六条办事场景，目标、时限与检查保持原样。
+
+长任务的文件检查走既有 runner（评测器）；入口额外记录 native events（原生事件）来验证真实上下文、15 步以上、成功压缩、目标与待办保留，以及源文件未被改写。Qwen 必须以实际 98,304 上下文触发压缩后完成；MiMo 按自身容量对照。`long-task-verification.json` 与模型用量位于当次打印的隔离目录；退出删除测试凭据并扫描模型密钥，产物不进 Git。
 
 **runner 必须与宿主在同一台机器运行**，因为测试文件由 runner 写进这台机器的系统临时目录，检查也读取这些临时文件。`--host` 是宿主的 origin，不带 `/personal/v1`。跨端场景需要真人拿手机验收，自动运行只列为「需人工」。
 
@@ -166,6 +170,7 @@ node --test tests/eval-runner.test.ts
 | action-04-research-script | 查资料 → 写脚本 → 实际运行 → 汇报 |
 | action-05-stop-resume | 中途停止再继续 |
 | action-06-delete-approval | 删除批准一次、拒绝一次 |
+| action-07-long-directory | 逐批审阅24份合成交接资料、保存独立报告与汇总，验证原生上下文压缩续跑 |
 | memory-01-preference | 告诉偏好 → 新对话采用 |
 | memory-02-correction | 纠正理解 → 后续按纠正走 |
 | memory-03-switch-model | 换模型后记得称呼 |

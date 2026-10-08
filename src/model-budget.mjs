@@ -54,10 +54,16 @@ export async function readModelCapacity(input, { fetchImpl = fetch, timeoutMs = 
 }
 
 /** Leave room for framing/token-estimator error; the cap is capability, not a fixed request size. */
-export function outputBudget({ contextWindow, inputTokens, maxTokens = 32768, safetyTokens }) {
+export const MIN_OUTPUT_TOKENS = 2048;
+
+export function outputBudget({ contextWindow, inputTokens, maxTokens = 32768, safetyTokens,
+  minOutputTokens = MIN_OUTPUT_TOKENS }) {
   // pi-ai reserves 4096 itself; use at least that much before its final clamp.
   const safety = safetyTokens ?? Math.max(4096, Math.ceil(contextWindow * 0.02));
-  return Math.max(1, Math.floor(Math.min(maxTokens, contextWindow - Math.ceil(inputTokens) - safety)));
+  const remaining = Math.floor(contextWindow - Math.ceil(inputTokens) - safety);
+  // null asks the caller to compact, never to send a near-empty completion.
+  if (remaining < Math.min(minOutputTokens, maxTokens)) return null;
+  return Math.floor(Math.min(maxTokens, remaining));
 }
 
 /** Keep existing tool text and durable image metadata for text-only routes. */
