@@ -14,7 +14,7 @@ Windows-4，2026-10-09。只处理 EX-2（出口验收）第⑥至⑧步及设�
 | ⑧ Core 真进程停止且后续启动失败 | 普通问候完成、无记忆注入；桌面与手机宽度网页有轻提示 | [故障与恢复验收](outage-final.json) |
 | ⑧ Core 恢复 | 恢复读取能力后提示自动消失；待交付来源不冒充已完成形成 | 同上 |
 | 设置 → 记忆 → 导出 | 桌面经原生保存接口实际写出 JSON、Markdown 两个文件；另在390像素宽 Chromium（浏览器引擎）网页中实际下载 Markdown | [实际保存和浏览器下载](settings-export-final.json) |
-| 定向回归 | 64项主要相关测试通过，追加实体无直接来源的开关用例、原生桌面 IPC（进程间通信）／界面测试通过；类型检查通过 | 对应 `tests/fg-1-*.test.ts` 等；完整测试交 CI（持续集成） |
+| 定向回归 | 64项主要相关测试通过，追加实体无直接来源的开关用例通过；原生桌面 IPC（进程间通信）／界面13项、完整装配交互与记忆界面62项通过；类型检查通过 | 对应 `tests/fg-1-*.test.ts` 等；完整测试交 CI（持续集成） |
 
 截图：[设置导出](settings-export.png)、[记忆页导出](memory-export.png)、[真实手机宽度浏览器导出](mobile-browser-memory-export.png)、[原话来源](mimo-sources.png)、[勾选遗忘删除](mimo-forget.png)、[桌面故障提示](mimo-core-unavailable-chat.png)、[手机宽度故障提示](mimo-core-unavailable-mobile-web.png)、[恢复后提示消失](mimo-core-recovered-mobile-web.png)。
 
@@ -33,6 +33,8 @@ Core 清除来源与混合来源派生对象，删除没有直接来源登记、
 ## 失败保留与边界
 
 最新重复闭环另见 [final-repeat.json](final-repeat.json)：⑥及⑧通过，⑦来源／遗忘／两类导出／新备份字节与数据库检查全部通过；原问句回合没有完成，因而该次⑦仍判失败，不把存储成功改成整步通过。较早的 `storage-final.json` 中原问句完成且不采用或回答被遗忘姓名，成功证据与重复失败都保留。
+
+首轮 WeftMate Linux CI 的装配测试因旧 DOM（页面元素模型）桩缺少 `before()` 失败；只补齐测试桩的相邻插入能力，随后受影响62项通过。生产行为与测试例外未修改。
 
 所有开发批次保留在 `diagnostic.json`、`development-*.json`、`settings-*-failure.json` 等文件中：原始400、孤立实体、清理待完成、压缩日志头帧格式、Core 原话副本、旧恢复门、新建会话的偶发原生传输失败、原始问句触发工具审批、桌面 Blob（内存文件）下载，以及手机测试未先展开侧栏。没有把早期失败覆盖成成功。最终存储门、故障门和真实文件导出分开计，不宣称完整王小明八步通过。
 
