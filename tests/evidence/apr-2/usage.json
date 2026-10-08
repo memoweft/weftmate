@@ -1,0 +1,29 @@
+{
+  "batches": [
+    "development-1",
+    "development-2",
+    "development-3",
+    "development-repeat",
+    "mimo-regression",
+    "mimo-repeat",
+    "safety-regression",
+    "safety-repeat",
+    "final-repeat"
+  ],
+  "totalScenarios": 38,
+  "totalPassed": 29,
+  "totalFailed": 9,
+  "usage": {
+    "requests": 315,
+    "requestsWithUsage": 287,
+    "requestsWithoutUsage": 28,
+    "rejected429": 0,
+    "input": 8679859,
+    "cachedInput": 2273344,
+    "output": 125883,
+    "knownEstimatedCny": 6.70374788,
+    "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "kind": "Known upstream usage cost lower bound; includes all successful, failed and cancelled runs; not an account invoice"
+  },
+  "offlineModelRequests": 0
+}

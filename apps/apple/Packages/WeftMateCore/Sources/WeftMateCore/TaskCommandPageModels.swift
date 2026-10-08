@@ -29,6 +29,7 @@ public struct TaskCommandPage: Equatable, Sendable {
     public let scope: TaskReadScope
     public let sessionId: String
     public let rootCommands: [TaskRootCommandMetadata]
+    public private(set) var supplementReceiptIDs = Set<String>()
     public let scannedCount: Int
     public let unsupportedRootCount: Int
     public let nextCursor: TaskCommandPageCursor?
@@ -45,6 +46,7 @@ public struct TaskCommandPage: Equatable, Sendable {
         var priorID = previous?.before
         var priorTime = previous?.boundaryCreatedAt
         var roots: [TaskRootCommandMetadata] = [], unsupported = 0
+        var supplements = Set<String>()
         for command in wire.commands {
             try command.validateBase()
             try SharedValidation.require(seen.insert(command.commandId).inserted && seen.count <= 5_000)
@@ -55,7 +57,11 @@ public struct TaskCommandPage: Equatable, Sendable {
             }
             priorID = command.commandId; priorTime = command.createdAt
             guard command.kind == "session.message", command.targetDeviceId == scope.hostId,
-                  command.sessionId == sessionID, command.rootTaskId == nil else { continue }
+                  command.sessionId == sessionID else { continue }
+            if command.rootTaskId != nil {
+                if command.taskAction == "supplement", command.state == "accepted_by_dsh", let receipt = command.receiptId, SharedValidation.receipt(receipt) { supplements.insert(receipt) }
+                continue
+            }
             try command.validateRoot()
             guard let state = SharedCommandState(rawValue: command.state) else { unsupported += 1; continue }
             // Host/observed states describe tools, not supported root message receipts.
@@ -68,8 +74,10 @@ public struct TaskCommandPage: Equatable, Sendable {
         if let before = wire.nextBefore, let boundary = wire.commands.last {
             next = TaskCommandPageCursor(scope: scope, sessionId: sessionID, before: before, boundaryCreatedAt: boundary.createdAt, seenIDs: seen)
         } else { next = nil }
-        return .init(scope: scope, sessionId: sessionID, rootCommands: roots, scannedCount: wire.commands.count,
+        var result = Self(scope: scope, sessionId: sessionID, rootCommands: roots, scannedCount: wire.commands.count,
             unsupportedRootCount: unsupported, nextCursor: next, hasMore: wire.hasMore)
+        result.supplementReceiptIDs = supplements
+        return result
     }
 }
 

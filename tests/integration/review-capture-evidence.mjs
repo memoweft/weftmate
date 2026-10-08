@@ -17,12 +17,14 @@ test('choose newest timestamp independently of checkout mtime and retain origina
       const file = join(root, `review-watch-login-light-${suffix}.png`);
       await writeFile(file, 'fixture'); await writeFile(file.replace(/\.png$/, '.json'), JSON.stringify({ ...metadata, generatedAt, source: suffix }));
     }
-    const rows = await collectEvidence(root), selected = rows.find(row => row.platform === 'watch' && row.scene === 'login' && row.theme === 'light');
+    // Repository device captures must not decide whether this isolated fixture is missing.
+    const fixtureOptions = { includeRepositoryEvidence: false };
+    const rows = await collectEvidence(root, fixtureOptions), selected = rows.find(row => row.platform === 'watch' && row.scene === 'login' && row.theme === 'light');
     assert.equal(selected.source, '20990101T000000Z'); assert.equal(selected.commit, 'a'.repeat(40));
     assert.equal(rows.find(row => row.platform === 'mac' && row.scene === 'memory' && row.theme === 'dark').status, '待补');
     const file = join(root, 'review-watch-login-dark.png'); await writeFile(file, 'fixture');
     await writeFile(file.replace(/\.png$/, '.json'), JSON.stringify({ ...metadata, theme: 'light', generatedAt: '2099-01-01T00:00:00Z' }));
-    await assert.rejects(collectEvidence(root), /disagrees/);
+    await assert.rejects(collectEvidence(root, fixtureOptions), /disagrees/);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 test('public text scan detects observed credential and personal-path formats', () => {

@@ -158,7 +158,7 @@ public final class URLSessionTransport: HTTPTransport, Sendable {
         if let developmentRoute { try developmentRoute.validate(request.url) }
         #endif
         do {
-            let (bytes, response) = try await session.bytes(for: request)
+            let (bytes, response) = try await (request.timeoutInterval > 60 ? transferSession : session).bytes(for: request)
             guard let http = response as? HTTPURLResponse else { throw APIFailure.invalidResponse }
             if (300...399).contains(http.statusCode) { throw APIFailure.transport(.redirect) }
             if response.expectedContentLength > 1_048_576 { throw APIFailure.responseTooLarge }
