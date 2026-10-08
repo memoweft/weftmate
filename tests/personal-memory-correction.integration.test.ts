@@ -35,6 +35,9 @@ for (const scenario of [
   { name: 'changed preference', old: '我每天喝咖啡。',
     correction: '我其实不喝咖啡了，现在只喝茶。', query: '现在喝咖啡还是喝茶？',
     action: 'form', field: 'supersedes_cognition_id', replacement: '只喝茶', obsolete: '每天喝咖啡' },
+  { name: 'negated coffee correction', old: '我喜欢喝咖啡。',
+    correction: '刚才说错了，我其实不喝咖啡。', query: '我喝咖啡吗？',
+    action: 'correct', field: 'corrects_cognition_id', replacement: '不喝咖啡', obsolete: '喜欢喝咖啡' },
 ]) {
   test(`natural memory ${scenario.name}: source retention, new-session recall and restart`, { skip }, async () => {
     const root = await realpath(await mkdtemp(path.join(tmpdir(), 'm2d-correction-')))

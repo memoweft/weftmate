@@ -116,9 +116,9 @@ try {
     // Additional desktop acceptance; the original scenario stays unmodified.
     scenarios.push({ ...original, id: 'memory-correction-new-sessions',
       turns: [
-        { user: '我最近只能周二晚上游泳，安排游泳时帮我记着。', after: { newSession: true, waitMs: 1000 } },
-        { user: '刚才说错了，现在固定空出来的是周六晚上，周二已经没空了，以后游泳按周六来安排。', after: { newSession: true, waitMs: 1000 } },
-        { user: '下周给我安排一次游泳，放在哪天比较合适？' },
+        { user: '我最近只能周二晚上游泳，安排游泳时帮我记着。只回复收到，不调用工具。', after: { newSession: true, waitMs: 1000 } },
+        { user: '刚才说错了，现在固定空出来的是周六晚上，周二已经没空了，以后游泳按周六来安排。只回复收到，不调用工具。', after: { newSession: true, waitMs: 1000 } },
+        { user: '我哪天晚上能游泳？只写一句话，不调用工具。' },
       ], checks: original.checks.map(check => check.type === 'reply_contains' ? { ...check, text: '周六' }
         : check.type === 'llm_judge' ? { ...check, prompt: '按纠正后的周六晚上安排游泳。' } : check) });
     if (process.argv.includes('--desktop-only')) scenarios = scenarios.filter(s => s.id === 'memory-correction-new-sessions');
