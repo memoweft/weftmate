@@ -1,5 +1,8 @@
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
-import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage } from 'electron';
+import { hostname } from 'node:os';
+import { createHash, X509Certificate } from 'node:crypto';
+import { desktopAuthStorage } from './personal-desktop-auth.mjs';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
@@ -45,15 +48,17 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   // On Windows at fractional DPI, constructor dimensions can include a different frame inset.
   if (Number.isFinite(bounds.x)) win.setBounds(bounds);
   const uiUrl = new URL('/personal/v1/ui', origin).href;
+  let activeOrigin = origin;
+  let certificateVerifier = null;
   const status = { host: '启动中', model: '未选择' };
   const updateStatus = next => { Object.assign(status, next); onStatus({ ...status }); };
   const trusted = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame &&
-    new URL(event.senderFrame.url).origin === origin && new URL(event.senderFrame.url).pathname === '/personal/v1/ui';
+    new URL(event.senderFrame.url).origin === activeOrigin && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
   const handle = (channel, callback) => ipcMain.handle(channel, (event, ...args) => {
     if (!trusted(event)) throw new Error('Desktop bridge unavailable');
     return callback(...args);
   });
-  const fetchLocal = path => desktopSession.fetch(new URL(`/personal/v1${path}`, origin).href, { credentials: 'include' });
+  const fetchLocal = path => desktopSession.fetch(new URL(`/personal/v1${path}`, activeOrigin).href, { credentials: 'include' });
   const jsonLocal = async path => {
     const response = await fetchLocal(path);
     if (!response.ok) throw new Error('Session unavailable');
@@ -68,6 +73,37 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const settings = () => ({ autoStart: app.getLoginItemSettings(loginOptions).openAtLogin,
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
+  const authStore = desktopAuthStorage(join(app.getPath('userData'), 'desktop-auth.enc'), safeStorage);
+  handle('wm:desktop:identity', () => ({ deviceName: hostname(), localOrigin: origin }));
+  handle('wm:desktop:credentials', (key, value, remove) => authStore.credentials(key, value, remove));
+  handle('wm:desktop:key', scope => authStore.key(scope));
+  handle('wm:desktop:proof', (scope, input) => authStore.sign(scope, input));
+  handle('wm:desktop:key-reset', scope => authStore.resetKey(scope));
+  handle('wm:desktop:connect-host', async ({ hostId, baseUrl } = {}) => {
+    const trustedHost = authStore.credentials('trusted-host:' + hostId);
+    const target = new URL(baseUrl);
+    if (!trustedHost || target.protocol !== 'https:' || target.username || target.password || target.search || target.hash ||
+      ![trustedHost.origin, trustedHost.relay?.baseUrl].includes(target.origin)) throw new Error('HOST_TRUST_INVALID');
+    // Standard certificate validation runs first; a manually delivered pin adds
+    // possession of the specific installation TLS key on top of it.
+    const previousOrigin = activeOrigin, previousVerifier = certificateVerifier;
+    certificateVerifier = (request, done) => {
+      if (request.hostname !== target.hostname) { done(-3); return; }
+      try {
+        const pin = createHash('sha256').update(new X509Certificate(request.certificate.data).publicKey.export({ type: 'spki', format: 'der' })).digest('base64url');
+        done(request.verificationResult === 'net::OK' && pin === trustedHost.tlsSpki ? 0 : -2);
+      } catch { done(-2); }
+    };
+    desktopSession.setCertificateVerifyProc(certificateVerifier);
+    activeOrigin = target.origin;
+    try { await win.loadURL(new URL('/personal/v1/ui', activeOrigin).href); }
+    catch (error) {
+      activeOrigin = previousOrigin; certificateVerifier = previousVerifier;
+      desktopSession.setCertificateVerifyProc(previousVerifier);
+      await win.loadURL(new URL('/personal/v1/ui', activeOrigin).href); throw error;
+    }
+    return { connected: true };
+  });
   handle('wm:desktop:model', name => { if (typeof name === 'string') updateStatus({ model: name }); });
   handle('wm:desktop:theme', ({ color, symbolColor } = {}) => {
     if (process.platform === 'win32') { win.setTitleBarOverlay({ color, symbolColor, height: 44 }); resolvedPalette = { color, symbolColor, height: 44 }; }
@@ -110,7 +146,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   win.webContents.on('did-start-loading', () => { clientReady = false; });
   win.webContents.on('did-finish-load', () => { clientReady = true; if (pendingConversation) show(); });
   win.webContents.on('page-title-updated', event => { event.preventDefault(); win.setTitle('WeftMate'); });
-  win.webContents.on('will-navigate', (event, url) => { if (url !== uiUrl) event.preventDefault(); });
+  win.webContents.on('will-navigate', (event, url) => { if (url !== new URL('/personal/v1/ui', activeOrigin).href) event.preventDefault(); });
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
   const updatePalette = () => {
     if (!win.isDestroyed() && process.platform === 'win32') {
@@ -171,7 +207,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     stopped = true; clearTimeout(timer);
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
-    for (const channel of ['wm:desktop:settings', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const channel of ['wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }

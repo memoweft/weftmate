@@ -1,5 +1,17 @@
 import { CloudError } from './security.mjs';
 
+// The provider scopes its resume cookie to /oidc/auth/<uid>. App clients
+// resume through our JSON bridge, so keep that HttpOnly cookie on the cloud
+// path for both installation and deletion. The provider still verifies it.
+export function appCookiePath(cookie) {
+  return /^wm_cloud_resume(?:\.sig)?=/.test(cookie)
+    ? cookie.replace(/;\s*path=[^;]*/i, '; path=/personal/v1/cloud') : cookie;
+}
+export function widenAppResumeCookies(res) {
+  const cookies = res.getHeader('set-cookie');
+  if (cookies) res.setHeader('set-cookie', [cookies].flat().map(appCookiePath));
+}
+
 // Drive the provider's ordinary HTTP endpoints inside the app's credentialed
 // transport. No password grant, custom token issuer, or external navigation.
 export function appAuthorization({ config }) {
@@ -13,7 +25,7 @@ export function appAuthorization({ config }) {
     });
     const cookies = response.headers.getSetCookie();
     if (cookies.length) {
-      res.setHeader('set-cookie', [...(res.getHeader('set-cookie') ?? []), ...cookies]);
+      res.setHeader('set-cookie', [...(res.getHeader('set-cookie') ?? []), ...cookies.map(appCookiePath)]);
       const jar = new Map((req.headers.cookie ?? '').split(';').filter(Boolean).map(s => {
         const i = s.indexOf('='); return [s.slice(0, i).trim(), s.slice(i + 1)];
       }));

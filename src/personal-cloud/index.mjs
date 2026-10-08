@@ -8,8 +8,9 @@ import { hashPassword, validPassword } from '../personal-access/password.mjs';
 
 const bindingKey = (issuer, sub) => JSON.stringify([issuer, sub]);
 export function cloudIdentityFromEnvironment(env = process.env) {
-  return env.WEFTMATE_CLOUD_ISSUER ? { issuer: env.WEFTMATE_CLOUD_ISSUER,
-    clientId: env.WEFTMATE_CLOUD_WEB_CLIENT_ID || 'weftmate-web' } : null;
+    return env.WEFTMATE_CLOUD_ISSUER ? { issuer: env.WEFTMATE_CLOUD_ISSUER,
+    clientId: env.WEFTMATE_CLOUD_WEB_CLIENT_ID || 'weftmate-web',
+    allowInsecureLoopback: env.WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK === 'true' } : null;
 }
 
 export async function createHostCloudIdentity(context, options) {
