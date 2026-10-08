@@ -10,7 +10,7 @@ final class A6SettingsUITests: XCTestCase {
         return try JSONSerialization.jsonObject(with: data) as! [String: Any]
     }
     @MainActor private func expect(_ element: XCUIElement) throws {
-        XCTAssertTrue(element.waitForExistence(timeout: 30), "Missing required native control")
+        XCTAssertTrue(element.exists || element.waitForExistence(timeout: 30), "Missing required native control")
         if !element.exists { throw NSError(domain: "A6UI", code: 1) }
     }
     @MainActor private func tap(_ app: XCUIApplication, _ name: String) throws {
@@ -62,7 +62,7 @@ final class A6SettingsUITests: XCTestCase {
     }
     @MainActor @discardableResult private func category(_ app: XCUIApplication, _ id: String) throws -> CGRect {
         let row = app.buttons["settingsCategory." + id]
-        let search = app.searchFields.firstMatch
+        let search = app.searchFields["搜索设置"]
         for _ in 0..<6 {
             let coveredBySearch = row.exists && search.exists && row.frame.intersects(search.frame)
             if row.exists && row.isHittable && !coveredBySearch { break }
@@ -84,7 +84,6 @@ final class A6SettingsUITests: XCTestCase {
         XCTAssertFalse(app.buttons["settingsCategory.backups"].exists)
         for id in ["general", "appearance", "account", "devices", "usage", "models", "approvals", "memory", "schedules", "about"] {
             let listFrame = try category(app, id)
-            if id == "about" { print("A6_ABOUT_NAV " + app.navigationBars.debugDescription) }
             try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
             if id == "appearance" { try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", "light") }
             if id == "usage" { try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", "light") }
@@ -101,7 +100,7 @@ final class A6SettingsUITests: XCTestCase {
             if id == "about" { XCTAssertEqual(app.buttons["settingsCategory.about"].frame.minY, listFrame.minY, accuracy: 2, "Returning must retain the list position") }
             app.swipeDown()
         }
-        let search = app.searchFields.firstMatch
+        let search = app.searchFields["搜索设置"]
         // Pull the native list down to reveal its searchable field.
         for _ in 0..<3 { if search.isHittable { break }; app.swipeDown() }
         try expect(search); search.tap(); search.typeText("月度 上限")
