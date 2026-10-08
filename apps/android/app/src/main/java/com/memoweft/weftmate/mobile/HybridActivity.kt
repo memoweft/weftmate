@@ -1339,7 +1339,8 @@ class HybridActivity : Activity() {
                 check(displayPrefs.edit().putString("appearance:$activeScope", selected).commit())
                 runOnUiThread { applySystemBars() }
             }
-            JSONObject().put("value", appearance())
+            JSONObject().put("value", appearance()).put("systemDark",
+                (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES)
         }
         "auth.state" -> {
             val state = api.accountState(params.getString("origin"))

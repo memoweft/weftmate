@@ -270,6 +270,7 @@ function processEvent(message){const {event,data}=message;
       data.status==='cancelled'?'已取消保存':'保存未完成，请重试';
   }
   if(event==='notifications.permission'&&state.page==='notifications')page('notifications');
+  if(event==='theme.system')state.nativeSystemDark=!!data.dark;
   if(event==='theme.system'&&state.appearance==='system'){
     document.documentElement.dataset.theme=data.dark?'dark':'light';document.documentElement.style.colorScheme=data.dark?'dark':'light';
   }
@@ -299,7 +300,7 @@ async function boot(){
     state.busy=info.busy;state.ui=info.ui;state.backgroundSync=info.backgroundSync||'unknown';
     state.connection=info.loggedIn?'checking':'local';
     if(info.cloudApp){
-      try{applyTheme((await uiCore.mobileAppearance()).value)}catch{applyTheme('system')}
+      try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
       await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
       await WeftMobileCloud.init();return;
     }
@@ -316,7 +317,7 @@ async function boot(){
       const content=$('chat-content');clear(content);content.append(notice('正在核对上次电脑会话…'));
       await restoreSharedSelection(previousHost,state.owner,state.authEpoch)}
     else{loadDraft();if(state.conversationId){await renderConversation();void refreshHandoff(state.conversationId)}else showWelcome();void listSharedSessions()}
-    try{applyTheme((await uiCore.mobileAppearance()).value)}catch{applyTheme('system')}
+    try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
     await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
     if(!info.launchConversationId)page('home');else updatePageHeader();
     void resumeCloudLogin();void refreshCloudDevices();

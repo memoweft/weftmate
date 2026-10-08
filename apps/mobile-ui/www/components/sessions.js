@@ -184,7 +184,7 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
 
 function toolLabel(name){return {open_settings:'系统设置',open_app:'打开应用',list_launchable_apps:'应用列表'}[name]||'手机动作'}
 
-function applyTheme(value){state.appearance=value;const dark=value==='dark'||value==='system'&&systemThemeMedia.matches;
+function applyTheme(value){state.appearance=value;const systemDark=window.weftNative&&typeof state.nativeSystemDark==='boolean'?state.nativeSystemDark:systemThemeMedia.matches;const dark=value==='dark'||value==='system'&&systemDark;
   document.documentElement.dataset.theme=dark?'dark':'light';document.documentElement.style.colorScheme=dark?'dark':'light';
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content',dark?'#262723':'#ffffff')}
 
