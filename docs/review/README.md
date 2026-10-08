@@ -48,6 +48,8 @@ node tests/integration/review-capture-gallery.mjs --out .local/review-gallery
 
 既有证据只通过 `evidence.mjs` 的显式兼容表收集：DS-1b / IC-2 的 iPhone 浅深列表、对话、审批、输出与来源，以及 FE-1b 的 MuMu（安卓模拟器）浅色登录 / 列表 / 步骤 / 审批 / 输出 / 记忆和深色列表 / 外观。只收已知合成画面，排除 `before-*`、`initial/`、图标、浏览器替代设备证据及包含临时绝对路径的 UI-3 命令截图。历史图未记录准确拍摄时刻时，标明「证据提交时间」，用该文件最后一次 Git 提交排序。旧图中不明确的主题不猜测；缺图显示「待补」。新包按上述命名放图后无需改兼容表。
 
+Watch 当前只提供同步的进度 / 最近回复摘要和审批，以及健康入口，没有独立登录、会话列表、完整执行步骤、提问、输出来源、记忆或外观页，因此这七个场景明确显示「此端尚无」。审批支持但缺少按主题命名与来源元数据的图，显示「待补」。
+
 ## 新增场景与自动更新
 
 1. 在 `scenes.json` 新增稳定英文标识和中文标题；确实不支持的端填 `unavailable`。
@@ -57,5 +59,7 @@ node tests/integration/review-capture-gallery.mjs --out .local/review-gallery
 颜色由项目生成的 `src/personal-access-ui/tokens.css` 内嵌提供；页面 CSS（层叠样式表）只引用设计令牌变量，不维护第二份调色板。只调整本审稿工具，不修改产品界面代码。
 
 [review-gallery.yml](../../.github/workflows/review-gallery.yml) 在 main 的前端、设计或证据路径变化后截图并生成，PR（拉取请求）上的本工具改动也执行同一验证；可手动 `workflow_dispatch`（手动触发工作流）。使用 Windows runner（执行机器），只授予仓库读取权限，上传 14 天的 Actions artifact（工作流产物），不部署外网。下载后打开 `index.html`。
+
+工作流给测试设置新的 C: 完整临时路径，避开 GitHub Windows 默认 `RUNNER~1` 短路径与宿主私有目录的真实路径校验冲突，不降低权限校验。
 
 自动扫描覆盖截图时的 DOM（页面内容结构）文字、密码输入值、元数据与内嵌 HTML（网页文件），检查凭据样式、私人邮箱与电脑路径；图片解码、1600 / 390 两种宽度和两套外观、放大与 Esc 均验证。历史原生图片需人工视觉检查；没有把文字扫描宣称为 OCR（图片文字识别）。

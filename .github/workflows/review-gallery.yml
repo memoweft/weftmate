@@ -43,6 +43,13 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
+      - name: Use a full Windows temporary path for private host storage
+        shell: pwsh
+        run: |
+          $galleryTemp = Join-Path 'C:\' ('weftmate-review-' + [guid]::NewGuid().ToString('N'))
+          New-Item -ItemType Directory -Path $galleryTemp | Out-Null
+          "TEMP=$galleryTemp" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "TMP=$galleryTemp" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Install capture engines
         run: |
           node node_modules/electron/install.js
