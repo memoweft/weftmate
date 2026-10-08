@@ -88,4 +88,58 @@
     return { call, receive, fetch, account, nextRequestId: (prefix = 'ui') => `${prefix}-${Date.now().toString(36)}-${(++sequence).toString(36)}-${Math.random().toString(36).slice(2, 10)}` };
   }
   globalThis.WeftUiCore.createAndroidBridge = createAndroidBridge;
+  // App account transport shares the account core; only the platform owns secrets.
+  globalThis.WeftUiCore.createMobileCloudTransport = ({ bridge, native, hostOrigin }) => {
+    const request = async (url, options = {}) => {
+      if (!native) return globalThis.fetch(url, options);
+      const absolute = new URL(url, hostOrigin).href;
+      const path = new URL(absolute).pathname;
+      if (path === '/personal/v1/cloud/devices/pending' || /^\/personal\/v1\/cloud\/devices\/[^/]+\/decision$/.test(path)) {
+        try {
+          const body = options.body ? JSON.parse(options.body) : {};
+          const result = path.endsWith('/pending') ? await bridge.call('cloud.pending')
+            : await bridge.call('cloud.decision', { id: decodeURIComponent(path.split('/').at(-2)), decision: body.decision });
+          return { ok: true, status: 200, json: async () => result };
+        } catch (error) { return { ok: false, status: error.status || 503, json: async () => ({ error: { code: error.message } }) }; }
+      }
+      if (!path.startsWith('/personal/v1/cloud/') && !['/personal/v1/auth/cloud-nonce', '/personal/v1/auth/cloud-session'].includes(path)) {
+        return bridge.fetch(url, options);
+      }
+      let result;
+      try {
+        result = path === '/personal/v1/cloud/config'
+          ? { status: 200, body: await bridge.call('cloud.app.configure', { origin: hostOrigin }) }
+          : await bridge.call('cloud.app.request', { url: absolute, method: options.method || 'GET', headers: options.headers || {},
+            ...(options.body !== undefined ? { body: options.body } : {}) });
+      } catch (error) {
+        result = { status: error.status || 503, body: { error: { code: error.code || error.message || 'NETWORK' } } };
+      }
+      return { ok: result.status >= 200 && result.status < 300, status: result.status, json: async () => result.body,
+        headers: { get: name => name.toLowerCase() === 'retry-after' ? result.retryAfter : name.toLowerCase() === 'dpop-nonce' ? result.nonce : null } };
+    };
+    const credentials = native ? async (key, value, remove) => {
+      const result = await bridge.call('cloud.app.credentials', { key, ...(remove ? { remove: true } : value !== undefined ? { value } : {}) });
+      return result.value ?? undefined;
+    } : (...args) => globalThis.WeftCloud.storage(...args);
+    return { fetch: request, cloudCredentials: credentials, nativeCloudKey: native ? {
+      get: id => bridge.call('cloud.app.key', { id }),
+      sign: async (id, input) => (await bridge.call('cloud.app.sign', { id, input })).signature,
+      clear: id => bridge.call('cloud.app.key', { id, clear: true }),
+    } : undefined };
+  };
+  globalThis.WeftUiCore.adaptMobileCloudClient = client => {
+    const exchange = client.exchange.bind(client);
+    // Cloud sign-in precedes selecting a computer. A missing trusted channel is
+    // a device-approval state; it must not send the user back to password entry.
+    client.exchange = async (...args) => {
+      if (client.config?.hostId === 'unconnected') return { status: 'pending_approval', requestId: null };
+      try { return await exchange(...args); }
+      catch (error) {
+        if (error.code === 'PAIRING_REQUIRED' || error.status === 404 && ['HOST_NOT_FOUND', 'NOT_FOUND'].includes(error.code))
+          return { status: 'pending_approval', requestId: null };
+        throw error;
+      }
+    };
+    return client;
+  };
 })();

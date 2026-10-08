@@ -95,7 +95,8 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
 
 /** The updateable UI is presentation; account secrets, local history, model calls and tools stay native. */
 class HybridActivity : Activity() {
-    private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045; const val ORIGINAL_SAVE_REQUEST = 2046 }
+    private companion object { const val SPEECH_REQUEST = 2041; const val AVATAR_REQUEST = 2042; const val NOTIFY_REQUEST = 2043; const val ATTACHMENT_REQUEST = 2044; const val ARTIFACT_SAVE_REQUEST = 2045; const val ORIGINAL_SAVE_REQUEST = 2046; const val CAMERA_REQUEST = 2047 }
+    private var pendingCameraPermission: android.webkit.PermissionRequest? = null
     private val origin = "https://appassets.androidplatform.net"
     private val entry = "$origin/ui/index.html"
     private val worker = Executors.newFixedThreadPool(2)
@@ -165,7 +166,7 @@ class HybridActivity : Activity() {
         secrets = SecureSettings(this)
         secrets.cloudValue("login")?.let { value ->
             val saved = JSONObject(value)
-            CloudPins.install(saved.getString("host"), saved.getString("pin"))
+            if (saved.has("pin")) CloudPins.install(saved.getString("host"), saved.getString("pin"))
         }
         receiveCloudCallback(intent)
         accountModels = AccountModels(store, api, secrets)
@@ -219,6 +220,23 @@ class HybridActivity : Activity() {
             javaScriptCanOpenWindowsAutomatically = false
             setSupportMultipleWindows(false)
             mixedContentMode = android.webkit.WebSettings.MIXED_CONTENT_NEVER_ALLOW
+        }
+        web.webChromeClient = object : android.webkit.WebChromeClient() {
+            override fun onPermissionRequest(request: android.webkit.PermissionRequest) {
+                if (closed.get() || request.origin.toString().trimEnd('/') != origin ||
+                    request.resources.toSet() != setOf(android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE)) {
+                    request.deny(); return
+                }
+                if (checkSelfPermission(android.Manifest.permission.CAMERA) == android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                    request.grant(arrayOf(android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE)); return
+                }
+                pendingCameraPermission?.deny()
+                pendingCameraPermission = request
+                requestPermissions(arrayOf(android.Manifest.permission.CAMERA), CAMERA_REQUEST)
+            }
+            override fun onPermissionRequestCanceled(request: android.webkit.PermissionRequest) {
+                if (pendingCameraPermission === request) pendingCameraPermission = null
+            }
         }
         web.webViewClient = object : WebViewClient() {
             override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
@@ -804,7 +822,7 @@ class HybridActivity : Activity() {
             val scope = owner(host) ?: "local"
             val launch = if (intent?.getStringExtra("ownerScope") == scope)
                 intent?.getStringExtra("conversationId") ?: "" else ""
-            JSONObject().put("loggedIn", host != null).put("username", host?.username ?: "")
+            JSONObject().put("loggedIn", host != null).put("username", host?.username ?: "").put("cloudApp", true)
                 .put("owner", scope.takeUnless { it == "local" } ?: "").put("model", modelStatus(host))
                 .put("deviceId", host?.deviceId ?: "")
                 .put("busy", busy.get() && host != null && activeTurnScope == scope)
@@ -1349,7 +1367,10 @@ class HybridActivity : Activity() {
         }
         "auth.login", "cloud.adopt" -> {
             val previous = secrets.host()
-            val identity = if (method == "cloud.adopt") CloudLogin(secrets, api).result()
+            val appCloud = CloudAppLogin(secrets, api)
+            val identity = if (method == "cloud.adopt") {
+                if (appCloud.hasResult()) appCloud.result() else CloudLogin(secrets, api).result()
+            }
                 else api.login(params.getString("origin"), params.getString("username"),
                     params.getString("password"), params.optString("deviceName", "Android"))
             ensureOpen()
@@ -1358,11 +1379,14 @@ class HybridActivity : Activity() {
                 if (previous != null) SyncJobService.cancel(this)
                 secrets.saveHost(identity)
                 if (method == "cloud.adopt") {
-                    val login = JSONObject(secrets.cloudValue("login")!!)
-                    val pins = JSONObject(secrets.cloudValue("pins") ?: "{}")
-                    pins.put(identity.origin, login.getString("pin"))
-                    secrets.saveCloudValue("pins", pins.toString())
+                    if (!appCloud.hasResult()) {
+                        val login = JSONObject(secrets.cloudValue("login")!!)
+                        val pins = JSONObject(secrets.cloudValue("pins") ?: "{}")
+                        pins.put(identity.origin, login.getString("pin"))
+                        secrets.saveCloudValue("pins", pins.toString())
+                    }
                     secrets.saveCloudValue("result", null)
+                    secrets.saveAppValue("result", null)
                 }
                 SyncJobService.schedule(this)
             }
@@ -1373,6 +1397,20 @@ class HybridActivity : Activity() {
             restartUpdateSubscription()
             activeConversation = null
             savedIdentityView(identity).put("backgroundSync", SyncJobService.status(this))
+        }
+        "cloud.app.identity" -> JSONObject().put("deviceName", android.os.Build.MODEL)
+            .put("clientId", "weftmate-android").put("redirectUri", CLOUD_CALLBACK)
+            .put("hostOrigin", if (BuildConfig.DEBUG && packageName == "com.memoweft.weftmate.mobile.lg1bqa")
+                intent?.getStringExtra("lg1bHostOrigin") ?: CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com"
+                else CloudAppLogin(secrets, api).hostOrigin() ?: "https://api.weftmate.com")
+        "cloud.app.configure" -> CloudAppLogin(secrets, api).configure(params.getString("origin"))
+        "cloud.app.key" -> CloudAppKeys(secrets).get(params.getString("id"), params.optBoolean("clear"))
+        "cloud.app.sign" -> CloudAppKeys(secrets).sign(params.getString("id"), params.getString("input"))
+        "cloud.app.credentials" -> CloudAppLogin(secrets, api).credentials(params)
+        "cloud.app.request" -> CloudAppLogin(secrets, api).request(params)
+        "cloud.app.status" -> {
+            require(BuildConfig.DEBUG && packageName == "com.memoweft.weftmate.mobile.lg1bqa")
+            CloudAppLogin(secrets, api).status()
         }
         "cloud.configure" -> CloudLogin(secrets, api).configure(params.getString("origin"), params.getString("pin"))
         "cloud.request" -> CloudLogin(secrets, api).request(params)
@@ -1921,6 +1959,16 @@ class HybridActivity : Activity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (closed.get()) return
         if (requestCode == NOTIFY_REQUEST) emit("notifications.permission", notices().state())
+        if (requestCode == CAMERA_REQUEST) {
+            val pending = pendingCameraPermission
+            pendingCameraPermission = null
+            if (pending != null) {
+                if (grantResults.firstOrNull() == android.content.pm.PackageManager.PERMISSION_GRANTED &&
+                    pending.origin.toString().trimEnd('/') == origin && web.url?.startsWith("$origin/ui/") == true)
+                    pending.grant(arrayOf(android.webkit.PermissionRequest.RESOURCE_VIDEO_CAPTURE))
+                else pending.deny()
+            }
+        }
     }
 
     private fun startArtifactSave(host: HostIdentity, params: JSONObject): JSONObject {
@@ -2158,6 +2206,8 @@ class HybridActivity : Activity() {
     }
 
     override fun onDestroy() {
+        pendingCameraPermission?.deny()
+        pendingCameraPermission = null
         closed.set(true)
         stopped = true
         activeModel?.cancel()
