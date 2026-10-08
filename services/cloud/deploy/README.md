@@ -167,7 +167,7 @@ sudo stat -c '%a %U:%G' /etc/weftmate-cloud/cloud.env
 sudo systemctl restart weftmate-cloud
 sudo systemctl is-active weftmate-cloud
 curl -fsS http://127.0.0.1:8787/healthz
-# 预期 schemaVersion=5
+# 预期 schemaVersion=6（S2b + S1d；升级前备份数据库，不执行降级迁移）
 sudo journalctl -u weftmate-cloud --since '5 minutes ago' --no-pager
 ```
 

@@ -15,22 +15,22 @@ struct TimelineArtifactCard: View {
     @State private var sharing = false
     private var name: String { entry.event.data["fileName"]?.string ?? "成果文件" }
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            WeftLabel(name, icon: "outputs").font(.headline)
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+            WeftLabel(name, icon: "outputs").font(AppleTokens.Fonts.headline)
             Text("\(entry.event.data["contentType"]?.string ?? "文件") · \(entry.event.data["size"]?.int ?? 0) 字节")
-                .font(.caption).foregroundStyle(Weave.muted)
+                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             HStack {
                 Button("预览") { openPreview(entry.event) }.accessibilityIdentifier("previewArtifact.\(entry.seq)")
                 Button("保存") { Task { await prepare(); if file != nil { exporting = true } } }
                 Button("分享") { Task { await prepare(); if file != nil { sharing = true } } }
             }.buttonStyle(OutlineActionStyle()).disabled(loading || appModel.historyCachedAt != nil)
             if loading { ProgressView() }
-            if let error { Text(error).font(.caption).foregroundStyle(Weave.danger) }
+            if let error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         }
-        .padding(14).background(Weave.soft, in: RoundedRectangle(cornerRadius: 14))
+        .padding(AppleTokens.Space.p14).background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14))
         .fileExporter(isPresented: $exporting, item: file.map { AttachmentExport(file: $0) }, contentTypes: [.data], defaultFilename: name,
             onCompletion: { result in if case .failure = result { error = "文件未保存，请重试。" } }, onCancellation: {})
-        .popover(isPresented: $sharing) { if let file { ShareLink(item: file) { WeftLabel("分享文件", icon: "open") }.padding(24) } }
+        .popover(isPresented: $sharing) { if let file { ShareLink(item: file) { WeftLabel("分享文件", icon: "open") }.padding(AppleTokens.Space.p24) } }
         .onDisappear { cleanup() }
         .onChange(of: appModel.accountEpoch) { _, _ in cleanup() }
         .accessibilityElement(children: .contain)
