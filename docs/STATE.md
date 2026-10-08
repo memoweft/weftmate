@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-4 | IC-1 图标系统 | [PR #56](https://github.com/memoweft/weftmate/pull/56)（`wp/ic-1-icon-system`）：C4「天蓝」母版与45个确认功能图标、24个现有动作扩展统一至 design/icons/；单命令生成 Windows 多尺寸 ICO、系统主题单色任务栏 / 托盘、通知与安装器资产，桌面 / 手机 Web（网页界面）和 Android（安卓）图标已接入。Android 0.8.5/code18。桌面69/69、记忆页面3/3、界面3/3、手机及发布97/97、图标资产3/3、Android JVM（Java 虚拟机）27/27、构建与类型检查通过；真实 Electron（桌面程序框架）审批闭环与 MuMu 专属包1/1通过，测试包已卸载。[前后截图与边界](../tests/evidence/ic-1/README.md)；完整 CI（持续集成）门禁见 PR #56，待 Claude 审查 |
+| Codex · Windows-4 | S1d D29 App 内账号与设置设备服务端 | `wp/s1d-account-devices`：邮箱→验证码→设置密码、App 内 OIDC（开放身份连接协议）/PKCE（授权码校验）/DPoP（设备密钥持有证明）、改密码/退出、同账号设备目录/连接、电脑首次云登录自动绑定与受信 pin（证书公钥指纹）交付已实现；相关验证与 PR（拉取请求）见本包验收，LG-1 / LG-2 接线按 CLIENT_API 7.8；不部署 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | DS-1 设计令牌 | [PR #59](https://github.com/memoweft/weftmate/pull/59)（`wp/ds-1-design-tokens`）：唯一母版 design/tokens/ 与可重复生成脚本、桌面 / 手机 Web（网页界面）变量和 Android（安卓）资源 / 原生辅助常量接入；Apple（苹果客户端）交接产物在 design/tokens/generated/apple/，未改 apps/apple/。Android 0.8.6/code19；15 对截图逐像素一致、4,016 项样式值一致、相关交互及发布158/158、令牌2/2、Android JVM（Java 虚拟机）27/27、构建与类型检查通过。[截图与边界](../tests/evidence/ds-1/README.md)；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
 | Codex · Windows-2 | M2c 本地单槽记忆形成 | WeftMate [PR #58](https://github.com/memoweft/weftmate/pull/58)、Core [PR #87](https://github.com/memoweft/memoweft/pull/87)：本地流式形成／正确模板思考参数、相邻原话片段完整保留／中文直读提示、召回到期读取已有记忆已实现。真实Electron（桌面程序框架）最终Qwen3/3、MiMo3/3，原600秒预算与检查保持；[定位、前后对比与费用](../tests/evidence/m2c/README.md)。相关11/11、Core214/214及补验26/26（重叠）、类型检查通过；Core完整CI（持续集成）1,719/1,719，完整门禁见两PR。Core仅Claude squash（压缩合并），之后更新本仓CI固定提交；M2-3纠正与完整八步出口另包 |
@@ -19,6 +19,8 @@
 已完成：文档/规则重置、M0-1b 清理与拆分、M0-2 容量与动态预算（#24）、H1 健康设置/摘要/隔离队列（#22）、S0/S1a/S1b（#27/#29/#30）、CI 分组与依赖审计。
 
 ## 最近一次验证
+
+- **S1d / D29**：WSL（Windows 的 Linux 子系统）Node 24.21.0 相关云/数据库/入口/宿主 **33/33**（含 6 组新账号/设备测试）通过；真实 cloud main 进程、file（文件）邮件、隔离 SQLite（嵌入式数据库）和宿主验证分步注册→电脑云登录自动绑定→第二设备待批准→允许→账号目录→连接→一次性 wm1 配对材料消费/受信 pin（证书公钥指纹）交付。覆盖 DPoP（设备密钥持有证明）缺 key/重放、跨账号拒绝、pin 错 key/recipient/过期/篡改、旧密码/刷新族撤销、本机应急密码与云退出/离线保持；Windows 宿主相关回归 **8/8** 与类型检查通过。完整套件只交 CI（持续集成），客户端相机/真实 Electron（桌面程序框架）完整登录页由 LG-1 / LG-2 验收；本包只改服务器、不部署、不发真实邮件、不碰日用数据。
 
 - **DS-1**：真实 Electron（桌面程序框架）审批闭环与浅 / 深 / 四种主题色 / 字号保存、390×844 手机 Web 的列表 / 运行 / 审批 / 步骤 / 成果 / 来源均通过，15 对截图零像素差异（仅固定实时秒数字样与悬停条件）。全部样式声明保留原值；Android code19 JVM 与构建通过。仅参数来源变更，动画本体和 Apple 接线留后续包；客户端业务契约无变更。详见 tests/evidence/ds-1/README.md。
 
@@ -81,6 +83,8 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- **S1d / D29**：CLIENT_API **7.8** 新增分步注册/找回、App 内 authorization/resume、密码更改/退出、DPoP 同账号设备目录/host connect、宿主 cloud-desktop 自动绑定、受信 recipient pin 交付与本机应急密码；7.1 / 7.4 / 7.7 同步登记 origin/Cookie/电脑云 Cookie 管理资格。云 schema 6；LG-1（Windows / 网页 / Android）与 LG-2（Apple）按 7.8 接线，原账号/配对接口兼容，跨账号共享留 S5。
+
 - **M2a**：CLIENT_API 3.4 的 `assistant.message.data` 新增可选 `memoryUsed:[{id,kind,summary}]`，记录实际保留在回复请求上下文中的 MemoWeft 依据；未命中/失败/预算移除返回空数组，旧宿主可省略。来源复用3.9账户权限接口；桌面标签已接，手机/Apple（苹果客户端）标签另包。
 
 - **UI-2 客户端接入**：服务端契约无变更，手机 / Android接入既有 CLIENT_API 3.16资源列表与既有成果 / 来源详情；原生精确只读路由需 code17，发布默认已更新。记忆模块与桌面界面未修改。
@@ -114,7 +118,7 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 - **UI-1 契约缺口**：`GET /sessions` 缺少日期、未读及跨会话审批汇总；有真实时间时可分组，无日期时显示「会话」，审批点只来自已读取的真实审批。未提供会话重命名/删除/归档、删除关联记忆、可取消排队、记忆引用、成果在文件夹显示及任意网页/成果图片预览接口，不造按钮或数据；已有 queue/steer（排队/插话）参数已接。助手文字使用持久消息，原生文字 chunk（片段）目前不在契约中，真正逐字流式输出另包。外观按设备保存；字体、自定义色、密度及账号同步不在本包。截图来自独立 Electron 验收入口，不代表 `src/main.mjs` 全套启动或 macOS 原生 App 已验收。
 - M1-1c（依赖 #41）：电脑文件范围、不同根并行与子任务网页已修复；当包六场景1/6（03）；最新M0-7b基线4/6，仍未达完整M1出口。D12 五种模式与常见危险操作判断由 M1-2 接入，真实Qwen/MiMo失败与对照见上；跨端与长期稳定性未验。
 
-- **S1c-Apple 生产依赖未齐**：7.7 原生公钥 bootstrap 已由 S1c-Web 补齐并接入；注册/找回尚无云浏览器页；discover 需要已知 hostId、尚无账号宿主枚举；已有设备批准尚无可信 pin 转交接口。待云/Windows 轨道补正式契约与页面，才能完成「全新设备仅云账号登录→另一设备批准」的无扫码流程。真机 Secure Enclave/相机与生产系统浏览器/中继未验；本包不越界改 `services/cloud` 或 `src`。
+- **S1c-Apple / D29 客户端待接**：S1d 已补 CLIENT_API 7.8 App 内注册/找回/OIDC 交互、账号设备/宿主枚举、连接和已有设备可信 pin 交付。LG-1 / LG-2 须接完整登录页、设置账户/设备、相机或可信设备传输与原生验签/固定 pin；云 HTML（网页标记）兼容表单仍非完整注册页，D29 不依赖它。生产预登记客户端、真机 Secure Enclave（安全隔区）/相机及中继部署尚未验；本包不改 Apple / 前端、不部署。
 - S1c-Web 未部署；云需预登记实际直接/中继回调与 Android client。Android 本机没有 SDK/Gradle，已在 CI 完成构建/JVM；实际系统浏览器往返、CA+SPKI 拒绝的真机验收和相机扫码另包（本包输入配对码，无新增权限），Apple S1c 另包。宿主离线仍按 S2 的网络失败语义，S6 离线聊天另包。
 
 - D1 已完成真实云/systemd（系统服务管理）私有证书权限、既有443共存与 API/relay 生产 CA；API/relay/hosts DNS 已就绪。S2b 已交付阿里云 DNS provider 与逐宿主自动签发/续期/安装/热载，尚未部署：本人需创建指定 DNS 区增删权限 RAM 子账号并私下配置凭据、升级 cloud schema 5、开启宿主 ACME；生产 AliDNS/Let's Encrypt、真实 Windows/五端 pin 真机与长时续期尚未验。掉电残留 TXT 的后台清扫、内容 key 轮换、已撤销宿主重新启用留后续包。Windows 验收使用隔离 CA，不能代表普通浏览器生产内容证书已就绪。
