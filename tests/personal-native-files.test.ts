@@ -66,7 +66,7 @@ test('one browser capability opens model-selected URLs, reads captures and follo
     (error: any) => error.code === 'BROWSER_SOURCE_UNVERIFIED')
 })
 
-test('new owner conversations get separate host data directories; shared chat retains native defaults', async () => {
+test('new owner conversations get separate host data directories; shared chat also gets an account-isolated native cwd', async () => {
   const root = await mkdtemp(join(tmpdir(), 'native-session-cwd-'))
   try {
     const created: any[] = []
@@ -82,9 +82,9 @@ test('new owner conversations get separate host data directories; shared chat re
       } })
     for (const sessionId of ['one', 'two']) await backend.createSession({ sessionId, modelProfileId: 'local', ownerId: 'owner' })
     await backend.createSession({ sessionId: 'shared', modelProfileId: 'local', ownerId: 'other' })
-    assert.equal(created[0].cwd, join(root, 'conversations/one'))
-    assert.equal(created[1].cwd, join(root, 'conversations/two'))
-    assert.equal(created[2].cwd, undefined)
+    assert.equal(created[0].cwd.split(/[/\\]/).at(-1), 'one')
+    assert.equal(created[1].cwd.split(/[/\\]/).at(-1), 'two')
+    assert.ok(created[2].cwd.startsWith(join(root, 'conversations'))); assert.notEqual(created[0].cwd.split(/[/\\]/).at(-2), created[2].cwd.split(/[/\\]/).at(-2))
     assert.equal(created[2].agentPreset, 'personal-shared-chat')
   } finally { await rm(root, { recursive: true, force: true }) }
 })
