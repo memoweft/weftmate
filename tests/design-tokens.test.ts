@@ -10,7 +10,7 @@ test('design token outputs match the sole source without writing files', () => {
 });
 test('every authored desktop/mobile token reference exists in its generated CSS', () => {
   for (const [directory, files] of [
-    ['src/personal-access-ui', ['styles.css', 'native-desktop.css']],
+    ['src/personal-access-ui', ['styles.css', 'native-desktop.css', 'settings.css']],
     ['apps/mobile-ui/www', ['styles.css']],
   ] as const) {
     const generated = readFileSync(resolve(root, directory, 'tokens.css'), 'utf8');

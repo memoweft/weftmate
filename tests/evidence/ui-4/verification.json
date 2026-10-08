@@ -1,0 +1,21 @@
+{
+  "realElectron": true,
+  "isolatedAccount": true,
+  "paidModelRequests": 0,
+  "checks": [
+    "modal hides background controls from accessibility",
+    "appearance save and reload",
+    "keyword search",
+    "usage totals and persisted monthly/temporary limits",
+    "all desktop categories light/dark",
+    "About version state and existing update action",
+    "backup settings, create, import and restore cancellation",
+    "reminder pause, resume, run and delete",
+    "Escape close and background accessibility restored",
+    "conversation usage deep link",
+    "narrow category picker",
+    "reduced motion",
+    "mobile list, subpages, search and return"
+  ],
+  "errors": []
+}

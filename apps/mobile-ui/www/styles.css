@@ -371,6 +371,24 @@ summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible
 html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduced-motion] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
+/* UI-4: shared category list and pushed settings pages. */
+.settings-search { width: 100%; border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-8); padding: var(--wm-space-12); background: var(--surface); color: var(--ink); margin-bottom: var(--wm-space-20); }
+.settings-list .group { border: 0; background: transparent; box-shadow: none; }
+.settings-list .group > h2 { color: var(--muted); font-size: var(--wm-font-size-12); }
+.settings-list .row { border-radius: 0; padding: var(--wm-space-16) 0; gap: var(--wm-space-12); }
+.settings-category-icon { width: var(--wm-space-24); height: var(--wm-space-24); }
+[data-theme="dark"] .settings-category-icon { filter: invert(1); }
+.settings-list .row > span:first-of-type { flex: 1; }
+.settings-row { padding: var(--wm-space-24) 0; border-bottom: var(--wm-space-1) solid var(--line); }
+.settings-segmented { display: flex; padding: var(--wm-space-3); gap: var(--wm-space-2); margin-top: var(--wm-space-16); border-radius: var(--wm-radius-8); background: var(--soft); }
+.settings-segmented button { flex: 1; border: 0; border-radius: var(--wm-radius-6); padding: var(--wm-space-10); background: transparent; color: var(--ink); }
+.settings-segmented button[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
+
+.settings-control-source { display: none; }
 /* Shared positioning measures the untransformed menu within the visual viewport. */
 .popover[popover] { width: 350px; animation: none; transform: none; transition: opacity var(--wm-duration-fast) var(--ease); }
 .session-action-dialog { box-sizing: border-box; min-width: 0; max-width: calc(100dvw - 16px); max-height: calc(100dvh - 16px); overflow: auto; }
+
+.settings-schedules-list { list-style: none; padding: 0; margin: var(--wm-space-20) 0; }
+.settings-schedule-row { display: flex; flex-wrap: wrap; gap: var(--wm-space-12); padding: var(--wm-space-20) 0; border-bottom: var(--wm-space-1) solid var(--line); }
+.settings-schedule-row .system-service-detail { flex-basis: 100%; display: flex; flex-direction: column; gap: var(--wm-space-8); }
