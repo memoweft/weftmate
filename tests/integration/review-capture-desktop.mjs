@@ -1,11 +1,10 @@
-import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
-import { repository, outDirectory, capture } from '../../scripts/review-gallery/common.mjs';
+import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
 for (const theme of ['light', 'dark']) {
   const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
@@ -37,38 +36,42 @@ for (const theme of ['light', 'dark']) {
     await page.goto(fixture.origin + '/personal/v1/ui', { timeout: 30000 });
     console.log('Desktop fixture loaded.');
     const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
-    const shot = scene => capture(page, out, 'windows', scene, theme, application);
-    await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor(); await shot('login');
-    await page.getByRole('textbox', { name: '账户名', exact: true }).fill(fixture.credentials.username);
-    await page.getByLabel('密码', { exact: true }).filter({ visible: true }).fill(fixture.credentials.password);
-    await page.getByRole('textbox', { name: '这台设备的名称' }).fill('合成审稿桌面');
-    await button('登录').click(); await button('允许一次').waitFor();
-    await page.getByText('已登录。', { exact: true }).waitFor({ state: 'hidden' });
-    ownerId = await page.evaluate(async () => (await (await fetch('/personal/v1/auth/me')).json()).account.ownerId);
-    // Remove the hidden login form value before any authenticated screenshot.
-    await page.locator('input[type=password]').evaluateAll(nodes => nodes.forEach(n => { n.value = ''; }));
-    await button('搜索会话').click(); await page.getByRole('searchbox', { name: '搜索会话', exact: true }).waitFor(); await shot('sessions');
-    await page.getByRole('searchbox', { name: '搜索会话', exact: true }).blur();
-    await page.getByText('执行了 2 步 · 用时 2 秒', { exact: true }).click();
-    await page.getByText('读取 3 个文件', { exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); await shot('conversation');
-    await button('允许一次').evaluate(node => node.scrollIntoView({ block: 'center' })); await shot('approval');
-    await page.getByRole('radio', { name: '简要报告', exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); await shot('question');
-    await button('输出与来源').click(); await page.getByRole('button', { name: /README.md.*读取/ }).waitFor(); await shot('outputs-sources');
-    await button('关闭列表').click();
-    await button('查看这条回复采用的 1 条记忆来源').click();
-    await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); await shot('memory');
-    await button('收起右侧面板').click(); await button(/TimelineFixture/).click(); await button('设置').click();
-    await page.getByRole('combobox', { name: /^颜色模式/ }).waitFor(); await shot('appearance');
-    assert.deepEqual(errors, []);
-    console.log(`Desktop ${theme}: eight synthetic scenes captured.`);
-  } catch (error) {
-    console.error(error.message);
-    if (page) console.error((await page.locator('body').innerText()).slice(-1600));
-    throw error;
+    const shot = (scene, prepare) => runScene({ page, out, platform: 'windows', scene, theme, prepare, application });
+    await shot('login', async () => {
+      await page.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
+      await page.getByLabel('邮箱', { exact: true }).filter({ visible: true }).waitFor();
+      await button('离线使用这台电脑').waitFor();
+    });
+    // Real isolated host authentication is independent of login-page selectors.
+    // This gallery captures LG-1a's first screen, not the cloud registration flow.
+    ownerId = await page.evaluate(async credentials => {
+      const response = await fetch('/personal/v1/auth/login', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(credentials) });
+      if (!response.ok) throw Error('Isolated desktop authentication failed');
+      return (await response.json()).account.ownerId;
+    }, fixture.credentials);
+    const home = async () => {
+      await page.goto(fixture.origin + '/personal/v1/ui');
+      await button('允许一次').waitFor();
+    };
+    const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
+    const preparations = {
+      sessions: async () => { await home(); await button('搜索会话').click(); await page.getByRole('searchbox', { name: '搜索会话', exact: true }).waitFor(); },
+      conversation: async () => { await home(); await page.getByText('执行了 2 步 · 用时 2 秒', { exact: true }).click(); await page.getByText('读取 3 个文件', { exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      approval: async () => { await home(); await button('允许一次').evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      question: async () => { await home(); await page.getByRole('radio', { name: '简要报告', exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      'outputs-sources': async () => { await home(); await button('输出与来源').click(); await page.getByRole('button', { name: /README.md.*读取/ }).waitFor(); },
+      memory: async () => { await home(); await button('查看这条回复采用的 1 条记忆来源').click(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },
+      appearance: async () => { await settings(); await page.getByRole('combobox', { name: /^颜色模式/ }).waitFor(); },
+      usage: async () => { await settings(); await page.getByText('用量', { exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
+      'session-menu': async () => { await home(); await button('更多操作 项目进度报告').click(); await page.getByRole('dialog', { name: '对话操作', exact: true }).waitFor(); await button('归档对话').waitFor(); await button('删除对话').waitFor(); },
+    };
+    for (const scene of catalog.scenes.filter(row => row.id !== 'login')) await shot(scene.id, preparations[scene.id]);
+    if (errors.length) throw Error('Desktop renderer or synthetic projection failed');
+    console.log(`Desktop ${theme}: scene outcomes recorded.`);
   } finally {
     closing = true;
     await page?.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
     await application?.evaluate(({ app }) => app.exit(0)).catch(() => {});
-    await application?.close().catch(() => {}); await fixture.close();
+    await application?.close().catch(() => {}); await fixture.close(); await rm(profile, { recursive: true, force: true }); await rm(fixture.root, { recursive: true, force: true });
   }
 }
