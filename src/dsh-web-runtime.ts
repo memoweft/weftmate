@@ -577,11 +577,16 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
     '      checking every deliverable. Keep reusable methods and pitfalls in this conversation.')
   const personalCompaction = MOD_MAINTAINER_PRESET_COMPACTION.replace(
     "'@deepseek-ai/dsh-compaction-basic'", `../../profiles/${profileName}/plugins/weftmate-compaction.mjs`)
-  const contextAwareComposition = `${longTaskComposition}${personalCompaction}`
+  const previousContextAwareComposition = `${longTaskComposition}${personalCompaction}`
+  // Native one-shot jobs expose jobId + job_output, including blocking waits
+  // and one completion notice; foreground calls still return results directly.
+  const contextAwareComposition = previousContextAwareComposition
+    .replace('    completionDelivery: quiet', '    completionDelivery: wakeup')
+    .replace('    backgroundMode: continuable', '    backgroundMode: one-shot')
   await mkdir(presetDir, { recursive: true })
   const existingComposition = (await readFile(composition, 'utf8').catch(() => '')).replace(/\r\n/g, '\n')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== `${compositionText}${MOD_MAINTAINER_PRESET_COMPACTION}` && existingComposition !== compositionText &&
+  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== previousContextAwareComposition && existingComposition !== `${compositionText}${MOD_MAINTAINER_PRESET_COMPACTION}` && existingComposition !== compositionText &&
       existingComposition !== previousM1Composition && existingComposition !== `${previousM1Composition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
       existingComposition !== previousNativeComposition && existingComposition !== `${previousNativeComposition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
       existingComposition !== boundedCompositionText &&

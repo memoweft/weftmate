@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "testedBaseCommit": "383fa13",
+  "runs": [
+    "lan-1.json",
+    "lan-2.json",
+    "mimo-long.json",
+    "mimo-regression.json"
+  ],
+  "startupFailures": "startup-attempts.json",
+  "localTests": {
+    "relatedPassed": 21,
+    "relatedFailed": 0,
+    "lanBridgePassed": 3,
+    "typecheck": "passed",
+    "preexistingToolScopeFixtureFailure": "assembly.sections is not iterable; reproduced using the unmodified baseline preset",
+    "nativeTestsOnCleanCi": "explicitly skipped without pinned compiled DSH; no new CI exception entries"
+  },
+  "knownMimoEstimatedCny": 0.4375288,
+  "pricing": {
+    "perMillionTokens": {
+      "uncachedInput": 1,
+      "cachedInput": 0.02,
+      "output": 2
+    },
+    "source": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "kind": "known usage lower bound, not invoice"
+  },
+  "lanLock": "released immediately after both sequential runs",
+  "clientContractChanges": false
+}
