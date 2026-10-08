@@ -1,0 +1,10 @@
+.backup-settings form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--wm-space-12) var(--wm-space-16); }
+.backup-settings form label { margin: 0; }
+.backup-settings form label:has([name=directory]), .backup-settings form label:has([name=path]) { grid-column: 1 / -1; }
+.backup-settings form label:has([type=checkbox]) { display: flex; align-items: center; gap: var(--wm-space-8); grid-column: 1 / -1; margin: var(--wm-space-12) 0; }
+.backup-settings input[type=checkbox] { width: var(--wm-space-18); height: var(--wm-space-18); min-height: 0; margin: 0; padding: 0; accent-color: var(--accent); }
+.backup-settings input { display: block; margin-top: var(--wm-space-6); font-weight: normal; }
+.backup-settings form button { justify-self: start; grid-column: 1 / -1; }
+.backup-settings .actions, .backup-settings [data-import] { margin-top: var(--wm-space-16); }
+.backup-settings .field-help { margin-top: var(--wm-space-8); }
+@media (max-width: 600px) { .backup-settings form { grid-template-columns: 1fr; } }

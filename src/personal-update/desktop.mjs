@@ -15,7 +15,7 @@ export async function updateTrustedKeys({ development = false, feed = null } = {
 
 export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion(), getWindow = () => null,
   root = join(app.getPath('userData'), 'updates', 'ui'), feed = process.env.WEFTMATE_UI_UPDATE_FEED,
-  trustedKeys = null, selfCheckTimeout = 10000, mobileUiDir = null } = {}) {
+  trustedKeys = null, selfCheckTimeout = 10000, mobileUiDir = null, beforeAppInstall = async () => {} } = {}) {
   const channel = process.env.WEFTMATE_UPDATE_CHANNEL || 'stable';
   const store = await new UpdateStore({ root, trustedKeys: trustedKeys || await updateTrustedKeys({ development: !app.isPackaged, feed }),
     versions: { app: appVersion, host: appVersion, bridge: 1 }, channel, builtInVersion: appVersion,
@@ -82,12 +82,17 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   }
   const trusted = event => window && event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame &&
     event.senderFrame.url === window.webContents.getURL() && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
+  async function restart() {
+    if (updateState().status !== 'downloaded' || !await isIdle()) return false;
+    try { await beforeAppInstall(); } catch { return false; }
+    return await isIdle() && quitAndInstall();
+  }
   for (const [channelName, handler] of [['wm:desktop:update-state', state], ['wm:desktop:update-check', check],
-    ['wm:desktop:update-restart', async () => { if (!await isIdle()) return { restarted: false, reason: '任务仍在运行，请完成后重试' }; return { restarted: quitAndInstall() }; }]]) {
+    ['wm:desktop:update-restart', async () => { const restarted = await restart(); return { restarted, ...(restarted ? {} : { reason: '更新尚未就绪、任务仍在运行或更新前备份未完成，请稍后重试' }) }; }]]) {
     ipcMain.handle(channelName, (event) => { if (!trusted(event)) throw new Error('Desktop update unavailable'); return handler(); });
   }
   if (feed || updateState().enabled) { checkTimer = setInterval(() => void check(), 60 * 60 * 1000); checkTimer.unref(); void check(); }
-  return { store, state, check, reopen, attach, async restart() { return await isIdle() && quitAndInstall(); }, async prepareWindow() { if (await isIdle()) await store.activate({ idle: true }); },
+  return { store, state, check, reopen, attach, restart, async prepareWindow() { if (await isIdle()) await store.activate({ idle: true }); },
     close() { clearInterval(checkTimer); clearTimeout(healthTimer); setPersonalAccessUiResourceReader(null);
       for (const name of ['wm:desktop:update-state', 'wm:desktop:update-check', 'wm:desktop:update-restart']) ipcMain.removeHandler(name); } };
 }
