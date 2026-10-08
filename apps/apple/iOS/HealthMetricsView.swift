@@ -12,22 +12,22 @@ struct HealthMetricsView: View {
     var body: some View {
         Section("最新健康指标") {
             if let latest {
-                Text("\(latest.date) · \(latest.timeZone)").font(.caption).foregroundStyle(.secondary)
+                Text("\(latest.date) · \(latest.timeZone)").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                 Text("身体电量：\(value(latest.hourly?.last?.bodyBattery)) / 100").accessibilityIdentifier("healthMetric.battery")
                 Text("恢复度：\(value(latest.derived?.recovery?.value)) / 100").accessibilityIdentifier("healthMetric.recovery")
                 if let recovery = latest.derived?.recovery {
                     Text("依据 \(recovery.inputs.compactMap { HealthCategory(rawValue: $0)?.title }.joined(separator: "、")) · 基线 \(recovery.baselineDays) 天")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                 }
                 Text("负荷：\(value(latest.derived?.load?.value)) 相对单位").accessibilityIdentifier("healthMetric.load")
                 if let load = latest.derived?.load {
                     if let ratio = load.ratio { Text("近 7 天 / 28 天负荷比：\(ratio, specifier: "%.2f")") }
-                    else { Text("负荷比数据不足 · 7 天窗 \(load.acuteDays)/7 · 28 天窗 \(load.chronicDays)/28").font(.caption) }
+                    else { Text("负荷比数据不足 · 7 天窗 \(load.acuteDays)/7 · 28 天窗 \(load.chronicDays)/28").font(AppleTokens.Fonts.caption) }
                 }
                 if let hour = latest.hourly?.last(where: { $0.stress != nil }), let stress = hour.stress {
                     Text("压力：\(stress.lower, specifier: "%.0f")–\(stress.upper, specifier: "%.0f") / 100").accessibilityIdentifier("healthMetric.stress")
                     Text("最近采样 \(stress.latestSampleAt) · \(stress.sampleCount) 组 · \(stress.confidence == "sparse" ? "采样稀疏" : "离散采样")")
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                 } else { Text("压力：数据不足").accessibilityIdentifier("healthMetric.stress") }
                 Text("睡眠：\(latest.sleep.map { String(format: "%.1f 小时", $0.totalMinutes / 60) } ?? "数据不足")").accessibilityIdentifier("healthMetric.sleep")
                 if let sleep = latest.derived?.sleep {
@@ -37,11 +37,11 @@ struct HealthMetricsView: View {
                         Text("\(["core": "核心", "deep": "深睡", "rem": "快速眼动", "unspecified": "未分期"][stage] ?? stage)：\(sleep.stageMinutes[stage]!, specifier: "%.0f") 分钟")
                     }
                 }
-                Text("本地陪伴估算；缺失输入不补零，压力代表有采样时的区间。").font(.footnote).foregroundStyle(.secondary)
+                Text("本地陪伴估算；缺失输入不补零，压力代表有采样时的区间。").font(AppleTokens.Fonts.footnote).foregroundStyle(AppleTokens.Styles.secondary)
             } else { Text("授权并更新摘要后查看指标") }
         }
         Section("身体电量与压力 · 小时趋势") {
-            Text("折线为电量；竖线为压力区间。时间按摘要时区显示。").font(.caption).foregroundStyle(.secondary)
+            Text("折线为电量；竖线为压力区间。时间按摘要时区显示。").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
             if let hours = latest?.hourly, !hours.isEmpty {
                 Chart {
                     ForEach(hours, id: \.start) { hour in

@@ -4,6 +4,7 @@ import { csrfForToken, digest, exactKeys, failure } from '../personal-access/com
 import { SESSION_MS } from '../personal-access/constants.mjs';
 import { cloudConfiguration, createCloudVerifier } from './proofs.mjs';
 import { openIdentity } from './storage.mjs';
+import { hashPassword, validPassword } from '../personal-access/password.mjs';
 
 const bindingKey = (issuer, sub) => JSON.stringify([issuer, sub]);
 export function cloudIdentityFromEnvironment(env = process.env) {
@@ -19,6 +20,7 @@ export async function createHostCloudIdentity(context, options) {
   const installationKey = await importJWK(store.state.installation.privateJwk, 'ES256');
   let poll;
   let syncing = null;
+  let desktopQueue = Promise.resolve();
   const activeResponses = new Map();
   async function edit(change) {
     const next = structuredClone(store.state);
@@ -30,7 +32,8 @@ export async function createHostCloudIdentity(context, options) {
     const current = context.authenticate(request, 'account:manage');
     if (direct) {
       context.requireBrowserOrigin(request, true);
-      if (store.state.sessions[current.deviceId] || current.device.authKind !== 'password')
+      if (current.device.authKind !== 'password' &&
+          store.state.devices[store.state.sessions[current.deviceId]?.trustId]?.isHost !== true)
         throw failure('LOCAL_SESSION_REQUIRED', 403);
     }
     return current;
@@ -40,6 +43,30 @@ export async function createHostCloudIdentity(context, options) {
       .setIssuer(hostId).setAudience(config.issuer).setIssuedAt().setExpirationTime('60s')
       .setJti(randomUUID()).sign(installationKey);
     return callCloud(route, { hostId, proof });
+  }
+  function deviceStatus(next, trustId, isHost = false) {
+    const d = next.devices[trustId];
+    next.outbox[randomUUID()] = { action: '/hosts/devices/status', sub: next.bindings[d.bindingKey].sub,
+      deviceId: d.cloudDeviceId, jkt: d.jkt, status: d.status, ...(isHost ? { isHost: true } : {}) };
+  }
+  async function issueSession(trustId, identity, name) {
+    const device = store.state.devices[trustId];
+    if (device.status !== 'trusted') throw failure('DEVICE_NOT_TRUSTED', 403);
+    const deviceId = `device-${randomUUID()}`, token = randomBytes(32).toString('base64url');
+    const csrfToken = csrfForToken(token);
+    const expiresAt = new Date(context.timestamp() + SESSION_MS).toISOString();
+    await edit(next => { next.sessions[deviceId] = { bindingKey: device.bindingKey, trustId, epoch: identity.auth_epoch }; });
+    await context.mutate(device.ownerId, next => {
+      next.devices[deviceId] = { name, tokenHash: digest(token), csrfHash: digest(csrfToken),
+        scopes: ['sessions:read', 'commands:write', 'account:manage'], authKind: 'cloud', authEpoch: next.account.authEpoch,
+        revoked: false, enrolledAt: new Date(context.timestamp()).toISOString(), expiresAt };
+    });
+    return { ...context.publicAuth(device.ownerId, deviceId, context.accountState(device.ownerId).devices[deviceId], csrfToken), token };
+  }
+  function sessionReply(response, request, result) {
+    const { token, ...body } = result;
+    context.json(response, 200, body, { 'set-cookie': context.sessionCookie(token,
+      context.requestAuthority(request).startsWith('https:')) });
   }
   async function callCloud(route, body, token) {
     let response;
@@ -105,7 +132,11 @@ export async function createHostCloudIdentity(context, options) {
     closeInvalidResponses();
   }
   async function syncRevocations() {
-    if (syncing) return syncing;
+    if (syncing) {
+      await syncing;
+      if (Object.keys(store.state.outbox).length) return syncRevocations();
+      return;
+    }
     syncing = (async () => {
       for (const [id, event] of Object.entries(store.state.outbox)) {
         const { action = '/hosts/devices/revoke', ...data } = event;
@@ -114,6 +145,10 @@ export async function createHostCloudIdentity(context, options) {
       }
       const result = await signedRequest('/hosts/revocations', { afterSeq: store.state.watermark });
       await applyEvents(result.eventToken);
+      if (store.state.hostName) {
+        const binding = Object.values(store.state.bindings).find(b => b.status === 'active');
+        if (binding) await signedRequest('/hosts/status', { name: store.state.hostName, sub: binding.sub });
+      }
     })().finally(() => { syncing = null; });
     return syncing;
   }
@@ -126,6 +161,7 @@ export async function createHostCloudIdentity(context, options) {
       device.status = 'revoked';
       next.outbox[randomUUID()] = { sub: next.bindings[session.bindingKey].sub,
         deviceId: device.cloudDeviceId, jkt: device.jkt };
+      deviceStatus(next, session.trustId);
     });
     await revokeInvalidSessions();
     closeInvalidResponses();
@@ -150,7 +186,8 @@ export async function createHostCloudIdentity(context, options) {
   async function handle(request, response, url) {
     const pathname = url.pathname;
     if (!(pathname.startsWith('/personal/v1/cloud/') ||
-        ['/personal/v1/auth/cloud-session', '/personal/v1/auth/cloud-nonce'].includes(pathname))) return false;
+        ['/personal/v1/auth/cloud-session', '/personal/v1/auth/cloud-nonce', '/personal/v1/auth/cloud-desktop',
+          '/personal/v1/auth/cloud-offline'].includes(pathname))) return false;
     try {
       if (url.search) throw failure('INVALID_REQUEST');
       const route = pathname.replace('/personal/v1', '');
@@ -162,7 +199,8 @@ export async function createHostCloudIdentity(context, options) {
         const current = local(request);
         const binding = Object.values(store.state.bindings).find(b => b.ownerId === current.ownerId && b.status !== 'unbound');
         context.json(response, 200, { status: binding?.status || 'unbound',
-          canManage: current.via === 'cookie' && current.device.authKind === 'password' &&
+          canManage: current.via === 'cookie' && (current.device.authKind === 'password' ||
+            store.state.devices[store.state.sessions[current.deviceId]?.trustId]?.isHost === true) &&
             context.requestAuthority(request) === context.origin &&
             !Object.keys(request.headers).some(k => k === 'forwarded' || k.startsWith('x-forwarded-')), hostId }); return true;
       }
@@ -176,6 +214,30 @@ export async function createHostCloudIdentity(context, options) {
         throw failure('METHOD_NOT_ALLOWED', 405);
       context.requireBrowserOrigin(request);
       const body = await context.readJson(request, 16 * 1024);
+      if (route === '/auth/cloud-offline') {
+        context.requireBrowserOrigin(request, true);
+        exactKeys(body, ['cloudAccountId','password','deviceName'], ['cloudAccountId','password','deviceName']);
+        const binding = store.state.bindings[bindingKey(config.issuer, body.cloudAccountId)];
+        if (!binding?.desktop || !binding.emergencyPasswordSet) throw failure('UNAUTHORIZED', 401);
+        sessionReply(response, request, await context.loginAccount({
+          username: context.accountState(binding.ownerId).account.username,
+          password: body.password, deviceName: body.deviceName })); return true;
+      }
+      if (route === '/cloud/emergency-password') {
+        const current = local(request, true);
+        exactKeys(body, ['password'], ['password']);
+        const binding = Object.values(store.state.bindings).find(b => b.ownerId === current.ownerId && b.desktop && b.status === 'active');
+        if (!binding || binding.emergencyPasswordSet || current.device.authKind !== 'cloud') throw failure('FORBIDDEN', 403);
+        if (!validPassword(body.password)) throw failure('INVALID_REQUEST');
+        const password = await context.hashWork(() => hashPassword(body.password));
+        await context.serial(async () => {
+          local(request, true);
+          if (store.state.bindings[bindingKey(binding.issuer, binding.sub)].emergencyPasswordSet) throw failure('FORBIDDEN', 403);
+          await context.mutate(current.ownerId, next => { next.account.password = password; });
+          await edit(next => { next.bindings[bindingKey(binding.issuer, binding.sub)].emergencyPasswordSet = true; });
+        });
+        context.json(response, 200, { configured: true }); return true;
+      }
       if (route === '/auth/cloud-nonce') {
         exactKeys(body, [], []);
         const nonce = randomBytes(32).toString('base64url');
@@ -184,6 +246,91 @@ export async function createHostCloudIdentity(context, options) {
           next.nonces[nonce] = context.timestamp() + 120_000;
         }));
         context.json(response, 200, { nonce, expiresIn: 120 }, { 'dpop-nonce': nonce }); return true;
+      }
+      if (route === '/auth/cloud-desktop') {
+        context.requireBrowserOrigin(request, true);
+        if (!['127.0.0.1','::1','::ffff:127.0.0.1'].includes(request.socket.remoteAddress))
+          throw failure('LOCAL_SESSION_REQUIRED', 403);
+        exactKeys(body, ['accessToken','deviceName'], ['accessToken','deviceName']);
+        if (request.headers.authorization) throw failure('AMBIGUOUS_AUTH');
+        const name = context.deviceName(body.deviceName);
+        const identity = await verifier.verify(body.accessToken, config.base, 'cloud:account');
+        const proof = await verifier.proof(body.accessToken, request.headers.dpop, 'POST', `${context.origin}${pathname}`);
+        if (proof.jkt !== identity.cnf?.jkt) throw failure('DPOP_INVALID', 401);
+        await context.serial(() => edit(next => {
+          if ((next.nonces[proof.nonce] ?? 0) <= context.timestamp() || next.replays[proof.replayId])
+            throw failure('DPOP_REPLAY', 401);
+          delete next.nonces[proof.nonce]; next.replays[proof.replayId] = context.timestamp() + 120000;
+        }));
+        const task = desktopQueue.then(async () => {
+          const key = bindingKey(config.issuer, identity.sub);
+          let binding = store.state.bindings[key];
+          if (binding?.status === 'unbound') throw failure('CLOUD_NOT_BOUND', 403);
+          if (identity.auth_epoch < (store.state.epochs[key] ?? 0)) throw failure('UNAUTHORIZED', 401);
+          if (!binding) {
+            // Allocate an independent owner. Never infer ownership of existing
+            // data from a cloud email, username, or an unbound legacy account.
+            const created = await context.registerAccount({ username: `cloud-${randomUUID()}`,
+              password: randomBytes(48).toString('base64url'), deviceName: name, displayName: name });
+            const claimId = randomUUID();
+            await context.serial(async () => {
+              await context.mutate(created.account.ownerId, next => { next.devices[created.device.id].revoked = true; });
+              await edit(next => {
+                next.bindings[key] = { issuer: config.issuer, sub: identity.sub, ownerId: created.account.ownerId,
+                  hostId, claimId, status: 'pending', desktop: true };
+                next.claims[claimId] = { ownerId: created.account.ownerId, sub: identity.sub, status: 'pending' };
+              });
+            });
+            binding = store.state.bindings[key];
+          }
+          // Existing password-bound accounts must still explicitly approve a
+          // new cloud device. Only a cloud-first desktop binding bootstraps it.
+          let trustId = Object.keys(store.state.devices).find(id => {
+            const d = store.state.devices[id]; return d.bindingKey === key && d.jkt === proof.jkt && d.cloudDeviceId === identity.device_id;
+          });
+          if ((binding.status === 'active' || !binding.desktop) && store.state.devices[trustId]?.status !== 'trusted') {
+            if (trustId && store.state.devices[trustId].status !== 'pending') throw failure('DEVICE_NOT_TRUSTED', 403);
+            return context.serial(async () => {
+              await edit(next => {
+                if (!trustId) {
+                  trustId = randomUUID(); next.devices[trustId] = { ownerId: binding.ownerId, bindingKey: key,
+                    cloudDeviceId: identity.device_id, jkt: proof.jkt, publicJwk: proof.jwk, name,
+                    requestedAt: new Date(context.timestamp()).toISOString(), status: 'pending' };
+                  deviceStatus(next, trustId);
+                }
+              });
+              return { pending: true, requestId: trustId };
+            });
+          }
+          if (binding.status !== 'active') {
+            const claim = await callCloud('/hosts/claims', { claimId: binding.claimId, hostId,
+              publicJwk: store.state.installation.publicJwk, tlsSpki: store.state.tls.spki });
+            const signature = await new SignJWT({ claimId: binding.claimId, challenge: claim.challenge, sub: identity.sub })
+              .setProtectedHeader({ alg: 'ES256', typ: 'wm-host-claim+jwt' }).setIssuer(hostId)
+              .setAudience(config.issuer).setIssuedAt().setExpirationTime('60s').sign(installationKey);
+            await callCloud('/hosts/claims/confirm', { claimId: binding.claimId, proof: signature }, body.accessToken);
+          }
+          return context.serial(async () => {
+            await edit(next => {
+              next.bindings[key].status = 'active'; next.claims[binding.claimId].status = 'active';
+              next.epochs[key] = identity.auth_epoch; next.hostName = name;
+              if (!trustId) {
+                trustId = randomUUID(); next.devices[trustId] = { ownerId: binding.ownerId, bindingKey: key,
+                  cloudDeviceId: identity.device_id, jkt: proof.jkt, publicJwk: proof.jwk, name,
+                  requestedAt: new Date(context.timestamp()).toISOString(), status: 'trusted', isHost: true };
+              }
+              if (next.devices[trustId].status !== 'trusted') throw failure('DEVICE_NOT_TRUSTED', 403);
+              next.devices[trustId].isHost = true;
+              deviceStatus(next, trustId, true);
+            });
+            return issueSession(trustId, identity, name);
+          });
+        });
+        desktopQueue = task.catch(() => {});
+        const result = await task;
+        if (result.pending) context.json(response, 202, { status: 'pending_approval', requestId: result.requestId });
+        else sessionReply(response, request, result);
+        void syncRevocations().catch(() => {}); return true;
       }
       if (route === '/cloud/claims') {
         local(request, true);
@@ -266,15 +413,36 @@ export async function createHostCloudIdentity(context, options) {
           const status = body.decision === 'allow' ? 'trusted' : 'denied';
           if (device.status !== 'pending' && device.status !== status) throw failure('DEVICE_DECISION_CONFLICT', 409);
           device.status = status;
+          deviceStatus(next, decision[1]);
         }));
+        void syncRevocations().catch(() => {});
         context.json(response, 200, { decision: body.decision }); return true;
       }
+      const trust = /^\/cloud\/devices\/([a-f0-9-]+)\/trust$/.exec(route);
+      if (trust) {
+        const current = local(request);
+        exactKeys(body, [], []);
+        const device = store.state.devices[trust[1]];
+        if (!device || device.ownerId !== current.ownerId) throw failure('NOT_FOUND', 404);
+        if (device.status !== 'trusted') throw failure('DEVICE_NOT_TRUSTED', 403);
+        const binding = store.state.bindings[device.bindingKey];
+        const payload = { sub: binding.sub, hostId, deviceId: device.cloudDeviceId, jkt: device.jkt,
+          tlsSpki: store.state.tls.spki, publicJwk: store.state.installation.publicJwk,
+          origin: context.origin, relay: context.service.relayStatus() };
+        const trustToken = await new SignJWT(payload).setProtectedHeader({ alg: 'ES256', typ: 'wm-host-trust+jwt' })
+          .setIssuer(hostId).setAudience(device.jkt).setIssuedAt().setExpirationTime('120s').setJti(randomUUID()).sign(installationKey);
+        context.json(response, 200, { ...payload, trustToken, expiresIn: 120 }); return true;
+      }
       if (route === '/cloud/pairings') {
-        const current = local(request, true);
+        const current = local(request);
+        context.requireBrowserOrigin(request, true);
+        if (current.device.authKind !== 'password' &&
+            store.state.devices[store.state.sessions[current.deviceId]?.trustId]?.isHost !== true)
+          throw failure('LOCAL_SESSION_REQUIRED', 403);
         exactKeys(body, [], []);
         const challenge = randomBytes(32).toString('base64url');
         await context.serial(() => edit(next => {
-          local(request, true);
+          local(request);
           next.pairings[digest(challenge)] = { ownerId: current.ownerId, expiresAt: context.timestamp() + 120_000 };
         }));
         context.json(response, 201, { challenge, expiresIn: 120, hostId, tlsSpki: store.state.tls.spki,
@@ -310,6 +478,7 @@ export async function createHostCloudIdentity(context, options) {
               trustId = randomUUID(); next.devices[trustId] = { ownerId: binding.ownerId, bindingKey: key,
                 cloudDeviceId: identity.device_id, jkt: proof.jkt, publicJwk: proof.jwk, name,
                 requestedAt: new Date(context.timestamp()).toISOString(), status: 'pending' };
+              deviceStatus(next, trustId);
             }
             const device = next.devices[trustId];
             if (route.endsWith('/redeem')) {
@@ -317,29 +486,17 @@ export async function createHostCloudIdentity(context, options) {
               if (!pairing || pairing.expiresAt <= context.timestamp() || pairing.ownerId !== binding.ownerId)
                 throw failure('PAIRING_INVALID', 401);
               delete next.pairings[digest(body.challenge)]; device.status = 'trusted';
+              deviceStatus(next, trustId);
             }
           });
           const device = store.state.devices[trustId];
           if (device.status === 'pending') return { pending: true, requestId: trustId };
           if (device.status !== 'trusted') throw failure('DEVICE_NOT_TRUSTED', 403);
-          const deviceId = `device-${randomUUID()}`;
-          const token = randomBytes(32).toString('base64url');
-          const csrfToken = csrfForToken(token);
-          const expiresAt = new Date(context.timestamp() + SESSION_MS).toISOString();
-          // Journal first. A crash before access-store write leaves only an inert session reference.
-          await edit(next => { next.sessions[deviceId] = { bindingKey: key, trustId, epoch: identity.auth_epoch }; });
-          await context.mutate(device.ownerId, next => {
-            next.devices[deviceId] = { name, tokenHash: digest(token), csrfHash: digest(csrfToken),
-              scopes: ['sessions:read', 'commands:write', 'account:manage'], authKind: 'cloud', authEpoch: next.account.authEpoch,
-              revoked: false, enrolledAt: new Date(context.timestamp()).toISOString(), expiresAt };
-          });
-          return { ...context.publicAuth(device.ownerId, deviceId,
-            context.accountState(device.ownerId).devices[deviceId], csrfToken), token };
+          return issueSession(trustId, identity, name);
         });
+        void syncRevocations().catch(() => {});
         if (result.pending) context.json(response, 202, { status: 'pending_approval', requestId: result.requestId });
-        else { const { token, ...body } = result;
-          context.json(response, 200, body, { 'set-cookie': context.sessionCookie(token,
-            context.requestAuthority(request).startsWith('https:')) }); }
+        else sessionReply(response, request, result);
         return true;
       }
       throw failure('NOT_FOUND', 404);
@@ -371,4 +528,5 @@ const CLOUD_CODES = new Set(['INVALID_REQUEST', 'UNAUTHORIZED', 'FORBIDDEN', 'NO
   'ORIGIN_NOT_ALLOWED', 'UNSUPPORTED_MEDIA_TYPE', 'BODY_TOO_LARGE', 'AMBIGUOUS_AUTH', 'LOCAL_SESSION_REQUIRED',
   'CLOUD_TOKEN_INVALID', 'DPOP_INVALID', 'DPOP_REPLAY', 'CLOUD_UNAVAILABLE', 'CLOUD_BINDING_CONFLICT',
   'CLAIM_INVALID', 'CLOUD_NOT_BOUND', 'DEVICE_NOT_TRUSTED', 'DEVICE_DECISION_CONFLICT', 'PAIRING_INVALID',
+  'INVALID_CREDENTIALS', 'LOGIN_RATE_LIMITED', 'DEVICE_LIMIT', 'CAPACITY_LIMIT', 'ACCOUNT_ALREADY_EXISTS',
   'STORAGE_UNAVAILABLE', 'SERVICE_CLOSING']);

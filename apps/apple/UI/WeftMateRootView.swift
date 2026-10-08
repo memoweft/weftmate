@@ -6,19 +6,19 @@ struct WeftMateRootView: View {
     @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: AppleTokens.Space.p0) {
             if model.developmentRouteEnabled {
                 WeftLabel("局域网开发联调", icon: "cloud", size: 16)
-                    .font(.caption).foregroundStyle(Weave.secondary)
-                    .frame(maxWidth: .infinity).padding(.vertical, 6)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.secondary)
+                    .frame(maxWidth: .infinity).padding(.vertical, AppleTokens.Space.p6)
                     .background(Weave.accentSoft)
                     .accessibilityIdentifier("developmentRouteNotice")
             }
             Group {
                 if model.restoring {
-                    VStack(spacing: 20) {
+                    VStack(spacing: AppleTokens.Space.p20) {
                         BrandMark(size: 48)
-                        ProgressView("正在打开 WeftMate…").font(.callout).foregroundStyle(Weave.muted)
+                        ProgressView("正在打开 WeftMate…").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                     }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Weave.canvas)
                 } else if let session = model.session {
                     #if os(macOS)
@@ -84,22 +84,22 @@ private struct MacWorkspace: View {
     }
 
     private var sidebar: some View {
-        VStack(spacing: 0) {
-            HStack(spacing: 7) {
+        VStack(spacing: AppleTokens.Space.p0) {
+            HStack(spacing: AppleTokens.Space.p7) {
                 WeftIcon("search").foregroundStyle(Weave.muted)
                 TextField("搜索对话", text: $search)
                     .textFieldStyle(.plain)
                     .accessibilityLabel("搜索对话")
             }
-            .padding(7)
-            .background(Weave.surface, in: RoundedRectangle(cornerRadius: 8))
-            .padding(.horizontal, 16).padding(.top, 12)
+            .padding(AppleTokens.Space.p7)
+            .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r8))
+            .padding(.horizontal, AppleTokens.Space.p16).padding(.top, AppleTokens.Space.p12)
 
-            HStack(spacing: 10) {
+            HStack(spacing: AppleTokens.Space.p10) {
                 BrandMark(size: 30)
-                Text("WeftMate").font(.title3.weight(.semibold)).tracking(-0.5)
+                Text("WeftMate").font(AppleTokens.Fonts.title3.weight(.semibold)).tracking(-0.5)
                 Spacer()
-            }.padding(.horizontal, 18).padding(.top, 18).padding(.bottom, 14)
+            }.padding(.horizontal, AppleTokens.Space.p18).padding(.top, AppleTokens.Space.p18).padding(.bottom, AppleTokens.Space.p14)
 
             List(selection: $selected) {
                 Section("最近对话") {
@@ -107,7 +107,7 @@ private struct MacWorkspace: View {
                     ForEach(filteredConversations) { conversation in
                         ConversationRow(conversation: conversation, selected: selected == .conversation(conversation.id))
                             .tag(SidebarSelection.conversation(conversation.id))
-                            .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : Color.clear)
+                            .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
                     }
                 }
                 Section {
@@ -126,20 +126,20 @@ private struct MacWorkspace: View {
 
             Divider()
             Button { selected = .settings } label: {
-                HStack(spacing: 11) {
+                HStack(spacing: AppleTokens.Space.p11) {
                     Text(String(model.accountName.prefix(1)).uppercased())
-                        .font(.body.weight(.medium)).foregroundStyle(Weave.accent)
-                        .frame(width: 34, height: 34).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: 11))
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(model.accountName).font(.callout.weight(.medium)).lineLimit(1)
+                        .font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(Weave.accent)
+                        .frame(width: 34, height: 34).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r11))
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p3) {
+                        Text(model.accountName).font(AppleTokens.Fonts.callout.weight(.medium)).lineLimit(1)
                         if model.verificationPending {
-                            Text("重新登录").font(.caption2).foregroundStyle(Weave.muted)
+                            Text("重新登录").font(AppleTokens.Fonts.caption2).foregroundStyle(Weave.muted)
                         }
                     }
                     Spacer()
-                    WeftIcon("right", size: 16).font(.caption).foregroundStyle(Weave.muted)
+                    WeftIcon("right", size: 16).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                 }
-                .padding(16).contentShape(Rectangle())
+                .padding(AppleTokens.Space.p16).contentShape(Rectangle())
             }
             .buttonStyle(.plain).accessibilityLabel("账户与设置")
         }
@@ -225,24 +225,24 @@ private struct PhoneWorkspace: View {
 private struct WelcomeView: View {
     @ObservedObject var model: AppleAppModel
     var body: some View {
-        VStack(alignment: .leading, spacing: 23) {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p23) {
             BrandMark(size: 48)
             Text("接着聊吧")
-                .font(.largeTitle.weight(.medium)).tracking(-1).foregroundStyle(Weave.ink)
+                .font(AppleTokens.Fonts.largeTitle.weight(.medium)).tracking(-1).foregroundStyle(Weave.ink)
                 .fixedSize(horizontal: false, vertical: true)
             Text("选择对话，接着处理你的目标。")
-                .font(.body).lineSpacing(7).foregroundStyle(Weave.muted)
+                .font(AppleTokens.Fonts.body).lineSpacing(AppleTokens.Space.p7).foregroundStyle(Weave.muted)
             if let error = model.conversationsError {
                 InlineNotice(message: error, isError: true)
                 Button("重新连接") { Task { await model.refresh() } }.buttonStyle(OutlineActionStyle())
                     .disabled(model.refreshing)
             } else if model.refreshing {
-                HStack(spacing: 10) { ProgressView().controlSize(.small); Text("正在读取…") }
-                    .font(.callout).foregroundStyle(Weave.muted)
+                HStack(spacing: AppleTokens.Space.p10) { ProgressView().controlSize(.small); Text("正在读取…") }
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
 
             }
         }
-        .frame(maxWidth: 440, alignment: .leading).padding(40)
+        .frame(maxWidth: 440, alignment: .leading).padding(AppleTokens.Space.p40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Weave.surface)
         .navigationTitle("WeftMate")

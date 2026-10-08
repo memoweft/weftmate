@@ -15,17 +15,17 @@ struct ApprovalModeControl: View {
     private var isVerified: Bool { model.session?.verification == .verified }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
             Button {
                 showingMenu = true
             } label: {
-                HStack(spacing: 5) {
+                HStack(spacing: AppleTokens.Space.p5) {
                     WeftIcon("approval")
                     Text(settings?.mode.shortTitle ?? "审批模式")
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
-                    WeftIcon("chevron", size: 16).font(.caption)
+                    WeftIcon("chevron", size: 16).font(AppleTokens.Fonts.caption)
                     if busy { ProgressView().controlSize(.mini) }
-                }.font(.caption).foregroundStyle(Weave.ink)
+                }.font(AppleTokens.Fonts.caption).foregroundStyle(Weave.ink)
             }
             .buttonStyle(OutlineActionStyle())
             .disabled(busy || !isVerified)
@@ -34,19 +34,19 @@ struct ApprovalModeControl: View {
             .accessibilityIdentifier(sessionID == nil ? "defaultApprovalMode" : "approvalMode")
             .popover(isPresented: $showingMenu, arrowEdge: .bottom) {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 5) {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
                         Text(sessionID == nil ? "新对话的默认模式" : "本对话的审批模式")
-                            .font(.headline).padding(.bottom, 6)
+                            .font(AppleTokens.Fonts.headline).padding(.bottom, AppleTokens.Space.p6)
                         ForEach(Array(ApprovalMode.allCases.enumerated()), id: \.element.id) { index, mode in
                             modeButton(mode, number: index + 1)
                         }
                         if sessionID != nil, let categories = settings?.allowedCategories, !categories.isEmpty {
                             Divider()
                             Text("本对话已允许：" + categories.map(SessionApproval.riskLabel).joined(separator: "、"))
-                                .font(.caption).foregroundStyle(Weave.muted)
+                                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         }
                     }
-                    .padding(18)
+                    .padding(AppleTokens.Space.p18)
                 }
                 .frame(idealWidth: 330, maxWidth: 330, maxHeight: 520)
                 .presentationCompactAdaptation(.popover)
@@ -54,9 +54,9 @@ struct ApprovalModeControl: View {
                 .accessibilityIdentifier("approvalModeMenu")
             }
             if let error {
-                Text(error).font(.caption).foregroundStyle(Weave.danger)
+                Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger)
                 Button("重新读取审批模式") { Task { await load() } }
-                    .font(.caption).disabled(busy || !isVerified)
+                    .font(AppleTokens.Fonts.caption).disabled(busy || !isVerified)
             }
         }
         .task(id: identity) { settings = nil; error = nil; await load() }
@@ -77,17 +77,17 @@ struct ApprovalModeControl: View {
             if mode == .allowAll { confirmingAllowAll = true }
             else { Task { await save(mode) } }
         } label: {
-            HStack(alignment: .center, spacing: 10) {
+            HStack(alignment: .center, spacing: AppleTokens.Space.p10) {
                 WeftIcon("allow", size: 16)
                     .opacity(settings?.mode == mode ? 1 : 0).frame(width: 16)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(mode.title).font(.callout.weight(.medium)).foregroundStyle(Weave.ink)
-                    Text(mode.explanation).font(.caption).foregroundStyle(Weave.muted)
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p3) {
+                    Text(mode.title).font(AppleTokens.Fonts.callout.weight(.medium)).foregroundStyle(Weave.ink)
+                    Text(mode.explanation).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: 0)
-                Text("\(number)").font(.caption).foregroundStyle(Weave.muted)
-            }.padding(.vertical, 7).contentShape(Rectangle())
+                Spacer(minLength: AppleTokens.Space.p0)
+                Text("\(number)").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            }.padding(.vertical, AppleTokens.Space.p7).contentShape(Rectangle())
         }
         .buttonStyle(.plain).disabled(busy || !isVerified)
         .accessibilityLabel(mode.title + "，" + mode.explanation)

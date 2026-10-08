@@ -30,14 +30,14 @@ struct WatchHealthView: View {
                 Text("恢复：\((latest.derived?.recovery?.value).map { String(format: "%.0f", $0) } ?? "数据不足")")
                 if let stress = latest.hourly?.last(where: { $0.stress != nil })?.stress {
                     Text("压力：\(stress.lower, specifier: "%.0f")–\(stress.upper, specifier: "%.0f")")
-                    Text(stress.latestSampleAt).font(.caption)
+                    Text(stress.latestSampleAt).font(AppleTokens.Fonts.caption)
                 } else { Text("压力：数据不足") }
                 Text("负荷：\((latest.derived?.load?.value).map { String(format: "%.1f", $0) } ?? "数据不足")")
                 Text("睡眠：\(latest.sleep.map { String(format: "%.1f 小时", $0.totalMinutes / 60) } ?? "数据不足")")
             }
             Button("读取并更新健康指标") { Task { await health.authorize() } }.disabled(health.busy)
-            Text("本地估算；同步到手机的记录由手机汇总并上传本人电脑。").font(.caption)
-            if let message = health.message { Text(message).font(.caption) }
+            Text("本地估算；同步到手机的记录由手机汇总并上传本人电脑。").font(AppleTokens.Fonts.caption)
+            if let message = health.message { Text(message).font(AppleTokens.Fonts.caption) }
         }.navigationTitle("健康")
     }
 }

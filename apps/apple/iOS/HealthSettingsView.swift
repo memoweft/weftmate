@@ -12,7 +12,7 @@ struct HealthSettingsView: View {
             Section {
                 Text("只读取你选择的项目，在手机上计算指标，汇总为每日与小时摘要。手表记录会通过“健康”同步到 iPhone。")
                 Text("Apple 不公开读取权限状态。若无数据或已撤权，请到“健康” → 头像 → App → WeftMate 检查权限。")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(AppleTokens.Fonts.footnote).foregroundStyle(AppleTokens.Styles.secondary)
                 Button("选择读取权限") {
                     if model.state.preferences.cloudChoiceMade {
                         Task { await model.authorize(cloudAllowed: model.state.preferences.cloudModelAllowed, app: app) }
@@ -27,9 +27,9 @@ struct HealthSettingsView: View {
                         if enabled { p.enabled.insert(category) } else { p.enabled.remove(category) }
                         Task { await model.setPreferences(p, app: app) }
                     })) {
-                        VStack(alignment: .leading, spacing: 4) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p4) {
                             Text(category.title)
-                            Text(model.status(category).title).font(.caption).foregroundStyle(.secondary)
+                            Text(model.status(category).title).font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                         }
                     }.accessibilityIdentifier("healthCategory.\(category.rawValue)")
                 }
@@ -40,12 +40,12 @@ struct HealthSettingsView: View {
                     Task { await model.setPreferences(p, app: app) }
                 })).accessibilityIdentifier("healthCloudAllowed")
                 Text("设备端指标与小时摘要始终仅供本人电脑和本地模型使用，不进云。此选择仅适用于不含设备端指标的每日摘要。")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(AppleTokens.Fonts.footnote).foregroundStyle(AppleTokens.Styles.secondary)
                 Picker("自评频率", selection: Binding(get: { model.state.preferences.selfAssessmentFrequency }, set: { value in
                     var p = model.state.preferences; p.selfAssessmentFrequency = value
                     Task { await model.setPreferences(p, app: app) }
                 })) { ForEach(SelfAssessmentFrequency.allCases, id: \.self) { Text($0.title).tag($0) } }
-                Text("自评询问将在后续版本提供。").font(.footnote).foregroundStyle(.secondary)
+                Text("自评询问将在后续版本提供。").font(AppleTokens.Fonts.footnote).foregroundStyle(AppleTokens.Styles.secondary)
             }
             Section("每日摘要") {
                 if let summary = model.latest {
@@ -57,22 +57,22 @@ struct HealthSettingsView: View {
                                 Text("\(HealthCategory(rawValue: key)?.title ?? key)：\(metric.value, specifier: "%.1f") \(metric.unit)")
                                 if let deviation = metric.deviationPercent {
                                     Text("较此前 14 天基线 \(deviation, specifier: "%+.0f")% · \(metric.baselineDays) 天有数据")
-                                        .font(.caption).foregroundStyle(.secondary)
-                                } else { Text("基线数据不足").font(.caption).foregroundStyle(.secondary) }
+                                        .font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
+                                } else { Text("基线数据不足").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary) }
                             }
                         }
                     }
                     if let count = summary.workoutCount { Text("锻炼 \(count) 次 · \(summary.workoutMinutes ?? 0, specifier: "%.0f") 分钟") }
-                    Text("汇总于 \(summary.summarizedAt)").font(.caption).foregroundStyle(.secondary)
+                    Text("汇总于 \(summary.summarizedAt)").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                 } else { Text("还没有健康摘要") }
                 Button("更新摘要") { Task { await model.refresh(app: app) } }.disabled(model.busy || model.uploading)
                 if model.busy { ProgressView("正在读取…") }
-                if let message = model.message { Text(message).foregroundStyle(.secondary) }
+                if let message = model.message { Text(message).foregroundStyle(AppleTokens.Styles.secondary) }
             }
             Section {
                 Button("删除健康摘要并停止读取", role: .destructive) { deleting = true }
                 Text(model.state.deleteAllPending ? "本地摘要已删除，服务器删除将在可用时重试。" : "删除摘要不会删除“健康”中的原始记录。系统读取权限可在“健康”中撤销。")
-                    .font(.footnote).foregroundStyle(.secondary)
+                    .font(AppleTokens.Fonts.footnote).foregroundStyle(AppleTokens.Styles.secondary)
             }
         }
         .navigationTitle("健康")
