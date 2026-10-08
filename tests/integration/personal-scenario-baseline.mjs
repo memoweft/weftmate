@@ -10,6 +10,7 @@ import { join, resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
+import { createLanBaselineBridge } from './baseline-lan-model.mjs';
 const repository = resolve(import.meta.dirname, '../..');
 // Keep generated goals and evidence free of the Windows account's home path.
 process.env.TEMP = process.env.TMP = 'C:/Temp';
@@ -23,11 +24,13 @@ assert.ok(!memoryAccuracy || memoryLoop, '--memory-accuracy requires --memory-lo
 const coreSourceIndex = process.argv.indexOf('--memory-core-source');
 const coreSource = coreSourceIndex === -1 ? 'D:/AIProjects/MemoWeft/Core/py/src'
   : resolve(process.argv[coreSourceIndex + 1]);
-const modelName = process.argv.includes('--mimo') ? 'mimo' : 'qwen';
+const lan = process.argv.includes('--lan');
+assert.ok(!lan || !process.argv.includes('--mimo'), '--lan and --mimo are mutually exclusive');
+const modelName = lan ? 'lan' : process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const diagnostic = process.argv.includes('--diagnostic');
 const comparison = process.argv.includes('--mimo-machine');
 assert.ok(!comparison || modelName === 'mimo', '--mimo-machine requires --mimo');
-const mimoKeyScope = comparison || memoryLoop || memoryUi ? 'Machine' : 'User';
+const mimoKeyScope = lan || comparison || memoryLoop || memoryUi ? 'Machine' : 'User';
 const run = promisify(execFile);
 async function environmentKey(name, scope = 'User') {
   const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
@@ -35,6 +38,11 @@ async function environmentKey(name, scope = 'User') {
   return stdout.trim();
 }
 const keys = { qwen: await environmentKey('MODEL_SWITCH_UNIFIED_KEY'), mimo: await environmentKey('MIMO_API_KEY', mimoKeyScope) };
+const lanBaseUrl = lan ? await environmentKey('WEFTMATE_LAN_MODEL_BASE_URL') : null;
+if (lan) {
+  keys.lan = await environmentKey('WEFTMATE_LAN_MODEL_KEY');
+  assert.ok(lanBaseUrl, 'WEFTMATE_LAN_MODEL_BASE_URL absent');
+}
 if (comparison) assert.ok(keys.qwen, 'Qwen key required for Qwen → MiMo memory-03');
 if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key')) {
   console.log(`${new Date().toISOString()} MIMO_API_KEY absent; checking ${mimoKeyScope} environment every 10 minutes, at most one hour.`);
@@ -44,7 +52,7 @@ if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key'
     console.log(`${new Date().toISOString()} MiMo key check ${check}/6: ${keys.mimo ? 'present' : 'absent'}`);
   }
 }
-if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
+if (!keys[modelName]) throw new Error(`${lan ? 'WEFTMATE_LAN_MODEL_KEY' : modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
 const scenarioFixes = process.argv.includes('--scenario-fixes');
 const root = join('C:/Temp', `weftmate-${memoryCorrection ? 'm2d' : memoryFormation ? 'm2c' : memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
@@ -63,6 +71,12 @@ const env = { ...process.env };
 for (const name of Object.keys(env)) if (name.startsWith('WEFTMATE_') || name.startsWith('MEMOWEFT_') || name === 'ELECTRON_RUN_AS_NODE' || name === 'MIMO_API_KEY' || name === 'MODEL_SWITCH_UNIFIED_KEY') delete env[name];
 env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
 let app, page, output = '';
+let lanBridge;
+const redact = value => {
+  let text = String(value);
+  if (lan) for (const secret of [lanBaseUrl, new URL(lanBaseUrl).host, keys.lan]) text = text.replaceAll(secret, '[private-lan]');
+  return text;
+};
 const out = join(root, diagnostic ? 'diagnostic' : 'eval'); mkdirSync(out);
 async function api(path, body, method = body ? 'POST' : 'GET') {
   return page.evaluate(async ({ path, body, method }) => {
@@ -74,20 +88,29 @@ async function api(path, body, method = body ? 'POST' : 'GET') {
 async function until(check) { const deadline = Date.now() + 90000; while (Date.now() < deadline) { const value = await check(); if (value) return value; await new Promise(r => setTimeout(r, 250)); } throw new Error('Baseline setup timed out'); }
 console.log(`Isolated ${modelName} root: ${root}`);
 try {
+  if (lan) {
+    lanBridge = await createLanBaselineBridge({ baseUrl: lanBaseUrl, key: keys.lan });
+    // A serial batch may reuse the model already warmed by its first invocation.
+    if (!process.argv.includes('--lan-warmed')) {
+      const warmup = await lanBridge.warmup();
+      writeFileSync(join(root, 'lan-warmup.json'), JSON.stringify(warmup));
+      console.log(`Warmup lan/local-quality: passed ${(warmup.durationMs / 1000).toFixed(2)}s`);
+    }
+  }
   app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'),
     args: [join(repository, 'tests/integration/personal-baseline-bootstrap.mjs'), `--user-data-dir=${profile}`, '--personal-host', '--access-port=0', `--personal-memory-config=${memoryConfig}`], cwd: repository, env, timeout: 90000 });
-  const capture = data => { output += String(data); writeFileSync(join(root, 'host.log'), output); };
+  const capture = data => { output += redact(data); writeFileSync(join(root, 'host.log'), output); };
   app.process().stdout?.on('data', capture);
   app.process().stderr?.on('data', capture);
   page = await app.firstWindow({ timeout: 90000 }); page.setDefaultTimeout(90000);
   await page.waitForURL('**/personal/v1/ui');
   await page.fill('#login-name', username); await page.fill('#login-password', password); await page.fill('#login-device', 'Baseline Electron');
   await page.locator('#login-form button[type=submit]').click(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
-  for (const name of [modelName, modelName === 'qwen' ? 'mimo' : 'qwen']) {
+  for (const name of [modelName, lan || modelName === 'qwen' ? 'mimo' : 'qwen']) {
     if (!keys[name]) continue;
     const requestId = `baseline-model-${name}`;
-    assert.equal((await api('/account/models', { requestId, name, baseUrl: name === 'qwen' ? 'http://127.0.0.1:8081/v1' : 'https://api.xiaomimimo.com/v1',
-      modelId: name === 'qwen' ? 'qwen3.8-27b-original' : 'mimo-v2.6-flash', apiKey: keys[name] })).status, 202);
+    assert.equal((await api('/account/models', { requestId, name, baseUrl: name === 'lan' ? lanBridge.url : name === 'qwen' ? 'http://127.0.0.1:8081/v1' : 'https://api.xiaomimimo.com/v1',
+      modelId: name === 'lan' ? 'local-quality' : name === 'qwen' ? 'qwen3.8-27b-original' : 'mimo-v2.6-flash', apiKey: name === 'lan' ? lanBridge.token : keys[name] })).status, 202);
     const operation = await until(async () => { const value = await api(`/account/models/by-request/${requestId}`); return !['pending', 'applying'].includes(value.body.operation?.status) && value.body.operation; });
     assert.equal(operation.status, 'succeeded');
     console.log(`Configured ${name}`);
@@ -123,29 +146,37 @@ try {
         : check.type === 'llm_judge' ? { ...check, prompt: '按纠正后的周六晚上安排游泳。' } : check) });
     if (process.argv.includes('--desktop-only')) scenarios = scenarios.filter(s => s.id === 'memory-correction-new-sessions');
   }
-  // Each scenario runs once. Only memory-03 starts on Qwen and switches to MiMo.
+  // Each scenario runs once. LAN memory-03 switches to MiMo; legacy order is unchanged.
   const results = [], startedAt = new Date().toISOString();
   for (const scenario of scenarios) {
     const firstModel = !memoryLoop && comparison && scenario.id === 'memory-03-switch-model' ? 'qwen' : modelName;
     if (comparison && !memoryLoop) assert.equal((await api('/settings/models', {
       backgroundModelProfileId: scenario.id === 'memory-03-switch-model' ? null : selected.id,
     }, 'PATCH')).status, 200);
-    console.log(`Starting ${scenario.id}: ${firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
+    console.log(`Starting ${scenario.id}: ${lan ? 'lan/local-quality' : firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
     await runEvaluation({ host: new URL(page.url()).origin, out, model: firstModel,
-      switchModel: comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
+      switchModel: lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
       onScenarioResult: async result => { results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
   }
   if (memoryLoop || memoryUi) {
     if (memoryCorrection && !process.argv.includes('--desktop-only')) {
-      const correction = results.find(result => result.id === 'memory-02-correction');
-      assert.equal(correction?.status, 'passed');
-      const items = (await api('/memory/items?kind=cognition')).body.items;
-      const adopted = correction.turns.at(-1).memoryUsed;
-      assert.ok(items.some(item => item.text.includes('周五') && item.currentState === 'current' &&
-        adopted.some(memory => memory.id === item.id)), 'original memory-02 must adopt its corrected item');
-      assert.ok(items.filter(item => item.text.includes('只能周三')).every(item =>
-        item.currentState === 'not_current' && !adopted.some(memory => memory.id === item.id)));
-      assert.equal(correction.turns.flatMap(turn => turn.approvals).length, 0);
+      try {
+        const correction = results.find(result => result.id === 'memory-02-correction');
+        assert.equal(correction?.status, 'passed');
+        const items = (await api('/memory/items?kind=cognition')).body.items;
+        const adopted = correction.turns.at(-1).memoryUsed;
+        assert.ok(items.some(item => item.text.includes('周五') && item.currentState === 'current' &&
+          adopted.some(memory => memory.id === item.id)), 'original memory-02 must adopt its corrected item');
+        assert.ok(items.filter(item => item.text.includes('只能周三')).every(item =>
+          item.currentState === 'not_current' && !adopted.some(memory => memory.id === item.id)));
+        assert.equal(correction.turns.flatMap(turn => turn.approvals).length, 0);
+        if (lan) writeFileSync(join(root, 'original-correction-verification.json'), JSON.stringify({ status: 'passed' }));
+      } catch (error) {
+        if (!lan) throw error;
+        // Preserve this failure, while still verifying the independent three-session case.
+        writeFileSync(join(root, 'original-correction-verification.json'), JSON.stringify({ status: 'failed', reason: redact(error.message) }));
+        process.exitCode = 1;
+      }
     }
     const sample = results.find(result => result.id === (memoryCorrection ? 'memory-correction-new-sessions' : memoryUi ? 'memory-ui' : 'memory-01-preference'));
     if (sample?.status === 'passed') {
@@ -200,13 +231,20 @@ try {
     skippedChecks: results.flatMap(r => r.checks).filter(c => c.status === 'skipped').length };
   summary.passRate = summary.passed + summary.failed ? summary.passed / (summary.passed + summary.failed) : null;
   summary.coverage = summary.passed / results.length;
-  const report = { schemaVersion: 1, startedAt, host: new URL(page.url()).origin, model: modelName, results, summary };
+  const report = { schemaVersion: 1, startedAt, host: new URL(page.url()).origin, model: lan ? 'lan/local-quality' : modelName, results, summary };
   writeFileSync(join(out, 'results.json'), JSON.stringify(report, null, 2) + '\n');
   writeFileSync(join(out, 'report.md'), buildReport(report));
   writeFileSync(join(root, 'memory-status.json'), JSON.stringify((await api('/memory/status')).body, null, 2));
   console.log(JSON.stringify(report.summary));
+} catch (error) {
+  if (lan) writeFileSync(join(root, 'lan-acceptance-error.json'), JSON.stringify({ name: error.name, reason: redact(error.message) }));
+  throw error;
 } finally {
   if (app) { await app.evaluate(({ app }) => app.quit()).catch(() => {}); await app.close().catch(() => {}); }
+  if (lanBridge) {
+    await lanBridge.close();
+    writeFileSync(join(root, 'lan-serial-requests.json'), JSON.stringify(lanBridge.metrics(), null, 2));
+  }
   writeFileSync(join(root, 'host.log'), output);
   const sensitive = /credentials\.json$|(?:Cookies|Trust Tokens)(?:-journal)?$|setup-[^/]+\.json$|secure-snapshot.*\.yml$|security-credentials\.patch\.yml$/;
   function clean(dir) { for (const name of readdirSync(dir)) { const file = join(dir, name), info = lstatSync(file);
@@ -216,7 +254,8 @@ try {
   let scanned = 0, matches = 0, skippedLinks = 0;
   function scan(dir) { for (const name of readdirSync(dir)) { const file = join(dir, name), info = lstatSync(file);
     if (info.isSymbolicLink()) { skippedLinks++; continue; }
-    if (info.isDirectory()) scan(file); else { const content = readFileSync(file); scanned++; if (Object.values(keys).filter(Boolean).some(key => content.includes(Buffer.from(key)))) matches++; } } }
+    if (info.isDirectory()) scan(file); else { const content = readFileSync(file); scanned++; if ([...Object.values(keys), lanBaseUrl, lanBaseUrl && new URL(lanBaseUrl).host].filter(Boolean).some(key => content.includes(Buffer.from(key)))) matches++; } } }
   scan(root); writeFileSync(join(root, 'credential-scan.json'), JSON.stringify({ scanned, matches, skippedLinks }));
-  assert.equal(matches, 0, 'No model keys may persist in isolated artifacts');
+  assert.equal(matches, 0, lan ? 'No model keys or private LAN destination may persist in isolated artifacts'
+    : 'No model keys may persist in isolated artifacts');
 }
