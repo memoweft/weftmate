@@ -1,0 +1,21 @@
+{
+  "id": "memory-1x-correction",
+  "category": "memory",
+  "title": "留出：浇水量省略主题纠正",
+  "setup": { "files": [], "memories": [], "devices": ["隔离宿主电脑与真实桌面程序"] },
+  "turns": [
+    { "user": "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。", "after": { "newSession": true, "waitMs": 1000 } },
+    { "user": "前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。", "after": { "newSession": true, "waitMs": 1000 } },
+    { "user": "今天给阳台盆栽浇水，该量多少？" }
+  ],
+  "checks": [
+    { "type": "reply_contains", "text": "150" },
+    { "type": "turn_status", "turn": 1, "status": "completed" },
+    { "type": "turn_status", "turn": 2, "status": "completed" },
+    { "type": "turn_status", "status": "completed" },
+    { "type": "memory_used" },
+    { "type": "llm_judge", "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。" }
+  ],
+  "timeoutSec": 900,
+  "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。"
+}

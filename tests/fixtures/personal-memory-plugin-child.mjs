@@ -47,6 +47,7 @@ async function preStep(id, agent = { session: session(id) }, priorMessages = nul
   return { text: injected.at(-1)?.content?.[0]?.text ?? null,
     stale: JSON.stringify(result.messages).includes('STALE_A_CONTEXT'),
     count: injected.length, messages: result.messages,
+    currentQuestionLast: result.messages.at(-1)?.source?.kind === 'user',
     last: injected.at(-1) ? { id: injected.at(-1).id, role: injected.at(-1).role,
       source: injected.at(-1).source, frozen: Object.isFrozen(injected.at(-1)),
       sourceFrozen: Object.isFrozen(injected.at(-1).source) } : null };
@@ -56,7 +57,7 @@ process.on('message', async (message) => {
   try {
     const agentA = { session: session('session-a') };
     const a = await preStep('session-a', agentA);
-    agentA.session.append('user/message', a.messages.at(-1));
+    for (const message of a.messages) agentA.session.append('user/message', message);
     const latestContextCount = agentA.session.deriveMessages().filter(message => message.source?.plugin === 'weftmate-personal-memory').length;
     const adopted = agentA.session.append('assistant/message', { turn: 1, message: { content: [{ type: 'text', text: '采用回复' }] } }).data.memoryUsed;
     agentA.session.events.push({ seq: 2, type: 'user/message', data: userClaim('session-a') });
