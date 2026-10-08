@@ -28,6 +28,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
         ui.byId('message-text').placeholder = '向 WeftMate 说说你的目标';
     }
     function mountComposer() {
+        globalThis.WeftPopover?.bindSelect(ui.byId('message-mode'), 'model-popover message-mode-popover');
         ui.byId('model-select').addEventListener('change', (event) => { core.state.modelProfileId = event.target.value; ui.updateAvailability(); });
         ui.byId('model-trigger').addEventListener('click', ui.openModelMenu);
         ui.byId('model-trigger').addEventListener('keydown', (event) => {

@@ -41,7 +41,7 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     if (!source.equals(generated)) problems.push(`differs ${name}`);
   }
   if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
-    for (const [sourceName, generatedName] of [['components/usage.js', 'components/usage-view.js'], ['components/settings-controls.js', 'components/settings-controls.js'], ['usage.css', 'usage.css']]) {
+    for (const [sourceName, generatedName] of [['components/usage.js', 'components/usage-view.js'], ['components/settings-controls.js', 'components/settings-controls.js'], ['usage.css', 'usage.css'], ['popovers.js', 'popovers.js']]) {
       const source = await readFile(new URL(`../../../src/personal-access-ui/${sourceName}`, import.meta.url));
       const generated = await readFile(path.join(mobileWwwDir, generatedName));
       if (!source.equals(generated)) problems.push(`differs ${generatedName}`);
@@ -61,6 +61,7 @@ export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     await copyFile(new URL('../../../src/personal-access-ui/components/usage.js', import.meta.url), path.join(mobileWwwDir, 'components/usage-view.js'));
     await copyFile(new URL('../../../src/personal-access-ui/components/settings-controls.js', import.meta.url), path.join(mobileWwwDir, 'components/settings-controls.js'));
     await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
+    await copyFile(new URL('../../../src/personal-access-ui/popovers.js', import.meta.url), path.join(mobileWwwDir, 'popovers.js'));
     await mkdir(path.join(mobileWwwDir, 'legal'), { recursive: true });
     for (const kind of ['terms', 'privacy']) await copyFile(new URL(`../../../docs/legal/${kind}-zh.md`, import.meta.url), path.join(mobileWwwDir, 'legal', `${kind}-zh.txt`));
   }

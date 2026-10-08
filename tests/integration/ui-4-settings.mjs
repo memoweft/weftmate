@@ -24,6 +24,7 @@ try {
   }, fixture.credentials);
   await page.reload();
   const capture = async name => {
+    if (process.argv.includes('--verify-only')) return;
     console.log("Capture", name);
     await page.evaluate(() => { for (const animation of document.getAnimations()) { if (animation.effect.getComputedTiming().iterations !== Infinity) animation.finish(); } });
     await application.evaluate(({ BrowserWindow }) => { const window = BrowserWindow.getAllWindows()[0]; window.show(); window.focus(); });
@@ -86,21 +87,21 @@ try {
   await mobile.evaluate(() => page('settings'));
   await mobile.getByRole('heading', { name: '设置', exact: true, level: 1 }).waitFor(); assert.equal(await mobile.locator('#home-page').isVisible(),false);
   await mobile.waitForTimeout(300);
-  await mobile.screenshot({ path: join(evidence, 'mobile-list.png'), animations: 'disabled' });
+  if (!process.argv.includes('--verify-only')) await mobile.screenshot({ path: join(evidence, 'mobile-list.png'), animations: 'disabled' });
   const list = mobile.getByRole('navigation', { name: '设置分类' });
   for (const [id, name] of [['general','常规'],['appearance','外观'],['usage','用量']]) {
     await list.getByRole('button', { name: new RegExp('^' + name + ' ') }).click();
     if (id === 'appearance') { await mobile.getByRole('button', { name: '深色', exact: true }).click(); await mobile.waitForFunction(() => document.documentElement.dataset.theme === 'dark'); assert.equal(await mobile.locator('html').getAttribute('data-theme'), 'dark'); }
     if(id === 'usage') await mobile.getByRole('button', {name:'刷新用量',exact:true}).waitFor();
     await mobile.waitForTimeout(300);
-    await mobile.screenshot({ path: join(evidence, `mobile-${id}.png`), animations: 'disabled' });
+    if (!process.argv.includes('--verify-only')) await mobile.screenshot({ path: join(evidence, `mobile-${id}.png`), animations: 'disabled' });
     await mobile.keyboard.press('Escape'); await mobile.getByRole('heading', { name: '设置', exact: true, level: 1 }).waitFor(); assert.equal(await mobile.locator('#home-page').isVisible(),false);
   }
   await mobile.getByRole('searchbox', { name: '搜索设置' }).fill('费用'); assert.equal(await list.getByRole('button').count(), 1);
   await list.getByRole('button').click(); await mobile.keyboard.press('Escape'); assert.equal(await mobile.getByRole('searchbox', { name: '搜索设置' }).inputValue(), '费用');
   checks.push('mobile list, subpages, search and return');
   assert.deepEqual(errors, []);
-  await writeFile(join(evidence, 'verification.json'), JSON.stringify({ realElectron: true, isolatedAccount: true, paidModelRequests: 0, checks, errors }, null, 2) + '\n');
+  if (!process.argv.includes('--verify-only')) await writeFile(join(evidence, 'verification.json'), JSON.stringify({ realElectron: true, isolatedAccount: true, paidModelRequests: 0, checks, errors }, null, 2) + '\n');
   console.log('UI-4 passed:', checks.join(', '));
 } finally {
   await browser?.close(); await application?.evaluate(({ app }) => app.exit(0)).catch(() => {}); await application?.close().catch(() => {});

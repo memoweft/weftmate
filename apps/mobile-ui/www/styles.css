@@ -385,3 +385,6 @@ html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduce
 .settings-segmented button[aria-pressed="true"] { background: var(--surface); color: var(--ink); }
 
 .settings-control-source { display: none; }
+/* Shared positioning measures the untransformed menu within the visual viewport. */
+.popover[popover] { width: 350px; animation: none; transform: none; transition: opacity var(--wm-duration-fast) var(--ease); }
+.session-action-dialog { box-sizing: border-box; min-width: 0; max-width: calc(100dvw - 16px); max-height: calc(100dvh - 16px); overflow: auto; }
