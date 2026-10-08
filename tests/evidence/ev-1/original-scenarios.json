@@ -1,0 +1,41 @@
+{
+  "baselineCommit": "1f29811b3b31aa59306ecc41931aef4d64002221",
+  "scenarios": [
+    {
+      "id": "action-01-organize",
+      "timeoutSec": 360,
+      "sha256Lf": "5f277b8258994f9a032c1d12132be09a562fa81133509a7dff60fbd3773238f1",
+      "goalsChecksApprovalsUnchanged": true
+    },
+    {
+      "id": "action-02-web-document",
+      "timeoutSec": 900,
+      "sha256Lf": "ba7dd4d6422c5eec66ed9ebe20e312d22a96fa82cab791ffbde56edad9e41502",
+      "goalsChecksApprovalsUnchanged": true
+    },
+    {
+      "id": "action-03-read-code",
+      "timeoutSec": 360,
+      "sha256Lf": "c045966850c7103a585f5c0b2b87573b511cbbcb59082c0dbb10526ee2f7f214",
+      "goalsChecksApprovalsUnchanged": true
+    },
+    {
+      "id": "action-04-research-script",
+      "timeoutSec": 900,
+      "sha256Lf": "b72d3c8eb9a30e99bdf6e7e155e0181b578923b13762b17f50635abe68e57389",
+      "goalsChecksApprovalsUnchanged": true
+    },
+    {
+      "id": "action-05-stop-resume",
+      "timeoutSec": 600,
+      "sha256Lf": "2edde493e2e337c7651b3f382ec0f25338104aa37c0a253843df44c433001642",
+      "goalsChecksApprovalsUnchanged": true
+    },
+    {
+      "id": "action-06-delete-approval",
+      "timeoutSec": 600,
+      "sha256Lf": "51cfe6a056f0b4bab79c6bebf9595c986032ad54a213311b238f08d01c1df885",
+      "goalsChecksApprovalsUnchanged": true
+    }
+  ]
+}

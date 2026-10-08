@@ -1,0 +1,13 @@
+{
+  "source": "M1-4 saved MiMo action-04",
+  "baselineCommit": "1f29811b3b31aa59306ecc41931aef4d64002221",
+  "scriptSha256": "81c9c52a7e7fff360f25b83299e890fc429cee78a57a0473952031f5f35d2395",
+  "scriptWritesResultJson": true,
+  "resultExistedAtReplay": false,
+  "modelRequests": 0,
+  "oldRisk": [
+    "overwrite"
+  ],
+  "newRisk": [],
+  "rootCause": "The argv[3] ternary target was unresolved. Unknown targets require overwrite approval, even though this literal launch selects a new result.json."
+}

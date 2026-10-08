@@ -125,12 +125,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-01.md",
-      "text": "1001"
+      "text": "1001",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-01.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -145,12 +147,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-02.md",
-      "text": "1002"
+      "text": "1002",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-02.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -165,12 +169,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-03.md",
-      "text": "1003"
+      "text": "1003",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-03.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -185,12 +191,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-04.md",
-      "text": "1004"
+      "text": "1004",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-04.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -205,12 +213,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-05.md",
-      "text": "1005"
+      "text": "1005",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-05.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -225,12 +235,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-06.md",
-      "text": "1006"
+      "text": "1006",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-06.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -245,12 +257,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-07.md",
-      "text": "1007"
+      "text": "1007",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-07.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -265,12 +279,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-08.md",
-      "text": "1008"
+      "text": "1008",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-08.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -285,12 +301,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-09.md",
-      "text": "1009"
+      "text": "1009",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-09.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -305,12 +323,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-10.md",
-      "text": "1010"
+      "text": "1010",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-10.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -325,12 +345,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-11.md",
-      "text": "1011"
+      "text": "1011",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-11.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -345,12 +367,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-12.md",
-      "text": "1012"
+      "text": "1012",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-12.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -365,12 +389,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-13.md",
-      "text": "1013"
+      "text": "1013",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-13.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -385,12 +411,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-14.md",
-      "text": "1014"
+      "text": "1014",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-14.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -405,12 +433,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-15.md",
-      "text": "1015"
+      "text": "1015",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-15.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -425,12 +455,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-16.md",
-      "text": "1016"
+      "text": "1016",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-16.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -445,12 +477,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-17.md",
-      "text": "1017"
+      "text": "1017",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-17.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -465,12 +499,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-18.md",
-      "text": "1018"
+      "text": "1018",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-18.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -485,12 +521,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-19.md",
-      "text": "1019"
+      "text": "1019",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-19.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -505,12 +543,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-20.md",
-      "text": "1020"
+      "text": "1020",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-20.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -525,12 +565,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-21.md",
-      "text": "1021"
+      "text": "1021",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-21.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -545,12 +587,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-22.md",
-      "text": "1022"
+      "text": "1022",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-22.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -565,12 +609,14 @@
     {
       "type": "file_contains",
       "path": "reviews/review-23.md",
-      "text": "1023"
+      "text": "1023",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-23.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
@@ -585,22 +631,26 @@
     {
       "type": "file_contains",
       "path": "reviews/review-24.md",
-      "text": "1024"
+      "text": "1024",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "reviews/review-24.md",
-      "text": "100"
+      "text": "100",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "summary.md",
-      "text": "24300"
+      "text": "24300",
+      "numeric": true
     },
     {
       "type": "file_contains",
       "path": "summary.md",
-      "text": "2400"
+      "text": "2400",
+      "numeric": true
     },
     {
       "type": "file_contains",

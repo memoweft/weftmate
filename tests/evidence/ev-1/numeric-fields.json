@@ -1,0 +1,306 @@
+{
+  "scenario": "action-07-long-directory",
+  "count": 50,
+  "fields": [
+    {
+      "field": "checks[2].numeric",
+      "path": "reviews/review-01.md",
+      "text": "1001",
+      "value": true
+    },
+    {
+      "field": "checks[3].numeric",
+      "path": "reviews/review-01.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[6].numeric",
+      "path": "reviews/review-02.md",
+      "text": "1002",
+      "value": true
+    },
+    {
+      "field": "checks[7].numeric",
+      "path": "reviews/review-02.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[10].numeric",
+      "path": "reviews/review-03.md",
+      "text": "1003",
+      "value": true
+    },
+    {
+      "field": "checks[11].numeric",
+      "path": "reviews/review-03.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[14].numeric",
+      "path": "reviews/review-04.md",
+      "text": "1004",
+      "value": true
+    },
+    {
+      "field": "checks[15].numeric",
+      "path": "reviews/review-04.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[18].numeric",
+      "path": "reviews/review-05.md",
+      "text": "1005",
+      "value": true
+    },
+    {
+      "field": "checks[19].numeric",
+      "path": "reviews/review-05.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[22].numeric",
+      "path": "reviews/review-06.md",
+      "text": "1006",
+      "value": true
+    },
+    {
+      "field": "checks[23].numeric",
+      "path": "reviews/review-06.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[26].numeric",
+      "path": "reviews/review-07.md",
+      "text": "1007",
+      "value": true
+    },
+    {
+      "field": "checks[27].numeric",
+      "path": "reviews/review-07.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[30].numeric",
+      "path": "reviews/review-08.md",
+      "text": "1008",
+      "value": true
+    },
+    {
+      "field": "checks[31].numeric",
+      "path": "reviews/review-08.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[34].numeric",
+      "path": "reviews/review-09.md",
+      "text": "1009",
+      "value": true
+    },
+    {
+      "field": "checks[35].numeric",
+      "path": "reviews/review-09.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[38].numeric",
+      "path": "reviews/review-10.md",
+      "text": "1010",
+      "value": true
+    },
+    {
+      "field": "checks[39].numeric",
+      "path": "reviews/review-10.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[42].numeric",
+      "path": "reviews/review-11.md",
+      "text": "1011",
+      "value": true
+    },
+    {
+      "field": "checks[43].numeric",
+      "path": "reviews/review-11.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[46].numeric",
+      "path": "reviews/review-12.md",
+      "text": "1012",
+      "value": true
+    },
+    {
+      "field": "checks[47].numeric",
+      "path": "reviews/review-12.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[50].numeric",
+      "path": "reviews/review-13.md",
+      "text": "1013",
+      "value": true
+    },
+    {
+      "field": "checks[51].numeric",
+      "path": "reviews/review-13.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[54].numeric",
+      "path": "reviews/review-14.md",
+      "text": "1014",
+      "value": true
+    },
+    {
+      "field": "checks[55].numeric",
+      "path": "reviews/review-14.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[58].numeric",
+      "path": "reviews/review-15.md",
+      "text": "1015",
+      "value": true
+    },
+    {
+      "field": "checks[59].numeric",
+      "path": "reviews/review-15.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[62].numeric",
+      "path": "reviews/review-16.md",
+      "text": "1016",
+      "value": true
+    },
+    {
+      "field": "checks[63].numeric",
+      "path": "reviews/review-16.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[66].numeric",
+      "path": "reviews/review-17.md",
+      "text": "1017",
+      "value": true
+    },
+    {
+      "field": "checks[67].numeric",
+      "path": "reviews/review-17.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[70].numeric",
+      "path": "reviews/review-18.md",
+      "text": "1018",
+      "value": true
+    },
+    {
+      "field": "checks[71].numeric",
+      "path": "reviews/review-18.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[74].numeric",
+      "path": "reviews/review-19.md",
+      "text": "1019",
+      "value": true
+    },
+    {
+      "field": "checks[75].numeric",
+      "path": "reviews/review-19.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[78].numeric",
+      "path": "reviews/review-20.md",
+      "text": "1020",
+      "value": true
+    },
+    {
+      "field": "checks[79].numeric",
+      "path": "reviews/review-20.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[82].numeric",
+      "path": "reviews/review-21.md",
+      "text": "1021",
+      "value": true
+    },
+    {
+      "field": "checks[83].numeric",
+      "path": "reviews/review-21.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[86].numeric",
+      "path": "reviews/review-22.md",
+      "text": "1022",
+      "value": true
+    },
+    {
+      "field": "checks[87].numeric",
+      "path": "reviews/review-22.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[90].numeric",
+      "path": "reviews/review-23.md",
+      "text": "1023",
+      "value": true
+    },
+    {
+      "field": "checks[91].numeric",
+      "path": "reviews/review-23.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[94].numeric",
+      "path": "reviews/review-24.md",
+      "text": "1024",
+      "value": true
+    },
+    {
+      "field": "checks[95].numeric",
+      "path": "reviews/review-24.md",
+      "text": "100",
+      "value": true
+    },
+    {
+      "field": "checks[96].numeric",
+      "path": "summary.md",
+      "text": "24300",
+      "value": true
+    },
+    {
+      "field": "checks[97].numeric",
+      "path": "summary.md",
+      "text": "2400",
+      "value": true
+    }
+  ]
+}
