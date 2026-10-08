@@ -84,6 +84,8 @@ ln -sfn "$release" /opt/weftmate-cloud/current
 
 复制 `cloud.env.example` 为 `/etc/weftmate-cloud/cloud.env`，0600，替换示例域名；`CLOUD_MAIL_TRANSPORT=file`，生产发行者使用 HTTPS。systemd EnvironmentFile（环境文件）中的 JSON 配置须整体用单引号包裹，保留 JSON 双引号。默认 `CLOUD_OIDC_CLIENTS=[]`；客户端的正式回调由 S1c 登记，不留部署测试 client。
 
+S1e 的 cloud unit（云服务配置）使用独立 `LogNamespace=weftmate-cloud`。升级时将 `deploy/journald@weftmate-cloud.conf` 安装到 `/etc/systemd/journald@weftmate-cloud.conf`，再随正常代码升级重新加载 unit 并重启 cloud；只配置该日志 namespace（命名空间）。日志为 volatile（内存存储），目标保留一小时、五分钟轮转、最多 16 MiB；不含邮箱明文或请求内容。查日志改用 `journalctl --namespace=weftmate-cloud -u weftmate-cloud`；原 frps/旧服务 journal（日志）不变。真实入口启动与每分钟清理过期验证/授权/防重放/限速元数据及一小时前的 file 邮件。S1e 工作包只提交配置与验证，不执行部署。
+
 安装两个 unit（服务单元）到 `/etc/systemd/system/`、`frps.toml` 到 `/etc/weftmate/frps.toml`，配置文件 0644，环境文件 0600。cloud 使用 DynamicUser、StateDirectory `/var/lib/weftmate-cloud`、UMask 0077、ProtectSystem；frps 使用独立 DynamicUser 和 LoadCredential（服务私有凭据），从 root 可读的 certbot 私钥生成进程专属只读快照，不开放私钥的全局读权限。
 
 ```sh

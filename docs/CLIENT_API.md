@@ -753,3 +753,23 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 宿主安装签名新增 `/personal/v1/cloud/hosts/status`（签入 action/sub/name）和 `/hosts/devices/status`（签入 action/sub/deviceId/jkt/status、可选 isHost=true）；沿用 7.5 的 `{hostId,proof}`、60 秒期限/jti 防重放/member 检查，只收名称、活动与内容信任元数据，不收 pin 交付材料或内容。云 schema 6 存放票据、设备元数据与映射。跨账号共享只有 `sharing.supported=false` 接口位置；本包所有连接/配对/信任交付都拒绝越权，S5 再实现主账号扫码确认。
 
 新增业务码：400 `PASSWORD_TICKET_INVALID`（过期/错用途/已用/旧 epoch）、401 `DPOP_INVALID`、403 `APP_LOGIN_REQUIRED`；账号密码/验证码限速与 7.3 相同。接口必须来自固定配置的云/宿主 origin，不以邮箱或目录 pin 推断本地 owner 或宿主信任。S1d 不部署；本节服务端已交付，客户端完整页面与真机扫码由 LG-1 / LG-2 验收。
+
+### 7.9 账号生命周期（S1e / D30）
+
+本节接口由云提供，使用 **7.8 云 DPoP（设备密钥持有证明）授权**：`Authorization: DPoP <cloud audience access token>` + 本次精确 URL/方法/令牌摘要对应的 `DPoP` proof（证明）。不接受宿主 Cookie（会话凭据）、ID token（身份令牌）或无 proof 的 Bearer（未绑定设备密钥的令牌）。所有写操作要求已登记 Origin（来源地址）、JSON ≤16 KiB、无 query（查询参数）/多余字段；响应 `Cache-Control: no-store`。页面与确认文案由 LG-1 / LG-2 接线，本包不改界面。
+
+| 方法与完整路径 | 请求 | 响应 / 语义 |
+|---|---|---|
+| POST `/personal/v1/cloud/auth/account/delete` | `{password}` | 200 `{deleted:true,localDataPreserved:true}`；重新校验当前密码与实时设备授权，再不可恢复地删除账号全部已实现的云数据，立即撤销令牌与在线中继连接；本机对话、记忆、内容密钥及独立应急密码保留 |
+| POST `/personal/v1/cloud/auth/email/change/request` | `{email}` | 200 `{challengeId,expiresIn:600}`；已登录设备输入新邮箱，新邮箱收一次六位验证码；无需重新输入密码；邮箱已被占用（含未激活注册）409 EMAIL_IN_USE |
+| POST `/personal/v1/cloud/auth/email/change/confirm` | `{challengeId,code}` | 200 `{account:{cloudAccountId,email,auth_epoch},notificationAccepted}`；验证码绑定账号与 epoch（认证版本），十分钟内单次有效；提交时再次查占用，换绑后通知旧邮箱「邮箱已更改」；subject（账号标识）保持，epoch +1，原云会话/刷新族/旧邮箱验证码撤销，客户端用新邮箱重新登录 |
+| POST `/personal/v1/cloud/devices/rename` | `{deviceId,name}` | 200 `{renamed:true,deviceId,name}`；只改本账号设备，名称去首尾空白、非空、最多 128 个字符；关联电脑的云目录名称一起更新，后续心跳不覆盖；未知/其他账号设备 404 NOT_FOUND |
+| POST `/personal/v1/cloud/auth/logout/others` | `{}` | 200 `{loggedOut:true,revokedDevices}`；撤销除当前 token 设备指纹外的全部云设备/授权族，取消未完成的其他设备确认，向各宿主写 device 撤权事件；同 deviceId 的另一 key 也撤销，当前 key 的云/宿主会话与刷新族有效；重复调用返回 revokedDevices=0 |
+
+注销必须先在客户端明确展示：**云端账号数据全部删除且不可恢复；本机的对话与记忆仍留在设备上。** 成功后删除客户端云令牌并清原宿主 Cookie（调用原 `/auth/logout`）；本地数据由用户在设备上另行删除。同一邮箱可重新注册，获得全新 cloudAccountId，不继承旧账号内容/设备信任。密码/验证码不持久化。不做手机号或多账号同时登录。
+
+删除范围：`cloud_accounts`（邮箱/密码哈希）、`cloud_devices`（公钥）、`grant_bindings`/`oidc_records`（所有令牌族/会话/账号相关未完成交互）、`interaction_forms`（相关 CSRF）、`email_challenges`/`password_tickets`（验证/授权记录）、`host_claims`/`host_memberships`、`device_host_links`/`host_device_status`、账号的 `cloud_revocations`。账号拥有的安装还删除 `cloud_hosts`/`host_relays`（安装 key、归属、路由与凭据派生记录）和该安装的其他成员关系；仅作为成员加入的他人宿主保持。该安装自有 ACME（自动证书管理）TXT 先经原 DNS provider（域名解析服务适配器）清理；清理失败返回 503，账号删除尚未提交，可重试。file（文件）邮件按账号清理，包括换绑前的旧邮箱通知；SQLite（嵌入式数据库）启用 secure_delete（覆盖删除页）并在删除后 checkpoint（检查点落盘）清 WAL（预写日志）。S3 推送标识、S4 备份密文/包裹密钥、S5 独立共享对象目前尚无表或文件，后续模块必须接入同一注销删除事务，不能保留到注销之后。
+
+撤权沿用宿主 `/hosts/revocations` 云签名 `wm-cloud-revocations+jwt`（撤权令牌），新增可选 `memberships:[{sub,epoch}]` 权威归属快照。新宿主验证原 issuer（发行者）/固定 JWKS（签名公钥集合）/host audience（宿主受众）后，对快照中消失的活跃绑定标为 unbound，撤销其云 Cookie、内容设备与正在进行的响应；本地账号/应急密码不变。快照先于 outbox（待同步记录）发送处理，已删除账号的旧状态记录不能阻塞撤权；发送后再拉一次事件以保持单次同步撤权。已删除安装无公钥可认证请求，只返回不含账号信息的云签名空快照，不保留账号墓碑。watermark（事件水位）取 AUTOINCREMENT（递增序列），删除不会倒退。沿用每 60 秒/启动同步的宿主撤权延迟；云端中继 socket（连接）在删除提交后立即关闭，离线宿主联网同步后撤权。
+
+业务码复用 400 CHALLENGE_INVALID / CODE_INVALID / INVALID_REQUEST / INVALID_DEVICE、401 INVALID_CREDENTIALS / UNAUTHORIZED / DPOP_INVALID、403 FORBIDDEN / ORIGIN_NOT_ALLOWED、409 EMAIL_IN_USE、429 RATE_LIMITED（Retry-After）。旧 7.1 `/auth/email/{request,confirm}` 的密码 + Bearer 形式保留兼容并补旧邮箱通知；新客户端使用本节接口。旧邮箱通知故障不回滚已完成换绑，notificationAccepted=false；发验证码失败仍为 503 MAIL_UNAVAILABLE。
