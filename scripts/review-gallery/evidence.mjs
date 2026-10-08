@@ -1,7 +1,7 @@
 import { readdir, readFile } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import { join, relative } from 'node:path';
-import { catalog, repository } from './common.mjs';
+import { catalog, repository, assertPublicText } from './common.mjs';
 // Explicit compatibility aliases for known synthetic device captures. Browser captures
 // and UI-3's machine-path-bearing shell evidence are deliberately not device evidence.
 const aliases = [];
@@ -26,12 +26,21 @@ async function walk(root) {
 }
 export async function collectEvidence(captureDirectory) {
   const candidates = [];
+  const failures = [];
+  for (const name of await readdir(captureDirectory).catch(() => [])) {
+    if (!/^review-(windows|mobile-web)-.+-(light|dark)\.json$/.test(name)) continue;
+    const row = JSON.parse(await readFile(join(captureDirectory, name), 'utf8'));
+    if (row.status !== 'failed') continue;
+    if (name !== `review-${row.platform}-${row.scene}-${row.theme}.json` || !catalog.scenes.some(scene => scene.id === row.scene) || !catalog.themes.includes(row.theme) || row.synthetic !== true || !/^[a-f0-9]{40}$/.test(row.commit) || !Number.isFinite(Date.parse(row.generatedAt)) || typeof row.reason !== 'string' || !row.reason.trim()) throw Error('Invalid capture failure provenance');
+    assertPublicText(JSON.stringify(row)); failures.push(row);
+  }
   const roots = [captureDirectory, join(repository, 'tests/evidence'), join(repository, 'apps/apple/Tests/Evidence')];
   const pattern = /^review-(windows|mobile-web|android|iphone|mac|watch)-(.+)-(light|dark)(?:-\d{8}T\d{6}Z)?\.png$/;
   for (const root of roots) for (const path of await walk(root)) {
     const match = path.split(/[\\/]/).at(-1).match(pattern);
     if (!match || !catalog.scenes.some(row => row.id === match[2])) continue;
     const metadata = JSON.parse(await readFile(path.replace(/\.png$/, '.json'), 'utf8'));
+    assertPublicText(JSON.stringify(metadata));
     if (metadata.synthetic !== true || !/^[a-f0-9]{40}$/.test(metadata.commit) || !Number.isFinite(Date.parse(metadata.generatedAt))) throw Error('Device evidence needs synthetic provenance, full commit and ISO timestamp');
     if (metadata.platform !== match[1] || metadata.scene !== match[2] || metadata.theme !== match[3]) throw Error('Evidence metadata disagrees with filename');
     candidates.push({ ...metadata, path, source: roots.indexOf(root) === 0 ? metadata.source : relative(repository, path).replaceAll('\\', '/') });
@@ -47,6 +56,6 @@ export async function collectEvidence(captureDirectory) {
   return catalog.scenes.flatMap(scene => catalog.platforms.flatMap(platform => catalog.themes.map(theme => {
     const matches = candidates.filter(row => row.scene === scene.id && row.platform === platform.id && row.theme === theme)
       .sort((a, b) => Date.parse(b.generatedAt) - Date.parse(a.generatedAt) || a.source.localeCompare(b.source));
-    return matches[0] || { scene: scene.id, platform: platform.id, theme, status: scene.unavailable?.includes(platform.id) ? '此端尚无' : '待补' };
+    return failures.find(row => row.scene === scene.id && row.platform === platform.id && row.theme === theme) || matches[0] || { scene: scene.id, platform: platform.id, theme, status: scene.unavailable?.includes(platform.id) ? '此端尚无' : '待补' };
   })));
 }

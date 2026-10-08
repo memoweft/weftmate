@@ -1,12 +1,11 @@
-import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, rm } from 'node:fs/promises';
 import { resolve, extname, join, sep } from 'node:path';
 import { startFe1bFixture } from './fe-1b-fixture.mjs';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { mobileBridge } from '../../scripts/review-gallery/mobile-bridge.mjs';
-import { repository, outDirectory, capture } from '../../scripts/review-gallery/common.mjs';
+import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const assets = join(repository, 'apps/mobile-ui/www'), out = outDirectory();
 const server = createServer(async (req, res) => {
   try {
@@ -36,21 +35,29 @@ try {
       await page.goto(`http://127.0.0.1:${server.address().port}/`);
       const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
       const conversation = title => button(new RegExp(`^${title} [0-9]`));
-      const shot = scene => capture(page, out, 'mobile-web', scene, theme);
-      await button('登录或连接').click(); await page.getByRole('heading', { name: '电脑账户与连接', exact: true }).waitFor(); await shot('login');
-      await page.getByLabel('个人服务地址', { exact: true }).fill(fixture.origin);
-      await page.getByLabel('账户名（3–64个字符）', { exact: true }).fill(fixture.credentials.username);
-      await page.getByLabel('密码（注册时15–128个字符）', { exact: true }).fill(fixture.credentials.password);
-      await page.getByLabel('设备名称', { exact: true }).fill('合成审稿手机');
-      await button('检查服务连接').click(); await button('注册新账户').waitFor();
-      await button('登录').click(); await page.waitForFunction(() => state.loggedIn); await button('返回').click(); await conversation('整理项目进展').waitFor(); await shot('sessions');
-      await conversation('整理项目进展').click(); await page.getByText(/执行了 1 步/).click();
-      await page.getByText('读取项目记录 · notes.md', { exact: true }).waitFor(); await shot('conversation');
-      await button('输出与来源').click(); await button(/^notes.md 1 次使用$/).waitFor(); await shot('outputs-sources');
-      await button('返回对话').click(); await button('返回').click(); await conversation('整理临时文件').click();
-      await button('允许一次').waitFor(); await shot('approval'); await button('返回').click();
-      await button('打开导航').click(); await button('记忆').click(); await button(/使用中文说明/).waitFor(); await shot('memory');
-      await button('返回').click(); await button('设置与账户').click(); await button(/^外观 /).click(); await button(new RegExp(`^${theme === 'dark' ? '深色' : '浅色'}`)).click(); await shot('appearance');
+      const shot = (scene, prepare, current = page) => runScene({ page: current, out, platform: 'mobile-web', scene, theme, prepare });
+      // LG-1b follow-up: replace only this function's visible-name selectors.
+      const prepareLogin = async () => {
+        await button('登录或连接').click();
+        await page.getByRole('heading', { name: '电脑账户与连接', exact: true }).waitFor();
+      };
+      await shot('login', prepareLogin);
+      // Keep authenticated scenes independent of an evolving login form.
+      await bridge({ method: 'auth.login', params: { ...fixture.credentials, deviceName: '合成审稿手机' } });
+      const home = async () => { await page.reload(); await conversation('整理项目进展').waitFor(); };
+      const report = async () => { await home(); await conversation('整理项目进展').click(); };
+      const settings = async () => { await home(); await button('设置与账户').click(); };
+      const preparations = {
+        sessions: home,
+        conversation: async () => { await report(); await page.getByText(/执行了 1 步/).click(); await page.getByText('读取项目记录 · notes.md', { exact: true }).waitFor(); },
+        'outputs-sources': async () => { await report(); await button('输出与来源').click(); await button(/^notes.md 1 次使用$/).waitFor(); },
+        approval: async () => { await home(); await conversation('整理临时文件').click(); await button('允许一次').waitFor(); },
+        memory: async () => { await home(); await button('打开导航').click(); await button('记忆').click(); await button(/使用中文说明/).waitFor(); },
+        appearance: async () => { await settings(); await button(/^外观 /).click(); await button(new RegExp(`^${theme === 'dark' ? '深色' : '浅色'}`)).click(); },
+        usage: async () => { await settings(); await button(/^用量 /).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
+        'session-menu': async () => { await home(); await page.getByRole('main').getByRole('button', { name: '更多操作 整理项目进展', exact: true }).click(); await page.getByRole('dialog', { name: '对话操作', exact: true }).waitFor(); await button('归档对话').waitFor(); await button('删除对话').waitFor(); },
+      };
+      for (const scene of catalog.scenes.filter(row => !['login', 'question'].includes(row.id))) await shot(scene.id, preparations[scene.id]);
       // FE-1a's real question projection supplies the missing FE-1b question fixture.
       const questionPage = await context.newPage(); questionPage.setDefaultTimeout(30000);
       await questionPage.route('**/bridge', async route => {
@@ -58,16 +65,14 @@ try {
         if (body.method === 'settings.appearance') return route.fulfill({ json: { result: { value: theme } } });
         await route.continue();
       });
-      await questionPage.goto(candidate.mobileUrl);
-      await questionPage.waitForFunction(() => state.booted && state.page === 'home');
-      await questionPage.getByRole('button', { name: '项目进度报告 待审批', exact: true }).click();
-      await questionPage.getByText('报告要采用哪种格式？', { exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' }));
-      await capture(questionPage, out, 'mobile-web', 'question', theme);
-      assert.deepEqual(errors, []); console.log(`Mobile ${theme}: eight synthetic scenes captured.`);
-    } catch (error) {
-      console.error(error.message);
-      for (const current of context.pages()) console.error((await current.locator('body').innerText()).slice(-1800));
-      throw error;
-    } finally { await context.close(); await fixture.close(); await candidate.close(); }
+      await shot('question', async () => {
+        await questionPage.goto(candidate.mobileUrl);
+        await questionPage.waitForFunction(() => state.booted && state.page === 'home');
+        await questionPage.getByRole('button', { name: '项目进度报告 待审批', exact: true }).click();
+        await questionPage.getByText('报告要采用哪种格式？', { exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' }));
+      }, questionPage);
+      if (errors.length) throw Error('Mobile renderer failed');
+      console.log(`Mobile ${theme}: scene outcomes recorded.`);
+    } finally { await context.close(); await fixture.close(); await candidate.close(); await rm(fixture.root, { recursive: true, force: true }); await rm(candidate.root, { recursive: true, force: true }); }
   }
 } finally { await browser.close(); server.closeAllConnections(); await new Promise(done => server.close(done)); }
