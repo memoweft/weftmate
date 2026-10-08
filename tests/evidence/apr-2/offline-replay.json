@@ -1,0 +1,27 @@
+{
+  "source": "EV-1 saved failed action-02 command; unchanged, offline only",
+  "baselineCommit": "33d8cada6a9f7d149ba452aae86ef7f08c4d6686",
+  "commandSha256": "2e9bf9bb35e7be9522e35422adf248baa1edc9df0139100d2b32c9129a789100",
+  "modelRequests": 0,
+  "writes": [
+    {
+      "target": "C:\\Temp\\weftmate-eval-action-02-web-document-2YnLMK",
+      "kind": "directory",
+      "existed": true
+    },
+    {
+      "target": "C:\\Temp\\weftmate-eval-action-02-web-document-2YnLMK\\v24.0.0.html",
+      "kind": "write",
+      "existed": false
+    },
+    {
+      "target": "C:\\Temp\\weftmate-eval-action-02-web-document-2YnLMK\\v22.0.0.html",
+      "kind": "write",
+      "existed": false
+    }
+  ],
+  "oldRisk": [
+    "overwrite"
+  ],
+  "newRisk": []
+}
