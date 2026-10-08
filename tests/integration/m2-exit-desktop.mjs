@@ -167,6 +167,7 @@ async function baseline(modelName, fourOnly = false) {
     await page.locator('#model-trigger').click();
     await page.getByRole('option', { name, exact: true }).click();
     const response = page.waitForResponse(r => new URL(r.url()).pathname === '/personal/v1/commands' && r.request().postDataJSON()?.kind === 'session.create');
+    response.catch(() => {}); // Await below owns failure; prevent an early UI timeout from aborting cleanup.
     await page.locator('#new-session').click();
     const created = await response, body = await created.json(); assert.equal(created.status(), 202);
     const cmd = await until(async () => { const cmd = (await api(`/commands/${body.command.commandId}`)).body.command;
@@ -189,6 +190,7 @@ async function baseline(modelName, fourOnly = false) {
     report.turns.push(turn); persist();
     await page.locator('#message-text').fill(text);
     const response = page.waitForResponse(r => new URL(r.url()).pathname === '/personal/v1/commands' && r.request().postDataJSON()?.kind === 'session.message');
+    response.catch(() => {});
     await page.locator('#send-message').click();
     const sent = await response; assert.equal(sent.status(), 202, await sent.text());
     let savedEventCount = -1;
