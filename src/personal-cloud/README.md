@@ -1,5 +1,7 @@
 # 宿主云身份（S1b）
 
+S1d / D29 新电脑无需先本地登录：App（应用）内账号流程完成后，带云控制面 token（令牌）与宿主 nonce/DPoP（设备密钥持有证明）调用直接回环 `/auth/cloud-desktop`，创建独立 owner 并自动认领/绑定。已有本地数据仍走下面的显式绑定；已有宿主的新 key 仍等待批准。自动绑定电脑 Cookie（会话凭据）可在直接地址管理绑定/展示二维码，普通手机云 Cookie 不可。可信 pin（证书公钥指纹）交付、可选应急密码和 LG-1 / LG-2 接线见 CLIENT_API 7.8；`trust.mjs` 要求调用者提供已受信设备通道取得的外部公钥锚，不允许云目录自举信任。
+
 `index.mjs` 处理认领/绑定事务、内容设备信任、Cookie 交换和撤销；`proofs.mjs` 用 jose 验证固定 issuer/JWKS/RS256 access token 与 ES256 DPoP；`storage.mjs` 管理私有安装/TLS 密钥、版本 1 身份日志与迁移前备份。客户端接口见 `docs/CLIENT_API.md` 7.4。
 
 宿主启用配置：`WEFTMATE_CLOUD_ISSUER=https://api.example.com/personal/v1/cloud/oidc`。Electron 与 `run-personal-host.mjs` 的子进程沿用此环境变量；未设置时本地认证不依赖云。工厂测试可显式提供 `cloudIdentity: { issuer, allowInsecureLoopback: true }`，HTTP 仅限回环；生产环境变量没有启用 HTTP 的开关。issuer、JWKS 与 audience 从此配置确定，令牌内的 jku/x5u 不参与配置。

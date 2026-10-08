@@ -1,4 +1,4 @@
-# WeftMate Cloud · S1a–S2
+# WeftMate Cloud · S1a–S2 / S1d
 
 独立的 Node **24.x** ESM 服务。S1a 实现云账号、邮箱验证、密码找回、新云设备邮件确认和 OIDC；设计见 [CLOUD.md](../../docs/CLOUD.md)，接口见 [CLIENT_API.md 第 7 节](../../docs/CLIENT_API.md#7-云端账号s1a客户端接入在后续包)。S1b 已接宿主认领、安装签名与设备撤权；S2 已接官方 frp 授权与 TLS 透传。五端完整客户端在 S1c。不接收对话、记忆、健康或宿主密码。
 
@@ -13,7 +13,7 @@ npm test
 npm start
 ```
 
-默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":5}`。Ctrl+C / SIGTERM 关闭中继入口、HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
+默认监听 `127.0.0.1:8787`，健康检查 `GET /healthz` 返回 `{"status":"ok","service":"weftmate-cloud","schemaVersion":6}`。Ctrl+C / SIGTERM 关闭中继入口、HTTP 和数据库。默认 issuer 为 `http://localhost:8787/personal/v1/cloud/oidc`，账号交互须通过这个 origin 访问。随机端口测试先分配端口再配置 issuer；`CLOUD_PORT=0` 只用于健康检查启动测试，账号登录须配置实际公开端口。
 
 配置只读环境变量，不自动加载 `.env`。可复制 `.env.example` 到被忽略的 `.env`，使用 `node --env-file=.env src/main.mjs`。没有登记客户端时仍可注册/验证，但不能开始 OIDC 授权；不会默认开放生产 redirect URI。
 
@@ -45,9 +45,11 @@ npm start
 
 ## OIDC、存储与密钥
 
+S1d / D29 的 App（应用）内完整账号页、设备目录/连接和受信 pin（证书公钥指纹）交付见 [CLIENT_API 7.8](../../docs/CLIENT_API.md#78-app-内账号与设置设备s1d--d29) 与 [CLOUD 第 14 节](../../docs/CLOUD.md#14-s1d-app-内账号与设置设备d29)。`/auth/authorization` / resume 封装 provider 标准授权交互，不导航外部网页；新 App grant 强制 P-256 DPoP（设备密钥持有证明）。以下 S1a/S1c 表述为兼容路径。独立相关验证：`node --test test/app-devices.test.mjs test/identity.test.mjs test/hosts.test.mjs`；新 test 含真实 main 进程、file 邮件与隔离宿主闭环，数据只在系统临时目录。
+
 锁定 `oidc-provider 9.12.2` 和 `jose 6.2.12`，自己的 package-lock；不手写 OAuth/JWT。Authorization Code + 强制 PKCE S256，授权码 60 秒、单次使用；访问/ID token 300 秒，访问 token 的 audience 仅 `<issuer origin>/personal/v1/cloud`。scope 为 `cloud:account`；JWT 不包含邮箱或内容。请求 `openid offline_access cloud:account` 且 `prompt=consent` 才有离线刷新；原生客户端须校验 state、ID token nonce/issuer/audience/RS256/exp，并将刷新凭据放系统凭据库。浏览器不把刷新凭据放 localStorage。[oidc-provider](https://github.com/panva/node-oidc-provider)、[jose](https://github.com/panva/jose)
 
-刷新由 provider 管理，强制每次轮换、绝对族寿命 30 天。复用撤销整个授权族及后继刷新；SQLite 原子 consume 同时处理并发复用，防止两个有效后继。RS256 access token 自包含，刷新族撤销不会让外部离线 JWT 验证即时失效；剩余短 TTL 是明确边界。云账号 Cookie host-only、HttpOnly、SameSite=Lax，HTTPS 时 Secure；密码/验证码写入要求 issuer 同源 Origin；交互登录额外检查签名 Cookie、interaction 与 CSRF。token/revocation 为标准 form POST，可供无 Origin 的原生客户端使用；有 Origin 时仅允许云同源。
+刷新由 provider 管理，强制每次轮换、绝对族寿命 30 天。复用撤销整个授权族及后继刷新；SQLite 原子 consume 同时处理并发复用，防止两个有效后继。RS256 access token 自包含，刷新族撤销不会让外部离线 JWT 验证即时失效；剩余短 TTL 是明确边界。云账号 Cookie host-only、HttpOnly、开发回环 SameSite=Lax，HTTPS 时 Secure/SameSite=None（供 App 内跨 origin 交互）；密码/验证码写入要求 issuer 或预登记回调 Origin；交互登录额外检查签名 Cookie、interaction 与 CSRF。token/revocation 为标准 form POST，可供无 Origin 的原生客户端使用；有 Origin 时仅允许云自身或预登记回调 origin。
 
 SQLite `node:sqlite`：WAL/FK/FULL 同步、连续 SQL 迁移；账号、验证码、设备、失败桶和 OIDC adapter 状态可重开。已应用迁移不可修改，版本/名称/校验和不符拒绝启动。001 保持原样，002 增加身份表；升级前备份，无自动向下迁移。短小控制面记录用同步 SQL，scrypt/密钥生成/文件和邮件异步，不写用户内容。
 
