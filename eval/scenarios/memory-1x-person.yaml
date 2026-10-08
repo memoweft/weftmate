@@ -1,0 +1,20 @@
+{
+  "id": "memory-1x-person",
+  "category": "memory",
+  "title": "留出：课程师生关系跨对话联系",
+  "setup": { "files": [], "memories": [], "devices": ["隔离宿主电脑与真实桌面程序"] },
+  "turns": [
+    { "user": "闻舟是教我陶艺的老师，他会带我练拉坯。", "after": { "newSession": true, "waitMs": 1000 } },
+    { "user": "我想给闻舟发个消息，帮我写一句自然的问候。" }
+  ],
+  "checks": [
+    { "type": "reply_contains", "text": "闻舟" },
+    { "type": "reply_matches", "pattern": "陶艺|拉坯" },
+    { "type": "turn_status", "turn": 1, "status": "completed" },
+    { "type": "turn_status", "status": "completed" },
+    { "type": "memory_used" },
+    { "type": "llm_judge", "prompt": "问候应自然联系陶艺老师或拉坯，不捏造其他关系或事项。" }
+  ],
+  "timeoutSec": 600,
+  "notes": "M2e留出场景；陶艺师生关系领域。新会话只提姓名；基线另核对采用的正式关系、当前状态、完整原话来源、独立会话及未声明审批。"
+}
