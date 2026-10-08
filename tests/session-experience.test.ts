@@ -62,7 +62,7 @@ test('HTTP contract hides archived sessions, denies send, restores and deletes d
     const request=async(route:string,method='GET',body?:any)=>{const r=await fetch(origin+'/personal/v1'+route,{method,headers:{authorization:`Bearer ${device.token}`,'content-type':'application/json'},...(body?{body:JSON.stringify(body)}:{})});return {status:r.status,body:await r.json()}};
     const sent=await request('/commands','POST',{requestId:'create',kind:'session.create',targetDeviceId:hostId,modelProfileId:'local'});assert.equal(sent.status,202);
     let command;for(let i=0;i<100;i++){command=(await request('/commands/'+sent.body.command.commandId)).body.command;if(command.state==='accepted_by_dsh')break;await new Promise(r=>setTimeout(r,20))}assert.equal(command.state,'accepted_by_dsh');
-    const id=command.sessionId;assert.equal((await request(`/sessions/${id}/archive`,'POST',{})).status,200);assert.equal((await request('/sessions')).body.sessions.length,0);
+    const id=command.sessionId;assert.equal((await request('/sessions')).body.sessions[0].modelProfileId,'local','ordinary sessions retain their bound model identity');assert.equal((await request(`/sessions/${id}/archive`,'POST',{})).status,200);assert.equal((await request('/sessions')).body.sessions.length,0);
     assert.equal((await request('/sessions?archived=true')).body.sessions[0].archived,true);
     assert.equal((await request('/commands','POST',{requestId:'denied',kind:'session.message',targetDeviceId:hostId,sessionId:id,text:'hello'})).body.error.code,'SESSION_ARCHIVED');
     assert.equal((await request(`/sessions/${id}/unarchive`,'POST',{})).status,200);assert.equal((await request('/sessions')).body.sessions.length,1);

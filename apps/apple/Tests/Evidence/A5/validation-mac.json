@@ -1,0 +1,8 @@
+{
+  "debugBuild": true,
+  "nativeWindowsCaptured": 20,
+  "globalScreenCapture": false,
+  "accessibilityPermissionRequested": false,
+  "compiledDshEngine": false,
+  "synthetic": true
+}

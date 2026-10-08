@@ -47,10 +47,31 @@ public struct ConversationResourcesPage: Decodable, Sendable {
 public struct ConversationResourcesWindow: Sendable {
     public private(set) var outputs: [ConversationOutput] = []
     public private(set) var sources: [ConversationSource] = []
+    public private(set) var readOutputs: [ConversationOutput] = []
+    public func olderVersions(of output: ConversationOutput) -> [ConversationOutput] {
+        readOutputs.filter { $0.id != output.id && $0.fileName != nil && $0.fileName == output.fileName }
+            .sorted { ($0.createdAt ?? "", $0.id) > ($1.createdAt ?? "", $1.id) }
+    }
     public private(set) var nextSeq = -1
     public init() {}
+    public mutating func includeTimelineOutputs(_ events: [TimelineEvent]) throws {
+        let collected = events.filter { $0.type == "artifact.created" }.flatMap { event -> [ConversationOutput] in
+            let values: [JSONValue]
+            if case .array(let array) = event.data["artifacts"] { values = array } else { values = [event.data] }
+            return values.compactMap { value in
+                guard let id = value["artifactId"]?.string else { return nil }
+                return ConversationOutput(artifactId: id, fileName: value["fileName"]?.string,
+                    contentType: value["contentType"]?.string, size: value["size"]?.int, createdAt: value["createdAt"]?.string ?? event.at)
+            }
+        }
+        try apply(.init(outputs: collected, sources: [], nextSeq: nextSeq, hasMore: false))
+    }
     public mutating func apply(_ page: ConversationResourcesPage) throws {
         guard page.nextSeq >= nextSeq, !page.hasMore || page.nextSeq > nextSeq else { throw APIFailure.invalidResponse }
+        for output in page.outputs {
+            if let index = readOutputs.firstIndex(where: { $0.id == output.id }) { readOutputs[index] = output }
+            else { readOutputs.append(output) }
+        }
         var latest: [String: ConversationOutput] = [:]
         for output in outputs + page.outputs {
             let key = output.fileName ?? output.id

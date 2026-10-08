@@ -1,0 +1,16 @@
+{
+  "realCloudMain": true,
+  "realPersonalHost": true,
+  "compiledDshEngine": false,
+  "syntheticRuntimeAndModel": true,
+  "steerRootMatches": true,
+  "queueStartedInOrder": true,
+  "cancelHTTP": 202,
+  "cancelRaceHTTP": 409,
+  "canceledNeverStarted": true,
+  "stopRetainsQueue": true,
+  "archiveRestore": true,
+  "defaultDeleteDoesNotForget": true,
+  "checkedDeleteCallsDeleteEvidence": true,
+  "deletedWorkspacesAbsent": true
+}

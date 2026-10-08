@@ -24,6 +24,7 @@ public struct SharedSessionRecord: Codable, Equatable, Sendable, Identifiable {
     public let conversationId: String?
     public let modelProfileId: String?
     public let unavailable: Bool?
+    public let archived: Bool?
     func validate() throws {
         try SharedValidation.require(SharedValidation.id(sessionId) && title.utf16.count <= 256 &&
             conversationId.map(SharedValidation.id) ?? true && modelProfileId.map(SharedValidation.profile) ?? true &&
@@ -134,6 +135,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public let sessionId: String?
     public let text: String?
     public let mode: String?
+    public let intent: MessageIntent?
     public let modelProfileId: String?
     public let sourceSyncEventId: String?
     public let attachments: [OriginalAttachment]?
@@ -142,10 +144,11 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public init(requestId: String, kind: SharedCommandKind, targetDeviceId: String,
                 sessionId: String? = nil, text: String? = nil, modelProfileId: String? = nil,
                 sourceSyncEventId: String? = nil, attachments: [OriginalAttachment]? = nil,
-                originalAttachments: [OriginalAttachment]? = nil, attachmentMessageId: String? = nil) throws {
+                originalAttachments: [OriginalAttachment]? = nil, attachmentMessageId: String? = nil, intent: MessageIntent = .steer) throws {
         self.requestId = requestId; self.kind = kind; self.targetDeviceId = targetDeviceId
         self.sessionId = sessionId; self.text = text; self.modelProfileId = modelProfileId
-        self.sourceSyncEventId = sourceSyncEventId; mode = kind == .message ? "queue" : nil
+        self.sourceSyncEventId = sourceSyncEventId; mode = nil
+        self.intent = kind == .message ? intent : nil
         self.attachments = attachments; self.originalAttachments = originalAttachments
         self.attachmentMessageId = attachmentMessageId
         try validate()
@@ -164,7 +167,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
         case .message:
             try SharedValidation.require(sessionId.map(SharedValidation.id) == true && modelProfileId == nil &&
                 text.map { (!$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || attachments != nil || originalAttachments != nil) && $0.utf16.count <= 8_192 } == true &&
-                mode == "queue" && sourceSyncEventId.map(SharedValidation.id) ?? true)
+                ((intent != nil && (mode == nil || mode == intent?.rawValue)) || (intent == nil && mode == "queue")) && sourceSyncEventId.map(SharedValidation.id) ?? true)
         case .cancel:
             try SharedValidation.require(sessionId.map(SharedValidation.id) == true && modelProfileId == nil &&
                 text == nil && mode == nil && sourceSyncEventId == nil)
@@ -180,7 +183,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     static func decode(_ data: Data) throws -> Self {
         try SharedValidation.require(data.count <= 12_288)
         guard let keys = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "modelProfileId", "sourceSyncEventId", "attachments", "originalAttachments", "attachmentMessageId"]) else {
+              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "intent", "modelProfileId", "sourceSyncEventId", "attachments", "originalAttachments", "attachmentMessageId"]) else {
             throw APIFailure.invalidResponse
         }
         let payload: Self
@@ -190,6 +193,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
         try SharedValidation.require(keys["requestId"] as? String == payload.requestId && keys["kind"] as? String == payload.kind.rawValue &&
             keys["targetDeviceId"] as? String == payload.targetDeviceId && keys["sessionId"] as? String == payload.sessionId &&
             keys["text"] as? String == payload.text && keys["mode"] as? String == payload.mode &&
+            keys["intent"] as? String == payload.intent?.rawValue &&
             keys["modelProfileId"] as? String == payload.modelProfileId && keys["sourceSyncEventId"] as? String == payload.sourceSyncEventId &&
             keys["attachmentMessageId"] as? String == payload.attachmentMessageId)
         for key in ["attachments", "originalAttachments"] {
@@ -243,6 +247,16 @@ public struct SharedCommandReceipt: Codable, Equatable, Sendable {
     public let sourceSyncEventId: String?
     public let receiptId: String?
     public let errorCode: String?
+    public let intent: MessageIntent?
+    public let rootTaskId: String?
+    public let taskAction: String?
+    public init(commandId: String, requestId: String, kind: SharedCommandKind, targetDeviceId: String, state: SharedCommandState,
+                sessionId: String?, conversationId: String?, sourceSyncEventId: String?, receiptId: String?, errorCode: String?,
+                intent: MessageIntent? = nil, rootTaskId: String? = nil, taskAction: String? = nil) {
+        self.commandId = commandId; self.requestId = requestId; self.kind = kind; self.targetDeviceId = targetDeviceId; self.state = state
+        self.sessionId = sessionId; self.conversationId = conversationId; self.sourceSyncEventId = sourceSyncEventId
+        self.receiptId = receiptId; self.errorCode = errorCode; self.intent = intent; self.rootTaskId = rootTaskId; self.taskAction = taskAction
+    }
     func validateStructure() throws {
         try SharedValidation.require(SharedValidation.id(commandId) && SharedValidation.id(targetDeviceId) &&
             SharedValidation.request(requestId) && sessionId.map(SharedValidation.id) == true &&
@@ -267,6 +281,7 @@ public struct SharedHistoryImage: Codable, Equatable, Sendable {
     public let height: Int
     public let name: String?
 }
+public struct SharedLifecycleTask: Codable, Equatable, Sendable { public let receiptId: String? }
 public struct SharedHistoryData: Codable, Equatable, Sendable {
     public let text: String?
     public let images: [SharedHistoryImage]?
@@ -277,6 +292,7 @@ public struct SharedHistoryData: Codable, Equatable, Sendable {
     public let truncated: Bool?
     public let turn: Int?
     public let reason: String?
+    public let tasks: [SharedLifecycleTask]?
 }
 public struct SharedHistoryEvent: Codable, Equatable, Sendable, Identifiable {
     public var id: Int { seq }
@@ -287,7 +303,8 @@ public struct SharedHistoryEvent: Codable, Equatable, Sendable, Identifiable {
     func validate() throws {
         try SharedValidation.require(seq >= 0 && seq <= SharedValidation.maximumSequence && !type.isEmpty && type.utf8.count <= 128 &&
             at.map { $0.utf8.count <= 64 } ?? true && data.text.map { $0.utf16.count <= 16_384 } ?? true &&
-            data.receiptId.map(SharedValidation.receipt) ?? true && data.turn.map { $0 > 0 && $0 <= SharedValidation.maximumSequence } ?? true)
+            data.receiptId.map(SharedValidation.receipt) ?? true &&
+            (data.tasks ?? []).allSatisfy { $0.receiptId.map(SharedValidation.receipt) ?? true } && data.turn.map { $0 > 0 && $0 <= SharedValidation.maximumSequence } ?? true)
         let images = data.images ?? []
         try OriginalAttachmentValidation.validate(data.originalAttachments, messageID: data.attachmentMessageId,
             unpreviewedIDs: data.unpreviewedOriginalImageIds)
@@ -349,6 +366,7 @@ public struct SharedTurnTracker: Sendable {
     public private(set) var messages: [ChatMessage] = []
     private var openTurn: Int?
     private var receiptTurns: [String: Int] = [:]
+    private var nativeReceiptProgress: [String: SharedTurnProgress] = [:]
     private var ambiguousReceipts = Set<String>()
     private var endings: [Int: String] = [:]
     private var runningTurns = Set<Int>()
@@ -362,18 +380,38 @@ public struct SharedTurnTracker: Sendable {
 
         for event in page.events {
             if let message = event.chatMessage(sessionID: sessionId) { messages.append(message) }
-            if event.type == "turn.started" {
-                if let previous = openTurn { ambiguousTurns.insert(previous); runningTurns.remove(previous) }
-                openTurn = event.data.turn
-                if let turn = openTurn {
-                    if !seenTurns.insert(turn).inserted { ambiguousTurns.insert(turn) }
-                    runningTurns.insert(turn)
+            let lifecycleReceipts = event.data.tasks?.compactMap(\.receiptId) ?? event.data.receiptId.map { [$0] } ?? []
+            if ["task.queued", "task.started", "task.ended"].contains(event.type) {
+                for receipt in lifecycleReceipts {
+                    if event.type == "task.queued" { nativeReceiptProgress[receipt] = .pending }
+                    else if event.type == "task.started" { nativeReceiptProgress[receipt] = .running }
+                    else {
+                        switch event.data.reason {
+                        case "completed": nativeReceiptProgress[receipt] = .completed
+                        case "aborted", "canceled": nativeReceiptProgress[receipt] = .aborted
+                        case "error": nativeReceiptProgress[receipt] = .failed
+                        case "blocked": nativeReceiptProgress[receipt] = .blocked
+                        default: nativeReceiptProgress[receipt] = .unknown
+                        }
+                    }
+                }
+            }
+            if event.type == "turn.started" || event.type == "task.started" {
+                // Native step-1 start follows turn.started and names the same active turn.
+                let sameTurnStart = event.type == "task.started" && openTurn == event.data.turn
+                if !sameTurnStart {
+                    if let previous = openTurn { ambiguousTurns.insert(previous); runningTurns.remove(previous) }
+                    openTurn = event.data.turn
+                    if let turn = openTurn {
+                        if !seenTurns.insert(turn).inserted { ambiguousTurns.insert(turn) }
+                        runningTurns.insert(turn)
+                    }
                 }
             } else if event.type == "user.message", let receipt = event.data.receiptId {
-                if let turn = openTurn, receiptTurns[receipt] == nil, !ambiguousReceipts.contains(receipt) {
+                if let turn = event.data.turn ?? openTurn, receiptTurns[receipt] == nil, !ambiguousReceipts.contains(receipt) {
                     receiptTurns[receipt] = turn
                 } else { receiptTurns[receipt] = nil; ambiguousReceipts.insert(receipt) }
-            } else if event.type == "turn.ended" {
+            } else if event.type == "turn.ended" || (event.type == "task.ended" && event.data.reason != "canceled") {
                 if let turn = event.data.turn, turn == openTurn {
                     endings[turn] = event.data.reason; runningTurns.remove(turn)
                 } else if let previous = openTurn {
@@ -389,6 +427,7 @@ public struct SharedTurnTracker: Sendable {
         if receipt.state == .rejected { return .failed }
         if receipt.state == .pending || receipt.state == .dispatching { return .pending }
         guard receipt.state.isAccepted else { return .unknown }
+        if let id = receipt.receiptId, let native = nativeReceiptProgress[id], !ambiguousReceipts.contains(id) { return native }
         guard let id = receipt.receiptId, let turn = receiptTurns[id], !ambiguousReceipts.contains(id) else { return .accepted }
         guard !ambiguousTurns.contains(turn) else { return .unknown }
         if let reason = endings[turn] {
