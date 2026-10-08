@@ -16,6 +16,7 @@ process.env.TEMP = process.env.TMP = 'C:/Temp';
 const memoryUi = process.argv.includes('--memory-ui');
 const memoryLoop = process.argv.includes('--memory-loop');
 const memoryAccuracy = process.argv.includes('--memory-accuracy');
+const memoryFormation = process.argv.includes('--memory-formation');
 assert.ok(!memoryAccuracy || memoryLoop, '--memory-accuracy requires --memory-loop');
 const coreSourceIndex = process.argv.indexOf('--memory-core-source');
 const coreSource = coreSourceIndex === -1 ? 'D:/AIProjects/MemoWeft/Core/py/src'
@@ -43,7 +44,7 @@ if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key'
 }
 if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
 const scenarioFixes = process.argv.includes('--scenario-fixes');
-const root = join('C:/Temp', `weftmate-${memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
+const root = join('C:/Temp', `weftmate-${memoryFormation ? 'm2c' : memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password = `test-${randomUUID()}-password`, username = `eval-${randomUUID()}`;
