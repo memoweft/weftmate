@@ -1,0 +1,67 @@
+{
+  "id": "memory-2x-correction",
+  "category": "memory",
+  "title": "盲测B：无线电频道省略主题纠正",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "隔离宿主与真实桌面程序"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我的手持对讲机集合频道固定在7频道，每次出队都用这个。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "改一下，是12频道才对，先前的7频道不再使用，往后照新的。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "下次出队，我的手持对讲机要调到哪个频道？"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_contains",
+      "text": "12"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "应使用纠正后的12频道，不能仍让用户调到7频道。"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 3,
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "memoryExpectation": {
+    "kind": "cognition",
+    "currentPattern": "12频道",
+    "oldPattern": "7频道",
+    "sourceTurn": 1
+  },
+  "timeoutSec": 900,
+  "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。"
+}
