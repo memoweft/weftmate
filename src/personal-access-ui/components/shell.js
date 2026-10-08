@@ -61,14 +61,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         }
         const popup = ui.byId('model-popover');
         popup.hidden = false;
-        popup.style.right = '0px';
-        const availableHeight = trigger.getBoundingClientRect().top - ui.byId('conversation-pane').getBoundingClientRect().top - 12;
-        popup.style.maxHeight = `${Math.max(96, Math.min(460, window.innerHeight * .58, availableHeight))}px`;
-        const bounds = popup.getBoundingClientRect();
-        if (bounds.left < 16)
-            popup.style.right = `${bounds.left - 16}px`;
-        else if (bounds.right > window.innerWidth - 16)
-            popup.style.right = `${bounds.right - window.innerWidth + 16}px`;
+        globalThis.WeftPopover?.position(popup, trigger);
         trigger.setAttribute('aria-expanded', 'true');
         const selected = [...list.children].find((item) => item.getAttribute('aria-selected') === 'true');
         const focusTarget = selected || list.children[0];
@@ -318,7 +311,6 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         });
         ui.byId('rail-close').addEventListener('click', () => { ui.closeRail(); window.WeftDesktop?.toggleRail(true); });
         ui.byId('rail-backdrop').addEventListener('click', ui.closeRail);
-        window.addEventListener('resize', () => ui.closeModelMenu());
         window.WeftDesktop?.init({ renderSessions: ui.renderSessions, openAccount: core.openAccount, sendDraft: core.sendDraft, addFiles: core.addAttachmentFiles,
             stop: core.stopCurrentTurn, isAssistant: () => core.state.currentView === 'assistant', resources: core.loadConversationResources, openResource: ui.openConversationResource });
         if (window.WeftDesktop)

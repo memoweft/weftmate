@@ -69,10 +69,7 @@ async function loadApprovalMode(context){const key=JSON.stringify(context),revis
   finally{if(current()){approvalModeState.loading=false;
     if(!context.defaults)updateApprovalModeButton();if(approvalModeState.menu)renderApprovalModeMenu()}}}
 
-function placeApprovalModeMenu(){const popup=$('approval-mode-popover'),menu=approvalModeState.menu;if(!menu)return;
-  const top=menu.trigger.getBoundingClientRect().top;
-  popup.style.bottom=menu.context.defaults?'16px':`${Math.max(16,window.innerHeight-top+8)}px`;
-  popup.style.maxHeight=`${Math.max(100,Math.min(window.innerHeight-32,menu.context.defaults?window.innerHeight-32:top-16))}px`}
+function placeApprovalModeMenu(){const menu=approvalModeState.menu;if(menu)globalThis.WeftPopover.position($('approval-mode-popover'),menu.trigger)}
 
 function renderApprovalModeMenu(){const menu=approvalModeState.menu;if(!menu)return;const popup=$('approval-mode-popover');clear(popup);
   popup.append(el('h3','',menu.context.defaults?'新电脑对话的默认模式':'这段对话的审批模式'));
