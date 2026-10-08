@@ -14,3 +14,7 @@ export const passwordChangedMail = () => ({
   subject: 'WeftMate 密码已更改',
   text: '你的云账号密码已更改。原有云会话与刷新令牌已撤销。如果不是你操作，请立即找回密码。此操作不改变本地宿主密码或内容密钥。',
 });
+export const emailChangedMail = () => ({
+  subject: 'WeftMate 邮箱已更改',
+  text: '你的 WeftMate 账号邮箱已更改，原有云会话已撤销。如果不是你操作，请联系支持。本机的对话、记忆与应急密码不受影响。',
+});

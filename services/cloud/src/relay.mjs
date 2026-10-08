@@ -124,6 +124,10 @@ export function createRelay({ database: db, config, secret, now = Date.now, dns 
       if (!dns) throw new CloudError(503, 'DNS_NOT_CONFIGURED');
       const name = `_acme-challenge.${row.domain}`;
       await dns[route.endsWith('/present') ? 'present' : 'cleanup']({ name, value: payload.value, ttl: 60 });
+      if (route.endsWith('/present')) {
+        try { active(hostId); }
+        catch (error) { await dns.cleanup({ name, value: payload.value, ttl: 60 }); throw error; }
+      }
       return { name, updated: true };
     }
     throw new CloudError(404, 'NOT_FOUND');
@@ -166,6 +170,15 @@ export function createRelay({ database: db, config, secret, now = Date.now, dns 
     }
   });
   return { hostRequest, revoke, plugin, control, content,
+    async cleanupDns(hostId) {
+      const row = rowFor(hostId);
+      if (!row) return;
+      const name = `_acme-challenge.${row.domain}`;
+      const records = db.prepare('SELECT value FROM relay_dns_records WHERE name=?').all(name);
+      if (records.length && !dns) throw new CloudError(503, 'DNS_NOT_CONFIGURED');
+      for (const record of records) await dns.cleanup({ name, value: record.value, ttl: 60 });
+      db.prepare('DELETE FROM relay_dns_records WHERE name=?').run(name);
+    },
     discover(hostId, accountId) {
       enabled();
       if (!db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(hostId, accountId))
