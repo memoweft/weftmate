@@ -1,0 +1,36 @@
+{
+  "localTests": {
+    "command": "node --test tests/personal-dynamic-write-targets.test.ts tests/personal-approval-modes.test.ts tests/personal-tool-approvals.test.ts tests/personal-approval-bridge.test.ts",
+    "passed": 78,
+    "failed": 0,
+    "skipped": 0,
+    "logKeptOutsideRepository": true
+  },
+  "typecheck": {
+    "command": "npm run typecheck",
+    "status": "passed"
+  },
+  "offlineReplay": {
+    "status": "passed",
+    "modelRequests": 0
+  },
+  "publicScope": [
+    "src/plugins/personal-approval-policy.mjs",
+    "src/plugins/personal-write-targets.mjs",
+    "tests/personal-dynamic-write-targets.test.ts",
+    "tests/evidence/apr-2/",
+    "docs/STATE.md Windows-3 row"
+  ],
+  "clientContractChanged": false,
+  "safetyRegressionCases": [
+    "typed and scoped reassignment",
+    "prefix increment/decrement",
+    "bash PWD/OLDPWD after cd",
+    "failed or non-directory Set-Location/Push-Location/cd destinations"
+  ],
+  "processScanCompletedBatches": {
+    "rootTaggedProcessesRemaining": 0,
+    "processNames": [],
+    "isolatedRoots": 6
+  }
+}

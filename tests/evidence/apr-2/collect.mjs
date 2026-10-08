@@ -35,7 +35,7 @@ for (const request of upstream) {
   usage.cachedInput += request.usage.prompt_tokens_details?.cached_tokens ?? 0;
   usage.output += request.usage.completion_tokens ?? 0;
 }
-usage.knownEstimatedCny = (usage.input - usage.cachedInput + usage.cachedInput * .02 + usage.output * 2) / 1e6;
+usage.knownEstimatedCny = ((usage.input - usage.cachedInput) * 100 + usage.cachedInput * 2 + usage.output * 200) / 1e8;
 usage.kind = 'Known usage estimate; lower bound when requests have no usage; not an account invoice';
 usage.priceSource = 'https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash';
 const snapshot = Object.fromEntries(['personal-write-targets.mjs', 'personal-approval-policy.mjs'].map(file => [file,
@@ -45,7 +45,7 @@ const output = {
   scenarios: report.results.map(result => ({
     id: result.id, status: result.status, durationMs: result.durationMs, reason: result.reason ?? null, checks: result.checks,
     turns: result.turns.map(turn => ({ status: turn.status, durationMs: turn.durationMs,
-      approvals: decisions.filter(decision => decision.sessionId === turn.sessionId).map(decision => ({
+      approvals: decisions.filter(decision => decision.sessionId === turn.sessionId && decision.sourceCommandId === turn.commandId).map(decision => ({
         toolName: decision.toolName, riskCategories: decision.riskCategories, status: decision.status, outcome: decision.outcome,
       })),
     })),

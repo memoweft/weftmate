@@ -247,14 +247,6 @@
               ],
               "status": "resolved",
               "outcome": "allowed-once"
-            },
-            {
-              "toolName": "pwsh",
-              "riskCategories": [
-                "delete"
-              ],
-              "status": "resolved",
-              "outcome": "rejected"
             }
           ]
         },
@@ -262,14 +254,6 @@
           "status": "completed",
           "durationMs": 54571,
           "approvals": [
-            {
-              "toolName": "pwsh",
-              "riskCategories": [
-                "delete"
-              ],
-              "status": "resolved",
-              "outcome": "allowed-once"
-            },
             {
               "toolName": "pwsh",
               "riskCategories": [
