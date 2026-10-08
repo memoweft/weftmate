@@ -45,9 +45,13 @@ const core = globalThis.WeftUiCore.create({
 
 ## FE-1b 接入
 
-下一包在手机现有构建 / 发布流程中导入 `uiCoreAssets`，把清单文件从本目录拷入 `apps/mobile-ui/www/ui-core/` 和 Android（安卓）打包资产；不要在手机 `app.js` 复制逻辑。加载顺序与桌面一致，在手机入口创建独立实例，并提供手机组件的 `effects`。构建副本是生成资产，母版始终是此目录。
+手机现有构建 / 发布流程直接导入 `uiCoreAssets`，按清单生成 `apps/mobile-ui/www/ui-core/`；Android（安卓）的 `assets.srcDir` 收入同一目录。`npm run build` 生成副本，`npm run check`、Gradle（安卓构建工具）`preBuild` 与发布脚本逐字节核对文件集合和内容，缺失、额外或陈旧副本均失败。构建副本是生成资产，母版始终是此目录；改共享代码后必须重新构建手机资产。
 
-手机壳现有原生桥接负责传输与登录凭据，桥接适配器把既有响应映射为同一账户 / 宿主 / `/personal/v1` 数据形状。屏幕、抽屉、原生权限提示和图片选择由手机组件 / 壳管理；功能层不导入 Electron 或 Android。手机接入、生成资产、原生桥适配与手机设备验收由 FE-1b 完成。
+手机入口与桌面一样创建独立 `WeftUiCore.create()`，注入普通手机状态及命名呈现回调。`adapters/android-bridge.js` 负责请求编号、原生响应与事件分流，并把共享请求映射到既有原生认证、缓存历史、任务、审批、提问、成果与业务路由。真实 Cookie（会话凭据）、CSRF 和模型密钥仍只在 Kotlin（安卓程序语言）里；功能层中的 `native:<身份版本>` 仅表示已登录，既不含凭据，也不会作为参数发送给原生桥。
+
+手机使用共享的历史分页、时间线投影、步骤合并、任务身份、审批 / 提问校验与提交、资源分页与调用去重。`adapters/mobile-decisions.js` 将共享快照投影为手机卡片所需的形状，并恢复旧请求标记与问题草稿。`mobile.js`、`mobile-host.js` 与 `mobile-settings.js` 保存手机原生本地对话、发送回执、离线缓存、记忆快照、模型保管库和项目恢复的适配动作；它们只处理普通数据，界面节点不进入功能层。手机原有记忆能力与路径限制、未知回执和修订检查均保留，没有把原生持久化重做成浏览器存储。
+
+`apps/mobile-ui/www/layout.js` 是手机容器与组件位置的唯一组装入口；`components/` 处理聊天、会话、记忆、设置、成果 / 来源和决策呈现，`timeline.js` 仅呈现共享投影。屏幕、抽屉、焦点、滚动、原生权限提示和图片选择由手机组件 / 壳管理。登录 / 注册页面保留既有流程，后续 LG-1b 再调整。相关纯逻辑和手机回归、390×844 Chromium（浏览器引擎）及 MuMu（安卓模拟器）真实屏幕前后证据见 [FE-1b](../../tests/evidence/fe-1b/README.md)。
 
 ## 验证
 

@@ -9,7 +9,7 @@
 import { createHash } from 'node:crypto'
 import { describeTool, toolArguments } from './timeline.mjs'
 import { sourceRange } from './source-range.mjs'
-import { indexInboxTimeline, turnReceiptAt } from './inbox-timeline.mjs'
+import { claimedInputsAt, indexInboxTimeline, turnReceiptAt } from './inbox-timeline.mjs'
 
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
@@ -386,8 +386,9 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
       if (!rows.length && page.hasMore) throw new DshAdapterError('internal', 'source')
       suffix.unshift(...rows)
       const range = sourceRange(suffix, options)
-      if (range && (options.turn !== undefined || !options.receiptId || range.events.some(entry =>
-          (entry.event ?? entry).data?.source?.rpcId === options.receiptId)) || !page.hasMore) return suffix
+      const missingInsertion = range?.events.some((entry, offset) => (entry.event ?? entry).type === 'agent/inbox/spliced' &&
+        claimedInputsAt(suffix, range.start + offset).some(input => input.unavailable))
+      if (range && !missingInsertion || !page.hasMore) return suffix
       beforeSeq = (rows[0]?.event ?? rows[0])?.seq
     }
   }
@@ -500,10 +501,18 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
     async sourceEvents(sessionId, { turn, receiptId } = {}) {
       const listed = await unwrap(await client.sessions.list({}), 'list')
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
-      const range = sourceRange(await sourceLogFor(sessionId, { turn, receiptId }), { turn, receiptId })
+      const entries = await sourceLogFor(sessionId, { turn, receiptId })
+      const range = sourceRange(entries, { turn, receiptId })
       return { current: range?.current === true, events: (range?.events ?? [])
-        .filter(entry => ['turn/start', 'user/message', 'turn/end'].includes((entry.event ?? entry).type))
-        .map(entry => projectHistoryEvent(entry)).filter(Boolean) }
+        .flatMap((entry, offset) => {
+          const event = entry.event ?? entry
+          const claimed = event.type === 'agent/inbox/spliced' ? claimedInputsAt(entries, range.start + offset) : []
+          if (claimed.length) return [{ seq: event.seq, type: 'input.claimed',
+            data: { receipts: claimed.map(input => typeof input.receiptId === 'string' &&
+              /^[A-Za-z0-9._:-]{1,160}$/.test(input.receiptId) ? input.receiptId : null) } }]
+          return ['turn/start', 'user/message', 'turn/end'].includes(event.type)
+            ? [projectHistoryEvent(entry)].filter(Boolean) : []
+        }) }
     },
 
     async send(sessionId, content, mode = 'queue') {

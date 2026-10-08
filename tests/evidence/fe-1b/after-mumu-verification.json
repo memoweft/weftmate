@@ -1,0 +1,29 @@
+{
+  "baselineCommit": "efce1451055271a66c5ba502ba153e55e79522b7",
+  "phase": "after",
+  "surface": "mumu",
+  "viewport": {
+    "width": 720,
+    "height": 1280
+  },
+  "realPersonalAuthentication": true,
+  "realNativeBridge": true,
+  "syntheticProjection": true,
+  "modelRequests": 0,
+  "fixtureTime": "2026-10-08T06:00:00.000Z",
+  "locators": "visible accessible names and roles",
+  "relocated": false,
+  "checks": [
+    "fresh isolated package and actual HybridActivity WebView",
+    "existing login and registration form verified by real account-state route",
+    "real personal login and session list",
+    "stop through original native command receipt and retain draft",
+    "send through account CSRF route and durable native command receipt",
+    "three approval buttons, five modes, native PATCH and approval POST",
+    "readable steps and lazy raw detail",
+    "fullscreen artifact/source and retained draft",
+    "account-scoped memory snapshot and source",
+    "appearance and draft restored after reload"
+  ],
+  "errors": []
+}

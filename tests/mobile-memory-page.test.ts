@@ -6,8 +6,8 @@ import test from 'node:test'
 import { webcrypto } from 'node:crypto'
 
 const candidateRoot = fileURLToPath(new URL('../', import.meta.url))
-const source = readFileSync(new URL('../apps/mobile-ui/www/app.js', import.meta.url), 'utf8')
-const html = readFileSync(new URL('../apps/mobile-ui/www/index.html', import.meta.url), 'utf8')
+import { mobileSource as source, mobileHtml as html } from '../apps/mobile-ui/tests/load-page.mjs'
+
 const htmlIds = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((match) => match[1]))
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
 
@@ -265,7 +265,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     } }
   runInNewContext(source, { document, window, localStorage: timers.localStorage, setTimeout: timers.setTimeout,
     clearTimeout: timers.clearTimeout, requestAnimationFrame: timers.requestAnimationFrame, URLSearchParams,
-    console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, TextEncoder })
+    console, Intl, Date, Error, Map, Set, Promise, URL, crypto: webcrypto, AbortSignal, TextEncoder })
   return { get, nav, calls, businessPaths, deferred, storage, itemsByOwner, setDeferredOwner: (owner: string) => { deferOwner = owner },
     flushAnimationFrames() { for (const frame of animationFrames.splice(0)) frame(0) },
     setDeferMore: () => { deferMore = true }, resolveDeferred(index: number, value: object) { deferred[index].resolve(value) },
