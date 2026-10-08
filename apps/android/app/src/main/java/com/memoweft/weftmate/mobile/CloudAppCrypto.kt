@@ -6,6 +6,17 @@ import java.util.Base64
 internal fun cloudBase64(bytes: ByteArray): String = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes)
 internal fun cloudKeyAlias(id: String): String = "weftmate-app-p256-" + cloudBase64(MessageDigest.getInstance("SHA-256").digest(id.toByteArray()))
 
+internal fun requireLegacyCloudRequestWithoutToken(target: String, issuer: String) {
+    if (target == "$issuer/token") throw ApiFailure(409, "NATIVE_LOGIN_UPGRADE_REQUIRED")
+}
+internal fun requireLegacyCloudTokensClear(hasValue: Boolean, value: String?) {
+    if (!hasValue || value != "") throw ApiFailure(409, "NATIVE_LOGIN_UPGRADE_REQUIRED")
+}
+internal fun mobileUiNativeLoginCompatible(minNative: Int, nativeVersion: Int): Boolean =
+    minNative >= 21 && minNative <= nativeVersion
+internal fun mobileUiNeedsNativeLoginUpgrade(recordedVersion: Int, nativeVersion: Int): Boolean =
+    nativeVersion >= 21 && recordedVersion < 21
+
 /** Android SHA256withECDSA emits ASN.1 DER; JOSE ES256 requires exactly 32-byte r followed by s. */
 internal fun cloudJoseSignature(der: ByteArray): ByteArray {
     require(der.size in 8..72 && der[0] == 0x30.toByte() && (der[1].toInt() and 255) == der.size - 2)
