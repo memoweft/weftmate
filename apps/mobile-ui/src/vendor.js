@@ -1,3 +1,5 @@
+import jsQR from 'jsqr';
+export const decodeQR = jsQR;
 import MarkdownIt from 'markdown-it';
 import DOMPurify from 'dompurify';
 import hljs from 'highlight.js/lib/common';

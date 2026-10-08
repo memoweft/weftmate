@@ -1,0 +1,321 @@
+{
+  "startedAt": "2026-10-08T12:37:28.735Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "d73e9646f6b477e8aba383928b64e9ee9f7b0683",
+  "modelRequests": 0,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session",
+    "Native current-device rename through visible group, field and button names",
+    "Native manual pairing redeems real one-time desktop code and adopts host session",
+    "Email change, real verification mail and remembered-device reauthentication",
+    "Recovery changes real cloud password and prefills synthetic email",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Logout other devices revokes real desktop login",
+    "Account deletion notice and cleared protected cloud credentials"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "nativeErrors": [
+    {
+      "method": "cloud.pending",
+      "errorCode": "LOGIN_REQUIRED",
+      "status": 401
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "ACCOUNT_SWITCHED",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "ACCOUNT_SWITCHED",
+      "status": 0
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "LOGIN_REQUIRED",
+      "status": 401
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "LOGIN_REQUIRED",
+      "status": 401
+    }
+  ],
+  "passed": true,
+  "nativeCleanup": {
+    "applicationRemoved": true,
+    "reverseRemoved": true,
+    "forwardRemoved": true,
+    "probePassed": true,
+    "originalNightMode": "no",
+    "nightModeRestored": true
+  },
+  "finishedAt": "2026-10-08T12:38:48.010Z",
+  "surface": "android",
+  "realNativeBridge": true,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/cloud/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/auth/cloud-nonce",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/cd5ecb70-404c-4b91-ac7b-8b94c2565652/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/cd5ecb70-404c-4b91-ac7b-8b94c2565652/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/rename",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/system",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/projects",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/workspaces/browser",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/pairings",
+      "status": 201
+    },
+    {
+      "path": "/personal/v1/cloud/pairings/redeem",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/email/change/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/email/change/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/logout",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/recovery/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/recovery/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/recovery/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/devices/6580b802-e11d-44d0-9709-3612699ad9e2/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/6580b802-e11d-44d0-9709-3612699ad9e2/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/logout/others",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 403
+    },
+    {
+      "path": "/personal/v1/auth/logout",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/account/delete",
+      "status": 200
+    }
+  ]
+}
