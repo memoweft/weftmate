@@ -11,7 +11,7 @@
 | Codex · Windows-4 | IC-1 图标系统 | [PR #56](https://github.com/memoweft/weftmate/pull/56)（`wp/ic-1-icon-system`）：C4「天蓝」母版与45个确认功能图标、24个现有动作扩展统一至 design/icons/；单命令生成 Windows 多尺寸 ICO、系统主题单色任务栏 / 托盘、通知与安装器资产，桌面 / 手机 Web（网页界面）和 Android（安卓）图标已接入。Android 0.8.5/code18。桌面69/69、记忆页面3/3、界面3/3、手机及发布97/97、图标资产3/3、Android JVM（Java 虚拟机）27/27、构建与类型检查通过；真实 Electron（桌面程序框架）审批闭环与 MuMu 专属包1/1通过，测试包已卸载。[前后截图与边界](../tests/evidence/ic-1/README.md)；完整 CI（持续集成）门禁见 PR #56，待 Claude 审查 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | DS-1 设计令牌 | [PR #59](https://github.com/memoweft/weftmate/pull/59)（`wp/ds-1-design-tokens`）：唯一母版 design/tokens/ 与可重复生成脚本、桌面 / 手机 Web（网页界面）变量和 Android（安卓）资源 / 原生辅助常量接入；Apple（苹果客户端）交接产物在 design/tokens/generated/apple/，未改 apps/apple/。Android 0.8.6/code19；15 对截图逐像素一致、4,016 项样式值一致、相关交互及发布158/158、令牌2/2、Android JVM（Java 虚拟机）27/27、构建与类型检查通过。[截图与边界](../tests/evidence/ds-1/README.md)；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
-| Codex · Windows-2 | M2b 记忆形成准确 | WeftMate [PR #54](https://github.com/memoweft/weftmate/pull/54)、Core [PR #86](https://github.com/memoweft/memoweft/pull/86)：原话派生命题、专名/日期约束、具体错误重写一次与持久失败记录、JSON（结构化数据）模式、原话表达偏好召回已实现。真实Electron（桌面程序框架）最终Qwen0/3超时、MiMo3/3，未写错误姓名；[证据/费用](../tests/evidence/m2b/README.md)。相关测试与类型检查通过，完整CI（持续集成）见两PR；M2出口未达，M2-3纠正审批另包。Core由Claude squash（压缩合并）后须更新本仓CI固定提交 |
+| Codex · Windows-2 | M2c 本地单槽记忆形成 | WeftMate [PR #58](https://github.com/memoweft/weftmate/pull/58)、Core [PR #87](https://github.com/memoweft/memoweft/pull/87)：本地流式形成／正确模板思考参数、相邻原话片段完整保留／中文直读提示、召回到期读取已有记忆已实现。真实Electron（桌面程序框架）最终Qwen3/3、MiMo3/3，原600秒预算与检查保持；[定位、前后对比与费用](../tests/evidence/m2c/README.md)。相关11/11、Core214/214及补验26/26（重叠）、类型检查通过；Core完整CI（持续集成）1,719/1,719，完整门禁见两PR。Core仅Claude squash（压缩合并），之后更新本仓CI固定提交；M2-3纠正与完整八步出口另包 |
 | Codex · Mac | IC-2 Apple 图标 | [PR #57](https://github.com/memoweft/weftmate/pull/57)（`wp/ic-2-apple-icons`）：macOS / iOS / watchOS C4 AppIcon、iOS 深色 / 着色资产、69 个功能模板与 16 px 光学版本接入；旧 SF Symbols 与手绘品牌替换，Watch 仅审批 / 完成相关。三端 Debug、iOS 浅 / 深 2/2 + 审批回归 1/1、Watch 截图 1/1、图标相关 3/3 通过；[前后截图与边界](../apps/apple/Tests/Evidence/IC-2/README.md)。Mac AX 未授权，未申请；真机 / 主屏幕深色着色手动切换未验。客户端契约无变更；最终 CI 见 PR checks，待 Claude 审查 |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
 | Codex · Cloud | S2b 宿主内容证书自动签发 | [PR #38](https://github.com/memoweft/weftmate/pull/38)（`wp/s2b-host-certs`）：阿里云 V3 DNS-01/provider 私有环境接线与 RecordId 所有权、宿主 Node ACME/原内容 key CSR、每天检查/<30天续期/原子安装/热载、状态到期与错误已实现；本机真实 Pebble/challtestsrv→签名宿主/云/假 AliDNS API→配对 pin/TLS 热载与模拟到期续期通过；交付待 Claude 审查，最终 CI 门禁见 PR checks，本包未部署 |
@@ -25,7 +25,7 @@
 - **IC-1**：唯一图标来源、Windows 系统主题选择、手机及 Android code18接入完成；真实 Electron 浅 / 深审批卡、输入区与侧栏，MuMu 应用桌面图标、应用内浅 / 深、主题资源及通知均取证。窗口 / 任务栏使用单色 ICO；Windows 托盘处于溢出区，未取得其可见图标截图。仅安装并卸载本包专属 QA（质量验证）应用，没有覆盖原调试包。完整验证、既有静态正则例外及未做项见 tests/evidence/ic-1/README.md；客户端业务契约无变更。
 - **UI-2v**：MuMu Android 15 真实安卓外壳/真实个人认证/原生网络桥通过；合成任务投影、零模型请求。14张 `adb exec-out screencap -p` 截图覆盖列表/运行/审批/步骤/成果/来源/深色；真实测试输入法区域324设备像素、网页980→726 CSS px（页面像素），标题与输入区稳定、点击按键与草稿保留/重载通过。手机96/96、Android JVM27/27与构建通过；[证据](../tests/evidence/ui-2v/README.md)。预装搜狗输入法返回零高度，正常键盘兼容性未验；未宣称真实 DSH 执行或云登录。隔离包/宿主/端口清理、原输入法设置恢复。
 
-- **M2b**：开发定向Core272/272，日期/事件32/32、准确性/HTTP（网络请求）43/43；WeftMate相关11/11与类型检查通过。Core完整CI（持续集成）1,710/1,710与严格类型检查202模块。真实Electron（桌面程序框架）最终Qwen三场景各600秒超时、MiMo3/3；原话姓名未抄错写入，首轮失败完整保留。完整门禁见[WeftMate #54](https://github.com/memoweft/weftmate/pull/54/checks)、[Core #86](https://github.com/memoweft/memoweft/pull/86/checks)。
+- **M2c**：相关WeftMate11/11（合入IC-1/IC-2与D28后复验）及类型检查通过；Core形成／HTTP（网络请求）相关批次214/214、准确性与边界补验26/26（重叠），严格类型检查通过。最新Core完整CI（持续集成）1,719/1,719及202模块类型检查、所有门禁绿。真实Electron（桌面程序框架）指定三项最终Qwen3/3、MiMo3/3；首轮流式偏好截断／小枣拒写失败保留，未改目标、检查或600秒预算；[证据](../tests/evidence/m2c/README.md)。完整门禁见[WeftMate #58](https://github.com/memoweft/weftmate/pull/58/checks)、[Core #87](https://github.com/memoweft/memoweft/pull/87/checks)。
 
 - **UI-2**：手机目录100/100与相关记忆 / 项目 / 续聊回归31/31、来源分页 / 按需原文 / 失败重试 / 离线列表、全屏返回位置、草稿重启、跟随系统主题、窄屏 / 横屏与输入区视口布局通过；Android JVM 27/27与调试包、类型检查、发布回归通过。截图见 tests/evidence/ui-2/。初次验收使用浏览器；安卓安装与真实系统输入法已由 UI-2v 补验，跨设备验收仍另包。
 - **UI-2a**：手机交互94/94、真实 Chromium（浏览器引擎）390×844五种模式/风险确认/默认重新读取/三种决定、发布回归1/1、类型检查通过；Android 本机 JVM（Java 虚拟机）26/26与 assembleDebug通过，0.8.3/code16。合成截图见 tests/evidence/ui-2a/；没有安装本人设备、发布手机包或执行真实脚本，完整门禁交 PR CI（持续集成）。
@@ -65,19 +65,19 @@
 - S1b：身份 7/7、实际 cloud OIDC/SQLite→宿主流程、A/B 隔离、DPoP 拒绝与 SSE 撤权、云离线本地登录通过；旧 store/ID/密码/Cookie/非零同步水位和备份保持。
 - MW-2：真实 Python Core RPC/持久待办/并发撤回 2/2、健康 HTTP 7/7、类型检查/预检通过；M0-3 长历史 230,000+ 范围投影与审批/提问验证已通过。Qwen / MiMo 基线及真实长任务尚未跑。
 
-## 最近一次场景结果 · M2b 记忆形成准确
+## 最近一次场景结果 · M2c 本地单槽形成
 
-2026-10-08，真实Electron（桌面程序框架）+固定DSH（执行框架）+隔离MemoWeft Core（记忆核心）。Qwen仅8081 / `qwen3.8-27b-original`；MiMo官方接口 / `mimo-v2.6-flash`。原目标、检查、600秒总预算保持，未启用可选模型评判，见[完整证据与费用](../tests/evidence/m2b/README.md)。
+2026-10-08，真实Electron（桌面程序框架）+固定DSH（执行框架）+隔离MemoWeft Core（记忆核心）。Qwen仅8081 / `qwen3.8-27b-original`，MiMo官方接口 / `mimo-v2.6-flash`。原目标、检查与每场景600秒预算保持，可选模型评判未启用；见[定位时间线、完整证据与费用](../tests/evidence/m2c/README.md)。
 
-| 场景 | M2a Qwen / MiMo | M2b最终 Qwen / MiMo | 核对 |
+| 场景 | M2b Qwen / MiMo | M2c最终 Qwen / MiMo | 核对 |
 |---|---|---|---|
-| memory-01 偏好 | 通过269.43s / 失败83.72s | 超时600.56s / **通过59.16s** | MiMo形成/新对话买菜例子与采用依据通过；Qwen后台网络超时/原有重试积压，偏好后来准确形成 |
-| memory-03 换模型 | 失败100.73s / 通过69.28s | 超时600.64s / **通过84.33s** | Qwen→MiMo、MiMo→Qwen；最终Qwen已形成“小禾”，但采用未在预算内完成；MiMo完整通过 |
-| memory-04 人物 | 失败133.02s / 通过39.77s | 超时600.63s / **通过35.44s** | MiMo形成/采用阿岚背景；Qwen人物工作退出时仍处理中，未写错误人物 |
+| memory-01 偏好 | 超时600.56s / 通过59.16s | **通过399.18s / 通过88.45s** | 完整原话偏好形成、新对话买菜例子与采用依据通过 |
+| memory-03 换模型 | 超时600.64s / 通过84.33s | **通过136.77s / 通过73.81s** | 正确保存小禾并在另一模型的新对话采用；Qwen→MiMo、MiMo→Qwen，后台各自保持所配模型 |
+| memory-04 人物 | 超时600.63s / 通过35.44s | **通过276.84s / 通过107.43s** | 阿岚与秋季展览／海报背景形成、召回和采用通过 |
 
-最终Qwen0/3、MiMo3/3，**M2出口未达**。首轮Qwen偏好失败432.32秒（原话召回词汇缺口）、称呼通过119.25秒、人物失败541.96秒（“阿朵”重写仍不合格，零写入）完整保留，未替换最终成绩。三个隔离World（记忆世界）均无“小莓”“阿朵”；最终Qwen有“小禾”及原话买菜偏好，MiMo有“小禾”“阿岚”。解释错误/一次重写结果持久可查；Qwen最终超时属于后台网络/重试/等待证据，不归为缺字段，也不断言单一根因。M2a `memory-02`第三轮未声明审批仅记录，未复跑或批准，纠正留M2-3。
+最终Qwen3/3、MiMo3/3，**只代表本包三项，不代表完整M2出口**。M2b同一偏好任务四次推理、25分52秒才写入，300秒非流式读取空闲超时及无效顶层思考参数造成重算与单槽等待；本地改流式，沿用300秒传输空闲超时与330秒召回等待预算。首轮仅流式结果1/3，偏好选择四个相邻片段却只保存引导句，称呼两次抄成小枣且拒写；现合并相邻选中原话区间、直接呈现中文来源，不跨未选片段、不改持久哈希。最终Qwen目标形成均一次尝试、无HTTP超时重试；四份World（记忆世界）均无小莓／阿朵／小枣，最终两份均有正确小禾／阿岚／买菜原话偏好。原M2a memory-02未声明审批现象保留，纠正留M2-3。
 
-MiMo全部17个请求有用量：输入75,783 token（令牌），缓存43,200，输出3,384，共79,167；按官方现价计**¥0.040215（约¥0.04）**，不是账单。三个隔离根498文件密钥扫描0、凭据/宿主进程0，8081原模型及98,304/单槽保持，无切换/活动/排队/维护租约；未读日用保管库、未自起其他模型或停止/重启8080。日期与截断字段另外以定向测试/完整Core CI验证。Core合并后本仓CI需更新固定提交；当前前版固定Core不能替代新Core自身CI及隔离程序验证。客户端接口无变更。
+MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌），缓存54,848，输出4,829，共95,668；按官方现价计**¥0.04674596（约¥0.05）**，不是账单，包含诊断与Qwen方向换模型时的MiMo调用。四个隔离根665实际文件密钥扫描0、凭据／宿主进程0；8081原模型、98,304/单槽及无切换／活动／排队／维护租约保持。未读日用保管库、未自起模型、未停止或重启8080。Core最新ee718d6由独立源码真实MiMo、正常形成路径真实Qwen及自身完整CI验证；本仓CI仍固定已合入M2b的0a0c54c，Core由Claude squash（压缩合并）后需更新固定提交。客户端接口无变更。
 
 ## 契约变更
 
@@ -109,7 +109,7 @@ MiMo全部17个请求有用量：输入75,783 token（令牌），缓存43,200�
 
 ## 已知问题与未做
 
-- **M1-2 / M0-7c**：Qwen action-06第二轮澄清超时；MiMo首轮允许后出现unknown tool "pweff"并再次审批，两边失败列待查代码问题。动态写入/自身文件修正审批、通用云记忆接线与跨会话形成/注入均待查，见最近场景表。手机/Android菜单已在UI-2a完成，Apple菜单已在A4a完成；真机/跨端验收及长期稳定性另包。风险判断集中在可见参数、常见命令、内联与本地脚本源，动态生成/未知二进制副作用没有静态识别保证；没有新增沙盒范围、白名单、限次或审计层。
+- **M1-2 / M0-7c**：Qwen action-06第二轮澄清超时；MiMo首轮允许后出现unknown tool "pweff"并再次审批，两边失败列待查代码问题。动态写入/自身文件修正审批仍待查；跨会话形成/注入指定三项已在M2c通过，记忆纠正留M2-3，见最近场景表。手机/Android菜单已在UI-2a完成，Apple菜单已在A4a完成；真机/跨端验收及长期稳定性另包。风险判断集中在可见参数、常见命令、内联与本地脚本源，动态生成/未知二进制副作用没有静态识别保证；没有新增沙盒范围、白名单、限次或审计层。
 
 - **UI-1 契约缺口**：`GET /sessions` 缺少日期、未读及跨会话审批汇总；有真实时间时可分组，无日期时显示「会话」，审批点只来自已读取的真实审批。未提供会话重命名/删除/归档、删除关联记忆、可取消排队、记忆引用、成果在文件夹显示及任意网页/成果图片预览接口，不造按钮或数据；已有 queue/steer（排队/插话）参数已接。助手文字使用持久消息，原生文字 chunk（片段）目前不在契约中，真正逐字流式输出另包。外观按设备保存；字体、自定义色、密度及账号同步不在本包。截图来自独立 Electron 验收入口，不代表 `src/main.mjs` 全套启动或 macOS 原生 App 已验收。
 - M1-1c（依赖 #41）：电脑文件范围、不同根并行与子任务网页已修复；当包六场景1/6（03）；最新M0-7b基线4/6，仍未达完整M1出口。D12 五种模式与常见危险操作判断由 M1-2 接入，真实Qwen/MiMo失败与对照见上；跨端与长期稳定性未验。
