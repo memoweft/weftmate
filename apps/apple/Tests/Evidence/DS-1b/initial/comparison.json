@@ -1,0 +1,35 @@
+{
+  "method": "Unmodified full-frame XCTest screenshots decoded as sRGB RGBA; no masks, alignment, tolerance or resized images",
+  "pairs": [
+    {
+      "after": "after-dark-list.png",
+      "before": "before-dark-list.png",
+      "differenceBounds": [
+        84,
+        84,
+        1157,
+        2435
+      ],
+      "differentPixels": 179522,
+      "height": 2622,
+      "maxChannelDelta": 7,
+      "name": "dark-list",
+      "width": 1206
+    },
+    {
+      "after": "after-dark-keyboard.png",
+      "before": "before-dark-keyboard.png",
+      "differenceBounds": [
+        162,
+        911,
+        1064,
+        949
+      ],
+      "differentPixels": 3534,
+      "height": 2622,
+      "maxChannelDelta": 149,
+      "name": "dark-keyboard",
+      "width": 1206
+    }
+  ]
+}
