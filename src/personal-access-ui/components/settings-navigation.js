@@ -19,7 +19,9 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         content.scrollTop = positions.get(id) || 0;
         category.mount({ ...options, target: panels.get(id), core, ui });
-        globalThis.WeftMotion?.reveal(panels.get(id), 'base');
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            for (const animation of dialog.getAnimations({ subtree: true })) animation.cancel();
+        } else globalThis.WeftMotion?.reveal(panels.get(id), 'base');
     }
     function renderSettingsNavigation() {
         navigation.replaceChildren(); picker.replaceChildren();

@@ -99,7 +99,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.evaluate(()=>fixture.failModeWrite=true);await menu.locator('[data-mode="ask"]').click();
     await page.waitForFunction(()=>!approvalModeState.loading);assert.equal(await page.evaluate(()=>fixture.sessionModes.s1),'auto');
     assert.equal(await label.innerText(),'审批');await page.evaluate(()=>fixture.failModeWrite=false);
-    await page.evaluate(()=>page('settings'));const defaults=page.getByRole('button',{name:'设置默认审批模式'});
+    await page.evaluate(()=>page('settings'));await page.getByRole('navigation',{name:'设置分类'}).getByRole('button',{name:/^审批 /}).click();const defaults=page.getByRole('button',{name:'设置默认审批模式'});
     await defaults.click();await page.waitForFunction(()=>!approvalModeState.loading);
     await menu.locator('[data-mode="allow-all"]').click();assert.match(await page.locator('#approval-risk-scope').innerText(),/默认模式.*已有对话保持原模式/);
     await page.locator('#approval-risk-cancel').click();await defaults.click();await page.waitForFunction(()=>!approvalModeState.loading);
