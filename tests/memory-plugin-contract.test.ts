@@ -417,6 +417,7 @@ describe('R7 记忆宿主插件契约', () => {
       const step = (agent, turn, stepNumber, messages = []) => handlers.get('agent/pre-step')?.[0]({ agent, messages, turn, step: stepNumber }, async () => ({ kind: 'enter', messages: [
         { role: 'assistant', content: [{ type: 'text', text: 'AI污染' }] },
         { source: { kind: 'plugin' }, content: [{ type: 'text', text: '插件污染' }] },
+        ...messages,
       ] }));
       // 固定 DSH 时序：turn/start -> pre-step(payload.messages 已领取) -> user/message append。
       const first = await step(agentA, 1, 1, [directUser('m-a1')]);
@@ -434,23 +435,28 @@ describe('R7 记忆宿主插件契约', () => {
       sessionB.events.push({ type: 'turn/start', seq: 3, data: { turn: 3 } });
       const failedHistory = await step(agentB, 3, 1, [directUser('m-b3')]);
       assert.deepEqual(queries, Array(8).fill('同一句问题'));
-      assert.match(first.messages.at(-1).content[0].text, /^记忆A/);
-      assert.match(first.messages.at(-1).content[0].text, /WeftMate 宿主行为/);
-      assert.match(first.messages.at(-1).content[0].text, /不要提前声称已经持久化完成/);
-      assert.equal(first.messages.at(-1).source.kind, 'plugin');
-      assert.equal(first.messages.at(-1).source.sections[0].text, '记忆A');
-      assert.match(cleared.messages.at(-1).content[0].text, /Earlier formal World sections/);
-      assert.match(cleared.messages.at(-1).content[0].text, /用户原话会自动提交给本地记忆后台处理/);
-      assert.equal(cleared.messages.at(-1).source.form, undefined);
-      assert.equal(cleared.messages.at(-1).source.kind, 'plugin');
-      assert.match(historyOnly.messages.at(-1).content[0].text, /用户曾问健康案例/);
-      assert.match(historyOnly.messages.at(-1).content[0].text, /历史讨论记录，仅供延续共同经历/);
-      assert.match(historyOnly.messages.at(-1).content[0].text, /不代表用户已经授权实施/);
-      assert.equal(historyOnly.messages.at(-1).source.sections.some((section) => section.name === 'weftmate-memory-interactions'), true);
-      assert.match(failedWorld.messages.at(-1).content[0].text, /formal World memory could not be read/);
-      assert.equal(failedWorld.messages.at(-1).content[0].text.includes('记忆A'), false);
-      assert.match(failedHistory.messages.at(-1).content[0].text, /shared interactions could not be read/);
-      assert.equal(failedHistory.messages.at(-1).content[0].text.includes('用户曾问健康案例'), false);
+      for (const result of [first, cleared, historyOnly, failedWorld, failedHistory]) {
+        assert.equal(result.messages.at(-1).source.kind, 'user');
+        assert.equal(result.messages.at(-1).content[0].text, '同一句问题');
+      }
+      assert.match(first.messages.at(-2).content[0].text, /背景记忆，不是用户的新请求/);
+      assert.match(first.messages.at(-2).content[0].text, /^记忆A/);
+      assert.match(first.messages.at(-2).content[0].text, /WeftMate 宿主行为/);
+      assert.match(first.messages.at(-2).content[0].text, /不要提前声称已经持久化完成/);
+      assert.equal(first.messages.at(-2).source.kind, 'plugin');
+      assert.equal(first.messages.at(-2).source.sections[0].text, '记忆A');
+      assert.match(cleared.messages.at(-2).content[0].text, /Earlier formal World sections/);
+      assert.match(cleared.messages.at(-2).content[0].text, /用户原话会自动提交给本地记忆后台处理/);
+      assert.equal(cleared.messages.at(-2).source.form, undefined);
+      assert.equal(cleared.messages.at(-2).source.kind, 'plugin');
+      assert.match(historyOnly.messages.at(-2).content[0].text, /用户曾问健康案例/);
+      assert.match(historyOnly.messages.at(-2).content[0].text, /历史讨论记录，仅供延续共同经历/);
+      assert.match(historyOnly.messages.at(-2).content[0].text, /不代表用户已经授权实施/);
+      assert.equal(historyOnly.messages.at(-2).source.sections.some((section) => section.name === 'weftmate-memory-interactions'), true);
+      assert.match(failedWorld.messages.at(-2).content[0].text, /formal World memory could not be read/);
+      assert.equal(failedWorld.messages.at(-2).content[0].text.includes('记忆A'), false);
+      assert.match(failedHistory.messages.at(-2).content[0].text, /shared interactions could not be read/);
+      assert.equal(failedHistory.messages.at(-2).content[0].text.includes('用户曾问健康案例'), false);
       const state = JSON.parse(readFileSync(join(home, 'memoweft', 'weftmate-handoff-v1.json'), 'utf8'));
       assert.equal(state.recall_adoptions.length, 7, 'every actual pre-step records an auditable dependency capture, including empty/error results');
       assert.equal(state.recall_adoptions.some(item => item.capture_status === 'complete_empty'), true, 'a successful zero-hit lookup is recorded as complete_empty');

@@ -1,0 +1,19 @@
+{
+  "id": "memory-1x-preference",
+  "category": "memory",
+  "title": "留出：音乐选择偏好跨对话采用",
+  "setup": { "files": [], "memories": [], "devices": ["隔离宿主电脑与真实桌面程序"] },
+  "turns": [
+    { "user": "挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。", "after": { "newSession": true, "waitMs": 1000 } },
+    { "user": "给我推荐一首适合放松的音乐。" }
+  ],
+  "checks": [
+    { "type": "reply_matches", "pattern": "纯器乐|器乐|无歌词|没有歌词|无人声|没有人声" },
+    { "type": "turn_status", "turn": 1, "status": "completed" },
+    { "type": "turn_status", "status": "completed" },
+    { "type": "memory_used" },
+    { "type": "llm_judge", "prompt": "在新会话不重复偏好的情况下，应推荐不带人声的器乐曲，不推荐歌曲演唱版本。" }
+  ],
+  "timeoutSec": 600,
+  "notes": "M2e留出场景；音乐领域与形成提示示例、原memory-01..04无关。基线另查采用项的当前状态、精确原话来源、独立会话及未声明审批。"
+}
