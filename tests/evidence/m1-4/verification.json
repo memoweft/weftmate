@@ -38,5 +38,7 @@
     "publicFilesScanned": 14,
     "publicPrivateValueMatches": 0,
     "isolatedProcessesRemaining": 0
-  }
+  },
+  "pr": "https://github.com/memoweft/weftmate/pull/95",
+  "ciChecks": "https://github.com/memoweft/weftmate/pull/95/checks"
 }

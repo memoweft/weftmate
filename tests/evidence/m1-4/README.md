@@ -55,6 +55,8 @@ DSH `dsh-tool-jobs` 已提供作业完成通知、`job_output(wait: true)` 阻�
 
 测试入口最初两次在旧 `#login-name` 登录选择器上超时，场景未开始、模型请求 0。入口已接现有离线登录流程；启动失败和凭据扫描保留在 [startup-attempts.json](startup-attempts.json)。所有运行日志留在仓库外，最终公开产物另行扫描；不读取日用账号、保险库或运行数据。
 
+交付与完整检查见 [PR #95](https://github.com/memoweft/weftmate/pull/95) 和 [当前提交的 CI 检查](https://github.com/memoweft/weftmate/pull/95/checks)。CI 通过不改变上述真实 LAN 0/2 与 MiMo 回归 5/6 的判定。
+
 ```powershell
 node --test tests/personal-delegation-results.test.ts tests/dsh-web-profile.test.ts tests/long-task-compaction.test.ts
 node --test tests/integration/baseline-lan-model.test.mjs
