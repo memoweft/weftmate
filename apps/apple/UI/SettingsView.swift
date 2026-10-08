@@ -134,7 +134,18 @@ private struct SettingsCategoryView: View {
             content
         }.background(Weave.canvas).navigationTitle(title)
             .accessibilityIdentifier("settingsPage." + route.categoryID)
-            .task(id: route.categoryID) { await settings.refresh(route.categoryID) }
+            .task(id: route.categoryID) {
+                await settings.refresh(route.categoryID)
+                #if DEBUG && os(macOS)
+                let args = ProcessInfo.processInfo.arguments
+                if route.categoryID == "about", args.contains("--ui-testing"), args.contains("--upd2-auto-check") {
+                    updates.check()
+                    while updates.checking && !Task.isCancelled { try? await Task.sleep(for: .milliseconds(100)) }
+                    // Sanitized acceptance result; temporary feed URLs/keys never appear here.
+                    FileHandle.standardOutput.write(Data(("UPD2_STATUS:" + updates.statusText + "\n").utf8))
+                }
+                #endif
+            }
             .sheet(item: $legal) { LegalDocumentView(document: $0) }
             .confirmationDialog("删除这条提醒或定时任务？已启动的任务和历史记录保留。", isPresented: Binding(get: { deletingSchedule != nil }, set: { if !$0 { deletingSchedule = nil } }), titleVisibility: .visible) {
                 Button("删除", role: .destructive) { if let item = deletingSchedule { Task { await settings.schedule(item, action: .delete) } }; deletingSchedule = nil }
@@ -279,12 +290,29 @@ private struct SettingsCategoryView: View {
             }
             Button("刷新备份") { Task { await settings.refresh("backups") } }.disabled(settings.busy)
         case "about":
+            SettingsRow("App 版本", "当前安装的 WeftMate 版本与 build。") {
+                Text("\(settings.installedVersion) / \(settings.installedBuild)").accessibilityIdentifier("aboutNativeVersion")
+            }
+            ForEach(["ui", "app", "mobile-ui"], id: \.self) { layer in
+                let value = settings.hostUpdates?.updates?.layers.first { $0.layer == layer }
+                SettingsRow("所连电脑 · " + (value?.title ?? (layer == "ui" ? "界面与功能包" : layer == "app" ? "程序本体" : "手机界面包")), "宿主版本与更新状态（" + layer + "）。") {
+                    VStack(alignment: .trailing, spacing: AppleTokens.Space.p4) {
+                        Text(value?.currentVersion ?? "宿主未提供版本")
+                        Text(value?.statusText ?? "等待连接").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                    }.accessibilityIdentifier("aboutHostLayer." + layer)
+                }
+            }
+            if let notice = settings.compatibilityNotice {
+                InlineNotice(message: notice, isError: true).accessibilityIdentifier("aboutCompatibilityNotice")
+            }
             #if os(macOS)
-            SettingsRow("版本", "当前安装的 WeftMate 版本。") { Text(updates.installedVersionDisplay) }
-            Button("检查更新…") { openWindow(id: "updates"); updates.check() }.accessibilityIdentifier("openUpdatesButton")
+            SettingsRow("更新状态", "独立分发版可检查更新并打开下载页。") { Text(updates.statusText).accessibilityIdentifier("aboutUpdateStatus") }
+            Button("检查更新") { updates.check() }.disabled(updates.checking).accessibilityIdentifier("openUpdatesButton")
+            if let release = updates.release { Link("打开下载页", destination: release.downloadPage).accessibilityIdentifier("aboutDownloadPage") }
             #else
-            SettingsRow("版本", "当前安装的 WeftMate 版本。") { Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1") }
+            SettingsRow("更新状态", "App 由 TestFlight / App Store 自动更新。") { Text(settings.compatibilityNotice == nil ? "在手机上检查" : "有新版本可在 TestFlight 更新") }
             #endif
+            Button("刷新宿主版本") { Task { await settings.refresh("about") } }.disabled(settings.busy)
             Button("服务条款") { legal = .terms }
             Button("隐私政策") { legal = .privacy }
             Link("反馈", destination: URL(string: "https://github.com/memoweft/weftmate/issues")!)

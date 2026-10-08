@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>WeftMate cloud login</string><key>CFBundleURLSchemes</key><array><string>com.weftmate.apple</string></array></dict></array>
+<key>WeftMateMacUpdateFeed</key><string>$(WEFTMATE_MAC_UPDATE_FEED)</string>
+<key>WeftMateMacUpdatePublicKey</key><string>$(WEFTMATE_MAC_UPDATE_PUBLIC_KEY)</string>
+<key>WeftMateMacUpdateChannel</key><string>$(WEFTMATE_MAC_UPDATE_CHANNEL)</string>
+</dict></plist>

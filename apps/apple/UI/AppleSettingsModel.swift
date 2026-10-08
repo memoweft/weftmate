@@ -3,6 +3,7 @@ import WeftMateCore
 
 /// All host reads/writes live here. Views never construct network requests.
 @MainActor final class AppleSettingsModel: ObservableObject {
+    @Published var hostUpdates: NativeHostStatus?
     @Published var schedules: [ManagedSchedule] = []
     @Published var backups: HostBackups?
     @Published var backupPreferences: BackupPreferences?
@@ -21,6 +22,9 @@ import WeftMateCore
         await perform {
             guard let app = self.app else { return }
             switch category {
+            case "about":
+                let reply = try await app.assistantClient.nativeUpdateStatus()
+                if self.current { self.hostUpdates = reply }
             case "schedules":
                 let reply = try await app.assistantClient.settingsSchedules()
                 if self.current { self.schedules = reply.items }
@@ -80,6 +84,11 @@ import WeftMateCore
         do { try await work(); return true }
         catch { if current, !Task.isCancelled { self.error = "操作未完成，请刷新确认当前状态后重试。" }; return false }
     }
+    var installedVersion: String { Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "未知" }
+    var installedBuild: String { Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "未知" }
+    var compatibilityNotice: String? {
+        NativeCompatibility.notice(installed: installedVersion, minimum: hostUpdates?.minimum(for: .current), platform: .current)
+    }
     func summary(_ category: String) -> String {
         guard let app else { return "" }
         switch category {
@@ -91,6 +100,7 @@ import WeftMateCore
         case "models": return "主模型与单价"
         case "approvals": return "新对话默认模式"
         case "memory": return "记忆与来源"
+        case "about": return installedVersion + " / " + installedBuild
         case "schedules": return "提醒与任务"
         case "system": return app.verificationPending ? "等待连接" : "已连接"
         case "backups": return "电脑本地备份"
