@@ -10,6 +10,7 @@ import { uiCoreAssets } from '../src/ui-core/manifest.mjs'
 import { buildUiCoreAssets, checkUiCoreAssets, uiCoreSourceDir } from '../apps/mobile-ui/src/build-ui-core.mjs'
 import { checkMobileUi } from '../apps/mobile-ui/src/check.mjs'
 import { publishMobileUi } from '../src/personal-access/mobile-ui-release.mjs'
+import { generateKeyPairSync } from 'node:crypto'
 
 const execFileAsync = promisify(execFile)
 const repository = fileURLToPath(new URL('../', import.meta.url))
@@ -75,7 +76,8 @@ test('published mobile bundle includes the verified shared assets at their ui-co
   await writeFile(path.join(wwwDir, 'index.html'), '<!doctype html><title>Synthetic mobile UI</title>')
   await checkMobileUi({ sourceDir, wwwDir })
   const outputDir = path.join(root, 'releases')
-  const manifest = await publishMobileUi({ sourceDir: wwwDir, outputDir, uiVersion: '0.8.4', minNativeVersionCode: 17 })
+  const manifest = await publishMobileUi({ sourceDir: wwwDir, outputDir, uiVersion: '0.8.4', minNativeVersionCode: 17,
+    privateKey: generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'pem' }) })
   const bundle = path.join(outputDir, 'bundles', manifest.assetBase.split('/')[5])
   for (const name of uiCoreAssets) {
     assert.ok(manifest.assets.some((asset: { path: string }) => asset.path === `ui-core/${name}`), name)
@@ -89,7 +91,7 @@ test('publish command refuses stale generated assets before creating a release',
   const copiedSources = path.join(isolatedRepository, 'src', 'ui-core')
   await cp(sourceDir, copiedSources, { recursive: true })
   for (const name of ['src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
-    'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/usage.css',
+    'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-update/manifest.mjs', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/usage.css',
     'docs/legal/terms-zh.md', 'docs/legal/privacy-zh.md', 'apps/mobile-ui/www/legal/terms-zh.txt', 'apps/mobile-ui/www/legal/privacy-zh.txt']) {
     const destination = path.join(isolatedRepository, name)
     await mkdir(path.dirname(destination), { recursive: true })
@@ -108,7 +110,9 @@ test('publish command refuses stale generated assets before creating a release',
   await assert.rejects(execFileAsync(process.execPath, args), /ui-core assets: differs/)
   await assert.rejects(readFile(path.join(outputDir, 'current.json')), { code: 'ENOENT' })
   await buildUiCoreAssets({ sourceDir: copiedSources, targetDir })
-  await execFileAsync(process.execPath, args)
+  const keyFile = path.join(root, 'test-key.pem')
+  await writeFile(keyFile, generateKeyPairSync('ed25519').privateKey.export({ type: 'pkcs8', format: 'pem' }))
+  await execFileAsync(process.execPath, args, { env: { ...process.env, WEFTMATE_UPDATE_PRIVATE_KEY_PATH: keyFile } })
   const manifest = JSON.parse(await readFile(path.join(outputDir, 'current.json'), 'utf8'))
   assert.ok(manifest.assets.some((asset: { path: string }) => asset.path === `ui-core/${uiCoreAssets[0]}`))
 })

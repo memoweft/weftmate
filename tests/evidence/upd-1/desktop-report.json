@@ -1,0 +1,54 @@
+{
+  "realElectron": true,
+  "productMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "paidModelRequests": 0,
+  "v2ChangedBytes": 4818,
+  "v2TotalBytes": 1345940,
+  "v2ReusedBytes": 1341122,
+  "taskUnaffected": true,
+  "taskCompletedNormally": true,
+  "rollback": true,
+  "layers": [
+    {
+      "layer": "ui",
+      "currentVersion": "0.2.0",
+      "availableVersion": "0.3.0",
+      "status": "failed",
+      "error": "新界面启动失败，已恢复上一版",
+      "downloadedBytes": 53,
+      "reusedBytes": 1343374,
+      "enabled": true,
+      "channel": "stable"
+    },
+    {
+      "layer": "app",
+      "currentVersion": "0.1.0",
+      "availableVersion": null,
+      "enabled": false,
+      "status": "disabled",
+      "version": null,
+      "error": null,
+      "channel": "stable"
+    },
+    {
+      "layer": "mobile-ui",
+      "currentVersion": null,
+      "availableVersion": null,
+      "scope": "host-published",
+      "status": "disabled",
+      "error": null,
+      "enabled": false,
+      "channel": "stable"
+    }
+  ],
+  "downloads": [
+    {
+      "path": "files/ui/0.2.0/personal-access-ui/layout.js",
+      "bytes": 4818
+    }
+  ],
+  "rejectedCount": 1,
+  "restartRetainsV2": true
+}

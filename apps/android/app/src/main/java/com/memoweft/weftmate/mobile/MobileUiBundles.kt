@@ -30,6 +30,8 @@ class MobileUiBundles(private val context: Context) {
         ?: builtIn
     private val names = Regex("[A-Za-z0-9._/-]{1,180}")
     private val digest = Regex("[a-f0-9]{64}")
+    private val updateKeys by lazy { JSONObject(context.assets.open("update-trusted-keys.json").bufferedReader().use { it.readText() }) }
+    private fun verifySignature(value: JSONObject) = SignedUiManifest.verify(value, updateKeys, BuildConfig.VERSION_NAME, BuildConfig.VERSION_CODE, BuildConfig.UPDATE_CHANNEL)
     init {
         // Code 21 removes the old refresh-token bridge: cached pages using it must boot the new built-in UI.
         if (mobileUiNeedsNativeLoginUpgrade(prefs.getInt("nativeLoginUiVersion", 0), BuildConfig.VERSION_CODE)) {
@@ -37,6 +39,7 @@ class MobileUiBundles(private val context: Context) {
                 .remove("staged").putInt("nativeLoginUiVersion", 21).commit())
             activeId = builtIn
         }
+        if (activeId != builtIn && !verify(activeId)) rejectActive()
     }
     private fun rejected(): Set<String> = try {
         val values = org.json.JSONArray(prefs.getString("rejectedIds", "[]"))
@@ -85,6 +88,7 @@ class MobileUiBundles(private val context: Context) {
         val base = "$origin/personal/v1/app"
         val body = bytes("$base/manifest", 256 * 1024, host.cookie)
         val manifest = JSONObject(String(body, Charsets.UTF_8))
+        verifySignature(manifest)
         if (manifest.getInt("schemaVersion") != 1 || manifest.getInt("bridgeVersion") != 1)
             throw ApiFailure(409, "UI_UPDATE_INCOMPATIBLE")
         if (manifest.getInt("minNativeVersionCode") > BuildConfig.VERSION_CODE)
@@ -118,7 +122,10 @@ class MobileUiBundles(private val context: Context) {
                     paths.add(path) && digest.matches(hash) && size in 1..(4L * 1024 * 1024))
                 total += size
                 require(total <= 16L * 1024 * 1024)
-                val data = bytes("$origin$assetBase$path", size.toInt(), host.cookie)
+                val cached = if (activeId == builtIn) try { context.assets.open(path).use { it.readBytes() } } catch (_: Exception) { null }
+                    else try { File(directory, "$activeId/$path").readBytes() } catch (_: Exception) { null }
+                val data = cached?.takeIf { it.size.toLong() == size && sha256(it) == hash }
+                    ?: bytes("$origin$assetBase$path", size.toInt(), host.cookie)
                 require(data.size.toLong() == size && sha256(data) == hash)
                 val file = File(work, path)
                 check(file.canonicalPath.startsWith(work.canonicalPath + File.separator))
@@ -198,6 +205,7 @@ class MobileUiBundles(private val context: Context) {
         return try {
             val root = File(directory, id)
             val manifest = JSONObject(File(root, ".release-manifest.json").readText(Charsets.UTF_8))
+            verifySignature(manifest)
             if (!mobileUiNativeLoginCompatible(manifest.getInt("minNativeVersionCode"), BuildConfig.VERSION_CODE)) return false
             val items = manifest.getJSONArray("assets")
             if (items.length() !in 1..250) return false

@@ -66,6 +66,7 @@ import {
 } from './dsh-settings-migration.ts';
 import { formatHarnessStartupError } from './harness-startup-error.ts';
 import { checkForUpdates, initUpdater, quitAndInstall, updateState } from './update.ts';
+import { createDesktopUpdates } from './personal-update/desktop.mjs';
 import { initPerception } from './perception.ts';
 import { initDevices } from './devices.ts';
 import { ManagedAiGameRuntime } from './managed-ai-game-runtime.mjs';
@@ -231,6 +232,7 @@ let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn �
 let personalAccessService = null;
 let personalAccessOrigin = null;
 let personalDesktop = null;
+let desktopUpdates = null;
 let desktopStatus = { host: '启动中', model: '未选择' };
 let personalMemoryManager = null;
 let modelScheduler = null;
@@ -3178,6 +3180,12 @@ async function bootstrap() {
         },
       });
       if (accessPort !== null) {
+        desktopUpdates = await createDesktopUpdates({ getWindow: () => win, mobileUiDir, isIdle: async () => {
+          if (activeStageOneTurns.size) return false;
+          if (!runtimeOrigin) return !activeModelProfile();
+          try { assertAuthoritativeSessionsIdle(await listSharedSessionsForReferenceGuard()); return true; }
+          catch { return false; }
+        } });
         const { createPersonalAccessService } = await import('./personal-access/index.mjs');
         const { relayFromEnvironment } = await import('./personal-relay/index.mjs');
         const { cloudIdentityFromEnvironment } = await import('./personal-cloud/index.mjs');
@@ -3189,6 +3197,8 @@ async function bootstrap() {
           uiHandler: servePersonalAccessUi,
           androidPackagePath,
            mobileUiDir,
+           mobileUiTrustedKeys: desktopUpdates.store.trustedKeys,
+           hostVersion: appVersion,
            memoryManager: personalMemoryManager,
           browserReader: personalBrowserReader,
           accountModelManager,
@@ -3236,10 +3246,12 @@ async function bootstrap() {
         if (desktopRequested) {
           // Explicit legacy setup links remain valid; the default first page is account login.
           const setupGrant = null;
+          await desktopUpdates.prepareWindow();
           personalDesktop = createPersonalDesktop({ origin: personalAccessOrigin, setupGrant, isQuitting: () => isQuitting,
             startInTray: process.argv.includes('--start-in-tray'),
             onStatus: status => { desktopStatus = status; refreshTrayMenu(); } });
           win = personalDesktop.window;
+          desktopUpdates.attach(win);
           setupTray();
           await personalDesktop.ready;
         }
@@ -3317,12 +3329,12 @@ async function checkPreviewUpdateFromTray() {
   }
 }
 
-function installPreviewUpdateFromTray() {
-  if (!quitAndInstall()) {
+async function installPreviewUpdateFromTray() {
+  if (!(desktopUpdates ? await desktopUpdates.restart() : quitAndInstall())) {
     const options = {
       type: 'info',
       title: 'WeftMate 更新尚未就绪',
-      message: '尚未下载可安装的更新。请先检查更新并等待下载完成。',
+      message: '更新尚未就绪或任务仍在运行。请等待下载与任务完成后重试。',
       buttons: ['知道了'],
     };
     void (win && !win.isDestroyed() ? dialog.showMessageBox(win, options) : dialog.showMessageBox(options));
@@ -3383,6 +3395,7 @@ app.on('before-quit', (e) => {
   shutdownPromise = (async () => {
     try { await personalDesktop?.close(); }
     catch (error) { logCrash('shutdown-desktop-session', error); }
+    finally { desktopUpdates?.close(); }
     let accessClosing = null;
     try { accessClosing = personalAccessService?.close?.() ?? null; }
     catch (error) { logCrash('shutdown-personal-access', error); }
