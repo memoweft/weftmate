@@ -6,6 +6,7 @@ import { join } from 'node:path'
 import { classifyPersonalRisk } from '../src/plugins/personal-approval-policy.mjs'
 
 const forms = [
+  ['pwsh', "[string]$p='TARGET'; Set-Content $p data"],
   ['pwsh', "$p='TARGET'; Invoke-WebRequest https://example.org -OutFile:$p"],
   ['bash', 'P=TARGET; curl --output="$P" https://example.org'],
   ['bash', 'P=TARGET; curl -o"$P" https://example.org'],
@@ -162,4 +163,21 @@ test('unsupported adjacent quoted words stay unknown instead of inventing a dest
   for (const command of ["P='sub'/'user.txt'; echo data > \"$P\"", 'P="sub"/user.txt; curl -o "$P" https://example.org'])
     assert.ok(classifyPersonalRisk('bash', { command }).includes('overwrite'), command)
   assert.ok(classifyPersonalRisk('pwsh', { command: '$p="user""file.txt"; Set-Content $p data' }).includes('overwrite'))
+})
+
+test('typed, scoped and incremented variables cannot retain a stale new-file grant', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-reassign-'))
+  try {
+    writeFileSync(join(cwd, 'user.txt'), 'user fixture')
+    writeFileSync(join(cwd, '2'), 'user fixture')
+    for (const command of [
+      "$p='new.txt'; [string]$p='user.txt'; Set-Content $p data",
+      "$p='new.txt'; [System.String]$p=Read-Host; Set-Content $p data",
+      "$p='new.txt'; $script:p='user.txt'; Set-Content $p data",
+      "$p='new.txt'; $local:p='user.txt'; Set-Content $p data",
+      "$p='new.txt'; [object]$p='user.txt'; Set-Content $p data",
+      "$p='1'; ++$p; Set-Content $p data",
+      "$p='3'; --$p; Set-Content $p data",
+    ]) assert.ok(classifyPersonalRisk('pwsh', { command }, cwd).includes('overwrite'), command)
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
