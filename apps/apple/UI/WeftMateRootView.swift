@@ -68,6 +68,13 @@ struct WeftMateRootView: View {
                 let settingsCapture = argsForSettingsCapture()
                 let windows = NSApplication.shared.windows.filter { $0.isVisible && (!settingsCapture || $0.title != "WeftMate") }
                     .sorted { ($0.sheetParent == nil ? 1 : 0) < ($1.sheetParent == nil ? 1 : 0) }
+                if settingsCapture {
+                    // The launch workaround can refocus the main window. Capture the
+                    // independent settings window in its actual active appearance.
+                    NSApplication.shared.activate(ignoringOtherApps: true)
+                    windows.first(where: { $0.sheetParent == nil })?.makeKeyAndOrderFront(nil)
+                    try? await Task.sleep(for: .milliseconds(300))
+                }
                 // Sheets have their own window-server IDs. Include only this app's
                 // visible windows so usage and session menus appear over their parent.
                 var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: $0.windowNumber) }

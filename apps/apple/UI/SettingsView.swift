@@ -63,7 +63,7 @@ struct SettingsView: View {
             }
         }
         .onExitCommand { dismissWindow(id: "settings") }
-        .toolbar { Button { dismissWindow(id: "settings") } label: { WeftLabel("关闭设置", icon: "close") }.keyboardShortcut(.cancelAction).accessibilityIdentifier("closeSettings") }
+        .toolbar { Button { dismissWindow(id: "settings") } label: { WeftLabel("关闭设置", icon: "deny") }.keyboardShortcut(.cancelAction).accessibilityIdentifier("closeSettings") }
         .background(Weave.canvas).accessibilityIdentifier("settingsRoot")
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme).tint(Weave.accent)
         #else
@@ -195,7 +195,7 @@ private struct SettingsCategoryView: View {
             SettingsRow("颜色模式", "选择适合当前环境的颜色模式，保存到这台设备。") {
                 Picker("颜色模式", selection: $app.appearanceMode) {
                     Text("浅色").tag("light"); Text("深色").tag("dark"); Text("跟随系统").tag("system")
-                }.pickerStyle(.segmented).accessibilityIdentifier("appearancePicker")
+                }.pickerStyle(.segmented).labelsHidden().accessibilityIdentifier("appearancePicker")
             }
             SettingsRow("主题色", "按钮、选中状态与交互提示使用统一主题色。") { Text("石墨").foregroundStyle(Weave.muted) }
             SettingsRow("字号", "随系统文字大小与辅助功能设置调整。") { Text("系统默认").foregroundStyle(Weave.muted) }
