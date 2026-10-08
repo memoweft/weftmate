@@ -108,6 +108,7 @@ async function baseline(modelName, fourOnly = false) {
   const env = { ...process.env };
   for (const name of Object.keys(env)) if (/^(?:WEFTMATE_|MEMOWEFT_)/.test(name) || ['ELECTRON_RUN_AS_NODE', 'MIMO_API_KEY', 'MODEL_SWITCH_UNIFIED_KEY'].includes(name)) delete env[name];
   env.WEFTMATE_BASELINE_TRACE = join(root, 'requests.jsonl');
+  if (process.argv.includes('--memory-trace')) env.WEFTMATE_BASELINE_MEMORY_TRACE = join(root, 'memory-requests.jsonl');
   let app, page, ownerId, models = [], client, log = '', A, previous = [], corrected = [];
   const capturedSessions = new Set();
   async function api(path, body, method = body === undefined ? 'GET' : 'POST') {
