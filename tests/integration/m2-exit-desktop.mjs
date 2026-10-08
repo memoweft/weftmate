@@ -25,6 +25,7 @@ const repository = resolve(import.meta.dirname, '../..');
 const run = promisify(execFile), pause = ms => new Promise(r => setTimeout(r, ms));
 const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
 const provider = option('--model', null), judgeModel = option('--judge-model', undefined);
+const eightOnly = process.argv.includes('--eight-only');
 assert.ok(provider === null || ['mimo', 'lan'].includes(provider), '--model mimo|lan');
 const coreSource = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWeft/Core/py/src'));
 const python = option('--python', 'D:/AIProjects/MemoWeft/Core/py/.venv/Scripts/python.exe');
@@ -421,7 +422,7 @@ async function baseline(modelName, fourOnly = false) {
       await page.getByRole('button', { name: /返回对话/ }).click();
       result.semantic = await semantic(turn, '记忆服务故障时普通问候仍可用。');
     });
-    await step('speed', '同一对话重复任务的步骤与耗时', async result => {
+    if (!eightOnly) await step('speed', '同一对话重复任务的步骤与耗时', async result => {
       // Restore only the isolated Core process seam before this independent task.
       await close(); await launch(true);
       const id = await session(modelName, false);
@@ -485,7 +486,7 @@ try {
   else {
     if (!provider || provider === 'mimo') await baseline('mimo');
     if (!provider || provider === 'lan') { await acquireLan(); await baseline('lan'); }
-    if (!provider) await baseline('lan', true);
+    if (!provider && !eightOnly) await baseline('lan', true);
   }
 } finally {
   if (bridge) { await bridge.close(); save(join(evidence, 'lan-serial.json'), bridge.metrics()); }
@@ -500,6 +501,6 @@ try {
   // Optional assertion mode lets CI consume the same evidence without treating
   // a successfully completed baseline collection as a passing product exit.
   if (process.argv.includes('--require-pass') && reports.some(report => report.fatal ||
-    (report.four ? !report.four.passedGate : !report.summary?.eightStepGate || report.steps.find(step => step.id === 'speed')?.status !== 'passed'))) process.exitCode = 1;
+    (report.four ? !report.four.passedGate : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
   console.log(JSON.stringify({ roots, usage, credentialScan: publicScan }));
 }
