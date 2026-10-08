@@ -1,0 +1,3479 @@
+{
+  "runs": [
+    {
+      "label": "development-mimo-1",
+      "root": "C:/Temp/weftmate-m2f-mimo-c658513f-0874-4390-b8f7-67fbf797a179",
+      "side": "development",
+      "model": "mimo",
+      "suite": "matrix",
+      "coreCommit": "250c73c",
+      "hostCommit": "060acd7",
+      "exitCode": 0,
+      "notes": "Development only. Long-lived Core was loaded at 250c73c; identity follow-up edited the checkout before this host finished. Not a fixed final run.",
+      "scenarios": [
+        {
+          "id": "memory-1x-correction",
+          "category": "memory",
+          "title": "留出：浇水量省略主题纠正",
+          "status": "passed",
+          "durationMs": 40541,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "150",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-597b939e-8c07-479d-a106-cc3c64f862fd",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-2552c27e-6f2b-454c-9387-ebc8c14d5f72",
+              "startedAt": "2026-10-08T20:33:37.974Z",
+              "reply": "收到：阳台盆栽每次浇水固定 300 毫升。之后你提到浇水用量或安排相关建议时，我会按这个固定量来算。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:33:38.381Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:33:38.382Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:33:38.774Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:33:38.775Z"
+                },
+                {
+                  "seq": 58,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:33:44.962Z"
+                },
+                {
+                  "seq": 59,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:33:44.962Z"
+                },
+                {
+                  "seq": 60,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:33:44.963Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 6993,
+              "endedAt": "2026-10-08T20:33:44.967Z"
+            },
+            {
+              "sessionId": "session-5b209b6e-1f32-4327-8405-ad2b90832783",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-dee8b231-12ad-4701-99a7-1438af9bca78",
+              "startedAt": "2026-10-08T20:33:48.461Z",
+              "reply": "收到，已更正：阳台盆栽每次浇水 **150 毫升**，之前的 300 毫升作废，以后都按 150 毫升执行。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:33:48.947Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:33:48.947Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:33:50.160Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:33:50.161Z"
+                },
+                {
+                  "seq": 60,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:33:58.553Z"
+                },
+                {
+                  "seq": 61,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:33:58.553Z"
+                },
+                {
+                  "seq": 62,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:33:58.554Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-16017b0a4905eeeda9517f33a0baba15c627e7270fb1a676c0b4b2211ffbf70f",
+                  "kind": "cognition",
+                  "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+                }
+              ],
+              "durationMs": 10287,
+              "endedAt": "2026-10-08T20:33:58.748Z"
+            },
+            {
+              "sessionId": "session-26ad2206-3489-419f-bb34-7e235b78e3e3",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-a52f4c41-68f5-48bf-ab4e-976a0df4b5a8",
+              "startedAt": "2026-10-08T20:34:02.128Z",
+              "reply": "按你之前定下的量：**每盆 150 毫升**（300 毫升那次报大了，作废）。\n\n今天给阳台盆栽浇水就按 150 毫升/盆来。如果今天阳光强、盆土干得快，可以观察一下表土，干透了再照量补一次；土壤还湿就先不浇。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:34:02.532Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:34:02.532Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:34:08.357Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:34:08.358Z"
+                },
+                {
+                  "seq": 82,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:34:16.300Z"
+                },
+                {
+                  "seq": 83,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:34:16.300Z"
+                },
+                {
+                  "seq": 84,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:34:16.301Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-cb8dc1d72e0dd6d37926461ccdcabdf25e2bb4aa0e6c107d9db55316e80485e0",
+                  "kind": "cognition",
+                  "summary": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+                }
+              ],
+              "durationMs": 14385,
+              "endedAt": "2026-10-08T20:34:16.513Z"
+            }
+          ],
+          "replySummary": "按你之前定下的量：**每盆 150 毫升**（300 毫升那次报大了，作废）。\n\n今天给阳台盆栽浇水就按 150 毫升/盆来。如果今天阳光强、盆土干得快，可以观察一下表土，干透了再照量补一次；土壤还湿就先不浇。",
+          "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-VaCDXw",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 36,
+              "prompt_tokens": 271,
+              "total_tokens": 307,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复采用纠正后的150毫升，未沿用300毫升；纠正回合未重复盆栽浇水主题。\"}",
+            "status": "passed",
+            "reason": "回复采用纠正后的150毫升，未沿用300毫升；纠正回合未重复盆栽浇水主题。"
+          }
+        },
+        {
+          "id": "memory-1x-person",
+          "category": "memory",
+          "title": "留出：课程师生关系跨对话联系",
+          "status": "passed",
+          "durationMs": 46027,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "闻舟",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "陶艺|拉坯",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "问候应自然联系陶艺老师或拉坯，不捏造其他关系或事项。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-2dd3e1b8-439e-4bc0-994d-aa52d035286b",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-d95de3a1-9c14-49b4-9299-5954c8fb0ff7",
+              "startedAt": "2026-10-08T20:34:21.621Z",
+              "reply": "好的，记下了：闻舟是教你陶艺的老师，会带你练拉坯。需要安排上课提醒或记录练习计划时告诉我即可。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:34:22.047Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:34:22.047Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:34:22.615Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:34:22.616Z"
+                },
+                {
+                  "seq": 51,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:34:28.393Z"
+                },
+                {
+                  "seq": 52,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:34:28.394Z"
+                },
+                {
+                  "seq": 53,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:34:28.395Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 7500,
+              "endedAt": "2026-10-08T20:34:29.121Z"
+            },
+            {
+              "sessionId": "session-2eed3539-78e5-4ac9-8746-ebb226ad1b28",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-87477c0b-51a5-4479-ab2f-e31b2871c823",
+              "startedAt": "2026-10-08T20:34:32.176Z",
+              "reply": "给你一句自然的问候：\n\n> 闻舟老师好呀～最近好久没联系了，挺想念在工坊拉坯的日子。您最近还好吗？什么时候方便再去跟您学两手？\n\n如果想更简短随意一点，也可以用：\n\n> 好久不见，闻舟！最近练坯的手感都还在，就等您有空带我继续了😊\n\n需要我通过消息工具帮你直接发出去的话，告诉我用哪个联系人/渠道就行。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:34:32.594Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:34:32.594Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:34:58.521Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:34:58.521Z"
+                },
+                {
+                  "seq": 110,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:35:05.426Z"
+                },
+                {
+                  "seq": 111,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:35:05.426Z"
+                },
+                {
+                  "seq": 112,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:35:05.427Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "relationship-a35f46fb2096c08f90c66da4e8afa5a8b98e54a001ce9e9b52761f42d725143b",
+                  "kind": "relationship",
+                  "summary": "用户闻舟是教我陶艺的老师，他会带我练拉坯。"
+                }
+              ],
+              "durationMs": 33889,
+              "endedAt": "2026-10-08T20:35:06.065Z"
+            }
+          ],
+          "replySummary": "给你一句自然的问候：\n\n> 闻舟老师好呀～最近好久没联系了，挺想念在工坊拉坯的日子。您最近还好吗？什么时候方便再去跟您学两手？\n\n如果想更简短随意一点，也可以用：\n\n> 好久不见，闻舟！最近练坯的手感都还在，就等您有空带我继续了😊\n\n需要我通过消息工具帮你直接发出去的话，告诉我用哪个联系人/渠道就行。",
+          "notes": "M2e留出场景；陶艺师生关系领域。新会话只提姓名；基线另核对采用的正式关系、当前状态、完整原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-person-mX0CBt",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 28,
+              "prompt_tokens": 252,
+              "total_tokens": 280,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"问候自然联系陶艺老师与拉坯，未捏造其他关系或事项。\"}",
+            "status": "passed",
+            "reason": "问候自然联系陶艺老师与拉坯，未捏造其他关系或事项。"
+          }
+        },
+        {
+          "id": "memory-1x-preference",
+          "category": "memory",
+          "title": "留出：音乐选择偏好跨对话采用",
+          "status": "passed",
+          "durationMs": 33788,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "纯器乐|器乐|无歌词|没有歌词|无人声|没有人声",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "在新会话不重复偏好的情况下，应推荐不带人声的器乐曲，不推荐歌曲演唱版本。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-f604346f-280e-40d2-9687-72a6b8f65791",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-d54953c8-7b6f-47ba-ab6a-ff4969c11b1d",
+              "startedAt": "2026-10-08T20:35:10.789Z",
+              "reply": "明白，以后给你挑音乐时我会全部排除带人声的作品，只选纯器乐。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:35:11.275Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:35:11.275Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:35:11.923Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:35:11.923Z"
+                },
+                {
+                  "seq": 51,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:35:16.011Z"
+                },
+                {
+                  "seq": 52,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:35:16.011Z"
+                },
+                {
+                  "seq": 53,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:35:16.012Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 5441,
+              "endedAt": "2026-10-08T20:35:16.230Z"
+            },
+            {
+              "sessionId": "session-95da9fde-5755-493f-b700-0212f4d09af1",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-2bd73419-bf57-4126-839a-8a1fe081c7b5",
+              "startedAt": "2026-10-08T20:35:20.945Z",
+              "reply": "推荐久石让《The Rain》（《菊次郎的夏天》原声专辑中的纯钢琴曲）——旋律舒缓、没有乐器喧宾夺主，节奏像雨天散步一样平稳，适合睡前或发呆时听。整首只有钢琴与轻柔的弦乐铺底，完全器乐，不会有歌词打断放松的状态。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:35:21.450Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:35:21.450Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:35:35.865Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:35:35.866Z"
+                },
+                {
+                  "seq": 93,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:35:41.726Z"
+                },
+                {
+                  "seq": 94,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:35:41.726Z"
+                },
+                {
+                  "seq": 95,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:35:41.727Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-bd8373631d106d014480f4a3948460ee83a8e8379a70c72cf021bbc20c89e540",
+                  "kind": "cognition",
+                  "summary": "用户挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。"
+                }
+              ],
+              "durationMs": 21224,
+              "endedAt": "2026-10-08T20:35:42.169Z"
+            }
+          ],
+          "replySummary": "推荐久石让《The Rain》（《菊次郎的夏天》原声专辑中的纯钢琴曲）——旋律舒缓、没有乐器喧宾夺主，节奏像雨天散步一样平稳，适合睡前或发呆时听。整首只有钢琴与轻柔的弦乐铺底，完全器乐，不会有歌词打断放松的状态。",
+          "notes": "M2e留出场景；音乐领域与形成提示示例、原memory-01..04无关。基线另查采用项的当前状态、精确原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-preference-t8qxIB",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 25,
+              "prompt_tokens": 219,
+              "total_tokens": 244,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复推荐了纯器乐曲，符合排除人声偏好的要求。\"}",
+            "status": "passed",
+            "reason": "回复推荐了纯器乐曲，符合排除人声偏好的要求。"
+          }
+        },
+        {
+          "id": "memory-2x-correction",
+          "category": "memory",
+          "title": "盲测B：无线电频道省略主题纠正",
+          "status": "passed",
+          "durationMs": 43686,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "12",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "应使用纠正后的12频道，不能仍让用户调到7频道。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            },
+            {
+              "type": "turn_status",
+              "turn": 3,
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-72ef04e3-7a49-4ddf-aad6-8e71678d3acd",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-bdc83e8b-b268-46b6-b57b-dc14c41b830e",
+              "startedAt": "2026-10-08T20:35:47.863Z",
+              "reply": "明白：你的手持对讲机集合频道固定为 7 频道，出队时统一使用这个频道。已记下，后续涉及对讲机频道的相关操作会按 7 频道处理。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:35:48.302Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:35:48.302Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:35:49.075Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:35:49.076Z"
+                },
+                {
+                  "seq": 59,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:35:53.575Z"
+                },
+                {
+                  "seq": 60,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:35:53.575Z"
+                },
+                {
+                  "seq": 61,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:35:53.576Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 5905,
+              "endedAt": "2026-10-08T20:35:53.768Z"
+            },
+            {
+              "sessionId": "session-f2f9989b-76b3-44ff-ac7d-16ceab71634c",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-e3b0cb2e-e5b4-4e44-95ac-55d9f32f1837",
+              "startedAt": "2026-10-08T20:35:57.770Z",
+              "reply": "明白，已更正：手持对讲机固定 **12频道**，此前的7频道作废，往后出队一律按12频道执行。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:35:58.252Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:35:58.252Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:35:59.499Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:35:59.500Z"
+                },
+                {
+                  "seq": 49,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:36:02.670Z"
+                },
+                {
+                  "seq": 50,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:36:02.671Z"
+                },
+                {
+                  "seq": 51,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:36:02.672Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-79eeec5e1ce6c2eb153102d7abb182258717b23746f71b7df6850c6aa0ffdea9",
+                  "kind": "cognition",
+                  "summary": "用户的手持对讲机集合频道固定在7频道，每次出队都用这个。"
+                }
+              ],
+              "durationMs": 5096,
+              "endedAt": "2026-10-08T20:36:02.866Z"
+            },
+            {
+              "sessionId": "session-6746976e-fd9e-4d8e-9667-4b35ea8e7bcd",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-1f072c82-f863-43fd-be20-301624c2d771",
+              "startedAt": "2026-10-08T20:36:06.852Z",
+              "reply": "下次出队把手持对讲机调到 **12 频道**（此前的 7 频道已不再使用，往后都按新的 12 频道来）。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:36:07.397Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:36:07.397Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:36:11.334Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:36:11.334Z"
+                },
+                {
+                  "seq": 98,
+                  "type": "step.started",
+                  "at": "2026-10-08T20:36:23.414Z"
+                },
+                {
+                  "seq": 99,
+                  "type": "step.completed",
+                  "at": "2026-10-08T20:36:23.423Z"
+                },
+                {
+                  "seq": 127,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:36:28.933Z"
+                },
+                {
+                  "seq": 128,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:36:28.933Z"
+                },
+                {
+                  "seq": 129,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:36:28.933Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-7d06a55406e472be3ef7a28f9849c2b6dfea4bd9d0b21c014978a57d4fa6a32b",
+                  "kind": "cognition",
+                  "summary": "用户改一下，是12频道才对，先前的7频道不再使用，往后照新的。"
+                }
+              ],
+              "durationMs": 22631,
+              "endedAt": "2026-10-08T20:36:29.483Z"
+            }
+          ],
+          "replySummary": "下次出队把手持对讲机调到 **12 频道**（此前的 7 频道已不再使用，往后都按新的 12 频道来）。",
+          "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-2x-correction-K5ZMqo",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 32,
+              "prompt_tokens": 206,
+              "total_tokens": 238,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复明确指示调到12频道，并说明7频道已停用，符合纠正后频道要求。\"}",
+            "status": "passed",
+            "reason": "回复明确指示调到12频道，并说明7频道已停用，符合纠正后频道要求。"
+          }
+        },
+        {
+          "id": "memory-2x-person",
+          "category": "memory",
+          "title": "盲测B：攀岩搭档关系",
+          "status": "passed",
+          "durationMs": 20174,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "许澄",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "攀岩|保护|安全结",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "开场白应联系攀岩搭档、互相保护或安全结，不捏造其他关系。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-d48423b8-aae1-4baa-9ff9-4bd54f5a0c0f",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-d720e261-abaa-4b40-acb2-250dc6b0af8f",
+              "startedAt": "2026-10-08T20:36:36.384Z",
+              "reply": "明白，许澄是你的攀岩搭档，你们互相做保护，每次他都会帮你检查安全结。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:36:36.841Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:36:36.842Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:36:37.432Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:36:37.432Z"
+                },
+                {
+                  "seq": 46,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:36:42.559Z"
+                },
+                {
+                  "seq": 47,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:36:42.559Z"
+                },
+                {
+                  "seq": 48,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:36:42.560Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 6781,
+              "endedAt": "2026-10-08T20:36:43.165Z"
+            },
+            {
+              "sessionId": "session-f2d9b2e7-c6f7-43ce-bae7-27cb7c9c73f9",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-cdb3e96b-2f16-4e3e-92e1-d318538eea4b",
+              "startedAt": "2026-10-08T20:36:47.361Z",
+              "reply": "一句轻松的开场白：\n\n“许澄，这周末有没有空？老地方爬两把，顺便比比谁的结打得快——上次你帮我检查安全结，这次我先给你挑毛病。”",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:36:48.316Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:36:48.317Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:36:49.012Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:36:49.012Z"
+                },
+                {
+                  "seq": 70,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:36:53.935Z"
+                },
+                {
+                  "seq": 71,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:36:53.936Z"
+                },
+                {
+                  "seq": 72,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:36:53.936Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "relationship-6e939c4ac7cf75251eb17548e2005b44fe3a47bae1a83d95298eb025b7ab5565",
+                  "kind": "relationship",
+                  "summary": "用户许澄跟我搭档练攀岩，我们互相做保护，他总是帮我检查安全结。"
+                }
+              ],
+              "durationMs": 6802,
+              "endedAt": "2026-10-08T20:36:54.163Z"
+            }
+          ],
+          "replySummary": "一句轻松的开场白：\n\n“许澄，这周末有没有空？老地方爬两把，顺便比比谁的结打得快——上次你帮我检查安全结，这次我先给你挑毛病。”",
+          "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-2x-person-CBOyEp",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 30,
+              "prompt_tokens": 187,
+              "total_tokens": 217,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"开场白联系了攀岩搭档、互相保护和安全结，未捏造其他关系。\"}",
+            "status": "passed",
+            "reason": "开场白联系了攀岩搭档、互相保护和安全结，未捏造其他关系。"
+          }
+        },
+        {
+          "id": "memory-2x-preference",
+          "category": "memory",
+          "title": "盲测B：住宿气味偏好",
+          "status": "failed",
+          "durationMs": 24960,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "无香|不.*香薰|不要.*香薰|避免.*香薰",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "订房备注应要求无香环境或不放香薰，不能要求添加香味。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "failed",
+              "reason": "memory_used did not match expected value"
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-a8d00f84-d4aa-4065-84e7-efab2abfd7d8",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-c4e66f99-4921-4a47-aecf-8ebb7873471f",
+              "startedAt": "2026-10-08T20:37:00.925Z",
+              "reply": "收到：以后帮你选住宿，我会把「房间无香、不放香薰」作为固定要求——订房时留意客房禁烟/无香安排，预订备注和到店沟通里也明确要求无香环境，避免香薰、香氛清洁剂和客房扩香。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:37:01.372Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:37:01.372Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:37:01.961Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:37:01.961Z"
+                },
+                {
+                  "seq": 70,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:37:06.773Z"
+                },
+                {
+                  "seq": 71,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:37:06.774Z"
+                },
+                {
+                  "seq": 72,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:37:06.774Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 6421,
+              "endedAt": "2026-10-08T20:37:07.346Z"
+            },
+            {
+              "sessionId": "session-fcf379d9-3b33-4bb1-be5a-07c1b62ce6d8",
+              "modelProfileId": "private-model-fb7e9c951c9ede0f75c0c5c41fbcdaca46f14f61",
+              "commandId": "cmd-986d8e06-9d26-492a-b09e-48d81273d1b1",
+              "startedAt": "2026-10-08T20:37:11.824Z",
+              "reply": "给您一句通用的订房备注：\n\n**「请安排高楼层、远离电梯和走廊的安静房间，如可能尽量安排大床房，感谢！」**\n\n其他常见需求可替换括号部分：\n\n- 晚到：「预计晚上 10 点后到店，请留房并备注延迟入住。」\n- 度假/蜜月：「希望安排景观好的高楼层房间，如有布置请提前告知。」\n- 带老人小孩：「请安排靠近电梯的低楼层房间，谢谢。」\n- 怕吵：「对睡眠要求高，麻烦安排远离电梯、马路的安静房间。」\n\n告诉我您的具体场景（几人入住、有无特殊需求），我可以帮您写成一句最贴合的。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:37:12.323Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:37:12.323Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:37:13.322Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:37:13.322Z"
+                },
+                {
+                  "seq": 171,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:37:22.128Z"
+                },
+                {
+                  "seq": 172,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:37:22.129Z"
+                },
+                {
+                  "seq": 173,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:37:22.131Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 10869,
+              "endedAt": "2026-10-08T20:37:22.693Z"
+            }
+          ],
+          "replySummary": "给您一句通用的订房备注：\n\n**「请安排高楼层、远离电梯和走廊的安静房间，如可能尽量安排大床房，感谢！」**\n\n其他常见需求可替换括号部分：\n\n- 晚到：「预计晚上 10 点后到店，请留房并备注延迟入住。」\n- 度假/蜜月：「希望安排景观好的高楼层房间，如有布置请提前告知。」\n- 带老人小孩：「请安排靠近电梯的低楼层房间，谢谢。」\n- 怕吵：「对睡眠要求高，麻烦安排远离电梯、马路的安静房间。」\n\n告诉我您的具体场景（几人入住、有无特殊需求），我可以帮您写成一句最贴合的。",
+          "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-2x-preference-lijJjF",
+          "reason": "reply_matches did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 29,
+              "prompt_tokens": 319,
+              "total_tokens": 348,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":false,\"reason\":\"回复未包含用户长期要求的无香/不放香薰备注，遗漏关键需求\"}",
+            "status": "failed",
+            "reason": "回复未包含用户长期要求的无香/不放香薰备注，遗漏关键需求"
+          }
+        }
+      ],
+      "formations": [
+        {
+          "state": "applied",
+          "source": [
+            "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。\",\"supports\":[{\"evidence_id\":\"8faa88ac-7a23-4253-a737-6a3faa8685a6\",\"sentence_id\":\"t0\"}]}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 148,
+              "completion_tokens_details": {
+                "reasoning_tokens": 39
+              },
+              "prompt_tokens": 4270,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              },
+              "total_tokens": 4418
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:8e9deaaf28f8926acb6ea2ff01520d28:61594f174b3f24e28b8dd3bedab23e4e3f0d62a30ba9967b05eea4ff63ef58f1",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-16017b0a4905eeeda9517f33a0baba15c627e7270fb1a676c0b4b2211ffbf70f",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 1
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。\",\"supports\":[{\"evidence_id\":\"527de041-9f7e-422f-b0fc-ecf4b487a48c\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-16017b0a4905eeeda9517f33a0baba15c627e7270fb1a676c0b4b2211ffbf70f\"}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 232,
+              "completion_tokens_details": {
+                "reasoning_tokens": 45
+              },
+              "prompt_tokens": 4427,
+              "prompt_tokens_details": {
+                "cached_tokens": 2048
+              },
+              "total_tokens": 4659
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:9429d98ae19d2078060ef9853766c34a:1bf037a4a697d7d9e2d78ba7bab9aa81cda30ad58c5c099b5095bcb9231f52fc",
+            "cognitions": [
+              {
+                "action": "correct",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "prior_cognition_id": "cognition-16017b0a4905eeeda9517f33a0baba15c627e7270fb1a676c0b4b2211ffbf70f",
+                "replacement_cognition_id": "cognition-cb8dc1d72e0dd6d37926461ccdcabdf25e2bb4aa0e6c107d9db55316e80485e0",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 2
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "今天给阳台盆栽浇水，该量多少？"
+          ],
+          "modelResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "worldResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "闻舟是教我陶艺的老师，他会带我练拉坯。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"relationship\",\"formed_by\":\"stated\",\"proposition\":\"闻舟是教用户陶艺的老师，他会带用户练拉坯。\",\"supports\":[{\"evidence_id\":\"134fbee2-8cff-4c33-9d25-f47d78e4ba4e\",\"sentence_id\":\"t0\"}],\"target_entity\":{\"canonical_name\":\"闻舟\",\"kind\":\"person\"},\"relation_type\":\"teacher\"}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 1110,
+              "completion_tokens_details": {
+                "reasoning_tokens": 987
+              },
+              "prompt_tokens": 4387,
+              "prompt_tokens_details": {
+                "cached_tokens": 2048
+              },
+              "total_tokens": 5497
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:ce0b34db7b09712ad879c69a88ea183d:879b5bebb295c15150363c9668ae7475233a18642765e8747a59b028f178e11f",
+            "cognitions": [
+              {
+                "action": "form",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "relation_type": "teacher",
+                "relationship_id": "relationship-a35f46fb2096c08f90c66da4e8afa5a8b98e54a001ce9e9b52761f42d725143b",
+                "source_entity_id": "entity-cd4c459c89b36cfc33d4d21963ab9f14d18df8e2fb712ada6b5889a9617b05a3",
+                "statement_kind": "relationship",
+                "target_entity_id": "entity-f8e842356115b487856943940a3a1bf614b6081d67cd79a3c8df62aac0170977"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 3
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "我想给闻舟发个消息，帮我写一句自然的问候。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 35,
+              "completion_tokens_details": {
+                "reasoning_tokens": 22
+              },
+              "prompt_tokens": 4745,
+              "prompt_tokens_details": {
+                "cached_tokens": 4160
+              },
+              "total_tokens": 4780
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。\",\"supports\":[{\"evidence_id\":\"a886b02c-bf93-4a03-966f-3ac29e853f25\",\"sentence_id\":\"t0\"}]}]}",
+            "finish_reason": "stop",
+            "formation_rewrite": {
+              "error": {
+                "code": "invalid_model_result",
+                "instruction": "Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts."
+              },
+              "final_error": null,
+              "first_result": {
+                "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。\",\"supports\":[{\"evidence_id\":\"a886b02c-bf93-4a03-966f-3ac29e853f25\",\"sentence_id\":\"t0\"}]}]}parameter",
+                "finish_reason": "stop",
+                "model": "mimo-v2.6-flash",
+                "usage": {
+                  "completion_tokens": 138,
+                  "completion_tokens_details": {
+                    "reasoning_tokens": 23
+                  },
+                  "prompt_tokens": 4787,
+                  "prompt_tokens_details": {
+                    "cached_tokens": 0
+                  },
+                  "total_tokens": 4925
+                }
+              },
+              "state": "completed"
+            },
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 126,
+              "completion_tokens_details": {
+                "reasoning_tokens": 13
+              },
+              "prompt_tokens": 5150,
+              "prompt_tokens_details": {
+                "cached_tokens": 4736
+              },
+              "total_tokens": 5276
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:87cef43af6be6e2075c5df86302ab814:e141bd9dc55ca08eccaa1fd1073d52c2a58f13a2265e1129ca982e85f8422776",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-bd8373631d106d014480f4a3948460ee83a8e8379a70c72cf021bbc20c89e540",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 4
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "给我推荐一首适合放松的音乐。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 45,
+              "completion_tokens_details": {
+                "reasoning_tokens": 32
+              },
+              "prompt_tokens": 4811,
+              "prompt_tokens_details": {
+                "cached_tokens": 4160
+              },
+              "total_tokens": 4856
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "我的手持对讲机集合频道固定在7频道，每次出队都用这个。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"我的手持对讲机集合频道固定在7频道，每次出队都用这个。\",\"supports\":[{\"evidence_id\":\"703e3cb5-f6d6-4ac0-bf46-c424bb55ff44\",\"sentence_id\":\"t0\"}]}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 132,
+              "completion_tokens_details": {
+                "reasoning_tokens": 25
+              },
+              "prompt_tokens": 4856,
+              "prompt_tokens_details": {
+                "cached_tokens": 4160
+              },
+              "total_tokens": 4988
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:0dff5b29d902c221566c218d2fd57605:a24169420127a52792d9004b68dd5329d5930422d70c2fa81cb97b776d0051f6",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-79eeec5e1ce6c2eb153102d7abb182258717b23746f71b7df6850c6aa0ffdea9",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 5
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "改一下，是12频道才对，先前的7频道不再使用，往后照新的。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"改一下，是12频道才对，先前的7频道不再使用，往后照新的。\",\"supports\":[{\"evidence_id\":\"5c89d90f-9338-477c-83a7-c35433fee56a\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-79eeec5e1ce6c2eb153102d7abb182258717b23746f71b7df6850c6aa0ffdea9\"}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 227,
+              "completion_tokens_details": {
+                "reasoning_tokens": 51
+              },
+              "prompt_tokens": 4988,
+              "prompt_tokens_details": {
+                "cached_tokens": 4288
+              },
+              "total_tokens": 5215
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:8b81b9f703167da0f8ac39c872796c09:1f6270ceb24444c4f931dc82723611a5187d73bfc5053984ed9a61d1e86e0380",
+            "cognitions": [
+              {
+                "action": "correct",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "prior_cognition_id": "cognition-79eeec5e1ce6c2eb153102d7abb182258717b23746f71b7df6850c6aa0ffdea9",
+                "replacement_cognition_id": "cognition-7d06a55406e472be3ef7a28f9849c2b6dfea4bd9d0b21c014978a57d4fa6a32b",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 6
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "下次出队，我的手持对讲机要调到哪个频道？"
+          ],
+          "modelResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "worldResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "许澄跟我搭档练攀岩，我们互相做保护，他总是帮我检查安全结。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"relationship\",\"formed_by\":\"stated\",\"proposition\":\"许澄跟我搭档练攀岩，我们互相做保护，他总是帮我检查安全结。\",\"supports\":[{\"evidence_id\":\"c80a2748-e719-439f-b34f-c0eab476976e\",\"sentence_id\":\"t0\"}],\"target_entity\":{\"canonical_name\":\"许澄\",\"kind\":\"person\"},\"relation_type\":\"climbing_partner\"}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 198,
+              "completion_tokens_details": {
+                "reasoning_tokens": 67
+              },
+              "prompt_tokens": 5001,
+              "prompt_tokens_details": {
+                "cached_tokens": 4288
+              },
+              "total_tokens": 5199
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:5e97987fa5c24342c708771b03f8eea3:04bc08b7e571b04704ab84f1b2231344564717002beacc2b8610538b87de7204",
+            "cognitions": [
+              {
+                "action": "form",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "relation_type": "climbing_partner",
+                "relationship_id": "relationship-6e939c4ac7cf75251eb17548e2005b44fe3a47bae1a83d95298eb025b7ab5565",
+                "source_entity_id": "entity-cd4c459c89b36cfc33d4d21963ab9f14d18df8e2fb712ada6b5889a9617b05a3",
+                "statement_kind": "relationship",
+                "target_entity_id": "entity-e2402a4b7a55259d72dc20569ff8b74aaf5d626542a646cfb50987b5b26eabdf"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 7
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "给许澄写一句周末见面时的开场白。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 40,
+              "completion_tokens_details": {
+                "reasoning_tokens": 27
+              },
+              "prompt_tokens": 5235,
+              "prompt_tokens_details": {
+                "cached_tokens": 4288
+              },
+              "total_tokens": 5275
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "选住宿我有一条长期要求：房间别放香薰，我只接受无香的环境。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"选住宿我有一条长期要求：房间别放香薰，我只接受无香的环境。\",\"supports\":[{\"evidence_id\":\"0790bdfa-5bc3-43c5-bf7a-37e92a7941b2\",\"sentence_id\":\"t0\"}]}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 132,
+              "completion_tokens_details": {
+                "reasoning_tokens": 19
+              },
+              "prompt_tokens": 5286,
+              "prompt_tokens_details": {
+                "cached_tokens": 4544
+              },
+              "total_tokens": 5418
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:68b94b36cb0d76186af6f2c3e3897b94:490158403d50aa57a0cc46687d60320bc2280da6a8f74d5431e51d83fadd48cb",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-56c9980ef7fad279cd155037ee33ef36696df351729b7394f653b466740b2ae4",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 8
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "替我写一句订房时给前台的备注。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 39,
+              "completion_tokens_details": {
+                "reasoning_tokens": 26
+              },
+              "prompt_tokens": 5334,
+              "prompt_tokens_details": {
+                "cached_tokens": 4160
+              },
+              "total_tokens": 5373
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 237,
+          "matches": 0,
+          "skippedLinks": 511
+        }
+      },
+      "clarifications": [],
+      "mimoUsage": {
+        "startedRequests": 48,
+        "usageRequests": 48,
+        "missingUsageRequests": 0,
+        "inputTokens": 221546,
+        "cachedInputTokens": 163840,
+        "outputTokens": 5259,
+        "knownCostCny": 0.0715008
+      }
+    },
+    {
+      "label": "development-mimo-2",
+      "root": "C:/Temp/weftmate-m2f-mimo-7f2b62e5-4318-48b8-99cf-23edfc835220",
+      "side": "development",
+      "model": "mimo",
+      "suite": "matrix",
+      "coreCommit": "7d9a29a",
+      "hostCommit": "060acd7",
+      "exitCode": 0,
+      "notes": "Development only. Core loaded at 7d9a29a; one-task override follow-up edited checkout before host finished. Not counted as a fixed final run.",
+      "scenarios": [
+        {
+          "id": "memory-1x-correction",
+          "category": "memory",
+          "title": "留出：浇水量省略主题纠正",
+          "status": "passed",
+          "durationMs": 40834,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "150",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-bd821d0f-8863-4fcd-b162-082216d76878",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-9addbec3-2bee-49e3-810a-a51ff832ab03",
+              "startedAt": "2026-10-08T20:39:29.087Z",
+              "reply": "收到：阳台盆栽每次浇水固定 300 毫升。以后涉及浇水、估算用水量或安排浇花相关事项时，我会按这个固定用量来算。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:39:29.486Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:39:29.486Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:39:29.892Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:39:29.892Z"
+                },
+                {
+                  "seq": 57,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:39:32.535Z"
+                },
+                {
+                  "seq": 58,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:39:32.536Z"
+                },
+                {
+                  "seq": 59,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:39:32.537Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 3455,
+              "endedAt": "2026-10-08T20:39:32.542Z"
+            },
+            {
+              "sessionId": "session-927fd2ef-3071-44c2-84a1-83579f6a5d35",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-76d48758-b74c-4c07-a188-cbd450e14549",
+              "startedAt": "2026-10-08T20:39:36.306Z",
+              "reply": "收到，已更正：以后阳台盆栽每次浇水按 **150毫升** 执行，之前的 300毫升 作废。没有相关的定时任务需要改动。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:39:36.722Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:39:36.722Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:39:46.645Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:39:46.646Z"
+                },
+                {
+                  "seq": 115,
+                  "type": "step.started",
+                  "at": "2026-10-08T20:39:51.369Z"
+                },
+                {
+                  "seq": 116,
+                  "type": "step.completed",
+                  "at": "2026-10-08T20:39:51.379Z"
+                },
+                {
+                  "seq": 151,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:39:54.083Z"
+                },
+                {
+                  "seq": 152,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:39:54.083Z"
+                },
+                {
+                  "seq": 153,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:39:54.084Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-3cc2c89b39f6104508917b303fc59de0b8bc926c0b92e22d8babd31384f44694",
+                  "kind": "cognition",
+                  "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+                }
+              ],
+              "durationMs": 17976,
+              "endedAt": "2026-10-08T20:39:54.282Z"
+            },
+            {
+              "sessionId": "session-1d188c53-0a50-417c-9058-34e55f41153d",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-06227766-13c9-4fe7-8c41-6fd3600624f7",
+              "startedAt": "2026-10-08T20:39:57.850Z",
+              "reply": "按之前更正后的数：**150 毫升**（300 毫升那个大数已作废，之后都以 150 毫升为准）。今天给阳台盆浇 150 毫升即可。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:39:58.293Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:39:58.293Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:40:00.574Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:40:00.574Z"
+                },
+                {
+                  "seq": 62,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:40:07.752Z"
+                },
+                {
+                  "seq": 63,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:40:07.753Z"
+                },
+                {
+                  "seq": 64,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:40:07.753Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-8a99cb775e9e5cb64a403f2d68ba03617d57a586f64f184a051ab948217ad464",
+                  "kind": "cognition",
+                  "summary": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+                }
+              ],
+              "durationMs": 10159,
+              "endedAt": "2026-10-08T20:40:08.009Z"
+            }
+          ],
+          "replySummary": "按之前更正后的数：**150 毫升**（300 毫升那个大数已作废，之后都以 150 毫升为准）。今天给阳台盆浇 150 毫升即可。",
+          "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-j1108p",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 33,
+              "prompt_tokens": 238,
+              "total_tokens": 271,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复采用150毫升，未沿用300毫升，且未重复盆栽浇水主题。\"}",
+            "status": "passed",
+            "reason": "回复采用150毫升，未沿用300毫升，且未重复盆栽浇水主题。"
+          }
+        },
+        {
+          "id": "memory-1x-person",
+          "category": "memory",
+          "title": "留出：课程师生关系跨对话联系",
+          "status": "passed",
+          "durationMs": 20169,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "闻舟",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "陶艺|拉坯",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "问候应自然联系陶艺老师或拉坯，不捏造其他关系或事项。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-2b48b4f3-c413-4af0-80c2-17104f00c619",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-6dc27834-b0d1-4da3-8b31-e84f2ce44cbd",
+              "startedAt": "2026-10-08T20:40:12.665Z",
+              "reply": "好的，记下了——闻舟是教你陶艺的老师，会带你练拉坯。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:40:13.097Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:40:13.097Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:40:13.707Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:40:13.707Z"
+                },
+                {
+                  "seq": 41,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:40:17.066Z"
+                },
+                {
+                  "seq": 42,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:40:17.066Z"
+                },
+                {
+                  "seq": 43,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:40:17.067Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 4998,
+              "endedAt": "2026-10-08T20:40:17.663Z"
+            },
+            {
+              "sessionId": "session-0bcccc0b-3c8e-4e8b-9653-3370f16c27a8",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-fb642e0f-9929-4f95-8c89-99f9ec455e72",
+              "startedAt": "2026-10-08T20:40:22.161Z",
+              "reply": "给闻舟的问候，可以直接用这句：\n\n> 闻舟老师，晚上好呀～最近手有点痒，想起跟您练拉坯的日子了。您最近忙吗？有空想再去您那儿转转。\n\n如果想更简短随意一点：\n\n> 师傅，晚上好！最近练得怎么样？我这两天想着哪天再去找您拉一回坯。\n\n需要我帮你通过某个渠道发出去的话，告诉我用哪个应用就行。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:40:22.998Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:40:22.998Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:40:23.637Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:40:23.638Z"
+                },
+                {
+                  "seq": 188,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:40:30.931Z"
+                },
+                {
+                  "seq": 189,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:40:30.931Z"
+                },
+                {
+                  "seq": 190,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:40:30.932Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "relationship-0a75e5fcad4aa421d563cb2eb3383c8b249453f1f6e597190ba7135e7ff6f65b",
+                  "kind": "relationship",
+                  "summary": "用户闻舟是教我陶艺的老师，他会带我练拉坯。"
+                }
+              ],
+              "durationMs": 8978,
+              "endedAt": "2026-10-08T20:40:31.139Z"
+            }
+          ],
+          "replySummary": "给闻舟的问候，可以直接用这句：\n\n> 闻舟老师，晚上好呀～最近手有点痒，想起跟您练拉坯的日子了。您最近忙吗？有空想再去您那儿转转。\n\n如果想更简短随意一点：\n\n> 师傅，晚上好！最近练得怎么样？我这两天想着哪天再去找您拉一回坯。\n\n需要我帮你通过某个渠道发出去的话，告诉我用哪个应用就行。",
+          "notes": "M2e留出场景；陶艺师生关系领域。新会话只提姓名；基线另核对采用的正式关系、当前状态、完整原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-person-rFmdES",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 28,
+              "prompt_tokens": 249,
+              "total_tokens": 277,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"问候自然联系陶艺老师和拉坯，未捏造其他关系或事项。\"}",
+            "status": "passed",
+            "reason": "问候自然联系陶艺老师和拉坯，未捏造其他关系或事项。"
+          }
+        },
+        {
+          "id": "memory-1x-preference",
+          "category": "memory",
+          "title": "留出：音乐选择偏好跨对话采用",
+          "status": "passed",
+          "durationMs": 17324,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "纯器乐|器乐|无歌词|没有歌词|无人声|没有人声",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "在新会话不重复偏好的情况下，应推荐不带人声的器乐曲，不推荐歌曲演唱版本。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-8e0a375b-bb81-4e83-965f-65ceef992ff4",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-6e38d8d2-cce6-4da4-9ad4-c115729aaecb",
+              "startedAt": "2026-10-08T20:40:35.908Z",
+              "reply": "明白，以后给你挑音乐时我会只选纯器乐，把带人声的作品都排除掉。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:40:36.341Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:40:36.341Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:40:36.934Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:40:36.934Z"
+                },
+                {
+                  "seq": 47,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:40:38.877Z"
+                },
+                {
+                  "seq": 48,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:40:38.877Z"
+                },
+                {
+                  "seq": 49,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:40:38.878Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 3154,
+              "endedAt": "2026-10-08T20:40:39.062Z"
+            },
+            {
+              "sessionId": "session-43599c5d-df93-4f92-bf04-fb7ecb92627e",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-10fe2b9a-abfd-4fc8-8b8c-a9dd75e264e8",
+              "startedAt": "2026-10-08T20:40:43.398Z",
+              "reply": "推荐坂本龙一的《Aqua》(专辑《Playing the Piano》版本)——纯钢琴曲，节奏舒缓、旋律像水波一样层层荡开，没有歌词干扰，很适合睡前或放空时听。如果想要更\"包裹感\"一点的，可以换成 Max Richter 的《On the Nature of Dayness》(冬)，大提琴铺底，也全是器乐。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:40:43.864Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:40:43.864Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:40:45.171Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:40:45.171Z"
+                },
+                {
+                  "seq": 96,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:40:49.690Z"
+                },
+                {
+                  "seq": 97,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:40:49.691Z"
+                },
+                {
+                  "seq": 98,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:40:49.691Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-d1b6501ce26b1a6555b8e7fac66d40de4ede2be1d16408aec933517c2f679735",
+                  "kind": "cognition",
+                  "summary": "用户挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。"
+                }
+              ],
+              "durationMs": 6917,
+              "endedAt": "2026-10-08T20:40:50.315Z"
+            }
+          ],
+          "replySummary": "推荐坂本龙一的《Aqua》(专辑《Playing the Piano》版本)——纯钢琴曲，节奏舒缓、旋律像水波一样层层荡开，没有歌词干扰，很适合睡前或放空时听。如果想要更\"包裹感\"一点的，可以换成 Max Richter 的《On the Nature of Dayness》(冬)，大提琴铺底，也全是器乐。",
+          "notes": "M2e留出场景；音乐领域与形成提示示例、原memory-01..04无关。基线另查采用项的当前状态、精确原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-preference-ZE8niB",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 29,
+              "prompt_tokens": 232,
+              "total_tokens": 261,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"推荐均为纯器乐曲，未推荐带人声的歌曲演唱版本，符合偏好。\"}",
+            "status": "passed",
+            "reason": "推荐均为纯器乐曲，未推荐带人声的歌曲演唱版本，符合偏好。"
+          }
+        },
+        {
+          "id": "memory-2x-correction",
+          "category": "memory",
+          "title": "盲测B：无线电频道省略主题纠正",
+          "status": "passed",
+          "durationMs": 48107,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "12",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "应使用纠正后的12频道，不能仍让用户调到7频道。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            },
+            {
+              "type": "turn_status",
+              "turn": 3,
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-92101cdb-8ddb-4bea-981f-a071183684e3",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-975f1106-8ba7-444e-8ca8-6ab95afcc349",
+              "startedAt": "2026-10-08T20:40:55.097Z",
+              "reply": "收到：手持对讲机集合频道固定为 7 频道，出队统一用这个。已记下，后续涉及对讲机频道的安排都按 7 频道处理。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:40:55.531Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:40:55.531Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:40:56.132Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:40:56.133Z"
+                },
+                {
+                  "seq": 66,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:40:58.930Z"
+                },
+                {
+                  "seq": 67,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:40:58.931Z"
+                },
+                {
+                  "seq": 68,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:40:58.931Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 4391,
+              "endedAt": "2026-10-08T20:40:59.488Z"
+            },
+            {
+              "sessionId": "session-2dcd4f99-811a-4b9a-af0f-f1543b76df2e",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-08ad9395-1ed0-46ce-a093-f27705bba9cf",
+              "startedAt": "2026-10-08T20:41:03.500Z",
+              "reply": "收到，已更正：手持对讲机频道改为 **12频道**，先前的7频道不再使用，往后都按12频道执行。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:41:03.960Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:41:03.960Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:41:05.136Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:41:05.137Z"
+                },
+                {
+                  "seq": 87,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:41:08.554Z"
+                },
+                {
+                  "seq": 88,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:41:08.555Z"
+                },
+                {
+                  "seq": 89,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:41:08.555Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-a939b29e386957c9ce9e7aaad4b674b2f9d3a3f3f7a6c2d713b16695def2fb3d",
+                  "kind": "cognition",
+                  "summary": "用户的手持对讲机集合频道固定在7频道，每次出队都用这个。"
+                }
+              ],
+              "durationMs": 5466,
+              "endedAt": "2026-10-08T20:41:08.966Z"
+            },
+            {
+              "sessionId": "session-7df82c39-0094-40ea-8a64-31d49e98d43c",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-c513568a-d7fb-43ef-9396-00209c62fed1",
+              "startedAt": "2026-10-08T20:41:12.725Z",
+              "reply": "下次出队把手持对讲机调到 **12 频道**（此前的 7 频道已停用）。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:41:13.202Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:41:13.203Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:41:26.133Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:41:26.133Z"
+                },
+                {
+                  "seq": 70,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:41:40.446Z"
+                },
+                {
+                  "seq": 71,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:41:40.446Z"
+                },
+                {
+                  "seq": 72,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:41:40.447Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-8b8e2b482fc03de0dc169bab26a11291e12693a0abaa9c22230db7ba8e724c4c",
+                  "kind": "cognition",
+                  "summary": "用户改一下，是12频道才对，先前的7频道不再使用，往后照新的。"
+                }
+              ],
+              "durationMs": 28320,
+              "endedAt": "2026-10-08T20:41:41.045Z"
+            }
+          ],
+          "replySummary": "下次出队把手持对讲机调到 **12 频道**（此前的 7 频道已停用）。",
+          "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-2x-correction-X18qDj",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 32,
+              "prompt_tokens": 193,
+              "total_tokens": 225,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复明确指示调到12频道，并说明7频道已停用，符合纠正后频道要求。\"}",
+            "status": "passed",
+            "reason": "回复明确指示调到12频道，并说明7频道已停用，符合纠正后频道要求。"
+          }
+        },
+        {
+          "id": "memory-2x-person",
+          "category": "memory",
+          "title": "盲测B：攀岩搭档关系",
+          "status": "passed",
+          "durationMs": 22727,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "许澄",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "攀岩|保护|安全结",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "开场白应联系攀岩搭档、互相保护或安全结，不捏造其他关系。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-b59d1768-2b9b-47de-aad7-8f26f1dc57eb",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-c0b1c803-d3f6-405a-be8a-e4814af26996",
+              "startedAt": "2026-10-08T20:41:50.231Z",
+              "reply": "了解——许澄是你的攀岩搭档，你们互相保护，每次他都会帮你复查安全结。这个背景我记下了，之后涉及攀岩、保护装备或结绳检查相关的内容我都会留意。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:41:50.694Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:41:50.694Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:41:51.311Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:41:51.311Z"
+                },
+                {
+                  "seq": 65,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:41:54.536Z"
+                },
+                {
+                  "seq": 66,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:41:54.537Z"
+                },
+                {
+                  "seq": 67,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:41:54.537Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 4495,
+              "endedAt": "2026-10-08T20:41:54.727Z"
+            },
+            {
+              "sessionId": "session-cdc52c6d-986e-4ad1-ac3d-1fe4a276c056",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-0ddad2dd-96e9-4aca-a64c-0217b79987de",
+              "startedAt": "2026-10-08T20:41:59.240Z",
+              "reply": "周末见面时可以这样开口：\n\n\"许澄，这周攀岩馆约起？不过老规矩——安全结还是先给我看一眼，你检查完我才上墙。\"\n\n既接上了你们互相保护的老习惯，也顺手把周末的约见说出来了。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:41:59.710Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:41:59.711Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:42:06.795Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:42:06.796Z"
+                },
+                {
+                  "seq": 80,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:42:10.009Z"
+                },
+                {
+                  "seq": 81,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:42:10.009Z"
+                },
+                {
+                  "seq": 82,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:42:10.010Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "relationship-696e7b0fc89b4de95d3ec632baa053fbda732edc07ad5b3778a2029716baacce",
+                  "kind": "relationship",
+                  "summary": "用户许澄跟我搭档练攀岩，我们互相做保护，他总是帮我检查安全结。"
+                }
+              ],
+              "durationMs": 11377,
+              "endedAt": "2026-10-08T20:42:10.617Z"
+            }
+          ],
+          "replySummary": "周末见面时可以这样开口：\n\n\"许澄，这周攀岩馆约起？不过老规矩——安全结还是先给我看一眼，你检查完我才上墙。\"\n\n既接上了你们互相保护的老习惯，也顺手把周末的约见说出来了。",
+          "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-2x-person-zsOpej",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 30,
+              "prompt_tokens": 204,
+              "total_tokens": 234,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":true,\"reason\":\"开场白联系了攀岩搭档、互相保护和安全结检查，未捏造其他关系。\"}",
+            "status": "passed",
+            "reason": "开场白联系了攀岩搭档、互相保护和安全结检查，未捏造其他关系。"
+          }
+        },
+        {
+          "id": "memory-2x-preference",
+          "category": "memory",
+          "title": "盲测B：住宿气味偏好",
+          "status": "failed",
+          "durationMs": 27460,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "无香|不.*香薰|不要.*香薰|避免.*香薰",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "订房备注应要求无香环境或不放香薰，不能要求添加香味。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "failed",
+              "reason": "memory_used did not match expected value"
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-fafe170b-b690-4b84-982f-5802fba7c837",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-16b8f255-d0e7-4262-b41a-f1530396939c",
+              "startedAt": "2026-10-08T20:42:15.581Z",
+              "reply": "明白，已记下：**选住宿时房间不放香薰，只接受完全无香的环境**——订房时我会把“无香薰、无香氛客房用品”作为筛选条件，必要时提前和酒店确认。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:42:16.089Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:42:16.089Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:42:16.770Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:42:16.770Z"
+                },
+                {
+                  "seq": 68,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:42:25.121Z"
+                },
+                {
+                  "seq": 69,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:42:25.121Z"
+                },
+                {
+                  "seq": 70,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:42:25.122Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 10084,
+              "endedAt": "2026-10-08T20:42:25.665Z"
+            },
+            {
+              "sessionId": "session-18a84bec-62ea-4fa0-8137-e7cfd66bafaa",
+              "modelProfileId": "private-model-d53e1596ab1c176e2a7e91970687af43df820923",
+              "commandId": "cmd-0d6d1bf6-d667-4f0d-b4d9-addae1405412",
+              "startedAt": "2026-10-08T20:42:29.458Z",
+              "reply": "以下是一句通用、礼貌的订房备注，可直接填在预订页面的「特殊要求」栏或电话告知前台：\n\n> **您好，预订了 X 月 X 日至 X 日的房间，希望安排高楼层、远离电梯和走廊的安静房间，我们大约 XX:XX 到店，麻烦留房，谢谢！**\n\n按需替换成自己的情况，常用可选片段：\n\n- **到店时间**：「预计晚上 10 点后到店，麻烦保留房间」\n- **房间偏好**：「希望大床房 / 双床房」「需要无烟层」「希望视野好一点」\n- **安静需求**：「睡眠浅，希望安排安静的房间」\n- **同行人**：「两位成人 / 带一名儿童，麻烦准备婴儿床」\n- **设施**：「需要发票，抬头稍后提供」\n\n如果你告诉我酒店档次、出行人数和具体需求，我可以帮你写一句更贴合的版本（中文或英文都行）。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T20:42:30.058Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T20:42:30.058Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T20:42:32.795Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T20:42:32.796Z"
+                },
+                {
+                  "seq": 179,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T20:42:40.027Z"
+                },
+                {
+                  "seq": 180,
+                  "type": "task.ended",
+                  "at": "2026-10-08T20:42:40.027Z"
+                },
+                {
+                  "seq": 181,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T20:42:40.029Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 10765,
+              "endedAt": "2026-10-08T20:42:40.223Z"
+            }
+          ],
+          "replySummary": "以下是一句通用、礼貌的订房备注，可直接填在预订页面的「特殊要求」栏或电话告知前台：\n\n> **您好，预订了 X 月 X 日至 X 日的房间，希望安排高楼层、远离电梯和走廊的安静房间，我们大约 XX:XX 到店，麻烦留房，谢谢！**\n\n按需替换成自己的情况，常用可选片段：\n\n- **到店时间**：「预计晚上 10 点后到店，麻烦保留房间」\n- **房间偏好**：「希望大床房 / 双床房」「需要无烟层」「希望视野好一点」\n- **安静需求**：「睡眠浅，希望安排安静的房间」\n- **同行人**：「两位成人 / 带一名儿童，麻烦准备婴儿床」\n- **设施**：「需要发票，抬头稍后提供」\n\n如果你告诉我酒店档次、出行人数和具体需求，我可以帮你写一句更贴合的版本（中文或英文都行）。",
+          "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-2x-preference-zqmDUb",
+          "reason": "reply_matches did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 27,
+              "prompt_tokens": 375,
+              "total_tokens": 402,
+              "completion_tokens_details": {
+                "reasoning_tokens": 0
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "finishReason": "stop",
+            "rawVerdict": "{\"pass\":false,\"reason\":\"回复未包含无香/不放香薰的备注要求，遗漏用户长期需求\"}",
+            "status": "failed",
+            "reason": "回复未包含无香/不放香薰的备注要求，遗漏用户长期需求"
+          }
+        }
+      ],
+      "formations": [
+        {
+          "state": "applied",
+          "source": [
+            "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"attribute\",\"formed_by\":\"stated\",\"proposition\":\"我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。\",\"supports\":[{\"evidence_id\":\"b42e765b-bae2-4151-b97e-a780d0d7db27\",\"sentence_id\":\"t0\"}],\"entity\":{\"canonical_name\":\"阳台盆栽\",\"kind\":\"topic\",\"aliases\":[\"盆栽\"]}}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 296,
+              "completion_tokens_details": {
+                "reasoning_tokens": 169
+              },
+              "prompt_tokens": 4322,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              },
+              "total_tokens": 4618
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:9486d7cf4eb587e05f28ee043e5b153c:96b4393137e757b9ad74750b205291220045be8e29f0ca2ff07595f827b67778",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-3cc2c89b39f6104508917b303fc59de0b8bc926c0b92e22d8babd31384f44694",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "attribute"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 1
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"attribute\",\"formed_by\":\"stated\",\"proposition\":\"前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。\",\"supports\":[{\"evidence_id\":\"ee5f1fc0-0f13-4c7e-b515-a3f19577f5e3\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-3cc2c89b39f6104508917b303fc59de0b8bc926c0b92e22d8babd31384f44694\"}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 248,
+              "completion_tokens_details": {
+                "reasoning_tokens": 60
+              },
+              "prompt_tokens": 4558,
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              },
+              "total_tokens": 4806
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:9cc4112c6eb25a83ecd059e5d48ea25d:c607880cdb04cae9772c2118630dafbecb0d2cf1cc2e22460a55a546507ea936",
+            "cognitions": [
+              {
+                "action": "correct",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "prior_cognition_id": "cognition-3cc2c89b39f6104508917b303fc59de0b8bc926c0b92e22d8babd31384f44694",
+                "replacement_cognition_id": "cognition-8a99cb775e9e5cb64a403f2d68ba03617d57a586f64f184a051ab948217ad464",
+                "statement_kind": "attribute"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 2
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "今天给阳台盆栽浇水，该量多少？"
+          ],
+          "modelResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "worldResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "闻舟是教我陶艺的老师，他会带我练拉坯。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"relationship\",\"formed_by\":\"stated\",\"proposition\":\"闻舟是教我陶艺的老师，他会带我练拉坯。\",\"supports\":[{\"evidence_id\":\"dc046ea0-40ce-4c60-acaf-7fbfaa82d43b\",\"sentence_id\":\"t0\"}],\"target_entity\":{\"canonical_name\":\"闻舟\",\"kind\":\"person\"},\"relation_type\":\"pottery_teacher\"}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 161,
+              "completion_tokens_details": {
+                "reasoning_tokens": 39
+              },
+              "prompt_tokens": 4519,
+              "prompt_tokens_details": {
+                "cached_tokens": 4096
+              },
+              "total_tokens": 4680
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:91b74b7ad68a093bbb9adbc142b77f75:cd1e23667088332b2222a475962af0ccd0233026d428a3e49b3fef01bf4660db",
+            "cognitions": [
+              {
+                "action": "form",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "relation_type": "pottery_teacher",
+                "relationship_id": "relationship-0a75e5fcad4aa421d563cb2eb3383c8b249453f1f6e597190ba7135e7ff6f65b",
+                "source_entity_id": "entity-2fe17b34d39f0a896da4ada97f3e954dc8ba7ae29d8cd625daaa549d2462d73a",
+                "statement_kind": "relationship",
+                "target_entity_id": "entity-eb7255d1d8af346cba860d60a0c21e5406dbf6645a184bf44839abea7138d185"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 3
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "我想给闻舟发个消息，帮我写一句自然的问候。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 49,
+              "completion_tokens_details": {
+                "reasoning_tokens": 36
+              },
+              "prompt_tokens": 4874,
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              },
+              "total_tokens": 4923
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。\",\"supports\":[{\"evidence_id\":\"246cd6de-e593-4350-bf54-e2c8c202d848\",\"sentence_id\":\"t0\"}],\"entity\":{\"canonical_name\":\"挑音乐\",\"kind\":\"topic\",\"aliases\":[\"选音乐\",\"挑歌\"]}}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 283,
+              "completion_tokens_details": {
+                "reasoning_tokens": 152
+              },
+              "prompt_tokens": 4909,
+              "prompt_tokens_details": {
+                "cached_tokens": 4672
+              },
+              "total_tokens": 5192
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:4f801d31e5b6fa1bf7667b037ed3dc33:ad21f5cc90a367b09779f5a51e80a718af8025e4f5da3cba9affeb57d835652b",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-d1b6501ce26b1a6555b8e7fac66d40de4ede2be1d16408aec933517c2f679735",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 4
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "给我推荐一首适合放松的音乐。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 41,
+              "completion_tokens_details": {
+                "reasoning_tokens": 28
+              },
+              "prompt_tokens": 5009,
+              "prompt_tokens_details": {
+                "cached_tokens": 4224
+              },
+              "total_tokens": 5050
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "我的手持对讲机集合频道固定在7频道，每次出队都用这个。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"attribute\",\"formed_by\":\"stated\",\"proposition\":\"我的手持对讲机集合频道固定在7频道，每次出队都用这个。\",\"supports\":[{\"evidence_id\":\"e440285a-96a7-45ce-9217-2d87c40ea3a6\",\"sentence_id\":\"t0\"}],\"entity\":{\"canonical_name\":\"手持对讲机\",\"kind\":\"topic\",\"aliases\":[\"对讲机\"]}}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 226,
+              "completion_tokens_details": {
+                "reasoning_tokens": 94
+              },
+              "prompt_tokens": 5059,
+              "prompt_tokens_details": {
+                "cached_tokens": 4864
+              },
+              "total_tokens": 5285
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:4187a6c34323a3082fa84f97f9aa40e9:de1d92fb4f55f2780a0d7ca84c90a7f469d1753327b291bb2e667da7e8a39495",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-a939b29e386957c9ce9e7aaad4b674b2f9d3a3f3f7a6c2d713b16695def2fb3d",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "attribute"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 5
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "改一下，是12频道才对，先前的7频道不再使用，往后照新的。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"correct\",\"target\":\"owner_self\",\"statement_kind\":\"attribute\",\"formed_by\":\"stated\",\"proposition\":\"改一下，是12频道才对，先前的7频道不再使用，往后照新的。\",\"supports\":[{\"evidence_id\":\"a3965961-1270-4276-9ea5-fe18af2dfc07\",\"sentence_id\":\"t0\"}],\"corrects_cognition_id\":\"cognition-a939b29e386957c9ce9e7aaad4b674b2f9d3a3f3f7a6c2d713b16695def2fb3d\",\"entity\":{\"canonical_name\":\"频道\",\"kind\":\"topic\",\"aliases\":[\"对讲机频道\"]}}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 910,
+              "completion_tokens_details": {
+                "reasoning_tokens": 715
+              },
+              "prompt_tokens": 5260,
+              "prompt_tokens_details": {
+                "cached_tokens": 4352
+              },
+              "total_tokens": 6170
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:af892b73ce719b57fb516db79eda9481:59e223f88d3b686de3563e378e2d73ee02f31da6ed04eda469a2f19282d65c13",
+            "cognitions": [
+              {
+                "action": "correct",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "prior_cognition_id": "cognition-a939b29e386957c9ce9e7aaad4b674b2f9d3a3f3f7a6c2d713b16695def2fb3d",
+                "replacement_cognition_id": "cognition-8b8e2b482fc03de0dc169bab26a11291e12693a0abaa9c22230db7ba8e724c4c",
+                "statement_kind": "attribute"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 6
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "下次出队，我的手持对讲机要调到哪个频道？"
+          ],
+          "modelResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "worldResult": {
+            "reason": "pure_inquiry_no_declarative_facts",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "许澄跟我搭档练攀岩，我们互相做保护，他总是帮我检查安全结。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"relationship\",\"formed_by\":\"stated\",\"proposition\":\"许澄跟我搭档练攀岩，我们互相做保护，他总是帮我检查安全结。\",\"supports\":[{\"evidence_id\":\"3de1191c-1315-4b4f-abad-35750d2e444f\",\"sentence_id\":\"t0\"}],\"target_entity\":{\"canonical_name\":\"许澄\",\"kind\":\"person\"},\"relation_type\":\"climbing_partner\"}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 673,
+              "completion_tokens_details": {
+                "reasoning_tokens": 543
+              },
+              "prompt_tokens": 5346,
+              "prompt_tokens_details": {
+                "cached_tokens": 4224
+              },
+              "total_tokens": 6019
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:89ab716350b89762aafad080e4ded746:acdd15811edaa8be26e6e61b5f10d8429a005455b7afec66196af8a07dc93a0d",
+            "cognitions": [
+              {
+                "action": "form",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "relation_type": "climbing_partner",
+                "relationship_id": "relationship-696e7b0fc89b4de95d3ec632baa053fbda732edc07ad5b3778a2029716baacce",
+                "source_entity_id": "entity-2fe17b34d39f0a896da4ada97f3e954dc8ba7ae29d8cd625daaa549d2462d73a",
+                "statement_kind": "relationship",
+                "target_entity_id": "entity-f275344b0b7127ac416765d2b57ff6bf6667444caa3fdc01faa1ed9253b8e46b"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 7
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "给许澄写一句周末见面时的开场白。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 53,
+              "completion_tokens_details": {
+                "reasoning_tokens": 39
+              },
+              "prompt_tokens": 5567,
+              "prompt_tokens_details": {
+                "cached_tokens": 4352
+              },
+              "total_tokens": 5620
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        },
+        {
+          "state": "applied",
+          "source": [
+            "选住宿我有一条长期要求：房间别放香薰，我只接受无香的环境。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"cognitions\",\"cognitions\":[{\"action\":\"form\",\"target\":\"owner_self\",\"statement_kind\":\"preference\",\"formed_by\":\"stated\",\"proposition\":\"选住宿我有一条长期要求：房间别放香薰，我只接受无香的环境。\",\"supports\":[{\"evidence_id\":\"c36b1b42-867e-49a2-b31c-4031f872e35c\",\"sentence_id\":\"t0\"}],\"entity\":{\"canonical_name\":\"选住宿\",\"kind\":\"topic\",\"aliases\":[\"订酒店\",\"挑住宿\"]}}]}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 289,
+              "completion_tokens_details": {
+                "reasoning_tokens": 153
+              },
+              "prompt_tokens": 5621,
+              "prompt_tokens_details": {
+                "cached_tokens": 4352
+              },
+              "total_tokens": 5910
+            }
+          },
+          "worldResult": {
+            "boundary_event_id": "weftmate-turn-boundary-v1:9e69356253ee52478c76b6ce897ae124:3a5fc78b1c0da5687f51712574ee175a3cd0d73251d49a6c0312c24cbea811c0",
+            "cognitions": [
+              {
+                "action": "form",
+                "cognition_id": "cognition-069d03421657384d2e989d89608bacb2ef53e7fd4e2123461d4778cfbf66612b",
+                "confidence": 600,
+                "cred_status": "limited",
+                "evidence_count": 1,
+                "formed_by": "stated",
+                "statement_kind": "preference"
+              }
+            ],
+            "schema_version": 8,
+            "state": "applied",
+            "world_revision": 8
+          },
+          "lastError": null
+        },
+        {
+          "state": "no_change",
+          "source": [
+            "替我写一句订房时给前台的备注。"
+          ],
+          "modelResult": {
+            "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+            "finish_reason": "stop",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 41,
+              "completion_tokens_details": {
+                "reasoning_tokens": 28
+              },
+              "prompt_tokens": 5742,
+              "prompt_tokens_details": {
+                "cached_tokens": 4224
+              },
+              "total_tokens": 5783
+            }
+          },
+          "worldResult": {
+            "reason": "model_no_change",
+            "schema_version": 1,
+            "state": "no_change"
+          },
+          "lastError": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 238,
+          "matches": 0,
+          "skippedLinks": 511
+        }
+      },
+      "clarifications": [],
+      "mimoUsage": {
+        "startedRequests": 47,
+        "usageRequests": 47,
+        "missingUsageRequests": 0,
+        "inputTokens": 219120,
+        "cachedInputTokens": 164480,
+        "outputTokens": 6438,
+        "knownCostCny": 0.0708056
+      }
+    }
+  ],
+  "summary": {
+    "groups": {
+      "development-A": {
+        "passed": 6,
+        "total": 6,
+        "semanticPassed": 6,
+        "semanticTotal": 6,
+        "semanticErrors": 0
+      },
+      "development-B": {
+        "passed": 4,
+        "total": 6,
+        "semanticPassed": 4,
+        "semanticTotal": 6,
+        "semanticErrors": 0
+      }
+    },
+    "cases": {
+      "development-matrix-memory-1x-correction": {
+        "passed": 2,
+        "total": 2,
+        "runs": [
+          {
+            "label": "development-mimo-1",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          },
+          {
+            "label": "development-mimo-2",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          }
+        ]
+      },
+      "development-matrix-memory-1x-person": {
+        "passed": 2,
+        "total": 2,
+        "runs": [
+          {
+            "label": "development-mimo-1",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          },
+          {
+            "label": "development-mimo-2",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          }
+        ]
+      },
+      "development-matrix-memory-1x-preference": {
+        "passed": 2,
+        "total": 2,
+        "runs": [
+          {
+            "label": "development-mimo-1",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          },
+          {
+            "label": "development-mimo-2",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          }
+        ]
+      },
+      "development-matrix-memory-2x-correction": {
+        "passed": 2,
+        "total": 2,
+        "runs": [
+          {
+            "label": "development-mimo-1",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          },
+          {
+            "label": "development-mimo-2",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          }
+        ]
+      },
+      "development-matrix-memory-2x-person": {
+        "passed": 2,
+        "total": 2,
+        "runs": [
+          {
+            "label": "development-mimo-1",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          },
+          {
+            "label": "development-mimo-2",
+            "status": "passed",
+            "reason": null,
+            "semantic": "passed"
+          }
+        ]
+      },
+      "development-matrix-memory-2x-preference": {
+        "passed": 0,
+        "total": 2,
+        "runs": [
+          {
+            "label": "development-mimo-1",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+            "semantic": "failed"
+          },
+          {
+            "label": "development-mimo-2",
+            "status": "failed",
+            "reason": "reply_matches did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+            "semantic": "failed"
+          }
+        ]
+      }
+    },
+    "clarificationRates": {
+      "development": {
+        "scenarios": 12,
+        "firstTurnQuestionScenarios": 0,
+        "anyQuestionScenarios": 0
+      }
+    }
+  }
+}
