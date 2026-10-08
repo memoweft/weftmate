@@ -92,5 +92,7 @@ export function projectCompletion(value) {
     ...(Number.isSafeInteger(value.usage.prompt_tokens) ? { prompt_tokens: value.usage.prompt_tokens } : {}),
     ...(Number.isSafeInteger(value.usage.completion_tokens) ? { completion_tokens: value.usage.completion_tokens } : {}),
     ...(Number.isSafeInteger(value.usage.total_tokens) ? { total_tokens: value.usage.total_tokens } : {}),
+    ...(Number.isSafeInteger(value.usage.prompt_tokens_details?.cached_tokens) ? {
+      prompt_tokens_details: { cached_tokens: value.usage.prompt_tokens_details.cached_tokens } } : {}),
   } } : {}) };
 }

@@ -375,6 +375,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
   const tasks: Array<[string, string]> = [
     [join(here, 'model-budget.mjs'), join(dir, 'model-budget.mjs')],
     [join(here, 'model-scheduler-client.mjs'), join(dir, 'model-scheduler-client.mjs')],
+    [join(here, 'personal-access', 'usage-native.mjs'), join(dir, 'personal-access', 'usage-native.mjs')],
     [join(PLUGINS_DIR, 'weftmate-model-budget.mjs'), join(dir, 'plugins', 'weftmate-model-budget.mjs')],
     [join(PLUGINS_DIR, 'weftmate-compaction.mjs'), join(dir, 'plugins', 'weftmate-compaction.mjs')],
     [join(PLUGINS_DIR, 'weftmate-background-title.mjs'), join(dir, 'plugins', 'weftmate-background-title.mjs')],

@@ -9,6 +9,7 @@
 | `commands.mjs`、`tasks.mjs` | 命令调度、任务状态、停止与执行回执 |
 | `approvals.mjs`、`user-questions.mjs` | 工具审批、用户提问及回答交付 |
 | `workspaces.mjs`、`artifacts.mjs` | 项目/浏览器来源、工具入口与成果保存 |
+| `usage.mjs`、`usage-response.mjs`、`usage-native.mjs` | 数字用量账本、价格快照、月度上限与原生 / 兼容响应接线 |
 | `account-models.mjs` | 账户模型可见性、配置操作与恢复 |
 | `http.mjs`、`memory-http.mjs` | 请求分发与记忆代理 |
 | `store.mjs` | 持久化、格式验证与旧格式迁移 |

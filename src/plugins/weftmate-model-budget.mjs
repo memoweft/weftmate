@@ -3,6 +3,7 @@ import { Config, apply as applyPiAi } from '@deepseek-ai/dsh-llm-pi-ai';
 import { LlmError, CONTEXT_WINDOW_EXCEEDED_CODE } from '@deepseek-ai/dsh-llm';
 import { readModelCapacity, modelCapacityFor, outputBudget, messagesForModelInput } from '../model-budget.mjs';
 import { acquireModelSlot, isBackgroundPurpose } from '../model-scheduler-client.mjs';
+import { meteredNativeStream, usageSessionId } from '../personal-access/usage-native.mjs';
 
 export { Config };
 export const name = 'llm-pi-ai';
@@ -91,8 +92,9 @@ export function apply(ctx, config) {
         if (operation === 'stream') return async function* (options) {
           const background = isBackgroundPurpose(options.purpose);
           const scheduler = process.env.WEFTMATE_MODEL_SCHEDULER_URL;
+          const billingSessionId = usageSessionId(options.sessionId, ctx.get('sessions'));
           if (background && scheduler) {
-            const query = new URLSearchParams({ sessionId: options.sessionId ?? '',
+            const query = new URLSearchParams({ sessionId: billingSessionId ?? '',
               profileId: options.provider, model: options.model });
             const response = await fetch(`${scheduler}/route?${query}`, { signal: options.signal });
             if (!response.ok) throw new Error('BACKGROUND_MODEL_UNAVAILABLE');
@@ -105,7 +107,7 @@ export function apply(ctx, config) {
           options = { ...options, messages: messagesForModelInput(options.messages, modelInfo.inputModalities) };
           const row = rawSource().providers?.[options.provider];
           const entry = row?.models?.find(item => item.id === options.model);
-          if (!compatible(row) || !entry) { yield* target.stream(options); return; }
+          if (!compatible(row) || !entry) { yield* meteredNativeStream(options, value => target.stream(value), scheduler, billingSessionId); return; }
           const limits = await capacity(options.provider, row, entry);
           let inputTokens = options.messages.reduce((sum, message) => sum + ctx.tokenMeter.estimateMessage(message), 0) +
             (options.system ? Math.ceil(options.system.length / 4) + 4 : 0) +
@@ -139,7 +141,7 @@ export function apply(ctx, config) {
             throw new LlmError('Context has no useful output reserve; compact before continuing',
               CONTEXT_WINDOW_EXCEEDED_CODE);
           }
-          yield* target.stream({ ...options, maxTokens });
+          yield* meteredNativeStream({ ...options, maxTokens }, value => target.stream(value), scheduler, billingSessionId);
           } finally { await release(); }
         };
         const value = Reflect.get(target, operation);

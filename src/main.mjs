@@ -1640,7 +1640,7 @@ async function bootstrap() {
     const selected = profiles.find((profile) => profile.id === (backgroundProfileId ?? boundProfileId));
     if (!selected || !personalAccessService.canUseModelProfile(ownerId, selected.id, 'new')) return null;
     const key = credentialForModelProfile(selected);
-    return key ? { profileId: selected.id, baseUrl: modelScheduler.memoryBaseUrl(selected.id),
+    return key ? { profileId: selected.id, baseUrl: modelScheduler.memoryBaseUrl(selected.id, ownerId, sessionId),
       model: selected.model, modelTier: memoryRecallModelTier(selected),
       routeFingerprint: personalAccessService.privateAccountModelProof(ownerId, selected.id)?.routeFingerprint ?? null,
       credential: key } : null;
@@ -1649,6 +1649,9 @@ async function bootstrap() {
   const localModelController = localModelFlag
     ? createLocalModelController(localModelFlag.slice('--local-model-config='.length)) : null;
   modelScheduler = await createModelScheduler({
+    beginUsage: input => input.sessionId && !personalAccessService?.ownerForSession(input.sessionId)
+      ? null : personalAccessService?.beginUsage(input),
+    finishUsage: input => personalAccessService?.finishUsage(input),
     isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
       (await webRuntime?.personalModelQueueIdle?.(true))?.idle === true,
     profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||

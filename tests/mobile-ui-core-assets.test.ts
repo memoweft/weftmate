@@ -89,13 +89,16 @@ test('publish command refuses stale generated assets before creating a release',
   const copiedSources = path.join(isolatedRepository, 'src', 'ui-core')
   await cp(sourceDir, copiedSources, { recursive: true })
   for (const name of ['src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
-    'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs']) {
+    'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/usage.css']) {
     const destination = path.join(isolatedRepository, name)
     await mkdir(path.dirname(destination), { recursive: true })
     await copyFile(path.join(repository, name), destination)
   }
   const wwwDir = path.join(isolatedRepository, 'apps', 'mobile-ui', 'www')
   const targetDir = path.join(wwwDir, 'ui-core')
+  await mkdir(path.join(wwwDir, 'components'), { recursive: true })
+  await copyFile(path.join(repository, 'src/personal-access-ui/components/usage.js'), path.join(wwwDir, 'components/usage-view.js'))
+  await copyFile(path.join(repository, 'src/personal-access-ui/usage.css'), path.join(wwwDir, 'usage.css'))
   await buildUiCoreAssets({ sourceDir: copiedSources, targetDir })
   await writeFile(path.join(wwwDir, 'index.html'), '<!doctype html><title>Synthetic mobile UI</title>')
   await writeFile(path.join(targetDir, uiCoreAssets[0]), '// stale generated copy\n')
