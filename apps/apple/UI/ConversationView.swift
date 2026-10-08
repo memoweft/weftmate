@@ -65,11 +65,18 @@ struct ConversationRow: View {
 struct ConversationView: View {
     @ObservedObject var model: AppleAppModel
     let conversation: ConversationSummary
+    @StateObject private var resources: ConversationResourcesModel
+    init(model: AppleAppModel, conversation: ConversationSummary) {
+        self.model = model; self.conversation = conversation
+        _resources = StateObject(wrappedValue: ConversationResourcesModel(app: model,
+            sessionID: conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? ""))
+    }
     @Environment(\.scenePhase) private var scenePhase
     @FocusState private var draftFocused: Bool
     @State private var visibleMessageID: String?
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
+    @State private var resourcePopover = false
     @State private var importingAttachments = false
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var pendingAdoptionProfile: String?
@@ -95,6 +102,7 @@ struct ConversationView: View {
         HStack(spacing: 0) {
             conversationContent
             #if os(macOS)
+            if resources.visible { ConversationResourcesPanel(app: model, resources: resources) }
             if showingPreview { Divider(); attachmentPreview.frame(minWidth: 320, idealWidth: 400, maxWidth: 480) }
             #endif
         }
@@ -131,9 +139,11 @@ struct ConversationView: View {
         }
         #if os(iOS)
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
+        .fullScreenCover(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources) }
         #endif
-        .onChange(of: model.accountEpoch) { _, _ in closePreview(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
-        .onChange(of: conversation.id) { _, _ in closePreview(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: model.accountEpoch) { _, _ in closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: conversation.id) { _, _ in closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: resources.selected) { _, _ in resourcePopover = false }
         .onDisappear { closePreview() }
     }
 
@@ -170,25 +180,9 @@ struct ConversationView: View {
     }
 
     private func openArtifact(_ event: TimelineEvent) {
-        closePreview(); showingPreview = true; previewBusy = true
-        let epoch = model.accountEpoch
-        previewWorker = Task {
-            guard let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: epoch),
-                  let artifact = event.data["artifactId"]?.string else { previewError = "成果引用尚未核对。"; previewBusy = false; return }
-            let folder = FileManager.default.temporaryDirectory.appendingPathComponent("weftmate-preview-" + UUID().uuidString)
-            do {
-                let value = try await model.assistantClient.timelineArtifactBytes(sessionID: sessionID, artifactID: artifact)
-                guard !Task.isCancelled, model.accountEpoch == epoch else { return }
-                try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
-                let file = folder.appendingPathComponent(value.artifact.fileName ?? "成果.txt")
-                try value.data.write(to: file)
-                artifactPreviewName = value.artifact.fileName; artifactPreviewType = event.data["contentType"]?.string ?? "text/plain"
-                previewDirectory = folder; previewFile = file; previewBusy = false
-            } catch {
-                try? FileManager.default.removeItem(at: folder)
-                if !Task.isCancelled, model.accountEpoch == epoch { previewError = "成果未下载，请关闭后重试。"; previewBusy = false }
-            }
-        }
+        guard let id = event.data["artifactId"]?.string else { return }
+        endDraftFocus(); closePreview()
+        resources.open(.output(id, event.data["fileName"]?.string ?? "成果"))
     }
 
     private var conversationContent: some View {
@@ -224,7 +218,9 @@ struct ConversationView: View {
                             .frame(minHeight: 240)
                     }
                     if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
-                        ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, openAttachment: openAttachment, openArtifact: openArtifact)
+                        ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, openAttachment: openAttachment, openArtifact: openArtifact, openMemory: { event in
+                            endDraftFocus(); closePreview(); resources.open(.memory(event.seq, UsedMemory.references(in: event)))
+                        }, openSources: { resources.visible = true; resources.showingList = true })
                             .id(sessionID + model.accountEpoch.uuidString)
                     } else {
                         ForEach(model.messages) { message in
@@ -260,6 +256,23 @@ struct ConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button("输出与来源") {
+                    endDraftFocus()
+                        #if os(iOS)
+                        resources.showingList = true; resources.visible = true
+                        #else
+                        resourcePopover = true
+                        #endif
+                    }
+                    .accessibilityIdentifier("openConversationResources")
+                    #if os(macOS)
+                    .popover(isPresented: $resourcePopover) {
+                        ConversationResourceList(resources: resources,
+                            memories: model.timeline.events.filter { !UsedMemory.references(in: $0).isEmpty }, onOpen: { resourcePopover = false })
+                    }
+                    #endif
+            }
             #if os(iOS)
             ToolbarItem(placement: .primaryAction) {
                 PhoneAccountMenu(model: model)
