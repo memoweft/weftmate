@@ -18,7 +18,7 @@ Windows 可运行 `node tests/integration/personal-scenario-baseline.mjs`（Qwen
 
 M1-3 长任务单独运行 `node tests/integration/personal-long-task.mjs`（Qwen）与 `node tests/integration/personal-long-task.mjs --mimo`（MiMo）。入口启动真实 Electron（桌面程序框架）和固定 DSH，读取用户环境 `MODEL_SWITCH_UNIFIED_KEY` / 系统环境 `MIMO_API_KEY`，只在内存配置模型；使用随机端口和系统临时目录，不连接记忆或读取日用保险库。`--regression` 跑原有六条办事场景，目标、时限与检查保持原样。
 
-长任务的文件检查走既有 runner（评测器）；入口额外记录 native events（原生事件）来验证真实上下文、15 步以上、成功压缩、目标与待办保留，以及源文件未被改写。Qwen 必须以实际 98,304 上下文触发压缩后完成；MiMo 按自身容量对照。`long-task-verification.json` 与模型用量位于当次打印的隔离目录；退出删除测试凭据并扫描模型密钥，产物不进 Git。
+长任务的文件检查走既有 runner（评测器）；入口额外记录 native events（原生事件）来验证真实上下文、15 步以上、成功压缩、目标与待办保留，以及源文件未被改写。Qwen 必须以实际 98,304 上下文触发压缩后完成；MiMo 按自身容量对照。共享本地入口允许原生首输出空闲等待30分钟；可加 `--reasoning-off` 用原生配置发送 `reasoning_effort: none`，结果须注明是否关闭推理，不改服务或上下文。`long-task-verification.json` 与模型用量位于当次打印的隔离目录；退出删除测试凭据并扫描模型密钥，产物不进 Git。
 
 **runner 必须与宿主在同一台机器运行**，因为测试文件由 runner 写进这台机器的系统临时目录，检查也读取这些临时文件。`--host` 是宿主的 origin，不带 `/personal/v1`。跨端场景需要真人拿手机验收，自动运行只列为「需人工」。
 
