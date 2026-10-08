@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 
-export async function createLanBaselineBridge({ baseUrl, key, fetchImpl = fetch }) {
+export async function createLanBaselineBridge({ baseUrl, key, contextWindow, fetchImpl = fetch }) {
   const destination = new URL(baseUrl.replace(/\/+$/, '') + '/');
   const token = randomUUID();
   let tail = Promise.resolve(), active = 0, maxActive = 0, closed = false;
@@ -20,6 +20,14 @@ export async function createLanBaselineBridge({ baseUrl, key, fetchImpl = fetch 
     try {
       if (request.headers.authorization !== `Bearer ${token}`) { response.writeHead(403).end(); return; }
       const path = new URL(request.url, 'http://127.0.0.1').pathname;
+      // A long-task acceptance run deliberately uses a smaller configured
+      // envelope than the server capacity, without changing the server itself.
+      if (contextWindow && (path.endsWith('/props') || path.endsWith('/models'))) {
+        response.writeHead(200, { 'content-type': 'application/json' });
+        response.end(JSON.stringify(path.endsWith('/props') ? { n_ctx: contextWindow, total_slots: 1 }
+          : { data: [{ id: 'local-quality', context_window: contextWindow }] }));
+        return;
+      }
       record.kind = path.endsWith('/chat/completions') ? 'inference' : 'metadata';
       requests.push(record);
       const parts = []; for await (const part of request) parts.push(part);

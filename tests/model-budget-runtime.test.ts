@@ -97,7 +97,7 @@ export function apply(ctx) {
     const origin = await runtime.start();
     assert.ok(metadataReads >= 1, 'metadata is read at startup before a model request');
     const remote = await readFile(join(home, '.agent-presets', 'personal-remote', 'agent.cordis.yml'), 'utf8');
-    assert.match(remote, /dsh-compaction-basic/);
+    assert.match(remote, /weftmate-compaction\.mjs/);
     assert.match(remote, /thresholdRatio: 0.85/);
     const session = await call(origin, '/sessions', { agentPreset: 'minimal' });
     await call(origin, `/sessions/${session.sessionId}/models`, { provider: 'budget-fixture', model: 'qwen' }, 'PUT');
