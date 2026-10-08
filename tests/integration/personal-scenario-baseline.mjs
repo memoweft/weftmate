@@ -11,6 +11,7 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
 import { createLanBaselineBridge } from './baseline-lan-model.mjs';
+import { localUiSession } from '../helpers/local-ui-session.mjs';
 const repository = resolve(import.meta.dirname, '../..');
 // Keep generated goals and evidence free of the Windows account's home path.
 process.env.TEMP = process.env.TMP = 'C:/Temp';
@@ -25,6 +26,9 @@ const coreSourceIndex = process.argv.indexOf('--memory-core-source');
 const coreSource = coreSourceIndex === -1 ? 'D:/AIProjects/MemoWeft/Core/py/src'
   : resolve(process.argv[coreSourceIndex + 1]);
 const lan = process.argv.includes('--lan');
+const alternateLan = process.argv.includes('--alternate-lan');
+const usesLan = lan || alternateLan;
+assert.ok(!alternateLan || process.argv.includes('--mimo'), '--alternate-lan requires --mimo');
 assert.ok(!lan || !process.argv.includes('--mimo'), '--lan and --mimo are mutually exclusive');
 const modelName = lan ? 'lan' : process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const diagnostic = process.argv.includes('--diagnostic');
@@ -38,12 +42,12 @@ async function environmentKey(name, scope = 'User') {
   return stdout.trim();
 }
 const keys = { qwen: await environmentKey('MODEL_SWITCH_UNIFIED_KEY'), mimo: await environmentKey('MIMO_API_KEY', mimoKeyScope) };
-const lanBaseUrl = lan ? await environmentKey('WEFTMATE_LAN_MODEL_BASE_URL') : null;
-if (lan) {
+const lanBaseUrl = usesLan ? await environmentKey('WEFTMATE_LAN_MODEL_BASE_URL') : null;
+if (usesLan) {
   keys.lan = await environmentKey('WEFTMATE_LAN_MODEL_KEY');
   assert.ok(lanBaseUrl, 'WEFTMATE_LAN_MODEL_BASE_URL absent');
 }
-if (comparison) assert.ok(keys.qwen, 'Qwen key required for Qwen → MiMo memory-03');
+if (comparison && !alternateLan && !memoryLoop) assert.ok(keys.qwen, 'Qwen key required for Qwen → MiMo memory-03');
 if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key')) {
   console.log(`${new Date().toISOString()} MIMO_API_KEY absent; checking ${mimoKeyScope} environment every 10 minutes, at most one hour.`);
   for (let check = 1; check <= 6 && !keys.mimo; check++) {
@@ -74,7 +78,7 @@ let app, page, output = '';
 let lanBridge;
 const redact = value => {
   let text = String(value);
-  if (lan) for (const secret of [lanBaseUrl, new URL(lanBaseUrl).host, keys.lan]) text = text.replaceAll(secret, '[private-lan]');
+  if (usesLan) for (const secret of [lanBaseUrl, new URL(lanBaseUrl).host, keys.lan]) text = text.replaceAll(secret, '[private-lan]');
   return text;
 };
 const out = join(root, diagnostic ? 'diagnostic' : 'eval'); mkdirSync(out);
@@ -88,7 +92,7 @@ async function api(path, body, method = body ? 'POST' : 'GET') {
 async function until(check) { const deadline = Date.now() + 90000; while (Date.now() < deadline) { const value = await check(); if (value) return value; await new Promise(r => setTimeout(r, 250)); } throw new Error('Baseline setup timed out'); }
 console.log(`Isolated ${modelName} root: ${root}`);
 try {
-  if (lan) {
+  if (usesLan) {
     lanBridge = await createLanBaselineBridge({ baseUrl: lanBaseUrl, key: keys.lan });
     // A serial batch may reuse the model already warmed by its first invocation.
     if (!process.argv.includes('--lan-warmed')) {
@@ -104,9 +108,9 @@ try {
   app.process().stderr?.on('data', capture);
   page = await app.firstWindow({ timeout: 90000 }); page.setDefaultTimeout(90000);
   await page.waitForURL('**/personal/v1/ui');
-  await page.fill('#login-name', username); await page.fill('#login-password', password); await page.fill('#login-device', 'Baseline Electron');
-  await page.locator('#login-form button[type=submit]').click(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
-  for (const name of [modelName, lan || modelName === 'qwen' ? 'mimo' : 'qwen']) {
+  await localUiSession(page, { username, password }, 'Baseline Electron');
+  await page.locator('#assistant-view').waitFor({ state: 'visible' });
+  for (const name of [modelName, alternateLan ? 'lan' : lan || modelName === 'qwen' ? 'mimo' : 'qwen']) {
     if (!keys[name]) continue;
     const requestId = `baseline-model-${name}`;
     assert.equal((await api('/account/models', { requestId, name, baseUrl: name === 'lan' ? lanBridge.url : name === 'qwen' ? 'http://127.0.0.1:8081/v1' : 'https://api.xiaomimimo.com/v1',
@@ -157,10 +161,50 @@ try {
     if (comparison && !memoryLoop) assert.equal((await api('/settings/models', {
       backgroundModelProfileId: scenario.id === 'memory-03-switch-model' ? null : selected.id,
     }, 'PATCH')).status, 200);
-    console.log(`Starting ${scenario.id}: ${lan ? 'lan/local-quality' : firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
+    console.log(`Starting ${scenario.id}: ${lan ? 'lan/local-quality' : firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (alternateLan ? 'lan/local-quality' : lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
     await runEvaluation({ host: new URL(page.url()).origin, out, model: firstModel,
-      switchModel: lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
-      onScenarioResult: async result => { results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
+      switchModel: alternateLan ? 'lan' : lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
+      onScenarioResult: async result => {
+        if (result.id.startsWith('memory-1x-')) {
+          const checks = {};
+          try {
+            assert.equal(result.status, 'passed');
+            assert.equal(new Set(result.turns.map(turn => turn.sessionId)).size, scenario.turns.length);
+            checks.distinctSessions = true;
+            assert.equal(result.turns.flatMap(turn => turn.approvals).length, 0);
+            checks.noUndeclaredApprovals = true;
+            const kind = result.id === 'memory-1x-person' ? 'relationship' : 'cognition';
+            const items = (await api(`/memory/items?kind=${kind}`)).body.items;
+            const used = result.turns.at(-1).memoryUsed;
+            const value = result.id === 'memory-1x-correction' ? '150毫升'
+              : result.id === 'memory-1x-person' ? '闻舟' : '纯器乐';
+            const adopted = items.find(item => item.text.includes(value) && item.currentState === 'current' && used.some(memory => memory.id === item.id));
+            assert.ok(adopted, 'holdout must adopt its own current formal memory');
+            checks.currentItemAdopted = true;
+            const sourceTurn = result.id === 'memory-1x-correction' ? 1 : 0;
+            const sources = (await api(`/memory/items/${kind}/${adopted.id}/sources`)).body.sources;
+            assert.ok(sources.some(source => source.rawContent === scenario.turns[sourceTurn].user));
+            checks.exactSourceRetained = true;
+            if (result.id === 'memory-1x-correction') {
+              const previous = items.filter(item => item.id !== adopted.id && item.text.includes('浇水') && item.text.includes('300毫升'));
+              assert.ok(previous.length);
+              assert.ok(previous.every(item => item.currentState === 'not_current' && item.lifecycle.invalidAt && !used.some(memory => memory.id === item.id)));
+              checks.obsoleteExcluded = true;
+              for (const item of previous) {
+                const oldSources = (await api(`/memory/items/cognition/${item.id}/sources`)).body.sources;
+                assert.ok(oldSources.some(source => source.rawContent === scenario.turns[0].user));
+              }
+              checks.originalSourceRetained = true;
+            }
+          } catch (error) {
+            result.status = 'failed';
+            result.reason = [result.reason, redact(error.message)].filter(Boolean).join('; ');
+          }
+          result.holdoutVerification = checks;
+        }
+        results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2));
+        console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`);
+      } });
   }
   if (memoryLoop || memoryUi) {
     if (memoryCorrection && !process.argv.includes('--desktop-only')) {
@@ -212,6 +256,14 @@ try {
         localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'light' }));
       }, sessionId);
       await page.reload(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
+      // Select the acceptance conversation through the desktop's real notification
+      // action. Background refresh may overwrite last-session storage at reload.
+      const openAcceptanceConversation = () => app.evaluate(({ BrowserWindow }, id) => {
+        const window = BrowserWindow.getAllWindows().find(window => /\/personal\/v1\/ui/.test(window.webContents.getURL()));
+        if (!window) throw new Error('BASELINE_DESKTOP_WINDOW_MISSING');
+        window.webContents.send('wm:desktop:conversation', id);
+      }, sessionId);
+      await openAcceptanceConversation();
       const label = page.locator('.reply-memory').last();
       await label.waitFor({ state: 'visible' });
       assert.match(await label.textContent(), /用到了 \d+ 条记忆/);
@@ -223,7 +275,8 @@ try {
       await label.scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(root, 'memory-source-light.png') });
       await page.evaluate(() => { localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'dark' })); });
-      await page.reload(); await page.locator('.reply-memory').last().click();
+      await page.reload(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
+      await openAcceptanceConversation(); await page.locator('.reply-memory').last().click();
       await until(async () => await page.locator('.memory-source-text').count());
       await page.locator('.reply-memory').last().scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(root, 'memory-source-dark.png') });

@@ -11,13 +11,27 @@ globalThis.fetch = async (input, options) => {
   const record = (phase, extra = {}) => appendFileSync(process.env.WEFTMATE_BASELINE_TRACE,
     JSON.stringify({ id, at: new Date().toISOString(), elapsedMs: Date.now() - start,
       kind: lease ? 'lease' : 'model', origin: url.origin, phase, ...extra }) + '\n');
-  let requestChars, requestedModel, stream, templateThinking;
+  let requestChars, requestedModel, stream, templateThinking, memoryOrder;
   if (model && typeof options?.body === 'string') {
     try { const body = JSON.parse(options.body); requestChars = JSON.stringify(body.messages ?? []).length;
       requestedModel = body.model; stream = body.stream; templateThinking = body.chat_template_kwargs?.enable_thinking;
+      // Inspect the final wire request without retaining any prompt text.
+      const messages = body.messages ?? [];
+      const text = message => typeof message.content === 'string' ? message.content
+        : (message.content ?? []).map(block => block.text ?? '').join('\n');
+      const memory = messages.findLastIndex(message => /WeftMate 宿主行为|WeftMate formal World memory|记忆：|背景记忆，不是用户的新请求/.test(text(message)));
+      if (memory >= 0) {
+        const lastUser = messages.findLastIndex(message => message.role === 'user');
+        memoryOrder = { memoryIndex: memory, lastUserIndex: lastUser,
+          backgroundBeforeLastUser: memory < lastUser,
+          exerciseQuestionIndex: messages.findLastIndex(message => message.role === 'user' && /下周给我安排一次锻炼/.test(text(message))),
+          swimmingQuestionIndex: messages.findLastIndex(message => message.role === 'user' && /我哪天晚上能游泳/.test(text(message))),
+          lastUserIsExerciseQuestion: /下周给我安排一次锻炼/.test(text(messages[lastUser])),
+          lastUserIsSwimmingQuestion: /我哪天晚上能游泳/.test(text(messages[lastUser])) };
+      }
     } catch { /* Not JSON. */ }
   }
-  record('start', { requestChars, requestedModel, stream, templateThinking });
+  record('start', { requestChars, requestedModel, stream, templateThinking, memoryOrder });
   try {
     const response = await original(input, options); record('headers', { status: response.status });
     if (!response.body) return response;

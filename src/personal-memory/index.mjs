@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { MemoWeftRpc } from './rpc.mjs';
+import { processingRouteIdentity } from './config.mjs';
 import { createMemoryCommandJournal } from './journal.mjs';
 import { createPersonalHealthStore, OBSERVED_PENDING } from '../personal-health/index.mjs';
 import { normalizeApiBaseUrl } from '../stage2-config.ts';
@@ -77,10 +78,12 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const normalizedBaseUrl = normalizeApiBaseUrl(selected.baseUrl);
     if (!normalizedBaseUrl) throw error('MEMORY_MODEL_UNAVAILABLE');
     const modelTier = modelTierFor(selected);
+    const identity = processingRouteIdentity(normalizedBaseUrl);
     return { profileId: selected.profileId, baseUrl: normalizedBaseUrl, model: selected.model,
       credential: selected.credential, routeFingerprint: selected.routeFingerprint,
       modelTier,
-      key: JSON.stringify([selected.profileId, normalizedBaseUrl, selected.model,
+      sessionScoped: identity.sessionScoped,
+      key: JSON.stringify([selected.profileId, identity.baseUrl, selected.model,
         selected.routeFingerprint, modelTier]) };
   }
 
@@ -276,7 +279,8 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     }
     const home = await privateHome(ownerId);
     const rpc = rpcFactory({ python, pythonPath,
-      env: { MEMOWEFT_BASE_URL: selected.baseUrl, MEMOWEFT_WORLD_MODEL: selected.model } });
+      env: { MEMOWEFT_BASE_URL: selected.baseUrl, MEMOWEFT_WORLD_MODEL: selected.model,
+        MEMOWEFT_DSH_SESSION_SCOPE: selected.sessionScoped ? '1' : '0' } });
     const entry = { rpc, ready: false, active: 0, lastUsed: Date.now(),
       capabilities: null, routeReady: false, backlogCount: null, initializing: null,
       routeKey: selected.key, modelTier: selected.modelTier };
