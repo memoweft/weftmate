@@ -17,8 +17,9 @@ try {
   application = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository, args: ['scripts/review-gallery/electron.mjs', '--force-device-scale-factor=1', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-gpu'], env });
   await application.evaluate(({ app, ipcMain }) => {
     app.getLoginItemSettings = () => ({ openAtLogin: false }); app.setLoginItemSettings = () => {};
-    globalThis.ui4UpdateChecks = 0;
-    const state = () => ({layers:[{layer:'app',currentVersion:'0.1.0',status:'current'},{layer:'ui',currentVersion:'synthetic-ui',status:'current'},{layer:'mobile-ui',currentVersion:'synthetic-mobile',status:'current'}],canRestart:false});
+    globalThis.ui4UpdateChecks = 0; globalThis.ui4CanRestart = false;
+    const state = () => ({layers:[{layer:'app',currentVersion:'0.1.0',status:'current'},{layer:'ui',currentVersion:'synthetic-ui',status:'current'},{layer:'mobile-ui',currentVersion:'synthetic-mobile',status:'current'}],canRestart:globalThis.ui4CanRestart});
+    ipcMain.handle('wm:desktop:update-restart',()=>({restarted:false,reason:'合成任务运行中，请稍后重试。'}));
     ipcMain.handle('wm:desktop:update-state',state);ipcMain.handle('wm:desktop:update-check',()=>{globalThis.ui4UpdateChecks++;return state()});
   });
   const page = await application.firstWindow(); page.setDefaultTimeout(15000); page.on('pageerror', e => { errors.push(e.message); console.error(e.stack); });
@@ -72,6 +73,10 @@ try {
   checks.push('all desktop categories light/dark');
   await nav.getByRole('button',{name:'关于',exact:true}).click();await dialog.getByRole('button',{name:'检查更新',exact:true}).click();
   await application.evaluate(async()=>{while(!globalThis.ui4UpdateChecks)await new Promise(done=>setTimeout(done,10))});checks.push('About version state and existing update action');
+  await application.evaluate(()=>{globalThis.ui4CanRestart=true});await dialog.getByRole('button',{name:'检查更新',exact:true}).click();
+  const restart=dialog.getByRole('button',{name:'重启并更新',exact:true});await restart.click();
+  await dialog.getByRole('status').filter({hasText:'合成任务运行中，请稍后重试。'}).waitFor();assert.equal(await restart.isEnabled(),true);
+  await application.evaluate(()=>{globalThis.ui4CanRestart=false});checks.push('blocked update restart displays recovery and reenables control');
   await nav.getByRole('button',{name:'备份与恢复',exact:true}).click();
   await dialog.getByRole('spinbutton',{name:'最近保留天数',exact:true}).fill('14');await dialog.getByRole('button',{name:'保存备份设置',exact:true}).click();
   await page.waitForFunction(async()=>{const value=await(await fetch('/personal/v1/backups')).json();return value.settings.dailyDays===14;});

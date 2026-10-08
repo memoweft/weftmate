@@ -60,7 +60,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if(value) {target.replaceChildren();for(const layer of value.layers) target.append(globalThis.WeftSettingsControls.row(names[layer.layer] || '版本',
             `当前 ${layer.currentVersion || '版本未知'}${layer.availableVersion ? ` · 可用 ${layer.availableVersion}` : ''}`,node('span','settings-value',core.updateStatusText(layer))));}
         const actions=node('div','actions'), refresh=node('button','button secondary','检查更新');refresh.type='button';refresh.addEventListener('click',()=>{void renderSettingsUpdates(true)});actions.append(refresh);
-        if(value?.canRestart){const restart=node('button','button primary','重启并更新');restart.type='button';restart.addEventListener('click',async()=>{restart.disabled=true;try{await core.restartForUpdate()}catch{loading.textContent='更新未完成，请重新检查。';target.prepend(loading);restart.disabled=false}});actions.append(restart)}
+        if(value?.canRestart){const restart=node('button','button primary','重启并更新');restart.type='button';restart.addEventListener('click',async()=>{restart.disabled=true;try{const result=await core.restartForUpdate();if(!current())return;if(!result?.restarted){loading.textContent=result?.reason||'更新尚未就绪，请重新检查。';target.prepend(loading);restart.disabled=false}}catch{if(current()){loading.textContent='更新未完成，请重新检查。';target.prepend(loading);restart.disabled=false}}});actions.append(restart)}
         target.append(actions);
     }
     function mountSettingsNavigation() {
