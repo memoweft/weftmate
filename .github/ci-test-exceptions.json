@@ -1,18 +1,5 @@
 {
-  "knownFailures": [
-    {
-      "file": "tests/personal-task-stop.test.ts",
-      "name": "stop freezes exact receipts, ignores same-text unrelated turns, and withdraws pending work",
-      "reason": "CI-2 reverified: passes on local Windows but fails on Linux/macOS in run 37744346966. A quick restart calls driveTaskStop once; tasks.mjs skips the persisted lastAttemptAt within 1 second, and index.mjs start does not schedule another attempt. Waiting longer without an authoritative GET cannot trigger a retry. Product recovery bug, not a fixture timeout.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/62"
-    },
-    {
-      "file": "tests/personal-shared-attachments.test.ts",
-      "name": "shared session raw upload, command refs, owner read and exact command retry",
-      "reason": "CI-2 reverified: passes on local Windows but fails on Linux/macOS in run 37744346966 with 404 instead of 202 at line 226. commands.mjs releases accepted image staging; http.mjs resolves staging before looking up the existing requestId, so an exact retry after release fails. Product idempotency bug, not an obsolete assertion.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/62"
-    }
-  ],
+  "knownFailures": [],
   "unavailableFiles": [
     {
       "file": "tests/harness-model-routes.test.ts",
