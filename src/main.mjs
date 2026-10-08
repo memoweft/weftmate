@@ -1759,6 +1759,10 @@ async function bootstrap() {
       writeHostState();
       return recalled;
     } : undefined,
+    personalScheduleHandler: personalHostMode ? async request => {
+      if (!personalAccessService || isQuitting) throw new Error('SCHEDULE_UNAVAILABLE');
+      return personalAccessService.handleScheduleRuntime(request);
+    } : undefined,
     personalConversationContextHandler: personalHostMode ? async (request) => {
       if (!personalAccessService || isQuitting || !runtimeOrigin) {
         throw Object.assign(new Error('unavailable'), { code: 'CONVERSATION_CONTEXT_UNAVAILABLE' });
@@ -1787,6 +1791,7 @@ async function bootstrap() {
     webRuntime = createWebRuntime();
     webRuntime.onOrigin = (origin) => {
       runtimeOrigin = origin;
+      if (origin) void personalAccessService?.restoreSchedules?.().catch(() => {});
       writeHostState();
       if (origin) {
         if (!personalHostMode) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));

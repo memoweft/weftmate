@@ -37,6 +37,7 @@ import { createHostCloudIdentity } from '../personal-cloud/index.mjs';
 import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
 import { createUsageStore } from './usage.mjs';
+import { createScheduleOperations } from './schedules.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -103,6 +104,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
     get usage() { return usage; },
+    get scheduleOperations() { return scheduleOperations; },
     get root() { return root; },
     get cloudIdentity() { return hostCloudIdentity; },
     get accountModelForProfile() { return accountModelForProfile; },
@@ -496,7 +498,13 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     }, assertCurrent);
   }
 
+  const scheduleOperations = createScheduleOperations(context);
   const service = {
+    handleScheduleRuntime: scheduleOperations.handleRuntime,
+    async restoreSchedules() {
+      const sessionIds = Object.values(rootState.accounts).flatMap(account => Object.entries(account.sessions).filter(([, row]) => row.origin === 'personal-remote').map(([id]) => id));
+      await backend.restoreSchedules?.(sessionIds);
+    },
     backgroundModelProfile(ownerId) {
       const selected = accountState(ownerId).backgroundModelProfileId ?? null;
       if (selected && !modelSelectable(ownerId, selected)) throw failure('MODEL_UNAVAILABLE', 503);
@@ -521,6 +529,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
       server = candidate;
       origin = `http://127.0.0.1:${candidate.address().port}`;
+      await service.restoreSchedules();
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {

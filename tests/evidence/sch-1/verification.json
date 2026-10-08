@@ -1,0 +1,113 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realMiMo": true,
+  "isolatedAccount": true,
+  "checks": [
+    "MiMo conversation creates native reminder; native system notification shown and durable conversation message",
+    "natural tomorrow 09:00 uses account zone; conversation cancellation deletes exact schedule",
+    "calendar recurrence executes through original conversation and creates registered file; next local occurrence exists",
+    "management uses visible names/roles: pause, resume, delete",
+    "real host shutdown crosses target; restart catches up with missed time; second restart does not duplicate"
+  ],
+  "screenshots": [
+    {
+      "name": "01-reminder.png",
+      "realElectron": true,
+      "nativeFrame": false
+    },
+    {
+      "name": "02-periodic-file.png",
+      "realElectron": true,
+      "nativeFrame": false
+    },
+    {
+      "name": "03-management.png",
+      "realElectron": true,
+      "nativeFrame": false
+    },
+    {
+      "name": "04-offline-catchup.png",
+      "realElectron": true,
+      "nativeFrame": false
+    }
+  ],
+  "usage": [
+    {
+      "inputTokens": 141,
+      "cachedInputTokens": 0,
+      "outputTokens": 42
+    },
+    {
+      "inputTokens": 9858,
+      "cachedInputTokens": 6144,
+      "outputTokens": 172
+    },
+    {
+      "inputTokens": 10343,
+      "cachedInputTokens": 9856,
+      "outputTokens": 117
+    },
+    {
+      "inputTokens": 10991,
+      "cachedInputTokens": 10304,
+      "outputTokens": 111
+    },
+    {
+      "inputTokens": 11372,
+      "cachedInputTokens": 10944,
+      "outputTokens": 109
+    },
+    {
+      "inputTokens": 11790,
+      "cachedInputTokens": 11328,
+      "outputTokens": 63
+    },
+    {
+      "inputTokens": 12364,
+      "cachedInputTokens": 11328,
+      "outputTokens": 30
+    },
+    {
+      "inputTokens": 12797,
+      "cachedInputTokens": 12352,
+      "outputTokens": 35
+    },
+    {
+      "inputTokens": 13071,
+      "cachedInputTokens": 12736,
+      "outputTokens": 30
+    },
+    {
+      "inputTokens": 13655,
+      "cachedInputTokens": 13056,
+      "outputTokens": 208
+    },
+    {
+      "inputTokens": 14209,
+      "cachedInputTokens": 13632,
+      "outputTokens": 106
+    },
+    {
+      "inputTokens": 14863,
+      "cachedInputTokens": 14208,
+      "outputTokens": 58
+    },
+    {
+      "inputTokens": 15648,
+      "cachedInputTokens": 14848,
+      "outputTokens": 60
+    },
+    {
+      "inputTokens": 16230,
+      "cachedInputTokens": 15616,
+      "outputTokens": 63
+    },
+    {
+      "inputTokens": 16610,
+      "cachedInputTokens": 16192,
+      "outputTokens": 77
+    }
+  ],
+  "cost": 0.01741088
+}
