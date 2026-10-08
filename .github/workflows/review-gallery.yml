@@ -1,0 +1,66 @@
+name: Review gallery
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/personal-access-ui/**'
+      - 'src/personal-desktop*'
+      - 'src/ui-core/**'
+      - 'apps/mobile-ui/**'
+      - 'apps/android/**'
+      - 'apps/apple/**'
+      - 'design/**'
+      - 'tests/evidence/**'
+      - 'scripts/review-gallery/**'
+      - 'tests/integration/review-capture-*.mjs'
+      - '.github/workflows/review-gallery.yml'
+  pull_request:
+    paths:
+      - 'scripts/review-gallery/**'
+      - 'tests/integration/review-capture-*.mjs'
+      - '.github/workflows/review-gallery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: review-gallery-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  gallery:
+    name: Synthetic multi-device review gallery
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Install capture engines
+        run: |
+          node node_modules/electron/install.js
+          npx playwright install chromium
+      - name: Capture isolated synthetic scenes
+        run: node scripts/review-gallery/capture.mjs --out .local/review-gallery
+      - name: Verify evidence selection and text scan
+        run: node --test tests/integration/review-capture-evidence.mjs
+      - name: Generate self-contained review page
+        run: node scripts/review-gallery/build.mjs --out .local/review-gallery
+      - name: Verify responsive page and public evidence
+        run: node tests/integration/review-capture-gallery.mjs --out .local/review-gallery
+      - uses: actions/upload-artifact@v4
+        with:
+          name: review-gallery-${{ github.sha }}
+          path: |
+            .local/review-gallery/index.html
+            .local/review-gallery/manifest.json
+            .local/review-gallery/verification.json
+          if-no-files-found: error
+          retention-days: 14
