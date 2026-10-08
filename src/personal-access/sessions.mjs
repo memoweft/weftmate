@@ -25,6 +25,19 @@ export function createSessionOperations(context) {
   function publicHistoryEvent(ownerId, sessionId, event) {
     if (!plainObject(event.data)) return event;
     const { messageHash, ...publicData } = event.data;
+    if (event.type.startsWith('task.')) {
+      const bind = data => {
+        const source = Object.values(context.accountState(ownerId).commands).find(command =>
+          command.kind === 'session.message' && command.sessionId === sessionId &&
+          command.receiptId === data.receiptId);
+        return source ? { ...data, taskId: source.rootTaskId ?? source.commandId,
+          commandId: source.commandId, requestId: source.requestId,
+          ...(event.type === 'task.queued' ? { text: source.payload.text } : {}),
+          ...(data.turn !== undefined ? { turnTaskId: `turn-${data.turn}` } : {}) } : data;
+      };
+      return { ...event, data: { ...bind(publicData),
+        ...(publicData.tasks ? { tasks: publicData.tasks.map(bind) } : {}) } };
+    }
     if (event.type !== 'user.message') return { ...event, data: publicData };
     if (typeof messageHash !== 'string' || !/^[a-f0-9]{64}$/.test(messageHash) ||
         typeof publicData.receiptId !== 'string') return { ...event, data: publicData };

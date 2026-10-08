@@ -44,7 +44,9 @@ test('public account shell keeps secrets out of markup and code-generated HTML',
   assert.doesNotMatch(html, /<script(?![^>]*src=)/i)
   assert.match(app, /(?:localStorage|environment\.storage)\.setItem\(key, JSON\.stringify\(rows\.slice/)
   assert.doesNotMatch(app, /sessionStorage|innerHTML|console\./)
-  assert.doesNotMatch(app, /(?:localStorage|environment\.storage)\.setItem\([^\n]*\b(?:password|token|text)\b/)
+  // Match secret/content identifiers, not the "text" suffix in markerKey(context).
+  assert.doesNotMatch(app, /(?:localStorage|environment\.storage)\.setItem\([^\n]*\b(?:password|csrfToken|setupGrant|apiKey|token|text)\b/)
+
   assert.match(app, /history\.replaceState/)
   assert.match(app, /textContent/)
 })

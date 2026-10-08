@@ -7,7 +7,10 @@ import { isIP } from 'node:net';
 import { sqliteAdapter } from './oidc-adapter.mjs';
 import { Accounts } from './accounts.mjs';
 import { loadKeys } from './keys.mjs';
-import { CloudError, digest, equalDigest } from './security.mjs';
+import { CloudError, digest, equalDigest, transaction } from './security.mjs';
+import { deviceProof } from './device-proof.mjs';
+import { appAuthorization } from './app-authorization.mjs';
+import { accountLifecycle } from './account-lifecycle.mjs';
 
 export const CLOUD_PATH = '/personal/v1/cloud';
 const OIDC_PATH = `${CLOUD_PATH}/oidc`;
@@ -98,19 +101,19 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       },
       long: {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: config.issuer.startsWith('https:') ? 'none' : 'lax',
         secure: config.issuer.startsWith('https:'),
         path: CLOUD_PATH,
       },
       short: {
         httpOnly: true,
-        sameSite: 'lax',
+        sameSite: config.issuer.startsWith('https:') ? 'none' : 'lax',
         secure: config.issuer.startsWith('https:'),
         path: CLOUD_PATH,
       },
     },
     pkce: { required: () => true },
-    extraParams: ['wm_device_id', 'wm_public_jwk'],
+    extraParams: ['wm_device_id', 'wm_public_jwk', 'wm_app'],
     interactions: {
       policy,
       url: (_ctx, interaction) => `${CLOUD_PATH}/interactions/${interaction.uid}`,
@@ -172,13 +175,15 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         throw new errors.InvalidGrant('grant revoked');
       const hostId = token.resourceServer?.audience?.startsWith(`${config.audience}/hosts/`)
         ? token.resourceServer.audience.slice(`${config.audience}/hosts/`.length) : null;
-      if (hostId) {
+      if (hostId || binding.app_login || token.jkt) {
         const device = database.prepare('SELECT public_jwk FROM cloud_devices WHERE account_id=? AND fingerprint=?')
           .get(account.id, binding.fingerprint);
-        if (!database.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(hostId, account.id) ||
+        if (hostId && !database.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?').get(hostId, account.id) ||
             !device?.public_jwk || !token.jkt || token.jkt !== await calculateJwkThumbprint(JSON.parse(device.public_jwk)))
           throw new errors.InvalidGrant('host or device not authorized');
       }
+      database.prepare('UPDATE cloud_devices SET last_seen=? WHERE account_id=? AND fingerprint=?')
+        .run(now(), account.id, binding.fingerprint);
       return {
         device_id: binding.device_id,
         device_fingerprint: binding.fingerprint,
@@ -207,15 +212,15 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     }
     return remote;
   }
-  async function authenticate(req) {
+  async function authenticate(req, requireDevice = false) {
     if (
       typeof req.headers.authorization !== 'string' ||
-      !req.headers.authorization.startsWith('Bearer ')
+      !/^(Bearer|DPoP) [A-Za-z0-9_.-]+$/.test(req.headers.authorization)
     )
       throw new CloudError(401, 'UNAUTHORIZED');
     let payload;
     try {
-      ({ payload } = await jwtVerify(req.headers.authorization.slice(7), jwks, {
+      ({ payload } = await jwtVerify(req.headers.authorization.split(' ')[1], jwks, {
         issuer: config.issuer,
         audience: config.audience,
         algorithms: ['RS256'],
@@ -234,6 +239,10 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         .get(account.id, payload.device_fingerprint)
     )
       throw new CloudError(401, 'UNAUTHORIZED');
+    if (requireDevice) await deviceProof(req, req.headers.authorization.split(' ')[1], payload, { database, config, now });
+    req.cloudToken = payload;
+    database.prepare('UPDATE cloud_devices SET last_seen=? WHERE account_id=? AND fingerprint=?')
+      .run(now(), account.id, payload.device_fingerprint);
     return account;
   }
   async function details(req, res, uid) {
@@ -262,7 +271,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   }
   async function complete(req, res, body, interaction, result) {
     const { account, device } = result;
-    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch)
+    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch || !database.prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?').get(account.id, device.fingerprint))
       throw new CloudError(401, 'UNAUTHORIZED');
     const grant = new provider.Grant({
       accountId: account.id,
@@ -281,13 +290,13 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       }
     }
     const grantId = await grant.save();
-    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch) {
+    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch || !database.prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?').get(account.id, device.fingerprint)) {
       await grant.destroy();
       throw new CloudError(401, 'UNAUTHORIZED');
     }
     database
-      .prepare('INSERT INTO grant_bindings VALUES(?,?,?,?,?)')
-      .run(grantId, account.id, device.fingerprint, device.deviceId, account.auth_epoch);
+      .prepare('INSERT INTO grant_bindings(grant_id,account_id,fingerprint,device_id,auth_epoch,app_login) VALUES(?,?,?,?,?,?)')
+      .run(grantId, account.id, device.fingerprint, device.deviceId, account.auth_epoch, interaction.params.wm_app === '1' ? 1 : 0);
     const resumeUrl = await provider.interactionResult(
       req,
       res,
@@ -313,11 +322,31 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/auth/password/reset`, 'reset'],
     [`${CLOUD_PATH}/auth/email/request`, 'emailRequest'],
     [`${CLOUD_PATH}/auth/email/confirm`, 'emailConfirm'],
+    [`${CLOUD_PATH}/auth/email/change/request`, 'appEmailRequest'],
+    [`${CLOUD_PATH}/auth/email/change/confirm`, 'appEmailConfirm'],
     [`${CLOUD_PATH}/account`, 'account'],
     [`${CLOUD_PATH}/auth/devices/revoke`, 'deviceRevoke'],
+    [`${CLOUD_PATH}/auth/registration/request`, 'appRegisterRequest'],
+    [`${CLOUD_PATH}/auth/registration/verify`, 'appRegisterVerify'],
+    [`${CLOUD_PATH}/auth/registration/complete`, 'appRegisterComplete'],
+    [`${CLOUD_PATH}/auth/recovery/request`, 'appResetRequest'],
+    [`${CLOUD_PATH}/auth/recovery/verify`, 'appResetVerify'],
+    [`${CLOUD_PATH}/auth/recovery/complete`, 'appResetComplete'],
+    [`${CLOUD_PATH}/auth/password/change`, 'passwordChange'],
+    [`${CLOUD_PATH}/auth/logout`, 'logout'],
+    [`${CLOUD_PATH}/auth/account/delete`, 'accountDelete'],
+    [`${CLOUD_PATH}/auth/logout/others`, 'logoutOthers'],
+    [`${CLOUD_PATH}/devices/rename`, 'deviceRename'],
+    [`${CLOUD_PATH}/devices`, 'devices'],
+    [`${CLOUD_PATH}/auth/authorization`, 'appAuthorize'],
+    [`${CLOUD_PATH}/auth/authorization/resume`, 'appResume'],
   ]);
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
-  const hosts = createHosts({ database, config, keys, authenticate, now, relay });
+  const lifecycle = accountLifecycle({ database, accounts, relay });
+  const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider });
+  const authorizeInApp = appAuthorization({ config });
+  const allowedOrigin = origin => origin === new URL(config.issuer).origin || config.clients
+    .some(c => c.redirect_uris.some(uri => new URL(uri).origin !== 'null' && new URL(uri).origin === origin));
   return {
     provider,
     relay,
@@ -334,6 +363,16 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       if (host !== new URL(config.issuer).host) {
         reply(res, 400, { error: { code: 'HOST_NOT_ALLOWED' } });
         return true;
+      }
+      if (req.headers.origin && allowedOrigin(req.headers.origin)) {
+        res.setHeader('access-control-allow-origin', req.headers.origin);
+        res.setHeader('access-control-allow-credentials', 'true');
+        res.setHeader('access-control-expose-headers', 'Location,DPoP-Nonce,Retry-After');
+        res.setHeader('vary', 'Origin');
+        if (req.method === 'OPTIONS') {
+          res.writeHead(204, { 'access-control-allow-methods': 'GET,POST,OPTIONS',
+            'access-control-allow-headers': 'Content-Type,Authorization,DPoP' }); res.end(); return true;
+        }
       }
       if (url.pathname.startsWith(`${OIDC_PATH}/`)) {
         // A non-loopback caller must not inject proxy headers into Koa.
@@ -352,11 +391,11 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       const hostRoute = url.pathname.startsWith(`${CLOUD_PATH}/hosts/`);
       if (!route && !match && !hostRoute) return false;
       try {
-        if (req.headers.origin && req.headers.origin !== new URL(config.issuer).origin)
+        if (req.headers.origin && !allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
         if (hostRoute) {
           if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
-          if (url.search || req.headers.origin !== new URL(config.issuer).origin) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
+          if (url.search || !allowedOrigin(req.headers.origin)) throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
           reply(res, 200, await hosts.handle(url.pathname.slice(CLOUD_PATH.length), req, await bodyOf(req)));
           return true;
         }
@@ -374,6 +413,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
               interactionUid: interaction.uid,
               csrfToken,
               clientId: interaction.params.client_id,
+              appLogin: interaction.params.wm_app === '1',
+              deviceId: interaction.params.wm_device_id,
             });
           else
             formReply(
@@ -387,11 +428,31 @@ export async function createIdentity({ database, config, mailer, logger, now = D
           reply(res, 200, { account: accounts.public(await authenticate(req)) });
           return true;
         }
+        if (route === 'devices') {
+          if (req.method !== 'GET') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
+          if (url.search) throw new CloudError(400, 'INVALID_REQUEST');
+          const account = await authenticate(req, true);
+          const devices = database.prepare('SELECT * FROM cloud_devices WHERE account_id=? ORDER BY confirmed_at').all(account.id)
+            .map(d => ({ id: d.device_id, name: d.name, type: d.type,
+              online: d.last_seen !== null && now() - d.last_seen < 60000,
+              lastUsedAt: new Date(d.last_seen ?? d.confirmed_at).toISOString(),
+              isCurrent: d.fingerprint === req.cloudToken.device_fingerprint }));
+          const computers = database.prepare(`SELECT h.* FROM cloud_hosts h JOIN host_memberships m ON m.host_id=h.host_id
+            WHERE m.account_id=? ORDER BY h.host_id`).all(account.id).map(h => ({ id: h.host_id, hostId: h.host_id,
+              name: h.name, type: 'computer', online: h.last_seen !== null && now() - h.last_seen < 90000,
+              lastUsedAt: h.last_seen === null ? null : new Date(h.last_seen).toISOString(),
+              isCurrent: !!database.prepare("SELECT 1 FROM host_device_status WHERE host_id=? AND account_id=? AND device_id=? AND jkt=? AND status='trusted'")
+                .get(h.host_id, account.id, req.cloudToken.device_id, req.cloudToken.cnf.jkt) &&
+                h.host_id === database.prepare('SELECT host_id FROM device_host_links WHERE account_id=? AND fingerprint=?')
+                  .get(account.id, req.cloudToken.device_fingerprint)?.host_id }));
+          reply(res, 200, { devices, hosts: computers, sharing: { supported: false } }); return true;
+        }
         if (req.method !== 'POST') throw new CloudError(405, 'METHOD_NOT_ALLOWED');
         // All credential writes are same-origin, including native browser interactions.
-        if (req.headers.origin !== new URL(config.issuer).origin)
+        if (!allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
         const body = await bodyOf(req);
+        if (url.search) throw new CloudError(400, 'INVALID_REQUEST');
         if (route === 'login' && typeof body.publicJwk === 'string') {
           try { body.publicJwk = JSON.parse(body.publicJwk); }
           catch { throw new CloudError(400, 'INVALID_DEVICE_KEY'); }
@@ -399,6 +460,12 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         const from = source(req);
         if (route === 'login' || route === 'device') {
           const interaction = await checkedInteraction(req, res, body);
+          if (route === 'login' && interaction.params.wm_app === '1') {
+            await accounts.device(body);
+            if (!body.publicJwk || body.deviceId !== interaction.params.wm_device_id ||
+                await calculateJwkThumbprint(body.publicJwk) !== await calculateJwkThumbprint(JSON.parse(interaction.params.wm_public_jwk)))
+              throw new CloudError(400, 'INVALID_DEVICE_KEY');
+          }
           const result =
             route === 'login'
               ? await accounts.login(body, from, interaction.uid)
@@ -411,13 +478,57 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         } else {
           let result;
           switch (route) {
+            case 'appAuthorize':
+              await accounts.device(body);
+              result = await authorizeInApp(route, req, res, body); break;
+            case 'appResume': result = await authorizeInApp(route, req, res, body); break;
+            case 'appRegisterRequest': result = await accounts.requestPassword(body, 'register', from); break;
+            case 'appResetRequest': result = await accounts.requestPassword(body, 'reset', from); break;
+            case 'appRegisterVerify': result = accounts.verifyPasswordCode(body, 'register', from); break;
+            case 'appResetVerify': result = accounts.verifyPasswordCode(body, 'reset', from); break;
+            case 'appRegisterComplete': result = await accounts.completePassword(body, 'register', from); break;
+            case 'appResetComplete': result = await accounts.completePassword(body, 'reset', from); break;
+            case 'passwordChange': result = await accounts.changePassword(body, from, await authenticate(req, true)); break;
+            case 'accountDelete': {
+              const account = await authenticate(req, true);
+              result = await lifecycle.remove(body, from, account, req.cloudToken); break;
+            }
+            case 'logoutOthers': {
+              const account = await authenticate(req, true);
+              result = await lifecycle.logoutOthers(body, account, req.cloudToken); break;
+            }
+            case 'deviceRename': result = await lifecycle.rename(body, await authenticate(req, true)); break;
+            case 'logout': {
+              const account = await authenticate(req, true);
+              const grants = database.prepare('SELECT grant_id FROM grant_bindings WHERE account_id=? AND fingerprint=?')
+                .all(account.id, req.cloudToken.device_fingerprint);
+              transaction(database, () => {
+                for (const grant of grants) {
+                  database.prepare("DELETE FROM oidc_records WHERE grant_id=? OR (model='Grant' AND id=?)").run(grant.grant_id, grant.grant_id);
+                  database.prepare('DELETE FROM grant_bindings WHERE grant_id=?').run(grant.grant_id);
+                }
+                database.prepare('DELETE FROM cloud_devices WHERE account_id=? AND fingerprint=?')
+                  .run(account.id, req.cloudToken.device_fingerprint);
+                database.prepare('DELETE FROM device_host_links WHERE account_id=? AND fingerprint=?')
+                  .run(account.id, req.cloudToken.device_fingerprint);
+                database.prepare("UPDATE host_device_status SET status='revoked' WHERE account_id=? AND device_id=? AND jkt=?")
+                  .run(account.id, req.cloudToken.device_id, req.cloudToken.cnf.jkt);
+                database.prepare('INSERT INTO cloud_revocations(account_id,kind,device_id,jkt) VALUES(?,?,?,?)')
+                  .run(account.id, 'device', req.cloudToken.device_id, req.cloudToken.cnf.jkt);
+              });
+              result = { loggedOut: true }; break;
+            }
             case 'deviceRevoke': {
               const account = await authenticate(req);
               if (Object.keys(body).join(',') !== 'deviceId' || typeof body.deviceId !== 'string')
                 throw new CloudError(400, 'INVALID_REQUEST');
               database.exec('BEGIN IMMEDIATE');
               try {
+                database.prepare('DELETE FROM device_host_links WHERE account_id=? AND fingerprint IN (SELECT fingerprint FROM cloud_devices WHERE account_id=? AND device_id=?)')
+                  .run(account.id, account.id, body.deviceId);
                 database.prepare('DELETE FROM cloud_devices WHERE account_id=? AND device_id=?').run(account.id, body.deviceId);
+                database.prepare("UPDATE host_device_status SET status='revoked' WHERE account_id=? AND device_id=?")
+                  .run(account.id, body.deviceId);
                 const grants = database.prepare('SELECT grant_id FROM grant_bindings WHERE account_id=? AND device_id=?').all(account.id, body.deviceId);
                 for (const grant of grants) {
                   database.prepare("DELETE FROM oidc_records WHERE grant_id=? OR (model='Grant' AND id=?)").run(grant.grant_id, grant.grant_id);
@@ -444,11 +555,13 @@ export async function createIdentity({ database, config, mailer, logger, now = D
               result = await accounts.reset(body, from);
               break;
             case 'emailRequest':
-              result = await accounts.requestEmail(body, from, await authenticate(req));
+              result = await accounts.requestEmail(body, from, await authenticate(req), true);
               break;
             case 'emailConfirm':
-              result = accounts.confirmEmail(body, from, await authenticate(req));
+              result = await accounts.confirmEmail(body, from, await authenticate(req));
               break;
+            case 'appEmailRequest': result = await accounts.requestEmail(body, from, await authenticate(req, true)); break;
+            case 'appEmailConfirm': result = await accounts.confirmEmail(body, from, await authenticate(req, true)); break;
           }
           reply(res, route === 'register' ? 201 : 200, result);
         }

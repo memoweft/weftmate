@@ -5,6 +5,8 @@ import { canonicalCommand, explicitNotepadOpenIntent, publicCommand } from './co
 import { randomUUID } from 'node:crypto';
 
 export function createCommandOperations(context) {
+  const messageDispatches = new Map();
+
   function requestIdUsed(account, requestId) {
     return !!account.modelOperations?.[requestId] || !!account.projectOperations?.[requestId] ||
       Object.values(account.commands).some(command => command.requestId === requestId ||
@@ -345,10 +347,26 @@ export function createCommandOperations(context) {
               outcome: result?.outcome === 'already_open' ? 'already_open' : 'opened' }
             : { status: 'unconfirmed', method: 'visible_window' };
           if (typeof result.receiptId === 'string' && ID.test(result.receiptId)) command.receiptId = result.receiptId;
+          if (snapshot.kind === 'session.message' && snapshot.payload.mode === 'steer' && !snapshot.rootTaskId &&
+              typeof result.steeredReceiptId === 'string') {
+            const source = Object.values(next.commands).find(item => item.kind === 'session.message' &&
+              item.sessionId === command.sessionId && item.receiptId === result.steeredReceiptId);
+            if (source && source.commandId !== commandId) {
+              command.rootTaskId = source.rootTaskId ?? source.commandId;
+              command.taskAction = 'supplement';
+            }
+          }
           if (snapshot.kind === 'session.message' && command.receiptId) {
             const taskId = command.rootTaskId ?? command.commandId;
             const stop = next.commands[taskId]?.taskControl?.state === 'stop_requested'
               ? next.commands[taskId].taskControl.stopRequests.at(-1) : null;
+            // Native admission can identify a steer before its send receipt is
+            // durable. Include that pre-stop input once its exact lineage is known.
+            if (stop?.targets && result.steeredReceiptId && command.rootTaskId &&
+                Date.parse(command.createdAt) <= Date.parse(stop.at) &&
+                !stop.targets.some(item => item.commandId === commandId)) {
+              stop.targets.push({ commandId, receiptId: command.receiptId });
+            }
             const target = stop?.targets?.find((item) => item.commandId === commandId);
             if (target && !target.receiptId) target.receiptId = command.receiptId;
           }
@@ -364,7 +382,7 @@ export function createCommandOperations(context) {
           requestId: snapshot.requestId, attachments: snapshot.payload.attachments });
       }
       if (snapshot.kind === 'session.message') {
-        const taskId = snapshot.rootTaskId ?? snapshot.commandId;
+        const taskId = context.accountState(ownerId).commands[commandId]?.rootTaskId ?? snapshot.commandId;
         if (context.accountState(ownerId).commands[taskId]?.taskControl?.state === 'stop_requested') {
           await context.driveTaskStop(ownerId, taskId, true);
         }
@@ -379,11 +397,16 @@ export function createCommandOperations(context) {
     const key = `${ownerId}|${commandId}`;
     if (context.scheduled.has(key) || context.closing) return;
     context.scheduled.add(key);
-    const work = Promise.resolve().then(() => dispatch(ownerId, commandId)).finally(() => {
+    const command = context.accountState(ownerId).commands[commandId];
+    const sessionKey = command?.kind === 'session.message' ? `${ownerId}|${command.sessionId}` : null;
+    const previous = sessionKey ? messageDispatches.get(sessionKey) : null;
+    const work = Promise.resolve(previous).catch(() => {}).then(() => dispatch(ownerId, commandId)).finally(() => {
+      if (sessionKey && messageDispatches.get(sessionKey) === work) messageDispatches.delete(sessionKey);
       context.scheduled.delete(key);
       context.active.delete(work);
       context.activeByCommand.delete(key);
     });
+    if (sessionKey) messageDispatches.set(sessionKey, work);
     context.active.add(work);
     context.activeByCommand.set(key, work);
   }

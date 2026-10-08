@@ -73,6 +73,7 @@ export class FailureLimiter {
     ];
   }
   check(keys) {
+    this.db.prepare('DELETE FROM failure_limits WHERE window_start<=? AND blocked_until<=?').run(this.now() - 3600000, this.now());
     const until = Math.max(
       0,
       ...keys.map(

@@ -1,0 +1,432 @@
+{
+  "workPackage": "A4c",
+  "baseCommit": "b71df5b",
+  "mergedMainCommit": "d85e3dc",
+  "validationDate": "2026-10-08",
+  "platform": "Intel Mac / Xcode 26.3 (17C529)",
+  "iosSimulator": "iPhone 17 / iOS 26.3.1; isolated simulator and random test namespaces",
+  "watchSimulator": "Apple Watch Series 11 46 mm / watchOS 26.2",
+  "dailyDataUsed": false,
+  "paidModelRequests": 0,
+  "clientContractChanged": false,
+  "macAccessibilityTrusted": false,
+  "newPermissionsRequested": false,
+  "debugBuilds": {
+    "mac": {
+      "result": "passed",
+      "log": "Build/a4c-resume-mac-build.log"
+    },
+    "phone": {
+      "result": "passed",
+      "log": "Build/a4c-resume-phone-build.log"
+    },
+    "watch": {
+      "result": "passed",
+      "log": "Build/a4c-resume-watch-build.log"
+    }
+  },
+  "swiftStateChecks": {
+    "AppleDraftStateChecks": {
+      "passed": 7,
+      "failed": 0,
+      "log": "Build/A4c-Resume-State/apple-state-ikpgtf3i/AppleDraftStateChecks.log"
+    }
+  },
+  "uiSummary": {
+    "appearanceScenarios": 4,
+    "approvalRegression": 1,
+    "watchScreenshot": 1,
+    "failedFinalTests": 0
+  },
+  "xcresultSummaries": [
+    {
+      "bundle": "Build/A4c-light4.xcresult",
+      "result": "Passed",
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "test": "A4cAppearanceUITests/testLightAppearance()",
+          "result": "Passed",
+          "seconds": 41.91
+        }
+      ]
+    },
+    {
+      "bundle": "Build/A4c-dark.xcresult",
+      "result": "Passed",
+      "passed": 2,
+      "failed": 0,
+      "tests": [
+        {
+          "test": "A4cAppearanceUITests/testAppearanceChoicePersistsAndFollowsSystem()",
+          "result": "Passed",
+          "seconds": 40.78
+        },
+        {
+          "test": "A4cAppearanceUITests/testDarkAppearance()",
+          "result": "Passed",
+          "seconds": 74.67
+        }
+      ]
+    },
+    {
+      "bundle": "Build/A4c-preferences-final.xcresult",
+      "result": "Passed",
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "test": "A4cAppearanceUITests/testAppearanceChoicePersistsAndFollowsSystem()",
+          "result": "Passed",
+          "seconds": 39.79
+        }
+      ]
+    },
+    {
+      "bundle": "Build/A4c-resume-accessibility.xcresult",
+      "result": "Passed",
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "test": "A4cAppearanceUITests/testAccessibilityAppearance()",
+          "result": "Passed",
+          "seconds": 49.01
+        }
+      ]
+    },
+    {
+      "bundle": "Build/A4c-resume-approval.xcresult",
+      "result": "Passed",
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "test": "A4aApprovalUITests/testThreeApprovalButtonsRiskAndHumanResolvedRows()",
+          "result": "Passed",
+          "seconds": 18.77
+        }
+      ]
+    },
+    {
+      "bundle": "Build/A4c-watch.xcresult",
+      "result": "Passed",
+      "passed": 1,
+      "failed": 0,
+      "tests": [
+        {
+          "test": "IC2WatchIconsUITests/testApprovalAndLauncherIcons()",
+          "result": "Passed",
+          "seconds": 29.44
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "accessibility-approval.png",
+      "sha256": "80453a250cf17f6b56f2a350949f9d914e27ffab0fbf58995ba9b3270bc31c8c",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-approval_0_FD572B3F-5D73-4136-9DA6-BAC22E9EAF5D.png"
+      }
+    },
+    {
+      "file": "accessibility-completed.png",
+      "sha256": "c6a9b050145e5ba8482c5a5455582f347a03a62f49ea72cc859703d73b17fea6",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-completed_0_190B1E8F-92F2-4A5A-AF92-0934BDAFB23A.png"
+      }
+    },
+    {
+      "file": "accessibility-keyboard.png",
+      "sha256": "8171ae97add02c1685706458ef6b1bd9763a8e153e403eb369fc69cff920df46",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-keyboard_0_77A9209C-E69B-4AF8-B0BC-A5D0F1224DBD.png"
+      }
+    },
+    {
+      "file": "accessibility-list.png",
+      "sha256": "35c6aad02bbdf5eb7bb416384586978dda7805fe895623b92610b2b13a1cfbf1",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-list_0_ED3E01D1-B5E9-463A-AB36-797D67A72D46.png"
+      }
+    },
+    {
+      "file": "accessibility-modes.png",
+      "sha256": "f9ac8e26909feb56ded926879cd3d82193c5806a1757d5a900ad2a68c4398c72",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-modes_0_26089D8E-E735-4552-B32F-A5ED5FEF9DEC.png"
+      }
+    },
+    {
+      "file": "accessibility-output.png",
+      "sha256": "4a05703d9b6defc691d1ae4de98fb636170032724007af747e760e3c04344442",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-output_0_09CC2271-196D-4F05-902A-0C3C56129256.png"
+      }
+    },
+    {
+      "file": "accessibility-outputs-sources.png",
+      "sha256": "a6422b79c4a305c9b7486e081b4c06e3e36219c31d02a00f321185b40e72f483",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-outputs-sources_0_7532E37C-B4F0-4034-BFE0-9AF00E192E14.png"
+      }
+    },
+    {
+      "file": "accessibility-running.png",
+      "sha256": "2f223955d1bc6f55152469d737264a8f3cc6d37830d50c149c403907b6b4140d",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-running_0_30BAEE89-48E8-4511-8836-821525906689.png"
+      }
+    },
+    {
+      "file": "accessibility-source.png",
+      "sha256": "4a87e878136667364043a95ff3e6b056e50e84a3c6fd22771936610210f30d0f",
+      "source": {
+        "export": "Build/A4c-resume-exports-accessibility",
+        "attachment": "A4c-accessibility-source_0_90729C7D-98D4-4E1E-8198-888D9EB74BC3.png"
+      }
+    },
+    {
+      "file": "appearance-dark-override.png",
+      "sha256": "ce2c1669adf8b21ef47fa92df9e7b91bab7fdf86e3c4e83d14e5601c02264a19",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-appearance-dark-override_0_3138980D-58F9-4F82-9BE6-DE671D011154.png"
+      }
+    },
+    {
+      "file": "appearance-light-override.png",
+      "sha256": "7a2502021b176f6c4ac6265a1ddf96f506162164f6bd6c1ba7d3a4307531c450",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-appearance-light-override_0_3E4387FF-8181-4E1D-B8CB-25000DEB8356.png"
+      }
+    },
+    {
+      "file": "appearance-system.png",
+      "sha256": "1ea2df2805e96caa2956b29adcbba9ccf4614baff847f5339267a8080bff37ef",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-appearance-system_0_32EF4677-9BEB-462D-B56F-D4905F281E81.png"
+      }
+    },
+    {
+      "file": "approval-resolved.png",
+      "sha256": "447abf37cf3f28e489fcdb0b69b1359479fe0fd53491a26dcc219caeaed89f11",
+      "source": {
+        "export": "Build/A4c-resume-exports-approval",
+        "attachment": "A4a-ios-06-processed-rows_0_28042A49-BF3C-423C-9135-5E85B9894F63.png"
+      }
+    },
+    {
+      "file": "before-dark-approval.png",
+      "sha256": "ff3425fdd7670c98342b9b53390a34e8ec0ee26c543fb914d352ae06aed3f935",
+      "source": {
+        "before": "Tests/Evidence/IC-2/ios-dark-approval-composer.png"
+      }
+    },
+    {
+      "file": "before-light-approval.png",
+      "sha256": "fe7e300d54337c10023be7e9359286389352abc2ffcbb43af0d38778523ec19f",
+      "source": {
+        "before": "Tests/Evidence/IC-2/ios-light-approval-composer.png"
+      }
+    },
+    {
+      "file": "before-light-completed.png",
+      "sha256": "6ebb7c14dcd61b94cdc0882415472e0888f09657992db34377034e3c5c301ee3",
+      "source": {
+        "before": "Tests/Evidence/IC-2/ios-light-completed-composer.png"
+      }
+    },
+    {
+      "file": "before-light-list.png",
+      "sha256": "5c4e66acaa625400a5586a9ea7f5764aca7391c19e984f10272a6861f62090ad",
+      "source": {
+        "before": "Tests/Evidence/IC-2/ios-light-sidebar.png"
+      }
+    },
+    {
+      "file": "before-light-outputs-sources.png",
+      "sha256": "584843797a890f07fc11fbaeff4e0394f2b75931d14a22a18ab88e8cd8a87e3f",
+      "source": {
+        "before": "Tests/Evidence/IC-2/ios-light-outputs-sources.png"
+      }
+    },
+    {
+      "file": "dark-approval.png",
+      "sha256": "3c691236e04782aa44b1ab77f54354bb00862c777202e47ef4ff7c43832d3450",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-approval_0_A12F4127-9EFD-4B74-BB67-B1F5B218E778.png"
+      }
+    },
+    {
+      "file": "dark-completed.png",
+      "sha256": "fdefa4616521d7a5af45fc9ff69fcda79f5f36ecdc3268d516ff11e74499ce69",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-completed_0_47FFFB53-7CFE-4C06-BE13-44B5633FBD74.png"
+      }
+    },
+    {
+      "file": "dark-keyboard.png",
+      "sha256": "147fe44388d8e5772d923ea7580be68721a8bec68e5a5df7fc09c684c9a80bf3",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-keyboard_0_4D4049A2-A12F-4D6E-9DAF-B3F76317FCCC.png"
+      }
+    },
+    {
+      "file": "dark-list.png",
+      "sha256": "2cff1058afb0c61ee02931f009f3e91adfae8305ba28a21deb6201a9f551032b",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-list_0_AD0B00BD-6AD9-42A0-B924-28404004D2CD.png"
+      }
+    },
+    {
+      "file": "dark-output.png",
+      "sha256": "272d983183c6b4d896537c4663c0d857983828f93898cb56459d6f27efcd2d7a",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-output_0_D00953A2-DCB2-4883-830A-F03206E38CFD.png"
+      }
+    },
+    {
+      "file": "dark-outputs-sources.png",
+      "sha256": "bbe290bebee0927e3667a6bec2e3e27916da505dceb288fbc87963350f8b6360",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-outputs-sources_0_70627FCE-E285-474C-9979-2916B6AEEA8B.png"
+      }
+    },
+    {
+      "file": "dark-running.png",
+      "sha256": "7504ada744a3428326d26786e2e7fe2af2291be7d63e3557c268644d6b061be3",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-running_0_8BDCEB13-F425-4076-A1E3-2CBDBDA5ADB0.png"
+      }
+    },
+    {
+      "file": "dark-source.png",
+      "sha256": "567d8587edce8261bf20e96fae840e8a754b86a95cf2f630e750b48f2d4745a4",
+      "source": {
+        "export": "Build/A4c-exports-dark",
+        "attachment": "A4c-dark-source_0_371BED81-80D5-4EE5-A404-F714A1DC39ED.png"
+      }
+    },
+    {
+      "file": "light-approval.png",
+      "sha256": "94a47942b78cfe24b04c7f85ae093255f01518114d32b66014e0a4d0f5305c03",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-approval_0_8B5E7ED6-7AC0-406B-8435-31FD07B1E277.png"
+      }
+    },
+    {
+      "file": "light-completed.png",
+      "sha256": "56f02b58bd84ff239a81812030d3a4557ae9c31fe08fc7be080a67a9ef87c042",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-completed_0_DE976F76-3BF6-4311-9368-07657E1E9E3E.png"
+      }
+    },
+    {
+      "file": "light-keyboard.png",
+      "sha256": "beb54b9f9aeb18c6ba6d3a00977215cacfc16ba3d389a68078318041d5769198",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-keyboard_0_37F752DC-3D88-463D-8107-8B6DC3AB47FB.png"
+      }
+    },
+    {
+      "file": "light-list.png",
+      "sha256": "59b29b4ed09e09a6e941cd2ea3066a9742956ae07a281b1f100b74c785cc1e77",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-list_0_5127A311-6567-49C7-9556-B943C94B092E.png"
+      }
+    },
+    {
+      "file": "light-output.png",
+      "sha256": "1f049e748085816db5c3afd05243e7fff9e5b1166d9491102e0db1ce903e586c",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-output_0_CD7BBA94-9012-4D68-8DD1-1EF7EE890F51.png"
+      }
+    },
+    {
+      "file": "light-outputs-sources.png",
+      "sha256": "86e0eff8ee43fd042709f9aa526dc0f1dae9e5690e5a828b7d26b31fa47230c9",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-outputs-sources_0_8C0BF8B8-A745-4458-A28A-51D08D142B80.png"
+      }
+    },
+    {
+      "file": "light-running.png",
+      "sha256": "52d96ab9d81e94aacbe025bb51d04383798b360981776a3d45ff3895c75c4f39",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-running_0_DC465ED5-8C1D-46EF-85E1-A4529A9523B2.png"
+      }
+    },
+    {
+      "file": "light-source.png",
+      "sha256": "30066b72e0bc6eeef7ef120cb696487065d2bcfe3a8e85a812131ecf168d2710",
+      "source": {
+        "export": "Build/A4c-exports-light4",
+        "attachment": "A4c-light-source_0_6963BB49-AEE3-457E-A089-0CA70F8CCC06.png"
+      }
+    },
+    {
+      "file": "watch-approval.png",
+      "sha256": "0f60db973b8713d34927af3227fd66d957f61d4bf45ba2d8a22a09424a2ebe76",
+      "source": {
+        "export": "Build/A4c-exports-watch",
+        "attachment": "IC2-Watch-approval_0_EFC9D140-D121-464C-81B6-88C47A799412.png"
+      }
+    }
+  ],
+  "checks": [
+    "neutral light/dark palette, filled primary and outlined secondary actions",
+    "iPhone home is conversation list; no permanent spirit or draft explanation",
+    "assistant text without a wrapper; right-aligned user bubble",
+    "appearance override, relaunch persistence, system appearance",
+    "outputs/sources and artifact preview, return preserves draft",
+    "accessibility-medium: long approval mode on separate row, all modes reachable by scrolling",
+    "system keyboard: send button stays above keyboard",
+    "three approval decisions and resolved rows; no real shell execution"
+  ],
+  "macLayoutReview": [
+    "HSplitView left sidebar",
+    "timeline max width 760 pt, composer max width 792 pt, centered",
+    "on-demand right resource panel; native App build only"
+  ],
+  "priorFailuresRetained": [
+    "Swift 6 XCTest isolation compiler errors in initial test helper, corrected in current test",
+    "native account menu title inaccessible and setting choice lookup failed; native Label and current lookup passed",
+    "shared DerivedData database locked during final Mac build; sequential resume build passed",
+    "simulator destination temporarily unavailable before interruption; resume accessibility test passed"
+  ],
+  "notVerified": [
+    "macOS UI interaction: AX permission unavailable",
+    "physical devices, Watch haptics and reachable phone approval",
+    "real host / DSH / models / production deployment",
+    "cross-device theme preference synchronization",
+    "full design-token wiring: separate Apple work package per DS-1 handoff"
+  ],
+  "ci": "Complete repository suite runs in PR CI; final status is recorded in orchestrator result and PR checks."
+}

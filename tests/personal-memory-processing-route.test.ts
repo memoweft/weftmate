@@ -11,6 +11,38 @@ const required = ['initialize', 'capabilities', 'health', 'shutdown', 'ingest_bo
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup', 'query_jobs']
 
+test('formation deadline recalls existing memories while a stuck job remains durable', async t => {
+  const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-stalled-'))
+  t.after(() => rmSync(root, { recursive: true, force: true }))
+  let jobReads = 0, home = ''
+  const manager = createPersonalMemoryManager({ root, enabled: true,
+    python: join(root, 'python.exe'), pythonPath: join(root, 'py'),
+    baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic',
+    formationWaitMs: 30,
+    rpcFactory: () => ({ child: {}, async close() {}, async request(method, params = {}) {
+      if (method === 'capabilities') return { protocol: 'memoweft.dsh_rpc', protocol_version: 2,
+        schema_version: 1, methods: required }
+      if (method === 'initialize') { home = params.dsh_home; return {
+        runtime: { subject_id: ownerA, db_path: join(home, 'memoweft', 'memoweft.sqlite3') },
+        capabilities: { subject_id: ownerA, methods: required, services: { command: { operations: [] } } } } }
+      if (method === 'health') return { runtime: { subject_id: ownerA, route_ready: true } }
+      if (method === 'query_jobs') { jobReads++; return { jobs: [{ job_id: 'stalled', worker: { state: 'retry' } }] } }
+      if (method === 'preview_recall') return { world_revision: 2, preview: {
+        selected_item_ids: [['cognition', 'existing']], rendered_recall: '记忆：已有的表达偏好',
+      } }
+      if (method === 'query_interactions') return { rendered_context: '' }
+      return {}
+    } }) })
+  t.after(() => manager.close())
+  const started = Date.now()
+  const recalled = await manager.recall(ownerA, { query: 'cache', sessionId: 'new-session' })
+  assert.equal(recalled.state, 'ready')
+  assert.equal(recalled.sourceCount, 1)
+  assert.match(recalled.contextText, /已有的表达偏好/)
+  assert.ok(jobReads > 0)
+  assert.ok(Date.now() - started < 2000, 'stalled formation does not hold the foreground indefinitely')
+})
+
 test('account memory workers follow only the owner session route and restart without losing the outbox', async t => {
   const root = mkdtempSync(join(tmpdir(), 'weftmate-memory-processing-route-'))
   writeFileSync(join(root, 'pyproject.toml'), '[project]\nversion = "2.0.0-synthetic"\n')
@@ -130,5 +162,28 @@ test('account memory workers follow only the owner session route and restart wit
   assert.ok(recallQueries.includes('我叫什么？'), 'identity remains a separate Core recall')
   assert.deepEqual(recalled.memories, [{ id: 'cog-1', kind: 'cognition', summary: '安全的偏好摘要' },
     { id: 'entity-2', kind: 'entity', summary: '安全的人物名' }])
+
+  jobReads = 0
+  rpc.request = async (method: string, params: any) => {
+    if (method === 'query_jobs') return { jobs: ++jobReads === 1
+      ? [{ job_id: 'accepted', worker: { state: 'processing' } }]
+      : [{ job_id: 'accepted', worker: { state: 'applied' } },
+        { job_id: 'later', worker: { state: 'processing' } }] }
+    return method === 'preview_recall' ? { world_revision: 4, preview: {
+      selected_item_ids: [['cognition', 'cog-1']], rendered_recall: '记忆：已经形成的偏好',
+    } } : method === 'query_interactions' ? { rendered_context: '' } : request(method, params)
+  }
+  assert.equal((await manager.recall(ownerA, { query: 'later jobs cannot extend this wait',
+    sessionId: 'background-session' })).sourceCount, 1)
+  assert.equal(jobReads, 2)
+
+  rpc.request = async (method: string, params: any) => {
+    if (method === 'query_jobs') throw Object.assign(new Error('MEMORY_TIMEOUT'), { code: 'MEMORY_TIMEOUT' })
+    return method === 'preview_recall' ? { world_revision: 4, preview: {
+      selected_item_ids: [['cognition', 'cog-1']], rendered_recall: '记忆：已经形成的偏好',
+    } } : method === 'query_interactions' ? { rendered_context: '' } : request(method, params)
+  }
+  assert.equal((await manager.recall(ownerA, { query: 'timed out job query keeps current memories',
+    sessionId: 'background-session' })).state, 'ready')
 
 })

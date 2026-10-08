@@ -468,7 +468,8 @@ export function validateSingleStore(store) {
                (store.sessions[command.sessionId].projectRevision ?? null) !== (payload.projectRevision ?? null) ||
                (store.sessions[command.sessionId].workspaceKind ?? null) !== (payload.workspaceKind ?? null))) ||
           (command.rootTaskId !== undefined && (command.kind !== 'session.message' ||
-            command.rootTaskId !== payload.rootTaskId || command.taskAction !== payload.taskAction ||
+            (command.rootTaskId !== payload.rootTaskId || command.taskAction !== payload.taskAction) &&
+              !(payload.rootTaskId === undefined && payload.mode === 'steer' && command.taskAction === 'supplement') ||
             command.rootTaskId === commandId ||
             store.commands[command.rootTaskId]?.kind !== 'session.message' ||
             store.commands[command.rootTaskId]?.rootTaskId !== undefined ||
@@ -499,7 +500,8 @@ export function validateSingleStore(store) {
                   (target.attemptAt !== undefined && !validTime(target.attemptAt)) ||
                   Object.keys(target).some((key) => !['commandId', 'receiptId', 'ack', 'ackAt', 'attemptAt'].includes(key))))) ||
               (item.lastAttemptAt !== undefined && !validTime(item.lastAttemptAt)) ||
-              Object.keys(item).some((key) => !['requestId', 'at', 'targets', 'lastAttemptAt'].includes(key))) ||
+              (item.queuedOnly !== undefined && item.queuedOnly !== true) ||
+              Object.keys(item).some((key) => !['requestId', 'at', 'targets', 'lastAttemptAt', 'queuedOnly'].includes(key))) ||
             !validTime(command.taskControl.updatedAt) ||
             Object.keys(command.taskControl).some((key) => !['state', 'stopRequests', 'updatedAt'].includes(key)))) ||
           (command.receiptId !== undefined && !validId(command.receiptId)) ||

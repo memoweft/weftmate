@@ -49,13 +49,13 @@ struct ConversationAttachmentTile: View {
     @State private var directory: URL?
     var body: some View {
         Button(action: open) {
-            HStack(spacing: 10) {
+            HStack(spacing: AppleTokens.Space.p10) {
                 AttachmentThumbnail(file: thumbnail, isImage: reference.isImage)
-                Text(reference.name).lineLimit(2).font(.callout)
-                Spacer(minLength: 0)
-                WeftIcon("open", size: 16).font(.caption)
-            }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                .background(Weave.soft, in: RoundedRectangle(cornerRadius: 12))
+                Text(reference.name).lineLimit(2).font(AppleTokens.Fonts.callout)
+                Spacer(minLength: AppleTokens.Space.p0)
+                WeftIcon("open", size: 16).font(AppleTokens.Fonts.caption)
+            }.padding(AppleTokens.Space.p10).frame(maxWidth: .infinity, alignment: .leading)
+                .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
         }
         .buttonStyle(.plain).accessibilityLabel("预览 " + reference.name)
         .accessibilityIdentifier("attachmentPreview.\(reference.id)")
@@ -89,7 +89,7 @@ struct AttachmentThumbnail: View {
             if let file, let image = UIImage(contentsOfFile: file.path) { Image(uiImage: image).resizable().scaledToFit() }
             else { WeftIcon(isImage ? "image" : "file") }
             #endif
-        }.frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 8))
+        }.frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: AppleTokens.Radius.r8))
     }
 }
 
@@ -109,24 +109,24 @@ struct ConversationAttachmentPreview: View {
     @State private var exporting = false
     @State private var exportError: String?
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppleTokens.Space.p12) {
             HStack {
-                Text(name).font(.headline).lineLimit(2)
+                Text(name).font(AppleTokens.Fonts.headline).lineLimit(2)
                 Spacer()
                 Button(action: close) { WeftIcon("deny") }.accessibilityLabel("关闭预览")
             }
             if loading { ProgressView("正在下载…") }
-            if let error { Text(error).font(.callout).foregroundStyle(Weave.danger) }
+            if let error { Text(error).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.danger) }
             if let file {
                 AttachmentContentPreview(file: file, contentType: contentType).frame(maxWidth: .infinity, maxHeight: .infinity)
                 HStack {
-                    Button("保存文件") { exporting = true }.buttonStyle(.borderedProminent)
+                    Button("保存文件") { exporting = true }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
                     ShareLink(item: file) { WeftLabel("分享", icon: "open") }
                 }
             } else { Spacer() }
-            if let exportError { Text(exportError).font(.caption).foregroundStyle(Weave.danger) }
+            if let exportError { Text(exportError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         }
-        .padding(16).background(Weave.surface)
+        .padding(AppleTokens.Space.p16).background(Weave.surface)
         .fileExporter(isPresented: $exporting, item: file.map { AttachmentExport(file: $0) },
             contentTypes: [.data], defaultFilename: name, onCompletion: { result in
                 if case .failure = result { exportError = "文件未保存，请重试。" }
@@ -148,10 +148,10 @@ private struct AttachmentContentPreview: View {
                     .accessibilityLabel("附件图片").accessibilityIdentifier("attachmentImageContent")
             } else if let text {
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 12) {
-                        Text(text).font(.system(.body, design: .monospaced)).textSelection(.enabled)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                        Text(text).font(.system(AppleTokens.TextStyle.body, design: .monospaced)).textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("attachmentTextContent")
-                        if truncated { Text("仅预览开头，可保存完整文件。").font(.caption).foregroundStyle(Weave.muted) }
+                        if truncated { Text("仅预览开头，可保存完整文件。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                     }
                 }
             } else { NativeAttachmentPreview(file: file) }

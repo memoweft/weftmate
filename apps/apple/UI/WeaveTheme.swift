@@ -1,35 +1,20 @@
 import SwiftUI
 
-// Match the existing Weave palette while respecting the system appearance.
+// Neutral desktop and mobile palette; the C4 brand retains its blue.
 enum Weave {
-    static let accent = adaptive(light: 0x2859D8, dark: 0x7FA7FF)
-    static let accentSoft = adaptive(light: 0xE9F0FF, dark: 0x20345A)
-    static let ink = adaptive(light: 0x1C2940, dark: 0xE9EFFB)
-    static let secondary = adaptive(light: 0x56657B, dark: 0xB9C7DF)
-    static let muted = adaptive(light: 0x64748A, dark: 0xA2B2CB)
-    static let canvas = adaptive(light: 0xF3F5FA, dark: 0x121A28)
-    static let surface = adaptive(light: 0xFFFFFF, dark: 0x161F2F)
-    static let soft = adaptive(light: 0xF7F9FD, dark: 0x1D2A3F)
-    static let line = adaptive(light: 0xE4E9F2, dark: 0x344259)
-    static let danger = adaptive(light: 0xB93248, dark: 0xFF8EA0)
+    static let accent = AppleTokens.Colors.accent
+    static let accentSoft = AppleTokens.Colors.accentSoft
+    static let ink = AppleTokens.Colors.ink
+    static let secondary = AppleTokens.Colors.secondary
+    static let muted = AppleTokens.Colors.muted
+    static let canvas = AppleTokens.Colors.canvas
+    static let surface = AppleTokens.Colors.surface
+    static let soft = AppleTokens.Colors.soft
+    static let line = AppleTokens.Colors.line
+    static let onAccent = AppleTokens.Colors.onAccent
+    static let status = AppleTokens.Colors.status
+    static let danger = AppleTokens.Colors.danger
 
-    private static func adaptive(light: UInt32, dark: UInt32) -> Color {
-        #if os(macOS)
-        return Color(nsColor: NSColor(name: nil) { appearance in
-            let value = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light
-            return NSColor(red: CGFloat((value >> 16) & 255) / 255,
-                           green: CGFloat((value >> 8) & 255) / 255,
-                           blue: CGFloat(value & 255) / 255, alpha: 1)
-        })
-        #else
-        return Color(uiColor: UIColor { traits in
-            let value = traits.userInterfaceStyle == .dark ? dark : light
-            return UIColor(red: CGFloat((value >> 16) & 255) / 255,
-                           green: CGFloat((value >> 8) & 255) / 255,
-                           blue: CGFloat(value & 255) / 255, alpha: 1)
-        })
-        #endif
-    }
 }
 
 struct BrandMark: View {
@@ -45,23 +30,45 @@ struct WeaveCard<Content: View>: View {
     init(@ViewBuilder content: () -> Content) { self.content = content() }
     var body: some View {
         content
-            .padding(24)
-            .background(Weave.surface, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 24).strokeBorder(Weave.line, lineWidth: 1))
-            .shadow(color: .black.opacity(0.035), radius: 18, x: 0, y: 8)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(AppleTokens.Space.p20)
+            .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r14, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r14).strokeBorder(Weave.line, lineWidth: AppleTokens.Space.p1))
+    }
+}
+
+enum AppleAppearance: String, CaseIterable, Identifiable {
+    case system, light, dark
+    var id: String { rawValue }
+    var title: String { switch self { case .system: "跟随系统"; case .light: "浅色"; case .dark: "深色" } }
+    var colorScheme: ColorScheme? { switch self { case .system: nil; case .light: .light; case .dark: .dark } }
+}
+
+/// Actions grow with Dynamic Type and retain a 44 pt touch target.
+struct OutlineActionStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var enabled
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.font(AppleTokens.Fonts.callout.weight(.medium))
+            .padding(.horizontal, AppleTokens.Space.p12).frame(minHeight: 44)
+            .foregroundStyle(Weave.ink)
+            .background(configuration.isPressed ? Weave.soft : Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10))
+            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r10).strokeBorder(Weave.line))
+            .opacity(enabled ? 1 : AppleTokens.Opacity.disabled)
     }
 }
 
 struct PrimaryActionStyle: ButtonStyle {
+    var fillsWidth = true
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(.body, design: .default, weight: .semibold))
-            .frame(maxWidth: .infinity, minHeight: 46)
-            .foregroundStyle(.white)
-            .background(Weave.accent.opacity(enabled ? (configuration.isPressed ? 0.78 : 1) : 0.45),
-                        in: RoundedRectangle(cornerRadius: 13, style: .continuous))
-            .scaleEffect(configuration.isPressed ? 0.985 : 1)
+            .font(.system(AppleTokens.TextStyle.body, design: .default, weight: .semibold))
+            .padding(.horizontal, AppleTokens.Space.p14)
+            .frame(maxWidth: fillsWidth ? .infinity : nil, minHeight: 44)
+            .foregroundStyle(Weave.onAccent)
+            .background(Weave.accent.opacity(enabled ? (configuration.isPressed ? AppleTokens.Opacity.pressed : 1) : AppleTokens.Opacity.disabled),
+                        in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r10, style: .continuous))
+            .scaleEffect(configuration.isPressed ? AppleTokens.Scale.pressed : 1)
     }
 }
 
@@ -74,12 +81,12 @@ struct InlineNotice: View {
         } icon: {
             WeftIcon(isError ? "warn" : "info")
         }
-        .font(.callout)
+        .font(AppleTokens.Fonts.callout)
         .foregroundStyle(isError ? Weave.danger : Weave.secondary)
-        .padding(13)
+        .padding(AppleTokens.Space.p13)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isError ? Weave.danger.opacity(0.07) : Weave.soft,
-                    in: RoundedRectangle(cornerRadius: 12))
+        .background(isError ? Weave.danger.opacity(AppleTokens.Opacity.notice) : Weave.soft,
+                    in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
         .accessibilityElement(children: .combine)
     }
 }
@@ -89,14 +96,14 @@ struct EmptyState: View {
     let title: String
     let message: String
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: AppleTokens.Space.p12) {
             WeftIcon(symbol, size: 34).foregroundStyle(Weave.accent)
-            Text(title).font(.title3.weight(.semibold)).foregroundStyle(Weave.ink)
-            Text(message).font(.body).foregroundStyle(Weave.muted)
-                .multilineTextAlignment(.center).lineSpacing(4)
+            Text(title).font(AppleTokens.Fonts.title3.weight(.semibold)).foregroundStyle(Weave.ink)
+            Text(message).font(AppleTokens.Fonts.body).foregroundStyle(Weave.muted)
+                .multilineTextAlignment(.center).lineSpacing(AppleTokens.Space.p4)
                 .frame(maxWidth: 390)
         }
-        .padding(30)
+        .padding(AppleTokens.Space.p30)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
@@ -104,11 +111,11 @@ struct EmptyState: View {
 extension View {
     func weaveField() -> some View {
         self.textFieldStyle(.plain)
-            .font(.body)
-            .padding(.horizontal, 13)
-            .padding(.vertical, 12)
-            .background(Weave.soft, in: RoundedRectangle(cornerRadius: 11))
-            .overlay(RoundedRectangle(cornerRadius: 11).strokeBorder(Weave.line))
+            .font(AppleTokens.Fonts.body)
+            .padding(.horizontal, AppleTokens.Space.p13)
+            .padding(.vertical, AppleTokens.Space.p12)
+            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r11))
+            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r11).strokeBorder(Weave.line))
     }
 
     @ViewBuilder func accountInput() -> some View {

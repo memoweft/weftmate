@@ -1,0 +1,65 @@
+{
+  "baseCommit": "28b068d",
+  "branch": "wp/ds-1b-apple-tokens",
+  "platform": {
+    "xcode": "26.3 (17C529)",
+    "host": "Intel macOS",
+    "phone": "iPhone 17 isolated simulator / iOS 26.3.1",
+    "watch": "Apple Watch Series 11 (46mm) / watchOS 26.2"
+  },
+  "builds": {
+    "macOS Debug": "passed",
+    "iOS Simulator Debug": "passed",
+    "watchOS Simulator Debug": "passed"
+  },
+  "swiftChecks": {
+    "DesignTokenChecks": 24,
+    "AppleDraftStateChecks": 7,
+    "MessageMarkdownChecks": 6
+  },
+  "iosNativeTests": {
+    "lightAppearance": "1/1",
+    "darkAppearance": "1/1",
+    "appearanceChoicePersistsAndFollowsSystem": "1/1",
+    "accessibilityAppearance": "1/1"
+  },
+  "tokenTests": "3/3",
+  "generationCheck": "passed",
+  "repeatedGeneration": "byte-for-byte unchanged (tokens and Xcode project)",
+  "screenshotComparison": {
+    "pairs": 16,
+    "differentPixels": 0,
+    "width": 1206,
+    "height": 2622,
+    "masks": false,
+    "tolerance": false,
+    "imageModification": false,
+    "report": "comparison.json"
+  },
+  "initialCapture": {
+    "report": "initial/comparison.json",
+    "darkListDifferentPixels": 179522,
+    "darkListMaxChannelDelta": 7,
+    "darkKeyboardDifferentPixels": 3534,
+    "darkKeyboardMaxChannelDelta": 149,
+    "resolution": "Identical 2-second screenshot settling in baseline and migrated native tests; all 16 final pairs are exact"
+  },
+  "initialBuildFailure": {
+    "reason": "Previously uncompiled DS-1 handoff emitted [] for an empty Swift dictionary",
+    "resolution": "Generator now emits [:]; three native Debug targets compile"
+  },
+  "macAccessibility": {
+    "trusted": false,
+    "permissionRequested": false,
+    "guiAcceptance": false
+  },
+  "boundaries": [
+    "Synthetic local fixture data and isolated namespaces; zero model requests",
+    "No real device / host / model / Watch connectivity or haptic acceptance",
+    "No deployment, merge or account appearance synchronization",
+    "Client API contract unchanged",
+    "Full suite delegated to PR CI; consult current PR head checks"
+  ],
+  "pullRequest": "https://github.com/memoweft/weftmate/pull/65",
+  "ciChecks": "https://github.com/memoweft/weftmate/pull/65/checks"
+}
