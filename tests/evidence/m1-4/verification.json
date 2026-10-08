@@ -27,5 +27,16 @@
     "kind": "known usage lower bound, not invoice"
   },
   "lanLock": "released immediately after both sequential runs",
-  "clientContractChanges": false
+  "clientContractChanges": false,
+  "implementationCommit": "18213de",
+  "mergedMain": "9b85e3f182dad02d04f3741fde40c3e0e33355b2",
+  "postMergeRelatedTestsPassed": 21,
+  "postMergeTypecheck": "passed",
+  "cleanup": {
+    "isolatedFilesScanned": 1283,
+    "privateValueMatches": 0,
+    "publicFilesScanned": 14,
+    "publicPrivateValueMatches": 0,
+    "isolatedProcessesRemaining": 0
+  }
 }
