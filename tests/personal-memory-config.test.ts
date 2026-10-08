@@ -3,7 +3,20 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
-import { loadPersonalMemoryConfig } from '../src/personal-memory/config.mjs'
+import { loadPersonalMemoryConfig, processingRouteIdentity } from '../src/personal-memory/config.mjs'
+
+test('only the internal session usage suffix is excluded from model route identity', () => {
+  const base = 'http://127.0.0.1:12345/gateway/inference/profile/scope/owner';
+  assert.deepEqual(processingRouteIdentity(`${base}/session-a/v1`),
+    { baseUrl: `${base}/none/v1`, sessionScoped: true });
+  assert.deepEqual(processingRouteIdentity(`${base}/session-a/v1`), processingRouteIdentity(`${base}/session-b/v1`));
+  assert.notDeepEqual(processingRouteIdentity(`${base}/session-a/v1`),
+    processingRouteIdentity(base.replace('/owner', '/other-owner') + '/session-a/v1'));
+  assert.notDeepEqual(processingRouteIdentity(`${base}/session-a/v1`),
+    processingRouteIdentity(base.replace('/profile/', '/other-profile/') + '/session-a/v1'));
+  for (const url of ['http://127.0.0.1:12345/v1', 'https://api.example/scope/owner/session-a/v1'])
+    assert.deepEqual(processingRouteIdentity(url), { baseUrl: url, sessionScoped: false });
+});
 
 test('account memory config accepts a configured loopback service and a credential reference without storing a key', async () => {
   const root = mkdtempSync(join(tmpdir(), 'personal-memory-config-'))

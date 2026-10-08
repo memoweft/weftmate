@@ -21,7 +21,14 @@ export async function startTimelineCandidate(options = {}) {
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
   const result = (id, text) => append('tool/result', { turn: 1, message: { source: { kind: 'tool', callId: id }, content: [{ type: 'tool-result', toolCallId: id, isError: false, content: [{ type: 'text', text }] }] } })
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
+  const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
   const backend = {
+    ...(options.schedules ? { schedules: async ({action,id}) => {
+      if (['list','notifications'].includes(action)) return {items:scheduleRows.map(row=>({...row}))};
+      const row=scheduleRows.find(row=>row.id===id);assert.ok(row);
+      if(action==='delete')scheduleRows.splice(scheduleRows.indexOf(row),1);else row.state=action==='pause'?'paused':action==='resume'?'scheduled':'completed';
+      return {ok:true};
+    }} : {}),
     getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true }], preflight: async () => ({ ok: true }),
     createSession: async input => { operations.push({ kind: 'create' }); sessionId = input.sessionId; return { sessionId } },
     sendMessage: async input => {

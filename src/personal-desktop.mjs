@@ -10,6 +10,7 @@ import { validArtifactFileName } from './personal-artifacts/index.mjs';
 import { windowIcon, notificationIcon } from './app-icons.mjs';
 
 export function desktopNotification(event) {
+  if (event.type === 'assistant.message' && event.data?.reminder) return { title: '提醒与定时任务', body: event.data.text };
   if (event.type === 'approval.requested') return { title: '需要审批', body: '打开对话查看并决定是否允许。' };
   if (event.type === 'question.asked') return { title: '需要回答', body: '打开对话补充信息。' };
   if (event.type === 'turn.ended' && event.data?.reason === 'completed') return { title: '任务完成', body: '打开对话查看结果。' };
@@ -185,7 +186,10 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   win.on('resized', save); win.on('moved', save);
   // Poll authenticated history in main so hidden windows and other conversations still notify.
   // Watermarks prevent replay of completed historical turns after login/restart.
-  const watermarks = new Map(), notifications = new Set();
+  const watermarks = new Map(), notifications = new Set(), reminderOnlySessions = new Set();
+  const reminderNotificationsFile = join(app.getPath('userData'), 'desktop-reminder-notifications.json');
+  let reminderNotified = new Set();
+  try { reminderNotified = new Set(JSON.parse(readFileSync(reminderNotificationsFile, 'utf8'))); } catch { /* first use */ }
   let timer, stopped = false, ownerId = null, initialized = false;
   async function poll() {
     try {
@@ -202,7 +206,13 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
         do {
           const page = await jsonLocal(`/sessions/${encodeURIComponent(row.sessionId)}/events?afterSeq=${cursor}&limit=200`);
           for (const event of page.events || []) {
-            const message = (last !== undefined || initialized) && desktopNotification(event);
+            if (event.type === 'assistant.message' && event.data?.reminder) reminderOnlySessions.add(row.sessionId);
+            else if (['user.message', 'step.started', 'assistant.message'].includes(event.type)) reminderOnlySessions.delete(row.sessionId);
+            if (event.type === 'turn.ended' && reminderOnlySessions.delete(row.sessionId)) continue;
+            const reminderKey = `${me.account?.ownerId}:${row.sessionId}:${event.seq}`;
+            const reminder = event.type === 'assistant.message' && event.data?.reminder;
+            if (reminder && reminderNotified.has(reminderKey)) continue;
+            const message = (reminder || last !== undefined || initialized) && desktopNotification(event);
             if (!message || stopped || !Notification.isSupported()) continue;
             const notification = new Notification({ ...message, icon: notificationIcon, title: `WeftMate · ${message.title}` });
             notifications.add(notification);
@@ -210,6 +220,10 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
             notification.on('close', () => notifications.delete(notification));
             notification.on('show', () => app.emit('weftmate-desktop-notification-shown', { sessionId: row.sessionId, type: event.type }));
             notification.show();
+            if (reminder) {
+              reminderNotified.add(reminderKey);
+              writeFileSync(reminderNotificationsFile, JSON.stringify([...reminderNotified]));
+            }
             // Native event for integration tests/diagnostics; no conversation content.
             app.emit('weftmate-desktop-notification', { sessionId: row.sessionId, type: event.type });
           }
