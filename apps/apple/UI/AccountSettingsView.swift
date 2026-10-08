@@ -85,6 +85,9 @@ struct AccountSettingsView: View {
 
 /// Cloud-only shell: the account stays usable before a trusted content host exists.
 struct CloudAccountHome: View {
+    #if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+    #endif
     @ObservedObject var app: AppleAppModel
     @ObservedObject var cloud: CloudLoginModel
     var body: some View {
@@ -101,8 +104,13 @@ struct CloudAccountHome: View {
                     Text("在设置中连接你的电脑，接上对话与记忆。")
                         .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).multilineTextAlignment(.center)
                 }
-                NavigationLink { CloudDevicesView(app: app, cloud: cloud) } label: { WeftLabel("设置 → 设备", icon: "desktop") }.buttonStyle(PrimaryActionStyle())
-                NavigationLink { AccountSettingsView(cloud: cloud) } label: { WeftLabel("设置 → 账户", icon: "account") }.buttonStyle(OutlineActionStyle())
+                #if os(macOS)
+                Button { app.settingsRoute = .init(categoryID: "devices"); openWindow(id: "settings") } label: { WeftLabel("设置 → 设备", icon: "desktop") }.buttonStyle(PrimaryActionStyle())
+                Button { app.settingsRoute = .init(categoryID: "account"); openWindow(id: "settings") } label: { WeftLabel("设置 → 账户", icon: "account") }.buttonStyle(OutlineActionStyle())
+                #else
+                NavigationLink { SettingsView(model: app, route: .init(categoryID: "devices")) } label: { WeftLabel("设置 → 设备", icon: "desktop") }.buttonStyle(PrimaryActionStyle())
+                NavigationLink { SettingsView(model: app, route: .init(categoryID: "account")) } label: { WeftLabel("设置 → 账户", icon: "account") }.buttonStyle(OutlineActionStyle())
+                #endif
                 if let error = cloud.error { InlineNotice(message: error, isError: true) }
             }.padding(AppleTokens.Space.p24).frame(maxWidth: 468).frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Weave.canvas).navigationTitle("WeftMate")

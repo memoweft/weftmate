@@ -7,7 +7,7 @@ struct PhoneAccountMenu: View {
     @EnvironmentObject private var health: HealthSettingsModel
     @State private var route: Route?
 
-    private enum Destination { case memory, devices, settings, spirit, health }
+    private enum Destination { case memory, settings, spirit, health }
     private struct Route: Identifiable {
         let id = UUID()
         let destination: Destination
@@ -19,15 +19,11 @@ struct PhoneAccountMenu: View {
         Menu {
             Button { open(.memory) } label: { Label("记忆", image: "wm-memory") }
                 .accessibilityLabel("记忆").accessibilityIdentifier("phoneMenu.memory")
-            Button { open(.spirit) } label: { Label("小纬", image: "wm-pet") }
-                .accessibilityLabel("小纬").accessibilityIdentifier("phoneMenu.spirit")
             Button { open(.health) } label: { Label("健康", image: "wm-health") }
                 .accessibilityLabel("健康").accessibilityIdentifier("phoneMenu.health")
             Divider()
-            Button { open(.devices) } label: { Label("设备", image: "wm-desktop") }
-                .accessibilityLabel("设备").accessibilityIdentifier("phoneMenu.devices")
-            Button { open(.settings) } label: { Label("账户与设置", image: "wm-account") }
-                .accessibilityLabel("账户与设置").accessibilityIdentifier("phoneMenu.settings")
+            Button { open(.settings) } label: { Label("设置", image: "wm-settings") }
+                .accessibilityLabel("设置").accessibilityIdentifier("phoneMenu.settings")
         } label: {
             WeftIcon("account")
         }
@@ -39,8 +35,7 @@ struct PhoneAccountMenu: View {
                     if item.epoch == model.accountEpoch, model.session != nil {
                         switch item.destination {
                         case .memory: MemoryWorkspaceView(appModel: model).id(item.epoch)
-                        case .devices: CloudDevicesView(app: model, cloud: model.cloudLogin)
-                        case .settings: SettingsView(model: model)
+                        case .settings: SettingsView(model: model, onClose: { route = nil })
                         case .spirit: SpiritProfileView()
                         case .health:
                             HealthSettingsView(model: health, app: model)

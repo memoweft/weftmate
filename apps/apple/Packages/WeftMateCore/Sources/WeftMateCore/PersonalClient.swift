@@ -319,6 +319,25 @@ public actor PersonalClient {
     public func setUsageTimeZone(_ timeZone: String) async throws -> UsageSettings {
         return try await parityRequest(path: "/settings/usage", method: "PATCH", body: JSONSerialization.data(withJSONObject: ["timeZone": timeZone]))
     }
+    public func settingsSchedules() async throws -> ScheduleList { try await parityRequest(path: "/schedules") }
+    public func manageSchedule(sessionID: String, id: String, action: ScheduleAction) async throws {
+        let path = "/schedules/\(try checkedID(sessionID))/\(try checkedID(id))"
+        let _: SettingsActionReply = try await parityRequest(path: path + (action == .delete ? "" : "/" + action.rawValue),
+            method: action == .delete ? "DELETE" : "POST", body: action == .delete ? nil : Data("{}".utf8))
+    }
+    public func settingsStatus() async throws -> HostSettingsStatus { try await parityRequest(path: "/status") }
+    public func settingsBackups() async throws -> HostBackups { try await parityRequest(path: "/backups") }
+    public func setBackupPreferences(_ preferences: BackupPreferences) async throws {
+        struct Reply: Decodable { let settings: BackupPreferences }
+        let _: Reply = try await parityRequest(path: "/backups/settings", method: "PATCH", body: JSONEncoder().encode(preferences))
+    }
+    public func createBackup() async throws -> BackupActionReply {
+        try await parityRequest(path: "/backups", method: "POST", body: Data("{}".utf8))
+    }
+    public func restoreBackup(id: String) async throws -> BackupActionReply {
+        struct Body: Encodable { let id: String; let confirm = true }
+        return try await parityRequest(path: "/backups/restore", method: "POST", body: JSONEncoder().encode(Body(id: try checkedID(id))))
+    }
     private func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil) async throws -> T {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
