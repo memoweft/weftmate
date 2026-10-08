@@ -203,7 +203,7 @@ test('queued health with cloud opt-out preserves non-health recall on every rout
         capabilities: { subject_id: params.subject_id, services: { command: { operations: [] } } } } }
         if (method === 'health') return { runtime: { subject_id: initialized.subject_id, route_ready: true } }
         if (method === 'preview_recall') return { world_revision: 1, preview: {
-          rendered_recall: '偏好：回答使用中文', selected_item_ids: ['c-fixture'] } }
+          rendered_recall: '偏好：回答使用中文', selected_item_ids: [['cognition', 'c-fixture']] } }
         if (method === 'query_interactions') return { rendered_context: '合成历史' }
         return {}
       } }
@@ -212,6 +212,7 @@ test('queued health with cloud opt-out preserves non-health recall on every rout
   await manager.healthStore.upsert(ownerA, summary())
   const cloudRecall = await manager.recall(ownerA, { query: 'test', sessionId: 'session-a' })
   assert.equal(cloudRecall.state, 'ready')
+  assert.deepEqual(cloudRecall.memories, [{ id: 'c-fixture', kind: 'cognition', summary: '偏好：回答使用中文' }])
   assert.equal(cloudRecall.contextText, '偏好：回答使用中文\n\n合成历史')
   assert.equal(calls.findLast((row: any) => row.method === 'initialize').params.model_tier, 'cloud')
   assert.equal(calls.some((row: any) => row.method === 'preview_recall'), true)
