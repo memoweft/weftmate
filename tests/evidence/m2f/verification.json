@@ -1,0 +1,1998 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "blindCommit": "b6bc07f",
+    "originalScenariosUnmodified": true,
+    "blindBOnlyFinal": true,
+    "semanticJudgeOptIn": true,
+    "semanticJudgeDoesNotOverrideDeterministic": true,
+    "allFailuresRetained": true
+  },
+  "runs": [
+    {
+      "label": "m2f-baseline-a-mimo",
+      "candidate": "ea1d9d11aca0f839c76026b89ec46c9f85d439fd",
+      "stage": "baseline",
+      "exitCode": 0,
+      "scenarios": [
+        {
+          "id": "memory-1x-correction",
+          "category": "memory",
+          "title": "留出：浇水量省略主题纠正",
+          "status": "passed",
+          "durationMs": 51155,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "150",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-762a8928-6f0a-4aad-b1c1-9b4f018d220e",
+              "modelProfileId": "private-model-b3a4ccdc20f50642867582b415858af8e3d054fd",
+              "commandId": "cmd-641b6474-68f1-46bb-be51-c15a8f1a1318",
+              "startedAt": "2026-10-08T15:08:51.965Z",
+              "reply": "收到：阳台盆栽每次浇水固定 300 毫升，已记住这个用量。以后涉及浇水建议或安排时我会按这个标准来。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:08:52.452Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:08:52.453Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:08:52.894Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:08:52.895Z"
+                },
+                {
+                  "seq": 55,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:08:58.053Z"
+                },
+                {
+                  "seq": 56,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:08:58.054Z"
+                },
+                {
+                  "seq": 57,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:08:58.055Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 6707,
+              "endedAt": "2026-10-08T15:08:58.672Z"
+            },
+            {
+              "sessionId": "session-b287b623-baa3-4708-a7cc-77cc572daa9e",
+              "modelProfileId": "private-model-b3a4ccdc20f50642867582b415858af8e3d054fd",
+              "commandId": "cmd-709d5fb1-3172-4fe8-b895-e86030404399",
+              "startedAt": "2026-10-08T15:09:01.710Z",
+              "reply": "明白。前面报的 300 毫升作废，实际是 150 毫升；之后都按 150 毫升这个数为准。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:09:02.136Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:09:02.137Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:09:08.832Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:09:08.832Z"
+                },
+                {
+                  "seq": 186,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:09:18.999Z"
+                },
+                {
+                  "seq": 187,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:09:19.011Z"
+                },
+                {
+                  "seq": 188,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:09:19.011Z"
+                },
+                {
+                  "seq": 189,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:09:20.045Z"
+                },
+                {
+                  "seq": 229,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:09:23.810Z"
+                },
+                {
+                  "seq": 230,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:09:23.811Z"
+                },
+                {
+                  "seq": 231,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:09:23.811Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 22326,
+              "endedAt": "2026-10-08T15:09:24.036Z"
+            },
+            {
+              "sessionId": "session-118d5dfd-57d2-45c3-a2de-5673f675b602",
+              "modelProfileId": "private-model-b3a4ccdc20f50642867582b415858af8e3d054fd",
+              "commandId": "cmd-feefa1da-3116-40f7-b13c-66c91c4ebeaf",
+              "startedAt": "2026-10-08T15:09:28.336Z",
+              "reply": "今天浇 **150 毫升** 就够了（按你后来定的小数值，之前说的 300 毫升作废）。\n\n如果盆土表面还明显潮湿，可以再少浇一点或隔天再浇；判断标准是\"浇到盆底刚渗出水\"比固定量更稳。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:09:28.870Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:09:28.871Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:09:35.489Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:09:35.490Z"
+                },
+                {
+                  "seq": 88,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:09:40.449Z"
+                },
+                {
+                  "seq": 89,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:09:40.449Z"
+                },
+                {
+                  "seq": 90,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:09:40.450Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-25842a940a08761ef4e5d43b571fdda027942a03a13be4e6f7dc561a245a3efa",
+                  "kind": "cognition",
+                  "summary": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+                }
+              ],
+              "durationMs": 12788,
+              "endedAt": "2026-10-08T15:09:41.124Z"
+            }
+          ],
+          "replySummary": "今天浇 **150 毫升** 就够了（按你后来定的小数值，之前说的 300 毫升作废）。\n\n如果盆土表面还明显潮湿，可以再少浇一点或隔天再浇；判断标准是\"浇到盆底刚渗出水\"比固定量更稳。",
+          "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-jYPnag",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "semanticJudgement": {
+            "status": "passed",
+            "reason": "回复明确采用纠正后的150毫升作为浇水量，并说明之前说的300毫升作废，未仍按300毫升浇水；纠正回合（第二条用户消息）仅修正数值，未重复盆栽或浇水主题，符合全部要求。",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 167,
+              "prompt_tokens": 241,
+              "total_tokens": 408,
+              "completion_tokens_details": {
+                "reasoning_tokens": 99
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "memory-1x-person",
+          "category": "memory",
+          "title": "留出：课程师生关系跨对话联系",
+          "status": "passed",
+          "durationMs": 54008,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "闻舟",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "陶艺|拉坯",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "问候应自然联系陶艺老师或拉坯，不捏造其他关系或事项。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-79d94a04-3c16-4cdc-98eb-a0113de5564f",
+              "modelProfileId": "private-model-b3a4ccdc20f50642867582b415858af8e3d054fd",
+              "commandId": "cmd-ca8028d1-825b-4c7a-a429-9120fce20471",
+              "startedAt": "2026-10-08T15:10:02.657Z",
+              "reply": "明白——闻舟是教你陶艺的老师，主要带你练拉坯。我记下这个背景了，之后如果涉及日程、记录练习之类的安排，我会把闻舟当作你的陶艺老师来对待。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:10:03.083Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:10:03.084Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:10:03.669Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:10:03.670Z"
+                },
+                {
+                  "seq": 57,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:10:07.162Z"
+                },
+                {
+                  "seq": 58,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:10:07.162Z"
+                },
+                {
+                  "seq": 59,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:10:07.163Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 5074,
+              "endedAt": "2026-10-08T15:10:07.732Z"
+            },
+            {
+              "sessionId": "session-d865fb96-5f03-4746-a4eb-6cacf26f4b23",
+              "modelProfileId": "private-model-b3a4ccdc20f50642867582b415858af8e3d054fd",
+              "commandId": "cmd-af28a64e-8713-4e0a-bb90-612cd37859a1",
+              "startedAt": "2026-10-08T15:10:11.381Z",
+              "reply": "给你一句自然的问候：\n\n> 闻舟，最近怎么样？上次学的拉坯我这几天一直在练，总算有点感觉了，改天还想去找您再请教请教～您最近什么时候有空？\n\n如果想更简短随意一点：\n\n> 闻舟好呀，最近练拉坯手有点生，想着跟您打个招呼，有空指点我两句😄\n\n需要我帮你实际发出去的话，告诉我用哪个应用（微信、短信等）和联系人即可。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:10:11.808Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:10:11.808Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:10:13.469Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:10:13.470Z"
+                },
+                {
+                  "seq": 214,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:10:54.787Z"
+                },
+                {
+                  "seq": 215,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:10:54.788Z"
+                },
+                {
+                  "seq": 216,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:10:54.788Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "relationship-78fe0bb8b74aa604b8931649ba787b12e3311d75121e14299cc40f8ad05e8b36",
+                  "kind": "relationship",
+                  "summary": "用户闻舟是教我陶艺的老师，他会带我练拉坯。"
+                }
+              ],
+              "durationMs": 43605,
+              "endedAt": "2026-10-08T15:10:54.986Z"
+            }
+          ],
+          "replySummary": "给你一句自然的问候：\n\n> 闻舟，最近怎么样？上次学的拉坯我这几天一直在练，总算有点感觉了，改天还想去找您再请教请教～您最近什么时候有空？\n\n如果想更简短随意一点：\n\n> 闻舟好呀，最近练拉坯手有点生，想着跟您打个招呼，有空指点我两句😄\n\n需要我帮你实际发出去的话，告诉我用哪个应用（微信、短信等）和联系人即可。",
+          "notes": "M2e留出场景；陶艺师生关系领域。新会话只提姓名；基线另核对采用的正式关系、当前状态、完整原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-person-Dq6rug",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "status": "passed",
+            "reason": "问候均围绕闻舟作为陶艺老师和拉坯练习展开，语气自然，未虚构其他人物关系或无关事项；提到的练拉坯与用户给出的背景（老师带练拉坯）一致，属于合理续写。",
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 202,
+              "prompt_tokens": 238,
+              "total_tokens": 440,
+              "completion_tokens_details": {
+                "reasoning_tokens": 141
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            }
+          }
+        },
+        {
+          "id": "memory-1x-preference",
+          "category": "memory",
+          "title": "留出：音乐选择偏好跨对话采用",
+          "status": "failed",
+          "durationMs": 26735,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "纯器乐|器乐|无歌词|没有歌词|无人声|没有人声",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "failed",
+              "reason": "memory_used did not match expected value"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "在新会话不重复偏好的情况下，应推荐不带人声的器乐曲，不推荐歌曲演唱版本。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-365c1b6e-e209-4bca-a050-b26bc47f1456",
+              "modelProfileId": "private-model-b3a4ccdc20f50642867582b415858af8e3d054fd",
+              "commandId": "cmd-00668dae-ddeb-47d8-9ca7-dc243c85050a",
+              "startedAt": "2026-10-08T15:11:11.364Z",
+              "reply": "明白，以后给你挑音乐时会排除带人声的曲目，只选纯器乐。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:11:11.752Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:11:11.752Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:11:12.346Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:11:12.346Z"
+                },
+                {
+                  "seq": 53,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:11:16.108Z"
+                },
+                {
+                  "seq": 54,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:11:16.108Z"
+                },
+                {
+                  "seq": 55,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:11:16.109Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 5004,
+              "endedAt": "2026-10-08T15:11:16.368Z"
+            },
+            {
+              "sessionId": "session-2309b180-2bdf-4ae4-92c0-4da55e0726ec",
+              "modelProfileId": "private-model-b3a4ccdc20f50642867582b415858af8e3d054fd",
+              "commandId": "cmd-485fa456-2ec6-4052-a994-86130b2aa467",
+              "startedAt": "2026-10-08T15:11:20.562Z",
+              "reply": "推荐德彪西的《月光》（Claude Debussy — *Clair de Lune*），出自《贝加马斯克组曲》。\n\n它节奏舒缓、旋律像水波一样起伏，没有强烈的起伏感，很适合睡前、阅读或发呆时听。钢琴音色柔和，即使循环播放也不容易觉得腻。\n\n如果想换换口味，还可以试试：\n\n- **萨蒂《第一号裸体歌舞》**（Erik Satie — *Gymnopédie No.1*）：极简、安静，有\"留白\"感\n- **巴赫《哥德堡变奏曲》咏叹调**（Glenn Gould 演奏版）：平稳安神，适合需要集中注意力时作背景\n- **坂本龙一《Merry Christmas Mr. Lawrence》**：旋律优美，带一点淡淡的忧伤\n\n想让我在你的音乐软件里直接搜索并播放其中一首吗？",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:11:21.002Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:11:21.002Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:11:25.449Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:11:25.450Z"
+                },
+                {
+                  "seq": 169,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:11:35.604Z"
+                },
+                {
+                  "seq": 170,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:11:35.604Z"
+                },
+                {
+                  "seq": 171,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:11:35.605Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 15642,
+              "endedAt": "2026-10-08T15:11:36.204Z"
+            }
+          ],
+          "replySummary": "推荐德彪西的《月光》（Claude Debussy — *Clair de Lune*），出自《贝加马斯克组曲》。\n\n它节奏舒缓、旋律像水波一样起伏，没有强烈的起伏感，很适合睡前、阅读或发呆时听。钢琴音色柔和，即使循环播放也不容易觉得腻。\n\n如果想换换口味，还可以试试：\n\n- **萨蒂《第一号裸体歌舞》**（Erik Satie — *Gymnopédie No.1*）：极简、安静，有\"留白\"感\n- **巴赫《哥德堡变奏曲》咏叹调**（Glenn Gould 演奏版）：平稳安神，适合需要集中注意力时作背景\n- **坂本龙一《Merry Christmas Mr. Lawrence》**：旋律优美，带一点淡淡的忧伤\n\n想让我在你的音乐软件里直接搜索并播放其中一首吗？",
+          "notes": "M2e留出场景；音乐领域与形成提示示例、原memory-01..04无关。基线另查采用项的当前状态、精确原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-preference-aII2iF",
+          "reason": "reply_matches did not match expected value; memory_used did not match expected value; holdout must adopt its own current formal memory",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true
+          },
+          "semanticJudgement": {
+            "status": "error",
+            "reason": "Expected ',' or '}' after property value in JSON at position 12 (line 1 column 13)"
+          }
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 217,
+          "matches": 0,
+          "skippedLinks": 511
+        }
+      },
+      "mimoUsage": {
+        "startedRequests": 24,
+        "usageRequests": 22,
+        "missingUsageRequests": 2,
+        "inputTokens": 94361,
+        "cachedInputTokens": 77568,
+        "outputTokens": 3707,
+        "knownCostCny": 0.02575836
+      },
+      "requestOrdering": {
+        "observed": 2,
+        "allBackgroundBeforeLastUser": true
+      }
+    },
+    {
+      "label": "m2f-development-a-mimo-1",
+      "candidate": "working-tree-before-explicit-rejected-value-cue",
+      "stage": "development",
+      "exitCode": 0,
+      "scenarios": [
+        {
+          "id": "memory-1x-correction",
+          "category": "memory",
+          "title": "留出：浇水量省略主题纠正",
+          "status": "passed",
+          "durationMs": 306864,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "150",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-49df681b-1b73-4837-93dc-e3c50790932c",
+              "modelProfileId": "private-model-4b9ba59452d63a1be42835cbdadc7a0d37c1dbad",
+              "commandId": "cmd-2746cae1-8a8d-480a-9222-46d6aba14e95",
+              "startedAt": "2026-10-08T15:15:37.407Z",
+              "reply": "收到：你阳台盆栽每次固定浇 300 毫升。之后涉及浇水建议或安排时，我会按这个用量来。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:15:38.018Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:15:38.019Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:15:38.646Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:15:38.647Z"
+                },
+                {
+                  "seq": 55,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:15:44.640Z"
+                },
+                {
+                  "seq": 56,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:15:44.640Z"
+                },
+                {
+                  "seq": 57,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:15:44.641Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 7611,
+              "endedAt": "2026-10-08T15:15:45.018Z"
+            },
+            {
+              "sessionId": "session-a2655d52-8a83-431e-8fca-96a2cfe0a805",
+              "modelProfileId": "private-model-4b9ba59452d63a1be42835cbdadc7a0d37c1dbad",
+              "commandId": "cmd-d7db290d-e4d2-4d90-ac80-0aba539f3ba8",
+              "startedAt": "2026-10-08T15:15:50.262Z",
+              "reply": "收到，已更正：**阳台盆栽每次浇水量以 150 毫升为准**，之前那个 300 毫升是报大了、作废，之后我都按 150 毫升这个小数来。这条纠正已进入 MemoWeft 的处理队列，会自动覆盖原来的记录，无需你再说明。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:15:50.863Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:15:50.863Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:15:53.574Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:15:53.574Z"
+                },
+                {
+                  "seq": 114,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:16:01.925Z"
+                },
+                {
+                  "seq": 115,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:16:01.938Z"
+                },
+                {
+                  "seq": 116,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:16:01.939Z"
+                },
+                {
+                  "seq": 117,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:16:02.992Z"
+                },
+                {
+                  "seq": 147,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:16:06.992Z"
+                },
+                {
+                  "seq": 148,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:16:08.045Z"
+                },
+                {
+                  "seq": 339,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:16:23.909Z"
+                },
+                {
+                  "seq": 340,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:16:25.180Z"
+                },
+                {
+                  "seq": 341,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:16:25.181Z"
+                },
+                {
+                  "seq": 342,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:16:26.420Z"
+                },
+                {
+                  "seq": 389,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:16:54.072Z"
+                },
+                {
+                  "seq": 390,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:16:55.241Z"
+                },
+                {
+                  "seq": 465,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:17:03.494Z"
+                },
+                {
+                  "seq": 466,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:17:04.641Z"
+                },
+                {
+                  "seq": 510,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:17:08.822Z"
+                },
+                {
+                  "seq": 511,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:17:09.938Z"
+                },
+                {
+                  "seq": 582,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:17:14.620Z"
+                },
+                {
+                  "seq": 583,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:17:15.727Z"
+                },
+                {
+                  "seq": 664,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:17:44.426Z"
+                },
+                {
+                  "seq": 665,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:17:45.447Z"
+                },
+                {
+                  "seq": 754,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:17:49.945Z"
+                },
+                {
+                  "seq": 755,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:17:52.124Z"
+                },
+                {
+                  "seq": 938,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:17:59.557Z"
+                },
+                {
+                  "seq": 939,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:18:00.548Z"
+                },
+                {
+                  "seq": 940,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:18:00.549Z"
+                },
+                {
+                  "seq": 941,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:18:27.957Z"
+                },
+                {
+                  "seq": 1019,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:18:33.501Z"
+                },
+                {
+                  "seq": 1020,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:18:35.875Z"
+                },
+                {
+                  "seq": 1068,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:18:45.654Z"
+                },
+                {
+                  "seq": 1069,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:18:47.589Z"
+                },
+                {
+                  "seq": 1152,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:18:54.477Z"
+                },
+                {
+                  "seq": 1153,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:18:55.936Z"
+                },
+                {
+                  "seq": 1273,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:19:13.304Z"
+                },
+                {
+                  "seq": 1274,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:19:23.058Z"
+                },
+                {
+                  "seq": 1365,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:19:28.330Z"
+                },
+                {
+                  "seq": 1366,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:19:29.848Z"
+                },
+                {
+                  "seq": 1744,
+                  "type": "step.started",
+                  "at": "2026-10-08T15:19:50.804Z"
+                },
+                {
+                  "seq": 1745,
+                  "type": "step.completed",
+                  "at": "2026-10-08T15:19:52.459Z"
+                },
+                {
+                  "seq": 1801,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:20:08.120Z"
+                },
+                {
+                  "seq": 1802,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:20:08.121Z"
+                },
+                {
+                  "seq": 1803,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:20:08.121Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 258454,
+              "endedAt": "2026-10-08T15:20:08.716Z"
+            },
+            {
+              "sessionId": "session-4689f736-e88e-4160-ae9a-bc08f1626ccc",
+              "modelProfileId": "private-model-4b9ba59452d63a1be42835cbdadc7a0d37c1dbad",
+              "commandId": "cmd-e85649f9-69da-4340-a992-91894f03e60c",
+              "startedAt": "2026-10-08T15:20:12.132Z",
+              "reply": "今天每盆按 **150 毫升** 浇就行——之前那个 300 毫升报大了，作废，以后都以 150 毫升这个小数为准。\n\n如果今天阳光强、盆土干得快，可以到傍晚再摸一下表土，表面干了就补一次同样的量，但别一次浇到 300。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:20:12.596Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:20:12.596Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:20:13.862Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:20:13.863Z"
+                },
+                {
+                  "seq": 94,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:20:41.150Z"
+                },
+                {
+                  "seq": 95,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:20:41.151Z"
+                },
+                {
+                  "seq": 96,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:20:41.151Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-d56693faec6a309c44491e3e62153ebd6dffa520eec6823ff8979a16e65fbc88",
+                  "kind": "cognition",
+                  "summary": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+                }
+              ],
+              "durationMs": 29625,
+              "endedAt": "2026-10-08T15:20:41.757Z"
+            }
+          ],
+          "replySummary": "今天每盆按 **150 毫升** 浇就行——之前那个 300 毫升报大了，作废，以后都以 150 毫升这个小数为准。\n\n如果今天阳光强、盆土干得快，可以到傍晚再摸一下表土，表面干了就补一次同样的量，但别一次浇到 300。",
+          "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-TuAcek",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 347,
+              "prompt_tokens": 254,
+              "total_tokens": 601,
+              "completion_tokens_details": {
+                "reasoning_tokens": 276
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复明确以纠正后的150毫升作为浇水用量，并强调300毫升已作废、不要浇到300，未仍按300毫升浇水；纠正回合（第二条用户消息）只做数值纠正，未重复盆栽或浇水主题。\"}",
+            "status": "passed",
+            "reason": "回复明确以纠正后的150毫升作为浇水用量，并强调300毫升已作废、不要浇到300，未仍按300毫升浇水；纠正回合（第二条用户消息）只做数值纠正，未重复盆栽或浇水主题。"
+          }
+        },
+        {
+          "id": "memory-1x-person",
+          "category": "memory",
+          "title": "留出：课程师生关系跨对话联系",
+          "status": "passed",
+          "durationMs": 31422,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "闻舟",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "陶艺|拉坯",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "问候应自然联系陶艺老师或拉坯，不捏造其他关系或事项。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-073786ec-8cbe-4af7-aa9b-846d40c64cb0",
+              "modelProfileId": "private-model-4b9ba59452d63a1be42835cbdadc7a0d37c1dbad",
+              "commandId": "cmd-36f179e9-f34c-47c1-85d8-4da89d386c6e",
+              "startedAt": "2026-10-08T15:20:56.095Z",
+              "reply": "好的，记下了：闻舟是教你陶艺的老师，会带你练拉坯。需要安排上课提醒或整理练习要点时随时告诉我。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:20:56.568Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:20:56.569Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:20:57.195Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:20:57.195Z"
+                },
+                {
+                  "seq": 48,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:20:59.923Z"
+                },
+                {
+                  "seq": 49,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:20:59.923Z"
+                },
+                {
+                  "seq": 50,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:20:59.924Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 4482,
+              "endedAt": "2026-10-08T15:21:00.577Z"
+            },
+            {
+              "sessionId": "session-48f89b09-8e66-46c0-9198-564980f2a9e8",
+              "modelProfileId": "private-model-4b9ba59452d63a1be42835cbdadc7a0d37c1dbad",
+              "commandId": "cmd-72de4feb-ce26-4a9b-80ac-45ec4fe1539d",
+              "startedAt": "2026-10-08T15:21:04.381Z",
+              "reply": "给闻舟老师的一句问候：\n\n> **「闻舟老师好呀～最近没怎么摸坯，手都有点生了，突然特别想念转盘前的日子。您最近还好吗？」**\n\n自然、带点学生的亲近感，也顺带提到了拉坯，方便他接话。如果你想更简短一点，也可以只用前半句：「闻舟老师好呀，最近手有点痒，想念拉坯了～您最近怎么样？」\n\n需要的话我可以帮你直接发出去（告诉我用哪个聊天工具就行）。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:21:04.844Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:21:04.844Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:21:09.594Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:21:09.594Z"
+                },
+                {
+                  "seq": 336,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:21:25.112Z"
+                },
+                {
+                  "seq": 337,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:21:25.113Z"
+                },
+                {
+                  "seq": 338,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:21:25.114Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "relationship-6261ffe71156ed6a20c53619de916a0b35906b744433dcfe6e55675d3813341e",
+                  "kind": "relationship",
+                  "summary": "用户闻舟是教我陶艺的老师，他会带我练拉坯。"
+                }
+              ],
+              "durationMs": 21347,
+              "endedAt": "2026-10-08T15:21:25.728Z"
+            }
+          ],
+          "replySummary": "给闻舟老师的一句问候：\n\n> **「闻舟老师好呀～最近没怎么摸坯，手都有点生了，突然特别想念转盘前的日子。您最近还好吗？」**\n\n自然、带点学生的亲近感，也顺带提到了拉坯，方便他接话。如果你想更简短一点，也可以只用前半句：「闻舟老师好呀，最近手有点痒，想念拉坯了～您最近怎么样？」\n\n需要的话我可以帮你直接发出去（告诉我用哪个聊天工具就行）。",
+          "notes": "M2e留出场景；陶艺师生关系领域。新会话只提姓名；基线另核对采用的正式关系、当前状态、完整原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-person-g5Esnc",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 353,
+              "prompt_tokens": 245,
+              "total_tokens": 598,
+              "completion_tokens_details": {
+                "reasoning_tokens": 292
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "rawVerdict": "{\"pass\":false,\"reason\":\"问候语本身自然联系了陶艺老师与拉坯，但回复额外声称“我可以帮你直接发出去（告诉我用哪个聊天工具）”，捏造了自己能够发送消息的能力/事项，违反不捏造其他事项的要求。\"}",
+            "status": "failed",
+            "reason": "问候语本身自然联系了陶艺老师与拉坯，但回复额外声称“我可以帮你直接发出去（告诉我用哪个聊天工具）”，捏造了自己能够发送消息的能力/事项，违反不捏造其他事项的要求。"
+          }
+        },
+        {
+          "id": "memory-1x-preference",
+          "category": "memory",
+          "title": "留出：音乐选择偏好跨对话采用",
+          "status": "passed",
+          "durationMs": 27355,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "纯器乐|器乐|无歌词|没有歌词|无人声|没有人声",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "在新会话不重复偏好的情况下，应推荐不带人声的器乐曲，不推荐歌曲演唱版本。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-7cb27990-9136-4998-a9d8-be4297697a96",
+              "modelProfileId": "private-model-4b9ba59452d63a1be42835cbdadc7a0d37c1dbad",
+              "commandId": "cmd-b96b967a-008b-46eb-826b-89702315c20a",
+              "startedAt": "2026-10-08T15:22:00.307Z",
+              "reply": "好的，以后给你挑音乐时我会把带人声的作品排除，只选纯器乐（古典、爵士器乐、氛围/电子纯音乐等）。\n\n这条偏好我记下了，不需要你每次重复。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:22:00.944Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:22:00.944Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:22:01.702Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:22:01.702Z"
+                },
+                {
+                  "seq": 73,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:22:05.572Z"
+                },
+                {
+                  "seq": 74,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:22:05.572Z"
+                },
+                {
+                  "seq": 75,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:22:05.573Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 5918,
+              "endedAt": "2026-10-08T15:22:06.225Z"
+            },
+            {
+              "sessionId": "session-b807284b-e8d6-463e-87a5-dd970a41c638",
+              "modelProfileId": "private-model-4b9ba59452d63a1be42835cbdadc7a0d37c1dbad",
+              "commandId": "cmd-51e53802-7afd-452a-840a-74b774f2f71e",
+              "startedAt": "2026-10-08T15:22:10.339Z",
+              "reply": "推荐 **萨蒂《第一号吉姆诺佩蒂》（Erik Satie — Gymnopédie No.1）**，钢琴独奏，无人声。\n\n节奏缓慢、和声温柔而不甜腻，三拍子像平缓的呼吸，3 分多钟一首，很适合睡前或发呆时放着听。钢琴音色干净，音量调低一点当背景音也不会喧宾夺主。\n\n如果想要更现代、更\"氛围化\"的版本，可以听 **坂本龙一《Energy Flow》** 或 **Brian Eno《Music for Airports 1/1》**，同样都是纯器乐。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:22:11.468Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:22:11.468Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:22:12.259Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:22:12.259Z"
+                },
+                {
+                  "seq": 159,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:22:24.916Z"
+                },
+                {
+                  "seq": 160,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:22:24.917Z"
+                },
+                {
+                  "seq": 161,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:22:24.918Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-a3627e7c59f425b66a38fe0ab6094c1ba33717d9defba27e9572c93088036d06",
+                  "kind": "cognition",
+                  "summary": "用户挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。"
+                }
+              ],
+              "durationMs": 14991,
+              "endedAt": "2026-10-08T15:22:25.330Z"
+            }
+          ],
+          "replySummary": "推荐 **萨蒂《第一号吉姆诺佩蒂》（Erik Satie — Gymnopédie No.1）**，钢琴独奏，无人声。\n\n节奏缓慢、和声温柔而不甜腻，三拍子像平缓的呼吸，3 分多钟一首，很适合睡前或发呆时放着听。钢琴音色干净，音量调低一点当背景音也不会喧宾夺主。\n\n如果想要更现代、更\"氛围化\"的版本，可以听 **坂本龙一《Energy Flow》** 或 **Brian Eno《Music for Airports 1/1》**，同样都是纯器乐。",
+          "notes": "M2e留出场景；音乐领域与形成提示示例、原memory-01..04无关。基线另查采用项的当前状态、精确原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-preference-csX9Hy",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 512,
+              "prompt_tokens": 271,
+              "total_tokens": 783,
+              "completion_tokens_details": {
+                "reasoning_tokens": 35
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复推荐的三首作品（Satie《Gymnopédie No.1》、坂本龙一《Energy Flow》、Brian Eno《Music for Airports》）均为纯器乐、无人声，且明确说明\"",
+            "status": "error",
+            "reason": "Expected ',' or '}' after property value in JSON at position 120 (line 1 column 121)"
+          }
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 219,
+          "matches": 0,
+          "skippedLinks": 511
+        }
+      },
+      "mimoUsage": {
+        "startedRequests": 40,
+        "usageRequests": 40,
+        "missingUsageRequests": 0,
+        "inputTokens": 409083,
+        "cachedInputTokens": 221504,
+        "outputTokens": 8650,
+        "knownCostCny": 0.20930908
+      },
+      "requestOrdering": {
+        "observed": 3,
+        "allBackgroundBeforeLastUser": true
+      }
+    },
+    {
+      "label": "m2f-development-a-mimo-2",
+      "candidate": "f5d615e85d3691e3e7271e6f236f496c50a7dd00",
+      "stage": "development",
+      "exitCode": 0,
+      "scenarios": [
+        {
+          "id": "memory-1x-correction",
+          "category": "memory",
+          "title": "留出：浇水量省略主题纠正",
+          "status": "passed",
+          "durationMs": 53158,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "150",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "应采用纠正后的150毫升，不能仍按300毫升浇水；纠正回合没有重复盆栽或浇水主题。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-0e3c6ae5-e52b-49f2-9b02-f09055b90c65",
+              "modelProfileId": "private-model-22aa4fb0f04db4d2ae12d82c4fbd31b3adfae0ce",
+              "commandId": "cmd-b3e3edcb-ab9e-45dd-8b8a-f2477deee1f1",
+              "startedAt": "2026-10-08T15:20:45.182Z",
+              "reply": "记下了：阳台盆栽每次固定浇 300 毫升。需要我把它整理成养护建议或提醒时再说。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:20:45.624Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:20:45.625Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:20:46.069Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:20:46.070Z"
+                },
+                {
+                  "seq": 57,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:20:50.538Z"
+                },
+                {
+                  "seq": 58,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:20:50.539Z"
+                },
+                {
+                  "seq": 59,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:20:50.540Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 5363,
+              "endedAt": "2026-10-08T15:20:50.545Z"
+            },
+            {
+              "sessionId": "session-f745da0b-6b63-4f8b-ad1c-082ac787dead",
+              "modelProfileId": "private-model-22aa4fb0f04db4d2ae12d82c4fbd31b3adfae0ce",
+              "commandId": "cmd-f5864247-5cd1-4319-84ec-693ba4d33061",
+              "startedAt": "2026-10-08T15:20:54.592Z",
+              "reply": "收到：阳台盆栽每次浇水改为 **150 毫升**，之前的 300 毫升作废，后续一律按 150 毫升执行。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:20:55.043Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:20:55.043Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:21:10.795Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:21:10.796Z"
+                },
+                {
+                  "seq": 55,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:21:14.943Z"
+                },
+                {
+                  "seq": 56,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:21:14.944Z"
+                },
+                {
+                  "seq": 57,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:21:14.945Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-f1c9e8f71b4f0dd3d7aa1e6bb1e7dc091afa8df6dd73786cb5fabcceee7df1c7",
+                  "kind": "cognition",
+                  "summary": "用户养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。"
+                }
+              ],
+              "durationMs": 20576,
+              "endedAt": "2026-10-08T15:21:15.168Z"
+            },
+            {
+              "sessionId": "session-29151ccf-db13-4b43-8acc-fe246bdd2142",
+              "modelProfileId": "private-model-22aa4fb0f04db4d2ae12d82c4fbd31b3adfae0ce",
+              "commandId": "cmd-7fa73d19-b114-49a4-9582-29e785307eee",
+              "startedAt": "2026-10-08T15:21:19.559Z",
+              "reply": "按你之前定的数：**150 毫升**（300 毫升那次报大了，已作废，以这个小数为准）。\n\n每盆浇 150 ml 左右即可；如果今天阳光强、盆土干得快，可以观察盆土——表层 2–3 厘米干了再浇，浇就浇透，别只浇一半。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:21:20.025Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:21:20.025Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:21:30.505Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:21:30.505Z"
+                },
+                {
+                  "seq": 103,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:21:35.589Z"
+                },
+                {
+                  "seq": 104,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:21:35.590Z"
+                },
+                {
+                  "seq": 105,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:21:35.590Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-14648ed090743e7ddbd4929ab62576099507dda9cbd37cab6b95003fce05d453",
+                  "kind": "cognition",
+                  "summary": "用户前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。"
+                }
+              ],
+              "durationMs": 16681,
+              "endedAt": "2026-10-08T15:21:36.240Z"
+            }
+          ],
+          "replySummary": "按你之前定的数：**150 毫升**（300 毫升那次报大了，已作废，以这个小数为准）。\n\n每盆浇 150 ml 左右即可；如果今天阳光强、盆土干得快，可以观察盆土——表层 2–3 厘米干了再浇，浇就浇透，别只浇一半。",
+          "notes": "M2e留出场景；园艺数量领域；三个独立会话。基线严格检查当前纠正项采用、旧项失效且排除、双方原话来源保留及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-correction-hjTahP",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 223,
+              "prompt_tokens": 259,
+              "total_tokens": 482,
+              "completion_tokens_details": {
+                "reasoning_tokens": 153
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "rawVerdict": "{\"pass\": true, \"reason\":\"回复明确采用纠正后的 150 毫升，说明 300 毫升已作废，未再按 300 毫升给出用量；第二条纠正信息只针对数值更正，没有重复盆栽或浇水主题。\"}",
+            "status": "passed",
+            "reason": "回复明确采用纠正后的 150 毫升，说明 300 毫升已作废，未再按 300 毫升给出用量；第二条纠正信息只针对数值更正，没有重复盆栽或浇水主题。"
+          }
+        },
+        {
+          "id": "memory-1x-person",
+          "category": "memory",
+          "title": "留出：课程师生关系跨对话联系",
+          "status": "passed",
+          "durationMs": 38685,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "text": "闻舟",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "陶艺|拉坯",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "问候应自然联系陶艺老师或拉坯，不捏造其他关系或事项。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-01b17814-f68b-4ed4-ba3d-3004a45074d3",
+              "modelProfileId": "private-model-22aa4fb0f04db4d2ae12d82c4fbd31b3adfae0ce",
+              "commandId": "cmd-809f78a5-4b35-463b-baf9-251ebf4255e2",
+              "startedAt": "2026-10-08T15:21:42.962Z",
+              "reply": "知道了——闻舟是你的陶艺老师，会带你练拉坯。祝你们练习顺利！",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:21:43.405Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:21:43.406Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:21:44.027Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:21:44.028Z"
+                },
+                {
+                  "seq": 41,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:21:46.677Z"
+                },
+                {
+                  "seq": 42,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:21:46.677Z"
+                },
+                {
+                  "seq": 43,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:21:46.678Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 3951,
+              "endedAt": "2026-10-08T15:21:46.913Z"
+            },
+            {
+              "sessionId": "session-5fec8ec9-83a4-4593-8813-480242b9affb",
+              "modelProfileId": "private-model-22aa4fb0f04db4d2ae12d82c4fbd31b3adfae0ce",
+              "commandId": "cmd-fd7b5896-147b-4a9a-a7bc-c8674e06c5c1",
+              "startedAt": "2026-10-08T15:21:51.302Z",
+              "reply": "给你一句，自然、不生分，还带着你们拉坯的共同话题：\n\n> **闻舟，最近好吗？好久没碰拉坯机了，手有点痒，想着最近再去找你练练，你哪天方便？**\n\n如果想更简短随意一点：\n\n> **闻舟老师，最近怎么样？我这几天手痒想拉坯了，你什么时候有空，我去上课～**\n\n要发的话告诉我用哪个，以及通过什么发（微信、短信还是其他），我帮你发出去。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:21:51.790Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:21:51.790Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:21:57.318Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:21:57.319Z"
+                },
+                {
+                  "seq": 228,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:22:19.314Z"
+                },
+                {
+                  "seq": 229,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:22:19.315Z"
+                },
+                {
+                  "seq": 230,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:22:19.315Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "relationship-281215d0c49cd09780f9efb8ad41b4399351fee98ca564b2b6604b5800b0ee6e",
+                  "kind": "relationship",
+                  "summary": "用户闻舟是教我陶艺的老师，他会带我练拉坯。"
+                }
+              ],
+              "durationMs": 28624,
+              "endedAt": "2026-10-08T15:22:19.926Z"
+            }
+          ],
+          "replySummary": "给你一句，自然、不生分，还带着你们拉坯的共同话题：\n\n> **闻舟，最近好吗？好久没碰拉坯机了，手有点痒，想着最近再去找你练练，你哪天方便？**\n\n如果想更简短随意一点：\n\n> **闻舟老师，最近怎么样？我这几天手痒想拉坯了，你什么时候有空，我去上课～**\n\n要发的话告诉我用哪个，以及通过什么发（微信、短信还是其他），我帮你发出去。",
+          "notes": "M2e留出场景；陶艺师生关系领域。新会话只提姓名；基线另核对采用的正式关系、当前状态、完整原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-person-S6g6Vi",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 512,
+              "prompt_tokens": 245,
+              "total_tokens": 757,
+              "completion_tokens_details": {
+                "reasoning_tokens": 431
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复中的问候均围绕陶艺老师闻舟与拉坯展开（如约练拉坯、想拉坯、去上课），未虚构其他人物关系，也未编造与陶艺/拉坯无关的其他事项；'好久没碰拉坯机了''手痒'只是对拉坯话题的自然展开，属于该关系",
+            "status": "error",
+            "reason": "Unterminated string in JSON at position 119 (line 1 column 120)"
+          }
+        },
+        {
+          "id": "memory-1x-preference",
+          "category": "memory",
+          "title": "留出：音乐选择偏好跨对话采用",
+          "status": "passed",
+          "durationMs": 17425,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "pattern": "纯器乐|器乐|无歌词|没有歌词|无人声|没有人声",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "prompt": "在新会话不重复偏好的情况下，应推荐不带人声的器乐曲，不推荐歌曲演唱版本。",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "sessionId": "session-8c82c255-7bff-45f4-a8df-b0d24d7b0ae1",
+              "modelProfileId": "private-model-22aa4fb0f04db4d2ae12d82c4fbd31b3adfae0ce",
+              "commandId": "cmd-12a47602-ec2c-41e7-b7bc-8872e76a55fe",
+              "startedAt": "2026-10-08T15:22:45.600Z",
+              "reply": "明白，以后给你挑音乐时我会把带人声的作品排除，只保留纯器乐曲目。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:22:46.058Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:22:46.059Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:22:46.685Z"
+                },
+                {
+                  "seq": 8,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:22:46.686Z"
+                },
+                {
+                  "seq": 52,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:22:49.667Z"
+                },
+                {
+                  "seq": 53,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:22:49.667Z"
+                },
+                {
+                  "seq": 54,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:22:49.668Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [],
+              "durationMs": 4271,
+              "endedAt": "2026-10-08T15:22:49.871Z"
+            },
+            {
+              "sessionId": "session-e019d122-fdb8-4159-88a4-8baaa324ea34",
+              "modelProfileId": "private-model-22aa4fb0f04db4d2ae12d82c4fbd31b3adfae0ce",
+              "commandId": "cmd-b6e05ac6-5cbe-4e77-b2b3-f84377c7b895",
+              "startedAt": "2026-10-08T15:22:54.374Z",
+              "reply": "推荐：**久石让《Summer》**（电影《菊次郎的夏天》原声）\n\n纯钢琴曲，节奏轻快又干净，没有歌词干扰，适合放空或休息时听。如果想要更舒缓的，可以听他的《The Rain》（《花火》原声），情绪更静。",
+              "status": "completed",
+              "approvals": [],
+              "timeline": [
+                {
+                  "seq": 4,
+                  "type": "task.queued",
+                  "at": "2026-10-08T15:22:54.821Z"
+                },
+                {
+                  "seq": 5,
+                  "type": "turn.started",
+                  "at": "2026-10-08T15:22:54.822Z"
+                },
+                {
+                  "seq": 7,
+                  "type": "task.started",
+                  "at": "2026-10-08T15:22:55.444Z"
+                },
+                {
+                  "seq": 11,
+                  "type": "user.message",
+                  "at": "2026-10-08T15:22:55.445Z"
+                },
+                {
+                  "seq": 81,
+                  "type": "assistant.message",
+                  "at": "2026-10-08T15:23:00.397Z"
+                },
+                {
+                  "seq": 82,
+                  "type": "task.ended",
+                  "at": "2026-10-08T15:23:00.397Z"
+                },
+                {
+                  "seq": 83,
+                  "type": "turn.ended",
+                  "at": "2026-10-08T15:23:00.398Z"
+                }
+              ],
+              "memoryUsedSupported": true,
+              "memoryUsed": [
+                {
+                  "id": "cognition-0774e25812198a7b31b5f3dd6407b4de85f5bd39c7032473d81b711d1662675c",
+                  "kind": "cognition",
+                  "summary": "用户挑音乐给我的时候，把带人声的都排除，我一直更喜欢纯器乐。"
+                }
+              ],
+              "durationMs": 6627,
+              "endedAt": "2026-10-08T15:23:01.001Z"
+            }
+          ],
+          "replySummary": "推荐：**久石让《Summer》**（电影《菊次郎的夏天》原声）\n\n纯钢琴曲，节奏轻快又干净，没有歌词干扰，适合放空或休息时听。如果想要更舒缓的，可以听他的《The Rain》（《花火》原声），情绪更静。",
+          "notes": "M2e留出场景；音乐领域与形成提示示例、原memory-01..04无关。基线另查采用项的当前状态、精确原话来源、独立会话及未声明审批。",
+          "scratchDir": "C:\\temp\\weftmate-eval-memory-1x-preference-d5sIeH",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "semanticJudgement": {
+            "model": "mimo-v2.6-flash",
+            "usage": {
+              "completion_tokens": 164,
+              "prompt_tokens": 201,
+              "total_tokens": 365,
+              "completion_tokens_details": {
+                "reasoning_tokens": 71
+              },
+              "prompt_tokens_details": {
+                "cached_tokens": 0
+              }
+            },
+            "rawVerdict": "{\"pass\":true,\"reason\":\"回复推荐的是久石让的纯钢琴原声配乐（《Summer》《The Rain》），均为无人声的器乐曲，符合'推荐不带人声的器乐曲'的要求；且没有向用户重复/复述其'喜欢纯器乐'的偏好表述，只是自然地给出了无人声的选项，因此满足不重复偏好前提下的推荐标准。\"}",
+            "status": "passed",
+            "reason": "回复推荐的是久石让的纯钢琴原声配乐（《Summer》《The Rain》），均为无人声的器乐曲，符合'推荐不带人声的器乐曲'的要求；且没有向用户重复/复述其'喜欢纯器乐'的偏好表述，只是自然地给出了无人声的选项，因此满足不重复偏好前提下的推荐标准。"
+          }
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 217,
+          "matches": 0,
+          "skippedLinks": 511
+        }
+      },
+      "mimoUsage": {
+        "startedRequests": 23,
+        "usageRequests": 23,
+        "missingUsageRequests": 0,
+        "inputTokens": 90811,
+        "cachedInputTokens": 65088,
+        "outputTokens": 3289,
+        "knownCostCny": 0.03360276
+      },
+      "requestOrdering": {
+        "observed": 4,
+        "allBackgroundBeforeLastUser": true
+      }
+    }
+  ],
+  "mimoTotalUsage": {
+    "startedRequests": 87,
+    "usageRequests": 85,
+    "missingUsageRequests": 2,
+    "inputTokens": 594255,
+    "cachedInputTokens": 364160,
+    "outputTokens": 15646,
+    "knownCostCny": 0.2686702
+  },
+  "pricing": {
+    "source": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "verifiedDate": "2026-10-08",
+    "cachedInputCnyPerMillion": 0.02,
+    "uncachedInputCnyPerMillion": 1,
+    "outputCnyPerMillion": 2
+  }
+}
