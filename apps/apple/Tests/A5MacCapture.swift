@@ -11,7 +11,7 @@ import Security
         let scene = CommandLine.arguments[3], theme = CommandLine.arguments[4], host = CommandLine.arguments[5], cloud = CommandLine.arguments[6]
         let service = "com.weftmate.apple.ui-tests." + name
         let root = FileManager.default.temporaryDirectory.appendingPathComponent(name, isDirectory: true)
-        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true, attributes: [.posixPermissions: 0o700])
         let app = Process(); app.executableURL = executable
         app.arguments = ["--ui-testing", "--lg2-capture", "-ApplePersistenceIgnoreState", "YES", "--ui-testing-namespace", name,
                          "--ui-testing-data-dir", root.path, "--server-url", host, "--s1c-cloud-url", cloud, "--a5-review-scene", scene, "--a5-theme", theme, scene == "login" ? "--lg2-cloud" : "--a5-local-server"]

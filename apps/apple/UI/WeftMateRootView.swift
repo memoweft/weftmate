@@ -129,8 +129,8 @@ private struct MacWorkspace: View {
             guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
             switch args[index + 1] {
             case "memory": selected = .memory
-            case "appearance": selected = .settings
-            case "conversation", "approval", "question", "outputs-sources":
+            case "appearance", "usage": selected = .settings
+            case "conversation", "approval", "question", "outputs-sources", "session-menu":
                 if let conversation = model.conversations.first(where: { $0.title == "整理项目资料" }) { selected = .conversation(conversation.id) }
             default: selected = nil
             }

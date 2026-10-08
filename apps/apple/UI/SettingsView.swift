@@ -148,6 +148,12 @@ struct SettingsView: View {
             Text("退出后，在登录页更改服务器地址。草稿仍归原服务器的原账户保留。")
         }
         .accessibilityIdentifier("settingsRoot")
+        #if DEBUG
+        .task {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1), args[index + 1] == "usage" { showingUsage = true }
+        }
+        #endif
     }
 
     private func copyUnsavedDrafts() {

@@ -6,6 +6,7 @@ final class A5ParityUITests: XCTestCase {
     @MainActor private func get(_ path: String) async throws -> [String: Any] {
         let (data,response) = try await URLSession.shared.data(from: URL(string:driver + path)!)
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode,200)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw NSError(domain:"A5Driver",code:1) }
         return try JSONSerialization.jsonObject(with:data) as! [String: Any]
     }
     @MainActor private func expect(_ element: XCUIElement, _ timeout: TimeInterval = 30) throws {
@@ -40,7 +41,7 @@ final class A5ParityUITests: XCTestCase {
         try fill(app,"accountEmail",credentials["email"] as! String);try tap(app,"accountRegistration");try tap(app,"accountSubmit")
         try fill(app,"accountCode",try await get("/code")["code"] as! String);try tap(app,"accountSubmit")
         try fill(app,"accountPassword",credentials["password"] as! String,secure:true);try fill(app,"accountRepeatedPassword",credentials["password"] as! String,secure:true);try tap(app,"accountSubmit")
-        try expect(app.textFields["accountDeviceName"]);try tap(app,"accountSubmit")
+        try expect(app.textFields["accountDeviceName"]);try tap(app,"accountSubmit");try expect(app.textFields["accountCode"])
         try fill(app,"accountCode",try await get("/code")["code"] as! String);try tap(app,"accountSubmit")
         try expect(app.staticTexts["已登录 WeftMate"]);_ = try await get("/bootstrap")
         try tap(app,"设置 → 设备");try tap(app,"刷新设备")
@@ -93,8 +94,8 @@ final class A5ParityUITests: XCTestCase {
         try tap(app,"openConversationResources");try expect(app.staticTexts["输出内容"]);keep(app,"outputs-sources",theme);try tap(app,"closeResourcesPanel")
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.memory");try expect(app.staticTexts["我的记忆"]);keep(app,"memory",theme);try tap(app,"closeAuxiliarySheetButton")
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.settings");try expect(app.staticTexts["账户与设置"]);keep(app,"appearance",theme)
+        try tap(app,"openUsage");try expect(app.staticTexts["本月合计"]);keep(app,"usage",theme)
         if behavior {
-            try tap(app,"openUsage");try expect(app.staticTexts["本月合计"])
             let report=try await get("/a5/report"),usage=report["usage"] as! [String:Any],total=usage["total"] as! [String:Any]
             XCTAssertTrue(app.staticTexts[String(format:"¥%.6f",total["cost"] as! Double)].exists)
             _ = try await get("/a5/usage-warning");app.swipeUp();try tap(app,"刷新用量");try expect(app.staticTexts.containing(NSPredicate(format:"label CONTAINS %@","80%")).firstMatch)
@@ -112,6 +113,9 @@ final class A5ParityUITests: XCTestCase {
             let final=try await get("/a5/report");XCTAssertEqual((final["memoryDeletes"] as! [[String:Any]]).count,1)
             let exists=final["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
         }
+        if !behavior { try tap(app,"完成");try tap(app,"closeAuxiliarySheetButton") }
+        if behavior { try back(app);try row(app,ids["review"] as! String) }
+        try tap(app,"对话菜单");try expect(app.buttons["归档对话"]);keep(app,"session-menu",theme)
         app.terminate()
     }
 }
