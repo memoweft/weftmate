@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import vm from 'node:vm';
 
-const source=readFileSync(new URL('../www/app.js',import.meta.url),'utf8');
-const html=readFileSync(new URL('../www/index.html',import.meta.url),'utf8');
+import {mobileSource as source,mobileHtml as html} from './load-page.mjs';
+
 const styles=readFileSync(new URL('../www/styles.css',import.meta.url),'utf8');
 const htmlIds=new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(match=>match[1]));
 
@@ -68,17 +68,15 @@ function harness({reduced=false,autoBoot=false,autoResults={},storage={},queueFr
   const saved=new Map(Object.entries(storage));
   const localStorage={setItem(key,value){saved.set(key,String(value))},removeItem(key){saved.delete(key)},
     getItem(key){return saved.get(key)??null},key(index){return [...saved.keys()][index]??null},get length(){return saved.size}};
-  const context=vm.createContext({document,window,localStorage,URL,
+  const context=vm.createContext({document,window,localStorage,URL,AbortSignal,crypto:globalThis.crypto,
     setTimeout:(fn,delay)=>{const id=++nextTimer;timers.set(id,{fn,delay,due:now+delay});return id},clearTimeout:id=>timers.delete(id),
     requestAnimationFrame:fn=>{if(queueFrames){frames.push(fn);return frames.length}fn(now);return 0},ResizeObserver,console});
-  vm.runInContext(readFileSync(new URL('../www/timeline.js',import.meta.url),'utf8'),context);
   vm.runInContext(source,context);
   const run=code=>vm.runInContext(code,context);
   const node=id=>document.getElementById(id);
-  const flush=async()=>{await Promise.resolve();await Promise.resolve()};
-  const reply=(index,result,error)=>{const request=bridge[index];const task=run(`pending.get('${request.id}')`);
-    run(`pending.delete('${request.id}')`);timers.delete(task.timer);
-    if(error)task.reject(new Error(error));else task.resolve(result)};
+  const flush=async()=>{for(let index=0;index<12;index++)await Promise.resolve()};
+  const reply=(index,result,error)=>{const request=bridge[index];
+    run(`androidBridge.receive({data:${JSON.stringify(JSON.stringify(error?{id:request.id,ok:false,error:{code:error}}:{id:request.id,ok:true,result}))}})`)};
   const advance=ms=>{now+=ms;while(true){const due=[...timers].find(([,timer])=>timer.due<=now);if(!due)break;
     timers.delete(due[0]);due[1].fn()}};
   const flushFrame=()=>{now+=frameMs;const callbacks=frames.splice(0);for(const callback of callbacks)callback(now)};
@@ -981,6 +979,7 @@ test('UI-2a category approval preserves scope and original request through timeo
   const restored=harness({storage:Object.fromEntries(h.storage)});prepareApprovalChat(restored);await readApprovals(restored,[row]);
   assert.match(allText(approvalCard(restored)),/重试总是允许此类/);
   const retry=restored.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
+  restored.reply(restored.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[row],nextBefore:null,hasMore:false});await restored.flush();
   const repeated=restored.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');assert.deepEqual(restored.bridge[repeated].params,params);
   const answered={...answeredApproval(row,params.requestId,'allowed-once'),decisionScope:'conversation-category'};
   restored.reply(repeated,{approval:answered,requestId:params.requestId});await restored.flush();
@@ -1027,6 +1026,32 @@ async function readQuestions(h,rows,context='approvalContext()'){const reading=h
 function questionCard(h){return h.node('chat-content').children.find(node=>node.dataset.questionRpcId)}
 function answeredQuestion(row,requestId,answer){return {...row,status:'answered',answerRequestId:requestId,answer,
   answeredAt:'2026-10-06T14:01:00.000Z'}}
+
+test('dedicated approvals and questions stay actionable when the general activity index is unavailable',async()=>{
+  const h=harness(),fixture=syntheticConversationTask(),approval=syntheticApproval(),question=syntheticQuestionBatch();
+  prepareSyntheticTaskChat(h);h.run("state.deviceId='phone-a'");
+  const refreshing=h.run('refreshConversationTasks()');
+  const activity=h.bridge.findLastIndex(item=>item.method==='activity.list');
+  const approvals=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');
+  const questions=h.bridge.findLastIndex(item=>item.method==='shared.questions.list');
+  assert.ok(approvals>=0&&questions>=0,'dedicated decision reads start independently of the activity request');
+  h.reply(activity,null,'HOST_UNAVAILABLE');await refreshing;
+  h.reply(approvals,{approvals:[approval],nextBefore:null,hasMore:false});
+  h.reply(questions,{questions:[question],nextBefore:null,hasMore:false});await h.flush();
+  const details=h.bridge.map((request,index)=>({request,index})).filter(({request})=>request.method==='shared.tasks.detail');
+  assert.ok(details.length>0,'exact source is checked through its dedicated task endpoint');
+  for(const {index} of details)h.reply(index,fixture.task);await h.flush();
+  assert.match(allText(approvalCard(h)),/允许一次.*拒绝/);
+  assert.match(allText(questionCard(h)),/确认计划.*提交回答/);
+  assert.equal(h.run("conversationTasks.entries.get('root-inline').notice"),'');
+  const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');
+  assert.ok(request>activity,'a failed activity read does not prevent the verified approval action');
+  const requestId=h.bridge[request].params.requestId,answered=answeredApproval(approval,requestId,'allowed-once');
+  h.reply(request,{approval:answered,requestId});await h.flush();
+  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[answered],nextBefore:null,hasMore:false});await deciding;
+  assert.match(allText(approvalCard(h)),/已允许 · 运行命令/);
+});
 
 test('task15-question-client natural single multiple and free answers preserve original position and plan intent without granting a tool permission',async()=>{
   const h=harness();prepareApprovalChat(h);const row=syntheticQuestionBatch();
@@ -1082,6 +1107,7 @@ test('task15-question-client an uncertain source or network result keeps the sam
   const restored=harness({storage:Object.fromEntries(h.storage)});prepareApprovalChat(restored);await readQuestions(restored,[row]);
   assert.match(allText(questionCard(restored)),/同一份原回答.*重试原回答/);
   const retry=restored.run(`answerToolQuestion([...toolQuestions.sessions.get('s1').rows.values()][0],${JSON.stringify(answer)})`);
+  restored.reply(restored.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[row],nextBefore:null,hasMore:false});await restored.flush();
   const repeated=restored.bridge.findLastIndex(item=>item.method==='shared.questions.answer');assert.equal(restored.bridge[repeated].params.requestId,requestId);
   const answered=answeredQuestion(row,requestId,answer);restored.reply(repeated,{question:answered,requestId});await restored.flush();
   restored.reply(restored.bridge.findLastIndex(item=>item.method==='shared.questions.list'),{questions:[{...answered,status:'resolved',outcome:'answered',
@@ -1192,6 +1218,7 @@ test('task15-approval-client an unknown network reply is read back and can retry
   const saved=Object.fromEntries(h.storage),restarted=harness({storage:saved});prepareApprovalChat(restarted);await readApprovals(restarted,[row]);
   assert.match(allText(approvalCard(restarted)),/重试允许一次/);
   const retry=restarted.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
+  restarted.reply(restarted.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[row],nextBefore:null,hasMore:false});await restarted.flush();
   const repeated=restarted.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');assert.equal(restarted.bridge[repeated].params.requestId,requestId);
   const answered=answeredApproval(row,requestId,'allowed-once');restarted.reply(repeated,{approval:answered,requestId});await restarted.flush();
   restarted.reply(restarted.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),
@@ -1510,7 +1537,7 @@ test('M0-3 mobile requests the tail first, prepends older events, and preserves 
   assert.equal(h.bridge[i].params.afterSeq,undefined);
   h.reply(i,{source:'host',sessionId:'s1',events:[{seq:2400,type:'assistant.message',data:{text:'最新回复'}}],nextSeq:2400,hasMore:false,hasOlder:true,nextBeforeSeq:2400});await first;
   assert.equal(h.run('state.sharedNextSeq'),2400);const older=h.run('loadOlderHistory()');i=h.bridge.findLastIndex(r=>r.method==='shared.sessions.events');
-  assert.equal(h.bridge[i].params.beforeSeq,2400);h.reply(i,{events:[{seq:2399,type:'assistant.message',data:{text:'较早回复'}}],nextSeq:2400,hasMore:false,hasOlder:false,nextBeforeSeq:2399});await older;
+  assert.equal(h.bridge[i].params.beforeSeq,2400);h.reply(i,{source:'host',sessionId:'s1',events:[{seq:2399,type:'assistant.message',data:{text:'较早回复'}}],nextSeq:2400,hasMore:false,hasOlder:false,nextBeforeSeq:2399});await older;
   assert.equal(h.run('state.sharedEvents.map(e=>e.seq).join(",")'),'2399,2400');assert.equal(h.run('state.sharedNextSeq'),2400);
 })
 

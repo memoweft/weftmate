@@ -71,7 +71,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         globalThis.WeftDesktopUI?.appendArtifactActions(line, artifact, ui.toast);
         parent.append(line);
     }
-    async function openTimelinePreview(context, path, title) {
+    async function openTimelinePreview(context, path, title, versions = []) {
         if (!core.conversationTaskCurrent(context))
             return;
         if (window.WeftDesktop) {
@@ -86,6 +86,12 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                 if (artifact?.artifactId)
                     ui.appendResourceArtifactActions(preview.content, artifact);
                 preview.content.append(window.WeftDesktop.markdown(text));
+                if (versions.length) {
+                    const older = ui.element('details', 'resource-usage');
+                    older.append(ui.element('summary', '', `旧版 · ${versions.length} 个`));
+                    for (const artifact of versions) ui.appendTimelineArtifact(older, artifact, context);
+                    preview.content.append(older);
+                }
             }
             catch {
                 if (preview.content.isConnected)
@@ -125,7 +131,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         if (!core.conversationTaskCurrent(context))
             return;
         if (item.artifact) {
-            void ui.openTimelinePreview(context, core.artifactPreviewPath(item.artifact.artifactId), item.name);
+            void ui.openTimelinePreview(context, core.artifactPreviewPath(item.artifact.artifactId), item.name, item.versions);
             return;
         }
         const target = window.WeftDesktop.openPreview(item.name, trigger, item.key, item.kind);
@@ -157,6 +163,12 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                         return;
                     const text = data.source?.text || data.text || '暂时没有可预览内容';
                     content.textContent = `${text}${data.truncated || data.source?.truncated ? '\n[内容已截断]' : ''}`;
+                    if (!data.source && core.sourcePresentation(item.kind === 'tool' ? item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text).hasArguments) {
+                        const presentation = core.sourcePresentation(item.kind === 'tool' ? item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text);
+                        const raw = ui.element('details', 'resource-usage');
+                        raw.append(ui.element('summary', '', '详情'), content);
+                        line.append(ui.element('p', 'resource-tool-summary', presentation.summary), raw);
+                    }
                     const copy = ui.element('button', 'timeline-action', '复制');
                     copy.type = 'button';
                     copy.addEventListener('click', async () => {
@@ -185,7 +197,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         if (!window.WeftTimeline)
             return;
         const context = core.conversationTaskContext(), sessionId = context.sessionId;
-        window.WeftTimeline.render(events, ui.byId('transcript'), {
+        window.WeftTimeline.render(events.filter(event => event.type !== 'task.queued'), ui.byId('transcript'), {
             fileLabel: window.WeftDesktop?.fileLabel,
             mobile: window.matchMedia?.('(max-width: 640px)').matches === true,
             readDetail: seq => core.readTimelineDetail(sessionId, seq),

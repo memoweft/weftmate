@@ -1,0 +1,464 @@
+{
+  "comparison": "complete RGBA image, no masks or crop",
+  "images": [
+    {
+      "surface": "chromium",
+      "name": "chromium-appearance",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-appearance.png",
+      "after": "after-chromium-appearance.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-approval",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-approval.png",
+      "after": "after-chromium-approval.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-artifact",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-artifact.png",
+      "after": "after-chromium-artifact.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-dark-list",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-dark-list.png",
+      "after": "after-chromium-dark-list.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-list",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-list.png",
+      "after": "after-chromium-list.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-login",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-login.png",
+      "after": "after-chromium-login.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-memory-source",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-memory-source.png",
+      "after": "after-chromium-memory-source.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-memory",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-memory.png",
+      "after": "after-chromium-memory.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-mode",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-mode.png",
+      "after": "after-chromium-mode.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-outputs-sources",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-outputs-sources.png",
+      "after": "after-chromium-outputs-sources.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-raw-step",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-raw-step.png",
+      "after": "after-chromium-raw-step.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-resolved-approval",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-resolved-approval.png",
+      "after": "after-chromium-resolved-approval.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-running",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-running.png",
+      "after": "after-chromium-running.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-sent",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-sent.png",
+      "after": "after-chromium-sent.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-settings",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-settings.png",
+      "after": "after-chromium-settings.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-source",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-source.png",
+      "after": "after-chromium-source.png"
+    },
+    {
+      "surface": "chromium",
+      "name": "chromium-steps",
+      "width": 390,
+      "height": 844,
+      "changedPixels": 0,
+      "changedPercent": 0.0,
+      "changedBounds": null,
+      "before": "before-chromium-steps.png",
+      "after": "after-chromium-steps.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-appearance",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-appearance.png",
+      "after": "after-mumu-appearance.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-approval",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-approval.png",
+      "after": "after-mumu-approval.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-artifact",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-artifact.png",
+      "after": "after-mumu-artifact.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-dark-list",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-dark-list.png",
+      "after": "after-mumu-dark-list.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-list",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-list.png",
+      "after": "after-mumu-list.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-login",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 286,
+      "changedPercent": 0.031033,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-login.png",
+      "after": "after-mumu-login.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-memory-source",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-memory-source.png",
+      "after": "after-mumu-memory-source.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-memory",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-memory.png",
+      "after": "after-mumu-memory.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-mode",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-mode.png",
+      "after": "after-mumu-mode.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-outputs-sources",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-outputs-sources.png",
+      "after": "after-mumu-outputs-sources.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-raw-step",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-raw-step.png",
+      "after": "after-mumu-raw-step.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-resolved-approval",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-resolved-approval.png",
+      "after": "after-mumu-resolved-approval.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-running",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-running.png",
+      "after": "after-mumu-running.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-sent",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-sent.png",
+      "after": "after-mumu-sent.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-settings",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-settings.png",
+      "after": "after-mumu-settings.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-source",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-source.png",
+      "after": "after-mumu-source.png"
+    },
+    {
+      "surface": "mumu",
+      "name": "mumu-steps",
+      "width": 720,
+      "height": 1280,
+      "changedPixels": 265,
+      "changedPercent": 0.028754,
+      "changedBounds": [
+        40,
+        6,
+        64,
+        23
+      ],
+      "before": "before-mumu-steps.png",
+      "after": "after-mumu-steps.png"
+    }
+  ]
+}

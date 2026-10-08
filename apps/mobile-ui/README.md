@@ -1,5 +1,7 @@
 # WeftMate 手机界面
 
+FE-1b：手机接入 `src/ui-core/` 共享功能层，保持 0.8.6 / Android（安卓）code19 的现有外观与登录 / 注册流程。入口创建独立功能实例，页面位置集中在 `www/layout.js`；`www/components/` 管理呈现、抽屉、焦点、滚动和原生选择提示。会话历史、时间线投影、审批 / 模式、提问、任务、成果 / 来源、记忆快照、设置和原生请求恢复经共享层与手机适配器执行。传输、账户凭据、模型密钥和本机记录继续留在原生壳。构建副本与母版不一致时，手机检查、Android 打包与宿主发布都会失败。[改前 / 改后 Chromium（浏览器引擎）与 MuMu（安卓模拟器）证据](../../tests/evidence/fe-1b/README.md)。
+
 UI-2：0.8.4 / Android code17 统一桌面中性色与浅 / 深 / 跟随系统主题。首页为可搜索的会话列表，工具步骤默认收起；「输出与来源」在手机打开全屏列表、成果与使用摘要，返回保留对话位置和草稿。来源列表复用 CLIENT_API 3.16，按账户与会话缓存，原文按需读取；新增对应的原生只读路由，因此发布最低 code17。手机相关交互100/100、Android JVM（Java 虚拟机）27/27、调试包构建与类型检查通过；[截图、复现与验收边界](../../tests/evidence/ui-2/README.md)。
 
 UI-2a：0.8.3 页面新增输入区五种审批模式、全部允许风险确认、设置中的新电脑对话默认模式，以及允许一次 / 总是允许此类 / 拒绝审批卡。模式按 CLIENT_API 3.7 保存在电脑会话上；共享会话和已交给电脑的手机对话均可使用，手机直连模型未绑定电脑时显示适用范围。同类授权只限当前对话，断网重试保留原请求与范围。Android 壳需 code16，发布使用 `--min-native-version-code 16`（发布器默认值已更新）。验收见 [UI-2a](../../tests/evidence/ui-2a/README.md)；`node --test tests/approval-interactions.test.mjs` 使用 Chromium（浏览器引擎）验证 390×844 的真实页面，截图默认写仓库忽略的 `.local/ui-2a/`。
@@ -15,7 +17,11 @@ npm run build
 npm run check
 ```
 
-`npm run build` 只将固定依赖的 `markdown-it`、`DOMPurify`、`highlight.js` 打成 `www/vendor.js`。`www/app.js`、`www/styles.css`、原稿细线 SVG 图标和 W 品牌资源直接由 Android Gradle 的 `assets.srcDir` 收入 APK。包内 `www/licenses/` 保留所用开源库的许可证；图标来自用户指定的 MobileStyle v1.2 原件。
+`npm run build` 将固定依赖的 `markdown-it`、`DOMPurify`、`highlight.js` 打成 `www/vendor.js`，并按 `src/ui-core/manifest.mjs` 的 `uiCoreAssets` 清单生成 `www/ui-core/`。这个目录只存生成文件，修改功能必须回到 `src/ui-core/` 母版；`npm run check` 严格比较文件集合与每个字节，并检查全部页面脚本语法。Android Gradle（安卓构建工具）`preBuild` 和宿主发布脚本使用同一检查，`assets.srcDir` 收入同一份 `www/`。包内 `www/licenses/` 保留所用开源库的许可证；图标来自用户指定的 MobileStyle v1.2 原件。
+
+手机原生桥适配位于 `src/ui-core/adapters/`。共享功能以 `/personal/v1` 数据形状调用适配器；适配器选择现有的原生缓存、认证、任务与业务方法，真实 Cookie（会话凭据）、CSRF（跨站请求伪造防护）和模型密钥不进入页面。`mobile-decisions.js` 复用共享审批 / 提问 / 任务动作，并迁移旧未确认请求标记与问题草稿；手机原生发送和本地 / 已交给电脑的对话回执恢复由适配动作保留。记忆界面的节点留在组件里，功能层只保存视图标识和账户 / 修订快照。
+
+相关验证：`npm test`（按可见名称 / 角色的 Chromium 流程及内部状态回归）、根目录 `node --test tests/mobile-memory-page.test.ts tests/mobile-android-bridge.test.ts tests/mobile-ui-core-assets.test.ts tests/ui-core.test.ts`；设备流程与前后截图复现见上面的 FE-1b 证据。MuMu 使用 `-PweftmateApplicationId=com.memoweft.weftmate.mobile.fe1bqa` 或证据中的隔离构建脚本，测试结束卸载自己的包，不覆盖已安装应用。
 
 宿主发布使用仓库的 `scripts/build-mobile-ui.mjs`，由主助手在审阅后选择独立输出目录和版本。发布器生成不可变资产与清单，手机对每个文件核对大小和 SHA-256（哈希）后才在私有目录切换。应用页面只从 `https://appassets.androidplatform.net/ui/` 加载；外部网页没有原生桥，业务请求也只允许当前账户宿主的固定业务前缀。
 
