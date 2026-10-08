@@ -43,7 +43,9 @@ test('public account shell keeps secrets out of markup and code-generated HTML',
   assert.match(html, /autocomplete="current-password"/)
   assert.doesNotMatch(html, /<script(?![^>]*src=)/i)
   assert.match(app, /(?:localStorage|environment\.storage)\.setItem\(key, JSON\.stringify\(rows\.slice/)
-  assert.doesNotMatch(app, /sessionStorage|innerHTML|console\./)
+  assert.doesNotMatch(app, /sessionStorage|console\./)
+  // Cloud forms use fixed templates; account values and legal content use textContent/value.
+  assert.doesNotMatch(app, /innerHTML\s*=\s*(?:value\.|payload\.|result\.|await\b)/)
   // Match secret/content identifiers, not the "text" suffix in markerKey(context).
   assert.doesNotMatch(app, /(?:localStorage|environment\.storage)\.setItem\([^\n]*\b(?:password|csrfToken|setupGrant|apiKey|token|text)\b/)
 

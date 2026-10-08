@@ -1,5 +1,8 @@
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
-import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage } from 'electron';
+import { hostname } from 'node:os';
+import { createHash, X509Certificate } from 'node:crypto';
+import { desktopAuthStorage } from './personal-desktop-auth.mjs';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
@@ -45,15 +48,17 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   // On Windows at fractional DPI, constructor dimensions can include a different frame inset.
   if (Number.isFinite(bounds.x)) win.setBounds(bounds);
   const uiUrl = new URL('/personal/v1/ui', origin).href;
+  let contentOrigin = origin;
+  const certificatePins = new Map(), networkRequests = new Map(), peerOrigins = new Set();
   const status = { host: '启动中', model: '未选择' };
   const updateStatus = next => { Object.assign(status, next); onStatus({ ...status }); };
   const trusted = event => event.sender === win.webContents && event.senderFrame === win.webContents.mainFrame &&
-    new URL(event.senderFrame.url).origin === origin && new URL(event.senderFrame.url).pathname === '/personal/v1/ui';
+    new URL(event.senderFrame.url).origin === origin && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
   const handle = (channel, callback) => ipcMain.handle(channel, (event, ...args) => {
     if (!trusted(event)) throw new Error('Desktop bridge unavailable');
     return callback(...args);
   });
-  const fetchLocal = path => desktopSession.fetch(new URL(`/personal/v1${path}`, origin).href, { credentials: 'include' });
+  const fetchLocal = path => desktopSession.fetch(new URL(`/personal/v1${path}`, contentOrigin).href, { credentials: 'include' });
   const jsonLocal = async path => {
     const response = await fetchLocal(path);
     if (!response.ok) throw new Error('Session unavailable');
@@ -68,6 +73,59 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const settings = () => ({ autoStart: app.getLoginItemSettings(loginOptions).openAtLogin,
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
+  const authStore = desktopAuthStorage(join(app.getPath('userData'), 'desktop-auth.enc'), safeStorage);
+  handle('wm:desktop:identity', () => ({ deviceName: hostname(), localOrigin: origin,
+    clientId: process.env.WEFTMATE_CLOUD_DESKTOP_CLIENT_ID || process.env.WEFTMATE_CLOUD_WEB_CLIENT_ID,
+    redirectUri: process.env.WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI }));
+  handle('wm:desktop:credentials', (key, value, remove) => authStore.credentials(key, value, remove));
+  handle('wm:desktop:key', scope => authStore.key(scope));
+  handle('wm:desktop:proof', (scope, input) => authStore.sign(scope, input));
+  handle('wm:desktop:key-reset', scope => authStore.resetKey(scope));
+  desktopSession.setCertificateVerifyProc((request, done) => {
+    const expected = certificatePins.get(request.hostname);
+    if (!expected) { done(-3); return; }
+    try {
+      const pin = createHash('sha256').update(new X509Certificate(request.certificate.data).publicKey.export({ type: 'spki', format: 'der' })).digest('base64url');
+      done(request.verificationResult === 'net::OK' && pin === expected ? 0 : -2);
+    } catch { done(-2); }
+  });
+  handle('wm:desktop:connect-host', async ({ hostId, baseUrl } = {}) => {
+    const trustedHost = authStore.credentials('trusted-host:' + hostId);
+    const target = new URL(baseUrl);
+    if (!trustedHost || target.protocol !== 'https:' || target.username || target.password || target.search || target.hash ||
+      ![trustedHost.origin, trustedHost.relay?.baseUrl].includes(target.origin)) throw new Error('HOST_TRUST_INVALID');
+    // Keep the packaged UI and its credential bridge local. Only authenticated
+    // data requests go to the selected, manually pinned installation.
+    certificatePins.set(target.hostname, trustedHost.tlsSpki);
+    peerOrigins.add(target.origin);
+    return { hostId, baseUrl: target.origin };
+  });
+  handle('wm:desktop:activate-host', ({ baseUrl } = {}) => {
+    const target = new URL(baseUrl);
+    if (target.origin !== origin && !peerOrigins.has(target.origin)) throw new Error('HOST_TRUST_INVALID');
+    contentOrigin = target.origin;
+  });
+  handle('wm:desktop:fetch', async (url, options = {}, requestId) => {
+    const target = new URL(url);
+    const cloudOrigin = process.env.WEFTMATE_CLOUD_ISSUER ? new URL(process.env.WEFTMATE_CLOUD_ISSUER).origin : null;
+    if (![origin, cloudOrigin].includes(target.origin) && !peerOrigins.has(target.origin) || target.username || target.password ||
+      !target.pathname.startsWith('/personal/v1/')) throw new Error('Native request unavailable');
+    const controller = new AbortController(); networkRequests.set(requestId, controller);
+    const timeout = setTimeout(() => controller.abort(), 360000);
+    try {
+      const response = await desktopSession.fetch(target.href, { method: options.method || 'GET', body: options.body,
+        headers: { ...options.headers, Origin: target.origin }, credentials: 'include', cache: 'no-store', redirect: 'error', signal: controller.signal });
+      return { status: response.status, body: await response.json().catch(() => ({})), headers: {
+        'retry-after': response.headers.get('Retry-After'), 'dpop-nonce': response.headers.get('DPoP-Nonce') } };
+    } finally { clearTimeout(timeout); networkRequests.delete(requestId); }
+  });
+  handle('wm:desktop:fetch-abort', requestId => networkRequests.get(requestId)?.abort());
+  handle('wm:desktop:clear-sessions', async () => {
+    for (const request of networkRequests.values()) request.abort();
+    for (const cookie of await desktopSession.cookies.get({ name: 'wm_personal_session' })) {
+      await desktopSession.cookies.remove(`${cookie.secure ? 'https' : 'http'}://${cookie.domain.replace(/^\./, '')}${cookie.path}`, cookie.name);
+    }
+  });
   handle('wm:desktop:model', name => { if (typeof name === 'string') updateStatus({ model: name }); });
   handle('wm:desktop:theme', ({ color, symbolColor } = {}) => {
     if (process.platform === 'win32') { win.setTitleBarOverlay({ color, symbolColor, height: 44 }); resolvedPalette = { color, symbolColor, height: 44 }; }
@@ -171,7 +229,8 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     stopped = true; clearTimeout(timer);
     for (const notification of notifications) notification.close();
     nativeTheme.removeListener('updated', updatePalette);
-    for (const channel of ['wm:desktop:settings', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
+    for (const request of networkRequests.values()) request.abort();
+    for (const channel of ['wm:desktop:settings', 'wm:desktop:identity', 'wm:desktop:credentials', 'wm:desktop:key', 'wm:desktop:key-reset', 'wm:desktop:proof', 'wm:desktop:connect-host', 'wm:desktop:activate-host', 'wm:desktop:fetch', 'wm:desktop:fetch-abort', 'wm:desktop:clear-sessions', 'wm:desktop:theme', 'wm:desktop:model', 'wm:desktop:auto-start', 'wm:desktop:artifact']) ipcMain.removeHandler(channel);
     save(); await desktopSession.cookies.flushStore(); desktopSession.flushStorageData();
   } };
 }

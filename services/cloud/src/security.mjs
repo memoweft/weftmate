@@ -4,7 +4,7 @@ const scrypt = promisify(callback);
 // Same cost as the personal host, with independent cloud salts and records.
 export const PASSWORD_PARAMS = Object.freeze({ N: 131072, r: 8, p: 1, maxmem: 192 * 1024 * 1024 });
 export const validPassword = (value) =>
-  typeof value === 'string' && [...value].length >= 15 && [...value].length <= 128;
+  typeof value === 'string' && [...value].length >= 8 && [...value].length <= 128;
 export function normalizeEmail(value) {
   if (typeof value !== 'string') throw new CloudError(400, 'INVALID_EMAIL');
   const email = value.trim().normalize('NFKC').toLowerCase();

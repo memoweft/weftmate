@@ -4,7 +4,7 @@ S1d / D29 新电脑无需先本地登录：App（应用）内账号流程完成�
 
 `index.mjs` 处理认领/绑定事务、内容设备信任、Cookie 交换和撤销；`proofs.mjs` 用 jose 验证固定 issuer/JWKS/RS256 access token 与 ES256 DPoP；`storage.mjs` 管理私有安装/TLS 密钥、版本 1 身份日志与迁移前备份。客户端接口见 `docs/CLIENT_API.md` 7.4。
 
-宿主启用配置：`WEFTMATE_CLOUD_ISSUER=https://api.example.com/personal/v1/cloud/oidc`。Electron 与 `run-personal-host.mjs` 的子进程沿用此环境变量；未设置时本地认证不依赖云。工厂测试可显式提供 `cloudIdentity: { issuer, allowInsecureLoopback: true }`，HTTP 仅限回环；生产环境变量没有启用 HTTP 的开关。issuer、JWKS 与 audience 从此配置确定，令牌内的 jku/x5u 不参与配置。
+宿主启用配置：`WEFTMATE_CLOUD_ISSUER=https://api.example.com/personal/v1/cloud/oidc`。Electron 与 `run-personal-host.mjs` 的子进程沿用此环境变量；未设置时本地认证不依赖云。工厂测试可显式提供 `cloudIdentity: { issuer, allowInsecureLoopback: true }`；隔离真实程序测试也可设置 `WEFTMATE_CLOUD_ALLOW_INSECURE_LOOPBACK=true`，HTTP 仍仅限 `127.0.0.1` / `[::1]`。issuer、JWKS 与 audience 从此配置确定，令牌内的 jku/x5u 不参与配置。
 
 ## 认领与恢复
 
@@ -45,6 +45,8 @@ S2 的 `/cloud/pairings` 响应增添 relay 状态/baseUrl；原 tlsSpki 与实�
 
 `GET /cloud/config` 公开固定 issuer/hostId/clientId，`GET /cloud/binding` 只读当前 Cookie 的绑定状态与直接地址管理资格。浏览器界面在 `../personal-access-ui/cloud-login.js` / `cloud-ui.js`；Android 的共享 JS 与系统浏览器桥见 `apps/mobile-ui/www/cloud-native.js` 和 `apps/android/.../CloudLogin.kt`。CLIENT_API 7.7 是正式契约。
 
-宿主 `WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 weftmate-web。云端需预登记精确的直接地址/中继回调 `<origin>/personal/v1/ui/`，application_type=web；Android 另登记 weftmate-android 的 `com.memoweft.weftmate:/oauth`。没有注册回调的部署不能登录，不动态放开 origin。浏览器凭据只在等待内容批准期间保存 IndexedDB，交换宿主 Cookie 后删除，设备 CryptoKey 保留供下次证明。
+宿主 `WEFTMATE_CLOUD_WEB_CLIENT_ID` 默认 weftmate-web。云端需预登记精确的直接地址/中继回调 `<origin>/personal/v1/ui/`，application_type=web；Android 另登记 weftmate-android 的 `com.memoweft.weftmate:/oauth`。没有注册回调的部署不能登录，不动态放开 origin。LG-1a 桌面程序可用 `WEFTMATE_CLOUD_DESKTOP_CLIENT_ID` 和 `WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI` 选择已经登记的固定程序回调；回调仅作为数据解析，注册、密码和设备确认均留在程序内。
+
+LG-1a 的共享登录、轮换与账户/设备动作在 `src/ui-core/cloud-auth.js` / `cloud-account.js`。云刷新凭据保留用于设置页，与宿主受众令牌共享单个轮换授权族；网页使用 IndexedDB（浏览器结构化存储）的不可导出密钥，Windows（桌面系统）使用系统加密存储与主进程签名。电脑连接保留本机打包的界面资产，主进程使用标准 CA（证书机构）验证与可信交付的 SPKI（证书公钥指纹）传递宿主请求；远端只提供数据。程序退出/账号注销清除本设备宿主 Cookie（会话凭据）与云令牌，独立应急密码和本地内容仍保留。`cloud-login.js` / `cloud-ui.js` 是 S1c 兼容资产，旧浏览器认证路径仍可供其他旧客户端使用。
 
 `WEFTMATE_WEB_E2E=true node --test services/cloud/test/web-login.test.mjs` 使用真实 Chromium、file 邮件、隔离宿主与 SQLite 云验证绑定、等待/批准、二维码自动刷新/输入码、拒绝、解绑与本地会话保留。合成截图在忽略的 `.local/s1c-web/`；完整根测试只交 CI。

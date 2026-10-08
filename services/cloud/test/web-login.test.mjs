@@ -2,23 +2,33 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
+import { randomBytes, randomUUID } from 'node:crypto';
 import { mkdtemp, realpath, rm, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { fixture, EMAIL, PASSWORD, P } from './identity-helpers.mjs';
+import { fixture, P } from './identity-helpers.mjs';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { servePersonalAccessUi } from '../../../src/personal-access-ui/index.mjs';
+
 const enabled = process.env.WEFTMATE_WEB_E2E === 'true';
-test('S1c real browser: local login → bind → new mobile browser waits → desktop allows → conversation; QR, deny and unlink', { skip: !enabled, timeout: 180000 }, async t => {
+const button = (page, name) => page.getByRole('button', { name, exact: true });
+const field = (page, name) => page.getByLabel(name, { exact: true }).filter({ visible: true });
+
+test('D29 real browser: in-app login → device approval → remembered session → settings directory/rename/pairing; deny and unlink', { skip: !enabled, timeout: 180000 }, async t => {
   const { chromium } = await import('../../../apps/mobile-ui/node_modules/playwright/index.mjs');
   const reserved = createServer(); reserved.listen(0, '127.0.0.1'); await once(reserved, 'listening');
   const port = reserved.address().port; await new Promise(resolve => reserved.close(resolve));
   const origin = `http://127.0.0.1:${port}`;
   const f = await fixture(t, { env: { CLOUD_OIDC_CLIENTS: JSON.stringify([
     { client_id: 'weftmate-web', application_type: 'web', redirect_uris: [origin + '/personal/v1/ui/'] },
-    { client_id: 'weftmate-android', redirect_uris: ['com.memoweft.weftmate:/oauth'] },
+    { client_id: 'test-native', redirect_uris: ['com.example.weftmate:/callback'] },
   ]) } });
-  await f.verified();
+  const email = `${randomUUID()}@example.com`, password = randomBytes(24).toString('base64url');
+  const registration = (await f.api(`${P}/auth/register`, { method: 'POST', status: 201,
+    body: { email, password } })).data;
+  await f.api(`${P}/auth/register/verify`, { method: 'POST', status: 200,
+    body: { challengeId: registration.challengeId, code: await f.mailCode(registration.challengeId) } });
+  const seed = await f.signedIn({ email, password, deviceId: 'setup-device' });
   const root = await realpath(await mkdtemp(join(tmpdir(), 'wm-browser-host-')));
   const host = await createPersonalAccessService({ root, port, uiHandler: servePersonalAccessUi,
     cloudIdentity: { issuer: f.config.issuer, allowInsecureLoopback: true },
@@ -27,85 +37,154 @@ test('S1c real browser: local login → bind → new mobile browser waits → de
       readEvents: async () => ({ events: [], nextSeq: -1, hasMore: false }), describeSession: async () => null } });
   t.after(async () => { await host.close(); await rm(root, { recursive: true, force: true }); });
   await host.start();
-  const grant = await host.issueSetupGrant();
-  const localPassword = 'synthetic local browser password';
-  const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' },
-    body: JSON.stringify({ grant: grant.grant, username: 'synthetic-local', password: localPassword, deviceName: 'Computer' }) });
-  assert.equal(setup.status, 201);
-  const browser = await chromium.launch({ headless: true }); t.after(() => browser.close());
-  const desktop = await browser.newContext({ viewport: { width: 1280, height: 850 } });
-  const owner = await desktop.newPage(); const errors = [];
-  owner.on('pageerror', error => errors.push(error.message));
-  await mkdir('.local/s1c-web', { recursive: true });
-  async function visible(page, selector) { try { await page.locator(selector).waitFor({ state: 'visible', timeout: 15000 }); } catch (error) { await page.screenshot({path: '.local/s1c-web/failure.png'}); console.log({selector,url:page.url(),errors,body:await page.locator('body').innerText()}); throw error; } }
-  async function cloudForm(page) {
-    await page.locator('input[name=email]').fill(EMAIL);
-    await page.locator('input[name=password]').fill(PASSWORD);
-    const response = page.waitForResponse(r => r.url().endsWith('/auth/login') && r.request().method() === 'POST');
-    await page.getByRole('button', { name: '登录', exact: true }).click();
-    const logged = await response;
-    if ((await logged.text()).includes('challengeId')) {
-      const id = await page.locator('input[name=challengeId]').inputValue();
-      await page.locator('input[name=code]').fill(await f.mailCode(id));
-      await page.getByRole('button', { name: '确认登录', exact: true }).click();
-    }
+  async function hostApi(route, body, auth, status = 200, method = body === undefined ? 'GET' : 'POST') {
+    const response = await fetch(origin + '/personal/v1' + route, { method, headers: {
+      origin, ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+      ...(auth ? { cookie: auth.cookie, 'x-weftmate-csrf': auth.csrfToken } : {}),
+    }, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+    assert.equal(response.status, status, `${method} ${route}`);
+    const data = await response.json();
+    return { ...data, cookie: response.headers.get('set-cookie')?.split(';')[0] };
   }
-  await owner.goto(origin + '/personal/v1/ui/'); await visible(owner, '#login-view');
-  await owner.locator('#login-name').fill('synthetic-local'); await owner.locator('#login-password').fill(localPassword);
-  await owner.locator('#login-device').fill('Desktop'); await owner.locator('#login-form button[type=submit]').click();
-  await visible(owner, '#assistant-view'); await owner.locator('#account-menu-trigger').click(); await owner.locator('#rail-account').click();
-  await visible(owner, '#cloud-bind'); await owner.locator('#cloud-bind').click(); await cloudForm(owner);
-  await visible(owner, '#account-view');
-  await owner.getByText('已绑定 WeftMate 账号', { exact: true }).waitFor();
-  const phoneContext = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true });
-  const phone = await phoneContext.newPage(); phone.on('pageerror', e => errors.push(e.message));
-  await phone.goto(origin + '/personal/v1/ui/'); await visible(phone, '#cloud-login');
-  await phone.locator('#login-device').fill('Mobile browser'); await phone.locator('#cloud-login').click(); await cloudForm(phone);
-  await visible(phone, '#cloud-wait-view');
-  await phone.getByText('在已登录的电脑或手机上点“允许”。', {exact:true}).waitFor();
+  // Compatibility setup uses the public APIs, leaving the browser to exercise
+  // the complete D29 account flow and real provider/DPoP exchange itself.
+  const grant = await host.issueSetupGrant();
+  const local = await hostApi('/auth/setup', { grant: grant.grant, username: 'synthetic-local',
+    password: randomBytes(24).toString('base64url'), deviceName: 'Setup computer' }, undefined, 201);
+  const claim = await hostApi('/cloud/claims', {}, local);
+  await hostApi('/cloud/binding', { claimId: claim.claimId, accessToken: seed.access_token }, local);
+  await host.syncCloudRevocations();
+
+  const browser = await chromium.launch({ headless: true }); t.after(() => browser.close());
+  const errors = [], requests = [];
+  await mkdir('.local/s1c-web', { recursive: true });
+  async function pageFor(options = {}) {
+    const context = await browser.newContext(options), page = await context.newPage();
+    page.setDefaultTimeout(20000);
+    page.on('pageerror', error => errors.push(error.message));
+    page.on('response', response => { const request = response.request();
+      const url = new URL(response.url());
+      if (url.pathname.startsWith('/personal/v1/')) requests.push({ path: url.pathname, status: response.status(),
+        proof: !!request.headers().dpop });
+    });
+    return { context, page };
+  }
+  async function loggedIn(page) {
+    try { await page.getByRole('textbox', { name: '输入消息', exact: true }).waitFor({ state: 'visible' }); }
+    catch (error) {
+      await page.screenshot({ path: '.local/s1c-web/failure.png' });
+      t.diagnostic(JSON.stringify({ headings: await page.getByRole('heading').allTextContents(),
+        status: await page.getByRole('status').filter({ visible: true }).allTextContents(),
+        alerts: await page.getByRole('alert').allTextContents(), requests: requests.slice(-15), errors }));
+      throw error;
+    }
+    assert.equal(page.url(), origin + '/personal/v1/ui/', 'authorization stays inside the app');
+  }
+  async function cloudLogin(page) {
+    await page.goto(origin + '/personal/v1/ui/');
+    await page.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
+    assert.equal(await field(page, '配对码').isVisible(), false);
+    assert.equal(await button(page, '离线使用这台电脑').count(), 0, 'remote browsers have no local emergency login');
+    await field(page, '邮箱').fill(email); await field(page, '密码').fill(password);
+    const response = page.waitForResponse(value => value.url().endsWith(P + '/auth/login') && value.request().method() === 'POST');
+    await button(page, '登录').click();
+    const logged = await response;
+    assert.equal(logged.status(), 202);
+    const challenge = (await logged.json()).challengeId;
+    await page.getByRole('heading', { name: '确认新设备', exact: true }).waitFor();
+    await field(page, '验证码').fill(await f.mailCode(challenge));
+    await button(page, '验证').click();
+    await page.getByRole('heading', { name: '在你已登录的设备上允许这台设备', exact: true }).waitFor();
+    assert.equal(page.url(), origin + '/personal/v1/ui/');
+  }
+  async function openSettings(page) {
+    const shortcut = button(page, '账户'), settings = button(page, '设置');
+    if (await shortcut.isVisible()) await shortcut.click();
+    else {
+      if (!(await settings.isVisible())) {
+        if (!(await button(page, '账户菜单').isVisible())) await button(page, '切换会话侧栏').click();
+        await button(page, '账户菜单').click();
+      }
+      await settings.click();
+    }
+    await button(page, '设备').click();
+    await page.getByRole('heading', { name: '设备', exact: true }).waitFor();
+  }
+  async function rename(page, before, after) {
+    const row = page.getByRole('group', { name: before, exact: true });
+    await row.getByRole('button', { name: '改名', exact: true }).click();
+    await row.getByRole('textbox', { name: '设备名称', exact: true }).fill(after);
+    await row.getByRole('button', { name: '保存名称', exact: true }).click();
+    await page.getByRole('group', { name: after, exact: true }).waitFor();
+  }
+
+  const { context: ownerContext, page: owner } = await pageFor({ viewport: { width: 1280, height: 850 } });
+  await cloudLogin(owner);
+  assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
+  const firstPending = await hostApi('/cloud/devices/pending', undefined, local);
+  assert.equal(firstPending.devices.length, 1);
+  await hostApi(`/cloud/devices/${firstPending.devices[0].id}/decision`, { decision: 'allow' }, local);
+  await loggedIn(owner);
+  assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 200);
+  await owner.reload(); await loggedIn(owner);
+  await openSettings(owner); await rename(owner, '这个浏览器', 'Approved owner browser');
+  await owner.screenshot({ path: '.local/s1c-web/owner-devices.png' });
+  await button(owner, '← 返回对话').click();
+
+  const { context: phoneContext, page: phone } = await pageFor({ viewport: { width: 390, height: 844 }, isMobile: true });
+  await cloudLogin(phone);
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
   await phone.screenshot({ path: '.local/s1c-web/mobile-wait.png' });
-  await phone.reload(); await visible(phone, '#cloud-wait-view');
-  // Opening settings performs the foreground pending read; no push service is involved.
-  await owner.locator('#account-back').click(); await owner.locator('#account-menu-trigger').click(); await owner.locator('#rail-account').click();
-  await visible(owner, '#pending-devices');
-  await owner.locator('#pending-device-list button').filter({ hasText: /^允许$/ }).click();
-  await visible(phone, '#assistant-view');
+  await phone.reload();
+  await phone.getByRole('heading', { name: '在你已登录的设备上允许这台设备', exact: true }).waitFor();
+  // Settings reads the same pending requests that appear in the top banner.
+  await openSettings(owner);
+  await owner.getByRole('heading', { name: '待批准设备', exact: true }).waitFor();
+  await button(owner, '允许').click();
+  const trust = owner.getByRole('dialog', { name: '可信交付', exact: true });
+  await trust.waitFor();
+  assert.match(await trust.getByRole('textbox', { name: '可信交付码', exact: true }).inputValue(), /^wmt1\./);
+  await trust.getByRole('button', { name: '关闭', exact: true }).click();
+  await loggedIn(phone);
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 200);
-  assert.equal(await phone.evaluate(() => Object.keys(localStorage).some(k => /refresh|cloud.*token/i.test(k))), false);
-  const privateKeyState = await phone.evaluate(async () => {
-    const client = new WeftCloud.Client(); const key = await client.key();
-    return { extractable: key.privateKey.extractable, tokens: await WeftCloud.storage(client.tokenId) };
+  assert.equal(await phone.evaluate(() => Object.keys(localStorage).some(key => /refresh|cloud.*token/i.test(key))), false);
+  const protectedState = await phone.evaluate(async () => {
+    const client = new WeftUiCore.CloudAuthClient({ fetch: (...args) => fetch(...args), crypto,
+      credentials: (...args) => WeftCloud.storage(...args), vendor: WeftCloudVendor, host: location.origin });
+    await client.configure(); const key = await client.key(), saved = await client.saved();
+    return { extractable: key.privateKey.extractable, hasRefreshToken: !!saved.refreshToken };
   });
-  assert.equal(privateKeyState.extractable, false); assert.equal(privateKeyState.tokens, undefined);
+  assert.deepEqual(protectedState, { extractable: false, hasRefreshToken: true });
   await phone.screenshot({ path: '.local/s1c-web/mobile-conversation.png' });
-  // One-time QR challenge is both encoded for a camera and usable as a typed code.
-  await owner.clock.install();
-  await owner.locator('#pairing-open').click();
-  await owner.waitForFunction(() => document.getElementById('pairing-code').value.startsWith('wm1.'));
-  const firstCode = await owner.locator('#pairing-code').inputValue();
-  await owner.clock.fastForward(120100);
-  await owner.waitForFunction(first => { const code = document.getElementById('pairing-code').value; return code.startsWith('wm1.') && code !== first; }, firstCode);
-  const code = await owner.locator('#pairing-code').inputValue();
-  await owner.clock.resume();
-  assert.match(await owner.locator('#pairing-qr').getAttribute('src'), /^data:image\/png;base64,/);
-  const qrContext = await browser.newContext(); const qr = await qrContext.newPage();
-  await qr.goto(origin + '/personal/v1/ui/#pair=' + code.slice(4)); await visible(qr, '#cloud-login');
-  assert.equal(await qr.locator('#cloud-pairing-input').inputValue(), code);
-  await qr.locator('#cloud-login').click(); await cloudForm(qr); await visible(qr, '#assistant-view');
-  assert.equal((await qrContext.request.get(origin + '/personal/v1/sessions')).status(), 200);
-  // A separate browser's ordinary cloud login can still be denied.
-  const deniedContext = await browser.newContext(); const denied = await deniedContext.newPage();
-  await denied.goto(origin + '/personal/v1/ui/'); await visible(denied, '#cloud-login');
-  await denied.locator('#login-device').fill('Denied browser'); await denied.locator('#cloud-login').click(); await cloudForm(denied);
-  await visible(denied, '#cloud-wait-view');
-  await owner.locator('#devices-refresh').click(); await visible(owner, '#pending-devices');
-  await owner.locator('#pending-device-list button').filter({ hasText: /^拒绝$/ }).click();
-  await denied.getByText('这台设备未获允许。请在电脑上重新配对。').waitFor();
+  await openSettings(phone); await rename(phone, '这个浏览器', 'Mobile browser');
+  await phone.getByText(/这台设备/).filter({ visible: true }).first().waitFor();
+  await phone.screenshot({ path: '.local/s1c-web/remote-devices.png' });
+
+  // The remote web client consumes a QR/typed code in Settings → Devices.
+  // Only the directly authenticated computer can create pairing material.
+  const pairing = await hostApi('/cloud/pairings', {}, local, 201);
+  const code = 'wm1.' + Buffer.from(JSON.stringify(pairing)).toString('base64url');
+  await field(phone, '输入电脑的配对码').fill(code);
+  const redeemed = phone.waitForResponse(response => response.url().endsWith('/cloud/pairings/redeem') && response.request().method() === 'POST');
+  await button(phone, '配对连接').click(); assert.equal((await redeemed).status(), 200);
+  await loggedIn(phone); await openSettings(phone);
+  await field(phone, '输入电脑的配对码').fill(code); await button(phone, '配对连接').click();
+  await phone.getByRole('status').filter({ hasText: '配对码已失效或不属于这台电脑，请获取新码。' }).waitFor();
+
+  const { context: deniedContext, page: denied } = await pageFor();
+  await cloudLogin(denied);
+  await button(owner, '← 返回对话').click(); await openSettings(owner);
+  await owner.getByRole('heading', { name: '待批准设备', exact: true }).waitFor();
+  await button(owner, '拒绝').click();
+  await denied.getByText('这台设备未获允许，请在已登录设备上重新批准。', { exact: true }).waitFor();
   assert.equal((await deniedContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
   await denied.screenshot({ path: '.local/s1c-web/device-denied.png' });
-  await owner.locator('#cloud-unbind').click(); await owner.getByText('未绑定', { exact: true }).waitFor();
+  await hostApi('/cloud/binding', {}, local, 200, 'DELETE');
   assert.equal((await phoneContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
-  assert.equal((await desktop.request.get(origin + '/personal/v1/sessions')).status(), 200);
+  assert.equal((await ownerContext.request.get(origin + '/personal/v1/sessions')).status(), 401);
+  assert.equal((await hostApi('/sessions', undefined, local)).sessions.length, 0, 'local owner survives cloud unbinding');
+  for (const route of ['/auth/authorization', '/auth/authorization/resume', '/devices', '/devices/rename'])
+    assert.ok(requests.some(request => request.path === P + route && request.status === 200), route);
+  assert.ok(requests.some(request => request.path === P + '/oidc/token' && request.status === 200 && request.proof));
   assert.deepEqual(errors, []);
 });
