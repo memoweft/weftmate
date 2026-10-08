@@ -42,7 +42,7 @@ const mobileEffects = {
   renderAttachmentDrafts: (...args) => renderAttachmentDrafts(...args),
   markAttachmentRevision: (...args) => markAttachmentRevision(...args),
   clearAcceptedHostAttachments: (...args) => clearAcceptedHostAttachments(...args),
-  updateComposer: () => updateComposer(), updateAvailability: () => {}, paintConnection: () => {},
+  updateComposer: () => updateComposer(), updateAvailability: () => updateComposer(), paintConnection: () => {},
   renderSharedConversation: () => renderSharedConversation(),
   renderConversation: (...args) => renderConversation(...args),
   renderConversationList: () => renderConversationList(), renderSessions: () => renderConversationList(),
@@ -519,6 +519,9 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('[data-action="new-chat"]').addEventListener('click',()=>selectConversation(null));
   $('conversation-search').addEventListener('input',renderConversationList);
   $('draft').addEventListener('input',updateComposer);$('send-button').addEventListener('click',send);$('stop-button').addEventListener('click',stop);
+  $('message-mode').addEventListener('change',()=>uiCore.setMessageMode($('message-mode').value));
+  $('draft').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){
+    event.preventDefault();if(!$('send-button').disabled)void send({intent:event.ctrlKey||event.metaKey?'queue':undefined});}});
   $('model-button').addEventListener('click',openModels);$('plus-button').addEventListener('click',openAttachmentMenu);
   $('approval-mode-button').addEventListener('click',()=>{void openApprovalModes()});
   $('approval-risk-cancel').addEventListener('click',()=>closeApprovalRisk());

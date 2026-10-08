@@ -58,6 +58,8 @@ async function openTimelinePreview(context,read,title,artifact=null){if(!convers
     const body=el('div','markdown resource-document');
     if(window.WeftFormat?.render){body.innerHTML=window.WeftFormat.render(text);enhanceMarkdown(body)}else body.textContent=text;
     target.append(body);if(data.truncated||data.source?.truncated)target.append(el('p','muted','内容已截断'));
+    if(artifact?.versions?.length){const older=el('details','resource-usage');older.append(el('summary','',`旧版 · ${artifact.versions.length} 个`));
+      for(const version of artifact.versions)appendTimelineArtifact(older,version,context);target.append(older)}
     if(artifact){const save=el('button','timeline-action','保存到手机');save.addEventListener('click',async()=>{try{await call('shared.artifacts.save',{artifactId:artifact.artifactId});toast('请选择保存位置')}catch(e){toast(safeError(e),true)}});target.append(save)}
   }catch{if(state.resourceView!==view)return;clear(target);target.append(el('p','inline-error','暂时无法读取，请重试。'));
     const retry=el('button','secondary','重新读取');retry.addEventListener('click',load);target.append(retry)}};await load();
@@ -76,7 +78,11 @@ function openResourceSource(item,context){if(!conversationTaskCurrent(context))r
     detail.addEventListener('toggle',async()=>{if(!detail.open||detail.dataset.loaded)return;detail.dataset.loaded='loading';
       detail.querySelector('pre')?.remove();const output=el('pre','timeline-raw','正在读取…');detail.append(output);
       try{const data=await readResourceUse(context,use);if(state.resourceView!==view||!conversationTaskCurrent(context))return;
-        output.textContent=`${data.source?.text||data.text||'暂时没有可预览内容'}${data.truncated||data.source?.truncated?'\n[内容已截断]':''}`;
+        const text=data.source?.text||data.text||'暂时没有可预览内容';
+        if(item.kind==='tool'){const presentation=uiCore.sourcePresentation(item.name,text);
+          detail.append(el('p','source-summary',presentation.summary));const raw=el('details','resource-raw');
+          raw.append(el('summary','','详情'));output.remove();raw.append(output);detail.append(raw);}
+        output.textContent=`${text}${data.truncated||data.source?.truncated?'\n[内容已截断]':''}`;
         const copy=el('button','timeline-action','复制');copy.addEventListener('click',()=>copyText(output.textContent));detail.append(copy);detail.dataset.loaded='true';
       }catch{if(state.resourceView===view){output.textContent='暂时无法读取，收起后可重试。';delete detail.dataset.loaded}}});target.append(detail)}
 }
