@@ -1,0 +1,149 @@
+{
+  "method" : "Unmodified full-frame XCTest screenshots decoded as sRGB RGBA; no masks, alignment, tolerance or resized images",
+  "pairs" : [
+    {
+      "after" : "after-light-list.png",
+      "before" : "before-light-list.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-list",
+      "width" : 1206
+    },
+    {
+      "after" : "after-light-running.png",
+      "before" : "before-light-running.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-running",
+      "width" : 1206
+    },
+    {
+      "after" : "after-light-approval.png",
+      "before" : "before-light-approval.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-approval",
+      "width" : 1206
+    },
+    {
+      "after" : "after-light-outputs-sources.png",
+      "before" : "before-light-outputs-sources.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-outputs-sources",
+      "width" : 1206
+    },
+    {
+      "after" : "after-light-completed.png",
+      "before" : "before-light-completed.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-completed",
+      "width" : 1206
+    },
+    {
+      "after" : "after-light-source.png",
+      "before" : "before-light-source.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-source",
+      "width" : 1206
+    },
+    {
+      "after" : "after-light-output.png",
+      "before" : "before-light-output.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-output",
+      "width" : 1206
+    },
+    {
+      "after" : "after-light-keyboard.png",
+      "before" : "before-light-keyboard.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "light-keyboard",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-list.png",
+      "before" : "before-dark-list.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-list",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-running.png",
+      "before" : "before-dark-running.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-running",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-approval.png",
+      "before" : "before-dark-approval.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-approval",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-outputs-sources.png",
+      "before" : "before-dark-outputs-sources.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-outputs-sources",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-completed.png",
+      "before" : "before-dark-completed.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-completed",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-source.png",
+      "before" : "before-dark-source.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-source",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-output.png",
+      "before" : "before-dark-output.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-output",
+      "width" : 1206
+    },
+    {
+      "after" : "after-dark-keyboard.png",
+      "before" : "before-dark-keyboard.png",
+      "differentPixels" : 0,
+      "height" : 2622,
+      "maxChannelDelta" : 0,
+      "name" : "dark-keyboard",
+      "width" : 1206
+    }
+  ]
+}
