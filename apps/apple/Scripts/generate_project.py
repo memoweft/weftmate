@@ -86,6 +86,10 @@ def target(name, platform, sources, testing=None):
                         "Resources/" + {"macosx": "Mac", "iphoneos": "Phone", "watchos": "Watch"}[platform] + "Icons.xcassets"]:
             resource_files.append(obj(name + ":resource:" + catalog, isa="PBXBuildFile",
                                       fileRef=file(catalog, "folder.assetcatalog")))
+    if not is_test and platform in ["macosx", "iphoneos"]:
+        for document in ["terms-zh", "privacy-zh"]:
+            path = "../../docs/legal/" + document + ".md"
+            resource_files.append(obj(name + ":legal:" + document, isa="PBXBuildFile", fileRef=file(path, "net.daringfireball.markdown")))
     phases.append(obj(name + ":resources", isa="PBXResourcesBuildPhase", buildActionMask=2147483647,
                       files=resource_files, runOnlyForDeploymentPostprocessing=0))
     deps = []
@@ -137,7 +141,7 @@ debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixt
 target("WeftMateMac", "macosx", ui + mac + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture + ["../../design/tokens/generated/apple/DesignTokens.swift"])
 target("WeftMateMacUITests", "macosx", ["Tests/WeftMateUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMateMac")
-target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift", "Tests/IC2IconsUITests.swift", "Tests/A4cAppearanceUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
+target("WeftMatePhoneUITests", "iphoneos", ["Tests/LG2AccountUITests.swift", "Tests/WeftMateUITests.swift", "Tests/IC2IconsUITests.swift", "Tests/A4cAppearanceUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
 target("WeftMateWatchUITests", "watchos", ["Tests/IC2WatchIconsUITests.swift"], "WeftMateWatch")
 product_group = obj("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")
 group = obj("group", isa="PBXGroup", children=all_files+[product_group], sourceTree="<group>")
