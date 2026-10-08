@@ -23,6 +23,8 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > 512) return false
     val route = path.substringBefore('?')
     val query = path.substringAfter('?', "")
+    if (route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/resources")) &&
+        (query.isEmpty() || query.matches(Regex("afterSeq=(-1|[0-9]+)")))) return true
     if (query.isEmpty() && (route == "/personal/v1/system" || route == "/personal/v1/settings/models" ||
         route == "/personal/v1/settings/approvals" ||
         route.matches(Regex("/personal/v1/sessions/[A-Za-z0-9_-]{1,128}/approval-mode")) ||
