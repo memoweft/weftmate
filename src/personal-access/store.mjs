@@ -1,4 +1,5 @@
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
+import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { randomUUID } from 'node:crypto';
 import { open, rename, rm } from 'node:fs/promises';
 import { ensurePrivateFile } from '../private-host-storage.mjs';
@@ -509,6 +510,7 @@ export function validateSingleStore(store) {
               Object.keys(item).some((key) => !['requestId', 'at', 'targets', 'lastAttemptAt', 'queuedOnly'].includes(key))) ||
             !validTime(command.taskControl.updatedAt) ||
             Object.keys(command.taskControl).some((key) => !['state', 'stopRequests', 'updatedAt'].includes(key)))) ||
+          (command.scheduleSourceId !== undefined && !scheduledCommandSource(store, command)) ||
           (command.receiptId !== undefined && !validId(command.receiptId)) ||
           (command.sourceAuthEpoch !== undefined && (!Number.isSafeInteger(command.sourceAuthEpoch) ||
             command.sourceAuthEpoch < 0 || !['password', 'cloud'].includes(store.devices[command.sourceDeviceId].authKind) ||

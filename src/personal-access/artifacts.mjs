@@ -1,3 +1,4 @@
+import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { digest, failure, id, validId, withDeadline } from './common.mjs';
 import { canonicalArtifact } from '../personal-artifacts/index.mjs';
 import { INTERNAL_ARTIFACT_KIND, MAX_COMMANDS, SNAPSHOT_ID, WEB_SNAPSHOT_ID } from './constants.mjs';
@@ -133,7 +134,7 @@ export function createArtifactOperations(context) {
               !Number.isSafeInteger(item.sourceAuthEpoch)) return false;
           const device = next.devices[item.sourceDeviceId];
           return device?.authKind === 'password' && !device.revoked &&
-            device.authEpoch === item.sourceAuthEpoch && Date.parse(device.expiresAt) > context.timestamp();
+            device.authEpoch === item.sourceAuthEpoch && (scheduledCommandSource(next, item) || Date.parse(device.expiresAt) > context.timestamp());
         });
         if (eligible.length !== 1) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
         const source = eligible[0];
