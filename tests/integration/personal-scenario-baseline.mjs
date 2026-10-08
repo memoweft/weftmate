@@ -164,7 +164,47 @@ try {
     console.log(`Starting ${scenario.id}: ${lan ? 'lan/local-quality' : firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (alternateLan ? 'lan/local-quality' : lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
     await runEvaluation({ host: new URL(page.url()).origin, out, model: firstModel,
       switchModel: alternateLan ? 'lan' : lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
-      onScenarioResult: async result => { results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
+      onScenarioResult: async result => {
+        if (result.id.startsWith('memory-1x-')) {
+          const checks = {};
+          try {
+            assert.equal(result.status, 'passed');
+            assert.equal(new Set(result.turns.map(turn => turn.sessionId)).size, scenario.turns.length);
+            checks.distinctSessions = true;
+            assert.equal(result.turns.flatMap(turn => turn.approvals).length, 0);
+            checks.noUndeclaredApprovals = true;
+            const kind = result.id === 'memory-1x-person' ? 'relationship' : 'cognition';
+            const items = (await api(`/memory/items?kind=${kind}`)).body.items;
+            const used = result.turns.at(-1).memoryUsed;
+            const value = result.id === 'memory-1x-correction' ? '150毫升'
+              : result.id === 'memory-1x-person' ? '闻舟' : '纯器乐';
+            const adopted = items.find(item => item.text.includes(value) && item.currentState === 'current' && used.some(memory => memory.id === item.id));
+            assert.ok(adopted, 'holdout must adopt its own current formal memory');
+            checks.currentItemAdopted = true;
+            const sourceTurn = result.id === 'memory-1x-correction' ? 1 : 0;
+            const sources = (await api(`/memory/items/${kind}/${adopted.id}/sources`)).body.sources;
+            assert.ok(sources.some(source => source.rawContent === scenario.turns[sourceTurn].user));
+            checks.exactSourceRetained = true;
+            if (result.id === 'memory-1x-correction') {
+              const previous = items.filter(item => item.id !== adopted.id && item.text.includes('浇水') && item.text.includes('300毫升'));
+              assert.ok(previous.length);
+              assert.ok(previous.every(item => item.currentState === 'not_current' && item.lifecycle.invalidAt && !used.some(memory => memory.id === item.id)));
+              checks.obsoleteExcluded = true;
+              for (const item of previous) {
+                const oldSources = (await api(`/memory/items/cognition/${item.id}/sources`)).body.sources;
+                assert.ok(oldSources.some(source => source.rawContent === scenario.turns[0].user));
+              }
+              checks.originalSourceRetained = true;
+            }
+          } catch (error) {
+            result.status = 'failed';
+            result.reason = redact(error.message);
+          }
+          result.holdoutVerification = checks;
+        }
+        results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2));
+        console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`);
+      } });
   }
   if (memoryLoop || memoryUi) {
     if (memoryCorrection && !process.argv.includes('--desktop-only')) {
