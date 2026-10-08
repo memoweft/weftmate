@@ -219,7 +219,7 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 现有成果是宿主登记且校验过的 UTF-8 文本、≤128 KiB，支持相应文本 MIME；未提供客户端直接登记成果/任意路径下载 API。来源校验通过才可打开/保存，客户端可核对元数据与字节哈希。
 
-### 3.9 记忆（14）
+### 3.9 记忆（13）
 
 `kind` 为 `cognition / entity / relationship / event`；下表均有顶层 `ownerId`。写入体 ≤12 KiB，`expectedWorldRevision` 是非负安全整数。
 
