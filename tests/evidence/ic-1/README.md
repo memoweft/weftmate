@@ -30,7 +30,7 @@ Windows 窗口 / 任务栏使用透明底单色 ICO（Windows 图标容器），
 ## 验证结果
 
 - 新资产与静态路由测试 3/3：45 个确认图标及扩展可继承颜色，生成资产与母版一致；C4 遮罩 / Android 奇偶裁剪与透明度保留；三种 ICO 的尺寸和 PNG（位图）条目完整；新增静态资源可在登录前按正确 MIME（媒体类型）和原安全头读取。
-- 最终桌面相关交互 / IPC（进程间通信）69/69；桌面界面 3/3 的真实 Chromium（浏览器引擎）交互检查通过；真实 Electron 图标与审批流程通过，报告见 [verification.json](verification.json)。
+- 最终桌面相关交互 / IPC（进程间通信）69/69，记忆页面夹具回归3/3；桌面界面 3/3 的真实 Chromium（浏览器引擎）交互检查通过；真实 Electron 图标与审批流程通过，报告见 [verification.json](verification.json)。
 - 最终手机交互、浅 / 深布局及手机发布回归 97/97。
 - Android JVM（Java 虚拟机）27/27，普通 `assembleDebug`、专属 `assembleDebugAndroidTest` 均通过；MuMu 从全新安装运行 `IconSystemVisualTest` 1/1，通过后卸载。
 - `npm run typecheck` 和 `git diff --check` 通过；完整测试交 [PR #56 的 GitHub CI（持续集成）](https://github.com/memoweft/weftmate/pull/56/checks)，不在本地跑全量。
