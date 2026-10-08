@@ -206,7 +206,7 @@
       if (!menu.hidden) { globalThis.WeftPopover?.position(menu, byId('account-menu-trigger')); menu.querySelector('button')?.focus() }
     })
     document.addEventListener('click', e => { if (!byId('account-menu').hidden && !byId('account-menu').parentNode.contains(e.target)) { byId('account-menu').hidden = true; byId('account-menu-trigger').setAttribute('aria-expanded', 'false') } })
-    byId('rail-devices').addEventListener('click', () => { actions.openAccount(); byId('devices-refresh').scrollIntoView({ block: 'center' }) })
+
     const input = byId('message-text')
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {

@@ -44,28 +44,63 @@ function subNotice(title,text){const target=$('page-content');clear(target);targ
 function connectionLabel(){return {connected:'电脑连接正常',checking:'已保存登录，待核对',offline:'电脑暂不可达，可离线使用',
   expired:'登录已失效，请重新登录',local:'未登录'}[state.connection]||'连接状态待确认'}
 
-function settingsPage(target){target.append(heading('设置'),group('个人空间',[
-  row('账户',state.loggedIn?`${state.username} · ${connectionLabel()}`:'未登录',()=>page('account')),
-  ...(!globalThis.WeftMobileCloud?.active?[row('电脑账户与连接',state.loggedIn?connectionLabel():'可以登录或注册',()=>page('connect'))]:[]),
-  row('设备',state.loggedIn?'查看或移除已登录设备':'登录后可管理设备',()=>page('devices'))]),
-  group('使用偏好',[row('用量','本月费用、用量与月度上限',()=>page('usage')),row('对话模型',state.model?.displayName||'尚未配置手机模型',()=>page('models')),
-    row('外观','跟随系统、浅色或深色',()=>page('appearance')),
-    row('通知','回复、动作和同步状态',()=>page('notifications')),
-    row('离线与同步',state.loggedIn?'当前账户的记录与状态':'登录后查看本机与同步状态',()=>page('sync'))]),
-  group('应用',[row('界面更新',state.ui?.activeVersion||'内置页面',()=>page('updates')),
-    row('原生兼容界面','仅供排查当前系统网页组件',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
+const mobileSettingsRegistry = WeftUiCore.settingsRegistry({
+  general: target => generalSettingsPage(target), appearance: target => appearancePage(target),
+  account: target => accountPage(target), devices: target => devicesPage(target),
+  usage: target => usagePage(target, state.usageSessionId || ''), models: target => modelsPage(target),
+  schedules: target => {target.append(heading('提醒与定时任务'));const body=el('section');target.append(body);WeftSchedulesView(uiCore,body,{current:()=>body.isConnected&&state.page==='schedules',openConversation:id=>selectSharedSession(id)})},
+  about: target => aboutSettingsPage(target), approvals: target => approvalSettingsPage(target), memory: target => memoryPage(target), resources: target => workspacesPage(target),
+});
+const settingsListPosition = { scroll: 0, query: '' };
+function settingsPage(target){
+  target.append(heading('设置'));
+  const search=el('input','settings-search');search.type='search';search.placeholder='搜索设置';search.setAttribute('aria-label','搜索设置');search.value=settingsListPosition.query;
+  const list=el('nav','settings-list');list.setAttribute('aria-label','设置分类');target.append(search,list);
+  const draw=()=>{clear(list);let name,section;
+    for(const category of mobileSettingsRegistry.list({query:search.value})){
+      if(name!==category.group){name=category.group;section=group(name,[]);list.append(section)}
+      const summaries={general:'通知、离线与同步',appearance:{system:'跟随系统',light:'浅色',dark:'深色'}[state.appearance],account:state.loggedIn?state.username:'未登录',devices:'连接、配对与待批准',usage:'本月费用、用量与月度上限',models:state.model?.displayName||'管理手机与账户模型',schedules:'管理提醒与定时任务',approvals:'新对话的默认模式',memory:'查看理解与来源',resources:'项目与网页资料',about:state.ui?.activeVersion||'版本、条款与隐私'};
+      const item=row(category.name,summaries[category.id]||'',()=>{
+        settingsListPosition.scroll=$('generic-page').scrollTop;settingsListPosition.query=search.value;state.settingsChild=true;page(category.id)});
+      const icon=el('img','settings-category-icon');icon.src='icons/'+category.icon+'.svg';icon.alt='';item.prepend(icon);section.querySelector('.group-body').append(item);
+    }
+    if(!list.children.length)list.append(el('p','muted','没有匹配的设置，试试“主题”或“费用”。'));
+  };
+  search.addEventListener('input',()=>{settingsListPosition.query=search.value;draw()});draw();
+  $('generic-page').scrollTop=settingsListPosition.scroll;
+}
+function generalSettingsPage(target){target.append(heading('常规'),group('此设备',[
+  row('通知','回复、动作和同步状态',()=>page('notifications')),
+  row('离线与同步',state.loggedIn?'当前账户的记录与状态':'登录后查看本机与同步状态',()=>page('sync')),
+  ...(!globalThis.WeftMobileCloud?.active?[row('电脑账户与连接',connectionLabel(),()=>page('connect'))]:[]),
+  row('界面更新',state.ui?.activeVersion||'内置页面',()=>page('updates')),
+  row('原生兼容界面','排查系统网页组件',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
   void systemStatusSection(target);
-  const section=el('section','group');section.append(el('h2','','审批'));
+}
+function approvalSettingsPage(target){target.append(heading('审批'));
   const button=el('button','secondary','设置默认审批模式');button.type='button';button.disabled=!state.loggedIn;
   button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-controls','approval-mode-popover');
   button.addEventListener('click',()=>{void openApprovalModes(true,button)});
-  section.append(el('p','hint','用于新电脑对话，已有对话可在输入区单独设置。'),button);target.append(section);
+  target.append(el('p','hint','用于新电脑对话，已有对话可在输入区单独设置。'),button);
+}
+
+function aboutSettingsPage(target){target.append(heading('关于'),group('WeftMate',[
+  row('界面版本',state.ui?.activeVersion||'内置页面',()=>page('updates')),
+  row('服务条款','在应用内阅读',()=>mobileSettingsLegal('terms')),
+  row('隐私政策','在应用内阅读',()=>mobileSettingsLegal('privacy'))]));
+}
+async function mobileSettingsLegal(kind){
+  let dialog=$('settings-legal-reader');
+  if(!dialog){dialog=el('dialog','legal-reader');dialog.id='settings-legal-reader';const close=el('button','secondary','关闭');close.type='button';close.addEventListener('click',()=>dialog.close());dialog.append(close,el('h2'),el('article'));document.body.append(dialog)}
+  dialog.setAttribute('aria-label',kind==='terms'?'服务条款':'隐私政策');dialog.querySelector('h2').textContent=dialog.getAttribute('aria-label');
+  const body=dialog.querySelector('article');body.textContent='正在读取…';dialog.showModal();
+  try{const response=await fetch('legal/'+kind+'-zh.txt');body.innerHTML=WeftFormat.render(await response.text())}catch{body.textContent='内容暂时无法读取，请重试。'}
 }
 
 async function systemStatusSection(target){const owner=state.owner,epoch=state.authEpoch;
   const section=el('section','group');section.append(el('h2','','系统状态'));
   const status=el('p','hint','正在读取…');section.append(status);target.append(section);
-  const current=()=>state.owner===owner&&state.authEpoch===epoch&&target.isConnected&&state.page==='settings';
+  const current=()=>state.owner===owner&&state.authEpoch===epoch&&target.isConnected&&state.page==='general';
   try{const [system,settings]=await Promise.all([
     uiCore.readMobileSystem(),
     uiCore.readMobileModelSettings()]);
@@ -84,12 +119,12 @@ async function systemStatusSection(target){const owner=state.owner,epoch=state.a
       const button=el('button','secondary',`重启${name}`);button.disabled=!system.canRestart||!value.canRestart;
       button.addEventListener('click',async()=>{button.disabled=true;button.textContent='重启中…';
         try{await uiCore.restartService(key);
-          if(current())page('settings')
+          if(current())page('general')
         }catch(e){if(current()){status.textContent='重启未确认，请刷新查看实际状态。';button.disabled=false;button.textContent=`重启${name}`}}});
       section.append(button)
     }
     const background=el('p','hint',settings.backgroundModelProfileId?'后台模型已单独配置 · 在电脑设置中修改':'后台模型跟随主模型 · 在电脑设置中修改');section.append(background);
-    const refresh=el('button','secondary','刷新状态');refresh.addEventListener('click',()=>page('settings'));section.append(refresh);
+    const refresh=el('button','secondary','刷新状态');refresh.addEventListener('click',()=>page('general'));section.append(refresh);
   }catch(e){if(current())status.textContent=state.loggedIn?'系统状态暂时无法读取，请重新连接电脑后刷新。':'登录并连接电脑后查看系统状态。'}
 }
 
@@ -280,13 +315,13 @@ function connectPage(target){globalThis.WeftCloudMobile?.mount(target,{call,logg
         state.profile=profile;
         state.connection=profile.connectionVerified?'connected':'offline';
         showProfile(profile);
-        if(state.page==='connect'||state.page==='settings')page(state.page);
+        if(state.page==='connect'||state.page==='general')page(state.page);
         else if(state.page==='chat'&&!state.conversationId)showWelcome();
         toast(profile.connectionVerified?'账户连接正常':'电脑暂不可达，正在使用当前账户的本机资料',!profile.connectionVerified);
       }catch(error){
         if(epoch!==state.authEpoch||owner!==state.owner)return;
         state.connection=error.message==='UNAUTHORIZED'||error.message==='AUTH_REQUIRED'?'expired':'offline';
-        if(state.page==='connect'||state.page==='settings')page(state.page);
+        if(state.page==='connect'||state.page==='general')page(state.page);
         else if(state.page==='chat'&&!state.conversationId)showWelcome();
         toast(state.connection==='expired'?'登录已失效，请重新登录':'电脑暂不可达，本机资料仍保留',true);
       }
@@ -535,10 +570,13 @@ function syncPage(target){target.append(heading('离线与同步'),notice(state.
   }).catch(()=>{});
 }
 
-function appearancePage(target){target.append(heading('外观','同一套 Weave 组件会跟随选择同步变化。'));
-  const options=[['system','跟随系统','随着设备浅色/深色模式切换'],['light','浅色','明亮的 Weave 界面'],['dark','深色','暗处阅读更舒适']];
-  target.append(group('主题',options.map(([value,label,detail])=>row(`${label}${state.appearance===value?' · 当前':''}`,detail,async()=>{
-    try{const saved=await uiCore.mobileAppearance(value);applyTheme(saved.value);page('appearance')}catch(e){toast(safeError(e),true)}}))));
+function appearancePage(target){target.append(heading('外观','保存到这台设备。'));
+  const line=el('div','settings-row'),copy=el('div');copy.append(el('strong','','颜色模式'),el('p','hint','选择适合当前环境的颜色模式。'));
+  const select=el('select');select.setAttribute('aria-label','颜色模式');
+  for(const [value,label] of [['light','浅色'],['dark','深色'],['system','跟随系统']]){const option=el('option','',label);option.value=value;select.append(option)}
+  select.value=state.appearance;line.append(select);const segments=WeftSettingsControls.segmented(select);
+  select.addEventListener('change',async()=>{try{const saved=await uiCore.mobileAppearance(select.value);applyTheme(saved.value);page('appearance')}catch(e){toast(safeError(e),true)}});
+  line.append(copy,segments);target.append(line);
 }
 
 async function updatesPage(target){target.append(heading('界面更新','常规界面可从个人服务端更新；新增原生能力仍需更新应用。'));

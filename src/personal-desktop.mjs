@@ -1,3 +1,4 @@
+import packageInfo from '../package.json' with { type: 'json' };
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
 import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage } from 'electron';
 import { hostname } from 'node:os';
@@ -40,7 +41,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   let resolvedPalette = null;
   const bounds = restoreDesktopBounds(saved, screen.getAllDisplays());
   const win = new BrowserWindow({
-    ...bounds, minWidth: 760, minHeight: 520,
+    ...bounds, minWidth: 480, minHeight: 520,
     title: 'WeftMate', icon: windowIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI), show: false, backgroundColor: palette().color,
     ...(process.platform === 'win32' ? { titleBarStyle: 'hidden', titleBarOverlay: palette() } : {}),
     webPreferences: { session: desktopSession, preload: join(import.meta.dirname, 'personal-desktop-preload.cjs'),
@@ -71,7 +72,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     ...process.argv.filter(arg => /^--(?:access-port|workspace-dir|public-origin|personal-memory-config|local-model-config|android-package-path|mobile-ui-dir)=/.test(arg) || arg === '--trust-loopback-proxy'),
   ];
   const loginOptions = { path: process.execPath, args: loginArgs };
-  const settings = () => ({ autoStart: app.getLoginItemSettings(loginOptions).openAtLogin,
+  const settings = () => ({ version: packageInfo.version, autoStart: app.getLoginItemSettings(loginOptions).openAtLogin,
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
   const authStore = desktopAuthStorage(join(app.getPath('userData'), 'desktop-auth.enc'), safeStorage);
