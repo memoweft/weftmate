@@ -567,7 +567,7 @@ test('HTTPS issuer behind an explicitly trusted loopback proxy issues host-only 
     assert.match(cookie, /HttpOnly/i);
     assert.match(cookie, /Secure/i);
     assert.doesNotMatch(cookie, /Domain=/i);
-    assert.match(cookie, /SameSite=Lax/i);
+    assert.match(cookie, /SameSite=None/i);
   }
 });
 

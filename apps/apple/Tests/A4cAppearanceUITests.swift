@@ -114,6 +114,9 @@ final class A4cAppearanceUITests: XCTestCase {
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
     }
     @MainActor private func screenshot(_ app: XCUIApplication, _ name: String) {
+        // Let native glass / text editing decoration settle before comparing pixels.
+        // The app is a separate process; test assertions and capture pixels are unchanged.
+        Thread.sleep(forTimeInterval: 2)
         let attachment = XCTAttachment(screenshot: app.screenshot()); attachment.name = "A4c-" + name
         attachment.lifetime = .keepAlways; add(attachment)
     }

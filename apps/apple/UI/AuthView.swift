@@ -12,25 +12,25 @@ struct AuthView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 28) {
-                HStack(spacing: 12) {
+            VStack(spacing: AppleTokens.Space.p28) {
+                HStack(spacing: AppleTokens.Space.p12) {
                     BrandMark()
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("WeftMate").font(.title2.weight(.semibold)).tracking(-0.6)
-                        Text("在这里，接上你的话题").font(.callout).foregroundStyle(Weave.muted)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p3) {
+                        Text("WeftMate").font(AppleTokens.Fonts.title2.weight(.semibold)).tracking(AppleTokens.Tracking.brand)
+                        Text("在这里，接上你的话题").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                     }
-                    Spacer(minLength: 0)
+                    Spacer(minLength: AppleTokens.Space.p0)
                 }
                 .frame(maxWidth: 420)
 
                 WeaveCard {
-                    VStack(alignment: .leading, spacing: 20) {
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack(alignment: .leading, spacing: 9) {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
+                        HStack(alignment: .center, spacing: AppleTokens.Space.p12) {
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p9) {
                                 Text(register ? "创建你的账户" : "欢迎回来")
-                                    .font(.system(size: 28, weight: .semibold)).tracking(-0.7)
+                                    .font(.system(size: AppleTokens.FontSize.f28, weight: .semibold)).tracking(AppleTokens.Tracking.welcomeTitle)
                                 Text("用同一个账户，接上原来的对话。")
-                                    .font(.callout).foregroundStyle(Weave.muted).lineSpacing(4)
+                                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).lineSpacing(AppleTokens.Space.p4)
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                             SpiritView(size: 76)
@@ -38,7 +38,7 @@ struct AuthView: View {
                         Button { model.cloudLogin.showLogin = true } label: {
                             WeftLabel("用 WeftMate 账号登录", icon: "account")
                         }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("cloudLoginEntry")
-                        Text("直接连接电脑（用户名 + 密码）").font(.headline)
+                        Text("直接连接电脑（用户名 + 密码）").font(AppleTokens.Fonts.headline)
                         Picker("账户操作", selection: $register) {
                             Text("登录").tag(false)
                             Text("注册").tag(true)
@@ -46,7 +46,7 @@ struct AuthView: View {
                         .pickerStyle(.segmented)
                         .disabled(model.authBusy)
 
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                             fieldLabel("账户")
                             TextField("账户名", text: $username)
                                 .textContentType(.username)
@@ -57,11 +57,11 @@ struct AuthView: View {
                                 .accessibilityIdentifier("username")
                             if register {
                                 Text("账户名为 3–64 个字符，可使用字母、数字、点、横线和下划线。")
-                                    .font(.caption).foregroundStyle(Weave.muted)
+                                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                             }
                         }
 
-                        VStack(alignment: .leading, spacing: 8) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                             fieldLabel("密码")
                             SecureField(register ? "15–128 个字符" : "输入密码", text: $password)
                                 .textContentType(register ? .newPassword : .password)
@@ -72,7 +72,7 @@ struct AuthView: View {
                         }
 
                         if register {
-                            VStack(alignment: .leading, spacing: 8) {
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                                 fieldLabel("昵称（可选）")
                                 TextField("希望怎么称呼你", text: $displayName)
                                     .textContentType(.nickname).weaveField()
@@ -82,19 +82,19 @@ struct AuthView: View {
                             }
                         }
 
-                        VStack(alignment: .leading, spacing: 10) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
                             Button {
-                                withAnimation(.easeInOut(duration: 0.18)) { showServer.toggle() }
+                                withAnimation(AppleTokens.Motion.connection) { showServer.toggle() }
                             } label: {
-                                HStack(spacing: 8) {
+                                HStack(spacing: AppleTokens.Space.p8) {
                                     WeftIcon("cloud")
                                     Text(model.serverDisplayName).lineLimit(1)
                                     Spacer()
-                                    Text(showServer ? "收起" : "更改").font(.caption.weight(.medium))
-                                    WeftIcon("chevron", size: 16).font(.caption).rotationEffect(.degrees(showServer ? 180 : 0))
+                                    Text(showServer ? "收起" : "更改").font(AppleTokens.Fonts.caption.weight(.medium))
+                                    WeftIcon("chevron", size: 16).font(AppleTokens.Fonts.caption).rotationEffect(.degrees(showServer ? 180 : 0))
                                 }
-                                .font(.callout).foregroundStyle(Weave.secondary)
-                                .padding(.vertical, 6).contentShape(Rectangle())
+                                .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
+                                .padding(.vertical, AppleTokens.Space.p6).contentShape(Rectangle())
                             }
                             .buttonStyle(.plain).accessibilityIdentifier("serverSettingsButton")
                             if showServer {
@@ -103,7 +103,7 @@ struct AuthView: View {
                                     .submitLabel(.next).onSubmit { field = .username }
                                     .accessibilityIdentifier("serverURL")
                                 Text("连接你自己的 WeftMate 服务器。更改地址后，登录到该服务器上的账户。")
-                                    .font(.caption).foregroundStyle(Weave.muted).lineSpacing(3)
+                                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineSpacing(AppleTokens.Space.p3)
                             }
                         }
 
@@ -113,8 +113,8 @@ struct AuthView: View {
                         }
 
                         Button(action: authenticate) {
-                            HStack(spacing: 9) {
-                                if model.authBusy { ProgressView().controlSize(.small).tint(.white) }
+                            HStack(spacing: AppleTokens.Space.p9) {
+                                if model.authBusy { ProgressView().controlSize(.small).tint(AppleTokens.Colors.white) }
                                 Text(model.authBusy ? "正在连接…" : register ? "注册并登录" : "登录")
                             }
                         }
@@ -127,10 +127,10 @@ struct AuthView: View {
                 .frame(maxWidth: 468)
 
                 Text("账户数据按账户独立保存。登录失败时，输入会保留在当前页面。")
-                    .font(.caption).foregroundStyle(Weave.muted)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                     .multilineTextAlignment(.center).frame(maxWidth: 410)
             }
-            .padding(.horizontal, 24).padding(.vertical, 36)
+            .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p36)
             .frame(maxWidth: .infinity)
         }
         .background(Weave.canvas)
@@ -143,7 +143,7 @@ struct AuthView: View {
     }
 
     private func fieldLabel(_ label: String) -> some View {
-        Text(label).font(.callout.weight(.medium)).foregroundStyle(Weave.secondary)
+        Text(label).font(AppleTokens.Fonts.callout.weight(.medium)).foregroundStyle(Weave.secondary)
     }
 
     private func authenticate() {
