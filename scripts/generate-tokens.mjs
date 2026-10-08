@@ -55,13 +55,12 @@ await put('apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTok
     return `    const val duration${name[0].toUpperCase() + name.slice(1)} = ${millis}L`;
   }).join('\n') + '\n}\n');
 
-// Apple consumes this platform-neutral manifest in a later Mac work package.
-// Keep the generated handoff outside apps/apple to avoid touching its live work.
+// Apple compiles this generated Swift source directly; the manifest is also available for tooling.
 await put('design/tokens/generated/apple/DesignTokens.json', JSON.stringify({
   format: 'weftmate.design-tokens.apple.v1', units: { dimensions: 'pt', duration: 'ms' },
-  shared: tokens.shared, surfaces: tokens.surfaces, android: tokens.android,
+  shared: tokens.shared, surfaces: tokens.surfaces, android: tokens.android, apple: tokens.apple,
 }, null, 2) + '\n');
-const dictionary = values => `[\n${entries(values).map(([name, value]) =>
+const dictionary = values => entries(values).length === 0 ? '[:]' : `[\n${entries(values).map(([name, value]) =>
   `        ${JSON.stringify(name)}: ${typeof value === 'string' ? JSON.stringify(value) : value}`).join(',\n')}\n    ]`;
 const numeric = values => Object.fromEntries(entries(values).map(([name, value]) => [name, parseFloat(value)]));
 const themeColors = {};
@@ -72,8 +71,64 @@ for (const [surface, { themes }] of entries(tokens.surfaces)) {
     themeColors[name] = Object.fromEntries(entries(variables).filter(([, value]) => value.startsWith('#')));
   }
 }
+const apple = tokens.apple;
+const swiftID = value => value.replaceAll('.', '_');
+const constants = (name, values, type, expression = value => value) =>
+  `    public enum ${name} {\n${entries(values).map(([key, value]) => `        public static let ${key}: ${type} = ${expression(value)}`).join('\n')}\n    }\n`;
+const pointValues = (shared, native, prefix) => Object.fromEntries(entries({ ...numeric(shared), ...native })
+  .map(([key, value]) => [prefix + swiftID(key), value]));
+const curves = { 'ease-in-out': 'easeInOut', 'ease-in': 'easeIn' };
+const animation = recipe => {
+  const curve = tokens.shared.easing[recipe.easing];
+  const duration = `Motion.${recipe.duration}`;
+  if (curves[curve]) return `Animation.${curves[curve]}(duration: ${duration})`;
+  if (curve === 'ease') return `Animation.timingCurve(0.25, 0.1, 0.25, 1, duration: ${duration})`;
+  const points = curve.match(/^cubic-bezier\(([^)]+)\)$/)?.[1].split(',');
+  if (!points || points.length !== 4) throw new Error(`Unsupported Apple easing: ${curve}`);
+  return `Animation.timingCurve(${points.map(Number).join(', ')}, duration: ${duration})`;
+};
+const nativeSwift = `\n// Native A4c recipes. System text styles retain Dynamic Type and platform metrics.\n` +
+  `public enum AppleTokens {\n` +
+  constants('Space', pointValues(tokens.shared.space, apple.spacing, 'p'), 'CGFloat') +
+  constants('Radius', pointValues(Object.fromEntries(entries(tokens.shared.radius).filter(([, v]) => v.endsWith('px'))), apple.radius, 'r'), 'CGFloat') +
+  constants('FontSize', pointValues(tokens.shared.fontSize, {}, 'f'), 'CGFloat') +
+  constants('TextStyle', apple.textStyles, 'Font.TextStyle', value => `.${value}`) +
+  constants('Fonts', apple.textStyles, 'Font', value => `.${value}`) +
+  constants('Styles', apple.hierarchicalStyles, 'HierarchicalShapeStyle', value => `.${value}`) +
+  constants('Tracking', apple.tracking, 'CGFloat') +
+  constants('Opacity', apple.opacity, 'Double') +
+  constants('Scale', apple.scale, 'CGFloat') +
+  `    public enum Motion {\n` + entries(tokens.shared.duration).map(([key, value]) =>
+    `        public static let ${/^\d/.test(key) ? 'd' + key : key}: TimeInterval = ${parseFloat(value) * (value.endsWith('ms') ? 0.001 : 1)}`).join('\n') + '\n' +
+    entries(apple.animation).map(([key, recipe]) => `        public static let ${key}: Animation = ${animation(recipe)}`).join('\n') + '\n    }\n' +
+  `    public enum Colors {\n` +
+    entries(apple.systemColors).map(([key, value]) => `        public static let ${key}: Color = .${value}`).join('\n') + '\n' +
+    `        #if os(macOS) || os(iOS)\n` +
+    entries(apple.colors).map(([key, { light, dark }]) => `        public static let ${key} = adaptive(light: 0x${light.slice(1)}, dark: 0x${dark.slice(1)})`).join('\n') + `
+        private static func adaptive(light: UInt32, dark: UInt32) -> Color {
+            #if os(macOS)
+            return Color(nsColor: NSColor(name: nil) { appearance in
+                let value = appearance.bestMatch(from: [.aqua, .darkAqua]) == .darkAqua ? dark : light
+                return NSColor(red: CGFloat((value >> 16) & 255) / 255,
+                               green: CGFloat((value >> 8) & 255) / 255,
+                               blue: CGFloat(value & 255) / 255, alpha: 1)
+            })
+            #else
+            return Color(uiColor: UIColor { traits in
+                let value = traits.userInterfaceStyle == .dark ? dark : light
+                return UIColor(red: CGFloat((value >> 16) & 255) / 255,
+                               green: CGFloat((value >> 8) & 255) / 255,
+                               blue: CGFloat(value & 255) / 255, alpha: 1)
+            })
+            #endif
+        }
+        #endif
+    }
+}
+`;
+
 await put('design/tokens/generated/apple/DesignTokens.swift',
-  `// ${banner}\n// Native values are points / milliseconds; platform wiring is a separate Mac work package.\n` +
+  `// ${banner}\n// Native dimensions are points; manifest durations are milliseconds.\nimport SwiftUI\n#if os(macOS)\nimport AppKit\n#elseif os(iOS)\nimport UIKit\n#endif\n` +
   `public enum WeftDesignTokens {\n` +
   entries({ spacing: numeric(tokens.shared.space), radius: numeric(Object.fromEntries(entries(tokens.shared.radius).filter(([, v]) => v.endsWith('px')))),
     fontSize: numeric(tokens.shared.fontSize), lineHeight: numeric(tokens.shared.lineHeight),
@@ -82,5 +137,5 @@ await put('design/tokens/generated/apple/DesignTokens.swift',
     .map(([name, values]) => `    public static let ${name}: [String: Double] = ${dictionary(values)}`).join('\n') + '\n' +
   entries({ fontFamily: tokens.shared.fontFamily, fontRelative: tokens.shared.fontRelative,
     easing: tokens.shared.easing, shadowRecipes: tokens.shared.shadow,
-    ...themeColors }).map(([name, values]) => `    public static let ${name}: [String: String] = ${dictionary(values)}`).join('\n') + '\n}\n');
+    ...themeColors }).map(([name, values]) => `    public static let ${name}: [String: String] = ${dictionary(values)}`).join('\n') + '\n}\n' + nativeSwift);
 console.log(`${check ? 'Checked' : 'Generated'} desktop/mobile CSS, Android resources/helpers and Apple token manifest.`);

@@ -90,19 +90,19 @@ struct WatchHomeView: View {
                                     Button { model.decide(approval, allowed: true) } label: { WeftLabel("允许", icon: "allow", size: 16) }
                                     Button { model.decide(approval, allowed: false) } label: { WeftLabel("拒绝", icon: "deny", size: 16) }
                                 }.disabled(model.busy || !model.reachable)
-                            }.padding(8).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
+                            }.padding(8).background(AppleTokens.Styles.quaternary, in: RoundedRectangle(cornerRadius: 10))
                         }
                         if !snapshot.assistantSummary.isEmpty {
                             NavigationLink("最近回复") { ScrollView { Text(snapshot.assistantSummary).font(.caption).padding(8) } }
                         }
                     } else { Text("在手机上打开一段对话").font(.caption) }
                     Button("刷新") { model.refresh() }.disabled(model.busy)
-                    if let notice = model.notice { Text(notice).font(.caption).foregroundStyle(.secondary) }
+                    if let notice = model.notice { Text(notice).font(.caption).foregroundStyle(AppleTokens.Styles.secondary) }
                     if !model.reachable {
-                        Text("打开手机后可审批").font(.caption2).foregroundStyle(.secondary)
+                        Text("打开手机后可审批").font(.caption2).foregroundStyle(AppleTokens.Styles.secondary)
                     }
                 }.padding(8)
-            }.navigationTitle("WeftMate").tint(.primary)
+            }.navigationTitle("WeftMate").tint(AppleTokens.Colors.primary)
         }
         .task(id: scenePhase) { if scenePhase == .active { model.refresh() } }
         .accessibilityIdentifier("watchHome")

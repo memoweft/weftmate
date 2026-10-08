@@ -40,6 +40,10 @@ M1-1d 后本次修复前与最终原场景均未观测到未声明审批；没�
 ## 复跑与边界
 
 ```powershell
+# 续做最终两个原场景，独立账号，不追加演示：
+node tests/integration/personal-scenario-baseline.mjs --memory-loop --only memory-01-preference,memory-02-correction --memory-core-source D:/AIProjects/MemoWeft/Worktrees/m2d-correction/py/src
+node tests/integration/personal-scenario-baseline.mjs --memory-loop --only memory-01-preference,memory-02-correction --mimo --mimo-machine --memory-core-source D:/AIProjects/MemoWeft/Worktrees/m2d-correction/py/src
+# 原场景后追加独立对话来源验收：
 node tests/integration/personal-scenario-baseline.mjs --memory-loop --memory-correction --memory-core-source D:/AIProjects/MemoWeft/Worktrees/m2d-correction/py/src
 node tests/integration/personal-scenario-baseline.mjs --memory-loop --memory-correction --mimo --mimo-machine --memory-core-source D:/AIProjects/MemoWeft/Worktrees/m2d-correction/py/src
 # 只验三段独立对话的程序来源：
@@ -48,7 +52,9 @@ node tests/integration/personal-scenario-baseline.mjs --memory-loop --memory-cor
 
 Core 主工作目录仍是 `main`，修改位于独立工作树。**Core 只能由 Claude squash（压缩合并）**；本仓 CI 暂时固定公开候选 `561eb090eb009ce07d16b00fc441eeb6cd808c8b`，合并 Core 后须更新为实际 squash 提交。客户端契约无变更。D16 的真正遗忘、完整八步记忆出口与长时间稳定性另包。
 
-本包所有 MiMo 已返回用量的 **110 个请求**：输入 1,203,373 token（令牌），其中缓存 973,312、未缓存 230,061；输出 45,112。已知用量费用 **¥0.33975124（约 ¥0.34，下界）**。共开始 111 个请求；追加演示取消前最后一个请求未返回用量，该笔费用未知，未算入此下界。按[官方价目](https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash)缓存输入 ¥0.02、未缓存输入 ¥1、输出 ¥2／百万 token 计算；已知统计包含首轮诊断、中途失败、追加演示和续做独立复跑，不是账户账单。最终 Qwen 的两个原场景 **0/2**：各在完整 600／900 秒预算结束，首轮仍运行，无可见回复、无形成结果和纠正行为证据。 5 个前台请求没有一个完成；其中一次等待 248.13 秒后收到 HTTP（网络请求）200 与流式保活，但在 300 秒请求期限内仍无回复内容。采样始终为指定 Qwen、98,304／单槽，活动与排队租约各 1。现有证据只能确认本地服务排队／响应超时，不能将未得到回复归因为记忆代码或模型纠正能力。原回合取消后隔离宿主退出；没有停止或重启共享模型服务。上次中断的 Qwen 仅有 memory-01 的完整 600.60 秒失败记录；memory-02 在执行中被停止，保留为 `interrupted-qwen`，不算一次完成的纠正场景。
+本包所有 MiMo 已返回用量的 **110 个请求**：输入 1,203,373 token（令牌），其中缓存 973,312、未缓存 230,061；输出 45,112。已知用量费用 **¥0.33975124（约 ¥0.34，下界）**。共开始 111 个请求；追加演示取消前最后一个请求未返回用量，该笔费用未知，未算入此下界。按[官方价目](https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash)缓存输入 ¥0.02、未缓存输入 ¥1、输出 ¥2／百万 token 计算；已知统计包含首轮诊断、中途失败、追加演示和续做独立复跑，不是账户账单。
+
+最终 Qwen 的两个原场景 **0/2**：各在完整 600／900 秒预算结束，首轮仍运行，无可见回复、无形成结果和纠正行为证据。5 个前台请求没有一个完成；其中一次等待 248.13 秒后收到 HTTP（网络请求）200 与流式保活，但在 300 秒请求期限内仍无回复内容。采样始终为指定 Qwen、98,304／单槽，活动与排队租约各 1。现有证据只能确认本地服务排队／响应超时，不能将未得到回复归因为记忆代码或模型纠正能力。原回合取消后隔离宿主退出；没有停止或重启共享模型服务。上次中断的 Qwen 仅有 memory-01 的完整 600.60 秒失败记录；memory-02 在执行中被停止，保留为 `interrupted-qwen`，不算一次完成的纠正场景。
 
 所有公开证据只有合成事实检查、时刻、用量及数量，不含完整模型回复、真实账号、凭据或临时路径。未读日用保管库、未自起模型、未停止或重启 8080；结束保留 8081 模型。
 
