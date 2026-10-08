@@ -5,9 +5,11 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
         if (!list) return;
         const context = core.conversationTaskContext(), rows = core.taskQueue().filter(row => row.queued);
         const visible = rows.filter(row => row.state === 'queued' || row.state === 'running');
-        list.hidden = visible.length === 0;
         const active = document.activeElement;
         const taskId = active?.closest('[data-queued-task]')?.dataset.queuedTask, action = active?.dataset.queueAction;
+        const previous = new Map([...list.children].map(card => [card.dataset.queuedTask, card]));
+        const departing = Math.max(previous.size, visible.length) <= 20 ? [...previous].filter(([id]) => !visible.some(row => row.taskId === id)).map(([, card]) => globalThis.WeftMotion?.snapshot(card)) : [];
+        list.hidden = visible.length === 0;
         list.replaceChildren();
         for (const row of visible) {
             const card = ui.element('article', 'queued-task'); card.dataset.queuedTask = row.taskId;
@@ -34,7 +36,9 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                 card.append(actions);
             }
             list.append(card);
+            if (!previous.has(row.taskId) && visible.length <= 20) globalThis.WeftMotion?.reveal(card, 'fast');
         }
+        for (const copy of departing) globalThis.WeftMotion?.dismiss(copy);
         if (taskId && action && document.activeElement === document.body) {
             const replacement = [...list.querySelectorAll('button')].find(button => button.dataset.queueAction === action && button.closest('[data-queued-task]').dataset.queuedTask === taskId);
             if (replacement && !replacement.disabled) replacement.focus({ preventScroll: true });

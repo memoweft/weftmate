@@ -57,7 +57,7 @@
     return `${type}${size ? ` · ${size}` : ''}`
   }
   function closePreview(restore = true) {
-    hidePicker(); preview?.panel.remove(); preview = null; tabs.clear()
+    hidePicker(); if (preview) { if (globalThis.WeftMotion) globalThis.WeftMotion.remove(preview.panel); else preview.panel.remove(); } preview = null; tabs.clear()
     document.body.classList.remove('preview-open', 'preview-expanded')
     if (restore && returnFocus?.isConnected) returnFocus.focus()
     returnFocus = null
@@ -115,11 +115,14 @@
   }
   function selectTab(key, focus = false) {
     const selected = tabs.get(key); if (!selected || !preview) return
+    const opening = preview.panel.hidden, switching = preview.active !== key
     preview.panel.hidden = false; document.body.classList.add('preview-open')
+    if (opening) globalThis.WeftMotion?.reveal(preview.panel, '240ms')
     preview.active = key; preview.content = selected.content
     for (const [id, tab] of tabs) {
       tab.content.hidden = id !== key; tab.select.setAttribute('aria-selected', String(id === key)); tab.select.tabIndex = id === key ? 0 : -1
     }
+    if (switching) globalThis.WeftMotion?.reveal(selected.content, 'fast')
     if (focus) selected.select.focus({ preventScroll: true })
   }
   function openPreview(title, trigger = document.activeElement, key = title, kind = 'file') {
@@ -150,7 +153,7 @@
     const panel = node('aside', 'timeline-preview'); panel.setAttribute('aria-label', '成果与来源预览')
     const resize = node('div', 'preview-resize'); resize.setAttribute('role', 'separator'); resize.setAttribute('aria-orientation', 'vertical'); resize.setAttribute('aria-label', '调整预览宽度'); resize.tabIndex = 0
     const header = node('div', 'preview-heading'), close = node('button', 'button quiet small', '收起'); close.type = 'button'; close.setAttribute('aria-label', '收起右侧面板')
-    close.addEventListener('click', () => { panel.hidden = true; document.body.classList.remove('preview-open', 'preview-expanded'); returnFocus?.isConnected && returnFocus.focus() })
+    close.addEventListener('click', () => { if (globalThis.WeftMotion) globalThis.WeftMotion.hide(panel); else panel.hidden = true; document.body.classList.remove('preview-open', 'preview-expanded'); returnFocus?.isConnected && returnFocus.focus() })
     const tablist = node('div', 'preview-tabs'); tablist.setAttribute('role', 'tablist'); tablist.setAttribute('aria-label', '输出与来源标签页')
     const add = node('button', 'button quiet small preview-add', '+'); add.type = 'button'; add.append(window.WeftIcons.create('plus', 16)); add.setAttribute('aria-label', '再打开一项'); add.setAttribute('aria-haspopup', 'dialog')
     add.addEventListener('click', () => { void showPicker(add) })
@@ -173,6 +176,7 @@
     })
     resize.addEventListener('keydown', e => { if (['ArrowLeft', 'ArrowRight'].includes(e.key)) { e.preventDefault(); width(panel.getBoundingClientRect().width + (e.key === 'ArrowLeft' ? 32 : -32)) } })
     preview = { panel, tablist }
+    globalThis.WeftMotion?.reveal(panel, '240ms')
   }
   function showImage(url, name, trigger) {
     const panel = openPreview(name, trigger), image = node('img', 'preview-image'); image.src = url; image.alt = name

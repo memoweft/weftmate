@@ -39,6 +39,7 @@
         resources.type = 'button';
         resources.addEventListener('click', () => options.openStep?.(step, resources));
         detail.append(label, resources, output, copy);
+        globalThis.WeftMotion?.details(detail);
         if (detail.dataset.loaded === 'true')
             appendReferences(output.textContent, detail, options);
         detail.addEventListener('toggle', async () => {
