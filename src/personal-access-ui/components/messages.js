@@ -76,6 +76,8 @@ globalThis.WeftUiComponents.factories.messages = (core, ui) => {
                 ui.appendUnpreviewedOriginalImages(row, originalImages);
             if (event.type === 'assistant.message')
                 ui.appendReplyMemory(row, event);
+            const taskLabel = core.messageTaskLabel(event);
+            if (event.type === 'user.message' && taskLabel) row.append(ui.element('small', 'message-task-label', taskLabel));
             if (event.data.truncated === true)
                 row.append(ui.element('span', 'truncated', '这条记录已截断，可在电脑查看完整来源。'));
             const next = [...list.children].find(n => Number(n.dataset.seq) > event.seq);

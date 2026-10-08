@@ -205,7 +205,7 @@
     const input = byId('message-text')
     input.addEventListener('keydown', e => {
       if (e.key === 'Enter' && !e.shiftKey && !e.isComposing && e.keyCode !== 229) {
-        e.preventDefault(); if (!input.disabled) actions.sendDraft()
+        e.preventDefault(); if (!input.disabled) actions.sendDraft(input.value, e.ctrlKey || e.metaKey ? 'queue' : undefined)
       }
     })
     const add = files => { if (!byId('message-attachments').disabled && files.length) actions.addFiles(files) }

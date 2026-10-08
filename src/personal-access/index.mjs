@@ -596,6 +596,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     close() {
       if (closePromise) return closePromise;
       closing = true;
+      tasks.cancelTaskStopRetries();
       for (const account of Object.values(rootState.accounts)) for (const command of Object.values(account.commands)) {
         for (const row of [...(command.toolApprovals ?? []), ...(command.toolExecutions ?? []), ...(command.userQuestions ?? [])]) {
           if (row.runtimeId) closedToolRuntimeIds.add(row.runtimeId);

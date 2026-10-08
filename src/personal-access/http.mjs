@@ -1444,7 +1444,12 @@ export function createHttpHandler(context) {
           ...(conversationBinding ? { conversationId: conversationBinding } : {}),
           ...(browserBinding ? { workspaceKind: 'browser', initialUrls: taskAction
             ? rootSource.payload.initialUrls : initialBrowserUrls(rawPayload.text, context.browserReader) } : {}) }, state.hostId, true);
-        if (payload.kind === 'session.message' && (payload.attachments || payload.originalAttachments)) {
+        const prior = Object.values(state.commands).find((command) => command.requestId === payload.requestId);
+        if (prior && payload.kind === 'session.message' && (payload.attachments || payload.originalAttachments)) {
+          // Compare the canonical request against its durable command before
+          // touching staging, which acceptance may already have released.
+          payload = canonicalCommand({ ...payload, modelInputHash: prior.payload.modelInputHash }, state.hostId, true);
+        } else if (payload.kind === 'session.message' && (payload.attachments || payload.originalAttachments)) {
           const staged = payload.attachments ? await context.sharedAttachmentStores.get(ownerId).resolve({
             sessionId: payload.sessionId, requestId: payload.requestId, attachments: payload.attachments }) : [];
           payload = canonicalCommand({ ...payload, modelInputHash: digest(modelTextWithAttachments(
@@ -1469,7 +1474,6 @@ export function createHttpHandler(context) {
           command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
           throw failure('REQUEST_CONFLICT', 409);
         }
-        const prior = Object.values(state.commands).find((command) => command.requestId === payload.requestId);
         if (prior) {
           if (prior.payloadHash !== payloadHash) throw failure('REQUEST_CONFLICT', 409);
           return context.json(response, 202, taskAction

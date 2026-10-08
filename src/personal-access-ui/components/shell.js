@@ -201,14 +201,15 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('cancel-turn').hidden = value.cancelHidden;
         ui.byId('cancel-turn').disabled = value.cancelDisabled;
         ui.byId('message-mode').hidden = !value.running;
+        ui.byId('message-mode').value = core.state.messageMode || 'steer';
         const send = ui.byId('send-message');
         send.disabled = value.sendDisabled;
         send.textContent = value.sendText;
-        send.classList.toggle('is-stop', value.running);
-        send.dataset.action = value.running ? 'stop' : 'send';
-        send.setAttribute('aria-label', value.running ? '停止' : '发送');
-        send.title = value.running ? '停止 · Esc' : '发送 · Enter';
-        send.replaceChildren(window.WeftIcons.create(value.running ? 'stop' : 'send', 20));
+        send.classList.remove('is-stop');
+        send.dataset.action = 'send';
+        send.setAttribute('aria-label', '发送');
+        send.title = '发送 · Enter；新任务 · Ctrl/Cmd+Enter';
+        send.replaceChildren(window.WeftIcons.create('send', 20));
         ui.byId('model-hint').textContent = value.hint;
         ui.byId('model-hint').hidden = !value.hint;
     }
