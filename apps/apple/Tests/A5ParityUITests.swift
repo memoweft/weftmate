@@ -20,6 +20,14 @@ final class A5ParityUITests: XCTestCase {
     @MainActor private func keep(_ app: XCUIApplication, _ scene: String, _ theme: String) {
         let attachment=XCTAttachment(screenshot:app.screenshot());attachment.name="review-iphone-" + scene + "-" + theme;attachment.lifetime = .keepAlways;add(attachment)
     }
+    @MainActor private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
+        for up in [true, false] {
+            for _ in 0..<8 {
+                if element.exists && element.isHittable { return }
+                if up { app.swipeUp() } else { app.swipeDown() }
+            }
+        }
+    }
     @MainActor private func row(_ app: XCUIApplication, _ id: String) throws { let element=app.descendants(matching:.any).matching(identifier:"conversationRow." + id).firstMatch;try expect(element);element.tap() }
     @MainActor private func back(_ app: XCUIApplication) throws { let button=app.navigationBars.buttons.firstMatch;try expect(button);button.tap() }
     @MainActor private func send(_ app: XCUIApplication, _ text: String) throws {
@@ -79,17 +87,17 @@ final class A5ParityUITests: XCTestCase {
         try row(app,ids["review"] as! String)
         try expect(app.buttons["openConversationResources"]);keep(app,"conversation",theme)
         let allow=app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","approveOnce.")).firstMatch
-        for _ in 0..<8 { if allow.exists && allow.isHittable { break };app.swipeUp() }
+        reveal(app,allow)
         try expect(allow);keep(app,"approval",theme)
         if behavior {
             XCTAssertTrue(app.staticTexts["删除合成草稿文件"].exists);allow.tap()
             let deny=try await get("/a5/deny");try tap(app,"refreshHistoryButton")
             let reject=app.buttons["rejectApproval." + (deny["approvalId"] as! String)]
-            for _ in 0..<8 { if reject.exists && reject.isHittable { break };app.swipeUp() }
+            reveal(app,reject)
             try expect(reject);reject.tap()
         }
         let question=app.staticTexts["报告要采用哪种格式？"]
-        for _ in 0..<8 { if question.exists && question.isHittable { break };app.swipeUp() }
+        reveal(app,question)
         try expect(question);keep(app,"question",theme)
         try tap(app,"openConversationResources");try expect(app.staticTexts["输出内容"]);keep(app,"outputs-sources",theme);try tap(app,"closeResourcesPanel")
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.memory");try expect(app.staticTexts["我的记忆"]);keep(app,"memory",theme);try tap(app,"closeAuxiliarySheetButton")
