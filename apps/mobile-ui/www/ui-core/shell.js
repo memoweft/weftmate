@@ -2,6 +2,7 @@
 globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
     function failureMessage(error, context) {
         switch (error?.code) {
+            case 'USAGE_LIMIT_REACHED': return '本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型。';
             case 'INVALID_CREDENTIALS': return '账户名或密码不正确。';
             case 'LOGIN_RATE_LIMITED': return '登录尝试过于频繁，请稍后再试。';
             case 'INVALID_SETUP_GRANT': return '设置链接已失效，请在这台电脑上重新发起设置。';
@@ -179,6 +180,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             await core.refreshSessions();
             await core.refreshTasks();
             await core.refreshHistory();
+            void core.refreshUsageBudget?.();
             if (core.state.syncAvailable)
                 await core.refreshPhoneRecords();
             await core.refreshConversationTasks();

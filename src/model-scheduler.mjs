@@ -3,6 +3,7 @@ import { randomBytes } from 'node:crypto';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { openAICompatibleEndpoint } from './openai-compatible-client.ts';
+import { usageResponse } from './personal-access/usage-response.mjs';
 
 /** One inference slot, with foreground FIFO and native DSH turn-wide idle checks. */
 export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 } = {}) {
@@ -54,6 +55,7 @@ export function createInferenceQueue({ isIdle = async () => true, pollMs = 100 }
 
 /** Private loopback bridge shared by native DSH streams and MemoWeft workers. */
 export async function createModelScheduler({ isIdle, profileFor, backgroundRoute, credentialFor, fetchImpl = fetch,
+  beginUsage = null, finishUsage = null,
   heartbeatMs = 15_000 }) {
   const queues = new Map();
   async function queueFor(destination) {
@@ -93,6 +95,16 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
       const prefix = `/${token}`;
       if (!url.pathname.startsWith(`${prefix}/`)) { response.writeHead(404).end(); return; }
       const route = url.pathname.slice(prefix.length);
+      if ((route === '/usage/start' || route === '/usage/finish') && request.method === 'POST') {
+        let raw = ''; for await (const part of request) raw += part;
+        const input = JSON.parse(raw);
+        let value = {};
+        if (route === '/usage/start') {
+          const profile = profileFor(input.profileId);
+          if (profile && beginUsage) value = await beginUsage({ profileId: profile.id, sessionId: input.sessionId || null });
+        } else if (finishUsage) await finishUsage(input);
+        response.setHeader('content-type', 'application/json'); response.end(JSON.stringify(value ?? {})); return;
+      }
       if (route === '/route' && request.method === 'GET') {
         const value = await backgroundRoute(url.searchParams.get('sessionId'), url.searchParams.get('profileId'));
         response.setHeader('content-type', 'application/json'); response.end(JSON.stringify(value)); return;
@@ -106,12 +118,13 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         response.writeHead(200, { 'content-type': 'text/plain' }); response.write('granted\n');
         return; // Socket lifetime owns the lease, including a crashed DSH child.
       }
-      const match = /^\/inference\/([A-Za-z0-9._-]+)\/(?:v1\/)?(chat\/completions|models|props)$/.exec(route);
+      const match = /^\/inference\/([A-Za-z0-9._-]+)(?:\/scope\/([A-Za-z0-9._:-]+)\/([A-Za-z0-9._:-]+))?\/(?:v1\/)?(chat\/completions|models|props)$/.exec(route);
       if (!match) { response.writeHead(404).end(); return; }
       const profile = profileFor(match[1]);
       const key = profile && credentialFor(profile);
       if (!profile || !key || request.headers.authorization !== `Bearer ${key}`) { response.writeHead(403).end(); return; }
-      if (match[2] === 'chat/completions') {
+      const operation = match[4];
+      if (operation === 'chat/completions') {
         // MemoWeft's HTTP timeout measures transport inactivity. Informational
         // responses keep queued work alive without changing the final status/body.
         const heartbeat = setInterval(() => { if (!response.headersSent) response.writeProcessing(); }, heartbeatMs);
@@ -125,18 +138,25 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
         const value = JSON.parse(Buffer.concat(parts).toString('utf8'));
         body = JSON.stringify({ ...value, model: profile.model });
       }
-      const endpoint = match[2] === 'props'
+      const endpoint = operation === 'props'
         ? new URL(profile.baseUrl.replace(/\/?v1\/?$/, '/props'))
-        : openAICompatibleEndpoint(profile.baseUrl, match[2]);
-      const upstream = await fetchImpl(endpoint, { method: request.method, signal: controller.signal,
-        headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body });
+        : openAICompatibleEndpoint(profile.baseUrl, operation);
+      const usageTicket = operation === 'chat/completions' && beginUsage ? await beginUsage({ profileId: profile.id,
+        ownerId: match[2] ?? null, sessionId: match[3] === 'none' ? null : match[3] ?? null }) : null;
+      let upstream;
+      try {
+        upstream = await fetchImpl(endpoint, { method: request.method, signal: controller.signal,
+          headers: { authorization: `Bearer ${key}`, 'content-type': 'application/json' }, body });
+        if (usageTicket) upstream = await usageResponse(upstream, usage => finishUsage({ ...usageTicket, usage, source: 'openai' }));
+      } catch (error) { if (usageTicket) await finishUsage({ ...usageTicket, usage: null }); throw error; }
       response.writeHead(upstream.status, { 'content-type': upstream.headers.get('content-type') ?? 'application/json',
         'x-modelswitcher-model': profile.model });
       if (upstream.body) await pipeline(Readable.fromWeb(upstream.body), response);
       else response.end();
-    } catch {
-      if (!response.headersSent) response.writeHead(503);
-      response.end();
+    } catch (error) {
+      if (!response.headersSent) { response.writeHead(error.code === 'USAGE_LIMIT_REACHED' ? 402 : 503, { 'content-type': 'application/json' });
+        response.end(JSON.stringify({ code: error.code === 'USAGE_LIMIT_REACHED' ? error.code : 'MODEL_QUEUE_UNAVAILABLE' })); }
+      else response.end();
     } finally {
       // A native lease remains open until its owner closes the response body.
       if (!request.url.includes('/lease?')) release?.();
@@ -145,7 +165,7 @@ export async function createModelScheduler({ isIdle, profileFor, backgroundRoute
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   const url = `http://127.0.0.1:${server.address().port}/${token}`;
   return { url, queue,
-    memoryBaseUrl: profileId => `${url}/inference/${profileId}/v1`,
+    memoryBaseUrl: (profileId, ownerId, sessionId) => `${url}/inference/${profileId}${ownerId ? `/scope/${ownerId}/${sessionId ?? 'none'}` : ''}/v1`,
     async close() { queue.close(); for (const controller of controllers) controller.abort();
       server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); },
   };
