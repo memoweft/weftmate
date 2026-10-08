@@ -423,6 +423,32 @@ public actor PersonalClient {
             itemID: itemID, expectedRevision: expectedWorldRevision)
     }
 
+    public func conversationResources(sessionID: String, afterSeq: Int = -1) async throws -> ConversationResourcesPage {
+        let (auth, generation) = try snapshot()
+        let session = try checkedID(sessionID)
+        guard afterSeq >= -1, afterSeq <= SharedValidation.maximumSequence else { throw APIFailure.invalidResponse }
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/sessions/\(session)/resources?afterSeq=\(afterSeq)")
+        return try JSONDecoder().decode(ConversationResourcesPage.self, from: response.body)
+    }
+
+    /// Paths come from the authorized resource list; only existing read-only source routes are followed.
+    public func conversationSourceContent(_ use: ResourceUse, sessionID: String) async throws -> TimelineDetail {
+        let (auth, generation) = try snapshot()
+        let session = try checkedID(sessionID)
+        let components = use.path.split(separator: "/").map(String.init)
+        let timeline = components.count == 5 && components[0] == "sessions" && components[1] == session
+            && components[2] == "events" && Int(components[3]) != nil && components[4] == "detail"
+        let snapshotSource = components.count == 4 && components[0] == "tasks" && components[2] == "sources"
+        guard timeline || snapshotSource, !use.path.contains("?"), !use.path.contains("#") else { throw APIFailure.invalidResponse }
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: use.path)
+        if timeline { return try JSONDecoder().decode(TimelineDetail.self, from: response.body) }
+        let value = try JSONDecoder().decode(JSONValue.self, from: response.body)
+        guard let source = value["source"], let text = source["text"]?.string else { throw APIFailure.invalidResponse }
+        return .init(seq: use.seq ?? 0, text: text, truncated: source["truncated"]?.bool ?? source["hasMore"]?.bool)
+    }
+
     public func taskDetail(taskID: String) async throws -> TaskSnapshot {
         let (auth, generation) = try snapshot()
         let id = try checkedID(taskID)
