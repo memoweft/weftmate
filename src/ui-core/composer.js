@@ -31,18 +31,24 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     function composerInputMode(sessionId) {
         return core.state.sessions.find(item => item.sessionId === sessionId)?.running ? core.state.messageMode || 'steer' : 'queue';
     }
-    async function sendDraft(text = effects.readMessageDraft()) {
+    async function sendIntentAction(action, intent) {
+        const previous = core.state.messageMode, context = core.conversationTaskContext();
+        if (intent) core.setMessageMode(intent);
+        try { return await action(); }
+        finally { if (intent && core.conversationTaskCurrent(context)) core.setMessageMode(previous); }
+    }
+    async function sendDraft(text = effects.readMessageDraft(), intent) {
         if (core.state.activeChatSource === 'phone')
-            return core.sendPhoneMessage();
+            return sendIntentAction(() => core.sendPhoneMessage(), intent);
         const attachments = core.currentAttachmentDrafts();
         if ((!text.trim() && attachments.length === 0) || !core.state.selectedSessionId || core.state.unresolvedSubmission ||
             core.state.capabilities?.chat?.available !== true ||
             core.state.sessions.find((item) => item.sessionId === core.state.selectedSessionId)?.sendAvailable !== true)
             return;
         if (attachments.length)
-            return core.sendDesktopMessageWithAttachments(text);
+            return sendIntentAction(() => core.sendDesktopMessageWithAttachments(text), intent);
         const sent = await core.submitCommand('session.message', { sessionId: core.state.selectedSessionId, text,
-            mode: core.composerInputMode(core.state.selectedSessionId) }, core.state.selectedSessionId);
+            intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId) }, core.state.selectedSessionId);
         if (sent) {
             effects.clearMessageDraft();
             effects.updateAvailability();
@@ -50,8 +56,28 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     }
     async function stopCurrentTurn() {
         const session = core.state.activeChatSource === 'phone' ? core.phoneBinding()?.sessionId : core.state.selectedSessionId;
-        if (session && core.state.sessions.find(item => item.sessionId === session)?.running && !core.state.cancelSubmitting)
-            await core.submitCommand('session.cancel', { sessionId: session }, session);
+        const context = core.conversationTaskContext();
+        const current = core.taskQueue().filter(row => row.state === 'running').at(-1);
+        if (session && core.state.sessions.find(item => item.sessionId === session)?.running && !core.state.cancelSubmitting) {
+            if (!current?.taskId || current.taskId.startsWith('turn-'))
+                return core.submitCommand('session.cancel', { sessionId: session }, session);
+            core.state.cancelSubmitting = true;
+            effects.updateAvailability();
+            try {
+                const key = `${context.ownerId}/${context.identity}/${session}/${current.taskId}`;
+                if (core.stopAttempt?.key !== key)
+                    core.stopAttempt = { key, requestId: environment.crypto.randomUUID() };
+                await core.accessApi(`/tasks/${encodeURIComponent(current.taskId)}/stop`, {
+                    method: 'POST', protectedWrite: true, body: { requestId: core.stopAttempt.requestId } });
+                if (core.conversationTaskCurrent(context))
+                    effects.toast('停止请求已提交，排队任务会继续执行。');
+            } catch (error) {
+                if (core.conversationTaskCurrent(context)) effects.toast(core.taskControlError(error));
+            } finally {
+                core.state.cancelSubmitting = false;
+                effects.updateAvailability();
+            }
+        }
     }
     function composerState(text) {
         const phoneChat = core.state.activeChatSource === 'phone';
@@ -86,10 +112,10 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             modelDisabled: phoneChat || !chat || !core.state.models.length,
             modelName: core.state.models.find(item => item.id === core.state.modelProfileId)?.name || '选择模型',
             messageDisabled, voiceDisabled: messageDisabled || core.state.submitting || core.state.phoneSending,
-            sendDisabled: running ? !core.state.online || core.state.cancelSubmitting : phoneChat
+            sendDisabled: phoneChat
                 ? !phoneReady || (!!pendingPhone && !pendingHere) || (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !text.trim())
                 : !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || (!text.trim() && attachmentCount === 0) || core.state.unresolvedSubmission,
-            sendText: running ? '停止' : phoneChat ? bound ? '发送到电脑' : recoveryHere && !pendingPhone ? '核对旧请求' : pendingHere ? '核对并重试' : '同步文字' : '发送',
+            sendText: phoneChat ? bound ? '发送到电脑' : recoveryHere && !pendingPhone ? '核对旧请求' : pendingHere ? '核对并重试' : '同步文字' : '发送',
             attachmentsDisabled: phoneChat || !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission || attachmentCount >= 4,
             desktopText: blockedDesktop ? '查看原事情' : '打开记事本',
             desktopDisabled: blockedDesktop ? false : !core.state.online || core.state.capabilities?.desktopOpenApp?.available !== true || !core.state.capabilities.desktopOpenApp.appIds?.includes('notepad') || core.state.submitting || core.state.unresolvedSubmission,
@@ -104,6 +130,6 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         effects.updateAvailability();
         return true;
     }
-    function setMessageMode(mode) { core.state.messageMode = mode; }
+    function setMessageMode(mode) { core.state.messageMode = mode === 'queue' ? 'queue' : 'steer'; effects.updateAvailability(); }
     return { addAttachmentFiles, composerInputMode, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode };
 };

@@ -1,5 +1,68 @@
 /* Shared tasks state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
+    function taskQueue(events = core.timelineEventsForContext(), commands = core.state.tasks) {
+        const sessionId = core.conversationTaskContext().sessionId;
+        const rows = new Map();
+        const roots = commands.filter(row => row.kind === 'session.message' && !row.rootTaskId && row.sessionId === sessionId);
+        const root = data => roots.find(row => row.commandId === data.taskId || data.receiptId && row.receiptId === data.receiptId);
+        for (const event of [...events].sort((a, b) => a.seq - b.seq)) {
+            if (!['task.queued', 'task.started', 'task.ended'].includes(event.type)) continue;
+            for (const data of event.data?.tasks || [event.data || {}]) {
+                const command = root(data), taskId = command?.commandId || data.taskId;
+                if (!taskId) continue;
+                const previous = rows.get(taskId) || {};
+                rows.set(taskId, { ...previous, taskId, receiptId: data.receiptId || command?.receiptId || previous.receiptId,
+                    text: data.text || previous.text || command?.text || command?.taskLabel || '新任务',
+                    seq: previous.seq ?? event.seq, queued: previous.queued || event.type === 'task.queued',
+                    state: event.type === 'task.queued' ? 'queued' : event.type === 'task.started' ? 'running' :
+                        ['canceled', 'cancelled'].includes(data.reason) ? 'cancelled' : 'ended', reason: data.reason });
+            }
+        }
+        return [...rows.values()].sort((a, b) => a.seq - b.seq).map(row => {
+            const scope = JSON.stringify([core.state.ownerId, core.state.identityGeneration, sessionId]);
+            const operation = core.queueOperationScope === scope ? core.queueOperations?.get(row.taskId) : null;
+            return { ...row, ...(operation?.cancelled && row.state === 'queued' ? { state: 'cancelled' } : {}),
+                busy: operation?.busy === true, notice: operation?.notice || '' };
+        });
+    }
+    async function cancelQueuedTask(taskId) {
+        const context = core.conversationTaskContext(), row = core.taskQueue().find(row => row.taskId === taskId);
+        if (!core.conversationTaskCurrent(context) || !row || row.state !== 'queued') return false;
+        const key = JSON.stringify([context.ownerId, context.identity, context.sessionId]);
+        if (core.queueOperationScope !== key) { core.queueOperationScope = key; core.queueOperations = new Map(); }
+        const operation = core.queueOperations.get(taskId) || { requestId: environment.crypto.randomUUID() };
+        if (operation.busy) return false;
+        operation.busy = true; operation.notice = '';
+        core.queueOperations.set(taskId, operation);
+        effects.renderConversationTasks();
+        try {
+            await core.accessApi(`/tasks/${encodeURIComponent(taskId)}/cancel`, {
+                method: 'POST', protectedWrite: true, body: { requestId: operation.requestId } });
+            if (!core.conversationTaskCurrent(context)) return false;
+            operation.cancelled = true;
+            return true;
+        } catch (error) {
+            if (core.conversationTaskCurrent(context)) {
+                operation.notice = error.status === 409 ? '已经开始，可以用停止' : error.code === 'NETWORK'
+                    ? '取消结果待确认，可重试核对原请求。' : '取消未完成，请重试。';
+                effects.toast(operation.notice);
+            }
+            return false;
+        } finally {
+            operation.busy = false;
+            if (core.conversationTaskCurrent(context)) effects.renderConversationTasks();
+        }
+    }
+    async function editQueuedTask(taskId) {
+        const row = core.taskQueue().find(row => row.taskId === taskId);
+        return row && await core.cancelQueuedTask(taskId) ? row.text : null;
+    }
+    function messageTaskLabel(event) {
+        const command = core.state.tasks.find(row => row.sessionId === core.conversationTaskContext().sessionId &&
+            row.receiptId && row.receiptId === event.data?.receiptId);
+        return event.data?.taskAction === 'supplement' || command?.taskAction === 'supplement'
+            ? '已补充到当前任务' : '';
+    }
     function commandTitle(command) {
         if (command.kind === 'desktop.write_artifact')
             return command.fileName || '电脑生成的文件';
@@ -208,5 +271,5 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
             return '当前账户或设备无法操作这件事。';
         return '操作尚未确认，请重新核对任务记录。';
     }
-    return { commandTitle, commandStatus, taskReplyText, conversationTaskContext, conversationTaskCurrent, relatedExecutionSteps, executionProgress, executionName, refreshConversationTasks, taskControlStatus, taskControlError };
+    return { taskQueue, cancelQueuedTask, editQueuedTask, messageTaskLabel, commandTitle, commandStatus, taskReplyText, conversationTaskContext, conversationTaskCurrent, relatedExecutionSteps, executionProgress, executionName, refreshConversationTasks, taskControlStatus, taskControlError };
 };
