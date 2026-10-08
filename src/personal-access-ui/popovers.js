@@ -50,10 +50,10 @@
       }
     });
   }
-  window.addEventListener?.('resize', refresh);
-  window.addEventListener?.('scroll', refresh, true);
-  window.visualViewport?.addEventListener('resize', refresh);
-  window.visualViewport?.addEventListener('scroll', refresh);
+  globalThis.window?.addEventListener?.('resize', refresh);
+  globalThis.window?.addEventListener?.('scroll', refresh, true);
+  globalThis.window?.visualViewport?.addEventListener('resize', refresh);
+  globalThis.window?.visualViewport?.addEventListener('scroll', refresh);
   function bindSelect(select, className) {
     if (!select?.parentNode) return;
     const menu = document.createElement('div');
