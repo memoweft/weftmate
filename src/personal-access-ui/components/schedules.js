@@ -1,5 +1,5 @@
 /* Reminder presentation shared by the desktop category and generated mobile view. */
-globalThis.WeftSchedulesView = (core, target, { openConversation, current = () => target.isConnected } = {}) => {
+globalThis.WeftSchedulesView = (core, target, { openConversation, autoLoad = true, current = () => target.isConnected } = {}) => {
     const element = (tag, className, text) => { const node = document.createElement(tag); node.className = className; if (text !== undefined) node.textContent = text; return node; };
     const status = element('p', 'muted'); status.setAttribute('role', 'status');
     const refresh = element('button', 'button secondary', '刷新提醒'); refresh.type = 'button';
@@ -8,7 +8,7 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, current = () =
     let generation = 0;
     async function render() {
         core.syncMobileIdentity?.();
-        const version = ++generation, token = core.accountToken(); status.textContent = '正在读取…';
+        const version = ++generation, token = core.accountToken(); status.textContent = '正在读取…'; list.replaceChildren();
         try {
             const value = await core.loadSchedules();
             if (!value || version !== generation || !core.accountCurrent(token) || !current()) return;
@@ -34,16 +34,17 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, current = () =
             }
         } catch { if (core.accountCurrent(token) && current()) status.textContent = '读取失败，请刷新重试。'; }
     }
-    refresh.addEventListener('click', () => { void render(); }); void render();
+    refresh.addEventListener('click', () => { void render(); }); if (autoLoad) void render(); return render;
 };
-if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.schedules = (core, ui) => ({
-    mountSchedules() {
-        const section = ui.element('section', 'settings-schedules'); section.id = 'settings-schedules';
-        globalThis.WeftUiLayout.mountSchedules(section);
-    },
-    showSettingsSchedules() {
-        const target = ui.byId('settings-schedules'), token = core.accountToken();
-        WeftSchedulesView(core, target, { current: () => core.accountCurrent(token) && !target.closest('.settings-category').hidden,
-            openConversation: async sessionId => { await core.enterAssistant(); await core.selectSession(sessionId); } });
-    },
-});
+if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.schedules = (core, ui) => {
+    let renderSchedules;
+    return {
+        mountSchedules() {
+            const target = ui.element('section', 'settings-schedules'); target.id = 'settings-schedules';
+            globalThis.WeftUiLayout.mountSchedules(target);
+            renderSchedules = WeftSchedulesView(core, target, { autoLoad: false, current: () => !target.closest('.settings-category').hidden,
+                openConversation: async sessionId => { await core.enterAssistant(); await core.selectSession(sessionId); } });
+        },
+        showSettingsSchedules() { void renderSchedules(); },
+    };
+};

@@ -107,8 +107,10 @@ test('D29 real browser: in-app login → device approval → remembered session 
       }
       await settings.click();
     }
-    await button(page, '设备').click();
-    await page.getByRole('heading', { name: '设备', exact: true }).waitFor();
+    const picker = page.getByRole('combobox', { name: '设置分类', exact: true });
+    if (await picker.isVisible()) await picker.selectOption('devices');
+    else await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '设备', exact: true }).click();
+    await page.getByRole('heading', { name: '设备', exact: true, level: 1 }).waitFor();
   }
   async function rename(page, before, after) {
     const row = page.getByRole('group', { name: before, exact: true });
@@ -129,7 +131,7 @@ test('D29 real browser: in-app login → device approval → remembered session 
   await owner.reload(); await loggedIn(owner);
   await openSettings(owner); await rename(owner, '这个浏览器', 'Approved owner browser');
   await owner.screenshot({ path: '.local/s1c-web/owner-devices.png' });
-  await button(owner, '← 返回对话').click();
+  await button(owner, '关闭设置').click();
 
   const { context: phoneContext, page: phone } = await pageFor({ viewport: { width: 390, height: 844 }, isMobile: true });
   await cloudLogin(phone);
@@ -173,7 +175,7 @@ test('D29 real browser: in-app login → device approval → remembered session 
 
   const { context: deniedContext, page: denied } = await pageFor();
   await cloudLogin(denied);
-  await button(owner, '← 返回对话').click(); await openSettings(owner);
+  await button(owner, '关闭设置').click(); await openSettings(owner);
   await owner.getByRole('heading', { name: '待批准设备', exact: true }).waitFor();
   await button(owner, '拒绝').click();
   await denied.getByText('这台设备未获允许，请在已登录设备上重新批准。', { exact: true }).waitFor();
