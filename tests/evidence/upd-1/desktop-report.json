@@ -4,9 +4,9 @@
   "realDsh": true,
   "syntheticModel": true,
   "paidModelRequests": 0,
-  "v2ChangedBytes": 4818,
-  "v2TotalBytes": 1345940,
-  "v2ReusedBytes": 1341122,
+  "v2ChangedBytes": 4914,
+  "v2TotalBytes": 1357291,
+  "v2ReusedBytes": 1352377,
   "taskUnaffected": true,
   "taskCompletedNormally": true,
   "rollback": true,
@@ -18,7 +18,7 @@
       "status": "failed",
       "error": "新界面启动失败，已恢复上一版",
       "downloadedBytes": 53,
-      "reusedBytes": 1343374,
+      "reusedBytes": 1354725,
       "enabled": true,
       "channel": "stable"
     },
@@ -46,7 +46,7 @@
   "downloads": [
     {
       "path": "files/ui/0.2.0/personal-access-ui/layout.js",
-      "bytes": 4818
+      "bytes": 4914
     }
   ],
   "rejectedCount": 1,

@@ -45,12 +45,12 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
     finally { switching = false; }
   }
   async function loaded() {
-    clearTimeout(healthTimer);
     if (!store.pointer.trial || !window || window.isDestroyed()) return;
     try {
       const healthy = await window.webContents.executeJavaScript(`globalThis.__WeftUiStarted === true`);
       if (!healthy || startFailed) return await failed();
       await store.healthy();
+      clearTimeout(healthTimer);
     } catch { await failed(); }
   }
   async function reopen() {
