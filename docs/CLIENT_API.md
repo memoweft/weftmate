@@ -472,13 +472,13 @@ Apple通用网络错误保留HTTP status与大写 `error.code`，无合法code�
 
 `metrics` 仅包含有数据且用户启用的项目；缺数据不写 0。心率、静息心率、HRV、呼吸频率为当日样本算术均值；步数/活动能量用 HealthKit 原生累计统计处理手机与 Watch 重叠来源。睡眠仅算 asleep 阶段（不含 inBed/awake），重叠区间取并集；间隔不超过 2 小时的睡眠段作为一次睡眠，以最后起床的本地日期归属，间隔不计时长；同日起床的夜间睡眠和小睡合计。`fellAsleepAt/wokeAt` 是当日睡眠最早入睡与最后起床，不表示中间连续睡着。锻炼按开始日期计次，时长使用 HealthKit workout 的活动 duration（排除暂停），来源为 HealthKit 中已有锻炼；本包不启动实时锻炼或原始传感器采集。
 
-基线为当前日期**之前 14 个本地日历日**内有数据日期的均值，排除当日及缺数据日，`baselineDays` 表示实际天数（首次回填的较早日期可能不足 14 天）。偏离为 `(value / baselineMean - 1) * 100`；无基线或均值为 0 时省略 `baselineMean/deviationPercent` 中无法计算的字段。没有医疗诊断或分数。`sourceDevices` 是去重的 HealthKit 来源应用/设备描述，统计来源未提供硬件名时使用来源应用名；不是原始样本 ID、设备序列号或样本时间线。
+基线为当前日期**之前 14 个本地日历日**内有数据日期的均值，排除当日及缺数据日，`baselineDays` 表示实际天数（首次回填的较早日期可能不足 14 天）。偏离为 `(value / baselineMean - 1) * 100`；无基线或均值为 0 时省略 `baselineMean/deviationPercent` 中无法计算的字段。H1 仅提供日统计；H3 的可选本地估算分数见 6.4，不用于医疗诊断。`sourceDevices` 是去重的 HealthKit 来源应用/设备描述，统计来源未提供硬件名时使用来源应用名；不是原始样本 ID、设备序列号或样本时间线。
 
 `cloudModelAllowed` 必传，默认 false；首次请求健康授权前询问，设置可随时改。true 只允许云端使用摘要，不扩大原始数据权限；false 要从云端召回、提示词与后续云端模型请求中排除这些摘要，仍可供本地模型使用。已上传的摘要在使用选择改变时重新上传替换；服务端应把最新明确选择用于账号已有健康证据，并确保旧索引/衍生记忆不绕过该选择。用户离线改为 false 后，本地即采用新选择，服务器只能在联网提交成功后生效。`selfAssessmentFrequency` 为 `off / low / moderate`，省略时为 low；服务端按账号最新汇总时间将选择与频率应用到全部摘要/待写证据（相同时间 false 优先），旧回填和幂等重试不能覆盖更新的选择。本包只保存频率，不上传自评答案、不实现询问界面。
 
 `readStates` 为 `disabled / notRequested / dataAvailable / noDataOrReadDenied / unavailable / failed`。Apple 不公开读取授权是否被拒绝/撤销，空结果不能据此断言拒绝；`dataAvailable` 只代表此次读到数据。应用内逐类关闭会停止该类查询、移除本地与排队摘要的指标并重新上传替换。系统撤权后再次读取为空，会更新近期摘要，既有摘要不会因此自动等同用户要求全部删除；删除需明确操作。查询失败保留此前已读取数值并标注 failed。
 
-POST 返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"memory":{"state":"queued","pendingObservedCount":1,"reasonCode":"MEMORY_OBSERVED_UNSUPPORTED"}}`。200 表示摘要与 observed 待办已原子持久化；`memory.state=delivered`、`pendingObservedCount=0` 表示 Core 写入及来源权限已确认。queued 表示待交付，原因可能为 MEMORY_OBSERVED_UNSUPPORTED（旧 Core/未启用）或 MEMORY_OBSERVED_PENDING（传输/清理待重试）；200 本身不保证 Core 已完成。请求只接受上述字段；各指标要求对应 readState 为 dataAvailable/failed、单位匹配、非负有限数值与 0–14 baselineDays；拒绝原始样本和任意追加文本。`metrics.workouts`（如提供）单位 min，`metrics.respiratoryRate` 单位 breaths/min。账号由凭据确定，来源设备必须是本账号签发过的 ID，已撤销设备仍可标记其历史离线摘要。较新汇总完整覆盖同来源/日期记录。
+POST 返回 200：`{"summary":{…当前持久化版本…},"duplicate":false,"memory":{"state":"queued","pendingObservedCount":1,"reasonCode":"MEMORY_OBSERVED_UNSUPPORTED"}}`。200 表示摘要与 observed 待办已原子持久化；`memory.state=delivered`、`pendingObservedCount=0` 表示 Core 写入及来源权限已确认。queued 表示待交付，原因可能为 MEMORY_OBSERVED_UNSUPPORTED（旧 Core/未启用）或 MEMORY_OBSERVED_PENDING（传输/清理待重试）；200 本身不保证 Core 已完成。请求只接受上述字段与 6.4 的可选 `derived/hourly`；各指标要求对应 readState 为 dataAvailable/failed、单位匹配、非负有限数值与 0–14 baselineDays；拒绝原始样本和任意追加文本。`metrics.workouts`（如提供）单位 min，`metrics.respiratoryRate` 单位 breaths/min。账号由凭据确定，来源设备必须是本账号签发过的 ID，已撤销设备仍可标记其历史离线摘要。较新汇总完整覆盖同来源/日期记录。
 
 ### 6.2 撤权与删除
 
@@ -522,6 +522,37 @@ H1 在进入前台、打开健康设置、手动更新及前台每 15 分钟重�
 每条日摘要生成 source_kind=observed 的中文事实，稳定来源为账号/设备/日期。现有 `personal-memory` 管理器通过正式 observed upsert / 来源权限更新 / 真正撤回 RPC 交付，不构造 user/assistant boundary，不另写 SQLite。摘要和交付标记同一宿主文件保存；收到 Core 回执后才清除待办。进程中断或 Core 不可用时，后续健康写入、记忆 status / recall 会重放；DELETE 先移除宿主内容，保留仅含来源哈希与水位的撤回待办，清理完成后移除。
 
 召回使用 3.10 的实际地址及用户 `modelTier` 覆盖判断，initialize 与每次 World / interactions 召回使用最终 local/cloud。`cloudModelAllowed=false` 排除已写入的健康证据及其衍生项、依赖它们的助手历史，保留其他可读记忆；true 后云端可用，撤销选择后立即作用于全账号来源。来源同步失败时该次注入暂缓，待同步成功恢复，不使用旧授权数据。GET 提供客户端读取摘要，客户端不得把本地专用摘要自行注入云端模型。
+
+### 6.4 H3 可选设备端指标与小时聚合
+
+不新增端点或 schemaVersion。H1 的日摘要保持兼容；H3 在同一 JSON 可选增加 `derived` 与 `hourly`，服务端仍只校验、持久化和投影 observed，不在宿主计算。省略字段在下一次较新 upsert 中移除旧值。H3 必须 `cloudModelAllowed=false`；true 返回 `INVALID_HEALTH_SUMMARY`，旧 H1 云使用选择不能放宽 H3。MemoWeft 来源权限沿用 H2，全部设备端分数 / 压力区间的内容明确标记估算；200 仅证明摘要与 observed 待办持久化，Core delivered 仍看回执。
+
+```json
+{
+  "derived": {
+    "algorithmVersion": "weftmate-h3-v1",
+    "recovery": {"value":70,"inputs":["hrv","restingHeartRate","sleep"],"baselineDays":14},
+    "load": {"value":6.2,"inputs":["activeEnergy","workouts","heartRate"],"elevatedHeartRateMinutes":12,"acuteDays":7,"chronicDays":28,"acute7Mean":5.5,"chronic28Mean":5,"ratio":1.1},
+    "sleep": {"stageMinutes":{"core":300,"deep":80,"rem":100},"continuityPercent":96,"durationScore":100,"midpointDeviationMinutes":20,"baselineDays":14}
+  },
+  "hourly": [{"start":"2026-10-06T18:00:00Z","end":"2026-10-06T19:00:00Z","bodyBattery":64,
+    "stress":{"lower":20,"upper":60,"sampleCount":1,"latestSampleAt":"2026-10-06T18:15:00Z","confidence":"sparse"}}]
+}
+```
+
+以上为添加到 6.1 日摘要的字段片段，不是单独上传体；时区为 America/Los_Angeles、相应 readStates 必须有 dataAvailable，示例睡眠总时长为480分钟。计算依据和所有系数见 COMPANION 4b 的 H3 表。
+
+| 字段 | 约束与含义 |
+|---|---|
+| `derived.algorithmVersion` | 固定 `weftmate-h3-v1`，随日摘要保存算法版本；不接受任意说明或样本。 |
+| `derived.recovery` | 可省略；value为有限0–100；inputs非空去重，只能 sleep/hrv/restingHeartRate/respiratoryRate，要求相应读取状态 dataAvailable；baselineDays 1–14。缺项重归一化，inputs与实际有效天数标明依据。 |
+| `derived.load` | 可省略；value有限非负相对单位；inputs为activeEnergy/workouts/heartRate有效组成。elevatedHeartRateMinutes为可选实际样本覆盖分钟；acuteDays 0–7/chronicDays 0–28。完整且输入一致才分别提供acute7Mean/chronic28Mean；两窗完整且慢性均值>0才提供ratio。各值非负有限。 |
+| `derived.sleep` | 可省略，要求已有sleep日摘要。stageMinutes仅core/deep/rem/unspecified有限非负分钟，合计≤总睡眠分钟；continuityPercent 0–100。可选durationScore 0–100、midpointDeviationMinutes 0–720，baselineDays 0–14。这些是个人历史比较，不是医学睡眠效率。 |
+| `hourly[]` | 可省略，最多25个按UTC升序且不重叠的小时聚合；start/end为UTC ISO8601，每桶0<时长≤1小时，全部落在本摘要日期 / 时区内，end≤summarizedAt。夏令时23/25小时用独立UTC桶；当前小时可不完整。 |
+| `hourly[].bodyBattery` | 可省略，有限0–100，是桶结束时的电量估算。缺压力 / 活动只积分已知贡献，不把结果表达为实际测得电量。 |
+| `hourly[].stress` | 可省略；lower/upper有限0–100且lower≤upper；sampleCount为正安全整数；latestSampleAt在本桶内；confidence为sparse/sampled。这是启发式区间，不是统计置信区间或持续测量。要求本日hrv/heartRate读取状态dataAvailable。无样本的小时省略stress，不补0或延续上一小时。 |
+
+所有可选字段缺失时不编码null；每小时至少提供电量或压力之一。单位和健康读取项目沿用6.1，不接受原始观测、任意文本或追加健康类别。12 KiB上限不变，H3仅传聚合；应用内关闭任一贡献输入先从本地 / 排队摘要移除派生字段，再从剩余启用数据重新计算；删除仍使用6.2并清空所有日 / 小时数据。
 
 ## 7. 云端账号与宿主云身份（S1a / S1b / S1c-Web / S1d）
 
