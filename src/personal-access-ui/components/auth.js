@@ -112,6 +112,7 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
                 const password = ui.byId('auth-password'); if (password) password.value = '';
             });
         }
+        globalThis.WeftMotion?.changed(ui.byId('login-view'), `${value.mode}:${value.step}`, 'base');
         ui.errorAt('cloud-auth-error', value.error);
         ui.setBusy(ui.byId('cloud-auth-form'), value.busy);
         const resend = ui.byId('auth-resend'); if (resend) { resend.disabled = value.busy || value.resendSeconds > 0; resend.textContent = value.resendSeconds ? `${value.resendSeconds} 秒后可重发` : '重新发送验证码'; }
