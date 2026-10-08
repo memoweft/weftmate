@@ -172,6 +172,9 @@ private struct SavedTaskResponse: Codable {
     func savedApprovalOutcome(_ approval: SessionApproval) -> ApprovalDecisionOutcome? {
         response("approval:" + approval.id)?.approval?.outcome
     }
+    func savedApprovalScope(_ approval: SessionApproval) -> ApprovalDecisionScope? {
+        response("approval:" + approval.id)?.approval?.decisionScope
+    }
     func savedAnswers(_ batch: SessionQuestionBatch) -> [QuestionAnswerItem]? {
         response("question:" + batch.id)?.question?.answer.answers ?? batch.answer?.answers
     }
@@ -179,11 +182,11 @@ private struct SavedTaskResponse: Codable {
     var needsObservation: Bool {
         approvals.contains { !$0.status.isTerminal } || questions.contains { !$0.status.isTerminal }
     }
-    func decide(_ approval: SessionApproval, outcome: ApprovalDecisionOutcome) async {
+    func decide(_ approval: SessionApproval, outcome: ApprovalDecisionOutcome, decisionScope: ApprovalDecisionScope? = nil) async {
         let key = "approval:" + approval.id
         guard canRespond(key), approval.canDecide, approvals.contains(approval), let scope = try? scope() else { return }
         do {
-            let intent = try ApprovalDecisionIntent(scope: scope, approval: approval, outcome: outcome, requestID: UUID().uuidString)
+            let intent = try ApprovalDecisionIntent(scope: scope, approval: approval, outcome: outcome, requestID: UUID().uuidString, decisionScope: decisionScope)
             try save(SavedTaskResponse(approval: intent, question: nil))
             await submit(key)
         } catch { errors[key] = message(error) }

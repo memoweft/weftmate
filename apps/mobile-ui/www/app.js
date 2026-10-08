@@ -24,6 +24,82 @@ state.accountModelCredentialConflict=null;
 const conversationTasks={owner:null,epoch:-1,entries:new Map(),inFlight:null};
 const toolApprovals={owner:null,epoch:-1,deviceId:null,sessions:new Map(),attempts:new Map(),inFlight:new Map(),detail:null,pollTimer:null};
 const toolQuestions={owner:null,epoch:-1,deviceId:null,sessions:new Map(),attempts:new Map(),drafts:new Map(),inFlight:new Map(),detail:null,pollTimer:null};
+const approvalModes=[
+  {mode:'auto',label:'自动（推荐）',short:'自动',description:'由 WeftMate 判断，有风险才问你'},
+  {mode:'ask',label:'每次询问',short:'每次询问',description:'执行和修改前都先问'},
+  {mode:'accept-edits',label:'自动接受文件修改',short:'接受修改',description:'改文件直接做，其他照常询问'},
+  {mode:'plan',label:'先出计划',short:'先出计划',description:'先给计划，你确认后再做'},
+  {mode:'allow-all',label:'全部允许',short:'全部允许',description:'不再询问，危险操作也会直接执行'}];
+const approvalModeState={key:null,mode:null,loading:false,error:'',menu:null,confirmation:null,revision:0};
+function approvalModeContext(defaults=false){return {...conversationTaskContext(),page:state.page,defaults}}
+function approvalModeCurrent(context){return state.loggedIn&&!state.transitionPending&&context.owner===state.owner&&
+  context.epoch===state.authEpoch&&context.generation===state.generation&&context.page===state.page&&
+  (context.defaults||context.sessionId===conversationTaskContext().sessionId&&context.conversationId===conversationTaskContext().conversationId&&context.source===state.chatSource)}
+function approvalModePath(context){return context.defaults?'/personal/v1/settings/approvals':`/personal/v1/sessions/${context.sessionId}/approval-mode`}
+function closeApprovalModeMenu({restoreFocus=false}={}){const menu=approvalModeState.menu;approvalModeState.menu=null;
+  $('approval-mode-popover').hidden=true;$('approval-mode-button').setAttribute('aria-expanded','false');
+  if(restoreFocus)menu?.trigger?.focus({preventScroll:true})}
+function closeApprovalRisk({restoreFocus=true}={}){const confirmation=approvalModeState.confirmation;
+  approvalModeState.confirmation=null;$('approval-risk-dialog').hidden=true;
+  if(restoreFocus&&confirmation&&approvalModeCurrent(confirmation.context))confirmation.trigger?.focus({preventScroll:true})}
+function updateApprovalModeButton(){if(state.page!=='chat')return;const context=approvalModeContext(),key=JSON.stringify(context),button=$('approval-mode-button');
+  button.disabled=!state.loggedIn||state.transitionPending||state.restorePending;
+  if(approvalModeState.key!==key){closeApprovalModeMenu();closeApprovalRisk({restoreFocus:false});
+    approvalModeState.key=key;approvalModeState.mode=null;approvalModeState.error='';approvalModeState.loading=false;
+    if(context.sessionId&&state.loggedIn&&!state.transitionPending)void loadApprovalMode(context)}
+  const mode=approvalModes.find(item=>item.mode===approvalModeState.mode);
+  $('approval-mode-label').textContent=mode?.short||'审批';
+  button.setAttribute('aria-label',`审批模式${mode?`：${mode.label}`:''}`)}
+async function loadApprovalMode(context){const key=JSON.stringify(context),revision=++approvalModeState.revision;approvalModeState.loading=true;
+  const current=()=>approvalModeCurrent(context)&&approvalModeState.key===key&&approvalModeState.revision===revision;
+  try{const result=await call('host.business',{path:approvalModePath(context),method:'GET'});
+    if(!current())return false;
+    if(!approvalModes.some(item=>item.mode===result?.mode))throw new Error('APPROVAL_RECEIPT_INVALID');
+    approvalModeState.mode=result.mode;approvalModeState.error='';return true
+  }catch(e){if(current())approvalModeState.error=safeError(e);return false}
+  finally{if(current()){approvalModeState.loading=false;
+    if(!context.defaults)updateApprovalModeButton();if(approvalModeState.menu)renderApprovalModeMenu()}}}
+function placeApprovalModeMenu(){const popup=$('approval-mode-popover'),menu=approvalModeState.menu;if(!menu)return;
+  const top=menu.trigger.getBoundingClientRect().top;
+  popup.style.bottom=menu.context.defaults?'16px':`${Math.max(16,window.innerHeight-top+8)}px`;
+  popup.style.maxHeight=`${Math.max(100,Math.min(window.innerHeight-32,menu.context.defaults?window.innerHeight-32:top-16))}px`}
+function renderApprovalModeMenu(){const menu=approvalModeState.menu;if(!menu)return;const popup=$('approval-mode-popover');clear(popup);
+  popup.append(el('h3','',menu.context.defaults?'新电脑对话的默认模式':'这段对话的审批模式'));
+  if(!menu.context.defaults&&!menu.context.sessionId){popup.append(el('p','hint','审批模式用于电脑执行。进入电脑会话或将这段对话交给电脑后，可单独设置。'));
+    const settings=el('button','','设置默认模式');settings.addEventListener('click',()=>page('settings'));popup.append(settings);placeApprovalModeMenu();return}
+  if(approvalModeState.loading)popup.append(el('p','hint','正在读取…'));
+  if(approvalModeState.error){const message=el('p','inline-error',`${approvalModeState.error} · 请重试`);popup.append(message);
+    const retry=el('button','','重新读取');retry.addEventListener('click',()=>{void loadApprovalMode(menu.context)});popup.append(retry)}
+  for(const item of approvalModes){const button=el('button','approval-mode-option');button.type='button';button.dataset.mode=item.mode;
+    button.setAttribute('role','menuitemradio');button.setAttribute('aria-checked',String(approvalModeState.mode===item.mode));
+    button.disabled=approvalModeState.loading||!!approvalModeState.error;
+    const copy=el('span','approval-mode-copy');copy.append(el('strong','',item.label),el('small','',item.description));
+    const check=el('span',approvalModeState.mode===item.mode?'icon icon-check':'mode-check-space');check.setAttribute('aria-hidden','true');
+    button.append(copy,check);button.addEventListener('click',()=>chooseApprovalMode(item.mode,menu));popup.append(button)}placeApprovalModeMenu()}
+async function openApprovalModes(defaults=false,trigger=$('approval-mode-button')){if(!state.loggedIn||state.transitionPending)return;
+  if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
+  closeModelMenu();closeAttachmentMenu();const context=approvalModeContext(defaults);
+  approvalModeState.key=JSON.stringify(context);approvalModeState.mode=null;approvalModeState.error='';
+  approvalModeState.loading=defaults||!!context.sessionId;approvalModeState.menu={context,trigger};
+  $('approval-mode-popover').hidden=false;if(!defaults)trigger.setAttribute('aria-expanded','true');renderApprovalModeMenu();
+  if(approvalModeState.loading)await loadApprovalMode(context);
+  if(approvalModeState.menu?.context===context)$('approval-mode-popover').querySelector('[aria-checked="true"]')?.focus({preventScroll:true})}
+function chooseApprovalMode(mode,menu){if(!approvalModeCurrent(menu.context)||approvalModeState.loading)return;
+  if(mode==='allow-all'){closeApprovalModeMenu();approvalModeState.confirmation=menu;
+    $('approval-risk-scope').textContent=menu.context.defaults?'作为新电脑对话的默认模式；已有对话保持原模式。':'仅应用于这段对话。';
+    $('approval-risk-dialog').hidden=false;$('approval-risk-cancel').focus({preventScroll:true});return}
+  void saveApprovalMode(mode,menu)}
+async function saveApprovalMode(mode,menu){if(!approvalModeCurrent(menu.context))return;
+  const revision=++approvalModeState.revision,current=()=>approvalModeCurrent(menu.context)&&approvalModeState.revision===revision;
+  approvalModeState.loading=true;closeApprovalRisk({restoreFocus:false});renderApprovalModeMenu();
+  try{const result=await call('host.business',{path:approvalModePath(menu.context),method:'PATCH',body:{mode}});
+    if(!current())return;if(result?.mode!==mode)throw new Error('APPROVAL_RECEIPT_INVALID');
+    approvalModeState.mode=mode;closeApprovalModeMenu();menu.trigger.focus({preventScroll:true});
+    if(menu.context.defaults){menu.trigger.textContent=`默认审批模式 · ${approvalModes.find(item=>item.mode===mode).label}`;
+      toast('默认模式已保存，已有对话保持原模式')}else updateApprovalModeButton()
+  }catch(e){if(current()){toast(`${safeError(e)} · 请重新读取模式`,true);closeApprovalModeMenu();
+      approvalModeState.mode=null;approvalModeState.error=safeError(e);if(!menu.context.defaults)updateApprovalModeButton()}}
+  finally{if(current())approvalModeState.loading=false}}
 
 function draftKey(id=state.conversationId){return `weftmate-draft:${state.owner||'local'}:${id||'new'}`}
 function sharedDraftKey(id=state.sharedSessionId){return `weftmate-shared-draft:${state.owner||'local'}:${id||'none'}`}
@@ -268,6 +344,7 @@ function cancelAttachmentPick({announce=false}={}){if(!state.attachmentPick)retu
   state.attachmentPick=null;renderAttachmentPickStatus();updateComposer();
   if(announce)status('已停止等待选择结果，原有消息草稿保留')}
 function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){toast('这段电脑会话仅可查看，无法添加图片',true);return}
+  closeApprovalModeMenu();
   if(state.attachmentPick)return;if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}
   closeModelMenu();state.attachmentMenu=true;const popup=$('attachment-popover');popup.hidden=false;
   $('pick-file').hidden=false;$('attachment-note').hidden=state.chatSource!=='host';
@@ -343,6 +420,7 @@ function placeModelMenu(){const top=$('model-button').getBoundingClientRect().to
   popup.style.bottom=`${Math.max(110,window.innerHeight-top+8)}px`;
   popup.style.maxHeight=`${Math.min(300,Math.max(160,top-24),Math.floor(window.innerHeight*.46))}px`}
 function page(name){
+  closeApprovalModeMenu();closeApprovalRisk({restoreFocus:false});
   stopApprovalObservation();stopQuestionObservation();const previousPage=state.page;closeDrawer();closeModelMenu();closeAttachmentMenu();if(name!=='chat'){
     closeImagePreview({restoreFocus:false});invalidateLiveProgress();cancelAttachmentPick();stopSharedPoll();if(state.restorePending){state.restorePending=false;loadDraft();updateComposer()}}state.page=name;state.generation++;
   $('chat-page').classList.toggle('active',name==='chat');$('generic-page').classList.toggle('active',name!=='chat');
@@ -377,6 +455,7 @@ function updateComposer(){const text=$('draft').value;state.draft=text;const key
   $('model-button').disabled=host||!state.loggedIn||state.busy||state.modelSwitching||state.transitionPending;
   $('voice-button').disabled=!state.loggedIn||busy||state.modelSwitching||state.transitionPending||state.restorePending||host&&!session?.sendAvailable;
   syncChatInsets();
+  updateApprovalModeButton();
 }
 function scrollBottom(force=false){if(!force&&!state.scrollPinned)return;
   const box=$('chat-scroll'),bottom=Math.max(0,(Number.isFinite(box.scrollHeight)?box.scrollHeight:0)-
@@ -1133,6 +1212,7 @@ window.addEventListener('error',reportBootFailure);
 window.addEventListener('unhandledrejection',reportBootFailure);
 
 async function openModels(){
+  closeApprovalModeMenu();
   if(state.busy)return;
   if(state.menu){closeModelMenu();return}
   closeAttachmentMenu();
@@ -1198,6 +1278,11 @@ function settingsPage(target){target.append(heading('设置'),group('个人空�
   group('应用',[row('界面更新',state.ui?.activeVersion||'内置页面',()=>page('updates')),
     row('原生兼容界面','仅供排查当前系统网页组件',()=>call('compat.openNative').catch(e=>toast(safeError(e),true)))]));
   void systemStatusSection(target);
+  const section=el('section','group');section.append(el('h2','','审批'));
+  const button=el('button','secondary','设置默认审批模式');button.type='button';button.disabled=!state.loggedIn;
+  button.setAttribute('aria-haspopup','menu');button.setAttribute('aria-controls','approval-mode-popover');
+  button.addEventListener('click',()=>{void openApprovalModes(true,button)});
+  section.append(el('p','hint','用于新电脑对话，已有对话可在输入区单独设置。'),button);target.append(section);
 }
 async function systemStatusSection(target){const owner=state.owner,epoch=state.authEpoch;
   const section=el('section','group');section.append(el('h2','','系统状态'));
@@ -2149,7 +2234,7 @@ function normalizedApproval(item){if(!item||!approvalIdPattern.test(item.approva
       ['allowed-once','rejected'].includes(item.outcome)&&(!decision||item.decisionOutcome!==item.outcome))||
     item.status==='unavailable'&&!['cancelled','unavailable'].includes(item.outcome))return null;
   const fields=['approvalId','sessionId','taskId','sourceCommandId','sourceReceiptId','turn','callId','rootCallId',
-    'toolName','reason','createdAt','status','decisionOutcome','decisionRequestId','answeredAt','outcome','resolvedAt'];
+    'toolName','reason','createdAt','status','decisionOutcome','decisionRequestId','answeredAt','outcome','resolvedAt','decisionScope','riskCategories'];
   return Object.fromEntries(fields.filter(key=>item[key]!==undefined).map(key=>[key,item[key]]))}
 function approvalIdentity(row){return JSON.stringify([row.approvalId,row.sessionId,row.taskId,row.sourceCommandId,
   row.sourceReceiptId,row.turn,row.callId,row.rootCallId,row.toolName,row.createdAt])}
@@ -2162,11 +2247,12 @@ function approvalAttempt(context,row){const key=`${row.sessionId}/${row.approval
   let attempt=toolApprovals.attempts.get(key);if(attempt)return attempt.identity===approvalIdentity(row)?attempt:null;
   try{const saved=JSON.parse(localStorage.getItem(approvalMarkerKey(context,row))||'null');
     if(saved?.identity===approvalIdentity(row)&&approvalRequestPattern.test(saved.requestId||'')&&
-      ['allowed-once','rejected'].includes(saved.outcome)){
-      attempt={...saved,unknown:true,checked:false,busy:false};toolApprovals.attempts.set(key,attempt);return attempt}}
+      ['allowed-once','rejected'].includes(saved.outcome)&&
+      (saved.scope===undefined||saved.outcome==='allowed-once'&&['once','conversation-category'].includes(saved.scope))){
+      attempt={...saved,...(saved.outcome==='allowed-once'?{scope:saved.scope||'once'}:{}),unknown:true,checked:false,busy:false};toolApprovals.attempts.set(key,attempt);return attempt}}
   catch{}return null}
 function saveApprovalAttempt(context,row,attempt){try{localStorage.setItem(approvalMarkerKey(context,row),JSON.stringify({
-  identity:attempt.identity,requestId:attempt.requestId,outcome:attempt.outcome}))}catch{}}
+  identity:attempt.identity,requestId:attempt.requestId,outcome:attempt.outcome,...(attempt.scope?{scope:attempt.scope}:{})}))}catch{}}
 function clearApprovalAttempt(context,row){toolApprovals.attempts.delete(`${row.sessionId}/${row.approvalId}`);
   try{localStorage.removeItem(approvalMarkerKey(context,row))}catch{}}
 function relatedTaskApproval(task,row){if(task?.taskId!==row.taskId||task.sessionId!==row.sessionId||
@@ -2179,7 +2265,16 @@ function relatedTaskApproval(task,row){if(task?.taskId!==row.taskId||task.sessio
 function taskApprovals(task,context){if(!approvalScopeCurrent(context))return [];
   return [...(toolApprovals.sessions.get(context.sessionId)?.rows.values()||[])].filter(row=>relatedTaskApproval(task,row))}
 function approvalOperation(row){return {pwsh:'运行命令',read:'读取文件',write:'写入文件',edit:'修改文件',glob:'查找文件',grep:'搜索内容',
-  weftmod:'设备操作',weftmod_script:'运行脚本',job_kill:'停止后台任务'}[row.toolName]||row.toolName}
+  shell:'运行命令',bash:'运行命令',weftmod:'设备操作',weftmod_script:'运行脚本',job_kill:'停止后台任务'}[row.toolName]||row.toolName}
+const approvalRiskNames={delete:'删除文件',overwrite:'覆盖文件',system:'修改系统',install:'安装软件',external:'发送或发布',spend:'付款',execute:'执行脚本'};
+function approvalRiskCategories(row){return Array.isArray(row.riskCategories)?row.riskCategories.filter(value=>Object.hasOwn(approvalRiskNames,value)):[]}
+function approvalRiskCopy(row){const categories=approvalRiskCategories(row);
+  const names=categories.map(value=>approvalRiskNames[value]);
+  return `${names.length?`风险类别：${names.join('、')}。`:'风险类别：未标明。'}${
+    categories.some(value=>['delete','overwrite','external','spend'].includes(value))?'可能无法撤销，请先确认影响范围。':'能否撤销取决于实际操作，请先确认影响范围。'}`}
+function approvalRecord(row){const outcome=row.outcome||row.decisionOutcome;
+  return `${outcome==='allowed-once'?(row.decisionScope==='conversation-category'?'已总是允许此类':'已允许'):
+    outcome==='rejected'?'已拒绝':outcome==='cancelled'?'已取消':'审批已失效'} · ${approvalOperation(row)}`}
 function approvalMeaning(row,cache,attempt){if(attempt?.busy)return '正在提交决定并核对审批状态…';
   if(row.status==='pending')return cache.error?'连接中断，审批状态待更新。请先检查状态。':attempt?.unknown?
     attempt.checked?'上次决定尚未登记，可以重试同一请求。':'上次决定的回执尚不明确，请先检查状态。':'等待你决定是否执行这项操作。';
@@ -2192,8 +2287,13 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
   const focused=document.activeElement,focusChoice=focused?.dataset?.approvalChoice;
   const hadFocus=focusChoice&&focused.parent===card.querySelector('.approval-actions')||focused?.closest?.('.tool-approval')===card;
   card.dataset.signature=signature;clear(card);card.dataset.approvalId=row.approvalId;card.dataset.taskId=row.taskId;
+  if(row.status!=='pending'&&!(row.status==='answered'&&cache.error)){
+    card.classList.add('is-resolved');const record=el('p','approval-status',approvalRecord(row));record.setAttribute('role','status');
+    record.setAttribute('aria-live','polite');record.setAttribute('aria-label',`${approvalRecord(row)}。${approvalMeaning(row,cache,attempt)}`);
+    card.append(record);if(hadFocus){record.setAttribute('tabindex','-1');record.focus({preventScroll:true})}return}
   card.append(el('strong','approval-title',`${row.status==='pending'?'需要审批':'审批记录'} · ${approvalOperation(row)}`));
   if(row.reason&&row.status==='pending')card.append(el('p','approval-reason',row.reason));
+  if(row.status==='pending')card.append(el('p','approval-risk-copy',approvalRiskCopy(row)));
   card.classList.toggle('is-resolved',approvalTerminal(row));
   const message=el('p','approval-status',approvalMeaning(row,cache,attempt));message.setAttribute('role','status');message.setAttribute('aria-live','polite');
   card.append(message);
@@ -2205,9 +2305,12 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
       button.addEventListener('click',()=>{const restoreFocus=button.dataset.restoreFocus==='1';delete button.dataset.restoreFocus;
         if(approvalViewCurrent(context))void handler(restoreFocus)});controls.append(button)};
     if(row.status==='pending'&&!cache.error&&(!attempt?.unknown||attempt.checked)){
-      if(attempt?.unknown)add(attempt.outcome==='allowed-once'?'重试允许本次':'重试拒绝',attempt.outcome,
-        restoreFocus=>decideToolApproval(row,attempt.outcome,context,restoreFocus),attempt.outcome==='allowed-once');
-      else{add('允许本次','allowed-once',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus),true);
+      if(attempt?.unknown)add(attempt.outcome==='allowed-once'?(attempt.scope==='conversation-category'?'重试总是允许此类':'重试允许一次'):'重试拒绝',attempt.outcome,
+        restoreFocus=>decideToolApproval(row,attempt.outcome,context,restoreFocus,attempt.scope),attempt.outcome==='allowed-once');
+      else{add('允许一次','allowed-once',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus),true);
+        add('总是允许此类','conversation-category',restoreFocus=>decideToolApproval(row,'allowed-once',context,restoreFocus,'conversation-category'));
+        controls.children[1].disabled=!approvalRiskCategories(row).length;
+        controls.children[1].title=approvalRiskCategories(row).length?'仅允许这段对话后续的同类操作':'这次审批未提供风险类别，可选择允许一次';
         add('拒绝','rejected',restoreFocus=>decideToolApproval(row,'rejected',context,restoreFocus))}}
     if(cache.error||attempt?.unknown)add('检查审批状态','check',()=>refreshToolApprovals(context,{force:true}));
     card.append(controls);
@@ -2263,20 +2366,23 @@ async function refreshToolApprovals(context=approvalContext(),{force=false}={}){
     finally{if(approvalViewCurrent(context))scheduleApprovalObservation(context)}};
   const promise=run();toolApprovals.inFlight.set(key,{promise});try{return await promise}
   finally{if(toolApprovals.inFlight.get(key)?.promise===promise)toolApprovals.inFlight.delete(key)}}
-async function decideToolApproval(row,outcome,context=approvalContext(),restoreFocus=false){
+async function decideToolApproval(row,outcome,context=approvalContext(),restoreFocus=false,scope=outcome==='allowed-once'?'once':undefined){
   if(!approvalViewCurrent(context)||!approvalScopeCurrent(context)||!['allowed-once','rejected'].includes(outcome))return;
   const cache=toolApprovals.sessions.get(row.sessionId),current=cache?.rows.get(row.approvalId);
   if(!current||approvalIdentity(current)!==approvalIdentity(row)||current.status!=='pending'||cache.error)return;
   let attempt=approvalAttempt(context,row);if(attempt?.busy)return;
-  if(attempt?.unknown&&(!attempt.checked||attempt.outcome!==outcome)){void refreshToolApprovals(context,{force:true});return}
-  attempt ||= {identity:approvalIdentity(row),requestId:newSharedRequestId(),outcome};
+  if(outcome==='allowed-once'&&!['once','conversation-category'].includes(scope)||outcome==='rejected'&&scope!==undefined||
+    scope==='conversation-category'&&!approvalRiskCategories(current).length)return;
+  if(attempt?.unknown&&(!attempt.checked||attempt.outcome!==outcome||attempt.scope!==scope)){void refreshToolApprovals(context,{force:true});return}
+  attempt ||= {identity:approvalIdentity(row),requestId:newSharedRequestId(),outcome,...(scope?{scope}:{})};
   attempt.busy=true;attempt.unknown=true;attempt.checked=false;toolApprovals.attempts.set(`${row.sessionId}/${row.approvalId}`,attempt);
   saveApprovalAttempt(context,row,attempt);renderApprovalView(context);
   try{const result=await call('shared.approvals.decide',{sessionId:row.sessionId,approvalId:row.approvalId,
-      requestId:attempt.requestId,outcome:attempt.outcome});if(!approvalViewCurrent(context))return;
+      requestId:attempt.requestId,outcome:attempt.outcome,...(attempt.scope?{scope:attempt.scope}:{})});if(!approvalViewCurrent(context))return;
     const received=normalizedApproval(result?.approval);
     if(result?.requestId!==attempt.requestId||!received||approvalIdentity(received)!==approvalIdentity(row)||
-      received.status!=='answered'||received.decisionRequestId!==attempt.requestId||received.decisionOutcome!==attempt.outcome)
+      received.status!=='answered'||received.decisionRequestId!==attempt.requestId||received.decisionOutcome!==attempt.outcome||
+      attempt.outcome==='allowed-once'&&(received.decisionScope||'once')!==attempt.scope)
       throw new Error('APPROVAL_RECEIPT_INVALID');
     cache.rows.set(row.approvalId,mergedApproval(cache.rows.get(row.approvalId),received));renderApprovalView(context)
   }catch(e){if(!approvalViewCurrent(context))return;toast(e?.message==='TIMEOUT'||e?.message==='RECEIPT_TIMEOUT'?
@@ -2735,6 +2841,7 @@ async function phoneAction(kind){if(kind==='settings'){
   }catch(e){loading.textContent=safeError(e);loading.className='inline-error'}
 }
 function handleBack(){if(!$('image-preview').hidden){closeImagePreview();return}
+  if(approvalModeState.confirmation){closeApprovalRisk();return}if(approvalModeState.menu){closeApprovalModeMenu({restoreFocus:true});return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
   if(state.drawer){closeDrawer();$('menu-button').focus();return}
   if(state.page!=='chat'){page('chat');return}if(document.activeElement===$('draft'))$('draft').blur()}
@@ -2746,6 +2853,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('conversation-search').addEventListener('input',renderConversationList);
   $('draft').addEventListener('input',updateComposer);$('send-button').addEventListener('click',send);$('stop-button').addEventListener('click',stop);
   $('model-button').addEventListener('click',openModels);$('plus-button').addEventListener('click',openAttachmentMenu);
+  $('approval-mode-button').addEventListener('click',()=>{void openApprovalModes()});
+  $('approval-risk-cancel').addEventListener('click',()=>closeApprovalRisk());
+  $('approval-risk-confirm').addEventListener('click',()=>{if(approvalModeState.confirmation)void saveApprovalMode('allow-all',approvalModeState.confirmation)});
+  $('approval-risk-dialog').addEventListener('keydown',event=>{if(event.key==='Tab'){
+    event.preventDefault();(document.activeElement===$('approval-risk-cancel')?$('approval-risk-confirm'):$('approval-risk-cancel')).focus()}});
+  $('approval-mode-popover').addEventListener('keydown',event=>{
+    const options=[...$('approval-mode-popover').querySelectorAll('button:not(:disabled)')],index=options.indexOf(document.activeElement);
+    if(['ArrowDown','ArrowUp','Home','End'].includes(event.key)){event.preventDefault();
+      options[event.key==='Home'?0:event.key==='End'?options.length-1:(index+(event.key==='ArrowUp'?-1:1)+options.length)%options.length]?.focus()}});
   $('pick-image').addEventListener('click',()=>pickAttachment('image'));$('pick-file').addEventListener('click',()=>pickAttachment('file'));
   $('attachment-pick-cancel').addEventListener('click',()=>cancelAttachmentPick({announce:true}));
   $('image-preview-close').addEventListener('click',()=>closeImagePreview());
@@ -2756,9 +2872,10 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('jump-latest').addEventListener('click',()=>{state.scrollPinned=true;scrollBottom(true)});
   $('chat-scroll').addEventListener('scroll',handleChatScroll);
   document.addEventListener('click',event=>{if(state.menu&&!$('model-popover').contains(event.target)&&!$('model-button').contains(event.target))closeModelMenu();
+    if(approvalModeState.menu&&!$('approval-mode-popover').contains(event.target)&&!approvalModeState.menu.trigger.contains(event.target))closeApprovalModeMenu();
     if(state.attachmentMenu&&!$('attachment-popover').contains(event.target)&&!$('plus-button').contains(event.target))closeAttachmentMenu()});
   window.addEventListener('weft-back',handleBack);window.addEventListener('keydown',event=>{if(event.key==='Escape')handleBack()});
-  window.addEventListener('resize',()=>{if(state.menu)placeModelMenu();if(state.attachmentMenu)placeAttachmentMenu();syncChatInsets()});
+  window.addEventListener('resize',()=>{if(state.menu)placeModelMenu();if(approvalModeState.menu)placeApprovalModeMenu();if(state.attachmentMenu)placeAttachmentMenu();syncChatInsets()});
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'){stopSharedPoll();
       clearTimeout(toolApprovals.pollTimer);toolApprovals.pollTimer=null;clearTimeout(toolQuestions.pollTimer);toolQuestions.pollTimer=null}
     else if(state.chatSource==='host'&&state.page==='chat'){void loadSharedHistory();scheduleSharedPoll()}

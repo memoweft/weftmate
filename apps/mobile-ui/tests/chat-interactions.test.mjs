@@ -390,12 +390,14 @@ test('host image picker scopes drafts to the exact DSH session and offers file s
   assert.equal(h.node('attachment-note').hidden,false);assert.match(html,/普通文件将以文件卡显示/);
   h.run('closeAttachmentMenu()');
   const picking=h.run('pickAttachment("image")');
-  assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[0].params)),{kind:'image',conversationId:'session-one',viewGeneration:0});
-  h.reply(0,{pending:true,requestId:'host-pick'});await picking;
+  const pick=h.bridge.findIndex(item=>item.method==='attachments.pick');
+  assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[pick].params)),{kind:'image',conversationId:'session-one',viewGeneration:0});
+  h.reply(pick,{pending:true,requestId:'host-pick'});await picking;
   h.run('processEvent({event:"attachment.result",data:{requestId:"host-pick",conversationId:"session-one",status:"selected",viewGeneration:0}})');
-  assert.equal(h.bridge[1].method,'attachments.list');
-  assert.equal(h.bridge[1].params.conversationId,'session-one');
-  h.reply(1,{attachments:[{attachmentId:id,kind:'image',name:'电脑.png',thumbnailDataUrl:'data:image/png;base64,AA=='},
+  const listing=h.bridge.findIndex(item=>item.method==='attachments.list');
+  assert.ok(listing>pick);
+  assert.equal(h.bridge[listing].params.conversationId,'session-one');
+  h.reply(listing,{attachments:[{attachmentId:id,kind:'image',name:'电脑.png',thumbnailDataUrl:'data:image/png;base64,AA=='},
     {attachmentId:`sha256:${'f'.repeat(64)}`,kind:'image',name:'已发送历史.png'}]});await h.flush();
   assert.equal(h.node('attachment-drafts').hidden,false);
   assert.equal(h.run('currentAttachments().length'),1,'durable history SHA is never treated as a removable draft');
@@ -416,12 +418,14 @@ test('host file picker keeps one attachment UUID under the selected DSH session'
   const h=harness(),id='attachment-00000000-0000-4000-8000-000000000003';
   h.run('state.loggedIn=true;state.owner="A";state.chatSource="host";state.sharedSessionId="session-file";state.sharedSessions=[{sessionId:"session-file",sendAvailable:true,source:"host"}]');
   const picking=h.run('pickAttachment("file")');
-  assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[0].params)),
+  const pick=h.bridge.findIndex(item=>item.method==='attachments.pick');
+  assert.deepEqual(JSON.parse(JSON.stringify(h.bridge[pick].params)),
     {kind:'file',conversationId:'session-file',viewGeneration:0});
-  h.reply(0,{pending:true,requestId:'host-file-pick'});await picking;
+  h.reply(pick,{pending:true,requestId:'host-file-pick'});await picking;
   h.run('processEvent({event:"attachment.result",data:{requestId:"host-file-pick",conversationId:"session-file",status:"selected",viewGeneration:0}})');
-  assert.equal(h.bridge[1].method,'attachments.list');
-  h.reply(1,{attachments:[{attachmentId:id,kind:'file',name:'资料.csv'}]});await h.flush();
+  const listing=h.bridge.findIndex(item=>item.method==='attachments.list');
+  assert.ok(listing>pick);
+  h.reply(listing,{attachments:[{attachmentId:id,kind:'file',name:'资料.csv'}]});await h.flush();
   assert.equal(h.node('attachment-drafts').hidden,false);
   assert.equal(h.run('currentAttachments()[0].attachmentId'),id);
   assert.equal(h.run('currentAttachments()[0].kind'),'file');
@@ -964,6 +968,53 @@ async function readApprovals(h,rows,context='approvalContext()'){const reading=h
 function approvalCard(h){return h.node('chat-content').children.find(node=>node.dataset.approvalId)}
 function answeredApproval(row,requestId,outcome){return {...row,status:'answered',decisionRequestId:requestId,decisionOutcome:outcome,
   answeredAt:'2026-10-06T13:01:00.000Z'}}
+
+test('UI-2a category approval preserves scope and original request through timeout and restart',async()=>{
+  const h=harness();prepareApprovalChat(h);const row=syntheticApproval({riskCategories:['delete','overwrite']});await readApprovals(h,[row]);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children.length,3);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children[1].disabled,false);
+  assert.match(allText(approvalCard(h)),/删除文件、覆盖文件.*可能无法撤销/);
+  const deciding=h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
+  const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),params=h.bridge[request].params;
+  assert.equal(params.scope,'conversation-category');h.reply(request,null,'TIMEOUT');await h.flush();
+  h.reply(h.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[row],nextBefore:null,hasMore:false});await deciding;
+  const restored=harness({storage:Object.fromEntries(h.storage)});prepareApprovalChat(restored);await readApprovals(restored,[row]);
+  assert.match(allText(approvalCard(restored)),/重试总是允许此类/);
+  const retry=restored.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
+  const repeated=restored.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');assert.deepEqual(restored.bridge[repeated].params,params);
+  const answered={...answeredApproval(row,params.requestId,'allowed-once'),decisionScope:'conversation-category'};
+  restored.reply(repeated,{approval:answered,requestId:params.requestId});await restored.flush();
+  restored.reply(restored.bridge.findLastIndex(item=>item.method==='shared.approvals.list'),{approvals:[answered],nextBefore:null,hasMore:false});await retry;
+  assert.equal(allText(approvalCard(restored)).trim(),'已总是允许此类 · 运行命令');
+});
+
+test('UI-2a category permission remains unavailable without a server risk category',async()=>{
+  const h=harness();prepareApprovalChat(h);await readApprovals(h,[syntheticApproval()]);
+  assert.equal(approvalCard(h).querySelector('.approval-actions').children[1].disabled,true);
+  await h.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once',approvalContext(),false,'conversation-category')");
+  assert.equal(h.bridge.some(item=>item.method==='shared.approvals.decide'),false);
+});
+
+test('UI-2a approval mode late reads cannot label another conversation or account',async()=>{
+  const h=harness();h.run("state.loggedIn=true;state.owner='A';state.chatSource='host';state.sharedSessionId='s1';updateApprovalModeButton()");
+  const first=h.bridge.findLastIndex(item=>item.method==='host.business');
+  h.run("state.sharedSessionId='s2';state.generation++;updateApprovalModeButton()");
+  const second=h.bridge.findLastIndex(item=>item.method==='host.business');h.reply(first,{mode:'allow-all'});await h.flush();
+  assert.equal(h.node('approval-mode-label').textContent,'审批');h.reply(second,{mode:'ask'});await h.flush();
+  assert.equal(h.node('approval-mode-label').textContent,'每次询问');
+  const opening=h.run('openApprovalModes()'),third=h.bridge.findLastIndex(item=>item.method==='host.business');
+  h.run("state.owner='B';state.authEpoch++;updateApprovalModeButton()");h.reply(third,{mode:'allow-all'});await opening;
+  assert.equal(h.node('approval-mode-popover').hidden,true);assert.equal(h.node('approval-mode-label').textContent,'审批');
+});
+
+test('UI-2a an older mode read cannot overwrite a newly saved mode in the same conversation',async()=>{
+  const h=harness();h.run("state.loggedIn=true;state.owner='A';state.chatSource='host';state.sharedSessionId='s1';updateApprovalModeButton()");
+  const oldRead=h.bridge.length-1,opening=h.run('openApprovalModes()'),newRead=h.bridge.length-1;
+  h.reply(newRead,{mode:'auto'});await opening;
+  const saving=h.run("saveApprovalMode('plan',approvalModeState.menu)"),write=h.bridge.length-1;
+  h.reply(write,{mode:'plan'});await saving;assert.equal(h.node('approval-mode-label').textContent,'先出计划');
+  h.reply(oldRead,{mode:'auto'});await h.flush();assert.equal(h.node('approval-mode-label').textContent,'先出计划');
+});
 function syntheticQuestionBatch(overrides={}){return {questionRpcId:'52345678-1234-4234-8234-123456789abc',sessionId:'s1',taskId:'root-inline',
   sourceCommandId:'root-inline',sourceReceiptId:'rpc:root.1',turn:1,createdAt:'2026-10-06T14:00:00.000Z',status:'pending',questions:[
     {id:'plan',header:'确认计划',question:'是否按这份计划继续？',detail:'先整理资料，再核对文件内容。',intent:{kind:'plan-review',approve:'同意'},
@@ -984,7 +1035,7 @@ test('task15-question-client natural single multiple and free answers preserve o
   const card=questionCard(h),form=card.querySelector('.question-form'),fields=form.children.filter(node=>node.tagName==='fieldset');
   assert.equal(h.node('chat-content').children.filter(node=>node.dataset.questionRpcId).length,1);
   assert.match(allText(card),/确认计划.*是否按这份计划继续.*先整理资料，再核对文件内容.*同意.*按上面的计划继续/);
-  assert.doesNotMatch(allText(h.node('chat-content')),/错误来源|永久允许|允许本次/);assert.equal(fields.length,3);
+  assert.doesNotMatch(allText(h.node('chat-content')),/错误来源|永久允许|允许一次/);assert.equal(fields.length,3);
   const selected=fields[0].querySelector('input');assert.equal(selected.type,'radio');selected.checked=true;selected.fire('change');
   const multi=fields[1].children.filter(node=>node.className==='question-option').map(node=>node.querySelector('input'));
   assert.equal(multi.every(input=>input.type==='checkbox'),true);for(const input of multi){input.checked=true;input.fire('change')}
@@ -1097,7 +1148,7 @@ test('task15-approval-client pending approvals follow exact root and supplement 
     sourceCommandId:'foreign-source',reason:'错误来源不应可审批'}),syntheticApproval({approvalId:'42345678-1234-4234-8234-123456789abc',
     sourceReceiptId:'rpc:other.2',reason:'错误回执不应可审批'})]);
   const cards=h.node('chat-content').children.filter(node=>node.dataset.approvalId);
-  assert.equal(cards.length,2);assert.match(allText(cards[0]),/需要审批 · 运行命令.*需要执行这次命令.*允许本次.*拒绝/);
+  assert.equal(cards.length,2);assert.match(allText(cards[0]),/需要审批 · 运行命令.*需要执行这次命令.*允许一次.*拒绝/);
   assert.match(allText(cards[1]),/需要审批 · 写入文件.*保存这次生成的文件/);
   const children=h.node('chat-content').children;
   assert.ok(children.indexOf(cards[0])>children.findIndex(node=>node.dataset.receiptId===fixture.source.receiptId));
@@ -1113,7 +1164,8 @@ for(const outcome of ['allowed-once','rejected'])test(`task15-approval-client ${
   h.node('draft').value='审批期间也保留草稿';h.node('draft').focus();h.run('state.scrollPinned=false');h.node('chat-scroll').scrollTop=143;
   const deciding=h.run(`decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],${JSON.stringify(outcome)},approvalContext(),true)`);
   const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),params=h.bridge[request].params;
-  assert.deepEqual(Object.keys(params).sort(),['approvalId','outcome','requestId','sessionId']);
+  assert.deepEqual(Object.keys(params).sort(),outcome==='allowed-once'?['approvalId','outcome','requestId','scope','sessionId']:['approvalId','outcome','requestId','sessionId']);
+  if(outcome==='allowed-once')assert.equal(params.scope,'once');
   assert.equal(params.sessionId,row.sessionId);assert.equal(params.approvalId,row.approvalId);assert.equal(params.outcome,outcome);
   assert.equal(approvalCard(h).querySelector('.approval-actions').children.every(button=>button.disabled),true);
   await h.run(`decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],${JSON.stringify(outcome)})`);
@@ -1121,11 +1173,11 @@ for(const outcome of ['allowed-once','rejected'])test(`task15-approval-client ${
   const answered=answeredApproval(row,params.requestId,outcome);h.reply(request,{approval:answered,requestId:params.requestId});await h.flush();
   const checking=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');assert.ok(checking>request);
   h.reply(checking,{approvals:[answered],nextBefore:null,hasMore:false});await deciding;
-  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/已登记“允许本次”，等待执行端处理/:/已登记“拒绝”，等待执行端处理/);
+  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/已允许 · 运行命令/:/已拒绝 · 运行命令/);
   assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
   assert.equal(h.node('draft').value,'审批期间也保留草稿');assert.equal(h.document.activeElement,h.node('draft'));assert.equal(h.node('chat-scroll').scrollTop,143);
   await readApprovals(h,[{...answered,status:'resolved',outcome,resolvedAt:'2026-10-06T13:02:00.000Z'}]);
-  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/执行端已处理本次允许；任务结果仍以执行记录为准/:/执行端已处理本次拒绝/);
+  assert.match(allText(approvalCard(h)),outcome==='allowed-once'?/已允许 · 运行命令/:/已拒绝 · 运行命令/);
   assert.doesNotMatch(allText(approvalCard(h)),/目标已完成|任务已完成/);
 });
 
@@ -1135,10 +1187,10 @@ test('task15-approval-client an unknown network reply is read back and can retry
   const request=h.bridge.findLastIndex(item=>item.method==='shared.approvals.decide'),requestId=h.bridge[request].params.requestId;
   h.reply(request,null,'TIMEOUT');await h.flush();const check=h.bridge.findLastIndex(item=>item.method==='shared.approvals.list');
   assert.ok(check>request);h.reply(check,{approvals:[row],nextBefore:null,hasMore:false});await deciding;
-  assert.match(allText(approvalCard(h)),/上次决定尚未登记.*重试允许本次.*检查审批状态/);
+  assert.match(allText(approvalCard(h)),/上次决定尚未登记.*重试允许一次.*检查审批状态/);
   assert.equal(approvalCard(h).querySelector('.approval-actions').children.some(button=>button.textContent==='拒绝'),false);
   const saved=Object.fromEntries(h.storage),restarted=harness({storage:saved});prepareApprovalChat(restarted);await readApprovals(restarted,[row]);
-  assert.match(allText(approvalCard(restarted)),/重试允许本次/);
+  assert.match(allText(approvalCard(restarted)),/重试允许一次/);
   const retry=restarted.run("decideToolApproval([...toolApprovals.sessions.get('s1').rows.values()][0],'allowed-once')");
   const repeated=restarted.bridge.findLastIndex(item=>item.method==='shared.approvals.decide');assert.equal(restarted.bridge[repeated].params.requestId,requestId);
   const answered=answeredApproval(row,requestId,'allowed-once');restarted.reply(repeated,{approval:answered,requestId});await restarted.flush();
@@ -1146,7 +1198,7 @@ test('task15-approval-client an unknown network reply is read back and can retry
     {approvals:[{...answered,status:'resolved',outcome:'allowed-once',resolvedAt:'2026-10-06T13:02:00.000Z'}],nextBefore:null,hasMore:false});await retry;
   assert.equal([...restarted.storage.keys()].some(key=>key.startsWith('weftmate-approval:')),false);
   const other=harness({storage:saved});prepareApprovalChat(other,{deviceId:'phone-b'});await readApprovals(other,[row]);
-  assert.match(allText(approvalCard(other)),/允许本次.*拒绝/);assert.doesNotMatch(allText(approvalCard(other)),/重试允许/);
+  assert.match(allText(approvalCard(other)),/允许一次.*拒绝/);assert.doesNotMatch(allText(approvalCard(other)),/重试允许/);
 });
 
 test('task15-approval-client replayed answered receipts cannot regress an already-read resolved or unavailable approval',async()=>{
@@ -1166,7 +1218,7 @@ test('task15-approval-client replayed answered receipts cannot regress an alread
 test('task15-approval-client task cancellation and other invalidation have different messages and no decision buttons',async()=>{
   for(const outcome of ['cancelled','unavailable']){
     const h=harness();prepareApprovalChat(h);await readApprovals(h,[syntheticApproval({status:'unavailable',outcome})]);
-    assert.match(allText(approvalCard(h)),outcome==='cancelled'?/任务已停止，此次审批不再可用/:/此次审批已失效，请核对原任务/);
+    assert.match(allText(approvalCard(h)),outcome==='cancelled'?/已取消 · 运行命令/:/审批已失效 · 运行命令/);
     assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
   }
 });
@@ -1207,7 +1259,7 @@ test('task15-approval-client leaving during a decision retains its marker and re
   const answered=answeredApproval(row,requestId,'allowed-once');h.reply(request,{approval:answered,requestId});await deciding;
   assert.equal(h.node('chat-content').children.length,0);assert.equal(h.run("toolApprovals.attempts.values().next().value.busy"),false);
   h.run("state.sharedSessionId='s1';state.generation++;renderSharedConversation()");
-  await readApprovals(h,[answered]);assert.match(allText(approvalCard(h)),/已登记“允许本次”，等待执行端处理/);
+  await readApprovals(h,[answered]);assert.match(allText(approvalCard(h)),/已允许 · 运行命令/);
   assert.equal(approvalCard(h).querySelector('.approval-actions'),null);
 });
 
@@ -1224,7 +1276,7 @@ test('task15-approval-client native methods use dedicated authenticated routes a
   assert.equal([...bridge.matchAll(/\n\s+ensureCurrent\(\)/g)].length,2);
   assert.match(bridge,/api\.approvals\(host/);assert.match(bridge,/api\.decideApproval\(host/);assert.doesNotMatch(bridge,/api\.business/);
   assert.match(network,/fun approvals\([\s\S]*?approvalListPath\(sessionId, before, limit\)\}[\s\S]*?"GET"[\s\S]*?"Cookie" to host.cookie/);
-  assert.match(network,/fun decideApproval\([\s\S]*?approvalDecisionPath\(sessionId, approvalId, requestId, outcome\)\}[\s\S]*?"POST",\s*JSONObject\(\)\.put\("requestId", requestId\)\.put\("outcome", outcome\), authWriteHeaders\(host\)/);
+  assert.match(network,/fun decideApproval\([\s\S]*?approvalDecisionPath\(sessionId, approvalId, requestId, outcome, scope\)\}[\s\S]*?"POST",\s*JSONObject\(\)\.put\("requestId", requestId\)\.put\("outcome", outcome\)\.apply[\s\S]*?put\("scope", scope\)[\s\S]*?authWriteHeaders\(host\)/);
   assert.match(native,/\.put\("deviceId", host\?\.deviceId/);
 });
 function prepareSyntheticTaskChat(h){h.run(`state.loggedIn=true;state.owner='A';state.chatSource='host';state.sharedSessionId='s1';
@@ -1375,7 +1427,7 @@ test('manual shared status check reconciles the saved request once and refreshes
   const h=harness();h.run('state.loggedIn=true;state.owner="A";state.page="chat";state.chatSource="host";state.sharedSessionId="pc1";state.sharedSessions=[{sessionId:"pc1",title:"电脑",sendAvailable:true,source:"host"}];state.sharedPending={requestId:"saved-1",state:"uncertain",text:"离线消息"}');
   h.node('draft').value='离线消息';const checking=h.run('checkSharedPending()');await h.run('checkSharedPending()');
   assert.equal(h.bridge.filter(item=>item.method==='shared.outbox.reconcile').length,1);
-  h.reply(0,{source:'host',commands:[{source:'host',sessionId:'pc1',requestId:'saved-1',kind:'session.message',state:'accepted'}]});
+  h.reply(h.bridge.findIndex(item=>item.method==='shared.outbox.reconcile'),{source:'host',commands:[{source:'host',sessionId:'pc1',requestId:'saved-1',kind:'session.message',state:'accepted'}]});
   await h.flush();
   const outbox=h.bridge.findIndex(item=>item.method==='shared.outbox.list');
   const sessions=h.bridge.findIndex(item=>item.method==='shared.sessions.list');
