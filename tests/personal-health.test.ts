@@ -256,3 +256,67 @@ test('health queue rejects corrupted stored evidence', async t => {
   await writeFile(target, JSON.stringify(state))
   await assert.rejects(store.pendingObserved(ownerA), { code: 'STORAGE_UNAVAILABLE' })
 })
+
+test('H3 daily/hourly estimates persist through real health HTTP and observed without raw samples or cloud usage', async t => {
+  const f = await fixture(t), auth = await f.register('h3_estimates')
+  const derived = { algorithmVersion: 'weftmate-h3-v1', recovery: { value: 70, inputs: ['sleep'], baselineDays: 14 },
+    sleep: { stageMinutes: { core: 340 }, continuityPercent: 94, durationScore: 85, midpointDeviationMinutes: 25, baselineDays: 14 },
+    load: { value: 3, inputs: ['workouts'], acuteDays: 7, chronicDays: 28, acute7Mean: 3, chronic28Mean: 2, ratio: 1.5 } }
+  const hourly = [{ start: '2026-10-06T18:00:00Z', end: '2026-10-06T19:00:00Z', bodyBattery: 64,
+    stress: { lower: 20, upper: 60, sampleCount: 1, latestSampleAt: '2026-10-06T18:15:00Z', confidence: 'sparse' } }]
+  const payload = summary({ sourceDeviceId: auth.deviceId, derived, hourly,
+    readStates: { sleep: 'dataAvailable', steps: 'dataAvailable', workouts: 'dataAvailable', hrv: 'dataAvailable', heartRate: 'dataAvailable' } })
+  const result = await f.api('POST', base, payload, auth)
+  assert.equal(result.status, 200)
+  assert.deepEqual(result.body.summary.derived, derived)
+  assert.deepEqual(result.body.summary.hourly, hourly)
+  assert.equal((await f.api('POST', base, payload, auth)).body.duplicate, true)
+  const evidence = observedHealthEvidence(auth.ownerId, result.body.summary)
+  assert.match(evidence.content, /恢复度估算 70/)
+  assert.match(evidence.content, /压力估算区间 20–60/)
+  assert.equal(evidence.permissions.allow_cloud_read, false)
+  assert.equal((await f.api('GET', `${base}?days=2&timeZone=America%2FLos_Angeles`, undefined, auth)).body.summaries[0].hourly.length, 1)
+  const legacy = summary({ sourceDeviceId: auth.deviceId, date: '2026-10-05', cloudModelAllowed: true, summarizedAt: '2026-10-07T03:00:00Z' })
+  assert.equal((await f.api('POST', base, legacy, auth)).status, 200)
+  const afterOptIn = await f.api('GET', `${base}?days=3&timeZone=America%2FLos_Angeles`, undefined, auth)
+  assert.equal(afterOptIn.body.summaries.find((s: any) => s.derived).cloudModelAllowed, false,
+    'A newer legacy H1 opt-in must not make H3 readable by cloud models')
+  const other = await f.register('h3_other_account')
+  assert.equal((await f.api('GET', `${base}?days=2`, undefined, other)).body.summaries.length, 0)
+  const replacement = { ...payload, summarizedAt: '2026-10-07T02:00:00Z' }
+  delete replacement.derived; delete replacement.hourly
+  assert.equal((await f.api('POST', base, replacement, auth)).body.summary.derived, undefined)
+})
+
+test('H3 rejects invalid estimates, raw appendages, overlap, future/out-of-day hours and cloud consent', () => {
+  const payload: any = summary({ derived: { algorithmVersion: 'weftmate-h3-v1' },
+    hourly: [{ start: '2026-10-06T18:00:00Z', end: '2026-10-06T19:00:00Z', bodyBattery: 70 }] })
+  assert.doesNotThrow(() => healthSummary(payload))
+  const invalid = [
+    { cloudModelAllowed: true },
+    { derived: { ...payload.derived, samples: [] } },
+    { derived: { ...payload.derived, recovery: { value: 101, inputs: ['sleep'], baselineDays: 14 } } },
+    { derived: { ...payload.derived, recovery: { value: 70, inputs: ['sleep'], baselineDays: 0 } } },
+    { derived: { ...payload.derived, sleep: { stageMinutes: { core: 500 }, continuityPercent: 90, baselineDays: 14 } } },
+    { derived: { ...payload.derived, load: { value: 3, inputs: ['workouts'], acuteDays: 1, chronicDays: 2, ratio: 2 } } },
+    { hourly: [{ ...payload.hourly[0], bodyBattery: -1 }] },
+    { hourly: [{ ...payload.hourly[0], stress: { lower: 80, upper: 20, sampleCount: 1, latestSampleAt: '2026-10-06T18:15:00Z', confidence: 'sparse' } }] },
+    { hourly: [payload.hourly[0], payload.hourly[0]] },
+    { hourly: [{ ...payload.hourly[0], end: '2026-10-06T20:00:00Z' }] },
+    { hourly: [{ ...payload.hourly[0], start: '2026-10-07T18:00:00Z', end: '2026-10-07T19:00:00Z' }] },
+    { summarizedAt: '2026-10-06T18:30:00Z' },
+  ]
+  for (const extra of invalid) assert.throws(() => healthSummary({ ...payload, ...extra }), /INVALID_HEALTH_SUMMARY/)
+})
+
+test('H3 accepts 23/25-hour local DST days with unique UTC intervals and exact retry bytes', () => {
+  for (const [date, start, hours] of [['2026-11-01', '2026-11-01T07:00:00Z', 25], ['2026-03-08', '2026-03-08T08:00:00Z', 23]] as const) {
+    const begin = Date.parse(start)
+    const hourly = Array.from({ length: hours }, (_, i) => ({ start: new Date(begin + i * 3600000).toISOString(),
+      end: new Date(begin + (i + 1) * 3600000).toISOString(), bodyBattery: 70 }))
+    const payload = summary({ date, summarizedAt: new Date(begin + hours * 3600000).toISOString(),
+      derived: { algorithmVersion: 'weftmate-h3-v1' }, hourly, sleep: undefined })
+    assert.equal(healthSummary(payload).hourly.length, hours)
+    assert.ok(Buffer.byteLength(JSON.stringify(payload)) < 12 * 1024)
+  }
+})

@@ -14,11 +14,14 @@ public struct HealthLocalState: Codable, Sendable {
     }
     /// Consent applies also to previously queued and uploaded summaries. Replacements propagate the new policy.
     public mutating func applyPreferences(_ preferences: HealthPreferences, now: Date = Date()) {
+        let removedInputs = !self.preferences.enabled.subtracting(preferences.enabled).isEmpty
         self.preferences = preferences
         for key in Array(summaries.keys) {
             var summary = summaries[key]!
             summary.summarizedAt = HealthSummaryCalculator.timestamp(now)
-            summary.cloudModelAllowed = preferences.cloudChoiceMade && preferences.cloudModelAllowed
+            summary.cloudModelAllowed = summary.derived != nil || summary.hourly != nil ? false : preferences.cloudChoiceMade && preferences.cloudModelAllowed
+            // Derived values may contain a contribution from any disabled input; discard and recompute locally.
+            if removedInputs { summary.derived = nil; summary.hourly = nil; summary.cloudModelAllowed = false }
             summary.selfAssessmentFrequency = preferences.selfAssessmentFrequency
             for category in HealthCategory.allCases where !preferences.enabled.contains(category) {
                 summary.metrics.removeValue(forKey: category.rawValue)
