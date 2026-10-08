@@ -20,6 +20,7 @@ const files = new Map([
   ['/personal/v1/ui/', ['index.html', 'text/html; charset=utf-8']],
   ['/personal/v1/ui/index.html', ['index.html', 'text/html; charset=utf-8']],
   ['/personal/v1/ui/app.js', ['app.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/tokens.css', ['tokens.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/styles.css', ['styles.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/file-sha256.js', ['file-sha256.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js', ['vendor/noble-hashes-2.3.0/sha2.js', 'text/javascript; charset=utf-8']],

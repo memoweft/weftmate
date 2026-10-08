@@ -1,0 +1,152 @@
+[
+  {
+    "before": "before-completed.png",
+    "after": "after-completed.png",
+    "width": 1800,
+    "height": 1203,
+    "changedPixels": 0,
+    "totalPixels": 2165400,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-desktop-dark.png",
+    "after": "after-desktop-dark.png",
+    "width": 1800,
+    "height": 1203,
+    "changedPixels": 0,
+    "totalPixels": 2165400,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-desktop-light.png",
+    "after": "after-desktop-light.png",
+    "width": 1800,
+    "height": 1203,
+    "changedPixels": 0,
+    "totalPixels": 2165400,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-dark-approval.png",
+    "after": "after-mobile-dark-approval.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-dark-artifact.png",
+    "after": "after-mobile-dark-artifact.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-dark-list.png",
+    "after": "after-mobile-dark-list.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-dark-running.png",
+    "after": "after-mobile-dark-running.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-dark-source.png",
+    "after": "after-mobile-dark-source.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-dark-steps.png",
+    "after": "after-mobile-dark-steps.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-light-approval.png",
+    "after": "after-mobile-light-approval.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-light-artifact.png",
+    "after": "after-mobile-light-artifact.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-light-list.png",
+    "after": "after-mobile-light-list.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-light-running.png",
+    "after": "after-mobile-light-running.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-light-source.png",
+    "after": "after-mobile-light-source.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  },
+  {
+    "before": "before-mobile-light-steps.png",
+    "after": "after-mobile-light-steps.png",
+    "width": 390,
+    "height": 844,
+    "changedPixels": 0,
+    "totalPixels": 329160,
+    "maxChannelDelta": 0,
+    "bounds": null
+  }
+]
