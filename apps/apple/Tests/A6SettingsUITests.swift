@@ -20,6 +20,14 @@ final class A6SettingsUITests: XCTestCase {
         let field = secure ? app.secureTextFields[name] : app.textFields[name]
         try expect(field); field.tap(); field.typeText(value)
     }
+    @MainActor private func reveal(_ app: XCUIApplication, _ element: XCUIElement) {
+        for up in [true, false] {
+            for _ in 0..<6 {
+                if element.exists && element.isHittable { return }
+                if up { app.swipeUp() } else { app.swipeDown() }
+            }
+        }
+    }
     @MainActor private func keep(_ app: XCUIApplication, _ scene: String, _ theme: String) {
         let image = XCTAttachment(screenshot: app.screenshot()); image.name = "review-iphone-" + scene + "-" + theme
         image.lifetime = .keepAlways; add(image)
@@ -71,10 +79,10 @@ final class A6SettingsUITests: XCTestCase {
             try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
             if id == "appearance" { try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", "light") }
             if id == "usage" { try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", "light") }
-            if id == "account" { try expect(app.staticTexts["signedInEmail"]); try expect(app.buttons["accountLogout"]) }
+            if id == "account" { try expect(app.staticTexts["signedInEmail"]); reveal(app, app.buttons["accountLogout"]); try expect(app.buttons["accountLogout"]) }
             if id == "devices" {
                 let rename = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "renameDevice.")).firstMatch
-                try expect(rename); rename.tap()
+                reveal(app, rename); try expect(rename); rename.tap()
                 let name = app.alerts.textFields.firstMatch; try expect(name); name.tap()
                 name.typeText(" 合成改名")
                 app.alerts.buttons["保存"].tap()

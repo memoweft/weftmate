@@ -24,7 +24,7 @@ try:
    subprocess.run([str(a.capture.resolve()),str(a.app.resolve()),str((a.evidence/(stem+'.png')).resolve()),scene['id'],theme,ready['host'],ready['cloud']],check=True)
    (a.evidence/(stem+'.json')).write_text(json.dumps({'platform':'mac','scene':review_scene,'theme':theme,'commit':commit,'generatedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'synthetic':True,'source':'实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型'},ensure_ascii=False,indent=2)+'\n')
    print('Captured',theme,scene['id'],flush=True)
- if not a.scene and not a.theme:(a.evidence/'validation-mac.json').write_text(json.dumps({'debugBuild':True,'nativeWindowsCaptured':len(catalog['themes'])*len(catalog['scenes']),'globalScreenCapture':False,'accessibilityPermissionRequested':False,'compiledDshEngine':False,'synthetic':True},indent=2)+'\n')
+ if not a.scene and not a.theme:(a.evidence/'validation-mac.json').write_text(json.dumps({'debugBuild':True,'nativeWindowsCaptured':len(themes)*len(scenes),'globalScreenCapture':False,'accessibilityPermissionRequested':False,'compiledDshEngine':False,'synthetic':True},indent=2)+'\n')
 finally:
  fixture.terminate()
  try:fixture.wait(timeout=20)
