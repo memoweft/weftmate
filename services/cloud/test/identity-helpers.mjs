@@ -96,6 +96,7 @@ export async function fixture(t, { env = {}, relayDns, realProcess = false } = {
     });
   }
   async function stop() {
+    await identity?.relay?.close();
     if (child) { child.kill('SIGTERM'); await childExit; child = null; }
     if (server)
       await new Promise((resolve) => {
@@ -302,6 +303,7 @@ export async function fixture(t, { env = {}, relayDns, realProcess = false } = {
       if (rotate) await loadKeys(root, { rotate: true });
       await start();
     },
+    get now() { return realProcess ? Date.now() : clock; },
     offline: stop,
   };
 }
