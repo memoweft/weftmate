@@ -198,11 +198,15 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('attachment-cancel').disabled = !value.attachmentBusy;
         ui.byId('open-notepad').textContent = value.desktopText;
         ui.byId('open-notepad').disabled = value.desktopDisabled;
-        ui.byId('cancel-turn').hidden = value.cancelHidden;
+        const stop = ui.byId('cancel-turn');
+        if (!stop.hidden && value.cancelHidden) globalThis.WeftMotion?.hide(stop);
+        else if (stop.hidden && !value.cancelHidden) { stop.hidden = false; globalThis.WeftMotion?.reveal(stop, '160ms'); }
+        stop.hidden = value.cancelHidden;
         ui.byId('cancel-turn').disabled = value.cancelDisabled;
         ui.byId('message-mode').hidden = !value.running;
         ui.byId('message-mode').value = core.state.messageMode || 'steer';
         const send = ui.byId('send-message');
+        globalThis.WeftMotion?.changed(send, String(value.running), '160ms');
         send.disabled = value.sendDisabled;
         send.textContent = value.sendText;
         send.classList.remove('is-stop');
@@ -287,6 +291,8 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     function paintScreen(view) {
         for (const name of ui.views)
             ui.byId(`${name}-view`).hidden = name !== view;
+        if (ui.motionView !== view) globalThis.WeftMotion?.reveal(ui.byId(`${view}-view`), 'base');
+        ui.motionView = view;
         document.body.classList.toggle('assistant-active', view === 'assistant');
         document.body.classList.toggle('cloud-auth-active', view === 'login' || view === 'cloud-wait');
     }

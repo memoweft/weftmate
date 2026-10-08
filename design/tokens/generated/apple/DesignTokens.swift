@@ -118,7 +118,10 @@ public enum WeftDesignTokens {
         "280ms": 280,
         "300ms": 300,
         "420ms": 420,
-        "0ms": 0
+        "0ms": 0,
+        "exit": 120,
+        "stagger": 24,
+        "staggerLimit": 60
     ]
     public static let fontFamily: [String: String] = [
         "body": "-apple-system, BlinkMacSystemFont, \"Segoe UI\", \"PingFang SC\", \"Microsoft YaHei\", \"Noto Sans CJK SC\", sans-serif",
@@ -367,6 +370,9 @@ public enum AppleTokens {
         public static let d300ms: TimeInterval = 0.3
         public static let d420ms: TimeInterval = 0.42
         public static let d0ms: TimeInterval = 0
+        public static let exit: TimeInterval = 0.12
+        public static let stagger: TimeInterval = 0.024
+        public static let staggerLimit: TimeInterval = 0.06
         public static let disclosure: Animation = Animation.easeInOut(duration: Motion.base)
         public static let connection: Animation = Animation.easeInOut(duration: Motion.fast)
     }
