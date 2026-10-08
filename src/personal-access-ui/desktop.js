@@ -72,6 +72,7 @@
     const close = node('button', 'button quiet small resource-picker-close', '关闭列表'); close.type = 'button'; close.addEventListener('click', hidePicker)
     menu.append(close, node('p', 'muted', '正在读取…')); picker = menu
     globalThis.WeftUiLayout.mountResourcePicker(menu)
+    globalThis.WeftPopover?.position(menu, trigger, { side: 'bottom', align: 'end' })
     trigger.setAttribute('aria-expanded', 'true'); close.focus({ preventScroll: true })
     try {
       const items = await actions.resources()
@@ -202,7 +203,7 @@
     byId('account-menu-trigger').addEventListener('click', () => {
       const menu = byId('account-menu'); menu.hidden = !menu.hidden
       byId('account-menu-trigger').setAttribute('aria-expanded', String(!menu.hidden))
-      if (!menu.hidden) menu.querySelector('button')?.focus()
+      if (!menu.hidden) { globalThis.WeftPopover?.position(menu, byId('account-menu-trigger')); menu.querySelector('button')?.focus() }
     })
     document.addEventListener('click', e => { if (!byId('account-menu').hidden && !byId('account-menu').parentNode.contains(e.target)) { byId('account-menu').hidden = true; byId('account-menu-trigger').setAttribute('aria-expanded', 'false') } })
     byId('rail-devices').addEventListener('click', () => { actions.openAccount(); byId('devices-refresh').scrollIntoView({ block: 'center' }) })
