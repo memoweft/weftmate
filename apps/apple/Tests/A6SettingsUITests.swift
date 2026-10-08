@@ -144,7 +144,9 @@ final class A6SettingsUITests: XCTestCase {
         try openSettings(app); try category(app, "schedules")
         try expect(app.staticTexts["合成提醒：检查本周计划"])
         try tap(app, "暂停"); try expect(app.buttons["恢复"])
+        XCTAssertFalse(app.sheets["删除这条提醒或定时任务？已启动的任务和历史记录保留。"].exists)
         try tap(app, "恢复"); try expect(app.buttons["暂停"])
+        XCTAssertFalse(app.sheets["删除这条提醒或定时任务？已启动的任务和历史记录保留。"].exists)
         try tap(app, "立即运行")
         try tap(app, "删除")
         let confirm = app.sheets.buttons["删除"].firstMatch
