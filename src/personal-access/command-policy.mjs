@@ -45,7 +45,7 @@ export function explicitNotepadOpenIntent(value) {
 }
 
 export function canonicalCommand(value, hostId, internal = false) {
-  exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'appId', 'attachments',
+  exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'modelProfileId', 'sessionId', 'text', 'mode', 'intent', 'appId', 'attachments',
     'attachmentMessageId', 'originalAttachments', 'sourceSyncEventId',
     ...(internal ? ['taskId', 'artifactId', 'fileName', 'size', 'sha256', 'rootTaskId', 'taskAction',
       'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
@@ -83,7 +83,7 @@ export function canonicalCommand(value, hostId, internal = false) {
       throw failure('INVALID_REQUEST');
     }
   } else if (value.kind === 'session.message') {
-    exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text', 'mode', 'attachments',
+    exactKeys(value, ['requestId', 'kind', 'targetDeviceId', 'sessionId', 'text', 'mode', 'intent', 'attachments',
       'attachmentMessageId', 'originalAttachments', 'sourceSyncEventId',
       ...(internal ? ['rootTaskId', 'taskAction', 'projectId', 'projectRevision', 'workspaceKind',
         'initialUrls', 'conversationId', 'modelInputHash'] : [])],
@@ -113,6 +113,8 @@ export function canonicalCommand(value, hostId, internal = false) {
       throw failure('INVALID_REQUEST');
     }
     if (value.mode !== undefined && !['queue', 'steer'].includes(value.mode)) throw failure('INVALID_REQUEST');
+    if (value.intent !== undefined && (!['queue', 'steer'].includes(value.intent) ||
+        value.mode !== undefined && value.mode !== value.intent)) throw failure('INVALID_REQUEST');
     if (value.sourceSyncEventId !== undefined &&
         (typeof value.sourceSyncEventId !== 'string' || !SYNC_EVENT_ID.test(value.sourceSyncEventId))) {
       throw failure('INVALID_REQUEST');
@@ -161,7 +163,7 @@ export function canonicalCommand(value, hostId, internal = false) {
     'projectId', 'projectRevision', 'sourceReceiptId', 'sourceSnapshotIds', 'workspaceKind', 'initialUrls',
     'conversationId', 'cutoverSyncSeq', 'contextHash', 'acknowledgeUncertainLocalTurn', 'modelInputHash']
     .filter((key) => Object.hasOwn(value, key) || (key === 'mode' && value.kind === 'session.message'))
-    .map((key) => [key, key === 'mode' ? (value.mode ?? 'queue')
+    .map((key) => [key, key === 'mode' ? (value.intent ?? value.mode ?? 'steer')
       : key === 'attachments' ? value.attachments.map(canonicalSharedAttachment)
         : key === 'originalAttachments' ? value.originalAttachments.map(canonicalAttachmentMetadata)
         : key === 'initialUrls' ? [...value.initialUrls] : value[key]]));
@@ -178,6 +180,7 @@ export function publicCommand(command) {
     updatedAt: command.updatedAt,
   };
   if (command.sessionId) result.sessionId = command.sessionId;
+  if (command.kind === 'session.message') result.intent = command.payload.mode;
   if (command.payload?.attachmentMessageId) result.attachmentMessageId = command.payload.attachmentMessageId;
   if (command.payload?.originalAttachments) result.originalAttachments = command.payload.originalAttachments.map((item) => ({ ...item }));
   if (command.payload?.conversationId) result.conversationId = command.payload.conversationId;

@@ -90,6 +90,8 @@ public struct HealthDailySummary: Codable, Equatable, Sendable {
     public var sleep: HealthSleepSummary?
     public var workoutCount: Int?
     public var workoutMinutes: Double?
+    public var derived: HealthDerivedMetrics? = nil
+    public var hourly: [HealthHourlySummary]? = nil
 }
 public enum HealthSummaryCalculator {
     public static func dateKey(_ date: Date, calendar: Calendar) -> String {

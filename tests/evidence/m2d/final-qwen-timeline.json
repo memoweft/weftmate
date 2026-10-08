@@ -1,0 +1,121 @@
+[
+  {
+    "id": "31308-3",
+    "at": "2026-10-08T07:52:17.813Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13751,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "31308-3",
+    "at": "2026-10-08T07:57:17.743Z",
+    "elapsedMs": 299930,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "name": "AbortError"
+  },
+  {
+    "id": "31308-5",
+    "at": "2026-10-08T07:57:18.286Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13751,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "31308-5",
+    "at": "2026-10-08T08:02:14.039Z",
+    "elapsedMs": 295753,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "name": "AbortError"
+  },
+  {
+    "id": "31308-8",
+    "at": "2026-10-08T08:02:18.803Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13726,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "31308-8",
+    "at": "2026-10-08T08:07:18.802Z",
+    "elapsedMs": 299999,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "name": "AbortError"
+  },
+  {
+    "id": "31308-10",
+    "at": "2026-10-08T08:07:19.340Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13726,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "31308-10",
+    "at": "2026-10-08T08:11:27.469Z",
+    "elapsedMs": 248129,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "31308-10",
+    "at": "2026-10-08T08:11:27.471Z",
+    "elapsedMs": 248131,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "31308-10",
+    "at": "2026-10-08T08:12:19.340Z",
+    "elapsedMs": 300000,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "chunks": 2,
+    "bytes": 6,
+    "name": "AbortError"
+  },
+  {
+    "id": "31308-12",
+    "at": "2026-10-08T08:12:20.320Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13726,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "31308-12",
+    "at": "2026-10-08T08:17:16.055Z",
+    "elapsedMs": 295735,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "name": "AbortError"
+  }
+]

@@ -20,8 +20,10 @@ describe('阶段 0 主进程启动与退出收口', () => {
 
     const control = main.slice(main.indexOf("process.on('message'"), main.indexOf('const PET_WINDOW_SIZE'));
     assert.match(control, /WEFTMATE_DOGFOOD_CONTROL !== '1'/);
-    assert.match(control, /message\.type !== 'weftmate:quit'/);
-    assert.match(control, /isQuitting = true;\n  app\.quit\(\);/);
+    const quitBranch = control.slice(0, control.indexOf("if (!personalHostMode"));
+    assert.match(quitBranch, /!process\.connected \|\| !message \|\| typeof message !== 'object'\) return/);
+    assert.match(quitBranch, /if \(message\.type === 'weftmate:quit'\) \{[\s\S]*isQuitting = true;\s*app\.quit\(\);\s*return;/);
+    assert.ok(quitBranch.indexOf('WEFTMATE_DOGFOOD_CONTROL') < quitBranch.indexOf("message.type === 'weftmate:quit'"));
   });
 
   it('bootstrap、窗口和 shutdown 都有阶段 0 的确定性收口顺序', () => {

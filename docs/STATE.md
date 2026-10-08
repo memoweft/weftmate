@@ -8,11 +8,13 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-4 | S1d D29 App 内账号与设置设备服务端 | [PR #64](https://github.com/memoweft/weftmate/pull/64)（`wp/s1d-account-devices`）：邮箱→验证码→设置密码、App 内 OIDC（开放身份连接协议）/PKCE（授权码校验）/DPoP（设备密钥持有证明）、改密码/退出、同账号设备目录/连接、电脑首次云登录自动绑定与受信 pin（证书公钥指纹）交付已实现；相关云 33/33、Windows 宿主 9/9 与类型检查通过，完整 CI（持续集成）门禁见 PR 当前提交；LG-1 / LG-2 接线按 CLIENT_API 7.8，待 Claude 审查；不部署 |
+| Codex · Windows-5 | M1-0b 同对话排队、取消与插话 | [PR #66](https://github.com/memoweft/weftmate/pull/66)（`wp/m1-0b-queue-steer`）：默认 steer（插话）、显式 queue（排队）、原生回执归属与 FIFO（先入先出）、取消待执行输入、停止后续队已实现；新增5项、账号/命令/多账号32项及时间线/精确停止定向回归、类型检查通过，隔离 Electron（桌面程序框架）+固定 DSH 合成模型闭环通过。Qwen action-05两轮600.61/600.48秒超时，aborted（已停止）/未提前写汇总均通过，续做受共享单槽等待与传输超时阻塞，真实模型验收未通过；约23分钟空闲轮询亦未得到空闲窗口，需独占验证窗口复验。代码提交6项CI（持续集成）全绿，最终文档提交看PR当前检查；界面等FE-1a合并后另包接入，待Claude审查 |
+| Codex · Windows-4 | S1e D30 账号生命周期 | [PR #68](https://github.com/memoweft/weftmate/pull/68)（`wp/s1e-account-lifecycle`）：DPoP（设备密钥持有证明）+ 密码注销与逐表删除/中继断流、换绑验证码与旧邮箱通知、设备改名、退出其他设备已实现；云签名归属快照撤销宿主云会话并保留本地数据/应急登录。相关云 44/44、Windows 宿主 9/9 与类型检查通过；真实云进程 + 隔离宿主换绑/注销/应急登录及在线中继断流通过，CLIENT_API 7.9；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查；不改界面、不部署、不发真实邮件 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
-| Codex · Windows-3 | DS-1 设计令牌 | [PR #59](https://github.com/memoweft/weftmate/pull/59)（`wp/ds-1-design-tokens`）：唯一母版 design/tokens/ 与可重复生成脚本、桌面 / 手机 Web（网页界面）变量和 Android（安卓）资源 / 原生辅助常量接入；Apple（苹果客户端）交接产物在 design/tokens/generated/apple/，未改 apps/apple/。Android 0.8.6/code19；15 对截图逐像素一致、4,016 项样式值一致、相关交互及发布158/158、令牌2/2、Android JVM（Java 虚拟机）27/27、构建与类型检查通过。[截图与边界](../tests/evidence/ds-1/README.md)；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
-| Codex · Windows-2 | M2c 本地单槽记忆形成 | WeftMate [PR #58](https://github.com/memoweft/weftmate/pull/58)、Core [PR #87](https://github.com/memoweft/memoweft/pull/87)：本地流式形成／正确模板思考参数、相邻原话片段完整保留／中文直读提示、召回到期读取已有记忆已实现。真实Electron（桌面程序框架）最终Qwen3/3、MiMo3/3，原600秒预算与检查保持；[定位、前后对比与费用](../tests/evidence/m2c/README.md)。相关11/11、Core214/214及补验26/26（重叠）、类型检查通过；Core完整CI（持续集成）1,719/1,719，完整门禁见两PR。Core仅Claude squash（压缩合并），之后更新本仓CI固定提交；M2-3纠正与完整八步出口另包 |
+| Codex · Windows-3 | FE-1a 桌面界面与功能分层 | `wp/fe-1a-ui-layers`：共享功能层 src/ui-core/、桌面独立组件与集中 layout.js 组装完成；手机 FE-1b 的资产清单与传输 / 呈现接口已说明。纯逻辑15/15、桌面及记忆回归64/64、名称 / 角色交互3/3、类型检查与令牌检查通过；真实 Electron（桌面程序框架）同组流程及侧栏临时换位通过，9对截图零像素差异。[证据](../tests/evidence/fe-1a/README.md)；业务契约无变更，完整 CI（持续集成）以本分支 PR（拉取请求）最新提交为准，待 Claude 审查 |
+| Codex · Windows-2 | M2d 自然纠正（M2-3） | WeftMate [PR #61](https://github.com/memoweft/weftmate/pull/61)、Core [PR #88](https://github.com/memoweft/memoweft/pull/88)：沿既有取代链找省略主题的纠正项，只注入有效新说法；旧理解失效、来源保留，偏好演进排除旧当前值，模型不另写偏好备忘。MiMo独立原memory-01/02通过79.09s/76.69s，三段独立Electron（桌面程序框架）来源验收39.24s、只指向新说法；Qwen原预算600.63s/900.66s均首轮超时、无回复，完整失败与前后对比见[证据](../tests/evidence/m2d/README.md)，原600/900秒预算不变。相关16/16（调度与边界11、真实Core纠正3、健康与补交2），类型检查通过；Core完整CI（持续集成）1,728/1,728、203模块严格类型检查及全部门禁绿，WeftMate最终CI见PR。Core仅Claude squash（压缩合并），之后将本仓CI临时候选561eb09更新为实际合并提交；完整八步出口另包 |
 | Codex · Windows-6 | M1-3 长任务不中断 | [PR #63](https://github.com/memoweft/weftmate/pull/63)（`wp/m1-3-long-tasks`）：预算不足走 DSH 原生 compaction（上下文压缩）恢复，摘要精确保留 goal（目标）/ todo（待办）与做法经验；24批合成目录长任务与隔离 Electron（桌面程序框架）验证入口已实现。相关43/43与类型检查通过；MiMo长任务642秒/85工具调用通过（约¥0.2834）；Qwen实际98,304上下文已确认，仍在共享单槽等待；原六场景MiMo回归进行中，CI（持续集成）六项已绿，待真实Qwen验收后提交审查 |
+| Codex · Mac-2 | H3 设备端健康指标 | [PR #67](https://github.com/memoweft/weftmate/pull/67)（`wp/h3-health-metrics`）：iPhone / Watch 本地恢复度、电量、负荷、压力区间与睡眠；日 / 小时摘要沿用 H2 隔离队列且强制仅本地模型；最小健康页 7/30 天趋势。Swift 相关22/22、宿主10/10、iOS / watchOS Debug 构建通过；隔离模拟器真实 HealthKit→计算→H2 HTTP→健康页闭环通过，[合成截图与验证](../apps/apple/Tests/Evidence/H3/README.md)；完整 CI 见本包 PR；不含真实设备、后台持续采集、Core delivered 或 AI 建议验收。 |
 | Codex · Mac | DS-1b Apple 设计令牌 | [PR #65](https://github.com/memoweft/weftmate/pull/65)（`wp/ds-1b-apple-tokens`）：三端工程直接编译 DS-1 生成 Swift，A4c 原生颜色 / 动态字体 / 间距 / 圆角 / 动效改为令牌；Watch 仅颜色 / 层级样式引用。16 对 iOS 原生浅深截图逐像素一致（0 差异），首轮系统绘制时序差异保留；三端 Debug、原生调色板 Swift 24/24、草稿7/7、Markdown6/6、iOS 浅深 / 外观保存及跟随系统 / 大字号4/4、令牌3/3及重复生成通过。[截图与报告](../apps/apple/Tests/Evidence/DS-1b/README.md)。Mac AX 未授权，未申请；真机 / 真实宿主模型 / Watch 连接触感 / 跨设备外观同步未验；客户端契约无变更。完整 CI 见本包 PR 当前提交，待 Claude 审查 |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
 | Codex · Cloud | S2b 宿主内容证书自动签发 | [PR #38](https://github.com/memoweft/weftmate/pull/38)（`wp/s2b-host-certs`）：阿里云 V3 DNS-01/provider 私有环境接线与 RecordId 所有权、宿主 Node ACME/原内容 key CSR、每天检查/<30天续期/原子安装/热载、状态到期与错误已实现；本机真实 Pebble/challtestsrv→签名宿主/云/假 AliDNS API→配对 pin/TLS 热载与模拟到期续期通过；交付待 Claude 审查，最终 CI 门禁见 PR checks，本包未部署 |
@@ -20,6 +22,8 @@
 已完成：文档/规则重置、M0-1b 清理与拆分、M0-2 容量与动态预算（#24）、H1 健康设置/摘要/隔离队列（#22）、S0/S1a/S1b（#27/#29/#30）、CI 分组与依赖审计。
 
 ## 最近一次验证
+
+- **FE-1a**：82/82 相关测试通过；真实主程序登录、发送 / 插话 / 排队、运行、三种审批决定、提问、步骤、成果与来源、记忆标签和外观均走通。只在测试响应里把输出按钮移到侧栏，同组交互继续通过。9对1200×800截图逐RGBA（红绿蓝与透明度通道）像素一致，无遮罩；仅固定合成时钟和悬停状态。零模型请求，合成账号与日志、隔离目录；手机接线交FE-1b，src/personal-memory/与业务契约未改。[复现与边界](../tests/evidence/fe-1a/README.md)。
 
 - **S1d / D29**：WSL（Windows 的 Linux 子系统）Node 24.21.0 相关云/数据库/入口/宿主 **33/33**（含 6 组新账号/设备测试）通过；真实 cloud main 进程、file（文件）邮件、隔离 SQLite（嵌入式数据库）和宿主验证分步注册→电脑云登录自动绑定→第二设备待批准→允许→账号目录→连接→一次性 wm1 配对材料消费/受信 pin（证书公钥指纹）交付。覆盖 DPoP（设备密钥持有证明）缺 key/重放、跨账号拒绝、pin 错 key/recipient/过期/篡改、旧密码/刷新族撤销、本机应急密码与云退出/离线保持；Windows 宿主相关回归 **9/9**（原 8 项 + 旧账号绑定中断边界 1 项） 与类型检查通过。完整套件只交 CI（持续集成），客户端相机/真实 Electron（桌面程序框架）完整登录页由 LG-1 / LG-2 验收；本包只改服务器、不部署、不发真实邮件、不碰日用数据。
 
@@ -84,6 +88,10 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- **M1-0b**：CLIENT_API 3.5 / 3.6 / 4.1 新增发送 `intent:steer|queue`（省略默认 steer，旧 mode 兼容）、Command.intent / 原生插话 rootTaskId、POST `/tasks/{taskId}/cancel`；queued/started/ended 投影原生 inbox（收件队列）/step，保留 seq / receiptId，生命周期关联根命令 ID 与 turnTaskId。停止保留其他排队目标，取消竞争已开始时409；桌面/手机/Apple 界面另包接入，未修改界面。
+- **S1e / D30**：CLIENT_API **7.9** 新增云 DPoP `/auth/account/delete`、`/auth/email/change/{request,confirm}`、`/devices/rename`、`/auth/logout/others`；撤权签名响应新增可选 `memberships:[{sub,epoch}]`，新宿主按缺失归属撤销云访问/保留本地应急登录；旧邮箱接口兼容，schema 6 不变。LG-1 / LG-2 账户设置按本节接线，删除不可恢复确认须明确云/本地范围。
+
+- **H3**：CLIENT_API 6.4 向既有 schemaVersion=1 日摘要添加可选 `derived/hourly`（算法版本、个人恢复度、相对负荷、睡眠、小时电量 / 压力区间）；最多25个UTC小时桶，12 KiB不变，H1兼容。H3来源强制禁止云读取，较新H1云许可也不得放宽；接口路径 / 账号隔离 / 删除重试不变。
 - **S1d / D29**：CLIENT_API **7.8** 新增分步注册/找回、App 内 authorization/resume、密码更改/退出、DPoP 同账号设备目录/host connect、宿主 cloud-desktop 自动绑定、受信 recipient pin 交付与本机应急密码；7.1 / 7.4 / 7.7 同步登记 origin/Cookie/电脑云 Cookie 管理资格。云 schema 6；LG-1（Windows / 网页 / Android）与 LG-2（Apple）按 7.8 接线，原账号/配对接口兼容，跨账号共享留 S5。
 
 - **M2a**：CLIENT_API 3.4 的 `assistant.message.data` 新增可选 `memoryUsed:[{id,kind,summary}]`，记录实际保留在回复请求上下文中的 MemoWeft 依据；未命中/失败/预算移除返回空数组，旧宿主可省略。来源复用3.9账户权限接口；桌面标签已接，手机/Apple（苹果客户端）标签另包。
@@ -125,4 +133,4 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 - D1 已完成真实云/systemd（系统服务管理）私有证书权限、既有443共存与 API/relay 生产 CA；API/relay/hosts DNS 已就绪。S2b 已交付阿里云 DNS provider 与逐宿主自动签发/续期/安装/热载，尚未部署：本人需创建指定 DNS 区增删权限 RAM 子账号并私下配置凭据、升级 cloud schema 5、开启宿主 ACME；生产 AliDNS/Let's Encrypt、真实 Windows/五端 pin 真机与长时续期尚未验。掉电残留 TXT 的后台清扫、内容 key 轮换、已撤销宿主重新启用留后续包。Windows 验收使用隔离 CA，不能代表普通浏览器生产内容证书已就绪。
 - frp 此版无踢在线 client 的管理 API；本包用云必经 TCP socket 所有权立即断流。部署不可绕过入口或公网暴露 frps/plugin。D24 普通浏览器允许，云/DNS 主动完全控制时仍可能被冒充；原生另 pin。
 - MW-2 部署需升级 observed v1 Core；真机上传/日用模型/vendor 未验。M1-3 极少上下文先压缩待做。
-- 根单测已有已登记例外、外部 vendor/Design 夹具及部分跨平台适配；Mac 127.0.0.2 回环别名缺失的既有环境失败以 CI 为准，未在 S2 改写例外。Windows 中继打包/真机与 S1c 客户端留后续包。
+- 根单测 CI-2：4 个过时静态契约断言已更新，knownFailures（已知失败）从 12 项减至 2（9 项通过、1 项旧用例不存在）；完整 CI 在 Linux/macOS 复现停止回执快速重启不重试、图片暂存释放后原请求重试 404 两个产品问题，保留既有例外并更新原因，见 PR #62。固定 DSH vendor（运行时依赖）/Design 外部夹具与平台例外仍保留。Windows Mod 崩溃启动期间 EPERM rename 位于产品持久化/退出并发路径，非测试目录清理；本包不修产品、不加例外或延长超时。Windows 中继打包/真机与 S1c 客户端留后续包。

@@ -1,0 +1,29 @@
+{
+  "baselineCommit": "fc156ee85bb62d37c91818402aea91848186ee35",
+  "decisions": [
+    "总是允许此类",
+    "拒绝"
+  ],
+  "queue": true,
+  "stopButton": true,
+  "escapeStop": true,
+  "realProgram": true,
+  "syntheticHost": true,
+  "isolated": true,
+  "modelRequests": 0,
+  "relocated": false,
+  "flows": [
+    "login",
+    "send-steer",
+    "running",
+    "approval-three-buttons",
+    "question",
+    "steps",
+    "sources",
+    "memory",
+    "completed",
+    "artifact",
+    "appearance"
+  ],
+  "errors": []
+}

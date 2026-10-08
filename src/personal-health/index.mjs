@@ -2,7 +2,7 @@ import path from 'node:path';
 import { readFile } from 'node:fs/promises';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
 import { durableWrite } from '../personal-access/store.mjs';
-import { healthDate, healthFailure, healthSummary, observedHealthEvidence, summaryHash } from './summary.mjs';
+import { healthDate, healthFailure, healthSummary, summaryCloudAllowed, observedHealthEvidence, summaryHash } from './summary.mjs';
 
 const OWNER = /^owner-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 export const OBSERVED_PENDING = 'MEMORY_OBSERVED_UNSUPPORTED';
@@ -35,7 +35,7 @@ export function createPersonalHealthStore({ root, clock = Date.now, onChange = n
           !state.deletedThrough || typeof state.deletedThrough.dates !== 'object' ||
           state.summaries.some((row) => !row || row.evidence?.subject_id !== ownerId ||
             row.evidence?.source_kind !== 'observed' || row.requestHash?.length !== 64 ||
-            row.summary?.cloudModelAllowed !== state.preferences.cloudModelAllowed ||
+            row.summary?.cloudModelAllowed !== summaryCloudAllowed(row.summary, state.preferences.cloudModelAllowed) ||
             row.summary?.selfAssessmentFrequency !== state.preferences.selfAssessmentFrequency ||
             summaryHash(row.evidence) !== summaryHash(observedHealthEvidence(ownerId, healthSummary(row.summary))))) {
         throw healthFailure('STORAGE_UNAVAILABLE', 503);
@@ -107,7 +107,7 @@ export function createPersonalHealthStore({ root, clock = Date.now, onChange = n
         state.summaries = state.summaries.filter((row) => row !== previous);
         state.summaries.push({ summary, requestHash, delivery: previous?.delivery });
         for (const row of state.summaries) {
-          row.summary.cloudModelAllowed = state.preferences.cloudModelAllowed;
+          row.summary.cloudModelAllowed = summaryCloudAllowed(row.summary, state.preferences.cloudModelAllowed);
           row.summary.selfAssessmentFrequency = state.preferences.selfAssessmentFrequency;
           row.evidence = observedHealthEvidence(ownerId, row.summary);
         }
