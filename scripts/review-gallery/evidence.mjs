@@ -24,7 +24,7 @@ async function walk(root) {
   }
   return result;
 }
-export async function collectEvidence(captureDirectory) {
+export async function collectEvidence(captureDirectory, { includeRepositoryEvidence = true } = {}) {
   const candidates = [];
   const failures = [];
   for (const name of await readdir(captureDirectory).catch(() => [])) {
@@ -34,7 +34,7 @@ export async function collectEvidence(captureDirectory) {
     if (name !== `review-${row.platform}-${row.scene}-${row.theme}.json` || !catalog.scenes.some(scene => scene.id === row.scene) || !catalog.themes.includes(row.theme) || row.synthetic !== true || !/^[a-f0-9]{40}$/.test(row.commit) || !Number.isFinite(Date.parse(row.generatedAt)) || typeof row.reason !== 'string' || !row.reason.trim()) throw Error('Invalid capture failure provenance');
     assertPublicText(JSON.stringify(row)); failures.push(row);
   }
-  const roots = [captureDirectory, join(repository, 'tests/evidence'), join(repository, 'apps/apple/Tests/Evidence')];
+  const roots = [captureDirectory, ...(includeRepositoryEvidence ? [join(repository, 'tests/evidence'), join(repository, 'apps/apple/Tests/Evidence')] : [])];
   const pattern = /^review-(windows|mobile-web|android|iphone|mac|watch)-(.+)-(light|dark)(?:-\d{8}T\d{6}Z)?\.png$/;
   for (const root of roots) for (const path of await walk(root)) {
     const match = path.split(/[\\/]/).at(-1).match(pattern);
@@ -45,7 +45,7 @@ export async function collectEvidence(captureDirectory) {
     if (metadata.platform !== match[1] || metadata.scene !== match[2] || metadata.theme !== match[3]) throw Error('Evidence metadata disagrees with filename');
     candidates.push({ ...metadata, path, source: roots.indexOf(root) === 0 ? metadata.source : relative(repository, path).replaceAll('\\', '/') });
   }
-  for (const row of aliases) {
+  for (const row of includeRepositoryEvidence ? aliases : []) {
     const path = join(repository, row.path);
     try { await readFile(path); } catch { continue; }
     const history = git(['log', '-1', '--format=%H|%cI', '--', row.path]);
