@@ -228,10 +228,12 @@ struct ConversationView: View {
                             .frame(minHeight: 240)
                     }
                     if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                         ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, openAttachment: openAttachment, openArtifact: openArtifact, openMemory: { event in
                             endDraftFocus(); closePreview(); resources.open(.memory(event.seq, UsedMemory.references(in: event)))
                         }, openSources: { resources.visible = true; resources.showingList = true })
                             .id(sessionID + model.accountEpoch.uuidString)
+                        }
                     } else {
                         ForEach(model.messages) { message in
                             MessageView(model: model, message: message, openAttachment: openAttachment).id(message.id)
