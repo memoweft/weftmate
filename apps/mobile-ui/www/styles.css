@@ -106,7 +106,7 @@ main{min-height:0;flex:1;position:relative;display:flex;flex-direction:column}.p
 .conversation-task-actions{display:flex;flex-wrap:wrap;gap:var(--wm-space-8);margin-top:var(--wm-space-10)}.conversation-task-actions button{min-height:44px;padding:var(--wm-space-8) var(--wm-space-12);font-size:var(--wm-font-size-13)}
 .conversation-task-more{margin-top:var(--wm-space-7)}.conversation-task-more summary{min-height:44px;box-sizing:border-box;display:flex;align-items:center;padding:var(--wm-space-7) 0;color:var(--ink);cursor:pointer}.conversation-task-more p{padding-left:var(--wm-space-10)}
 .conversation-task-more summary:focus-visible{outline:2px solid var(--accent);outline-offset:var(--wm-space-3);border-radius:var(--wm-radius-4)}
-.conversation-approval{padding:var(--wm-space-14);margin:0 0 var(--wm-space-24);border:1px solid var(--line);border-radius:var(--wm-radius-14);color:var(--ink);overflow-wrap:anywhere}
+.conversation-approval,.motion-approval{padding:var(--wm-space-14);margin:0 0 var(--wm-space-24);border:1px solid var(--line);border-radius:var(--wm-radius-14);color:var(--ink);overflow-wrap:anywhere}
 .approval-title{display:block;font-size:var(--wm-font-size-16);font-weight:600;line-height:var(--wm-line-height-1_5)}
 .approval-reason{margin:var(--wm-space-8) 0 0;font-size:var(--wm-font-size-16);line-height:var(--wm-line-height-1_65);white-space:pre-wrap;user-select:text}
 .approval-status{margin:var(--wm-space-8) 0 0;color:var(--secondary);font-size:var(--wm-font-size-14);line-height:var(--wm-line-height-1_6)}
@@ -361,3 +361,12 @@ summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible
 .session-forget{display:flex;align-items:start;gap:var(--wm-space-8);margin:var(--wm-space-16) 0}
 .session-action-dialog input[type=checkbox]{flex:none;width:var(--wm-space-20);height:var(--wm-space-20);margin:0;accent-color:var(--accent)}
 .session-action-dialog .danger{min-height:var(--wm-space-48);border-radius:var(--wm-radius-12);color:var(--danger);background:var(--danger-soft);font-weight:600}
+
+/* UI-P1m: same short, non-spring timings as desktop. JS owns page continuity. */
+.page.active{animation:none}
+.drawer{transition:transform var(--wm-duration-240ms) var(--wm-easing-desktop)}
+.drawer:not(.open){transition:none}
+.scrim{transition:opacity var(--wm-duration-base) var(--wm-easing-desktop)}
+.motion-copy{z-index:1000;pointer-events:none!important;overflow:hidden}
+html[data-reduced-motion] *,html[data-reduced-motion] *::before,html[data-reduced-motion] *::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}

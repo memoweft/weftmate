@@ -30,6 +30,14 @@ class MobileUiBundles(private val context: Context) {
         ?: builtIn
     private val names = Regex("[A-Za-z0-9._/-]{1,180}")
     private val digest = Regex("[a-f0-9]{64}")
+    init {
+        // Code 21 removes the old refresh-token bridge: cached pages using it must boot the new built-in UI.
+        if (mobileUiNeedsNativeLoginUpgrade(prefs.getInt("nativeLoginUiVersion", 0), BuildConfig.VERSION_CODE)) {
+            check(prefs.edit().putString("active", builtIn).putString("previous", builtIn)
+                .remove("staged").putInt("nativeLoginUiVersion", 21).commit())
+            activeId = builtIn
+        }
+    }
     private fun rejected(): Set<String> = try {
         val values = org.json.JSONArray(prefs.getString("rejectedIds", "[]"))
         (0 until values.length()).map { values.getString(it) }.filter { digest.matches(it) }.toSet()
@@ -81,6 +89,8 @@ class MobileUiBundles(private val context: Context) {
             throw ApiFailure(409, "UI_UPDATE_INCOMPATIBLE")
         if (manifest.getInt("minNativeVersionCode") > BuildConfig.VERSION_CODE)
             throw ApiFailure(409, "NATIVE_UPDATE_REQUIRED")
+        if (!mobileUiNativeLoginCompatible(manifest.getInt("minNativeVersionCode"), BuildConfig.VERSION_CODE))
+            throw ApiFailure(409, "UI_UPDATE_INCOMPATIBLE")
         val version = manifest.getString("uiVersion")
         require(version.matches(Regex("[0-9A-Za-z._-]{1,40}")))
         val assetBase = manifest.getString("assetBase")
@@ -188,6 +198,7 @@ class MobileUiBundles(private val context: Context) {
         return try {
             val root = File(directory, id)
             val manifest = JSONObject(File(root, ".release-manifest.json").readText(Charsets.UTF_8))
+            if (!mobileUiNativeLoginCompatible(manifest.getInt("minNativeVersionCode"), BuildConfig.VERSION_CODE)) return false
             val items = manifest.getJSONArray("assets")
             if (items.length() !in 1..250) return false
             var total = 0L

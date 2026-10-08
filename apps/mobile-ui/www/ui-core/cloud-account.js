@@ -85,7 +85,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   async function beginCloudLogin(email, password) {
     const ticket = journey;
     auth.email = email.trim().toLowerCase();
-    const result = await client.begin({ email: auth.email, password, deviceName: auth.deviceName, deviceType: environment.desktop ? 'windows' : 'web' });
+    const result = await client.begin({ email: auth.email, password, deviceName: auth.deviceName, deviceType: environment.deviceType || (environment.desktop ? 'windows' : 'web') });
     if (ticket !== journey) return;
     if (result.confirmationRequired) { auth.mode = 'confirm'; auth.step = 'code'; auth.resendAt = 0; return; }
     await finishCloudLogin(ticket);
