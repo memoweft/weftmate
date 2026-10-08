@@ -1,0 +1,13 @@
+{
+  "desktop": true,
+  "model": "mimo-v2.6-flash",
+  "conversationAndMemory": true,
+  "artifactCount": 1,
+  "backupVerified": true,
+  "deletedConversationRestored": true,
+  "settingsRestored": true,
+  "memoryRestored": true,
+  "artifactsRestored": true,
+  "portableRestoreAndRelogin": true,
+  "credentialReconfigured": true
+}
