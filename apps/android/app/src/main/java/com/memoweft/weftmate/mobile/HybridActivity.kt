@@ -848,6 +848,13 @@ class HybridActivity : Activity() {
             val host = requireHost()
             sharedChat.sessions(host)
         }
+        "shared.sessions.lifecycle" -> {
+            val host = requireHost()
+            val result = api.sessionLifecycle(host, params.getString("sessionId"),
+                params.getString("action"), params.optBoolean("forgetMemories", false))
+            sharedChat.sessions(host)
+            result
+        }
         "shared.conversations.get" -> {
             val host = requireHost()
             val epoch = accountEpoch.get()

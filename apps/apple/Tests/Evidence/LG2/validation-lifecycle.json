@@ -1,0 +1,20 @@
+{
+  "uiPassed": 1,
+  "uiFailed": 0,
+  "uiSkipped": 0,
+  "realCloudMain": true,
+  "fileMail": true,
+  "isolatedHost": true,
+  "simulatorsAtOnce": 1,
+  "phase": "lifecycle",
+  "steps": [
+    "registration",
+    "automatic login",
+    "computer directory",
+    "rename",
+    "remove",
+    "logout others",
+    "email change",
+    "delete"
+  ]
+}

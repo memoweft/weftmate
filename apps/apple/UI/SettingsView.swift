@@ -61,9 +61,8 @@ struct SettingsView: View {
                         LabeledContent("登录设备", value: model.session?.device.name ?? model.deviceName)
                             .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                             .accessibilityIdentifier("accountDevice.\(model.session?.device.id ?? "unknown")")
-                        Button("用 WeftMate 账号登录") {
-                            Task { await model.signOut(); if model.session == nil { model.cloudLogin.showLogin = true } }
-                        }.disabled(model.authBusy).accessibilityIdentifier("settingsCloudLogin")
+                        NavigationLink("账户") { AccountSettingsView(cloud: model.cloudLogin) }
+                        NavigationLink("设备") { CloudDevicesView(app: model, cloud: model.cloudLogin) }
                         Button(role: .destructive) { confirmSignOut = true } label: {
                             WeftLabel("退出登录 / 切换账户", icon: "back")
                         }

@@ -311,7 +311,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
         config.accountModelWrite ? 200 : 404))
     if (url.endsWith('/models')) return Promise.resolve(reply({ models: config.modelCatalog ??
       [{ id: 'model-test', name: 'Synthetic', configured: true }] }))
-    if (url.endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
+    if (url.split('?')[0].endsWith('/sessions')) return Promise.resolve(reply({ sessions: config.sessions ?? [
       { sessionId: 'A', title: 'A', sendAvailable: true, running: aRunning }, { sessionId: 'B', title: 'B', sendAvailable: true },
     ] }))
     if (/\/sessions\/[^/]+\/approvals\//.test(url) && options.method === 'POST') return Promise.resolve(

@@ -17,7 +17,7 @@ struct PairingScannerView: View {
                 if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
                     CameraScanner(receive: receive)
                 } else {
-                    ContentUnavailableView("相机扫描暂不可用", systemImage: "qrcode.viewfinder", description: Text("可选择二维码图片，或返回粘贴电脑配对信息。"))
+                    EmptyState(symbol: "camera", title: "相机扫描暂不可用", message: "可选择二维码图片，或返回输入配对码。")
                 }
                 PhotosPicker("选择二维码图片", selection: $image, matching: .images).accessibilityIdentifier("pairingImagePicker")
                 if let error { Text(error).foregroundStyle(AppleTokens.Colors.red) }

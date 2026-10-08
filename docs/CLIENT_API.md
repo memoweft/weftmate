@@ -105,7 +105,14 @@
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/sessions` | 无；当前无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"modelProfileId":"local"}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
+| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local"}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
+| POST `/sessions/{sessionId}/archive` | 空对象 `{}` | 200 `{sessionId,archived:true}`；幂等归档，保留历史、经验与工作目录 | 404 `SESSION_UNAVAILABLE` | 桌、手、安；Apple 可按契约接入 |
+| POST `/sessions/{sessionId}/unarchive` | 空对象 `{}` | 200 `{sessionId,archived:false}`；幂等恢复 | 404 `SESSION_UNAVAILABLE` | 同上 |
+| DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略） | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
+
+归档会话的 `sendAvailable:false`，发送新消息返回409 `SESSION_ARCHIVED`，先恢复再发送。已有运行不因归档停止。删除默认保留 MemoWeft 长期记忆；`forgetMemories:true` 需要 Cookie 与 `account:manage`，按账号及会话来源查询 Core（核心）的记忆任务证据，再走 `delete_evidence` 真正删除与储存清理。Core 不可用或遗忘失败时保留对话用于重试；已完成的证据遗忘不能撤销。再次删除已删除会话返回404。停止或后台形成未确认时不能宣称删除成功。
+
+普通对话以 DSH（助手运行时）原生 `cwd` 绑定宿主数据目录内按账号散列 / 会话 ID 隔离的工作目录。脚本与笔记默认在这里，回到原会话沿用同一目录及原生上下文；`经验.md` 存在时作为本对话资料读取。压缩仍由既有原生摘要保留方法、脚本路径、命令与踩坑记录。项目的用户目录不属于对话删除范围。
 
 项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表当前按会话 ID 遍历，客户端自行呈现排序。创建走 `/commands`，没有 POST `/sessions`。
 
@@ -774,6 +781,8 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 宿主安装签名新增 `/personal/v1/cloud/hosts/status`（签入 action/sub/name）和 `/hosts/devices/status`（签入 action/sub/deviceId/jkt/status、可选 isHost=true）；沿用 7.5 的 `{hostId,proof}`、60 秒期限/jti 防重放/member 检查，只收名称、活动与内容信任元数据，不收 pin 交付材料或内容。云 schema 6 存放票据、设备元数据与映射。跨账号共享只有 `sharing.supported=false` 接口位置；本包所有连接/配对/信任交付都拒绝越权，S5 再实现主账号扫码确认。
 
 新增业务码：400 `PASSWORD_TICKET_INVALID`（过期/错用途/已用/旧 epoch）、401 `DPOP_INVALID`、403 `APP_LOGIN_REQUIRED`；账号密码/验证码限速与 7.3 相同。接口必须来自固定配置的云/宿主 origin，不以邮箱或目录 pin 推断本地 owner 或宿主信任。S1d 不部署；本节服务端已交付，客户端完整页面与真机扫码由 LG-1 / LG-2 验收。
+
+**Apple 实现备注（LG-2）**：iPhone / Mac 账号页面在 App 内走本节 JSON 接口，使用独立内存 Cookie 容器。`/auth/authorization/resume` 是 provider 恢复路由的 JSON 包装：原生网络层须同时取本 App 接口路径与返回的固定 issuer `/oidc/auth/{uid}` 路径对应的交互 / resume Cookie；仅按包装接口路径筛选会漏掉 provider 的 resume Cookie。Cookie 只发往已配置的云 origin，不跨宿主传送。代码 / 刷新均发送 DPoP，同一 single-use refresh family 的消费在模型网络层串行；没有新增服务端路径或第二种登录协议。
 
 ### 7.9 账号生命周期（S1e / D30）
 
