@@ -120,7 +120,7 @@ final class A5ParityUITests: XCTestCase {
             _ = try await get("/a5/usage-blocked");try tap(app,"刷新用量");try expect(app.staticTexts.containing(NSPredicate(format:"label CONTAINS %@","云端模型请求已暂停")).firstMatch)
             let refused=try await get("/a5/refused");XCTAssertEqual(refused["status"] as? Int,402)
             try fill(app,"usageTemporaryLimit","1");try tap(app,"临时提高本月上限")
-            try tap(app,"完成");try tap(app,"closeAuxiliarySheetButton");try back(app)
+            try tap(app,"closeUsageSheet");try tap(app,"closeAuxiliarySheetButton");try back(app)
             try row(app,ids["deletion"] as! String);try tap(app,"对话菜单");try tap(app,"归档对话");try back(app)
             try tap(app,"已归档");try row(app,ids["deletion"] as! String)
             XCTAssertFalse(app.buttons["sendButton"].isEnabled);try tap(app,"恢复对话")
@@ -131,7 +131,7 @@ final class A5ParityUITests: XCTestCase {
             let final=try await get("/a5/report");XCTAssertEqual((final["memoryDeletes"] as! [[String:Any]]).count,1)
             let exists=final["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
         }
-        if !behavior { try tap(app,"完成");try tap(app,"closeAuxiliarySheetButton") }
+        if !behavior { try tap(app,"closeUsageSheet");try tap(app,"closeAuxiliarySheetButton") }
         if behavior { try back(app);try row(app,ids["review"] as! String) }
         try tap(app,"对话菜单");try expect(app.buttons["归档对话"]);keep(app,"session-menu",theme)
         app.terminate()
