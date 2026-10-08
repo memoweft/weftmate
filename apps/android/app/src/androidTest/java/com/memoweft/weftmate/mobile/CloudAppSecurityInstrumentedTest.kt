@@ -13,6 +13,36 @@ import java.util.concurrent.atomic.AtomicReference
 
 /** Synthetic process-only credentials, independent preferences and key aliases. Never uses the daily account. */
 class CloudAppSecurityInstrumentedTest {
+    @Test fun upgradingCachedLegacyUiUsesBuiltinAndKeepsFiles() {
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        assumeTrue(InstrumentationRegistry.getArguments().getString("lg1bNativeSecurity") == "1")
+        val base = instrumentation.targetContext
+        assumeTrue(base.packageName == "com.memoweft.weftmate.mobile.lg1bqa")
+        val suffix = UUID.randomUUID().toString()
+        val prefsName = "lg1b-cache-upgrade-$suffix"
+        val root = java.io.File(base.filesDir, prefsName).apply { check(mkdirs()) }
+        val context = object : android.content.ContextWrapper(base) {
+            override fun getFilesDir(): java.io.File = root
+            override fun getSharedPreferences(name: String, mode: Int): android.content.SharedPreferences =
+                base.getSharedPreferences(if (name == "mobile-ui-bundles") prefsName else name, mode)
+        }
+        val prefs = base.getSharedPreferences(prefsName, android.content.Context.MODE_PRIVATE)
+        val cachedId = "a".repeat(64)
+        val cached = java.io.File(root, "mobile-ui-bundles/$cachedId").apply { check(mkdirs()) }
+        val page = java.io.File(cached, "index.html").apply { writeText("synthetic legacy cached page") }
+        check(prefs.edit().putString("active", cachedId).putString("previous", cachedId).putString("staged", cachedId).commit())
+        try {
+            val bundle = MobileUiBundles(context)
+            assertEquals("builtin", bundle.state().active)
+            assertEquals("builtin", bundle.state().previous)
+            assertNull(bundle.state().staged)
+            assertEquals("synthetic legacy cached page", page.readText())
+            assertEquals(21, prefs.getInt("nativeLoginUiVersion", 0))
+            bundle.close()
+        } finally {
+            root.deleteRecursively(); base.deleteSharedPreferences(prefsName)
+        }
+    }
     @Test fun privateKeyNeverExportsAndRotatingRefreshNeverCrossesBridge() {
         val instrumentation = InstrumentationRegistry.getInstrumentation()
         assumeTrue(InstrumentationRegistry.getArguments().getString("lg1bNativeSecurity") == "1")
@@ -72,6 +102,16 @@ class CloudAppSecurityInstrumentedTest {
             val issuer = "$origin/personal/v1/cloud/oidc"
             secrets.saveAppValue("login", JSONObject().put("host", origin).put("issuer", issuer)
                 .put("config", JSONObject().put("issuer", issuer).put("clientId", "weftmate-android").put("hostId", "synthetic-host")).toString())
+            secrets.saveCloudValue("login", JSONObject().put("host", origin).put("issuer", issuer).toString())
+            secrets.saveCloudValue("tokens", JSONObject().put("refresh_token", UUID.randomUUID().toString()).toString())
+            val legacy = CloudLogin(secrets, PersonalApi())
+            assertEquals("NATIVE_LOGIN_UPGRADE_REQUIRED", assertThrows(ApiFailure::class.java) {
+                legacy.request(JSONObject().put("url", "$issuer/token").put("method", "POST"))
+            }.safeCode)
+            assertThrows(ApiFailure::class.java) { legacy.tokens(JSONObject()) }
+            assertThrows(ApiFailure::class.java) { legacy.tokens(JSONObject().put("value", "nonempty-synthetic")) }
+            assertTrue(legacy.tokens(JSONObject().put("value", "")).isNull("value"))
+            assertNull(secrets.cloudValue("tokens"))
             val native = CloudAppLogin(secrets, PersonalApi())
             fun token(form: String) = native.request(JSONObject().put("url", "$issuer/token").put("method", "POST")
                 .put("headers", JSONObject().put("content-type", "application/x-www-form-urlencoded")).put("body", form)).getJSONObject("body")

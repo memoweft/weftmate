@@ -4,6 +4,8 @@ LG-1b 当前壳为 **0.8.8 / code21**：登录、注册、找回密码、等待�
 
 扫码按用户点击请求 `CAMERA` permission（相机权限），设备无相机或用户拒绝时仍可手填配对码。相机为可选硬件；原生仅向 `appassets.androidplatform.net` 内置页面的 `VIDEO_CAPTURE` 请求授予相机，不授予音频采集。页面中的二维码解码由手机 UI 提供。
 
+code21 同时退役旧刷新令牌桥：`cloud.request` 的旧 `/oidc/token` 路径与 `cloud.tokens` 的读取 / 非空写入返回 `NATIVE_LOGIN_UPGRADE_REQUIRED`，只保留 `cloud.tokens` 的空字符串删除入口，避免内置页面经旧接口绕过原生保护。首次升级至 code21 将旧缓存页面的活动 / 回退指针切至新版内置页；缓存文件、本机对话、草稿和记忆保留。后续手机 UI 发布必须声明 `minNativeVersionCode >= 21`，不再激活依赖旧令牌桥的发布包。
+
 LG-1b 的独立验证包为 `com.memoweft.weftmate.mobile.lg1bqa`，通过 Gradle 参数 `-PweftmateApplicationId=com.memoweft.weftmate.mobile.lg1bqa` 构建。`Lg1bWebViewProbeTest` 只在该包及显式 `lg1bProbe=1` 时启动调试，`lg1bHostOrigin` 指向随机端口的隔离宿主，完成文件为 `files/lg1b-probe.done`。`CloudAppSecurityInstrumentedTest` 仅在同包及 `lg1bNativeSecurity=1` 下运行，用独立偏好设置 / 密钥和进程内随机凭据验证不可导出私钥、原生刷新轮换、不透明句柄及退出后清除；不读取本人账户。测试专用 `cloud.app.status` 仅在这个 debug（调试）包可用，返回 `credentialPresent/refreshCount`，不返回秘密。
 
 IC-1 当前壳为 **0.8.5 / code18**：C4 自适应启动图标、单色主题 / 通知图标与统一功能图标已接入；母版在 [design/icons](../../design/icons/README.md)，用 `npm run icons:generate` 生成。没有新增权限或原生接口，手机 UI（网页界面）的最低桥接版本仍为 code17。[真实 MuMu 验证与卸载](../../tests/evidence/ic-1/README.md)。

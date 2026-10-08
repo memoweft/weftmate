@@ -1422,10 +1422,7 @@ class HybridActivity : Activity() {
         }
         "cloud.configure" -> CloudLogin(secrets, api).configure(params.getString("origin"), params.getString("pin"))
         "cloud.request" -> CloudLogin(secrets, api).request(params)
-        "cloud.tokens" -> {
-            if (params.has("value")) secrets.saveCloudValue("tokens", params.optString("value").takeIf { it.isNotEmpty() })
-            JSONObject().put("value", secrets.cloudValue("tokens") ?: JSONObject.NULL)
-        }
+        "cloud.tokens" -> CloudLogin(secrets, api).tokens(params)
         "cloud.authorize" -> {
             val saved = JSONObject(secrets.cloudValue("login") ?: throw ApiFailure(401, "LOGIN_REQUIRED"))
             val url = Uri.parse(params.getString("url"))

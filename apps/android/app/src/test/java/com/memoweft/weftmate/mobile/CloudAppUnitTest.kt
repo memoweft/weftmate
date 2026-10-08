@@ -50,4 +50,21 @@ class CloudAppUnitTest {
         assertNotEquals(cloudKeyAlias(issuer), cloudKeyAlias(issuer + "different"))
         assertFalse(cloudKeyAlias(issuer).contains("example.com"))
     }
+    @Test fun legacyBridgeCannotReadOrIssueRefreshAndOldBundlesAreIncompatible() {
+        assertEquals("NATIVE_LOGIN_UPGRADE_REQUIRED", assertThrows(ApiFailure::class.java) {
+            requireLegacyCloudRequestWithoutToken("$issuer/token", issuer)
+        }.safeCode)
+        requireLegacyCloudRequestWithoutToken("$issuer/jwks", issuer)
+        assertThrows(ApiFailure::class.java) { requireLegacyCloudTokensClear(false, null) }
+        assertThrows(ApiFailure::class.java) { requireLegacyCloudTokensClear(true, "synthetic-nonempty") }
+        requireLegacyCloudTokensClear(true, "")
+        assertFalse(mobileUiNativeLoginCompatible(20, 21))
+        assertTrue(mobileUiNativeLoginCompatible(21, 21))
+        assertFalse(mobileUiNativeLoginCompatible(22, 21))
+        assertFalse(mobileUiNeedsNativeLoginUpgrade(0, 20))
+        assertTrue(mobileUiNeedsNativeLoginUpgrade(0, 21))
+        assertTrue(mobileUiNeedsNativeLoginUpgrade(20, 21))
+        assertFalse(mobileUiNeedsNativeLoginUpgrade(21, 21))
+        assertFalse(mobileUiNeedsNativeLoginUpgrade(21, 22))
+    }
 }

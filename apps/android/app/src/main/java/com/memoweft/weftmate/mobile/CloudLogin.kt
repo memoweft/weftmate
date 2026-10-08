@@ -83,6 +83,7 @@ internal class CloudLogin(private val secrets: SecureSettings, private val api: 
         val target = params.getString("url")
         val host = login.getString("host")
         val issuer = login.getString("issuer")
+        requireLegacyCloudRequestWithoutToken(target, issuer)
         val method = params.optString("method", "GET")
         require(method in setOf("GET", "POST"))
         val hostRoutes = setOf("/cloud/config", "/auth/cloud-nonce", "/auth/cloud-session", "/cloud/pairings/redeem")
@@ -132,5 +133,10 @@ internal class CloudLogin(private val secrets: SecureSettings, private val api: 
         val value = JSONObject(secrets.cloudValue("result") ?: throw ApiFailure(401, "LOGIN_REQUIRED"))
         return HostIdentity(value.getString("origin"), value.getString("username"), value.getString("ownerId"),
             value.getString("hostId"), value.getString("deviceId"), value.getString("cookie"), value.getString("csrf"))
+    }
+    fun tokens(params: JSONObject): JSONObject {
+        requireLegacyCloudTokensClear(params.has("value"), params.optString("value", ""))
+        secrets.saveCloudValue("tokens", null)
+        return JSONObject().put("value", JSONObject.NULL)
     }
 }
