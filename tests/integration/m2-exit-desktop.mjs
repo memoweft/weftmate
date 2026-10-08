@@ -16,6 +16,7 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { PersonalClient, checkOne, loadScenarios, runEvaluation } from '../../scripts/eval.mjs';
 import { createLanBaselineBridge } from './baseline-lan-model.mjs';
+import { judgeMemorySemantics } from './baseline-memory-verification.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { verify } from '../../src/personal-backup/archive.mjs';
 import { original, confirmation, correction, recallQuestion, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
@@ -252,6 +253,12 @@ async function baseline(modelName, fourOnly = false) {
     return result;
   }
   async function semantic(turn, criterion) {
+    if (judgeModel === 'mimo') {
+      const verdict = await judgeMemorySemantics({ result: { turns: [turn] },
+        scenario: { turns: [{ user: turn.user }], checks: [{ type: 'llm_judge', prompt: criterion }] }, key });
+      (report.directJudgements ??= []).push(verdict);
+      return { type: 'llm_judge', prompt: criterion, turn: report.turns.indexOf(turn) + 1, ...verdict };
+    }
     return checkOne({ type: 'llm_judge', prompt: criterion, turn: report.turns.indexOf(turn) + 1 }, { judgeModel, models, client, turns: report.turns,
       scenario: { turns: report.turns.map(t => ({ user: t.user })) }, scratchDir: root, deadline: Date.now() + 180000 });
   }
@@ -447,6 +454,14 @@ async function baseline(modelName, fourOnly = false) {
     const sum = field => uses.reduce((total, row) => total + (field(row.usage) ?? 0), 0);
     report.mimoUsage = { requests: starts.length, returnedUsage: uses.length, missingUsage: starts.length - uses.length,
       input: sum(u => u.prompt_tokens), cached: sum(u => u.prompt_tokens_details?.cached_tokens), output: sum(u => u.completion_tokens) };
+    for (const verdict of report.directJudgements ?? []) {
+      report.mimoUsage.requests++;
+      if (!verdict.usage) { report.mimoUsage.missingUsage++; continue; }
+      report.mimoUsage.returnedUsage++;
+      report.mimoUsage.input += verdict.usage.prompt_tokens ?? 0;
+      report.mimoUsage.cached += verdict.usage.prompt_tokens_details?.cached_tokens ?? 0;
+      report.mimoUsage.output += verdict.usage.completion_tokens ?? 0;
+    }
     report.mimoUsage.knownCnyLowerBound = (report.mimoUsage.input - report.mimoUsage.cached + report.mimoUsage.cached * 0.02 + report.mimoUsage.output * 2) / 1000000;
     // No synthetic passwords, setup grants, API keys, private endpoints in artifacts.
     const sensitive = /credentials\.json$|(?:Cookies|Trust Tokens)(?:-journal)?$|setup-[^/]+\.json$|secure-snapshot.*\.yml$|security-credentials\.patch\.yml$/;
