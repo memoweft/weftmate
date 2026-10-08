@@ -1,0 +1,58 @@
+{
+  "id": "memory-2x-person",
+  "category": "memory",
+  "title": "盲测B：攀岩搭档关系",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "隔离宿主与真实桌面程序"
+    ]
+  },
+  "turns": [
+    {
+      "user": "许澄跟我搭档练攀岩，我们互相做保护，他总是帮我检查安全结。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "给许澄写一句周末见面时的开场白。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_contains",
+      "text": "许澄"
+    },
+    {
+      "type": "reply_matches",
+      "pattern": "攀岩|保护|安全结"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "开场白应联系攀岩搭档、互相保护或安全结，不捏造其他关系。"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "memoryExpectation": {
+    "kind": "relationship",
+    "currentPattern": "许澄",
+    "sourceTurn": 0
+  },
+  "timeoutSec": 900,
+  "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。"
+}

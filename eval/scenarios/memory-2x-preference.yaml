@@ -1,0 +1,54 @@
+{
+  "id": "memory-2x-preference",
+  "category": "memory",
+  "title": "盲测B：住宿气味偏好",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "隔离宿主与真实桌面程序"
+    ]
+  },
+  "turns": [
+    {
+      "user": "选住宿我有一条长期要求：房间别放香薰，我只接受无香的环境。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "替我写一句订房时给前台的备注。"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_matches",
+      "pattern": "无香|不.*香薰|不要.*香薰|避免.*香薰"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "订房备注应要求无香环境或不放香薰，不能要求添加香味。"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "memoryExpectation": {
+    "kind": "cognition",
+    "currentPattern": "无香|别放香薰",
+    "sourceTurn": 0
+  },
+  "timeoutSec": 900,
+  "notes": "M2f留出B；开发前提交后封存，仅最终固定候选运行。严格核对独立会话、零审批、正式当前项采用、完整原话；纠正另查旧项失效且未采用及旧原话。"
+}
