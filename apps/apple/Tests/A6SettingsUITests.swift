@@ -60,10 +60,18 @@ final class A6SettingsUITests: XCTestCase {
         try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings")
         try expect(app.navigationBars["设置"])
     }
-    @MainActor private func category(_ app: XCUIApplication, _ id: String) throws {
+    @MainActor @discardableResult private func category(_ app: XCUIApplication, _ id: String) throws -> CGRect {
         let row = app.buttons["settingsCategory." + id]
-        for _ in 0..<5 { if row.exists && row.isHittable { break }; app.swipeUp() }
-        try expect(row); row.tap()
+        let search = app.searchFields.firstMatch
+        for _ in 0..<6 {
+            let coveredBySearch = row.exists && search.exists && row.frame.intersects(search.frame)
+            if row.exists && row.isHittable && !coveredBySearch { break }
+            app.swipeUp()
+        }
+        try expect(row)
+        let frame = row.frame
+        row.tap()
+        return frame
     }
     @MainActor private func back(_ app: XCUIApplication) throws {
         let button = app.navigationBars.buttons["设置"].firstMatch; try expect(button); button.tap()
@@ -75,7 +83,8 @@ final class A6SettingsUITests: XCTestCase {
         XCTAssertFalse(app.buttons["settingsCategory.system"].exists)
         XCTAssertFalse(app.buttons["settingsCategory.backups"].exists)
         for id in ["general", "appearance", "account", "devices", "usage", "models", "approvals", "memory", "schedules", "about"] {
-            try category(app, id)
+            let listFrame = try category(app, id)
+            if id == "about" { print("A6_ABOUT_NAV " + app.navigationBars.debugDescription) }
             try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
             if id == "appearance" { try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", "light") }
             if id == "usage" { try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", "light") }
@@ -89,6 +98,7 @@ final class A6SettingsUITests: XCTestCase {
                 try expect(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "合成改名")).firstMatch)
             }
             try back(app)
+            if id == "about" { XCTAssertEqual(app.buttons["settingsCategory.about"].frame.minY, listFrame.minY, accuracy: 2, "Returning must retain the list position") }
             app.swipeDown()
         }
         let search = app.searchFields.firstMatch
