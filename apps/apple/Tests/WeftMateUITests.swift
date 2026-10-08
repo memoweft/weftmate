@@ -111,7 +111,7 @@ final class WeftMateUITests: XCTestCase {
 
     private func openDevices(_ app: XCUIApplication) -> String {
         #if os(macOS)
-        element(app, "devicesNavigation").tap()
+        element(app, "settingsNavigation").tap(); element(app, "settingsCategory.devices").tap()
         #else
         openPhoneAuxiliary(app, item: "phoneMenu.devices")
         #endif
@@ -129,6 +129,7 @@ final class WeftMateUITests: XCTestCase {
         #else
         openPhoneAuxiliary(app, item: "phoneMenu.settings")
         #endif
+        element(app, "settingsCategory.account").tap()
         let account = element(app, "accountUsername")
         XCTAssertTrue(account.waitForExistence(timeout: 15))
         XCTAssertEqual(account.label, username)
@@ -140,6 +141,7 @@ final class WeftMateUITests: XCTestCase {
         #else
         openPhoneAuxiliary(app, item: "phoneMenu.settings")
         #endif
+        element(app, "settingsCategory.account").tap()
         let button = app.buttons["signOutButton"]
         XCTAssertTrue(button.waitForExistence(timeout: 15))
         button.tap()
@@ -181,9 +183,11 @@ final class WeftMateUITests: XCTestCase {
         let menu = app.buttons["phoneAccountMenu"]
         XCTAssertTrue(menu.waitForExistence(timeout: 10))
         menu.tap()
-        let choice = app.buttons[item]
+        let choice = app.buttons[["phoneMenu.devices", "phoneMenu.spirit"].contains(item) ? "phoneMenu.settings" : item]
         XCTAssertTrue(choice.waitForExistence(timeout: 5))
         choice.tap()
+        if item == "phoneMenu.devices" { element(app, "settingsCategory.devices").tap() }
+        if item == "phoneMenu.spirit" { element(app, "settingsCategory.appearance").tap(); app.buttons["小纬形象"].tap() }
     }
 
     @MainActor func testPhoneAccountMenuReturnsToSameDraft() throws {
