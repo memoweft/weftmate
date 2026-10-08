@@ -5,6 +5,7 @@ import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
   ['/personal/v1/ui/motion.js', ['motion.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/popovers.js', ['popovers.js', 'text/javascript; charset=utf-8']],
   ...uiCoreAssets.map(name => [`/personal/v1/ui/ui-core/${name}`, [`../ui-core/${name}`, 'text/javascript; charset=utf-8']]),
   ['/personal/v1/ui/components/steps.js', ['components/steps.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/artifacts.js', ['components/artifacts.js', 'text/javascript; charset=utf-8']],
@@ -19,6 +20,7 @@ const files = new Map([
   ['/personal/v1/ui/components/resources.js', ['components/resources.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/sessions.js', ['components/sessions.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/approvals.js', ['components/approvals.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/components/schedules.js', ['components/schedules.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/usage.js', ['components/usage.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/usage.css', ['usage.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/settings.js', ['components/settings.js', 'text/javascript; charset=utf-8']],

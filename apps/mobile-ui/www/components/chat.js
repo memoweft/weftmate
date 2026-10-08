@@ -269,9 +269,7 @@ function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedSharedSessi
   $('pick-file').hidden=false;$('attachment-note').hidden=state.chatSource!=='host';
   $('plus-button').setAttribute('aria-expanded','true');requestAnimationFrame(()=>popup.classList.add('open'));placeAttachmentMenu();$('pick-image').focus()}
 
-function placeAttachmentMenu(){const top=$('plus-button').getBoundingClientRect().top;
-  const popup=$('attachment-popover');popup.style.bottom=`${Math.max(100,window.innerHeight-top+8)}px`;
-  popup.style.maxHeight=`${Math.max(150,top-20)}px`}
+function placeAttachmentMenu(){globalThis.WeftPopover.position($('attachment-popover'),$('plus-button'))}
 
 function renderAttachmentDrafts(){const box=$('attachment-drafts');clear(box);const items=state.loggedIn&&!state.transitionPending?currentAttachments():[];
   const scope={owner:state.owner,epoch:state.authEpoch,conversationId:attachmentConversationId(),source:state.chatSource};
@@ -343,9 +341,7 @@ async function removeAttachment(attachmentId){if(state.busy||state.transitionPen
       renderAttachmentDrafts();updateComposer();status(item.kind==='image'?'':'已从草稿移除附件')}}
   catch(e){const message=safeError(e);status(message,true)}}
 
-function placeModelMenu(){const top=$('model-button').getBoundingClientRect().top;const popup=$('model-popover');
-  popup.style.bottom=`${Math.max(110,window.innerHeight-top+8)}px`;
-  popup.style.maxHeight=`${Math.min(300,Math.max(160,top-24),Math.floor(window.innerHeight*.46))}px`}
+function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('model-button'))}
 
 function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
   const controlChanged=$('stop-button').hidden!==view.stopHidden;
@@ -509,3 +505,6 @@ function refreshCloudDevices(){const owner=state.owner,epoch=state.authEpoch;
   return globalThis.WeftCloudMobile?.pending({call,loggedIn:state.loggedIn,owner,
     current:value=>value===state.owner&&epoch===state.authEpoch});
 }
+
+/* Keep the existing mode value/change contract; use shared menu geometry. */
+globalThis.WeftPopover?.bindSelect($('message-mode'), 'popover message-mode-popover');
