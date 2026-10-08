@@ -6,6 +6,8 @@ import { join } from 'node:path'
 import { classifyPersonalRisk } from '../src/plugins/personal-approval-policy.mjs'
 
 const forms = [
+  ['bash', 'PWD=unused; cd sub; echo data > "$PWD/TARGET"'],
+  ['bash', 'OLDPWD=unused; cd sub; echo data > "$OLDPWD/TARGET"'],
   ['pwsh', "[string]$p='TARGET'; Set-Content $p data"],
   ['pwsh', "$p='TARGET'; Invoke-WebRequest https://example.org -OutFile:$p"],
   ['bash', 'P=TARGET; curl --output="$P" https://example.org'],
@@ -179,5 +181,19 @@ test('typed, scoped and incremented variables cannot retain a stale new-file gra
       "$p='1'; ++$p; Set-Content $p data",
       "$p='3'; --$p; Set-Content $p data",
     ]) assert.ok(classifyPersonalRisk('pwsh', { command }, cwd).includes('overwrite'), command)
+  } finally { rmSync(cwd, { recursive: true, force: true }) }
+})
+
+test('failed directory switches cannot grant relative writes in a guessed directory', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-failed-location-'))
+  try {
+    writeFileSync(join(cwd, 'user.txt'), 'user fixture')
+    for (const [shell, command] of [
+      ['pwsh', 'Set-Location absent; Set-Content user.txt data'],
+      ['pwsh', 'Push-Location absent; Pop-Location; Set-Content user.txt data'],
+      ['pwsh', 'Set-Location user.txt; Set-Content user.txt data'],
+      ['bash', 'cd absent; echo data > user.txt'],
+      ['bash', 'pushd absent; popd; echo data > user.txt'],
+    ]) assert.ok(classifyPersonalRisk(shell, { command }, cwd).includes('overwrite'), command)
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
