@@ -342,6 +342,27 @@ UPD-1 / D32：新版 `/app/manifest` 在上述兼容字段上增加统一签名�
 
 桌面“关于”接入 `src/ui-core/update.js` 的 `readUpdateState()`、`checkUpdates()`、`restartForUpdate()`；这些是本机窗口的 IPC（进程间通信）动作，不新增远程安装权限或业务 HTTP（网络协议）路由。响应 `{layers:[{layer,currentVersion,availableVersion,status,error,channel}],canRestart}`；`status` 包含检查 / 下载 / 就绪 / 失败状态，手机宿主发布版本标 `scope=host-published`，手机设备本身的安装版本由原生状态返回。程序本体须先核签清单、再核对下载的安装包，用户明确重启且任务空闲才安装；正式发布源与代码签名交 UPD-3。
 
+#### UPD-2 Apple 关于页只读版本状态
+
+既有 GET `/personal/v1/status` 增加可选字段（认证 / owner-scoped / `sessions:read` 不变）：
+
+```json
+{
+  "updates": {"layers": [
+    {"layer":"ui","currentVersion":"0.3.0","availableVersion":"0.4.0","status":"ready","channel":"stable"},
+    {"layer":"app","currentVersion":"0.2.0","availableVersion":null,"status":"disabled","channel":"stable"},
+    {"layer":"mobile-ui","currentVersion":"0.9.0","availableVersion":null,"status":"current","channel":"stable"}
+  ]},
+  "nativeMinimumVersions": {"iOS":"0.2.0","macOS":"0.2.0"}
+}
+```
+
+只读投影不包含更新源、内部错误路径、`canRestart` 或安装动作。Electron 宿主复用 UPD-1 当前三层状态；独立宿主不掌握桌面 UI 版本时返回 `currentVersion:null/status:"unknown"`。旧宿主缺字段时 Apple 关于页显示未提供版本，不能把 App 版本充作宿主层版本。
+
+`nativeMinimumVersions` 为宿主原生协议兼容要求，键使用 ApplePlatform wire 名 `iOS / macOS / watchOS`，值使用 UPD-1 SemVer 边界。缺字段 / 空表表示未声明；无效要求不默认为兼容。登录、云宿主兑换、恢复、离线验证遇到最低版本高于本机时返回客户端 `NATIVE_UPDATE_REQUIRED` 提示，不发布已连接会话；关于页读到要求后阻止后续宿主操作。Android 手机界面清单的 `minNativeVersion` / `minNativeVersionCode` 不作为 Apple 原生协议要求。平台最低版本尚未在正式宿主配置。
+
+Mac 最小口子使用 UPD-1 `layer=app` 整体 Ed25519 签名清单，增加签名扩展 `nativePlatform:"macOS"/nativeBuild/downloadPage`，来源与原始32字节公钥由构建配置提供，默认未配置。只检测并打开下载页，不下载或执行更新包；iPhone 保持 TestFlight / App Store 更新。发布接线与 Sparkle 沙盒阻碍见 [发布说明](../scripts/release/README.md)。
+
 ### 3.14 桌面 UI 静态资源（12个 GET 路径，不计入89业务接口）
 
 | GET路径（都无查询） | 响应 / 错误 | 使用端 |

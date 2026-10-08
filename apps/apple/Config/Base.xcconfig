@@ -11,4 +11,8 @@ CODE_SIGN_IDENTITY[sdk=macosx*] = -
 SWIFT_STRICT_CONCURRENCY = complete
 LD_RUNPATH_SEARCH_PATHS = $(inherited) @executable_path/Frameworks
 INFOPLIST_KEY_CFBundleDisplayName = WeftMate
+// UPD-2 detection-only hook. Blank source/key means no network check.
+WEFTMATE_MAC_UPDATE_FEED =
+WEFTMATE_MAC_UPDATE_PUBLIC_KEY =
+WEFTMATE_MAC_UPDATE_CHANNEL = stable
 #include? "Local.xcconfig"

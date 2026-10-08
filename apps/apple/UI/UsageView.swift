@@ -60,7 +60,6 @@ struct UsageView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
-                Text(model.sessionID == nil ? "用量" : "对话用量").font(AppleTokens.Fonts.title2)
                 HStack {
                     TextField("月份 YYYY-MM", text: $model.month).accessibilityIdentifier("usageMonth")
                     Button("读取月份") { Task { await model.refresh() } }.disabled(model.loading)
