@@ -593,10 +593,10 @@ export function createHttpHandler(context) {
         const settingsRoute = pathname.endsWith('/settings/usage');
         if (!settingsRoute && request.method !== 'GET') throw failure('NOT_FOUND', 404);
         context.authenticate(request, request.method === 'PATCH' ? 'account:manage' : 'sessions:read');
-        if (settingsRoute && url.search || [...url.searchParams.keys()].some(key => !['month', 'sessionId'].includes(key))) throw failure('INVALID_REQUEST');
+        if (settingsRoute && url.search || [...url.searchParams.keys()].some(key => !['month', 'sessionId', 'timeZone'].includes(key))) throw failure('INVALID_REQUEST');
         const sessionId = url.searchParams.get('sessionId');
         if (sessionId && !state.sessions[sessionId]) throw failure('SESSION_UNAVAILABLE', 404);
-        if (!settingsRoute) return context.json(response, 200, context.usage.summary(ownerId, url.searchParams.get('month') ?? undefined, sessionId));
+        if (!settingsRoute) return context.json(response, 200, context.usage.summary(ownerId, url.searchParams.get('month') ?? undefined, sessionId, url.searchParams.get('timeZone') ?? undefined));
         const catalog = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })));
         if (request.method === 'PATCH') {
           const body = await context.readJson(request);
