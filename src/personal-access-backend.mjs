@@ -201,7 +201,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
           ...(result?.rejected === true && result?.errorCode === 'IMAGE_REJECTED'
             ? { rejected: true, errorCode: 'IMAGE_REJECTED',
               ...(typeof result.imageReasonCode === 'string' ? { imageReasonCode: result.imageReasonCode } : {}) } : {}),
-          ...(result?.receiptId ? { receiptId: result.receiptId } : {}) }
+          ...(result?.receiptId ? { receiptId: result.receiptId } : {}),
+          ...(result?.steeredReceiptId ? { steeredReceiptId: result.steeredReceiptId } : {}) }
       })
     },
     async readAttachment({ sessionId, attachmentId, ownerId }) {
@@ -228,7 +229,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         return { accepted: result?.accepted === true }
       })
     },
-    async stopTask({ sessionId, ownerId, requestId, receiptIds }) {
+    async stopTask({ sessionId, ownerId, requestId, receiptIds, queuedOnly }) {
       requireRuntime()
       if (typeof taskStop !== 'function') fail('CAPABILITY_UNAVAILABLE')
       if (hostOwnerId() !== null && ownerId !== hostOwnerId()) fail('SESSION_READ_ONLY')
@@ -237,7 +238,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
           new Set(receiptIds).size !== receiptIds.length ||
           receiptIds.some((value) => typeof value !== 'string' || !idPattern.test(value))) fail('INVALID_COMMAND')
       await requireSession(sessionId, ownerId)
-      const result = await taskStop({ sessionId, requestId, receiptIds })
+      const result = await taskStop({ sessionId, requestId, receiptIds, ...(queuedOnly ? { queuedOnly: true } : {}) })
       if (!Array.isArray(result?.outcomes) || result.outcomes.length !== receiptIds.length ||
           new Set(result.outcomes.map((item) => item?.receiptId)).size !== receiptIds.length ||
           result.outcomes.some((item) => !receiptIds.includes(item?.receiptId) ||
