@@ -83,6 +83,9 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
                 card.dataset.seq = timelineAnchor.dataset.seq;
                 list.insertBefore(card, timelineAnchor);
             }
+            const firstPaint = !card.dataset.signature;
+            const resolution = card.dataset.motionStatus && card.dataset.motionStatus !== row.status && row.status !== 'pending' && core.conversationApprovals.entries.size <= 20 ? globalThis.WeftMotion?.snapshot(card) : null;
+            card.dataset.motionStatus = row.status;
             card.dataset.sourceReceiptId = row.sourceReceiptId;
             card.dataset.signature = signature;
             card.dataset.scope = scope;
@@ -152,6 +155,8 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             card.classList.toggle('is-resolved', ['resolved', 'unavailable'].includes(row.status));
             actions.append(detail);
             card.append(actions);
+            if (firstPaint && core.conversationApprovals.entries.size <= 20) globalThis.WeftMotion?.reveal(card, 'base');
+            globalThis.WeftMotion?.dismiss(resolution, true);
             if (focusAction && !document.querySelector('dialog[open]') &&
                 (document.activeElement === active || document.activeElement === document.body)) {
                 const replacement = card.querySelector(`[data-conversation-approval-action="${focusAction}"]`);
