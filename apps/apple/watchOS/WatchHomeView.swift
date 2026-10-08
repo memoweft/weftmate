@@ -96,6 +96,7 @@ struct WatchHomeView: View {
                             NavigationLink("最近回复") { ScrollView { Text(snapshot.assistantSummary).font(.caption).padding(8) } }
                         }
                     } else { Text("在手机上打开一段对话").font(.caption) }
+                    if let accountKey = model.snapshot?.accountKey { NavigationLink("健康") { WatchHealthView().id(accountKey) } }
                     Button("刷新") { model.refresh() }.disabled(model.busy)
                     if let notice = model.notice { Text(notice).font(.caption).foregroundStyle(.secondary) }
                     if !model.reachable {

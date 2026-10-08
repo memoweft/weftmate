@@ -1,4 +1,9 @@
 import { createHash } from 'node:crypto';
+import { validateDeviceMetrics } from './device-metrics.mjs';
+
+// An explicit H1 account opt-in must never relax H3's device-only policy.
+export const summaryCloudAllowed = (summary, accountAllowed) =>
+  summary.derived !== undefined || summary.hourly !== undefined ? false : accountAllowed;
 
 export const HEALTH_BODY_MAX = 12 * 1024;
 export const healthFailure = (code, status = 400) => Object.assign(new Error(code), { code, status });
@@ -26,7 +31,7 @@ const STATES = ['disabled', 'notRequested', 'dataAvailable', 'noDataOrReadDenied
 /** Only daily aggregates are accepted; no arbitrary text or raw sample payloads. */
 export function healthSummary(value) {
   keys(value, ['schemaVersion', 'date', 'timeZone', 'sourceDeviceId', 'sourceDevices', 'summarizedAt',
-    'cloudModelAllowed', 'selfAssessmentFrequency', 'readStates', 'metrics', 'sleep', 'workoutCount', 'workoutMinutes'],
+    'cloudModelAllowed', 'selfAssessmentFrequency', 'readStates', 'metrics', 'sleep', 'workoutCount', 'workoutMinutes', 'derived', 'hourly'],
   ['schemaVersion', 'date', 'timeZone', 'sourceDeviceId', 'sourceDevices', 'summarizedAt',
     'cloudModelAllowed', 'readStates', 'metrics']);
   healthDate(value.date);
@@ -63,6 +68,7 @@ export function healthSummary(value) {
       value.workoutMinutes !== undefined && !number(value.workoutMinutes) ||
       (value.workoutCount !== undefined || value.workoutMinutes !== undefined) &&
         !['dataAvailable', 'failed'].includes(value.readStates.workouts)) throw healthFailure('INVALID_HEALTH_SUMMARY');
+  validateDeviceMetrics(value, { keys, instant, number, failure: healthFailure });
   return { ...structuredClone(value), summarizedAt: new Date(value.summarizedAt).toISOString(),
     sourceDevices: [...new Set(value.sourceDevices)], selfAssessmentFrequency: value.selfAssessmentFrequency ?? 'low' };
 }
@@ -93,10 +99,15 @@ export function observedHealthEvidence(ownerId, summary) {
   });
   if (summary.workoutCount !== undefined) lines.push(`${summary.date} 锻炼 ${summary.workoutCount} 次${
     summary.workoutMinutes !== undefined ? `，活动时长 ${decimal(summary.workoutMinutes)} 分钟` : ''}。`);
+  if (summary.derived?.recovery) lines.push(`${summary.date} 设备端恢复度估算 ${decimal(summary.derived.recovery.value)}/100（个人基线 ${summary.derived.recovery.baselineDays} 天）。`);
+  if (summary.derived?.load) lines.push(`${summary.date} 相对负荷 ${decimal(summary.derived.load.value)}${summary.derived.load.ratio === undefined ? '' : `，7/28 天比 ${decimal(summary.derived.load.ratio)}`}。`);
+  for (const hour of summary.hourly ?? []) {
+    lines.push(`${hour.start} 至 ${hour.end}${hour.bodyBattery === undefined ? '' : ` 身体电量估算 ${decimal(hour.bodyBattery)}/100`}${hour.stress === undefined ? '' : `，压力估算区间 ${decimal(hour.stress.lower)}–${decimal(hour.stress.upper)}/100（${hour.stress.sampleCount} 组离散采样）`}。`);
+  }
   const sourceId = `weftmate-health-v1:${summaryHash([ownerId, summary.sourceDeviceId, summary.date])}`;
   return { schema_version: 1, subject_id: ownerId, source_kind: 'observed', source_id: sourceId,
     evidence_id: sourceId, payload_hash: summaryHash(summary), content: lines.join('\n'),
     source: { device_id: summary.sourceDeviceId, devices: summary.sourceDevices, date: summary.date,
       time_zone: summary.timeZone, summarized_at: summary.summarizedAt },
-    permissions: { allow_local_read: true, allow_cloud_read: summary.cloudModelAllowed, allow_inference: true } };
+    permissions: { allow_local_read: true, allow_cloud_read: summaryCloudAllowed(summary, summary.cloudModelAllowed), allow_inference: true } };
 }

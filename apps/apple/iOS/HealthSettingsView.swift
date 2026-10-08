@@ -8,8 +8,9 @@ struct HealthSettingsView: View {
     @State private var deleting = false
     var body: some View {
         Form {
+            HealthMetricsView(summaries: Array(model.state.summaries.values))
             Section {
-                Text("只读取你选择的项目，在手机上汇总为每日摘要。手表记录会通过“健康”同步到 iPhone。")
+                Text("只读取你选择的项目，在手机上计算指标，汇总为每日与小时摘要。手表记录会通过“健康”同步到 iPhone。")
                 Text("Apple 不公开读取权限状态。若无数据或已撤权，请到“健康” → 头像 → App → WeftMate 检查权限。")
                     .font(.footnote).foregroundStyle(.secondary)
                 Button("选择读取权限") {
@@ -38,7 +39,7 @@ struct HealthSettingsView: View {
                     var p = model.state.preferences; p.cloudChoiceMade = true; p.cloudModelAllowed = value
                     Task { await model.setPreferences(p, app: app) }
                 })).accessibilityIdentifier("healthCloudAllowed")
-                Text("默认仅供本地模型使用。修改后，已保存摘要也会随下一次上传更新使用范围。")
+                Text("设备端指标与小时摘要始终仅供本人电脑和本地模型使用，不进云。此选择仅适用于不含设备端指标的每日摘要。")
                     .font(.footnote).foregroundStyle(.secondary)
                 Picker("自评频率", selection: Binding(get: { model.state.preferences.selfAssessmentFrequency }, set: { value in
                     var p = model.state.preferences; p.selfAssessmentFrequency = value
@@ -80,7 +81,7 @@ struct HealthSettingsView: View {
             Button("仅供本地模型使用（默认）") { Task { await model.authorize(cloudAllowed: false, app: app) } }
             Button("允许云端模型使用") { Task { await model.authorize(cloudAllowed: true, app: app) } }
             Button("取消", role: .cancel) {}
-        } message: { Text("只上传每日摘要，不上传原始健康样本。你可以随时在此更改。") }
+        } message: { Text("只向本人电脑上传每日与小时摘要，不上传原始健康样本。设备端指标不进云。你可以随时在此更改。") }
         .confirmationDialog("删除此账号的全部健康摘要？", isPresented: $deleting, titleVisibility: .visible) {
             Button("删除摘要并停止读取", role: .destructive) { Task { await model.deleteAll(app: app) } }
         }
