@@ -1,5 +1,13 @@
 # WeftMate Android 客户端
 
+LG-1b 当前壳为 **0.8.8 / code21**：登录、注册、找回密码、等待批准和账户 / 设备设置复用 LG-1a 的共享业务。App 内的 `cloud.app.*` bridge（桥接）使用原生网络层的独立 Cookie jar（会话容器），只允许配置云 / 宿主的明确 `/personal/v1` 路由，不跳系统浏览器。`cloud.app.identity` 返回手机型号、`weftmate-android` 与登记的 `com.memoweft.weftmate:/oauth`；`configure` 返回云配置；`key` 只返回 P-256 `publicJwk` / `deviceId`；`sign` 返回 ES256 的 `signature`；`credentials` 返回非敏感展示数据与刷新令牌的不透明句柄；`request` 返回 `status/body/nonce/retryAfter`。私钥留在 Android Keystore（安卓密钥库），可用时优先 StrongBox（独立安全芯片），否则由 Keystore 的实现保存；签名始终在原生层完成。实际刷新令牌经 Keystore AES-GCM（认证加密）保存，WebView（网页视图）只得到随机 `wm-refresh:<uuid>`，旧 `cloud.tokens` 接口不能读取新存储。宿主 Cookie 与真实 CSRF（跨站请求伪造防护）也不进入页面；成功交换后沿用 `cloud.adopt` 的本机账户归属与同步。受信交付码 / 配对码建立 TLS pin（证书公钥固定）后才允许正式宿主内容交换；隔离 HTTP 回环调试仍可验收。
+
+扫码按用户点击请求 `CAMERA` permission（相机权限），设备无相机或用户拒绝时仍可手填配对码。相机为可选硬件；原生仅向 `appassets.androidplatform.net` 内置页面的 `VIDEO_CAPTURE` 请求授予相机，不授予音频采集。页面中的二维码解码由手机 UI 提供。
+
+code21 同时退役旧刷新令牌桥：`cloud.request` 的旧 `/oidc/token` 路径与 `cloud.tokens` 的读取 / 非空写入返回 `NATIVE_LOGIN_UPGRADE_REQUIRED`，只保留 `cloud.tokens` 的空字符串删除入口，避免内置页面经旧接口绕过原生保护。首次升级至 code21 将旧缓存页面的活动 / 回退指针切至新版内置页；缓存文件、本机对话、草稿和记忆保留。后续手机 UI 发布必须声明 `minNativeVersionCode >= 21`，不再激活依赖旧令牌桥的发布包。
+
+LG-1b 的独立验证包为 `com.memoweft.weftmate.mobile.lg1bqa`，通过 Gradle 参数 `-PweftmateApplicationId=com.memoweft.weftmate.mobile.lg1bqa` 构建。`Lg1bWebViewProbeTest` 只在该包及显式 `lg1bProbe=1` 时启动调试，`lg1bHostOrigin` 指向随机端口的隔离宿主，完成文件为 `files/lg1b-probe.done`。`CloudAppSecurityInstrumentedTest` 仅在同包及 `lg1bNativeSecurity=1` 下运行，用独立偏好设置 / 密钥和进程内随机凭据验证不可导出私钥、原生刷新轮换、不透明句柄及退出后清除；不读取本人账户。测试专用 `cloud.app.status` 仅在这个 debug（调试）包可用，返回 `credentialPresent/refreshCount`，不返回秘密。
+
 IC-1 当前壳为 **0.8.5 / code18**：C4 自适应启动图标、单色主题 / 通知图标与统一功能图标已接入；母版在 [design/icons](../../design/icons/README.md)，用 `npm run icons:generate` 生成。没有新增权限或原生接口，手机 UI（网页界面）的最低桥接版本仍为 code17。[真实 MuMu 验证与卸载](../../tests/evidence/ic-1/README.md)。
 
 UI-2 当前壳为 **0.8.4 / code17**：内置与桌面统一的手机会话列表、主题与全屏「输出与来源」，新增精确 `GET /sessions/{sessionId}/resources?afterSeq` 原生连接路由，系统栏改为同一中性色；内置版本显示使用 BuildConfig。没有新增权限或数据库迁移。新版 UI（网页界面）发布最低 code17；本机 JVM（Java 虚拟机）27/27与调试包构建通过。UI-2v 已补齐 **MuMu Android 15 真实安卓壳**的列表、运行、审批、步骤、全屏成果/来源、真实系统输入法与深色验收，产品代码无修正、版本保持 code17；[安卓截图与输入法边界](../../tests/evidence/ui-2v/README.md)。原390×844 Chromium（浏览器引擎）验收保留在 [UI-2](../../tests/evidence/ui-2/README.md)。
