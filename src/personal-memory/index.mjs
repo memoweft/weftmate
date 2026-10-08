@@ -25,12 +25,14 @@ const owner = (value) => {
 /** Lazily owns one MemoWeft RPC v2 process and private data root per account. */
 export function createPersonalMemoryManager({ root, enabled = false, python, pythonPath,
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
-  processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS }) {
+  processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS,
+  formationWaitMs = 330_000 }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
       typeof credential !== 'function' || typeof rpcFactory !== 'function' ||
       processingRoute !== null && typeof processingRoute !== 'function' ||
       defaultProcessingRoute !== null && typeof defaultProcessingRoute !== 'function' ||
       !Number.isInteger(maxActiveOwners) || maxActiveOwners < 1 || maxActiveOwners > 16 ||
+      !Number.isInteger(formationWaitMs) || formationWaitMs < 0 ||
       (enabled && (typeof python !== 'string' || !path.isAbsolute(python) ||
         typeof pythonPath !== 'string' || !path.isAbsolute(pythonPath) ||
         typeof baseUrl !== 'string' || !/^http:\/\/127\.0\.0\.1:\d{1,5}\/(?:[A-Za-z0-9._/-]+\/)?v1$/.test(baseUrl) ||
@@ -465,14 +467,21 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
         // previous boundary's background model request finishes (local kick: 20s).
         // Wait only for already accepted work; ordinary chat still degrades on failure.
         if (entry.capabilities?.methods?.includes('query_jobs')) {
-          const deadline = Date.now() + 330_000;
-          while (true) {
-            const result = await entry.rpc.request('query_jobs', { operation: 'list' });
-            const pending = result.jobs?.some(job => ['pending', 'processing', 'retry'].includes(job.worker?.state));
+          const deadline = Date.now() + formationWaitMs;
+          let acceptedJobs;
+          while (Date.now() < deadline) {
+            let result;
+            try { result = await entry.rpc.request('query_jobs', { operation: 'list' },
+              Math.max(100, Math.min(15_000, deadline - Date.now()))); }
+            catch (cause) { if (cause?.code === 'MEMORY_TIMEOUT') break; throw cause; }
+            acceptedJobs ??= new Set((result.jobs ?? []).map(job => job.job_id));
+            const pending = result.jobs?.some(job => acceptedJobs.has(job.job_id) &&
+              ['pending', 'processing', 'retry'].includes(job.worker?.state));
             if (!pending) break;
-            if (Date.now() >= deadline) return { state: 'withheld', reasonCode: 'MEMORY_FORMATION_PENDING' };
-            await new Promise(resolve => setTimeout(resolve, 250));
+            await new Promise(resolve => setTimeout(resolve, Math.max(0, Math.min(250, deadline - Date.now()))));
           }
+          // A stalled new job must not hide older usable memories. At the
+          // deadline, recall the current World and let the foreground answer.
         }
         const [world, style, identity, interaction] = await Promise.all([
           entry.rpc.request('preview_recall', { query, model_tier: destinationTier }),
