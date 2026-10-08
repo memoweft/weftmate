@@ -1,0 +1,14 @@
+{
+  "attempts": 15,
+  "reportedRequests": 97,
+  "inputTokens": 1016849,
+  "cachedInputTokens": 909632,
+  "outputTokens": 12135,
+  "reportedCostCny": 0.14967964,
+  "priceCnyPerMillion": {
+    "input": 1,
+    "cachedInput": 0.02,
+    "output": 2
+  },
+  "note": "按仓库预置 MiMo 单价估算，含诊断与失败重跑；中断且未返回用量的请求无法精确计价，不是账单。"
+}

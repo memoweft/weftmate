@@ -4,8 +4,7 @@ import { createUserMessage } from '@deepseek-ai/dsh-llm';
 import { defineTool } from '@deepseek-ai/dsh-tools';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { createNativeScheduleManager } from '../personal-access/schedules-native.mjs';
-import { personalExecutionIdentity } from './weftmate-personal-desktop.mjs';
+import { createNativeScheduleManager, scheduleSourceReceipt } from '../personal-access/schedules-native.mjs';
 import { scheduleContent } from '../personal-access/schedules-calendar.mjs';
 
 export const name = 'weftmate-personal-schedules';
@@ -33,13 +32,15 @@ export async function apply(ctx) {
   // Use the official runtime, including its transaction and durability barriers.
   schedule.apply(ctx);
   ctx.on('tools/pre-execute', async (exec, next) => {
-    if (personal(exec.agent) && exec.name === 'schedule_create') scheduleContent(exec.arguments.prompt);
+    if (personal(exec.agent) && exec.name === 'schedule_create') {
+      scheduleContent(exec.arguments.prompt); scheduleSourceReceipt(exec);
+    }
     return next();
   });
   ctx.on('tools/execute', async (exec, next) => {
     const result = await next();
     if (!personal(exec.agent) || result.isError || result.value?.code) return result;
-    if (exec.name === 'schedule_create' && result.value?.id) await manager.register(exec.agent, result.value, personalExecutionIdentity(exec).receiptId);
+    if (exec.name === 'schedule_create' && result.value?.id) await manager.register(exec.agent, result.value, scheduleSourceReceipt(exec));
     if (exec.name === 'schedule_delete' && result.value?.deleted) await manager.deleted(exec.agent, result.value.id);
     return result;
   });
@@ -64,7 +65,7 @@ export async function apply(ctx) {
     }
     if (!payload.messages?.some(m => m.source?.kind === 'user')) return decision;
     const policy = await request({ action: 'context', sessionId: payload.agent.id });
-    const guidance = `当前时间 ${new Date().toISOString()}；账号时区 ${policy.timeZone}。用户明确交代提醒/定时执行时直接调用 schedule_create，WeftMate 的日历重复和定时执行适配已安装，不需要读源码或编写调度脚本。prompt 是完整 JSON 字符串，例如 {"weftmate":1,"kind":"reminder","text":"交报告"}；定时工作示例 {"weftmate":1,"kind":"task","text":"生成周报文件","repeat":{"kind":"weekly","time":"08:00:00","weekday":1}}。纯提醒 kind=reminder，届时执行 kind=task；daily 不填 weekday。首次时间由 at 或 after_seconds 指定，后续日历规则在 repeat 中，二者可以不同。at 的 time_zone 用账号时区。固定间隔用 every_seconds。一次性不填 repeat。成功后一句话复述本地时间、规则、内容；失败不能说已建立。取消/暂停/恢复先 schedule_manage list，再操作准确 id。`;
+    const guidance = `当前时间 ${new Date().toISOString()}；账号时区 ${policy.timeZone}。消息以“现在执行定时任务”开头时，这是已到点的任务，直接执行内容；用户交代未来的提醒/定时执行时直接调用 schedule_create，WeftMate 的日历重复和定时执行适配已安装，不需要读源码或编写调度脚本。prompt 是完整 JSON 字符串，例如 {"weftmate":1,"kind":"reminder","text":"交报告"}；定时工作示例 {"weftmate":1,"kind":"task","text":"生成周报文件","repeat":{"kind":"weekly","time":"08:00:00","weekday":1}}。纯提醒 kind=reminder，届时执行 kind=task；daily 不填 weekday。首次时间由 at 或 after_seconds 指定，后续日历规则在 repeat 中，二者可以不同。at 的 time_zone 用账号时区。固定间隔用 every_seconds。一次性不填 repeat。成功后一句话复述本地时间、规则、内容；失败不能说已建立。取消/暂停/恢复先 schedule_manage list，再操作准确 id。`;
     return { ...decision, messages: [...decision.messages, createUserMessage({ source: { kind: 'plugin', plugin: name }, content: [{ type: 'text', text: guidance }] })] };
   }, { prepend: true });
   const lifecycle = ctx.get('weftmateSessionLifecycle');
