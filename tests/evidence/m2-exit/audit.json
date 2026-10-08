@@ -1,0 +1,192 @@
+{
+  "at": "2026-10-08T20:57:42.102Z",
+  "roots": [
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-3bd82ee6-3458-4c92-8002-c83c7ec3cd66",
+      "removedCredentials": 0,
+      "scanned": 219,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        53492,
+        42300
+      ],
+      "usage": {
+        "requests": 5,
+        "returnedUsage": 5,
+        "missingUsage": 0,
+        "input": 29059,
+        "cached": 18432,
+        "output": 942,
+        "knownCnyLowerBound": 0.01287964
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-ebea8133-75ad-40b5-a20c-c632f42ca570",
+      "removedCredentials": 0,
+      "scanned": 353,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        42736,
+        52800,
+        9476,
+        47980,
+        33232,
+        32060,
+        38324,
+        46012
+      ],
+      "usage": {
+        "requests": 28,
+        "returnedUsage": 28,
+        "missingUsage": 0,
+        "input": 183736,
+        "cached": 133632,
+        "output": 4020,
+        "knownCnyLowerBound": 0.06081664
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-fc383563-5009-4491-9fe3-d89c311eaa08",
+      "removedCredentials": 0,
+      "scanned": 217,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        41284,
+        42144
+      ],
+      "usage": {
+        "requests": 0,
+        "returnedUsage": 0,
+        "missingUsage": 0,
+        "input": 0,
+        "cached": 0,
+        "output": 0,
+        "knownCnyLowerBound": 0
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-f3894049-9f3c-4234-86dc-9dc81063e704",
+      "removedCredentials": 0,
+      "scanned": 574,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        28440,
+        32088,
+        57944,
+        30916,
+        30476,
+        21300,
+        54176,
+        11368,
+        32104
+      ],
+      "usage": {
+        "requests": 28,
+        "returnedUsage": 28,
+        "missingUsage": 0,
+        "input": 193310,
+        "cached": 142144,
+        "output": 3879,
+        "knownCnyLowerBound": 0.061766879999999996
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-4d979277-1fb7-4785-b2bd-5f89a06ea184",
+      "removedCredentials": 0,
+      "scanned": 464,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        6352,
+        6092,
+        55756,
+        57040,
+        27844,
+        47560,
+        34792,
+        39076,
+        40796
+      ],
+      "usage": {
+        "requests": 23,
+        "returnedUsage": 22,
+        "missingUsage": 1,
+        "input": 576060,
+        "cached": 243840,
+        "output": 5379,
+        "knownCnyLowerBound": 0.34785479999999996
+      }
+    },
+    {
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-c611aefb-9801-4218-be9c-db5a0a32c83b",
+      "removedCredentials": 0,
+      "scanned": 229,
+      "privateMatches": 0,
+      "recordedProcessPids": [
+        9468,
+        37396,
+        33472
+      ],
+      "usage": {
+        "requests": 1,
+        "returnedUsage": 1,
+        "missingUsage": 0,
+        "input": 10343,
+        "cached": 6144,
+        "output": 181,
+        "knownCnyLowerBound": 0.0046838800000000005
+      }
+    }
+  ],
+  "publicScanned": 19,
+  "publicMatches": 0,
+  "usage": {
+    "requests": 85,
+    "returnedUsage": 84,
+    "missingUsage": 1,
+    "input": 992508,
+    "cached": 544192,
+    "output": 14401,
+    "knownCnyLowerBound": 0.4880018399999999
+  },
+  "recordedProcessesStillAlive": [],
+  "closedHostExportChecks": [
+    {
+      "model": "mimo",
+      "root": "C:\\Temp\\weftmate-m2-exit-mimo-f3894049-9f3c-4234-86dc-9dc81063e704",
+      "artifactRoot": "C:\\Temp\\ex2-export-d6d95b53",
+      "method": "production BK-1 archive engine on closed isolated host",
+      "forgetCompleted": false,
+      "files": 110,
+      "recoverableForgottenName": true,
+      "filesWithForgottenName": [
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-mimo-f3894049-9f3c-4234-86dc-9dc81063e704-profile-conversations-d2dc3fe94acb3266b29613f9a1d6a67f0369ce6d97fcdcf58dbec24400cbd824-session-0b551047-5ee1-433a-ad21-69f3feb4ea7b--/session-0b551047-5ee1-433a-ad21-69f3feb4ea7b/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-mimo-f3894049-9f3c-4234-86dc-9dc81063e704-profile-conversations-d2dc3fe94acb3266b29613f9a1d6a67f0369ce6d97fcdcf58dbec24400cbd824-session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce--/session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-mimo-f3894049-9f3c-4234-86dc-9dc81063e704-profile-conversations-d2dc3fe94acb3266b29613f9a1d6a67f0369ce6d97fcdcf58dbec24400cbd824-session-6708c1df-7349-4de2-8399-18b676c7ccfa--/session-6708c1df-7349-4de2-8399-18b676c7ccfa/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-mimo-f3894049-9f3c-4234-86dc-9dc81063e704-profile-conversations-d2dc3fe94acb3266b29613f9a1d6a67f0369ce6d97fcdcf58dbec24400cbd824-session-a600bab2-0274-4a32-aeba-a1896debe338--/session-a600bab2-0274-4a32-aeba-a1896debe338/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-mimo-f3894049-9f3c-4234-86dc-9dc81063e704-profile-conversations-d2dc3fe94acb3266b29613f9a1d6a67f0369ce6d97fcdcf58dbec24400cbd824-session-f31f526a-3791-43b8-a9e2-5f68cea135eb--/session-f31f526a-3791-43b8-a9e2-5f68cea135eb/session.jsonl.zstd",
+        "dsh-home/storages/session_projcache.json",
+        "personal-access/accounts/owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547/memory-home/memoweft/memoweft.sqlite3",
+        "personal-access/store.json"
+      ]
+    },
+    {
+      "model": "lan",
+      "root": "C:\\Temp\\weftmate-m2-exit-lan-4d979277-1fb7-4785-b2bd-5f89a06ea184",
+      "artifactRoot": "C:\\Temp\\ex2-export-eea5a86d",
+      "method": "production BK-1 archive engine on closed isolated host",
+      "forgetCompleted": false,
+      "files": 110,
+      "recoverableForgottenName": true,
+      "filesWithForgottenName": [
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-lan-4d979277-1fb7-4785-b2bd-5f89a06ea184-profile-conversations-2e946437f3e88b9246f623808da1ae3f580fb545f27f2ead6d21cdb56d73a6a6-session-5d594621-fe60-4d17-97da-2be1f391cc4a--/session-5d594621-fe60-4d17-97da-2be1f391cc4a/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-lan-4d979277-1fb7-4785-b2bd-5f89a06ea184-profile-conversations-2e946437f3e88b9246f623808da1ae3f580fb545f27f2ead6d21cdb56d73a6a6-session-743f0ab7-c83b-46e8-bc11-5abe56d2c4a8--/session-743f0ab7-c83b-46e8-bc11-5abe56d2c4a8/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-lan-4d979277-1fb7-4785-b2bd-5f89a06ea184-profile-conversations-2e946437f3e88b9246f623808da1ae3f580fb545f27f2ead6d21cdb56d73a6a6-session-920c7c9c-50de-45a8-9563-ffab8396aeae--/session-920c7c9c-50de-45a8-9563-ffab8396aeae/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-lan-4d979277-1fb7-4785-b2bd-5f89a06ea184-profile-conversations-2e946437f3e88b9246f623808da1ae3f580fb545f27f2ead6d21cdb56d73a6a6-session-be196655-1076-49ee-b417-aa6f88856ae6--/session-be196655-1076-49ee-b417-aa6f88856ae6/session.jsonl.zstd",
+        "dsh-home/sessions/--C-Temp-weftmate-m2-exit-lan-4d979277-1fb7-4785-b2bd-5f89a06ea184-profile-conversations-2e946437f3e88b9246f623808da1ae3f580fb545f27f2ead6d21cdb56d73a6a6-session-ef8c50c5-1045-4c17-96e1-c818e1814cb3--/session-ef8c50c5-1045-4c17-96e1-c818e1814cb3/session.jsonl.zstd",
+        "dsh-home/storages/session_projcache.json",
+        "personal-access/accounts/owner-373f2781-5765-4f8e-a5dc-24bf05621448/memory-home/memoweft/memoweft.sqlite3",
+        "personal-access/store.json"
+      ]
+    }
+  ]
+}
