@@ -2,6 +2,7 @@
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { activateMobileUiRelease, publishMobileUi } from '../src/personal-access/mobile-ui-release.mjs';
+import { checkMobileUi } from '../apps/mobile-ui/src/check.mjs';
 
 const repository = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
 const sourceDir = path.join(repository, 'apps', 'mobile-ui', 'www');
@@ -20,6 +21,7 @@ if (!outputDir || !path.isAbsolute(outputDir) ||
       options.has('--release-notes') || options.has('--min-native-version-code')))) {
   throw new Error('an absolute output directory and one publish or activation action are required');
 }
+if (!options.has('--activate-release')) await checkMobileUi();
 const manifest = options.has('--activate-release')
   ? await activateMobileUiRelease({ outputDir, releaseId: options.get('--activate-release') })
   : await publishMobileUi({ sourceDir, outputDir,

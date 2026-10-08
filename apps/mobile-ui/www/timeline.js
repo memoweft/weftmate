@@ -4,20 +4,7 @@
   const node = (tag, cls, text) => { const n = document.createElement(tag); n.className = cls || ''; if (text) n.textContent = text; return n }
   const elapsed = (ms) => ms < 1000 ? '不到 1 秒' : ms < 60000 ? `${Math.round(ms / 1000)} 秒` : `${Math.floor(ms / 60000)} 分 ${Math.round(ms % 60000 / 1000)} 秒`
   function render(events, list, options = {}) {
-    const ordered = [...events].sort((a, b) => a.seq - b.seq), groups = [], steps = new Map()
-    let group = null
-    for (const raw of ordered) {
-      const event = raw.type === 'artifact.created' && raw.data?.completedStep ? { ...raw, type: 'step.completed', data: raw.data.completedStep } : raw
-      if (event.type.startsWith('step.')) {
-        const data = event.data || {}, key = `${data.taskId}/${data.stepId}`
-        let step = steps.get(key)
-        if (!step) {
-          if (!group || group.taskId !== data.taskId) { group = { seq: event.seq, taskId: data.taskId, steps: [] }; groups.push(group) }
-          step = { ...data, at: event.at, endAt: event.type === 'step.completed' ? event.at : null }; group.steps.push(step); steps.set(key, step)
-        } else { Object.assign(step, data); if (event.type === 'step.completed') step.endAt = event.at }
-        if (raw.type === 'artifact.created') group = null
-      } else if (!['turn.started', 'turn.ended', 'task.started', 'task.ended'].includes(event.type)) group = null
-    }
+    const {ordered, groups, cards} = WeftUiCore.projectTimeline(events)
     const existing = new Map([...list.children].filter(n => n.dataset.timeline).map(n => [n.dataset.timeline, n]))
     const seen = new Set()
     const put = (key, seq, build) => {
@@ -73,8 +60,6 @@
       }
       row.replaceChildren(details)
     })
-    const cards = ordered.flatMap(event => event.type === 'artifact.created' && event.data?.artifacts?.length
-      ? event.data.artifacts.map(artifact => ({ ...event, data: { ...event.data, ...artifact } })) : [event])
     for (const event of cards) {
       if (!/^(approval\.|question\.|artifact\.|task\.queued)/.test(event.type)) continue
       const data = event.data || {}, family = event.type.split('.')[0]
@@ -104,15 +89,9 @@
   }
   function appendReferences(text, parent, options) {
     if (!options.openReference) return
-    let args
-    try { args = JSON.parse(text).arguments; if (typeof args === 'string') args = JSON.parse(args) } catch { return }
-    if (!args) return
-    const strings = value => (Array.isArray(value) ? value : [value]).filter(value => typeof value === 'string' && value)
-    for (const [kind, values] of [['file', [...strings(args.file_path), ...strings(args.filePath), ...strings(args.path), ...strings(args.paths)]], ['webpage', [...strings(args.url), ...strings(args.urls)]]]) {
-      for (const value of new Set(values)) {
-        const link = node('button', 'timeline-action step-reference', value); link.type = 'button'
-        link.addEventListener('click', () => options.openReference(`${kind}:${value}`, link)); parent.append(link)
-      }
+    for (const reference of WeftUiCore.resourceReferences(text)) {
+      const link = node('button', 'timeline-action step-reference', reference.value); link.type = 'button'
+      link.addEventListener('click', () => options.openReference(reference.key, link)); parent.append(link)
     }
   }
   window.WeftTimeline = { render }
