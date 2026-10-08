@@ -108,7 +108,8 @@
 | GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local"}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
 | POST `/sessions/{sessionId}/archive` | 空对象 `{}` | 200 `{sessionId,archived:true}`；幂等归档，保留历史、经验与工作目录 | 404 `SESSION_UNAVAILABLE` | 桌、手、安；Apple 可按契约接入 |
 | POST `/sessions/{sessionId}/unarchive` | 空对象 `{}` | 200 `{sessionId,archived:false}`；幂等恢复 | 404 `SESSION_UNAVAILABLE` | 同上 |
-| DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略） | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
+| GET `/sessions/{sessionId}/forget-preview` | 无；Cookie 与 `account:manage` | 200 `{ownerId,worldRevision,itemCount,evidenceCount,evidenceIds,items:[{id,kind,text,itemType}]}`；只读，预览该对话全部来源遗忘的级联范围 | 404 `SESSION_UNAVAILABLE`；503记忆不可用 | 同上 |
+| DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略）；勾选遗忘可另传 `deleteConversationSnippets:false`（默认）及预览的 `memoryWorldRevision` | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
 
 普通会话与项目 / 浏览器 / 接管会话均返回已绑定的 `modelProfileId`；旧会话无法确定时可为 `null`。A5 修复普通会话曾漏掉该既有字段、导致 Apple 无法确认原模型的问题。
 
@@ -218,7 +219,7 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 现有成果是宿主登记且校验过的 UTF-8 文本、≤128 KiB，支持相应文本 MIME；未提供客户端直接登记成果/任意路径下载 API。来源校验通过才可打开/保存，客户端可核对元数据与字节哈希。
 
-### 3.9 记忆（11）
+### 3.9 记忆（14）
 
 `kind` 为 `cognition / entity / relationship / event`；下表均有顶层 `ownerId`。写入体 ≤12 KiB，`expectedWorldRevision` 是非负安全整数。
 
@@ -229,6 +230,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | GET `/memory/items` | `kind` 默认cognition；`query` ≤120 UTF-16；`limit` 默认50、1–50；`after=<nextCursor>` | 200 `{"items":[{"id":"memory:1","kind":"cognition","text":"偏好中文","truncated":false,"currentState":"current","createdAt":"…","updatedAt":"…","lifecycle":{"invalidAt":null,"archivedAt":null,"mutedAt":null},"sourceCount":1}],"worldRevision":8,"nextCursor":null,"hasMore":false,"searchScope":"account_snapshot"}` | 409 `MEMORY_REVISION_CHANGED`；413 `MEMORY_SEARCH_LIMIT`；503 `MEMORY_DISABLED` | 桌、手、安、苹 |
 | GET `/memory/items/{kind}/{itemId}` | 无 | 200 `{"item":{…},"worldRevision":8,"availableActions":{"correct":{"available":true},"mute":{"available":true},"delete":{"available":false,"reasonCode":"MEMORY_DELETE_UNAVAILABLE"}}}` | 404 `NOT_FOUND`；503 `MEMORY_RESPONSE_INVALID` | 桌、手、安、苹 |
 | GET `/memory/items/{kind}/{itemId}/sources` | 无 | 200 `{"sources":[{"evidenceId":"evidence:1","relation":"supports","currentnessState":"current","permissions":{"allowLocalRead":true,"allowCloudRead":false,"allowInference":true},"contentAvailable":true,"summary":"…","rawContent":"…","rawContentTruncated":false,"recordedAt":"…"}],"worldRevision":8}` | 404 `NOT_FOUND`；503 `MEMORY_RESPONSE_INVALID` | 桌、手、安、苹 |
+| GET `/memory/items/{kind}/{itemId}/forget-preview` | 无 | 200 `{ownerId,worldRevision,itemCount,evidenceCount,evidenceIds,items:[{id,kind,text,itemType}]}`；当前项与将级联删除的全部记忆，名称完整返回；原库只读 | 404 `NOT_FOUND`；503记忆不可用 | 桌、手、安（界面）；苹（接口） |
+| GET `/memory/evidence/{evidenceId}/forget-preview` | 无 | 同上，预览单条来源的级联范围 | 同上 | 桌、手、安（界面）；苹（接口） |
 | POST `/memory/items/{kind}/{itemId}/correct` | `requestId,expectedWorldRevision,text`；非entity，非空文字≤4,000 UTF-16 | 200或409 `Receipt` | 422 `MEMORY_ACTION_UNSUPPORTED`；409 `MEMORY_REQUEST_CONFLICT / MEMORY_REPLAY_REDACTED` | 桌、手、安、苹 |
 | POST `/memory/items/{kind}/{itemId}/mute` | `requestId,expectedWorldRevision` | 200或409 `Receipt` | 503 `MEMORY_ACTION_UNSUPPORTED / MEMORY_UNAVAILABLE`；409请求冲突 | 桌、手、安、苹 |
 | DELETE `/memory/items/{kind}/{itemId}` | `requestId,expectedWorldRevision`；可选 `deleteConversationSnippets:false`（JSON体） | 200或409 `Receipt` | 503 `MEMORY_DELETE_UNAVAILABLE`；409请求冲突 | 桌、手、安、苹 |
@@ -240,7 +243,7 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 FG-1：遗忘按来源级联清除 Evidence（来源证据）、依赖理解、关系和无剩余依据的人物／别名，清除 Core（记忆核心）派生上下文、宿主注入／采用标记、投影及纠正日志副本。SQLite（嵌入式数据库）清理使用 `secure_delete` 和 WAL（预写日志）截断；`storageCleanup.state=pending` 表示仍有底层或宿主清理待完成，不能宣称不可恢复。原请求回执和 `retry-cleanup` 可在重启后继续核对。
 
-`deleteConversationSnippets` 默认 `false`，界面暂不提供开关。显式 `true` 时另外清除 Core 保存的含原话上下文片段，以及该账户原生会话日志／个人命令记录中含来源原话的文字，保留会话及其他片段。选项属于原请求身份的一部分，重试不得改变。默认保留的对话原文和过去已生成的备份可含原话；专用记忆导出始终排除被遗忘的正式记忆。若随后删除相应对话，新的 BK-1 备份也应不再包含这些对话与记忆的副本。
+D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手机界面的记忆页「忘掉」确认框先列出级联记忆名称与数量；删除对话勾选遗忘时显示汇总数量。两类确认框均提供「同时删除对话里含这句话的原话」，每次打开默认不勾。显式 `true` 才另外清除该账户原生会话日志／个人命令记录中含来源原话的文字，保留会话及其他片段。Core 自己的原话副本无论是否勾选均清除；无关证据的前置 AI 上下文原样保留。预览只读，不创建回执、不递增修订、不调用模型；预览失败或修订与详情不一致时不可确认。记忆删除沿用 `expectedWorldRevision`，会话删除传 `memoryWorldRevision`；修订变化返回409 `MEMORY_REVISION_CHANGED`，需要重新核对。选项属于原请求身份的一部分，重试不得改变。默认保留的对话原文和过去已生成的备份可含原话；专用记忆导出始终排除被遗忘的正式记忆。若随后删除相应对话，新的 BK-1 备份也应不再包含这些对话与记忆的副本。
 
 桌面导出通过受限的原生保存接口选择文件位置，文件正文仍来自上述已鉴权 `/personal/v1/memory/export`；保存对话框结束后重新取当前导出并核对账户，防止保存期间切换账户或遗忘后写出旧内容。浏览器使用网页下载。
 

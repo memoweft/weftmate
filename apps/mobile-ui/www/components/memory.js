@@ -212,7 +212,7 @@ function renderMemoryActions(target,token){const memory=state.memory,detail=memo
       const preview=choice.preview,scope=el('p','',preview?`将忘掉 ${preview.itemCount} 项记忆，清除 ${preview.evidenceCount} 条来源。以下内容会一起忘掉：`:
         choice.previewError||'正在读取将一起忘掉的记忆…');scope.setAttribute('role','status');body.append(scope);
       if(preview){const list=el('ul','memory-sources');for(const item of preview.items)list.append(el('li','',uiCore.forgetItemSummary(item)));body.append(list)}
-      const label=el('label'),snippets=el('input');snippets.type='checkbox';snippets.checked=choice.deleteConversationSnippets===true;
+      const label=el('label','session-forget'),snippets=el('input');snippets.type='checkbox';snippets.checked=choice.deleteConversationSnippets===true;
       snippets.addEventListener('change',()=>{choice.deleteConversationSnippets=snippets.checked});
       label.append(snippets,document.createTextNode('同时删除对话里含这句话的原话'));body.append(label,
         el('p','muted','默认保留对话原文；勾选后删除对应原生对话片段及个人命令副本。以前的备份仍保留。'));
