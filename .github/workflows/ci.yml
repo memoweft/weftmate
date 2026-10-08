@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # M2e candidate (Core #89); replace with its squash commit after merge.
-          ref: 2c1b1efb886cc676ca6ccc38883ea5677a48fca7
+          ref: 49ba50c7a95e71d30d9a62a278c22d4b360bb2cb
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
