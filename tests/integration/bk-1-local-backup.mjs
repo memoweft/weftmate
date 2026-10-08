@@ -97,7 +97,10 @@ try {
     await page.getByRole('dialog', { name: '恢复备份', exact: true }).screenshot({ path: join(evidence, 'desktop-restore-confirm.png') }); await page.getByRole('button', { name: '确认恢复', exact: true }).click(); await closed();
     await launch(); const restored = (await api('/backups')).body.status; assert.equal(restored.state, 'succeeded', JSON.stringify(restored)); assert.ok(restored.restored); assert.ok((await api('/sessions')).body.sessions.some(row => row.sessionId === sessionId)); assert.equal((await api('/settings/approvals')).body.mode, 'ask');
     assert.ok((await api('/memory/items?kind=cognition')).body.items.some(row => row.text.includes('紫薯'))); assert.equal((await api(`/sessions/${sessionId}/resources`)).body.outputs.length, artifacts.body.outputs.length);
-    await settingsPage(); await captureBackup('desktop-restored.png'); await app.close();
+    await settingsPage(); await captureBackup('desktop-restored.png');
+    const restoredDeletion = await api(`/sessions/${sessionId}`, { forgetMemories: false }, 'DELETE');
+    assert.equal(restoredDeletion.status, 200, 'first restored startup owns the native session disposer: ' + JSON.stringify(restoredDeletion.body));
+    await app.close();
     const other = join(base, 'other-profile'); await mkdir(other); await writeFile(join(other, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
     // A different installation ID and empty account prove that source credentials are not required.
     const targetSetup = await createPersonalAccessService({ root: join(other, 'personal-access'), port: 0, backend });
@@ -112,6 +115,6 @@ try {
     const targetStore = JSON.parse(await readFile(join(other, 'personal-access/store.json'), 'utf8'));
     const ownSession = targetStore.accounts[Object.keys(targetStore.accounts).find(id => targetStore.accounts[id].sessions[sessionId])];
     assert.ok(ownSession); await settingsPage(); await captureBackup('desktop-other-computer.png');
-    const summary = { desktop: true, dailyDeferredDuringMiMoTurn: true, dailyAndManualPreserveWindowIdsAndPid: true, model: 'mimo-v2.6-flash', conversationAndMemory: true, artifactCount: artifacts.body.outputs.length, backupVerified: true, deletedConversationRestored: true, settingsRestored: true, memoryRestored: true, artifactsRestored: true, portableRestoreAndRelogin: true, credentialReconfigured: true };
+    const summary = { desktop: true, dailyDeferredDuringMiMoTurn: true, dailyAndManualPreserveWindowIdsAndPid: true, model: 'mimo-v2.6-flash', conversationAndMemory: true, artifactCount: artifacts.body.outputs.length, backupVerified: true, deletedConversationRestored: true, restoredSessionCanBeDeleted: true, settingsRestored: true, memoryRestored: true, artifactsRestored: true, portableRestoreAndRelogin: true, credentialReconfigured: true };
     await writeFile(join(evidence, 'verification.json'), JSON.stringify(summary, null, 2)); console.log(JSON.stringify(summary));
 } finally { await app?.close().catch(() => {}); console.log(`Isolated BK-1 profile: ${base}`); }

@@ -7,6 +7,7 @@
   "artifactCount": 1,
   "backupVerified": true,
   "deletedConversationRestored": true,
+  "restoredSessionCanBeDeleted": true,
   "settingsRestored": true,
   "memoryRestored": true,
   "artifactsRestored": true,
