@@ -1,0 +1,356 @@
+[
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approval-mode"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/events?limit=100"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/questions?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands/by-request/ui-muz4n9c0-r-4dhm8e3z"
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/commands",
+    "body": {
+      "requestId": "<synthetic-request-id>",
+      "kind": "session.cancel",
+      "targetDeviceId": "host-0c905e31-3050-41f3-bb1f-28b548614826",
+      "sessionId": "session-22222222-2222-4222-8222-222222222222"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/events?limit=100"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands/by-request/ui-muz4n9c0-16-aiki0xru"
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/commands",
+    "body": {
+      "requestId": "<synthetic-request-id>",
+      "kind": "session.message",
+      "targetDeviceId": "host-0c905e31-3050-41f3-bb1f-28b548614826",
+      "sessionId": "session-11111111-1111-4111-8111-111111111111",
+      "text": "把报告写得简短一些",
+      "mode": "queue"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/events?limit=100&afterSeq=5"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approval-mode"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/events?limit=100"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/questions?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/tasks/cmd-demo"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approval-mode"
+  },
+  {
+    "method": "PATCH",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approval-mode",
+    "body": {
+      "mode": "ask"
+    }
+  },
+  {
+    "method": "POST",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals/12345678-1234-4234-8234-123456789abc",
+    "body": {
+      "requestId": "<synthetic-request-id>",
+      "outcome": "allowed-once",
+      "scope": "once"
+    }
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/events?limit=100"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/events/3/detail"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/resources?afterSeq=-1"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/artifacts/report-new/preview"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/resources?afterSeq=-1"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/memory/status"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/memory/items?kind=cognition&limit=20"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/memory/items/cognition/fe1b-memory"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/memory/items/cognition/fe1b-memory/sources"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/events?limit=100"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-22222222-2222-4222-8222-222222222222/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-33333333-3333-4333-8333-333333333333/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approval-mode"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/events?limit=100"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/approvals?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/sessions/session-11111111-1111-4111-8111-111111111111/questions?limit=50"
+  },
+  {
+    "method": "GET",
+    "path": "/personal/v1/commands?limit=50"
+  }
+]

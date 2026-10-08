@@ -30,7 +30,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
   try{
     await page.addInitScript(({approval})=>{
       const sessionModes={s1:'auto',s2:'ask'},requests=[];
-      window.fixture={sessionModes,defaultMode:'auto',requests,approval:null,failModeWrite:false};
+      window.fixture={sessionModes,defaultMode:'auto',requests,approval:null,history:[],failModeWrite:false};
       window.weftNative={postMessage(json){const request=JSON.parse(json);requests.push(request);let result={},error;
         const {method,params}=request,f=window.fixture;
         if(method==='app.bootstrap')result={loggedIn:false,username:'',owner:'',model:null,busy:false};
@@ -53,7 +53,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
         if(method==='shared.questions.list')result={questions:[],nextBefore:null,hasMore:false};
         if(method==='shared.tasks.detail')result={taskId:'cmd-demo',sessionId:'s1',source:{commandId:'cmd-demo',kind:'session.message',
           sessionId:'s1',receiptId:'rpc:demo.1'},artifacts:[],control:{state:'active',canStop:false,canSupplement:false}};
-        if(method==='shared.sessions.events')result={source:'host',sessionId:params.sessionId,events:[],nextSeq:-1,hasMore:false};
+        if(method==='shared.sessions.events')result={source:'host',sessionId:params.sessionId,events:f.history,nextSeq:f.history.at(-1)?.seq??-1,hasMore:false};
         if(method==='shared.sessions.list')result={source:'host',hostAvailable:true,sessions:[{sessionId:'s1',title:'整理临时文件',sendAvailable:true,source:'host'},
           {sessionId:'s2',title:'另一个合成对话',sendAvailable:true,source:'host'}]};
         if(method==='shared.outbox.list')result={source:'host',commands:[]};
@@ -108,10 +108,12 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
     await page.getByRole('button',{name:'默认审批模式 · 先出计划'}).click();await page.waitForFunction(()=>!approvalModeState.loading);
     assert.equal(await menu.locator('[aria-checked="true"]').getAttribute('data-mode'),'plan');await page.keyboard.press('Escape');
     await page.evaluate(()=>page('chat'));await seed();
-    const showApproval=async()=>{await page.evaluate(()=>{
+    const showApproval=async()=>{await page.waitForFunction(()=>!state.sharedLoading);await page.evaluate(()=>{
+      stopSharedPoll();
       fixture.resetApproval();resetToolApprovals();conversationTasks.entries.clear();
-      state.sharedEvents=[{seq:0,type:'user.message',data:{text:'请整理临时文件，运行前让我确认。',receiptId:'rpc:demo.1'}},
-        {seq:1,type:'assistant.message',data:{text:'整理脚本已准备好。先确认这次操作的影响范围。'}}];renderSharedConversation();
+      fixture.history=[{seq:0,type:'user.message',data:{text:'请整理临时文件，运行前让我确认。',receiptId:'rpc:demo.1'}},
+        {seq:1,type:'assistant.message',data:{text:'整理脚本已准备好。先确认这次操作的影响范围。'}}];
+      state.sharedEvents=fixture.history;renderSharedConversation();
     });await page.evaluate(()=>refreshToolApprovals());await page.evaluate(()=>{$('chat-scroll').scrollTop=0;closeToast()})};
     await showApproval();const card=page.locator('.conversation-approval');
     assert.match(await card.innerText(),/风险类别：执行脚本、删除文件.*可能无法撤销/s);

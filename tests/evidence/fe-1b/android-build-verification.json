@@ -1,0 +1,12 @@
+{
+  "jvmTests": 27,
+  "jvmFailures": 0,
+  "standardDebugBuild": true,
+  "isolatedDebugBuild": true,
+  "isolatedInstrumentationBuild": true,
+  "mobileGeneratedAssetCheck": true,
+  "nativeVersionName": "0.8.6",
+  "nativeVersionCode": 19,
+  "standardCommand": "gradle --offline :app:testDebugUnitTest :app:assembleDebug --console=plain",
+  "isolatedCommand": "gradle --offline -I ../../tests/evidence/fe-1b/isolate.gradle :app:assembleDebug :app:assembleDebugAndroidTest --console=plain"
+}
