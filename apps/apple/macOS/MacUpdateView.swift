@@ -32,7 +32,7 @@ struct MacUpdateView: View {
                             if updates.checking {
                                 ProgressView().controlSize(.small)
                             } else {
-                                Image(systemName: statusSymbol).foregroundStyle(statusColor)
+                                WeftIcon( statusSymbol).foregroundStyle(statusColor)
                             }
                             Text(statusTitle).font(.title3.weight(.semibold)).foregroundStyle(Weave.ink)
                         }
@@ -120,12 +120,12 @@ struct MacUpdateView: View {
 
     private var statusSymbol: String {
         switch updates.phase {
-        case .idle, .checking: "arrow.clockwise"
-        case .updateAvailable: "arrow.down.circle"
-        case .upToDate: "checkmark.circle"
-        case .localIsNewer: "arrow.up.circle"
-        case .noCompatibleRelease: "desktopcomputer"
-        case .failure: "exclamationmark.circle"
+        case .idle, .checking: "sync"
+        case .updateAvailable: "download"
+        case .upToDate: "allow"
+        case .localIsNewer: "send"
+        case .noCompatibleRelease: "desktop"
+        case .failure: "warn"
         }
     }
 

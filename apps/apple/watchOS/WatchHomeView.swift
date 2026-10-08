@@ -12,6 +12,14 @@ import WeftMateCore
     private let session = WCSession.default
     override init() {
         super.init()
+        #if DEBUG && targetEnvironment(simulator)
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--ic2-icons-fixture") {
+            snapshot = WatchTimelineSnapshot(accountKey: "ic2-synthetic", sessionID: "ic2-fixture", taskID: nil,
+                progress: "等待审批", running: false, assistantSummary: "", approvals: [
+                    WatchApproval(id: "ic2-approval", summary: "运行合成脚本")], completedTaskIDs: [])
+            return
+        }
+        #endif
         if WCSession.isSupported() { session.delegate = self; session.activate() }
     }
     nonisolated func session(_ session: WCSession, activationDidCompleteWith activationState: WCSessionActivationState, error: Error?) {
@@ -73,14 +81,14 @@ struct WatchHomeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
                     if let snapshot = model.snapshot {
-                        Label(snapshot.progress, systemImage: snapshot.running ? "gearshape" : "checkmark.circle")
+                        WeftLabel(snapshot.progress, icon: snapshot.approvals.isEmpty ? (snapshot.running ? "tool" : "allow") : "approval", size: 16)
                             .font(.caption).lineLimit(1).accessibilityIdentifier("watchProgress")
                         ForEach(snapshot.approvals) { approval in
                             VStack(alignment: .leading, spacing: 8) {
-                                Text(approval.summary).font(.caption)
+                                WeftLabel(approval.summary, icon: "approval", size: 16).font(.caption)
                                 HStack {
-                                    Button("允许") { model.decide(approval, allowed: true) }
-                                    Button("拒绝") { model.decide(approval, allowed: false) }
+                                    Button { model.decide(approval, allowed: true) } label: { WeftLabel("允许", icon: "allow", size: 16) }
+                                    Button { model.decide(approval, allowed: false) } label: { WeftLabel("拒绝", icon: "deny", size: 16) }
                                 }.disabled(model.busy || !model.reachable)
                             }.padding(8).background(.quaternary, in: RoundedRectangle(cornerRadius: 10))
                         }

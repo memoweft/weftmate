@@ -3,6 +3,7 @@ import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nati
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { validArtifactFileName } from './personal-artifacts/index.mjs';
+import { windowIcon, notificationIcon } from './app-icons.mjs';
 
 export function desktopNotification(event) {
   if (event.type === 'approval.requested') return { title: '需要审批', body: '打开对话查看并决定是否允许。' };
@@ -36,7 +37,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   const bounds = restoreDesktopBounds(saved, screen.getAllDisplays());
   const win = new BrowserWindow({
     ...bounds, minWidth: 760, minHeight: 520,
-    title: 'WeftMate', show: false, backgroundColor: palette().color,
+    title: 'WeftMate', icon: windowIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI), show: false, backgroundColor: palette().color,
     ...(process.platform === 'win32' ? { titleBarStyle: 'hidden', titleBarOverlay: palette() } : {}),
     webPreferences: { session: desktopSession, preload: join(import.meta.dirname, 'personal-desktop-preload.cjs'),
       nodeIntegration: false, contextIsolation: true, sandbox: true, webSecurity: true },
@@ -111,7 +112,12 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
   win.webContents.on('page-title-updated', event => { event.preventDefault(); win.setTitle('WeftMate'); });
   win.webContents.on('will-navigate', (event, url) => { if (url !== uiUrl) event.preventDefault(); });
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-  const updatePalette = () => { if (!win.isDestroyed() && process.platform === 'win32') win.setTitleBarOverlay(resolvedPalette ?? palette()); };
+  const updatePalette = () => {
+    if (!win.isDestroyed() && process.platform === 'win32') {
+      win.setTitleBarOverlay(resolvedPalette ?? palette());
+      win.setIcon(windowIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI));
+    }
+  };
   nativeTheme.on('updated', updatePalette);
   const save = () => {
     if (!win.isDestroyed()) writeFileSync(stateFile, JSON.stringify({ bounds: win.getNormalBounds(), maximized: maximizeOnShow || win.isMaximized() }));
@@ -139,7 +145,7 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
           for (const event of page.events || []) {
             const message = (last !== undefined || initialized) && desktopNotification(event);
             if (!message || stopped || !Notification.isSupported()) continue;
-            const notification = new Notification({ ...message, title: `WeftMate · ${message.title}` });
+            const notification = new Notification({ ...message, icon: notificationIcon, title: `WeftMate · ${message.title}` });
             notifications.add(notification);
             notification.on('click', () => show(row.sessionId));
             notification.on('close', () => notifications.delete(notification));

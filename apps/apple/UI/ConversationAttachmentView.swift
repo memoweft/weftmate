@@ -53,7 +53,7 @@ struct ConversationAttachmentTile: View {
                 AttachmentThumbnail(file: thumbnail, isImage: reference.isImage)
                 Text(reference.name).lineLimit(2).font(.callout)
                 Spacer(minLength: 0)
-                Image(systemName: "arrow.up.right").font(.caption)
+                WeftIcon("open", size: 16).font(.caption)
             }.padding(10).frame(maxWidth: .infinity, alignment: .leading)
                 .background(Weave.soft, in: RoundedRectangle(cornerRadius: 12))
         }
@@ -84,10 +84,10 @@ struct AttachmentThumbnail: View {
         Group {
             #if os(macOS)
             if let file, let image = NSImage(contentsOf: file) { Image(nsImage: image).resizable().scaledToFit() }
-            else { Image(systemName: isImage ? "photo" : "doc") }
+            else { WeftIcon(isImage ? "image" : "file") }
             #else
             if let file, let image = UIImage(contentsOfFile: file.path) { Image(uiImage: image).resizable().scaledToFit() }
-            else { Image(systemName: isImage ? "photo" : "doc") }
+            else { WeftIcon(isImage ? "image" : "file") }
             #endif
         }.frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 8))
     }
@@ -113,7 +113,7 @@ struct ConversationAttachmentPreview: View {
             HStack {
                 Text(name).font(.headline).lineLimit(2)
                 Spacer()
-                Button(action: close) { Image(systemName: "xmark") }.accessibilityLabel("关闭预览")
+                Button(action: close) { WeftIcon("deny") }.accessibilityLabel("关闭预览")
             }
             if loading { ProgressView("正在下载…") }
             if let error { Text(error).font(.callout).foregroundStyle(Weave.danger) }
@@ -121,7 +121,7 @@ struct ConversationAttachmentPreview: View {
                 AttachmentContentPreview(file: file, contentType: contentType).frame(maxWidth: .infinity, maxHeight: .infinity)
                 HStack {
                     Button("保存文件") { exporting = true }.buttonStyle(.borderedProminent)
-                    ShareLink(item: file) { Label("分享", systemImage: "square.and.arrow.up") }
+                    ShareLink(item: file) { WeftLabel("分享", icon: "open") }
                 }
             } else { Spacer() }
             if let exportError { Text(exportError).font(.caption).foregroundStyle(Weave.danger) }

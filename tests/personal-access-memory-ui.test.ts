@@ -195,6 +195,7 @@ test('memory view preserves chat draft and discards a successful response for an
       for (const fn of this.listeners.get(name) ?? []) fn({ currentTarget: this, target: this, preventDefault() {} })
     }
     append(...nodes: Node[]) { this.children.push(...nodes) }
+    prepend(...nodes: Node[]) { this.children.unshift(...nodes) }
     replaceChildren(...nodes: Node[]) { this.children = nodes }
     setAttribute() {}
     removeAttribute() {}
@@ -329,15 +330,19 @@ test('memory view preserves chat draft and discards a successful response for an
   const storage = new Map<string, string>()
   const document = { body: { classList: { toggle() {} } }, visibilityState: 'visible',
     getElementById: get, createElement: (tag: string) => new Node(tag),
+    createElementNS: (_namespace: string, tag: string) => new Node(tag),
     querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : null,
     querySelectorAll: () => [], addEventListener() {} }
   const window = { location: { hash: '', pathname: '/personal/v1/ui', search: '' },
-    history: { replaceState() {} }, addEventListener() {} }
-  runInNewContext(source, { document, window, location: { protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl,
+    history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }
+  const context = { document, window, location: { protocol: 'http:' }, fetch, URL, URLSearchParams, AbortSignal, Intl,
     globalThis: { crypto: { randomUUID: () => `synthetic-${++requestSequence}` } },
     localStorage: { getItem: (key: string) => storage.get(key) ?? null,
       setItem: (key: string, value: string) => { storage.set(key, value) }, removeItem: (key: string) => { storage.delete(key) } },
-    setTimeout, clearTimeout, setInterval: () => 1, clearInterval() {}, console })
+    setTimeout, clearTimeout, setInterval: () => 1, clearInterval() {}, console }
+  const icons = await readFile(join(root, 'src', 'personal-access-ui', 'icons.js'), 'utf8')
+  runInNewContext(icons + '\nwindow.WeftIcons = globalThis.WeftIcons;', context)
+  runInNewContext(source, context)
   const flush = () => new Promise((resolve) => setTimeout(resolve, 0))
   for (let i = 0; i < 20 && get('assistant-view').hidden; i++) await flush()
   assert.equal(get('assistant-view').hidden, false)

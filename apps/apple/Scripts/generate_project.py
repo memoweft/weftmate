@@ -82,9 +82,10 @@ def target(name, platform, sources, testing=None):
     phases.append(obj(name + ":frameworks", isa="PBXFrameworksBuildPhase", buildActionMask=2147483647, files=framework_files, runOnlyForDeploymentPostprocessing=0))
     resource_files = []
     if not is_test:
-        catalog = "Resources/Spirit.xcassets"
-        resource_files.append(obj(name + ":resource:" + catalog, isa="PBXBuildFile",
-                                  fileRef=file(catalog, "folder.assetcatalog")))
+        for catalog in ["Resources/Spirit.xcassets", "Resources/Icons.xcassets",
+                        "Resources/" + {"macosx": "Mac", "iphoneos": "Phone", "watchos": "Watch"}[platform] + "Icons.xcassets"]:
+            resource_files.append(obj(name + ":resource:" + catalog, isa="PBXBuildFile",
+                                      fileRef=file(catalog, "folder.assetcatalog")))
     phases.append(obj(name + ":resources", isa="PBXResourcesBuildPhase", buildActionMask=2147483647,
                       files=resource_files, runOnlyForDeploymentPostprocessing=0))
     deps = []
@@ -95,6 +96,8 @@ def target(name, platform, sources, testing=None):
     if is_test:
         deps.append(dependency(name, testing))
     settings = {"PRODUCT_NAME": "$(TARGET_NAME)", "PRODUCT_BUNDLE_IDENTIFIER": "com.weftmate.apple." + name.lower(), "SDKROOT": platform}
+    if not is_test:
+        settings["ASSETCATALOG_COMPILER_APPICON_NAME"] = "AppIcon"
     if platform == "macosx":
         settings.update(MACOSX_DEPLOYMENT_TARGET="14.0", SUPPORTED_PLATFORMS="macosx", COMBINE_HIDPI_IMAGES="YES")
         if not is_test:
@@ -104,8 +107,10 @@ def target(name, platform, sources, testing=None):
     if platform == "iphoneos":
         settings.update(IPHONEOS_DEPLOYMENT_TARGET="17.0", SUPPORTED_PLATFORMS="iphoneos iphonesimulator", TARGETED_DEVICE_FAMILY="1,2", SUPPORTS_MACCATALYST="NO", INFOPLIST_KEY_UILaunchScreen_Generation="YES", INFOPLIST_KEY_UIApplicationSceneManifest_Generation="YES", INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents="YES")
     elif platform == "watchos":
-        settings["PRODUCT_BUNDLE_IDENTIFIER"] = "com.weftmate.apple.weftmatephone.watch"
-        settings.update(WATCHOS_DEPLOYMENT_TARGET="10.0", SUPPORTED_PLATFORMS="watchos watchsimulator", TARGETED_DEVICE_FAMILY="4", SKIP_INSTALL="YES", INFOPLIST_KEY_WKApplication="YES", INFOPLIST_KEY_WKCompanionAppBundleIdentifier="com.weftmate.apple.weftmatephone", INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp="NO")
+        settings.update(WATCHOS_DEPLOYMENT_TARGET="10.0", SUPPORTED_PLATFORMS="watchos watchsimulator", TARGETED_DEVICE_FAMILY="4", SKIP_INSTALL="YES")
+        if not is_test:
+            settings["PRODUCT_BUNDLE_IDENTIFIER"] = "com.weftmate.apple.weftmatephone.watch"
+            settings.update(INFOPLIST_KEY_WKApplication="YES", INFOPLIST_KEY_WKCompanionAppBundleIdentifier="com.weftmate.apple.weftmatephone", INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp="NO")
     if is_test:
         settings.update(TEST_TARGET_NAME=testing, INFOPLIST_KEY_CFBundleDisplayName=name)
     elif platform in ["macosx", "iphoneos"]:
@@ -127,12 +132,13 @@ ui = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "UI").rglob("*.swift"))
 mac = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "macOS").rglob("*.swift"))
 phone = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "iOS").rglob("*.swift"))
 watch = sorted(str(p.relative_to(ROOT)) for p in (ROOT / "watchOS").rglob("*.swift"))
-target("WeftMateWatch", "watchos", watch)
+target("WeftMateWatch", "watchos", watch + ["UI/WeftIcon.swift"])
 debug_fixture = ["Tests/TaskProgressUIFixture.swift", "Tests/AppleContractUIFixture.swift", "Tests/HealthKitUIFixture.swift"]
 target("WeftMateMac", "macosx", ui + mac + debug_fixture)
 target("WeftMatePhone", "iphoneos", ui + phone + debug_fixture)
 target("WeftMateMacUITests", "macosx", ["Tests/WeftMateUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMateMac")
-target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
+target("WeftMatePhoneUITests", "iphoneos", ["Tests/WeftMateUITests.swift", "Tests/IC2IconsUITests.swift", "Tests/A3TimelineUITests.swift", "Tests/S1cCloudUITests.swift", "Tests/A4aApprovalUITests.swift", "Tests/A4bResourcesUITests.swift"], "WeftMatePhone")
+target("WeftMateWatchUITests", "watchos", ["Tests/IC2WatchIconsUITests.swift"], "WeftMateWatch")
 product_group = obj("products", isa="PBXGroup", children=products, name="Products", sourceTree="<group>")
 group = obj("group", isa="PBXGroup", children=all_files+[product_group], sourceTree="<group>")
 project_config = configs("project", {"CLANG_WARN_DOCUMENTATION_COMMENTS": "YES", "CLANG_WARN_UNGUARDED_AVAILABILITY": "YES_AGGRESSIVE", "SWIFT_VERSION": "6.0"}, True)
@@ -146,7 +152,7 @@ data += "\t};\n\trootObject = " + ref("project") + ";\n}\n"
 schemes = PROJECT / "xcshareddata/xcschemes"
 schemes.mkdir(parents=True, exist_ok=True)
 for name in ["WeftMateMac", "WeftMatePhone", "WeftMateWatch"]:
-    test = name + "UITests" if name != "WeftMateWatch" else None
+    test = name + "UITests"
     def buildable(target_name, extension="app"):
         return f'<BuildableReference BuildableIdentifier="primary" BlueprintIdentifier="{ref("target:"+target_name)}" BuildableName="{target_name}.{extension}" BlueprintName="{target_name}" ReferencedContainer="container:WeftMate.xcodeproj"/>'
     test_xml = f'<Testables><TestableReference skipped="NO">{buildable(test, "xctest")}</TestableReference></Testables>' if test else "<Testables/>"

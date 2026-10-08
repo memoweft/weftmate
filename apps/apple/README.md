@@ -130,3 +130,16 @@ python3 Scripts/package_mac_trial.py --artifacts /private/path/apple-delivery
 [Apple 真实设备运行说明](https://developer.apple.com/documentation/Xcode/running-your-app-on-simulated-or-physical-devices)、[签名和团队流程](https://help.apple.com/xcode/mac/current/en.lproj/dev60b6fbbc7.html)。
 
 当前工作包与进度见主仓 `docs/PLAN.md` 和 `docs/STATE.md`；本说明不替代实际联调或用户验收。
+
+## IC-2 图标
+
+应用和功能图标的唯一来源为仓库根 `design/icons/`。`npm run icons:generate` 现在也生成 Apple 资产；在 Mac 仅刷新苹果端可执行 `node scripts/generate-icons.mjs --apple-only`，无需改其他平台生成物。Apple 生成器复用现有 Electron SVG 渲染器，不另加图像库。
+
+- `Resources/MacIcons.xcassets`：16、32、128、256、512 pt 的 1× / 2× AppIcon，浅底 C4。
+- `Resources/PhoneIcons.xcassets`：1024 px 浅底、深底、灰阶着色 AppIcon；默认图标无透明通道，系统负责裁圆角。
+- `Resources/WatchIcons.xcassets`：1024 px 浅底 C4，系统生成缩略图并裁圆。
+- `Resources/Icons.xcassets`：功能图标模板、16 px 光学线宽版本、跟随深浅外观的彩色品牌标记，以及单色 C4。`WeftIcon` / `WeftLabel` 继承文字颜色，保留原有可访问性文本与动作；尺寸随 Dynamic Type 缩放。
+
+分享入口复用 `open`（打开系统分享面板），退出登录复用 `back`（返回登录），选中标记复用 `allow`。不再维护 SF Symbols 映射或手绘旧品牌。macOS 当前没有自定义菜单栏 / 托盘或通知附件图标；新增这类单色位置应使用 `wm-brand-monochrome` 模板，不从 AppIcon 手工裁图。操作系统自己绘制的导航、展开控件与系统分享面板保留系统行为。
+
+三端构建、浅 / 深色 iOS 界面、主屏幕及 Watch 取证见 [IC-2 证据](Tests/Evidence/IC-2/README.md)。Watch 仅 Debug 模拟器同时带 `--ui-testing --ic2-icons-fixture` 时显示合成审批卡；不启动手机连接，不模拟可达或实际批准，Release 不含此入口。

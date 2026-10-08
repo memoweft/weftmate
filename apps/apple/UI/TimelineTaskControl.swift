@@ -65,7 +65,7 @@ private struct TimelineSourceCard: View {
                     .font(.caption).foregroundStyle(Weave.muted)
             }
             if let error = model.sourceErrors[source.snapshotId] { Text(error).font(.caption) }
-        } label: { Label(source.title ?? source.relativePath ?? "来源", systemImage: "doc.text.magnifyingglass").font(.caption) }
+        } label: { WeftLabel(source.title ?? source.relativePath ?? "来源", icon: "source", size: 16).font(.caption) }
         .task(id: expanded) { if expanded { await model.loadSource(source.snapshotId) } else { model.closeSource(source.snapshotId) } }
         .animation(.easeInOut(duration: 0.2), value: expanded)
     }

@@ -35,27 +35,8 @@ enum Weave {
 struct BrandMark: View {
     var size: CGFloat = 42
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: size * 0.28, style: .continuous)
-                .fill(Weave.accent.gradient)
-            WeftMateGlyph()
-                .stroke(.white, style: StrokeStyle(lineWidth: size * 0.095, lineCap: .round, lineJoin: .round))
-        }
-        .frame(width: size, height: size)
-        .accessibilityHidden(true)
-    }
-}
-
-/// The existing shared brand/weftmate-mark.svg path, rendered natively.
-private struct WeftMateGlyph: Shape {
-    func path(in rect: CGRect) -> Path {
-        func p(_ x: CGFloat, _ y: CGFloat) -> CGPoint {
-            CGPoint(x: rect.minX + rect.width * x / 40, y: rect.minY + rect.height * y / 40)
-        }
-        return Path { path in
-            path.move(to: p(9, 11)); path.addLine(to: p(15, 29)); path.addLine(to: p(23, 11))
-            path.move(to: p(17, 11)); path.addLine(to: p(25, 29)); path.addLine(to: p(31, 11))
-        }
+        Image("wm-brand").resizable().scaledToFit()
+            .frame(width: size, height: size).accessibilityHidden(true)
     }
 }
 
@@ -91,7 +72,7 @@ struct InlineNotice: View {
         Label {
             Text(message).fixedSize(horizontal: false, vertical: true)
         } icon: {
-            Image(systemName: isError ? "exclamationmark.circle" : "info.circle")
+            WeftIcon(isError ? "warn" : "info")
         }
         .font(.callout)
         .foregroundStyle(isError ? Weave.danger : Weave.secondary)
@@ -109,7 +90,7 @@ struct EmptyState: View {
     let message: String
     var body: some View {
         VStack(spacing: 12) {
-            Image(systemName: symbol).font(.system(size: 34, weight: .light)).foregroundStyle(Weave.accent)
+            WeftIcon(symbol, size: 34).foregroundStyle(Weave.accent)
             Text(title).font(.title3.weight(.semibold)).foregroundStyle(Weave.ink)
             Text(message).font(.body).foregroundStyle(Weave.muted)
                 .multilineTextAlignment(.center).lineSpacing(4)

@@ -12,7 +12,7 @@ struct ConversationResourceList: View {
                 if resources.window.outputs.isEmpty { Text("还没有输出内容").font(.caption).foregroundStyle(Weave.muted) }
                 ForEach(resources.window.outputs) { output in
                     Button { resources.open(.output(output.id, output.fileName ?? "成果")); onOpen() } label: {
-                        Label(output.fileName ?? "成果", systemImage: "doc")
+                        WeftLabel(output.fileName ?? "成果", icon: "file")
                     }.accessibilityIdentifier("resourceOutput.\(output.id)")
                 }
                 Divider()
@@ -20,13 +20,13 @@ struct ConversationResourceList: View {
                 if resources.window.sources.isEmpty && memories.isEmpty { Text("还没有来源").font(.caption).foregroundStyle(Weave.muted) }
                 ForEach(resources.window.sources) { source in
                     Button { resources.open(.source(source.key, source.name)); onOpen() } label: {
-                        Label(source.name + " · \(source.uses.count) 次", systemImage: source.kind == "tool" ? "chevron.left.forwardslash.chevron.right" : "link")
+                        WeftLabel(source.name + " · \(source.uses.count) 次", icon: source.kind == "tool" ? "code" : "source")
                             .lineLimit(2).multilineTextAlignment(.leading)
                     }.accessibilityIdentifier("resourceSource.\(source.key)")
                 }
                 ForEach(memories) { event in
                     Button { resources.open(.memory(event.seq, UsedMemory.references(in: event))); onOpen() } label: {
-                        Label("用到了 \(UsedMemory.references(in: event).count) 条记忆", systemImage: "brain")
+                        WeftLabel("用到了 \(UsedMemory.references(in: event).count) 条记忆", icon: "memory")
                     }.accessibilityIdentifier("resourceMemory.\(event.seq)")
                 }
                 if resources.loading { ProgressView("正在读取…") }
@@ -56,7 +56,7 @@ struct ConversationResourcesPanel: View {
             VStack(spacing: 0) {
                 HStack(spacing: 10) {
                     #if os(iOS)
-                    Button { resources.visible = false } label: { Label("返回", systemImage: "chevron.left") }
+                    Button { resources.visible = false } label: { WeftLabel("返回", icon: "back") }
                         .accessibilityIdentifier("closeResourcesPanel")
                     Text("输出与来源").font(.headline)
                     Spacer()
@@ -66,16 +66,16 @@ struct ConversationResourcesPanel: View {
                             ForEach(resources.tabs) { tab in
                                 HStack(spacing: 5) {
                                     Button { resources.selected = tab.id; resources.showingList = false } label: {
-                                        Label(tab.name, systemImage: tab.icon).lineLimit(1)
+                                        WeftLabel(tab.name, icon: tab.icon).lineLimit(1)
                                     }.accessibilityIdentifier("resourceTab.\(tab.id)")
-                                    Button { resources.close(tab.id) } label: { Image(systemName: "xmark").font(.caption) }
+                                    Button { resources.close(tab.id) } label: { WeftIcon("deny", size: 16).font(.caption) }
                                         .accessibilityLabel("关闭 " + tab.name).accessibilityIdentifier("closeResourceTab.\(tab.id)")
                                 }.padding(8).background(resources.selected == tab.id ? Weave.soft : Weave.surface)
                             }
                         }
                     }
                     #endif
-                    Button { resources.showingList.toggle() } label: { Image(systemName: "plus") }.accessibilityLabel("打开另一个输出或来源")
+                    Button { resources.showingList.toggle() } label: { WeftIcon("plus") }.accessibilityLabel("打开另一个输出或来源")
                         .accessibilityIdentifier("addResourceTab")
                     #if os(macOS)
                     Button(enlarged ? "还原" : "放大") { enlarged.toggle() }

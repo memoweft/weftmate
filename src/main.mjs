@@ -15,6 +15,7 @@
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session } from 'electron';
+import { windowIcon, trayIcon } from './app-icons.mjs';
 import { normalizeApiBaseUrl } from './stage2-config.ts';
 import { switchActiveModel } from './model-switch-transaction.ts';
 import { discoverOpenAICompatibleModels, verifyOpenAICompatibleModel } from './openai-compatible-client.ts';
@@ -207,9 +208,7 @@ function logCrash(kind, err) {
 process.on('uncaughtException', (err) => { logCrash('uncaughtException', err); });
 process.on('unhandledRejection', (reason) => { logCrash('unhandledRejection', reason); });
 
-// 托盘图标:内嵌 data URL(32x32 冷蓝纬线纹,与 build/icon.png 同源),免打包路径/asarUnpack 麻烦。
-const TRAY_ICON =
-  'data:image/png;base64,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';
+// 托盘图标由 design/icons/app 单色母版生成，跟随系统任务栏主题。
 
 // 单实例锁:桌面常驻防开多份进程抢同一个数据目录。抢不到 = 已有一个在跑,退出自己,让那个把窗口唤前台。
 if (!app.requestSingleInstanceLock()) {
@@ -2062,7 +2061,7 @@ async function bootstrap() {
   const initialWindowPalette = nativeWindowPalette();
   win = new BrowserWindow({
     width: 1200, height: 800, minWidth: 760, minHeight: 520,
-    title: 'WeftMate', show: false, backgroundColor: initialWindowPalette.background,
+    title: 'WeftMate', icon: windowIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI), show: false, backgroundColor: initialWindowPalette.background,
     ...(process.platform === 'win32' ? {
       titleBarStyle: 'hidden',
       titleBarOverlay: { color: initialWindowPalette.background, symbolColor: initialWindowPalette.symbols, height: TITLE_BAR_OVERLAY_HEIGHT },
@@ -3332,8 +3331,12 @@ function installPreviewUpdateFromTray() {
 /** 系统托盘:常驻图标 + 生命周期/诊断入口,左键点=显示窗口。 */
 function setupTray() {
   if (tray) return;
-  tray = new Tray(nativeImage.createFromDataURL(TRAY_ICON));
+  tray = new Tray(nativeImage.createFromPath(trayIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI)));
   tray.setToolTip('WeftMate');
+  nativeTheme.on('updated', () => {
+    if (tray && !tray.isDestroyed()) tray.setImage(nativeImage.createFromPath(trayIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI)));
+    if (win && !win.isDestroyed()) win.setIcon(windowIcon(nativeTheme.shouldUseDarkColorsForSystemIntegratedUI));
+  });
   refreshTrayMenu();
   tray.on('click', showWindow); // Windows 习惯:左键点托盘图标唤起窗口
 }
