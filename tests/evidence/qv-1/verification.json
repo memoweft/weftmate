@@ -3,7 +3,7 @@
   "date": "2026-10-08",
   "model": "lan/local-quality",
   "repositoryBase": "715e9b2a4aae73cdd66bd55913edb6a9a3c74017",
-  "deliveryMergedMain": "8a6eaab",
+  "deliveryMergedMain": "2d8ffd8de23fa78701ea2d30c5c91a0719c240e6",
   "coreBase": "53f1b06",
   "protocol": {
     "electron": true,
@@ -5744,7 +5744,7 @@
       "source": "m0-7c",
       "assessment": {
         "category": "product",
-        "reason": "产品控制状态问题：首轮 stopped 的可见终态没有变成可续做回执，第二轮未发出。"
+        "reason": "产品控制状态问题：首轮 aborted（已停止） 的可见终态没有变成可续做回执，第二轮未发出。"
       }
     },
     {
@@ -7207,7 +7207,7 @@
     },
     "syntax": true,
     "diffCheck": true,
-    "afterMergedMain": "8a6eaab",
+    "afterMergedMain": "2d8ffd8de23fa78701ea2d30c5c91a0719c240e6",
     "fullTests": "PR CI"
   },
   "cleanup": {
