@@ -35,7 +35,21 @@ export function defaultUsagePrice(model) {
   if (model?.sourceKind === 'local' || model?.modelTier === 'local') return { ...zeroPrice };
   return model?.model === 'mimo-v2.6-flash' ? { ...MIMO_PRICE } : null;
 }
-export function aggregateUsage(records, month, sessionId = null) {
+function usageTimeZone(value = Intl.DateTimeFormat().resolvedOptions().timeZone) {
+  if (typeof value !== 'string' || !value || /^[+-]/.test(value)) throw failure('INVALID_REQUEST');
+  try { return new Intl.DateTimeFormat('en', { timeZone: value }).resolvedOptions().timeZone; }
+  catch { throw failure('INVALID_REQUEST'); }
+}
+function dateInZone(timeZone) {
+  const formatter = new Intl.DateTimeFormat('en', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' });
+  return value => {
+    const parts = Object.fromEntries(formatter.formatToParts(new Date(value)).map(part => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  };
+}
+export function aggregateUsage(records, month, sessionId = null, timeZone = usageTimeZone()) {
+  timeZone = usageTimeZone(timeZone);
+  const localDate = dateInZone(timeZone);
   const total = () => ({ requests: 0, unknownRequests: 0, unpricedRequests: 0,
     inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, cost: 0 });
   const sum = total(), days = new Map(), sessions = new Map(), models = new Map();
@@ -49,14 +63,15 @@ export function aggregateUsage(records, month, sessionId = null) {
     else target.cost = Math.round((target.cost + row.cost) * 1e9) / 1e9;
   }
   for (const row of records) {
-    if (!row.at.startsWith(month) || sessionId && row.sessionId !== sessionId) continue;
-    const day = row.at.slice(0, 10), session = row.sessionId;
+    if (sessionId && row.sessionId !== sessionId) continue;
+    const day = localDate(row.at), session = row.sessionId;
+    if (!day.startsWith(`${month}-`)) continue;
     if (!sessions.has(session)) sessions.set(session, total());
     if (!models.has(row.profileId)) models.set(row.profileId, total());
     add(sum, row); add(days.get(day), row); add(sessions.get(session), row); add(models.get(row.profileId), row);
   }
   const rank = (map, key) => [...map].map(([id, value]) => ({ [key]: id, ...value })).sort((a, b) => b.cost - a.cost || b.requests - a.requests);
-  return { month, timeZone: 'UTC', sessionId, total: sum,
+  return { month, timeZone, sessionId, total: sum,
     days: [...days].map(([day, value]) => ({ day, ...value })),
     sessions: rank(sessions, 'sessionId'), models: rank(models, 'profileId') };
 }
@@ -75,9 +90,10 @@ export async function createUsageStore({ root, clock = Date.now }) {
   if (data.version !== 1 || !data.accounts || typeof data.accounts !== 'object') throw failure('STORE_CORRUPT', 500);
   let queue = Promise.resolve();
   const at = () => new Date(clock()).toISOString();
-  const month = () => at().slice(0, 7);
+  const month = timeZone => dateInZone(timeZone)(clock()).slice(0, 7);
   const empty = () => ({ records: [], settings: { monthlyLimit: null, temporaryLimit: null, temporaryMonth: null, prices: {} } });
   const account = ownerId => data.accounts[ownerId] ?? empty();
+  const settings = ownerId => ({ ...structuredClone(account(ownerId).settings), timeZone: usageTimeZone(account(ownerId).settings.timeZone) });
   function mutate(ownerId, work) {
     const operation = queue.then(async () => {
       const next = structuredClone(data), row = next.accounts[ownerId] ??= empty();
@@ -85,11 +101,16 @@ export async function createUsageStore({ root, clock = Date.now }) {
     });
     queue = operation.catch(() => {}); return operation;
   }
-  function summary(ownerId, selectedMonth = month(), sessionId = null) {
+  function summary(ownerId, selectedMonth, sessionId = null, timeZone) {
+    const saved = settings(ownerId);
+    timeZone = usageTimeZone(timeZone);
+    selectedMonth ??= month(timeZone);
     if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) throw failure('INVALID_REQUEST');
-    const row = account(ownerId), value = aggregateUsage(row.records, selectedMonth, sessionId);
-    const full = sessionId ? aggregateUsage(row.records, selectedMonth).total : value.total;
-    return { ...value, budget: usageBudget(full.cost, row.settings, selectedMonth) };
+    const row = account(ownerId), value = aggregateUsage(row.records, selectedMonth, sessionId, timeZone);
+    const budgetMonth = month(saved.timeZone);
+    const full = !sessionId && selectedMonth === budgetMonth && timeZone === saved.timeZone
+      ? value.total : aggregateUsage(row.records, budgetMonth, null, saved.timeZone).total;
+    return { ...value, budget: usageBudget(full.cost, saved, budgetMonth) };
   }
   function assertAllowed(ownerId, model) {
     if (model.sourceKind !== 'local' && model.modelTier !== 'local' && summary(ownerId).budget.state === 'blocked') {
@@ -98,19 +119,21 @@ export async function createUsageStore({ root, clock = Date.now }) {
   }
   return {
     summary,
-    settings: ownerId => structuredClone(account(ownerId).settings),
+    settings,
     async configure(ownerId, input) {
       const money = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
-      const allowed = ['monthlyLimit', 'temporaryLimit', 'profileId', 'price'];
+      const allowed = ['monthlyLimit', 'temporaryLimit', 'profileId', 'price', 'timeZone'];
       if (!input || Object.keys(input).some(key => !allowed.includes(key)) || !Object.keys(input).length) throw failure('INVALID_REQUEST');
       for (const key of ['monthlyLimit', 'temporaryLimit']) if (Object.hasOwn(input, key) && input[key] !== null && !money(input[key])) throw failure('INVALID_REQUEST');
       if (Object.hasOwn(input, 'price') !== Object.hasOwn(input, 'profileId')) throw failure('INVALID_REQUEST');
       if (Object.hasOwn(input, 'profileId') && (typeof input.profileId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(input.profileId))) throw failure('INVALID_REQUEST');
       if (input.price !== undefined && input.price !== null &&
         (Object.keys(input.price).length !== 3 || !['cachedInput', 'input', 'output'].every(key => money(input.price[key])))) throw failure('INVALID_REQUEST');
+      const timeZone = Object.hasOwn(input, 'timeZone') ? usageTimeZone(input.timeZone) : null;
       await mutate(ownerId, row => {
+        if (timeZone) row.settings.timeZone = timeZone;
         for (const key of ['monthlyLimit', 'temporaryLimit']) if (Object.hasOwn(input, key)) row.settings[key] = input[key];
-        if (Object.hasOwn(input, 'temporaryLimit')) row.settings.temporaryMonth = month();
+        if (Object.hasOwn(input, 'temporaryLimit')) row.settings.temporaryMonth = month(usageTimeZone(row.settings.timeZone));
         if (input.profileId) { if (input.price === null) delete row.settings.prices[input.profileId]; else row.settings.prices[input.profileId] = input.price; }
       });
       return this.settings(ownerId);
