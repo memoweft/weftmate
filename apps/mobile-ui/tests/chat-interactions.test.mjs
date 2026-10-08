@@ -371,7 +371,7 @@ test('shared send keeps phone drafts separate and blocks uncertain duplicate',as
   assert.equal(h.node('pick-file').hidden,false);assert.equal(h.node('attachment-note').hidden,false);
   h.run('closeAttachmentMenu()');assert.equal(h.bridge.some(request=>request.method==='attachments.pick'),false);
   const sending=h.run('send()');const request=h.bridge.find(item=>item.method==='shared.send');
-  assert.ok(request);assert.deepEqual(JSON.parse(JSON.stringify(request.params)),{sessionId:'pc1',text:'发送到电脑',requestId:request.params.requestId});
+  assert.ok(request);assert.deepEqual(JSON.parse(JSON.stringify(request.params)),{sessionId:'pc1',text:'发送到电脑',requestId:request.params.requestId,intent:'queue'});
   assert.match(request.params.requestId,/^ui-[a-z0-9-]+$/);
   h.reply(h.bridge.indexOf(request),{source:'host',sessionId:'pc1',requestId:request.params.requestId,kind:'session.message',state:'uncertain'});
   await sending;await h.run('send()');
@@ -467,7 +467,7 @@ test('host image send uses one request ID and clears image drafts only after acc
   const uncertain=harness();uncertain.run(setup);
   assert.equal(uncertain.node('send-button').disabled,false,'image-only message can be sent');
   const attempt=uncertain.run('send()');const post=uncertain.bridge.find(item=>item.method==='shared.send');
-  assert.deepEqual(JSON.parse(JSON.stringify(post.params)),{sessionId:'session-one',text:'',requestId:post.params.requestId,attachmentIds:[id]});
+  assert.deepEqual(JSON.parse(JSON.stringify(post.params)),{sessionId:'session-one',text:'',requestId:post.params.requestId,intent:'queue',attachmentIds:[id]});
   uncertain.reply(uncertain.bridge.indexOf(post),{source:'host',sessionId:'session-one',requestId:post.params.requestId,state:'uncertain'});await attempt;
   assert.equal(uncertain.run('currentAttachments().length'),1);
   await uncertain.run('send()');assert.equal(uncertain.bridge.filter(item=>item.method==='shared.send').length,1);

@@ -88,6 +88,8 @@ internal fun activityCommandProjection(row: JSONObject): JSONObject {
     if (row.has("conversationId")) projected.put("conversationId", row.optString("conversationId"))
     if (row.has("rootTaskId")) projected.put("rootTaskId", row.optString("rootTaskId"))
     if (row.has("taskAction")) projected.put("taskAction", row.optString("taskAction"))
+    if (row.has("receiptId")) projected.put("receiptId", row.optString("receiptId"))
+    if (row.has("taskLabel")) projected.put("taskLabel", row.optString("taskLabel"))
     return projected
 }
 
@@ -319,7 +321,8 @@ class HybridActivity : Activity() {
                     else respond(reply, id, true, result)
                     if (method == "app.ready") scheduleStagedApply()
                 } catch (error: Exception) {
-                    respond(reply, id, false, JSONObject().put("code", safeCode(error)))
+                    respond(reply, id, false, JSONObject().put("code", safeCode(error))
+                        .apply { if (error is ApiFailure) put("status", error.status) })
                 } finally { if (authMutation) {
                     accountTransition.set(false)
                     authInFlight.set(false)
@@ -894,7 +897,8 @@ class HybridActivity : Activity() {
             val epoch = accountEpoch.get()
             sharedChat.submit(host, params.getString("sessionId"), params.getString("text"),
                 "session.message", params.optString("requestId").takeIf { it.isNotBlank() }, attachmentIds,
-                sourceSyncEventId = params.optString("sourceSyncEventId").takeIf { it.isNotBlank() }, current = {
+                sourceSyncEventId = params.optString("sourceSyncEventId").takeIf { it.isNotBlank() },
+                intent = params.optString("intent", "queue"), current = {
                 !closed.get() && !accountTransition.get() && epoch == accountEpoch.get() &&
                     owner(secrets.host()) == owner(host)
             })

@@ -17,7 +17,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
       sendHidden:host?state.sharedRunning&&!text.trim()&&!attachments:busy,
       stopHidden:host?!state.sharedRunning:!busy,
       draftDisabled:!state.loggedIn||state.transitionPending||state.restorePending||host&&!session?.sendAvailable,
-      placeholder:host?(session?.sendAvailable?state.sharedRunning?'补充说明…':'继续对话…':'这段会话仅可查看'):'说说你的目标…',
+      placeholder:host?(session?.sendAvailable?state.sharedRunning?core.composerInputMode(state.sharedSessionId)==='queue'?'新任务，按顺序执行…':'补充当前任务…':'继续对话…':'这段会话仅可查看'):'说说你的目标…',
       modelName:host?session?.modelDisplayName||session?.modelName||'当前模型':state.model?.displayName||'选择模型',
       modelLabel:host?'当前模型':'选择模型',
       attachmentsDisabled:!state.loggedIn||state.restorePending||state.transitionPending||!!state.attachmentPick||
@@ -204,15 +204,15 @@ function acceptSend(attempt,conversationId,turnId){if(state.activeSend!==attempt
 
 function newSharedRequestId(){return `ui-${Date.now().toString(36)}-${(++requestSequence).toString(36)}-${Math.random().toString(36).slice(2,10)}`}
 
-async function sendShared(){const text=effects.readMessageDraft().trim(),session=selectedSharedSession();
+async function sendShared(options={}){core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const text=effects.readMessageDraft().trim(),session=selectedSharedSession();
   const items=[...currentAttachments()];
   if((!text&&!items.length)||!session?.sendAvailable||state.sharedPending||state.sharedOutboxLoading||state.transitionPending)return;
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=session.sessionId,
     requestId=newSharedRequestId(),key=sharedDraftKey(),attachmentIds=items.map(item=>item.attachmentId);
-  const afterSeq=state.sharedNextSeq;state.sharedPending={requestId,state:'submitting',text,attachmentIds,afterSeq};
+  const afterSeq=state.sharedNextSeq;state.sharedPending={requestId,state:'submitting',text,attachmentIds,afterSeq,intent};
   effects.updateComposer();effects.status('正在提交到电脑会话…');effects.renderSharedConversation();
-  try{const result=await effects.nativeCall('shared.send',{sessionId,text,requestId,...(attachmentIds.length?{attachmentIds}:{})});
+  try{const result=await effects.nativeCall('shared.send',{sessionId,text,requestId,intent,...(attachmentIds.length?{attachmentIds}:{})});
     if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
     if(result?.source!=='host'||result.sessionId!==sessionId||result.requestId!==requestId)throw new Error('OPERATION_FAILED');
     if(result.state==='accepted'){
@@ -230,13 +230,13 @@ async function sendShared(){const text=effects.readMessageDraft().trim(),session
     else effects.status(effects.safeError(e),true)}
   finally{if(sharedViewCurrent(owner,epoch,generation,sessionId)){effects.updateComposer();effects.renderSharedConversation();effects.scheduleSharedPoll()}}}
 
-async function sendLinked(){const binding=selectedBinding(),session=selectedSharedSession(),text=effects.readMessageDraft().trim();
+async function sendLinked(options={}){core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const binding=selectedBinding(),session=selectedSharedSession(),text=effects.readMessageDraft().trim();
   if(!binding||!session?.sendAvailable||!text||state.linkedPending||currentAttachments().length)return;
   const owner=state.owner,epoch=state.authEpoch,conversationId=state.conversationId,
     sessionId=binding.sessionId,key=`weftmate-linked-send:${owner}:${conversationId}`;
   let marker;try{marker=JSON.parse(environment.storage.getItem(key)||'null')}catch{marker=null}
   if(marker&&(marker.sessionId!==sessionId||marker.text!==text)){effects.status('上一条电脑消息待核对；原草稿仍保留',true);return}
-  marker ||= {requestId:newSharedRequestId(),sessionId,text};
+  marker ||= {requestId:newSharedRequestId(),sessionId,text,intent};
   try{environment.storage.setItem(key,JSON.stringify(marker))}catch{effects.status('无法保存发送编号，本次没有提交',true);return}
   state.linkedPending=marker.requestId;effects.updateComposer();
   const current=()=>state.owner===owner&&state.authEpoch===epoch&&state.chatSource==='phone'&&
@@ -244,7 +244,7 @@ async function sendLinked(){const binding=selectedBinding(),session=selectedShar
   try{const rows=await effects.nativeCall('shared.outbox.list');if(!current())return;
     let found=rows?.commands?.find(item=>item.requestId===marker.requestId&&item.sessionId===sessionId);
     if(!found||found.state==='pending'||found.state==='uncertain'){
-      const sent=await effects.nativeCall('shared.send',{sessionId,text:marker.text,requestId:marker.requestId});
+      const sent=await effects.nativeCall('shared.send',{sessionId,text:marker.text,requestId:marker.requestId,intent:marker.intent||'queue'});
       if(!current())return;found=sent}
     if(found?.state==='accepted'){
       if(effects.readMessageDraft().trim()===text)effects.clearMessageDraft();
@@ -254,8 +254,8 @@ async function sendLinked(){const binding=selectedBinding(),session=selectedShar
   }catch(error){if(current())effects.status(error?.message==='TIMEOUT'?'发送结果待核对；原请求编号已保留':effects.safeError(error),true)}
   finally{if(state.owner===owner&&state.authEpoch===epoch){state.linkedPending=null;effects.updateComposer()}}}
 
-async function send(){if(state.chatSource==='host')return sendShared();
-  if(selectedBinding())return sendLinked();
+async function send(options={}){if(state.chatSource==='host')return sendShared(options);
+  if(selectedBinding())return sendLinked(options);
   const text=effects.readMessageDraft().trim(),items=[...currentAttachments()];if((!text&&!items.length)||state.busy||state.sendUncertain)return;
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}
   const owner=state.owner,epoch=state.authEpoch,conversationId=state.conversationId||'',attachmentIds=items.map(item=>item.attachmentId);
@@ -281,6 +281,8 @@ async function send(){if(state.chatSource==='host')return sendShared();
     if(!state.sendUncertain)state.activeSend=null}}
 
 async function stop(){if(state.chatSource==='host'||selectedBinding()){
+    core.syncMobileIdentity();
+    if(core.taskQueue().some(row=>row.state==='running'&&!row.taskId.startsWith('turn-')))return core.stopCurrentTurn();
     if(state.sharedStopping||!selectedSharedSession()?.sendAvailable)return;
     const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=state.sharedSessionId,
       requestId=newSharedRequestId();state.sharedStopping=true;effects.status('正在请求电脑停止…');
