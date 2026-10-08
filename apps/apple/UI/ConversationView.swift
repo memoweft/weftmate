@@ -268,6 +268,9 @@ struct ConversationView: View {
             }
             #endif
             .onChange(of: model.timeline.events.last?.seq) { _, _ in
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--a5-review-scene") { return }
+                #endif
                 let oldTail = previousTailID
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
                 // Follow new messages only when already at the end; preserve reading position otherwise.

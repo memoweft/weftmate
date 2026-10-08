@@ -61,6 +61,22 @@ final class A5ParityUITests: XCTestCase {
         XCTAssertEqual((report["workspaceExists"] as! [String:Bool])["forget"],false)
         app.terminate()
     }
+    @MainActor func testFramedLightGallery() async throws { try await framedGallery("light") }
+    @MainActor func testFramedDarkGallery() async throws { try await framedGallery("dark") }
+    @MainActor private func framedGallery(_ theme: String) async throws {
+        _ = try await get("/a5/setup");_ = try await get("/bootstrap")
+        let ready=try await get("/ready"),ids=try await get("/a5/ids")
+        let app=XCUIApplication(),namespace="a5-frame-" + UUID().uuidString.prefix(8)
+        for scene in ["conversation","approval","question"] {
+            app.launchArguments=["--ui-testing","--ui-testing-namespace",namespace,"--a5-local-server","--a5-theme",theme,"--a5-review-scene",scene,"--server-url",ready["host"] as! String]
+            app.launch();try expect(app.descendants(matching:.any)["conversationList"].firstMatch);try row(app,ids["review"] as! String)
+            if scene == "approval" { try expect(app.buttons.matching(NSPredicate(format:"identifier BEGINSWITH %@","approveOnce.")).firstMatch) }
+            else if scene == "question" { try expect(app.staticTexts["报告要采用哪种格式？"]) }
+            else { try expect(app.buttons["openConversationResources"]) }
+            try await Task.sleep(for:.seconds(1))
+            keep(app,scene,theme);app.terminate()
+        }
+    }
     @MainActor private func run(theme: String, behavior: Bool) async throws {
         let ready=try await get("/ready"),credentials=try await get("/credentials")
         let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a5-" + UUID().uuidString.prefix(8),"--lg2-cloud","--a5-theme",theme,
