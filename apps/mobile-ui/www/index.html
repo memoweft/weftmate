@@ -18,7 +18,10 @@
   <div id="app">
     <header class="topbar">
       <button id="menu-button" class="icon-button" aria-label="打开导航"><span class="icon icon-menu"></span></button>
+      <button id="page-back" class="icon-button" aria-label="返回" hidden><span class="icon icon-back"></span></button>
       <div class="brand"><strong>WeftMate</strong><small id="header-subtitle">同一个助手，接着聊。</small></div>
+      <button id="outputs-button" class="header-action" hidden>输出与来源</button>
+      <button id="home-new-chat" class="icon-button" aria-label="新对话" hidden><span class="icon icon-plus"></span></button>
 
     </header>
     <div id="drawer-scrim" class="scrim" hidden></div>
@@ -38,6 +41,11 @@
       <button id="profile-link" class="profile-link"><span class="avatar" id="drawer-avatar">我</span><span><strong id="drawer-name">本机个人空间</strong><small>个人资料与设置</small></span><span class="icon icon-settings"></span></button>
     </nav>
     <main id="main">
+      <section id="home-page" class="page">
+        <div class="home-search"><input id="home-search" class="search" type="search" placeholder="搜索会话" aria-label="搜索所有会话"></div>
+        <div id="home-conversations" class="home-conversations conversation-list" aria-label="会话列表"></div>
+        <button id="home-settings" class="profile-link"><span class="icon icon-settings"></span><span>设置与账户</span></button>
+      </section>
       <section id="chat-page" class="page active" aria-label="对话">
         <div id="chat-scroll" class="chat-scroll"><div id="chat-content" class="chat-content"></div></div>
         <button id="jump-latest" class="jump-latest" hidden>回到最新 <span class="icon icon-down"></span></button>
@@ -71,6 +79,10 @@
       </section>
       <section id="generic-page" class="page" aria-live="polite"><div id="page-content"></div></section>
     </main>
+    <section id="resource-page" class="resource-page" role="dialog" aria-modal="true" aria-labelledby="resource-title" hidden>
+      <header class="resource-topbar"><button id="resource-back" class="icon-button" aria-label="返回对话"><span class="icon icon-back"></span></button><strong id="resource-title"></strong></header>
+      <div id="resource-content" class="resource-content"></div>
+    </section>
     <div id="image-preview" class="image-preview" role="dialog" aria-modal="true" aria-label="图片预览" hidden>
       <div class="image-preview-stage"><img id="image-preview-image" alt=""></div>
       <header class="image-preview-topbar">

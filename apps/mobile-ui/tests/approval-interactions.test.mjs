@@ -67,7 +67,7 @@ test('UI-2a 390×844 modes, risk confirmation, settings and three approval decis
       stopSharedPoll();state.loggedIn=true;state.owner='synthetic-ui2a';state.deviceId='phone-synthetic';state.chatSource='host';
       state.sharedSessionId=id;state.conversationId=null;state.generation++;state.sharedHostAvailable=true;
       state.sharedSessions=[{sessionId:id,title:'整理临时文件',sendAvailable:true,source:'host'}];state.sharedEvents=[];
-      renderSharedConversation();closeToast();
+      page('chat');renderSharedConversation();closeToast();
     },sessionId);
     const label=page.locator('#approval-mode-label'),menu=page.locator('#approval-mode-popover');
     await seed();await page.waitForFunction(()=>document.getElementById('approval-mode-label').textContent==='自动');
