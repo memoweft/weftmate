@@ -1,6 +1,6 @@
 /* Settings navigation and category placement. No domain requests or persistence here. */
 globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
-    let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus;
+    let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus, cloudNotice;
     const panels = new Map(), positions = new Map();
     const node = (tag, className, text) => ui.element(tag, className, text);
     function selectSettings(id, options = {}) {
@@ -10,6 +10,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (content) positions.set(selected, content.scrollTop);
         if (selected === 'devices' && id !== 'devices') ui.stopCloudPairing();
         selected = id;
+        if (cloudNotice) cloudNotice.hidden = core.state.cloudAuth.mode !== 'authenticated' || !['account', 'devices'].includes(id);
         for (const [key, panel] of panels) panel.hidden = key !== id;
         ui.byId('settings-title').textContent = category.name;
         picker.value = id;
@@ -70,6 +71,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         move('devices', ui.byId('devices-heading').closest('section'));
         const cloud = ui.byId('cloud-settings');
         if (cloud) {
+            cloudNotice = ui.byId('cloud-settings-status'); cloudNotice.classList.add('settings-cloud-status');
             cloud.querySelector('nav').hidden = true;
             move('account', cloud); move('devices', ui.byId('cloud-devices-panel'));
         }
@@ -118,7 +120,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             panels.get('about').append(globalThis.WeftSettingsControls.row(name, '在应用内阅读。', button));
         }
         for (const original of originals) if (original.parentNode === account) original.hidden = true;
-        account.append(content); main.append(head, picker, account); dialog.append(sidebar, main); document.body.append(dialog);
+        account.append(content); main.append(head, picker); if (cloudNotice) main.append(cloudNotice); main.append(account); dialog.append(sidebar, main); document.body.append(dialog);
         registry = globalThis.WeftUiCore.settingsRegistry({
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },

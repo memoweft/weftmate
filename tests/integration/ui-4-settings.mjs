@@ -113,7 +113,7 @@ try {
   for (const [id, name] of [['general','常规'],['appearance','外观'],['usage','用量'],['schedules','提醒与定时任务']]) {
     await list.getByRole('button', { name: new RegExp('^' + name + ' ') }).click();
     if (id === 'appearance') { await mobile.getByRole('button', { name: '深色', exact: true }).click(); await mobile.waitForFunction(() => document.documentElement.dataset.theme === 'dark'); assert.equal(await mobile.locator('html').getAttribute('data-theme'), 'dark'); }
-    if(id === 'schedules') await mobile.getByRole('button',{name:'刷新提醒',exact:true}).waitFor();
+    if(id === 'schedules') await mobile.getByRole('status').filter({hasText:'还没有提醒。'}).waitFor();
     if(id === 'usage') await mobile.getByRole('button', {name:'刷新用量',exact:true}).waitFor();
     await mobile.waitForTimeout(300);
     if (!process.argv.includes('--verify-only')) await mobile.screenshot({ path: join(evidence, `mobile-${id}.png`), animations: 'disabled' });

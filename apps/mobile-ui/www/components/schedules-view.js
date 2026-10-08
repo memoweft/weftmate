@@ -11,7 +11,7 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, autoLoad = tru
         const version = ++generation, token = core.accountToken(); status.textContent = '正在读取…'; list.replaceChildren();
         try {
             const value = await core.loadSchedules();
-            if (!value || version !== generation || !core.accountCurrent(token) || !current()) return;
+            if (!value || version !== generation || !core.accountIdentityCurrent(token) || !current()) return;
             list.replaceChildren(); status.textContent = value.items.length ? `${value.items.length} 项提醒与定时任务` : '还没有提醒。可以在对话里说“明天早上 9 点提醒我交报告”。';
             for (const row of value.items) {
                 const item = element('li', 'system-service settings-schedule-row'); item.setAttribute('aria-label', row.text);
@@ -25,14 +25,14 @@ globalThis.WeftSchedulesView = (core, target, { openConversation, autoLoad = tru
                     const button = element('button', 'button secondary small', label); button.type = 'button';
                     button.addEventListener('click', async () => {
                         button.disabled = true;
-                        try { await core.manageSchedule(row, action); if (core.accountCurrent(token) && current()) await render(); }
-                        catch { if (core.accountCurrent(token) && current()) status.textContent = `${label}未确认，请刷新查看实际状态。`; }
+                        try { await core.manageSchedule(row, action); if (core.accountIdentityCurrent(token) && current()) await render(); }
+                        catch { if (core.accountIdentityCurrent(token) && current()) status.textContent = `${label}未确认，请刷新查看实际状态。`; }
                         finally { button.disabled = false; }
                     }); item.append(button);
                 }
                 list.append(item);
             }
-        } catch { if (core.accountCurrent(token) && current()) status.textContent = '读取失败，请刷新重试。'; }
+        } catch { if (core.accountIdentityCurrent(token) && current()) status.textContent = '读取失败，请刷新重试。'; }
     }
     refresh.addEventListener('click', () => { void render(); }); if (autoLoad) void render(); return render;
 };
@@ -42,7 +42,7 @@ if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.schedules
         mountSchedules() {
             const target = ui.element('section', 'settings-schedules'); target.id = 'settings-schedules';
             globalThis.WeftUiLayout.mountSchedules(target);
-            renderSchedules = WeftSchedulesView(core, target, { autoLoad: false, current: () => !target.closest('.settings-category').hidden,
+            renderSchedules = WeftSchedulesView(core, target, { autoLoad: false, current: () => !ui.byId('account-view').hidden && !target.closest('.settings-category').hidden,
                 openConversation: async sessionId => { await core.enterAssistant(); await core.selectSession(sessionId); } });
         },
         showSettingsSchedules() { void renderSchedules(); },
