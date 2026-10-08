@@ -376,6 +376,7 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(here, 'model-budget.mjs'), join(dir, 'model-budget.mjs')],
     [join(here, 'model-scheduler-client.mjs'), join(dir, 'model-scheduler-client.mjs')],
     [join(PLUGINS_DIR, 'weftmate-model-budget.mjs'), join(dir, 'plugins', 'weftmate-model-budget.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-compaction.mjs'), join(dir, 'plugins', 'weftmate-compaction.mjs')],
     [join(PLUGINS_DIR, 'weftmate-background-title.mjs'), join(dir, 'plugins', 'weftmate-background-title.mjs')],
     [join(CLIENT_PLUGIN_SRC, 'package.json'), join(clientDest, 'package.json')],
     [join(CLIENT_PLUGIN_SRC, 'index.js'), join(clientDest, 'index.js')],
@@ -565,11 +566,21 @@ async function writePersonalRemotePreset(homeDir: string, profileName: string): 
 - name: ../../profiles/${profileName}/plugins/weftmate-personal-desktop-preset.mjs
 `
   const previousM1Composition = compositionText.replace('    toolFilter:\n      deny: [browser]\n', '')
-  const contextAwareComposition = `${compositionText}${MOD_MAINTAINER_PRESET_COMPACTION}`
+  const longTaskComposition = compositionText.replace(
+    '      Verify results before reporting completion; inspect effects before retrying.',
+    '      Verify results before reporting completion; inspect effects before retrying.\n' +
+    '      For long tasks, use create_goal and todo_write to maintain the objective and\n' +
+    '      complete plan, updating completed steps and key results as work progresses.\n' +
+    '      After a checkpoint, continue pending work without repeating verified effects.\n' +
+    '      Read get_goal before updating its exact revision; mark complete only after\n' +
+    '      checking every deliverable. Keep reusable methods and pitfalls in this conversation.')
+  const personalCompaction = MOD_MAINTAINER_PRESET_COMPACTION.replace(
+    "'@deepseek-ai/dsh-compaction-basic'", `../../profiles/${profileName}/plugins/weftmate-compaction.mjs`)
+  const contextAwareComposition = `${longTaskComposition}${personalCompaction}`
   await mkdir(presetDir, { recursive: true })
   const existingComposition = (await readFile(composition, 'utf8').catch(() => '')).replace(/\r\n/g, '\n')
   const existingMetadata = await readFile(metadata, 'utf8').catch(() => '')
-  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== compositionText &&
+  if ((existingComposition && existingComposition !== contextAwareComposition && existingComposition !== `${compositionText}${MOD_MAINTAINER_PRESET_COMPACTION}` && existingComposition !== compositionText &&
       existingComposition !== previousM1Composition && existingComposition !== `${previousM1Composition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
       existingComposition !== previousNativeComposition && existingComposition !== `${previousNativeComposition}${MOD_MAINTAINER_PRESET_COMPACTION}` &&
       existingComposition !== boundedCompositionText &&
