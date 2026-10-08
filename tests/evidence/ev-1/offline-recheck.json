@@ -1,0 +1,125 @@
+{
+  "scenario": "action-07-long-directory",
+  "modelRequests": 0,
+  "numericFields": 50,
+  "runs": [
+    {
+      "label": "m1-4-lan-1",
+      "savedStatus": "failed",
+      "old": {
+        "status": "failed",
+        "passed": 98,
+        "total": 100
+      },
+      "new": {
+        "status": "passed",
+        "passed": 100,
+        "total": 100
+      },
+      "changed": [
+        {
+          "path": "summary.md",
+          "text": "24300",
+          "numeric": true,
+          "old": "failed",
+          "new": "passed"
+        },
+        {
+          "path": "summary.md",
+          "text": "2400",
+          "numeric": true,
+          "old": "failed",
+          "new": "passed"
+        }
+      ],
+      "sourceFilesUnchanged": 24,
+      "artifactHashes": {
+        "reviews/review-01.md": "ab5881562447ff5e8e9de677e3efe68be48a08166d3b72b4d82508afaafa4db5",
+        "reviews/review-02.md": "4c2728630a763c3f663e97cfcc514ade97d72f3977735f1359a62731726738cc",
+        "reviews/review-03.md": "5fa0c88551a5a118c34912c0615dd9964b0fb8c6e3f0b53270c3a2120b4c5e7c",
+        "reviews/review-04.md": "f210bdde6d240ee3d7ad7c54699386254a94dfa8de63f54bd6e0b664ca682321",
+        "reviews/review-05.md": "1ec5904186bad6b9fb34b2a403071bd5de5ea9d3df61168c33abcbd73244631d",
+        "reviews/review-06.md": "195796cf01fc085ecb16f86349a3f5bdc46985517d9560ff5ec6d178e24d01bc",
+        "reviews/review-07.md": "9b14fad41fe2f5e6e99c9688f255e7af1e478feb1da844adf5c1ea6d6dda82b8",
+        "reviews/review-08.md": "b0c51f20b73f40ce2437516478e4a88a28a51fcf1bb404f0ce92e4225b50bdad",
+        "reviews/review-09.md": "d8f8c029b3d79d2c2db6af53f58737bb0d2cfdec26395d1fc2465c008da0b9d8",
+        "reviews/review-10.md": "9ae8a74ef64cce6ed7547581a629ae2402121ab74481d0a6e01391bce9e63af9",
+        "reviews/review-11.md": "c550e4532629a90a118925716f61d33624756c46f168f213fa0f3d12b5b16466",
+        "reviews/review-12.md": "e1feb0eb9873ccb8db24ea42d714520171adbf0ae720b09b80c4b605fcc299bd",
+        "reviews/review-13.md": "ce926ea95de87ebef289cac5951e71d1f23b9cef0c9403d771fc33569ec1eda8",
+        "reviews/review-14.md": "13b3565bc2b80554ce00a47c075c71e6f9d1910df856dbbd810445f758081a0d",
+        "reviews/review-15.md": "25aae0c64af588c0251862eb2e4096a29fcaf41d2dc31fd0ab5562a18df48ecd",
+        "reviews/review-16.md": "81ec2559b36aadb23e1aaafdcccd3d63c25ce1ef0512f5b288745030c9eedc38",
+        "reviews/review-17.md": "b65a1f1f5448f11cda53b49cbe9d4c784b90badc4b80cf711cd558dea7b5bd0a",
+        "reviews/review-18.md": "9b1df58220891b3fc79a2eaba1890fe975e55c484455d41ac80462bbaff1fa7c",
+        "reviews/review-19.md": "bcf876a803fc267c82286fbe3f7ee93851dc5d97dfede7a9a8a1f557d00594dd",
+        "reviews/review-20.md": "dbecf27699eba2cd77dbefca6ef62e2d082572c3dc048e850d8e00a9476cbe34",
+        "reviews/review-21.md": "874fd76a713e0bd45555f8664c052ad3c0492759b571b63cf59db53a096ab228",
+        "reviews/review-22.md": "fbdb03cfd8d610176010ffdde54ba921db9ef3fbe54972f1e5dc3d24ef422425",
+        "reviews/review-23.md": "4fd35d860a1f625094352651f07f072058d9a51ccdb73713cae7fc7136a8e89f",
+        "reviews/review-24.md": "6932e201f7b9c3a0397b22726752895fd3a60b6bbf313e837f3dd097b791aeee",
+        "summary.md": "6ae001378c37b71cae277b687ec6f20a8c09f336715fcf282d3803b15988fe59"
+      },
+      "artifactsUnmodifiedByReplay": true
+    },
+    {
+      "label": "m1-4-lan-2",
+      "savedStatus": "failed",
+      "old": {
+        "status": "failed",
+        "passed": 98,
+        "total": 100
+      },
+      "new": {
+        "status": "passed",
+        "passed": 100,
+        "total": 100
+      },
+      "changed": [
+        {
+          "path": "summary.md",
+          "text": "24300",
+          "numeric": true,
+          "old": "failed",
+          "new": "passed"
+        },
+        {
+          "path": "summary.md",
+          "text": "2400",
+          "numeric": true,
+          "old": "failed",
+          "new": "passed"
+        }
+      ],
+      "sourceFilesUnchanged": 24,
+      "artifactHashes": {
+        "reviews/review-01.md": "fb913419813d2dc112af81fa7255bb89a36af7c5b134201f1c915e0a7bfed087",
+        "reviews/review-02.md": "f327062513687336aa5caacd3768975134c67e777c667d586ad32da898a92521",
+        "reviews/review-03.md": "d4536af66532a3612a1d5b4b43d14be9ea6e6f139f27de7cb6c42acfe439f79c",
+        "reviews/review-04.md": "efbbbc6e0d1cba1e8d99c7db8be31f69bc3a62d7ac6743887af98d8fe79ab6ec",
+        "reviews/review-05.md": "75a90d4179b22c8bff8976f69f07c2d3a8c696d85d6b05b8c2980286f7f84c00",
+        "reviews/review-06.md": "c93f3b8b63a43d769a8bb9d610cc0f7c872ae7827e74b4bb81e143566b9a7374",
+        "reviews/review-07.md": "f89abe00b05a4a403a6bd7b046ae5aa2279bb7b3b4cdef37e97e17cb76534bc9",
+        "reviews/review-08.md": "d5da9af710777d0d2de27112f33347e74d44287b7c8bbef6594d6cb532c19492",
+        "reviews/review-09.md": "3646f480e7c9f05a036efc48bb427f95db1a3fc7ab5905f81bd7f58674b2f050",
+        "reviews/review-10.md": "c1fbb4505aa4fcb4f9e0adb18fab398611d9c4318ca700fa598a84673eeab58e",
+        "reviews/review-11.md": "63391f42771faa0e287a7986faaa4835e587f45d48bc272143ffc8afca6dfaf1",
+        "reviews/review-12.md": "b9f079299e2f4715ed201cd2bbfa3b05828072b2fd09df8d75f3c2826b249359",
+        "reviews/review-13.md": "627cf853bf064f23a4c3104165514fa59a5e489c4d9e4a71c6b887105756dabe",
+        "reviews/review-14.md": "ad9a0eb4d80996cce02d9000474324ba9d1c0adc58ac966ca80332fa5da6aa87",
+        "reviews/review-15.md": "2bb1bea60df4d2225f280ad735e400e2876b3dad7d2f52137046551d778d87b1",
+        "reviews/review-16.md": "8aeea3f6a54a3c2de9fa3431b1ac8249b81e0c352ae94c881ef31925e0ea5836",
+        "reviews/review-17.md": "7464d9127c6d87d697a9065c42092fd687d94f33d9fc897b18b6e97ca5d8eebf",
+        "reviews/review-18.md": "ebb63238a210bd902394ceee65613eb9b1bc6546e47dbf314b1608b0e9b742df",
+        "reviews/review-19.md": "ec0fbfb9f980ca429bff8a0313d60785ecbfe8db8184496e3a5461cd2a5e77a9",
+        "reviews/review-20.md": "ae702a9b0aba7f45b8ddfc5d64a7d312fc2cfd930a0f2da9ea3e42c8e87fd5fa",
+        "reviews/review-21.md": "106d33a5002a27a3fe778564361ed3b594c24849b8a0fdfac4c5907a5d44b44b",
+        "reviews/review-22.md": "965e2809fc25a5d5a02281aec2f1b7e716f9f046eb6871d32bc6d1947f0e20cb",
+        "reviews/review-23.md": "058b3392fe3f679d7f0d0071920c8c19028f135726853fddd43b4c8aeacaf384",
+        "reviews/review-24.md": "39cb1af26d684ebfc33e72725248ef2f60079685f56aedc13a95c86311d9d85b",
+        "summary.md": "e5900c94d54d15a8a69096f7ad3170ff35fcc7721b89ef11ecdcf9515856443f"
+      },
+      "artifactsUnmodifiedByReplay": true
+    }
+  ]
+}

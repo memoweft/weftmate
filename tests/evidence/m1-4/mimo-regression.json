@@ -1,0 +1,138 @@
+{
+  "label": "mimo-regression",
+  "model": "mimo",
+  "startedAt": "2026-10-08T15:13:50.065Z",
+  "processExitCode": 0,
+  "testedBaseCommit": "383fa13",
+  "summary": {
+    "passed": 5,
+    "failed": 1,
+    "manual": 0,
+    "unsupported": 0
+  },
+  "scenarios": [
+    {
+      "id": "action-01-organize",
+      "status": "passed",
+      "durationMs": 31024,
+      "reason": null,
+      "checksPassed": 8,
+      "checksTotal": 8,
+      "failedChecks": [],
+      "unexpectedApprovals": []
+    },
+    {
+      "id": "action-02-web-document",
+      "status": "passed",
+      "durationMs": 123352,
+      "reason": null,
+      "checksPassed": 4,
+      "checksTotal": 5,
+      "failedChecks": [
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "unexpectedApprovals": []
+    },
+    {
+      "id": "action-03-read-code",
+      "status": "passed",
+      "durationMs": 37304,
+      "reason": null,
+      "checksPassed": 4,
+      "checksTotal": 5,
+      "failedChecks": [
+        {
+          "type": "llm_judge",
+          "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "unexpectedApprovals": []
+    },
+    {
+      "id": "action-04-research-script",
+      "status": "failed",
+      "durationMs": 66416,
+      "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+      "checksPassed": 0,
+      "checksTotal": 0,
+      "failedChecks": [],
+      "unexpectedApprovals": [
+        {
+          "toolName": "pwsh",
+          "riskCategories": [
+            "overwrite"
+          ],
+          "status": "pending"
+        }
+      ]
+    },
+    {
+      "id": "action-05-stop-resume",
+      "status": "passed",
+      "durationMs": 96064,
+      "reason": null,
+      "checksPassed": 4,
+      "checksTotal": 4,
+      "failedChecks": [],
+      "unexpectedApprovals": []
+    },
+    {
+      "id": "action-06-delete-approval",
+      "status": "passed",
+      "durationMs": 49543,
+      "reason": null,
+      "checksPassed": 7,
+      "checksTotal": 7,
+      "failedChecks": [],
+      "unexpectedApprovals": []
+    }
+  ],
+  "native": {
+    "contextWindows": [
+      1000000
+    ],
+    "modelId": "mimo-v2.6-flash",
+    "contextSource": "service metadata",
+    "reasoningOff": false,
+    "continuationChecks": [],
+    "compactions": 0,
+    "successfulCompactions": 0,
+    "nativeGoalChanges": 0,
+    "nativeTodoWrites": 0,
+    "toolCalls": 36,
+    "goalAndTodosInCheckpoint": null
+  },
+  "delegation": {
+    "delegations": [],
+    "parentJobOutputCalls": 0,
+    "nativeCompletionNotices": 0,
+    "reportWriteAttempts": [],
+    "repeatedWrites": [],
+    "childToolCalls": 0,
+    "childCompactions": 0,
+    "writeObservation": "Native write/edit attempts for reviews/review-NN.md and summary.md; arbitrary shell effects are not counted by this field."
+  },
+  "credentialScan": {
+    "scanned": 234,
+    "matches": 0
+  },
+  "usage": {
+    "requests": 42,
+    "endedRequests": 41,
+    "requestsWithUsage": 38,
+    "rejected429": 3,
+    "interruptedWithoutUsage": 1,
+    "input": 518827,
+    "cachedInput": 426112,
+    "output": 8923,
+    "knownEstimatedCny": 0.11908324,
+    "kind": "Usage estimate; lower bound if interrupted requests have no usage; not an account invoice"
+  }
+}
