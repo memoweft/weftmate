@@ -2,6 +2,17 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createLanBaselineBridge } from './baseline-lan-model.mjs';
 
+test('long-task configured context does not query or reconfigure the LAN server', async () => {
+  const bridge = await createLanBaselineBridge({ baseUrl: 'http://private.invalid/v1', key: 'private-key', contextWindow: 98304,
+    fetchImpl: async () => { assert.fail('Configured metadata must stay in the test bridge'); } });
+  try {
+    const headers = { authorization: `Bearer ${bridge.token}` };
+    assert.equal((await fetch(bridge.url.replace('/v1', '/props'), { headers }).then(r => r.json())).n_ctx, 98304);
+    assert.equal((await fetch(bridge.url + '/models', { headers }).then(r => r.json())).data[0].context_window, 98304);
+    assert.equal(bridge.metrics().requests.length, 0);
+  } finally { await bridge.close(); }
+});
+
 test('LAN bridge serializes complete bodies and keeps destination/auth out of upstream errors', async () => {
   let active = 0, maxActive = 0;
   const bridge = await createLanBaselineBridge({ baseUrl: 'http://private.invalid/v1', key: 'private-key',
