@@ -701,6 +701,7 @@ export function createHttpHandler(context) {
           ...context.service.status(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus,
+          updates: await context.updateStatus(), nativeMinimumVersions: context.nativeMinimumVersions,
         });
       }
       if (request.method === 'GET' && pathname === '/personal/v1/models') {

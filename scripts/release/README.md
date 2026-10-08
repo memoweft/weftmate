@@ -68,3 +68,39 @@ npm run typecheck
 ```
 
 真实桌面使用隔离临时 `userData`（用户数据目录）、临时密钥与本地来源；真实 DSH 任务由合成 SSE（服务器推送事件）模型保持运行。手机 Chromium（浏览器引擎）390×844 核签下载与切换；MuMu（安卓模拟器）先检查其他测试包进程，再构建 / 安装独立 `upd1qa` 包，测试后卸载。证据在 `tests/evidence/upd-1/`，测试不触碰日用数据。开发形态只允许本机回环测试源配合 `WEFTMATE_UPDATE_TEST_PUBLIC_KEYS_PATH` 替换测试公钥；打包形态忽略该变量。
+
+## Apple（UPD-2）：原生版本与最低兼容版本
+
+Apple 设置 → 关于显示 `CFBundleShortVersionString / CFBundleVersion`、所连电脑的 `ui / app / mobile-ui` 版本和 UPD-1 状态文案。读取既有认证 `/personal/v1/status` 的可选 `updates.layers`；Electron 宿主直接复用 `desktopUpdates.state()` 的当前版本，切换后读到实际活动版本。独立宿主没有桌面更新器时不编造 `ui` 版本，显示「宿主未提供版本」；手机包不存在时显示「尚未配置」。接口只返回版本 / 渠道 / 状态，没有远程检查、安装或重启权限。
+
+宿主构造参数 `nativeMinimumVersions` 可按 `{iOS:"0.2.0",macOS:"0.2.0"}` 声明最低版本，并通过 `/status` 返回。未配置时为空，旧宿主缺字段也兼容。原生端在首次登录、云批准兑换、会话恢复与离线重新验证时检查；高于本机版本则不发布已连接会话、不保存新凭据，明确显示需要更新。关于页读到新的要求时显示提示并阻止后续宿主操作。它是原生协议的兼容要求，**不取 Android `/app/manifest` 的 `minNativeVersionCode` 或最低壳版本来阻断 iPhone / Mac**。本包不设置真实最低版本。
+
+iPhone 仅通过 TestFlight / App Store 更新。关于页展示当前 App 版本、build 和「在手机上检查」；低于宿主声明时提示「有新版本可在 TestFlight 更新」，正式版去 App Store。不下载、激活或执行手机界面包 / 原生执行代码。
+
+## Mac 最小更新口子：检测签名新版本并打开下载页
+
+本包使用任务允许的降级方案，未接入 Sparkle 安装器，也未新增 Swift Package 依赖。核对固定 **Sparkle 2.8.0** 后发现当前 Mac App 开启 `com.apple.security.app-sandbox`，其安装流程要求 `SUEnableInstallerLauncherService` 和额外 Mach lookup 临时例外权限（`<bundle>-spks`、`<bundle>-spki`）；当前工作包不新增安装器权限。标准 Sparkle 在 delta 下载失败时会退回完整更新，无法直接保证本包「只下载差分」要求。依据：[官方沙盒说明](https://sparkle-project.org/documentation/sandboxing/)、[2.8.0 的 fallback 实现](https://github.com/sparkle-project/Sparkle/blob/2.8.0/Sparkle/SPUCoreBasedUpdateDriver.m#L224)。后续接入前需审查安装器权限、选定固定 SPM 版本、验证禁止完整包回退及空闲重启；本包没有自动下载、安装、重启或差分演示的完成声明。
+
+最小口子沿用 **UPD-1 签名 JSON 清单**，不增加 XML appcast 或另一套签名格式。App 匿名读取一份清单、核对内置 Ed25519 公钥、整体签名、渠道、平台与时间，再显示版本和签名授权的下载页。请求不带宿主 Cookie / 凭据，不跟随重定向；签名失败不出现新版下载按钮，保留当前版本。原有公开 Mac 下载页入口保留，但没有配置就不会自动访问旧官网清单。
+
+构建设置来自 `Config/Base.xcconfig` / 仓库外 `Config/Local.xcconfig`：
+
+| 设置 | 默认 | 发布时填写 |
+|---|---|---|
+| `WEFTMATE_MAC_UPDATE_FEED` | 空 | 公开 HTTPS `manifest-app.json` 地址（降级口子不是 Sparkle XML appcast） |
+| `WEFTMATE_MAC_UPDATE_PUBLIC_KEY` | 空占位 | Ed25519 **原始 32 字节公钥**的 base64，来自发布身份的 SPKI 最后32字节；不是私钥 |
+| `WEFTMATE_MAC_UPDATE_CHANNEL` | `stable` | `stable` 或 `preview` |
+
+xcconfig 中 URL 的 `//` 会被当作注释，使用 `https:/$()/example.com/updates/manifest-app.json`，或在构建命令中传该设置。空来源显示「未配置更新源」；有来源无有效公钥显示「更新源公钥未配置」，不会联网。私钥仍只通过 `WEFTMATE_UPDATE_PRIVATE_KEY_PATH` 从本人 / CI 仓库外环境读取；Apple 不保存私钥。正式分发仍需 Developer ID 签名、公证与本人发布身份，由 UPD-3 处理。
+
+1. 按现有原生打包步骤产生已签名 / 公证的 DMG，运行 `package.mjs --layer app` 生成普通 UPD-1 清单和文件哈希。
+2. 用同一发布环境私钥补 Apple 检测字段并重新签整个清单：
+
+```sh
+node scripts/release/apple-manifest.mjs --manifest <private-feed>/manifest-app.json --build 12 --download-page https://example.com/downloads/mac
+node scripts/release/verify.mjs <private-feed>/manifest-app.json <private-feed>/files/app/<version> src/personal-update/trusted-keys.json
+```
+
+扩展字段为 `nativePlatform:"macOS"`、`nativeBuild:"12"`、`downloadPage:"https://…"`；均被整体签名覆盖。先发布不可变文件，再原子发布清单，递增版本或 build；不要将 iOS 或 Windows 包发到此来源。最低原生协议要求通过宿主 `/status` 声明，与可下载 App 版本分开。
+
+本地检测演示：`node apps/apple/Scripts/upd2_fixture.mjs`。它只在回环提供随机临时签名密钥签发的 v2 清单，私钥只在进程内存，不落盘、不输出。将输出的 **公开** feed / publicKey 作为 `WEFTMATE_UPD2_FEED` / `WEFTMATE_UPD2_PUBLIC_KEY` 传给串行 Mac `UPD2UITests`；Debug 的 `--ui-testing` 才允许回环测试来源与临时公钥，Release 不编译这个替换入口。iPhone UI 测试只用合成 HTTPTransport，不访问该来源。证据与精确验收范围见 `apps/apple/Tests/Evidence/UPD2/README.md`。

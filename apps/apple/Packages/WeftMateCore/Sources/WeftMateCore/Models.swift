@@ -141,6 +141,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
     case invalidResponse, responseTooLarge, credentialStorage
     case platformCapabilityUnavailable
     case requestLedgerLimit
+    case nativeUpdateRequired(String)
     case logoutIncomplete(credentialRemoved: Bool, remoteConfirmed: Bool)
 
     public var safeCode: String {
@@ -156,6 +157,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .credentialStorage: "CREDENTIAL_STORAGE_UNAVAILABLE"
         case .platformCapabilityUnavailable: "APPLE_CAPABILITY_UNAVAILABLE"
         case .requestLedgerLimit: "LOCAL_REQUEST_LEDGER_LIMIT"
+        case .nativeUpdateRequired: "NATIVE_UPDATE_REQUIRED"
         case .logoutIncomplete: "LOGOUT_UNCONFIRMED"
         }
     }
@@ -183,6 +185,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .credentialStorage: "无法安全保存登录凭据，请检查钥匙串访问。"
         case .platformCapabilityUnavailable: "服务器尚未接通 Apple 设备的续聊能力；当前可读取原会话。"
         case .requestLedgerLimit: "本机请求记录已达到保存上限，请先核对已有请求。"
+        case .nativeUpdateRequired(let notice): notice
         case .logoutIncomplete(false, true): "服务器已退出，但钥匙串中的旧凭据未能清除。请检查钥匙串访问。"
         case .logoutIncomplete(false, false): "钥匙串中的凭据未能清除，服务器退出也未确认。请恢复连接并检查钥匙串访问后重试。"
         case .logoutIncomplete(true, false): "已清除本机登录，服务器暂不可达，远端退出尚未确认。"
