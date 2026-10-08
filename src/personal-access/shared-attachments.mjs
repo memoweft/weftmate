@@ -96,6 +96,19 @@ export async function createSharedAttachmentStore({ root }) {
     return { ...old, file: paths.legacy };
   }
   return {
+    async removeSession(sessionId) {
+      if (!SESSION_ID.test(sessionId)) fail('INVALID_REQUEST');
+      await serial(async () => {
+        for (const name of await readdir(root)) {
+          if (!name.endsWith('.image')) continue;
+          const file = path.join(root, name);
+          const encoded = await readFile(file);
+          const headerLength = encoded.readUInt32BE(0);
+          const stored = JSON.parse(encoded.toString('utf8', 4, 4 + headerLength));
+          if (stored.sessionId === sessionId) await rm(file, { force: true });
+        }
+      });
+    },
     get,
     async put({ attachmentId, sessionId, requestId, name, contentType, sha256, bytes, authorize = () => {} }) {
       if (!IMAGE_ID.test(attachmentId) || !SESSION_ID.test(sessionId) || !REQUEST_ID.test(requestId) ||

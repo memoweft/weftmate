@@ -104,7 +104,8 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                     : recovery && !recoveryHere ? '旧设备有未确认文字，请先切回原手机对话核对。'
                         : recoveryHere ? '重新登录后保留了旧文字。先核对服务器是否已接收，再决定是否重新同步。' : core.state.phoneSendNotice || ''
             : !core.state.online ? '等待重新连接电脑。'
-                : selected && !canSendHere ? '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
+                : selected?.archived ? '这段对话已归档，请在会话菜单中恢复后继续。'
+                    : selected && !canSendHere ? '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
                     : !chat || !model ? '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。' : '';
         return {
             phoneChat, running, hint, attachmentBusy,

@@ -212,6 +212,18 @@ export async function createAttachmentStore({ root }) {
   }
   return {
     put, get,
+    async removeConversation(conversationId) {
+      if (!validUuid(conversationId)) invalid();
+      for (const name of await readdir(root)) {
+        if (!name.endsWith('.image')) continue;
+        const attachmentId = name.slice(0, -'.image'.length);
+        const found = await get(attachmentId);
+        if (found.conversationId === conversationId) {
+          await rm(found.file, { force: true });
+          await rm(fileFor(attachmentId, true), { force: true });
+        }
+      }
+    },
     async referenced({ attachment, conversationId, messageId }) {
       try {
         const found = await get(attachment.attachmentId);

@@ -1,0 +1,14 @@
+{
+  "surface": "mumu",
+  "realHost": true,
+  "realPinnedDsh": true,
+  "realNativeBridge": true,
+  "syntheticModel": true,
+  "isolated": true,
+  "locators": "visible names and roles",
+  "archiveRestore": true,
+  "longPress": true,
+  "defaultDelete": true,
+  "runningDeletion": true,
+  "errors": []
+}

@@ -28,12 +28,13 @@ import {
 } from '../runtime/gateway/index.mjs'
 import { InProcessApiClient, toFetchHandler } from '@deepseek-ai/dsh-host-apiproxy'
 import { nativeTimelineLog } from '../runtime/dsh-adapter/timeline.mjs'
+import { nativeSessionLifecycle } from '../runtime/dsh-adapter/session-lifecycle.mjs'
 
 export const name = 'weftmate-host'
 // apiProxy is a hard composition dependency: Gateway v1 constructs its
 // supported in-process client during apply(), so Cordis must not schedule this
 // host before the official api-gateway service is ready.
-export const inject = ['webServer', 'apiProxy']
+export const inject = ['webServer', 'apiProxy', 'agents', 'sessions', 'sessionPersistence', 'agentPresets']
 
 export function apply(ctx) {
   const apiProxy = ctx.get('apiProxy')
@@ -42,6 +43,7 @@ export function apply(ctx) {
   const gatewayV1 = createGatewayV1({
     client: new InProcessApiClient(toFetchHandler(apiProxy)),
     readLog: nativeTimelineLog(ctx),
+    lifecycle: nativeSessionLifecycle(ctx),
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。
     diagnostics: {
       runtime: { version: process.env.WEFTMATE_APP_VERSION ?? 'dev', startedAt: Date.now() },
