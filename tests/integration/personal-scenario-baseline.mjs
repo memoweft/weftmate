@@ -146,9 +146,13 @@ try {
         : check.type === 'llm_judge' ? { ...check, prompt: '按纠正后的周六晚上安排游泳。' } : check) });
     if (process.argv.includes('--desktop-only')) scenarios = scenarios.filter(s => s.id === 'memory-correction-new-sessions');
   }
-  // Each scenario runs once. LAN memory-03 switches to MiMo; legacy order is unchanged.
+  const repeatIndex = process.argv.indexOf('--repeat');
+  const repetitions = repeatIndex === -1 ? 1 : Number(process.argv[repeatIndex + 1]);
+  assert.ok(Number.isSafeInteger(repetitions) && repetitions > 0, '--repeat requires a positive integer');
+  // Repeat within this same isolated account, host and single prewarmed bridge.
+  const batch = Array.from({ length: repetitions }, () => scenarios).flat();
   const results = [], startedAt = new Date().toISOString();
-  for (const scenario of scenarios) {
+  for (const scenario of batch) {
     const firstModel = !memoryLoop && comparison && scenario.id === 'memory-03-switch-model' ? 'qwen' : modelName;
     if (comparison && !memoryLoop) assert.equal((await api('/settings/models', {
       backgroundModelProfileId: scenario.id === 'memory-03-switch-model' ? null : selected.id,
