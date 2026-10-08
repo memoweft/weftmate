@@ -1,0 +1,604 @@
+[
+  {
+    "id": "39828-3",
+    "at": "2026-10-08T07:03:50.593Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13371,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "39828-3",
+    "at": "2026-10-08T07:04:20.720Z",
+    "elapsedMs": 30127,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "39828-3",
+    "at": "2026-10-08T07:04:20.720Z",
+    "elapsedMs": 30127,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "39828-3",
+    "at": "2026-10-08T07:08:50.559Z",
+    "elapsedMs": 299966,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "chunks": 9,
+    "bytes": 27,
+    "name": "AbortError"
+  },
+  {
+    "id": "39828-5",
+    "at": "2026-10-08T07:08:51.110Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13371,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "39828-5",
+    "at": "2026-10-08T07:09:01.115Z",
+    "elapsedMs": 10006,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "39828-5",
+    "at": "2026-10-08T07:09:01.117Z",
+    "elapsedMs": 10007,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "39828-5",
+    "at": "2026-10-08T07:10:12.518Z",
+    "elapsedMs": 81408,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "39828-5",
+    "at": "2026-10-08T07:10:51.826Z",
+    "elapsedMs": 120716,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "39828-5",
+    "at": "2026-10-08T07:10:54.971Z",
+    "elapsedMs": 123861,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 30619
+  },
+  {
+    "id": "39828-5",
+    "at": "2026-10-08T07:11:40.554Z",
+    "elapsedMs": 169444,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 158,
+    "bytes": 46898,
+    "reasoningChars": 542,
+    "contentChars": 112,
+    "usage": {
+      "completion_tokens": 182,
+      "prompt_tokens": 8837,
+      "total_tokens": 9019,
+      "prompt_tokens_details": {
+        "cached_tokens": 7439
+      }
+    }
+  },
+  {
+    "id": "43984-1",
+    "at": "2026-10-08T07:12:01.353Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 10090,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "43984-1",
+    "at": "2026-10-08T07:12:07.262Z",
+    "elapsedMs": 5909,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "43984-1",
+    "at": "2026-10-08T07:12:07.264Z",
+    "elapsedMs": 5911,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "43984-1",
+    "at": "2026-10-08T07:12:07.265Z",
+    "elapsedMs": 5912,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "43984-1",
+    "at": "2026-10-08T07:12:13.607Z",
+    "elapsedMs": 12254,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 51591
+  },
+  {
+    "id": "43984-1",
+    "at": "2026-10-08T07:12:14.709Z",
+    "elapsedMs": 13356,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 119,
+    "bytes": 62752,
+    "reasoningChars": 0,
+    "contentChars": 505,
+    "usage": {
+      "completion_tokens": 251,
+      "prompt_tokens": 3754,
+      "total_tokens": 4005,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "39828-8",
+    "at": "2026-10-08T07:12:14.904Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13403,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "39828-8",
+    "at": "2026-10-08T07:12:19.750Z",
+    "elapsedMs": 4846,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "39828-8",
+    "at": "2026-10-08T07:12:19.751Z",
+    "elapsedMs": 4847,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "39828-8",
+    "at": "2026-10-08T07:12:19.751Z",
+    "elapsedMs": 4847,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "39828-8",
+    "at": "2026-10-08T07:13:18.728Z",
+    "elapsedMs": 63824,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 32089
+  },
+  {
+    "id": "39828-8",
+    "at": "2026-10-08T07:13:43.650Z",
+    "elapsedMs": 88746,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 64647
+  },
+  {
+    "id": "39828-8",
+    "at": "2026-10-08T07:13:49.142Z",
+    "elapsedMs": 94238,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "chunks": 233,
+    "bytes": 75483,
+    "name": "AbortError"
+  },
+  {
+    "id": "39828-11",
+    "at": "2026-10-08T07:13:53.241Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13415,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "39828-11",
+    "at": "2026-10-08T07:14:13.418Z",
+    "elapsedMs": 20177,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "39828-11",
+    "at": "2026-10-08T07:14:13.420Z",
+    "elapsedMs": 20179,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "39828-11",
+    "at": "2026-10-08T07:14:13.421Z",
+    "elapsedMs": 20180,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "39828-11",
+    "at": "2026-10-08T07:14:28.090Z",
+    "elapsedMs": 34849,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "39828-11",
+    "at": "2026-10-08T07:14:31.616Z",
+    "elapsedMs": 38375,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 64,
+    "bytes": 21852,
+    "reasoningChars": 279,
+    "contentChars": 46,
+    "usage": {
+      "completion_tokens": 84,
+      "prompt_tokens": 8849,
+      "total_tokens": 8933,
+      "prompt_tokens_details": {
+        "cached_tokens": 7439
+      }
+    }
+  },
+  {
+    "id": "39828-12",
+    "at": "2026-10-08T07:14:31.819Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 544,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "39828-12",
+    "at": "2026-10-08T07:14:33.841Z",
+    "elapsedMs": 2022,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "39828-12",
+    "at": "2026-10-08T07:14:33.841Z",
+    "elapsedMs": 2022,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "39828-12",
+    "at": "2026-10-08T07:14:33.842Z",
+    "elapsedMs": 2023,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "39828-12",
+    "at": "2026-10-08T07:14:43.581Z",
+    "elapsedMs": 11762,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 49,
+    "bytes": 17664,
+    "reasoningChars": 242,
+    "contentChars": 0,
+    "usage": {
+      "completion_tokens": 64,
+      "prompt_tokens": 175,
+      "total_tokens": 239,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "43984-2",
+    "at": "2026-10-08T07:14:52.751Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 10053,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "43984-2",
+    "at": "2026-10-08T07:15:22.923Z",
+    "elapsedMs": 30172,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "43984-2",
+    "at": "2026-10-08T07:15:22.925Z",
+    "elapsedMs": 30174,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "43984-2",
+    "at": "2026-10-08T07:15:24.741Z",
+    "elapsedMs": 31990,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "43984-2",
+    "at": "2026-10-08T07:15:36.895Z",
+    "elapsedMs": 44144,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 47,
+    "bytes": 24143,
+    "reasoningChars": 0,
+    "contentChars": 263,
+    "usage": {
+      "completion_tokens": 94,
+      "prompt_tokens": 3757,
+      "total_tokens": 3851,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "39828-14",
+    "at": "2026-10-08T07:15:37.146Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 14832,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "39828-14",
+    "at": "2026-10-08T07:16:07.467Z",
+    "elapsedMs": 30321,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "39828-14",
+    "at": "2026-10-08T07:16:07.468Z",
+    "elapsedMs": 30322,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "39828-14",
+    "at": "2026-10-08T07:16:34.848Z",
+    "elapsedMs": 57702,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "39828-14",
+    "at": "2026-10-08T07:16:54.112Z",
+    "elapsedMs": 76966,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "39828-14",
+    "at": "2026-10-08T07:17:04.336Z",
+    "elapsedMs": 87190,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 34,
+    "bytes": 11843,
+    "reasoningChars": 130,
+    "contentChars": 26,
+    "usage": {
+      "completion_tokens": 45,
+      "prompt_tokens": 9184,
+      "total_tokens": 9229,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "43984-3",
+    "at": "2026-10-08T07:17:25.321Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 10486,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true,
+    "templateThinking": false
+  },
+  {
+    "id": "43984-3",
+    "at": "2026-10-08T07:17:37.553Z",
+    "elapsedMs": 12233,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "43984-3",
+    "at": "2026-10-08T07:17:37.554Z",
+    "elapsedMs": 12234,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "43984-3",
+    "at": "2026-10-08T07:17:37.554Z",
+    "elapsedMs": 12234,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "43984-3",
+    "at": "2026-10-08T07:22:34.527Z",
+    "elapsedMs": 309207,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 75,
+    "bytes": 41585,
+    "reasoningChars": 0,
+    "contentChars": 368,
+    "usage": {
+      "completion_tokens": 165,
+      "prompt_tokens": 3947,
+      "total_tokens": 4112,
+      "prompt_tokens_details": {
+        "cached_tokens": 3521
+      }
+    }
+  },
+  {
+    "id": "39828-17",
+    "at": "2026-10-08T07:22:34.752Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13413,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "39828-17",
+    "at": "2026-10-08T07:23:00.689Z",
+    "elapsedMs": 25937,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "39828-17",
+    "at": "2026-10-08T07:23:00.692Z",
+    "elapsedMs": 25940,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "39828-17",
+    "at": "2026-10-08T07:23:00.693Z",
+    "elapsedMs": 25941,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "39828-17",
+    "at": "2026-10-08T07:25:12.712Z",
+    "elapsedMs": 157960,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 34604
+  },
+  {
+    "id": "39828-17",
+    "at": "2026-10-08T07:28:51.088Z",
+    "elapsedMs": 376336,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "chunks": 160,
+    "bytes": 53786,
+    "name": "AbortError"
+  }
+]
