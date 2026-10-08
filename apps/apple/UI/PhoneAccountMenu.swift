@@ -16,22 +16,22 @@ struct PhoneAccountMenu: View {
 
     var body: some View {
         Menu {
-            Button { open(.memory) } label: { Label("记忆", systemImage: "brain.head.profile") }
+            Button { open(.memory) } label: { WeftLabel("记忆", icon: "memory") }
                 .accessibilityIdentifier("phoneMenu.memory")
-            Button { open(.spirit) } label: { Label("小纬", systemImage: "sparkles") }
+            Button { open(.spirit) } label: { WeftLabel("小纬", icon: "pet") }
                 .accessibilityIdentifier("phoneMenu.spirit")
-            Button { open(.health) } label: { Label("健康", systemImage: "heart") }
+            Button { open(.health) } label: { WeftLabel("健康", icon: "health") }
                 .accessibilityIdentifier("phoneMenu.health")
             Button("用 WeftMate 账号登录") {
                 Task { await model.signOut(); if model.session == nil { model.cloudLogin.showLogin = true } }
             }
             Divider()
-            Button { open(.devices) } label: { Label("设备", systemImage: "laptopcomputer.and.iphone") }
+            Button { open(.devices) } label: { WeftLabel("设备", icon: "desktop") }
                 .accessibilityIdentifier("phoneMenu.devices")
-            Button { open(.settings) } label: { Label("账户与设置", systemImage: "person.crop.circle") }
+            Button { open(.settings) } label: { WeftLabel("账户与设置", icon: "account") }
                 .accessibilityIdentifier("phoneMenu.settings")
         } label: {
-            Image(systemName: "person.crop.circle")
+            WeftIcon("account")
         }
         .accessibilityLabel("账户菜单")
         .accessibilityIdentifier("phoneAccountMenu")
@@ -48,7 +48,7 @@ struct PhoneAccountMenu: View {
                             HealthSettingsView(model: health, app: model)
                         }
                     } else {
-                        EmptyState(symbol: "person.crop.circle", title: "账户已变更",
+                        EmptyState(symbol: "account", title: "账户已变更",
                             message: "回到当前账户后重新打开。")
                     }
                 }
