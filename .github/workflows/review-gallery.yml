@@ -62,15 +62,18 @@ jobs:
       - name: Verify evidence selection and text scan
         run: node --test tests/integration/review-capture-evidence.mjs
       - name: Generate self-contained review page
+        if: ${{ !cancelled() }}
         run: node scripts/review-gallery/build.mjs --out .local/review-gallery
       - name: Verify responsive page and public evidence
         run: node tests/integration/review-capture-gallery.mjs --out .local/review-gallery
       - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
         with:
           name: review-gallery-${{ github.sha }}
           path: |
             .local/review-gallery/index.html
             .local/review-gallery/manifest.json
             .local/review-gallery/verification.json
+            .local/review-gallery/review-*.json
           if-no-files-found: error
           retention-days: 14
