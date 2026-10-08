@@ -13,8 +13,8 @@ android {
             .orElse("com.memoweft.weftmate.mobile.debug").get()
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "0.8.6"
+        versionCode = 20
+        versionName = "0.8.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

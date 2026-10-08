@@ -147,7 +147,13 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
     record.setAttribute('aria-live','polite');record.setAttribute('aria-label',`${approvalRecord(row)}。${approvalMeaning(row,cache,attempt)}`);
     card.append(record);if(hadFocus){record.setAttribute('tabindex','-1');record.focus({preventScroll:true})}return}
   card.append(el('strong','approval-title',`${row.status==='pending'?'需要审批':'审批记录'} · ${approvalOperation(row)}`));
-  if(row.reason&&row.status==='pending')card.append(el('p','approval-reason',row.reason));
+  if(row.status==='pending'){const presentation=uiCore.approvalPresentation(row),description=el('p','approval-reason',presentation.summary);
+    card.append(description);if(presentation.reason)card.append(el('p','approval-risk-copy',presentation.reason));
+    const details=el('details','approval-detail'),raw=el('pre','timeline-raw');
+    raw.textContent=typeof presentation.raw==='string'?presentation.raw:JSON.stringify(presentation.raw,null,2);
+    details.append(el('summary','','详情'),raw);card.append(details);
+    void uiCore.readApprovalPresentation(row).then(value=>{if(!approvalViewCurrent(context)||card.dataset.approvalId!==row.approvalId||!card.contains?.(description))return;
+      description.textContent=value.summary;raw.textContent=typeof value.raw==='string'?value.raw:JSON.stringify(value.raw,null,2);});}
   if(row.status==='pending')card.append(el('p','approval-risk-copy',approvalRiskCopy(row)));
   card.classList.toggle('is-resolved',approvalTerminal(row));
   const message=el('p','approval-status',approvalMeaning(row,cache,attempt));message.setAttribute('role','status');message.setAttribute('aria-live','polite');
@@ -273,6 +279,7 @@ function taskReplyProgress(reply){if(reply?.status==='failed'&&reply.endReasonKi
   blocked:'模型请求被阻断',failed:'模型回合未完成',unconfirmed:'回复结束状态待核对'}[reply?.status]||'回复结束状态待核对'}
 
 function renderConversationTasks(){const context=conversationTaskContext(),content=$('chat-content');
+  renderQueuedTasks();
   if(state.page!=='chat'||!context.sessionId||conversationTasks.owner!==context.owner||conversationTasks.epoch!==context.epoch)return;
   const scroll=$('chat-scroll'),previousScroll=scroll.scrollTop;
   for(const entry of conversationTasks.entries.values()){

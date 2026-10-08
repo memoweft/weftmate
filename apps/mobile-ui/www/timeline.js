@@ -61,7 +61,7 @@
       row.replaceChildren(details)
     })
     for (const event of cards) {
-      if (!/^(approval\.|question\.|artifact\.|task\.queued)/.test(event.type)) continue
+      if (!/^(approval\.|question\.|artifact\.)/.test(event.type)) continue
       const data = event.data || {}, family = event.type.split('.')[0]
       const key = family === 'approval' ? data.approvalId : family === 'question' ? data.callId || data.stepId : data.artifactId || event.seq
       if (seen.has(`${family}-${key}`)) continue
