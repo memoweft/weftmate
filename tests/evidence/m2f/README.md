@@ -1,5 +1,7 @@
 # M2f · 完整来源形成、主题召回与盲测结果
 
+> 本页保留上一轮失败，不覆盖历史结果。本轮返工最终结论见 [FINAL.md](FINAL.md)：约定门槛达标，原题 LAN（局域网模型服务）13/14，A+C 10/12；逐轮确定性/语义与残余失败见新证据。
+
 **固定候选未通过验收：留出失败仍存在，原题出现退步。不能宣称记忆已对未见说法可靠。**
 
 Core（记忆核心）候选 `f5d615e85d3691e3e7271e6f236f496c50a7dd00`；[Core PR（拉取请求）#90](https://github.com/memoweft/memoweft/pull/90)，[WeftMate PR #93](https://github.com/memoweft/weftmate/pull/93)。Core 只在新 worktree（工作树）修改，日用主目录仍为 main；由 Claude squash（压缩合并），之后须更新 Observed bridge（真实核心集成）到实际合并提交。
