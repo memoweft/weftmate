@@ -133,11 +133,13 @@ final class A6SettingsUITests: XCTestCase {
         try openSettings(app)
         try await searchAndDeepLink(app, ids: ids)
     }
-    @MainActor func testDarkSettingsReview() async throws {
-        let (app, _) = try await launch("dark")
+    @MainActor func testLightSettingsReview() async throws { try await review("light") }
+    @MainActor func testDarkSettingsReview() async throws { try await review("dark") }
+    @MainActor private func review(_ theme: String) async throws {
+        let (app, _) = try await launch(theme)
         defer { app.terminate() }
         try openSettings(app); try category(app, "appearance")
-        try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", "dark")
-        try back(app); try category(app, "usage"); try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", "dark")
+        try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", theme)
+        try back(app); try category(app, "usage"); try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", theme)
     }
 }
