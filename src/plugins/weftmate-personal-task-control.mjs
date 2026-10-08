@@ -10,7 +10,8 @@ const recentLimit = 256;
 
 function validRequest(frame) {
   return frame && typeof frame === 'object' && !Array.isArray(frame) &&
-    Object.keys(frame).sort().join(',') === 'id,protocol,receiptIds,requestId,sessionId' &&
+    Object.keys(frame).filter(key => key !== 'queuedOnly').sort().join(',') === 'id,protocol,receiptIds,requestId,sessionId' &&
+    (frame.queuedOnly === undefined || frame.queuedOnly === true) &&
     frame.protocol === PERSONAL_TASK_CONTROL_PROTOCOL && typeof frame.id === 'string' &&
     /^stop-[0-9a-f-]{36}$/.test(frame.id) &&
     typeof frame.requestId === 'string' && REQUEST.test(frame.requestId) &&
@@ -77,7 +78,7 @@ export function stopExactTask(agents, claimedBySession, input) {
       outcome.status = 'queue_removed';
     }
   }
-  if (safeActive && openTurnOf(agent) === openTurn) {
+  if (!input.queuedOnly && safeActive && openTurnOf(agent) === openTurn) {
     for (const outcome of outcomes) {
       if (activeReceipts.includes(outcome.receiptId)) {
         outcome.status = 'cancel_requested';
@@ -141,13 +142,13 @@ export function createTaskStopHandler(agents, claimedBySession, send, stopJobs =
   const recent = new Map();
   return (frame) => {
     if (frame?.protocol !== PERSONAL_TASK_CONTROL_PROTOCOL || !validRequest(frame)) return;
-    const key = `${frame.sessionId}\u0000${frame.requestId}`;
+    const key = `${frame.sessionId}\u0000${frame.requestId}\u0000${frame.queuedOnly === true}`;
     const stable = recent.get(key) ?? new Map();
     recent.delete(key);
     recent.set(key, stable);
     if (recent.size > recentLimit) recent.delete(recent.keys().next().value);
     let result;
-    try { onStop?.(frame); result = stopExactTask(agents, claimedBySession, frame); }
+    try { if (!frame.queuedOnly) onStop?.(frame); result = stopExactTask(agents, claimedBySession, frame); }
     catch { result = { status: 'unconfirmed', outcomes: frame.receiptIds.map((receiptId) =>
       ({ receiptId, status: 'unconfirmed' })) }; }
     const finish = (jobs = [], forceUnconfirmed = false) => {
@@ -171,7 +172,7 @@ export function createTaskStopHandler(agents, claimedBySession, send, stopJobs =
       send({ protocol: PERSONAL_TASK_CONTROL_PROTOCOL, id: frame.id, ...result });
     };
     let work;
-    try { work = stopJobs?.(frame); } catch (error) { work = Promise.reject(error); }
+    try { if (!frame.queuedOnly) work = stopJobs?.(frame); } catch (error) { work = Promise.reject(error); }
     if (work) Promise.resolve(work).then(finish, () => {
       result.outcomes = result.outcomes.map(outcome => ({ ...outcome, status: 'unconfirmed' }));
       finish([], true);
