@@ -117,7 +117,6 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                     list.insertBefore(card, anchor.nextSibling);
                 else
                     list.append(card);
-
             }
             const expanded = card.querySelector?.('details')?.open === true;
             card.dataset.signature = signature;

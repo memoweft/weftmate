@@ -201,7 +201,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         const stop = ui.byId('cancel-turn');
         if (!stop.hidden && value.cancelHidden) globalThis.WeftMotion?.hide(stop);
         else if (stop.hidden && !value.cancelHidden) { stop.hidden = false; globalThis.WeftMotion?.reveal(stop, '160ms'); }
-        else stop.hidden = value.cancelHidden;
+        stop.hidden = value.cancelHidden;
         ui.byId('cancel-turn').disabled = value.cancelDisabled;
         ui.byId('message-mode').hidden = !value.running;
         ui.byId('message-mode').value = core.state.messageMode || 'steer';
