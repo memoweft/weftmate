@@ -1,0 +1,2780 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-08T20:26:22.561Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "0199ef148950e1322433ccbae1de318054895d1d",
+    "core": "ea1d9d11aca0f839c76026b89ec46c9f85d439fd"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "01",
+      "title": "原话进入真实桌面对话",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactUserEvent": true,
+        "nonemptyReply": true
+      },
+      "startedAt": "2026-10-08T20:26:34.855Z",
+      "finishedAt": "2026-10-08T20:26:44.440Z"
+    },
+    {
+      "id": "02",
+      "title": "模型提议、用户确认组队提醒",
+      "status": "failed",
+      "checks": {
+        "proposal": false,
+        "confirmationCompleted": false,
+        "confirmationSource": true
+      },
+      "startedAt": "2026-10-08T20:26:44.441Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "应主动提议以后用户想组队时提醒找王小明，邀请用户确认。",
+        "turn": 1,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-08T20:27:06.398Z"
+    },
+    {
+      "id": "03",
+      "title": "人物、关系、评价、决定和原话来源",
+      "status": "failed",
+      "checks": {
+        "person": true,
+        "relationship": true,
+        "evaluation": false,
+        "decision": false,
+        "personSource": false,
+        "relationshipSource": true,
+        "evaluationSource": false,
+        "decisionSource": false
+      },
+      "startedAt": "2026-10-08T20:27:06.399Z",
+      "items": [
+        {
+          "id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+          "kind": "entity",
+          "text": "王小明",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:26:53.312Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:26:53.312Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c",
+          "kind": "relationship",
+          "text": "用户王小明打游戏挺厉害，是我好兄弟。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:26:53.312Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "sources": {
+        "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e": [],
+        "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3": [],
+        "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c": [
+          {
+            "evidenceId": "e6dd95dc-08ff-4b89-aac0-15e96137dd38",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-08T20:26:44.431Z"
+          }
+        ]
+      },
+      "storage": {
+        "entity": [
+          {
+            "id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+            "world_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "kind": "person",
+            "canonical_name": "用户",
+            "invalid_at": null,
+            "created_at": "2026-10-08T20:26:53.312Z",
+            "updated_at": "2026-10-08T20:26:53.312Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+            "world_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "kind": "person",
+            "canonical_name": "王小明",
+            "invalid_at": null,
+            "created_at": "2026-10-08T20:26:53.312Z",
+            "updated_at": "2026-10-08T20:26:53.312Z",
+            "aliases_json": "[]"
+          }
+        ],
+        "relationship": [
+          {
+            "id": "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c",
+            "world_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "source_entity_id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+            "target_entity_id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+            "relation_type": "好兄弟",
+            "content": "用户王小明打游戏挺厉害，是我好兄弟。",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "invalid_at": null,
+            "created_at": "2026-10-08T20:26:53.312Z",
+            "updated_at": "2026-10-08T20:26:53.312Z"
+          }
+        ],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship_transitions": [],
+        "interaction_commitment": [],
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-ac75ed45545d09b62ad102407f1fd3831ee579e2fdf973b425d7fe05fa83532a",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:97cb1babae4a9aa941f00d17ea643143:15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3",
+            "boundary_payload_hash": "15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce",
+            "result_session_id": "session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce\",\"subject_id\":\"owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547\"}",
+            "formal_target_hash": "3a735829a216475a904486476e7ece0e6324706bb559f0434b3deec1d7d833a2",
+            "subject_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"e6dd95dc-08ff-4b89-aac0-15e96137dd38\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-08T20:26:44.525Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-08T20:26:44.543Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-08T20:26:44.560Z",
+            "model_completed_at": "2026-10-08T20:26:53.294Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":227,\"completion_tokens_details\":{\"reasoning_tokens\":76},\"prompt_tokens\":3698,\"prompt_tokens_details\":{\"cached_tokens\":2048},\"total_tokens\":3925}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"statement_kind\\\":\\\"relationship\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u738b\\u5c0f\\u660e\\u662f\\u6211\\u7684\\u597d\\u5144\\u5f1f\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"e6dd95dc-08ff-4b89-aac0-15e96137dd38\\\",\\\"segment_id\\\":\\\"s0\\\"},{\\\"evidence_id\\\":\\\"e6dd95dc-08ff-4b89-aac0-15e96137dd38\\\",\\\"segment_id\\\":\\\"s1\\\"}],\\\"target_entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"},\\\"relation_type\\\":\\\"\\u597d\\u5144\\u5f1f\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":227,\"completion_tokens_details\":{\"reasoning_tokens\":76},\"prompt_tokens\":3698,\"prompt_tokens_details\":{\"cached_tokens\":2048},\"total_tokens\":3925}}",
+            "model_result_hash": "6e228f4e5d588d463555bd3b838427c18f24e26dc52c6d01832809fb05d2928f",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:97cb1babae4a9aa941f00d17ea643143:15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3\",\"cognitions\":[{\"action\":\"form\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"relation_type\":\"\\u597d\\u5144\\u5f1f\",\"relationship_id\":\"relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c\",\"source_entity_id\":\"entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3\",\"statement_kind\":\"relationship\",\"target_entity_id\":\"entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "48d10261bca978eb7812d8347db50f296d540de5e883b60a4507e6e785d391d7",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-08T20:26:44.433Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:97cb1babae4a9aa941f00d17ea643143:15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3\",\"evidence_count\":1,\"evidence_manifest_hash\":\"419a3cec4774d163cfd6426e95dee8c3e59573280917b206f35ae33325573978\",\"formal_target_hash\":\"3a735829a216475a904486476e7ece0e6324706bb559f0434b3deec1d7d833a2\",\"job_id\":\"memory-world-job-ac75ed45545d09b62ad102407f1fd3831ee579e2fdf973b425d7fe05fa83532a\",\"job_state\":\"pending\",\"payload_hash\":\"15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "c7819c09af881e54c0487f6f43cdfefa61beea8385b36c663801edd618849c25",
+            "created_at": "2026-10-08T20:26:44.433Z",
+            "completed_at": "2026-10-08T20:26:53.312Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          }
+        ]
+      },
+      "finishedAt": "2026-10-08T20:27:08.974Z"
+    },
+    {
+      "id": "04",
+      "title": "新会话、换模型、改写问题仍召回",
+      "status": "failed",
+      "checks": {
+        "newSession": true,
+        "changedModel": true,
+        "completed": true,
+        "replyName": false,
+        "formalMemoryAdopted": false
+      },
+      "startedAt": "2026-10-08T20:27:12.524Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "新会话应根据此前确认的组队决定回答找王小明，不能只询问或编造别人。",
+        "turn": 3,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-08T20:27:53.605Z"
+    },
+    {
+      "id": "05",
+      "title": "自然纠正、两个模型的当前理解和失效解释",
+      "status": "failed",
+      "checks": {
+        "correctionCompleted": true,
+        "latestStored": true,
+        "oldInvalid": true,
+        "oldSourceExplainsChange": false,
+        "correctedSource": true,
+        "bothRepliesLatest": true,
+        "bothAdoptLatest": true,
+        "oldExcluded": true,
+        "replacementReason": false
+      },
+      "startedAt": "2026-10-08T20:27:53.606Z",
+      "items": [
+        {
+          "id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+          "kind": "entity",
+          "text": "王小明",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:26:53.312Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:26:53.312Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c",
+          "kind": "relationship",
+          "text": "用户王小明打游戏挺厉害，是我好兄弟。",
+          "truncated": false,
+          "currentState": "not_current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:28:07.646Z",
+          "lifecycle": {
+            "invalidAt": "2026-10-08T20:28:07.646Z",
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+          "kind": "relationship",
+          "text": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:28:07.646Z",
+          "updatedAt": "2026-10-08T20:28:07.646Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "sources": {
+        "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e": [],
+        "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3": [],
+        "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c": [
+          {
+            "evidenceId": "e6dd95dc-08ff-4b89-aac0-15e96137dd38",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContent": "王小明打游戏挺厉害，是我好兄弟。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-08T20:26:44.431Z"
+          }
+        ],
+        "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911": [
+          {
+            "evidenceId": "40f85f1c-6ea4-49b1-85d6-74c6d9328b91",
+            "relation": "support",
+            "currentnessState": "current",
+            "permissions": {
+              "allowLocalRead": true,
+              "allowCloudRead": true,
+              "allowInference": true
+            },
+            "contentAvailable": true,
+            "summary": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContent": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "rawContentTruncated": false,
+            "recordedAt": "2026-10-08T20:28:01.396Z"
+          }
+        ]
+      },
+      "storage": {
+        "entity": [
+          {
+            "id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+            "world_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "kind": "person",
+            "canonical_name": "用户",
+            "invalid_at": null,
+            "created_at": "2026-10-08T20:26:53.312Z",
+            "updated_at": "2026-10-08T20:26:53.312Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+            "world_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "kind": "person",
+            "canonical_name": "王小明",
+            "invalid_at": null,
+            "created_at": "2026-10-08T20:26:53.312Z",
+            "updated_at": "2026-10-08T20:26:53.312Z",
+            "aliases_json": "[]"
+          }
+        ],
+        "relationship": [
+          {
+            "id": "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c",
+            "world_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "source_entity_id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+            "target_entity_id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+            "relation_type": "好兄弟",
+            "content": "用户王小明打游戏挺厉害，是我好兄弟。",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "invalid_at": "2026-10-08T20:28:07.646Z",
+            "created_at": "2026-10-08T20:26:53.312Z",
+            "updated_at": "2026-10-08T20:28:07.646Z"
+          },
+          {
+            "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+            "world_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "source_entity_id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+            "target_entity_id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+            "relation_type": "表弟",
+            "content": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "invalid_at": null,
+            "created_at": "2026-10-08T20:28:07.646Z",
+            "updated_at": "2026-10-08T20:28:07.646Z"
+          }
+        ],
+        "cognition": [],
+        "cognition_transitions": [],
+        "relationship_transitions": [],
+        "interaction_commitment": [
+          {
+            "id": "468ee765-e036-496f-a858-cf58c4a402c8",
+            "subject_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "conversation_id": "session-b5f72612-a8e0-4229-8bdb-173e881c9966",
+            "episode_id": "weftmate-turn-boundary-v1:47508d07381ed33977c49747727a39e0:fa426c19770d39cda8747bb5d688becc68a6fcda8fe960c0b6df3a2795965b98",
+            "assistant_message_id": "915b50e6-fdf7-4ed5-a287-d1fab95d5cbb",
+            "kind": "recommendation",
+            "content": "AI建议合适的组队人选",
+            "raw_quote": "建议合适的组队人选",
+            "status": "active",
+            "created_at": "2026-10-08T20:27:53.702Z",
+            "updated_at": "2026-10-08T20:27:53.702Z"
+          }
+        ],
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-ac75ed45545d09b62ad102407f1fd3831ee579e2fdf973b425d7fe05fa83532a",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:97cb1babae4a9aa941f00d17ea643143:15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3",
+            "boundary_payload_hash": "15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce",
+            "result_session_id": "session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce\",\"subject_id\":\"owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547\"}",
+            "formal_target_hash": "3a735829a216475a904486476e7ece0e6324706bb559f0434b3deec1d7d833a2",
+            "subject_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"e6dd95dc-08ff-4b89-aac0-15e96137dd38\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-08T20:26:44.525Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-08T20:26:44.543Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-08T20:26:44.560Z",
+            "model_completed_at": "2026-10-08T20:26:53.294Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":227,\"completion_tokens_details\":{\"reasoning_tokens\":76},\"prompt_tokens\":3698,\"prompt_tokens_details\":{\"cached_tokens\":2048},\"total_tokens\":3925}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"statement_kind\\\":\\\"relationship\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u738b\\u5c0f\\u660e\\u662f\\u6211\\u7684\\u597d\\u5144\\u5f1f\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"e6dd95dc-08ff-4b89-aac0-15e96137dd38\\\",\\\"segment_id\\\":\\\"s0\\\"},{\\\"evidence_id\\\":\\\"e6dd95dc-08ff-4b89-aac0-15e96137dd38\\\",\\\"segment_id\\\":\\\"s1\\\"}],\\\"target_entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"},\\\"relation_type\\\":\\\"\\u597d\\u5144\\u5f1f\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":227,\"completion_tokens_details\":{\"reasoning_tokens\":76},\"prompt_tokens\":3698,\"prompt_tokens_details\":{\"cached_tokens\":2048},\"total_tokens\":3925}}",
+            "model_result_hash": "6e228f4e5d588d463555bd3b838427c18f24e26dc52c6d01832809fb05d2928f",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:97cb1babae4a9aa941f00d17ea643143:15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3\",\"cognitions\":[{\"action\":\"form\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"relation_type\":\"\\u597d\\u5144\\u5f1f\",\"relationship_id\":\"relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c\",\"source_entity_id\":\"entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3\",\"statement_kind\":\"relationship\",\"target_entity_id\":\"entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "48d10261bca978eb7812d8347db50f296d540de5e883b60a4507e6e785d391d7",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-08T20:26:44.433Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:97cb1babae4a9aa941f00d17ea643143:15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3\",\"evidence_count\":1,\"evidence_manifest_hash\":\"419a3cec4774d163cfd6426e95dee8c3e59573280917b206f35ae33325573978\",\"formal_target_hash\":\"3a735829a216475a904486476e7ece0e6324706bb559f0434b3deec1d7d833a2\",\"job_id\":\"memory-world-job-ac75ed45545d09b62ad102407f1fd3831ee579e2fdf973b425d7fe05fa83532a\",\"job_state\":\"pending\",\"payload_hash\":\"15dbb2ecb6aa5371e2c3ec7a159df47b780e6b58be1e521c0b919de192477bd3\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "c7819c09af881e54c0487f6f43cdfefa61beea8385b36c663801edd618849c25",
+            "created_at": "2026-10-08T20:26:44.433Z",
+            "completed_at": "2026-10-08T20:26:53.312Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-a0356ca0103b62d252859c4db73adf1bffc53ec636fc64ca482795e86c345cc0",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:47508d07381ed33977c49747727a39e0:fa426c19770d39cda8747bb5d688becc68a6fcda8fe960c0b6df3a2795965b98",
+            "boundary_payload_hash": "fa426c19770d39cda8747bb5d688becc68a6fcda8fe960c0b6df3a2795965b98",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-b5f72612-a8e0-4229-8bdb-173e881c9966",
+            "result_session_id": "session-b5f72612-a8e0-4229-8bdb-173e881c9966",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-b5f72612-a8e0-4229-8bdb-173e881c9966\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-b5f72612-a8e0-4229-8bdb-173e881c9966\",\"subject_id\":\"owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547\"}",
+            "formal_target_hash": "e3c4a4ed1bb0e8feb517ad30461014ffa134fc5175d2015bfe934d3c109d66b2",
+            "subject_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"9b4c34fa-8923-4dd8-93a7-5298aa10a8ca\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-08T20:27:53.719Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-08T20:27:53.740Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-08T20:27:53.758Z",
+            "model_completed_at": "2026-10-08T20:27:53.778Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-08T20:27:53.659Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:47508d07381ed33977c49747727a39e0:fa426c19770d39cda8747bb5d688becc68a6fcda8fe960c0b6df3a2795965b98\",\"evidence_count\":1,\"evidence_manifest_hash\":\"96b38ff48a564c576f2099f38909739dc448034f44b7c3812d19e7d5af5cc96f\",\"formal_target_hash\":\"e3c4a4ed1bb0e8feb517ad30461014ffa134fc5175d2015bfe934d3c109d66b2\",\"job_id\":\"memory-world-job-a0356ca0103b62d252859c4db73adf1bffc53ec636fc64ca482795e86c345cc0\",\"job_state\":\"pending\",\"payload_hash\":\"fa426c19770d39cda8747bb5d688becc68a6fcda8fe960c0b6df3a2795965b98\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "5e5b8a1303a79cc5c3378e1c0864d79b56b8fdf6c27b6c563165f7908d51eeec",
+            "created_at": "2026-10-08T20:27:53.659Z",
+            "completed_at": "2026-10-08T20:27:53.778Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-b319c89572c6a47881d61134d584db890167fb23bd1879dda9d2311137101a2c",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:d827559a64e5a06f5d658c8fbb2f9c84:a1578e26a968eabe2383b3b8882d7d4b4dcd2ed622807e0e3643a0f147a02d5f",
+            "boundary_payload_hash": "a1578e26a968eabe2383b3b8882d7d4b4dcd2ed622807e0e3643a0f147a02d5f",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-0b551047-5ee1-433a-ad21-69f3feb4ea7b",
+            "result_session_id": "session-0b551047-5ee1-433a-ad21-69f3feb4ea7b",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-0b551047-5ee1-433a-ad21-69f3feb4ea7b\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-0b551047-5ee1-433a-ad21-69f3feb4ea7b\",\"subject_id\":\"owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547\"}",
+            "formal_target_hash": "ea8158d9fe31f97923d89d38a0286ba90a0bf088d5b65f4b9de522ffb657632d",
+            "subject_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"40f85f1c-6ea4-49b1-85d6-74c6d9328b91\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-08T20:28:01.432Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-08T20:28:01.453Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-08T20:28:01.471Z",
+            "model_completed_at": "2026-10-08T20:28:07.630Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":355,\"completion_tokens_details\":{\"reasoning_tokens\":122},\"prompt_tokens\":4099,\"prompt_tokens_details\":{\"cached_tokens\":2048},\"total_tokens\":4454}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"statement_kind\\\":\\\"relationship\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u66f4\\u6b63\\u4e00\\u4e0b\\uff1a\\u738b\\u5c0f\\u660e\\u662f\\u6211\\u7684\\u8868\\u5f1f\\uff0c\\u4e0d\\u662f\\u597d\\u5144\\u5f1f\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"40f85f1c-6ea4-49b1-85d6-74c6d9328b91\\\",\\\"segment_id\\\":\\\"s0\\\"},{\\\"evidence_id\\\":\\\"40f85f1c-6ea4-49b1-85d6-74c6d9328b91\\\",\\\"segment_id\\\":\\\"s1\\\"}],\\\"corrects_relationship_id\\\":\\\"relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c\\\",\\\"relation_type\\\":\\\"\\u8868\\u5f1f\\\",\\\"target_entity\\\":{\\\"canonical_name\\\":\\\"\\u738b\\u5c0f\\u660e\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":355,\"completion_tokens_details\":{\"reasoning_tokens\":122},\"prompt_tokens\":4099,\"prompt_tokens_details\":{\"cached_tokens\":2048},\"total_tokens\":4454}}",
+            "model_result_hash": "98b5667e6052b4489d939bbda1065ec5d27fc8acfa9ae8dbf469df1c57d1d49d",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:d827559a64e5a06f5d658c8fbb2f9c84:a1578e26a968eabe2383b3b8882d7d4b4dcd2ed622807e0e3643a0f147a02d5f\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_relationship_id\":\"relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c\",\"relation_type\":\"\\u8868\\u5f1f\",\"replacement_relationship_id\":\"relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911\",\"source_entity_id\":\"entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3\",\"statement_kind\":\"relationship\",\"target_entity_id\":\"entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "5d02027017563215891a72124ecc1bd9eae258e6b4bb57b7a3ca25a41dd25b7e",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-08T20:28:01.397Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:d827559a64e5a06f5d658c8fbb2f9c84:a1578e26a968eabe2383b3b8882d7d4b4dcd2ed622807e0e3643a0f147a02d5f\",\"evidence_count\":1,\"evidence_manifest_hash\":\"aaedeac2bb4a7a8e169043f0da533d64cd046f1f71d37426b7dbe3af3f19e0dd\",\"formal_target_hash\":\"ea8158d9fe31f97923d89d38a0286ba90a0bf088d5b65f4b9de522ffb657632d\",\"job_id\":\"memory-world-job-b319c89572c6a47881d61134d584db890167fb23bd1879dda9d2311137101a2c\",\"job_state\":\"pending\",\"payload_hash\":\"a1578e26a968eabe2383b3b8882d7d4b4dcd2ed622807e0e3643a0f147a02d5f\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "23f87ee04e253ec2757530233c8366a09a770415df583566cdafbf32457a275d",
+            "created_at": "2026-10-08T20:28:01.397Z",
+            "completed_at": "2026-10-08T20:28:07.646Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-fc3b80c47f10004dff90962da5c62080f66bddcc3022ab692252d5cd650f4b9d",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:9d3815cd1d1ca2213e97c5c29fc92df8:d5fff244706849daa96bfdcb771c53e3e8b77a857ca8734dfa6c7edfef4c40f3",
+            "boundary_payload_hash": "d5fff244706849daa96bfdcb771c53e3e8b77a857ca8734dfa6c7edfef4c40f3",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-a600bab2-0274-4a32-aeba-a1896debe338",
+            "result_session_id": "session-a600bab2-0274-4a32-aeba-a1896debe338",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a600bab2-0274-4a32-aeba-a1896debe338\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a600bab2-0274-4a32-aeba-a1896debe338\",\"subject_id\":\"owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547\"}",
+            "formal_target_hash": "7f7fb9ded28176941961458e04e9052d2b678d787f67f8576fb5d38544390971",
+            "subject_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"e8a3ba2f-63ec-41e7-adab-af44e2065edd\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-08T20:28:28.087Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-08T20:28:28.106Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-08T20:28:28.125Z",
+            "model_completed_at": "2026-10-08T20:28:28.143Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-08T20:28:28.052Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:9d3815cd1d1ca2213e97c5c29fc92df8:d5fff244706849daa96bfdcb771c53e3e8b77a857ca8734dfa6c7edfef4c40f3\",\"evidence_count\":1,\"evidence_manifest_hash\":\"4e930a78431398c4621395e59c4e750169313ca782e65d6410da822ea684c587\",\"formal_target_hash\":\"7f7fb9ded28176941961458e04e9052d2b678d787f67f8576fb5d38544390971\",\"job_id\":\"memory-world-job-fc3b80c47f10004dff90962da5c62080f66bddcc3022ab692252d5cd650f4b9d\",\"job_state\":\"pending\",\"payload_hash\":\"d5fff244706849daa96bfdcb771c53e3e8b77a857ca8734dfa6c7edfef4c40f3\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "6c110b6a8e8b3466b77271168321fe8e33e9171a689f537ad985ef9f602ce85e",
+            "created_at": "2026-10-08T20:28:28.052Z",
+            "completed_at": "2026-10-08T20:28:28.143Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-39be67bb57a1f429a4d2a9ba6623e1b836caf70b6b585c1fc2b8d04b2bb13f70",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:cca33a1d9d175c9aca14ad6c55c4092d:896fb01071293ebf4753e8fe252d9df8ccb4d3226ea3035b536a288a007c304d",
+            "boundary_payload_hash": "896fb01071293ebf4753e8fe252d9df8ccb4d3226ea3035b536a288a007c304d",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-f31f526a-3791-43b8-a9e2-5f68cea135eb",
+            "result_session_id": "session-f31f526a-3791-43b8-a9e2-5f68cea135eb",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-f31f526a-3791-43b8-a9e2-5f68cea135eb\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-f31f526a-3791-43b8-a9e2-5f68cea135eb\",\"subject_id\":\"owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547\"}",
+            "formal_target_hash": "f30ba3718f326e0369e963a05b2d8be15d2e0465441c7fc20e6781d4e8674b2d",
+            "subject_id": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"db972ff1-7987-4ffc-9425-66fa3306e45c\"]",
+            "state": "processing",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": "memoweft-world:54368:7def6fddad2348b6b4432f9acb337911",
+            "claim_token": "f4d80986ec964494a49bf7923854627d",
+            "claimed_at": "2026-10-08T20:28:50.453Z",
+            "lease_expires_at": "2026-10-08T20:33:50.471Z",
+            "heartbeat_at": "2026-10-08T20:28:50.471Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": null,
+            "model_completed_at": null,
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": null,
+            "model_result_hash": null,
+            "world_result_json": null,
+            "result_hash": null,
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-08T20:28:50.415Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:cca33a1d9d175c9aca14ad6c55c4092d:896fb01071293ebf4753e8fe252d9df8ccb4d3226ea3035b536a288a007c304d\",\"evidence_count\":1,\"evidence_manifest_hash\":\"4c3660f6e6477eea30e57d6c20f7f7821e66b52c16ca2f4ea8e2cf8cb3b8217e\",\"formal_target_hash\":\"f30ba3718f326e0369e963a05b2d8be15d2e0465441c7fc20e6781d4e8674b2d\",\"job_id\":\"memory-world-job-39be67bb57a1f429a4d2a9ba6623e1b836caf70b6b585c1fc2b8d04b2bb13f70\",\"job_state\":\"pending\",\"payload_hash\":\"896fb01071293ebf4753e8fe252d9df8ccb4d3226ea3035b536a288a007c304d\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "b93bec745a2bc5f92258c63052884fd3fc0f51db7d1d9aa4e032cc2e62d97b08",
+            "created_at": "2026-10-08T20:28:50.415Z",
+            "completed_at": null,
+            "last_error_type": null,
+            "terminal_state": null,
+            "terminal_detail": null
+          }
+        ]
+      },
+      "semantic": [
+        {
+          "type": "llm_judge",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 5,
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "当前关系是表弟，已纠正好兄弟的旧说法；组队仍找王小明。",
+          "turn": 6,
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "finishedAt": "2026-10-08T20:28:50.498Z"
+    },
+    {
+      "id": "06",
+      "title": "重启宿主、持久化后仍采用最新理解",
+      "status": "failed",
+      "checks": {
+        "restarted": true,
+        "persistedLatest": true,
+        "latestReply": false,
+        "latestAdopted": true
+      },
+      "startedAt": "2026-10-08T20:28:50.500Z",
+      "items": [
+        {
+          "id": "entity-127203abf65887db99ee40bef2356f0b17bce52271b82b3bfc6eb045195c3a4e",
+          "kind": "entity",
+          "text": "王小明",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:26:53.312Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "entity-20113869c278864e4a4ca489873dff0ac5baa57eb59f9306016ae8ac3f9663c3",
+          "kind": "entity",
+          "text": "用户",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:26:53.312Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 0
+        },
+        {
+          "id": "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c",
+          "kind": "relationship",
+          "text": "用户王小明打游戏挺厉害，是我好兄弟。",
+          "truncated": false,
+          "currentState": "not_current",
+          "createdAt": "2026-10-08T20:26:53.312Z",
+          "updatedAt": "2026-10-08T20:28:07.646Z",
+          "lifecycle": {
+            "invalidAt": "2026-10-08T20:28:07.646Z",
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+          "kind": "relationship",
+          "text": "用户更正一下：王小明是我的表弟，不是好兄弟。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-08T20:28:07.646Z",
+          "updatedAt": "2026-10-08T20:28:07.646Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "重启后当前关系仍是表弟；组队找王小明。",
+        "turn": 7,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-08T20:29:31.096Z"
+    },
+    {
+      "id": "07",
+      "title": "界面看来源、真正遗忘、导出不可恢复",
+      "status": "failed",
+      "checks": {
+        "uiSource": true
+      },
+      "startedAt": "2026-10-08T20:29:31.097Z",
+      "deletions": [
+        {
+          "status": 503,
+          "body": {
+            "error": {
+              "code": "SERVICE_UNAVAILABLE"
+            }
+          }
+        }
+      ],
+      "reason": "locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('dialog', { name: '删除对话', exact: true }) to be hidden\u001b[22m\n\u001b[2m    44 × locator resolved to visible <dialog open=\"\" aria-label=\"删除对话\" class=\"dialog confirm-dialog\">…</dialog>\u001b[22m\n",
+      "finishedAt": "2026-10-08T20:29:55.087Z"
+    },
+    {
+      "id": "08",
+      "title": "Core 真进程停止且无法重启、普通聊天和提示",
+      "status": "failed",
+      "checks": {
+        "actualCoreStopped": true,
+        "unavailable": true,
+        "chatCompleted": true,
+        "noMemoryInjected": true,
+        "chatNotice": false,
+        "memoryPageNotice": true
+      },
+      "startedAt": "2026-10-08T20:29:55.089Z",
+      "killedCoreProcesses": 1,
+      "memory": {
+        "ownerId": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+        "state": "unavailable",
+        "worldRevision": null,
+        "capabilities": {
+          "list": false,
+          "source": false,
+          "inject": false,
+          "correct": false,
+          "mute": false,
+          "deleteEvidence": false,
+          "deleteWorldItem": false
+        },
+        "pendingBoundaryCount": null,
+        "blockedBoundaryCount": null,
+        "discardedBoundaryCount": null,
+        "lastFailureCode": "MEMORY_PROCESS_UNAVAILABLE",
+        "reasonCode": "MEMORY_PROCESS_UNAVAILABLE"
+      },
+      "chatNotice": "WeftMate\n新对话\nCtrl N\nCtrl K\n\n已归档\n会话\n新对话\n更多\n新对话\n更多\n新对话\n更多\n新对话\n更多\n新对话\n更多\n新对话\n更多\n新对话\n更多\ne\neval-f180818a-d04c-4acb-8aaa-05feae103e46\n新对话\n本对话用量\n输出与来源\n今天想做什么？\n\n请求已记录，等待派发。\n\n输入消息\nmimo\n自动",
+      "memoryNotice": "记忆服务暂时不可用，请稍后刷新。",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "记忆服务故障时普通问候仍可用。",
+        "turn": 8,
+        "status": "skipped",
+        "reason": "No judge configured; enable --judge-model same or a configured model name."
+      },
+      "finishedAt": "2026-10-08T20:30:04.073Z"
+    },
+    {
+      "id": "speed",
+      "title": "同一对话重复任务的步骤与耗时",
+      "status": "passed",
+      "checks": {
+        "sameConversation": true,
+        "verifiedReuseAndImprovement": true
+      },
+      "startedAt": "2026-10-08T20:30:04.074Z",
+      "measurement": {
+        "first": {
+          "sessionId": "session-8425dbd2-290a-46c3-a8a9-fbe877f0ae75",
+          "model": "mimo",
+          "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+          "user": "请在本对话默认工作目录创建 triangle.py：用 Python 打印 1 到 n 的三角数，n 从命令行参数读取。运行 n=8，检查输出 36。写经验.md 简短记录脚本路径与使用命令。只在默认工作目录写文件。",
+          "reply": "已完成：`triangle.py` 用公式 `n*(n+1)//2` 打印第 n 个三角数，`python triangle.py 8` 实测输出 `36` 符合预期；`经验.md` 已记录脚本路径与使用命令。",
+          "status": "completed",
+          "memoryUsed": [],
+          "events": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-08T20:30:13.116Z",
+              "data": {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2",
+                "text": "请在本对话默认工作目录创建 triangle.py：用 Python 打印 1 到 n 的三角数，n 从命令行参数读取。运行 n=8，检查输出 36。写经验.md 简短记录脚本路径与使用命令。只在默认工作目录写文件。",
+                "commandId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "requestId": "86647a17-89d4-4780-844e-193330c6b5bf"
+              }
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-08T20:30:13.117Z",
+              "data": {
+                "turn": 1
+              }
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-08T20:30:14.956Z",
+              "data": {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "turn": 1,
+                "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2",
+                "commandId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "requestId": "86647a17-89d4-4780-844e-193330c6b5bf",
+                "turnTaskId": "turn-1"
+              }
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-08T20:30:14.956Z",
+              "data": {
+                "text": "请在本对话默认工作目录创建 triangle.py：用 Python 打印 1 到 n 的三角数，n 从命令行参数读取。运行 n=8，检查输出 36。写经验.md 简短记录脚本路径与使用命令。只在默认工作目录写文件。",
+                "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2"
+              }
+            },
+            {
+              "seq": 48,
+              "type": "step.started",
+              "at": "2026-10-08T20:30:19.762Z",
+              "data": {
+                "taskId": "turn-1",
+                "stepId": "call_75ac55898b634fa6bf7d92ed",
+                "callId": "call_75ac55898b634fa6bf7d92ed",
+                "toolName": "write",
+                "summary": "写入文件",
+                "groupHint": "write",
+                "detailRef": {
+                  "seq": 48
+                },
+                "turn": 1,
+                "state": "running"
+              }
+            },
+            {
+              "seq": 50,
+              "type": "artifact.created",
+              "at": "2026-10-08T20:30:23.448Z",
+              "data": {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "artifactId": "artifact-4ec042ee-a36b-4e14-81a7-cfe7256af78e",
+                "fileName": "triangle.py",
+                "contentType": "text/plain; charset=utf-8",
+                "size": 57,
+                "artifacts": [
+                  {
+                    "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                    "artifactId": "artifact-4ec042ee-a36b-4e14-81a7-cfe7256af78e",
+                    "fileName": "triangle.py",
+                    "contentType": "text/plain; charset=utf-8",
+                    "size": 57
+                  },
+                  {
+                    "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                    "artifactId": "artifact-4ec042ee-a36b-4e14-81a7-cfe7256af78e",
+                    "fileName": "triangle.py",
+                    "contentType": "text/plain; charset=utf-8",
+                    "size": 57
+                  }
+                ],
+                "detailSeq": 50,
+                "completedStep": {
+                  "taskId": "turn-1",
+                  "stepId": "call_75ac55898b634fa6bf7d92ed",
+                  "callId": "call_75ac55898b634fa6bf7d92ed",
+                  "toolName": "write",
+                  "summary": "写入文件",
+                  "groupHint": "write",
+                  "detailRef": {
+                    "seq": 50
+                  },
+                  "turn": 1,
+                  "state": "completed"
+                }
+              }
+            },
+            {
+              "seq": 99,
+              "type": "step.started",
+              "at": "2026-10-08T20:30:27.628Z",
+              "data": {
+                "taskId": "turn-1",
+                "stepId": "call_98386322838a45a0a044ed9e",
+                "callId": "call_98386322838a45a0a044ed9e",
+                "toolName": "pash",
+                "summary": "执行工具 pash",
+                "groupHint": "pash",
+                "detailRef": {
+                  "seq": 99
+                },
+                "turn": 1,
+                "state": "running"
+              }
+            },
+            {
+              "seq": 100,
+              "type": "step.completed",
+              "at": "2026-10-08T20:30:27.629Z",
+              "data": {
+                "taskId": "turn-1",
+                "stepId": "call_98386322838a45a0a044ed9e",
+                "callId": "call_98386322838a45a0a044ed9e",
+                "toolName": "pash",
+                "summary": "执行工具 pash",
+                "groupHint": "pash",
+                "detailRef": {
+                  "seq": 100
+                },
+                "turn": 1,
+                "state": "failed"
+              }
+            },
+            {
+              "seq": 125,
+              "type": "step.started",
+              "at": "2026-10-08T20:30:31.839Z",
+              "data": {
+                "taskId": "turn-1",
+                "stepId": "call_1a28845d71b2454992eb3d9e",
+                "callId": "call_1a28845d71b2454992eb3d9e",
+                "toolName": "pwsh",
+                "summary": "运行命令 python triangle.py 8",
+                "groupHint": "pwsh",
+                "detailRef": {
+                  "seq": 125
+                },
+                "turn": 1,
+                "state": "running"
+              }
+            },
+            {
+              "seq": 126,
+              "type": "step.completed",
+              "at": "2026-10-08T20:30:33.088Z",
+              "data": {
+                "taskId": "turn-1",
+                "stepId": "call_1a28845d71b2454992eb3d9e",
+                "callId": "call_1a28845d71b2454992eb3d9e",
+                "toolName": "pwsh",
+                "summary": "运行命令 python triangle.py 8",
+                "groupHint": "pwsh",
+                "detailRef": {
+                  "seq": 126
+                },
+                "turn": 1,
+                "state": "completed"
+              }
+            },
+            {
+              "seq": 177,
+              "type": "step.started",
+              "at": "2026-10-08T20:30:37.841Z",
+              "data": {
+                "taskId": "turn-1",
+                "stepId": "call_46fe879e1e554ba798a27427",
+                "callId": "call_46fe879e1e554ba798a27427",
+                "toolName": "write",
+                "summary": "写入文件",
+                "groupHint": "write",
+                "detailRef": {
+                  "seq": 177
+                },
+                "turn": 1,
+                "state": "running"
+              }
+            },
+            {
+              "seq": 178,
+              "type": "artifact.created",
+              "at": "2026-10-08T20:30:41.186Z",
+              "data": {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "artifactId": "artifact-99f419d1-ab76-4ba4-af95-b5b9b2f4acf1",
+                "fileName": "经验.md",
+                "contentType": "text/plain; charset=utf-8",
+                "size": 294,
+                "artifacts": [
+                  {
+                    "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                    "artifactId": "artifact-99f419d1-ab76-4ba4-af95-b5b9b2f4acf1",
+                    "fileName": "经验.md",
+                    "contentType": "text/plain; charset=utf-8",
+                    "size": 294
+                  },
+                  {
+                    "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                    "artifactId": "artifact-99f419d1-ab76-4ba4-af95-b5b9b2f4acf1",
+                    "fileName": "经验.md",
+                    "contentType": "text/plain; charset=utf-8",
+                    "size": 294
+                  }
+                ],
+                "detailSeq": 178,
+                "completedStep": {
+                  "taskId": "turn-1",
+                  "stepId": "call_46fe879e1e554ba798a27427",
+                  "callId": "call_46fe879e1e554ba798a27427",
+                  "toolName": "write",
+                  "summary": "写入文件",
+                  "groupHint": "write",
+                  "detailRef": {
+                    "seq": 178
+                  },
+                  "turn": 1,
+                  "state": "completed"
+                }
+              }
+            },
+            {
+              "seq": 203,
+              "type": "assistant.message",
+              "at": "2026-10-08T20:30:43.984Z",
+              "data": {
+                "text": "已完成：`triangle.py` 用公式 `n*(n+1)//2` 打印第 n 个三角数，`python triangle.py 8` 实测输出 `36` 符合预期；`经验.md` 已记录脚本路径与使用命令。",
+                "memoryUsed": []
+              }
+            },
+            {
+              "seq": 204,
+              "type": "task.ended",
+              "at": "2026-10-08T20:30:43.985Z",
+              "data": {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "turn": 1,
+                "reason": "completed",
+                "nativeTurnEndSeq": 205,
+                "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2",
+                "commandId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "requestId": "86647a17-89d4-4780-844e-193330c6b5bf",
+                "turnTaskId": "turn-1"
+              }
+            },
+            {
+              "seq": 205,
+              "type": "turn.ended",
+              "at": "2026-10-08T20:30:43.985Z",
+              "data": {
+                "reason": "completed",
+                "turn": 1
+              }
+            }
+          ],
+          "durationMs": 32492,
+          "steps": 4,
+          "outputVerified": true
+        },
+        "second": {
+          "sessionId": "session-8425dbd2-290a-46c3-a8a9-fbe877f0ae75",
+          "model": "mimo",
+          "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+          "user": "用这段对话已有的方法计算 n=12 的三角数。",
+          "reply": "用已有的 `triangle.py` 运行 `python triangle.py 12`，结果为 **78**（12×13÷2=78）。",
+          "status": "completed",
+          "memoryUsed": [],
+          "events": [
+            {
+              "seq": 206,
+              "type": "task.queued",
+              "at": "2026-10-08T20:30:46.922Z",
+              "data": {
+                "taskId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+                "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da",
+                "text": "用这段对话已有的方法计算 n=12 的三角数。",
+                "commandId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+                "requestId": "2b08f89c-529e-4f29-a2b4-70cd666a4729"
+              }
+            },
+            {
+              "seq": 207,
+              "type": "turn.started",
+              "at": "2026-10-08T20:30:46.922Z",
+              "data": {
+                "turn": 2
+              }
+            },
+            {
+              "seq": 209,
+              "type": "task.started",
+              "at": "2026-10-08T20:30:49.218Z",
+              "data": {
+                "taskId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+                "turn": 2,
+                "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da",
+                "commandId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+                "requestId": "2b08f89c-529e-4f29-a2b4-70cd666a4729",
+                "turnTaskId": "turn-2"
+              }
+            },
+            {
+              "seq": 210,
+              "type": "user.message",
+              "at": "2026-10-08T20:30:49.218Z",
+              "data": {
+                "text": "用这段对话已有的方法计算 n=12 的三角数。",
+                "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da"
+              }
+            },
+            {
+              "seq": 240,
+              "type": "step.started",
+              "at": "2026-10-08T20:30:54.290Z",
+              "data": {
+                "taskId": "turn-2",
+                "stepId": "call_e5f101fbefc84120b79dae82",
+                "callId": "call_e5f101fbefc84120b79dae82",
+                "toolName": "pwsh",
+                "summary": "运行命令 python triangle.py 12",
+                "groupHint": "pwsh",
+                "detailRef": {
+                  "seq": 240
+                },
+                "turn": 2,
+                "state": "running"
+              }
+            },
+            {
+              "seq": 241,
+              "type": "step.completed",
+              "at": "2026-10-08T20:30:55.496Z",
+              "data": {
+                "taskId": "turn-2",
+                "stepId": "call_e5f101fbefc84120b79dae82",
+                "callId": "call_e5f101fbefc84120b79dae82",
+                "toolName": "pwsh",
+                "summary": "运行命令 python triangle.py 12",
+                "groupHint": "pwsh",
+                "detailRef": {
+                  "seq": 241
+                },
+                "turn": 2,
+                "state": "completed"
+              }
+            },
+            {
+              "seq": 268,
+              "type": "assistant.message",
+              "at": "2026-10-08T20:30:58.219Z",
+              "data": {
+                "text": "用已有的 `triangle.py` 运行 `python triangle.py 12`，结果为 **78**（12×13÷2=78）。",
+                "memoryUsed": []
+              }
+            },
+            {
+              "seq": 269,
+              "type": "task.ended",
+              "at": "2026-10-08T20:30:58.219Z",
+              "data": {
+                "taskId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+                "turn": 2,
+                "reason": "completed",
+                "nativeTurnEndSeq": 270,
+                "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da",
+                "commandId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+                "requestId": "2b08f89c-529e-4f29-a2b4-70cd666a4729",
+                "turnTaskId": "turn-2"
+              }
+            },
+            {
+              "seq": 270,
+              "type": "turn.ended",
+              "at": "2026-10-08T20:30:58.220Z",
+              "data": {
+                "reason": "completed",
+                "turn": 2
+              }
+            }
+          ],
+          "durationMs": 14107,
+          "steps": 1,
+          "outputVerified": true,
+          "reusedScript": true
+        },
+        "durationRatio": 0.4341684106857073,
+        "threshold": "at least one fewer tool step OR second duration <= 80% of first",
+        "passed": true
+      },
+      "toolDetails": [
+        "{\n  \"arguments\": \"{\\\"command\\\":\\\"python triangle.py 12\\\",\\\"description\\\":\\\"Run triangle.py with n=12\\\"}\"\n}"
+      ],
+      "finishedAt": "2026-10-08T20:31:00.216Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "王小明打游戏挺厉害，是我好兄弟。",
+      "reply": "记下了：王小明游戏打得不错，是你的好兄弟。以后有组队、开黑之类的安排可以随时找我。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:26:37.561Z",
+          "data": {
+            "taskId": "cmd-40a5b8a1-97c4-4012-bedb-6c6f073511c0",
+            "receiptId": "35227ca5-ec7d-4a13-9696-b4ac03bb99bd",
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "commandId": "cmd-40a5b8a1-97c4-4012-bedb-6c6f073511c0",
+            "requestId": "6c8614f0-82cb-46d5-acbb-155c56005eb5"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:26:37.562Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:26:37.974Z",
+          "data": {
+            "taskId": "cmd-40a5b8a1-97c4-4012-bedb-6c6f073511c0",
+            "turn": 1,
+            "receiptId": "35227ca5-ec7d-4a13-9696-b4ac03bb99bd",
+            "commandId": "cmd-40a5b8a1-97c4-4012-bedb-6c6f073511c0",
+            "requestId": "6c8614f0-82cb-46d5-acbb-155c56005eb5",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T20:26:37.975Z",
+          "data": {
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "receiptId": "35227ca5-ec7d-4a13-9696-b4ac03bb99bd"
+          }
+        },
+        {
+          "seq": 60,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:26:43.847Z",
+          "data": {
+            "text": "记下了：王小明游戏打得不错，是你的好兄弟。以后有组队、开黑之类的安排可以随时找我。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 61,
+          "type": "task.ended",
+          "at": "2026-10-08T20:26:43.848Z",
+          "data": {
+            "taskId": "cmd-40a5b8a1-97c4-4012-bedb-6c6f073511c0",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 62,
+            "receiptId": "35227ca5-ec7d-4a13-9696-b4ac03bb99bd",
+            "commandId": "cmd-40a5b8a1-97c4-4012-bedb-6c6f073511c0",
+            "requestId": "6c8614f0-82cb-46d5-acbb-155c56005eb5",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 62,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:26:43.848Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 7659,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "好，以后我想组队时，就提醒我找王小明。",
+      "reply": "",
+      "status": "failed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 63,
+          "type": "task.queued",
+          "at": "2026-10-08T20:26:46.367Z",
+          "data": {
+            "taskId": "cmd-78ba342e-2e85-4e5d-948f-edffd506f274",
+            "receiptId": "c8017fe2-0754-4c53-a3d5-554fd2b8d31b",
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "commandId": "cmd-78ba342e-2e85-4e5d-948f-edffd506f274",
+            "requestId": "13d58624-380f-432f-9fcb-f5cb50170cb4"
+          }
+        },
+        {
+          "seq": 64,
+          "type": "turn.started",
+          "at": "2026-10-08T20:26:46.368Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 66,
+          "type": "task.started",
+          "at": "2026-10-08T20:26:53.552Z",
+          "data": {
+            "taskId": "cmd-78ba342e-2e85-4e5d-948f-edffd506f274",
+            "turn": 2,
+            "receiptId": "c8017fe2-0754-4c53-a3d5-554fd2b8d31b",
+            "commandId": "cmd-78ba342e-2e85-4e5d-948f-edffd506f274",
+            "requestId": "13d58624-380f-432f-9fcb-f5cb50170cb4",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 68,
+          "type": "user.message",
+          "at": "2026-10-08T20:26:53.552Z",
+          "data": {
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "receiptId": "c8017fe2-0754-4c53-a3d5-554fd2b8d31b"
+          }
+        },
+        {
+          "seq": 189,
+          "type": "question.asked",
+          "at": "2026-10-08T20:27:05.575Z",
+          "data": {
+            "taskId": "turn-2",
+            "stepId": "call_42530583c79f4d00a784419a",
+            "callId": "call_42530583c79f4d00a784419a",
+            "toolName": "ask_user_question",
+            "summary": "请求补充信息",
+            "groupHint": "ask_user_question",
+            "detailRef": {
+              "seq": 189
+            },
+            "turn": 2,
+            "state": "running",
+            "questions": [
+              {
+                "id": "reminder_when",
+                "question": "提醒需要一个触发时间：你希望我什么时候提醒你「找王小明组队」？",
+                "header": "提醒时间",
+                "options": [
+                  {
+                    "label": "每天晚上 20:00（推荐）",
+                    "description": "每天固定晚上 8 点提醒一次，适合日常开黑"
+                  },
+                  {
+                    "label": "每周五 20:00",
+                    "description": "每周五晚上提醒一次，周末组队前收到"
+                  },
+                  {
+                    "label": "今晚 21:00 提醒一次",
+                    "description": "只提醒这一次，不重复"
+                  },
+                  {
+                    "label": "不要定时提醒",
+                    "description": "先不建立提醒，你想组队时随时叫我"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "unexpectedQuestions": [
+        {
+          "questionRpcId": "089a02c1-63c4-4cec-ae9e-46b2770d43ed",
+          "sessionId": "session-2fb5190e-7106-47b5-a0fa-3c2d2b78e5ce",
+          "taskId": "cmd-78ba342e-2e85-4e5d-948f-edffd506f274",
+          "sourceCommandId": "cmd-78ba342e-2e85-4e5d-948f-edffd506f274",
+          "sourceReceiptId": "c8017fe2-0754-4c53-a3d5-554fd2b8d31b",
+          "turn": 2,
+          "questions": [
+            {
+              "id": "reminder_when",
+              "question": "提醒需要一个触发时间：你希望我什么时候提醒你「找王小明组队」？",
+              "header": "提醒时间",
+              "options": [
+                {
+                  "label": "每天晚上 20:00（推荐）",
+                  "description": "每天固定晚上 8 点提醒一次，适合日常开黑"
+                },
+                {
+                  "label": "每周五 20:00",
+                  "description": "每周五晚上提醒一次，周末组队前收到"
+                },
+                {
+                  "label": "今晚 21:00 提醒一次",
+                  "description": "只提醒这一次，不重复"
+                },
+                {
+                  "label": "不要定时提醒",
+                  "description": "先不建立提醒，你想组队时随时叫我"
+                }
+              ]
+            }
+          ],
+          "createdAt": "2026-10-08T20:27:05.607Z",
+          "status": "pending",
+          "observedSeq": 189
+        }
+      ],
+      "reason": "Unexpected clarification; no answer declared by the eight-step scenario, turn cancelled",
+      "durationMs": 21915,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-b5f72612-a8e0-4229-8bdb-173e881c9966",
+      "model": "lan",
+      "modelProfileId": "private-model-344009052792f9b1e8e9d8a6ea79e5a804e5c4fc",
+      "user": "我们之前说组队可以找谁？",
+      "reply": "我这边在当前会话和工作区里没有找到之前关于“组队可以找谁”的记录。能再提供一下具体的项目/场景或之前讨论的时间吗？我可以帮你整理联系人或建议合适的组队人选。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:27:15.298Z",
+          "data": {
+            "taskId": "cmd-2ea07ac4-b5ea-4d89-bb3a-c427b3538e2c",
+            "receiptId": "a2ee98da-ff93-4496-a66f-3eb33612f204",
+            "text": "我们之前说组队可以找谁？",
+            "commandId": "cmd-2ea07ac4-b5ea-4d89-bb3a-c427b3538e2c",
+            "requestId": "f6a8ad90-afc3-41b9-9a53-3deb51c48fec"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:27:15.298Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:27:15.860Z",
+          "data": {
+            "taskId": "cmd-2ea07ac4-b5ea-4d89-bb3a-c427b3538e2c",
+            "turn": 1,
+            "receiptId": "a2ee98da-ff93-4496-a66f-3eb33612f204",
+            "commandId": "cmd-2ea07ac4-b5ea-4d89-bb3a-c427b3538e2c",
+            "requestId": "f6a8ad90-afc3-41b9-9a53-3deb51c48fec",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T20:27:15.860Z",
+          "data": {
+            "text": "我们之前说组队可以找谁？",
+            "receiptId": "a2ee98da-ff93-4496-a66f-3eb33612f204"
+          }
+        },
+        {
+          "seq": 404,
+          "type": "step.started",
+          "at": "2026-10-08T20:27:35.193Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "OdlbjFsYGTZJiyMkuRyhuyzO8Q2M5ZCq",
+            "callId": "OdlbjFsYGTZJiyMkuRyhuyzO8Q2M5ZCq",
+            "toolName": "grep",
+            "summary": "搜索内容",
+            "groupHint": "grep",
+            "detailRef": {
+              "seq": 404
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 405,
+          "type": "step.completed",
+          "at": "2026-10-08T20:27:35.977Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "OdlbjFsYGTZJiyMkuRyhuyzO8Q2M5ZCq",
+            "callId": "OdlbjFsYGTZJiyMkuRyhuyzO8Q2M5ZCq",
+            "toolName": "grep",
+            "summary": "搜索内容",
+            "groupHint": "grep",
+            "detailRef": {
+              "seq": 405
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 495,
+          "type": "step.started",
+          "at": "2026-10-08T20:27:40.486Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "D2hIUq5a6rS49v1S2SqyQMJzsaz3wzEK",
+            "callId": "D2hIUq5a6rS49v1S2SqyQMJzsaz3wzEK",
+            "toolName": "glob",
+            "summary": "查找文件",
+            "groupHint": "glob",
+            "detailRef": {
+              "seq": 495
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 496,
+          "type": "step.completed",
+          "at": "2026-10-08T20:27:41.301Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "D2hIUq5a6rS49v1S2SqyQMJzsaz3wzEK",
+            "callId": "D2hIUq5a6rS49v1S2SqyQMJzsaz3wzEK",
+            "toolName": "glob",
+            "summary": "查找文件",
+            "groupHint": "glob",
+            "detailRef": {
+              "seq": 496
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 583,
+          "type": "step.started",
+          "at": "2026-10-08T20:27:45.992Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "QsSUB5bY3aya5mmmq0kJX2Hv9qHQ0BP1",
+            "callId": "QsSUB5bY3aya5mmmq0kJX2Hv9qHQ0BP1",
+            "toolName": "grep",
+            "summary": "搜索内容",
+            "groupHint": "grep",
+            "detailRef": {
+              "seq": 583
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 584,
+          "type": "step.completed",
+          "at": "2026-10-08T20:27:46.743Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "QsSUB5bY3aya5mmmq0kJX2Hv9qHQ0BP1",
+            "callId": "QsSUB5bY3aya5mmmq0kJX2Hv9qHQ0BP1",
+            "toolName": "grep",
+            "summary": "搜索内容",
+            "groupHint": "grep",
+            "detailRef": {
+              "seq": 584
+            },
+            "turn": 1,
+            "state": "failed"
+          }
+        },
+        {
+          "seq": 731,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:27:52.892Z",
+          "data": {
+            "text": "我这边在当前会话和工作区里没有找到之前关于“组队可以找谁”的记录。能再提供一下具体的项目/场景或之前讨论的时间吗？我可以帮你整理联系人或建议合适的组队人选。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 732,
+          "type": "task.ended",
+          "at": "2026-10-08T20:27:52.892Z",
+          "data": {
+            "taskId": "cmd-2ea07ac4-b5ea-4d89-bb3a-c427b3538e2c",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 733,
+            "receiptId": "a2ee98da-ff93-4496-a66f-3eb33612f204",
+            "commandId": "cmd-2ea07ac4-b5ea-4d89-bb3a-c427b3538e2c",
+            "requestId": "f6a8ad90-afc3-41b9-9a53-3deb51c48fec",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 733,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:27:52.893Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 39111,
+      "steps": 3
+    },
+    {
+      "sessionId": "session-0b551047-5ee1-433a-ad21-69f3feb4ea7b",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+      "reply": "明白，已更正：王小明是你表弟，以后组队照样找他。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c",
+          "kind": "relationship",
+          "summary": "用户王小明打游戏挺厉害，是我好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:27:56.612Z",
+          "data": {
+            "taskId": "cmd-1d2ede15-44f9-4673-996f-c9ad75a081c4",
+            "receiptId": "b06c93c3-e31b-4a16-adc7-84b14262458e",
+            "text": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "commandId": "cmd-1d2ede15-44f9-4673-996f-c9ad75a081c4",
+            "requestId": "757b7f26-9437-493e-9b11-2ea71ba7114b"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:27:56.612Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:27:57.151Z",
+          "data": {
+            "taskId": "cmd-1d2ede15-44f9-4673-996f-c9ad75a081c4",
+            "turn": 1,
+            "receiptId": "b06c93c3-e31b-4a16-adc7-84b14262458e",
+            "commandId": "cmd-1d2ede15-44f9-4673-996f-c9ad75a081c4",
+            "requestId": "757b7f26-9437-493e-9b11-2ea71ba7114b",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-08T20:27:57.151Z",
+          "data": {
+            "text": "更正一下：王小明是我的表弟，不是好兄弟。以后组队还是找他。",
+            "receiptId": "b06c93c3-e31b-4a16-adc7-84b14262458e"
+          }
+        },
+        {
+          "seq": 50,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:28:00.710Z",
+          "data": {
+            "text": "明白，已更正：王小明是你表弟，以后组队照样找他。",
+            "memoryUsed": [
+              {
+                "id": "relationship-2bdc1f65b692df939abe3b783164f995a40857ff17e1776698ed9726c637fb7c",
+                "kind": "relationship",
+                "summary": "用户王小明打游戏挺厉害，是我好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 51,
+          "type": "task.ended",
+          "at": "2026-10-08T20:28:00.710Z",
+          "data": {
+            "taskId": "cmd-1d2ede15-44f9-4673-996f-c9ad75a081c4",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 52,
+            "receiptId": "b06c93c3-e31b-4a16-adc7-84b14262458e",
+            "commandId": "cmd-1d2ede15-44f9-4673-996f-c9ad75a081c4",
+            "requestId": "757b7f26-9437-493e-9b11-2ea71ba7114b",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 52,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:28:00.710Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 5612,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-a600bab2-0274-4a32-aeba-a1896debe338",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "王小明跟我是什么关系？我们组队该找谁？",
+      "reply": "王小明是你的**表弟**（不是好兄弟）。\n\n至于组队该找谁——这取决于是什么场景（游戏开黑、比赛、工作项目还是运动）？告诉我具体活动和人数要求，我可以按互补性和配合度帮你推荐人选；如果就是和王小明一起，表弟之间熟络度高，通常沟通成本也低。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:28:12.440Z",
+          "data": {
+            "taskId": "cmd-64fe97c4-b4c6-4fdb-a4f0-da31c16b6a8d",
+            "receiptId": "aa7b9c64-1b65-4d69-bf7e-fcdf06933b0a",
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "commandId": "cmd-64fe97c4-b4c6-4fdb-a4f0-da31c16b6a8d",
+            "requestId": "0b61df0c-cb25-4f06-a99c-34aefeb61ca2"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:28:12.440Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:28:12.978Z",
+          "data": {
+            "taskId": "cmd-64fe97c4-b4c6-4fdb-a4f0-da31c16b6a8d",
+            "turn": 1,
+            "receiptId": "aa7b9c64-1b65-4d69-bf7e-fcdf06933b0a",
+            "commandId": "cmd-64fe97c4-b4c6-4fdb-a4f0-da31c16b6a8d",
+            "requestId": "0b61df0c-cb25-4f06-a99c-34aefeb61ca2",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-08T20:28:12.979Z",
+          "data": {
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "receiptId": "aa7b9c64-1b65-4d69-bf7e-fcdf06933b0a"
+          }
+        },
+        {
+          "seq": 244,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:28:27.197Z",
+          "data": {
+            "text": "王小明是你的**表弟**（不是好兄弟）。\n\n至于组队该找谁——这取决于是什么场景（游戏开黑、比赛、工作项目还是运动）？告诉我具体活动和人数要求，我可以按互补性和配合度帮你推荐人选；如果就是和王小明一起，表弟之间熟络度高，通常沟通成本也低。",
+            "memoryUsed": [
+              {
+                "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 245,
+          "type": "task.ended",
+          "at": "2026-10-08T20:28:27.198Z",
+          "data": {
+            "taskId": "cmd-64fe97c4-b4c6-4fdb-a4f0-da31c16b6a8d",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 246,
+            "receiptId": "aa7b9c64-1b65-4d69-bf7e-fcdf06933b0a",
+            "commandId": "cmd-64fe97c4-b4c6-4fdb-a4f0-da31c16b6a8d",
+            "requestId": "0b61df0c-cb25-4f06-a99c-34aefeb61ca2",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 246,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:28:27.199Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 15783,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-f31f526a-3791-43b8-a9e2-5f68cea135eb",
+      "model": "lan",
+      "modelProfileId": "private-model-344009052792f9b1e8e9d8a6ea79e5a804e5c4fc",
+      "user": "王小明跟我是什么关系？我们组队该找谁？",
+      "reply": "王小明是你的表弟。\n\n关于“我们组队该找谁”，我目前没有相关的记录或上下文。你是指某个具体的项目、游戏还是活动？提供一下组队的场景或目标，我可以帮你梳理合适的人选。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:28:31.130Z",
+          "data": {
+            "taskId": "cmd-75dcd85a-accb-4821-93d8-ce66ceab7a13",
+            "receiptId": "87f5a407-361e-402f-8e92-d05755e1d0a5",
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "commandId": "cmd-75dcd85a-accb-4821-93d8-ce66ceab7a13",
+            "requestId": "e260c4f5-fbed-48fb-a78e-42a9e54dc82c"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:28:31.130Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:28:31.673Z",
+          "data": {
+            "taskId": "cmd-75dcd85a-accb-4821-93d8-ce66ceab7a13",
+            "turn": 1,
+            "receiptId": "87f5a407-361e-402f-8e92-d05755e1d0a5",
+            "commandId": "cmd-75dcd85a-accb-4821-93d8-ce66ceab7a13",
+            "requestId": "e260c4f5-fbed-48fb-a78e-42a9e54dc82c",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-08T20:28:31.674Z",
+          "data": {
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "receiptId": "87f5a407-361e-402f-8e92-d05755e1d0a5"
+          }
+        },
+        {
+          "seq": 379,
+          "type": "step.started",
+          "at": "2026-10-08T20:28:43.356Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "9d20dPVJRLxihdzjpS8Qq6BPJmRo15qe",
+            "callId": "9d20dPVJRLxihdzjpS8Qq6BPJmRo15qe",
+            "toolName": "glob",
+            "summary": "查找文件",
+            "groupHint": "glob",
+            "detailRef": {
+              "seq": 379
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 380,
+          "type": "step.completed",
+          "at": "2026-10-08T20:28:44.192Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "9d20dPVJRLxihdzjpS8Qq6BPJmRo15qe",
+            "callId": "9d20dPVJRLxihdzjpS8Qq6BPJmRo15qe",
+            "toolName": "glob",
+            "summary": "查找文件",
+            "groupHint": "glob",
+            "detailRef": {
+              "seq": 380
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 472,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:28:49.656Z",
+          "data": {
+            "text": "王小明是你的表弟。\n\n关于“我们组队该找谁”，我目前没有相关的记录或上下文。你是指某个具体的项目、游戏还是活动？提供一下组队的场景或目标，我可以帮你梳理合适的人选。",
+            "memoryUsed": [
+              {
+                "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 473,
+          "type": "task.ended",
+          "at": "2026-10-08T20:28:49.656Z",
+          "data": {
+            "taskId": "cmd-75dcd85a-accb-4821-93d8-ce66ceab7a13",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 474,
+            "receiptId": "87f5a407-361e-402f-8e92-d05755e1d0a5",
+            "commandId": "cmd-75dcd85a-accb-4821-93d8-ce66ceab7a13",
+            "requestId": "e260c4f5-fbed-48fb-a78e-42a9e54dc82c",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 474,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:28:49.657Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 20119,
+      "steps": 1
+    },
+    {
+      "sessionId": "session-6708c1df-7349-4de2-8399-18b676c7ccfa",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "王小明跟我是什么关系？我们组队该找谁？",
+      "reply": "王小明是你的**表弟**（不是好兄弟）。\n\n至于“组队该找谁”——我这边没有相关的背景记录，不知道你指的是什么组队（游戏、项目、还是别的），也就不知道有哪些候选人选。",
+      "status": "failed",
+      "memoryUsed": [
+        {
+          "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+          "kind": "relationship",
+          "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:29:02.088Z",
+          "data": {
+            "taskId": "cmd-fc18e32a-5100-43a0-9d07-b5ea7c8d00cf",
+            "receiptId": "a862ca18-4717-4284-94db-428d36c5b25f",
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "commandId": "cmd-fc18e32a-5100-43a0-9d07-b5ea7c8d00cf",
+            "requestId": "03e8a8fd-6981-4ce4-b7c3-e545802c17ff"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:29:02.089Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:29:02.640Z",
+          "data": {
+            "taskId": "cmd-fc18e32a-5100-43a0-9d07-b5ea7c8d00cf",
+            "turn": 1,
+            "receiptId": "a862ca18-4717-4284-94db-428d36c5b25f",
+            "commandId": "cmd-fc18e32a-5100-43a0-9d07-b5ea7c8d00cf",
+            "requestId": "03e8a8fd-6981-4ce4-b7c3-e545802c17ff",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 11,
+          "type": "user.message",
+          "at": "2026-10-08T20:29:02.640Z",
+          "data": {
+            "text": "王小明跟我是什么关系？我们组队该找谁？",
+            "receiptId": "a862ca18-4717-4284-94db-428d36c5b25f"
+          }
+        },
+        {
+          "seq": 98,
+          "type": "step.started",
+          "at": "2026-10-08T20:29:08.110Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_0db26f8f329849169d65e0d9",
+            "callId": "call_0db26f8f329849169d65e0d9",
+            "toolName": "glob",
+            "summary": "查找文件",
+            "groupHint": "glob",
+            "detailRef": {
+              "seq": 98
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 99,
+          "type": "step.completed",
+          "at": "2026-10-08T20:29:08.938Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_0db26f8f329849169d65e0d9",
+            "callId": "call_0db26f8f329849169d65e0d9",
+            "toolName": "glob",
+            "summary": "查找文件",
+            "groupHint": "glob",
+            "detailRef": {
+              "seq": 99
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 100,
+          "type": "step.started",
+          "at": "2026-10-08T20:29:08.939Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_57a5caf7f12d4e8a893d0021",
+            "callId": "call_57a5caf7f12d4e8a893d0021",
+            "toolName": "pwsh",
+            "summary": "运行命令 Get-ChildItem -Recurse -File | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSiz",
+            "groupHint": "pwsh",
+            "detailRef": {
+              "seq": 100
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 101,
+          "type": "step.completed",
+          "at": "2026-10-08T20:29:10.279Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_57a5caf7f12d4e8a893d0021",
+            "callId": "call_57a5caf7f12d4e8a893d0021",
+            "toolName": "pwsh",
+            "summary": "运行命令 Get-ChildItem -Recurse -File | Select-Object FullName, Length, LastWriteTime | Format-Table -AutoSiz",
+            "groupHint": "pwsh",
+            "detailRef": {
+              "seq": 101
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 182,
+          "type": "step.started",
+          "at": "2026-10-08T20:29:17.556Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_173d0cb8fd2949a4b4a86703",
+            "callId": "call_173d0cb8fd2949a4b4a86703",
+            "toolName": "schedule_list",
+            "summary": "执行工具 schedule_list",
+            "groupHint": "schedule_list",
+            "detailRef": {
+              "seq": 182
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 183,
+          "type": "step.completed",
+          "at": "2026-10-08T20:29:17.562Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_173d0cb8fd2949a4b4a86703",
+            "callId": "call_173d0cb8fd2949a4b4a86703",
+            "toolName": "schedule_list",
+            "summary": "执行工具 schedule_list",
+            "groupHint": "schedule_list",
+            "detailRef": {
+              "seq": 183
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 394,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:29:30.284Z",
+          "data": {
+            "text": "王小明是你的**表弟**（不是好兄弟）。\n\n至于“组队该找谁”——我这边没有相关的背景记录，不知道你指的是什么组队（游戏、项目、还是别的），也就不知道有哪些候选人选。",
+            "memoryUsed": [
+              {
+                "id": "relationship-ec74300996caf82943caad340e7b97856787bc5715f30ac6e908a7c8dae8f911",
+                "kind": "relationship",
+                "summary": "用户更正一下：王小明是我的表弟，不是好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 395,
+          "type": "question.asked",
+          "at": "2026-10-08T20:29:30.285Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_14425a3c4054485d94eab9ab",
+            "callId": "call_14425a3c4054485d94eab9ab",
+            "toolName": "ask_user_question",
+            "summary": "请求补充信息",
+            "groupHint": "ask_user_question",
+            "detailRef": {
+              "seq": 395
+            },
+            "turn": 1,
+            "state": "running",
+            "questions": [
+              {
+                "id": "team_context",
+                "question": "你说的“组队”是指什么场景？",
+                "header": "组队背景",
+                "options": [
+                  {
+                    "label": "游戏里的组队",
+                    "description": "告诉我游戏名和现有可选队友，我帮你分析该拉谁"
+                  },
+                  {
+                    "label": "工作/项目组队",
+                    "description": "告诉我项目目标和成员情况，我帮你搭配人选"
+                  },
+                  {
+                    "label": "运动/活动组队",
+                    "description": "告诉我活动类型和报名的人，我帮你分配"
+                  }
+                ],
+                "multi_select": false
+              }
+            ]
+          }
+        }
+      ],
+      "unexpectedQuestions": [
+        {
+          "questionRpcId": "2b0863c4-8288-41fa-9b99-de5a491d3653",
+          "sessionId": "session-6708c1df-7349-4de2-8399-18b676c7ccfa",
+          "taskId": "cmd-fc18e32a-5100-43a0-9d07-b5ea7c8d00cf",
+          "sourceCommandId": "cmd-fc18e32a-5100-43a0-9d07-b5ea7c8d00cf",
+          "sourceReceiptId": "a862ca18-4717-4284-94db-428d36c5b25f",
+          "turn": 1,
+          "questions": [
+            {
+              "id": "team_context",
+              "question": "你说的“组队”是指什么场景？",
+              "header": "组队背景",
+              "options": [
+                {
+                  "label": "游戏里的组队",
+                  "description": "告诉我游戏名和现有可选队友，我帮你分析该拉谁"
+                },
+                {
+                  "label": "工作/项目组队",
+                  "description": "告诉我项目目标和成员情况，我帮你搭配人选"
+                },
+                {
+                  "label": "运动/活动组队",
+                  "description": "告诉我活动类型和报名的人，我帮你分配"
+                }
+              ],
+              "multiSelect": false
+            }
+          ],
+          "createdAt": "2026-10-08T20:29:30.355Z",
+          "status": "pending",
+          "observedSeq": 395
+        }
+      ],
+      "reason": "Unexpected clarification; no answer declared by the eight-step scenario, turn cancelled",
+      "durationMs": 29850,
+      "steps": 3
+    },
+    {
+      "sessionId": "session-79bcabda-cd81-43c5-9ad4-1acfb46e73a7",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "你好，请用一句中文打个招呼。",
+      "reply": "你好！很高兴见到你，有什么需要我帮忙的尽管说。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:29:58.490Z",
+          "data": {
+            "taskId": "cmd-5ed49674-deac-4346-a4b0-25ae5c77e744",
+            "receiptId": "9709204a-cd4c-4d87-abfc-4ae27da8dd5d",
+            "text": "你好，请用一句中文打个招呼。",
+            "commandId": "cmd-5ed49674-deac-4346-a4b0-25ae5c77e744",
+            "requestId": "3f4837e2-db9b-4a6e-bc1c-264a174947db"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:29:58.490Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:29:58.858Z",
+          "data": {
+            "taskId": "cmd-5ed49674-deac-4346-a4b0-25ae5c77e744",
+            "turn": 1,
+            "receiptId": "9709204a-cd4c-4d87-abfc-4ae27da8dd5d",
+            "commandId": "cmd-5ed49674-deac-4346-a4b0-25ae5c77e744",
+            "requestId": "3f4837e2-db9b-4a6e-bc1c-264a174947db",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T20:29:58.859Z",
+          "data": {
+            "text": "你好，请用一句中文打个招呼。",
+            "receiptId": "9709204a-cd4c-4d87-abfc-4ae27da8dd5d"
+          }
+        },
+        {
+          "seq": 37,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:30:02.415Z",
+          "data": {
+            "text": "你好！很高兴见到你，有什么需要我帮忙的尽管说。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 38,
+          "type": "task.ended",
+          "at": "2026-10-08T20:30:02.415Z",
+          "data": {
+            "taskId": "cmd-5ed49674-deac-4346-a4b0-25ae5c77e744",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 39,
+            "receiptId": "9709204a-cd4c-4d87-abfc-4ae27da8dd5d",
+            "commandId": "cmd-5ed49674-deac-4346-a4b0-25ae5c77e744",
+            "requestId": "3f4837e2-db9b-4a6e-bc1c-264a174947db",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 39,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:30:02.416Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 6198,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-8425dbd2-290a-46c3-a8a9-fbe877f0ae75",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "请在本对话默认工作目录创建 triangle.py：用 Python 打印 1 到 n 的三角数，n 从命令行参数读取。运行 n=8，检查输出 36。写经验.md 简短记录脚本路径与使用命令。只在默认工作目录写文件。",
+      "reply": "已完成：`triangle.py` 用公式 `n*(n+1)//2` 打印第 n 个三角数，`python triangle.py 8` 实测输出 `36` 符合预期；`经验.md` 已记录脚本路径与使用命令。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T20:30:13.116Z",
+          "data": {
+            "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2",
+            "text": "请在本对话默认工作目录创建 triangle.py：用 Python 打印 1 到 n 的三角数，n 从命令行参数读取。运行 n=8，检查输出 36。写经验.md 简短记录脚本路径与使用命令。只在默认工作目录写文件。",
+            "commandId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "requestId": "86647a17-89d4-4780-844e-193330c6b5bf"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T20:30:13.117Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T20:30:14.956Z",
+          "data": {
+            "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "turn": 1,
+            "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2",
+            "commandId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "requestId": "86647a17-89d4-4780-844e-193330c6b5bf",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T20:30:14.956Z",
+          "data": {
+            "text": "请在本对话默认工作目录创建 triangle.py：用 Python 打印 1 到 n 的三角数，n 从命令行参数读取。运行 n=8，检查输出 36。写经验.md 简短记录脚本路径与使用命令。只在默认工作目录写文件。",
+            "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2"
+          }
+        },
+        {
+          "seq": 48,
+          "type": "step.started",
+          "at": "2026-10-08T20:30:19.762Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_75ac55898b634fa6bf7d92ed",
+            "callId": "call_75ac55898b634fa6bf7d92ed",
+            "toolName": "write",
+            "summary": "写入文件",
+            "groupHint": "write",
+            "detailRef": {
+              "seq": 48
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 50,
+          "type": "artifact.created",
+          "at": "2026-10-08T20:30:23.448Z",
+          "data": {
+            "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "artifactId": "artifact-4ec042ee-a36b-4e14-81a7-cfe7256af78e",
+            "fileName": "triangle.py",
+            "contentType": "text/plain; charset=utf-8",
+            "size": 57,
+            "artifacts": [
+              {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "artifactId": "artifact-4ec042ee-a36b-4e14-81a7-cfe7256af78e",
+                "fileName": "triangle.py",
+                "contentType": "text/plain; charset=utf-8",
+                "size": 57
+              },
+              {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "artifactId": "artifact-4ec042ee-a36b-4e14-81a7-cfe7256af78e",
+                "fileName": "triangle.py",
+                "contentType": "text/plain; charset=utf-8",
+                "size": 57
+              }
+            ],
+            "detailSeq": 50,
+            "completedStep": {
+              "taskId": "turn-1",
+              "stepId": "call_75ac55898b634fa6bf7d92ed",
+              "callId": "call_75ac55898b634fa6bf7d92ed",
+              "toolName": "write",
+              "summary": "写入文件",
+              "groupHint": "write",
+              "detailRef": {
+                "seq": 50
+              },
+              "turn": 1,
+              "state": "completed"
+            }
+          }
+        },
+        {
+          "seq": 99,
+          "type": "step.started",
+          "at": "2026-10-08T20:30:27.628Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_98386322838a45a0a044ed9e",
+            "callId": "call_98386322838a45a0a044ed9e",
+            "toolName": "pash",
+            "summary": "执行工具 pash",
+            "groupHint": "pash",
+            "detailRef": {
+              "seq": 99
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 100,
+          "type": "step.completed",
+          "at": "2026-10-08T20:30:27.629Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_98386322838a45a0a044ed9e",
+            "callId": "call_98386322838a45a0a044ed9e",
+            "toolName": "pash",
+            "summary": "执行工具 pash",
+            "groupHint": "pash",
+            "detailRef": {
+              "seq": 100
+            },
+            "turn": 1,
+            "state": "failed"
+          }
+        },
+        {
+          "seq": 125,
+          "type": "step.started",
+          "at": "2026-10-08T20:30:31.839Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_1a28845d71b2454992eb3d9e",
+            "callId": "call_1a28845d71b2454992eb3d9e",
+            "toolName": "pwsh",
+            "summary": "运行命令 python triangle.py 8",
+            "groupHint": "pwsh",
+            "detailRef": {
+              "seq": 125
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 126,
+          "type": "step.completed",
+          "at": "2026-10-08T20:30:33.088Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_1a28845d71b2454992eb3d9e",
+            "callId": "call_1a28845d71b2454992eb3d9e",
+            "toolName": "pwsh",
+            "summary": "运行命令 python triangle.py 8",
+            "groupHint": "pwsh",
+            "detailRef": {
+              "seq": 126
+            },
+            "turn": 1,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 177,
+          "type": "step.started",
+          "at": "2026-10-08T20:30:37.841Z",
+          "data": {
+            "taskId": "turn-1",
+            "stepId": "call_46fe879e1e554ba798a27427",
+            "callId": "call_46fe879e1e554ba798a27427",
+            "toolName": "write",
+            "summary": "写入文件",
+            "groupHint": "write",
+            "detailRef": {
+              "seq": 177
+            },
+            "turn": 1,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 178,
+          "type": "artifact.created",
+          "at": "2026-10-08T20:30:41.186Z",
+          "data": {
+            "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "artifactId": "artifact-99f419d1-ab76-4ba4-af95-b5b9b2f4acf1",
+            "fileName": "经验.md",
+            "contentType": "text/plain; charset=utf-8",
+            "size": 294,
+            "artifacts": [
+              {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "artifactId": "artifact-99f419d1-ab76-4ba4-af95-b5b9b2f4acf1",
+                "fileName": "经验.md",
+                "contentType": "text/plain; charset=utf-8",
+                "size": 294
+              },
+              {
+                "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+                "artifactId": "artifact-99f419d1-ab76-4ba4-af95-b5b9b2f4acf1",
+                "fileName": "经验.md",
+                "contentType": "text/plain; charset=utf-8",
+                "size": 294
+              }
+            ],
+            "detailSeq": 178,
+            "completedStep": {
+              "taskId": "turn-1",
+              "stepId": "call_46fe879e1e554ba798a27427",
+              "callId": "call_46fe879e1e554ba798a27427",
+              "toolName": "write",
+              "summary": "写入文件",
+              "groupHint": "write",
+              "detailRef": {
+                "seq": 178
+              },
+              "turn": 1,
+              "state": "completed"
+            }
+          }
+        },
+        {
+          "seq": 203,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:30:43.984Z",
+          "data": {
+            "text": "已完成：`triangle.py` 用公式 `n*(n+1)//2` 打印第 n 个三角数，`python triangle.py 8` 实测输出 `36` 符合预期；`经验.md` 已记录脚本路径与使用命令。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 204,
+          "type": "task.ended",
+          "at": "2026-10-08T20:30:43.985Z",
+          "data": {
+            "taskId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 205,
+            "receiptId": "8dbd41c7-455e-4c80-b9d3-e5fa48355cc2",
+            "commandId": "cmd-ccabfe08-15e1-48f3-9ca1-578ef531d60c",
+            "requestId": "86647a17-89d4-4780-844e-193330c6b5bf",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 205,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:30:43.985Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 32492,
+      "steps": 4,
+      "outputVerified": true
+    },
+    {
+      "sessionId": "session-8425dbd2-290a-46c3-a8a9-fbe877f0ae75",
+      "model": "mimo",
+      "modelProfileId": "private-model-900e3cd0e9bacba8b6026c1d974be2abd56039b4",
+      "user": "用这段对话已有的方法计算 n=12 的三角数。",
+      "reply": "用已有的 `triangle.py` 运行 `python triangle.py 12`，结果为 **78**（12×13÷2=78）。",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 206,
+          "type": "task.queued",
+          "at": "2026-10-08T20:30:46.922Z",
+          "data": {
+            "taskId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+            "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da",
+            "text": "用这段对话已有的方法计算 n=12 的三角数。",
+            "commandId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+            "requestId": "2b08f89c-529e-4f29-a2b4-70cd666a4729"
+          }
+        },
+        {
+          "seq": 207,
+          "type": "turn.started",
+          "at": "2026-10-08T20:30:46.922Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 209,
+          "type": "task.started",
+          "at": "2026-10-08T20:30:49.218Z",
+          "data": {
+            "taskId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+            "turn": 2,
+            "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da",
+            "commandId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+            "requestId": "2b08f89c-529e-4f29-a2b4-70cd666a4729",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 210,
+          "type": "user.message",
+          "at": "2026-10-08T20:30:49.218Z",
+          "data": {
+            "text": "用这段对话已有的方法计算 n=12 的三角数。",
+            "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da"
+          }
+        },
+        {
+          "seq": 240,
+          "type": "step.started",
+          "at": "2026-10-08T20:30:54.290Z",
+          "data": {
+            "taskId": "turn-2",
+            "stepId": "call_e5f101fbefc84120b79dae82",
+            "callId": "call_e5f101fbefc84120b79dae82",
+            "toolName": "pwsh",
+            "summary": "运行命令 python triangle.py 12",
+            "groupHint": "pwsh",
+            "detailRef": {
+              "seq": 240
+            },
+            "turn": 2,
+            "state": "running"
+          }
+        },
+        {
+          "seq": 241,
+          "type": "step.completed",
+          "at": "2026-10-08T20:30:55.496Z",
+          "data": {
+            "taskId": "turn-2",
+            "stepId": "call_e5f101fbefc84120b79dae82",
+            "callId": "call_e5f101fbefc84120b79dae82",
+            "toolName": "pwsh",
+            "summary": "运行命令 python triangle.py 12",
+            "groupHint": "pwsh",
+            "detailRef": {
+              "seq": 241
+            },
+            "turn": 2,
+            "state": "completed"
+          }
+        },
+        {
+          "seq": 268,
+          "type": "assistant.message",
+          "at": "2026-10-08T20:30:58.219Z",
+          "data": {
+            "text": "用已有的 `triangle.py` 运行 `python triangle.py 12`，结果为 **78**（12×13÷2=78）。",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 269,
+          "type": "task.ended",
+          "at": "2026-10-08T20:30:58.219Z",
+          "data": {
+            "taskId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 270,
+            "receiptId": "96dd3a3f-53d7-4e67-87d0-7078ab2391da",
+            "commandId": "cmd-4058ef6d-42bd-4dc6-a23f-0d4576977b9d",
+            "requestId": "2b08f89c-529e-4f29-a2b4-70cd666a4729",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 270,
+          "type": "turn.ended",
+          "at": "2026-10-08T20:30:58.220Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "durationMs": 14107,
+      "steps": 1,
+      "outputVerified": true,
+      "reusedScript": true
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-fdd57fa9-c2ea-4a78-af47-5f3414bfe547",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "finishedAt": "2026-10-08T20:31:03.547Z",
+  "summary": {
+    "passed": 2,
+    "failed": 7,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 28,
+    "returnedUsage": 28,
+    "missingUsage": 0,
+    "input": 193310,
+    "cached": 142144,
+    "output": 3879,
+    "knownCnyLowerBound": 0.061766879999999996
+  },
+  "credentialScan": {
+    "scanned": 354,
+    "matches": 0
+  }
+}
