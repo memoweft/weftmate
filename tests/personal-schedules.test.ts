@@ -10,10 +10,21 @@ const native = await import(new URL('../vendor/dsh-runtime/node_modules/@deepsee
   .catch(error => { if (error.code === 'ERR_MODULE_NOT_FOUND') return null; throw error; });
 const createUserMessage = native ? (await import(new URL('../vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-llm/lib/index.js', import.meta.url).href)).createUserMessage : undefined;
 const nativeFixture = { skip: native ? false : 'prebuilt DSH vendor fixture unavailable' };
-import { createNativeScheduleManager } from '../src/personal-access/schedules-native.mjs';
+import { createNativeScheduleManager, scheduleSourceReceipt } from '../src/personal-access/schedules-native.mjs';
 import { nextCalendarInput, scheduleContent } from '../src/personal-access/schedules-calendar.mjs';
 import { createScheduleOperations } from '../src/personal-access/schedules.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
+
+test('schedule creation binds the latest claimed steer without changing file-tool authorization', () => {
+  const exec = { callId: 'schedule-call', agent: { session: { events: [
+    { type: 'turn/start', data: { turn: 1 } },
+    { type: 'user/message', data: { source: { kind: 'user', rpcId: 'original-task' } } },
+    { type: 'user/message', data: { source: { kind: 'user', rpcId: 'reminder-steer' } } },
+    { type: 'tool/call', data: { turn: 1, callId: 'schedule-call', name: 'schedule_create' } },
+  ] } } };
+  assert.equal(scheduleSourceReceipt(exec), 'reminder-steer');
+  assert.throws(() => scheduleSourceReceipt({ ...exec, callId: 'missing' }), /TOOL_SOURCE_UNAVAILABLE/);
+});
 
 test('native local at handles zones, DST overlap/gap and weekly calendar keeps local hour', nativeFixture, () => {
   const at = native.createAtScheduleRecord('schedule-1', 'report', { date: '2026-10-09', time: '09:00:00', time_zone: 'Asia/Shanghai' }, Date.parse('2026-10-08T00:00:00Z'));
@@ -102,6 +113,15 @@ test('daily calendar continuation skips the nonexistent spring DST occurrence', 
   f.agent.session.append('schedule/change', { version: 1, operation: 'dispatch', id: row.id });
   await f.manager.due(f.agent);
   assert.equal((await f.manager.manage(f.agent, 'list')).items[0].nextRunAt, '2027-03-15T06:30:00.000Z');
+});
+
+test('calendar catch-up during a DST overlap skips the already-past earlier instant', nativeFixture, async t => {
+  const f = await fixture(t, 'America/New_York');
+  const row = await f.create({ prompt: JSON.stringify({ weftmate: 1, kind: 'reminder', text: '起床', repeat: { kind: 'weekly', weekday: 0, time: '01:30:00' } }), after_seconds: 1 });
+  f.advance(Date.parse('2026-11-01T06:20:00Z') - f.now());
+  f.agent.session.append('schedule/change', { version: 1, operation: 'dispatch', id: row.id });
+  await f.manager.due(f.agent);
+  assert.equal((await f.manager.manage(f.agent, 'list')).items[0].nextRunAt, '2026-11-08T06:30:00.000Z');
 });
 
 test('scheduled command inherits conversation owner, source authorization and current approval mode', async () => {

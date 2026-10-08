@@ -58,17 +58,23 @@ async function api(path, body, method = body === undefined ? 'GET' : 'POST') {
     }, { path, body, method });
 }
 async function nativeScreenshot(name) {
-    const encoded = await app.evaluate(async ({ BrowserWindow, desktopCapturer }) => {
-        const win = BrowserWindow.getAllWindows().find(win => win.getTitle() === 'WeftMate'), handle = win.getNativeWindowHandle();
-        const id = handle.length === 8 ? handle.readBigUInt64LE().toString() : handle.readUInt32LE().toString();
-        const sources = await desktopCapturer.getSources({ types: ['window'], thumbnailSize: { width: 1600, height: 1200 } });
-        return sources.find(source => source.id.split(':')[1] === id)?.thumbnail.toPNG().toString('base64') ?? null;
+    // Capture the real Electron window directly. Desktop source enumeration on
+    // Windows can stall when another application's compositor is busy.
+    const capture = app.evaluate(async ({ BrowserWindow }) => {
+        const win = BrowserWindow.getAllWindows().find(win => win.getTitle() === 'WeftMate');
+        const content = await win.webContents.capturePage();
+        return content.toPNG().toString('base64');
     });
-    if (encoded) await writeFile(join(evidence, name), Buffer.from(encoded, 'base64'));
-    else { await desktop.screenshot({ path: join(evidence, name) }); report.rendererScreenshotFallback = true; }
+    let timer;
+    const encoded = await Promise.race([capture, new Promise(resolve => { timer = setTimeout(() => resolve(null), 10000); })]);
+    clearTimeout(timer);
+    report.screenshots ??= [];
+    if (encoded) { await writeFile(join(evidence, name), Buffer.from(encoded, 'base64')); report.screenshots.push({ name, realElectron: true, nativeFrame: false }); }
+    else { report.screenshots.push({ name, captureTimedOut: true }); console.log(`Window capture timed out: ${name}; functional checks continue`); }
 }
+
 async function launch() {
-    app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), args: ['.', `--user-data-dir=${profileDir}`, '--personal-host', '--access-port=0'], cwd: repo, env, timeout: 90000 });
+    app = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), args: ['--disable-gpu', '.', `--user-data-dir=${profileDir}`, '--personal-host', '--access-port=0'], cwd: repo, env, timeout: 90000 });
     app.process().stdout?.on('data', data => { const value = String(data); if (/schedule|error|failed/i.test(value)) console.log(value.replaceAll(key, '[redacted]')); });
     app.process().stderr?.on('data', data => { const value = String(data); if (/schedule|error|failed/i.test(value)) console.log(value.replaceAll(key, '[redacted]')); });
     desktop = await app.firstWindow(); desktop.setDefaultTimeout(60000);
@@ -86,10 +92,12 @@ async function launch() {
         await desktop.getByLabel('离线密码', { exact: true }).filter({ visible: true }).fill(password);
         await desktop.getByRole('button', { name: '登录', exact: true }).click();
     }
-    await desktop.getByRole('button', { name: /新对话/ }).waitFor();
+    await desktop.getByRole('button', { name: '新对话 Ctrl N', exact: true }).waitFor();
 }
 async function schedules() { const value = await api('/schedules'); assert.equal(value.status, 200, JSON.stringify(value)); return value.body.items; }
 async function send(text) {
+    const back = desktop.getByRole('button', { name: /返回对话/ });
+    if (await back.isVisible()) await back.click();
     const composer = desktop.getByRole('textbox', { name: '输入消息', exact: true });
     await until(() => composer.isEnabled()); await composer.fill(text);
     await desktop.getByRole('button', { name: '发送', exact: true }).click();
@@ -102,7 +110,7 @@ try {
     await until(async () => { const value = await api('/account/models/by-request/schedule-model'); return value.body.operation?.status === 'succeeded'; });
     await desktop.reload();
     await api('/settings/usage', { timeZone: 'Asia/Shanghai' }, 'PATCH');
-    await desktop.getByRole('button', { name: /新对话/ }).click();
+    await desktop.getByRole('button', { name: '新对话 Ctrl N', exact: true }).click();
     await send('请在 65 秒后提醒我交 SCH-1 报告，只是提醒，不要执行其他工作。');
     const reminder = await until(async () => (await schedules()).find(row => row.text.includes('SCH-1') && row.kind === 'reminder'));
     console.log('Reminder created');
@@ -111,6 +119,14 @@ try {
     await until(async () => (await app.evaluate(() => globalThis.schShown)).some(row => row.type === 'assistant.message'));
     report.checks.push('MiMo conversation creates native reminder; native system notification shown and durable conversation message');
     await nativeScreenshot('01-reminder.png');
+    await send('明天早上 9 点提醒我交 SCH-1 明日报告，只提醒。');
+    const tomorrow = await until(async () => (await schedules()).find(row => row.text.includes('明日报告')));
+    const localTarget = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(tomorrow.nextRunAt));
+    assert.equal(localTarget, '09:00');
+    await send('取消明天交 SCH-1 明日报告的提醒。');
+    await until(async () => !(await schedules()).some(row => row.id === tomorrow.id));
+    report.checks.push('natural tomorrow 09:00 uses account zone; conversation cancellation deletes exact schedule');
+
     await send('请在 65 秒后开始执行，之后每周一早上 8 点执行一次：在本对话目录新建 sch-1-weekly.txt，内容写“本周验收完成”。这是定时任务，现在不要写文件，建立任务后一句话确认。');
     const task = await until(async () => (await schedules()).find(row => row.kind === 'task' && row.text.includes('sch-1-weekly.txt')));
     assert.equal(task.repeat.kind, 'weekly'); assert.equal(task.repeat.weekday, 1);
@@ -118,9 +134,13 @@ try {
     await until(async () => { const value = await api(`/sessions/${task.sessionId}/resources`); return value.body.outputs?.some(row => row.fileName === 'sch-1-weekly.txt'); }, 240000);
     const taskRows = await schedules(); assert.ok(taskRows.find(row => row.id === task.id).nextRunAt);
     report.checks.push('calendar recurrence executes through original conversation and creates registered file; next local occurrence exists');
+    const backFromSettings = desktop.getByRole('button', { name: /返回对话/ });
+    if (await backFromSettings.isVisible()) await backFromSettings.click();
     await nativeScreenshot('02-periodic-file.png');
-    await desktop.getByRole('button', { name: '账户菜单', exact: true }).click();
-    await desktop.getByRole('button', { name: '设置', exact: true }).click();
+    if (!(await desktop.getByText('提醒与定时任务', { exact: true }).isVisible())) {
+        await desktop.getByRole('button', { name: '账户菜单', exact: true }).click();
+        await desktop.getByRole('button', { name: '设置', exact: true }).click();
+    }
     await desktop.getByText('提醒与定时任务', { exact: true }).click();
     const taskItem = desktop.getByRole('listitem', { name: task.text, exact: true });
     await taskItem.getByRole('button', { name: '暂停', exact: true }).click();
@@ -134,6 +154,7 @@ try {
     await desktop.getByRole('button', { name: /返回对话/ }).click();
     await send('请在 65 秒后提醒我检查 SCH-1 离线补发，只提醒。');
     const offline = await until(async () => (await schedules()).find(row => row.text.includes('离线补发')));
+    await until(async () => { const value = await api('/sessions'); return value.body.sessions.find(row => row.sessionId === offline.sessionId)?.running === false; });
     await app.close(); app = null;
     const due = Date.parse(offline.nextRunAt);
     const waitMs = Math.max(0, due + 65000 - Date.now());
@@ -142,25 +163,28 @@ try {
     while (Date.now() < waitDeadline) await new Promise(resolve => setTimeout(resolve, Math.min(1000, waitDeadline - Date.now())));
     await launch();
     await until(async () => { const value = await api('/notifications'); return value.body.items?.some(row => row.text.includes('离线补发') && row.missed); });
-    await desktop.getByRole('button', { name: /新对话/ }).waitFor();
+    await desktop.getByRole('button', { name: '新对话 Ctrl N', exact: true }).waitFor();
     await until(async () => { const value = await api(`/sessions/${offline.sessionId}/events?afterSeq=-1&limit=100`); return value.body.events?.some(row => row.data?.reminder && row.data.text.includes('错过了') && row.data.text.includes('离线补发')); });
     await nativeScreenshot('04-offline-catchup.png');
     await app.close(); app = null; await launch();
     const notifications = await api('/notifications');
     assert.equal(notifications.body.items.filter(row => row.text.includes('离线补发')).length, 1);
     report.checks.push('real host shutdown crosses target; restart catches up with missed time; second restart does not duplicate');
-    await send('明天早上 9 点提醒我交 SCH-1 明日报告，只提醒。');
-    const tomorrow = await until(async () => (await schedules()).find(row => row.text.includes('明日报告')));
-    const localTarget = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Shanghai', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date(tomorrow.nextRunAt));
-    assert.equal(localTarget, '09:00');
-    await send('取消明天交 SCH-1 明日报告的提醒。');
-    await until(async () => !(await schedules()).some(row => row.id === tomorrow.id));
-    report.checks.push('natural tomorrow 09:00 uses account zone; conversation cancellation deletes exact schedule');
-
     assert.deepEqual(pageErrors, []);
     report.usage = upstreamUsage; report.cost = Math.round(upstreamUsage.reduce((sum, row) => sum + (usageCost(row, MIMO_PRICE) ?? 0), 0) * 1e9) / 1e9;
     await writeFile(join(evidence, 'verification.json'), JSON.stringify(report, null, 2));
     console.log(JSON.stringify(report));
+ } catch (error) {
+    const diagnostic = { error: error.message, checks: report.checks };
+    try {
+      diagnostic.schedules = (await api('/schedules')).body;
+      diagnostic.commands = (await api('/commands?limit=20')).body;
+      diagnostic.alerts = await desktop.getByRole('alert').allTextContents();
+      const sessions = (await api('/sessions')).body.sessions;
+      diagnostic.timeline = (await api(`/sessions/${sessions[0].sessionId}/events?limit=50`)).body;
+      await writeFile(join(repo, '.local/sch-1-last-failure.json'), JSON.stringify(diagnostic, null, 2));
+    } catch { /* Preserve the original validation failure. */ }
+    throw error;
 } finally {
     const costs = join(repo, '.local/sch-1-costs.json'); await mkdir(join(repo, '.local'), { recursive: true });
     const attempts = JSON.parse(await readFile(costs, 'utf8').catch(() => '[]'));

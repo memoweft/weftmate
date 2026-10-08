@@ -4,6 +4,16 @@ import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { scheduleContent, nextCalendarInput } from './schedules-calendar.mjs';
 
+/** Latest claimed user intent, including a reminder requested by a live steer. */
+export function scheduleSourceReceipt(exec) {
+  const events = exec.agent.session.events;
+  const call = events.findLastIndex(event => event.type === 'tool/call' && event.data.callId === (exec.rootCallId ?? exec.callId));
+  const start = events.findLastIndex((event, index) => index < call && event.type === 'turn/start');
+  const source = events.slice(start + 1, call).findLast(event => event.type === 'user/message' && event.data.source?.kind === 'user');
+  if (call < 0 || start < 0 || typeof source?.data.source?.rpcId !== 'string') throw new Error('TOOL_SOURCE_UNAVAILABLE');
+  return source.data.source.rpcId;
+}
+
 export async function createNativeScheduleManager({ ctx, native, file, request, clock = Date.now }) {
   let state;
   try { state = JSON.parse(await readFile(file, 'utf8')); }
@@ -54,7 +64,7 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
       while (true) {
         try { native.createAtScheduleRecord(row.id, row.prompt, at, now); break; }
         catch (error) {
-          if (error.code !== 'invalid_rule') throw error;
+          if (!['invalid_rule', 'not_future'].includes(error.code)) throw error;
           at = nextCalendarInput(row.repeat, row.timeZone, now, at.date);
         }
       }
@@ -71,15 +81,16 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     row.nativeId = result.id; row.state = 'scheduled'; row.nextRecord = result;
   }
   async function deliver(agent, row, occurrenceAt, deliveryId, manual = false) {
-    if (bucket(agent.id).notifications.some(n => n.id === deliveryId)) return;
+    const notificationId = `${agent.id}:${deliveryId}`;
+    if (bucket(agent.id).notifications.some(n => n.id === notificationId)) return;
     const missed = !manual && clock() - Date.parse(occurrenceAt) >= 60000;
     const local = new Date(occurrenceAt).toLocaleString('zh-CN', { timeZone: row.timeZone });
     const text = `${missed ? `错过了 ${local} 的${row.kind === 'task' ? '定时任务' : '提醒'}，现在补${row.kind === 'task' ? '执行' : '提醒'}：` : row.kind === 'task' ? '定时任务：' : '提醒：'}${row.text}`;
-    if (row.kind === 'task') await request({ action: 'execute', sessionId: agent.id, text: `这是已到点的定时任务，请现在执行以下工作，沿用本对话审批模式，不要重新建立该定时任务：\n${text}`, deliveryId, sourceReceiptId: row.sourceReceiptId });
+    if (row.kind === 'task') await request({ action: 'execute', sessionId: agent.id, text: `现在执行定时任务：${row.text}`, deliveryId, sourceReceiptId: row.sourceReceiptId });
     const message = native.createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: 'weftmate-reminder' } });
     agent.session.append('user/message', message, { surfaceOp: 'append' });
     await ctx.sessions.flush(agent.session);
-    bucket(agent.id).notifications.push({ id: deliveryId, text, kind: row.kind, scheduledAt: occurrenceAt,
+    bucket(agent.id).notifications.push({ id: notificationId, text, kind: row.kind, scheduledAt: occurrenceAt,
       createdAt: new Date(clock()).toISOString(), missed, messageId: message.id });
     row.lastRunAt = new Date(clock()).toISOString();
   }
