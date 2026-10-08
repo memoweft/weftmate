@@ -1,3 +1,4 @@
+import { statSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 
@@ -217,10 +218,20 @@ export function shellWriteTargets(source, cwd, powershell = true) {
     // known literal assignment afterwards can establish fresh evidence again.
     if (!assignment && /^[\w.-]+$/.test(parts[0]) && !/^(?:set-location|push-location|pop-location|cd|pushd|popd|get-location|pwd|new-item|set-content|add-content|out-file|invoke-webrequest|invoke-restmethod|curl(?:\.exe)?|move-item|copy-item|mv|cp|out-null|write-output|write-host|get-content|get-childitem|get-item|test-path|echo|printf|cat|ls|mkdir|node|python3?|pwsh|powershell|bash|sh|script-source)$/i.test(command)) invalidate();
     if (['set-location', 'push-location', 'pop-location', 'cd', 'pushd', 'popd'].includes(command)) {
+      const previousLocation = location;
       if (command === 'pop-location' || command === 'popd') location = uncertain ? undefined : stack.pop();
       else {
         if (command === 'push-location' || command === 'pushd') stack.push(location);
         location = uncertain ? undefined : absolute(value(parts.slice(1).filter(p => !/^-LiteralPath$|^-Path$/i.test(p))));
+      }
+      // A missing/non-directory destination makes these commands fail while
+      // the shell can continue in its old directory. Never assume that switch.
+      try { if (!location || !statSync(location).isDirectory()) location = undefined; }
+      catch { location = undefined; }
+      if (location === undefined) stack.length = 0;
+      if (!powershell) {
+        bindings.set('PWD', location);
+        bindings.set('OLDPWD', location === undefined ? undefined : previousLocation);
       }
     }
     const add = (expression, kind = 'write', from) => writes.push({ target: uncertain ? undefined : absolute(value(expression)), kind, from });
