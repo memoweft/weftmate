@@ -144,8 +144,8 @@ final class A5ParityUITests: XCTestCase {
         try expect(question);keep(app,"question",theme)
         try tap(app,"openConversationResources");try expect(app.staticTexts["输出内容"]);keep(app,"outputs-sources",theme);try tap(app,"closeResourcesPanel")
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.memory");try expect(app.staticTexts["我的记忆"]);keep(app,"memory",theme);try tap(app,"closeAuxiliarySheetButton")
-        try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.settings");try expect(app.staticTexts["账户与设置"]);keep(app,"appearance",theme)
-        try tap(app,"openUsage");try expect(app.descendants(matching:.any)["usageTotalCost"].firstMatch);keep(app,"usage",theme)
+        try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.settings");try tap(app,"settingsCategory.appearance");try expect(app.segmentedControls["appearancePicker"]);keep(app,"appearance",theme)
+        try tap(app,"设置");try tap(app,"settingsCategory.usage");try expect(app.descendants(matching:.any)["usageTotalCost"].firstMatch);keep(app,"usage",theme)
         if behavior {
             let report=try await get("/a5/report"),usage=report["usage"] as! [String:Any],total=usage["total"] as! [String:Any]
             let totalCost=app.descendants(matching:.any)["usageTotalCost"].firstMatch
@@ -154,7 +154,7 @@ final class A5ParityUITests: XCTestCase {
             _ = try await get("/a5/usage-blocked");try tap(app,"刷新用量");try expect(app.staticTexts.containing(NSPredicate(format:"label CONTAINS %@","云端模型请求已暂停")).firstMatch)
             let refused=try await get("/a5/refused");XCTAssertEqual(refused["status"] as? Int,402)
             try fill(app,"usageTemporaryLimit","1");try tap(app,"临时提高本月上限")
-            try tap(app,"closeUsageSheet");try tap(app,"closeAuxiliarySheetButton");try back(app)
+            try tap(app,"closeAuxiliarySheetButton");try back(app)
             try row(app,ids["deletion"] as! String);try tap(app,"对话菜单");try tap(app,"归档对话");try back(app)
             try tap(app,"已归档");try row(app,ids["deletion"] as! String)
             XCTAssertFalse(app.buttons["sendButton"].isEnabled);try tap(app,"恢复对话")
@@ -170,7 +170,7 @@ final class A5ParityUITests: XCTestCase {
             let final=try await get("/a5/report");XCTAssertEqual((final["memoryDeletes"] as! [[String:Any]]).count,1)
             let exists=final["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
         }
-        if !behavior { try tap(app,"closeUsageSheet");try tap(app,"closeAuxiliarySheetButton") }
+        if !behavior { try tap(app,"closeAuxiliarySheetButton") }
         if behavior { try back(app);try row(app,ids["review"] as! String) }
         try tap(app,"对话菜单");try expect(app.buttons["归档对话"]);keep(app,"session-menu",theme)
         app.terminate()

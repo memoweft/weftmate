@@ -6,6 +6,13 @@ import Darwin
 import WeftMateCore
 
 struct WeftMateRootView: View {
+    #if DEBUG && os(macOS)
+    private func argsForSettingsCapture() -> Bool {
+        let args = ProcessInfo.processInfo.arguments
+        guard let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return false }
+        return ["appearance", "usage"].contains(args[index + 1]) || args[index + 1].hasPrefix("settings-")
+    }
+    #endif
     @ObservedObject var model: AppleAppModel
     @Environment(\.scenePhase) private var scenePhase
 
@@ -58,8 +65,16 @@ struct WeftMateRootView: View {
                 try? await Task.sleep(for: .seconds(ProcessInfo.processInfo.arguments.contains("--a5-review-scene") ? 8 : 1))
                 // Capture only this process's own displayed window; never enumerate other apps.
                 typealias WindowImages = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
-                let windows = NSApplication.shared.windows.filter { $0.isVisible }
+                let settingsCapture = argsForSettingsCapture()
+                let windows = NSApplication.shared.windows.filter { $0.isVisible && (!settingsCapture || $0.title != "WeftMate") }
                     .sorted { ($0.sheetParent == nil ? 1 : 0) < ($1.sheetParent == nil ? 1 : 0) }
+                if settingsCapture {
+                    // The launch workaround can refocus the main window. Capture the
+                    // independent settings window in its actual active appearance.
+                    NSApplication.shared.activate(ignoringOtherApps: true)
+                    windows.first(where: { $0.sheetParent == nil })?.makeKeyAndOrderFront(nil)
+                    try? await Task.sleep(for: .milliseconds(300))
+                }
                 // Sheets have their own window-server IDs. Include only this app's
                 // visible windows so usage and session menus appear over their parent.
                 var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: $0.windowNumber) }
@@ -104,11 +119,12 @@ private struct AccountEntry: View {
 
 #if os(macOS)
 private enum SidebarSelection: Hashable {
-    case conversation(String), memory, devices, settings
+    case conversation(String), memory
 }
 
 private struct MacWorkspace: View {
     @ObservedObject var model: AppleAppModel
+    @Environment(\.openWindow) private var openWindow
     @State private var selected: SidebarSelection?
     @State private var search = ""
 
@@ -141,7 +157,10 @@ private struct MacWorkspace: View {
             guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
             switch args[index + 1] {
             case "memory": selected = .memory
-            case "appearance", "usage": selected = .settings
+            case "appearance", "usage":
+                model.settingsRoute = .init(categoryID: args[index + 1]); openWindow(id: "settings")
+            case let category where category.hasPrefix("settings-"):
+                model.settingsRoute = .init(categoryID: String(category.dropFirst(9))); openWindow(id: "settings")
             case "conversation", "approval", "question", "outputs-sources", "session-menu":
                 if let conversation = model.conversations.first(where: { $0.title == "整理项目资料" }) { selected = .conversation(conversation.id) }
             default: selected = nil
@@ -186,9 +205,7 @@ private struct MacWorkspace: View {
                 Section {
                     WeftLabel("记忆", icon: "memory").tag(SidebarSelection.memory)
                         .accessibilityIdentifier("memoryNavigation")
-                    WeftLabel("设备", icon: "desktop").tag(SidebarSelection.devices)
-                        .accessibilityIdentifier("devicesNavigation")
-                    WeftLabel("设置", icon: "settings").tag(SidebarSelection.settings)
+                    Button { openWindow(id: "settings") } label: { WeftLabel("设置", icon: "settings") }
                         .accessibilityIdentifier("settingsNavigation")
                 }
             }
@@ -198,7 +215,7 @@ private struct MacWorkspace: View {
             .accessibilityIdentifier("conversationList")
 
             Divider()
-            Button { selected = .settings } label: {
+            Button { model.settingsRoute = .init(categoryID: "account"); openWindow(id: "settings") } label: {
                 HStack(spacing: AppleTokens.Space.p11) {
                     Text(String(model.accountName.prefix(1)).uppercased())
                         .font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(Weave.accent)
@@ -228,8 +245,6 @@ private struct MacWorkspace: View {
                 WelcomeView(model: model)
             }
         case .memory: MemoryWorkspaceView(appModel: model).id(model.accountEpoch)
-        case .devices: CloudDevicesView(app: model, cloud: model.cloudLogin)
-        case .settings: SettingsView(model: model)
         case nil: WelcomeView(model: model)
         }
     }
