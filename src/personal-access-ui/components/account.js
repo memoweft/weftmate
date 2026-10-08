@@ -536,6 +536,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
     function profileError(message) { ui.errorAt('profile-error', message); }
     function showProfileReload(visible) { ui.byId('profile-reload').hidden = !visible; }
     function paintPendingDevices(payload, current) {
+        ui.paintCloudPending?.(payload);
         const list = ui.byId('pending-device-list');
         list.replaceChildren();
         ui.byId('pending-devices').hidden = payload.devices.length === 0;
@@ -553,7 +554,8 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                     for (const control of actions.children)
                         control.disabled = true;
                     try {
-                        await core.decideDevice(device.id, decision);
+                        if (ui.decideCloudDevice) await ui.decideCloudDevice(device, decision);
+                        else await core.decideDevice(device.id, decision);
                         if (current())
                             await core.refreshPendingDevices();
                     }

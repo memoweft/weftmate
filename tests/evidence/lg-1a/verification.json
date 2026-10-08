@@ -1,0 +1,28 @@
+{
+  "startedAt": "2026-10-08T11:29:11.293Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "modelRequests": 0,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Non-enumerating login error",
+    "Registration, file code, automatic login and local desktop binding",
+    "Remembered device restores login after reload",
+    "Local emergency password configured",
+    "Computer Connect uses the real hosts/connect contract",
+    "Real pairing QR renders and refreshes after two browser minutes",
+    "Second web device email confirmation, waiting and desktop approval",
+    "Trusted delivery imported by the actual recipient",
+    "Web device renamed through the shared flow",
+    "Cloud device renamed",
+    "Third device refused content access and removed from cloud directory",
+    "Email change and reauthentication",
+    "Logout other devices",
+    "Password recovery and email prefill",
+    "Account deletion clears host Cookie and protected desktop cloud credentials",
+    "Offline emergency login after cloud deletion preserves local account"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "passed": true,
+  "finishedAt": "2026-10-08T11:30:39.337Z"
+}

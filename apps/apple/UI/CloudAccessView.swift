@@ -1,6 +1,6 @@
 import SwiftUI
-import WeftMateCore
 
+/// This page is reachable only after account login, from Settings → Devices.
 struct CloudAccessView: View {
     @ObservedObject var model: CloudLoginModel
     var body: some View {
@@ -8,65 +8,47 @@ struct CloudAccessView: View {
             Form {
                 if model.waiting {
                     Section {
-                        WeftLabel("等待设备批准", icon: "clock").font(AppleTokens.Fonts.headline)
-                            .accessibilityIdentifier("cloudWaiting")
-                        Text("请在已登录的设备上点允许，或扫电脑上的二维码")
-                        Button("已允许，重试连接") { model.retry() }.disabled(model.busy)
-                            .accessibilityIdentifier("cloudRetry")
-                        #if os(iOS)
-                        Button("扫描电脑配对二维码") { model.showScanner = true }.disabled(model.busy)
-                        #else
-                        Text("请在另一台设备上批准。也可从电脑粘贴配对信息固定安全密钥。")
-                        #endif
-                    }
-                } else {
-                    Section {
-                        Text("用 WeftMate 账号登录").font(AppleTokens.Fonts.headline)
-                        Text("注册、邮箱验证和找回密码在云端认证页面完成。访问电脑上的对话还需要设备批准。")
-                        Button(model.busy ? "正在登录…" : "打开系统登录浏览器") { model.begin() }
-                            .disabled(model.busy).accessibilityIdentifier("cloudBrowserLogin")
+                        Text("在你已登录的设备上允许这台设备").font(AppleTokens.Fonts.headline).accessibilityIdentifier("cloudWaiting")
+                        ForEach(model.devices.filter { !$0.isCurrent }) { device in WeftLabel(device.name, icon: device.icon) }
+                        Text("批准后会自动进入。")
+                        Button("换账号") { Task { await model.signOutAccount() } }
                     }
                 }
                 Section("连接你的电脑") {
-                    Text("首次连接请从电脑取得配对信息。电脑的安全密钥会保存在这台设备上。")
+                    Text("在电脑上打开「设置 → 设备 → 添加设备」，取得二维码或配对码。")
                     #if os(iOS)
-                    Button("扫描电脑配对二维码") { model.showScanner = true }.disabled(model.busy)
-                        .accessibilityIdentifier("cloudScan")
+                    Button("扫描电脑配对二维码") { model.showScanner = true }.disabled(model.busy).accessibilityIdentifier("cloudScan")
                     #endif
                     if model.hasPairing {
-                        WeftLabel("已取得电脑配对信息", icon: "approval")
-                            .accessibilityIdentifier("cloudPairingReady")
-                        Button("更换配对信息") { model.editPairing() }.disabled(model.busy)
+                        WeftLabel("已取得电脑配对信息", icon: "approval").accessibilityIdentifier("cloudPairingReady")
+                        Button("更换配对码") { model.editPairing() }
                     } else {
-                        TextField("粘贴电脑配对信息", text: $model.pairingText, axis: .vertical)
-                            .lineLimit(2...4).disabled(model.busy).accessibilityIdentifier("cloudPairingText")
+                        TextField("输入配对码", text: $model.pairingText, axis: .vertical).lineLimit(2...4)
+                            .accessibilityIdentifier("cloudPairingText")
                     }
-                    if model.waiting {
-                        Button("使用此配对信息授权") {
-                            do { try model.receivePairing(Data(model.pairingText.utf8)); model.retry(redeem: true) }
-                            catch { model.scan(Data(model.pairingText.utf8)) }
-                        }.disabled(model.busy).accessibilityIdentifier("cloudRedeem")
+                    Button("请求设备批准") { model.scan(Data(model.pairingText.utf8)) }.disabled(model.busy || model.pairingText.isEmpty)
+                        .accessibilityIdentifier("cloudRequestApproval")
+                    if model.hasPairing {
+                        Button("使用配对码授权") { model.retry(redeem: true) }.disabled(model.busy).accessibilityIdentifier("cloudRedeem")
                     }
                 }
-                Section("云服务") {
-                    TextField("https://api.weftmate.com", text: $model.cloudAddress)
-                        .serverInput().disabled(model.busy || model.cloudSignedIn).accessibilityIdentifier("cloudAddress")
-                }
-                if let error = model.error {
-                    Section { Text(error).foregroundStyle(AppleTokens.Colors.red).accessibilityIdentifier("cloudError") }
-                }
+                if let error = model.error { Section { InlineNotice(message: error, isError: true).accessibilityIdentifier("cloudError") } }
                 if model.busy { ProgressView("正在连接…") }
-            }
-            .navigationTitle("WeftMate 账号")
-            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { model.cancel() }.accessibilityIdentifier("cloudCancel") } }
-            #if os(iOS)
-            #if DEBUG
-            .task { await model.loadSyntheticQR() }
-            #endif
-            .sheet(isPresented: $model.showScanner) { PairingScannerView { model.scan($0) } }
-            #endif
+            }.navigationTitle("连接设备")
+                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("取消") { model.cancel() }.accessibilityIdentifier("cloudCancel") } }
+                .task {
+                    #if DEBUG && os(iOS)
+                    await model.loadSyntheticQR()
+                    #endif
+                    while !Task.isCancelled {
+                        await model.poll()
+                        do { try await Task.sleep(for: .seconds(3)) } catch { return }
+                    }
+                }
+                #if os(iOS)
+                .sheet(isPresented: $model.showScanner) { PairingScannerView { model.scan($0) } }
+                #endif
         }
-        .interactiveDismissDisabled(model.busy || model.waiting)
         #if os(macOS)
         .frame(minWidth: 480, minHeight: 560)
         #endif
@@ -76,34 +58,12 @@ struct CloudAccessView: View {
 struct CloudAccessPresenter: View {
     @ObservedObject var cloud: CloudLoginModel
     var body: some View {
-        AppleTokens.Colors.clear.frame(width: 0, height: 0)
-            .sheet(isPresented: $cloud.showLogin, onDismiss: { cloud.cancel() }) { CloudAccessView(model: cloud) }
-            .sheet(isPresented: $cloud.showPending) {
-                NavigationStack {
-                    List {
-                        Section {
-                            Text("有新设备请求访问你的对话").font(AppleTokens.Fonts.headline)
-                            Text("仅在确认是你自己的设备时允许。")
-                        }
-                        ForEach(cloud.pending) { device in
-                            VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
-                                Text(device.name).font(AppleTokens.Fonts.headline)
-                                Text("\(device.platformLabel) · \(device.requestedAtLabel)").font(AppleTokens.Fonts.caption)
-                                HStack {
-                                    Button("允许") { Task { await cloud.decide(device, allow: true) } }
-                                        .buttonStyle(PrimaryActionStyle(fillsWidth: false)).accessibilityIdentifier("cloudAllow.\(device.id)")
-                                    Button("拒绝", role: .destructive) { Task { await cloud.decide(device, allow: false) } }.buttonStyle(OutlineActionStyle())
-                                }
-                            }
-                        }
-                        if let error = cloud.error { Text(error).foregroundStyle(AppleTokens.Colors.red) }
-                    }
-                    .navigationTitle("新设备授权")
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("稍后") { cloud.showPending = false } } }
-                }
-                #if os(macOS)
-                .frame(minWidth: 480, minHeight: 380)
-                #endif
-            }
+        VStack {
+            if let device = cloud.pending.first { PendingDeviceRow(cloud: cloud, device: device) }
+            Spacer()
+        }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+            .allowsHitTesting(!cloud.pending.isEmpty)
+            .sheet(isPresented: $cloud.showLogin) { CloudAccessView(model: cloud) }
+            .sheet(isPresented: $cloud.showTrustDelivery) { PairingDisplayView(cloud: cloud, initialValue: cloud.pairingCode ?? "") }
     }
 }

@@ -1,0 +1,142 @@
+/** Numeric-only, owner-scoped request ledger. Never persist prompts or responses. */
+import path from 'node:path';
+import { readFile } from 'node:fs/promises';
+import { randomUUID } from 'node:crypto';
+import { durableWrite } from './store.mjs';
+import { failure } from './common.mjs';
+
+export const MIMO_PRICE = Object.freeze({ cachedInput: 0.02, input: 1, output: 2 });
+const zeroPrice = { cachedInput: 0, input: 0, output: 0 };
+const count = value => Number.isSafeInteger(value) && value >= 0;
+export function normalizeUsage(value, source = 'openai') {
+  if (!value || typeof value !== 'object') return null;
+  if (source === 'dsh') {
+    const { inputTokens, outputTokens, cacheReadTokens = 0, cacheWriteTokens = 0 } = value;
+    if (![inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens].every(count)) return null;
+    // pi-ai input excludes cache read/write. Its synthetic all-zero terminal usage
+    // cannot prove that a provider reported usage; retain unknown in that case.
+    if (inputTokens + outputTokens + cacheReadTokens + cacheWriteTokens === 0) return null;
+    return { inputTokens: inputTokens + cacheReadTokens + cacheWriteTokens,
+      cachedInputTokens: cacheReadTokens, outputTokens };
+  }
+  const inputTokens = value.prompt_tokens ?? value.input_tokens;
+  const outputTokens = value.completion_tokens ?? value.output_tokens;
+  const cachedInputTokens = value.prompt_tokens_details?.cached_tokens ?? value.prompt_cache_hit_tokens ??
+    value.input_tokens_details?.cached_tokens ?? 0;
+  if (![inputTokens, outputTokens, cachedInputTokens].every(count) || cachedInputTokens > inputTokens) return null;
+  return { inputTokens, cachedInputTokens, outputTokens };
+}
+export function usageCost(tokens, price) {
+  if (!tokens || !price) return null;
+  return Math.round(((tokens.inputTokens - tokens.cachedInputTokens) * price.input +
+    tokens.cachedInputTokens * price.cachedInput + tokens.outputTokens * price.output) * 1000) / 1e9;
+}
+export function defaultUsagePrice(model) {
+  if (model?.sourceKind === 'local' || model?.modelTier === 'local') return { ...zeroPrice };
+  return model?.model === 'mimo-v2.6-flash' ? { ...MIMO_PRICE } : null;
+}
+export function aggregateUsage(records, month, sessionId = null) {
+  const total = () => ({ requests: 0, unknownRequests: 0, unpricedRequests: 0,
+    inputTokens: 0, cachedInputTokens: 0, outputTokens: 0, cost: 0 });
+  const sum = total(), days = new Map(), sessions = new Map(), models = new Map();
+  const numberOfDays = new Date(`${month}-01T00:00:00Z`); numberOfDays.setUTCMonth(numberOfDays.getUTCMonth() + 1, 0);
+  for (let day = 1; day <= numberOfDays.getUTCDate(); day++) days.set(`${month}-${String(day).padStart(2, '0')}`, total());
+  function add(target, row) {
+    target.requests++;
+    if (!row.tokens) target.unknownRequests++;
+    else for (const key of ['inputTokens', 'cachedInputTokens', 'outputTokens']) target[key] += row.tokens[key];
+    if (row.cost === null) target.unpricedRequests++;
+    else target.cost = Math.round((target.cost + row.cost) * 1e9) / 1e9;
+  }
+  for (const row of records) {
+    if (!row.at.startsWith(month) || sessionId && row.sessionId !== sessionId) continue;
+    const day = row.at.slice(0, 10), session = row.sessionId;
+    if (!sessions.has(session)) sessions.set(session, total());
+    if (!models.has(row.profileId)) models.set(row.profileId, total());
+    add(sum, row); add(days.get(day), row); add(sessions.get(session), row); add(models.get(row.profileId), row);
+  }
+  const rank = (map, key) => [...map].map(([id, value]) => ({ [key]: id, ...value })).sort((a, b) => b.cost - a.cost || b.requests - a.requests);
+  return { month, timeZone: 'UTC', sessionId, total: sum,
+    days: [...days].map(([day, value]) => ({ day, ...value })),
+    sessions: rank(sessions, 'sessionId'), models: rank(models, 'profileId') };
+}
+export function usageBudget(cost, settings, month) {
+  const limit = settings.temporaryMonth === month && settings.temporaryLimit !== null
+    ? settings.temporaryLimit : settings.monthlyLimit;
+  return { monthlyLimit: settings.monthlyLimit, effectiveLimit: limit,
+    temporaryLimit: settings.temporaryMonth === month ? settings.temporaryLimit : null,
+    state: limit === null ? 'unlimited' : cost >= limit ? 'blocked' : cost >= Math.round(limit * 0.8 * 1e9) / 1e9 ? 'warning' : 'ok' };
+}
+export async function createUsageStore({ root, clock = Date.now }) {
+  const file = path.join(root, 'usage.json');
+  let data;
+  try { data = JSON.parse(await readFile(file, 'utf8')); }
+  catch (error) { if (error.code !== 'ENOENT') throw failure('STORE_CORRUPT', 500); data = { version: 1, accounts: {} }; }
+  if (data.version !== 1 || !data.accounts || typeof data.accounts !== 'object') throw failure('STORE_CORRUPT', 500);
+  let queue = Promise.resolve();
+  const at = () => new Date(clock()).toISOString();
+  const month = () => at().slice(0, 7);
+  const empty = () => ({ records: [], settings: { monthlyLimit: null, temporaryLimit: null, temporaryMonth: null, prices: {} } });
+  const account = ownerId => data.accounts[ownerId] ?? empty();
+  function mutate(ownerId, work) {
+    const operation = queue.then(async () => {
+      const next = structuredClone(data), row = next.accounts[ownerId] ??= empty();
+      const result = work(row); await durableWrite(file, next); data = next; return result;
+    });
+    queue = operation.catch(() => {}); return operation;
+  }
+  function summary(ownerId, selectedMonth = month(), sessionId = null) {
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(selectedMonth)) throw failure('INVALID_REQUEST');
+    const row = account(ownerId), value = aggregateUsage(row.records, selectedMonth, sessionId);
+    const full = sessionId ? aggregateUsage(row.records, selectedMonth).total : value.total;
+    return { ...value, budget: usageBudget(full.cost, row.settings, selectedMonth) };
+  }
+  function assertAllowed(ownerId, model) {
+    if (model.sourceKind !== 'local' && model.modelTier !== 'local' && summary(ownerId).budget.state === 'blocked') {
+      throw failure('USAGE_LIMIT_REACHED', 402);
+    }
+  }
+  return {
+    summary,
+    settings: ownerId => structuredClone(account(ownerId).settings),
+    async configure(ownerId, input) {
+      const money = value => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+      const allowed = ['monthlyLimit', 'temporaryLimit', 'profileId', 'price'];
+      if (!input || Object.keys(input).some(key => !allowed.includes(key)) || !Object.keys(input).length) throw failure('INVALID_REQUEST');
+      for (const key of ['monthlyLimit', 'temporaryLimit']) if (Object.hasOwn(input, key) && input[key] !== null && !money(input[key])) throw failure('INVALID_REQUEST');
+      if (Object.hasOwn(input, 'price') !== Object.hasOwn(input, 'profileId')) throw failure('INVALID_REQUEST');
+      if (Object.hasOwn(input, 'profileId') && (typeof input.profileId !== 'string' || !/^[A-Za-z0-9._:-]{1,160}$/.test(input.profileId))) throw failure('INVALID_REQUEST');
+      if (input.price !== undefined && input.price !== null &&
+        (Object.keys(input.price).length !== 3 || !['cachedInput', 'input', 'output'].every(key => money(input.price[key])))) throw failure('INVALID_REQUEST');
+      await mutate(ownerId, row => {
+        for (const key of ['monthlyLimit', 'temporaryLimit']) if (Object.hasOwn(input, key)) row.settings[key] = input[key];
+        if (Object.hasOwn(input, 'temporaryLimit')) row.settings.temporaryMonth = month();
+        if (input.profileId) { if (input.price === null) delete row.settings.prices[input.profileId]; else row.settings.prices[input.profileId] = input.price; }
+      });
+      return this.settings(ownerId);
+    },
+    assertAllowed,
+    async begin(ownerId, { sessionId = null, profileId, model }) {
+      return mutate(ownerId, row => {
+        if (!model) throw failure('MODEL_UNAVAILABLE', 409);
+        assertAllowed(ownerId, model);
+        const requestId = randomUUID();
+        const price = row.settings.prices[profileId] ?? defaultUsagePrice(model);
+        row.records.push({ requestId, sessionId, profileId, at: at(), durationMs: null,
+          tokens: null, cost: null, price, source: 'unknown' });
+        return requestId;
+      });
+    },
+    async finish(ownerId, requestId, usage, source = 'openai') {
+      await mutate(ownerId, row => {
+        const record = row.records.find(item => item.requestId === requestId);
+        if (!record || record.durationMs !== null) return;
+        record.tokens = normalizeUsage(usage, source);
+        record.cost = record.tokens ? usageCost(record.tokens, record.price) : null;
+        record.source = record.tokens ? source : 'unknown';
+        record.durationMs = Math.max(0, clock() - Date.parse(record.at));
+      });
+    },
+    close: () => queue,
+  };
+}
