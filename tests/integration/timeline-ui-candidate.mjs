@@ -61,7 +61,16 @@ export async function startTimelineCandidate(options = {}) {
     listUserQuestions: async () => ({ runtimeId, questions: questionFrame ? [questionFrame] : [] }),
     respondUserQuestion: async () => { questionFrame.nativeState = 'answered'; result('question-1', '{"answers":[{"id":"format","selected":["简要报告"]}]}'); return { accepted: true } },
   }
-  service = await createPersonalAccessService({ root, port: 0, backend, uiHandler: servePersonalAccessUi })
+  const backupSettings = { enabled: true, directory: 'D:/Synthetic/UI-4-Backups', dailyDays: 7, weeklyCopies: 4 }, backupRows = [], backupOperations = [];
+  const backupManager = options.backups ? {
+    isPending: () => false,
+    view: async () => ({settings:{...backupSettings},backups:backupRows.map(row=>({...row})),status:{state:'idle'}}),
+    configure: async value => {Object.assign(backupSettings,value);backupOperations.push('settings');return {...backupSettings}},
+    request: async () => {const row={id:'ui4-backup',createdAt:'2026-10-08T08:00:00Z',size:1048576,verification:'valid'};backupRows.push(row);backupOperations.push('create');return {backup:row}},
+    importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
+    restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
+  } : null;
+  service = await createPersonalAccessService({ root, port: 0, backend, backupManager, uiHandler: servePersonalAccessUi })
   const { origin, hostId } = await service.start(), grant = await service.issueSetupGrant()
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
   const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', headers: { origin, 'content-type': 'application/json' }, body: JSON.stringify({ grant: grant.grant, ...credentials }) })
@@ -111,7 +120,7 @@ export async function startTimelineCandidate(options = {}) {
   const bridgeCode = `window.weftNative={postMessage(raw){const m=JSON.parse(raw);fetch('/bridge',{method:'POST',body:JSON.stringify(m)}).then(r=>r.json()).then(v=>window.weftNative.onmessage({data:JSON.stringify({id:m.id,ok:!v.error,result:v.result,error:v.error})}))},onmessage:null}`
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
-  return { root, origin, credentials, sessionId, operations, request, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
+  return { root, origin, credentials, sessionId, operations, request, backupOperations, mobileUrl: `http://127.0.0.1:${server.address().port}/`,
     complete: async (handled = false) => { if (!handled) await request(`/sessions/${sessionId}/approvals/${approvalId}`, { requestId:'fixture-allow-once',outcome:'allowed-once' });await service.trackToolApproval({ action: 'resolve_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), outcome:'allowed-once' });append('approval/decided',{id:approvalId,outcome:'allowed-once'});questionFrame.nativeState='answered';if (!handled) result('question-1','{"answers":[{"id":"format","selected":["简要报告"]}]}');result('write-1','Report saved.'); append('step/end',{turn:1,step:1});append('assistant/message',{content:[{type:'text',text:'报告已保存，测试全部通过。'}]});append('turn/end',{turn:1,reason:{kind:'completed'}});running=false },
     close: async () => { await service.close();await new Promise(done=>server.close(done)) } }
 }

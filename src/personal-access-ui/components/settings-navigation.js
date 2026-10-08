@@ -59,7 +59,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         picker = node('select', 'settings-category-picker'); picker.setAttribute('aria-label', '设置分类');
         content = node('div', 'settings-content');
         const originals = [...account.children]; account.append(content);
-        for (const id of ['general', 'appearance', 'account', 'devices', 'usage', 'models', 'approvals', 'memory', 'schedules', 'resources', 'system', 'about']) {
+        for (const id of ['general', 'appearance', 'account', 'devices', 'usage', 'models', 'approvals', 'memory', 'schedules', 'resources', 'system', 'backups', 'about']) {
             const panel = node('section', 'settings-category'); panel.dataset.category = id; panel.hidden = true; panels.set(id, panel); content.append(panel);
         }
         const move = (id, element) => { if (element) panels.get(id).append(element); };
@@ -75,6 +75,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         }
         move('devices', document.querySelector('.account-downloads'));
         move('schedules', ui.byId('settings-schedules'));
+        move('backups', document.querySelector('.backup-settings'));
         const system = ui.byId('system-heading').closest('section');
         for (const id of ['background-model-select', 'background-model-notice']) {
             const element = ui.byId(id); if (id === 'background-model-select') { move('models', element.previousElementSibling); move('models', element.nextElementSibling); }
@@ -121,6 +122,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         registry = globalThis.WeftUiCore.settingsRegistry({
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },
+            backups: () => ui.showSettingsBackups(),
             schedules: () => ui.showSettingsSchedules(),
             usage: options => ui.showSettingsUsage(options),
             about: () => { version.textContent = core.state.system?.host?.version || '版本未知'; },
