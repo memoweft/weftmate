@@ -74,7 +74,9 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     autoStartSupported: process.platform === 'win32' || process.platform === 'darwin' });
   handle('wm:desktop:settings', settings);
   const authStore = desktopAuthStorage(join(app.getPath('userData'), 'desktop-auth.enc'), safeStorage);
-  handle('wm:desktop:identity', () => ({ deviceName: hostname(), localOrigin: origin }));
+  handle('wm:desktop:identity', () => ({ deviceName: hostname(), localOrigin: origin,
+    clientId: process.env.WEFTMATE_CLOUD_DESKTOP_CLIENT_ID || process.env.WEFTMATE_CLOUD_WEB_CLIENT_ID,
+    redirectUri: process.env.WEFTMATE_CLOUD_DESKTOP_REDIRECT_URI }));
   handle('wm:desktop:credentials', (key, value, remove) => authStore.credentials(key, value, remove));
   handle('wm:desktop:key', scope => authStore.key(scope));
   handle('wm:desktop:proof', (scope, input) => authStore.sign(scope, input));

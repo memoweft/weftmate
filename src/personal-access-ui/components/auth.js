@@ -75,7 +75,7 @@ globalThis.WeftUiComponents.factories.auth = (core, ui) => {
         if (value.mode === 'authenticated' || value.mode === 'offline') { screenKey = ''; return; }
         if (value.mode === 'waiting') {
             ui.byId('cloud-wait-title').textContent = '在你已登录的设备上允许这台设备';
-            ui.byId('cloud-wait-status').textContent = value.error || `可以批准的设备：${[...value.devices, ...value.hosts].filter(device => !device.isCurrent).map(device => device.name).join('、') || '已登录的电脑或手机'}。批准后会自动进入。`;
+            ui.byId('cloud-wait-status').textContent = value.error || `可以批准的设备：${[...new Set([...value.devices, ...value.hosts].filter(device => !device.isCurrent).map(device => device.name))].join('、') || '已登录的电脑或手机'}。批准后会自动进入。`;
             return;
         }
         const key = `${value.mode}:${value.step}`;

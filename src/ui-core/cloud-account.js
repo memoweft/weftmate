@@ -2,10 +2,15 @@
 globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   const auth = { mode: 'login', step: 'email', email: '', error: '', busy: false, resendAt: 0, retryAt: 0, deviceName: '这台设备', devices: [], hosts: [] };
   core.state.cloudAuth = auth;
-  let client, waitTimer, renewalTimer, journey = 0, pairingTimer;
+  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight;
   const now = () => environment.now?.() ?? Date.now();
   const paint = () => effects.paintCloudAuth?.(cloudAuthView());
-  function cloudAuthView() { return { ...auth, resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds: Math.max(0, Math.ceil((auth.retryAt - now()) / 1000)) }; }
+  function cloudAuthView() {
+    const retrySeconds = Math.max(0, Math.ceil((auth.retryAt - now()) / 1000));
+    const error = auth.retryAt && auth.error.startsWith('尝试太多次')
+      ? retrySeconds ? `尝试太多次，请等待 ${retrySeconds} 秒后重试。` : '等待已结束，可以重试。' : auth.error;
+    return { ...auth, error, resendSeconds: Math.max(0, Math.ceil((auth.resendAt - now()) / 1000)), retrySeconds };
+  }
   function cloudError(error) {
     const code = error?.code || error?.message;
     if (code === 'RATE_LIMITED' || code === 'LOGIN_RATE_LIMITED') { auth.retryAt = now() + Math.max(1, error.retryAfter || 60) * 1000; return `尝试太多次，请等待 ${Math.ceil((auth.retryAt - now()) / 1000)} 秒后重试。`; }
@@ -86,6 +91,11 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return run(() => beginCloudLogin(email, password));
   }
   async function finishCloudLogin(ticket = journey) {
+    if (exchangeInFlight) return exchangeInFlight;
+    const current = applyCloudSession(ticket); exchangeInFlight = current;
+    try { return await current; } finally { if (exchangeInFlight === current) exchangeInFlight = null; }
+  }
+  async function applyCloudSession(ticket) {
     const result = await client.exchange(environment.bindDesktop ?? environment.desktop);
     if (ticket !== journey) return;
     const saved = await client.saved();
@@ -101,14 +111,17 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       core.show('cloud-wait'); paint();
       clearTimeout(waitTimer); waitTimer = setTimeout(() => void retryCloudApproval(ticket), 3000); return;
     }
+    clearTimeout(waitTimer); waitTimer = null;
     auth.mode = 'authenticated'; paint(); core.acceptSession(result); await core.enterAssistant();
     await core.refreshPendingDevices(); scheduleRenewal();
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
     if (draft) { effects.restoreCloudDraft?.(draft); await environment.cloudCredentials('draft:' + saved.sub, undefined, true); }
   }
   async function retryCloudApproval(ticket = journey) {
+    if (ticket !== journey || auth.mode !== 'waiting') return;
     try { await finishCloudLogin(ticket); }
     catch (error) { if (ticket !== journey) return; auth.error = cloudError(error); paint();
+      if (['CLOUD_TOKEN_INVALID', 'UNAUTHORIZED'].includes(error.code)) { await expireCloudSession(); return; }
       if (!['DEVICE_NOT_TRUSTED', 'CLOUD_TOKEN_INVALID'].includes(error.code)) waitTimer = setTimeout(() => void retryCloudApproval(ticket), 10000); }
   }
   function scheduleRenewal() {
@@ -128,7 +141,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     try { await core.api('/logout', { method: 'POST', protectedWrite: true, body: {} }); } catch { /* revoked cookies are already unusable */ }
     core.clearSession(); auth.email = email; startCloudJourney();
   }
-  async function cancelCloudJourney() { await client.forget(); startCloudJourney(); }
+  async function cancelCloudJourney() { await client.forget(); await client.resetKey(); startCloudJourney(); }
   async function cloudOfflineLogin({ password, cloudAccountId, username }) {
     return run(async () => {
       const remembered = await environment.cloudCredentials('offline-account');
@@ -140,7 +153,12 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   }
   async function cloudDirectory() {
     const generation = client.generation;
-    const result = await client.authorized('/devices');
+    let result;
+    try { result = await client.authorized('/devices'); }
+    catch (error) {
+      if (generation === client.generation && ['CLOUD_TOKEN_INVALID', 'UNAUTHORIZED'].includes(error.code)) await expireCloudSession();
+      throw error;
+    }
     if (generation !== client.generation) throw { code: 'CLOUD_TOKEN_INVALID' };
     auth.devices = result.devices; auth.hosts = result.hosts; return result;
   }
@@ -225,11 +243,14 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   function initializeCloudAccount() {
     client = new globalThis.WeftUiCore.CloudAuthClient({ fetch: environment.fetch, crypto: environment.crypto,
       credentials: environment.cloudCredentials, vendor: environment.cloudVendor, host: environment.hostOrigin, nativeKey: environment.nativeCloudKey, now });
-    const localLoad = core.load, localExpired = core.sessionExpired;
+    const localLoad = core.load, localExpired = core.sessionExpired, localClear = core.clearSession;
+    core.clearSession = () => { localClear(); if (auth.mode === 'offline') startCloudJourney(); };
     core.load = async () => {
       if (core.state.setupGrant) return localLoad();
       if (environment.nativeIdentity) {
         const identity = await environment.nativeIdentity(); auth.deviceName = identity.deviceName;
+        if (identity.clientId) client.clientId = identity.clientId;
+        if (identity.redirectUri) client.redirectUri = identity.redirectUri;
         environment.bindDesktop = identity.localOrigin === environment.hostOrigin;
         auth.localDesktop = environment.bindDesktop;
       }

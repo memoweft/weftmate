@@ -1,0 +1,22 @@
+{
+  "startedAt": "2026-10-08T10:15:55.766Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "modelRequests": 0,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Non-enumerating login error",
+    "Registration, file code, automatic login and local desktop binding",
+    "Remembered device restores login after reload",
+    "Local emergency password configured",
+    "Computer Connect uses the real hosts/connect contract",
+    "Real pairing QR renders and refreshes after two browser minutes",
+    "Logout rotates the desktop key, offline password approves it and later polling preserves Settings",
+    "Account deletion clears host Cookie and protected desktop cloud credentials",
+    "Offline emergency login after cloud deletion preserves local account"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "logoutRecoveryOnly": true,
+  "passed": true,
+  "finishedAt": "2026-10-08T10:16:43.662Z"
+}

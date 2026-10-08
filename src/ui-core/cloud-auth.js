@@ -29,6 +29,7 @@
     }
     async configure() {
       this.config = await this.request(this.host + '/personal/v1/cloud/config');
+      if (this.clientId) this.config.clientId = this.clientId;
       const cloudOrigin = origin(this.config.issuer);
       if (this.config.issuer !== cloudOrigin + '/personal/v1/cloud/oidc' || !this.config.clientId || !this.config.hostId) fail('INVALID_CONFIGURATION');
       this.base = cloudOrigin + '/personal/v1/cloud';
@@ -113,7 +114,8 @@
       const resumed = await this.publicRequest('/auth/authorization/resume', { resumeUrl: result.resumeUrl });
       const callback = new URL(resumed.callbackUrl), expected = new URL(this.redirectUri);
       const params = new URLSearchParams(callback.hash ? callback.hash.slice(1) : callback.search);
-      if (callback.origin !== expected.origin || callback.pathname !== expected.pathname || params.getAll('state').length !== 1 ||
+      if (callback.protocol !== expected.protocol || callback.host !== expected.host || callback.username !== expected.username || callback.password !== expected.password ||
+        callback.pathname !== expected.pathname || params.getAll('state').length !== 1 ||
         params.get('state') !== pending.state || params.getAll('code').length !== 1 || params.has('error') ||
         params.getAll('iss').length > 1 || params.has('iss') && params.get('iss') !== this.config.issuer) fail('CLOUD_TOKEN_INVALID');
       const tokens = await this.token({ grant_type: 'authorization_code', client_id: this.config.clientId, redirect_uri: this.redirectUri,

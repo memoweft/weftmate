@@ -282,6 +282,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function stopCloudPairing() {
         ui.cloudUi?.stopPairing();
+        ui.stopAccountPairing?.();
     }
     function paintScreen(view) {
         for (const name of ui.views)
