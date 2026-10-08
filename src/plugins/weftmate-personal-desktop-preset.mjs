@@ -4,6 +4,8 @@ export const name = 'weftmate-personal-desktop-preset';
 export const inject = ['tools'];
 
 const descriptions = {
+  schedule_create: 'Create a durable WeftMate reminder or executable task using DSH. WeftMate already supports calendar recurrence through prompt JSON: {"weftmate":1,"kind":"reminder","text":"交报告"} or {"weftmate":1,"kind":"task","text":"生成周报文件","repeat":{"kind":"weekly","time":"08:00:00","weekday":1}}. weekday: Sunday=0, Monday=1. daily repeat omits weekday. Select at (local date/time in the account time zone), after_seconds (first occurrence after a delay), or every_seconds (fixed interval >=300). For delayed first occurrence followed by calendar recurrence, use after_seconds AND repeat inside prompt, not every_seconds. The installed host handles notifications, execution, approval, and recurrence. Call this tool directly; do not inspect application source or implement timers/scripts for scheduling. Confirm only after tool success, in one sentence with local time and content.',
+  schedule_manage: 'Manage all schedules in this conversation, including paused entries. List to find the exact stable id, then pause/resume/delete/run. Use this to cancel reminders requested in conversation.',
   pwsh: 'Run a PowerShell command in this conversation or an explicit workdir.',
   bash: 'Run a shell command in this conversation or an explicit workdir.',
   read: 'Read a file. Relative paths use this conversation directory.',
