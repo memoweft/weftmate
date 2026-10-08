@@ -348,7 +348,11 @@ function placeModelMenu(){const top=$('model-button').getBoundingClientRect().to
   popup.style.bottom=`${Math.max(110,window.innerHeight-top+8)}px`;
   popup.style.maxHeight=`${Math.min(300,Math.max(160,top-24),Math.floor(window.innerHeight*.46))}px`}
 
-function updateComposer(){const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
+function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
+  $('message-mode-control').hidden=!view.host||!state.sharedRunning;
+  $('message-mode').value=uiCore.composerInputMode(state.sharedSessionId);
+  $('message-mode').disabled=!state.loggedIn||view.busy||state.transitionPending;
+  renderQueuedTasks();
   $('send-button').disabled=!view.ready;$('send-button').classList.toggle('ready',view.ready);$('send-button').hidden=view.sendHidden;
   $('stop-button').hidden=view.stopHidden;$('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
   $('device-line').textContent='';$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
@@ -356,6 +360,21 @@ function updateComposer(){const view=uiCore.mobile.composerState($('draft').valu
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;
   syncChatInsets();updateApprovalModeButton();updatePageHeader();
+}
+
+function renderQueuedTasks(){uiCore.syncMobileIdentity();const context=conversationTaskContext(),box=$('queued-tasks'),cards=$('queued-cards');
+  const rows=state.page==='chat'&&context.sessionId?uiCore.taskQueue().filter(row=>row.state==='queued'):[];
+  box.hidden=!rows.length;const signature=JSON.stringify([context,rows]);if(cards.dataset.signature===signature)return;
+  cards.dataset.signature=signature;clear(cards);$('queued-count').textContent=`${rows.length} 个排队中`;
+  for(const row of rows){const card=el('article','queued-task');card.setAttribute('aria-label',`排队任务 ${row.text}`);
+    card.append(el('p','queued-text',row.text));const actions=el('div','queued-actions');
+    for(const [label,edit] of [['编辑后重新排',true],['取消',false]]){const button=el('button','quiet',label);button.type='button';button.disabled=row.busy;
+      button.addEventListener('click',async()=>{if(!conversationTaskCurrent(context))return;
+        if(edit){const text=await uiCore.editQueuedTask(row.taskId);if(text!==null&&conversationTaskCurrent(context)){
+          $('draft').value=text;uiCore.setMessageMode('queue');$('draft').focus({preventScroll:true});}}
+        else await uiCore.cancelQueuedTask(row.taskId);renderQueuedTasks();});actions.append(button)}
+    card.append(actions);if(row.notice){const note=el('p','queued-notice',row.notice);note.setAttribute('role','status');card.append(note)}cards.append(card)}
+  syncChatInsets();
 }
 
 function scrollBottom(force=false){if(!force&&!state.scrollPinned)return;

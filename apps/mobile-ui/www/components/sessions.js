@@ -23,6 +23,7 @@ function trackSharedAcceptedTurn(...args){return uiCore.mobile.trackSharedAccept
 function waitForSharedTurn(...args){return uiCore.mobile.waitForSharedTurn(...args)}
 
 function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='chat')return;
+  uiCore.syncMobileIdentity();
   const scroll=$('chat-scroll'),previousScroll=scroll.scrollTop,content=$('chat-content'),saved=retainTimeline(content);clear(content);
   const session=selectedSharedSession();updatePageHeader();olderControl(content);
   if(state.sharedError)content.append(el('div','shared-notice',state.sharedError));
@@ -50,6 +51,7 @@ function renderSharedConversation(){if(state.chatSource!=='host'||state.page!=='
           if(unavailable)row.append(el('small','message-attachment-note',`${unavailable} 张历史图片暂无法预览`))}
         if(originalFiles.length)appendSharedFiles(row,event,state.sharedSessionId);
         if(event.type==='user.message'&&receiptIdPattern.test(event.data?.receiptId||''))row.dataset.receiptId=event.data.receiptId;
+        if(event.type==='user.message'&&uiCore.messageTaskLabel(event))row.append(el('small','message-state',uiCore.messageTaskLabel(event)));
         row.dataset.seq=String(event.seq);content.append(row);
         if(event.data?.truncated)content.append(el('p','message-state','这条电脑消息仅显示前一部分'))}}
     else if(event.type==='turn.started'){lastTurn='running';lastEndReasonKind=''}
@@ -102,6 +104,7 @@ async function renderConversation({silent=false}={}){if(state.page!=='chat')retu
         const body=event.data?.text;if(typeof body!=='string'||!body.trim())continue;
         const row=messageNode(event.type==='user.message'?'user':'assistant',body);
         if(event.type==='user.message'&&receiptIdPattern.test(event.data?.receiptId||''))row.dataset.receiptId=event.data.receiptId;
+        if(event.type==='user.message'&&uiCore.messageTaskLabel(event))row.append(el('small','message-state',uiCore.messageTaskLabel(event)));
         row.dataset.seq=String(event.seq);content.append(row);
       }
       const late=result.messages.filter(m=>Number.isSafeInteger(m.serverSeq)&&

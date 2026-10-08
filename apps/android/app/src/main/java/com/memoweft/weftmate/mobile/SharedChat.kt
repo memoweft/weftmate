@@ -157,7 +157,8 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
 
     @Synchronized fun submit(host: HostIdentity, sessionId: String, text: String?, kind: String,
         requestId: String?, attachmentIds: List<String> = emptyList(),
-        sourceSyncEventId: String? = null, current: () -> Boolean): JSONObject {
+        sourceSyncEventId: String? = null, intent: String = "queue", current: () -> Boolean): JSONObject {
+        if (intent !in setOf("steer", "queue")) throw ApiFailure(400, "INVALID_REQUEST")
         if (!sessionIdPattern.matches(sessionId) || kind !in setOf("session.message", "session.cancel"))
             throw ApiFailure(400, "INVALID_REQUEST")
         if (kind == "session.message" && ((text.isNullOrBlank() && attachmentIds.isEmpty()) ||
@@ -185,7 +186,7 @@ internal class SharedChat(private val store: LocalStore, private val api: Person
         val payload = JSONObject().put("requestId", id).put("kind", kind)
             .put("targetDeviceId", host.hostId).put("sessionId", sessionId)
         if (kind == "session.message") payload.put("text", text)
-            .put("mode", "queue")
+            .put("intent", intent)
         if (sourceSyncEventId != null) payload.put("sourceSyncEventId", sourceSyncEventId)
         if (attachmentIds.isNotEmpty()) {
             val rows = attachments?.get(owner, sessionId, attachmentIds)
