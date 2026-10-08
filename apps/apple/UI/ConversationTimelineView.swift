@@ -59,7 +59,7 @@ struct ConversationTimelineView: View {
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
         if commands.hasMore {
-            Button("读取更早记录的来源与控制") { Task { await commands.loadMore() } }.font(.caption)
+            Button("查看更早记录") { Task { await commands.loadMore() } }.font(.caption)
         }
         if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(.caption).foregroundStyle(Weave.muted) }
         if let error = interactions.persistenceError { Text(error).font(.caption).foregroundStyle(Weave.danger) }
@@ -111,7 +111,7 @@ struct TimelineExecutionBlock: View {
                 }.transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding(14).background(Weave.soft, in: RoundedRectangle(cornerRadius: 14))
+        .padding(.vertical, 6)
         .onAppear { if !initialized { expanded = entry.running && desktop; initialized = true } }
         .onChange(of: entry.running) { _, running in withAnimation(.easeInOut(duration: 0.2)) { expanded = running && desktop } }
     }
