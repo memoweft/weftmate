@@ -36,7 +36,7 @@ try {
   const button = name => page.getByRole('button', { name, exact: true });
   await button('账户菜单').click(); await button('设置').click();
   const dialog = page.getByRole('dialog', { name: '设置', exact: true }), nav = dialog.getByRole('navigation', { name: '设置分类' });
-  await dialog.waitFor();
+  await dialog.waitFor(); assert.equal(await page.getByRole('button',{name:'允许一次',exact:true}).count(),0); checks.push('modal hides background controls from accessibility');
   await nav.getByRole('button', { name: '外观', exact: true }).click();
   await button('深色').click(); assert.equal(await page.locator('html').getAttribute('data-theme'), 'dark');
   await page.reload(); await button('账户菜单').click(); await button('设置').click();
@@ -71,7 +71,7 @@ try {
   await reminder.getByRole('button',{name:'立即运行',exact:true}).click();await page.waitForFunction(async()=>{const value=await(await fetch('/personal/v1/schedules')).json();return value.items[0].state==='completed';});
   await reminder.getByRole('button',{name:'删除',exact:true}).click();await reminder.waitFor({state:'hidden'});
   assert.equal((await fixture.request('/schedules')).items.length,0);checks.push('reminder pause, resume, run and delete');
-  await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'hidden' }); checks.push('Escape close');
+  await page.keyboard.press('Escape'); await dialog.waitFor({ state: 'hidden' }); await button('允许一次').waitFor(); checks.push('Escape close and background accessibility restored');
   await button('本对话用量').click(); await dialog.getByRole('heading', { name: '本对话用量', exact: true }).waitFor(); checks.push('conversation usage deep link');
   await application.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setContentSize(680, 800));
   await dialog.getByRole('combobox', { name: '设置分类', exact: true }).waitFor();

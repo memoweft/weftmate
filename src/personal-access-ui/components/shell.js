@@ -287,7 +287,11 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         if (ui.motionView !== view) globalThis.WeftMotion?.reveal(ui.byId(`${view}-view`), 'base');
         ui.motionView = view;
         document.body.classList.toggle('assistant-active', view === 'assistant' || view === 'account');
-        if (view === 'account') ui.showSettingsDialog?.(); else ui.hideSettingsDialog?.();
+        if (view === 'account') {
+            ui.showSettingsDialog?.(); ui.byId('assistant-view').setAttribute('aria-hidden', 'true');
+        } else {
+            ui.byId('assistant-view').setAttribute('aria-hidden', 'false'); ui.hideSettingsDialog?.();
+        }
         document.body.classList.toggle('cloud-auth-active', view === 'login' || view === 'cloud-wait');
     }
     function mountShell() {
