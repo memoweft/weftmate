@@ -98,16 +98,24 @@ export function createTaskOperations(context) {
               invalidHistory = true; break;
             }
             openTurn = turn;
-            turns.set(turn, { receipts: new Set(), unknownUser: false, startedAt: event.at, ended: false });
-          } else if (event.type === 'user.message') {
-            const receiptId = event.data?.receiptId;
+            turns.set(turn, { receipts: new Set(), users: new Set(), unknownUser: false, startedAt: event.at, ended: false });
+          } else if (['user.message', 'input.claimed', 'task.started'].includes(event.type)) {
             if (openTurn === null) { invalidHistory = true; break; }
-            if (typeof receiptId !== 'string' || !ID.test(receiptId)) {
-              turns.get(openTurn).unknownUser = true; continue;
+            if (event.type === 'task.started' && event.data?.turn !== openTurn) { invalidHistory = true; break; }
+            const record = turns.get(openTurn);
+            const receipts = event.type === 'input.claimed' ? event.data?.receipts ?? [null] : [event.data?.receiptId];
+            for (const receiptId of receipts) {
+              // Older lifecycle projections omit receipts; they add no binding evidence.
+              if (event.type === 'task.started' && receiptId === undefined) continue;
+              if (typeof receiptId !== 'string' || !ID.test(receiptId)) {
+                record.unknownUser = true; continue;
+              }
+              record.receipts.add(receiptId);
+              const duplicateUser = event.type === 'user.message' && record.users.has(receiptId);
+              if (duplicateUser || receiptTurns.has(receiptId) && receiptTurns.get(receiptId) !== openTurn) receiptTurns.set(receiptId, null);
+              else receiptTurns.set(receiptId, openTurn);
+              if (event.type === 'user.message') record.users.add(receiptId);
             }
-            turns.get(openTurn).receipts.add(receiptId);
-            if (receiptTurns.has(receiptId)) receiptTurns.set(receiptId, null);
-            else receiptTurns.set(receiptId, openTurn);
           } else if (event.type === 'turn.ended') {
             const turn = event.data?.turn;
             if (openTurn !== null && turn === openTurn) {
