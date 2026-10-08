@@ -26,7 +26,7 @@ globalThis.WeftMobileCloudForms = (core, ui) => {
     }
     async function showLegal(kind) {
         ui.byId('legal-title').textContent = kind === 'terms' ? '服务条款' : '隐私政策';
-        const response = await fetch(`legal/${kind}-zh.md`);
+        const response = await fetch(`legal/${kind}-zh.txt`);
         if (response.ok) ui.byId('legal-text').innerHTML = WeftFormat.render(await response.text());
         else ui.byId('legal-text').textContent = '内容暂时无法读取，请重试。';
         ui.byId('legal-reader').showModal();

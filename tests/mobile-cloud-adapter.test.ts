@@ -36,3 +36,14 @@ test('mobile adapter preserves native errors and treats a missing trusted comput
   const invalid = functions.adaptMobileCloudClient({ config: { hostId: 'host-example' }, exchange: async () => { throw { code: 'CLOUD_TOKEN_INVALID' }; } });
   await assert.rejects(invalid.exchange(), error => error.code === 'CLOUD_TOKEN_INVALID');
 });
+
+test('known direct computer connects without a relay, but mismatched host identity stays refused', async () => {
+  const functions = context(), paths = [];
+  const client = { config: { hostId: 'host-example' }, host: 'https://host.example.com', request: async path => { paths.push(path); return { hostId: 'host-example' }; } };
+  const connection = await functions.resolveMobileCloudConnection(client, { hostId: 'host-example', status: 'offline', approval: 'trusted' });
+  assert.equal(connection.status, 'online'); assert.equal(connection.baseUrl, client.host);
+  assert.equal(paths.at(-1), client.host + '/personal/v1/auth/cloud-nonce');
+  const other = { hostId: 'other-host', status: 'offline' };
+  assert.equal(await functions.resolveMobileCloudConnection(client, other), other);
+  await assert.rejects(functions.resolveMobileCloudConnection({ ...client, request: async () => ({ hostId: 'wrong-host' }) }, { hostId: 'host-example', status: 'offline' }), error => error.code === 'HOST_TRUST_INVALID');
+});
