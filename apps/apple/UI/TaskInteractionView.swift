@@ -49,7 +49,7 @@ struct TimelineInteractionCard: View {
     private func approvalCard(_ approval: SessionApproval) -> some View {
         let key = "approval:" + approval.id
         return VStack(alignment: .leading, spacing: 10) {
-            WeftLabel("操作审批", icon: "approval").font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
+            WeftLabel("需要审批", icon: "approval").font(.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
             Text(approval.reason).font(.callout).foregroundStyle(Weave.ink).textSelection(.enabled)
             if !approval.riskLabels.isEmpty {
                 Text("风险类别：" + approval.riskLabels.joined(separator: "、"))
@@ -57,7 +57,7 @@ struct TimelineInteractionCard: View {
             }
             Text(approval.reversalNotice).font(.caption).foregroundStyle(Weave.muted)
             if !(approval.riskCategories ?? []).isEmpty {
-                Text("总是允许此类：仅授权本对话后续同类操作，其他对话不继承。")
+                Text("总是允许此类：用于本对话后续同类操作。")
                     .font(.caption).foregroundStyle(Weave.muted)
             }
             if approval.canDecide, !model.hasSaved(key) {
@@ -70,7 +70,8 @@ struct TimelineInteractionCard: View {
                 observed: model.currentApprovals.contains(approval.id))
         }
         .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Weave.canvas, in: RoundedRectangle(cornerRadius: 16))
+        .background(Weave.surface, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Weave.line))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("approvalCard.\(approval.id)")
     }
@@ -81,7 +82,7 @@ struct TimelineInteractionCard: View {
             Button("允许一次") {
                 endInput()
                 Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .once) }
-            }.accessibilityIdentifier("approveOnce.\(approval.id)")
+            }.buttonStyle(PrimaryActionStyle(fillsWidth: false)).accessibilityIdentifier("approveOnce.\(approval.id)")
             Button("总是允许此类") {
                 endInput()
                 Task { await model.decide(approval, outcome: .allowedOnce, decisionScope: .conversationCategory) }
@@ -91,7 +92,7 @@ struct TimelineInteractionCard: View {
             Button("拒绝") { endInput(); Task { await model.decide(approval, outcome: .rejected) } }
                 .accessibilityIdentifier("rejectApproval.\(approval.id)")
         }
-        .buttonStyle(.bordered).tint(Weave.accent).disabled(!model.canRespond(key))
+        .buttonStyle(OutlineActionStyle()).tint(Weave.accent).disabled(!model.canRespond(key))
     }
 
     private func questionCard(_ batch: SessionQuestionBatch) -> some View {
@@ -130,14 +131,15 @@ struct TimelineInteractionCard: View {
                     let values = answers(for: batch)
                     Task { await model.answer(batch, answers: values) }
                 }
-                .buttonStyle(.borderedProminent).tint(Weave.accent)
+                .buttonStyle(PrimaryActionStyle(fillsWidth: false)).tint(Weave.accent)
                 .disabled(!model.canRespond(key) || !complete(batch))
                 .accessibilityIdentifier("submitQuestion.\(batch.id)")
             }
             responseState(key, status: batch.status, observed: model.currentQuestions.contains(batch.id))
         }
         .padding(14).frame(maxWidth: .infinity, alignment: .leading)
-        .background(Weave.canvas, in: RoundedRectangle(cornerRadius: 16))
+        .background(Weave.surface, in: RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).strokeBorder(Weave.line))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("questionCard.\(batch.id)")
     }
@@ -215,7 +217,7 @@ struct TimelineInteractionCard: View {
         if model.hasSaved(key), status == .pending || status == .answered {
             Button(model.responseNeedsReadback(key) ? "核对并继续原提交" : "核对接收状态") {
                 Task { await model.continueOriginal(key) }
-            }.buttonStyle(.bordered).disabled(model.loading || model.busy.contains(key))
+            }.buttonStyle(OutlineActionStyle()).disabled(model.loading || model.busy.contains(key))
                 .accessibilityIdentifier("continueInteraction.\(key)")
         }
     }

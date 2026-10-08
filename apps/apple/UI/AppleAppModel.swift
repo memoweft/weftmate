@@ -754,6 +754,9 @@ final class AppleAppModel: ObservableObject {
     let developmentRouteEnabled: Bool
 
     private let client: PersonalClient
+    @Published var appearanceMode = "system" {
+        didSet { defaults?.set(appearanceMode, forKey: "appearanceMode") }
+    }
     private let defaults: UserDefaults?
     private let launchConfigurationError: String?
     private let draftPersistence: (any AppleDraftPersisting)?
@@ -813,6 +816,7 @@ final class AppleAppModel: ObservableObject {
             ? UserDefaults(suiteName: testService) : UserDefaults.standard
         if preferences == nil { configurationError = "无法打开测试存储，请检查启动参数。" }
         defaults = preferences
+        appearanceMode = preferences?.string(forKey: "appearanceMode") ?? "system"
         let store = KeychainCredentialStore(service: uiTesting
             ? "\(testService).credentials" : "com.weftmate.apple.credentials")
         cloudNamespace = uiTesting ? testService + ".cloud" : "com.weftmate.apple.cloud"
