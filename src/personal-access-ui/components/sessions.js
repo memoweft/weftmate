@@ -45,6 +45,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
         ui.byId('desktop-action').hidden = true;
         const selected = core.state.sessions.find((item) => item.sessionId === sessionId);
         ui.byId('assistant-title').textContent = selected?.title || '新对话';
+        globalThis.WeftMotion?.changed(ui.byId('chat-scroll'), sessionId, 'base');
     }
     function renderSessions() {
         const list = ui.byId('session-list');
@@ -118,6 +119,8 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
             list.append(row);
         }
         ui.byId('sessions-status').textContent = matches ? '' : '没有找到会话。';
+        if (matches <= 20) globalThis.WeftMotion?.changed(list, JSON.stringify([archivedView, query, sessions.map(row => row.sessionId)]), 'fast');
+        else globalThis.WeftMotion?.cancel(list);
     }
     function mountSessions() {
         ui.byId('load-older').addEventListener('click', () => { void core.loadOlderHistory(); });

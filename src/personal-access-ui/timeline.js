@@ -33,7 +33,15 @@
       summary.prepend(window.WeftIcons.create('chevron', 16))
       details.append(summary)
       for (const step of block.steps) details.append(globalThis.WeftTimelineCards.step(step, savedSteps.get(String(step.stepId)), running, options))
+      const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
       row.replaceChildren(details)
+      globalThis.WeftMotion?.details(details)
+      globalThis.WeftMotion?.dismiss(collapse, true)
+      if (details.open && block.steps.length <= 20) {
+        let index = 0
+        for (const step of details.querySelectorAll('.execution-step'))
+          if (!savedSteps.has(step.dataset.step)) globalThis.WeftMotion?.reveal(step, 'fast', index++)
+      }
     })
     for (const event of cards) {
       if (!/^(approval\.|question\.|artifact\.|task\.queued)/.test(event.type)) continue
