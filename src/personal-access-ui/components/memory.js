@@ -146,7 +146,7 @@ globalThis.WeftUiComponents.factories.memory = (core, ui) => {
                 for (const item of preview.items) list.append(ui.element('li', '', core.forgetItemSummary(item)));
                 scope.append(list);
             }
-            const label = ui.element('label'), checkbox = ui.element('input'); checkbox.type = 'checkbox';
+            const label = ui.element('label', 'memory-forget-option'), checkbox = ui.element('input'); checkbox.type = 'checkbox';
             checkbox.checked = core.memory.deleteConversationSnippets === true;
             checkbox.addEventListener('change', () => { core.memory.deleteConversationSnippets = checkbox.checked; });
             label.append(checkbox, document.createTextNode('同时删除对话里含这句话的原话')); scope.append(label);

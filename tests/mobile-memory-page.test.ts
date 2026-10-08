@@ -570,6 +570,29 @@ test('source evidence deletion uses the evidence ID and refreshes the source lis
   assert.doesNotMatch(app.get('page-content').textContent, /Old source body/)
 })
 
+test('forget confirmation cannot submit after preview failure or a changed revision', async () => {
+  for (const fail of [true, false]) {
+    let writes = 0
+    const app = harness({
+      status: (owner) => ({ ownerId: appOwner(owner), state: 'ready', worldRevision: 10,
+        capabilities: { list: true, source: true, deleteEvidence: true } }),
+      preview: () => fail ? Promise.reject(new Error('MEMORY_UNAVAILABLE'))
+        : { worldRevision: 11, itemCount: 0, evidenceCount: 0, items: [] },
+      write: () => { writes++; return {} },
+    })
+    await openMemory(app)
+    await waitUntil(() => !!findButton(app.get('page-content'), 'A memory private to A'), 'memory list loaded')
+    findButton(app.get('page-content'), 'A memory private to A')!.fire('click')
+    await waitUntil(() => !!findButton(app.get('page-content'), '删除这条来源'), 'source action available')
+    findButton(app.get('page-content'), '删除这条来源')!.fire('click')
+    await waitUntil(() => app.get('page-content').textContent.includes('无法读取遗忘范围'), 'failed preview visible')
+    const input = findAll(app.get('page-content'), node => node.tagName === 'INPUT' && node.type === 'text')[0]
+    input.value = '删除'; input.fire('input')
+    const confirm = findButton(app.get('page-content'), '确认删除这条来源')!
+    assert.equal(confirm.disabled, true); confirm.fire('click'); await flush(); assert.equal(writes, 0)
+  }
+})
+
 test('revision conflict refreshes the changed account snapshot without resubmitting', async () => {
   let revision = 10;let writes = 0
   const app = harness({
