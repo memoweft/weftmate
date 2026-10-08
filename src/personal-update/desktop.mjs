@@ -5,6 +5,7 @@ import { UpdateStore, updateSource } from './store.mjs';
 import { personalAccessUiResources, setPersonalAccessUiResourceReader } from '../personal-access-ui/index.mjs';
 import { updateState, checkForUpdates, quitAndInstall } from '../update.ts';
 import { createMobileUiPublisher } from '../personal-access/mobile-ui-release.mjs';
+import { installPreparedUpdate } from '../update-policy.ts';
 
 export async function updateTrustedKeys({ development = false, feed = null } = {}) {
   // Packaged applications never accept an environment-provided trust root.
@@ -83,9 +84,8 @@ export async function createDesktopUpdates({ isIdle, appVersion = app.getVersion
   const trusted = event => window && event.sender === window.webContents && event.senderFrame === window.webContents.mainFrame &&
     event.senderFrame.url === window.webContents.getURL() && ['/personal/v1/ui', '/personal/v1/ui/'].includes(new URL(event.senderFrame.url).pathname);
   async function restart() {
-    if (updateState().status !== 'downloaded' || !await isIdle()) return false;
-    try { await beforeAppInstall(); } catch { return false; }
-    return await isIdle() && quitAndInstall();
+    return installPreparedUpdate({ ready: () => updateState().status === 'downloaded', idle: isIdle,
+      beforeInstall: beforeAppInstall, install: quitAndInstall });
   }
   for (const [channelName, handler] of [['wm:desktop:update-state', state], ['wm:desktop:update-check', check],
     ['wm:desktop:update-restart', async () => { const restarted = await restart(); return { restarted, ...(restarted ? {} : { reason: '更新尚未就绪、任务仍在运行或更新前备份未完成，请稍后重试' }) }; }]]) {

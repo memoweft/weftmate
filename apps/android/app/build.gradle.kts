@@ -16,8 +16,8 @@ android {
             .orElse("com.memoweft.weftmate.mobile.debug").get()
         minSdk = 26
         targetSdk = 35
-        versionCode = 21
-        versionName = "0.8.8"
+        versionCode = 22
+        versionName = "0.8.9"
         buildConfigField("String", "UPDATE_CHANNEL", "\"$updateChannel\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
