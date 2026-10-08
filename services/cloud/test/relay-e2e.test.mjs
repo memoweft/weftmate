@@ -5,7 +5,7 @@ import { createServer as tcpServer } from 'node:net';
 import { createServer as httpsServer, request as httpsRequest } from 'node:https';
 import { request as httpRequest } from 'node:http';
 import { checkServerIdentity } from 'node:tls';
-import { createHash, createPrivateKey, randomUUID } from 'node:crypto';
+import { createHash, createPrivateKey, randomUUID, generateKeyPairSync } from 'node:crypto';
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { once } from 'node:events';
@@ -13,6 +13,7 @@ import path from 'node:path';
 import { fixture, P, generateKeyPair, exportJWK, SignJWT } from './identity-helpers.mjs';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { publishMobileUi } from '../../../src/personal-access/mobile-ui-release.mjs';
+import { keyId } from '../../../src/personal-update/manifest.mjs';
 import { frpcConfig } from '../../../src/personal-relay/index.mjs';
 import { tlsSpki } from '../../../src/personal-relay/tls.mjs';
 
@@ -46,6 +47,10 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       CLOUD_RELAY_FRPS_PORT: String(ports.frps), CLOUD_RELAY_FRPS_HTTPS_PORT: String(ports.https),
       CLOUD_RELAY_CONTROL_PORT: String(ports.control), CLOUD_RELAY_CONTENT_PORT: String(ports.content), CLOUD_RELAY_PLUGIN_PORT: String(ports.plugin) } });
     const root = await realpath(f.root), infra = path.join(root, 'infra'); await mkdir(infra);
+    const updatePair = generateKeyPairSync('ed25519');
+    const updatePrivateKey = updatePair.privateKey.export({ type: 'pkcs8', format: 'pem' });
+    const updatePublicKey = updatePair.publicKey.export({ type: 'spki', format: 'pem' });
+    const mobileUiTrustedKeys = { [keyId(updatePublicKey)]: updatePublicKey };
     const frpDir = process.env.WEFTMATE_FRP_DIR, haproxy = process.env.WEFTMATE_HAPROXY ?? 'haproxy';
     assert.ok(frpDir, 'official frp directory must be supplied');
     const procs = []; let host, apiTls, stream, fakeTls; const fakeSockets = new Set();
@@ -83,7 +88,7 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       const source = path.join(root,'ui-source'), bundles = path.join(root,'ui-bundles'); await mkdir(source);
       const marker = 'WM_PRIVATE_SYNTHETIC_CONTENT_S2_7fbd214e';
       await writeFile(path.join(source,'index.html'),`<!doctype html><p>${marker}</p>`);
-      await publishMobileUi({ sourceDir: source, outputDir: bundles, uiVersion: '0.2.0' });
+      await publishMobileUi({ sourceDir: source, outputDir: bundles, uiVersion: '0.2.0', privateKey: updatePrivateKey });
       const history = Array.from({ length: 2200 }, (_,seq) => ({ seq, type:'assistant.message', data:{ text: `${marker} ${seq}` } }));
       const backend = { getStatus: async()=>({runtime:'ready'}), listModels:async()=>[], preflight:async()=>({ok:true}),
         createSession:async()=>({}), sendMessage:async()=>({}), cancelSession:async()=>({}),
@@ -94,7 +99,7 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
           return { events:page,nextSeq:page.at(-1)?.seq??afterSeq??-1,hasMore:false,nextBeforeSeq:page[0]?.seq??null,
             hasOlder:(page[0]?.seq??0)>0,latestSeq:history.length-1 };
         } };
-      host = await createPersonalAccessService({ root:path.join(root,'host'), port:0, backend, mobileUiDir:bundles,
+      host = await createPersonalAccessService({ root:path.join(root,'host'), port:0, backend, mobileUiDir:bundles, mobileUiTrustedKeys,
         cloudIdentity:{issuer:f.config.issuer,allowInsecureLoopback:true},
         relay:{binary:path.join(frpDir,'frpc'),transportCaFile:path.join(infra,'cert.pem'),developmentTls:true,connectAddress:'127.0.0.1',connectPort:frontPort,diagnostic:error=>t.diagnostic(error.message)} });
       const started = await host.start();
@@ -165,7 +170,7 @@ test('S2 real frp + cloud + host + HAProxy on 443: private content, browser auth
       stream=await request('/app/updates',{headers:auth,streaming:true});
       assert.equal(stream.res.statusCode,200); let events=''; stream.res.on('data',chunk=>events+=chunk);
       await waitFor(()=>events.includes('connected'),'SSE initial frame');
-      await publishMobileUi({sourceDir:source,outputDir:bundles,uiVersion:'0.2.1'});
+      await publishMobileUi({sourceDir:source,outputDir:bundles,uiVersion:'0.2.1',privateKey:updatePrivateKey});
       await waitFor(()=>events.includes('0.2.1'),'SSE update did not arrive');
       const closed=new Promise(r=>stream.res.once('close',r)); f.identity.relay.control.disconnect(started.hostId); await closed;
       await waitFor(()=>host.relayStatus().state==='online' && frps.logs().split('login').length>2,'Reconnect did not succeed',40_000);

@@ -5,14 +5,15 @@
  *  - 只在「打包形态 + 配置了更新渠道」时启用；开发形态/无渠道 → enabled:false，UI 显示未配置。
  *  - 渠道 = 打包目录里的 app-update.yml（electron-builder 在配置 publish 时生成），或
  *    WEFTMATE_UPDATE_FEED 环境变量（预发布验证用）。
- *  - 签名：正式发布必须有可信签名证书。阶段 3 只允许未签名候选通过进程级 loopback feed
- *    做受控工程升级；它不是已签名预览发布，也不能转成公共更新源。
+ *  - 签名：下载前验证 Ed25519 清单，下载后核对安装包 SHA-256；正式发布仍需可信签名证书。
  *  - 状态机只保留 UI 需要的极简叶子，绝不 log 任何路径/凭据。
  */
 import { app, BrowserWindow } from 'electron'
 import { existsSync, readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { sanitizeUpdateFailure } from './update-policy.ts'
+import { readAppUpdateManifest, verifyDownloadedApp } from './personal-update/app-package.mjs'
+import type { UpdateManifest } from './personal-update/manifest.mjs'
 
 export type UpdateStatus =
   | 'disabled'      // 未打包或未配置渠道
@@ -36,6 +37,8 @@ const state: UpdateState = { enabled: false, status: 'disabled', version: null, 
 let autoUpdater: typeof import('electron-updater').autoUpdater | null = null
 let installed = false
 let stateListener: ((state: UpdateState) => void) | null = null
+let signedAppManifest: UpdateManifest | null = null
+let checking = false
 
 function publishState(getWindow?: () => BrowserWindow | null): void {
   const snapshot = updateState()
@@ -93,15 +96,32 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
       warn: (message: unknown) => console.warn(`[weftmate-updater] ${sanitizeUpdateFailure(message)}`),
       error: (message: unknown) => console.error(`[weftmate-updater] ${sanitizeUpdateFailure(message)}`),
     }
-    updater.autoDownload = true
+    // The signed layer manifest authorizes the version before updater downloads it.
+    updater.autoDownload = false
+    updater.disableDifferentialDownload = false
+    updater.allowPrerelease = process.env.WEFTMATE_UPDATE_CHANNEL === 'preview'
+    updater.channel = updater.allowPrerelease ? 'preview' : 'latest'
     // Preview updates are installed only after the user chooses the explicit
     // tray action. A normal app exit must never silently mutate the install.
     updater.autoInstallOnAppQuit = false
     updater.on('checking-for-update', () => { state.status = 'checking'; state.error = null; publishState(getWindow) })
-    updater.on('update-available', (info) => { state.status = 'available'; state.version = info?.version ?? null; publishState(getWindow) })
+    updater.on('update-available', (info) => {
+      if (!signedAppManifest || signedAppManifest.version !== info.version) {
+        state.status = 'error'; state.error = sanitizeUpdateFailure('signature version mismatch'); publishState(getWindow); return
+      }
+      state.status = 'available'; state.version = info.version; publishState(getWindow)
+      void updater.downloadUpdate().catch(error => { state.status = 'error'; state.error = sanitizeUpdateFailure(error); publishState(getWindow) })
+    })
     updater.on('update-not-available', () => { state.status = 'not-available'; publishState(getWindow) })
     updater.on('download-progress', () => { state.status = 'available'; publishState(getWindow) })
-    updater.on('update-downloaded', (info) => { state.status = 'downloaded'; state.version = info?.version ?? state.version; publishState(getWindow) })
+    updater.on('update-downloaded', async (info) => {
+      try {
+        if (!signedAppManifest || info.version !== signedAppManifest.version) throw new Error('signature version mismatch')
+        await verifyDownloadedApp(signedAppManifest, info.downloadedFile)
+        state.status = 'downloaded'; state.version = info.version; state.error = null
+      } catch (error) { state.status = 'error'; state.error = sanitizeUpdateFailure(error) }
+      publishState(getWindow)
+    })
     updater.on('error', (error) => {
       state.status = 'error'
       state.error = sanitizeUpdateFailure(error)
@@ -122,13 +142,21 @@ export async function initUpdater(getWindow: () => BrowserWindow | null, onState
 export async function checkForUpdates(getWindow: () => BrowserWindow | null): Promise<UpdateState> {
   await initUpdater(getWindow)
   if (!state.enabled || autoUpdater === null) return state
+  if (checking || state.status === 'available' || state.status === 'downloaded') return updateState()
+  checking = true
   try {
+    state.status = 'checking'; state.error = null; publishState(getWindow)
+    const feed = resolveFeed()
+    // UPD-3 must provide the companion signed manifest URL for a packaged provider.
+    const manifestFeed = process.env.WEFTMATE_APP_MANIFEST_FEED || (feed !== 'packaged' ? feed : null)
+    if (!manifestFeed) throw new Error('signature manifest source missing')
+    signedAppManifest = await readAppUpdateManifest(manifestFeed, app.getVersion(), process.env.WEFTMATE_UPDATE_CHANNEL || 'stable')
     await autoUpdater.checkForUpdates()
   } catch (error) {
     state.status = 'error'
     state.error = sanitizeUpdateFailure(error)
     publishState(getWindow)
-  }
+  } finally { checking = false }
   return state
 }
 

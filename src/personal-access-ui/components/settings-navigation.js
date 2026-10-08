@@ -2,6 +2,7 @@
 globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
     let registry, selected = 'general', dialog, search, navigation, content, picker, returnFocus, cloudNotice;
     const panels = new Map(), positions = new Map();
+    let updateGeneration = 0;
     const node = (tag, className, text) => ui.element(tag, className, text);
     function selectSettings(id, options = {}) {
         const category = registry.get(id);
@@ -47,6 +48,21 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         selectSettings(selected);
     }
     function hideSettingsDialog() { if (dialog?.open) dialog.close(); }
+    async function renderSettingsUpdates(check = false) {
+        const target = ui.byId('settings-updates'), token = core.accountToken(), generation = ++updateGeneration;
+        const current = () => core.accountIdentityCurrent(token) && generation === updateGeneration && dialog.open && selected === 'about';
+        const loading = node('p', 'muted', check ? '正在检查更新…' : '正在读取版本…'); loading.setAttribute('role', 'status'); target.replaceChildren(loading);
+        let value;
+        try { value = await (check ? core.checkUpdates() : core.readUpdateState()); }
+        catch { if (current()) loading.textContent = '更新状态暂时无法读取，请重试。'; }
+        if (!current()) return;
+        const names = {ui:'电脑界面',app:'程序版本','mobile-ui':'手机界面'};
+        if(value) {target.replaceChildren();for(const layer of value.layers) target.append(globalThis.WeftSettingsControls.row(names[layer.layer] || '版本',
+            `当前 ${layer.currentVersion || '版本未知'}${layer.availableVersion ? ` · 可用 ${layer.availableVersion}` : ''}`,node('span','settings-value',core.updateStatusText(layer))));}
+        const actions=node('div','actions'), refresh=node('button','button secondary','检查更新');refresh.type='button';refresh.addEventListener('click',()=>{void renderSettingsUpdates(true)});actions.append(refresh);
+        if(value?.canRestart){const restart=node('button','button primary','重启并更新');restart.type='button';restart.addEventListener('click',async()=>{restart.disabled=true;try{await core.restartForUpdate()}catch{loading.textContent='更新未完成，请重新检查。';target.prepend(loading);restart.disabled=false}});actions.append(restart)}
+        target.append(actions);
+    }
     function mountSettingsNavigation() {
         const account = ui.byId('account-view');
         dialog = node('dialog', 'settings-dialog'); dialog.id = 'settings-dialog'; dialog.setAttribute('aria-label', '设置');
@@ -109,6 +125,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         const memory = node('button', 'button secondary', '管理记忆'); memory.type = 'button'; memory.addEventListener('click', () => { hideSettingsDialog(); void core.openMemory(); });
         panels.get('memory').append(globalThis.WeftSettingsControls.row('记忆管理', '查看理解与来源，纠正或移除已有记忆。', memory));
         description('models', '主模型', '每段对话在输入区单独选择主模型。', '在对话中选择');
+        const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
         description('about', 'WeftMate', '跨设备、跨对话的个人助手。', globalThis.weftmateDesktop ? '桌面程序' : '远程网页');
         const appVersion = node('span', 'settings-value', '正在读取…');
         if (globalThis.weftmateDesktop) { panels.get('about').append(globalThis.WeftSettingsControls.row('版本', '当前桌面程序。', appVersion)); void globalThis.weftmateDesktop.settings().then(settings => { appVersion.textContent = settings.version; }); }
@@ -127,7 +144,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             backups: () => ui.showSettingsBackups(),
             schedules: () => ui.showSettingsSchedules(),
             usage: options => ui.showSettingsUsage(options),
-            about: () => { version.textContent = core.state.system?.host?.version || '版本未知'; },
+            about: () => { version.textContent = core.state.system?.host?.version || '版本未知'; void renderSettingsUpdates(); },
         });
         search.addEventListener('input', renderSettingsNavigation); picker.addEventListener('change', () => selectSettings(picker.value));
         close.addEventListener('click', () => ui.byId('account-back').click());

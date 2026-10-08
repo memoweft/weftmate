@@ -15,7 +15,12 @@ let application, browser;
 const errors = [], checks = [];
 try {
   application = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository, args: ['scripts/review-gallery/electron.mjs', '--force-device-scale-factor=1', '--disable-backgrounding-occluded-windows', '--disable-renderer-backgrounding', '--disable-gpu'], env });
-  await application.evaluate(({ app }) => { app.getLoginItemSettings = () => ({ openAtLogin: false }); app.setLoginItemSettings = () => {}; });
+  await application.evaluate(({ app, ipcMain }) => {
+    app.getLoginItemSettings = () => ({ openAtLogin: false }); app.setLoginItemSettings = () => {};
+    globalThis.ui4UpdateChecks = 0;
+    const state = () => ({layers:[{layer:'app',currentVersion:'0.1.0',status:'current'},{layer:'ui',currentVersion:'synthetic-ui',status:'current'},{layer:'mobile-ui',currentVersion:'synthetic-mobile',status:'current'}],canRestart:false});
+    ipcMain.handle('wm:desktop:update-state',state);ipcMain.handle('wm:desktop:update-check',()=>{globalThis.ui4UpdateChecks++;return state()});
+  });
   const page = await application.firstWindow(); page.setDefaultTimeout(15000); page.on('pageerror', e => { errors.push(e.message); console.error(e.stack); });
   await page.goto(fixture.origin + '/personal/v1/ui');
   await page.evaluate(async credentials => {
@@ -56,6 +61,7 @@ try {
     await nav.getByRole('button', { name: '外观', exact: true }).click(); await button(theme === 'light' ? '浅色' : '深色').click();
     for (const [id, name] of [['general','常规'],['appearance','外观'],['account','账户'],['devices','设备'],['usage','用量'],['models','模型'],['approvals','审批'],['memory','记忆'],['schedules','提醒与定时任务'],['resources','资料访问'],['system','系统状态'],['backups','备份与恢复'],['about','关于']]) {
       await nav.getByRole('button', { name, exact: true }).click();
+      if (id === 'about') await dialog.getByRole('button', {name:'检查更新',exact:true}).waitFor();
       if (id === 'backups') await page.waitForFunction(() => document.querySelector('.backup-settings [name=directory]').value === 'D:/Synthetic/UI-4-Backups');
       if (id === 'schedules') await dialog.getByRole('listitem', {name:'提交合成报告',exact:true}).waitFor();
       if (id === 'devices') assert.equal(await dialog.getByRole('button', {name:'配对连接',exact:true}).count(),0);
@@ -64,6 +70,8 @@ try {
     }
   }
   checks.push('all desktop categories light/dark');
+  await nav.getByRole('button',{name:'关于',exact:true}).click();await dialog.getByRole('button',{name:'检查更新',exact:true}).click();
+  await application.evaluate(async()=>{while(!globalThis.ui4UpdateChecks)await new Promise(done=>setTimeout(done,10))});checks.push('About version state and existing update action');
   await nav.getByRole('button',{name:'备份与恢复',exact:true}).click();
   await dialog.getByRole('spinbutton',{name:'最近保留天数',exact:true}).fill('14');await dialog.getByRole('button',{name:'保存备份设置',exact:true}).click();
   await page.waitForFunction(async()=>{const value=await(await fetch('/personal/v1/backups')).json();return value.settings.dailyDays===14;});
