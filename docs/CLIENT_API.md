@@ -105,7 +105,14 @@
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
-| GET `/sessions` | 无；当前无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"modelProfileId":"local"}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
+| GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local"}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
+| POST `/sessions/{sessionId}/archive` | 空对象 `{}` | 200 `{sessionId,archived:true}`；幂等归档，保留历史、经验与工作目录 | 404 `SESSION_UNAVAILABLE` | 桌、手、安；Apple 可按契约接入 |
+| POST `/sessions/{sessionId}/unarchive` | 空对象 `{}` | 200 `{sessionId,archived:false}`；幂等恢复 | 404 `SESSION_UNAVAILABLE` | 同上 |
+| DELETE `/sessions/{sessionId}` | `{forgetMemories:false}`（默认，可省略） | 200 `{sessionId,deleted:true,forgetMemories,forgottenEvidenceCount}`；永久删除对话日志、宿主记录、生成成果及专属工作目录，运行中先停止 | 409 `SESSION_BUSY`（执行或回执尚未确认，稍后重试）；503 `BACKEND_UNAVAILABLE`；勾选遗忘还可返回503 `MEMORY_DELETE_UNAVAILABLE`、409 `MEMORY_DELETE_CONFLICT` | 同上 |
+
+归档会话的 `sendAvailable:false`，发送新消息返回409 `SESSION_ARCHIVED`，先恢复再发送。已有运行不因归档停止。删除默认保留 MemoWeft 长期记忆；`forgetMemories:true` 需要 Cookie 与 `account:manage`，按账号及会话来源查询 Core（核心）的记忆任务证据，再走 `delete_evidence` 真正删除与储存清理。Core 不可用或遗忘失败时保留对话用于重试；已完成的证据遗忘不能撤销。再次删除已删除会话返回404。停止或后台形成未确认时不能宣称删除成功。
+
+普通对话以 DSH（助手运行时）原生 `cwd` 绑定宿主数据目录内按账号散列 / 会话 ID 隔离的工作目录。脚本与笔记默认在这里，回到原会话沿用同一目录及原生上下文；`经验.md` 存在时作为本对话资料读取。压缩仍由既有原生摘要保留方法、脚本路径、命令与踩坑记录。项目的用户目录不属于对话删除范围。
 
 项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表当前按会话 ID 遍历，客户端自行呈现排序。创建走 `/commands`，没有 POST `/sessions`。
 

@@ -814,7 +814,15 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         headers = mapOf("Cookie" to host.cookie), active = active).body
 
     fun remoteSessions(host: HostIdentity): JSONObject = http.request(
-        "${host.origin}/personal/v1/sessions", "GET", headers = mapOf("Cookie" to host.cookie)).body
+        "${host.origin}/personal/v1/sessions?archived=all", "GET", headers = mapOf("Cookie" to host.cookie)).body
+
+    fun sessionLifecycle(host: HostIdentity, sessionId: String, action: String, forgetMemories: Boolean): JSONObject {
+        require(sessionId.matches(Regex("[A-Za-z0-9_-]{1,128}")) && action in setOf("archive", "unarchive", "delete"))
+        val suffix = if (action == "delete") "" else "/$action"
+        val body = if (action == "delete") JSONObject().put("forgetMemories", forgetMemories) else JSONObject()
+        return http.request("${host.origin}/personal/v1/sessions/$sessionId$suffix",
+            if (action == "delete") "DELETE" else "POST", body, authWriteHeaders(host)).body
+    }
 
     fun sharedConversation(host: HostIdentity, conversationId: String): JSONObject {
         require(validImageScopeId(conversationId))

@@ -194,7 +194,7 @@ export function createCommandOperations(context) {
         }
         if (command.kind === 'session.message') {
           const session = context.accountState(ownerId).sessions[command.sessionId];
-          if (!session || session.ownerId !== ownerId || !pendingSession ||
+          if (!session || session.archived === true || session.deleting === true || session.ownerId !== ownerId || !pendingSession ||
               session.modelProfileId !== pendingSession.modelProfileId ||
               session.conversationId !== pendingSession.conversationId ||
               !context.messageModelUsable(ownerId, session)) {

@@ -352,3 +352,12 @@ summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible
 .message-mode-control select{min-height:var(--wm-space-44);padding:var(--wm-space-8) var(--wm-space-12);border:var(--wm-space-1) solid var(--line);border-radius:var(--wm-radius-8);background:var(--surface);color:var(--ink);font:inherit}
 .approval-detail .timeline-raw{overflow-wrap:anywhere;white-space:pre-wrap}
 .queued-tasks>summary:focus-visible,.message-mode-control select:focus-visible,.queued-actions button:focus-visible,.approval-detail>summary:focus-visible{outline:var(--wm-space-2) solid var(--accent);outline-offset:var(--wm-space-3)}
+.session-row{display:flex;align-items:center;gap:var(--wm-space-4)}
+.session-row>button:first-child{flex:1;min-width:0}
+.session-row .session-more{flex:none;width:auto;font-size:var(--wm-font-size-12)}
+.session-action-dialog{width:calc(100% - var(--wm-space-24));max-width:480px;border:1px solid var(--line);border-radius:var(--wm-radius-16);padding:var(--wm-space-20);background:var(--surface);color:var(--ink)}
+.session-action-dialog::backdrop{background:var(--wm-color-approval-scrim)}
+.session-action-dialog>button{display:block;width:100%;margin-top:var(--wm-space-12)}
+.session-forget{display:flex;align-items:start;gap:var(--wm-space-8);margin:var(--wm-space-16) 0}
+.session-action-dialog input[type=checkbox]{flex:none;width:var(--wm-space-20);height:var(--wm-space-20);margin:0;accent-color:var(--accent)}
+.session-action-dialog .danger{min-height:var(--wm-space-48);border-radius:var(--wm-radius-12);color:var(--danger);background:var(--danger-soft);font-weight:600}
