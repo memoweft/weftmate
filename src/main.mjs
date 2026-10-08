@@ -232,7 +232,6 @@ let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn �
 let personalAccessService = null;
 let personalBackupManager = null;
 let backupRestartRequested = false;
-let backupUpgradeRequested = false;
 let personalAccessOrigin = null;
 let personalDesktop = null;
 let desktopStatus = { host: '启动中', model: '未选择' };
@@ -398,6 +397,7 @@ async function stageOneGateway(path, init = {}) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error('gateway request failed');
+    if (path === '/backup-pause') error.code = body.error?.code;
     throw error;
   }
   return body;
@@ -1183,6 +1183,19 @@ async function bootstrap() {
     isIdle: async () => !isQuitting && !personalAccessService?.hasUnissuedDshCommands?.() &&
       (await webRuntime?.personalModelQueueIdle?.())?.idle === true,
     requestRestart: () => { backupRestartRequested = true; setTimeout(() => app.quit(), 250); },
+    captureBoundary: (work, { signal, deadline, check, stage }) => exclusiveMainQueue.run(async () => {
+      check();
+      if (personalAccessService?.hasUnissuedDshCommands?.() || !(await webRuntime.personalModelQueueIdle()).idle)
+        throw Object.assign(new Error('SESSION_BUSY'), { code: 'SESSION_BUSY' });
+      const id = randomUUID();
+      try {
+        await stageOneGateway('/backup-pause', { method: 'POST', body: JSON.stringify({ id, deadline, stage }), signal });
+        check(); await work();
+      } finally {
+        // The native lease also expires independently if the host is stalled.
+        await stageOneGateway('/backup-resume', { method: 'POST', body: JSON.stringify({ id }), signal: AbortSignal.timeout(2000) }).catch(() => {});
+      }
+    }),
   });
   if (process.env.WEFTMATE_STAGE14_R2_OBSERVE === '1') {
     if (!personalHostMode || app.isPackaged) throw new Error('Stage14R2 observer requires an isolated development host');
@@ -2115,9 +2128,9 @@ async function bootstrap() {
     if (!Array.isArray(result?.items)) throw new Error('session reference scan returned an invalid response');
     const runtime = webRuntime?.currentPersonalRuntimeId();
     if (runtime !== recoveredLifecycleRuntime) { recoveredLifecycleRuntime = runtime; recoveredLifecycles.clear(); }
-    // Claim the native disposer before model inspection can implicitly resume a
-    // persisted personal agent through the read-only official API owner.
-    for (const item of result.items) if (item.agentPreset?.startsWith('personal-') && !recoveredLifecycles.has(item.sessionId)) {
+    // Only the first startup after a restore claims native disposers before
+    // model inspection. Ordinary startup never resumes all personal sessions.
+    for (const item of result.items) if (personalBackupManager?.isRestoredStartup() && item.agentPreset?.startsWith('personal-') && !recoveredLifecycles.has(item.sessionId)) {
       await stageOneGateway(`/sessions/${encodeURIComponent(item.sessionId)}/resume`, { method: 'POST', body: '{}' });
       recoveredLifecycles.add(item.sessionId);
     }
@@ -3341,8 +3354,8 @@ async function checkPreviewUpdateFromTray() {
 }
 
 function installPreviewUpdateFromTray() {
-  if (personalBackupManager && !backupUpgradeRequested && updateState().status === 'downloaded') {
-    void personalBackupManager.request('before-upgrade').then(() => { backupUpgradeRequested = true; })
+  if (personalBackupManager && updateState().status === 'downloaded') {
+    void personalBackupManager.request('before-upgrade').then(() => { quitAndInstall(); })
       .catch(error => logCrash('backup-before-upgrade', error));
     return;
   }
@@ -3410,6 +3423,7 @@ app.on('before-quit', (e) => {
 
   shutdownPromise = (async () => {
     let backupSafe = true;
+    await personalBackupManager?.stopOnline();
     try { await personalDesktop?.close(); }
     catch (error) { logCrash('shutdown-desktop-session', error); }
     let accessClosing = null;
@@ -3508,13 +3522,6 @@ app.on('before-quit', (e) => {
     hostLifecycleState = 'stopped';
     runtimeOrigin = null;
     writeHostStateForLifecycle?.();
-    if (backupUpgradeRequested && !startupFailureReported) {
-      void personalBackupManager.view().then(view => {
-        if (view.status?.state === 'succeeded' && quitAndInstall()) return;
-        app.relaunch(); app.exit(startupExitCode);
-      });
-      return;
-    }
     if (backupRestartRequested) app.relaunch();
     app.exit(startupExitCode); // cleanup 完成后一次性退出；启动失败必须保留非零码。
   });

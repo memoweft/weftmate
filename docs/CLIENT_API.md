@@ -812,13 +812,13 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 |---|---|---|
 | GET `/personal/v1/backups` | — | 200 `{settings,status,backups,excludedCredentials:true,localUnencrypted:true}`；`settings={enabled,directory,dailyDays,weeklyCopies}`，默认启用、宿主数据目录旁 `Backups/`、7 天与 4 周；每条 `backups={id,createdAt,reason,size,verification}`，大小字节，`verification=valid\|invalid` 为重新流式 SHA-256（安全哈希算法）校验结果，时间 UTC（协调世界时）ISO 8601 |
 | PATCH `/personal/v1/backups/settings` | 上述设置字段的子集 | 200 `{settings}`；目录须为绝对路径，不能位于宿主数据根内；天数与周份数均为正整数 |
-| POST `/personal/v1/backups` | `{}` | 202 `{state:"pending",restartsHost:true,requiresLogin:false}`；拒绝活动任务，受管关闭服务后生成一致快照，再重新启动；结果持久化到 `status` |
+| POST `/personal/v1/backups` | `{}` | 202 `{state:"succeeded",restartsHost:false,requiresLogin:false,backup}`；拒绝活动任务，程序内完成在线快照后返回；窗口、进程和登录保持，结果持久化到 `status` |
 | POST `/personal/v1/backups/import` | `{path}` | 201 `{id}`；校验宿主电脑上的外来 `.wmb` 包，复制到当前备份目录并再次校验，原子发布，不替换数据 |
 | POST `/personal/v1/backups/restore` | `{id,confirm:true}` | 202 `{state:"pending",restartsHost:true,requiresLogin:true}`；先校验来源、备份当前状态、停写入服务、重新校验、暂存/替换、重启；新数据成功启动后提交，替换/启动失败自动回滚；按新 `GET /backups` 的 `status` 判断结果 |
-| POST `/personal/v1/backups/prepare-account-deletion` | `{}` | 本机注销前调用：首次 202 `{ready:false,state:"pending",restartsHost:true,requiresLogin:false}`，自动备份并重启；用户重新打开注销确认后再调用，已验证安全快照返回 200 `{ready:true}`，之后才执行 7.9 的云注销。密码不得保存用于自动续做 |
+| POST `/personal/v1/backups/prepare-account-deletion` | `{}` | 本机注销前调用：程序内完成在线安全快照后返回 200 `{ready:true,restartsHost:false}`，同一次确认中继续执行 7.9 的云注销；备份失败不执行云注销，密码仅留在当次页面内存 |
 
-`status` 为 `null`，或 `{state,at?,reason?,backup?,restored?,code?}`；`state=pending\|succeeded\|failed\|rolled-back`。`succeeded` 表示上次操作成功；恢复重启的 API（应用接口）可用之前不会提交事务，启动失败回滚后报告 `rolled-back`。请求备份后拒绝新的写请求，避免在关闭前接收新任务。重启后接入端口可能变化，客户端需重新发现连接。原机浏览器登录保持；恢复会清除包内设备会话，因此须重新登录。
+`status` 为 `null`，或 `{state,at?,reason?,backup?,restored?,code?}`；`state=pending\|running\|deferred\|succeeded\|failed\|rolled-back`。`succeeded` 表示上次操作成功；恢复重启的 API（应用接口）可用之前不会提交事务，启动失败回滚后报告 `rolled-back`。只有请求恢复后拒绝新的写请求，避免关闭前接收新任务；普通备份仅短暂排队文件写入，压缩和校验期间正常接收操作。每日调度遇到任务会推迟，暂停写入/排空/捕获超时（最多 2 秒）不发布包，标记 `deferred`，下个每分钟检查再试。仅恢复或升级安装重启，恢复后接入端口可能变化，客户端需重新发现连接。原机浏览器登录保持；恢复会清除包内设备会话，因此须重新登录。
 
 包包含账号/设置、DSH（助手运行时）会话与日志、对话工作目录/经验、成果、用量、健康和 MemoWeft Core（记忆核心）数据库。数据库使用 SQLite（嵌入式数据库）安全在线备份，不复制活动 WAL（预写日志）或 SHM（共享内存文件）。模型密钥、云令牌、设备私钥、浏览器登录与缓存、自动生成的 DSH 依赖链接不进包；账号密码哈希保留供重新登录，历史设备仅留撤销后的元数据与不可用的校验值以维持命令引用；来源会话不能继续使用。换机后重新填写模型密钥；云端重新验证 subject（账号标识）与 issuer（发行者）、重新认领新安装后，使用包内不含凭据的归属映射接回原账号，不能靠邮箱推断归属。当前安装 ID 与其本机私钥保持，来源安装私钥不会被导入。
 
-默认保留最近 7 天全部成功包，再加最近 4 个日历周各最新一份；UTC 周从周一开始，始终保留最新成功包，坏包不自动删除。临时文件落盘后原子改名，包内含版本、时间、原因、逐文件大小/SHA-256 与清单 SHA-256。坏包 409 `BACKUP_CORRUPT`，数据中的链接 409 `BACKUP_SYMLINK`，活动任务 409 `SESSION_BUSY`，已有操作 409 `CONFLICT`，无备份能力 503 `CAPABILITY_UNAVAILABLE`，关闭期间 503 `SERVICE_CLOSING`。本地包未加密，应保存在可信磁盘；S4 云端加密备份尚未实现。
+默认保留最近 7 天全部成功包，再加最近 4 个日历周各最新一份；UTC 周从周一开始，始终保留最新成功包，坏包不自动删除。临时文件落盘后原子改名，包内含版本、时间、原因、逐文件大小/SHA-256 与清单 SHA-256。坏包 409 `BACKUP_CORRUPT`，数据中的链接 409 `BACKUP_SYMLINK`，活动任务 409 `SESSION_BUSY`，已有操作 409 `CONFLICT`，暂停写入超时 409 `BACKUP_PAUSE_TIMEOUT`，无备份能力 503 `CAPABILITY_UNAVAILABLE`，关闭期间 503 `SERVICE_CLOSING`。本地包未加密，应保存在可信磁盘；S4 云端加密备份尚未实现。

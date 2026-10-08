@@ -50,9 +50,9 @@ async function launch(root = profile) {
     const settings = await api('/backups/settings', { enabled: false, directory: join(base, 'Backups'), dailyDays: 7, weeklyCopies: 4 }, 'PATCH'); assert.equal(settings.status, 200, JSON.stringify(settings.body));
 }
 async function closed() { await until(() => child.exitCode !== null, 120000); }
-async function settingsPage() { await page.getByRole('button', { name: '账户菜单', exact: true }).click(); await page.getByRole('button', { name: '设置', exact: true }).click(); await page.getByRole('button', { name: '刷新备份列表', exact: true }).click(); }
+async function settingsPage() { if (!await page.getByRole('button', { name: '刷新备份列表', exact: true }).isVisible()) { await page.getByRole('button', { name: '账户菜单', exact: true }).click(); await page.getByRole('button', { name: '设置', exact: true }).click(); } await page.getByRole('button', { name: '刷新备份列表', exact: true }).click(); }
 async function captureBackup(name) {
-    await page.getByRole('heading', { name: '备份', exact: true }).scrollIntoViewIfNeeded();
+    await page.getByRole('heading', { name: '备份与恢复', exact: true }).scrollIntoViewIfNeeded();
     await page.waitForTimeout(350); // Existing settings entrance motion completes before the viewport capture.
     await page.screenshot({ path: join(evidence, name) });
 }
@@ -68,17 +68,31 @@ try {
     await api(`/sessions/${sessionId}/approval-mode`, { mode: 'allow-all' }, 'PATCH');
     const message = await api('/commands', { requestId: randomUUID(), kind: 'session.message', targetDeviceId: hostId, sessionId,
         text: '记住我的长期早餐偏好：我一直喜欢蒸紫薯。请在默认对话工作目录创建 breakfast.md，写一句这个偏好，并把这个文件作为成果展示给我。不要询问。' }); assert.equal(message.status, 202);
+    const windowBefore = await app.evaluate(({ BrowserWindow }) => ({ pid: process.pid, ids: BrowserWindow.getAllWindows().map(window => window.id) }));
+    // Trigger the actual production daily scheduler while MiMo is executing a turn.
+    await until(async () => (await api('/sessions')).body.sessions?.some(row => row.sessionId === sessionId && row.running), 30000);
+    const duringTurn = await app.evaluate(() => globalThis.bkDailyTick());
+    assert.equal(duringTurn.backups.length, 0, 'daily backup is deferred while a real MiMo task runs');
+    assert.equal(child.exitCode, null); assert.equal(page.isClosed(), false);
     await until(async () => (await api(`/sessions/${sessionId}/events?limit=200`)).body.events?.some(row => row.type === 'turn.ended'), 240000);
     const memories = await until(async () => { const value = (await api('/memory/items?kind=cognition')).body; return value.items?.some(row => row.text.includes('紫薯')) && value; }, 180000);
     console.log('MiMo conversation and memory formed');
     const artifacts = await api(`/sessions/${sessionId}/resources`); assert.equal(artifacts.status, 200); assert.ok(artifacts.body.outputs?.length > 0, 'MiMo published a real artifact');
     await api('/settings/approvals', { mode: 'ask' }, 'PATCH');
     await settingsPage(); await captureBackup('desktop-backup-settings.png');
-    await page.getByRole('button', { name: '立即备份', exact: true }).click(); await closed();
+    const daily = await app.evaluate(() => globalThis.bkDailyTick());
+    assert.equal(daily.status.state, 'succeeded', JSON.stringify(daily.status));
+    assert.equal(daily.status.backup.reason, 'daily');
+    assert.equal(child.exitCode, null); assert.equal(page.isClosed(), false);
+    assert.deepEqual(await app.evaluate(({ BrowserWindow }) => ({ pid: process.pid, ids: BrowserWindow.getAllWindows().map(window => window.id) })), windowBefore);
+    await page.getByRole('button', { name: '立即备份', exact: true }).click();
+    await until(async () => (await api('/backups')).body.status?.backup?.reason === 'manual');
+    assert.equal(child.exitCode, null); assert.equal(page.isClosed(), false);
+    assert.deepEqual(await app.evaluate(({ BrowserWindow }) => ({ pid: process.pid, ids: BrowserWindow.getAllWindows().map(window => window.id) })), windowBefore);
     const status = JSON.parse(await readFile(join(profile, 'personal-backup/status.json'), 'utf8')); assert.equal(status.state, 'succeeded', JSON.stringify(status)); const backupId = status.backup.id;
     const manifest = await verify(join(base, 'Backups', backupId)); assert.ok(manifest.files.some(row => row.path.endsWith('memoweft.sqlite3'))); assert.ok(manifest.files.some(row => row.path.endsWith('breakfast.md')));
     assert.ok(!gunzipSync(await readFile(join(base, 'Backups', backupId))).includes(Buffer.from(key)), 'live MiMo key does not enter the package');
-    await launch(); const deleted = await api(`/sessions/${sessionId}`, { forgetMemories: false }, 'DELETE'); assert.equal(deleted.status, 200, JSON.stringify(deleted.body)); await api('/settings/approvals', { mode: 'allow-all' }, 'PATCH');
+    const deleted = await api(`/sessions/${sessionId}`, { forgetMemories: false }, 'DELETE'); assert.equal(deleted.status, 200, JSON.stringify(deleted.body)); await api('/settings/approvals', { mode: 'allow-all' }, 'PATCH');
     await settingsPage(); await page.getByRole('button', { name: /^恢复 / }).first().click();
     await page.getByRole('dialog', { name: '恢复备份', exact: true }).screenshot({ path: join(evidence, 'desktop-restore-confirm.png') }); await page.getByRole('button', { name: '确认恢复', exact: true }).click(); await closed();
     await launch(); const restored = (await api('/backups')).body.status; assert.equal(restored.state, 'succeeded', JSON.stringify(restored)); assert.ok(restored.restored); assert.ok((await api('/sessions')).body.sessions.some(row => row.sessionId === sessionId)); assert.equal((await api('/settings/approvals')).body.mode, 'ask');
@@ -98,6 +112,6 @@ try {
     const targetStore = JSON.parse(await readFile(join(other, 'personal-access/store.json'), 'utf8'));
     const ownSession = targetStore.accounts[Object.keys(targetStore.accounts).find(id => targetStore.accounts[id].sessions[sessionId])];
     assert.ok(ownSession); await settingsPage(); await captureBackup('desktop-other-computer.png');
-    const summary = { desktop: true, model: 'mimo-v2.6-flash', conversationAndMemory: true, artifactCount: artifacts.body.outputs.length, backupVerified: true, deletedConversationRestored: true, settingsRestored: true, memoryRestored: true, artifactsRestored: true, portableRestoreAndRelogin: true, credentialReconfigured: true };
+    const summary = { desktop: true, dailyDeferredDuringMiMoTurn: true, dailyAndManualPreserveWindowIdsAndPid: true, model: 'mimo-v2.6-flash', conversationAndMemory: true, artifactCount: artifacts.body.outputs.length, backupVerified: true, deletedConversationRestored: true, settingsRestored: true, memoryRestored: true, artifactsRestored: true, portableRestoreAndRelogin: true, credentialReconfigured: true };
     await writeFile(join(evidence, 'verification.json'), JSON.stringify(summary, null, 2)); console.log(JSON.stringify(summary));
 } finally { await app?.close().catch(() => {}); console.log(`Isolated BK-1 profile: ${base}`); }
