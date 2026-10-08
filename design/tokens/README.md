@@ -13,7 +13,7 @@
 | `apps/android/app/src/main/res/values/design_*.xml` | 颜色、dp（密度无关像素）/ sp（字体缩放像素）尺寸、毫秒时长与曲线资源；网页背景对应显式选择的浅深模式 |
 | `apps/android/app/src/main/res/values-night/design_colors.xml` | C4 品牌色的系统深色资源 |
 | `apps/android/app/src/main/java/com/memoweft/weftmate/mobile/DesignTokens.kt` | 现有原生辅助函数需要的无上下文颜色与 dp / sp 数值，同一母版生成 |
-| `design/tokens/generated/apple/DesignTokens.json`、`DesignTokens.swift` | Apple（苹果客户端）接线交接：尺寸按 pt（点）、时长按毫秒输出；字体、阴影和曲线保留配方。由 Mac 工作包映射原生字体 / 颜色 / 阴影与动画 API（应用接口），本包不修改 `apps/apple/` |
+| `design/tokens/generated/apple/DesignTokens.json`、`DesignTokens.swift` | Apple（苹果客户端）原生接入：三个 Xcode 目标直接编译生成的 Swift 文件；`AppleTokens` 提供 pt（点）尺寸、系统字体、动态颜色与秒制原生动画，JSON / `WeftDesignTokens` 保留毫秒与跨平台配方 |
 
 精修某个用途时，改下列对应字段，再生成、检查相关交互、比较真实程序截图，一并提交母版与产物。不要手改生成文件。新增用途先复用现有语义；有实际不同的用途才新增名称。与几何相关的视口断点、百分比、网格比例和功能计时器仍属于组件布局与业务逻辑。
 
@@ -108,3 +108,22 @@
 `shared.duration` 输出 `--wm-duration-<名称>`。`fast / base / slow` 分别为已有的 180 / 200 / 220 毫秒；数字名称保留已有 160 / 240 / 260 / 280 / 300 / 420 毫秒的用途。`working` 为现有工作状态点的 1.8 秒周期；`reduced` 为手机现有减少动态效果时的 0.01 毫秒；`0ms` 为已有零时长覆盖。Android 模型弹层保留 160 毫秒时长和原有原生默认插值。
 
 `shared.easing.standard / smooth / enter / desktop / mobile` 分别保存现有 `ease`、`ease-in-out`、`ease-in`、`cubic-bezier(.16,1,.3,1)`、`cubic-bezier(.2,.8,.2,1)`；`enter` 沿用手机图片预览关闭时的已有曲线。本包仅换参数来源，不增加动画、修改关键帧或重新设计减少动态效果行为；UI-P1 定稿时在这里调整。
+
+
+## Apple 原生接入（DS-1b）
+
+`apps/apple/Scripts/generate_project.py` 把 `design/tokens/generated/apple/DesignTokens.swift` 作为三个原生 App 的共享编译源，工程不复制它，也不手改生成文件。先在根目录运行 `npm run tokens:generate`，新增工程源文件时再运行 `python3 apps/apple/Scripts/generate_project.py`；两者可重复生成，`--check` 校验 Swift 与 JSON 和其他平台产物。
+
+| 母版 / Swift 引用 | 保留的行为 |
+|---|---|
+| `apple.colors` → `AppleTokens.Colors` → `Weave` | A4c 实际使用的 12 对浅深颜色；继续使用原来的 `NSColor` / `UIColor` 动态提供器和 RGB / 255 转换，响应浅色、深色和系统外观 |
+| `apple.systemColors` / `hierarchicalStyles` → `Colors` / `Styles` | 原生错误红、透明色、反白及系统层级样式；Watch 仅替换这些引用，字体、尺寸和交互不改 |
+| `apple.textStyles` → `Fonts` / `TextStyle` | 系统 `body`、`caption` 等语义字体，保留各平台字号与 Dynamic Type（动态字体）；不把系统字体改成固定 pt。已有 28 pt 标题引用共享 `FontSize.f28` |
+| `shared.space` + `apple.spacing` → `Space` | 现有内边距、栈间距、行间距与描边；Apple 独有的 0 / 23 pt 由 `apple.spacing` 补齐，不改变 Web / Android 阶梯 |
+| `shared.radius` → `Radius` | 现有圆角与连续圆角样式 |
+| `apple.tracking` / `opacity` / `scale` | 两处字距、按钮与提示的现有透明度、按压缩放 |
+| `apple.animation` + `shared.duration` / `easing` → `Motion` | 现有展开 200 ms、连接区 180 ms 的 `ease-in-out` 动画；Swift 常量自动转秒，未增加动画或改变减少动态效果行为 |
+
+Apple 当前没有手写 `.shadow`，系统菜单 / 导航 / 按钮的原生效果继续由系统绘制，不启用 Web 阴影配方。视口断点、栏宽 / 窗口大小、图标光学尺寸、比例和功能计时仍属于布局 / 图标 / 业务契约；SwiftUI 未显式指定的系统控件默认值继续使用原生默认值。以后新增自定义样式，先补对应母版令牌。
+
+前后原生截图与逐像素报告见 [DS-1b](../../apps/apple/Tests/Evidence/DS-1b/README.md)。

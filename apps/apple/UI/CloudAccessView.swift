@@ -8,7 +8,7 @@ struct CloudAccessView: View {
             Form {
                 if model.waiting {
                     Section {
-                        WeftLabel("等待设备批准", icon: "clock").font(.headline)
+                        WeftLabel("等待设备批准", icon: "clock").font(AppleTokens.Fonts.headline)
                             .accessibilityIdentifier("cloudWaiting")
                         Text("请在已登录的设备上点允许，或扫电脑上的二维码")
                         Button("已允许，重试连接") { model.retry() }.disabled(model.busy)
@@ -21,7 +21,7 @@ struct CloudAccessView: View {
                     }
                 } else {
                     Section {
-                        Text("用 WeftMate 账号登录").font(.headline)
+                        Text("用 WeftMate 账号登录").font(AppleTokens.Fonts.headline)
                         Text("注册、邮箱验证和找回密码在云端认证页面完成。访问电脑上的对话还需要设备批准。")
                         Button(model.busy ? "正在登录…" : "打开系统登录浏览器") { model.begin() }
                             .disabled(model.busy).accessibilityIdentifier("cloudBrowserLogin")
@@ -53,7 +53,7 @@ struct CloudAccessView: View {
                         .serverInput().disabled(model.busy || model.cloudSignedIn).accessibilityIdentifier("cloudAddress")
                 }
                 if let error = model.error {
-                    Section { Text(error).foregroundStyle(.red).accessibilityIdentifier("cloudError") }
+                    Section { Text(error).foregroundStyle(AppleTokens.Colors.red).accessibilityIdentifier("cloudError") }
                 }
                 if model.busy { ProgressView("正在连接…") }
             }
@@ -76,19 +76,19 @@ struct CloudAccessView: View {
 struct CloudAccessPresenter: View {
     @ObservedObject var cloud: CloudLoginModel
     var body: some View {
-        Color.clear.frame(width: 0, height: 0)
+        AppleTokens.Colors.clear.frame(width: 0, height: 0)
             .sheet(isPresented: $cloud.showLogin, onDismiss: { cloud.cancel() }) { CloudAccessView(model: cloud) }
             .sheet(isPresented: $cloud.showPending) {
                 NavigationStack {
                     List {
                         Section {
-                            Text("有新设备请求访问你的对话").font(.headline)
+                            Text("有新设备请求访问你的对话").font(AppleTokens.Fonts.headline)
                             Text("仅在确认是你自己的设备时允许。")
                         }
                         ForEach(cloud.pending) { device in
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text(device.name).font(.headline)
-                                Text("\(device.platformLabel) · \(device.requestedAtLabel)").font(.caption)
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
+                                Text(device.name).font(AppleTokens.Fonts.headline)
+                                Text("\(device.platformLabel) · \(device.requestedAtLabel)").font(AppleTokens.Fonts.caption)
                                 HStack {
                                     Button("允许") { Task { await cloud.decide(device, allow: true) } }
                                         .buttonStyle(PrimaryActionStyle(fillsWidth: false)).accessibilityIdentifier("cloudAllow.\(device.id)")
@@ -96,7 +96,7 @@ struct CloudAccessPresenter: View {
                                 }
                             }
                         }
-                        if let error = cloud.error { Text(error).foregroundStyle(.red) }
+                        if let error = cloud.error { Text(error).foregroundStyle(AppleTokens.Colors.red) }
                     }
                     .navigationTitle("新设备授权")
                     .toolbar { ToolbarItem(placement: .cancellationAction) { Button("稍后") { cloud.showPending = false } } }
