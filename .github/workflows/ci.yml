@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # MemoWeft main after MW-2 (memoweft/memoweft#84).
-          ref: 0f786cd60663d447c8276200ec69fecae4d5d7bb
+          ref: 0a80775d57f49e9b9c0555ad7dc51d2652b1bfff
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
