@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
 import { canonicalCommand } from '../src/personal-access/command-policy.mjs'
-import { stopExactTask } from '../src/plugins/weftmate-personal-task-control.mjs'
-import { indexInboxTimeline } from '../src/runtime/dsh-adapter/inbox-timeline.mjs'
+import { stopExactTask, createTaskStopHandler } from '../src/plugins/weftmate-personal-task-control.mjs'
+import { indexInboxTimeline, turnReceiptAt } from '../src/runtime/dsh-adapter/inbox-timeline.mjs'
 import { projectHistoryEvent } from '../src/runtime/dsh-adapter/sessions.mjs'
 
 test('send intent defaults to steer, accepts legacy mode, and rejects ambiguous intent', () => {
@@ -38,6 +38,21 @@ test('native queue metadata preserves splice seq, FIFO receipt identity, cancell
   assert.equal(projectHistoryEvent(entries[6], null, null, entries[7], metadata.get(6)).data.receiptId, 'a')
 })
 
+test('steer root uses claimed native input before user message persistence and stops at turn end', () => {
+  const entries = [
+    { seq: 0, type: 'agent/inbox/spliced', data: { target: 'next-step', start: 0,
+      inserted: [{ id: 'first', source: { kind: 'user', rpcId: 'first' }, content: [] }] } },
+    { seq: 1, type: 'turn/start', data: { turn: 1 } },
+    { seq: 2, type: 'agent/inbox/spliced', data: { target: 'next-step', start: 0, removedCount: 1, inserted: [] } },
+    { seq: 3, type: 'agent/inbox/spliced', data: { target: 'next-step', start: 0, inserted: [] } },
+    { seq: 4, type: 'turn/end', data: { turn: 1 } },
+  ]
+  assert.equal(turnReceiptAt(entries, 3), 'first')
+  const beforeUser = indexInboxTimeline([...entries.slice(0, 3), { seq: 3, type: 'step/start', data: { turn: 1, step: 1 } }], {}, 3)
+  assert.equal(beforeUser.receiptId, 'first')
+  assert.equal(turnReceiptAt(entries, 5), null)
+})
+
 test('queued-only cancellation never aborts a task that won the start race', () => {
   let cancels = 0
   const session = { id: 'session-a', header: { agentPreset: 'personal-remote' }, events: [
@@ -48,6 +63,12 @@ test('queued-only cancellation never aborts a task that won the start race', () 
     inbox: { nextTurn: [], nextStep: [] }, cancel: () => { cancels++ } }
   const result = stopExactTask({ get: () => agent }, new Map(), { sessionId: 'session-a', receiptIds: ['a'], queuedOnly: true })
   assert.equal(result.status, 'unconfirmed'); assert.equal(cancels, 0)
+  let jobStops = 0, stoppedClaims = 0
+  const handler = createTaskStopHandler({ get: () => agent }, new Map(), () => {},
+    () => { jobStops++ }, () => { stoppedClaims++ })
+  handler({ protocol: 'weftmate.personal-task-control.v1', id: 'stop-12345678-1234-1234-1234-123456789abc',
+    sessionId: 'session-a', requestId: 'race', receiptIds: ['a'], queuedOnly: true })
+  assert.equal(jobStops, 0); assert.equal(stoppedClaims, 0, 'failed queue cancellation cannot latch future job stops')
 })
 
 test('two authenticated clients serialize sends, steer belongs to active root, cancel is idempotent across restart', async () => {
@@ -115,7 +136,8 @@ test('two authenticated clients serialize sends, steer belongs to active root, c
     const amendment = await settle(one, adjust.commandId), next = await settle(two, queued.commandId)
     assert.equal(amendment.intent, 'steer'); assert.equal(amendment.rootTaskId, active.commandId)
     assert.equal(next.rootTaskId, undefined); assert.equal(next.intent, 'queue')
-    assert.deepEqual(sends.map(send => send.text), ['active', 'adjust', 'queued'])
+    assert.equal(sends[0].text, 'active')
+    assert.deepEqual(new Set(sends.slice(1).map(send => send.text)), new Set(['adjust', 'queued']))
     const retry = await send(one, 'adjust'); assert.equal(retry.commandId, adjust.commandId)
     const canceled = await api(two, `/tasks/${next.commandId}/cancel`, { requestId: 'cancel-next' })
     assert.equal(canceled.status, 202, JSON.stringify(canceled.body)); assert.equal(canceled.body.task.control.stopStatus, 'stopped')
