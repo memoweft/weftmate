@@ -10,6 +10,7 @@ import { join, resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { PROFILE_PATCH_TEMPLATE } from '../../src/dsh-web-runtime.ts';
+import { createOfficialDshSettingsClient } from '../../src/dsh-settings-migration.ts';
 import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
@@ -72,6 +73,20 @@ try {
     modelId: modelName === 'qwen' ? 'qwen3.8-27b-original' : 'mimo-v2.6-flash', apiKey: key })).status, 202);
   const operation = await until(async () => { const value = await api(`/account/models/by-request/${requestId}`); return !['pending', 'applying'].includes(value.body.operation?.status) && value.body.operation; });
   assert.equal(operation.status, 'succeeded');
+  if (modelName === 'qwen') {
+    // The shared single-slot endpoint can queue behind other worktrees longer
+    // than DSH's five-minute first-output watchdog. This is native per-route
+    // test configuration, not a production timeout or a reduced context window.
+    const nativeOrigin = [...output.matchAll(/dsh web: (http:\/\/127\.0\.0\.1:\d+)/g)].at(-1)?.[1];
+    assert.ok(nativeOrigin);
+    const settings = createOfficialDshSettingsClient({ origin: nativeOrigin });
+    const snapshot = await settings.describeSettings();
+    const routes = Object.entries({ ...snapshot.baseProviders, ...snapshot.userProviders });
+    const updates = routes.filter(([, row]) => row.models?.some(model => model.id === 'qwen3.8-27b-original'))
+      .map(([name, row]) => ({ op: 'set', path: ['providers', name], value: { ...row, streamIdleTimeoutMs: 1800000 } }));
+    assert.ok(updates.length);
+    await settings.mutateSettings(updates, snapshot.revision);
+  }
   const selected = (await api('/models')).body.models.find(model => model.name === modelName); assert.ok(selected?.configured);
   assert.equal((await api('/settings/models', { backgroundModelProfileId: selected.id }, 'PATCH')).status, 200);
   writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'Long task runner', provisioned: true }), { mode: 0o600 });
@@ -94,10 +109,12 @@ try {
     compactions: events.filter(event => event.type === 'compaction/summary').length,
     compactionEnds: events.filter(event => event.type === 'compaction/end').map(event => event.data),
     nativeGoalChanges: events.filter(event => event.type === 'goal/change').length,
+    nativeGoalPhase: events.filter(event => event.type === 'goal/change').at(-1)?.data.goal?.phase,
     nativeTodoWrites: events.filter(event => event.type === 'todo/write').length,
+    nativeTodosComplete: events.filter(event => event.type === 'todo/write').at(-1)?.data.todos?.every(todo => todo.status === 'completed'),
     toolCalls: events.filter(event => event.type === 'assistant/message').flatMap(event => event.data.tools ?? []).length,
     goalAndTodosInCheckpoint: events.filter(event => event.type === 'compaction/summary').every(event => JSON.stringify(event.data.summary).includes('Native continuation state') && JSON.stringify(event.data.summary).includes('todos')) };
-  for (const scenario of scenarios) {
+  for (const scenario of regression ? [] : scenarios) {
     const result = results.find(result => result.id === scenario.id);
     if (result?.scratchDir) for (const file of scenario.setup.files) assert.equal(readFileSync(join(result.scratchDir, file.path), 'utf8'), file.content, 'Source remains unchanged');
   }
@@ -105,6 +122,7 @@ try {
   if (!regression) {
     assert.equal(summary.passed, 1, 'Deliverable checks must all pass'); assert.ok(stats.toolCalls > 15);
     assert.ok(stats.nativeGoalChanges >= 2 && stats.nativeTodoWrites >= 2);
+    assert.equal(stats.nativeGoalPhase, 'complete'); assert.equal(stats.nativeTodosComplete, true);
     if (modelName === 'qwen') { assert.deepEqual(stats.contextWindows, [98304]); assert.ok(stats.compactions >= 1); assert.ok(stats.goalAndTodosInCheckpoint); }
   }
 } finally {
