@@ -288,7 +288,7 @@ export async function createHostCloudIdentity(context, options) {
           let trustId = Object.keys(store.state.devices).find(id => {
             const d = store.state.devices[id]; return d.bindingKey === key && d.jkt === proof.jkt && d.cloudDeviceId === identity.device_id;
           });
-          if (binding.status === 'active' && store.state.devices[trustId]?.status !== 'trusted') {
+          if ((binding.status === 'active' || !binding.desktop) && store.state.devices[trustId]?.status !== 'trusted') {
             if (trustId && store.state.devices[trustId].status !== 'pending') throw failure('DEVICE_NOT_TRUSTED', 403);
             return context.serial(async () => {
               await edit(next => {
