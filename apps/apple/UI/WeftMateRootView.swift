@@ -59,6 +59,7 @@ struct WeftMateRootView: View {
                 // Capture only this process's own displayed window; never enumerate other apps.
                 typealias WindowImages = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
                 let windows = NSApplication.shared.windows.filter { $0.isVisible }
+                    .sorted { ($0.sheetParent == nil ? 1 : 0) < ($1.sheetParent == nil ? 1 : 0) }
                 // Sheets have their own window-server IDs. Include only this app's
                 // visible windows so usage and session menus appear over their parent.
                 var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: $0.windowNumber) }
