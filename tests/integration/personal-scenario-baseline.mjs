@@ -129,10 +129,12 @@ try {
       await label.click();
       await page.getByRole('heading', { name: '这条回复的记忆来源' }).waitFor();
       await until(async () => await page.locator('.memory-source-text').count());
+      await label.scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(root, 'memory-source-light.png') });
       await page.evaluate(() => { localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'dark' })); });
       await page.reload(); await page.locator('.reply-memory').last().click();
       await until(async () => await page.locator('.memory-source-text').count());
+      await page.locator('.reply-memory').last().scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(root, 'memory-source-dark.png') });
       writeFileSync(join(root, 'ui-verification.json'), JSON.stringify({ electron: true, label: await page.locator('.reply-memory').last().textContent(), sources: await page.locator('.memory-source-text').count(), themes: ['light', 'dark'] }));
     }
