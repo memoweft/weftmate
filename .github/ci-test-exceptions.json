@@ -1,76 +1,16 @@
 {
   "knownFailures": [
     {
-      "file": "tests/main-shutdown-contract.test.ts",
-      "name": "显式 dogfood userData 在 wipe 和单实例锁之前生效，且 IPC 仅在控制开关开启时退出",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/personal-access-ui-interaction.test.ts",
-      "name": "task15-narrow task entry retains focus immediately after stopping and closing, then after the next signature refresh",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/personal-access-ui-interaction.test.ts",
-      "name": "task15-narrow task refresh respects an input or another button chosen after close",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/personal-access-ui-interaction.test.ts",
-      "name": "task15-narrow task refresh respects another open dialog",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/personal-access-ui-interaction.test.ts",
-      "name": "task15-narrow late task refresh cannot reclaim focus after switching sessions",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/personal-access-ui-interaction.test.ts",
-      "name": "task15-narrow late task refresh cannot reclaim focus after switching account identity",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/personal-access-ui-interaction.test.ts",
-      "name": "synthetic cached progress becomes visibly stale and a late receipt moves its failure card to the original message",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/personal-access-ui.test.ts",
-      "name": "public account shell keeps secrets out of markup and code-generated HTML",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/pet-newbase-contract.test.ts",
-      "name": "自动唤醒只认设置里的 visible 真值；动作请求白名单 set-visible/set-free-activity",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
-      "file": "tests/stage2-shell-contract.test.ts",
-      "name": "keeps old session ownership explicit and wires all route-changing entry points through one journal queue",
-      "reason": "Existing main failure recorded by M0-1b in PR #20; product fix tracked there and in docs/STATE.md.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/20"
-    },
-    {
       "file": "tests/personal-task-stop.test.ts",
       "name": "stop freezes exact receipts, ignores same-text unrelated turns, and withdraws pending work",
-      "reason": "Reproduced on unchanged main 855044d with no npm dependencies: restart does not retry the frozen stop receipt within the test window. Seen on Linux/macOS CI; product fix outside CI-1.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/23"
+      "reason": "CI-2 reverified: passes on local Windows but fails on Linux/macOS in run 37744346966. A quick restart calls driveTaskStop once; tasks.mjs skips the persisted lastAttemptAt within 1 second, and index.mjs start does not schedule another attempt. Waiting longer without an authoritative GET cannot trigger a retry. Product recovery bug, not a fixture timeout.",
+      "tracking": "https://github.com/memoweft/weftmate/pull/62"
     },
     {
       "file": "tests/personal-shared-attachments.test.ts",
       "name": "shared session raw upload, command refs, owner read and exact command retry",
-      "reason": "Reproduced on unchanged main 855044d with no npm dependencies: exact retry after image dispatch can return 404 instead of 202 after staging is consumed. Timing-sensitive; product fix outside CI-1.",
-      "tracking": "https://github.com/memoweft/weftmate/pull/23"
+      "reason": "CI-2 reverified: passes on local Windows but fails on Linux/macOS in run 37744346966 with 404 instead of 202 at line 226. commands.mjs releases accepted image staging; http.mjs resolves staging before looking up the existing requestId, so an exact retry after release fails. Product idempotency bug, not an obsolete assertion.",
+      "tracking": "https://github.com/memoweft/weftmate/pull/62"
     }
   ],
   "unavailableFiles": [

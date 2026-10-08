@@ -167,6 +167,23 @@ test('binding requires local Cookie/CSRF; unknown subjects cannot select an owne
   assert.equal((await f.exchange(await f.access('stranger', 'unknown', key), key)).result.status, 403)
 })
 
+test('desktop login cannot bootstrap a key into a partially committed legacy binding', async t => {
+  const f = await fixture(t)
+  f.interrupt()
+  assert.equal((await f.bind()).result.status, 503)
+  const key = await generateKeyPair('ES256')
+  const token = await f.access('cloud-a', 'desktop', key, { scope: 'cloud:account' }, f.issuer.slice(0, -5))
+  const pending = (await f.exchange(token, key, '/auth/cloud-desktop')).result
+  assert.equal(pending.status, 202)
+  assert.equal(pending.cookie, undefined)
+  assert.equal((await f.requests('POST', `/cloud/devices/${pending.requestId}/decision`, { decision: 'allow' }, f.a)).status, 200)
+  assert.equal((await f.bind()).result.status, 200)
+  const trusted = (await f.exchange(token, key, '/auth/cloud-desktop')).result
+  assert.equal(trusted.status, 200)
+  assert.equal(trusted.account.ownerId, f.a.account.ownerId)
+  assert.equal((await f.requests('GET', '/auth/me', undefined, f.b)).account.ownerId, f.b.account.ownerId)
+})
+
 test('two local accounts bind independently; pending devices cannot see content; only their own account can approve; deny is durable', { timeout: 60_000 }, async t => {
   const f = await fixture(t)
   assert.equal((await f.bind()).result.status, 200)

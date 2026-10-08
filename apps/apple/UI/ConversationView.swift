@@ -19,23 +19,23 @@ struct ConversationListContent: View {
         Group {
             if let cachedAt = model.conversationsCachedAt {
                 Text("本机缓存 · \(cachedAt.formatted(date: .abbreviated, time: .shortened))")
-                    .font(.caption).foregroundStyle(Weave.muted)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
             if model.refreshing && model.conversations.isEmpty {
                 HStack { ProgressView(); Text("正在读取…").foregroundStyle(Weave.muted) }
-                    .padding(.vertical, 18)
+                    .padding(.vertical, AppleTokens.Space.p18)
             } else if let error = model.conversationsError {
-                VStack(alignment: .leading, spacing: 12) {
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                     InlineNotice(message: error, isError: true)
                     Button("重新连接") { Task { await model.refresh() } }
                         .disabled(model.refreshing)
-                }.padding(.vertical, 10)
+                }.padding(.vertical, AppleTokens.Space.p10)
             } else if model.conversations.isEmpty {
                 Text("还没有对话")
-                    .font(.callout).foregroundStyle(Weave.muted).padding(.vertical, 18)
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(.vertical, AppleTokens.Space.p18)
             } else if filtered.isEmpty {
                 Text("没有找到相关对话。")
-                    .font(.callout).foregroundStyle(Weave.muted).padding(.vertical, 18)
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).padding(.vertical, AppleTokens.Space.p18)
             }
         }
     }
@@ -45,20 +45,20 @@ struct ConversationRow: View {
     let conversation: ConversationSummary
     var selected = false
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
+            HStack(alignment: .firstTextBaseline, spacing: AppleTokens.Space.p8) {
                 Text(conversation.title.isEmpty ? "未命名对话" : conversation.title)
-                    .font(.body.weight(.medium)).foregroundStyle(selected ? Weave.onAccent : Weave.ink).lineLimit(2)
+                    .font(AppleTokens.Fonts.body.weight(.medium)).foregroundStyle(selected ? Weave.onAccent : Weave.ink).lineLimit(2)
                 if conversation.running {
                     Circle().fill(selected ? Weave.onAccent : Weave.status).frame(width: 6, height: 6)
                         .accessibilityLabel("正在处理")
                 }
             }
             if conversation.running {
-                Text("正在处理").font(.caption).foregroundStyle(selected ? Weave.onAccent : Weave.muted)
+                Text("正在处理").font(AppleTokens.Fonts.caption).foregroundStyle(selected ? Weave.onAccent : Weave.muted)
             }
         }
-        .padding(.vertical, 5)
+        .padding(.vertical, AppleTokens.Space.p5)
         .accessibilityElement(children: .combine)
         .accessibilityIdentifier("conversationRow.\(conversation.id)")
     }
@@ -102,7 +102,7 @@ struct ConversationView: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: AppleTokens.Space.p0) {
             conversationContent
             #if os(macOS)
             if resources.visible { ConversationResourcesPanel(app: model, resources: resources) }
@@ -191,7 +191,7 @@ struct ConversationView: View {
     private var conversationContent: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 22) {
+                LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                     if model.timeline.hasOlder {
                         Button(model.olderBusy ? "正在读取…" : "读取更早的记录") {
                             // scrollPosition retains the visible target while records are prepended.
@@ -201,14 +201,14 @@ struct ConversationView: View {
                     }
                     if let cachedAt = model.historyCachedAt {
                         Text("离线记录 · \(cachedAt.formatted(date: .abbreviated, time: .shortened))，等待核对最新状态。")
-                            .font(.caption).foregroundStyle(Weave.muted)
+                            .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                             .accessibilityIdentifier("cachedHistoryNotice")
                     }
                     if model.historyBusy && model.messages.isEmpty {
-                        HStack(spacing: 10) {
+                        HStack(spacing: AppleTokens.Space.p10) {
                             ProgressView().controlSize(.small)
-                            Text("正在读取…").font(.callout).foregroundStyle(Weave.muted)
-                        }.padding(.vertical, 24).frame(maxWidth: .infinity)
+                            Text("正在读取…").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                        }.padding(.vertical, AppleTokens.Space.p24).frame(maxWidth: .infinity)
                     }
                     if let error = model.historyError {
                         InlineNotice(message: error, isError: true)
@@ -232,17 +232,17 @@ struct ConversationView: View {
                     }
                     commandStatusCards
                     adoptionStatusCards
-                    Color.clear.frame(height: 1).id("latest")
+                    AppleTokens.Colors.clear.frame(height: 1).id("latest")
                 }
                 .scrollTargetLayout()
-                .padding(.horizontal, 24).padding(.vertical, 26)
+                .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p26)
                 .frame(maxWidth: 760).frame(maxWidth: .infinity)
             }
             .scrollPosition(id: $visibleMessageID, anchor: .bottom)
             #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
             #endif
-            .safeAreaInset(edge: .bottom, spacing: 0) { composer.id(composerIdentity) }
+            .safeAreaInset(edge: .bottom, spacing: AppleTokens.Space.p0) { composer.id(composerIdentity) }
             .onChange(of: model.timeline.events.last?.seq) { _, _ in
                 let oldTail = previousTailID
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
@@ -323,16 +323,16 @@ struct ConversationView: View {
         let key = AppleAppModel.draftKey(for: conversation)
         let rows = model.commandRows(for: conversation)
         return ForEach(rows) { row in
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 HStack {
-                    Text(row.status).font(.caption.weight(.semibold))
+                    Text(row.status).font(AppleTokens.Fonts.caption.weight(.semibold))
                     if model.reconcilingRequests.contains(row.id) { ProgressView().controlSize(.small) }
                 }
                 if row.progress == nil || row.progress == .pending || row.progress == .accepted || row.progress == .unknown {
-                    Text(row.record.intent.text ?? "").font(.caption).lineLimit(4).textSelection(.enabled)
+                    Text(row.record.intent.text ?? "").font(AppleTokens.Fonts.caption).lineLimit(4).textSelection(.enabled)
                 }
                 if let note = row.note {
-                    Text(note).font(.caption).fixedSize(horizontal: false, vertical: true)
+                    Text(note).font(AppleTokens.Fonts.caption).fixedSize(horizontal: false, vertical: true)
                 }
                 HStack {
                         Button("重新确认") {
@@ -343,10 +343,10 @@ struct ConversationView: View {
                             Task { await model.continueSavedRequest(row.id, accountEpoch: accountEpoch) }
                         }.disabled(model.reconcilingRequests.contains(row.id) || model.sendTargets[key] == nil)
                     }
-                }.buttonStyle(OutlineActionStyle()).font(.caption)
+                }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
-            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-            .background(Weave.soft, in: RoundedRectangle(cornerRadius: 12))
+            .padding(AppleTokens.Space.p12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
             .foregroundStyle(Weave.secondary)
             .accessibilityIdentifier("commandStatus.\(row.id)")
         }
@@ -355,22 +355,22 @@ struct ConversationView: View {
     private var composer: some View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
-        return VStack(alignment: .leading, spacing: 9) {
-            VStack(alignment: .leading, spacing: 8) {
+        return VStack(alignment: .leading, spacing: AppleTokens.Space.p9) {
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 TextField("向 WeftMate 说说你的目标", text: draft, axis: .vertical)
-                    .lineLimit(2...6).textFieldStyle(.plain).font(.body)
-                    .focused($draftFocused).padding(.horizontal, 9).padding(.top, 7)
+                    .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
+                    .focused($draftFocused).padding(.horizontal, AppleTokens.Space.p9).padding(.top, AppleTokens.Space.p7)
                     .disabled(!model.canEditDraft(for: conversation))
                     .accessibilityIdentifier("conversationDraft")
                 if let files = model.attachmentDrafts[key], !files.isEmpty {
                     ScrollView(.horizontal) {
-                        HStack(spacing: 10) {
+                        HStack(spacing: AppleTokens.Space.p10) {
                             ForEach(files) { file in
-                                VStack(spacing: 4) {
+                                VStack(spacing: AppleTokens.Space.p4) {
                                     AttachmentThumbnail(file: file.display, isImage: file.original.isImage)
-                                    Text(file.original.name).font(.caption).lineLimit(1).frame(width: 90)
+                                    Text(file.original.name).font(AppleTokens.Fonts.caption).lineLimit(1).frame(width: 90)
                                     Button("移除") { model.removeAttachment(file.id, from: conversation, accountEpoch: accountEpoch) }
-                                        .font(.caption).disabled(model.preparingConversations.contains(key))
+                                        .font(AppleTokens.Fonts.caption).disabled(model.preparingConversations.contains(key))
                                 }
                             }
                         }
@@ -379,7 +379,7 @@ struct ConversationView: View {
                 if dynamicTypeSize.isAccessibilitySize {
                     composerApprovalMode(accountEpoch: accountEpoch)
                 }
-                HStack(spacing: 12) {
+                HStack(spacing: AppleTokens.Space.p12) {
                     Menu {
                         Button("添加文件或图片") { importingAttachments = true }
                         #if DEBUG
@@ -405,32 +405,32 @@ struct ConversationView: View {
                     }
                     if model.loadingAttachments.contains(key) { ProgressView().controlSize(.small) }
                     Text(model.sendTargets[key]?.modelName ?? conversation.originalModelLabel ?? "当前模型")
-                        .font(.caption).foregroundStyle(Weave.muted).lineLimit(1)
+                        .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
                         .accessibilityLabel("当前模型")
                     Spacer()
                     Button { Task { await model.send(conversation, accountEpoch: accountEpoch) } } label: {
                         WeftIcon("send")
-                            .font(.body.weight(.semibold)).frame(width: 20, height: 44)
+                            .font(AppleTokens.Fonts.body.weight(.semibold)).frame(width: 20, height: 44)
                     }
                     .buttonStyle(PrimaryActionStyle(fillsWidth: false))
                     .disabled(!model.canSend(conversation)).accessibilityLabel("发送")
                     .accessibilityIdentifier("sendButton")
                 }
             }
-            .padding(9)
-            .background(Weave.surface, in: RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(Weave.line))
+            .padding(AppleTokens.Space.p9)
+            .background(Weave.surface, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
+            .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r16).strokeBorder(Weave.line))
 
-            if let attachmentInputError { Text(attachmentInputError).font(.caption).foregroundStyle(Weave.danger) }
+            if let attachmentInputError { Text(attachmentInputError).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
             if let error = model.draftError {
                 InlineNotice(message: error, isError: true).accessibilityIdentifier("draftStorageError")
             }
             if let error = model.cacheError {
-                Text(error).font(.caption).foregroundStyle(Weave.muted)
+                Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let notice = model.continuationNotices[key] {
-                Text(notice).font(.caption).foregroundStyle(Weave.secondary)
+                Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let choice = model.modelsToConfirm[key] {
@@ -454,7 +454,7 @@ struct ConversationView: View {
                 .accessibilityIdentifier("chooseAdoptionModelButton")
             }
             if let error = model.adoptionError {
-                Text(error).font(.caption).foregroundStyle(Weave.danger)
+                Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger)
                     .fixedSize(horizontal: false, vertical: true)
             }
         }
@@ -462,7 +462,7 @@ struct ConversationView: View {
             guard model.canAddAttachments(conversation) else { return false }
             Task { await model.addAttachments(urls, to: conversation, accountEpoch: accountEpoch) }; return true
         }
-        .padding(.horizontal, 20).padding(.top, 12).padding(.bottom, 12)
+        .padding(.horizontal, AppleTokens.Space.p20).padding(.top, AppleTokens.Space.p12).padding(.bottom, AppleTokens.Space.p12)
         .frame(maxWidth: 792).frame(maxWidth: .infinity)
         .background(Weave.surface)
     }
@@ -491,17 +491,17 @@ struct ConversationView: View {
     private var adoptionStatusCards: some View {
         let accountEpoch = model.accountEpoch
         return ForEach(model.adoptionRows(for: conversation)) { row in
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 HStack {
-                    Text(row.status).font(.caption.weight(.semibold))
+                    Text(row.status).font(AppleTokens.Fonts.caption.weight(.semibold))
                     if model.adoptingRequests.contains(row.id) { ProgressView().controlSize(.small) }
                 }
-                if let note = row.note { Text(note).font(.caption).fixedSize(horizontal: false, vertical: true) }
+                if let note = row.note { Text(note).font(AppleTokens.Fonts.caption).fixedSize(horizontal: false, vertical: true) }
                 if row.record.receipt?.projection.binding?.truncated == true {
-                    Text("采用的原上下文有截断，原始记录仍保留。").font(.caption)
+                    Text("采用的原上下文有截断，原始记录仍保留。").font(AppleTokens.Fonts.caption)
                 }
                 if let count = row.record.receipt?.projection.binding?.omittedImages, count > 0 {
-                    Text("采用上下文未包含 \(count) 张图片。").font(.caption)
+                    Text("采用上下文未包含 \(count) 张图片。").font(AppleTokens.Fonts.caption)
                 }
                 HStack {
                     Button("重新确认接通") {
@@ -512,10 +512,10 @@ struct ConversationView: View {
                             Task { await model.continueAdoptionRequest(row.id, accountEpoch: accountEpoch) }
                         }.disabled(model.adoptingRequests.contains(row.id))
                     }
-                }.buttonStyle(OutlineActionStyle()).font(.caption)
+                }.buttonStyle(OutlineActionStyle()).font(AppleTokens.Fonts.caption)
             }
-            .padding(12).frame(maxWidth: .infinity, alignment: .leading)
-            .background(Weave.soft, in: RoundedRectangle(cornerRadius: 12))
+            .padding(AppleTokens.Space.p12).frame(maxWidth: .infinity, alignment: .leading)
+            .background(Weave.soft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r12))
             .foregroundStyle(Weave.secondary)
             .accessibilityIdentifier("adoptionStatus.\(row.id)")
         }
@@ -527,14 +527,14 @@ struct MessageView: View {
     let message: ChatMessage
     let openAttachment: (ConversationAttachmentReference) -> Void
     var body: some View {
-        VStack(alignment: message.role == .user ? .trailing : .leading, spacing: 7) {
+        VStack(alignment: message.role == .user ? .trailing : .leading, spacing: AppleTokens.Space.p7) {
             if message.role == .user {
                 if !message.text.isEmpty {
                     HStack {
-                        Spacer(minLength: 32)
-                        Text(message.text).textSelection(.enabled).lineSpacing(5)
-                            .padding(.horizontal, 16).padding(.vertical, 12)
-                            .background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: 19))
+                        Spacer(minLength: AppleTokens.Space.p32)
+                        Text(message.text).textSelection(.enabled).lineSpacing(AppleTokens.Space.p5)
+                            .padding(.horizontal, AppleTokens.Space.p16).padding(.vertical, AppleTokens.Space.p12)
+                            .background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r19))
                     }
                 }
             } else {
@@ -555,19 +555,19 @@ struct MessageView: View {
             let remainingAttachments = max(0, message.attachmentCount - max(message.originalAttachments.count, message.images.count))
             if remainingAttachments > 0 {
                 WeftLabel("\(remainingAttachments) 个附件 · 此版本尚未展开", icon: "attach", size: 16)
-                    .font(.caption).foregroundStyle(Weave.muted)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
             if message.truncated {
                 Text("这条记录仅显示部分内容。")
-                    .font(.caption).foregroundStyle(Weave.muted)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
             if message.pendingContext {
                 Text("已保存记录，尚未进入原模型上下文。")
-                    .font(.caption).foregroundStyle(Weave.muted)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
         }
-        .font(.body).foregroundStyle(Weave.ink)
-        .padding(.vertical, 2)
+        .font(AppleTokens.Fonts.body).foregroundStyle(Weave.ink)
+        .padding(.vertical, AppleTokens.Space.p2)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message.\(message.id)")
     }
