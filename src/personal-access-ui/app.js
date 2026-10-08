@@ -2488,7 +2488,7 @@
     if (!memories.length || !window.WeftDesktop) return
     const button = element('button', 'button quiet small reply-memory', `用到了 ${memories.length} 条记忆`)
     button.type = 'button'
-    button.setAttribute('aria-haspopup', 'dialog')
+    button.setAttribute('aria-label', `查看这条回复采用的 ${memories.length} 条记忆来源`)
     button.addEventListener('click', async () => {
       const context = conversationTaskContext()
       const target = window.WeftDesktop.openPreview('记忆来源', button, `reply-memory:${context.sessionId}:${event.seq}`, 'source')
