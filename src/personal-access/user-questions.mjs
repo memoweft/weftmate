@@ -1,3 +1,4 @@
+import { scheduledCommandSource } from './schedules-authorization.mjs';
 import {
   canonicalUserQuestionAnswer,
   canonicalUserQuestions,
@@ -29,7 +30,7 @@ export function createUserQuestionOperations(context) {
       const device = account.devices[checked.source.sourceDeviceId];
       if (!device || !['password', 'cloud'].includes(device.authKind) || device.revoked ||
           !Number.isSafeInteger(checked.source.sourceAuthEpoch) || device.authEpoch !== checked.source.sourceAuthEpoch ||
-          Date.parse(device.expiresAt) <= context.timestamp()) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
+          !scheduledCommandSource(account, checked.source) && Date.parse(device.expiresAt) <= context.timestamp()) throw failure('TOOL_SOURCE_UNAVAILABLE', 403);
       if (!context.messageModelUsable(account.ownerId, account.sessions[input.sessionId], account)) throw failure('MODEL_UNAVAILABLE', 409);
       if (checked.root.taskControl?.state === 'stop_requested') throw failure('TASK_NOT_READY', 409);
       // Providing information does not authorize execution, and can help clarify an unknown result.
