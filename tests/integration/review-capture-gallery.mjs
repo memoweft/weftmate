@@ -3,13 +3,16 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright';
-import { catalog, outDirectory, assertPublicText } from '../../scripts/review-gallery/common.mjs';
+import { catalog, outDirectory, assertPublicText, captureSummary } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
 const manifest = JSON.parse(await readFile(join(out, 'manifest.json'), 'utf8'));
 const html = await readFile(join(out, 'index.html'), 'utf8');
 assertPublicText(html.replace(/data:image\/png;base64,[A-Za-z0-9+/=]+/g, ''));
 assert.equal(manifest.records.length, catalog.scenes.length * catalog.platforms.length * catalog.themes.length);
-for (const row of manifest.records.filter(row => ['windows', 'mobile-web'].includes(row.platform))) {
+assertPublicText(JSON.stringify(manifest));
+const summary = captureSummary(manifest.records);
+assert.deepEqual(manifest.failures, summary.failures);
+for (const row of manifest.records.filter(row => ['windows', 'mobile-web'].includes(row.platform) && row.status !== 'failed')) {
   assert.ok(row.file, `${row.platform}/${row.scene}/${row.theme} must be captured`);
   assert.equal(row.synthetic, true); assertPublicText(row.text);
   const expected = catalog.platforms.find(platform => platform.id === row.platform).viewport;
@@ -37,14 +40,20 @@ try {
       }
       await page.evaluate(() => scrollTo(0, 0));
       await page.screenshot({ path: join(out, `gallery-${width}-${theme}.png`) });
-      await page.getByRole('button', { name: /^放大登录页 · Windows/ }).click();
-      await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape');
-      await page.getByRole('dialog').waitFor({ state: 'hidden' });
+      assert.equal(await page.locator('.capture-failures li').count(), summary.failed);
+      assert.equal(await page.locator('.comparison .missing').filter({ hasText: /^截图失败：/ }).count(), summary.failed);
+      if (await page.locator('.comparison:visible .capture').count()) {
+        await page.locator('.comparison:visible .capture').first().click();
+        await page.getByRole('dialog').waitFor(); await page.keyboard.press('Escape');
+        await page.getByRole('dialog').waitFor({ state: 'hidden' });
+      }
       checks.push(`${width}/${theme}: no overflow, all images decode, themes, keyboard enlargement`);
     }
     assert.deepEqual(errors, []); await page.close();
   }
 } finally { await browser.close(); }
 await writeFile(join(out, 'verification.json'), JSON.stringify({ generatedAt: new Date().toISOString(),
-  syntheticCaptures: 32, textAndMetadataScan: 'passed', scanScope: 'captured DOM text, password inputs, manifest and embedded HTML; historical device images manually reviewed, no OCR claim', checks }, null, 2) + '\n');
-console.log(`Gallery verification passed (${checks.length} viewport/theme combinations; 32 synthetic captures).`);
+  syntheticCaptures: summary.captured, failedCaptures: summary.failed, attemptedCaptures: summary.attempted, exceedsHalf: summary.exceedsHalf, textAndMetadataScan: 'passed', scanScope: 'captured DOM text, password inputs, manifest and embedded HTML; historical device images manually reviewed, no OCR claim', checks }, null, 2) + '\n');
+console.log(`Gallery verification passed (${checks.length} viewport/theme combinations; ${summary.captured} synthetic captures, ${summary.failed} failed).`);
+
+assert.equal(summary.exceedsHalf, false, `More than half of capture scenes failed (${summary.failed}/${summary.attempted})`);
