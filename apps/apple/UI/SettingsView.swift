@@ -115,6 +115,7 @@ private struct SettingsCategoryView: View {
     @State private var legal: LegalDocument?
     @State private var deletingSchedule: ManagedSchedule?
     @State private var restoringBackup: HostBackup?
+    @State private var restartingService: HostService?
     #if os(macOS)
     @EnvironmentObject private var updates: MacUpdateModel
     @Environment(\.openWindow) private var openWindow
@@ -134,6 +135,10 @@ private struct SettingsCategoryView: View {
             .confirmationDialog("删除这条提醒或定时任务？已启动的任务和历史记录保留。", isPresented: Binding(get: { deletingSchedule != nil }, set: { if !$0 { deletingSchedule = nil } }), titleVisibility: .visible) {
                 Button("删除", role: .destructive) { if let item = deletingSchedule { Task { await settings.schedule(item, action: .delete) } }; deletingSchedule = nil }
                 Button("取消", role: .cancel) { deletingSchedule = nil }
+            }
+            .confirmationDialog("重启服务？运行中的任务可能中断，请等待电脑完成维护（最多 6 分钟）。", isPresented: Binding(get: { restartingService != nil }, set: { if !$0 { restartingService = nil } }), titleVisibility: .visible) {
+                Button("确认重启") { if let service = restartingService { Task { await settings.restart(service) } }; restartingService = nil }
+                Button("取消", role: .cancel) { restartingService = nil }
             }
             .confirmationDialog("恢复此备份？电脑将备份当前状态后替换本地数据并重启，完成后需要重新登录。", isPresented: Binding(get: { restoringBackup != nil }, set: { if !$0 { restoringBackup = nil } }), titleVisibility: .visible) {
                 Button("恢复并重启", role: .destructive) { if let item = restoringBackup { Task { await settings.restore(item) } }; restoringBackup = nil }
@@ -202,7 +207,17 @@ private struct SettingsCategoryView: View {
             }
         case "models":
             SettingsRow("主模型", "新对话创建时选择，已有对话保留原模型。") { Text("按对话选择").foregroundStyle(Weave.muted) }
-            SettingsRow("后台模型", "由电脑宿主配置，用于后台任务。") { Text("宿主配置").foregroundStyle(Weave.muted) }
+            SettingsRow("后台模型", "标题与记忆整理等后续后台请求使用此模型。") {
+                #if os(macOS)
+                Picker("后台模型", selection: Binding(get: { settings.backgroundModelID }, set: { id in Task { await settings.saveBackgroundModel(id) } })) {
+                    Text("跟随主模型").tag("")
+                    ForEach(settings.models.filter(\.configured)) { Text($0.name).tag($0.id) }
+                    if !settings.backgroundModelID.isEmpty && !settings.models.contains(where: { $0.id == settings.backgroundModelID }) { Text("原后台模型不可用").tag(settings.backgroundModelID) }
+                }.labelsHidden().disabled(settings.busy)
+                #else
+                Text(settings.models.first { $0.id == settings.backgroundModelID }?.name ?? (settings.backgroundModelID.isEmpty ? "跟随主模型" : "原后台模型不可用")).foregroundStyle(Weave.muted)
+                #endif
+            }
             Section("模型档案与单价 · 元 / 百万令牌") {
                 ForEach(settings.models) { model in
                     SettingsRow(model.name, model.configured ? "已配置 · " + model.model : "未配置") {
@@ -227,9 +242,15 @@ private struct SettingsCategoryView: View {
             }
             Button("刷新提醒") { Task { await settings.refresh("schedules") } }.disabled(settings.busy)
         case "system":
-            SettingsRow("宿主", "当前电脑连接的认证状态。") { Text(app.verificationPending ? "等待连接" : "已连接") }
-            SettingsRow("模型服务", "读取电脑宿主报告的实际状态。") { Text(settings.status?.backend?["runtime"]?.string ?? "尚未读取") }
-            SettingsRow("一键修复", "当前个人接口未提供原生修复操作。") { Text("即将支持").foregroundStyle(Weave.muted) }
+            ForEach(HostService.allCases) { service in
+                SettingsRow(service.title, "电脑宿主报告的实际状态；重启可能中断当前任务。") {
+                    VStack(alignment: .trailing, spacing: AppleTokens.Space.p5) {
+                        Text(settings.status?.service(service).title ?? "尚未读取")
+                        if let version = settings.status?.service(service).version { Text(version).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                        Button("重启修复") { restartingService = service }.disabled(settings.busy || settings.status?.service(service).canRestart != true)
+                    }
+                }
+            }
             Button("刷新系统状态") { Task { await settings.refresh("system") } }.disabled(settings.busy)
         case "backups":
             if let preferences = settings.backupPreferences {

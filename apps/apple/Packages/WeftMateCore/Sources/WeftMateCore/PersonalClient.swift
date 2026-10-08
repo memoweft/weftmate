@@ -325,7 +325,15 @@ public actor PersonalClient {
         let _: SettingsActionReply = try await parityRequest(path: path + (action == .delete ? "" : "/" + action.rawValue),
             method: action == .delete ? "DELETE" : "POST", body: action == .delete ? nil : Data("{}".utf8))
     }
-    public func settingsStatus() async throws -> HostSettingsStatus { try await parityRequest(path: "/status") }
+    public func settingsStatus() async throws -> HostSystemSnapshot { try await parityRequest(path: "/system") }
+    public func backgroundModelPreference() async throws -> BackgroundModelPreference { try await parityRequest(path: "/settings/models") }
+    public func setBackgroundModel(_ profileID: String?) async throws -> BackgroundModelPreference {
+        let fields: [String: Any] = ["backgroundModelProfileId": profileID.map { $0 as Any } ?? NSNull()]
+        return try await parityRequest(path: "/settings/models", method: "PATCH", body: JSONSerialization.data(withJSONObject: fields))
+    }
+    public func restartSettingsService(_ service: HostService) async throws -> HostSystemSnapshot {
+        try await parityRequest(path: "/system/" + service.rawValue + "/restart", method: "POST", body: Data("{}".utf8), timeoutInterval: 360)
+    }
     public func settingsBackups() async throws -> HostBackups { try await parityRequest(path: "/backups") }
     public func setBackupPreferences(_ preferences: BackupPreferences) async throws {
         struct Reply: Decodable { let settings: BackupPreferences }
@@ -338,10 +346,10 @@ public actor PersonalClient {
         struct Body: Encodable { let id: String; let confirm = true }
         return try await parityRequest(path: "/backups/restore", method: "POST", body: JSONEncoder().encode(Body(id: try checkedID(id))))
     }
-    private func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil) async throws -> T {
+    private func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil, timeoutInterval: TimeInterval = 60) async throws -> T {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
-        let response = try await sharedAuthorizedRequest(auth, generation, path: path, method: method, body: body)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: path, method: method, body: body, timeoutInterval: timeoutInterval)
         return try decode(response.body)
     }
 
@@ -1108,11 +1116,11 @@ public actor PersonalClient {
 
     private func sharedAuthorizedRequest(_ auth: Credential, _ generation: UInt64,
                                          path: String, method: String = "GET", body: Data? = nil,
-                                         acceptedErrorStatuses: Set<Int> = []) async throws -> HTTPResponse {
+                                         acceptedErrorStatuses: Set<Int> = [], timeoutInterval: TimeInterval = 60) async throws -> HTTPResponse {
         do {
             try check(generation)
             let response = try await rawRequest(server: auth.session.server, path: path, method: method, body: body, auth: auth,
-                acceptedErrorStatuses: acceptedErrorStatuses)
+                acceptedErrorStatuses: acceptedErrorStatuses, timeoutInterval: timeoutInterval)
             try check(generation)
             return response
         } catch {
@@ -1345,10 +1353,10 @@ public actor PersonalClient {
         do { return try decoder.decode(T.self, from: data) } catch { throw APIFailure.invalidResponse }
     }
     private func rawRequest(server: ServerConfiguration, path: String, method: String = "GET",
-                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:]) async throws -> HTTPResponse {
+                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:], timeoutInterval: TimeInterval = 60) async throws -> HTTPResponse {
         guard let url = URL(string: server.originString + "/personal/v1" + path),
               body?.count ?? 0 <= 262_144 else { throw APIFailure.invalidResponse }
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
         request.httpMethod = method; request.httpBody = body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let auth { request.setValue(auth.cookie, forHTTPHeaderField: "Cookie") }

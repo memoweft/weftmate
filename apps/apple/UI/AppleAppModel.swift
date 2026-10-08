@@ -1612,6 +1612,7 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func clearVisibleAccount() {
+        settingsRoute = .init(categoryID: "general")
         timelineRootCommands = []; stoppingActiveTask = false
         showingArchived = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
         queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []

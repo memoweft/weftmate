@@ -50,7 +50,7 @@ struct WeftMateMacApp: App {
             }
         }
         Window("设置", id: "settings") {
-            NavigationStack { SettingsView(model: model).environmentObject(updates) }
+            NavigationStack { SettingsView(model: model).id(model.accountEpoch).environmentObject(updates) }
                 .frame(minWidth: 480, minHeight: 540)
         }
         .defaultSize(width: 1000, height: 760)

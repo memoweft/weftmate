@@ -10,7 +10,7 @@ final class A6SettingsUITests: XCTestCase {
         return try JSONSerialization.jsonObject(with: data) as! [String: Any]
     }
     @MainActor private func expect(_ element: XCUIElement) throws {
-        XCTAssertTrue(element.waitForExistence(timeout: 30), "Missing: " + element.identifier)
+        XCTAssertTrue(element.waitForExistence(timeout: 30), "Missing required native control")
         if !element.exists { throw NSError(domain: "A6UI", code: 1) }
     }
     @MainActor private func tap(_ app: XCUIApplication, _ name: String) throws {
@@ -29,7 +29,7 @@ final class A6SettingsUITests: XCTestCase {
         let app = XCUIApplication()
         let namespace = "a6-" + UUID().uuidString.prefix(8)
         app.launchArguments = ["--ui-testing", "--ui-testing-namespace", namespace, "--server-url", ready["host"] as! String,
-                               "--s1c-cloud-url", ready["cloud"] as! String, "--lg2-cloud", "--a5-theme", theme]
+                               "--s1c-cloud-url", ready["cloud"] as! String, "--s1c-qr-url", driver + "/pairing.png", "--lg2-cloud", "--a5-theme", theme]
         app.launch()
         try fill(app, "accountEmail", credentials["email"] as! String)
         try tap(app, "accountRegistration"); try tap(app, "accountSubmit")
