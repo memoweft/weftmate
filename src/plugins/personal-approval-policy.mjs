@@ -74,7 +74,10 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   for (const match of source.matchAll(/\bopen\s*\(\s*(?:'([^']+)'|"([^"]+)"),\s*['"]w[bt]?['"]/gi))
     if (overwrites(match[1] ?? match[2])) categories.add('overwrite');
   const powershell = !/^(?:bash|sh)$/.test(name) && !/\.sh$/i.test(context.scriptPath ?? '');
-  for (const write of shellWriteTargets([args.command, args.code, args.script, args.action].filter(x => typeof x === 'string').join('\n'), cwd, powershell)) {
+  const isShell = typeof args.command === 'string' || /^(?:pwsh|powershell|psh|bash|sh|shell)$/.test(name) ||
+    /\.(?:ps1|sh)$/i.test(context.scriptPath ?? '') || !context.scriptPath && typeof args.script === 'string';
+  const shellSource = isShell ? [args.command, args.code, args.script, args.action].filter(x => typeof x === 'string').join('\n') : '';
+  for (const write of shellWriteTargets(shellSource, cwd, powershell)) {
     let target = write.target;
     if (write.kind === 'directory' && target) {
       try { if (statSync(target).isDirectory()) continue; } catch { /* New directory. */ }

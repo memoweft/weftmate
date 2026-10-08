@@ -123,7 +123,9 @@ export function shellWriteTargets(source, cwd, powershell = true) {
     if (!text) return;
     if (text[0] === "'" && text.at(-1) === "'")
       return powershell ? text.slice(1, -1).replaceAll("''", "'") : text.slice(1, -1);
-    if (text[0] === '"' && text.at(-1) === '"') text = text.slice(1, -1);
+    const quoted = text[0] === '"' && text.at(-1) === '"';
+    const expanded = text.includes('$');
+    if (quoted) text = text.slice(1, -1);
     else if (powershell && /[\s'"`]/.test(text)) return;
     if (!powershell && /[\\*?~]/.test(text)) return;
     // Only pwd is a known command substitution; all other substitutions fail.
@@ -134,7 +136,7 @@ export function shellWriteTargets(source, cwd, powershell = true) {
       if (value === undefined) unknown = true;
       return value ?? '';
     });
-    if (unknown || /[\0$`]/.test(text)) return;
+    if (unknown || /[\0$`]/.test(text) || !powershell && !quoted && expanded && /\s/.test(text)) return;
     return text;
   }
   function value(parts, bare = true) {
@@ -176,7 +178,10 @@ export function shellWriteTargets(source, cwd, powershell = true) {
     }
     if (parts.length !== 1) return;
     const variableName = /^\$(?:\{([^}]+)\}|([\w:]+(?:\.Path)?))$/i.exec(parts[0]);
-    if (variableName) return variable(variableName[1] ?? variableName[2]);
+    if (variableName) {
+      const result = variable(variableName[1] ?? variableName[2]);
+      return !powershell && result !== undefined && /\s/.test(result) ? undefined : result;
+    }
     if (powershell && !bare && !/^['"]/.test(parts[0])) return;
     return string(parts[0]);
   }
