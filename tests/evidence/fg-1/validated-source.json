@@ -1,0 +1,27 @@
+{
+  "description": "Final production-source fingerprints; earlier evidence records the pre-commit HEAD and its then-working-tree implementation. Upstream main merges are preserved.",
+  "weftmate": {
+    "src/main.mjs": "1b4685270caa696333d27af42eecd7a527b1bacd913645d619a30284a131da23",
+    "src/personal-access-backend.mjs": "a7268bce2639dc918e40193b66727a117b77ba6c8ff479f36097318f173408e6",
+    "src/personal-access/sessions.mjs": "1dc1ee2cb68a0db26ba720ddff0272c0e4c7ad9e11c9f4127449a4e0779462ea",
+    "src/personal-access/index.mjs": "d97cbfdb0d7cd184414ab440f73fd44da6197ddd822ce30ca5699f096eea103e",
+    "src/personal-memory/index.mjs": "91d7f942c9d59993143b266695f1daf81634c83c6d9a4c473fd7da335b1969c1",
+    "src/personal-memory/http.mjs": "bee4e8cdd5eb797fe72e6345b989b70a75426bd82a88441a113edb790ac8e1be",
+    "src/personal-memory/journal.mjs": "2c815d3998a8fbbf49c4bb50a97d749fb98a3a1a307e42c97ce10c3a12a6d0bc",
+    "src/runtime/dsh-adapter/session-lifecycle.mjs": "c3fd63c4a70fb73ac44851f987b99fca7011073836fa3648686a50c3cb7f4add",
+    "src/runtime/dsh-adapter/memory-erasure.mjs": "1445ed9413e391fa85104fd526478bf440f00afba8e452939b235c9b5f239d62",
+    "src/runtime/dsh-adapter/sessions.mjs": "80fadb623f672e998bd5d1ac40ea3254286aa7a81d3162ac067aa1007dc6a7ca",
+    "src/runtime/gateway/routes/v1.mjs": "2da738c8807110b7c257c68b7539664e7f6339a5d17693010a2e86b73600f3c6",
+    "src/personal-desktop.mjs": "ca4be5e4825ab4c53b41c51e8a13677c24205da0e2d5bc3a303470ac246cf147",
+    "src/personal-desktop-preload.cjs": "156f2f67ead31e5139b44652f4aca5c79cb4c42b6f8b785f2b672eae1364662b",
+    "src/personal-access-ui/components/memory.js": "f02395700875f7b2c20b527ed653cb0d5dd83ae96eb8e8f4fb8285ca553410d5",
+    "src/personal-access-ui/components/settings-navigation.js": "cb1c0180e39dc8074a404bd6e21bc3ef9adf71f4bd87fc9b5a4b1355c0915561",
+    "src/ui-core/shell.js": "2d62e41e9850979fd49d1f0a99c0657ff835b25dc4c3a27bbaf1bc234be72011",
+    "src/ui-core/adapters/mobile-host.js": "81b4789dfe9c29dba1a32552bebae70bde5dd4487fb252d8073205d3978d8d21"
+  },
+  "core": {
+    "py\\src\\memoweft\\integrations\\trust\\true_delete.py": "032f94cf7307bc6ee6ec6ad034f72276190933798e1e390c6c09670e321f54f0",
+    "py\\src\\memoweft\\integrations\\trust\\command_store.py": "0f320ac50bda6ee5dd4bbe5a95d56db239880420e87cb4d20bb684000dbf5b97",
+    "py\\src\\memoweft\\integrations\\dsh_bridge\\protocol_v2.py": "18d532034d5f4e0616fde6634ab07d8368c5be4a7344cf9fbbd8dc2d402506c6"
+  }
+}
