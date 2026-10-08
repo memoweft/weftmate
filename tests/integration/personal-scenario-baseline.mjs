@@ -17,6 +17,8 @@ const memoryUi = process.argv.includes('--memory-ui');
 const memoryLoop = process.argv.includes('--memory-loop');
 const memoryAccuracy = process.argv.includes('--memory-accuracy');
 const memoryFormation = process.argv.includes('--memory-formation');
+const memoryCorrection = process.argv.includes('--memory-correction');
+assert.ok(!memoryCorrection || memoryLoop, '--memory-correction requires --memory-loop');
 assert.ok(!memoryAccuracy || memoryLoop, '--memory-accuracy requires --memory-loop');
 const coreSourceIndex = process.argv.indexOf('--memory-core-source');
 const coreSource = coreSourceIndex === -1 ? 'D:/AIProjects/MemoWeft/Core/py/src'
@@ -44,7 +46,7 @@ if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key'
 }
 if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
 const scenarioFixes = process.argv.includes('--scenario-fixes');
-const root = join('C:/Temp', `weftmate-${memoryFormation ? 'm2c' : memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
+const root = join('C:/Temp', `weftmate-${memoryCorrection ? 'm2d' : memoryFormation ? 'm2c' : memoryAccuracy ? 'm2b' : memoryUi ? 'm2a-ui' : memoryLoop ? 'm2a' : scenarioFixes ? 'm1-1d' : comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password = `test-${randomUUID()}-password`, username = `eval-${randomUUID()}`;
@@ -107,6 +109,20 @@ try {
   if (diagnostic) scenarios = scenarios.filter(s => s.id === 'action-06-delete-approval').map(s => ({ ...s, timeoutSec: 600 }));
   const onlyIndex = process.argv.indexOf('--only');
   if (onlyIndex !== -1) scenarios = scenarios.filter(s => process.argv[onlyIndex + 1].split(',').includes(s.id));
+  if (memoryCorrection) {
+    scenarios = scenarios.filter(s => /^(memory-01|memory-02)-/.test(s.id));
+    const original = scenarios.find(s => s.id === 'memory-02-correction');
+    assert.ok(original);
+    // Additional desktop acceptance; the original scenario stays unmodified.
+    scenarios.push({ ...original, id: 'memory-correction-new-sessions',
+      turns: [
+        { user: '我最近只能周二晚上游泳，安排游泳时帮我记着。', after: { newSession: true, waitMs: 1000 } },
+        { user: '刚才说错了，现在固定空出来的是周六晚上，周二已经没空了，以后游泳按周六来安排。', after: { newSession: true, waitMs: 1000 } },
+        { user: '下周给我安排一次游泳，放在哪天比较合适？' },
+      ], checks: original.checks.map(check => check.type === 'reply_contains' ? { ...check, text: '周六' }
+        : check.type === 'llm_judge' ? { ...check, prompt: '按纠正后的周六晚上安排游泳。' } : check) });
+    if (process.argv.includes('--desktop-only')) scenarios = scenarios.filter(s => s.id === 'memory-correction-new-sessions');
+  }
   // Each scenario runs once. Only memory-03 starts on Qwen and switches to MiMo.
   const results = [], startedAt = new Date().toISOString();
   for (const scenario of scenarios) {
@@ -120,8 +136,40 @@ try {
       onScenarioResult: async result => { results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
   }
   if (memoryLoop || memoryUi) {
-    const sample = results.find(result => result.id === (memoryUi ? 'memory-ui' : 'memory-01-preference'));
+    if (memoryCorrection && !process.argv.includes('--desktop-only')) {
+      const correction = results.find(result => result.id === 'memory-02-correction');
+      assert.equal(correction?.status, 'passed');
+      const items = (await api('/memory/items?kind=cognition')).body.items;
+      const adopted = correction.turns.at(-1).memoryUsed;
+      assert.ok(items.some(item => item.text.includes('周五') && item.currentState === 'current' &&
+        adopted.some(memory => memory.id === item.id)), 'original memory-02 must adopt its corrected item');
+      assert.ok(items.filter(item => item.text.includes('只能周三')).every(item =>
+        item.currentState === 'not_current' && !adopted.some(memory => memory.id === item.id)));
+      assert.equal(correction.turns.flatMap(turn => turn.approvals).length, 0);
+    }
+    const sample = results.find(result => result.id === (memoryCorrection ? 'memory-correction-new-sessions' : memoryUi ? 'memory-ui' : 'memory-01-preference'));
     if (sample?.status === 'passed') {
+      if (memoryCorrection) {
+        assert.equal(new Set(sample.turns.map(turn => turn.sessionId)).size, 3);
+        assert.equal(sample.turns.flatMap(turn => turn.approvals).length, 0);
+        const items = (await api('/memory/items?kind=cognition')).body.items;
+        const used = sample.turns.at(-1).memoryUsed;
+        const corrected = items.find(item => used.some(memory => memory.id === item.id) && item.text.includes('周六'));
+        assert.ok(corrected, 'memoryUsed must identify the corrected understanding');
+        assert.equal(corrected.currentState, 'current');
+        const obsolete = items.filter(item => item.text.includes('只能周二'));
+        assert.ok(obsolete.length);
+        assert.ok(obsolete.every(item => item.currentState === 'not_current' && item.lifecycle.invalidAt));
+        assert.ok(obsolete.every(item => !used.some(memory => memory.id === item.id)));
+        const sources = (await api(`/memory/items/cognition/${corrected.id}/sources`)).body.sources;
+        assert.ok(sources.some(source => source.rawContent === scenarios.find(s => s.id === sample.id).turns[1].user));
+        for (const item of obsolete) {
+          const previous = (await api(`/memory/items/cognition/${item.id}/sources`)).body.sources;
+          assert.ok(previous.some(source => source.rawContent.includes('只能周二')));
+        }
+        writeFileSync(join(root, 'correction-verification.json'), JSON.stringify({ threeDistinctSessions: true,
+          correctedMemoryUsed: true, obsoleteExcluded: true, sourcesRetained: true, undeclaredApprovals: 0 }));
+      }
       const sessionId = sample.turns.at(-1).sessionId;
       await page.evaluate(async sessionId => {
         const status = await (await fetch('/personal/v1/status')).json();
@@ -136,6 +184,7 @@ try {
       await label.click();
       await page.getByRole('heading', { name: '这条回复的记忆来源' }).waitFor();
       await until(async () => await page.locator('.memory-source-text').count());
+      if (memoryCorrection) assert.match(await page.locator('.memory-source-text').allTextContents().then(texts => texts.join('\n')), /周六/);
       await label.scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(root, 'memory-source-light.png') });
       await page.evaluate(() => { localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'dark' })); });
