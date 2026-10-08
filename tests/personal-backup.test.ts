@@ -37,6 +37,7 @@ test('BK-1 online SQLite snapshot remains consistent while another connection wr
   assert.equal(copy.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
   assert.ok(copy.prepare('SELECT count(*) AS n FROM rows').get().n >= 1500); copy.close();
   assert.ok(writes > 0, 'writes overlap the online backup');
+  await assert.rejects(sqliteSnapshot(file, path.join(f.base, 'aborted.sqlite3'), () => { throw Object.assign(new Error('capture deadline'), { code: 'BACKUP_PAUSE_TIMEOUT' }); }), { code: 'BACKUP_PAUSE_TIMEOUT' });
 });
 test('BK-1 snapshot covers content and removes host-managed credentials and device sessions', async t => {
   const f = await fixture(t);
@@ -96,7 +97,10 @@ test('BK-1 busy host defers online snapshot; manual backup never restarts', asyn
   await assert.rejects(manager.request(), { code: 'SESSION_BUSY' }); assert.equal(restarts, 0);
   idle = true; const result = await manager.request(); assert.equal(result.restartsHost, false); assert.equal(restarts, 0);
   const view = await manager.view(); assert.equal(view.status.state, 'succeeded'); assert.equal(view.backups.length, 1);
-  await manager.finishShutdown();
+  await manager.restore(result.backup.id); assert.equal(restarts, 1);
+  await manager.finishShutdown({ safe: false });
+  assert.equal((await manager.view()).status.state, 'failed');
+  assert.equal((await manager.view()).backups.length, 1, 'unsafe restore shutdown produces no safety snapshot');
 });
 
 test('BK-1 restores only after producing a verified backup of current state', async t => {
