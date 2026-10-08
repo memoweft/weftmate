@@ -5,9 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="color-scheme" content="light dark">
   <title>WeftMate</title>
+  <link rel="icon" type="image/svg+xml" href="/personal/v1/ui/favicon.svg">
   <link rel="stylesheet" href="/personal/v1/ui/styles.css">
   <link rel="stylesheet" href="/personal/v1/ui/native-desktop.css">
   <script src="/personal/v1/ui/format-vendor.js" defer></script>
+  <script src="/personal/v1/ui/icons.js" defer></script>
   <script src="/personal/v1/ui/desktop.js" defer></script>
   <script src="/personal/v1/ui/timeline.js" defer></script>
   <script src="/personal/v1/ui/cloud-vendor.js" defer></script>
@@ -84,21 +86,21 @@
           <button type="button" class="rail-backdrop" id="rail-backdrop" aria-label="关闭会话侧栏" hidden></button>
           <aside class="session-rail" id="session-rail" aria-label="会话导航">
             <div class="rail-top">
-            <div class="rail-heading"><strong>WeftMate</strong><button type="button" class="icon-close rail-close" id="rail-close" aria-label="收起会话侧栏"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button></div>
-            <button type="button" class="button quiet rail-new" id="new-session"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>新对话<kbd>Ctrl N</kbd></button>
+            <div class="rail-heading"><strong class="brand-name"><span class="wm-brand" aria-hidden="true"></span>WeftMate</strong><button type="button" class="icon-close rail-close" id="rail-close" aria-label="收起会话侧栏"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#sidebar"/></svg></button></div>
+            <button type="button" class="button quiet rail-new" id="new-session"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#compose"/></svg>新对话<kbd>Ctrl N</kbd></button>
             </div>
-            <div class="rail-search"><button type="button" class="composer-icon" id="search-sessions" aria-label="搜索会话"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg></button><input id="session-search" type="search" placeholder="搜索会话" aria-label="搜索会话"><kbd>Ctrl K</kbd></div>
+            <div class="rail-search"><button type="button" class="composer-icon" id="search-sessions" aria-label="搜索会话"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#search"/></svg></button><input id="session-search" type="search" placeholder="搜索会话" aria-label="搜索会话"><kbd>Ctrl K</kbd></div>
             <p class="muted rail-message" id="sessions-status">正在读取会话…</p>
             <ul class="session-list" id="session-list"></ul>
-            <div class="rail-footer"><button type="button" class="rail-link" id="rail-phone" hidden>手机记录</button><div id="account-menu" class="account-menu" hidden><button type="button" class="rail-link" id="rail-account">设置</button><button type="button" class="rail-link" id="rail-memory">记忆</button><button type="button" class="rail-link" id="rail-devices">设备</button></div><button type="button" class="rail-link account-menu-trigger" id="account-menu-trigger" aria-expanded="false" aria-controls="account-menu"><span class="rail-avatar"><img id="rail-avatar-image" alt="" hidden><span id="rail-avatar-initial">W</span></span><span id="rail-account-name">我的账户</span><span id="pending-device-badge" class="account-pending" aria-label="有设备等待批准" hidden></span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button></div>
+            <div class="rail-footer"><button type="button" class="rail-link" id="rail-phone" hidden><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#phone"/></svg>手机记录</button><div id="account-menu" class="account-menu" hidden><button type="button" class="rail-link" id="rail-account"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#settings"/></svg>设置</button><button type="button" class="rail-link" id="rail-memory"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#memory"/></svg>记忆</button><button type="button" class="rail-link" id="rail-devices"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#desktop"/></svg>设备</button></div><button type="button" class="rail-link account-menu-trigger" id="account-menu-trigger" aria-expanded="false" aria-controls="account-menu"><span class="rail-avatar"><img id="rail-avatar-image" alt="" hidden><span id="rail-avatar-initial">W</span></span><span id="rail-account-name">我的账户</span><span id="pending-device-badge" class="account-pending" aria-label="有设备等待批准" hidden></span><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#chevron"/></svg></button></div>
           </aside>
           <div class="assistant-main">
             <div class="assistant-topbar">
-              <button type="button" class="icon-close menu-button" id="rail-open" aria-controls="session-rail" aria-expanded="true" aria-label="切换会话侧栏"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+              <button type="button" class="icon-close menu-button" id="rail-open" aria-controls="session-rail" aria-expanded="true" aria-label="切换会话侧栏"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#sidebar"/></svg></button>
               <div class="assistant-heading"><strong id="assistant-title">新对话</strong><span id="assistant-connection" hidden></span></div>
               <button type="button" class="button secondary small" id="show-phone" hidden>手机记录</button>
               <button type="button" class="button secondary small account-shortcut" id="show-account">账户</button>
-              <button type="button" class="button quiet small" id="conversation-resources" aria-expanded="false" aria-haspopup="dialog">输出与来源</button>
+              <button type="button" class="button quiet small" id="conversation-resources" aria-expanded="false" aria-haspopup="dialog"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#outputs"/></svg>输出与来源</button>
             </div>
             <p class="connection-banner" id="connection-banner" role="status" hidden></p>
 
@@ -125,18 +127,18 @@
                   <div class="composer-attachments" id="composer-attachments" hidden><div class="attachment-draft-list" id="attachment-draft-list"></div><p class="attachment-status" id="attachment-status" role="status" aria-live="polite"></p></div>
                   <div class="composer-actions">
                     <input id="message-attachments" type="file" multiple hidden>
-                    <label class="composer-icon attachment-add" id="attachment-add" for="message-attachments" aria-label="添加图片或文件" title="添加图片或文件"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></label>
+                    <label class="composer-icon attachment-add" id="attachment-add" for="message-attachments" aria-label="添加图片或文件" title="添加图片或文件"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#plus"/></svg></label>
                     <button type="button" class="button quiet small" id="attachment-cancel" hidden>取消上传</button>
                     <div class="model-picker" id="model-picker">
-                      <button type="button" class="model-trigger" id="model-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="model-options" disabled><span id="model-label">选择模型</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+                      <button type="button" class="model-trigger" id="model-trigger" aria-haspopup="listbox" aria-expanded="false" aria-controls="model-options" disabled><span id="model-label">选择模型</span><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#chevron"/></svg></button>
                       <div class="model-popover" id="model-popover" hidden>
                         <div class="model-options" id="model-options" role="listbox" aria-label="选择模型"></div>
-                        <button type="button" class="model-configure" id="model-configure"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9Z"/><circle cx="12" cy="12" r="3"/></svg>配置模型</button>
+                        <button type="button" class="model-configure" id="model-configure"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#model"/></svg>配置模型</button>
                       </div>
                     </div>
-                    <button type="button" class="composer-icon" id="voice-input" aria-label="语音输入" aria-pressed="false" title="语音输入" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11v1a7 7 0 0 0 14 0v-1M12 19v3M8 22h8"/></svg></button>
+                    <button type="button" class="composer-icon" id="voice-input" aria-label="语音输入" aria-pressed="false" title="语音输入" disabled><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#mic"/></svg></button>
                     <div class="approval-picker" id="approval-picker">
-                      <button type="button" class="model-trigger" id="approval-mode-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-menu" disabled><span id="approval-mode-label">自动</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg></button>
+                      <button type="button" class="model-trigger" id="approval-mode-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-menu" disabled><span id="approval-mode-label">自动</span><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#chevron"/></svg></button>
                       <div class="model-popover approval-popover" id="approval-mode-menu" role="menu" aria-label="审批模式" hidden></div>
                     </div>
                     <select id="message-mode" aria-label="运行中输入方式" hidden><option value="steer">插话</option><option value="queue">新目标排队</option></select>
@@ -293,7 +295,7 @@
 
   <dialog class="dialog" id="password-dialog" aria-labelledby="password-heading">
     <form id="password-form" novalidate>
-      <div class="dialog-head"><h2 id="password-heading">修改密码</h2><button type="button" class="icon-close" data-close="password-dialog" aria-label="关闭">×</button></div>
+      <div class="dialog-head"><h2 id="password-heading">修改密码</h2><button type="button" class="icon-close" data-close="password-dialog" aria-label="关闭"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#deny"/></svg></button></div>
       <div class="dialog-body"><p class="muted">修改后其他设备的登录会失效，当前设备会保持登录。</p>
         <label for="current-password">当前密码</label><input id="current-password" type="password" autocomplete="current-password" required>
         <label for="new-password">新密码</label><input id="new-password" type="password" autocomplete="new-password" required>
@@ -306,13 +308,13 @@
   </dialog>
 
   <dialog class="dialog confirm-dialog" id="revoke-dialog" aria-labelledby="revoke-heading">
-    <div class="dialog-head"><h2 id="revoke-heading">撤销设备</h2><button type="button" class="icon-close" data-close="revoke-dialog" aria-label="关闭">×</button></div>
+    <div class="dialog-head"><h2 id="revoke-heading">撤销设备</h2><button type="button" class="icon-close" data-close="revoke-dialog" aria-label="关闭"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#deny"/></svg></button></div>
     <div class="dialog-body"><p id="revoke-description"></p><p class="muted">这台设备将立即失去访问权限。账户和其他设备保持可用。</p><p class="form-error" id="revoke-error" role="alert" hidden></p></div>
     <div class="dialog-footer"><button type="button" class="button secondary" data-close="revoke-dialog">取消</button><button type="button" class="button danger" id="revoke-confirm">撤销设备</button></div>
   </dialog>
 
   <dialog class="dialog memory-detail-dialog" id="memory-detail-dialog" aria-labelledby="memory-detail-title">
-    <div class="dialog-head"><h2 id="memory-detail-title">记忆详情</h2><button type="button" class="icon-close" id="memory-detail-close" aria-label="关闭记忆详情">×</button></div>
+    <div class="dialog-head"><h2 id="memory-detail-title">记忆详情</h2><button type="button" class="icon-close" id="memory-detail-close" aria-label="关闭记忆详情"><svg class="wm-icon" viewBox="0 0 24 24" aria-hidden="true"><use href="/personal/v1/ui/icons.svg#deny"/></svg></button></div>
     <div class="dialog-body">
       <p id="memory-detail-status" class="memory-detail-status" role="status"></p>
       <p id="memory-detail-error" class="form-error" role="alert" hidden></p>

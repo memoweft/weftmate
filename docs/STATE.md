@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
+| Codex · Windows-4 | IC-1 图标系统 | C4「天蓝」母版与45个确认功能图标、24个现有动作扩展统一至 design/icons/；单命令生成 Windows 多尺寸 ICO、系统主题单色任务栏 / 托盘、通知与安装器资产，桌面 / 手机 Web（网页界面）和 Android（安卓）图标已接入。Android 0.8.5/code18。桌面69/69、界面3/3、手机及发布97/97、图标资产3/3、Android JVM（Java 虚拟机）27/27、构建与类型检查通过；真实 Electron（桌面程序框架）审批闭环与 MuMu 专属包1/1通过，测试包已卸载。[前后截图与边界](../tests/evidence/ic-1/README.md)；完整 CI（持续集成）交 PR，待 Claude 审查 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | UI-2 手机界面统一 | [PR #51](https://github.com/memoweft/weftmate/pull/51)（`wp/ui-2-mobile-visual`）：会话列表首页、运行 / 待审批点、中性浅 / 深 / 跟随系统主题、安静步骤与原文两层展开、全屏输出与来源及返回位置 / 草稿已完成；保留登录、云配对、附件、审批与离线。Android 0.8.4/code17，只接既有来源列表路由与系统栏。手机100/100与相关页面回归31/31、Android JVM（Java 虚拟机）27/27、assembleDebug、类型检查与发布回归通过；[截图与边界](../tests/evidence/ui-2/README.md)。无可用模拟器，390×844 Chromium（浏览器引擎）验收；完整测试交 PR CI（持续集成），待 Claude 审查 |
 | Codex · Windows-2 | M2a 记忆最小闭环 | [PR #52](https://github.com/memoweft/weftmate/pull/52)（`wp/m2a-memory-loop`）：MemoWeft 自动形成/召回、`memoryUsed` 与桌面回复标签/右侧来源、按模型能力降级截图已完成；相关69/69、类型检查、真实 Electron（桌面程序框架）单条记忆来源浅/深色通过。原记忆四场景Qwen1/4、MiMo2/4，M2出口未达；[证据/费用](../tests/evidence/m2a/README.md)，最终CI（持续集成）见PR，待Claude审查 |
@@ -20,6 +20,8 @@
 已完成：文档/规则重置、M0-1b 清理与拆分、M0-2 容量与动态预算（#24）、H1 健康设置/摘要/隔离队列（#22）、S0/S1a/S1b（#27/#29/#30）、CI 分组与依赖审计。
 
 ## 最近一次验证
+
+- **IC-1**：唯一图标来源、Windows 系统主题选择、手机及 Android code18接入完成；真实 Electron 浅 / 深审批卡、输入区与侧栏，MuMu 应用桌面图标、应用内浅 / 深、主题资源及通知均取证。窗口 / 任务栏使用单色 ICO；Windows 托盘处于溢出区，未取得其可见图标截图。仅安装并卸载本包专属 QA（质量验证）应用，没有覆盖原调试包。完整验证、既有静态正则例外及未做项见 tests/evidence/ic-1/README.md；客户端业务契约无变更。
 
 - **M2a**：相关69/69、类型检查、真实Electron（桌面程序框架）偏好→新对话采用→「用到了 1 条记忆」→右侧原话来源浅深色通过；独立短回复验收105.42秒。原场景Qwen1/4、MiMo2/4；保留错误形成姓名、缺字段及未声明审批失败，未放宽检查。完整门禁见[PR #52 CI（持续集成）](https://github.com/memoweft/weftmate/pull/52/checks)。
 
