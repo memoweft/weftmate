@@ -102,9 +102,9 @@ jobs:
             node .github/scripts/ci-unit-tests.mjs required
           fi
 
-      # Only exact baseline case names from PR #20 and CI-1 are non-blocking.
-      # Other tests in those files remain in the required step above.
-      - name: Known main failures (13 cases; PR 20 and CI-1)
+      # CI-2 retired 10 baseline exceptions. Only the two product failures
+      # reproduced on Linux/macOS remain non-blocking; other cases stay required.
+      - name: Known main failures (2 cases; CI-2 reverified)
         if: ${{ !cancelled() }}
         continue-on-error: true
         shell: bash
