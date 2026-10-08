@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import test from 'node:test'
+import { desktopHtml } from './helpers/desktop-ui-source.mjs'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
 const launcher = join(repository, 'scripts', 'run-personal-host.mjs')
@@ -74,7 +75,8 @@ test('local setup, same-account devices, password rotation and logout work in th
     const staticPage = await fetch(`${first.origin}/personal/v1/ui`)
     assert.equal(staticPage.status, 200)
     assert.match(staticPage.headers.get('content-security-policy') ?? '', /script-src 'self'/)
-    assert.match(await staticPage.text(), /登录 WeftMate/)
+    assert.match(await staticPage.text(), /components\/markup.js/)
+    assert.match(desktopHtml(), /登录 WeftMate/)
     assert.deepEqual(await auth(first.origin, '/state'), {
       status: 200, body: { configured: false, registrationAvailable: true }, cookie: '',
     })

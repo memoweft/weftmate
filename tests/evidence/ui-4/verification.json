@@ -1,0 +1,17 @@
+{
+  "realElectron": true,
+  "isolatedAccount": true,
+  "paidModelRequests": 0,
+  "checks": [
+    "appearance save and reload",
+    "keyword search",
+    "usage totals and persisted monthly/temporary limits",
+    "all desktop categories light/dark",
+    "Escape close",
+    "conversation usage deep link",
+    "narrow category picker",
+    "reduced motion",
+    "mobile list, subpages, search and return"
+  ],
+  "errors": []
+}
