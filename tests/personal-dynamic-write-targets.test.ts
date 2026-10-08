@@ -157,3 +157,9 @@ test('JavaScript arrows and comparisons are not parsed as shell redirection', ()
     assert.ok(classifyPersonalRisk('bash', { command: 'P="new.txt user.txt"; curl -o $P https://example.org' }, cwd).includes('overwrite'))
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
+
+test('unsupported adjacent quoted words stay unknown instead of inventing a destination', () => {
+  for (const command of ["P='sub'/'user.txt'; echo data > \"$P\"", 'P="sub"/user.txt; curl -o "$P" https://example.org'])
+    assert.ok(classifyPersonalRisk('bash', { command }).includes('overwrite'), command)
+  assert.ok(classifyPersonalRisk('pwsh', { command: '$p="user""file.txt"; Set-Content $p data' }).includes('overwrite'))
+})
