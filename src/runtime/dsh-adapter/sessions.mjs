@@ -506,7 +506,7 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
       return { current: range?.current === true, events: (range?.events ?? [])
         .flatMap((entry, offset) => {
           const event = entry.event ?? entry
-          const claimed = claimedInputsAt(entries, range.start + offset)
+          const claimed = event.type === 'agent/inbox/spliced' ? claimedInputsAt(entries, range.start + offset) : []
           if (claimed.length) return [{ seq: event.seq, type: 'input.claimed',
             data: { receipts: claimed.map(input => typeof input.receiptId === 'string' &&
               /^[A-Za-z0-9._:-]{1,160}$/.test(input.receiptId) ? input.receiptId : null) } }]
