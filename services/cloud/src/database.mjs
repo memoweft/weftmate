@@ -49,7 +49,7 @@ export async function openDatabase(databasePath, { migrationsDir = defaultMigrat
   const database = new DatabaseSync(databasePath);
   try {
     await chmod(databasePath, 0o600);
-    database.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;');
+    database.exec('PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000; PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL; PRAGMA secure_delete = ON;');
     const schemaVersion = await migrate(database, migrationsDir);
     return { database, schemaVersion };
   } catch (error) {
