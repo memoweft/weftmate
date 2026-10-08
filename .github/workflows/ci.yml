@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # FG-1 rework candidate (Core #91): exact read-only forget preview and scoped redaction.
-          ref: c046e6b412603a418ad46de90dbc761b1e551fe8
+          ref: b623fc7f0cde207e4e7ed24409f3285704d7ce5b
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
