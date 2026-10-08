@@ -1,0 +1,618 @@
+{
+  "date": "2026-10-08",
+  "models": [
+    "http://127.0.0.1:8081/v1 / qwen3.8-27b-original",
+    "https://api.xiaomimimo.com/v1 / mimo-v2.6-flash"
+  ],
+  "coreDeliveryCommit": "3c81ed0ea47f0287bc2504e30d0b83e06b590627",
+  "realRunSourceBase": "7c2b855",
+  "finalResults": {
+    "qwen": [
+      {
+        "id": "memory-01-preference",
+        "status": "failed",
+        "durationMs": 600559,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 141782,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "running",
+            "durationMs": 453166,
+            "memoryUsedSupported": null,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-03-switch-model",
+        "status": "failed",
+        "durationMs": 600641,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 532434,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "running",
+            "durationMs": 62435,
+            "memoryUsedSupported": null,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-04-person",
+        "status": "failed",
+        "durationMs": 600625,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 499781,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "running",
+            "durationMs": 93627,
+            "memoryUsedSupported": null,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    ],
+    "mimo": [
+      {
+        "id": "memory-01-preference",
+        "status": "passed",
+        "durationMs": 59158,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed",
+            "pattern": "买菜|菜市场|蔬菜|菜摊"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 9347,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 44928,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-03-switch-model",
+        "status": "passed",
+        "durationMs": 84326,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "status": "passed",
+            "text": "小禾"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 5936,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 73428,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-04-person",
+        "status": "passed",
+        "durationMs": 35443,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "reply_contains",
+            "status": "passed",
+            "text": "阿岚"
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed",
+            "pattern": "海报|展览"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 20048,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 9745,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 3,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    ]
+  },
+  "diagnosticQwenResults": [
+    {
+      "id": "memory-01-preference",
+      "status": "failed",
+      "durationMs": 432320,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "status": "failed",
+          "pattern": "买菜|菜市场|蔬菜|菜摊",
+          "reason": "reply_matches did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "failed",
+          "reason": "memory_used did not match expected value"
+        },
+        {
+          "type": "llm_judge",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "durationMs": 35685,
+          "memoryUsedSupported": true,
+          "memoryUsedCount": 0,
+          "unexpectedApproval": false,
+          "questionCount": 0,
+          "toolCallCount": 0
+        },
+        {
+          "status": "completed",
+          "durationMs": 391380,
+          "memoryUsedSupported": true,
+          "memoryUsedCount": 0,
+          "unexpectedApproval": false,
+          "questionCount": 0,
+          "toolCallCount": 0
+        }
+      ]
+    },
+    {
+      "id": "memory-03-switch-model",
+      "status": "passed",
+      "durationMs": 119248,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "status": "passed",
+          "text": "小禾"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "durationMs": 39067,
+          "memoryUsedSupported": true,
+          "memoryUsedCount": 0,
+          "unexpectedApproval": false,
+          "questionCount": 0,
+          "toolCallCount": 0
+        },
+        {
+          "status": "completed",
+          "durationMs": 75522,
+          "memoryUsedSupported": true,
+          "memoryUsedCount": 1,
+          "unexpectedApproval": false,
+          "questionCount": 0,
+          "toolCallCount": 0
+        }
+      ]
+    },
+    {
+      "id": "memory-04-person",
+      "status": "failed",
+      "durationMs": 541959,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "status": "passed",
+          "text": "阿岚"
+        },
+        {
+          "type": "reply_matches",
+          "status": "failed",
+          "pattern": "海报|展览",
+          "reason": "reply_matches did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "failed",
+          "reason": "memory_used did not match expected value"
+        },
+        {
+          "type": "llm_judge",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "status": "completed",
+          "durationMs": 129353,
+          "memoryUsedSupported": true,
+          "memoryUsedCount": 1,
+          "unexpectedApproval": false,
+          "questionCount": 0,
+          "toolCallCount": 0
+        },
+        {
+          "status": "completed",
+          "durationMs": 406990,
+          "memoryUsedSupported": true,
+          "memoryUsedCount": 0,
+          "unexpectedApproval": false,
+          "questionCount": 0,
+          "toolCallCount": 0
+        }
+      ]
+    }
+  ],
+  "formationAudit": {
+    "diagnostic": {
+      "jobs": [
+        {
+          "state": "applied",
+          "reason": null,
+          "transportErrorType": null
+        },
+        {
+          "state": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "transportErrorType": null
+        },
+        {
+          "state": "applied",
+          "reason": null,
+          "transportErrorType": null
+        },
+        {
+          "state": "no_change",
+          "reason": "model_no_change",
+          "transportErrorType": null
+        },
+        {
+          "state": "no_change",
+          "reason": "entity_name_not_in_proposition",
+          "transportErrorType": null,
+          "rewrite": {
+            "state": "completed",
+            "firstError": "entity_name_not_in_proposition",
+            "finalError": "entity_name_not_in_proposition",
+            "failureType": null,
+            "firstResponseContainsIncorrectName": true
+          }
+        },
+        {
+          "state": "pending",
+          "reason": null,
+          "transportErrorType": null
+        }
+      ],
+      "storedIncorrectNameCount": 0,
+      "names": {
+        "小禾": {
+          "inEvidence": true,
+          "inWorld": true
+        },
+        "阿岚": {
+          "inEvidence": true,
+          "inWorld": false
+        }
+      }
+    },
+    "qwen": {
+      "jobs": [
+        {
+          "state": "applied",
+          "reason": null,
+          "transportErrorType": null
+        },
+        {
+          "state": "applied",
+          "reason": null,
+          "transportErrorType": null
+        },
+        {
+          "state": "processing",
+          "reason": null,
+          "transportErrorType": null
+        }
+      ],
+      "storedIncorrectNameCount": 0,
+      "names": {
+        "小禾": {
+          "inEvidence": true,
+          "inWorld": true
+        },
+        "阿岚": {
+          "inEvidence": true,
+          "inWorld": false
+        }
+      }
+    },
+    "mimo": {
+      "jobs": [
+        {
+          "state": "applied",
+          "reason": null,
+          "transportErrorType": null
+        },
+        {
+          "state": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "transportErrorType": null
+        },
+        {
+          "state": "applied",
+          "reason": null,
+          "transportErrorType": null
+        },
+        {
+          "state": "no_change",
+          "reason": "model_no_change",
+          "transportErrorType": null
+        },
+        {
+          "state": "applied",
+          "reason": null,
+          "transportErrorType": null
+        },
+        {
+          "state": "no_change",
+          "reason": "model_no_change",
+          "transportErrorType": null
+        }
+      ],
+      "storedIncorrectNameCount": 0,
+      "names": {
+        "小禾": {
+          "inEvidence": true,
+          "inWorld": true
+        },
+        "阿岚": {
+          "inEvidence": true,
+          "inWorld": true
+        }
+      }
+    }
+  },
+  "credentialScans": [
+    {
+      "scanned": 164,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "scanned": 164,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    {
+      "scanned": 167,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  ],
+  "mimoCost": {
+    "requestCount": 17,
+    "reportedUsageRequests": 17,
+    "missingUsageRequests": 0,
+    "inputTokens": 75783,
+    "cachedInputTokens": 43200,
+    "outputTokens": 3384,
+    "totalReportedTokens": 79167,
+    "reportedCostCny": 0.040215,
+    "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash"
+  },
+  "unitTests": {
+    "coreDistinctCoveredTests": 274,
+    "coreScopedBatchPassed": 272,
+    "coreDateFollowupPassed": 32,
+    "coreAccuracyHttpFollowupPassed": 43,
+    "coreCiPassed": 1710,
+    "weftmatePassed": 11,
+    "failed": 0
+  },
+  "typecheck": "passed",
+  "scope": "M2b; memory-02 correction and full M2 exit not verified",
+  "weftmateImplementationCommit": "4955f821527d15ce38ab9f029db6b690054635b7",
+  "validationNotes": "Real memory scenarios use the name/required-field/source-cue implementation. Event-date and truncated-output additions made after host startup are covered by the dedicated unit tests and full Core CI; these scene inputs contain no event dates.",
+  "cleanup": {
+    "scannedFiles": 498,
+    "keyMatches": 0,
+    "testCredentialFilesRemaining": 0,
+    "skippedLinks": 1533,
+    "modelFinalState": {
+      "currentModelId": "qwen3.8-27b-original",
+      "switching": false,
+      "activeLeases": 0,
+      "queuedLeases": 0,
+      "maintenanceQueued": 0,
+      "propsReachable": true,
+      "contextWindow": 98304,
+      "slots": 1
+    },
+    "isolatedHostProcessesRemaining": 0
+  },
+  "observedModelRequests": [
+    {
+      "origin": "http://127.0.0.1:8081",
+      "models": [
+        "qwen3.8-27b-original"
+      ]
+    },
+    {
+      "origin": "https://api.xiaomimimo.com",
+      "models": [
+        "mimo-v2.6-flash"
+      ]
+    }
+  ]
+}

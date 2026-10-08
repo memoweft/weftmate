@@ -478,7 +478,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           entry.rpc.request('preview_recall', { query, model_tier: destinationTier }),
           // Standing conversational preferences apply even when today's topic
           // shares no words with the earlier preference (e.g. a new concept).
-          entry.rpc.request('preview_recall', { query: '用户希望我如何称呼和讲解？', model_tier: destinationTier }),
+          // Explicit communication cues use Core's existing query fallback;
+          // exact source facts need not contain a synthesized "用户希望" phrase.
+          entry.rpc.request('preview_recall', { query: '“语言”“例子”“术语”的表达偏好？', model_tier: destinationTier }),
           entry.rpc.request('preview_recall', { query: '我叫什么？', model_tier: destinationTier }),
           entry.rpc.request('query_interactions', { query, session_id: sessionId, projection: 'model', model_tier: destinationTier }),
         ]);
