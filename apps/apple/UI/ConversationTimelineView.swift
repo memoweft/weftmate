@@ -35,6 +35,11 @@ struct ConversationTimelineView: View {
                     if let message = appModel.messages.first(where: { $0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)") }) {
                         MessageView(model: appModel, message: message, openAttachment: openAttachment)
                     }
+                    if entry.event.type == "user.message", let receipt = entry.event.data["receiptId"]?.string,
+                       appModel.isSupplement(receipt, in: conversation) || commands.supplementReceiptIDs.contains(receipt) {
+                        Text("已补充到当前任务").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                            .accessibilityIdentifier("supplementNotice." + receipt)
+                    }
                     let memories = UsedMemory.references(in: entry.event)
                     if !memories.isEmpty {
                         Button { openMemory(entry.event) } label: {
@@ -64,10 +69,13 @@ struct ConversationTimelineView: View {
         if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
         if let error = interactions.persistenceError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         AppleTokens.Colors.clear.frame(height: 0)
-            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)") {
+            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.timeline.events.last?.seq ?? -1)") {
                 guard scenePhase == .active, !appModel.historyBusy, appModel.historyCachedAt == nil else { interactions.suspend(); commands.suspend(); return }
                 interactions.activate(); commands.activate()
-                if appModel.taskControlSessions.contains(sessionID) { await commands.refresh() }
+                if appModel.taskControlSessions.contains(sessionID) {
+                    await commands.refresh()
+                    if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = commands.rootCommands }
+                }
                 var policy = ConversationPollingPolicy()
                 while !Task.isCancelled {
                     let old = interactions.approvals, oldQuestions = interactions.questions
@@ -75,6 +83,9 @@ struct ConversationTimelineView: View {
                     do { try await Task.sleep(nanoseconds: policy.delayNanoseconds(madeProgress: old != interactions.approvals || oldQuestions != interactions.questions)) }
                     catch { return }
                 }
+            }
+            .onChange(of: commands.rootCommands) { _, value in
+                if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = value }
             }
             .onDisappear { interactions.suspend(); commands.suspend() }
             .onChange(of: appModel.accountEpoch) { _, _ in interactions.cancel(); commands.cancel() }

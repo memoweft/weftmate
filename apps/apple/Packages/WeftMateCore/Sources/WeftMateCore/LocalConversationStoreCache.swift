@@ -8,6 +8,7 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     public let sessionId: String?
     public let hostId: String
     public let originalModelLabel: String?
+    public let archived: Bool?
     public let originalModel: SharedOriginalModel?
     public var conversationKey: String {
         if let conversationId { return "conversation:" + conversationId }
@@ -15,12 +16,12 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     }
     public var conversation: ConversationSummary {
         .init(id: id, title: title, conversationId: conversationId, sessionId: sessionId,
-              running: false, sendAvailable: false, originalModelLabel: originalModelLabel)
+              running: false, sendAvailable: false, originalModelLabel: originalModelLabel, archived: archived ?? false)
     }
     public init(conversation: ConversationSummary, hostId: String, originalModel: SharedOriginalModel? = nil) throws {
         id = conversation.id; title = conversation.title; conversationId = conversation.conversationId
         sessionId = conversation.sessionId; self.hostId = hostId
-        originalModelLabel = conversation.originalModelLabel; self.originalModel = originalModel
+        archived = conversation.archived; originalModelLabel = conversation.originalModelLabel; self.originalModel = originalModel
         try validate()
     }
     func validate() throws {
