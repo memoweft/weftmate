@@ -1,0 +1,304 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-08",
+  "taskFixCommit": "4069c8c",
+  "subsequentMainMerge": "1ca030f",
+  "deterministic": {
+    "beforeFixFailures": 2,
+    "afterFixPassed": 4,
+    "closedClaimWithoutUserMessage": {
+      "stopStatus": "stopped",
+      "pendingReceipts": 0,
+      "canResume": true
+    },
+    "preservedClaimedInputCount": 1
+  },
+  "syntheticElectron": {
+    "earlyStopGoalPreserved": true,
+    "resumedRequestContainsOriginalGoal": true,
+    "ordinaryStopResume": true,
+    "queueSteerCancel": true
+  },
+  "tests": {
+    "taskControlAndSource": 28,
+    "approvalsProofReplyFixture": 31,
+    "lanBridge": 2,
+    "evaluationRunner": 12,
+    "typecheck": "passed"
+  },
+  "initialControlOnlyLan": {
+    "results": [
+      {
+        "scenario": "action-05-stop-resume",
+        "status": "passed",
+        "durationMs": 53194,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "aborted",
+            "durationMs": 2492,
+            "userMessageCount": 1
+          },
+          {
+            "status": "completed",
+            "durationMs": 47538,
+            "userMessageCount": 1
+          }
+        ]
+      },
+      {
+        "scenario": "action-05-stop-resume",
+        "status": "failed",
+        "durationMs": 600374,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "aborted",
+            "durationMs": 2728,
+            "userMessageCount": 0
+          },
+          {
+            "status": "running",
+            "durationMs": 594416,
+            "userMessageCount": 1
+          }
+        ]
+      },
+      {
+        "scenario": "action-05-stop-resume",
+        "status": "passed",
+        "durationMs": 38111,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "aborted",
+            "durationMs": 2546,
+            "userMessageCount": 1
+          },
+          {
+            "status": "completed",
+            "durationMs": 32333,
+            "userMessageCount": 1
+          }
+        ]
+      }
+    ],
+    "warmup": {
+      "model": "lan/local-quality",
+      "durationMs": 2691,
+      "status": "passed"
+    },
+    "maxActive": 1,
+    "failureReason": "Resume became available, but unpersisted original goal was absent from native model history; clarification waited until original 600-second deadline."
+  },
+  "finalLan": {
+    "model": "local-quality",
+    "sameBatch": true,
+    "results": [
+      {
+        "scenario": "action-05-stop-resume",
+        "status": "passed",
+        "durationMs": 56328,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "aborted",
+            "durationMs": 2500,
+            "userMessageCount": 1
+          },
+          {
+            "status": "completed",
+            "durationMs": 50804,
+            "userMessageCount": 1
+          }
+        ]
+      },
+      {
+        "scenario": "action-05-stop-resume",
+        "status": "passed",
+        "durationMs": 95027,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "aborted",
+            "durationMs": 2454,
+            "userMessageCount": 1
+          },
+          {
+            "status": "completed",
+            "durationMs": 89497,
+            "userMessageCount": 1
+          }
+        ]
+      },
+      {
+        "scenario": "action-05-stop-resume",
+        "status": "passed",
+        "durationMs": 59007,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "aborted",
+            "durationMs": 2584,
+            "userMessageCount": 1
+          },
+          {
+            "status": "completed",
+            "durationMs": 53923,
+            "userMessageCount": 1
+          }
+        ]
+      }
+    ],
+    "warmup": {
+      "model": "lan/local-quality",
+      "durationMs": 862,
+      "status": "passed"
+    },
+    "maxActive": 1,
+    "credentialScan": {
+      "scanned": 208,
+      "matches": 0,
+      "skippedLinks": 510
+    }
+  },
+  "finalMimo": {
+    "model": "mimo-v2.6-flash",
+    "results": [
+      {
+        "scenario": "action-05-stop-resume",
+        "status": "passed",
+        "durationMs": 38294,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "aborted",
+            "durationMs": 2994,
+            "userMessageCount": 1
+          },
+          {
+            "status": "completed",
+            "durationMs": 31771,
+            "userMessageCount": 1
+          }
+        ]
+      }
+    ],
+    "credentialScan": {
+      "scanned": 199,
+      "matches": 0,
+      "skippedLinks": 510
+    }
+  }
+}
