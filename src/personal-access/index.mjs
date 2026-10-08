@@ -120,6 +120,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get attachmentStores() { return attachmentStores; },
     get authenticate() { return authenticate; },
     get backend() { return backend; },
+    get sessionOperations() { return sessions; },
     get browserReader() { return browserReader; },
     get browserToolSource() { return browserToolSource; },
     get callBackend() { return callBackend; },

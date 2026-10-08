@@ -659,3 +659,10 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 .resource-tool-summary { overflow-wrap: anywhere; padding: var(--wm-space-8) 0; }
 
 .queued-task .conversation-task-actions { margin: 0; gap: var(--wm-space-4); }
+.session-list .session-row { display: flex; align-items: center; }
+.session-list .session-row > button:first-child { flex: 1; min-width: 0; }
+.session-list .session-more { width: auto; flex: none; font-size: var(--wm-font-size-11); }
+.confirm-dialog .dialog-body > button { margin-top: var(--wm-space-12); margin-right: var(--wm-space-8); }
+.confirm-dialog label { display: flex; align-items: start; gap: var(--wm-space-8); margin-top: var(--wm-space-18); }
+.confirm-dialog input[type=checkbox] { flex: none; width: var(--wm-space-18); height: var(--wm-space-18); min-height: 0; padding: 0; margin: var(--wm-space-4) 0 0; accent-color: var(--accent); }
+.confirm-dialog .form-error:empty { display: none; }
