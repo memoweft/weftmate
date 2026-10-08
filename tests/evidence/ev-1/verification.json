@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "modelRunsBaseCommit": "1f29811b3b31aa59306ecc41931aef4d64002221",
+  "mergedMainBeforeCommit": "ee74c0d5772c51346e74d08ed6bcd356b3bd76e6",
+  "relatedTests": {
+    "evalAndRiskPolicy": 22,
+    "nativeApprovalsAndTools": 31,
+    "failed": 0,
+    "skipped": 0
+  },
+  "typecheck": "passed after main merge",
+  "offlineModelRequests": 0,
+  "lanArtifactChecksPassed": 200,
+  "lanArtifactChecksTotal": 200,
+  "modelScenarios": {
+    "originalSixPassed": 5,
+    "originalSixTotal": 6,
+    "extraPassed": 2,
+    "extraTotal": 2,
+    "action04Passed": 2,
+    "action04Total": 2,
+    "action06Passed": 2,
+    "action06Total": 2
+  },
+  "usage": {
+    "requests": 62,
+    "requestsWithUsage": 56,
+    "requestsWithoutUsage": 6,
+    "rejected429": 0,
+    "input": 664140,
+    "cachedInput": 429184,
+    "output": 12803,
+    "knownEstimatedCny": 0.26914568
+  },
+  "credentialScan": {
+    "scanned": 488,
+    "matches": 0,
+    "skippedSharedDependencyLinks": 1020
+  },
+  "remaining": "action-02 PowerShell dynamic $p WriteAllText target remains unresolved and requires overwrite approval. No semantic judge or memory implementation changes.",
+  "publicScan": {
+    "files": 15,
+    "matches": 0
+  },
+  "isolatedModelProcessLeftovers": 0
+}
