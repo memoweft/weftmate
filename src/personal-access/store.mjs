@@ -1,3 +1,5 @@
+import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
+import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { randomUUID } from 'node:crypto';
 import { open, rename, rm } from 'node:fs/promises';
 import { ensurePrivateFile } from '../private-host-storage.mjs';
@@ -43,6 +45,7 @@ import { APPROVAL_MODES, RISK_CATEGORIES } from '../plugins/personal-approval-po
 import { artifactContentType } from '../personal-artifacts/index.mjs';
 
 export async function durableWrite(file, state, shouldCommit = () => true) {
+  const releaseWrite = await enterProfileWrite(file);
   const tmp = `${file}.${randomUUID()}.tmp`;
   let handle;
   try {
@@ -70,6 +73,7 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
   } finally {
     await handle?.close().catch(() => {});
     await rm(tmp, { force: true }).catch(() => {});
+    releaseWrite();
   }
 }
 
@@ -506,6 +510,7 @@ export function validateSingleStore(store) {
               Object.keys(item).some((key) => !['requestId', 'at', 'targets', 'lastAttemptAt', 'queuedOnly'].includes(key))) ||
             !validTime(command.taskControl.updatedAt) ||
             Object.keys(command.taskControl).some((key) => !['state', 'stopRequests', 'updatedAt'].includes(key)))) ||
+          (command.scheduleSourceId !== undefined && !scheduledCommandSource(store, command)) ||
           (command.receiptId !== undefined && !validId(command.receiptId)) ||
           (command.sourceAuthEpoch !== undefined && (!Number.isSafeInteger(command.sourceAuthEpoch) ||
             command.sourceAuthEpoch < 0 || !['password', 'cloud'].includes(store.devices[command.sourceDeviceId].authKind) ||

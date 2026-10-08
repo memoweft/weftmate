@@ -1,3 +1,4 @@
+import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
 import { lstat, open, rename, rm } from 'node:fs/promises';
@@ -70,6 +71,7 @@ export function createPersonalArtifactStore(root) {
       await ensurePrivateDirectory(root);
       await ensurePrivateDirectory(path.dirname(path.dirname(file)));
       await ensurePrivateDirectory(path.dirname(file));
+      const releaseWrite = await enterProfileWrite(file);
       const tmp = `${file}.${randomUUID()}.tmp`;
       let handle;
       try {
@@ -88,6 +90,7 @@ export function createPersonalArtifactStore(root) {
       } finally {
         await handle?.close().catch(() => {});
         await rm(tmp, { force: true }).catch(() => {});
+        releaseWrite();
       }
     },
   };

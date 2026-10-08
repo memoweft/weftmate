@@ -187,7 +187,7 @@ export const PROFILE_PATCH_TEMPLATE_R14 = PROFILE_PATCH_TEMPLATE_R13.replace('�
 export const PROFILE_PATCH_TEMPLATE_R15 = PROFILE_PATCH_TEMPLATE_R14
   .replace('    - id: weftmate-personal-memory', "    - id: weftmate-personal-task-control\n      name: ./plugins/weftmate-personal-task-control.mjs\n    - id: weftmate-personal-memory")
 export const PROFILE_PATCH_TEMPLATE = PROFILE_PATCH_TEMPLATE_R15
-  .replace('    - id: weftmate-personal-task-control', "    - id: weftmate-personal-conversation-context\n      name: ./plugins/weftmate-personal-conversation-context.mjs\n    - id: weftmate-personal-task-control")
+  .replace('    - id: weftmate-personal-task-control', "    - id: weftmate-personal-schedules\n      name: ./plugins/weftmate-personal-schedules.mjs\n    - id: weftmate-personal-conversation-context\n      name: ./plugins/weftmate-personal-conversation-context.mjs\n    - id: weftmate-personal-task-control")
 
 export const PROFILE_PATCH_TEMPLATE_R3_PICKER = `# WeftMate 补丁层（R3）：叠加在 bundle patch（dsh-base → dsh-web-app）之上，最后写者赢。
 # 挂 weftmate 自有宿主/客户端插件行（宿主行 + 客户端 dsh.client 行）。
@@ -403,6 +403,9 @@ async function writePluginAssets(dir: string): Promise<boolean> {
     [join(PLUGINS_DIR, 'weftmate-personal-memory.mjs'), join(dir, 'plugins', 'weftmate-personal-memory.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-conversation-context.mjs'), join(dir, 'plugins', 'weftmate-personal-conversation-context.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-task-control.mjs'), join(dir, 'plugins', 'weftmate-personal-task-control.mjs')],
+    [join(PLUGINS_DIR, 'weftmate-personal-schedules.mjs'), join(dir, 'plugins', 'weftmate-personal-schedules.mjs')],
+    [join(here, 'personal-access', 'schedules-native.mjs'), join(dir, 'personal-access', 'schedules-native.mjs')],
+    [join(here, 'personal-access', 'schedules-calendar.mjs'), join(dir, 'personal-access', 'schedules-calendar.mjs')],
     [join(PLUGINS_DIR, 'weftmate-personal-shared-chat-preset.mjs'), join(dir, 'plugins', 'weftmate-personal-shared-chat-preset.mjs')],
     [join(PLUGINS_DIR, 'weftmate-mod-projects.mjs'), join(dir, 'plugins', 'weftmate-mod-projects.mjs')],
     [MOD_DEVELOPMENT_PLUGIN_SRC, join(dir, 'plugins', 'weftmate-mod-development.mjs')],
@@ -781,6 +784,7 @@ export interface DshWebRuntimeOptions {
     sessionId: string, turn: number, query?: string, userMessageId?: string | null,
     boundary?: Record<string, unknown> }>) => Promise<unknown>
   /** First-turn, owner-bound phone conversation context from this managed child only. */
+  personalScheduleHandler?: (request: Readonly<{ action: string, sessionId: string, text?: string, deliveryId?: string, sourceReceiptId?: string }>) => Promise<unknown>
   personalConversationContextHandler?: (request: Readonly<{ id: string, sessionId: string,
     turn: number, step: 1, receiptId: string, messageHash: string }>) => Promise<unknown>
   /** Unit-test seam only; production callers leave this unset. */
@@ -1136,6 +1140,7 @@ export class DshWebRuntime {
     personalDesktopRequestHandler: DshWebRuntimeOptions['personalDesktopRequestHandler']
     personalApprovalRuntimeClosedHandler: DshWebRuntimeOptions['personalApprovalRuntimeClosedHandler']
     personalMemoryRequestHandler: DshWebRuntimeOptions['personalMemoryRequestHandler']
+    personalScheduleHandler: DshWebRuntimeOptions['personalScheduleHandler']
     personalConversationContextHandler: DshWebRuntimeOptions['personalConversationContextHandler']
     testOnlySecureCompositionPreflight: (() => Promise<void>) | undefined
     testOnlyAfterSecureCompositionSnapshot: ((snapshot: Readonly<{ digest: string, entries: readonly unknown[] }>) => Promise<void>) | undefined
@@ -1195,6 +1200,7 @@ export class DshWebRuntime {
       personalDesktopRequestHandler: options.personalDesktopRequestHandler,
       personalApprovalRuntimeClosedHandler: options.personalApprovalRuntimeClosedHandler,
       personalMemoryRequestHandler: options.personalMemoryRequestHandler,
+      personalScheduleHandler: options.personalScheduleHandler,
       personalConversationContextHandler: options.personalConversationContextHandler,
       testOnlySecureCompositionPreflight: options.testOnlySecureCompositionPreflight,
       testOnlyAfterSecureCompositionSnapshot: options.testOnlyAfterSecureCompositionSnapshot,
@@ -2168,6 +2174,22 @@ export class DshWebRuntime {
     )
   }
 
+  private handlePersonalScheduleMessage(child: ChildProcess, message: unknown): void {
+    if (!message || typeof message !== 'object') return
+    const row = message as Record<string, unknown>
+    if (row.protocol !== 'weftmate.personal-schedules.v1' || typeof row.id !== 'string' ||
+        !/^schedule-[0-9a-f-]{36}$/.test(row.id) || typeof row.sessionId !== 'string' ||
+        !/^[A-Za-z0-9_-]{1,128}$/.test(row.sessionId) || !['context', 'execute'].includes(String(row.action))) return
+    if (this.closed || this.child !== child || this.closedChildren.has(child) || !this.opts.personalScheduleHandler) return
+    const respond = (value: object) => { if (child.connected && this.child === child) child.send({ protocol: row.protocol, id: row.id, ...value }) }
+    const input = { action: row.action as string, sessionId: row.sessionId,
+      ...(typeof row.text === 'string' ? { text: row.text } : {}),
+      ...(typeof row.deliveryId === 'string' ? { deliveryId: row.deliveryId } : {}),
+      ...(typeof row.sourceReceiptId === 'string' ? { sourceReceiptId: row.sourceReceiptId } : {}) }
+    void this.opts.personalScheduleHandler(input).then(result => respond({ ok: true, result }),
+      () => respond({ ok: false }))
+  }
+
   private handlePersonalConversationContextMessage(child: ChildProcess, message: unknown): void {
     if (!message || typeof message !== 'object' || Array.isArray(message)) return
     const row = message as Record<string, unknown>
@@ -2373,6 +2395,7 @@ export class DshWebRuntime {
         this.handleCredentialMessage(child, message)
         this.handlePersonalDesktopMessage(child, message)
         this.handlePersonalMemoryMessage(child, message)
+        this.handlePersonalScheduleMessage(child, message)
         this.handlePersonalConversationContextMessage(child, message)
         this.handleTaskStopMessage(child, message)
         this.handleProjectProofMessage(child, message)

@@ -371,6 +371,29 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 
 桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）只需按本节接线。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
 
+
+### 3.18 提醒与定时任务（SCH-1，M2）
+
+宿主复用 DSH schedule（原生定时调度）的持久事件、计时、事务与派发，执行使用原对话命令队列和 DSH jobs（后台任务）。用户在对话中建立一次性、固定间隔、每日或每周任务；时间按 3.17 保存的账号 `timeZone` 解释，未保存时沿用宿主时区。确认用一句话复述当地时间、重复规则和内容。建立和口头取消由模型调用原生 `schedule_create/list/delete` 与管理工具完成，不增加第二个调度器或自然语言 HTTP（网络接口）解析端点。
+
+所有路径均以 `/personal/v1` 为前缀，沿用账号 Cookie（会话凭据）/设备认证、Origin（来源）和写操作 CSRF（跨站请求伪造）校验。读取要求 `sessions:read`，管理要求 `commands:write`；仅返回当前账号拥有的 `personal-remote` 对话，不允许操作其他账号或只读共享对话。
+
+| 方法与路径 | 请求 | 响应 / 语义 |
+|---|---|---|
+| GET `/schedules` | 无查询参数 | 200 `{items:Schedule[]}`；包含有效、暂停与已完成项；删除后不再返回 |
+| POST `/schedules/{sessionId}/{id}/pause` | `{}` | 200 `{ok:true}`；停止未来派发，保留管理项和规则；重复暂停幂等 |
+| POST `/schedules/{sessionId}/{id}/resume` | `{}` | 200 `{ok:true}`；暂停项重新交给 DSH，重复恢复幂等；周期项从下一次当地日历/间隔时间继续，已过期的一次性项恢复后立即提醒 |
+| DELETE `/schedules/{sessionId}/{id}` | 无请求体 | 200 `{ok:true}`；删除未来派发与管理项，保留历史提醒和已启动的对话任务；不存在项404 |
+| POST `/schedules/{sessionId}/{id}/run` | `{}` | 200 `{ok:true}`；立即提醒或将工作排入原对话，暂停状态与原下次时间保持；每次请求代表一次独立手动运行，客户端不得在响应不确定时自动重发 |
+| GET `/notifications` | 无查询参数 | 200 `{items:Notification[]}`；持久提醒/定时执行通知列表，手机可读取；S3 远程推送另包接入 |
+
+`Schedule`：`{id,nativeId,sessionId,text,kind,timeZone,repeat,state,nextRunAt,lastRunAt,approvalMode}`。`id` 是对话内稳定管理标识；日历续期或恢复时 `nativeId` 可变，客户端只使用 `sessionId/id` 管理。`kind=reminder|task`；`repeat=null|{kind:interval,seconds}|{kind:daily,time}|{kind:weekly,time,weekday}`，`time` 为 `HH:mm:ss`，`weekday` 为0–6（周日0、周一1）。`state=scheduled|paused|completed`；暂停/完成时 `nextRunAt=null`；时间戳为 UTC（协调世界时）ISO 字符串。`approvalMode` 记录建立时模式；实际执行读取原对话当时的模式和分类授权，沿用原用户回执建立的账号意图；建立时登录凭据到期不取消长期任务，设备撤销、账号授权、当前认证版本及原对话审批仍有效。
+
+`Notification`：`{id,sessionId,text,kind,scheduledAt,createdAt,missed,messageId}`。原对话历史增加 `assistant.message.data.reminder=true`（可选字段，旧客户端可忽略）；该消息采用原生持久 seq（事件序号），正常历史分页和事件订阅均可见。纯提醒无需模型推理；Windows 程序显示系统通知，点击进入所属对话；桌面按账号/会话/seq 持久去重，开机补发也显示一次。任务先在原对话提示，再按正常审批模式执行，步骤、审批和成果继续使用已有任务契约。
+
+宿主启动时恢复拥有有效任务的原对话。一次性错过后补一次；固定间隔使用 DSH 最新一次决策，不逐次重放积压；日历重复补一次后重建下一次未来日期，保留当地时间（含夏令时切换）。迟到至少一分钟时消息标明「错过了 X 的提醒/定时任务」。原生 `at` 拒绝首次选择的不存在夏令时时刻，重叠时选择较早瞬间；日历续期遇到不存在的时刻跳过该次，保留下一个有效日期。宿主关机期间不在云端执行电脑任务（D13）；手机通过通知列表等宿主恢复，远程推送留 S3。派发、模型完成和用户读到通知是不同状态；保持 DSH 原生崩溃恢复边界，不宣称外部副作用严格恰好一次。
+
+
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
 ### 4.1 事件结构与原生来源
@@ -803,3 +826,22 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 撤权沿用宿主 `/hosts/revocations` 云签名 `wm-cloud-revocations+jwt`（撤权令牌），新增可选 `memberships:[{sub,epoch}]` 权威归属快照。新宿主验证原 issuer（发行者）/固定 JWKS（签名公钥集合）/host audience（宿主受众）后，对快照中消失的活跃绑定标为 unbound，撤销其云 Cookie、内容设备与正在进行的响应；本地账号/应急密码不变。快照先于 outbox（待同步记录）发送处理，已删除账号的旧状态记录不能阻塞撤权；发送后再拉一次事件以保持单次同步撤权。已删除安装无公钥可认证请求，只返回不含账号信息的云签名空快照，不保留账号墓碑。watermark（事件水位）取 AUTOINCREMENT（递增序列），删除不会倒退。沿用每 60 秒/启动同步的宿主撤权延迟；云端中继 socket（连接）在删除提交后立即关闭，离线宿主联网同步后撤权。
 
 业务码复用 400 CHALLENGE_INVALID / CODE_INVALID / INVALID_REQUEST / INVALID_DEVICE、401 INVALID_CREDENTIALS / UNAUTHORIZED / DPOP_INVALID、403 FORBIDDEN / ORIGIN_NOT_ALLOWED、409 EMAIL_IN_USE、429 RATE_LIMITED（Retry-After）。旧 7.1 `/auth/email/{request,confirm}` 的密码 + Bearer 形式保留兼容并补旧邮箱通知；新客户端使用本节接口。旧邮箱通知故障不回滚已完成换绑，notificationAccepted=false；发验证码失败仍为 503 MAIL_UNAVAILABLE。
+
+## 8. 本地备份与恢复（BK-1）
+
+以下接口由内容宿主提供，沿用 Cookie（会话凭据）/CSRF（跨站请求伪造防护）与 `account:manage` 权限。备份包含整个宿主，只有本地旧所有者或该安装已验证的桌面云归属账号可访问；普通配对成员返回 403 `FORBIDDEN`。路径均是宿主电脑上的路径，远程客户端不能用手机本地路径代替。无 query（查询参数），写请求字段须精确匹配。
+
+| 方法与完整路径 | 请求 | 响应 / 语义 |
+|---|---|---|
+| GET `/personal/v1/backups` | — | 200 `{settings,status,backups,excludedCredentials:true,localUnencrypted:true}`；`settings={enabled,directory,dailyDays,weeklyCopies}`，默认启用、宿主数据目录旁 `Backups/`、7 天与 4 周；每条 `backups={id,createdAt,reason,size,verification}`，大小字节，`verification=valid\|invalid` 为重新流式 SHA-256（安全哈希算法）校验结果，时间 UTC（协调世界时）ISO 8601 |
+| PATCH `/personal/v1/backups/settings` | 上述设置字段的子集 | 200 `{settings}`；目录须为绝对路径，不能位于宿主数据根内；天数与周份数均为正整数 |
+| POST `/personal/v1/backups` | `{}` | 202 `{state:"succeeded",restartsHost:false,requiresLogin:false,backup}`；拒绝活动任务，程序内完成在线快照后返回；窗口、进程和登录保持，结果持久化到 `status` |
+| POST `/personal/v1/backups/import` | `{path}` | 201 `{id}`；校验宿主电脑上的外来 `.wmb` 包，复制到当前备份目录并再次校验，原子发布，不替换数据 |
+| POST `/personal/v1/backups/restore` | `{id,confirm:true}` | 202 `{state:"pending",restartsHost:true,requiresLogin:true}`；先校验来源、备份当前状态、停写入服务、重新校验、暂存/替换、重启；新数据成功启动后提交，替换/启动失败自动回滚；按新 `GET /backups` 的 `status` 判断结果 |
+| POST `/personal/v1/backups/prepare-account-deletion` | `{}` | 本机注销前调用：程序内完成在线安全快照后返回 200 `{ready:true,restartsHost:false}`，同一次确认中继续执行 7.9 的云注销；备份失败不执行云注销，密码仅留在当次页面内存 |
+
+`status` 为 `null`，或 `{state,at?,reason?,backup?,restored?,code?}`；`state=pending\|running\|deferred\|succeeded\|failed\|rolled-back`。`succeeded` 表示上次操作成功；恢复重启的 API（应用接口）可用之前不会提交事务，启动失败回滚后报告 `rolled-back`。只有请求恢复后拒绝新的写请求，避免关闭前接收新任务；普通备份仅短暂排队文件写入，并在这一边界为 SQLite 固定只读事务视图；恢复文件写入后在线复制该视图，后续 WAL（预写日志）提交不进入该数据库快照，数据库复制、压缩和校验期间正常接收操作。每日调度遇到任务会推迟，暂停写入/排空/捕获超时（最多 2 秒）不发布包，标记 `deferred`，下个每分钟检查再试。仅恢复或升级安装重启，恢复后接入端口可能变化，客户端需重新发现连接。原机浏览器登录保持；恢复会清除包内设备会话，因此须重新登录。
+
+包包含账号/设置、DSH（助手运行时）会话与日志、对话工作目录/经验、成果、用量、健康和 MemoWeft Core（记忆核心）数据库。数据库使用 SQLite（嵌入式数据库）安全在线备份，不复制活动 WAL（预写日志）或 SHM（共享内存文件）。模型密钥、云令牌、设备私钥、浏览器登录与缓存、自动生成的 DSH 依赖链接不进包；账号密码哈希保留供重新登录，历史设备仅留撤销后的元数据与不可用的校验值以维持命令引用；来源会话不能继续使用。换机后重新填写模型密钥；云端重新验证 subject（账号标识）与 issuer（发行者）、重新认领新安装后，使用包内不含凭据的归属映射接回原账号，不能靠邮箱推断归属。当前安装 ID 与其本机私钥保持，来源安装私钥不会被导入。
+
+默认保留最近 7 天全部成功包，再加最近 4 个日历周各最新一份；UTC 周从周一开始，始终保留最新成功包，坏包不自动删除。临时文件落盘后原子改名，包内含版本、时间、原因、逐文件大小/SHA-256 与清单 SHA-256。坏包 409 `BACKUP_CORRUPT`，数据中的链接 409 `BACKUP_SYMLINK`，活动任务 409 `SESSION_BUSY`，已有操作 409 `CONFLICT`，暂停写入超时 409 `BACKUP_PAUSE_TIMEOUT`，无备份能力 503 `CAPABILITY_UNAVAILABLE`，关闭期间 503 `SERVICE_CLOSING`。本地包未加密，应保存在可信磁盘；S4 云端加密备份尚未实现。
