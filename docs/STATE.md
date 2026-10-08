@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-5 | DS-2 多端审稿页 | [PR #75](https://github.com/memoweft/weftmate/pull/75)（`wp/ds-2-review-gallery`）：八场景浅深清单、真实 Electron（桌面程序框架）生产窗口 / 390×844 Chromium（浏览器引擎）隔离合成截图、自包含 HTML（网页文件）、原生证据命名与最新来源收集、独立 Actions（自动化工作流）产物已实现。32 张新截图 + 16 张历史设备图；证据选择 / 扫描 2/2、两宽度×两主题响应式 / 图片尺寸解码 / 放大键盘验证及独立视觉复审通过，交付 Orchestrator/ds-2-gallery/index.html。仅改审稿工具，客户端契约无变更；完整 CI（持续集成）与手动工作流见 PR 当前提交，待 Claude 审查；安卓 / 苹果本包不新拍，缺图待补，Watch 七个完整页面标此端尚无 |
+| Codex · Windows-5 | USE-1 用量与费用 | `wp/use-1-usage-cost`：原生 DSH（模型执行框架）与兼容响应用量记账、价格快照、月 / 日聚合、按对话 / 模型排行、80% 提示与 100% 云请求拒绝、本地豁免及仅本月临时上限；桌面 / 手机用量页面与标题入口完成。新增 7/7、相关界面 / 共享功能 84/84、模型 / 移动 / 生成资产 62/62、宿主 / 账号 / 调度 52/52 与类型检查通过；真实 Electron（桌面程序框架）MiMo 用量 / 缓存 / 费用逐项一致，低上限请求未到达上游，临时提高恢复。截图见 [USE-1](../tests/evidence/use-1/README.md)。完整 CI（持续集成）交本分支 PR（合并请求）；Apple（苹果客户端）接线、离线手机直连记账与真实 Android（安卓）壳验收留后续 |
 | Codex · Windows-4 | QV-1 LAN（局域网）本地模型场景复验 | [PR #73](https://github.com/memoweft/weftmate/pull/73)（`wp/qv-1-lan-model-baseline`）：测试入口新增 `--lan`，地址/密钥仅进程内，单次预热、上游请求串行且每批最大并发1；基础6/10（办事4/6、记忆2/4），含M2d与M1-0b共8/14，失败不覆盖。独立停止续做51.86秒通过；批次早停已aborted（已停止）但canResume=false的产品控制缺口保留，M2d纠正900.37秒澄清超时、三段对话82.93秒答旧偏好未答周六。历史Qwen/MiMo逐项对照与定位见[证据](../tests/evidence/qv-1/README.md)。本地定向14/14、语法与脱敏扫描通过，测试凭据/隔离进程剩余0；已合入最新main，完整CI（持续集成）见本分支PR（合并请求），待Claude审查；只改测试、不修产品、不改契约 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | FE-1a 桌面界面与功能分层 | `wp/fe-1a-ui-layers`：共享功能层 src/ui-core/、桌面独立组件与集中 layout.js 组装完成；手机 FE-1b 的资产清单与传输 / 呈现接口已说明。纯逻辑15/15、桌面及记忆回归64/64、名称 / 角色交互3/3、类型检查与令牌检查通过；真实 Electron（桌面程序框架）同组流程及侧栏临时换位通过，9对截图零像素差异。[证据](../tests/evidence/fe-1a/README.md)；业务契约无变更，完整 CI（持续集成）以本分支 PR（拉取请求）最新提交为准，待 Claude 审查 |
@@ -88,6 +88,8 @@
 MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌），缓存54,848，输出4,829，共95,668；按官方现价计**¥0.04674596（约¥0.05）**，不是账单，包含诊断与Qwen方向换模型时的MiMo调用。四个隔离根665实际文件密钥扫描0、凭据／宿主进程0；8081原模型、98,304/单槽及无切换／活动／排队／维护租约保持。未读日用保管库、未自起模型、未停止或重启8080。Core最新ee718d6由独立源码真实MiMo、正常形成路径真实Qwen及自身完整CI验证；本仓CI仍固定已合入M2b的0a0c54c，Core由Claude squash（压缩合并）后需更新固定提交。客户端接口无变更。
 
 ## 契约变更
+
+- **USE-1**：CLIENT_API 3.17 新增 GET `/usage?month&sessionId`、GET/PATCH `/settings/usage`，账号隔离的 token（令牌） / 缓存 / 费用月日统计、价格与仅本月临时上限；新增 402 `USAGE_LIMIT_REACHED`，云请求达到上限拒绝、本地豁免。手机原生精确业务路径已接；Apple 按本节接线，旧客户端兼容。
 
 - **M1-0b**：CLIENT_API 3.5 / 3.6 / 4.1 新增发送 `intent:steer|queue`（省略默认 steer，旧 mode 兼容）、Command.intent / 原生插话 rootTaskId、POST `/tasks/{taskId}/cancel`；queued/started/ended 投影原生 inbox（收件队列）/step，保留 seq / receiptId，生命周期关联根命令 ID 与 turnTaskId。停止保留其他排队目标，取消竞争已开始时409；桌面/手机/Apple 界面另包接入，未修改界面。
 - **S1e / D30**：CLIENT_API **7.9** 新增云 DPoP `/auth/account/delete`、`/auth/email/change/{request,confirm}`、`/devices/rename`、`/auth/logout/others`；撤权签名响应新增可选 `memberships:[{sub,epoch}]`，新宿主按缺失归属撤销云访问/保留本地应急登录；旧邮箱接口兼容，schema 6 不变。LG-1 / LG-2 账户设置按本节接线，删除不可恢复确认须明确云/本地范围。
