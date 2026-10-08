@@ -1,7 +1,7 @@
 import Foundation
 
 private struct AuthReply: Codable { let account: AccountProfile; let device: DeviceRecord; let csrfToken: String }
-private struct StatusReply: Codable { let ownerId: String; let hostId: String }
+private typealias StatusReply = NativeHostStatus
 private struct Credential: Codable, Sendable {
     var session: AccountSession
     let cookie: String
@@ -51,6 +51,8 @@ public actor PersonalClient {
     private let store: any CredentialStore
     private let transport: any HTTPTransport
     private let platform: ApplePlatform
+    private let nativeVersion: String
+    private var compatibilityNotice: String?
     private var credential: Credential?
     private var epoch: UInt64 = 0
     private var syncEvents: [SyncEvent] = []
@@ -77,8 +79,9 @@ public actor PersonalClient {
     private let decoder = JSONDecoder()
 
     public init(credentialStore: any CredentialStore = KeychainCredentialStore(),
-                transport: any HTTPTransport = URLSessionTransport(), platform: ApplePlatform = .current) {
-        self.store = credentialStore; self.transport = transport; self.platform = platform
+                transport: any HTTPTransport = URLSessionTransport(), platform: ApplePlatform = .current,
+                nativeVersion: String = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.0") {
+        self.store = credentialStore; self.transport = transport; self.platform = platform; self.nativeVersion = nativeVersion
     }
     /// H1 draft: never send to a different account after an asynchronous account switch.
     public func uploadHealthSummary(_ summary: HealthDailySummary, account: LocalAccountScope) async throws -> HealthUploadResult {
@@ -131,6 +134,7 @@ public actor PersonalClient {
             guard status.ownerId == me.account.ownerId, status.hostId == saved.session.hostId, validCSRF(me.csrfToken) else {
                 throw APIFailure.identityMismatch
             }
+            try requireNativeCompatibility(status)
             let updated = Credential(session: AccountSession(server: server, account: me.account,
                 device: currentDevice(me.device), hostId: status.hostId, verification: .verified), cookie: saved.cookie, csrf: me.csrfToken)
             try persist(updated); credential = updated
@@ -180,6 +184,7 @@ public actor PersonalClient {
         catch { try check(generation); throw error }
         try check(generation)
         guard status.ownerId == reply.account.ownerId, validID(status.hostId) else { throw APIFailure.identityMismatch }
+        try requireNativeCompatibility(status)
         let verified = Credential(session: AccountSession(server: server, account: reply.account,
             device: currentDevice(reply.device), hostId: status.hostId, verification: .verified), cookie: cookie, csrf: reply.csrfToken)
         try persist(verified); credential = verified
@@ -242,6 +247,7 @@ public actor PersonalClient {
         let status: StatusReply = try await request(server: server, path: "/status", auth: provisional)
         try check(generation); try Task.checkCancellation()
         guard status.ownerId == reply.account.ownerId, status.hostId == hostID else { throw APIFailure.identityMismatch }
+        try requireNativeCompatibility(status)
         try persist(provisional); credential = provisional
         return .authenticated(provisional.session)
     }
@@ -319,10 +325,37 @@ public actor PersonalClient {
     public func setUsageTimeZone(_ timeZone: String) async throws -> UsageSettings {
         return try await parityRequest(path: "/settings/usage", method: "PATCH", body: JSONSerialization.data(withJSONObject: ["timeZone": timeZone]))
     }
-    private func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil) async throws -> T {
+    public func settingsSchedules() async throws -> ScheduleList { try await parityRequest(path: "/schedules") }
+    public func manageSchedule(sessionID: String, id: String, action: ScheduleAction) async throws {
+        let path = "/schedules/\(try checkedID(sessionID))/\(try checkedID(id))"
+        let _: SettingsActionReply = try await parityRequest(path: path + (action == .delete ? "" : "/" + action.rawValue),
+            method: action == .delete ? "DELETE" : "POST", body: action == .delete ? nil : Data("{}".utf8))
+    }
+    public func settingsStatus() async throws -> HostSystemSnapshot { try await parityRequest(path: "/system") }
+    public func backgroundModelPreference() async throws -> BackgroundModelPreference { try await parityRequest(path: "/settings/models") }
+    public func setBackgroundModel(_ profileID: String?) async throws -> BackgroundModelPreference {
+        let fields: [String: Any] = ["backgroundModelProfileId": profileID.map { $0 as Any } ?? NSNull()]
+        return try await parityRequest(path: "/settings/models", method: "PATCH", body: JSONSerialization.data(withJSONObject: fields))
+    }
+    public func restartSettingsService(_ service: HostService) async throws -> HostSystemSnapshot {
+        try await parityRequest(path: "/system/" + service.rawValue + "/restart", method: "POST", body: Data("{}".utf8), timeoutInterval: 360)
+    }
+    public func settingsBackups() async throws -> HostBackups { try await parityRequest(path: "/backups") }
+    public func setBackupPreferences(_ preferences: BackupPreferences) async throws {
+        struct Reply: Decodable { let settings: BackupPreferences }
+        let _: Reply = try await parityRequest(path: "/backups/settings", method: "PATCH", body: JSONEncoder().encode(preferences))
+    }
+    public func createBackup() async throws -> BackupActionReply {
+        try await parityRequest(path: "/backups", method: "POST", body: Data("{}".utf8))
+    }
+    public func restoreBackup(id: String) async throws -> BackupActionReply {
+        struct Body: Encodable { let id: String; let confirm = true }
+        return try await parityRequest(path: "/backups/restore", method: "POST", body: JSONEncoder().encode(Body(id: try checkedID(id))))
+    }
+    private func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil, timeoutInterval: TimeInterval = 60) async throws -> T {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
-        let response = try await sharedAuthorizedRequest(auth, generation, path: path, method: method, body: body)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: path, method: method, body: body, timeoutInterval: timeoutInterval)
         return try decode(response.body)
     }
 
@@ -1089,11 +1122,11 @@ public actor PersonalClient {
 
     private func sharedAuthorizedRequest(_ auth: Credential, _ generation: UInt64,
                                          path: String, method: String = "GET", body: Data? = nil,
-                                         acceptedErrorStatuses: Set<Int> = []) async throws -> HTTPResponse {
+                                         acceptedErrorStatuses: Set<Int> = [], timeoutInterval: TimeInterval = 60) async throws -> HTTPResponse {
         do {
             try check(generation)
             let response = try await rawRequest(server: auth.session.server, path: path, method: method, body: body, auth: auth,
-                acceptedErrorStatuses: acceptedErrorStatuses)
+                acceptedErrorStatuses: acceptedErrorStatuses, timeoutInterval: timeoutInterval)
             try check(generation)
             return response
         } catch {
@@ -1249,7 +1282,21 @@ public actor PersonalClient {
         // Decode only the documented metadata field; no route or download permission is inferred.
         return try decode(JSONEncoder().encode(value))
     }
+    private func requireNativeCompatibility(_ status: NativeHostStatus) throws {
+        compatibilityNotice = NativeCompatibility.notice(installed: nativeVersion, minimum: status.minimum(for: platform), platform: platform)
+        if let compatibilityNotice { throw APIFailure.nativeUpdateRequired(compatibilityNotice) }
+    }
+    public func nativeUpdateStatus() async throws -> NativeHostStatus {
+        let (auth, generation) = try snapshot()
+        let value: NativeHostStatus = try await authorized(auth, generation, path: "/status")
+        guard value.ownerId == auth.session.account.ownerId, value.hostId == auth.session.hostId else { throw APIFailure.identityMismatch }
+        // Read-only status stays available for About and recovery when a host rolls back its minimum.
+        // Subsequent host operations are blocked while the requirement remains unsatisfied.
+        compatibilityNotice = NativeCompatibility.notice(installed: nativeVersion, minimum: value.minimum(for: platform), platform: platform)
+        return value
+    }
     private func verify(_ auth: Credential, _ generation: UInt64) async throws {
+        if let compatibilityNotice { throw APIFailure.nativeUpdateRequired(compatibilityNotice) }
         let me: AuthReply = try await authorized(auth, generation, path: "/auth/me")
         guard me.account.ownerId == auth.session.account.ownerId, me.device.id == auth.session.device.id,
               validCSRF(me.csrfToken) else {
@@ -1259,6 +1306,7 @@ public actor PersonalClient {
         }
         if auth.session.verification == .unverifiedOffline {
             let status: StatusReply = try await authorized(auth, generation, path: "/status")
+            try requireNativeCompatibility(status)
             guard status.ownerId == me.account.ownerId, status.hostId == auth.session.hostId else {
                 credential = nil; clearCaches(); epoch &+= 1
                 try store.delete(key: credentialKey(server: auth.session.server, platform: platform))
@@ -1278,7 +1326,7 @@ public actor PersonalClient {
         try Task.checkCancellation()
     }
     private func transition(server: ServerConfiguration, clearSaved: Bool) throws -> UInt64 {
-        let old = credential; epoch &+= 1; credential = nil; clearCaches()
+        let old = credential; epoch &+= 1; credential = nil; clearCaches(); compatibilityNotice = nil
         if let old, clearSaved { try store.delete(key: credentialKey(server: old.session.server, platform: platform)) }
         if clearSaved { try store.delete(key: credentialKey(server: server, platform: platform)) }
         return epoch
@@ -1326,10 +1374,10 @@ public actor PersonalClient {
         do { return try decoder.decode(T.self, from: data) } catch { throw APIFailure.invalidResponse }
     }
     private func rawRequest(server: ServerConfiguration, path: String, method: String = "GET",
-                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:]) async throws -> HTTPResponse {
+                            body: Data? = nil, auth: Credential? = nil, acceptedErrorStatuses: Set<Int> = [], extraHeaders: [String: String] = [:], timeoutInterval: TimeInterval = 60) async throws -> HTTPResponse {
         guard let url = URL(string: server.originString + "/personal/v1" + path),
               body?.count ?? 0 <= 262_144 else { throw APIFailure.invalidResponse }
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: url, timeoutInterval: timeoutInterval)
         request.httpMethod = method; request.httpBody = body
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         if let auth { request.setValue(auth.cookie, forHTTPHeaderField: "Cookie") }

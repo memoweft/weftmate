@@ -3238,6 +3238,7 @@ async function bootstrap() {
            mobileUiDir,
            mobileUiTrustedKeys: desktopUpdates.store.trustedKeys,
            hostVersion: appVersion,
+           updateStatus: () => desktopUpdates.state(),
            memoryManager: personalMemoryManager,
           browserReader: personalBrowserReader,
           accountModelManager,

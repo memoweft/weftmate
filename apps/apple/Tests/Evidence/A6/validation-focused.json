@@ -1,0 +1,57 @@
+{
+  "swiftTests": {
+    "passed": 21,
+    "failed": 0,
+    "a6": 8,
+    "a5Regression": 13,
+    "command": "swift test --jobs 2 --filter a6|a5"
+  },
+  "sharedDesignTests": {
+    "passed": 21,
+    "failed": 0,
+    "files": [
+      "settings-registry.test.ts",
+      "settings-ui-contract.test.ts",
+      "design-tokens.test.ts",
+      "icon-system.test.ts"
+    ]
+  },
+  "literalAppleIconIds": {
+    "checked": 17,
+    "missing": 0
+  },
+  "iPhoneUI": {
+    "passedExecutions": 7,
+    "failedFinalExecutions": 0,
+    "skipped": 0,
+    "flows": [
+      "all phone categories",
+      "search and retained position",
+      "conversation ledger deep link",
+      "rename/remove",
+      "logout others",
+      "change email/delete synthetic account",
+      "light/dark review",
+      "pause/resume/run exactly once/confirmed reminder deletion"
+    ],
+    "sourceCommits": [
+      "ee2a9617969980d2171c2f975f06b39bc6b1de70",
+      "8bd63d18736a80f3edc32e93cf4b2e9b21f12acc",
+      "313fc461c6cebed23b86785ed5cf4c387849c9ad"
+    ]
+  },
+  "sourceCommit": "313fc461c6cebed23b86785ed5cf4c387849c9ad",
+  "productionData": false,
+  "realModelCalls": false,
+  "watchSimulator": false,
+  "macDebugBuild": {
+    "passed": true,
+    "sourceCommit": "313fc461c6cebed23b86785ed5cf4c387849c9ad",
+    "xcodeJobs": 2
+  },
+  "fixtureManagers": {
+    "backup": "real local backup manager; settings read over production HTTP",
+    "schedules": "synthetic runtime manager through production HTTP",
+    "system": "synthetic runtime manager through production HTTP"
+  }
+}

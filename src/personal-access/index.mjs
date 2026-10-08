@@ -58,7 +58,7 @@ export { uniqueSessionOwner } from './store.mjs';
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
   mobileUiDir = null, mobileUiTrustedKeys = null, hostVersion = '0.1.0', sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null, updateStatus = null, nativeMinimumVersions = {} }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -114,6 +114,23 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get accountModelForProfile() { return accountModelForProfile; },
     get accountModelManager() { return accountModelManager; },
     get systemManager() { return systemManager; },
+    get nativeMinimumVersions() { return nativeMinimumVersions; },
+    async updateStatus() {
+      if (updateStatus) {
+        const value = await updateStatus();
+        // Only version/status metadata crosses the API; no source URLs, paths or installer actions.
+        return { layers: value.layers.map(({ layer, currentVersion, availableVersion, status, channel }) =>
+          ({ layer, currentVersion, availableVersion, status, channel })) };
+      }
+      let manifest = null;
+      try { manifest = await mobileUi?.current(); } catch { /* Unavailable publisher is shown explicitly. */ }
+      return { layers: [
+        { layer: 'ui', currentVersion: null, status: 'unknown' },
+        { layer: 'app', currentVersion: hostVersion, status: 'disabled' },
+        { layer: 'mobile-ui', currentVersion: manifest?.version || manifest?.uiVersion || null,
+          status: manifest ? 'current' : 'disabled', channel: manifest?.channel || 'stable' },
+      ] };
+    },
     get accountModelView() { return accountModelView; },
     get accountState() { return accountState; },
     get active() { return active; },
