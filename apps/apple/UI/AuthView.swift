@@ -1,155 +1,149 @@
 import SwiftUI
+import WeftMateCore
 
+/// Account layout only. Network, countdown, validation and transitions belong to the model/core.
 struct AuthView: View {
-    @ObservedObject var model: AppleAppModel
-    @State private var register = false
-    @State private var username = ""
-    @State private var password = ""
-    @State private var displayName = ""
-    @State private var showServer = false
-    @FocusState private var field: Field?
-    private enum Field: Hashable { case server, username, password, displayName }
-
+    @ObservedObject var model: CloudLoginModel
+    @State private var showPassword = false
+    @State private var legal: LegalDocument?
     var body: some View {
-        ScrollView {
-            VStack(spacing: AppleTokens.Space.p28) {
-                HStack(spacing: AppleTokens.Space.p12) {
-                    BrandMark()
-                    VStack(alignment: .leading, spacing: AppleTokens.Space.p3) {
-                        Text("WeftMate").font(AppleTokens.Fonts.title2.weight(.semibold)).tracking(AppleTokens.Tracking.brand)
-                        Text("在这里，接上你的话题").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
-                    }
-                    Spacer(minLength: AppleTokens.Space.p0)
-                }
-                .frame(maxWidth: 420)
-
+        ScrollView { accountContent }.background(Weave.canvas).foregroundStyle(Weave.ink)
+            .disabled(model.busy).sheet(item: $legal) { LegalDocumentView(document: $0) }
+            .accessibilityIdentifier("authRoot")
+        #if os(iOS)
+            .scrollDismissesKeyboard(.interactively)
+        #endif
+    }
+    var accountContent: some View {
+            VStack(spacing: AppleTokens.Space.p24) {
+                BrandMark(size: 48)
                 WeaveCard {
                     VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
-                        HStack(alignment: .center, spacing: AppleTokens.Space.p12) {
-                            VStack(alignment: .leading, spacing: AppleTokens.Space.p9) {
-                                Text(register ? "创建你的账户" : "欢迎回来")
-                                    .font(.system(size: AppleTokens.FontSize.f28, weight: .semibold)).tracking(AppleTokens.Tracking.welcomeTitle)
-                                Text("用同一个账户，接上原来的对话。")
-                                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted).lineSpacing(AppleTokens.Space.p4)
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            SpiritView(size: 76)
+                        Text(title).font(AppleTokens.Fonts.title2.weight(.semibold))
+                        fields
+                        if let error = model.error { InlineNotice(message: error, isError: true).accessibilityIdentifier("authError") }
+                        if let notice = model.notice { InlineNotice(message: notice) }
+                        TimelineView(.periodic(from: .now, by: 1)) { context in
+                            let seconds = max(0, Int(ceil(model.retryAt.timeIntervalSince(context.date))))
+                            Button { Task { await model.submit() } } label: {
+                                HStack { if model.busy { ProgressView().controlSize(.small) }; Text(seconds > 0 ? "等待 \(seconds) 秒" : actionTitle) }
+                            }.buttonStyle(PrimaryActionStyle()).disabled(model.busy || !canSubmit || seconds > 0)
+                                .accessibilityIdentifier("accountSubmit")
                         }
-                        Button { model.cloudLogin.showLogin = true } label: {
-                            WeftLabel("用 WeftMate 账号登录", icon: "account")
-                        }.buttonStyle(PrimaryActionStyle()).accessibilityIdentifier("cloudLoginEntry")
-                        Text("直接连接电脑（用户名 + 密码）").font(AppleTokens.Fonts.headline)
-                        Picker("账户操作", selection: $register) {
-                            Text("登录").tag(false)
-                            Text("注册").tag(true)
+                        if model.form.page == .login {
+                            Button("忘记密码？") { model.changePage(.recovery) }.accessibilityIdentifier("accountRecovery")
+                            Button("还没有账号？注册") { model.changePage(.registration) }.accessibilityIdentifier("accountRegistration")
+                        } else {
+                            Button("回到登录") { model.changePage(.login) }
                         }
-                        .pickerStyle(.segmented)
-                        .disabled(model.authBusy)
-
-                        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-                            fieldLabel("账户")
-                            TextField("账户名", text: $username)
-                                .textContentType(.username)
-                                .accountInput().weaveField()
-                                .focused($field, equals: .username)
-                                .submitLabel(.next)
-                                .onSubmit { field = .password }
-                                .accessibilityIdentifier("username")
-                            if register {
-                                Text("账户名为 3–64 个字符，可使用字母、数字、点、横线和下划线。")
-                                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-                            fieldLabel("密码")
-                            SecureField(register ? "15–128 个字符" : "输入密码", text: $password)
-                                .textContentType(register ? .newPassword : .password)
-                                .weaveField().focused($field, equals: .password)
-                                .submitLabel(register ? .next : .go)
-                                .onSubmit { if register { field = .displayName } else { authenticate() } }
-                                .accessibilityIdentifier("password")
-                        }
-
-                        if register {
-                            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-                                fieldLabel("昵称（可选）")
-                                TextField("希望怎么称呼你", text: $displayName)
-                                    .textContentType(.nickname).weaveField()
-                                    .focused($field, equals: .displayName).submitLabel(.go)
-                                    .onSubmit(authenticate)
-                                    .accessibilityIdentifier("displayName")
-                            }
-                        }
-
-                        VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
-                            Button {
-                                withAnimation(AppleTokens.Motion.connection) { showServer.toggle() }
-                            } label: {
-                                HStack(spacing: AppleTokens.Space.p8) {
-                                    WeftIcon("cloud")
-                                    Text(model.serverDisplayName).lineLimit(1)
-                                    Spacer()
-                                    Text(showServer ? "收起" : "更改").font(AppleTokens.Fonts.caption.weight(.medium))
-                                    WeftIcon("chevron", size: 16).font(AppleTokens.Fonts.caption).rotationEffect(.degrees(showServer ? 180 : 0))
-                                }
-                                .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
-                                .padding(.vertical, AppleTokens.Space.p6).contentShape(Rectangle())
-                            }
-                            .buttonStyle(.plain).accessibilityIdentifier("serverSettingsButton")
-                            if showServer {
-                                TextField("https://服务器地址", text: $model.serverInput)
-                                    .serverInput().weaveField().focused($field, equals: .server)
-                                    .submitLabel(.next).onSubmit { field = .username }
-                                    .accessibilityIdentifier("serverURL")
-                                Text("连接你自己的 WeftMate 服务器。更改地址后，登录到该服务器上的账户。")
-                                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineSpacing(AppleTokens.Space.p3)
-                            }
-                        }
-
-                        if let error = model.authError {
-                            InlineNotice(message: error, isError: true)
-                                .accessibilityIdentifier("authError")
-                        }
-
-                        Button(action: authenticate) {
-                            HStack(spacing: AppleTokens.Space.p9) {
-                                if model.authBusy { ProgressView().controlSize(.small).tint(AppleTokens.Colors.white) }
-                                Text(model.authBusy ? "正在连接…" : register ? "注册并登录" : "登录")
-                            }
-                        }
-                        .buttonStyle(PrimaryActionStyle())
-                        .disabled(model.authBusy || username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || password.isEmpty)
-                        .accessibilityIdentifier(register ? "registerButton" : "loginButton")
                     }
-                    .foregroundStyle(Weave.ink)
+                }.frame(maxWidth: 468)
+                if model.form.page == .registration {
+                    VStack(spacing: AppleTokens.Space.p6) {
+                        Text("注册即表示同意").font(AppleTokens.Fonts.caption)
+                        HStack(spacing: AppleTokens.Space.p8) {
+                            Button("《服务条款》") { legal = .terms }
+                            Button("《隐私政策》") { legal = .privacy }
+                        }.font(AppleTokens.Fonts.caption)
+                    }.foregroundStyle(Weave.muted)
                 }
-                .frame(maxWidth: 468)
-
-                Text("账户数据按账户独立保存。登录失败时，输入会保留在当前页面。")
-                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
-                    .multilineTextAlignment(.center).frame(maxWidth: 410)
-            }
-            .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p36)
-            .frame(maxWidth: .infinity)
+            }.padding(AppleTokens.Space.p24).frame(maxWidth: .infinity)
+    }
+    private var title: String {
+        switch model.form.page {
+        case .login: "登录 WeftMate"
+        case .registration: "注册 WeftMate"
+        case .recovery: "找回密码"
+        case .deviceConfirmation: "确认这台设备"
         }
-        .background(Weave.canvas)
-        .disabled(model.authBusy)
-        .onChange(of: register) { _, _ in model.authError = nil }
-        #if os(iOS)
-        .scrollDismissesKeyboard(.interactively)
+    }
+    @ViewBuilder private var fields: some View {
+        if model.form.page == .login || model.form.step == .email && model.form.page != .deviceConfirmation {
+            TextField("邮箱", text: $model.form.email).accountInput().weaveField().accessibilityLabel("邮箱").accessibilityIdentifier("accountEmail")
+            #if os(iOS)
+                .keyboardType(.emailAddress)
+            #endif
+        }
+        if model.form.page == .login || [.registration, .recovery].contains(model.form.page) && model.form.step == .password {
+            HStack {
+                Group {
+                    if showPassword { TextField("密码", text: $model.form.password) }
+                    else { SecureField("密码", text: $model.form.password) }
+                }.accountInput().accessibilityLabel("密码").accessibilityIdentifier("accountPassword")
+                Button(showPassword ? "隐藏" : "显示") { showPassword.toggle() }
+                    .font(AppleTokens.Fonts.caption).accessibilityLabel(showPassword ? "隐藏密码" : "显示密码")
+            }.weaveField()
+            if model.form.page != .login {
+                SecureField("再次输入密码", text: $model.form.repeatedPassword).weaveField()
+                    .accessibilityLabel("再次输入密码").accessibilityIdentifier("accountRepeatedPassword")
+                Text(model.form.strength).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            }
+        }
+        if model.form.page == .deviceConfirmation || model.form.step == .code {
+            Text("验证码已发送到你的邮箱").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
+            TextField("6 位验证码", text: $model.form.code).accountInput().weaveField()
+                .accessibilityLabel("6 位验证码").accessibilityIdentifier("accountCode")
+            #if os(iOS)
+                .keyboardType(.numberPad).textContentType(.oneTimeCode)
+            #endif
+            if model.form.page != .deviceConfirmation {
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    let seconds = model.form.resendSeconds(now: context.date)
+                    Button(seconds > 0 ? "\(seconds) 秒后可重发" : "重新发送验证码") { Task { await model.resend() } }
+                        .disabled(seconds > 0 || model.busy)
+                }
+            }
+        }
+        if model.form.page == .registration && model.form.step == .deviceName {
+            TextField("设备名称", text: $model.deviceName).weaveField().accessibilityLabel("设备名称").accessibilityIdentifier("accountDeviceName")
+        }
+    }
+    private var actionTitle: String {
+        if model.busy { return "正在处理…" }
+        switch model.form.page {
+        case .login: return "登录"
+        case .deviceConfirmation: return "确认并登录"
+        case .registration, .recovery:
+            switch model.form.step {
+            case .email: return "发送验证码"
+            case .code: return "验证"
+            case .password: return model.form.page == .recovery ? "设置新密码" : "下一步"
+            case .deviceName: return "完成并登录"
+            }
+        }
+    }
+    private var canSubmit: Bool {
+        if model.form.page == .login { return !model.form.email.isEmpty && !model.form.password.isEmpty }
+        if model.form.page == .deviceConfirmation || model.form.step == .code {
+            return model.form.code.count == 6 && model.form.code.allSatisfy(\.isNumber)
+        }
+        if model.form.step == .password { return model.form.validPassword }
+        if model.form.step == .deviceName { return !model.deviceName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+        return !model.form.email.isEmpty
+    }
+}
+
+enum LegalDocument: String, Identifiable {
+    case terms, privacy
+    var id: String { rawValue }
+    var title: String { self == .terms ? "服务条款" : "隐私政策" }
+    var content: String {
+        guard let url = Bundle.main.url(forResource: self == .terms ? "terms-zh" : "privacy-zh", withExtension: "md"),
+              let text = try? String(contentsOf: url, encoding: .utf8) else { return "文档未能打开，请稍后重试。" }
+        return text
+    }
+}
+struct LegalDocumentView: View {
+    let document: LegalDocument
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            ScrollView { Text(document.content).font(AppleTokens.Fonts.body).textSelection(.enabled).padding(AppleTokens.Space.p24).frame(maxWidth: 760, alignment: .leading) }
+                .background(Weave.canvas).foregroundStyle(Weave.ink).navigationTitle(document.title)
+                .toolbar { ToolbarItem(placement: .confirmationAction) { Button("完成") { dismiss() } } }
+        }
+        #if os(macOS)
+        .frame(minWidth: 520, minHeight: 580)
         #endif
-        .accessibilityIdentifier("authRoot")
-    }
-
-    private func fieldLabel(_ label: String) -> some View {
-        Text(label).font(AppleTokens.Fonts.callout.weight(.medium)).foregroundStyle(Weave.secondary)
-    }
-
-    private func authenticate() {
-        guard !model.authBusy else { return }
-        field = nil
-        Task { await model.authenticate(username: username, password: password,
-                                       displayName: register ? displayName : nil, register: register) }
     }
 }
