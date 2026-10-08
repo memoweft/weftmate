@@ -9,11 +9,12 @@ android {
     buildFeatures { buildConfig = true }
 
     defaultConfig {
-        applicationId = "com.memoweft.weftmate.mobile.debug"
+        applicationId = providers.gradleProperty("weftmateApplicationId")
+            .orElse("com.memoweft.weftmate.mobile.debug").get()
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "0.8.6"
+        versionCode = 20
+        versionName = "0.8.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -23,6 +24,12 @@ android {
     testOptions { unitTests.isReturnDefaultValues = true }
     sourceSets.getByName("main").assets.srcDir(project.file("../../mobile-ui/www"))
 }
+
+val checkMobileUiAssets by tasks.registering(Exec::class) {
+    workingDir(project.file("../../mobile-ui"))
+    commandLine("node", "src/check.mjs")
+}
+tasks.named("preBuild") { dependsOn(checkMobileUiAssets) }
 
 dependencies {
     implementation("androidx.webkit:webkit:1.16.0")

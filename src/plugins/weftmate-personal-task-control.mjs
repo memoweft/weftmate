@@ -55,11 +55,15 @@ export function stopExactTask(agents, claimedBySession, input) {
   }
   const openTurn = openTurnOf(agent);
   const activeMessages = [];
+  const persistedMessages = new Set();
   if (openTurn !== null) {
     const startIndex = agent.session.events.findLastIndex((event) => event?.type === 'turn/start' &&
       event.data?.turn === openTurn);
     for (const event of agent.session.events.slice(startIndex + 1)) {
-      if (event?.type === 'user/message' && event.data?.source?.kind === 'user') activeMessages.push(event.data);
+      if (event?.type === 'user/message' && event.data?.source?.kind === 'user') {
+        activeMessages.push(event.data);
+        persistedMessages.add(event.data.id);
+      }
     }
     for (const message of claimedBySession.get(input.sessionId)?.get(openTurn)?.values() ?? []) {
       if (!activeMessages.some((candidate) => candidate.id === message.id)) activeMessages.push(message);
@@ -79,6 +83,18 @@ export function stopExactTask(agents, claimedBySession, input) {
     }
   }
   if (!input.queuedOnly && safeActive && openTurnOf(agent) === openTurn) {
+    // Claimed inputs belong to this turn even while pre-step is awaiting
+    // memory/context. Preserve their original native messages before aborting:
+    // otherwise an explicit resume sees only "continue" without its goal.
+    // Do not persist unrelated queued inputs or duplicate already committed ones.
+    if (typeof agent.session.append === 'function') {
+      for (const message of activeMessages) {
+        if (!persistedMessages.has(message.id)) {
+          agent.session.append('user/message', message, { surfaceOp: 'append' });
+          persistedMessages.add(message.id);
+        }
+      }
+    }
     for (const outcome of outcomes) {
       if (activeReceipts.includes(outcome.receiptId)) {
         outcome.status = 'cancel_requested';

@@ -1,5 +1,6 @@
 /** Decorate the native pi-ai adapter; its protocols, settings and credentials remain native. */
 import { Config, apply as applyPiAi } from '@deepseek-ai/dsh-llm-pi-ai';
+import { LlmError, CONTEXT_WINDOW_EXCEEDED_CODE } from '@deepseek-ai/dsh-llm';
 import { readModelCapacity, modelCapacityFor, outputBudget, messagesForModelInput } from '../model-budget.mjs';
 import { acquireModelSlot, isBackgroundPurpose } from '../model-scheduler-client.mjs';
 
@@ -132,6 +133,12 @@ export function apply(ctx, config) {
           }
           const maxTokens = outputBudget({ ...limits, inputTokens,
             maxTokens: Math.min(limits.maxTokens, options.maxTokens ?? limits.maxTokens) });
+          if (maxTokens === null) {
+            // The agent's native request-error handler compacts and rebuilds the
+            // envelope before retrying. Do not recurse while holding a model slot.
+            throw new LlmError('Context has no useful output reserve; compact before continuing',
+              CONTEXT_WINDOW_EXCEEDED_CODE);
+          }
           yield* target.stream({ ...options, maxTokens });
           } finally { await release(); }
         };

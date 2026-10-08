@@ -1,6 +1,6 @@
 # M0-7 场景评测
 
-这份评测使用 Node 24 和 `/personal/v1`，没有新依赖。首批定义共 12 条：办事 6、记忆 4、跨端 2。Mac 用假 HTTP 服务自测 runner；Qwen / MiMo 的真实基线由 Windows 跑，不能把假服务通过率当作模型或产品通过率。
+这份评测使用 Node 24 和 `/personal/v1`，没有新依赖。当前定义共 13 条：办事 7（首批 6 条 + M1-3 长任务）、记忆 4、跨端 2。Mac 用假 HTTP 服务自测 runner；Qwen / MiMo 的真实基线由 Windows 跑，不能把假服务通过率当作模型或产品通过率。
 
 ## M0-7b 正式基线
 
@@ -15,6 +15,12 @@ Windows 可运行 `node tests/integration/personal-scenario-baseline.mjs`（Qwen
 报告中的每轮 `startedAt` / `endedAt` / `durationMs` 和 `timeline`（事件时间线）只保存公开事件类型、序号及时间，便于与8081和后端日志对齐。超时轮也保留已观察事件及耗时。
 
 ## Windows：先启动隔离宿主
+
+M1-3 长任务单独运行 `node tests/integration/personal-long-task.mjs --lan`（局域网 `local-quality`）、`node tests/integration/personal-long-task.mjs`（本机 Qwen）或 `node tests/integration/personal-long-task.mjs --mimo`（MiMo）。入口启动真实 Electron（桌面程序框架）和固定 DSH，读取用户环境 `WEFTMATE_LAN_MODEL_BASE_URL` / `WEFTMATE_LAN_MODEL_KEY` / `MODEL_SWITCH_UNIFIED_KEY` 或系统环境 `MIMO_API_KEY`，只在内存配置模型；使用随机端口和系统临时目录，不连接记忆或读取日用保险库。`--lan` 与 `--mimo` 互斥；LAN 的私有地址和密钥仅在测试进程中使用，经与 QV-1 一致的串行本机转发桥连接，宿主只收到随机本机地址与临时凭据。运行 LAN 前必须等 QV-1 完成，避免跨包抢单槽。`--mimo --regression` 跑原有六条办事场景，目标、时限与检查保持原样。
+
+长任务的文件检查走既有 runner（评测器）；入口额外记录 native events（原生事件）来验证上下文、15 步以上、成功压缩、目标与待办保留，以及源文件未被改写。本机 Qwen 必须以实际 98,304 上下文触发压缩后完成；LAN 在测试桥配置 98,304 的上下文预算（服务本身为 131K，不重配服务），用相同场景验证压缩。MiMo 按自身容量对照。每次成功压缩逐项核对摘要内目标与待办等于压缩前最新原生状态，并确认压缩后继续调用工具。共享本地入口允许原生首输出空闲等待30分钟；可加 `--reasoning-off` 用原生配置发送 `reasoning_effort: none`，结果须注明是否关闭推理，不改服务或上下文。`long-task-verification.json` 与模型用量位于当次打印的隔离目录；退出删除测试凭据并扫描模型密钥及 LAN 私有地址，产物不进 Git。
+
+2026-10-08 正式结果：[M1-3 证据与费用](../tests/evidence/m1-3/README.md)。MiMo 长任务641.997秒、85次工具调用通过，原六场景6/6；LAN 首轮281.584秒失败于后台子任务与主会话重复写第5批报告，触发未声明覆盖审批。LAN 尚未压缩，真实模型的跨压缩续跑仍未验收通过，不用本地合成模型测试替代。原目标、预算、检查与审批保持，前次失败保留。
 
 **runner 必须与宿主在同一台机器运行**，因为测试文件由 runner 写进这台机器的系统临时目录，检查也读取这些临时文件。`--host` 是宿主的 origin，不带 `/personal/v1`。跨端场景需要真人拿手机验收，自动运行只列为「需人工」。
 
@@ -166,6 +172,7 @@ node --test tests/eval-runner.test.ts
 | action-04-research-script | 查资料 → 写脚本 → 实际运行 → 汇报 |
 | action-05-stop-resume | 中途停止再继续 |
 | action-06-delete-approval | 删除批准一次、拒绝一次 |
+| action-07-long-directory | 逐批审阅24份合成交接资料、保存独立报告与汇总，验证原生上下文压缩续跑 |
 | memory-01-preference | 告诉偏好 → 新对话采用 |
 | memory-02-correction | 纠正理解 → 后续按纠正走 |
 | memory-03-switch-model | 换模型后记得称呼 |

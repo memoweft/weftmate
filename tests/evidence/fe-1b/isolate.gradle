@@ -1,0 +1,10 @@
+// Keep every already installed application and its private data intact.
+allprojects {
+    afterEvaluate { project ->
+        if (project.name == 'app') {
+            project.android.defaultConfig.applicationId = 'com.memoweft.weftmate.mobile.fe1bqa'
+            def baseline = System.getenv('FE1B_BASELINE_ASSETS')
+            if (baseline) project.android.sourceSets.main.assets.setSrcDirs([baseline])
+        }
+    }
+}
