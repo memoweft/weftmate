@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { _electron } from 'playwright';
 import { createRequire } from 'node:module';
-import { promisify } from 'node:util';
+import { promisify, isDeepStrictEqual } from 'node:util';
 import { execFile } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { mkdirSync, writeFileSync, readFileSync, rmSync, readdirSync, lstatSync } from 'node:fs';
@@ -131,7 +131,9 @@ try {
     const statePart = checkpoint.data.summary.find(part => part.type === 'text' && part.text.includes('## Native continuation state\n'));
     const state = statePart ? JSON.parse(statePart.text.split('## Native continuation state\n')[1]) : {};
     const end = events.find(event => event.type === 'compaction/end' && event.data.compactionId === checkpoint.data.compactionId && !event.data.error);
-    return { goalPreserved: !!goal && JSON.stringify(state.goal) === JSON.stringify(goal),
+    // The goals service snapshot also includes activation/timestamps omitted
+    // from goal/change. Compare every authoritative event field, not its shape.
+    return { goalPreserved: !!goal && Object.entries(goal).every(([field, value]) => isDeepStrictEqual(state.goal?.[field], value)),
       todosPreserved: !!todos && JSON.stringify(state.todos) === JSON.stringify(todos),
       toolsContinued: events.some(event => event.sessionId === checkpoint.sessionId && event.seq > end.seq && event.type === 'assistant/message' && event.data.tools?.length) };
   });
