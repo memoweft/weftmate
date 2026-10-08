@@ -121,11 +121,14 @@ export function shellWriteTargets(source, cwd, powershell = true) {
   };
   function string(text) {
     if (!text) return;
-    if (text[0] === "'" && text.at(-1) === "'")
+    if (text[0] === "'") {
+      if (!(powershell ? /^'(?:[^']|'')*'$/ : /^'[^']*'$/).test(text)) return;
       return powershell ? text.slice(1, -1).replaceAll("''", "'") : text.slice(1, -1);
+    }
     const quoted = text[0] === '"' && text.at(-1) === '"';
     const expanded = text.includes('$');
-    if (quoted) text = text.slice(1, -1);
+    if (quoted) { text = text.slice(1, -1); if (text.includes('"')) return; }
+    else if (text.includes('"') || text.includes("'")) return;
     else if (powershell && /[\s'"`]/.test(text)) return;
     if (!powershell && /[\\*?~]/.test(text)) return;
     // Only pwd is a known command substitution; all other substitutions fail.
