@@ -68,6 +68,7 @@ try {
     await page.getByRole('dialog', { name: '输出与来源' }).getByRole('button', { name: /README/ }).click()
     await preview.getByText('读取 1 次', { exact: true }).waitFor()
     await preview.getByText(/读取 3 个文件 ·/).click()
+    await preview.getByText('详情', { exact: true }).click()
     await preview.getByText(/Read 3 files successfully/).waitFor()
     await preview.getByRole('button', { name: '复制', exact: true }).click()
     await preview.getByRole('button', { name: '已复制', exact: true }).waitFor()
