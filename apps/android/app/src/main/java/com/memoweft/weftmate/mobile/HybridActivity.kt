@@ -13,6 +13,10 @@ import android.graphics.Canvas
 import android.content.res.Configuration
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.database.ContentObserver
+import android.provider.Settings
 import android.speech.RecognizerIntent
 import android.view.View
 import android.view.WindowInsets
@@ -118,6 +122,16 @@ class HybridActivity : Activity() {
     private val updateSubscriptionEpoch = AtomicLong(0)
     private val updateListening = AtomicBoolean(false)
     private val updateConnection = AtomicReference<HttpURLConnection?>()
+    private val motionSettings = listOf(Settings.Global.ANIMATOR_DURATION_SCALE,
+        Settings.Global.TRANSITION_ANIMATION_SCALE, Settings.Global.WINDOW_ANIMATION_SCALE)
+    private val motionObserver = object : ContentObserver(Handler(Looper.getMainLooper())) {
+        override fun onChange(selfChange: Boolean) { syncMotionPreference() }
+    }
+    private fun syncMotionPreference() {
+        if (closed.get() || !::web.isInitialized) return
+        val reduced = motionSettings.any { Settings.Global.getFloat(contentResolver, it, 1f) == 0f }
+        web.evaluateJavascript("window.weftReducedMotion=$reduced;window.dispatchEvent(new CustomEvent('weft-motion-preference',{detail:{reducedMotion:$reduced}}))", null)
+    }
     private lateinit var web: WebView
     private lateinit var bundles: MobileUiBundles
     private lateinit var store: LocalStore
@@ -199,6 +213,7 @@ class HybridActivity : Activity() {
             }
         }
         web = WebView(this)
+        motionSettings.forEach { contentResolver.registerContentObserver(Settings.Global.getUriFor(it), false, motionObserver) }
         container.addView(web, FrameLayout.LayoutParams(-1, -1))
         setContentView(container)
         configureWeb()
@@ -258,6 +273,7 @@ class HybridActivity : Activity() {
             override fun onPageFinished(view: WebView, url: String) {
                 if (closed.get()) return
                 if (url != entry) return
+                syncMotionPreference()
                 val expected = pageGeneration
                 web.postDelayed({
                     if (!closed.get() && !currentPageReady && expected == pageGeneration) {
@@ -1909,6 +1925,7 @@ class HybridActivity : Activity() {
     }
 
     override fun onResume() { super.onResume(); if (closed.get()) return; foreground = true; checkForUpdate(); restartUpdateSubscription(); scheduleSharedReconcile();
+        syncMotionPreference()
         preferHighDisplayRefreshRate()
         secrets.host()?.let { queueSync(it, accountEpoch.get(), null) } }
 
@@ -2211,6 +2228,7 @@ class HybridActivity : Activity() {
     }
 
     override fun onDestroy() {
+        contentResolver.unregisterContentObserver(motionObserver)
         pendingCameraPermission?.deny()
         pendingCameraPermission = null
         closed.set(true)

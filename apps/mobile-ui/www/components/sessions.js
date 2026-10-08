@@ -174,12 +174,12 @@ function renderLiveProgress(){if(state.page!=='chat'||state.chatSource!=='phone'
   const text=node.querySelector('.live-progress-text'),phase=node.querySelector('.message-state');
   if(!text._liveTextNode){text._liveTextNode=document.createTextNode('');text.append(text._liveTextNode)}
   const shown=text._liveTextNode.data,target=state.progressText;
-  if(!target.startsWith(shown)||window.matchMedia('(prefers-reduced-motion: reduce)').matches){
+  if(!target.startsWith(shown)||(globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches)){
     if(shown!==target)text._liveTextNode.data=target;liveRevealStart=null}
   else if(shown!==target)scheduleLiveMotion();
   text.hidden=!state.progressText;const label=phaseLabel(state.phase);
   if(phase.textContent!==label)phase.textContent=label;
-  if(state.scrollPinned){if(window.matchMedia('(prefers-reduced-motion: reduce)').matches)scrollBottom();
+  if(state.scrollPinned){if((globalThis.WeftMobileMotion?.reduced()??window.matchMedia('(prefers-reduced-motion: reduce)').matches))scrollBottom();
     else scheduleLiveMotion()}}
 
 function toolLabel(name){return {open_settings:'系统设置',open_app:'打开应用',list_launchable_apps:'应用列表'}[name]||'手机动作'}
@@ -305,7 +305,7 @@ function mobileSessionMenu(session,confirming=false){
     archive.addEventListener('click',()=>{void run(archive,()=>uiCore.archiveSession(session.sessionId,!session.archived))});
     const remove=el('button','danger','删除对话');remove.type='button';remove.addEventListener('click',()=>{close();mobileSessionMenu(session,true)});dialog.append(archive,remove)}
   const cancel=el('button','secondary','取消');cancel.type='button';cancel.addEventListener('click',close);dialog.append(notice,cancel);
-  dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();cancel.focus();
+  dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();globalThis.WeftMobileMotion?.reveal(dialog,'base');cancel.focus();
 }
 function renderConversationList(){const target=$('conversation-list'),previousScroll=target.scrollTop;clear(target);const filter=$('conversation-search').value.trim().toLocaleLowerCase();
   const toggle=el('button','secondary',archivedSessionView?'返回最近对话':'已归档');toggle.type='button';toggle.addEventListener('click',()=>{archivedSessionView=!archivedSessionView;renderConversationList()});target.append(toggle);

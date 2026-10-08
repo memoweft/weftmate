@@ -59,6 +59,8 @@
         details.append(detail)
       }
       row.replaceChildren(details)
+      globalThis.WeftMobileMotion?.details(details)
+      if(details.open&&block.steps.length<=20) [...details.querySelectorAll('.execution-step')].filter(detail=>!savedSteps.has(detail.dataset.step)).forEach((detail,index)=>globalThis.WeftMobileMotion?.reveal(detail,'fast',index))
     })
     for (const event of cards) {
       if (!/^(approval\.|question\.|artifact\.)/.test(event.type)) continue
