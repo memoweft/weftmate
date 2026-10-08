@@ -1,0 +1,1459 @@
+{
+  "date": "2026-10-08",
+  "primaryModel": "qwen3.8-27b-original",
+  "comparisonModel": "mimo-v2.6-flash",
+  "qwenActionPassed": 4,
+  "qwenActionTotal": 6,
+  "apiComparisonAvailable": false,
+  "mimoEstimatedCostCny": 0,
+  "results": [
+    {
+      "id": "action-01-organize",
+      "qwen": {
+        "id": "action-01-organize",
+        "category": "action",
+        "title": "整理收件目录",
+        "status": "passed",
+        "durationMs": 180366,
+        "checks": [
+          {
+            "type": "file_contains",
+            "path": "inbox/文本/会议记录.txt",
+            "text": "周五讨论秋季活动",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "inbox/表格/预算.csv",
+            "text": "场地,300",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "inbox/文档/说明.md",
+            "text": "# 活动说明",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "inbox/不要动/保留.txt",
+            "text": "原样保留",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "path": "inbox/会议记录.txt",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "path": "inbox/预算.csv",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "path": "inbox/说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-07T23:35:15.300Z",
+            "endedAt": "2026-10-07T23:38:13.836Z",
+            "durationMs": 178536,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-07T23:35:15.682Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-07T23:35:15.882Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-07T23:35:15.882Z"
+              },
+              {
+                "seq": 178,
+                "type": "step.started",
+                "at": "2026-10-07T23:36:34.590Z"
+              },
+              {
+                "seq": 179,
+                "type": "step.completed",
+                "at": "2026-10-07T23:36:35.749Z"
+              },
+              {
+                "seq": 586,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:37:39.901Z"
+              },
+              {
+                "seq": 587,
+                "type": "step.started",
+                "at": "2026-10-07T23:37:39.901Z"
+              },
+              {
+                "seq": 588,
+                "type": "step.completed",
+                "at": "2026-10-07T23:37:41.063Z"
+              },
+              {
+                "seq": 786,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:38:13.637Z"
+              },
+              {
+                "seq": 787,
+                "type": "task.ended",
+                "at": "2026-10-07T23:38:13.637Z"
+              },
+              {
+                "seq": 788,
+                "type": "turn.ended",
+                "at": "2026-10-07T23:38:13.638Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "action-02-web-document",
+      "qwen": {
+        "id": "action-02-web-document",
+        "category": "action",
+        "title": "查网页并保存说明",
+        "status": "passed",
+        "durationMs": 510839,
+        "checks": [
+          {
+            "type": "file_exists",
+            "path": "node24说明.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "node24说明.md",
+            "text": "https://nodejs.org/",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "说明|保存|写好",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-07T23:38:15.616Z",
+            "endedAt": "2026-10-07T23:46:44.677Z",
+            "durationMs": 509061,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-07T23:38:16.016Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-07T23:38:16.219Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-07T23:38:16.220Z"
+              },
+              {
+                "seq": 2883,
+                "type": "step.started",
+                "at": "2026-10-07T23:40:39.272Z"
+              },
+              {
+                "seq": 2884,
+                "type": "step.started",
+                "at": "2026-10-07T23:40:39.282Z"
+              },
+              {
+                "seq": 2885,
+                "type": "step.completed",
+                "at": "2026-10-07T23:40:45.171Z"
+              },
+              {
+                "seq": 2886,
+                "type": "step.completed",
+                "at": "2026-10-07T23:40:45.172Z"
+              },
+              {
+                "seq": 2959,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:40:49.305Z"
+              },
+              {
+                "seq": 2960,
+                "type": "step.started",
+                "at": "2026-10-07T23:40:49.306Z"
+              },
+              {
+                "seq": 2961,
+                "type": "step.completed",
+                "at": "2026-10-07T23:40:54.185Z"
+              },
+              {
+                "seq": 3042,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:40:58.726Z"
+              },
+              {
+                "seq": 3043,
+                "type": "step.started",
+                "at": "2026-10-07T23:40:58.727Z"
+              },
+              {
+                "seq": 3044,
+                "type": "step.completed",
+                "at": "2026-10-07T23:41:03.059Z"
+              },
+              {
+                "seq": 3289,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:41:16.582Z"
+              },
+              {
+                "seq": 3290,
+                "type": "step.started",
+                "at": "2026-10-07T23:41:16.583Z"
+              },
+              {
+                "seq": 3291,
+                "type": "step.completed",
+                "at": "2026-10-07T23:41:21.349Z"
+              },
+              {
+                "seq": 3428,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:41:29.376Z"
+              },
+              {
+                "seq": 3429,
+                "type": "step.started",
+                "at": "2026-10-07T23:41:29.376Z"
+              },
+              {
+                "seq": 3430,
+                "type": "step.completed",
+                "at": "2026-10-07T23:41:33.716Z"
+              },
+              {
+                "seq": 3680,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:41:49.653Z"
+              },
+              {
+                "seq": 3681,
+                "type": "step.started",
+                "at": "2026-10-07T23:41:49.653Z"
+              },
+              {
+                "seq": 3682,
+                "type": "step.completed",
+                "at": "2026-10-07T23:41:54.311Z"
+              },
+              {
+                "seq": 4633,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:42:50.728Z"
+              },
+              {
+                "seq": 4634,
+                "type": "step.started",
+                "at": "2026-10-07T23:42:50.729Z"
+              },
+              {
+                "seq": 4635,
+                "type": "step.completed",
+                "at": "2026-10-07T23:42:55.509Z"
+              },
+              {
+                "seq": 4741,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:43:03.838Z"
+              },
+              {
+                "seq": 4742,
+                "type": "step.started",
+                "at": "2026-10-07T23:43:03.838Z"
+              },
+              {
+                "seq": 4743,
+                "type": "step.completed",
+                "at": "2026-10-07T23:43:08.375Z"
+              },
+              {
+                "seq": 5237,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:43:41.593Z"
+              },
+              {
+                "seq": 5238,
+                "type": "step.started",
+                "at": "2026-10-07T23:43:41.594Z"
+              },
+              {
+                "seq": 5239,
+                "type": "step.completed",
+                "at": "2026-10-07T23:43:42.339Z"
+              },
+              {
+                "seq": 5471,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:43:58.427Z"
+              },
+              {
+                "seq": 5472,
+                "type": "step.started",
+                "at": "2026-10-07T23:43:58.427Z"
+              },
+              {
+                "seq": 5473,
+                "type": "step.completed",
+                "at": "2026-10-07T23:44:03.061Z"
+              },
+              {
+                "seq": 5880,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:44:33.638Z"
+              },
+              {
+                "seq": 5881,
+                "type": "step.started",
+                "at": "2026-10-07T23:44:33.638Z"
+              },
+              {
+                "seq": 5882,
+                "type": "step.completed",
+                "at": "2026-10-07T23:44:38.217Z"
+              },
+              {
+                "seq": 7520,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:45:42.488Z"
+              },
+              {
+                "seq": 7521,
+                "type": "step.started",
+                "at": "2026-10-07T23:45:42.489Z"
+              },
+              {
+                "seq": 7522,
+                "type": "step.completed",
+                "at": "2026-10-07T23:45:43.551Z"
+              },
+              {
+                "seq": 9237,
+                "type": "step.started",
+                "at": "2026-10-07T23:46:30.568Z"
+              },
+              {
+                "seq": 9238,
+                "type": "artifact.created",
+                "at": "2026-10-07T23:46:33.303Z"
+              },
+              {
+                "seq": 9323,
+                "type": "step.started",
+                "at": "2026-10-07T23:46:37.294Z"
+              },
+              {
+                "seq": 9324,
+                "type": "step.completed",
+                "at": "2026-10-07T23:46:38.046Z"
+              },
+              {
+                "seq": 9517,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:46:44.595Z"
+              },
+              {
+                "seq": 9518,
+                "type": "task.ended",
+                "at": "2026-10-07T23:46:44.595Z"
+              },
+              {
+                "seq": 9519,
+                "type": "turn.ended",
+                "at": "2026-10-07T23:46:44.596Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "action-03-read-code",
+      "qwen": {
+        "id": "action-03-read-code",
+        "category": "action",
+        "title": "读小项目解释金额计算",
+        "status": "passed",
+        "durationMs": 77111,
+        "checks": [
+          {
+            "type": "reply_matches",
+            "pattern": "20(?:\\.0{1,2})?",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "pattern": "浮点|精度|分为|整数|分单位",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "path": "project/pricing.mjs",
+            "text": "Math.round(cents * (1 - discount)) / 100",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "prompt": "回答应为 20 元，解释先转整数分有助于处理浮点精度，并结合实际 pricing.mjs，不应声称已修改代码。",
+            "status": "skipped",
+            "reason": "No judge configured; enable --judge-model same or a configured model name."
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-07T23:46:46.171Z",
+            "endedAt": "2026-10-07T23:48:01.788Z",
+            "durationMs": 75617,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-07T23:46:46.566Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-07T23:46:46.917Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-07T23:46:46.918Z"
+              },
+              {
+                "seq": 157,
+                "type": "step.started",
+                "at": "2026-10-07T23:47:01.243Z"
+              },
+              {
+                "seq": 158,
+                "type": "step.completed",
+                "at": "2026-10-07T23:47:01.995Z"
+              },
+              {
+                "seq": 237,
+                "type": "step.started",
+                "at": "2026-10-07T23:47:04.551Z"
+              },
+              {
+                "seq": 238,
+                "type": "step.started",
+                "at": "2026-10-07T23:47:04.560Z"
+              },
+              {
+                "seq": 239,
+                "type": "step.completed",
+                "at": "2026-10-07T23:47:05.681Z"
+              },
+              {
+                "seq": 240,
+                "type": "step.completed",
+                "at": "2026-10-07T23:47:06.025Z"
+              },
+              {
+                "seq": 1653,
+                "type": "step.started",
+                "at": "2026-10-07T23:47:38.176Z"
+              },
+              {
+                "seq": 1654,
+                "type": "step.completed",
+                "at": "2026-10-07T23:47:39.248Z"
+              },
+              {
+                "seq": 1780,
+                "type": "step.started",
+                "at": "2026-10-07T23:47:43.223Z"
+              },
+              {
+                "seq": 1781,
+                "type": "step.completed",
+                "at": "2026-10-07T23:47:44.306Z"
+              },
+              {
+                "seq": 2463,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:48:01.694Z"
+              },
+              {
+                "seq": 2464,
+                "type": "task.ended",
+                "at": "2026-10-07T23:48:01.695Z"
+              },
+              {
+                "seq": 2465,
+                "type": "turn.ended",
+                "at": "2026-10-07T23:48:01.695Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "action-04-research-script",
+      "qwen": {
+        "id": "action-04-research-script",
+        "category": "action",
+        "title": "查资料写脚本并实际运行",
+        "status": "failed",
+        "durationMs": 203430,
+        "timedOut": false,
+        "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+        "checks": [],
+        "turns": [
+          {
+            "startedAt": "2026-10-08T00:21:20.370Z",
+            "durationMs": 201377,
+            "status": "running",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T00:21:20.759Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T00:21:20.950Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T00:21:20.950Z"
+              },
+              {
+                "seq": 250,
+                "type": "step.started",
+                "at": "2026-10-08T00:21:52.758Z"
+              },
+              {
+                "seq": 251,
+                "type": "step.started",
+                "at": "2026-10-08T00:21:52.766Z"
+              },
+              {
+                "seq": 252,
+                "type": "step.completed",
+                "at": "2026-10-08T00:21:53.903Z"
+              },
+              {
+                "seq": 253,
+                "type": "step.completed",
+                "at": "2026-10-08T00:22:00.027Z"
+              },
+              {
+                "seq": 1095,
+                "type": "step.started",
+                "at": "2026-10-08T00:23:44.868Z"
+              },
+              {
+                "seq": 1096,
+                "type": "step.completed",
+                "at": "2026-10-08T00:23:45.632Z"
+              },
+              {
+                "seq": 1818,
+                "type": "assistant.message",
+                "at": "2026-10-08T00:24:31.318Z"
+              },
+              {
+                "seq": 1819,
+                "type": "step.started",
+                "at": "2026-10-08T00:24:31.319Z"
+              },
+              {
+                "seq": 1820,
+                "type": "artifact.created",
+                "at": "2026-10-08T00:24:34.124Z"
+              },
+              {
+                "seq": 1893,
+                "type": "step.started",
+                "at": "2026-10-08T00:24:41.353Z"
+              },
+              {
+                "seq": 1894,
+                "type": "approval.requested",
+                "at": "2026-10-08T00:24:41.361Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      },
+      "initialQwen": {
+        "id": "action-04-research-script",
+        "category": "action",
+        "title": "查资料写脚本并实际运行",
+        "status": "failed",
+        "durationMs": 42794,
+        "timedOut": false,
+        "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+        "checks": [],
+        "turns": [
+          {
+            "startedAt": "2026-10-07T23:48:03.262Z",
+            "durationMs": 40971,
+            "status": "running",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-07T23:48:03.673Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-07T23:48:04.035Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-07T23:48:04.035Z"
+              },
+              {
+                "seq": 214,
+                "type": "step.started",
+                "at": "2026-10-07T23:48:10.909Z"
+              },
+              {
+                "seq": 215,
+                "type": "step.started",
+                "at": "2026-10-07T23:48:10.919Z"
+              },
+              {
+                "seq": 216,
+                "type": "step.completed",
+                "at": "2026-10-07T23:48:12.016Z"
+              },
+              {
+                "seq": 217,
+                "type": "step.completed",
+                "at": "2026-10-07T23:48:14.722Z"
+              },
+              {
+                "seq": 261,
+                "type": "step.started",
+                "at": "2026-10-07T23:48:16.811Z"
+              },
+              {
+                "seq": 262,
+                "type": "step.completed",
+                "at": "2026-10-07T23:48:20.172Z"
+              },
+              {
+                "seq": 376,
+                "type": "step.started",
+                "at": "2026-10-07T23:48:24.637Z"
+              },
+              {
+                "seq": 377,
+                "type": "step.completed",
+                "at": "2026-10-07T23:48:27.888Z"
+              },
+              {
+                "seq": 378,
+                "type": "step.started",
+                "at": "2026-10-07T23:48:27.889Z"
+              },
+              {
+                "seq": 379,
+                "type": "step.completed",
+                "at": "2026-10-07T23:48:28.934Z"
+              },
+              {
+                "seq": 546,
+                "type": "step.started",
+                "at": "2026-10-07T23:48:33.857Z"
+              },
+              {
+                "seq": 547,
+                "type": "step.completed",
+                "at": "2026-10-07T23:48:35.987Z"
+              },
+              {
+                "seq": 829,
+                "type": "step.started",
+                "at": "2026-10-07T23:48:43.828Z"
+              },
+              {
+                "seq": 830,
+                "type": "approval.requested",
+                "at": "2026-10-07T23:48:43.837Z"
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "action-05-stop-resume",
+      "qwen": {
+        "id": "action-05-stop-resume",
+        "category": "action",
+        "title": "中途停下再接着办",
+        "status": "passed",
+        "durationMs": 57201,
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "汇总.md",
+            "status": "passed"
+          },
+          {
+            "type": "file_contains",
+            "turn": 2,
+            "path": "汇总.md",
+            "text": "30",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 2,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-07T23:48:47.606Z",
+            "endedAt": "2026-10-07T23:48:50.385Z",
+            "durationMs": 2779,
+            "status": "aborted",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-07T23:48:48.103Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-07T23:48:48.522Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-07T23:48:48.522Z"
+              },
+              {
+                "seq": 16,
+                "type": "task.ended",
+                "at": "2026-10-07T23:48:49.733Z"
+              },
+              {
+                "seq": 17,
+                "type": "turn.ended",
+                "at": "2026-10-07T23:48:49.733Z"
+              }
+            ]
+          },
+          {
+            "startedAt": "2026-10-07T23:48:51.660Z",
+            "endedAt": "2026-10-07T23:49:41.786Z",
+            "durationMs": 50126,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 19,
+                "type": "turn.started",
+                "at": "2026-10-07T23:48:52.088Z"
+              },
+              {
+                "seq": 21,
+                "type": "task.started",
+                "at": "2026-10-07T23:48:52.484Z"
+              },
+              {
+                "seq": 22,
+                "type": "user.message",
+                "at": "2026-10-07T23:48:52.484Z"
+              },
+              {
+                "seq": 459,
+                "type": "step.started",
+                "at": "2026-10-07T23:49:03.797Z"
+              },
+              {
+                "seq": 460,
+                "type": "step.completed",
+                "at": "2026-10-07T23:49:04.876Z"
+              },
+              {
+                "seq": 698,
+                "type": "step.started",
+                "at": "2026-10-07T23:49:11.141Z"
+              },
+              {
+                "seq": 699,
+                "type": "step.completed",
+                "at": "2026-10-07T23:49:11.882Z"
+              },
+              {
+                "seq": 1174,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:49:24.581Z"
+              },
+              {
+                "seq": 1175,
+                "type": "step.started",
+                "at": "2026-10-07T23:49:24.582Z"
+              },
+              {
+                "seq": 1176,
+                "type": "artifact.created",
+                "at": "2026-10-07T23:49:27.231Z"
+              },
+              {
+                "seq": 1398,
+                "type": "step.started",
+                "at": "2026-10-07T23:49:33.699Z"
+              },
+              {
+                "seq": 1399,
+                "type": "artifact.created",
+                "at": "2026-10-07T23:49:36.468Z"
+              },
+              {
+                "seq": 1599,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:49:41.733Z"
+              },
+              {
+                "seq": 1600,
+                "type": "task.ended",
+                "at": "2026-10-07T23:49:41.733Z"
+              },
+              {
+                "seq": 1601,
+                "type": "turn.ended",
+                "at": "2026-10-07T23:49:41.734Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "action-06-delete-approval",
+      "qwen": {
+        "id": "action-06-delete-approval",
+        "category": "action",
+        "title": "删除操作批准一次拒绝一次",
+        "status": "failed",
+        "durationMs": 600384,
+        "timedOut": true,
+        "reason": "Scenario timed out",
+        "checks": [
+          {
+            "type": "approval_seen",
+            "turn": 1,
+            "outcome": "allowed-once",
+            "status": "passed"
+          },
+          {
+            "type": "file_absent",
+            "turn": 1,
+            "path": "过期草稿.txt",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-07T23:49:43.566Z",
+            "endedAt": "2026-10-07T23:50:08.321Z",
+            "durationMs": 24755,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-07T23:49:43.961Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-07T23:49:44.158Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-07T23:49:44.158Z"
+              },
+              {
+                "seq": 223,
+                "type": "step.started",
+                "at": "2026-10-07T23:49:51.604Z"
+              },
+              {
+                "seq": 224,
+                "type": "step.completed",
+                "at": "2026-10-07T23:49:52.702Z"
+              },
+              {
+                "seq": 369,
+                "type": "step.started",
+                "at": "2026-10-07T23:49:56.714Z"
+              },
+              {
+                "seq": 370,
+                "type": "step.completed",
+                "at": "2026-10-07T23:49:57.477Z"
+              },
+              {
+                "seq": 503,
+                "type": "step.started",
+                "at": "2026-10-07T23:50:01.281Z"
+              },
+              {
+                "seq": 504,
+                "type": "approval.requested",
+                "at": "2026-10-07T23:50:01.294Z"
+              },
+              {
+                "seq": 505,
+                "type": "approval.resolved",
+                "at": "2026-10-07T23:50:02.116Z"
+              },
+              {
+                "seq": 506,
+                "type": "step.completed",
+                "at": "2026-10-07T23:50:03.556Z"
+              },
+              {
+                "seq": 671,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:50:08.270Z"
+              },
+              {
+                "seq": 672,
+                "type": "task.ended",
+                "at": "2026-10-07T23:50:08.271Z"
+              },
+              {
+                "seq": 673,
+                "type": "turn.ended",
+                "at": "2026-10-07T23:50:08.271Z"
+              }
+            ]
+          },
+          {
+            "startedAt": "2026-10-07T23:50:08.692Z",
+            "durationMs": 573109,
+            "status": "running",
+            "timeline": [
+              {
+                "seq": 675,
+                "type": "turn.started",
+                "at": "2026-10-07T23:50:09.221Z"
+              },
+              {
+                "seq": 677,
+                "type": "task.started",
+                "at": "2026-10-07T23:50:09.688Z"
+              },
+              {
+                "seq": 678,
+                "type": "user.message",
+                "at": "2026-10-07T23:50:09.689Z"
+              },
+              {
+                "seq": 1252,
+                "type": "step.started",
+                "at": "2026-10-07T23:50:25.720Z"
+              },
+              {
+                "seq": 1253,
+                "type": "step.completed",
+                "at": "2026-10-07T23:50:26.468Z"
+              },
+              {
+                "seq": 2128,
+                "type": "assistant.message",
+                "at": "2026-10-07T23:50:58.557Z"
+              },
+              {
+                "seq": 2129,
+                "type": "question.asked",
+                "at": "2026-10-07T23:50:58.558Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "cross-01-desktop-approval",
+      "qwen": {
+        "id": "cross-01-desktop-approval",
+        "category": "cross-device",
+        "title": "电脑发起手机查看并审批",
+        "status": "manual",
+        "durationMs": 0,
+        "reason": "需人工：按 setup.devices、turns 和 checks 在真实设备验收。",
+        "checks": [],
+        "turns": []
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment",
+        "manualRequired": true
+      }
+    },
+    {
+      "id": "cross-02-phone-result",
+      "qwen": {
+        "id": "cross-02-phone-result",
+        "category": "cross-device",
+        "title": "手机发起电脑执行手机看成果",
+        "status": "manual",
+        "durationMs": 0,
+        "reason": "需人工：按 setup.devices、turns 和 checks 在真实设备验收。",
+        "checks": [],
+        "turns": []
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment",
+        "manualRequired": true
+      }
+    },
+    {
+      "id": "memory-01-preference",
+      "qwen": {
+        "id": "memory-01-preference",
+        "category": "memory",
+        "title": "新对话采用表达偏好",
+        "status": "failed",
+        "durationMs": 600360,
+        "timedOut": true,
+        "reason": "Scenario timed out",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-07T23:59:44.667Z",
+            "endedAt": "2026-10-08T00:00:01.669Z",
+            "durationMs": 17002,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-07T23:59:45.071Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-07T23:59:45.422Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-07T23:59:45.422Z"
+              },
+              {
+                "seq": 427,
+                "type": "assistant.message",
+                "at": "2026-10-08T00:00:01.545Z"
+              },
+              {
+                "seq": 428,
+                "type": "task.ended",
+                "at": "2026-10-08T00:00:01.545Z"
+              },
+              {
+                "seq": 429,
+                "type": "turn.ended",
+                "at": "2026-10-08T00:00:01.546Z"
+              }
+            ]
+          },
+          {
+            "startedAt": "2026-10-08T00:00:04.685Z",
+            "durationMs": 577492,
+            "status": "running",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T00:00:05.079Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T00:00:05.269Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T00:00:05.269Z"
+              },
+              {
+                "seq": 312,
+                "type": "step.started",
+                "at": "2026-10-08T00:00:15.286Z"
+              },
+              {
+                "seq": 313,
+                "type": "step.completed",
+                "at": "2026-10-08T00:00:16.047Z"
+              },
+              {
+                "seq": 895,
+                "type": "question.asked",
+                "at": "2026-10-08T00:00:31.824Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "memory-02-correction",
+      "qwen": {
+        "id": "memory-02-correction",
+        "category": "memory",
+        "title": "纠正后按新理解走",
+        "status": "failed",
+        "durationMs": 35641,
+        "timedOut": false,
+        "reason": "Unexpected approval; scenario has no matching decision (left pending)",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-08T00:09:45.145Z",
+            "endedAt": "2026-10-08T00:10:07.823Z",
+            "durationMs": 22678,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T00:09:45.552Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T00:09:45.910Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T00:09:45.911Z"
+              },
+              {
+                "seq": 173,
+                "type": "step.started",
+                "at": "2026-10-08T00:09:52.405Z"
+              },
+              {
+                "seq": 174,
+                "type": "step.completed",
+                "at": "2026-10-08T00:09:53.186Z"
+              },
+              {
+                "seq": 459,
+                "type": "step.started",
+                "at": "2026-10-08T00:10:00.975Z"
+              },
+              {
+                "seq": 460,
+                "type": "artifact.created",
+                "at": "2026-10-08T00:10:04.098Z"
+              },
+              {
+                "seq": 563,
+                "type": "assistant.message",
+                "at": "2026-10-08T00:10:07.705Z"
+              },
+              {
+                "seq": 564,
+                "type": "task.ended",
+                "at": "2026-10-08T00:10:07.706Z"
+              },
+              {
+                "seq": 565,
+                "type": "turn.ended",
+                "at": "2026-10-08T00:10:07.706Z"
+              }
+            ]
+          },
+          {
+            "startedAt": "2026-10-08T00:10:08.322Z",
+            "durationMs": 9494,
+            "status": "running",
+            "timeline": [
+              {
+                "seq": 567,
+                "type": "turn.started",
+                "at": "2026-10-08T00:10:08.842Z"
+              },
+              {
+                "seq": 569,
+                "type": "task.started",
+                "at": "2026-10-08T00:10:09.316Z"
+              },
+              {
+                "seq": 570,
+                "type": "user.message",
+                "at": "2026-10-08T00:10:09.317Z"
+              },
+              {
+                "seq": 842,
+                "type": "step.started",
+                "at": "2026-10-08T00:10:17.383Z"
+              },
+              {
+                "seq": 843,
+                "type": "approval.requested",
+                "at": "2026-10-08T00:10:17.400Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "memory-03-switch-model",
+      "qwen": {
+        "id": "memory-03-switch-model",
+        "category": "memory",
+        "title": "换模型后还记得称呼",
+        "status": "unsupported",
+        "durationMs": 12150,
+        "timedOut": false,
+        "reason": "Configured model 'mimo' is unavailable in the eval account. Configure this test account; no daily account is used.",
+        "checks": [
+          {
+            "type": "turn_status",
+            "turn": 1,
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "startedAt": "2026-10-08T00:10:21.147Z",
+            "endedAt": "2026-10-08T00:10:28.835Z",
+            "durationMs": 7688,
+            "status": "completed",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T00:10:21.558Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T00:10:21.902Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T00:10:21.902Z"
+              },
+              {
+                "seq": 192,
+                "type": "assistant.message",
+                "at": "2026-10-08T00:10:28.681Z"
+              },
+              {
+                "seq": 193,
+                "type": "task.ended",
+                "at": "2026-10-08T00:10:28.681Z"
+              },
+              {
+                "seq": 194,
+                "type": "turn.ended",
+                "at": "2026-10-08T00:10:28.681Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    },
+    {
+      "id": "memory-04-person",
+      "qwen": {
+        "id": "memory-04-person",
+        "category": "memory",
+        "title": "之后提到某人能联系上",
+        "status": "failed",
+        "durationMs": 600370,
+        "timedOut": true,
+        "reason": "Scenario timed out",
+        "checks": [],
+        "turns": [
+          {
+            "startedAt": "2026-10-08T00:10:33.026Z",
+            "durationMs": 597300,
+            "status": "running",
+            "timeline": [
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-08T00:10:33.447Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-08T00:10:33.797Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-08T00:10:33.797Z"
+              },
+              {
+                "seq": 572,
+                "type": "question.asked",
+                "at": "2026-10-08T00:10:50.741Z"
+              }
+            ]
+          }
+        ]
+      },
+      "mimo": {
+        "status": "pending",
+        "durationMs": null,
+        "reason": "MIMO_API_KEY absent from Windows User environment"
+      }
+    }
+  ],
+  "credentialScans": [
+    {
+      "scanned": 33123,
+      "matches": 0
+    },
+    {
+      "scanned": 178,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  ],
+  "modelObservation": {
+    "at": "2026-10-08T00:17:20.0900757Z",
+    "currentModelId": "qwen3.8-27b-original",
+    "switching": false,
+    "activeLeases": 0,
+    "queuedLeases": 0,
+    "modelPid": 16988
+  }
+}
