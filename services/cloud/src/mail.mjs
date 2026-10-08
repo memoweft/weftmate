@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { chmod, mkdir, open, rm } from 'node:fs/promises';
+import { chmod, mkdir, open, rm, readdir, readFile, rename } from 'node:fs/promises';
 import path from 'node:path';
 
 // Provider implementations implement send({ to, subject, text }) -> { id }.
@@ -9,7 +9,29 @@ export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
   if (config.mailTransport === 'resend' && (!config.resendApiKey || !config.mailFrom))
     throw new Error('Resend is not configured');
   return {
-    async send({ to, subject, text }) {
+    async prune(now = Date.now()) {
+      if (config.mailTransport !== 'file') return;
+      const names = await readdir(config.mailDir).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
+      for (const name of names.filter(n => /^[a-f0-9-]+\.json$/.test(n))) {
+        const file = path.join(config.mailDir, name);
+        const source = await readFile(file, 'utf8').catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+        if (source === null) continue;
+        const mail = JSON.parse(source);
+        if (Date.parse(mail.createdAt) <= now - 3600000) await rm(file, { force: true });
+      }
+    },
+    async deleteAccount(accountId, emails = []) {
+      if (config.mailTransport !== 'file') return;
+      const names = await readdir(config.mailDir).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
+      for (const name of names.filter(n => /^[a-f0-9-]+\.json$/.test(n))) {
+        const file = path.join(config.mailDir, name);
+        const source = await readFile(file, 'utf8').catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+        if (source === null) continue;
+        const mail = JSON.parse(source);
+        if (mail.accountId === accountId || !mail.accountId && emails.includes(mail.to)) await rm(file, { force: true });
+      }
+    },
+    async send({ to, subject, text, accountId }) {
       if (
         typeof to !== 'string' ||
         !to.trim() ||
@@ -46,11 +68,12 @@ export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
       await chmod(config.mailDir, 0o700);
       const id = randomUUID();
       const file = path.join(config.mailDir, `${id}.json`);
-      const handle = await open(file, 'wx', 0o600);
+      const staging = `${file}.tmp`;
+      const handle = await open(staging, 'wx', 0o600);
       try {
         await handle.writeFile(
           JSON.stringify(
-            { id, from: config.mailFrom, to, subject, text, createdAt: new Date().toISOString() },
+            { id, from: config.mailFrom, to, subject, text, ...(accountId ? { accountId } : {}), createdAt: new Date().toISOString() },
             null,
             2,
           ) + '\n',
@@ -58,10 +81,11 @@ export function createMailer(config, { logger, fetchImpl = fetch } = {}) {
         await handle.sync();
       } catch (error) {
         await handle.close();
-        await rm(file, { force: true });
+        await rm(staging, { force: true });
         throw error;
       }
       await handle.close();
+      await rename(staging, file);
       logger?.info('mail.written', { id, transport: 'file' });
       return { id };
     },

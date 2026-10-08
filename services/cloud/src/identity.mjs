@@ -10,6 +10,7 @@ import { loadKeys } from './keys.mjs';
 import { CloudError, digest, equalDigest, transaction } from './security.mjs';
 import { deviceProof } from './device-proof.mjs';
 import { appAuthorization } from './app-authorization.mjs';
+import { accountLifecycle } from './account-lifecycle.mjs';
 
 export const CLOUD_PATH = '/personal/v1/cloud';
 const OIDC_PATH = `${CLOUD_PATH}/oidc`;
@@ -270,7 +271,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
   }
   async function complete(req, res, body, interaction, result) {
     const { account, device } = result;
-    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch)
+    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch || !database.prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?').get(account.id, device.fingerprint))
       throw new CloudError(401, 'UNAUTHORIZED');
     const grant = new provider.Grant({
       accountId: account.id,
@@ -289,7 +290,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
       }
     }
     const grantId = await grant.save();
-    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch) {
+    if (accounts.get(account.id)?.auth_epoch !== account.auth_epoch || !database.prepare('SELECT 1 FROM cloud_devices WHERE account_id=? AND fingerprint=?').get(account.id, device.fingerprint)) {
       await grant.destroy();
       throw new CloudError(401, 'UNAUTHORIZED');
     }
@@ -321,6 +322,8 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/auth/password/reset`, 'reset'],
     [`${CLOUD_PATH}/auth/email/request`, 'emailRequest'],
     [`${CLOUD_PATH}/auth/email/confirm`, 'emailConfirm'],
+    [`${CLOUD_PATH}/auth/email/change/request`, 'appEmailRequest'],
+    [`${CLOUD_PATH}/auth/email/change/confirm`, 'appEmailConfirm'],
     [`${CLOUD_PATH}/account`, 'account'],
     [`${CLOUD_PATH}/auth/devices/revoke`, 'deviceRevoke'],
     [`${CLOUD_PATH}/auth/registration/request`, 'appRegisterRequest'],
@@ -331,11 +334,15 @@ export async function createIdentity({ database, config, mailer, logger, now = D
     [`${CLOUD_PATH}/auth/recovery/complete`, 'appResetComplete'],
     [`${CLOUD_PATH}/auth/password/change`, 'passwordChange'],
     [`${CLOUD_PATH}/auth/logout`, 'logout'],
+    [`${CLOUD_PATH}/auth/account/delete`, 'accountDelete'],
+    [`${CLOUD_PATH}/auth/logout/others`, 'logoutOthers'],
+    [`${CLOUD_PATH}/devices/rename`, 'deviceRename'],
     [`${CLOUD_PATH}/devices`, 'devices'],
     [`${CLOUD_PATH}/auth/authorization`, 'appAuthorize'],
     [`${CLOUD_PATH}/auth/authorization/resume`, 'appResume'],
   ]);
   const relay = createRelay({ database, config, secret: keys.cookieSecret, now, dns: relayDns });
+  const lifecycle = accountLifecycle({ database, accounts, relay });
   const hosts = createHosts({ database, config, keys, authenticate, now, relay, provider });
   const authorizeInApp = appAuthorization({ config });
   const allowedOrigin = origin => origin === new URL(config.issuer).origin || config.clients
@@ -445,6 +452,7 @@ export async function createIdentity({ database, config, mailer, logger, now = D
         if (!allowedOrigin(req.headers.origin))
           throw new CloudError(403, 'ORIGIN_NOT_ALLOWED');
         const body = await bodyOf(req);
+        if (url.search) throw new CloudError(400, 'INVALID_REQUEST');
         if (route === 'login' && typeof body.publicJwk === 'string') {
           try { body.publicJwk = JSON.parse(body.publicJwk); }
           catch { throw new CloudError(400, 'INVALID_DEVICE_KEY'); }
@@ -481,6 +489,15 @@ export async function createIdentity({ database, config, mailer, logger, now = D
             case 'appRegisterComplete': result = await accounts.completePassword(body, 'register', from); break;
             case 'appResetComplete': result = await accounts.completePassword(body, 'reset', from); break;
             case 'passwordChange': result = await accounts.changePassword(body, from, await authenticate(req, true)); break;
+            case 'accountDelete': {
+              const account = await authenticate(req, true);
+              result = await lifecycle.remove(body, from, account, req.cloudToken); break;
+            }
+            case 'logoutOthers': {
+              const account = await authenticate(req, true);
+              result = await lifecycle.logoutOthers(body, account, req.cloudToken); break;
+            }
+            case 'deviceRename': result = await lifecycle.rename(body, await authenticate(req, true)); break;
             case 'logout': {
               const account = await authenticate(req, true);
               const grants = database.prepare('SELECT grant_id FROM grant_bindings WHERE account_id=? AND fingerprint=?')
@@ -538,11 +555,13 @@ export async function createIdentity({ database, config, mailer, logger, now = D
               result = await accounts.reset(body, from);
               break;
             case 'emailRequest':
-              result = await accounts.requestEmail(body, from, await authenticate(req));
+              result = await accounts.requestEmail(body, from, await authenticate(req), true);
               break;
             case 'emailConfirm':
-              result = accounts.confirmEmail(body, from, await authenticate(req));
+              result = await accounts.confirmEmail(body, from, await authenticate(req));
               break;
+            case 'appEmailRequest': result = await accounts.requestEmail(body, from, await authenticate(req, true)); break;
+            case 'appEmailConfirm': result = await accounts.confirmEmail(body, from, await authenticate(req, true)); break;
           }
           reply(res, route === 'register' ? 201 : 200, result);
         }

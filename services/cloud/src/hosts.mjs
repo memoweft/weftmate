@@ -11,6 +11,20 @@ const requireFields = (body, fields) => {
 const validId = value => typeof value === 'string' && /^[A-Za-z0-9_-]{1,128}$/.test(value);
 
 export function createHosts({ database: db, config, keys, authenticate, now, relay, provider }) {
+  async function revocations(hostId, afterSeq) {
+    if (!Number.isSafeInteger(afterSeq) || afterSeq < 0) throw new CloudError(400, 'INVALID_REQUEST');
+    const rows = db.prepare(`SELECT r.* FROM cloud_revocations r JOIN host_memberships m ON m.account_id=r.account_id
+      WHERE m.host_id=? AND (r.host_id IS NULL OR r.host_id=?) AND r.seq>? ORDER BY r.seq LIMIT 1000`).all(hostId, hostId, afterSeq);
+    // AUTOINCREMENT survives account deletion; max(seq) could move backwards.
+    const watermark = rows.length === 1000 ? rows.at(-1).seq : db.prepare("SELECT coalesce((SELECT seq FROM sqlite_sequence WHERE name='cloud_revocations'),0) AS seq").get().seq;
+    const events = rows.map(r => ({ seq: r.seq, sub: r.account_id, kind: r.kind,
+      ...(r.kind === 'epoch' ? { epoch: r.epoch } : { deviceId: r.device_id, ...(r.jkt ? { jkt: r.jkt } : {}) }) }));
+    const memberships = db.prepare('SELECT a.id AS sub,a.auth_epoch AS epoch FROM cloud_accounts a JOIN host_memberships m ON m.account_id=a.id WHERE m.host_id=?').all(hostId);
+    const eventToken = await new SignJWT({ events, watermark, memberships }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
+      .setIssuer(config.issuer).setAudience(`${config.audience}/hosts/${hostId}`).setIssuedAt()
+      .setExpirationTime('300s').sign(await importJWK(keys.privateJwks.keys[0], 'RS256'));
+    return { eventToken };
+  }
   async function signed(body) {
     requireFields(body, ['hostId', 'proof']);
     const host = db.prepare('SELECT * FROM cloud_hosts WHERE host_id=?').get(body.hostId);
@@ -122,6 +136,12 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       }
       return result;
     }
+    // A deleted installation has no public key left to authenticate. Its empty
+    // signed snapshot is public, contains no account IDs, and only revokes access.
+    if (route === '/hosts/revocations' && validId(body.hostId) && !db.prepare('SELECT 1 FROM cloud_hosts WHERE host_id=?').get(body.hostId)) {
+      requireFields(body, ['hostId','proof']);
+      return revocations(body.hostId, 0);
+    }
     const payload = await signed(body);
     if (payload.action !== route) throw new CloudError(401, 'UNAUTHORIZED');
     db.prepare('UPDATE cloud_hosts SET last_seen=? WHERE host_id=?').run(now(), body.hostId);
@@ -129,7 +149,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       if (typeof payload.name !== 'string' || !payload.name.trim() || payload.name.length > 128 ||
           typeof payload.sub !== 'string' || !db.prepare('SELECT 1 FROM host_memberships WHERE host_id=? AND account_id=?')
             .get(body.hostId, payload.sub)) throw new CloudError(400, 'INVALID_REQUEST');
-      db.prepare('UPDATE cloud_hosts SET name=? WHERE host_id=?').run(payload.name.trim(), body.hostId);
+      db.prepare("UPDATE cloud_hosts SET name=? WHERE host_id=? AND name='WeftMate computer'").run(payload.name.trim(), body.hostId);
       return { updated: true };
     }
     if (route === '/hosts/devices/status') {
@@ -165,18 +185,7 @@ export function createHosts({ database: db, config, keys, authenticate, now, rel
       return { revoked: true };
     }
     if (route === '/hosts/revocations') {
-      if (!Number.isSafeInteger(payload.afterSeq) || payload.afterSeq < 0) throw new CloudError(400, 'INVALID_REQUEST');
-      const rows = db.prepare(`SELECT r.* FROM cloud_revocations r JOIN host_memberships m ON m.account_id=r.account_id
-        WHERE m.host_id=? AND (r.host_id IS NULL OR r.host_id=?) AND r.seq>? ORDER BY r.seq LIMIT 1000`)
-        .all(body.hostId, body.hostId, payload.afterSeq);
-      // Include current epochs, even if the host joined after an older reset event.
-      const watermark = rows.length === 1000 ? rows.at(-1).seq : db.prepare('SELECT coalesce(max(seq),0) AS seq FROM cloud_revocations').get().seq;
-      const events = rows.map(r => ({ seq: r.seq, sub: r.account_id, kind: r.kind,
-        ...(r.kind === 'epoch' ? { epoch: r.epoch } : { deviceId: r.device_id, ...(r.jkt ? { jkt: r.jkt } : {}) }) }));
-      const eventToken = await new SignJWT({ events, watermark }).setProtectedHeader({ alg: 'RS256', typ: 'wm-cloud-revocations+jwt', kid: keys.privateJwks.keys[0].kid })
-        .setIssuer(config.issuer).setAudience(`${config.audience}/hosts/${body.hostId}`).setIssuedAt()
-        .setExpirationTime('300s').sign(await importJWK(keys.privateJwks.keys[0], 'RS256'));
-      return { eventToken };
+      return revocations(body.hostId, payload.afterSeq);
     }
     throw new CloudError(404, 'NOT_FOUND');
   } };

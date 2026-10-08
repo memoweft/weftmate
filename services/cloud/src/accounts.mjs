@@ -10,7 +10,7 @@ import {
   FailureLimiter,
   transaction,
 } from './security.mjs';
-import { challengeMail, passwordChangedMail } from './mail-templates.mjs';
+import { challengeMail, passwordChangedMail, emailChangedMail } from './mail-templates.mjs';
 
 export class Accounts {
   constructor(database, mailer, secret, { now = Date.now, logger } = {}) {
@@ -58,7 +58,7 @@ export class Accounts {
         JSON.stringify(context),
       );
     try {
-      await this.mailer.send({
+      await this.sendMail(account, {
         to: email,
         ...challengeMail(purpose.replace('app-', ''), code, context.device?.deviceId),
       });
@@ -84,6 +84,15 @@ export class Accounts {
       throw error;
     }
     return this.sendChallenge(account, 'register', email);
+  }
+  async sendMail(account, message) {
+    if (!this.get(account.id)) throw new CloudError(401, 'UNAUTHORIZED');
+    const result = await this.mailer.send({ ...message, accountId: account.id });
+    if (!this.get(account.id)) {
+      await this.mailer.deleteAccount?.(account.id, [message.to]);
+      throw new CloudError(401, 'UNAUTHORIZED');
+    }
+    return result;
   }
   async requestPassword(body, purpose, source) {
     const email = normalizeEmail(body.email);
@@ -154,7 +163,7 @@ export class Accounts {
   }
   async passwordNotification(account) {
     let notificationAccepted = true;
-    try { await this.mailer.send({ to: account.email, ...passwordChangedMail() }); }
+    try { await this.sendMail(account, { to: account.email, ...passwordChangedMail() }); }
     catch {
       notificationAccepted = false;
       this.logger?.error('mail.notification_failed', { code: 'MAIL_UNAVAILABLE' });
@@ -330,29 +339,32 @@ export class Accounts {
     // Reset stays committed even when the notification provider is unavailable.
     let notificationAccepted = true;
     try {
-      await this.mailer.send({ to: account.email, ...passwordChangedMail() });
+      await this.sendMail(account, { to: account.email, ...passwordChangedMail() });
     } catch {
       notificationAccepted = false;
       this.logger?.error('mail.notification_failed', { code: 'MAIL_UNAVAILABLE' });
     }
     return { passwordChanged: true, notificationAccepted };
   }
-  async requestEmail(body, source, account) {
+  async requestEmail(body, source, account, legacy = false) {
+    if (Object.keys(body).sort().join(',') !== (legacy ? 'email,password' : 'email')) throw new CloudError(400, 'INVALID_REQUEST');
     const keys = this.check(account.email, source);
-    if (!(await verifyPassword(body.password, JSON.parse(account.password)))) {
-      this.limiter.fail(keys);
-      throw new CloudError(401, 'INVALID_CREDENTIALS');
+    if (legacy) {
+      if (!await verifyPassword(body.password, JSON.parse(account.password))) {
+        this.limiter.fail(keys); throw new CloudError(401, 'INVALID_CREDENTIALS');
+      }
+      if (this.get(account.id)?.auth_epoch !== account.auth_epoch) throw new CloudError(401, 'UNAUTHORIZED');
     }
-    if (this.get(account.id).auth_epoch !== account.auth_epoch)
-      throw new CloudError(401, 'UNAUTHORIZED');
     const email = normalizeEmail(body.email);
-    this.delivery(account.email, source);
     if (this.byEmail(email)) throw new CloudError(409, 'EMAIL_IN_USE');
+    this.delivery(account.email, source);
     return this.sendChallenge(account, 'email', email);
   }
-  confirmEmail(body, source, authenticated) {
+  async confirmEmail(body, source, authenticated) {
+    if (Object.keys(body).sort().join(',') !== 'challengeId,code') throw new CloudError(400, 'INVALID_REQUEST');
     const { challenge, account } = this.readChallenge(body.challengeId, 'email', source, body.code);
     if (account.id !== authenticated.id) throw new CloudError(403, 'FORBIDDEN');
+    if (account.auth_epoch !== authenticated.auth_epoch) throw new CloudError(401, 'UNAUTHORIZED');
     if (this.byEmail(challenge.email)) throw new CloudError(409, 'EMAIL_IN_USE');
     transaction(this.db, () => {
       this.consume(body.challengeId);
@@ -362,6 +374,11 @@ export class Accounts {
       // Challenges sent to the previous mailbox must lose authority immediately.
       this.revoke(account.id);
     });
-    return { account: this.public(this.get(account.id)) };
+    let notificationAccepted = true;
+    try { await this.sendMail(account, { to: account.email, ...emailChangedMail() }); }
+    catch { notificationAccepted = false; this.logger?.error('mail.notification_failed', { code: 'MAIL_UNAVAILABLE' }); }
+    const current = this.get(account.id);
+    if (!current) throw new CloudError(401, 'UNAUTHORIZED');
+    return { account: this.public(current), notificationAccepted };
   }
 }
