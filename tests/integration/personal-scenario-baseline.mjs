@@ -9,29 +9,33 @@ import { mkdirSync, writeFileSync, readFileSync, rmSync, readdirSync, lstatSync 
 import { join, resolve } from 'node:path';
 import { createPersonalAccessService } from '../../src/personal-access/index.mjs';
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
-import { runEvaluation, loadScenarios } from '../../scripts/eval.mjs';
+import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
 const repository = resolve(import.meta.dirname, '../..');
 // Keep generated goals and evidence free of the Windows account's home path.
 process.env.TEMP = process.env.TMP = 'C:/Temp';
 const modelName = process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const diagnostic = process.argv.includes('--diagnostic');
+const comparison = process.argv.includes('--mimo-machine');
+assert.ok(!comparison || modelName === 'mimo', '--mimo-machine requires --mimo');
+const mimoKeyScope = comparison ? 'Machine' : 'User';
 const run = promisify(execFile);
-async function userKey(name) {
+async function environmentKey(name, scope = 'User') {
   const { stdout } = await run('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command',
-    `[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','User'))`], { windowsHide: true });
+    `[Console]::Out.Write([Environment]::GetEnvironmentVariable('${name}','${scope}'))`], { windowsHide: true });
   return stdout.trim();
 }
-const keys = { qwen: await userKey('MODEL_SWITCH_UNIFIED_KEY'), mimo: await userKey('MIMO_API_KEY') };
+const keys = { qwen: await environmentKey('MODEL_SWITCH_UNIFIED_KEY'), mimo: await environmentKey('MIMO_API_KEY', mimoKeyScope) };
+if (comparison) assert.ok(keys.qwen, 'Qwen key required for Qwen → MiMo memory-03');
 if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key')) {
-  console.log(`${new Date().toISOString()} MIMO_API_KEY absent; checking User environment every 10 minutes, at most one hour.`);
+  console.log(`${new Date().toISOString()} MIMO_API_KEY absent; checking ${mimoKeyScope} environment every 10 minutes, at most one hour.`);
   for (let check = 1; check <= 6 && !keys.mimo; check++) {
     await new Promise(r => setTimeout(r, 600000));
-    keys.mimo = await userKey('MIMO_API_KEY');
+    keys.mimo = await environmentKey('MIMO_API_KEY', mimoKeyScope);
     console.log(`${new Date().toISOString()} MiMo key check ${check}/6: ${keys.mimo ? 'present' : 'absent'}`);
   }
 }
 if (!keys[modelName]) throw new Error(`${modelName === 'qwen' ? 'MODEL_SWITCH_UNIFIED_KEY' : 'MIMO_API_KEY'} absent`);
-const root = join('C:/Temp', `weftmate-m0-7b-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
+const root = join('C:/Temp', `weftmate-${comparison ? 'm0-7c' : 'm0-7b'}-${modelName}-${randomUUID()}`), profile = join(root, 'profile');
 mkdirSync(profile, { recursive: true });
 writeFileSync(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
 const password = `test-${randomUUID()}-password`, username = `eval-${randomUUID()}`;
@@ -82,14 +86,34 @@ try {
   assert.equal((await api('/settings/models', { backgroundModelProfileId: selected.id }, 'PATCH')).status, 200);
   const memory = (await api('/memory/status')).body;
   console.log(`Memory state: ${memory.state} ${memory.reasonCode ?? ''}`);
-  assert.equal(memory.capabilities?.inject, true, 'The isolated Core must be configured before recording memory results');
+  writeFileSync(join(root, 'memory-status-initial.json'), JSON.stringify(memory, null, 2));
+  assert.equal(comparison ? memory.capabilities?.list : memory.capabilities?.inject, true,
+    'The isolated Core must be configured before recording memory results');
   writeFileSync(join(out, 'credentials.json'), JSON.stringify({ host: new URL(page.url()).origin, username, password, deviceName: 'Baseline runner', provisioned: true }), { mode: 0o600 });
   let scenarios = await loadScenarios('eval/scenarios/*.yaml');
   if (diagnostic) scenarios = scenarios.filter(s => s.id === 'action-06-delete-approval').map(s => ({ ...s, timeoutSec: 600 }));
   const onlyIndex = process.argv.indexOf('--only');
   if (onlyIndex !== -1) scenarios = scenarios.filter(s => s.id === process.argv[onlyIndex + 1]);
-  const report = await runEvaluation({ host: new URL(page.url()).origin, out, model: modelName, switchModel: modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: scenarios,
-    onScenarioResult: async result => { writeFileSync(join(root, 'progress.json'), JSON.stringify(result, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
+  // Each scenario runs once. Only memory-03 starts on Qwen and switches to MiMo.
+  const results = [], startedAt = new Date().toISOString();
+  for (const scenario of scenarios) {
+    const firstModel = comparison && scenario.id === 'memory-03-switch-model' ? 'qwen' : modelName;
+    if (comparison) assert.equal((await api('/settings/models', {
+      backgroundModelProfileId: scenario.id === 'memory-03-switch-model' ? null : selected.id,
+    }, 'PATCH')).status, 200);
+    console.log(`Starting ${scenario.id}: ${firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (comparison ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
+    await runEvaluation({ host: new URL(page.url()).origin, out, model: firstModel,
+      switchModel: comparison ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
+      onScenarioResult: async result => { results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
+  }
+  const count = status => results.filter(r => r.status === status).length;
+  const summary = { passed: count('passed'), failed: count('failed'), manual: count('manual'), unsupported: count('unsupported'),
+    skippedChecks: results.flatMap(r => r.checks).filter(c => c.status === 'skipped').length };
+  summary.passRate = summary.passed + summary.failed ? summary.passed / (summary.passed + summary.failed) : null;
+  summary.coverage = summary.passed / results.length;
+  const report = { schemaVersion: 1, startedAt, host: new URL(page.url()).origin, model: modelName, results, summary };
+  writeFileSync(join(out, 'results.json'), JSON.stringify(report, null, 2) + '\n');
+  writeFileSync(join(out, 'report.md'), buildReport(report));
   writeFileSync(join(root, 'memory-status.json'), JSON.stringify((await api('/memory/status')).body, null, 2));
   console.log(JSON.stringify(report.summary));
 } finally {
