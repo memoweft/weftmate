@@ -117,10 +117,15 @@ final class A6SettingsUITests: XCTestCase {
         let row = app.descendants(matching: .any)["conversationRow." + (ids["review"] as! String)].firstMatch
         try expect(row); row.tap()
         try tap(app, "对话菜单"); try tap(app, "conversationUsage")
-        try expect(app.staticTexts["usageSessionFocus"])
-        XCTAssertTrue(app.staticTexts["usageSessionFocus"].label.contains("整理项目资料"))
+        let focus = app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH %@", "本对话：")).firstMatch
+        try expect(focus)
+        XCTAssertTrue(focus.label.contains("整理项目资料"))
         try expect(app.staticTexts["usageTotalCost"])
-        _ = try await get("/a5/report")
+        let report = try await get("/a5/report")
+        let rows = (report["usage"] as! [String: Any])["sessions"] as! [[String: Any]]
+        let ledger = rows.first { $0["sessionId"] as? String == ids["review"] as? String }!
+        let expected = String(format: "¥%.6f", ledger["cost"] as! Double)
+        XCTAssertTrue(app.staticTexts["usageTotalCost"].label.contains(expected), "Conversation usage must match its host ledger")
     }
     @MainActor func testFocusedSearchAndConversationUsage() async throws {
         let (app, ids) = try await launch("light")
