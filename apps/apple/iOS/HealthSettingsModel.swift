@@ -7,6 +7,8 @@ import WeftMateCore
     @Published private(set) var busy = false
     @Published private(set) var message: String?
     let reader = HealthKitReader()
+    private let calendarOverride: Calendar?
+    init(calendar: Calendar? = nil) { calendarOverride = calendar }
     private var local: HealthLocalStore?
     private var scope: LocalAccountScope?
     private var generation = UUID()
@@ -60,7 +62,7 @@ import WeftMateCore
         if state.preferences.enabled.isEmpty { await upload(app: app); return }
         busy = true; message = nil
         let token = generation
-        let summaries = await reader.read(preferences: state.preferences, calendar: .current, deviceId: session.device.id)
+        let summaries = await reader.read(preferences: state.preferences, calendar: calendarOverride ?? .current, deviceId: session.device.id)
         guard token == generation, matches(app), !Task.isCancelled else { busy = false; return }
         do {
             // Replace recent days so late Watch synchronization and read revocation remove stale values.
