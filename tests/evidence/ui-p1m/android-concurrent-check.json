@@ -1,0 +1,11 @@
+{
+  "sourceCommit": "02db5b11816306f7851941e3eee3103deb768b5d",
+  "synthetic": true,
+  "phase": "final verification with simultaneous desktop gallery and browser tests",
+  "scene": "drawer-open-close",
+  "longFrameCountOver50ms": 2,
+  "longTaskCountOver50ms": 0,
+  "frameDurationsMs": null,
+  "outcome": "failed performance gate; raw frame durations were not saved by this aborted attempt",
+  "next": "repeat after competing local capture and tests finish; retain this observation"
+}

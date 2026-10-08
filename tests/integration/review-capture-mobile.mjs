@@ -36,10 +36,14 @@ try {
       const button = name => page.getByRole('button', { name, exact: typeof name === 'string' });
       const conversation = title => button(new RegExp(`^${title} [0-9]`));
       const shot = (scene, prepare, current = page) => runScene({ page: current, out, platform: 'mobile-web', scene, theme, prepare });
-      // LG-1b follow-up: replace only this function's visible-name selectors.
+      // LG-1b account-first login; authentication below remains independent.
       const prepareLogin = async () => {
-        await button('登录或连接').click();
-        await page.getByRole('heading', { name: '电脑账户与连接', exact: true }).waitFor();
+        // FE-1b's local auth fixture predates the native cloudApp bootstrap flag.
+        await page.waitForFunction(() => state.booted);
+        await page.evaluate(() => WeftMobileCloud.init());
+        await page.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor();
+        await page.getByRole('textbox', { name: '邮箱', exact: true }).waitFor();
+        await page.getByRole('button', { name: '还没有账号？注册', exact: true }).waitFor();
       };
       await shot('login', prepareLogin);
       // Keep authenticated scenes independent of an evolving login form.
