@@ -1581,7 +1581,7 @@ export class DshWebRuntime {
   }
 
   /** Exact current-child, in-process DSH running/inbox snapshot. Unknown is busy. */
-  personalModelQueueIdle(): Promise<PersonalModelIdleResult> {
+  personalModelQueueIdle(inference = false): Promise<PersonalModelIdleResult> {
     const child = this.child
     if ((!this.opts.personalHostApiProxy && !this.opts.modelScheduling) || this.closed || !child ||
         this.closedChildren.has(child) || !child.connected || this.originValue === null) {
@@ -1595,7 +1595,7 @@ export class DshWebRuntime {
       }, 2_000)
       this.modelIdlePending.set(id, { child, timer, resolve })
       try {
-        child.send({ protocol: MODEL_IDLE_PROTOCOL, id }, (error) => {
+        child.send({ protocol: MODEL_IDLE_PROTOCOL, id, ...(inference ? { inference: true } : {}) }, (error) => {
           if (!error || !this.modelIdlePending.has(id)) return
           this.modelIdlePending.delete(id)
           clearTimeout(timer)
@@ -2128,7 +2128,7 @@ export class DshWebRuntime {
       if (pending?.size === 0) this.personalMemoryPending.delete(child)
       if (!this.closed && !this.closedChildren.has(child) && this.child === child) respond(value)
     }
-    entry.timer = setTimeout(() => settle({ ok: false, error: 'MEMORY_TIMEOUT' }), 20_000)
+    entry.timer = setTimeout(() => settle({ ok: false, error: 'MEMORY_TIMEOUT' }), action === 'recall' ? 365_000 : 20_000)
     entry.timer.unref?.()
     const request = Object.freeze({ id: row.id, action: action as 'recall' | 'ingest',
       sessionId: row.sessionId, turn: row.turn as number,

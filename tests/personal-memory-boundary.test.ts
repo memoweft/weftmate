@@ -190,3 +190,17 @@ test('an immutable old private revision remains recallable until the account mod
       privateAccountModelProof: () => null }, hasCredential: () => true }),
   { allowed: false, reasonCode: 'MEMORY_DESTINATION_BLOCKED' }, 'a stopped or removed ledger route is unavailable')
 })
+
+test('private local route uses exact owner route and credential without requiring a public fingerprint', () => {
+  const profile = { id: 'private-model-' + 'a'.repeat(40), baseUrl: 'http://127.0.0.1:8081/v1', model: 'qwen3.8-27b-original' };
+  const proof = { active: true, profileId: profile.id, baseUrl: profile.baseUrl, modelId: profile.model, routeFingerprint: null, credential: true };
+  const binding = { ownerId: ownerA, origin: 'personal-remote', modelProfileId: profile.id };
+  const described = { agentPreset: 'personal-remote' };
+  const access = { canUseModelProfile: () => true, privateAccountModelProof: (id: string) => id === ownerA ? proof : null };
+  const decide = (selected = profile, selectedBinding = binding) => memoryRecallDestination({ binding: selectedBinding, described,
+    profiles: [selected], boundProfileId: profile.id, access, hasCredential: () => true });
+  assert.equal(decide().allowed, true);
+  assert.equal(decide({ ...profile, model: 'other' }).allowed, false);
+  assert.equal(decide({ ...profile, baseUrl: 'http://127.0.0.1:8082/v1' }).allowed, false);
+  assert.equal(decide(profile, { ...binding, ownerId: ownerB }).allowed, false);
+});

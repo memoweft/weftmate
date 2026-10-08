@@ -26,7 +26,8 @@ export function memorySessionPolicy({ binding, described, selected, access }) {
   const settingsRouteFingerprint = profileRouteFingerprint(profile);
   const privateRoute = privateProof?.active === true && privateProof.profileId === profile?.id &&
     privateProof.baseUrl === profile?.baseUrl && privateProof.modelId === profile?.model &&
-    settingsRouteFingerprint !== null && privateProof.routeFingerprint === settingsRouteFingerprint &&
+    (settingsRouteFingerprint !== null || modelTierFor(profile) === 'local') &&
+    privateProof.routeFingerprint === settingsRouteFingerprint &&
     privateProof.credential === true;
   if (binding.modelProfileId !== profile?.id || access?.canUseModelProfile?.(binding.ownerId, profile.id) !== true ||
       (!formal && !privateRoute)) {
