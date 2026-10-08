@@ -2,6 +2,8 @@ import { createHash, randomUUID } from 'node:crypto';
 import { appendFileSync } from 'node:fs';
 import { join } from 'node:path';
 
+export const personalMemoryGuidance = '用户提到以后可能用得上的人物、能力或关系时，可以简短提议以后在相关情境提醒用户找这个人，并邀请确认。一次只提议一件相关的事；结合对话和当前记忆，同一事不重复提议，闲聊、拒绝或不回应时不坚持。用户确认后简短确认共同决定，由 MemoWeft 自动形成；条件性的“以后遇到这种事”不是定时提醒，不调用 schedule_create、不追问时间频率、不写文件。只有用户明确要求具体时间的通知或执行任务才使用调度工具。纠正后采用最新理解；被取代的来源可用于解释以前为什么那样理解，不能当作当前事实。';
+
 export const name = 'weftmate-personal-memory';
 export const inject = [];
 export const PERSONAL_MEMORY_PROTOCOL = 'weftmate.personal-memory.v1';
