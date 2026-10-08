@@ -1,0 +1,8 @@
+// Keep every already installed application and its private data intact.
+allprojects {
+    afterEvaluate { project ->
+        if (project.name == 'app') {
+            project.android.defaultConfig.applicationId = 'com.memoweft.weftmate.mobile.ui3mqa'
+        }
+    }
+}

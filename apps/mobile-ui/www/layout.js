@@ -36,6 +36,13 @@ const mobileMarkup = String.raw`
         <button id="jump-latest" class="jump-latest" hidden>回到最新 <span class="icon icon-down"></span></button>
         <div id="composer-dock" class="composer-dock">
           <div id="device-line" class="device-line">执行于这台手机</div>
+          <details id="queued-tasks" class="queued-tasks" hidden>
+            <summary id="queued-count">排队中</summary>
+            <div id="queued-cards" aria-label="排队任务"></div>
+          </details>
+          <label id="message-mode-control" class="message-mode-control" hidden>运行中输入
+            <select id="message-mode" aria-label="运行中输入方式"><option value="steer">插话</option><option value="queue">新任务</option></select>
+          </label>
           <div class="composer-card">
             <textarea id="draft" rows="2" placeholder="和 WeftMate 聊聊…" aria-label="输入消息"></textarea>
             <div id="attachment-drafts" class="attachment-drafts" aria-label="待发送附件" hidden></div>

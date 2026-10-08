@@ -25,7 +25,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     });
     const scope = JSON.stringify([state.owner, state.authEpoch, state.sharedGeneration, state.sharedSessionId]);
     const changed = scope !== historyScope;
-    if (changed) { historyScope = scope; core.state.historyGeneration++; }
+    if (changed) { historyScope = scope; core.state.historyGeneration++; core.state.messageMode = 'steer'; }
     if (changed || !core.state.historyInFlight && !core.state.olderLoading) {
       core.state.historyEvents = new Map(state.sharedEvents.map(event => [event.seq, event]));
       core.state.seenSeq = new Set(core.state.historyEvents.keys());
@@ -50,18 +50,26 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
     state.sharedNextBeforeSeq = core.state.nextBeforeSeq; state.sharedLoading = false;
     effects.renderSharedConversation(); void effects.refreshConversationTasks();
   }
+  function mobileOutput(item) {
+    const output = {...item.artifact};
+    delete output.versions;
+    if (item.versions.length) output.versions = item.versions;
+    return output;
+  }
   async function mobileResources(context) {
     syncMobileIdentity();
     const key = `weftmate-resources:${context.owner}:${context.sessionId}`;
     if (!context.sessionId) return {outputs:[],sources:[]};
     try {
       const data = await core.loadConversationResources();
-      const collection = {outputs:data.outputs.map(item => item.artifact),sources:data.sources};
+      const collection = {outputs:data.outputs.map(mobileOutput),sources:data.sources};
       try { environment.storage.setItem(key, JSON.stringify(collection)); } catch {}
       return collection;
     } catch (error) {
       if (!core.mobileDecisions.current(context)) throw error;
-      try { const saved=JSON.parse(environment.storage.getItem(key)); if(saved) return {...saved,offline:true}; } catch {}
+      try { const saved=JSON.parse(environment.storage.getItem(key)); if(saved) return {...saved,
+        outputs:core.deduplicateOutputs((saved.outputs||[]).flatMap(item=>[item,...(item.versions||[])]))
+          .map(mobileOutput),offline:true}; } catch {}
       throw error;
     }
   }
