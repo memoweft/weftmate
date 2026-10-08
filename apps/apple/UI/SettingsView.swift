@@ -241,7 +241,7 @@ private struct SettingsCategoryView: View {
                         Button(item.state == "paused" ? "恢复" : "暂停") { Task { await settings.schedule(item, action: item.state == "paused" ? .resume : .pause) } }.disabled(item.state == "completed")
                         Button("立即运行") { Task { await settings.schedule(item, action: .run) } }
                         Button("删除", role: .destructive) { deletingSchedule = item }
-                    }.disabled(settings.busy)
+                    }.buttonStyle(.borderless).disabled(settings.busy)
                 }
             }
             Button("刷新提醒") { Task { await settings.refresh("schedules") } }.disabled(settings.busy)
