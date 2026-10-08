@@ -60,7 +60,7 @@
   .settings-row > div:first-child { flex-basis: 100%; }
   .settings-row > select { width: 100%; }
 }
-@media (prefers-reduced-motion: reduce) { .settings-switch::before { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .settings-dialog, .settings-dialog *, .settings-dialog *::before, .settings-dialog *::after { animation: none !important; transition: none !important; } }
 
 .settings-dialog select { appearance: auto; font: inherit; color: var(--ink); background: var(--surface); border: var(--wm-space-1) solid var(--line); border-radius: var(--wm-radius-8); padding: var(--wm-space-8) var(--wm-space-12); }
 .settings-category label { color: var(--ink); }

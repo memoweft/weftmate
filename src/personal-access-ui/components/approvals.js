@@ -188,6 +188,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
             const menu = ui.byId('approval-mode-menu'), opening = menu.hidden;
             ui.renderApprovalMode();
             menu.hidden = !opening;
+            if (opening) globalThis.WeftPopover?.position(menu, ui.byId('approval-mode-trigger'));
             ui.byId('approval-mode-trigger').setAttribute('aria-expanded', String(opening));
             if (opening)
                 menu.querySelector('[aria-checked="true"]')?.focus();
