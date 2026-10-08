@@ -200,6 +200,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       return value
     },
     async restoreSchedules(sessionIds) {
+      if (!sessionIds.length) return
       requireRuntime()
       const response = await fetch(new URL('/weftmate/schedules/restore', currentOrigin()), {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ sessionIds }) })
