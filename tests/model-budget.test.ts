@@ -56,10 +56,13 @@ describe('per-request output budget', () => {
     assert.equal(outputBudget({ contextWindow: 32768, inputTokens: 0 }), 28672);
   });
   it('rounds input upward and handles exact remaining capacity and overflow', () => {
-    assert.equal(outputBudget({ contextWindow: 8192, inputTokens: 4094.1 }), 1);
-    assert.equal(outputBudget({ contextWindow: 8192, inputTokens: 4094 }), 2);
-    assert.equal(outputBudget({ contextWindow: 4096, inputTokens: 5000 }), 1);
-    assert.equal(outputBudget({ contextWindow: 1, inputTokens: 0 }), 1);
+    assert.equal(outputBudget({ contextWindow: 8192, inputTokens: 4094.1 }), null);
+    assert.equal(outputBudget({ contextWindow: 8192, inputTokens: 4094 }), null);
+    assert.equal(outputBudget({ contextWindow: 4096, inputTokens: 5000 }), null);
+    assert.equal(outputBudget({ contextWindow: 1, inputTokens: 0 }), null);
+    assert.equal(outputBudget({ contextWindow: 8192, inputTokens: 2048 }), 2048);
+    assert.equal(outputBudget({ contextWindow: 8192, inputTokens: 2048.1 }), null);
+    assert.equal(outputBudget({ contextWindow: 8192, inputTokens: 3000, maxTokens: 1024 }), 1024);
   });
 });
 
