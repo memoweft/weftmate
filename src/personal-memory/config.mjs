@@ -5,6 +5,16 @@ const invalid = () => Object.assign(new Error('MEMORY_CONFIGURATION_INVALID'), {
   code: 'MEMORY_CONFIGURATION_INVALID',
 });
 
+/** Session usage attribution is not a change of the processing model. */
+export function processingRouteIdentity(baseUrl) {
+  const url = new URL(baseUrl);
+  const scoped = url.protocol === 'http:' && url.hostname === '127.0.0.1'
+    ? url.pathname.match(/^(.*\/inference\/[^/]+\/scope\/[^/]+\/)[^/]+(\/v1)$/) : null;
+  if (!scoped) return { baseUrl, sessionScoped: false };
+  url.pathname = `${scoped[1]}none${scoped[2]}`;
+  return { baseUrl: url.href.replace(/\/$/, ''), sessionScoped: true };
+}
+
 /** Read a deployment-owned path reference; the model key remains in safeStorage. */
 export async function loadPersonalMemoryConfig(file) {
   if (typeof file !== 'string' || !path.isAbsolute(file)) throw invalid();
