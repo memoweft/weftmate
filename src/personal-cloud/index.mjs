@@ -292,11 +292,13 @@ export async function createHostCloudIdentity(context, options) {
           if (!binding) {
             // Allocate an independent owner. Never infer ownership of existing
             // data from a cloud email, username, or an unbound legacy account.
-            const created = await context.registerAccount({ username: `cloud-${randomUUID()}`,
-              password: randomBytes(48).toString('base64url'), deviceName: name, displayName: name });
+            const recoveredOwner = context.restoredCloudOwner?.(config.issuer, identity.sub);
+            const created = recoveredOwner ? { account: { ownerId: recoveredOwner }, device: null }
+              : await context.registerAccount({ username: `cloud-${randomUUID()}`,
+                password: randomBytes(48).toString('base64url'), deviceName: name, displayName: name });
             const claimId = randomUUID();
             await context.serial(async () => {
-              await context.mutate(created.account.ownerId, next => { next.devices[created.device.id].revoked = true; });
+              if (created.device) await context.mutate(created.account.ownerId, next => { next.devices[created.device.id].revoked = true; });
               await edit(next => {
                 next.bindings[key] = { issuer: config.issuer, sub: identity.sub, ownerId: created.account.ownerId,
                   hostId, claimId, status: 'pending', desktop: true };
@@ -529,6 +531,7 @@ export async function createHostCloudIdentity(context, options) {
     }
   }
   return { browserConfiguration: () => ({ issuer: config.issuer }),
+    isInstallationOwner: ownerId => Object.values(store.state.bindings).some(binding => binding.ownerId === ownerId && binding.desktop === true && binding.status === 'active'),
     tls: () => structuredClone(store.state.tls), relayRequest: signedRequest, handle, assertSession, revokeLocalDevice, applyEvents, syncRevocations, closeInvalidResponses,
     validSession(ownerId, deviceId) {
       try { assertSession(ownerId, deviceId); return true; } catch { return false; }

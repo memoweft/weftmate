@@ -1,3 +1,4 @@
+import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream } from 'node:fs';
 import { open, readdir, rename, rm, stat, statfs } from 'node:fs/promises';
@@ -132,6 +133,7 @@ export async function createAttachmentStore({ root }) {
     if (expectedSize !== undefined && (!Number.isSafeInteger(expectedSize) || expectedSize < 0 ||
         expectedSize > limit)) invalid();
     const file = fileFor(attachmentId, display);
+    const releaseWrite = await enterProfileWrite(file);
     const temp = `${file}.${randomUUID()}.tmp`;
     let handle;
     let idleTimer;
@@ -207,7 +209,7 @@ export async function createAttachmentStore({ root }) {
     } finally {
       clearTimeout(idleTimer);
       await handle?.close().catch(() => {});
-      await rm(temp, { force: true }).catch(() => {});
+      await rm(temp, { force: true }).catch(() => {}); releaseWrite();
     }
   }
   return {
