@@ -43,6 +43,24 @@ final class A5ParityUITests: XCTestCase {
     }
     @MainActor func testLightParityFlowAndGallery() async throws { try await run(theme:"light",behavior:true) }
     @MainActor func testDarkGallery() async throws { try await run(theme:"dark",behavior:false) }
+    @MainActor func testFocusedDeletionOption() async throws {
+        _ = try await get("/a5/setup");_ = try await get("/bootstrap")
+        let ready=try await get("/ready"),ids=try await get("/a5/ids")
+        let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a5-delete-" + UUID().uuidString.prefix(8),"--a5-local-server","--a5-theme","light","--server-url",ready["host"] as! String]
+        app.launch();try expect(app.descendants(matching:.any)["conversationList"].firstMatch)
+        try row(app,ids["forget"] as! String);try tap(app,"对话菜单");try tap(app,"删除对话")
+        let toggle=app.buttons["forgetConversationMemories"];try expect(toggle);XCTAssertEqual(toggle.value as? String,"未勾选")
+        toggle.tap()
+        let checked=XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","已勾选"),object:toggle)
+        let checkedResult=await XCTWaiter.fulfillment(of:[checked],timeout:10);XCTAssertEqual(checkedResult,.completed)
+        try tap(app,"confirmDeleteConversation")
+        let dismissed=XCTNSPredicateExpectation(predicate:NSPredicate(format:"exists == false"),object:app.buttons["confirmDeleteConversation"])
+        let dismissedResult=await XCTWaiter.fulfillment(of:[dismissed],timeout:20);XCTAssertEqual(dismissedResult,.completed)
+        let report=try await get("/a5/report")
+        XCTAssertEqual((report["memoryDeletes"] as! [[String:Any]]).count,1)
+        XCTAssertEqual((report["workspaceExists"] as! [String:Bool])["forget"],false)
+        app.terminate()
+    }
     @MainActor private func run(theme: String, behavior: Bool) async throws {
         let ready=try await get("/ready"),credentials=try await get("/credentials")
         let app=XCUIApplication();app.launchArguments=["--ui-testing","--ui-testing-namespace","a5-" + UUID().uuidString.prefix(8),"--lg2-cloud","--a5-theme",theme,
@@ -76,7 +94,7 @@ final class A5ParityUITests: XCTestCase {
             try tap(app,"编辑排队任务 A5_EDIT")
             let editable=app.textFields["conversationDraft"]
             let restored=XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","A5_EDIT"),object:editable)
-            XCTAssertEqual(XCTWaiter.wait(for:[restored],timeout:20),.completed)
+            let restoredResult=await XCTWaiter.fulfillment(of:[restored],timeout:20);XCTAssertEqual(restoredResult,.completed)
             editable.tap();editable.typeText("-changed")
             XCTAssertEqual(editable.value as? String,"A5_EDIT-changed")
             try tap(app,"sendButton")
@@ -125,10 +143,14 @@ final class A5ParityUITests: XCTestCase {
             try tap(app,"已归档");try row(app,ids["deletion"] as! String)
             XCTAssertFalse(app.buttons["sendButton"].isEnabled);try tap(app,"恢复对话")
             try tap(app,"对话菜单");try tap(app,"删除对话")
-            try expect(app.switches["forgetConversationMemories"])
-            XCTAssertEqual(app.switches["forgetConversationMemories"].value as? String,"0");try tap(app,"confirmDeleteConversation")
+            try expect(app.buttons["forgetConversationMemories"])
+            XCTAssertEqual(app.buttons["forgetConversationMemories"].value as? String,"未勾选");try tap(app,"confirmDeleteConversation")
             try back(app);try tap(app,"返回最近对话");try row(app,ids["forget"] as! String);try tap(app,"对话菜单");try tap(app,"删除对话")
-            try expect(app.switches["forgetConversationMemories"]);app.switches["forgetConversationMemories"].tap();try tap(app,"confirmDeleteConversation")
+            try expect(app.buttons["forgetConversationMemories"]);app.buttons["forgetConversationMemories"].tap()
+            let checked=XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","已勾选"),object:app.buttons["forgetConversationMemories"])
+            let checkedResult=await XCTWaiter.fulfillment(of:[checked],timeout:10);XCTAssertEqual(checkedResult,.completed)
+            guard checkedResult == .completed else { throw NSError(domain:"A5ForgetSelection",code:1) }
+            try tap(app,"confirmDeleteConversation")
             let final=try await get("/a5/report");XCTAssertEqual((final["memoryDeletes"] as! [[String:Any]]).count,1)
             let exists=final["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
         }

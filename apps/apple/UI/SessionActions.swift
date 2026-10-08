@@ -22,7 +22,17 @@ struct SessionDeleteSheet: View {
         VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
             Text("删除对话？").font(AppleTokens.Fonts.title2)
             Text("永久删除这段对话、专属工作目录与经验，无法恢复。运行中的任务会先停止。长期记忆默认保留。")
-            Toggle("同时忘掉从这段对话形成的记忆", isOn: $app.forgetConversationMemories)
+            Button { app.forgetConversationMemories.toggle() } label: {
+                HStack(spacing: AppleTokens.Space.p12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: AppleTokens.Radius.r8).strokeBorder(Weave.line)
+                        if app.forgetConversationMemories { WeftIcon("allow", size: 16).foregroundStyle(Weave.accent) }
+                    }.frame(width: 24, height: 24)
+                    Text("同时忘掉从这段对话形成的记忆").multilineTextAlignment(.leading)
+                }.contentShape(Rectangle())
+            }.buttonStyle(.plain).foregroundStyle(Weave.ink)
+                .accessibilityLabel("同时忘掉从这段对话形成的记忆")
+                .accessibilityValue(app.forgetConversationMemories ? "已勾选" : "未勾选")
                 .accessibilityIdentifier("forgetConversationMemories").disabled(app.lifecycleBusy)
             if let error = app.lifecycleError { InlineNotice(message: error, isError: true) }
             HStack {
