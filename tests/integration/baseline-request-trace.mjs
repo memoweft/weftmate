@@ -24,6 +24,8 @@ globalThis.fetch = async (input, options) => {
         const lastUser = messages.findLastIndex(message => message.role === 'user');
         memoryOrder = { memoryIndex: memory, lastUserIndex: lastUser,
           backgroundBeforeLastUser: memory < lastUser,
+          exerciseQuestionIndex: messages.findLastIndex(message => message.role === 'user' && /下周给我安排一次锻炼/.test(text(message))),
+          swimmingQuestionIndex: messages.findLastIndex(message => message.role === 'user' && /我哪天晚上能游泳/.test(text(message))),
           lastUserIsExerciseQuestion: /下周给我安排一次锻炼/.test(text(messages[lastUser])),
           lastUserIsSwimmingQuestion: /我哪天晚上能游泳/.test(text(messages[lastUser])) };
       }
