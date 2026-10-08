@@ -288,6 +288,7 @@ test('memory view preserves chat draft and discards a successful response for an
       return response({ ownerId: 'owner-a', receipt: { commandId: 'synthetic-command', requestId: body.requestId,
         state: 'applied', worldRevision: memoryRevision } })
     }
+    if (url.endsWith('/forget-preview')) return response({ ownerId: 'owner-a', worldRevision: memoryRevision, itemCount: 2, evidenceCount: 1, items: [secondItem, { id: 'person', kind: 'entity', itemType: 'person', text: '王小明' }] })
     if (url.endsWith('/memory/items/cognition/memory-a-2') && options.method === 'DELETE') {
       const body = JSON.parse(options.body)
       memoryItems = memoryItems.filter((item) => item.id !== 'memory-a-2')
@@ -334,6 +335,7 @@ test('memory view preserves chat draft and discards a successful response for an
   const storage = new Map<string, string>()
   const document = { body: { classList: { toggle() {} } }, visibilityState: 'visible',
     getElementById: get, createElement: (tag: string) => new Node(tag),
+    createTextNode: (text: string) => { const node = new Node(); node.textContent = text; return node },
     createElementNS: (_namespace: string, tag: string) => new Node(tag),
     querySelector: (selector: string) => selector === '.local-badge' ? get('local-badge') : null,
     querySelectorAll: () => [], addEventListener() {} }
@@ -385,6 +387,9 @@ test('memory view preserves chat draft and discards a successful response for an
   get('memory-list').children[1].children[0].fire('click')
   for (let i = 0; i < 20 && get('memory-delete-action').hidden; i++) await flush()
   get('memory-delete-action').fire('click')
+  assert.equal(get('memory-confirm-action').disabled, true, 'wait for preview before confirmation')
+  for (let i = 0; i < 20 && get('memory-confirm-action').disabled; i++) await flush()
+  assert.match(get('memory-forget-scope').children[0].textContent, /2 项记忆/)
   get('memory-confirm-action').fire('click')
   for (let i = 0; i < 20 && !get('memory-receipt-text').textContent.includes('底层清理待完成'); i++) await flush()
   assert.match(get('memory-receipt-text').textContent, /底层清理待完成/)
