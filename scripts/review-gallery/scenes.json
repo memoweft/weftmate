@@ -17,6 +17,8 @@
     { "id": "question", "label": "提问卡", "unavailable": ["watch"] },
     { "id": "outputs-sources", "label": "输出与来源", "unavailable": ["watch"] },
     { "id": "memory", "label": "记忆", "unavailable": ["watch"] },
-    { "id": "appearance", "label": "设置 / 外观", "unavailable": ["watch"] }
+    { "id": "appearance", "label": "设置 / 外观", "unavailable": ["watch"] },
+    { "id": "usage", "label": "设置 → 用量", "unavailable": ["watch"] },
+    { "id": "session-menu", "label": "对话归档 / 删除菜单", "unavailable": ["watch"] }
   ]
 }
