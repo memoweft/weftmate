@@ -197,7 +197,7 @@ private struct SettingsCategoryView: View {
                     Text("浅色").tag("light"); Text("深色").tag("dark"); Text("跟随系统").tag("system")
                 }.pickerStyle(.segmented).accessibilityIdentifier("appearancePicker")
             }
-            SettingsRow("主题色", "按钮、选中状态与交互提示使用统一主题色。") { Text("天蓝").foregroundStyle(Weave.muted) }
+            SettingsRow("主题色", "按钮、选中状态与交互提示使用统一主题色。") { Text("石墨").foregroundStyle(Weave.muted) }
             SettingsRow("字号", "随系统文字大小与辅助功能设置调整。") { Text("系统默认").foregroundStyle(Weave.muted) }
             SettingsRow("界面密度", "当前布局使用标准间距。") { Text("标准").foregroundStyle(Weave.muted) }
             NavigationLink("小纬形象") { SpiritProfileView() }
