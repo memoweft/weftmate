@@ -303,6 +303,7 @@ async function baseline(modelName, fourOnly = false) {
       result.checks.confirmationCompleted = turn.status === 'completed';
       result.checks.confirmationSource = turn.events?.some(row => row.type === 'user.message' && row.data.text === confirmation) === true;
     });
+    if (process.argv.includes('--proposal-only')) return;
     await step('03', '人物、关系、评价、决定和原话来源', async result => {
       await settled(); previous = await items(); const provenance = await sources(previous);
       result.items = previous; result.sources = provenance; result.storage = await storage();
