@@ -1,0 +1,3894 @@
+{
+  "schemaVersion": 1,
+  "protocol": {
+    "originalScenariosUnmodified": true,
+    "noJudge": true,
+    "strictHoldoutSources": true,
+    "lanAtomicLock": true,
+    "lanSerialBatches": true,
+    "freshAccountPerBatch": true,
+    "lanModel": "local-quality",
+    "priorResults": "verification.json",
+    "promptDecontaminationCandidate": "2c1b1efb886cc676ca6ccc38883ea5677a48fca7",
+    "genericCorrectionRuleCandidate": "b0f8d15cb98eb610c9bd8ef163df7a2d5621136d",
+    "scoreFromScenarioStatusNotExitCode": true,
+    "observedInferenceModels": [
+      "local-quality",
+      "mimo-v2.6-flash"
+    ]
+  },
+  "runs": [
+    {
+      "label": "rework-lan-original-holdout-1",
+      "exitCode": 0,
+      "coreCandidate": "2c1b1efb886cc676ca6ccc38883ea5677a48fca7",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 81935,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 12750,
+              "startedAt": "2026-10-08T13:17:46.902Z",
+              "endedAt": "2026-10-08T13:17:59.652Z",
+              "memoryUsedCount": 0,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 64266,
+              "startedAt": "2026-10-08T13:18:02.699Z",
+              "endedAt": "2026-10-08T13:19:06.965Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "failed",
+          "durationMs": 900386,
+          "reason": "Scenario timed out",
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 26162,
+              "startedAt": "2026-10-08T13:19:11.262Z",
+              "endedAt": "2026-10-08T13:19:37.424Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 39148,
+              "startedAt": "2026-10-08T13:19:38.008Z",
+              "endedAt": "2026-10-08T13:20:17.156Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "running",
+              "durationMs": 828136,
+              "startedAt": "2026-10-08T13:20:20.501Z",
+              "endedAt": null,
+              "memoryUsedCount": 0,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 80549,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 4766,
+              "startedAt": "2026-10-08T13:34:11.983Z",
+              "endedAt": "2026-10-08T13:34:16.749Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 70545,
+              "startedAt": "2026-10-08T13:34:19.949Z",
+              "endedAt": "2026-10-08T13:35:30.494Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 76067,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 30363,
+              "startedAt": "2026-10-08T13:35:33.719Z",
+              "endedAt": "2026-10-08T13:36:04.082Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 40348,
+              "startedAt": "2026-10-08T13:36:07.339Z",
+              "endedAt": "2026-10-08T13:36:47.687Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-correction",
+          "status": "failed",
+          "durationMs": 170087,
+          "reason": "Expected values to be strictly equal:\n\n'failed' !== 'passed'\n",
+          "holdoutVerification": {},
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "failed",
+              "reason": "reply_contains did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 30100,
+              "startedAt": "2026-10-08T13:36:52.127Z",
+              "endedAt": "2026-10-08T13:37:22.227Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 68957,
+              "startedAt": "2026-10-08T13:37:25.558Z",
+              "endedAt": "2026-10-08T13:38:34.515Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 61912,
+              "startedAt": "2026-10-08T13:38:37.725Z",
+              "endedAt": "2026-10-08T13:39:39.637Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-person",
+          "status": "passed",
+          "durationMs": 96728,
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 27194,
+              "startedAt": "2026-10-08T13:39:43.741Z",
+              "endedAt": "2026-10-08T13:40:10.935Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 62881,
+              "startedAt": "2026-10-08T13:40:15.009Z",
+              "endedAt": "2026-10-08T13:41:17.890Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-preference",
+          "status": "failed",
+          "durationMs": 80875,
+          "reason": "holdout must adopt its own current formal memory",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true
+          },
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 29170,
+              "startedAt": "2026-10-08T13:41:22.846Z",
+              "endedAt": "2026-10-08T13:41:52.016Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 44515,
+              "startedAt": "2026-10-08T13:41:56.370Z",
+              "endedAt": "2026-10-08T13:42:40.885Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:17:59.655Z",
+          "completedAt": "2026-10-08T13:18:38.260Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T13:19:07.351Z",
+          "completedAt": "2026-10-08T13:19:27.411Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:19:37.614Z",
+          "completedAt": "2026-10-08T13:20:11.598Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "unexpected_correction_target",
+          "createdAt": "2026-10-08T13:20:17.889Z",
+          "completedAt": "2026-10-08T13:21:39.776Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:34:16.945Z",
+          "completedAt": "2026-10-08T13:34:56.417Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:35:30.865Z",
+          "completedAt": "2026-10-08T13:35:54.995Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:36:04.293Z",
+          "completedAt": "2026-10-08T13:36:38.111Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:36:48.099Z",
+          "completedAt": "2026-10-08T13:37:11.851Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:37:22.454Z",
+          "completedAt": "2026-10-08T13:37:54.311Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "correction_target_unknown",
+          "createdAt": "2026-10-08T13:38:34.714Z",
+          "completedAt": "2026-10-08T13:39:30.824Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T13:39:40.028Z",
+          "completedAt": "2026-10-08T13:40:00.105Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:40:11.581Z",
+          "completedAt": "2026-10-08T13:41:03.329Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:41:18.097Z",
+          "completedAt": "2026-10-08T13:41:42.745Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:41:52.223Z",
+          "completedAt": "2026-10-08T13:42:23.970Z"
+        },
+        {
+          "state": "pending",
+          "terminal": null,
+          "reason": null,
+          "createdAt": "2026-10-08T13:42:41.078Z",
+          "completedAt": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 228,
+          "matches": 0,
+          "skippedLinks": 511
+        },
+        "ui-verification": {
+          "electron": true,
+          "label": "用到了 1 条记忆",
+          "sources": 1,
+          "themes": [
+            "light",
+            "dark"
+          ]
+        },
+        "lan-serial-requests": {
+          "maxActive": 1,
+          "requestCount": 107,
+          "inferenceCount": 49
+        }
+      },
+      "wireRequestOrder": [
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "mimoUsage": {
+        "startedRequests": 1,
+        "usageRequests": 1,
+        "missingUsageRequests": 0,
+        "inputTokens": 9114,
+        "cachedInputTokens": 4096,
+        "outputTokens": 151,
+        "knownCostCny": 0.00540192
+      }
+    },
+    {
+      "label": "rework-lan-correction-1",
+      "exitCode": 0,
+      "coreCandidate": "b0f8d15cb98eb610c9bd8ef163df7a2d5621136d",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 78499,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 16931,
+              "startedAt": "2026-10-08T13:43:15.684Z",
+              "endedAt": "2026-10-08T13:43:32.615Z",
+              "memoryUsedCount": 0,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 56355,
+              "startedAt": "2026-10-08T13:43:35.911Z",
+              "endedAt": "2026-10-08T13:44:32.266Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 133244,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 24601,
+              "startedAt": "2026-10-08T13:44:35.900Z",
+              "endedAt": "2026-10-08T13:45:00.501Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 46821,
+              "startedAt": "2026-10-08T13:45:01.732Z",
+              "endedAt": "2026-10-08T13:45:48.553Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 55394,
+              "startedAt": "2026-10-08T13:45:51.739Z",
+              "endedAt": "2026-10-08T13:46:47.133Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 105192,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 20278,
+              "startedAt": "2026-10-08T13:46:51.213Z",
+              "endedAt": "2026-10-08T13:47:11.491Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 36333,
+              "startedAt": "2026-10-08T13:47:15.202Z",
+              "endedAt": "2026-10-08T13:47:51.535Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 39134,
+              "startedAt": "2026-10-08T13:47:54.977Z",
+              "endedAt": "2026-10-08T13:48:34.111Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:43:33.196Z",
+          "completedAt": "2026-10-08T13:44:09.740Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T13:44:32.631Z",
+          "completedAt": "2026-10-08T13:44:52.703Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:45:00.724Z",
+          "completedAt": "2026-10-08T13:45:43.446Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:45:49.168Z",
+          "completedAt": "2026-10-08T13:46:32.125Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T13:46:47.748Z",
+          "completedAt": "2026-10-08T13:47:07.824Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:47:11.692Z",
+          "completedAt": "2026-10-08T13:47:47.798Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:47:51.751Z",
+          "completedAt": "2026-10-08T13:48:28.811Z"
+        },
+        {
+          "state": "pending",
+          "terminal": null,
+          "reason": null,
+          "createdAt": "2026-10-08T13:48:34.848Z",
+          "completedAt": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 221,
+          "matches": 0,
+          "skippedLinks": 511
+        },
+        "correction-verification": {
+          "threeDistinctSessions": true,
+          "correctedMemoryUsed": true,
+          "obsoleteExcluded": true,
+          "sourcesRetained": true,
+          "undeclaredApprovals": 0
+        },
+        "original-correction-verification": {
+          "status": "passed"
+        },
+        "ui-verification": {
+          "electron": true,
+          "label": "用到了 2 条记忆",
+          "sources": 2,
+          "themes": [
+            "light",
+            "dark"
+          ]
+        },
+        "lan-serial-requests": {
+          "maxActive": 1,
+          "requestCount": 50,
+          "inferenceCount": 20
+        }
+      },
+      "wireRequestOrder": [
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      }
+    },
+    {
+      "label": "rework-lan-original-holdout-2",
+      "exitCode": 0,
+      "coreCandidate": "b0f8d15cb98eb610c9bd8ef163df7a2d5621136d",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 81863,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 13350,
+              "startedAt": "2026-10-08T13:48:56.644Z",
+              "endedAt": "2026-10-08T13:49:09.994Z",
+              "memoryUsedCount": 0,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 63348,
+              "startedAt": "2026-10-08T13:49:13.205Z",
+              "endedAt": "2026-10-08T13:50:16.553Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 135442,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 27059,
+              "startedAt": "2026-10-08T13:50:19.968Z",
+              "endedAt": "2026-10-08T13:50:47.027Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 39633,
+              "startedAt": "2026-10-08T13:50:48.358Z",
+              "endedAt": "2026-10-08T13:51:27.991Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 62761,
+              "startedAt": "2026-10-08T13:51:30.556Z",
+              "endedAt": "2026-10-08T13:52:33.317Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 70327,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 20635,
+              "startedAt": "2026-10-08T13:52:37.433Z",
+              "endedAt": "2026-10-08T13:52:58.068Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 43937,
+              "startedAt": "2026-10-08T13:53:01.320Z",
+              "endedAt": "2026-10-08T13:53:45.257Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 77729,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 29245,
+              "startedAt": "2026-10-08T13:53:49.228Z",
+              "endedAt": "2026-10-08T13:54:18.473Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 42409,
+              "startedAt": "2026-10-08T13:54:22.087Z",
+              "endedAt": "2026-10-08T13:55:04.496Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-correction",
+          "status": "failed",
+          "durationMs": 160316,
+          "reason": "holdout must adopt its own current formal memory",
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true
+          },
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 32523,
+              "startedAt": "2026-10-08T13:55:08.692Z",
+              "endedAt": "2026-10-08T13:55:41.215Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 65567,
+              "startedAt": "2026-10-08T13:55:44.638Z",
+              "endedAt": "2026-10-08T13:56:50.205Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 53100,
+              "startedAt": "2026-10-08T13:56:53.361Z",
+              "endedAt": "2026-10-08T13:57:46.461Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-person",
+          "status": "failed",
+          "durationMs": 81702,
+          "reason": "reply_contains did not match expected value; Expected values to be strictly equal:\n\n'failed' !== 'passed'\n",
+          "holdoutVerification": {},
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "failed",
+              "reason": "reply_contains did not match expected value"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 20193,
+              "startedAt": "2026-10-08T13:57:50.450Z",
+              "endedAt": "2026-10-08T13:58:10.643Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 55629,
+              "startedAt": "2026-10-08T13:58:14.263Z",
+              "endedAt": "2026-10-08T13:59:09.892Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-preference",
+          "status": "failed",
+          "durationMs": 73336,
+          "reason": "reply_matches did not match expected value; Expected values to be strictly equal:\n\n'failed' !== 'passed'\n",
+          "holdoutVerification": {},
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 25075,
+              "startedAt": "2026-10-08T13:59:13.985Z",
+              "endedAt": "2026-10-08T13:59:39.060Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 41831,
+              "startedAt": "2026-10-08T13:59:42.687Z",
+              "endedAt": "2026-10-08T14:00:24.518Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:49:09.997Z",
+          "completedAt": "2026-10-08T13:49:50.680Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T13:50:16.939Z",
+          "completedAt": "2026-10-08T13:50:37.014Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:50:47.436Z",
+          "completedAt": "2026-10-08T13:51:22.363Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:51:28.165Z",
+          "completedAt": "2026-10-08T13:52:20.062Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T13:52:34.348Z",
+          "completedAt": "2026-10-08T13:52:54.436Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:52:58.259Z",
+          "completedAt": "2026-10-08T13:53:37.494Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:53:45.616Z",
+          "completedAt": "2026-10-08T13:54:09.503Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:54:19.121Z",
+          "completedAt": "2026-10-08T13:54:54.153Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:55:05.432Z",
+          "completedAt": "2026-10-08T13:55:29.417Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:55:41.389Z",
+          "completedAt": "2026-10-08T13:56:15.455Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:56:50.378Z",
+          "completedAt": "2026-10-08T13:57:17.034Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T13:57:46.650Z",
+          "completedAt": "2026-10-08T13:58:06.725Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:58:10.854Z",
+          "completedAt": "2026-10-08T13:58:54.436Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T13:59:10.243Z",
+          "completedAt": "2026-10-08T13:59:34.487Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T13:59:39.255Z",
+          "completedAt": "2026-10-08T14:00:11.276Z"
+        },
+        {
+          "state": "pending",
+          "terminal": null,
+          "reason": null,
+          "createdAt": "2026-10-08T14:00:24.692Z",
+          "completedAt": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 227,
+          "matches": 0,
+          "skippedLinks": 511
+        },
+        "ui-verification": {
+          "electron": true,
+          "label": "用到了 1 条记忆",
+          "sources": 1,
+          "themes": [
+            "light",
+            "dark"
+          ]
+        },
+        "lan-serial-requests": {
+          "maxActive": 1,
+          "requestCount": 100,
+          "inferenceCount": 45
+        }
+      },
+      "wireRequestOrder": [
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "mimoUsage": {
+        "startedRequests": 1,
+        "usageRequests": 1,
+        "missingUsageRequests": 0,
+        "inputTokens": 9109,
+        "cachedInputTokens": 4096,
+        "outputTokens": 120,
+        "knownCostCny": 0.00533492
+      }
+    },
+    {
+      "label": "rework-lan-correction-2",
+      "exitCode": 0,
+      "coreCandidate": "b0f8d15cb98eb610c9bd8ef163df7a2d5621136d",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 71022,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 11886,
+              "startedAt": "2026-10-08T14:00:45.081Z",
+              "endedAt": "2026-10-08T14:00:56.967Z",
+              "memoryUsedCount": 0,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 54600,
+              "startedAt": "2026-10-08T14:00:59.675Z",
+              "endedAt": "2026-10-08T14:01:54.275Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 200553,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 44846,
+              "startedAt": "2026-10-08T14:01:57.947Z",
+              "endedAt": "2026-10-08T14:02:42.793Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 62629,
+              "startedAt": "2026-10-08T14:02:43.436Z",
+              "endedAt": "2026-10-08T14:03:46.065Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 87410,
+              "startedAt": "2026-10-08T14:03:49.068Z",
+              "endedAt": "2026-10-08T14:05:16.478Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 99090,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 20106,
+              "startedAt": "2026-10-08T14:05:20.146Z",
+              "endedAt": "2026-10-08T14:05:40.252Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 35093,
+              "startedAt": "2026-10-08T14:05:43.323Z",
+              "endedAt": "2026-10-08T14:06:18.416Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 35751,
+              "startedAt": "2026-10-08T14:06:21.492Z",
+              "endedAt": "2026-10-08T14:06:57.243Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:00:56.971Z",
+          "completedAt": "2026-10-08T14:01:29.459Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:01:54.654Z",
+          "completedAt": "2026-10-08T14:02:14.734Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:02:43.005Z",
+          "completedAt": "2026-10-08T14:03:21.828Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:03:46.754Z",
+          "completedAt": "2026-10-08T14:05:04.710Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:05:16.839Z",
+          "completedAt": "2026-10-08T14:05:36.912Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:05:40.417Z",
+          "completedAt": "2026-10-08T14:06:14.538Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:06:18.602Z",
+          "completedAt": "2026-10-08T14:06:52.464Z"
+        },
+        {
+          "state": "pending",
+          "terminal": null,
+          "reason": null,
+          "createdAt": "2026-10-08T14:06:57.787Z",
+          "completedAt": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 224,
+          "matches": 0,
+          "skippedLinks": 511
+        },
+        "correction-verification": {
+          "threeDistinctSessions": true,
+          "correctedMemoryUsed": true,
+          "obsoleteExcluded": true,
+          "sourcesRetained": true,
+          "undeclaredApprovals": 0
+        },
+        "original-correction-verification": {
+          "status": "passed"
+        },
+        "ui-verification": {
+          "electron": true,
+          "label": "用到了 2 条记忆",
+          "sources": 2,
+          "themes": [
+            "light",
+            "dark"
+          ]
+        },
+        "lan-serial-requests": {
+          "maxActive": 1,
+          "requestCount": 58,
+          "inferenceCount": 24
+        }
+      },
+      "wireRequestOrder": [
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 10,
+          "lastUserIndex": 12,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 11,
+          "lastUserIndex": 13,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 12,
+          "lastUserIndex": 15,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "mimoUsage": {
+        "startedRequests": 0,
+        "usageRequests": 0,
+        "missingUsageRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "knownCostCny": 0.0
+      }
+    },
+    {
+      "label": "rework-mimo-original-holdout",
+      "exitCode": 0,
+      "coreCandidate": "b0f8d15cb98eb610c9bd8ef163df7a2d5621136d",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 48353,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 5645,
+              "startedAt": "2026-10-08T14:07:16.770Z",
+              "endedAt": "2026-10-08T14:07:22.415Z",
+              "memoryUsedCount": 0,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 37608,
+              "startedAt": "2026-10-08T14:07:25.469Z",
+              "endedAt": "2026-10-08T14:08:03.077Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 58509,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 6032,
+              "startedAt": "2026-10-08T14:08:06.068Z",
+              "endedAt": "2026-10-08T14:08:12.100Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 12082,
+              "startedAt": "2026-10-08T14:08:13.641Z",
+              "endedAt": "2026-10-08T14:08:25.723Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 33846,
+              "startedAt": "2026-10-08T14:08:29.231Z",
+              "endedAt": "2026-10-08T14:09:03.077Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 29900,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 4652,
+              "startedAt": "2026-10-08T14:09:06.374Z",
+              "endedAt": "2026-10-08T14:09:11.026Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 19381,
+              "startedAt": "2026-10-08T14:09:14.840Z",
+              "endedAt": "2026-10-08T14:09:34.221Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 42959,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 14428,
+              "startedAt": "2026-10-08T14:09:37.926Z",
+              "endedAt": "2026-10-08T14:09:52.355Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 23256,
+              "startedAt": "2026-10-08T14:09:55.447Z",
+              "endedAt": "2026-10-08T14:10:18.703Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-correction",
+          "status": "passed",
+          "durationMs": 114333,
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 8083,
+              "startedAt": "2026-10-08T14:10:23.071Z",
+              "endedAt": "2026-10-08T14:10:31.154Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 55695,
+              "startedAt": "2026-10-08T14:10:35.049Z",
+              "endedAt": "2026-10-08T14:11:30.744Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 40845,
+              "startedAt": "2026-10-08T14:11:34.165Z",
+              "endedAt": "2026-10-08T14:12:15.010Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-person",
+          "status": "failed",
+          "durationMs": 30601,
+          "reason": "reply_matches did not match expected value; Expected values to be strictly equal:\n\n'failed' !== 'passed'\n",
+          "holdoutVerification": {},
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 7370,
+              "startedAt": "2026-10-08T14:12:19.010Z",
+              "endedAt": "2026-10-08T14:12:26.380Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 17711,
+              "startedAt": "2026-10-08T14:12:29.812Z",
+              "endedAt": "2026-10-08T14:12:47.523Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-preference",
+          "status": "failed",
+          "durationMs": 59324,
+          "reason": "reply_matches did not match expected value; Expected values to be strictly equal:\n\n'failed' !== 'passed'\n",
+          "holdoutVerification": {},
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 35722,
+              "startedAt": "2026-10-08T14:12:51.662Z",
+              "endedAt": "2026-10-08T14:13:27.384Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 17466,
+              "startedAt": "2026-10-08T14:13:31.066Z",
+              "endedAt": "2026-10-08T14:13:48.532Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:07:22.418Z",
+          "completedAt": "2026-10-08T14:07:35.392Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:08:03.431Z",
+          "completedAt": "2026-10-08T14:08:03.524Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:08:12.794Z",
+          "completedAt": "2026-10-08T14:08:20.017Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:08:26.424Z",
+          "completedAt": "2026-10-08T14:08:33.728Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:09:03.985Z",
+          "completedAt": "2026-10-08T14:09:04.071Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:09:11.627Z",
+          "completedAt": "2026-10-08T14:09:20.321Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T14:09:34.576Z",
+          "completedAt": "2026-10-08T14:09:41.964Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:09:52.522Z",
+          "completedAt": "2026-10-08T14:10:11.248Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T14:10:19.124Z",
+          "completedAt": "2026-10-08T14:10:23.930Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:10:31.533Z",
+          "completedAt": "2026-10-08T14:10:37.766Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:11:30.927Z",
+          "completedAt": "2026-10-08T14:11:38.964Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:12:15.622Z",
+          "completedAt": "2026-10-08T14:12:15.723Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:12:26.560Z",
+          "completedAt": "2026-10-08T14:12:33.722Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T14:12:47.883Z",
+          "completedAt": "2026-10-08T14:13:07.121Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:13:27.583Z",
+          "completedAt": "2026-10-08T14:13:38.331Z"
+        },
+        {
+          "state": "processing",
+          "terminal": null,
+          "reason": null,
+          "createdAt": "2026-10-08T14:13:48.723Z",
+          "completedAt": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 227,
+          "matches": 0,
+          "skippedLinks": 511
+        },
+        "ui-verification": {
+          "electron": true,
+          "label": "用到了 1 条记忆",
+          "sources": 1,
+          "themes": [
+            "light",
+            "dark"
+          ]
+        },
+        "lan-serial-requests": {
+          "maxActive": 1,
+          "requestCount": 8,
+          "inferenceCount": 1
+        }
+      },
+      "wireRequestOrder": [
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 7,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 5,
+          "lastUserIndex": 7,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "mimoUsage": {
+        "startedRequests": 48,
+        "usageRequests": 47,
+        "missingUsageRequests": 1,
+        "inputTokens": 234767,
+        "cachedInputTokens": 197824,
+        "outputTokens": 8408,
+        "knownCostCny": 0.057715480000000006
+      }
+    },
+    {
+      "label": "rework-mimo-correction",
+      "exitCode": 0,
+      "coreCandidate": "b0f8d15cb98eb610c9bd8ef163df7a2d5621136d",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 52843,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 5419,
+              "startedAt": "2026-10-08T14:14:11.942Z",
+              "endedAt": "2026-10-08T14:14:17.361Z",
+              "memoryUsedCount": 0,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 42206,
+              "startedAt": "2026-10-08T14:14:20.706Z",
+              "endedAt": "2026-10-08T14:15:02.912Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 47651,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 6533,
+              "startedAt": "2026-10-08T14:15:06.120Z",
+              "endedAt": "2026-10-08T14:15:12.653Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 12351,
+              "startedAt": "2026-10-08T14:15:13.234Z",
+              "endedAt": "2026-10-08T14:15:25.585Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 22235,
+              "startedAt": "2026-10-08T14:15:29.395Z",
+              "endedAt": "2026-10-08T14:15:51.630Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "status": "passed",
+          "durationMs": 75494,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 5161,
+              "startedAt": "2026-10-08T14:15:54.641Z",
+              "endedAt": "2026-10-08T14:15:59.802Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 43664,
+              "startedAt": "2026-10-08T14:16:03.625Z",
+              "endedAt": "2026-10-08T14:16:47.289Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 17521,
+              "startedAt": "2026-10-08T14:16:50.947Z",
+              "endedAt": "2026-10-08T14:17:08.468Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:14:18.006Z",
+          "completedAt": "2026-10-08T14:14:34.678Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:15:03.324Z",
+          "completedAt": "2026-10-08T14:15:03.423Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:15:12.842Z",
+          "completedAt": "2026-10-08T14:15:19.305Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:15:26.146Z",
+          "completedAt": "2026-10-08T14:15:39.365Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:15:52.010Z",
+          "completedAt": "2026-10-08T14:15:52.107Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:16:00.364Z",
+          "completedAt": "2026-10-08T14:16:41.913Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:16:47.474Z",
+          "completedAt": "2026-10-08T14:17:04.175Z"
+        },
+        {
+          "state": "processing",
+          "terminal": null,
+          "reason": null,
+          "createdAt": "2026-10-08T14:17:08.668Z",
+          "completedAt": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 219,
+          "matches": 0,
+          "skippedLinks": 511
+        },
+        "correction-verification": {
+          "threeDistinctSessions": true,
+          "correctedMemoryUsed": true,
+          "obsoleteExcluded": true,
+          "sourcesRetained": true,
+          "undeclaredApprovals": 0
+        },
+        "ui-verification": {
+          "electron": true,
+          "label": "用到了 2 条记忆",
+          "sources": 2,
+          "themes": [
+            "light",
+            "dark"
+          ]
+        }
+      },
+      "wireRequestOrder": [
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": 5,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": true
+        }
+      ],
+      "mimoUsage": {
+        "startedRequests": 21,
+        "usageRequests": 20,
+        "missingUsageRequests": 1,
+        "inputTokens": 93810,
+        "cachedInputTokens": 75328,
+        "outputTokens": 3696,
+        "knownCostCny": 0.02738056
+      }
+    },
+    {
+      "label": "rework-lan-original-holdout-3",
+      "exitCode": 0,
+      "coreCandidate": "b0f8d15cb98eb610c9bd8ef163df7a2d5621136d",
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "status": "passed",
+          "durationMs": 67509,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 12350,
+              "startedAt": "2026-10-08T14:19:15.516Z",
+              "endedAt": "2026-10-08T14:19:27.866Z",
+              "memoryUsedCount": 0,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 49505,
+              "startedAt": "2026-10-08T14:19:31.712Z",
+              "endedAt": "2026-10-08T14:20:21.217Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "status": "passed",
+          "durationMs": 133709,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 26575,
+              "startedAt": "2026-10-08T14:20:24.646Z",
+              "endedAt": "2026-10-08T14:20:51.221Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 41330,
+              "startedAt": "2026-10-08T14:20:52.567Z",
+              "endedAt": "2026-10-08T14:21:33.897Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 59548,
+              "startedAt": "2026-10-08T14:21:36.985Z",
+              "endedAt": "2026-10-08T14:22:36.533Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-03-switch-model",
+          "status": "passed",
+          "durationMs": 64668,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 20987,
+              "startedAt": "2026-10-08T14:22:39.782Z",
+              "endedAt": "2026-10-08T14:23:00.769Z",
+              "memoryUsedCount": 1,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 38604,
+              "startedAt": "2026-10-08T14:23:03.938Z",
+              "endedAt": "2026-10-08T14:23:42.542Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-04-person",
+          "status": "passed",
+          "durationMs": 89955,
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 34159,
+              "startedAt": "2026-10-08T14:23:46.229Z",
+              "endedAt": "2026-10-08T14:24:20.388Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 50242,
+              "startedAt": "2026-10-08T14:24:23.808Z",
+              "endedAt": "2026-10-08T14:25:14.050Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-correction",
+          "status": "passed",
+          "durationMs": 177663,
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true,
+            "obsoleteExcluded": true,
+            "originalSourceRetained": true
+          },
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "turn": 2,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 25835,
+              "startedAt": "2026-10-08T14:25:18.057Z",
+              "endedAt": "2026-10-08T14:25:43.892Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 57348,
+              "startedAt": "2026-10-08T14:25:47.279Z",
+              "endedAt": "2026-10-08T14:26:44.627Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 85593,
+              "startedAt": "2026-10-08T14:26:47.869Z",
+              "endedAt": "2026-10-08T14:28:13.462Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-person",
+          "status": "passed",
+          "durationMs": 73434,
+          "holdoutVerification": {
+            "distinctSessions": true,
+            "noUndeclaredApprovals": true,
+            "currentItemAdopted": true,
+            "exactSourceRetained": true
+          },
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 20600,
+              "startedAt": "2026-10-08T14:28:17.656Z",
+              "endedAt": "2026-10-08T14:28:38.256Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 46018,
+              "startedAt": "2026-10-08T14:28:42.538Z",
+              "endedAt": "2026-10-08T14:29:28.556Z",
+              "memoryUsedCount": 3,
+              "approvals": 0
+            }
+          ]
+        },
+        {
+          "id": "memory-1x-preference",
+          "status": "failed",
+          "durationMs": 77362,
+          "reason": "reply_matches did not match expected value; Expected values to be strictly equal:\n\n'failed' !== 'passed'\n",
+          "holdoutVerification": {},
+          "checks": [
+            {
+              "type": "turn_status",
+              "turn": 1,
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "failed",
+              "reason": "reply_matches did not match expected value"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped",
+              "reason": "No judge configured; enable --judge-model same or a configured model name."
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "durationMs": 24652,
+              "startedAt": "2026-10-08T14:29:32.886Z",
+              "endedAt": "2026-10-08T14:29:57.538Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            },
+            {
+              "status": "completed",
+              "durationMs": 45610,
+              "startedAt": "2026-10-08T14:30:02.194Z",
+              "endedAt": "2026-10-08T14:30:47.804Z",
+              "memoryUsedCount": 2,
+              "approvals": 0
+            }
+          ]
+        }
+      ],
+      "coreJobs": [
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:19:28.447Z",
+          "completedAt": "2026-10-08T14:20:02.642Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:20:21.579Z",
+          "completedAt": "2026-10-08T14:20:41.654Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:20:51.414Z",
+          "completedAt": "2026-10-08T14:21:28.829Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:21:34.431Z",
+          "completedAt": "2026-10-08T14:22:13.229Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:22:36.877Z",
+          "completedAt": "2026-10-08T14:22:56.952Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:23:00.958Z",
+          "completedAt": "2026-10-08T14:23:36.725Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T14:23:43.038Z",
+          "completedAt": "2026-10-08T14:24:07.570Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:24:20.568Z",
+          "completedAt": "2026-10-08T14:25:03.266Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T14:25:14.404Z",
+          "completedAt": "2026-10-08T14:25:38.535Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:25:44.099Z",
+          "completedAt": "2026-10-08T14:26:18.271Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:26:44.816Z",
+          "completedAt": "2026-10-08T14:27:32.835Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "pure_inquiry_no_declarative_facts",
+          "createdAt": "2026-10-08T14:28:13.635Z",
+          "completedAt": "2026-10-08T14:28:33.712Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:28:38.472Z",
+          "completedAt": "2026-10-08T14:29:14.534Z"
+        },
+        {
+          "state": "no_change",
+          "terminal": "no_change",
+          "reason": "model_no_change",
+          "createdAt": "2026-10-08T14:29:28.758Z",
+          "completedAt": "2026-10-08T14:29:52.648Z"
+        },
+        {
+          "state": "applied",
+          "terminal": "applied",
+          "reason": null,
+          "createdAt": "2026-10-08T14:29:57.776Z",
+          "completedAt": "2026-10-08T14:30:27.278Z"
+        },
+        {
+          "state": "pending",
+          "terminal": null,
+          "reason": null,
+          "createdAt": "2026-10-08T14:30:48.025Z",
+          "completedAt": null
+        }
+      ],
+      "artifacts": {
+        "credential-scan": {
+          "scanned": 227,
+          "matches": 0,
+          "skippedLinks": 511
+        },
+        "ui-verification": {
+          "electron": true,
+          "label": "用到了 1 条记忆",
+          "sources": 1,
+          "themes": [
+            "light",
+            "dark"
+          ]
+        },
+        "lan-serial-requests": {
+          "maxActive": 1,
+          "requestCount": 100,
+          "inferenceCount": 45
+        }
+      },
+      "wireRequestOrder": [
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 6,
+          "lastUserIndex": 8,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 5,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": 6,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": true,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 4,
+          "lastUserIndex": 6,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        },
+        {
+          "memoryIndex": 3,
+          "lastUserIndex": 5,
+          "backgroundBeforeLastUser": true,
+          "exerciseQuestionIndex": -1,
+          "swimmingQuestionIndex": -1,
+          "lastUserIsExerciseQuestion": false,
+          "lastUserIsSwimmingQuestion": false
+        }
+      ],
+      "mimoUsage": {
+        "startedRequests": 1,
+        "usageRequests": 1,
+        "missingUsageRequests": 0,
+        "inputTokens": 9122,
+        "cachedInputTokens": 4096,
+        "outputTokens": 136,
+        "knownCostCny": 0.00537992
+      }
+    }
+  ],
+  "date": "2026-10-08",
+  "tests": {
+    "finalCorePromptAndParserPassed": 29,
+    "earlierCoreRelatedPassed": 83,
+    "weftmateEvaluatorPassed": 12,
+    "weftmateHostAndLanBridgePassed": 8,
+    "typecheck": true,
+    "coreCiPythonPassed": 1748,
+    "coreCiMypyModules": 204,
+    "weftmateRelatedPassed": 20,
+    "weftmateRelatedSkipped": 0
+  },
+  "summary": {
+    "decontaminationOnlyLan": {
+      "originalPassed": 3,
+      "originalTotal": 4,
+      "holdoutPassed": 1,
+      "holdoutTotal": 3,
+      "passed": 4,
+      "total": 7
+    },
+    "finalLan": {
+      "originalAndSpecialPassed": 14,
+      "originalAndSpecialTotal": 14,
+      "holdoutPassed": 2,
+      "holdoutTotal": 6,
+      "passed": 16,
+      "total": 20
+    },
+    "finalMimo": {
+      "originalAndSpecialPassed": 7,
+      "originalAndSpecialTotal": 7,
+      "holdoutPassed": 1,
+      "holdoutTotal": 3,
+      "passed": 8,
+      "total": 10
+    },
+    "holdoutAcceptancePassed": false
+  },
+  "mimoTotalUsage": {
+    "startedRequests": 72,
+    "usageRequests": 70,
+    "missingUsageRequests": 2,
+    "inputTokens": 355922,
+    "cachedInputTokens": 285440,
+    "outputTokens": 12511,
+    "knownCostCny": 0.1012128
+  },
+  "diagnostics": {
+    "firstDecontaminationOriginalCorrection": {
+      "firstAction": "form",
+      "rewriteAction": "form",
+      "compilerError": "unexpected_correction_target"
+    },
+    "firstDecontaminationHoldoutCorrection": {
+      "targetLength": 60,
+      "targetMatchesAuthoritativeRecord": false,
+      "firstAction": "form",
+      "rewriteAction": "correct",
+      "compilerError": "correction_target_unknown"
+    },
+    "firstFinalLanHoldoutCorrection": {
+      "initialAndCorrectionFormation": "no_change",
+      "reply150WasOnlyGenericRange": true,
+      "strictAdoptionRejected": true
+    },
+    "firstFinalLanHoldoutPerson": {
+      "formalKind": "relationship",
+      "current": true,
+      "adopted": true,
+      "literalNameCheckPassed": false
+    },
+    "mimoHoldoutPerson": {
+      "formalKind": "cognition",
+      "current": true,
+      "adopted": true,
+      "semanticPotteryVocabularyPresent": true,
+      "literalTopicCheckPassed": false,
+      "formalRelationshipVerified": false
+    },
+    "finalHoldoutMusic": {
+      "lanRound1CurrentItemAdopted": false,
+      "lanRound2CurrentItemAdopted": false,
+      "mimoCurrentItemAdopted": false,
+      "lanRound2TopicSegmentRetained": false,
+      "mimoTopicSegmentRetained": false
+    },
+    "grading": {
+      "inputsAndChecksNotChangedAfterFailures": true,
+      "exitCodeIsNotScenarioPassCriterion": true,
+      "crossModelFailuresAreUnresolved": true
+    }
+  },
+  "cleanup": {
+    "isolatedBatches": 7,
+    "actualFilesScanned": 1573,
+    "secretMatches": 0,
+    "allLanMaxActiveOne": true,
+    "lanLockReleased": true,
+    "allObservedBackgroundBeforeLastUser": true,
+    "dailyCoreBranch": "main",
+    "registeredIsolatedProcesses": 0,
+    "credentialFiles": 0,
+    "publicFilesScanned": 7,
+    "publicSecretMatches": 0,
+    "observedExerciseQuestionLastUser": true,
+    "observedSwimmingQuestionLastUser": true
+  }
+}
