@@ -359,7 +359,7 @@ struct ConversationView: View {
     private var commandStatusCards: some View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
-        let rows = model.commandRows(for: conversation)
+        let rows = model.commandStatusRows(for: conversation)
         return ForEach(rows) { row in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 HStack {
@@ -408,6 +408,7 @@ struct ConversationView: View {
                                     Text(task.text).font(AppleTokens.Fonts.callout).lineLimit(3)
                                     Spacer()
                                     Button("编辑后重排") { sendIntent = .queue; Task { await model.cancelQueued(task, conversation: conversation, edit: true) } }
+                                        .accessibilityLabel("编辑排队任务 " + task.text)
                                     Button("取消") { Task { await model.cancelQueued(task, conversation: conversation) } }
                                         .accessibilityLabel("取消排队任务 " + task.text)
                                 }.disabled(model.queueBusy.contains(task.id) || model.historyCachedAt != nil)

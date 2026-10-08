@@ -120,3 +120,33 @@ private actor ParityTransport: HTTPTransport {
     let requests = await transport.recorded()
     #expect(requests.first?.url?.query == "archived=all")
 }
+
+@Test func a5CommandTrackerFollowsNativeLifecycleIncludingBatchedCancellation() throws {
+    let root = SharedCommandReceipt(commandId:"root",requestId:"r",kind:.message,targetDeviceId:"host",state:.acceptedByDSH,sessionId:"session",conversationId:nil,sourceSyncEventId:nil,receiptId:"receipt-root",errorCode:nil)
+    let queued = SharedCommandReceipt(commandId:"queued",requestId:"q",kind:.message,targetDeviceId:"host",state:.acceptedByDSH,sessionId:"session",conversationId:nil,sourceSyncEventId:nil,receiptId:"receipt-queue",errorCode:nil)
+    var tracker = try SharedTurnTracker(sessionID:"session")
+    func page(_ json: String, _ after: Int) throws -> SharedHistoryPage { try .decode(Data(json.utf8),sessionID:"session",afterSeq:after) }
+    try tracker.apply(page(#"{"events":[{"seq":0,"type":"user.message","data":{"receiptId":"receipt-root","turn":1,"text":"original"}},{"seq":1,"type":"task.started","data":{"receiptId":"receipt-root","turn":1}},{"seq":2,"type":"task.queued","data":{"receiptId":"receipt-queue","text":"queued"}}],"nextSeq":2,"hasMore":false}"#,-1))
+    #expect(tracker.progress(for:root) == .running); #expect(tracker.progress(for:queued) == .pending)
+    try tracker.apply(page(#"{"events":[{"seq":3,"type":"task.ended","data":{"reason":"canceled","tasks":[{"receiptId":"receipt-queue"},{"receiptId":"other"}]}}],"nextSeq":3,"hasMore":false}"#,2))
+    #expect(tracker.progress(for:queued) == .aborted); #expect(tracker.progress(for:root) == .running)
+    try tracker.apply(page(#"{"events":[{"seq":4,"type":"task.ended","data":{"receiptId":"receipt-root","turn":1,"reason":"completed"}}],"nextSeq":4,"hasMore":false}"#,3))
+    #expect(tracker.progress(for:root) == .completed)
+}
+
+@Test func a5NativeStepStartDoesNotMakeTheCurrentSupplementAmbiguous() throws {
+    let supplement = SharedCommandReceipt(commandId:"supplement",requestId:"s",kind:.message,targetDeviceId:"host",state:.acceptedByDSH,sessionId:"session",conversationId:nil,sourceSyncEventId:nil,receiptId:"steer",errorCode:nil,rootTaskId:"root",taskAction:"supplement")
+    let json = #"{"events":[{"seq":0,"type":"turn.started","data":{"turn":1}},{"seq":1,"type":"user.message","data":{"receiptId":"original","text":"original"}},{"seq":2,"type":"task.started","data":{"turn":1,"receiptId":"original"}},{"seq":3,"type":"user.message","data":{"receiptId":"steer","text":"supplement"}},{"seq":4,"type":"task.ended","data":{"turn":1,"receiptId":"original","reason":"completed"}},{"seq":5,"type":"turn.ended","data":{"turn":1,"reason":"completed"}}],"nextSeq":5,"hasMore":false}"#
+    var tracker = try SharedTurnTracker(sessionID:"session")
+    try tracker.apply(.decode(Data(json.utf8),sessionID:"session",afterSeq:-1))
+    #expect(tracker.progress(for:supplement) == .completed)
+}
+
+@Test func a5RemoteSupplementMetadataAnnotatesMessageWithoutBecomingRootControl() async throws {
+    let transport = ParityTransport(), client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+    let session = try await client.login(server: ServerConfiguration(input:"https://parity.example.com"), username:"synthetic", password:"synthetic-password-long", deviceName:"iPhone")
+    let wire = #"{"commands":[{"commandId":"child","requestId":"child-request","kind":"session.message","targetDeviceId":"host","sessionId":"session","state":"accepted_by_dsh","createdAt":"2026-10-08T01:00:00Z","updatedAt":"2026-10-08T01:00:00Z","rootTaskId":"root","taskAction":"supplement","receiptId":"steer"},{"commandId":"root","requestId":"root-request","kind":"session.message","targetDeviceId":"host","sessionId":"session","state":"accepted_by_dsh","createdAt":"2026-10-08T00:00:00Z","updatedAt":"2026-10-08T00:00:00Z","receiptId":"original"}],"hasMore":false}"#
+    let page = try TaskCommandPage.decode(Data(wire.utf8),scope:TaskReadScope(session),sessionID:"session",limit:50,previous:nil)
+    #expect(page.supplementReceiptIDs == Set(["steer"]))
+    #expect(page.rootCommands.map(\.id) == ["root"])
+}

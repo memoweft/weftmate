@@ -281,6 +281,7 @@ public struct SharedHistoryImage: Codable, Equatable, Sendable {
     public let height: Int
     public let name: String?
 }
+public struct SharedLifecycleTask: Codable, Equatable, Sendable { public let receiptId: String? }
 public struct SharedHistoryData: Codable, Equatable, Sendable {
     public let text: String?
     public let images: [SharedHistoryImage]?
@@ -291,6 +292,7 @@ public struct SharedHistoryData: Codable, Equatable, Sendable {
     public let truncated: Bool?
     public let turn: Int?
     public let reason: String?
+    public let tasks: [SharedLifecycleTask]?
 }
 public struct SharedHistoryEvent: Codable, Equatable, Sendable, Identifiable {
     public var id: Int { seq }
@@ -301,7 +303,8 @@ public struct SharedHistoryEvent: Codable, Equatable, Sendable, Identifiable {
     func validate() throws {
         try SharedValidation.require(seq >= 0 && seq <= SharedValidation.maximumSequence && !type.isEmpty && type.utf8.count <= 128 &&
             at.map { $0.utf8.count <= 64 } ?? true && data.text.map { $0.utf16.count <= 16_384 } ?? true &&
-            data.receiptId.map(SharedValidation.receipt) ?? true && data.turn.map { $0 > 0 && $0 <= SharedValidation.maximumSequence } ?? true)
+            data.receiptId.map(SharedValidation.receipt) ?? true &&
+            (data.tasks ?? []).allSatisfy { $0.receiptId.map(SharedValidation.receipt) ?? true } && data.turn.map { $0 > 0 && $0 <= SharedValidation.maximumSequence } ?? true)
         let images = data.images ?? []
         try OriginalAttachmentValidation.validate(data.originalAttachments, messageID: data.attachmentMessageId,
             unpreviewedIDs: data.unpreviewedOriginalImageIds)
@@ -363,6 +366,7 @@ public struct SharedTurnTracker: Sendable {
     public private(set) var messages: [ChatMessage] = []
     private var openTurn: Int?
     private var receiptTurns: [String: Int] = [:]
+    private var nativeReceiptProgress: [String: SharedTurnProgress] = [:]
     private var ambiguousReceipts = Set<String>()
     private var endings: [Int: String] = [:]
     private var runningTurns = Set<Int>()
@@ -376,18 +380,38 @@ public struct SharedTurnTracker: Sendable {
 
         for event in page.events {
             if let message = event.chatMessage(sessionID: sessionId) { messages.append(message) }
-            if event.type == "turn.started" {
-                if let previous = openTurn { ambiguousTurns.insert(previous); runningTurns.remove(previous) }
-                openTurn = event.data.turn
-                if let turn = openTurn {
-                    if !seenTurns.insert(turn).inserted { ambiguousTurns.insert(turn) }
-                    runningTurns.insert(turn)
+            let lifecycleReceipts = event.data.tasks?.compactMap(\.receiptId) ?? event.data.receiptId.map { [$0] } ?? []
+            if ["task.queued", "task.started", "task.ended"].contains(event.type) {
+                for receipt in lifecycleReceipts {
+                    if event.type == "task.queued" { nativeReceiptProgress[receipt] = .pending }
+                    else if event.type == "task.started" { nativeReceiptProgress[receipt] = .running }
+                    else {
+                        switch event.data.reason {
+                        case "completed": nativeReceiptProgress[receipt] = .completed
+                        case "aborted", "canceled": nativeReceiptProgress[receipt] = .aborted
+                        case "error": nativeReceiptProgress[receipt] = .failed
+                        case "blocked": nativeReceiptProgress[receipt] = .blocked
+                        default: nativeReceiptProgress[receipt] = .unknown
+                        }
+                    }
+                }
+            }
+            if event.type == "turn.started" || event.type == "task.started" {
+                // Native step-1 start follows turn.started and names the same active turn.
+                let sameTurnStart = event.type == "task.started" && openTurn == event.data.turn
+                if !sameTurnStart {
+                    if let previous = openTurn { ambiguousTurns.insert(previous); runningTurns.remove(previous) }
+                    openTurn = event.data.turn
+                    if let turn = openTurn {
+                        if !seenTurns.insert(turn).inserted { ambiguousTurns.insert(turn) }
+                        runningTurns.insert(turn)
+                    }
                 }
             } else if event.type == "user.message", let receipt = event.data.receiptId {
-                if let turn = openTurn, receiptTurns[receipt] == nil, !ambiguousReceipts.contains(receipt) {
+                if let turn = event.data.turn ?? openTurn, receiptTurns[receipt] == nil, !ambiguousReceipts.contains(receipt) {
                     receiptTurns[receipt] = turn
                 } else { receiptTurns[receipt] = nil; ambiguousReceipts.insert(receipt) }
-            } else if event.type == "turn.ended" {
+            } else if event.type == "turn.ended" || (event.type == "task.ended" && event.data.reason != "canceled") {
                 if let turn = event.data.turn, turn == openTurn {
                     endings[turn] = event.data.reason; runningTurns.remove(turn)
                 } else if let previous = openTurn {
@@ -403,6 +427,7 @@ public struct SharedTurnTracker: Sendable {
         if receipt.state == .rejected { return .failed }
         if receipt.state == .pending || receipt.state == .dispatching { return .pending }
         guard receipt.state.isAccepted else { return .unknown }
+        if let id = receipt.receiptId, let native = nativeReceiptProgress[id], !ambiguousReceipts.contains(id) { return native }
         guard let id = receipt.receiptId, let turn = receiptTurns[id], !ambiguousReceipts.contains(id) else { return .accepted }
         guard !ambiguousTurns.contains(turn) else { return .unknown }
         if let reason = endings[turn] {

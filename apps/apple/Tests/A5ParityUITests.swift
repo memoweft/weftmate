@@ -64,8 +64,8 @@ final class A5ParityUITests: XCTestCase {
             try send(app,"A5_STEER supplemental instruction")
             try expect(app.staticTexts["已补充到当前任务"])
             app.segmentedControls["sendIntent"].buttons["新任务"].tap()
-            for text in ["A5_QUEUE_1", "A5_QUEUE_2", "A5_CANCEL"] { try send(app,text) }
-            let queued=app.buttons["3 个排队中"];try expect(queued);queued.tap()
+            for text in ["A5_QUEUE_1", "A5_QUEUE_2", "A5_CANCEL", "A5_EDIT"] { try send(app,text) }
+            let queued=app.buttons["4 个排队中"];try expect(queued);queued.tap()
             let cancelCard=app.descendants(matching:.any).matching(NSPredicate(format:"identifier BEGINSWITH %@ AND label CONTAINS %@","queuedTask.","A5_CANCEL")).firstMatch
             // Locate the named task card, then its named cancel action; no position assumptions.
             let cancelText=app.staticTexts["A5_CANCEL"];try expect(cancelText)
@@ -73,17 +73,24 @@ final class A5ParityUITests: XCTestCase {
             let cancelReceipt=ops.last { $0["text"] as? String == "A5_CANCEL" }!["receiptId"] as! String
             _ = cancelReceipt;_ = cancelCard
             try tap(app,"取消排队任务 A5_CANCEL")
+            try tap(app,"编辑排队任务 A5_EDIT")
+            let editable=app.textFields["conversationDraft"]
+            let restored=XCTNSPredicateExpectation(predicate:NSPredicate(format:"value == %@","A5_EDIT"),object:editable)
+            XCTAssertEqual(XCTWaiter.wait(for:[restored],timeout:20),.completed)
+            editable.tap();editable.typeText("-changed")
+            XCTAssertEqual(editable.value as? String,"A5_EDIT-changed")
+            try tap(app,"sendButton")
             try tap(app,"stopActiveTask")
             // The real host projection is polled until both queued goals have been consumed in order.
             var final:[String:Any]=[:]
             for _ in 0..<100 {
                 final=try await get("/a5/report")
                 let starts=(final["operations"] as! [[String:Any]]).filter { $0["kind"] as? String == "started" }.compactMap { $0["text"] as? String }
-                if starts.contains("A5_QUEUE_2") { break };try await Task.sleep(for:.milliseconds(200))
+                if starts.contains("A5_EDIT-changed") { break };try await Task.sleep(for:.milliseconds(200))
             }
             let starts=(final["operations"] as! [[String:Any]]).filter { $0["kind"] as? String == "started" }.compactMap { $0["text"] as? String }
             XCTAssertEqual(starts.filter { $0.hasPrefix("A5_QUEUE_") },["A5_QUEUE_1","A5_QUEUE_2"])
-            XCTAssertFalse(starts.contains("A5_CANCEL"));XCTAssertFalse(starts.contains("A5_STEER supplemental instruction"))
+            XCTAssertFalse(starts.contains("A5_CANCEL"));XCTAssertFalse(starts.contains("A5_EDIT"));XCTAssertTrue(starts.contains("A5_EDIT-changed"));XCTAssertFalse(starts.contains("A5_STEER supplemental instruction"))
             try back(app)
         }
         try row(app,ids["review"] as! String)
