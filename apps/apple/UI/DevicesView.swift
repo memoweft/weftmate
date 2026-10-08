@@ -18,7 +18,7 @@ struct DevicesView: View {
                     HStack { ProgressView(); Text("正在读取设备…").foregroundStyle(Weave.muted) }
                         .frame(maxWidth: .infinity).padding(24)
                 } else if model.devices.isEmpty && model.devicesError == nil {
-                    EmptyState(symbol: "laptopcomputer.and.iphone", title: "没有设备记录",
+                    EmptyState(symbol: "desktop", title: "没有设备记录",
                                message: "刷新以取得服务器登记的设备。")
                 } else {
                     WeaveCard {
@@ -40,7 +40,7 @@ struct DevicesView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { Task { await model.refresh() } } label: {
-                    Label("刷新设备", systemImage: "arrow.clockwise")
+                    WeftLabel("刷新设备", icon: "sync")
                 }.disabled(model.refreshing)
             }
         }
@@ -52,7 +52,7 @@ private struct DeviceRow: View {
     let device: DeviceRecord
     var body: some View {
         HStack(alignment: .top, spacing: 14) {
-            Image(systemName: symbol).font(.title3).foregroundStyle(Weave.accent)
+            WeftIcon(symbol, size: 24).foregroundStyle(Weave.accent)
                 .frame(width: 40, height: 40).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: 12))
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 8) {
@@ -78,10 +78,10 @@ private struct DeviceRow: View {
 
     private var symbol: String {
         let name = device.name.lowercased()
-        if name.contains("watch") || name.contains("手表") { return "applewatch" }
-        if name.contains("phone") || name.contains("手机") || name.contains("android") { return "iphone" }
-        if name.contains("mac") { return "laptopcomputer" }
-        return "desktopcomputer"
+        if name.contains("watch") || name.contains("手表") { return "watch" }
+        if name.contains("phone") || name.contains("手机") || name.contains("android") { return "phone" }
+        if name.contains("mac") { return "desktop" }
+        return "desktop"
     }
 
     private func relativeDate(_ source: String) -> String? {

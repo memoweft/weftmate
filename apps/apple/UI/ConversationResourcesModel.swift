@@ -10,7 +10,7 @@ enum ResourceTab: Identifiable, Equatable {
         switch self { case .output(_, let name), .source(_, let name): name; case .memory: "记忆来源" }
     }
     var icon: String {
-        switch self { case .output: "doc"; case .source: "link"; case .memory: "brain" }
+        switch self { case .output: "file"; case .source: "source"; case .memory: "memory" }
     }
 }
 @MainActor final class ConversationResourcesModel: ObservableObject {
