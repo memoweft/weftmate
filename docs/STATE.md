@@ -11,7 +11,7 @@
 | Codex · Windows-4 | W-1 Windows 桌面程序 | [PR #40](https://github.com/memoweft/weftmate/pull/40)（`wp/w1-desktop-app`）：默认个人宿主与 WeftMate 原生窗口、持久本地登录、托盘/单实例/窗口恢复、开机到托盘、审批/提问/完成通知及成果原生打开已实现；真实 Electron（桌面程序框架）+ 固定 DSH 合成闭环通过，相关测试 69/69；[程序截图与验收](../tests/evidence/w1/README.md)，完整测试见 PR CI（持续集成）；安装包与快捷方式留 W-2 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | UI-2a 手机审批模式 | [PR #45](https://github.com/memoweft/weftmate/pull/45)（`wp/ui-2a-mobile-approval`）：手机五种模式、全部允许风险确认、按电脑对话保存与账户默认、三按钮风险审批及处理后一行已完成；Android 0.8.3/code16 桥接 scope（授权范围），发布最低 code16。手机交互94/94、真实 Chromium（浏览器引擎）390×844、Android JVM（Java 虚拟机）26/26与 assembleDebug、类型检查通过；[合成截图与边界](../tests/evidence/ui-2a/README.md)，完整门禁交 PR CI（持续集成），待 Claude 审查 |
-| Codex · Windows-2 | M0-7c MiMo场景对照 | `wp/m0-7c-mimo`：10个自动场景各一遍，MiMo办事4/6；Qwen→MiMo换模型两轮完成但未记住称呼；两边失败列待查代码问题，通用云记忆路由降级已记录。测试凭据清理、隔离宿主退出；[证据/用量/人工步骤](../tests/evidence/m0-7c/README.md)，定向11/11与类型检查通过，完整门禁交PR CI（持续集成），待Claude审查 |
+| Codex · Windows-2 | M1-1d 场景代码修复 | [PR #50](https://github.com/memoweft/weftmate/pull/50)（`wp/m1-1d-scenario-fixes`）：自身文件修正/动态输出误审批、未知工具先报错、直接执行与必要提问指引已修；相关83/83、类型检查通过。Qwen/MiMo action-04/06均过，最新五场景20轮无澄清/额外审批；记忆未通过，另列MiMo图像路由错误。隔离宿主及凭据已清理；[证据/迭代/费用](../tests/evidence/m1-1d/README.md)，最终CI跟进，待Claude审查 |
 | Codex · Mac | A4a Apple 审批模式 | `wp/a4a-apple-approval-modes`：macOS / iOS 五种模式菜单、全部允许风险提示、对话保存与账户默认、三按钮审批/风险/收起摘要已接入 CLIENT_API 3.7；Watch仍允许一次/拒绝。定向 Swift 20/20、审批状态10/10、iOS合成 XCTest 2/2、三端 Debug 构建通过；[截图与复现](../apps/apple/Tests/Evidence/A4a/README.md)。额外 Mac XCTest 自动化模式启动超时，未申请新权限；真机/日用宿主未验，完整门禁交 PR CI，待 Claude 审查 |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
 | Codex · Cloud | S2b 宿主内容证书自动签发 | [PR #38](https://github.com/memoweft/weftmate/pull/38)（`wp/s2b-host-certs`）：阿里云 V3 DNS-01/provider 私有环境接线与 RecordId 所有权、宿主 Node ACME/原内容 key CSR、每天检查/<30天续期/原子安装/热载、状态到期与错误已实现；本机真实 Pebble/challtestsrv→签名宿主/云/假 AliDNS API→配对 pin/TLS 热载与模拟到期续期通过；交付待 Claude 审查，最终 CI 门禁见 PR checks，本包未部署 |
@@ -58,32 +58,25 @@
 - S1b：身份 7/7、实际 cloud OIDC/SQLite→宿主流程、A/B 隔离、DPoP 拒绝与 SSE 撤权、云离线本地登录通过；旧 store/ID/密码/Cookie/非零同步水位和备份保持。
 - MW-2：真实 Python Core RPC/持久待办/并发撤回 2/2、健康 HTTP 7/7、类型检查/预检通过；M0-3 长历史 230,000+ 范围投影与审批/提问验证已通过。Qwen / MiMo 基线及真实长任务尚未跑。
 
-## 最近一次场景结果 · M0-7c（Qwen基线 + MiMo对照）
+## 最近一次场景结果 · M1-1d（指定五场景复验）
 
-2026-10-08，真实Electron（桌面程序框架）+固定DSH（执行框架），隔离测试账号与独立MemoWeft Core（记忆核心）。Qwen沿用M0-7b；MiMo `https://api.xiaomimimo.com/v1` / `mimo-v2.6-flash` 的10个自动场景各跑一遍，memory-03严格8081 / `qwen3.8-27b-original`→MiMo。两个跨端场景仍需Android/iOS实机，未用自动点击代替。
+2026-10-08，真实Electron（桌面程序框架）+固定DSH（执行框架），隔离账号/Core（记忆核心）。Qwen仅8081 / `qwen3.8-27b-original`，MiMo为指定官方接口 / `mimo-v2.6-flash`；沿用M0-7b目标、检查、审批决定与校准时限。针对真实新误判/指引未落实修复后复验，中间失败也保留，不挑最高分，见[完整证据](../tests/evidence/m1-1d/README.md)。
 
-| 场景 | Qwen基线 / 耗时 | MiMo对照 / 耗时 | D4归类 / 证据 |
+| 场景 | M0-7c Qwen / MiMo | 本包最新 Qwen / MiMo | 核对结果 |
 |---|---|---|---|
-| action-01 整理目录 | 通过 / 180.37s | 通过 / 99.73s | 两边通过；整理文件及原样保留8项检查满足 |
-| action-02 网页→文档 | 通过 / 510.84s | 通过 / 111.27s | 两边确定性检查通过；文档事实抽查均有缺口，见证据 |
-| action-03 读代码 | 通过 / 77.11s | 通过 / 37.43s | 两边通过；金额20、精度解释、关键代码保持 |
-| action-04 资料→脚本→执行 | 失败 / 203.43s | 失败 / 107.53s | 待查代码问题：Qwen动态outPath运行需审批；MiMo修正未完成sum.mjs需覆盖审批，均无result.json |
-| action-05 停止→续做 | 通过 / 57.20s | 通过 / 111.11s | 两边通过；停止→原根任务续做，汇总30 |
-| action-06 删除批准/拒绝 | 超时失败 / 600.38s | 失败 / 16.58s | 待查代码问题：Qwen第二轮澄清超时；MiMo首轮允许后unknown tool "pweff"，重试再次审批，未进入拒绝轮 |
-| memory-01 偏好 | 超时失败 / 600.36s | 超时失败 / 600.39s | 待查代码问题：两边新对话均询问缓存主题并等澄清；MiMo云记忆路由降级 |
-| memory-02 纠正 | 失败 / 35.64s | 失败 / 53.61s | 待查代码问题：两边更正自己的会话偏好文件均触发覆盖审批；未验证真正记忆纠正 |
-| memory-03 换模型 | 不支持 / 12.15s | 失败 / 88.11s | Qwen→MiMo补跑两轮均completed（已完成），MiMo未叫“小禾”；云模型形成/注入待查，采用依据不支持 |
-| memory-04 人物背景 | 超时失败 / 600.37s | 超时失败 / 600.41s | 待查代码问题：两边首轮均问提醒/备忘等处理方式，未进入新会话；MiMo云记忆路由降级 |
-| cross-01 电脑→手机审批 | 需人工 / — | 需人工 / — | 需Android/iOS各在隔离账号原对话审批一次并核对电脑实际删除 |
-| cross-02 手机→电脑→成果 | 需人工 / — | 需人工 / — | 需手机发原目标，打开实际购物清单，核对牛奶和勾选框 |
+| action-04 资料→脚本→执行 | 失败203.43s / 失败107.53s | **通过379.98s / 通过76.80s** | 实际运行并生成25、24、49；没有额外审批 |
+| action-06 删除批准/拒绝 | 超时600.38s / 失败16.58s | **通过145.53s / 通过262.86s** | 两轮原生审批允许/拒绝各一次，删除/保留与终态满足，无澄清 |
+| memory-01 偏好 | 超时600.36s / 超时600.39s | 失败59.68s / 失败96.92s | 两轮完成、无提问；新会话未采用买菜表达偏好 |
+| memory-02 纠正 | 失败35.64s / 失败53.61s | 失败180.87s / 失败248.40s | 两边前两轮完成、无审批；Qwen第三轮正常结束但未答周五，MiMo第三轮图像路由错误 |
+| memory-04 人物背景 | 超时600.37s / 超时600.41s | 失败46.87s / 失败17.15s | 两轮完成、无提问；新会话缺海报/展览背景 |
 
-办事：Qwen **4/6（66.7%）**，MiMo **4/6（66.7%）**。本次对照（含Qwen→MiMo混合memory-03）12项：通过4、失败6、需人工2；可判定4/10（40.0%），通过覆盖4/12（33.3%）。没有“MiMo过、Qwen不过”的完整场景，**无D4模型能力归类项**；两边均不过列待查代码问题，不宣称同根因。memory-03旧“不支持”是未配置第二模型，本次已实际执行，不作纯模型比较。可选LLM judge（模型评判）未启用；`memory_used`采用依据仍不支持，不能把称呼/关键词当完整记忆通过。**完整M1出口未达**：办事未全过，记忆与Android/iOS跨端尚未通过。
+最新10项为通过4、失败6，20轮无原生澄清、无额外审批，声明的四张删除审批分别允许/拒绝。自身文件来源保留在原生成果中，常见动态输出静态解析并排除JavaScript注释文档签名；`pweff`旧卡生成前就已未知，参数未被放行过程改写，现在未注册工具先报错。用户已有文件危险操作审批保持。
 
-MiMo后台的隔离Core初始/结束均degraded（降级）、`MEMORY_MODEL_UNAVAILABLE`、`inject=false`、worldRevision=0。只读定位：Core 2.0.0云路由仍读取旧DeepSeek环境配置，忽略宿主传入的通用路由/凭据；未配旧凭据、未伪装本地模型，本包只记录不修代码。memory-01/04的原生提问等待和memory-02的文件覆盖行为另列，见[公开检查与具体失败现象](../tests/evidence/m0-7c/README.md)。
+记忆形成/召回未通过：两边worldRevision=0，Qwen ready/inject=true，MiMo degraded/MEMORY_MODEL_UNAVAILABLE/inject=false；`memory_used`采用依据仍不支持。MiMo memory-02第三轮取界面图像后实际error/`UNSUPPORTED_CONTENT`，当前pi-ai路由拒绝图像输入；该能力声明遗留单列，本包未修，不能全归为记忆缺失。英文指引阶段Qwen memory-02/04仍提问等待，补充中文后最新回合均未再问。记忆属于M2，未靠重复当前会话偏好或代答来通过。
 
-MiMo返回用量：输入 **766,804** token（令牌），其中缓存 **625,216**；输出 **14,144**；总计 **780,948**。59/61个实际请求取得用量，含前台与后台标题等调用；按[官方实时价目](https://mimo.mi.com/docs/pricing)估计已报告用量 **¥0.1824**（缓存输入¥0.02、非缓存¥1、输出¥2/百万）。两个中止请求未返回完整用量，按相近已完成请求估计另有输入约8,534、输出约163；本次合计约 **789,645 token / ¥0.1912（约¥0.19）**。缺失输入按未缓存计，实际可能未收费或偏离样本；不是账单或严格上下界。
+办事最新合并证据两边6/6（本包复验两项、其余四项沿用M0-7c）；memory-03和两项跨端未重跑。**完整M1出口仍需Android/iOS跨端审批**。相关83/83、类型检查通过，完整门禁交[PR #50 CI（持续集成）](https://github.com/memoweft/weftmate/pull/50/checks)，没有新增CI例外或改客户端接口。
 
-校准时限与M0-7b一致：整理/读代码360秒，联网/脚本900秒，停止/删除/两轮记忆600秒，三轮纠正900秒；目标、检查、审批决定保持。Qwen旧首轮预填充/第二轮澄清诊断及已修PowerShell箭头误判见[M0-7b证据](../tests/evidence/m0-7b/README.md)。本包未改生产代码或`/personal/v1`契约。评测器定向11/11、类型检查通过，完整测试交PR CI（持续集成）；测试凭据已删除，模型key扫描0命中，隔离宿主已退出，8080未停止/重启。
+MiMo本包134个实际请求，129个有用量；输入1,502,923 token（令牌）（缓存1,262,144）、输出27,543、合计1,530,466。按[官方价目](https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash)已报告成本¥0.3211；5个缺用量请求按相近样本估计，本包约1,578,477 token / **¥0.3707（约¥0.37）**，不是账单或严格上下界。14个隔离根密钥扫描0命中，测试凭据及宿主进程剩余0；8081保持指定Qwen、活动/排队租约0，8080未停止/重启。
 
 ## 契约变更
 

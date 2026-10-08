@@ -3,6 +3,25 @@ import { lstat, readdir, readFile, realpath } from 'node:fs/promises';
 import path from 'node:path';
 const additions = new WeakMap();
 
+/** Creation provenance survives turns/restarts in the native artifact results. */
+export function conversationCreatedFiles(session) {
+  const files = new Set();
+  for (const event of session.events ?? []) {
+    if (event.type !== 'tool/result') continue;
+    for (const result of event.data?.message?.content ?? []) {
+      if (result.type !== 'tool-result') continue;
+      for (const block of result.content ?? []) {
+        if (block.type !== 'text') continue;
+        try {
+          const value = JSON.parse(block.text);
+          if (value.artifact?.artifactId && typeof value.createdFilePath === 'string') files.add(path.resolve(value.createdFilePath));
+        } catch { /* Ordinary tool text. */ }
+      }
+    }
+  }
+  return files;
+}
+
 /** Observe ordinary files, without following links into another directory. */
 export async function snapshotFiles(directory) {
   const files = new Map();
@@ -56,7 +75,8 @@ export async function trackNativeFiles(bridge, exec, next, identity) {
     if (before.get(file)?.sha256 === current.sha256) continue;
     const registered = await bridge.request({ action: 'register_file', ...identity(exec),
       filePath: file, sha256: current.sha256 }, exec.signal);
-    artifacts.push(registered.artifactId ? { artifact: registered } : { fileName: path.basename(file), ...registered });
+    artifacts.push(registered.artifactId ? { artifact: registered,
+      ...(!before.has(file) ? { createdFilePath: file } : {}) } : { fileName: path.basename(file), ...registered });
   }
   if (!artifacts.length) return result;
   additions.set(exec, artifacts.map(value => ({ type: 'text', text: JSON.stringify(value) })));
