@@ -102,17 +102,13 @@ jobs:
             node .github/scripts/ci-unit-tests.mjs required
           fi
 
-      # CI-2 retired all 12 baseline exceptions. If tracked failures remain in
-      # the catalog, observe only their exact names; other cases stay required.
-      - name: Known main failures (catalog observation)
+      # CI-2 retired 10 baseline exceptions. Only the two product failures
+      # reproduced on Linux/macOS remain non-blocking; other cases stay required.
+      - name: Known main failures (2 cases; CI-2 reverified)
         if: ${{ !cancelled() }}
         continue-on-error: true
         shell: bash
         run: |
-          if node -e "process.exit(require('./.github/ci-test-exceptions.json').knownFailures.length === 0 ? 0 : 1)"; then
-            echo "No known main failures remain; all non-vendor platform-supported cases are required."
-            exit 0
-          fi
           if [ "${{ runner.os }}" = "Linux" ]; then
             xvfb-run --auto-servernum node .github/scripts/ci-unit-tests.mjs known
           else
