@@ -695,3 +695,16 @@ kbd { font: inherit; font-size: var(--wm-font-size-10); color: var(--ink-muted);
 .confirm-dialog label { display: flex; align-items: start; gap: var(--wm-space-8); margin-top: var(--wm-space-18); }
 .confirm-dialog input[type=checkbox] { flex: none; width: var(--wm-space-18); height: var(--wm-space-18); min-height: 0; padding: 0; margin: var(--wm-space-4) 0 0; accent-color: var(--accent); }
 .confirm-dialog .form-error:empty { display: none; }
+.conversation-approval[data-motion-status="answered"] { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--wm-space-8); padding: 0; background: transparent; border: 0; font-size: var(--wm-font-size-12); }
+.conversation-approval[data-motion-status="answered"] > .conversation-task-title { display: none; }
+.conversation-approval[data-motion-status="answered"] > .conversation-approval-status, .conversation-approval[data-motion-status="answered"] > .conversation-task-actions { margin: 0; }
+.motion-copy { z-index: 100; pointer-events: none; overflow: hidden; list-style: none; contain: layout paint; color: var(--ink); background: var(--surface); }
+
+/* Only compositor properties change; native details layout settles in the same action. */
+.execution-block summary > .wm-icon:first-child { transition: transform var(--wm-duration-base) var(--wm-easing-desktop); }
+.preview-tab-select { transition: color var(--wm-duration-160ms) var(--wm-easing-desktop), background-color var(--wm-duration-160ms) var(--wm-easing-desktop); }
+.composer-send, #cancel-turn { transition: color var(--wm-duration-160ms) var(--wm-easing-desktop), background-color var(--wm-duration-160ms) var(--wm-easing-desktop); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}

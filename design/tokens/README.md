@@ -110,6 +110,8 @@
 `shared.easing.standard / smooth / enter / desktop / mobile` 分别保存现有 `ease`、`ease-in-out`、`ease-in`、`cubic-bezier(.16,1,.3,1)`、`cubic-bezier(.2,.8,.2,1)`；`enter` 沿用手机图片预览关闭时的已有曲线。本包仅换参数来源，不增加动画、修改关键帧或重新设计减少动态效果行为；UI-P1 定稿时在这里调整。
 
 
+UI-P1 桌面在现有 `fast / base / 160ms / 240ms` 上接入 180 / 200 / 160 / 240 毫秒动效，曲线统一使用 `desktop`。新增 `exit` 为 120 毫秒退出，`stagger` 为新步骤 24 毫秒错开，`staggerLimit` 把错开总延迟限制为 60 毫秒，因此完整步骤序列最多 240 毫秒。系统减少动态效果时跳过动画；这些新增常量同步生成到各端，但手机与 Apple 未在本包消费新动效。详见 [UI-P1 证据](../../tests/evidence/ui-p1/README.md)。
+
 ## Apple 原生接入（DS-1b）
 
 `apps/apple/Scripts/generate_project.py` 把 `design/tokens/generated/apple/DesignTokens.swift` 作为三个原生 App 的共享编译源，工程不复制它，也不手改生成文件。先在根目录运行 `npm run tokens:generate`，新增工程源文件时再运行 `python3 apps/apple/Scripts/generate_project.py`；两者可重复生成，`--check` 校验 Swift 与 JSON 和其他平台产物。
