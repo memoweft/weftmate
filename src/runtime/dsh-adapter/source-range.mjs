@@ -1,3 +1,5 @@
+import { claimedInputsAt } from './inbox-timeline.mjs'
+
 const raw = entry => entry?.event ?? entry
 const bindings = new WeakMap()
 
@@ -46,18 +48,26 @@ export function sourceRange(entries, { turn, observedSeq, receiptId } = {}) {
     while (start > 0) {
       start--
       if (raw(entries[start]).type !== 'turn/start') continue
-      if (!receiptId || entries.slice(start, stop).some(entry => raw(entry).type === 'user/message' &&
-          raw(entry).data?.source?.rpcId === receiptId)) break
+      if (!receiptId || entries.slice(start, stop).some((entry, offset) =>
+          raw(entry).type === 'user/message' && raw(entry).data?.source?.rpcId === receiptId ||
+          raw(entry).type === 'agent/inbox/spliced' &&
+            claimedInputsAt(entries, start + offset).some(input => input.receiptId === receiptId))) break
       stop = start
     }
-    if (raw(entries[start])?.type !== 'turn/start') return null
+    if (start === stop || raw(entries[start])?.type !== 'turn/start') return null
   }
   const events = entries.slice(start, stop)
   if (receiptId) {
     let index = bindings.get(entries)
     if (!index) { index = new Map(); bindings.set(entries, index) }
-    for (const entry of events) if (raw(entry).type === 'user/message' && raw(entry).data?.source?.kind === 'user') {
-      index.set(raw(entry).data.source.rpcId, raw(entries[start]).data?.turn)
+    for (let offset = 0; offset < events.length; offset++) {
+      const entry = raw(events[offset])
+      if (entry.type === 'user/message' && entry.data?.source?.kind === 'user') {
+        index.set(entry.data.source.rpcId, raw(entries[start]).data?.turn)
+      }
+      for (const input of entry.type === 'agent/inbox/spliced' ? claimedInputsAt(entries, start + offset) : []) if (input.receiptId) {
+        index.set(input.receiptId, raw(entries[start]).data?.turn)
+      }
     }
   }
   return { start, end: stop, current: stop === entries.length, events }
