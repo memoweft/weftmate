@@ -1,0 +1,21 @@
+{
+  "passed": true,
+  "test": "CloudAppSecurityInstrumentedTest",
+  "platform": "MuMu Android 15",
+  "commit": "d73e9646f6b477e8aba383928b64e9ee9f7b0683",
+  "verified": [
+    "AndroidKeyStore P-256 private key encoded is null",
+    "ES256 native signature verifies",
+    "Actual refresh token stays in native encrypted storage",
+    "Refresh uses opaque handle and rotates",
+    "Credential removal clears native refreshes",
+    "Legacy token response/read/write cannot bypass native refresh protection",
+    "Code21 switches legacy cached UI to builtin without deleting files",
+    "Trusted host metadata accepts a disabled relay with null baseUrl"
+  ],
+  "synthetic": true,
+  "modelRequests": 0,
+  "isolatedPackagesRemoved": true,
+  "generatedAt": "2026-10-08T12:42:41.112481+00:00",
+  "tests": 2
+}

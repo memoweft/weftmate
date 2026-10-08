@@ -129,6 +129,7 @@ function call(method, params={}, timeoutMs=45000) { return androidBridge.call(me
 
 
 function page(name){
+  $('cloud-auth-page')?.classList.remove('active'); $('cloud-settings-page')?.classList.remove('active');
   workspaceNotices.clear();
   closeResourcePage({restoreFocus:false});clearTimeout(state.homePollTimer);
   closeApprovalModeMenu();closeApprovalRisk({restoreFocus:false});
@@ -140,13 +141,13 @@ function page(name){
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
     usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
-    account:'我的资料',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
+    account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
-  if(name==='home'){renderHome();void refreshHome();return}
+  if(name==='home'){renderHome();if(window.weftNative)void refreshHome();return}
   if(name==='chat'){
     if(state.chatSource==='host'){renderSharedConversation();loadSharedHistory();scheduleSharedPoll()}
-    else{if(previousPage!=='chat')refreshAttachmentDrafts();renderConversation()}return}renderPage(name);
+    else{if(previousPage!=='chat')refreshAttachmentDrafts();renderConversation()}return}if(globalThis.WeftMobileCloud?.route(name))return;renderPage(name);
 }
 
 
@@ -269,6 +270,7 @@ function processEvent(message){const {event,data}=message;
       data.status==='cancelled'?'已取消保存':'保存未完成，请重试';
   }
   if(event==='notifications.permission'&&state.page==='notifications')page('notifications');
+  if(event==='theme.system')state.nativeSystemDark=!!data.dark;
   if(event==='theme.system'&&state.appearance==='system'){
     document.documentElement.dataset.theme=data.dark?'dark':'light';document.documentElement.style.colorScheme=data.dark?'dark':'light';
   }
@@ -291,12 +293,17 @@ function processEvent(message){const {event,data}=message;
 
 
 async function boot(){
-  if(!window.weftNative){status('当前网页环境没有原生能力，请在 WeftMate 应用中打开',true);return}
+  if(!window.weftNative){applyTheme(localStorage.getItem('weftmate.mobile.theme') || 'system');state.booted=true;await WeftMobileCloud.init();return}
   window.weftNative.onmessage=androidBridge.receive;
   try{await call('events.subscribe');const info=await call('app.bootstrap');
     state.loggedIn=info.loggedIn;state.username=info.username;state.owner=info.owner;state.deviceId=info.deviceId||'';state.model=info.model;
     state.busy=info.busy;state.ui=info.ui;state.backgroundSync=info.backgroundSync||'unknown';
     state.connection=info.loggedIn?'checking':'local';
+    if(info.cloudApp){
+      try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
+      await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
+      await WeftMobileCloud.init();return;
+    }
     showProfile({displayName:info.username||'本机个人空间'});
     // Restore the selected phone/new or host session before updateComposer can persist the
     // initially empty textarea. Otherwise a restart deletes the saved `owner:new` draft.
@@ -310,7 +317,7 @@ async function boot(){
       const content=$('chat-content');clear(content);content.append(notice('正在核对上次电脑会话…'));
       await restoreSharedSelection(previousHost,state.owner,state.authEpoch)}
     else{loadDraft();if(state.conversationId){await renderConversation();void refreshHandoff(state.conversationId)}else showWelcome();void listSharedSessions()}
-    try{applyTheme((await uiCore.mobileAppearance()).value)}catch{applyTheme('system')}
+    try{const appearance=await uiCore.mobileAppearance();if(typeof appearance.systemDark==='boolean')state.nativeSystemDark=appearance.systemDark;applyTheme(appearance.value)}catch{applyTheme('system')}
     await call('app.ready',{owner:state.owner||'',hasDraft:hasAnyDraft()});state.booted=true;
     if(!info.launchConversationId)page('home');else updatePageHeader();
     void resumeCloudLogin();void refreshCloudDevices();
