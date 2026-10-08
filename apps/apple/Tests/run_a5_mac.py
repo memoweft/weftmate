@@ -14,7 +14,7 @@ try:
  commit=subprocess.check_output(['git','rev-parse','HEAD'],text=True).strip()
  catalog=json.loads((ROOT/'scripts/review-gallery/scenes.json').read_text())
  themes=[a.theme] if a.theme else catalog['themes']
- scenes=([{'id': 'settings-'+id} for id in ['general','appearance','account','devices','usage','models','approvals','memory','schedules','system','backups','about']] if a.settings_categories else [scene for scene in catalog['scenes'] if not a.scene or scene['id']==a.scene])
+ scenes=([{'id': 'settings-'+id} for id in ['general','appearance','account','devices','usage','models','approvals','memory','schedules','system','backups','about'] if not a.scene or id == a.scene] if a.settings_categories else [scene for scene in catalog['scenes'] if not a.scene or scene['id']==a.scene])
  if not scenes:raise ValueError('Unknown review scene')
  for theme in themes:
   for scene in scenes:
