@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "sourceCommit": "3c77eebc0d37a95ffb7d18fd8396ff60fcb56e42",
+  "mobile": {
+    "build": true,
+    "check": true,
+    "tests": 103,
+    "failures": 0
+  },
+  "relatedRootTests": {
+    "tests": 25,
+    "failures": 0
+  },
+  "android": {
+    "jvmTests": 31,
+    "failures": 0,
+    "debugApk": true,
+    "instrumentationApk": true,
+    "nativeVersionCode": 21,
+    "nativeVersion": "0.8.8"
+  },
+  "typecheck": true,
+  "reviewEvidenceTests": 4,
+  "modelRequests": 0
+}

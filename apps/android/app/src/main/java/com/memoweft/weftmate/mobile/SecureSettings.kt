@@ -64,6 +64,14 @@ class SecureSettings(context: Context, storageName: String = "private-settings",
     }
     fun cloudValue(name: String): String? = prefs.getString("cloud-$name", null)?.let { decrypt(it) }
 
+    /** Separate namespace: legacy cloud.tokens cannot read native app refresh credentials. */
+    @Synchronized internal fun saveAppValue(name: String, value: String?) {
+        val editor = prefs.edit()
+        if (value == null) editor.remove("app-cloud:$name") else editor.putString("app-cloud:$name", encrypt(value))
+        check(editor.commit())
+    }
+    internal fun appValue(name: String): String? = prefs.getString("app-cloud:$name", null)?.let { decrypt(it) }
+
     @Synchronized fun saveHost(value: HostIdentity) {
         captureLegacyOwner()
         ensureMigrated()
