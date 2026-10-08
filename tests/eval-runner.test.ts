@@ -12,6 +12,37 @@ const scenario = (id, turns, checks, extra = {}) => ({ id, category: 'action', t
   setup: { files: [{ path: 'input.txt', content: 'fixture' }], memories: [], devices: ['fake host'] },
   turns, checks, timeoutSec: 3, notes: 'isolated fixture', ...extra });
 
+test('numeric file checks opt in to equal decimal values, with whole values and valid grouping', async t => {
+  const scratchDir = await mkdtemp(join(tmpdir(), 'weftmate-numeric-'));
+  t.after(() => rm(scratchDir, { recursive: true, force: true }));
+  const check = { type: 'file_contains', path: 'amount.txt', text: '24300', numeric: true };
+  const context = { scratchDir, turns: [] };
+  for (const text of ['金额 24300 元', '金额 24,300 元', '金额 ２４,３００ 元', '金额 ２４，３００．００ 元', '金额 24 300 元',
+    '金额 24\u00a0300 元', '金额 24\u202f300 元', '金额 24\t300 元', '金额 +24300.00 元']) {
+    await writeFile(join(scratchDir, 'amount.txt'), text);
+    assert.equal((await checkOne(check, context)).status, 'passed', text);
+  }
+  for (const text of ['243000', '124300', '-24,300', '－２４３００', '−24300', '２４３００．０１', '24,300.01', '24.300', '24,30', '2,43,00',
+    '24\n300', '2.43e4', '24300e2', '.24300', 'id24300', '24300items', '_24300']) {
+    await writeFile(join(scratchDir, 'amount.txt'), text);
+    assert.equal((await checkOne(check, context)).status, 'failed', text);
+  }
+  await writeFile(join(scratchDir, 'amount.txt'), '24,300');
+  assert.equal((await checkOne({ ...check, numeric: false }, context)).status, 'failed');
+  const { numeric, ...literal } = check;
+  assert.equal((await checkOne(literal, context)).status, 'failed', 'default remains literal');
+  await writeFile(join(scratchDir, 'amount.txt'), '124300');
+  assert.equal((await checkOne(literal, context)).status, 'passed', 'default still allows substrings');
+  await writeFile(join(scratchDir, 'amount.txt'), '9,007,199,254,740,993');
+  assert.equal((await checkOne({ ...check, text: '9007199254740993' }, context)).status, 'passed');
+  assert.equal((await checkOne({ ...check, text: '9007199254740992' }, context)).status, 'failed', 'no float rounding');
+  validateScenario(scenario('numeric', [{ user: 'calculate' }], [check]));
+  for (const bad of [{ ...check, numeric: 'true' }, { ...check, text: 'total 24300' },
+    { ...check, text: '24,30' }, { type: 'reply_contains', text: '24300', numeric: true }]) {
+    assert.throws(() => validateScenario(scenario('bad-numeric', [{ user: 'calculate' }], [bad])), /numeric/);
+  }
+});
+
 async function fakeHost(t, options = {}) {
   const scratch = await mkdtemp(join(tmpdir(), 'weftmate-eval-test-'));
   const calls = [], sessions = new Map(), commands = new Map(), timers = new Set(), accounts = new Map();
