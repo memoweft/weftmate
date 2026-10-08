@@ -2,7 +2,7 @@
 globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
   const auth = { mode: 'login', step: 'email', email: '', error: '', busy: false, resendAt: 0, retryAt: 0, deviceName: '这台设备', devices: [], hosts: [] };
   core.state.cloudAuth = auth;
-  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight;
+  let client, waitTimer, renewalTimer, journey = 0, exchangeInFlight, ownHost;
   const now = () => environment.now?.() ?? Date.now();
   const paint = () => effects.paintCloudAuth?.(cloudAuthView());
   function cloudAuthView() {
@@ -20,6 +20,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       NETWORK: '网络不通，请检查连接后重试。', STORAGE_UNAVAILABLE: '无法安全记住本设备，请检查设备存储后重试。',
       PAIRING_INVALID: '配对码已失效或不属于这台电脑，请获取新码。', PAIRING_REQUIRED: '请在目标电脑显示二维码，并输入配对码后连接。',
       HOST_TRUST_INVALID: '可信交付码已失效或不属于本设备，请在已登录设备上重新获取。',
+      INVALID_DEVICE: '设备名称须为 1–128 个字符。',
       PASSWORD_MISMATCH: '两次输入的密码不一致。', EMERGENCY_PASSWORD_INVALID: '离线密码须为 15–128 个字符。',
       INVALID_PASSWORD: '密码须为 8–128 个字符。', MAIL_UNAVAILABLE: '验证码暂时无法发送，请稍后重试。' })[code] || '操作未完成，请重试。';
   }
@@ -70,11 +71,13 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       const ticket = journey;
       validPassword(password, confirmation);
       const mode = auth.mode;
+      const name = deviceName?.trim() || auth.deviceName;
+      if (mode === 'registration' && (!name || name.length > 128)) throw { code: 'INVALID_DEVICE' };
       await client.publicRequest(`/auth/${mode}/complete`, { passwordTicket: auth.passwordTicket, password });
       if (ticket !== journey) return;
       auth.passwordTicket = null;
       if (mode === 'recovery') { startCloudJourney(); effects.toast('密码已重设，请登录。'); return; }
-      auth.deviceName = deviceName.trim() || auth.deviceName;
+      auth.deviceName = name;
       await beginCloudLogin(auth.email, password);
     });
   }
@@ -96,7 +99,9 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     try { return await current; } finally { if (exchangeInFlight === current) exchangeInFlight = null; }
   }
   async function applyCloudSession(ticket) {
-    const result = await client.exchange(environment.bindDesktop ?? environment.desktop);
+    const pairing = environment.initialPairing ? parseCloudPairing(environment.initialPairing) : null;
+    if (pairing && pairing.hostId !== client.config.hostId) throw { code: 'PAIRING_INVALID' };
+    const result = await client.exchange(pairing ? false : environment.bindDesktop ?? environment.desktop, pairing);
     if (ticket !== journey) return;
     const saved = await client.saved();
     if (ticket !== journey) return;
@@ -112,6 +117,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
       clearTimeout(waitTimer); waitTimer = setTimeout(() => void retryCloudApproval(ticket), 3000); return;
     }
     clearTimeout(waitTimer); waitTimer = null;
+    if (pairing) { await saveCloudPairingPin(pairing); environment.initialPairing = null; }
     auth.mode = 'authenticated'; paint(); core.acceptSession(result); await core.enterAssistant();
     await core.refreshPendingDevices(); scheduleRenewal();
     const draft = await environment.cloudCredentials('draft:' + saved.sub);
@@ -139,6 +145,7 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     await client.forget();
     // Clear the host cookie as well as the in-memory projection.
     try { await core.api('/logout', { method: 'POST', protectedWrite: true, body: {} }); } catch { /* revoked cookies are already unusable */ }
+    await effects.clearNativeHostSessions?.();
     core.clearSession(); auth.email = email; startCloudJourney();
   }
   async function cancelCloudJourney() { await client.forget(); await client.resetKey(); startCloudJourney(); }
@@ -216,19 +223,52 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
     return core.accessApi('/cloud/emergency-password', { method: 'POST', protectedWrite: true, body: { password } });
   }
   async function cloudPairing() { const result = await core.accessApi('/cloud/pairings', { method: 'POST', protectedWrite: true, body: {} }); return result; }
-  async function cloudRedeemPairing(input) {
+  function parseCloudPairing(input) {
     let value = input.trim(); if (value.includes('#pair=')) value = new URL(value).hash.slice(6); if (value.startsWith('wm1.')) value = value.slice(4);
     let pairing;
     try { pairing = JSON.parse(new TextDecoder().decode(Uint8Array.from(atob(value.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)))); }
     catch { throw { code: 'PAIRING_INVALID' }; }
-    if (pairing.hostId !== client.config.hostId || !/^[A-Za-z0-9_-]{43}$/.test(pairing.challenge) || !/^[A-Za-z0-9_-]{43}$/.test(pairing.tlsSpki)) throw { code: 'PAIRING_INVALID' };
-    const result = await client.exchange(false, pairing); core.acceptSession(result); return result;
+    if (typeof pairing.hostId !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(pairing.challenge) || !/^[A-Za-z0-9_-]{43}$/.test(pairing.tlsSpki)) throw { code: 'PAIRING_INVALID' };
+    for (const value of [pairing.origin, pairing.relay?.baseUrl].filter(Boolean)) {
+      const url = new URL(value);
+      if (url.username || url.password || url.search || url.hash || !(url.protocol === 'https:' || url.protocol === 'http:' && ['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname))) throw { code: 'PAIRING_INVALID' };
+    }
+    return pairing;
   }
-  async function cloudConnectTrusted(connection) {
+  async function saveCloudPairingPin(pairing) {
+    await environment.cloudCredentials('trusted-host:' + pairing.hostId, { tlsSpki: pairing.tlsSpki, publicJwk: pairing.publicJwk, origin: pairing.origin, relay: pairing.relay });
+  }
+  async function cloudRedeemPairing(input) {
+    const pairing = parseCloudPairing(input);
+    if (pairing.hostId !== client.config.hostId) {
+      const connection = await cloudConnect(pairing.hostId); await saveCloudPairingPin(pairing);
+      return cloudConnectTrusted({ ...connection, baseUrl: connection.baseUrl || pairing.relay?.baseUrl || pairing.origin }, pairing);
+    }
+    const result = await client.exchange(false, pairing); await saveCloudPairingPin(pairing); core.acceptSession(result); return result;
+  }
+  async function cloudConnectTrusted(connection, pairing = null) {
+    if (exchangeInFlight) await exchangeInFlight;
+    const current = applyCloudConnection(connection, pairing); exchangeInFlight = current;
+    try { return await current; } finally { if (exchangeInFlight === current) exchangeInFlight = null; }
+  }
+  async function applyCloudConnection(connection, pairing) {
     if (connection.hostId !== client.config.hostId) {
-      const trusted = await environment.cloudCredentials('trusted-host:' + connection.hostId);
-      if (!trusted || !connection.baseUrl) throw { code: 'PAIRING_REQUIRED' };
-      await effects.openCloudHost?.({ hostId: connection.hostId, baseUrl: connection.baseUrl }); return connection;
+      const self = ownHost?.hostId === connection.hostId;
+      const trusted = self || await environment.cloudCredentials('trusted-host:' + connection.hostId);
+      if (!trusted || !self && !connection.baseUrl) throw { code: 'PAIRING_REQUIRED' };
+      const target = self ? ownHost : await effects.openCloudHost?.({ hostId: connection.hostId, baseUrl: connection.baseUrl });
+      if (!target) return connection;
+      const previous = { host: client.host, hostId: client.config.hostId }, generation = client.generation;
+      try {
+        client.host = target.baseUrl; client.config.hostId = target.hostId;
+        const session = await client.exchange(pairing ? false : self, pairing);
+        if (generation !== client.generation) throw { code: 'CLOUD_TOKEN_INVALID' };
+        if (session.status === 'pending_approval') throw { code: 'PAIRING_REQUIRED' };
+        await effects.activateCloudHost?.(target);
+        environment.bindDesktop = !!self; auth.localDesktop = !!self;
+        core.accessBase = target.baseUrl + '/personal/v1'; core.authBase = core.accessBase + '/auth';
+        core.acceptSession(session); return connection;
+      } catch (error) { client.host = previous.host; client.config.hostId = previous.hostId; throw error; }
     }
     const result = await client.exchange(false); if (result.status === 'pending_approval') { await finishCloudLogin(); return; }
     core.acceptSession(result); return result;
@@ -261,6 +301,10 @@ globalThis.WeftUiCore.factories.cloudAccount = (core, effects, environment) => {
           auth.error = '云服务尚未配置，请稍后重试。';
         } else auth.error = cloudError(error);
         core.show('login'); paint(); return;
+      }
+      if (environment.nativeIdentity) {
+        ownHost = { hostId: client.config.hostId, baseUrl: environment.hostOrigin };
+        await effects.activateCloudHost?.(ownHost);
       }
       if (auth.deviceName === '这台设备') auth.deviceName = environment.deviceName || (environment.desktop ? '这台电脑' : '这个浏览器');
       try { const remembered = await environment.cloudCredentials('offline-account'); auth.offlineKnown = !!remembered?.sub;

@@ -121,6 +121,10 @@ test('registration state and 60 second resend deadline live in the shared core; 
   await core.cloudRequestCode(); assert.equal(f.calls.filter(row => row.url.endsWith('/registration/request')).length, 1)
   f.advance(59001); assert.equal(core.cloudAuthView().resendSeconds, 1); f.advance(999); assert.equal(core.cloudAuthView().resendSeconds, 0)
   await core.cloudVerifyCode('123456'); assert.equal(core.cloudAuthView().step, 'password')
+  const password = randomBytes(24).toString('base64url');
+  await core.cloudComplete({ password, confirmation: password, deviceName: 'X'.repeat(129) });
+  assert.equal(f.calls.filter(row => row.url.endsWith('/registration/complete')).length, 0, 'bad device names must not consume the password ticket')
+  assert.match(core.cloudAuthView().error, /设备名称/)
   assert.equal(f.records.size, 1, 'only the key was persisted')
   assert.equal(core.cloudPasswordHint('short'), '至少 8 位'); assert.ok(paints.length)
 })
@@ -139,6 +143,26 @@ test('pending approval exchanges share one request and stop polling after succes
   assert.ok(f.cleared.includes(1), 'the pending timer was cancelled')
   core.state.currentView = 'account'; await core.retryCloudApproval(); await f.timers[0]()
   assert.equal(core.state.currentView, 'account'); assert.equal(entries, 1)
+})
+test('another host is selected through trusted native data transport; a failed exchange preserves the previous host', async () => {
+  const f = await fixture(), activated: any[] = [], requested: any[] = []
+  const core: any = { state: {}, accessBase: '/personal/v1', authBase: '/personal/v1/auth', show: () => {}, load: () => {}, clearSession: () => {}, sessionExpired: () => {},
+    acceptSession: () => {}, enterAssistant: async () => {}, refreshPendingDevices: async () => {} }
+  Object.assign(core, f.context.WeftUiCore.factories.cloudAccount(core, { openCloudHost: async (target: any) => { requested.push(target); return target },
+    activateCloudHost: async (target: any) => { activated.push(target) } }, f.environment))
+  const client = core.initializeCloudAccount(); f.useClient(client); await client.configure(); await login(f)
+  await assert.rejects(core.cloudConnectTrusted({ hostId: 'other-host', baseUrl: 'https://other.example.com' }))
+  assert.equal(requested.length, 0, 'an account directory cannot establish a pin')
+  await f.credentials('trusted-host:other-host', { tlsSpki: randomBytes(32).toString('base64url'), origin: 'https://other.example.com' })
+  await core.cloudConnectTrusted({ hostId: 'other-host', baseUrl: 'https://other.example.com' })
+  assert.equal(activated.length, 1); assert.equal(core.accessBase, 'https://other.example.com/personal/v1')
+  assert.equal(client.config.hostId, 'other-host'); assert.equal((await client.saved()).host.audience, base + '/hosts/other-host')
+  const original = client.fetch;
+  client.fetch = async (...args: any[]) => { if (args[0].startsWith('https://offline.example.com')) throw new Error('Synthetic offline peer'); return original(...args) }
+  await f.credentials('trusted-host:offline-host', { tlsSpki: randomBytes(32).toString('base64url'), origin: 'https://offline.example.com' })
+  await assert.rejects(core.cloudConnectTrusted({ hostId: 'offline-host', baseUrl: 'https://offline.example.com' }))
+  assert.equal(activated.length, 1); assert.equal(client.host, 'https://other.example.com'); assert.equal(client.config.hostId, 'other-host')
+  assert.equal(core.accessBase, 'https://other.example.com/personal/v1')
 })
 test('expired refresh returns to login, clears host cookie, and restores a draft only for the same account', async () => {
   const f = await fixture(), restored: string[] = [], views: string[] = [], hostCalls: any[] = []
