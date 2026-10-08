@@ -216,6 +216,14 @@ try {
         localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'light' }));
       }, sessionId);
       await page.reload(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
+      // Select the acceptance conversation through the desktop's real notification
+      // action. Background refresh may overwrite last-session storage at reload.
+      const openAcceptanceConversation = () => app.evaluate(({ BrowserWindow }, id) => {
+        const window = BrowserWindow.getAllWindows().find(window => /\/personal\/v1\/ui/.test(window.webContents.getURL()));
+        if (!window) throw new Error('BASELINE_DESKTOP_WINDOW_MISSING');
+        window.webContents.send('wm:desktop:conversation', id);
+      }, sessionId);
+      await openAcceptanceConversation();
       const label = page.locator('.reply-memory').last();
       await label.waitFor({ state: 'visible' });
       assert.match(await label.textContent(), /用到了 \d+ 条记忆/);
@@ -227,7 +235,8 @@ try {
       await label.scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(root, 'memory-source-light.png') });
       await page.evaluate(() => { localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'dark' })); });
-      await page.reload(); await page.locator('.reply-memory').last().click();
+      await page.reload(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
+      await openAcceptanceConversation(); await page.locator('.reply-memory').last().click();
       await until(async () => await page.locator('.memory-source-text').count());
       await page.locator('.reply-memory').last().scrollIntoViewIfNeeded();
       await page.screenshot({ path: join(root, 'memory-source-dark.png') });
