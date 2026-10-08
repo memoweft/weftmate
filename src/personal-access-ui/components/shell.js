@@ -283,10 +283,15 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function paintScreen(view) {
         for (const name of ui.views)
-            ui.byId(`${name}-view`).hidden = name !== view;
+            ui.byId(`${name}-view`).hidden = name !== view && !(view === 'account' && name === 'assistant');
         if (ui.motionView !== view) globalThis.WeftMotion?.reveal(ui.byId(`${view}-view`), 'base');
         ui.motionView = view;
-        document.body.classList.toggle('assistant-active', view === 'assistant');
+        document.body.classList.toggle('assistant-active', view === 'assistant' || view === 'account');
+        if (view === 'account') {
+            ui.showSettingsDialog?.(); ui.byId('assistant-view').setAttribute('aria-hidden', 'true');
+        } else {
+            ui.byId('assistant-view').setAttribute('aria-hidden', 'false'); ui.hideSettingsDialog?.();
+        }
         document.body.classList.toggle('cloud-auth-active', view === 'login' || view === 'cloud-wait');
     }
     function mountShell() {

@@ -138,10 +138,10 @@ function page(name){
   if(!['chat','home'].includes(name)&&['chat','home'].includes(previousPage))state.returnPage=previousPage;
   $('chat-page').classList.toggle('active',name==='chat');$('generic-page').classList.toggle('active',!['chat','home'].includes(name));
   $('home-page').classList.toggle('active',name==='home');updatePageHeader();
-  if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home');
+  if(previousPage!==name)globalThis.WeftMobileMotion?.push($(name==='chat'?'chat-page':name==='home'?'home-page':'generic-page'),name==='home'||name==='settings'&&previousPage!=='settings');
   $('conversation-usage').hidden=!(name==='chat' && state.loggedIn && (state.sharedSessionId || uiCore.mobile?.selectedBinding()?.sessionId));
   $('header-subtitle').textContent=name==='chat'?'同一个助手，接着聊。':{
-    usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
+    schedules:'提醒与定时任务',about:'关于',general:'常规',approvals:'审批',resources:'资料访问',usage:'用量',memory:'记忆',capabilities:'能力与扩展',workspaces:'项目与成果',devices:'设备',notifications:'通知',settings:'设置',
     account:'账户',password:'修改密码',models:'对话模型',sync:'离线与同步',appearance:'外观',updates:'更新',connect:'连接电脑'
   }[name]||name;
   document.querySelectorAll('[data-page]').forEach(b=>b.classList.toggle('current',b.dataset.page===name));
@@ -340,7 +340,7 @@ window.addEventListener('unhandledrejection',reportBootFailure);
 
 
 
-function renderPage(name){const target=$('page-content');clear(target);switch(name){
+function renderPage(name){const target=$('page-content');clear(target);if(name!=='settings')$('generic-page').scrollTop=0;const category=mobileSettingsRegistry.get(name);if(category)return category.mount(target);switch(name){
   case 'usage':return usagePage(target, state.usageSessionId || '');
   case 'memory':return memoryPage(target);
   case 'capabilities':return capabilitiesPage(target);
@@ -514,6 +514,7 @@ function handleBack(){if(!$('resource-page').hidden){closeResourcePage();return}
   if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}if(state.attachmentPick){cancelAttachmentPick({announce:true});return}if(state.menu){closeModelMenu();$('model-button').focus();return}
   if(state.drawer){closeDrawer();$('menu-button').focus();return}
   if(state.page==='home')return;
+  if(state.settingsChild && state.page!=='settings'){page('settings');state.settingsChild=false;return}
   if(state.page!=='chat'){page(state.returnPage||'chat');return}
   if(document.activeElement===$('draft')){$('draft').blur();return}page('home')}
 document.addEventListener('DOMContentLoaded',()=>{

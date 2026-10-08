@@ -27,7 +27,7 @@
 | 设备与状态 | desktop、phone、cloud、offline、sync、bell、info、warn、moon、sun |
 | 陪伴 | pet、health |
 
-补充 24 个 id：`battery`、`bell-off`、`book`、`bookmark`、`camera`、`chat`、`clock`、`code`、`collapse`、`filter`、`history`、`image`、`key`、`keyboard`、`loader`、`mail`、`pause`、`pin`、`play`、`plus`、`right`、`undo`、`watch`、`wifi`。沿用各现有动作的含义，并统一网格、颜色、线宽与圆角。旧手机 / 原生名称的兼容映射集中在生成脚本；新调用用规范 id。
+补充 26 个 id：`battery`、`bell-off`、`book`、`bookmark`、`camera`、`chat`、`clock`、`code`、`collapse`、`filter`、`history`、`image`、`key`、`keyboard`、`loader`、`mail`、`pause`、`pin`、`play`、`plus`、`right`、`undo`、`watch`、`wifi`、`palette`、`chart`。后两项用于设置外观与用量分类。沿用各现有动作的含义，并统一网格、颜色、线宽与圆角。旧手机 / 原生名称的兼容映射集中在生成脚本；新调用用规范 id。
 
 ## 生成与新增
 

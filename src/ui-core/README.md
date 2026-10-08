@@ -61,3 +61,7 @@ const core = globalThis.WeftUiCore.create({
 - Windows（视窗系统）真实程序：`node tests/integration/fe-1a-ui-layers.mjs`。脚本通过 Playwright（界面自动化工具）`_electron.launch` 启动 `.`，使用隔离目录、真实个人入口服务和合成日志；截图位于 `tests/evidence/fe-1a/`。
 - `node tests/integration/fe-1a-ui-layers.mjs --relocated`：只在测试响应中改 `layout.js`，把输出按钮移到侧栏；同一组名称 / 角色定位的流程继续通过。产品组装不被修改。
 - `python tests/integration/fe-1a-compare-screenshots.py`：与记录的改前截图逐像素比较。
+
+## 设置分类
+
+`settings-registry.js` 只提供分类元数据、登记、查询与搜索，不接触 DOM。`settingsRegistry(mounts)` 在每个呈现端创建独立注册表，共用分类和关键词，挂载动作由呈现端提供。`register({id, group, name, icon, keywords, mount, desktopOnly})` 新增或替换一项；搜索同时匹配名称、分组与关键词，多个关键词需同时命中。桌面分类容器按登记自动创建，手机挂载到当前子页。新增领域设置继续复用该领域的功能层动作。
