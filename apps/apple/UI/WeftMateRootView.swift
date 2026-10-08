@@ -147,7 +147,7 @@ private struct MacWorkspace: View {
         switch selected {
         case .conversation(let id):
             if let conversation = model.conversations.first(where: { $0.id == id }) {
-                ConversationView(model: model, conversation: conversation)
+                ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString)
             } else {
                 WelcomeView(model: model)
             }
@@ -199,7 +199,7 @@ private struct PhoneWorkspace: View {
                 .navigationTitle("对话")
                 .navigationDestination(for: String.self) { id in
                     if let conversation = model.conversations.first(where: { $0.id == id }) {
-                        ConversationView(model: model, conversation: conversation)
+                        ConversationView(model: model, conversation: conversation).id(conversation.id + (conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) ?? "") + model.accountEpoch.uuidString)
                     } else {
                         EmptyState(symbol: "text.bubble", title: "会话已变更", message: "返回会话列表后刷新。")
                     }
