@@ -655,7 +655,7 @@ kbd { font: inherit; font-size: 10px; color: var(--ink-muted); white-space: nowr
 .desktop-titlebar .wm-brand { width: 24px; height: 24px; margin-right: 6px; vertical-align: middle; }
 .preview-tab-close, .preview-add { display: inline-flex; align-items: center; justify-content: center; }
 .model-option-icon { color: var(--surface); }
-.model-option-icon .wm-icon { width: 17px; height: 17px; }
+.model-option-icon .wm-icon { width: 16px; height: 16px; }
 
 .execution-block summary { list-style: none; }
 .execution-block summary::-webkit-details-marker { display: none; }
