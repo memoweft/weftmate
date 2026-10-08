@@ -1,3 +1,4 @@
+import { desktopFeatureSource, desktopHtml } from './helpers/desktop-ui-source.mjs'
 import assert from 'node:assert/strict'
 import { Blob, File } from 'node:buffer'
 import { createHash } from 'node:crypto'
@@ -9,15 +10,26 @@ import test from 'node:test'
 import { hashBlobSha256 } from '../src/personal-access-ui/file-sha256.js'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
-const source = readFileSync(join(repository, 'src', 'personal-access-ui', 'app.js'), 'utf8')
+const source = desktopFeatureSource()
 const executableSource = source.replace("import('./file-sha256.js')",
   'Promise.resolve({ hashBlobSha256: globalThis.__weftmateTestHashBlobSha256 })')
 assert.notEqual(executableSource, source, 'the attachment test harness replaces only the browser module loader')
-const accountHtml = readFileSync(join(repository, 'src', 'personal-access-ui', 'index.html'), 'utf8')
+const accountHtml = desktopHtml()
 const styles = readFileSync(join(repository, 'src', 'personal-access-ui', 'styles.css'), 'utf8')
+// Accessible metadata comes from the assembled production markup, not a DOM position.
+const controlMetadata = new Map<string, { role: string; name: string }>()
+for (const match of accountHtml.matchAll(/<(input|textarea|select|button)\b([^>]*)>/g)) {
+  const [, tag, attributes] = match, id = /\bid="([^"]+)"/.exec(attributes)?.[1]
+  if (!id) continue
+  const content = tag === 'input' ? '' : accountHtml.slice(match.index! + match[0].length).split(`</${tag}>`)[0]
+  const label = new RegExp(String.raw`<label[^>]*for="${id}"[^>]*>([\s\S]*?)<\/label>`).exec(accountHtml)?.[1]
+  const name = /\baria-label="([^"]+)"/.exec(attributes)?.[1] || label || content
+  controlMetadata.set(id, { role: tag === 'button' ? 'button' : tag === 'select' ? 'combobox' : /type="search"/.test(attributes) ? 'searchbox' : 'textbox', name: name.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim() })
+}
+
 const sha = (value: string) => createHash('sha256').update(value).digest('hex')
-const qrDataDeclaration = source.match(/const publicPlatformQrData = Object\.freeze\((\{[\s\S]*?\n  \})\)/)
-assert.ok(qrDataDeclaration, 'the standard platform QR assets are embedded in app.js')
+const qrDataDeclaration = source.match(/const publicPlatformQrData = Object\.freeze\((\{[\s\S]*?\n\s*\})\)/)
+assert.ok(qrDataDeclaration, 'the standard platform QR assets are kept in the desktop component assets')
 const publicPlatformQrData = runInNewContext(`(${qrDataDeclaration[1]})`) as Record<string, string>
 
 function officialQrSvg(platform: string) {
@@ -436,7 +448,13 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/icons.js'), 'utf8') + '\nwindow.WeftIcons = globalThis.WeftIcons;', context)
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8'), context)
   runInNewContext(executableSource, context)
-  return { get, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
+  const getByRole = (role: string, { name }: { name: string | RegExp }) => {
+    const matches = [...controlMetadata].filter(([, control]) => control.role === role &&
+      (typeof name === 'string' ? control.name === name : name.test(control.name)))
+    assert.equal(matches.length, 1, `one ${role} named ${name}`)
+    return get(matches[0][0])
+  }
+  return { get, getByRole, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
     deferMe: () => { deferNextMe = true }, resolveMe: (value: object, status = 200) => { deferredMe?.resolve(reply(value, status)); deferredMe = null },
     deferDevices: () => { deferNextDevices = true }, resolveDevices: (value: object) => { deferredDevices?.resolve(reply(value)); deferredDevices = null },
     resolveTaskDetail: (value: object, status = 200) => { deferredTaskDetail?.resolve(reply(value, status)); deferredTaskDetail = null },
@@ -465,7 +483,7 @@ test('model menu preserves the draft, selects a configured model and opens exist
     { id: 'unconfigured', name: '未配置模型', configured: false },
   ] })
   for (let attempt = 0; attempt < 20 && page.get('model-label').textContent !== '本地模型'; attempt++) await flush()
-  page.get('message-text').value = '继续我的目标'
+  page.getByRole('textbox', { name: '输入消息' }).value = '继续我的目标'
   page.get('model-trigger').fire('click')
   const choices = page.get('model-options').children
   assert.equal(choices.length, 2)
@@ -476,11 +494,11 @@ test('model menu preserves the draft, selects a configured model and opens exist
   assert.equal(page.get('model-label').textContent, '云端模型')
   assert.equal(page.get('model-popover').hidden, true)
   assert.equal(page.get('model-trigger').getAttribute('aria-expanded'), 'false')
-  assert.equal(page.get('message-text').value, '继续我的目标')
+  assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '继续我的目标')
   assert.equal(page.requests.filter(({ options }) => options.method === 'POST').length, 0)
   page.get('model-trigger').fire('click')
   assert.equal(page.get('model-options').children[1].getAttribute('aria-selected'), 'true')
-  page.get('model-configure').fire('click')
+  page.getByRole('button', { name: '配置模型' }).fire('click')
   await flush()
   assert.equal(page.get('account-view').hidden, false)
   assert.equal(page.get('model-popover').hidden, true)
@@ -501,8 +519,8 @@ test('desktop file composer streams a file over 2 MiB, retries the same tuple, a
   page.get('message-attachments').files = [file]
   page.get('message-attachments').fire('change')
   assert.equal(page.get('attachment-draft-list').children.length, 1)
-  page.get('message-text').value = '请读取标记并保留原件。'
-  page.get('message-text').fire('input')
+  page.getByRole('textbox', { name: '输入消息' }).value = '请读取标记并保留原件。'
+  page.getByRole('textbox', { name: '输入消息' }).fire('input')
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 100 && !page.get('attachment-status').textContent.includes('可重试'); attempt++) await flush()
   assert.match(page.get('attachment-status').textContent, /仍保留，可重试/)
@@ -534,7 +552,7 @@ test('desktop file composer streams a file over 2 MiB, retries the same tuple, a
   page.resolvePost({ command: { ...command, commandId: 'cmd-file-stage15', state: 'pending' } })
   for (let attempt = 0; attempt < 20 && page.get('attachment-draft-list').children.length; attempt++) await flush()
   assert.equal(page.get('attachment-draft-list').children.length, 0)
-  assert.equal(page.get('message-text').value, '')
+  assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '')
 })
 
 test('switching sessions aborts a late original upload and keeps the file only in its original draft', async () => {
@@ -691,13 +709,13 @@ test('a delayed create keeps the old conversation until acceptance and then sele
   const tasks: object[] = []
   const page = harness(tasks, [], true, { sessions, byRequest: { 'request-1': command } })
   for (let attempt = 0; attempt < 10 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
-  page.get('new-session').fire('click')
+  page.getByRole('button', { name: /新对话/ }).fire('click')
   await flush()
   page.resolvePost({ command })
   tasks.push(command)
   for (let attempt = 0; attempt < 10 && !page.storage.get('weftmate:requests:v1:owner-test')?.includes('cmd-create'); attempt++) await flush()
   assert.equal(page.get('assistant-title').textContent, 'A')
-  assert.equal(page.get('new-session').disabled, true, 'pending create cannot be repeated with a new ID')
+  assert.equal(page.getByRole('button', { name: /新对话/ }).disabled, true, 'pending create cannot be repeated with a new ID')
   assert.equal(page.get('reset-operation').hidden, true, 'pending work cannot be acknowledged as uncertain')
   assert.match(page.storage.get('weftmate:requests:v1:owner-test')!, /cmd-create/)
 
@@ -719,7 +737,7 @@ test('a delayed create failure updates its real receipt without clearing the sel
     const tasks: object[] = []
     const page = harness(tasks, [], true, { sessions, byRequest: { 'request-1': command } })
     for (let attempt = 0; attempt < 10 && page.get('assistant-title').textContent !== 'A'; attempt++) await flush()
-    page.get('new-session').fire('click')
+    page.getByRole('button', { name: /新对话/ }).fire('click')
     await flush()
     page.resolvePost({ command })
     tasks.push(command)
@@ -867,11 +885,11 @@ test('task15-narrow late task refresh cannot reclaim focus after switching sessi
   const oldEntry = page.document.activeElement
   page.deferOneTaskDetail(); page.tick(); await flush()
   page.get('session-list').children[1].children[0].fire('click'); await flush()
-  page.get('message-text').focus()
+  page.getByRole('textbox', { name: '输入消息' }).focus()
   page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
   assert.equal(page.get('assistant-title').textContent, 'B')
   assert.equal(oldEntry.isConnected, false)
-  assert.equal(page.document.activeElement, page.get('message-text'))
+  assert.equal(page.document.activeElement, page.getByRole('textbox', { name: '输入消息' }))
   assert.equal(task15NarrowCard(page), undefined)
 })
 
@@ -881,10 +899,10 @@ test('task15-narrow late task refresh cannot reclaim focus after switching accou
   const oldEntry = page.document.activeElement
   page.deferOneTaskDetail(); page.tick(); await flush()
   await switchToB(page)
-  page.get('message-text').focus()
+  page.getByRole('textbox', { name: '输入消息' }).focus()
   page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
   assert.equal(oldEntry.isConnected, false)
-  assert.equal(page.document.activeElement, page.get('message-text'))
+  assert.equal(page.document.activeElement, page.getByRole('textbox', { name: '输入消息' }))
   assert.equal(page.get('account-name').textContent, 'ProfileB')
 })
 
@@ -900,11 +918,11 @@ test('task15-narrow late task refresh cannot reclaim focus after switching to th
   page.deferOneTaskDetail(); page.tick(); await flush()
   const phone = page.get('session-list').children.find((row) => visibleText(row).includes('另一来源'))!
   assert.ok(phone); phone.children[0].fire('click'); await flush()
-  page.get('message-text').focus()
+  page.getByRole('textbox', { name: '输入消息' }).focus()
   page.resolveTaskDetail({ ...task, replyEvidence: { status: 'aborted' } }); await flush()
   assert.match(page.get('assistant-title').textContent, /另一来源/)
   assert.equal(oldEntry.isConnected, false)
-  assert.equal(page.document.activeElement, page.get('message-text'))
+  assert.equal(page.document.activeElement, page.getByRole('textbox', { name: '输入消息' }))
   assert.equal(task15NarrowCard(page), undefined)
 })
 
@@ -1167,7 +1185,7 @@ test('main chat rail opens the same phone MiMo conversation and its authenticate
   rail.children[2].children[0].fire('click')
   assert.equal(page.get('assistant-title').textContent, '路上的图片')
   assert.equal(page.get('conversation-pane').hidden, false)
-  assert.equal(page.get('message-text').disabled, false)
+  assert.equal(page.getByRole('textbox', { name: '输入消息' }).disabled, false)
   assert.equal(page.get('model-hint').textContent, '')
   assert.equal(page.get('model-hint').hidden, true, 'routine chat does not show implementation guidance')
   assert.match(visibleText(page.get('transcript')), /看看这张图.*看到山了.*旧图/)
@@ -1194,7 +1212,7 @@ test('main chat rail opens the same phone MiMo conversation and its authenticate
   rail.children[0].children[0].fire('click')
   await flush()
   assert.equal(page.get('assistant-title').textContent, 'A')
-  assert.equal(page.get('message-text').disabled, false, 'desktop DSH conversation remains sendable')
+  assert.equal(page.getByRole('textbox', { name: '输入消息' }).disabled, false, 'desktop DSH conversation remains sendable')
 })
 
 test('bound phone conversation keeps one rail card and exact receipt renders its adopted user once', async () => {
@@ -1461,8 +1479,8 @@ test('desktop appends one user text event to the original phone conversation wit
   ] })
   for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
   page.get('session-list').children[2].children[0].fire('click')
-  page.get('message-text').value = '电脑补充的文字'
-  page.get('message-text').fire('input')
+  page.getByRole('textbox', { name: '输入消息' }).value = '电脑补充的文字'
+  page.getByRole('textbox', { name: '输入消息' }).fire('input')
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !/电脑补充的文字/.test(visibleText(page.get('transcript'))); attempt++) await flush()
   const posts = page.requests.filter((request) => request.url.endsWith('/sync/events') && request.options.method === 'POST')
@@ -1486,7 +1504,7 @@ test('timeout keeps exact phone event and draft; retry reconciles then posts the
   ] })
   for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
   page.get('session-list').children[2].children[0].fire('click')
-  page.get('message-text').value = '原文保留'
+  page.getByRole('textbox', { name: '输入消息' }).value = '原文保留'
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !page.storage.has('weftmate:phone-sync-outbox:v1:owner-test:device-test'); attempt++) await flush()
   const key = 'weftmate:phone-sync-outbox:v1:owner-test:device-test'
@@ -1494,7 +1512,7 @@ test('timeout keeps exact phone event and draft; retry reconciles then posts the
   assert.equal(pending.event.payload.text, '原文保留')
   for (let attempt = 0; attempt < 20 && (page.get('send-message').textContent !== '核对并重试' ||
     page.get('send-message').disabled); attempt++) await flush()
-  assert.equal(page.get('message-text').value, '原文保留')
+  assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '原文保留')
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && page.storage.has(key); attempt++) await flush()
   const posts = page.requests.filter((request) => request.url.endsWith('/sync/events') && request.options.method === 'POST')
@@ -1511,7 +1529,7 @@ test('lost receipt after server commit reconciles the same event without a secon
   ] })
   for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
   page.get('session-list').children[2].children[0].fire('click')
-  page.get('message-text').value = '只保存一次'
+  page.getByRole('textbox', { name: '输入消息' }).value = '只保存一次'
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !/只保存一次/.test(visibleText(page.get('transcript'))); attempt++) await flush()
   assert.equal(page.requests.filter((request) => request.url.endsWith('/sync/events') && request.options.method === 'POST').length, 1)
@@ -1526,11 +1544,11 @@ test('409 keeps the original phone draft and exact event for explicit review', a
   ] })
   for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
   page.get('session-list').children[2].children[0].fire('click')
-  page.get('message-text').value = '冲突时保留'
+  page.getByRole('textbox', { name: '输入消息' }).value = '冲突时保留'
   page.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !/编号发生冲突/.test(page.get('model-hint').textContent); attempt++) await flush()
   assert.match(page.get('model-hint').textContent, /编号发生冲突/)
-  assert.equal(page.get('message-text').value, '冲突时保留')
+  assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '冲突时保留')
   const stored = JSON.parse(page.storage.get('weftmate:phone-sync-outbox:v1:owner-test:device-test')!)
   assert.equal(stored.event.payload.text, '冲突时保留')
   assert.equal(page.get('send-message').textContent, '核对并重试')
@@ -1630,13 +1648,13 @@ test('task15-approval-client shows only real receipt-bound requests and distingu
   assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000006'), undefined)
   assert.equal(approvalCard(f.page, '00000000-0000-4000-8000-000000000007'), undefined)
   assert.doesNotMatch(visibleText(f.page.get('transcript')), /永久允许|目标已完成|approval-call|rpc:approval/)
-  f.page.get('message-text').value = '保留草稿'
+  f.page.getByRole('textbox', { name: '输入消息' }).value = '保留草稿'
   f.page.get('chat-scroll').scrollTop = 312
   const detail = approvalAction(f.page, 'detail')!
   detail.focus(); detail.fire('click')
   detail.fire('click'); await flush()
   assert.equal(f.page.document.activeElement, approvalAction(f.page, 'detail'))
-  assert.equal(f.page.get('message-text').value, '保留草稿')
+  assert.equal(f.page.getByRole('textbox', { name: '输入消息' }).value, '保留草稿')
   assert.equal(f.page.get('chat-scroll').scrollTop, 312)
 })
 
@@ -1647,7 +1665,7 @@ test('task15-approval-client retries an uncertain answer with the same request a
     approvalDecide: (_url, options) => { bodies.push(JSON.parse(options.body)); return bodies.length === 1 ? firstPost.promise : secondPost.promise } }
   const first = task15ApprovalFixture(config)
   await approvalReady(first.page)
-  first.page.get('message-text').value = '提交期间继续写草稿'
+  first.page.getByRole('textbox', { name: '输入消息' }).value = '提交期间继续写草稿'
   first.page.get('chat-scroll').scrollTop = 217
   const allow = approvalAction(first.page, 'allowed-once')!, reject = approvalAction(first.page, 'rejected')!
   allow.focus(); allow.fire('click'); allow.fire('click'); reject.fire('click')
@@ -1655,13 +1673,13 @@ test('task15-approval-client retries an uncertain answer with the same request a
   assert.equal(bodies.length, 1)
   assert.equal(approvalAction(first.page, 'allowed-once')!.disabled, true)
   assert.equal(approvalAction(first.page, 'rejected')!.disabled, true)
-  first.page.get('message-text').focus()
+  first.page.getByRole('textbox', { name: '输入消息' }).focus()
   firstPost.reject(new Error('synthetic uncertain network'))
   for (let i = 0; i < 25 && approvalAction(first.page, 'allowed-once')?.disabled; i++) await flush()
   assert.match(visibleText(approvalCard(first.page)!), /上次答复结果尚未确认/)
   assert.equal(approvalAction(first.page, 'rejected')!.disabled, true)
-  assert.equal(first.page.document.activeElement, first.page.get('message-text'))
-  assert.equal(first.page.get('message-text').value, '提交期间继续写草稿')
+  assert.equal(first.page.document.activeElement, first.page.getByRole('textbox', { name: '输入消息' }))
+  assert.equal(first.page.getByRole('textbox', { name: '输入消息' }).value, '提交期间继续写草稿')
   assert.equal(first.page.get('chat-scroll').scrollTop, 217)
   const writes = first.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/approvals/'))
   const firstWrite = first.page.requests.indexOf(writes[0])
@@ -1719,15 +1737,15 @@ test('task15-approval-client ignores a pending POST and old controls after accou
   oldButton.fire('click'); await flush()
   f.approvals.A = []
   await switchToB(f.page)
-  f.page.get('message-text').value = 'B 的新草稿'
-  f.page.get('message-text').focus()
+  f.page.getByRole('textbox', { name: '输入消息' }).value = 'B 的新草稿'
+  f.page.getByRole('textbox', { name: '输入消息' }).focus()
   oldPost.resolve(reply({ approval: approvalAnswered(f.approval, body.requestId), requestId: body.requestId }))
   for (let i = 0; i < 15; i++) await flush()
   oldButton.fire('click')
   await flush()
   assert.equal(approvalCard(f.page), undefined)
-  assert.equal(f.page.get('message-text').value, 'B 的新草稿')
-  assert.equal(f.page.document.activeElement, f.page.get('message-text'))
+  assert.equal(f.page.getByRole('textbox', { name: '输入消息' }).value, 'B 的新草稿')
+  assert.equal(f.page.document.activeElement, f.page.getByRole('textbox', { name: '输入消息' }))
   assert.equal(f.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/approvals/')).length, 1)
 })
 
@@ -1796,7 +1814,7 @@ test('task15-question-client preserves native question order, exact labels, sour
   questionAction(f.page, 'custom-1')!.value = '额外信息'; questionAction(f.page, 'custom-1')!.fire('input')
   const free = questionAction(f.page, 'custom-2')!; free.value = '合成备注'; free.fire('input'); free.focus()
   const plan = questionAction(f.page, 'option-3-0')!; plan.checked = true; plan.fire('change')
-  f.page.get('message-text').value = '聊天草稿保留'
+  f.page.getByRole('textbox', { name: '输入消息' }).value = '聊天草稿保留'
   f.page.get('chat-scroll').scrollTop = 284
   f.page.tick(); for (let i = 0; i < 15; i++) await flush()
   assert.equal(f.page.document.activeElement, free)
@@ -1805,7 +1823,7 @@ test('task15-question-client preserves native question order, exact labels, sour
   detail.fire('click'); await flush()
   assert.equal(f.page.document.activeElement, questionAction(f.page, 'detail'))
   assert.equal(f.page.get('chat-scroll').scrollTop, 284)
-  assert.equal(f.page.get('message-text').value, '聊天草稿保留')
+  assert.equal(f.page.getByRole('textbox', { name: '输入消息' }).value, '聊天草稿保留')
   questionForm(f.page).fire('submit'); questionForm(f.page).fire('submit')
   for (let i = 0; i < 15 && bodies.length === 0; i++) await flush()
   assert.equal(bodies.length, 1)
@@ -1881,13 +1899,13 @@ test('task15-question-client ignores old conversation reads and account-device a
   await questionReady(posting.page)
   const oldForm = questionForm(posting.page); oldForm.fire('submit'); await flush()
   posting.questions.A = []; await switchToB(posting.page)
-  posting.page.get('message-text').value = 'B 的草稿'; posting.page.get('message-text').focus()
+  posting.page.getByRole('textbox', { name: '输入消息' }).value = 'B 的草稿'; posting.page.getByRole('textbox', { name: '输入消息' }).focus()
   oldPost.resolve(reply({ question: questionAnswered(posting.question, body.requestId, body.answer), requestId: body.requestId }))
   for (let i = 0; i < 15; i++) await flush()
   oldForm.fire('submit'); await flush()
   assert.equal(questionCard(posting.page), undefined)
-  assert.equal(posting.page.get('message-text').value, 'B 的草稿')
-  assert.equal(posting.page.document.activeElement, posting.page.get('message-text'))
+  assert.equal(posting.page.getByRole('textbox', { name: '输入消息' }).value, 'B 的草稿')
+  assert.equal(posting.page.document.activeElement, posting.page.getByRole('textbox', { name: '输入消息' }))
   assert.equal(posting.page.requests.filter((row) => row.options.method === 'POST' && row.url.includes('/questions/')).length, 1)
 })
 
@@ -1982,7 +2000,7 @@ test('A pending phone text stays under A device key after B signs in', async () 
   await ready(page)
   for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
   page.get('session-list').children[2].children[0].fire('click')
-  page.get('message-text').value = 'A 的待核对文字'
+  page.getByRole('textbox', { name: '输入消息' }).value = 'A 的待核对文字'
   page.get('message-form').fire('submit')
   const aKey = 'weftmate:phone-sync-outbox:v1:profile-owner-a:profile-device-A'
   for (let attempt = 0; attempt < 20 && !page.storage.has(aKey); attempt++) await flush()
@@ -1990,7 +2008,7 @@ test('A pending phone text stays under A device key after B signs in', async () 
   await switchToB(page)
   for (let attempt = 0; attempt < 20 && page.get('session-list').children.length < 3; attempt++) await flush()
   page.get('session-list').children[2].children[0].fire('click')
-  assert.equal(page.get('message-text').value, '')
+  assert.equal(page.getByRole('textbox', { name: '输入消息' }).value, '')
   assert.equal(page.get('send-message').textContent, '同步文字')
   assert.doesNotMatch(page.get('model-hint').textContent, /待核对/)
   assert.equal(page.storage.has(aKey), true)
@@ -2006,7 +2024,7 @@ test('same owner on a new device recovers old text by checking the server before
   await ready(first)
   for (let attempt = 0; attempt < 20 && first.get('session-list').children.length < 3; attempt++) await flush()
   first.get('session-list').children[2].children[0].fire('click')
-  first.get('message-text').value = '登录前的文字'
+  first.getByRole('textbox', { name: '输入消息' }).value = '登录前的文字'
   first.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && !storage.has('weftmate:phone-sync-recovery:v1:profile-owner-a'); attempt++) await flush()
   const second = harness([], [], false, { profileAccounts: profileFixture(), syncAvailable: true,
@@ -2014,11 +2032,11 @@ test('same owner on a new device recovers old text by checking the server before
   await ready(second)
   for (let attempt = 0; attempt < 20 && second.get('session-list').children.length < 3; attempt++) await flush()
   second.get('session-list').children[2].children[0].fire('click')
-  assert.equal(second.get('message-text').value, '登录前的文字')
+  assert.equal(second.getByRole('textbox', { name: '输入消息' }).value, '登录前的文字')
   assert.equal(second.get('send-message').textContent, '核对旧请求')
   second.get('message-form').fire('submit')
   for (let attempt = 0; attempt < 20 && storage.has('weftmate:phone-sync-recovery:v1:profile-owner-a'); attempt++) await flush()
-  assert.equal(second.get('message-text').value, '登录前的文字')
+  assert.equal(second.getByRole('textbox', { name: '输入消息' }).value, '登录前的文字')
   assert.match(second.get('model-hint').textContent, /草稿已恢复/)
   assert.equal(second.requests.some((request) => request.url.endsWith('/sync/events') && request.options.method === 'POST'), false)
 })
