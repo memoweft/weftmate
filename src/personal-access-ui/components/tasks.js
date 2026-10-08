@@ -1,5 +1,51 @@
 /* Desktop tasks component: paint data, bind controls, invoke shared actions. */
 globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
+    function renderTaskQueue() {
+        const list = ui.byId('task-queue');
+        if (!list) return;
+        const context = core.conversationTaskContext(), rows = core.taskQueue().filter(row => row.queued);
+        const visible = rows.filter(row => row.state === 'queued' || row.state === 'running');
+        list.hidden = visible.length === 0;
+        const active = document.activeElement;
+        const taskId = active?.closest('[data-queued-task]')?.dataset.queuedTask, action = active?.dataset.queueAction;
+        list.replaceChildren();
+        for (const row of visible) {
+            const card = ui.element('article', 'queued-task'); card.dataset.queuedTask = row.taskId;
+            card.setAttribute('aria-label', `排队任务 ${row.text}`);
+            card.append(ui.element('strong', '', row.state === 'queued' ? '排队中' : '运行中'), ui.element('p', 'queued-task-text', row.text));
+            if (row.notice) { const notice = ui.element('p', 'queued-task-notice', row.notice); notice.setAttribute('role', 'status'); card.append(notice); }
+            if (row.state === 'queued') {
+                const actions = ui.element('div', 'conversation-task-actions');
+                for (const [action, label] of [['edit', '编辑后重新排'], ['cancel', '取消']]) {
+                    const button = ui.element('button', 'button quiet small', label); button.type = 'button';
+                    button.dataset.queueAction = action; button.disabled = row.busy;
+                    button.addEventListener('click', async () => {
+                        if (!core.conversationTaskCurrent(context)) return;
+                        if (action === 'cancel') return core.cancelQueuedTask(row.taskId);
+                        if (ui.readMessageDraft().trim()) { ui.toast('请先发送或清空当前草稿，再编辑排队任务。'); return; }
+                        const text = await core.editQueuedTask(row.taskId);
+                        if (text === null || !core.conversationTaskCurrent(context)) return;
+                        ui.byId('message-text').value = text;
+                        core.setMessageMode('queue');
+                        ui.byId('message-text').focus();
+                    });
+                    actions.append(button);
+                }
+                card.append(actions);
+            }
+            list.append(card);
+        }
+        if (taskId && action && document.activeElement === document.body) {
+            const replacement = [...list.querySelectorAll('button')].find(button => button.dataset.queueAction === action && button.closest('[data-queued-task]').dataset.queuedTask === taskId);
+            if (replacement && !replacement.disabled) replacement.focus({ preventScroll: true });
+        }
+        // Receipt lookup may complete after the message first appears.
+        for (const node of ui.byId('transcript').children) {
+            if (!node.dataset?.receiptId) continue;
+            const label = core.messageTaskLabel({ data: { receiptId: node.dataset.receiptId } });
+            if (label && !node.querySelector('.message-task-label')) node.append(ui.element('small', 'message-task-label', label));
+        }
+    }
     function renderDesktopActionReview() {
         const list = ui.byId('transcript');
         for (const node of [...list.children])
@@ -20,13 +66,19 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
         list.append(row);
     }
     function renderConversationTasks() {
+        ui.renderTaskQueue();
         ui.renderDesktopActionReview();
         const context = core.conversationTaskContext(), list = ui.byId('transcript');
         if (!context.sessionId || core.conversationTasks.ownerId !== context.ownerId || core.conversationTasks.identity !== context.identity)
             return;
+        const queue = new Map(core.taskQueue().map(row => [row.taskId, row]));
         for (const entry of core.conversationTasks.entries.values()) {
             if (entry.sessionId !== context.sessionId || entry.conversationId && entry.conversationId !== context.conversationId)
                 continue;
+            if (['queued', 'cancelled'].includes(queue.get(entry.taskId)?.state)) {
+                [...list.children].find(row => row.dataset?.conversationTask === entry.taskId)?.remove();
+                continue;
+            }
             const payload = entry.payload, steps = payload ? core.relatedExecutionSteps(payload) : [];
             const artifacts = (Array.isArray(payload?.artifacts) ? payload.artifacts : []).filter((row) => row?.taskId === entry.taskId && row.sessionId === context.sessionId && core.sessionIdPattern.test(row.artifactId || ''));
             const control = payload?.control;
@@ -123,8 +175,10 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                     replacement.focus({ preventScroll: true });
             }
         }
+        for (const card of [...list.children])
+            if (card.dataset?.conversationTask && !core.conversationTasks.entries.has(card.dataset.conversationTask)) card.remove();
         ui.renderConversationApprovals();
         ui.renderConversationQuestions();
     }
-    return { renderDesktopActionReview, renderConversationTasks };
+    return { renderTaskQueue, renderDesktopActionReview, renderConversationTasks };
 };
