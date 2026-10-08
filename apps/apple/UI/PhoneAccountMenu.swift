@@ -23,9 +23,6 @@ struct PhoneAccountMenu: View {
                 .accessibilityLabel("小纬").accessibilityIdentifier("phoneMenu.spirit")
             Button { open(.health) } label: { Label("健康", image: "wm-health") }
                 .accessibilityLabel("健康").accessibilityIdentifier("phoneMenu.health")
-            Button("用 WeftMate 账号登录") {
-                Task { await model.signOut(); if model.session == nil { model.cloudLogin.showLogin = true } }
-            }
             Divider()
             Button { open(.devices) } label: { Label("设备", image: "wm-desktop") }
                 .accessibilityLabel("设备").accessibilityIdentifier("phoneMenu.devices")
@@ -42,7 +39,7 @@ struct PhoneAccountMenu: View {
                     if item.epoch == model.accountEpoch, model.session != nil {
                         switch item.destination {
                         case .memory: MemoryWorkspaceView(appModel: model).id(item.epoch)
-                        case .devices: DevicesView(model: model)
+                        case .devices: CloudDevicesView(app: model, cloud: model.cloudLogin)
                         case .settings: SettingsView(model: model)
                         case .spirit: SpiritProfileView()
                         case .health:
