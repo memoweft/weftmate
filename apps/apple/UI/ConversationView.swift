@@ -83,6 +83,7 @@ struct ConversationView: View {
     @State private var resourcePopover = false
     @State private var sendIntent: MessageIntent = .steer
     @State private var showingUsage = false
+    @State private var usageAfterActions = false
     #if os(macOS)
     @Environment(\.openWindow) private var openWindow
     #endif
@@ -293,16 +294,17 @@ struct ConversationView: View {
                 Button { showingSessionActions.toggle() } label: { WeftIcon("more") }.accessibilityLabel("对话菜单")
                     .sheet(isPresented: $showingSessionActions, onDismiss: {
                         if deleteAfterActions { deleteAfterActions = false; model.askToDelete(conversation) }
+                        if usageAfterActions { usageAfterActions = false; showingUsage = true }
                     }) {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                             SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false },
                                 onDelete: { deleteAfterActions = true; showingSessionActions = false })
                             Button("本对话用量") {
-                                showingSessionActions = false
                                 #if os(macOS)
+                                showingSessionActions = false
                                 model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
                                 #else
-                                showingUsage = true
+                                usageAfterActions = true; showingSessionActions = false
                                 #endif
                             }.accessibilityIdentifier("conversationUsage")
                         }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)

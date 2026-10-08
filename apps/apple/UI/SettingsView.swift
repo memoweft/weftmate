@@ -11,6 +11,9 @@ struct SettingsView: View {
     @StateObject private var settings: AppleSettingsModel
     @State private var search = ""
     @State private var phonePath: [AppleSettingsRoute]
+    #if os(macOS)
+    @Environment(\.dismissWindow) private var dismissWindow
+    #endif
     @Environment(\.dismiss) private var dismiss
     let onClose: (() -> Void)?
     init(model: AppleAppModel, route: AppleSettingsRoute? = nil, onClose: (() -> Void)? = nil) {
@@ -59,7 +62,8 @@ struct SettingsView: View {
                 } detail: { detail(model.settingsRoute) }
             }
         }
-        .toolbar { Button { dismiss() } label: { WeftLabel("关闭设置", icon: "close") }.keyboardShortcut(.cancelAction).accessibilityIdentifier("closeSettings") }
+        .onExitCommand { dismissWindow(id: "settings") }
+        .toolbar { Button { dismissWindow(id: "settings") } label: { WeftLabel("关闭设置", icon: "close") }.keyboardShortcut(.cancelAction).accessibilityIdentifier("closeSettings") }
         .background(Weave.canvas).accessibilityIdentifier("settingsRoot")
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme).tint(Weave.accent)
         #else
