@@ -19,7 +19,7 @@ import { createLanBaselineBridge } from './baseline-lan-model.mjs';
 import { judgeMemorySemantics } from './baseline-memory-verification.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { verify } from '../../src/personal-backup/archive.mjs';
-import { original, confirmation, correction, recallQuestion, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
+import { original, confirmation, correction, recallQuestion, proposalCheck, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
 const run = promisify(execFile), pause = ms => new Promise(r => setTimeout(r, ms));
@@ -298,7 +298,7 @@ async function baseline(modelName, fourOnly = false) {
     });
     await step('02', '模型提议、用户确认组队提醒', async result => {
       const first = report.turns[0];
-      result.checks.proposal = /组队|开黑/.test(first.reply) && /提醒|找他|叫他|叫上|拉上/.test(first.reply) && /[？?]|要不要|可以|以后/.test(first.reply);
+      result.checks.proposal = proposalCheck(first.reply);
       result.semantic = await semantic(first, '应主动提议以后用户想组队时提醒找王小明，邀请用户确认。');
       const turn = await message(A, confirmation);
       result.checks.confirmationCompleted = turn.status === 'completed';
