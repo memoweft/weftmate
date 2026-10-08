@@ -33,7 +33,7 @@ function appendTimelineArtifact(parent,artifact,context=conversationTaskContext(
   wrap.append(open,el('small','',`${artifact.contentType||'文件'} · ${artifact.size||0} 字节`),save);parent.append(wrap)}
 
 function closeResourcePage({restoreFocus=true}={}){const view=state.resourceView;state.resourceView=null;
-  $('resource-page').hidden=true;$('chat-page').removeAttribute?.('inert');
+  if(!$('resource-page').hidden) { if(globalThis.WeftMobileMotion) WeftMobileMotion.hide($('resource-page'),true); else $('resource-page').hidden=true; }$('chat-page').removeAttribute?.('inert');
   $('main').removeAttribute?.('inert');document.querySelector('.topbar')?.removeAttribute?.('inert');
   if(view){$('chat-scroll').scrollTop=view.scrollTop;state.scrollPinned=view.scrollPinned;
     if(restoreFocus)view.trigger?.focus({preventScroll:true})}}
@@ -44,7 +44,7 @@ function showResourcePage(title,context,trigger=document.activeElement){
     scrollPinned:previous?.scrollPinned??state.scrollPinned};state.resourceView=view;state.scrollPinned=false;
   $('resource-page').hidden=false;$('resource-title').textContent=title;clear($('resource-content'));
   $('resource-content').scrollTop=0;$('main').setAttribute('inert','');document.querySelector('.topbar')?.setAttribute('inert','');
-  $('chat-page').setAttribute('inert','');$('resource-back').focus({preventScroll:true});return view;
+  $('chat-page').setAttribute('inert','');globalThis.WeftMobileMotion?.push($('resource-page'),false,'240ms');$('resource-back').focus({preventScroll:true});return view;
 }
 
 function retainTimeline(content){const key=JSON.stringify([state.owner,state.authEpoch,state.chatSource,state.conversationId,state.sharedSessionId]);
