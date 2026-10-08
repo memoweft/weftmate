@@ -11,6 +11,7 @@ import { createPersonalAccessService } from '../../src/personal-access/index.mjs
 import { PERSONAL_HOST_MARKER, PERSONAL_HOST_MARKER_CONTENT } from '../../src/host-mode.mjs';
 import { runEvaluation, loadScenarios, buildReport } from '../../scripts/eval.mjs';
 import { createLanBaselineBridge } from './baseline-lan-model.mjs';
+import { localUiSession } from '../helpers/local-ui-session.mjs';
 const repository = resolve(import.meta.dirname, '../..');
 // Keep generated goals and evidence free of the Windows account's home path.
 process.env.TEMP = process.env.TMP = 'C:/Temp';
@@ -107,8 +108,8 @@ try {
   app.process().stderr?.on('data', capture);
   page = await app.firstWindow({ timeout: 90000 }); page.setDefaultTimeout(90000);
   await page.waitForURL('**/personal/v1/ui');
-  await page.fill('#login-name', username); await page.fill('#login-password', password); await page.fill('#login-device', 'Baseline Electron');
-  await page.locator('#login-form button[type=submit]').click(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
+  await localUiSession(page, { username, password }, 'Baseline Electron');
+  await page.locator('#assistant-view').waitFor({ state: 'visible' });
   for (const name of [modelName, alternateLan ? 'lan' : lan || modelName === 'qwen' ? 'mimo' : 'qwen']) {
     if (!keys[name]) continue;
     const requestId = `baseline-model-${name}`;

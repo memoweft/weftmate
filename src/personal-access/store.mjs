@@ -205,6 +205,8 @@ export function validateSingleStore(store) {
   }
   for (const [sessionId, session] of Object.entries(store.sessions)) {
     if (!validId(sessionId) || !plainObject(session) || session.ownerId !== store.ownerId ||
+        (session.archived !== undefined && typeof session.archived !== 'boolean') ||
+        (session.deleting !== undefined && typeof session.deleting !== 'boolean') ||
         (session.origin !== undefined && !['personal-remote', 'shared-chat', 'legacy-local', 'local-attached'].includes(session.origin)) ||
         (session.modelProfileId !== undefined && (typeof session.modelProfileId !== 'string' ||
           !MODEL_PROFILE_ID.test(session.modelProfileId))) ||

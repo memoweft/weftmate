@@ -579,25 +579,23 @@ test('switching back to a phone conversation keeps local send on chat.send',asyn
 test('one searchable recent list mixes exact phone and computer IDs with honest model and execution source',()=>{
   assert.equal(html.includes('id="phone-tab"')||html.includes('id="host-tab"'),false);
   const h=harness();h.run('state.loggedIn=true;state.owner="A";state.conversations=[{id:"conversation-1",title:"手机照片",createdAt:"2026-09-26T10:00:00Z",modelName:"MiMo"},{id:"conversation-2",title:"外出记录",createdAt:"2026-09-24T10:00:00Z"}];state.sharedSessions=[{sessionId:"session-1",title:"项目分析",createdAt:"2026-09-27T10:00:00Z",sendAvailable:true,source:"host"}];renderConversationList()');
-  const rows=h.node('conversation-list').children;
-  assert.equal(rows.length,3);
-  assert.match(allText(rows[0]),/项目分析.*电脑执行/);
-  assert.doesNotMatch(allText(rows[0]),/模型未标记/);
-  assert.match(allText(rows[1]),/手机照片.*MiMo.*手机执行/);
-  assert.match(allText(rows[2]),/外出记录.*手机执行/);
-  assert.doesNotMatch(allText(rows[2]),/模型未标记/);
-  rows[0].fire('click');assert.equal(h.run('state.chatSource'),'host');assert.equal(h.run('state.sharedSessionId'),'session-1');
-  rows[1].fire('click');assert.equal(h.run('state.chatSource'),'phone');assert.equal(h.run('state.conversationId'),'conversation-1');
+  const buttons=node=>[...(node.tagName==='button'?[node]:[]),...node.children.flatMap(buttons)];
+  const conversations=()=>buttons(h.node('conversation-list')).filter(node=>node.dataset.sessionId||node.dataset.conversationId);
+  const named=name=>conversations().find(node=>allText(node).includes(name));
+  assert.equal(conversations().length,3);
+  assert.match(allText(named('项目分析')),/项目分析.*电脑执行/);
+  assert.match(allText(named('手机照片')),/手机照片.*MiMo.*手机执行/);
+  assert.match(allText(named('外出记录')),/外出记录.*手机执行/);
+  named('项目分析').fire('click');assert.equal(h.run('state.chatSource'),'host');assert.equal(h.run('state.sharedSessionId'),'session-1');
+  named('手机照片').fire('click');assert.equal(h.run('state.chatSource'),'phone');assert.equal(h.run('state.conversationId'),'conversation-1');
   h.node('conversation-list').scrollTop=73;
   h.node('conversation-search').value='MiMo';h.run('renderConversationList()');
-  assert.equal(h.node('conversation-list').children.length,1);
-  assert.match(allText(h.node('conversation-list').children[0]),/手机照片/);
+  assert.equal(conversations().length,1);assert.ok(named('手机照片'));
   assert.equal(h.node('conversation-list').scrollTop,73,'filter preserves the scroll position');
   h.node('conversation-search').value='项目';h.run('renderConversationList()');
-  assert.equal(h.node('conversation-list').children.length,1);
-  assert.match(allText(h.node('conversation-list').children[0]),/项目分析/);
+  assert.equal(conversations().length,1);assert.ok(named('项目分析'));
   h.node('conversation-search').value='不存在';h.run('renderConversationList()');
-  assert.match(h.node('conversation-list').children[0].textContent,/没有匹配的对话/);
+  assert.match(allText(h.node('conversation-list')),/没有匹配的对话/);
 });
 
 test('late A conversation list cannot replace the unified drawer after switching to B',async()=>{

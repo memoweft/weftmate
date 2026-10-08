@@ -52,6 +52,8 @@ for (const scenario of [
         requests.push(payload)
         const evidence = payload.evidence[0]
         const correcting = evidence.text === scenario.correction
+        assert.equal(req.url, `/gateway/inference/synthetic-interpretation/scope/${owner}/${correcting ? 'session-correction' : 'session-old'}/v1/chat/completions`,
+          'formation usage belongs to the source session, not the new conversation waiting on it')
         assert.equal(evidence.text, correcting ? scenario.correction : scenario.old)
         if (correcting) {
           assert.equal(payload.current_cognitions.length, 1)
@@ -71,8 +73,8 @@ for (const scenario of [
     const address = server.address() as { port: number }
     const create = () => createPersonalMemoryManager({ root, enabled: true, python, pythonPath,
       baseUrl: 'http://127.0.0.1:8081/v1', model: '@current', credential: () => 'synthetic-key',
-      processingRoute: () => ({ profileId: 'synthetic-interpretation',
-        baseUrl: `http://127.0.0.1:${address.port}/v1`, model: 'synthetic-interpretation',
+      processingRoute: (_ownerId: string, sessionId: string) => ({ profileId: 'synthetic-interpretation',
+        baseUrl: `http://127.0.0.1:${address.port}/gateway/inference/synthetic-interpretation/scope/${owner}/${sessionId}/v1`, model: 'synthetic-interpretation',
         credential: 'synthetic-key', routeFingerprint: null, modelTier: 'cloud' }) })
     let manager = create()
     const world = () => manager.query(owner, 'query_world', {

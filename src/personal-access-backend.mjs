@@ -3,7 +3,8 @@ import { discoverOpenAICompatibleModels, openAICompatibleEndpoint } from './open
 import { modelTierFor } from './model-tier.ts'
 import { modelRouteFingerprint } from './model-route-fingerprint.mjs'
 import path from 'node:path'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, rm } from 'node:fs/promises'
+import { sessionWorkspace } from './personal-access/session-workspace.mjs'
 const idPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,159}$/
 const fail = (code) => { const error = new Error(code); error.code = code; throw error }
 
@@ -157,8 +158,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         requireModelAllowed(ownerId, modelProfileId, 'new')
         const profile = modelProfile(modelProfileId)
         await requireCatalogRoute(profile)
-        const cwd = preset === 'personal-remote' && sessionWorkspaceRoot
-          ? path.join(sessionWorkspaceRoot, sessionId) : undefined
+        const cwd = sessionWorkspaceRoot
+          ? sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId) : undefined
         if (cwd) await mkdir(cwd, { recursive: true, mode: 0o700 })
         const created = await gateway('/sessions', { method: 'POST',
           body: JSON.stringify({ sessionId, agentPreset: preset, ...(cwd ? { cwd } : {}) }) })
@@ -174,6 +175,20 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
             ...(profile.reasoningEffort && profile.reasoningEffort !== 'off' ? { reasoningEffort: profile.reasoningEffort } : {}) }) })
         return { sessionId }
       })
+    },
+    async deleteSession({ sessionId, ownerId }) {
+      requireRuntime()
+      const listed = await listSessions()
+      if (listed?.items?.some(item => item.sessionId === sessionId)) {
+        const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: '{}' })
+        if (result?.deleted !== true) fail('SESSION_UNAVAILABLE')
+      }
+      if (sessionWorkspaceRoot) await rm(sessionWorkspace(sessionWorkspaceRoot, ownerId ?? 'fixture', sessionId), { recursive: true, force: true })
+      // Older releases used a session-only directory. It is owned by this exact
+      // UUID session, and is never a project or a user-selected working folder.
+      if (sessionWorkspaceRoot && /^session-[A-Za-z0-9_-]+$/.test(sessionId))
+        await rm(path.join(sessionWorkspaceRoot, sessionId), { recursive: true, force: true })
+      return { deleted: true }
     },
     async sendMessage({ sessionId, text, mode = 'queue', ownerId, attachments = [] }) {
       requireRuntime()

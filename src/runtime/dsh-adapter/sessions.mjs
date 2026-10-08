@@ -332,7 +332,7 @@ function stableHistoryEnd(entries, cache) {
  * Ownership is gateway-local and is intentionally not inferred from a stream
  * disconnect; a resume explicitly re-establishes it after list + history.
  */
-export function createDshSessionAdapter(client, { readLog } = {}) {
+export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
   if (!client?.sessions || !client?.events) throw new TypeError('supported DSH client is required')
   const owned = new Map()
   // Lazy call metadata index. Each visited source range is indexed once, including
@@ -413,6 +413,7 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
         }))
     },
     async create(options = {}) {
+      if (lifecycle && options.cwd && options.agentPreset?.startsWith('personal-')) await lifecycle.create(options)
       const value = await unwrap(await client.sessions.create(options), 'create')
       const sessionId = sessionIdOf(value)
       if (sessionId === null) throw new DshAdapterError('dsh-rejected', 'create', await payloadDigest(value))
@@ -425,6 +426,7 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
       const listed = await unwrap(await client.sessions.list({}), 'list')
       const item = (Array.isArray(listed?.items) ? listed.items : []).find((candidate) => sessionIdOf(candidate) === sessionId)
       requireOrdinarySummary(item, sessionId)
+      if (lifecycle && item.agentPreset?.startsWith('personal-')) await lifecycle.resume(sessionId)
       const history = await unwrap(await client.sessions.history({ sessionId }), 'history')
       const historyEntries = Array.isArray(history?.events) ? history.events : []
       // DSH returns HistoryEntry `{ event, view? }`; attach only the known
@@ -435,6 +437,12 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
       return { sessionId, events, lastSeq }
     },
 
+    async remove(sessionId) {
+      if (!lifecycle) throw new DshAdapterError('internal', 'delete')
+      const value = await lifecycle.remove(sessionId)
+      owned.delete(sessionId); logs.delete(sessionId); callIndexes.delete(sessionId)
+      return value
+    },
     async historyPage(sessionId, options = {}) {
       const { afterSeq, beforeSeq, limit = 50 } = options
       if (typeof sessionId !== 'string' || !sessionId) throw new TypeError('sessionId is required')

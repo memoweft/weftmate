@@ -43,9 +43,9 @@ function promptContent(value) {
   return value
 }
 
-export function createGatewayV1({ client, readLog, diagnostics: diagnosticsDeps } = {}) {
+export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagnosticsDeps } = {}) {
   if (client === undefined) throw new TypeError('supported DSH client is required')
-  const sessions = createDshSessionAdapter(client, { readLog })
+  const sessions = createDshSessionAdapter(client, { readLog, lifecycle })
   const agents = createDshAgentAdapter(sessions)
   const workspaces = createDshWorkspaceAdapter(client)
   const models = createDshModelAdapter(client)
@@ -223,6 +223,11 @@ export function createGatewayV1({ client, readLog, diagnostics: diagnosticsDeps 
       }
       if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
       const [, sessionId, action] = match
+      if (!action && req.method === 'DELETE') {
+        const value = await sessions.remove(sessionId)
+        records.delete(sessionId)
+        return writeJson(res, 200, value)
+      }
       if (action === 'source' && req.method === 'GET') {
         const turn = requestUrl.searchParams.get('turn'), receiptId = requestUrl.searchParams.get('receiptId')
         if (turn !== null && (!/^\d+$/.test(turn) || !Number.isSafeInteger(Number(turn)) || Number(turn) < 1) ||
