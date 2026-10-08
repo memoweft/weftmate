@@ -124,7 +124,20 @@ try {
   const checkpoints = events.filter(event => event.type === 'compaction/summary');
   const completedCompactions = checkpoints.filter(checkpoint => events.some(event => event.type === 'compaction/end' &&
     event.data.compactionId === checkpoint.data.compactionId && !event.data.error));
+  const continuationChecks = completedCompactions.map(checkpoint => {
+    const before = events.filter(event => event.sessionId === checkpoint.sessionId && event.seq < checkpoint.seq);
+    const goal = before.filter(event => event.type === 'goal/change').at(-1)?.data.goal;
+    const todos = before.filter(event => event.type === 'todo/write').at(-1)?.data.todos;
+    const statePart = checkpoint.data.summary.find(part => part.type === 'text' && part.text.includes('## Native continuation state\n'));
+    const state = statePart ? JSON.parse(statePart.text.split('## Native continuation state\n')[1]) : {};
+    const end = events.find(event => event.type === 'compaction/end' && event.data.compactionId === checkpoint.data.compactionId && !event.data.error);
+    return { goalPreserved: !!goal && JSON.stringify(state.goal) === JSON.stringify(goal),
+      todosPreserved: !!todos && JSON.stringify(state.todos) === JSON.stringify(todos),
+      toolsContinued: events.some(event => event.sessionId === checkpoint.sessionId && event.seq > end.seq && event.type === 'assistant/message' && event.data.tools?.length) };
+  });
   const stats = { contextWindows: [...new Set(events.filter(event => event.type === 'request/context').map(event => event.data.contextWindow))],
+    modelId, contextSource: lan ? 'test-configured envelope (98304), not server capacity' : 'service metadata', reasoningOff,
+    continuationChecks,
     compactions: checkpoints.length,
     successfulCompactions: completedCompactions.length,
     compactionEnds: events.filter(event => event.type === 'compaction/end').map(event => event.data),
@@ -143,7 +156,8 @@ try {
     assert.equal(summary.passed, 1, 'Deliverable checks must all pass'); assert.ok(stats.toolCalls > 15);
     assert.ok(stats.nativeGoalChanges >= 2 && stats.nativeTodoWrites >= 2);
     assert.equal(stats.nativeGoalPhase, 'complete'); assert.equal(stats.nativeTodosComplete, true);
-    if (modelName !== 'mimo') { assert.deepEqual(stats.contextWindows, [98304]); assert.ok(stats.successfulCompactions >= 1); assert.ok(stats.goalAndTodosInCheckpoint); }
+    if (modelName !== 'mimo') { assert.deepEqual(stats.contextWindows, [98304]); assert.ok(stats.successfulCompactions >= 1); assert.ok(stats.goalAndTodosInCheckpoint);
+      assert.ok(continuationChecks.every(check => check.goalPreserved && check.todosPreserved && check.toolsContinued)); }
   }
 } finally {
   if (app) { await app.evaluate(({ app }) => app.quit()).catch(() => {}); await app.close().catch(() => {}); }
