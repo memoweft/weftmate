@@ -38,7 +38,7 @@ Apple 独有的 A4c 颜色与系统文字样式写入母版 `apple` 分组；共
 - 第一次编译交接文件发现其空的 Swift 字典输出为 `[]`，修复生成器为 `[:]` 后三端通过。原始构建日志、xcresult 与临时原始源码备份保留在受忽略的 `Build/`。
 - Mac `AXIsProcessTrusted=false`，没有申请辅助功能权限；Mac 仅声明构建与原生调色板检查。未宣称 Mac GUI 验收。
 - Watch 仅构建和颜色引用变更；没有真机、真实 iPhone 连接、审批或触感验收。没有真实宿主 / 模型、跨设备外观同步、部署或发布；客户端 API 契约无变更。
-- 完整测试交由本包 PR CI；最终结果以当前提交的 PR checks 为准。
+- 完整测试交由 [PR #65 CI](https://github.com/memoweft/weftmate/pull/65/checks)；最终结果以当前提交的 PR checks 为准。
 
 ## 复现
 

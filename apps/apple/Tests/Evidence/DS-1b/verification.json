@@ -59,5 +59,7 @@
     "No deployment, merge or account appearance synchronization",
     "Client API contract unchanged",
     "Full suite delegated to PR CI; consult current PR head checks"
-  ]
+  ],
+  "pullRequest": "https://github.com/memoweft/weftmate/pull/65",
+  "ciChecks": "https://github.com/memoweft/weftmate/pull/65/checks"
 }
