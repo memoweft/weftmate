@@ -8,6 +8,22 @@ const repository = resolve(import.meta.dirname, '../..');
 app.getAppPath = () => repository;
 await import('./baseline-request-trace.mjs');
 registerHooks({ load(url, context, nextLoad) {
+  if (url === pathToFileURL(resolve(repository, 'src/personal-memory/rpc.mjs')).href) {
+    const source = "import { appendFileSync as appendCoreLog } from 'node:fs';\n" + readFileSync(new URL(url), 'utf8')
+      .replace('child.stderr.resume();', `child.stderr.on('data', part => appendCoreLog(process.env.WEFTMATE_BASELINE_TRACE.replace('requests.jsonl', 'core.log'), String(part)));`);
+    return { format: 'module', source, shortCircuit: true };
+  }
+  if (url === pathToFileURL(resolve(repository, 'src/model-scheduler.mjs')).href) {
+    const source = "import { appendFileSync as appendSchedulerTrace } from 'node:fs';\nlet traceSerial = 0;\n" + readFileSync(new URL(url), 'utf8')
+      .replace('let release;', `let release; const traceId = 'scheduler-' + (++traceSerial), traceStart = Date.now();
+        const trace = phase => appendSchedulerTrace(process.env.WEFTMATE_BASELINE_TRACE, JSON.stringify({id:traceId, at:new Date().toISOString(), elapsedMs:Date.now()-traceStart, kind:'scheduler', phase, queue:queue.status()})+'\\n');`)
+      .replace("if (match[2] === 'chat/completions') {", "if (match[2] === 'chat/completions') { trace('accepted');")
+      .replace("release = await selectedQueue.acquire('background', controller.signal);", "{ trace('queued'); release = await selectedQueue.acquire('background', controller.signal); trace('granted'); }")
+      .replace('const upstream = await fetchImpl(endpoint,', "trace('upstream-start'); const upstream = await fetchImpl(endpoint,")
+      .replace('response.writeHead(upstream.status,', "trace('upstream-headers'); response.writeHead(upstream.status,")
+      .replace('release?.();', "{ release?.(); trace('closed'); }");
+    return { format: 'module', source, shortCircuit: true };
+  }
   if (url === pathToFileURL(resolve(repository, 'src/config-store.ts')).href) {
     let source = 'const ephemeralKeys = new Map<string, string>();\n' + readFileSync(new URL(url), 'utf8');
     source = source.replace('return readSecrets().credentials[id] ?? null;', 'return ephemeralKeys.get(id) ?? null;')
