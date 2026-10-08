@@ -8,7 +8,7 @@
 
 | 执行者 | 当前工作包 | 状态 |
 |---|---|---|
-| Codex · Windows-5 | M1-0b 同对话排队、取消与插话 | [PR #66](https://github.com/memoweft/weftmate/pull/66)（`wp/m1-0b-queue-steer`）：默认 steer（插话）、显式 queue（排队）、原生回执归属与 FIFO（先入先出）、取消待执行输入、停止后续队已实现；新增5项、账号/命令/多账号32项及时间线/精确停止定向回归、类型检查通过，隔离 Electron（桌面程序框架）+固定 DSH 合成模型闭环通过。Qwen action-05两轮600.61/600.48秒超时，aborted（已停止）/未提前写汇总均通过，续做受共享单槽等待与传输超时阻塞，真实模型验收未通过；约23分钟空闲轮询亦未得到空闲窗口，需独占验证窗口复验。代码提交6项CI（持续集成）全绿，最终文档提交看PR当前检查；界面等FE-1a合并后另包接入，待Claude审查 |
+| Codex · Windows-5 | BUG-1 CI-2 产品修复 | 停止回执退避到期自动重试、图片暂存释放后原 requestId 幂等返回、Mod（模组）运行记录读写/状态转换串行与失败/退出落盘后完成已实现；Windows rename（重命名）仅 EPERM/EBUSY 短重试，knownFailures（已知失败）2→0。Windows 相关测试、WSL（适用于 Linux 的 Windows 子系统）停止/附件7/7、类型检查通过；完整 Mod 文件30次重复（510/510）通过，一次全平台 CI（持续集成）验证待运行，待 PR（拉取请求）审查；未使用真实模型 |
 | Codex · Windows-4 | S1e D30 账号生命周期 | [PR #68](https://github.com/memoweft/weftmate/pull/68)（`wp/s1e-account-lifecycle`）：DPoP（设备密钥持有证明）+ 密码注销与逐表删除/中继断流、换绑验证码与旧邮箱通知、设备改名、退出其他设备已实现；云签名归属快照撤销宿主云会话并保留本地数据/应急登录。相关云 44/44、Windows 宿主 9/9 与类型检查通过；真实云进程 + 隔离宿主换绑/注销/应急登录及在线中继断流通过，CLIENT_API 7.9；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查；不改界面、不部署、不发真实邮件 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
 | Codex · Windows-3 | DS-1 设计令牌 | [PR #59](https://github.com/memoweft/weftmate/pull/59)（`wp/ds-1-design-tokens`）：唯一母版 design/tokens/ 与可重复生成脚本、桌面 / 手机 Web（网页界面）变量和 Android（安卓）资源 / 原生辅助常量接入；Apple（苹果客户端）交接产物在 design/tokens/generated/apple/，未改 apps/apple/。Android 0.8.6/code19；15 对截图逐像素一致、4,016 项样式值一致、相关交互及发布158/158、令牌2/2、Android JVM（Java 虚拟机）27/27、构建与类型检查通过。[截图与边界](../tests/evidence/ds-1/README.md)；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
@@ -130,4 +130,4 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 - D1 已完成真实云/systemd（系统服务管理）私有证书权限、既有443共存与 API/relay 生产 CA；API/relay/hosts DNS 已就绪。S2b 已交付阿里云 DNS provider 与逐宿主自动签发/续期/安装/热载，尚未部署：本人需创建指定 DNS 区增删权限 RAM 子账号并私下配置凭据、升级 cloud schema 5、开启宿主 ACME；生产 AliDNS/Let's Encrypt、真实 Windows/五端 pin 真机与长时续期尚未验。掉电残留 TXT 的后台清扫、内容 key 轮换、已撤销宿主重新启用留后续包。Windows 验收使用隔离 CA，不能代表普通浏览器生产内容证书已就绪。
 - frp 此版无踢在线 client 的管理 API；本包用云必经 TCP socket 所有权立即断流。部署不可绕过入口或公网暴露 frps/plugin。D24 普通浏览器允许，云/DNS 主动完全控制时仍可能被冒充；原生另 pin。
 - MW-2 部署需升级 observed v1 Core；真机上传/日用模型/vendor 未验。M1-3 极少上下文先压缩待做。
-- 根单测 CI-2：4 个过时静态契约断言已更新，knownFailures（已知失败）从 12 项减至 2（9 项通过、1 项旧用例不存在）；完整 CI 在 Linux/macOS 复现停止回执快速重启不重试、图片暂存释放后原请求重试 404 两个产品问题，保留既有例外并更新原因，见 PR #62。固定 DSH vendor（运行时依赖）/Design 外部夹具与平台例外仍保留。Windows Mod 崩溃启动期间 EPERM rename 位于产品持久化/退出并发路径，非测试目录清理；本包不修产品、不加例外或延长超时。Windows 中继打包/真机与 S1c 客户端留后续包。
+- 根单测 BUG-1：CI-2 定位的停止回执快速重启不重试、图片暂存释放后原请求重试404、Windows Mod（模组）崩溃启动记录并发 EPERM 均已修复；knownFailures（已知失败）2→0，恢复为必过单测，空清单观察步骤直接报告零项。Windows/WSL（适用于 Linux 的 Windows 子系统）相关回归通过；完整 Mod 文件30次重复（510/510）通过，一次全平台 CI（持续集成）验证待运行。固定 DSH vendor（运行时依赖）/Design 外部夹具与两个无关的 Linux/macOS 平台例外保留，无 Windows 排除项；未新增例外或延长超时。Windows 中继打包/真机与 S1c 客户端留后续包。

@@ -1,30 +1,44 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { mkdir, readFile, readdir, rename, rm, lstat, writeFile, cp } from 'node:fs/promises'
 import { dirname, join, relative, resolve } from 'node:path'
+import { setTimeout as delay } from 'node:timers/promises'
 
 export const now = () => new Date().toISOString()
-const writeChains = new Map()
+const fileChains = new Map()
+
+async function queuedJson(path, operation) {
+  const key = process.platform === 'win32' ? resolve(path).toLowerCase() : resolve(path)
+  const previous = fileChains.get(key) ?? Promise.resolve()
+  const work = previous.catch(() => {}).then(operation)
+  fileChains.set(key, work)
+  try { return await work } finally { if (fileChains.get(key) === work) fileChains.delete(key) }
+}
 
 export function id(value, label = 'identifier') {
   if (typeof value !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$/.test(value)) throw new Error(`Invalid ${label}`)
   return value
 }
 
-export async function readJson(path) {
+async function readJsonFile(path) {
   try { return JSON.parse(await readFile(path, 'utf8')) } catch (error) { if (error?.code === 'ENOENT') return null; throw error }
 }
 
-export async function atomicJson(path, value) {
-  const previous = writeChains.get(path) ?? Promise.resolve()
-  const write = previous.catch(() => {}).then(async () => {
+async function writeJsonFile(path, value) {
     await mkdir(dirname(path), { recursive: true })
     const temporary = `${path}.${randomUUID()}.tmp`
-    await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
-    await rename(temporary, path)
-  })
-  writeChains.set(path, write)
-  try { await write } finally { if (writeChains.get(path) === write) writeChains.delete(path) }
+    try {
+      await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
+      for (let attempt = 0; ; attempt++) {
+        try { await rename(temporary, path); break } catch (error) {
+          if (process.platform !== 'win32' || !['EPERM', 'EBUSY'].includes(error?.code) || attempt >= 4) throw error
+          await delay(10 * 2 ** attempt)
+        }
+      }
+    } finally { await rm(temporary, { force: true }) }
 }
+
+export function readJson(path) { return queuedJson(path, () => readJsonFile(path)) }
+export function atomicJson(path, value) { return queuedJson(path, () => writeJsonFile(path, value)) }
 
 async function entries(path) {
   return readdir(path, { withFileTypes: true }).catch(error => error?.code === 'ENOENT' ? [] : Promise.reject(error))
@@ -97,6 +111,15 @@ export class ModProjectStore {
     return (await Promise.all(names.map(name => this.version(projectId, name)))).filter(Boolean).sort((a, b) => b.created_at.localeCompare(a.created_at))
   }
   async saveRun(projectId, run) { await atomicJson(this.runFile(projectId, run.run_id), run); return run }
+  updateRun(projectId, runId, change) {
+    const path = this.runFile(projectId, runId)
+    return queuedJson(path, async () => {
+      const current = await readJsonFile(path)
+      const next = await change(current)
+      if (next && next !== current) await writeJsonFile(path, next)
+      return next
+    })
+  }
   async checkpointData(projectId, checkpoint) {
     const idValue = id(checkpoint, 'recovery checkpoint id')
     const target = join(this.recoveryRoot(projectId), idValue)
