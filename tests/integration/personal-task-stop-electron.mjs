@@ -15,6 +15,7 @@ if (process.platform !== 'win32' || process.env.WEFTMATE_SYNTHETIC_STOP_E2E !== 
 const repository = dirname(fileURLToPath(new URL('../../package.json', import.meta.url)));
 const require = createRequire(import.meta.url);
 const electron = require('electron');
+const earlyStop = process.argv.includes('--early-stop');
 const root = mkdtempSync(join(tmpdir(), 'weftmate-synthetic-stop-'));
 assert.ok(realpathSync(root).startsWith(realpathSync(tmpdir()) + sep));
 const profile = join(root, 'profile');
@@ -29,6 +30,11 @@ const modelServer = createServer(async (request, response) => {
   paths.push(pathRecord);
   request.on('end', () => { pathRecord.ended = true; });
   request.on('close', () => { pathRecord.closed = true; });
+  if (request.method === 'GET' && request.url === '/props') {
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(JSON.stringify({ n_ctx: 65536, total_slots: 1 }));
+    return;
+  }
   if (request.method === 'GET' && request.url === '/v1/models') {
     response.writeHead(200, { 'content-type': 'application/json' });
     response.end(JSON.stringify({ object: 'list', data: [{ id: 'synthetic-stop-model', object: 'model' }] }));
@@ -46,7 +52,10 @@ const modelServer = createServer(async (request, response) => {
   const body = JSON.parse(raw);
   assert.equal(body.model, 'synthetic-stop-model');
   const record = { closed: false, startedAt: Date.now(),
-    kind: raw.includes('synthetic unrelated next task') ? 'unrelated' : 'target' };
+    compaction: raw.includes('compaction engine'),
+    originalGoal: raw.includes('synthetic blocking task'), resume: raw.includes('synthetic resume explicit next step'),
+    kind: /Generate the session title|compaction engine/.test(raw) ? 'background'
+      : raw.includes('synthetic unrelated next task') ? 'unrelated' : 'target' };
   requests.push(record);
   response.on('close', () => { record.closed = true; });
   const write = (delta, finish = null) => response.write(`data: ${JSON.stringify({ id: 'synthetic',
@@ -55,17 +64,22 @@ const modelServer = createServer(async (request, response) => {
   response.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache' });
   write('working');
   record.complete = () => {
-    if (record.closed || record.kind !== 'unrelated') return;
-    write('next task completed'); write('', 'stop'); response.end('data: [DONE]\n\n');
+    if (record.closed || !completeFollowingRequests && record.kind === 'target') return;
+    write(record.compaction && record.originalGoal ? 'checkpoint: synthetic blocking task; next task completed'
+      : 'next task completed'); write('', 'stop'); response.end('data: [DONE]\n\n');
   };
-  if (completeFollowingRequests) record.complete();
+  if (completeFollowingRequests || record.kind === 'background') record.complete();
 });
 await new Promise((resolve) => modelServer.listen(0, '127.0.0.1', resolve));
 const modelPort = modelServer.address().port;
-const child = spawn(electron, ['.', `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'], {
+const childEnv = { ...process.env, WEFTMATE_USER_DATA: profile, WEFTMATE_DOGFOOD_CONTROL: '1',
+  WEFTMATE_SYNTHETIC_STOP_FIXTURE: '1' };
+for (const key of Object.keys(childEnv)) if (key === 'MIMO_API_KEY' || key === 'MODEL_SWITCH_UNIFIED_KEY' ||
+    key.startsWith('WEFTMATE_LAN_') || key === 'ELECTRON_RUN_AS_NODE') delete childEnv[key];
+const child = spawn(electron, [earlyStop ? join(repository, 'tests/integration/personal-early-stop-bootstrap.mjs') : '.',
+  `--user-data-dir=${profile}`, '--personal-host', '--access-port=0'], {
   cwd: repository, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe', 'ipc'],
-  env: { ...process.env, WEFTMATE_USER_DATA: profile, WEFTMATE_DOGFOOD_CONTROL: '1',
-    WEFTMATE_SYNTHETIC_STOP_FIXTURE: '1' },
+  env: childEnv,
 });
 let output = '';
 for (const stream of [child.stdout, child.stderr]) stream.on('data', (chunk) => {
@@ -167,7 +181,8 @@ try {
   const target = await postCommand(origin, account, { requestId: randomUUID(), kind: 'session.message',
     targetDeviceId: hostId, sessionId: session.sessionId, text: 'synthetic blocking task', mode: 'queue' });
   assert.match(target.receiptId, /^[A-Za-z0-9._:-]+$/);
-  try { await until(() => requests.some((item) => item.kind === 'target'), 15_000); }
+  try { await until(() => earlyStop ? output.includes('[early-stop] claimed before persistence')
+    : requests.some((item) => item.kind === 'target'), 15_000); }
   catch (error) {
     const events = await history(origin, account, session.sessionId);
     throw new Error(`synthetic upstream was not reached; paths=${JSON.stringify(paths)}; events=${JSON.stringify(events.map((event) =>
@@ -176,17 +191,25 @@ try {
   const later = await postCommand(origin, account, { requestId: randomUUID(), kind: 'session.message',
     targetDeviceId: hostId, sessionId: session.sessionId, text: 'synthetic unrelated next task', mode: 'queue' });
   const stopRequestId = randomUUID();
+  if (earlyStop) assert.ok(!(await history(origin, account, session.sessionId)).some(event =>
+    event.type === 'user.message' && event.data.receiptId === target.receiptId));
   const stopped = await requestJson(origin, account, 'POST',
     `/personal/v1/tasks/${target.commandId}/stop`, { requestId: stopRequestId });
   assert.equal(stopped.status, 202, JSON.stringify(stopped.body));
   const targetTurn = await until(async () => {
     const events = await history(origin, account, session.sessionId);
     const user = events.find((event) => event.type === 'user.message' && event.data?.receiptId === target.receiptId);
-    const start = events.findLast((event) => event.type === 'turn.started' && event.seq < user?.seq);
+    const start = earlyStop ? events.find(event => event.type === 'turn.started')
+      : events.findLast((event) => event.type === 'turn.started' && event.seq < user?.seq);
     const end = events.find((event) => event.type === 'turn.ended' && event.data?.turn === start?.data?.turn);
     return end?.data?.reason === 'aborted' ? end : null;
   }, 30_000);
-  await until(() => requests.some((item) => item.kind === 'target' && item.closed === true), 10_000);
+  if (earlyStop) {
+    assert.equal((await history(origin, account, session.sessionId)).filter(event =>
+      event.type === 'user.message' && event.data.receiptId === target.receiptId).length, 1,
+    'native cancellation preserves the original claimed goal exactly once');
+    assert.ok(!requests.some(item => item.kind === 'target'));
+  } else await until(() => requests.some((item) => item.kind === 'target' && item.closed === true), 10_000);
   assert.equal(targetTurn.data.reason, 'aborted');
   const task = await until(async () => {
     const read = await requestJson(origin, account, 'GET', `/personal/v1/tasks/${target.commandId}`);
@@ -195,6 +218,7 @@ try {
   }, 20_000);
   assert.equal(task.control.reasonCode, 'STOP_OBSERVED');
   assert.equal(task.control.canResume, true);
+  assert.equal(task.control.pendingReceipts, 0);
   await until(() => requests.some((item) => item.kind === 'unrelated'), 15_000);
   const repeated = await requestJson(origin, account, 'POST',
     `/personal/v1/tasks/${target.commandId}/stop`, { requestId: stopRequestId });
@@ -234,6 +258,8 @@ try {
       event.data?.turn === start?.data?.turn && event.data?.reason === 'completed') ?? null;
   }, 30_000);
   assert.ok(resumedTurn.data.turn > laterTurn.data.turn);
+  if (earlyStop) assert.ok(requests.some(item => item.resume && item.originalGoal),
+    'the resumed model request includes the original interrupted goal');
   const finalTask = await requestJson(origin, account, 'GET', `/personal/v1/tasks/${target.commandId}`);
   assert.equal(finalTask.status, 200);
   assert.equal(finalTask.body.control.state, 'active');
@@ -244,7 +270,7 @@ try {
   assert.equal(commands.body.commands.some((item) => item.kind === 'session.cancel'), false);
   const original = commands.body.commands.find((item) => item.commandId === target.commandId);
   assert.equal(original.receiptId, target.receiptId);
-  console.log('[synthetic-stop] target aborted; upstream closed; unrelated turn completed; explicit resume completed');
+  console.log(`[synthetic-stop] ${earlyStop ? 'claimed input stopped before normal persistence; native goal preserved once' : 'target aborted; upstream closed'}; unrelated turn completed; explicit resume completed`);
 } finally {
   try { await stopOwned(); }
   finally {
