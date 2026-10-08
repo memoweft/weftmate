@@ -81,7 +81,7 @@ final class A4cAppearanceUITests: XCTestCase {
         screenshot(app, "appearance-dark-override")
         app.terminate(); app.launch()
         try await openSettings(app)
-        XCTAssertTrue(app.descendants(matching: .any).matching(identifier: "appearancePicker").firstMatch.label.contains("深色"))
+        XCTAssertEqual(app.segmentedControls["appearancePicker"].buttons["深色"].value as? String, "1")
         choose("浅色", app: app)
         screenshot(app, "appearance-light-override")
         choose("跟随系统", app: app)
@@ -89,14 +89,15 @@ final class A4cAppearanceUITests: XCTestCase {
     }
     @MainActor private func openSettings(_ app: XCUIApplication) async throws {
         XCTAssertTrue(app.buttons["phoneAccountMenu"].waitForExistence(timeout: 30)); app.buttons["phoneAccountMenu"].tap()
-        let settings = app.descendants(matching: .any).matching(NSPredicate(format: "identifier == %@ OR label == %@", "phoneMenu.settings", "账户与设置")).firstMatch
+        let settings = app.descendants(matching: .any).matching(NSPredicate(format: "identifier == %@ OR label == %@", "phoneMenu.settings", "设置")).firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 5)); settings.tap()
+        XCTAssertTrue(app.buttons["settingsCategory.appearance"].waitForExistence(timeout: 5)); app.buttons["settingsCategory.appearance"].tap()
         let picker = app.descendants(matching: .any).matching(identifier: "appearancePicker").firstMatch
         for _ in 0..<6 { if picker.isHittable { break }; app.swipeUp() }
         XCTAssertTrue(picker.isHittable)
     }
     @MainActor private func choose(_ title: String, app: XCUIApplication) {
-        app.descendants(matching: .any).matching(identifier: "appearancePicker").firstMatch.tap(); app.descendants(matching: .any).matching(NSPredicate(format: "label == %@", title)).firstMatch.tap()
+        app.segmentedControls["appearancePicker"].buttons[title].tap()
     }
     @MainActor private func assertComposerFits(_ app: XCUIApplication) {
         let bounds = app.windows.firstMatch.frame

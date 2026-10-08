@@ -869,6 +869,7 @@ final class AppleAppModel: ObservableObject {
     let developmentRouteEnabled: Bool
 
     private let client: PersonalClient
+    @Published var settingsRoute = AppleSettingsRoute(categoryID: "general")
     @Published var appearanceMode = "system" {
         didSet { defaults?.set(appearanceMode, forKey: "appearanceMode") }
     }

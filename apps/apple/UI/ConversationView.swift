@@ -83,6 +83,9 @@ struct ConversationView: View {
     @State private var resourcePopover = false
     @State private var sendIntent: MessageIntent = .steer
     @State private var showingUsage = false
+    #if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+    #endif
     @State private var showingSessionActions = false
     @State private var deleteAfterActions = false
     @State private var importingAttachments = false
@@ -115,7 +118,7 @@ struct ConversationView: View {
             #endif
         }
         .sheet(isPresented: $showingUsage) {
-            NavigationStack { UsageView(app: model, sessionID: conversation.sessionId).toolbar { Button("完成") { showingUsage = false }.accessibilityIdentifier("closeUsageSheet") } }
+            NavigationStack { SettingsView(model: model, route: .usage(sessionID: conversation.sessionId), onClose: { showingUsage = false }).toolbar { Button("完成") { showingUsage = false }.accessibilityIdentifier("closeUsageSheet") } }
         }
         .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             if case .success(let files) = result {
@@ -294,7 +297,14 @@ struct ConversationView: View {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
                             SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false },
                                 onDelete: { deleteAfterActions = true; showingSessionActions = false })
-                            Button("对话用量") { showingSessionActions = false; showingUsage = true }
+                            Button("本对话用量") {
+                                showingSessionActions = false
+                                #if os(macOS)
+                                model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
+                                #else
+                                showingUsage = true
+                                #endif
+                            }.accessibilityIdentifier("conversationUsage")
                         }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)
                             #if os(iOS)
                             .presentationDetents([.medium])
