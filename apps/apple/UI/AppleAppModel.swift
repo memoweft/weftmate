@@ -901,7 +901,7 @@ final class AppleAppModel: ObservableObject {
 
     private var permitsSyntheticLoopback: Bool {
         #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--a4a-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver"))
+        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--a4a-local-server") || ProcessInfo.processInfo.arguments.contains("--a4b-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver"))
         #else
         false
         #endif
@@ -943,7 +943,7 @@ final class AppleAppModel: ObservableObject {
             await authenticate(username: "tester", password: "synthetic-only", displayName: nil, register: false)
             return
         }
-        if permitsSyntheticLoopback && (fixtureArguments.contains("--a3-local-server") || fixtureArguments.contains("--a4a-local-server")) {
+        if permitsSyntheticLoopback && (fixtureArguments.contains("--a3-local-server") || fixtureArguments.contains("--a4a-local-server") || fixtureArguments.contains("--a4b-local-server")) {
             await authenticate(username: "a3-tester", password: "synthetic-test-only", displayName: nil, register: false)
             return
         }
