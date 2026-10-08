@@ -1,0 +1,24 @@
+{
+  "baseline": "31a71a4e542a82acf31b3a0114680749a7fea9ce",
+  "results": [
+    {
+      "file": "src/personal-access-ui/styles.css",
+      "declarations": 2062,
+      "changedValues": 0
+    },
+    {
+      "file": "src/personal-access-ui/native-desktop.css",
+      "declarations": 29,
+      "changedValues": 0
+    },
+    {
+      "file": "apps/mobile-ui/www/styles.css",
+      "declarations": 1925,
+      "changedValues": 0
+    }
+  ],
+  "normalization": [
+    "whitespace",
+    "negative pixel spacing expressed as calc(-1 * token)"
+  ]
+}

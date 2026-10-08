@@ -1,0 +1,309 @@
+[
+  {
+    "id": "request-1",
+    "at": "2026-10-08T05:57:37.999Z",
+    "elapsedMs": 0,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-2",
+    "at": "2026-10-08T05:57:38.044Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13371,
+    "requestedModel": "qwen3.8-27b-original"
+  },
+  {
+    "id": "request-2",
+    "at": "2026-10-08T05:58:08.688Z",
+    "elapsedMs": 30644,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "request-2",
+    "at": "2026-10-08T05:58:08.689Z",
+    "elapsedMs": 30645,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "request-2",
+    "at": "2026-10-08T06:02:38.014Z",
+    "elapsedMs": 299970,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "chunks": 9,
+    "bytes": 27,
+    "name": "AbortError"
+  },
+  {
+    "id": "request-3",
+    "at": "2026-10-08T06:02:38.535Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13371,
+    "requestedModel": "qwen3.8-27b-original"
+  },
+  {
+    "id": "request-3",
+    "at": "2026-10-08T06:02:48.538Z",
+    "elapsedMs": 10003,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "request-3",
+    "at": "2026-10-08T06:02:48.539Z",
+    "elapsedMs": 10004,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "request-3",
+    "at": "2026-10-08T06:03:07.839Z",
+    "elapsedMs": 29304,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "request-3",
+    "at": "2026-10-08T06:03:16.215Z",
+    "elapsedMs": 37680,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "request-3",
+    "at": "2026-10-08T06:03:20.188Z",
+    "elapsedMs": 41653,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 156,
+    "bytes": 48604,
+    "reasoningChars": 671,
+    "contentChars": 90,
+    "usage": {
+      "completion_tokens": 190,
+      "prompt_tokens": 8835,
+      "total_tokens": 9025,
+      "prompt_tokens_details": {
+        "cached_tokens": 7439
+      }
+    }
+  },
+  {
+    "id": "request-4",
+    "at": "2026-10-08T06:03:40.857Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "accepted",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-4",
+    "at": "2026-10-08T06:03:40.860Z",
+    "elapsedMs": 4,
+    "kind": "scheduler",
+    "phase": "queued",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-4",
+    "at": "2026-10-08T06:03:40.861Z",
+    "elapsedMs": 5,
+    "kind": "scheduler",
+    "phase": "granted",
+    "queue": {
+      "active": "background",
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-4",
+    "at": "2026-10-08T06:03:40.862Z",
+    "elapsedMs": 6,
+    "kind": "scheduler",
+    "phase": "upstream-start",
+    "queue": {
+      "active": "background",
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-5",
+    "at": "2026-10-08T06:03:40.862Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 10654,
+    "requestedModel": "qwen3.8-27b-original"
+  },
+  {
+    "id": "request-5",
+    "at": "2026-10-08T06:04:56.742Z",
+    "elapsedMs": 75880,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "request-4",
+    "at": "2026-10-08T06:04:56.743Z",
+    "elapsedMs": 75887,
+    "kind": "scheduler",
+    "phase": "upstream-headers",
+    "queue": {
+      "active": "background",
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-5",
+    "at": "2026-10-08T06:04:56.744Z",
+    "elapsedMs": 75882,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "request-5",
+    "at": "2026-10-08T06:04:56.745Z",
+    "elapsedMs": 75883,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 1,
+    "bytes": 8613,
+    "reasoningChars": 6149,
+    "contentChars": 505,
+    "usage": {
+      "completion_tokens": 1850,
+      "prompt_tokens": 4169,
+      "total_tokens": 6019,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  },
+  {
+    "id": "request-4",
+    "at": "2026-10-08T06:04:56.746Z",
+    "elapsedMs": 75890,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-6",
+    "at": "2026-10-08T06:04:57.030Z",
+    "elapsedMs": 1,
+    "kind": "scheduler",
+    "phase": "closed",
+    "queue": {
+      "active": null,
+      "foregroundPending": 0,
+      "backgroundPending": 0
+    }
+  },
+  {
+    "id": "request-7",
+    "at": "2026-10-08T06:04:57.036Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13403,
+    "requestedModel": "qwen3.8-27b-original"
+  },
+  {
+    "id": "request-7",
+    "at": "2026-10-08T06:05:00.239Z",
+    "elapsedMs": 3203,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "request-7",
+    "at": "2026-10-08T06:05:00.240Z",
+    "elapsedMs": 3204,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "request-7",
+    "at": "2026-10-08T06:05:00.240Z",
+    "elapsedMs": 3204,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "request-7",
+    "at": "2026-10-08T06:06:06.525Z",
+    "elapsedMs": 69489,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-content"
+  },
+  {
+    "id": "request-7",
+    "at": "2026-10-08T06:06:35.659Z",
+    "elapsedMs": 98623,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "end",
+    "chunks": 1502,
+    "bytes": 478131,
+    "reasoningChars": 4075,
+    "contentChars": 990,
+    "usage": {
+      "completion_tokens": 1873,
+      "prompt_tokens": 8841,
+      "total_tokens": 10714,
+      "prompt_tokens_details": {
+        "cached_tokens": 7439
+      }
+    }
+  }
+]
