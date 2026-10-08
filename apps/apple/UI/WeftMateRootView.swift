@@ -1,4 +1,8 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+import Darwin
+#endif
 import WeftMateCore
 
 struct WeftMateRootView: View {
@@ -27,21 +31,61 @@ struct WeftMateRootView: View {
                     PhoneWorkspace(model: model).id(session.account.ownerId)
                     #endif
                 } else {
-                    AuthView(model: model)
+                    AccountEntry(app: model, cloud: model.cloudLogin)
                 }
             }
         }
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
         .task(id: "\(scenePhase)-\(model.accountEpoch)-\(model.session?.verification.rawValue ?? "none")") {
-            if scenePhase == .active { await model.cloudLogin.checkPending() }
+            guard scenePhase == .active else { return }
+            while !Task.isCancelled {
+                await model.cloudLogin.poll()
+                do { try await Task.sleep(for: .seconds(model.cloudLogin.waiting ? 3 : 30)) } catch { return }
+            }
         }
         .tint(Weave.accent)
         .preferredColorScheme(AppleAppearance(rawValue: model.appearanceMode)?.colorScheme)
-        .task { await model.start() }
+        .task {
+            await model.start()
+            #if DEBUG && os(macOS)
+            if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--lg2-capture") {
+                try? await Task.sleep(for: .seconds(1))
+                // Capture only this process's own displayed window; never enumerate other apps.
+                typealias WindowImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
+                if let window = NSApplication.shared.windows.first(where: { $0.title == "WeftMate" }),
+                   let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImage") {
+                    let capture = unsafeBitCast(symbol, to: WindowImage.self)
+                    if let image = capture(.null, 8, UInt32(window.windowNumber), 1)?.takeRetainedValue() {
+                        let bitmap = NSBitmapImageRep(cgImage: image)
+                        if let data = bitmap.representation(using: .png, properties: [:]) {
+                            FileHandle.standardOutput.write(Data(("LG2_CAPTURE:" + data.base64EncodedString() + "\n").utf8))
+                        }
+                    }
+                }
+                NSApplication.shared.terminate(nil)
+            }
+            #endif
+        }
         .onAppear { model.setForeground(scenePhase == .active) }
         .onChange(of: scenePhase) { _, phase in model.setForeground(phase == .active) }
         .onDisappear { model.setForeground(false) }
         .accessibilityIdentifier("weftmateRoot")
+    }
+}
+
+private struct AccountEntry: View {
+    @ObservedObject var app: AppleAppModel
+    @ObservedObject var cloud: CloudLoginModel
+    var body: some View {
+        Group {
+            if cloud.authenticated { CloudAccountHome(app: app, cloud: cloud) }
+            else { AuthView(model: cloud) }
+        }.task {
+            while !Task.isCancelled {
+                await cloud.poll()
+                do { try await Task.sleep(for: .seconds(cloud.waiting ? 3 : 30)) } catch { return }
+            }
+        }
     }
 }
 
@@ -155,7 +199,7 @@ private struct MacWorkspace: View {
                 WelcomeView(model: model)
             }
         case .memory: MemoryWorkspaceView(appModel: model).id(model.accountEpoch)
-        case .devices: DevicesView(model: model)
+        case .devices: CloudDevicesView(app: model, cloud: model.cloudLogin)
         case .settings: SettingsView(model: model)
         case nil: WelcomeView(model: model)
         }

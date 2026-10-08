@@ -775,6 +775,8 @@ devices 的 online 指最近 60 秒云 API/登录/刷新活动；hosts 指最近
 
 新增业务码：400 `PASSWORD_TICKET_INVALID`（过期/错用途/已用/旧 epoch）、401 `DPOP_INVALID`、403 `APP_LOGIN_REQUIRED`；账号密码/验证码限速与 7.3 相同。接口必须来自固定配置的云/宿主 origin，不以邮箱或目录 pin 推断本地 owner 或宿主信任。S1d 不部署；本节服务端已交付，客户端完整页面与真机扫码由 LG-1 / LG-2 验收。
 
+**Apple 实现备注（LG-2）**：iPhone / Mac 账号页面在 App 内走本节 JSON 接口，使用独立内存 Cookie 容器。`/auth/authorization/resume` 是 provider 恢复路由的 JSON 包装：原生网络层须同时取本 App 接口路径与返回的固定 issuer `/oidc/auth/{uid}` 路径对应的交互 / resume Cookie；仅按包装接口路径筛选会漏掉 provider 的 resume Cookie。Cookie 只发往已配置的云 origin，不跨宿主传送。代码 / 刷新均发送 DPoP，同一 single-use refresh family 的消费在模型网络层串行；没有新增服务端路径或第二种登录协议。
+
 ### 7.9 账号生命周期（S1e / D30）
 
 本节接口由云提供，使用 **7.8 云 DPoP（设备密钥持有证明）授权**：`Authorization: DPoP <cloud audience access token>` + 本次精确 URL/方法/令牌摘要对应的 `DPoP` proof（证明）。不接受宿主 Cookie（会话凭据）、ID token（身份令牌）或无 proof 的 Bearer（未绑定设备密钥的令牌）。所有写操作要求已登记 Origin（来源地址）、JSON ≤16 KiB、无 query（查询参数）/多余字段；响应 `Cache-Control: no-store`。页面与确认文案由 LG-1 / LG-2 接线，本包不改界面。

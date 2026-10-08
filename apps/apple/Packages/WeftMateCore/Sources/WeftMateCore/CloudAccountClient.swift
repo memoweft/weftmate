@@ -11,10 +11,15 @@ public actor CloudAccountClient {
     private var jwks: [[String: String]] = []
     private var generation: UInt64 = 0
     private var busy = false
-    private struct Saved: Codable { let refresh: String; let subject: String; let hostID: String? }
+    private var rotating = false
+    private var rotationWaiters: [CheckedContinuation<Void, Never>] = []
+    private struct Saved: Codable { let refresh: String; let subject: String; let hostID: String?; var appGrant: Bool? = nil }
     private struct Tokens: Decodable {
         let access_token: String; let token_type: String; let refresh_token: String?; let id_token: String?
     }
+    private var flow: CloudAuthorization?
+    private var interaction: [String: String] = [:]
+    private var cookies: [HTTPCookie] = []
     private var saved: Saved?
     private var control: String?
     private var controlExpiry: Double = 0
@@ -35,7 +40,7 @@ public actor CloudAccountClient {
     }
     public func cancel() { generation &+= 1 }
     public func forget() throws {
-        generation &+= 1; saved = nil; control = nil; hostToken = nil; hostExpiry = 0
+        generation &+= 1; flow = nil; cookies = []; interaction = [:]; saved = nil; control = nil; hostToken = nil; hostExpiry = 0
         try store.delete(key: storageKey)
     }
     private func check(_ value: UInt64) throws {
@@ -70,6 +75,166 @@ public actor CloudAccountClient {
         try store.save(JSONEncoder().encode(next), key: storageKey)
         saved = next; control = tokens.access_token; controlExpiry = access["exp"] as? Double ?? 0; hostToken = nil; hostExpiry = 0
     }
+    public var deviceID: String { "apple-" + key.thumbprint }
+    public func savedSubject() throws -> String? {
+        if saved == nil, let bytes = try store.load(key: storageKey) { saved = try JSONDecoder().decode(Saved.self, from: bytes) }
+        return saved?.appGrant == true ? saved?.subject : nil
+    }
+    /// Transport identity references stay separated by issuer/client and verified account subject.
+    public func savedHostReference(hostID: String) throws -> [String: String]? {
+        guard let subject = try savedSubject(), let bytes = try store.load(key: storageKey + ".hosts." + subject) else { return nil }
+        return try JSONDecoder().decode([String: [String: String]].self, from: bytes)[hostID]
+    }
+    public func rememberHost(hostID: String, reference: [String: String]) throws {
+        guard let subject = try savedSubject() else { throw APIFailure.notAuthenticated }
+        let metadataKey = storageKey + ".hosts." + subject
+        var refs: [String: [String: String]] = [:]
+        if let bytes = try store.load(key: metadataKey) { refs = try JSONDecoder().decode([String: [String: String]].self, from: bytes) }
+        refs[hostID] = reference
+        try store.save(JSONEncoder().encode(refs), key: metadataKey)
+    }
+    public func beginAppLogin() async throws {
+        let discovery = try await send(url: URL(string: configuration.issuer + "/.well-known/openid-configuration")!)
+        let metadata = try object(discovery.body)
+        guard metadata["issuer"] as? String == configuration.issuer,
+              metadata["token_endpoint"] as? String == configuration.issuer + "/token",
+              metadata["jwks_uri"] as? String == configuration.issuer + "/jwks" else { throw CloudLoginFailure.token }
+        cookies = []; interaction = [:]
+        let next = try CloudAuthorization(configuration: configuration)
+        flow = next
+        let response = try await appJSON("/auth/authorization", body: ["clientId": configuration.clientID,
+            "redirectUri": configuration.redirectURI, "deviceId": deviceID, "publicJwk": key.publicJwk,
+            "codeChallenge": cloudBase64(Data(SHA256.hash(data: Data(next.verifier.utf8)))), "state": next.state, "nonce": next.nonce])
+        let fields = try object(response.body)
+        guard fields["appLogin"] as? Bool == true, fields["deviceId"] as? String == deviceID,
+              let uid = fields["interactionUid"] as? String, let csrf = fields["csrfToken"] as? String else { throw CloudLoginFailure.token }
+        interaction = ["interactionUid": uid, "csrfToken": csrf]
+    }
+    public func appLogin(email: String, password: String, name: String, type: String) async throws -> AppLoginReply {
+        guard flow != nil, !interaction.isEmpty else { throw CloudLoginFailure.callback }
+        var body: [String: Any] = interaction
+        body.merge(["email": email, "password": password, "deviceId": deviceID, "publicJwk": key.publicJwk,
+                    "deviceName": cloudDeviceName(name), "deviceType": type]) { _, value in value }
+        return try JSONDecoder().decode(AppLoginReply.self, from: await appJSON("/auth/login", body: body).body)
+    }
+    public func confirmAppDevice(challenge: String, code: String) async throws -> AppLoginReply {
+        var body = interaction; body["challengeId"] = challenge; body["code"] = code
+        return try JSONDecoder().decode(AppLoginReply.self, from: await appJSON("/auth/device/confirm", body: body).body)
+    }
+    public func finishAppLogin(resumeURL: String) async throws {
+        guard let flow else { throw CloudLoginFailure.callback }
+        let epoch = generation
+        guard let resume = URLComponents(string: resumeURL), let issuer = URLComponents(string: configuration.issuer),
+              resume.scheme == issuer.scheme, resume.host == issuer.host, resume.port == issuer.port,
+              resume.user == nil, resume.password == nil, resume.query == nil, resume.fragment == nil,
+              resume.path.hasPrefix(issuer.path + "/auth/") else { throw CloudLoginFailure.callback }
+        let response = try await appJSON("/auth/authorization/resume", body: ["resumeUrl": resumeURL],
+            providerCookiePath: resume.path)
+        guard let raw = try object(response.body)["callbackUrl"] as? String, let callback = URL(string: raw) else { throw CloudLoginFailure.callback }
+        let code = try flow.code(from: callback)
+        let tokens = try await token(["grant_type": "authorization_code", "client_id": configuration.clientID,
+            "redirect_uri": configuration.redirectURI, "code": code, "code_verifier": flow.verifier, "resource": configuration.audience])
+        try check(epoch)
+        guard let idToken = tokens.id_token, let refresh = tokens.refresh_token else { throw CloudLoginFailure.token }
+        let id = try await claims(idToken, audience: configuration.clientID, type: nil)
+        let access = try await claims(tokens.access_token, audience: configuration.audience, type: "at+jwt")
+        try check(epoch)
+        guard id["nonce"] as? String == flow.nonce, let subject = id["sub"] as? String,
+              access["sub"] as? String == subject, tokens.token_type.lowercased() == "dpop",
+              (access["cnf"] as? [String: String])?["jkt"] == key.thumbprint else { throw CloudLoginFailure.token }
+        let next = Saved(refresh: refresh, subject: subject, hostID: nil, appGrant: true)
+        try store.save(JSONEncoder().encode(next), key: storageKey)
+        saved = next; control = tokens.access_token; controlExpiry = access["exp"] as? Double ?? 0
+        hostToken = nil; hostExpiry = 0; self.flow = nil; interaction = [:]; cookies = []
+    }
+    public func requestEmail(email: String, recovery: Bool) async throws -> String {
+        let response = try await appJSON("/auth/\(recovery ? "recovery" : "registration")/request", body: ["email": email])
+        guard let challenge = try object(response.body)["challengeId"] as? String else { throw APIFailure.invalidResponse }
+        return challenge
+    }
+    public func verifyEmail(challenge: String, code: String, recovery: Bool) async throws -> String {
+        let response = try await appJSON("/auth/\(recovery ? "recovery" : "registration")/verify", body: ["challengeId": challenge, "code": code])
+        guard let ticket = try object(response.body)["passwordTicket"] as? String else { throw APIFailure.invalidResponse }
+        return ticket
+    }
+    public func completeEmail(ticket: String, password: String, recovery: Bool) async throws {
+        _ = try await appJSON("/auth/\(recovery ? "recovery" : "registration")/complete", body: ["passwordTicket": ticket, "password": password])
+    }
+    public func directory() async throws -> CloudDirectory {
+        try JSONDecoder().decode(CloudDirectory.self, from: await appJSON("/devices", body: nil, authorized: true).body)
+    }
+    public func accountEmail() async throws -> String {
+        let response = try await appJSON("/account", body: nil, authorized: true)
+        guard let email = (try object(response.body)["account"] as? [String: Any])?["email"] as? String else { throw APIFailure.invalidResponse }
+        return email
+    }
+    public func connect(hostID: String) async throws -> CloudHostConnection {
+        try JSONDecoder().decode(CloudHostConnection.self, from: await appJSON("/hosts/connect", body: ["hostId": hostID], authorized: true).body)
+    }
+    public func changePassword(current: String, password: String) async throws {
+        _ = try await appJSON("/auth/password/change", body: ["currentPassword": current, "password": password], authorized: true)
+    }
+    public func requestEmailChange(email: String) async throws -> String {
+        let response = try await appJSON("/auth/email/change/request", body: ["email": email], authorized: true)
+        guard let challenge = try object(response.body)["challengeId"] as? String else { throw APIFailure.invalidResponse }
+        return challenge
+    }
+    public func confirmEmailChange(challenge: String, code: String) async throws -> String {
+        let response = try await appJSON("/auth/email/change/confirm", body: ["challengeId": challenge, "code": code], authorized: true)
+        guard let email = (try object(response.body)["account"] as? [String: Any])?["email"] as? String else { throw APIFailure.invalidResponse }
+        return email
+    }
+    public func logoutOthers() async throws {
+        _ = try await appJSON("/auth/logout/others", body: [:], authorized: true)
+    }
+    public func renameDevice(id: String, name: String) async throws {
+        _ = try await appJSON("/devices/rename", body: ["deviceId": id, "name": name], authorized: true)
+    }
+    public func revokeDevice(id: String) async throws {
+        _ = try await appJSON("/auth/devices/revoke", body: ["deviceId": id], authorized: true)
+    }
+    public func deleteAccount(password: String) async throws {
+        _ = try await appJSON("/auth/account/delete", body: ["password": password], authorized: true)
+    }
+    public func logout() async throws {
+        defer { try? forget() }
+        _ = try await appJSON("/auth/logout", body: [:], authorized: true)
+    }
+    private func appJSON(_ path: String, body: [String: Any]?, authorized: Bool = false, providerCookiePath: String? = nil) async throws -> HTTPResponse {
+        let epoch = generation
+        let url = URL(string: configuration.audience + path)!
+        var request = URLRequest(url: url); request.httpMethod = body == nil ? "GET" : "POST"
+        request.setValue(configuration.server.originString, forHTTPHeaderField: "Origin")
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+        if let body { request.httpBody = try JSONSerialization.data(withJSONObject: body); request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
+        if authorized {
+            if control == nil || controlExpiry <= Date().timeIntervalSince1970 + 30 {
+                control = try await refresh(resource: configuration.audience, hostID: nil, epoch: epoch)
+            }
+            request.setValue("DPoP " + control!, forHTTPHeaderField: "Authorization")
+            request.setValue(try key.proof(url: url, method: request.httpMethod!, accessToken: control), forHTTPHeaderField: "DPoP")
+        } else {
+            let matching = cookies.filter {
+                (url.path.hasPrefix($0.path) || (providerCookiePath?.hasPrefix($0.path) == true)) && ($0.expiresDate ?? .distantFuture) > Date()
+            }
+            for (header, value) in HTTPCookie.requestHeaderFields(with: matching) { request.setValue(value, forHTTPHeaderField: header) }
+        }
+        let response = try await transport.send(request); try check(epoch)
+        if !authorized, let raw = response.headers.first(where: { $0.key.lowercased() == "set-cookie" })?.value {
+            for cookie in HTTPCookie.cookies(withResponseHeaderFields: ["Set-Cookie": raw], for: url) {
+                // The jar belongs solely to the fixed configured origin and lives for one interaction.
+                cookies.removeAll { $0.name == cookie.name && $0.path == cookie.path }
+                cookies.append(cookie)
+            }
+        }
+        if !(200...299).contains(response.status) {
+            let json = try? object(response.body)
+            let code = (json?["error"] as? [String: String])?["code"] ?? json?["error"] as? String ?? "HTTP_\(response.status)"
+            let retry = response.headers.first(where: { $0.key.lowercased() == "retry-after" }).flatMap { Int($0.value) }
+            throw AppAccountError(code: code, status: response.status, retryAfter: retry)
+        }
+        return response
+    }
     public func relay(hostID: String) async throws -> ServerConfiguration {
         guard !busy else { throw CloudLoginFailure.busy }
         busy = true; defer { busy = false }
@@ -96,16 +261,27 @@ public actor CloudAccountClient {
         hostToken = try await refresh(resource: configuration.audience + "/hosts/" + hostID, hostID: hostID, epoch: generation)
         return hostToken!
     }
+    private func acquireRotation() async {
+        if rotating { await withCheckedContinuation { rotationWaiters.append($0) } }
+        else { rotating = true }
+    }
+    private func releaseRotation() {
+        if rotationWaiters.isEmpty { rotating = false }
+        else { rotationWaiters.removeFirst().resume() }
+    }
     private func refresh(resource: String, hostID: String?, epoch: UInt64) async throws -> String {
+        // Foreground directory polling and a host exchange share one single-use refresh family.
+        await acquireRotation(); defer { releaseRotation() }
+        try check(epoch)
         if saved == nil, let bytes = try store.load(key: storageKey) { saved = try JSONDecoder().decode(Saved.self, from: bytes) }
-        guard let saved, hostID == nil || saved.hostID == hostID else { throw APIFailure.notAuthenticated }
+        guard let saved, hostID == nil || saved.appGrant == true || saved.hostID == hostID else { throw APIFailure.notAuthenticated }
         let tokens = try await token(["grant_type": "refresh_token", "client_id": configuration.clientID,
             "refresh_token": saved.refresh, "resource": resource])
         // Cancellation may suppress the response's UI, but must still save an already consumed rotation.
         // A concurrent forget has cleared saved, so it must never resurrect this credential.
         guard self.saved?.refresh == saved.refresh else { throw APIFailure.accountChanged }
         guard let refresh = tokens.refresh_token else { throw CloudLoginFailure.token }
-        let next = Saved(refresh: refresh, subject: saved.subject, hostID: saved.hostID)
+        let next = Saved(refresh: refresh, subject: saved.subject, hostID: hostID ?? saved.hostID, appGrant: saved.appGrant)
         do { try store.save(JSONEncoder().encode(next), key: storageKey); self.saved = next }
         catch { self.saved = nil; try? store.delete(key: storageKey); throw APIFailure.credentialStorage }
         try check(epoch)
@@ -117,7 +293,11 @@ public actor CloudAccountClient {
                   (payload["scope"] as? String)?.split(separator: " ").contains("host:session") == true else { throw CloudLoginFailure.token }
             hostExpiry = payload["exp"] as? Double ?? 0
         } else {
-            guard tokens.token_type.lowercased() == "bearer", (payload["scope"] as? String)?.split(separator: " ").contains("cloud:account") == true else { throw CloudLoginFailure.token }
+            guard tokens.token_type.lowercased() == (saved.appGrant == true ? "dpop" : "bearer"),
+                   (payload["scope"] as? String)?.split(separator: " ").contains("cloud:account") == true else { throw CloudLoginFailure.token }
+            if saved.appGrant == true {
+                guard (payload["cnf"] as? [String: String])?["jkt"] == key.thumbprint else { throw CloudLoginFailure.token }
+            }
             controlExpiry = payload["exp"] as? Double ?? 0
         }
         return tokens.access_token
@@ -129,7 +309,7 @@ public actor CloudAccountClient {
         // URLComponents encodes spaces; '+' needs escaping for application/x-www-form-urlencoded.
         request.httpBody = Data(parts.percentEncodedQuery!.replacingOccurrences(of: "+", with: "%2B").utf8)
         request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
-        if fields["resource"] != configuration.audience { request.setValue(try key.proof(url: url), forHTTPHeaderField: "DPoP") }
+        if flow != nil || saved?.appGrant == true || fields["resource"] != configuration.audience { request.setValue(try key.proof(url: url), forHTTPHeaderField: "DPoP") }
         var response = try await transport.send(request)
         if response.status == 400, let nonce = response.headers.first(where: { $0.key.lowercased() == "dpop-nonce" })?.value,
            (try? object(response.body)["error"] as? String) == "use_dpop_nonce" {
