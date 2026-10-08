@@ -80,3 +80,7 @@
 .settings-category .backup-settings form button { margin-top: var(--wm-space-16); }
 .settings-dialog .backup-settings .settings-switch { width: var(--wm-space-44); height: var(--wm-space-26); min-height: var(--wm-space-26); padding: var(--wm-space-3); }
 @media (max-width: 719px) { .settings-category .backup-settings form label { grid-template-columns: 1fr; gap: var(--wm-space-8); } }
+
+.settings-cloud-status { padding: 0 var(--wm-space-36); margin: 0 0 var(--wm-space-12); }
+.settings-cloud-status:empty { display: none; }
+@media (max-width: 719px) { .settings-cloud-status { padding: 0 var(--wm-space-20); } }
