@@ -64,10 +64,13 @@ struct ConversationTimelineView: View {
         if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
         if let error = interactions.persistenceError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         AppleTokens.Colors.clear.frame(height: 0)
-            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)") {
+            .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)|\(appModel.timeline.events.last?.seq ?? -1)") {
                 guard scenePhase == .active, !appModel.historyBusy, appModel.historyCachedAt == nil else { interactions.suspend(); commands.suspend(); return }
                 interactions.activate(); commands.activate()
-                if appModel.taskControlSessions.contains(sessionID) { await commands.refresh() }
+                if appModel.taskControlSessions.contains(sessionID) {
+                    await commands.refresh()
+                    if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = commands.rootCommands }
+                }
                 var policy = ConversationPollingPolicy()
                 while !Task.isCancelled {
                     let old = interactions.approvals, oldQuestions = interactions.questions
@@ -76,7 +79,9 @@ struct ConversationTimelineView: View {
                     catch { return }
                 }
             }
-            .onChange(of: commands.rootCommands) { _, value in appModel.timelineRootCommands = value }
+            .onChange(of: commands.rootCommands) { _, value in
+                if appModel.selectedConversation?.id == conversation.id { appModel.timelineRootCommands = value }
+            }
             .onDisappear { interactions.suspend(); commands.suspend() }
             .onChange(of: appModel.accountEpoch) { _, _ in interactions.cancel(); commands.cancel() }
     }
