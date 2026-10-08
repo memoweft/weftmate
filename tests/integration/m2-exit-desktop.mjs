@@ -55,7 +55,9 @@ async function acquireLan() {
       ownsLock = true;
     } catch (error) {
       if (error.code !== 'EEXIST') throw error;
-      if (Date.now() - statSync(lockPath).mtimeMs > 3 * 60 * 60 * 1000) {
+      const occupied = statSync(lockPath, { throwIfNoEntry: false });
+      if (!occupied) continue; // The other batch may have released between calls.
+      if (Date.now() - occupied.mtimeMs > 3 * 60 * 60 * 1000) {
         rmSync(lockPath); continue;
       }
       console.log(`${new Date().toISOString()} LAN occupied; next atomic attempt in five minutes.`);
