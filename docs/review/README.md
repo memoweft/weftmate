@@ -56,7 +56,7 @@ Watch 当前只提供同步的进度 / 最近回复摘要和审批，以及健�
 2. 在两个 `review-capture-*.mjs` 中按可见名称与角色导航，等待对应内容再调用 `capture`。桌面 / 手机当前必须完整覆盖八场景，验证会检查每个格子。
 3. 原生端按约定提交截图与元数据。重新生成和验证，检查截图名与实际内容一致。
 
-颜色由项目生成的 `src/personal-access-ui/tokens.css` 内嵌提供；页面 CSS（层叠样式表）只引用设计令牌变量，不维护第二份调色板。只调整本审稿工具，不修改产品界面代码。
+颜色由项目生成的 `src/personal-access-ui/tokens.css` 内嵌提供；页面 CSS（层叠样式表）只引用设计令牌变量，不维护第二份调色板。系统字体沿用 `body` 字体令牌，审稿控件用文字标签与原生语义，不新增装饰图标；截图保留产品自身的统一图标。只调整本审稿工具，不修改产品界面代码。
 
 [review-gallery.yml](../../.github/workflows/review-gallery.yml) 在 main 的前端、设计或证据路径变化后截图并生成，PR（拉取请求）上的本工具改动也执行同一验证；可手动 `workflow_dispatch`（手动触发工作流）。使用 Windows runner（执行机器），只授予仓库读取权限，上传 14 天的 Actions artifact（工作流产物），不部署外网。下载后打开 `index.html`。
 
