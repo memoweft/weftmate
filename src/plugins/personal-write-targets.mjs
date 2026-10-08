@@ -236,7 +236,12 @@ export function shellWriteTargets(source, cwd, powershell = true) {
         do { if (tail[end] === '(') depth++; if (tail[end++] === ')') depth--; } while (end < tail.length && depth);
         return tail.slice(at, end);
       };
-      const option = names => { const at = tail.findIndex(p => names.test(p)); return at < 0 ? undefined : argumentAt(at + 1); };
+      const option = names => {
+        const at = tail.findIndex(p => names.test(p));
+        if (at < 0) return;
+        if (tail[at + 1] === '=') return tail[at] === '--output' ? argumentAt(at + 2) : [];
+        return argumentAt(at + 1);
+      };
       if (/^(?:invoke-webrequest|invoke-restmethod|curl(?:\.exe)?)$/.test(cmd)) {
         const curl = /^curl/.test(cmd);
         const outputOption = curl ? /^(?:-o|--output)$/ : /^-OutFile$/i;
