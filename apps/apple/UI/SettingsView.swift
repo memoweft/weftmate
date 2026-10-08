@@ -131,7 +131,7 @@ struct SettingsView: View {
             .padding(AppleTokens.Space.p24).frame(maxWidth: 700).frame(maxWidth: .infinity)
         }
         .sheet(isPresented: $showingUsage) {
-            NavigationStack { UsageView(app: model).toolbar { Button("完成") { showingUsage = false } } }
+            NavigationStack { UsageView(app: model).toolbar { Button("完成") { showingUsage = false }.accessibilityIdentifier("closeUsageSheet") } }
         }
         .background(Weave.canvas)
         .navigationTitle("设置")

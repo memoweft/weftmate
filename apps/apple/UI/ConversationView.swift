@@ -114,7 +114,7 @@ struct ConversationView: View {
             #endif
         }
         .sheet(isPresented: $showingUsage) {
-            NavigationStack { UsageView(app: model, sessionID: conversation.sessionId).toolbar { Button("完成") { showingUsage = false } } }
+            NavigationStack { UsageView(app: model, sessionID: conversation.sessionId).toolbar { Button("完成") { showingUsage = false }.accessibilityIdentifier("closeUsageSheet") } }
         }
         .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             if case .success(let files) = result {
