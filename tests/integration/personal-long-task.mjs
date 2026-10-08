@@ -105,15 +105,19 @@ try {
   writeFileSync(join(out, 'results.json'), JSON.stringify(report, null, 2)); writeFileSync(join(out, 'report.md'), buildReport(report));
   const sessionIds = results.flatMap(result => result.turns.map(turn => turn.sessionId));
   const events = native.filter(event => sessionIds.includes(event.sessionId));
+  const checkpoints = events.filter(event => event.type === 'compaction/summary');
+  const completedCompactions = checkpoints.filter(checkpoint => events.some(event => event.type === 'compaction/end' &&
+    event.data.compactionId === checkpoint.data.compactionId && !event.data.error));
   const stats = { contextWindows: [...new Set(events.filter(event => event.type === 'request/context').map(event => event.data.contextWindow))],
-    compactions: events.filter(event => event.type === 'compaction/summary').length,
+    compactions: checkpoints.length,
+    successfulCompactions: completedCompactions.length,
     compactionEnds: events.filter(event => event.type === 'compaction/end').map(event => event.data),
     nativeGoalChanges: events.filter(event => event.type === 'goal/change').length,
     nativeGoalPhase: events.filter(event => event.type === 'goal/change').at(-1)?.data.goal?.phase,
     nativeTodoWrites: events.filter(event => event.type === 'todo/write').length,
     nativeTodosComplete: events.filter(event => event.type === 'todo/write').at(-1)?.data.todos?.every(todo => todo.status === 'completed'),
     toolCalls: events.filter(event => event.type === 'assistant/message').flatMap(event => event.data.tools ?? []).length,
-    goalAndTodosInCheckpoint: events.filter(event => event.type === 'compaction/summary').every(event => JSON.stringify(event.data.summary).includes('Native continuation state') && JSON.stringify(event.data.summary).includes('todos')) };
+    goalAndTodosInCheckpoint: checkpoints.length ? checkpoints.every(event => JSON.stringify(event.data.summary).includes('Native continuation state') && JSON.stringify(event.data.summary).includes('todos')) : null };
   for (const scenario of regression ? [] : scenarios) {
     const result = results.find(result => result.id === scenario.id);
     if (result?.scratchDir) for (const file of scenario.setup.files) assert.equal(readFileSync(join(result.scratchDir, file.path), 'utf8'), file.content, 'Source remains unchanged');
@@ -123,7 +127,7 @@ try {
     assert.equal(summary.passed, 1, 'Deliverable checks must all pass'); assert.ok(stats.toolCalls > 15);
     assert.ok(stats.nativeGoalChanges >= 2 && stats.nativeTodoWrites >= 2);
     assert.equal(stats.nativeGoalPhase, 'complete'); assert.equal(stats.nativeTodosComplete, true);
-    if (modelName === 'qwen') { assert.deepEqual(stats.contextWindows, [98304]); assert.ok(stats.compactions >= 1); assert.ok(stats.goalAndTodosInCheckpoint); }
+    if (modelName === 'qwen') { assert.deepEqual(stats.contextWindows, [98304]); assert.ok(stats.successfulCompactions >= 1); assert.ok(stats.goalAndTodosInCheckpoint); }
   }
 } finally {
   if (app) { await app.evaluate(({ app }) => app.quit()).catch(() => {}); await app.close().catch(() => {}); }
