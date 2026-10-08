@@ -563,3 +563,39 @@ test('full command ledger or unreconciled text budget rejects new work before pe
     } finally { await textService.close() }
   } finally { rmSync(root, { recursive: true, force: true }) }
 })
+
+test('UPD-2 status exposes authenticated read-only layer versions without source paths or install actions', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'upd2-status-'))
+  const versions = { layers: [
+    { layer: 'ui', currentVersion: '0.3.0', availableVersion: '0.4.0', status: 'ready', channel: 'stable', feed: 'private-source' },
+    { layer: 'app', currentVersion: '0.2.0', status: 'disabled', error: '/private/fixture/path' },
+    { layer: 'mobile-ui', currentVersion: '0.9.0', status: 'current' },
+  ], canRestart: true }
+  const service = await createPersonalAccessService({ root, port: 0, backend: fixture().backend,
+    updateStatus: async () => versions, nativeMinimumVersions: { iOS: '0.2.0', macOS: '0.1.0' } })
+  try {
+    const { origin } = await service.start()
+    const { token } = await service.enrollDevice({ name: 'synthetic iPhone' })
+    assert.equal((await request(origin, null, 'GET', '/personal/v1/status')).status, 401)
+    const result = await request(origin, token, 'GET', '/personal/v1/status')
+    assert.equal(result.status, 200)
+    assert.deepEqual(result.body.nativeMinimumVersions, { iOS: '0.2.0', macOS: '0.1.0' })
+    assert.deepEqual(result.body.updates.layers.map((value: any) => value.currentVersion), ['0.3.0', '0.2.0', '0.9.0'])
+    assert.equal(result.body.updates.canRestart, undefined)
+    assert.ok(!JSON.stringify(result.body).includes('private-source'))
+    assert.ok(!JSON.stringify(result.body).includes('/private/fixture/path'))
+    versions.layers[0].currentVersion = '0.4.0'
+    assert.equal((await request(origin, token, 'GET', '/personal/v1/status')).body.updates.layers[0].currentVersion, '0.4.0')
+  } finally { await service.close(); rmSync(root, { recursive: true, force: true }) }
+})
+
+test('UPD-2 standalone host reports unavailable UI and mobile versions without inventing them', async () => {
+  const root = mkdtempSync(join(tmpdir(), 'upd2-standalone-'))
+  const service = await createPersonalAccessService({ root, port: 0, backend: fixture().backend, hostVersion: '0.2.0' })
+  try {
+    const { origin } = await service.start(), { token } = await service.enrollDevice({ name: 'synthetic Mac' })
+    const reply = await request(origin, token, 'GET', '/personal/v1/status')
+    assert.deepEqual(reply.body.updates.layers.map((value: any) => value.currentVersion), [null, '0.2.0', null])
+    assert.deepEqual(reply.body.nativeMinimumVersions, {})
+  } finally { await service.close(); rmSync(root, { recursive: true, force: true }) }
+})

@@ -19,6 +19,7 @@ enum AppleContractUIFixture {
         func delete(key: String) { lock.withLock { values[key] = nil } }
     }
     private actor Transport: HTTPTransport {
+        private var statusReads = 0
         private let image = Data(base64Encoded: "iVBORw0KGgoAAAANSUhEUgAAAUAAAAC0CAIAAABqhmJGAAAEyklEQVR4nO3SAQmAUADFwNfUEIawhg2saIox+Awuwu363hzsub8cbPqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBTV9WFD6sKCmDwtKHxbU9GFB6cOCmj4sKH1YUNOHBaUPC2r6sKD0YUFNHxaUPiyo6cOC0ocFNX1YUPqwoKYPC0ofFtT0YUHpw4KaPiwofVhQ04cFpQ8LavqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBTV9WFD6sKCmDwtKHxbU9GFB6cOCmj4sKH1YUNOHBaUPC2r6sKD0YUFNHxaUPiyo6cOC0ocFNX1YUPqwoKYPC0ofFtT0YUHpw4KaPiwofVhQ04cFpQ8LavqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBTV9WFD6sKCmDwtKHxbU9GFB6cOCmj4sKH1YUNOHBaUPC2r6sKD0YUFNHxaUPiyo6cOC0ocFNX1YUPqwoKYPC0ofFtT0YUHpw4KaPiwofVhQ04cFpQ8LavqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBTV9WFD6sKCmDwtKHxbU9GFB6cOCmj4sKH1YUNOHBaUPC2r6sKD0YUFNHxaUPiyo6cOC0ocFNX1YUPqwoKYPC0ofFtT0YUHpw4KaPiwofVhQ04cFpQ8LavqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBTV9WFD6sKCmDwtKHxbU9GFB6cOCmj4sKH1YUNOHBaUPC2r6sKD0YUFNHxaUPiyo6cOC0ocFNX1YUPqwoKYPC0ofFtT0YUHpw4KaPiwofVhQ04cFpQ8LavqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBTV9WFD6sKCmDwtKHxbU9GFB6cOCmj4sKH1YUNOHBaUPC2r6sKD0YUFNHxaUPiyo6cOC0ocFNX1YUPqwoKYPC0ofFtT0YUHpw4KaPiwofVhQ04cFpQ8LavqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBTV9WFD6sKCmDwtKHxbU9GFB6cOCmj4sKH1YUNOHBaUPC2r6sKD0YUFNHxaUPiyo6cOC0ocFNX1YUPqwoKYPC0ofFtT0YUHpw4KaPiwofVhQ04cFpQ8LavqwoPRhQU0fFpQ+LKjpw4LShwU1fVhQ+rCgpg8LSh8W1PRhQenDgpo+LCh9WFDThwWlDwtq+rCg9GFBTR8WlD4sqOnDgtKHBfUD0TjRepyspN8AAAAASUVORK5CYII=")!
         private var uploads: [String: Data] = [:]
         private var command: [String: Any]?
@@ -48,7 +49,19 @@ enum AppleContractUIFixture {
             switch path {
             case "/personal/v1/auth/login": return try json(auth, headers: ["set-cookie": "wm_personal_session=" + String(repeating: "a", count: 43)])
             case "/personal/v1/auth/me": return try json(auth)
-            case "/personal/v1/status": return try json(["ownerId": "owner-fixture", "hostId": "host-fixture", "backend": ["capabilities": ["desktopOpenApp": ["available": false]]]])
+            case "/personal/v1/status":
+                statusReads += 1
+                var value: [String: Any] = ["ownerId": "owner-fixture", "hostId": "host-fixture", "backend": ["capabilities": ["desktopOpenApp": ["available": false]]]]
+                if ProcessInfo.processInfo.arguments.contains("--upd2-about") {
+                    value["updates"] = ["layers": [
+                        ["layer": "ui", "currentVersion": "0.3.0", "status": "ready"],
+                        ["layer": "app", "currentVersion": "0.2.0", "status": "current"],
+                        ["layer": "mobile-ui", "currentVersion": "0.9.0", "status": "current"]]]
+                    if statusReads > 1 && ProcessInfo.processInfo.arguments.contains("--upd2-incompatible") {
+                        value["nativeMinimumVersions"] = ["iOS": "0.2.0", "macOS": "0.2.0"]
+                    }
+                }
+                return try json(value)
             case "/personal/v1/auth/devices": return try json(["devices": [["id": "device-fixture", "name": "Fixture", "current": true]]])
             case "/personal/v1/sync/capabilities":
                 let body = try JSONSerialization.jsonObject(with: request.httpBody!) as! [String: Any]
