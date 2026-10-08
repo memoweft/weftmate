@@ -28,7 +28,7 @@ export function syntheticBackend(root) {
     s.running=false;s.current=null;
     if(s.queue.length){const m=s.queue.shift();start(s,m);}
   }
-  const adapter=id=>createDshSessionAdapter({sessions:{},events:{}},{readLog:async()=>sessions.get(id)?.events??[]});
+  const adapter=id=>createDshSessionAdapter({sessions:{list:async()=>({result:{ok:true,value:{items:[{sessionId:id,origin:'user'}]}}})},events:{}},{readLog:async()=>sessions.get(id)?.events??[]});
   const backend={
     getStatus:async()=>({runtime:'ready',referenceScan:'ready'}),listModels:async()=>[model],preflight:async()=>({ok:true}),
     createSession:async({sessionId,ownerId})=>{const folder=join(root,'workspaces',sessionId);await mkdir(folder,{recursive:true,mode:0o700});await writeFile(join(folder,'经验.md'),'合成经验');sessions.set(sessionId,{id:sessionId,ownerId,folder,title:'合成对话',events:[],queue:[],turn:0,current:null,running:false});return {sessionId};},
