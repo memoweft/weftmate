@@ -133,6 +133,24 @@ final class A6SettingsUITests: XCTestCase {
         try openSettings(app)
         try await searchAndDeepLink(app, ids: ids)
     }
+    @MainActor func testSchedulesUseTheRealPersonalAPI() async throws {
+        let (app, _) = try await launch("light")
+        defer { app.terminate() }
+        try openSettings(app); try category(app, "schedules")
+        try expect(app.staticTexts["合成提醒：检查本周计划"])
+        try tap(app, "暂停"); try expect(app.buttons["恢复"])
+        try tap(app, "恢复"); try expect(app.buttons["暂停"])
+        try tap(app, "立即运行")
+        try tap(app, "删除")
+        let confirm = app.sheets.buttons["删除"].firstMatch
+        try expect(confirm); confirm.tap()
+        try expect(app.staticTexts["暂无提醒或定时任务"])
+        let report = try await get("/a6/settings-report")
+        let actions = report["schedules"] as! [[String: Any]]
+        XCTAssertEqual(actions.filter { $0["action"] as? String == "run" }.count, 1)
+        XCTAssertTrue(["pause", "resume", "delete"].allSatisfy { action in actions.contains { $0["action"] as? String == action } })
+        XCTAssertEqual((report["backups"] as! [String: Any])["status"] as? Int, 200)
+    }
     @MainActor func testLightSettingsReview() async throws { try await review("light") }
     @MainActor func testDarkSettingsReview() async throws { try await review("dark") }
     @MainActor private func review(_ theme: String) async throws {
