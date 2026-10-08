@@ -30,13 +30,13 @@ struct SettingsView: View {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("有改动尚未保存").font(.headline).foregroundStyle(Weave.ink)
                             Button("复制未保存草稿") { copyUnsavedDrafts() }
-                                .buttonStyle(.bordered)
+                                .buttonStyle(OutlineActionStyle())
                             Button("重试保存并退出") { Task { await model.signOut() } }
-                                .buttonStyle(.bordered).disabled(model.authBusy)
+                                .buttonStyle(OutlineActionStyle()).disabled(model.authBusy)
                             Button("仍然退出（未保存的改动会丢失）", role: .destructive) {
                                 Task { await model.signOut(discardUnsavedChanges: true) }
                             }
-                            .buttonStyle(.bordered).disabled(model.authBusy)
+                            .buttonStyle(OutlineActionStyle()).disabled(model.authBusy)
                             if let draftCopyResult {
                                 Text(draftCopyResult).font(.caption).foregroundStyle(Weave.muted)
                             }
@@ -67,9 +67,19 @@ struct SettingsView: View {
                         Button(role: .destructive) { confirmSignOut = true } label: {
                             WeftLabel("退出登录 / 切换账户", icon: "back")
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(OutlineActionStyle())
                         .disabled(model.authBusy)
                         .accessibilityIdentifier("signOutButton")
+                    }
+                }
+
+                WeaveCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        WeftLabel("外观", icon: "sun").font(.headline).foregroundStyle(Weave.ink)
+                        Picker("颜色模式", selection: $model.appearanceMode) {
+                            ForEach(AppleAppearance.allCases) { mode in Text(mode.title).tag(mode.rawValue) }
+                        }.accessibilityIdentifier("appearancePicker")
+                        Text("保存到这台设备").font(.caption).foregroundStyle(Weave.muted)
                     }
                 }
 
@@ -91,7 +101,7 @@ struct SettingsView: View {
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text("更换服务器需要先退出当前账户，再登录到新的服务器。")
                             .font(.caption).foregroundStyle(Weave.muted).lineSpacing(3)
-                        Button("更换服务器") { confirmServer = true }.buttonStyle(.bordered)
+                        Button("更换服务器") { confirmServer = true }.buttonStyle(OutlineActionStyle())
                             .disabled(model.authBusy)
                             .accessibilityIdentifier("changeServerButton")
                     }
@@ -99,8 +109,8 @@ struct SettingsView: View {
 
                 WeaveCard {
                     VStack(alignment: .leading, spacing: 13) {
-                        WeftLabel("Apple 客户端", icon: "brand-monochrome").font(.headline).foregroundStyle(Weave.ink)
-                        LabeledContent("外观", value: "跟随系统").font(.callout).foregroundStyle(Weave.secondary)
+                        WeftLabel("关于", icon: "brand-monochrome").font(.headline).foregroundStyle(Weave.ink)
+
                         #if os(macOS)
                         LabeledContent("版本", value: updates.installedVersionDisplay)
                             .font(.callout).foregroundStyle(Weave.secondary)
@@ -108,15 +118,12 @@ struct SettingsView: View {
                             openWindow(id: "updates")
                             updates.check()
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(OutlineActionStyle())
                         .accessibilityIdentifier("openUpdatesButton")
                         #else
                         LabeledContent("版本", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1")
                             .font(.callout).foregroundStyle(Weave.secondary)
                         #endif
-                        Divider()
-                        Text("当前可以登录、查看设备和读取原会话。续聊、附件和独立模型正在接通；Apple Watch 暂提供独立的起步界面。")
-                            .font(.caption).foregroundStyle(Weave.muted).lineSpacing(4)
                     }
                 }
             }

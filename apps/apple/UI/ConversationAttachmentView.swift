@@ -120,7 +120,7 @@ struct ConversationAttachmentPreview: View {
             if let file {
                 AttachmentContentPreview(file: file, contentType: contentType).frame(maxWidth: .infinity, maxHeight: .infinity)
                 HStack {
-                    Button("保存文件") { exporting = true }.buttonStyle(.borderedProminent)
+                    Button("保存文件") { exporting = true }.buttonStyle(PrimaryActionStyle(fillsWidth: false))
                     ShareLink(item: file) { WeftLabel("分享", icon: "open") }
                 }
             } else { Spacer() }
