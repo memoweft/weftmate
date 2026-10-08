@@ -135,7 +135,7 @@ public struct TimelineEntry: Equatable, Sendable, Identifiable {
 }
 public enum TimelineProjection {
     public static func taskRunning(_ events: [TimelineEvent], fallback: Bool) -> Bool {
-        events.last(where: { ["task.started", "turn.started", "task.ended", "turn.ended"].contains($0.type) })
+        events.last(where: { ["task.started", "turn.started", "task.ended", "turn.ended"].contains($0.type) && !($0.type == "task.ended" && $0.data["reason"]?.string == "canceled") })
             .map { $0.type.hasSuffix("started") } ?? fallback
     }
     public static func entries(_ events: [TimelineEvent]) -> [TimelineEntry] {

@@ -33,6 +33,10 @@ struct WeftMateMacApp: App {
         }
         .defaultSize(width: 1080, height: 760)
         .commands {
+            CommandGroup(replacing: .appSettings) {
+                Button("设置…") { openWindow(id: "settings") }
+                    .keyboardShortcut(",", modifiers: [.command])
+            }
             CommandGroup(after: .appInfo) {
                 Button("检查更新…") {
                     openWindow(id: "updates")
@@ -45,6 +49,11 @@ struct WeftMateMacApp: App {
                     .disabled(model.session == nil || model.refreshing)
             }
         }
+        Window("设置", id: "settings") {
+            NavigationStack { SettingsView(model: model).id(model.accountEpoch).environmentObject(updates) }
+                .frame(minWidth: 480, minHeight: 540)
+        }
+        .defaultSize(width: 1000, height: 760)
         Window("检查更新", id: "updates") {
             MacUpdateView().environmentObject(updates)
         }

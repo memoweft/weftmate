@@ -97,7 +97,7 @@ final class LG2AccountUITests: XCTestCase {
         app.terminate(); app.launch()
         try expect(app.descendants(matching: .any)["conversationList"].firstMatch, timeout: 30)
         try tap(app, "phoneAccountMenu"); try tap(app, "phoneMenu.settings")
-        try tap(app, "账户")
+        try tap(app, "settingsCategory.account")
         try expect(app.staticTexts["signedInEmail"], timeout: 15)
         XCTAssertTrue(app.staticTexts["signedInEmail"].label.contains(credentials["email"]!))
         keep(app, "ios-account")
@@ -157,7 +157,7 @@ final class LG2AccountUITests: XCTestCase {
         app.sheets.buttons["移除设备"].firstMatch.tap()
         let removed = NSPredicate { _, _ in !app.buttons["removeDevice." + ready["computerDeviceId"]!].exists }
         XCTAssertEqual(XCTWaiter.wait(for: [XCTNSPredicateExpectation(predicate: removed, object: nil)], timeout: 20), .completed)
-        app.navigationBars.buttons["WeftMate"].firstMatch.tap()
+        try tap(app, "closeAuxiliarySheetButton")
         try tap(app, "设置 → 账户")
         try tap(app, "退出所有其他设备")
         app.sheets.buttons["退出其他设备"].firstMatch.tap()

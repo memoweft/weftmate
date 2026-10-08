@@ -11,8 +11,8 @@ struct ConversationListContent: View {
     @Binding var search: String
 
     var filtered: [ConversationSummary] {
-        guard !search.isEmpty else { return model.conversations }
-        return model.conversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
+        guard !search.isEmpty else { return model.visibleConversations }
+        return model.visibleConversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
     }
 
     var body: some View {
@@ -77,9 +77,18 @@ struct ConversationView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var draftFocused: Bool
     @State private var visibleMessageID: String?
+    @State private var nearEnd = true
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
     @State private var resourcePopover = false
+    @State private var sendIntent: MessageIntent = .steer
+    @State private var showingUsage = false
+    @State private var usageAfterActions = false
+    #if os(macOS)
+    @Environment(\.openWindow) private var openWindow
+    #endif
+    @State private var showingSessionActions = false
+    @State private var deleteAfterActions = false
     @State private var importingAttachments = false
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var pendingAdoptionProfile: String?
@@ -108,6 +117,9 @@ struct ConversationView: View {
             if resources.visible { ConversationResourcesPanel(app: model, resources: resources) }
             if showingPreview { Divider(); attachmentPreview.frame(minWidth: 320, idealWidth: 400, maxWidth: 480) }
             #endif
+        }
+        .sheet(isPresented: $showingUsage) {
+            SettingsView(model: model, route: .usage(sessionID: conversation.sessionId), onClose: { showingUsage = false })
         }
         .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             if case .success(let files) = result {
@@ -144,7 +156,7 @@ struct ConversationView: View {
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
         .fullScreenCover(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources) }
         #endif
-        .onChange(of: model.accountEpoch) { _, _ in closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: model.accountEpoch) { _, _ in showingSessionActions = false; closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: conversation.id) { _, _ in closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: resources.selected) { _, _ in resourcePopover = false }
         .onDisappear { closePreview() }
@@ -194,8 +206,8 @@ struct ConversationView: View {
                 LazyVStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                     if model.timeline.hasOlder {
                         Button(model.olderBusy ? "正在读取…" : "读取更早的记录") {
-                            // scrollPosition retains the visible target while records are prepended.
-                            Task { await model.loadOlder(conversation) }
+                            // Keep the current named record in view when earlier history is prepended.
+                            Task { await readOlder(proxy: proxy) }
                         }.disabled(model.olderBusy).accessibilityIdentifier("loadOlderTimeline")
                         .id("older")
                     }
@@ -221,10 +233,12 @@ struct ConversationView: View {
                             .frame(minHeight: 240)
                     }
                     if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                         ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, openAttachment: openAttachment, openArtifact: openArtifact, openMemory: { event in
                             endDraftFocus(); closePreview(); resources.open(.memory(event.seq, UsedMemory.references(in: event)))
                         }, openSources: { resources.visible = true; resources.showingList = true })
                             .id(sessionID + model.accountEpoch.uuidString)
+                        }
                     } else {
                         ForEach(model.messages) { message in
                             MessageView(model: model, message: message, openAttachment: openAttachment).id(message.id)
@@ -238,17 +252,34 @@ struct ConversationView: View {
                 .padding(.horizontal, AppleTokens.Space.p24).padding(.vertical, AppleTokens.Space.p26)
                 .frame(maxWidth: 760).frame(maxWidth: .infinity)
             }
-            .scrollPosition(id: $visibleMessageID, anchor: .bottom)
+            .modifier(ConversationScrollTracking(visibleID: $visibleMessageID, nearEnd: $nearEnd))
+            .onChange(of: visibleMessageID) { _, value in
+                if value == "older", !model.olderBusy, !model.historyBusy { Task { await readOlder(proxy: proxy) } }
+            }
             #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
             #endif
             .safeAreaInset(edge: .bottom, spacing: AppleTokens.Space.p0) { composer.id(composerIdentity) }
+            #if DEBUG
+            .onChange(of: model.timeline.events.count) { _, _ in
+                let args = ProcessInfo.processInfo.arguments
+                if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
+                    let type = args[index + 1] == "approval" ? "approval.requested" : args[index + 1] == "question" ? "question.asked" : "step.started"
+                    if let entry = TimelineProjection.entries(model.timeline.events).first(where: { $0.event.type == type || (type == "step.started" && !$0.steps.isEmpty) }) {
+                        proxy.scrollTo(entry.id, anchor: .top)
+                    }
+                }
+            }
+            #endif
             .onChange(of: model.timeline.events.last?.seq) { _, _ in
+                #if DEBUG
+                if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--a5-review-scene") { return }
+                #endif
                 let oldTail = previousTailID
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
                 // Follow new messages only when already at the end; preserve reading position otherwise.
                 if !draftFocused, previousTailID != nil,
-                   oldTail == nil || visibleMessageID == "latest" || visibleMessageID == oldTail {
+                   oldTail == nil || nearEnd || visibleMessageID == "latest" || visibleMessageID == oldTail {
                     proxy.scrollTo("latest", anchor: .bottom)
                 }
             }
@@ -259,6 +290,29 @@ struct ConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { showingSessionActions.toggle() } label: { WeftIcon("more") }.accessibilityLabel("对话菜单")
+                    .sheet(isPresented: $showingSessionActions, onDismiss: {
+                        if deleteAfterActions { deleteAfterActions = false; model.askToDelete(conversation) }
+                        if usageAfterActions { usageAfterActions = false; showingUsage = true }
+                    }) {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
+                            SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false },
+                                onDelete: { deleteAfterActions = true; showingSessionActions = false })
+                            Button("本对话用量") {
+                                #if os(macOS)
+                                showingSessionActions = false
+                                model.settingsRoute = .usage(sessionID: conversation.sessionId); openWindow(id: "settings")
+                                #else
+                                usageAfterActions = true; showingSessionActions = false
+                                #endif
+                            }.accessibilityIdentifier("conversationUsage")
+                        }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)
+                            #if os(iOS)
+                            .presentationDetents([.medium])
+                            #endif
+                    }
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     endDraftFocus()
@@ -290,13 +344,19 @@ struct ConversationView: View {
                 .accessibilityIdentifier("refreshHistoryButton")
             }
         }
-        .task(id: conversation.id) { await model.open(conversation) }
+        .task(id: conversation.id) {
+            await model.open(conversation)
+            #if DEBUG
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
+                if args[index + 1] == "outputs-sources" { resources.showingList = true; resources.visible = true }
+                if args[index + 1] == "session-menu" { showingSessionActions = true }
+            }
+            #endif
+        }
         .task(id: "\(scenePhase)|\(model.historyBusy)") {
             guard scenePhase == .active, !model.historyBusy else { return }
             await model.pollTimeline(conversation)
-        }
-        .onChange(of: visibleMessageID) { _, value in
-            if value == "older", !model.olderBusy { Task { await model.loadOlder(conversation) } }
         }
         // End this view's keyboard focus when navigating away. Retaining the old responder
         // can restore the keyboard without the safe-area composer after a task detail returns.
@@ -307,6 +367,14 @@ struct ConversationView: View {
         }
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("conversationDetail")
+    }
+
+    private func readOlder(proxy: ScrollViewProxy) async {
+        let epoch = model.accountEpoch
+        let anchor = visibleMessageID == "older" ? TimelineProjection.entries(model.timeline.events).first?.id : visibleMessageID
+        await model.loadOlder(conversation)
+        guard model.accountEpoch == epoch, model.selectedConversation?.id == conversation.id else { return }
+        if let anchor { proxy.scrollTo(anchor, anchor: .top) }
     }
 
     private func endDraftFocus() {
@@ -321,7 +389,7 @@ struct ConversationView: View {
     private var commandStatusCards: some View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
-        let rows = model.commandRows(for: conversation)
+        let rows = model.commandStatusRows(for: conversation)
         return ForEach(rows) { row in
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 HStack {
@@ -356,12 +424,49 @@ struct ConversationView: View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
         return VStack(alignment: .leading, spacing: AppleTokens.Space.p9) {
+            if conversation.archived {
+                HStack { Text("已归档，恢复后可以发送消息"); Button("恢复对话") { Task { await model.archive(conversation, archived: false) } } }
+                    .font(AppleTokens.Fonts.callout)
+            }
+            let queued = model.queuedTasks(for: conversation)
+            if !queued.isEmpty {
+                DisclosureGroup("\(queued.count) 个排队中") {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
+                            ForEach(queued) { task in
+                                HStack {
+                                    Text(task.text).font(AppleTokens.Fonts.callout).lineLimit(3)
+                                    Spacer()
+                                    Button("编辑后重排") { sendIntent = .queue; Task { await model.cancelQueued(task, conversation: conversation, edit: true) } }
+                                        .accessibilityLabel("编辑排队任务 " + task.text)
+                                    Button("取消") { Task { await model.cancelQueued(task, conversation: conversation) } }
+                                        .accessibilityLabel("取消排队任务 " + task.text)
+                                }.disabled(model.queueBusy.contains(task.id) || model.historyCachedAt != nil)
+                                    .accessibilityIdentifier("queuedTask.\(task.id)")
+                            }
+                        }
+                    }.frame(maxHeight: 180)
+                }.font(AppleTokens.Fonts.caption)
+            }
+            if let notice = model.queueNotice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            if conversation.running {
+                Picker("发送方式", selection: $sendIntent) { Text("插话").tag(MessageIntent.steer); Text("新任务").tag(MessageIntent.queue) }
+                    .pickerStyle(.segmented).accessibilityIdentifier("sendIntent")
+            }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 TextField("向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
                     .focused($draftFocused).padding(.horizontal, AppleTokens.Space.p9).padding(.top, AppleTokens.Space.p7)
                     .disabled(!model.canEditDraft(for: conversation))
                     .accessibilityIdentifier("conversationDraft")
+                    .onSubmit { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: sendIntent) } }
+                    #if os(macOS)
+                    .onKeyPress(.return, phases: .down) { press in
+                        if press.modifiers.contains(.shift) { return .ignored }
+                        Task { await model.send(conversation, accountEpoch: accountEpoch, intent: press.modifiers.contains(.command) || press.modifiers.contains(.control) ? .queue : sendIntent) }
+                        return .handled
+                    }
+                    #endif
                 if let files = model.attachmentDrafts[key], !files.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: AppleTokens.Space.p10) {
@@ -408,7 +513,15 @@ struct ConversationView: View {
                         .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
                         .accessibilityLabel("当前模型")
                     Spacer()
-                    Button { Task { await model.send(conversation, accountEpoch: accountEpoch) } } label: {
+                    if conversation.running {
+                        Button { Task { await model.stopActiveTask() } } label: { WeftIcon("stop") }
+                            .accessibilityLabel("停止").accessibilityIdentifier("stopActiveTask")
+                            .disabled(model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil)
+                            #if os(macOS)
+                            .keyboardShortcut(.escape, modifiers: [])
+                            #endif
+                    }
+                    Button { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: sendIntent) } } label: {
                         WeftIcon("send")
                             .font(AppleTokens.Fonts.body.weight(.semibold)).frame(width: 20, height: 44)
                     }
@@ -570,5 +683,25 @@ struct MessageView: View {
         .padding(.vertical, AppleTokens.Space.p2)
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("message.\(message.id)")
+    }
+}
+
+/// Track visibility without feeding a changing LazyStack target back into its layout on iOS 18+.
+/// Older systems retain their existing position binding.
+private struct ConversationScrollTracking: ViewModifier {
+    @Binding var visibleID: String?
+    @Binding var nearEnd: Bool
+    func body(content: Content) -> some View {
+        if #available(iOS 18, macOS 15, *) {
+            content
+                .onScrollTargetVisibilityChange(idType: String.self) { ids in
+                    visibleID = ids.contains("older") ? "older" : ids.contains("latest") ? "latest" : ids.first
+                }
+                .onScrollGeometryChange(for: Bool.self) { geometry in
+                    geometry.contentOffset.y + geometry.containerSize.height >= geometry.contentSize.height + geometry.contentInsets.bottom - AppleTokens.Space.p24
+                } action: { _, value in nearEnd = value }
+        } else {
+            content.scrollPosition(id: $visibleID, anchor: .bottom)
+        }
     }
 }

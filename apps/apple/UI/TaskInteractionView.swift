@@ -50,7 +50,9 @@ struct TimelineInteractionCard: View {
         let key = "approval:" + approval.id
         return VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
             WeftLabel("需要审批", icon: "approval").font(AppleTokens.Fonts.subheadline.weight(.semibold)).foregroundStyle(Weave.ink)
-            Text(approval.reason).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.ink).textSelection(.enabled)
+            Text(model.readableApprovals[approval.id] ?? approval.readableSummary).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.ink).textSelection(.enabled)
+            if let reason = approval.readableRisk { Text(reason).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            DisclosureGroup("详情") { Text(model.approvalDetails[approval.id] ?? approval.reason).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled) }
             if !approval.riskLabels.isEmpty {
                 Text("风险类别：" + approval.riskLabels.joined(separator: "、"))
                     .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.secondary)
@@ -74,6 +76,7 @@ struct TimelineInteractionCard: View {
         .overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r14).strokeBorder(Weave.line))
         .accessibilityElement(children: .contain)
         .accessibilityIdentifier("approvalCard.\(approval.id)")
+        .task(id: approval.id) { await model.readApprovalPresentation(approval, events: events) }
     }
 
     private func approvalButtons(_ approval: SessionApproval, key: String, vertical: Bool) -> some View {
