@@ -25,6 +25,9 @@ const coreSourceIndex = process.argv.indexOf('--memory-core-source');
 const coreSource = coreSourceIndex === -1 ? 'D:/AIProjects/MemoWeft/Core/py/src'
   : resolve(process.argv[coreSourceIndex + 1]);
 const lan = process.argv.includes('--lan');
+const alternateLan = process.argv.includes('--alternate-lan');
+const usesLan = lan || alternateLan;
+assert.ok(!alternateLan || process.argv.includes('--mimo'), '--alternate-lan requires --mimo');
 assert.ok(!lan || !process.argv.includes('--mimo'), '--lan and --mimo are mutually exclusive');
 const modelName = lan ? 'lan' : process.argv.includes('--mimo') ? 'mimo' : 'qwen';
 const diagnostic = process.argv.includes('--diagnostic');
@@ -38,12 +41,12 @@ async function environmentKey(name, scope = 'User') {
   return stdout.trim();
 }
 const keys = { qwen: await environmentKey('MODEL_SWITCH_UNIFIED_KEY'), mimo: await environmentKey('MIMO_API_KEY', mimoKeyScope) };
-const lanBaseUrl = lan ? await environmentKey('WEFTMATE_LAN_MODEL_BASE_URL') : null;
-if (lan) {
+const lanBaseUrl = usesLan ? await environmentKey('WEFTMATE_LAN_MODEL_BASE_URL') : null;
+if (usesLan) {
   keys.lan = await environmentKey('WEFTMATE_LAN_MODEL_KEY');
   assert.ok(lanBaseUrl, 'WEFTMATE_LAN_MODEL_BASE_URL absent');
 }
-if (comparison) assert.ok(keys.qwen, 'Qwen key required for Qwen → MiMo memory-03');
+if (comparison && !alternateLan && !memoryLoop) assert.ok(keys.qwen, 'Qwen key required for Qwen → MiMo memory-03');
 if (modelName === 'mimo' && !keys.mimo && process.argv.includes('--wait-for-key')) {
   console.log(`${new Date().toISOString()} MIMO_API_KEY absent; checking ${mimoKeyScope} environment every 10 minutes, at most one hour.`);
   for (let check = 1; check <= 6 && !keys.mimo; check++) {
@@ -74,7 +77,7 @@ let app, page, output = '';
 let lanBridge;
 const redact = value => {
   let text = String(value);
-  if (lan) for (const secret of [lanBaseUrl, new URL(lanBaseUrl).host, keys.lan]) text = text.replaceAll(secret, '[private-lan]');
+  if (usesLan) for (const secret of [lanBaseUrl, new URL(lanBaseUrl).host, keys.lan]) text = text.replaceAll(secret, '[private-lan]');
   return text;
 };
 const out = join(root, diagnostic ? 'diagnostic' : 'eval'); mkdirSync(out);
@@ -88,7 +91,7 @@ async function api(path, body, method = body ? 'POST' : 'GET') {
 async function until(check) { const deadline = Date.now() + 90000; while (Date.now() < deadline) { const value = await check(); if (value) return value; await new Promise(r => setTimeout(r, 250)); } throw new Error('Baseline setup timed out'); }
 console.log(`Isolated ${modelName} root: ${root}`);
 try {
-  if (lan) {
+  if (usesLan) {
     lanBridge = await createLanBaselineBridge({ baseUrl: lanBaseUrl, key: keys.lan });
     // A serial batch may reuse the model already warmed by its first invocation.
     if (!process.argv.includes('--lan-warmed')) {
@@ -106,7 +109,7 @@ try {
   await page.waitForURL('**/personal/v1/ui');
   await page.fill('#login-name', username); await page.fill('#login-password', password); await page.fill('#login-device', 'Baseline Electron');
   await page.locator('#login-form button[type=submit]').click(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
-  for (const name of [modelName, lan || modelName === 'qwen' ? 'mimo' : 'qwen']) {
+  for (const name of [modelName, alternateLan ? 'lan' : lan || modelName === 'qwen' ? 'mimo' : 'qwen']) {
     if (!keys[name]) continue;
     const requestId = `baseline-model-${name}`;
     assert.equal((await api('/account/models', { requestId, name, baseUrl: name === 'lan' ? lanBridge.url : name === 'qwen' ? 'http://127.0.0.1:8081/v1' : 'https://api.xiaomimimo.com/v1',
@@ -153,9 +156,9 @@ try {
     if (comparison && !memoryLoop) assert.equal((await api('/settings/models', {
       backgroundModelProfileId: scenario.id === 'memory-03-switch-model' ? null : selected.id,
     }, 'PATCH')).status, 200);
-    console.log(`Starting ${scenario.id}: ${lan ? 'lan/local-quality' : firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
+    console.log(`Starting ${scenario.id}: ${lan ? 'lan/local-quality' : firstModel}${scenario.id === 'memory-03-switch-model' ? ' → ' + (alternateLan ? 'lan/local-quality' : lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen') : ''}`);
     await runEvaluation({ host: new URL(page.url()).origin, out, model: firstModel,
-      switchModel: lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
+      switchModel: alternateLan ? 'lan' : lan || comparison && !memoryLoop ? 'mimo' : modelName === 'qwen' ? 'mimo' : 'qwen', scenarioList: [scenario],
       onScenarioResult: async result => { results.push(result); writeFileSync(join(root, 'progress.json'), JSON.stringify(results, null, 2)); console.log(`${result.id}: ${result.status} ${(result.durationMs / 1000).toFixed(2)}s ${result.reason ?? ''}`); } });
   }
   if (memoryLoop || memoryUi) {
