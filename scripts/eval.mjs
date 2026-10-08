@@ -223,7 +223,8 @@ export async function checkOne(check, context) {
     else if (check.type === 'approval_seen') {
       passed = (turn?.approvals ?? []).some(a => (!check.outcome || a.decisionOutcome === check.outcome) && (!check.reasonMatches || new RegExp(check.reasonMatches, 'u').test(a.reason ?? '')));
     } else if (check.type === 'memory_used') {
-      return { ...check, status: 'unsupported', reason: 'CLIENT_API §3.4/§3.9: no per-reply memory provenance. capabilities.inject and memory/items/sources do not prove adoption; replyEvidence describes output only.' };
+      if (!turn?.memoryUsedSupported) return { ...check, status: 'unsupported', reason: 'Host reply events do not expose memoryUsed.' };
+      passed = turn.memoryUsed.some(item => typeof item.id === 'string' && item.id && typeof item.summary === 'string' && item.summary);
     } else if (check.type === 'llm_judge') {
       if (!context.judgeModel) return { ...check, status: 'skipped', reason: 'No judge configured; enable --judge-model same or a configured model name.' };
       const model = resolveModel(context.models, context.judgeModel === 'same' ? turn.modelProfileId : context.judgeModel);
@@ -301,7 +302,13 @@ async function runScenario(scenario, context) {
         cursor = page.cursor;
         for (const event of page.events) {
           turn.timeline.push({ seq: event.seq, type: event.type, at: event.at });
-          if (event.type === 'assistant.message') turn.reply += `${turn.reply ? '\n' : ''}${event.data.text ?? ''}`;
+          if (event.type === 'assistant.message') {
+            turn.reply += `${turn.reply ? '\n' : ''}${event.data.text ?? ''}`;
+            if (Array.isArray(event.data.memoryUsed)) {
+              turn.memoryUsedSupported = true;
+              turn.memoryUsed = [...(turn.memoryUsed ?? []), ...event.data.memoryUsed];
+            }
+          }
           if (event.type === 'turn.ended') terminal = event;
         }
         const approvals = await approvalPage(context.client, session, deadline);

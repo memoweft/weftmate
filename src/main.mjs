@@ -1651,7 +1651,7 @@ async function bootstrap() {
     ? createLocalModelController(localModelFlag.slice('--local-model-config='.length)) : null;
   modelScheduler = await createModelScheduler({
     isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
-      (await webRuntime?.personalModelQueueIdle?.())?.idle === true,
+      (await webRuntime?.personalModelQueueIdle?.(true))?.idle === true,
     profileFor: id => settingsMod.listModelProfiles().profiles.find(profile => profile.id === id ||
       routeForProfile(profile.id).provider === id || profile.baseUrl?.replace(/\/+$/, '') === id?.replace(/\/+$/, '')),
     credentialFor: credentialForModelProfile,

@@ -89,3 +89,10 @@ test('main publishes one local gate state and suppresses repeated reason logs', 
     'reference_scan_failed']) assert.ok(main.includes(`'${reason}'`), reason)
   assert.match(main, /try \{ assertSessionReferenceScanComplete\(\); \}\s*catch \{\s*noteAccountModelGate\(sessionReferenceScan\.state === 'failed'\s*\? 'reference_scan_failed' : 'reference_scan_incomplete'\)/)
 })
+
+test('memory pre-step frees inference for accepted background formation while the route reload fence stays busy', () => {
+  const agent = { status: 'running', inbox: { hasPending: true }, [Symbol.for('weftmate.memoryRecallPending')]: true };
+  assert.deepEqual(modelIdleSnapshot([agent]), { idle: false, reason: 'agent_running' });
+  assert.deepEqual(modelIdleSnapshot([agent], true), { idle: true, reason: 'idle' });
+  assert.equal(modelIdleSnapshot([agent, { status: 'running', inbox: { hasPending: false } }], true).idle, false);
+});

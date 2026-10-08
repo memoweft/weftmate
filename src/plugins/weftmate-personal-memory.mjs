@@ -65,7 +65,7 @@ class HostMemoryBridge {
       const timer = setTimeout(() => {
         if (!this.pending.delete(id)) return;
         reject(new Error('MEMORY_TIMEOUT'));
-      }, 18_000);
+      }, action === 'recall' ? 360_000 : 18_000);
       const abort = () => {
         const entry = this.pending.get(id);
         if (!entry) return;
@@ -159,40 +159,64 @@ export function apply(ctx) {
     if (decision.kind !== 'enter') return decision;
     const messages = stripPreviousPersonalMemoryMessages(decision.messages);
     const clearedDecision = { ...decision, messages };
-    if (payload?.signal?.aborted) return clearedDecision;
+    if (payload?.signal?.aborted) {
+      if (payload?.agent?.session) delete payload.agent.session[Symbol.for('weftmate.memoryRecall')];
+      return clearedDecision;
+    }
     const session = payload?.agent?.session;
     if (session?.header?.origin === 'subagent' ||
         !PRESETS.has(session?.header?.agentPreset) || typeof session.id !== 'string') return clearedDecision;
     const turn = payload.turn;
     const user = userForPreStep(session, turn, payload.messages);
-    if (!user) return clearedDecision;
+    if (!user) { delete session[Symbol.for('weftmate.memoryRecall')]; return clearedDecision; }
     const query = user.text;
     let text = null;
     try {
       diagnostic('prestep-send');
+      payload.agent[Symbol.for('weftmate.memoryRecallPending')] = true;
       const result = await bridge.request('recall', { sessionId: session.id, turn, query,
         userMessageId: user.id }, payload.signal);
       diagnostic(result?.state === 'ready' ? 'prestep-reply-ready'
         : result?.state === 'withheld' ? 'prestep-reply-withheld' : 'prestep-reply-other');
+      session[Symbol.for('weftmate.memoryRecall')] = { turn, memories: result.state === 'ready' && result.contextText?.trim() ? result.memories ?? [] : [] };
       if (result.state === 'ready' && typeof result.contextText === 'string' && result.contextText.trim() &&
           result.contextText.length <= 16_384) text = result.contextText;
     } catch (error) {
+      delete session[Symbol.for('weftmate.memoryRecall')];
       diagnostic(['MEMORY_TIMEOUT', 'MEMORY_CANCELLED', 'MEMORY_UNAVAILABLE'].includes(error?.message)
         ? `prestep-error-${error.message}` : 'prestep-error-other', error);
       // A failed bridge clears this step's memory rather than reusing prior data.
     }
+    finally { delete payload.agent[Symbol.for('weftmate.memoryRecallPending')]; }
     if (text === null) return clearedDecision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     diagnostic('prestep-factory-ready');
     const memoryMessage = createUserMessage({
       content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: name },
     });
+    session[Symbol.for('weftmate.memoryRecall')].messageId = memoryMessage.id;
     diagnostic('prestep-message-created');
     return { ...clearedDecision, messages: [...messages, memoryMessage] };
   }, { prepend: true });
   ctx.on('agent/request-error', (payload, next) => {
     diagnostic('model-request-error', payload?.failure);
     return next();
+  });
+  ctx.on('session/created', session => {
+    if (!PRESETS.has(session.header?.agentPreset)) return;
+    const deriveMessages = session.deriveMessages?.bind(session);
+    if (deriveMessages) session.deriveMessages = () => {
+      const current = session[Symbol.for('weftmate.memoryRecall')]?.messageId;
+      return deriveMessages().filter(message => message?.source?.plugin !== name || message.id === current);
+    };
+    const append = session.append.bind(session);
+    session.append = (type, data, ...rest) => {
+      if (type === 'assistant/message') {
+        const recalled = session[Symbol.for('weftmate.memoryRecall')];
+        data = { ...data, memoryUsed: recalled?.turn === data.turn ? recalled.memories : [] };
+      }
+      return append(type, data, ...rest);
+    };
   });
   ctx.on('session/event', (session, event) => {
     if (event?.type === 'turn/end') diagnostic(event.data?.reason?.kind === 'error'

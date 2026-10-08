@@ -126,7 +126,11 @@
 - 消息最多显示 4,000 个 UTF-16（字符串编码）单元；工具投影不带原始参数 / 输出。单条大记录截断并标记 `truncated`，整页按字节分页；长会话不再返回 `HISTORY_WINDOW_LIMIT`。用户原件消息仍可由原有附件登记恢复显示文本。
 - 详情只读取工具调用、工具结果和审批原始记录；推理、注入上下文不开放。返回最多 64,000 个 UTF-16 单元，超出标记截断。详情与历史使用同一账号 / 会话读取权限，不公开本机路径形式的下载引用。
 
-保留既有类型：`user.message`（`text,receiptId,images,originalAttachments,attachmentMessageId` 等）、`assistant.message`（`text,images`）、`turn.started`（`turn`）、`turn.ended`（`reason`，可有 `turn,endReasonKind`）。输出预算耗尽仍为 `reason:"error",endReasonKind:"max-tokens"`。执行事件见第 4 节。历史图片下载仍见 3.5。
+保留既有类型：`user.message`（`text,receiptId,images,originalAttachments,attachmentMessageId` 等）、`assistant.message`（`text,images,memoryUsed?`）、`turn.started`（`turn`）、`turn.ended`（`reason`，可有 `turn,endReasonKind`）。输出预算耗尽仍为 `reason:"error",endReasonKind:"max-tokens"`。执行事件见第 4 节。历史图片下载仍见 3.5。
+
+M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在上下文中的 MemoWeft Recall（记忆召回）依据，数组项为 `{"id":"cognition-…","kind":"cognition","summary":"偏好用中文和买菜例子解释技术"}`。`kind` 为 `cognition/entity/relationship/event`，`summary` 最多240个 UTF-16 单元，取自目标模型权限过滤后的召回文本。后台形成走既有模型排队与账户后台模型配置；每轮按当前消息召回，并用 MemoWeft 的称呼/表达方式查询补充持续适用的对话偏好，结果去重；下一轮召回等待已接受的 Core（记忆核心）形成工作完成，普通对话在服务不可用或等待到期时继续。
+
+新宿主在未命中、不可用或预算移除记忆时返回 `memoryUsed:[]`；旧宿主可省略此字段。它证明此回复请求采用了这些上下文依据，不声称能读取模型内部推理或证明每一条都改变了输出。客户端可用 `GET /memory/items/{kind}/{id}/sources`（3.9）打开当前来源；记忆后来删除或权限改变时，历史摘要仍是当时的回复依据，当前来源可返回不可读/404，不能用历史标签恢复已忘掉的原文。桌面在回复下显示「用到了 N 条记忆」，点击在既有右侧面板查看来源；手机/Apple（苹果客户端）标签另包。评测器 `memory_used` 检查指定回合的回复数组是否非空，空数组为失败、字段缺失为不支持；不以记忆服务状态代替采用证据。
 
 ### 3.5 发送消息与附件（5）
 
