@@ -24,6 +24,7 @@ public struct SharedSessionRecord: Codable, Equatable, Sendable, Identifiable {
     public let conversationId: String?
     public let modelProfileId: String?
     public let unavailable: Bool?
+    public let archived: Bool?
     func validate() throws {
         try SharedValidation.require(SharedValidation.id(sessionId) && title.utf16.count <= 256 &&
             conversationId.map(SharedValidation.id) ?? true && modelProfileId.map(SharedValidation.profile) ?? true &&
@@ -134,6 +135,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public let sessionId: String?
     public let text: String?
     public let mode: String?
+    public let intent: MessageIntent?
     public let modelProfileId: String?
     public let sourceSyncEventId: String?
     public let attachments: [OriginalAttachment]?
@@ -142,10 +144,11 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     public init(requestId: String, kind: SharedCommandKind, targetDeviceId: String,
                 sessionId: String? = nil, text: String? = nil, modelProfileId: String? = nil,
                 sourceSyncEventId: String? = nil, attachments: [OriginalAttachment]? = nil,
-                originalAttachments: [OriginalAttachment]? = nil, attachmentMessageId: String? = nil) throws {
+                originalAttachments: [OriginalAttachment]? = nil, attachmentMessageId: String? = nil, intent: MessageIntent = .steer) throws {
         self.requestId = requestId; self.kind = kind; self.targetDeviceId = targetDeviceId
         self.sessionId = sessionId; self.text = text; self.modelProfileId = modelProfileId
-        self.sourceSyncEventId = sourceSyncEventId; mode = kind == .message ? "queue" : nil
+        self.sourceSyncEventId = sourceSyncEventId; mode = nil
+        self.intent = kind == .message ? intent : nil
         self.attachments = attachments; self.originalAttachments = originalAttachments
         self.attachmentMessageId = attachmentMessageId
         try validate()
@@ -164,7 +167,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
         case .message:
             try SharedValidation.require(sessionId.map(SharedValidation.id) == true && modelProfileId == nil &&
                 text.map { (!$0.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || attachments != nil || originalAttachments != nil) && $0.utf16.count <= 8_192 } == true &&
-                mode == "queue" && sourceSyncEventId.map(SharedValidation.id) ?? true)
+                ((intent != nil && (mode == nil || mode == intent?.rawValue)) || (intent == nil && mode == "queue")) && sourceSyncEventId.map(SharedValidation.id) ?? true)
         case .cancel:
             try SharedValidation.require(sessionId.map(SharedValidation.id) == true && modelProfileId == nil &&
                 text == nil && mode == nil && sourceSyncEventId == nil)
@@ -180,7 +183,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
     static func decode(_ data: Data) throws -> Self {
         try SharedValidation.require(data.count <= 12_288)
         guard let keys = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any],
-              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "modelProfileId", "sourceSyncEventId", "attachments", "originalAttachments", "attachmentMessageId"]) else {
+              Set(keys.keys).isSubset(of: ["requestId", "kind", "targetDeviceId", "sessionId", "text", "mode", "intent", "modelProfileId", "sourceSyncEventId", "attachments", "originalAttachments", "attachmentMessageId"]) else {
             throw APIFailure.invalidResponse
         }
         let payload: Self
@@ -190,6 +193,7 @@ public struct SharedCommandPayload: Codable, Equatable, Sendable {
         try SharedValidation.require(keys["requestId"] as? String == payload.requestId && keys["kind"] as? String == payload.kind.rawValue &&
             keys["targetDeviceId"] as? String == payload.targetDeviceId && keys["sessionId"] as? String == payload.sessionId &&
             keys["text"] as? String == payload.text && keys["mode"] as? String == payload.mode &&
+            keys["intent"] as? String == payload.intent?.rawValue &&
             keys["modelProfileId"] as? String == payload.modelProfileId && keys["sourceSyncEventId"] as? String == payload.sourceSyncEventId &&
             keys["attachmentMessageId"] as? String == payload.attachmentMessageId)
         for key in ["attachments", "originalAttachments"] {
@@ -243,6 +247,16 @@ public struct SharedCommandReceipt: Codable, Equatable, Sendable {
     public let sourceSyncEventId: String?
     public let receiptId: String?
     public let errorCode: String?
+    public let intent: MessageIntent?
+    public let rootTaskId: String?
+    public let taskAction: String?
+    public init(commandId: String, requestId: String, kind: SharedCommandKind, targetDeviceId: String, state: SharedCommandState,
+                sessionId: String?, conversationId: String?, sourceSyncEventId: String?, receiptId: String?, errorCode: String?,
+                intent: MessageIntent? = nil, rootTaskId: String? = nil, taskAction: String? = nil) {
+        self.commandId = commandId; self.requestId = requestId; self.kind = kind; self.targetDeviceId = targetDeviceId; self.state = state
+        self.sessionId = sessionId; self.conversationId = conversationId; self.sourceSyncEventId = sourceSyncEventId
+        self.receiptId = receiptId; self.errorCode = errorCode; self.intent = intent; self.rootTaskId = rootTaskId; self.taskAction = taskAction
+    }
     func validateStructure() throws {
         try SharedValidation.require(SharedValidation.id(commandId) && SharedValidation.id(targetDeviceId) &&
             SharedValidation.request(requestId) && sessionId.map(SharedValidation.id) == true &&

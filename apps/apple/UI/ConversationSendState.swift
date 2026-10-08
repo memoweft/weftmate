@@ -21,6 +21,7 @@ struct ConversationCommandPresentation: Identifiable, Sendable {
     }
 
     private var lastObservedStatus: String {
+        if receipt?.taskAction == "supplement" { return "已补充到当前任务" }
         if let progress {
             switch progress {
             case .pending: return "服务端排队中"

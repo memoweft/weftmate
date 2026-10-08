@@ -36,6 +36,7 @@ struct WeftMateRootView: View {
             }
         }
         .overlay { CloudAccessPresenter(cloud: model.cloudLogin) }
+        .sheet(item: $model.deletionCandidate) { _ in SessionDeleteSheet(app: model) }
         .task(id: "\(scenePhase)-\(model.accountEpoch)-\(model.session?.verification.rawValue ?? "none")") {
             guard scenePhase == .active else { return }
             while !Task.isCancelled {
@@ -49,7 +50,7 @@ struct WeftMateRootView: View {
             await model.start()
             #if DEBUG && os(macOS)
             if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--lg2-capture") {
-                try? await Task.sleep(for: .seconds(1))
+                try? await Task.sleep(for: .seconds(ProcessInfo.processInfo.arguments.contains("--a5-review-scene") ? 8 : 1))
                 // Capture only this process's own displayed window; never enumerate other apps.
                 typealias WindowImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
                 if let window = NSApplication.shared.windows.first(where: { $0.title == "WeftMate" }),
@@ -122,6 +123,19 @@ private struct MacWorkspace: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
+        #if DEBUG
+        .task(id: model.conversations.count) {
+            let args = ProcessInfo.processInfo.arguments
+            guard args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) else { return }
+            switch args[index + 1] {
+            case "memory": selected = .memory
+            case "appearance": selected = .settings
+            case "conversation", "approval", "question", "outputs-sources":
+                if let conversation = model.conversations.first(where: { $0.title == "整理项目资料" }) { selected = .conversation(conversation.id) }
+            default: selected = nil
+            }
+        }
+        #endif
         .onChange(of: selected) { _, selection in
             if case .conversation = selection {} else { model.closeConversation() }
         }
@@ -146,10 +160,13 @@ private struct MacWorkspace: View {
             }.padding(.horizontal, AppleTokens.Space.p18).padding(.top, AppleTokens.Space.p18).padding(.bottom, AppleTokens.Space.p14)
 
             List(selection: $selected) {
-                Section("最近对话") {
+                Section(model.showingArchived ? "已归档" : "最近对话") {
+                    Button(model.showingArchived ? "返回最近对话" : "已归档") { model.showingArchived.toggle() }
+                    if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
                     ConversationListContent(model: model, search: $search)
                     ForEach(filteredConversations) { conversation in
                         ConversationRow(conversation: conversation, selected: selected == .conversation(conversation.id))
+                            .contextMenu { SessionActions(app: model, conversation: conversation) }
                             .tag(SidebarSelection.conversation(conversation.id))
                             .listRowBackground(selected == .conversation(conversation.id) ? Weave.accent : AppleTokens.Colors.clear)
                     }
@@ -206,7 +223,7 @@ private struct MacWorkspace: View {
     }
 
     private var filteredConversations: [WeftMateCore.ConversationSummary] {
-        search.isEmpty ? model.conversations : model.conversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
+        search.isEmpty ? model.visibleConversations : model.visibleConversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
     }
 }
 #else
@@ -218,10 +235,14 @@ private struct PhoneWorkspace: View {
     var body: some View {
         NavigationStack {
                 List {
-                    Section("最近对话") {
+                    Section(model.showingArchived ? "已归档" : "最近对话") {
+                    Button(model.showingArchived ? "返回最近对话" : "已归档") { model.showingArchived.toggle() }
+                    if let error = model.lifecycleError { InlineNotice(message: error, isError: true) }
                         ConversationListContent(model: model, search: $search)
                         ForEach(filteredConversations) { conversation in
                             NavigationLink(value: conversation.id) { ConversationRow(conversation: conversation) }
+                                .contextMenu { SessionActions(app: model, conversation: conversation) }
+                                .swipeActions { SessionActions(app: model, conversation: conversation) }
                                 .accessibilityIdentifier("conversationRow.\(conversation.id)")
                         }
                     }
@@ -261,7 +282,7 @@ private struct PhoneWorkspace: View {
     }
 
     private var filteredConversations: [WeftMateCore.ConversationSummary] {
-        search.isEmpty ? model.conversations : model.conversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
+        search.isEmpty ? model.visibleConversations : model.visibleConversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
     }
 }
 #endif

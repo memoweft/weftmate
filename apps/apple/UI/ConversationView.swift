@@ -11,8 +11,8 @@ struct ConversationListContent: View {
     @Binding var search: String
 
     var filtered: [ConversationSummary] {
-        guard !search.isEmpty else { return model.conversations }
-        return model.conversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
+        guard !search.isEmpty else { return model.visibleConversations }
+        return model.visibleConversations.filter { $0.title.localizedCaseInsensitiveContains(search) }
     }
 
     var body: some View {
@@ -80,6 +80,8 @@ struct ConversationView: View {
     @State private var previousTailID: String?
     @State private var composerIdentity = UUID()
     @State private var resourcePopover = false
+    @State private var sendIntent: MessageIntent = .steer
+    @State private var showingUsage = false
     @State private var importingAttachments = false
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var pendingAdoptionProfile: String?
@@ -108,6 +110,9 @@ struct ConversationView: View {
             if resources.visible { ConversationResourcesPanel(app: model, resources: resources) }
             if showingPreview { Divider(); attachmentPreview.frame(minWidth: 320, idealWidth: 400, maxWidth: 480) }
             #endif
+        }
+        .sheet(isPresented: $showingUsage) {
+            NavigationStack { UsageView(app: model, sessionID: conversation.sessionId).toolbar { Button("完成") { showingUsage = false } } }
         }
         .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             if case .success(let files) = result {
@@ -243,6 +248,17 @@ struct ConversationView: View {
             .scrollDismissesKeyboard(.interactively)
             #endif
             .safeAreaInset(edge: .bottom, spacing: AppleTokens.Space.p0) { composer.id(composerIdentity) }
+            #if DEBUG
+            .onChange(of: model.timeline.events.count) { _, _ in
+                let args = ProcessInfo.processInfo.arguments
+                if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
+                    let type = args[index + 1] == "approval" ? "approval.requested" : args[index + 1] == "question" ? "question.asked" : "step.started"
+                    if let entry = TimelineProjection.entries(model.timeline.events).first(where: { $0.event.type == type || (type == "step.started" && !$0.steps.isEmpty) }) {
+                        proxy.scrollTo(entry.id, anchor: .center)
+                    }
+                }
+            }
+            #endif
             .onChange(of: model.timeline.events.last?.seq) { _, _ in
                 let oldTail = previousTailID
                 previousTailID = TimelineProjection.entries(model.timeline.events).last?.id ?? model.messages.last?.id
@@ -259,6 +275,12 @@ struct ConversationView: View {
         .navigationBarTitleDisplayMode(.inline)
         #endif
         .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Menu {
+                    SessionActions(app: model, conversation: conversation)
+                    Button("对话用量") { showingUsage = true }
+                } label: { WeftIcon("more") }.accessibilityLabel("对话菜单")
+            }
             ToolbarItem(placement: .primaryAction) {
                 Button {
                     endDraftFocus()
@@ -290,7 +312,15 @@ struct ConversationView: View {
                 .accessibilityIdentifier("refreshHistoryButton")
             }
         }
-        .task(id: conversation.id) { await model.open(conversation) }
+        .task(id: conversation.id) {
+            await model.open(conversation)
+            #if DEBUG
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1), args[index + 1] == "outputs-sources" {
+                resources.showingList = true; resources.visible = true
+            }
+            #endif
+        }
         .task(id: "\(scenePhase)|\(model.historyBusy)") {
             guard scenePhase == .active, !model.historyBusy else { return }
             await model.pollTimeline(conversation)
@@ -356,12 +386,48 @@ struct ConversationView: View {
         let accountEpoch = model.accountEpoch
         let key = AppleAppModel.draftKey(for: conversation)
         return VStack(alignment: .leading, spacing: AppleTokens.Space.p9) {
+            if conversation.archived {
+                HStack { Text("已归档，恢复后可以发送消息"); Button("恢复对话") { Task { await model.archive(conversation, archived: false) } } }
+                    .font(AppleTokens.Fonts.callout)
+            }
+            let queued = model.queuedTasks(for: conversation)
+            if !queued.isEmpty {
+                DisclosureGroup("\(queued.count) 个排队中") {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
+                            ForEach(queued) { task in
+                                HStack {
+                                    Text(task.text).font(AppleTokens.Fonts.callout).lineLimit(3)
+                                    Spacer()
+                                    Button("编辑后重排") { sendIntent = .queue; Task { await model.cancelQueued(task, conversation: conversation, edit: true) } }
+                                    Button("取消") { Task { await model.cancelQueued(task, conversation: conversation) } }
+                                        .accessibilityLabel("取消排队任务 " + task.text)
+                                }.disabled(model.queueBusy.contains(task.id) || model.historyCachedAt != nil)
+                                    .accessibilityIdentifier("queuedTask.\(task.id)")
+                            }
+                        }
+                    }.frame(maxHeight: 180)
+                }.font(AppleTokens.Fonts.caption)
+            }
+            if let notice = model.queueNotice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            if conversation.running {
+                Picker("发送方式", selection: $sendIntent) { Text("插话").tag(MessageIntent.steer); Text("新任务").tag(MessageIntent.queue) }
+                    .pickerStyle(.segmented).accessibilityIdentifier("sendIntent")
+            }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 TextField("向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
                     .focused($draftFocused).padding(.horizontal, AppleTokens.Space.p9).padding(.top, AppleTokens.Space.p7)
                     .disabled(!model.canEditDraft(for: conversation))
                     .accessibilityIdentifier("conversationDraft")
+                    .onSubmit { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: sendIntent) } }
+                    #if os(macOS)
+                    .onKeyPress(.return, phases: .down) { press in
+                        if press.modifiers.contains(.shift) { return .ignored }
+                        Task { await model.send(conversation, accountEpoch: accountEpoch, intent: press.modifiers.contains(.command) || press.modifiers.contains(.control) ? .queue : sendIntent) }
+                        return .handled
+                    }
+                    #endif
                 if let files = model.attachmentDrafts[key], !files.isEmpty {
                     ScrollView(.horizontal) {
                         HStack(spacing: AppleTokens.Space.p10) {
@@ -408,7 +474,15 @@ struct ConversationView: View {
                         .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineLimit(1)
                         .accessibilityLabel("当前模型")
                     Spacer()
-                    Button { Task { await model.send(conversation, accountEpoch: accountEpoch) } } label: {
+                    if conversation.running {
+                        Button { Task { await model.stopActiveTask() } } label: { WeftIcon("stop") }
+                            .accessibilityLabel("停止").accessibilityIdentifier("stopActiveTask")
+                            .disabled(model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil)
+                            #if os(macOS)
+                            .keyboardShortcut(.escape, modifiers: [])
+                            #endif
+                    }
+                    Button { Task { await model.send(conversation, accountEpoch: accountEpoch, intent: sendIntent) } } label: {
                         WeftIcon("send")
                             .font(AppleTokens.Fonts.body.weight(.semibold)).frame(width: 20, height: 44)
                     }

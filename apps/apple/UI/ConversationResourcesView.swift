@@ -14,6 +14,13 @@ struct ConversationResourceList: View {
                     Button { resources.open(.output(output.id, output.fileName ?? "成果")); onOpen() } label: {
                         WeftLabel(output.fileName ?? "成果", icon: "file")
                     }.accessibilityIdentifier("resourceOutput.\(output.id)")
+                    if !resources.window.olderVersions(of: output).isEmpty {
+                        DisclosureGroup("旧版 · \(output.fileName ?? "成果")") {
+                            ForEach(resources.window.olderVersions(of: output)) { old in
+                                Button(old.createdAt ?? "旧版") { resources.open(.output(old.id, old.fileName ?? "成果")); onOpen() }
+                            }
+                        }
+                    }
                 }
                 Divider()
                 Text("来源").font(AppleTokens.Fonts.headline)
@@ -135,7 +142,7 @@ private struct ResourceTabContent: View {
                                 .accessibilityIdentifier("resourceUseCount")
                             if let location = source.location ?? source.url { Text(location).font(AppleTokens.Fonts.caption).textSelection(.enabled) }
                             ForEach(source.uses) { use in
-                                ResourceUseView(client: app.assistantClient, sessionID: resources.sessionID, use: use)
+                                ResourceUseView(resources: resources, use: use)
                                 Divider()
                             }
                         } else if resources.loading { ProgressView() }
@@ -208,37 +215,29 @@ private struct ResourceTabContent: View {
     private func cleanup() { if let folder { try? FileManager.default.removeItem(at: folder) }; folder = nil; file = nil }
 }
 private struct ResourceUseView: View {
-    let client: PersonalClient
-    let sessionID: String
+    @ObservedObject var resources: ConversationResourcesModel
     let use: ResourceUse
     @State private var expanded = false
-    @State private var detail: TimelineDetail?
-    @State private var error: String?
-    @State private var loading = false
     var body: some View {
-        DisclosureGroup(isExpanded: $expanded) {
-            if loading { ProgressView() }
-            if let detail {
-                Text(detail.text).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("resourceRaw.\(use.id)")
-                if detail.truncated == true { Text("内容已截断。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-                Button("复制原始内容") {
-                    #if os(macOS)
-                    NSPasteboard.general.clearContents(); NSPasteboard.general.setString(detail.text, forType: .string)
-                    #else
-                    UIPasteboard.general.string = detail.text
-                    #endif
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+            Text(ReadableToolSummary.text(tool: "工具", raw: use.summary)).font(AppleTokens.Fonts.callout)
+            DisclosureGroup("详情", isExpanded: $expanded) {
+                if resources.loadingUses.contains(use.id) { ProgressView() }
+                if let detail = resources.useDetails[use.id] {
+                    Text(detail.text).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("resourceRaw.\(use.id)")
+                    if detail.truncated == true { Text("内容已截断。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                    Button("复制原始内容") {
+                        #if os(macOS)
+                        NSPasteboard.general.clearContents(); NSPasteboard.general.setString(detail.text, forType: .string)
+                        #else
+                        UIPasteboard.general.string = detail.text
+                        #endif
+                    }
                 }
+                if let error = resources.useErrors[use.id] { Text(error); Button("重新读取") { Task { await resources.loadUse(use) } } }
             }
-            if let error { Text(error); Button("重新读取") { Task { await load() } } }
-        } label: { Text(use.summary).font(AppleTokens.Fonts.callout).multilineTextAlignment(.leading) }
-            .accessibilityIdentifier("resourceUse.\(use.id)")
-            .task(id: expanded) { if expanded && detail == nil { await load() } }
-    }
-    private func load() async {
-        guard !loading else { return }; loading = true; error = nil
-        defer { loading = false }
-        do { let value = try await client.conversationSourceContent(use, sessionID: sessionID); if !Task.isCancelled { detail = value } }
-        catch { if !Task.isCancelled { self.error = "原始内容未读取，请重试。" } }
+        }.accessibilityIdentifier("resourceUse.\(use.id)")
+            .task(id: expanded) { if expanded && resources.useDetails[use.id] == nil { await resources.loadUse(use) } }
     }
 }

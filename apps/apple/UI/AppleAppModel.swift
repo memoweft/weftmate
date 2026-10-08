@@ -213,7 +213,7 @@ extension AppleAppModel {
 
     func canSend(_ conversation: ConversationSummary) -> Bool {
         let key = Self.draftKey(for: conversation)
-        guard canEditDraft(for: conversation), commandStore != nil, session?.verification == .verified,
+        guard !conversation.archived, canEditDraft(for: conversation), commandStore != nil, session?.verification == .verified,
               selectedConversation?.id == conversation.id,
               !verificationPending, sendTargets[key] != nil, !preparingConversations.contains(key),
               (!(drafts[key] ?? "").trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !(attachmentDrafts[key] ?? []).isEmpty),
@@ -236,7 +236,7 @@ extension AppleAppModel {
         adoptionProjections[key] = nil
         continuationNotices[key] = "正在核对原会话和模型…"
         do {
-            let sessions = try await client.sharedSessions()
+            let sessions = try await client.sharedSessions(includeArchived: true)
             guard accountEpoch == epoch else { return }
             let sessionID: String
             let profileID: String
@@ -354,7 +354,7 @@ extension AppleAppModel {
         if attachmentDrafts[key]?.isEmpty == true { attachmentMessageIDs[key] = nil; attachmentSessionIDs[key] = nil }
     }
 
-    func send(_ conversation: ConversationSummary, accountEpoch: UUID) async {
+    func send(_ conversation: ConversationSummary, accountEpoch: UUID, intent: MessageIntent = .steer) async {
         guard accountEpoch == epoch, canSend(conversation), let accountSession = session,
               let local = commandStore, let target = sendTargets[Self.draftKey(for: conversation)] else { return }
         let key = Self.draftKey(for: conversation)
@@ -383,11 +383,11 @@ extension AppleAppModel {
             var payload: SharedCommandPayload
             if selectedFiles.isEmpty {
                 payload = try SharedCommandPayload(requestId: "apple-" + UUID().uuidString.lowercased(), kind: .message,
-                    targetDeviceId: accountSession.hostId, sessionId: target.sessionID, text: text)
+                    targetDeviceId: accountSession.hostId, sessionId: target.sessionID, text: text, intent: intent)
             } else {
                 let attempt: ConversationAttachmentAttempt
                 if let prior = attachmentAttempts[key], prior.drafts == selectedFiles, prior.payload.text == text,
-                   prior.payload.sessionId == target.sessionID { attempt = prior }
+                   prior.payload.sessionId == target.sessionID, prior.payload.intent == intent { attempt = prior }
                 else {
                     var staged: [StagedConversationAttachment] = [], textBytes = 0, bytes = 0
                     for file in selectedFiles {
@@ -401,7 +401,7 @@ extension AppleAppModel {
                     let body = try SharedCommandPayload(requestId: "apple-" + UUID().uuidString.lowercased(), kind: .message,
                         targetDeviceId: accountSession.hostId, sessionId: target.sessionID, text: text,
                         attachments: staged.isEmpty ? nil : staged.map(\.metadata),
-                        originalAttachments: selectedFiles.map(\.original), attachmentMessageId: messageID)
+                        originalAttachments: selectedFiles.map(\.original), attachmentMessageId: messageID, intent: intent)
                     _ = try body.encoded() // Byte check before any upload or command request.
                     attempt = .init(requestID: body.requestId, messageID: messageID, drafts: selectedFiles, staged: staged, payload: body)
                     attachmentAttempts[key] = attempt
@@ -692,6 +692,110 @@ private struct LocalAppleDraftPersistence: AppleDraftPersisting {
 final class AppleAppModel: ObservableObject {
     private var cloudNamespace = "com.weftmate.apple.cloud"
     lazy var cloudLogin = CloudLoginModel(app: self, namespace: cloudNamespace)
+    @Published var timelineRootCommands: [TaskRootCommandMetadata] = []
+    @Published var stoppingActiveTask = false
+    func stopActiveTask() async {
+        guard !stoppingActiveTask, historyCachedAt == nil, let conversation = selectedConversation,
+              let id = conversation.sessionId,
+              let started = timeline.events.last(where: { $0.type == "task.started" }) ?? timeline.events.last(where: { $0.type == "user.message" }),
+              let receipt = started.data["receiptId"]?.string,
+              let command = timelineRootCommands.first(where: { $0.receiptId == receipt }) else { return }
+        let actionEpoch = epoch
+        stoppingActiveTask = true
+        defer { if actionEpoch == epoch { stoppingActiveTask = false } }
+        let control = TaskWorkspaceModel(client: client, taskId: command.commandId, expectedHostId: command.targetDeviceId,
+            expectedSessionId: id, expectedRequestId: command.requestId, accountEpoch: epoch, stateDirectory: assistantStateDirectory,
+            currentEpoch: { [weak self] in self?.accountEpoch ?? UUID() }, currentSession: { [weak self] in self?.session })
+        await control.refresh()
+        if control.snapshot?.control.canStop == true { await control.requestStop() }
+        guard actionEpoch == epoch else { return }
+        queueNotice = control.stopError ?? control.error
+    }
+    @Published var showingArchived = false
+    @Published var deletionCandidate: ConversationSummary?
+    @Published var forgetConversationMemories = false
+    @Published var lifecycleBusy = false
+    @Published var lifecycleError: String?
+    @Published var queueNotice: String?
+    @Published var queueBusy = Set<String>()
+    private var queueCancelRequests: [String: String] = [:]
+    private var canceledQueuedTasks = Set<String>()
+    var visibleConversations: [ConversationSummary] { conversations.filter { $0.archived == showingArchived } }
+    func askToDelete(_ conversation: ConversationSummary) {
+        forgetConversationMemories = false; lifecycleError = nil; deletionCandidate = conversation
+    }
+    func archive(_ conversation: ConversationSummary, archived: Bool) async {
+        guard !lifecycleBusy, let id = conversation.sessionId else { return }
+        let actionEpoch = epoch; lifecycleBusy = true; lifecycleError = nil
+        defer { if actionEpoch == epoch { lifecycleBusy = false } }
+        do {
+            let result = try await client.setSessionArchived(archived, sessionID: id)
+            guard actionEpoch == epoch else { return }
+            guard result.sessionId == id, result.archived == archived else { throw APIFailure.identityMismatch }
+            if let index = conversations.firstIndex(where: { $0.id == conversation.id }) {
+                let old = conversations[index]
+                conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
+                    running: old.running, sendAvailable: !archived && old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: archived)
+            }
+            if selectedConversation?.id == conversation.id { selectedConversation = conversations.first { $0.id == conversation.id } }
+            await refresh()
+        } catch { if actionEpoch == epoch { lifecycleError = "归档状态未更新，请重试。" } }
+    }
+    func deleteConversation() async {
+        guard !lifecycleBusy, let conversation = deletionCandidate, let id = conversation.sessionId else { return }
+        let actionEpoch = epoch, forget = forgetConversationMemories
+        lifecycleBusy = true; lifecycleError = nil
+        defer { if actionEpoch == epoch { lifecycleBusy = false } }
+        do {
+            let result = try await client.deleteSession(sessionID: id, forgetMemories: forget)
+            guard actionEpoch == epoch else { return }
+            guard result.deleted, result.sessionId == id, result.forgetMemories == forget else { throw APIFailure.identityMismatch }
+            conversations.removeAll { $0.id == conversation.id }
+            if selectedConversation?.id == conversation.id { closeConversation() }
+            deletionCandidate = nil
+            await refresh()
+        } catch {
+            guard actionEpoch == epoch else { return }
+            if case APIFailure.server(409, "SESSION_BUSY") = error { lifecycleError = "任务停止尚未确认，请稍后重试删除。" }
+            else if forget { lifecycleError = "遗忘或删除尚未完成，对话保留，请重试。" }
+            else { lifecycleError = "对话尚未删除，请稍后重试。" }
+        }
+    }
+    func queuedTasks(for conversation: ConversationSummary) -> [QueuedTask] {
+        guard selectedConversation?.id == conversation.id else { return [] }
+        let observed = timelineRootCommands.map {
+            SharedCommandReceipt(commandId: $0.commandId, requestId: $0.requestId, kind: .message,
+                targetDeviceId: $0.targetDeviceId, state: $0.state, sessionId: $0.sessionId, conversationId: nil,
+                sourceSyncEventId: nil, receiptId: $0.receiptId, errorCode: nil)
+        }
+        return TaskQueueProjection.queued(events: timeline.events, commands: commandRows(for: conversation).compactMap(\.receipt) + observed)
+            .filter { !canceledQueuedTasks.contains($0.id) }
+    }
+    func cancelQueued(_ task: QueuedTask, conversation: ConversationSummary, edit: Bool = false) async {
+        guard !queueBusy.contains(task.id), historyCachedAt == nil else { return }
+        let actionEpoch = epoch
+        queueBusy.insert(task.id); queueNotice = nil
+        defer { if actionEpoch == epoch { queueBusy.remove(task.id) } }
+        let request = queueCancelRequests[task.id] ?? "apple-cancel-" + UUID().uuidString.lowercased()
+        queueCancelRequests[task.id] = request
+        do {
+            var result = try await client.cancelQueuedTask(taskID: task.id, requestID: request)
+            while [.requested, .cancelRequested].contains(result.control.stopStatus), actionEpoch == epoch, !Task.isCancelled {
+                try await Task.sleep(for: .seconds(1))
+                result = try await client.taskDetail(taskID: task.id)
+            }
+            guard actionEpoch == epoch, !Task.isCancelled else { return }
+            if result.control.stopStatus == .stopped {
+                canceledQueuedTasks.insert(task.id)
+                if edit { setDraft(task.text, for: conversation, accountEpoch: actionEpoch) }
+            } else { queueNotice = "取消尚未确认，请检查状态后重试。" }
+        } catch {
+            guard actionEpoch == epoch else { return }
+            if case APIFailure.server(409, _) = error { queueNotice = "已经开始，可以用停止" }
+            else { queueNotice = "取消未确认，请重试。" }
+        }
+    }
+
     @Published var serverInput: String
     @Published private(set) var session: AccountSession?
     @Published private(set) var restoring = true
@@ -820,6 +924,9 @@ final class AppleAppModel: ObservableObject {
         if preferences == nil { configurationError = "无法打开测试存储，请检查启动参数。" }
         defaults = preferences
         appearanceMode = preferences?.string(forKey: "appearanceMode") ?? "system"
+        #if DEBUG
+        if uiTesting, let index = args.firstIndex(of: "--a5-theme"), args.indices.contains(index + 1), ["light", "dark"].contains(args[index + 1]) { appearanceMode = args[index + 1] }
+        #endif
         let store = KeychainCredentialStore(service: uiTesting
             ? "\(testService).credentials" : "com.weftmate.apple.credentials")
         cloudNamespace = uiTesting ? testService + ".cloud" : "com.weftmate.apple.cloud"
@@ -913,7 +1020,7 @@ final class AppleAppModel: ObservableObject {
 
     private var permitsSyntheticLoopback: Bool {
         #if DEBUG
-        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--a4a-local-server") || ProcessInfo.processInfo.arguments.contains("--a4b-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver") || ProcessInfo.processInfo.arguments.contains("--lg2-cloud"))
+        ProcessInfo.processInfo.arguments.contains("--ui-testing") && (ProcessInfo.processInfo.arguments.contains("--a3-local-server") || ProcessInfo.processInfo.arguments.contains("--a4a-local-server") || ProcessInfo.processInfo.arguments.contains("--a4b-local-server") || ProcessInfo.processInfo.arguments.contains("--s1c-browser-driver") || ProcessInfo.processInfo.arguments.contains("--lg2-cloud") || ProcessInfo.processInfo.arguments.contains("--a5-local-server"))
         #else
         false
         #endif
@@ -931,6 +1038,11 @@ final class AppleAppModel: ObservableObject {
     }
 
     var deviceName: String {
+        #if DEBUG
+        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--a5-theme") {
+            return ApplePlatform.current == .macOS ? "合成 Mac" : "合成 iPhone"
+        }
+        #endif
         #if os(macOS)
         return Host.current().localizedName ?? "我的 Mac"
         #else
@@ -957,6 +1069,10 @@ final class AppleAppModel: ObservableObject {
         }
         if permitsSyntheticLoopback && (fixtureArguments.contains("--a3-local-server") || fixtureArguments.contains("--a4a-local-server") || fixtureArguments.contains("--a4b-local-server")) {
             await authenticate(username: "a3-tester", password: "synthetic-test-only", displayName: nil, register: false)
+            return
+        }
+        if permitsSyntheticLoopback && fixtureArguments.contains("--a5-local-server") {
+            await authenticate(username: "a5-tester", password: "synthetic-test-only", displayName: nil, register: false)
             return
         }
         #endif
@@ -1054,7 +1170,7 @@ final class AppleAppModel: ObservableObject {
         if let session, !draftsReady { await loadScopedDrafts(session) }
         guard actionEpoch == epoch else { return }
         do {
-            let result = try await client.conversations()
+            let result = try await client.conversations(includeArchived: true)
             guard actionEpoch == epoch else { return }
             taskControlSessions = try await client.taskControlSessionIDs()
             guard actionEpoch == epoch else { return }
@@ -1217,12 +1333,12 @@ final class AppleAppModel: ObservableObject {
         }
     }
     private func updateTimelineActivity(_ conversation: ConversationSummary) {
-        guard let last = timeline.events.last(where: { ["turn.started", "task.started", "turn.ended", "task.ended"].contains($0.type) }),
+        guard let last = timeline.events.last(where: { ["turn.started", "task.started", "turn.ended", "task.ended"].contains($0.type) && !($0.type == "task.ended" && $0.data["reason"]?.string == "canceled") }),
               let index = conversations.firstIndex(where: { $0.id == conversation.id }) else { return }
         let old = conversations[index], running = last.type.hasSuffix("started")
         guard old.running != running else { return }
         conversations[index] = .init(id: old.id, title: old.title, conversationId: old.conversationId, sessionId: old.sessionId,
-            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel)
+            running: running, sendAvailable: old.sendAvailable, originalModelLabel: old.originalModelLabel, archived: old.archived)
     }
     private func persistTimeline(_ conversation: ConversationSummary) async {
         guard historyCachedAt == nil, !timeline.events.isEmpty, let timelineCache, let account = draftAccount, let session,
@@ -1238,7 +1354,7 @@ final class AppleAppModel: ObservableObject {
         let actionEpoch = epoch
         guard let session, session.verification == .verified else { return nil }
         do {
-            let live = try await client.sharedSessions()
+            let live = try await client.sharedSessions(includeArchived: true)
             guard actionEpoch == epoch,
                   let currentSession = live.first(where: { $0.running && $0.sessionId == selectedConversation?.sessionId })
                     ?? live.first(where: \.running)
@@ -1285,6 +1401,7 @@ final class AppleAppModel: ObservableObject {
     func closeConversation() {
         retireHistoryObservers()
         historyRequest = UUID()
+        timelineRootCommands = []
         selectedConversation = nil
         messages = []; timeline = TimelineWindow(); timelineMessageIDs = [:]; offlineTimeline = false; olderBusy = false
         historyBusy = false
@@ -1485,6 +1602,9 @@ final class AppleAppModel: ObservableObject {
     }
 
     private func clearVisibleAccount() {
+        timelineRootCommands = []; stoppingActiveTask = false
+        showingArchived = false; deletionCandidate = nil; forgetConversationMemories = false; lifecycleBusy = false; lifecycleError = nil
+        queueNotice = nil; queueBusy = []; queueCancelRequests = [:]; canceledQueuedTasks = []
         attachmentDrafts.values.flatMap { $0 }.forEach { $0.removeTemporaryFiles() }
         attachmentDrafts = [:]; attachmentAttempts = [:]; attachmentMessageIDs = [:]; attachmentSessionIDs = [:]
         loadingAttachments = []; taskControlSessions = []
