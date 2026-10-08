@@ -30,6 +30,11 @@ const modelServer = createServer(async (request, response) => {
   paths.push(pathRecord);
   request.on('end', () => { pathRecord.ended = true; });
   request.on('close', () => { pathRecord.closed = true; });
+  if (request.method === 'GET' && request.url === '/props') {
+    response.writeHead(200, { 'content-type': 'application/json' });
+    response.end(JSON.stringify({ n_ctx: 65536, total_slots: 1 }));
+    return;
+  }
   if (request.method === 'GET' && request.url === '/v1/models') {
     response.writeHead(200, { 'content-type': 'application/json' });
     response.end(JSON.stringify({ object: 'list', data: [{ id: 'synthetic-stop-model', object: 'model' }] }));
