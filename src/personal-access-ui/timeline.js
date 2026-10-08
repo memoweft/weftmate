@@ -43,9 +43,11 @@
       details.open = previous ? wasRunning && !running ? false : running && !wasRunning ? !options.mobile : previous.open : running && !options.mobile
       row.dataset.running = String(running)
       const summary = node('summary', '', `${running ? '正在执行' : '执行了'} ${block.steps.length} 步${!running && Number.isFinite(end - start) ? ` · 用时 ${elapsed(end - start)}` : ''}`)
+      summary.prepend(window.WeftIcons.create('chevron', 16))
       details.append(summary)
       for (const step of block.steps) {
         const detail = node('details', 'execution-step'), label = node('summary', '', `${step.summary || '工具执行'}${step.state === 'failed' ? ' · 未完成' : step.state === 'running' && running ? ' · 运行中' : ''}`)
+        label.prepend(window.WeftIcons.create('chevron', 16), window.WeftIcons.create('terminal', 16))
         const output = node('pre', 'timeline-raw'), copy = node('button', 'timeline-action', '复制')
         detail.dataset.step = String(step.stepId)
         const saved = savedSteps.get(detail.dataset.step)

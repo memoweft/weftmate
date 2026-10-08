@@ -3,6 +3,11 @@ import { readFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 const files = new Map([
+  ['/personal/v1/ui/icons.js', ['icons.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/icons.svg', ['icons.svg', 'image/svg+xml']],
+  ['/personal/v1/ui/favicon.svg', ['favicon.svg', 'image/svg+xml']],
+  ['/personal/v1/ui/brand/color-light.svg', ['brand/color-light.svg', 'image/svg+xml']],
+  ['/personal/v1/ui/brand/color-dark.svg', ['brand/color-dark.svg', 'image/svg+xml']],
   ['/personal/v1/ui/native-desktop.js', ['native-desktop.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/native-desktop.css', ['native-desktop.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/desktop.js', ['desktop.js', 'text/javascript; charset=utf-8']],

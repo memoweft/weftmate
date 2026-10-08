@@ -5,6 +5,7 @@
   document.documentElement.classList.add('weftmate-desktop');
   const bar = document.createElement('div');
   bar.className = 'desktop-titlebar'; bar.textContent = 'WeftMate'; bar.setAttribute('aria-hidden', 'true');
+  const mark = document.createElement('span'); mark.className = 'wm-brand'; bar.prepend(mark);
   document.body.prepend(bar);
   const updateTheme = () => {
     // UI-1 hides the site header in its full-height workspace. Reserve only the native bar there.

@@ -68,6 +68,7 @@ class Element {
     for (const listener of this.listeners.get(name) ?? []) listener({ currentTarget: this, target: this, preventDefault() {}, ...extra })
   }
   append(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.push(...children) }
+  prepend(...children: Element[]) { for (const child of children) child.parentNode = this; this.children.unshift(...children) }
   replaceChildren(...children: Element[]) { for (const child of [...this.children]) child.remove(); this.children = []; this.append(...children) }
   setAttribute(name: string, value: string) { this.attributes.set(name, value) }
   getAttribute(name: string) { return this.attributes.get(name) ?? null }
@@ -401,6 +402,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   }
   const body = get('body')
   const document = { body, activeElement: body, visibilityState: 'visible', getElementById: get,
+    createElementNS: (_namespace: string, tagName: string) => { const node = new Element('', tagName); node.ownerDocument = document; return node },
     createElement: (tagName: string) => { const node = new Element('', tagName); node.ownerDocument = document; return node },
     querySelector: (selector: string): Element | null => {
       if (selector === 'dialog[open]') return [...nodes.values()].find((node) => matchesTestSelector(node, selector)) ?? null
@@ -416,7 +418,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
   for (const node of nodes.values()) node.ownerDocument = document
   const location = { hash: config.setupGrant ? `#setup=${config.setupGrant}` : '',
     pathname: '/personal/v1/ui', search: '', protocol: 'http:' }
-  const window = { location, innerWidth: 1280, innerHeight: 820, history: { replaceState() {} }, addEventListener() {} }
+  const window = { location, innerWidth: 1280, innerHeight: 820, history: { replaceState() {} }, addEventListener() {}, WeftIcons: null as any }
   const URLShim = class extends URL {}
   URLShim.createObjectURL = (_file: object) => { const value = `blob:synthetic-${objectUrls.created.length + 1}`; objectUrls.created.push(value); return value }
   URLShim.revokeObjectURL = (value: string) => { objectUrls.revoked.push(value) }
@@ -431,6 +433,7 @@ function harness(commands: object[] = [], durableEvents: Array<{ seq: number; ty
      if (config.taskPollTimers && delay === 2_000) taskTimers.set(id, callback)
      return id
    }, clearTimeout(id: number) { taskTimers.delete(id) }, setInterval: (callback: () => void) => { refreshTick = callback; return 1 }, clearInterval() {} }
+  runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/icons.js'), 'utf8') + '\nwindow.WeftIcons = globalThis.WeftIcons;', context)
   runInNewContext(readFileSync(join(repository, 'src/personal-access-ui/timeline.js'), 'utf8'), context)
   runInNewContext(executableSource, context)
   return { get, document, requests, storage, history, objectUrls, setDeferHistory: (value: boolean) => { deferHistory = value },
