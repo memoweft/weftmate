@@ -119,6 +119,7 @@ try {
       await page.evaluate(async sessionId => {
         const status = await (await fetch('/personal/v1/status')).json();
         localStorage.setItem(`weftmate:last-session:v1:${status.ownerId}`, sessionId);
+        localStorage.setItem('weftmate.desktop.appearance.v1', JSON.stringify({ theme: 'light' }));
       }, sessionId);
       await page.reload(); await page.locator('#assistant-view').waitFor({ state: 'visible' });
       const label = page.locator('.reply-memory').last();
