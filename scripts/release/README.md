@@ -35,13 +35,13 @@ node scripts/release/verify.mjs D:/private/update-feed/stable/manifest-ui.json D
 ## 发布手机界面包
 
 ```powershell
-node scripts/release/package.mjs --layer mobile-ui --version 0.9.0 --channel stable --min-host-version 0.1.0 --min-native-version 0.8.8 --min-native-version-code 21 --source-dir apps/mobile-ui/www --output-dir D:/private/mobile-ui/stable
+node scripts/release/package.mjs --layer mobile-ui --version 0.9.0 --channel stable --min-host-version 0.1.0 --min-native-version 0.8.9 --min-native-version-code 22 --source-dir apps/mobile-ui/www --output-dir D:/private/mobile-ui/stable
 node scripts/release/verify.mjs D:/private/mobile-ui/stable/manifest-mobile-ui.json D:/private/mobile-ui/stable/bundles/<asset-index-hash> src/personal-update/trusted-keys.json
 ```
 
 宿主仍用 `--mobile-ui-dir=<absolute directory>` 提供认证的 `/personal/v1/app/manifest`、`/app/assets/` 和 `/app/updates`。兼容旧发布命令 `scripts/build-mobile-ui.mjs`，它现在也必须提供私钥环境变量；可选 `--channel`、`--min-host-version`、`--min-native-version`。恢复历史发布时使用该脚本的 `--activate-release <version-hash>`，签名与每个文件仍须通过校验。
 
-新清单保留 `schemaVersion=1`、`uiVersion`、`assets`、`minNativeVersionCode`、`entry`、`assetBase`，因此旧壳继续按既有流程读取；它们等于统一字段的对应值并纳入签名。新安卓壳在下载与激活前强制验签，按哈希复用内置 / 当前版本文件，在私有目录下载、校验、切换；有任务或草稿时沿用既有暂缓机制。签名与哈希不通过保留当前版；新页面启动失败沿用壳的自动拒绝 / 回退流程。已有旧 unsigned manifest（无签名清单）可继续向旧壳提供，新壳拒绝它并使用内置页；不签名旧包不作为新版发布方案。
+新清单保留 `schemaVersion=1`、`uiVersion`、`assets`、`minNativeVersionCode`、`entry`、`assetBase`，因此旧壳继续按既有流程读取；它们等于统一字段的对应值并纳入签名。新安卓壳 0.8.9 / code22 在下载与激活前强制验签，按哈希复用内置 / 当前版本文件，在私有目录下载、校验、切换；有任务或草稿时沿用既有暂缓机制。签名与哈希不通过保留当前版；新页面启动失败沿用壳的自动拒绝 / 回退流程。已有旧 unsigned manifest（无签名清单）可继续向旧壳提供，新壳拒绝它并使用内置页；不签名旧包不作为新版发布方案。
 
 Android `stable` 是当前原生壳的默认渠道；独立预览壳用 Gradle（安卓构建工具）参数 `-PweftmateUpdateChannel=preview` 选定同名渠道，不把预览清单发到 stable 来源。更新验签使用 Bouncy Castle（密码库）的轻量 Ed25519（签名算法）实现，不依赖较新 Android 系统才具备的密码提供者。
 

@@ -99,6 +99,12 @@ test('release scripts verify all three layers, generate changed files and preser
   for (const key of ['schemaVersion', 'uiVersion', 'bridgeVersion', 'minNativeVersionCode', 'assetBase', 'entry', 'assets', 'releaseNotes', 'publishedAt']) assert.ok(Object.hasOwn(mobile, key))
   const legacy = Object.fromEntries(['schemaVersion', 'uiVersion', 'bridgeVersion', 'minNativeVersionCode', 'assetBase', 'entry', 'assets', 'releaseNotes', 'publishedAt'].map(key => [key, mobile[key]]))
   assert.equal(validateMobileManifest(legacy).manifest.uiVersion, mobile.version)
+  const largeAssets = [{ path: 'index.html', size: 1, sha256: sha256('x') },
+    ...Array.from({ length: 250 }, (_, i) => ({ path: `file-${i}.js`, size: 1, sha256: sha256('x') }))].sort((a, b) => a.path.localeCompare(b.path))
+  const largeManifest = signManifest({ ...mobile, files: largeAssets, assets: largeAssets,
+    assetBase: `/personal/v1/app/assets/${sha256(JSON.stringify(largeAssets))}/`, minNativeVersionCode: 21 }, f.privateKey)
+  assert.throws(() => validateMobileManifest(largeManifest), /code22/)
+  assert.equal(validateMobileManifest(signManifest({ ...largeManifest, minNativeVersionCode: 22 }, f.privateKey)).assets.length, 251)
   const installerDir = join(f.root, 'installer'); await mkdir(installerDir)
   const installer = join(installerDir, 'WeftMate-Setup-1.1.0.exe')
   await writeFile(installer, 'synthetic installer'); await writeFile(installer + '.blockmap', 'synthetic blockmap')

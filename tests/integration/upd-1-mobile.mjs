@@ -27,7 +27,7 @@ const setup = await fetch(origin + '/personal/v1/auth/setup', { method: 'POST', 
 assert.equal(setup.status, 201); const identity = await setup.json(), cookie = setup.headers.get('set-cookie').split(';')[0];
 let downloadedBytes = 0;
 const store = await new UpdateStore({ root: join(root, 'browser-updates'), layer: 'mobile-ui', trustedKeys, builtInVersion: '0.8.8',
-  versions: { host: '0.1.0', native: '0.8.8', bridge: 1 }, builtInFile: name => join(repository, 'apps/mobile-ui/www', name),
+  versions: { host: '0.1.0', native: '0.8.9', bridge: 1 }, builtInFile: name => join(repository, 'apps/mobile-ui/www', name),
   fetcher: async (url, options) => { const response = await fetch(url, { ...options, headers: { cookie } }); if (String(url).includes('/assets/')) downloadedBytes += Number(response.headers.get('content-length') || 0); return response; } }).init();
 const assets = createServer(async (req, res) => {
   try {
@@ -45,7 +45,7 @@ try {
   const url = `http://127.0.0.1:${assets.address().port}/`;
   await page.goto(url); await page.getByRole('heading', { name: '登录 WeftMate', exact: true }).waitFor(); await page.screenshot({ path: join(evidence, 'mobile-chromium-v1.png') });
   const viewFile = join(sourceDir, 'components/cloud-auth.js'); await writeFile(viewFile, (await readFile(viewFile, 'utf8')).replace("'登录 WeftMate'", "'登录 WeftMate · UPD mobile v2'"));
-  const manifest = await publishMobileUi({ sourceDir, outputDir: mobileUiDir, uiVersion: '0.9.0', minNativeVersionCode: 21, privateKey,
+  const manifest = await publishMobileUi({ sourceDir, outputDir: mobileUiDir, uiVersion: '0.9.0', minNativeVersionCode: 22, privateKey,
     releaseNotes: '签名兼容 / \u2028 😀\n"手机更新"' });
   await store.check(origin + '/personal/v1/app/manifest'); assert.equal(store.state.status, 'ready');
   const changed = manifest.files.find(row => row.path === 'components/cloud-auth.js'); assert.equal(store.state.downloadedBytes, changed.size);

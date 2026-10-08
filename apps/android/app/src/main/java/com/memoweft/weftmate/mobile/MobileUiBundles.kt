@@ -105,7 +105,7 @@ class MobileUiBundles(private val context: Context) {
         if (releaseId in rejected()) return state("UI_UPDATE_REJECTED")
         if (releaseId == activeId || releaseId == prefs.getString("staged", null)) return state()
         val items = manifest.getJSONArray("assets")
-        require(items.length() in 1..250)
+        require(items.length() in 1..512)
         var total = 0L
         val paths = mutableSetOf<String>()
         val work = File(directory, "$releaseId.${UUID.randomUUID()}.tmp")
@@ -208,7 +208,7 @@ class MobileUiBundles(private val context: Context) {
             verifySignature(manifest)
             if (!mobileUiNativeLoginCompatible(manifest.getInt("minNativeVersionCode"), BuildConfig.VERSION_CODE)) return false
             val items = manifest.getJSONArray("assets")
-            if (items.length() !in 1..250) return false
+            if (items.length() !in 1..512) return false
             var total = 0L
             val seen = mutableSetOf<String>()
             for (index in 0 until items.length()) {

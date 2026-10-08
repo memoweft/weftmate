@@ -6,7 +6,7 @@ import { signManifest, signingKeyFromEnvironment, validateManifest, verifyManife
 const HASH = /^[a-f0-9]{64}$/;
 const ASSET_PATH = /^(?!.*(?:^|\/)\.\.?\/)[A-Za-z0-9_.\/-]{1,180}$/;
 const VERSION = /^\d+\.\d+\.\d+(?:-[A-Za-z0-9.-]+)?$/;
-const MAX_ASSETS = 250;
+const MAX_ASSETS = 512;
 const MAX_ASSET_BYTES = 4 * 1024 * 1024;
 const MAX_BUNDLE_BYTES = 16 * 1024 * 1024;
 const TYPES = new Map([['.html', 'text/html; charset=utf-8'], ['.css', 'text/css; charset=utf-8'],
@@ -50,6 +50,7 @@ export function validateMobileManifest(value) {
   const hash = /^\/personal\/v1\/app\/assets\/([a-f0-9]{64})\/$/.exec(value.assetBase)?.[1];
   if (!hash) fail('invalid asset base');
   const assets = validateAssets(value.assets);
+  if (assets.length > 250 && value.minNativeVersionCode < 22) fail('native code22 required for this asset count');
   if (value.signature) {
     validateManifest(value, { layer: 'mobile-ui' });
     if (value.version !== value.uiVersion || JSON.stringify(value.files) !== JSON.stringify(assets)) fail('signed aliases mismatch');

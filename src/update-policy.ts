@@ -6,3 +6,16 @@ export function sanitizeUpdateFailure(error: unknown): string {
   if (/timeout|timed out|econn|enotfound|network|http|fetch|socket|offline/i.test(text)) return '无法连接预发布更新源。请检查网络或稍后重试。';
   return '更新未完成。当前版本保持不变，请稍后重试。';
 }
+
+/** Both About and tray actions share the same idle/backup/install boundary. */
+export async function installPreparedUpdate({ ready, idle, beforeInstall, install }: {
+  ready: () => boolean;
+  idle: () => Promise<boolean>;
+  beforeInstall: () => Promise<void>;
+  install: () => boolean;
+}): Promise<boolean> {
+  if (!ready() || !await idle()) return false;
+  try { await beforeInstall(); } catch { return false; }
+  if (!ready() || !await idle()) return false;
+  return install();
+}
