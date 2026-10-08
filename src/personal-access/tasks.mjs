@@ -14,6 +14,13 @@ import { GENERAL_TOOL_NAME, ID, INTERNAL_ARTIFACT_KIND, JOB_STATES, REQUEST_ID, 
 import { publicCommand } from './command-policy.mjs';
 
 export function createTaskOperations(context) {
+  const stopRetryTimers = new Map();
+
+  function cancelTaskStopRetries() {
+    for (const timer of stopRetryTimers.values()) clearTimeout(timer);
+    stopRetryTimers.clear();
+  }
+
   function taskSource(account, taskId) {
     const source = account.commands[taskId];
     if (!source || source.kind !== 'session.message' || source.rootTaskId !== undefined ||
@@ -254,6 +261,9 @@ export function createTaskOperations(context) {
   function driveTaskStop(ownerId, taskId, force = false) {
     const key = `${ownerId}|${taskId}`;
     if (context.stopping.has(key)) return context.stopping.get(key);
+    clearTimeout(stopRetryTimers.get(key));
+    stopRetryTimers.delete(key);
+    let retryAt = context.timestamp() + 1_000;
     const work = (async () => {
       if (context.closing || context.storageFault || typeof context.backend.stopTask !== 'function') return;
       const account = context.accountState(ownerId);
@@ -261,7 +271,10 @@ export function createTaskOperations(context) {
       if (source.taskControl?.state !== 'stop_requested') return;
       const stop = latestStop(account, taskId);
       if (!stop?.targets) return;
-      if (!force && stop.lastAttemptAt && context.timestamp() - Date.parse(stop.lastAttemptAt) < 1_000) return;
+      if (!force && stop.lastAttemptAt && context.timestamp() - Date.parse(stop.lastAttemptAt) < 1_000) {
+        retryAt = Date.parse(stop.lastAttemptAt) + 1_000;
+        return;
+      }
       const candidates = stop.targets.filter((target) => target.receiptId && target.ack !== 'queue_removed' &&
         account.commands[target.commandId]?.state === 'accepted_by_dsh')
         .sort((left, right) => (left.attemptAt ? Date.parse(left.attemptAt) : 0) -
@@ -275,6 +288,7 @@ export function createTaskOperations(context) {
         if (current?.requestId !== stop.requestId) return;
         const at = new Date(context.timestamp()).toISOString();
         current.lastAttemptAt = at;
+        retryAt = Date.parse(at) + 1_000;
         for (const candidate of candidates) {
           const target = current.targets.find((item) => item.commandId === candidate.commandId);
           if (target?.receiptId === candidate.receiptId) target.attemptAt = at;
@@ -315,7 +329,23 @@ export function createTaskOperations(context) {
           }
         }));
       }
-    })().finally(() => context.stopping.delete(key));
+    })().finally(() => {
+      context.stopping.delete(key);
+      if (context.closing || context.storageFault || typeof context.backend.stopTask !== 'function') return;
+      const source = context.accountState(ownerId).commands[taskId];
+      const stop = source?.taskControl?.state === 'stop_requested' ? source.taskControl.stopRequests.at(-1) : null;
+      if (!stop?.targets?.some(target => target.receiptId &&
+          (!target.ack || target.ack === 'unconfirmed') &&
+          context.accountState(ownerId).commands[target.commandId]?.state === 'accepted_by_dsh')) return;
+      // Recovery may run inside the persisted backoff window. Keep a wakeup
+      // even when that attempt was skipped or its acknowledgement was lost.
+      const timer = setTimeout(() => {
+        stopRetryTimers.delete(key);
+        driveTaskStop(ownerId, taskId).catch(() => {});
+      }, Math.max(1, retryAt - context.timestamp()));
+      timer.unref?.();
+      stopRetryTimers.set(key, timer);
+    });
     context.stopping.set(key, work);
     return work;
   }
@@ -329,6 +359,7 @@ export function createTaskOperations(context) {
     taskStopEvidence,
     taskDetail,
     driveTaskStop,
+    cancelTaskStopRetries,
     /** Managed-child only: bind generic tools to the original authorized receipt, with no new scheduler. */
     async trackToolExecution(input) {
       exactKeys(input, ['id', 'action', 'sessionId', 'turn', 'callId', 'rootCallId', 'receiptId', 'messageHash',

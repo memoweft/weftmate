@@ -4,9 +4,44 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
 import { createPersonalAccessService } from '../src/personal-access/index.mjs'
+import { createTaskOperations } from '../src/personal-access/tasks.mjs'
 
 const password = 'correct horse battery staple'
 const pause = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms))
+
+test('stop recovery wakes at persisted backoff and retries a lost acknowledgement without reads', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 })
+  const source: any = { commandId: 'task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session',
+    taskControl: { state: 'stop_requested', stopRequests: [{ requestId: 'stop', lastAttemptAt: new Date().toISOString(),
+      targets: [{ commandId: 'task', receiptId: 'receipt' }] }] } }
+  const account = { commands: { task: source }, sessions: { session: { origin: 'personal-remote' } } }
+  const stopping = new Map()
+  const calls: string[][] = []
+  const context: any = { closing: false, storageFault: false, stopping, timestamp: () => Date.now(),
+    accountState: () => account, serial: (work: any) => work(), mutate: (_owner: any, change: any) => change(account),
+    backend: { describeSession: async () => ({ sessionId: 'session', agentPreset: 'personal-remote' }),
+      stopTask: async ({ receiptIds }: any) => {
+        calls.push(receiptIds)
+        if (calls.length === 1) throw new Error('lost acknowledgement')
+        return { outcomes: [{ receiptId: 'receipt', status: 'queue_removed' }] }
+      } } }
+  const tasks = createTaskOperations(context)
+  await tasks.driveTaskStop('owner', 'task')
+  t.mock.timers.tick(999)
+  assert.equal(calls.length, 0)
+  t.mock.timers.tick(1)
+  await Promise.all(stopping.values())
+  assert.deepEqual(calls, [['receipt']])
+  t.mock.timers.tick(999)
+  assert.equal(calls.length, 1)
+  t.mock.timers.tick(1)
+  await Promise.all(stopping.values())
+  assert.deepEqual(calls, [['receipt'], ['receipt']])
+  assert.equal(source.taskControl.stopRequests[0].targets[0].ack, 'queue_removed')
+  t.mock.timers.tick(10_000)
+  assert.equal(calls.length, 2, 'a confirmed removal ends retries')
+  tasks.cancelTaskStopRetries()
+})
 
 async function request(origin: string, method: string, route: string, auth: Record<string, string>, body?: object) {
   const response = await fetch(`${origin}${route}`, { method,

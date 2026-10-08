@@ -12,6 +12,13 @@ const unavailable = new Set(exceptions.unavailableFiles.map(entry => entry.file)
 const knownFiles = new Set(exceptions.knownFailures.map(entry => entry.file));
 const platformTests = exceptions.platformTests.filter(entry => entry.platforms.includes(process.platform));
 const selected = files.filter(file => !unavailable.has(file) && (mode === 'required' || knownFiles.has(file)));
+if (mode === 'known' && selected.length === 0) {
+  // Without explicit files, node --test discovers the entire repository.
+  const message = '### Unit tests (known)\nNo known failures remain; no baseline tests to run.\n';
+  console.log(message);
+  if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, message);
+  process.exit(0);
+}
 const escape = value => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 // Node matches both leaf names and suite-qualified names. Only exact recorded
 // leaf names are exempt; another failing test in the same file still blocks CI.
@@ -42,7 +49,7 @@ if (mode === 'required') {
     ...exceptions.unavailableFiles.map(entry => `- File \`${entry.file}\`: ${entry.reason}`),
     ...exceptions.vendorTests.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`),
     ...platformTests.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`),
-    '', 'Known main failures run separately as a non-blocking step (11 from PR #20; 2 reproduced on main by CI-1):',
+    '', `Known main failures: ${exceptions.knownFailures.length} (any entries run separately as a non-blocking step):`,
     ...exceptions.knownFailures.map(entry => `- \`${entry.file}\` / ${entry.name}: ${entry.reason}`));
 }
 console.log(lines.join('\n'));
