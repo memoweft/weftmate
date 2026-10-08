@@ -179,6 +179,7 @@ test('memory view preserves chat draft and discards a successful response for an
   class Node {
     id: string
     children: Node[] = []
+    parentNode: Node | null = null
     listeners = new Map<string, Array<(event: any) => void>>()
     hidden = false
     disabled = false
@@ -195,8 +196,10 @@ test('memory view preserves chat draft and discards a successful response for an
     fire(name: string) {
       for (const fn of this.listeners.get(name) ?? []) fn({ currentTarget: this, target: this, preventDefault() {} })
     }
-    append(...nodes: Node[]) { this.children.push(...nodes) }
-    prepend(...nodes: Node[]) { this.children.unshift(...nodes) }
+    append(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.push(...nodes) }
+    prepend(...nodes: Node[]) { for (const node of nodes) node.parentNode = this; this.children.unshift(...nodes) }
+    before(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this); for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
+    after(...nodes: Node[]) { if (!this.parentNode) return; const at = this.parentNode.children.indexOf(this) + 1; for (const node of nodes) node.parentNode = this.parentNode; this.parentNode.children.splice(at, 0, ...nodes) }
     replaceChildren(...nodes: Node[]) { this.children = nodes }
     setAttribute() {}
     removeAttribute() {}
