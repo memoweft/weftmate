@@ -11,13 +11,12 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
         function field(parent, name, text, type = 'text') {
             const label = ui.element('label'), input = ui.element('input'); input.name = name; input.type = type;
             input.setAttribute('aria-label', text); input.required = type !== 'checkbox'; if (type === 'number') input.min = '1';
-            if (type === 'checkbox') label.append(input, ui.element('span', '', text));
+            if (type === 'checkbox') label.append(ui.element('span', '', text), input);
             else label.append(ui.element('span', '', text), input);
             parent.append(label); return input;
         }
         inputs.enabled = field(form, 'enabled', '每日自动备份', 'checkbox');
         globalThis.WeftSettingsControls.toggle(inputs.enabled);
-        inputs.enabled.parentNode.append(inputs.enabled);
         inputs.directory = field(form, 'directory', '备份目录');
         inputs.dailyDays = field(form, 'dailyDays', '最近保留天数', 'number');
         inputs.weeklyCopies = field(form, 'weeklyCopies', '每周保留份数', 'number');

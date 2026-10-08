@@ -54,6 +54,7 @@ class FakeElement {
     for (const listener of this.listeners.get(name) ?? []) listener(event)
   }
   append(...children: FakeElement[]) { for (const child of children) { child.parentNode = this; this.children.push(child) } }
+  prepend(...children: FakeElement[]) { for (const child of children) { child.remove(); child.parentNode = this } this.children.unshift(...children) }
   appendChild(child: FakeElement) { this.append(child); return child }
   replaceChildren(...children: FakeElement[]) { this.children = []; this._text = ''; this.append(...children) }
   insertBefore(child: FakeElement, before: FakeElement | null) {
@@ -296,7 +297,7 @@ function switchToConnect(app: ReturnType<typeof harness>) { app.nav.find((button
 async function openModels(app: ReturnType<typeof harness>) {
   await waitUntil(() => app.calls.some((call) => call.method === 'app.ready'), 'mobile app bootstrap did not finish')
   app.nav.find((button) => button.dataset.page === 'settings')!.fire('click')
-  findButton(app.get('page-content'), '对话模型')!.fire('click')
+  findButton(app.get('page-content'), '模型')!.fire('click')
   await waitUntil(() => app.calls.some((call) => call.method === 'models.account.list'), 'account models were not requested')
 }
 async function logoutAndLoginB(app: ReturnType<typeof harness>) {
