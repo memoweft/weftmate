@@ -1,0 +1,60 @@
+{
+  "comparison": "exact RGBA pixels; no masks",
+  "allIdentical": true,
+  "pairs": [
+    {
+      "flow": "appearance",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "artifact",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "completed",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "login",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "memory",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "running-approval-question",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "sent",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "sources",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    },
+    {
+      "flow": "steps",
+      "width": 1200,
+      "height": 800,
+      "changedPixels": 0
+    }
+  ]
+}

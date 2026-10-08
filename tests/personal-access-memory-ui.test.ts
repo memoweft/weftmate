@@ -1,3 +1,4 @@
+import { desktopFeatureSource, desktopHtml } from './helpers/desktop-ui-source.mjs'
 import assert from 'node:assert/strict'
 import { spawn } from 'node:child_process'
 import { existsSync } from 'node:fs'
@@ -164,7 +165,7 @@ test('isolated synthetic memory HTTP contract keeps owners, cursors and receipts
 })
 
 test('memory page keeps scripts external and uses only the candidate static publisher', async () => {
-  const html = await readFile(join(root, 'src', 'personal-access-ui', 'index.html'), 'utf8')
+  const html = desktopHtml()
   const publisher = await readFile(join(root, 'src', 'personal-access-ui', 'index.mjs'), 'utf8')
   assert.match(html, /id="rail-memory"/)
   assert.match(html, /id="memory-view"/)
@@ -174,7 +175,7 @@ test('memory page keeps scripts external and uses only the candidate static publ
 })
 
 test('memory view preserves chat draft and discards a successful response for another cookie owner', async () => {
-  const source = await readFile(join(root, 'src', 'personal-access-ui', 'app.js'), 'utf8')
+  const source = desktopFeatureSource()
   class Node {
     id: string
     children: Node[] = []

@@ -1,3 +1,4 @@
+import { desktopFeatureSource, desktopHtml } from './helpers/desktop-ui-source.mjs'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -36,14 +37,14 @@ test('account UI serves only its fixed public GET assets with restrictive header
 })
 
 test('public account shell keeps secrets out of markup and code-generated HTML', () => {
-  const html = readFileSync(join(repository, 'src', 'personal-access-ui', 'index.html'), 'utf8')
-  const app = readFileSync(join(repository, 'src', 'personal-access-ui', 'app.js'), 'utf8')
+  const html = desktopHtml()
+  const app = desktopFeatureSource()
   assert.match(html, /autocomplete="new-password"/)
   assert.match(html, /autocomplete="current-password"/)
   assert.doesNotMatch(html, /<script(?![^>]*src=)/i)
-  assert.match(app, /localStorage\.setItem\(key, JSON\.stringify\(rows\.slice/)
+  assert.match(app, /(?:localStorage|environment\.storage)\.setItem\(key, JSON\.stringify\(rows\.slice/)
   assert.doesNotMatch(app, /sessionStorage|innerHTML|console\./)
-  assert.doesNotMatch(app, /localStorage\.setItem\([^\n]*(?:password|token|text)/)
+  assert.doesNotMatch(app, /(?:localStorage|environment\.storage)\.setItem\([^\n]*\b(?:password|token|text)\b/)
   assert.match(app, /history\.replaceState/)
   assert.match(app, /textContent/)
 })

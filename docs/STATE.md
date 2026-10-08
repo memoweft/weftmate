@@ -10,7 +10,7 @@
 |---|---|---|
 | Codex · Windows-4 | IC-1 图标系统 | [PR #56](https://github.com/memoweft/weftmate/pull/56)（`wp/ic-1-icon-system`）：C4「天蓝」母版与45个确认功能图标、24个现有动作扩展统一至 design/icons/；单命令生成 Windows 多尺寸 ICO、系统主题单色任务栏 / 托盘、通知与安装器资产，桌面 / 手机 Web（网页界面）和 Android（安卓）图标已接入。Android 0.8.5/code18。桌面69/69、记忆页面3/3、界面3/3、手机及发布97/97、图标资产3/3、Android JVM（Java 虚拟机）27/27、构建与类型检查通过；真实 Electron（桌面程序框架）审批闭环与 MuMu 专属包1/1通过，测试包已卸载。[前后截图与边界](../tests/evidence/ic-1/README.md)；完整 CI（持续集成）门禁见 PR #56，待 Claude 审查 |
 | Codex · Windows | M0-6 现有模型入口、后台路由与系统状态 | [PR（合并请求）#33](https://github.com/memoweft/weftmate/pull/33) 方向调整完成：接入 D:\AI 的 8081 ModelSwitcher（模型切换代理），删除自起模型与参数；98,304 / 单槽 / 12 步与后台排队冒烟通过，M1-1b 完成后真实按钮重启通过；最终 CI（持续集成）见 PR 当前提交 |
-| Codex · Windows-3 | DS-1 设计令牌 | [PR #59](https://github.com/memoweft/weftmate/pull/59)（`wp/ds-1-design-tokens`）：唯一母版 design/tokens/ 与可重复生成脚本、桌面 / 手机 Web（网页界面）变量和 Android（安卓）资源 / 原生辅助常量接入；Apple（苹果客户端）交接产物在 design/tokens/generated/apple/，未改 apps/apple/。Android 0.8.6/code19；15 对截图逐像素一致、4,016 项样式值一致、相关交互及发布158/158、令牌2/2、Android JVM（Java 虚拟机）27/27、构建与类型检查通过。[截图与边界](../tests/evidence/ds-1/README.md)；完整 CI（持续集成）见本分支 PR（拉取请求），待 Claude 审查 |
+| Codex · Windows-3 | FE-1a 桌面界面与功能分层 | `wp/fe-1a-ui-layers`：共享功能层 src/ui-core/、桌面独立组件与集中 layout.js 组装完成；手机 FE-1b 的资产清单与传输 / 呈现接口已说明。纯逻辑15/15、桌面及记忆回归64/64、名称 / 角色交互3/3、类型检查与令牌检查通过；真实 Electron（桌面程序框架）同组流程及侧栏临时换位通过，9对截图零像素差异。[证据](../tests/evidence/fe-1a/README.md)；业务契约无变更，完整 CI（持续集成）以本分支 PR（拉取请求）最新提交为准，待 Claude 审查 |
 | Codex · Windows-2 | M2b 记忆形成准确 | WeftMate [PR #54](https://github.com/memoweft/weftmate/pull/54)、Core [PR #86](https://github.com/memoweft/memoweft/pull/86)：原话派生命题、专名/日期约束、具体错误重写一次与持久失败记录、JSON（结构化数据）模式、原话表达偏好召回已实现。真实Electron（桌面程序框架）最终Qwen0/3超时、MiMo3/3，未写错误姓名；[证据/费用](../tests/evidence/m2b/README.md)。相关测试与类型检查通过，完整CI（持续集成）见两PR；M2出口未达，M2-3纠正审批另包。Core由Claude squash（压缩合并）后须更新本仓CI固定提交 |
 | Codex · Mac | IC-2 Apple 图标 | [PR #57](https://github.com/memoweft/weftmate/pull/57)（`wp/ic-2-apple-icons`）：macOS / iOS / watchOS C4 AppIcon、iOS 深色 / 着色资产、69 个功能模板与 16 px 光学版本接入；旧 SF Symbols 与手绘品牌替换，Watch 仅审批 / 完成相关。三端 Debug、iOS 浅 / 深 2/2 + 审批回归 1/1、Watch 截图 1/1、图标相关 3/3 通过；[前后截图与边界](../apps/apple/Tests/Evidence/IC-2/README.md)。Mac AX 未授权，未申请；真机 / 主屏幕深色着色手动切换未验。客户端契约无变更；最终 CI 见 PR checks，待 Claude 审查 |
 | Codex · Cloud | S1c-Web 云账号登录与设备授权 | [PR #36](https://github.com/memoweft/weftmate/pull/36)（`wp/s1c-web-cloud-login`）：桌面/手机 Web Code+PKCE/不可导出 DPoP、绑定/解绑、一次性二维码与输入码、前台允许/拒绝已实现；真实 Chromium + file 邮件 + 隔离宿主闭环通过；Android 系统浏览器回调/Keystore/SPKI 已接线，GitHub runner 的 assembleDebug / JVM 单测通过；首轮五项 CI 全绿，最终门禁见 PR checks；待 Claude 审查 |
@@ -19,6 +19,8 @@
 已完成：文档/规则重置、M0-1b 清理与拆分、M0-2 容量与动态预算（#24）、H1 健康设置/摘要/隔离队列（#22）、S0/S1a/S1b（#27/#29/#30）、CI 分组与依赖审计。
 
 ## 最近一次验证
+
+- **FE-1a**：82/82 相关测试通过；真实主程序登录、发送 / 插话 / 排队、运行、三种审批决定、提问、步骤、成果与来源、记忆标签和外观均走通。只在测试响应里把输出按钮移到侧栏，同组交互继续通过。9对1200×800截图逐RGBA（红绿蓝与透明度通道）像素一致，无遮罩；仅固定合成时钟和悬停状态。零模型请求，合成账号与日志、隔离目录；手机接线交FE-1b，src/personal-memory/与业务契约未改。[复现与边界](../tests/evidence/fe-1a/README.md)。
 
 - **DS-1**：真实 Electron（桌面程序框架）审批闭环与浅 / 深 / 四种主题色 / 字号保存、390×844 手机 Web 的列表 / 运行 / 审批 / 步骤 / 成果 / 来源均通过，15 对截图零像素差异（仅固定实时秒数字样与悬停条件）。全部样式声明保留原值；Android code19 JVM 与构建通过。仅参数来源变更，动画本体和 Apple 接线留后续包；客户端业务契约无变更。详见 tests/evidence/ds-1/README.md。
 

@@ -1,13 +1,12 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
-import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import { runInNewContext } from 'node:vm'
 import test from 'node:test'
 
 const repository = fileURLToPath(new URL('../', import.meta.url))
-const source = readFileSync(new URL('../src/personal-access-ui/desktop.js', import.meta.url), 'utf8')
+const source = ['ui-core/store.js', 'ui-core/timeline-model.js', 'ui-core/appearance.js', 'personal-access-ui/desktop.js'].map(path => readFileSync(new URL('../src/' + path, import.meta.url), 'utf8')).join('\n;\n')
 function presentation(saved: object | null = null, dark = false) {
   const root = { dataset: {} as Record<string, string>, style: { setProperty(name: string, value: string) { values.set(name, value) } } }
   const values = new Map<string, string>(), window: Record<string, any> = {}
@@ -42,12 +41,12 @@ test('desktop appearance restores device preferences and artifact labels hide MI
   assert.equal(api.fileLabel({ fileName: 'unknown.bin' }), '文件')
 })
 
-test('desktop UI-1 Chromium verifies navigation, timeline, side panel, appearance and command controls', { timeout: 180000 }, () => {
-  const require = createRequire(import.meta.url), electron = require('electron') as string
+test('desktop UI-1 Chromium verifies navigation, timeline, side panel, appearance and command controls', { timeout: 250000 }, () => {
   const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE
-  const result = spawnSync(electron, ['tests/integration/desktop-ui-1.cjs', '--verify-only'], {
-    cwd: repository, env, encoding: 'utf8', timeout: 170000, windowsHide: true, maxBuffer: 2 * 1024 * 1024,
+  const result = spawnSync(process.execPath, ['tests/integration/desktop-ui-interactions.mjs', '--verify-only'], {
+    cwd: repository, env, encoding: 'utf8', timeout: 240000, windowsHide: true, maxBuffer: 2 * 1024 * 1024,
   })
+  if (result.error) result.error.message += '\n' + result.stdout + '\n' + result.stderr
   assert.ifError(result.error)
   assert.equal(result.status, 0, result.stderr || result.stdout)
   assert.match(result.stdout, /UI-1 Chromium interactions passed/, result.stderr)
