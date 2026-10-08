@@ -307,14 +307,14 @@ export class ModProjectRuntime {
     this.active.set(projectId, active)
     try {
       await active.started
-      const stored = await this.store.run(projectId, run.run_id)
-      if (stored?.status === 'starting') await this.store.saveRun(projectId, { ...stored, status: 'running', health: 'healthy' })
+      await this.store.updateRun(projectId, run.run_id, stored => stored?.status === 'starting' ? { ...stored, status: 'running', health: 'healthy' } : stored)
       await this.store.saveVersion(projectId, { ...version, status: 'active', activated_at: now(), activation_receipt: { project_id: projectId, version_id: selected, source_digest: version.source_digest, run_id: run.run_id, control_revision: controlRevision, health: 'healthy', created_at: now() } })
       const current = await this.store.project(projectId)
       if (current?.control_revision === controlRevision && current.desired_state === 'running') await this.store.saveProject({ ...current, health: 'healthy', updated_at: now() })
       return publicRun(await this.store.run(projectId, run.run_id))
     } catch (error) {
-      await this.#fail(project, version, run, 'start', error)
+      try { await this.#fail(project, version, run, 'start', error) }
+      finally { await this.#stopActive(active, 'start-failed', true) }
       throw error
     }
   }
@@ -333,11 +333,9 @@ export class ModProjectRuntime {
     project = { ...project, desired_state: 'stopped', control_revision: project.control_revision + 1, stop_latch: reason === 'user-stop' || project.stop_latch === true, stop_reason: reason, health: 'stopping', updated_at: now() }
     await this.store.saveProject(project)
     if (!currentRunId) return publicProject({ ...project, health: 'stopped' })
-    const run = await this.store.run(projectId, currentRunId)
-    if (run && !terminal.has(run.status)) await this.store.saveRun(projectId, { ...run, status: 'stopping', health: 'stopping' })
+    await this.store.updateRun(projectId, currentRunId, run => run && !terminal.has(run.status) ? { ...run, status: 'stopping', health: 'stopping' } : run)
     if (active) await this.#stopActive(active, 'user-stop')
-    const latest = await this.store.run(projectId, currentRunId)
-    if (latest && !terminal.has(latest.status)) await this.store.saveRun(projectId, { ...latest, status: 'stopped', health: 'stopped', ended_at: now() })
+    const latest = await this.store.updateRun(projectId, currentRunId, run => run && !terminal.has(run.status) ? { ...run, status: 'stopped', health: 'stopped', ended_at: now() } : run)
     const latestProject = await this.store.project(projectId)
     if (latestProject?.desired_state === 'stopped') await this.store.saveProject({ ...latestProject, health: latest?.status === 'interrupted' ? 'needs-review' : 'stopped', updated_at: now() })
     return publicRun(await this.store.run(projectId, currentRunId))
@@ -476,22 +474,46 @@ export class ModProjectRuntime {
     const source = this.store.source(project.project_id, version.version_id)
     const child = fork(runner, [join(source, version.manifest.entry), stateRoot, mode, JSON.stringify(version.manifest.behaviorChecks ?? null)], { stdio: ['ignore', 'ignore', 'ignore', 'ipc'], env: { PATH: process.env.PATH ?? '', NODE_OPTIONS: '' }, execArgv: ['--permission', `--allow-fs-read=${source}`, `--allow-fs-read=${runner}`] })
     let resolveStarted, rejectStarted, resolveValidated, rejectValidated
-    let resolveExited
-    const active = { child, project, version, run, stateRoot, closed: false, accepting: true, invocations: new Map(), stateQueue: Promise.resolve(), abort: new AbortController(),
+    let resolveExited, rejectExited
+    const active = { child, project, version, run, stateRoot, closed: false, accepting: true, invocations: new Map(), stateQueue: Promise.resolve(), lifecycleQueue: Promise.resolve(), abort: new AbortController(),
       started: new Promise((resolve, reject) => { resolveStarted = resolve; rejectStarted = reject }),
       validated: new Promise((resolve, reject) => { resolveValidated = resolve; rejectValidated = reject }),
-      exited: new Promise(resolve => { resolveExited = resolve }),
+      exited: new Promise((resolve, reject) => { resolveExited = resolve; rejectExited = reject }),
     }
     active.resolveExited = resolveExited
+    active.rejectExited = rejectExited
+    active.exited.catch(() => {})
     active.started.catch(() => {})
     active.validated.catch(() => {})
     active.resolveStarted = resolveStarted; active.rejectStarted = rejectStarted; active.resolveValidated = resolveValidated; active.rejectValidated = rejectValidated
-    child.on('message', message => void this.#childMessage(active, message))
-    child.on('exit', (code, signal) => void this.#childExit(active, code, signal))
+    child.on('message', message => {
+      if (message?.type === 'error') this.#lifecycle(active, () => this.#childMessage(active, message))
+      else this.#childMessage(active, message).catch(error => this.#eventError(active, error))
+    })
+    child.on('exit', (code, signal) => this.#lifecycle(active, () => this.#childExit(active, code, signal)))
+    child.on('error', error => this.#lifecycle(active, () => this.#childMessage(active, { type: 'error', phase: 'process', error: serial(error) })))
     if (mode === 'validate') {
-      active.timeout = setTimeout(() => { void this.#stopActive(active, 'validation-timeout'); active.rejectValidated(new Error('Mod validation timed out')) }, this.validationTimeoutMs)
+      active.timeout = setTimeout(() => {
+        this.#stopActive(active, 'validation-timeout').then(() => active.rejectValidated(new Error('Mod validation timed out')),
+          error => this.#eventError(active, error))
+      }, this.validationTimeoutMs)
     }
     return active
+  }
+  #lifecycle(active, operation) {
+    active.lifecycleQueue = active.lifecycleQueue.then(operation).catch(error => this.#eventError(active, error))
+  }
+  #eventError(active, error) {
+    // EventEmitter does not await promises. Surface persistence/IPC failures
+    // through the public lifecycle promises and stop admitting child work.
+    active.accepting = false
+    active.abort.abort(error)
+    active.rejectStarted(error)
+    active.rejectValidated(error)
+    active.rejectExited(error)
+    for (const call of active.invocations.values()) call.reject(error)
+    active.invocations.clear()
+    try { active.child.kill('SIGKILL') } catch { /* The child may already have exited. */ }
   }
   async #childMessage(active, message) {
     if (!message || typeof message !== 'object') return
@@ -501,8 +523,8 @@ export class ModProjectRuntime {
     if (message.type === 'error') {
       const error = Object.assign(new Error(message.error?.message ?? 'Mod child failed'), message.error ?? {})
       if (active.run.status === 'validating') { active.rejectValidated(error); return }
-      active.rejectStarted(error)
       await this.#fail(active.project, active.version, active.run, message.phase ?? 'child', error)
+      active.rejectStarted(error)
       return
     }
     if (message.type === 'stopped') return
@@ -553,29 +575,32 @@ export class ModProjectRuntime {
     clearTimeout(active.timeout)
     if (active.closed) return
     active.closed = true
-    active.resolveExited({ code, signal })
     if (this.active.get(active.project.project_id) === active) this.active.delete(active.project.project_id)
     // A child may be stopped while `start(api)` is awaiting a model bridge.
     // Do not leave the public start promise pending forever in that case.
-    active.rejectStarted(new Error(`Mod child exited before reporting healthy (${code ?? signal ?? 'unknown'})`))
     if (active.run.status === 'validating') {
       if (code !== 0) active.rejectValidated(new Error(`Mod validation child exited (${code ?? signal ?? 'unknown'})`))
+      active.rejectStarted(new Error(`Mod child exited before reporting healthy (${code ?? signal ?? 'unknown'})`))
+      active.resolveExited({ code, signal })
       return
     }
     const run = await this.store.run(active.project.project_id, active.run.run_id)
-    if (!run || terminal.has(run.status)) return
-    const project = await this.store.project(active.project.project_id)
-    if (project?.desired_state === 'stopped') {
-      await this.store.saveRun(active.project.project_id, active.forced
-        ? { ...run, status: 'interrupted', health: 'needs-review', ended_at: now(), error: { message: 'Stop timed out; final checkpoint may be unknown.' } }
-        : { ...run, status: 'stopped', health: 'stopped', ended_at: now() })
-      return
+    if (run && !terminal.has(run.status)) {
+      const project = await this.store.project(active.project.project_id)
+      if (project?.desired_state === 'stopped') {
+        await this.store.updateRun(active.project.project_id, active.run.run_id, current => !current || terminal.has(current.status) ? current : active.forced
+          ? { ...current, status: 'interrupted', health: 'needs-review', ended_at: now(), error: { message: 'Stop timed out; final checkpoint may be unknown.' } }
+          : { ...current, status: 'stopped', health: 'stopped', ended_at: now() })
+      } else {
+        const error = new Error(`Mod child exited unexpectedly (${code ?? signal ?? 'unknown'})`)
+        await this.#fail(active.project, active.version, active.run, 'exit', error)
+      }
     }
-    const error = new Error(`Mod child exited unexpectedly (${code ?? signal ?? 'unknown'})`)
-    await this.#fail(active.project, active.version, active.run, 'exit', error)
+    active.rejectStarted(new Error(`Mod child exited before reporting healthy (${code ?? signal ?? 'unknown'})`))
+    active.resolveExited({ code, signal })
   }
   async #stopActive(active, reason, immediate = false) {
-    if (active.closed) return
+    if (active.closed) return active.exited
     active.closing = true
     active.accepting = false
     active.stopping = true
@@ -600,8 +625,9 @@ export class ModProjectRuntime {
     if (current && terminal.has(current.status)) return
     const stopIntent = await this.store.project(project.project_id)
     if (stopIntent?.desired_state === 'stopped' && stopIntent.control_revision !== run.control_revision) return
-    const finalRun = { ...(current ?? run), status: 'failed', health: 'failed', ended_at: now(), error: serial(error) }
-    await this.store.saveRun(project.project_id, finalRun)
+    const finalRun = await this.store.updateRun(project.project_id, run.run_id, stored => stored && terminal.has(stored.status)
+      ? stored : { ...(stored ?? run), status: 'failed', health: 'failed', ended_at: now(), error: serial(error) })
+    if (finalRun.status !== 'failed') return
     const currentProject = await this.store.project(project.project_id)
     if (currentProject?.control_revision === run.control_revision) await this.store.saveProject({ ...currentProject, desired_state: 'stopped', stop_reason: 'failed', health: 'failed', updated_at: now() })
     const fingerprint = failureDigest(phase, error)
