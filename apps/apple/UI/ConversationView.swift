@@ -84,6 +84,7 @@ struct ConversationView: View {
     @State private var sendIntent: MessageIntent = .steer
     @State private var showingUsage = false
     @State private var showingSessionActions = false
+    @State private var deleteAfterActions = false
     @State private var importingAttachments = false
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var pendingAdoptionProfile: String?
@@ -284,13 +285,16 @@ struct ConversationView: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
                 Button { showingSessionActions.toggle() } label: { WeftIcon("more") }.accessibilityLabel("对话菜单")
-                    .popover(isPresented: $showingSessionActions) {
+                    .sheet(isPresented: $showingSessionActions, onDismiss: {
+                        if deleteAfterActions { deleteAfterActions = false; model.askToDelete(conversation) }
+                    }) {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p16) {
-                            SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false })
+                            SessionActions(app: model, conversation: conversation, onSelect: { showingSessionActions = false },
+                                onDelete: { deleteAfterActions = true; showingSessionActions = false })
                             Button("对话用量") { showingSessionActions = false; showingUsage = true }
                         }.font(AppleTokens.Fonts.body).padding(AppleTokens.Space.p18)
                             #if os(iOS)
-                            .presentationCompactAdaptation(.popover)
+                            .presentationDetents([.medium])
                             #endif
                     }
             }

@@ -125,9 +125,10 @@ final class A5ParityUITests: XCTestCase {
             try tap(app,"已归档");try row(app,ids["deletion"] as! String)
             XCTAssertFalse(app.buttons["sendButton"].isEnabled);try tap(app,"恢复对话")
             try tap(app,"对话菜单");try tap(app,"删除对话")
+            try expect(app.switches["forgetConversationMemories"])
             XCTAssertEqual(app.switches["forgetConversationMemories"].value as? String,"0");try tap(app,"confirmDeleteConversation")
             try back(app);try tap(app,"返回最近对话");try row(app,ids["forget"] as! String);try tap(app,"对话菜单");try tap(app,"删除对话")
-            app.switches["forgetConversationMemories"].tap();try tap(app,"confirmDeleteConversation")
+            try expect(app.switches["forgetConversationMemories"]);app.switches["forgetConversationMemories"].tap();try tap(app,"confirmDeleteConversation")
             let final=try await get("/a5/report");XCTAssertEqual((final["memoryDeletes"] as! [[String:Any]]).count,1)
             let exists=final["workspaceExists"] as! [String:Bool];XCTAssertEqual(exists["deletion"],false);XCTAssertEqual(exists["forget"],false)
         }
