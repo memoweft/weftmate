@@ -355,15 +355,15 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 
 | 方法与路径 | 请求 | 响应 / 权限 |
 |---|---|---|
-| GET `/usage` | 可选 `month=YYYY-MM`、`sessionId`；月份默认当前 UTC（协调世界时）月 | 200 `UsageSummary`；`sessions:read`，只读取当前账号；对话不属于账号返回 404 |
+| GET `/usage` | 可选 `month=YYYY-MM`、`sessionId`、`timeZone`（IANA〔互联网号码分配机构〕时区名，例如 `Asia/Shanghai`）；缺省时区为宿主系统时区，月份默认该时区当前月；非法时区 / 月份返回 400 `INVALID_REQUEST` | 200 `UsageSummary`；`sessions:read`，只读取当前账号；对话不属于账号返回 404 |
 | GET `/settings/usage` | 无查询 | 200 `UsageSettings`；`sessions:read` |
-| PATCH `/settings/usage` | `{monthlyLimit?:number|null,temporaryLimit?:number|null,profileId?:string,price?:Price|null}` | 200 `UsageSettings`；`account:manage`，Cookie（会话凭据）与 CSRF（跨站请求伪造防护）；金额为有限非负数，非法请求 400 |
+| PATCH `/settings/usage` | `{monthlyLimit?:number|null,temporaryLimit?:number|null,profileId?:string,price?:Price|null,timeZone?:string}` | 200 `UsageSettings`；`account:manage`，Cookie（会话凭据）与 CSRF（跨站请求伪造防护）；金额为有限非负数，非法请求 400 |
 
 `Price = {cachedInput,input,output}`，三个字段单位均为人民币元 / 百万 token（令牌）。`profileId` 与 `price` 一起提交；模型必须为当前账号可见，否则 409 `MODEL_UNAVAILABLE`。`price:null` 恢复预设。官方 `mimo-v2.6-flash` 预设缓存输入 0.02、未缓存输入 1、输出 2；本地 / 局域网模型默认三项 0，并在界面标「本地」。其他云模型未设单价时为 `null`，费用未知，不能当作免费。每个请求保存发出时的单价快照，之后改价不重算历史。价格来源：[MiMo 官方价格](https://mimo.mi.com/docs/pricing)。
 
-`UsageSettings = {monthlyLimit,temporaryLimit,temporaryMonth,prices,canManage,models}`；`models:[{id,name,model,local,price}]` 只含当前账号可见模型，不含地址或密钥。`monthlyLimit:null` 默认不限，0 暂停后续云端请求；`temporaryLimit` 为仅本月覆盖值，`null` 清除覆盖，UTC 下月自动失效。每个账号独立设置。
+`UsageSettings = {monthlyLimit,temporaryLimit,temporaryMonth,prices,timeZone,canManage,models}`；`models:[{id,name,model,local,price}]` 只含当前账号可见模型，不含地址或密钥。`monthlyLimit:null` 默认不限，0 暂停后续云端请求；`temporaryLimit` 为仅本月覆盖值，`null` 清除覆盖，按账号保存的 `timeZone` 到下月自动失效。`timeZone` 接受有效 IANA 时区名，缺省（含旧账本）用宿主系统时区；有管理权限的客户端打开用量设置或保存设置时上报所在时区，保存到账号，多个设备以最后上报为准。临时上限的 `temporaryMonth` 在设置时按更新后的账号时区确定；仅更新时区不会延长已保存的临时月份。查询时区只影响统计，不修改账号设置。每个账号独立设置。
 
-`UsageSummary = {month,timeZone:"UTC",sessionId,total,days,sessions,models,budget}`。`total` 与各分组均含 `{requests,unknownRequests,unpricedRequests,inputTokens,cachedInputTokens,outputTokens,cost}`。输入包含缓存命中，`cachedInputTokens` 是其子集；输出包含服务商计入输出的推理用量。`days:[{day:"YYYY-MM-DD",...统计}]` 按日期排列并包含没有请求的零值日；`sessions:[{sessionId,...统计}]`、`models:[{profileId,...统计}]` 按费用降序，费用相同时按请求数降序。`sessionId:null` 表示未绑定对话的后台或手机独立代理请求；标题 / 模型名称从现有目录读取，不复制进用量账本。带 `sessionId` 时仅过滤统计，但 `budget` 仍按全账号本月总费用判断。
+`UsageSummary = {month,timeZone,sessionId,total,days,sessions,models,budget}`。`timeZone` 返回实际使用的规范时区名。请求记录仍保存 UTC（协调世界时）时间戳，按查询时区的当地日历日期归入月 / 日；夏令时跳时 / 重复小时使用该时区在请求发生时的偏移，不假设每天固定 24 小时。`total` 与各分组均含 `{requests,unknownRequests,unpricedRequests,inputTokens,cachedInputTokens,outputTokens,cost}`。输入包含缓存命中，`cachedInputTokens` 是其子集；输出包含服务商计入输出的推理用量。`days:[{day:"YYYY-MM-DD",...统计}]` 按日期排列并包含没有请求的零值日；`sessions:[{sessionId,...统计}]`、`models:[{profileId,...统计}]` 按费用降序，费用相同时按请求数降序。`sessionId:null` 表示未绑定对话的后台或手机独立代理请求；标题 / 模型名称从现有目录读取，不复制进用量账本。带 `sessionId` 时仅过滤统计，但 `budget` 始终按账号保存时区的当前月全账号总费用判断，包括查询历史月份或其他时区；与请求前 80% / 100% 判定一致。
 
 `budget = {monthlyLimit,effectiveLimit,temporaryLimit,state:"unlimited"|"ok"|"warning"|"blocked"}`。已知费用达到有效上限 80% 提示；达到 100% 在每次后续云请求发出前拒绝，包括对话、工具循环、子任务、标题、记忆后台和手机模型代理；HTTP（网页传输协议）返回 **402 `USAGE_LIMIT_REACHED`**，界面说明「本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型」。已发出的请求不会中途取消，因此正在运行 / 并发的请求可能跨过上限；后续请求被拒。本地目的地不受限，即使用户给本地模型填了非零单价仍可请求。未报告用量 / 未定价的费用不估算，无法据此保证实际供应商账单上限。
 
