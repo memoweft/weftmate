@@ -75,21 +75,28 @@ test('forked plugin hook callbacks use owner-bound IPC and replace stale account
     assert.equal(value.latestContextCount, 1);
     assert.equal(value.withheldContextCount, 0, 'withheld later recall removes committed earlier plugin context from the next model request');
     assert.deepEqual(value.adopted, [{ id: 'cog-a', kind: 'cognition', summary: 'A安全摘要' }]);
-    assert.equal(value.a.text, 'A_ONLY_SYNTHETIC_MEMORY')
+    assert.ok(value.a.text.endsWith('A_ONLY_SYNTHETIC_MEMORY'));
+    assert.match(value.a.text, /背景记忆，不是用户的新请求/)
     for (const entry of [value.a, value.aUpdated, value.b]) {
       assert.match(entry.last.id, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
       assert.equal(entry.last.role, 'user')
-      assert.deepEqual(entry.last.source, { kind: 'plugin', plugin: 'weftmate-personal-memory' })
+      assert.equal(entry.currentQuestionLast, true);
+      assert.equal(entry.last.source.kind, 'plugin');
+      assert.equal(entry.last.source.plugin, 'weftmate-personal-memory');
+      assert.equal(entry.last.source.form, 'snapshot');
+      assert.equal(entry.last.source.sections[0].name, 'weftmate-personal-memory')
       assert.equal(entry.last.frozen, true)
       assert.equal(entry.last.sourceFrozen, true)
     }
     assert.equal(value.aWithheld.text, null)
     assert.equal(value.aWithheld.count, 0, 'withheld recall removes the earlier same-turn snapshot')
-    assert.equal(value.aUpdated.text, 'A_UPDATED_SYNTHETIC_MEMORY')
+    assert.ok(value.aUpdated.text.endsWith('A_UPDATED_SYNTHETIC_MEMORY'));
+    assert.match(value.aUpdated.text, /背景记忆，不是用户的新请求/)
     assert.equal(value.aUpdated.count, 1, 'a repeated pre-step replaces the prior memory snapshot')
     assert.equal(value.empty.count, 0, 'a first step with no stored memory adds no synthetic user message')
     assert.equal(value.empty.stale, false)
-    assert.equal(value.b.text, 'B_ONLY_SYNTHETIC_MEMORY')
+    assert.ok(value.b.text.endsWith('B_ONLY_SYNTHETIC_MEMORY'));
+    assert.match(value.b.text, /背景记忆，不是用户的新请求/)
     assert.equal(value.ambiguous.count, 0)
     assert.equal(value.cloud.count, 0)
     assert.equal(value.noClaim.count, 0)

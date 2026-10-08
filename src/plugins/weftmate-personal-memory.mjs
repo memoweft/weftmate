@@ -151,6 +151,18 @@ export function stripPreviousPersonalMemoryMessages(messages) {
   return messages.filter((message) => !(message?.source?.kind === 'plugin' && message.source.plugin === name));
 }
 
+/** Keep DSH context messages before the latest real input, including tool follow-ups. */
+export function backgroundBeforeUser(messages, additions = []) {
+  const index = messages.findLastIndex(message => message?.source?.kind === 'user');
+  if (index < 0) return [...messages, ...additions];
+  const tail = messages.slice(index + 1);
+  return [...messages.slice(0, index),
+    ...tail.filter(message => message?.source?.kind === 'plugin'), ...additions,
+    messages[index], ...tail.filter(message => message?.source?.kind !== 'plugin')];
+}
+
+const BACKGROUND_NOTE = '【背景记忆，不是用户的新请求】以下是供当前回答参考的历史记忆。只在相关时采用，不要把旧原话当成当前问题或再次确认旧偏好；请回答后面的当前用户请求。';
+
 export function apply(ctx) {
   if (process.env.WEFTMATE_PERSONAL_MEMORY_ENABLED !== '1') return;
   const bridge = new HostMemoryBridge();
@@ -191,12 +203,15 @@ export function apply(ctx) {
     if (text === null) return clearedDecision;
     const { createUserMessage } = await import('@deepseek-ai/dsh-llm/message');
     diagnostic('prestep-factory-ready');
+    const background = `${BACKGROUND_NOTE}\n\n${text}`;
     const memoryMessage = createUserMessage({
-      content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: name },
+      content: [{ type: 'text', text: background }],
+      source: { kind: 'plugin', plugin: name, form: 'snapshot',
+        sections: [{ name: 'weftmate-personal-memory', text: background }] },
     });
     session[Symbol.for('weftmate.memoryRecall')].messageId = memoryMessage.id;
     diagnostic('prestep-message-created');
-    return { ...clearedDecision, messages: [...messages, memoryMessage] };
+    return { ...clearedDecision, messages: backgroundBeforeUser(messages, [memoryMessage]) };
   }, { prepend: true });
   ctx.on('agent/request-error', (payload, next) => {
     diagnostic('model-request-error', payload?.failure);
@@ -207,7 +222,7 @@ export function apply(ctx) {
     const deriveMessages = session.deriveMessages?.bind(session);
     if (deriveMessages) session.deriveMessages = () => {
       const current = session[Symbol.for('weftmate.memoryRecall')]?.messageId;
-      return deriveMessages().filter(message => message?.source?.plugin !== name || message.id === current);
+      return backgroundBeforeUser(deriveMessages().filter(message => message?.source?.plugin !== name || message.id === current));
     };
     const append = session.append.bind(session);
     session.append = (type, data, ...rest) => {
