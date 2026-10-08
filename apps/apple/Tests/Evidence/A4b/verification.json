@@ -1,0 +1,60 @@
+{
+  "workPackage": "A4b",
+  "data": "synthetic loopback account, isolated app namespace, existing isolated simulator",
+  "swift": {
+    "passed": 20,
+    "failed": 0,
+    "filter": "ConversationResourcesTests|timeline|MemorySDK"
+  },
+  "stateChecks": {
+    "AppleTimelineStateChecks": "passed",
+    "resourceTabs": [
+      "deduplicate",
+      "independent close",
+      "collapse and reopen",
+      "last tab closes panel",
+      "account isolation"
+    ]
+  },
+  "builds": {
+    "macOS Debug": "passed",
+    "iOS Simulator Debug": "passed",
+    "watchOS Simulator Debug": "passed"
+  },
+  "iosXCTest": {
+    "passed": 2,
+    "failed": 0,
+    "tests": [
+      "testMemoryOriginalUnavailableAndReturnToDraft",
+      "testOutputGroupsPagedUsesOnDemandRawAndArtifactEntry"
+    ],
+    "resultBundle": "Build/A4b-UI-Final.xcresult"
+  },
+  "environment": {
+    "Xcode": "26.3",
+    "Mac architecture": "Intel",
+    "iOS Simulator": "26.3.1",
+    "watchOS Simulator": "26.2"
+  },
+  "macAutomation": {
+    "AXIsProcessTrusted": false,
+    "permissionsRequested": false,
+    "interactiveUIAcceptance": "not verified"
+  },
+  "limitations": [
+    "synthetic host and memory source data",
+    "no real device or daily host acceptance",
+    "no Watch UI changes",
+    "full tests delegated to PR CI"
+  ],
+  "screenshots": [
+    "ios-01-memory-summaries.png",
+    "ios-02-memory-original.png",
+    "ios-03-memory-unavailable.png",
+    "ios-04-return-position-draft.png",
+    "ios-05-output-source-list.png",
+    "ios-06-two-readable-uses.png",
+    "ios-07-raw-content.png",
+    "ios-08-artifact-shared-panel.png"
+  ]
+}

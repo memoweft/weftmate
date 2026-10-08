@@ -7,12 +7,14 @@ struct ConversationTimelineView: View {
     let sessionID: String
     let openAttachment: (ConversationAttachmentReference) -> Void
     let openArtifact: (TimelineEvent) -> Void
+    let openMemory: (TimelineEvent) -> Void
+    let openSources: () -> Void
     @StateObject private var interactions: TaskInteractionModel
     @StateObject private var commands: TaskDirectoryModel
     @Environment(\.scenePhase) private var scenePhase
     init(appModel: AppleAppModel, conversation: ConversationSummary, sessionID: String,
-         openAttachment: @escaping (ConversationAttachmentReference) -> Void, openArtifact: @escaping (TimelineEvent) -> Void) {
-        self.appModel = appModel; self.conversation = conversation; self.sessionID = sessionID; self.openAttachment = openAttachment; self.openArtifact = openArtifact
+         openAttachment: @escaping (ConversationAttachmentReference) -> Void, openArtifact: @escaping (TimelineEvent) -> Void, openMemory: @escaping (TimelineEvent) -> Void, openSources: @escaping () -> Void) {
+        self.appModel = appModel; self.conversation = conversation; self.sessionID = sessionID; self.openAttachment = openAttachment; self.openArtifact = openArtifact; self.openMemory = openMemory; self.openSources = openSources
         _interactions = StateObject(wrappedValue: TaskInteractionModel(client: appModel.assistantClient, account: appModel.session,
             epoch: appModel.accountEpoch, stateDirectory: appModel.assistantStateDirectory,
             currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() }, currentSession: { [weak appModel] in appModel?.session }))
@@ -27,11 +29,18 @@ struct ConversationTimelineView: View {
         ForEach(TimelineProjection.entries(appModel.timeline.events)) { entry in
             VStack(alignment: .leading, spacing: 12) {
                 if !entry.steps.isEmpty {
-                    TimelineExecutionBlock(client: appModel.assistantClient, sessionID: sessionID, entry: entry)
+                    TimelineExecutionBlock(client: appModel.assistantClient, sessionID: sessionID, entry: entry, openSources: openSources)
                         .id(entry.id + appModel.accountEpoch.uuidString)
                 } else if entry.event.type.hasSuffix(".message") {
                     if let message = appModel.messages.first(where: { $0.id == (appModel.timelineMessageIDs[entry.seq] ?? "host|\(sessionID)|\(entry.seq)") }) {
                         MessageView(model: appModel, message: message, openAttachment: openAttachment)
+                    }
+                    let memories = UsedMemory.references(in: entry.event)
+                    if !memories.isEmpty {
+                        Button { openMemory(entry.event) } label: {
+                            Label("用到了 \(memories.count) 条记忆", systemImage: "brain")
+                                .font(.caption).foregroundStyle(Weave.muted)
+                        }.buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
                     }
                     if appModel.taskControlSessions.contains(sessionID), let receipt = entry.event.data["receiptId"]?.string,
                        let command = commands.rootCommands.first(where: { $0.receiptId == receipt }) {
@@ -76,6 +85,7 @@ struct TimelineExecutionBlock: View {
     let client: PersonalClient
     let sessionID: String
     let entry: TimelineEntry
+    let openSources: () -> Void
     @State private var expanded = false
     @State private var initialized = false
     #if os(macOS)
@@ -95,6 +105,7 @@ struct TimelineExecutionBlock: View {
             }.buttonStyle(.plain).accessibilityIdentifier("executionBlock.\(entry.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
             if expanded {
+                Button("查看来源") { openSources() }.font(.caption).accessibilityIdentifier("executionSources.\(entry.seq)")
                 ForEach(entry.steps) { step in
                     TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running)
                 }.transition(.opacity.combined(with: .move(edge: .top)))
