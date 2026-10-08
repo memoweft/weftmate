@@ -144,7 +144,8 @@ test('trusted-device delivery uses an external sender anchor and rejects another
   const make = async (deviceId: string, expiry = '120s') => ({ hostId: 'host-test', publicJwk: anchor,
     trustToken: await new jose.SignJWT({ hostId: 'host-test', deviceId, jkt, tlsSpki: pin, publicJwk: anchor, origin: 'https://host.example.com' })
       .setProtectedHeader({ alg: 'ES256', typ: 'wm-host-trust+jwt' }).setIssuer('host-test').setSubject('account-test').setAudience(jkt)
-      .setJti(randomBytes(16).toString('hex')).setIssuedAt().setExpirationTime(expiry).sign(host.privateKey) })
+      .setJti(randomBytes(16).toString('hex')).setIssuedAt(Math.floor(f.environment.now() / 1000))
+      .setExpirationTime(Math.floor(f.environment.now() / 1000) + (expiry === '-1s' ? -1 : 120)).sign(host.privateKey) })
   await assert.rejects(core.cloudImportTrust(core.cloudTrustMaterial(await make('another-device'))), (error: any) => error.code === 'HOST_TRUST_INVALID')
   const expired = await make(key.deviceId, '-1s'); await assert.rejects(core.cloudImportTrust(core.cloudTrustMaterial(expired)))
   const wrongAnchor = await jose.generateKeyPair('ES256', { extractable: true }), valid = await make(key.deviceId)
