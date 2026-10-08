@@ -1,12 +1,28 @@
 /* Shared resources state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
+    function deduplicateOutputs(artifacts) {
+        const groups = new Map(), seen = new Set();
+        for (const artifact of artifacts) {
+            if (!artifact?.artifactId || seen.has(artifact.artifactId)) continue;
+            seen.add(artifact.artifactId);
+            const location = artifact.filePath || artifact.relativePath || artifact.path;
+            const key = location ? location.replace(/\\/g, '/') : `${artifact.sessionId || ''}/${artifact.fileName || artifact.artifactId}`;
+            if (!groups.has(key)) groups.set(key, []);
+            groups.get(key).push(artifact);
+        }
+        return [...groups.values()].map(versions => {
+            versions.reverse().sort((a, b) => (Date.parse(b.createdAt || b.at) || 0) - (Date.parse(a.createdAt || a.at) || 0));
+            const artifact = versions[0];
+            return { key: `artifact:${artifact.artifactId}`, kind: 'file', name: artifact.fileName || '成果文件', artifact, versions: versions.slice(1) };
+        });
+    }
     function timelineEventsForContext(context = core.conversationTaskContext()) { return context.source === 'phone' ? core.state.phoneHostEvents.get(context.conversationId) || [] : [...core.state.historyEvents.values()]; }
     async function loadConversationResources() {
         const context = core.conversationTaskContext(), key = JSON.stringify(context);
         if (!core.conversationTaskCurrent(context) || !context.sessionId)
             return { outputs: [], sources: [] };
         if (core.resourceCache?.key !== key)
-            core.resourceCache = { key, sources: new Map(), cursor: -1, outputs: [] };
+            core.resourceCache = { key, sources: new Map(), cursor: -1, outputs: [], versions: new Map() };
         const cache = core.resourceCache;
         if (cache.pending)
             return cache.pending;
@@ -16,7 +32,13 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
                 const page = await core.accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/resources?afterSeq=${cache.cursor}`);
                 if (!core.conversationTaskCurrent(context) || core.resourceCache !== cache)
                     throw { code: 'STALE_CONTEXT' };
-                cache.outputs = page.outputs.map(artifact => ({ key: `artifact:${artifact.artifactId}`, kind: 'file', name: artifact.fileName || '成果文件', artifact }));
+                const taskArtifacts = [...core.conversationTasks.entries.values()].filter(entry => entry.sessionId === context.sessionId).flatMap(entry => entry.payload?.artifacts || []);
+                const eventArtifacts = core.timelineEventsForContext(context).filter(event => event.type === 'artifact.created').flatMap(event =>
+                    (event.data?.artifacts || [event.data]).map(artifact => ({ ...artifact, at: event.at, sessionId: context.sessionId })));
+                for (const artifact of [...eventArtifacts, ...taskArtifacts, ...page.outputs]) {
+                    if (artifact?.artifactId) cache.versions.set(artifact.artifactId, { ...cache.versions.get(artifact.artifactId), ...artifact });
+                }
+                cache.outputs = core.deduplicateOutputs([...cache.versions.values()]);
                 for (const source of page.sources) {
                     const prior = cache.sources.get(source.key) || { ...source, uses: [] };
                     const uses = new Map(prior.uses.map(use => [use.callId || use.id, use]));
@@ -53,6 +75,8 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             if (!Array.isArray(payload.commands))
                 throw { code: 'REQUEST_FAILED' };
             core.state.tasks = append ? [...core.state.tasks, ...payload.commands.filter((item) => !core.state.tasks.some((previous) => previous.commandId === item.commandId))] : payload.commands;
+            for (const command of core.state.tasks)
+                if (command.kind === 'session.message' && command.rootTaskId) core.conversationTasks.entries.delete(command.commandId);
             core.state.nextBefore = typeof payload.nextBefore === 'string' ? payload.nextBefore : null;
             effects.renderConversationTasks();
             for (const marker of core.readMarkers()) {
@@ -125,6 +149,10 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             await core.lookupRequest(marker);
     }
     async function submitCommand(kind, fields = {}, sessionId = null, fixedRequestId = null) {
+        if (kind === 'session.message') {
+            const { mode, ...rest } = fields;
+            fields = { ...rest, intent: fields.intent || mode || 'steer' };
+        }
         if (!core.state.online || !core.state.hostId) {
             core.setOnline(false);
             return;
@@ -179,5 +207,5 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             effects.updateAvailability();
         }
     }
-    return { timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand };
+    return { deduplicateOutputs, timelineEventsForContext, loadConversationResources, refreshTasks, updateFromCommand, lookupRequest, restoreRequests, submitCommand };
 };
