@@ -42,7 +42,7 @@ if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.schedules
         mountSchedules() {
             const target = ui.element('section', 'settings-schedules'); target.id = 'settings-schedules';
             globalThis.WeftUiLayout.mountSchedules(target);
-            renderSchedules = WeftSchedulesView(core, target, { autoLoad: false, current: () => !ui.byId('account-view').hidden && !target.closest('.settings-category').hidden,
+            renderSchedules = globalThis.WeftSchedulesView(core, target, { autoLoad: false, current: () => !ui.byId('account-view').hidden && !target.closest('.settings-category').hidden,
                 openConversation: async sessionId => { await core.enterAssistant(); await core.selectSession(sessionId); } });
         },
         showSettingsSchedules() { void renderSchedules(); },
