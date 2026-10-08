@@ -70,8 +70,10 @@
       option.setAttribute('aria-selected', String(selected))
       option.tabIndex = selected ? 0 : -1
       const icon = element('span', 'model-option-icon')
+      icon.append(window.WeftIcons.create('model', 16))
       icon.setAttribute('aria-hidden', 'true')
       const check = element('span', 'model-option-check')
+      check.append(window.WeftIcons.create('allow', 16))
       check.setAttribute('aria-hidden', 'true')
       option.append(icon, element('span', 'model-option-name', model.name), check)
       option.addEventListener('click', () => {
@@ -2237,6 +2239,7 @@
     send.setAttribute('aria-label', running ? '停止' : '发送')
     send.title = running ? '停止 · Esc' : '发送 · Enter'
     if (running) { send.textContent = '停止'; send.disabled = !state.online || state.cancelSubmitting }
+    send.replaceChildren(window.WeftIcons.create(running ? 'stop' : 'send', 20));
     const hint = byId('model-hint')
     if (phoneChat && bound) hint.textContent = state.phoneSendNotice || ''
     else if (phoneChat) hint.textContent = pendingPhone && !pendingHere
@@ -2645,7 +2648,8 @@
       button.setAttribute('aria-checked', String(mode === currentApprovalMode))
       const copy = element('span', 'approval-mode-copy')
       copy.append(element('strong', '', label), element('span', 'muted', description))
-      button.append(element('span', 'approval-mode-check', mode === currentApprovalMode ? '✓' : ''), copy, element('kbd', '', String(index + 1)))
+      const check = element('span', 'approval-mode-check'); if (mode === currentApprovalMode) check.append(window.WeftIcons.create('allow', 16));
+      button.append(check, copy, element('kbd', '', String(index + 1)))
       button.addEventListener('click', () => { void saveApprovalMode(mode) })
       menu.append(button)
     })
@@ -3012,7 +3016,8 @@
       card.dataset.sourceReceiptId = row.sourceReceiptId
       card.dataset.signature = signature; card.dataset.scope = scope
       card.replaceChildren()
-      card.append(element('strong', 'conversation-task-title', `${executionName(row)} · ${row.status === 'pending' ? '需要你批准' : '审批回执'}`))
+      const heading = element('strong', 'conversation-task-title', `${executionName(row)} · ${row.status === 'pending' ? '需要你批准' : '审批回执'}`)
+      heading.prepend(window.WeftIcons.create('approval', 16)); card.append(heading)
       card.classList.toggle('is-resolved', row.status !== 'pending')
       const reason = element('p', 'conversation-approval-reason', row.reason.replace(/^\[weftmate:[a-z,\-]+\]\s*/, '').trim() || '执行端请求你批准这次操作。'); reason.hidden = row.status !== 'pending'; card.append(reason)
       const notice = entry.notice || (sourceNotice ? '原任务暂时无法核对，请重新核对答复。' : '')
@@ -3024,6 +3029,7 @@
       if (row.status === 'pending') for (const action of ['allowed-once', ...(row.riskCategories?.length ? ['allowed-always'] : []), 'rejected']) {
         const outcome = action === 'allowed-always' ? 'allowed-once' : action
         const button = element('button', `button ${action === 'allowed-once' ? 'primary' : 'secondary'} small`, action === 'allowed-once' ? '允许一次' : action === 'allowed-always' ? '总是允许此类' : '拒绝')
+        button.prepend(window.WeftIcons.create(action === 'rejected' ? 'deny' : 'allow', 16))
         button.type = 'button'; button.dataset.conversationApprovalAction = action
         button.disabled = !!operation || !entry.authoritative || !!notice || !!marker && (marker.outcome !== outcome ||
           (marker.scope ?? 'once') !== (action === 'allowed-always' ? 'conversation-category' : 'once'))
@@ -4096,7 +4102,7 @@
     dialog.setAttribute('aria-modal', 'true')
     dialog.setAttribute('aria-label', '图片预览')
     const image = element('img')
-    const close = element('button', 'phone-image-close', '×')
+    const close = element('button', 'phone-image-close'); close.append(window.WeftIcons.create('deny', 20))
     close.type = 'button'
     close.setAttribute('aria-label', '关闭图片预览')
     close.addEventListener('click', closePhoneImagePreview)

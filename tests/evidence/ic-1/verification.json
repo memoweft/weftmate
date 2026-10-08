@@ -1,0 +1,12 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "syntheticAccount": true,
+  "paidModelRequests": 0,
+  "icons": true,
+  "approvalInteraction": true,
+  "nativeThemes": [
+    "light",
+    "dark"
+  ]
+}

@@ -1,5 +1,7 @@
 # WeftMate Android 客户端
 
+IC-1 当前壳为 **0.8.5 / code18**：C4 自适应启动图标、单色主题 / 通知图标与统一功能图标已接入；母版在 [design/icons](../../design/icons/README.md)，用 `npm run icons:generate` 生成。没有新增权限或原生接口，手机 UI（网页界面）的最低桥接版本仍为 code17。[真实 MuMu 验证与卸载](../../tests/evidence/ic-1/README.md)。
+
 UI-2 当前壳为 **0.8.4 / code17**：内置与桌面统一的手机会话列表、主题与全屏「输出与来源」，新增精确 `GET /sessions/{sessionId}/resources?afterSeq` 原生连接路由，系统栏改为同一中性色；内置版本显示使用 BuildConfig。没有新增权限或数据库迁移。新版 UI（网页界面）发布最低 code17；本机 JVM（Java 虚拟机）27/27与调试包构建通过，未有在线设备 / 可用模拟器，使用工作包指定的390×844 Chromium（浏览器引擎）回退。[截图与真实设备验收边界](../../tests/evidence/ui-2/README.md)。
 
 UI-2a 当前壳为 **0.8.3 / code16**：内置手机审批模式界面，新增精确 `/settings/approvals` 与 `/sessions/{sessionId}/approval-mode` 业务路由；审批决定可传 `scope: once / conversation-category`，拒绝不带 scope（授权范围）。继续使用原 Cookie（会话凭据）、CSRF（跨站请求伪造防护）和 TLS pin（证书公钥固定）连接，没有新增系统权限。发布新版手机 UI（网页界面）需 `--min-native-version-code 16`；合成截图与本机 JVM（Java 虚拟机）/调试包构建结果见 [UI-2a](../../tests/evidence/ui-2a/README.md)。
