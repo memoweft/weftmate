@@ -350,6 +350,27 @@ macOS发布元数据：`version,build,bytes,sha256,architecture:"universal/arm64
 
 文件引用来自公开工具详情中的 `file_path / filePath / path / paths`，网页来自 `url / urls`，不猜测脚本代码里的未执行路径。无法读取参数时仍保留工具来源；列表不返回原始输出。现有记忆自动注入只在模型请求内，公开时间线没有逐条召回引用；本接口不将记忆查询工具调用冒充为「引用了某条记忆」。逐条记忆引用与「用到了 N 条记忆」入口需由记忆工作包提供真实引用字段，届时追加兼容来源类别。
 
+
+### 3.17 用量与费用（USE-1，M1）
+
+| 方法与路径 | 请求 | 响应 / 权限 |
+|---|---|---|
+| GET `/usage` | 可选 `month=YYYY-MM`、`sessionId`；月份默认当前 UTC（协调世界时）月 | 200 `UsageSummary`；`sessions:read`，只读取当前账号；对话不属于账号返回 404 |
+| GET `/settings/usage` | 无查询 | 200 `UsageSettings`；`sessions:read` |
+| PATCH `/settings/usage` | `{monthlyLimit?:number|null,temporaryLimit?:number|null,profileId?:string,price?:Price|null}` | 200 `UsageSettings`；`account:manage`，Cookie（会话凭据）与 CSRF（跨站请求伪造防护）；金额为有限非负数，非法请求 400 |
+
+`Price = {cachedInput,input,output}`，三个字段单位均为人民币元 / 百万 token（令牌）。`profileId` 与 `price` 一起提交；模型必须为当前账号可见，否则 409 `MODEL_UNAVAILABLE`。`price:null` 恢复预设。官方 `mimo-v2.6-flash` 预设缓存输入 0.02、未缓存输入 1、输出 2；本地 / 局域网模型默认三项 0，并在界面标「本地」。其他云模型未设单价时为 `null`，费用未知，不能当作免费。每个请求保存发出时的单价快照，之后改价不重算历史。价格来源：[MiMo 官方价格](https://mimo.mi.com/docs/pricing)。
+
+`UsageSettings = {monthlyLimit,temporaryLimit,temporaryMonth,prices,canManage,models}`；`models:[{id,name,model,local,price}]` 只含当前账号可见模型，不含地址或密钥。`monthlyLimit:null` 默认不限，0 暂停后续云端请求；`temporaryLimit` 为仅本月覆盖值，`null` 清除覆盖，UTC 下月自动失效。每个账号独立设置。
+
+`UsageSummary = {month,timeZone:"UTC",sessionId,total,days,sessions,models,budget}`。`total` 与各分组均含 `{requests,unknownRequests,unpricedRequests,inputTokens,cachedInputTokens,outputTokens,cost}`。输入包含缓存命中，`cachedInputTokens` 是其子集；输出包含服务商计入输出的推理用量。`days:[{day:"YYYY-MM-DD",...统计}]` 按日期排列并包含没有请求的零值日；`sessions:[{sessionId,...统计}]`、`models:[{profileId,...统计}]` 按费用降序，费用相同时按请求数降序。`sessionId:null` 表示未绑定对话的后台或手机独立代理请求；标题 / 模型名称从现有目录读取，不复制进用量账本。带 `sessionId` 时仅过滤统计，但 `budget` 仍按全账号本月总费用判断。
+
+`budget = {monthlyLimit,effectiveLimit,temporaryLimit,state:"unlimited"|"ok"|"warning"|"blocked"}`。已知费用达到有效上限 80% 提示；达到 100% 在每次后续云请求发出前拒绝，包括对话、工具循环、子任务、标题、记忆后台和手机模型代理；HTTP（网页传输协议）返回 **402 `USAGE_LIMIT_REACHED`**，界面说明「本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型」。已发出的请求不会中途取消，因此正在运行 / 并发的请求可能跨过上限；后续请求被拒。本地目的地不受限，即使用户给本地模型填了非零单价仍可请求。未报告用量 / 未定价的费用不估算，无法据此保证实际供应商账单上限。
+
+原生 DSH（模型执行框架）用量事件优先；OpenAI-compatible（OpenAI 兼容协议）JSON（结构化数据）或 SSE（服务端事件流）响应 `usage` 用于手机代理 / 记忆后台。缓存输入使用 `prompt_tokens_details.cached_tokens` 或 `prompt_cache_hit_tokens`，原生适配器的缓存读写计数按实际语义合并；DSH 适配器合成的全零事件无法证明供应商提供了用量，保留未知。缺失或不完整用量的整次请求计 `unknownRequests`，该请求费用不计入 `cost`，保留请求标识与时间；没有自行估算。只存账号 / 对话 / 模型 / 请求标识、时间、数字与来源类别，不存消息正文、工具参数或响应正文。宿主账本保留已删除对话的费用统计，不恢复对话内容；历史账单 / 外部供应商账单导入未实现。
+
+桌面与手机功能读取 / 保存统一位于 `src/ui-core/usage.js`；实际手机页面使用同一宿主账本。手机独立离线直连模型尚无宿主回传，离线聊天记账随 S6 接入；Apple（苹果客户端）只需按本节接线。Android（安卓）原生 `host.business` 已增加精确用量路径，旧原生壳未升级时返回不支持，不能以未知错误显示为零费用。
+
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
 ### 4.1 事件结构与原生来源

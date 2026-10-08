@@ -44,7 +44,8 @@ async function fixture(t: any) {
   await new Promise<void>(resolve => cloud.listen(0, '127.0.0.1', resolve))
   cloudOrigin = `http://127.0.0.1:${(cloud.address() as any).port}`
   cloudBase = `${cloudOrigin}${P}/cloud`; issuer = `${cloudBase}/oidc`
-  const backend = { getStatus: async () => ({ runtime: 'ready' }), listModels: async () => [],
+  const backend = { getStatus: async () => ({ runtime: 'ready' }),
+    listModels: async () => [{ id: 'synthetic', model: 'synthetic', name: 'Synthetic cloud', configured: true, sourceKind: 'cloud' }],
     preflight: async () => ({ ok: true }), createSession: async ({ sessionId }: any) => ({ sessionId }), sendMessage: async () => ({}),
     cancelSession: async () => ({}), readEvents: async ({ afterSeq }: any) => ({ events: [], nextSeq: afterSeq, hasMore: false }),
     describeSession: async (sessionId: string) => ({ sessionId, title: 'synthetic', running: false }),
@@ -289,6 +290,8 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
   const response = await f.requests('DELETE', `/auth/devices/${session.device.id}`, {}, f.a)
   assert.equal(response.status, 200)
   await localClosed
+  assert.equal((await f.requests('GET', '/usage', undefined, f.a)).total.unknownRequests, 1,
+    'revoked stream without provider usage remains an unknown request')
   assert.equal((await f.requests('GET', '/sessions', undefined, session)).status, 401)
   assert.equal((await f.exchange(token, key)).result.status, 403)
   const fresh = await generateKeyPair('ES256'), freshToken = await f.access('cloud-a', 'second-phone', fresh)
@@ -299,6 +302,7 @@ test('local device revoke closes active responses; signed cloud epoch/device rev
   await assert.rejects(f.service.receiveCloudRevocations('forged'), /CLOUD_TOKEN_INVALID/)
   await f.service.receiveCloudRevocations(await f.event([{ seq: 1, kind: 'epoch', sub: 'cloud-a', epoch: 1 }], 1))
   await epochClosed
+  assert.equal((await f.requests('GET', '/usage', undefined, f.a)).total.unknownRequests, 2)
   assert.equal((await f.requests('GET', '/sessions', undefined, second)).status, 401)
   assert.equal((await f.requests('GET', '/auth/me', undefined, f.a)).status, 200)
   assert.equal((await f.requests('GET', '/auth/me', undefined, f.b)).status, 200)
