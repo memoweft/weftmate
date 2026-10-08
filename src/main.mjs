@@ -15,6 +15,7 @@
  * v2 的 SDK 聊天/桥/旧 UI 等主链路已随 R4 退役删除（见 docs/ARCHITECTURE.md §4 退役清单）。
  */
 import { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, screen, dialog, nativeTheme, session } from 'electron';
+import { createBackupManager } from './personal-backup/index.mjs';
 import { windowIcon, trayIcon } from './app-icons.mjs';
 import { normalizeApiBaseUrl } from './stage2-config.ts';
 import { switchActiveModel } from './model-switch-transaction.ts';
@@ -229,6 +230,8 @@ let settingsMod = null; // settings.ts 模块(宠物窗口状态——本机显�
 let configStoreMod = null; // config-store.ts 模块(模型档 safeStorage 存取;DSH 凭据接缝从这里取)
 let webRuntime = null; // DSH web 运行时管理器(R1-02:写 profile→spawn 官方 CLI→URL 行→退出收口)
 let personalAccessService = null;
+let personalBackupManager = null;
+let backupRestartRequested = false;
 let personalAccessOrigin = null;
 let personalDesktop = null;
 let desktopStatus = { host: '启动中', model: '未选择' };
@@ -394,6 +397,7 @@ async function stageOneGateway(path, init = {}) {
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
     const error = new Error('gateway request failed');
+    if (path === '/backup-pause') error.code = body.error?.code;
     throw error;
   }
   return body;
@@ -1174,6 +1178,25 @@ async function bootstrap() {
   // otherwise normalize/rewrite exactly the bytes the journal protects.
   const userDataDir = app.getPath('userData');
   if (personalHostMode) await ensurePrivateDirectory(userDataDir);
+  if (personalHostMode) personalBackupManager = await createBackupManager({
+    root: userDataDir, appVersion: app.getVersion(),
+    isIdle: async () => !isQuitting && !personalAccessService?.hasUnissuedDshCommands?.() &&
+      (await webRuntime?.personalModelQueueIdle?.())?.idle === true,
+    requestRestart: () => { backupRestartRequested = true; setTimeout(() => app.quit(), 250); },
+    captureBoundary: (work, { signal, deadline, check, stage }) => exclusiveMainQueue.run(async () => {
+      check();
+      if (personalAccessService?.hasUnissuedDshCommands?.() || !(await webRuntime.personalModelQueueIdle()).idle)
+        throw Object.assign(new Error('SESSION_BUSY'), { code: 'SESSION_BUSY' });
+      const id = randomUUID();
+      try {
+        await stageOneGateway('/backup-pause', { method: 'POST', body: JSON.stringify({ id, deadline, stage }), signal });
+        check(); await work();
+      } finally {
+        // The native lease also expires independently if the host is stalled.
+        await stageOneGateway('/backup-resume', { method: 'POST', body: JSON.stringify({ id }), signal: AbortSignal.timeout(2000) }).catch(() => {});
+      }
+    }),
+  });
   if (process.env.WEFTMATE_STAGE14_R2_OBSERVE === '1') {
     if (!personalHostMode || app.isPackaged) throw new Error('Stage14R2 observer requires an isolated development host');
     stage14R2Observation = stage14R2ObservationProfile({ enabled: '1', profile: userDataDir,
@@ -1439,7 +1462,7 @@ async function bootstrap() {
     if (!raw || typeof raw.action !== 'string') return;
     try { rmSync(UPDATE_REQUEST_FILE, { force: true }); } catch { /* 删不掉下轮再试 */ }
     if (raw.action === 'check') void checkForUpdates(() => win);
-    else if (raw.action === 'install') quitAndInstall();
+    else if (raw.action === 'install') installPreviewUpdateFromTray();
   }
   // ── R6-01 · 感知请求面：官方 UI（客户端插件）→ 宿主插件写请求文件 → main 消费切换开关 ──
   const PERCEPTION_REQUEST_FILE = join(dshHome, 'weftmate-perception-request.json');
@@ -1757,6 +1780,10 @@ async function bootstrap() {
       writeHostState();
       return recalled;
     } : undefined,
+    personalScheduleHandler: personalHostMode ? async request => {
+      if (!personalAccessService || isQuitting) throw new Error('SCHEDULE_UNAVAILABLE');
+      return personalAccessService.handleScheduleRuntime(request);
+    } : undefined,
     personalConversationContextHandler: personalHostMode ? async (request) => {
       if (!personalAccessService || isQuitting || !runtimeOrigin) {
         throw Object.assign(new Error('unavailable'), { code: 'CONVERSATION_CONTEXT_UNAVAILABLE' });
@@ -1785,6 +1812,7 @@ async function bootstrap() {
     webRuntime = createWebRuntime();
     webRuntime.onOrigin = (origin) => {
       runtimeOrigin = origin;
+      if (origin) void personalAccessService?.restoreSchedules?.().catch(() => {});
       writeHostState();
       if (origin) {
         if (!personalHostMode) void navigateToRuntimeSurface(origin).catch((error) => logCrash('dsh-surface-navigation', error));
@@ -2098,9 +2126,19 @@ async function bootstrap() {
   async function listSharedSessionsForUi() {
     return stageOneGateway('/sessions').catch(() => ({ items: [] }));
   }
+  let recoveredLifecycleRuntime = null;
+  const recoveredLifecycles = new Set();
   async function listSharedSessionsForReferenceGuard() {
     const result = await stageOneGateway('/sessions');
     if (!Array.isArray(result?.items)) throw new Error('session reference scan returned an invalid response');
+    const runtime = webRuntime?.currentPersonalRuntimeId();
+    if (runtime !== recoveredLifecycleRuntime) { recoveredLifecycleRuntime = runtime; recoveredLifecycles.clear(); }
+    // Only the first startup after a restore claims native disposers before
+    // model inspection. Ordinary startup never resumes all personal sessions.
+    for (const item of result.items) if (personalBackupManager?.isRestoredStartup() && item.agentPreset?.startsWith('personal-') && !recoveredLifecycles.has(item.sessionId)) {
+      await stageOneGateway(`/sessions/${encodeURIComponent(item.sessionId)}/resume`, { method: 'POST', body: '{}' });
+      recoveredLifecycles.add(item.sessionId);
+    }
     return result;
   }
   function assertSessionReferenceScanComplete() {
@@ -3192,6 +3230,7 @@ async function bootstrap() {
            memoryManager: personalMemoryManager,
           browserReader: personalBrowserReader,
           accountModelManager,
+          backupManager: personalBackupManager,
           systemManager: {
             async status(ownerId) {
               const model = localModelController ? await localModelController.status()
@@ -3260,6 +3299,8 @@ async function bootstrap() {
     return;
   }
 
+  await personalBackupManager?.started();
+
   // R6-02 · 桌宠自愈：上次可见（设置里 visible=true）→ 启动补唤醒（v2 等价路径的恢复）。
   if (!headless && desktopCompanion && settingsMod?.getDesktopPetWindowState?.().visible) {
     void wakeDesktopPet().catch((error) => logCrash('desktop-pet-autowake', error));
@@ -3318,6 +3359,11 @@ async function checkPreviewUpdateFromTray() {
 }
 
 function installPreviewUpdateFromTray() {
+  if (personalBackupManager && updateState().status === 'downloaded') {
+    void personalBackupManager.request('before-upgrade').then(() => { quitAndInstall(); })
+      .catch(error => logCrash('backup-before-upgrade', error));
+    return;
+  }
   if (!quitAndInstall()) {
     const options = {
       type: 'info',
@@ -3381,11 +3427,13 @@ app.on('before-quit', (e) => {
   writeHostStateForLifecycle?.();
 
   shutdownPromise = (async () => {
+    let backupSafe = true;
+    await personalBackupManager?.stopOnline();
     try { await personalDesktop?.close(); }
     catch (error) { logCrash('shutdown-desktop-session', error); }
     let accessClosing = null;
     try { accessClosing = personalAccessService?.close?.() ?? null; }
-    catch (error) { logCrash('shutdown-personal-access', error); }
+    catch (error) { backupSafe = false; logCrash('shutdown-personal-access', error); }
     // Stop admission before any asynchronous cleanup.  A mutation already in
     // this lane may finish/compensate, but no new session/settings/model work
     // can cross the shutdown fence.
@@ -3396,7 +3444,7 @@ app.on('before-quit', (e) => {
         await Promise.race([accessClosing, new Promise((_, reject) => {
           timer = setTimeout(() => reject(new Error('personal access close timed out')), 5_000);
         })]);
-      } catch (error) { logCrash('shutdown-personal-access', error); }
+      } catch (error) { backupSafe = false; logCrash('shutdown-personal-access', error); }
       finally { if (timer) clearTimeout(timer); }
     }
     personalAccessOrigin = null;
@@ -3407,7 +3455,7 @@ app.on('before-quit', (e) => {
         await Promise.race([personalBrowserReader.close(), new Promise((_, reject) => {
           timer = setTimeout(() => reject(new Error('personal browser reader close timed out')), 5_000);
         })]);
-      } catch (error) { logCrash('shutdown-personal-browser', error); }
+      } catch (error) { backupSafe = false; logCrash('shutdown-personal-browser', error); }
       finally { if (timer) clearTimeout(timer); personalBrowserReader = null; }
     }
     if (personalMemoryManager) {
@@ -3416,7 +3464,7 @@ app.on('before-quit', (e) => {
         await Promise.race([personalMemoryManager.close(), new Promise((_, reject) => {
           timer = setTimeout(() => reject(new Error('account memory close timed out')), 5_000);
         })]);
-      } catch (error) { logCrash('shutdown-account-memory', error); }
+      } catch (error) { backupSafe = false; logCrash('shutdown-account-memory', error); }
       finally { if (timer) clearTimeout(timer); }
     }
     await modWindowManager?.dispose?.();
@@ -3459,6 +3507,7 @@ app.on('before-quit', (e) => {
       }
       console.log('[weftmate] ✓ 退出收尾:DSH web 运行时收口完成');
     } catch (err) {
+      backupSafe = false;
       logCrash('shutdown-dsh-runtime', err);
       console.error('[weftmate] DSH 退出收尾出错(仍继续退出):', err && err.message ? err.message : err);
     }
@@ -3470,12 +3519,15 @@ app.on('before-quit', (e) => {
     modelObservationProxy = null;
     modelObservationRecorder?.close?.();
     modelObservationRecorder = null;
+    if (startupFailureReported && await personalBackupManager?.startupFailed()) backupRestartRequested = true;
+    else await personalBackupManager?.finishShutdown({ safe: backupSafe });
   })();
   void shutdownPromise.finally(() => {
     cleanupDone = true;
     hostLifecycleState = 'stopped';
     runtimeOrigin = null;
     writeHostStateForLifecycle?.();
+    if (backupRestartRequested) app.relaunch();
     app.exit(startupExitCode); // cleanup 完成后一次性退出；启动失败必须保留非零码。
   });
 });
