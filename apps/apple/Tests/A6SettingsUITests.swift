@@ -6,6 +6,7 @@ final class A6SettingsUITests: XCTestCase {
     @MainActor private func get(_ path: String) async throws -> [String: Any] {
         let (data, response) = try await URLSession.shared.data(from: URL(string: driver + path)!)
         XCTAssertEqual((response as? HTTPURLResponse)?.statusCode, 200)
+        guard (response as? HTTPURLResponse)?.statusCode == 200 else { throw NSError(domain: "A6Driver", code: 1) }
         return try JSONSerialization.jsonObject(with: data) as! [String: Any]
     }
     @MainActor private func expect(_ element: XCUIElement) throws {
@@ -24,7 +25,6 @@ final class A6SettingsUITests: XCTestCase {
         image.lifetime = .keepAlways; add(image)
     }
     @MainActor private func launch(_ theme: String) async throws -> (XCUIApplication, [String: Any]) {
-        _ = try await get("/a5/setup")
         let ready = try await get("/ready"), credentials = try await get("/credentials")
         let app = XCUIApplication()
         let namespace = "a6-" + UUID().uuidString.prefix(8)
@@ -33,10 +33,12 @@ final class A6SettingsUITests: XCTestCase {
         app.launch()
         try fill(app, "accountEmail", credentials["email"] as! String)
         try tap(app, "accountRegistration"); try tap(app, "accountSubmit")
+        try expect(app.textFields["accountCode"])
         try fill(app, "accountCode", try await get("/code")["code"] as! String); try tap(app, "accountSubmit")
         try fill(app, "accountPassword", credentials["password"] as! String, secure: true)
         try fill(app, "accountRepeatedPassword", credentials["password"] as! String, secure: true); try tap(app, "accountSubmit")
         try expect(app.textFields["accountDeviceName"]); try tap(app, "accountSubmit")
+        try expect(app.textFields["accountCode"])
         try fill(app, "accountCode", try await get("/code")["code"] as! String); try tap(app, "accountSubmit")
         try expect(app.staticTexts["已登录 WeftMate"]); _ = try await get("/bootstrap")
         try tap(app, "设置 → 设备"); try tap(app, "刷新设备")
