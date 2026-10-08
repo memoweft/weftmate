@@ -111,10 +111,11 @@ final class A5ParityUITests: XCTestCase {
         try tap(app,"openConversationResources");try expect(app.staticTexts["输出内容"]);keep(app,"outputs-sources",theme);try tap(app,"closeResourcesPanel")
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.memory");try expect(app.staticTexts["我的记忆"]);keep(app,"memory",theme);try tap(app,"closeAuxiliarySheetButton")
         try tap(app,"phoneAccountMenu");try tap(app,"phoneMenu.settings");try expect(app.staticTexts["账户与设置"]);keep(app,"appearance",theme)
-        try tap(app,"openUsage");try expect(app.staticTexts["本月合计"]);keep(app,"usage",theme)
+        try tap(app,"openUsage");try expect(app.descendants(matching:.any)["usageTotalCost"].firstMatch);keep(app,"usage",theme)
         if behavior {
             let report=try await get("/a5/report"),usage=report["usage"] as! [String:Any],total=usage["total"] as! [String:Any]
-            XCTAssertTrue(app.staticTexts[String(format:"¥%.6f",total["cost"] as! Double)].exists)
+            let totalCost=app.descendants(matching:.any)["usageTotalCost"].firstMatch
+            XCTAssertTrue((totalCost.label + " " + String(describing: totalCost.value ?? "")).contains(String(format:"¥%.6f",total["cost"] as! Double)))
             _ = try await get("/a5/usage-warning");app.swipeUp();try tap(app,"刷新用量");try expect(app.staticTexts.containing(NSPredicate(format:"label CONTAINS %@","80%")).firstMatch)
             _ = try await get("/a5/usage-blocked");try tap(app,"刷新用量");try expect(app.staticTexts.containing(NSPredicate(format:"label CONTAINS %@","云端模型请求已暂停")).firstMatch)
             let refused=try await get("/a5/refused");XCTAssertEqual(refused["status"] as? Int,402)
