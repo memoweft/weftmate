@@ -57,18 +57,24 @@ struct WeftMateRootView: View {
                 }
                 try? await Task.sleep(for: .seconds(ProcessInfo.processInfo.arguments.contains("--a5-review-scene") ? 8 : 1))
                 // Capture only this process's own displayed window; never enumerate other apps.
-                typealias WindowImage = @convention(c) (CGRect, UInt32, UInt32, UInt32) -> Unmanaged<CGImage>?
-                if let window = NSApplication.shared.windows.first(where: { $0.isVisible && $0.isKeyWindow }) ?? NSApplication.shared.windows.first(where: { $0.isVisible }) ?? NSApplication.shared.windows.first,
-                   let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImage") {
-                    let capture = unsafeBitCast(symbol, to: WindowImage.self)
-                    if let image = capture(.null, 8, UInt32(window.windowNumber), 1)?.takeRetainedValue() {
+                typealias WindowImages = @convention(c) (CGRect, CFArray, UInt32) -> Unmanaged<CGImage>?
+                let windows = NSApplication.shared.windows.filter { $0.isVisible }
+                // Sheets have their own window-server IDs. Include only this app's
+                // visible windows so usage and session menus appear over their parent.
+                var ids: [UnsafeRawPointer?] = windows.map { UnsafeRawPointer(bitPattern: $0.windowNumber) }
+                if !ids.isEmpty, let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "CGWindowListCreateImageFromArray") {
+                    let array = CFArrayCreate(kCFAllocatorDefault, &ids, ids.count, nil)!
+                    let capture = unsafeBitCast(symbol, to: WindowImages.self)
+                    if let image = capture(.null, array, 1)?.takeRetainedValue() {
                         let bitmap = NSBitmapImageRep(cgImage: image)
                         if let data = bitmap.representation(using: .png, properties: [:]) {
                             FileHandle.standardOutput.write(Data(("LG2_CAPTURE:" + data.base64EncodedString() + "\n").utf8))
                         }
                     }
                 }
-                NSApplication.shared.terminate(nil)
+                // AppKit defers termination while a review sheet is open. This isolated
+                // capture process has already flushed its PNG; the parent removes test state.
+                Darwin.exit(0)
             }
             #endif
         }
