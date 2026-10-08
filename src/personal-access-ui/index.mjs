@@ -19,6 +19,7 @@ const files = new Map([
   ['/personal/v1/ui/components/resources.js', ['components/resources.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/sessions.js', ['components/sessions.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/approvals.js', ['components/approvals.js', 'text/javascript; charset=utf-8']],
+  ['/personal/v1/ui/components/schedules.js', ['components/schedules.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/usage.js', ['components/usage.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/usage.css', ['usage.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/settings.js', ['components/settings.js', 'text/javascript; charset=utf-8']],
