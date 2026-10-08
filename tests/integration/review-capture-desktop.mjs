@@ -43,6 +43,7 @@ for (const theme of ['light', 'dark']) {
     await page.getByLabel('密码', { exact: true }).filter({ visible: true }).fill(fixture.credentials.password);
     await page.getByRole('textbox', { name: '这台设备的名称' }).fill('合成审稿桌面');
     await button('登录').click(); await button('允许一次').waitFor();
+    await page.getByText('已登录。', { exact: true }).waitFor({ state: 'hidden' });
     ownerId = await page.evaluate(async () => (await (await fetch('/personal/v1/auth/me')).json()).account.ownerId);
     // Remove the hidden login form value before any authenticated screenshot.
     await page.locator('input[type=password]').evaluateAll(nodes => nodes.forEach(n => { n.value = ''; }));
