@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # M2g person-loop candidate (Core #92); replace with Claude's squash commit after merge.
-          ref: bc0e5f9184f9f3fc27bf505bc37d5c33a32ce344
+          ref: dc59e5e8248c889226c3ef7e3abd713dfc98001c
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
