@@ -40,10 +40,12 @@ export function apply(ctx) {
   const apiProxy = ctx.get('apiProxy')
   if (apiProxy === undefined) throw new Error('weftmate-host requires DSH apiProxy')
   // Required supported seam: same composed runtime only, never a second DSH client/runtime.
+  const lifecycle = nativeSessionLifecycle(ctx)
+  ctx.provide('weftmateSessionLifecycle', lifecycle)
   const gatewayV1 = createGatewayV1({
     client: new InProcessApiClient(toFetchHandler(apiProxy)),
     readLog: nativeTimelineLog(ctx),
-    lifecycle: nativeSessionLifecycle(ctx),
+    lifecycle,
     // P1-05 diagnostics deps：pin 由打包/启动方注入（env），不自行推断。
     diagnostics: {
       runtime: { version: process.env.WEFTMATE_APP_VERSION ?? 'dev', startedAt: Date.now() },
