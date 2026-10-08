@@ -1,6 +1,6 @@
 /** Decorate the native pi-ai adapter; its protocols, settings and credentials remain native. */
 import { Config, apply as applyPiAi } from '@deepseek-ai/dsh-llm-pi-ai';
-import { readModelCapacity, modelCapacityFor, outputBudget } from '../model-budget.mjs';
+import { readModelCapacity, modelCapacityFor, outputBudget, messagesForModelInput } from '../model-budget.mjs';
 import { acquireModelSlot, isBackgroundPurpose } from '../model-scheduler-client.mjs';
 
 export { Config };
@@ -100,6 +100,8 @@ export function apply(ctx, config) {
           const release = await acquireModelSlot(background ? 'background' : 'foreground', options.signal,
             scheduler, { profileId: options.provider });
           try {
+          const modelInfo = await target.resolveModel(options.provider, options.model, options.signal);
+          options = { ...options, messages: messagesForModelInput(options.messages, modelInfo.inputModalities) };
           const row = rawSource().providers?.[options.provider];
           const entry = row?.models?.find(item => item.id === options.model);
           if (!compatible(row) || !entry) { yield* target.stream(options); return; }
@@ -116,6 +118,17 @@ export function apply(ctx, config) {
               JSON.stringify(options.tools) === JSON.stringify(header?.tools) &&
               visible(options.messages) === visible(session.deriveMessages())) {
             inputTokens = ctx.tokenMeter.measure(session).totalTokens;
+          }
+          // Memory is optional context. Keep the native conversation/compaction
+          // budget authoritative and leave framing + a useful output reserve.
+          if (inputTokens + Math.max(4096, Math.ceil(limits.contextWindow * 0.02)) +
+              Math.min(4096, limits.maxTokens) > limits.contextWindow) {
+            const memoryMessages = options.messages.filter(message => message.source?.plugin === 'weftmate-personal-memory');
+            if (memoryMessages.length) {
+              options = { ...options, messages: options.messages.filter(message => !memoryMessages.includes(message)) };
+              inputTokens -= memoryMessages.reduce((sum, message) => sum + ctx.tokenMeter.estimateMessage(message), 0);
+              if (session?.[Symbol.for('weftmate.memoryRecall')]) session[Symbol.for('weftmate.memoryRecall')].memories = [];
+            }
           }
           const maxTokens = outputBudget({ ...limits, inputTokens,
             maxTokens: Math.min(limits.maxTokens, options.maxTokens ?? limits.maxTokens) });

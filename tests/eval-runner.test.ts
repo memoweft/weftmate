@@ -219,7 +219,7 @@ test('memory provenance unsupported, new session and model switch; manual scenes
     { type: 'reply_contains', text: '小禾' }, { type: 'memory_used' }, { type: 'turn_status', status: 'completed' },
   ], { category: 'memory' }), scenario('cross', [{ user: 'manual' }], [], { category: 'cross-device', manual: true })]);
   assert.equal(report.results[0].status, 'unsupported');
-  assert.match(report.results[0].reason, /no per-reply memory provenance/);
+  assert.match(report.results[0].reason, /do not expose memoryUsed/);
   assert.equal(report.results[0].turns[1].modelProfileId, 'mimo');
   assert.equal(report.results[1].status, 'manual');
   assert.equal(report.summary.passRate, null);
@@ -305,4 +305,12 @@ test('CLI glob and --only generate a manual report without any host connection',
   assert.equal(report.summary.manual, 1);
   assert.equal(report.summary.passRate, null);
   assert.match(await readFile(join(out, 'report.md'), 'utf8'), /需人工/);
+});
+
+test('memory_used reads the selected reply provenance and fails on an empty list', async () => {
+  const context: any = { turns: [{ memoryUsedSupported: true, memoryUsed: [{ id: 'cog-1', summary: '用中文买菜例子解释' }] }] };
+  assert.equal((await checkOne({ type: 'memory_used' }, context)).status, 'passed');
+  context.turns.push({ memoryUsedSupported: true, memoryUsed: [] });
+  assert.equal((await checkOne({ type: 'memory_used' }, context)).status, 'failed');
+  assert.equal((await checkOne({ type: 'memory_used', turn: 1 }, context)).status, 'passed');
 });

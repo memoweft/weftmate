@@ -642,3 +642,8 @@ kbd { font: inherit; font-size: 10px; color: var(--ink-muted); white-space: nowr
 .approval-mode-copy .muted { font-size: 12px; line-height: 1.5; }
 .approval-mode-option kbd { flex-shrink: 0; }
 .conversation-plan .question-detail { max-height: 220px; overflow: auto; }
+
+.reply-memory { display: block; margin-top: 10px; color: var(--ink-muted); }
+.reply-memory-source { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.reply-memory-source:last-child { border-bottom: 0; }
+.memory-source-text { white-space: pre-wrap; overflow-wrap: anywhere; }

@@ -64,7 +64,7 @@ test('forked plugin hook callbacks use owner-bound IPC and replace stale account
         aRecalls++
         if (aRecalls === 2) respond(true, { state: 'withheld', reasonCode: 'MEMORY_UNAVAILABLE' })
         else respond(true, { state: 'ready', contextText: aRecalls === 1
-          ? 'A_ONLY_SYNTHETIC_MEMORY' : 'A_UPDATED_SYNTHETIC_MEMORY' })
+          ? 'A_ONLY_SYNTHETIC_MEMORY' : 'A_UPDATED_SYNTHETIC_MEMORY', memories: [{ id: 'cog-a', kind: 'cognition', summary: 'A安全摘要' }] })
       } else respond(true, { state: 'ready', contextText: 'B_ONLY_SYNTHETIC_MEMORY' })
     })
     child.once('error', reject)
@@ -72,6 +72,9 @@ test('forked plugin hook callbacks use owner-bound IPC and replace stale account
   })
   try {
     const value = await result
+    assert.equal(value.latestContextCount, 1);
+    assert.equal(value.withheldContextCount, 0, 'withheld later recall removes committed earlier plugin context from the next model request');
+    assert.deepEqual(value.adopted, [{ id: 'cog-a', kind: 'cognition', summary: 'A安全摘要' }]);
     assert.equal(value.a.text, 'A_ONLY_SYNTHETIC_MEMORY')
     for (const entry of [value.a, value.aUpdated, value.b]) {
       assert.match(entry.last.id, /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)

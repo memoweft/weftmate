@@ -139,7 +139,11 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     const data = messageText(message)
     const images = messageImages(message)
     if (data || images.length) projected = { seq, type: 'assistant.message', data: { ...(data ?? { text: '' }),
-      ...(images.length ? { images } : {}) } }
+      ...(images.length ? { images } : {}),
+      ...(Array.isArray(event.data?.memoryUsed) ? { memoryUsed: event.data.memoryUsed
+        .filter(item => ['cognition', 'entity', 'relationship', 'event'].includes(item?.kind) &&
+          typeof item.id === 'string' && /^[A-Za-z0-9._:-]{1,512}$/.test(item.id) && typeof item.summary === 'string')
+        .map(item => ({ id: item.id, kind: item.kind, summary: safeHistoryText(item.summary.slice(0, 240)).text })) } : {}) } }
   } else if (type === 'turn/start') {
     projected = { seq, type: 'turn.started', data: {
       ...(Number.isSafeInteger(event.data?.turn) && event.data.turn > 0 ? { turn: event.data.turn } : {}) } }
