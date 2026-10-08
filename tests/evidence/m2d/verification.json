@@ -1,0 +1,887 @@
+{
+  "coreCandidate": "561eb090eb009ce07d16b00fc441eeb6cd808c8b",
+  "budgetsSeconds": {
+    "memory-01": 600,
+    "memory-02": 900
+  },
+  "runs": {
+    "before-qwen": {
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "originalChecksStatus": "failed",
+          "durationMs": 600634,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "running",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "originalChecksStatus": "failed",
+          "durationMs": 900586,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "running",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        }
+      ],
+      "credential-scan": {
+        "scanned": 164,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "mimoRequests": {
+        "started": 0,
+        "withUsage": 0,
+        "missingUsage": 0
+      },
+      "world": {
+        "currentFriday": 1,
+        "obsoleteWednesdayRetained": 1,
+        "sourceWednesdayRetained": 1,
+        "sourceCorrectionRetained": 1
+      },
+      "formationJobs": {
+        "applied": 3
+      },
+      "operatorCancelledOpenDemo": false
+    },
+    "before-mimo": {
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "originalChecksStatus": "passed",
+          "durationMs": 68941,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "originalChecksStatus": "failed",
+          "durationMs": 114245,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "failed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        }
+      ],
+      "credential-scan": {
+        "scanned": 170,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "ui-verification": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "mimoRequests": {
+        "started": 16,
+        "withUsage": 16,
+        "missingUsage": 0
+      },
+      "world": {
+        "currentFriday": 1,
+        "obsoleteWednesdayRetained": 1,
+        "sourceWednesdayRetained": 1,
+        "sourceCorrectionRetained": 1
+      },
+      "formationJobs": {
+        "applied": 3,
+        "no_change": 2
+      },
+      "operatorCancelledOpenDemo": false
+    },
+    "lineage-first-mimo": {
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "originalChecksStatus": "passed",
+          "durationMs": 61812,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "originalChecksStatus": "passed",
+          "durationMs": 99557,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "originalChecksStatus": "passed",
+          "durationMs": 232788,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": true,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": true,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        }
+      ],
+      "credential-scan": {
+        "scanned": 166,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "mimoRequests": {
+        "started": 24,
+        "withUsage": 24,
+        "missingUsage": 0
+      },
+      "world": {
+        "currentFriday": 1,
+        "obsoleteWednesdayRetained": 1,
+        "sourceWednesdayRetained": 2,
+        "sourceCorrectionRetained": 2
+      },
+      "formationJobs": {
+        "applied": 4,
+        "no_change": 4
+      },
+      "operatorCancelledOpenDemo": false
+    },
+    "final-mimo": {
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "originalChecksStatus": "passed",
+          "durationMs": 60868,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "originalChecksStatus": "passed",
+          "durationMs": 144803,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": true,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-correction-new-sessions",
+          "originalChecksStatus": "failed",
+          "durationMs": 604611,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": true,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 3,
+              "adoptsFriday": true,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "running",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 34,
+              "adoptsFriday": false,
+              "adoptsSaturday": true
+            }
+          ]
+        }
+      ],
+      "credential-scan": {
+        "scanned": 183,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "mimoRequests": {
+        "started": 48,
+        "withUsage": 47,
+        "missingUsage": 1
+      },
+      "world": {
+        "currentFriday": 0,
+        "obsoleteWednesdayRetained": 1,
+        "sourceWednesdayRetained": 1,
+        "sourceCorrectionRetained": 2
+      },
+      "formationJobs": {
+        "applied": 5,
+        "no_change": 2
+      },
+      "operatorCancelledOpenDemo": true
+    },
+    "desktop-mimo": {
+      "scenarios": [
+        {
+          "id": "memory-correction-new-sessions",
+          "originalChecksStatus": "passed",
+          "durationMs": 39242,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": true
+            }
+          ]
+        }
+      ],
+      "credential-scan": {
+        "scanned": 166,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "correction-verification": {
+        "threeDistinctSessions": true,
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "sourcesRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "ui-verification": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "mimoRequests": {
+        "started": 9,
+        "withUsage": 9,
+        "missingUsage": 0
+      },
+      "world": {
+        "currentFriday": 0,
+        "obsoleteWednesdayRetained": 0,
+        "sourceWednesdayRetained": 0,
+        "sourceCorrectionRetained": 1
+      },
+      "formationJobs": {
+        "applied": 2,
+        "no_change": 1
+      },
+      "operatorCancelledOpenDemo": false
+    },
+    "interrupted-qwen": {
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "originalChecksStatus": "failed",
+          "durationMs": 600602,
+          "checks": [],
+          "turns": [
+            {
+              "status": "running",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        }
+      ],
+      "mimoRequests": {
+        "started": 0,
+        "withUsage": 0,
+        "missingUsage": 0
+      },
+      "world": {
+        "currentFriday": 0,
+        "obsoleteWednesdayRetained": 0,
+        "sourceWednesdayRetained": 0,
+        "sourceCorrectionRetained": 0
+      },
+      "formationJobs": {},
+      "operatorCancelledOpenDemo": false
+    },
+    "final-mimo-isolated": {
+      "scenarios": [
+        {
+          "id": "memory-01-preference",
+          "originalChecksStatus": "passed",
+          "durationMs": 79089,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_matches",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 0,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            }
+          ]
+        },
+        {
+          "id": "memory-02-correction",
+          "originalChecksStatus": "passed",
+          "durationMs": 76693,
+          "checks": [
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "reply_contains",
+              "status": "passed"
+            },
+            {
+              "type": "turn_status",
+              "status": "passed"
+            },
+            {
+              "type": "memory_used",
+              "status": "passed"
+            },
+            {
+              "type": "llm_judge",
+              "status": "skipped"
+            }
+          ],
+          "turns": [
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 1,
+              "adoptsFriday": false,
+              "adoptsSaturday": false
+            },
+            {
+              "status": "completed",
+              "approvalCount": 0,
+              "unexpectedApproval": false,
+              "memoryUsedCount": 2,
+              "adoptsFriday": true,
+              "adoptsSaturday": false
+            }
+          ]
+        }
+      ],
+      "credential-scan": {
+        "scanned": 167,
+        "matches": 0,
+        "skippedLinks": 511
+      },
+      "ui-verification": {
+        "electron": true,
+        "label": "用到了 1 条记忆",
+        "sources": 1,
+        "themes": [
+          "light",
+          "dark"
+        ]
+      },
+      "mimoRequests": {
+        "started": 14,
+        "withUsage": 14,
+        "missingUsage": 0
+      },
+      "world": {
+        "currentFriday": 1,
+        "obsoleteWednesdayRetained": 1,
+        "sourceWednesdayRetained": 1,
+        "sourceCorrectionRetained": 1
+      },
+      "formationJobs": {
+        "applied": 3,
+        "no_change": 2
+      },
+      "original-correction-verification": {
+        "correctedMemoryUsed": true,
+        "obsoleteExcluded": true,
+        "oldInvalidated": true,
+        "existingTransitionRetained": true,
+        "oldSourceRetained": true,
+        "newSourceRetained": true,
+        "undeclaredApprovals": 0
+      },
+      "operatorCancelledOpenDemo": false
+    }
+  },
+  "mimoUsage": {
+    "requestsStarted": 111,
+    "requestsWithUsage": 110,
+    "requestsWithoutUsage": 1,
+    "promptTokens": 1203373,
+    "cachedPromptTokens": 973312,
+    "uncachedPromptTokens": 230061,
+    "completionTokens": 45112,
+    "knownUsageCostCny": 0.33975124,
+    "knownUsageIsLowerBound": true,
+    "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash"
+  },
+  "localValidation": {
+    "correctionIntegration": 3,
+    "observedLifecycle": 2,
+    "schedulerAndBoundary": 11,
+    "failed": 0,
+    "skipped": 0,
+    "typecheck": "passed"
+  }
+}

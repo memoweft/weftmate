@@ -1,0 +1,129 @@
+[
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:29:28.698Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13751,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:29:58.790Z",
+    "elapsedMs": 30093,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:29:58.791Z",
+    "elapsedMs": 30094,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:32:33.272Z",
+    "elapsedMs": 184575,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-reasoning"
+  },
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:33:16.829Z",
+    "elapsedMs": 228132,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 100,
+    "bytes": 32937
+  },
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:34:07.645Z",
+    "elapsedMs": 278948,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 200,
+    "bytes": 66580
+  },
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:37:53.665Z",
+    "elapsedMs": 504968,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "progress",
+    "chunks": 300,
+    "bytes": 98370
+  },
+  {
+    "id": "12432-3",
+    "at": "2026-10-08T07:39:27.160Z",
+    "elapsedMs": 598463,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "chunks": 312,
+    "bytes": 101993,
+    "name": "AbortError"
+  },
+  {
+    "id": "12432-6",
+    "at": "2026-10-08T07:39:31.013Z",
+    "elapsedMs": 0,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13726,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  },
+  {
+    "id": "12432-6",
+    "at": "2026-10-08T07:43:51.043Z",
+    "elapsedMs": 260030,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "headers",
+    "status": 200
+  },
+  {
+    "id": "12432-6",
+    "at": "2026-10-08T07:43:51.044Z",
+    "elapsedMs": 260031,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "first-chunk"
+  },
+  {
+    "id": "12432-6",
+    "at": "2026-10-08T07:44:31.010Z",
+    "elapsedMs": 299997,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "error",
+    "chunks": 4,
+    "bytes": 96,
+    "name": "AbortError"
+  },
+  {
+    "id": "12432-8",
+    "at": "2026-10-08T07:44:31.563Z",
+    "elapsedMs": 1,
+    "kind": "model",
+    "origin": "http://127.0.0.1:8081",
+    "phase": "start",
+    "requestChars": 13726,
+    "requestedModel": "qwen3.8-27b-original",
+    "stream": true
+  }
+]
