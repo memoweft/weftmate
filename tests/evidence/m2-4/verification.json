@@ -1,0 +1,61 @@
+{
+  "desktop": true,
+  "scriptCreated": true,
+  "reusedScript": true,
+  "archiveRestore": true,
+  "defaultDelete": true,
+  "formedMemoryRetained": true,
+  "trueForget": true,
+  "usage": [
+    {
+      "inputTokens": 4876,
+      "outputTokens": 168,
+      "cacheReadTokens": 4096
+    },
+    {
+      "inputTokens": 1270,
+      "outputTokens": 37,
+      "cacheReadTokens": 8960
+    },
+    {
+      "inputTokens": 345,
+      "outputTokens": 47,
+      "cacheReadTokens": 10176
+    },
+    {
+      "inputTokens": 327,
+      "outputTokens": 140,
+      "cacheReadTokens": 10496
+    },
+    {
+      "inputTokens": 1307,
+      "outputTokens": 76,
+      "cacheReadTokens": 10816
+    },
+    {
+      "inputTokens": 2768,
+      "outputTokens": 34,
+      "cacheReadTokens": 6144
+    },
+    {
+      "inputTokens": 478,
+      "outputTokens": 53,
+      "cacheReadTokens": 12096
+    },
+    {
+      "inputTokens": 464,
+      "outputTokens": 100,
+      "cacheReadTokens": 12544
+    },
+    {
+      "inputTokens": 2773,
+      "outputTokens": 60,
+      "cacheReadTokens": 6144
+    },
+    {
+      "inputTokens": 2801,
+      "outputTokens": 59,
+      "cacheReadTokens": 6144
+    }
+  ]
+}

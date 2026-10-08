@@ -308,3 +308,13 @@ test('UI-3 switching to another conversation resets the running-input default to
   f.core.setMessageMode('queue'); await f.core.selectSession('next-session')
   assert.equal(f.core.composerInputMode('next-session'), 'steer')
 })
+test('session lifecycle actions use protected writes and never enable an archived/read-only session by inference',async()=>{
+  const f=fixture((url:string)=>({ok:true,json:async()=>url.endsWith('archived=all')?{sessions:[{sessionId:'session-test',archived:true,sendAvailable:false}]}:{archived:true}}));
+  await f.core.archiveSession('session-test');assert.equal(f.core.composerState('hello').messageDisabled,true);assert.equal(f.core.sessionList().length,0);assert.equal(f.core.sessionList(true).length,1);
+  const write=f.requests.find(r=>r.options.method==='POST')!;assert.equal(write.options.headers['X-WeftMate-CSRF'],'synthetic-csrf');assert.match(write.path,/\/archive$/);
+});
+test('a delayed lifecycle response cannot replace another account session list',async()=>{
+  const pending=deferred(),f=fixture(()=>pending.promise);
+  const work=f.core.archiveSession('session-test');f.core.state.identityGeneration++;f.core.state.sessions=[{sessionId:'other-account'}];pending.resolve({ok:true,json:async()=>({archived:true})});
+  assert.equal(await work,false);assert.equal(f.core.state.sessions[0].sessionId,'other-account');
+});

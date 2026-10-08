@@ -96,7 +96,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   }
   async function listMobileSessions(){if(!state.loggedIn||state.transitionPending)return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration;
-  try{const result=await core.accessApi('/sessions');if(owner!==state.owner||epoch!==state.authEpoch||generation!==state.sharedGeneration)return;
+  try{const result=await core.accessApi('/sessions?archived=all');if(owner!==state.owner||epoch!==state.authEpoch||generation!==state.sharedGeneration)return;
     if(result?.source!=='host'||!Array.isArray(result.sessions))throw new Error('OPERATION_FAILED');
     state.sharedSessions=result.sessions.filter(item=>item?.source==='host'&&typeof item.sessionId==='string'&&item.sessionId);
     state.sharedHostAvailable=result.hostAvailable===true;effects.renderConversationList();
