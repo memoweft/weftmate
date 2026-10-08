@@ -10,6 +10,14 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
             const value = await core.loadUsage({ sessionId, month });
             if (!value || !current()) return;
             const { summary, settings } = value;
+            let timeZoneLabel = summary.timeZone;
+            try {
+                const name = new Intl.DateTimeFormat('zh-CN', { timeZone: summary.timeZone, timeZoneName: 'longGeneric' })
+                    .formatToParts(new Date(`${summary.month}-15T12:00:00Z`)).find(part => part.type === 'timeZoneName')?.value;
+                if (name && name !== summary.timeZone) timeZoneLabel = `${name}（${summary.timeZone}）`;
+            } catch { /* Fall back to the API's IANA name when localization is unavailable. */ }
+            // day is already a calendar date in summary.timeZone, not a UTC timestamp.
+            const dateLabel = day => `${day.day}（${timeZoneLabel}）`;
             target.replaceChildren();
             const head = node('div', '', 'usage-toolbar');
             head.append(node('h2', sessionId ? '本对话用量' : '用量与费用'));
@@ -19,15 +27,15 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
             head.append(picker, refresh); target.append(head);
             target.append(node('p', `${month ? '所选月份' : '本月合计'} ${core.usageMoney(summary.total.cost)} · ${summary.total.requests} 次请求`, 'usage-total'));
             target.append(node('p', `输入 ${summary.total.inputTokens.toLocaleString()}（含缓存 ${summary.total.cachedInputTokens.toLocaleString()}） · 输出 ${summary.total.outputTokens.toLocaleString()}`, 'usage-tokens'));
-            target.append(node('p', '按 UTC 月份统计，金额按请求时单价计算，供参考，以服务商账单为准。', 'muted'));
+            target.append(node('p', `按 ${timeZoneLabel} 统计，金额按请求时单价计算，供参考，以服务商账单为准。`, 'muted'));
             if (summary.total.unknownRequests || summary.total.unpricedRequests) target.append(node('p', `${summary.total.unknownRequests} 次用量未知；${summary.total.unpricedRequests} 次费用未知，未计入金额。`, 'muted'));
             const notice = node('p', value.notice || (summary.budget.effectiveLimit === null ? '未设置月度上限。' : `本月有效上限 ${core.usageMoney(summary.budget.effectiveLimit)}。`), 'usage-notice');
             notice.setAttribute('role', summary.budget.state === 'blocked' ? 'alert' : 'status'); target.append(notice);
             target.append(node('h3', '每日费用'));
-            const chart = node('div', '', 'usage-chart'); chart.setAttribute('role', 'img'); chart.setAttribute('aria-label', `${summary.month} 每日费用柱状图`);
+            const chart = node('div', '', 'usage-chart'); chart.setAttribute('role', 'img'); chart.setAttribute('aria-label', `${summary.month} 每日费用柱状图（${timeZoneLabel}）`);
             const max = Math.max(...summary.days.map(day => day.cost), 0.000000001);
             for (const day of summary.days) {
-                const column = node('div', '', 'usage-column'); column.title = `${day.day} ${core.usageMoney(day.cost)} · ${day.requests} 次 · 未知 ${day.unknownRequests}`;
+                const column = node('div', '', 'usage-column'); column.title = `${dateLabel(day)} ${core.usageMoney(day.cost)} · ${day.requests} 次 · 未知 ${day.unknownRequests}`;
                 const meter = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); meter.setAttribute('viewBox', '0 0 10 100'); meter.setAttribute('preserveAspectRatio', 'none'); meter.setAttribute('aria-hidden', 'true');
                 const bar = document.createElementNS('http://www.w3.org/2000/svg', 'rect'); const height = 100 * day.cost / max;
                 for (const [key, value] of Object.entries({ x: 1, y: 100 - height, width: 8, height })) bar.setAttribute(key, String(value));
@@ -36,7 +44,7 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
             }
             target.append(chart);
             const details = node('details', '', 'usage-daily'); details.append(node('summary', '每日明细'));
-            const daily = node('ul', ''); for (const day of summary.days.filter(row => row.requests)) daily.append(node('li', `${day.day} · ${core.usageMoney(day.cost)} · ${day.requests} 次请求 · 未知 ${day.unknownRequests}`));
+            const daily = node('ul', ''); for (const day of summary.days.filter(row => row.requests)) daily.append(node('li', `${dateLabel(day)} · ${core.usageMoney(day.cost)} · ${day.requests} 次请求 · 未知 ${day.unknownRequests}`));
             if (!daily.children.length) daily.append(node('li', '这个月还没有模型请求。')); details.append(daily); target.append(details);
             for (const [title, rows] of [['按对话排行', value.sessions], ['按模型排行', value.models]]) {
                 target.append(node('h3', title)); const list = node('ol', '', 'usage-ranking');
