@@ -1,10 +1,10 @@
-/* Desktop presentation only. All writes remain in app.js and /personal/v1. */
+/* Desktop presentation only. Feature actions and preferences live in ui-core. */
 (() => {
   'use strict'
   const byId = id => document.getElementById(id)
   const node = (tag, cls = '', text = '') => { const n = document.createElement(tag); n.className = cls; n.textContent = text; return n }
-  const appearanceKey = 'weftmate.desktop.appearance.v1'
-  const defaults = { theme: 'system', accent: 'neutral', fontSize: '15' }
+  const appearanceStore = globalThis.WeftUiCore.createAppearance(localStorage)
+  const defaults = globalThis.WeftUiCore.appearanceDefaults
   let appearance = { ...defaults }, preview = null, returnFocus = null, actions = null, picker = null
   const tabs = new Map()
   const media = window.matchMedia?.('(prefers-color-scheme: dark)')
@@ -16,7 +16,7 @@
     root.style.setProperty('--text-size', `var(--wm-font-size-${appearance.fontSize}, ${appearance.fontSize}px)`)
     for (const key of Object.keys(defaults)) if (byId(`appearance-${key}`)) byId(`appearance-${key}`).value = appearance[key]
   }
-  try { applyAppearance(JSON.parse(localStorage.getItem(appearanceKey) || 'null') || defaults) } catch { applyAppearance(defaults) }
+  applyAppearance(appearanceStore.value)
   media?.addEventListener?.('change', () => { if (appearance.theme === 'system') applyAppearance() })
   function markdown(text, cls = 'markdown-body') {
     const content = node('div', cls)
@@ -71,7 +71,7 @@
     const menu = node('div', 'resource-picker'); menu.setAttribute('role', 'dialog'); menu.setAttribute('aria-label', '输出与来源')
     const close = node('button', 'button quiet small resource-picker-close', '关闭列表'); close.type = 'button'; close.addEventListener('click', hidePicker)
     menu.append(close, node('p', 'muted', '正在读取…')); picker = menu
-    byId('assistant-view').querySelector('.assistant-shell').append(menu)
+    globalThis.WeftUiLayout.mountResourcePicker(menu)
     trigger.setAttribute('aria-expanded', 'true'); close.focus({ preventScroll: true })
     try {
       const items = await actions.resources()
@@ -157,7 +157,7 @@
     const expand = node('button', 'button quiet small', '放大'); expand.type = 'button'; expand.setAttribute('aria-label', '放大右侧面板'); expand.setAttribute('aria-pressed', 'false')
     expand.addEventListener('click', () => { const expanded = document.body.classList.toggle('preview-expanded'); expand.textContent = expanded ? '还原' : '放大'; expand.setAttribute('aria-pressed', String(expanded)) })
     header.append(tablist, add, expand, close); panel.append(resize, header)
-    byId('assistant-view').querySelector('.assistant-shell').append(panel)
+    globalThis.WeftUiLayout.mountPreview(panel)
     document.body.classList.add('preview-open')
     resize.setAttribute('aria-valuemin', '280'); resize.setAttribute('aria-valuemax', String(Math.round(window.innerWidth * .6)))
     resize.setAttribute('aria-valuenow', String(Math.round(panel.getBoundingClientRect().width)))
@@ -178,17 +178,7 @@
     const panel = openPreview(name, trigger), image = node('img', 'preview-image'); image.src = url; image.alt = name
     panel.content.replaceChildren(image)
   }
-  function sessionGroup(session, now = new Date()) {
-    const stamp = session.updatedAt || session.lastMessageAt || session.createdAt
-    if (!stamp || !Number.isFinite(Date.parse(stamp))) return '会话'
-    const date = new Date(stamp), today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const day = new Date(date.getFullYear(), date.getMonth(), date.getDate())
-    const days = Math.round((today - day) / 86400000)
-    return days <= 0 ? '今天' : days === 1 ? '昨天' : days < 7 ? '7 天内' : '更早'
-  }
-  function sortSessions(sessions) {
-    return [...sessions].sort((a, b) => (Date.parse(b.updatedAt || b.lastMessageAt || b.createdAt) || 0) - (Date.parse(a.updatedAt || a.lastMessageAt || a.createdAt) || 0))
-  }
+  const { sessionGroup, sortSessions } = globalThis.WeftUiCore
   function toggleRail(force) {
     const collapsed = force === undefined ? !document.body.classList.contains('rail-collapsed') : force
     document.body.classList.toggle('rail-collapsed', collapsed)
@@ -201,7 +191,7 @@
     document.addEventListener('click', e => { if (picker && !picker.contains(e.target) && !e.target.closest('#conversation-resources, .preview-add')) hidePicker() })
     for (const key of Object.keys(defaults)) byId(`appearance-${key}`).addEventListener('change', e => {
       appearance[key] = e.target.value; applyAppearance()
-      try { localStorage.setItem(appearanceKey, JSON.stringify(appearance)) } catch { /* device storage can be unavailable */ }
+      try { appearanceStore.set(appearance) } catch { /* device storage can be unavailable */ }
     })
     byId('session-search').addEventListener('input', actions.renderSessions)
     byId('search-sessions').addEventListener('click', () => { toggleRail(false); byId('session-search').focus() })

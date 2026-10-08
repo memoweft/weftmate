@@ -1,3 +1,4 @@
+import { personalAccessUiAssetPaths } from '../personal-access-ui/index.mjs';
 import {
   attachmentDisposition,
   bounded,
@@ -99,18 +100,7 @@ export function createHttpHandler(context) {
         throw failure('ORIGIN_NOT_ALLOWED', 403);
       }
       if (context.cloudIdentity && await context.cloudIdentity.handle(request, response, url)) return;
-      const staticPaths = new Set(['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
-        '/personal/v1/ui/native-desktop.js', '/personal/v1/ui/native-desktop.css',
-        '/personal/v1/ui/tokens.css', '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
-        '/personal/v1/ui/cloud-ui.js', '/personal/v1/ui/cloud-login.js', '/personal/v1/ui/cloud-vendor.js',
-        '/personal/v1/ui/desktop.js', '/personal/v1/ui/format-vendor.js',
-        '/personal/v1/ui/icons.js', '/personal/v1/ui/icons.svg',
-        '/personal/v1/ui/brand/color-light.svg', '/personal/v1/ui/brand/color-dark.svg',
-        '/personal/v1/ui/file-sha256.js', '/personal/v1/ui/vendor/noble-hashes-2.3.0/sha2.js',
-        '/personal/v1/ui/vendor/noble-hashes-2.3.0/_md.js',
-        '/personal/v1/ui/vendor/noble-hashes-2.3.0/_u64.js',
-        '/personal/v1/ui/vendor/noble-hashes-2.3.0/utils.js']);
-      if (request.method === 'GET' && !url.search && staticPaths.has(pathname)) {
+      if (request.method === 'GET' && !url.search && personalAccessUiAssetPaths.has(pathname)) {
         if (context.uiHandler && await context.uiHandler(request, response,
           context.cloudIdentity?.browserConfiguration()) === true) return;
         throw failure('NOT_FOUND', 404);
@@ -1217,44 +1207,74 @@ export function createHttpHandler(context) {
           // For a webpage this is the same captured-body hash, not a project-file claim.
           ...(source.kind === 'webpage' ? { fileSha256: source.textSha256 } : {}) } });
       }
-      const taskActionMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/(supplements|stop|resume)$/.exec(pathname);
+      const taskActionMatch = /^\/personal\/v1\/tasks\/([A-Za-z0-9_-]+)\/(supplements|stop|resume|cancel)$/.exec(pathname);
       const projectSessionMatch = /^\/personal\/v1\/projects\/([A-Za-z0-9_-]+)\/sessions$/.exec(pathname);
       const browserSessionPath = pathname === '/personal/v1/workspaces/browser/sessions';
-      if (request.method === 'POST' && taskActionMatch?.[2] === 'stop') {
+      if (request.method === 'POST' && ['stop', 'cancel'].includes(taskActionMatch?.[2])) {
+        const queuedOnly = taskActionMatch[2] === 'cancel';
         if (url.search) throw failure('INVALID_REQUEST');
         const taskId = id(taskActionMatch[1]);
         const body = await context.readJson(request);
         exactKeys(body, ['requestId'], ['requestId']);
         if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId)) throw failure('INVALID_REQUEST');
-        await context.serial(() => context.mutate(ownerId, (next) => {
+        await context.serial(async () => {
           const current = context.authenticate(request, 'commands:write');
           if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
-          const source = context.taskSource(next, taskId);
-          const usedByCommand = Object.values(next.commands).some((item) => item.requestId === body.requestId);
-          const priorTask = Object.values(next.commands).find((item) =>
-            item.taskControl?.stopRequests.some((entry) => entry.requestId === body.requestId));
-          if (usedByCommand || next.modelOperations?.[body.requestId] || next.projectOperations?.[body.requestId] ||
-              context.interactionRequestIdUsed(next, body.requestId) ||
-              (priorTask && priorTask.commandId !== taskId)) throw failure('REQUEST_CONFLICT', 409);
-          if (priorTask) return;
-          const now = new Date(context.timestamp()).toISOString();
-          const control = source.taskControl ?? { state: 'active', stopRequests: [], updatedAt: now };
-          if (control.state === 'stop_requested' || control.stopRequests.length >= 100) {
-            throw failure('TASK_NOT_READY', 409);
-          }
-          control.state = 'stop_requested';
-          control.stopRequests.push({ requestId: body.requestId, at: now,
-            targets: context.stopTargets(next, taskId) });
-          control.updatedAt = now;
-          source.taskControl = control;
-          for (const item of [source, ...context.taskChildren(next, taskId)]) {
-            for (const row of item.toolApprovals ?? []) invalidateToolApproval(row, 'task_stopped', now);
-            for (const row of item.userQuestions ?? []) invalidateUserQuestion(row, 'TASK_NOT_READY', now);
-            if (item.state === 'pending') {
-              item.state = 'rejected'; item.errorCode = 'TASK_NOT_READY'; item.updatedAt = now;
+          const account = context.accountState(ownerId);
+          const source = context.taskSource(account, taskId);
+          const prior = Object.values(account.commands).flatMap(command => command.taskControl?.stopRequests ?? [])
+            .find(entry => entry.requestId === body.requestId);
+          if (prior && Boolean(prior.queuedOnly) !== queuedOnly) throw failure('REQUEST_CONFLICT', 409);
+          let outcomes;
+          if (queuedOnly && !prior) {
+            if (context.requestIdUsed(account, body.requestId) || context.interactionRequestIdUsed(account, body.requestId)) {
+              throw failure('REQUEST_CONFLICT', 409);
+            }
+            if (source.taskControl?.state === 'stop_requested' || !['pending', 'accepted_by_dsh'].includes(source.state)) {
+              throw failure('TASK_NOT_READY', 409);
+            }
+            if (source.state === 'accepted_by_dsh') {
+              if (!source.receiptId || typeof context.backend.stopTask !== 'function') throw failure('TASK_NOT_READY', 409);
+              const result = await context.callBackend(() => context.backend.stopTask({
+                sessionId: source.sessionId, ownerId, requestId: body.requestId,
+                receiptIds: [source.receiptId], queuedOnly: true }));
+              if (result?.outcomes?.length !== 1 || result.outcomes[0].receiptId !== source.receiptId ||
+                  result.outcomes[0].status !== 'queue_removed') throw failure('TASK_NOT_READY', 409);
+              outcomes = result.outcomes;
             }
           }
-        }));
+          await context.mutate(ownerId, (next) => {
+            const current = context.authenticate(request, 'commands:write');
+            if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+            const source = context.taskSource(next, taskId);
+            const usedByCommand = Object.values(next.commands).some((item) => item.requestId === body.requestId);
+            const priorTask = Object.values(next.commands).find((item) =>
+              item.taskControl?.stopRequests.some((entry) => entry.requestId === body.requestId));
+            if (usedByCommand || next.modelOperations?.[body.requestId] || next.projectOperations?.[body.requestId] ||
+                context.interactionRequestIdUsed(next, body.requestId) ||
+                (priorTask && priorTask.commandId !== taskId)) throw failure('REQUEST_CONFLICT', 409);
+            if (priorTask) return;
+            const now = new Date(context.timestamp()).toISOString();
+            const control = source.taskControl ?? { state: 'active', stopRequests: [], updatedAt: now };
+            if (control.state === 'stop_requested' || control.stopRequests.length >= 100) {
+              throw failure('TASK_NOT_READY', 409);
+            }
+            control.state = 'stop_requested';
+            control.stopRequests.push({ requestId: body.requestId, at: now,
+              ...(queuedOnly ? { queuedOnly: true } : {}),
+              targets: context.stopTargets(next, taskId).map(target => outcomes?.some(outcome =>
+                outcome.receiptId === target.receiptId) ? { ...target, ack: 'queue_removed', ackAt: now } : target) });
+            control.updatedAt = now;
+            source.taskControl = control;
+            for (const item of [source, ...context.taskChildren(next, taskId)]) {
+              for (const row of item.toolApprovals ?? []) invalidateToolApproval(row, 'task_stopped', now);
+              for (const row of item.userQuestions ?? []) invalidateUserQuestion(row, 'TASK_NOT_READY', now);
+              if (item.state === 'pending') {
+                item.state = 'rejected'; item.errorCode = 'TASK_NOT_READY'; item.updatedAt = now;
+              }
+            }
+          });
+        });
         if (context.accountState(ownerId).commands[taskId]?.taskControl?.state === 'stop_requested' &&
             context.accountState(ownerId).sessions[context.accountState(ownerId).commands[taskId].sessionId]?.workspaceKind === 'browser') {
           context.browserReader?.cancelTask(ownerId, taskId);
@@ -1327,7 +1347,7 @@ export function createHttpHandler(context) {
         return context.json(response, 200, { command: publicCommand(command) });
       }
       if (request.method === 'POST' && (pathname === '/personal/v1/commands' ||
-          (taskActionMatch && taskActionMatch[2] !== 'stop') || projectSessionMatch || browserSessionPath ||
+          (taskActionMatch && ['supplements', 'resume'].includes(taskActionMatch[2])) || projectSessionMatch || browserSessionPath ||
           sharedConversationMatch)) {
         if (url.search) throw failure('INVALID_REQUEST');
         const taskAction = taskActionMatch?.[2] === 'supplements' ? 'supplement'
@@ -1410,7 +1430,7 @@ export function createHttpHandler(context) {
         } : taskAction ? {
           requestId: body.requestId, kind: 'session.message', targetDeviceId: state.hostId,
           sessionId: rootSource.sessionId, text: body.text,
-          mode: 'queue', rootTaskId, taskAction,
+          mode: taskAction === 'supplement' ? 'steer' : 'queue', rootTaskId, taskAction,
         } : canonicalCommand(body, state.hostId);
         const projectBinding = rawPayload.kind === 'session.message' ? taskAction
           ? rootSource.payload : state.sessions[rawPayload.sessionId] : null;

@@ -76,9 +76,12 @@ describe('Stage 2 settings, model management and product surface', () => {
     assert.match(journal, /export function recoverRouteMutationJournalFiles/);
     assert.match(main, /const routeMutationQueue = createRouteMutationQueue\(\)/);
     assert.match(main, /const enqueueRouteMutation = \(work\) => routeMutationQueue\.run\(work\)/);
-    assert.match(main, /saveModelRoute = async \(input\) =>/);
-    assert.match(main, /return enqueueRouteMutation\(async \(\) =>/);
-    assert.match(main, /await enqueueRouteMutation\(async \(\) => \{\s*await hydrateLegacySessionBindings\(\);\s*assertSessionReferenceScanComplete\(\)/);
+    const saveRoute = main.slice(main.indexOf('saveModelRoute = async'), main.indexOf('configureLocalModel = async'));
+    assert.match(saveRoute, /saveModelRoute = async \(input, \{ catalogOnly = false \} = \{\}\) =>/);
+    assert.match(saveRoute, /return enqueueRouteMutation\(async \(\) =>/);
+    assert.match(saveRoute, /if \(childEnvironmentChanged\) \{\s*await hydrateLegacySessionBindings\(\);\s*assertSessionReferenceScanComplete\(\);/);
+    const deleteRoute = main.slice(main.indexOf("ipcMain.handle('wm:stage2:delete-model'"), main.indexOf("ipcMain.handle('wm:stage2:set-theme'"));
+    assert.match(deleteRoute, /await enqueueRouteMutation\(async \(\) => \{\s*await hydrateLegacySessionBindings\(\);\s*assertSessionReferenceScanComplete\(\)/);
     assert.match(main, /async function activateStageOneConfig[\s\S]*return saveModelRoute\(\{ \.\.\.clean, provider: 'openai-compatible' \}\)/);
     assert.match(main, /wm:stage1:import-current-local-model[\s\S]*await activateStageOneConfig/);
     assert.match(main, /if \(childEnvironmentChanged\) \{\s*await hydrateLegacySessionBindings\(\);\s*assertSessionReferenceScanComplete\(\);/);

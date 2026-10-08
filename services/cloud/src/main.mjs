@@ -5,6 +5,7 @@ import { createMailer } from './mail.mjs';
 import { createCloudServer } from './server.mjs';
 import { createIdentity } from './identity.mjs';
 import { dnsFromEnvironment } from './dns-aliyun.mjs';
+import { pruneEphemeral } from './maintenance.mjs';
 
 // WAL sidecars and any future service files inherit private permissions.
 process.umask(0o077);
@@ -13,10 +14,14 @@ let database;
 let server;
 let relay;
 let stopping = false;
+let maintenance;
+let maintenanceWork = Promise.resolve();
 
 async function shutdown(signal) {
   if (stopping) return;
   stopping = true;
+  clearInterval(maintenance);
+  await maintenanceWork;
   logger.info('service.stopping', { signal });
   await relay?.close();
   server.close(() => {
@@ -31,6 +36,12 @@ try {
   const opened = await openDatabase(config.databasePath);
   database = opened.database;
   const mailer = createMailer(config, { logger });
+  await pruneEphemeral(database, mailer);
+  maintenance = setInterval(() => {
+    maintenanceWork = maintenanceWork.then(() => pruneEphemeral(database, mailer))
+      .catch(() => logger.error('service.cleanup_failed', { code: 'CLEANUP_FAILED' }));
+  }, 60000);
+  maintenance.unref();
   const identity = await createIdentity({ database, config, mailer, logger, relayDns: dnsFromEnvironment({ database }) });
   relay = identity.relay;
   await relay.start();
@@ -54,6 +65,8 @@ try {
     schemaVersion: opened.schemaVersion,
   });
 } catch (error) {
+  clearInterval(maintenance);
+  await maintenanceWork;
   await relay?.close();
   database?.close();
   logger.error('service.start_failed', { code: error.code ?? 'STARTUP_FAILED' });

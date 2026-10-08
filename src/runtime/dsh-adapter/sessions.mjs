@@ -9,6 +9,7 @@
 import { createHash } from 'node:crypto'
 import { describeTool, toolArguments } from './timeline.mjs'
 import { sourceRange } from './source-range.mjs'
+import { indexInboxTimeline, turnReceiptAt } from './inbox-timeline.mjs'
 
 const SAFE_ERROR_CODES = new Set([
   'session-not-found',
@@ -120,7 +121,7 @@ function messageImages(message) {
 }
 
 /** Stable public timeline; private reasoning and injected messages stay private. */
-export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null) {
+export function projectHistoryEvent(raw, call = null, contextTurn = null, closingTurn = null, inbox = null) {
   const event = raw?.event ?? raw
   const seq = event?.seq
   if (!Number.isSafeInteger(seq) || seq < 0) return null
@@ -201,10 +202,20 @@ export function projectHistoryEvent(raw, call = null, contextTurn = null, closin
     projected = { seq, type: 'task.ended', data: { taskId, turn: data.turn,
       reason: kind === 'max-tokens' ? 'error' : kind ?? 'unknown', nativeTurnEndSeq: closingTurn.seq,
       ...(kind === 'max-tokens' ? { endReasonKind: kind } : {}) } }
+  } else if (type === 'agent/inbox/spliced' && inbox?.tasks) {
+    const tasks = inbox.tasks.filter(task => typeof task.receiptId === 'string').map(task => ({
+      taskId: task.receiptId, receiptId: task.receiptId,
+      ...(inbox.type === 'task.queued' ? { text: safeHistoryText(task.text).text } : { reason: inbox.reason }),
+    }));
+    if (tasks.length) projected = { seq, type: inbox.type, data: { ...tasks[0],
+      ...(tasks.length > 1 ? { tasks } : {}) } };
   } else if (type === 'task.queued') {
     // Reserved read projection for a future native queue producer; never write
     // unknown event types into this fixed DSH runtime's durable log.
     projected = { seq, type, data: boundedTimelineValue({ ...data, taskId }) }
+  }
+  if (projected && ['task.started', 'task.ended'].includes(projected.type) && inbox?.receiptId) {
+    projected.data.receiptId = inbox.receiptId;
   }
   if (projected && Buffer.byteLength(JSON.stringify(projected), 'utf8') > 32_000) {
     const { taskId, stepId, callId, toolName, summary, state, artifactId, fileName, size, contentType } = projected.data
@@ -448,7 +459,7 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
           const previous = entries[i]?.event ?? entries[i]
           if (Number.isSafeInteger(previous.data?.turn)) { contextTurn = previous.data.turn; break }
         }
-        const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null)
+        const event = projectHistoryEvent(entries[index], raw.type === 'tool/result' ? relatedCall(entries, index, cache) : null, contextTurn, raw.type === 'step/end' ? resolveStepEnd(entries, index, cache) : null, ['agent/inbox/spliced', 'step/start', 'step/end'].includes(raw.type) ? indexInboxTimeline(entries, cache, index) : null)
         const size = event ? Buffer.byteLength(JSON.stringify(event), 'utf8') : 0
         if (event && (events.length === limit || bytes + size > HISTORY_RESPONSE_BYTES_LIMIT)) { hasMore = true; break }
         scanned = raw.seq
@@ -519,7 +530,18 @@ export function createDshSessionAdapter(client, { readLog } = {}) {
       const value = await unwrap(response, 'prompt')
       const receiptId = typeof response?.rpcId === 'string' && /^[A-Za-z0-9._:-]{1,160}$/.test(response.rpcId)
         ? response.rpcId : undefined
-      return { accepted: value?.accepted === true, command: value?.command, ...(receiptId ? { receiptId } : {}) }
+      let steeredReceiptId
+      if (mode === 'steer' && receiptId && readLog) {
+        const entries = await readLog(sessionId)
+        const insertion = entries.findLastIndex(entry => {
+          const event = entry.event ?? entry
+          return event.type === 'agent/inbox/spliced' && event.data?.target === 'next-step' &&
+            event.data.inserted?.some(message => message.source?.rpcId === receiptId)
+        })
+        if (insertion >= 0) steeredReceiptId = turnReceiptAt(entries, insertion) ?? undefined
+      }
+      return { accepted: value?.accepted === true, command: value?.command, ...(receiptId ? { receiptId } : {}),
+        ...(steeredReceiptId ? { steeredReceiptId } : {}) }
     },
 
     async attachment(sessionId, attachmentId) {

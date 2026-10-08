@@ -107,6 +107,19 @@ export async function createHostCloudIdentity(context, options) {
       throw failure('CLOUD_TOKEN_INVALID', 401);
     await context.serial(async () => {
       await edit(next => {
+        if (envelope.memberships !== undefined) {
+          if (!Array.isArray(envelope.memberships) || envelope.memberships.some(m => typeof m.sub !== 'string' || !Number.isSafeInteger(m.epoch) || m.epoch < 0))
+            throw failure('CLOUD_TOKEN_INVALID', 401);
+          for (const [key, binding] of Object.entries(next.bindings)) {
+            if (binding.status !== 'active') continue;
+            const member = envelope.memberships.find(m => m.sub === binding.sub);
+            if (!member) {
+              binding.status = 'unbound';
+              for (const device of Object.values(next.devices)) if (device.bindingKey === key) device.status = 'revoked';
+              for (const [id, event] of Object.entries(next.outbox)) if (event.sub === binding.sub) delete next.outbox[id];
+            } else next.epochs[key] = Math.max(next.epochs[key] ?? 0, member.epoch);
+          }
+        }
         let previous = -1;
         for (const event of envelope.events) {
           if (!Number.isSafeInteger(event.seq) || event.seq <= previous || event.seq > envelope.watermark ||
@@ -138,16 +151,24 @@ export async function createHostCloudIdentity(context, options) {
       return;
     }
     syncing = (async () => {
+      // Read authoritative membership before flushing pending status records:
+      // a deleted account must not leave a failing outbox blocking revocation.
+      const result = await signedRequest('/hosts/revocations', { afterSeq: store.state.watermark });
+      await applyEvents(result.eventToken);
+      let flushed = false;
       for (const [id, event] of Object.entries(store.state.outbox)) {
         const { action = '/hosts/devices/revoke', ...data } = event;
         await signedRequest(action, { ...data, requestId: id });
+        flushed = true;
         await context.serial(() => edit(next => { delete next.outbox[id]; }));
       }
-      const result = await signedRequest('/hosts/revocations', { afterSeq: store.state.watermark });
-      await applyEvents(result.eventToken);
       if (store.state.hostName) {
         const binding = Object.values(store.state.bindings).find(b => b.status === 'active');
         if (binding) await signedRequest('/hosts/status', { name: store.state.hostName, sub: binding.sub });
+      }
+      if (flushed) {
+        const updated = await signedRequest('/hosts/revocations', { afterSeq: store.state.watermark });
+        await applyEvents(updated.eventToken);
       }
     })().finally(() => { syncing = null; });
     return syncing;

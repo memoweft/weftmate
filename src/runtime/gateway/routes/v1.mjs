@@ -262,7 +262,8 @@ export function createGatewayV1({ client, readLog, diagnostics: diagnosticsDeps 
           throw error
         }
         return writeJson(res, result.accepted ? 202 : 409, { accepted: result.accepted,
-          ...(result.receiptId ? { receiptId: result.receiptId } : {}) })
+          ...(result.receiptId ? { receiptId: result.receiptId } : {}),
+          ...(result.steeredReceiptId ? { steeredReceiptId: result.steeredReceiptId } : {}) })
       }
       if (action === 'cancel' && req.method === 'POST') {
         record(sessionId); const result = await sessions.cancel(sessionId)
