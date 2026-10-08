@@ -85,14 +85,15 @@ test('history pages use host watermarks/cursors and keep stale reads out after a
 test('shared send/stop actions choose steer or queue and block unresolved submissions', async () => {
   const f = fixture(), commands: any[] = []
   f.core.submitCommand = async (...args: any[]) => { commands.push(args); return { state: 'accepted_by_dsh' } }
-  await f.core.sendDraft('普通消息'); assert.equal(commands.at(-1)[1].mode, 'queue')
+  await f.core.sendDraft('普通消息'); assert.equal(commands.at(-1)[1].intent, 'queue')
   f.core.state.sessions[0].running = true
-  await f.core.sendDraft('调整目标'); assert.equal(commands.at(-1)[1].mode, 'steer')
-  f.core.setMessageMode('queue'); await f.core.sendDraft('下一件事'); assert.equal(commands.at(-1)[1].mode, 'queue')
+  await f.core.sendDraft('调整目标'); assert.equal(commands.at(-1)[1].intent, 'steer')
+  f.core.setMessageMode('queue'); await f.core.sendDraft('下一件事'); assert.equal(commands.at(-1)[1].intent, 'queue')
   f.core.state.unresolvedSubmission = true; await f.core.sendDraft('送达未确认时'); assert.equal(commands.length, 3)
   await f.core.stopCurrentTurn(); assert.equal(commands.at(-1)[0], 'session.cancel')
   const view = f.core.composerState('未发送的草稿')
-  assert.equal(view.running, true); assert.equal(view.sendDisabled, false)
+  assert.equal(view.running, true); assert.equal(view.sendDisabled, true)
+  f.core.state.unresolvedSubmission = false; assert.equal(f.core.composerState('草稿').sendDisabled, false)
   f.core.state.online = false; assert.equal(f.core.composerState('草稿').sendDisabled, true)
 })
 
@@ -188,4 +189,122 @@ test('appearance keeps unknown saved fields while the control defaults stay stab
   f.core.appearance.set({ theme: 'dark', accent: 'blue', fontSize: '17', legacyField: true })
   assert.equal(f.api.createAppearance(f.environment.storage).value.legacyField, true)
   assert.deepEqual(Object.keys(f.api.appearanceDefaults), ['theme', 'accent', 'fontSize'])
+})
+
+
+test('UI-3 intent overrides do not change the composer selection and empty running drafts cannot send', async () => {
+  const f = fixture(), sent: any[] = []
+  f.core.state.sessions[0].running = true
+  f.core.submitCommand = async (...args: any[]) => { sent.push(args); return {} }
+  assert.equal(f.core.composerInputMode('session-test'), 'steer')
+  await f.core.sendDraft('快捷键排队', 'queue')
+  assert.equal(sent[0][1].intent, 'queue'); assert.equal(f.core.composerInputMode('session-test'), 'steer')
+  f.core.setMessageMode('invalid'); assert.equal(f.core.composerInputMode('session-test'), 'steer')
+  assert.equal(f.core.composerState('').sendDisabled, true)
+  assert.equal(f.core.composerState('补充').sendText, '发送')
+})
+
+test('UI-3 queue projection follows sequence, batches, receipt reconciliation and terminal reasons', () => {
+  const f = fixture()
+  const queued = { seq: 2, type: 'task.queued', data: { tasks: [{ taskId: 'receipt-one', receiptId: 'receipt-one', text: '一' }, { taskId: 'task-two', text: '二' }] } }
+  const started = { seq: 3, type: 'task.started', data: { taskId: 'task-one', receiptId: 'receipt-one' } }
+  const commands = [{ kind: 'session.message', sessionId: 'session-test', commandId: 'task-one', receiptId: 'receipt-one' }]
+  let rows = f.core.taskQueue([started, queued], commands)
+  assert.deepEqual(plain(rows).map((r: any) => [r.taskId, r.state, r.text]), [['task-one', 'running', '一'], ['task-two', 'queued', '二']])
+  rows = f.core.taskQueue([queued, started, { seq: 4, type: 'task.ended', data: { taskId: 'task-one', reason: 'completed' } },
+    { seq: 5, type: 'task.ended', data: { taskId: 'task-two', reason: 'canceled' } }], commands)
+  assert.deepEqual(plain(rows).map((r: any) => r.state), ['ended', 'cancelled'])
+})
+
+test('UI-3 cancel/edit retains request identity, handles 409 and never stops a running task', async () => {
+  let status = 409
+  const f = fixture(() => response(status === 409 ? { error: { code: 'TASK_NOT_READY' } } : { task: {} }, status))
+  f.core.state.historyEvents.set(1, { seq: 1, type: 'task.queued', data: { taskId: 'task-one', text: '原目标' } })
+  assert.equal(await f.core.cancelQueuedTask('task-one'), false)
+  assert.equal(f.core.taskQueue()[0].notice, '已经开始，可以用停止')
+  const original = JSON.parse(f.requests[0].options.body).requestId
+  status = 202
+  assert.equal(await f.core.editQueuedTask('task-one'), '原目标')
+  assert.equal(JSON.parse(f.requests[1].options.body).requestId, original)
+  assert.equal(f.core.taskQueue()[0].state, 'cancelled')
+  assert.ok(f.requests.every(r => r.path.endsWith('/tasks/task-one/cancel')))
+  f.core.state.historyEvents.set(2, { seq: 2, type: 'task.started', data: { taskId: 'task-one' } })
+  assert.equal(await f.core.cancelQueuedTask('task-one'), false)
+})
+
+test('UI-3 stale cancellation cannot populate another account or conversation', async () => {
+  const wait = deferred(), f = fixture(() => wait.promise)
+  f.core.state.historyEvents.set(1, { seq: 1, type: 'task.queued', data: { taskId: 'task-one', text: '原目标' } })
+  const pending = f.core.cancelQueuedTask('task-one')
+  f.core.state.identityGeneration++; f.core.state.ownerId = 'other-owner'
+  wait.resolve(response({ task: {} }, 202))
+  assert.equal(await pending, false); assert.equal(f.core.taskQueue()[0].state, 'queued')
+})
+
+test('UI-3 stop targets the current root and leaves the later queue untouched', async () => {
+  const f = fixture(() => response({ task: {} }, 202))
+  f.core.state.sessions[0].running = true
+  f.core.state.historyEvents.set(1, { seq: 1, type: 'task.started', data: { taskId: 'current-root' } })
+  f.core.state.historyEvents.set(2, { seq: 2, type: 'task.queued', data: { taskId: 'next-root', text: '下一件事' } })
+  await f.core.stopCurrentTurn()
+  assert.ok(f.requests[0].path.endsWith('/tasks/current-root/stop'))
+  assert.equal(f.core.taskQueue()[1].state, 'queued')
+})
+
+test('UI-3 approvals and sources share summaries for shell/files/web/subtask and unknown tools', () => {
+  const f = fixture()
+  for (const [tool, args, summary] of [
+    ['shell', { command: 'npm test', cwd: 'D:/project' }, '运行命令：npm test（在 D:/project）'],
+    ['delete_files', { paths: ['a.txt', 'b.txt', 'c.txt', 'd.txt'] }, '删除 4 个文件：a.txt、b.txt、c.txt…'],
+    ['write', { file_path: 'out/report.md' }, '写入 1 个文件：report.md'],
+    ['edit', { path: 'out/report.md' }, '修改 1 个文件：report.md'],
+    ['web_fetch', { url: 'https://example.com/a' }, '访问网页 example.com'],
+    ['subagent', { prompt: '核对结果' }, '交给子任务：核对结果'],
+    ['custom_tool', { a: 1, b: 'two', c: true, d: 'omitted' }, 'custom_tool：a=1，b=two，c=true'],
+  ] as any[]) {
+    const text = JSON.stringify({ arguments: JSON.stringify(args) })
+    assert.equal(f.core.toolSummary(tool, args), summary)
+    assert.equal(f.core.sourcePresentation(tool, text).summary, summary)
+    assert.equal(f.core.approvalPresentation({ toolName: tool, reason: JSON.stringify(args) }).summary, summary)
+  }
+  assert.equal(f.core.toolSummary('unknown', 'invalid json'), 'unknown')
+  assert.equal(f.core.approvalPresentation({ toolName: 'write', reason: '[weftmate:overwrite] 覆盖报告，可从 Git 恢复。' }).summary, '覆盖报告，可从 Git 恢复。')
+})
+
+test('UI-3 outputs group by path, keep creation order and expose older versions', () => {
+  const f = fixture()
+  const rows = f.core.deduplicateOutputs([
+    { artifactId: 'old', fileName: 'report.md', path: 'out/report.md', createdAt: '2026-10-01' },
+    { artifactId: 'other', fileName: 'report.md', path: 'other/report.md', createdAt: '2026-10-03' },
+    { artifactId: 'new', fileName: 'report.md', path: 'out/report.md', createdAt: '2026-10-02', updatedAt: '2026-10-02' },
+  ])
+  assert.equal(rows.length, 2); assert.equal(rows[0].artifact.artifactId, 'new'); assert.equal(rows[0].versions[0].artifactId, 'old')
+})
+
+
+test('UI-3 native approval reasons keep the risk prose and fold embedded raw parameters', () => {
+  const f = fixture(), row = { toolName: 'pwsh', reason: '[weftmate:delete] 删除用户文件。操作：pwsh\n{"command":"Remove-Item a.txt"}' }
+  const presentation = f.core.approvalPresentation(row)
+  assert.equal(presentation.summary, '运行命令：Remove-Item a.txt')
+  assert.equal(presentation.reason, '删除用户文件。操作：pwsh')
+  assert.ok(presentation.raw.includes('{"command"'))
+})
+
+
+test('UI-3 attachment shortcuts respect unresolved submissions and restore the selected intent', async () => {
+  const f = fixture(), intents: string[] = []
+  f.core.state.sessions[0].running = true
+  f.core.currentAttachmentDrafts = () => [{ attachmentId: 'fixture' }]
+  f.core.sendDesktopMessageWithAttachments = async () => { intents.push(f.core.composerInputMode('session-test')); return {} }
+  f.core.state.unresolvedSubmission = true; await f.core.sendDraft('带附件排队', 'queue'); assert.equal(intents.length, 0)
+  f.core.state.unresolvedSubmission = false; await f.core.sendDraft('带附件排队', 'queue')
+  assert.deepEqual(intents, ['queue']); assert.equal(f.core.composerInputMode('session-test'), 'steer')
+})
+
+test('UI-3 switching to another conversation resets the running-input default to steer', async () => {
+  const f = fixture()
+  f.core.state.sessions.push({ sessionId: 'next-session', sendAvailable: true, running: true })
+  f.core.refreshHistory = async () => {}; f.core.refreshApprovalMode = async () => {}; f.core.refreshConversationTasks = async () => {}
+  f.core.setMessageMode('queue'); await f.core.selectSession('next-session')
+  assert.equal(f.core.composerInputMode('next-session'), 'steer')
 })
