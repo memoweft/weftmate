@@ -47,6 +47,21 @@ node scripts/run-personal-host.mjs --user-data-dir C:\WeftMate-Test\profile --ac
 - Apple（macOS / iOS / watchOS）：[apps/apple/README](../apps/apple/README.md)
 - 设备与验证环境：[DEVELOPMENT_ENVIRONMENT](DEVELOPMENT_ENVIRONMENT.md)
 
+### 用 MuMu 模拟器验收安卓
+
+本机 MuMu Android 15 的 ADB（安卓调试桥）位于 `D:\Software\MuMuPlayer\nx_main\adb.exe`。本人启动模拟器后连接 `127.0.0.1:7555`；明确指定该序列号，避免操作其他设备：
+
+```powershell
+$adb = 'D:\Software\MuMuPlayer\nx_main\adb.exe'
+& $adb connect 127.0.0.1:7555
+& $adb -s 127.0.0.1:7555 get-state
+& $adb -s 127.0.0.1:7555 reverse tcp:18187 tcp:18187
+```
+
+只启动隔离宿主与合成账号，监听本机回环 18187。ADB reverse（安卓端口反向映射）后，安卓壳填写 `http://127.0.0.1:18187`；不要把模拟器的回环地址当成 Windows 回环地址，也不要连接日用 Runtime（运行数据）。调试壳允许这一字面回环 HTTP（网页传输协议）地址，正式来源仍要求 HTTPS（加密连接）。
+
+模拟器已有调试应用时，使用独立测试包名保护原有数据，不覆盖或卸载原应用。UI-2v 的构建、真实 `HybridActivity` 操作、`adb exec-out screencap -p` 截图及清理步骤见 [MuMu 验收证据](../tests/evidence/ui-2v/README.md)。软键盘必须同时有实际图像和非零 IME（输入法）区域；MuMu 预装输入法返回零高度时，可使用仅在测试 APK（安卓安装包）中的真实系统输入法服务取证，结束恢复原输入法设置。只卸载本次安装的隔离包、停止隔离宿主，并执行 `reverse --remove tcp:18187`；不运行 `adb reverse --remove-all` 或清空本人应用数据。
+
 ## GitHub CI
 
 三平台使用 Node 24 和锁文件安装；生产发布预检、完整依赖高危审计、依赖兼容冒烟、类型检查与必过单测都阻塞合入。普通 `npm test` 仍保留完整单测与 vendor 契约门。
