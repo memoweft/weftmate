@@ -67,6 +67,28 @@ public struct HostBackups: Decodable, Sendable {
 public struct BackupActionReply: Decodable, Sendable {
     public let state: String; public let restartsHost: Bool; public let requiresLogin: Bool
 }
-public struct HostSettingsStatus: Decodable, Sendable {
-    public let backend: JSONValue?
+
+public struct BackgroundModelPreference: Decodable, Sendable { public let backgroundModelProfileId: String? }
+public enum HostService: String, CaseIterable, Identifiable, Sendable {
+    case model, host, memory
+    public var id: String { rawValue }
+    public var title: String { switch self { case .model: "模型服务"; case .host: "宿主"; case .memory: "记忆服务" } }
+}
+public struct HostServiceState: Decodable, Sendable {
+    public let state: String; public let version: String?; public let lastError: String?; public let canRestart: Bool
+    public var title: String {
+        switch state {
+        case "ready", "running", "online", "connected": "运行正常"
+        case "unconfigured", "disabled": "尚未配置"
+        case "starting", "restarting": "正在启动"
+        case "unavailable", "error", "offline", "stopped": "暂不可用"
+        default: "状态待确认"
+        }
+    }
+}
+public struct HostSystemSnapshot: Decodable, Sendable {
+    public let model: HostServiceState; public let host: HostServiceState; public let memory: HostServiceState
+    public func service(_ key: HostService) -> HostServiceState {
+        switch key { case .model: model; case .host: host; case .memory: memory }
+    }
 }

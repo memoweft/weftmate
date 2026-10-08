@@ -8,7 +8,8 @@ import WeftMateCore
     @Published var backupPreferences: BackupPreferences?
     @Published var models: [SharedHostModel] = []
     @Published var prices: [WeftMateCore.UsageModel] = []
-    @Published var status: HostSettingsStatus?
+    @Published var status: HostSystemSnapshot?
+    @Published var backgroundModelID = ""
     @Published var busy = false
     @Published var error: String?
     @Published var notice: String?
@@ -29,7 +30,8 @@ import WeftMateCore
             case "models":
                 let models = try await app.assistantClient.hostModels()
                 let prices = try await app.assistantClient.usageSettings()
-                if self.current { self.models = models; self.prices = prices.models }
+                let preference = try await app.assistantClient.backgroundModelPreference()
+                if self.current { self.models = models; self.prices = prices.models; self.backgroundModelID = preference.backgroundModelProfileId ?? "" }
             case "system":
                 let reply = try await app.assistantClient.settingsStatus()
                 if self.current { self.status = reply }
@@ -37,21 +39,33 @@ import WeftMateCore
             }
         }
     }
+    func saveBackgroundModel(_ id: String) async {
+        await perform {
+            let result = try await self.app?.assistantClient.setBackgroundModel(id.isEmpty ? nil : id)
+            if self.current { self.backgroundModelID = result?.backgroundModelProfileId ?? "" }
+        }
+    }
+    func restart(_ service: HostService) async {
+        await perform {
+            let result = try await self.app?.assistantClient.restartSettingsService(service)
+            if self.current { self.status = result; self.notice = "已重新读取服务状态。" }
+        }
+    }
     func schedule(_ item: ManagedSchedule, action: ScheduleAction) async {
-        await perform { try await self.app?.assistantClient.manageSchedule(sessionID: item.sessionId, id: item.id, action: action) }
-        if current { await refresh("schedules") }
+        let succeeded = await perform { try await self.app?.assistantClient.manageSchedule(sessionID: item.sessionId, id: item.id, action: action) }
+        if succeeded, current { await refresh("schedules") }
     }
     func saveBackups() async {
         guard let backupPreferences else { return }
-        await perform { try await self.app?.assistantClient.setBackupPreferences(backupPreferences) }
-        if current { await refresh("backups") }
+        let succeeded = await perform { try await self.app?.assistantClient.setBackupPreferences(backupPreferences) }
+        if succeeded, current { await refresh("backups") }
     }
     func backup() async {
-        await perform {
+        let succeeded = await perform {
             guard let result = try await self.app?.assistantClient.createBackup(), self.current else { return }
             self.notice = result.state == "succeeded" ? "备份完成。" : "备份状态：" + result.state
         }
-        if current { await refresh("backups") }
+        if succeeded, current { await refresh("backups") }
     }
     func restore(_ item: HostBackup) async {
         await perform {
@@ -59,12 +73,12 @@ import WeftMateCore
             self.notice = result.requiresLogin ? "恢复已受理，电脑将重启；完成后请重新登录。" : "恢复状态：" + result.state
         }
     }
-    private func perform(_ work: () async throws -> Void) async {
-        guard !busy, current else { return }
+    @discardableResult private func perform(_ work: () async throws -> Void) async -> Bool {
+        guard !busy, current else { return false }
         busy = true; error = nil
         defer { busy = false }
-        do { try await work() }
-        catch { if current, !Task.isCancelled { self.error = "操作未完成，请刷新确认当前状态后重试。" } }
+        do { try await work(); return true }
+        catch { if current, !Task.isCancelled { self.error = "操作未完成，请刷新确认当前状态后重试。" }; return false }
     }
     func summary(_ category: String) -> String {
         guard let app else { return "" }

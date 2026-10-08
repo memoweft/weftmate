@@ -40,7 +40,9 @@ private actor SettingsTransport: HTTPTransport {
         } else if path.hasSuffix("/status") { json = #"{"ownerId":"owner","hostId":"host"}"# }
         else {
             requests.append(request)
-            if path.hasSuffix("/schedules"), request.httpMethod == "GET" { json = #"{"items":[]}"# }
+            if path.contains("/system") { json = #"{"model":{"state":"ready","version":"synthetic","canRestart":true},"host":{"state":"ready","canRestart":true},"memory":{"state":"unconfigured","canRestart":false}}"# }
+            else if path.hasSuffix("/settings/models") { json = #"{"backgroundModelProfileId":null}"# }
+            else if path.hasSuffix("/schedules"), request.httpMethod == "GET" { json = #"{"items":[]}"# }
             else if path.contains("/schedules/") { json = #"{"ok":true}"# }
             else if path.hasSuffix("/backups/settings") { json = #"{"settings":{"enabled":false,"directory":"/synthetic/Backups","dailyDays":14,"weeklyCopies":8}}"# }
             else if request.httpMethod == "POST" { json = #"{"state":"pending","restartsHost":true,"requiresLogin":true}"# }
@@ -82,4 +84,28 @@ private actor SettingsTransport: HTTPTransport {
     let body = try JSONSerialization.jsonObject(with: requests.last!.httpBody!) as! [String: Any]
     #expect(body["confirm"] as? Bool == true)
     #expect(body["id"] as? String == "synthetic-backup")
+}
+@Test func a6SystemMaintenanceUsesSixMinuteTimeoutAndHostReturnedState() async throws {
+    let transport = SettingsTransport(), client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+    _ = try await client.login(server: ServerConfiguration(input: "https://settings.example.com"), username: "synthetic", password: "synthetic-password-long", deviceName: "Mac")
+    let before = try await client.settingsStatus()
+    #expect(before.model.canRestart && !before.memory.canRestart)
+    #expect(before.memory.title == "尚未配置")
+    let after = try await client.restartSettingsService(.model)
+    #expect(after.model.title == "运行正常")
+    let requests = await transport.recorded()
+    #expect(requests.last?.url?.path == "/personal/v1/system/model/restart")
+    #expect(requests.last?.timeoutInterval == 360)
+    #expect(requests.last?.value(forHTTPHeaderField: "X-WeftMate-CSRF") != nil)
+}
+@Test func a6BackgroundPreferenceCanReturnToFollowingPrimaryModel() async throws {
+    let transport = SettingsTransport(), client = PersonalClient(credentialStore: MemoryStore(), transport: transport)
+    _ = try await client.login(server: ServerConfiguration(input: "https://settings.example.com"), username: "synthetic", password: "synthetic-password-long", deviceName: "Mac")
+    #expect(try await client.backgroundModelPreference().backgroundModelProfileId == nil)
+    _ = try await client.setBackgroundModel("synthetic-profile")
+    _ = try await client.setBackgroundModel(nil)
+    let requests = await transport.recorded()
+    let bodies = try requests.dropFirst().map { try JSONSerialization.jsonObject(with: $0.httpBody!) as! [String: Any] }
+    #expect(bodies[0]["backgroundModelProfileId"] as? String == "synthetic-profile")
+    #expect(bodies[1]["backgroundModelProfileId"] is NSNull)
 }
