@@ -56,9 +56,9 @@ export { uniqueSessionOwner } from './store.mjs';
  * nextSeq is the scanned durable-history watermark, including filtered records.
  */
 export async function createPersonalAccessService({ root, port, backend, uiHandler, androidPackagePath = null,
-  mobileUiDir = null, sharedProfileIsFormal = () => false, memoryManager = null,
+  mobileUiDir = null, mobileUiTrustedKeys = null, hostVersion = '0.1.0', sharedProfileIsFormal = () => false, memoryManager = null,
   allowedOrigins = [], trustedProxy = false, clock = Date.now, verifyToolResult = null,
-  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null }) {
+  browserReader = null, accountModelManager = null, systemManager = null, cloudIdentity = null, relay = null, backupManager = null }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) ||
       !Number.isInteger(port) || port < 0 || port > 65535 || !plainObject(backend) ||
       (uiHandler !== undefined && typeof uiHandler !== 'function') ||
@@ -99,10 +99,14 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   if (cloudIdentity) await backupBeforeCloud(root);
   let hostRelay = null;
   const storeFile = path.join(root, 'store.json');
+  const restoredCloudOwners = await readFile(path.join(root, 'backup-cloud-owners.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return []; throw error; });
   let rootState;
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get backupManager() { return backupManager; },
+    backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
+    restoredCloudOwner: (issuer, sub) => Array.isArray(restoredCloudOwners) ? restoredCloudOwners.find(row => row.issuer === issuer && row.sub === sub && rootState.accounts[row.ownerId])?.ownerId : undefined,
     get usage() { return usage; },
     get scheduleOperations() { return scheduleOperations; },
     get root() { return root; },
@@ -396,7 +400,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
     }
   }
-  const mobileUi = mobileUiDir === null ? null : createMobileUiPublisher({ root: mobileUiDir });
+  const mobileUi = mobileUiDir === null ? null : createMobileUiPublisher({ root: mobileUiDir, trustedKeys: mobileUiTrustedKeys, hostVersion });
   const nativeDownloads = createNativeDownloadPublisher(root);
   const androidPackageEntry = async () => {
     if (!androidPackagePath) return null;

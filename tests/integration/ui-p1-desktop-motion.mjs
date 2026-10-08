@@ -171,7 +171,7 @@ try {
     await frames(phase, 'session-switch', async () => { await page.getByRole('button', { name: /^项目进度报告(?:\s|$)/ }).evaluate(button => button.click()); await page.getByRole('button', { name: '允许一次', exact: true }).waitFor(); });
     await page.getByRole('button', { name: '账户菜单' }).click();
     await frames(phase, 'page-switch', () => page.getByRole('button', { name: '设置', exact: true }).evaluate(button => button.click()));
-    await page.getByRole('button', { name: /返回对话/ }).click();
+    await page.getByRole('button', { name: phase === 'before' ? /返回对话/ : '关闭设置' }).click();
     await frames(phase, 'approval-resolve', async () => {
       await page.getByRole('button', { name: '允许一次', exact: true }).evaluate(button => button.click());
       await until(() => page.getByText(/已提交允许|已允许本次/).count());

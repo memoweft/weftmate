@@ -91,20 +91,20 @@ globalThis.WeftUsageView = function (core, target, { sessionId = '', current = (
     void render();
 };
 if (globalThis.WeftUiComponents) globalThis.WeftUiComponents.factories.usage = (core, ui) => {
-    function mountUsage() {
-        const section = document.createElement('details'); section.className = 'card group usage-section';
-        const label = document.createElement('summary'); label.textContent = '用量'; section.append(label);
-        const body = document.createElement('div'); body.className = 'usage-body'; section.append(body);
-        section.addEventListener('toggle', () => { if (section.open) WeftUsageView(core, body); });
-        const conversation = document.createElement('button'); conversation.type = 'button'; conversation.className = 'button quiet small usage-title-button'; conversation.textContent = '本对话用量';
-        const panel = document.createElement('section'); panel.className = 'card group usage-conversation'; panel.hidden = true;
-        const back = document.createElement('button'); back.type = 'button'; back.className = 'button secondary'; back.textContent = '返回对话'; back.addEventListener('click', () => { panel.hidden = true; });
-        const content = document.createElement('div'); content.className = 'usage-body'; panel.append(back, content);
-        let selectedId = null;
-        const update = ui.updateAvailability;
-        ui.updateAvailability = (...args) => { if (selectedId !== core.state.selectedSessionId || core.state.activeChatSource === 'phone') panel.hidden = true; return update(...args); };
-        conversation.addEventListener('click', () => { if (!core.state.selectedSessionId || core.state.activeChatSource === 'phone') return ui.toast('请先选择一段电脑对话。'); selectedId = core.state.selectedSessionId; panel.hidden = false; WeftUsageView(core, content, { sessionId: selectedId, current: () => !panel.hidden && selectedId === core.state.selectedSessionId }); });
-        globalThis.WeftUiLayout.mountUsage(section, conversation, panel);
+    let activeScope = null;
+    function showSettingsUsage({ sessionId = '' } = {}) {
+        const target = document.querySelector('[data-category="usage"].settings-category');
+        const token = core.accountToken(); activeScope = {};
+        const scope = activeScope;
+        WeftUsageView(core, target, { sessionId, current: () => scope === activeScope && core.accountCurrent(token) && !target.hidden });
     }
-    return { mountUsage };
+    function mountUsage() {
+        const conversation = ui.element('button', 'button quiet small usage-title-button', '本对话用量'); conversation.type = 'button';
+        conversation.addEventListener('click', () => {
+            if (!core.state.selectedSessionId || core.state.activeChatSource === 'phone') return ui.toast('请先选择一段电脑对话。');
+            ui.openSettings('usage', { sessionId: core.state.selectedSessionId });
+        });
+        globalThis.WeftUiLayout.mountUsage(conversation);
+    }
+    return { mountUsage, showSettingsUsage };
 };

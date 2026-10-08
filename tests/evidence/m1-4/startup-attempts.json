@@ -1,0 +1,24 @@
+[
+  {
+    "model": "lan",
+    "status": "setup-failed",
+    "reason": "Legacy #login-name removed by current desktop cloud/offline login flow",
+    "scenarioStarted": false,
+    "modelRequests": 0,
+    "credentialScan": {
+      "scanned": 195,
+      "matches": 0
+    }
+  },
+  {
+    "model": "mimo",
+    "status": "setup-failed",
+    "reason": "Legacy #login-name removed by current desktop cloud/offline login flow",
+    "scenarioStarted": false,
+    "modelRequests": 0,
+    "credentialScan": {
+      "scanned": 194,
+      "matches": 0
+    }
+  }
+]

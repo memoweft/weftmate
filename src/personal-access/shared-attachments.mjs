@@ -1,3 +1,4 @@
+import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readFile, readdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -136,6 +137,7 @@ export async function createSharedAttachmentStore({ root }) {
         const header = Buffer.from(JSON.stringify({ attachment, sessionId, requestId }), 'utf8');
         const length = Buffer.alloc(4); length.writeUInt32BE(header.length);
         const file = pathsFor(sessionId, requestId, attachmentId).current;
+        const releaseWrite = await enterProfileWrite(file);
         const temp = `${file}.${randomUUID()}.tmp`;
         let handle;
         try {
@@ -146,7 +148,7 @@ export async function createSharedAttachmentStore({ root }) {
           authorize();
           await rename(temp, file);
           return { attachment, duplicate: false };
-        } finally { await handle?.close().catch(() => {}); await rm(temp, { force: true }).catch(() => {}); }
+        } finally { await handle?.close().catch(() => {}); await rm(temp, { force: true }).catch(() => {}); releaseWrite(); }
       });
     },
     async resolve({ sessionId, requestId, attachments }) {

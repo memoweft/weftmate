@@ -4,6 +4,8 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ['/personal/v1/ui/backup.css', ['backup.css', 'text/css; charset=utf-8']],
+  ['/personal/v1/ui/components/backup.js', ['components/backup.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/motion.js', ['motion.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/popovers.js', ['popovers.js', 'text/javascript; charset=utf-8']],
   ...uiCoreAssets.map(name => [`/personal/v1/ui/ui-core/${name}`, [`../ui-core/${name}`, 'text/javascript; charset=utf-8']]),
@@ -23,6 +25,8 @@ const files = new Map([
   ['/personal/v1/ui/components/schedules.js', ['components/schedules.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/usage.js', ['components/usage.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/usage.css', ['usage.css', 'text/css; charset=utf-8']],
+  ...['components/settings-controls.js', 'components/settings-navigation.js'].map(name => [`/personal/v1/ui/${name}`, [name, 'text/javascript; charset=utf-8']]),
+  ['/personal/v1/ui/settings.css', ['settings.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/settings.js', ['components/settings.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/account.js', ['components/account.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/components/memory.js', ['components/memory.js', 'text/javascript; charset=utf-8']],
@@ -60,6 +64,12 @@ const files = new Map([
 ])
 
 export const personalAccessUiAssetPaths = new Set(files.keys())
+export const personalAccessUiResources = new Map([...files.values()].map(([name]) => {
+  const resource = name.startsWith('../ui-core/') ? name.slice(3) : `personal-access-ui/${name}`;
+  return [resource, join(import.meta.dirname, name)];
+}))
+let verifiedResource = null
+export function setPersonalAccessUiResourceReader(reader) { verifiedResource = reader }
 
 const securityHeaders = {
   'cache-control': 'no-store',
@@ -78,7 +88,8 @@ export async function servePersonalAccessUi(request, response, cloud = null) {
   const asset = files.get(url.pathname)
   if (!asset) return false
   try {
-    const body = await readFile(join(import.meta.dirname, asset[0]))
+    const resource = asset[0].startsWith('../ui-core/') ? asset[0].slice(3) : `personal-access-ui/${asset[0]}`
+    const body = await verifiedResource?.(resource) ?? await readFile(join(import.meta.dirname, asset[0]))
     const headers = { ...securityHeaders };
     if (cloud?.issuer) headers['content-security-policy'] = headers['content-security-policy']
       .replace("connect-src 'self'", `connect-src 'self' ${new URL(cloud.issuer).origin}`);
