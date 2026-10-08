@@ -9,6 +9,7 @@ const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 export function syntheticBackend(root) {
   const sessions = new Map(), operations = [], approvals = [], memoryDeletes = [];
   let service;
+  const runtimeId = randomUUID();
   const model = { id:'mimo',name:'合成模型',model:'mimo-v2.6-flash',configured:true,sourceKind:'cloud' };
   function append(s,type,data){const event={seq:s.events.length,time:Date.now(),type,data};s.events.push(event);return event;}
   function message(text,receipt=randomUUID()){return {id:randomUUID(),source:{kind:'user',rpcId:receipt},content:[{type:'text',text}]};}
@@ -62,7 +63,7 @@ export function syntheticBackend(root) {
     readEvents:async({sessionId,...input})=>adapter(sessionId).historyPage(sessionId,input),
     readEventDetail:async({sessionId,seq})=>adapter(sessionId).historyDetail(sessionId,seq),
     getTaskReplyEvidence:async({sessionId})=>{const s=sessions.get(sessionId);return {status:s.running?'streaming':'completed',turn:s.turn,assistantChunks:0,textChunks:0,reasoningChunks:0,assistantMessages:2,toolSaveObserved:false};},
-    listUserQuestions:async({sessionId})=>({runtimeId:sessions.get(sessionId)?.questionRuntime??randomUUID(),questions:sessions.get(sessionId)?.questionFrame?[sessions.get(sessionId).questionFrame]:[]}),
+    listUserQuestions:async({sessionId})=>({runtimeId,questions:sessions.get(sessionId)?.questionFrame?[sessions.get(sessionId).questionFrame]:[]}),
     respondUserQuestion:async({sessionId})=>{sessions.get(sessionId).questionFrame.nativeState='answered';return {accepted:true};},
   };
   const memoryManager={
@@ -81,7 +82,7 @@ export function syntheticBackend(root) {
       ids[scene]=created.sessionId;sessions.get(created.sessionId).title=title;
       if(scene==='review') {
         const sent=await accepted(api,{requestId:'a5-review-message',kind:'session.message',targetDeviceId:hostId,sessionId:created.sessionId,text:'保持运行，读取项目资料并整理下一步。'});
-        const s=sessions.get(created.sessionId),receiptId=sent.receiptId,callId='a5-delete',runtimeId=randomUUID(),approvalId=randomUUID();
+        const s=sessions.get(created.sessionId),receiptId=sent.receiptId,callId='a5-delete',approvalId=randomUUID();
         const args={command:'rm synthetic-draft.txt',description:'删除合成草稿文件'},reason='[weftmate:delete] 删除后无法撤销，只影响本次合成草稿。\n'+JSON.stringify(args);
         append(s,'tool/call',{turn:1,callId:'a5-read',name:'read',arguments:JSON.stringify({path:'notes.md'})});
         append(s,'tool/result',{turn:1,message:{source:{kind:'tool',callId:'a5-read'},content:[{type:'tool-result',toolCallId:'a5-read',isError:false,content:[{type:'text',text:'合成资料已读取。'}]}]}});

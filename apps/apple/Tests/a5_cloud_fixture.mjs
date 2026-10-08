@@ -109,7 +109,7 @@ const driver = createServer(async(req,res)=>{
         } else if(path==='/pending'){result=await direct('/cloud/devices/pending');}
         else if(path==='/a5/deny'){result=await synthetic.addApproval();}
         else if(path==='/a5/ids'){result=ids;}
-        else if(path==='/a5/report'){result={operations:synthetic.operations,memoryDeletes:synthetic.memoryDeletes,usage:await direct('/usage'),sessions:await direct('/sessions?archived=all'),ids,workspaceExists:Object.fromEntries(await Promise.all(Object.entries(ids??{}).map(async([name,id])=>[name,await access(join(root,'workspaces',id)).then(()=>true,()=>false)])))};}
+        else if(path==='/a5/report'){result={operations:synthetic.operations,memoryDeletes:synthetic.memoryDeletes,approvalState:await direct('/sessions/'+ids.review+'/approvals'),approvalReasons:Object.values(JSON.parse(await readFile(join(root,'host','store.json'),'utf8')).accounts).flatMap(account=>Object.values(account.commands).flatMap(command=>(command.toolApprovals??[]).map(row=>({status:row.status,reasonCode:row.reasonCode,taskId:row.taskId})))),usage:await direct('/usage'),sessions:await direct('/sessions?archived=all'),ids,workspaceExists:Object.fromEntries(await Promise.all(Object.entries(ids??{}).map(async([name,id])=>[name,await access(join(root,'workspaces',id)).then(()=>true,()=>false)])))};}
         else if(path==='/a5/complete'){const s=synthetic.sessions.get(ids.queue);synthetic.finish(s);result={ok:true};}
         else if(path==='/a5/review-login'){
             if(!local)throw Error('Bootstrap first');

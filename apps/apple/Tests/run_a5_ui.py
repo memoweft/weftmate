@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """One iPhone at a time; real cloud main + isolated host + synthetic native log/model."""
-import argparse,json,os,plistlib,re,shutil,subprocess,tempfile
+import argparse,json,os,plistlib,re,shutil,subprocess,tempfile,urllib.request
 from pathlib import Path
 from datetime import datetime,timezone
 ROOT=Path(__file__).resolve().parents[3]
@@ -28,7 +28,12 @@ try:
   t=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
   for line in t.stdout:print(re.sub(r"Type '.*?' into",'Type <synthetic input> into',line),end='',flush=True)
   status=t.wait();run('xcrun','simctl','shutdown','all')
-  if status:raise subprocess.CalledProcessError(status,cmd)
+  if status:
+   try:
+    report=json.load(urllib.request.urlopen(meta['driver']+'/a5/report'))
+    Path('/private/tmp/a5-ui-failure-'+a.phase+'.json').write_text(json.dumps(report,ensure_ascii=False,indent=2))
+   except Exception:pass
+   raise subprocess.CalledProcessError(status,cmd)
  summary=json.loads(run('xcrun','xcresulttool','get','test-results','summary','--path',str(a.result)))
  assert summary['passedTests']==1 and summary['failedTests']==0 and summary['skippedTests']==0
  commit=run('git','rev-parse','HEAD').strip();now=datetime.now(timezone.utc);stamp=now.strftime('%Y%m%dT%H%M%SZ');generated=now.isoformat(timespec='milliseconds').replace('+00:00','Z')
