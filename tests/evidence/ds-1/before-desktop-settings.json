@@ -1,0 +1,66 @@
+{
+  "light-neutral": {
+    "colors": [
+      "#3d4542",
+      "#282f2c",
+      "#e9ece8"
+    ],
+    "fontSize": "19px"
+  },
+  "light-blue": {
+    "colors": [
+      "#365eab",
+      "#284b91",
+      "#e9eff9"
+    ],
+    "fontSize": "19px"
+  },
+  "light-green": {
+    "colors": [
+      "#32654f",
+      "#254d3c",
+      "#e8f0e9"
+    ],
+    "fontSize": "19px"
+  },
+  "light-purple": {
+    "colors": [
+      "#765299",
+      "#60417e",
+      "#f0eaf5"
+    ],
+    "fontSize": "19px"
+  },
+  "dark-neutral": {
+    "colors": [
+      "#b9c6b9",
+      "#ced8cc",
+      "#353e35"
+    ],
+    "fontSize": "19px"
+  },
+  "dark-blue": {
+    "colors": [
+      "#a4bff3",
+      "#c0d2f7",
+      "#2b3b53"
+    ],
+    "fontSize": "19px"
+  },
+  "dark-green": {
+    "colors": [
+      "#a0c8ad",
+      "#bddbc5",
+      "#2d3e32"
+    ],
+    "fontSize": "19px"
+  },
+  "dark-purple": {
+    "colors": [
+      "#cbb3e6",
+      "#decbf2",
+      "#3b314a"
+    ],
+    "fontSize": "19px"
+  }
+}

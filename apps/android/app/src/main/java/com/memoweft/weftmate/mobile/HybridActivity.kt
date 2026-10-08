@@ -506,8 +506,8 @@ class HybridActivity : Activity() {
             if (closed.get()) return@runOnUiThread
             val message = TextView(this).apply {
                 text = "$reason\n打开原生界面继续使用"
-                textSize = 16f
-                setPadding(48, 96, 48, 48)
+                textSize = DesignTokens.font16
+                setPadding(DesignTokens.fallbackPadding, DesignTokens.fallbackTop, DesignTokens.fallbackPadding, DesignTokens.fallbackPadding)
                 setOnClickListener { startActivity(Intent(this@HybridActivity, MainActivity::class.java)) }
             }
             (web.parent as? FrameLayout)?.addView(message, FrameLayout.LayoutParams(-1, -2))
@@ -623,7 +623,7 @@ class HybridActivity : Activity() {
         val selected = appearance()
         val dark = selected == "dark" || selected == "system" &&
             (resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
-        val color = if (dark) Color.rgb(38, 39, 35) else Color.WHITE
+        val color = getColor(if (dark) R.color.wm_web_surface_dark else R.color.wm_web_surface_light)
         window.decorView.setBackgroundColor(color)
         window.statusBarColor = color
         window.navigationBarColor = color

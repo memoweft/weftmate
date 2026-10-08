@@ -11,11 +11,13 @@ globalThis.fetch = async (input, options) => {
   const record = (phase, extra = {}) => appendFileSync(process.env.WEFTMATE_BASELINE_TRACE,
     JSON.stringify({ id, at: new Date().toISOString(), elapsedMs: Date.now() - start,
       kind: lease ? 'lease' : 'model', origin: url.origin, phase, ...extra }) + '\n');
-  let requestChars, requestedModel;
+  let requestChars, requestedModel, stream, templateThinking;
   if (model && typeof options?.body === 'string') {
-    try { const body = JSON.parse(options.body); requestChars = JSON.stringify(body.messages ?? []).length; requestedModel = body.model; } catch { /* Not JSON. */ }
+    try { const body = JSON.parse(options.body); requestChars = JSON.stringify(body.messages ?? []).length;
+      requestedModel = body.model; stream = body.stream; templateThinking = body.chat_template_kwargs?.enable_thinking;
+    } catch { /* Not JSON. */ }
   }
-  record('start', { requestChars, requestedModel });
+  record('start', { requestChars, requestedModel, stream, templateThinking });
   try {
     const response = await original(input, options); record('headers', { status: response.status });
     if (!response.body) return response;

@@ -12,43 +12,43 @@ import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 
-/** Direct native mapping of MobileStyle_v1_2/source/src/tokens.json. */
+/** Native compatibility palette generated from design/tokens/tokens.json. */
 object Weave {
-    const val accent = 0xff2859d8.toInt()
-    const val ink = 0xff1c2940.toInt()
-    const val secondary = 0xff56657b.toInt()
-    const val muted = 0xff64748a.toInt()
-    const val canvas = 0xfff3f5fa.toInt()
-    const val surface = Color.WHITE
-    const val soft = 0xfff7f9fd.toInt()
-    const val accentSoft = 0xffeaf0ff.toInt()
-    const val line = 0xffe4e9f2.toInt()
-    const val lineStrong = 0xffcdd7e7.toInt()
-    const val danger = 0xffbf374d.toInt()
-    const val overlay = 0x4718263e
+    const val accent = DesignTokens.nativeAccent
+    const val ink = DesignTokens.nativeInk
+    const val secondary = DesignTokens.nativeSecondary
+    const val muted = DesignTokens.nativeMuted
+    const val canvas = DesignTokens.nativeCanvas
+    const val surface = DesignTokens.nativeSurface
+    const val soft = DesignTokens.nativeSoft
+    const val accentSoft = DesignTokens.nativeAccentSoft
+    const val line = DesignTokens.nativeLine
+    const val lineStrong = DesignTokens.nativeLineStrong
+    const val danger = DesignTokens.nativeDanger
+    const val overlay = DesignTokens.nativeOverlay
 
     fun dp(context: Context, value: Int): Int = (context.resources.displayMetrics.density * value).toInt()
     fun shape(context: Context, color: Int, radius: Int, stroke: Int? = null) = GradientDrawable().apply {
         setColor(color)
         cornerRadius = dp(context, radius).toFloat()
-        if (stroke != null) setStroke(dp(context, 1), stroke)
+        if (stroke != null) setStroke(dp(context, DesignTokens.space1), stroke)
     }
     fun topSheet(context: Context, color: Int = surface) = GradientDrawable().apply {
         setColor(color)
-        val radius = dp(context, 32).toFloat()
+        val radius = dp(context, DesignTokens.radius32).toFloat()
         cornerRadii = floatArrayOf(radius, radius, radius, radius, 0f, 0f, 0f, 0f)
     }
     fun drawer(context: Context) = GradientDrawable().apply {
         setColor(surface)
-        val radius = dp(context, 32).toFloat()
+        val radius = dp(context, DesignTokens.radius32).toFloat()
         cornerRadii = floatArrayOf(0f, 0f, radius, radius, radius, radius, 0f, 0f)
     }
-    fun text(context: Context, value: String, size: Float = 14f, color: Int = ink, weight: Int = Typeface.NORMAL) =
+    fun text(context: Context, value: String, size: Float = DesignTokens.font14, color: Int = ink, weight: Int = Typeface.NORMAL) =
         TextView(context).apply {
             text = value; textSize = size; setTextColor(color); typeface = Typeface.create(Typeface.DEFAULT, weight)
             includeFontPadding = false
         }
-    fun icon(context: Context, resId: Int, tint: Int = secondary, size: Int = 20) = ImageView(context).apply {
+    fun icon(context: Context, resId: Int, tint: Int = secondary, size: Int = DesignTokens.space20) = ImageView(context).apply {
         setImageResource(resId)
         imageTintList = ColorStateList.valueOf(tint)
         scaleType = ImageView.ScaleType.FIT_CENTER
@@ -58,13 +58,13 @@ object Weave {
         onClick: () -> Unit): FrameLayout = FrameLayout(context).apply {
         contentDescription = description
         isClickable = true; isFocusable = true
-        background = shape(context, surface, 16)
-        minimumWidth = dp(context, 48); minimumHeight = dp(context, 48)
-        addView(icon(context, resId, tint), FrameLayout.LayoutParams(dp(context, 20), dp(context, 20), Gravity.CENTER))
+        background = shape(context, surface, DesignTokens.radius16)
+        minimumWidth = dp(context, DesignTokens.space48); minimumHeight = dp(context, DesignTokens.space48)
+        addView(icon(context, resId, tint), FrameLayout.LayoutParams(dp(context, DesignTokens.space20), dp(context, DesignTokens.space20), Gravity.CENTER))
         setOnClickListener { onClick() }
     }
-    fun mark(context: Context, size: Int = 32, softMark: Boolean = false): FrameLayout = FrameLayout(context).apply {
-        background = shape(context, if (softMark) accentSoft else accent, if (size >= 48) 19 else 10)
+    fun mark(context: Context, size: Int = DesignTokens.space32, softMark: Boolean = false): FrameLayout = FrameLayout(context).apply {
+        background = shape(context, if (softMark) accentSoft else accent, if (size >= DesignTokens.space48) DesignTokens.radius19 else DesignTokens.radius10)
         addView(ImageView(context).apply {
             setImageResource(R.drawable.weftmate_foreground)
             imageTintList = ColorStateList.valueOf(if (softMark) accent else surface)

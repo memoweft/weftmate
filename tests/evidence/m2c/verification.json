@@ -1,0 +1,986 @@
+{
+  "date": "2026-10-08",
+  "models": [
+    "http://127.0.0.1:8081/v1 / qwen3.8-27b-original",
+    "https://api.xiaomimimo.com/v1 / mimo-v2.6-flash"
+  ],
+  "coreDeliveryCommit": "ee718d6f039e208120c41972dc46f7bd5f0ddc5d",
+  "qwenRunCoreBase": "e63b156de797ada9665b710d5c85a9ebf27ce96f",
+  "qwenLaterChanges": "invalid-span coalescing fix verified by directed tests and full CI; normal selected segments in real Qwen cases",
+  "mimoRunCoreBase": "ee718d6f039e208120c41972dc46f7bd5f0ddc5d",
+  "weftmateRunBase": "75f32f85346b397294da011c513ad2814cdec31e",
+  "diagnosticResults": {
+    "before": [
+      {
+        "id": "memory-01-preference",
+        "status": "passed",
+        "durationMs": 540880,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 343387,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 192821,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    ],
+    "streamFirst": [
+      {
+        "id": "memory-01-preference",
+        "status": "failed",
+        "durationMs": 445859,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_matches",
+            "status": "failed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "failed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 205755,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 235546,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-03-switch-model",
+        "status": "failed",
+        "durationMs": 95976,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_contains",
+            "status": "failed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "failed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 26273,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 65035,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-04-person",
+        "status": "passed",
+        "durationMs": 93990,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_contains",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 39179,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 49412,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    ]
+  },
+  "finalResults": {
+    "qwen": [
+      {
+        "id": "memory-01-preference",
+        "status": "passed",
+        "durationMs": 399182,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 140869,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 253593,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-03-switch-model",
+        "status": "passed",
+        "durationMs": 136767,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 64479,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 64984,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-04-person",
+        "status": "passed",
+        "durationMs": 276843,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_contains",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 189187,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 81662,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 4,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    ],
+    "mimo": [
+      {
+        "id": "memory-01-preference",
+        "status": "passed",
+        "durationMs": 88454,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 10746,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 0,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 72836,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-03-switch-model",
+        "status": "passed",
+        "durationMs": 73812,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_contains",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 20076,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 1,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 48356,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      },
+      {
+        "id": "memory-04-person",
+        "status": "passed",
+        "durationMs": 107433,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed",
+            "turn": 1
+          },
+          {
+            "type": "reply_contains",
+            "status": "passed"
+          },
+          {
+            "type": "reply_matches",
+            "status": "passed"
+          },
+          {
+            "type": "turn_status",
+            "status": "passed"
+          },
+          {
+            "type": "memory_used",
+            "status": "passed"
+          },
+          {
+            "type": "llm_judge",
+            "status": "skipped"
+          }
+        ],
+        "turns": [
+          {
+            "status": "completed",
+            "durationMs": 4604,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 2,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          },
+          {
+            "status": "completed",
+            "durationMs": 97289,
+            "memoryUsedSupported": true,
+            "memoryUsedCount": 3,
+            "unexpectedApproval": false,
+            "questionCount": 0,
+            "toolCallCount": 0
+          }
+        ]
+      }
+    ]
+  },
+  "formationAudit": {
+    "before": {
+      "jobs": [
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:03:20.738Z",
+          "model_completed_at": "2026-10-08T06:04:56.746Z",
+          "completed_at": "2026-10-08T06:04:56.755Z",
+          "usage": {
+            "completion_tokens": 1850,
+            "prompt_tokens": 4169,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 6019
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 505
+        },
+        {
+          "state": "pending",
+          "attempts": 0,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:06:36.371Z",
+          "model_completed_at": null,
+          "completed_at": null,
+          "usage": {},
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 0
+        }
+      ],
+      "worldHasSmallHe": false,
+      "worldHasArlan": false,
+      "worldHasShoppingPreference": true,
+      "wrongNamesInWorld": []
+    },
+    "streamFirst": {
+      "jobs": [
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:10:58.880Z",
+          "model_completed_at": "2026-10-08T06:11:34.561Z",
+          "completed_at": "2026-10-08T06:11:34.568Z",
+          "usage": {
+            "completion_tokens": 242,
+            "prompt_tokens": 4136,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 4378
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 504
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:14:57.211Z",
+          "model_completed_at": null,
+          "completed_at": "2026-10-08T06:15:17.252Z",
+          "usage": {},
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 0
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:15:26.668Z",
+          "model_completed_at": "2026-10-08T06:16:00.860Z",
+          "completed_at": "2026-10-08T06:16:00.872Z",
+          "usage": {
+            "completion_tokens": 103,
+            "prompt_tokens": 4531,
+            "prompt_tokens_details": {
+              "cached_tokens": 4123
+            },
+            "total_tokens": 4634
+          },
+          "rewriteState": "completed",
+          "rewriteError": "entity_name_not_in_span",
+          "finalError": "entity_name_not_in_span",
+          "contentChars": 306
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:16:35.046Z",
+          "model_completed_at": "2026-10-08T06:16:57.240Z",
+          "completed_at": "2026-10-08T06:16:57.248Z",
+          "usage": {
+            "completion_tokens": 12,
+            "prompt_tokens": 3988,
+            "prompt_tokens_details": {
+              "cached_tokens": 3504
+            },
+            "total_tokens": 4000
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 41
+        },
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:17:17.681Z",
+          "model_completed_at": "2026-10-08T06:17:47.359Z",
+          "completed_at": "2026-10-08T06:17:47.370Z",
+          "usage": {
+            "completion_tokens": 200,
+            "prompt_tokens": 4098,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 4298
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 605
+        },
+        {
+          "state": "pending",
+          "attempts": 0,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:18:10.159Z",
+          "model_completed_at": null,
+          "completed_at": null,
+          "usage": {},
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 0
+        }
+      ],
+      "worldHasSmallHe": false,
+      "worldHasArlan": true,
+      "worldHasShoppingPreference": false,
+      "wrongNamesInWorld": []
+    },
+    "qwen": {
+      "jobs": [
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:22:38.194Z",
+          "model_completed_at": "2026-10-08T06:24:20.582Z",
+          "completed_at": "2026-10-08T06:24:20.593Z",
+          "usage": {
+            "completion_tokens": 249,
+            "prompt_tokens": 3754,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 4003
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 502
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:26:54.978Z",
+          "model_completed_at": null,
+          "completed_at": "2026-10-08T06:27:15.020Z",
+          "usage": {},
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 0
+        },
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:28:03.036Z",
+          "model_completed_at": "2026-10-08T06:29:05.442Z",
+          "completed_at": "2026-10-08T06:29:05.456Z",
+          "usage": {
+            "completion_tokens": 107,
+            "prompt_tokens": 3788,
+            "prompt_tokens_details": {
+              "cached_tokens": 0
+            },
+            "total_tokens": 3895
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 306
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:29:12.941Z",
+          "model_completed_at": "2026-10-08T06:29:53.360Z",
+          "completed_at": "2026-10-08T06:29:53.367Z",
+          "usage": {
+            "completion_tokens": 12,
+            "prompt_tokens": 3931,
+            "prompt_tokens_details": {
+              "cached_tokens": 3521
+            },
+            "total_tokens": 3943
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 41
+        },
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:32:26.102Z",
+          "model_completed_at": "2026-10-08T06:33:11.442Z",
+          "completed_at": "2026-10-08T06:33:11.457Z",
+          "usage": {
+            "completion_tokens": 212,
+            "prompt_tokens": 3950,
+            "prompt_tokens_details": {
+              "cached_tokens": 3521
+            },
+            "total_tokens": 4162
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 605
+        },
+        {
+          "state": "pending",
+          "attempts": 0,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:33:51.335Z",
+          "model_completed_at": null,
+          "completed_at": null,
+          "usage": {},
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 0
+        }
+      ],
+      "worldHasSmallHe": true,
+      "worldHasArlan": true,
+      "worldHasShoppingPreference": true,
+      "wrongNamesInWorld": []
+    },
+    "mimo": {
+      "jobs": [
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:34:58.930Z",
+          "model_completed_at": "2026-10-08T06:35:24.054Z",
+          "completed_at": "2026-10-08T06:35:24.061Z",
+          "usage": {
+            "completion_tokens": 280,
+            "completion_tokens_details": {
+              "reasoning_tokens": 50
+            },
+            "prompt_tokens": 4376,
+            "prompt_tokens_details": {
+              "cached_tokens": 3904
+            },
+            "total_tokens": 4656
+          },
+          "rewriteState": "completed",
+          "rewriteError": "invalid_proposition",
+          "finalError": null,
+          "contentChars": 505
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:36:14.971Z",
+          "model_completed_at": "2026-10-08T06:36:15.015Z",
+          "completed_at": "2026-10-08T06:36:15.015Z",
+          "usage": {},
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 0
+        },
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:36:38.400Z",
+          "model_completed_at": "2026-10-08T06:36:49.072Z",
+          "completed_at": "2026-10-08T06:36:49.089Z",
+          "usage": {
+            "completion_tokens": 474,
+            "completion_tokens_details": {
+              "reasoning_tokens": 290
+            },
+            "prompt_tokens": 3947,
+            "prompt_tokens_details": {
+              "cached_tokens": 2048
+            },
+            "total_tokens": 4421
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 407
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:37:29.744Z",
+          "model_completed_at": "2026-10-08T06:37:31.232Z",
+          "completed_at": "2026-10-08T06:37:31.232Z",
+          "usage": {
+            "completion_tokens": 31,
+            "completion_tokens_details": {
+              "reasoning_tokens": 18
+            },
+            "prompt_tokens": 4032,
+            "prompt_tokens_details": {
+              "cached_tokens": 2048
+            },
+            "total_tokens": 4063
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 41
+        },
+        {
+          "state": "applied",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:37:37.790Z",
+          "model_completed_at": "2026-10-08T06:39:11.363Z",
+          "completed_at": "2026-10-08T06:39:11.377Z",
+          "usage": {
+            "completion_tokens": 586,
+            "completion_tokens_details": {
+              "reasoning_tokens": 476
+            },
+            "prompt_tokens": 4371,
+            "prompt_tokens_details": {
+              "cached_tokens": 4032
+            },
+            "total_tokens": 4957
+          },
+          "rewriteState": "completed",
+          "rewriteError": "missing_target_entity",
+          "finalError": null,
+          "contentChars": 304
+        },
+        {
+          "state": "no_change",
+          "attempts": 1,
+          "last_error_type": null,
+          "created_at": "2026-10-08T06:39:18.724Z",
+          "model_completed_at": "2026-10-08T06:39:22.070Z",
+          "completed_at": "2026-10-08T06:39:22.070Z",
+          "usage": {
+            "completion_tokens": 47,
+            "completion_tokens_details": {
+              "reasoning_tokens": 34
+            },
+            "prompt_tokens": 4173,
+            "prompt_tokens_details": {
+              "cached_tokens": 2048
+            },
+            "total_tokens": 4220
+          },
+          "rewriteState": null,
+          "rewriteError": null,
+          "finalError": null,
+          "contentChars": 41
+        }
+      ],
+      "worldHasSmallHe": true,
+      "worldHasArlan": true,
+      "worldHasShoppingPreference": true,
+      "wrongNamesInWorld": []
+    }
+  },
+  "cleanup": {
+    "before": {
+      "scanned": 164,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    "streamFirst": {
+      "scanned": 165,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    "qwen": {
+      "scanned": 168,
+      "matches": 0,
+      "skippedLinks": 511
+    },
+    "mimo": {
+      "scanned": 168,
+      "matches": 0,
+      "skippedLinks": 511
+    }
+  },
+  "units": {
+    "weftmate": {
+      "passed": 11,
+      "failed": 0
+    },
+    "coreBatch": {
+      "passed": 214,
+      "failed": 0
+    },
+    "coreAccuracyFollowup": {
+      "passed": 26,
+      "failed": 0,
+      "overlapsBatch": true
+    },
+    "coreCI": {
+      "passed": 1719,
+      "failed": 0,
+      "strictTypecheckModules": 202
+    }
+  },
+  "modelCleanup": {
+    "currentModelId": "qwen3.8-27b-original",
+    "switching": false,
+    "activeLeases": 0,
+    "queuedLeases": 0,
+    "maintenanceQueued": 0,
+    "totalSlots": 1,
+    "context": 98304,
+    "remainingOwnedHostProcesses": 0,
+    "remainingCredentialFiles": 0
+  },
+  "mimoUsage": {
+    "requests": 20,
+    "requestsWithUsage": 20,
+    "missingUsage": 0,
+    "input": 90839,
+    "cachedInput": 54848,
+    "output": 4829,
+    "total": 95668,
+    "uncachedInput": 35991,
+    "cny": 0.04674596,
+    "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "scope": "all M2c diagnostic and final model calls, including MiMo in Qwen switch-model scenarios; usage pricing, not account bill"
+  },
+  "observedModelOrigins": [
+    "http://127.0.0.1:8081",
+    "https://api.xiaomimimo.com"
+  ],
+  "publicEvidenceScan": {
+    "files": 7,
+    "modelKeyMatches": 0,
+    "personalHomePaths": 0
+  }
+}
