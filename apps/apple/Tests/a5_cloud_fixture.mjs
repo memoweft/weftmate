@@ -11,6 +11,7 @@ import { promisify } from 'node:util';
 import { createPersonalAccessService } from '../../../src/personal-access/index.mjs';
 import { generateKeyPair, exportJWK, SignJWT } from '../../../services/cloud/node_modules/jose/dist/webapi/index.js';
 import { syntheticBackend } from './a5_synthetic_backend.mjs';
+import { createBackupManager } from '../../../src/personal-backup/index.mjs';
 process.umask(0o077);
 const run = promisify(execFile), P = '/personal/v1/cloud';
 const root = await realpath(await mkdtemp(join(tmpdir(), 'wm-lg2-')));
@@ -37,10 +38,31 @@ async function mailCode(id) {
     }
     throw new Error('Synthetic mail not found');
 }
-const synthetic = syntheticBackend(root);
-const host = await createPersonalAccessService({root:join(root,'host'),port:0,cloudIdentity:{issuer:cloudOrigin+P+'/oidc',allowInsecureLoopback:true},backend:synthetic.backend,memoryManager:synthetic.memoryManager});
+const profile = join(root, 'profile');
+const synthetic = syntheticBackend(profile);
+const scheduleCalls = [], reminderRows = new Map();
+// The runtime remains explicitly synthetic; the personal HTTP authorization and projection are real.
+synthetic.backend.schedules = async ({sessionId, action, id}) => {
+    scheduleCalls.push({sessionId, action, id});
+    if (action === 'notifications') return {items:[]};
+    const rows = reminderRows.get(sessionId) ?? [];
+    if (action === 'list') return {items:rows};
+    const row = rows.find(row => row.id === id);
+    if (!row) throw Object.assign(new Error('Missing synthetic reminder'), {code:'NOT_FOUND'});
+    if (action === 'pause') { row.state='paused';row.nextRunAt=null; }
+    if (action === 'resume') { row.state='scheduled';row.nextRunAt='2050-10-08T20:00:00Z'; }
+    if (action === 'delete') reminderRows.set(sessionId,rows.filter(row=>row.id!==id));
+    return {ok:true};
+};
+const systemManager = {
+    status:async()=>({model:{state:'ready',version:'合成夹具',lastError:null,canRestart:true},host:{state:'ready',version:'合成夹具',lastError:null,canRestart:true},memory:{state:'disabled',version:null,lastError:null,canRestart:false},queue:{backgroundPending:0},canRestart:true}),
+    restart:async()=>{},
+};
+const backupManager = await createBackupManager({root:profile,isIdle:async()=>![...synthetic.sessions.values()].some(row=>row.running),requestRestart:()=>{},appVersion:'a6-synthetic'});
+const host = await createPersonalAccessService({root:join(profile,'personal-access'),port:0,cloudIdentity:{issuer:cloudOrigin+P+'/oidc',allowInsecureLoopback:true},backend:synthetic.backend,memoryManager:synthetic.memoryManager,systemManager,backupManager});
 synthetic.attach(host);
 const started = await host.start();
+await backupManager.started();
 const key = await generateKeyPair('ES256'), publicJwk = await exportJWK(key.publicKey);
 const sha = v => createHash('sha256').update(v).digest('base64url');
 async function proof(url, accessToken, nonce) { return new SignJWT({htu:url,htm:'POST',...(accessToken?{ath:sha(accessToken)}:{}),...(nonce?{nonce}:{})})
@@ -95,7 +117,9 @@ const driver = createServer(async(req,res)=>{
             const binding=await direct('/cloud/binding',{claimId:claim.claimId,accessToken:desktopTokens.access_token});
             if(binding.status!==200)throw Error('Synthetic cloud binding failed');
             await host.syncCloudRevocations();
-            ids=await synthetic.seed(direct,started.hostId); result={ok:true};
+            ids=await synthetic.seed(direct,started.hostId);
+            reminderRows.set(ids.review,[{id:'a6-reminder',nativeId:'synthetic-native',text:'合成提醒：检查本周计划',kind:'reminder',timeZone:'America/Los_Angeles',repeat:null,state:'scheduled',nextRunAt:'2050-10-08T20:00:00Z',lastRunAt:null,approvalMode:'auto'}]);
+            result={ok:true};
         } else if(path==='/pairing.png'){
             const pair=await direct('/cloud/pairings',{}); const png=join(root,'pair.png');
             await new Promise((resolve,reject)=>{const proc=spawn(qrBinary,[png]);proc.stdin.end('wm1.'+Buffer.from(JSON.stringify(pair)).toString('base64url'));proc.once('exit',c=>c===0?resolve():reject(new Error('QR failed')));});
@@ -109,7 +133,8 @@ const driver = createServer(async(req,res)=>{
         } else if(path==='/pending'){result=await direct('/cloud/devices/pending');}
         else if(path==='/a5/deny'){result=await synthetic.addApproval();}
         else if(path==='/a5/ids'){result=ids;}
-        else if(path==='/a5/report'){result={operations:synthetic.operations,memoryDeletes:synthetic.memoryDeletes,approvalState:await direct('/sessions/'+ids.review+'/approvals'),approvalReasons:Object.values(JSON.parse(await readFile(join(root,'host','store.json'),'utf8')).accounts).flatMap(account=>Object.values(account.commands).flatMap(command=>(command.toolApprovals??[]).map(row=>({status:row.status,reasonCode:row.invalidationReason,taskId:row.taskId})))),usage:await direct('/usage'),sessions:await direct('/sessions?archived=all'),ids,workspaceExists:Object.fromEntries(await Promise.all(Object.entries(ids??{}).map(async([name,id])=>[name,await access(join(root,'workspaces',id)).then(()=>true,()=>false)])))};}
+        else if(path==='/a6/settings-report'){result={schedules:scheduleCalls,backups:await direct('/backups'),system:await direct('/system')};}
+        else if(path==='/a5/report'){result={operations:synthetic.operations,memoryDeletes:synthetic.memoryDeletes,approvalState:await direct('/sessions/'+ids.review+'/approvals'),approvalReasons:Object.values(JSON.parse(await readFile(join(profile,'personal-access','store.json'),'utf8')).accounts).flatMap(account=>Object.values(account.commands).flatMap(command=>(command.toolApprovals??[]).map(row=>({status:row.status,reasonCode:row.invalidationReason,taskId:row.taskId})))),usage:await direct('/usage'),sessions:await direct('/sessions?archived=all'),ids,workspaceExists:Object.fromEntries(await Promise.all(Object.entries(ids??{}).map(async([name,id])=>[name,await access(join(profile,'workspaces',id)).then(()=>true,()=>false)])))};}
         else if(path==='/a5/complete'){const s=synthetic.sessions.get(ids.queue);synthetic.finish(s);result={ok:true};}
         else if(path==='/a5/review-login'){
             if(!local)throw Error('Bootstrap first');
@@ -131,5 +156,5 @@ const driver = createServer(async(req,res)=>{
 });
 driver.listen(0,'127.0.0.1');await once(driver,'listening');
 console.log(JSON.stringify({root,driver:`http://127.0.0.1:${driver.address().port}`}));
-async function close(){clearInterval(ticker);await host.close();await new Promise(r=>driver.close(r));db.close();child.kill('SIGTERM');await once(child,'exit');await rm(root,{recursive:true,force:true});}
+async function close(){clearInterval(ticker);await backupManager.stopOnline();await host.close();await new Promise(r=>driver.close(r));db.close();child.kill('SIGTERM');await once(child,'exit');await rm(root,{recursive:true,force:true});}
 process.once('SIGTERM',()=>close().then(()=>process.exit()));process.once('SIGINT',()=>close().then(()=>process.exit()));
