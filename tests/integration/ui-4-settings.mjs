@@ -71,7 +71,9 @@ try {
   await capture('desktop-narrow.png');
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await dialog.getByRole('combobox', { name: '设置分类', exact: true }).selectOption('general');
-  assert.equal(await page.evaluate(() => document.getElementById('settings-dialog').getAnimations({ subtree: true }).length), 0); checks.push('reduced motion');
+  const remainingMotion = await page.evaluate(() => document.getElementById('settings-dialog').getAnimations({ subtree: true }).map(animation => ({ target: animation.effect.target?.id || animation.effect.target?.className, duration: animation.effect.getComputedTiming().duration, state: animation.playState })));
+  if(remainingMotion.length) console.log('Remaining settings motion:', JSON.stringify(remainingMotion));
+  assert.equal(remainingMotion.length, 0); checks.push('reduced motion');
   browser = await chromium.launch();
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   mobile.on('pageerror', e => { errors.push(e.message); console.error(e.stack); });
