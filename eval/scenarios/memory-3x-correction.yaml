@@ -1,0 +1,67 @@
+{
+  "id": "memory-3x-correction",
+  "category": "memory",
+  "title": "盲测C：手冲比例纠正",
+  "setup": {
+    "files": [],
+    "memories": [],
+    "devices": [
+      "隔离宿主与真实桌面程序"
+    ]
+  },
+  "turns": [
+    {
+      "user": "我做手冲咖啡一直按粉水比1比15，之后帮我照这个比例算。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "更正，往后统一用1比17，原来的1比15停用。",
+      "after": {
+        "newSession": true,
+        "waitMs": 1000
+      }
+    },
+    {
+      "user": "我下一杯手冲咖啡该用什么粉水比？"
+    }
+  ],
+  "checks": [
+    {
+      "type": "reply_matches",
+      "pattern": "1\\s*[比:：/]\\s*17"
+    },
+    {
+      "type": "llm_judge",
+      "prompt": "应该使用新的1比17粉水比，不能继续要求按1比15。"
+    },
+    {
+      "type": "turn_status",
+      "turn": 1,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 2,
+      "status": "completed"
+    },
+    {
+      "type": "turn_status",
+      "turn": 3,
+      "status": "completed"
+    },
+    {
+      "type": "memory_used"
+    }
+  ],
+  "memoryExpectation": {
+    "kind": "cognition",
+    "currentPattern": "1比17",
+    "sourceTurn": 1,
+    "oldPattern": "1比15"
+  },
+  "timeoutSec": 900,
+  "notes": "M2f返工盲测C；改代码前独立提交封存，只在固定候选最终验证运行。原话、当前正式项采用、独立会话、零审批、纠正旧项失效严格核对。"
+}
