@@ -15,6 +15,7 @@ export async function startTimelineCandidate(options = {}) {
   let sessionId, taskId, running = true, artifact, service, questionFrame
   const receiptId = 'timeline-synthetic-receipt', runtimeId = randomUUID(), approvalId = randomUUID()
   const goal = '读取项目资料，运行测试，并保存一份进度报告。'
+  const approvalReason = `${options.riskApproval ? '[weftmate:overwrite] ' : ''}覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。`
   const operations = [], baseTime = options.baseTime || Date.parse('2026-10-07T08:00:00Z')
   const append = (type, data) => { const event = { seq: events.length, time: baseTime + events.length * 500, type, data }; events.push(event); return event }
   const call = (name, id, args) => append('tool/call', { turn: 1, callId: id, name, arguments: JSON.stringify(args) })
@@ -36,7 +37,7 @@ export async function startTimelineCandidate(options = {}) {
       append('assistant/message', { content: [{ type: 'text', text: options.interactive ? '我会先读取资料并运行测试，再整理 **项目进度报告**。\n\n覆盖现有报告前，需要你批准。' : '我会先读取资料并运行测试。覆盖现有报告前，需要你批准。' }] })
       call('read', 'read-1', { paths: ['README.md', 'docs/PLAN.md', 'docs/STATE.md'] }); result('read-1', 'Read 3 files successfully.')
       call('pwsh', 'test-1', { command: 'npm test' }); result('test-1', 'Tests: 42 passed, 0 failed.')
-      append('approval/asked', { id: approvalId, toolName: 'pwsh', callId: 'write-1', reason: '覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。' })
+      append('approval/asked', { id: approvalId, toolName: 'pwsh', callId: 'write-1', reason: approvalReason })
       const question = call('ask_user_question', 'question-1', { questions: [{ id: 'format', question: '报告要采用哪种格式？', options: [{ label: '简要报告' }, { label: '完整记录' }] }] })
       questionFrame = { sessionId, questionRpcId: randomUUID(), sourceReady: true, sourceReceiptId: receiptId, messageHash: hash(goal), turn: 1, sourceSeq: user.seq, observedSeq: question.seq,
         questions: [{ id: 'format', question: '报告要采用哪种格式？', options: [{ label: '简要报告' }, { label: '完整记录' }] }], nativeState: 'pending' }
@@ -62,7 +63,7 @@ export async function startTimelineCandidate(options = {}) {
   const created = await command({ requestId: 'timeline-create', kind: 'session.create', modelProfileId: 'local', targetDeviceId: hostId })
   sessionId = created.sessionId
   const source = await command({ requestId: 'timeline-message', kind: 'session.message', sessionId, targetDeviceId: hostId, text: goal }); taskId = source.commandId
-  await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: '覆盖项目中的 progress.md。原文件将被替换，可从 Git 恢复。' })
+  await service.trackToolApproval({ action: 'register_approval', runtimeId, approvalId, sessionId, turn: 1, callId: 'write-1', rootCallId: 'write-1', receiptId, messageHash: hash(goal), toolName: 'pwsh', argumentsHash: hash('write report'), reason: approvalReason })
   artifact = await service.submitToolArtifact({ sessionId, turn: 1, callId: 'artifact-1', messageHash: hash(goal), fileName: '项目进度报告.md', content: '# 项目进度报告\n\n已读取 3 个文件。42 项测试通过。\n' })
   call('write', 'artifact-1', {fileName:artifact.fileName});result('artifact-1',JSON.stringify(artifact))
   const bridge = async (method, params) => {
