@@ -141,11 +141,14 @@ function fillApprovalCard(card,row,context,cache){const attempt=approvalAttempt(
   const signature=JSON.stringify([row,cache.error,attempt?.busy,attempt?.unknown,attempt?.checked]);if(card.dataset.signature===signature)return;
   const focused=document.activeElement,focusChoice=focused?.dataset?.approvalChoice;
   const hadFocus=focusChoice&&focused.parent===card.querySelector('.approval-actions')||focused?.closest?.('.tool-approval')===card;
-  card.dataset.signature=signature;clear(card);card.dataset.approvalId=row.approvalId;card.dataset.taskId=row.taskId;
+  const resolving=card.dataset.approvalId&&!card.classList.contains('is-resolved')&&row.status!=='pending';
+  const copy=resolving?globalThis.WeftMobileMotion?.snapshot(card):null;
+  const entering=!card.dataset.approvalId;card.dataset.signature=signature;clear(card);card.dataset.approvalId=row.approvalId;card.dataset.taskId=row.taskId;
   if(row.status!=='pending'&&!(row.status==='answered'&&cache.error)){
     card.classList.add('is-resolved');const record=el('p','approval-status',approvalRecord(row));record.setAttribute('role','status');
     record.setAttribute('aria-live','polite');record.setAttribute('aria-label',`${approvalRecord(row)}。${approvalMeaning(row,cache,attempt)}`);
-    card.append(record);if(hadFocus){record.setAttribute('tabindex','-1');record.focus({preventScroll:true})}return}
+    card.append(record);globalThis.WeftMobileMotion?.dismiss(copy,true);if(hadFocus){record.setAttribute('tabindex','-1');record.focus({preventScroll:true})}return}
+  if(entering)globalThis.WeftMobileMotion?.reveal(card,'base');
   card.append(el('strong','approval-title',`${row.status==='pending'?'需要审批':'审批记录'} · ${approvalOperation(row)}`));
   if(row.status==='pending'){const presentation=uiCore.approvalPresentation(row),description=el('p','approval-reason',presentation.summary);
     card.append(description);if(presentation.reason)card.append(el('p','approval-risk-copy',presentation.reason));
