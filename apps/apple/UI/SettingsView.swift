@@ -11,6 +11,7 @@ struct SettingsView: View {
     @EnvironmentObject private var updates: MacUpdateModel
     @Environment(\.openWindow) private var openWindow
     #endif
+    @State private var showingUsage = false
     @State private var confirmSignOut = false
     @State private var confirmServer = false
     @State private var draftCopyResult: String?
@@ -61,6 +62,7 @@ struct SettingsView: View {
                         LabeledContent("登录设备", value: model.session?.device.name ?? model.deviceName)
                             .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                             .accessibilityIdentifier("accountDevice.\(model.session?.device.id ?? "unknown")")
+                        Button("用量") { showingUsage = true }.accessibilityIdentifier("openUsage")
                         NavigationLink("账户") { AccountSettingsView(cloud: model.cloudLogin) }
                         NavigationLink("设备") { CloudDevicesView(app: model, cloud: model.cloudLogin) }
                         Button(role: .destructive) { confirmSignOut = true } label: {
@@ -128,6 +130,9 @@ struct SettingsView: View {
             }
             .padding(AppleTokens.Space.p24).frame(maxWidth: 700).frame(maxWidth: .infinity)
         }
+        .sheet(isPresented: $showingUsage) {
+            NavigationStack { UsageView(app: model).toolbar { Button("完成") { showingUsage = false }.accessibilityIdentifier("closeUsageSheet") } }
+        }
         .background(Weave.canvas)
         .navigationTitle("设置")
         .confirmationDialog("退出当前账户？", isPresented: $confirmSignOut, titleVisibility: .visible) {
@@ -143,6 +148,12 @@ struct SettingsView: View {
             Text("退出后，在登录页更改服务器地址。草稿仍归原服务器的原账户保留。")
         }
         .accessibilityIdentifier("settingsRoot")
+        #if DEBUG
+        .task {
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1), args[index + 1] == "usage" { showingUsage = true }
+        }
+        #endif
     }
 
     private func copyUnsavedDrafts() {

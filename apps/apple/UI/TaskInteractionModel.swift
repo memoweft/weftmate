@@ -32,6 +32,8 @@ private struct SavedTaskResponse: Codable {
 
 /// Permission decisions and information answers share task identity, never their outcome semantics.
 @MainActor final class TaskInteractionModel: ObservableObject {
+    @Published private(set) var readableApprovals: [String: String] = [:]
+    @Published private(set) var approvalDetails: [String: String] = [:]
     @Published private(set) var approvals: [SessionApproval] = []
     @Published private(set) var questions: [SessionQuestionBatch] = []
     @Published private(set) var loading = false
@@ -91,6 +93,18 @@ private struct SavedTaskResponse: Codable {
         task = snapshot; timelineSessionID = nil
         await refreshSession(snapshot.sessionId)
     }
+    func readApprovalPresentation(_ approval: SessionApproval, events: [TimelineEvent]) async {
+        guard isCurrent, readableApprovals[approval.id] == nil,
+              let event = events.first(where: { $0.data["callId"]?.string == approval.callId && $0.data["detailRef"]?["seq"]?.int != nil }),
+              let seq = event.data["detailRef"]?["seq"]?.int else { return }
+        do {
+            let detail = try await client.timelineDetail(sessionID: approval.sessionId, seq: seq)
+            guard isCurrent, !Task.isCancelled else { return }
+            readableApprovals[approval.id] = ReadableToolSummary.text(tool: approval.toolName, raw: detail.text)
+            approvalDetails[approval.id] = detail.text
+        } catch { /* The authorized human reason remains available if detail cannot be read. */ }
+    }
+
     func refreshTimeline(sessionID: String) async {
         guard isCurrent, !loading else { return }
         task = nil; timelineSessionID = sessionID

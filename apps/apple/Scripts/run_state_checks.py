@@ -9,7 +9,7 @@ import tempfile
 import time
 
 ROOT = Path(__file__).resolve().parents[1]
-APP_MODEL = ["CloudBrowser", "CloudLoginModel", "AppleAppModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState"]
+APP_MODEL = ["CloudBrowser", "CloudLoginModel", "AppleAppModel", "ConversationSendState", "ConversationAdoptionState", "ConversationAttachmentState", "TaskWorkspaceModel"]
 CHECKS = {
     "AppleContractStateChecks": APP_MODEL,
     "AppleAdoptionStateChecks": APP_MODEL,

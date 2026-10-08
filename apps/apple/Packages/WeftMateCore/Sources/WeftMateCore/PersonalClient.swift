@@ -10,7 +10,7 @@ private struct Credential: Codable, Sendable {
 private struct DevicesReply: Decodable { let devices: [DeviceRecord] }
 private struct RemoteSession: Decodable {
     let sessionId: String; let title: String; let running: Bool; let sendAvailable: Bool
-    let conversationId: String?; let modelProfileId: String?; let unavailable: Bool?
+    let conversationId: String?; let modelProfileId: String?; let unavailable: Bool?; let archived: Bool?
 }
 private struct SessionsReply: Decodable { let sessions: [RemoteSession] }
 private struct OriginalModel: Decodable { let modelId: String; let displayName: String }
@@ -279,11 +279,58 @@ public actor PersonalClient {
         return reply.devices
     }
 
-    public func conversations() async throws -> [ConversationSummary] {
+    public func setSessionArchived(_ archived: Bool, sessionID: String) async throws -> SessionArchiveResult {
+        try await parityRequest(path: "/sessions/\(try checkedID(sessionID))/" + (archived ? "archive" : "unarchive"), method: "POST", body: Data("{}".utf8))
+    }
+    public func deleteSession(sessionID: String, forgetMemories: Bool = false) async throws -> SessionDeleteResult {
+        struct Body: Encodable { let forgetMemories: Bool }
+        return try await parityRequest(path: "/sessions/\(try checkedID(sessionID))", method: "DELETE", body: JSONEncoder().encode(Body(forgetMemories: forgetMemories)))
+    }
+    public func cancelQueuedTask(taskID: String, requestID: String) async throws -> TaskSnapshot {
+        struct Body: Encodable { let requestId: String }
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: "/tasks/\(try checkedID(taskID))/cancel", method: "POST", body: JSONEncoder().encode(Body(requestId: requestID)))
+        struct Reply: Decodable { let task: JSONValue }
+        let reply: Reply = try decode(response.body)
+        return try TaskSnapshot.decode(JSONEncoder().encode(reply.task), scope: TaskReadScope(auth.session), taskID: taskID)
+    }
+    public func usage(month: String? = nil, sessionID: String? = nil, timeZone: String? = nil) async throws -> UsageSummary {
+        var query: [String] = []
+        if let month {
+            guard month.range(of: "^[0-9]{4}-(0[1-9]|1[0-2])$", options: .regularExpression) != nil else { throw APIFailure.invalidResponse }
+            query.append("month=" + month)
+        }
+        if let sessionID { query.append("sessionId=" + (try checkedID(sessionID))) }
+        if let timeZone {
+            guard TimeZone(identifier: timeZone) != nil, let escaped = timeZone.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed.subtracting(CharacterSet(charactersIn: "&+=?#"))) else { throw APIFailure.invalidResponse }
+            query.append("timeZone=" + escaped)
+        }
+        return try await parityRequest(path: "/usage" + (query.isEmpty ? "" : "?" + query.joined(separator: "&")))
+    }
+    public func usageSettings() async throws -> UsageSettings { try await parityRequest(path: "/settings/usage") }
+    public func setUsageLimit(_ value: Double?, temporary: Bool, timeZone: String? = nil) async throws -> UsageSettings {
+        if let value, !value.isFinite || value < 0 { throw APIFailure.invalidResponse }
+        var fields: [String: Any] = [temporary ? "temporaryLimit" : "monthlyLimit": value.map { $0 as Any } ?? NSNull()]
+        if let timeZone { fields["timeZone"] = timeZone }
+        let body = try JSONSerialization.data(withJSONObject: fields)
+        return try await parityRequest(path: "/settings/usage", method: "PATCH", body: body)
+    }
+    public func setUsageTimeZone(_ timeZone: String) async throws -> UsageSettings {
+        return try await parityRequest(path: "/settings/usage", method: "PATCH", body: JSONSerialization.data(withJSONObject: ["timeZone": timeZone]))
+    }
+    private func parityRequest<T: Decodable>(path: String, method: String = "GET", body: Data? = nil) async throws -> T {
+        let (auth, generation) = try snapshot()
+        try await verify(auth, generation)
+        let response = try await sharedAuthorizedRequest(auth, generation, path: path, method: method, body: body)
+        return try decode(response.body)
+    }
+
+    public func conversations(includeArchived: Bool = false) async throws -> [ConversationSummary] {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
         let events = try await readSync(auth, generation)
-        let host: SessionsReply = try await authorized(auth, generation, path: "/sessions")
+        let host: SessionsReply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
         guard host.sessions.count <= 20_000, host.sessions.allSatisfy({ validID($0.sessionId) }),
               Set(host.sessions.map(\.sessionId)).count == host.sessions.count else { throw APIFailure.invalidResponse }
         let grouped = Dictionary(grouping: events, by: \.conversationId)
@@ -296,13 +343,13 @@ public actor PersonalClient {
             guard bound.count <= 1 else { throw APIFailure.invalidResponse }
             let session = bound.first
             rows.append(.init(id: id, title: title, conversationId: id, sessionId: session?.sessionId,
-                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil))
+                running: session?.running ?? false, sendAvailable: false, originalModelLabel: nil, archived: session?.archived ?? false))
         }
         for session in host.sessions where session.conversationId == nil || grouped[session.conversationId!] == nil {
             rows.append(.init(id: session.conversationId ?? session.sessionId,
                 title: session.title.isEmpty ? "电脑会话" : session.title, conversationId: session.conversationId,
                 sessionId: session.sessionId, running: session.running, sendAvailable: false,
-                originalModelLabel: session.modelProfileId))
+                originalModelLabel: session.modelProfileId, archived: session.archived ?? false))
         }
         try check(generation)
         syncEvents = events
@@ -365,11 +412,11 @@ public actor PersonalClient {
     /// Cache belongs only to the currently authenticated generation; no fallback is represented as fresh data.
     public func cachedHistory(conversationID: String) -> [ChatMessage]? { credential == nil ? nil : historyCache[conversationID] }
 
-    public func sharedSessions() async throws -> [SharedSessionRecord] {
+    public func sharedSessions(includeArchived: Bool = false) async throws -> [SharedSessionRecord] {
         struct Reply: Decodable { let sessions: [SharedSessionRecord] }
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
-        let reply: Reply = try await authorized(auth, generation, path: "/sessions")
+        let reply: Reply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
         guard reply.sessions.count <= 20_000,
               Set(reply.sessions.map(\.sessionId)).count == reply.sessions.count else { throw APIFailure.invalidResponse }
         for session in reply.sessions { try session.validate() }
@@ -891,18 +938,15 @@ public actor PersonalClient {
 
     /// The current API omits session origin. A positive owner-only desktop capability plus
     /// sendAvailable proves personal-remote; shared accounts are forced unavailable by /status.
-    public func taskControlSessionIDs() async throws -> Set<String> {
+    public func taskControlSessionIDs(includeArchived: Bool = false) async throws -> Set<String> {
         let (auth, generation) = try snapshot()
         try await verify(auth, generation)
-        struct Capability: Decodable { let available: Bool }
-        struct Capabilities: Decodable { let desktopOpenApp: Capability? }
-        struct Backend: Decodable { let capabilities: Capabilities? }
-        struct Status: Decodable { let ownerId: String; let hostId: String; let backend: Backend? }
+        struct Status: Decodable { let ownerId: String; let hostId: String }
         let status: Status = try await authorized(auth, generation, path: "/status")
         guard status.ownerId == auth.session.account.ownerId, status.hostId == auth.session.hostId else { throw APIFailure.identityMismatch }
-        guard status.backend?.capabilities?.desktopOpenApp?.available == true else { return [] }
-        let sessions: SessionsReply = try await authorized(auth, generation, path: "/sessions")
-        return Set(sessions.sessions.filter { $0.sendAvailable && $0.unavailable != true }.map(\.sessionId))
+        // Root task controls are authorized by /tasks; opening desktop apps is an unrelated capability.
+        let sessions: SessionsReply = try await authorized(auth, generation, path: includeArchived ? "/sessions?archived=all" : "/sessions")
+        return Set(sessions.sessions.filter { ($0.sendAvailable || ($0.archived == true && $0.running)) && $0.unavailable != true }.map(\.sessionId))
     }
 
     public func uploadOriginalAttachment(_ metadata: OriginalAttachment, file: URL, conversationID: String,
