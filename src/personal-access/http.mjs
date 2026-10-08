@@ -167,7 +167,7 @@ export function createHttpHandler(context) {
             return context.json(response, 202, await context.backupManager.restore(body.id));
           }
         } catch (error) {
-          if (['BACKUP_CORRUPT', 'BACKUP_SYMLINK'].includes(error.code)) return context.json(response, 409, { error: { code: error.code } });
+          if (['BACKUP_CORRUPT', 'BACKUP_SYMLINK', 'BACKUP_PAUSE_TIMEOUT'].includes(error.code)) return context.json(response, 409, { error: { code: error.code } });
           throw error;
         }
         throw failure('NOT_FOUND', 404);

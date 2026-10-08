@@ -1,9 +1,9 @@
 /* Desktop backup controls, using the existing settings form and token styles. */
 globalThis.WeftUiComponents.factories.backup = (core, ui) => {
     function mountBackup() {
-        const section = ui.element('section', 'card group backup-settings'); section.setAttribute('aria-label', '备份');
-        section.append(ui.element('h2', '', '备份'));
-        for (const text of ['每天空闲时自动备份。备份会短暂关闭并重新打开程序，请先完成当前任务。',
+        const section = ui.element('section', 'card group backup-settings'); section.setAttribute('aria-label', '备份与恢复'); section.dataset.settingsGroup = '此电脑'; section.dataset.settingsCategory = 'backups';
+        section.append(ui.element('h2', '', '备份与恢复'));
+        for (const text of ['每天空闲时自动备份，程序保持打开。有任务正在运行时，自动备份会等任务完成。',
             '包含账号与设置、对话与经验、成果、用量和记忆。模型密钥、云令牌、设备私钥与登录会话不进包；恢复后请重新登录，换电脑后重新填写模型密钥。',
             '本地备份未加密，包含私人内容，请保存在你信任的磁盘。云端加密备份尚未启用。']) section.append(ui.element('p', 'field-help', text));
         const form = ui.element('form'), inputs = {};
@@ -62,7 +62,7 @@ globalThis.WeftUiComponents.factories.backup = (core, ui) => {
                 : value.status?.state === 'rolled-back' ? '恢复未成功，已自动回到恢复前的状态。' : value.status?.state === 'succeeded' ? '上次操作已完成。' : '';
         }
         reload.addEventListener('click', () => void run(refresh));
-        create.addEventListener('click', () => void run(async () => { await core.createBackup(); notice.textContent = '已开始备份，程序将重新打开。'; }));
+        create.addEventListener('click', () => void run(async () => { await core.createBackup(); await refresh(); notice.textContent = '备份已完成。'; }));
         form.addEventListener('submit', event => { event.preventDefault(); void run(async () => { await core.saveBackupSettings({ enabled: inputs.enabled.checked, directory: inputs.directory.value, dailyDays: Number(inputs.dailyDays.value), weeklyCopies: Number(inputs.weeklyCopies.value) }); notice.textContent = '备份设置已保存。'; }); });
         importForm.addEventListener('submit', event => { event.preventDefault(); void run(async () => { await core.importBackup(importPath.value); await refresh(); notice.textContent = '备份已导入并通过校验，请在列表中选择恢复。'; }); });
         // Read only when the settings surface becomes visible, after authentication.

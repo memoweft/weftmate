@@ -1,3 +1,4 @@
+import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { lstat, open, readFile, rename, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
@@ -153,6 +154,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     const file = outboxFile(ownerId);
     const body = JSON.stringify(state);
     if (Buffer.byteLength(body, 'utf8') > MAX_OUTBOX_BYTES) throw error('MEMORY_OUTBOX_FULL');
+    const releaseWrite = await enterProfileWrite(file);
     const tmp = `${file}.${randomUUID()}.tmp`;
     let handle;
     try {
@@ -166,6 +168,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     } finally {
       await handle?.close().catch(() => {});
       await rm(tmp, { force: true }).catch(() => {});
+      releaseWrite();
     }
   }
 

@@ -10,6 +10,12 @@ import { beginRestore, rollbackRestore, commitRestore } from '../src/personal-ba
 import { createBackupManager } from '../src/personal-backup/index.mjs';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
 import { validateStore } from '../src/personal-access/store.mjs';
+import { copySnapshotTree } from '../src/runtime/dsh-adapter/snapshot-files.mjs';
+import { createGatewayV1 } from '../src/runtime/gateway/routes/v1.mjs';
+import { createServer } from 'node:http';
+import { once } from 'node:events';
+import { enterProfileWrite } from '../src/personal-backup/write-barrier.mjs';
+import { durableWrite } from '../src/personal-access/store.mjs';
 import { rehomeSessions } from '../src/personal-backup/rehome.mjs';
 
 async function fixture(t) {
@@ -83,14 +89,16 @@ test('BK-1 failed startup automatically rolls back durable restore transaction',
   const manager = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => {} });
   assert.equal(await manager.startupFailed(), true); assert.equal(await readFile(path.join(f.root, 'setting.json'), 'utf8'), '"current"');
 });
-test('BK-1 busy host refuses restart; unsafe shutdown creates no snapshot', async t => {
+test('BK-1 busy host defers online snapshot; manual backup never restarts', async t => {
   const f = await fixture(t); let idle = false, restarts = 0;
   const manager = await createBackupManager({ root: f.root, isIdle: async () => idle, requestRestart: () => restarts++ });
   await manager.configure({ directory: f.directory, enabled: false });
   await assert.rejects(manager.request(), { code: 'SESSION_BUSY' }); assert.equal(restarts, 0);
-  idle = true; await manager.request(); assert.equal(restarts, 1); await manager.finishShutdown({ safe: false });
-  const view = await manager.view(); assert.equal(view.status.state, 'failed'); assert.equal(view.backups.length, 0);
+  idle = true; const result = await manager.request(); assert.equal(result.restartsHost, false); assert.equal(restarts, 0);
+  const view = await manager.view(); assert.equal(view.status.state, 'succeeded'); assert.equal(view.backups.length, 1);
+  await manager.finishShutdown();
 });
+
 test('BK-1 restores only after producing a verified backup of current state', async t => {
   const f = await fixture(t); const row = await snapshot(f); const manager = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => {}, validate: async () => {} });
   await manager.configure({ directory: f.directory, enabled: false }); await writeFile(path.join(f.root, 'setting.json'), '"current"');
@@ -131,14 +139,14 @@ test('BK-1 daily scheduler waits for idle and creates only one successful packag
   const f = await fixture(t); let idle = false, now = Date.UTC(2026, 9, 8), restarts = 0;
   const manager = await createBackupManager({ root: f.root, clock: () => now, isIdle: async () => idle, requestRestart: () => restarts++ });
   await manager.configure({ directory: f.directory }); await manager.checkDaily(); assert.equal(restarts, 0);
-  idle = true; await manager.checkDaily(); await manager.finishShutdown(); await manager.checkDaily(); assert.equal(restarts, 1);
-  now += 86400000; idle = false; await manager.checkDaily(); assert.equal(restarts, 1);
-  idle = true; await manager.checkDaily(); await manager.finishShutdown(); assert.equal(restarts, 2);
+  idle = true; await manager.checkDaily(); await manager.checkDaily(); assert.equal((await manager.view()).backups.length, 1); assert.equal(restarts, 0);
+  now += 86400000; idle = false; await manager.checkDaily(); assert.equal(restarts, 0);
+  idle = true; await manager.checkDaily(); assert.equal((await manager.view()).backups.length, 2); await manager.finishShutdown(); assert.equal(restarts, 0);
 });
-test('BK-1 account deletion requires a verified cold snapshot before returning ready', async t => {
+test('BK-1 account deletion completes a verified online snapshot without another confirmation before returning ready', async t => {
   const f = await fixture(t); const manager = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => {} });
-  await manager.configure({ directory: f.directory }); assert.equal((await manager.prepareAccountDeletion()).ready, false);
-  await manager.finishShutdown(); assert.equal((await manager.prepareAccountDeletion()).ready, true);
+  await manager.configure({ directory: f.directory }); assert.equal((await manager.prepareAccountDeletion()).ready, true);
+  await manager.finishShutdown();
   assert.equal((await manager.view()).status.backup.reason, 'before-account-deletion');
 });
 test('BK-1 portable restore keeps valid command receipts under the new installation ID', async t => {
@@ -188,4 +196,95 @@ test('BK-1 portable restore rebinds an already claimed target to the restored ow
   assert.equal(identity.installation.privateJwk.d, 'target-private'); assert.equal(identity.bindings.bound.ownerId, 'fixture-owner');
   assert.equal(identity.claims.claim.ownerId, 'fixture-owner'); assert.deepEqual(identity.sessions, {}); assert.deepEqual(identity.devices, {});
   await commitRestore({ root: target, control });
+});
+
+
+test('BK-1 write drain timeout releases admission, publishes nothing, then retries on next daily tick', async t => {
+  const f = await fixture(t);
+  const manager = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => assert.fail('daily restart'), pauseTimeoutMs: 35 });
+  await manager.configure({ directory: f.directory });
+  const release = await enterProfileWrite(path.join(f.root, 'ledger.json'));
+  await assert.rejects(manager.checkDaily(), { code: 'BACKUP_PAUSE_TIMEOUT' });
+  assert.equal((await manager.view()).status.state, 'deferred');
+  assert.equal((await manager.view()).backups.length, 0);
+  const resumed = await enterProfileWrite(path.join(f.root, 'ledger.json')); resumed(); release();
+  await manager.checkDaily();
+  assert.equal((await manager.view()).backups.length, 1);
+  await manager.finishShutdown();
+});
+
+test('BK-1 online capture stays coherent during continuous atomic file writes and resumes them before compression', async t => {
+  const f = await fixture(t), ledger = path.join(f.root, 'ledger.json');
+  const manager = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => assert.fail('online restart') });
+  await manager.configure({ directory: f.directory, enabled: false });
+  let running = true, writes = 0;
+  await durableWrite(ledger, { generation: 0, entries: [] });
+  const writer = (async () => {
+    while (running) { writes++; await durableWrite(ledger, { generation: writes, entries: Array(writes).fill(writes) }); await new Promise(resolve => setTimeout(resolve, 1)); }
+  })();
+  const result = await manager.request('daily'); running = false; await writer;
+  const extracted = path.join(f.base, 'extracted');
+  await verify(path.join(f.directory, result.backup.id), extracted);
+  const copied = JSON.parse(await readFile(path.join(extracted, 'ledger.json'), 'utf8'));
+  assert.equal(copied.entries.length, copied.generation); assert.ok(copied.entries.every(value => value === copied.generation));
+  assert.ok(writes > copied.generation, 'writes continue during hashing/compression');
+  assert.equal(manager.isPending(), false);
+  await manager.finishShutdown();
+});
+
+test('BK-1 task starting at snapshot admission defers backup without cancellation', async t => {
+  const f = await fixture(t); let idle = true, cancelled = false;
+  const manager = await createBackupManager({ root: f.root, isIdle: async () => idle, requestRestart: () => { cancelled = true; },
+    captureBoundary: async work => { idle = false; await work(); } });
+  await manager.configure({ directory: f.directory });
+  await assert.rejects(manager.checkDaily(), { code: 'SESSION_BUSY' });
+  assert.equal(cancelled, false); assert.equal((await manager.view()).backups.length, 0);
+  assert.equal((await manager.view()).status.state, 'deferred');
+  await manager.finishShutdown();
+});
+
+
+test('BK-1 native capture copies immutable whole log records while the writer event loop is paused', async t => {
+  const f = await fixture(t), logs = path.join(f.root, 'logs'), target = path.join(f.base, 'native');
+  await mkdir(logs); await mkdir(target);
+  const source = path.join(logs, 'events.jsonl');
+  await writeFile(source, Array.from({ length: 3000 }, (_, seq) => JSON.stringify({ seq, text: '日志' })).join('\n') + '\n');
+  copySnapshotTree(logs, target, { check() {} });
+  await writeFile(source, 'later mutation\n');
+  const records = (await readFile(path.join(target, 'events.jsonl'), 'utf8')).trim().split('\n').map(JSON.parse);
+  assert.equal(records.length, 3000); assert.deepEqual(records.map(row => row.seq), Array.from({ length: 3000 }, (_, seq) => seq));
+});
+
+test('BK-1 native pause drains admitted requests, keeps streams alive, and lease expiry releases queued requests', async t => {
+  let reads = 0, flushed = 0;
+  const gateway = createGatewayV1({ client: { events: {}, llm: {}, workspace: {}, settings: {}, sessions: { list: async () => { reads++; return { result: { ok: true, value: { items: [] } } }; } } },
+    lifecycle: { flushIdle: async () => { flushed++; } } });
+  const server = createServer((req, res) => void gateway.handle(req, res));
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  t.after(async () => { gateway.close(); await new Promise(resolve => server.close(resolve)); });
+  const base = `http://127.0.0.1:${server.address().port}/weftmate/api/v1`;
+  const post = (route, body) => fetch(`${base}/${route}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  assert.equal((await post('backup-pause', { id: 'first', deadline: Date.now() + 1000 })).status, 200);
+  let finished = false;
+  const waiting = fetch(`${base}/sessions`).then(response => { finished = true; return response; });
+  await new Promise(resolve => setTimeout(resolve, 20)); assert.equal(finished, false); assert.equal(reads, 0);
+  await post('backup-resume', { id: 'stale' }); assert.equal(finished, false);
+  await post('backup-resume', { id: 'first' }); assert.equal((await waiting).status, 200);
+  assert.equal(flushed, 1);
+  assert.equal((await post('backup-pause', { id: 'expires', deadline: Date.now() + 60 })).status, 200);
+  assert.equal((await fetch(`${base}/sessions`)).status, 200);
+  assert.equal(flushed, 2); assert.equal(reads, 2);
+});
+
+test('BK-1 upgrade and account-deletion snapshots complete online; only restore asks for restart', async t => {
+  const f = await fixture(t); let restarts = 0;
+  const manager = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => restarts++ });
+  await manager.configure({ directory: f.directory, enabled: false });
+  const upgrade = await manager.request('before-upgrade'); assert.equal(upgrade.restartsHost, false);
+  assert.equal((await manager.prepareAccountDeletion()).ready, true); assert.equal(restarts, 0);
+  await manager.restore(upgrade.backup.id); assert.equal(restarts, 1);
+  await manager.finishShutdown();
+  const restarted = await createBackupManager({ root: f.root, isIdle: async () => true, requestRestart: () => {}, validate: async () => {} });
+  assert.equal(restarted.isRestoredStartup(), true);
+  await restarted.started(); assert.equal(restarted.isRestoredStartup(), false); await restarted.finishShutdown();
 });

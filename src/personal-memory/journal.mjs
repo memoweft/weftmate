@@ -1,3 +1,4 @@
+import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, open, readFile, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
@@ -58,6 +59,7 @@ export function createMemoryCommandJournal({ root }) {
     const file = fileFor(ownerId);
     const body = JSON.stringify(value);
     if (Buffer.byteLength(body, 'utf8') > MAX_BYTES) throw failure('MEMORY_JOURNAL_FULL');
+    const releaseWrite = await enterProfileWrite(file);
     const tmp = `${file}.${randomUUID()}.tmp`;
     let handle;
     try {
@@ -71,6 +73,7 @@ export function createMemoryCommandJournal({ root }) {
     } finally {
       await handle?.close().catch(() => {});
       await rm(tmp, { force: true }).catch(() => {});
+      releaseWrite();
     }
   }
   return {

@@ -1,5 +1,6 @@
 import path from 'node:path';
-import { createReadStream, createWriteStream } from 'node:fs';
+import { createReadStream, createWriteStream, existsSync } from 'node:fs';
+import { copySnapshotTree } from '../runtime/dsh-adapter/snapshot-files.mjs';
 import { mkdir, readdir, lstat, readFile, writeFile, open, rename, rm, cp } from 'node:fs/promises';
 import { createHash, randomUUID } from 'node:crypto';
 import { createGzip, createGunzip } from 'node:zlib';
@@ -61,12 +62,12 @@ export function scrubStore(document) {
   return next;
 }
 // SQLite's online backup API includes committed WAL transactions; never copy live database pages.
-export async function sqliteSnapshot(source, destination) {
+export async function sqliteSnapshot(source, destination, check = () => {}) {
   const { DatabaseSync, backup } = await import('node:sqlite');
   const db = new DatabaseSync(source, { readOnly: true });
-  try { await backup(db, destination); } finally { db.close(); }
+  try { await backup(db, destination, { rate: 100, progress: () => check() }); check(); } finally { db.close(); }
 }
-export async function snapshot({ root, directory, reason = 'manual', now = Date.now(), databaseBackup = sqliteSnapshot }) {
+export async function snapshot({ root, directory, reason = 'manual', now = Date.now(), databaseBackup = sqliteSnapshot, withCapture = work => work(() => {}) }) {
   await mkdir(directory, { recursive: true, mode: 0o700 });
   const id = `${new Date(now).toISOString().replace(/[:.]/g, '-')}-${randomUUID()}.wmb`;
   const stage = path.join(directory, `.${id}.stage`), temporary = path.join(directory, `.${id}.tmp`);
@@ -74,21 +75,31 @@ export async function snapshot({ root, directory, reason = 'manual', now = Date.
   try {
     const manifest = { format: 'weftmate-local-backup', version: 1, sourceRoot: root, createdAt: new Date(now).toISOString(), reason,
       excluded: ['model keys', 'cloud tokens and identity keys', 'device sessions and private keys', 'browser sessions/cache'], files: [] };
-    for (const name of await files(root)) {
-      const source = path.join(root, name), target = path.join(stage, name);
-      await mkdir(path.dirname(target), { recursive: true });
-      if (/\.(?:sqlite3?|db)$/.test(name)) await databaseBackup(source, target);
-      else if (name === 'personal-access/store.json') await writeFile(target, JSON.stringify(scrubStore(JSON.parse(await readFile(source, 'utf8')))), { mode: 0o600 });
-      else await cp(source, target);
-      manifest.files.push({ path: name, size: (await lstat(target)).size, sha256: await fileHash(target) });
-    }
-    const identity = await readFile(path.join(root, 'personal-access/cloud-identity/identity.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
-    if (identity) {
-      const name = 'personal-access/backup-cloud-owners.json', target = path.join(stage, name);
-      const owners = Object.values(identity.bindings ?? {}).filter(row => row.desktop === true && row.status === 'active')
-        .map(({ issuer, sub, ownerId }) => ({ issuer, sub, ownerId }));
-      await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, JSON.stringify(owners), { mode: 0o600 });
-      manifest.files = manifest.files.filter(row => row.path !== name);
+    // Capture ordinary files in the main event loop while atomic writers and
+    // native DSH admission are paused. Copy bytes, never hard-link mutable logs.
+    // Check the deadline between bounded chunks, including directory traversal.
+    await withCapture(async check => {
+      const databases = [];
+      copySnapshotTree(root, stage, { check, included: name => included(name) &&
+        // Native logs were captured in their writer's event loop, immediately
+        // after flush. Do not read them a second time from this process.
+        !(name === 'dsh-home/sessions' && existsSync(path.join(stage, name))),
+        database: (source, target) => databases.push([source, target]) });
+      // The ownership map is scrubbed before releasing the capture boundary.
+      const identity = await readFile(path.join(root, 'personal-access/cloud-identity/identity.json'), 'utf8').then(JSON.parse).catch(error => { if (error.code === 'ENOENT') return null; throw error; });
+      if (identity) {
+        const target = path.join(stage, 'personal-access/backup-cloud-owners.json');
+        const owners = Object.values(identity.bindings ?? {}).filter(row => row.desktop === true && row.status === 'active')
+          .map(({ issuer, sub, ownerId }) => ({ issuer, sub, ownerId }));
+        await mkdir(path.dirname(target), { recursive: true }); await writeFile(target, JSON.stringify(owners), { mode: 0o600 });
+      }
+      for (const [source, target] of databases) { check(); await databaseBackup(source, target, check); }
+      check();
+    }, stage);
+    // Hashing, sanitizing captured bytes and compression never hold the write pause.
+    for (const name of await files(stage)) {
+      const target = path.join(stage, name);
+      if (name === 'personal-access/store.json') await writeFile(target, JSON.stringify(scrubStore(JSON.parse(await readFile(target, 'utf8')))), { mode: 0o600 });
       manifest.files.push({ path: name, size: (await lstat(target)).size, sha256: await fileHash(target) });
     }
     const header = JSON.stringify(manifest);
