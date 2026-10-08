@@ -1,0 +1,9 @@
+{
+  "platform": "android",
+  "scene": "login",
+  "theme": "light",
+  "commit": "d73e9646f6b477e8aba383928b64e9ee9f7b0683",
+  "generatedAt": "2026-10-08T12:37:43.723Z",
+  "synthetic": true,
+  "source": "隔离真实云登录与原生手机验收"
+}
