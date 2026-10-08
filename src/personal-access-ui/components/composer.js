@@ -51,7 +51,7 @@ globalThis.WeftUiComponents.factories.composer = (core, ui) => {
                 : (index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length;
             options[next].focus();
         });
-        ui.byId('model-configure').addEventListener('click', () => { ui.closeModelMenu(); core.openAccount(); });
+        ui.byId('model-configure').addEventListener('click', () => { ui.closeModelMenu(); ui.openSettings("models"); });
         ui.byId('voice-input').addEventListener('click', ui.startVoiceInput);
         document.addEventListener('click', (event) => {
             if (!ui.byId('model-popover').hidden && !ui.byId('model-picker').contains(event.target))

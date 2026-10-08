@@ -299,7 +299,7 @@ try {
     // the desktop’s trusted delivery before polling enters the conversation.
     const approvalGate = new Promise(done => { resumeWebPolling = done; });
     await web.route('**/personal/v1/auth/cloud-session', async route => { await approvalGate; await route.continue().catch(() => {}); });
-    await button(desktop, '← 返回对话').click();
+    await button(desktop, '关闭设置').click();
     await button(desktop, '允许').first().click();
     const trustDialog = desktop.getByRole('dialog', { name: '可信交付', exact: true }); await trustDialog.waitFor();
     const trustMaterial = await trustDialog.getByRole('textbox', { name: '可信交付码', exact: true }).inputValue();
@@ -321,7 +321,7 @@ try {
     const rejectedWeb = await rejectedContext.newPage(); observe(rejectedWeb); await rejectedWeb.goto(`${hostOrigin}/personal/v1/ui/`);
     const beforeRejectedLogin = Date.now(); await login(rejectedWeb, email, password); await confirmMail(rejectedWeb, email, beforeRejectedLogin);
     await rejectedWeb.getByText('在你已登录的设备上允许这台设备', { exact: true }).waitFor();
-    await button(desktop, '← 返回对话').click(); await button(desktop, '拒绝').first().click();
+    await button(desktop, '关闭设置').click(); await button(desktop, '拒绝').first().click();
     await rejectedWeb.getByText('这台设备未获允许，请在已登录设备上重新批准。', { exact: true }).waitFor();
     await openSettings(desktop, '设备');
     await desktop.getByRole('group', { name: '这个浏览器', exact: true }).getByRole('button', { name: '移除', exact: true }).click();

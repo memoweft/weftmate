@@ -92,7 +92,7 @@ try {
   await page.getByRole('button', { name: '收起右侧面板', exact: true }).click();
   await page.getByRole('button', { name: '账户菜单' }).click();
   await page.getByRole('button', { name: '设置', exact: true }).click();
-  await page.getByRole('combobox', { name: /^颜色模式/ }).selectOption('dark');
+  await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click(); await page.getByRole('button', { name: '深色', exact: true }).click();
   await shot('appearance');
   // The other two decisions, queue/steer and stop use fresh synthetic accounts in the same real program.
   const decisions = [];

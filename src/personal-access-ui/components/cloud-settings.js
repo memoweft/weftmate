@@ -25,7 +25,7 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         }
         const original = core.openAccount;
         core.openAccount = () => { original(); paintCloudSettings(); };
-        ui.byId('rail-devices').addEventListener('click', () => { core.openAccount(); select('devices'); });
+        ui.byId('rail-devices').addEventListener('click', () => { ui.openSettings('devices'); });
         const banner = ui.element('div', 'cloud-access-banner'); banner.id = 'cloud-access-banner'; banner.hidden = true;
         ui.byId('connection-banner').before(banner);
         directoryTimer = setInterval(() => { if (document.visibilityState === 'visible' && core.state.cloudAuth.mode === 'authenticated') void refreshDirectory(false); }, 30000);
@@ -39,6 +39,8 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
         if (!ui.byId('cloud-settings')) return;
         const active = core.state.cloudAuth.mode === 'authenticated';
         ui.byId('cloud-settings').hidden = !active;
+        ui.byId('cloud-devices-panel').hidden = !active || tab !== 'devices';
+        if (!active) ui.byId('devices-heading').closest('section').append(ui.byId('pending-devices'));
         for (const id of ['account-heading', 'devices-heading']) ui.byId(id).closest('section').hidden = active;
         ui.byId('cloud-account').hidden = true;
         if (!active) return;
@@ -172,5 +174,5 @@ globalThis.WeftUiComponents.factories.cloudSettings = (core, ui) => {
     }
     const activateCloudHost = target => globalThis.weftmateDesktop?.activateHost(target);
     const clearNativeHostSessions = () => globalThis.weftmateDesktop?.clearHostSessions();
-    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, stopAccountPairing: stopPairing };
+    return { mountCloudSettings, paintCloudSettings, paintCloudPending, decideCloudDevice, openCloudHost, activateCloudHost, clearNativeHostSessions, selectCloudSettings: select, stopAccountPairing: stopPairing };
 };
