@@ -36,6 +36,7 @@ import { createPersonalHealthStore } from '../personal-health/index.mjs';
 import { createHostCloudIdentity } from '../personal-cloud/index.mjs';
 import { createHostRelay } from '../personal-relay/index.mjs';
 import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
+import { createUsageStore } from './usage.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -98,8 +99,10 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   let hostRelay = null;
   const storeFile = path.join(root, 'store.json');
   let rootState;
+  const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get usage() { return usage; },
     get root() { return root; },
     get cloudIdentity() { return hostCloudIdentity; },
     get accountModelForProfile() { return accountModelForProfile; },
@@ -552,6 +555,17 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     isFormalLocalProfile: accountModels.isFormalLocalProfile,
     privateAccountModelProof: accountModels.privateAccountModelProof,
     ownerForSession: sessions.ownerForSession,
+    async beginUsage({ sessionId = null, profileId, ownerId = null }) {
+      const binding = sessionId ? sessions.ownerForSession(sessionId) : null;
+      if (sessionId && !binding || ownerId && binding && binding.ownerId !== ownerId) throw failure('SESSION_UNAVAILABLE', 404);
+      ownerId ??= binding?.ownerId ?? rootState.legacyOwnerId;
+      if (!rootState.accounts[ownerId]) throw failure('ACCOUNT_LOGIN_REQUIRED', 401);
+      const model = (await backend.listModels({ ownerId })).find(row => row.id === profileId);
+      if (!model || !accountModels.canUseModelProfile(ownerId, profileId)) throw failure('MODEL_UNAVAILABLE', 409);
+      const requestId = await usage.begin(ownerId, { sessionId, profileId, model });
+      return { ownerId, requestId };
+    },
+    finishUsage: ({ ownerId, requestId, usage: value, source }) => usage.finish(ownerId, requestId, value, source),
     getApprovalPolicy({ sessionId }) {
       const match = sessions.ownerForSession(sessionId);
       if (!match) throw failure('SESSION_UNAVAILABLE', 404);
@@ -634,7 +648,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
           // Store transactions contain no backend await. Successful close waits
           // for the last atomic write before another instance may open this root.
           await Promise.race([
-            Promise.all([approvalsClosed, syncClosed, browserClosed]),
+            Promise.all([approvalsClosed, syncClosed, browserClosed, usage.close()]),
             new Promise((_, reject) => { timer = setTimeout(() => reject(failure('CLOSE_TIMEOUT', 503)), CLOSE_TIMEOUT_MS); }),
           ]);
           clearTimeout(timer);

@@ -40,11 +40,22 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     ]);
     if (!source.equals(generated)) problems.push(`differs ${name}`);
   }
+  if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
+    for (const [sourceName, generatedName] of [['components/usage.js', 'components/usage-view.js'], ['usage.css', 'usage.css']]) {
+      const source = await readFile(new URL(`../../../src/personal-access-ui/${sourceName}`, import.meta.url));
+      const generated = await readFile(path.join(mobileWwwDir, generatedName));
+      if (!source.equals(generated)) problems.push(`differs ${generatedName}`);
+    }
+  }
   if (problems.length) throw new Error(`ui-core assets: ${problems.join('; ')}; run npm run build in apps/mobile-ui`);
   return uiCoreAssets.length;
 }
 
 export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir = mobileUiCoreDir } = {}) {
+  if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
+    await copyFile(new URL('../../../src/personal-access-ui/components/usage.js', import.meta.url), path.join(mobileWwwDir, 'components/usage-view.js'));
+    await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
+  }
   await mkdir(targetDir, { recursive: true });
   const expected = new Set(uiCoreAssets);
   for (const name of uiCoreAssets) {
