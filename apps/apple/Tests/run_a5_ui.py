@@ -6,7 +6,7 @@ from datetime import datetime,timezone
 ROOT=Path(__file__).resolve().parents[3]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--evidence',type=Path,required=True)
-p.add_argument('--phase',choices=['light','dark','delete','gallery-light','gallery-dark','a6-light','a6-dark'],required=True)
+p.add_argument('--phase',choices=['light','dark','delete','gallery-light','gallery-dark','a6-light','a6-dark','a6-focus'],required=True)
 a=p.parse_args();a.evidence.mkdir(parents=True,exist_ok=True)
 def run(*cmd):return subprocess.run(cmd,check=True,capture_output=True,text=True).stdout
 fixture=subprocess.Popen(['node','apps/apple/Tests/a5_cloud_fixture.mjs'],cwd=ROOT,stdout=subprocess.PIPE,stderr=open('/private/tmp/a5-cloud-'+a.phase+'.log','w'),text=True,env=os.environ|{'TMPDIR':'/private/tmp'})
@@ -23,7 +23,7 @@ try:
  with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as f:
   f.write(plistlib.dumps(config));f.flush()
   run('xcrun','simctl','shutdown','all');run('xcrun','simctl','boot',a.simulator);run('xcrun','simctl','bootstatus',a.simulator,'-b')
-  name={'light':'testLightParityFlowAndGallery','dark':'testDarkGallery','delete':'testFocusedDeletionOption','gallery-light':'testFramedLightGallery','gallery-dark':'testFramedDarkGallery','a6-light':'testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation','a6-dark':'testDarkSettingsReview'}[a.phase]
+  name={'light':'testLightParityFlowAndGallery','dark':'testDarkGallery','delete':'testFocusedDeletionOption','gallery-light':'testFramedLightGallery','gallery-dark':'testFramedDarkGallery','a6-light':'testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation','a6-dark':'testDarkSettingsReview','a6-focus':'testFocusedSearchAndConversationUsage'}[a.phase]
   cmd=['xcodebuild','test-without-building','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','2','-only-testing:WeftMatePhoneUITests/'+('A6SettingsUITests' if a.phase.startswith('a6-') else 'A5ParityUITests')+'/'+name,'-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-resultBundlePath',str(a.result)]
   t=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
   for line in t.stdout:print(re.sub(r"Type '.*?' into",'Type <synthetic input> into',line),end='',flush=True)

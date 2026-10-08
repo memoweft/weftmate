@@ -100,6 +100,9 @@ final class A6SettingsUITests: XCTestCase {
             if id == "about" { XCTAssertEqual(app.buttons["settingsCategory.about"].frame.minY, listFrame.minY, accuracy: 2, "Returning must retain the list position") }
             app.swipeDown()
         }
+        try await searchAndDeepLink(app, ids: ids)
+    }
+    @MainActor private func searchAndDeepLink(_ app: XCUIApplication, ids: [String: Any]) async throws {
         let search = app.searchFields["搜索设置"]
         // Pull the native list down to reveal its searchable field.
         for _ in 0..<3 { if search.isHittable { break }; app.swipeDown() }
@@ -109,6 +112,7 @@ final class A6SettingsUITests: XCTestCase {
         app.buttons["settingsCategory.usage"].tap(); try expect(app.staticTexts["usageTotalCost"])
         try back(app)
         XCTAssertEqual(search.value as? String, "月度 上限")
+        try tap(app, "关闭") // Native iOS search dismissal; restores the settings toolbar.
         try tap(app, "closeAuxiliarySheetButton")
         let row = app.descendants(matching: .any)["conversationRow." + (ids["review"] as! String)].firstMatch
         try expect(row); row.tap()
@@ -117,6 +121,12 @@ final class A6SettingsUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["usageSessionFocus"].label.contains("整理项目资料"))
         try expect(app.staticTexts["usageTotalCost"])
         _ = try await get("/a5/report")
+    }
+    @MainActor func testFocusedSearchAndConversationUsage() async throws {
+        let (app, ids) = try await launch("light")
+        defer { app.terminate() }
+        try openSettings(app)
+        try await searchAndDeepLink(app, ids: ids)
     }
     @MainActor func testDarkSettingsReview() async throws {
         let (app, _) = try await launch("dark")
