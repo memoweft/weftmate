@@ -217,25 +217,25 @@ class MainActivity : Activity() {
 
     private fun dp(value: Int) = (resources.displayMetrics.density * value).toInt()
     private fun button(text: String, primary: Boolean = false, action: () -> Unit) = Button(this).apply {
-        this.text = text; isAllCaps = false; textSize = 13f
+        this.text = text; isAllCaps = false; textSize = DesignTokens.font13
         backgroundTintList = null
         stateListAnimator = null
         setTextColor(if (primary) Weave.surface else Weave.accent)
         background = GradientDrawable().apply {
             setColor(if (primary) Weave.accent else Weave.surface)
-            if (!primary) setStroke(dp(1), Weave.line)
-            cornerRadius = dp(10).toFloat()
+            if (!primary) setStroke(dp(DesignTokens.space1), Weave.line)
+            cornerRadius = dp(DesignTokens.space10).toFloat()
         }
-        minWidth = dp(48); minimumWidth = dp(48)
-        minHeight = dp(48); minimumHeight = dp(48)
+        minWidth = dp(DesignTokens.space48); minimumWidth = dp(DesignTokens.space48)
+        minHeight = dp(DesignTokens.space48); minimumHeight = dp(DesignTokens.space48)
         elevation = 0f
-        setPadding(dp(9), dp(4), dp(9), dp(4))
+        setPadding(dp(DesignTokens.space9), dp(DesignTokens.space4), dp(DesignTokens.space9), dp(DesignTokens.space4))
         setOnClickListener { action() }
     }
     private fun state(text: String) {
         stateText.text = text
         val issue = listOf("失败", "不可达", "冲突", "已失效", "未完成", "容量", "拒绝").any(text::contains)
-        stateText.textSize = if (issue || text.contains("正在") || text.contains("停止")) 12f else 10f
+        stateText.textSize = if (issue || text.contains("正在") || text.contains("停止")) DesignTokens.font12 else DesignTokens.font10
         stateText.setTextColor(if (issue) Weave.danger else Weave.muted)
     }
     private fun buildUi() = buildWeaveUi()
@@ -260,42 +260,42 @@ class MainActivity : Activity() {
 
         val header = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(12), 0, dp(16), 0)
+            setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space16), 0)
         }
-        root.addView(header, LinearLayout.LayoutParams(-1, dp(64)))
+        root.addView(header, LinearLayout.LayoutParams(-1, dp(DesignTokens.space64)))
         menuAction = Weave.iconButton(this, R.drawable.wm_menu, "打开会话导航") { showDrawer() }
         backAction = Weave.iconButton(this, R.drawable.wm_back, "返回对话") {
             navigateTo(Pane.CHAT); showTranscript()
         }.apply { visibility = View.GONE }
-        header.addView(menuAction, LinearLayout.LayoutParams(dp(48), dp(48)))
-        header.addView(backAction, LinearLayout.LayoutParams(dp(48), dp(48)))
+        header.addView(menuAction, LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
+        header.addView(backAction, LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
         val heading = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; gravity = Gravity.CENTER_VERTICAL }
-        headerTitle = Weave.text(this, "WeftMate", 18f, Weave.ink, android.graphics.Typeface.BOLD)
-        headerSubtitle = Weave.text(this, "同一个助手，接着聊。", 12f, Weave.muted)
+        headerTitle = Weave.text(this, "WeftMate", DesignTokens.font18, Weave.ink, android.graphics.Typeface.BOLD)
+        headerSubtitle = Weave.text(this, "同一个助手，接着聊。", DesignTokens.font12, Weave.muted)
         heading.addView(headerTitle)
         heading.addView(headerSubtitle)
         header.addView(heading, LinearLayout.LayoutParams(0, -1, 1f))
         thingsAction = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = dp(48)
-            setPadding(dp(8), 0, 0, 0)
+            minimumHeight = dp(DesignTokens.space48)
+            setPadding(dp(DesignTokens.space8), 0, 0, 0)
             isClickable = true; isFocusable = true
             contentDescription = "查看正在做的事"
             setOnClickListener { showThings() }
         }
         thingsAction.addView(Weave.icon(this, R.drawable.wm_task, Weave.secondary, 18))
-        thingsAction.addView(Weave.text(this, "事情", 14f, Weave.secondary), LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(8) })
-        thingsBadge = Weave.text(this, "1", 12f, Weave.accent).apply {
+        thingsAction.addView(Weave.text(this, "事情", DesignTokens.font14, Weave.secondary), LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(DesignTokens.space8) })
+        thingsBadge = Weave.text(this, "1", DesignTokens.font12, Weave.accent).apply {
             gravity = Gravity.CENTER
-            background = Weave.shape(this@MainActivity, Weave.accentSoft, 6)
+            background = Weave.shape(this@MainActivity, Weave.accentSoft, DesignTokens.radius6)
             visibility = View.GONE
         }
-        thingsAction.addView(thingsBadge, LinearLayout.LayoutParams(dp(20), dp(20)).apply { leftMargin = dp(8) })
+        thingsAction.addView(thingsBadge, LinearLayout.LayoutParams(dp(DesignTokens.space20), dp(DesignTokens.space20)).apply { leftMargin = dp(DesignTokens.space8) })
         header.addView(thingsAction)
         readonlyStopButton = weaveCircle(R.drawable.wm_stop, "停止当前手机回复") {
             cancelRequested = true; activeModel?.cancel(); state("已请求停止手机当前回复，等待结果")
         }.apply { visibility = View.GONE }
-        header.addView(readonlyStopButton, LinearLayout.LayoutParams(dp(48), dp(48)))
+        header.addView(readonlyStopButton, LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
 
         chatPanel = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setBackgroundColor(Weave.surface) }
         root.addView(chatPanel, LinearLayout.LayoutParams(-1, 0, 1f))
@@ -339,7 +339,7 @@ class MainActivity : Activity() {
         elevation = 0f
         gravity = Gravity.CENTER
         setPadding(0, 0, 0, 0)
-        background = Weave.shape(this@MainActivity, Weave.accent, 24)
+        background = Weave.shape(this@MainActivity, Weave.accent, DesignTokens.radius24)
         val drawable = getDrawable(icon)?.mutate()?.apply { setTint(Weave.surface) }
         setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null)
         setOnClickListener { action() }
@@ -354,21 +354,21 @@ class MainActivity : Activity() {
         val panel = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = Weave.drawer(this@MainActivity)
-            setPadding(dp(20), dp(16), dp(20), dp(16))
+            setPadding(dp(DesignTokens.space20), dp(DesignTokens.space16), dp(DesignTokens.space20), dp(DesignTokens.space16))
         }
         drawerDialog.setContentView(panel)
         val head = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        head.addView(Weave.mark(this, 32), LinearLayout.LayoutParams(dp(32), dp(32)))
-        head.addView(Weave.text(this, "WeftMate", 24f, Weave.ink, android.graphics.Typeface.BOLD),
-            LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(8) })
+        head.addView(Weave.mark(this, 32), LinearLayout.LayoutParams(dp(DesignTokens.space32), dp(DesignTokens.space32)))
+        head.addView(Weave.text(this, "WeftMate", DesignTokens.font24, Weave.ink, android.graphics.Typeface.BOLD),
+            LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(DesignTokens.space8) })
         head.addView(Weave.iconButton(this, R.drawable.wm_close, "关闭会话导航") { drawerDialog.dismiss() },
-            LinearLayout.LayoutParams(dp(48), dp(48)))
+            LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
         panel.addView(head)
         val newRow = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            background = Weave.shape(this@MainActivity, Weave.accentSoft, 16)
-            setPadding(dp(12), 0, dp(12), 0)
-            minimumHeight = dp(48)
+            background = Weave.shape(this@MainActivity, Weave.accentSoft, DesignTokens.radius16)
+            setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space12), 0)
+            minimumHeight = dp(DesignTokens.space48)
             isClickable = true; isFocusable = true
             contentDescription = "开始新的对话"
             id = R.id.new_conversation_button
@@ -379,90 +379,90 @@ class MainActivity : Activity() {
             }
         }
         newRow.addView(Weave.icon(this, R.drawable.wm_plus, Weave.accent, 18))
-        newRow.addView(Weave.text(this, "开始新的对话", 14f, Weave.accent),
-            LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(12) })
+        newRow.addView(Weave.text(this, "开始新的对话", DesignTokens.font14, Weave.accent),
+            LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(DesignTokens.space12) })
         newRow.addView(Weave.icon(this, R.drawable.wm_right, Weave.accent, 16))
-        panel.addView(newRow, LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(16); bottomMargin = dp(16) })
+        panel.addView(newRow, LinearLayout.LayoutParams(-1, dp(DesignTokens.space48)).apply { topMargin = dp(DesignTokens.space16); bottomMargin = dp(DesignTokens.space16) })
         val searchRow = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            background = Weave.shape(this@MainActivity, Weave.soft, 10)
-            setPadding(dp(12), 0, dp(12), 0)
+            background = Weave.shape(this@MainActivity, Weave.soft, DesignTokens.radius10)
+            setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space12), 0)
         }
         searchRow.addView(Weave.icon(this, R.drawable.wm_search, Weave.muted, 18))
         drawerSearch = EditText(this).apply {
             id = R.id.drawer_search
             hint = "找一段聊过的内容"
-            textSize = 12f; setTextColor(Weave.ink); setHintTextColor(Weave.muted)
+            textSize = DesignTokens.font12; setTextColor(Weave.ink); setHintTextColor(Weave.muted)
             setSingleLine(true); background = null
-            setPadding(dp(8), 0, 0, 0)
+            setPadding(dp(DesignTokens.space8), 0, 0, 0)
             addTextChangedListener(object : android.text.TextWatcher {
                 override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) { }
                 override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { refreshDrawerHistory(s?.toString() ?: "") }
                 override fun afterTextChanged(s: android.text.Editable?) { }
             })
         }
-        searchRow.addView(drawerSearch, LinearLayout.LayoutParams(0, dp(48), 1f))
+        searchRow.addView(drawerSearch, LinearLayout.LayoutParams(0, dp(DesignTokens.space48), 1f))
         panel.addView(searchRow)
         val shortcuts = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         val shortcutOne = LinearLayout(this)
         shortcutOne.addView(drawerShortcut(R.drawable.wm_task, "事情") { drawerDialog.dismiss(); showThings() },
-            LinearLayout.LayoutParams(0, dp(48), 1f))
+            LinearLayout.LayoutParams(0, dp(DesignTokens.space48), 1f))
         shortcutOne.addView(drawerShortcut(R.drawable.wm_phone, "手机记录") { drawerDialog.dismiss(); showAccountEvents() },
-            LinearLayout.LayoutParams(0, dp(48), 1f))
+            LinearLayout.LayoutParams(0, dp(DesignTokens.space48), 1f))
         val shortcutTwo = LinearLayout(this)
         shortcutTwo.addView(drawerShortcut(R.drawable.wm_pc, "电脑会话") { drawerDialog.dismiss(); showComputerSessions() },
-            LinearLayout.LayoutParams(0, dp(48), 1f))
+            LinearLayout.LayoutParams(0, dp(DesignTokens.space48), 1f))
         shortcutTwo.addView(drawerShortcut(R.drawable.wm_device, "连接") { drawerDialog.dismiss(); showSettings(true, "account") },
-            LinearLayout.LayoutParams(0, dp(48), 1f))
+            LinearLayout.LayoutParams(0, dp(DesignTokens.space48), 1f))
         shortcuts.addView(shortcutOne); shortcuts.addView(shortcutTwo)
-        panel.addView(shortcuts, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+        panel.addView(shortcuts, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space12) })
         panel.addView(drawerShortcut(R.drawable.wm_layers, "能力与规划") {
             drawerDialog.dismiss(); showSettings(true, "plan")
-        }, LinearLayout.LayoutParams(-1, dp(48)))
+        }, LinearLayout.LayoutParams(-1, dp(DesignTokens.space48)))
         val historyScroll = ScrollView(this).apply { isFillViewport = false }
         val historyBody = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        historyBody.addView(Weave.text(this, "最近", 12f, Weave.muted),
-            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(20); bottomMargin = dp(8) })
+        historyBody.addView(Weave.text(this, "最近", DesignTokens.font12, Weave.muted),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space20); bottomMargin = dp(DesignTokens.space8) })
         drawerList = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; id = R.id.drawer_history }
         historyBody.addView(drawerList)
         historyScroll.addView(historyBody)
         panel.addView(historyScroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        panel.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(8) })
+        panel.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(DesignTokens.space1)).apply { topMargin = dp(DesignTokens.space8) })
         settingsToggle = LinearLayout(this).apply {
             id = R.id.settings_toggle
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = dp(56)
-            background = Weave.shape(this@MainActivity, Weave.surface, 16)
+            minimumHeight = dp(DesignTokens.space56)
+            background = Weave.shape(this@MainActivity, Weave.surface, DesignTokens.radius16)
             isClickable = true; isFocusable = true
             contentDescription = "打开个人设置"
             setOnClickListener { drawerDialog.dismiss(); showSettings(true, "home") }
             drawerAvatar = weaveAvatar(40)
-            addView(drawerAvatar, LinearLayout.LayoutParams(dp(40), dp(40)))
+            addView(drawerAvatar, LinearLayout.LayoutParams(dp(DesignTokens.space40), dp(DesignTokens.space40)))
             val labels = LinearLayout(this@MainActivity).apply { orientation = LinearLayout.VERTICAL }
-            drawerProfileTitle = Weave.text(this@MainActivity, "本机个人空间", 14f, Weave.ink)
+            drawerProfileTitle = Weave.text(this@MainActivity, "本机个人空间", DesignTokens.font14, Weave.ink)
             labels.addView(drawerProfileTitle)
-            labels.addView(Weave.text(this@MainActivity, "设置、连接与偏好", 12f, Weave.muted))
-            addView(labels, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(12) })
+            labels.addView(Weave.text(this@MainActivity, "设置、连接与偏好", DesignTokens.font12, Weave.muted))
+            addView(labels, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(DesignTokens.space12) })
             addView(Weave.icon(this@MainActivity, R.drawable.wm_settings, Weave.secondary, 18))
         }
-        panel.addView(settingsToggle, LinearLayout.LayoutParams(-1, dp(56)))
+        panel.addView(settingsToggle, LinearLayout.LayoutParams(-1, dp(DesignTokens.space56)))
     }
 
     private fun drawerShortcut(icon: Int, title: String, action: () -> Unit) = LinearLayout(this).apply {
         gravity = Gravity.CENTER_VERTICAL
-        minimumHeight = dp(48)
+        minimumHeight = dp(DesignTokens.space48)
         isClickable = true; isFocusable = true
-        setPadding(dp(8), 0, 0, 0)
+        setPadding(dp(DesignTokens.space8), 0, 0, 0)
         addView(Weave.icon(this@MainActivity, icon, Weave.secondary, 18))
-        addView(Weave.text(this@MainActivity, title, 14f, Weave.ink),
-            LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(8) })
+        addView(Weave.text(this@MainActivity, title, DesignTokens.font14, Weave.ink),
+            LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(DesignTokens.space8) })
         setOnClickListener { action() }
     }
 
     private fun showDrawer() {
         if (drawerDialog.isShowing) return
         drawerDialog.show()
-        val width = minOf(dp(324), resources.displayMetrics.widthPixels - dp(52))
+        val width = minOf(dp(DesignTokens.space324), resources.displayMetrics.widthPixels - dp(DesignTokens.space52))
         drawerDialog.window?.setLayout(width, WindowManager.LayoutParams.MATCH_PARENT)
         drawerDialog.window?.setGravity(Gravity.START or Gravity.TOP)
         refreshDrawerHistory(drawerSearch.text.toString())
@@ -487,13 +487,13 @@ class MainActivity : Activity() {
             runOnUiThread {
                 if (request != drawerGeneration || currentGeneration != generation || owner != currentOwner) return@runOnUiThread
                 drawerList.removeAllViews()
-                if (rows.isEmpty()) drawerList.addView(Weave.text(this, if (normalized.isEmpty()) "还没有本机对话。" else "没有找到这段对话。", 12f, Weave.muted))
+                if (rows.isEmpty()) drawerList.addView(Weave.text(this, if (normalized.isEmpty()) "还没有本机对话。" else "没有找到这段对话。", DesignTokens.font12, Weave.muted))
                 for ((id, title, time) in rows) {
                     val item = LinearLayout(this).apply {
                         orientation = LinearLayout.VERTICAL
                         gravity = Gravity.CENTER_VERTICAL
-                        setPadding(dp(8), dp(8), dp(8), dp(8))
-                        background = if (id == selectedConversation) Weave.shape(this@MainActivity, Weave.accentSoft, 10) else null
+                        setPadding(dp(DesignTokens.space8), dp(DesignTokens.space8), dp(DesignTokens.space8), dp(DesignTokens.space8))
+                        background = if (id == selectedConversation) Weave.shape(this@MainActivity, Weave.accentSoft, DesignTokens.radius10) else null
                         isClickable = true; isFocusable = true
                         setOnClickListener {
                             selectedConversation = id
@@ -502,12 +502,12 @@ class MainActivity : Activity() {
                             showTranscript()
                         }
                     }
-                    item.addView(Weave.text(this, title, 14f, if (id == selectedConversation) Weave.accent else Weave.ink).apply {
+                    item.addView(Weave.text(this, title, DesignTokens.font14, if (id == selectedConversation) Weave.accent else Weave.ink).apply {
                         maxLines = 1; ellipsize = TextUtils.TruncateAt.END
                     })
-                    item.addView(Weave.text(this, time, 12f, Weave.muted),
-                        LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
-                    drawerList.addView(item, LinearLayout.LayoutParams(-1, dp(64)))
+                    item.addView(Weave.text(this, time, DesignTokens.font12, Weave.muted),
+                        LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space4) })
+                    drawerList.addView(item, LinearLayout.LayoutParams(-1, dp(DesignTokens.space64)))
                 }
             }
         }
@@ -540,26 +540,26 @@ class MainActivity : Activity() {
         settingsSheetRoot = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
             background = Weave.topSheet(this@MainActivity)
-            setPadding(dp(20), dp(8), dp(20), 0)
+            setPadding(dp(DesignTokens.space20), dp(DesignTokens.space8), dp(DesignTokens.space20), 0)
         }
         val sheet = settingsSheetRoot
         settingsDialog.setContentView(sheet)
         val head = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
         settingsBack = Weave.iconButton(this, R.drawable.wm_back, "返回设置", Weave.secondary) { renderSettingsPage("home") }
             .apply { visibility = View.GONE }
-        head.addView(settingsBack, LinearLayout.LayoutParams(dp(48), dp(48)))
-        settingsTitle = Weave.text(this, "设置", 18f, Weave.ink, android.graphics.Typeface.BOLD)
+        head.addView(settingsBack, LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
+        settingsTitle = Weave.text(this, "设置", DesignTokens.font18, Weave.ink, android.graphics.Typeface.BOLD)
         head.addView(settingsTitle, LinearLayout.LayoutParams(0, -2, 1f))
         settingsStop = Weave.iconButton(this, R.drawable.wm_stop, "停止当前手机回复", Weave.danger) {
             cancelRequested = true; activeModel?.cancel(); state("已请求停止手机当前回复")
         }.apply { visibility = View.GONE }
-        head.addView(settingsStop, LinearLayout.LayoutParams(dp(48), dp(48)))
+        head.addView(settingsStop, LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
         head.addView(Weave.iconButton(this, R.drawable.wm_close, "关闭设置") { settingsDialog.dismiss() },
-            LinearLayout.LayoutParams(dp(48), dp(48)))
-        sheet.addView(head, LinearLayout.LayoutParams(-1, dp(64)))
+            LinearLayout.LayoutParams(dp(DesignTokens.space48), dp(DesignTokens.space48)))
+        sheet.addView(head, LinearLayout.LayoutParams(-1, dp(DesignTokens.space64)))
         settingsPanel = ScrollView(this).apply { isFillViewport = false }
         sheet.addView(settingsPanel, LinearLayout.LayoutParams(-1, 0, 1f))
-        val pages = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(8), 0, dp(24)) }
+        val pages = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(DesignTokens.space8), 0, dp(DesignTokens.space24)) }
         settingsPanel.addView(pages)
         settingsHome = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         accountSettingsPage = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; visibility = View.GONE }
@@ -574,16 +574,16 @@ class MainActivity : Activity() {
 
         val profile = LinearLayout(this).apply {
             gravity = Gravity.CENTER_VERTICAL
-            setPadding(dp(8), dp(12), dp(8), dp(12))
+            setPadding(dp(DesignTokens.space8), dp(DesignTokens.space12), dp(DesignTokens.space8), dp(DesignTokens.space12))
         }
         settingsAvatar = weaveAvatar(64)
-        profile.addView(settingsAvatar, LinearLayout.LayoutParams(dp(64), dp(64)))
+        profile.addView(settingsAvatar, LinearLayout.LayoutParams(dp(DesignTokens.space64), dp(DesignTokens.space64)))
         val profileText = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-        profileText.addView(Weave.text(this, "自己的助手，\n按自己的方式。", 18f, Weave.ink))
-        settingsProfileSubtitle = Weave.text(this, "本机个人空间", 12f, Weave.muted)
-        profileText.addView(settingsProfileSubtitle, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
-        profile.addView(profileText, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(16) })
-        profile.addView(Weave.mark(this, 24, true), LinearLayout.LayoutParams(dp(24), dp(24)))
+        profileText.addView(Weave.text(this, "自己的助手，\n按自己的方式。", DesignTokens.font18, Weave.ink))
+        settingsProfileSubtitle = Weave.text(this, "本机个人空间", DesignTokens.font12, Weave.muted)
+        profileText.addView(settingsProfileSubtitle, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space4) })
+        profile.addView(profileText, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(DesignTokens.space16) })
+        profile.addView(Weave.mark(this, 24, true), LinearLayout.LayoutParams(dp(DesignTokens.space24), dp(DesignTokens.space24)))
         settingsHome.addView(profile)
 
         settingsGroup(settingsHome, "你的助手", listOf(
@@ -597,49 +597,49 @@ class MainActivity : Activity() {
             Triple(R.drawable.wm_info, "关于 WeftMate", "about")))
 
         val accountCard = settingsCard(accountSettingsPage)
-        accountCard.addView(Weave.text(this, "同一账户，在手机与电脑间接续。", 16f, Weave.ink),
-            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(16) })
+        accountCard.addView(Weave.text(this, "同一账户，在手机与电脑间接续。", DesignTokens.font16, Weave.ink),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space16) })
         originInput = settingInput("电脑服务地址 · HTTPS").apply { id = R.id.origin_input }; accountCard.addView(originInput)
         usernameInput = settingInput("用户名").apply { id = R.id.username_input }; accountCard.addView(usernameInput)
         passwordInput = settingInput("密码 · 只用于本次登录", true).apply { id = R.id.password_input }; accountCard.addView(passwordInput)
-        hostChip = Weave.text(this, "电脑账户未登录", 12f, Weave.muted)
-        accountCard.addView(hostChip, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12); bottomMargin = dp(8) })
+        hostChip = Weave.text(this, "电脑账户未登录", DesignTokens.font12, Weave.muted)
+        accountCard.addView(hostChip, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space12); bottomMargin = dp(DesignTokens.space8) })
         val accountButtons = LinearLayout(this)
-        accountButtons.addView(button("登录") { login() }.apply { id = R.id.login_button }, LinearLayout.LayoutParams(0, dp(48), 1f))
-        accountButtons.addView(button("退出") { logout() }, LinearLayout.LayoutParams(0, dp(48), 1f).apply { leftMargin = dp(8) })
+        accountButtons.addView(button("登录") { login() }.apply { id = R.id.login_button }, LinearLayout.LayoutParams(0, dp(DesignTokens.space48), 1f))
+        accountButtons.addView(button("退出") { logout() }, LinearLayout.LayoutParams(0, dp(DesignTokens.space48), 1f).apply { leftMargin = dp(DesignTokens.space8) })
         accountCard.addView(accountButtons)
         accountCard.addView(button("关联本机未绑定对话") { bindUnbound() },
-            LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(8) })
+            LinearLayout.LayoutParams(-1, dp(DesignTokens.space48)).apply { topMargin = dp(DesignTokens.space8) })
 
         val modelCard = settingsCard(modelSettingsPage)
-        modelCard.addView(Weave.text(this, "手机自己的模型服务", 16f, Weave.ink),
-            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
-        modelCard.addView(Weave.text(this, "聊天直接连接你配置的模型；应用列表仅在工具调用时发送。", 12f, Weave.muted),
-            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(16) })
+        modelCard.addView(Weave.text(this, "手机自己的模型服务", DesignTokens.font16, Weave.ink),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space8) })
+        modelCard.addView(Weave.text(this, "聊天直接连接你配置的模型；应用列表仅在工具调用时发送。", DesignTokens.font12, Weave.muted),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space16) })
         modelEndpointInput = settingInput(if (BuildConfig.DEBUG) "HTTPS地址 · 回环调试可HTTP" else "模型HTTPS地址 /v1")
             .apply { id = R.id.model_endpoint_input }; modelCard.addView(modelEndpointInput)
         modelIdInput = settingInput("模型 ID").apply { id = R.id.model_id_input }; modelCard.addView(modelIdInput)
         modelKeyInput = settingInput("API Key · 保存后不回显", true).apply { id = R.id.model_key_input }; modelCard.addView(modelKeyInput)
-        modelChip = Weave.text(this, "手机模型未配置", 12f, Weave.muted)
-        modelCard.addView(modelChip, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12); bottomMargin = dp(8) })
+        modelChip = Weave.text(this, "手机模型未配置", DesignTokens.font12, Weave.muted)
+        modelCard.addView(modelChip, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space12); bottomMargin = dp(DesignTokens.space8) })
         modelCard.addView(button("保存手机模型", true) { saveModel() }.apply { id = R.id.save_model_button },
-            LinearLayout.LayoutParams(-1, dp(48)))
+            LinearLayout.LayoutParams(-1, dp(DesignTokens.space48)))
 
         val syncCard = settingsCard(syncSettingsPage)
-        syncCard.addView(Weave.text(this, "记录先留在手机，连接后再同步。", 16f, Weave.ink))
-        syncChip = Weave.text(this, "同步尚未连接", 12f, Weave.muted)
-        syncCard.addView(syncChip, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12); bottomMargin = dp(12) })
-        syncCard.addView(button("立即同步", true) { sync() }, LinearLayout.LayoutParams(-1, dp(48)))
+        syncCard.addView(Weave.text(this, "记录先留在手机，连接后再同步。", DesignTokens.font16, Weave.ink))
+        syncChip = Weave.text(this, "同步尚未连接", DesignTokens.font12, Weave.muted)
+        syncCard.addView(syncChip, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space12); bottomMargin = dp(DesignTokens.space12) })
+        syncCard.addView(button("立即同步", true) { sync() }, LinearLayout.LayoutParams(-1, dp(DesignTokens.space48)))
         syncCard.addView(button("查看手机同步记录") { settingsDialog.dismiss(); showAccountEvents() },
-            LinearLayout.LayoutParams(-1, dp(48)).apply { topMargin = dp(8) })
+            LinearLayout.LayoutParams(-1, dp(DesignTokens.space48)).apply { topMargin = dp(DesignTokens.space8) })
         buildPlanPage()
         renderSettingsPage("home")
     }
 
     private fun buildPlanPage() {
         planSettingsPage.removeAllViews()
-        planSettingsPage.addView(Weave.text(this, "同一个助手，按真实能力逐步接续。", 16f, Weave.secondary),
-            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16); bottomMargin = dp(8) })
+        planSettingsPage.addView(Weave.text(this, "同一个助手，按真实能力逐步接续。", DesignTokens.font16, Weave.secondary),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space16); bottomMargin = dp(DesignTokens.space8) })
         planGroup("现在能用", listOf(
             Triple("手机聊天与模型设置", if (model == null) "待配置" else "已填写", "填入手机能连接的模型服务后，就能在手机上聊天。"),
             Triple("手机应用与系统设置", "可请求", "可以让这台手机打开应用或设置；打开后请看一眼结果。"),
@@ -658,58 +658,58 @@ class MainActivity : Activity() {
     }
 
     private fun planGroup(title: String, rows: List<Triple<String, String, String>>) {
-        planSettingsPage.addView(Weave.text(this, title, 12f, Weave.muted),
-            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24); bottomMargin = dp(8); leftMargin = dp(8) })
+        planSettingsPage.addView(Weave.text(this, title, DesignTokens.font12, Weave.muted),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space24); bottomMargin = dp(DesignTokens.space8); leftMargin = dp(DesignTokens.space8) })
         val group = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = Weave.shape(this@MainActivity, Weave.surface, 24)
-            setPadding(dp(16), dp(4), dp(16), dp(4))
+            background = Weave.shape(this@MainActivity, Weave.surface, DesignTokens.radius24)
+            setPadding(dp(DesignTokens.space16), dp(DesignTokens.space4), dp(DesignTokens.space16), dp(DesignTokens.space4))
         }
         planSettingsPage.addView(group)
         rows.forEachIndexed { index, (name, status, description) ->
-            val item = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(12), 0, dp(12)) }
+            val item = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(0, dp(DesignTokens.space12), 0, dp(DesignTokens.space12)) }
             val head = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-            head.addView(Weave.text(this, name, 14f, Weave.ink), LinearLayout.LayoutParams(0, -2, 1f))
-            head.addView(Weave.text(this, status, 12f, if (status == "已可用") 0xff137854.toInt() else Weave.muted))
+            head.addView(Weave.text(this, name, DesignTokens.font14, Weave.ink), LinearLayout.LayoutParams(0, -2, 1f))
+            head.addView(Weave.text(this, status, DesignTokens.font12, if (status == "已可用") DesignTokens.nativeSuccess else Weave.muted))
             item.addView(head)
-            item.addView(Weave.text(this, description, 12f, Weave.secondary).apply { setLineSpacing(dp(3).toFloat(), 1f) },
-                LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
+            item.addView(Weave.text(this, description, DesignTokens.font12, Weave.secondary).apply { setLineSpacing(dp(DesignTokens.space3).toFloat(), 1f) },
+                LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space6) })
             group.addView(item)
-            if (index < rows.lastIndex) group.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(1)))
+            if (index < rows.lastIndex) group.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(DesignTokens.space1)))
         }
     }
 
     private fun settingsCard(parent: LinearLayout): LinearLayout = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        background = Weave.shape(this@MainActivity, Weave.surface, 24)
-        setPadding(dp(8), dp(16), dp(8), dp(16))
-        parent.addView(this, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(16) })
+        background = Weave.shape(this@MainActivity, Weave.surface, DesignTokens.radius24)
+        setPadding(dp(DesignTokens.space8), dp(DesignTokens.space16), dp(DesignTokens.space8), dp(DesignTokens.space16))
+        parent.addView(this, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space16) })
     }
 
     private fun settingInput(hint: String, password: Boolean = false) = EditText(this).apply {
-        this.hint = hint; setSingleLine(true); textSize = 14f
+        this.hint = hint; setSingleLine(true); textSize = DesignTokens.font14
         setTextColor(Weave.ink); setHintTextColor(Weave.muted)
-        background = Weave.shape(this@MainActivity, Weave.surface, 10, Weave.lineStrong)
-        setPadding(dp(12), 0, dp(12), 0)
-        minimumHeight = dp(48)
+        background = Weave.shape(this@MainActivity, Weave.surface, DesignTokens.radius10, Weave.lineStrong)
+        setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space12), 0)
+        minimumHeight = dp(DesignTokens.space48)
         if (password) inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD
-        layoutParams = LinearLayout.LayoutParams(-1, dp(48)).apply { bottomMargin = dp(12) }
+        layoutParams = LinearLayout.LayoutParams(-1, dp(DesignTokens.space48)).apply { bottomMargin = dp(DesignTokens.space12) }
     }
 
     private fun settingsGroup(parent: LinearLayout, title: String, items: List<Triple<Int, String, String>>) {
-        parent.addView(Weave.text(this, title, 12f, Weave.muted),
-            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(24); leftMargin = dp(16); bottomMargin = dp(8) })
+        parent.addView(Weave.text(this, title, DesignTokens.font12, Weave.muted),
+            LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space24); leftMargin = dp(DesignTokens.space16); bottomMargin = dp(DesignTokens.space8) })
         val card = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = Weave.shape(this@MainActivity, Weave.surface, 24)
-            setPadding(dp(16), 0, dp(16), 0)
+            background = Weave.shape(this@MainActivity, Weave.surface, DesignTokens.radius24)
+            setPadding(dp(DesignTokens.space16), 0, dp(DesignTokens.space16), 0)
         }
         parent.addView(card)
         items.forEachIndexed { index, (icon, label, route) ->
             val available = route != "unavailable"
             val row = LinearLayout(this).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                minimumHeight = dp(56)
+                minimumHeight = dp(DesignTokens.space56)
                 isClickable = available
                 if (available) setOnClickListener {
                     if (route == "capabilities") renderSettingsInfo("手机能力", "可读取并打开这台手机上可启动的应用，也可请求打开系统设置。动作回执会区分已派发与已观察。")
@@ -718,11 +718,11 @@ class MainActivity : Activity() {
                 }
             }
             row.addView(Weave.icon(this, icon, if (available) Weave.secondary else Weave.muted))
-            row.addView(Weave.text(this, label, 14f, if (available) Weave.ink else Weave.muted),
-                LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(12) })
+            row.addView(Weave.text(this, label, DesignTokens.font14, if (available) Weave.ink else Weave.muted),
+                LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(DesignTokens.space12) })
             if (available) row.addView(Weave.icon(this, R.drawable.wm_right, Weave.lineStrong, 16))
-            card.addView(row, LinearLayout.LayoutParams(-1, dp(56)))
-            if (index < items.lastIndex) card.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(1)))
+            card.addView(row, LinearLayout.LayoutParams(-1, dp(DesignTokens.space56)))
+            if (index < items.lastIndex) card.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(DesignTokens.space1)))
         }
     }
 
@@ -734,7 +734,7 @@ class MainActivity : Activity() {
         accountSettingsPage.visibility = View.GONE
         modelSettingsPage.visibility = View.GONE
         syncSettingsPage.visibility = View.GONE
-        val info = Weave.text(this, description, 16f, Weave.secondary).apply { setPadding(dp(12), dp(24), dp(12), 0) }
+        val info = Weave.text(this, description, DesignTokens.font16, Weave.secondary).apply { setPadding(dp(DesignTokens.space12), dp(DesignTokens.space24), dp(DesignTokens.space12), 0) }
         val pages = settingsHome.parent as LinearLayout
         planSettingsPage.visibility = View.GONE
         if (pages.childCount > 5) pages.removeViewAt(5)
@@ -767,13 +767,13 @@ class MainActivity : Activity() {
         settingsPanel.layoutParams = if (home) LinearLayout.LayoutParams(-1, 0, 1f)
             else LinearLayout.LayoutParams(-1, -2)
         if (!settingsDialog.isShowing) return
-        val maxHeight = resources.displayMetrics.heightPixels - dp(52)
+        val maxHeight = resources.displayMetrics.heightPixels - dp(DesignTokens.space52)
         if (home) settingsDialog.window?.setLayout(WindowManager.LayoutParams.MATCH_PARENT, maxHeight)
         else settingsSheetRoot.post {
             if (!settingsDialog.isShowing || settingsPage != page) return@post
             val pages = settingsHome.parent as LinearLayout
             val contentHeight = pages.measuredHeight
-            val desired = (dp(64) + contentHeight + dp(12)).coerceIn(dp(220), maxHeight)
+            val desired = (dp(DesignTokens.space64) + contentHeight + dp(DesignTokens.space12)).coerceIn(dp(DesignTokens.space220), maxHeight)
             settingsDialog.window?.setLayout(WindowManager.LayoutParams.MATCH_PARENT, desired)
         }
     }
@@ -810,7 +810,7 @@ class MainActivity : Activity() {
         val currentPane = paneGeneration
         val currentTranscript = ++transcriptGeneration
         transcript.removeAllViews()
-        transcript.addView(Weave.text(this, "正在读取手机活动…", 14f, Weave.muted))
+        transcript.addView(Weave.text(this, "正在读取手机活动…", DesignTokens.font14, Weave.muted))
         worker.execute {
             val activities = (if (owner == null) emptyList() else store.listConversations(owner)).take(20).mapNotNull { conversation ->
                 val latest = store.latestTurnStatus(conversation.id)
@@ -825,18 +825,18 @@ class MainActivity : Activity() {
                 if (pane != Pane.THINGS || currentPane != paneGeneration || currentGeneration != generation ||
                     currentTranscript != transcriptGeneration || owner != currentOwner) return@runOnUiThread
                 transcript.removeAllViews()
-                transcript.setPadding(dp(24), dp(24), dp(24), dp(16))
-                if (activities.isEmpty()) transcript.addView(Weave.text(this, "当前没有手机活动。", 16f, Weave.secondary))
+                transcript.setPadding(dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space16))
+                if (activities.isEmpty()) transcript.addView(Weave.text(this, "当前没有手机活动。", DesignTokens.font16, Weave.secondary))
                 for ((title, summary) in activities) {
                     val card = LinearLayout(this).apply {
                         orientation = LinearLayout.VERTICAL
-                        background = Weave.shape(this@MainActivity, Weave.soft, 16, Weave.line)
-                        setPadding(dp(16), dp(12), dp(16), dp(12))
+                        background = Weave.shape(this@MainActivity, Weave.soft, DesignTokens.radius16, Weave.line)
+                        setPadding(dp(DesignTokens.space16), dp(DesignTokens.space12), dp(DesignTokens.space16), dp(DesignTokens.space12))
                     }
-                    card.addView(Weave.text(this, title, 14f, Weave.ink))
-                    card.addView(Weave.text(this, summary, 12f, Weave.muted),
-                        LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(4) })
-                    transcript.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+                    card.addView(Weave.text(this, title, DesignTokens.font14, Weave.ink))
+                    card.addView(Weave.text(this, summary, DesignTokens.font12, Weave.muted),
+                        LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space4) })
+                    transcript.addView(card, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space12) })
                 }
             }
         }
@@ -905,31 +905,31 @@ class MainActivity : Activity() {
         val current = model
         val popupContent = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = Weave.shape(this@MainActivity, Weave.surface, 20, Weave.line)
-            setPadding(dp(8), dp(8), dp(8), dp(8))
+            background = Weave.shape(this@MainActivity, Weave.surface, DesignTokens.radius20, Weave.line)
+            setPadding(dp(DesignTokens.space8), dp(DesignTokens.space8), dp(DesignTokens.space8), dp(DesignTokens.space8))
         }
-        val title = Weave.text(this, "选择手机模型", 14f, Weave.ink, android.graphics.Typeface.BOLD).apply {
-            setPadding(dp(12), dp(8), dp(12), dp(8))
+        val title = Weave.text(this, "选择手机模型", DesignTokens.font14, Weave.ink, android.graphics.Typeface.BOLD).apply {
+            setPadding(dp(DesignTokens.space12), dp(DesignTokens.space8), dp(DesignTokens.space12), dp(DesignTokens.space8))
         }
         popupContent.addView(title)
         val listScroll = ScrollView(this).apply { isFillViewport = false }
         val list = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         listScroll.addView(list)
         popupContent.addView(listScroll, LinearLayout.LayoutParams(-1, 0, 1f))
-        val footer = Weave.text(this, "配置自定义模型", 14f, Weave.accent).apply {
+        val footer = Weave.text(this, "配置自定义模型", DesignTokens.font14, Weave.accent).apply {
             gravity = Gravity.CENTER_VERTICAL
-            minimumHeight = dp(48)
-            setPadding(dp(12), 0, dp(12), 0)
+            minimumHeight = dp(DesignTokens.space48)
+            setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space12), 0)
             isClickable = true; isFocusable = true
             setOnClickListener { modelPicker?.dismiss(); showSettings(true, "model") }
         }
         popupContent.addView(footer)
-        val width = (resources.displayMetrics.widthPixels - dp(32)).coerceAtMost(dp(380))
-        val height = dp(340).coerceAtMost(resources.displayMetrics.heightPixels / 2)
+        val width = (resources.displayMetrics.widthPixels - dp(DesignTokens.space32)).coerceAtMost(dp(DesignTokens.space380))
+        val height = dp(DesignTokens.space340).coerceAtMost(resources.displayMetrics.heightPixels / 2)
         val popup = PopupWindow(popupContent, width, height, true).apply {
             isOutsideTouchable = true
             setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
-            elevation = dp(12).toFloat()
+            elevation = dp(DesignTokens.space12).toFloat()
             setOnDismissListener {
                 pickerGeneration++
                 if (modelPicker === this) modelPicker = null
@@ -939,9 +939,9 @@ class MainActivity : Activity() {
         val request = ++pickerGeneration
         fun message(text: String, retry: Boolean = false) {
             list.removeAllViews()
-            list.addView(Weave.text(this, text, 13f, Weave.muted).apply {
-                minimumHeight = dp(48); gravity = Gravity.CENTER_VERTICAL
-                setPadding(dp(12), 0, dp(12), 0)
+            list.addView(Weave.text(this, text, DesignTokens.font13, Weave.muted).apply {
+                minimumHeight = dp(DesignTokens.space48); gravity = Gravity.CENTER_VERTICAL
+                setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space12), 0)
                 if (retry) {
                     isClickable = true
                     setOnClickListener { popup.dismiss(); showModelPicker() }
@@ -951,12 +951,12 @@ class MainActivity : Activity() {
         message("正在读取已保存模型…")
         val location = IntArray(2)
         composerView.modelChoice.getLocationOnScreen(location)
-        val x = dp(16).coerceAtMost((resources.displayMetrics.widthPixels - width).coerceAtLeast(0))
-        val y = (location[1] - height + dp(4)).coerceAtLeast(dp(32))
+        val x = dp(DesignTokens.space16).coerceAtMost((resources.displayMetrics.widthPixels - width).coerceAtLeast(0))
+        val y = (location[1] - height + dp(DesignTokens.space4)).coerceAtLeast(dp(DesignTokens.space32))
         popup.showAtLocation(root, Gravity.TOP or Gravity.START, x, y)
         if (ValueAnimator.areAnimatorsEnabled()) {
             popupContent.alpha = 0f
-            popupContent.animate().alpha(1f).setDuration(160).start()
+            popupContent.animate().alpha(1f).setDuration(DesignTokens.duration160ms).start()
         }
         worker.execute {
             val saved = try { secrets.modelProfiles() } catch (_: Exception) { emptyList() }
@@ -985,15 +985,15 @@ class MainActivity : Activity() {
         }
         if (entries.isEmpty()) list.addView(Weave.text(this,
             if (loading) "正在读取模型目录…" else if (current == null) "先配置一个手机模型" else "模型目录暂不可用，请检查连接",
-            13f, Weave.muted).apply { minimumHeight = dp(48); gravity = Gravity.CENTER_VERTICAL; setPadding(dp(12), 0, dp(12), 0) })
+            DesignTokens.font13, Weave.muted).apply { minimumHeight = dp(DesignTokens.space48); gravity = Gravity.CENTER_VERTICAL; setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space12), 0) })
         for (profile in entries) {
             val selected = current?.endpoint == profile.endpoint && current.modelId == profile.modelId
             val row = LinearLayout(this).apply {
                 gravity = Gravity.CENTER_VERTICAL
-                minimumHeight = dp(56)
-                setPadding(dp(12), dp(4), dp(12), dp(4))
+                minimumHeight = dp(DesignTokens.space56)
+                setPadding(dp(DesignTokens.space12), dp(DesignTokens.space4), dp(DesignTokens.space12), dp(DesignTokens.space4))
                 isClickable = true; isFocusable = true
-                background = Weave.shape(this@MainActivity, if (selected) Weave.accentSoft else Weave.surface, 12)
+                background = Weave.shape(this@MainActivity, if (selected) Weave.accentSoft else Weave.surface, DesignTokens.radius12)
                 contentDescription = "${profile.displayName}，${if (selected) "已选择" else "可选择"}，模型 ID ${profile.modelId}"
                 setOnClickListener {
                     if (sending) return@setOnClickListener
@@ -1015,10 +1015,10 @@ class MainActivity : Activity() {
                 }
             }
             val names = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
-            names.addView(Weave.text(this, profile.displayName, 14f, Weave.ink).apply {
+            names.addView(Weave.text(this, profile.displayName, DesignTokens.font14, Weave.ink).apply {
                 maxLines = 1; ellipsize = TextUtils.TruncateAt.END
             })
-            names.addView(Weave.text(this, profile.modelId, 11f, Weave.muted).apply {
+            names.addView(Weave.text(this, profile.modelId, DesignTokens.font11, Weave.muted).apply {
                 maxLines = 1; ellipsize = TextUtils.TruncateAt.MIDDLE
             })
             row.addView(names, LinearLayout.LayoutParams(0, -2, 1f))
@@ -1026,8 +1026,8 @@ class MainActivity : Activity() {
             list.addView(row)
         }
         if (loading || discovered == null && current != null) {
-            list.addView(Weave.text(this, if (loading) "正在发现当前服务的模型…" else "目录暂不可用 · 点此重试", 12f, Weave.muted).apply {
-                minimumHeight = dp(44); gravity = Gravity.CENTER_VERTICAL; setPadding(dp(12), 0, dp(12), 0)
+            list.addView(Weave.text(this, if (loading) "正在发现当前服务的模型…" else "目录暂不可用 · 点此重试", DesignTokens.font12, Weave.muted).apply {
+                minimumHeight = dp(DesignTokens.space44); gravity = Gravity.CENTER_VERTICAL; setPadding(dp(DesignTokens.space12), 0, dp(DesignTokens.space12), 0)
                 if (!loading) { isClickable = true; setOnClickListener { popup.dismiss(); showModelPicker() } }
             })
         }
@@ -1051,38 +1051,38 @@ class MainActivity : Activity() {
                 clearWelcomeLayoutListener()
                 transcript.removeAllViews()
                 transcript.minimumHeight = 0
-                transcript.setPadding(dp(20), dp(20), dp(20), dp(8))
+                transcript.setPadding(dp(DesignTokens.space20), dp(DesignTokens.space20), dp(DesignTokens.space20), dp(DesignTokens.space8))
                 for (item in items) {
                     if (item.user) {
-                        val bubble = Weave.text(this, item.text.removePrefix("我 · "), 16f, Weave.ink).apply {
-                            setLineSpacing(dp(4).toFloat(), 1f)
-                            setPadding(dp(16), dp(12), dp(16), dp(12))
+                        val bubble = Weave.text(this, item.text.removePrefix("我 · "), DesignTokens.font16, Weave.ink).apply {
+                            setLineSpacing(dp(DesignTokens.space4).toFloat(), 1f)
+                            setPadding(dp(DesignTokens.space16), dp(DesignTokens.space12), dp(DesignTokens.space16), dp(DesignTokens.space12))
                             background = GradientDrawable().apply {
                                 setColor(Weave.accentSoft)
-                                val large = dp(24).toFloat(); val small = dp(6).toFloat()
+                                val large = dp(DesignTokens.space24).toFloat(); val small = dp(DesignTokens.space6).toFloat()
                                 cornerRadii = floatArrayOf(large, large, large, large, small, small, large, large)
                             }
                             maxWidth = (resources.displayMetrics.widthPixels * .87f).toInt()
                         }
                         transcript.addView(bubble, LinearLayout.LayoutParams(-2, -2).apply {
-                            gravity = Gravity.END; bottomMargin = dp(24)
+                            gravity = Gravity.END; bottomMargin = dp(DesignTokens.space24)
                         })
                     } else if (item.text.startsWith("助手 · ")) {
                         val row = LinearLayout(this).apply { gravity = Gravity.TOP }
-                        row.addView(Weave.mark(this, 24, true), LinearLayout.LayoutParams(dp(24), dp(24)))
-                        row.addView(Weave.text(this, item.text.removePrefix("助手 · "), 16f, Weave.ink).apply {
-                            setLineSpacing(dp(5).toFloat(), 1f)
-                        }, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(8) })
-                        transcript.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(24) })
+                        row.addView(Weave.mark(this, 24, true), LinearLayout.LayoutParams(dp(DesignTokens.space24), dp(DesignTokens.space24)))
+                        row.addView(Weave.text(this, item.text.removePrefix("助手 · "), DesignTokens.font16, Weave.ink).apply {
+                            setLineSpacing(dp(DesignTokens.space5).toFloat(), 1f)
+                        }, LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(DesignTokens.space8) })
+                        transcript.addView(row, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space24) })
                     } else if (item.text.startsWith("系统设置 · ") || item.text.startsWith("打开应用 · ") ||
                         item.text.startsWith("应用列表 · ") || item.text.startsWith("手机动作 · ")) {
                         transcript.addView(receiptCard(item.text),
-                            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(16) })
+                            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space16) })
                     } else {
-                        transcript.addView(Weave.text(this, item.text, 12f, Weave.secondary).apply {
-                            background = Weave.shape(this@MainActivity, Weave.soft, 10)
-                            setPadding(dp(12), dp(8), dp(12), dp(8))
-                        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(12) })
+                        transcript.addView(Weave.text(this, item.text, DesignTokens.font12, Weave.secondary).apply {
+                            background = Weave.shape(this@MainActivity, Weave.soft, DesignTokens.radius10)
+                            setPadding(dp(DesignTokens.space12), dp(DesignTokens.space8), dp(DesignTokens.space12), dp(DesignTokens.space8))
+                        }, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space12) })
                     }
                 }
                 scroll.post { scroll.fullScroll(View.FOCUS_DOWN) }
@@ -1097,38 +1097,38 @@ class MainActivity : Activity() {
         val summary = fields.getOrNull(2) ?: ""
         return LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            background = Weave.shape(this@MainActivity, Weave.surface, 24, Weave.line)
-            setPadding(dp(16), dp(16), dp(16), dp(16))
+            background = Weave.shape(this@MainActivity, Weave.surface, DesignTokens.radius24, Weave.line)
+            setPadding(dp(DesignTokens.space16), dp(DesignTokens.space16), dp(DesignTokens.space16), dp(DesignTokens.space16))
             val head = LinearLayout(this@MainActivity).apply { gravity = Gravity.CENTER_VERTICAL }
-            head.addView(Weave.text(this@MainActivity, title, 14f, Weave.ink, android.graphics.Typeface.BOLD),
+            head.addView(Weave.text(this@MainActivity, title, DesignTokens.font14, Weave.ink, android.graphics.Typeface.BOLD),
                 LinearLayout.LayoutParams(0, -2, 1f))
-            head.addView(Weave.text(this@MainActivity, status, 12f,
+            head.addView(Weave.text(this@MainActivity, status, DesignTokens.font12,
                 if (status.contains("未完成")) Weave.danger else Weave.accent).apply {
-                background = Weave.shape(this@MainActivity, if (status.contains("未完成")) 0xfffff0f2.toInt() else Weave.accentSoft, 10)
-                setPadding(dp(8), dp(4), dp(8), dp(4))
+                background = Weave.shape(this@MainActivity, if (status.contains("未完成")) DesignTokens.nativeDangerSoft else Weave.accentSoft, DesignTokens.radius10)
+                setPadding(dp(DesignTokens.space8), dp(DesignTokens.space4), dp(DesignTokens.space8), dp(DesignTokens.space4))
             })
             addView(head)
-            if (summary.isNotBlank()) addView(Weave.text(this@MainActivity, summary, 12f, Weave.secondary).apply {
-                setLineSpacing(dp(3).toFloat(), 1f)
-            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(10) })
+            if (summary.isNotBlank()) addView(Weave.text(this@MainActivity, summary, DesignTokens.font12, Weave.secondary).apply {
+                setLineSpacing(dp(DesignTokens.space3).toFloat(), 1f)
+            }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space10) })
         }
     }
 
     private fun recordRow(source: String, content: String): View = LinearLayout(this).apply {
         orientation = LinearLayout.VERTICAL
-        setPadding(dp(2), dp(12), dp(2), dp(12))
-        addView(Weave.text(this@MainActivity, source, 12f, Weave.muted))
-        addView(Weave.text(this@MainActivity, content, 14f, Weave.ink).apply {
-            setLineSpacing(dp(3).toFloat(), 1f)
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(6) })
-        addView(Weave.divider(this@MainActivity), LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(12) })
+        setPadding(dp(DesignTokens.space2), dp(DesignTokens.space12), dp(DesignTokens.space2), dp(DesignTokens.space12))
+        addView(Weave.text(this@MainActivity, source, DesignTokens.font12, Weave.muted))
+        addView(Weave.text(this@MainActivity, content, DesignTokens.font14, Weave.ink).apply {
+            setLineSpacing(dp(DesignTokens.space3).toFloat(), 1f)
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space6) })
+        addView(Weave.divider(this@MainActivity), LinearLayout.LayoutParams(-1, dp(DesignTokens.space1)).apply { topMargin = dp(DesignTokens.space12) })
     }
 
     private fun renderWelcome() {
         if (pane != Pane.CHAT) return
         clearWelcomeLayoutListener()
         transcript.removeAllViews()
-        transcript.setPadding(dp(24), dp(16), dp(24), 0)
+        transcript.setPadding(dp(DesignTokens.space24), dp(DesignTokens.space16), dp(DesignTokens.space24), 0)
         val shortScreen = resources.configuration.screenHeightDp <= 680
         val welcome = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         transcript.addView(welcome, LinearLayout.LayoutParams(-1, -2))
@@ -1139,19 +1139,19 @@ class MainActivity : Activity() {
         }
         welcome.addView(hero, LinearLayout.LayoutParams(-1, -2))
         val signature = LinearLayout(this).apply { gravity = Gravity.CENTER_VERTICAL }
-        signature.addView(Weave.mark(this, 32, true), LinearLayout.LayoutParams(dp(32), dp(32)))
-        signature.addView(Weave.text(this, "你的个人空间", 12f, Weave.muted),
-            LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(12) })
-        hero.addView(signature, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(20) })
-        hero.addView(Weave.text(this, "你好，慢慢聊。", if (shortScreen) 24f else 30f, Weave.ink),
+        signature.addView(Weave.mark(this, 32, true), LinearLayout.LayoutParams(dp(DesignTokens.space32), dp(DesignTokens.space32)))
+        signature.addView(Weave.text(this, "你的个人空间", DesignTokens.font12, Weave.muted),
+            LinearLayout.LayoutParams(-2, -2).apply { leftMargin = dp(DesignTokens.space12) })
+        hero.addView(signature, LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space20) })
+        hero.addView(Weave.text(this, "你好，慢慢聊。", if (shortScreen) DesignTokens.font24 else 30f, Weave.ink),
             LinearLayout.LayoutParams(-1, -2))
-        hero.addView(Weave.text(this, "说说今天，\n也可以让我帮你做一件手机上的事。", 16f, Weave.muted).apply {
-            setLineSpacing(dp(7).toFloat(), 1f)
-        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+        hero.addView(Weave.text(this, "说说今天，\n也可以让我帮你做一件手机上的事。", DesignTokens.font16, Weave.muted).apply {
+            setLineSpacing(dp(DesignTokens.space7).toFloat(), 1f)
+        }, LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space12) })
         val starts = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
         welcome.addView(starts)
-        starts.addView(Weave.text(this, "从这里开始", 12f, Weave.muted),
-            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
+        starts.addView(Weave.text(this, "从这里开始", DesignTokens.font12, Weave.muted),
+            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space8) })
         starts.addView(welcomePrompt(R.drawable.wm_chat, "先聊一会儿", "从一句话开始") {
             composer.requestFocus()
             (getSystemService(INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager)
@@ -1164,9 +1164,9 @@ class MainActivity : Activity() {
         })
         val connection = Weave.text(this,
             if (host == null) "本机已保存 · 电脑账户未登录" else "本机已保存 · 电脑账户已登录，连接待核对",
-            12f, Weave.muted).apply { gravity = Gravity.CENTER_VERTICAL; id = R.id.welcome_connection }
-        starts.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(1)).apply { topMargin = dp(16) })
-        starts.addView(connection, LinearLayout.LayoutParams(-1, dp(40)))
+            DesignTokens.font12, Weave.muted).apply { gravity = Gravity.CENTER_VERTICAL; id = R.id.welcome_connection }
+        starts.addView(Weave.divider(this), LinearLayout.LayoutParams(-1, dp(DesignTokens.space1)).apply { topMargin = dp(DesignTokens.space16) })
+        starts.addView(connection, LinearLayout.LayoutParams(-1, dp(DesignTokens.space40)))
         val listener = object : ViewTreeObserver.OnGlobalLayoutListener {
             override fun onGlobalLayout() {
                 if (pane != Pane.CHAT || transcript.childCount != 1 || transcript.getChildAt(0) !== welcome) {
@@ -1192,18 +1192,18 @@ class MainActivity : Activity() {
 
     private fun welcomePrompt(icon: Int, title: String, hint: String, action: () -> Unit): View = LinearLayout(this).apply {
         gravity = Gravity.CENTER_VERTICAL
-        minimumHeight = dp(48)
+        minimumHeight = dp(DesignTokens.space48)
         isClickable = true; isFocusable = true
         addView(Weave.icon(this@MainActivity, icon, Weave.secondary, 18))
-        addView(Weave.text(this@MainActivity, title, 14f, Weave.ink),
-            LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(12) })
-        addView(Weave.text(this@MainActivity, hint, 12f, Weave.muted))
+        addView(Weave.text(this@MainActivity, title, DesignTokens.font14, Weave.ink),
+            LinearLayout.LayoutParams(0, -2, 1f).apply { leftMargin = dp(DesignTokens.space12) })
+        addView(Weave.text(this@MainActivity, hint, DesignTokens.font12, Weave.muted))
         addView(Weave.icon(this@MainActivity, R.drawable.wm_right, Weave.muted, 12),
-            LinearLayout.LayoutParams(dp(12), dp(12)).apply { leftMargin = dp(8) })
+            LinearLayout.LayoutParams(dp(DesignTokens.space12), dp(DesignTokens.space12)).apply { leftMargin = dp(DesignTokens.space8) })
         setOnClickListener { action() }
     }
 
-    private fun weaveAvatar(size: Int): TextView = Weave.text(this, "我", if (size >= 64) 24f else 16f, Weave.accent).apply {
+    private fun weaveAvatar(size: Int): TextView = Weave.text(this, "我", if (size >= 64) DesignTokens.font24 else DesignTokens.font16, Weave.accent).apply {
         gravity = Gravity.CENTER
         background = Weave.shape(this@MainActivity, Weave.accentSoft, if (size >= 64) 24 else 16)
     }
@@ -1213,16 +1213,16 @@ class MainActivity : Activity() {
         val owner = currentOwner
         if (owner == null) {
             transcript.removeAllViews()
-            transcript.setPadding(dp(24), dp(24), dp(24), dp(12))
-            transcript.addView(Weave.text(this, "登录电脑账户并同步后，可在这里查看手机来源记录。", 14f, Weave.muted))
+            transcript.setPadding(dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space12))
+            transcript.addView(Weave.text(this, "登录电脑账户并同步后，可在这里查看手机来源记录。", DesignTokens.font14, Weave.muted))
             return state("先登录电脑账户，再查看手机记录")
         }
         val currentGeneration = generation
         val currentPane = paneGeneration
         val currentTranscript = ++transcriptGeneration
         transcript.removeAllViews()
-        transcript.setPadding(dp(24), dp(24), dp(24), dp(12))
-        transcript.addView(Weave.text(this, "正在读取手机记录…", 14f, Weave.muted))
+        transcript.setPadding(dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space12))
+        transcript.addView(Weave.text(this, "正在读取手机记录…", DesignTokens.font14, Weave.muted))
         worker.execute {
             val events = store.remoteEvents(owner).takeLast(100)
             runOnUiThread {
@@ -1230,11 +1230,11 @@ class MainActivity : Activity() {
                     currentGeneration != generation || owner != currentOwner ||
                     currentTranscript != transcriptGeneration) return@runOnUiThread
                 transcript.removeAllViews()
-                transcript.addView(Weave.text(this, "手机记录", 24f, Weave.ink),
-                    LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(8) })
-                transcript.addView(Weave.text(this, "同一账户下已同步的手机来源内容，仅供查看。", 12f, Weave.muted),
-                    LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(20) })
-                if (events.isEmpty()) transcript.addView(Weave.text(this, "暂时没有已同步的手机记录。", 14f, Weave.muted))
+                transcript.addView(Weave.text(this, "手机记录", DesignTokens.font24, Weave.ink),
+                    LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space8) })
+                transcript.addView(Weave.text(this, "同一账户下已同步的手机来源内容，仅供查看。", DesignTokens.font12, Weave.muted),
+                    LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space20) })
+                if (events.isEmpty()) transcript.addView(Weave.text(this, "暂时没有已同步的手机记录。", DesignTokens.font14, Weave.muted))
                 for (event in events) {
                     val payload = event.optJSONObject("payload") ?: continue
                     val detail = when (event.optString("kind")) {
@@ -1261,16 +1261,16 @@ class MainActivity : Activity() {
         val identity = host
         if (identity == null) {
             transcript.removeAllViews()
-            transcript.setPadding(dp(24), dp(24), dp(24), dp(12))
-            transcript.addView(Weave.text(this, "登录电脑账户后，可在这里查看电脑会话。", 14f, Weave.muted))
+            transcript.setPadding(dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space12))
+            transcript.addView(Weave.text(this, "登录电脑账户后，可在这里查看电脑会话。", DesignTokens.font14, Weave.muted))
             return state("先登录电脑账户，再查看电脑会话")
         }
         val owner = currentOwner
         val currentPane = paneGeneration
         val currentTranscript = ++transcriptGeneration
         transcript.removeAllViews()
-        transcript.setPadding(dp(24), dp(24), dp(24), dp(12))
-        transcript.addView(Weave.text(this, "正在连接电脑会话…", 14f, Weave.muted))
+        transcript.setPadding(dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space24), dp(DesignTokens.space12))
+        transcript.addView(Weave.text(this, "正在连接电脑会话…", DesignTokens.font14, Weave.muted))
         worker.execute {
             try {
                 val rows = api.remoteSessions(identity).getJSONArray("sessions")
@@ -1280,9 +1280,9 @@ class MainActivity : Activity() {
                         owner != currentOwner || host?.deviceId != identity.deviceId ||
                         currentTranscript != transcriptGeneration) return@runOnUiThread
                     transcript.removeAllViews()
-                    transcript.addView(Weave.text(this, "电脑会话", 24f, Weave.ink))
-                    transcript.addView(Weave.text(this, if (visible.isEmpty()) "电脑还没有可读会话。" else "请选择一段电脑会话查看；本页只读。", 14f, Weave.muted),
-                        LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(12) })
+                    transcript.addView(Weave.text(this, "电脑会话", DesignTokens.font24, Weave.ink))
+                    transcript.addView(Weave.text(this, if (visible.isEmpty()) "电脑还没有可读会话。" else "请选择一段电脑会话查看；本页只读。", DesignTokens.font14, Weave.muted),
+                        LinearLayout.LayoutParams(-1, -2).apply { topMargin = dp(DesignTokens.space12) })
                     AlertDialog.Builder(this).setTitle("电脑会话 · 只读")
                         .setItems(visible.map { it.optString("title", "新对话").take(80) }.toTypedArray()) { _, index ->
                             val id = visible[index].getString("sessionId")
@@ -1308,8 +1308,8 @@ class MainActivity : Activity() {
                                             owner != currentOwner || host?.deviceId != identity.deviceId ||
                                             currentTranscript != transcriptGeneration) return@runOnUiThread
                                         transcript.removeAllViews()
-                                        transcript.addView(Weave.text(this, "电脑会话 · 只读", 24f, Weave.ink),
-                                            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(20) })
+                                        transcript.addView(Weave.text(this, "电脑会话 · 只读", DesignTokens.font24, Weave.ink),
+                                            LinearLayout.LayoutParams(-1, -2).apply { bottomMargin = dp(DesignTokens.space20) })
                                         for (line in projected.takeLast(100)) transcript.addView(recordRow("电脑来源", line))
                                     }
                                 } catch (_: Exception) { runOnUiThread {
@@ -1322,7 +1322,7 @@ class MainActivity : Activity() {
             } catch (_: Exception) { runOnUiThread {
                 if (pane == Pane.COMPUTER_SESSIONS && currentPane == paneGeneration && owner == currentOwner) {
                     transcript.removeAllViews()
-                    transcript.addView(Weave.text(this, "电脑暂时不可达。手机本地对话仍可使用。", 14f, Weave.muted))
+                    transcript.addView(Weave.text(this, "电脑暂时不可达。手机本地对话仍可使用。", DesignTokens.font14, Weave.muted))
                     state("电脑不可达或会话读取失败；手机本地记录仍可用")
                 }
             } }

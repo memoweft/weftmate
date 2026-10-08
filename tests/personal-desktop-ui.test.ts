@@ -35,7 +35,7 @@ test('desktop time groups use real dates, preserve undated sessions, and never m
 test('desktop appearance restores device preferences and artifact labels hide MIME parameters', () => {
   const { api, root, values } = presentation({ theme: 'dark', accent: 'purple', fontSize: '17' })
   assert.equal(root.dataset.theme, 'dark'); assert.equal(root.dataset.accent, 'purple')
-  assert.equal(values.get('--text-size'), '17px')
+  assert.equal(values.get('--text-size'), 'var(--wm-font-size-17, 17px)')
   assert.equal(api.fileLabel({ fileName: '报告.md', contentType: 'text/plain; charset=utf-8', size: 68 }), 'Markdown · 68 字节')
   assert.equal(api.fileLabel({ fileName: 'notes.txt', size: 2048 }), '文本 · 2.0 KB')
   assert.equal(api.fileLabel({ fileName: 'photo.png', size: 1048576 }), '图片 · 1.0 MB')

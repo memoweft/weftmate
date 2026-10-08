@@ -101,7 +101,7 @@ export function createHttpHandler(context) {
       if (context.cloudIdentity && await context.cloudIdentity.handle(request, response, url)) return;
       const staticPaths = new Set(['/personal/v1/ui', '/personal/v1/ui/', '/personal/v1/ui/index.html',
         '/personal/v1/ui/native-desktop.js', '/personal/v1/ui/native-desktop.css',
-        '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
+        '/personal/v1/ui/tokens.css', '/personal/v1/ui/app.js', '/personal/v1/ui/timeline.js', '/personal/v1/ui/styles.css', '/personal/v1/ui/favicon.svg',
         '/personal/v1/ui/cloud-ui.js', '/personal/v1/ui/cloud-login.js', '/personal/v1/ui/cloud-vendor.js',
         '/personal/v1/ui/desktop.js', '/personal/v1/ui/format-vendor.js',
         '/personal/v1/ui/icons.js', '/personal/v1/ui/icons.svg',
