@@ -58,7 +58,7 @@ struct HealthMetricsView: View {
                         AxisMarks(values: .automatic) { axis in
                             AxisGridLine(); AxisTick()
                             AxisValueLabel {
-                                if let date = axis.as(Date.self) { Text(axisLabel(date, format: "HH:mm")) }
+                                if let date = axis.as(Date.self) { Text(axisLabel(date, format: "HH:mm")).fixedSize() }
                             }
                         }
                     }
@@ -81,7 +81,7 @@ struct HealthMetricsView: View {
                     AxisMarks(values: .automatic) { axis in
                         AxisGridLine(); AxisTick()
                         AxisValueLabel {
-                            if let date = axis.as(Date.self) { Text(axisLabel(date, format: "M/d")) }
+                            if let date = axis.as(Date.self) { Text(axisLabel(date, format: "M/d")).fixedSize() }
                         }
                     }
                 }.environment(\.timeZone, TimeZone(identifier: latest?.timeZone ?? "UTC") ?? .current).accessibilityIdentifier("healthDailyTrend.\(kind)")

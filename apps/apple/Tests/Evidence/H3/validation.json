@@ -5,7 +5,7 @@
   "hostSummaryCount": 30,
   "allCloudDenied": true,
   "algorithmVersion": "weftmate-h3-v1",
-  "maximumSummaryBytes": 4183,
+  "maximumSummaryBytes": 4206,
   "recovery": 70,
   "loadRatio": 1,
   "sleepMinutes": 480,
