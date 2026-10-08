@@ -7,17 +7,17 @@ struct ConversationResourceList: View {
     var onOpen: () -> Void = {}
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 14) {
-                Text("输出内容").font(.headline)
-                if resources.window.outputs.isEmpty { Text("还没有输出内容").font(.caption).foregroundStyle(Weave.muted) }
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p14) {
+                Text("输出内容").font(AppleTokens.Fonts.headline)
+                if resources.window.outputs.isEmpty { Text("还没有输出内容").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                 ForEach(resources.window.outputs) { output in
                     Button { resources.open(.output(output.id, output.fileName ?? "成果")); onOpen() } label: {
                         WeftLabel(output.fileName ?? "成果", icon: "file")
                     }.accessibilityIdentifier("resourceOutput.\(output.id)")
                 }
                 Divider()
-                Text("来源").font(.headline)
-                if resources.window.sources.isEmpty && memories.isEmpty { Text("还没有来源").font(.caption).foregroundStyle(Weave.muted) }
+                Text("来源").font(AppleTokens.Fonts.headline)
+                if resources.window.sources.isEmpty && memories.isEmpty { Text("还没有来源").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                 ForEach(resources.window.sources) { source in
                     Button { resources.open(.source(source.key, source.name)); onOpen() } label: {
                         WeftLabel(source.name + " · \(source.uses.count) 次", icon: source.kind == "tool" ? "code" : "source")
@@ -30,9 +30,9 @@ struct ConversationResourceList: View {
                     }.accessibilityIdentifier("resourceMemory.\(event.seq)")
                 }
                 if resources.loading { ProgressView("正在读取…") }
-                if let error = resources.error { Text(error).font(.caption).foregroundStyle(Weave.danger) }
-                Button("查看全部 / 重新读取") { Task { await resources.refresh() } }.disabled(resources.loading)
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(18)
+                if let error = resources.error { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
+                Button("查看全部") { Task { await resources.refresh() } }.disabled(resources.loading)
+            }.frame(maxWidth: .infinity, alignment: .leading).padding(AppleTokens.Space.p18)
         }.buttonStyle(.plain).frame(idealWidth: 360)
             .task { await resources.refresh() }
             .accessibilityIdentifier("conversationResourceList")
@@ -46,31 +46,31 @@ struct ConversationResourcesPanel: View {
     @GestureState private var dragWidth: CGFloat = 0
     private var memories: [TimelineEvent] { app.timeline.events.filter { !UsedMemory.references(in: $0).isEmpty } }
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: AppleTokens.Space.p0) {
             #if os(macOS)
             Rectangle().fill(Weave.line).frame(width: 5).contentShape(Rectangle())
                 .gesture(DragGesture().updating($dragWidth) { value, state, _ in state = -value.translation.width }
                     .onEnded { value in width = min(800, max(320, width - value.translation.width)); enlarged = false })
                 .accessibilityLabel("调整面板宽度")
             #endif
-            VStack(spacing: 0) {
-                HStack(spacing: 10) {
+            VStack(spacing: AppleTokens.Space.p0) {
+                HStack(spacing: AppleTokens.Space.p10) {
                     #if os(iOS)
                     Button { resources.visible = false } label: { WeftLabel("返回", icon: "back") }
                         .accessibilityIdentifier("closeResourcesPanel")
-                    Text("输出与来源").font(.headline)
+                    Text("输出与来源").font(AppleTokens.Fonts.headline)
                     Spacer()
                     #else
                     ScrollView(.horizontal) {
-                        HStack(spacing: 8) {
+                        HStack(spacing: AppleTokens.Space.p8) {
                             ForEach(resources.tabs) { tab in
-                                HStack(spacing: 5) {
+                                HStack(spacing: AppleTokens.Space.p5) {
                                     Button { resources.selected = tab.id; resources.showingList = false } label: {
                                         WeftLabel(tab.name, icon: tab.icon).lineLimit(1)
                                     }.accessibilityIdentifier("resourceTab.\(tab.id)")
-                                    Button { resources.close(tab.id) } label: { WeftIcon("deny", size: 16).font(.caption) }
+                                    Button { resources.close(tab.id) } label: { WeftIcon("deny", size: 16).font(AppleTokens.Fonts.caption) }
                                         .accessibilityLabel("关闭 " + tab.name).accessibilityIdentifier("closeResourceTab.\(tab.id)")
-                                }.padding(8).background(resources.selected == tab.id ? Weave.soft : Weave.surface)
+                                }.padding(AppleTokens.Space.p8).background(resources.selected == tab.id ? Weave.soft : Weave.surface)
                             }
                         }
                     }
@@ -81,7 +81,7 @@ struct ConversationResourcesPanel: View {
                     Button(enlarged ? "还原" : "放大") { enlarged.toggle() }
                     Button("收起") { resources.visible = false }.accessibilityIdentifier("closeResourcesPanel")
                     #endif
-                }.buttonStyle(.plain).padding(14)
+                }.buttonStyle(.plain).padding(AppleTokens.Space.p14)
                 Divider()
                 if resources.showingList || resources.activeTab == nil {
                     ConversationResourceList(resources: resources, memories: memories)
@@ -113,7 +113,7 @@ private struct ResourceTabContent: View {
         Group {
             switch tab {
             case .output(_, let name):
-                VStack(spacing: 8) {
+                VStack(spacing: AppleTokens.Space.p8) {
                     ConversationAttachmentPreview(file: file, name: name, contentType: "text/plain", loading: loading, error: error,
                         close: { resources.close(tab.id) })
                     if error != nil { Button("重新读取") { Task { await loadOutput() } } }
@@ -122,18 +122,18 @@ private struct ResourceTabContent: View {
                         HStack {
                             Button("用默认程序打开") { NSWorkspace.shared.open(file) }
                             Button("在文件夹中显示") { NSWorkspace.shared.activateFileViewerSelecting([file]) }
-                        }.padding(.bottom, 14)
+                        }.padding(.bottom, AppleTokens.Space.p14)
                     }
                     #endif
                 }.task { await loadOutput() }
             case .source(let key, let name):
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 14) {
-                        Text(name).font(.title3)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p14) {
+                        Text(name).font(AppleTokens.Fonts.title3)
                         if let source = resources.window.sources.first(where: { $0.key == key }) {
                             Text((source.kind == "tool" ? "调用" : "读取") + " \(source.uses.count) 次").foregroundStyle(Weave.muted)
                                 .accessibilityIdentifier("resourceUseCount")
-                            if let location = source.location ?? source.url { Text(location).font(.caption).textSelection(.enabled) }
+                            if let location = source.location ?? source.url { Text(location).font(AppleTokens.Fonts.caption).textSelection(.enabled) }
                             ForEach(source.uses) { use in
                                 ResourceUseView(client: app.assistantClient, sessionID: resources.sessionID, use: use)
                                 Divider()
@@ -142,25 +142,25 @@ private struct ResourceTabContent: View {
                         else { Text("正在读取来源列表…") }
                         if let error = resources.error { Text(error).foregroundStyle(Weave.danger) }
                         Button("重新读取来源") { Task { await resources.refresh() } }
-                    }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
+                    }.padding(AppleTokens.Space.p20).frame(maxWidth: .infinity, alignment: .leading)
                 }.task { await resources.refresh() }
             case .memory(_, let memories):
                 ScrollView {
-                    VStack(alignment: .leading, spacing: 18) {
-                        Text("这条回复的记忆来源").font(.title3)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p18) {
+                        Text("这条回复的记忆来源").font(AppleTokens.Fonts.title3)
                         ForEach(memories) { memory in
-                            VStack(alignment: .leading, spacing: 9) {
-                                Text(memory.summary).font(.body).textSelection(.enabled)
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p9) {
+                                Text(memory.summary).font(AppleTokens.Fonts.body).textSelection(.enabled)
                                 DisclosureGroup("来源原话", isExpanded: Binding(get: { expandedMemories.contains(memory.id) }, set: { if $0 { expandedMemories.insert(memory.id) } else { expandedMemories.remove(memory.id) } })) {
                                     if let value = sources[memory.id] {
                                         if value.sources.isEmpty { Text("当前没有可读取的来源。") }
                                         ForEach(value.sources, id: \.evidenceId) { source in
-                                            VStack(alignment: .leading, spacing: 6) {
-                                                Text("记录于 " + source.recordedAt).font(.caption).foregroundStyle(Weave.muted)
+                                            VStack(alignment: .leading, spacing: AppleTokens.Space.p6) {
+                                                Text("记录于 " + source.recordedAt).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                                                 Text(source.rawContent ?? source.summary ?? (source.contentAvailable ? "当前权限不允许读取这条原话。" : "来源已不可读。"))
                                                     .textSelection(.enabled)
-                                                if source.rawContentTruncated { Text("原话仅显示部分内容。").font(.caption).foregroundStyle(Weave.muted) }
-                                            }.padding(.vertical, 6)
+                                                if source.rawContentTruncated { Text("原话仅显示部分内容。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+                                            }.padding(.vertical, AppleTokens.Space.p6)
                                         }
                                     } else if let error = sourceErrors[memory.id] {
                                         Text(error).foregroundStyle(Weave.muted)
@@ -172,7 +172,7 @@ private struct ResourceTabContent: View {
                             }
                             Divider()
                         }
-                    }.padding(20).frame(maxWidth: .infinity, alignment: .leading)
+                    }.padding(AppleTokens.Space.p20).frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
         }.onDisappear { cleanup() }
@@ -219,9 +219,9 @@ private struct ResourceUseView: View {
         DisclosureGroup(isExpanded: $expanded) {
             if loading { ProgressView() }
             if let detail {
-                Text(detail.text).font(.caption.monospaced()).textSelection(.enabled)
+                Text(detail.text).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading).accessibilityIdentifier("resourceRaw.\(use.id)")
-                if detail.truncated == true { Text("内容已截断。").font(.caption).foregroundStyle(Weave.muted) }
+                if detail.truncated == true { Text("内容已截断。").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
                 Button("复制原始内容") {
                     #if os(macOS)
                     NSPasteboard.general.clearContents(); NSPasteboard.general.setString(detail.text, forType: .string)
@@ -231,7 +231,7 @@ private struct ResourceUseView: View {
                 }
             }
             if let error { Text(error); Button("重新读取") { Task { await load() } } }
-        } label: { Text(use.summary).font(.callout).multilineTextAlignment(.leading) }
+        } label: { Text(use.summary).font(AppleTokens.Fonts.callout).multilineTextAlignment(.leading) }
             .accessibilityIdentifier("resourceUse.\(use.id)")
             .task(id: expanded) { if expanded && detail == nil { await load() } }
     }

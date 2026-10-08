@@ -1682,7 +1682,7 @@ export class DshWebRuntime {
 
   /** Dedicated parent-to-child stop protocol. The child is the only authority
    * able to compare an exact receipt with its current turn in one JS tick. */
-  stopPersonalTask(input: { sessionId: string, requestId: string, receiptIds: string[] }): Promise<PersonalTaskStopResult> {
+  stopPersonalTask(input: { sessionId: string, requestId: string, receiptIds: string[], queuedOnly?: true }): Promise<PersonalTaskStopResult> {
     const receiptIds = input?.receiptIds
     if (typeof input?.sessionId !== 'string' || input.sessionId.length < 1 || input.sessionId.length > 160 ||
         typeof input.requestId !== 'string' || !TASK_STOP_RECEIPT.test(input.requestId) ||
@@ -1704,7 +1704,7 @@ export class DshWebRuntime {
       this.taskStopPending.set(id, { child, timer, receiptIds: [...receiptIds], resolve })
       try {
         child.send({ protocol: TASK_STOP_PROTOCOL, id, requestId: input.requestId,
-          sessionId: input.sessionId, receiptIds }, (error) => {
+          sessionId: input.sessionId, receiptIds, ...(input.queuedOnly ? { queuedOnly: true } : {}) }, (error) => {
           if (!error || !this.taskStopPending.has(id)) return
           this.taskStopPending.delete(id)
           clearTimeout(timer)

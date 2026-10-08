@@ -8,40 +8,40 @@ struct MacUpdateView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                HStack(spacing: 13) {
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
+                HStack(spacing: AppleTokens.Space.p13) {
                     BrandMark(size: 42)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("WeftMate").font(.title2.weight(.semibold)).foregroundStyle(Weave.ink)
-                        Text("Mac 更新").font(.callout).foregroundStyle(Weave.muted)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p4) {
+                        Text("WeftMate").font(AppleTokens.Fonts.title2.weight(.semibold)).foregroundStyle(Weave.ink)
+                        Text("Mac 更新").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                     }
                 }
 
                 WeaveCard {
-                    VStack(alignment: .leading, spacing: 12) {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                         LabeledContent("本机版本", value: updates.installedVersionDisplay)
                             .accessibilityIdentifier("installedVersion")
                         LabeledContent("进程架构", value: updates.architecture)
                     }
-                    .font(.callout).foregroundStyle(Weave.secondary)
+                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                 }
 
                 WeaveCard {
-                    VStack(alignment: .leading, spacing: 12) {
-                        HStack(spacing: 10) {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                        HStack(spacing: AppleTokens.Space.p10) {
                             if updates.checking {
                                 ProgressView().controlSize(.small)
                             } else {
                                 WeftIcon( statusSymbol).foregroundStyle(statusColor)
                             }
-                            Text(statusTitle).font(.title3.weight(.semibold)).foregroundStyle(Weave.ink)
+                            Text(statusTitle).font(AppleTokens.Fonts.title3.weight(.semibold)).foregroundStyle(Weave.ink)
                         }
-                        Text(statusMessage).font(.callout).foregroundStyle(Weave.secondary)
-                            .fixedSize(horizontal: false, vertical: true).lineSpacing(4)
+                        Text(statusMessage).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
+                            .fixedSize(horizontal: false, vertical: true).lineSpacing(AppleTokens.Space.p4)
                         if let release = updates.release, !release.notes.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Divider()
-                            Text(release.notes).font(.callout).foregroundStyle(Weave.muted)
-                                .fixedSize(horizontal: false, vertical: true).lineSpacing(4)
+                            Text(release.notes).font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
+                                .fixedSize(horizontal: false, vertical: true).lineSpacing(AppleTokens.Space.p4)
                                 .textSelection(.enabled)
                         }
                     }
@@ -50,7 +50,7 @@ struct MacUpdateView: View {
                     .accessibilityIdentifier("updateStatus")
                 }
 
-                VStack(spacing: 12) {
+                VStack(spacing: AppleTokens.Space.p12) {
                     Button(updates.checking ? "正在检查…" : "检查更新") {
                         browserFailed = false
                         updates.check()
@@ -70,7 +70,7 @@ struct MacUpdateView: View {
                     .accessibilityIdentifier("downloadUpdateButton")
 
                     Link("其他设备下载", destination: updates.otherDevicesURL)
-                        .font(.callout)
+                        .font(AppleTokens.Fonts.callout)
                         .accessibilityIdentifier("otherDevicesDownloadLink")
                 }
                 .frame(maxWidth: .infinity)
@@ -79,10 +79,10 @@ struct MacUpdateView: View {
                     InlineNotice(message: "无法打开浏览器，请重试。", isError: true)
                 }
                 Text("更新信息来自官网，无需登录。下载完成后，请手动安装新版应用。")
-                    .font(.caption).foregroundStyle(Weave.muted).lineSpacing(4)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineSpacing(AppleTokens.Space.p4)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(24)
+            .padding(AppleTokens.Space.p24)
             .frame(maxWidth: 620, alignment: .leading)
             .frame(maxWidth: .infinity)
         }

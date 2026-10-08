@@ -285,7 +285,8 @@ export function createTaskOperations(context) {
         let result;
         try {
           result = await withDeadline(() => context.backend.stopTask({ sessionId: source.sessionId,
-            ownerId, requestId: stop.requestId, receiptIds: receipts }), 3_000);
+            ownerId, requestId: stop.requestId, receiptIds: receipts,
+            ...(stop.queuedOnly ? { queuedOnly: true } : {}) }), 3_000);
         } catch { return; }
         if (!Array.isArray(result?.outcomes) || result.outcomes.length !== receipts.length ||
             new Set(result.outcomes.map((item) => item.receiptId)).size !== receipts.length ||

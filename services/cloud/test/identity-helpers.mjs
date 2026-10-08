@@ -3,6 +3,9 @@ import { mkdtemp, readdir, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { once } from 'node:events';
+import { spawn } from 'node:child_process';
+import { createInterface } from 'node:readline';
+import { fileURLToPath } from 'node:url';
 import { randomBytes, createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { loadConfig } from '../src/config.mjs';
@@ -25,9 +28,11 @@ export const PASSWORD = 'a test password with 20 chars';
 export const NEXT_PASSWORD = 'another test password 20 chars';
 export const EMAIL = 'account@example.com';
 export const P = '/personal/v1/cloud';
-export async function fixture(t, { env = {}, relayDns } = {}) {
+export async function fixture(t, { env = {}, relayDns, realProcess = false } = {}) {
   const root = await mkdtemp(path.join(tmpdir(), 'weftmate-cloud-identity-'));
   let server,
+    child,
+    childExit,
     opened,
     identity,
     config,
@@ -60,6 +65,27 @@ export async function fixture(t, { env = {}, relayDns } = {}) {
       ]),
       ...env,
     });
+    if (realProcess) {
+      await new Promise(resolve => { server.close(resolve); server.closeAllConnections(); });
+      server = null;
+      child = spawn(process.execPath, ['src/main.mjs'], { cwd: fileURLToPath(new URL('../', import.meta.url)),
+        env: { ...process.env, CLOUD_DATA_DIR: root, CLOUD_PORT: String(port), CLOUD_HOST: '127.0.0.1',
+          CLOUD_ISSUER: config.issuer, CLOUD_MAIL_TRANSPORT: 'file', CLOUD_OIDC_CLIENTS: JSON.stringify(config.clients), ...env } });
+      childExit = once(child, 'exit');
+      child.stderr.resume();
+      const lines = createInterface({ input: child.stdout });
+      await Promise.race([new Promise((resolve, reject) => {
+        lines.on('line', line => {
+          logs += line + '\n';
+          const data = JSON.parse(line);
+          if (data.event === 'service.started') resolve();
+          if (data.event === 'service.start_failed') reject(new Error(line));
+        });
+      }), childExit.then(() => { throw new Error('cloud exited before readiness'); })]);
+      const state = JSON.parse(await readFile(path.join(root, 'identity-keys', 'keys.json'), 'utf8'));
+      identity = { keys: { cookieSecret: state.cookieSecret } };
+      return;
+    }
     identity = await createIdentity({
       database: opened.database,
       relayDns: typeof relayDns === 'function' ? relayDns(opened.database) : relayDns,
@@ -70,6 +96,8 @@ export async function fixture(t, { env = {}, relayDns } = {}) {
     });
   }
   async function stop() {
+    await identity?.relay?.close();
+    if (child) { child.kill('SIGTERM'); await childExit; child = null; }
     if (server)
       await new Promise((resolve) => {
         server.close(resolve);
@@ -275,5 +303,7 @@ export async function fixture(t, { env = {}, relayDns } = {}) {
       if (rotate) await loadKeys(root, { rotate: true });
       await start();
     },
+    get now() { return realProcess ? Date.now() : clock; },
+    offline: stop,
   };
 }

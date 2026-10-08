@@ -15,18 +15,18 @@ struct TimelineTaskControl: View {
             currentEpoch: { [weak appModel] in appModel?.accountEpoch ?? UUID() }, currentSession: { [weak appModel] in appModel?.session }))
     }
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
             if let task = model.snapshot {
                 if task.control.canStop {
                     Button(model.stopActionLabel) { Task { await model.requestStop() } }
-                        .buttonStyle(.bordered).disabled(model.stopBusy || !model.canRequestStop || appModel.historyCachedAt != nil)
+                        .buttonStyle(OutlineActionStyle()).disabled(model.stopBusy || !model.canRequestStop || appModel.historyCachedAt != nil)
                         .accessibilityIdentifier("stopTask.\(task.taskId)")
                 }
                 if model.stopRecord != nil {
                     Text(TaskPresentation.controlLabel(task.control))
-                        .font(.caption).foregroundStyle(Weave.muted)
+                        .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                     if ![.stopped, .completed].contains(task.control.stopStatus) {
-                        Button("核对停止状态") { Task { await model.reconcileStop() } }.font(.caption).disabled(model.stopBusy)
+                        Button("核对停止状态") { Task { await model.reconcileStop() } }.font(AppleTokens.Fonts.caption).disabled(model.stopBusy)
                     }
                 }
                 ForEach(task.sources) { source in
@@ -34,10 +34,10 @@ struct TimelineTaskControl: View {
                 }
             }
             if let error = model.error {
-                Text(error).font(.caption).foregroundStyle(Weave.muted)
-                Button("核对来源与控制") { Task { await model.refresh() } }.font(.caption)
+                Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                Button("核对来源与控制") { Task { await model.refresh() } }.font(AppleTokens.Fonts.caption)
             }
-            if let error = model.stopError { Text(error).font(.caption).foregroundStyle(Weave.danger) }
+            if let error = model.stopError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
         }
         .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)") {
             guard scenePhase == .active, appModel.historyCachedAt == nil else { model.cancel(); return }
@@ -60,13 +60,13 @@ private struct TimelineSourceCard: View {
         DisclosureGroup(isExpanded: $expanded) {
             if model.loadingSources.contains(source.snapshotId) { ProgressView() }
             if let preview = model.sourcePreviews[source.snapshotId] {
-                Text(preview.text).font(.caption.monospaced()).textSelection(.enabled)
+                Text(preview.text).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
                 Text(preview.verification == .deliveredTextSHA256Verified ? "当前网页文字已校验。" : "原文件片段，片段未独立校验。")
-                    .font(.caption).foregroundStyle(Weave.muted)
+                    .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
             }
-            if let error = model.sourceErrors[source.snapshotId] { Text(error).font(.caption) }
-        } label: { WeftLabel(source.title ?? source.relativePath ?? "来源", icon: "source", size: 16).font(.caption) }
+            if let error = model.sourceErrors[source.snapshotId] { Text(error).font(AppleTokens.Fonts.caption) }
+        } label: { WeftLabel(source.title ?? source.relativePath ?? "来源", icon: "source", size: 16).font(AppleTokens.Fonts.caption) }
         .task(id: expanded) { if expanded { await model.loadSource(source.snapshotId) } else { model.closeSource(source.snapshotId) } }
-        .animation(.easeInOut(duration: 0.2), value: expanded)
+        .animation(AppleTokens.Motion.disclosure, value: expanded)
     }
 }

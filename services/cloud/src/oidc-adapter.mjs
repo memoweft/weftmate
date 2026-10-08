@@ -7,6 +7,9 @@ export function sqliteAdapter(database, now = Date.now) {
       this.model = model;
     }
     async upsert(id, payload, expiresIn) {
+      const accountId = payload.accountId ?? payload.result?.login?.accountId;
+      if (accountId && !database.prepare('SELECT 1 FROM cloud_accounts WHERE id=?').get(accountId))
+        throw new errors.InvalidGrant('account deleted');
       // Reject a token issued by an in-flight request after reset/revocation.
       if (
         payload.grantId &&

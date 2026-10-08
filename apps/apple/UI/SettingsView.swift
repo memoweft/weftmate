@@ -17,8 +17,8 @@ struct SettingsView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                Text("账户与设置").font(.title2.weight(.semibold)).foregroundStyle(Weave.ink)
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
+                Text("账户与设置").font(AppleTokens.Fonts.title2.weight(.semibold)).foregroundStyle(Weave.ink)
                 if model.verificationPending {
                     InlineNotice(message: "服务器暂不可达，正在显示上次保存的账户身份。重新连接后会验证登录状态。")
                 }
@@ -27,39 +27,39 @@ struct SettingsView: View {
                 }
                 if model.needsUnsavedDraftDecision {
                     WeaveCard {
-                        VStack(alignment: .leading, spacing: 12) {
-                            Text("有改动尚未保存").font(.headline).foregroundStyle(Weave.ink)
+                        VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                            Text("有改动尚未保存").font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
                             Button("复制未保存草稿") { copyUnsavedDrafts() }
-                                .buttonStyle(.bordered)
+                                .buttonStyle(OutlineActionStyle())
                             Button("重试保存并退出") { Task { await model.signOut() } }
-                                .buttonStyle(.bordered).disabled(model.authBusy)
+                                .buttonStyle(OutlineActionStyle()).disabled(model.authBusy)
                             Button("仍然退出（未保存的改动会丢失）", role: .destructive) {
                                 Task { await model.signOut(discardUnsavedChanges: true) }
                             }
-                            .buttonStyle(.bordered).disabled(model.authBusy)
+                            .buttonStyle(OutlineActionStyle()).disabled(model.authBusy)
                             if let draftCopyResult {
-                                Text(draftCopyResult).font(.caption).foregroundStyle(Weave.muted)
+                                Text(draftCopyResult).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                             }
                         }
                     }
                 }
                 WeaveCard {
-                    VStack(alignment: .leading, spacing: 20) {
-                        HStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p20) {
+                        HStack(spacing: AppleTokens.Space.p14) {
                             Text(String(model.accountName.prefix(1)).uppercased())
-                                .font(.title2.weight(.medium)).foregroundStyle(Weave.accent)
-                                .frame(width: 52, height: 52).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: 16))
-                            VStack(alignment: .leading, spacing: 5) {
-                                Text(model.accountName).font(.headline).foregroundStyle(Weave.ink)
+                                .font(AppleTokens.Fonts.title2.weight(.medium)).foregroundStyle(Weave.accent)
+                                .frame(width: 52, height: 52).background(Weave.accentSoft, in: RoundedRectangle(cornerRadius: AppleTokens.Radius.r16))
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p5) {
+                                Text(model.accountName).font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
                                 Text(model.session?.account.username ?? "")
-                                    .font(.callout).foregroundStyle(Weave.muted)
+                                    .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted)
                                     .accessibilityIdentifier("accountUsername")
                             }
-                            Spacer(minLength: 0)
+                            Spacer(minLength: AppleTokens.Space.p0)
                         }
                         Divider()
                         LabeledContent("登录设备", value: model.session?.device.name ?? model.deviceName)
-                            .font(.callout).foregroundStyle(Weave.secondary)
+                            .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                             .accessibilityIdentifier("accountDevice.\(model.session?.device.id ?? "unknown")")
                         Button("用 WeftMate 账号登录") {
                             Task { await model.signOut(); if model.session == nil { model.cloudLogin.showLogin = true } }
@@ -67,60 +67,67 @@ struct SettingsView: View {
                         Button(role: .destructive) { confirmSignOut = true } label: {
                             WeftLabel("退出登录 / 切换账户", icon: "back")
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(OutlineActionStyle())
                         .disabled(model.authBusy)
                         .accessibilityIdentifier("signOutButton")
                     }
                 }
 
                 WeaveCard {
-                    VStack(alignment: .leading, spacing: 12) {
-                        WeftLabel("审批", icon: "approval").font(.headline).foregroundStyle(Weave.ink)
-                        Text("新对话的默认模式").font(.callout)
-                        ApprovalModeControl(model: model, sessionID: nil).id(model.accountEpoch)
-                        Text("按账户保存，只影响新建对话。已有对话在输入区切换审批模式。")
-                            .font(.caption).foregroundStyle(Weave.muted)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                        WeftLabel("外观", icon: "sun").font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
+                        Picker("颜色模式", selection: $model.appearanceMode) {
+                            ForEach(AppleAppearance.allCases) { mode in Text(mode.title).tag(mode.rawValue) }
+                        }.accessibilityIdentifier("appearancePicker")
+                        Text("保存到这台设备").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                     }
                 }
 
                 WeaveCard {
-                    VStack(alignment: .leading, spacing: 15) {
-                        WeftLabel("服务器", icon: "cloud").font(.headline).foregroundStyle(Weave.ink)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+                        WeftLabel("审批", icon: "approval").font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
+                        Text("新对话的默认模式").font(AppleTokens.Fonts.callout)
+                        ApprovalModeControl(model: model, sessionID: nil).id(model.accountEpoch)
+                        Text("按账户保存，只影响新建对话。已有对话在输入区切换审批模式。")
+                            .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+                    }
+                }
+
+                WeaveCard {
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p15) {
+                        WeftLabel("服务器", icon: "cloud").font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
                         Text(model.session?.server.originString ?? model.serverInput)
-                            .font(.callout).foregroundStyle(Weave.secondary).textSelection(.enabled)
+                            .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary).textSelection(.enabled)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         Text("更换服务器需要先退出当前账户，再登录到新的服务器。")
-                            .font(.caption).foregroundStyle(Weave.muted).lineSpacing(3)
-                        Button("更换服务器") { confirmServer = true }.buttonStyle(.bordered)
+                            .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).lineSpacing(AppleTokens.Space.p3)
+                        Button("更换服务器") { confirmServer = true }.buttonStyle(OutlineActionStyle())
                             .disabled(model.authBusy)
                             .accessibilityIdentifier("changeServerButton")
                     }
                 }
 
                 WeaveCard {
-                    VStack(alignment: .leading, spacing: 13) {
-                        WeftLabel("Apple 客户端", icon: "brand-monochrome").font(.headline).foregroundStyle(Weave.ink)
-                        LabeledContent("外观", value: "跟随系统").font(.callout).foregroundStyle(Weave.secondary)
+                    VStack(alignment: .leading, spacing: AppleTokens.Space.p13) {
+                        WeftLabel("关于", icon: "brand-monochrome").font(AppleTokens.Fonts.headline).foregroundStyle(Weave.ink)
+
                         #if os(macOS)
                         LabeledContent("版本", value: updates.installedVersionDisplay)
-                            .font(.callout).foregroundStyle(Weave.secondary)
+                            .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                         Button("检查更新…") {
                             openWindow(id: "updates")
                             updates.check()
                         }
-                        .buttonStyle(.bordered)
+                        .buttonStyle(OutlineActionStyle())
                         .accessibilityIdentifier("openUpdatesButton")
                         #else
                         LabeledContent("版本", value: Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1")
-                            .font(.callout).foregroundStyle(Weave.secondary)
+                            .font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary)
                         #endif
-                        Divider()
-                        Text("当前可以登录、查看设备和读取原会话。续聊、附件和独立模型正在接通；Apple Watch 暂提供独立的起步界面。")
-                            .font(.caption).foregroundStyle(Weave.muted).lineSpacing(4)
                     }
                 }
             }
-            .padding(24).frame(maxWidth: 700).frame(maxWidth: .infinity)
+            .padding(AppleTokens.Space.p24).frame(maxWidth: 700).frame(maxWidth: .infinity)
         }
         .background(Weave.canvas)
         .navigationTitle("设置")

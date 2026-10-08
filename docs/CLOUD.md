@@ -1,4 +1,4 @@
-# WeftMate 轻云架构 · S0 已审查 / S1a–S2 实现
+# WeftMate 轻云架构 · S0 已审查 / S1a–S2 / S1d 实现
 
 依据：`VISION.md`「数据在哪里」、`PLAN.md` D20/D21 与第 9b 节 S1–S6、`CLIENT_API.md` 认证/设备/同步/健康、`COMPANION.md` 共养。S0 设计已审查合入；S1a 云账号/邮箱/OIDC 与 S1b 宿主身份/内容设备授权已实现，当前交付见第 3、12–13 节。完整客户端与后续云能力仍按工作包派发，本包不部署。
 
@@ -43,7 +43,7 @@ flowchart LR
 
 云账号用不可变 `cloudAccountId`（OIDC `sub`，发行策略用 public subject，让同账号各官方客户端/宿主看到相同 sub），邮箱是可变登录名，不拿邮箱或用户名推导 ID。邮箱验证注册：发一次性验证码，验证邮箱所有权后完成账号创建；密码仅存带独立盐与参数的 scrypt 验证记录，复用现有宿主的参数设计并在 Linux 上测容量，不把本地密码哈希上传。公开登录面需要现有 PLAN 已要求的失败限速和验证码过期/单次使用，防撞库与验证码重放；不引入全局设备数上限或新审计框架。
 
-推荐 **OIDC/OAuth 2.0 Authorization Code + PKCE（S256）**，用成熟 `oidc-provider` 实现协议，用 `jose` 验 JWT/JWK；WeftMate 只写账号、邮件交互与 SQLite adapter，不手写 OAuth/JWT 编解码。原生端用系统认证浏览器，公开客户端不嵌入 client secret；校验 state/nonce 和已登记 redirect URI，不用密码授权模式。浏览器云会话用 host-only Secure/HttpOnly Cookie 与 Origin/CSRF；原生刷新凭据放 Keychain/Keystore/系统凭据库，浏览器不把刷新凭据写 localStorage。依据 [OIDC 实现](https://github.com/panva/node-oidc-provider)、[jose](https://github.com/panva/jose)、[原生 OAuth 标准](https://www.rfc-editor.org/rfc/rfc8252)、[OAuth 安全最佳实践](https://www.rfc-editor.org/rfc/rfc9700)。
+推荐 **OIDC/OAuth 2.0 Authorization Code + PKCE（S256）**，用成熟 `oidc-provider` 实现协议，用 `jose` 验 JWT/JWK；WeftMate 只写账号、邮件交互与 SQLite adapter，不手写 OAuth/JWT 编解码。D29 新第一方客户端通过 App 内 JSON 账号页承载同一 OIDC 授权流程（见第 14 节），旧系统认证浏览器路径兼容；公开客户端不嵌入 client secret；校验 state/nonce 和已登记 redirect URI，不用密码授权模式。浏览器云会话用 host-only Secure/HttpOnly Cookie 与 Origin/CSRF；原生刷新凭据放 Keychain/Keystore/系统凭据库，浏览器不把刷新凭据写 localStorage。依据 [OIDC 实现](https://github.com/panva/node-oidc-provider)、[jose](https://github.com/panva/jose)、[原生 OAuth 标准](https://www.rfc-editor.org/rfc/rfc8252)、[OAuth 安全最佳实践](https://www.rfc-editor.org/rfc/rfc9700)。
 
 访问 token 初始建议 5 分钟，刷新 token 初始建议 30 天、轮换并检测复用，由 provider 管理授权族和撤销；会话状态按设备独立。发行者示例 `https://api.example.com/personal/v1/cloud/oidc`，audience 区分云控制面与指定宿主；宿主 token 含 `sub,device_id,host_id,scope,auth_epoch,iat,exp,jti` 与 DPoP `cnf.jkt`，不带用户内容。宿主只接受 access token，不用 ID token 授权 API。发行算法起步 RS256，私钥只在云配置，公开 JWKS 用 kid 轮换，旧公钥保留至已发 token 过期。客户端/宿主固定 issuer、audience、算法与 JWKS 地址，不信 token 内的任意 jku/x5u；未知 kid 可刷新一次，获取失败不降级为不验签。[JWT 安全标准](https://www.rfc-editor.org/rfc/rfc8725)
 
@@ -52,7 +52,7 @@ flowchart LR
 ### 2.2 宿主认领与内容设备信任
 
 1. 宿主本地生成独立安装密钥、TLS 内容密钥，记录现有 `hostId`，私钥不外传；主动请求注册挑战。已验证云账号在宿主 UI 登录，确认一次性认领挑战，宿主签名证明持有安装私钥。云保存宿主公钥与成员关系；注册半途退出只留可清理的 pending 元数据，不创建内容账号。
-2. **绑定本地账号必须由该本地账号认证会话批准**：云证明“你是谁”，宿主决定“你对应哪个 ownerId”。本地持久保存 `(issuer,sub) → ownerId` 及已批准设备公钥。云端只保存 `(cloudAccountId,hostId,role)`，不能凭自己改目录映射让陌生 sub 接管已有 ownerId。
+2. **绑定已有本地账号必须由该本地账号认证会话批准**（D29 新电脑可在本机直接入口云登录后创建独立 owner 并自动绑定，不接管已有数据）：云证明“你是谁”，宿主决定“你对应哪个 ownerId”。本地持久保存 `(issuer,sub) → ownerId` 及已批准设备公钥。云端只保存 `(cloudAccountId,hostId,role)`，不能凭自己改目录映射让陌生 sub 接管已有 ownerId。
 3. 客户端每台生成自己的认证密钥。首次内容配对通过宿主当面 QR（含宿主 TLS SPKI、公钥与一次性挑战），或现有已信任客户端经已验证连接批准；由宿主登记新的设备公钥。云邮件确认与本地内容信任是两个完成状态。云被攻破后可发假 JWT，但无法生成既有设备的私钥证明。
 4. 客户端用标准 **DPoP** 在宿主会话交换时证明持有 token 绑定的公钥，宿主验证方法/URL、nonce、时间与重放，再检查该公钥已经在此 ownerId 的本地信任集合。DPoP 本身不负责配对，不把云发回的公钥自动当作本地信任。[DPoP 标准](https://www.rfc-editor.org/info/rfc9449)
 5. 交换成功后宿主签发自己的 `wm_personal_session` 与 CSRF，保持 `/personal/v1` 的本地授权语义；凭据仍按本地 deviceId 归属。云令牌只送新的专用会话交换入口，绝不直接进入旧 Bearer 查 tokenHash 路径。内容设备撤销在宿主和云同步，关闭活跃流并拒绝下一次请求；云撤销事件由宿主校验并更新本地设备状态，断联时不能声称立即生效。
@@ -266,7 +266,7 @@ Node 24 `node:sqlite` 起步仅存控制面小记录，WAL/FK/事务迁移，密
 
 ## 12. S1a 当前交付与边界
 
-独立 `services/cloud/` 按第 2 节实现云账号，契约在 `CLIENT_API.md` 第 7 节，客户端接入在后续包。不可变随机 cloudAccountId/public sub、规范化唯一可变邮箱、独立盐和参数的 scrypt；pending 注册验证后激活，密码找回与换邮箱递增 epoch、撤销旧云会话/授权码/刷新族/旧验证码；新设备标识或公钥经邮箱确认后才签发授权码。设备标识/公钥目前由客户端声明，无私钥持有证明，不自动授权内容。
+独立 `services/cloud/` 按第 2 节实现云账号，契约在 `CLIENT_API.md` 第 7 节，客户端接入在后续包。不可变随机 cloudAccountId/public sub、规范化唯一可变邮箱、独立盐和参数的 scrypt；pending 注册验证后激活，密码找回与换邮箱递增 epoch、撤销旧云会话/授权码/刷新族/旧验证码；新设备标识或公钥经邮箱确认后才签发授权码。S1a 兼容流程的设备标识/公钥由客户端声明；S1d 的 App grant 必须绑定 DPoP，缺私钥证明不能兑换/刷新；新设备仍不自动授权已有宿主内容。
 
 协议使用锁定 `oidc-provider 9.12.2` / `jose 6.2.12` 和 SQLite adapter，强制 Code+PKCE S256、登记 redirect、public/native 无 secret；RS256 access/ID token 300 秒，code 60 秒，refresh 轮换/复用检测且族绝对寿命 30 天。S1a 的控制面 audience 为云 `/personal/v1/cloud`；S1b 追加受 membership/设备密钥约束的指定宿主 resource 与 DPoP。签名私钥与 Cookie/验证码秘密独立私有文件，停服务轮换并重启，旧 key 保留 300+60 秒；具体命令见 cloud README。
 
@@ -282,4 +282,30 @@ Mac Node 24.21.0 隔离 `node --test test/*.test.mjs` **30/30**，cloud npm audi
 
 云配合增加宿主 challenges/公钥/member、已登记宿主 OAuth resource、邮件已确认设备的 DPoP key 约束、设备/epoch 撤销事件；不存本地 ownerId/内容。宿主在线启动与每 60 秒轮询，已到达事件立即关闭 SSE/拒绝会话，离线仍允许原本地登录。解绑只删映射/member 与云内容设备信任，old claimId outbox 不误撤新 member。
 
-隔离验收与运行说明见 `src/personal-cloud/README.md`。S1c 仍需完整云登录/认领/绑定页面与手机接入、二维码展示/扫描；S2 负责内容 TLS 适配器/证书与原生 pin 的真实连接，中继未部署；S3 推送未接通。当前电脑本地密码登录可作为首次内容批准者；云邮件确认独立于此授权。本包无公网/真实邮件/真实账号验收。
+隔离验收与运行说明见 `src/personal-cloud/README.md`。S1c 已交付的兼容客户端见 STATE；D29 完整登录页与设置设备由 LG-1 / LG-2 接 S1d（下一节）。S2 负责内容 TLS 适配器/证书与原生 pin 的真实连接；S3 推送未接通。旧电脑本地密码会话可作为内容批准者，S1d 云创建电脑使用自动绑定的受信会话；云邮件确认仍独立于已有宿主内容授权。
+
+## 14. S1d App 内账号与设置设备（D29）
+
+完整契约和 LG-1 / LG-2 接线顺序见 **CLIENT_API 7.8**。第一方账号页面通过 `/auth/registration/{request,verify,complete}` 和 `/auth/recovery/{request,verify,complete}` 先验证邮箱再设置密码；复用 S1a 六位验证码、10 分钟/单次消费、失败/邮件限速及 scrypt。邮箱校验产生 HMAC（带密钥摘要）保存的独立 10 分钟设置密码票据，绑定账号、用途、epoch；重放/过期/并发消费或旧 epoch 均拒绝。改密码验证当前密码，重置/改密码撤销原授权族和票据；退出只撤当前设备及其 key 的宿主会话，其他设备保留。
+
+继续使用锁定 `oidc-provider` 的标准 Code + PKCE / DPoP（设备密钥持有证明），由 `/auth/authorization` 与 `/auth/authorization/resume` 经服务自己的回环 HTTP（网页传输协议）端点完成授权交互与回调提取，客户端不跳外部网页。设备公钥在开始交互时固定，App grant（授权记录）强制公钥与 token cnf.jkt 一致，缺 proof 无 Bearer（不绑定设备密钥的令牌）回退；原 provider 仍负责授权码单次消费、签发、刷新轮换/复用检测和 30 天绝对寿命。不另造密码授权/令牌族。HTTPS（加密网页连接）交互 Cookie 为 host-only/Secure/HttpOnly/SameSite=None，注册回调 origin（来源地址）精确控制 CORS（跨来源访问），密码写入检查 Origin，登录额外检查交互 Cookie/CSRF（跨站请求校验）。原生网络层保存 Cookie，网页用 credentials:include；旧系统浏览器流程保留兼容。
+
+账号设备目录只列已邮件确认/登录的云设备与会员宿主，记录名称/类型/最近活动/当前设备；安装签名心跳与最小设备批准状态同步不上传内容。`/hosts/connect` 检查账号成员与 DPoP，在现有 provider Grant 和未消费 RefreshToken（刷新记录）上增加选中宿主 resource（令牌目标），保留原 key、过期和消费状态，再由标准 refresh 请求选择云/宿主 audience（受众）。pending 只能得到等待/配对入口；denied/revoked 不会因此获得内容 Cookie，实际内容授权始终由宿主执行。目录没有 pin/安装公钥/中继凭据；跨账号共享只留 `sharing.supported=false`，S5 再实现主设备扫码确认。
+
+电脑新安装从本机直接地址 `/auth/cloud-desktop` 提交云控制面 token + 宿主 nonce/DPoP；宿主校验回环 socket（连接）、Host/Origin 与无代理头，创建独立本地 owner，自动沿用 S1b claim/install proof/member/binding。已有本地数据只由原本地认证显式绑定，不从邮箱/用户名推断所有权；首次绑定之外的未知 key 仍待已有设备批准。重复登录/中断重试保留 owner/claim，旧本地账号/密码/数据路径不变。云创建账户初始本地密码为未交付的随机独立记录；受信电脑可第一次配置独立应急密码，`/auth/cloud-offline` 只查本机映射并复用原密码校验/限速，云离线或云退出后仍可应急登录。
+
+已有受信设备从已经固定宿主身份的 Cookie/TLS（传输层安全）通道取得 `/cloud/devices/{requestId}/trust`，只对同 owner 已批准 recipient（接收设备）返回 120 秒安装签名 `wm-host-trust+jwt`（绑定 sub/host/device/jkt/pin）。再从发送设备的可信通道或当面二维码交给接收者，公钥锚也来自该通道；接收者不能从云目录或未验证 envelope（封装）自举信任。`src/personal-cloud/trust.mjs` 的参考校验需要显式外部锚，拒绝错误 key、账号/设备/指纹、到期和篡改。二维码一次性配对保持 S1b/S1c；客户端相机、设备间交付界面、标准 CA（证书机构）+ pin 真机验证由 LG-1 / LG-2 做。
+
+schema 6 追加密码票据、App grant 标记、名称/类型/最近活动、device-host 映射与最小内容批准状态。S1d 不修改既有迁移、不部署、不发真实邮件。相关云/宿主回归、真实 `src/main.mjs` + file（文件）邮件/隔离 SQLite（嵌入式数据库）/宿主的注册→自动绑定→第二设备待批准→电脑允许→目录→连接→配对消费/可信 pin 交付由 `services/cloud/test/app-devices.test.mjs` 覆盖；Linux CI（持续集成）验证 cloud 全量，Windows 既有目录 fsync（同步落盘）限制不为本包改夹具。
+
+## 15. S1e 账号生命周期（D30）
+
+正式接口见 **CLIENT_API 7.9**。注销、换绑新邮箱、设备改名、退出其他设备均需已登录的云 DPoP（设备密钥持有证明）授权；注销另校验当前密码。复用 S1a/S1d scrypt（密码派生）、邮件验证码/十分钟期限/失败与发信限速、provider（身份提供方）授权族，没有新的令牌系统。换绑只向新邮箱发一次验证码，完成后通知旧邮箱，提交时再检查唯一性；subject（账号标识）不变，递增 epoch（认证版本）并撤销旧云授权，需新邮箱重新登录。通知失败不回滚换绑，返回 notificationAccepted=false；原密码 + Bearer（未绑定设备密钥的令牌）换绑入口兼容。
+
+`account-lifecycle.mjs` 在一个 SQLite（嵌入式数据库）事务里删除账号、邮箱/密码哈希、设备/公钥、令牌/授权族、验证码/设置密码票据/关联未完成交互、宿主认领/归属/设备映射及撤权记录。删除自有安装及其共享成员、路由/凭据派生记录，保留作为成员访问的其他账号安装；删除前清理自有 ACME（自动证书管理）TXT，失败不提交注销。提交后同步销毁所有自有安装的 control/content（控制/内容）中继连接，使现有 SSE（服务端事件流）/下载立即中止；旧凭据不能重连。file（文件）邮件按账号清理，换绑前的通知也删除；异步发信完成后再检查账号，不能把已删除账号的邮件写回来。数据库启用 secure_delete（覆盖删除页），注销后执行 WAL checkpoint（预写日志检查点），不创建含账号明文的删除墓碑。同邮箱可重新注册为全新 sub。推送/备份/独立共享尚未落库；S3/S4/S5 新表和外部对象必须加入本模块的删除事务/清理路径，包括备份密文和包裹密钥。
+
+宿主仍通过固定云身份验证签名撤权响应。响应新增 memberships（当前归属与 epoch 的快照），已消失的绑定变为 unbound（已解绑）并撤销云 Cookie（会话凭据）/设备/活跃响应；安装公钥被删除时只返回不含账号信息的签名空快照。先处理快照，再发 outbox（待同步记录），发送后再取新事件；账号删除不会因旧待发送记录失败而阻塞，也不需要在云保留已注销账号 ID。事件水位取 sqlite_sequence（数据库递增序列）避免删除后倒退。云中继即时断开；直接地址宿主仍按既有每 60 秒同步/离线后补同步执行撤权。本地账户、对话、记忆、内容 key（密钥）、独立应急密码不删除；`/auth/cloud-offline` 继续可用。
+
+退出其他设备按当前 fingerprint（设备指纹）排除，撤销所有其他 key 的云授权族、登录设备、待确认交互和设备映射，写带 jkt（公钥指纹）的宿主 device 事件；不递增账号 epoch，当前云/宿主会话继续有效。设备改名在账号范围更新，关联电脑目录同步；安装心跳只初始化未命名电脑，不覆盖用户设置的名称。
+
+安全元数据不含邮箱明文：失败/邮件限速仅存带服务器密钥的摘要，保留到一小时统计窗及当前限速结束；proof（请求证明）防重放记录过期两分钟。真实云入口启动及每分钟清理过期安全元数据、验证码/票据/交互/令牌，file 邮件最长一小时加一次清理间隔。运行日志只含既有事件/代码/随机邮件 ID，不记邮箱、密码、正文或令牌；cloud 的独立 systemd journal namespace（系统服务日志命名空间）配置 volatile（内存存储）/一小时自动保留/五分钟轮转，安装方法见 deploy README。此配置仅覆盖 WeftMate cloud，不更改机器其他服务日志。S1e 不部署、不发真实邮件；数据库仍 schema（结构版本）6，无迁移。

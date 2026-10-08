@@ -27,7 +27,7 @@ struct ConversationTimelineView: View {
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
         ForEach(TimelineProjection.entries(appModel.timeline.events)) { entry in
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
                 if !entry.steps.isEmpty {
                     TimelineExecutionBlock(client: appModel.assistantClient, sessionID: sessionID, entry: entry, openSources: openSources)
                         .id(entry.id + appModel.accountEpoch.uuidString)
@@ -39,7 +39,7 @@ struct ConversationTimelineView: View {
                     if !memories.isEmpty {
                         Button { openMemory(entry.event) } label: {
                             WeftLabel("用到了 \(memories.count) 条记忆", icon: "memory", size: 16)
-                                .font(.caption).foregroundStyle(Weave.muted)
+                                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
                         }.buttonStyle(.plain).accessibilityIdentifier("memoryUsed.\(entry.seq)")
                     }
                     if appModel.taskControlSessions.contains(sessionID), let receipt = entry.event.data["receiptId"]?.string,
@@ -51,7 +51,7 @@ struct ConversationTimelineView: View {
                 } else if entry.event.type == "artifact.created" {
                     TimelineArtifactCard(appModel: appModel, sessionID: sessionID, entry: entry, openPreview: openArtifact)
                         .id(entry.id + appModel.accountEpoch.uuidString)
-                } else { Text("排队中").font(.caption).foregroundStyle(Weave.muted) }
+                } else { Text("排队中").font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
             }.id(entry.id)
         }
         // Original sync messages are outside the DSH sequence space.
@@ -59,11 +59,11 @@ struct ConversationTimelineView: View {
             MessageView(model: appModel, message: message, openAttachment: openAttachment).id(message.id)
         }
         if commands.hasMore {
-            Button("读取更早记录的来源与控制") { Task { await commands.loadMore() } }.font(.caption)
+            Button("查看更早记录") { Task { await commands.loadMore() } }.font(AppleTokens.Fonts.caption)
         }
-        if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(.caption).foregroundStyle(Weave.muted) }
-        if let error = interactions.persistenceError { Text(error).font(.caption).foregroundStyle(Weave.danger) }
-        Color.clear.frame(height: 0)
+        if let error = interactions.approvalError ?? interactions.questionError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+        if let error = interactions.persistenceError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
+        AppleTokens.Colors.clear.frame(height: 0)
             .task(id: "\(scenePhase)|\(appModel.historyCachedAt != nil)|\(appModel.historyBusy)") {
                 guard scenePhase == .active, !appModel.historyBusy, appModel.historyCachedAt == nil else { interactions.suspend(); commands.suspend(); return }
                 interactions.activate(); commands.activate()
@@ -94,26 +94,26 @@ struct TimelineExecutionBlock: View {
     private let desktop = false
     #endif
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Button { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } } label: {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p12) {
+            Button { withAnimation(AppleTokens.Motion.disclosure) { expanded.toggle() } } label: {
                 HStack {
                     WeftLabel(entry.running ? "正在执行 \(entry.steps.count) 步" : "执行了 \(entry.steps.count) 步 · 用时 \(entry.elapsed)",
                           icon: entry.running ? "tool" : "allow")
-                    Spacer(minLength: 4)
+                    Spacer(minLength: AppleTokens.Space.p4)
                     WeftIcon(expanded ? "chevron" : "right")
-                }.font(.callout).foregroundStyle(Weave.secondary).contentShape(Rectangle()).frame(minHeight: 28)
+                }.font(AppleTokens.Fonts.callout).foregroundStyle(Weave.secondary).contentShape(Rectangle()).frame(minHeight: 28)
             }.buttonStyle(.plain).accessibilityIdentifier("executionBlock.\(entry.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
             if expanded {
-                Button("查看来源") { openSources() }.font(.caption).accessibilityIdentifier("executionSources.\(entry.seq)")
+                Button("查看来源") { openSources() }.font(AppleTokens.Fonts.caption).accessibilityIdentifier("executionSources.\(entry.seq)")
                 ForEach(entry.steps) { step in
                     TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running)
                 }.transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
-        .padding(14).background(Weave.soft, in: RoundedRectangle(cornerRadius: 14))
+        .padding(.vertical, AppleTokens.Space.p6)
         .onAppear { if !initialized { expanded = entry.running && desktop; initialized = true } }
-        .onChange(of: entry.running) { _, running in withAnimation(.easeInOut(duration: 0.2)) { expanded = running && desktop } }
+        .onChange(of: entry.running) { _, running in withAnimation(AppleTokens.Motion.disclosure) { expanded = running && desktop } }
     }
 }
 private struct TimelineStepView: View {
@@ -126,13 +126,13 @@ private struct TimelineStepView: View {
     @State private var error: String?
     @State private var loading = false
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Button { withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() } } label: {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+            Button { withAnimation(AppleTokens.Motion.disclosure) { expanded.toggle() } } label: {
                 HStack(alignment: .top) {
                     Text(step.summary + (step.running && running ? " · 运行中" : step.data["state"]?.string == "failed" ? " · 未完成" : ""))
-                        .font(.callout).multilineTextAlignment(.leading)
-                    Spacer(minLength: 4)
-                    WeftIcon(expanded ? "chevron" : "right", size: 16).font(.caption)
+                        .font(AppleTokens.Fonts.callout).multilineTextAlignment(.leading)
+                    Spacer(minLength: AppleTokens.Space.p4)
+                    WeftIcon(expanded ? "chevron" : "right", size: 16).font(AppleTokens.Fonts.caption)
                 }.contentShape(Rectangle()).frame(minHeight: 32)
             }.buttonStyle(.plain).accessibilityIdentifier("executionStep.\(step.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
@@ -140,16 +140,16 @@ private struct TimelineStepView: View {
                 if loading { ProgressView() }
                 if let detail {
                     Text(detail.text + (detail.truncated == true ? "\n[内容已截断]" : ""))
-                        .font(.caption.monospaced()).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
+                        .font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
                     Button("复制") {
                         #if os(macOS)
                         NSPasteboard.general.clearContents(); NSPasteboard.general.setString(detail.text, forType: .string)
                         #else
                         UIPasteboard.general.string = detail.text
                         #endif
-                    }.font(.caption)
+                    }.font(AppleTokens.Fonts.caption)
                 }
-                if let error { Text(error).font(.caption) }
+                if let error { Text(error).font(AppleTokens.Fonts.caption) }
             }
         }
         .task(id: "\(expanded)-\(step.detailSeq ?? -1)") {
