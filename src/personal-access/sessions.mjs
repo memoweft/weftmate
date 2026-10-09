@@ -6,6 +6,7 @@ import { rm } from 'node:fs/promises';
 import path from 'node:path';
 import { createSessionMetadata } from './session-metadata.mjs';
 import { protectMainSession } from './chat-identity.mjs';
+import { eraseChatCopies } from './chat-erasure.mjs';
 
 export function createSessionOperations(context) {
   const deletions = new Set();
@@ -283,6 +284,7 @@ export function createSessionOperations(context) {
             await rm(path.join(context.root, 'artifacts', ownerId, command.taskId ?? command.rootTaskId ?? command.commandId), { recursive: true, force: true });
         }
         await context.serial(() => context.mutate(ownerId, next => {
+          for (const chatId of eraseChatCopies(next, { sessionId })) context.chatTimeline?.invalidate(ownerId, chatId);
           delete next.sessions[sessionId];
           for (const field of ['commands', 'toolApprovals', 'userQuestions', 'projectSources', 'browserSources', 'conversationBindings'])
             for (const [key, value] of Object.entries(next[field] ?? {}))

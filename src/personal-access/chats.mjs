@@ -23,7 +23,7 @@ export function createChatOperations(context) {
       parent: chat.kind === 'main' ? null : session?.projectId
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
     if (!session) return { ...base, title: 'WeftMate', pinned: true, archived: false,
-      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: false,
+      unread: chat.unread, groupId: null, projectId: null, running: false, sendAvailable: !account.memoryCleanupPending,
       taskAvailable: false };
     let described, summary;
     try {
@@ -40,14 +40,16 @@ export function createChatOperations(context) {
           described.modelProfileId === session.modelProfileId) &&
         (!session.workspaceKind || context.browserReader?.status()?.available === true && described.modelProfileId === session.modelProfileId) ||
        session.origin === 'shared-chat' && described.agentPreset === 'personal-shared-chat');
-    return { ...base, ...summary, title: chat.kind === 'main' ? 'WeftMate' : summary.title ?? bounded(described.title, 256) ?? '',
+    return { ...base, ...summary, unread: chat.kind === 'main' ? chat.unread === true || summary.unread : summary.unread,
+      title: chat.kind === 'main' ? 'WeftMate' : summary.title ?? bounded(described.title, 256) ?? '',
       pinned: chat.kind === 'main' || summary.pinned, archived: session.archived === true,
       projectId: session.projectId ?? null, ...(project ? { projectName: project.name, projectRevoked: project.revoked } : {}),
       ...(session.projectNotice ? { projectNotice: session.projectNotice } : {}),
       ...(session.conversationId ? { conversationId: session.conversationId } : {}),
       ...(session.workspaceKind ? { workspaceKind: session.workspaceKind } : {}),
       modelProfileId: session.modelProfileId ?? described.modelProfileId ?? null,
-      running: described.running === true, sendAvailable: Boolean(canSend), taskAvailable: session.origin === 'personal-remote',
+      running: described.running === true, sendAvailable: Boolean(canSend) && !account.memoryCleanupPending, taskAvailable: session.origin === 'personal-remote',
+      ...(chat.relay ? { contextOrganizing: true } : {}), ...(chat.relayError ? { relayError: chat.relayError } : {}),
       ...(described.contextUsage ? { contextUsage: described.contextUsage } : {}),
       ...(described.running && described.processing ? { processing: described.processing } : {}) };
   }
@@ -70,9 +72,16 @@ export function createChatOperations(context) {
         if (typeof body.unread !== 'boolean') throw failure('INVALID_REQUEST');
         if (body.expectedRevision !== chat.revision) throw failure('REVISION_CHANGED', 409);
         const projected = await view(ownerId, chatId);
+        const active = account.chatIdentity.segments[chat.activeSegmentId];
+        const readPage = !body.unread && active ? await context.callBackend(() => context.backend.readEvents({ ownerId, sessionId: active.sessionId, limit: 200 })) : null;
         const response = { chat: { ...projected, unread: body.unread, revision: chat.revision + 1 } };
         await context.mutate(ownerId, next => {
           const current = next.chatIdentity.chats[chatId]; current.unread = body.unread; current.revision++;
+          if (readPage) {
+            const session = next.sessions[active.sessionId]; session.unread = false;
+            session.readMessageSeq = Math.max(-1, ...readPage.events.filter(row=>row.type==='assistant.message').map(row=>row.seq));
+            current.sessionRevision = digest(JSON.stringify(session));
+          }
           next.chatOperations ??= {};
           next.chatOperations[body.requestId] = { fingerprint, response };
         });

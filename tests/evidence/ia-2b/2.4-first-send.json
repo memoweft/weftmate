@@ -1,0 +1,53 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "model": "mimo-v2.6-flash",
+  "turns": [
+    {
+      "commandId": "cmd-1d405855-b375-4587-989c-326bb8930a3c",
+      "sessionId": "session-09abe13d-1392-4f6b-b61b-ca2f5ece8ff4",
+      "activeSessionId": "session-09abe13d-1392-4f6b-b61b-ca2f5ece8ff4"
+    },
+    {
+      "commandId": "cmd-cde99583-181c-4372-b73e-4acae1a5b72c",
+      "sessionId": "session-09abe13d-1392-4f6b-b61b-ca2f5ece8ff4",
+      "activeSessionId": "session-09abe13d-1392-4f6b-b61b-ca2f5ece8ff4"
+    }
+  ],
+  "switches": [],
+  "segments": [
+    {
+      "segmentId": "segment-c77b2af7-366b-4df8-9a28-0b803c4b7799",
+      "chatId": "chat-2f899032-7661-441b-ad95-1de555069f0f",
+      "sessionId": "session-09abe13d-1392-4f6b-b61b-ca2f5ece8ff4",
+      "hostId": "host-79a5128e-a1c2-4eba-99ac-2e582541ed81",
+      "ordinal": 0,
+      "state": "active",
+      "startedAt": "2026-10-09T19:03:12.816Z"
+    }
+  ],
+  "usage": [
+    {
+      "completion_tokens": 72,
+      "prompt_tokens": 2128,
+      "total_tokens": 2200,
+      "completion_tokens_details": {
+        "reasoning_tokens": 68
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 1664
+      }
+    },
+    {
+      "completion_tokens": 13,
+      "prompt_tokens": 2526,
+      "total_tokens": 2539,
+      "completion_tokens_details": {
+        "reasoning_tokens": 6
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 2112
+      }
+    }
+  ]
+}

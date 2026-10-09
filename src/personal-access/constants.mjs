@@ -113,7 +113,7 @@ export const LEGACY_SCOPES = new Set(['sessions:read', 'commands:write']);
 
 export const SCOPES = new Set([...LEGACY_SCOPES, 'account:manage']);
 
-export const KINDS = new Set(['session.create', 'session.message', 'session.cancel', 'desktop.open_app']);
+export const KINDS = new Set(['session.create', 'session.message', 'chat.message', 'session.cancel', 'desktop.open_app']);
 
 export const INTERNAL_ARTIFACT_KIND = 'desktop.write_artifact';
 
