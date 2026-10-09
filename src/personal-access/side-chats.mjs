@@ -64,7 +64,7 @@ export function createSideChats(context) {
       if (body && context.requestIdUsed(account, body.requestId)) throw failure('REQUEST_CONFLICT', 409);
       if (body && chat.revision !== body.expectedRevision) throw failure('REVISION_CHANGED', 409);
       const sameSource = Object.values(account.chatResults ?? {}).find(row => row.sourceChatId === input.sourceChatId &&
-        (input.taskId ? row.taskId === input.taskId : row.sourceEventId === input.sourceEventId));
+        (input.taskId && row.taskId === input.taskId || row.sourceEventId === input.sourceEventId));
       const resultId = sameSource?.resultId ?? `result-${digest(`${input.sourceChatId}/${input.taskId ?? input.sourceEventId}`).slice(0,40)}`;
       const previous = account.chatResults?.[resultId];
       const contentHash = digest(JSON.stringify([input.sourceEventId,input.state,input.summary,input.artifactRefs,input.requiresResponse]));
@@ -175,7 +175,9 @@ export function createSideChats(context) {
       const { chat } = sourceSession(ownerId, chatId);
       if (chat.kind !== 'side') throw failure('MAIN_CHAT_PROTECTED', 409);
       let input;
-      if (raw.taskId) input = await terminal(ownerId, chatId, raw.taskId, raw.sourceEventId, false);
+      const knownTask = raw.taskId ?? Object.values(account.chatResults ?? {}).find(row =>
+        row.sourceChatId === chatId && row.sourceEventId === raw.sourceEventId)?.taskId;
+      if (knownTask) input = await terminal(ownerId, chatId, knownTask, raw.sourceEventId, false);
       else {
         const event = await source(ownerId, chatId, raw.sourceEventId);
         if (event.type !== 'assistant.message') throw failure('SOURCE_UNAVAILABLE', 404);
