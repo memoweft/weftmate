@@ -1,3 +1,5 @@
+import { canonicalProviderModelId } from '../model-connection-check.mjs';
+import { currentChatProfile } from '../background-model-selection.mjs';
 import { personalAccessUiAssetPaths } from '../personal-access-ui/index.mjs';
 import {
   attachmentDisposition,
@@ -648,23 +650,22 @@ export function createHttpHandler(context) {
         context.authenticate(request, request.method === 'PATCH' ? 'account:manage' : 'sessions:read');
         if (request.method === 'PATCH') {
           const body = await context.readJson(request);
-          exactKeys(body, ['backgroundModelProfileId'], ['backgroundModelProfileId']);
+          exactKeys(body, ['backgroundModelProfileId', 'defaultModelProfileId'], []);
+          if (!Object.keys(body).length) throw failure('INVALID_REQUEST');
           const catalog = modelProjection(await context.callBackend(() => context.backend.listModels({ ownerId })));
-          if (body.backgroundModelProfileId !== null && !catalog.some(model =>
-            model.id === body.backgroundModelProfileId && model.configured)) throw failure('MODEL_UNAVAILABLE', 409);
-          if (body.backgroundModelProfileId !== null && !context.modelSelectable(ownerId, body.backgroundModelProfileId)) {
-            throw failure('MODEL_UNAVAILABLE', 409);
-          }
+          for (const key of Object.keys(body)) if (body[key] !== null && (!catalog.some(model => model.id === body[key] && model.configured) || !context.modelSelectable(ownerId, body[key]))) throw failure('MODEL_UNAVAILABLE', 409);
           await context.serial(() => context.mutate(ownerId, next => {
             context.authenticate(request, 'account:manage');
-            if (body.backgroundModelProfileId !== null && !context.modelSelectable(ownerId, body.backgroundModelProfileId)) {
-              throw failure('MODEL_UNAVAILABLE', 409);
+            for (const key of Object.keys(body)) {
+              if (body[key] !== null && !context.modelSelectable(ownerId, body[key])) throw failure('MODEL_UNAVAILABLE', 409);
+              next[key] = body[key];
             }
-            next.backgroundModelProfileId = body.backgroundModelProfileId;
           }));
           await context.memoryManager?.invalidateOwnerRoute?.(ownerId);
         }
-        return context.json(response, 200, { backgroundModelProfileId: context.accountState(ownerId).backgroundModelProfileId ?? null });
+        return context.json(response, 200, { backgroundModelProfileId: context.accountState(ownerId).backgroundModelProfileId ?? null,
+          defaultModelProfileId: context.accountState(ownerId).defaultModelProfileId ?? null,
+          currentChatModelProfileId: currentChatProfile(context.accountState(ownerId), id => context.modelSelectable(ownerId, id)) });
       }
       const restartMatch = /^\/personal\/v1\/system\/(model|host|memory)\/restart$/.exec(pathname);
       if ((pathname === '/personal/v1/system' && request.method === 'GET') ||
@@ -731,6 +732,24 @@ export function createHttpHandler(context) {
         if (operation.status === 'uncertain') await context.reconcileModelOperation(ownerId, operation.requestId);
         return context.json(response, 200, context.modelOperationResponse(ownerId,
           context.accountState(ownerId).modelOperations[operation.requestId]));
+      }
+      if (pathname === '/personal/v1/account/models/check' && request.method === 'POST') {
+        if (url.search || !context.accountModelManager?.check) throw failure('CAPABILITY_UNAVAILABLE', 503);
+        context.authenticate(request, 'account:manage');
+        const body = await context.readJson(request, 12 * 1024);
+        exactKeys(body, ['profileId', 'baseUrl', 'modelId', 'apiKey', 'sendTestMessage'], []);
+        if (body.sendTestMessage !== undefined && typeof body.sendTestMessage !== 'boolean') throw failure('INVALID_REQUEST');
+        if (body.modelId !== undefined && !ACCOUNT_MODEL_NAME_ID.test(body.modelId)) throw failure('INVALID_REQUEST');
+        if (body.apiKey !== undefined && (typeof body.apiKey !== 'string' || !body.apiKey || body.apiKey.length > 4096)) throw failure('INVALID_REQUEST');
+        if (body.profileId && !context.modelSelectable(ownerId, body.profileId)) throw failure('MODEL_UNAVAILABLE', 422);
+        if (body.baseUrl !== undefined) {
+          body.baseUrl = canonicalAccountBaseUrl(body.baseUrl);
+          if (!body.baseUrl) throw failure('INVALID_REQUEST');
+        }
+        if (!body.profileId && (!body.baseUrl || !ACCOUNT_MODEL_NAME_ID.test(body.modelId ?? '') || typeof body.apiKey !== 'string' || !body.apiKey || body.apiKey.length > 4096)) throw failure('INVALID_REQUEST');
+        const value = await context.accountModelManager.check({ ownerId, input: body });
+        context.authenticate(request, 'account:manage');
+        return context.json(response, 200, value);
       }
       const accountModelMatch = /^\/personal\/v1\/account\/models\/(account-model-[0-9a-f-]{36})(?:\/(test|stop-using|transfer))?$/.exec(pathname);
       if (accountModelMatch && request.method === 'GET' && !accountModelMatch[2]) {
@@ -803,6 +822,8 @@ export function createHttpHandler(context) {
             ? body.baseUrl : priorModel.revisions[String(priorModel.runtimeRevision)].baseUrl);
           modelId = action === 'create' || body.modelId !== undefined
             ? body.modelId : priorModel.revisions[String(priorModel.runtimeRevision)].modelId;
+          if (typeof modelId !== 'string' || !ACCOUNT_MODEL_NAME_ID.test(modelId)) throw failure('INVALID_REQUEST');
+          modelId = canonicalProviderModelId(baseUrl, modelId);
           modelTier = body.modelTier ?? (action === 'update'
             ? priorModel.revisions[String(priorModel.runtimeRevision)].modelTier : undefined);
           if (body.modelTier !== undefined && !['auto', 'local', 'cloud'].includes(body.modelTier)) {
@@ -1009,9 +1030,7 @@ export function createHttpHandler(context) {
           catch (error) { throw error?.code === 'MODEL_UNAVAILABLE'
             ? failure('MODEL_UNAVAILABLE', 422) : error; }
           if (!plainObject(value)) throw failure('BACKEND_UNAVAILABLE', 503);
-          return context.json(response, 200, { configured: value.configured === true,
-            reachable: value.reachable === true, modelListed: value.modelListed === true,
-            inferenceVerified: false });
+          return context.json(response, 200, value);
         }
         if (typeof context.backend.modelCompletion !== 'function') throw failure('CAPABILITY_UNAVAILABLE', 503);
         const body = canonicalCompletion(await context.readJson(request, 256 * 1024));

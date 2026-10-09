@@ -91,6 +91,8 @@ MiMo本包全部20个实际请求均有用量：输入90,839 token（令牌）�
 
 ## 契约变更
 
+- MS-1：CLIENT_API 3.10 / 3.15 增加账户默认模型与最近聊天模型字段、`/account/models/check` 草稿检查 / 显式极小测试、逐项安全诊断和模型 `location`；旧字段保留，后台无会话不再回退启动配置。
+
 - **UI-P4**：CLIENT_API 3.1 的 GET `/sessions` 增加可选只读 `contextUsage:{usedTokens,contextWindow}`，透传DSH（助手运行时）当前有效上下文占用及真实上限；未知占用省略，未知上限为null，旧客户端兼容。未改发送、幂等键、停止或审批接口。
 
 - **FG-2**：遗忘预览 `items[].kind` 增加 `interaction_commitment`（交互承诺），`itemType` 为承诺／建议／约定的既有种类，纳入名称列表与 `itemCount`；独立列表与命令目标种类保持既有契约。
