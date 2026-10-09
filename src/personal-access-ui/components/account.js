@@ -212,7 +212,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             const checked = core.state.modelChecks?.[model.id ?? model.profileId];
             const loaded = group === 'computer' && core.state.system?.model?.currentModelId === model.modelId;
             const available = model.status === 'active' && model.configured;
-            const failed = checked && (!checked.reachable || checked.authentication === 'rejected' || checked.model === 'missing' || checked.model === 'test_failed');
+            const failed = checked && (!checked.reachable || checked.authentication === 'rejected' || checked.model === 'missing' || checked.model === 'test_failed' || ['failed', 'invalid'].includes(checked.catalog) || checked.catalog === 'unsupported' && !checked.inferenceVerified);
             const status = loaded ? '已加载' : !model.configured ? '需要密钥' : !available || failed ? '不可用' : '可用';
             main.append(ui.element('strong', '', model.name || model.modelId), ui.element('small', 'muted', `${model.modelId} · ${label}`), ui.element('span', 'model-status' + (loaded ? ' is-loaded' : ''), status));
             const actions = ui.element('div', 'actions');
@@ -224,6 +224,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
                 ui.byId('account-model-base-url').value = model.baseUrl || '';
                 ui.byId('account-model-id').value = model.modelId || '';
                 ui.byId('account-model-tier').value = model.modelTier || 'auto';
+                ui.byId('account-model-tier').dispatchEvent(new Event('weft:sync'));
                 ui.byId('account-model-key').value = '';
                 ui.byId('account-model-submit').textContent = '保存修改';
                 ui.byId('account-model-cancel').hidden = false;
