@@ -1,0 +1,9 @@
+{
+  "platform": "iphone",
+  "scene": "composer-context",
+  "theme": "dark",
+  "commit": "309754ccabb8afa524e46ff674b00d72f7883114",
+  "generatedAt": "2026-10-09T08:42:36.714Z",
+  "synthetic": true,
+  "source": "实际 iPhone 原生 App；真实隔离 cloud main / 宿主，合成 DSH 日志与模型"
+}

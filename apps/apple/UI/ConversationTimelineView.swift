@@ -111,16 +111,14 @@ struct TimelineExecutionBlock: View {
             Button { withAnimation(AppleTokens.Motion.disclosure) { expanded.toggle() } } label: {
                 HStack {
                     Text(summary)
-                    Spacer(minLength: AppleTokens.Space.p4)
-                    WeftIcon(expanded ? "chevron" : "right")
-                }.font(AppleTokens.Fonts.caption).foregroundStyle(entry.steps.contains { $0.effectiveState == "failed" } ? Weave.danger : Weave.muted).contentShape(Rectangle()).frame(minHeight: 28)
+                    WeftIcon(expanded ? "chevron" : "right", size: AppleTokens.Space.p16)
+                }.font(AppleTokens.Fonts.body).foregroundStyle(entry.steps.contains { $0.effectiveState == "failed" } ? Weave.danger : Weave.muted).frame(maxWidth: .infinity, minHeight: AppleTokens.Space.p44, alignment: .leading).contentShape(Rectangle())
             }.buttonStyle(.plain).accessibilityIdentifier("executionBlock.\(entry.seq)")
                 .accessibilityValue(expanded ? "已展开" : "已收起")
             if expanded {
-                Button("查看来源") { openSources() }.font(AppleTokens.Fonts.caption).accessibilityIdentifier("executionSources.\(entry.seq)")
                 VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 ForEach(entry.steps) { step in
-                    TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running, decision: interactions.decisionLabel(for: step), progress: progress)
+                    TimelineStepView(client: client, sessionID: sessionID, step: step, running: entry.running, decision: interactions.decisionLabel(for: step), progress: progress, openSources: openSources)
                 }
                 }.padding(AppleTokens.Space.p10).overlay(RoundedRectangle(cornerRadius: AppleTokens.Radius.r12).strokeBorder(Weave.line))
                 .transition(.opacity)
@@ -130,7 +128,12 @@ struct TimelineExecutionBlock: View {
         .task(id: entry.steps.last(where: \.running)?.detailSeq) {
             if let step = entry.steps.last(where: \.running), entry.running { await progress.read(client: client, sessionID: sessionID, step: step) }
         }
-        .onAppear { if !initialized { expanded = failed; initialized = true } }
+        .onAppear { if !initialized { expanded = failed
+                #if DEBUG && os(macOS)
+                let args = ProcessInfo.processInfo.arguments
+                if args.contains("--ui-testing"), args.contains("a9-detail") { expanded = true }
+                #endif
+                initialized = true } }
         .onChange(of: failed) { _, value in if value { expanded = true } }
     }
 }
@@ -141,6 +144,7 @@ private struct TimelineStepView: View {
     let running: Bool
     let decision: String?
     @ObservedObject var progress: ToolProgressModel
+    let openSources: () -> Void
     @State private var expanded = false
     private var detail: TimelineDetail? { step.detailSeq.flatMap { progress.details[$0] } }
     private var error: String? { step.detailSeq.flatMap { progress.errors[$0] } }
@@ -157,25 +161,66 @@ private struct TimelineStepView: View {
                 .accessibilityValue(expanded ? "已展开" : "已收起")
             if expanded {
                 if detail == nil && error == nil { ProgressView() }
-                if let detail {
-                    Text(detail.text + (detail.truncated == true ? "\n[内容已截断]" : ""))
-                        .font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled).frame(maxWidth: .infinity, alignment: .leading)
-                    Button("复制") {
-                        #if os(macOS)
-                        NSPasteboard.general.clearContents(); NSPasteboard.general.setString(detail.text, forType: .string)
-                        #else
-                        UIPasteboard.general.string = detail.text
-                        #endif
-                    }.font(AppleTokens.Fonts.caption)
+                if let value = progress.presentation(step) {
+                    ToolStepDetailView(value: value, openSources: openSources)
                 }
                 if let error { Text(error).font(AppleTokens.Fonts.caption) }
             }
         }
-        .onAppear { if step.effectiveState == "failed" { expanded = true } }
+        .onAppear {
+            if step.effectiveState == "failed" { expanded = true }
+            #if DEBUG && os(macOS)
+            let args = ProcessInfo.processInfo.arguments
+            if args.contains("--ui-testing"), args.contains("a9-detail"), step.ordinal == 1 { expanded = true }
+            #endif
+        }
         .onChange(of: step.effectiveState) { _, value in if value == "failed" { expanded = true } }
         .task(id: "\(expanded)-\(step.detailSeq ?? -1)") {
             guard expanded else { return }
             await progress.read(client: client, sessionID: sessionID, step: step)
         }
+    }
+}
+
+/// The parser owns interpretation; this view only presents its fields and disclosures.
+private struct ToolStepDetailView: View {
+    let value: ToolStepDetail
+    let openSources: () -> Void
+    @State private var fullOutput = false
+    @State private var rawExpanded = false
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+            Button("查看使用的来源", action: openSources).font(AppleTokens.Fonts.callout)
+            if !value.parameters.isEmpty {
+                Text("参数").font(AppleTokens.Fonts.callout.weight(.medium))
+                ForEach(value.parameters) { parameter in
+                    Text(parameter.name + "：" + parameter.value).font(AppleTokens.Fonts.callout).textSelection(.enabled)
+                }
+            }
+            if let error = value.error {
+                Text("错误").font(AppleTokens.Fonts.callout.weight(.medium)).foregroundStyle(Weave.danger)
+                Text(error).font(AppleTokens.Fonts.callout.monospaced()).foregroundStyle(Weave.danger).textSelection(.enabled)
+            }
+            if !value.output.isEmpty {
+                Text("输出").font(AppleTokens.Fonts.callout.weight(.medium))
+                Text(fullOutput ? value.output : value.outputPreview).font(AppleTokens.Fonts.callout.monospaced()).textSelection(.enabled)
+                if value.hasFullOutput {
+                    Button(fullOutput ? "收起全文" : "展开全文") { fullOutput.toggle() }.font(AppleTokens.Fonts.callout)
+                }
+            }
+            if value.truncated { Text("内容已截断").font(AppleTokens.Fonts.callout).foregroundStyle(Weave.muted) }
+            Button("复制") { copy(value.readableText) }.font(AppleTokens.Fonts.callout)
+            DisclosureGroup("查看原始数据", isExpanded: $rawExpanded) {
+                Text(value.raw).font(AppleTokens.Fonts.caption.monospaced()).textSelection(.enabled)
+                Button("复制原始数据") { copy(value.raw) }.font(AppleTokens.Fonts.callout)
+            }.font(AppleTokens.Fonts.callout)
+        }.frame(maxWidth: .infinity, alignment: .leading)
+    }
+    private func copy(_ text: String) {
+        #if os(macOS)
+        NSPasteboard.general.clearContents(); NSPasteboard.general.setString(text, forType: .string)
+        #else
+        UIPasteboard.general.string = text
+        #endif
     }
 }
