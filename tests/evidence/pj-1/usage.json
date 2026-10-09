@@ -1,0 +1,57 @@
+{
+  "model": "mimo-v2.6-flash",
+  "runs": [
+    {
+      "run": 1,
+      "result": "first artifact-store conflict then pending approval timeout",
+      "responses": 4,
+      "totals": {
+        "inputTokens": 8336,
+        "outputTokens": 398,
+        "cacheReadTokens": 4864,
+        "cacheWriteTokens": 0
+      }
+    },
+    {
+      "run": 2,
+      "result": "desktop passed; mobile locator timeout",
+      "responses": 5,
+      "totals": {
+        "inputTokens": 4593,
+        "outputTokens": 361,
+        "cacheReadTokens": 14144,
+        "cacheWriteTokens": 0
+      }
+    },
+    {
+      "run": 3,
+      "result": "desktop and mobile web passed; path-redacted text matcher timeout",
+      "responses": 8,
+      "totals": {
+        "inputTokens": 4707,
+        "outputTokens": 433,
+        "cacheReadTokens": 28288,
+        "cacheWriteTokens": 0
+      }
+    },
+    {
+      "run": 4,
+      "result": "full task, readonly/outside refusal, move and removal passed",
+      "responses": 13,
+      "totals": {
+        "inputTokens": 12892,
+        "outputTokens": 995,
+        "cacheReadTokens": 44096,
+        "cacheWriteTokens": 0
+      }
+    }
+  ],
+  "totals": {
+    "inputTokens": 30528,
+    "outputTokens": 2187,
+    "cacheReadTokens": 91392,
+    "cacheWriteTokens": 0
+  },
+  "responses": 30,
+  "note": "Native assistant usage; model configuration/connection probes may not be included. No credential, real account or real directory is recorded."
+}

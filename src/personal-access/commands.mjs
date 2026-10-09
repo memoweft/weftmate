@@ -4,6 +4,7 @@ import { TEXT_ATTACHMENT_TYPES } from '../personal-sync/attachments.mjs';
 import { DISPATCH_TIMEOUT_MS, ID, IMAGE_REASONS, MAX_COMMANDS } from './constants.mjs';
 import { canonicalCommand, explicitNotepadOpenIntent, publicCommand } from './command-policy.mjs';
 import { randomUUID } from 'node:crypto';
+import { inspectProjectRoot } from '../personal-projects/index.mjs';
 
 export function createCommandOperations(context) {
   const messageDispatches = new Map();
@@ -149,6 +150,12 @@ export function createCommandOperations(context) {
         return;
       }
       try {
+        if (pending.payload.projectId) {
+          const project = context.accountState(ownerId).projects[pending.payload.projectId];
+          const inspected = await inspectProjectRoot(project.rootPath);
+          if (inspected.rootIdentity !== project.rootIdentity || inspected.rootFinalPath !== project.rootFinalPath)
+            throw failure('PROJECT_ROOT_CHANGED', 409);
+        }
         await context.callBackend(() => context.backend.preflight({ ...pending.payload, ownerId }));
       } catch (error) {
         if (context.closing) return;
@@ -284,6 +291,7 @@ export function createCommandOperations(context) {
         try {
           if (snapshot.kind === 'session.create') callback = Promise.resolve(context.backend.createSession({
             sessionId: snapshot.sessionId, modelProfileId: snapshot.payload.modelProfileId, ownerId,
+            ...(snapshot.payload.projectId ? { project: context.accountState(ownerId).projects[snapshot.payload.projectId] } : {}),
           }));
           else if (snapshot.kind === 'session.message') {
             const staged = snapshot.payload.attachments

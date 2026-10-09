@@ -483,3 +483,16 @@ html, body { overflow: hidden; }
 /* UI-P5 uses the same semantic shell surfaces as desktop; no native caption on web. */
 #app, .topbar, #chat-page, .composer-dock { background: var(--panel); }
 .drawer { background: var(--sidebar); border-color: var(--panel-divider); }
+
+.mobile-projects { margin-top: var(--wm-space-24); }
+.mobile-project-heading { display: flex; align-items: center; gap: var(--wm-space-8); }
+.mobile-project-toggle { display: flex; flex: 1; align-items: center; gap: var(--wm-space-8); min-width: 0; text-align: left; background: transparent; color: var(--ink); border: 0; padding: var(--wm-space-12); }
+.mobile-project-toggle span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mobile-project-toggle img { width: var(--wm-space-20); height: var(--wm-space-20); }
+.mobile-project-conversation, .mobile-project-empty { margin-left: var(--wm-space-24); }
+.mobile-projects .muted { padding: var(--wm-space-8) var(--wm-space-12); }
+.mobile-projects .session-more { min-width: var(--wm-space-44); min-height: var(--wm-space-44); }
+
+.mobile-project-heading .session-more { flex: 0 0 var(--wm-space-44); width: var(--wm-space-44); padding: var(--wm-space-8); }
+.mobile-project-heading .session-more img { width: var(--wm-space-20); height: var(--wm-space-20); }
+[data-theme="dark"] .mobile-project-heading img { filter: invert(1); }
