@@ -46,6 +46,7 @@ import { createScheduleOperations } from './schedules.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
 import { reconcileChatIdentity } from './chat-identity.mjs';
 import { createChatOperations } from './chats.mjs';
+import { createChatTimeline } from './chat-timeline.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -113,6 +114,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
     get chats() { return chats; },
+    get chatTimeline() { return chatTimeline; },
     get offline() { return offline; },
     get backupManager() { return backupManager; },
     backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
@@ -249,6 +251,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   };
   const sessions = createSessionOperations(context);
   const chats = createChatOperations(context);
+  const chatTimeline = createChatTimeline(context);
   const {
     requireOriginalAttachments, commandReferencesOriginal, publicHistoryEvent,
     conversationSnapshot, conversationProjection, verifiedSyncUserEvent, sourceDevicesUpgraded,
@@ -720,6 +723,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }
       closePromise = (async () => {
+        await chatTimeline.close();
         await offline.close();
         await hostRelay?.close();
         hostCloudIdentity?.close();

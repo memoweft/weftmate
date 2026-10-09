@@ -113,6 +113,25 @@ try {
   const link = (await api(`/sessions/${sessionId}/chat`)).body;
   const side = (await api(`/chats/${link.chatId}`)).body.chat;
   assert.equal(side.title, '迁移样本'); assert.equal(side.groupId, group.id); assert.equal(side.archived, true);
+  const timelineStart = performance.now();
+  const logical = await api(`/chats/${link.chatId}/events`);
+  const timelineMs = performance.now() - timelineStart;
+  assert.equal(logical.status, 200);
+  assert.ok(logical.body.items.some(event => event.type === 'assistant.message'));
+  const logicalUser = logical.body.items.find(event => event.type === 'user.message');
+  assert.equal(logicalUser.sourceRef.sessionId, sessionId);
+  assert.equal((await api(`/chats/${link.chatId}/changes?cursor=${encodeURIComponent(logical.body.syncCursor)}`)).status, 200);
+  const search = await until(async () => {
+    const value = await api(`/chats/${link.chatId}/search?q=${encodeURIComponent('蓝色纸船')}`);
+    return value.body.indexState === 'ready' && value;
+  });
+  assert.equal(search.status, 200); assert.ok(search.body.hits.length > 0);
+  const nativeDate = new Intl.DateTimeFormat('en-CA', { timeZone: logical.body.timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(logicalUser.at));
+  assert.ok((await api(`/chats/${link.chatId}/locate?date=${nativeDate}`)).body.eventId);
+  await writeFile(join(evidence, 'history-native.json'), JSON.stringify({ checkedAt: new Date().toISOString(),
+    fixedDsh: true, realElectronHost: true, syntheticAccount: true, randomPorts: true, coldLogicalTimelineMs: timelineMs,
+    publicMessagesAndOriginalSources: true, chineseSearch: true, dateLocate: true, independentChanges: true,
+    note: 'Small native migration fixture; native cold 10k/100k recovery is measured separately, not inferred from this time.' }, null, 2) + '\n');
   const after = (await api(`/sessions/${sessionId}/events?afterSeq=-1&limit=200`)).body.events;
   for (const event of history.filter(event => ['user.message', 'assistant.message'].includes(event.type))) {
     assert.deepEqual(after.find(row => row.seq === event.seq), event);
