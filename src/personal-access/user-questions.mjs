@@ -13,7 +13,7 @@ import { MAX_COMMAND_TOOL_APPROVALS, MAX_TOOL_APPROVALS, QUESTION_REASONS, REQUE
 
 export function createUserQuestionOperations(context) {
   function interactionRequestIdUsed(account, requestId) {
-    return toolApprovals(account).some(row => row.decisionRequestId === requestId) ||
+    return !!account.chatOperations?.[requestId] || toolApprovals(account).some(row => row.decisionRequestId === requestId) ||
       userQuestions(account).some(row => row.answerRequestId === requestId);
   }
 

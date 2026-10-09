@@ -109,6 +109,9 @@ test('real HTTP service migrates once, preserves old APIs, isolates accounts and
     assert.deepEqual(await request(`/chats/${mainId}/metadata`, otherDevice.token, 'PATCH', mark), marked);
     assert.equal((await request(`/chats/${mainId}/metadata`, device.token, 'PATCH', { ...mark, unread: false })).body.error.code, 'REQUEST_CONFLICT');
     assert.equal((await request(`/chats/${mainId}/metadata`, device.token, 'PATCH', { ...mark, requestId: 'stale' })).body.error.code, 'REVISION_CHANGED');
+    assert.equal((await request(`/chats/${mainId}/metadata`, device.token, 'PATCH', { ...mark, requestId: 123 })).status, 400);
+    assert.equal((await request('/commands', device.token, 'POST', { requestId: mark.requestId, kind: 'session.cancel',
+      targetDeviceId: seed.hostId, sessionId: 'original' })).body.error.code, 'REQUEST_CONFLICT');
     assert.equal((await request('/chats?limit=201')).status, 400);
     assert.equal((await request('/chats?cursor=made-up')).body.error.code, 'CURSOR_RESET_REQUIRED');
     const registration = await fetch(`${origin}/personal/v1/auth/register`, { method: 'POST', headers: { origin, 'content-type': 'application/json' },
