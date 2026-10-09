@@ -1,0 +1,17 @@
+{
+  "phase": "after-approval",
+  "firstAttempt": {
+    "exitCode": 1,
+    "resultWritten": false,
+    "root": "C:/Temp/weftmate-fx13-replay-HbpV0z",
+    "orphanProcessesTerminated": 5,
+    "reason": "Runner exited during startup without error output; no completed case or approval result."
+  },
+  "retry": {
+    "exitCode": 0,
+    "casesPassed": [
+      "fixed script no approval",
+      "relative output collision asks; rejected and original preserved"
+    ]
+  }
+}

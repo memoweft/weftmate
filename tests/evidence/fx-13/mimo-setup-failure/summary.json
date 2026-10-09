@@ -1,0 +1,63 @@
+{
+  "startedAt": "2026-10-09T17:28:38.426Z",
+  "originalScenario": true,
+  "freshAccounts": true,
+  "realElectron": true,
+  "realDsh": true,
+  "runs": [
+    {
+      "iteration": 1,
+      "root": "C:/Temp/weftmate-fx13-mimo-Sx4UyL",
+      "runnerPid": 37756,
+      "electronPid": 37380,
+      "runtimePluginHashes": {
+        "personal-native-files.mjs": "ca9ad7b9b2f855ee01374ad82d4e3e1d00ba56ccd6a677a30d7a3ade892e1654",
+        "personal-write-targets.mjs": "72b39ce957ec5d5454a622c034eab87fc49f7c03285a90fd39a55f28fb033054",
+        "personal-approval-policy.mjs": "4ce360fbd7c9be96ff65145f2a01b31eb92909259b87c302c6f297e89e481c2e"
+      },
+      "status": "failed",
+      "durationMs": 0,
+      "unexpectedApprovals": 0,
+      "cleaned": true
+    },
+    {
+      "iteration": 2,
+      "root": "C:/Temp/weftmate-fx13-mimo-VjDnp3",
+      "runnerPid": 37756,
+      "electronPid": 53632,
+      "runtimePluginHashes": {
+        "personal-native-files.mjs": "ca9ad7b9b2f855ee01374ad82d4e3e1d00ba56ccd6a677a30d7a3ade892e1654",
+        "personal-write-targets.mjs": "72b39ce957ec5d5454a622c034eab87fc49f7c03285a90fd39a55f28fb033054",
+        "personal-approval-policy.mjs": "4ce360fbd7c9be96ff65145f2a01b31eb92909259b87c302c6f297e89e481c2e"
+      },
+      "status": "failed",
+      "durationMs": 0,
+      "unexpectedApprovals": 0,
+      "cleaned": true
+    },
+    {
+      "iteration": 3,
+      "root": "C:/Temp/weftmate-fx13-mimo-QBUQ4E",
+      "runnerPid": 37756,
+      "electronPid": 23952,
+      "runtimePluginHashes": {
+        "personal-native-files.mjs": "ca9ad7b9b2f855ee01374ad82d4e3e1d00ba56ccd6a677a30d7a3ade892e1654",
+        "personal-write-targets.mjs": "72b39ce957ec5d5454a622c034eab87fc49f7c03285a90fd39a55f28fb033054",
+        "personal-approval-policy.mjs": "4ce360fbd7c9be96ff65145f2a01b31eb92909259b87c302c6f297e89e481c2e"
+      },
+      "status": "failed",
+      "durationMs": 0,
+      "unexpectedApprovals": 0,
+      "cleaned": true
+    }
+  ],
+  "finishedAt": "2026-10-09T17:29:13.263Z",
+  "usage": {
+    "requests": 0,
+    "withUsage": 0,
+    "missingUsage": 0,
+    "promptTokens": 0,
+    "completionTokens": 0,
+    "cachedTokens": 0
+  }
+}

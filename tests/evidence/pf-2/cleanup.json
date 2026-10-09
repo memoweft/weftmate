@@ -1,0 +1,21 @@
+{
+  "previousKilledPids": [
+    57848,
+    37520,
+    46864,
+    25872,
+    47160,
+    32236,
+    55280,
+    43328,
+    19016,
+    30708
+  ],
+  "note": "Exact forced-stop count; normal exits are not counted. No daily process or 8081 was accessed.",
+  "lanLockReleased": true,
+  "simulatorsStarted": 0,
+  "at": "2026-10-10T00:42:42.6771639+08:00",
+  "finalKilledPids": [],
+  "killedCount": 10,
+  "remainingMatchedProcesses": []
+}

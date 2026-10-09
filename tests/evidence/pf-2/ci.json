@@ -1,0 +1,38 @@
+{
+  "checkedCommit": "e2efeba261e3a6f3a40d4e01afb859bdde58c28e",
+  "note": "Code checkpoint before the evidence-only closing commit. The final PR head is checked independently and recorded in Orchestrator/pf-2.result.md.",
+  "checks": [
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/37961913073/job/113926598297",
+      "name": "test (ubuntu-latest)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/37961913070/job/113926598568",
+      "name": "Relay full chain (443)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/37961913073/job/113926598890",
+      "name": "Observed bridge (real MemoWeft Core)",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/37961912945/job/113926597500",
+      "name": "Web cloud login interactions",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/37961912945/job/113926597868",
+      "name": "Android debug and JVM tests",
+      "state": "SUCCESS"
+    },
+    {
+      "link": "https://github.com/memoweft/weftmate/actions/runs/37961912995/job/113926597536",
+      "name": "Host certificates (Pebble DNS-01)",
+      "state": "SUCCESS"
+    }
+  ],
+  "capturedAt": "2026-10-10T00:59:46.9066545+08:00",
+  "pr": "https://github.com/memoweft/weftmate/pull/141"
+}

@@ -1,0 +1,34 @@
+{
+  "before": false,
+  "root": "C:/Temp/weftmate-fx13-replay-9xU8PR",
+  "realElectron": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "cases": [
+    {
+      "kind": "fixed",
+      "approvalExpected": false,
+      "outputPreserved": true,
+      "scriptResult": {
+        "subtotals": {
+          "茶": 25,
+          "咖啡": 24
+        },
+        "total": 49,
+        "小计": {
+          "茶": 25,
+          "咖啡": 24
+        },
+        "合计": 49
+      }
+    },
+    {
+      "kind": "relative",
+      "approvalExpected": true,
+      "outputPreserved": true,
+      "scriptResult": null
+    }
+  ],
+  "electronPid": 45336,
+  "cleaned": true
+}
