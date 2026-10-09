@@ -108,6 +108,7 @@ export function createMainChat(context) {
               const now = new Date(context.timestamp()).toISOString();
               next.sessions[relay.sessionId] = { ownerId, origin: 'personal-remote', attachedAt: now, modelProfileId: relay.modelProfileId,
                 approvalMode: previous ? next.sessions[previous.sessionId].approvalMode : next.defaultApprovalMode ?? 'auto', workspaceChatId: request.chatId,
+                deepThinking: previous ? next.sessions[previous.sessionId].deepThinking === true : next.personalization?.defaultDeepThinking === true,
                 ...(previous && next.sessions[previous.sessionId].allowedApprovalCategories ? { allowedApprovalCategories: structuredClone(next.sessions[previous.sessionId].allowedApprovalCategories) } : {}) };
               next.chatIdentity.segments[relay.segmentId] = { segmentId: relay.segmentId, chatId: request.chatId, sessionId: relay.sessionId,
                 hostId: next.hostId, ordinal: previous ? previous.ordinal + 1 : 0, state: 'active', startedAt: now,

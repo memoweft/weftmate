@@ -1,3 +1,4 @@
+import { accountPersonalization } from './personalization.mjs';
 import { modelTierFor } from '../model-tier.ts';
 import { currentChatProfile } from '../background-model-selection.mjs';
 import path from 'node:path';
@@ -704,6 +705,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       const project = account.projects?.[session.projectId];
       return { conversationWorkspace: sessionWorkspace(path.join(path.dirname(root), 'conversations'), match.ownerId, session.workspaceChatId ?? sessionId),
         deepThinking: (chatForSession(account,sessionId)?.deepThinking ?? session.deepThinking) === true,
+        personalization: accountPersonalization(account),
 
         mode: session.approvalMode ?? account.defaultApprovalMode ?? 'auto',
         allowedCategories: session.allowedApprovalCategories ?? [],

@@ -1,0 +1,515 @@
+{
+  "realElectron": true,
+  "realPinnedDsh": true,
+  "turns": [
+    {
+      "kind": "new",
+      "reply": "你好，小合成。\n\n—WM",
+      "thinking": true
+    },
+    {
+      "kind": "main",
+      "reply": "你好，小合成。\n\n—WM",
+      "thinking": true
+    },
+    {
+      "kind": "project",
+      "reply": "小合成，你好！\n\n—WM",
+      "thinking": true
+    },
+    {
+      "kind": "side",
+      "reply": "小合成你好，你刚才让我用设置里的称呼向你问好，并说明你让我做的这件事。—WM",
+      "thinking": true
+    },
+    {
+      "kind": "temporary",
+      "reply": "小合成，你好——你刚才只是让我用设置里的称呼向你问好，并说明你刚才让我做什么，除此之外没有其他任务。—WM",
+      "thinking": true
+    }
+  ],
+  "thinkingDisplays": [
+    "折叠",
+    "展开",
+    "不显示"
+  ],
+  "webSearchDisabled": true,
+  "wire": [
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "disabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    },
+    {
+      "status": 200
+    },
+    {
+      "model": "mimo-v2.6-flash",
+      "thinking": {
+        "type": "enabled"
+      },
+      "reasoning_effort": null
+    },
+    {
+      "status": 200
+    }
+  ],
+  "usage": {
+    "month": "2026-10",
+    "timeZone": "Asia/Shanghai",
+    "sessionId": null,
+    "total": {
+      "requests": 8,
+      "unknownRequests": 0,
+      "unpricedRequests": 0,
+      "inputTokens": 13552,
+      "cachedInputTokens": 2112,
+      "outputTokens": 575,
+      "cost": 0.01263224
+    },
+    "days": [
+      {
+        "day": "2026-10-01",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-02",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-03",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-04",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-05",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-06",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-07",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-08",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-09",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-10",
+        "requests": 8,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 13552,
+        "cachedInputTokens": 2112,
+        "outputTokens": 575,
+        "cost": 0.01263224
+      },
+      {
+        "day": "2026-10-11",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-12",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-13",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-14",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-15",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-16",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-17",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-18",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-19",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-20",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-21",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-22",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-23",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-24",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-25",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-26",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-27",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-28",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-29",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-30",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      },
+      {
+        "day": "2026-10-31",
+        "requests": 0,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 0,
+        "cachedInputTokens": 0,
+        "outputTokens": 0,
+        "cost": 0
+      }
+    ],
+    "sessions": [
+      {
+        "sessionId": "session-03d931d1-b646-4d27-85c6-56e262b6940f",
+        "requests": 3,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 4794,
+        "cachedInputTokens": 2112,
+        "outputTokens": 76,
+        "cost": 0.00287624
+      },
+      {
+        "sessionId": "session-320832a6-971d-4b36-a8b7-51f8cf74d5dc",
+        "requests": 2,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 2302,
+        "cachedInputTokens": 0,
+        "outputTokens": 261,
+        "cost": 0.002824
+      },
+      {
+        "sessionId": "session-f8d2940f-9b73-498f-8cda-2bdd248e955c",
+        "requests": 1,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 2161,
+        "cachedInputTokens": 0,
+        "outputTokens": 176,
+        "cost": 0.002513
+      },
+      {
+        "sessionId": "session-f8aa8c81-86e4-4c68-9bc5-1455ccb8ddff",
+        "requests": 1,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 2155,
+        "cachedInputTokens": 0,
+        "outputTokens": 40,
+        "cost": 0.002235
+      },
+      {
+        "sessionId": "session-4b29a203-ac48-4d58-a54e-d22cce591455",
+        "requests": 1,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 2140,
+        "cachedInputTokens": 0,
+        "outputTokens": 22,
+        "cost": 0.002184
+      }
+    ],
+    "models": [
+      {
+        "profileId": "private-model-1eeab3fac80126f98790cb8598124367a43d402b",
+        "requests": 8,
+        "unknownRequests": 0,
+        "unpricedRequests": 0,
+        "inputTokens": 13552,
+        "cachedInputTokens": 2112,
+        "outputTokens": 575,
+        "cost": 0.01263224
+      }
+    ],
+    "budget": {
+      "monthlyLimit": null,
+      "effectiveLimit": null,
+      "temporaryLimit": null,
+      "state": "unlimited"
+    }
+  }
+}
