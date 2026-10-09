@@ -151,6 +151,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
                 core.operation('正在核对上次请求。');
         }
         core.state.hostId = payload.hostId;
+        core.state.personalCapabilities = payload.personalCapabilities ?? {};
         core.state.capabilities = payload.backend?.capabilities ?? null;
         core.state.executionAccount = payload.executionAccount;
         core.state.syncAvailable = payload.sync?.available === true;
@@ -190,7 +191,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
             // Receipts and native history control the composer. Model settings,
             // host diagnostics and the complete session list must not delay them.
             await Promise.all([core.refreshHistory(), ...core.readMarkers()
-                .filter(marker => ['session.create', 'session.message', 'session.cancel'].includes(marker.kind))
+                .filter(marker => ['session.create', 'session.message', 'session.cancel', 'chat.message', 'session.side.create'].includes(marker.kind))
                 .map(marker => core.lookupRequest(marker))]);
         } finally { core.state.liveRefreshing = false; }
     }
@@ -262,6 +263,7 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
     }
     function clearSession() {
+        core.resetLogicalSession?.();
         effects.cancelCloudLogin();
         effects.removeResourcePreview();
         core.cancelAttachmentUpload();
