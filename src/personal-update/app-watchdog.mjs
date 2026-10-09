@@ -60,13 +60,14 @@ async function relevantProcesses() {
 }
 // Separate installer extraction from startup health: a cold install can take minutes.
 const installDeadline = Date.now() + state.timeoutMs;
-let bootAt = Date.now();
+let newAppPid = null;
 if (installResult === 0) {
   try {
     const metadata = JSON.parse(await readFile(join(state.installation, 'resources/app.asar/package.json'), 'utf8'));
     if (metadata.version !== state.nextVersion) throw new Error('installed version mismatch');
     const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE;
-    const child = spawn(state.executable, [`--desktop-config=${state.configFile}`], { detached: true, windowsHide: true, stdio: 'ignore', env });
+    const child = spawn(state.executable, [`--desktop-config=${state.configFile}`], { cwd: state.snapshot, detached: true, windowsHide: true, stdio: 'ignore', env });
+    newAppPid = child.pid;
     child.on('error', () => {}); child.unref();
     await save('monitor-state.json', { phase: 'checking-startup', token: state.token });
   } catch { installResult = 1; }
@@ -84,6 +85,7 @@ while (installResult === 0 && Date.now() < installDeadline) {
 let recoveryStep = 'stop-new-process';
 try {
   // Native failures may occur before main can write its PID. Select only this exact executable.
+  if (newAppPid && alive(newAppPid)) await run('taskkill.exe', ['/pid', String(newAppPid), '/T', '/F'], { windowsHide: true }).catch(() => {});
   for (const row of await relevantProcesses()) await run('taskkill.exe', ['/pid', String(row.ProcessId), '/T', '/F'], { windowsHide: true }).catch(() => {});
   await pause(500);
   const failedProgram = `${state.installation}.failed-${state.token}`;

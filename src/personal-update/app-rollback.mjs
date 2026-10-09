@@ -34,7 +34,7 @@ export async function prepareAppRollback({ configFile, nextVersion, appData = ap
       timeoutMs, phase: 'installing', createdAt: new Date().toISOString() };
     await atomicJson(join(root, 'pending.json'), state);
     const child = spawn(recoveryExe, [join(snapshot, 'monitor.mjs'), root], {
-      detached: true, windowsHide: true, stdio: 'ignore', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
+      cwd: snapshot, detached: true, windowsHide: true, stdio: 'ignore', env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
     });
     await new Promise((resolve, reject) => { child.once('spawn', resolve); child.once('error', reject); });
     child.unref();
