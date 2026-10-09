@@ -130,6 +130,8 @@ globalThis.WeftUiCore.factories.resources = (core, effects, environment) => {
             if (!core.readMarkers().some((row) => row.requestId === marker.requestId))
                 return;
             if (payload.command) {
+                const index = core.state.tasks.findIndex(item => item.commandId === payload.command.commandId);
+                if (index >= 0) core.state.tasks[index] = payload.command;
                 core.updateFromCommand(payload.command);
                 if (!core.state.tasks.some((item) => item.commandId === payload.command.commandId)) {
                     core.state.tasks.unshift(payload.command);

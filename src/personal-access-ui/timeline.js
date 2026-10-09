@@ -43,34 +43,55 @@
       const previous = row.querySelector('details')
       const terminal = ordered.some(e => (e.type === 'task.ended' && e.data?.taskId === block.taskId) ||
         e.type === 'turn.ended' && block.taskId === `turn-${e.data?.turn}`)
-      const view = globalThis.WeftUiCore.progressText(block.steps, terminal), running = view.running
-      const signature = JSON.stringify([block, terminal, view])
-      if (row.dataset.signature === signature) return
+      const view = globalThis.WeftUiCore.progressText(block.steps, terminal)
+      // Keep completed work visible while a real native turn waits for its
+      // next model/tool result. The stage comes from host state, not a timer
+      // pretending that another tool is still running.
+      if (options.waiting && !terminal && !view.running && !view.failed &&
+          block === groups.at(-1) && started && block.seq > started.seq &&
+          block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
+        view.text += ` · ${options.waiting}`; view.running = true
+      }
+      const running = view.running
+      const signature = JSON.stringify([block, terminal])
+      row.dataset.running = String(running)
+      if (row.dataset.signature === signature) {
+        // A stage/timer update must not detach a focused or scrolling summary.
+        const text = previous?.querySelector('.inline-progress-text')
+        if (text && text.textContent !== view.text) text.textContent = view.text
+        text?.classList.toggle('is-running', running)
+        previous?.querySelector('summary')?.setAttribute('aria-label', `${view.text}，${previous.open ? '已展开' : '已收起'}`)
+        return
+      }
       row.dataset.signature = signature
       const focused = document.activeElement, focusStep = focused?.closest?.('.execution-step')?.dataset.step
       const hadFocus = row.contains?.(focused)
       const savedSteps = new Map([...row.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]))
       const newFailure = block.steps.some(step => step.state === 'failed' && savedSteps.get(String(step.stepId))?.dataset.state !== 'failed')
-      const details = node('details', 'execution-block')
+      const details = previous || node('details', 'execution-block')
       details.open = newFailure || previous?.open === true
       row.dataset.running = String(running)
       row.classList.toggle('has-failure', !!view.failed)
-      const summary = node('summary', 'inline-progress-summary')
+      const summary = details.querySelector('summary') || node('summary', 'inline-progress-summary')
       summary.setAttribute('role', 'button')
-      const text = node('span', 'inline-progress-text', view.text)
+      const text = summary.querySelector('.inline-progress-text') || node('span', 'inline-progress-text')
+      text.textContent = view.text
       text.classList.toggle('is-running', running)
       text.setAttribute('aria-live', 'polite')
-      summary.append(text)
-      const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true')
-      if (window.WeftIcons) arrow.append(window.WeftIcons.create('chevron', 16))
-      summary.append(arrow)
-      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${view.text}，${details.open ? '已展开' : '已收起'}`) }
-      details.addEventListener('toggle', () => { accessibility(); if (details.open && details.isConnected) renderCurrent() }); accessibility()
-      const records = node('div', 'execution-records')
-      details.append(summary, records)
-      for (const step of block.steps) records.append(globalThis.WeftTimelineCards.step(step, savedSteps.get(String(step.stepId)), running, options))
+      if (!text.parentNode) summary.append(text)
+      if (!summary.querySelector('.progress-chevron')) {
+        const arrow = node('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true')
+        if (window.WeftIcons) arrow.append(window.WeftIcons.create('chevron', 16))
+        summary.append(arrow)
+      }
+      const accessibility = () => { summary.setAttribute('aria-expanded', String(details.open)); summary.setAttribute('aria-label', `${text.textContent}，${details.open ? '已展开' : '已收起'}`) }
+      if (!previous) details.addEventListener('toggle', () => { accessibility(); if (details.open && details.isConnected) renderCurrent() }); accessibility()
+      const records = details.querySelector('.execution-records') || node('div', 'execution-records')
+      if (!summary.parentNode) details.append(summary)
+      if (!records.parentNode) details.append(records)
+      records.replaceChildren(...block.steps.map(step => globalThis.WeftTimelineCards.step(step, savedSteps.get(String(step.stepId)), running, options)))
       const collapse = previous?.open && !details.open && block.steps.length <= 20 ? globalThis.WeftMotion?.snapshot(previous) : null
-      row.replaceChildren(details)
+      if (!previous) row.replaceChildren(details)
       if (hadFocus) (focusStep ? [...records.querySelectorAll('.execution-step')].find(detail => detail.dataset.step === focusStep)?.querySelector('summary') : summary)?.focus({ preventScroll: true })
       globalThis.WeftMotion?.details(details)
       globalThis.WeftMotion?.dismiss(collapse, true)

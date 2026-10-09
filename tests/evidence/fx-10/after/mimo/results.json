@@ -1,0 +1,508 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T10:23:28.127Z",
+  "host": "http://127.0.0.1:57262",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "action-01-organize",
+      "category": "action",
+      "title": "整理收件目录",
+      "status": "passed",
+      "durationMs": 27900,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-f55ecf4f-d304-4c04-82f0-b9a3e07ead51",
+          "modelProfileId": "private-model-50b03886b63be28c737cc2578ace21de28e5f5a5",
+          "commandId": "cmd-779116bb-d83d-46b6-83d3-cc7b2071cb48",
+          "startedAt": "2026-10-09T10:23:28.899Z",
+          "reply": "收好了，收件箱现在按类型分成三个子文件夹：\n\n- `文本\\会议记录.txt`（28 字节）\n- `表格\\预算.csv`（25 字节）\n- `文档\\说明.md`（15 字节）\n\n文件名和内容都原样保留（已逐个读回核对，`周五讨论秋季活动。`、`项目,金额 / 场地,300`、`# 活动说明` 均无变化）。`不要动` 文件夹保持原位未动，里面的 `保留.txt`（`原样保留`）还在原路径。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:23:28.960Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:23:28.961Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:23:29.015Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:23:29.016Z"
+            },
+            {
+              "seq": 44,
+              "type": "step.started",
+              "at": "2026-10-09T10:23:34.581Z"
+            },
+            {
+              "seq": 45,
+              "type": "step.completed",
+              "at": "2026-10-09T10:23:34.591Z"
+            },
+            {
+              "seq": 91,
+              "type": "step.started",
+              "at": "2026-10-09T10:23:38.061Z"
+            },
+            {
+              "seq": 92,
+              "type": "step.completed",
+              "at": "2026-10-09T10:23:38.755Z"
+            },
+            {
+              "seq": 199,
+              "type": "step.started",
+              "at": "2026-10-09T10:23:43.475Z"
+            },
+            {
+              "seq": 200,
+              "type": "step.completed",
+              "at": "2026-10-09T10:23:44.022Z"
+            },
+            {
+              "seq": 371,
+              "type": "step.started",
+              "at": "2026-10-09T10:23:49.465Z"
+            },
+            {
+              "seq": 372,
+              "type": "step.completed",
+              "at": "2026-10-09T10:23:50.037Z"
+            },
+            {
+              "seq": 427,
+              "type": "step.started",
+              "at": "2026-10-09T10:23:52.376Z"
+            },
+            {
+              "seq": 428,
+              "type": "step.completed",
+              "at": "2026-10-09T10:23:52.876Z"
+            },
+            {
+              "seq": 479,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:23:56.208Z"
+            },
+            {
+              "seq": 480,
+              "type": "task.ended",
+              "at": "2026-10-09T10:23:56.208Z"
+            },
+            {
+              "seq": 481,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:23:56.209Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 27560,
+          "endedAt": "2026-10-09T10:23:56.459Z"
+        }
+      ],
+      "replySummary": "收好了，收件箱现在按类型分成三个子文件夹：\n\n- `文本\\会议记录.txt`（28 字节）\n- `表格\\预算.csv`（25 字节）\n- `文档\\说明.md`（15 字节）\n\n文件名和内容都原样保留（已逐个读回核对，`周五讨论秋季活动。`、`项目,金额 / 场地,300`、`# 活动说明` 均无变化）。`不要动` 文件夹保持原位未动，里面的 `保留.txt`（`原样保留`）还在原路径。",
+      "notes": "只在 runner 临时目录移动文件；任何未声明的审批会使场景失败并请求取消。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；360秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-01-organize-flVJMa"
+    },
+    {
+      "id": "action-01-organize",
+      "category": "action",
+      "title": "整理收件目录",
+      "status": "passed",
+      "durationMs": 23600,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-0170b06c-fef0-40ec-9a44-3a817de1f1cc",
+          "modelProfileId": "private-model-50b03886b63be28c737cc2578ace21de28e5f5a5",
+          "commandId": "cmd-80ace8e0-d3a5-471d-a518-eb62c8246f95",
+          "startedAt": "2026-10-09T10:23:57.660Z",
+          "reply": "收件箱已按类型整理完毕，`不要动` 文件夹保持原样。\n\n整理后的结构：\n\n```\ninbox\\\n├── 文本\\会议记录.txt      （周五讨论秋季活动。）\n├── 表格\\预算.csv          （项目,金额 / 场地,300）\n├── 文档\\说明.md           （# 活动说明）\n└── 不要动\\保留.txt        （原样保留，未改动）\n```\n\n三个文件均为移动操作，文件名和内容都完好无损；`不要动` 目录及其内的 `保留.txt` 未被触碰。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:23:57.699Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:23:57.699Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:23:57.723Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:23:57.723Z"
+            },
+            {
+              "seq": 52,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:02.918Z"
+            },
+            {
+              "seq": 53,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:02.923Z"
+            },
+            {
+              "seq": 91,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:06.539Z"
+            },
+            {
+              "seq": 92,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:07.131Z"
+            },
+            {
+              "seq": 206,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:13.121Z"
+            },
+            {
+              "seq": 207,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:13.813Z"
+            },
+            {
+              "seq": 274,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:16.442Z"
+            },
+            {
+              "seq": 275,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:17.318Z"
+            },
+            {
+              "seq": 328,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:24:20.880Z"
+            },
+            {
+              "seq": 329,
+              "type": "task.ended",
+              "at": "2026-10-09T10:24:20.880Z"
+            },
+            {
+              "seq": 330,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:24:20.881Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 23260,
+          "endedAt": "2026-10-09T10:24:20.920Z"
+        }
+      ],
+      "replySummary": "收件箱已按类型整理完毕，`不要动` 文件夹保持原样。\n\n整理后的结构：\n\n```\ninbox\\\n├── 文本\\会议记录.txt      （周五讨论秋季活动。）\n├── 表格\\预算.csv          （项目,金额 / 场地,300）\n├── 文档\\说明.md           （# 活动说明）\n└── 不要动\\保留.txt        （原样保留，未改动）\n```\n\n三个文件均为移动操作，文件名和内容都完好无损；`不要动` 目录及其内的 `保留.txt` 未被触碰。",
+      "notes": "只在 runner 临时目录移动文件；任何未声明的审批会使场景失败并请求取消。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；360秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-01-organize-nLPcmH"
+    },
+    {
+      "id": "action-01-organize",
+      "category": "action",
+      "title": "整理收件目录",
+      "status": "passed",
+      "durationMs": 20631,
+      "checks": [
+        {
+          "type": "file_contains",
+          "path": "inbox/文本/会议记录.txt",
+          "text": "周五讨论秋季活动",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/表格/预算.csv",
+          "text": "场地,300",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/文档/说明.md",
+          "text": "# 活动说明",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "inbox/不要动/保留.txt",
+          "text": "原样保留",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/会议记录.txt",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/预算.csv",
+          "status": "passed"
+        },
+        {
+          "type": "file_absent",
+          "path": "inbox/说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-3680c8e8-a637-4193-9148-d1f18bc9ac7a",
+          "modelProfileId": "private-model-50b03886b63be28c737cc2578ace21de28e5f5a5",
+          "commandId": "cmd-042d6fb8-1838-45e6-a09e-d1a80d1eefb6",
+          "startedAt": "2026-10-09T10:24:21.895Z",
+          "reply": "收拾好了，按类型分了三个文件夹：\n\n```\ninbox\\\n├─ 文本\\会议记录.txt      周五讨论秋季活动。\n├─ 表格\\预算.csv          项目,金额 / 场地,300\n├─ 文档\\说明.md           # 活动说明\n└─ 不要动\\保留.txt        原样保留（未动）\n```\n\n文件名和内容都原样保留（字节数与移动前一致），`不要动` 文件夹连同里面的 `保留.txt` 完全没碰。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:24:21.953Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:24:21.954Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:24:22.117Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:24:22.117Z"
+            },
+            {
+              "seq": 47,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:25.011Z"
+            },
+            {
+              "seq": 48,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:25.017Z"
+            },
+            {
+              "seq": 89,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:28.602Z"
+            },
+            {
+              "seq": 90,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:29.167Z"
+            },
+            {
+              "seq": 158,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:32.652Z"
+            },
+            {
+              "seq": 159,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:32.664Z"
+            },
+            {
+              "seq": 160,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:32.676Z"
+            },
+            {
+              "seq": 161,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:32.691Z"
+            },
+            {
+              "seq": 162,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:32.762Z"
+            },
+            {
+              "seq": 163,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:32.779Z"
+            },
+            {
+              "seq": 164,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:32.788Z"
+            },
+            {
+              "seq": 165,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:32.795Z"
+            },
+            {
+              "seq": 278,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:36.276Z"
+            },
+            {
+              "seq": 279,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:36.899Z"
+            },
+            {
+              "seq": 332,
+              "type": "step.started",
+              "at": "2026-10-09T10:24:38.811Z"
+            },
+            {
+              "seq": 333,
+              "type": "step.completed",
+              "at": "2026-10-09T10:24:39.416Z"
+            },
+            {
+              "seq": 378,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:24:41.995Z"
+            },
+            {
+              "seq": 379,
+              "type": "task.ended",
+              "at": "2026-10-09T10:24:41.996Z"
+            },
+            {
+              "seq": 380,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:24:41.996Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 20234,
+          "endedAt": "2026-10-09T10:24:42.129Z"
+        }
+      ],
+      "replySummary": "收拾好了，按类型分了三个文件夹：\n\n```\ninbox\\\n├─ 文本\\会议记录.txt      周五讨论秋季活动。\n├─ 表格\\预算.csv          项目,金额 / 场地,300\n├─ 文档\\说明.md           # 活动说明\n└─ 不要动\\保留.txt        原样保留（未动）\n```\n\n文件名和内容都原样保留（字节数与移动前一致），`不要动` 文件夹连同里面的 `保留.txt` 完全没碰。",
+      "notes": "只在 runner 临时目录移动文件；任何未声明的审批会使场景失败并请求取消。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；360秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-01-organize-M01nBi"
+    }
+  ],
+  "summary": {
+    "passed": 3,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 0,
+    "passRate": 1,
+    "coverage": 1
+  }
+}

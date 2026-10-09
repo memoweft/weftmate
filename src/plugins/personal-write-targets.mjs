@@ -258,7 +258,6 @@ export function shellWriteTargets(source, cwd, powershell = true) {
       const cmd = parts[i].toLowerCase();
       if (!['set-content', 'add-content', 'out-file', 'new-item', 'invoke-webrequest', 'invoke-restmethod', 'curl', 'curl.exe', 'move-item', 'copy-item', 'mv', 'cp'].includes(cmd)) continue;
       const tail = parts.slice(i + 1);
-      if (tail.includes(',')) { add([]); continue; }
       const argumentAt = at => {
         if (at < 0 || at >= tail.length) return;
         if (tail[at] !== '(') return [tail[at]];
@@ -272,6 +271,8 @@ export function shellWriteTargets(source, cwd, powershell = true) {
         if (tail[at + 1] === '=') return tail[at] === '--output' ? argumentAt(at + 2) : [];
         return argumentAt(at + 1);
       };
+      const kind = cmd === 'new-item' && /^Directory$/i.test(value(option(/^-ItemType$/i) ?? []) ?? '') ? 'directory' : 'write';
+      if (tail.includes(',')) { add([], kind); continue; }
       if (/^(?:invoke-webrequest|invoke-restmethod|curl(?:\.exe)?)$/.test(cmd)) {
         const curl = /^curl/.test(cmd);
         const outputOption = curl ? /^(?:-o|--output)$/ : /^-OutFile$/i;
@@ -293,8 +294,13 @@ export function shellWriteTargets(source, cwd, powershell = true) {
       }
       if (/^(?:move-item|copy-item|mv|cp)$/.test(cmd)) {
         add(option(/^-Destination$/i) ?? positional[1] ?? [], 'move', absolute(value(option(/^-(?:LiteralPath|Path)$/i) ?? positional[0] ?? [])));
+        const move = writes.at(-1);
+        // Literal Move-Item without Force cannot replace an existing file.
+        // Abbreviated switches and splatted parameters may supply Force.
+        if (cmd === 'move-item' && !tail.some(token => /^-f(?:o(?:r(?:c(?:e)?)?)?)?(?::|$)/i.test(token) || /^@/.test(token)))
+          move.noReplace = true;
       } else add(option(/^-(?:LiteralPath|Path|FilePath)$/i) ?? positional[0] ?? [],
-        cmd === 'new-item' && /^Directory$/i.test(value(option(/^-ItemType$/i) ?? []) ?? '') ? 'directory' : 'write');
+        kind);
     }
   }
   function block(input, uncertain = false) {

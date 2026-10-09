@@ -60,7 +60,7 @@ const server = createServer((req, res) => {
       const finished = body.messages.some(m => m.role === 'tool' && JSON.stringify(m.content).includes('PF1_SYNTHETIC_OK'));
       const name = body.tools.some(t => t.function.name === 'read') ? 'read' : 'load_tools';
       const delta = finished ? { content: 'PF1_SYNTHETIC_OK' } : { tool_calls: [{ index: 0, id: `synthetic-call-${requests.length}`,
-        type: 'function', function: { name, arguments: JSON.stringify(name === 'read' ? { file_path: 'pf1-input.txt' } : { names: ['read'] }) } }] };
+        type: 'function', function: { name, arguments: JSON.stringify(name === 'read' ? { file_path: 'pf1-input.txt' } : { names: process.env.PF1_LOAD_TOOLS?.split(',') ?? ['read'] }) } }] };
       res.writeHead(200, { 'content-type': 'text/event-stream' });
       res.end(`data: ${JSON.stringify({ id: 'synthetic', choices: [{ index: 0, delta, finish_reason: null }] })}\n\ndata: ${JSON.stringify({ id: 'synthetic', choices: [{ index: 0, delta: {}, finish_reason: finished ? 'stop' : 'tool_calls' }] })}\n\ndata: [DONE]\n\n`);
       return;
@@ -145,6 +145,8 @@ try {
     console.log(JSON.stringify({ timings }));
   }
   if (process.env.PF1_CAPTURE_FILE) await writeFile(process.env.PF1_CAPTURE_FILE, JSON.stringify(requests[0], null, 2));
+  if (process.env.PF1_TOOL_DESCRIPTIONS_FILE) await writeFile(process.env.PF1_TOOL_DESCRIPTIONS_FILE,
+    JSON.stringify(requests.map(request => (request.tools ?? []).map(tool => ({name:tool.function.name,description:tool.function.description}))),null,2));
   const encoding = getEncoding('cl100k_base');
   const count = value => encoding.encode(typeof value === 'string' ? value : JSON.stringify(value)).length;
   const tokens = requests[0].messages.reduce((sum, message) => sum + count(message.content) + 4, 0) + count(requests[0].tools ?? []);

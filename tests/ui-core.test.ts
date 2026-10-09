@@ -44,6 +44,88 @@ test('D35 progress uses real kinds/objects and prioritizes failure and stopped s
   assert.equal(api.executionDetailText('plain output'), 'plain output');
 });
 
+test('FX-10 native turn history makes stop usable before the session list catches up and removes it on terminal evidence', async () => {
+  const f = fixture()
+  f.core.state.sessionSnapshotAt='2026-10-09T00:00:00.000Z'
+  f.core.appendHistory([{sessionId:'session-test',seq:1,at:'2026-10-09T00:00:01.000Z',type:'turn.started',data:{}}])
+  assert.equal(f.core.state.sessions[0].running, false)
+  assert.equal(f.core.composerState('').running, true)
+  assert.equal(f.core.composerState('').cancelDisabled, false)
+  assert.ok(f.paints.some(row => row.name === 'updateAvailability'))
+  let stopped = false
+  f.core.submitCommand = async (kind: string) => { stopped = kind === 'session.cancel'; return {state:'accepted_by_dsh'} }
+  await f.core.stopCurrentTurn()
+  assert.equal(stopped, true)
+  f.core.state.sessions[0].running = true
+  f.core.appendHistory([{sessionId:'session-test',seq:2,at:'2026-10-09T00:00:02.000Z',type:'turn.ended',data:{reason:'completed'}}])
+  assert.equal(f.core.composerState('').running, false)
+  assert.equal(f.core.composerState('').cancelHidden, true)
+  f.core.beginOptimistic({sessionId:'session-test',requestId:'queued',status:'accepted'})
+  assert.equal(f.core.composerState('').running, false, 'accepted/queued receipt is not running evidence')
+})
+
+test('FX-10 live conversation reads remain independent of slow host/model refresh and coalesce overlapping ticks', async () => {
+  const f = fixture(), host = deferred(), history = deferred()
+  f.core.refreshStatus = () => host.promise
+  let histories = 0, receipts = 0
+  f.core.refreshHistory = async () => { histories++; await history.promise }
+  f.core.readMarkers = () => [{kind:'session.message',requestId:'pending-receipt'}]
+  f.core.lookupRequest = async () => { receipts++ }
+  f.core.refreshTasks = async () => { throw Error('live reads must not request the account task list') }
+  f.core.refreshConversationTasks = async () => {}
+  const background = f.core.refreshAssistant()
+  const live = f.core.refreshLiveConversation()
+  await f.core.refreshLiveConversation()
+  assert.equal(histories, 1)
+  assert.equal(receipts, 1)
+  history.resolve(undefined); await live
+  f.core.refreshModels = f.core.refreshSessions = f.core.refreshTasks = f.core.restoreRequests = async () => {}
+  host.resolve(undefined); await background
+  assert.equal(f.core.state.liveRefreshing, false)
+})
+
+test('FX-10 a newer idle snapshot overrides an old unended start without inventing an ending', () => {
+  const f=fixture()
+  f.core.state.sessionSnapshotAt='2026-10-09T00:00:00.000Z'
+  f.core.appendHistory([{sessionId:'session-test',seq:1,at:'2026-10-09T00:00:01.000Z',type:'turn.started',data:{}}])
+  assert.equal(f.core.composerState('').running,true)
+  f.core.state.sessionSnapshotAt='2026-10-09T00:00:02.000Z'
+  assert.equal(f.core.composerState('').running,false)
+  assert.match(f.core.turnStatusViewModel().message,/尚无结束记录/)
+  assert.equal(f.core.state.turnStatus,'running','no terminal record was fabricated')
+})
+
+test('FX-10 an accepted new session delivers its first message while an older session list is still loading', async () => {
+  const sessions = deferred()
+  const f = fixture((_url, options) => {
+    const body = JSON.parse(options.body)
+    return response({command:{...body, sessionId:'session-new',state:'accepted_by_dsh',receiptId:'native-new'}})
+  })
+  f.core.refreshSessions = () => sessions.promise
+  f.core.refreshTasks = f.core.refreshHistory = async () => {}
+  f.core.selectSession = async (id: string) => { f.core.state.selectedSessionId=id; f.core.state.newConversation=false }
+  f.core.startNewConversation()
+  const sent = f.core.sendDraft('first message')
+  try {
+    await Promise.race([sent,new Promise(resolve=>setTimeout(resolve,100))])
+    assert.deepEqual(f.requests.filter(r=>r.options.method==='POST').map(r=>JSON.parse(r.options.body).kind), ['session.create','session.message'])
+    assert.equal(f.core.state.selectedSessionId,'session-new')
+  } finally { sessions.resolve(undefined); await sent }
+})
+
+test('FX-10 receipt lookup replaces a pending command snapshot before optimistic delivery reads it', async () => {
+  const command={commandId:'cmd-confirmed',requestId:'request-confirmed',sessionId:'session-test',kind:'session.message',state:'accepted_by_dsh',receiptId:'native-confirmed'}
+  const f=fixture(()=>response({command}))
+  f.core.state.tasks=[{...command,state:'pending',receiptId:undefined}]
+  const marker={requestId:command.requestId,kind:command.kind,sessionId:command.sessionId}
+  f.core.rememberMarker(marker)
+  f.core.beginOptimistic({sessionId:command.sessionId,requestId:command.requestId,text:'accepted message'})
+  await f.core.lookupRequest(marker)
+  assert.equal(f.core.state.tasks[0].state,'accepted_by_dsh')
+  assert.equal(f.core.state.tasks[0].receiptId,'native-confirmed')
+  assert.equal(f.core.optimisticMessages()[0].status,'accepted')
+})
+
 test('D35 chronology splits only at visible conversation boundaries and approvals stay on their own step', () => {
   const { api } = fixture();
   const events = [

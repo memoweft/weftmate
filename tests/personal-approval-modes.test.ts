@@ -134,3 +134,21 @@ test('executing a generated script resolves argv conditional targets without exe
     assert.ok(risk('node delete.mjs').includes('delete'))
   } finally { rmSync(cwd, { recursive: true, force: true }) }
 })
+
+
+test('FX-10 directory arrays and non-replacing pipeline moves do not invent overwrite risk', () => {
+  const cwd = mkdtempSync(join(tmpdir(), 'weftmate-organize-'))
+  try {
+    const setup = "$base=$PWD; New-Item -ItemType Directory -Force -Path (Join-Path $base 'text'),(Join-Path $base 'tables') | Out-Null; "
+    assert.deepEqual(classifyPersonalRisk('pwsh', { command: setup + "Move-Item -Force (Join-Path $base 'source.txt') (Join-Path $base 'text/source.txt')" }, cwd), [])
+    const pipeline = "Get-ChildItem -Path $PWD -File -Filter '*.txt' | ForEach-Object { $dest=Join-Path $PWD $_.Name; if(Test-Path $dest){ Write-Output 'skip' } else { Move-Item -LiteralPath $_.FullName -Destination $dest } }"
+    assert.deepEqual(classifyPersonalRisk('pwsh', {command:pipeline}, cwd), [])
+    for (const force of ['-Force','-Fo','-Force:$flag','@parameters'])
+      assert.ok(classifyPersonalRisk('pwsh', {command:pipeline.replace('Move-Item -LiteralPath', `Move-Item ${force} -LiteralPath`)}, cwd).includes('overwrite'))
+    writeFileSync(join(cwd, 'user.txt'), 'keep')
+    assert.ok(classifyPersonalRisk('pwsh', {command:setup + 'Move-Item -Force source.txt user.txt'}, cwd).includes('overwrite'))
+    assert.ok(classifyPersonalRisk('pwsh', {command:"New-Item -ItemType File -Force -Path user.txt,other.txt"}, cwd).includes('overwrite'))
+    assert.ok(classifyPersonalRisk('pwsh', {command:pipeline + '; Remove-Item user.txt'}, cwd).includes('delete'))
+    assert.ok(classifyPersonalRisk('pwsh', {command:pipeline + '; Set-Content user.txt changed'}, cwd).includes('overwrite'))
+  } finally { rmSync(cwd, {recursive:true,force:true}) }
+})

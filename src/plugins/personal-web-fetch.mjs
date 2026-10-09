@@ -9,14 +9,13 @@ export function personalWebFetchProvider(bridge, currentExecution, executionIden
     async fetch({ url }, signal) {
       const identity = executionIdentity(currentExecution());
       const first = await bridge.request({ ...identity, action: 'browse', browserAction: 'open', url }, signal);
-      const segments = [first.text];
-      for (let segmentIndex = 1; segmentIndex < first.segmentCount; segmentIndex++) {
-        const part = await bridge.request({ ...identity, action: 'browse', browserAction: 'read',
-          snapshotId: first.snapshotId, segmentIndex }, signal);
-        segments.push(part.text);
-      }
-      return { url: first.url, statusCode: first.httpStatus, body: { kind: 'text', content: segments.join('') },
-        truncated: first.captureTruncated };
+      // Preserve the browser's existing progressive page reads. Joining every
+      // captured segment feeds navigation, changelogs and unrelated sections
+      // into every subsequent model request, even when only the lead is needed.
+      const continuation = first.segmentCount > 1 ?
+        `\n\n[Partial page: segment 0 of ${first.segmentCount}. Read further captured sections with browser action="read", snapshotId=${JSON.stringify(first.snapshotId)}, segmentIndex=1..${first.segmentCount - 1}. Do not cite unread sections.]\nOutline:\n${first.outline || '(no headings)'}` : '';
+      return { url: first.url, statusCode: first.httpStatus, body: { kind: 'text', content: first.text + continuation },
+        truncated: first.captureTruncated === true || first.segmentCount > 1 };
     },
   };
 }

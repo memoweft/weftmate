@@ -9,7 +9,9 @@ const MAX_LINKS = 50;
 const MAX_LABEL = 160;
 const READ_TIMEOUT_MS = 15_000;
 const EXTRACT = `(() => {
-  const body = document.querySelector('main, article') || document.body;
+  // API reference pages may use a content container instead of a main/article
+  // landmark. Their site-wide module menu is not the requested page content.
+  const body = document.querySelector('main, article, [role="main"], #apicontent') || document.body;
   const raw = String(body?.innerText || document.body?.innerText || '');
   const links = [];
   const primary = body?.querySelectorAll('a[href]') || [];

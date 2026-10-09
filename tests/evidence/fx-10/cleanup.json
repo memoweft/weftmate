@@ -1,0 +1,46 @@
+{
+  "at": "2026-10-09T21:00:58.7005541+08:00",
+  "forcedCleanedCount": 7,
+  "forcedProcesses": [
+    {
+      "ProcessId": 48376,
+      "ParentProcessId": 25516,
+      "Name": "node.exe"
+    },
+    {
+      "ProcessId": 53508,
+      "ParentProcessId": 48376,
+      "Name": "cmd.exe"
+    },
+    {
+      "ProcessId": 42500,
+      "ParentProcessId": 53508,
+      "Name": "electron.exe"
+    },
+    {
+      "ProcessId": 36396,
+      "ParentProcessId": 42500,
+      "Name": "electron.exe"
+    },
+    {
+      "ProcessId": 31700,
+      "ParentProcessId": 42500,
+      "Name": "electron.exe"
+    },
+    {
+      "ProcessId": 54572,
+      "ParentProcessId": 42500,
+      "Name": "electron.exe"
+    },
+    {
+      "ProcessId": 24424,
+      "ParentProcessId": 42500,
+      "Name": "electron.exe"
+    }
+  ],
+  "normalFixtureShutdown": "All remaining Electron/DSH/Core and model fixtures closed normally; short-lived processes not invented into a total",
+  "remainingOwnNodeElectronPythonWsl": 0,
+  "lanLockReleased": true,
+  "startedEmulators": 0,
+  "daily18186Or8081Accessed": false
+}

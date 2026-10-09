@@ -1,0 +1,16 @@
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, lstatSync } from 'node:fs';
+import { join,resolve } from 'node:path';
+const root=resolve('tests/evidence/fx-10');
+const phases=['before','after','after-web','final-web','verified-web','final-verified-web','scoped-final-web','final-page-web','delivery-web'];
+const output={generatedAt:new Date().toISOString(),models:[],usage:{requests:0,withUsage:0,missingUsage:0,inputTokens:0,cachedInputTokens:0,outputTokens:0}};
+for(const phase of phases)for(const model of ['mimo','lan']){
+ const dir=join(root,phase,model);let result,trace;try{result=JSON.parse(readFileSync(join(dir,'results.json')));trace=readFileSync(join(dir,'requests.jsonl'),'utf8').trim().split('\n').filter(Boolean).map(JSON.parse);}catch{continue;}
+ const starts=trace.filter(e=>e.kind==='model'&&e.phase==='start');
+ const requests=starts.map(s=>{const rows=trace.filter(e=>e.id===s.id),end=rows.find(e=>['end','error','cancel'].includes(e.phase));const first=rows.filter(e=>['first-reasoning','first-content','first-tool-call'].includes(e.phase)).sort((a,b)=>a.elapsedMs-b.elapsedMs)[0];return {id:s.id,at:s.at,origin:s.origin,stream:s.stream,requestChars:s.requestChars,durationMs:end?.elapsedMs,headersMs:rows.find(e=>e.phase==='headers')?.elapsedMs,firstMeaningfulMs:first?.elapsedMs,reasoningChars:end?.reasoningChars,contentChars:end?.contentChars,usage:end?.usage,terminal:end?.phase};});
+ if(model==='mimo')for(const r of requests.filter(r=>r.origin==='https://api.xiaomimimo.com')){output.usage.requests++;if(r.usage){output.usage.withUsage++;output.usage.inputTokens+=r.usage.prompt_tokens||0;output.usage.outputTokens+=r.usage.completion_tokens||0;output.usage.cachedInputTokens+=r.usage.prompt_tokens_details?.cached_tokens||0;}else output.usage.missingUsage++;}
+ const scenarios=result.results.map(r=>{const start=Date.parse(r.turns[0].startedAt),end=Date.parse(r.turns.at(-1).endedAt||r.turns.at(-1).timeline.at(-1)?.at);const modelRequests=requests.filter(q=>q.stream===true&&q.requestChars>1000&&Date.parse(q.at)>=start&&Date.parse(q.at)<=end);const events=r.turns.flatMap(t=>t.timeline);const durations=events.filter(e=>e.type==='step.started').map(s=>{const e=events.find(e=>e.type==='step.completed'&&e.seq>s.seq&&(!events.some(x=>x.type==='step.started'&&x.seq>s.seq&&x.seq<e.seq)));return e?{start:s.at,end:e.at,ms:Date.parse(e.at)-Date.parse(s.at)}:null;}).filter(Boolean);return {id:r.id,status:r.status,durationMs:r.durationMs,foregroundModelRequests:modelRequests,maxRequestChars:Math.max(0,...modelRequests.map(q=>q.requestChars)),toolDetailsCount:r.toolDetails?.length||0,toolWindows:durations,unexpectedApproval:r.turns.find(t=>t.unexpectedApproval)?.unexpectedApproval};});
+ output.models.push({phase,model,scenarios});
+ writeFileSync(join(dir,'timing-summary.json'),JSON.stringify(scenarios,null,2));
+}
+writeFileSync(join(root,'model-summary.json'),JSON.stringify(output,null,2));
+console.log(JSON.stringify({usage:output.usage,runs:output.models.map(m=>({phase:m.phase,model:m.model,scenarios:m.scenarios.map(s=>({id:s.id,ms:s.durationMs,maxRequestChars:s.maxRequestChars,modelMs:s.foregroundModelRequests.reduce((a,q)=>a+(q.durationMs||0),0)}))}))},null,2));

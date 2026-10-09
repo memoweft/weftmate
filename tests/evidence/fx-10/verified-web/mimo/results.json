@@ -1,0 +1,762 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T10:36:56.463Z",
+  "host": "http://127.0.0.1:59485",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "action-02-web-document",
+      "category": "action",
+      "title": "查网页并保存说明",
+      "status": "passed",
+      "durationMs": 139341,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "node24说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "node24说明.md",
+          "text": "https://nodejs.org/",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "说明|保存|写好",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "modelProfileId": "private-model-521d145724b0b59da6674d1e6410f712c459d551",
+          "commandId": "cmd-12946a72-b500-456b-b7bc-6786c0856a27",
+          "startedAt": "2026-10-09T10:36:57.176Z",
+          "reply": "已保存并核验 `[local path] 24 对比 22 的版本周期、V8 13.6 新语言特性、TS 默认可运行、AsyncLocalStorage/权限模型/弃用项等要点，并附 7 个官方来源链接。内容依据 Node 24.0.0 与 22.0.0 发布说明、nodejs/release 周期表、v24/v22 官方文档及 PR #57199 整理，可供下班后阅读。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:36:57.218Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:36:57.218Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:36:57.263Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:36:57.263Z"
+            },
+            {
+              "seq": 45,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:00.863Z"
+            },
+            {
+              "seq": 46,
+              "type": "step.completed",
+              "at": "2026-10-09T10:37:00.870Z"
+            },
+            {
+              "seq": 104,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:04.216Z"
+            },
+            {
+              "seq": 105,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:04.226Z"
+            },
+            {
+              "seq": 106,
+              "type": "step.completed",
+              "at": "2026-10-09T10:37:08.406Z"
+            },
+            {
+              "seq": 107,
+              "type": "step.completed",
+              "at": "2026-10-09T10:37:08.408Z"
+            },
+            {
+              "seq": 218,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:13.976Z"
+            },
+            {
+              "seq": 219,
+              "type": "step.completed",
+              "at": "2026-10-09T10:37:17.976Z"
+            },
+            {
+              "seq": 337,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:26.079Z"
+            },
+            {
+              "seq": 338,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:26.090Z"
+            },
+            {
+              "seq": 339,
+              "type": "step.completed",
+              "at": "2026-10-09T10:37:28.854Z"
+            },
+            {
+              "seq": 340,
+              "type": "step.completed",
+              "at": "2026-10-09T10:37:30.662Z"
+            },
+            {
+              "seq": 784,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:53.737Z"
+            },
+            {
+              "seq": 785,
+              "type": "step.started",
+              "at": "2026-10-09T10:37:53.747Z"
+            },
+            {
+              "seq": 786,
+              "type": "step.completed",
+              "at": "2026-10-09T10:37:59.973Z"
+            },
+            {
+              "seq": 787,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:00.142Z"
+            },
+            {
+              "seq": 1051,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:13.656Z"
+            },
+            {
+              "seq": 1052,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:13.665Z"
+            },
+            {
+              "seq": 1053,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:22.552Z"
+            },
+            {
+              "seq": 1054,
+              "type": "step.completed",
+              "at": "2026-10-09T10:38:22.552Z"
+            },
+            {
+              "seq": 1546,
+              "type": "step.started",
+              "at": "2026-10-09T10:38:51.725Z"
+            },
+            {
+              "seq": 1547,
+              "type": "artifact.created",
+              "at": "2026-10-09T10:38:53.118Z"
+            },
+            {
+              "seq": 1892,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:07.350Z"
+            },
+            {
+              "seq": 1893,
+              "type": "artifact.created",
+              "at": "2026-10-09T10:39:08.028Z"
+            },
+            {
+              "seq": 1959,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:39:16.109Z"
+            },
+            {
+              "seq": 1960,
+              "type": "task.ended",
+              "at": "2026-10-09T10:39:16.110Z"
+            },
+            {
+              "seq": 1961,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:39:16.111Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 139031,
+          "endedAt": "2026-10-09T10:39:16.207Z"
+        }
+      ],
+      "replySummary": "已保存并核验 `[local path] 24 对比 22 的版本周期、V8 13.6 新语言特性、TS 默认可运行、AsyncLocalStorage/权限模型/弃用项等要点，并附 7 个官方来源链接。内容依据 Node 24.0.0 与 22.0.0 发布说明、nodejs/release 周期表、v24/v22 官方文档及 PR #57199 整理，可供下班后阅读。",
+      "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。本地 Qwen 27B 首轮 240 秒到期时仍在正常检索官方迁移指南，调整为 600 秒以覆盖检索、写入和核验。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-02-web-document-SO9Udn",
+      "toolDetails": [
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 45,
+          "at": "2026-10-09T10:37:00.863Z",
+          "type": "step.started",
+          "toolName": "load_tools",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 46,
+          "at": "2026-10-09T10:37:00.870Z",
+          "type": "step.completed",
+          "toolName": "load_tools",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_e7b02b62e8124417a0768d79\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{\\\"loaded\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 104,
+          "at": "2026-10-09T10:37:04.216Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v24-release-announce\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 105,
+          "at": "2026-10-09T10:37:04.226Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v24.0.0\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 106,
+          "at": "2026-10-09T10:37:08.406Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "failed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v24-release-announce\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_76ad85446c414108a74750e2\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Error: BROWSER_HTTP_ERROR\"\n        }\n      ],\n      \"isError\": true\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 107,
+          "at": "2026-10-09T10:37:08.408Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v24.0.0\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_21ff21db142143cd9daf4f5d\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/blog/release/v24.0.0 (HTTP 200)\\n\\nNode.js 24.0.0 (Current)\\nRG\\n\\nRafael Gonzaga\\n\\nNode.js 24.0.0 (Current)\\n2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol\\n\\nWe’re excited to announce the release of Node.js 24! This release brings several significant updates, including the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11. Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows. The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally. These changes, along with many other improvements, continue to push the platform forward.\\n\\nAs a reminder, Node.js 24 will enter long-term support (LTS) in October, but until then, it will be the \\\"Current\\\" release for the next six months. We encourage you to explore the new features and benefits offered by this latest release and evaluate their potential impact on your applications.\\n\\nNotable Changes\\nV8 13.6\\n\\nThe V8 engine is updated to version 13.6, which includes several new JavaScript features:\\n\\nFloat16Array\\nExplicit resource management\\nRegExp.escape\\nWebAssembly Memory64\\nError.isError\\n\\nThe V8 update was a contribution by Michaël Zasso in #58070.\\n\\nnpm 11\\n\\nNode.js 24 comes with npm 11, which includes several improvements and new features. This update brings enhanced performance, improved security features, and better compatibility with modern JavaScript packages.\\n\\nThe npm update was a contribution by the npm team in #56274.\\n\\nAsyncLocalStorage defaults to AsyncContextFrame\\n\\nAsyncLocalStorage now uses AsyncContextFrame by default, which provides a more efficient implementation of asynchronous context tracking. This change improves performance and makes the API more robust for advanced use cases.\\n\\nThis change was a contribution by Stephen Belanger in #55552.\\n\\nURLPattern as a global\\n\\nThe URLPattern API is now exposed on the global object, making it easier to use without explicit imports. This API provides a powerful pattern matching system for URLs, similar to how regular expressions work for strings.\\n\\nThis feature was a contribution by Jonas Badalič in #56950.\\n\\nPermission Model Improvements\\n\\nThe experimental Permission Model introduced in Node.js 20 has been improved, and the flag has been changed from --experimental-permission to simply --permission, indicating its increasing stability and readiness for broader adoption.\\n\\nThis change was a contribution by Rafael Gonzaga in #56240.\\n\\nTest Runner Enhancements\\n\\nThe test runner module now automatically waits for subtests to finish, eliminating the need to manually await test promises. This makes writing tests more intuitive and reduces common errors related to unhandled promises.\\n\\nThe test runner improvements were contributions by Colin Ihrig in #56664.\\n\\nUndici 7\\n\\nNode.js 24 includes Undici 7, which brings numerous improvements to the HTTP client capabilities, including better performance and support for newer HTTP features.\\n\\nDeprecations and Removals\\n\\nSeveral APIs have been deprecated or removed in this release:\\n\\nRuntime deprecation of url.parse() - use the WHATWG URL API instead (#55017)\\nRemoval of deprecated tls.createSecurePair (#57361)\\nRuntime deprecation of SlowBuffer (#55175)\\nRuntime deprecation of instantiating REPL without new (#54869)\\nDeprecation of using Zlib classes without new (#55718)\\nDeprecation of passing args to spawn and execFile in child_process (#57199)\\nSemver-Major Commits\\n[c6b934380a] - (SEMVER-MAJOR) src: enable Float16Array on global object (Michaël Zasso) #58154\\n[69efb81a73] - (SEMVER-MAJOR) src: enable explicit resource management (Michaël Zasso) #58154\\n[b00ff4270e] - (SEMVER-MAJOR) src,test: unregister the isolate after disposal and before freeing (Joyee Cheung) #58070\\n[b81697d860] - (SEMVER-MAJOR) src: use non-deprecated WriteUtf8V2() method (Yagiz Nizipli) #58070\\n[1f06169b87] - (SEMVER-MAJOR) src: use non-deprecated Utf8LengthV2() method (Yagiz Nizipli) #58070\\n[eae9a296f0] - (SEMVER-MAJOR) src: use V8-owned CppHeap (Joyee Cheung) #58070\\n[087c254a11] - (SEMVER-MAJOR) test: fix test-fs-write for V8 13.6 (Michaël Zasso) #58070\\n[9e49bedd8e] - (SEMVER-MAJOR) build: update list of installed cppgc headers (Michaël Zasso) #58070\\n[93cca8a43e] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.6 (Michaël Zasso) #58070\\n[347daa07be] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.5 (Michaël Zasso) #58070\\n[2a35d5a86c] - (SEMVER-MAJOR) build: fix V8 TLS config for shared lib builds (Michaël Zasso) #58070\\n[b0fb5a09cf] - (SEMVER-MAJOR) build: pass -fPIC to linker as well for shared builds (Michaël Zasso) #58070\\n[dd4c5d6c73] - (SEMVER-MAJOR) src,test: add V8 API to test the hash seed (Michaël Zasso) #58070\\n[1d5d7b6eed] - (SEMVER-MAJOR) src: use v8::ExternalMemoryAccounter (Michaël Zasso) #58070\\n[3779e43cce] - (SEMVER-MAJOR) tools: update license-builder and LICENSE for V8 deps (Michaël Zasso) #58070\\n[82c2255206] - (SEMVER-MAJOR) deps: remove deps/simdutf (Michaël Zasso) #58070\\n[8a258eb7b1] - (SEMVER-MAJOR) test: handle explicit resource management globals (Michaël Zasso) #58070\\n[9e0d9b6024] - (SEMVER-MAJOR) test: adapt assert tests to stack trace changes (Michaël Zasso) #58070\\n[f7406aa56d] - (SEMVER-MAJOR) test: update test-linux-perf-logger (Michaël Zasso) #58070\\n[c7493fac5e] - (SEMVER-MAJOR) Revert \\\"test: disable fast API call count checks\\\" (Michaël Zasso) #58070\\n[50a8527867] - (SEMVER-MAJOR) src: replace uses of FastApiTypedArray (Michaël Zasso) #58070\\n[9c1ebb713c] - (SEMVER-MAJOR) build: add /bigobj to compile V8 on Windows (Michaël Zasso) #58070\\n[fb3d5ea45d] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.4 (Michaël Zasso) #58070\\n[756abacf73] - (SEMVER-MAJOR) build,src,tools: adapt build config for V8 13.3 (Michaël Zasso) #58070\\n[f8953e54b0] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.2 (Michaël Zasso) #58070\\n[c8a0e205e1] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.1 (Michaël Zasso) #58070\\n[1689ee84ce] - (SEMVER-MAJOR) build: enable shared RO heap with ptr compression (Michaël Zasso) #58070\\n[15f2fb9467] - (SEMVER-MAJOR) build: remove support for s390 32-bit (Richard Lau) #58070\\n[4ab254c9f2] - (SEMVER-MAJOR) deps: V8: backport 954187bb1b87 (Joyee Cheung) #58070\\n[732923b927] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (StefanStojanovic) #58070\\n[972834d7c0] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #58070\\n[7098bff3a9] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #58070\\n[dc82c40d4a] - (SEMVER-MAJOR) deps: use std::map in MSVC STL for EphemeronRememberedSet (Joyee Cheung) #58070\\n[42f5130ee2] - (SEMVER-MAJOR) deps: patch V8 for illumos (Dan McDonald) #58070\\n[23b17dbd9e] - (SEMVER-MAJOR) deps: remove problematic comment from v8-internal (Michaël Zasso) #58070\\n[c5d71fcdab] - (SEMVER-MAJOR) deps: define V8_PRESERVE_MOST as no-op on Windows (Stefan Stojanovic) #58070\\n[fbc2005b15] - (SEMVER-MAJOR) deps: fix FP16 bitcasts.h (Stefan Stojanovic) #58070\\n[57f9430503] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #58070\\n[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\\n[f8923a4f17] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #58070\\n[c7964bc02b] - (SEMVER-MAJOR) deps: update V8 to 13.6.233.8 (Michaël Zasso) #58070\\n[6682861d6f] - (SEMVER-MAJOR) build: downgrade armv7 support to experimental (Michaël Zasso) #58071\\n[0579e0ec93] - (SEMVER-MAJOR) buffer: move SlowBuffer to EOL (James M Snell) #58008\\n[a55f5d5e63] - (SEMVER-MAJOR) readline: add stricter validation for functions called after closed (Dario Piotrowicz) #57680\\n[d16b0bae55] - (SEMVER-MAJOR) http2: session tracking and graceful server close (Kushagra Pandey) #57586\\n[e2b94dc3f9] - (SEMVER-MAJOR) readline: fix unicode line separators being ignored (Dario Piotrowicz) #57591\\n[4a47ce5ff9] - (SEMVER-MAJOR) Revert \\\"assert,util: revert recursive breaking change\\\" (Ruben Bridgewater) #57622\\n[7d4db69049] - (SEMVER-MAJOR) http: remove outgoingmessage _headers and _headersList (Yagiz Nizipli) #57551\\n[fabf9384e0] - (SEMVER-MAJOR) fs: remove ability to call truncate wi\\n\\n[Partial page: segment 0 of 5. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-5939a571-716e-46d9-ab23-93a201595ca6\\\", segmentIndex=1..4. Do not cite unread sections.]\\nOutline:\\nNode.js 24.0.0 (Current)\\n2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol\\nNotable Changes\\nV8 13.6\\nnpm 11\\nAsyncLocalStorage defaults to AsyncContextFrame\\nURLPattern as a global\\nPermission Model Improvements\\nTest Runner Enhancements\\nUndici 7\\nDeprecations and Removals\\nSemver-Major Commits\\nSemver-Minor Commits\\nSemver-Patch Commits\\nSHASUMS\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 218,
+          "at": "2026-10-09T10:37:13.976Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v22.0.0\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 219,
+          "at": "2026-10-09T10:37:17.976Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v22.0.0\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_ef85e1e51afa44a9b00fbbb4\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/blog/release/v22.0.0 (HTTP 200)\\n\\nNode.js 22.0.0 (Current)\\nRG\\n\\nRafael Gonzaga\\n\\nNode.js 22.0.0 (Current)\\n2024-04-24, Version 22.0.0 (Current), @RafaelGSS and @marco-ippolito\\n\\nWe're excited to announce the release of Node.js 22! Highlights include require()ing ESM graphs, WebSocket client, updates of the V8 JavaScript engine, and more! As a reminder, Node.js 22 will enter long-term support (LTS) in October, but until then, it will be the \\\"Current\\\" release for the next six months. We encourage you to explore the new features and benefits offered by this latest release and evaluate their potential impact on your applications.\\n\\nOther Notable Changes\\n[25c79f3331] - esm: drop support for import assertions (Nicolò Ribaudo) #52104\\n[818c10e86d] - lib: improve perf of AbortSignal creation (Raz Luvaton) #52408\\n[4f68c7c1c9] - watch: mark as stable (Moshe Atlow) #52074\\n[02b0bc01fe] - (SEMVER-MAJOR) deps: update V8 to 12.4.254.14 (Michaël Zasso) #52465\\n[c975384264] - (SEMVER-MAJOR) lib: enable WebSocket by default (Aras Abbasi) #51594\\n[1abff07392] - (SEMVER-MAJOR) stream: bump default highWaterMark (Robert Nagy) #52037\\n[1a5acd0638] - (SEMVER-MAJOR) v8: enable maglev on supported architectures (Keyhan Vakil) #51360\\n[128c60d906] - (SEMVER-MINOR) cli: implement node --run <script-in-package-json> (Yagiz Nizipli) #52190\\n[151d365ad1] - (SEMVER-MINOR) fs: expose glob and globSync (Moshe Atlow) #51912\\n[5f7fad2605] - (SEMVER-MINOR) module: support require()ing synchronous ESM graphs (Joyee Cheung) #51977\\nSemver-Major Commits\\n[2b1e7c2fcb] - (SEMVER-MAJOR) build: compile with C++20 support on Windows (StefanStojanovic) #52465\\n[12d00f1479] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #52465\\n[5f08e11a3c] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #52293\\n[94f0369d1d] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #51362\\n[58674cd1d8] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #50115\\n[60e836427e] - (SEMVER-MAJOR) console: treat non-strings as separate argument in console.assert() (Jacob Hummer) #49722\\n[d62ab3a1ef] - (SEMVER-MAJOR) crypto: runtime deprecate hmac constructor (Marco Ippolito) #52071\\n[de0602d190] - (SEMVER-MAJOR) crypto: runtime deprecate Hash constructor (Marco Ippolito) #51880\\n[215f4d04b7] - (SEMVER-MAJOR) crypto: move createCipher and createDecipher to eol (Marco Ippolito) #50973\\n[30801b8aaf] - (SEMVER-MAJOR) deps: V8: cherry-pick cd10ad7cdbe5 (Joyee Cheung) #52465\\n[521b629ab1] - (SEMVER-MAJOR) deps: V8: revert CL 5331688 (Michaël Zasso) #52465\\n[3795e97e6c] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (StefanStojanovic) #52465\\n[5bde9e677d] - (SEMVER-MAJOR) deps: silence internal V8 deprecation warning (Michaël Zasso) #52465\\n[46e628c6f2] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #52465\\n[f824e40a82] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #52465\\n[d2c84c9a13] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #52465\\n[95d6045bdb] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #52465\\n[00f55f5743] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #52465\\n[764085aa66] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #52465\\n[02b0bc01fe] - (SEMVER-MAJOR) deps: update V8 to 12.4.254.14 (Michaël Zasso) #52465\\n[0ec50a19dd] - (SEMVER-MAJOR) deps: V8: cherry-pick cd10ad7cdbe5 (Joyee Cheung) #52293\\n[021b0b7dee] - (SEMVER-MAJOR) deps: V8: backport c4be0a97f981 (Richard Lau) #52293\\n[681aaf85c7] - (SEMVER-MAJOR) deps: silence internal V8 deprecation warning (Michaël Zasso) #52293\\n[c563a1c4e4] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (Stefan Stojanovic) #52293\\n[11e94b9987] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #52293\\n[856163e23c] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #52293\\n[b530214127] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #52293\\n[8054f69dd9] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #52293\\n[dee908be42] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #52293\\n[cf069414ee] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #52293\\n[cc5792dd85] - (SEMVER-MAJOR) deps: update V8 to 12.3.219.16 (Michaël Zasso) #52293\\n[61a0d3b4c4] - (SEMVER-MAJOR) deps: V8: backport c4be0a97f981 (Richard Lau) #51362\\n[f55380a725] - (SEMVER-MAJOR) deps: V8: cherry-pick f8d5e576b814 (Richard Lau) #51362\\n[b9d806a2dd] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (StefanStojanovic) #51362\\n[63b58bc17b] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #51362\\n[86056353c4] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #51362\\n[2e0efc1c8d] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #51362\\n[59e6f62e34] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #51362\\n[0423f7e27e] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #51362\\n[f36620806d] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #51362\\n[09a8440b45] - (SEMVER-MAJOR) deps: update V8 to 12.2.281.27 (Michaël Zasso) #51362\\n[0da3beebfc] - (SEMVER-MAJOR) deps: V8: cherry-pick de611e69ad51 (Keyhan Vakil) #50115\\n[b982335637] - (SEMVER-MAJOR) deps: V8: cherry-pick 0fd478bcdabd (Joyee Cheung) #50115\\n[481a90116c] - (SEMVER-MAJOR) deps: V8: cherry-pick 0f9ebbc672c7 (Chengzhong Wu) #50115\\n[782addbdc3] - (SEMVER-MAJOR) deps: V8: cherry-pick 8f0b94671ddb (Lu Yahan) #50115\\n[b682e7f540] - (SEMVER-MAJOR) deps: V8: cherry-pick f7d000a7ae7b (Luke Albao) #50115\\n[a60090c52f] - (SEMVER-MAJOR) deps: V8: cherry-pick 25902244ad1a (Joyee Cheung) #50115\\n[8441d1fc18] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #50115\\n[e8e9bbd7a9] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #50115\\n[785d5cd006] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #50115\\n[7071c1dafd] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #50115\\n[d1d60b297d] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #50115\\n[5b240c62f9] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #50115\\n[d8c97e4857] - (SEMVER-MAJOR) deps: update V8 to 11.9.169.7 (Michaël Zasso) #50115\\n[b9df88a8c2] - (SEMVER-MAJOR) doc: runtime deprecate flag --trace-atomics-wait (marco-ippolito) #51179\\n[9ba5df30b4] - (SEMVER-MAJOR) doc: bump FreeBSD experimental support to 13.2 (Michaël Zasso) #51231\\n[900d79caf2] - (SEMVER-MAJOR) doc: add migration paths for deprecated utils (Marco Ippolito) #50488\\n[8206f6bb7f] - (SEMVER-MAJOR) fs: runtime deprecate fs.Stats constructor (Marco Ippolito) #52067\\n[c14133503a] - (SEMVER-MAJOR) fs: use private fields instead of symbols for Dir (Jungku Lee) #51037\\n[abbdc3efaa] - (SEMVER-MAJOR) fs: make stats date fields lazy (Yagiz Nizipli) #50908\\n[4b76ccea95] - (SEMVER-MAJOR) http: preserve raw header duplicates in writeHead after setHeader calls (Tim Perry) #50394\\n[c975384264] - (SEMVER-MAJOR) lib: enable WebSocket by default (Aras Abbasi) #51594\\n[351495e938] - (SEMVER-MAJOR) lib,test: handle new Iterator global (Michaël Zasso) #51362\\n[a8b21fdc90] - (SEMVER-MAJOR) process: wait for 'exit' before printing result (Antoine du Hamel) #52172\\n[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\\n[c5c4b50260] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 126 (Michaël Zasso) #52293\\n[d248639285] - (SEMVER-MAJOR) src: use supported API to get stalled TLA messages (Michaël Zasso) #51362\\n[d34b02db4c] - (SEMVER-MAJOR) src: update default V8 platform to override functions with location (Etienne Pierre-Doray) #51362\\n[d9c47e9b5f] - (SEMVER-MAJOR) src: add missing TryCatch (Michaël Zasso) #51362\\n[5cddd3b2d8] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 124 \\n\\n[Partial page: segment 0 of 5. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-93196a75-3658-4a27-95cd-565a9ea5dd01\\\", segmentIndex=1..4. Do not cite unread sections.]\\nOutline:\\nNode.js 22.0.0 (Current)\\n2024-04-24, Version 22.0.0 (Current), @RafaelGSS and @marco-ippolito\\nOther Notable Changes\\nSemver-Major Commits\\nSemver-Minor Commits\\nSemver-Patch Commits\\nSHASUMS\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 337,
+          "at": "2026-10-09T10:37:26.079Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://raw.githubusercontent.com/nodejs/release/main/README.md\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 338,
+          "at": "2026-10-09T10:37:26.090Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v24-lts\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 339,
+          "at": "2026-10-09T10:37:28.854Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://raw.githubusercontent.com/nodejs/release/main/README.md\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_3e0675fc3ad74b04a33dcf98\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://raw.githubusercontent.com/nodejs/release/main/README.md (HTTP 200)\\n\\n# Node.js Release Working Group\\n\\n## Release schedule\\n\\n| Release  | Status              | Codename     |Initial Release | Active LTS Start | Maintenance Start | End-of-life               |\\n| :--:     | :---:               | :---:        | :---:          | :---:            | :---:             | :---:                     |\\n| [22.x][] | **Maintenance LTS** | [Jod][]      | 2024-04-24     | 2024-10-29       | 2025-10-21        | 2027-04-30                |\\n| [24.x][] | **Active LTS**      | [Krypton][]  | 2025-05-06     | 2025-10-28       | 2026-10-20        | 2028-04-30                |\\n| [26.x][] | **Current**         |              | 2026-05-05     | 2026-10-28       | 2027-10-20        | 2029-04-30                |\\n\\nDates are subject to change.\\n\\n<p><img src=\\\"schedule.svg\\\" alt=\\\"LTS Schedule\\\"/></p>\\n\\nThe Release schedule is available also as a [JSON][] file.\\n\\n### Release Phases\\n\\nThere are three phases that a Node.js release can be in: 'Current', 'Active\\nLong Term Support (LTS)', and 'Maintenance'. Odd-numbered release lines are not\\npromoted to LTS - they will not go through the 'Active LTS' or 'Maintenance'\\nphases.\\n\\n * Current - Should incorporate most of the non-major (non-breaking)\\n changes that land on `nodejs/node` main branch.\\n * Active LTS - New features, bug fixes, and updates that have been audited by\\n the Release team and have been determined to be appropriate and stable for the\\n release line.\\n * Maintenance - Critical bug fixes and security updates. New features may be\\n added at the discretion of the Release team - typically only in cases where\\n the new feature supports migration to later release lines.\\n\\nChanges required for critical security and bug fixes may lead to *semver-major*\\nchanges landing within a release stream, such situations will be rare and will\\nland as *semver-minor*. Although, those changes should have a revert option included.\\n\\nThe term 'supported release lines' will be used to refer to all release lines\\nthat are not End-of-Life.\\n\\n### End-of-Life Releases\\n\\n|  Release |      Status     |  Codename | Initial Release | Active LTS Start | Maintenance LTS Start | End-of-life |\\n|:--------:|:---------------:|:---------:|:---------------:|:----------------:|:---------------------:|:-----------:|\\n|  v0.10.x | **End-of-Life** |     -     |    2013-03-11   |         -        |       2015-10-01      |  2016-10-31 |\\n|  v0.12.x | **End-of-Life** |     -     |    2015-02-06   |         -        |       2016-04-01      |  2016-12-31 |\\n|  [4.x][] | **End-of-Life** | [Argon][] |    2015-09-08   |    2015-10-01    |       2017-04-01      |  2018-04-30 |\\n|  [5.x][] | **End-of-Life** |           |    2015-10-29   |         -        |                       |  2016-06-30 |\\n|  [6.x][] | **End-of-Life** | [Boron][] |    2016-04-26   |    2016-10-18    |       2018-04-30      |  2019-04-30 |\\n|  [7.x][] | **End-of-Life** |           |    2016-10-25   |         -        |                       |  2017-06-30 |\\n|  [8.x][] | **End-of-Life** | [Carbon][]|    2017-05-30   |    2017-10-31    |       2019-01-01      |  2019-12-31 |\\n|  [9.x][] | **End-of-Life** |           |    2017-10-01   |         -        |                       |  2018-06-30 |\\n| [10.x][] | **End-of-Life** |[Dubnium][]|    2018-04-24   |    2018-10-30    |       2020-05-19      |  2021-04-30 |\\n| [11.x][] | **End-of-Life** |           |    2018-10-23   |         -        |                       |  2019-06-01 |\\n| [12.x][] | **End-of-Life** | [Erbium][]|    2019-04-23   |    2019-10-21    |       2020-11-30      |  2022-04-30 |\\n| [13.x][] | **End-of-Life** |           |    2019-10-22   |         -        |                       |  2020-06-01 |\\n| [14.x][] | **End-of-Life** |[Fermium][]|    2020-04-21   |    2020-10-27    |       2021-10-19      |  2023-04-30 |\\n| [15.x][] | **End-of-Life** |           |    2020-10-20   |         -        |                       |  2021-06-01 |\\n| [16.x][] | **End-of-Life** |[Gallium][]|    2021-04-20   |    2021-10-26    |       2022-10-18      | [2023-09-11][nodejs16eol] |\\n| [17.x][] | **End-of-Life** |           |    2021-10-19   |         -        |                       |  2022-06-01 |\\n| [18.x][] | **End-of-Life** |[Hydrogen][]|   2022-04-19   |    2022-10-25    |       2023-10-18      |  2025-04-30 |\\n| [19.x][] | **End-of-Life** |           |    2022-10-18   |         -        |                       |  2023-06-01 |\\n| [20.x][] | **End-of-Life** | [Iron][]  |    2023-04-18   |    2023-10-24    |       2024-10-22      | 2026-04-30  |\\n| [21.x][] | **End-of-Life** |           |    2023-10-17   |         -        |       2024-04-01      |  2024-06-01 |\\n| [23.x][] | **End-of-Life** |           |    2024-10-15   |         -        |       2025-04-01      |  2025-06-01 |\\n| [25.x][] | **End-of-Life** |           |    2025-10-15   |         -        |       2026-04-01      |  2026-06-01 |\\n\\n## Mandate\\n\\nThe Release working group's purpose is:\\n\\n* Management/execution of the release and support process for all releases.\\n\\nIts responsibilities are:\\n\\n* Define the release process.\\n* Define the content of releases.\\n* Generate and create releases.\\n* Test Releases.\\n* Manage the LTS and Current branches including backporting changes to\\n  these branches.\\n* Define the policy for what gets backported to release streams.\\n\\nThe Release working group is structured into teams and membership in\\nthe working group does not automatically result in membership in these\\nteams. These teams are:\\n\\n* Releasers team\\n* Backporters team\\n* CITGM team\\n\\nThe `releasers` team is entrusted with the secrets and CI access to be able\\nbuild and sign releases. **Additions to the releasers team must be approved\\nby the TSC following the process outlined in GOVERNANCE.md.**\\n\\nThe Release team manages the process/content of LTS releases\\nand the required backporting for these releases. Additions to the Release\\nteam needs sign off from the rest of the Release team.\\n\\nThe Canary in the Gold Mine (CITGM) team maintains CITGM as one of\\nthe key sanity checks for releases. This team maintains the CITGM\\nrepository and works to keep CITGM builds running and passing regularly.\\nThis also includes maintaining the CI jobs in collaboration with the Build\\nWorking Group.\\n\\n## Release Plan\\n\\nNew *semver-major* releases of Node.js are branched from `main` every six\\nmonths. New even-numbered versions are released in April and odd-numbered\\nversions in October.\\n\\nIn coordination with a new *odd-numbered* major release, the previous\\n*even-numbered* major version will transition to Long Term Support. The\\ntransition to Long Term Support will happen in a *semver-minor* release and\\nshould happen after the new major version is released.\\n\\nEvery even (LTS) major version will be actively maintained for 12 months from\\nthe date it enters LTS coverage. Following those 12 months of active support,\\nthe major version will transition into \\\"maintenance\\\" mode for 18 months. Prior\\nto Node.js 12, the active period was 18 months and the maintenance period 12\\nmonths. See [Releases Phases](#release-phases) for details of which changes\\nare expected to land during each release phase.\\n\\nThe exact date that a release will be moved to LTS, moved between LTS modes,\\nor deprecated will be chosen no later than the first day of the month it is to\\nchange. If the release team plans to change the release date, it will be done\\nwith no less than 14 days notice.\\n\\nAll LTS releases will be assigned a codename. A list of expected upcoming\\ncodenames is available in [CODENAMES.md](./CODENAMES.md).\\n\\n### LTS Staging Branches\\n\\nEvery LTS major version has two branches in the GitHub repository: a release\\nbranch and a staging branch. The release branch is used to cut new releases.\\nOnly members of the @nodejs/releasers team should land commits onto release branches.\\nThe staging branch is used to land cherry-picked or backported commits from\\nmain that need to be included in a future release. Only members of\\n@nodejs/backporters should land commits onto staging branches.\\n\\nFor example, for Node.js v4, there is a `v4.x` branch and a `v4.x-staging`\\nbranch. When commits land in main that must be cherry-picked for a future\\nNode.js v4 release, those must be landed into the `v4.x-staging` \\n\\n[Partial page: segment 0 of 2. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-40caad4c-b2df-4ad6-be3e-42ab33f17aa3\\\", segmentIndex=1..1. Do not cite unread sections.]\\nOutline:\\n(no headings)\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 340,
+          "at": "2026-10-09T10:37:30.662Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "failed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v24-lts\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_1fe186d170bf4704b14f48eb\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Error: BROWSER_HTTP_ERROR\"\n        }\n      ],\n      \"isError\": true\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 784,
+          "at": "2026-10-09T10:37:53.737Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/docs/latest-v24.x/api/typescript.html\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 785,
+          "at": "2026-10-09T10:37:53.747Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/docs/latest-v24.x/api/sqlite.html\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 786,
+          "at": "2026-10-09T10:37:59.973Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/docs/latest-v24.x/api/typescript.html\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_903b599291ec4ee4a8d4d8c3\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/docs/latest-v24.x/api/typescript.html (HTTP 200)\\n\\nSkip to content\\nNode.js\\nAbout this documentation\\nUsage and example\\nAssertion testing\\nAsynchronous context tracking\\nAsync hooks\\nBuffer\\nC++ addons\\nC/C++ addons with Node-API\\nC++ embedder API\\nChild processes\\nCluster\\nCommand-line options\\nConsole\\nCrypto\\nDebugger\\nDeprecated APIs\\nDiagnostics Channel\\nDNS\\nDomain\\nEnvironment Variables\\nErrors\\nEvents\\nFile system\\nGlobals\\nHTTP\\nHTTP/2\\nHTTPS\\nInspector\\nInternationalization\\nIterable Streams API\\nModules: CommonJS modules\\nModules: ECMAScript modules\\nModules: node:module API\\nModules: Packages\\nModules: TypeScript\\nNet\\nOS\\nPath\\nPerformance hooks\\nPermissions\\nProcess\\nPunycode\\nQuery strings\\nReadline\\nREPL\\nReport\\nSingle executable applications\\nSQLite\\nStream\\nString decoder\\nTest runner\\nTimers\\nTLS/SSL\\nTrace events\\nTTY\\nUDP/datagram\\nURL\\nUtilities\\nV8\\nVM\\nWASI\\nWeb Crypto API\\nWeb Streams API\\nWorker threads\\nZlib\\nCode repository and issue tracker\\nNode.js v24.21.0 documentation\\n Table of contents  Index  Other versions  Options\\nTable of contents\\nModules: TypeScript\\nEnabling\\nFull TypeScript support\\nType stripping\\nDetermining module system\\nTypeScript features\\nImporting types without type keyword\\nNon-file forms of input\\nSource maps\\nType stripping in dependencies\\nPaths aliases\\nModules: TypeScript\\n#\\nHistory\\n\\nStability: 2 - Stable\\n\\nEnabling\\n#\\n\\nThere are two ways to enable runtime TypeScript support in Node.js:\\n\\nFor full support of all of TypeScript's syntax and features, including using any version of TypeScript, use a third-party package.\\n\\nFor lightweight support, you can use the built-in support for type stripping.\\n\\nFull TypeScript support\\n#\\n\\nTo use TypeScript with full support for all TypeScript features, including tsconfig.json, you can use a third-party package. These instructions use tsx as an example but there are many other similar libraries available.\\n\\nInstall the package as a development dependency using whatever package manager you're using for your project. For example, with npm:\\n\\nnpm install --save-dev tsx \\nCOPY\\n\\nThen you can run your TypeScript code via:\\n\\nnpx tsx your-file.ts \\nCOPY\\n\\nOr alternatively, you can run with node via:\\n\\nnode --import=tsx your-file.ts \\nCOPY\\nType stripping\\n#\\nHistory\\n\\nBy default Node.js will execute TypeScript files that contains only erasable TypeScript syntax. Node.js will replace TypeScript syntax with whitespace, and no type checking is performed. To enable the transformation of non erasable TypeScript syntax, which requires JavaScript code generation, such as enum declarations, parameter properties use the flag --experimental-transform-types. To disable this feature, use the flag --no-strip-types.\\n\\nNode.js ignores tsconfig.json files and therefore features that depend on settings within tsconfig.json, such as paths or converting newer JavaScript syntax to older standards, are intentionally unsupported. To get full TypeScript support, see Full TypeScript support.\\n\\nThe type stripping feature is designed to be lightweight. By intentionally not supporting syntaxes that require JavaScript code generation, and by replacing inline types with whitespace, Node.js can run TypeScript code without the need for source maps.\\n\\nType stripping is compatible with most versions of TypeScript but we recommend version 5.8 or newer with the following tsconfig.json settings:\\n\\n{\\n  \\\"compilerOptions\\\": {\\n     \\\"noEmit\\\": true, // Optional - see note below\\n     \\\"target\\\": \\\"esnext\\\",\\n     \\\"module\\\": \\\"nodenext\\\",\\n     \\\"rewriteRelativeImportExtensions\\\": true,\\n     \\\"erasableSyntaxOnly\\\": true,\\n     \\\"verbatimModuleSyntax\\\": true\\n  }\\n} \\nCOPY\\n\\nUse the noEmit option if you intend to only execute *.ts files, for example a build script. You won't need this flag if you intend to distribute *.js files.\\n\\nDetermining module system\\n#\\n\\nNode.js supports both CommonJS and ES Modules syntax in TypeScript files. Node.js will not convert from one module system to another; if you want your code to run as an ES module, you must use import and export syntax, and if you want your code to run as CommonJS you must use require and module.exports.\\n\\n.ts files will have their module system determined the same way as .js files. To use import and export syntax, add \\\"type\\\": \\\"module\\\" to the nearest parent package.json.\\n.mts files will always be run as ES modules, similar to .mjs files.\\n.cts files will always be run as CommonJS modules, similar to .cjs files.\\n.tsx files are unsupported.\\n\\nAs in JavaScript files, file extensions are mandatory in import statements and import() expressions: import './file.ts', not import './file'. Because of backward compatibility, file extensions are also mandatory in require() calls: require('./file.ts'), not require('./file'), similar to how the .cjs extension is mandatory in require calls in CommonJS files.\\n\\nThe tsconfig.json option allowImportingTsExtensions will allow the TypeScript compiler tsc to type-check files with import specifiers that include the .ts extension.\\n\\nTypeScript features\\n#\\n\\nSince Node.js is only removing inline types, any TypeScript features that involve replacing TypeScript syntax with new JavaScript syntax will error, unless the flag --experimental-transform-types is passed.\\n\\nThe most prominent features that require transformation are:\\n\\nEnum declarations\\nnamespace with runtime code\\nparameter properties\\nimport aliases\\n\\nnamespaces that do not contain runtime code are supported. This example will work correctly:\\n\\n// This namespace is exporting a type\\nnamespace TypeOnly {\\n   export type A = string;\\n} \\nCOPY\\n\\nThis will result in ERR_UNSUPPORTED_TYPESCRIPT_SYNTAX error:\\n\\n// This namespace is exporting a value\\nnamespace A {\\n   export let x = 1\\n} \\nCOPY\\n\\nSince Decorators are currently a TC39 Stage 3 proposal, they are not transformed and will result in a parser error. Node.js does not provide polyfills and thus will not support decorators until they are supported natively in JavaScript.\\n\\nIn addition, Node.js does not read tsconfig.json files and does not support features that depend on settings within tsconfig.json, such as paths or converting newer JavaScript syntax into older standards.\\n\\nImporting types without type keyword\\n#\\n\\nDue to the nature of type stripping, the type keyword is necessary to correctly strip type imports. Without the type keyword, Node.js will treat the import as a value import, which will result in a runtime error. The tsconfig option verbatimModuleSyntax can be used to match this behavior.\\n\\nThis example will work correctly:\\n\\nimport type { Type1, Type2 } from './module.ts';\\nimport { fn, type FnParams } from './fn.ts'; \\nCOPY\\n\\nThis will result in a runtime error:\\n\\nimport { Type1, Type2 } from './module.ts';\\nimport { fn, FnParams } from './fn.ts'; \\nCOPY\\nNon-file forms of input\\n#\\n\\nType stripping can be enabled for --eval and STDIN. The module system will be determined by --input-type, as it is for JavaScript.\\n\\nTypeScript syntax is unsupported in the REPL, --check, and inspect.\\n\\nSource maps\\n#\\n\\nSince inline types are replaced by whitespace, source maps are unnecessary for correct line numbers in stack traces; and Node.js does not generate them. When --experimental-transform-types is enabled, source-maps are enabled by default.\\n\\nType stripping in dependencies\\n#\\n\\nTo discourage package authors from publishing packages written in TypeScript, Node.js refuses to handle TypeScript files inside folders under a node_modules path.\\n\\nPaths aliases\\n#\\n\\ntsconfig \\\"paths\\\" won't be transformed and therefore produce an error. The closest feature available is subpath imports with the limitation that they need to start with #.\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 787,
+          "at": "2026-10-09T10:38:00.142Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/docs/latest-v24.x/api/sqlite.html\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_ca0d8ced79bf42e2ace356b8\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/docs/latest-v24.x/api/sqlite.html (HTTP 200)\\n\\nSkip to content\\nNode.js\\nAbout this documentation\\nUsage and example\\nAssertion testing\\nAsynchronous context tracking\\nAsync hooks\\nBuffer\\nC++ addons\\nC/C++ addons with Node-API\\nC++ embedder API\\nChild processes\\nCluster\\nCommand-line options\\nConsole\\nCrypto\\nDebugger\\nDeprecated APIs\\nDiagnostics Channel\\nDNS\\nDomain\\nEnvironment Variables\\nErrors\\nEvents\\nFile system\\nGlobals\\nHTTP\\nHTTP/2\\nHTTPS\\nInspector\\nInternationalization\\nIterable Streams API\\nModules: CommonJS modules\\nModules: ECMAScript modules\\nModules: node:module API\\nModules: Packages\\nModules: TypeScript\\nNet\\nOS\\nPath\\nPerformance hooks\\nPermissions\\nProcess\\nPunycode\\nQuery strings\\nReadline\\nREPL\\nReport\\nSingle executable applications\\nSQLite\\nStream\\nString decoder\\nTest runner\\nTimers\\nTLS/SSL\\nTrace events\\nTTY\\nUDP/datagram\\nURL\\nUtilities\\nV8\\nVM\\nWASI\\nWeb Crypto API\\nWeb Streams API\\nWorker threads\\nZlib\\nCode repository and issue tracker\\nNode.js v24.21.0 documentation\\n Table of contents  Index  Other versions  Options\\nTable of contents\\nSQLite\\nType conversion between JavaScript and SQLite\\nClass: DatabaseSync\\nnew DatabaseSync(path[, options])\\ndatabase.aggregate(name, options)\\ndatabase.close()\\ndatabase.loadExtension(path[, entryPoint])\\ndatabase.enableLoadExtension(allow)\\ndatabase.enableDefensive(active)\\ndatabase.location([dbName])\\ndatabase.exec(sql)\\ndatabase.function(name[, options], fn)\\ndatabase.setAuthorizer(callback)\\ndatabase.isOpen\\ndatabase.isTransaction\\ndatabase.limits\\ndatabase.open()\\ndatabase.serialize([dbName])\\ndatabase.deserialize(buffer[, options])\\ndatabase.prepare(sql[, options])\\ndatabase.createTagStore([maxSize])\\ndatabase.createSession([options])\\ndatabase.applyChangeset(changeset[, options])\\ndatabase[Symbol.dispose]()\\nClass: Session\\nsession.changeset()\\nsession.patchset()\\nsession.close()\\nsession[Symbol.dispose]()\\nClass: StatementSync\\nBinding parameters\\nstatement.all([namedParameters][, ...anonymousParameters])\\nstatement.columns()\\nstatement.expandedSQL\\nstatement.get([namedParameters][, ...anonymousParameters])\\nstatement.iterate([namedParameters][, ...anonymousParameters])\\nstatement.run([namedParameters][, ...anonymousParameters])\\nstatement.setAllowBareNamedParameters(enabled)\\nstatement.setAllowUnknownNamedParameters(enabled)\\nstatement.setReturnArrays(enabled)\\nstatement.setReadBigInts(enabled)\\nstatement.sourceSQL\\nClass: SQLTagStore\\nsqlTagStore.all(stringElements[, ...boundParameters])\\nsqlTagStore.get(stringElements[, ...boundParameters])\\nsqlTagStore.iterate(stringElements[, ...boundParameters])\\nsqlTagStore.run(stringElements[, ...boundParameters])\\nsqlTagStore.size\\nsqlTagStore.capacity\\nsqlTagStore.db\\nsqlTagStore.clear()\\nsqlite.backup(sourceDb, path[, options])\\nsqlite.constants\\nSQLite constants\\nConflict resolution constants\\nAuthorization constants\\nAuthorization result codes\\nAuthorization action codes\\nSQLite\\n#\\nHistory\\n\\nStability: 1.2 - Release candidate.\\n\\nSource Code: lib/sqlite.js\\n\\nThe node:sqlite module facilitates working with SQLite databases. To access it:\\n\\nconst sqlite = require('node:sqlite');\\nCOPY\\n\\nThis module is only available under the node: scheme.\\n\\nThe following example shows the basic usage of the node:sqlite module to open an in-memory database, write data to the database, and then read the data back.\\n\\nconst { DatabaseSync } = require('node:sqlite');\\nconst database = new DatabaseSync(':memory:');\\n\\n// Execute SQL statements from strings.\\ndatabase.exec(`\\n  CREATE TABLE data(\\n    key INTEGER PRIMARY KEY,\\n    value TEXT\\n  ) STRICT\\n`);\\n// Create a prepared statement to insert data into the database.\\nconst insert = database.prepare('INSERT INTO data (key, value) VALUES (?, ?)');\\n// Execute the prepared statement with bound values.\\ninsert.run(1, 'hello');\\ninsert.run(2, 'world');\\n// Finalize the prepared statement once it is no longer needed.\\ninsert.close();\\n// Create a prepared statement to read data from the database.\\nconst query = database.prepare('SELECT * FROM data ORDER BY key');\\n// Execute the prepared statement and log the result set.\\nconsole.log(query.all());\\n// Prints: [ { key: 1, value: 'hello' }, { key: 2, value: 'world' } ]\\nquery.close();\\nCOPY\\nType conversion between JavaScript and SQLite\\n#\\n\\nWhen Node.js writes to or reads from SQLite, it is necessary to convert between JavaScript data types and SQLite's data types. Because JavaScript supports more data types than SQLite, only a subset of JavaScript types are supported. Attempting to write an unsupported data type to SQLite will result in an exception.\\n\\nStorage class\\tJavaScript to SQLite\\tSQLite to JavaScript\\nNULL\\t<null>\\t<null>\\nINTEGER\\t<number>, <bigint>, or <boolean>\\t<number> or <bigint> (configurable)\\nREAL\\t<number>\\t<number>\\nTEXT\\t<string>\\t<string>\\nBLOB\\t<TypedArray>, <DataView>, <ArrayBuffer>, or <SharedArrayBuffer>\\t<Uint8Array>\\n\\nBooleans are written as the INTEGER values 1 and 0. Like any other INTEGER value, they are read back as <number> by default, or as <bigint> values (1n and 0n) when reading BigInts is enabled. Writing a <bigint> that does not fit in a signed 64-bit integer throws an ERR_INVALID_ARG_VALUE error.\\n\\nAPIs that read values from SQLite have a configuration option that determines whether INTEGER values are converted to number or bigint in JavaScript, such as the readBigInts option for statements and the useBigIntArguments option for user-defined functions. If Node.js reads an INTEGER value from SQLite that is outside the JavaScript safe integer range, and the option to read BigInts is not enabled, then an ERR_OUT_OF_RANGE error will be thrown.\\n\\nClass: DatabaseSync\\n#\\nHistory\\n\\nThis class represents a single connection to a SQLite database. All APIs exposed by this class execute synchronously.\\n\\nnew DatabaseSync(path[, options])\\n#\\nHistory\\npath <string> | <Buffer> | <URL> The path of the database. A SQLite database can be stored in a file or completely in memory. To use a file-backed database, the path should be a file path. To use an in-memory database, the path should be the special name ':memory:'.\\noptions <Object> Configuration options for the database connection. The following options are supported:\\nopen <boolean> If true, the database is opened by the constructor. When this value is false, the database must be opened via the open() method. Default: true.\\nreadOnly <boolean> If true, the database is opened in read-only mode. If the database does not exist, opening it will fail. Default: false.\\nenableForeignKeyConstraints <boolean> If true, foreign key constraints are enabled. This is recommended but can be disabled for compatibility with legacy database schemas. The enforcement of foreign key constraints can be enabled and disabled after opening the database using PRAGMA foreign_keys. Default: true.\\nenableDoubleQuotedStringLiterals <boolean> If true, SQLite will accept double-quoted string literals. This is not recommended but can be enabled for compatibility with legacy database schemas. Default: false.\\nallowExtension <boolean> If true, the loadExtension SQL function and the loadExtension() method are enabled. You can call enableLoadExtension(false) later to disable this feature. Default: false.\\ntimeout <number> The busy timeout in milliseconds. This is the maximum amount of time that SQLite will wait for a database lock to be released before returning an error. Default: 0.\\nreadBigInts <boolean> If true, integer fields are read as JavaScript BigInt values. If false, integer fields are read as JavaScript numbers. Default: false.\\nreturnArrays <boolean> If true, query results are returned as arrays instead of objects. Default: false.\\nallowBareNamedParameters <boolean> If true, allows binding named parameters without the prefix character (e.g., foo instead of :foo). Default: true.\\nallowUnknownNamedParameters <boolean> If true, unknown named parameters are ignored when binding. If false, an exception is thrown for unknown named parameters. Default: false.\\ndefensive <boolean> If true, enables the defensive flag. When the defensive flag is enabled, language features that allow ordinary SQL to deliberately corrupt the database file are disabled. The defensive flag can also be set using enableDefensive(). Default: true.\\nlimits <Object> Configuration for various SQLite limits. These limits can be used to prevent excessive resource consumptio\\n\\n[Partial page: segment 0 of 6. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-37a24623-948c-4c2c-8820-6cceb6a23ff5\\\", segmentIndex=1..5. Do not cite unread sections.]\\nOutline:\\nNode.js v24.21.0 documentation\\nSQLite #\\nType conversion between JavaScript and SQLite #\\nClass: DatabaseSync #\\nnew DatabaseSync(path[, options]) #\\ndatabase.aggregate(name, options) #\\ndatabase.close() #\\ndatabase.loadExtension(path[, entryPoint]) #\\ndatabase.enableLoadExtension(allow) #\\ndatabase.enableDefensive(active) #\\ndatabase.location([dbName]) #\\ndatabase.exec(sql) #\\ndatabase.function(name[, options], fn) #\\ndatabase.setAuthorizer(callback) #\\ndatabase.isOpen #\\ndatabase.isTransaction #\\ndatabase.limits #\\ndatabase.open() #\\ndatabase.serialize([dbName]) #\\ndatabase.deserialize(buffer[, options]) #\\ndatabase.prepare(sql[, options]) #\\ndatabase.createTagStore([maxSize]) #\\ndatabase.createSession([options]) #\\ndatabase.applyChangeset(changeset[, options]) #\\ndatabase[Symbol.dispose]() #\\nClass: Session #\\nsession.changeset() #\\nsession.patchset() #\\nsession.close() #\\nsession[Symbol.dispose]() #\\nClass: StatementSync #\\nBinding parameters #\\nstatement.all([namedParameters][, ...anonymousParameters]) #\\nstatement.columns() #\\nstatement.expandedSQL #\\nstatement.get([namedParameters][, ...anonymousParameters]) #\\nstatement.iterate([namedParameters][, ...anonymousParameters]) #\\nstatement.run([namedParameters][, ...anonymousParameters]) #\\nstatement.setAllowBareNamedParameters(enabled) #\\nstatement.setAllowUnknownNamedParameters(enabled) #\\nstatement.setReturnArrays(enabled) #\\nstatement.setReadBigInts(enabled) #\\nstatement.sourceSQL #\\nClass: SQLTagStore #\\nsqlTagStore.all(stringElements[, ...boundParameters]) #\\nsqlTagStore.get(stringElements[, ...boundParameters]) #\\nsqlTagStore.iterate(stringElements[, ...boundParameters]) #\\nsqlTagStore.run(stringElements[, ...boundParameters]) #\\nsqlTagStore.size #\\nsqlTagStore.capacity #\\nsqlTagStore.db #\\nsqlTagStore.clear() #\\nsqlite.backup(sourceDb, path[, options]) #\\nsqlite.constants #\\nSQLite constants #\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 1051,
+          "at": "2026-10-09T10:38:13.656Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://github.com/nodejs/node/pull/57199\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 1052,
+          "at": "2026-10-09T10:38:13.665Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/docs/latest-v22.x/api/sqlite.html\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 1053,
+          "at": "2026-10-09T10:38:22.552Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://github.com/nodejs/node/pull/57199\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_3919c89c0ae74cbe8649ce1f\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://github.com/nodejs/node/pull/57199 (HTTP 200)\\n\\nnodejs\\nnode\\nRepository navigation\\nCode\\nIssues\\n609\\n (609)\\nPull requests\\n579\\n (579)\\nActions\\nProjects\\nSecurity and quality\\nInsights\\nchild_process: disallow args in execFile/spawn when shell option is true\\n- #57199\\n#57199\\nMerged\\nnodejs-github-bot\\nmerged 3 commits into\\nnodejs:main\\nfrom\\nDanielVenable:child-process-disallow-args-when-shell-option-true\\n+32\\n-2\\nLines changed: 32 additions & 2 deletions\\nConversation17\\n (17)\\nCommits3\\n (3)\\nChecks0\\n (0)\\nFiles changed6\\n (6)\\nConversation\\nDanielVenable\\ncommented\\nContributor\\n\\nThis will make it throw an error when args are passed to execFile or\\nspawn when the shell option is true. The reason for this is that when it\\naccepts args, it gives the false impression that the args are escaped while\\nreally they are just concatenated. This makes it easy to introduce bugs\\nand security vulnerabilities.\\n\\nThis will break any code that relies on passing args to execFile or\\nspawn with { shell: true }.\\n\\nFixes: #57143\\n\\n👍\\n3\\n nodejs-github-bot added child_process needs-ci labels \\nDanielVenable force-pushed the child-process-disallow-args-when-shell-option-true branch from 162ab95 to e903326 \\nCompare\\ncodecov Bot\\ncommented\\n• \\nedited \\nCodecov Report\\n\\nAll modified and coverable lines are covered by tests ✅\\n\\nProject coverage is 90.22%. Comparing base (922ce9d) to head (180b40a).\\nReport is 25 commits behind head on main.\\n\\nAdditional details and impacted files\\n🚀 New features to boost your workflow:\\n RafaelGSS added the semver-major label \\nRafaelGSS reviewed \\nView reviewed changes\\nRafaelGSS\\nleft a comment\\nMember\\n\\nThis is a semver-major change as it will break people current using the args approach (even being ignored).\\n\\nI'm not sure if we want to change the API in those situations. I think adding a process.emitWarning could be safer approach in this situation (also semver-major)\\n\\n👍\\n1\\naduh95 reviewed \\nView reviewed changes\\naduh95\\nleft a comment\\nContributor\\n\\nLet's add an entry in deprecation.md since we're effectively deprecating it\\n\\n RafaelGSS added deprecations request-ci labels \\n github-actions Bot removed the request-ci label \\nnodejs-github-bot\\ncommented\\nCollaborator\\n\\nCI: https://ci.nodejs.org/job/node-test-pull-request/65461/\\n\\naduh95 reviewed \\nView reviewed changes\\ndoc/api/deprecations.md\\nOutdated\\nShow resolved\\naduh95 reviewed \\nView reviewed changes\\ndoc/api/deprecations.md\\nOutdated\\nShow resolved\\naduh95 reviewed \\nView reviewed changes\\ntest/parallel/test-child-process-execfile.js\\nOutdated\\nShow resolved\\nmohd-akram\\ncommented\\nContributor\\n\\nThank you @DanielVenable for creating this PR. What's the update on this? It would be good to get this into Node.js 24 as the freeze is in a couple of weeks.\\n\\n aduh95 mentioned this pull request \\ndoc: deprecate passing args to spawn and execFile #57389\\n Merged\\naduh95 added a commit that referenced this pull request \\ndoc: deprecate passing args to spawn and execFile …\\nVerified\\n109c817\\nDanielVenable and others added 2 commits \\nchild_process: deprecate passing args to spawn and execFile …\\n281d896\\nfixup! child_process: deprecate passing args to spawn and execFile\\n7a04435\\naduh95 force-pushed the child-process-disallow-args-when-shell-option-true branch from c885d04 to 7a04435 \\nCompare\\naduh95\\ncommented\\nContributor\\n\\n@DanielVenable I've rebased to fix the git conflicts. I've also pushed 7a04435 to fix the implementation, PTAL.\\n\\nfixup! fixup! child_process: deprecate passing args to spawn and … …\\n180b40a\\naduh95\\ncommented\\nContributor\\n\\n/cc @nodejs/tsc since this is semver-major\\n\\nDanielVenable\\ncommented\\nContributor\\nAuthor\\n\\n@aduh95 LGTM\\n\\nanonrig approved these changes \\nView reviewed changes\\naduh95 approved these changes \\nView reviewed changes\\naduh95 reviewed \\nView reviewed changes\\ndoc/api/child_process.md\\nShow resolved\\n aduh95 mentioned this pull request \\ndoc: remove deprecated pattern in child_process.md #57568\\n Merged\\n aduh95 added author ready request-ci labels \\n68 hidden items\\nLoad more…\\nRafaelGSS added a commit that referenced this pull request \\n2025-05-07, Version 24.0.0 (Current) …\\nVerified\\n18fb425\\nRafaelGSS pushed a commit that referenced this pull request \\ndoc: deprecate passing args to spawn and execFile …\\nVerified\\ne455dd5\\nRafaelGSS pushed a commit that referenced this pull request \\nchild_process: deprecate passing args to spawn and execFile …\\nVerified\\nc6bca3f\\nRafaelGSS added a commit that referenced this pull request \\n2025-05-06, Version 24.0.0 (Current) …\\nVerified\\n4d624e3\\nRafaelGSS added a commit that referenced this pull request \\n2025-05-06, Version 24.0.0 (Current) …\\nVerified\\n9c77e22\\nRafaelGSS added a commit that referenced this pull request \\n2025-05-06, Version 24.0.0 (Current) …\\nVerified\\nc5349f4\\nRafaelGSS added a commit that referenced this pull request \\n2025-05-06, Version 24.0.0 (Current) …\\nVerified\\ne272637\\n ericcornelissen mentioned this pull request \\nSupport Node.js v24 ericcornelissen/shescape#1966\\nClosed\\n fisker mentioned this pull request \\nNode.js v24 warning sindresorhus/nano-spawn#89\\nClosed\\n Tosin-JD mentioned this pull request \\nAdd support for Node.js v24 ericcornelissen/shescape#1968\\n Merged\\n jdalton mentioned this pull request \\n[BUG] Add support for Node.js v24 npm/promise-spawn#134\\nClosed\\n1 task done\\n mrgrain mentioned this pull request \\nTasks (especially receiveArgs) should always quote and escape all args projen/projen#4267\\nOpen\\n RafaelGSS mentioned this pull request \\nI don’t see an alternative: “DeprecationWarning: Passing args to a child process with shell option true …” nodejs/help#5063\\nClosed\\n2 tasks done\\n hyrious mentioned this pull request \\nError: spawnSync npm.cmd EINVAL #59210\\nClosed\\n bjohansebas mentioned this pull request \\nfix: update spawn command to concatenate command and flags withastro/astro#14158\\n Merged\\n yCodeTech mentioned this pull request \\nFix spaces in paths and validating arguments valeryan/vscode-phpsab#172\\n Merged\\n coderabbitai Bot mentioned this pull request \\nfix(e2e): prevent fixture hook mutations ubugeeei-prod/vize#2820\\n Merged\\n coderabbitai Bot mentioned this pull request \\ntest: migrate legacy e2e coverage rstackjs/ts-checker-rspack-plugin#132\\n Merged\\n rhyanvargas mentioned this pull request \\nsecurity: address Node DEP0190 — args + shell:true in child_process rhyanvargas/agentic-development-starter-kit#77\\nClosed\\n5 tasks\\nThis was referenced \\nchore(release): main to develop PR voxel51/fiftyone#8161\\n Merged\\nConsolidate AI Assistant features and infrastructure updates tonythethompson/Olive-Studio#65\\n Merged\\nv0.5.0 blundergoat/gruff-ts#9\\n Merged\\nRHAIENG-6391: feat(codeserver-baseline): integrate phase-1 codeserver-baseline wiring and build opendatahub-io/notebooks#4304\\n Merged\\nfix(repo): backfill fork upstream for SSH repos on connect stablyai/orca#12970\\n Open\\n coderabbitai Bot mentioned this pull request \\nfeat: 本地 Skill 前置索引 + 意图匹配，修复模型误报不存在 (#613) 14790897/MiqroForge-Desktop#625\\n Closed\\n1 of 6 tasks\\nThis was referenced \\nfeat(dev): add cross-platform dev server launcher with memory optimiz… tonythethompson/Olive-Studio#382\\n Merged\\nfix(windows): finish the portability work and turn the Windows leg green (v0.27.5) MaheshKok/IntelliGit#224\\n Merged\\nadligo\\ncommented\\n\\nAlso switching to bun executing of your code will likely work, it's working for me.\\n\\nSign up for free to join this conversation on GitHub. Already have an account? Sign in to comment\\nReviewers\\naduh95\\nRafaelGSS\\nmcollina\\njasnell\\nanonrig\\nAssignees\\nNo one assigned\\nLabels\\nauthor ready\\nchild_process\\ncommit-queue-squash\\ndeprecations\\nneeds-ci\\nsemver-major\\nProjects\\nNone yet\\nMilestone\\nNo milestone\\nDevelopment\\n\\nSuccessfully merging this pull request may close these issues.\\n\\n Disallow args in child_process execFile/spawn when the shell option is true\\n9 participants\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 1054,
+          "at": "2026-10-09T10:38:22.552Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/docs/latest-v22.x/api/sqlite.html\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_96194aed92c945c0844eea4f\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/docs/latest-v22.x/api/sqlite.html (HTTP 200)\\n\\nSkip to content\\nNode.js\\nAbout this documentation\\nUsage and example\\nAssertion testing\\nAsynchronous context tracking\\nAsync hooks\\nBuffer\\nC++ addons\\nC/C++ addons with Node-API\\nC++ embedder API\\nChild processes\\nCluster\\nCommand-line options\\nConsole\\nCrypto\\nDebugger\\nDeprecated APIs\\nDiagnostics Channel\\nDNS\\nDomain\\nEnvironment Variables\\nErrors\\nEvents\\nFile system\\nGlobals\\nHTTP\\nHTTP/2\\nHTTPS\\nInspector\\nInternationalization\\nModules: CommonJS modules\\nModules: ECMAScript modules\\nModules: node:module API\\nModules: Packages\\nModules: TypeScript\\nNet\\nOS\\nPath\\nPerformance hooks\\nPermissions\\nProcess\\nPunycode\\nQuery strings\\nReadline\\nREPL\\nReport\\nSingle executable applications\\nSQLite\\nStream\\nString decoder\\nTest runner\\nTimers\\nTLS/SSL\\nTrace events\\nTTY\\nUDP/datagram\\nURL\\nUtilities\\nV8\\nVM\\nWASI\\nWeb Crypto API\\nWeb Streams API\\nWorker threads\\nZlib\\nCode repository and issue tracker\\nNode.js v22.23.3 documentation\\n Table of contents  Index  Other versions  Options\\nTable of contents\\nSQLite\\nClass: DatabaseSync\\nnew DatabaseSync(path[, options])\\ndatabase.aggregate(name, options)\\ndatabase.close()\\ndatabase.loadExtension(path)\\ndatabase.enableLoadExtension(allow)\\ndatabase.location([dbName])\\ndatabase.exec(sql)\\ndatabase.function(name[, options], fn)\\ndatabase.isOpen\\ndatabase.isTransaction\\ndatabase.open()\\ndatabase.prepare(sql)\\ndatabase.createSession([options])\\ndatabase.applyChangeset(changeset[, options])\\ndatabase[Symbol.dispose]()\\nClass: Session\\nsession.changeset()\\nsession.patchset()\\nsession.close().\\nClass: StatementSync\\nstatement.all([namedParameters][, ...anonymousParameters])\\nstatement.columns()\\nstatement.expandedSQL\\nstatement.get([namedParameters][, ...anonymousParameters])\\nstatement.iterate([namedParameters][, ...anonymousParameters])\\nstatement.run([namedParameters][, ...anonymousParameters])\\nstatement.setAllowBareNamedParameters(enabled)\\nstatement.setAllowUnknownNamedParameters(enabled)\\nstatement.setReturnArrays(enabled)\\nstatement.setReadBigInts(enabled)\\nstatement.sourceSQL\\nType conversion between JavaScript and SQLite\\nsqlite.backup(sourceDb, destination[, options])\\nsqlite.constants\\nSQLite constants\\nConflict resolution constants\\nSQLite\\n#\\nHistory\\n\\nStability: 1.1 - Active development.\\n\\nSource Code: lib/sqlite.js\\n\\nThe node:sqlite module facilitates working with SQLite databases. To access it:\\n\\nconst sqlite = require('node:sqlite');\\nCOPY\\n\\nThis module is only available under the node: scheme.\\n\\nThe following example shows the basic usage of the node:sqlite module to open an in-memory database, write data to the database, and then read the data back.\\n\\n'use strict';\\nconst { DatabaseSync } = require('node:sqlite');\\nconst database = new DatabaseSync(':memory:');\\n\\n// Execute SQL statements from strings.\\ndatabase.exec(`\\n  CREATE TABLE data(\\n    key INTEGER PRIMARY KEY,\\n    value TEXT\\n  ) STRICT\\n`);\\n// Create a prepared statement to insert data into the database.\\nconst insert = database.prepare('INSERT INTO data (key, value) VALUES (?, ?)');\\n// Execute the prepared statement with bound values.\\ninsert.run(1, 'hello');\\ninsert.run(2, 'world');\\n// Create a prepared statement to read data from the database.\\nconst query = database.prepare('SELECT * FROM data ORDER BY key');\\n// Execute the prepared statement and log the result set.\\nconsole.log(query.all());\\n// Prints: [ { key: 1, value: 'hello' }, { key: 2, value: 'world' } ]\\nCOPY\\nClass: DatabaseSync\\n#\\nHistory\\n\\nThis class represents a single connection to a SQLite database. All APIs exposed by this class execute synchronously.\\n\\nnew DatabaseSync(path[, options])\\n#\\nHistory\\npath <string> | <Buffer> | <URL> The path of the database. A SQLite database can be stored in a file or completely in memory. To use a file-backed database, the path should be a file path. To use an in-memory database, the path should be the special name ':memory:'.\\noptions <Object> Configuration options for the database connection. The following options are supported:\\nopen <boolean> If true, the database is opened by the constructor. When this value is false, the database must be opened via the open() method. Default: true.\\nreadOnly <boolean> If true, the database is opened in read-only mode. If the database does not exist, opening it will fail. Default: false.\\nenableForeignKeyConstraints <boolean> If true, foreign key constraints are enabled. This is recommended but can be disabled for compatibility with legacy database schemas. The enforcement of foreign key constraints can be enabled and disabled after opening the database using PRAGMA foreign_keys. Default: true.\\nenableDoubleQuotedStringLiterals <boolean> If true, SQLite will accept double-quoted string literals. This is not recommended but can be enabled for compatibility with legacy database schemas. Default: false.\\nallowExtension <boolean> If true, the loadExtension SQL function and the loadExtension() method are enabled. You can call enableLoadExtension(false) later to disable this feature. Default: false.\\ntimeout <number> The busy timeout in milliseconds. This is the maximum amount of time that SQLite will wait for a database lock to be released before returning an error. Default: 0.\\nreadBigInts <boolean> If true, integer fields are read as JavaScript BigInt values. If false, integer fields are read as JavaScript numbers. Default: false.\\nreturnArrays <boolean> If true, query results are returned as arrays instead of objects. Default: false.\\nallowBareNamedParameters <boolean> If true, allows binding named parameters without the prefix character (e.g., foo instead of :foo). Default: true.\\nallowUnknownNamedParameters <boolean> If true, unknown named parameters are ignored when binding. If false, an exception is thrown for unknown named parameters. Default: false.\\n\\nConstructs a new DatabaseSync instance.\\n\\ndatabase.aggregate(name, options)\\n#\\nAdded in: v22.16.0\\n\\nRegisters a new aggregate function with the SQLite database. This method is a wrapper around sqlite3_create_window_function().\\n\\nname <string> The name of the SQLite function to create.\\noptions <Object> Function configuration settings.\\ndeterministic <boolean> If true, the SQLITE_DETERMINISTIC flag is set on the created function. Default: false.\\ndirectOnly <boolean> If true, the SQLITE_DIRECTONLY flag is set on the created function. Default: false.\\nuseBigIntArguments <boolean> If true, integer arguments to options.step and options.inverse are converted to BigInts. If false, integer arguments are passed as JavaScript numbers. Default: false.\\nvarargs <boolean> If true, options.step and options.inverse may be invoked with any number of arguments (between zero and SQLITE_MAX_FUNCTION_ARG). If false, inverse and step must be invoked with exactly length arguments. Default: false.\\nstart <number> | <string> | <null> | <Array> | <Object> | <Function> The identity value for the aggregation function. This value is used when the aggregation function is initialized. When a <Function> is passed the identity will be its return value.\\nstep <Function> The function to call for each row in the aggregation. The function receives the current state and the row value. The return value of this function should be the new state.\\nresult <Function> The function to call to get the result of the aggregation. The function receives the final state and should return the result of the aggregation.\\ninverse <Function> When this function is provided, the aggregate method will work as a window function. The function receives the current state and the dropped row value. The return value of this function should be the new state.\\n\\nWhen used as a window function, the result function will be called multiple times.\\n\\nconst { DatabaseSync } = require('node:sqlite');\\n\\nconst db = new DatabaseSync(':memory:');\\ndb.exec(`\\n  CREATE TABLE t3(x, y);\\n  INSERT INTO t3 VALUES ('a', 4),\\n                        ('b', 5),\\n                        ('c', 3),\\n                        ('d', 8),\\n                        ('e', 1);\\n`);\\n\\ndb.aggregate('sumint', {\\n  start: 0,\\n  step: (acc, value) => acc + value,\\n});\\n\\ndb.prepare('SELECT sumint(y) as total FROM t3').get(); // { total: 21 }\\nCOPY\\ndatabase.close()\\n#\\nAdded in: v22.5.0\\n\\nCloses the database connection. An exception is thrown if the database is not open. This method is a wrapper around sqlite3_cl\\n\\n[Partial page: segment 0 of 4. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-4c56a075-4982-4911-b175-46114c42055c\\\", segmentIndex=1..3. Do not cite unread sections.]\\nOutline:\\nNode.js v22.23.3 documentation\\nSQLite #\\nClass: DatabaseSync #\\nnew DatabaseSync(path[, options]) #\\ndatabase.aggregate(name, options) #\\ndatabase.close() #\\ndatabase.loadExtension(path) #\\ndatabase.enableLoadExtension(allow) #\\ndatabase.location([dbName]) #\\ndatabase.exec(sql) #\\ndatabase.function(name[, options], fn) #\\ndatabase.isOpen #\\ndatabase.isTransaction #\\ndatabase.open() #\\ndatabase.prepare(sql) #\\ndatabase.createSession([options]) #\\ndatabase.applyChangeset(changeset[, options]) #\\ndatabase[Symbol.dispose]() #\\nClass: Session #\\nsession.changeset() #\\nsession.patchset() #\\nsession.close(). #\\nClass: StatementSync #\\nstatement.all([namedParameters][, ...anonymousParameters]) #\\nstatement.columns() #\\nstatement.expandedSQL #\\nstatement.get([namedParameters][, ...anonymousParameters]) #\\nstatement.iterate([namedParameters][, ...anonymousParameters]) #\\nstatement.run([namedParameters][, ...anonymousParameters]) #\\nstatement.setAllowBareNamedParameters(enabled) #\\nstatement.setAllowUnknownNamedParameters(enabled) #\\nstatement.setReturnArrays(enabled) #\\nstatement.setReadBigInts(enabled) #\\nstatement.sourceSQL #\\nType conversion between JavaScript and SQLite #\\nsqlite.backup(sourceDb, destination[, options]) #\\nsqlite.constants #\\nSQLite constants #\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 1546,
+          "at": "2026-10-09T10:38:51.725Z",
+          "type": "step.started",
+          "toolName": "write",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"file_path\\\":\\\"C:\\\\\\\\temp\\\\\\\\weftmate-eval-action-02-web-document-SO9Udn\\\\\\\\node24说明.md\\\",\\\"content\\\":\\\"# Node.js 24 相比 22 值得留意的变化（简要说明）\\\\n\\\\n> 整理时间：2026-10-09；依据 Node.js 官方发布说明与官方文档。\\\\n\\\\n## 1. 版本状态与支持周期（先看这个）\\\\n\\\\n| 版本 | 代号 | 状态 | 关键日期 |\\\\n|---|---|---|---|\\\\n| 22.x | Jod | **维护期 LTS**（只修关键 bug 和安全问题） | 发布 2024-04-24，进维护 2025-10-21，**EOL 2027-04-30** |\\\\n| 24.x | Krypton | **活跃 LTS** | 发布 2025-05-06，进 LTS 2025-10-28，2026-10-20 起转维护，**EOL 2028-04-30** |\\\\n\\\\n结论：24 是当前主推的生产版本，支持期比 22 多一年；22 还能用但已不再收新特性。\\\\n\\\\n## 2. 语言与运行时（V8 13.6，22 是 12.4）\\\\n\\\\n- **Float16Array**：新增 16 位浮点类型。\\\\n- **显式资源管理（Explicit Resource Management）**：`using` / `await using` 语法正式可用，适合自动释放连接、文件句柄等。\\\\n- **`RegExp.escape()`**：对字符串做正则转义。\\\\n- **WebAssembly Memory64**、**`Error.isError()`** 也随 V8 13.6 到来。\\\\n\\\\n## 3. TypeScript 支持变成\\\\\\\"默认能跑\\\\\\\"\\\\n\\\\n- 24 里**默认开启类型剥离（type stripping）且已标为 Stable**：直接 `node xxx.ts` 即可运行只含\\\\\\\"可擦除语法\\\\\\\"的 TS，不做类型检查。\\\\n- 可用 `--no-strip-types` 关闭；enum、参数属性等需要代码生成的语法要加 `--experimental-transform-types`。\\\\n- 注意：**不读 tsconfig.json**（paths、降级编译等不支持），不处理 `node_modules` 里的 TS 文件，`.tsx` 不支持；需要完整 TS 能力仍建议用 `tsx` 等第三方工具。\\\\n- 22 里这还是实验性、需加 `--experimental-strip-types` 的功能。\\\\n\\\\n## 4. 核心 API 与行为变化\\\\n\\\\n- **`AsyncLocalStorage` 默认改用 AsyncContextFrame 实现**：性能更好、更稳健；一般无感，但若你依赖其内部实现细节或做基准测试需要留意。\\\\n- **`URLPattern` 成为全局对象**：无需 import 直接可用（类正则的 URL 匹配）。\\\\n- **权限模型更进一步**：`--experimental-permission` 改名为 **`--permission`**，更稳定、更接近可用状态。\\\\n- **测试运行器**：子测试会自动等待完成，不必再手动 `await` 每个子测试。\\\\n- **`node:sqlite` 从\\\\\\\"活跃开发\\\\\\\"升到\\\\\\\"发布候选\\\\\\\"**（v22 文档 Stability 1.1 → v24 文档 Stability 1.2），API 也更丰富（`aggregate`、`setAuthorizer`、session/backup 等）。\\\\n- 内置 **Undici 7**（HTTP 客户端栈更新）、**npm 11**（22 自带 npm 10）。\\\\n\\\\n## 5. 弃用与移除（升级前要排查的点）\\\\n\\\\n- **`url.parse()` 运行时弃用**——改用 WHATWG `URL`/`URL`Parser（`new URL(...)`）。\\\\n- **`tls.createSecurePair` 已移除**；**`SlowBuffer` 进入 EOL**。\\\\n- **`spawn`/`execFile` 在 `shell: true` 时传 `args` 被弃用**（DEP0190）：参数只是拼接而非转义，容易引发安全问题，会收到 DeprecationWarning。\\\\n- 其他弃用：不带 `new` 直接用 REPL、不带 `new` 用 Zlib 类。\\\\n- **Windows 构建移除 MSVC 支持，必须用 ClangCL** 编译 Node 本体（对普通使用者无影响，影响自行编译/嵌入者）。\\\\n- **原生模块 ABI 变了**（NODE_MODULE_VERSION 137，22 是 127）：N-API/Node-API 模块不受影响，老式 V8 ABI 原生扩展需重新编译。\\\\n- ARMv7 支持降级为实验性。\\\\n\\\\n## 6. 升级建议（简）\\\\n\\\\n1. 新项目直接上 24；存量 22 项目在 2027-04-30（22 EOL）前迁到 24。\\\\n2. 升级前重点回归：`url.parse()`、`SlowBuffer`、`shell: true` + `args`、原生扩展重编译。\\\\n3. 生产环境以 24 的 LTS 版本为准，不要用奇数版（如 25、26 之前的 Current）。\\\\n\\\\n## 来源链接\\\\n\\\\n- [Node.js 24.0.0 发布说明（Notable Changes / 弃用清单）](https://nodejs.org/en/blog/release/v24.0.0)\\\\n- [Node.js 22.0.0 发布说明（对照基线）](https://nodejs.org/en/blog/release/v22.0.0)\\\\n- [官方发布周期与 LTS 状态表（nodejs/release）](https://github.com/nodejs/release#release-schedule)\\\\n- [v24 文档：Modules: TypeScript（Stability 2 - Stable）](https://nodejs.org/docs/latest-v24.x/api/typescript.html)\\\\n- [v24 文档：node:sqlite（Stability 1.2）](https://nodejs.org/docs/latest-v24.x/api/sqlite.html)\\\\n- [v22 文档：node:sqlite（Stability 1.1，对照）](https://nodejs.org/docs/latest-v22.x/api/sqlite.html)\\\\n- [PR #57199：shell:true 时传 args 弃用（DEP0190）](https://github.com/nodejs/node/pull/57199)\\\\n\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-63e6d69b-0fef-4c42-ae47-fbd6292fa356",
+          "seq": 1892,
+          "at": "2026-10-09T10:39:07.350Z",
+          "type": "step.started",
+          "toolName": "write",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"file_path\\\":\\\"C:\\\\\\\\temp\\\\\\\\weftmate-eval-action-02-web-document-SO9Udn\\\\\\\\node24说明.md\\\",\\\"content\\\":\\\"# Node.js 24 相比 22 值得留意的变化（简要说明）\\\\n\\\\n> 整理时间：2026-10-09；依据 Node.js 官方发布说明与官方文档。\\\\n\\\\n## 1. 版本状态与支持周期（先看这个）\\\\n\\\\n| 版本 | 代号 | 状态 | 关键日期 |\\\\n|---|---|---|---|\\\\n| 22.x | Jod | **维护期 LTS**（只修关键 bug 和安全问题） | 发布 2024-04-24，进维护 2025-10-21，**EOL 2027-04-30** |\\\\n| 24.x | Krypton | **活跃 LTS** | 发布 2025-05-06，进 LTS 2025-10-28，2026-10-20 起转维护，**EOL 2028-04-30** |\\\\n\\\\n结论：24 是当前主推的生产版本，支持期比 22 多一年；22 还能用但已不再收新特性。\\\\n\\\\n## 2. 语言与运行时（V8 13.6，22 是 12.4）\\\\n\\\\n- **Float16Array**：新增 16 位浮点类型。\\\\n- **显式资源管理（Explicit Resource Management）**：`using` / `await using` 语法正式可用，适合自动释放连接、文件句柄等资源。\\\\n- **`RegExp.escape()`**：对字符串做正则转义。\\\\n- **WebAssembly Memory64**、**`Error.isError()`** 也随 V8 13.6 到来。\\\\n\\\\n## 3. TypeScript 支持变成\\\\\\\"默认能跑\\\\\\\"\\\\n\\\\n- 24 里**默认开启类型剥离（type stripping）且已标为 Stable**：直接 `node xxx.ts` 即可运行只含\\\\\\\"可擦除语法\\\\\\\"的 TS，不做类型检查。\\\\n- 可用 `--no-strip-types` 关闭；enum、参数属性等需要代码生成的语法要加 `--experimental-transform-types`。\\\\n- 注意：**不读 tsconfig.json**（paths、降级编译等不支持），不处理 `node_modules` 里的 TS 文件，`.tsx` 不支持；需要完整 TS 能力仍建议用 `tsx` 等第三方工具。\\\\n- 22 里这还是实验性、需加 `--experimental-strip-types` 才生效的功能。\\\\n\\\\n## 4. 核心 API 与行为变化\\\\n\\\\n- **`AsyncLocalStorage` 默认改用 AsyncContextFrame 实现**：性能更好、更稳健；一般无感，但若依赖其内部实现细节或做基准测试需要留意。\\\\n- **`URLPattern` 成为全局对象**：无需 import 直接可用（类正则的 URL 匹配）。\\\\n- **权限模型更进一步**：`--experimental-permission` 改名为 **`--permission`**，更稳定、更接近可用状态。\\\\n- **测试运行器**：子测试会自动等待完成，不必再手动 `await` 每个子测试。\\\\n- **`node:sqlite` 从\\\\\\\"活跃开发\\\\\\\"升到\\\\\\\"发布候选\\\\\\\"**（v22 文档 Stability 1.1 → v24 文档 Stability 1.2），API 也更丰富（`aggregate`、`setAuthorizer`、session/backup 等）。\\\\n- 内置 **Undici 7**（HTTP 客户端栈更新）、**npm 11**（22 自带 npm 10）。\\\\n\\\\n## 5. 弃用与移除（升级前要排查的点）\\\\n\\\\n- **`url.parse()` 运行时弃用**——改用 WHATWG URL API（`new URL(...)`）。\\\\n- **`tls.createSecurePair` 已移除**；**`SlowBuffer` 进入 EOL**。\\\\n- **`spawn`/`execFile` 在 `shell: true` 时传 `args` 被弃用**（DEP0190）：参数只是拼接而非转义，容易引发安全问题，会收到 DeprecationWarning。\\\\n- 其他弃用：不带 `new` 直接调用 REPL、不带 `new` 使用 Zlib 类。\\\\n- **Windows 构建移除 MSVC 支持，必须用 ClangCL** 编译 Node 本体（对普通使用者无影响，影响自行编译/嵌入 Node 的场景）。\\\\n- **原生模块 ABI 变了**（NODE_MODULE_VERSION 137，22 是 127）：N-API/Node-API 模块不受影响，老式 V8 ABI 原生扩展需重新编译。\\\\n- ARMv7 支持降级为实验性。\\\\n\\\\n## 6. 升级建议（简）\\\\n\\\\n1. 新项目直接上 24；存量 22 项目可在 2027-04-30（22 EOL）前迁到 24。\\\\n2. 升级前重点回归：`url.parse()`、`SlowBuffer`、`shell: true` + `args`、原生扩展重编译。\\\\n3. 生产环境以 24 的 LTS 版本为准；奇数版本（Current 线）不上生产。\\\\n\\\\n## 来源链接\\\\n\\\\n- [Node.js 24.0.0 发布说明（Notable Changes / 弃用清单）](https://nodejs.org/en/blog/release/v24.0.0)\\\\n- [Node.js 22.0.0 发布说明（对照基线）](https://nodejs.org/en/blog/release/v22.0.0)\\\\n- [官方发布周期与 LTS 状态表（nodejs/release）](https://github.com/nodejs/release#release-schedule)\\\\n- [v24 文档：Modules: TypeScript（Stability 2 - Stable）](https://nodejs.org/docs/latest-v24.x/api/typescript.html)\\\\n- [v24 文档：node:sqlite（Stability 1.2）](https://nodejs.org/docs/latest-v24.x/api/sqlite.html)\\\\n- [v22 文档：node:sqlite（Stability 1.1，对照）](https://nodejs.org/docs/latest-v22.x/api/sqlite.html)\\\\n- [PR #57199：shell:true 时传 args 弃用（DEP0190）](https://github.com/nodejs/node/pull/57199)\\\\n\\\"}\"\n}"
+        }
+      ]
+    },
+    {
+      "id": "action-02-web-document",
+      "category": "action",
+      "title": "查网页并保存说明",
+      "status": "passed",
+      "durationMs": 89702,
+      "checks": [
+        {
+          "type": "file_exists",
+          "path": "node24说明.md",
+          "status": "passed"
+        },
+        {
+          "type": "file_contains",
+          "path": "node24说明.md",
+          "text": "https://nodejs.org/",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "说明|保存|写好",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "回复应说明已经保存中文说明并提到官方来源；不能将尚未进行的检索/保存说成完成。仅凭回复不能验收文档事实准确性。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "modelProfileId": "private-model-521d145724b0b59da6674d1e6410f712c459d551",
+          "commandId": "cmd-b9254cfb-0426-4310-ad98-c6c8e904fe7a",
+          "startedAt": "2026-10-09T10:39:17.928Z",
+          "reply": "已保存 `node24说明.md` 到 `[local path] 22/24 版本现状与支持周期、V8 13.6 新语法（`using`、`RegExp.escape` 等）、AsyncContextFrame、`URLPattern` 全局、`--permission`、npm 11/Undici 7、弃用与移除项（`url.parse()`、`tls.createSecurePair`、ABI 137、Windows 改用 ClangCL）及升级清单。依据来源为 Node.js 官方博客的 [24.0.0 发布说明](https://nodejs.org/en/blog/release/v24.0.0)、[22.0.0 发布说明](https://nodejs.org/en/blog/release/v22.0.0) 与 [官方发布计划](https://github.com/nodejs/release#release-schedule)，均附在文末链接中。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T10:39:17.973Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T10:39:17.973Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T10:39:18.005Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T10:39:18.005Z"
+            },
+            {
+              "seq": 48,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:21.286Z"
+            },
+            {
+              "seq": 49,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:21.291Z"
+            },
+            {
+              "seq": 115,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:24.977Z"
+            },
+            {
+              "seq": 116,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:24.992Z"
+            },
+            {
+              "seq": 117,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:29.192Z"
+            },
+            {
+              "seq": 118,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:29.193Z"
+            },
+            {
+              "seq": 153,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:33.405Z"
+            },
+            {
+              "seq": 154,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:33.421Z"
+            },
+            {
+              "seq": 155,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:37.512Z"
+            },
+            {
+              "seq": 156,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:38.180Z"
+            },
+            {
+              "seq": 222,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:41.863Z"
+            },
+            {
+              "seq": 223,
+              "type": "step.started",
+              "at": "2026-10-09T10:39:41.874Z"
+            },
+            {
+              "seq": 224,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:45.858Z"
+            },
+            {
+              "seq": 225,
+              "type": "step.completed",
+              "at": "2026-10-09T10:39:51.143Z"
+            },
+            {
+              "seq": 468,
+              "type": "step.started",
+              "at": "2026-10-09T10:40:05.396Z"
+            },
+            {
+              "seq": 469,
+              "type": "step.completed",
+              "at": "2026-10-09T10:40:09.361Z"
+            },
+            {
+              "seq": 1073,
+              "type": "step.started",
+              "at": "2026-10-09T10:40:41.330Z"
+            },
+            {
+              "seq": 1074,
+              "type": "artifact.created",
+              "at": "2026-10-09T10:40:42.470Z"
+            },
+            {
+              "seq": 1148,
+              "type": "assistant.message",
+              "at": "2026-10-09T10:40:47.262Z"
+            },
+            {
+              "seq": 1149,
+              "type": "task.ended",
+              "at": "2026-10-09T10:40:47.262Z"
+            },
+            {
+              "seq": 1150,
+              "type": "turn.ended",
+              "at": "2026-10-09T10:40:47.263Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 89347,
+          "endedAt": "2026-10-09T10:40:47.275Z"
+        }
+      ],
+      "replySummary": "已保存 `node24说明.md` 到 `[local path] 22/24 版本现状与支持周期、V8 13.6 新语法（`using`、`RegExp.escape` 等）、AsyncContextFrame、`URLPattern` 全局、`--permission`、npm 11/Undici 7、弃用与移除项（`url.parse()`、`tls.createSecurePair`、ABI 137、Windows 改用 ClangCL）及升级清单。依据来源为 Node.js 官方博客的 [24.0.0 发布说明](https://nodejs.org/en/blog/release/v24.0.0)、[22.0.0 发布说明](https://nodejs.org/en/blog/release/v22.0.0) 与 [官方发布计划](https://github.com/nodejs/release#release-schedule)，均附在文末链接中。",
+      "notes": "需要联网；文件检查只确认保存和官方来源链接，具体事实准确性由 Windows 人工抽查，judge 为可选补充。本地 Qwen 27B 首轮 240 秒到期时仍在正常检索官方迁移指南，调整为 600 秒以覆盖检索、写入和核验。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限600秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-action-02-web-document-ryhYlN",
+      "toolDetails": [
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 48,
+          "at": "2026-10-09T10:39:21.286Z",
+          "type": "step.started",
+          "toolName": "load_tools",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 49,
+          "at": "2026-10-09T10:39:21.291Z",
+          "type": "step.completed",
+          "toolName": "load_tools",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"names\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_5e93489c6db04b6db6296e3b\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"{\\\"loaded\\\":[\\\"web_fetch\\\",\\\"write\\\"]}\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 115,
+          "at": "2026-10-09T10:39:24.977Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v24-release-announcement\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 116,
+          "at": "2026-10-09T10:39:24.992Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v22-release-announcement\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 117,
+          "at": "2026-10-09T10:39:29.192Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "failed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v24-release-announcement\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_025acb13188a4f17bebf8a4e\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Error: BROWSER_HTTP_ERROR\"\n        }\n      ],\n      \"isError\": true\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 118,
+          "at": "2026-10-09T10:39:29.193Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "failed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/v22-release-announcement\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_73652ddce1b3442db76d84b1\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Error: BROWSER_HTTP_ERROR\"\n        }\n      ],\n      \"isError\": true\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 153,
+          "at": "2026-10-09T10:39:33.405Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v24.0.0\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 154,
+          "at": "2026-10-09T10:39:33.421Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/node-v24-release-announcement/\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 155,
+          "at": "2026-10-09T10:39:37.512Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v24.0.0\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_6d45e6055bfe4954ac4fd0cf\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/blog/release/v24.0.0 (HTTP 200)\\n\\nNode.js 24.0.0 (Current)\\nRG\\n\\nRafael Gonzaga\\n\\nNode.js 24.0.0 (Current)\\n2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol\\n\\nWe’re excited to announce the release of Node.js 24! This release brings several significant updates, including the upgrade of the V8 JavaScript engine to version 13.6 and npm to version 11. Starting with Node.js 24, support for MSVC has been removed, and ClangCL is now required to compile Node.js on Windows. The AsyncLocalStorage API now uses AsyncContextFrame by default, and URLPattern is available globally. These changes, along with many other improvements, continue to push the platform forward.\\n\\nAs a reminder, Node.js 24 will enter long-term support (LTS) in October, but until then, it will be the \\\"Current\\\" release for the next six months. We encourage you to explore the new features and benefits offered by this latest release and evaluate their potential impact on your applications.\\n\\nNotable Changes\\nV8 13.6\\n\\nThe V8 engine is updated to version 13.6, which includes several new JavaScript features:\\n\\nFloat16Array\\nExplicit resource management\\nRegExp.escape\\nWebAssembly Memory64\\nError.isError\\n\\nThe V8 update was a contribution by Michaël Zasso in #58070.\\n\\nnpm 11\\n\\nNode.js 24 comes with npm 11, which includes several improvements and new features. This update brings enhanced performance, improved security features, and better compatibility with modern JavaScript packages.\\n\\nThe npm update was a contribution by the npm team in #56274.\\n\\nAsyncLocalStorage defaults to AsyncContextFrame\\n\\nAsyncLocalStorage now uses AsyncContextFrame by default, which provides a more efficient implementation of asynchronous context tracking. This change improves performance and makes the API more robust for advanced use cases.\\n\\nThis change was a contribution by Stephen Belanger in #55552.\\n\\nURLPattern as a global\\n\\nThe URLPattern API is now exposed on the global object, making it easier to use without explicit imports. This API provides a powerful pattern matching system for URLs, similar to how regular expressions work for strings.\\n\\nThis feature was a contribution by Jonas Badalič in #56950.\\n\\nPermission Model Improvements\\n\\nThe experimental Permission Model introduced in Node.js 20 has been improved, and the flag has been changed from --experimental-permission to simply --permission, indicating its increasing stability and readiness for broader adoption.\\n\\nThis change was a contribution by Rafael Gonzaga in #56240.\\n\\nTest Runner Enhancements\\n\\nThe test runner module now automatically waits for subtests to finish, eliminating the need to manually await test promises. This makes writing tests more intuitive and reduces common errors related to unhandled promises.\\n\\nThe test runner improvements were contributions by Colin Ihrig in #56664.\\n\\nUndici 7\\n\\nNode.js 24 includes Undici 7, which brings numerous improvements to the HTTP client capabilities, including better performance and support for newer HTTP features.\\n\\nDeprecations and Removals\\n\\nSeveral APIs have been deprecated or removed in this release:\\n\\nRuntime deprecation of url.parse() - use the WHATWG URL API instead (#55017)\\nRemoval of deprecated tls.createSecurePair (#57361)\\nRuntime deprecation of SlowBuffer (#55175)\\nRuntime deprecation of instantiating REPL without new (#54869)\\nDeprecation of using Zlib classes without new (#55718)\\nDeprecation of passing args to spawn and execFile in child_process (#57199)\\nSemver-Major Commits\\n[c6b934380a] - (SEMVER-MAJOR) src: enable Float16Array on global object (Michaël Zasso) #58154\\n[69efb81a73] - (SEMVER-MAJOR) src: enable explicit resource management (Michaël Zasso) #58154\\n[b00ff4270e] - (SEMVER-MAJOR) src,test: unregister the isolate after disposal and before freeing (Joyee Cheung) #58070\\n[b81697d860] - (SEMVER-MAJOR) src: use non-deprecated WriteUtf8V2() method (Yagiz Nizipli) #58070\\n[1f06169b87] - (SEMVER-MAJOR) src: use non-deprecated Utf8LengthV2() method (Yagiz Nizipli) #58070\\n[eae9a296f0] - (SEMVER-MAJOR) src: use V8-owned CppHeap (Joyee Cheung) #58070\\n[087c254a11] - (SEMVER-MAJOR) test: fix test-fs-write for V8 13.6 (Michaël Zasso) #58070\\n[9e49bedd8e] - (SEMVER-MAJOR) build: update list of installed cppgc headers (Michaël Zasso) #58070\\n[93cca8a43e] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.6 (Michaël Zasso) #58070\\n[347daa07be] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.5 (Michaël Zasso) #58070\\n[2a35d5a86c] - (SEMVER-MAJOR) build: fix V8 TLS config for shared lib builds (Michaël Zasso) #58070\\n[b0fb5a09cf] - (SEMVER-MAJOR) build: pass -fPIC to linker as well for shared builds (Michaël Zasso) #58070\\n[dd4c5d6c73] - (SEMVER-MAJOR) src,test: add V8 API to test the hash seed (Michaël Zasso) #58070\\n[1d5d7b6eed] - (SEMVER-MAJOR) src: use v8::ExternalMemoryAccounter (Michaël Zasso) #58070\\n[3779e43cce] - (SEMVER-MAJOR) tools: update license-builder and LICENSE for V8 deps (Michaël Zasso) #58070\\n[82c2255206] - (SEMVER-MAJOR) deps: remove deps/simdutf (Michaël Zasso) #58070\\n[8a258eb7b1] - (SEMVER-MAJOR) test: handle explicit resource management globals (Michaël Zasso) #58070\\n[9e0d9b6024] - (SEMVER-MAJOR) test: adapt assert tests to stack trace changes (Michaël Zasso) #58070\\n[f7406aa56d] - (SEMVER-MAJOR) test: update test-linux-perf-logger (Michaël Zasso) #58070\\n[c7493fac5e] - (SEMVER-MAJOR) Revert \\\"test: disable fast API call count checks\\\" (Michaël Zasso) #58070\\n[50a8527867] - (SEMVER-MAJOR) src: replace uses of FastApiTypedArray (Michaël Zasso) #58070\\n[9c1ebb713c] - (SEMVER-MAJOR) build: add /bigobj to compile V8 on Windows (Michaël Zasso) #58070\\n[fb3d5ea45d] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.4 (Michaël Zasso) #58070\\n[756abacf73] - (SEMVER-MAJOR) build,src,tools: adapt build config for V8 13.3 (Michaël Zasso) #58070\\n[f8953e54b0] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.2 (Michaël Zasso) #58070\\n[c8a0e205e1] - (SEMVER-MAJOR) tools: update V8 gypfiles for 13.1 (Michaël Zasso) #58070\\n[1689ee84ce] - (SEMVER-MAJOR) build: enable shared RO heap with ptr compression (Michaël Zasso) #58070\\n[15f2fb9467] - (SEMVER-MAJOR) build: remove support for s390 32-bit (Richard Lau) #58070\\n[4ab254c9f2] - (SEMVER-MAJOR) deps: V8: backport 954187bb1b87 (Joyee Cheung) #58070\\n[732923b927] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (StefanStojanovic) #58070\\n[972834d7c0] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #58070\\n[7098bff3a9] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #58070\\n[dc82c40d4a] - (SEMVER-MAJOR) deps: use std::map in MSVC STL for EphemeronRememberedSet (Joyee Cheung) #58070\\n[42f5130ee2] - (SEMVER-MAJOR) deps: patch V8 for illumos (Dan McDonald) #58070\\n[23b17dbd9e] - (SEMVER-MAJOR) deps: remove problematic comment from v8-internal (Michaël Zasso) #58070\\n[c5d71fcdab] - (SEMVER-MAJOR) deps: define V8_PRESERVE_MOST as no-op on Windows (Stefan Stojanovic) #58070\\n[fbc2005b15] - (SEMVER-MAJOR) deps: fix FP16 bitcasts.h (Stefan Stojanovic) #58070\\n[57f9430503] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #58070\\n[f26cab1b85] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 137 (Michaël Zasso) #58070\\n[f8923a4f17] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #58070\\n[c7964bc02b] - (SEMVER-MAJOR) deps: update V8 to 13.6.233.8 (Michaël Zasso) #58070\\n[6682861d6f] - (SEMVER-MAJOR) build: downgrade armv7 support to experimental (Michaël Zasso) #58071\\n[0579e0ec93] - (SEMVER-MAJOR) buffer: move SlowBuffer to EOL (James M Snell) #58008\\n[a55f5d5e63] - (SEMVER-MAJOR) readline: add stricter validation for functions called after closed (Dario Piotrowicz) #57680\\n[d16b0bae55] - (SEMVER-MAJOR) http2: session tracking and graceful server close (Kushagra Pandey) #57586\\n[e2b94dc3f9] - (SEMVER-MAJOR) readline: fix unicode line separators being ignored (Dario Piotrowicz) #57591\\n[4a47ce5ff9] - (SEMVER-MAJOR) Revert \\\"assert,util: revert recursive breaking change\\\" (Ruben Bridgewater) #57622\\n[7d4db69049] - (SEMVER-MAJOR) http: remove outgoingmessage _headers and _headersList (Yagiz Nizipli) #57551\\n[fabf9384e0] - (SEMVER-MAJOR) fs: remove ability to call truncate wi\\n\\n[Partial page: segment 0 of 5. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-55bd6a89-52af-4bcf-a08f-df10fab768f6\\\", segmentIndex=1..4. Do not cite unread sections.]\\nOutline:\\nNode.js 24.0.0 (Current)\\n2025-05-06, Version 24.0.0 (Current), @RafaelGSS and @juanarbol\\nNotable Changes\\nV8 13.6\\nnpm 11\\nAsyncLocalStorage defaults to AsyncContextFrame\\nURLPattern as a global\\nPermission Model Improvements\\nTest Runner Enhancements\\nUndici 7\\nDeprecations and Removals\\nSemver-Major Commits\\nSemver-Minor Commits\\nSemver-Patch Commits\\nSHASUMS\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 156,
+          "at": "2026-10-09T10:39:38.180Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "failed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/announcements/node-v24-release-announcement/\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_64ad0e3e002948fea234d0a2\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Error: BROWSER_HTTP_ERROR\"\n        }\n      ],\n      \"isError\": true\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 222,
+          "at": "2026-10-09T10:39:41.863Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v22.0.0\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 223,
+          "at": "2026-10-09T10:39:41.874Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://github.com/nodejs/release?tab=readme-ov-file#release-schedule\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 224,
+          "at": "2026-10-09T10:39:45.858Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog/release/v22.0.0\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_6e364de81d5146fc842235e0\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/blog/release/v22.0.0 (HTTP 200)\\n\\nNode.js 22.0.0 (Current)\\nRG\\n\\nRafael Gonzaga\\n\\nNode.js 22.0.0 (Current)\\n2024-04-24, Version 22.0.0 (Current), @RafaelGSS and @marco-ippolito\\n\\nWe're excited to announce the release of Node.js 22! Highlights include require()ing ESM graphs, WebSocket client, updates of the V8 JavaScript engine, and more! As a reminder, Node.js 22 will enter long-term support (LTS) in October, but until then, it will be the \\\"Current\\\" release for the next six months. We encourage you to explore the new features and benefits offered by this latest release and evaluate their potential impact on your applications.\\n\\nOther Notable Changes\\n[25c79f3331] - esm: drop support for import assertions (Nicolò Ribaudo) #52104\\n[818c10e86d] - lib: improve perf of AbortSignal creation (Raz Luvaton) #52408\\n[4f68c7c1c9] - watch: mark as stable (Moshe Atlow) #52074\\n[02b0bc01fe] - (SEMVER-MAJOR) deps: update V8 to 12.4.254.14 (Michaël Zasso) #52465\\n[c975384264] - (SEMVER-MAJOR) lib: enable WebSocket by default (Aras Abbasi) #51594\\n[1abff07392] - (SEMVER-MAJOR) stream: bump default highWaterMark (Robert Nagy) #52037\\n[1a5acd0638] - (SEMVER-MAJOR) v8: enable maglev on supported architectures (Keyhan Vakil) #51360\\n[128c60d906] - (SEMVER-MINOR) cli: implement node --run <script-in-package-json> (Yagiz Nizipli) #52190\\n[151d365ad1] - (SEMVER-MINOR) fs: expose glob and globSync (Moshe Atlow) #51912\\n[5f7fad2605] - (SEMVER-MINOR) module: support require()ing synchronous ESM graphs (Joyee Cheung) #51977\\nSemver-Major Commits\\n[2b1e7c2fcb] - (SEMVER-MAJOR) build: compile with C++20 support on Windows (StefanStojanovic) #52465\\n[12d00f1479] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #52465\\n[5f08e11a3c] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #52293\\n[94f0369d1d] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #51362\\n[58674cd1d8] - (SEMVER-MAJOR) build: reset embedder string to \\\"-node.0\\\" (Michaël Zasso) #50115\\n[60e836427e] - (SEMVER-MAJOR) console: treat non-strings as separate argument in console.assert() (Jacob Hummer) #49722\\n[d62ab3a1ef] - (SEMVER-MAJOR) crypto: runtime deprecate hmac constructor (Marco Ippolito) #52071\\n[de0602d190] - (SEMVER-MAJOR) crypto: runtime deprecate Hash constructor (Marco Ippolito) #51880\\n[215f4d04b7] - (SEMVER-MAJOR) crypto: move createCipher and createDecipher to eol (Marco Ippolito) #50973\\n[30801b8aaf] - (SEMVER-MAJOR) deps: V8: cherry-pick cd10ad7cdbe5 (Joyee Cheung) #52465\\n[521b629ab1] - (SEMVER-MAJOR) deps: V8: revert CL 5331688 (Michaël Zasso) #52465\\n[3795e97e6c] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (StefanStojanovic) #52465\\n[5bde9e677d] - (SEMVER-MAJOR) deps: silence internal V8 deprecation warning (Michaël Zasso) #52465\\n[46e628c6f2] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #52465\\n[f824e40a82] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #52465\\n[d2c84c9a13] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #52465\\n[95d6045bdb] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #52465\\n[00f55f5743] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #52465\\n[764085aa66] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #52465\\n[02b0bc01fe] - (SEMVER-MAJOR) deps: update V8 to 12.4.254.14 (Michaël Zasso) #52465\\n[0ec50a19dd] - (SEMVER-MAJOR) deps: V8: cherry-pick cd10ad7cdbe5 (Joyee Cheung) #52293\\n[021b0b7dee] - (SEMVER-MAJOR) deps: V8: backport c4be0a97f981 (Richard Lau) #52293\\n[681aaf85c7] - (SEMVER-MAJOR) deps: silence internal V8 deprecation warning (Michaël Zasso) #52293\\n[c563a1c4e4] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (Stefan Stojanovic) #52293\\n[11e94b9987] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #52293\\n[856163e23c] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #52293\\n[b530214127] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #52293\\n[8054f69dd9] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #52293\\n[dee908be42] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #52293\\n[cf069414ee] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #52293\\n[cc5792dd85] - (SEMVER-MAJOR) deps: update V8 to 12.3.219.16 (Michaël Zasso) #52293\\n[61a0d3b4c4] - (SEMVER-MAJOR) deps: V8: backport c4be0a97f981 (Richard Lau) #51362\\n[f55380a725] - (SEMVER-MAJOR) deps: V8: cherry-pick f8d5e576b814 (Richard Lau) #51362\\n[b9d806a2dd] - (SEMVER-MAJOR) deps: patch V8 to support compilation with MSVC (StefanStojanovic) #51362\\n[63b58bc17b] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #51362\\n[86056353c4] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #51362\\n[2e0efc1c8d] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #51362\\n[59e6f62e34] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #51362\\n[0423f7e27e] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #51362\\n[f36620806d] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #51362\\n[09a8440b45] - (SEMVER-MAJOR) deps: update V8 to 12.2.281.27 (Michaël Zasso) #51362\\n[0da3beebfc] - (SEMVER-MAJOR) deps: V8: cherry-pick de611e69ad51 (Keyhan Vakil) #50115\\n[b982335637] - (SEMVER-MAJOR) deps: V8: cherry-pick 0fd478bcdabd (Joyee Cheung) #50115\\n[481a90116c] - (SEMVER-MAJOR) deps: V8: cherry-pick 0f9ebbc672c7 (Chengzhong Wu) #50115\\n[782addbdc3] - (SEMVER-MAJOR) deps: V8: cherry-pick 8f0b94671ddb (Lu Yahan) #50115\\n[b682e7f540] - (SEMVER-MAJOR) deps: V8: cherry-pick f7d000a7ae7b (Luke Albao) #50115\\n[a60090c52f] - (SEMVER-MAJOR) deps: V8: cherry-pick 25902244ad1a (Joyee Cheung) #50115\\n[8441d1fc18] - (SEMVER-MAJOR) deps: patch V8 to avoid duplicated zlib symbol (Michaël Zasso) #50115\\n[e8e9bbd7a9] - (SEMVER-MAJOR) deps: remove usage of a C++20 feature from V8 (Michaël Zasso) #50115\\n[785d5cd006] - (SEMVER-MAJOR) deps: avoid compilation error with ASan (Michaël Zasso) #50115\\n[7071c1dafd] - (SEMVER-MAJOR) deps: disable V8 concurrent sparkplug compilation (Michaël Zasso) #50115\\n[d1d60b297d] - (SEMVER-MAJOR) deps: silence irrelevant V8 warning (Michaël Zasso) #50115\\n[5b240c62f9] - (SEMVER-MAJOR) deps: always define V8_EXPORT_PRIVATE as no-op (Michaël Zasso) #50115\\n[d8c97e4857] - (SEMVER-MAJOR) deps: update V8 to 11.9.169.7 (Michaël Zasso) #50115\\n[b9df88a8c2] - (SEMVER-MAJOR) doc: runtime deprecate flag --trace-atomics-wait (marco-ippolito) #51179\\n[9ba5df30b4] - (SEMVER-MAJOR) doc: bump FreeBSD experimental support to 13.2 (Michaël Zasso) #51231\\n[900d79caf2] - (SEMVER-MAJOR) doc: add migration paths for deprecated utils (Marco Ippolito) #50488\\n[8206f6bb7f] - (SEMVER-MAJOR) fs: runtime deprecate fs.Stats constructor (Marco Ippolito) #52067\\n[c14133503a] - (SEMVER-MAJOR) fs: use private fields instead of symbols for Dir (Jungku Lee) #51037\\n[abbdc3efaa] - (SEMVER-MAJOR) fs: make stats date fields lazy (Yagiz Nizipli) #50908\\n[4b76ccea95] - (SEMVER-MAJOR) http: preserve raw header duplicates in writeHead after setHeader calls (Tim Perry) #50394\\n[c975384264] - (SEMVER-MAJOR) lib: enable WebSocket by default (Aras Abbasi) #51594\\n[351495e938] - (SEMVER-MAJOR) lib,test: handle new Iterator global (Michaël Zasso) #51362\\n[a8b21fdc90] - (SEMVER-MAJOR) process: wait for 'exit' before printing result (Antoine du Hamel) #52172\\n[582ff5037c] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 127 (Michaël Zasso) #52465\\n[c5c4b50260] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 126 (Michaël Zasso) #52293\\n[d248639285] - (SEMVER-MAJOR) src: use supported API to get stalled TLA messages (Michaël Zasso) #51362\\n[d34b02db4c] - (SEMVER-MAJOR) src: update default V8 platform to override functions with location (Etienne Pierre-Doray) #51362\\n[d9c47e9b5f] - (SEMVER-MAJOR) src: add missing TryCatch (Michaël Zasso) #51362\\n[5cddd3b2d8] - (SEMVER-MAJOR) src: update NODE_MODULE_VERSION to 124 \\n\\n[Partial page: segment 0 of 5. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-bf04a372-ea86-47a3-a9df-94ac985c1b7d\\\", segmentIndex=1..4. Do not cite unread sections.]\\nOutline:\\nNode.js 22.0.0 (Current)\\n2024-04-24, Version 22.0.0 (Current), @RafaelGSS and @marco-ippolito\\nOther Notable Changes\\nSemver-Major Commits\\nSemver-Minor Commits\\nSemver-Patch Commits\\nSHASUMS\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 225,
+          "at": "2026-10-09T10:39:51.143Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://github.com/nodejs/release?tab=readme-ov-file#release-schedule\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_2cff5f292a534fb8a43fa141\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://github.com/nodejs/release?tab=readme-ov-file (HTTP 200)\\n\\nnodejs\\nRelease\\nRepository navigation\\nCode\\nIssues\\n38\\n (38)\\nPull requests\\n4\\n (4)\\nDiscussions\\nProjects\\nWiki\\nSecurity and quality\\nInsights\\nRelease\\nPublic\\nSponsor\\nNotifications\\nFork676\\n (676)\\nStar4.4k\\n (4.4k)\\nmain\\n12 Branches\\n0 Tags\\nCode\\nLatest commit\\naduh95\\nmeta: move targos to emeritus (#1176)\\n72fdab2\\n · \\nHistory\\n350 Commits\\nFolders and files\\nName\\tLast commit message\\tLast commit date\\n\\ndoc\\n\\t\\nadd minutes for 2026-02-05, 2026-03-05 and 2026-06-25\\n\\t\\n\\n\\n.editorconfig\\n\\t\\nclean up README whitespace & add .editorconfig\\n\\t\\n\\n\\nCODENAMES.md\\n\\t\\ndoc: add codenames through to Node.js 34 (2030) (#942)\\n\\t\\n\\n\\nCODE_OF_CONDUCT.md\\n\\t\\nUpdate master branch references to main (#775)\\n\\t\\n\\n\\nCONTRIBUTING.md\\n\\t\\nUpdate master branch references to main (#775)\\n\\t\\n\\n\\nGOVERNANCE.md\\n\\t\\ndoc: clarify releaser key addition process for release-keys repo (#1166)\\n\\t\\n\\n\\nREADME.md\\n\\t\\nmeta: move targos to emeritus (#1176)\\n\\t\\n\\n\\ngenerateReleasePlan.mjs\\n\\t\\nfix LTS transition handling of generateReleasePlan (#1163)\\n\\t\\n\\n\\nschedule.json\\n\\t\\nchore: update schedule and move 25.x to EOL (#1158)\\n\\t\\n\\n\\nschedule.svg\\n\\t\\nchore: update schedule and move 25.x to EOL (#1158)\\n\\t\\nRepository files navigation\\nREADME\\nCode of conduct\\nContributing\\nSecurity\\nNode.js Release Working Group\\nRelease schedule\\nRelease\\tStatus\\tCodename\\tInitial Release\\tActive LTS Start\\tMaintenance Start\\tEnd-of-life\\n22.x\\tMaintenance LTS\\tJod\\t2024-04-24\\t2024-10-29\\t2025-10-21\\t2027-04-30\\n24.x\\tActive LTS\\tKrypton\\t2025-05-06\\t2025-10-28\\t2026-10-20\\t2028-04-30\\n26.x\\tCurrent\\t\\t2026-05-05\\t2026-10-28\\t2027-10-20\\t2029-04-30\\n\\nDates are subject to change.\\n\\nThe Release schedule is available also as a JSON file.\\n\\nRelease Phases\\n\\nThere are three phases that a Node.js release can be in: 'Current', 'Active Long Term Support (LTS)', and 'Maintenance'. Odd-numbered release lines are not promoted to LTS - they will not go through the 'Active LTS' or 'Maintenance' phases.\\n\\nCurrent - Should incorporate most of the non-major (non-breaking) changes that land on nodejs/node main branch.\\nActive LTS - New features, bug fixes, and updates that have been audited by the Release team and have been determined to be appropriate and stable for the release line.\\nMaintenance - Critical bug fixes and security updates. New features may be added at the discretion of the Release team - typically only in cases where the new feature supports migration to later release lines.\\n\\nChanges required for critical security and bug fixes may lead to semver-major changes landing within a release stream, such situations will be rare and will land as semver-minor. Although, those changes should have a revert option included.\\n\\nThe term 'supported release lines' will be used to refer to all release lines that are not End-of-Life.\\n\\nEnd-of-Life Releases\\nRelease\\tStatus\\tCodename\\tInitial Release\\tActive LTS Start\\tMaintenance LTS Start\\tEnd-of-life\\nv0.10.x\\tEnd-of-Life\\t-\\t2013-03-11\\t-\\t2015-10-01\\t2016-10-31\\nv0.12.x\\tEnd-of-Life\\t-\\t2015-02-06\\t-\\t2016-04-01\\t2016-12-31\\n4.x\\tEnd-of-Life\\tArgon\\t2015-09-08\\t2015-10-01\\t2017-04-01\\t2018-04-30\\n5.x\\tEnd-of-Life\\t\\t2015-10-29\\t-\\t\\t2016-06-30\\n6.x\\tEnd-of-Life\\tBoron\\t2016-04-26\\t2016-10-18\\t2018-04-30\\t2019-04-30\\n7.x\\tEnd-of-Life\\t\\t2016-10-25\\t-\\t\\t2017-06-30\\n8.x\\tEnd-of-Life\\tCarbon\\t2017-05-30\\t2017-10-31\\t2019-01-01\\t2019-12-31\\n9.x\\tEnd-of-Life\\t\\t2017-10-01\\t-\\t\\t2018-06-30\\n10.x\\tEnd-of-Life\\tDubnium\\t2018-04-24\\t2018-10-30\\t2020-05-19\\t2021-04-30\\n11.x\\tEnd-of-Life\\t\\t2018-10-23\\t-\\t\\t2019-06-01\\n12.x\\tEnd-of-Life\\tErbium\\t2019-04-23\\t2019-10-21\\t2020-11-30\\t2022-04-30\\n13.x\\tEnd-of-Life\\t\\t2019-10-22\\t-\\t\\t2020-06-01\\n14.x\\tEnd-of-Life\\tFermium\\t2020-04-21\\t2020-10-27\\t2021-10-19\\t2023-04-30\\n15.x\\tEnd-of-Life\\t\\t2020-10-20\\t-\\t\\t2021-06-01\\n16.x\\tEnd-of-Life\\tGallium\\t2021-04-20\\t2021-10-26\\t2022-10-18\\t2023-09-11\\n17.x\\tEnd-of-Life\\t\\t2021-10-19\\t-\\t\\t2022-06-01\\n18.x\\tEnd-of-Life\\tHydrogen\\t2022-04-19\\t2022-10-25\\t2023-10-18\\t2025-04-30\\n19.x\\tEnd-of-Life\\t\\t2022-10-18\\t-\\t\\t2023-06-01\\n20.x\\tEnd-of-Life\\tIron\\t2023-04-18\\t2023-10-24\\t2024-10-22\\t2026-04-30\\n21.x\\tEnd-of-Life\\t\\t2023-10-17\\t-\\t2024-04-01\\t2024-06-01\\n23.x\\tEnd-of-Life\\t\\t2024-10-15\\t-\\t2025-04-01\\t2025-06-01\\n25.x\\tEnd-of-Life\\t\\t2025-10-15\\t-\\t2026-04-01\\t2026-06-01\\nMandate\\n\\nThe Release working group's purpose is:\\n\\nManagement/execution of the release and support process for all releases.\\n\\nIts responsibilities are:\\n\\nDefine the release process.\\nDefine the content of releases.\\nGenerate and create releases.\\nTest Releases.\\nManage the LTS and Current branches including backporting changes to these branches.\\nDefine the policy for what gets backported to release streams.\\n\\nThe Release working group is structured into teams and membership in the working group does not automatically result in membership in these teams. These teams are:\\n\\nReleasers team\\nBackporters team\\nCITGM team\\n\\nThe releasers team is entrusted with the secrets and CI access to be able build and sign releases. Additions to the releasers team must be approved by the TSC following the process outlined in GOVERNANCE.md.\\n\\nThe Release team manages the process/content of LTS releases and the required backporting for these releases. Additions to the Release team needs sign off from the rest of the Release team.\\n\\nThe Canary in the Gold Mine (CITGM) team maintains CITGM as one of the key sanity checks for releases. This team maintains the CITGM repository and works to keep CITGM builds running and passing regularly. This also includes maintaining the CI jobs in collaboration with the Build Working Group.\\n\\nRelease Plan\\n\\nNew semver-major releases of Node.js are branched from main every six months. New even-numbered versions are released in April and odd-numbered versions in October.\\n\\nIn coordination with a new odd-numbered major release, the previous even-numbered major version will transition to Long Term Support. The transition to Long Term Support will happen in a semver-minor release and should happen after the new major version is released.\\n\\nEvery even (LTS) major version will be actively maintained for 12 months from the date it enters LTS coverage. Following those 12 months of active support, the major version will transition into \\\"maintenance\\\" mode for 18 months. Prior to Node.js 12, the active period was 18 months and the maintenance period 12 months. See Releases Phases for details of which changes are expected to land during each release phase.\\n\\nThe exact date that a release will be moved to LTS, moved between LTS modes, or deprecated will be chosen no later than the first day of the month it is to change. If the release team plans to change the release date, it will be done with no less than 14 days notice.\\n\\nAll LTS releases will be assigned a codename. A list of expected upcoming codenames is available in CODENAMES.md.\\n\\nLTS Staging Branches\\n\\nEvery LTS major version has two branches in the GitHub repository: a release branch and a staging branch. The release branch is used to cut new releases. Only members of the @nodejs/releasers team should land commits onto release branches. The staging branch is used to land cherry-picked or backported commits from main that need to be included in a future release. Only members of @nodejs/backporters should land commits onto staging branches.\\n\\nFor example, for Node.js v4, there is a v4.x branch and a v4.x-staging branch. When commits land in main that must be cherry-picked for a future Node.js v4 release, those must be landed into the v4.x-staging branch. When commits are backported for a future Node.js v4 release, those must come in the form of pull requests opened against the v4.x-staging branch. Commits are only landed in the v4.x branch when a new v4.x release is being prepared.\\n\\nGenerally, changes are expected to live in a Current release for at least 2 weeks before being backported. It is possible for a commit to land earlier at the discretion of the Release working group.\\n\\nThe working group members are the union of the Releasers, Backporters and CITGM team members listed below.\\n\\nBackporters team\\n@aduh95 - Antoine du Hamel\\n@BethGriggs - Beth Griggs\\n@codebytere - Shelley Vohr\\n@guybedford - Guy Bedford\\n@RafaelGSS - Rafael Gonzaga\\n@richardlau - Richard Lau\\n@sxa - Stewart X Addison\\nReleasers team\\n@aduh95 - Antoine du Hamel\\n@juanarbol - Juan José\\n@marco-ippolito - Marco Ippolito\\n@RafaelGSS - Rafael Gonzaga\\n@richardlau - Richard Lau\\n@ruyadorno -\\n\\n[Partial page: segment 0 of 2. Read further captured sections with browser action=\\\"read\\\", snapshotId=\\\"capture-b0c84fed-fbcf-4785-a86c-73c065ac5ea8\\\", segmentIndex=1..1. Do not cite unread sections.]\\nOutline:\\nRepository navigation\\nLatest commit\\nHistory\\nFolders and files\\nRepository files navigation\\nNode.js Release Working Group\\nRelease schedule\\nRelease Phases\\nEnd-of-Life Releases\\nMandate\\nRelease Plan\\nLTS Staging Branches\\nBackporters team\\nReleasers team\\nCITGM team\\nEmeritus\\nLTS team\\nReleasers team\\nAbout\\nTopics\\nResources\\nCode of conduct\\nContributing\\nSecurity policy\\nStars\\nWatchers\\nForks\\nSponsor this project\\nContributors 67 (67)\\nLanguages\\n\\n(Content truncated. Fetch a more specific URL or section for the full text.)\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 468,
+          "at": "2026-10-09T10:40:05.396Z",
+          "type": "step.started",
+          "toolName": "web_fetch",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog\\\"}\"\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 469,
+          "at": "2026-10-09T10:40:09.361Z",
+          "type": "step.completed",
+          "toolName": "web_fetch",
+          "state": "completed",
+          "text": "{\n  \"arguments\": \"{\\\"url\\\":\\\"https://nodejs.org/en/blog\\\"}\",\n  \"output\": [\n    {\n      \"type\": \"tool-result\",\n      \"toolCallId\": \"call_1f46c3a7db9b4863a94f417c\",\n      \"content\": [\n        {\n          \"type\": \"text\",\n          \"text\": \"Fetched https://nodejs.org/en/blog (HTTP 200)\\n\\nBlog\\n\\nThe latest Node.js news, migration guides and events summaries\\n\\nEverything\\nAnnouncements\\nReleases\\nVulnerabilities\\nMigration Guides\\nEvents\\nNode.js 26.11.1 (Current)\\nReleases\\nNode.js 26.11.1 (Current)\\nADH\\n\\nAntoine du Hamel\\n\\nOct 07, 2026\\nNode.js 26.11.0 (Current)\\nReleases\\nNode.js 26.11.0 (Current)\\nADH\\n\\nAntoine du Hamel\\n\\nOct 07, 2026\\nNode.js 22.23.3 (LTS)\\nReleases\\nNode.js 22.23.3 (LTS)\\nADH\\n\\nAntoine du Hamel\\n\\nSep 23, 2026\\nNode.js 26.10.0 (Current)\\nReleases\\nNode.js 26.10.0 (Current)\\nADH\\n\\nAntoine du Hamel\\n\\nSep 22, 2026\\nNode.js 26.9.0 (Current)\\nReleases\\nNode.js 26.9.0 (Current)\\nADH\\n\\nAntoine du Hamel\\n\\nSep 16, 2026\\nNode.js 26.8.2 (Current)\\nReleases\\nNode.js 26.8.2 (Current)\\nADH\\n\\nAntoine du Hamel\\n\\nSep 09, 2026\\nPrevious\\n1\\n2\\n3\\n4\\n5\\n...\\n177\\nNext\"\n        }\n      ],\n      \"isError\": false\n    }\n  ]\n}"
+        },
+        {
+          "sessionId": "session-0112cb11-861d-4184-9277-325b20b47dea",
+          "seq": 1073,
+          "at": "2026-10-09T10:40:41.330Z",
+          "type": "step.started",
+          "toolName": "write",
+          "state": "running",
+          "text": "{\n  \"arguments\": \"{\\\"file_path\\\":\\\"C:\\\\\\\\temp\\\\\\\\weftmate-eval-action-02-web-document-ryhYlN/node24说明.md\\\",\\\"content\\\":\\\"# Node.js 24 相比 22 值得留意的变化（简要）\\\\n\\\\n> 整理日期：2026-10-09。依据 Node.js 官方发布说明与官方发布计划。\\\\n\\\\n## 1. 版本现状（先看这个）\\\\n\\\\n| 版本线 | 状态 | 代号 | 首发 | Active LTS | 进入维护 | 停止支持 |\\\\n|---|---|---|---|---|---|---|\\\\n| 22.x | 维护期 LTS | Jod | 2024-04-24 | 2024-10-29 | 2025-10-21 | 2027-04-30 |\\\\n| 24.x | **Active LTS** | Krypton | 2025-05-06 | 2025-10-28 | **2026-10-20** | 2028-04-30 |\\\\n| 26.x | Current（奇数号不进 LTS） | — | 2026-05-05 | 2026-10-28 | 2027-10-20 | 2029-04-30 |\\\\n\\\\n要点：**24 是当前的主力 LTS，22 已进入维护期（只剩关键修复和安全更新）**；24 约在 2026-10-20 转入维护期，22 的支持到 2027-04-30 结束。新项目建议直接 24，老项目可以在 22 停止支持前完成迁移。\\\\n\\\\n## 2. 运行时与语言层面（最值得关注）\\\\n\\\\n- **V8 升级到 13.6**（22 是 V8 12.4），带来新的 JS 能力：\\\\n  - `Float16Array`\\\\n  - **显式资源管理（explicit resource management，`using` / `await using`）**——资源自动释放的新标准语法\\\\n  - `RegExp.escape()`\\\\n  - WebAssembly Memory64\\\\n  - `Error.isError()`\\\\n- **`AsyncLocalStorage` 默认改用 `AsyncContextFrame` 实现**：异步上下文追踪性能更好、在复杂场景下更稳健（行为上仍是同一个 API）。\\\\n- **`URLPattern` 成为全局对象**，无需 import 即可用于 URL 模式匹配。\\\\n- **权限模型更稳**：实验开关从 `--experimental-permission` 改名为 **`--permission`**，意味着更接近可用于生产。\\\\n- **npm 升到 11**（22 自带 npm 10），**Undici 升到 7**（HTTP 客户端性能与新 HTTP 特性支持更好）。\\\\n- **测试运行器**：`node:test` 现在会自动等待子测试结束，不必手动 `await`，减少未处理 Promise 的坑。\\\\n\\\\n## 3. 弃用与移除（升级时最容易踩的坑）\\\\n\\\\nNode 24 中：\\\\n\\\\n- **`url.parse()` 运行时弃用**（会打印弃用警告）→ 改用 WHATWG `URL` API。\\\\n- **移除 `tls.createSecurePair()`**（已删除，非仅警告）。\\\\n- **`Buffer` 的 `SlowBuffer` 进入 EOL** 并运行时弃用。\\\\n- **不带 `new` 直接调用 REPL 构造**运行时弃用；**不带 `new` 使用 Zlib 类**弃用。\\\\n- **`child_process` 的 `spawn` / `execFile` 以参数数组形式传 args** 的写法弃用。\\\\n- **Windows 下不再支持用 MSVC 编译 Node.js，必须用 ClangCL**（自建原生模块/自行编译时要留意）。\\\\n- **原生模块 ABI 变化**：`NODE_MODULE_VERSION` 从 22 线的 127 升到 **137**，native addon 需要用新版 Node 重新编译。\\\\n- **armv7 支持降级为实验性**，并移除了 s390 32 位构建支持。\\\\n\\\\n对照：Node 22 自身的破坏性变化（`createCipher`/`createDecipher` 已 EOL、`import assertions` 语法被移除、默认 `highWaterMark` 变化等）在 24 中依然生效。\\\\n\\\\n## 4. 22 已有、24 继承的能力（不用重复迁移）\\\\n\\\\n22 引入且在 24 中保留的特性：`require()` 加载同步 ESM 图、原生 **WebSocket 客户端**、**`node --run <script>`**、`fs.glob()` / `fs.globSync()`、`--watch` 稳定化。这些不需要在 24 上重新适配。\\\\n\\\\n## 5. 升级检查清单（22 → 24）\\\\n\\\\n1. 先把 22 线升到最新补丁（如 22.23.x），再切 24。\\\\n2. 搜索代码中 `url.parse(`、`tls.createSecurePair`、`SlowBuffer`、直接调用 `zlib`/REPL 构造的写法。\\\\n3. 重新编译所有 native addon（ABI 137），确认依赖是否支持 Node 24。\\\\n4. 自建二进制的 Windows 环境改用 ClangCL 工具链。\\\\n5. 跑一遍 `node --test`，注意子测试自动等待带来的用例行为差异。\\\\n6. 关注 `AsyncContextFrame` 默认实现带来的性能/行为差异（一般无感，但极端场景建议回归测试）。\\\\n\\\\n## 来源\\\\n\\\\n- [Node.js 24.0.0 发布说明（官方博客）](https://nodejs.org/en/blog/release/v24.0.0)\\\\n- [Node.js 22.0.0 发布说明（官方博客）](https://nodejs.org/en/blog/release/v22.0.0)\\\\n- [Node.js 官方发布计划与状态（nodejs/release）](https://github.com/nodejs/release#release-schedule)\\\\n- [Node.js 官方博客（最新版本列表）](https://nodejs.org/en/blog)\\\\n\\\"}\"\n}"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "passed": 2,
+    "failed": 0,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 2,
+    "passRate": 1,
+    "coverage": 1
+  }
+}
