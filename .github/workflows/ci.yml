@@ -125,8 +125,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: memoweft/memoweft
-            # MF-2 elliptical-correction candidate; replace after Claude squash.
-            ref: 66498237b55a3181fd20526f0040477489fd8454
+          # MF-2 elliptical-correction candidate; replace after Claude squash.
+          ref: 23d238e20e9dcb5351e1a65e91cef8246cb2c795
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
