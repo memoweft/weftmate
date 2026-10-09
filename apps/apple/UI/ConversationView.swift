@@ -569,8 +569,16 @@ struct ConversationView: View {
                             #endif
                         }
                     } label: {
+                        #if os(macOS)
+                        Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1)
+                        #else
                         HStack(spacing: AppleTokens.Space.p3) { Text(model.sendTargets[key]?.modelName ?? "模型").lineLimit(1); WeftIcon("chevron", size: 12) }
-                    }.font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
+                        #endif
+                    }
+                    #if os(macOS)
+                    .menuStyle(.borderlessButton)
+                    #endif
+                    .font(AppleTokens.Fonts.caption).accessibilityLabel("模型选择").accessibilityIdentifier("composerModel")
                     Button { draftFocused = true; dictationPopover = true } label: { WeftIcon("mic", size: AppleTokens.Space.p16).frame(minWidth: AppleTokens.Space.p28, minHeight: AppleTokens.Space.p44) }
                         .buttonStyle(.plain).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
                             Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover)

@@ -1046,8 +1046,15 @@ final class AppleAppModel: ObservableObject {
         #if DEBUG
         if uiTesting, let index = args.firstIndex(of: "--a5-theme"), args.indices.contains(index + 1), ["light", "dark"].contains(args[index + 1]) { appearanceMode = args[index + 1] }
         #endif
-        let store = KeychainCredentialStore(service: uiTesting
+        var store: any CredentialStore = KeychainCredentialStore(service: uiTesting
             ? "\(testService).credentials" : "com.weftmate.apple.credentials")
+        #if DEBUG && os(macOS)
+        if uiTesting, args.contains("--lg2-capture"), args.contains("--a5-local-server"),
+           args.contains("--a10-ephemeral-credentials"), let index = args.firstIndex(of: "--server-url"),
+           args.indices.contains(index + 1), let url = URL(string: args[index + 1]), url.host == "127.0.0.1", url.scheme == "http" {
+            store = CaptureCredentials()
+        }
+        #endif
         cloudNamespace = uiTesting ? testService + ".cloud" : "com.weftmate.apple.cloud"
         var transport = URLSessionTransport(hostPins: HostPinStore(store: KeychainCredentialStore(service: cloudNamespace + ".pins")))
         var routeEnabled = false
@@ -1829,3 +1836,15 @@ final class AppleAppModel: ObservableObject {
         }
     }
 }
+
+#if DEBUG && os(macOS)
+/// Explicit capture-only alternative for noninteractive sessions without Keychain
+/// access. Authentication still uses the real isolated HTTP host; nothing persists.
+private final class CaptureCredentials: CredentialStore, @unchecked Sendable {
+    private let lock = NSLock()
+    private var values: [String: Data] = [:]
+    func load(key: String) -> Data? { lock.withLock { values[key] } }
+    func save(_ data: Data, key: String) { lock.withLock { values[key] = data } }
+    func delete(key: String) { lock.withLock { values[key] = nil } }
+}
+#endif

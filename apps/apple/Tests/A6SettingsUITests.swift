@@ -53,7 +53,7 @@ final class A6SettingsUITests: XCTestCase {
         try expect(app.textFields["accountDeviceName"]); try tap(app, "accountSubmit")
         try expect(app.textFields["accountCode"])
         try fill(app, "accountCode", try await get("/code")["code"] as! String); try tap(app, "accountSubmit")
-        try expect(app.staticTexts["已登录 WeftMate"]); _ = try await get("/bootstrap")
+        try expect(app.staticTexts["已登录 WeftMate"]); _ = try await get("/bootstrap"); _ = try await get("/a7/seed-archived")
         try tap(app, "设置 → 设备"); try tap(app, "刷新设备")
         try tap(app, "connectHost." + (ready["hostId"] as! String))
         try expect(app.descendants(matching: .any)["cloudPairingReady"].firstMatch)
@@ -68,30 +68,47 @@ final class A6SettingsUITests: XCTestCase {
     @MainActor @discardableResult private func category(_ app: XCUIApplication, _ id: String) throws -> CGRect {
         let row = app.buttons["settingsCategory." + id]
         let search = app.searchFields["搜索设置"]
-        for _ in 0..<6 {
-            let coveredBySearch = row.exists && search.exists && row.frame.intersects(search.frame)
-            if row.exists && row.isHittable && !coveredBySearch { break }
-            app.swipeUp()
+        // iOS 26's floating bottom search field can cover a hittable list row.
+        // Drag inside the list, then tap only a row whose centre is in its visible area.
+        let top = app.navigationBars["设置"].frame.maxY
+        for _ in 0..<12 {
+            let bottom = search.exists ? min(search.frame.minY, app.frame.maxY) : app.frame.maxY
+            if row.exists && row.isEnabled && row.isHittable && row.frame.midY > top && row.frame.maxY < bottom {
+                let frame = row.frame
+                row.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
+                return frame
+            }
+            let down = row.exists && row.frame.midY < top
+            let start = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.35 : 0.65))
+            let end = app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: down ? 0.65 : 0.35))
+            start.press(forDuration: 0.05, thenDragTo: end)
         }
-        try expect(row)
-        let frame = row.frame
-        row.tap()
-        return frame
+        XCTFail("Settings row has no unobscured tap area: " + id)
+        throw NSError(domain: "A6UI.RowVisibility", code: 1)
     }
     @MainActor private func back(_ app: XCUIApplication) throws {
         let button = app.navigationBars.buttons["设置"].firstMatch; try expect(button); button.tap()
     }
-    @MainActor func testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation() async throws {
-        let (app, ids) = try await launch("light")
+    @MainActor func testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation() async throws { try await allSettings("light") }
+    @MainActor func testDarkSettingsReachabilitySearchDeepLinkAndDeviceOperation() async throws { try await allSettings("dark") }
+    @MainActor private func allSettings(_ theme: String) async throws {
+        let (app, ids) = try await launch(theme)
         defer { app.terminate() }
         try openSettings(app)
         XCTAssertFalse(app.buttons["settingsCategory.system"].exists)
         XCTAssertFalse(app.buttons["settingsCategory.backups"].exists)
-        for id in ["general", "appearance", "account", "devices", "usage", "models", "approvals", "memory", "schedules", "about"] {
+        for id in ["general", "appearance", "account", "devices", "usage", "archived", "models", "approvals", "memory", "schedules", "about"] {
+            if id == "archived" {
+                let row = app.buttons["settingsCategory.archived"]
+                XCTAssertTrue(row.label.contains("1 条"), "Archive summary must show its count: " + row.label)
+                XCTAssertFalse(row.label.contains("0.1.0"))
+                keep(app, "settings-home", theme)
+            }
             let listFrame = try category(app, id)
             try expect(app.descendants(matching: .any)["settingsPage." + id].firstMatch)
-            if id == "appearance" { try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", "light") }
-            if id == "usage" { try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", "light") }
+            if id == "appearance" { try expect(app.segmentedControls["appearancePicker"]); keep(app, "appearance", theme) }
+            if id == "usage" { try expect(app.staticTexts["usageTotalCost"]); keep(app, "usage", theme) }
             if id == "account" { try expect(app.staticTexts["signedInEmail"]); reveal(app, app.buttons["accountLogout"]); try expect(app.buttons["accountLogout"]) }
             if id == "devices" {
                 let rename = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH %@", "renameDevice.")).firstMatch
@@ -101,6 +118,7 @@ final class A6SettingsUITests: XCTestCase {
                 app.alerts.buttons["保存"].tap()
                 try expect(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "合成改名")).firstMatch)
             }
+            keep(app, "settings-" + id, theme)
             try back(app)
             if id == "about" { XCTAssertEqual(app.buttons["settingsCategory.about"].frame.minY, listFrame.minY, accuracy: 2, "Returning must retain the list position") }
             app.swipeDown()
