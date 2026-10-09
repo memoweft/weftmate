@@ -1,0 +1,16 @@
+{
+  "check": "local-quality short SSE diagnostic",
+  "startedAt": "2026-10-09T02:38:10.973Z",
+  "chunks": 0,
+  "bytes": 0,
+  "contentChars": 0,
+  "reasoningChars": 0,
+  "doneMarker": false,
+  "finishReasons": [],
+  "eof": false,
+  "status": 200,
+  "headersMs": 65,
+  "errorName": "AbortError",
+  "aborted": true,
+  "elapsedMs": 30003
+}

@@ -23,6 +23,14 @@ private func row(_ id: String, pinned: Bool = false, group: String? = nil, archi
     #expect(SessionSidebar.sections(rows: rows, groups: [], query: "GROUPED").flatMap(\.rows).map(\.id) == ["grouped"])
 }
 private let previewJSON = #"{"worldRevision":4,"itemCount":3,"evidenceCount":1,"evidenceIds":["evidence"],"items":[{"id":"person","kind":"entity","text":"合成人物","itemType":"person"},{"id":"relation","kind":"relationship","text":"合成关系"},{"id":"decision","kind":"cognition","text":"合成决定","itemType":"decision"}]}"#
+@Test func fg2ForgetPreviewIncludesCommitmentsWithoutChangingCommandKinds() throws {
+    let json = #"{"worldRevision":4,"itemCount":3,"evidenceCount":1,"evidenceIds":["evidence"],"items":[{"id":"promise","kind":"interaction_commitment","text":"合成承诺","itemType":"commitment"},{"id":"recommendation","kind":"interaction_commitment","text":"合成建议","itemType":"recommendation"},{"id":"agreement","kind":"interaction_commitment","text":"合成约定","itemType":"agreement"}]}"#
+    let preview = try JSONDecoder().decode(ForgetPreview.self, from: Data(json.utf8))
+    try preview.validate(ownerID: "owner", expectedRevision: 4)
+    #expect(preview.items.map(\.typeLabel) == ["交互承诺", "交互建议", "共同约定"])
+    #expect(preview.items.allSatisfy { $0.kind == .interactionCommitment })
+    #expect(MemoryKind(rawValue: "interaction_commitment") == nil)
+}
 @Test func a7ForgetPreviewShowsCascadeTypesCountsAndStartsUnchecked() throws {
     let preview = try JSONDecoder().decode(ForgetPreview.self, from: Data(previewJSON.utf8))
     try preview.validate(ownerID: "owner", expectedRevision: 4)
