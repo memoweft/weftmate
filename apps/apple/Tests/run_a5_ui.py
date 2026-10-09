@@ -6,7 +6,7 @@ from datetime import datetime,timezone
 ROOT=Path(__file__).resolve().parents[3]
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--xctestrun',type=Path,required=True);p.add_argument('--simulator',required=True);p.add_argument('--result',type=Path,required=True);p.add_argument('--evidence',type=Path,required=True)
-p.add_argument('--phase',choices=['light','dark','delete','gallery-light','gallery-dark','a6-light','a6-dark','a6-focus','a6-review-light','a6-schedules','a7-light','a7-dark','a8-light','a8-dark'],required=True)
+p.add_argument('--phase',choices=['light','dark','delete','gallery-light','gallery-dark','a6-light','a6-dark','a6-focus','a6-review-light','a6-schedules','a7-light','a7-dark','a8-light','a8-dark','a9-before-light','a9-before-dark','a9-after-light','a9-after-dark'],required=True)
 a=p.parse_args();a.evidence.mkdir(parents=True,exist_ok=True)
 def run(*cmd):return subprocess.run(cmd,check=True,capture_output=True,text=True).stdout
 fixture=subprocess.Popen(['node','apps/apple/Tests/a5_cloud_fixture.mjs'],cwd=ROOT,stdout=subprocess.PIPE,stderr=open('/private/tmp/a5-cloud-'+a.phase+'.log','w'),text=True,env=os.environ|{'TMPDIR':'/private/tmp'})
@@ -15,7 +15,9 @@ try:
  meta=json.loads(fixture.stdout.readline());config=plistlib.loads(a.xctestrun.read_bytes())
  def inject(v):
   if isinstance(v,dict):
-   if 'TestBundlePath' in v:v.setdefault('EnvironmentVariables',{})['WEFTMATE_A5_DRIVER']=meta['driver']
+   if 'TestBundlePath' in v:
+    v.setdefault('EnvironmentVariables',{})['WEFTMATE_A5_DRIVER']=meta['driver']
+    if a.phase.startswith('a9-before-'):v['EnvironmentVariables']['WEFTMATE_A9_BASELINE']='1'
    for child in v.values():inject(child)
   elif isinstance(v,list):
    for child in v:inject(child)
@@ -23,8 +25,8 @@ try:
  with tempfile.NamedTemporaryFile(suffix='.xctestrun',dir=a.xctestrun.parent) as f:
   f.write(plistlib.dumps(config));f.flush()
   run('xcrun','simctl','shutdown','all');run('xcrun','simctl','boot',a.simulator);run('xcrun','simctl','bootstatus',a.simulator,'-b')
-  name={'light':'testLightParityFlowAndGallery','dark':'testDarkGallery','delete':'testFocusedDeletionOption','gallery-light':'testFramedLightGallery','gallery-dark':'testFramedDarkGallery','a6-light':'testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation','a6-dark':'testDarkSettingsReview','a6-focus':'testFocusedSearchAndConversationUsage','a6-review-light':'testLightSettingsReview','a6-schedules':'testSchedulesUseTheRealPersonalAPI','a7-light':'testLightMenuArchiveAndForget','a7-dark':'testDarkMenuArchiveAndForget','a8-light':'testLightConversationFlow','a8-dark':'testDarkConversationFlow'}[a.phase]
-  cmd=['xcodebuild','test-without-building','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','2','-only-testing:WeftMatePhoneUITests/'+('A8ConversationFlowUITests' if a.phase.startswith('a8-') else 'A7SessionMenuUITests' if a.phase.startswith('a7-') else 'A6SettingsUITests' if a.phase.startswith('a6-') else 'A5ParityUITests')+'/'+name,'-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-resultBundlePath',str(a.result)]
+  name={'light':'testLightParityFlowAndGallery','dark':'testDarkGallery','delete':'testFocusedDeletionOption','gallery-light':'testFramedLightGallery','gallery-dark':'testFramedDarkGallery','a6-light':'testLightSettingsReachabilitySearchDeepLinkAndDeviceOperation','a6-dark':'testDarkSettingsReview','a6-focus':'testFocusedSearchAndConversationUsage','a6-review-light':'testLightSettingsReview','a6-schedules':'testSchedulesUseTheRealPersonalAPI','a7-light':'testLightMenuArchiveAndForget','a7-dark':'testDarkMenuArchiveAndForget','a8-light':'testLightConversationFlow','a8-dark':'testDarkConversationFlow','a9-before-light':'testLightPolish','a9-before-dark':'testDarkPolish','a9-after-light':'testLightPolish','a9-after-dark':'testDarkPolish'}[a.phase]
+  cmd=['xcodebuild','test-without-building','-xctestrun',f.name,'-destination','platform=iOS Simulator,id='+a.simulator,'-jobs','2','-only-testing:WeftMatePhoneUITests/'+('A9PolishUITests' if a.phase.startswith('a9-') else 'A8ConversationFlowUITests' if a.phase.startswith('a8-') else 'A7SessionMenuUITests' if a.phase.startswith('a7-') else 'A6SettingsUITests' if a.phase.startswith('a6-') else 'A5ParityUITests')+'/'+name,'-parallel-testing-enabled','NO','-maximum-concurrent-test-simulator-destinations','1','-resultBundlePath',str(a.result)]
   t=subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True)
   for line in t.stdout:print(re.sub(r"Type '.*?' into",'Type <synthetic input> into',line),end='',flush=True)
   status=t.wait();run('xcrun','simctl','shutdown','all')
@@ -42,10 +44,10 @@ try:
   for test in json.loads((Path(exported)/'manifest.json').read_text()):
    for attachment in test['attachments']:
     name=attachment['suggestedHumanReadableName'].split('_0_')[0]
-    if name.startswith('review-iphone-') or name.startswith('a8-iphone-'):
+    if name.startswith('review-iphone-') or name.startswith('a8-iphone-') or name.startswith('a9-iphone-'):
      stem=(name if name.split('-')[2] in ['session'] else name.replace('review-iphone-', 'a7-iphone-') if a.phase.startswith('a7-') else name)+'-'+stamp;shutil.copyfile(Path(exported)/attachment['exportedFileName'],a.evidence/(stem+'.png'))
-     theme=a.phase.removeprefix('gallery-').removeprefix('a6-').removeprefix('a7-').removeprefix('a8-').removeprefix('review-')
-     scene=name.removeprefix('review-iphone-').removeprefix('a8-iphone-').removesuffix('-'+theme)
+     theme=a.phase.removeprefix('gallery-').removeprefix('a6-').removeprefix('a7-').removeprefix('a8-').removeprefix('a9-before-').removeprefix('a9-after-').removeprefix('review-')
+     scene=name.removeprefix('review-iphone-').removeprefix('a8-iphone-').removeprefix('a9-iphone-').removesuffix('-'+theme)
      (a.evidence/(stem+'.json')).write_text(json.dumps({'platform':'iphone','scene':scene,'theme':theme,'commit':commit,'generatedAt':generated,'synthetic':True,'source':'实际 iPhone 原生 App；真实隔离 cloud main / 宿主，合成 DSH 日志与模型'},ensure_ascii=False,indent=2)+'\n')
  (a.evidence/('validation-'+a.phase+'.json')).write_text(json.dumps({'passed':1,'failed':0,'skipped':0,'realCloudMain':True,'realPersonalHost':True,'compiledDshEngine':False,'syntheticModel':True,'simulatorsAtOnce':1,'xcodeJobs':2,'shutdownImmediately':True},indent=2)+'\n')
 finally:
