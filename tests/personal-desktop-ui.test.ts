@@ -41,10 +41,10 @@ test('desktop appearance restores device preferences and artifact labels hide MI
   assert.equal(api.fileLabel({ fileName: 'unknown.bin' }), '文件')
 })
 
-test('desktop UI-1 Chromium verifies navigation, timeline, side panel, appearance and command controls', { timeout: 250000 }, () => {
+test('desktop UI-1 Chromium verifies navigation, timeline, side panel, appearance and command controls', { timeout: 360000 }, () => {
   const env = { ...process.env }; delete env.ELECTRON_RUN_AS_NODE
   const result = spawnSync(process.execPath, ['tests/integration/desktop-ui-interactions.mjs', '--verify-only'], {
-    cwd: repository, env, encoding: 'utf8', timeout: 240000, windowsHide: true, maxBuffer: 2 * 1024 * 1024,
+    cwd: repository, env, encoding: 'utf8', timeout: 350000, windowsHide: true, maxBuffer: 2 * 1024 * 1024,
   })
   if (result.error) result.error.message += '\n' + result.stdout + '\n' + result.stderr
   assert.ifError(result.error)

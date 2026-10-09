@@ -67,7 +67,7 @@
             const serviceStateLabels = { ready: '运行中', connected: '运行中', stopped: '已停止', starting: '启动中',
                 disabled: '未启用', unavailable: '不可用', unconfigured: '尚未配置', degraded: '需要处理' };
             const core = { authBase, accessBase, receiptIdPattern, state, memory, conversationTasks, conversationApprovals, conversationQuestions, api, browserRequestId, browserModelId, memoryBase, memoryKinds, memoryPreDispatchCodes, memoryItemId, memoryPathId, markerId, sessionIdPattern, syncIdPattern, originalAttachmentBytes, sharedImageBytes, sharedMessageBytes, sharedTextBytes, attachmentImageTypes, attachmentTextTypes, attachmentTypePattern, approvalModes, currentApprovalMode, approvalIdPattern, approvalRequestPattern, approvalIdentityFields, questionIdentityFields, resourceCache, serviceStateLabels };
-            core.state.messageMode = 'steer';
+            core.state.messageMode = 'queue';
             core.state.projects = [];
             core.state.projectCanManage = false;
             core.state.projectPending = null;
