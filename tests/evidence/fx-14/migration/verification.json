@@ -1,0 +1,15 @@
+{
+  "syntheticOnly": true,
+  "realInstaller": true,
+  "rehearsal": true,
+  "taskUntouched": true,
+  "publicConfigRemainsProtected": true,
+  "prepare": true,
+  "verify": true,
+  "health": {
+    "configured": false,
+    "registrationAvailable": true
+  },
+  "passed": true,
+  "temporaryDirectoryRemoved": true
+}
