@@ -1,0 +1,8 @@
+{
+  "files": 1,
+  "bytes": 66439,
+  "syntheticMessageMarkerFound": false,
+  "syntheticKeyFound": false,
+  "events": 391,
+  "note": "Only the product logs directory is scanned; evidence intentionally contains synthetic message bodies."
+}

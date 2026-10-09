@@ -1,0 +1,256 @@
+{
+  "startedAt": "2026-10-09T09:48:24.002Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "77b02052fedb991718e946f0db7e4b8230792443",
+  "modelRequests": 0,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "task-timeout",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "nativeErrors": [
+    {
+      "method": "cloud.pending",
+      "errorCode": "LOGIN_REQUIRED",
+      "status": 401
+    },
+    {
+      "method": "cloud.pending",
+      "errorCode": "ACCOUNT_SWITCHED",
+      "status": 0
+    }
+  ],
+  "phoneTask": {
+    "passed": false,
+    "durationMs": 193564,
+    "approvals": 0,
+    "text": "QA1 手机办事\n本对话用量\n输出与来源\nWeftMate\n新对话\n最近对话\n未分组\nQA1 手机办事\n电脑执行\n功能\n对话\n记忆\n能力与扩展\n项目与成果\n设备\n通知\n设置\n合\n合成电脑\n个人资料与设置\n请在电脑上创建 C:/Temp/qa1-phone-175df112-6434-4dbb-8bb1-000678e76dc7.txt，内容只写 QA1_PHONE_EXECUTED。只操作这个测试文件，完成后告诉我。\n\n执行进展暂时无法读取，已有记录待更新。请重新核对。\n\n查看来源与成果\n重新核对进展\n\n当前会话里我没有可用的电脑操作工具——我能调用的只有提醒（schedule）相关函数，没有 weftmod、pwsh、文件写入或桌面控制等工具。因此我无法在你的电脑上创建 C:/Temp/qa1-phone-175df112-6434-4dbb-8bb1-000678e76dc7.txt，也无法验证其内容。\n\n如果你希望我继续，请在会话中启用 weftmod（desktop/pwsh）工具后重新发送这个请求。启用后我会：\n\n用 pwsh 写入该路径，内容仅为 QA1_PHONE_EXECUTED（不加多余字符）。\n重新读取文件，核对路径与内容。\n只操作这一个测试文件，完成后向你汇报验证结果。\n复制回复\n发送结果待核对。请求已在手机保留，不会自动生成另一条消息。\n检查状态\n请在电脑上创建 C:/Temp/qa1-phone-175df112-6434-4dbb-8bb1-000678e76dc7.txt，内容只写 QA1_PHONE_EXECUTED。只操作这个测试文件，完成后告诉我。发送未确认，草稿已保留重试发送\n审批\n当前模型\n发送结果待核对 · 请求已保留，不会自动重发"
+  },
+  "visualOnly": true,
+  "passed": true,
+  "nativeCleanup": {
+    "applicationRemoved": true,
+    "reverseRemoved": true,
+    "forwardRemoved": true,
+    "probePassed": true,
+    "originalNightMode": "yes",
+    "nightModeRestored": true
+  },
+  "finishedAt": "2026-10-09T09:52:15.569Z",
+  "surface": "android",
+  "realNativeBridge": true,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/cloud/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/auth/cloud-nonce",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/1e0e86f1-0dc6-4550-934b-66dfb960a2ea/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/1e0e86f1-0dc6-4550-934b-66dfb960a2ea/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/account/models/by-request/f451e873-f8c6-474d-9ced-9f9c2ef9a476",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/cmd-09654fce-8e99-415d-9cac-24a399cdc4cc",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f18053dc-e3b3-4fc1-8ecb-32a15a4bc435/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f18053dc-e3b3-4fc1-8ecb-32a15a4bc435/approval-mode",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-f18053dc-e3b3-4fc1-8ecb-32a15a4bc435/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f18053dc-e3b3-4fc1-8ecb-32a15a4bc435/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-f18053dc-e3b3-4fc1-8ecb-32a15a4bc435/questions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/tasks/cmd-776c4d93-b185-4569-ab9f-8e8796af3939",
+      "status": 404
+    }
+  ]
+}

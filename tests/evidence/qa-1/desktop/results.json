@@ -1,0 +1,1423 @@
+{
+  "startedAt": "2026-10-09T09:22:00.995Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "light-settings",
+      "status": "passed",
+      "durationMs": 3972,
+      "pages": [
+        {
+          "name": "常规",
+          "durationMs": 265,
+          "screenshot": "desktop/light-settings-常规.png"
+        },
+        {
+          "name": "外观",
+          "durationMs": 218,
+          "screenshot": "desktop/light-settings-外观.png"
+        },
+        {
+          "name": "账户",
+          "durationMs": 245,
+          "screenshot": "desktop/light-settings-账户.png"
+        },
+        {
+          "name": "设备",
+          "durationMs": 226,
+          "screenshot": "desktop/light-settings-设备.png"
+        },
+        {
+          "name": "用量",
+          "durationMs": 264,
+          "screenshot": "desktop/light-settings-用量.png"
+        },
+        {
+          "name": "已归档",
+          "durationMs": 218,
+          "screenshot": "desktop/light-settings-已归档.png"
+        },
+        {
+          "name": "模型",
+          "durationMs": 225,
+          "screenshot": "desktop/light-settings-模型.png"
+        },
+        {
+          "name": "审批",
+          "durationMs": 220,
+          "screenshot": "desktop/light-settings-审批.png"
+        },
+        {
+          "name": "记忆",
+          "durationMs": 220,
+          "screenshot": "desktop/light-settings-记忆.png"
+        },
+        {
+          "name": "提醒与定时任务",
+          "durationMs": 237,
+          "screenshot": "desktop/light-settings-提醒与定时任务.png"
+        },
+        {
+          "name": "系统状态",
+          "durationMs": 228,
+          "screenshot": "desktop/light-settings-系统状态.png"
+        },
+        {
+          "name": "备份与恢复",
+          "durationMs": 229,
+          "screenshot": "desktop/light-settings-备份与恢复.png"
+        },
+        {
+          "name": "关于",
+          "durationMs": 229,
+          "screenshot": "desktop/light-settings-关于.png"
+        }
+      ]
+    },
+    {
+      "name": "light-narrow-window",
+      "status": "passed",
+      "durationMs": 67,
+      "screenshot": "desktop/light-narrow.png"
+    },
+    {
+      "name": "dark-settings",
+      "status": "passed",
+      "durationMs": 3752,
+      "pages": [
+        {
+          "name": "常规",
+          "durationMs": 241,
+          "screenshot": "desktop/dark-settings-常规.png"
+        },
+        {
+          "name": "外观",
+          "durationMs": 213,
+          "screenshot": "desktop/dark-settings-外观.png"
+        },
+        {
+          "name": "账户",
+          "durationMs": 216,
+          "screenshot": "desktop/dark-settings-账户.png"
+        },
+        {
+          "name": "设备",
+          "durationMs": 217,
+          "screenshot": "desktop/dark-settings-设备.png"
+        },
+        {
+          "name": "用量",
+          "durationMs": 229,
+          "screenshot": "desktop/dark-settings-用量.png"
+        },
+        {
+          "name": "已归档",
+          "durationMs": 227,
+          "screenshot": "desktop/dark-settings-已归档.png"
+        },
+        {
+          "name": "模型",
+          "durationMs": 218,
+          "screenshot": "desktop/dark-settings-模型.png"
+        },
+        {
+          "name": "审批",
+          "durationMs": 215,
+          "screenshot": "desktop/dark-settings-审批.png"
+        },
+        {
+          "name": "记忆",
+          "durationMs": 217,
+          "screenshot": "desktop/dark-settings-记忆.png"
+        },
+        {
+          "name": "提醒与定时任务",
+          "durationMs": 224,
+          "screenshot": "desktop/dark-settings-提醒与定时任务.png"
+        },
+        {
+          "name": "系统状态",
+          "durationMs": 227,
+          "screenshot": "desktop/dark-settings-系统状态.png"
+        },
+        {
+          "name": "备份与恢复",
+          "durationMs": 231,
+          "screenshot": "desktop/dark-settings-备份与恢复.png"
+        },
+        {
+          "name": "关于",
+          "durationMs": 225,
+          "screenshot": "desktop/dark-settings-关于.png"
+        }
+      ]
+    },
+    {
+      "name": "dark-narrow-window",
+      "status": "passed",
+      "durationMs": 71,
+      "screenshot": "desktop/dark-narrow.png"
+    },
+    {
+      "name": "stability-cycle-1",
+      "status": "failed",
+      "durationMs": 12091,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-4.png"
+    },
+    {
+      "name": "stability-cycle-2",
+      "status": "passed",
+      "durationMs": 30993,
+      "immediateMs": 1.399999976158142
+    },
+    {
+      "name": "stability-cycle-3",
+      "status": "passed",
+      "durationMs": 12044,
+      "immediateMs": 1.9000000059604645
+    },
+    {
+      "name": "stability-cycle-4",
+      "status": "passed",
+      "durationMs": 29943,
+      "immediateMs": 2
+    },
+    {
+      "name": "stability-cycle-5",
+      "status": "passed",
+      "durationMs": 29933,
+      "immediateMs": 2
+    },
+    {
+      "name": "stability-cycle-6",
+      "status": "passed",
+      "durationMs": 12499,
+      "immediateMs": 2.5999999940395355
+    },
+    {
+      "name": "stability-cycle-7",
+      "status": "passed",
+      "durationMs": 29931,
+      "immediateMs": 2.2000000178813934
+    },
+    {
+      "name": "stability-cycle-8",
+      "status": "passed",
+      "durationMs": 30240,
+      "immediateMs": 8.400000005960464
+    },
+    {
+      "name": "stability-cycle-9",
+      "status": "passed",
+      "durationMs": 11505,
+      "immediateMs": 3
+    },
+    {
+      "name": "stability-cycle-10",
+      "status": "passed",
+      "durationMs": 30762,
+      "immediateMs": 2.2000000178813934
+    },
+    {
+      "name": "stability-cycle-11",
+      "status": "passed",
+      "durationMs": 29464,
+      "immediateMs": 2.199999988079071
+    },
+    {
+      "name": "stability-cycle-12",
+      "status": "passed",
+      "durationMs": 12454,
+      "immediateMs": 1.699999988079071
+    },
+    {
+      "name": "stability-cycle-13",
+      "status": "passed",
+      "durationMs": 30003,
+      "immediateMs": 2.5
+    },
+    {
+      "name": "stability-cycle-14",
+      "status": "passed",
+      "durationMs": 29979,
+      "immediateMs": 2
+    },
+    {
+      "name": "stability-cycle-15",
+      "status": "passed",
+      "durationMs": 11953,
+      "immediateMs": 1.7999999821186066
+    },
+    {
+      "name": "stability-cycle-16",
+      "status": "passed",
+      "durationMs": 30465,
+      "immediateMs": 2.2000000178813934
+    },
+    {
+      "name": "stability-cycle-17",
+      "status": "passed",
+      "durationMs": 29965,
+      "immediateMs": 2.300000011920929
+    },
+    {
+      "name": "stability-cycle-18",
+      "status": "passed",
+      "durationMs": 11989,
+      "immediateMs": 5.100000023841858
+    },
+    {
+      "name": "stability-cycle-19",
+      "status": "passed",
+      "durationMs": 29955,
+      "immediateMs": 2
+    },
+    {
+      "name": "stability-cycle-20",
+      "status": "passed",
+      "durationMs": 30012,
+      "immediateMs": 1.9000000059604645
+    },
+    {
+      "name": "stability-cycle-21",
+      "status": "passed",
+      "durationMs": 11998,
+      "immediateMs": 1.800000011920929
+    },
+    {
+      "name": "stability-cycle-22",
+      "status": "passed",
+      "durationMs": 30465,
+      "immediateMs": 1.9000000059604645
+    },
+    {
+      "name": "stability-cycle-23",
+      "status": "passed",
+      "durationMs": 29973,
+      "immediateMs": 2
+    },
+    {
+      "name": "stability-cycle-24",
+      "status": "passed",
+      "durationMs": 11977,
+      "immediateMs": 1.9000000059604645
+    },
+    {
+      "name": "stability-cycle-25",
+      "status": "passed",
+      "durationMs": 29959,
+      "immediateMs": 2.0999999940395355
+    },
+    {
+      "name": "stability-cycle-26",
+      "status": "passed",
+      "durationMs": 30459,
+      "immediateMs": 1.7999999821186066
+    },
+    {
+      "name": "stability-cycle-27",
+      "status": "passed",
+      "durationMs": 11991,
+      "immediateMs": 1.9000000059604645
+    },
+    {
+      "name": "stability-cycle-28",
+      "status": "passed",
+      "durationMs": 30466,
+      "immediateMs": 2.0999999940395355
+    },
+    {
+      "name": "stability-cycle-29",
+      "status": "passed",
+      "durationMs": 29457,
+      "immediateMs": 1.699999988079071
+    },
+    {
+      "name": "stability-cycle-30",
+      "status": "passed",
+      "durationMs": 12575,
+      "immediateMs": 2.0999999940395355
+    },
+    {
+      "name": "stability-cycle-31",
+      "status": "passed",
+      "durationMs": 29974,
+      "immediateMs": 2.0999999940395355
+    },
+    {
+      "name": "stability-cycle-32",
+      "status": "passed",
+      "durationMs": 29985,
+      "immediateMs": 2.2000000178813934
+    },
+    {
+      "name": "stability-cycle-33",
+      "status": "passed",
+      "durationMs": 12496,
+      "immediateMs": 2.199999988079071
+    },
+    {
+      "name": "stability-cycle-34",
+      "status": "passed",
+      "durationMs": 29965,
+      "immediateMs": 1.800000011920929
+    },
+    {
+      "name": "stability-cycle-35",
+      "status": "passed",
+      "durationMs": 30465,
+      "immediateMs": 2.199999988079071
+    },
+    {
+      "name": "stability-cycle-36",
+      "status": "failed",
+      "durationMs": 12076,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-39.png"
+    },
+    {
+      "name": "stability-cycle-37",
+      "status": "passed",
+      "durationMs": 33947,
+      "immediateMs": 2
+    },
+    {
+      "name": "stability-cycle-38",
+      "status": "failed",
+      "durationMs": 15491,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-41.png"
+    },
+    {
+      "name": "stability-cycle-39",
+      "status": "failed",
+      "durationMs": 20049,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-42.png"
+    },
+    {
+      "name": "stability-cycle-40",
+      "status": "failed",
+      "durationMs": 15055,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-43.png"
+    },
+    {
+      "name": "stability-cycle-41",
+      "status": "failed",
+      "durationMs": 16026,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-44.png"
+    },
+    {
+      "name": "stability-cycle-42",
+      "status": "failed",
+      "durationMs": 20033,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-45.png"
+    },
+    {
+      "name": "stability-cycle-43",
+      "status": "passed",
+      "durationMs": 26062,
+      "immediateMs": 2.0999999940395355
+    },
+    {
+      "name": "stability-cycle-44",
+      "status": "failed",
+      "durationMs": 12082,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-47.png"
+    },
+    {
+      "name": "stability-cycle-45",
+      "status": "failed",
+      "durationMs": 12088,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-48.png"
+    },
+    {
+      "name": "stability-cycle-46",
+      "status": "failed",
+      "durationMs": 12087,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-49.png"
+    },
+    {
+      "name": "stability-cycle-47",
+      "status": "failed",
+      "durationMs": 12145,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-50.png"
+    },
+    {
+      "name": "stability-cycle-48",
+      "status": "failed",
+      "durationMs": 12126,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-51.png"
+    },
+    {
+      "name": "stability-cycle-49",
+      "status": "failed",
+      "durationMs": 12084,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-52.png"
+    },
+    {
+      "name": "stability-cycle-50",
+      "status": "failed",
+      "durationMs": 12102,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-53.png"
+    },
+    {
+      "name": "stability-cycle-51",
+      "status": "failed",
+      "durationMs": 17373,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-54.png"
+    },
+    {
+      "name": "stability-cycle-52",
+      "status": "failed",
+      "durationMs": 12844,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-55.png"
+    },
+    {
+      "name": "stability-cycle-53",
+      "status": "failed",
+      "durationMs": 12086,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-56.png"
+    },
+    {
+      "name": "stability-cycle-54",
+      "status": "failed",
+      "durationMs": 12096,
+      "error": "locator.waitFor: Timeout 12000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: '停止回复', exact: true }) to be visible\u001b[22m\n",
+      "screenshot": "desktop/failure-57.png"
+    }
+  ],
+  "errors": [],
+  "stability": {
+    "elapsedMs": 1809401,
+    "p99Ms": 31.211519,
+    "maxMs": 215.089151,
+    "storeWatchEvents": 880,
+    "samples": [
+      {
+        "at": 1791537726890,
+        "rss": 199217152,
+        "heapUsed": 21522080
+      },
+      {
+        "at": 1791537736891,
+        "rss": 206708736,
+        "heapUsed": 23943072
+      },
+      {
+        "at": 1791537746892,
+        "rss": 207089664,
+        "heapUsed": 27728412
+      },
+      {
+        "at": 1791537756891,
+        "rss": 197632000,
+        "heapUsed": 21426816
+      },
+      {
+        "at": 1791537766891,
+        "rss": 198475776,
+        "heapUsed": 22680196
+      },
+      {
+        "at": 1791537776891,
+        "rss": 201478144,
+        "heapUsed": 25751404
+      },
+      {
+        "at": 1791537786892,
+        "rss": 205791232,
+        "heapUsed": 21431516
+      },
+      {
+        "at": 1791537796893,
+        "rss": 195825664,
+        "heapUsed": 21895420
+      },
+      {
+        "at": 1791537806893,
+        "rss": 197287936,
+        "heapUsed": 23594368
+      },
+      {
+        "at": 1791537816893,
+        "rss": 199905280,
+        "heapUsed": 26325580
+      },
+      {
+        "at": 1791537826893,
+        "rss": 200982528,
+        "heapUsed": 26294324
+      },
+      {
+        "at": 1791537836893,
+        "rss": 205623296,
+        "heapUsed": 24522580
+      },
+      {
+        "at": 1791537846893,
+        "rss": 201302016,
+        "heapUsed": 25411260
+      },
+      {
+        "at": 1791537856893,
+        "rss": 205078528,
+        "heapUsed": 28396552
+      },
+      {
+        "at": 1791537866894,
+        "rss": 205361152,
+        "heapUsed": 24539256
+      },
+      {
+        "at": 1791537876894,
+        "rss": 205279232,
+        "heapUsed": 26105368
+      },
+      {
+        "at": 1791537886895,
+        "rss": 205307904,
+        "heapUsed": 28807312
+      },
+      {
+        "at": 1791537896896,
+        "rss": 207876096,
+        "heapUsed": 24257888
+      },
+      {
+        "at": 1791537906896,
+        "rss": 209104896,
+        "heapUsed": 26182476
+      },
+      {
+        "at": 1791537916897,
+        "rss": 208674816,
+        "heapUsed": 28311684
+      },
+      {
+        "at": 1791537926897,
+        "rss": 207499264,
+        "heapUsed": 26944936
+      },
+      {
+        "at": 1791537936897,
+        "rss": 211132416,
+        "heapUsed": 31724236
+      },
+      {
+        "at": 1791537946898,
+        "rss": 207228928,
+        "heapUsed": 20737496
+      },
+      {
+        "at": 1791537956900,
+        "rss": 209776640,
+        "heapUsed": 23107220
+      },
+      {
+        "at": 1791537966900,
+        "rss": 212008960,
+        "heapUsed": 25475468
+      },
+      {
+        "at": 1791537976900,
+        "rss": 220680192,
+        "heapUsed": 27246488
+      },
+      {
+        "at": 1791537986900,
+        "rss": 225054720,
+        "heapUsed": 33367944
+      },
+      {
+        "at": 1791537996900,
+        "rss": 227860480,
+        "heapUsed": 25601152
+      },
+      {
+        "at": 1791538006900,
+        "rss": 226787328,
+        "heapUsed": 18999028
+      },
+      {
+        "at": 1791538016900,
+        "rss": 227450880,
+        "heapUsed": 31353872
+      },
+      {
+        "at": 1791538026901,
+        "rss": 225918976,
+        "heapUsed": 27563228
+      },
+      {
+        "at": 1791538036900,
+        "rss": 238714880,
+        "heapUsed": 22130680
+      },
+      {
+        "at": 1791538046900,
+        "rss": 243826688,
+        "heapUsed": 38899268
+      },
+      {
+        "at": 1791538056900,
+        "rss": 254226432,
+        "heapUsed": 41759040
+      },
+      {
+        "at": 1791538066900,
+        "rss": 256528384,
+        "heapUsed": 28738660
+      },
+      {
+        "at": 1791538076900,
+        "rss": 255086592,
+        "heapUsed": 33545276
+      },
+      {
+        "at": 1791538086900,
+        "rss": 255602688,
+        "heapUsed": 26898940
+      },
+      {
+        "at": 1791538096900,
+        "rss": 255021056,
+        "heapUsed": 24464552
+      },
+      {
+        "at": 1791538106900,
+        "rss": 256561152,
+        "heapUsed": 42967848
+      },
+      {
+        "at": 1791538116901,
+        "rss": 255787008,
+        "heapUsed": 40249732
+      },
+      {
+        "at": 1791538126901,
+        "rss": 255959040,
+        "heapUsed": 42957920
+      },
+      {
+        "at": 1791538136901,
+        "rss": 256753664,
+        "heapUsed": 38098712
+      },
+      {
+        "at": 1791538146903,
+        "rss": 257220608,
+        "heapUsed": 37581124
+      },
+      {
+        "at": 1791538156907,
+        "rss": 258244608,
+        "heapUsed": 39129280
+      },
+      {
+        "at": 1791538166908,
+        "rss": 255471616,
+        "heapUsed": 33398568
+      },
+      {
+        "at": 1791538176909,
+        "rss": 255942656,
+        "heapUsed": 33134472
+      },
+      {
+        "at": 1791538186909,
+        "rss": 258027520,
+        "heapUsed": 18640128
+      },
+      {
+        "at": 1791538196909,
+        "rss": 259026944,
+        "heapUsed": 38142384
+      },
+      {
+        "at": 1791538206909,
+        "rss": 259395584,
+        "heapUsed": 44565672
+      },
+      {
+        "at": 1791538216909,
+        "rss": 260395008,
+        "heapUsed": 47160868
+      },
+      {
+        "at": 1791538226909,
+        "rss": 256643072,
+        "heapUsed": 34669564
+      },
+      {
+        "at": 1791538236909,
+        "rss": 256802816,
+        "heapUsed": 37627936
+      },
+      {
+        "at": 1791538246908,
+        "rss": 257478656,
+        "heapUsed": 49022620
+      },
+      {
+        "at": 1791538256908,
+        "rss": 257794048,
+        "heapUsed": 38765808
+      },
+      {
+        "at": 1791538266909,
+        "rss": 256102400,
+        "heapUsed": 29867552
+      },
+      {
+        "at": 1791538276910,
+        "rss": 258289664,
+        "heapUsed": 28195308
+      },
+      {
+        "at": 1791538286909,
+        "rss": 256217088,
+        "heapUsed": 25806408
+      },
+      {
+        "at": 1791538296910,
+        "rss": 256053248,
+        "heapUsed": 19890508
+      },
+      {
+        "at": 1791538306910,
+        "rss": 257085440,
+        "heapUsed": 30996056
+      },
+      {
+        "at": 1791538316911,
+        "rss": 257626112,
+        "heapUsed": 34309208
+      },
+      {
+        "at": 1791538326911,
+        "rss": 259395584,
+        "heapUsed": 34711332
+      },
+      {
+        "at": 1791538336911,
+        "rss": 260632576,
+        "heapUsed": 37327584
+      },
+      {
+        "at": 1791538346911,
+        "rss": 257552384,
+        "heapUsed": 31962632
+      },
+      {
+        "at": 1791538356911,
+        "rss": 260812800,
+        "heapUsed": 43501848
+      },
+      {
+        "at": 1791538366911,
+        "rss": 256335872,
+        "heapUsed": 23275660
+      },
+      {
+        "at": 1791538376911,
+        "rss": 258039808,
+        "heapUsed": 33531760
+      },
+      {
+        "at": 1791538386912,
+        "rss": 258764800,
+        "heapUsed": 39862580
+      },
+      {
+        "at": 1791538396912,
+        "rss": 258736128,
+        "heapUsed": 41258076
+      },
+      {
+        "at": 1791538406912,
+        "rss": 259112960,
+        "heapUsed": 42265120
+      },
+      {
+        "at": 1791538416912,
+        "rss": 260038656,
+        "heapUsed": 27122820
+      },
+      {
+        "at": 1791538426912,
+        "rss": 259858432,
+        "heapUsed": 34548708
+      },
+      {
+        "at": 1791538436912,
+        "rss": 258162688,
+        "heapUsed": 31747552
+      },
+      {
+        "at": 1791538446913,
+        "rss": 261369856,
+        "heapUsed": 33977988
+      },
+      {
+        "at": 1791538456913,
+        "rss": 260079616,
+        "heapUsed": 37219972
+      },
+      {
+        "at": 1791538466914,
+        "rss": 262324224,
+        "heapUsed": 47368156
+      },
+      {
+        "at": 1791538476914,
+        "rss": 260800512,
+        "heapUsed": 24577376
+      },
+      {
+        "at": 1791538486914,
+        "rss": 259686400,
+        "heapUsed": 37534104
+      },
+      {
+        "at": 1791538496914,
+        "rss": 258994176,
+        "heapUsed": 39276356
+      },
+      {
+        "at": 1791538506915,
+        "rss": 261345280,
+        "heapUsed": 38423832
+      },
+      {
+        "at": 1791538516916,
+        "rss": 261775360,
+        "heapUsed": 44861920
+      },
+      {
+        "at": 1791538526918,
+        "rss": 260313088,
+        "heapUsed": 28080168
+      },
+      {
+        "at": 1791538536919,
+        "rss": 260087808,
+        "heapUsed": 38963852
+      },
+      {
+        "at": 1791538546919,
+        "rss": 261357568,
+        "heapUsed": 39537408
+      },
+      {
+        "at": 1791538556920,
+        "rss": 260583424,
+        "heapUsed": 44562000
+      },
+      {
+        "at": 1791538566920,
+        "rss": 260505600,
+        "heapUsed": 32926968
+      },
+      {
+        "at": 1791538576921,
+        "rss": 259158016,
+        "heapUsed": 40302376
+      },
+      {
+        "at": 1791538586920,
+        "rss": 262000640,
+        "heapUsed": 43748776
+      },
+      {
+        "at": 1791538596921,
+        "rss": 259522560,
+        "heapUsed": 35963300
+      },
+      {
+        "at": 1791538606921,
+        "rss": 260325376,
+        "heapUsed": 37868544
+      },
+      {
+        "at": 1791538616920,
+        "rss": 259813376,
+        "heapUsed": 41642760
+      },
+      {
+        "at": 1791538626921,
+        "rss": 260886528,
+        "heapUsed": 24911276
+      },
+      {
+        "at": 1791538636921,
+        "rss": 260075520,
+        "heapUsed": 38004160
+      },
+      {
+        "at": 1791538646922,
+        "rss": 260980736,
+        "heapUsed": 43262368
+      },
+      {
+        "at": 1791538656923,
+        "rss": 258392064,
+        "heapUsed": 24642588
+      },
+      {
+        "at": 1791538666924,
+        "rss": 260730880,
+        "heapUsed": 26479700
+      },
+      {
+        "at": 1791538676925,
+        "rss": 259932160,
+        "heapUsed": 41611872
+      },
+      {
+        "at": 1791538686925,
+        "rss": 260255744,
+        "heapUsed": 24507140
+      },
+      {
+        "at": 1791538696926,
+        "rss": 260214784,
+        "heapUsed": 32829540
+      },
+      {
+        "at": 1791538706926,
+        "rss": 260743168,
+        "heapUsed": 19576684
+      },
+      {
+        "at": 1791538716926,
+        "rss": 259072000,
+        "heapUsed": 30883764
+      },
+      {
+        "at": 1791538726925,
+        "rss": 260902912,
+        "heapUsed": 36075200
+      },
+      {
+        "at": 1791538736926,
+        "rss": 260870144,
+        "heapUsed": 44257860
+      },
+      {
+        "at": 1791538746926,
+        "rss": 261271552,
+        "heapUsed": 36148332
+      },
+      {
+        "at": 1791538756928,
+        "rss": 260173824,
+        "heapUsed": 41310700
+      },
+      {
+        "at": 1791538766927,
+        "rss": 261042176,
+        "heapUsed": 47614016
+      },
+      {
+        "at": 1791538776927,
+        "rss": 261402624,
+        "heapUsed": 30915560
+      },
+      {
+        "at": 1791538786928,
+        "rss": 261865472,
+        "heapUsed": 24285880
+      },
+      {
+        "at": 1791538796927,
+        "rss": 259022848,
+        "heapUsed": 29603752
+      },
+      {
+        "at": 1791538806927,
+        "rss": 259588096,
+        "heapUsed": 21736224
+      },
+      {
+        "at": 1791538816928,
+        "rss": 260222976,
+        "heapUsed": 38079772
+      },
+      {
+        "at": 1791538826929,
+        "rss": 260730880,
+        "heapUsed": 41427388
+      },
+      {
+        "at": 1791538836929,
+        "rss": 260587520,
+        "heapUsed": 26385364
+      },
+      {
+        "at": 1791538846930,
+        "rss": 260923392,
+        "heapUsed": 40369392
+      },
+      {
+        "at": 1791538856930,
+        "rss": 260608000,
+        "heapUsed": 31413468
+      },
+      {
+        "at": 1791538866931,
+        "rss": 260505600,
+        "heapUsed": 37825032
+      },
+      {
+        "at": 1791538876932,
+        "rss": 260911104,
+        "heapUsed": 22204980
+      },
+      {
+        "at": 1791538886932,
+        "rss": 261877760,
+        "heapUsed": 34068520
+      },
+      {
+        "at": 1791538896932,
+        "rss": 262094848,
+        "heapUsed": 34219692
+      },
+      {
+        "at": 1791538906932,
+        "rss": 262660096,
+        "heapUsed": 41986432
+      },
+      {
+        "at": 1791538916933,
+        "rss": 261914624,
+        "heapUsed": 37046956
+      },
+      {
+        "at": 1791538926933,
+        "rss": 261189632,
+        "heapUsed": 24581216
+      },
+      {
+        "at": 1791538936933,
+        "rss": 259887104,
+        "heapUsed": 34990200
+      },
+      {
+        "at": 1791538946934,
+        "rss": 261660672,
+        "heapUsed": 38177704
+      },
+      {
+        "at": 1791538956934,
+        "rss": 260923392,
+        "heapUsed": 32336524
+      },
+      {
+        "at": 1791538966935,
+        "rss": 262553600,
+        "heapUsed": 25438736
+      },
+      {
+        "at": 1791538976935,
+        "rss": 259473408,
+        "heapUsed": 34745320
+      },
+      {
+        "at": 1791538986936,
+        "rss": 264544256,
+        "heapUsed": 46490860
+      },
+      {
+        "at": 1791538996937,
+        "rss": 259158016,
+        "heapUsed": 29868572
+      },
+      {
+        "at": 1791539006937,
+        "rss": 261459968,
+        "heapUsed": 29874084
+      },
+      {
+        "at": 1791539016937,
+        "rss": 261730304,
+        "heapUsed": 41111880
+      },
+      {
+        "at": 1791539026938,
+        "rss": 262983680,
+        "heapUsed": 29202440
+      },
+      {
+        "at": 1791539036937,
+        "rss": 261971968,
+        "heapUsed": 30176920
+      },
+      {
+        "at": 1791539046938,
+        "rss": 261697536,
+        "heapUsed": 44086124
+      },
+      {
+        "at": 1791539056938,
+        "rss": 260665344,
+        "heapUsed": 32191468
+      },
+      {
+        "at": 1791539066938,
+        "rss": 261808128,
+        "heapUsed": 39838872
+      },
+      {
+        "at": 1791539076939,
+        "rss": 263753728,
+        "heapUsed": 47144796
+      },
+      {
+        "at": 1791539086939,
+        "rss": 263114752,
+        "heapUsed": 30654692
+      },
+      {
+        "at": 1791539096940,
+        "rss": 262066176,
+        "heapUsed": 48043860
+      },
+      {
+        "at": 1791539106939,
+        "rss": 264794112,
+        "heapUsed": 38403240
+      },
+      {
+        "at": 1791539116940,
+        "rss": 262787072,
+        "heapUsed": 43852288
+      },
+      {
+        "at": 1791539126941,
+        "rss": 260472832,
+        "heapUsed": 28091264
+      },
+      {
+        "at": 1791539136942,
+        "rss": 261394432,
+        "heapUsed": 25385972
+      },
+      {
+        "at": 1791539146951,
+        "rss": 261795840,
+        "heapUsed": 26124708
+      },
+      {
+        "at": 1791539156960,
+        "rss": 263274496,
+        "heapUsed": 41234804
+      },
+      {
+        "at": 1791539166969,
+        "rss": 266842112,
+        "heapUsed": 37429572
+      },
+      {
+        "at": 1791539176973,
+        "rss": 264220672,
+        "heapUsed": 44005756
+      },
+      {
+        "at": 1791539186978,
+        "rss": 261877760,
+        "heapUsed": 28599596
+      },
+      {
+        "at": 1791539196984,
+        "rss": 261255168,
+        "heapUsed": 26464640
+      },
+      {
+        "at": 1791539206986,
+        "rss": 263962624,
+        "heapUsed": 33529988
+      },
+      {
+        "at": 1791539216993,
+        "rss": 260308992,
+        "heapUsed": 23718088
+      },
+      {
+        "at": 1791539226993,
+        "rss": 267575296,
+        "heapUsed": 43772484
+      },
+      {
+        "at": 1791539236997,
+        "rss": 260653056,
+        "heapUsed": 26428892
+      },
+      {
+        "at": 1791539247004,
+        "rss": 262422528,
+        "heapUsed": 37237768
+      },
+      {
+        "at": 1791539257008,
+        "rss": 262377472,
+        "heapUsed": 31948620
+      },
+      {
+        "at": 1791539267008,
+        "rss": 263733248,
+        "heapUsed": 21612916
+      },
+      {
+        "at": 1791539277008,
+        "rss": 262955008,
+        "heapUsed": 40131728
+      },
+      {
+        "at": 1791539287008,
+        "rss": 261480448,
+        "heapUsed": 29575448
+      },
+      {
+        "at": 1791539297009,
+        "rss": 261763072,
+        "heapUsed": 27221656
+      },
+      {
+        "at": 1791539307009,
+        "rss": 262426624,
+        "heapUsed": 46441628
+      },
+      {
+        "at": 1791539317010,
+        "rss": 260132864,
+        "heapUsed": 29452408
+      },
+      {
+        "at": 1791539327010,
+        "rss": 263245824,
+        "heapUsed": 38000296
+      },
+      {
+        "at": 1791539337011,
+        "rss": 261226496,
+        "heapUsed": 32439796
+      },
+      {
+        "at": 1791539347012,
+        "rss": 262492160,
+        "heapUsed": 39157664
+      },
+      {
+        "at": 1791539357012,
+        "rss": 263446528,
+        "heapUsed": 33453144
+      },
+      {
+        "at": 1791539367011,
+        "rss": 265854976,
+        "heapUsed": 38762040
+      },
+      {
+        "at": 1791539377012,
+        "rss": 260722688,
+        "heapUsed": 27140676
+      },
+      {
+        "at": 1791539387012,
+        "rss": 262832128,
+        "heapUsed": 27040960
+      },
+      {
+        "at": 1791539397011,
+        "rss": 264077312,
+        "heapUsed": 38271252
+      },
+      {
+        "at": 1791539407012,
+        "rss": 264224768,
+        "heapUsed": 35025860
+      },
+      {
+        "at": 1791539417012,
+        "rss": 261906432,
+        "heapUsed": 22415708
+      },
+      {
+        "at": 1791539427012,
+        "rss": 263032832,
+        "heapUsed": 25192480
+      },
+      {
+        "at": 1791539437013,
+        "rss": 262742016,
+        "heapUsed": 43178684
+      },
+      {
+        "at": 1791539447013,
+        "rss": 261394432,
+        "heapUsed": 24775904
+      },
+      {
+        "at": 1791539457013,
+        "rss": 262844416,
+        "heapUsed": 42169972
+      },
+      {
+        "at": 1791539467012,
+        "rss": 263671808,
+        "heapUsed": 34558384
+      },
+      {
+        "at": 1791539477013,
+        "rss": 265646080,
+        "heapUsed": 47025188
+      },
+      {
+        "at": 1791539487014,
+        "rss": 264228864,
+        "heapUsed": 47502756
+      },
+      {
+        "at": 1791539497014,
+        "rss": 262586368,
+        "heapUsed": 30120304
+      },
+      {
+        "at": 1791539507014,
+        "rss": 263610368,
+        "heapUsed": 30712788
+      },
+      {
+        "at": 1791539517014,
+        "rss": 264421376,
+        "heapUsed": 42436936
+      },
+      {
+        "at": 1791539527015,
+        "rss": 264822784,
+        "heapUsed": 34062956
+      }
+    ]
+  },
+  "modelCalls": 54,
+  "finishedAt": "2026-10-09T09:52:16.298Z",
+  "cleaned": true
+}
