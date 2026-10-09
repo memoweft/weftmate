@@ -501,6 +501,8 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 
 `aad` 解码后为 JSON（数据交换格式）`{version:1,ownerId,hostId,deviceId,keyId}`；客户端必须核对当前账户／宿主／设备。`wrappedKey` 用设备 RSA-OAEP 私钥解开，摘要与 MGF1（掩码生成函数）均为 SHA-256。内容钥匙为 32 字节 AES，GCM 的 `additionalData` 使用原始 `aad` 字节，不重编码 JSON。
 
+每个补交轮次还携带 `memoryRefs:[{kind,id}]`（最多64个唯一引用）与 `dependencyComplete`（布尔值）。引用包含当前召回及有界对话上下文所继承的记忆依赖，不能填正文。宿主将它写入助手消息的 Core `model_context_dependencies`，使遗忘能级联清除已经补交的回复副本；旧客户端或近期对话无法完整追溯时标记 `unavailable`，不伪造完整依赖。接口 `timestamp` 使用毫秒，宿主转换为 Core 的秒值。去重绑定本地受信物理设备身份，不受云会话续期后新 Cookie 设备编号影响。
+
 解密副本为 `{generation,reset,worldRevision,items,remove,hashes,truncated,recent,model,control,syncedAt}`。`items` 是新增或变化项：`{id,kind,text,viewpoint,sources:[{id,summary}],updatedAt,currentState:"current"}`；`remove` 是删除标识；`hashes` 是当前完整项目哈希表。`reset:true` 必须先清除旧副本和待补交离线对话，再应用。任何删除项也清理可能引用旧内容的离线对话。`recent` 最多 10 段×20 条；`model` 含账户选定的 `profileId,name,baseUrl,modelId,apiKey`，只能在设备安全层解密，安卓不得传 API key（模型凭据）到页面。`control` 为云状态接口地址、`hostId` 与 `generation`。
 
 `OFFLINE_CLOUD_REQUIRED`／`OFFLINE_MODEL_REQUIRED`（409）表示需要绑定云账户／配置云模型；`OFFLINE_RESET_REQUIRED`（409）表示旧代次已无效，须删除副本与旧待补交内容。`MEMORY_REVISION_CHANGED`（409）重取快照。`synced` 只证明 Core（记忆核心）已接收，正式形成是原有后台任务。

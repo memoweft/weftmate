@@ -45,7 +45,10 @@ export function offlineBoundary(deviceId, turn) {
   const sessionId = `offline-${hash(`${deviceId}:${turn.conversationId}`).slice(0, 48)}`;
   const payload = { schema_version: 1, provider_name: 'memoweft', mode: 'turn', parent_session_id: sessionId,
     result_session_id: sessionId, source_messages: turn.messages.map((message, i) => ({ role: message.role,
-      content: message.text, source_ref: `source:${i}`, message_id: `${turn.id}:${i}`, timestamp: Math.floor(turn.timestamp / 1000) })) };
+      content: message.text, source_ref: `source:${i}`, message_id: `${turn.id}:${i}`, timestamp: Math.floor(turn.timestamp / 1000),
+      ...(message.role === 'assistant' ? { model_context_dependencies: { schema_version: 1,
+        capture_status: turn.dependencyComplete === true ? (turn.memoryRefs?.length ? 'complete' : 'complete_empty') : 'unavailable',
+        world_items: (turn.memoryRefs ?? []).map(ref => ({ object_kind: ref.kind, item_id: ref.id })), interaction_ids: [] } } : {}) })) };
   const sort = value => value === null || typeof value !== 'object' ? value : Array.isArray(value) ? value.map(sort)
     : Object.fromEntries(Object.keys(value).sort().map(key => [key, sort(value[key])]));
   const canonical = JSON.stringify(sort(payload)).replace(/[\u007f-\uffff]/g, c => `\\u${c.charCodeAt(0).toString(16).padStart(4, '0')}`);

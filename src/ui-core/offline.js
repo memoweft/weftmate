@@ -130,7 +130,10 @@
         const conversation = value.conversations.find(c => c.id === conversationId) ?? { id: crypto.randomUUID(), turns: [],
           ...(recent ? { sourceSessionId: recent.id, context: recent.messages } : {}) };
         const { body, memories } = requestBody(value.snapshot, [...(conversation.context ?? []), ...conversation.turns.flatMap(t => t.messages)], text.trim());
-        const turn = { id: crypto.randomUUID(), conversationId: conversation.id, timestamp: Date.now(), messages: [{ role: 'user', text: text.trim() }] };
+        const refs = new Map([...memories, ...conversation.turns.slice(-20).flatMap(t => t.memoryRefs || [])].map(m => [`${m.kind}:${m.id}`, { kind: m.kind, id: m.id }]));
+        const turn = { id: crypto.randomUUID(), conversationId: conversation.id, timestamp: Date.now(),
+          memoryRefs: [...refs.values()].slice(0, 64), dependencyComplete: !conversation.context?.length && refs.size <= 64 &&
+            conversation.turns.slice(-20).every(t => t.dependencyComplete === true), messages: [{ role: 'user', text: text.trim() }] };
         if (!value.conversations.includes(conversation)) value.conversations.push(conversation);
         conversation.turns.push(turn); value.turns.push(turn); await persist();
         const response = await vault.complete(body, value.snapshot, abort.signal);

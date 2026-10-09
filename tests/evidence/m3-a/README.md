@@ -11,6 +11,7 @@
 ## 验证命令与范围
 
 - `node --test tests/personal-offline.test.ts`：封装加解密、篡改／错身份拒绝、权限和来源摘要过滤、增量移除、相关记忆选择、撤权清空、旧代次拒绝、补交幂等、Core 时间戳及 Cookie（会话凭据）续期保持物理设备身份。
+- `m3-a-core-forget.mjs`：在上述隔离世界的副本中，真实 Core 接收带记忆依赖的离线助手回复；遗忘后历史和磁盘均不含衍生回复标记，见 `core-forget.json`。无付费模型；`WEFTMATE_M3A_SOURCE_PROFILE` 指向本包隔离验收目录，禁止日用目录。
 - `node tests/integration/m3-a-offline.mjs`：真实桌面与网页闭环；`--android` 使用原生加密层、网络层、界面包和通过 ADB（安卓调试桥）映射的本地 TCP（传输控制协议）中继夹具。
 - 云 `offline-control.test.mjs`：真实 DPoP（设备密钥持有证明）、成员／设备隔离、代次单调性、电脑离线时设备撤销；在现有 WSL Node 环境运行，避免 Windows 目录同步落盘的既有夹具限制。
 - Android（安卓）`M3aOfflineVaultTest` 验证 Keystore（系统密钥库）包裹设备私钥、模型凭据不出原生层、磁盘无明文及销毁旧钥匙后无法解密旧包。`verification-android.json` 已通过相同真实 MiMo 全链路，原生屏幕见 `android-native-offline-memory.png`，4,501,504 字节存储扫描零命中。
@@ -20,3 +21,5 @@
 安卓硬件 RSA（非对称算法）路径在 MuMu 的 OAEP（最优非对称加密填充）掩码参数上失败，最终使用不可导出的 Keystore AES（对称算法）钥匙包裹 RSA 私钥，保留标准 SHA-256（摘要算法）封装，适用于现有最低安卓版本。网页保留不可导出的 WebCrypto（浏览器密码接口）密钥。
 
 离线模型用量与宿主账户用量记录在结果 JSON；费用采用宿主既有价格配置。完全断网的手机无法即时收到远程删除，恢复网络后先核对并清理；应用字节扫描不声称能够控制闪存磨损均衡或用户自行导出的备份。
+
+完整记录边界见 `usage.json`：开发及验收宿主25次请求（1次无供应商用量），已知54,949 token（词元）；最终网页／安卓直连4次共1,101 token。另记早期直连1次166 token，前期3次直连调试未保留供应商用量，不将已记录金额称为完整账单。

@@ -1,6 +1,6 @@
 import path from 'node:path';
 import { readFile } from 'node:fs/promises';
-import { failure } from '../personal-access/common.mjs';
+import { failure, plainObject } from '../personal-access/common.mjs';
 import { durableWrite } from '../personal-access/store.mjs';
 import { hash, publicDeviceKey, sealReplica } from './crypto.mjs';
 import { memorySnapshot, offlineBoundary, replicaDelta, REPLICA_LIMITS } from './snapshot.mjs';
@@ -63,11 +63,13 @@ export async function createOfflineService(context) {
       const current = context.authenticate(request, 'account:manage');
       if (current.ownerId !== ownerId || current.via !== 'cookie' || !['cloud', 'password'].includes(current.device.authKind)) throw failure('FORBIDDEN', 403);
       const body = await context.readJson(request, 256 * 1024);
+      if (!plainObject(body)) throw failure('INVALID_REQUEST');
       const result = await serial(async () => {
         context.authenticate(request, 'account:manage');
         const account = owner(ownerId), deviceId = context.cloudIdentity?.offlineDeviceId?.(ownerId, current.deviceId) ?? current.deviceId;
         if (route === '/sync') {
           if (Object.keys(body).some(k => !['publicJwk', 'generation', 'hashes'].includes(k))) throw failure('INVALID_REQUEST');
+          if (!Number.isSafeInteger(body.generation) || body.generation < 0) throw failure('INVALID_REQUEST');
           const publicJwk = publicDeviceKey(body.publicJwk);
           const control = await publish(ownerId);
           const snapshot = await memorySnapshot(context.memoryManager, ownerId);
@@ -100,6 +102,11 @@ export async function createOfflineService(context) {
           if (!turn || !ID.test(turn.id) || !ID.test(turn.conversationId) || !Number.isSafeInteger(turn.timestamp) || turn.timestamp < 0 ||
               !Array.isArray(turn.messages) || turn.messages.length < 1 || turn.messages.length > 2 || turn.messages[0]?.role !== 'user' ||
               turn.messages.some((m, i) => m.role !== (i === 0 ? 'user' : 'assistant') || typeof m.text !== 'string' || !m.text.trim() || m.text.length > 16384)) throw failure('INVALID_REQUEST');
+          if (turn.dependencyComplete !== undefined && typeof turn.dependencyComplete !== 'boolean' ||
+              turn.memoryRefs !== undefined && (!Array.isArray(turn.memoryRefs) || turn.memoryRefs.length > 64 ||
+                turn.memoryRefs.some(ref => !['cognition', 'entity', 'relationship', 'event'].includes(ref?.kind) ||
+                  typeof ref.id !== 'string' || !/^[A-Za-z0-9._:-]{1,512}$/.test(ref.id)))) throw failure('INVALID_REQUEST');
+          if (new Set((turn.memoryRefs ?? []).map(ref => `${ref.kind}:${ref.id}`)).size !== (turn.memoryRefs ?? []).length) throw failure('INVALID_REQUEST');
           const receiptId = hash(`${deviceId}:${turn.id}`), digest = hash(turn), prior = account.receipts[receiptId];
           if (prior && prior !== digest) throw failure('REQUEST_CONFLICT', 409);
           if (!prior) {
