@@ -414,8 +414,19 @@ export function createHttpHandler(context) {
           const latest = context.authenticate(request, 'commands:write');
           if (latest.ownerId !== ownerId || latest.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
         };
+        let conversationId = url.searchParams.get('conversationId');
+        const logicalChat = context.accountState(ownerId).chatIdentity?.chats[conversationId];
+        if (logicalChat) {
+          if (logicalChat.kind !== 'main' || !context.hostOwner(ownerId)) throw failure('CHAT_UNAVAILABLE', 404);
+          conversationId = await context.serial(async () => {
+            if (!context.chats.requireChat(ownerId, logicalChat.chatId).attachmentSessionId) await context.mutate(ownerId, next => {
+              next.chatIdentity.chats[logicalChat.chatId].attachmentSessionId = `session-${randomUUID()}`;
+            });
+            return context.chats.requireChat(ownerId, logicalChat.chatId).attachmentSessionId;
+          });
+        }
         const result = await context.attachmentStores.get(ownerId).put({ attachmentId: attachmentMatch[1],
-          conversationId: url.searchParams.get('conversationId'),
+          conversationId,
           messageId: url.searchParams.get('messageId'), name: url.searchParams.get('name'),
           contentType: request.headers['content-type'], sha256: request.headers['x-weftmate-sha256'],
           stream: request, expectedSize: lengthHeader === undefined ? undefined : Number(lengthHeader),
