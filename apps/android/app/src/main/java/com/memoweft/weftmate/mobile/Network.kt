@@ -23,6 +23,8 @@ internal fun validBusinessPath(path: String): Boolean {
     if (path.length > 512) return false
     val route = path.substringBefore('?')
     val query = path.substringAfter('?', "")
+    if (query.matches(Regex("[A-Za-z0-9._~=&%+-]*")) && route.matches(Regex("/personal/v1/chats(/main|/[A-Za-z0-9_-]{1,128}(/(events|changes|dates|locate|search|resources|metadata|archive|unarchive|results))?)?"))) return true
+    if (query.isEmpty() && route == "/personal/v1/commands") return true
     if (query.isEmpty() && route.matches(Regex("/personal/v1/offline/(sync|turns)"))) return true
     if (route == "/personal/v1/usage" && (query.isEmpty() ||
         query.matches(Regex("(month=[0-9]{4}-(0[1-9]|1[0-2]))?(&?sessionId=[A-Za-z0-9_-]{1,128})?")))) return true
@@ -293,8 +295,8 @@ class JsonHttp : SseTransport {
 
 class PersonalApi(private val http: JsonTransport = JsonHttp()) {
     fun uploadSharedImage(host: HostIdentity, sessionId: String, requestId: String,
-        row: ChatAttachment): JSONObject {
-        require(sessionId.matches(Regex("session-[0-9a-f-]{36}")) &&
+        row: ChatAttachment, logical: Boolean = false): JSONObject {
+        require(sessionId.matches(Regex(if (logical) "chat-[0-9a-f-]{36}" else "session-[0-9a-f-]{36}")) &&
             requestId.matches(Regex("[A-Za-z0-9_.:-]{1,128}")) &&
             row.id.matches(Regex("attachment-[0-9a-f-]{36}")))
         val image = row.kind == "image" && row.mimeType in setOf("image/png", "image/jpeg", "image/webp", "image/gif") &&
@@ -302,7 +304,7 @@ class PersonalApi(private val http: JsonTransport = JsonHttp()) {
         val text = row.kind == "file" && row.mimeType in setOf("text/plain", "text/markdown", "text/csv",
             "application/json", "application/x-ndjson") && row.sizeBytes in 1..AttachmentStore.MAX_MODEL_TEXT_BYTES
         if ((!image && !text) || row.file.length() != row.sizeBytes) throw ApiFailure(409, "ATTACHMENT_CHANGED")
-        val url = "${host.origin}/personal/v1/sessions/$sessionId/attachments/${row.id}" +
+        val url = "${host.origin}/personal/v1/${if (logical) "chats" else "sessions"}/$sessionId/attachments/${row.id}" +
             "?requestId=${URLEncoder.encode(requestId, "UTF-8")}&name=${URLEncoder.encode(row.name, "UTF-8")}" 
         val connection = URL(url).openPinnedConnection()
         require(Endpoints.allowedProtocol(connection.url))

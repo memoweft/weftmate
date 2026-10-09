@@ -77,6 +77,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
                 renderMainChat();
             }, 'chat-day-toggle'); action.setAttribute('aria-expanded', String(!spec.collapsed)); row.append(action);
         } else if (spec.kind === 'message') {
+            if (ui.mobile) { row.setAttribute('role','group');row.setAttribute('aria-label',`${spec.event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(spec.event.data?.text||'附件').slice(0,80).join('')}`); }
             const temporary = ui.element('ol'); ui.paintHistoryMessages([spec.event], temporary); const message = temporary.firstElementChild;
             row.replaceChildren(); if (message) { row.className += ' ' + message.className; row.append(...message.childNodes); }
             const complete = !core.state.mainChat.running || spec.event.sourceRef?.sessionId !== core.state.mainChat.activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
@@ -115,7 +116,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     function renderMainChat() {
         if (!tools) return;
         tools.hidden = !main(); searchPanel.hidden = !main() || !searchPanel.open;
-        ui.byId('assistant-title').closest('.assistant-topbar').classList.toggle('is-main-chat',main());
+        ui.byId('assistant-title').closest(ui.mobile ? '.topbar' : '.assistant-topbar').classList.toggle('is-main-chat',main());
         sidebar.hidden = !core.state.mainChat;
         sidebar.classList.toggle('is-current', main()); sidebar.setAttribute('aria-current', main() ? 'page' : 'false');
         if (!main()) return;
@@ -181,15 +182,19 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
     function mountMainChat() {
         sidebar = button('WeftMate', 'WeftMate 主对话', () => core.selectMainChat(), 'rail-main-chat');
         const avatar = ui.element('span', 'wm-brand chat-avatar'); avatar.setAttribute('aria-hidden', 'true'); sidebar.prepend(avatar); sidebar.hidden = true;
-        ui.byId('session-rail').querySelector('.rail-top').before(sidebar);
+        if (ui.mobile) ui.byId('session-list').before(sidebar);
+        else ui.byId('session-rail').querySelector('.rail-top').before(sidebar);
         const heading = ui.element('div', 'rail-side-heading', '旁聊'); ui.byId('session-list').before(heading);
         // TB-4 owns the future fixed pages; retain the explicit extension point hidden.
-        const future = ui.element('nav'); future.hidden = true; future.setAttribute('aria-label', '动态、目标与成果库'); sidebar.after(future);
+        const future = ui.element('nav'); future.hidden = true; future.setAttribute('aria-label', '动态、目标与成果库');
+        if (ui.mobile) { future.id = 'mobile-bottom-tabs'; future.setAttribute('aria-label','聊天、动态、目标、成果库'); ui.byId('chat-page').append(future); }
+        else sidebar.after(future);
         tools = ui.element('div', 'main-chat-tools'); tools.hidden = true;
         tools.append(button('搜索', '搜索主对话', () => { searchPanel.open = !searchPanel.open; searchPanel.hidden = !searchPanel.open; if (searchPanel.open) searchPanel.querySelector('input').focus(); }),
-            button('日期', '跳到日期', () => { const date = tools.querySelector('input'); date.hidden = !date.hidden; if (!date.hidden) { date.focus(); date.showPicker?.(); } }));
+            button('日期', '跳到日期', () => { const date = tools.querySelector('input'); date.hidden = !date.hidden; if (!date.hidden) { date.value=''; date.focus(); date.showPicker?.(); } }));
         const date = ui.element('input'); date.type = 'date'; date.hidden = true; date.setAttribute('aria-label', '跳到日期'); date.addEventListener('change', () => {date.hidden=true;void core.jumpChatDate(date.value).catch(() => ui.toast('日期暂时无法定位，请重试。')).finally(()=>tools.querySelectorAll('button')[1].focus());}); tools.append(date);
-        ui.byId('assistant-title').parentElement.after(tools);
+        if (ui.mobile) ui.byId('chat-page').prepend(tools);
+        else ui.byId('assistant-title').parentElement.after(tools);
         searchPanel = ui.element('form', 'main-chat-search'); searchPanel.hidden = true; searchPanel.setAttribute('aria-label', '主对话内搜索');
         const input = ui.element('input'); input.type = 'search'; input.setAttribute('aria-label', '主对话搜索关键词'); input.placeholder = '搜索这段主对话';
         searchPanel.addEventListener('submit', event => { event.preventDefault(); void core.searchMainChat(input.value).catch(() => ui.toast('搜索暂时无法读取，请重试。')); });
@@ -200,7 +205,8 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             button('关闭', '关闭主对话搜索', async () => { searchPanel.open = false; searchPanel.hidden = true; await core.searchMainChat(''); tools.querySelector('button').focus(); }));
         origin = ui.element('div', 'chat-origin'); origin.hidden = true; box().before(searchPanel, origin);
         const side = button('开旁聊', '开旁聊', () => core.openSideChat({ entry: 'composer' })); side.id = 'open-side-chat';
-        ui.byId('message-form').append(side);
+        if (ui.mobile) { side.setAttribute('role','menuitem'); side.addEventListener('click',ui.closeAttachmentMenu); ui.byId('attachment-popover').append(side); }
+        else ui.byId('message-form').append(side);
         observer = new ResizeObserver(entries => {
             if (!main()) return; const saved = ui.conversationScroll?.pinned ? null : rememberAnchor(); let changed = false;
             for (const entry of entries) { const height = entry.target.getBoundingClientRect().height; if (height && Math.abs((heights.get(entry.target.dataset.eventId) || 0) - height) > 1) { heights.set(entry.target.dataset.eventId, height); changed = true; } }
@@ -209,7 +215,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
         const schedule = () => { if (frame === null) frame = requestAnimationFrame(() => { frame = null; renderVisible(); }); };
         box().addEventListener('scroll', () => {
             schedule();
-            if (!main() || !rows.length || core.state.olderLoading) return;
+            if (!main() || !rows.length || core.state.olderLoading || ui.mobile && !ui.userScrolling?.()) return;
             const scroll = box().scrollTop - listStart(), total = measureOffsets();
             if (scroll < 80 && core.state.chatWindow.hasOlder && !ui.conversationScroll?.pinned) void core.loadOlderHistory();
             else if (total - scroll - box().clientHeight < 80 && core.state.chatWindow.hasNewer) void core.loadOlderLogicalHistory('newer');

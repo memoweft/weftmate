@@ -46,7 +46,7 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
       const generated = await readFile(path.join(mobileWwwDir, name));
       if (!source.equals(generated)) problems.push(`differs ${name}`);
     }
-    for (const [sourceName, generatedName] of [['components/question-bar.js', 'components/question-bar.js'], ['components/usage.js', 'components/usage-view.js'], ['components/settings-controls.js', 'components/settings-controls.js'], ['components/schedules.js', 'components/schedules-view.js'], ['usage.css', 'usage.css'], ['popovers.js', 'popovers.js'], ['conversation-scroll.js', 'conversation-scroll.js']]) {
+    for (const [sourceName, generatedName] of [['components/main-chat.js','components/main-chat.js'], ['components/question-bar.js', 'components/question-bar.js'], ['components/usage.js', 'components/usage-view.js'], ['components/settings-controls.js', 'components/settings-controls.js'], ['components/schedules.js', 'components/schedules-view.js'], ['usage.css', 'usage.css'], ['popovers.js', 'popovers.js'], ['conversation-scroll.js', 'conversation-scroll.js']]) {
       const source = await readFile(new URL(`../../../src/personal-access-ui/${sourceName}`, import.meta.url));
       const generated = await readFile(path.join(mobileWwwDir, generatedName));
       if (!source.equals(generated)) problems.push(`differs ${generatedName}`);
@@ -63,6 +63,7 @@ export async function checkUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
 
 export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir = mobileUiCoreDir } = {}) {
   if (sourceDir === uiCoreSourceDir && targetDir === mobileUiCoreDir) {
+    await copyFile(new URL('../../../src/personal-access-ui/components/main-chat.js', import.meta.url), path.join(mobileWwwDir, 'components/main-chat.js'));
     await copyFile(new URL('../../../src/personal-access-ui/components/question-bar.js', import.meta.url), path.join(mobileWwwDir, 'components/question-bar.js'));
     for (const name of ['components/offline.js', 'offline.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir, name));
     await copyFile(new URL('../../../src/personal-access-ui/components/usage.js', import.meta.url), path.join(mobileWwwDir, 'components/usage-view.js'));
