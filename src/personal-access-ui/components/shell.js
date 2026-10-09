@@ -191,25 +191,21 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('attachment-cancel').disabled = !value.attachmentBusy;
         ui.byId('open-notepad').textContent = value.desktopText;
         ui.byId('open-notepad').disabled = value.desktopDisabled;
-        const stop = ui.byId('cancel-turn');
-        if (!stop.hidden && value.cancelHidden) globalThis.WeftMotion?.hide(stop);
-        else if (stop.hidden && !value.cancelHidden) { stop.hidden = false; globalThis.WeftMotion?.reveal(stop, '160ms'); }
-        stop.hidden = value.cancelHidden;
-        ui.byId('cancel-turn').disabled = value.cancelDisabled;
-        ui.byId('message-mode').hidden = !value.running;
-        ui.byId('message-mode').value = core.state.messageMode || 'steer';
         const send = ui.byId('send-message');
-        globalThis.WeftMotion?.changed(send, String(value.running), '160ms');
-        send.disabled = value.sendDisabled;
-        send.textContent = value.sendText;
-        send.classList.remove('is-stop');
-        send.dataset.action = 'send';
-        send.setAttribute('aria-label', '发送');
-        send.title = '发送 · Enter；新任务 · Ctrl/Cmd+Enter';
-        send.replaceChildren(window.WeftIcons.create('send', 20));
+        const stop = value.running && !ui.readMessageDraft().trim() && !core.currentAttachmentDrafts().length;
+        globalThis.WeftMotion?.changed(send, String(stop), '160ms');
+        send.disabled = stop ? value.cancelDisabled : value.sendDisabled;
+        send.classList.toggle('is-stop', stop);
+        send.dataset.action = stop ? 'stop' : 'send';
+        send.setAttribute('aria-label', stop ? '停止回复' : '发送');
+        send.title = stop ? '停止回复 · Esc' : '发送 · Enter；排队 · Ctrl/Cmd+Enter';
+        send.replaceChildren(window.WeftIcons.create(stop ? 'stop' : 'send', 20));
+        ui.renderContextUsage();
+        ui.renderOptimisticMessages();
         ui.byId('model-hint').textContent = value.hint;
         ui.byId('model-hint').setAttribute('role', 'status');
-        ui.byId('model-hint').hidden = !value.hint;
+        ui.byId('model-hint').hidden = !value.hint || value.running || !ui.byId('approval-bar').hidden;
+        ui.renderTimeline();
     }
     function startAssistantRefresh() {
         core.stopAssistantRefresh();
@@ -262,6 +258,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
     }
     function resetConversationControls() {
         ui.byId('timeline-status').textContent = '';
+        ui.byId('approval-bar').hidden = true; ui.byId('approval-bar').replaceChildren(); delete ui.byId('approval-bar').dataset.signature;
         ui.byId('transcript').replaceChildren();
         ui.byId('session-list').replaceChildren();
         ui.byId('assistant-title').textContent = '新对话';
@@ -312,7 +309,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             ui.byId('rail-open').setAttribute('aria-expanded', 'true');
         });
         ui.byId('chat-scroll').addEventListener('scroll', () => {
-            if (ui.byId('chat-scroll').scrollTop < 40)
+            if (!ui.conversationScroll?.pinned && ui.byId('chat-scroll').scrollTop < 40)
                 void core.loadOlderHistory();
         });
         ui.byId('rail-close').addEventListener('click', () => { ui.closeRail(); window.WeftDesktop?.toggleRail(true); });

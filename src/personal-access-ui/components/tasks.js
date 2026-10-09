@@ -89,7 +89,8 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
             const outputLimited = payload?.replyEvidence?.status === 'failed' && payload.replyEvidence.endReasonKind === 'max-tokens';
             const turn = payload?.source?.dshTurn ?? payload?.replyEvidence?.turn;
             const hasTimeline = Number.isSafeInteger(turn) && core.timelineEventsForContext(context).some(e => e.type.startsWith('step.') && e.data?.taskId === `turn-${turn}`);
-            const visible = !hasTimeline && steps.length || artifacts.length || entry.notice && steps.length || outputLimited;
+            const visibleArtifacts = artifacts.filter(artifact => !list.querySelector(`[data-timeline-artifact="${artifact.artifactId}"]`));
+            const visible = !hasTimeline && steps.length || visibleArtifacts.length || entry.notice && steps.length || outputLimited || steps.length && control?.state === 'stopped';
             let card = [...list.children].find((row) => row.dataset?.conversationTask === entry.taskId);
             if (!visible) {
                 card?.remove();
@@ -119,39 +120,35 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
                     list.append(card);
             }
             const expanded = card.querySelector?.('details')?.open === true;
+            const savedSteps = new Map([...card.querySelectorAll('.execution-step')].map(detail => [detail.dataset.step, detail]));
             card.dataset.signature = signature;
             card.dataset.scope = scope;
             card.classList.toggle('has-timeline', hasTimeline && !entry.notice && !outputLimited && control?.state === 'active');
             card.replaceChildren();
-            card.append(ui.element('strong', 'conversation-task-title', entry.notice ? '工具进展 · 待更新'
-                : outputLimited && !steps.length && !artifacts.length ? '回复状态' : '工具进展'));
-            if (entry.notice)
-                card.append(ui.element('p', 'conversation-task-notice', entry.notice));
+            if (outputLimited) card.append(ui.element('strong', 'conversation-task-title', '回复状态'));
+            if (entry.notice) card.append(ui.element('p', 'conversation-task-notice', entry.notice));
             if (steps.length && !hasTimeline) {
-                const latest = steps.slice(-3), records = ui.element('ul', 'conversation-task-steps');
-                for (const step of latest)
-                    records.append(ui.element('li', '', `${entry.notice ? '上次记录：' : ''}${core.executionName(step)} · ${core.executionProgress(step)}`));
-                card.append(records);
-                if (steps.length > 3) {
-                    const details = ui.element('details', 'conversation-task-more');
-                    details.open = expanded;
-                    const summary = ui.element('summary', '', `查看全部 ${steps.length} 条执行记录`);
-                    summary.dataset.conversationTaskAction = 'more';
-                    details.append(summary);
-                    for (const step of steps)
-                        details.append(ui.element('p', '', `${core.executionName(step)} · ${core.executionProgress(step)}`));
-                    card.append(details);
-                }
+                const view = core.progressText(steps.map(step => ({ ...step, summary: step.summary || core.executionName(step) })), control?.state === 'stopped');
+                card.classList.toggle('has-failure', !!view.failed);
+                const details = ui.element('details', 'execution-block'); details.open = expanded || !!view.failed && card.dataset.failed !== 'true'; card.dataset.failed = String(!!view.failed);
+                const summary = ui.element('summary', 'inline-progress-summary', view.text); summary.setAttribute('role', 'button');
+                const arrow = ui.element('span', 'progress-chevron'); arrow.setAttribute('aria-hidden', 'true'); arrow.append(window.WeftIcons.create('chevron', 16)); summary.append(arrow);
+                const label = () => summary.setAttribute('aria-label', `${view.text}，${details.open ? '已展开' : '已收起'}`);
+                details.addEventListener('toggle', label); label();
+                summary.dataset.conversationTaskAction = 'more';
+                const records = ui.element('div', 'execution-records');
+                for (const step of steps) records.append(globalThis.WeftTimelineCards.step({ ...step, state: core.executionState(step), stepId: step.executionId, summary: `${core.executionName(step)} · ${core.executionProgress(step)}` }, savedSteps.get(step.executionId), view.running, {}));
+                details.append(summary, records); card.append(details);
             }
             if (!entry.notice && control && control.state !== 'active')
                 card.append(ui.element('p', 'conversation-task-state', core.taskControlStatus(control)));
-            if (!entry.notice && payload?.replyEvidence)
+            if (!entry.notice && outputLimited)
                 card.append(ui.element('p', 'conversation-task-reply', core.taskReplyText(payload.replyEvidence)));
             const verified = artifacts.filter((row) => row.state === 'observed' && row.verification?.status === 'observed' &&
                 row.verification?.method === 'sha256_readback');
-            for (const artifact of artifacts)
+            for (const artifact of visibleArtifacts)
                 ui.appendTimelineArtifact(card, artifact, context);
-            if (artifacts.length)
+            if (visibleArtifacts.length)
                 card.append(ui.element('p', 'conversation-task-result', verified.length
                     ? `${verified.length} 个成果文件已读回核验` : '成果文件仍待核验'));
             const actions = ui.element('div', 'conversation-task-actions');

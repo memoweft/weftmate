@@ -116,14 +116,16 @@
     trigger.setAttribute('aria-expanded', 'false');
     const label = select.getAttribute('aria-label') || select.labels?.[0]?.textContent.trim() || '选择';
     trigger.setAttribute('aria-label', label);
-    const icon = globalThis.WeftIcons.create('chevron', 16); trigger.append(text, icon);
+    const icon = globalThis.WeftIcons?.create('chevron', 16) || document.createElement('span');
+    if (!globalThis.WeftIcons) icon.className = 'icon icon-chevron';
+    trigger.append(text, icon);
     const menu = document.createElement('div'); menu.className = 'settings-select-menu'; menu.hidden = true;
     menu.id = `settings-options-${select.id || crypto.randomUUID()}`;
     const list = document.createElement('div'); list.setAttribute('role', 'listbox'); list.setAttribute('aria-label', label);
     list.id = menu.id + '-list'; trigger.setAttribute('aria-controls', list.id);
     select.after(trigger, menu); select.hidden = true; select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
     settingsSelects.set(select, trigger);
-    const sync = () => { text.textContent = select.selectedOptions[0]?.textContent || label; trigger.disabled = select.disabled; trigger.hidden = select.classList.contains('settings-category-picker') && innerWidth >= 720; };
+    const sync = () => { text.textContent = select.selectedOptions[0]?.textContent || label; trigger.disabled = select.disabled; trigger.hidden = select.dataset.controlHidden === 'true' || select.classList.contains('settings-category-picker') && innerWidth >= 720; };
     const close = (focus = false) => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (menu.matches(':popover-open')) menu.hidePopover(); if (focus) trigger.focus({ preventScroll: true }); };
     let search;
     const options = () => [...list.querySelectorAll('[role=option]')];
@@ -175,5 +177,5 @@
     const bind = () => dialog.querySelectorAll('select').forEach(bindSettingsSelect);
     bind(); new MutationObserver(bind).observe(dialog, { childList: true, subtree: true });
   }
-  globalThis.WeftPopover = { position, bindSelect, bindSettings };
+  globalThis.WeftPopover = { position, bindSelect, bindSettings, bindSettingsSelect };
 })();

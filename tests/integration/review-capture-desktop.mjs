@@ -7,7 +7,7 @@ import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
 for (const theme of ['light', 'dark']) {
-  const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
+  const fixture = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, composer:true, baseTime: Date.parse('2026-10-08T08:00:00Z') });
   const profile = await mkdtemp(join(tmpdir(), 'weftmate-review-desktop-'));
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
@@ -51,17 +51,19 @@ for (const theme of ['light', 'dark']) {
     }, fixture.credentials);
     const home = async () => {
       await page.goto(fixture.origin + '/personal/v1/ui');
-      await button('允许一次').waitFor();
+      await button('批准').waitFor();
     };
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
     const preparations = {
       sessions: async () => { await home(); await button('搜索会话').click(); await page.getByRole('searchbox', { name: '搜索会话', exact: true }).waitFor(); },
-      conversation: async () => { await home(); await page.getByText('执行了 2 步 · 用时 2 秒', { exact: true }).click(); await page.getByText('读取 3 个文件', { exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
-      approval: async () => { await home(); await button('允许一次').evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      'composer-context': async()=>{await home();await button('背景信息窗口：86% 已用').focus();await page.getByRole('tooltip').waitFor();},
+      conversation: async () => { await home(); await page.getByRole('button', {name:'读取了 3 个文件、已运行 1 个命令，已收起',exact:true}).click(); await page.getByText(/^读取 3 个文件/).evaluate(node => node.scrollIntoView({ block: 'center' })); },
+      approval: async () => { await home(); await button('批准').evaluate(node => node.scrollIntoView({ block: 'center' })); },
       question: async () => { await home(); await page.getByRole('radio', { name: '简要报告', exact: true }).evaluate(node => node.scrollIntoView({ block: 'center' })); },
       'outputs-sources': async () => { await home(); await button('输出与来源').click(); await page.getByRole('button', { name: /README.md.*读取/ }).waitFor(); },
       memory: async () => { await home(); await button('查看这条回复采用的 1 条记忆来源').click(); await page.getByText('合成偏好：使用中文说明。', { exact: true }).waitFor(); },
       appearance: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '外观', exact: true }).click(); await page.getByRole('group', { name: '颜色模式' }).waitFor(); },
+      general: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '常规', exact: true }).click(); await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).waitFor(); },
       usage: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
       'session-menu': async () => { await home(); await button('更多操作 项目进度报告').click(); await page.getByRole('menu', { name: '对话操作', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '归档 A', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '删除 D', exact: true }).waitFor(); },
     };

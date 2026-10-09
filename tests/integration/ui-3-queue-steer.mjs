@@ -105,12 +105,12 @@ async function scenario(page, surface) {
   const marker = `UI3_${surface}`, sessionId = await newSession(page);
   const target = await send(page, `${marker} BLOCK`);
   await until(() => requests.some(row => row.marker === marker && !row.closed));
-  await page.getByRole('button', { name: '停止', exact: true }).waitFor();
+  await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor();
   const steer = await send(page, `${marker} STEER`, 'Enter');
   assert.equal(steer.intent, 'steer'); assert.equal(steer.rootTaskId, target.commandId);
   const cancelled = await send(page, `${marker} CANCEL`, 'Control+Enter');
   const one = await send(page, `${marker} ONE`, 'Control+Enter');
-  await page.getByRole('combobox', { name: '运行中输入方式', exact: true }).selectOption('queue');
+  await page.getByRole('combobox', { name: '运行中输入方式', exact: true }).click(); await page.getByRole('option',{name:'新任务',exact:true}).click();
   const two = await send(page, `${marker} TWO`);
   assert.equal(one.intent, 'queue'); assert.equal(two.intent, 'queue');
   const cancelledCard = page.getByRole('article', { name: `排队任务 ${marker} CANCEL`, exact: true });
@@ -128,13 +128,13 @@ async function scenario(page, surface) {
   await page.getByText('已补充到当前任务', { exact: true }).waitFor();
   const rejectedCancel = await api(page, `/tasks/${target.commandId}/cancel`, { requestId: randomUUID() }); assert.equal(rejectedCancel.status, 409);
   automatic.add(marker);
-  await page.getByRole('button', { name: '停止', exact: true }).click();
+  await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).click();
   let events;
   await until(async () => { events = await history(page, sessionId); return events.some(event => event.type === 'task.ended' && event.data.taskId === two.commandId); });
   assert.deepEqual(events.filter(event => event.type === 'task.started').map(event => event.data.taskId), [target.commandId, one.commandId, two.commandId]);
   assert.ok(events.some(event => event.type === 'task.ended' && event.data.taskId === target.commandId && event.data.reason === 'aborted'));
   assert.ok(!events.some(event => event.type === 'user.message' && [cancelled.receiptId, edit.receiptId, edited.receiptId].includes(event.data.receiptId)));
-  await page.getByRole('button', { name: '停止', exact: true }).waitFor({ state: 'hidden' });
+  await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor({ state: 'hidden' });
   for (const decision of ['allow', 'deny']) {
     console.log(`UI-3 ${surface} deletion ${decision}`);
     const id = await newSession(page), deletion = `UI3_DELETE_${surface}_${decision}`, file = join(root, `${deletion}.txt`); writeFileSync(file, 'isolated test file');
@@ -150,7 +150,7 @@ async function scenario(page, surface) {
     await page.getByRole('button', { name: decision === 'allow' ? '允许一次' : '拒绝', exact: true }).click();
     await until(async () => (await history(page, id)).some(event => event.type === 'task.ended'));
     assert.equal(existsSync(file), decision === 'deny');
-    await page.getByRole('button', { name: '停止', exact: true }).waitFor({ state: 'hidden' });
+    await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor({ state: 'hidden' });
     const approval = (await api(page, `/sessions/${id}/approvals?limit=100`)).body.approvals[0];
     assert.equal(approval.decisionOutcome, decision === 'allow' ? 'allowed-once' : 'rejected');
     if (decision === 'allow') {

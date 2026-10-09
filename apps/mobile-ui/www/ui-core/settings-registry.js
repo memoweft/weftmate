@@ -15,7 +15,7 @@
         return { register, list, get: id => categories.get(id) };
     }
     const definitions = [
-        ['general', '设置', '常规', 'settings', ['开机', '自启', '通知', '托盘', '语言']],
+        ['general', '设置', '常规', 'settings', ['开机', '自启', '通知', '托盘', '语言', '回复进行中时发送的消息', '引导', '排队']],
         ['appearance', '设置', '外观', 'palette', ['主题', '浅色', '深色', '颜色', '字号', '字体', '密度']],
         ['account', '设置', '账户', 'account', ['邮箱', '密码', '退出', '注销', '昵称', '头像']],
         ['devices', '设置', '设备', 'desktop', ['连接', '配对', '添加', '待批准', '二维码']],
@@ -34,5 +34,9 @@
         return createSettingsRegistry(definitions.map(([id, group, name, icon, keywords, desktopOnly]) =>
             ({ id, group, name, icon, keywords, desktopOnly, mount: (...args) => mounts[id]?.(...args) })));
     }
-    Object.assign(globalThis.WeftUiCore, { createSettingsRegistry, settingsRegistry });
+    const messageModeSetting = {
+        name: '回复进行中时发送的消息',
+        options: [['queue', '排队', '等当前回复结束后作为下一条处理。'], ['steer', '引导', '插入当前回复，引导它调整方向。']],
+    };
+    Object.assign(globalThis.WeftUiCore, { createSettingsRegistry, settingsRegistry, messageModeSetting });
 })();

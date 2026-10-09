@@ -92,6 +92,7 @@ test('publish command refuses stale generated assets before creating a release',
   await cp(sourceDir, copiedSources, { recursive: true })
   for (const name of ['src/ui-core/manifest.mjs', 'apps/mobile-ui/src/build-ui-core.mjs',
     'apps/mobile-ui/src/check.mjs', 'scripts/build-mobile-ui.mjs', 'src/personal-access/mobile-ui-release.mjs', 'src/personal-update/manifest.mjs', 'src/personal-access-ui/components/usage.js', 'src/personal-access-ui/components/settings-controls.js', 'src/personal-access-ui/components/schedules.js', 'src/personal-access-ui/usage.css', 'src/personal-access-ui/popovers.js', 'apps/mobile-ui/www/popovers.js',
+    'src/personal-access-ui/conversation-scroll.js', 'apps/mobile-ui/www/conversation-scroll.js',
     'docs/legal/terms-zh.md', 'docs/legal/privacy-zh.md', 'apps/mobile-ui/www/legal/terms-zh.txt', 'apps/mobile-ui/www/legal/privacy-zh.txt']) {
     const destination = path.join(isolatedRepository, name)
     await mkdir(path.dirname(destination), { recursive: true })

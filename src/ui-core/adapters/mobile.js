@@ -18,7 +18,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
       sendHidden:host?state.sharedRunning&&!text.trim()&&!attachments:busy,
       stopHidden:host?!state.sharedRunning:!busy,
       draftDisabled:!state.loggedIn||state.transitionPending||state.restorePending||host&&!session?.sendAvailable,
-      placeholder:host?(session?.sendAvailable?state.sharedRunning?core.composerInputMode(state.sharedSessionId)==='queue'?'新任务，按顺序执行…':'补充当前任务…':'继续对话…':'这段会话仅可查看'):'说说你的目标…',
+      placeholder:host?(session?.sendAvailable?state.sharedRunning?core.composerInputMode(state.sharedSessionId)==='queue'?'排队，按顺序处理…':'引导当前回复…':'继续对话…':'这段会话仅可查看'):'说说你的目标…',
       modelName:host?session?.modelDisplayName||session?.modelName||'当前模型':state.model?.displayName||'选择模型',
       modelLabel:host?'当前模型':'选择模型',
       attachmentsDisabled:!state.loggedIn||state.restorePending||state.transitionPending||!!state.attachmentPick||
@@ -205,28 +205,36 @@ function acceptSend(attempt,conversationId,turnId){if(state.activeSend!==attempt
 
 function newSharedRequestId(){return `ui-${Date.now().toString(36)}-${(++requestSequence).toString(36)}-${Math.random().toString(36).slice(2,10)}`}
 
-async function sendShared(options={}){core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const text=effects.readMessageDraft().trim(),session=selectedSharedSession();
+async function sendShared(options={}){core.syncMobileIdentity();const intent=options.intent==='queue'||options.intent==='steer'?options.intent:core.composerInputMode(state.sharedSessionId);const text=(options.retryRow?.text ?? effects.readMessageDraft()).trim(),session=selectedSharedSession();
   const items=[...currentAttachments()];
   if((!text&&!items.length)||!session?.sendAvailable||state.sharedPending||state.sharedOutboxLoading||state.transitionPending)return;
   if(text.length>16384){effects.status('消息过长，请缩短后发送',true);return}
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration,sessionId=session.sessionId,
-    requestId=newSharedRequestId(),key=sharedDraftKey(),attachmentIds=items.map(item=>item.attachmentId);
+    requestId=options.retryRow?.requestId || newSharedRequestId(),key=sharedDraftKey(),attachmentIds=options.retryRow?.attachmentIds || items.map(item=>item.attachmentId);
+  const optimistic=options.retryRow || core.beginOptimistic({sessionId,text,requestId,attachmentIds,
+    retry:row=>sendShared({retryRow:row,intent:row.intent}),intent});
+  optimistic.status='sending';
   const afterSeq=state.sharedNextSeq;state.sharedPending={requestId,state:'submitting',text,attachmentIds,afterSeq,intent};
-  effects.updateComposer();effects.status('正在提交到电脑会话…');effects.renderSharedConversation();
+  effects.updateComposer();effects.status('正在提交到电脑会话…');effects.renderSharedConversation();effects.scrollBottom(true);
   try{const result=await effects.nativeCall('shared.send',{sessionId,text,requestId,intent,...(attachmentIds.length?{attachmentIds}:{})});
     if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
     if(result?.source!=='host'||result.sessionId!==sessionId||result.requestId!==requestId)throw new Error('OPERATION_FAILED');
     if(result.state==='accepted'){
+      optimistic.status='accepted';
+      void core.accessApi(`/commands/by-request/${encodeURIComponent(requestId)}`).then(found=>{
+        if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
+        core.reconcileOptimistic(found.command);core.observeOptimistic(state.sharedEvents);effects.renderSharedConversation();
+      }).catch(()=>{});
       state.sharedPending=null;
       try{if(environment.storage.getItem(key)?.trim()===text)environment.storage.removeItem(key)}catch{}
       if(effects.readMessageDraft().trim()===text)effects.clearMessageDraft();
       effects.clearAcceptedHostAttachments(attachmentIds);
       effects.status('电脑已受理消息，等待会话记录更新');waitForSharedTurn(sessionId,text,afterSeq,attachmentIds);void effects.loadSharedHistory();
-    }else if(result.state==='uncertain'){state.sharedPending={requestId,state:'uncertain',text,attachmentIds,afterSeq};
+    }else if(result.state==='uncertain'){optimistic.status='failed';state.sharedPending={requestId,state:'uncertain',text,attachmentIds,afterSeq};
       effects.status('发送结果待核对 · 请求已保留，不会自动重发')}
-    else{state.sharedPending=null;effects.status(effects.safeError(new Error(result.errorCode||'OPERATION_FAILED')),true)}
+    else{optimistic.status='failed';state.sharedPending=null;effects.status(effects.safeError(new Error(result.errorCode||'OPERATION_FAILED')),true)}
   }catch(e){if(!sharedViewCurrent(owner,epoch,generation,sessionId))return;
-    state.sharedPending=e?.message==='TIMEOUT'?{requestId,state:'uncertain',text,attachmentIds,afterSeq}:null;
+    optimistic.status='failed';state.sharedPending=e?.message==='TIMEOUT'?{requestId,state:'uncertain',text,attachmentIds,afterSeq}:null;
     if(state.sharedPending)effects.status('发送结果待核对 · 请查看电脑会话或待处理记录');
     else effects.status(effects.safeError(e),true)}
   finally{if(sharedViewCurrent(owner,epoch,generation,sessionId)){effects.updateComposer();effects.renderSharedConversation();effects.scheduleSharedPoll()}}}

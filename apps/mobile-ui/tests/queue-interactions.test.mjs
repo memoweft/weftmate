@@ -40,17 +40,25 @@ test('UI-3m named controls preserve intent, edit/cancel races and latest output 
     });
     await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>state.booted);
     await page.evaluate(()=>{state.loggedIn=true;state.owner='qa';state.deviceId='qa-phone';state.chatSource='host';state.sharedSessionId='s1';state.sharedHostAvailable=true;state.sharedRunning=true;state.sharedSessions=[{sessionId:'s1',running:true,sendAvailable:true,source:'host'}];state.sharedEvents=fixture.events;state.sharedNextSeq=1;page('chat');renderSharedConversation();});
-    const input=page.getByRole('textbox',{name:'输入消息',exact:true}),send=page.getByRole('button',{name:'发送',exact:true}),mode=page.getByRole('combobox',{name:'运行中输入方式',exact:true});
-    assert.equal(await mode.inputValue(),'steer');await input.fill('补充当前任务');await send.click();
+    const input=page.getByRole('textbox',{name:'输入消息',exact:true}),send=page.getByRole('button',{name:'发送',exact:true});
+    async function selectMode(label){
+      await page.getByRole('button',{name:'返回',exact:true}).click();
+      await page.getByRole('button',{name:'打开导航',exact:true}).click();await page.getByRole('button',{name:'设置',exact:true}).click();
+      await page.getByRole('button',{name:/^常规/}).click();
+      const mode=page.getByRole('combobox',{name:'回复进行中时发送的消息',exact:true});await mode.click();await page.getByRole('option',{name:label,exact:true}).click();
+      await page.getByRole('button',{name:'返回',exact:true}).click();await page.getByRole('button',{name:'返回',exact:true}).click();
+      await page.getByRole('button',{name:'排队验收 正在运行',exact:true}).click();
+    }
+    await selectMode('引导');await input.fill('补充当前任务');await send.click();
     await page.getByText('已补充到当前任务',{exact:true}).waitFor();
     assert.equal(await page.evaluate(()=>fixture.requests.find(row=>row.method==='shared.send').params.intent),'steer');
-    await mode.selectOption('queue');await input.fill('可编辑的目标');await send.click();await page.getByText('1 个排队中',{exact:true}).click();
+    await selectMode('排队');await input.fill('可编辑的目标');await send.click();await page.getByText('1 个排队中',{exact:true}).click();
     const card=page.getByRole('article',{name:'排队任务 可编辑的目标',exact:true});await card.getByRole('button',{name:'编辑后重新排',exact:true}).click();
-    await page.waitForFunction(()=>document.getElementById('draft').value==='可编辑的目标');assert.equal(await mode.inputValue(),'queue');
+    await page.waitForFunction(()=>document.getElementById('draft').value==='可编辑的目标');assert.equal(await page.evaluate(()=>uiCore.messageModePreference()),'queue');
     await input.fill('竞争开始的目标');await send.click();const racing=page.getByRole('article',{name:'排队任务 竞争开始的目标',exact:true});await racing.waitFor();
     await page.evaluate(()=>fixture.race=true);await racing.getByRole('button',{name:'取消',exact:true}).click();
     await racing.getByRole('status').getByText('已经开始，可以用停止',{exact:true}).waitFor();
-    assert.equal(await racing.isVisible(),true);assert.equal(await page.getByRole('button',{name:'停止',exact:true}).isVisible(),true);
+    assert.equal(await racing.isVisible(),true);assert.equal(await page.getByRole('button',{name:'停止回复',exact:true}).isVisible(),true);
     await page.getByRole('button',{name:'输出与来源',exact:true}).click();
     await page.getByRole('button',{name:/^报告.md/}).waitFor();assert.equal(await page.getByRole('button',{name:/^报告.md/}).count(),1);await page.getByRole('button',{name:/^报告.md/}).click();
     await page.getByText('最新报告内容',{exact:true}).waitFor();await page.getByText('旧版 · 1 个',{exact:true}).click();await page.getByRole('button',{name:'报告.md',exact:true}).click();await page.getByText('旧版报告内容',{exact:true}).waitFor();

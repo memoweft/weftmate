@@ -21,4 +21,4 @@
 .usage-pricing, .usage-daily { margin-top: var(--wm-space-16); }
 .usage-section > summary { cursor: pointer; padding: var(--wm-space-16); font-weight: 600; }
 .usage-conversation { max-height: 52vh; overflow: auto; }
-.assistant-heading .usage-title-button { width: auto; align-self: flex-start; padding: 0; background: transparent; color: var(--ink-secondary); font-size: var(--wm-font-size-12); }
+.assistant-topbar .usage-title-button { width: auto; padding: var(--wm-space-6); background: transparent; color: var(--ink-secondary); font-size: var(--wm-font-size-12); }
