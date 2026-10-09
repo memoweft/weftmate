@@ -416,7 +416,8 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       try { modelProfileId = (await resolveSession(sessionId))?.profile?.id ?? null } catch { /* History may remain readable. */ }
       return { sessionId, title: typeof item.title === 'string' ? item.title : '新对话',
         running: item.running === true, agentPreset: item.agentPreset ?? null,
-        modelProfileId, ...(item.running === true ? { processing: await processingStatus(sessionId) } : {}) }
+        modelProfileId, ...(item.contextUsage ? {contextUsage: item.contextUsage} : {}),
+        ...(item.running === true ? { processing: await processingStatus(sessionId) } : {}) }
     },
   }
 }

@@ -86,6 +86,7 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         core.state.activeChatSource = 'desktop';
         effects.paintDesktopComposer(fromPhone);
         core.state.selectedSessionId = sessionId;
+        core.state.newConversation = false;
         void core.updateSession(sessionId, { unread: false }).catch(error => effects.historyNotice(core.failureMessage(error)));
         void core.refreshApprovalMode(sessionId);
         core.state.turnStatus = null;
@@ -105,8 +106,9 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
             catch { /* optional preference */ }
         }
         effects.removeResourcePreview();
-        await core.refreshHistory(true);
         effects.scrollToLatest();
+        await core.refreshHistory(true);
+        effects.followConversationBottom?.();
         void core.refreshConversationTasks();
         effects.updateAvailability();
     }

@@ -766,3 +766,40 @@ details[open] > summary > .progress-chevron { transform: rotate(0deg); }
 .approval-bar .approval-status, .approval-remaining { grid-column: 1 / -1; color: var(--progress-ink); margin: var(--wm-space-4) 0 0; }
 @media (max-width: 640px) { .execution-block > .inline-progress-summary, .execution-records .execution-step > summary { min-height: var(--wm-space-44); } .approval-bar button { min-height: var(--wm-space-44); } }
 @media (prefers-reduced-motion: reduce) { .inline-progress-text.is-running { animation: none; } .progress-chevron { transition: none; } }
+/* UI-P4: composer order, one primary action, truthful context occupancy. */
+.composer-actions { gap: var(--wm-space-4); }
+.composer-spacer { flex: 1 1 auto; min-width: 0; }
+.model-picker { margin: 0; min-width: 0; }
+.model-trigger { max-width: 180px; }
+.approval-picker { flex: 0 1 auto; min-width: 0; }
+#approval-mode-trigger { max-width: 160px; }
+#approval-mode-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.approval-shield { flex: none; }
+.is-warning { color: var(--warning); }
+.composer-send, .composer-send.is-stop { border-radius: var(--wm-radius-circle); background: var(--accent); color: var(--surface); flex: none; }
+.context-usage { color: var(--ink-secondary); flex: none; }
+.context-usage svg { width: var(--wm-space-24); height: var(--wm-space-24); }
+.context-track, .context-fill { fill: none; stroke: currentColor; stroke-width: 2.5; }
+.context-track { opacity: .25; }
+.context-fill { transform: rotate(-90deg); transform-origin: center; stroke-linecap: round; }
+.context-usage.is-indeterminate .context-fill { stroke-dasharray: 20 100 !important; }
+.context-usage.is-warning { color: var(--warning); }
+.context-tooltip { position: fixed; z-index: 50; width: max-content; max-width: calc(100vw - var(--wm-space-24)); padding: var(--wm-space-12) var(--wm-space-16); border-radius: var(--wm-radius-12); background: var(--ink); color: var(--surface); box-shadow: var(--shadow-float); font-size: var(--wm-font-size-12); text-align: center; pointer-events: none; }
+.context-tooltip span, .context-tooltip strong { display: block; line-height: var(--wm-line-height-1_6); }
+.message.is-sending { color: var(--ink-secondary); }
+.message.is-sending .message-text { background: var(--surface-soft); }
+.message.send-failed .message-task-label { color: var(--danger); }
+.conversation-pane { position: relative; }
+.jump-latest { position: absolute; left: 50%; bottom: calc(var(--wm-space-64) * 3); transform: translateX(-50%); z-index: 5; padding: var(--wm-space-8) var(--wm-space-12); border: 1px solid var(--line); border-radius: var(--wm-radius-999); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; font-size: var(--wm-font-size-12); }
+@media (max-width: 640px) {
+  .composer-icon { width: var(--wm-space-36); height: var(--wm-space-44); flex-basis: var(--wm-space-36); }
+  .model-trigger { max-width: 100px; padding-inline: var(--wm-space-4); }
+  #approval-mode-trigger { max-width: 104px; padding-inline: var(--wm-space-4); }
+  .composer-actions { gap: 0; flex-wrap: wrap; }
+  .message-mode-popover + * { min-width: 0; }
+  #message-mode + .settings-select-wrap { order: 8; width: 100%; }
+}
+
+.composer-actions .settings-select { max-width: 100px; min-height: var(--wm-space-32); padding: var(--wm-space-4) var(--wm-space-6); font-size: var(--wm-font-size-12); }
+.chat-scroll { overflow-anchor: none; }
+@media (max-width:640px) { .composer-actions .settings-select { order:8; margin-left:auto; } }

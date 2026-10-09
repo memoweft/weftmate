@@ -88,6 +88,14 @@ function requireOrdinarySummary(item, sessionId) {
 }
 
 const HISTORY_TEXT_LIMIT = 4_000
+
+/** Native DSH occupancy follows surface movement, including compaction; never sum billing usage. */
+export function contextUsage(value) {
+  if (!value || typeof value !== 'object') return null
+  const usedTokens = value.projectedTokens ?? value.pressureTokens
+  if (!Number.isSafeInteger(usedTokens) || usedTokens < 0) return null
+  return { usedTokens, contextWindow: Number.isSafeInteger(value.contextWindow) && value.contextWindow > 0 ? value.contextWindow : null }
+}
 const HISTORY_PAGE_LIMIT = 200
 const HISTORY_RESPONSE_BYTES_LIMIT = 900_000
 function safeHistoryText(value) {
@@ -412,6 +420,7 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
           sessionId: sessionIdOf(item),
           title: typeof item.title === 'string' ? item.title : '新对话',
           running: item.running === true,
+          ...(contextUsage(item.projections?.values?.contextPressure) ? { contextUsage: contextUsage(item.projections.values.contextPressure) } : {}),
           ...(typeof item.agentPreset === 'string' ? { agentPreset: item.agentPreset } : {}),
         }))
     },

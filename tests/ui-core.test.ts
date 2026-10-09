@@ -2,6 +2,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import test from 'node:test'
+import { contextUsage, createDshSessionAdapter } from '../src/runtime/dsh-adapter/sessions.mjs'
 import { desktopScript, desktopScriptPaths } from './helpers/desktop-ui-source.mjs'
 const paths = desktopScriptPaths().filter(path => path.startsWith('ui-core/'))
 const source = paths.map(desktopScript).join('\n;\n')
@@ -354,7 +355,7 @@ test('UI-3 native approval reasons keep the risk prose and fold embedded raw par
 test('UI-3 attachment shortcuts respect unresolved submissions and restore the selected intent', async () => {
   const f = fixture(), intents: string[] = []
   f.core.state.sessions[0].running = true
-  f.core.currentAttachmentDrafts = () => [{ attachmentId: 'fixture' }]
+  f.core.currentAttachmentDrafts = () => [{ attachmentId: 'fixture', file: {name:'fixture.txt',size:1,lastModified:1}, contentType:'text/plain' }]
   f.core.sendDesktopMessageWithAttachments = async () => { intents.push(f.core.composerInputMode('session-test')); return {} }
   f.core.state.unresolvedSubmission = true; await f.core.sendDraft('带附件排队', 'queue'); assert.equal(intents.length, 0)
   f.core.state.unresolvedSubmission = false; await f.core.sendDraft('带附件排队', 'queue')
@@ -372,6 +373,70 @@ test('session lifecycle actions use protected writes and never enable an archive
   const f=fixture((url:string)=>({ok:true,json:async()=>url.endsWith('archived=all')?{sessions:[{sessionId:'session-test',archived:true,sendAvailable:false}]}:{archived:true}}));
   await f.core.archiveSession('session-test');assert.equal(f.core.composerState('hello').messageDisabled,true);assert.equal(f.core.sessionList().length,0);assert.equal(f.core.sessionList(true).length,1);
   const write=f.requests.find(r=>r.options.method==='POST')!;assert.equal(write.options.headers['X-WeftMate-CSRF'],'synthetic-csrf');assert.match(write.path,/\/archive$/);
+});
+
+test('UI-P4 native occupancy uses the projected current surface, never cumulative billing tokens', async()=>{
+  assert.deepEqual(contextUsage({projectedTokens:713000,pressureTokens:800000,contextWindow:828000}),{usedTokens:713000,contextWindow:828000});
+  assert.deepEqual(contextUsage({pressureTokens:12000}),{usedTokens:12000,contextWindow:null});
+  assert.equal(contextUsage({projectedTokens:-1,contextWindow:828000}),null);
+  const adapter=createDshSessionAdapter({events:{},sessions:{list:async()=>({result:{ok:true,value:{items:[
+    {sessionId:'session-test',projections:{values:{contextPressure:{projectedTokens:7000,contextWindow:10000}}}},
+    {sessionId:'subagent',origin:'subagent',projections:{values:{contextPressure:{projectedTokens:9}}}},
+  ]}}})}});
+  assert.deepEqual(await adapter.list(),[{sessionId:'session-test',title:'新对话',running:false,contextUsage:{usedTokens:7000,contextWindow:10000}}]);
+  const {api}=fixture();
+  assert.equal(api.contextUsageView({usedTokens:713000,contextWindow:828000}).label,'背景信息窗口：86% 已用');
+  assert.equal(api.contextUsageView({usedTokens:12000}).detail,'已用 12k 标记，上限未知');
+  assert.equal(api.contextUsageView({usedTokens:1200000,contextWindow:1500000}).detail,'已用 1.2M 标记，共 1.5M');
+  assert.equal(api.contextUsageView(null).ratio,null);
+});
+
+test('UI-P4 shows an optimistic message before the host answers and blocks a duplicate click',async()=>{
+  const pending=deferred(),f=fixture(()=>pending.promise);f.core.refreshTasks=async()=>{};f.core.refreshHistory=async()=>{};
+  const send=f.core.sendDraft('立即出现');
+  assert.equal(f.core.optimisticMessages()[0].text,'立即出现');assert.equal(f.core.optimisticMessages()[0].status,'sending');
+  await f.core.sendDraft('立即出现');assert.equal(f.requests.filter(row=>row.options.method==='POST').length,1);
+  const requestId=JSON.parse(f.requests[0].options.body).requestId;
+  pending.resolve(response({command:{requestId,kind:'session.message',sessionId:'session-test',state:'accepted_by_dsh',receiptId:'native-rpc'}}));await send;
+  assert.equal(f.core.optimisticMessages()[0].status,'accepted');
+  f.core.observeOptimistic([{type:'user.message',data:{text:'立即出现',receiptId:'other-rpc'}}]);assert.equal(f.core.optimisticMessages().length,1);
+  f.core.observeOptimistic([{type:'user.message',data:{text:'立即出现',receiptId:'native-rpc'}}]);assert.equal(f.core.optimisticMessages().length,0);
+});
+
+test('UI-P4 unconfirmed delivery retries the original request ID after checking the receipt',async()=>{
+  let writes=0;const f=fixture((url,options)=>{
+    if(options.method==='POST'){writes++;if(writes===1)throw Error('connection lost');const body=JSON.parse(options.body);return response({command:{requestId:body.requestId,sessionId:'session-test',state:'accepted_by_dsh',receiptId:'retry-rpc'}});}
+    return response({error:{code:'NOT_FOUND'}},404);
+  });f.core.refreshTasks=async()=>{};f.core.refreshHistory=async()=>{};
+  await f.core.sendDraft('保留并重试');const row=f.core.optimisticMessages()[0];assert.equal(row.status,'failed');
+  await f.core.retryOptimistic(row.requestId);
+  const posted=f.requests.filter(row=>row.options.method==='POST').map(row=>JSON.parse(row.options.body));
+  assert.equal(posted.length,2);assert.equal(posted[0].requestId,posted[1].requestId);assert.equal(row.status,'accepted');
+});
+
+test('UI-P4 a later confirmed task supersedes the original pending POST snapshot',async()=>{
+  const f=fixture((_url,options)=>response({command:{requestId:JSON.parse(options.body).requestId,sessionId:'session-test',kind:'session.message',state:'pending'}}));
+  f.core.refreshTasks=async()=>{const body=JSON.parse(f.requests[0].options.body);f.core.state.tasks=[{requestId:body.requestId,kind:'session.message',sessionId:'session-test',state:'accepted_by_dsh',receiptId:'confirmed-rpc'}];f.core.updateFromCommand(f.core.state.tasks[0]);};
+  f.core.refreshHistory=async()=>{};await f.core.sendDraft('正式消息');assert.equal(f.core.optimisticMessages()[0].status,'accepted');
+  f.core.observeOptimistic([{type:'user.message',data:{receiptId:'confirmed-rpc'}}]);assert.equal(f.core.optimisticMessages().length,0);
+});
+
+test('UI-P4 first message appears before session creation and survives an account boundary safely',async()=>{
+  const pending=deferred(),f=fixture(()=>pending.promise);f.core.refreshTasks=async()=>{};
+  f.core.startNewConversation();assert.equal(f.core.state.selectedSessionId,null);assert.equal(f.core.composerState('首条消息').sendDisabled,false);
+  const send=f.core.sendDraft('首条消息');assert.equal(f.core.optimisticMessages()[0].sessionId,null);
+  assert.equal(JSON.parse(f.requests[0].options.body).kind,'session.create');
+  f.core.state.identityGeneration++;f.core.state.ownerId='other-owner';
+  pending.resolve(response({command:{requestId:'old-create',kind:'session.create',sessionId:'old-session',state:'accepted_by_dsh'}}));await send;
+  assert.equal(f.core.optimisticMessages().length,0);assert.equal(f.core.state.selectedSessionId,null);
+});
+
+test('UI-P4 switching accounts during receipt lookup never retries the old account text',async()=>{
+  const lookup=deferred(),f=fixture();f.core.accessApi=()=>lookup.promise;
+  const row=f.core.beginOptimistic({sessionId:'session-test',requestId:'old-id',text:'原账户草稿',status:'failed'});
+  const retry=f.core.retryOptimistic(row.requestId);f.core.state.identityGeneration++;f.core.state.ownerId='other-owner';
+  lookup.resolve({command:null});await retry;
+  assert.equal(f.requests.length,0);assert.equal(f.core.optimisticMessages().length,0);
 });
 test('a delayed lifecycle response cannot replace another account session list',async()=>{
   const pending=deferred(),f=fixture(()=>pending.promise);

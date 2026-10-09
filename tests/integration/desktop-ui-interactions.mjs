@@ -17,7 +17,7 @@ async function start() {
   const page = await application.firstWindow(); page.setDefaultTimeout(25000)
   page.on('pageerror', error => errors.push(error.message))
   await localUiSession(page, candidate.credentials)
-  await page.getByRole('button', { name: '停止', exact: true }).waitFor()
+  await page.getByRole('button', { name: '停止回复', exact: true }).waitFor()
   return page
 }
 async function close() { await application?.close(); await candidate?.close(); application = null; candidate = null }
@@ -42,7 +42,7 @@ try {
     await until(() => candidate.operations.some(op => op.text === '把报告写得简短一些' && op.mode === 'steer'))
     await until(async () => (await input.inputValue()) === '')
     await until(async () => await page.getByRole('button', { name: /新对话/ }).isEnabled())
-    await page.getByRole('combobox', { name: '运行中输入方式' }).selectOption('queue')
+    await page.getByRole('combobox', { name: '运行中输入方式' }).click(); await page.getByRole('option',{name:'新任务',exact:true}).click()
     await new Promise(done => setTimeout(done, 850))
     await input.fill('下一件事：整理会议记录'); await input.press('Enter')
     await until(() => candidate.operations.some(op => op.text === '下一件事：整理会议记录' && op.mode === 'queue'))
@@ -111,13 +111,13 @@ try {
   for (const method of ['button', 'escape']) {
     const page = await start(), input = page.getByRole('textbox', { name: '输入消息', exact: true })
     await input.fill('保留这个草稿')
-    if (method === 'button') await page.getByRole('button', { name: '停止', exact: true }).click()
+    if (method === 'button') { await input.fill(''); await page.getByRole('button', { name: '停止回复', exact: true }).click(); await input.fill('保留这个草稿'); }
     else await page.keyboard.press('Escape')
     await until(() => candidate.operations.some(op => op.kind === 'cancel'))
     assert.equal(await input.inputValue(), '保留这个草稿')
     await until(async () => !(await page.getByRole('button', { name: /新对话/ }).isDisabled()))
     await page.keyboard.press('Control+n')
-    await until(() => candidate.operations.filter(op => op.kind === 'create').length === 2)
+    await page.getByText('今天想做什么？',{exact:true}).waitFor(); assert.equal(candidate.operations.filter(op=>op.kind==='create').length,1,'opening a new draft defers host creation until the first send')
     console.log(`UI-1 ${method} stop passed.`)
     await close()
   }

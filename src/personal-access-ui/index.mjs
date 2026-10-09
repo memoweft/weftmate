@@ -4,6 +4,7 @@ import { join } from 'node:path'
 import { uiCoreAssets } from '../ui-core/manifest.mjs'
 
 const files = new Map([
+  ['/personal/v1/ui/conversation-scroll.js', ['conversation-scroll.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/backup.css', ['backup.css', 'text/css; charset=utf-8']],
   ['/personal/v1/ui/components/backup.js', ['components/backup.js', 'text/javascript; charset=utf-8']],
   ['/personal/v1/ui/motion.js', ['motion.js', 'text/javascript; charset=utf-8']],

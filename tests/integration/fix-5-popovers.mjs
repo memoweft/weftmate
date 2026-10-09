@@ -45,7 +45,7 @@ try {
   }
   for (phase of capture && !fixture ? ['before', 'after'] : ['after']) {
     await page.reload(); await localUiSession(page, candidate.credentials);
-    await page.getByRole('button', { name: '停止', exact: true }).waitFor();
+    await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor();
     for (const [width, height] of [[1200,800], [720,600]]) {
       await app.evaluate(({ BrowserWindow }, size) => { const window = BrowserWindow.getAllWindows()[0]; window.setMinimumSize(0,0); window.setContentSize(...size); }, [width,height]);
       const size = `${width}x${height}`, enforce = phase === 'after';
@@ -57,9 +57,9 @@ try {
       await check(page, page.getByRole('menu', { name: '审批模式' }), 'approval', size, enforce); await page.keyboard.press('Escape');
       if (enforce) {
         await page.getByRole('combobox', { name: '运行中输入方式' }).click();
-        await check(page, page.getByRole('menu', { name: '运行中输入方式' }), 'message-mode', size);
-        await page.getByRole('menuitemradio', { name: '新任务', exact: true }).click();
-        assert.equal(await page.getByRole('combobox', { name: '运行中输入方式' }).inputValue(), 'queue');
+        await check(page, page.getByRole('listbox', { name: '运行中输入方式' }).locator('..'), 'message-mode', size);
+        await page.getByRole('option', { name: '新任务', exact: true }).click();
+        assert.match(await page.getByRole('combobox', { name: '运行中输入方式' }).textContent(),/新任务/);
       }
       await page.getByRole('button', { name: '账户菜单' }).click();
       await check(page, page.getByRole('button', { name: '设置', exact: true }).locator('..'), 'account', size, enforce); await page.keyboard.press('Escape');
@@ -114,9 +114,9 @@ try {
     await check(phone,phone.getByRole('dialog',{name:'对话操作',exact:true}),'session','390x844',phase==='after');await phone.getByRole('button',{name:'取消',exact:true}).click();
     if(phase==='after') {
       await phone.evaluate(()=>{state.chatSource='host';state.sharedRunning=true;state.sharedSessionId='synthetic-session';state.sharedSessions=[{sessionId:'synthetic-session',sendAvailable:true}];updateComposer();});
-      await phone.getByRole('combobox',{name:'运行中输入方式'}).click();await check(phone,phone.getByRole('menu',{name:'运行中输入方式'}),'message-mode','390x844');
-      await phone.getByRole('menuitemradio',{name:'新任务',exact:true}).click();
-      assert.equal(await phone.getByRole('combobox',{name:'运行中输入方式'}).inputValue(),'queue');
+      await phone.getByRole('combobox',{name:'运行中输入方式'}).click();await check(phone,phone.getByRole('listbox',{name:'运行中输入方式'}).locator('..'),'message-mode','390x844');
+      await phone.getByRole('option',{name:'新任务',exact:true}).click();
+      assert.match(await phone.getByRole('combobox',{name:'运行中输入方式'}).textContent(),/新任务/);
       await phone.evaluate(()=>{state.chatSource='phone';state.sharedRunning=false;updateComposer();});
       await phone.getByRole('button',{name:'选择模型',exact:true}).click();
       await phone.setViewportSize({width:280,height:300});await check(phone,phone.getByRole('heading',{name:'选择模型',exact:true}).locator('..'),'model-resize','280x300');

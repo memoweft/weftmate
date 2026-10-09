@@ -56,11 +56,11 @@ try {
   }
   await page.getByRole('heading', { name: '登录 WeftMate' }).waitFor(); await shot('login');
   await localUiSession(page, candidate.credentials);
-  await page.getByRole('button', { name: '停止', exact: true }).waitFor();
+  await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor();
   if (moved) {
     // Override only the composition module, before initialization; production layout is never edited.
     await page.route('**/personal/v1/ui/layout.js', route => route.fulfill({ contentType: 'text/javascript', body: readFileSync(join(repository, 'src/personal-access-ui/layout.js'), 'utf8').replace('/* layout-test-slot */', "document.querySelector('.rail-top').append(document.getElementById('conversation-resources')); ") }));
-    await page.reload(); await page.getByRole('button', { name: '停止', exact: true }).waitFor();
+    await page.reload(); await page.getByRole('button', { name: /^停止(?:回复)?$/, exact: true }).waitFor();
   }
   await page.getByRole('button', { name: '允许一次', exact: true }).waitFor();
   await page.getByRole('button', { name: '总是允许此类', exact: true }).waitFor();
@@ -110,14 +110,14 @@ try {
     assert.equal(receipt.approval.decisionOutcome, label === '拒绝' ? 'rejected' : 'allowed-once');
     if (label === '总是允许此类') assert.equal(JSON.parse(result.request().postData()).scope, 'conversation-category');
     decisions.push(label);
-    await page.getByRole('combobox', { name: '运行中输入方式', exact: true }).selectOption('queue');
+    await page.getByRole('combobox', { name: '运行中输入方式', exact: true }).click(); await page.getByRole('option',{name:'新任务',exact:true}).click();
     await page.getByRole('textbox', { name: '输入消息', exact: true }).fill('下一件事：合成排队目标');
     await page.getByRole('textbox', { name: '输入消息', exact: true }).press('Enter');
     await until(() => candidate.operations.some(op => op.text === '下一件事：合成排队目标' && op.mode === 'queue'));
     await until(async () => (await page.getByRole('textbox', { name: '输入消息', exact: true }).inputValue()) === '');
     await page.getByRole('textbox', { name: '输入消息', exact: true }).fill('停止时保留草稿');
     if (label === '拒绝') await page.keyboard.press('Escape');
-    else await page.getByRole('button', { name: '停止', exact: true }).click();
+    else {const input=page.getByRole('textbox',{name:'输入消息',exact:true});await input.fill('');await page.getByRole('button',{name:'停止回复',exact:true}).click();await input.fill('停止时保留草稿');}
     await until(() => candidate.operations.some(op => op.kind === 'cancel'));
     assert.equal(await page.getByRole('textbox', { name: '输入消息', exact: true }).inputValue(), '停止时保留草稿');
   }
