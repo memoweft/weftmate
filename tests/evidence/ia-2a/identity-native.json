@@ -1,0 +1,55 @@
+{
+  "step": "2.1",
+  "checkedAt": "2026-10-09T16:21:12.643Z",
+  "pinnedDsh": {
+    "repo": "https://github.com/deepseek-ai/deepseek-harness.git",
+    "packageVersion": "0.1.0-rc.5",
+    "commit": "47f943859bef60e4160492346772ded9b24f765a",
+    "commitSubject": "Merge pull request #2519 from deepseek-harness/feat/npm-public",
+    "recordedAt": "2026-08-14",
+    "notes": [
+      "上游仓库没有 git tag（ls-remote 验证为 0 个 tag），pin 以 commit 为准；版本号取自 checkout 根 package.json（0.1.0-rc.5）。",
+      "2026-08-06 的内嵌可行性探针（weftmate-dsh-embed-probe-20260806-r1）运行于更早的 rc.5 checkout（该 commit 未记录，旧目录已随工作区清理删除）。本 pin 锚定的是契约测试实际验证通过的 checkout HEAD；版本号未变，未升级 DSH。",
+      "升级流程 = owner 触发：更新本文件的 commit/packageVersion → 重跑 npm run test:contract 全绿 → 再动 vendor（见 docs/VENDOR-PACKAGING.md §8）。",
+      "契约测试启动时会校验 checkout 与本文件一致，不一致即失败并给出指引——这是 R1（rc.5 API 会动）的第一道护栏。"
+    ]
+  },
+  "syntheticAccount": true,
+  "randomPorts": true,
+  "model": "mimo-v2.6-flash",
+  "usage": [
+    {
+      "completion_tokens": 29,
+      "prompt_tokens": 2114,
+      "total_tokens": 2143,
+      "completion_tokens_details": {
+        "reasoning_tokens": 20
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    },
+    {
+      "completion_tokens": 40,
+      "prompt_tokens": 138,
+      "total_tokens": 178,
+      "completion_tokens_details": {
+        "reasoning_tokens": 33
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ],
+  "nativeFilesUnchangedByMigration": 104,
+  "oldMessagesAndDeepLinksReadable": true,
+  "originalCommandAndReceiptPreserved": true,
+  "groupAndArchivePreserved": true,
+  "mainIdentityStableAcrossRestart": true,
+  "fullStoppedProfileRollbackInSeparateDirectory": true,
+  "electronLaunchesClosed": 3,
+  "limitations": [
+    "First main-chat send and relay belong to IA-2b; no relay enabled.",
+    "Project/fork/shared mapping is covered by unit fixtures; this native run uses an ordinary session."
+  ]
+}

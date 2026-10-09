@@ -71,6 +71,7 @@ import { artifactContentType } from '../personal-artifacts/index.mjs';
 import { buildConversationContext } from '../personal-conversations/context.mjs';
 import { defaultUsagePrice } from './usage.mjs';
 import { usageResponse } from './usage-response.mjs';
+import { chatForSession, protectMainSession } from './chat-identity.mjs';
 
 export function createHttpHandler(context) {
   function handle(request, response) {
@@ -704,6 +705,7 @@ export function createHttpHandler(context) {
         }
         return context.json(response, 200, {
           ...context.service.status(ownerId),
+          personalCapabilities: { chats: 1 },
           executionAccount: context.hostOwner(ownerId),
           sync: { available: true }, downloads: { android: (await context.androidPackageEntry()) !== null },
           backend: backendStatus, memory: { state: memoryStatus.state, inject: memoryStatus.capabilities?.inject === true },
@@ -1107,6 +1109,32 @@ export function createHttpHandler(context) {
           controller.abort();
         }
       }
+      if (request.method === 'GET' && pathname === '/personal/v1/chats/main') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, await context.chats.main(ownerId));
+      }
+      if (request.method === 'GET' && pathname === '/personal/v1/chats') {
+        return context.json(response, 200, await context.chats.list(ownerId, url.searchParams));
+      }
+      const chatMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)$/.exec(pathname);
+      if (request.method === 'GET' && chatMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, { chat: await context.chats.view(ownerId, chatMatch[1]) });
+      }
+      const sessionChatMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/chat$/.exec(pathname);
+      if (request.method === 'GET' && sessionChatMatch) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, context.chats.resolveSession(ownerId, sessionChatMatch[1]));
+      }
+      const chatMetadataMatch = /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/metadata$/.exec(pathname);
+      if (chatMetadataMatch && request.method === 'PATCH') {
+        if (url.search) throw failure('INVALID_REQUEST');
+        return context.json(response, 200, await context.chats.metadata(ownerId, chatMetadataMatch[1], await context.readJson(request, 2048)));
+      }
+      if (chatMatch && request.method === 'DELETE' || /^\/personal\/v1\/chats\/([A-Za-z0-9_-]+)\/(metadata|archive|unarchive|fork)$/.test(pathname) && ['PATCH', 'POST'].includes(request.method)) {
+        const chatId = pathname.split('/')[4];
+        if (context.chats.requireChat(ownerId, chatId).kind === 'main') throw failure('MAIN_CHAT_PROTECTED', 409);
+      }
       if (request.method === 'GET' && pathname === '/personal/v1/sessions') {
         if ([...url.searchParams.keys()].some(key => key !== 'archived') ||
             url.searchParams.getAll('archived').length > 1 ||
@@ -1122,6 +1150,7 @@ export function createHttpHandler(context) {
           catch { /* Preserve the existing individual unavailable-session projection. */ }
         }
         for (const sessionId of Object.keys(state.sessions).sort()) {
+          if (chatForSession(state, sessionId)?.kind === 'main') continue;
           if (archived !== 'all' && (state.sessions[sessionId].archived === true) !== (archived === 'true')) continue;
           try {
             const described = descriptions ? descriptions.get(sessionId)
@@ -1632,6 +1661,7 @@ export function createHttpHandler(context) {
         if (context.interactionRequestIdUsed(state, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
         if (state.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (state.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+        if (state.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
         if (Object.values(state.commands).some((command) =>
           command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
           throw failure('REQUEST_CONFLICT', 409);
@@ -1643,6 +1673,7 @@ export function createHttpHandler(context) {
             : adoptionId ? { ...context.conversationProjection(ownerId, adoptionId), command: publicCommand(prior) }
               : { command: publicCommand(prior) });
         }
+        if (payload.kind === 'session.message' && !taskAction) protectMainSession(state, payload.sessionId, 'MAIN_CHAT_ROUTE_REQUIRED');
         if (payload.projectId && (state.projects?.[payload.projectId]?.revoked ||
             state.projects?.[payload.projectId]?.revision !== payload.projectRevision)) {
           throw failure('PROJECT_REVOKED', 409);
@@ -1716,6 +1747,7 @@ export function createHttpHandler(context) {
           if (context.interactionRequestIdUsed(latest, payload.requestId)) throw failure('REQUEST_CONFLICT', 409);
           if (latest.modelOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (latest.projectOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
+          if (latest.chatOperations?.[payload.requestId]) throw failure('REQUEST_CONFLICT', 409);
           if (Object.values(latest.commands).some((command) =>
             command.taskControl?.stopRequests.some((entry) => entry.requestId === payload.requestId))) {
             throw failure('REQUEST_CONFLICT', 409);

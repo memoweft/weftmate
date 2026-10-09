@@ -1,0 +1,3626 @@
+[
+  {
+    "at": "2026-10-09T16:19:41.383Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [],
+    "status": "",
+    "stop": false
+  },
+  {
+    "at": "2026-10-09T16:19:42.385Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [],
+    "status": "",
+    "stop": false
+  },
+  {
+    "at": "2026-10-09T16:19:43.389Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "等待模型回复… 2 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:44.394Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "等待模型回复… 3 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:45.402Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "等待模型回复… 4 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:46.403Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "等待模型回复… 5 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:47.406Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "等待模型回复… 6 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:48.407Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "等待模型回复… 7 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:49.417Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在思考… 8 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:50.426Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在思考… 9 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:51.436Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 正在思考… 10 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:52.444Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 正在思考… 11 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:53.449Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 正在思考… 12 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:54.451Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 正在思考… 13 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:55.462Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 正在思考… 14 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:56.472Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 等待模型回复… 15 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:57.479Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 等待模型回复… 16 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:58.489Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "工具已就绪 · 等待模型回复… 17 秒"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:19:59.493Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在访问网页 nodejs.org…"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:00.506Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在访问网页 nodejs.org…"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:01.512Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在访问网页 nodejs.org…"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:02.516Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在访问网页 nodejs.org…"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:03.514Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在访问网页 nodejs.org…"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:04.518Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "正在访问网页 nodejs.org…"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:05.538Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:06.551Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:07.545Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:08.552Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:09.553Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:10.565Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:11.566Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:12.574Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:13.578Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:14.593Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:15.614Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:16.614Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:17.618Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:18.617Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:19.626Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:20.627Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:21.630Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:22.635Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:23.648Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:24.664Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:25.675Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:26.685Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:27.701Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:28.705Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:29.710Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:30.711Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:31.723Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:32.722Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:33.728Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:34.734Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:35.743Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:36.743Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:37.756Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:38.760Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:39.787Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:40.775Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:41.796Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:42.802Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:43.791Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:44.795Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:45.801Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:46.799Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:47.796Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:48.800Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:49.812Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:50.816Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:51.815Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:52.830Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:53.828Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:54.837Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:55.844Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:56.850Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:57.857Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:58.869Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:20:59.879Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:00.882Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:01.887Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:02.893Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:03.897Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:04.902Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:05.904Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:06.914Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:07.919Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:08.929Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:09.931Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:10.937Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:11.941Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:12.948Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:13.955Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:14.963Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:15.965Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:16.979Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:17.982Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:18.986Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:19.986Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:20.992Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:21.993Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:22.996Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:23.996Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:25.001Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:26.005Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:27.015Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:28.016Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:29.027Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:30.042Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:31.044Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:32.050Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:33.050Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:34.057Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:35.065Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:36.075Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:37.074Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:38.075Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:39.074Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:40.086Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:41.091Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:42.099Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:43.108Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:44.116Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:45.125Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:46.128Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:47.137Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:48.141Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:49.146Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:50.146Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:51.155Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:52.165Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:53.178Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:54.190Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:55.195Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:56.207Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:57.216Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:58.221Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:21:59.228Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:00.234Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:01.236Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:02.238Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:03.244Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:04.254Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:05.261Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:06.264Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:07.284Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:08.296Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:09.300Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:10.296Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:11.298Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:12.307Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:13.318Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:14.325Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:15.325Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:16.331Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:17.338Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:18.348Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:19.363Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:20.366Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:21.381Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:22.378Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:23.389Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:24.404Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:25.412Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:26.414Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:27.417Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:28.427Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:29.437Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:30.446Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:31.452Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:32.466Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:33.479Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:34.490Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:35.500Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:36.504Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:37.506Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:38.509Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:39.515Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:40.520Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:41.526Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:42.558Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:43.547Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:44.555Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:45.555Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:46.570Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:47.582Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:48.596Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:49.611Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:50.606Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:51.617Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:52.624Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:53.635Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:54.645Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:55.649Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:56.648Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:57.656Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:58.665Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:22:59.678Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:00.682Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:01.684Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:02.697Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:03.703Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:04.715Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:05.724Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:06.730Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:07.732Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:08.740Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:09.753Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:10.761Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:11.762Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:12.773Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:13.782Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:14.792Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:15.792Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:16.795Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:17.807Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:18.798Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:19.809Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:20.824Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:21.832Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:22.844Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:23.852Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:24.859Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:25.877Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:26.883Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:27.895Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:28.903Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:29.911Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:30.913Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:31.914Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:32.922Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:33.931Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:34.940Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:35.945Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:36.958Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:37.969Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:38.980Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:39.985Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:40.995Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:42.008Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:43.020Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:44.027Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:45.040Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:46.040Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:47.047Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:48.049Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:49.054Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:50.055Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:51.052Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:52.055Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:53.055Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:54.061Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:55.075Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:56.087Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:57.101Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:58.112Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:23:59.122Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:00.131Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:01.141Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:02.150Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:03.163Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:04.173Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:05.179Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:06.192Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:07.200Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:08.207Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:09.208Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:10.207Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:11.207Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:12.207Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:13.220Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:14.226Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:15.228Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:16.229Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:17.230Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:18.238Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:19.247Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:20.258Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:21.258Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:22.270Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:23.290Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:24.288Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:25.297Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:26.300Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:27.300Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:28.297Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:29.305Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:30.317Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:31.319Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:32.323Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:33.327Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:34.333Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:35.339Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:36.340Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:37.353Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:38.363Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:39.377Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:40.387Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:41.393Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:42.397Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:43.396Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:44.400Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:45.403Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:46.408Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:47.419Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:48.433Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:49.439Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:50.446Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:51.457Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:52.464Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:53.477Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:54.478Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:55.481Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:56.483Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:57.495Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:58.506Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:24:59.519Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:00.543Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:01.540Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:02.542Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:03.549Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:04.551Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:05.547Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:06.569Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:07.566Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:08.574Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:09.587Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:10.602Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:11.602Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:12.614Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:13.607Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:14.622Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:15.631Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:16.644Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:17.652Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:18.658Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:19.653Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:20.665Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:21.678Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:22.686Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:23.699Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:24.696Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:25.707Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:26.717Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:27.725Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:28.738Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:29.749Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:30.768Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:31.771Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:32.789Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:33.801Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:34.796Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:35.802Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:36.799Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:37.803Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:38.800Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:39.804Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:40.819Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:41.823Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:42.829Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:43.840Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:44.841Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:45.845Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:46.853Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:47.853Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": true
+  },
+  {
+    "at": "2026-10-09T16:25:48.871Z",
+    "sessionId": "session-e8ed0bca-c6d6-4ab9-963e-20d0eb78ec19",
+    "progress": [
+      "第 3 步失败",
+      "第 5 步失败"
+    ],
+    "status": "",
+    "stop": false
+  }
+]

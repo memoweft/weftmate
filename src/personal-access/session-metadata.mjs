@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { protectMainSession } from './chat-identity.mjs';
 import { failure, plainObject, validId } from './common.mjs';
 
 export function createSessionMetadata(context) {
@@ -15,6 +16,7 @@ export function createSessionMetadata(context) {
   };
   return {
     async metadata(ownerId, sessionId, patch) {
+      protectMainSession(context.accountState(ownerId), sessionId);
       if (!plainObject(patch) || !Object.keys(patch).length || Object.keys(patch).some(key => !['pinned', 'unread', 'title', 'groupId', 'projectId'].includes(key)) ||
           ['pinned', 'unread'].some(key => patch[key] !== undefined && typeof patch[key] !== 'boolean') ||
           patch.groupId !== undefined && patch.groupId !== null && !validId(patch.groupId) ||
@@ -74,6 +76,7 @@ export function createSessionMetadata(context) {
       });
     },
     async fork(ownerId, sessionId) {
+      protectMainSession(context.accountState(ownerId), sessionId);
       return context.serial(async () => {
         const source = requireSession(ownerId, sessionId);
         if (!context.backend.forkSession) throw failure('BACKEND_UNAVAILABLE', 503);

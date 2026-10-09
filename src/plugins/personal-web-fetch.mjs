@@ -14,8 +14,9 @@ export function personalWebFetchProvider(bridge, currentExecution, executionIden
       // into every subsequent model request, even when only the lead is needed.
       const continuation = first.segmentCount > 1 ?
         `\n\n[Partial page: segment 0 of ${first.segmentCount}. Read further captured sections with browser action="read", snapshotId=${JSON.stringify(first.snapshotId)}, segmentIndex=1..${first.segmentCount - 1}. Do not cite unread sections.]\nOutline:\n${first.outline || '(no headings)'}` : '';
-      return { url: first.url, statusCode: first.httpStatus, body: { kind: 'text', content: first.text + continuation },
-        truncated: first.captureTruncated === true || first.segmentCount > 1 };
+      const archive = first.sourcePath ? `\n\nCaptured source: ${first.sourcePath}. Use grep/read for a specific missing fact; this preview is verbatim and may omit later sections.${first.previewTruncated ? ` Read full segment 0 with browser action="read", snapshotId=${JSON.stringify(first.snapshotId)}, segmentIndex=0.` : ''}` : '';
+      return { url: first.url, statusCode: first.httpStatus, body: { kind: 'text', content: first.text + continuation + archive },
+        truncated: first.captureTruncated === true || first.segmentCount > 1 || first.previewTruncated === true };
     },
   };
 }

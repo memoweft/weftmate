@@ -44,6 +44,8 @@ import { backupBeforeCloud } from '../personal-cloud/storage.mjs';
 import { createUsageStore } from './usage.mjs';
 import { createScheduleOperations } from './schedules.mjs';
 import { createOfflineService } from '../personal-offline/index.mjs';
+import { reconcileChatIdentity } from './chat-identity.mjs';
+import { createChatOperations } from './chats.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
 
@@ -110,6 +112,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const usage = await createUsageStore({ root, clock });
   // Accessors preserve the original service's live state across module boundaries.
   const context = {
+    get chats() { return chats; },
     get offline() { return offline; },
     get backupManager() { return backupManager; },
     backupOwner: ownerId => hostOwner(ownerId) || hostCloudIdentity?.isInstallationOwner(ownerId) === true,
@@ -245,6 +248,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get verifyToolResult() { return verifyToolResult; },
   };
   const sessions = createSessionOperations(context);
+  const chats = createChatOperations(context);
   const {
     requireOriginalAttachments, commandReferencesOriginal, publicHistoryEvent,
     conversationSnapshot, conversationProjection, verifiedSyncUserEvent, sourceDevicesUpgraded,
@@ -340,6 +344,19 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     const migrated = { version: VERSION, hostId, legacyOwnerId: ownerId,
       unknownAuthLimits: { failures: 0, lastFailureAt: 0, lockUntil: 0 },
       sharedModelProfiles: [], accounts: { [ownerId]: account } };
+    validateStore(migrated);
+    await durableWrite(storeFile, migrated);
+    rootState = migrated;
+  }
+  if (Object.values(rootState.accounts).some(account => !account.chatIdentity)) {
+    // No listeners/writers are active yet. The BK-1 profile upgrade snapshot
+    // precedes host startup; also retain the exact access-store preimage when
+    // the application version is unchanged (development/compatible rollback).
+    const before = path.join(root, 'chat-identity-v1.before.json');
+    try { await ensurePrivateFile(before); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; await durableWrite(before, rootState); }
+    const migrated = structuredClone(rootState);
+    for (const account of Object.values(migrated.accounts)) reconcileChatIdentity(account, migrated.hostId, new Date(clock()).toISOString());
     validateStore(migrated);
     await durableWrite(storeFile, migrated);
     rootState = migrated;
@@ -490,6 +507,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     requireOpen();
     assertCurrent();
     for (const account of Object.values(next.accounts)) {
+      reconcileChatIdentity(account, next.hostId, new Date(timestamp()).toISOString());
       for (const [conversationId, binding] of Object.entries(account.conversationBindings ?? {})) {
         const state = account.commands[binding.adoptCommandId]?.state;
         if (state === 'rejected') delete account.conversationBindings[conversationId];

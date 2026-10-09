@@ -1,0 +1,9 @@
+{
+  "requests": 117,
+  "withUsage": 113,
+  "missingUsage": 4,
+  "inputTokens": 888808,
+  "cachedTokens": 408896,
+  "outputTokens": 59950,
+  "knownCostCnyLowerBound": 0.60798992
+}
