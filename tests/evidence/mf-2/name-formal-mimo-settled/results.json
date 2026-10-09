@@ -1,0 +1,1152 @@
+[
+  {
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": true,
+    "root": "C:/Temp/weftmate-mf2-2bbZCa",
+    "startedAt": "2026-10-09T15:20:39.157Z",
+    "turns": [
+      {
+        "sessionId": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+        "modelProfileId": "private-model-9e7705a18bd17342eedd6fd7367373b69ded3722",
+        "commandId": "cmd-ca481442-9e07-4caa-b2a7-fe0b43ae0c34",
+        "startedAt": "2026-10-09T15:20:50.732Z",
+        "reply": "好的，已了解到你们陶艺兴趣组的固定联系人是林舟，每次报名都找他。要不要我在以后遇到陶艺组报名、活动对接这类事时，主动提醒你联系林舟？",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:20:50.789Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:20:50.790Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:20:50.836Z"
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-09T15:20:50.837Z"
+          },
+          {
+            "seq": 80,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:20:55.117Z"
+          },
+          {
+            "seq": 81,
+            "type": "task.ended",
+            "at": "2026-10-09T15:20:55.118Z"
+          },
+          {
+            "seq": 82,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:20:55.119Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 4523,
+        "endedAt": "2026-10-09T15:20:55.255Z"
+      },
+      {
+        "sessionId": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+        "modelProfileId": "private-model-9e7705a18bd17342eedd6fd7367373b69ded3722",
+        "commandId": "cmd-4ea25c4a-8dbd-42b4-a02e-f1af4d3b8ee8",
+        "startedAt": "2026-10-09T15:21:07.465Z",
+        "reply": "已更正：以后联系人姓名一律按 **林洲** 记（不是\"林舟\"），我这边会采用最新理解。\n\n另外你之前说了一句\"提醒我\"，但没说提醒什么时间和内容——请告诉我要提醒的事项和时间（例如\"明天上午9点提醒我报名陶艺课\"），我再帮你建立提醒。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:21:07.530Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:21:07.531Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:21:07.562Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:21:07.563Z"
+          },
+          {
+            "seq": 349,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:21:28.413Z"
+          },
+          {
+            "seq": 350,
+            "type": "task.ended",
+            "at": "2026-10-09T15:21:28.413Z"
+          },
+          {
+            "seq": 351,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:21:28.414Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [
+          {
+            "id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+            "kind": "cognition",
+            "summary": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。"
+          }
+        ],
+        "durationMs": 21148,
+        "endedAt": "2026-10-09T15:21:28.613Z"
+      },
+      {
+        "sessionId": "session-4ee604ac-084a-4dd0-9356-ebff54b4c29a",
+        "modelProfileId": "private-model-9e7705a18bd17342eedd6fd7367373b69ded3722",
+        "commandId": "cmd-4f31e962-6c30-4f88-bb67-4da0808ebc30",
+        "startedAt": "2026-10-09T15:21:42.065Z",
+        "reply": "报名陶艺兴趣组找**林洲**，他是兴趣组的固定联系人，每次报名都联系他即可。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:21:42.137Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:21:42.138Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:21:42.172Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:21:42.173Z"
+          },
+          {
+            "seq": 39,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:21:44.951Z"
+          },
+          {
+            "seq": 40,
+            "type": "task.ended",
+            "at": "2026-10-09T15:21:44.951Z"
+          },
+          {
+            "seq": 41,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:21:44.952Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [
+          {
+            "id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+            "kind": "cognition",
+            "summary": "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。"
+          }
+        ],
+        "durationMs": 2896,
+        "endedAt": "2026-10-09T15:21:44.961Z"
+      }
+    ],
+    "settlements": [
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+            "boundary_payload_hash": "9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+            "result_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+            "formal_target_hash": "ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"70ec0f71-7683-47cc-b210-f0de82a07348\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:20:55.743Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:20:55.754Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:20:55.764Z",
+            "model_completed_at": "2026-10-09T15:21:05.612Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"naming\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u4eec\\u9676\\u827a\\u5174\\u8da3\\u7ec4\\u7684\\u56fa\\u5b9a\\u8054\\u7cfb\\u4eba\\u53eb\\u6797\\u821f\\uff0c\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}},{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"segment_id\\\":\\\"s1\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}}",
+            "model_result_hash": "aab6f91fda46ffa23582f544141035e2790973c734e9a0bdd4f37f1cd2236c00",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"cognitions\":[{\"action\":\"form\",\"canonical_name\":\"\\u6797\\u821f\",\"cognition_id\":\"cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c\",\"confidence\":600,\"cred_status\":\"limited\",\"entity_id\":\"entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f\",\"entity_kind\":\"person\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"naming\"},{\"action\":\"form\",\"cognition_id\":\"cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "f59c4768a14a9ec8a30aa2c83e1a606fc7a51c4e1ad4bc8caf47c12d605c60c7",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:20:55.702Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"evidence_count\":1,\"evidence_manifest_hash\":\"8d48726c1e663dc33aaf7e09b8db5d4fd14d3a31495775f749e6bba839a5decd\",\"formal_target_hash\":\"ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602\",\"job_id\":\"memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb\",\"job_state\":\"pending\",\"payload_hash\":\"9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "d86720e8ee5be70ab3e6350a38fa01165d6624ed358e64a668f7dd78d6145fe9",
+            "created_at": "2026-10-09T15:20:55.702Z",
+            "completed_at": "2026-10-09T15:21:05.620Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "content_type": "naming",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:05.620Z"
+          },
+          {
+            "id": "cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户每次报名都找他。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:05.620Z"
+          }
+        ],
+        "cognition_transitions": [],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f",
+            "world_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "kind": "person",
+            "canonical_name": "林舟",
+            "invalid_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:05.620Z",
+            "aliases_json": "[]"
+          }
+        ]
+      },
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+            "boundary_payload_hash": "9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+            "result_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+            "formal_target_hash": "ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"70ec0f71-7683-47cc-b210-f0de82a07348\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:20:55.743Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:20:55.754Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:20:55.764Z",
+            "model_completed_at": "2026-10-09T15:21:05.612Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"naming\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u4eec\\u9676\\u827a\\u5174\\u8da3\\u7ec4\\u7684\\u56fa\\u5b9a\\u8054\\u7cfb\\u4eba\\u53eb\\u6797\\u821f\\uff0c\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}},{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"segment_id\\\":\\\"s1\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}}",
+            "model_result_hash": "aab6f91fda46ffa23582f544141035e2790973c734e9a0bdd4f37f1cd2236c00",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"cognitions\":[{\"action\":\"form\",\"canonical_name\":\"\\u6797\\u821f\",\"cognition_id\":\"cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c\",\"confidence\":600,\"cred_status\":\"limited\",\"entity_id\":\"entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f\",\"entity_kind\":\"person\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"naming\"},{\"action\":\"form\",\"cognition_id\":\"cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "f59c4768a14a9ec8a30aa2c83e1a606fc7a51c4e1ad4bc8caf47c12d605c60c7",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:20:55.702Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"evidence_count\":1,\"evidence_manifest_hash\":\"8d48726c1e663dc33aaf7e09b8db5d4fd14d3a31495775f749e6bba839a5decd\",\"formal_target_hash\":\"ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602\",\"job_id\":\"memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb\",\"job_state\":\"pending\",\"payload_hash\":\"9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "d86720e8ee5be70ab3e6350a38fa01165d6624ed358e64a668f7dd78d6145fe9",
+            "created_at": "2026-10-09T15:20:55.702Z",
+            "completed_at": "2026-10-09T15:21:05.620Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-3a4b3cc2b626c754eae9fc22269b18f8f00517457e1de631cd635d6c933ba30d",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8",
+            "boundary_payload_hash": "ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+            "result_session_id": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a35964d7-8738-4910-9ca5-ae24319cfac3\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a35964d7-8738-4910-9ca5-ae24319cfac3\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+            "formal_target_hash": "b35ae8e905dd66c5c333b04071901eb7054191eb62d9984e15878540912d2b64",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"e4d8d50d-7fc3-4a29-b6f8-dd1fbb4f96a3\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:21:29.000Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:21:29.010Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:21:29.028Z",
+            "model_completed_at": "2026-10-09T15:21:40.451Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":340,\"completion_tokens_details\":{\"reasoning_tokens\":207},\"prompt_tokens\":4799,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5139}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"alias\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u90a3\\u4e2a\\u4eba\\u540d\\u5199\\u9519\\u4e86\\uff0c\\u5e94\\u8be5\\u662f\\u6797\\u6d32\\uff0c\\u4e0d\\u662f\\u6797\\u821f\\uff0c\\u4ee5\\u540e\\u6309\\u6797\\u6d32\\u8fd9\\u4e2a\\u540d\\u5b57\\u6765\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"e4d8d50d-7fc3-4a29-b6f8-dd1fbb4f96a3\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u6d32\\\",\\\"kind\\\":\\\"person\\\"},\\\"alias_of\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":340,\"completion_tokens_details\":{\"reasoning_tokens\":207},\"prompt_tokens\":4799,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5139}}",
+            "model_result_hash": "8cc437ef8f91925f9af724ba7ab42674445e385a04dd47d7c1173620dfc30179",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"cognitions\":[{\"action\":\"correct\",\"prior_entity_id\":\"entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f\",\"reason\":\"name_corrected\",\"replacement_entity_id\":\"entity-c96124babc18a4f7dee5afe707ce7bf67bcf0aa8da8de1bc73162efdf1664a4e\",\"statement_kind\":\"alias\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "e51b794998ebf9794844321135d843e3000eab5535df5d709f9153dca45f3afd",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:21:28.982Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"evidence_count\":1,\"evidence_manifest_hash\":\"dda7283ac5a18bd3657badcd7ecec5fdaa47168fffe1392bca163ce11880bddf\",\"formal_target_hash\":\"b35ae8e905dd66c5c333b04071901eb7054191eb62d9984e15878540912d2b64\",\"job_id\":\"memory-world-job-3a4b3cc2b626c754eae9fc22269b18f8f00517457e1de631cd635d6c933ba30d\",\"job_state\":\"pending\",\"payload_hash\":\"ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "766fe31edd5a9d3be42d4d98779cb1ffe77253d4a76c78692dd2caf10d261e63",
+            "created_at": "2026-10-09T15:21:28.982Z",
+            "completed_at": "2026-10-09T15:21:40.460Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "content_type": "naming",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": "2026-10-09T15:21:40.460Z",
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:40.460Z"
+          },
+          {
+            "id": "cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户每次报名都找他。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:05.620Z"
+          },
+          {
+            "id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。",
+            "content_type": "naming",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:40.460Z"
+          }
+        ],
+        "cognition_transitions": [
+          {
+            "id": "cognition-transition-446e4dc30753561b8c78afa2a185e833936ec6efffc5ed246be71d39efcb01ba",
+            "prior_cognition_id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+            "replacement_cognition_id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+            "reason": "name_corrected",
+            "revision": 2
+          }
+        ],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f",
+            "world_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "kind": "person",
+            "canonical_name": "林舟",
+            "invalid_at": "2026-10-09T15:21:40.460Z",
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:40.460Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-c96124babc18a4f7dee5afe707ce7bf67bcf0aa8da8de1bc73162efdf1664a4e",
+            "world_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "kind": "person",
+            "canonical_name": "林洲",
+            "invalid_at": null,
+            "created_at": "2026-10-09T15:21:40.460Z",
+            "updated_at": "2026-10-09T15:21:40.460Z",
+            "aliases_json": "[]"
+          }
+        ]
+      },
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+            "boundary_payload_hash": "9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+            "result_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+            "formal_target_hash": "ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"70ec0f71-7683-47cc-b210-f0de82a07348\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:20:55.743Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:20:55.754Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:20:55.764Z",
+            "model_completed_at": "2026-10-09T15:21:05.612Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"naming\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u4eec\\u9676\\u827a\\u5174\\u8da3\\u7ec4\\u7684\\u56fa\\u5b9a\\u8054\\u7cfb\\u4eba\\u53eb\\u6797\\u821f\\uff0c\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}},{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"segment_id\\\":\\\"s1\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}}",
+            "model_result_hash": "aab6f91fda46ffa23582f544141035e2790973c734e9a0bdd4f37f1cd2236c00",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"cognitions\":[{\"action\":\"form\",\"canonical_name\":\"\\u6797\\u821f\",\"cognition_id\":\"cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c\",\"confidence\":600,\"cred_status\":\"limited\",\"entity_id\":\"entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f\",\"entity_kind\":\"person\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"naming\"},{\"action\":\"form\",\"cognition_id\":\"cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "f59c4768a14a9ec8a30aa2c83e1a606fc7a51c4e1ad4bc8caf47c12d605c60c7",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:20:55.702Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"evidence_count\":1,\"evidence_manifest_hash\":\"8d48726c1e663dc33aaf7e09b8db5d4fd14d3a31495775f749e6bba839a5decd\",\"formal_target_hash\":\"ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602\",\"job_id\":\"memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb\",\"job_state\":\"pending\",\"payload_hash\":\"9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "d86720e8ee5be70ab3e6350a38fa01165d6624ed358e64a668f7dd78d6145fe9",
+            "created_at": "2026-10-09T15:20:55.702Z",
+            "completed_at": "2026-10-09T15:21:05.620Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-3a4b3cc2b626c754eae9fc22269b18f8f00517457e1de631cd635d6c933ba30d",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8",
+            "boundary_payload_hash": "ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+            "result_session_id": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a35964d7-8738-4910-9ca5-ae24319cfac3\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a35964d7-8738-4910-9ca5-ae24319cfac3\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+            "formal_target_hash": "b35ae8e905dd66c5c333b04071901eb7054191eb62d9984e15878540912d2b64",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"e4d8d50d-7fc3-4a29-b6f8-dd1fbb4f96a3\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:21:29.000Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:21:29.010Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:21:29.028Z",
+            "model_completed_at": "2026-10-09T15:21:40.451Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":340,\"completion_tokens_details\":{\"reasoning_tokens\":207},\"prompt_tokens\":4799,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5139}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"alias\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u90a3\\u4e2a\\u4eba\\u540d\\u5199\\u9519\\u4e86\\uff0c\\u5e94\\u8be5\\u662f\\u6797\\u6d32\\uff0c\\u4e0d\\u662f\\u6797\\u821f\\uff0c\\u4ee5\\u540e\\u6309\\u6797\\u6d32\\u8fd9\\u4e2a\\u540d\\u5b57\\u6765\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"e4d8d50d-7fc3-4a29-b6f8-dd1fbb4f96a3\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u6d32\\\",\\\"kind\\\":\\\"person\\\"},\\\"alias_of\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":340,\"completion_tokens_details\":{\"reasoning_tokens\":207},\"prompt_tokens\":4799,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5139}}",
+            "model_result_hash": "8cc437ef8f91925f9af724ba7ab42674445e385a04dd47d7c1173620dfc30179",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"cognitions\":[{\"action\":\"correct\",\"prior_entity_id\":\"entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f\",\"reason\":\"name_corrected\",\"replacement_entity_id\":\"entity-c96124babc18a4f7dee5afe707ce7bf67bcf0aa8da8de1bc73162efdf1664a4e\",\"statement_kind\":\"alias\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "e51b794998ebf9794844321135d843e3000eab5535df5d709f9153dca45f3afd",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:21:28.982Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"evidence_count\":1,\"evidence_manifest_hash\":\"dda7283ac5a18bd3657badcd7ecec5fdaa47168fffe1392bca163ce11880bddf\",\"formal_target_hash\":\"b35ae8e905dd66c5c333b04071901eb7054191eb62d9984e15878540912d2b64\",\"job_id\":\"memory-world-job-3a4b3cc2b626c754eae9fc22269b18f8f00517457e1de631cd635d6c933ba30d\",\"job_state\":\"pending\",\"payload_hash\":\"ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "766fe31edd5a9d3be42d4d98779cb1ffe77253d4a76c78692dd2caf10d261e63",
+            "created_at": "2026-10-09T15:21:28.982Z",
+            "completed_at": "2026-10-09T15:21:40.460Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-6b505d8d139b9b63076781c2e3d6baf11fdacc99ed2d230a714b2604f37087c0",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:a25ea312d02701ac1f698c3b4b49cdbf:0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30",
+            "boundary_payload_hash": "0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-4ee604ac-084a-4dd0-9356-ebff54b4c29a",
+            "result_session_id": "session-4ee604ac-084a-4dd0-9356-ebff54b4c29a",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-4ee604ac-084a-4dd0-9356-ebff54b4c29a\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-4ee604ac-084a-4dd0-9356-ebff54b4c29a\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+            "formal_target_hash": "6a97cd9aad20a0cb4f8d2ec0112ad1e9b0bcba378fc43ca31cd85ca83996e392",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"53533b63-e1e0-4afa-9b87-eb9741bc1ba2\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:21:45.446Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:21:45.458Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:21:45.468Z",
+            "model_completed_at": "2026-10-09T15:21:45.478Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:21:45.426Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:a25ea312d02701ac1f698c3b4b49cdbf:0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30\",\"evidence_count\":1,\"evidence_manifest_hash\":\"de02356b055d0438aea66cf1d82f1865a5f90a1a90bff9c6968231dd04625c74\",\"formal_target_hash\":\"6a97cd9aad20a0cb4f8d2ec0112ad1e9b0bcba378fc43ca31cd85ca83996e392\",\"job_id\":\"memory-world-job-6b505d8d139b9b63076781c2e3d6baf11fdacc99ed2d230a714b2604f37087c0\",\"job_state\":\"pending\",\"payload_hash\":\"0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "2eaebf711801e6db1d76c3041891c294ecdb6a8d2a3d5722955d669efb2bbef3",
+            "created_at": "2026-10-09T15:21:45.426Z",
+            "completed_at": "2026-10-09T15:21:45.478Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+            "content_type": "naming",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": "2026-10-09T15:21:40.460Z",
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:40.460Z"
+          },
+          {
+            "id": "cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户每次报名都找他。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:05.620Z"
+          },
+          {
+            "id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+            "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "content": "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。",
+            "content_type": "naming",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:40.460Z"
+          }
+        ],
+        "cognition_transitions": [
+          {
+            "id": "cognition-transition-446e4dc30753561b8c78afa2a185e833936ec6efffc5ed246be71d39efcb01ba",
+            "prior_cognition_id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+            "replacement_cognition_id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+            "reason": "name_corrected",
+            "revision": 2
+          }
+        ],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f",
+            "world_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "kind": "person",
+            "canonical_name": "林舟",
+            "invalid_at": "2026-10-09T15:21:40.460Z",
+            "created_at": "2026-10-09T15:21:05.620Z",
+            "updated_at": "2026-10-09T15:21:40.460Z",
+            "aliases_json": "[]"
+          },
+          {
+            "id": "entity-c96124babc18a4f7dee5afe707ce7bf67bcf0aa8da8de1bc73162efdf1664a4e",
+            "world_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+            "kind": "person",
+            "canonical_name": "林洲",
+            "invalid_at": null,
+            "created_at": "2026-10-09T15:21:40.460Z",
+            "updated_at": "2026-10-09T15:21:40.460Z",
+            "aliases_json": "[]"
+          }
+        ]
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-name-1",
+        "category": "memory",
+        "title": "holdout-name",
+        "status": "passed",
+        "durationMs": 4864,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+            "modelProfileId": "private-model-9e7705a18bd17342eedd6fd7367373b69ded3722",
+            "commandId": "cmd-ca481442-9e07-4caa-b2a7-fe0b43ae0c34",
+            "startedAt": "2026-10-09T15:20:50.732Z",
+            "reply": "好的，已了解到你们陶艺兴趣组的固定联系人是林舟，每次报名都找他。要不要我在以后遇到陶艺组报名、活动对接这类事时，主动提醒你联系林舟？",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:20:50.789Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:20:50.790Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:20:50.836Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T15:20:50.837Z"
+              },
+              {
+                "seq": 80,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:20:55.117Z"
+              },
+              {
+                "seq": 81,
+                "type": "task.ended",
+                "at": "2026-10-09T15:20:55.118Z"
+              },
+              {
+                "seq": 82,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:20:55.119Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 4523,
+            "endedAt": "2026-10-09T15:20:55.255Z"
+          }
+        ],
+        "replySummary": "好的，已了解到你们陶艺兴趣组的固定联系人是林舟，每次报名都找他。要不要我在以后遇到陶艺组报名、活动对接这类事时，主动提醒你联系林舟？",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-name-1-RecGkw"
+      },
+      {
+        "id": "holdout-name-2",
+        "category": "memory",
+        "title": "holdout-name",
+        "status": "passed",
+        "durationMs": 21490,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+            "modelProfileId": "private-model-9e7705a18bd17342eedd6fd7367373b69ded3722",
+            "commandId": "cmd-4ea25c4a-8dbd-42b4-a02e-f1af4d3b8ee8",
+            "startedAt": "2026-10-09T15:21:07.465Z",
+            "reply": "已更正：以后联系人姓名一律按 **林洲** 记（不是\"林舟\"），我这边会采用最新理解。\n\n另外你之前说了一句\"提醒我\"，但没说提醒什么时间和内容——请告诉我要提醒的事项和时间（例如\"明天上午9点提醒我报名陶艺课\"），我再帮你建立提醒。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:21:07.530Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:21:07.531Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:21:07.562Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:21:07.563Z"
+              },
+              {
+                "seq": 349,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:21:28.413Z"
+              },
+              {
+                "seq": 350,
+                "type": "task.ended",
+                "at": "2026-10-09T15:21:28.413Z"
+              },
+              {
+                "seq": 351,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:21:28.414Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+                "kind": "cognition",
+                "summary": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。"
+              }
+            ],
+            "durationMs": 21148,
+            "endedAt": "2026-10-09T15:21:28.613Z"
+          }
+        ],
+        "replySummary": "已更正：以后联系人姓名一律按 **林洲** 记（不是\"林舟\"），我这边会采用最新理解。\n\n另外你之前说了一句\"提醒我\"，但没说提醒什么时间和内容——请告诉我要提醒的事项和时间（例如\"明天上午9点提醒我报名陶艺课\"），我再帮你建立提醒。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-name-2-kCf5ry"
+      },
+      {
+        "id": "holdout-name-3",
+        "category": "memory",
+        "title": "holdout-name",
+        "status": "passed",
+        "durationMs": 3269,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-4ee604ac-084a-4dd0-9356-ebff54b4c29a",
+            "modelProfileId": "private-model-9e7705a18bd17342eedd6fd7367373b69ded3722",
+            "commandId": "cmd-4f31e962-6c30-4f88-bb67-4da0808ebc30",
+            "startedAt": "2026-10-09T15:21:42.065Z",
+            "reply": "报名陶艺兴趣组找**林洲**，他是兴趣组的固定联系人，每次报名都联系他即可。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:21:42.137Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:21:42.138Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:21:42.172Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:21:42.173Z"
+              },
+              {
+                "seq": 39,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:21:44.951Z"
+              },
+              {
+                "seq": 40,
+                "type": "task.ended",
+                "at": "2026-10-09T15:21:44.951Z"
+              },
+              {
+                "seq": 41,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:21:44.952Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+                "kind": "cognition",
+                "summary": "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。"
+              }
+            ],
+            "durationMs": 2896,
+            "endedAt": "2026-10-09T15:21:44.961Z"
+          }
+        ],
+        "replySummary": "报名陶艺兴趣组找**林洲**，他是兴趣组的固定联系人，每次报名都联系他即可。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-name-3-hRONe8"
+      }
+    ],
+    "expectedValuePresent": true,
+    "rejectedValueMentioned": false,
+    "rubric": "报名应找林洲，不能把林舟作为当前正确姓名。",
+    "answer": "报名陶艺兴趣组找**林洲**，他是兴趣组的固定联系人，每次报名都联系他即可。",
+    "automaticPass": true,
+    "formalItems": {
+      "ownerId": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+      "items": [
+        {
+          "id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+          "kind": "cognition",
+          "text": "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-09T15:21:05.620Z",
+          "updatedAt": "2026-10-09T15:21:40.460Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 2
+        },
+        {
+          "id": "cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384",
+          "kind": "cognition",
+          "text": "用户每次报名都找他。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-09T15:21:05.620Z",
+          "updatedAt": "2026-10-09T15:21:05.620Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+          "kind": "cognition",
+          "text": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+          "truncated": false,
+          "currentState": "not_current",
+          "createdAt": "2026-10-09T15:21:05.620Z",
+          "updatedAt": "2026-10-09T15:21:40.460Z",
+          "lifecycle": {
+            "invalidAt": "2026-10-09T15:21:40.460Z",
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "worldRevision": 2,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [
+        {
+          "job_id": "memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+          "boundary_payload_hash": "9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+          "result_session_id": "session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a5be1bad-b116-45a2-9f52-b2dfba7ca9b4\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+          "formal_target_hash": "ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602",
+          "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"70ec0f71-7683-47cc-b210-f0de82a07348\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:20:55.743Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:20:55.754Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:20:55.764Z",
+          "model_completed_at": "2026-10-09T15:21:05.612Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"naming\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u4eec\\u9676\\u827a\\u5174\\u8da3\\u7ec4\\u7684\\u56fa\\u5b9a\\u8054\\u7cfb\\u4eba\\u53eb\\u6797\\u821f\\uff0c\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}},{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6bcf\\u6b21\\u62a5\\u540d\\u90fd\\u627e\\u4ed6\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"70ec0f71-7683-47cc-b210-f0de82a07348\\\",\\\"segment_id\\\":\\\"s1\\\"}]}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":513,\"completion_tokens_details\":{\"reasoning_tokens\":316},\"prompt_tokens\":4524,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5037}}",
+          "model_result_hash": "aab6f91fda46ffa23582f544141035e2790973c734e9a0bdd4f37f1cd2236c00",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"cognitions\":[{\"action\":\"form\",\"canonical_name\":\"\\u6797\\u821f\",\"cognition_id\":\"cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c\",\"confidence\":600,\"cred_status\":\"limited\",\"entity_id\":\"entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f\",\"entity_kind\":\"person\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"naming\"},{\"action\":\"form\",\"cognition_id\":\"cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+          "result_hash": "f59c4768a14a9ec8a30aa2c83e1a606fc7a51c4e1ad4bc8caf47c12d605c60c7",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:20:55.702Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:c4cde2871f1f3b4b93d71ba31a6d5d57:9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"evidence_count\":1,\"evidence_manifest_hash\":\"8d48726c1e663dc33aaf7e09b8db5d4fd14d3a31495775f749e6bba839a5decd\",\"formal_target_hash\":\"ea9ca9c58a03764fb9aa960a798684e3d55e8001a764e2986b6c4573ff6ad602\",\"job_id\":\"memory-world-job-604aa7c8020af34fbe816a48a03525b406f491fe8eca818b9e92043facd46ebb\",\"job_state\":\"pending\",\"payload_hash\":\"9fcba55065bb43c71782ea31fb648db1f34a43504a504cf67f3898442c78fb7e\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "d86720e8ee5be70ab3e6350a38fa01165d6624ed358e64a668f7dd78d6145fe9",
+          "created_at": "2026-10-09T15:20:55.702Z",
+          "completed_at": "2026-10-09T15:21:05.620Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-3a4b3cc2b626c754eae9fc22269b18f8f00517457e1de631cd635d6c933ba30d",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8",
+          "boundary_payload_hash": "ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+          "result_session_id": "session-a35964d7-8738-4910-9ca5-ae24319cfac3",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-a35964d7-8738-4910-9ca5-ae24319cfac3\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-a35964d7-8738-4910-9ca5-ae24319cfac3\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+          "formal_target_hash": "b35ae8e905dd66c5c333b04071901eb7054191eb62d9984e15878540912d2b64",
+          "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"e4d8d50d-7fc3-4a29-b6f8-dd1fbb4f96a3\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:21:29.000Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:21:29.010Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:21:29.028Z",
+          "model_completed_at": "2026-10-09T15:21:40.451Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":340,\"completion_tokens_details\":{\"reasoning_tokens\":207},\"prompt_tokens\":4799,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5139}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"alias\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u90a3\\u4e2a\\u4eba\\u540d\\u5199\\u9519\\u4e86\\uff0c\\u5e94\\u8be5\\u662f\\u6797\\u6d32\\uff0c\\u4e0d\\u662f\\u6797\\u821f\\uff0c\\u4ee5\\u540e\\u6309\\u6797\\u6d32\\u8fd9\\u4e2a\\u540d\\u5b57\\u6765\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"e4d8d50d-7fc3-4a29-b6f8-dd1fbb4f96a3\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u6d32\\\",\\\"kind\\\":\\\"person\\\"},\\\"alias_of\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":340,\"completion_tokens_details\":{\"reasoning_tokens\":207},\"prompt_tokens\":4799,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5139}}",
+          "model_result_hash": "8cc437ef8f91925f9af724ba7ab42674445e385a04dd47d7c1173620dfc30179",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"cognitions\":[{\"action\":\"correct\",\"prior_entity_id\":\"entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f\",\"reason\":\"name_corrected\",\"replacement_entity_id\":\"entity-c96124babc18a4f7dee5afe707ce7bf67bcf0aa8da8de1bc73162efdf1664a4e\",\"statement_kind\":\"alias\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+          "result_hash": "e51b794998ebf9794844321135d843e3000eab5535df5d709f9153dca45f3afd",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:21:28.982Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:156fe13f2c32b1f495e161ff41d9ec98:ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"evidence_count\":1,\"evidence_manifest_hash\":\"dda7283ac5a18bd3657badcd7ecec5fdaa47168fffe1392bca163ce11880bddf\",\"formal_target_hash\":\"b35ae8e905dd66c5c333b04071901eb7054191eb62d9984e15878540912d2b64\",\"job_id\":\"memory-world-job-3a4b3cc2b626c754eae9fc22269b18f8f00517457e1de631cd635d6c933ba30d\",\"job_state\":\"pending\",\"payload_hash\":\"ec5f620c5622c9f2acf732511610d8390b05f348291801b3576c3f0aeead83d8\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "766fe31edd5a9d3be42d4d98779cb1ffe77253d4a76c78692dd2caf10d261e63",
+          "created_at": "2026-10-09T15:21:28.982Z",
+          "completed_at": "2026-10-09T15:21:40.460Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-6b505d8d139b9b63076781c2e3d6baf11fdacc99ed2d230a714b2604f37087c0",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:a25ea312d02701ac1f698c3b4b49cdbf:0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30",
+          "boundary_payload_hash": "0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-4ee604ac-084a-4dd0-9356-ebff54b4c29a",
+          "result_session_id": "session-4ee604ac-084a-4dd0-9356-ebff54b4c29a",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-4ee604ac-084a-4dd0-9356-ebff54b4c29a\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-4ee604ac-084a-4dd0-9356-ebff54b4c29a\",\"subject_id\":\"owner-00221a04-e969-44f6-88b0-73eae53afd14\"}",
+          "formal_target_hash": "6a97cd9aad20a0cb4f8d2ec0112ad1e9b0bcba378fc43ca31cd85ca83996e392",
+          "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"53533b63-e1e0-4afa-9b87-eb9741bc1ba2\"]",
+          "state": "no_change",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:21:45.446Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:21:45.458Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:21:45.468Z",
+          "model_completed_at": "2026-10-09T15:21:45.478Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": null,
+          "model_usage_json": null,
+          "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:21:45.426Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:a25ea312d02701ac1f698c3b4b49cdbf:0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30\",\"evidence_count\":1,\"evidence_manifest_hash\":\"de02356b055d0438aea66cf1d82f1865a5f90a1a90bff9c6968231dd04625c74\",\"formal_target_hash\":\"6a97cd9aad20a0cb4f8d2ec0112ad1e9b0bcba378fc43ca31cd85ca83996e392\",\"job_id\":\"memory-world-job-6b505d8d139b9b63076781c2e3d6baf11fdacc99ed2d230a714b2604f37087c0\",\"job_state\":\"pending\",\"payload_hash\":\"0a3ee9f29a4fee06e1c5a161ca16dc8cb01a9e64eb5229f05c296962e5470b30\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "2eaebf711801e6db1d76c3041891c294ecdb6a8d2a3d5722955d669efb2bbef3",
+          "created_at": "2026-10-09T15:21:45.426Z",
+          "completed_at": "2026-10-09T15:21:45.478Z",
+          "last_error_type": null,
+          "terminal_state": "no_change",
+          "terminal_detail": null
+        }
+      ],
+      "cognition": [
+        {
+          "id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+          "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "content": "用户陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+          "content_type": "naming",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": "2026-10-09T15:21:40.460Z",
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:21:05.620Z",
+          "updated_at": "2026-10-09T15:21:40.460Z"
+        },
+        {
+          "id": "cognition-684a78a6ae9dad9ab769e8cf81e48ee230c2c1ce050c0e4a942db194499fa384",
+          "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "content": "用户每次报名都找他。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": null,
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:21:05.620Z",
+          "updated_at": "2026-10-09T15:21:05.620Z"
+        },
+        {
+          "id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+          "subject_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "content": "用户陶艺兴趣组的固定联系人叫林洲，每次报名都找他。",
+          "content_type": "naming",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": null,
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:21:05.620Z",
+          "updated_at": "2026-10-09T15:21:40.460Z"
+        }
+      ],
+      "cognition_transitions": [
+        {
+          "id": "cognition-transition-446e4dc30753561b8c78afa2a185e833936ec6efffc5ed246be71d39efcb01ba",
+          "prior_cognition_id": "cognition-e024f22569a0e7cba511dcba5c2e4bb87deb88b42d02b02b67a6d9832c58716c",
+          "replacement_cognition_id": "cognition-58fd73b48be698bdd9cdd344d621c165",
+          "reason": "name_corrected",
+          "revision": 2
+        }
+      ],
+      "relationship": [],
+      "entity": [
+        {
+          "id": "entity-e261ded6339c8c20d591be4357447bfef414f1d09305fcefd5133ff4c717bb7f",
+          "world_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "kind": "person",
+          "canonical_name": "林舟",
+          "invalid_at": "2026-10-09T15:21:40.460Z",
+          "created_at": "2026-10-09T15:21:05.620Z",
+          "updated_at": "2026-10-09T15:21:40.460Z",
+          "aliases_json": "[]"
+        },
+        {
+          "id": "entity-c96124babc18a4f7dee5afe707ce7bf67bcf0aa8da8de1bc73162efdf1664a4e",
+          "world_id": "owner-00221a04-e969-44f6-88b0-73eae53afd14",
+          "kind": "person",
+          "canonical_name": "林洲",
+          "invalid_at": null,
+          "created_at": "2026-10-09T15:21:40.460Z",
+          "updated_at": "2026-10-09T15:21:40.460Z",
+          "aliases_json": "[]"
+        }
+      ]
+    },
+    "endedAt": "2026-10-09T15:21:49.942Z"
+  }
+]

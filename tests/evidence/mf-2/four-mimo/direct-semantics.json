@@ -1,0 +1,114 @@
+{
+  "input": "D:\\AIProjects\\WeftMate\\Worktrees\\w5\\tests\\evidence\\mf-2\\four-mimo\\four-mimo.json",
+  "results": [
+    {
+      "id": "memory-01-preference",
+      "originalStatus": "failed",
+      "originalReason": "memory_used did not match expected value; POST /models/private-model-19b6f9681b01293e6ec775ff48681398e163ef22/chat/completions: HTTP 503 BACKEND_UNAVAILABLE",
+      "semantic": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 32,
+          "prompt_tokens": 1018,
+          "total_tokens": 1050,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复为中文，先用买菜/冰箱例子解释缓存，再讲原理，符合要求。\"}",
+        "status": "passed",
+        "reason": "回复为中文，先用买菜/冰箱例子解释缓存，再讲原理，符合要求。"
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [],
+      "answer": "缓存这事，先用买菜打个比方。\n\n## 先讲买菜的小例子\n\n你家离超市有三公里，天天跑超市买菜太累了。于是你在楼下冰箱里常备几样：鸡蛋、牛奶、常喝的可乐。\n\n- **冰箱 = 缓存**，**超市 = 真正的数据源头**（硬盘、数据库、网站服务器）。\n- 冰箱里有的菜，直接拿，几秒钟搞定；没有的才跑超市，买回来顺手往冰箱里放一份，下次就能直接拿了。\n- 冰箱的问题也全跟真超市对不上有关：超市涨价了，你冰箱里贴的旧价签就是错的（**数据过期**）；冰箱塞满了，得先扔掉不常用的（**缓存淘汰**）；你把可乐喝完了冰箱里却还记着有（**脏数据**）。\n\n缓存的本质一句话：**在快但小的地方存一份副本，让常用的东西不用去慢但大的地方找。** 代价就是这份额外的副本需要维护——什么时候放、放多久、什么时候扔。\n\n## 再讲原理\n\n**1. 为什么有效：因为\"重复\"**\n\n数据访问有个规律——刚用过的东西很快会再用（时间局部性），用到的东西旁边的也容易被用到（空间局部性）。既然如此，把最近/最常用的留在手边，命中率就高。\n\n**2. 为什么值得：因为存储是一层套一层的金字塔**\n\n| 层 | 速度 | 容量/成本 | 例子 |\n|---|---|---|---|\n| CPU 缓存 | ~1 纳秒 | 极小极贵 | L1/L2/L3 |\n| 内存 | ~100 纳秒 | 中等 | 8GB/32GB |\n| 硬盘/网络 | ~毫秒~秒级 | 巨大便宜 | SSD、数据库、云 |\n\n快的存储又小又贵，慢的又大又便宜，谁也替代不了谁——所以工程上的标准做法就是**用小的快的给大的慢的当缓存**。CPU 访问内存比访问 L1 缓存慢约 100 倍，这 100 倍就是缓存存在的全部理由。\n\n**3. 三个核心指标和三个核心难题**\n\n- 指标：**命中率**（要的东西缓存里有多少比例能找到）、**命中后省了多少时间**、**缓存占了多少空间**。\n- 难题：**放什么**（LRU 之类，淘汰最久没用的）、**何时失效**（定时过期 vs 主动通知，数据库一变就把相关缓存删掉）、**一致性**（缓存和源头谁说了算——一般以源头为准，缓存只敢\"信一段时间\"）。\n\n**4. 生活里你天天在用的缓存**\n\n- 浏览器缓存：网站图片存本地，第二次打开秒开；所以\"强制刷新\"（Ctrl+F5）才能看到更新的网页——它就是逼浏览器把缓存扔了重买。\n- 手机 App 缓存：聊天记录、图片先存本地，断网也能看，但时间久了占内存，得\"清缓存\"。\n- 服务器常用的 Redis：把数据库查询结果放内存里，扛住高并发，别什么都去查数据库。\n\n**一句话总结**：缓存 = 复印件放在手边。复印件好用是因为拿得快，麻烦是因为原件一改你就得跟着改，改不过来就会看到过期的东西——你遇到过的\"怎么改了还没生效\"\"要清一下缓存\"，全是这一个问题的两面。"
+    },
+    {
+      "id": "memory-02-correction",
+      "originalStatus": "failed",
+      "originalReason": "POST /models/private-model-19b6f9681b01293e6ec775ff48681398e163ef22/chat/completions: HTTP 503 BACKEND_UNAVAILABLE",
+      "semantic": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 27,
+          "prompt_tokens": 268,
+          "total_tokens": 295,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复以周五晚上为当前空闲时间安排，未把周三当当前事实。\"}",
+        "status": "passed",
+        "reason": "回复以周五晚上为当前空闲时间安排，未把周三当当前事实。"
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [
+        {
+          "id": "cognition-edc73982316d0b85161825821e594cb56f198b1457a4c747fcb7f6d2a455f61b",
+          "kind": "cognition",
+          "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+        }
+      ],
+      "answer": "按你现在的空闲时间，放在**下周五晚上（10月16日）**最合适——你固定空出来的是周五晚上，一周练一次刚好接上周末可以休息。\n\n已给你建好提醒：**2026年10月16日（周五）20:00** 提醒\"周五晚上锻炼时间到了，去运动吧\"。想换时间或改成其他内容，跟我说一声就行。"
+    },
+    {
+      "id": "memory-03-switch-model",
+      "originalStatus": "passed",
+      "semantic": {
+        "status": "skipped",
+        "reason": "No semantic criterion declared."
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [
+        {
+          "id": "cognition-edc73982316d0b85161825821e594cb56f198b1457a4c747fcb7f6d2a455f61b",
+          "kind": "cognition",
+          "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+        }
+      ],
+      "answer": "你好小禾！\n\n今天事情多、节奏紧的时候，先给自己一个小小的肯定：你已经把待办一件件捡起来了，这本身就很了不起。喝口水、深呼吸三秒，把最紧急的那件先拆成“下一步就能动手”的小动作，完成后给自己一个微小的庆祝，剩下的会跟着动起来。\n\n我陪你把今天稳稳过完，有需要就叫我。"
+    },
+    {
+      "id": "memory-04-person",
+      "originalStatus": "failed",
+      "originalReason": "POST /models/private-model-19b6f9681b01293e6ec775ff48681398e163ef22/chat/completions: HTTP 503 BACKEND_UNAVAILABLE",
+      "semantic": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 32,
+          "prompt_tokens": 240,
+          "total_tokens": 272,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"开场白自然联系了周六碰面、秋季展览海报进度，未捏造其他关系或事项。\"}",
+        "status": "passed",
+        "reason": "开场白自然联系了周六碰面、秋季展览海报进度，未捏造其他关系或事项。"
+      },
+      "behaviorPass": true,
+      "formalMemoryUsed": [
+        {
+          "id": "cognition-edc73982316d0b85161825821e594cb56f198b1457a4c747fcb7f6d2a455f61b",
+          "kind": "cognition",
+          "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+        }
+      ],
+      "answer": "小禾，给你一句自然点的开场白：\n\n> 阿岚，周六碰面聊展览的事，你海报现在做到哪一步啦？我这边也想跟你对对进度，看看有没有要调整的地方。\n\n如果想更随意一点，也可以发这版：\n\n> 阿岚，周六约起～海报那边进展咋样了，先跟我透个底😄"
+    }
+  ],
+  "behaviorPassed": 4,
+  "total": 4
+}

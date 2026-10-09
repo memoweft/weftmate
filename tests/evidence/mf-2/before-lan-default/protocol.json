@@ -1,0 +1,64 @@
+{
+  "protocol": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+  "cases": [
+    {
+      "id": "qa2-01-water",
+      "turns": [
+        "我养的阳台盆栽每次浇水用300毫升，这是我现在固定的用量。",
+        "前面那个数报大了，应当是150毫升，300毫升作废，后面都以小的这个数为准。",
+        "今天给阳台盆栽浇水，该量多少？"
+      ],
+      "current": "150",
+      "rejected": "300",
+      "rubric": "采用每次150毫升；不得把300毫升作为当前用量。"
+    },
+    {
+      "id": "holdout-time",
+      "turns": [
+        "我每周的线上读书会固定在周四晚上19点30分开始。",
+        "刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+        "这周四的线上读书会几点开始？"
+      ],
+      "current": "20[：:]?15|20点15|八点十五",
+      "rejected": "19[：:]?30|19点30|七点半",
+      "rubric": "明确回答周四20:15（晚上八点十五）开始，不能仍采用19:30。"
+    },
+    {
+      "id": "holdout-name",
+      "turns": [
+        "我们陶艺兴趣组的固定联系人叫林舟，每次报名都找他。",
+        "那个人名写错了，应该是林洲，不是林舟，以后按林洲这个名字来。",
+        "我要报名陶艺兴趣组，该找谁？"
+      ],
+      "current": "林洲",
+      "rejected": "林舟",
+      "rubric": "报名应找林洲，不能把林舟作为当前正确姓名。"
+    },
+    {
+      "id": "holdout-price",
+      "turns": [
+        "我给邻居做的手工香皂固定每块卖48元。",
+        "上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+        "邻居买两块我做的手工香皂，一共多少钱？"
+      ],
+      "current": "72|七十二",
+      "rejected": "96|九十六",
+      "rubric": "用新单价36元计算两块共72元，不能按旧价48元算96元。"
+    },
+    {
+      "id": "holdout-address",
+      "turns": [
+        "以后我在星桥书社订的书都寄到青禾路18号。",
+        "前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+        "星桥书社这次寄书应该写哪个收件地址？"
+      ],
+      "current": "白榆路\\s*26号",
+      "rejected": "青禾路\\s*18号",
+      "rubric": "收件地址为白榆路26号，不能继续使用青禾路18号。"
+    }
+  ],
+  "sha256": "3eb325b5e2214632e4d83d8d48e0b219c74248d63d56f3534937c3d02fe118f1",
+  "model": "lan",
+  "settledMode": false,
+  "core": "C:\\temp\\weftmate-qa2-core\\py\\src"
+}
