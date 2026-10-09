@@ -105,9 +105,17 @@ public struct TimelineStep: Equatable, Sendable, Identifiable {
     public let seq: Int
     public var data: JSONValue
     public let at: String?
+    public var ordinal = 0
+    public var decision: String?
     public var endAt: String?
     public var summary: String { data["summary"]?.string ?? "工具执行" }
-    public var running: Bool { data["state"]?.string == "running" }
+    public var effectiveState: String? {
+        if data["state"]?.string == "failed" || data["jobState"]?.string == "failed" { return "failed" }
+        if data["state"]?.string == "cancelled" || data["jobState"]?.string == "killed" { return "cancelled" }
+        if ["running", "stopping"].contains(data["jobState"]?.string ?? "") { return "running" }
+        return data["state"]?.string
+    }
+    public var running: Bool { effectiveState == "running" }
     public var detailSeq: Int? { data["detailRef"]?["seq"]?.int }
 }
 public struct TimelineEntry: Equatable, Sendable, Identifiable {
@@ -117,6 +125,7 @@ public struct TimelineEntry: Equatable, Sendable, Identifiable {
     public var steps: [TimelineStep] = []
     public var resolved: TimelineEvent?
     public var running = false
+    public var stopped = false
     public var elapsed: String {
         func date(_ value: String?) -> Date? {
             guard let value else { return nil }
@@ -142,6 +151,7 @@ public enum TimelineProjection {
         let ordered = events.sorted { $0.seq < $1.seq }
         var result: [TimelineEntry] = [], steps: [String: (Int, Int)] = [:], cards: [String: Int] = [:]
         var group: Int?
+        var ordinals: [String: Int] = [:]
         let terminal = Set(ordered.compactMap { event -> String? in
             if event.type == "task.ended" { return event.data["taskId"]?.string }
             if event.type == "turn.ended", let turn = event.data["turn"]?.int { return "turn-\(turn)" }
@@ -161,13 +171,14 @@ public enum TimelineProjection {
                     }
                     let row = group!
                     steps[key] = (row, result[row].steps.count)
+                    ordinals[task, default: 0] += 1
                     result[row].steps.append(.init(id: key, taskID: task, seq: event.seq, data: event.data,
-                        at: event.type == "step.started" ? event.at : nil, endAt: event.type == "step.completed" ? event.at : nil))
+                        at: event.type == "step.started" ? event.at : nil, ordinal: ordinals[task]!, endAt: event.type == "step.completed" ? event.at : nil))
                 }
                 if raw.type != "artifact.created" { continue }
             }
             if ["task.started", "task.ended", "turn.started", "turn.ended"].contains(event.type) { continue }
-            group = nil
+            if !raw.type.hasPrefix("approval.") { group = nil }
             let family = raw.type.components(separatedBy: ".").first ?? ""
             if family == "approval" || family == "question" {
                 let key = family + ":" + (raw.data[family == "approval" ? "approvalId" : "callId"]?.string ?? raw.data["stepId"]?.string ?? String(raw.seq))
@@ -179,6 +190,19 @@ public enum TimelineProjection {
             }
         }
         for index in result.indices where !result[index].steps.isEmpty {
+            for stepIndex in result[index].steps.indices {
+                let step = result[index].steps[stepIndex]
+                let decision = ordered.last { $0.type == "approval.resolved" &&
+                    (($0.data["stepId"]?.string != nil && $0.data["stepId"]?.string == step.data["stepId"]?.string) ||
+                     ($0.data["callId"]?.string != nil && $0.data["callId"]?.string == step.data["callId"]?.string)) }
+                if let outcome = decision?.data["outcome"]?.string {
+                    result[index].steps[stepIndex].decision = outcome == "rejected" ? "已拒绝" : outcome == "allowed-once" ? "已批准" : nil
+                }
+            }
+            result[index].stopped = ordered.contains { event in
+                (event.type == "turn.ended" || event.type == "task.ended") && event.data["reason"]?.string == "aborted" &&
+                result[index].steps.contains { $0.taskID == event.data["taskId"]?.string || $0.taskID == "turn-\(event.data["turn"]?.int ?? -1)" }
+            }
             result[index].running = result[index].steps.contains { $0.running && !terminal.contains($0.taskID) }
         }
         return result.sorted { $0.seq < $1.seq }

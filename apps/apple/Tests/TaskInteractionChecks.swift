@@ -29,6 +29,8 @@ private actor InteractionHTTP: HTTPTransport {
         self.lostQuestion = lostQuestion; self.lostApproval = lostApproval; self.denyQuestions = denyQuestions
         self.withholdACK = withholdACK; self.oldSnapshot = oldSnapshot
     }
+    private var includeSecondApproval = false
+    func addSecondApproval() { includeSecondApproval = true }
     func submissions() -> ([Data], [Data]) { (approvalBodies, questionBodies) }
     func send(_ request: URLRequest) async throws -> HTTPResponse {
         let path = request.url!.path, method = request.httpMethod ?? "GET"
@@ -53,7 +55,7 @@ private actor InteractionHTTP: HTTPTransport {
         }
         if path.hasSuffix("/approvals") {
             if pause { await withCheckedContinuation { paused = $0 } }
-            return try json(["approvals": [approval(resolved: !oldSnapshot)], "hasMore": false]) }
+            return try json(["approvals": [approval(resolved: !oldSnapshot)] + (includeSecondApproval ? [secondApproval()] : []), "hasMore": false]) }
         if path.hasSuffix("/questions") {
             if denyQuestions { return try json(["error": ["code": "SOURCE_UNCONFIRMED"]], status: 403) }
             return try json(["questions": [question(resolved: !oldSnapshot && !withholdACK)], "hasMore": false])
@@ -76,6 +78,11 @@ private actor InteractionHTTP: HTTPTransport {
             row["decisionScope"] = decision["scope"] ?? "once"; row["decisionRequestId"] = decision["requestId"]; row["answeredAt"] = time
             if resolved { row["outcome"] = decision["outcome"]; row["resolvedAt"] = time }
         }
+        return row
+    }
+    private func secondApproval() -> [String: Any] {
+        var row = identity("approval-second", field: "approvalId")
+        row["riskCategories"] = ["execute"]; row["callId"] = "call-second"; row["toolName"] = "Synthetic"; row["reason"] = "Second synthetic approval"
         return row
     }
     private func question(resolved: Bool) -> [String: Any] {
@@ -122,6 +129,7 @@ private actor InteractionHTTP: HTTPTransport {
         let model = makeModel()
         await model.refresh(snapshot)
         try require(model.approvals.count == 1 && model.questions.count == 1, "Prompt projection failed")
+        try require(model.pendingApprovals.count == 1, "Verified pending approval missing from composer queue")
         print("PASS 1 same task and source receipt")
 
         await transport.pauseRead()
@@ -156,6 +164,7 @@ private actor InteractionHTTP: HTTPTransport {
 
         await reopened.decide(reopened.approvals[0], outcome: .allowedOnce)
         try require(reopened.approvals[0].status == .resolved && snapshot.replyEvidence.status == .blocked, "Decision was confused with task completion")
+        try require(reopened.pendingApprovals.isEmpty, "Registered approval did not disappear")
         print("PASS 5 decision confirmation remains separate from task completion")
 
         await transport.configure(oldSnapshot: true)
@@ -193,6 +202,7 @@ private actor InteractionHTTP: HTTPTransport {
         await firstCategory.refresh(categorySnapshot)
         await categoryHTTP.configure(lostApproval: true)
         await firstCategory.decide(firstCategory.approvals[0], outcome: .allowedOnce, decisionScope: .conversationCategory)
+        try require(firstCategory.pendingApprovals.count == 1, "Uncertain approval disappeared before matched receipt")
         let categoryKey = "approval:approval-check"
         try require(firstCategory.responseNeedsReadback(categoryKey), "Lost category POST was not retained")
         let reloadedCategory = categoryModel()
@@ -203,6 +213,17 @@ private actor InteractionHTTP: HTTPTransport {
         try require(categoryPosts.count == 2 && categoryPosts[0] == categoryPosts[1], "Category retry changed request/outcome/scope bytes")
         try require(reloadedCategory.approvals[0].decisionSummary == "已允许 · 运行脚本 · 本对话总是允许此类", "Resolved category summary is incorrect")
         print("PASS 10 category scope survives lost response and journal reopen with exact retry bytes")
-        print("TaskInteractionChecks: 10/10 passed; journal=" + directory.path)
+        let queueHTTP = InteractionHTTP()
+        await queueHTTP.addSecondApproval()
+        let queueClient = PersonalClient(credentialStore: InteractionCredentials(), transport: queueHTTP)
+        let queueSession = try await queueClient.login(server: ServerConfiguration(input: "https://interaction.unit.example:8443"), username: "fixture", password: "synthetic-only", deviceName: "Synthetic")
+        let queueModel = TaskInteractionModel(client: queueClient, account: queueSession, epoch: context.epoch,
+            stateDirectory: directory.appendingPathComponent("queue"), currentEpoch: { context.epoch }, currentSession: { queueSession })
+        await queueModel.refreshTimeline(sessionID: "session-check")
+        try require(queueModel.pendingApprovals.count == 2 && queueModel.pendingApprovals.first?.id == "approval-check", "Approval queue ordering incorrect")
+        await queueModel.decide(queueModel.pendingApprovals[0], outcome: .allowedOnce)
+        try require(queueModel.pendingApprovals.count == 1 && queueModel.pendingApprovals.first?.id == "approval-second", "Next approval did not replace registered first item")
+        print("PASS 11 two-item queue advances after matched receipt")
+        print("TaskInteractionChecks: 11/11 passed; journal=" + directory.path)
     }
 }

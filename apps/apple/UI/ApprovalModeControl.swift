@@ -25,7 +25,7 @@ struct ApprovalModeControl: View {
                         .lineLimit(2).fixedSize(horizontal: false, vertical: true)
                     WeftIcon("chevron", size: 16).font(AppleTokens.Fonts.caption)
                     if busy { ProgressView().controlSize(.mini) }
-                }.font(AppleTokens.Fonts.caption).foregroundStyle(Weave.ink)
+                }.font(AppleTokens.Fonts.caption).foregroundStyle(settings?.mode == .allowAll ? Weave.danger : Weave.ink)
             }
             .buttonStyle(OutlineActionStyle())
             .disabled(busy || !isVerified)
