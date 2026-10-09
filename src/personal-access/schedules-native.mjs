@@ -88,10 +88,12 @@ export async function createNativeScheduleManager({ ctx, native, file, request, 
     const text = `${missed ? `错过了 ${local} 的${row.kind === 'task' ? '定时任务' : '提醒'}，现在补${row.kind === 'task' ? '执行' : '提醒'}：` : row.kind === 'task' ? '定时任务：' : '提醒：'}${row.text}`;
     if (row.kind === 'task') await request({ action: 'execute', sessionId: agent.id, text: `现在执行定时任务：${row.text}`, deliveryId, sourceReceiptId: row.sourceReceiptId });
     const message = native.createUserMessage({ content: [{ type: 'text', text }], source: { kind: 'plugin', plugin: 'weftmate-reminder' } });
-    agent.session.append('user/message', message, { surfaceOp: 'append' });
+    const delivered = agent.session.append('user/message', message, { surfaceOp: 'append' });
     await ctx.sessions.flush(agent.session);
+    const messageSeq = delivered?.seq ?? agent.session.events.findLast(event => event.type === 'user/message' && (event.data?.id ?? event.data?.message?.id) === message.id)?.seq;
     bucket(agent.id).notifications.push({ id: notificationId, text, kind: row.kind, scheduledAt: occurrenceAt,
-      createdAt: new Date(clock()).toISOString(), missed, messageId: message.id });
+      createdAt: new Date(clock()).toISOString(), missed, messageId: message.id,
+      ...(Number.isSafeInteger(messageSeq) ? { seq: messageSeq } : {}) });
     row.lastRunAt = new Date(clock()).toISOString();
   }
   async function due(agent) {
