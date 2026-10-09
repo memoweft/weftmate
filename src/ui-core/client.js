@@ -17,6 +17,8 @@ globalThis.WeftUiCore.factories.client = (core) => {
         readChatDates: (id, from, to) => core.accessApi(`/chats/${encodeURIComponent(id)}/dates?${new URLSearchParams({ from, to })}`),
         locateChatDate: (id, date) => core.accessApi(`/chats/${encodeURIComponent(id)}/locate?${new URLSearchParams({ date })}`),
         searchChat: (id, params) => core.accessApi(`/chats/${encodeURIComponent(id)}/search?${new URLSearchParams(params)}`),
+        createSideChat: body => write('/commands', { ...body, kind: 'session.side.create' }),
+        shareSideChatResult: (id, body) => write(`/chats/${encodeURIComponent(id)}/results`, body),
         readProfile: () => core.api('/me'),
         saveProfile: body => authWrite('/profile', body, 'PATCH'),
         readDevices: () => core.api('/devices'),

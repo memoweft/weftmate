@@ -1,0 +1,20 @@
+{
+  "checkedAt": "2026-10-09T17:53:05.073Z",
+  "fixedDsh": true,
+  "realElectronHost": true,
+  "syntheticAccount": true,
+  "randomPorts": true,
+  "createIdempotent": true,
+  "noCopiedOrExecutedSourceMessage": true,
+  "contextTransfer": "references_only",
+  "independentNativeSession": true,
+  "actualToolTaskCompleted": true,
+  "resultState": "completed",
+  "mainCardHasNoNativeSeq": true,
+  "explicitAndAutomaticShareSameIdentity": true,
+  "sharedActivityIdentity": true,
+  "mainHasNoModelSession": true,
+  "summaryDisplayCharacters": 12,
+  "modelUsageRecordedIn": "identity-native.json",
+  "note": "No renderer changes, no relay or D33 multi-segment cleanup enabled."
+}

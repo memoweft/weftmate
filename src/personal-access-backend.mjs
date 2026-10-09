@@ -158,7 +158,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
       } else fail('INVALID_COMMAND')
       return { ok: true }
     },
-    async createSession({ sessionId, modelProfileId, ownerId, project }) {
+    async createSession({ sessionId, modelProfileId, ownerId, project, title }) {
       requireRuntime()
       if (typeof sessionId !== 'string' || !idPattern.test(sessionId)) fail('SESSION_UNAVAILABLE')
       const preset = presetForOwner(ownerId)
@@ -181,6 +181,7 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         await gateway(`/sessions/${encodeURIComponent(sessionId)}/models`, { method: 'PUT',
           body: JSON.stringify({ provider: route.provider, model: profile.model,
             ...(profile.reasoningEffort && profile.reasoningEffort !== 'off' ? { reasoningEffort: profile.reasoningEffort } : {}) }) })
+        if (title) await gateway(`/sessions/${encodeURIComponent(sessionId)}/rename`, { method: 'POST', body: JSON.stringify({ title }) })
         return { sessionId }
       })
     },

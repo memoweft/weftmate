@@ -1,0 +1,34 @@
+{
+  "checkedAt": "2026-10-09T17:55:55.572Z",
+  "model": "mimo-v2.6-flash",
+  "scope": "All three native-host runs in this IA-2a continuation, including one failed validation",
+  "runs": [
+    {
+      "label": "history-native-pass",
+      "requests": 2,
+      "inputTokens": 2252,
+      "cachedInputTokens": 0,
+      "outputTokens": 62
+    },
+    {
+      "label": "side-native-source-boundary-failure",
+      "requests": 5,
+      "inputTokens": 14431,
+      "cachedInputTokens": 7872,
+      "outputTokens": 347
+    },
+    {
+      "label": "side-native-pass",
+      "requests": 4,
+      "inputTokens": 10552,
+      "cachedInputTokens": 5184,
+      "outputTokens": 226
+    }
+  ],
+  "total": {
+    "requests": 11,
+    "inputTokens": 27235,
+    "cachedInputTokens": 13056,
+    "outputTokens": 635
+  }
+}
