@@ -8,6 +8,9 @@
 .offline-message{max-width:72ch;margin:var(--wm-space-20) auto;overflow-wrap:anywhere}
 .offline-message span{font-size:var(--wm-font-size-14);font-weight:600}
 .offline-message p{white-space:pre-wrap;line-height:1.6;margin:var(--wm-space-8) 0}
+.offline-message-body{white-space:pre-wrap;line-height:var(--wm-line-height-1_6);margin:var(--wm-space-8) 0}
+.offline-message-body pre,.offline-message-body .table-scroll{max-width:100%;overflow:auto}
+.offline-chat button,.offline-launcher{text-decoration:none}
 .offline-message.user{padding:var(--wm-space-12);background:var(--surface,var(--card));border-radius:var(--wm-radius-12)}
 .offline-empty{max-width:36ch;margin:var(--wm-space-24) auto;line-height:1.6}
 .offline-composer{max-width:72ch;width:100%;margin:0 auto;padding-bottom:var(--wm-space-12);display:grid;grid-template-columns:1fr auto;gap:var(--wm-space-8)}

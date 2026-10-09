@@ -33,3 +33,5 @@ M3-A 不接受电脑执行任务；D17 / D40 的加密任务暂存属于 S7。�
 ## 验证与交付边界
 
 测试使用合成账号、临时目录、随机端口、本地云与中继；不触碰日用宿主、8081 或生产云。覆盖密文篡改／错设备、权限过滤、增量、遗忘／撤权清理和旧补交拒绝、补交幂等及只发送相关记忆。真实桌面宿主、手机网页、MuMu（安卓模拟器）和 MiMo 走在线同步→宿主关闭→记忆问答→新偏好→上线补交形成→新对话召回→遗忘流程。实际通过项、未通过项及用量以本包证据和结果文件为准。
+
+实现参考：[Android Keystore MGF1 参数](https://developer.android.com/reference/android/security/keystore/KeyGenParameterSpec.Builder#setMgf1Digests(java.lang.String...))说明旧平台参数差异；本包用 Keystore AES 包裹设备私钥，保持线上的 RSA-OAEP-256 格式。

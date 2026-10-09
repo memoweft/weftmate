@@ -44,7 +44,9 @@
         const rows = [...(recent?.messages || conversation?.context || []), ...(conversation?.turns || []).flatMap(t => t.messages)];
         for (const message of rows) {
           const row = element('article', '', `offline-message ${message.role}`);
-          row.append(element('span', message.role === 'user' ? '我' : 'WeftMate'), element('p', message.text)); messages.append(row);
+          const body = element('div', message.text, 'offline-message-body');
+          if (message.role === 'assistant' && globalThis.WeftFormat?.render) body.innerHTML = globalThis.WeftFormat.render(message.text);
+          row.append(element('span', message.role === 'user' ? '我' : 'WeftMate'), body); messages.append(row);
         }
       }
       async function start(current) {
