@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # MF-2 elliptical-correction candidate; replace after Claude squash.
-          ref: 23d238e20e9dcb5351e1a65e91cef8246cb2c795
+          ref: 3fec305b87b9857324b0db7e1db408993321ac93
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
