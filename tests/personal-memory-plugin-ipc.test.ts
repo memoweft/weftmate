@@ -9,6 +9,30 @@ const ownerA = 'owner-00000000-0000-4000-8000-000000000001'
 const ownerB = 'owner-00000000-0000-4000-8000-000000000002'
 const formal = 'personal-local-occamy-miniplus-v21'
 
+test('private-to-ordinary policy filters both pre-step and the later native derived request', async () => {
+  const child = fork(new URL('fixtures/personal-memory-plugin-child.mjs', import.meta.url), ['--privacy-only'], {
+    env:{...process.env,WEFTMATE_PERSONAL_MEMORY_ENABLED:'1'},stdio:['ignore','ignore','ignore','ipc'],windowsHide:true,
+  });
+  try {
+    const result: any = await new Promise((resolve,reject)=>{
+      const timer=setTimeout(()=>reject(new Error('private plugin timeout')),12000);
+      child.on('message',(message:any)=>{
+        if(message.type==='ready') child.send({type:'run-private'});
+        else if(message.type==='result'){clearTimeout(timer);resolve(message);}
+        else if(message.type==='failed'){clearTimeout(timer);reject(new Error('private plugin failed'));}
+        else if(message.protocol==='weftmate.personal-memory.v1') child.send({protocol:message.protocol,id:message.id,ok:true,
+          result:{state:'ready',contextText:'EXISTING_ORDINARY_MEMORY',memoryPolicy:{ingest:true,recall:true,resetContext:true,contextStartTurn:3}}});
+      });
+      child.once('error',reject);
+    });
+    for(const rows of [result.preStep,result.derived]) {
+      assert.ok(!JSON.stringify(rows).includes('PRIVATE_HISTORY_SENTINEL'));
+      assert.ok(JSON.stringify(rows).includes('EXISTING_ORDINARY_MEMORY'));
+      assert.ok(rows.some((row:any)=>row.id==='user-ordinary'));
+    }
+  } finally { child.kill(); }
+});
+
 test('forked plugin hook callbacks use owner-bound IPC and replace stale account memory', async () => {
   const accounts = {
     [ownerA]: { sessions: { 'session-a': { origin: 'shared-chat', modelProfileId: formal },

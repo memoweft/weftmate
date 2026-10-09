@@ -1,3 +1,4 @@
+import { memorySettings } from './temporary-chats.mjs';
 import { randomUUID } from 'node:crypto';
 import { bounded, digest, exactKeys, failure, validId } from './common.mjs';
 import { chatForSession } from './chat-identity.mjs';
@@ -20,7 +21,7 @@ export function createChatOperations(context) {
       ...(session?.sideChat ? { originRefs: session.sideChat.contextTransfer.sourceRefs,
         contextTransfer: session.sideChat.contextTransfer } : {}),
       deepThinking: chat.deepThinking ?? session?.deepThinking ?? false,
-      timeZone: identity.timeZone, memoryMode: session?.memoryMode ?? 'on',
+      timeZone: identity.timeZone, ...memorySettings(session),
       parent: chat.kind === 'main' ? null : session?.projectId
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };
     if (!session) return { ...base, title: 'WeftMate', pinned: true, archived: false,
@@ -57,7 +58,7 @@ export function createChatOperations(context) {
   return {
     requireChat, view,
     async metadata(ownerId, chatId, body) {
-      exactKeys(body, ['requestId', 'expectedRevision', 'unread', 'title', 'pinned', 'groupId', 'projectId'], ['requestId', 'expectedRevision']);
+      exactKeys(body, ['requestId', 'expectedRevision', 'unread', 'title', 'pinned', 'groupId', 'projectId', 'memoryMode', 'recallEnabled', 'autoDeleteDays'], ['requestId', 'expectedRevision']);
       if (typeof body.requestId !== 'string' || !REQUEST_ID.test(body.requestId) || !Number.isSafeInteger(body.expectedRevision) || body.expectedRevision < 1) throw failure('INVALID_REQUEST');
       const fingerprint = digest(JSON.stringify({ chatId, ...Object.fromEntries(Object.entries(body).sort(([a], [b]) => a.localeCompare(b))) }));
       return context.serial(async () => {

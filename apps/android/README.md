@@ -104,3 +104,5 @@ adb -s <confirmed-serial> shell am instrument -w -e class com.memoweft.weftmate.
 连接页可输入电脑设置中复制的一次性配对码，再点「用 WeftMate 账号登录」。WebView 不承载云密码页面：系统浏览器完成 Code+PKCE 和邮件确认，通过 `com.memoweft.weftmate:/oauth` 返回应用。云端预登记 weftmate-android 的上述回调。配对码提供内容 TLS pin；所有原生宿主请求在系统 CA/域名验证后校验 SPKI，刷新凭据与 Cookie 使用现有 Keystore 加密设置。扫码相机另包，不新增权限。
 
 GitHub `S1c Web and Android / Android debug and JVM tests` 执行 Gradle 8.9、Java 17 的 `:app:assembleDebug :app:testDebugUnitTest`，包括回调路径/重复或不匹配 state 的 JVM 测试。本机无 SDK 时使用此 runner，不重建开发环境。系统浏览器返回和实际 TLS pin 的 Android 真机测试仍需隔离模拟器/测试设备。手机 UI 发布需 `--min-native-version-code 15`。
+
+MEM-2壳 **0.8.13 / code26** 增加临时对话业务路由 `/sessions/temporary`。界面包含入口、标题提示、记忆 / 召回开关和期限；宿主历史 `cacheAllowed:false` 时不保存为离线历史。发布此界面包最低code26。
