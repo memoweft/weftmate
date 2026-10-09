@@ -179,6 +179,18 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         if (core.state.refreshTimer)
             clearInterval(core.state.refreshTimer);
         core.state.refreshTimer = null;
+        clearInterval(core.state.liveRefreshTimer);
+        core.state.liveRefreshTimer = null;
+    }
+    async function refreshLiveConversation() {
+        if (core.state.liveRefreshing || !core.state.csrfToken) return;
+        core.state.liveRefreshing = true;
+        try {
+            // Receipts and native history control the composer. Model settings,
+            // host diagnostics and the complete session list must not delay them.
+            await Promise.all([core.refreshTasks(), core.refreshHistory()]);
+            await core.refreshConversationTasks();
+        } finally { core.state.liveRefreshing = false; }
     }
     async function refreshAssistant() {
         if (core.state.refreshing || !core.state.csrfToken)
@@ -375,5 +387,5 @@ globalThis.WeftUiCore.factories.shell = (core, effects, environment) => {
         }
         effects.paintScreen(view);
     }
-    return { failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshAssistant, enterAssistant, load, clearSession, show };
+    return { failureMessage, requestJson, accessApi, acceptSession, accountToken, accountCurrent, setOnline, operation, refreshStatus, refreshModels, stopAssistantRefresh, refreshLiveConversation, refreshAssistant, enterAssistant, load, clearSession, show };
 };

@@ -44,6 +44,61 @@ test('D35 progress uses real kinds/objects and prioritizes failure and stopped s
   assert.equal(api.executionDetailText('plain output'), 'plain output');
 });
 
+test('FX-10 native turn history makes stop usable before the session list catches up and removes it on terminal evidence', async () => {
+  const f = fixture()
+  f.core.appendHistory([{sessionId:'session-test',seq:1,type:'turn.started',data:{}}])
+  assert.equal(f.core.state.sessions[0].running, false)
+  assert.equal(f.core.composerState('').running, true)
+  assert.equal(f.core.composerState('').cancelDisabled, false)
+  assert.ok(f.paints.some(row => row.name === 'updateAvailability'))
+  let stopped = false
+  f.core.submitCommand = async (kind: string) => { stopped = kind === 'session.cancel'; return {state:'accepted_by_dsh'} }
+  await f.core.stopCurrentTurn()
+  assert.equal(stopped, true)
+  f.core.state.sessions[0].running = true
+  f.core.appendHistory([{sessionId:'session-test',seq:2,type:'turn.ended',data:{reason:'completed'}}])
+  assert.equal(f.core.composerState('').running, false)
+  assert.equal(f.core.composerState('').cancelHidden, true)
+  f.core.beginOptimistic({sessionId:'session-test',requestId:'queued',status:'accepted'})
+  assert.equal(f.core.composerState('').running, false, 'accepted/queued receipt is not running evidence')
+})
+
+test('FX-10 live conversation reads remain independent of slow host/model refresh and coalesce overlapping ticks', async () => {
+  const f = fixture(), host = deferred(), history = deferred()
+  f.core.refreshStatus = () => host.promise
+  let histories = 0, receipts = 0
+  f.core.refreshHistory = async () => { histories++; await history.promise }
+  f.core.refreshTasks = async () => { receipts++ }
+  f.core.refreshConversationTasks = async () => {}
+  const background = f.core.refreshAssistant()
+  const live = f.core.refreshLiveConversation()
+  await f.core.refreshLiveConversation()
+  assert.equal(histories, 1)
+  assert.equal(receipts, 1)
+  history.resolve(undefined); await live
+  f.core.refreshModels = f.core.refreshSessions = f.core.restoreRequests = async () => {}
+  host.resolve(undefined); await background
+  assert.equal(f.core.state.liveRefreshing, false)
+})
+
+test('FX-10 an accepted new session delivers its first message while an older session list is still loading', async () => {
+  const sessions = deferred()
+  const f = fixture((_url, options) => {
+    const body = JSON.parse(options.body)
+    return response({command:{...body, sessionId:'session-new',state:'accepted_by_dsh',receiptId:'native-new'}})
+  })
+  f.core.refreshSessions = () => sessions.promise
+  f.core.refreshTasks = f.core.refreshHistory = async () => {}
+  f.core.selectSession = async (id: string) => { f.core.state.selectedSessionId=id; f.core.state.newConversation=false }
+  f.core.startNewConversation()
+  const sent = f.core.sendDraft('first message')
+  try {
+    await Promise.race([sent,new Promise(resolve=>setTimeout(resolve,100))])
+    assert.deepEqual(f.requests.filter(r=>r.options.method==='POST').map(r=>JSON.parse(r.options.body).kind), ['session.create','session.message'])
+    assert.equal(f.core.state.selectedSessionId,'session-new')
+  } finally { sessions.resolve(undefined); await sent }
+})
+
 test('D35 chronology splits only at visible conversation boundaries and approvals stay on their own step', () => {
   const { api } = fixture();
   const events = [

@@ -79,9 +79,10 @@ export function classifyPersonalRisk(name, args = {}, cwd = process.cwd(), inspe
   const shellSource = isShell ? [args.command, args.code, args.script, args.action].filter(x => typeof x === 'string').join('\n') : '';
   for (const write of shellWriteTargets(shellSource, cwd, powershell)) {
     let target = write.target;
-    if (write.kind === 'directory' && target) {
-      try { if (statSync(target).isDirectory()) continue; } catch { /* New directory. */ }
-    }
+    // Creating a directory cannot replace a user file, including a multi-path
+    // command or loop whose destination cannot be statically resolved.
+    if (write.kind === 'directory') continue;
+    if (write.kind === 'move' && write.noReplace && !target) continue;
     if (write.kind === 'move' && target) {
       try { if (statSync(target).isDirectory()) target = write.from ? resolve(target, basename(write.from)) : undefined; }
       catch { /* New destination. */ }

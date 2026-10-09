@@ -214,6 +214,13 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
             if (document.visibilityState === 'visible')
                 void core.refreshAssistant();
         }, 6000);
+        core.state.liveRefreshTimer = setInterval(() => {
+            if (document.visibilityState === 'visible' && (core.state.unresolvedSubmission ||
+                core.state.submitting || core.state.turnStatus === 'running' ||
+                core.optimisticMessages().some(row => ['sending', 'accepted'].includes(row.status)) ||
+                core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId)?.running))
+                void core.refreshLiveConversation().catch(() => {});
+        }, 250);
     }
     function showRegistration() {
         ui.byId('setup-title').textContent = core.state.setupGrant ? '设置这台电脑的原账户' : '注册新账户';
