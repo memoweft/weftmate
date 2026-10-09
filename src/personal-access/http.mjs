@@ -1158,6 +1158,7 @@ export function createHttpHandler(context) {
             if (!described) throw failure('SESSION_UNAVAILABLE');
             if (described?.sessionId === sessionId) sessions.push({
               sessionId,
+              hostId: state.hostId,
               archived: state.sessions[sessionId].archived === true,
               modelProfileId: state.sessions[sessionId].modelProfileId ?? described.modelProfileId ?? null,
               title: bounded(described.title, 256) ?? '',
