@@ -21,6 +21,10 @@
       "name": "electron.exe"
     }
   ],
-  "dailyDataTouched": false,
-  "emulatorStarted": false
+  "emulatorStarted": false,
+  "dailyHostDataTouched": false,
+  "earlySystemClipboardProbe": true,
+  "originalImageRestored": true,
+  "otherClipboardFormatsPreservationVerified": false,
+  "clipboardContentStored": false
 }
