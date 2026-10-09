@@ -638,7 +638,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       let cleanup;
       if (proposal.operation.startsWith('delete_')) {
         const prior = await journal.get(ownerId, proposal.requestId);
-        if (!prior && proposal.deleteConversationSnippets === true) {
+        if (!prior) {
           let sources = [];
           if (proposal.targetKind === 'evidence') {
             const result = await withOwner(ownerId, entry => entry.rpc.request('query_evidence', { operation: 'get', evidence_id: proposal.targetId }));

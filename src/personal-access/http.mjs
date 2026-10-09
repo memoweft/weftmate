@@ -1783,6 +1783,7 @@ export function createHttpHandler(context) {
             return publicCommand(existing);
           }
           if (payload.sideChat) context.sideChats.validatePrepared(ownerId, payload.sideChat);
+          if (latest.memoryCleanupPending) throw failure('SESSION_BUSY', 409);
           if (adoptionId) {
             const fresh = context.conversationSnapshot(ownerId, adoptionId);
             if (!context.sourceDevicesUpgraded(ownerId, fresh)) {

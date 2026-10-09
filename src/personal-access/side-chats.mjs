@@ -14,6 +14,7 @@ export function createSideChats(context) {
   const flights = new Map();
   function sourceSession(ownerId, chatId) {
     const account = context.accountState(ownerId), chat = context.chats.requireChat(ownerId, chatId);
+    if (account.memoryCleanupPending) throw failure('SOURCE_UNAVAILABLE', 404);
     const segment = account.chatIdentity.segments[chat.activeSegmentId], session = account.sessions[segment?.sessionId];
     if (session?.memoryMode === 'off') throw failure('TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED', 409);
     if (session?.conversationId || session?.origin === 'shared-chat') throw failure('SHARED_CONTEXT_UNAVAILABLE', 409);
@@ -28,6 +29,7 @@ export function createSideChats(context) {
     if (!event || !['user.message','assistant.message'].includes(event.type) || event.sourceRef.kind !== 'native') throw failure('SOURCE_UNAVAILABLE', 404);
     const account = context.accountState(ownerId), session = account.sessions[event.sourceRef.sessionId];
     if (!session || session.deleting || session.memoryMode === 'off' || session.conversationId || session.origin === 'shared-chat') throw failure('SOURCE_UNAVAILABLE', 404);
+    if (session.forgottenSeqs?.includes(event.sourceRef.seq)) throw failure('SOURCE_UNAVAILABLE', 404);
     return event;
   }
   function validatePrepared(ownerId, prepared) {
@@ -67,6 +69,7 @@ export function createSideChats(context) {
         (input.taskId && row.taskId === input.taskId || row.sourceEventId === input.sourceEventId));
       const resultId = sameSource?.resultId ?? `result-${digest(`${input.sourceChatId}/${input.taskId ?? input.sourceEventId}`).slice(0,40)}`;
       const previous = account.chatResults?.[resultId];
+      if (previous?.deleted) throw failure('SOURCE_UNAVAILABLE', 404);
       const contentHash = digest(JSON.stringify([input.sourceEventId,input.state,input.summary,input.artifactRefs,input.requiresResponse]));
       await context.mutate(ownerId, next => {
         next.chatResults ??= {}; next.sideOperations ??= {};
@@ -117,6 +120,7 @@ export function createSideChats(context) {
     const selected = eventId ? events.find(event => nativeId(segment.hostId, command.sessionId, event.seq) === eventId)
       : events.filter(row => row.type === 'assistant.message').at(-1) ?? events.findLast(row => row.type === 'turn.ended');
     if (!selected || eventId && !['assistant.message','turn.ended'].includes(selected.type)) throw failure('SOURCE_UNAVAILABLE', 404);
+    if (events.some(event => account.sessions[command.sessionId]?.forgottenSeqs?.includes(event.seq))) throw failure('SOURCE_UNAVAILABLE', 404);
     const state = states[evidence.status];
     const label = state === 'stopped' ? '已停止' : state === 'failed' ? '执行失败' : '已完成';
     return { sourceChatId: chatId, sourceEventId: nativeId(segment.hostId, command.sessionId, selected.seq),
@@ -197,7 +201,7 @@ export function createSideChats(context) {
           if (chat?.kind !== 'side') continue;
           const latest = [command, ...(context.taskChildren?.(account, command.commandId) ?? [])].sort((a,b)=>a.createdAt.localeCompare(b.createdAt)).at(-1);
           const prior = Object.values(context.accountState(ownerId).chatResults ?? {}).find(row => row.taskId === command.commandId);
-          if (prior?.observedCommandId === latest.commandId) continue;
+          if (prior?.deleted || prior?.observedCommandId === latest.commandId) continue;
           try { const input = await terminal(ownerId, chat.chatId, command.commandId, undefined, true); if (input) await publish(ownerId, input); }
           catch (error) { if (!['TASK_NOT_READY','SOURCE_UNAVAILABLE','TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED','SHARED_CONTEXT_UNAVAILABLE','CHAT_UNAVAILABLE',
             'BACKEND_UNAVAILABLE','BACKEND_TIMEOUT'].includes(error.code)) throw error; }
