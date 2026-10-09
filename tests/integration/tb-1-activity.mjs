@@ -52,7 +52,8 @@ try{
   env.REVIEW_ORIGIN=await fixture.restartWithCloud(null);
   app=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repo,args:[join(repo,'scripts/review-gallery/electron.mjs')],env,timeout:90000});
   const restarted=await app.firstWindow();await localUiSession(restarted,fixture.credentials,'TB-1 restart',{mainChat:true});await restarted.getByRole('button',{name:/^动态(?:，|$)/}).click();
-  const retained=(await fixture.request('/activity')).items.map(row=>row.id);assert.deepEqual(retained,rows);report.checks.push('restart-stable-identities');
+  const restored=(await fixture.request('/activity')).items,retained=restored.map(row=>row.id);assert.ok(rows.every(id=>retained.includes(id)));report.checks.push('restart-stable-identities');
+  assert.equal(restored.filter(row=>row.type==='system.reconnected').length,1);assert.equal(restored.find(row=>row.type==='system.reconnected').notification.level,'silent');report.checks.push('host-restart-reconnected-once');
   await fixture.request(`/sessions/${fixture.sessionId}/metadata`,{memoryMode:'off'},'PATCH');fixture.progress.text('TB1-TEMPORARY-SECRET-42');fixture.progress.finish();
   await restarted.getByRole('button',{name:'全部',exact:true}).click();await restarted.getByText('临时对话中的任务已完成',{exact:true}).waitFor();
   assert.equal((await restarted.locator('.activity-surface').textContent()).includes('TB1-TEMPORARY-SECRET-42'),false);

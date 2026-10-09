@@ -11,6 +11,7 @@
     "keyboard-filter",
     "narrow-no-overflow",
     "restart-stable-identities",
+    "host-restart-reconnected-once",
     "temporary-window-and-persisted-feed-redacted",
     "mobile-390x844",
     "mobile-direct-approval-native-receipt",
