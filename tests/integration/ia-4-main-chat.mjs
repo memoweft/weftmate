@@ -40,6 +40,9 @@ try{
     for(const theme of ['light','dark']){
       await page.evaluate(theme=>applyTheme(theme),theme);
       await page.screenshot({path:join(evidence,`web-${size.width}-${theme}-recent.png`)});
+      const assistantName=await page.evaluate(()=>{const viewport=$('chat-scroll').getBoundingClientRect();return [...document.querySelectorAll('[role=group][aria-label]')].find(row=>{const box=row.getBoundingClientRect();return row.getAttribute('aria-label').startsWith('助手消息：')&&box.top>=viewport.top&&box.bottom<=viewport.bottom;})?.getAttribute('aria-label');});assert.ok(assistantName);
+      const assistant=page.getByRole('group',{name:assistantName,exact:true});await assistant.click();await assistant.getByRole('button',{name:'复制回复',exact:true}).click();await page.getByRole('menuitem',{name:'复制纯文本',exact:true}).waitFor();await page.keyboard.press('Escape');
+      await assistant.getByRole('button',{name:'更多回复操作',exact:true}).click();await page.getByRole('menuitem',{name:'开旁聊重新生成',exact:true}).waitFor();await page.keyboard.press('Escape');
       await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('合成手机结果摘要');await b('查找').click();
       for(const label of ['成功','失败','停止'])await page.getByRole('button',{name:new RegExp(`^打开旁聊结果：${label}`)}).waitFor();
       await b('关闭主对话搜索').click();
@@ -84,6 +87,6 @@ try{
     }
     await page.close();
   }
-  assert.deepEqual(report.errors,[]);report.checks.push('main-first','recent-tail','search-highlight-navigation','date-fold-unfold','side-reference-origin','draft-transfer','result-success-failure-stop-source','both-themes-two-sizes','font130-no-overflow');
+  assert.deepEqual(report.errors,[]);report.checks.push('main-first','recent-tail','search-highlight-navigation','date-fold-unfold','side-reference-origin','draft-transfer','result-success-failure-stop-source','ux4-actions-preserved','web-side-send','both-themes-two-sizes','font130-no-overflow');
   await writeFile(join(evidence,'verification.json'),JSON.stringify(report,null,2)+'\n');console.log(JSON.stringify(report));
 }finally{await browser?.close();await f.close();}
