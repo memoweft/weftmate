@@ -2,11 +2,20 @@ import { copySnapshotTree } from './snapshot-files.mjs';
 import { mkdirSync, existsSync } from 'node:fs';
 import { dirname, relative, resolve, isAbsolute } from 'node:path'
 import { rm, readFile, cp } from 'node:fs/promises'
+import { eraseSessionMemoryArtifact } from './memory-erasure.mjs'
 import { createUserMessage } from '@deepseek-ai/dsh-llm'
 
 /** Own native AgentHandles so deletion drains precisely one DSH lifecycle. */
 export function nativeSessionLifecycle(ctx) {
   const handles = new Map()
+  const queues = new Map()
+  const serial = (sessionId, task) => {
+    const prior = queues.get(sessionId) ?? Promise.resolve()
+    const work = prior.catch(() => {}).then(task)
+    queues.set(sessionId, work)
+    void work.finally(() => { if (queues.get(sessionId) === work) queues.delete(sessionId) }).catch(() => {})
+    return work
+  }
   async function ensure(options, resume = false) {
     const sessionId = options.sessionId
     if (handles.has(sessionId)) return
@@ -51,9 +60,29 @@ export function nativeSessionLifecycle(ctx) {
       }
       check();
     },
-    create: options => ensure(options),
-    resume: sessionId => ensure({ sessionId }, true),
-    async fork(sessionId, options) {
+    create: options => serial(options.sessionId, () => ensure(options)),
+    resume: sessionId => serial(sessionId, () => ensure({ sessionId }, true)),
+    use: (sessionId, task) => serial(sessionId, async () => {
+      const meta = ctx.get('sessions')?.get(sessionId)?.header ?? (await ctx.get('sessionPersistence').inspect(sessionId)).meta
+      if (meta.agentPreset?.startsWith('personal-')) await ensure({ sessionId }, true)
+      return task()
+    }),
+    cleanupMemory: (sessionId, { sourceTexts = [], deleteConversationSnippets = false } = {}) => serial(sessionId, async () => {
+      const persistence = ctx.get('sessionPersistence')
+      const agent = ctx.get('agents')?.get(sessionId)
+      if (agent && (agent.status !== 'idle' || agent.inbox?.hasPending)) {
+        console.error(`[weftmate] memory cleanup deferred: status=${agent.status} pending=${agent.inbox?.hasPending} owned=${handles.has(sessionId)}`)
+        throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
+      }
+      await ensure({ sessionId }, true)
+      const handle = handles.get(sessionId)
+      await ctx.sessions.flush(handle.agent.session)
+      await handle.dispose(); handles.delete(sessionId)
+      await eraseSessionMemoryArtifact(persistence, sessionId, { sourceTexts, deleteConversationSnippets })
+      await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
+      return { cleaned: true }
+    }),
+    fork: (sessionId, options) => serial(sessionId, async () => {
       await ensure({ sessionId }, true)
       const source = ctx.sessions.get(sessionId)
       if (ctx.agents.get(sessionId)?.status !== 'idle') throw Object.assign(new Error('session busy'), { code: 'agent-busy' })
@@ -61,10 +90,10 @@ export function nativeSessionLifecycle(ctx) {
       // Use the native fork transaction's immutable event seed and lineage.
       // Agent creation owns the native session lifecycle, with a fresh cwd,
       // rather than publishing a bare SessionStore child without an agent.
-      await ensure({ ...options, seed: source.events, parentSession: sessionId, agentPreset: source.header.agentPreset })
+      await serial(options.sessionId, () => ensure({ ...options, seed: source.events, parentSession: sessionId, agentPreset: source.header.agentPreset }))
       return { sessionId: options.sessionId, latestSeq: source.events.at(-1)?.seq ?? -1 }
-    },
-    async remove(sessionId) {
+    }),
+    remove: sessionId => serial(sessionId, async () => {
       const persistence = ctx.get('sessionPersistence')
       const live = ctx.get('sessions')?.get(sessionId)
       const meta = live?.header ?? (await persistence.inspect(sessionId)).meta
@@ -78,8 +107,11 @@ export function nativeSessionLifecycle(ctx) {
       const handle = handles.get(sessionId)
       if (live && !handle) throw Object.assign(new Error('session lifecycle not owned'), { code: 'agent-busy' })
       if (handle) { await ctx.sessions.flush(handle.agent.session); await handle.dispose(); handles.delete(sessionId) }
+      // Disposal checkpoints the last projection. Queue deletion after that
+      // native write so the removed conversation cannot survive in backups.
+      await ctx.get('storageDomain')?.get('session_projcache')?.table('sessions').delete(sessionId)
       await rm(target, { recursive: true, force: true })
       return { deleted: true }
-    },
+    }),
   }
 }

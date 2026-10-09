@@ -95,8 +95,16 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
       if (core.conversationTaskCurrent(context)) state.sharedOlderLoading = false;
     }
   }
+  async function refreshMobileMemoryAvailability() {
+    const owner = state.owner, epoch = state.authEpoch;
+    try { const result = await core.accessApi('/memory/status');
+      if (owner === state.owner && epoch === state.authEpoch && result.ownerId === owner)
+        effects.paintMemoryAvailability?.(result);
+    } catch { if (owner === state.owner && epoch === state.authEpoch) effects.paintMemoryAvailability?.({state:'unavailable'}); }
+  }
   async function listMobileSessions(){if(!state.loggedIn||state.transitionPending)return;
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration;
+  void refreshMobileMemoryAvailability();
   try{const result=await core.accessApi('/sessions?archived=all');if(owner!==state.owner||epoch!==state.authEpoch||generation!==state.sharedGeneration)return;
     core.state.sessionGroups = result.groups || [];
     if(result?.source!=='host'||!Array.isArray(result.sessions))throw new Error('OPERATION_FAILED');

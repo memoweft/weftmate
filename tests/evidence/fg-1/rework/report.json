@@ -1,0 +1,15 @@
+{
+  "realElectron": true,
+  "realDsh": true,
+  "realCore": true,
+  "seededWorld": true,
+  "formationClaim": false,
+  "paidRequests": 0,
+  "checks": [
+    "desktop: cascade names/count, default snippets false, actual Core deletion",
+    "phone web: cascade names/count, snippets true reaches DELETE, actual Core deletion",
+    "desktop conversation: preview recovered context, aggregate count, optional snippets true, native deletion"
+  ],
+  "syntheticRequests": 3,
+  "completedAt": "2026-10-08T23:46:51.260Z"
+}

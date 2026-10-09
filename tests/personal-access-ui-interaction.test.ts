@@ -114,6 +114,8 @@ class Element {
     if (index < 0) this.children.push(child)
     else this.children.splice(index, 0, child)
   }
+  before(...nodes: Element[]) { for (const node of nodes) this.parentNode?.insertBefore(node, this) }
+  after(...nodes: Element[]) { const next = this.nextSibling; for (const node of nodes) this.parentNode?.insertBefore(node, next) }
   remove() {
     if (this.ownerDocument && this.contains(this.ownerDocument.activeElement)) this.ownerDocument.activeElement = this.ownerDocument.body
     if (this.parentNode) this.parentNode.children = this.parentNode.children.filter((item) => item !== this)
