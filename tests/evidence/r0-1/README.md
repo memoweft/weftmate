@@ -35,9 +35,15 @@ Windows（视窗系统）超过260字符的 SQLite（嵌入式数据库）路径
 
 程序本体升级、故意启动失败版本的自动回退、卸载保留数据的最终记录由 `installed-report.json` 汇总，原生截图随同提交。中间失败未计为通过：修复了 Electron（桌面程序框架）的 ASAR（程序资源归档）虚拟文件系统复制、`app.exit()` 退出接缝、安装器进程名冲突及旧程序逐文件卸载占用；对外源、签名身份和用户数据没有为验收改写。
 
+最终正常链路见 [installed-report.json](installed-report.json)：界面全包1,525,039字节，只下载变化的 `layout.js` **5,074字节**；本体安装包174,201,561字节，实际 Range 下载 **6,580,413字节（3.78%）**，确认正常启动到 `.2`、通道切换持久化、卸载保留数据。
+
+最终坏版本链路由独立脚本 `r0-1-rollback.mjs` 重新验证，见 [rollback-report.json](rollback-report.json)：安装真实故障 `.3`，监护自动恢复 `.2`，拒绝同一坏版本，卸载保留数据；`manualRecovery:false`。`07-automatic-app-rollback.png` 是这次自动恢复后的真实窗口。`05-diagnostic-restore.png` 仅记录早期诊断恢复，**不计为自动回退通过**。Windows 开放目录句柄阻止移动时，恢复完整的上一版 ASAR 与运行时文件；不恢复或覆盖用户数据。
+
+`06-uninstall-retain.png` 是真实 NSIS 卸载页，默认不勾删除数据。为取图只打开并取消预览，实际卸载由脚本静默执行。开机项首轮报告的 `autoStart:false` 暴露了按名称登记、却用默认名称读取的接线问题；修复后由 [login-item-report.json](login-item-report.json) 的真实 Windows 注册表启用 / 重读 / 停用验证单独确认，含空格的配置参数也核对原注册命令，未改本人启动项。
+
 ## 验证与边界
 
-- 核心更新 / 配置 / 身份 / 包边界 / 备份定向46项通过，类型检查通过。
+- 核心更新 / 配置 / 身份 / 包边界 / 备份定向46项与新增开机项1项通过，类型检查通过。
 - 桌面界面 / 原生桥接 / 本地动作 / 手机发布相关18项通过，与上述有4项重复。
 - 完整单测交本包 GitHub CI（持续集成），不在本地重复全量。
 - 生产上传、本人实际迁移、正式 Authenticode（Windows 程序签名）及日用云 / 中继 / 证书终验未执行；中文发布与本人迁移命令见 [Windows 发布说明](../../../docs/WINDOWS_RELEASE.md)。
