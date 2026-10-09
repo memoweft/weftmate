@@ -71,3 +71,15 @@ test('activity HTTP snapshots, filtered all-read, version conflicts, restart, na
   const restored=await f.request('/activity');assert.ok(restored.items.some((r:any)=>r.id===newRow.id));assert.equal(restored.items.some((r:any)=>r.source.sessionId===f.sessionId),false);
   const persisted=JSON.parse(await readFile(join(f.root,'store.json'),'utf8'));assert.equal(Object.keys(persisted.accounts).length,1);
 });
+
+test('MEM-D formation pending does not masquerade as pause; model unavailability creates one event per real transition',async t=>{
+  let status:any={state:'degraded',reasonCode:'MEMORY_FORMATION_PENDING'};
+  const memoryManager={enabled:false,peek:()=>status.state,status:async()=>status,query:async()=>({}),submitCommand:async()=>({}),receiptByRequest:async()=>({}),retryCleanupByRequest:async()=>({})};
+  const f=await startTimelineCandidate({interactive:true,historyCount:0,memoryManager});t.after(()=>f.close());
+  assert.equal((await f.request('/activity?type=memory')).items.length,0);
+  status={state:'degraded',reasonCode:'MEMORY_MODEL_UNAVAILABLE'};
+  const paused=(await f.request('/activity?type=memory')).items;assert.equal(paused.length,1);assert.equal(paused[0].type,'memory.paused');
+  assert.equal((await f.request('/activity?type=memory')).items.length,1);
+  status={state:'degraded',reasonCode:'MEMORY_FORMATION_PENDING'};await f.request('/activity');
+  status={state:'unavailable',reasonCode:'MEMORY_MODEL_UNAVAILABLE'};assert.equal((await f.request('/activity?type=memory')).items.length,2);
+});

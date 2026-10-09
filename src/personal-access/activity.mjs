@@ -73,8 +73,16 @@ export function createActivity(context) {
       }
       if(context.memoryManager){const memory=await context.memoryManager.status(ownerId);
         await context.serial(()=>context.mutate(ownerId,next=>{const state=activityState(next);
-          if(state.memoryState!==memory.state&&['paused','unavailable','failed'].includes(memory.state)){state.memoryTransition=(state.memoryTransition??0)+1;putActivity(next,`memory-paused:${state.memoryTransition}`,{at:new Date(context.timestamp()).toISOString(),type:'memory.paused',title:'记忆已暂停',summary:'记忆暂时无法更新，可在记忆页查看状态。',level:'normal',actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});}
-          state.memoryState=memory.state;
+          const job=next.memoryBackfillJob, backfillPaused=job?.state==='paused';
+          const paused=['paused','unavailable','failed'].includes(memory.state)||memory.reasonCode==='MEMORY_MODEL_UNAVAILABLE';
+          const healthKey=backfillPaused?`backfill:${job.id}:paused`:paused?`paused:${memory.reasonCode??memory.state}`:`available:${memory.state}`;
+          if(state.memoryState!==healthKey&&(paused||backfillPaused)){state.memoryTransition=(state.memoryTransition??0)+1;putActivity(next,`memory-paused:${state.memoryTransition}`,{
+            at:new Date(context.timestamp()).toISOString(),type:'memory.paused',title:backfillPaused?'记忆补整理已暂停':'记忆已暂停',
+            summary:backfillPaused?'已提交的回合仍会继续形成，可在记忆页继续补整理。':'记忆暂时无法更新，可在记忆页查看状态。',
+            ...(backfillPaused?{source:{memoryJobId:job.id}}:{}),level:'normal',actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});}
+          if(job?.state==='completed'&&job.cursor>(job.skipped??0))putActivity(next,`backfill-completed:${job.id}`,{at:new Date(context.timestamp()).toISOString(),type:'memory.submission.completed',title:'历史对话补交完成',
+            summary:'历史对话已提交整理，形成进度可在记忆页查看。',source:{memoryJobId:job.id},level:'silent',actions:[{kind:'view_memory',label:'查看记忆',target:{}}]});
+          state.memoryState=healthKey;
         }));}
       const update=await context.updateStatus();
       for(const layer of update?.layers??[])if(layer.availableVersion&&layer.availableVersion!==layer.currentVersion)await record(ownerId,{key:`update:${layer.layer}:${layer.availableVersion}`,type:'system.update.available',title:'更新可用',summary:`新版本 ${layer.availableVersion} 已可用。`,level:'normal',actions:[{kind:'view_settings',label:'查看更新',target:{category:'about'}}]});

@@ -1158,7 +1158,7 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 
 读取要求原 `sessions:read`，写入要求原 `commands:write` 与 CSRF（跨站请求伪造防护）；按账户认证隔离，不接收客户端传入账户ID。游标签名绑定账户、用途、分页筛选与删除代次；无效或跨账户409 `CURSOR_RESET_REQUIRED`。删除代次使旧列表 / 已读快照失效；增量游标仍能读出无正文删除ID。客户端收到重置先清旧正文再重读，身份 / 筛选变化的迟到响应不得填回。
 
-每项 `Activity={id,at,type,title,summary,source,actions,state,read,revision,attentionRevision,createdSequence,notification,temporary?}`。`id` 与首次 `at` 稳定；同项正文或状态变化增加版本与注意水位。`summary` 最多160字符；`state=pending|completed|unavailable` 是待办状态，任务成功 / 失败 / 停止由 `type` 区分。`source` 按真实可用来源携带 `hostId,chatId,chatKind,sessionId,projectId,taskId,eventId,seq,messageId,scheduleId`，不暴露路径、工具参数、凭据或私有推理。主对话结果与动态复用同一根任务 `activityId`；正文显式分享不是任务成功事实。
+每项 `Activity={id,at,type,title,summary,source,actions,state,read,revision,attentionRevision,createdSequence,notification,temporary?}`。`id` 与首次 `at` 稳定；同项正文或状态变化增加版本与注意水位。`summary` 最多160字符；`state=pending|completed|unavailable` 是待办状态，任务成功 / 失败 / 停止由 `type` 区分。`source` 按真实可用来源携带 `hostId,chatId,chatKind,sessionId,projectId,taskId,eventId,seq,messageId,scheduleId,memoryJobId`，不暴露路径、工具参数、凭据或私有推理。主对话结果与动态复用同一根任务 `activityId`；正文显式分享不是任务成功事实。
 
 `actions=[{kind,label,target}]` 只描述实际存在的类型化动作，不是可执行网址。TB-1 支持 `open_chat`（原对话 / 旁聊及消息定位）、`respond_approval`（原 `sessionId,taskId,approvalId`）、`answer_question`（原 `sessionId,taskId,questionRpcId`）、`view_memory`。批准 / 拒绝仍直接走3.7的原审批路径、原回执校验与持久请求身份；问题打开原问题条，整批回答仍走3.7。动态没有通用任意执行接口，也不会因标读而完成待办。有效回执后原审批条与动态同时收为已处理；外部回答、取消、失效与重启都沿原生终态同步。未知动作不提供按钮。
 
@@ -1170,8 +1170,8 @@ Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/�
 | `approval.pending`, `question.pending` | `important` | 原审批 / 问题确实待处理；处理后的版本为 `silent` |
 | `task.failed` | `important` | 原生任务失败，不把断线或未知结果冒充失败 |
 | `task.completed`, `task.stopped` | `normal`（普通） | 原生终态；后台工作与副作用同时核对 |
-| `memory.paused` | `normal` | 记忆暂停 / 不可用状态发生变化；MEM-D 可用下述可信接缝接入 |
-| `memory.submission.completed` | `silent`（静默） | M3-A离线对话补交已受理；只称“已同步”，不称正式记忆形成 |
+| `memory.paused` | `normal` | 记忆暂停 / 不可用状态发生变化；MEM-D的正常形成不算暂停，模型不可用与本人暂停补整理按真实原因生成 |
+| `memory.submission.completed` | `silent`（静默） | M3-A离线对话补交已受理，或MEM-D有实际提交的历史补交已结束；不称正式记忆形成 |
 | `memory.report` | `normal` | 类型与接缝预留，MEM-3尚未生成周报 |
 | `system.update.available` | `normal` | 现有更新状态确实提供新版本；不暴露更新源或增加安装授权 |
 | `system.reconnected` | `silent` | 已观察就绪的宿主重启后再次就绪，或运行时不可用后恢复；首次安装启动不伪造恢复事件，不凭单个会话读取失败断言电脑离线 |
