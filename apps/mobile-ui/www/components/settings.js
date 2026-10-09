@@ -441,7 +441,7 @@ function modelsPage(target){target.append(heading('对话模型','手机直连�
     call('models.host').then(result=>{if(!current())return;clear(hostBody);
       const models=result.models||[];if(!models.length)hostBody.append(el('p','muted','电脑当前没有可选模型'));
       for(const item of models){hostBody.append(row(`${item.displayName}${item.selected?' · 当前':''}`,
-        `${item.sourceKind==='local'?'电脑本机':'电脑云端'} · ${item.configured?'已配置':'未配置'}`,async()=>{
+        `${item.sourceKind==='local'?'电脑本机':'电脑云端'} · ${item.configured?'已配置':'未配置'} · ${item.deepThinking?.supported?'支持深入思考':'此模型未声明深入思考能力'}`,async()=>{
           if(!item.configured){toast('请先在电脑上配置这个模型',true);return}
           try{const verified=await call('models.verifyHost',{profileId:item.profileId});if(!current())return;
             if(verified.available===false){toast('电脑模型暂不可用',true);return}
@@ -457,7 +457,7 @@ function modelsPage(target){target.append(heading('对话模型','手机直连�
       clear(accountBody);const models=Array.isArray(result?.models)?result.models:[];
       if(!models.length)accountBody.append(el('p','muted','当前账户尚无可取回的云模型。可从手机已保存模型明确上传，或在电脑账户页配置。'));
       for(const item of models){if(typeof item?.accountModelId!=='string'||!Number.isSafeInteger(item.revision))continue;
-        const card=el('div','model-library-entry');card.append(el('strong','',item.name||item.modelId),
+        const card=el('div','model-library-entry');card.append(el('small','',item.deepThinking?.supported?'支持深入思考':'此模型未声明深入思考能力'),el('strong','',item.name||item.modelId),
           el('small','',`${item.modelId} · ${{active:'账户可用',stopped:'已停止使用',pending:'配置中',failed:'配置失败'}[item.status]||'待核对'} · 修订 ${item.revision}`));
         const controls=el('div','model-library-actions');
         if(item.status==='active'){

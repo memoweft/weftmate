@@ -11,6 +11,7 @@ import { dirname } from 'node:path';
 import type { PublicModelProfile } from './stage2-config.ts';
 export { DEFAULT_MODEL_CAPACITY, modelCapacityFor } from './model-budget.mjs';
 import { modelCapacityFor } from './model-budget.mjs';
+import { modelReasoning } from './model-reasoning.mjs';
 
 export interface HarnessRoute {
   profileId: string;
@@ -84,6 +85,11 @@ export function renderModelRoutesPatch(profiles: readonly PublicModelProfile[]):
       `            contextWindow: ${capacity.contextWindow}`,
       `            maxTokens: ${capacity.maxTokens}`,
     );
+    const reasoning = modelReasoning(profile);
+    if (reasoning) {
+      lines.push(`            reasoningEfforts: ${JSON.stringify(reasoning.reasoningEfforts)}`,
+        `            compat: ${JSON.stringify(reasoning.compat)}`);
+    }
   }
   return `${lines.join('\n')}\n`;
 }

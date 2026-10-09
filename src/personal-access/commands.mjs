@@ -1,3 +1,4 @@
+import { chatForSession } from './chat-identity.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { digest, failure, id, modelTextWithAttachments, safeCode, withDeadline } from './common.mjs';
 import { TEXT_ATTACHMENT_TYPES } from '../personal-sync/attachments.mjs';
@@ -308,6 +309,8 @@ export function createCommandOperations(context) {
             callback = Promise.resolve(context.backend.sendMessage({
               sessionId: snapshot.sessionId, text: modelTextWithAttachments(snapshot.payload.text, staged,
                 snapshot.payload.originalAttachments), mode: snapshot.payload.mode, ownerId,
+              ...((chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId]?.deepThinking) !== undefined ?
+                { deepThinking: chatForSession(context.accountState(ownerId),snapshot.sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[snapshot.sessionId].deepThinking } : {}),
               attachments: staged.filter((item) => !TEXT_ATTACHMENT_TYPES.has(item.contentType))
                 .map((item) => ({ name: item.name, contentType: item.contentType,
                 data: item.bytes.toString('base64') })),

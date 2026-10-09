@@ -263,12 +263,15 @@ function cancelAttachmentPick({announce=false}={}){if(!state.attachmentPick)retu
   state.attachmentPick=null;renderAttachmentPickStatus();updateComposer();
   if(announce)status('已停止等待选择结果，原有消息草稿保留')}
 
-function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){toast('这段电脑会话仅可查看，无法添加图片',true);return}
+async function openAttachmentMenu(){if(state.chatSource==='host'&&!selectedSharedSession()?.sendAvailable){toast('这段电脑会话仅可查看，无法添加图片',true);return}
   closeApprovalModeMenu();
   if(state.attachmentPick)return;if(state.attachmentMenu){closeAttachmentMenu({restoreFocus:true});return}
   closeModelMenu();state.attachmentMenu=true;const popup=$('attachment-popover');popup.hidden=false;
   $('pick-file').hidden=false;$('attachment-note').hidden=state.chatSource!=='host';
-  $('plus-button').setAttribute('aria-expanded','true');requestAnimationFrame(()=>popup.classList.add('open'));placeAttachmentMenu();$('pick-image').focus()}
+  $('plus-button').setAttribute('aria-expanded','true');requestAnimationFrame(()=>popup.classList.add('open'));placeAttachmentMenu();$('pick-camera').focus();
+  const owner=state.owner,epoch=state.authEpoch,sessionId=state.sharedSessionId;
+  if(state.chatSource==='host')try{await uiCore.refreshThinkingModels();if(owner!==state.owner||epoch!==state.authEpoch||sessionId!==state.sharedSessionId)return;paintMobileThinking();placeAttachmentMenu()}catch{}
+}
 
 function placeAttachmentMenu(){globalThis.WeftPopover.position($('attachment-popover'),$('plus-button'))}
 
@@ -353,6 +356,8 @@ function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.c
   button.setAttribute('aria-label',stop?'停止回复':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':'send'}`));
   $('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
   renderContextUsage();
+  paintMobileThinking();
+  globalThis.WeftComposerSubtasks?.paint($('composer-subtasks'),globalThis.WeftUiCore.composerSubtasks([...uiCore.state.historyEvents.values()]),{scope:`${state.owner}/${state.authEpoch}/${state.sharedSessionId}`,root:$('chat-content')});
   $('device-line').hidden=true;$('device-line').textContent='';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
@@ -503,3 +508,5 @@ function refreshCloudDevices(){const owner=state.owner,epoch=state.authEpoch;
 }
 
 /* Keep the existing mode value/change contract; use shared menu geometry. */
+
+function paintMobileThinking(){const view=uiCore.thinkingView(),host=state.chatSource==='host';$('pick-thinking').hidden=!host||!view.supported;$('pick-thinking').setAttribute('aria-checked',String(view.enabled));$('pick-thinking').disabled=view.busy;$('thinking-badge').hidden=!host||!view.supported||!view.enabled;}

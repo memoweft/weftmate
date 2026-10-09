@@ -69,6 +69,7 @@ export async function buildUiCoreAssets({ sourceDir = uiCoreSourceDir, targetDir
     await copyFile(new URL('../../../src/personal-access-ui/components/schedules.js', import.meta.url), path.join(mobileWwwDir, 'components/schedules-view.js'));
     await copyFile(new URL('../../../src/personal-access-ui/components/settings-controls.js', import.meta.url), path.join(mobileWwwDir, 'components/settings-controls.js'));
     await copyFile(new URL('../../../src/personal-access-ui/usage.css', import.meta.url), path.join(mobileWwwDir, 'usage.css'));
+    for (const name of ['composer-subtasks.js','composer-extras.css']) await copyFile(new URL(`../../../src/personal-access-ui/${name}`, import.meta.url), path.join(mobileWwwDir,name));
     await copyFile(new URL('../../../src/personal-access-ui/popovers.js', import.meta.url), path.join(mobileWwwDir, 'popovers.js'));
     await copyFile(new URL('../../../src/personal-access-ui/conversation-scroll.js', import.meta.url), path.join(mobileWwwDir, 'conversation-scroll.js'));
     await mkdir(path.join(mobileWwwDir, 'legal'), { recursive: true });
