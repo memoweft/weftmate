@@ -208,6 +208,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         send.title = '发送 · Enter；新任务 · Ctrl/Cmd+Enter';
         send.replaceChildren(window.WeftIcons.create('send', 20));
         ui.byId('model-hint').textContent = value.hint;
+        ui.byId('model-hint').setAttribute('role', 'status');
         ui.byId('model-hint').hidden = !value.hint;
     }
     function startAssistantRefresh() {

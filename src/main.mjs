@@ -1779,8 +1779,9 @@ async function bootstrap() {
       personalMemoryIpc.recallRequests++;
       const foregroundProfile = settingsMod.listModelProfiles().profiles.find(profile =>
         profile.id === settingsMod.sessionModelBinding(request.sessionId));
+      const finishMemory = modelScheduler.beginMemory(request.sessionId);
       const recalled = await personalMemoryManager.recall(binding.ownerId, { query: request.query,
-        sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) });
+        sessionId: request.sessionId, modelTier: memoryRecallModelTier(foregroundProfile) }).finally(finishMemory);
       if (recalled?.state === 'ready' && typeof recalled.contextText === 'string' && recalled.contextText.trim()) {
         personalMemoryIpc.recallWithContext++;
       }
@@ -2986,6 +2987,7 @@ async function bootstrap() {
     profiles: () => settingsMod.listModelProfiles().profiles,
     hasCredential: hasProfileCredential,
     credentialForProfile: credentialForModelProfile,
+    processingStatus: (sessionId) => modelScheduler.progress(sessionId),
     modelFetch: (url, options) => options?.method === 'POST'
       ? scheduledModelFetch(url, options, modelScheduler.url) : fetch(url, options),
     hostOwnerId: () => personalAccessService?.legacyOwnerId?.() ?? null,

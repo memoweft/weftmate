@@ -4,7 +4,7 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
         const list = ui.byId('task-queue');
         if (!list) return;
         const context = core.conversationTaskContext(), rows = core.taskQueue().filter(row => row.queued);
-        const visible = rows.filter(row => row.state === 'queued' || row.state === 'running');
+        const visible = rows.filter(row => row.state === 'queued');
         const active = document.activeElement;
         const taskId = active?.closest('[data-queued-task]')?.dataset.queuedTask, action = active?.dataset.queueAction;
         const previous = new Map([...list.children].map(card => [card.dataset.queuedTask, card]));
@@ -89,7 +89,7 @@ globalThis.WeftUiComponents.factories.tasks = (core, ui) => {
             const outputLimited = payload?.replyEvidence?.status === 'failed' && payload.replyEvidence.endReasonKind === 'max-tokens';
             const turn = payload?.source?.dshTurn ?? payload?.replyEvidence?.turn;
             const hasTimeline = Number.isSafeInteger(turn) && core.timelineEventsForContext(context).some(e => e.type.startsWith('step.') && e.data?.taskId === `turn-${turn}`);
-            const visible = entry.notice || !hasTimeline && steps.length || artifacts.length || payload?.sources?.length || control?.canStop || control && control.state !== 'active' || outputLimited;
+            const visible = !hasTimeline && steps.length || artifacts.length || entry.notice && steps.length || outputLimited;
             let card = [...list.children].find((row) => row.dataset?.conversationTask === entry.taskId);
             if (!visible) {
                 card?.remove();

@@ -290,7 +290,7 @@ html,body{overflow:hidden}#app{height:var(--viewport-height,100dvh)}
 .session-approval-dot{background:var(--wm-color-mobile-warning)!important}.home-empty{padding:var(--wm-space-72) var(--wm-space-8);line-height:var(--wm-line-height-1_7);color:var(--secondary)}
 .home-empty h2{font-size:var(--wm-font-size-22);color:var(--ink);font-weight:500;margin:0 0 var(--wm-space-12)}.home-empty p{font-size:var(--wm-font-size-16)}.home-empty .primary{margin-top:var(--wm-space-16)}
 #home-settings{width:100%;min-height:68px;background:var(--canvas);font-size:var(--wm-font-size-15)}
-#chat-page .device-line{display:none}#chat-page .chat-content{padding:var(--wm-space-24) var(--wm-space-20) var(--wm-space-28);gap:0}
+#chat-page .device-line:empty{display:none}#chat-page .device-line{height:auto;min-height:29px;overflow-wrap:anywhere}#chat-page .chat-content{padding:var(--wm-space-24) var(--wm-space-20) var(--wm-space-28);gap:0}
 .message.user{background:var(--accent-soft);border-radius:var(--wm-radius-18);max-width:90%;padding:var(--wm-space-12) var(--wm-space-16);line-height:var(--wm-line-height-1_65)}
 .message.assistant{background:transparent;border:0;padding:0}.message-body{line-height:var(--wm-line-height-1_8)}
 .message-tools{margin-top:var(--wm-space-8)}.copy-button{min-height:44px;color:var(--muted)}
