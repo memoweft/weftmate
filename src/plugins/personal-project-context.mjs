@@ -69,14 +69,14 @@ export async function projectToolDecision(exec) {
   if (!project) return null;
   if (['write', 'edit'].includes(exec.name)) {
     if (project.permission === 'read-only') return { kind: 'deny', reason: 'PROJECT_READ_ONLY: 此项目只读。请在项目设置改为可写后再修改文件。' };
-    if (!await insideProject(project.rootPath, resolve(executionDirectory(exec.agent.session), exec.arguments.file_path ?? '')))
-      return { kind: 'deny', reason: 'PROJECT_WRITE_OUTSIDE: 不能写入项目文件夹外。请由用户在项目外的对话中明确批准该操作。' };
+    if (!exec.arguments?.sandbox_permissions && !await insideProject(project.rootPath, resolve(executionDirectory(exec.agent.session), exec.arguments.file_path ?? '')))
+      return { kind: 'deny', reason: 'PROJECT_WRITE_OUTSIDE: 当前权限不能写入项目文件夹外。如用户确需该操作，使用原生 sandbox_permissions 与 justification 申请一次沙箱升级，等待明确批准；拒绝后停止。' };
   }
   if (['pwsh', 'bash', 'shell'].includes(exec.name)) {
     const cwd = resolve(executionDirectory(exec.agent.session), exec.arguments?.workdir ?? '.');
     for (const write of shellWriteTargets(exec.arguments?.command ?? '', cwd, exec.name !== 'bash')) {
       if (project.permission === 'read-only') return { kind: 'deny', reason: 'PROJECT_READ_ONLY: 此项目只读，不能通过命令修改文件。' };
-      if (write.target && !await insideProject(project.rootPath, write.target)) return { kind: 'deny', reason: 'PROJECT_WRITE_OUTSIDE: 命令不能写入项目文件夹外。' };
+      if (!exec.arguments?.sandbox_permissions && write.target && !await insideProject(project.rootPath, write.target)) return { kind: 'deny', reason: 'PROJECT_WRITE_OUTSIDE: 当前命令不能写入项目文件夹外。确需执行时用原生 sandbox_permissions 与 justification 申请一次升级，等待用户明确批准。' };
     }
   }
   if (project.permission === 'read-only' && exec.arguments?.sandbox_permissions)

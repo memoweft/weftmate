@@ -1,10 +1,26 @@
 import { failure, publicProject, validProjectName } from '../personal-access/common.mjs';
 
+export function redactProjectPath(text, rootPath) {
+  if (typeof text !== 'string' || !rootPath) return text;
+  const variants = new Set([rootPath, rootPath.replaceAll('\\', '/')]);
+  for (const value of [...variants]) variants.add(JSON.stringify(value).slice(1, -1));
+  for (const value of [...variants].sort((a,b) => b.length - a.length))
+    text = text.replace(new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), '[项目文件夹]');
+  return text;
+}
+
 export function migrateProjects(account) {
   let changed = false;
   for (const project of Object.values(account.projects ?? {})) {
     if (project.permission === undefined) {
       project.permission = 'read-only'; project.instructions = ''; changed = true;
+    }
+  }
+  for (const command of Object.values(account.commands ?? {})) {
+    const project = account.projects?.[command.payload?.projectId];
+    for (const approval of command.toolApprovals ?? []) {
+      const reason = redactProjectPath(approval.reason, project?.rootPath);
+      if (reason !== approval.reason) { approval.reason = reason; changed = true; }
     }
   }
   return changed;

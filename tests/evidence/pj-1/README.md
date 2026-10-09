@@ -11,6 +11,7 @@
 | 项目工作目录与说明 | `pj-1-projects.mjs`：真实 Electron（桌面程序框架）、固定 DSH、MiMo；读取 brief.md、写 summary.md、用 pwsh（PowerShell 工具）运行 Get-Location 和 Get-Content 核对；总结含固定说明要求的「竹叶」 |
 | 系统文件夹选择接线 | 真实 Electron 主窗口经 preload（预加载桥）调用系统选择框 API（程序接口）；测试替换系统返回值为合成文件夹，验证 openDirectory 参数、默认名称与真实登记，不需人工操作系统对话框 |
 | 越界与只读写入 | 真实 MiMo 原生 write 调用被拒；outside.txt 与 forbidden.txt 未生成。路径中已有 junction（目录连接）也拒绝，单元测试覆盖；只读不能升级沙箱，子任务继承项目目录 / 说明 / 权限 |
+| 本人明确批准后的一次越界升级 | `pj-1-project-escalation.mjs`：合成模型、真实 Electron / DSH，即使对话为全部允许，越界文件在批准前不存在；原生 `allowed-once`（允许一次）后才写出。项目内新文件也走实际审批，公开审批对象隐藏项目绝对路径并保留文件名；见 escalation-verification.json |
 | 已有普通对话移入项目 | 同一真实程序中创建普通对话，绑定项目后读取 brief.md、写 moved.md、运行目录核对；移除后 brief.md、summary.md 与 moved.md 保留 |
 | 桌面外观与交互 | 浅 / 深主窗口、项目设置、创建项目、移至项目菜单、800×600 窄窗口；既有完整桌面交互脚本通过 |
 | 手机远程网页 | 同一真实宿主与项目，390×844；项目列表和真实完成任务的对话截图 |
@@ -25,6 +26,7 @@ node --test tests/personal-project-reader.test.ts tests/dsh-web-profile.test.ts 
 node --test tests/personal-desktop-ui.test.ts
 node tests/integration/pj-1-projects.mjs
 node tests/integration/pj-1-mobile-bundle.mjs
+node tests/integration/pj-1-project-escalation.mjs
 node apps/mobile-ui/src/build-ui-core.mjs
 node apps/mobile-ui/src/check.mjs
 npm run typecheck

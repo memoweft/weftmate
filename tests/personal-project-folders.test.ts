@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createPersonalAccessService } from '../src/personal-access/index.mjs';
+import { redactProjectPath } from '../src/personal-projects/projects.mjs';
 import { selectProjectContext, routeProjectTool, projectToolDecision, installProjectSandbox, inheritProjectContext, projectContextNotice, insideProject } from '../src/plugins/personal-project-context.mjs';
 
 test('folder CRUD, session membership, legacy migration and removal preserve data without exposing paths', {skip:process.platform!=='win32'}, async () => {
@@ -82,6 +83,8 @@ test('native project context routes new calls, confines writes, rejects readonly
     assert.equal(service.resolve({session}).mode,'workspace-write');assert.equal(service.resolve({session}).workspaceRoot,folder);
     const write:any={agent,name:'write',arguments:{file_path:'new/sub/file.md'}};routeProjectTool(write);assert.equal(await projectToolDecision(write),null);
     write.arguments.file_path=path.join(root,'escaped.md');assert.equal((await projectToolDecision(write))?.kind,'deny');
+    write.arguments.sandbox_permissions='danger-full-access';write.arguments.justification='User must approve';assert.equal(await projectToolDecision(write),null);delete write.arguments.sandbox_permissions;
+    const reason='modify '+folder+' '+JSON.stringify({file_path:path.join(folder,'summary.md')});const publicReason=redactProjectPath(reason,folder);assert.ok(!publicReason.includes(folder));assert.ok(!publicReason.includes(JSON.stringify(folder).slice(1,-1)));assert.match(publicReason,/summary.md/);
     assert.equal(await insideProject(folder,path.join(root,'project-other','file')),false);
     const outside=path.join(root,'outside');await mkdir(outside);await symlink(outside,path.join(folder,'link'),process.platform==='win32'?'junction':'dir');assert.equal(await insideProject(folder,path.join(folder,'link','new.md')),false);
     const search:any={agent,name:'glob',arguments:{pattern:'*.md'}};routeProjectTool(search);assert.equal(search.arguments.path,folder);
