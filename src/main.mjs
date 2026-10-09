@@ -2201,8 +2201,8 @@ async function bootstrap() {
     const sessions = await listSharedSessionsForReferenceGuard();
     assertAuthoritativeSessionsIdle(sessions);
   }
-  async function resolveKnownSession(sessionId) {
-    const sessions = await listSharedSessionsForReferenceGuard();
+  async function resolveKnownSession(sessionId, sessionSnapshot = null) {
+    const sessions = sessionSnapshot ?? await listSharedSessionsForReferenceGuard();
     if (!Array.isArray(sessions.items) || !sessions.items.some((item) => item?.sessionId === sessionId)) throw new Error('unknown session');
     const selected = await stageOneGateway(`/sessions/${encodeURIComponent(sessionId)}/models`);
     const chosen = resolveSafeSessionBinding({ provider: selected?.current?.provider,

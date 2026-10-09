@@ -10,7 +10,10 @@ test('FX-10 describing many requested sessions uses one native list and preserve
   const items=Array.from({length:80},(_,i)=>({sessionId:`session-${i}`,title:`Synthetic ${i}`,running:i===3,
     agentPreset:i===79?'standard':'personal-remote',contextUsage:{usedTokens:i,contextWindow:10000}}))
   const backend=createPersonalAccessBackend({currentOrigin:()=> 'http://127.0.0.1:1',
-    listSessions:async()=>{scans++;return {items}},resolveSession:async()=>({profile:{id:'model-synthetic'}}),
+    listSessions:async()=>{scans++;return {items}},resolveSession:async(id: string,snapshot: any)=>{
+      assert.ok(snapshot.items.some((row: any)=>row.sessionId===id),'binding resolution reuses the same native snapshot')
+      return {profile:{id:'model-synthetic'}}
+    },
     processingStatus:async()=>({phase:'reasoning'})} as any)
   const ids=items.slice(0,79).map(row=>row.sessionId)
   const bulk=await backend.describeSessions([...ids,'missing-session'])
