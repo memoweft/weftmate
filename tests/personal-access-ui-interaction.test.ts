@@ -887,6 +887,33 @@ test('ordinary text replies never produce a tool card from running, terminal or 
   }
 })
 
+test('orphan stop observation ends its progress without inventing history or hiding a newer unrelated turn', async () => {
+  const command = { commandId: 'orphan-root', kind: 'session.message', state: 'accepted_by_dsh',
+    sessionId: 'A', receiptId: 'rpc:orphan.1', dshTurn: 1 }
+  const task = { taskId: command.commandId, sessionId: 'A', source: command, artifacts: [], executionSteps: [],
+    control: { state: 'stop_requested', stopStatus: 'completed', canResume: true }, supplements: [], resumes: [] }
+  const events = [
+    { seq: 0, type: 'turn.started', data: { turn: 1 } },
+    { seq: 1, type: 'user.message', data: { text: '合成遗留停止', receiptId: command.receiptId } },
+    { seq: 2, type: 'step.started', data: { taskId: 'turn-1', turn: 1, stepId: 'read-1', toolName: 'read', summary: '读取文件：synthetic.txt' } },
+    { seq: 3, type: 'step.completed', data: { taskId: 'turn-1', turn: 1, stepId: 'read-1', toolName: 'read', summary: '读取文件：synthetic.txt', state: 'completed' } },
+  ]
+  const page = harness([command], events, true, { taskDetails: { [command.commandId]: task } })
+  await ready(page)
+  for (let i = 0; i < 30 && !page.get('timeline-status').textContent.includes('已结束'); i++) await flush()
+  assert.match(page.get('timeline-status').textContent, /^已结束/)
+  const progress = page.get('transcript').children.find((row: any) => row.dataset.timeline === 'steps-2')
+  assert.ok(progress)
+  assert.match(visibleText(progress), /读取了 1 个文件.*已结束/)
+  assert.equal(progress.dataset.running, 'false')
+  assert.equal(events.some(event => event.type === 'turn.ended'), false)
+  events.push({ seq: 4, type: 'turn.started', data: { turn: 2 } },
+    { seq: 5, type: 'user.message', data: { text: '新的无关目标', receiptId: 'rpc:other.2' } })
+  page.tick()
+  for (let i = 0; i < 30 && page.get('timeline-status').textContent.includes('已结束'); i++) await flush()
+  assert.equal(page.get('timeline-status').hidden, true, 'old terminal evidence cannot hide the new running turn')
+})
+
 function task15NarrowCard(page: ReturnType<typeof harness>) {
   return page.get('transcript').children.find((row) => row.dataset.conversationTask === 'root-narrow')
 }

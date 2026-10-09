@@ -145,7 +145,7 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
     if (!requestAllowed(req)) return writeJson(res, 403, { error: { code: 'origin-forbidden', message: 'Gateway request failed' } })
     const requestUrl = new URL(req.url ?? '/', 'http://gateway')
     const pathname = decodeURIComponent(requestUrl.pathname)
-    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history|source|rename|fork|memory-cleanup))?$/.exec(pathname)
+    const match = /^\/weftmate\/api\/v1\/sessions\/([^/]+)(?:\/(resume|messages|cancel|events|models|approval|history|source|stop-state|rename|fork|memory-cleanup))?$/.exec(pathname)
     const attachmentMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/attachments\/(sha256:[a-f0-9]{64})$/.exec(pathname)
     const questionMatch = /^\/weftmate\/api\/v1\/sessions\/([^/]+)\/questions(?:\/([0-9a-f-]{36}))?$/i.exec(pathname)
     const workspaceMatch = /^\/weftmate\/api\/v1\/workspaces\/([^/]+)$/.exec(pathname)
@@ -225,6 +225,16 @@ export function createGatewayV1({ client, readLog, lifecycle, diagnostics: diagn
       }
       if (!match) return writeJson(res, 404, { error: { code: 'not-found', message: 'Gateway request failed' } })
       const [, sessionId, action] = match
+      if (action === 'stop-state' && req.method === 'GET') {
+        const receiptId = requestUrl.searchParams.get('receiptId'), turn = requestUrl.searchParams.get('turn')
+        const stopRequestedAt = requestUrl.searchParams.get('stopRequestedAt')
+        if (!/^[A-Za-z0-9._:-]{1,160}$/.test(receiptId ?? '') ||
+            turn !== null && (!/^\d+$/.test(turn) || !Number.isSafeInteger(Number(turn)) || Number(turn) < 1) ||
+            !/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(stopRequestedAt ?? '') ||
+            !Number.isFinite(Date.parse(stopRequestedAt))) throw new TypeError('invalid stop state identity')
+        return writeJson(res, 200, await sessions.taskStopState({ sessionId, receiptId, stopRequestedAt,
+          ...(turn === null ? {} : { turn: Number(turn) }) }))
+      }
       if (action === 'rename' && req.method === 'POST') {
         const payload = await readJson(req)
         return writeJson(res, 200, await sessions.rename(sessionId, payload.title))

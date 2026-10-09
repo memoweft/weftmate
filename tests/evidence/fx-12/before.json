@@ -1,0 +1,82 @@
+{
+  "label": "before",
+  "scenarios": [
+    {
+      "scenario": "runtime-restart",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:13.259Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:13.259Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": false,
+        "stopStatus": "unconfirmed",
+        "pendingReceipts": 1,
+        "reasonCode": "TURN_OUTCOME_UNCONFIRMED"
+      }
+    },
+    {
+      "scenario": "missing-turn",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:13.535Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:13.535Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": false,
+        "stopStatus": "unconfirmed",
+        "pendingReceipts": 1,
+        "reasonCode": "TURN_OUTCOME_UNCONFIRMED"
+      }
+    },
+    {
+      "scenario": "model-switch-failed",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:13.801Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:13.801Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": false,
+        "stopStatus": "unconfirmed",
+        "pendingReceipts": 1,
+        "reasonCode": "TURN_OUTCOME_UNCONFIRMED"
+      }
+    },
+    {
+      "scenario": "upstream-disconnect",
+      "control": {
+        "state": "stop_requested",
+        "updatedAt": "2026-10-09T13:38:14.066Z",
+        "backgroundJobs": {
+          "active": 0,
+          "unconfirmed": 0
+        },
+        "stopRequestedAt": "2026-10-09T13:38:14.066Z",
+        "canSupplement": false,
+        "canStop": false,
+        "canResume": false,
+        "stopStatus": "unconfirmed",
+        "pendingReceipts": 1,
+        "reasonCode": "TURN_OUTCOME_UNCONFIRMED"
+      }
+    }
+  ],
+  "metrics": {
+    "stopCalls": 8,
+    "nativeReads": 0,
+    "sends": 4
+  }
+}

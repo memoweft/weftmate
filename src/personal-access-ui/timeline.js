@@ -41,19 +41,21 @@
         }
       }
       const previous = row.querySelector('details')
-      const terminal = ordered.some(e => (e.type === 'task.ended' && e.data?.taskId === block.taskId) ||
+      const stopView = options.stopViews?.[block.taskId]
+      const terminal = stopView?.terminal || ordered.some(e => (e.type === 'task.ended' && e.data?.taskId === block.taskId) ||
         e.type === 'turn.ended' && block.taskId === `turn-${e.data?.turn}`)
       const view = globalThis.WeftUiCore.progressText(block.steps, terminal)
+      if (stopView) { view.text = `${view.text} · ${stopView.text}`; view.running = !stopView.terminal; }
       // Keep completed work visible while a real native turn waits for its
       // next model/tool result. The stage comes from host state, not a timer
       // pretending that another tool is still running.
-      if (options.waiting && !terminal && !view.running && !view.failed &&
+      if (options.waiting && !stopView && !terminal && !view.running && !view.failed &&
           block === groups.at(-1) && started && block.seq > started.seq &&
           block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
         view.text += ` · ${options.waiting}`; view.running = true
       }
       const running = view.running
-      const signature = JSON.stringify([block, terminal])
+      const signature = JSON.stringify([block, terminal, stopView])
       row.dataset.running = String(running)
       if (row.dataset.signature === signature) {
         // A stage/timer update must not detach a focused or scrolling summary.

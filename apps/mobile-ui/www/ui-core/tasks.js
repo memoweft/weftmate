@@ -230,6 +230,8 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
                     }
                     core.conversationTasks.entries.set(taskId, entry);
                     effects.renderConversationTasks();
+                    effects.renderTurnStatus?.();
+                    effects.renderTimeline?.();
                 }
             };
             await Promise.all([worker(), worker()]);
@@ -249,7 +251,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
             if (control.stopStatus === 'stopped')
                 return '电脑已核对这件事的实际停止。已执行的步骤与成果会保留。';
             if (control.stopStatus === 'completed')
-                return '这件事的回合已正常结束；停止请求没有已证实的中断结果。核对成果后可写明下一步。';
+                return '这件事的回合已不在运行；未确认是停止请求使它结束。核对已执行的步骤与成果后，可写明下一步。';
             if (control.stopStatus === 'cancel_requested')
                 return '电脑已对准这件事发起取消，正在等待实际结束记录。';
             if (control.legacyStopIntent && !control.canResume)
@@ -268,6 +270,25 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
             default: return '任务控制状态待核对。';
         }
     }
+    function taskStopView(turn) {
+        const context = core.conversationTaskContext();
+        if (!core.conversationTaskCurrent(context) || !Number.isSafeInteger(turn) ||
+            core.conversationTasks.ownerId !== context.ownerId || core.conversationTasks.identity !== context.identity) return null;
+        const events = core.timelineEventsForContext(context).sort((a, b) => a.seq - b.seq);
+        const start = events.findIndex(event => event.type === 'turn.started' && event.data?.turn === turn);
+        const end = start < 0 ? -1 : events.findIndex((event, index) => index > start && event.type === 'turn.started');
+        const receipts = new Set(start < 0 ? [] : events.slice(start, end < 0 ? undefined : end)
+            .filter(event => event.type === 'user.message').map(event => event.data?.receiptId).filter(Boolean));
+        for (const entry of core.conversationTasks.entries.values()) {
+            const task = entry.payload, control = task?.control;
+            if (entry.sessionId !== context.sessionId || control?.state !== 'stop_requested') continue;
+            const commands = [task.source, ...(task.supplements || []), ...(task.resumes || [])];
+            if (!commands.some(command => command?.receiptId && (command.dshTurn === turn || receipts.has(command.receiptId)))) continue;
+            const terminal = control.canResume === true && ['stopped', 'completed'].includes(control.stopStatus);
+            return { text: terminal ? control.stopStatus === 'stopped' ? '已停止' : '已结束' : '正在停止…', terminal };
+        }
+        return null;
+    }
     function taskControlError(error) {
         if (error.code === 'TASK_NOT_READY' || error.status === 409)
             return '任务状态已变化或结果仍待核对，请重新核对后再操作。';
@@ -277,5 +298,5 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
             return '当前账户或设备无法操作这件事。';
         return '操作尚未确认，请重新核对任务记录。';
     }
-    return { taskQueue, cancelQueuedTask, editQueuedTask, messageTaskLabel, commandTitle, commandStatus, taskReplyText, conversationTaskContext, conversationTaskCurrent, relatedExecutionSteps, executionProgress, executionName, refreshConversationTasks, taskControlStatus, taskControlError };
+    return { taskQueue, cancelQueuedTask, editQueuedTask, messageTaskLabel, commandTitle, commandStatus, taskReplyText, conversationTaskContext, conversationTaskCurrent, relatedExecutionSteps, executionProgress, executionName, refreshConversationTasks, taskControlStatus, taskControlError, taskStopView };
 };

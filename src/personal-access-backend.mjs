@@ -386,6 +386,20 @@ export function createPersonalAccessBackend({ currentOrigin, referenceScan, prof
         return await replyEvidence({ sessionId, receiptId, ...(turn === undefined ? {} : { turn }) }) ?? unknown
       } catch { return unknown }
     },
+    async getTaskStopState({ sessionId, receiptId, turn, stopRequestedAt, ownerId }) {
+      requireRuntime()
+      if (typeof sessionId !== 'string' || !idPattern.test(sessionId) ||
+          typeof receiptId !== 'string' || !idPattern.test(receiptId) ||
+          turn !== undefined && (!Number.isSafeInteger(turn) || turn < 1) ||
+          typeof stopRequestedAt !== 'string' || !Number.isFinite(Date.parse(stopRequestedAt))) fail('INVALID_COMMAND')
+      if (hostOwnerId() !== null && (ownerId !== hostOwnerId() || ownerForSession(sessionId) !== ownerId)) fail('SESSION_READ_ONLY')
+      // Unlike requireSession, this read must reach DSH when the historical
+      // session itself is missing. Stored owner binding still fences it.
+      const runtimeId = getRuntimeId(), origin = currentOrigin()
+      const result = await gateway(`/sessions/${encodeURIComponent(sessionId)}/stop-state?receiptId=${encodeURIComponent(receiptId)}&stopRequestedAt=${encodeURIComponent(stopRequestedAt)}${turn === undefined ? '' : `&turn=${turn}`}`)
+      if (getRuntimeId() !== runtimeId || currentOrigin() !== origin) fail('RUNTIME_UNAVAILABLE')
+      return result
+    },
     async openDesktopApp({ appId, ownerId }) {
       requireRuntime()
       if (presetForOwner(ownerId) !== 'personal-remote') fail('CAPABILITY_UNAVAILABLE')
