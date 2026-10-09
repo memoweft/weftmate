@@ -50,7 +50,7 @@ try{
   for(const theme of ['light','dark']){
     await page.evaluate(theme=>applyTheme(theme),theme);await shot(`${theme}-recent`);
     for(const label of ['成功','失败','停止'])await page.getByRole('button',{name:new RegExp(`^打开旁聊结果：${label}`)}).waitFor();
-    await page.getByRole('button',{name:/^打开旁聊结果：停止/}).click();await b('打开导航').click();await b('WeftMate 主对话').click();
+    await page.getByRole('button',{name:/^打开旁聊结果：停止/}).click();await page.getByRole('banner').getByText('合成安卓结果 stopped',{exact:true}).waitFor();await page.getByText('合成安卓摘要 stopped',{exact:true}).waitFor();await b('打开导航').click();await b('WeftMate 主对话').click();
     await b('搜索主对话').click();await page.getByRole('searchbox',{name:'主对话搜索关键词'}).fill('纸船');await b('查找').click();await delay(1000);console.log('search state',await page.evaluate(()=>({search:uiCore.state.chatWindow.search,index:uiCore.state.chatWindow.indexState,notice:document.querySelector('.main-chat-notice')?.textContent,toast:$('toast').textContent,owner:state.owner})));await shot(`${theme}-search-diagnostic`);await page.locator('mark').first().waitFor();await b('下一条搜索结果').click();await b('上一条搜索结果').click();await shot(`${theme}-search`);await b('关闭主对话搜索').click();
     await b('跳到日期').click();await writeFile(join(out,`android-${theme}-native-date-picker.png`),execFileSync(adb,['-s',serial,'exec-out','screencap','-p'],{windowsHide:true,maxBuffer:12*1024*1024}));await nativeNode(/text="(?:取消|Cancel)"[^>]*package="android"/);
     const date=new Date(Date.now()-6*86400000).toLocaleDateString('en-CA',{timeZone:'Asia/Shanghai'}),label=`${Number(date.slice(5,7))} 月 ${Number(date.slice(8))} 日`;
@@ -73,10 +73,12 @@ try{
     finally{active=false;clearInterval(stream);await swipes;f.progress.finish('completed');}
     report.performance.streamedUpdates=streamed;report.performance.appPssKiB=Number(/TOTAL PSS:\s*(\d+)/.exec(run('shell','dumpsys','meminfo',pkg))?.[1]||0);
     const cdp=await page.context().newCDPSession(page);await cdp.send('HeapProfiler.collectGarbage');report.performance.heapBytes=(await cdp.send('Runtime.getHeapUsage')).usedSize;
+    await writeFile(join(out,'android-performance.json'),JSON.stringify(report.performance,null,2)+'\n');
     await page.evaluate(()=>uiCore.selectMainChat());
   }
+  const beforeSendIds=new Set((await f.request('/commands?limit=50')).commands.map(row=>row.commandId));
   await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('合成安卓立即发送');await b('发送').click();
-  await until(async()=>{const rows=(await f.request('/commands?limit=50')).commands;return rows.some(row=>row.kind==='chat.message'&&row.state==='accepted_by_dsh'&&row.requestId!==first.requestId);});
+  await until(async()=>{const rows=(await f.request('/commands?limit=50')).commands;return rows.find(row=>row.kind==='chat.message'&&row.state==='accepted_by_dsh'&&!beforeSendIds.has(row.commandId));});
   f.progress.call('read','ia4-read',{paths:['synthetic.md']});f.progress.result('ia4-read','synthetic contents');
   const approval=await f.progress.approve('ia4-approve','echo synthetic');await page.evaluate(()=>uiCore.refreshLogicalHistory());await b('批准').waitFor();await shot('approval');await b('批准').click();
   await page.getByRole('textbox',{name:'输入消息',exact:true}).fill('');await b('停止回复').waitFor();await b('停止回复').click();await shot('stopped');
