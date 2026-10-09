@@ -1,0 +1,209 @@
+{
+  "startedAt": "2026-10-09T14:06:52.545Z",
+  "realMain": true,
+  "realDsh": true,
+  "syntheticModel": true,
+  "checks": [
+    {
+      "name": "light-settings",
+      "status": "passed",
+      "durationMs": 4046,
+      "pages": [
+        {
+          "name": "常规",
+          "durationMs": 241,
+          "screenshot": "settings/light-settings-常规.png",
+          "originalHarnessScreenshot": "desktop/light-settings-常规.png"
+        },
+        {
+          "name": "外观",
+          "durationMs": 223,
+          "screenshot": "settings/light-settings-外观.png",
+          "originalHarnessScreenshot": "desktop/light-settings-外观.png"
+        },
+        {
+          "name": "账户",
+          "durationMs": 247,
+          "screenshot": "settings/light-settings-账户.png",
+          "originalHarnessScreenshot": "desktop/light-settings-账户.png"
+        },
+        {
+          "name": "设备",
+          "durationMs": 238,
+          "screenshot": "settings/light-settings-设备.png",
+          "originalHarnessScreenshot": "desktop/light-settings-设备.png"
+        },
+        {
+          "name": "用量",
+          "durationMs": 258,
+          "screenshot": "settings/light-settings-用量.png",
+          "originalHarnessScreenshot": "desktop/light-settings-用量.png"
+        },
+        {
+          "name": "已归档",
+          "durationMs": 224,
+          "screenshot": "settings/light-settings-已归档.png",
+          "originalHarnessScreenshot": "desktop/light-settings-已归档.png"
+        },
+        {
+          "name": "模型",
+          "durationMs": 238,
+          "screenshot": "settings/light-settings-模型.png",
+          "originalHarnessScreenshot": "desktop/light-settings-模型.png"
+        },
+        {
+          "name": "审批",
+          "durationMs": 223,
+          "screenshot": "settings/light-settings-审批.png",
+          "originalHarnessScreenshot": "desktop/light-settings-审批.png"
+        },
+        {
+          "name": "记忆",
+          "durationMs": 223,
+          "screenshot": "settings/light-settings-记忆.png",
+          "originalHarnessScreenshot": "desktop/light-settings-记忆.png"
+        },
+        {
+          "name": "提醒与定时任务",
+          "durationMs": 244,
+          "screenshot": "settings/light-settings-提醒与定时任务.png",
+          "originalHarnessScreenshot": "desktop/light-settings-提醒与定时任务.png"
+        },
+        {
+          "name": "系统状态",
+          "durationMs": 219,
+          "screenshot": "settings/light-settings-系统状态.png",
+          "originalHarnessScreenshot": "desktop/light-settings-系统状态.png"
+        },
+        {
+          "name": "备份与恢复",
+          "durationMs": 233,
+          "screenshot": "settings/light-settings-备份与恢复.png",
+          "originalHarnessScreenshot": "desktop/light-settings-备份与恢复.png"
+        },
+        {
+          "name": "关于",
+          "durationMs": 228,
+          "screenshot": "settings/light-settings-关于.png",
+          "originalHarnessScreenshot": "desktop/light-settings-关于.png"
+        }
+      ]
+    },
+    {
+      "name": "light-narrow-window",
+      "status": "passed",
+      "durationMs": 83,
+      "screenshot": "settings/light-narrow.png",
+      "originalHarnessScreenshot": "desktop/light-narrow.png"
+    },
+    {
+      "name": "dark-settings",
+      "status": "passed",
+      "durationMs": 3892,
+      "pages": [
+        {
+          "name": "常规",
+          "durationMs": 234,
+          "screenshot": "settings/dark-settings-常规.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-常规.png"
+        },
+        {
+          "name": "外观",
+          "durationMs": 215,
+          "screenshot": "settings/dark-settings-外观.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-外观.png"
+        },
+        {
+          "name": "账户",
+          "durationMs": 236,
+          "screenshot": "settings/dark-settings-账户.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-账户.png"
+        },
+        {
+          "name": "设备",
+          "durationMs": 249,
+          "screenshot": "settings/dark-settings-设备.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-设备.png"
+        },
+        {
+          "name": "用量",
+          "durationMs": 241,
+          "screenshot": "settings/dark-settings-用量.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-用量.png"
+        },
+        {
+          "name": "已归档",
+          "durationMs": 223,
+          "screenshot": "settings/dark-settings-已归档.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-已归档.png"
+        },
+        {
+          "name": "模型",
+          "durationMs": 228,
+          "screenshot": "settings/dark-settings-模型.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-模型.png"
+        },
+        {
+          "name": "审批",
+          "durationMs": 222,
+          "screenshot": "settings/dark-settings-审批.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-审批.png"
+        },
+        {
+          "name": "记忆",
+          "durationMs": 223,
+          "screenshot": "settings/dark-settings-记忆.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-记忆.png"
+        },
+        {
+          "name": "提醒与定时任务",
+          "durationMs": 234,
+          "screenshot": "settings/dark-settings-提醒与定时任务.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-提醒与定时任务.png"
+        },
+        {
+          "name": "系统状态",
+          "durationMs": 226,
+          "screenshot": "settings/dark-settings-系统状态.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-系统状态.png"
+        },
+        {
+          "name": "备份与恢复",
+          "durationMs": 219,
+          "screenshot": "settings/dark-settings-备份与恢复.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-备份与恢复.png"
+        },
+        {
+          "name": "关于",
+          "durationMs": 229,
+          "screenshot": "settings/dark-settings-关于.png",
+          "originalHarnessScreenshot": "desktop/dark-settings-关于.png"
+        }
+      ]
+    },
+    {
+      "name": "dark-narrow-window",
+      "status": "passed",
+      "durationMs": 75,
+      "screenshot": "settings/dark-narrow.png",
+      "originalHarnessScreenshot": "desktop/dark-narrow.png"
+    }
+  ],
+  "errors": [],
+  "stability": {
+    "elapsedMs": 8130,
+    "p99Ms": 43.909119,
+    "maxMs": 52.166655,
+    "storeWatchEvents": 2,
+    "samples": [
+      {
+        "at": 1791554819836,
+        "rss": 200945664,
+        "heapUsed": 22124240
+      }
+    ]
+  },
+  "modelCalls": 0,
+  "finishedAt": "2026-10-09T14:07:07.968Z",
+  "cleaned": true
+}

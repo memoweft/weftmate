@@ -1,0 +1,32 @@
+{
+  "provider": "MiMo mimo-v2.6-flash",
+  "requests": 223,
+  "returnedUsage": 210,
+  "missingUsage": 13,
+  "inputTokens": 914085,
+  "cachedInputTokens": 375872,
+  "outputTokens": 36996,
+  "knownCnyLowerBound": 0.61972244,
+  "priceSource": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+  "priceCheckedAt": "2026-10-09",
+  "counting": "Deduplicate traced external model starts by process request ID + UTC start. Includes failed and aborted model calls; excludes localhost bridges. Missing usage is not free.",
+  "bySource": {
+    "android-all-retry/requests.jsonl": 4,
+    "android-new-retry/requests.jsonl": 4,
+    "android-projects/requests.jsonl": 4,
+    "immediate-original/requests.jsonl": 22,
+    "legacy/requests.jsonl": 5,
+    "m1-action04-retry/requests.jsonl": 14,
+    "m1-mimo/requests.jsonl": 56,
+    "m2/requests.jsonl": 21,
+    "memory-holdout-retry/requests.jsonl": 7,
+    "memory-holdout/requests.jsonl": 20,
+    "menus/requests.jsonl": 7,
+    "orphan-traces/weftmate-qa2-RxS35W.jsonl": 4,
+    "project-lifecycle/requests.jsonl": 14,
+    "projects/requests.jsonl": 12,
+    "relay-complete/requests.jsonl": 5,
+    "runner-aborted/requests.jsonl": 19,
+    "second/requests.jsonl": 5
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "syntheticSnapshot": true,
+  "realWatchApp": true,
+  "phoneReachable": false,
+  "approveRejectedOrAllowed": false,
+  "reason": "User requires one simulator at a time, Watch last. iPhone was shut down. No false reachable state or approval receipt was injected.",
+  "screenshot": "approval.png",
+  "status": "blocked-live-approval",
+  "duration": "24 seconds simulator boot; interaction not timed separately",
+  "cleanup": "Watch app terminated; xcrun simctl shutdown all completed"
+}

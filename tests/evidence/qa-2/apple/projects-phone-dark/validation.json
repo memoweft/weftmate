@@ -1,0 +1,55 @@
+{
+  "platform": "iphone",
+  "theme": "dark",
+  "remote": false,
+  "authenticated": true,
+  "passed": 1,
+  "failed": 0,
+  "skipped": 0,
+  "realPersonalHTTP": true,
+  "realProjectStore": true,
+  "syntheticRootInspector": true,
+  "syntheticDsh": true,
+  "syntheticRestrictedProjection": true,
+  "projectSendCount": 1,
+  "restrictedTaskRequests": 0,
+  "projectCreateRequests": 0,
+  "moved": true,
+  "projectRemoved": false,
+  "generatedAt": "2026-10-09T14:24:01.989729+00:00",
+  "commit": "d1c6bd62ffed29d211028015ab48240c016e37df",
+  "screenshots": [
+    {
+      "file": "a11-iphone-move-project-dark.png",
+      "sha256": "00dfb69337bd7b0ccc891d0e1425309369a09e923b1c96832f5e71e038cae9d9"
+    },
+    {
+      "file": "a11-iphone-project-moved-dark.png",
+      "sha256": "2048e1f4e4102b5f9bd8203a63b1ad259ee6f1d25bcc56e50e983bf1defb7b2f"
+    },
+    {
+      "file": "a11-iphone-project-new-conversation-dark.png",
+      "sha256": "870cc667f3da787fa1e17a58b860b24048d52d58825faebb022c556228e97b45"
+    },
+    {
+      "file": "a11-iphone-project-sent-dark.png",
+      "sha256": "a28b7dc681db291922ff4cdc0b3919b6f1e0c8de3b63f28f6e59b853b301456f"
+    },
+    {
+      "file": "a11-iphone-projects-list-dark.png",
+      "sha256": "5f671aa134f1a444cdc0cd4dbec9243204097bf5cffa042360c84e2220ec76b7"
+    },
+    {
+      "file": "a11-iphone-restricted-sent-dark.png",
+      "sha256": "ec6eb6cd228da91e36720baa5d9c9313779f880304773b9ec16560515d4632c0"
+    },
+    {
+      "file": "a11-iphone-restricted-session-dark.png",
+      "sha256": "ca6b69ef9c70d67ed53dd41cc1fa0030e1cdccace0a1666a6bff92d74566af80"
+    }
+  ],
+  "xcodeJobs": 2,
+  "simulatorsAtOnce": 1,
+  "sourcesSHA256": "a415e3dfa8f017db49071fe7f4606dd5e869c099dd053e3621b64e8cf97d1548",
+  "binarySHA256": "0b30ab75e13a4beceeda21ba80f1c1365b4b26efac4e02b8132e2f6ff8ebfbba"
+}
