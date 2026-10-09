@@ -12,7 +12,7 @@ globalThis.WeftUiCore.factories.tasks = (core, effects, environment) => {
                 if (!taskId) continue;
                 const previous = rows.get(taskId) || {};
                 rows.set(taskId, { ...previous, taskId, receiptId: data.receiptId || command?.receiptId || previous.receiptId,
-                    text: data.text || previous.text || command?.text || command?.taskLabel || '新任务',
+                    text: data.text || previous.text || command?.text || command?.taskLabel || '排队任务',
                     seq: previous.seq ?? event.seq, queued: previous.queued || event.type === 'task.queued',
                     state: event.type === 'task.queued' ? 'queued' : event.type === 'task.started' ? 'running' :
                         ['canceled', 'cancelled'].includes(data.reason) ? 'cancelled' : 'ended', reason: data.reason });

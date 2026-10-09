@@ -532,7 +532,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   document.querySelector('[data-action="new-chat"]').addEventListener('click',()=>selectConversation(null));
   $('conversation-search').addEventListener('input',renderConversationList);
   $('draft').addEventListener('input',updateComposer);$('send-button').addEventListener('click',()=> $('send-button').dataset.action==='stop'?stop():send());
-  $('message-mode').addEventListener('change',()=>uiCore.setMessageMode($('message-mode').value));
   $('draft').addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){
     event.preventDefault();if(!$('send-button').disabled)void send({intent:event.ctrlKey||event.metaKey?'queue':undefined});}});
   $('model-button').addEventListener('click',openModels);$('plus-button').addEventListener('click',openAttachmentMenu);
@@ -553,7 +552,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   $('voice-button').addEventListener('click',async()=>{try{await call('voice.start',{conversationId:state.chatSource==='host'?'':state.conversationId||'',viewGeneration:state.generation});
       status('等待系统语音输入；识别结果只会填入草稿')}catch(e){status(safeError(e),true)}});
   ensureConversationScroll();
-  globalThis.WeftPopover.bindSettingsSelect($('message-mode'));
   const context=$('context-usage'),tooltip=$('context-tooltip');
   const showContext=()=>{tooltip.hidden=false;globalThis.WeftPopover.position(tooltip,context)};
   context.addEventListener('mouseenter',showContext);context.addEventListener('mouseleave',()=>tooltip.hidden=true);

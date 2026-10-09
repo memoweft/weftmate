@@ -305,7 +305,7 @@ html,body{overflow:hidden}#app{height:var(--viewport-height,100dvh)}
 .artifact-action{min-height:44px;padding:var(--wm-space-8) var(--wm-space-12);margin:var(--wm-space-8) var(--wm-space-8) 0 0;border:1px solid var(--line);border-radius:var(--wm-radius-8);background:var(--surface);color:var(--ink)}
 .timeline-action{min-height:44px}.timeline-raw{padding:var(--wm-space-14);background:var(--soft);border-radius:var(--wm-radius-10);font:var(--wm-font-size-13)/var(--wm-line-height-1_65) var(--wm-font-family-mono)}
 .shared-turn-state{margin:0 0 var(--wm-space-16);color:var(--secondary);font-size:var(--wm-font-size-14)}.shared-turn-state::before{content:'';display:inline-block;width:7px;height:7px;border-radius:var(--wm-radius-circle);background:var(--wm-color-mobile-success);margin-right:var(--wm-space-8)}
-.drawer{border-radius:0;border-right:1px solid var(--line);box-shadow:none;background:var(--canvas)}
+.drawer{border-radius:0;border-right:1px solid var(--line);box-shadow:none;background:var(--sidebar)}
 .nav-primary{background:transparent;border:1px solid var(--line);color:var(--ink);border-radius:var(--wm-radius-10)}
 .group{border:1px solid var(--line);border-radius:var(--wm-radius-14)}.secondary{color:var(--ink)}
 .resource-page{position:fixed;inset:0;z-index:70;background:var(--surface);color:var(--ink);display:flex;flex-direction:column;height:var(--viewport-height,100dvh);padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)}
@@ -348,10 +348,8 @@ summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible
 .queued-actions{display:flex;gap:var(--wm-space-12)}
 .queued-actions button{min-height:var(--wm-space-44);padding:var(--wm-space-8);font-size:var(--wm-font-size-14)}
 .queued-notice,.source-summary{overflow-wrap:anywhere;font-size:var(--wm-font-size-14);line-height:var(--wm-line-height-1_6)}
-.message-mode-control{display:flex;align-items:center;justify-content:space-between;gap:var(--wm-space-8);margin-bottom:var(--wm-space-8);font-size:var(--wm-font-size-14);color:var(--secondary)}
-.message-mode-control select{min-height:var(--wm-space-44);padding:var(--wm-space-8) var(--wm-space-12);border:var(--wm-space-1) solid var(--line);border-radius:var(--wm-radius-8);background:var(--surface);color:var(--ink);font:inherit}
 .approval-detail .timeline-raw{overflow-wrap:anywhere;white-space:pre-wrap}
-.queued-tasks>summary:focus-visible,.message-mode-control select:focus-visible,.queued-actions button:focus-visible,.approval-detail>summary:focus-visible{outline:var(--wm-space-2) solid var(--accent);outline-offset:var(--wm-space-3)}
+.queued-tasks>summary:focus-visible,.queued-actions button:focus-visible,.approval-detail>summary:focus-visible{outline:var(--wm-space-2) solid var(--accent);outline-offset:var(--wm-space-3)}
 .session-row{display:flex;align-items:center;gap:var(--wm-space-4)}
 .session-row>button:first-child{flex:1;min-width:0}
 .session-row .session-more{flex:none;width:auto;font-size:var(--wm-font-size-12)}
@@ -475,10 +473,13 @@ html, body { overflow: hidden; }
 .icon-send { -webkit-mask-image:url(icons/send.svg); mask-image:url(icons/send.svg); }
 .icon-shield { -webkit-mask-image:url(icons/approval.svg); mask-image:url(icons/approval.svg); }
 .icon-chevron { -webkit-mask-image:url(icons/16/chevron.svg); mask-image:url(icons/16/chevron.svg); }
-.message-mode-control .settings-select { display:flex; align-items:center; gap:var(--wm-space-8); min-height:var(--wm-space-36); padding:var(--wm-space-4) var(--wm-space-8); border:1px solid var(--line); border-radius:var(--wm-radius-8); color:var(--ink); background:var(--surface); }
 .settings-select-menu { position:fixed; z-index:50; margin:0; padding:var(--wm-space-6); border:1px solid var(--line); border-radius:var(--wm-radius-12); background:var(--surface); color:var(--ink); }
 .settings-select-menu button { display:block; width:100%; min-height:var(--wm-space-44); padding:var(--wm-space-8) var(--wm-space-12); text-align:left; border-radius:var(--wm-radius-8); }
 .settings-select-menu button[aria-selected=true] { background:var(--accent-soft); }
 .approval-mode-button .approval-shield { --small-icon: url(icons/16/approval.svg); }
 #approval-mode-button.is-warning { flex-shrink: 0; }
 @media (max-width:360px) { #approval-mode-button.is-warning { max-width:var(--wm-space-44); } #approval-mode-button.is-warning #approval-mode-label { display:none; } }
+
+/* UI-P5 uses the same semantic shell surfaces as desktop; no native caption on web. */
+#app, .topbar, #chat-page, .composer-dock { background: var(--panel); }
+.drawer { background: var(--sidebar); border-color: var(--panel-divider); }

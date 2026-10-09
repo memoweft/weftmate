@@ -191,9 +191,6 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         ui.byId('attachment-cancel').disabled = !value.attachmentBusy;
         ui.byId('open-notepad').textContent = value.desktopText;
         ui.byId('open-notepad').disabled = value.desktopDisabled;
-        ui.byId('message-mode').dataset.controlHidden = String(!value.running);
-        ui.byId('message-mode').value = core.state.messageMode || 'steer';
-        ui.byId('message-mode').dispatchEvent(new Event('weft:sync'));
         const send = ui.byId('send-message');
         const stop = value.running && !ui.readMessageDraft().trim() && !core.currentAttachmentDrafts().length;
         globalThis.WeftMotion?.changed(send, String(stop), '160ms');
@@ -201,7 +198,7 @@ globalThis.WeftUiComponents.factories.shell = (core, ui) => {
         send.classList.toggle('is-stop', stop);
         send.dataset.action = stop ? 'stop' : 'send';
         send.setAttribute('aria-label', stop ? '停止回复' : '发送');
-        send.title = stop ? '停止回复 · Esc' : '发送 · Enter；新任务 · Ctrl/Cmd+Enter';
+        send.title = stop ? '停止回复 · Esc' : '发送 · Enter；排队 · Ctrl/Cmd+Enter';
         send.replaceChildren(window.WeftIcons.create(stop ? 'stop' : 'send', 20));
         ui.renderContextUsage();
         ui.renderOptimisticMessages();

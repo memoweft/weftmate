@@ -344,10 +344,6 @@ async function removeAttachment(attachmentId){if(state.busy||state.transitionPen
 function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('model-button'))}
 
 function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
-  $('message-mode-control').hidden=!view.host||!state.sharedRunning;
-  $('message-mode').value=uiCore.composerInputMode(state.sharedSessionId);
-  $('message-mode').dispatchEvent?.(new Event('weft:sync'));
-  $('message-mode').disabled=!state.loggedIn||view.busy||state.transitionPending;
   renderQueuedTasks();
   const button=$('send-button'), stop=view.sendHidden;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');
@@ -356,7 +352,7 @@ function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.c
   button.setAttribute('aria-label',stop?'停止回复':'发送');button.replaceChildren(el('span',`icon icon-${stop?'stop':'send'}`));
   $('draft').disabled=view.draftDisabled;$('draft').placeholder=view.placeholder;
   renderContextUsage();
-  $('device-line').hidden=!$('approval-bar').hidden;$('device-line').textContent=view.processingHint||'';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
+  $('device-line').hidden=true;$('device-line').textContent='';$('device-line').setAttribute('role','status');$('model-label').textContent=view.modelName;$('model-button').setAttribute('aria-label',view.modelLabel);
   $('plus-button').disabled=view.attachmentsDisabled;
   for(const button of $('attachment-drafts').querySelectorAll('button'))button.disabled=view.attachmentItemDisabled;
   $('model-button').disabled=view.modelDisabled;$('voice-button').disabled=view.voiceDisabled;
@@ -506,4 +502,3 @@ function refreshCloudDevices(){const owner=state.owner,epoch=state.authEpoch;
 }
 
 /* Keep the existing mode value/change contract; use shared menu geometry. */
-globalThis.WeftPopover?.bindSelect($('message-mode'), 'popover message-mode-popover');
