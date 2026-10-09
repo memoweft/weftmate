@@ -5,9 +5,10 @@ import { createServer } from 'node:http';
 import { mkdtemp, mkdir, writeFile, rm, readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { DshWebRuntime } from '../src/dsh-web-runtime.ts';
+import { DshWebRuntime } from '../../src/dsh-web-runtime.ts';
+import { createOfficialDshSettingsClient } from '../../src/dsh-settings-migration.ts';
 
-test('native idle timeout retries a silent open stream, preserves incremental progress, and remains cancellable', {timeout:60000}, async () => {
+export async function runNativeStreamTimeout() {
   const root=await mkdtemp(join(tmpdir(),'weftmate-fx14-stream-')), home=join(root,'home'), workspace=join(root,'workspace');
   await mkdir(workspace,{recursive:true}); await mkdir(home,{recursive:true});
   let mode='silent', attempts=0, cancellations=0; const rows: any[]=[];
@@ -22,7 +23,7 @@ test('native idle timeout retries a silent open stream, preserves incremental pr
     res.on('close',()=>{row.closed=Date.now();cancellations++;});
     const delta=(content:any)=>res.write('data: '+JSON.stringify({id:'slow',choices:[{index:0,delta:content,finish_reason:null}]})+'\n\n');
     res.writeHead(200,{'content-type':'text/event-stream'}); delta({role:'assistant'});
-    if(mode==='cancel'||mode==='silent'&&attempts===1) return; // headers + first block, no semantic increment
+    if(mode==='cancel'||mode==='silent'&&attempts===1||mode==='override'&&attempts===5) return; // headers + first block, no semantic increment
     if(mode==='progress') for(let n=0;n<10;n++){await pause(80);if(res.destroyed)return;delta({content:'increment '+n+' '});}
     else {await pause(100);if(res.destroyed)return;delta({content:'retried successfully'});}
     res.end('data: '+JSON.stringify({choices:[{index:0,delta:{},finish_reason:'stop'}],usage:{prompt_tokens:100,completion_tokens:10,total_tokens:110}})+'\n\ndata: [DONE]\n\n');
@@ -83,5 +84,14 @@ test('native idle timeout retries a silent open stream, preserves incremental pr
     await until(async()=>attempts===4); await call(`/sessions/${id}/cancel`,{});
     await until(async()=>rows[3].closed>0);await pause(800);
     assert.equal(attempts,4,'caller cancellation never retries');assert.ok(cancellations>=4);
+    const settings=createOfficialDshSettingsClient({origin}), snapshot=await settings.describeSettings();
+    await settings.mutateSettings([{op:'set',path:['providers','slow-fixture'],value:{...snapshot.baseProviders['slow-fixture'],streamIdleTimeoutMs:300}}],snapshot.revision);
+    mode='override';await call(`/sessions/${id}/messages`,{content:'Provider timeout override fixture',mode:'queue'});
+    await until(async()=> (await events()).filter(row=>row.type==='turn/end').length===4);
+    assert.equal(attempts,6);assert.equal((await events()).filter(row=>row.type==='llm/retry').length,2);
+    assert.ok(rows[4].closed-rows[4].started<650,'explicit provider timeout overrides the 700ms environment default');
   } finally {if(previousTimeout===undefined) delete process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS; else process.env.WEFTMATE_STREAM_IDLE_TIMEOUT_MS=previousTimeout;if(previousScheduler===undefined)delete process.env.WEFTMATE_MODEL_SCHEDULER_URL;else process.env.WEFTMATE_MODEL_SCHEDULER_URL=previousScheduler;await runtime.close();scheduler.closeAllConnections();await new Promise<void>(resolve=>scheduler.close(()=>resolve()));server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));await rm(root,{recursive:true,force:true});}
-});
+}
+
+if (process.argv[1]?.replaceAll('\\','/').endsWith('/integration/model-stream-timeout.ts'))
+  test('native idle timeout retries a silent open stream, preserves incremental progress, and remains cancellable', {timeout:60000}, runNativeStreamTimeout);
