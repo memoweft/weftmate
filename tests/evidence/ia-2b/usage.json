@@ -1,10 +1,10 @@
 {
   "scope": "All IA-2b model calls including failed development runs and final cache verification",
   "totals": {
-    "requests": 61,
-    "prompt": 374742,
-    "completion": 10182,
-    "cached": 238976
+    "requests": 64,
+    "prompt": 379065,
+    "completion": 10617,
+    "cached": 240640
   },
   "runs": [
     {
@@ -134,6 +134,45 @@
           "total_tokens": 2149,
           "completion_tokens_details": {
             "reasoning_tokens": 28
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 1664
+          }
+        }
+      ]
+    },
+    {
+      "run": "weftmate-ia-2b-erasure-gYrKja",
+      "requests": 3,
+      "usage": [
+        {
+          "completion_tokens": 64,
+          "prompt_tokens": 118,
+          "total_tokens": 182,
+          "completion_tokens_details": {
+            "reasoning_tokens": 63
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        {
+          "completion_tokens": 334,
+          "prompt_tokens": 2093,
+          "total_tokens": 2427,
+          "completion_tokens_details": {
+            "reasoning_tokens": 293
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        {
+          "completion_tokens": 37,
+          "prompt_tokens": 2112,
+          "total_tokens": 2149,
+          "completion_tokens_details": {
+            "reasoning_tokens": 31
           },
           "prompt_tokens_details": {
             "cached_tokens": 1664
