@@ -21,9 +21,11 @@ for theme in ['light','dark']:
    get('/a5/setup');get('/bootstrap');get('/a8/prepare');ready=get('/ready')
    for stage in stages:get('/a8/'+stage)
    now=datetime.now(timezone.utc);stamp=now.strftime('%Y%m%dT%H%M%SZ')
-   stem='a9-mac-'+scene+'-'+theme+'-'+stamp
+   gallery={'progress':'conversation','stop':'composer-context','general':'general'} if a.phase=='after' else {}
+   evidenceScene=gallery.get(scene,scene)
+   stem=('review' if scene in gallery else 'a9')+'-mac-'+evidenceScene+'-'+theme+'-'+stamp
    subprocess.run([str(a.capture.resolve()),str(a.app.resolve()),str((a.evidence/(stem+'.png')).resolve()),'settings-general' if scene=='general' else 'a9-detail' if scene=='detail' else 'a9-send' if scene=='send' else 'conversation',theme,ready['host'],ready['cloud'],'a8'],check=True)
-   (a.evidence/(stem+'.json')).write_text(json.dumps({'platform':'mac','scene':scene,'theme':theme,'commit':commit,'generatedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'synthetic':True,'source':'实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型'},ensure_ascii=False,indent=2)+'\n')
+   (a.evidence/(stem+'.json')).write_text(json.dumps({'platform':'mac','scene':evidenceScene,'theme':theme,'commit':commit,'generatedAt':now.isoformat(timespec='milliseconds').replace('+00:00','Z'),'synthetic':True,'source':'实际 Mac 原生 App 自身窗口；真实隔离 cloud main / 宿主，合成 DSH 日志与模型'},ensure_ascii=False,indent=2)+'\n')
    print('Captured',theme,scene,flush=True)
   finally:
    fixture.terminate()

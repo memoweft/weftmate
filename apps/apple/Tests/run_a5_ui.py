@@ -45,9 +45,13 @@ try:
    for attachment in test['attachments']:
     name=attachment['suggestedHumanReadableName'].split('_0_')[0]
     if name.startswith('review-iphone-') or name.startswith('a8-iphone-') or name.startswith('a9-iphone-'):
-     stem=(name if name.split('-')[2] in ['session'] else name.replace('review-iphone-', 'a7-iphone-') if a.phase.startswith('a7-') else name)+'-'+stamp;shutil.copyfile(Path(exported)/attachment['exportedFileName'],a.evidence/(stem+'.png'))
      theme=a.phase.removeprefix('gallery-').removeprefix('a6-').removeprefix('a7-').removeprefix('a8-').removeprefix('a9-before-').removeprefix('a9-after-').removeprefix('review-')
      scene=name.removeprefix('review-iphone-').removeprefix('a8-iphone-').removeprefix('a9-iphone-').removesuffix('-'+theme)
+     gallery={'progress':'conversation','stop':'composer-context','general':'general'} if a.phase.startswith('a9-after-') else {}
+     if scene in gallery:
+      scene=gallery[scene];stem='review-iphone-'+scene+'-'+theme+'-'+stamp
+     else:stem=(name if name.split('-')[2] in ['session'] else name.replace('review-iphone-', 'a7-iphone-') if a.phase.startswith('a7-') else name)+'-'+stamp
+     shutil.copyfile(Path(exported)/attachment['exportedFileName'],a.evidence/(stem+'.png'))
      (a.evidence/(stem+'.json')).write_text(json.dumps({'platform':'iphone','scene':scene,'theme':theme,'commit':commit,'generatedAt':generated,'synthetic':True,'source':'实际 iPhone 原生 App；真实隔离 cloud main / 宿主，合成 DSH 日志与模型'},ensure_ascii=False,indent=2)+'\n')
  (a.evidence/('validation-'+a.phase+'.json')).write_text(json.dumps({'passed':1,'failed':0,'skipped':0,'realCloudMain':True,'realPersonalHost':True,'compiledDshEngine':False,'syntheticModel':True,'simulatorsAtOnce':1,'xcodeJobs':2,'shutdownImmediately':True},indent=2)+'\n')
 finally:

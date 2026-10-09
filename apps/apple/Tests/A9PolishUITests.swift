@@ -11,7 +11,12 @@ final class A9PolishUITests: XCTestCase {
     @MainActor private func expect(_ item: XCUIElement) throws {
         guard item.waitForExistence(timeout: 30) else { XCTFail("Missing " + item.identifier); throw NSError(domain: "A9UI", code: 1) }
     }
-    @MainActor private func tap(_ item: XCUIElement) throws { try expect(item); item.tap() }
+    @MainActor private func tap(_ item: XCUIElement) throws {
+        try expect(item)
+        let ready = XCTNSPredicateExpectation(predicate: NSPredicate(format: "enabled == true AND hittable == true"), object: item)
+        guard XCTWaiter.wait(for: [ready], timeout: 30) == .completed else { XCTFail("Control not ready: " + item.identifier); throw NSError(domain: "A9UI.Readiness", code: 1) }
+        item.tap()
+    }
     @MainActor private func keep(_ app: XCUIApplication, _ scene: String, _ theme: String) {
         let image = XCTAttachment(screenshot: app.screenshot()); image.name = "a9-iphone-" + scene + "-" + theme
         image.lifetime = .keepAlways; add(image)
