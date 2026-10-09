@@ -2,6 +2,8 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('weftmateDesktop', {
   platform: process.platform,
+  clipboardImage: () => ipcRenderer.invoke('wm:desktop:clipboard-image'),
+  captureRegion: () => ipcRenderer.invoke('wm:desktop:capture-region'),
   updateState: () => ipcRenderer.invoke('wm:desktop:update-state'),
   checkUpdates: () => ipcRenderer.invoke('wm:desktop:update-check'),
   setUpdateChannel: channel => ipcRenderer.invoke('wm:desktop:update-channel', channel),

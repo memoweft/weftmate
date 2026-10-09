@@ -200,7 +200,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
         form.hidden = !core.state.accountModelsCanManage;
         ui.byId('account-model-add').hidden = !core.state.accountModelsCanManage;
         const models = (core.state.allModels || []).filter(row => !row.id.startsWith('private-model-')).map(row => ({ ...row, modelId: row.model, status: 'active' }));
-        models.push(...core.state.accountModels);
+        models.push(...core.state.accountModels.map(row=>({...row,deepThinking:core.state.allModels?.find(model=>model.id===row.profileId)?.deepThinking ?? row.deepThinking})));
         const location = model => model.location || (model.sourceKind === 'cloud' ? 'cloud' : model.baseUrl && !['127.0.0.1', 'localhost', '[::1]'].includes(new URL(model.baseUrl).hostname) ? 'lan' : 'computer');
         for (const [group, label] of [['computer', '本机模型'], ['lan', '局域网模型'], ['cloud', '云端模型']]) {
             const heading = ui.element('li', 'model-list-heading', label); list.append(heading);
@@ -214,6 +214,7 @@ globalThis.WeftUiComponents.factories.account = (core, ui) => {
             const available = model.status === 'active' && model.configured;
             const failed = checked && (!checked.reachable || checked.authentication === 'rejected' || checked.model === 'missing' || checked.model === 'test_failed' || ['failed', 'invalid'].includes(checked.catalog) || checked.catalog === 'unsupported' && !checked.inferenceVerified);
             const status = loaded ? '已加载' : !model.configured ? '需要密钥' : !available || failed ? '不可用' : '可用';
+            main.append(ui.element('small','muted',model.deepThinking?.supported?'支持深入思考':'此模型未声明深入思考能力'));
             main.append(ui.element('strong', '', model.name || model.modelId), ui.element('small', 'muted', `${model.modelId} · ${label}`), ui.element('span', 'model-status' + (loaded ? ' is-loaded' : ''), status));
             const actions = ui.element('div', 'actions');
             const edit = ui.element('button', 'button quiet small', '编辑');

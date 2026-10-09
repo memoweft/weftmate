@@ -32,7 +32,7 @@ export async function startTimelineCandidate(options = {}) {
       if(action==='delete')scheduleRows.splice(scheduleRows.indexOf(row),1);else row.state=action==='pause'?'paused':action==='resume'?'scheduled':'completed';
       return {ok:true};
     }} : {}),
-    getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true }], preflight: async () => ({ ok: true }),
+    getStatus: async () => ({ runtime: 'ready', referenceScan: 'ready', capabilities: { chat: { available: true, inferenceVerified: false } } }), listModels: async () => [{ id: 'local', name: '合成会话', model: options.usageSamples ? 'mimo-v2.6-flash' : 'synthetic', sourceKind: options.usageSamples ? 'cloud' : 'local', configured: true, ...(options.composerMenu?{deepThinking:{supported:true,effort:'high'}}:{}) }], preflight: async () => ({ ok: true }),
     createSession: async input => { operations.push({ kind: 'create' });
       if(options.daily){if(sessionId)dailySessions.get(sessionId).running=running;events=[];running=false;dailySessions.set(input.sessionId,{events,running:false,title:'新对话'});}
       sessionId = input.sessionId; return { sessionId } },
@@ -117,7 +117,7 @@ export async function startTimelineCandidate(options = {}) {
     if (method === 'clipboard.copy') return {}
     if (method === 'conversations.list') return { conversations: [] }
     if (method === 'models.list') return { models: [] }
-    if (method === 'models.host') return { models: [{ profileId: 'local', displayName: '合成会话', configured: true }] }
+    if (method === 'models.host') return { models: [{ profileId: 'local', displayName: '合成会话', configured: true, ...(options.composerMenu?{deepThinking:{supported:true,effort:'high'}}:{}) }] }
     if (method === 'shared.sessions.list') return { source: 'host', hostAvailable: true, sessions: (await request('/sessions')).sessions.map(row=>({...row,source:'host'})) }
     if (options.sidebar && method === 'shared.projects.list') return request('/projects');
     if (options.sidebar && method === 'shared.sessions.lifecycle') return request(`/sessions/${params.sessionId}/${params.action}`, {});
@@ -164,6 +164,7 @@ export async function startTimelineCandidate(options = {}) {
       ask: questions => { const id = 'question-' + randomUUID(), event = call('ask_user_question', id, {questions}); const user = events.find(event => event.type === 'user/message');
         const frame = {sessionId,questionRpcId:randomUUID(),callId:id,sourceReady:true,sourceReceiptId:receiptId,messageHash:hash(goal),turn:1,sourceSeq:user.seq,observedSeq:event.seq,questions,nativeState:'pending'};
         questionFrames.push(frame);return frame; },
+      notice: (source,text)=>append('user/message',{source,content:[{type:'text',text}]}),
       context: value=>{contextUsage=value},
       call, result,
       text: text => append('assistant/message', {content:[{type:'text',text}]}),

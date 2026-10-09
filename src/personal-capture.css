@@ -1,0 +1,8 @@
+@import url('./personal-access-ui/tokens.css');
+body { margin:0; overflow:hidden; cursor:crosshair; font:var(--wm-font-size-14) var(--wm-font-family-body); }
+#screen { width:100vw; height:100vh; object-fit:fill; position:absolute; pointer-events:none; }
+#selection { position:absolute; border:1px solid var(--accent); box-shadow:0 0 0 100vmax rgb(0 0 0 / 45%); pointer-events:none; }
+.controls { position:fixed; bottom:var(--wm-space-20); left:var(--wm-space-20); padding:var(--wm-space-12); border-radius:var(--wm-radius-12); background:var(--surface); color:var(--ink); cursor:default; }
+p { margin:0 0 var(--wm-space-8); }
+button { font:inherit; padding:var(--wm-space-8) var(--wm-space-12); color:var(--ink); background:var(--surface-soft); border:1px solid var(--line); border-radius:var(--wm-radius-8); }
+button:focus-visible { outline:var(--wm-space-2) solid var(--accent); outline-offset:var(--wm-space-2); }

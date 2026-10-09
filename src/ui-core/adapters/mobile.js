@@ -18,7 +18,7 @@ globalThis.WeftUiCore.factories.mobile = (core, effects, environment) => {
       sendHidden:host?state.sharedRunning&&!text.trim()&&!attachments:busy,
       stopHidden:host?!state.sharedRunning:!busy,
       draftDisabled:!state.loggedIn||state.transitionPending||state.restorePending||host&&!session?.sendAvailable,
-      placeholder:host?(session?.sendAvailable?state.sharedRunning?core.composerInputMode(state.sharedSessionId)==='queue'?'排队，按顺序处理…':'引导当前回复…':'继续对话…':'这段会话仅可查看'):'说说你的目标…',
+      placeholder:host?(session?.sendAvailable?state.sharedRunning?globalThis.WeftUiCore.runningPlaceholder(core.composerInputMode(state.sharedSessionId)):'继续对话…':'这段会话仅可查看'):state.busy?globalThis.WeftUiCore.runningPlaceholder():'说说你的目标…',
       modelName:host?session?.modelDisplayName||session?.modelName||'当前模型':state.model?.displayName||'选择模型',
       modelLabel:host?'当前模型':'选择模型',
       attachmentsDisabled:!state.loggedIn||state.restorePending||state.transitionPending||!!state.attachmentPick||

@@ -1,0 +1,77 @@
+[
+  {
+    "at": "2026-10-09T19:43:26.234Z",
+    "wire": [
+      {
+        "model": "mimo-v2.6-flash",
+        "thinking": {
+          "type": "enabled"
+        },
+        "reasoning_effort": null
+      },
+      {
+        "model": "mimo-v2.6-flash",
+        "thinking": {
+          "type": "disabled"
+        },
+        "reasoning_effort": null
+      },
+      {
+        "status": 200
+      },
+      {
+        "status": 200
+      }
+    ]
+  },
+  {
+    "at": "2026-10-09T19:55:07.292Z",
+    "wire": [
+      {
+        "model": "mimo-v2.6-flash",
+        "thinking": {
+          "type": "disabled"
+        },
+        "reasoning_effort": null
+      },
+      {
+        "model": "mimo-v2.6-flash",
+        "thinking": {
+          "type": "disabled"
+        },
+        "reasoning_effort": null
+      },
+      {
+        "status": 200
+      },
+      {
+        "status": 200
+      }
+    ]
+  },
+  {
+    "at": "2026-10-09T19:56:30.889Z",
+    "wire": [
+      {
+        "model": "mimo-v2.6-flash",
+        "thinking": {
+          "type": "enabled"
+        },
+        "reasoning_effort": null
+      },
+      {
+        "model": "mimo-v2.6-flash",
+        "thinking": {
+          "type": "disabled"
+        },
+        "reasoning_effort": null
+      },
+      {
+        "status": 200
+      },
+      {
+        "status": 200
+      }
+    ]
+  }
+]

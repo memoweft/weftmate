@@ -55,13 +55,13 @@ const mobileMarkup = String.raw`
             <summary id="queued-count">排队中</summary>
             <div id="queued-cards" aria-label="排队任务"></div>
           </details>
-          <div class="composer-card">
+          <div id="composer-subtasks" class="composer-subtasks" hidden></div><div class="composer-card">
             <textarea id="draft" rows="2" placeholder="和 WeftMate 聊聊…" aria-label="输入消息"></textarea>
             <div id="attachment-drafts" class="attachment-drafts" aria-label="待发送附件" hidden></div>
             <div class="composer-actions">
               <button id="plus-button" class="icon-button" aria-label="添加图片或文件" aria-expanded="false" aria-controls="attachment-popover"><span class="icon icon-plus"></span></button>
               <button id="approval-mode-button" class="approval-mode-button" type="button" aria-label="审批模式" aria-haspopup="menu" aria-expanded="false" aria-controls="approval-mode-popover"><span class="icon icon-shield approval-shield" aria-hidden="true" hidden></span><span id="approval-mode-label">审批</span><span class="icon icon-down" aria-hidden="true"></span></button>
-              <div class="composer-spacer"></div>
+              <span id="thinking-badge" class="thinking-badge" aria-label="已开启深入思考" hidden>深入思考</span><div class="composer-spacer"></div>
               <button type="button" id="context-usage" class="icon-button context-usage" aria-label="背景信息窗口" aria-describedby="context-tooltip"><svg viewBox="0 0 24 24" aria-hidden="true"><circle class="context-track" cx="12" cy="12" r="8"/><circle class="context-fill" cx="12" cy="12" r="8" pathLength="100"/></svg></button>
               <div id="context-tooltip" class="context-tooltip" role="tooltip" hidden><span id="context-tooltip-label"></span><strong id="context-tooltip-detail"></strong></div>
               <button id="model-button" class="model-button" aria-label="选择模型" aria-expanded="false" aria-controls="model-popover"><span id="model-label">选择模型</span><span class="icon icon-down"></span></button>
@@ -76,11 +76,12 @@ const mobileMarkup = String.raw`
           <div id="chat-status" class="chat-status" role="status"></div>
         </div>
         <div id="model-popover" class="popover" hidden><h3>选择模型</h3><div id="model-options"></div><button data-page="models">配置自定义模型</button></div>
-        <div id="attachment-popover" class="popover attachment-popover" role="dialog" aria-label="添加附件" hidden>
+        <div id="attachment-popover" class="popover attachment-popover" role="menu" aria-label="添加附件" hidden>
           <h3>添加到这条消息</h3>
-          <button id="pick-image" type="button">图片<span>从系统相册选择</span></button>
-          <button id="pick-file" type="button">文件<span>从系统文件中选择</span></button>
-          <p id="attachment-note" class="attachment-note" hidden>附件会保存到这段电脑会话；普通文件将以文件卡显示。</p>
+          <button id="pick-camera" type="button" role="menuitem"><span class="icon icon-camera" aria-hidden="true"></span>相机</button>
+          <button id="pick-image" type="button" role="menuitem" aria-label="照片"><span class="icon icon-image" aria-hidden="true"></span>照片<span>从系统相册选择</span></button>
+          <button id="pick-file" type="button" role="menuitem"><span class="icon icon-attach" aria-hidden="true"></span>文件<span>从系统文件中选择</span></button>
+          <button id="pick-thinking" type="button" role="menuitemcheckbox" aria-checked="false" hidden><span class="icon icon-model" aria-hidden="true"></span>深入思考</button><p id="attachment-note" class="attachment-note" hidden>附件会保存到这段电脑会话；普通文件将以文件卡显示。</p>
         </div>
       </section>
       <section id="generic-page" class="page" aria-live="polite"><div id="page-content"></div></section>
