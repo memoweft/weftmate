@@ -15,6 +15,7 @@ async function start() {
   candidate = await startTimelineCandidate({ historyCount: 0, interactive: true, riskApproval: true, baseTime: Date.now() - 80000 })
   application = await _electron.launch({ executablePath, args: ['tests/integration/desktop-ui-1.cjs', candidate.origin + '/personal/v1/ui/'], cwd: root, env })
   const page = await application.firstWindow(); page.setDefaultTimeout(25000)
+  await page.addInitScript(() => { Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async text => { globalThis.syntheticClipboardText = text; } } }); });
   page.on('pageerror', error => errors.push(error.message))
   await localUiSession(page, candidate.credentials)
   await page.getByRole('button', { name: '停止回复', exact: true }).waitFor()
@@ -41,9 +42,10 @@ try {
     async function selectMode(label) {
       await page.getByRole('button', { name: '账户菜单' }).click()
       await page.getByRole('button', { name: '设置', exact: true }).click()
-      await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '常规', exact: true }).click()
+      await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '助手', exact: true }).click()
       await page.getByRole('combobox', { name: '回复进行中时发送的消息', exact: true }).click()
       await page.getByRole('option', { name: label, exact: true }).click()
+      await page.getByText('已同步 · 从下一次回复开始生效', { exact: true }).filter({visible:true}).waitFor()
       await page.getByRole('button', { name: '关闭设置', exact: true }).click()
     }
     await selectMode('引导')
@@ -86,6 +88,7 @@ try {
     await preview.getByText(/Read 3 files successfully/).waitFor()
     await preview.getByRole('button', { name: '复制', exact: true }).click()
     await preview.getByRole('button', { name: '已复制', exact: true }).waitFor()
+    assert.match(await page.evaluate(() => globalThis.syntheticClipboardText), /Read 3 files successfully/)
     await preview.getByRole('button', { name: '再打开一项' }).click()
     await page.getByRole('dialog', { name: '输出与来源' }).getByRole('button', { name: '项目进度报告.md', exact: true }).click()
     assert.equal(await preview.getByRole('tab').count(), 2)
