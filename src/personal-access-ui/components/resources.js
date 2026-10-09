@@ -147,7 +147,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
         }
         for (const use of item.uses) {
             const line = ui.element('details', 'resource-usage');
-            const time = use.at && Number.isFinite(Date.parse(use.at)) ? new Date(use.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) : '';
+            const time = use.at && Number.isFinite(Date.parse(use.at)) ? core.dateText(use.at) : '';
             line.append(ui.element('summary', '', `${use.summary}${time ? ` · ${time}` : ''}`));
             line.addEventListener('toggle', async () => {
                 if (!line.open || line.dataset.loaded || !core.conversationTaskCurrent(context))
@@ -162,9 +162,9 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
                     if (!core.conversationTaskCurrent(context) || !line.isConnected)
                         return;
                     const text = data.source?.text || data.text || '暂时没有可预览内容';
-                    content.textContent = `${text}${data.truncated || data.source?.truncated ? '\n[内容已截断]' : ''}`;
-                    if (!data.source && core.sourcePresentation(item.kind === 'tool' ? item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text).hasArguments) {
-                        const presentation = core.sourcePresentation(item.kind === 'tool' ? item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text);
+                    content.textContent = `${data.source ? text : core.executionDetailText(text)}${data.truncated || data.source?.truncated ? '\n[内容已截断]' : ''}`;
+                    if (!data.source && core.sourcePresentation(item.kind === 'tool' ? item.toolName || item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text).hasArguments) {
+                        const presentation = core.sourcePresentation(item.kind === 'tool' ? item.toolName || item.name : item.kind === 'webpage' ? 'web_fetch' : use.verb === '写入' ? 'write' : 'read', text);
                         const raw = ui.element('details', 'resource-usage');
                         raw.append(ui.element('summary', '', '详情'), content);
                         line.append(ui.element('p', 'resource-tool-summary', presentation.summary), raw);
@@ -203,6 +203,7 @@ globalThis.WeftUiComponents.factories.resources = (core, ui) => {
             waiting: core.state.turnStatus === 'running' ? core.processingStageLabel(core.state.sessions.find(row => row.sessionId === sessionId)?.processing) : '',
             artifacts: [...core.conversationTasks.entries.values()].flatMap(entry => entry.payload?.artifacts || []),
             approvals: [...core.conversationApprovals.entries.values()].filter(entry => entry.row.sessionId === sessionId).map(entry => entry.row),
+            questions: [...core.conversationQuestions.entries.values()].filter(entry => entry.row.sessionId === sessionId).map(entry => entry.row),
             fileLabel: window.WeftDesktop?.fileLabel,
             mobile: window.matchMedia?.('(max-width: 640px)').matches === true,
             readDetail: seq => core.readTimelineDetail(sessionId, seq),

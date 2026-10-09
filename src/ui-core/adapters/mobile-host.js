@@ -72,7 +72,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
       return collection;
     } catch (error) {
       if (!core.mobileDecisions.current(context)) throw error;
-      try { const saved=JSON.parse(environment.storage.getItem(key)); if(saved) return {...saved,
+      try { const saved=JSON.parse(environment.storage.getItem(key)); if(saved) return {...saved,sources:(saved.sources||[]).map(item=>({...item,toolName:item.toolName||(item.kind==='tool'?item.name:undefined),name:item.kind==='tool'&&!/[\u4e00-\u9fff]/.test(item.name)?core.toolLabel(item.name):item.name,uses:(item.uses||[]).map(use=>({...use,summary:item.kind==='tool'&&use.summary===(item.toolName||item.name)?core.toolLabel(item.toolName||item.name):core.interfaceText(use.summary)}))})),
         outputs:core.deduplicateOutputs((saved.outputs||[]).flatMap(item=>[item,...(item.versions||[])]))
           .map(mobileOutput),offline:true}; } catch {}
       throw error;

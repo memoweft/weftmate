@@ -462,7 +462,7 @@ function showWelcome(){const content=$('chat-content');clear(content);const welc
   link.addEventListener('click',()=>page('connect'));welcome.append(link);content.append(welcome);
 }
 
-function timeLabel(value){const d=new Date(value);return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(d):'本机记录'}
+function timeLabel(value){return uiCore.dateText(value)}
 
 function acceptSend(...args){return uiCore.mobile.acceptSend(...args)}
 

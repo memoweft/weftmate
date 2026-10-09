@@ -70,7 +70,7 @@ globalThis.WeftUiComponents.factories.approvals = (core, ui) => {
         const summary = ui.element('summary', '', `要${presentation.summary}`), raw = ui.element('pre', 'timeline-raw');
         summary.dataset.conversationApprovalAction = 'parameters';
         const reason = ui.element('p', 'approval-explanation');
-        const paint = value => { summary.textContent = `要${value.summary}`; raw.textContent = typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw, null, 2); reason.textContent = value.reason; reason.hidden = !value.reason; };
+        const paint = value => { summary.textContent = `要${value.summary}`; raw.textContent = core.executionDetailText(typeof value.raw === 'string' ? value.raw : JSON.stringify(value.raw, null, 2)); reason.textContent = value.reason; reason.hidden = !value.reason; };
         paint(presentation); details.append(summary, reason, raw); card.append(details);
         void core.readApprovalPresentation(row).then(value => { if (bar.dataset.signature === signature && core.approvalContextCurrent(context)) paint(value); });
         if (rows.length > 1) card.append(ui.element('small', 'approval-remaining', `还有 ${rows.length - 1} 个待批准`));

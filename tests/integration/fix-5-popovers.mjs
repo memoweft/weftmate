@@ -19,9 +19,9 @@ const env = { ...process.env };
 for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
 async function check(page, locator, name, size, enforce = true) {
   await locator.waitFor(); await page.waitForTimeout(300);
-  const rect = await locator.evaluate(node => { const r = node.getBoundingClientRect(), v = visualViewport; return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height, viewport: { left: v?.offsetLeft || 0, top: v?.offsetTop || 0, width: v?.width || innerWidth, height: v?.height || innerHeight }, scrollHeight: node.scrollHeight, clientHeight: node.clientHeight }; });
+  const rect = await locator.evaluate(node => { const r = node.getBoundingClientRect(), v = visualViewport; return { presentation: node.dataset.presentation, left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height, viewport: { left: v?.offsetLeft || 0, top: v?.offsetTop || 0, width: v?.width || innerWidth, height: v?.height || innerHeight }, scrollHeight: node.scrollHeight, clientHeight: node.clientHeight }; });
   results.push({ phase, size, name, ...rect }); console.log(`${phase} ${size} ${name}`);
-  if (enforce) { const v = rect.viewport; assert.ok(rect.width > 0 && rect.height > 0 && rect.left >= v.left + 7.5 && rect.top >= v.top + 7.5 && rect.right <= v.left + v.width - 7.5 && rect.bottom <= v.top + v.height - 7.5, `${name} ${size}: ${JSON.stringify(rect)}`); }
+  if (enforce) { const v = rect.viewport; const inset = rect.presentation === 'sheet' ? -0.5 : 7.5; assert.ok(rect.width > 0 && rect.height > 0 && rect.left >= v.left + inset && rect.top >= v.top + 7.5 && rect.right <= v.left + v.width - inset && rect.bottom <= v.top + v.height - inset, `${name} ${size}: ${JSON.stringify(rect)}`); if (rect.presentation === 'sheet') assert.ok(rect.height <= v.height * .55 + 1, 'bottom selection list stays within 55% of the visible viewport'); }
   if (capture) await page.screenshot({ path: join(evidence, `${phase}-${size}-${name}.png`) });
 }
 try {
