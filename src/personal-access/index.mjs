@@ -566,7 +566,16 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       }
       server = candidate;
       origin = `http://127.0.0.1:${candidate.address().port}`;
-      await service.restoreSchedules();
+      // Schedule restore depends on the native runtime; a failure must not
+      // keep the whole host offline. Retry in the background instead.
+      const restoreSchedulesWithRetry = async (attempt = 0) => {
+        try { await service.restoreSchedules(); }
+        catch (error) {
+          console.warn('[personal-access] schedule restore deferred:', error?.code ?? error?.message ?? error);
+          if (!closing && attempt < 10) setTimeout(() => void restoreSchedulesWithRetry(attempt + 1), 30_000 * (attempt + 1)).unref?.();
+        }
+      };
+      await restoreSchedulesWithRetry();
       hostCloudIdentity?.start();
       hostRelay?.start(origin);
       for (const [ownerId, account] of Object.entries(rootState.accounts)) {
