@@ -1,0 +1,609 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-09T09:28:09.936Z",
+  "host": "http://127.0.0.1:60392",
+  "model": "mimo",
+  "results": [
+    {
+      "id": "memory-01-preference",
+      "category": "memory",
+      "title": "新对话采用表达偏好",
+      "status": "passed",
+      "durationMs": 50724,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "买菜|菜市场|蔬菜|菜摊",
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "在没有当前会话重复偏好的情况下，回复应中文为主，先用买菜相关日常例子解释缓存，再讲原理，避免上来堆术语。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-23c354e2-24cf-4283-a7e7-1ca14c06f58e",
+          "modelProfileId": "private-model-a261cae35f394678a0801edc1c74d04027913921",
+          "commandId": "cmd-125f6408-39a8-40a5-9fb1-873b8f9c10bd",
+          "startedAt": "2026-10-09T09:28:10.601Z",
+          "reply": "好的，记下了。以后讲技术问题我会：\n\n1. **先用买菜的小例子**把事情说清楚——比如把数据传输比作把菜从菜市场拎回家，一眼能看懂；\n2. **再讲背后的原理**，术语尽量拆成人话，不一上来就堆概念。\n\n有想弄明白的技术问题，随时抛过来。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T09:28:10.639Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T09:28:10.639Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T09:28:10.672Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T09:28:10.672Z"
+            },
+            {
+              "seq": 79,
+              "type": "assistant.message",
+              "at": "2026-10-09T09:28:15.534Z"
+            },
+            {
+              "seq": 80,
+              "type": "task.ended",
+              "at": "2026-10-09T09:28:15.535Z"
+            },
+            {
+              "seq": 81,
+              "type": "turn.ended",
+              "at": "2026-10-09T09:28:15.536Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 5147,
+          "endedAt": "2026-10-09T09:28:15.748Z"
+        },
+        {
+          "sessionId": "session-9b0ad596-5d8f-489b-803a-589f5889c8fe",
+          "modelProfileId": "private-model-a261cae35f394678a0801edc1c74d04027913921",
+          "commandId": "cmd-7c9f7ccb-5ece-4cee-8abd-8c154708a1a1",
+          "startedAt": "2026-10-09T09:28:17.074Z",
+          "reply": "买菜的小例子：\n\n你家楼下的菜，来回要走 20 分钟。于是你早上出门时顺手多买两把放冰箱——下次要做饭，**不用再跑菜场，直接从冰箱拿**。冰箱里那两把菜，就是\"缓存\"。\n\n本质一句话：**把常用的东西，提前搬到一个离使用者更近、取起来更快的地方。**\n\n## 再讲原理\n\n**1. 为什么需要缓存？**\n取数据的代价差得远。CPU 从内存取一个数约 100 纳秒，从硬盘取要 10 微秒，从网络取要几十毫秒——差着几万到几十万倍。就像冰箱 30 秒、菜场 20 分钟。既然最贵的是\"跑远路\"，那就花钱买个冰箱（多花一点存储），省下跑路的时间。\n\n**2. 缓存怎么工作？两个动作：**\n- **命中（hit）**：要的东西冰箱里有 → 直接拿，快。\n- **未命中（miss）**：冰箱里没有 → 去菜场买（查数据库/硬盘/网络），顺手放一份进冰箱，下次就命中了。\n\n**3. 代价是什么？——\"菜可能不新鲜\"**\n缓存里存的是**副本**，原本的数据变了，副本还旧着，这叫**缓存过期/脏数据**。所以必须解决两个问题：\n- **过期策略**：放太久自动扔（TTL，比如牛奶上的保质期）。\n- **失效/更新**：原数据一变，主动把缓存删掉或更新，保证下次拿到的是新的。\n\n**4. 常见的缓存，其实是同一套逻辑：**\n- **CPU 缓存**：内存里的数据先抄一份在 CPU 旁边，取数快。\n- **浏览器缓存**：网站的图片、脚本存本地，下次打开不用重新下载。\n- **数据库缓存（如 Redis）**：热点数据放内存里，别每次都查硬盘。\n- **应用层缓存**：计算结果存起来，同样的请求直接返回（memoization）。\n\n**5. 缓存的经典翻车现场：**\n- **缓存穿透**：请求的数据缓存里没有、数据库里也没有，每次都穿透过去白查——解决办法是把\"空结果\"也缓存一小会儿。\n- **缓存击穿**：某个热点条目刚好过期，瞬间一大涌请求全去查数据库——解决办法是只让第一个去查，其他人等它。\n- **缓存雪崩**：大批条目同一时间过期，数据库被压垮——解决办法是过期时间加随机抖动。\n\n一句话总结：**缓存是用一点存储和\"可能不新鲜\"的风险，换速度；所有缓存设计，本质都在权衡\"快\"和\"对\"。**\n\n如果你问的是某个具体场景的缓存（浏览器缓存不生效、App 缓存清不掉、还是代码里的某个缓存类），告诉我具体是哪儿，我按那个场景细讲。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T09:28:17.133Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T09:28:17.133Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T09:28:17.163Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T09:28:17.163Z"
+            },
+            {
+              "seq": 177,
+              "type": "step.started",
+              "at": "2026-10-09T09:28:29.748Z"
+            },
+            {
+              "seq": 178,
+              "type": "step.completed",
+              "at": "2026-10-09T09:28:29.757Z"
+            },
+            {
+              "seq": 209,
+              "type": "step.started",
+              "at": "2026-10-09T09:28:32.216Z"
+            },
+            {
+              "seq": 210,
+              "type": "step.completed",
+              "at": "2026-10-09T09:28:32.308Z"
+            },
+            {
+              "seq": 211,
+              "type": "step.started",
+              "at": "2026-10-09T09:28:32.309Z"
+            },
+            {
+              "seq": 212,
+              "type": "step.completed",
+              "at": "2026-10-09T09:28:32.385Z"
+            },
+            {
+              "seq": 609,
+              "type": "assistant.message",
+              "at": "2026-10-09T09:29:00.855Z"
+            },
+            {
+              "seq": 610,
+              "type": "task.ended",
+              "at": "2026-10-09T09:29:00.856Z"
+            },
+            {
+              "seq": 611,
+              "type": "turn.ended",
+              "at": "2026-10-09T09:29:00.857Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-22e7b2177bf703da2cc75568822a4d871158282804481444100708082e3566c9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "durationMs": 43945,
+          "endedAt": "2026-10-09T09:29:01.019Z"
+        }
+      ],
+      "replySummary": "买菜的小例子：\n\n你家楼下的菜，来回要走 20 分钟。于是你早上出门时顺手多买两把放冰箱——下次要做饭，**不用再跑菜场，直接从冰箱拿**。冰箱里那两把菜，就是\"缓存\"。\n\n本质一句话：**把常用的东西，提前搬到一个离使用者更近、取起来更快的地方。**\n\n## 再讲原理\n\n**1. 为什么需要缓存？**\n取数据的代价差得远。CPU 从内存取一个数约 100 纳秒，从硬盘取要 10 微秒，从网络取要几十毫秒——差着几万到几十万倍。就像冰箱 30 秒、菜场 20 分钟。既然最贵的是\"跑远路\"，那就花钱买个冰箱（多花一点存储），省下跑路的时间。\n\n**2. 缓存怎么工作？两个动作：**\n- **命中（hit）**：要的东西冰箱里有 → 直接拿，快。\n- **未命中（miss）**：冰箱里没有 → 去菜场买（查数据库/硬盘/网络），顺手放一份进冰箱，下次就命中了。\n\n**3. 代价是什么？——\"菜可能不新鲜\"**\n缓存里存的是**副本**，原本的数据变了，副本还旧着，这叫**缓存过期/脏数据**。所以必须解决两个问题：\n- **过期策略**：放太久自动扔（TTL，比如牛奶上的保质期）。\n- *",
+      "notes": "需要第一轮形成并可注入测试账号记忆。新会话不复制偏好；回复匹配只是行为证据，memory_used 单独 unsupported。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；600秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-memory-01-preference-VLHy0e",
+      "semanticJudgement": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 33,
+          "prompt_tokens": 883,
+          "total_tokens": 916,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复以中文为主，先用买菜/冰箱例子解释缓存，再讲原理，符合要求。\"}",
+        "status": "passed",
+        "reason": "回复以中文为主，先用买菜/冰箱例子解释缓存，再讲原理，符合要求。"
+      }
+    },
+    {
+      "id": "memory-02-correction",
+      "category": "memory",
+      "title": "纠正后按新理解走",
+      "status": "failed",
+      "durationMs": 36350,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "turn_status",
+          "turn": 2,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "周五",
+          "status": "failed",
+          "reason": "reply_contains did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "应以周五晚上为当前空闲时间安排锻炼，不应仍建议周三。可以说明偏好被纠正，不能把旧时间当当前事实。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-e4abe1ad-327e-44ef-97fc-8a433b9714cb",
+          "modelProfileId": "private-model-a261cae35f394678a0801edc1c74d04027913921",
+          "commandId": "cmd-e3cecb35-2931-41f3-b8d4-f7c3568924f4",
+          "startedAt": "2026-10-09T09:29:05.357Z",
+          "reply": "好的，记住了：最近只能周三晚上锻炼。以后你让我安排运动计划时，我会默认把运动排在周三晚上，其余时间只放休息或轻量活动。这个偏好会由 MemoWeft 自动记入长期记忆，不用你再重复。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T09:29:05.423Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T09:29:05.423Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T09:29:05.459Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T09:29:05.460Z"
+            },
+            {
+              "seq": 101,
+              "type": "assistant.message",
+              "at": "2026-10-09T09:29:12.437Z"
+            },
+            {
+              "seq": 102,
+              "type": "task.ended",
+              "at": "2026-10-09T09:29:12.437Z"
+            },
+            {
+              "seq": 103,
+              "type": "turn.ended",
+              "at": "2026-10-09T09:29:12.438Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-22e7b2177bf703da2cc75568822a4d871158282804481444100708082e3566c9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "durationMs": 7285,
+          "endedAt": "2026-10-09T09:29:12.642Z"
+        },
+        {
+          "sessionId": "session-e4abe1ad-327e-44ef-97fc-8a433b9714cb",
+          "modelProfileId": "private-model-a261cae35f394678a0801edc1c74d04027913921",
+          "commandId": "cmd-e98b6171-395a-4209-9d10-4425d52be710",
+          "startedAt": "2026-10-09T09:29:12.683Z",
+          "reply": "收到，已更正：以后安排运动固定排在周五晚上，周三不再排。之前的“周三晚上”作废，以这次的“周五晚上”为准，MemoWeft 会自动更新这条记忆。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 104,
+              "type": "task.queued",
+              "at": "2026-10-09T09:29:12.802Z"
+            },
+            {
+              "seq": 105,
+              "type": "turn.started",
+              "at": "2026-10-09T09:29:12.802Z"
+            },
+            {
+              "seq": 107,
+              "type": "task.started",
+              "at": "2026-10-09T09:29:13.229Z"
+            },
+            {
+              "seq": 108,
+              "type": "user.message",
+              "at": "2026-10-09T09:29:13.229Z"
+            },
+            {
+              "seq": 149,
+              "type": "assistant.message",
+              "at": "2026-10-09T09:29:18.039Z"
+            },
+            {
+              "seq": 150,
+              "type": "task.ended",
+              "at": "2026-10-09T09:29:18.040Z"
+            },
+            {
+              "seq": 151,
+              "type": "turn.ended",
+              "at": "2026-10-09T09:29:18.041Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 5480,
+          "endedAt": "2026-10-09T09:29:18.163Z"
+        },
+        {
+          "sessionId": "session-e49bf194-0386-4d98-b21a-56023a1f3fdb",
+          "modelProfileId": "private-model-a261cae35f394678a0801edc1c74d04027913921",
+          "commandId": "cmd-d9193f5d-b69e-48a0-9289-2d5a4f9d7387",
+          "startedAt": "2026-10-09T09:29:19.612Z",
+          "reply": "推荐放在 **下周六（10月17日）上午**，备选周日（10月18日）下午。\n\n用买菜打个比方：一周里挑锻炼的日子，就像挑买菜的时间——别在又累又赶的时候去（周中下班后，体力和意愿都见底），也别拖到最后一刻（周日晚上练完没时间恢复，还影响周一上班）。周末上午精力最足、时间最完整，练完还有一整天可以休息恢复，是最\"新鲜\"的时段。\n\n**下周具体安排建议：**\n- **首选：10月17日（周六）上午 9–10 点** —— 睡到自然醒后精力最好，练完整个周末都是恢复期。\n- **备选：10月18日（周日）下午 4–5 点** —— 如果周六有事，避开傍晚低谷时段，练完洗澡休息，不影响周一。\n- 尽量避开周三、周四晚上：一周疲劳累积到高点，勉强练容易受伤、效果也差。\n\n如果你想要到点提醒，我可以帮你建一个定时提醒（比如周六早上 9:00 提醒你去锻炼），说一声就行。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T09:29:19.674Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T09:29:19.674Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T09:29:19.715Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T09:29:19.716Z"
+            },
+            {
+              "seq": 316,
+              "type": "assistant.message",
+              "at": "2026-10-09T09:29:41.122Z"
+            },
+            {
+              "seq": 317,
+              "type": "task.ended",
+              "at": "2026-10-09T09:29:41.123Z"
+            },
+            {
+              "seq": 318,
+              "type": "turn.ended",
+              "at": "2026-10-09T09:29:41.124Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-22e7b2177bf703da2cc75568822a4d871158282804481444100708082e3566c9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "durationMs": 21703,
+          "endedAt": "2026-10-09T09:29:41.315Z"
+        }
+      ],
+      "replySummary": "推荐放在 **下周六（10月17日）上午**，备选周日（10月18日）下午。\n\n用买菜打个比方：一周里挑锻炼的日子，就像挑买菜的时间——别在又累又赶的时候去（周中下班后，体力和意愿都见底），也别拖到最后一刻（周日晚上练完没时间恢复，还影响周一上班）。周末上午精力最足、时间最完整，练完还有一整天可以休息恢复，是最\"新鲜\"的时段。\n\n**下周具体安排建议：**\n- **首选：10月17日（周六）上午 9–10 点** —— 睡到自然醒后精力最好，练完整个周末都是恢复期。\n- **备选：10月18日（周日）下午 4–5 点** —— 如果周六有事，避开傍晚低谷时段，练完洗澡休息，不影响周一。\n- 尽量避开周三、周四晚上：一周疲劳累积到高点，勉强练容易受伤、效果也差。\n\n如果你想要到点提醒，我可以帮你建一个定时提醒（比如周六早上 9:00 提醒你去锻炼），说一声就行。",
+      "notes": "测试从日常纠正形成理解，使用三轮对话而非直接编辑底层记忆。等待 1 秒只是形成窗口，基线失败可能反映记忆形成/调度未接通。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；900秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-memory-02-correction-maTBNw",
+      "reason": "reply_contains did not match expected value",
+      "semanticJudgement": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 32,
+          "prompt_tokens": 450,
+          "total_tokens": 482,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复未建议周三，也未把周三当当前空闲事实，仅避开周三，符合要求。\"}",
+        "status": "passed",
+        "reason": "回复未建议周三，也未把周三当当前空闲事实，仅避开周三，符合要求。"
+      }
+    },
+    {
+      "id": "memory-04-person",
+      "category": "memory",
+      "title": "之后提到某人能联系上",
+      "status": "failed",
+      "durationMs": 18355,
+      "checks": [
+        {
+          "type": "turn_status",
+          "turn": 1,
+          "status": "passed"
+        },
+        {
+          "type": "reply_contains",
+          "text": "阿岚",
+          "status": "passed"
+        },
+        {
+          "type": "reply_matches",
+          "pattern": "海报|展览",
+          "status": "failed",
+          "reason": "reply_matches did not match expected value"
+        },
+        {
+          "type": "turn_status",
+          "status": "passed"
+        },
+        {
+          "type": "memory_used",
+          "status": "passed"
+        },
+        {
+          "type": "llm_judge",
+          "prompt": "给阿岚的开场白应自然联系准备秋季展览、海报或周六进度，不捏造其他关系或事项。",
+          "status": "skipped",
+          "reason": "No judge configured; enable --judge-model same or a configured model name."
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-d75b47ac-cf19-46f0-b135-3750489e1c39",
+          "modelProfileId": "private-model-a261cae35f394678a0801edc1c74d04027913921",
+          "commandId": "cmd-528d44e1-9569-4f26-b4f1-7a75b1b2df8c",
+          "startedAt": "2026-10-09T09:29:44.627Z",
+          "reply": "好的，阿岚负责海报、周六碰进度，我记下这个背景了。\n\n顺带提议一句：以后遇到海报、展览物料这类需要和阿岚对接的事，要不要我主动提醒你先找她沟通？你确认一下我就把它当作我们之间的约定。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T09:29:44.720Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T09:29:44.720Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T09:29:44.793Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T09:29:44.793Z"
+            },
+            {
+              "seq": 115,
+              "type": "assistant.message",
+              "at": "2026-10-09T09:29:51.233Z"
+            },
+            {
+              "seq": 116,
+              "type": "task.ended",
+              "at": "2026-10-09T09:29:51.233Z"
+            },
+            {
+              "seq": 117,
+              "type": "turn.ended",
+              "at": "2026-10-09T09:29:51.234Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-22e7b2177bf703da2cc75568822a4d871158282804481444100708082e3566c9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "durationMs": 6667,
+          "endedAt": "2026-10-09T09:29:51.294Z"
+        },
+        {
+          "sessionId": "session-01f8062f-7fda-4425-a35e-8a04fb81f9f4",
+          "modelProfileId": "private-model-a261cae35f394678a0801edc1c74d04027913921",
+          "commandId": "cmd-5da20393-126d-484d-8d37-ac2d4cd1c42b",
+          "startedAt": "2026-10-09T09:29:52.927Z",
+          "reply": "一句自然的开场白：\n\n> “阿岚，最近忙不忙？想起件事儿想跟你聊聊，方便的时候回我一句～”\n\n如果想更轻松一点，也可以：\n\n> “在吗阿岚？好久没联系了，正好有点事儿想听听你的想法。”\n\n你要是告诉我想聊什么主题，我可以帮你把开场白说得更贴合一点。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T09:29:52.992Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T09:29:52.993Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T09:29:53.033Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T09:29:53.033Z"
+            },
+            {
+              "seq": 138,
+              "type": "assistant.message",
+              "at": "2026-10-09T09:30:02.091Z"
+            },
+            {
+              "seq": 139,
+              "type": "task.ended",
+              "at": "2026-10-09T09:30:02.091Z"
+            },
+            {
+              "seq": 140,
+              "type": "turn.ended",
+              "at": "2026-10-09T09:30:02.092Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-22e7b2177bf703da2cc75568822a4d871158282804481444100708082e3566c9",
+              "kind": "cognition",
+              "summary": "用户以后给我讲技术问题，尽量用中文，先用一个买菜的小例子讲明白，再讲原理。"
+            }
+          ],
+          "durationMs": 9428,
+          "endedAt": "2026-10-09T09:30:02.355Z"
+        }
+      ],
+      "replySummary": "一句自然的开场白：\n\n> “阿岚，最近忙不忙？想起件事儿想跟你聊聊，方便的时候回我一句～”\n\n如果想更轻松一点，也可以：\n\n> “在吗阿岚？好久没联系了，正好有点事儿想听听你的想法。”\n\n你要是告诉我想聊什么主题，我可以帮你把开场白说得更贴合一点。",
+      "notes": "新会话只提名字，不复制原背景；独立测试账号，不接触本人联系人。 M0-7b 时限校准：本地27B实测生成约6–13 tokens/s（每秒令牌数），首轮约8.5K提示预填充曾为79 tokens/s；600秒为场景全部回合共用预算，覆盖预填充、推理、工具与后台单槽等待。原目标、检查及审批决定保持；原时限180秒。",
+      "scratchDir": "C:\\temp\\weftmate-eval-memory-04-person-G5V0Ci",
+      "reason": "reply_matches did not match expected value",
+      "semanticJudgement": {
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 36,
+          "prompt_tokens": 240,
+          "total_tokens": 276,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":false,\"reason\":\"开场白未自然联系秋季展览、海报或周六进度，且'好久没联系'与共同准备展览的朋友关系不符。\"}",
+        "status": "failed",
+        "reason": "开场白未自然联系秋季展览、海报或周六进度，且'好久没联系'与共同准备展览的朋友关系不符。"
+      }
+    }
+  ],
+  "summary": {
+    "passed": 1,
+    "failed": 2,
+    "manual": 0,
+    "unsupported": 0,
+    "skippedChecks": 3,
+    "passRate": 0.3333333333333333,
+    "coverage": 0.3333333333333333
+  }
+}
