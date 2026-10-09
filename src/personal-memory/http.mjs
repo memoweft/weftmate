@@ -221,7 +221,8 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
           result.provenance.length > 200 || Buffer.byteLength(JSON.stringify(result), 'utf8') > MAX_DETAIL_BYTES) {
         throw failure('MEMORY_RESPONSE_INVALID', 503);
       }
-      const sources = result.provenance.map((source) => ({
+      const sources = result.provenance.flatMap((source) => {
+        const userSource = {
         evidenceId: bounded(source.evidence_id, 512), relation: bounded(source.relation, 64),
         currentnessState: bounded(source.currentness_state, 64),
         permissions: { allowLocalRead: source.permissions?.allow_local_read === true,
@@ -235,7 +236,16 @@ export async function handlePersonalMemoryHttp({ manager, ownerId, request, path
         rawContentTruncated: typeof source.evidence?.raw_content === 'string' &&
           source.evidence.raw_content.length > 8_192,
         recordedAt: bounded(source.evidence?.recorded_at, 64),
-      }));
+        };
+        return [userSource, ...(source.evidence?.content_available === true && Array.isArray(source.assistant_sources) ? source.assistant_sources : []).map(proposal => ({
+          ...userSource, role: 'assistant', messageId: bounded(proposal.message_id, 160),
+          conversationId: bounded(proposal.conversation_id, 160),
+          summary: '助手提议（经用户确认）', rawContent: bounded(proposal.content, 8_192),
+          rawContentTruncated: typeof proposal.content === 'string' && proposal.content.length > 8_192,
+          recordedAt: bounded(proposal.recorded_at, 64),
+        }))];
+      });
+      if (sources.length > 200) throw failure('MEMORY_RESPONSE_INVALID', 503);
       return { status: 200, body: { sources, worldRevision: result.world_revision } };
     }
     if (method === 'POST' && ['correct', 'mute'].includes(action)) {

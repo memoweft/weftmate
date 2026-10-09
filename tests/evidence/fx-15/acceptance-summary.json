@@ -1,0 +1,29 @@
+{
+  "results": [
+    {
+      "run": "acceptance-original",
+      "passed": 8,
+      "total": 8,
+      "allPassed": true,
+      "bothSourcesVisible": true,
+      "confirmedDecisionAdopted": true
+    },
+    {
+      "run": "acceptance-alternate",
+      "passed": 4,
+      "total": 4,
+      "allPassed": true,
+      "bothSourcesVisible": true,
+      "confirmedDecisionAdopted": true
+    },
+    {
+      "run": "delayed",
+      "passed": 4,
+      "total": 4,
+      "allPassed": true,
+      "bothSourcesVisible": true,
+      "confirmedDecisionAdopted": true
+    }
+  ],
+  "fixtureSha256": "c47e688f39181c8bc60b0a048d0ff29a90181370ff047c95ecf7db0677b1f29c"
+}

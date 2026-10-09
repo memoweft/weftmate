@@ -257,6 +257,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 
 遗忘预览的 `items[].kind` 可为 `interaction_commitment`（交互承诺）；其 `itemType` 为 `commitment` / `recommendation` / `agreement`，与正式项一起计入 `itemCount`，表示将随来源或会话清除的派生记录。此类型只用于预览，独立记忆列表与命令目标的 kind 不扩展。
 
+FX-15：确认决定的来源列表可额外包含 `role:"assistant"`、`messageId`、`conversationId`；`rawContent` 为被确认的助手提议原话。`evidenceId` 指向提议所在回合的用户证据，用于权限及遗忘依赖，不表示助手文字成为用户 Evidence（原始证据）。同一 `evidenceId` 可同时出现用户原话和助手上下文，客户端应按 `evidenceId + role + messageId` 区分；旧客户端继续显示既有摘要和原文。助手来源撤权或删除后不返回正文。
+
 查询对当前账号快照搜索，`query` 经 NFKC/trim/小写规范化；游标绑定账号、kind、query、worldRevision，修订变化后重新查首屏。`currentState` 另可 `not_current`。来源最多200条，摘要≤2,000、原文≤8,192 UTF-16；详情/来源内部大小上限256 KiB。拒绝删除的原因在 `receipt.reasonCode`，可为 `MEMORY_DELETE_CONFLICT / MEMORY_SOURCE_UNRECOVERABLE / MEMORY_DELETE_SOURCE_UNKNOWN / MEMORY_COMMAND_REJECTED`；外层未知错误会投影为 `SERVICE_UNAVAILABLE`。`capabilities.inject` 仅表示能力，当前没有公开「注入/采用记忆」HTTP路由。
 
 FG-1：遗忘按来源级联清除 Evidence（来源证据）、依赖理解、关系和无剩余依据的人物／别名，清除 Core（记忆核心）派生上下文、宿主注入／采用标记、投影及纠正日志副本。SQLite（嵌入式数据库）清理使用 `secure_delete` 和 WAL（预写日志）截断；`storageCleanup.state=pending` 表示仍有底层或宿主清理待完成，不能宣称不可恢复。原请求回执和 `retry-cleanup` 可在重启后继续核对。

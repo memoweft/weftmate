@@ -1,0 +1,114 @@
+{
+  "runs": [
+    {
+      "run": "acceptance-alternate",
+      "requests": 9,
+      "returnedUsage": 9,
+      "missingUsage": 0,
+      "input": 26016,
+      "cached": 22656,
+      "output": 1107,
+      "knownCnyLowerBound": 0.0060271199999999995
+    },
+    {
+      "run": "acceptance-original",
+      "requests": 24,
+      "returnedUsage": 24,
+      "missingUsage": 0,
+      "input": 42410,
+      "cached": 31808,
+      "output": 2822,
+      "knownCnyLowerBound": 0.01688216
+    },
+    {
+      "run": "after-initial",
+      "requests": 35,
+      "returnedUsage": 35,
+      "missingUsage": 0,
+      "input": 100449,
+      "cached": 39808,
+      "output": 3492,
+      "knownCnyLowerBound": 0.06842116000000001
+    },
+    {
+      "run": "alternate",
+      "requests": 11,
+      "returnedUsage": 11,
+      "missingUsage": 0,
+      "input": 32520,
+      "cached": 14912,
+      "output": 1416,
+      "knownCnyLowerBound": 0.02073824
+    },
+    {
+      "run": "alternate-final",
+      "requests": 12,
+      "returnedUsage": 11,
+      "missingUsage": 1,
+      "input": 33916,
+      "cached": 24000,
+      "output": 1104,
+      "knownCnyLowerBound": 0.012604
+    },
+    {
+      "run": "before",
+      "requests": 26,
+      "returnedUsage": 26,
+      "missingUsage": 0,
+      "input": 51301,
+      "cached": 22912,
+      "output": 1980,
+      "knownCnyLowerBound": 0.03280724000000001
+    },
+    {
+      "run": "delayed",
+      "requests": 15,
+      "returnedUsage": 15,
+      "missingUsage": 0,
+      "input": 56000,
+      "cached": 39232,
+      "output": 840,
+      "knownCnyLowerBound": 0.01923264
+    },
+    {
+      "run": "eight-verified",
+      "requests": 40,
+      "returnedUsage": 39,
+      "missingUsage": 1,
+      "input": 141892,
+      "cached": 77504,
+      "output": 4131,
+      "knownCnyLowerBound": 0.07420008
+    },
+    {
+      "run": "original",
+      "requests": 29,
+      "returnedUsage": 29,
+      "missingUsage": 0,
+      "input": 63736,
+      "cached": 38656,
+      "output": 3578,
+      "knownCnyLowerBound": 0.033009119999999996
+    },
+    {
+      "run": "original-final",
+      "requests": 31,
+      "returnedUsage": 31,
+      "missingUsage": 0,
+      "input": 72280,
+      "cached": 50624,
+      "output": 3469,
+      "knownCnyLowerBound": 0.02960648
+    }
+  ],
+  "total": {
+    "requests": 232,
+    "returnedUsage": 230,
+    "missingUsage": 2,
+    "input": 620520,
+    "cached": 362112,
+    "output": 23939,
+    "knownCnyLowerBound": 0.31352824
+  },
+  "costUsesExistingRunnerTariff": true
+}
