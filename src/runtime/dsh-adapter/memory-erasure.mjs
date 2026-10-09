@@ -78,7 +78,7 @@ export async function eraseSessionMemoryArtifact(persistence, sessionId, options
     }
     if (value.source?.kind === 'plugin' && ['weftmate-personal-memory', 'weftmate-chat-handoff'].includes(value.source.plugin)) {
       changed = true
-      return { ...value, content: [], source: { ...value.source, sections: [] } }
+      return { ...value, content: [], source: { kind: 'plugin', plugin: 'weftmate-memory-erasure' } }
     }
     return Object.fromEntries(Object.entries(value).map(([key, child]) => [key, clean(child, redact, key)]))
   }

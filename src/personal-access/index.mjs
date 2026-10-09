@@ -49,6 +49,7 @@ import { createChatOperations } from './chats.mjs';
 import { createChatTimeline } from './chat-timeline.mjs';
 import { eraseChatCopies } from './chat-erasure.mjs';
 import { createMainChat } from './main-chat.mjs';
+import { createChatLifecycle } from './chat-lifecycle.mjs';
 import { createSideChats } from './side-chats.mjs';
 export { explicitNotepadOpenIntent } from './command-policy.mjs';
 export { uniqueSessionOwner } from './store.mjs';
@@ -120,6 +121,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
     get chatTimeline() { return chatTimeline; },
     get sideChats() { return sideChats; },
     get mainChat() { return mainChat; },
+    get chatLifecycle() { return chatLifecycle; },
     eraseChatCopies,
     get offline() { return offline; },
     get backupManager() { return backupManager; },
@@ -260,6 +262,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
   const chatTimeline = createChatTimeline(context);
   const sideChats = createSideChats(context);
   const mainChat = createMainChat(context);
+  const chatLifecycle = createChatLifecycle(context);
   const {
     requireOriginalAttachments, commandReferencesOriginal, publicHistoryEvent,
     conversationSnapshot, conversationProjection, verifiedSyncUserEvent, sourceDevicesUpgraded,
@@ -565,8 +568,8 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
       await serial(() => mutate(ownerId, next => { next.memoryCleanupPending = true; }));
       await mainChat.drain(ownerId);
       await offline.invalidate(ownerId);
-      // This managed migration preimage is included in new profile backups.
-      // Once erasure occurs it must not retain an older access-store copy.
+      // Portable backups already exclude this managed migration preimage.
+      // Erasure must also remove its local older access-store copy.
       await rm(path.join(root, 'chat-identity-v1.before.json'), { force: true });
       await serial(() => mutate(ownerId, next => {
         for (const chatId of eraseChatCopies(next, { forgotten: true })) chatTimeline.invalidate(ownerId, chatId);
@@ -590,7 +593,7 @@ export async function createPersonalAccessService({ root, port, backend, uiHandl
         }
       }));
       await serial(() => mutate(ownerId, next => { delete next.memoryCleanupPending; }));
-      for (const command of Object.values(accountState(ownerId).commands)) if (command.state === 'pending') void dispatch(ownerId, command.commandId);
+      for (const command of Object.values(accountState(ownerId).commands)) if (command.state === 'pending') schedule(ownerId, command.commandId);
       return { cleaned: true };
     },
     handleScheduleRuntime: scheduleOperations.handleRuntime,
