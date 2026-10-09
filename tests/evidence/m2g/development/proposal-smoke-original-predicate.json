@@ -1,0 +1,316 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-08T23:36:59.794Z",
+  "model": "lan",
+  "revision": {
+    "weftmate": "e2c4d091638a1e6d59a3c0373b8e446a35d2f45c",
+    "core": "dc59e5e8248c889226c3ef7e3abd713dfc98001c"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "01",
+      "title": "原话进入真实桌面对话",
+      "status": "passed",
+      "checks": {
+        "completed": true,
+        "exactUserEvent": true,
+        "nonemptyReply": true
+      },
+      "startedAt": "2026-10-08T23:37:14.957Z",
+      "finishedAt": "2026-10-08T23:37:38.637Z"
+    },
+    {
+      "id": "02",
+      "title": "模型提议、用户确认组队提醒",
+      "status": "failed",
+      "checks": {
+        "proposal": false,
+        "confirmationCompleted": true,
+        "confirmationSource": true,
+        "semanticAccepted": true
+      },
+      "startedAt": "2026-10-08T23:37:38.638Z",
+      "semantic": {
+        "type": "llm_judge",
+        "prompt": "应主动提议以后用户想组队时提醒找王小明，邀请用户确认。",
+        "turn": 1,
+        "model": "mimo-v2.6-flash",
+        "usage": {
+          "completion_tokens": 29,
+          "prompt_tokens": 146,
+          "total_tokens": 175,
+          "completion_tokens_details": {
+            "reasoning_tokens": 0
+          },
+          "prompt_tokens_details": {
+            "cached_tokens": 0
+          }
+        },
+        "finishReason": "stop",
+        "rawVerdict": "{\"pass\":true,\"reason\":\"回复主动提议以后游戏相关时提醒联系王小明，并询问用户确认，符合标准。\"}",
+        "status": "passed",
+        "reason": "回复主动提议以后游戏相关时提醒联系王小明，并询问用户确认，符合标准。"
+      },
+      "finishedAt": "2026-10-08T23:38:30.588Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-9559701d-bfe2-422a-bcfc-167ae44234b5",
+      "model": "lan",
+      "modelProfileId": "private-model-b1bfc4daf85d416527cc56b473e2a325aae86143",
+      "user": "王小明打游戏挺厉害，是我好兄弟。",
+      "reply": "记下了，王小明游戏很厉害，是你好兄弟。\n\n需要我以后在游戏相关的事情上提醒你可以联系他吗？",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T23:37:17.433Z",
+          "data": {
+            "taskId": "cmd-ea464557-fab0-497d-a38f-6a18a8c04a8b",
+            "receiptId": "e09ad37c-59d7-4487-9dc5-eb35ce99b8db",
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "commandId": "cmd-ea464557-fab0-497d-a38f-6a18a8c04a8b",
+            "requestId": "1372e008-cb46-4aa1-85ff-fce4241b64e8"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T23:37:17.434Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T23:37:17.827Z",
+          "data": {
+            "taskId": "cmd-ea464557-fab0-497d-a38f-6a18a8c04a8b",
+            "turn": 1,
+            "receiptId": "e09ad37c-59d7-4487-9dc5-eb35ce99b8db",
+            "commandId": "cmd-ea464557-fab0-497d-a38f-6a18a8c04a8b",
+            "requestId": "1372e008-cb46-4aa1-85ff-fce4241b64e8",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T23:37:17.828Z",
+          "data": {
+            "text": "王小明打游戏挺厉害，是我好兄弟。",
+            "receiptId": "e09ad37c-59d7-4487-9dc5-eb35ce99b8db"
+          }
+        },
+        {
+          "seq": 442,
+          "type": "assistant.message",
+          "at": "2026-10-08T23:37:38.070Z",
+          "data": {
+            "text": "记下了，王小明游戏很厉害，是你好兄弟。\n\n需要我以后在游戏相关的事情上提醒你可以联系他吗？",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 443,
+          "type": "task.ended",
+          "at": "2026-10-08T23:37:38.071Z",
+          "data": {
+            "taskId": "cmd-ea464557-fab0-497d-a38f-6a18a8c04a8b",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 444,
+            "receiptId": "e09ad37c-59d7-4487-9dc5-eb35ce99b8db",
+            "commandId": "cmd-ea464557-fab0-497d-a38f-6a18a8c04a8b",
+            "requestId": "1372e008-cb46-4aa1-85ff-fce4241b64e8",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 444,
+          "type": "turn.ended",
+          "at": "2026-10-08T23:37:38.072Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 22026,
+      "steps": 0
+    },
+    {
+      "sessionId": "session-9559701d-bfe2-422a-bcfc-167ae44234b5",
+      "model": "lan",
+      "modelProfileId": "private-model-b1bfc4daf85d416527cc56b473e2a325aae86143",
+      "user": "好，以后我想组队时，就提醒我找王小明。",
+      "reply": "好的，已记住。王小明游戏很厉害，是你好兄弟；以后你提到组队、开黑或求游戏建议时，我会提醒你可以找他。",
+      "status": "completed",
+      "memoryUsed": [
+        {
+          "id": "cognition-2fe6c19c447b27d5f3bceb9ae55caa7e5bbeb082f618f4f81d5ef3a59d9f8c9e",
+          "kind": "cognition",
+          "summary": "王小明打游戏挺厉害，"
+        },
+        {
+          "id": "relationship-4ed5914c97209910fc0bc546e54c80cfa6c8c4a1aa901983e01418d8c2de80a9",
+          "kind": "relationship",
+          "summary": "用户王小明打游戏挺厉害，是我好兄弟。"
+        }
+      ],
+      "events": [
+        {
+          "seq": 445,
+          "type": "task.queued",
+          "at": "2026-10-08T23:37:45.583Z",
+          "data": {
+            "taskId": "cmd-723bf2e4-11b8-4813-bd96-8a8162ec4b1c",
+            "receiptId": "65688f4a-13b8-4eb0-beeb-53cfdef08b06",
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "commandId": "cmd-723bf2e4-11b8-4813-bd96-8a8162ec4b1c",
+            "requestId": "dff34010-c670-4549-9e56-720ae1860bf7"
+          }
+        },
+        {
+          "seq": 446,
+          "type": "turn.started",
+          "at": "2026-10-08T23:37:45.583Z",
+          "data": {
+            "turn": 2
+          }
+        },
+        {
+          "seq": 448,
+          "type": "task.started",
+          "at": "2026-10-08T23:38:17.498Z",
+          "data": {
+            "taskId": "cmd-723bf2e4-11b8-4813-bd96-8a8162ec4b1c",
+            "turn": 2,
+            "receiptId": "65688f4a-13b8-4eb0-beeb-53cfdef08b06",
+            "commandId": "cmd-723bf2e4-11b8-4813-bd96-8a8162ec4b1c",
+            "requestId": "dff34010-c670-4549-9e56-720ae1860bf7",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 450,
+          "type": "user.message",
+          "at": "2026-10-08T23:38:17.498Z",
+          "data": {
+            "text": "好，以后我想组队时，就提醒我找王小明。",
+            "receiptId": "65688f4a-13b8-4eb0-beeb-53cfdef08b06"
+          }
+        },
+        {
+          "seq": 888,
+          "type": "assistant.message",
+          "at": "2026-10-08T23:38:30.081Z",
+          "data": {
+            "text": "好的，已记住。王小明游戏很厉害，是你好兄弟；以后你提到组队、开黑或求游戏建议时，我会提醒你可以找他。",
+            "memoryUsed": [
+              {
+                "id": "cognition-2fe6c19c447b27d5f3bceb9ae55caa7e5bbeb082f618f4f81d5ef3a59d9f8c9e",
+                "kind": "cognition",
+                "summary": "王小明打游戏挺厉害，"
+              },
+              {
+                "id": "relationship-4ed5914c97209910fc0bc546e54c80cfa6c8c4a1aa901983e01418d8c2de80a9",
+                "kind": "relationship",
+                "summary": "用户王小明打游戏挺厉害，是我好兄弟。"
+              }
+            ]
+          }
+        },
+        {
+          "seq": 889,
+          "type": "task.ended",
+          "at": "2026-10-08T23:38:30.082Z",
+          "data": {
+            "taskId": "cmd-723bf2e4-11b8-4813-bd96-8a8162ec4b1c",
+            "turn": 2,
+            "reason": "completed",
+            "nativeTurnEndSeq": 890,
+            "receiptId": "65688f4a-13b8-4eb0-beeb-53cfdef08b06",
+            "commandId": "cmd-723bf2e4-11b8-4813-bd96-8a8162ec4b1c",
+            "requestId": "dff34010-c670-4549-9e56-720ae1860bf7",
+            "turnTaskId": "turn-2"
+          }
+        },
+        {
+          "seq": 890,
+          "type": "turn.ended",
+          "at": "2026-10-08T23:38:30.084Z",
+          "data": {
+            "reason": "completed",
+            "turn": 2
+          }
+        }
+      ],
+      "durationMs": 45840,
+      "steps": 0
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-c764e339-4252-4c12-bc63-0334ffe5cd77",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "directJudgements": [
+    {
+      "model": "mimo-v2.6-flash",
+      "usage": {
+        "completion_tokens": 29,
+        "prompt_tokens": 146,
+        "total_tokens": 175,
+        "completion_tokens_details": {
+          "reasoning_tokens": 0
+        },
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        }
+      },
+      "finishReason": "stop",
+      "rawVerdict": "{\"pass\":true,\"reason\":\"回复主动提议以后游戏相关时提醒联系王小明，并询问用户确认，符合标准。\"}",
+      "status": "passed",
+      "reason": "回复主动提议以后游戏相关时提醒联系王小明，并询问用户确认，符合标准。"
+    }
+  ],
+  "finishedAt": "2026-10-08T23:38:31.953Z",
+  "summary": {
+    "passed": 1,
+    "failed": 1,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 1,
+    "returnedUsage": 1,
+    "missingUsage": 0,
+    "input": 146,
+    "cached": 0,
+    "output": 29,
+    "knownCnyLowerBound": 0.000204
+  },
+  "credentialScan": {
+    "scanned": 219,
+    "matches": 0
+  }
+}

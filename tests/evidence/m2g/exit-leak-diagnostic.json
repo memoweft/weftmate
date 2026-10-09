@@ -1,0 +1,66 @@
+[
+  {
+    "model": "mimo",
+    "readOnly": true,
+    "files": [
+      "personal-access/accounts/owner-20e58c1d-ec4c-46a5-8f21-c81741fb9c1a/memory-home/memoweft/memoweft.sqlite3"
+    ],
+    "leaked": [
+      {
+        "table": "interaction_commitment",
+        "fields": [
+          "content",
+          "raw_quote"
+        ],
+        "record": {
+          "id": "99e23039-90d7-4887-a447-ce77d9c01a85",
+          "subject_id": "owner-20e58c1d-ec4c-46a5-8f21-c81741fb9c1a",
+          "conversation_id": "session-e049a91b-b727-4a15-8d1e-0b8f5f63dd25",
+          "episode_id": "weftmate-turn-boundary-v1:bd710a1a91e03f4871bf671f892778f6:93876d78948e477fe8f6a7b53484cb083d746e42d4324868cca7cc2717ed60b3",
+          "assistant_message_id": "3c3f3cbb-67a1-470d-b827-9d7113c035bd",
+          "kind": "commitment",
+          "content": "AI承诺提醒你去找王小明",
+          "raw_quote": "我会提醒你去找王小明",
+          "status": "active",
+          "created_at": "2026-10-09T00:32:31.559Z",
+          "updated_at": "2026-10-09T00:32:31.559Z"
+        }
+      }
+    ],
+    "allConversationsDeleted": true,
+    "noFormalFact": true,
+    "noRecallAfterForget": true
+  },
+  {
+    "model": "lan",
+    "readOnly": true,
+    "files": [
+      "personal-access/accounts/owner-80c77324-74ea-428c-b3bb-c9823e1ab5fd/memory-home/memoweft/memoweft.sqlite3"
+    ],
+    "leaked": [
+      {
+        "table": "interaction_commitment",
+        "fields": [
+          "content",
+          "raw_quote"
+        ],
+        "record": {
+          "id": "4c7119f0-00e3-4673-a02d-9ff1bea8e7b9",
+          "subject_id": "owner-80c77324-74ea-428c-b3bb-c9823e1ab5fd",
+          "conversation_id": "session-1a42cb3c-9044-49f8-8fbe-4c6106b4fbf7",
+          "episode_id": "weftmate-turn-boundary-v1:a54c09af7975e3d2276a8eb10b0b95cc:130dc8bbc32229ed9d5c1dbf3d14e4fb5d80cf8d9d5c541802f32a67259fff73",
+          "assistant_message_id": "81b9fd81-086c-4f14-82ce-6b3f42c6950e",
+          "kind": "commitment",
+          "content": "AI承诺提醒你找王小明",
+          "raw_quote": "我会提醒你找王小明",
+          "status": "active",
+          "created_at": "2026-10-09T00:38:57.078Z",
+          "updated_at": "2026-10-09T00:38:57.078Z"
+        }
+      }
+    ],
+    "allConversationsDeleted": true,
+    "noFormalFact": true,
+    "noRecallAfterForget": true
+  }
+]
