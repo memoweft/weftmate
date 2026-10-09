@@ -1,4 +1,5 @@
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
+import { validateChatIdentity } from './chat-identity.mjs';
 import { scheduledCommandSource } from './schedules-authorization.mjs';
 import { randomUUID } from 'node:crypto';
 import { open, rm } from 'node:fs/promises';
@@ -80,6 +81,7 @@ export async function durableWrite(file, state, shouldCommit = () => true) {
 
 export function validateSingleStore(store) {
   if (!plainObject(store)) throw failure('STORE_CORRUPT', 500);
+  validateChatIdentity(store);
   if (store.defaultApprovalMode !== undefined && !APPROVAL_MODES.includes(store.defaultApprovalMode)) throw failure('STORE_CORRUPT', 500);
   for (const session of Object.values(store.sessions ?? {})) {
     if (!plainObject(session)) throw failure('STORE_CORRUPT', 500);
