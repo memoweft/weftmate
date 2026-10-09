@@ -1,0 +1,76 @@
+{
+  "generatedAt": "2026-10-09T15:32:30.846352+00:00",
+  "pairedSimulators": true,
+  "simulatorsAtOnce": 2,
+  "xcodeJobs": 2,
+  "realWatchConnectivity": true,
+  "realPersonalApprovalHTTP": true,
+  "deterministicPlanner": true,
+  "compiledDSH": false,
+  "realSyntheticFileDelete": true,
+  "approved": true,
+  "rejected": true,
+  "completionHapticEvents": 1,
+  "passedTests": 1,
+  "failedTests": 0,
+  "skippedTests": 0,
+  "screenshots": [
+    {
+      "file": "approve-ended-host.png",
+      "sha256": "af7e08e4b948760c81f57ef0eff025314e44de210172c3651a33dcb4f3d43554"
+    },
+    {
+      "file": "approve-ended-iphone.png",
+      "sha256": "06f6504bf36e57499922b1ac6367433118a053c05336583336b5655547cb476d"
+    },
+    {
+      "file": "approve-ended-watch.png",
+      "sha256": "eb723eda0a168c01c13c341cbcdbb76e4400e32f62bb60f1661d578d1018e5e8"
+    },
+    {
+      "file": "approve-pending-host.png",
+      "sha256": "efd54feb47fc928401dc2847c6685cdd4723a2f2342be89c97bdb6362202d8de"
+    },
+    {
+      "file": "approve-pending-iphone.png",
+      "sha256": "99b1d0a814ae6369e3a36a6f3c91bd298fe35f57b68875d3a68b0ab075fa7717"
+    },
+    {
+      "file": "approve-pending-watch.png",
+      "sha256": "db0c05c08035c9ddd375527dc97aca6e16be3ff70f3f99fd6f3c185dbb1c116e"
+    },
+    {
+      "file": "reject-ended-host.png",
+      "sha256": "7059325c49f8184c7f8c07ac0c09885570a112be9b224e94f7226a605caadffe"
+    },
+    {
+      "file": "reject-ended-iphone.png",
+      "sha256": "9691f08c8fa32feb98462ff32acf61f501a293b3e6236e3074c88619db1b62a0"
+    },
+    {
+      "file": "reject-ended-watch.png",
+      "sha256": "5680fca2ed88e67f4df25472dbe548f973d06df47660c58b8d190d0d1b2db3bd"
+    },
+    {
+      "file": "reject-pending-host.png",
+      "sha256": "0c03027d7021c718abab973917c49351b3311b29b5ff5fbf4200cbb4e3b6cf96"
+    },
+    {
+      "file": "reject-pending-iphone.png",
+      "sha256": "62a900708362d2a076c929dbd841db9d278ce97ff23f36a8ebe5c69a102e7774"
+    },
+    {
+      "file": "reject-pending-watch.png",
+      "sha256": "232eca7c07e5098fed00c3876a2ecf52b763a20afacc5e1923f49c512496b45a"
+    }
+  ],
+  "sourcesSHA256": "19eb93da5312de78a0a32af3c066e5f3fcef2090f984e7c2297ba722c9c7002b",
+  "baseCommit": "a495e50baaf1a489d620674f1c123d279cadecd1",
+  "phoneBinarySHA256": "5a490fecb0f858577809fc44f37ce4abc460b588e769dcfa1e4b56f6ebf2751f",
+  "watchBinarySHA256": "b10922a3da8bb8d4c7c21c7ec6466209b4ca35dbc01b33e7154871b0d6717275",
+  "approvalPostCount": 2,
+  "registeredWatchReplyCount": 2,
+  "nativeTestSeconds": 24.971,
+  "phoneImplementationSHA256": "ec1dd43d4fd6ab0babc7b2aeb8f34690891c908b99d2776ab0261111352069a0",
+  "watchImplementationSHA256": "a89ced8e0ccf34c7b4133aa6dab2b73dfa823c478c79c2eac7c5e1cd21b7d178"
+}
