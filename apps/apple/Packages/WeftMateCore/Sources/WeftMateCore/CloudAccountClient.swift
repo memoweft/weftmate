@@ -160,6 +160,10 @@ public actor CloudAccountClient {
     public func completeEmail(ticket: String, password: String, recovery: Bool) async throws {
         _ = try await appJSON("/auth/\(recovery ? "recovery" : "registration")/complete", body: ["passwordTicket": ticket, "password": password])
     }
+    public func offlineStatus(hostID: String) async throws -> OfflineAuthorization {
+        let response = try await appJSON("/hosts/offline/status", body: ["hostId": hostID], authorized: true)
+        return try JSONDecoder().decode(OfflineAuthorization.self, from: response.body)
+    }
     public func directory() async throws -> CloudDirectory {
         try JSONDecoder().decode(CloudDirectory.self, from: await appJSON("/devices", body: nil, authorized: true).body)
     }

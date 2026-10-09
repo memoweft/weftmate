@@ -1,0 +1,65 @@
+{
+  "unmodifiedNativeImages": true,
+  "images": [
+    {
+      "file": "iphone-light/a14-iphone-forgotten.png",
+      "sha256": "dbe8e59800447f86f8ac28bb6bf8b3c60a8036bc9d631d075797b472306f9afd",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a14-iphone-memory.png",
+      "sha256": "a6d1ad93535cb93287cfa8b3d63424f64e173d7da8fa0e3f217759023b6cb0ff",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a14-iphone-preference.png",
+      "sha256": "f5eb56ae14eda93b9b9ec22ccfd8261f85b7d9faa81956aea5f996afa647b904",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "iphone-light/a14-iphone-synced.png",
+      "sha256": "657d67f85e06a5fbf3f0ce5ee052e7590d645d2266da44c715755cfd1ec98ad8",
+      "width": 1206,
+      "height": 2622
+    },
+    {
+      "file": "mac-dark/a14-forgotten.png",
+      "sha256": "07b9960134eb073944a21796adc70185fccd3bc46295bca6b4e4df8fb192769e",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "mac-dark/a14-memory.png",
+      "sha256": "4dc3d11ffad7b760b802fd87c3718f1bbd64b67fd6787a76541a9fbfe2c56e75",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "mac-dark/a14-synced.png",
+      "sha256": "1c9f2b26ee0d398fce427de1d2c36233d49753015cba63d133db9b1ebb35b0c1",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "mac-light/a14-forgotten.png",
+      "sha256": "1868bac49b9a6f16af95b3264078bddfe450e15ed0bf0c60695f0ae0017aa29d",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "mac-light/a14-memory.png",
+      "sha256": "9d545120db08e4a371002f334093fd8142d86102f9a3f359353782d458e985fc",
+      "width": 1080,
+      "height": 760
+    },
+    {
+      "file": "mac-light/a14-synced.png",
+      "sha256": "53a4e8be07df0f7ddc76fd631681b1c7b31e1ba5f11e2b552a891d72cf1e37b0",
+      "width": 1080,
+      "height": 760
+    }
+  ]
+}
