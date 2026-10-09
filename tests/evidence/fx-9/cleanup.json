@@ -1,0 +1,9 @@
+{
+  "forcedTestTreeProcessesCleaned": 3,
+  "normalRunnerShutdown": "All completed runners closed their Electron, WSL cloud launcher, TCP fixture, instrumentation and removed owned forward/reverse rules in finally. Normal child exits are not assigned a fabricated count.",
+  "ownedAndroidPackagesRemoved": true,
+  "mumuInstance": 0,
+  "mumuShutdown": true,
+  "dailyHostAndDataTouched": false,
+  "dailyPortsAccessed": false
+}
