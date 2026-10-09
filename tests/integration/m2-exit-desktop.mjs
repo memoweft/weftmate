@@ -5,7 +5,7 @@
  * No product fixes, seeded memories, daily vault, private LAN address or key files.
  */
 import assert from 'node:assert/strict';
-import { _electron } from 'playwright';
+import { _electron, chromium } from 'playwright';
 import { createRequire } from 'node:module';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
@@ -24,7 +24,10 @@ import { original, confirmation, correction, recallQuestion, proposalCheck, form
 const repository = resolve(import.meta.dirname, '../..');
 const run = promisify(execFile), pause = ms => new Promise(r => setTimeout(r, ms));
 const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
-const provider = option('--model', null), judgeModel = option('--judge-model', undefined);
+const fgOnly = process.argv.includes('--fg-1');
+const outageOnly = process.argv.includes('--fg-1-outage');
+const settingsOnly = process.argv.includes('--fg-1-settings');
+const provider = option('--model', fgOnly ? 'mimo' : null), judgeModel = option('--judge-model', undefined);
 const eightOnly = process.argv.includes('--eight-only');
 assert.ok(provider === null || ['mimo', 'lan'].includes(provider), '--model mimo|lan');
 const coreSource = resolve(option('--memory-core-source', 'D:/AIProjects/MemoWeft/Core/py/src'));
@@ -42,10 +45,10 @@ async function environmentValue(name, scope) {
   return stdout.trim();
 }
 const key = await environmentValue('MIMO_API_KEY', 'Machine');
-const lanKey = await environmentValue('WEFTMATE_LAN_MODEL_KEY', 'User');
-const lanUrl = await environmentValue('WEFTMATE_LAN_MODEL_BASE_URL', 'User');
-assert.ok(key && lanKey && lanUrl, 'Required model environment variables absent');
-const secrets = [key, lanKey, lanUrl, new URL(lanUrl).host];
+const lanKey = fgOnly ? '' : await environmentValue('WEFTMATE_LAN_MODEL_KEY', 'User');
+const lanUrl = fgOnly ? '' : await environmentValue('WEFTMATE_LAN_MODEL_BASE_URL', 'User');
+assert.ok(key && (fgOnly || lanKey && lanUrl), 'Required model environment variables absent');
+const secrets = [key, lanKey, lanUrl, lanUrl && new URL(lanUrl).host].filter(Boolean);
 const redact = value => secrets.reduce((text, secret) => text.replaceAll(secret, '[private]'), String(value));
 const save = (file, value) => writeFileSync(file, redact(JSON.stringify(value, null, 2)) + '\n');
 async function acquireLan() {
@@ -169,6 +172,7 @@ async function baseline(modelName, fourOnly = false) {
     await page.reload(); await page.locator('#assistant-view').waitFor();
     await page.locator('#model-trigger').click();
     await page.getByRole('option', { name, exact: true }).click();
+    await until(async () => await page.locator('#new-session').isEnabled(), 30000, 'new conversation available');
     const response = page.waitForResponse(r => new URL(r.url()).pathname === '/personal/v1/commands' && r.request().postDataJSON()?.kind === 'session.create');
     response.catch(() => {}); // Await below owns failure; prevent an early UI timeout from aborting cleanup.
     await page.locator('#new-session').click();
@@ -265,6 +269,7 @@ async function baseline(modelName, fourOnly = false) {
       scenario: { turns: report.turns.map(t => ({ user: t.user })) }, scratchDir: root, deadline: Date.now() + 180000 });
   }
   async function step(id, title, action) {
+    if (fgOnly && !(settingsOnly ? ['settings-export'] : outageOnly ? ['08'] : ['06', '07', '08']).includes(id)) return;
     const result = { id, title, status: 'running', checks: {}, startedAt: new Date().toISOString() };
     report.steps.push(result); persist();
     try {
@@ -291,6 +296,43 @@ async function baseline(modelName, fourOnly = false) {
         onScenarioResult: async result => { report.fourProgress.push(result); persist(); console.log(`${result.id}: ${result.status} ${result.durationMs}ms`); } });
       report.four = fourScenarioSummary(result.results); persist(); return;
     }
+    if (settingsOnly) {
+      await step('settings-export', '真实桌面设置里的记忆导出与下载', async result => {
+        await app.evaluate(({BrowserWindow}, directory) => { for (const window of BrowserWindow.getAllWindows()) window.webContents.session.setDownloadPath(directory); }, join(root,'downloads'));
+        await page.getByRole('button', {name:'账户菜单',exact:true}).click();
+        await page.getByRole('button', {name:'设置',exact:true}).click();
+        await page.locator('.settings-nav-item').filter({hasText:'记忆'}).click();
+        for (const [format,label] of [['json','JSON'],['markdown','Markdown']]) {
+          await page.getByRole('button',{name:label,exact:true}).click();
+          const file=join(root,'downloads',format==='json'?'weftmate-memory.json':'weftmate-memory.md');
+          await until(async()=>statSync(file,{throwIfNoEntry:false})?.size>0,20000,'native memory export');
+          const text=readFileSync(file,'utf8');
+          result.checks[format] = format==='json'?JSON.parse(text).schemaVersion===1:text.startsWith('# 我的记忆');
+        }
+        await page.screenshot({path:join(evidence,'settings-export.png')});
+        await page.getByRole('button',{name:'管理记忆',exact:true}).click();
+        await page.locator('#memory-view').waitFor();
+        await page.screenshot({path:join(evidence,'memory-export.png')});
+        const browser=await chromium.launch({headless:true});
+        try {
+          const mobile=await browser.newPage({viewport:{width:390,height:844},acceptDownloads:true});
+          await mobile.goto(page.url());await localUiSession(mobile,{username,password},'FG-1 synthetic mobile browser');
+          await mobile.locator('#assistant-view').waitFor();
+          await mobile.locator('#rail-open').click();
+          await mobile.getByRole('button',{name:'账户菜单',exact:true}).click();
+          await mobile.getByRole('button',{name:'记忆',exact:true}).click();
+          await mobile.locator('#memory-view').waitFor();
+          const downloaded=mobile.waitForEvent('download');
+          await mobile.getByRole('button',{name:'导出我的记忆 · Markdown',exact:true}).click();
+          const file=await downloaded;const target=join(root,'browser-weftmate-memory.md');await file.saveAs(target);
+          result.checks.mobileBrowserDownload=readFileSync(target,'utf8').startsWith('# 我的记忆');
+          await mobile.screenshot({path:join(evidence,'mobile-browser-memory-export.png')});
+        } finally {await browser.close();}
+
+      });
+      return;
+    }
+    if (fgOnly) { A = await session(); await message(A, outageOnly ? '你好，请用一句中文打个招呼。' : original); if (!outageOnly) await message(A, correction); await settled(); }
     await step('01', '原话进入真实桌面对话', async result => {
       A = await session(); const turn = await message(A, original);
       result.checks = { completed: turn.status === 'completed', exactUserEvent: turn.events?.some(row => row.type === 'user.message' && row.data.text === original) === true,
@@ -316,7 +358,7 @@ async function baseline(modelName, fourOnly = false) {
       }
     });
     // MiMo can finish formation while another package owns the LAN lock.
-    await configure(modelName === 'mimo' ? 'lan' : 'mimo');
+    if (!fgOnly) await configure(modelName === 'mimo' ? 'lan' : 'mimo');
     const alternate = modelName === 'mimo' ? 'lan' : 'mimo';
     await step('04', '新会话、换模型、改写问题仍召回', async result => {
       const id = await session(alternate), turn = await message(id, recallQuestion, alternate);
@@ -362,7 +404,22 @@ async function baseline(modelName, fourOnly = false) {
         await until(async () => (await page.locator('.memory-source-raw').allTextContents()).some(text => text.includes(original) || text.includes(correction)));
         result.checks.uiSource = true;
         await page.screenshot({ path: join(evidence, `${modelName}-sources.png`) });
-        await page.getByRole('button', { name: '关闭记忆详情', exact: true }).click();
+        if (fgOnly) {
+          const before = await api('/memory/export?format=json');
+          result.checks.exportBeforeForget = before.status === 200 && before.body.content.includes('王小明');
+          await page.getByRole('button', { name: '忘掉', exact: true }).click();
+          const response = page.waitForResponse(r => r.request().method() === 'DELETE' && new URL(r.url()).pathname.includes('/memory/items/'));
+          await page.getByRole('button', { name: '确认忘掉', exact: true }).click();
+          const removed = await response; result.memoryPageForget = { status: removed.status(), body: await removed.json() };
+          if (removed.ok() && result.memoryPageForget.body.receipt.storageCleanup?.state === 'pending') {
+            const requestId = result.memoryPageForget.body.receipt.requestId;
+            result.cleanupRetry = await api(`/memory/commands/by-request/${requestId}/retry-cleanup`, {});
+          }
+          result.checks.memoryPageForget = removed.ok() && (result.cleanupRetry?.body.receipt ?? result.memoryPageForget.body.receipt).storageCleanup?.state !== 'pending';
+          result.checks.originalChatRetained = (await events(A)).some(event => event.type === 'user.message' && event.data.text === original);
+          if (result.checks.memoryPageForget) { await page.getByRole('button', { name: /返回对话/ }).click(); await openMemoryPage(); }
+          else if (await page.getByRole('button', { name: '关闭记忆详情', exact: true }).isVisible()) await page.getByRole('button', { name: '关闭记忆详情', exact: true }).click();
+        } else await page.getByRole('button', { name: '关闭记忆详情', exact: true }).click();
         await page.getByRole('button', { name: /返回对话/ }).click();
       }
       result.deletions = [];
@@ -390,8 +447,15 @@ async function baseline(modelName, fourOnly = false) {
       result.checks.forgotSourceEvidence = result.deletions.some(row => row.status === 200 && row.body.forgottenEvidenceCount > 0);
       result.checks.allConversationsDeleted = result.deletions.length === capturedSessions.size && result.deletions.every(row => row.status === 200);
       result.checks.noFormalFact = !remaining.some(item => /王小明|好兄弟|表弟/.test(item.text));
-      // There is no dedicated memory export UI/API. BK-1 is an actual current export.
-      const exported = await api('/backups', {}); result.export = { kind: 'BK-1 local backup', status: exported.status, dedicatedMemoryExport: false };
+      if (fgOnly) {
+        result.memoryExports = [];
+        for (const format of ['json', 'markdown']) {
+          const exported = await api(`/memory/export?format=${format}`); result.memoryExports.push(exported);
+        }
+        result.checks.memoryExportsExcludeForgotten = result.memoryExports.every(value => value.status === 200 && !/王小明|好兄弟|表弟/.test(value.body.content));
+      }
+      // BK-1 additionally checks fresh archives after the source chats are deleted.
+      const exported = await api('/backups', {}); result.export = { kind: 'BK-1 local backup', status: exported.status, dedicatedMemoryExport: fgOnly };
       result.checks.exportSucceeded = exported.status === 202 && exported.body.state === 'succeeded';
       if (result.checks.exportSucceeded) {
         const archive = join(root, 'Backups', exported.body.backup.id), extracted = join(root, 'export-check');
@@ -408,9 +472,11 @@ async function baseline(modelName, fourOnly = false) {
       result.semantic = await semantic(turn, '遗忘后不知道此前组队对象，不应重新说出王小明。');
     });
     await step('08', 'Core 真进程停止且无法重启、普通聊天和提示', async result => {
+      const outageSession = fgOnly ? (outageOnly ? A : report.turns.at(-1).sessionId) : null;
+      if (outageSession) await openSession(outageSession);
       const killed = await app.evaluate(() => globalThis.m2ExitBreakCore()); result.killedCoreProcesses = killed.length;
       await pause(1000); result.memory = (await api('/memory/status')).body;
-      const turn = await message(await session(modelName, false), '你好，请用一句中文打个招呼。');
+      const turn = await message(outageSession ?? await session(modelName, false), '你好，请用一句中文打个招呼。');
       result.checks = { actualCoreStopped: killed.length > 0, unavailable: result.memory.state === 'unavailable', chatCompleted: turn.status === 'completed' && turn.reply.trim().length > 0,
         noMemoryInjected: turn.memoryUsed.length === 0 };
       result.chatNotice = await page.locator('body').innerText();
@@ -422,6 +488,19 @@ async function baseline(modelName, fourOnly = false) {
       result.checks.memoryPageNotice = /不可用|无法/.test(result.memoryNotice);
       await page.screenshot({ path: join(evidence, `${modelName}-core-unavailable-memory.png`) });
       await page.getByRole('button', { name: /返回对话/ }).click();
+      if (fgOnly) {
+        await page.setViewportSize({width:390,height:844});
+        await until(async () => await page.locator('#chat-memory-notice').isVisible());
+        result.checks.mobileWebNotice = (await page.locator('#chat-memory-notice').innerText()).includes('不会用到或记住新内容');
+        await page.screenshot({path:join(evidence,`${modelName}-core-unavailable-mobile-web.png`)});
+        await app.evaluate(() => globalThis.m2ExitRestoreCore());
+        await until(async () => ['ready','degraded'].includes((await api('/memory/status')).body.state) && (await api('/memory/status')).body.capabilities?.list === true, 60000, 'Core recovery');
+        await until(async () => !(await page.locator('#chat-memory-notice').isVisible()), 30000, 'notice recovery');
+        result.checks.recoveryClearsNotice = true;
+        await page.screenshot({path:join(evidence,`${modelName}-core-recovered-mobile-web.png`)});
+        await page.setViewportSize({width:1200,height:800});
+        await page.screenshot({path:join(evidence,`${modelName}-core-recovered-chat.png`)});
+      }
       result.semantic = await semantic(turn, '记忆服务故障时普通问候仍可用。');
     });
     if (!eightOnly) await step('speed', '同一对话重复任务的步骤与耗时', async result => {
@@ -503,6 +582,6 @@ try {
   // Optional assertion mode lets CI consume the same evidence without treating
   // a successfully completed baseline collection as a passing product exit.
   if (process.argv.includes('--require-pass') && reports.some(report => report.fatal ||
-    (report.four ? !report.four.passedGate : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
+    (report.four ? !report.four.passedGate : fgOnly ? !report.steps.length || report.steps.some(step => step.status !== 'passed') : !report.summary?.eightStepGate || (!eightOnly && report.steps.find(step => step.id === 'speed')?.status !== 'passed')))) process.exitCode = 1;
   console.log(JSON.stringify({ roots, usage, credentialScan: publicScan }));
 }

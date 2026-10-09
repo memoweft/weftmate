@@ -359,7 +359,7 @@ summary:focus-visible,.artifact-action:focus-visible,.resource-row:focus-visible
 .session-action-dialog::backdrop{background:var(--wm-color-approval-scrim)}
 .session-action-dialog>button{display:block;width:100%;margin-top:var(--wm-space-12)}
 .session-forget{display:flex;align-items:start;gap:var(--wm-space-8);margin:var(--wm-space-16) 0}
-.session-action-dialog input[type=checkbox]{flex:none;width:var(--wm-space-20);height:var(--wm-space-20);margin:0;accent-color:var(--accent)}
+.session-action-dialog input[type=checkbox],.memory-confirm-panel input[type=checkbox]{flex:none;width:var(--wm-space-20);height:var(--wm-space-20);margin:0;accent-color:var(--accent)}
 .session-action-dialog .danger{min-height:var(--wm-space-48);border-radius:var(--wm-radius-12);color:var(--danger);background:var(--danger-soft);font-weight:600}
 
 /* UI-P1m: same short, non-spring timings as desktop. JS owns page continuity. */

@@ -23,6 +23,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
     function sessionLifecycleMessage(error) {
         return { SESSION_BUSY: '对话还在停止或核对执行结果，请稍后重试。', SESSION_ARCHIVED: '请先恢复对话，再发送消息。',
             MEMORY_DELETE_UNAVAILABLE: '记忆暂时无法遗忘，对话仍保留。请稍后重试，或取消勾选。',
+            MEMORY_REVISION_CHANGED: '记忆已变更，请重新打开确认框，核对新的遗忘范围。',
             MEMORY_DELETE_CONFLICT: '记忆遗忘尚未完成，对话仍保留。请稍后重试。' }[error?.code] || core.failureMessage(error);
     }
     async function archiveSession(sessionId, archived = true) {
@@ -35,9 +36,12 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return true;
     }
-    async function deleteSession(sessionId, forgetMemories = false) {
+    const previewSessionForget = sessionId => core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/forget-preview`);
+    async function deleteSession(sessionId, forgetMemories = false, options = {}) {
         const identity = core.state.identityGeneration;
-        const result = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: { forgetMemories }, protectedWrite: true, timeoutMs: 120000 });
+        const result = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: { forgetMemories,
+            ...(forgetMemories ? { deleteConversationSnippets: options.deleteConversationSnippets === true,
+                ...(options.worldRevision !== undefined ? { memoryWorldRevision: options.worldRevision } : {}) } : {}) }, protectedWrite: true, timeoutMs: 120000 });
         if (identity !== core.state.identityGeneration) return false;
         core.state.sessions = core.state.sessions.filter(item => item.sessionId !== sessionId);
         if (core.state.selectedSessionId === sessionId) {
@@ -51,5 +55,5 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { refreshSessions, sessionList, archiveSession, deleteSession, sessionLifecycleMessage };
+    return { refreshSessions, sessionList, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };

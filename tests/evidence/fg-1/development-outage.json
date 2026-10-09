@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 1,
+  "startedAt": "2026-10-08T21:55:06.604Z",
+  "model": "mimo",
+  "revision": {
+    "weftmate": "d274a80ca5a80dad12395fdb5e76ef7a9cd4df20",
+    "core": "f38424b198b4117c91ce1bdab263f715c470b21b"
+  },
+  "electron": true,
+  "steps": [
+    {
+      "id": "08",
+      "title": "Core 真进程停止且无法重启、普通聊天和提示",
+      "status": "failed",
+      "checks": {},
+      "startedAt": "2026-10-08T21:55:31.285Z",
+      "killedCoreProcesses": 1,
+      "memory": {
+        "ownerId": "owner-70d8d919-0764-48a5-83b2-9721858d2a19",
+        "state": "unavailable",
+        "worldRevision": null,
+        "capabilities": {
+          "list": false,
+          "source": false,
+          "inject": false,
+          "correct": false,
+          "mute": false,
+          "deleteEvidence": false,
+          "deleteWorldItem": false
+        },
+        "pendingBoundaryCount": null,
+        "blockedBoundaryCount": null,
+        "discardedBoundaryCount": null,
+        "lastFailureCode": "MEMORY_PROCESS_UNAVAILABLE",
+        "reasonCode": "MEMORY_PROCESS_UNAVAILABLE"
+      },
+      "reason": "session.create uncertain",
+      "finishedAt": "2026-10-08T21:55:33.755Z"
+    }
+  ],
+  "turns": [
+    {
+      "sessionId": "session-ae239650-13a1-43d3-9bd5-eba9591b97f2",
+      "model": "mimo",
+      "modelProfileId": "private-model-053126fabb3f85b9c8f737c508004b184be06245",
+      "user": "你好，请用一句中文打个招呼。",
+      "reply": "你好，我是 WeftMate，很高兴为你服务！",
+      "status": "completed",
+      "memoryUsed": [],
+      "events": [
+        {
+          "seq": 4,
+          "type": "task.queued",
+          "at": "2026-10-08T21:55:22.120Z",
+          "data": {
+            "taskId": "cmd-4337f09b-8514-446b-81bc-24a836cbb3d0",
+            "receiptId": "5aaf7ef4-1023-4811-baac-8d1f1ba49c5a",
+            "text": "你好，请用一句中文打个招呼。",
+            "commandId": "cmd-4337f09b-8514-446b-81bc-24a836cbb3d0",
+            "requestId": "b3a11d13-b5f5-4398-abd0-5913fe0d6505"
+          }
+        },
+        {
+          "seq": 5,
+          "type": "turn.started",
+          "at": "2026-10-08T21:55:22.121Z",
+          "data": {
+            "turn": 1
+          }
+        },
+        {
+          "seq": 7,
+          "type": "task.started",
+          "at": "2026-10-08T21:55:22.498Z",
+          "data": {
+            "taskId": "cmd-4337f09b-8514-446b-81bc-24a836cbb3d0",
+            "turn": 1,
+            "receiptId": "5aaf7ef4-1023-4811-baac-8d1f1ba49c5a",
+            "commandId": "cmd-4337f09b-8514-446b-81bc-24a836cbb3d0",
+            "requestId": "b3a11d13-b5f5-4398-abd0-5913fe0d6505",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 8,
+          "type": "user.message",
+          "at": "2026-10-08T21:55:22.499Z",
+          "data": {
+            "text": "你好，请用一句中文打个招呼。",
+            "receiptId": "5aaf7ef4-1023-4811-baac-8d1f1ba49c5a"
+          }
+        },
+        {
+          "seq": 35,
+          "type": "assistant.message",
+          "at": "2026-10-08T21:55:24.334Z",
+          "data": {
+            "text": "你好，我是 WeftMate，很高兴为你服务！",
+            "memoryUsed": []
+          }
+        },
+        {
+          "seq": 36,
+          "type": "task.ended",
+          "at": "2026-10-08T21:55:24.335Z",
+          "data": {
+            "taskId": "cmd-4337f09b-8514-446b-81bc-24a836cbb3d0",
+            "turn": 1,
+            "reason": "completed",
+            "nativeTurnEndSeq": 37,
+            "receiptId": "5aaf7ef4-1023-4811-baac-8d1f1ba49c5a",
+            "commandId": "cmd-4337f09b-8514-446b-81bc-24a836cbb3d0",
+            "requestId": "b3a11d13-b5f5-4398-abd0-5913fe0d6505",
+            "turnTaskId": "turn-1"
+          }
+        },
+        {
+          "seq": 37,
+          "type": "turn.ended",
+          "at": "2026-10-08T21:55:24.335Z",
+          "data": {
+            "reason": "completed",
+            "turn": 1
+          }
+        }
+      ],
+      "durationMs": 3684,
+      "steps": 0
+    }
+  ],
+  "initialMemory": {
+    "ownerId": "owner-70d8d919-0764-48a5-83b2-9721858d2a19",
+    "state": "ready",
+    "version": "2.0.0",
+    "worldRevision": 0,
+    "capabilities": {
+      "list": true,
+      "source": true,
+      "inject": true,
+      "correct": true,
+      "mute": true,
+      "deleteEvidence": true,
+      "deleteWorldItem": true
+    },
+    "pendingBoundaryCount": 0,
+    "blockedBoundaryCount": 0,
+    "discardedBoundaryCount": 0,
+    "lastFailureCode": null
+  },
+  "finishedAt": "2026-10-08T21:55:34.137Z",
+  "summary": {
+    "passed": 0,
+    "failed": 1,
+    "eightStepGate": false
+  },
+  "mimoUsage": {
+    "requests": 3,
+    "returnedUsage": 3,
+    "missingUsage": 0,
+    "input": 14041,
+    "cached": 8192,
+    "output": 76,
+    "knownCnyLowerBound": 0.00616484
+  },
+  "credentialScan": {
+    "scanned": 220,
+    "matches": 0
+  }
+}

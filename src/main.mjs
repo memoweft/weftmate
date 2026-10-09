@@ -398,7 +398,11 @@ async function stageOneGateway(path, init = {}) {
   const response = await fetch(new URL(`/weftmate/api/v1${path}`, runtimeOrigin), { ...init, headers: { 'content-type': 'application/json', ...(init.headers ?? {}) } });
   const body = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error('gateway request failed');
+    const nativeCode = typeof body.error?.code === 'string' && /^[A-Za-z0-9_-]{1,80}$/.test(body.error.code)
+      ? body.error.code : 'unknown';
+    console.error(`[weftmate] gateway ${init.method ?? 'GET'} ${path.split('?')[0]}: HTTP ${response.status} ${nativeCode}`);
+    const error = Object.assign(new Error(`gateway request failed: HTTP ${response.status} ${nativeCode}`),
+      { code: 'BACKEND_UNAVAILABLE', status: 503, nativeStatus: response.status, nativeCode });
     if (path === '/backup-pause') error.code = body.error?.code;
     throw error;
   }
@@ -2957,6 +2961,7 @@ async function bootstrap() {
     personalMemoryRuntimeConfig = memoryConfig;
     personalMemoryManager = createPersonalMemoryManager({
       root: join(userDataDir, 'personal-access'), enabled: true,
+      cleanupDeletedMemory: (ownerId, options) => personalAccessService.cleanupMemoryCopies(ownerId, options),
       python: memoryConfig.python, pythonPath: memoryConfig.pythonPath,
       baseUrl: modelScheduler.memoryBaseUrl(memoryConfig.authRef), model: memoryConfig.model,
       credential: (ownerId) => {

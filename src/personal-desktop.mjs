@@ -1,6 +1,6 @@
 import packageInfo from '../package.json' with { type: 'json' };
 /** Native shell for the same authenticated /personal/v1 client used remotely. */
-import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage } from 'electron';
+import { app, BrowserWindow, ipcMain, Notification, screen, shell, session, nativeTheme, safeStorage, dialog } from 'electron';
 import { hostname } from 'node:os';
 import { createHash, X509Certificate } from 'node:crypto';
 import { desktopAuthStorage } from './personal-desktop-auth.mjs';
@@ -154,6 +154,22 @@ export function createPersonalDesktop({ origin, setupGrant = null, isQuitting, s
     if (action === 'show') shell.showItemInFolder(file);
     else { const error = await shell.openPath(file); if (error) throw new Error('Default application unavailable'); }
     return { opened: true };
+  });
+  handle('wm:desktop:memory-export', async ({ format, ownerId } = {}) => {
+    if (!['json', 'markdown'].includes(format) || typeof ownerId !== 'string') throw new Error('Invalid memory export');
+    const filename = format === 'json' ? 'weftmate-memory.json' : 'weftmate-memory.md';
+    const selected = await dialog.showSaveDialog(win, { title: '导出我的记忆', defaultPath: join(app.getPath('downloads'), filename),
+      filters: [{ name: format === 'json' ? 'JSON' : 'Markdown', extensions: [format === 'json' ? 'json' : 'md'] }] });
+    if (selected.canceled || !selected.filePath) return { canceled: true };
+    // Fetch after the dialog closes: changing accounts or forgetting a memory
+    // while choosing a destination cannot save an older captured export.
+    const response = await fetchLocal(`/memory/export?format=${format}`);
+    if (!response.ok) throw new Error('Memory export unavailable');
+    const exported = await response.json();
+    if (exported.ownerId !== ownerId || exported.format !== format || typeof exported.content !== 'string')
+      throw new Error('Memory export owner mismatch');
+    writeFileSync(selected.filePath, exported.content, { encoding: 'utf8', mode: 0o600 });
+    return { exported: true };
   });
   let pendingConversation = null, clientReady = false, maximizeOnShow = saved.maximized === true;
   const show = sessionId => {

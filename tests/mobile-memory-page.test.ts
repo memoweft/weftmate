@@ -86,6 +86,7 @@ type DeferredRequest = { owner: string; path: string; resolve: (value: object) =
 
 function harness(options: { status?: (owner: string) => object; items?: (owner: string, kind: string, query: string, after: string) => object;
   details?: (owner: string, kind: string, id: string) => object; sources?: (owner: string, kind: string, id: string) => object;
+  preview?: (owner: string) => object | Promise<object>;
   write?: (owner: string, path: string, method: string, body: any) => object | Promise<object>;
   receipt?: (owner: string, requestId: string) => object | Promise<object>;
   taskDetail?: (owner: string, taskId: string) => object | Promise<object>;
@@ -160,6 +161,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
     const parts = path.split('/').map(decodeURIComponent)
     const kind = parts[5]
     const id = parts[6]
+    if (parts.at(-1) === 'forget-preview') return options.preview?.(owner) ?? { ownerId: rawOwners[owner], worldRevision: 10, itemCount: 2, evidenceCount: 1, items: [itemsByOwner[owner][0], {id: 'person', kind: 'entity', itemType: 'person', text: '王小明'}] }
     if (parts.at(-1) === 'sources') return options.sources?.(owner, kind, id) ?? { ownerId: rawOwners[owner], worldRevision: 10, sources: [
       { evidenceId: `evidence-${owner}`, relation: 'support', currentnessState: 'current',
         permissions: { allowLocalRead: true, allowCloudRead: false, allowInference: true },
@@ -249,6 +251,7 @@ function harness(options: { status?: (owner: string) => object; items?: (owner: 
   const document: any = { body: get('body'), documentElement: new FakeElement('html'), activeElement: null,
     visibilityState: 'visible', getElementById: (id: string) => htmlIds.has(id) ? get(id) : null,
     createElement: (tag: string) => new FakeElement(tag),
+    createTextNode: (text: string) => { const node = new FakeElement(); node.textContent = text; return node },
     querySelector: (selector: string) => selector === '[data-action="new-chat"]' ? newChat : selector === '.brand strong' ? brandTitle : null,
     querySelectorAll: (selector: string) => selector === '[data-page]' ? nav : [],
     addEventListener(name: string, listener: (event?: any) => unknown) { if (name === 'DOMContentLoaded') listener({}) },
@@ -518,15 +521,17 @@ test('item deletion requires typing confirmation and reports incomplete storage 
   findButton(app.get('page-content'), 'Delete this memory')!.fire('click')
   await waitUntil(() => !!findButton(app.get('page-content'), '永久删除这项记忆'), 'delete action available')
   findButton(app.get('page-content'), '永久删除这项记忆')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('以下内容会一起忘掉'), 'cascade preview loaded')
   const confirm = findButton(app.get('page-content'), '确认永久删除记忆')!
   assert.equal(confirm.disabled, true);assert.equal(writes.length, 0)
-  assert.match(app.get('page-content').textContent, /原始聊天、会话存档和既有备份仍可能保留/)
+  assert.match(app.get('page-content').textContent, /默认保留对话原文/)
   const input = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'text')[0]
   input.value = '删除';input.fire('input');assert.equal(confirm.disabled, false);confirm.fire('click')
   await waitUntil(() => app.get('page-content').textContent.includes('底层清理仍待完成'), 'cleanup boundary visible')
   assert.equal(writes.length, 1);assert.equal(writes[0].method, 'DELETE')
   assert.match(writes[0].path, /\/items\/cognition\/memory-A$/)
   assert.equal(writes[0].body.expectedWorldRevision, 10)
+  assert.equal(writes[0].body.deleteConversationSnippets, false)
   assert.doesNotMatch(app.get('page-content').textContent, /Delete this memory/)
 })
 
@@ -553,12 +558,39 @@ test('source evidence deletion uses the evidence ID and refreshes the source lis
   findButton(app.get('page-content'), 'Source-backed memory')!.fire('click')
   await waitUntil(() => !!findButton(app.get('page-content'), '删除这条来源'), 'evidence delete available')
   findButton(app.get('page-content'), '删除这条来源')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('以下内容会一起忘掉'), 'cascade preview loaded')
+  const snippets = findAll(app.get('page-content'), node => node.tagName === 'INPUT' && node.type === 'checkbox')[0]
+  assert.equal((snippets as any).checked, false); (snippets as any).checked = true; snippets.fire('change')
   const input = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'text')[0]
   input.value = '删除';input.fire('input');findButton(app.get('page-content'), '确认删除这条来源')!.fire('click')
   await waitUntil(() => app.get('page-content').textContent.includes('服务端没有返回来源记录'), 'fresh source list rendered')
   assert.equal(writes.length, 1);assert.equal(writes[0].method, 'DELETE')
   assert.match(writes[0].path, /\/evidence\/evidence-A$/)
+  assert.equal(writes[0].body.deleteConversationSnippets, true)
   assert.doesNotMatch(app.get('page-content').textContent, /Old source body/)
+})
+
+test('forget confirmation cannot submit after preview failure or a changed revision', async () => {
+  for (const fail of [true, false]) {
+    let writes = 0
+    const app = harness({
+      status: (owner) => ({ ownerId: appOwner(owner), state: 'ready', worldRevision: 10,
+        capabilities: { list: true, source: true, deleteEvidence: true } }),
+      preview: () => fail ? Promise.reject(new Error('MEMORY_UNAVAILABLE'))
+        : { worldRevision: 11, itemCount: 0, evidenceCount: 0, items: [] },
+      write: () => { writes++; return {} },
+    })
+    await openMemory(app)
+    await waitUntil(() => !!findButton(app.get('page-content'), 'A memory private to A'), 'memory list loaded')
+    findButton(app.get('page-content'), 'A memory private to A')!.fire('click')
+    await waitUntil(() => !!findButton(app.get('page-content'), '删除这条来源'), 'source action available')
+    findButton(app.get('page-content'), '删除这条来源')!.fire('click')
+    await waitUntil(() => app.get('page-content').textContent.includes('无法读取遗忘范围'), 'failed preview visible')
+    const input = findAll(app.get('page-content'), node => node.tagName === 'INPUT' && node.type === 'text')[0]
+    input.value = '删除'; input.fire('input')
+    const confirm = findButton(app.get('page-content'), '确认删除这条来源')!
+    assert.equal(confirm.disabled, true); confirm.fire('click'); await flush(); assert.equal(writes, 0)
+  }
 })
 
 test('revision conflict refreshes the changed account snapshot without resubmitting', async () => {
@@ -733,6 +765,7 @@ test('delete conflict copy names source or dependency conflict without guessing 
   findButton(app.get('page-content'), 'A memory private to A')!.fire('click')
   await waitUntil(() => !!findButton(app.get('page-content'), '永久删除这项记忆'), 'delete available')
   findButton(app.get('page-content'), '永久删除这项记忆')!.fire('click')
+  await waitUntil(() => app.get('page-content').textContent.includes('以下内容会一起忘掉'), 'cascade preview loaded')
   const input = findAll(app.get('page-content'), (node) => node.tagName === 'INPUT' && node.type === 'text')[0]
   input.value = '删除';input.fire('input')
   findButton(app.get('page-content'), '确认永久删除记忆')!.fire('click')
