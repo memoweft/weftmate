@@ -25,6 +25,7 @@ export async function startTimelineCandidate(options = {}) {
   const adapter = createDshSessionAdapter({ sessions: { list: async () => ok({ items: [{ sessionId, origin: 'user' }] }) }, events: {} }, { readLog: async () => events })
   const scheduleRows = [{id:'ui4-schedule',text:'提交合成报告',state:'scheduled',timeZone:'Asia/Shanghai',nextRunAt:'2026-10-09T01:00:00Z'}];
   const backend = {
+    deleteSession: async ({sessionId:id}) => { dailySessions.delete(id); if(id===sessionId){events=[];running=false;} return {deleted:true}; },
     chatRelayState: async () => ({ pending: relayPending, safe: !running }),
     prepareChatHandoff: async ({sessionId}) => ({text:'Synthetic bounded handoff',sourceSessionId:sessionId,throughSeq:1,sourceRefs:[]}),
     installChatHandoff: async () => {relayPending=false;return {installed:true};},
@@ -93,7 +94,7 @@ export async function startTimelineCandidate(options = {}) {
     importBackup: async () => {backupOperations.push('import');return {backup:{id:'ui4-import'}}},
     restore: async id => {backupOperations.push('restore:'+id);return {accepted:true}},
   } : null;
-  service = await createPersonalAccessService({ root, port: 0, backend, backupManager, uiHandler: servePersonalAccessUi })
+  service = await createPersonalAccessService({ root, port: 0, backend, backupManager, memoryManager:options.memoryManager??null, uiHandler: servePersonalAccessUi })
   const started = await service.start(); let origin = started.origin;
   const { hostId } = started, grant = await service.issueSetupGrant()
   const credentials = { username: 'TimelineFixture', password: `isolated-${randomUUID()}`, deviceName: '隔离测试浏览器' }
@@ -164,6 +165,7 @@ export async function startTimelineCandidate(options = {}) {
   const handler = server.listeners('request')[0];server.removeAllListeners('request');server.on('request',(req,res)=>{if(req.url==='/bridge.js'){res.writeHead(200,{'content-type':'text/javascript'});res.end(bridgeCode)}else handler(req,res)})
   await new Promise(done => server.listen(0,'127.0.0.1',done))
   return { root, origin,
+    recordActivity: input => service.recordActivity(auth.account.ownerId,input),
     relayNextMain: () => {relayPending=true;running=false;if(dailySessions.has(sessionId))dailySessions.get(sessionId).running=false;},
     seedMainHistory: (id, count = 10000, {offset=0,total=count,mixed=false} = {}) => {
       const row = dailySessions.get(id) || (id===sessionId?{events,running}:null); assert.ok(row);
@@ -179,7 +181,7 @@ export async function startTimelineCandidate(options = {}) {
     },
     restartWithCloud: async cloudIdentity => {
       await service.close();
-      service = await createPersonalAccessService({root,port:0,backend,backupManager,uiHandler:servePersonalAccessUi,cloudIdentity});
+      service = await createPersonalAccessService({root,port:0,backend,backupManager,memoryManager:options.memoryManager??null,uiHandler:servePersonalAccessUi,cloudIdentity});
       const started = await service.start(); origin = started.origin; assert.equal(started.hostId,hostId);
       return origin;
     },
