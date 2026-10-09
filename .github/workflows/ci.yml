@@ -126,7 +126,7 @@ jobs:
         with:
           repository: memoweft/memoweft
           # MF-2 elliptical-correction candidate; replace after Claude squash.
-          ref: a9b115f2d0de10bdf79bd7000057da6cbda7c046
+          ref: 2d403fc95632178f7939d44cce65a63d3dab4c3c
           path: memoweft-core
           persist-credentials: false
       - name: Setup Node
@@ -144,6 +144,6 @@ jobs:
           python -m pip install ./memoweft-core/py
           python -c "import sys; print('WEFTMATE_TEST_MEMOWEFT_PYTHON=' + sys.executable)" >> "$GITHUB_ENV"
       - name: Real Core memory lifecycle integration
-        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts
+        run: node --test tests/personal-memory-observed.integration.test.ts tests/personal-memory-observed-outbox.test.ts tests/personal-memory-correction.integration.test.ts tests/personal-memory-freshness.integration.test.ts tests/personal-memory-confirmation.integration.test.ts
         env:
           WEFTMATE_TEST_MEMOWEFT_SOURCE: ${{ github.workspace }}/memoweft-core/py/src

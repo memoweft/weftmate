@@ -21,11 +21,15 @@ import { createLanBaselineBridge } from './baseline-lan-model.mjs';
 import { judgeMemorySemantics } from './baseline-memory-verification.mjs';
 import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { verify } from '../../src/personal-backup/archive.mjs';
-import { original, confirmation, correction, recallQuestion, proposalCheck, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
+import { original, confirmation as originalConfirmation, correction, recallQuestion, proposalCheck, formationChecks, correctionChecks, speedComparison, fourScenarioSummary, exportHasForgottenName } from './m2-exit-checks.mjs';
 
 const repository = resolve(import.meta.dirname, '../..');
 const run = promisify(execFile), pause = ms => new Promise(r => setTimeout(r, ms));
 const option = (name, fallback) => process.argv.includes(name) ? process.argv[process.argv.indexOf(name) + 1] : fallback;
+const confirmedCase = option('--confirmation-case', null);
+const confirmationFixture = confirmedCase ? JSON.parse(readFileSync(join(repository, 'tests/fixtures/fx15-confirmed-decisions.json'), 'utf8'))[confirmedCase] : null;
+if (confirmedCase) assert.ok(confirmationFixture, 'Unknown confirmation case');
+const confirmation = confirmationFixture?.confirmation ?? originalConfirmation;
 const fgOnly = process.argv.includes('--fg-1');
 const outageOnly = process.argv.includes('--fg-1-outage');
 const settingsOnly = process.argv.includes('--fg-1-settings');
@@ -405,6 +409,7 @@ async function baseline(modelName, fourOnly = false) {
       const first = report.turns[0];
       result.checks.proposal = proposalCheck(first.reply);
       result.semantic = await semantic(first, '应主动提议以后用户想组队时提醒找王小明，邀请用户确认。');
+      for (const text of confirmationFixture?.intervening ?? []) await message(A, text);
       const turn = await message(A, confirmation);
       result.checks.confirmationCompleted = turn.status === 'completed';
       result.checks.confirmationSource = turn.events?.some(row => row.type === 'user.message' && row.data.text === confirmation) === true;
@@ -419,6 +424,33 @@ async function baseline(modelName, fourOnly = false) {
         ['evaluationSource', ['cognition'], /王小明.*(?:厉害|擅长|很强|高手)/, original], ['decisionSource', ['cognition'], /组队/, confirmation]]) {
         result.checks[name] = previous.some(item => kinds.includes(item.kind) && words.test(item.text) && provenance[item.id]?.some(source => source.rawContent === raw && source.contentAvailable));
       }
+      if (confirmedCase) {
+        // New confirmation variants identify the decision by BOTH exact sources;
+        // the original eight-step predicates above remain unchanged.
+        const isDecision = item => item.kind === 'cognition' && /提醒/.test(item.text) &&
+          provenance[item.id]?.some(source => source.rawContent === confirmation) &&
+          provenance[item.id]?.some(source => source.role === 'assistant' && source.rawContent === report.turns[0].reply);
+        const decision = previous.find(isDecision);
+        if (confirmedCase !== 'original') {
+          result.checks.decision = Boolean(decision);
+          result.checks.decisionSource = Boolean(decision);
+        }
+        report.confirmedDecisionId = decision?.id;
+        const proof = decision ? provenance[decision.id] ?? [] : [];
+        result.checks.assistantProposalSource = proof.some(source => source.role === 'assistant' && source.messageId && source.rawContent === report.turns[0].reply);
+        result.checks.bothSourcesVisible = false;
+        if (decision) {
+          await openMemoryPage(); await selectMemoryKind('cognition');
+          await page.getByLabel('搜索当前类型').fill('提醒');
+          await page.getByRole('button', { name: '搜索', exact: true }).click();
+          await page.getByRole('button', { name: new RegExp(decision.text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')) }).first().click();
+          await until(async () => (await page.locator('.memory-source-raw').allTextContents()).some(text => text === confirmation));
+          const visible = await page.locator('.memory-source-raw').allTextContents();
+          result.checks.bothSourcesVisible = visible.includes(confirmation) && visible.includes(report.turns[0].reply);
+          await page.screenshot({ path: join(evidence, 'confirmed-decision-sources.png'), animations: 'disabled' });
+          await leaveMemoryPage();
+        }
+      }
     });
     // MiMo can finish formation while another package owns the LAN lock.
     if (!fgOnly) await configure(modelName === 'mimo' ? 'lan' : 'mimo');
@@ -427,8 +459,11 @@ async function baseline(modelName, fourOnly = false) {
       const id = await session(alternate), turn = await message(id, recallQuestion, alternate);
       result.checks = { newSession: id !== A, changedModel: alternate !== modelName, completed: turn.status === 'completed', replyName: /王小明/.test(turn.reply),
         formalMemoryAdopted: turn.memoryUsed.some(memory => previous.some(item => item.id === memory.id && /王小明/.test(item.text))) };
+      if (confirmedCase) result.checks.confirmedDecisionAdopted = turn.memoryUsed.some(memory => memory.id === report.confirmedDecisionId);
+      if (confirmedCase && confirmedCase !== 'original') result.checks.formalMemoryAdopted = result.checks.confirmedDecisionAdopted;
       result.semantic = await semantic(turn, '新会话应根据此前确认的组队决定回答找王小明，不能只询问或编造别人。');
     });
+    if (process.argv.includes('--confirmation-only')) return;
     await step('05', '自然纠正、两个模型的当前理解和失效解释', async result => {
       const id = await session(modelName); const turn = await message(id, correction);
       await settled(); corrected = await items(); const provenance = await sources(corrected);

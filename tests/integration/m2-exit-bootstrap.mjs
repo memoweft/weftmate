@@ -25,6 +25,16 @@ globalThis.m2ExitSeedCredentials = async credentials => {
     if (key) vault.saveCredential(official.officialCredentialRef(routes.routeForProfile(model.id).provider), key);
   }
 };
+globalThis.fx15SeedSyntheticRoutes = async seedPrivate => {
+  const settings = await import('../../src/settings.ts');
+  const vault = await import('../../src/config-store.ts');
+  const routes = await import('../../src/harness-model-routes.ts');
+  const official = await import('../../src/dsh-settings-migration.ts');
+  for (const model of settings.listModelProfiles().profiles) {
+    if (seedPrivate || !model.id.startsWith('private-model-'))
+      vault.saveCredential(official.officialCredentialRef(routes.routeForProfile(model.id).provider), 'synthetic-unusable-key');
+  }
+};
 globalThis.m2ExitRestoreCore = () => { globalThis.m2ExitFault = false; };
 globalThis.m2ExitBreakCore = () => {
   globalThis.m2ExitFault = true;
