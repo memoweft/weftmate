@@ -1,0 +1,94 @@
+{
+  "runnerSyntax": [
+    {
+      "file": "runners/android-all.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/android-extras.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/android-task-flow.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/android-task.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/d36.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/desktop.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/immediate-after.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/legacy.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/m1.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/menus.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/models.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/orphan.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/progress.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/project-lifecycle.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/relay-bootstrap.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/relay-infra.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/relay-task.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/scroll-focused.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/settings.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/write-project-flow.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/write-project.mjs",
+      "exitCode": 0
+    },
+    {
+      "file": "runners/write-sample.mjs",
+      "exitCode": 0
+    }
+  ],
+  "missingReportLinks": [],
+  "productTests": "No product code changed; full required suite runs only in CI."
+}

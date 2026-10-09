@@ -1,0 +1,7 @@
+{
+  "pullRequest": "https://github.com/memoweft/weftmate/pull/132",
+  "base": "main",
+  "branch": "wp/qa-2-five-end-acceptance",
+  "checksUrl": "https://github.com/memoweft/weftmate/pull/132/checks",
+  "note": "This is the stable entry point, not a copied result for an earlier commit. Final head-specific gh pr checks results are recorded in Runtime/Orchestrator/qa-2.result.md after completion."
+}

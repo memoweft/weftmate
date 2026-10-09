@@ -1,0 +1,43 @@
+{
+  "realElectron": true,
+  "realHTTP": true,
+  "syntheticExecution": true,
+  "checks": [
+    {
+      "surface": "desktop",
+      "theme": "light",
+      "status": "passed",
+      "durationMs": 752,
+      "historyMovementPx": 0,
+      "stickyBottom": true,
+      "jumpToBottom": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "light",
+      "status": "passed",
+      "durationMs": 442,
+      "historyMovementPx": 0,
+      "stickyBottom": true,
+      "jumpToBottom": true
+    },
+    {
+      "surface": "desktop",
+      "theme": "dark",
+      "status": "passed",
+      "durationMs": 745,
+      "historyMovementPx": 0,
+      "stickyBottom": true,
+      "jumpToBottom": true
+    },
+    {
+      "surface": "mobile-web",
+      "theme": "dark",
+      "status": "passed",
+      "durationMs": 722,
+      "historyMovementPx": 0,
+      "stickyBottom": true,
+      "jumpToBottom": true
+    }
+  ]
+}
