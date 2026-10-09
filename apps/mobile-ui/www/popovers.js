@@ -110,6 +110,9 @@
   const settingsSelects = new WeakMap();
   function bindSettingsSelect(select) {
     if (settingsSelects.has(select) || select.classList.contains('settings-control-source')) return;
+    // Selects hidden in markup are legacy / reserved sources (for example the
+    // composer's model and execution-target fallbacks); never surface a proxy.
+    if (select.hidden) return;
     const trigger = document.createElement('button'), text = document.createElement('span');
     trigger.type = 'button'; trigger.className = `settings-select ${select.className}`;
     trigger.setAttribute('role', 'combobox'); trigger.setAttribute('aria-haspopup', 'listbox');
@@ -126,7 +129,9 @@
     select.after(trigger, menu); select.hidden = true; select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
     settingsSelects.set(select, trigger);
     const sync = () => { menu.dataset.presentation = innerWidth <= 600 ? 'sheet' : 'popover'; text.textContent = select.selectedOptions[0]?.textContent || label; trigger.disabled = select.disabled; trigger.hidden = select.dataset.controlHidden === 'true' || select.classList.contains('settings-category-picker') && innerWidth >= 720; };
-    const close = (focus = false) => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (menu.matches(':popover-open')) menu.hidePopover(); if (focus) trigger.focus({ preventScroll: true }); };
+    const close = (focus = false) => { menu.hidden = true; trigger.setAttribute('aria-expanded', 'false'); if (popoverOpen()) menu.hidePopover(); if (focus) trigger.focus({ preventScroll: true }); };
+    // Android WebView may not support the Popover API selector; treat it as closed.
+    const popoverOpen = () => { try { return menu.matches(':popover-open'); } catch { return false; } };
     let search;
     const options = () => [...list.querySelectorAll('[role=option]')];
     function render(query = '') {
