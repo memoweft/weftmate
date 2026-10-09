@@ -5,10 +5,11 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
+import { runNativeStreamTimeout } from './integration/model-stream-timeout.ts';
 import { DshWebRuntime } from '../src/dsh-web-runtime.ts';
 import { createOfficialDshSettingsClient } from '../src/dsh-settings-migration.ts';
 
-test('service context reaches native compaction and ten tool steps use changing wire budgets', { timeout: 60000 }, async () => {
+test('service context reaches native compaction and ten tool steps use changing wire budgets', { timeout: 60000 }, async t => {
   const root = await mkdtemp(join(tmpdir(), 'weftmate-budget-runtime-'));
   const home = join(root, 'home'), workspace = join(root, 'workspace');
   await mkdir(workspace, { recursive: true });
@@ -177,4 +178,7 @@ export function apply(ctx) {
     await new Promise<void>(resolve => server.close(() => resolve()));
     await rm(root, { recursive: true, force: true });
   }
+  // This existing release gate requires the pinned native vendor. Keep the
+  // slow-stream fixture under that gate rather than adding a CI exception.
+  await t.test('native stream idle recovery, incremental progress and cancellation', runNativeStreamTimeout);
 });
