@@ -410,6 +410,10 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
   }
 
   return {
+    async taskStopState(input) {
+      if (typeof lifecycle?.taskStopState !== 'function') return { status: 'unconfirmed' }
+      return lifecycle.taskStopState(input)
+    },
     /** Product-safe ordinary-session summaries for the WeftMate sidebar. */
     async list() {
       const value = await unwrap(await client.sessions.list({}), 'list')

@@ -526,7 +526,10 @@ export function validateSingleStore(store) {
                   Object.keys(target).some((key) => !['commandId', 'receiptId', 'ack', 'ackAt', 'attemptAt'].includes(key))))) ||
               (item.lastAttemptAt !== undefined && !validTime(item.lastAttemptAt)) ||
               (item.queuedOnly !== undefined && item.queuedOnly !== true) ||
-              Object.keys(item).some((key) => !['requestId', 'at', 'targets', 'lastAttemptAt', 'queuedOnly'].includes(key))) ||
+              (item.resolution !== undefined && (!plainObject(item.resolution) ||
+                !['stopped', 'completed'].includes(item.resolution.status) || !validTime(item.resolution.observedAt) ||
+                Object.keys(item.resolution).sort().join(',') !== 'observedAt,status')) ||
+              Object.keys(item).some((key) => !['requestId', 'at', 'targets', 'lastAttemptAt', 'queuedOnly', 'resolution'].includes(key))) ||
             !validTime(command.taskControl.updatedAt) ||
             Object.keys(command.taskControl).some((key) => !['state', 'stopRequests', 'updatedAt'].includes(key)))) ||
           (command.scheduleSourceId !== undefined && !scheduledCommandSource(store, command)) ||

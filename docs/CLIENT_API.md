@@ -197,6 +197,8 @@ M2a：`assistant.message.data.memoryUsed` 为本次模型请求实际保留在�
 | POST `/tasks/{taskId}/supplements` | `requestId,text`（沿用消息上限） | 202 `{"task":Task,"command":Command}`，子命令 `taskAction:"supplement"`，使用原生 steer | 409 `TASK_NOT_READY / REQUEST_CONFLICT` | 桌、手、安 |
 | POST `/tasks/{taskId}/resume` | `requestId,text`；停止已确认且 `canResume` | 202 `{"task":Task,"command":Command}`，子命令 `taskAction:"resume"` | 409 `TASK_NOT_READY / REQUEST_CONFLICT` | 桌、手、安 |
 
+停止收尾沿用 `control.state:"stop_requested"` 表示已冻结的停止意图，由 `stopStatus` 区分等待和终态。`stopped` 表示原生取消、队列移除或任务停止已确认；`completed` 表示目标回合已结束或已核对不再运行，不保证目标成功，也不保证由本次停止造成。宿主重启后，历史回合缺失且原生运行时确认不可能再运行时可收尾为 `completed`；读取失败、仍可能运行、待执行输入或副作用未确认继续等待。`stopObservedAt` 为核对时刻；`canResume:true` 后只按用户明确的新步骤续做，原命令、回执和已执行步骤保留。
+
 来源快照项目字段还含 `totalLines,readAt,hasMore,projectId,projectRevision`；网页字段为 `kind:"webpage",title,url,requestedUrl,readAt,contentSha256,truncated,links`，可有分段/版本字段。网页预览兼容字段 `fileSha256` 是返回文本的哈希；项目 `fileSha256` 是原文件哈希，不是摘录文本哈希。
 
 任务控制当前仅适用于 `personal-remote` 会话根消息；已接管的 `shared-chat` 会话命令仍可读/发/取消，但 `/tasks` 不提供它的任务详情（404 NOT_FOUND）。停止先登记 `stop_requested` 并使未处理审批/提问失效，再驱动取消与后台 job 停止；HTTP 202 不证明副作用已停止。`stopStatus` 可为 `requested / cancel_requested / stopped / completed / unconfirmed`，结合 `canResume,pendingReceipts,backgroundJobs` 呈现。M1-0b：`/stop` 与 `/cancel` 共用原生按回执控制：停止当前任务及已归属的插话，保留其他排队目标，停止结束后下一个自动开始。取消只移除尚在原生队列中的指定目标；若它已被领取，返回 409，客户端刷新状态后提供停止按钮。取消尚未发到 DSH 的 pending 命令会在宿主撤回，之后不派发；该情形没有原生 task.queued/ended，客户端用返回 Task 更新本地登记卡。取消重放不重复移除；同 requestId 改用 stop/cancel 另一动作返回 REQUEST_CONFLICT。取消状态复用 `control.state:"stop_requested"` 与 `stopStatus:"stopped"`，不新增执行状态机。单独停止不清空队列；需要一起取消时，客户端逐个调用排队目标的 cancel。队列复用 DSH 持久 inbox（收件队列），宿主恢复后保留其原生待执行输入；仅本宿主同一对话排队，不涵盖 D17 电脑离线时云端排队。
