@@ -1,0 +1,9 @@
+{
+  "passed": true,
+  "realWindowsRegistry": true,
+  "isolatedName": "WeftMate r01qa",
+  "enabledReadback": true,
+  "disabledReadback": true,
+  "startInTray": true,
+  "configurationPathContainsSpaces": true
+}
