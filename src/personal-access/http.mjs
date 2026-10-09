@@ -1298,6 +1298,14 @@ export function createHttpHandler(context) {
         return context.json(response, request.method === 'POST' ? 201 : 200,
           await context.sessionOperations.groups(ownerId, request.method, groupMatch[1], body));
       }
+      const branchMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/message-branches$/.exec(pathname);
+      if (branchMatch && ['GET', 'POST'].includes(request.method)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, request.method === 'POST' ? 'commands:write' : 'sessions:read');
+        return context.json(response, request.method === 'POST' ? 201 : 200, request.method === 'POST'
+          ? await context.sessionOperations.messageBranches.create(ownerId, branchMatch[1], await context.readJson(request, 2048))
+          : context.sessionOperations.messageBranches.versions(ownerId, branchMatch[1]));
+      }
       const metadataMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/(metadata|fork)$/.exec(pathname);
       if (metadataMatch && (request.method === 'PATCH' && metadataMatch[2] === 'metadata' || request.method === 'POST' && metadataMatch[2] === 'fork')) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -1398,7 +1406,18 @@ export function createHttpHandler(context) {
         if (url.search || !Number.isSafeInteger(seq)) throw failure('INVALID_REQUEST');
         if (!Object.hasOwn(state.sessions, sessionId)) throw failure('SESSION_UNAVAILABLE', 404);
         if (typeof context.backend.readEventDetail !== 'function') throw failure('BACKEND_UNAVAILABLE', 503);
-        return context.json(response, 200, await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId })));
+        if (state.sessions[sessionId].forgottenSeqs?.includes(seq)) throw failure('SOURCE_UNAVAILABLE', 404);
+        const detail = await context.callBackend(() => context.backend.readEventDetail({ sessionId, seq, ownerId }));
+        const current = context.authenticate(request, 'sessions:read');
+        if (current.ownerId !== ownerId || current.deviceId !== deviceId) throw failure('UNAUTHORIZED', 401);
+        const latest = context.accountState(ownerId).sessions[sessionId];
+        if (!latest || latest.forgottenSeqs?.includes(seq)) throw failure('SOURCE_UNAVAILABLE', 404);
+        if (['user.message', 'assistant.message'].includes(detail.type)) {
+          const event = context.publicHistoryEvent(ownerId, sessionId, { seq, type: detail.type, data: {
+            text: detail.text, messageHash: detail.messageHash, receiptId: detail.receiptId } });
+          return context.json(response, 200, { seq, type: detail.type, text: event.data.text });
+        }
+        return context.json(response, 200, detail);
       }
       const eventMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/events$/.exec(pathname);
       if (request.method === 'GET' && eventMatch) {
