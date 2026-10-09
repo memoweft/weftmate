@@ -40,7 +40,8 @@
       "formationWaitMs": 330000,
       "finalFour": 4,
       "finalFourSemanticPassed": 3,
-      "finalEvidence": "m2f-lan-four-semantic/lan.json"
+      "finalEvidence": "m2f-lan-four-semantic/lan.json",
+      "previousLetterOnlyFalsePositive": "m2f-lan-four-final/lan.json"
     }
   },
   "defaultTiming": {
