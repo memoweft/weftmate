@@ -28,7 +28,7 @@ async function fixture(t: any) {
     accountModelManager: { readOfflineModel: async () => ({ baseUrl: 'https://model.example/v1', modelId: 'mimo', apiKey: 'synthetic-secret' }) },
     cloudIdentity: { publishOffline: async (_owner: string, value: number) => { generation = value; return { hostId: identity.hostId, generation }; } },
     memoryManager: { enabled: true, query: async (_: any, _method: any, input: any) => ({ world_revision: generation, ...(input.operation === 'list' ? { items } : {}) }),
-      ingest: async (_: any, boundary: any) => { assertOwnerBoundBoundary(boundary.parent_session_id, boundary); accepted.push(boundary); return { state: 'accepted' }; }, discardOfflinePending: async () => {} },
+      ingest: async (_: any, boundary: any) => { assert.ok(boundary.source_messages.every((m: any) => ['user', 'assistant'].includes(m.role))); accepted.push(boundary); return { state: 'accepted' }; }, discardOfflinePending: async () => {} },
     readJson: (request: any) => request.body, json: (_response: any, _status: any, value: any) => value };
   const service = await createOfflineService(context);
   t.after(() => service.close());
@@ -80,6 +80,8 @@ test('online sync → cloud-only relevant recall → offline preference → idem
   await f.host('/offline/turns', { generation: 1, turns }); assert.equal(f.accepted.length, 1);
   await assert.rejects(f.host('/offline/turns', { generation: 1, turns: [{ ...turns[0], messages: [{ role: 'user', text: '更改正文' }] }] }), /REQUEST_CONFLICT/);
   assert.ok(!JSON.stringify(f.accepted[0].source_messages).includes('来源：'));
+  assert.deepEqual(f.accepted[0].source_messages[1].model_context_dependencies.world_items,
+    [{ object_kind: 'cognition', item_id: 'preferred-tea' }], 'forgotten memories can cascade into imported assistant context');
   f.remove(); await f.service.invalidate(identity.ownerId);
   await assert.rejects(engine.send('喝茶？'), /OFFLINE_RESET_REQUIRED/);
   assert.equal(engine.view().conversations.length, 0); assert.equal(engine.view().snapshot, null);
