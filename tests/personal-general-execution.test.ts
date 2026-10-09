@@ -197,6 +197,7 @@ async function withDesktopPlugin(run: (plugin: any) => Promise<void>) {
     const vendor = pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href
     const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
       .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
+    .replace("from './personal-reasoning.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-reasoning.mjs")).href}'`)
     .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
     .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
     .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)
@@ -403,6 +404,7 @@ test('tool lifecycle derives a nested call from the real root event and records 
     const vendor = pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-tools/lib/index.js')).href
     const source = readFileSync(join(process.cwd(), 'src/plugins/weftmate-personal-desktop.mjs'), 'utf8')
       .replace("from '@deepseek-ai/dsh-tools'", `from '${vendor}'`)
+    .replace("from './personal-reasoning.mjs'", `from '${pathToFileURL(join(process.cwd(), "src/plugins/personal-reasoning.mjs")).href}'`)
     .replace("from '@deepseek-ai/dsh-agent'", `from '${pathToFileURL(join(process.cwd(), "vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-agent/lib/index.js")).href}'`)
     .replace("from '@deepseek-ai/dsh-plan-mode'", `from '${pathToFileURL(join(process.cwd(), 'vendor/dsh-runtime/node_modules/@deepseek-ai/dsh-plan-mode/lib/index.js')).href}'`)
     .replace("from './personal-approval-policy.mjs'", `from '${pathToFileURL(join(process.cwd(), 'src/plugins/personal-approval-policy.mjs')).href}'`)

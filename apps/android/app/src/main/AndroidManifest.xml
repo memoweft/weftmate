@@ -29,5 +29,9 @@
         </activity>
         <service android:name=".SyncJobService" android:exported="false"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+        <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.composer-camera"
+            android:exported="false" android:grantUriPermissions="true">
+            <meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/composer_camera_paths" />
+        </provider>
     </application>
 </manifest>

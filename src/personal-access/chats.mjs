@@ -19,6 +19,7 @@ export function createChatOperations(context) {
       activeSegmentId: segment?.segmentId ?? null, activeSessionId: segment?.sessionId ?? null,
       ...(session?.sideChat ? { originRefs: session.sideChat.contextTransfer.sourceRefs,
         contextTransfer: session.sideChat.contextTransfer } : {}),
+      deepThinking: chat.deepThinking ?? session?.deepThinking ?? false,
       timeZone: identity.timeZone, memoryMode: session?.memoryMode ?? 'on',
       parent: chat.kind === 'main' ? null : session?.projectId
         ? { kind: 'project', id: session.projectId } : { kind: 'main', id: identity.mainChatId } };

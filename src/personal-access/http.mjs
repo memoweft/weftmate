@@ -617,6 +617,27 @@ export function createHttpHandler(context) {
         }
       }
       if (await context.scheduleOperations.handleHttp(request, response, url, ownerId)) return;
+      const thinkingMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/thinking$/.exec(pathname);
+      if (thinkingMatch && ['GET', 'PATCH'].includes(request.method)) {
+        if (url.search) throw failure('INVALID_REQUEST');
+        context.authenticate(request, request.method === 'PATCH' ? 'commands:write' : 'sessions:read');
+        const sessionId = thinkingMatch[1], account = context.accountState(ownerId), session = account.sessions[sessionId];
+        if (!session || session.deleting || session.archived || !['personal-remote', 'shared-chat'].includes(session.origin)) throw failure('SESSION_UNAVAILABLE', 404);
+        const models = await context.callBackend(() => context.backend.listModels({ ownerId }));
+        const supported = context.modelVisible(ownerId, session.modelProfileId) && models.find(row => row.id === session.modelProfileId)?.deepThinking?.supported === true;
+        if (request.method === 'PATCH') {
+          const body = await context.readJson(request); exactKeys(body, ['enabled'], ['enabled']);
+          if (typeof body.enabled !== 'boolean' || body.enabled && !supported) throw failure('INVALID_REQUEST');
+          await context.serial(() => context.mutate(ownerId, next => {
+            context.authenticate(request, 'commands:write');
+            const current = next.sessions[sessionId];
+            if (!current || current.archived || current.deleting) throw failure('SESSION_UNAVAILABLE', 404);
+            current.deepThinking = body.enabled;
+            const chat = chatForSession(next, sessionId); if (chat) chat.deepThinking = body.enabled;
+          }));
+        }
+        return context.json(response, 200, { supported, enabled: supported && (chatForSession(context.accountState(ownerId), sessionId)?.deepThinking ?? context.accountState(ownerId).sessions[sessionId].deepThinking) === true });
+      }
       const modeMatch = /^\/personal\/v1\/sessions\/([A-Za-z0-9_-]+)\/approval-mode$/.exec(pathname);
       if ((modeMatch || pathname === '/personal/v1/settings/approvals') && ['GET', 'PATCH'].includes(request.method)) {
         if (url.search) throw failure('INVALID_REQUEST');
@@ -1237,6 +1258,7 @@ export function createHttpHandler(context) {
                 projectName: state.projects?.[state.sessions[sessionId].projectId]?.name ?? '已登记项目',
                 projectRevoked: state.projects?.[state.sessions[sessionId].projectId]?.revoked === true,
                 modelProfileId: state.sessions[sessionId].modelProfileId } : {}),
+              deepThinking: (chatForSession(state,sessionId)?.deepThinking ?? state.sessions[sessionId].deepThinking) === true,
               sendAvailable: state.sessions[sessionId].deleting !== true && state.sessions[sessionId].archived !== true && ((state.sessions[sessionId].origin === 'personal-remote' &&
                 described.agentPreset === 'personal-remote' &&
                 (!state.sessions[sessionId].projectId ||

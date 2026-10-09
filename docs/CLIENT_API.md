@@ -267,6 +267,14 @@ D33：`deleteConversationSnippets` 默认 `false`。桌面、手机网页及手�
 
 `GET /status` 新增 `memory:{state,inject}`，用于对话页轻提示和恢复检测；原有 `backend.modules.memory` 保留。原生删除失败的错误体可附 `nativeStatus,nativeCode`（状态及受限错误码），不含原生请求正文或凭据。
 
+### UX-3 输入区：推理偏好与子任务投影
+
+- `GET /personal/v1/models` 与账户模型目录增加只读 `deepThinking:{supported:boolean,effort?:"high"}`；不支持 / 未声明时 `supported=false`。客户端据此隐藏开关，在模型设置说明能力。
+- `GET /personal/v1/sessions/{sessionId}/thinking` 返回 `{supported,enabled}`；`PATCH` 同一路径接受严格 `{enabled:boolean}`，沿用 Cookie（会话凭据）/ 原令牌、`commands:write` 与 CSRF（跨站请求伪造防护）。只允许本账户可发送的非归档会话，不支持的模型不能开启。幂等布尔偏好持久保存，不中断当前回合。`GET /sessions` / 对话视图增加 `deepThinking:boolean`，旧客户端可忽略。
+- 偏好同时保存到逻辑对话与当前会话；发送时优先逻辑对话，后续接力段沿用。宿主在后续原生回合的 `agent/request`（请求构造钩子）读取并固定偏好；开启只给该回合请求配置加 `reasoningEffort:"high"`，关闭透传模型原配置。同一回合中途切换不改变已固定的偏好。不改变账户模型默认值。原生已有能力声明优先；旧受管路由仅补缺失的能力与等价字段声明。
+- 原有 `step.started|step.completed` 可选 `subtask:{name,id?,background?}`：名称来自真实委派描述 / 后台命令；`id` 是原生子任务 / 作业标识，`background=true` 表示启动工具结束仍未结束任务。新增只读 `subtask.updated` 事件携带 `{id,state:"completed"|"failed"}`，来自 DSH 的后台结束通知，不包含子任务正文或隐藏推理。事件仍沿用真实 `seq` / `at` 和当前账户历史权限。客户端按同一 ID 合并，背景任务在原生终态前保持进行中，不因主回合结束推测终态。
+- Android（安卓）code25：`attachments.pick` 新增 `kind:"camera"`（已有 `image|file` 保持），结果仍走原 `attachment.result` 与原账户 / 对话 / `viewGeneration`（视图代次）核对。`/sessions/{id}/thinking` 加入原生业务桥。系统相机使用已有相机权限、仅专用缓存路径的临时 URI（资源标识）；返回导入后删除临时原图。发布 UX-3 手机包要求最低原生 code25。Apple（苹果端）原生接线见 `tests/evidence/ux-3/README.md`。
+
 ### 3.10 模型（12）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |

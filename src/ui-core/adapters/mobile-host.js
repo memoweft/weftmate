@@ -13,6 +13,7 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   }
   function syncMobileIdentity() {
     if (core.state.ownerId !== (state.owner || null)) {
+      core.state.models = [];
       core.state.sessionGroups = []; core.state.projects = []; core.state.projectCanManage = false; core.state.projectsError = '';
     }
     Object.assign(core.state, {
@@ -110,6 +111,9 @@ globalThis.WeftUiCore.factories.mobileHost = (core, effects, environment) => {
   const owner=state.owner,epoch=state.authEpoch,generation=state.sharedGeneration;
   syncMobileIdentity();
   void refreshMobileMemoryAvailability();
+  if (!core.state.models.length) void core.refreshThinkingModels().then(() => {
+    if(owner===state.owner&&epoch===state.authEpoch)effects.updateComposer();
+  }).catch(() => {});
   try{const result=await core.accessApi('/sessions?archived=all');if(owner!==state.owner||epoch!==state.authEpoch||generation!==state.sharedGeneration)return;
     core.state.sessionGroups = result.groups || [];
     void core.refreshSessionProjects().then(() => {

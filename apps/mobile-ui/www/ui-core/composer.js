@@ -1,6 +1,35 @@
 /* Shared composer state, data and actions. Presentation is supplied through named effects. */
 globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
     const messages = new Map();
+    const thinkingWrites = new Map();
+    async function refreshThinkingModels() {
+        const identity = core.state.identityGeneration;
+        const value = await core.accessApi('/models');
+        if (identity === core.state.identityGeneration) core.state.models = (value.models || []).filter(row => row.configured);
+    }
+    function thinkingView() {
+        const session = core.state.sessions.find(row => row.sessionId === core.state.selectedSessionId);
+        const model = core.state.models.find(row => row.id === (session?.modelProfileId || core.state.modelProfileId));
+        return { supported: model?.deepThinking?.supported === true,
+            enabled: core.state.newConversation ? core.state.newConversationThinking === true : session?.deepThinking === true,
+            busy: thinkingWrites.has(`${core.state.ownerId}/${core.state.selectedSessionId}`) };
+    }
+    async function setDeepThinking(enabled) {
+        if (typeof enabled !== 'boolean' || !thinkingView().supported || thinkingView().busy) return;
+        if (core.state.newConversation) { core.state.newConversationThinking = enabled; effects.updateAvailability(); return; }
+        const context = core.conversationTaskContext(), key = `${context.ownerId}/${context.sessionId}`;
+        const write = core.accessApi(`/sessions/${encodeURIComponent(context.sessionId)}/thinking`,
+            { method: 'PATCH', protectedWrite: true, body: { enabled } });
+        thinkingWrites.set(key, write); effects.updateAvailability();
+        try {
+            const saved = await write;
+            if (core.conversationTaskCurrent(context)) {
+                const row = core.state.sessions.find(row => row.sessionId === context.sessionId);
+                if (row) row.deepThinking = saved.enabled === true;
+            }
+        } catch { if (core.conversationTaskCurrent(context)) effects.toast('深入思考未保存，请重试'); }
+        finally { thinkingWrites.delete(key); effects.updateAvailability(); }
+    }
     function beginOptimistic(fields) {
         const row = {ownerId: core.state.ownerId, identity: core.state.identityGeneration, status:'sending', ...fields};
         messages.set(row.requestId, row);
@@ -48,6 +77,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         core.state.newConversation = true;
         core.state.newConversationId = environment.crypto.randomUUID();
         core.state.newConversationApprovalMode = null;
+        core.state.newConversationThinking = false;
         core.state.selectedSessionId = null;
         core.state.historyGeneration++;
         core.state.historyEvents.clear(); core.state.seenSeq.clear(); core.state.afterSeq = -1;
@@ -93,6 +123,13 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/approval-mode`,{method:'PATCH',protectedWrite:true,body:{mode:row.approvalMode}});
             if(!current())return;
             if(core.state.selectedSessionId===row.sessionId)void core.refreshApprovalMode(row.sessionId);
+        }
+        if (row.deepThinking === true) {
+            await core.accessApi(`/sessions/${encodeURIComponent(row.sessionId)}/thinking`,
+                {method:'PATCH', protectedWrite:true, body:{enabled:true}});
+            if (!current()) return;
+            const session = core.state.sessions.find(item => item.sessionId === row.sessionId);
+            if (session) session.deepThinking = true;
         }
         const submitted = row.attachments ? await sendIntentAction(() => core.sendDesktopMessageWithAttachments(row.text, row.requestId), row.intent)
             : await core.submitCommand('session.message', {sessionId: row.sessionId, text: row.text, intent: row.intent}, row.sessionId, row.requestId);
@@ -223,6 +260,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             draftId: core.state.newConversationId,
             requestId: attachments.length ? core.attachmentAttempt(core.attachmentDraftKey(), text, attachments).requestId : environment.crypto.randomUUID(), createRequestId: environment.crypto.randomUUID(),
             text, attachments: attachments.length > 0, files: attachments.map(item => item.file?.name || '附件'),
+            deepThinking: core.state.newConversation ? thinkingView().supported && thinkingView().enabled : undefined,
             approvalMode: core.state.newConversation ? core.state.newConversationApprovalMode : null,
             intent: intent === 'queue' || intent === 'steer' ? intent : core.composerInputMode(core.state.selectedSessionId), status: 'sending'};
         messages.set(row.requestId, row);
@@ -291,6 +329,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
                     : selected && !canSendHere ? '旧会话历史可读；要继续聊天或在对话中执行，请新建受限远端会话。'
                     : !chat || !model ? '电脑尚无可用模型。历史可阅读，聊天请先在电脑设置中配置模型。' : '';
         return {
+            placeholder: running ? globalThis.WeftUiCore.runningPlaceholder(messageModePreference()) : phoneChat ? '补充到这条手机对话' : '向 WeftMate 说说你的目标',
             phoneChat, running, hint: hint || (running ? processingLabel((phoneChat ? boundSession : selected)?.processing) : ''), attachmentBusy,
             newSessionDisabled: !chat || !model || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission,
             modelDisabled: phoneChat || !chat || !core.state.models.length,
@@ -298,7 +337,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
             messageDisabled, voiceDisabled: messageDisabled || core.state.submitting || core.state.phoneSending,
             sendDisabled: phoneChat
                 ? !phoneReady || (!!pendingPhone && !pendingHere) || (!!recovery && !recoveryHere) || (!pendingPhone && !recovery && !text.trim())
-                : !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || (!text.trim() && attachmentCount === 0) || core.state.unresolvedSubmission,
+                : !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || (!text.trim() && attachmentCount === 0) || core.state.unresolvedSubmission || thinkingView().busy,
             sendText: phoneChat ? bound ? '发送到电脑' : recoveryHere && !pendingPhone ? '核对旧请求' : pendingHere ? '核对并重试' : '同步文字' : '发送',
             attachmentsDisabled: phoneChat || !chat || !model || !canSendHere || core.state.submitting || attachmentBusy || core.state.unresolvedSubmission || attachmentCount >= 4,
             desktopText: blockedDesktop ? '查看原事情' : '打开记事本',
@@ -340,7 +379,7 @@ globalThis.WeftUiCore.factories.composer = (core, effects, environment) => {
         if (value?.phase === 'queued' && Number.isSafeInteger(value.ahead) && value.ahead > 0) return `模型排队中，前面还有 ${value.ahead} 个请求`;
         return { memory: '正在读取记忆…', reasoning: '正在思考…', answering: '正在回复…' }[value?.phase] || '等待模型回复…';
     }
-    return { handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
+    return { refreshThinkingModels, thinkingView, setDeepThinking, handleOptimisticCreation, beginOptimistic, optimisticMessages, reconcileOptimistic, observeOptimistic, startNewConversation, retryOptimistic,
         addAttachmentFiles, composerInputMode, conversationRunning, messageModePreference, loadMessageModePreference, sendDraft, stopCurrentTurn, composerState, selectModelProfile, setMessageMode, processingLabel, processingStageLabel };
 };
 
@@ -353,3 +392,5 @@ globalThis.WeftUiCore.contextUsageView = value => {
         label: ratio !== null ? `背景信息窗口：${Math.round(ratio * 100)}% 已用` : '背景信息窗口：用量待确认',
         detail: used !== null ? `已用 ${compact(used)} 标记${limit !== null ? `，共 ${compact(limit)}` : '，上限未知'}` : '当前占用尚未提供'};
 };
+
+globalThis.WeftUiCore.runningPlaceholder = mode => mode === 'queue' ? '排队到下一条…' : mode === 'steer' ? '引导当前回复…' : '补充或跟进…';
