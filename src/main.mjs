@@ -3246,6 +3246,12 @@ async function bootstrap() {
       configStoreMod.preflightVault();
       return configStoreMod.getCredential(officialCredentialRef(routeForProfile(profileId).provider));
     },
+    async readOfflineModel({ profileId }) {
+      const profile = settingsMod.listModelProfiles().profiles.find(item => item.id === profileId);
+      if (!profile || memoryRecallModelTier(profile) !== 'cloud') return null;
+      const apiKey = credentialForModelProfile(profile);
+      return apiKey ? { baseUrl: profile.baseUrl, modelId: profile.model, apiKey } : null;
+    },
   };
 
   try {

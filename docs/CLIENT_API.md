@@ -490,6 +490,27 @@ MS-1：`defaultModelProfileId` 按账户保存，用于新对话；已有对话�
 宿主启动时恢复拥有有效任务的原对话。一次性错过后补一次；固定间隔使用 DSH 最新一次决策，不逐次重放积压；日历重复补一次后重建下一次未来日期，保留当地时间（含夏令时切换）。迟到至少一分钟时消息标明「错过了 X 的提醒/定时任务」。原生 `at` 拒绝首次选择的不存在夏令时时刻，重叠时选择较早瞬间；日历续期遇到不存在的时刻跳过该次，保留下一个有效日期。宿主关机期间不在云端执行电脑任务（D13）；手机通过通知列表等宿主恢复，远程推送留 S3。派发、模型完成和用户读到通知是不同状态；保持 DSH 原生崩溃恢复边界，不宣称外部副作用严格恰好一次。
 
 
+### 3.19 手机离线记忆副本（M3-A / S6）
+
+仅已批准内容设备的 Cookie（会话凭据）＋CSRF（跨站请求防护）会话可调用，需要 `account:manage`。内容仍经既有宿主中继，云端只持有删除代次。Android（安卓）最低原生版本 code24；网页使用 WebCrypto（浏览器密码接口）；iPhone 原生端后续接相同契约。细节见 [M3_OFFLINE.md](M3_OFFLINE.md)。
+
+| 方法与路径 | 请求 | 响应 |
+|---|---|---|
+| `POST /personal/v1/offline/sync` | `{publicJwk:{kty:"RSA",n,e:"AQAB"},generation:0,hashes:{}}`，RSA 公钥必须 2048 位，私钥不得上传 | `{version:1,algorithm:"RSA-OAEP-256+A256GCM",aad,wrappedKey,iv,ciphertext}`；全部二进制字段使用无填充 base64url（URL 安全编码），密文末尾含 16 字节认证标签 |
+| `POST /personal/v1/offline/turns` | `{generation,turns:[{id,conversationId,timestamp,messages:[{role:"user",text},{role:"assistant",text}]}]}`；每次最多 50 轮，单条 16,384 字，整包 256 KiB。可只有用户消息 | `{generation,receipts:[{id,state:"synced"}]}`；相同设备／轮次和正文幂等，复用轮次 ID 改正文返回 `REQUEST_CONFLICT`（409） |
+
+`aad` 解码后为 JSON（数据交换格式）`{version:1,ownerId,hostId,deviceId,keyId}`；客户端必须核对当前账户／宿主／设备。`wrappedKey` 用设备 RSA-OAEP 私钥解开，摘要与 MGF1（掩码生成函数）均为 SHA-256。内容钥匙为 32 字节 AES，GCM 的 `additionalData` 使用原始 `aad` 字节，不重编码 JSON。
+
+每个补交轮次还携带 `memoryRefs:[{kind,id}]`（最多64个唯一引用）与 `dependencyComplete`（布尔值）。引用包含当前召回及有界对话上下文所继承的记忆依赖，不能填正文。宿主将它写入助手消息的 Core `model_context_dependencies`，使遗忘能级联清除已经补交的回复副本；旧客户端或近期对话无法完整追溯时标记 `unavailable`，不伪造完整依赖。接口 `timestamp` 使用毫秒，宿主转换为 Core 的秒值。去重绑定本地受信物理设备身份，不受云会话续期后新 Cookie 设备编号影响。
+
+解密副本为 `{generation,reset,worldRevision,items,remove,hashes,truncated,recent,model,control,syncedAt}`。`items` 是新增或变化项：`{id,kind,text,viewpoint,sources:[{id,summary}],updatedAt,currentState:"current"}`；`remove` 是删除标识；`hashes` 是当前完整项目哈希表。`reset:true` 必须先清除旧副本和待补交离线对话，再应用。任何删除项也清理可能引用旧内容的离线对话。`recent` 最多 10 段×20 条；`model` 含账户选定的 `profileId,name,baseUrl,modelId,apiKey`，只能在设备安全层解密，安卓不得传 API key（模型凭据）到页面。`control` 为云状态接口地址、`hostId`、绑定的云 `accountId` 与 `generation`；核对授权时须逐一匹配账户和代次，不能把同一宿主另一账户的授权用于此副本。
+
+`OFFLINE_CLOUD_REQUIRED`／`OFFLINE_MODEL_REQUIRED`（409）表示需要绑定云账户／配置云模型；`OFFLINE_RESET_REQUIRED`（409）表示旧代次已无效，须删除副本与旧待补交内容。`MEMORY_REVISION_CHANGED`（409）重取快照。`synced` 只证明 Core（记忆核心）已接收，正式形成是原有后台任务。
+
+云端 `POST /personal/v1/cloud/hosts/offline/status`：请求 `{hostId}`，使用既有云 DPoP（设备密钥持有证明）授权。只有同账户宿主成员的已批准设备能取得 `{hostId,accountId,generation,authorized:true}`。手机每次读取副本用于模型请求前及模型响应落盘前都核对，失败不调用模型；401／403／404 或代次不一致立即清理本地钥匙、密文、内存与待补交内容。离线期间仍能接收云端撤权，不能宣称完全断网的设备已收到清理。
+
+宿主通过既有安装签名 `POST /personal/v1/cloud/hosts/offline/publish` 发送 `{hostId,proof}`，签名载荷带 `action,sub,generation`；云只单调递增保存 `offline_controls`，不保存正文、模型密钥或设备解密私钥。云数据库 schema（结构版本）7，账号／宿主删除级联清除此表；本包未部署。
+
 ## 4. 对话时间线事件（正式：M0-3 / M1-0a）
 
 ### 4.1 事件结构与原生来源

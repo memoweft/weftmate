@@ -15,8 +15,10 @@ export function createMemoryHttpHandler(context) {
       }
       throw failure('MEMORY_DISABLED', 503);
     }
+    if (request.method === 'DELETE') await context.offline?.invalidate(ownerId);
     const result = await handlePersonalMemoryHttp({ manager: context.memoryManager,
       ownerId, request, pathname, url, readJson: context.readJson });
+    if (mutation && /\/(correct|mute)$/.test(pathname) && result.status < 300) await context.offline?.invalidate(ownerId);
     return context.json(response, result.status, { ownerId, ...result.body });
   }
   return { handleMemoryHttp };

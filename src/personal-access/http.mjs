@@ -249,9 +249,11 @@ export function createHttpHandler(context) {
       const { deviceId, ownerId: authenticatedOwnerId } = context.authenticate(request,
         write ? 'commands:write' : 'sessions:read');
       if (authenticatedOwnerId !== ownerId) throw failure('UNAUTHORIZED', 401);
+      if (pathname.startsWith('/personal/v1/offline/')) return await context.offline.handle(request, response, url, ownerId);
       if (pathname.startsWith('/personal/v1/health/')) {
         const result = await handlePersonalHealthHttp({ store: context.healthStore, context, request,
           url, pathname, ownerId, deviceId });
+        if (request.method === 'DELETE') await context.offline.invalidate(ownerId);
         return context.json(response, result.status, result.body);
       }
       if (pathname.startsWith('/personal/v1/memory/')) {

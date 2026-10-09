@@ -1,0 +1,60 @@
+{
+  "provider": "MiMo",
+  "model": "mimo-v2.6-flash",
+  "hostIncludingDevelopment": {
+    "runs": 7,
+    "requests": 25,
+    "unknownRequests": 1,
+    "unpricedRequests": 1,
+    "inputTokens": 52310,
+    "cachedInputTokens": 30528,
+    "outputTokens": 2639,
+    "cost": 0.02767056
+  },
+  "finalAcceptanceDirect": [
+    {
+      "source": "phone",
+      "tokens": {
+        "inputTokens": 197,
+        "cachedInputTokens": 0,
+        "outputTokens": 45
+      },
+      "cost": 0.000287
+    },
+    {
+      "source": "phone",
+      "tokens": {
+        "inputTokens": 166,
+        "cachedInputTokens": 0,
+        "outputTokens": 47
+      },
+      "cost": 0.00026
+    },
+    {
+      "source": "android",
+      "tokens": {
+        "inputTokens": 201,
+        "cachedInputTokens": 0,
+        "outputTokens": 156
+      },
+      "cost": 0.000513
+    },
+    {
+      "source": "android",
+      "tokens": {
+        "inputTokens": 200,
+        "cachedInputTokens": 64,
+        "outputTokens": 89
+      },
+      "cost": 0.00031528
+    }
+  ],
+  "developmentDirect": {
+    "measuredRequests": 1,
+    "inputTokens": 67,
+    "outputTokens": 99,
+    "totalTokens": 166,
+    "additionalRequestsWithoutUsageRecord": 3
+  },
+  "note": "宿主统计包含开发尝试；通过的两轮直连逐请求计量。早期3次直连调试未保留供应商用量，不把已知金额称为完整账单。价格采用仓库既有用量配置。"
+}
