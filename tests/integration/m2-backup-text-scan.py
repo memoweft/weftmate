@@ -7,14 +7,19 @@ import sys
 
 def searchable(value: object) -> str:
     if isinstance(value, bytes):
-        return value.decode('utf-8', errors='replace') + value.decode('utf-16le', errors='replace')
-    text = str(value)
+        return searchable(value.decode('utf-8', errors='replace')) + searchable(value.decode('utf-16le', errors='replace'))
+    if isinstance(value, dict):
+        return ' '.join(searchable(key) + ' ' + searchable(child) for key, child in value.items())
+    if isinstance(value, list):
+        return ' '.join(searchable(child) for child in value)
     if isinstance(value, str):
         try:
-            text += json.dumps(json.loads(value), ensure_ascii=False)
+            decoded = json.loads(value)
+            if decoded != value:
+                return value + ' ' + searchable(decoded)
         except (ValueError, TypeError):
             pass
-    return text
+    return str(value)
 
 
 def scan(path: str, needles: list[str]) -> dict[str, object]:
