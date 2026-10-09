@@ -372,7 +372,7 @@ function mobileSessionMenu(session,confirming=false){
   const run=async(button,action)=>{button.disabled=true;notice.textContent='';try{uiCore.syncMobileIdentity();await action();
     await listSharedSessions();if(state.page==='archived')archivedMobileRedraw?.();if(!state.sharedSessions.some(item=>item.sessionId===state.sharedSessionId))page('home');close();
   }catch(error){notice.textContent=uiCore.sessionLifecycleMessage(error)}finally{button.disabled=false}};
-  if(confirming){dialog.append(el('p','','这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
+  if(confirming){dialog.append(el('p','',session.projectId ? '这会永久删除对话与执行记录，项目文件夹里的文件不会删除。运行中的对话会先停止。' : '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
     const label=el('label','session-forget'),check=el('input');check.type='checkbox';label.append(check,document.createTextNode('同时忘掉从这段对话形成的记忆'));dialog.append(label);
     const snippetsLabel=el('label','session-forget'),snippets=el('input');snippets.type='checkbox';snippetsLabel.hidden=true;
     snippetsLabel.append(snippets,document.createTextNode('同时删除对话里含这句话的原话'));

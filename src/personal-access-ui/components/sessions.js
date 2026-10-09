@@ -3,7 +3,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     const collapsedGroups = new Set();
     let activeMenu, activeSubmenu;
     const collapsedProjects = new Set();
-    const canManageProjectFolders = () => core.state.projectCanManage && (!!globalThis.weftmateDesktop || !globalThis.matchMedia('(max-width: 719px)').matches);
+    const canManageProjectFolders = () => core.state.projectCanManage && (!!globalThis.weftmateDesktop || !(globalThis.matchMedia?.('(max-width: 719px)')?.matches ?? false));
     function projectError(error) {
         return { PROJECT_REVISION_CHANGED: '项目已在其他设备更新，请关闭并重新打开设置。',
             SESSION_BUSY: '项目对话仍在运行，请结束后再修改项目。', PROJECT_UNSAFE_PATH: '文件夹不可用，请选择本机已有文件夹。' }[error?.code] || core.failureMessage(error);
@@ -173,7 +173,7 @@ globalThis.WeftUiComponents.factories.sessions = (core, ui) => {
     function confirmDelete(session) {
         const dialog = ui.element('dialog', 'dialog confirm-dialog'); dialog.setAttribute('aria-label', '删除对话');
         const body = ui.element('div', 'dialog-body'); body.append(ui.element('h2', '', '删除对话？'),
-            ui.element('p', '', '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
+            ui.element('p', '', session.projectId ? '这会永久删除对话与执行记录，项目文件夹里的文件不会删除。运行中的对话会先停止。' : '这会永久删除对话、工作目录与经验，无法恢复。运行中的对话会先停止。'));
         const label = ui.element('label'); const forget = ui.element('input'); forget.type = 'checkbox';
         label.append(forget, document.createTextNode('同时忘掉从这段对话形成的记忆')); body.append(label);
         const snippetsLabel = ui.element('label'), snippets = ui.element('input'); snippets.type = 'checkbox';
