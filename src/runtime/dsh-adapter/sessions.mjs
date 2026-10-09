@@ -463,6 +463,16 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       owned.delete(sessionId); logs.delete(sessionId); callIndexes.delete(sessionId)
       return value
     },
+    async rename(sessionId, title) {
+      return this.withLifecycle(sessionId, async () => unwrap(await client.sessions.rename({ sessionId, title }), 'rename'))
+    },
+    async fork(sessionId, options) {
+      if (!lifecycle) throw new DshAdapterError('internal', 'fork')
+      await this.resume(sessionId)
+      const value = await lifecycle.fork(sessionId, options)
+      owned.set(value.sessionId, { lastSeq: -1, cancelRequested: false })
+      return value
+    },
     async historyPage(sessionId, options = {}) {
       const { afterSeq, beforeSeq, limit = 50 } = options
       if (typeof sessionId !== 'string' || !sessionId) throw new TypeError('sessionId is required')
