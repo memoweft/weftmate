@@ -49,12 +49,20 @@
       // pretending that another tool is still running.
       if (options.waiting && !terminal && !view.running && !view.failed &&
           block === groups.at(-1) && started && block.seq > started.seq &&
-          !block.steps.some(step => globalThis.WeftUiCore.executionState(step) === 'cancelled')) {
+          block.steps.every(step => globalThis.WeftUiCore.executionState(step) === 'completed')) {
         view.text += ` · ${options.waiting}`; view.running = true
       }
       const running = view.running
-      const signature = JSON.stringify([block, terminal, view])
-      if (row.dataset.signature === signature) return
+      const signature = JSON.stringify([block, terminal])
+      row.dataset.running = String(running)
+      if (row.dataset.signature === signature) {
+        // A stage/timer update must not detach a focused or scrolling summary.
+        const text = previous?.querySelector('.inline-progress-text')
+        if (text && text.textContent !== view.text) text.textContent = view.text
+        text?.classList.toggle('is-running', running)
+        previous?.querySelector('summary')?.setAttribute('aria-label', `${view.text}，${previous.open ? '已展开' : '已收起'}`)
+        return
+      }
       row.dataset.signature = signature
       const focused = document.activeElement, focusStep = focused?.closest?.('.execution-step')?.dataset.step
       const hadFocus = row.contains?.(focused)
