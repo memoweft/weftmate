@@ -1,0 +1,20 @@
+{
+  "desktop": true,
+  "pin": true,
+  "unread": true,
+  "renameSaveCancel": true,
+  "groups": true,
+  "forkContinued": true,
+  "workspaceIndependent": true,
+  "memoryProvenanceNotCopied": true,
+  "archiveRestoreDelete": true,
+  "usage": {
+    "requests": 6,
+    "unknownRequests": 1,
+    "unpricedRequests": 1,
+    "inputTokens": 42002,
+    "cachedInputTokens": 26816,
+    "outputTokens": 636,
+    "cost": 0.01699432
+  }
+}

@@ -19,7 +19,8 @@ async function bridge({ method, params = {} }) {
   if (method === 'auth.state') return request('/personal/v1/auth/state');
   if (method === 'settings.appearance') { if (params.value) appearance = params.value; return { value: appearance }; }
   if (method === 'conversations.list') return { conversations: [], source: 'phone' };
-  if (method === 'shared.sessions.list') { if (!nativeLogin) throw Error('LOGIN_REQUIRED'); const result = await request('/personal/v1/sessions'); return { ...result, sessions: result.sessions.map(row => ({ ...row, source: 'host' })), source: 'host', hostAvailable: true }; }
+  if (method === 'shared.sessions.list') { if (!nativeLogin) throw Error('LOGIN_REQUIRED'); const result = await request('/personal/v1/sessions?archived=all'); return { ...result, sessions: result.sessions.map(row => ({ ...row, source: 'host' })), source: 'host', hostAvailable: true }; }
+  if (method === 'shared.sessions.lifecycle') return request(`/personal/v1/sessions/${params.sessionId}${params.action === 'delete' ? '' : '/' + params.action}`, params.action === 'delete' ? 'DELETE' : 'POST', params.action === 'delete' ? { forgetMemories: params.forgetMemories } : {});
   if (method === 'shared.sessions.events') { const query = new URLSearchParams(); for (const key of ['afterSeq', 'beforeSeq']) if (params[key] != null) query.set(key, params[key]); return { ...await request(`/personal/v1/sessions/${params.sessionId}/events?${query}`), source: 'host', sessionId: params.sessionId, hostAvailable: true }; }
   if (method === 'shared.sessions.eventDetail') return request(`/personal/v1/sessions/${params.sessionId}/events/${params.seq}/detail`);
   if (method === 'shared.approvals.list' || method === 'shared.questions.list') return request(`/personal/v1/sessions/${params.sessionId}/${method.includes('approvals') ? 'approvals' : 'questions'}`);

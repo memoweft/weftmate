@@ -1,0 +1,11 @@
+{
+  "surface": "mobile-web",
+  "realHost": true,
+  "realNativeBridge": false,
+  "longPress": true,
+  "sameMenu": true,
+  "unread": true,
+  "groups": true,
+  "archiveRestore": true,
+  "errors": []
+}
