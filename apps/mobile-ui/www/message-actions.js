@@ -167,7 +167,7 @@
     async function versionBar(row, id, event) {
       const key = `${identity()}:${id}`;
       if (!versions.has(key)) versions.set(key, core.accessApi(`/sessions/${encodeURIComponent(id)}/message-branches`).catch(() => ({ groups: [] })));
-      const payload = await versions.get(key); if (!row.isConnected || row.querySelector('.message-versions')) return;
+      const payload = await versions.get(key); if (!row.isConnected || row.querySelector('.message-versions') || !Array.isArray(payload.groups)) return;
       for (const group of payload.groups) {
         const version = group.versions.find(item => item.sessionId === id);
         const role = group.action === 'edit' ? 'user.message' : 'assistant.message';
