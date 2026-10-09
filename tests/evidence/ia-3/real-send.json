@@ -1,0 +1,32 @@
+{
+  "realElectron": true,
+  "fixedDsh": true,
+  "model": "mimo-v2.6-flash",
+  "checks": [
+    "logical-first-send",
+    "logical-staged-attachment",
+    "real-model-read-attachment",
+    "one-original-command",
+    "native-receipt"
+  ],
+  "command": {
+    "commandId": "cmd-8e0dc052-40b7-4e40-8342-44325e1110f3",
+    "requestId": "attachment-send-47e727d1-0cb5-4361-928c-c78a24a1d60c",
+    "chatId": "chat-0343147a-e2ae-4015-8cca-9499a4a8b315",
+    "sessionId": "session-8ba5e94e-96c1-404e-88e0-17a66dbd85b7",
+    "receiptId": "98f5f9fd-b3ed-47c4-8f18-7892e119a353"
+  },
+  "usage": [
+    {
+      "completion_tokens": 46,
+      "prompt_tokens": 2281,
+      "total_tokens": 2327,
+      "completion_tokens_details": {
+        "reasoning_tokens": 39
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "model": "mimo-v2.6-flash",
+  "reportedInferenceRequests": 2,
+  "promptTokens": 4563,
+  "completionTokens": 89,
+  "totalTokens": 4652,
+  "cachedTokens": 1536,
+  "requests": [
+    {
+      "prompt_tokens": 2282,
+      "completion_tokens": 43,
+      "total_tokens": 2325,
+      "prompt_tokens_details": {
+        "cached_tokens": 1536
+      },
+      "completion_tokens_details": {
+        "reasoning_tokens": 32
+      }
+    },
+    {
+      "completion_tokens": 46,
+      "prompt_tokens": 2281,
+      "total_tokens": 2327,
+      "completion_tokens_details": {
+        "reasoning_tokens": 39
+      },
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      }
+    }
+  ],
+  "source": "Usage receipts from two successful real desktop runs; first run recorded before final attachment-clear verification. Earlier locator failures issued no inference request."
+}

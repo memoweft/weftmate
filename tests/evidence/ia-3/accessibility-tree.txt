@@ -1,0 +1,84 @@
+- main:
+  - complementary "会话导航":
+    - button "WeftMate 主对话": WeftMate
+    - button "收起会话侧栏"
+    - button "新旁聊 Ctrl N"
+    - button "搜索会话"
+    - searchbox "搜索会话"
+    - text: Ctrl K
+    - paragraph
+    - text: 旁聊
+    - list:
+      - listitem:
+        - button "未分组" [expanded]
+      - listitem:
+        - button "项目进度报告 正在运行": 项目进度报告
+        - button "更多操作 项目进度报告"
+      - listitem:
+        - text: 项目
+        - button "新建项目"
+      - listitem: 添加一个文件夹，开始项目对话。
+    - button "账户菜单": T TimelineFixture
+  - button "切换会话侧栏"
+  - strong: WeftMate
+  - button "搜索主对话": 搜索
+  - button "跳到日期": 日期
+  - button "输出与来源"
+  - region "对话":
+    - list:
+      - listitem:
+        - paragraph: 合成历史 71：准备周末安排。
+        - group
+      - listitem:
+        - text: 合成历史 72：准备周末安排。
+        - group
+      - listitem:
+        - paragraph: 合成纸船 73：日期搜索锚点。
+        - code: const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123; const synthetic = 123;
+        - button "复制"
+        - group
+      - listitem:
+        - text: 合成历史 74：准备周末安排。
+        - group
+      - listitem:
+        - paragraph: 合成历史 75：准备周末安排。
+        - group
+      - listitem:
+        - text: 合成历史 76：准备周末安排。
+        - group
+      - listitem:
+        - paragraph: 合成历史 77：准备周末安排。
+        - group
+      - listitem:
+        - text: 合成历史 78：准备周末安排。
+        - group
+      - listitem:
+        - button "今天，收起" [expanded]: 今天
+      - listitem:
+        - paragraph: 合成历史 79：准备周末安排。
+        - group
+      - listitem:
+        - text: 合成主对话控制验证
+        - group
+      - listitem:
+        - list:
+          - listitem:
+            - group:
+              - button "正在运行命令 echo synthetic…，已收起": 正在运行命令 echo synthetic…
+          - listitem: 已回答：简要报告
+      - listitem:
+        - list:
+          - listitem: 已回答：简要报告
+      - listitem:
+        - list
+    - text: 输入消息
+    - textbox "输入消息":
+      - /placeholder: 向 WeftMate 说说你的目标
+    - button "添加图片或文件"
+    - button "自动"
+    - button "背景信息窗口：用量待确认"
+    - button "合成会话" [disabled]
+    - button "语音输入"
+    - button "发送" [disabled]
+    - button "开旁聊"
+- status: 已停止

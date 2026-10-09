@@ -61,7 +61,8 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
         if (accepted.some(event => ['approval.requested', 'approval.resolved', 'question.asked', 'question.answered'].includes(event.type)))
             void Promise.all([core.refreshConversationApprovals(), core.refreshConversationQuestions()]).catch(() => {});
     }
-    async function refreshHistory(reset = false) {
+    async function refreshHistory(reset = false, legacy = false) {
+        if (!legacy && core.refreshLogicalHistory) return core.refreshLogicalHistory(reset);
         const sessionId = core.state.selectedSessionId;
         if (core.state.activeChatSource !== 'desktop' || !sessionId || !core.state.online)
             return;
@@ -130,7 +131,8 @@ globalThis.WeftUiCore.factories.messages = (core, effects, environment) => {
                 core.state.historyInFlight = null;
         }
     }
-    async function loadOlderHistory() {
+    async function loadOlderHistory(legacy = false) {
+        if (!legacy && core.inMainChat?.()) return core.loadOlderLogicalHistory();
         if (!core.state.hasOlder || core.state.olderLoading)
             return;
         const context = core.conversationTaskContext(), generation = core.state.historyGeneration;

@@ -22,7 +22,7 @@ export async function until(check, timeout = 180000) {
   while (Date.now() < deadline) { const value = await check(); if (value) return value; await pause(200); }
   throw new Error('IA-2b isolated test timeout');
 }
-export async function harness(label, { memory = true } = {}) {
+export async function harness(label, { memory = true, mainChat = false } = {}) {
   const base = await mkdtemp(join(tmpdir(), `weftmate-ia-2b-${label}-`)), profile = join(base, 'profile');
   await mkdir(profile); await mkdir(evidence, { recursive: true });
   await writeFile(join(profile, PERSONAL_HOST_MARKER), JSON.stringify(PERSONAL_HOST_MARKER_CONTENT));
@@ -61,7 +61,7 @@ export async function harness(label, { memory = true } = {}) {
     launches++;
     try { page = await app.firstWindow({ timeout: 90000 }); await page.waitForURL('**/personal/v1/ui'); }
     catch (error) { await writeFile(join(base, 'launch-error.log'), errors); console.error(errors.replaceAll(key, '[redacted]').slice(-8000)); throw error; }
-    await localUiSession(page, { username, password }, 'IA-2b test');
+    await localUiSession(page, { username, password }, 'IA-2b test', {mainChat});
     await app.evaluate(async (_, apiKey) => globalThis.m2ExitSeedCredentials({ 'ia2b-mimo': apiKey }), key);
     assert.equal((await api('/backups/settings', { enabled: false, directory: join(base, 'Backups') }, 'PATCH')).status, 200);
   }

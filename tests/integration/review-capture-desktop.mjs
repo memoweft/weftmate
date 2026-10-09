@@ -4,6 +4,8 @@ import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { startTimelineCandidate } from './timeline-ui-candidate.mjs';
+import { startMainChatCandidate } from './main-chat-candidate.mjs';
+import { localUiSession } from '../helpers/local-ui-session.mjs';
 import { repository, outDirectory, runScene, catalog } from '../../scripts/review-gallery/common.mjs';
 const out = outDirectory();
 for (const theme of ['light', 'dark']) {
@@ -12,7 +14,7 @@ for (const theme of ['light', 'dark']) {
   const env = { ...process.env };
   for (const key of Object.keys(env)) if (key.startsWith('WEFTMATE_') || key.startsWith('MEMOWEFT_') || key === 'ELECTRON_RUN_AS_NODE') delete env[key];
   Object.assign(env, { REVIEW_PROFILE: profile, REVIEW_THEME: theme, REVIEW_ORIGIN: fixture.origin });
-  let application, page, closing = false, ownerId;
+  let application, page, mainFixture, closing = false, ownerId;
   const errors = [];
   try {
     application = await _electron.launch({ executablePath: createRequire(import.meta.url)('electron'), cwd: repository,
@@ -51,6 +53,7 @@ for (const theme of ['light', 'dark']) {
     }, fixture.credentials);
     const home = async () => {
       await page.goto(fixture.origin + '/personal/v1/ui');
+      await button(/^项目进度报告/).click();
       await button('批准').waitFor();
     };
     const settings = async () => { await home(); await button('账户菜单').click(); await button('设置').click(); };
@@ -67,13 +70,18 @@ for (const theme of ['light', 'dark']) {
       usage: async () => { await settings(); await page.getByRole('navigation', { name: '设置分类' }).getByRole('button', { name: '用量', exact: true }).click(); await page.getByRole('heading', { name: '用量与费用', exact: true }).waitFor(); await button('刷新用量').waitFor(); },
       'session-menu': async () => { await home(); await button('更多操作 项目进度报告').click(); await page.getByRole('menu', { name: '对话操作', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '归档 A', exact: true }).waitFor(); await page.getByRole('menuitem', { name: '删除 D', exact: true }).waitFor(); },
     };
-    for (const scene of catalog.scenes.filter(row => row.id !== 'login').sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) await shot(scene.id, preparations[scene.id]);
+    for (const scene of catalog.scenes.filter(row => !['login','main-chat'].includes(row.id)).sort((a,b)=>Number(a.id==='question')-Number(b.id==='question'))) await shot(scene.id, preparations[scene.id]);
+    closing=true;await page.unrouteAll({behavior:'ignoreErrors'});await application.evaluate(({app})=>app.exit(0)).catch(()=>{});await application.close().catch(()=>{});mainFixture=await startMainChatCandidate();
+    application=await _electron.launch({executablePath:createRequire(import.meta.url)('electron'),cwd:repository,args:[join(repository,'scripts/review-gallery/electron.mjs'),'--force-device-scale-factor=1'],env:{...env,REVIEW_ORIGIN:mainFixture.origin}});
+    page=await application.firstWindow();page.setDefaultTimeout(30000);closing=false;
+    await localUiSession(page,mainFixture.credentials,'Synthetic main gallery',{mainChat:true});
+    await shot('main-chat',async()=>{await button('WeftMate 主对话').click();await page.waitForFunction(()=>document.querySelector('#transcript .main-chat-row'));});
     if (errors.length) throw Error('Desktop renderer or synthetic projection failed');
     console.log(`Desktop ${theme}: scene outcomes recorded.`);
   } finally {
     closing = true;
     await page?.unrouteAll({ behavior: 'ignoreErrors' }).catch(() => {});
     await application?.evaluate(({ app }) => app.exit(0)).catch(() => {});
-    await application?.close().catch(() => {}); await fixture.close(); await rm(profile, { recursive: true, force: true }); await rm(fixture.root, { recursive: true, force: true });
+    await application?.close().catch(() => {}); await fixture.close();await mainFixture?.close(); await rm(profile, { recursive: true, force: true }); await rm(fixture.root, { recursive: true, force: true });if(mainFixture)await rm(mainFixture.root,{recursive:true,force:true});
   }
 }
