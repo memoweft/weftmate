@@ -3005,7 +3005,7 @@ async function bootstrap() {
     processingStatus: (sessionId) => modelScheduler.progress(sessionId),
     modelFetch: (url, options) => options?.method === 'POST'
       ? scheduledModelFetch(url, options, modelScheduler.url) : fetch(url, options),
-    hostOwnerId: () => personalAccessService?.legacyOwnerId?.() ?? null,
+    hostOwnerId: () => personalAccessService?.executionOwnerId?.() ?? null,
     ownerForSession: (sessionId) => personalAccessService?.ownerForSession?.(sessionId)?.ownerId ?? null,
     modelAllowed: (ownerId, profileId, usage) => personalAccessService?.canUseModelProfile?.(ownerId, profileId, usage) === true,
     moduleStatus: () => ({ memory: process.env.WEFTMATE_MEMOWEFT_ENABLED === '1' ? 'unknown' : 'disabled' }),

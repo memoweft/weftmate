@@ -42,6 +42,15 @@ export function appAuthorization({ config }) {
           typeof body.codeChallenge !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(body.codeChallenge) ||
           ![body.state,body.nonce].every(v => typeof v === 'string' && v.length >= 16 && v.length <= 256))
         throw new CloudError(400, 'INVALID_REQUEST');
+      // App login explicitly verifies the entered account. A provider session
+      // for an earlier account would resume via its HTML account-switch logout
+      // form, which the JSON transport cannot submit. Start a fresh OIDC session;
+      // DPoP credentials and other clients' sessions are unaffected.
+      req.headers.cookie = (req.headers.cookie ?? '').split(';').filter(cookie =>
+        !/^\s*wm_cloud_session(?:\.sig)?=/.test(cookie)).join(';');
+      const expiredSession = ['wm_cloud_session', 'wm_cloud_session.sig'].map(name =>
+        `${name}=; Path=/personal/v1/cloud; HttpOnly; Max-Age=0; SameSite=${config.issuer.startsWith('https:') ? 'None; Secure' : 'Lax'}`);
+      res.setHeader('set-cookie', [...(res.getHeader('set-cookie') ?? []), ...expiredSession]);
       const query = new URLSearchParams({ client_id: body.clientId, redirect_uri: body.redirectUri,
         response_type: 'code', scope: 'openid offline_access cloud:account host:session', resource: config.audience,
         prompt: 'consent', code_challenge: body.codeChallenge, code_challenge_method: 'S256',

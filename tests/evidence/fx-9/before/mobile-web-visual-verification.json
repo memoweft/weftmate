@@ -1,0 +1,274 @@
+{
+  "startedAt": "2026-10-09T10:17:55.698Z",
+  "realCloudEntrypoint": "services/cloud/src/main.mjs",
+  "realElectronEntrypoint": ".",
+  "sourceCommit": "cf211f4492216b0a8dff6be6bc5cbe49293f5532",
+  "modelRequests": 0,
+  "steps": [
+    "Real cloud entrypoint health",
+    "Mobile registration, real file mail, sixty-second resend deadline and bundled legal reading",
+    "Real desktop approves the waiting phone and recipient imports trusted host delivery",
+    "Settings device directory sees real desktop, connects through hosts/connect and adopts real host session"
+  ],
+  "cloudTransport": "WSL Ubuntu",
+  "visualChecks": [
+    {
+      "name": "login",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "login",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "waiting",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": 11.58
+    },
+    {
+      "name": "waiting",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": 12.83
+    },
+    {
+      "name": "devices",
+      "theme": "dark",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    },
+    {
+      "name": "devices",
+      "theme": "light",
+      "horizontalOverflow": false,
+      "primaryContrast": null
+    }
+  ],
+  "executionOwner": {
+    "session": "session-af8b6026-e003-45e7-93db-1e7ef901ff18",
+    "approvalMode": {
+      "status": 404,
+      "body": {
+        "error": {
+          "code": "NOT_FOUND"
+        }
+      }
+    }
+  },
+  "passed": false,
+  "error": "locator.waitFor: Timeout 60000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByRole('button', { name: /QA1 手机办事/ }) to be visible\u001b[22m\n",
+  "pageErrors": [],
+  "failedRequests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/approval-mode",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/approval-mode",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/approval-mode",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/approval-mode",
+      "status": 404
+    }
+  ],
+  "finishedAt": "2026-10-09T10:19:28.574Z",
+  "surface": "mobile-web",
+  "realNativeBridge": false,
+  "locators": "visible accessible names and roles",
+  "requests": [
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/config",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 401
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/request",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/verify",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/registration/complete",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/authorization/resume",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/token",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/oidc/jwks",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/cloud/devices",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/auth/login",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/auth/cloud-nonce",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-desktop",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/pending",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/status",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/settings/models",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/usage",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sync/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/hosts/connect",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/cloud/auth/device/confirm",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/9c43ffc9-9e4d-44b7-ab4b-90c8fa0161e8/decision",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/cloud/devices/9c43ffc9-9e4d-44b7-ab4b-90c8fa0161e8/trust",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/cloud-session",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/auth/me",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/account/models",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/account/models/by-request/4afa4430-b52b-4e38-88e5-689b3a44a54e",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/commands",
+      "status": 202
+    },
+    {
+      "path": "/personal/v1/commands/cmd-56f3b6e2-2fb7-4b5c-9b27-d96e32348e30",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/approval-mode",
+      "status": 404
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/metadata",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/events",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/approvals",
+      "status": 200
+    },
+    {
+      "path": "/personal/v1/sessions/session-af8b6026-e003-45e7-93db-1e7ef901ff18/questions",
+      "status": 200
+    }
+  ]
+}

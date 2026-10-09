@@ -37,7 +37,7 @@ class SharedChatOutboxTest {
             if (owner == revokedOwner) throw ApiFailure(401, "UNAUTHORIZED")
             return when {
                 url.endsWith("/auth/me") -> HttpReply(200, JSONObject().put("account", JSONObject().put("ownerId", owner)))
-                url.endsWith("/sessions") -> HttpReply(200, JSONObject().put("sessions", JSONArray().put(
+                url.substringBefore('?').endsWith("/sessions") -> HttpReply(200, JSONObject().put("sessions", JSONArray().put(
                     JSONObject().put("sessionId", sessionId).put("title", "Synthetic")
                         .put("sendAvailable", writable))))
                 url.contains("/commands/by-request/") -> {
@@ -67,6 +67,26 @@ class SharedChatOutboxTest {
                 else -> throw ApiFailure(404, "NOT_FOUND")
             }
         }
+    }
+
+    @Test fun receiptLookupSettlesDispatchingOutboxWithoutResendingAndRejectsLateAccountReply() {
+        val context = InstrumentationRegistry.getInstrumentation().targetContext
+        val name = "fx9-receipt-${UUID.randomUUID()}.db"
+        val fixture = HostFixture().apply { commandState = "dispatching" }
+        val host = HostIdentity("https://example.test", "a", "owner-a", "host-one", "device-a", "cookie=owner-a", "csrf")
+        val store = LocalStore(context, name)
+        try {
+            val shared = SharedChat(store, PersonalApi(fixture))
+            assertEquals("uncertain", shared.submit(host, "session-one", "synthetic", "session.message", "fx9-one") { true }.getString("state"))
+            fixture.commands["owner-a|fx9-one"]!!.put("state", "accepted_by_dsh").put("receiptId", "receipt-one")
+            var checks = 0
+            try { shared.commandByRequest(host, "fx9-one") { ++checks == 1 }; fail("Late account reply") }
+            catch (error: ApiFailure) { assertEquals("ACCOUNT_SWITCHED", error.safeCode) }
+            assertEquals("uncertain", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
+            assertEquals("accepted_by_dsh", shared.commandByRequest(host, "fx9-one") { true }.getString("state"))
+            assertEquals("accepted", shared.outbox(host).getJSONArray("commands").getJSONObject(0).getString("state"))
+            assertEquals(1, fixture.posts)
+        } finally { store.close(); context.deleteDatabase(name) }
     }
 
     @Test fun accountRestartLostReplyAndReadOnlyStayIsolated() {

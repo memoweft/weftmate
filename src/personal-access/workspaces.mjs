@@ -122,7 +122,7 @@ export function createWorkspaceOperations(context) {
     checkedProjectSession,
     checkedBrowserSession,
     browserToolSource,
-    async projectForSession({ sessionId, ownerId = context.rootState.legacyOwnerId }) {
+    async projectForSession({ sessionId, ownerId = context.service.executionOwnerId() }) {
       id(sessionId);
       if (!context.hostOwner(ownerId)) throw failure('NOT_FOUND', 404);
       const session = context.accountState(ownerId).sessions[sessionId];
@@ -130,7 +130,7 @@ export function createWorkspaceOperations(context) {
       const { project } = await checkedProjectSession(ownerId, sessionId);
       return { ...publicProject(project), modelProfileId: session.modelProfileId };
     },
-    async browserForSession({ sessionId, ownerId = context.rootState.legacyOwnerId }) {
+    async browserForSession({ sessionId, ownerId = context.service.executionOwnerId() }) {
       id(sessionId);
       if (!context.hostOwner(ownerId)) return null;
       if (context.accountState(ownerId).sessions[sessionId]?.workspaceKind !== 'browser') return null;
@@ -140,7 +140,7 @@ export function createWorkspaceOperations(context) {
     /** Main-process only: list or read inside the project frozen on this session. */
     async submitToolProject({ action, sessionId, turn, callId, messageHash, receiptId,
       query = '', fileId, startLine = 1 }) {
-      const ownerId = context.rootState.legacyOwnerId;
+      const ownerId = context.service.executionOwnerId();
       id(sessionId);
       if (!['list_project', 'read_project'].includes(action) ||
           !Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||
@@ -250,7 +250,7 @@ export function createWorkspaceOperations(context) {
     /** Main-process only: one browser read from a frozen user URL or observed link. */
     async submitToolBrowser({ action, sessionId, turn, callId, messageHash, receiptId,
       url, snapshotId: linkSnapshotId, linkId, segmentIndex }) {
-      const ownerId = context.rootState.legacyOwnerId;
+      const ownerId = context.service.executionOwnerId();
       id(sessionId);
       if (!['open_page', 'follow_link', 'read_segment'].includes(action) ||
           !Number.isSafeInteger(turn) || turn < 0 || typeof callId !== 'string' ||

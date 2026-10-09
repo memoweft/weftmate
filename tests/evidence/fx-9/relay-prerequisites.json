@@ -1,0 +1,8 @@
+{
+  "available": false,
+  "windowsFrpPresent": true,
+  "wslOpenSslPresent": true,
+  "wslHaProxyPresent": false,
+  "sameTaskViaRelay": "not-run",
+  "reason": "No prepared local full-chain fixture and no HAProxy binary in the existing WSL environment. No environment rebuild or production relay mutation performed."
+}

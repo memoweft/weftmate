@@ -51,7 +51,8 @@ test('native file observation publishes every changed file, leaves unchanged fil
 test('one browser capability opens model-selected URLs, reads captures and follows links across turns without a browser workspace', async () => {
   const urls: string[] = []
   const account = { sessions: { conversation: { origin: 'personal-remote' }, other: { origin: 'personal-remote' } } }
-  const browser = createNativeBrowserOperations({ rootState: { legacyOwnerId: 'owner' }, accountState: () => account,
+  const browser = createNativeBrowserOperations({
+    sessionOperations: {executionOwnerForSession: () => 'owner'}, rootState: { legacyOwnerId: 'owner' }, accountState: () => account,
     personalExecutionSource: () => ({ root: { commandId: 'cmd-native' } }), browserReader: { read: async ({ url }: any) => {
       urls.push(url)
       return { url, title: 'Fixture', capturedText: 'Full captured page', links: [{ linkId: 'next', url: 'https://example.org/next' }], outline: [], captureTruncated: false }
