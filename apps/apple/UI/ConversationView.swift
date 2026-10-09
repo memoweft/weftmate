@@ -243,7 +243,7 @@ struct ConversationView: View {
                                    message: "说说你想完成什么。")
                             .frame(minHeight: 240)
                     }
-                    if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
+                    if model.tasksAvailable(conversation), let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: model.accountEpoch) {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p22) {
                         ConversationTimelineView(appModel: model, conversation: conversation, sessionID: sessionID, interactions: interactions, openAttachment: openAttachment, openArtifact: openArtifact, openMemory: { event in
                             endDraftFocus(); closePreview(); resources.open(.memory(event.seq, UsedMemory.references(in: event)))
@@ -469,7 +469,7 @@ struct ConversationView: View {
                     .font(AppleTokens.Fonts.callout)
             }
             let queued = model.queuedTasks(for: conversation)
-            if !queued.isEmpty {
+            if model.tasksAvailable(conversation), !queued.isEmpty {
                 DisclosureGroup("\(queued.count) 个排队中") {
                     ScrollView {
                         VStack(alignment: .leading, spacing: AppleTokens.Space.p10) {
@@ -489,7 +489,11 @@ struct ConversationView: View {
                 }.font(AppleTokens.Fonts.caption)
             }
             if let notice = model.queueNotice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
-            ConversationApprovalBar(model: interactions, events: model.timeline.events)
+            if model.tasksAvailable(conversation) { ConversationApprovalBar(model: interactions, events: model.timeline.events) }
+            else { Text(ProjectPresentation.restrictedNotice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("restrictedSessionNotice") }
+            if let notice = conversation.projectNotice ?? model.sessionProjectNotices[conversation.id] ?? conversation.projectName.map({ "项目：" + $0 }) {
+                Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("projectNotice")
+            }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
                 TextField("向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
@@ -583,7 +587,7 @@ struct ConversationView: View {
                         .buttonStyle(.plain).accessibilityLabel("语音输入").popover(isPresented: $dictationPopover) {
                             Text("使用系统听写输入文字").font(AppleTokens.Fonts.caption).padding(AppleTokens.Space.p16).presentationCompactAdaptation(.popover)
                         }
-                    let action = ComposerAction.resolve(running: conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
+                    let action = ComposerAction.resolve(running: model.tasksAvailable(conversation) && conversation.running, text: draft.wrappedValue, attachments: !(model.attachmentDrafts[key] ?? []).isEmpty)
                     Button {
                         if action == .stop { Task { await model.stopActiveTask() } }
                         else { Task { await model.send(conversation, accountEpoch: accountEpoch) } }
@@ -592,7 +596,7 @@ struct ConversationView: View {
                         .disabled(action == .stop ? model.stoppingActiveTask || model.timelineRootCommands.isEmpty || model.historyCachedAt != nil : !model.canSend(conversation))
                         .accessibilityLabel(action == .stop ? "停止" : "发送").accessibilityIdentifier("sendButton")
                     #if os(macOS)
-                    Button("停止") { Task { await model.stopActiveTask() } }.keyboardShortcut(.escape, modifiers: []).hidden().frame(width: 0, height: 0)
+                    if model.tasksAvailable(conversation) { Button("停止") { Task { await model.stopActiveTask() } }.keyboardShortcut(.escape, modifiers: []).hidden().frame(width: 0, height: 0) }
                     #endif
                 }
             }
@@ -647,7 +651,7 @@ struct ConversationView: View {
     }
 
     @ViewBuilder private func composerApprovalMode(accountEpoch: UUID) -> some View {
-        if let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: accountEpoch) {
+        if model.tasksAvailable(conversation), let sessionID = conversation.sessionId ?? model.taskSessionID(for: conversation, accountEpoch: accountEpoch) {
             ApprovalModeControl(model: model, sessionID: sessionID, compact: true).id(sessionID + accountEpoch.uuidString)
         }
     }
