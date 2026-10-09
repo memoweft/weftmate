@@ -27,6 +27,8 @@
 | 错误二进制 / 未认证捕获反例 | 启动前拒绝错误二进制，未认证时明确失败；均不生成 PNG | validation-negative.json |
 | 捕获器行为测试 | Node 4 / 4 | validation-focused.json |
 
+合入最新 main 的 PJ-1 后，Apple 源码保持相同，使用更新后的真实宿主再跑 Mac 浅深完整流程 2/2 和 iPhone 全设置浅色 1/1，均通过；结果见 validation-focused.json 的 postMergeIntegration。
+
 Mac Debug 与 iPhone build-for-testing（含 Watch 伴随 Debug 二进制）构建通过。xcodebuild 使用 -jobs 2，正式构建 / XCTest 串行，一次只开一台 iPhone，测试后立即 shutdown all。未启动 Watch 模拟器。开发中曾在 XCTest 准备阶段启动一个 Mac 增量构建，发现后立即终止，正式验收均在前一个 xcodebuild 退出后继续。
 
 PNG 为原生 App 原图，没有裁剪、缩放或修改；Mac 只读取本次启动进程自己的窗口 ID。截图索引、SHA-256 与源码说明见 screenshots.json / validation-focused.json。截图生成时 commit 字段记录基线提交，A10 工作树修改的最终源码提交及实际测试二进制指纹统一记录在 validation-focused.json。

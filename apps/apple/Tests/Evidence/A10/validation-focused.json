@@ -138,7 +138,7 @@
       "ownWindowCapture": true,
       "globalPermissionsRequested": false,
       "credentialStorage": "ephemeral capture only",
-      "commit": "73c0eee35b691bfd02f665e4c34e1652098c2b96"
+      "commit": "8961cf4fac7be6141558094adc31c080f0c3f4cc"
     },
     "dark": {
       "authenticated": true,
@@ -164,7 +164,32 @@
       "ownWindowCapture": true,
       "globalPermissionsRequested": false,
       "credentialStorage": "ephemeral capture only",
-      "commit": "73c0eee35b691bfd02f665e4c34e1652098c2b96"
+      "commit": "8961cf4fac7be6141558094adc31c080f0c3f4cc"
+    }
+  },
+  "postMergeIntegration": {
+    "mergeCommit": "8961cf4fac7be6141558094adc31c080f0c3f4cc",
+    "mainCommit": "7a88544fefbfb1c7f09651d12c69158a185c6f04",
+    "iphoneSettingsLight": {
+      "passedTests": 1,
+      "failedTests": 0,
+      "skippedTests": 0,
+      "startTime": 1791545889.434,
+      "finishTime": 1791546133.1
+    },
+    "mac": {
+      "light": {
+        "passed": true,
+        "categories": 13,
+        "hostSendCount": 1,
+        "hostSendMode": "queue"
+      },
+      "dark": {
+        "passed": true,
+        "categories": 13,
+        "hostSendCount": 1,
+        "hostSendMode": "queue"
+      }
     }
   }
 }
