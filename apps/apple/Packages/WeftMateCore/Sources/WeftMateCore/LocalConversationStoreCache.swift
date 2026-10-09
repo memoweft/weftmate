@@ -12,6 +12,10 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     public let unread: Bool?
     public let groupId: String?
     public let archived: Bool?
+    public let projectId: String?
+    public let projectName: String?
+    public let projectNotice: String?
+    public let taskAvailable: Bool?
     public let originalModel: SharedOriginalModel?
     public var conversationKey: String {
         if let conversationId { return "conversation:" + conversationId }
@@ -19,12 +23,13 @@ public struct LocalCachedConversationSummary: Codable, Equatable, Sendable, Iden
     }
     public var conversation: ConversationSummary {
         .init(id: id, title: title, conversationId: conversationId, sessionId: sessionId,
-              running: false, sendAvailable: false, originalModelLabel: originalModelLabel, archived: archived ?? false, pinned: pinned ?? false, unread: unread ?? false, groupId: groupId)
+              running: false, sendAvailable: false, originalModelLabel: originalModelLabel, archived: archived ?? false, pinned: pinned ?? false, unread: unread ?? false, groupId: groupId, projectId: projectId, projectName: projectName, projectNotice: projectNotice, taskAvailable: taskAvailable)
     }
     public init(conversation: ConversationSummary, hostId: String, originalModel: SharedOriginalModel? = nil) throws {
         id = conversation.id; title = conversation.title; conversationId = conversation.conversationId
         sessionId = conversation.sessionId; self.hostId = hostId
         pinned = conversation.pinned; unread = conversation.unread; groupId = conversation.groupId
+        projectId = conversation.projectId; projectName = conversation.projectName; projectNotice = conversation.projectNotice; taskAvailable = conversation.taskAvailable
         archived = conversation.archived; originalModelLabel = conversation.originalModelLabel; self.originalModel = originalModel
         try validate()
     }
