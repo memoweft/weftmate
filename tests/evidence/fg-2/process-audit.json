@@ -1,0 +1,10 @@
+{
+  "remaining": [],
+  "checkedAt": "2026-10-09T11:31:25.5635715+08:00",
+  "lanLockExists": true,
+  "stoppedOnlyOwnDiagnostic": {
+    "creationTime": "2026-10-09 10:35:00",
+    "pid": 33704,
+    "reason": "Short diagnostic did not honor its declared timeout"
+  }
+}

@@ -1,0 +1,96 @@
+{
+  "requests": 126,
+  "returnedUsage": 126,
+  "missingUsage": 0,
+  "input": 564609,
+  "cached": 392128,
+  "output": 17225,
+  "knownCnyLowerBound": 0.21477356,
+  "price": {
+    "source": "https://mimo.mi.com/models/zh-CN/mimo-v2.6-flash",
+    "verifiedOn": "2026-10-09",
+    "cachedInputCnyPerMillion": 0.02,
+    "uncachedInputCnyPerMillion": 1,
+    "outputCnyPerMillion": 2
+  },
+  "sources": [
+    {
+      "label": "initial full batch",
+      "path": "tests/evidence/fg-2/exit/usage.json",
+      "usage": {
+        "requests": 48,
+        "returnedUsage": 48,
+        "missingUsage": 0,
+        "input": 232571,
+        "cached": 164096,
+        "output": 7202,
+        "knownCnyLowerBound": 0.08616091999999999
+      }
+    },
+    {
+      "label": "MiMo focused forget",
+      "path": "tests/evidence/fg-2/forget/usage.json",
+      "usage": {
+        "requests": 14,
+        "returnedUsage": 14,
+        "missingUsage": 0,
+        "input": 69775,
+        "cached": 49856,
+        "output": 2587,
+        "knownCnyLowerBound": 0.026090119999999998
+      }
+    },
+    {
+      "label": "original four replies supplementary semantics",
+      "path": "tests/evidence/fg-2/four-lan-supplementary.json",
+      "usage": {
+        "requests": 3,
+        "returnedUsage": 3,
+        "missingUsage": 0,
+        "input": 1199,
+        "cached": 0,
+        "output": 92,
+        "knownCnyLowerBound": 0.001383
+      }
+    },
+    {
+      "label": "complete two-direction replay",
+      "path": "tests/evidence/m2-exit/fg-2/usage.json",
+      "usage": {
+        "requests": 38,
+        "returnedUsage": 38,
+        "missingUsage": 0,
+        "input": 137158,
+        "cached": 92992,
+        "output": 3697,
+        "knownCnyLowerBound": 0.053419839999999996
+      }
+    },
+    {
+      "label": "post-merge old-control failure",
+      "path": "tests/evidence/fg-2/post-merge-forget/usage.json",
+      "usage": {
+        "requests": 9,
+        "returnedUsage": 9,
+        "missingUsage": 0,
+        "input": 53992,
+        "cached": 35264,
+        "output": 1593,
+        "knownCnyLowerBound": 0.02261928
+      }
+    },
+    {
+      "label": "post-merge focused replay",
+      "path": "tests/evidence/fg-2/post-merge-forget-final/usage.json",
+      "usage": {
+        "requests": 14,
+        "returnedUsage": 14,
+        "missingUsage": 0,
+        "input": 69914,
+        "cached": 49920,
+        "output": 2054,
+        "knownCnyLowerBound": 0.025100400000000002
+      }
+    }
+  ]
+}
