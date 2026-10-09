@@ -1,0 +1,138 @@
+{
+  "host": "Mac local isolated personal host",
+  "realAuthentication": true,
+  "realApprovalAPI": true,
+  "deterministicPlanner": true,
+  "compiledDSH": false,
+  "realSyntheticFileOperation": true,
+  "events": [
+    {
+      "time": "2026-10-09T15:32:10.874Z",
+      "event": "approval.requested",
+      "scenario": "approve",
+      "approvalId": "b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+      "commandId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "tool": "shell",
+      "object": "synthetic-approve-draft.txt",
+      "status": "pending"
+    },
+    {
+      "time": "2026-10-09T15:32:14.292Z",
+      "event": "approval.answered",
+      "scenario": "approve",
+      "outcome": "allowed-once",
+      "requestId": "AAF7548B-A94C-4855-9B37-3B30326E0B9B"
+    },
+    {
+      "time": "2026-10-09T15:32:14.292Z",
+      "event": "step.executed",
+      "scenario": "approve",
+      "object": "synthetic-approve-draft.txt",
+      "operation": "delete"
+    },
+    {
+      "time": "2026-10-09T15:32:14.301Z",
+      "event": "task.ended",
+      "scenario": "approve",
+      "outcome": "allowed-once",
+      "fileExists": false,
+      "reason": "completed"
+    }
+  ],
+  "receipts": [
+    {
+      "scenario": "approve",
+      "stage": "answered",
+      "approvalId": "b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+      "sessionId": "session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706",
+      "taskId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "sourceCommandId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "sourceReceiptId": "a5044a61-02bb-44d3-8323-f1cac62cfb48",
+      "turn": 1,
+      "callId": "a12-approve",
+      "rootCallId": "a12-approve",
+      "toolName": "shell",
+      "reason": "[weftmate:delete] 删除本次合成草稿，无法撤销。\n{\"command\":\"rm synthetic-approve-draft.txt\"}",
+      "createdAt": "2026-10-09T15:32:10.870Z",
+      "status": "answered",
+      "decisionOutcome": "allowed-once",
+      "decisionRequestId": "AAF7548B-A94C-4855-9B37-3B30326E0B9B",
+      "decisionScope": "once",
+      "riskCategories": [
+        "delete"
+      ],
+      "answeredAt": "2026-10-09T15:32:14.192Z"
+    },
+    {
+      "scenario": "approve",
+      "stage": "resolved",
+      "approvalId": "b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+      "sessionId": "session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706",
+      "taskId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "sourceCommandId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "sourceReceiptId": "a5044a61-02bb-44d3-8323-f1cac62cfb48",
+      "turn": 1,
+      "callId": "a12-approve",
+      "rootCallId": "a12-approve",
+      "toolName": "shell",
+      "reason": "[weftmate:delete] 删除本次合成草稿，无法撤销。\n{\"command\":\"rm synthetic-approve-draft.txt\"}",
+      "createdAt": "2026-10-09T15:32:10.870Z",
+      "status": "resolved",
+      "decisionOutcome": "allowed-once",
+      "decisionRequestId": "AAF7548B-A94C-4855-9B37-3B30326E0B9B",
+      "decisionScope": "once",
+      "riskCategories": [
+        "delete"
+      ],
+      "answeredAt": "2026-10-09T15:32:14.192Z",
+      "outcome": "allowed-once",
+      "resolvedAt": "2026-10-09T15:32:14.293Z"
+    }
+  ],
+  "approvalHTTP": [
+    {
+      "path": "/personal/v1/sessions/session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706/approvals/b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+      "status": 200,
+      "request": {
+        "outcome": "allowed-once",
+        "requestId": "AAF7548B-A94C-4855-9B37-3B30326E0B9B",
+        "scope": "once"
+      },
+      "reply": {
+        "approval": {
+          "approvalId": "b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+          "sessionId": "session-e3d4a9bf-7784-4cf1-b697-d2b8ceb84706",
+          "taskId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+          "sourceCommandId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+          "sourceReceiptId": "a5044a61-02bb-44d3-8323-f1cac62cfb48",
+          "turn": 1,
+          "callId": "a12-approve",
+          "rootCallId": "a12-approve",
+          "toolName": "shell",
+          "reason": "[weftmate:delete] 删除本次合成草稿，无法撤销。\n{\"command\":\"rm synthetic-approve-draft.txt\"}",
+          "createdAt": "2026-10-09T15:32:10.870Z",
+          "status": "answered",
+          "decisionOutcome": "allowed-once",
+          "decisionRequestId": "AAF7548B-A94C-4855-9B37-3B30326E0B9B",
+          "decisionScope": "once",
+          "riskCategories": [
+            "delete"
+          ],
+          "answeredAt": "2026-10-09T15:32:14.192Z"
+        },
+        "requestId": "AAF7548B-A94C-4855-9B37-3B30326E0B9B"
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "name": "approve",
+      "filename": "synthetic-approve-draft.txt",
+      "approvalId": "b71ccf55-71a8-4b54-953b-bd0ef0fd94ef",
+      "commandId": "cmd-d4193410-a4b6-45a8-a04d-38abf74fdc16",
+      "done": true,
+      "outcome": "allowed-once",
+      "fileExists": false
+    }
+  ]
+}

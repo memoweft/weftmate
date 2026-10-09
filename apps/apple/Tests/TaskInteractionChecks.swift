@@ -206,6 +206,7 @@ private actor InteractionHTTP: HTTPTransport {
         await categoryHTTP.configure(lostApproval: true)
         await firstCategory.decide(firstCategory.approvals[0], outcome: .allowedOnce, decisionScope: .conversationCategory)
         try require(firstCategory.pendingApprovals.count == 1, "Uncertain approval disappeared before matched receipt")
+        try require(firstCategory.hasSaved("approval:approval-check") && !firstCategory.isRegistered("approval:approval-check"), "Saved uncertain request must not be reported to Watch as registered")
         let categoryKey = "approval:approval-check"
         await categoryHTTP.denyApprovalReads(true)
         await firstCategory.refresh(snapshot)
@@ -216,6 +217,7 @@ private actor InteractionHTTP: HTTPTransport {
         await reloadedCategory.refresh(categorySnapshot)
         try require(reloadedCategory.savedApprovalScope(reloadedCategory.approvals[0]) == .conversationCategory, "Journal lost category scope")
         await reloadedCategory.continueOriginal(categoryKey)
+        try require(reloadedCategory.isRegistered(categoryKey), "Matched host receipt was not reported as registered")
         let categoryPosts = await categoryHTTP.submissions().0
         try require(categoryPosts.count == 2 && categoryPosts[0] == categoryPosts[1], "Category retry changed request/outcome/scope bytes")
         try require(reloadedCategory.approvals[0].decisionSummary == "已允许 · 运行脚本 · 本对话总是允许此类", "Resolved category summary is incorrect")
