@@ -259,7 +259,7 @@ struct ConversationView: View {
                     if ConversationProcessing.visible(events: model.timeline.events, running: conversation.running, phase: conversation.processing?.phase) {
                         TimelineView(.periodic(from: waitingSince, by: 1)) { clock in
                             Text((conversation.processing ?? .init(phase: "waiting")).label + " · \(max(0, Int(clock.date.timeIntervalSince(waitingSince)))) 秒")
-                                .font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("processingLine")
+                                .font(AppleTokens.Fonts.body).foregroundStyle(Weave.muted).accessibilityIdentifier("processingLine")
                         }
                     }
                     commandStatusCards

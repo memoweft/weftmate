@@ -20,6 +20,7 @@ CHECKS = {
     "MemoryWorkspaceStateChecks": ["MemoryWorkspaceModel"],
     "MessageMarkdownChecks": ["MessageMarkdown"],
     "DesignTokenChecks": ["WeaveTheme", "WeftIcon"],
+    "ToolProgressChecks": ["ToolProgressModel"],
     "TaskDirectoryChecks": ["TaskDirectoryModel"],
     "TaskInteractionChecks": ["TaskInteractionModel"],
     "TaskWorkspaceChecks": ["TaskWorkspaceModel"],
