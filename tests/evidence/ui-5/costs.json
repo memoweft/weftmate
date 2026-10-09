@@ -37,6 +37,15 @@
       "knownCostCny": 0.01572276
     },
     {
+      "run": "weftmate-ui-5-mimo-5b46158b-3383-4cce-811f-eead02640584",
+      "requests": 6,
+      "unknownRequests": 0,
+      "inputTokens": 45607,
+      "cachedInputTokens": 30976,
+      "outputTokens": 332,
+      "knownCostCny": 0.01591452
+    },
+    {
       "run": "weftmate-ui-5-mimo-82facec0-2283-4e86-971d-207bcb9f09d9",
       "requests": 4,
       "unknownRequests": 0,
@@ -64,6 +73,6 @@
       "knownCostCny": 0.01730752
     }
   ],
-  "knownCostCny": 0.0968452,
+  "knownCostCny": 0.11275972,
   "note": "宿主用量账本合计；包括失败的合成验收批次。缺用量请求未估算，费用为下界。"
 }
