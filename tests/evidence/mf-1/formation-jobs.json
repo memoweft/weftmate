@@ -4995,6 +4995,77 @@
     ]
   },
   {
+    "root": "C:\\temp\\weftmate-m2-exit-mimo-86eeeU",
+    "account": "owner-0d12dd79-569f-4cec-afb6-53163fb61851",
+    "recovery": null,
+    "jobs": [
+      {
+        "job_id": "memory-world-job-e98e75e646fdae0e23dca0c7fee3540b3899872a8dbfbbae430b1b788b5881b2",
+        "parent_session_id": "session-a74fa112-152b-4f4d-8d2d-3408ff8f729e",
+        "boundary_event_id": "weftmate-turn-boundary-v1:5da7f669120261f176774791dd667f40:7cae9316bc9e014e124d6e03ce47cf5c403a11b3e40b02c83258458b509bc473",
+        "state": "no_change",
+        "attempts": 1,
+        "created_at": "2026-10-09T08:58:34.886Z",
+        "claimed_at": "2026-10-09T08:58:34.904Z",
+        "model_dispatch_started_at": "2026-10-09T08:58:34.927Z",
+        "model_completed_at": "2026-10-09T08:58:34.936Z",
+        "completed_at": "2026-10-09T08:58:34.936Z",
+        "sources": [
+          "我们之前说组队可以找谁？"
+        ],
+        "model_result": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        },
+        "world_result": {
+          "reason": "pure_inquiry_no_declarative_facts",
+          "schema_version": 1,
+          "state": "no_change"
+        }
+      },
+      {
+        "job_id": "memory-world-job-98a9f78c0f19840c32305fa578ee525ed963c8b6997b9255747705207905db5a",
+        "parent_session_id": "session-a74fa112-152b-4f4d-8d2d-3408ff8f729e",
+        "boundary_event_id": "weftmate-turn-boundary-v1:a4a6d19b7b2d1f20d50f62ab3b54ed38:f24ebfc1e8095634faea3b4b01a21b60f193df70d09d2a5ac46e9b007d2bd966",
+        "state": "processing",
+        "attempts": 1,
+        "created_at": "2026-10-09T08:58:52.139Z",
+        "claimed_at": "2026-10-09T08:58:52.159Z",
+        "model_dispatch_started_at": "2026-10-09T08:58:52.178Z",
+        "model_completed_at": "2026-10-09T08:59:03.267Z",
+        "completed_at": null,
+        "sources": [
+          "你好，请用一句中文打个招呼。"
+        ],
+        "model_result": {
+          "content": "{\"schema_version\":8,\"result\":\"no_change\"}",
+          "finish_reason": "stop",
+          "formation_rewrite": {
+            "error": {
+              "code": "model_no_change",
+              "instruction": "Rewrite the complete interpretation JSON once. Fix the reported compiler error; every cognition must include a nonempty proposition and valid supports. Copy names, forms of address, numbers and dates exactly from user evidence. Never invent facts. The source passed the declarative-fact check. Reconsider no_change: a new personal preference, name, relationship or correction must be represented unless the current World already expresses it. A question or task-only instruction can still return no_change."
+            },
+            "state": "reserved"
+          },
+          "model": "mimo-v2.6-flash",
+          "usage": {
+            "completion_tokens": 26,
+            "completion_tokens_details": {
+              "reasoning_tokens": 13
+            },
+            "prompt_tokens": 4561,
+            "prompt_tokens_details": {
+              "cached_tokens": 4352
+            },
+            "total_tokens": 4587
+          }
+        },
+        "world_result": {}
+      }
+    ]
+  },
+  {
     "root": "C:\\Users\\yun\\AppData\\Local\\Temp\\weftmate-mf1-iN0F7V",
     "account": "owner-0954a710-0d86-4b26-a410-5ab74ce9eccf",
     "recovery": null,
