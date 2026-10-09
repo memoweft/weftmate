@@ -1069,7 +1069,7 @@ App 内每次开始授权会清除本客户端先前的 OIDC（身份认证协�
 
 自动回写在主对话身份/历史/日期/搜索/增量读取时对账：仅处理主对话身份建立后新受理的普通/项目旁聊根任务，原生工具或成果事实表明它是执行任务；纯闲聊不因每条回复生成卡。不追溯迁移前旧任务。原生 `completed/failed/aborted` 分别显示完成/失败/停止，停止绝不显示完成；缺乏确定证据保留待对账。归档不阻止已受理任务回写。回写不启动主对话模型、不追加 DSH 消息、不重新摄取记忆；没有新增后台计时器。
 
-同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用这些来源和通知版本，不再复制消息或发第二份通知；动态已读、推送和结构化待回应接线留对应包。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理见9.5，接力见9.6。
+同一旁聊根任务保持同一 `resultId/mainEventId/activityId`，后续续做/显式更正增加 `resultRevision` 和 `notificationRevision`，更新原卡；手动分享已有自动结果也复用身份。普通手动分享以来源消息去重。`requiresResponse` 当前为false，不凭问号产生待办或代表用户认可/批准。TB-1（动态）复用根任务结果的 `activityId`，读写与通知见9.8；普通文字分享不据此生成“任务完成”。删除旁聊清空派生摘要、成果引用与搜索正文，保留 `deleted:true` 的无正文锚点；重复分享请求也只返回当前墓碑。D33 原话/派生数据跨段清理见9.5，接力见9.6。
 
 
 ### 9.5 D33 跨段清理（IA-2b / 2.5）
@@ -1143,3 +1143,41 @@ D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数�
 临时内容不自动回写主对话、不进入动态正文、全局成果库、近期对话离线副本。分叉、引用开旁聊、发布结果对 `hasTemporaryContent` 会话返回409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，直到显式分享功能提供确认与预览。TB-1/TB-3未来的全局列表必须排除该标记；对话内自己的输出与来源仍可查看。MEM-2没有新增全局列表接口。
 
 Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/标题/输入区显示状态；菜单分别接记忆与召回开关和四档期限；切换说明之前形成的保留；主对话导向临时旁聊。持久化模型添加本节公开字段，`cacheAllowed:false` 的历史不写离线缓存，离线副本继续消费宿主过滤结果；到期404移除本机展示缓存。原生界面与Watch（手表）实机验收由Apple工作包完成。
+
+### 9.8 动态与通知（TB-1 正式，D19 / D35 / D41 / D43）
+
+`GET /status.personalCapabilities` 增加精确数字版本 `activity:1, activityChanges:1, activityRead:1, activityNotification:1`。客户端只接受已认识的精确版本；旧宿主隐藏入口，手机显示升级说明。这里是原生事实的持久投影，不新增任务执行器或调度器。宿主每轮有界读取 DSH（助手运行时）公开事件与原生 schedule（调度）送达事实；来源离线保留水位，不把读取失败记作任务失败。后台工作仍在运行或副作用未核实时，不产生任务完成条目。
+
+| 方法 / 路径 | 输入 | 响应 / 语义 |
+|---|---|---|
+| GET `/activity` | `filter=all\|unread\|actionable`，`type=task\|reminder\|memory\|approval\|question\|system` 或完整类型，可选 `cursor,limit`（1–200，默认50） | `{items,nextCursor,hasMore,unreadCount,actionableCount,timeZone,snapshotCursor,syncCursor}`；按时间与ID反序。分页冻结首次水位，新事件不挤入旧页；账户时区用于按天分组 |
+| GET `/activity/changes` | 可选 `cursor,limit,filter,type`；筛选只决定返回的已读快照范围，不过滤变更本身 | `{upserts,removals,nextCursor,hasMore,unreadCount,actionableCount,snapshotCursor}`；修改、已读与删除均传递；空游标从0开始；按ID更新，删除只携带ID，无旧正文 |
+| GET `/activity/unread` | 无参数 | `{unreadCount,actionableCount}`；已读与待处理分别计数，标读不批准任务 |
+| PATCH `/activity/{id}/read` | `{requestId,read:boolean,attentionRevision}` | `{item}`；可见内容版本必须一致，否则409 `REQUEST_CONFLICT`；同请求同体幂等，异体或与原命令 / 审批 / 问题请求身份碰撞409 |
+| POST `/activity/read` | `{requestId,through:snapshotCursor}` | `{unreadCount,actionableCount}`；只覆盖快照水位与筛选范围内未发生新内容的条目；旧页面不标读后来事件；幂等规则同上 |
+
+读取要求原 `sessions:read`，写入要求原 `commands:write` 与 CSRF（跨站请求伪造防护）；按账户认证隔离，不接收客户端传入账户ID。游标签名绑定账户、用途、分页筛选与删除代次；无效或跨账户409 `CURSOR_RESET_REQUIRED`。删除代次使旧列表 / 已读快照失效；增量游标仍能读出无正文删除ID。客户端收到重置先清旧正文再重读，身份 / 筛选变化的迟到响应不得填回。
+
+每项 `Activity={id,at,type,title,summary,source,actions,state,read,revision,attentionRevision,createdSequence,notification,temporary?}`。`id` 与首次 `at` 稳定；同项正文或状态变化增加版本与注意水位。`summary` 最多160字符；`state=pending|completed|unavailable` 是待办状态，任务成功 / 失败 / 停止由 `type` 区分。`source` 按真实可用来源携带 `chatId,chatKind,sessionId,projectId,taskId,eventId,seq,messageId,scheduleId`，不暴露路径、工具参数、凭据或私有推理。主对话结果与动态复用同一根任务 `activityId`；正文显式分享不是任务成功事实。
+
+`actions=[{kind,label,target}]` 只描述实际存在的类型化动作，不是可执行网址。TB-1 支持 `open_chat`（原对话 / 旁聊及消息定位）、`respond_approval`（原 `sessionId,taskId,approvalId`）、`answer_question`（原 `sessionId,taskId,questionRpcId`）、`view_memory`。批准 / 拒绝仍直接走3.7的原审批路径、原回执校验与持久请求身份；问题打开原问题条，整批回答仍走3.7。动态没有通用任意执行接口，也不会因标读而完成待办。有效回执后原审批条与动态同时收为已处理；外部回答、取消、失效与重启都沿原生终态同步。未知动作不提供按钮。
+
+既有 `GET /sync/events` 事件通道兼容增加 `activity:{cursor,unreadCount,actionableCount}`，不占用手机聊天事件的 `seq` 或伪造对话消息。客户端据此或既有前台状态轮询，使用 `/activity/changes` 获取增量；桌面后台通知在主进程观察，窗口隐藏仍可送达。这里使用既有认证轮询通道，没有另建未授权推送服务或宣称已有安卓后台送达。旧 `/notifications` 继续从相同原生提醒事实读取，旧客户端读取不改变账户已读。
+
+| `type` | 通知等级 `notification.level` | 首版来源与边界 |
+|---|---|---|
+| `reminder.triggered` | `important`（重要） | 原生提醒 / 定时任务已经送达，稳定送达 / 消息身份去重 |
+| `approval.pending`, `question.pending` | `important` | 原审批 / 问题确实待处理；处理后的版本为 `silent` |
+| `task.failed` | `important` | 原生任务失败，不把断线或未知结果冒充失败 |
+| `task.completed`, `task.stopped` | `normal`（普通） | 原生终态；后台工作与副作用同时核对 |
+| `memory.paused` | `normal` | 记忆暂停 / 不可用状态发生变化；MEM-D 可用下述可信接缝接入 |
+| `memory.submission.completed` | `silent`（静默） | M3-A离线对话补交已受理；只称“已同步”，不称正式记忆形成 |
+| `memory.report` | `normal` | 类型与接缝预留，MEM-3尚未生成周报 |
+| `system.update.available` | `normal` | 现有更新状态确实提供新版本；不暴露更新源或增加安装授权 |
+| `system.reconnected` | `silent` | 已观察运行时不可用后再次就绪；不凭单个会话读取失败断言电脑离线 |
+
+`notification={level,type}` 的 `type` 是 ST-6（通知设置）的按类型开关接缝；ST-6未实施前维持现有系统通知行为。等级不是权限，重要不跳过未来勿扰或主动打扰限制。桌面用现有原生通知，每条动态ID最多一份系统通知，内容修订不重复弹出；点击带对应 `activityId` 打开动态并聚焦条目。通知去重仅持久保存账户与条目ID，无标题 / 正文。删除增量关闭对应已显示通知。S3a后续消费同一ID、等级与类型接安卓后台通知，约15分钟以上延迟的边界仍按D41说明；不得创建第二个提醒调度器。
+
+宿主可信接缝 `service.recordActivity(ownerId,{key,type,at?,title,summary,source?,actions?,level?})` 只允许已登记的记忆与系统类型，`key` 使用上游稳定事件 / 回执ID；相同事实与正文不会重复插入。它不暴露为公共HTTP（网络请求）写入接口。MEM-D / MEM-3 / S3a使用该接缝提供真实状态，不能提交临时正文或未发生的成功。
+
+删除会话 / D33遗忘沿 `eraseChatCopies` 清动态摘要、动作、原生观察摘要与待完成投影；无正文墓碑和抑制水位防止旧通知、旧回执、迟到观察或重启重建正文。账户删除带走整个账户存储。临时 / 混合临时来源在持久化前只保留泛化标题、原来源ID和安全动作：完成摘要固定“临时对话中的任务已完成”，失败 / 停止也只描述状态；临时审批 / 问题不带对象、问题正文或工具参数。此规则同时约束系统通知。
