@@ -106,8 +106,8 @@
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/sessions` | 可选单值 `archived=false`（默认）、`true`（仅归档）、`all`（全部）；无列表分页/搜索参数 | 200 `{"sessions":[{"sessionId":"session-…","title":"资料整理","running":true,"sendAvailable":true,"archived":false,"modelProfileId":"local","processing":{"phase":"queued","ahead":1,"modelName":"Muse Q5"}}]}` | 后端整体失败/单会话降级 | 桌、手、安、苹 |
-| PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
-| POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型与分组；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
+| PATCH `/sessions/{sessionId}/metadata` | `pinned?,unread?,title?,groupId?,projectId?`，至少一项；布尔值、非空标题≤256字符；groupId为本账号分组ID或null | 200 `{sessionId,pinned?,unread?,title?,groupId?,readMessageSeq?}`；原生 `sessionTitle.rename` 写用户标题，停止自动标题覆盖；手动已读记录最新助手消息水位 | 400 INVALID_REQUEST；404 SESSION_UNAVAILABLE / NOT_FOUND；409 SESSION_BUSY | 桌、手、安、苹 |
+| POST `/sessions/{sessionId}/fork` | 空对象 `{}`；原对话须空闲 | 201 `{sessionId,title}`；原生 DSH（助手运行时）事件种子及 parentSession 分叉谱系创建可继续的独立对话，标题加「（分叉）」；复制独立工作目录与经验，继承模型、分组或项目绑定；项目文件夹不复制，普通对话复制独立工作目录；不复制 MemoWeft（记忆核心）的记忆来源/绑定，原对话不变 | 404 SESSION_UNAVAILABLE；409 SESSION_BUSY；503 BACKEND_UNAVAILABLE | 桌、手、安、苹 |
 | GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
 | POST `/session-groups` | `{name}`，去首尾空白、非空、≤256字符 | 201 `{group:{id,name}}` | 400 INVALID_REQUEST | 桌、手、安、苹 |
 | PATCH `/session-groups/{id}` | `{name}`，同上 | 200 `{group:{id,name}}` | 404 NOT_FOUND | 桌、手、安、苹 |
@@ -125,7 +125,7 @@
 
 普通对话以 DSH（助手运行时）原生 `cwd` 绑定宿主数据目录内按账号散列 / 会话 ID 隔离的工作目录。脚本与笔记默认在这里，回到原会话沿用同一目录及原生上下文；`经验.md` 存在时作为本对话资料读取。压缩仍由既有原生摘要保留方法、脚本路径、命令与踩坑记录。项目的用户目录不属于对话删除范围。
 
-项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。
+项目会话可带 `projectId,projectRevision,projectName,projectRevoked`，移动或移除后可带 `projectNotice`（可显示的目录变更提示），浏览器会话带 `workspaceKind:"browser"`，共享会话带 `conversationId`。无法描述的会话返回 `title:"",running:false,sendAvailable:false,unavailable:true`。`sendAvailable` 是可发送权限，不是「当前空闲」；列表置顶项优先，同层按既有会话顺序；客户端按分组折叠显示，未分组在下。列表响应增加 `groups:[{id,name}]`，每会话增加 `pinned,unread,groupId` 及可选 `parentSessionId`；旧客户端可忽略。助手新消息水位超过已读水位时自动未读，打开对话由客户端 PATCH（部分更新）`unread:false` 自动已读；手动 `unread:true` 保留到下次打开/手动已读。分组与元数据持久保存且账号隔离，所有写操作沿用现有 `commands:write`、Cookie（会话凭据）/设备授权与 CSRF（跨站请求伪造防护）；已归档列表只在设置 → 已归档呈现，支持客户端标题搜索、恢复和既有删除确认。Android（安卓）原生 code23 起支持本节新增元数据、分组与分叉路由；新版界面包最低原生 code23，旧壳保留原版界面。创建走 `/commands`，没有 POST `/sessions`。
 
 UI-P4：每会话可选只读 `contextUsage:{usedTokens,contextWindow}`。`usedTokens` 是 DSH（助手运行时）原生 `contextPressure.projectedTokens`（缺失时用 `pressureTokens`）的当前上下文占用，会随压缩及有效上下文增减；不是请求用量的累加。`contextWindow` 来自原生最新 `request/context` 上限，缺失为 `null`。宿主未提供有效占用时省略整个字段，旧客户端可忽略；客户端未知上限不计算比例，不能用计费用量或默认模型容量伪造圆环。Android（安卓）现有宿主会话透传保留此字段，不新增原生业务路径。
 
@@ -290,18 +290,30 @@ MS-1 增加 `POST /account/models/check`：Cookie（浏览器会话凭据）及 
 
 模型代理是受限 OpenAI 兼容体：`model` 必须对应所选profile；messages 1–40条、文字≤16,384 UTF-16，角色 `system/user/assistant/tool`；最多8个function工具，`tool_choice` 仅 `auto/none/required`；`max_tokens` 1–8192，temperature 0–2。它是手机本地循环的模型请求通道，不是宿主DSH办事消息接口。`verify` 明确没有验证实际推理。
 
-### 3.11 项目与浏览器工作区（6）
+### 3.11 项目 / 文件夹与浏览器工作区（D37）
 
 | 方法与路径 | 请求参数/体 | 响应示例 / 状态 | 主要领域错误 | 使用端 |
 |---|---|---|---|---|
 | GET `/projects` | 无 | 200 `{"projects":[{"projectId":"project-…","name":"资料","revision":1,"revoked":false,"createdAt":"…"}],"canManage":true}` | — | 桌、手、安 |
-| POST `/projects` | `requestId,name,rootPath`；仅宿主所有者 | 201，重放200 `{"project":{…}}`；不回传rootPath | 403 `FORBIDDEN`；409 `REQUEST_CONFLICT`；503 `PROJECT_WINDOWS_REQUIRED / PROJECT_UNSAFE_PATH` | 桌 |
+| POST `/projects` | `requestId,name,rootPath,instructions?,permission?`；仅宿主所有者；permission 为 `read-only / write`，省略默认只读，instructions 默认空、≤16000字符 | 201，重放200 `{"project":{…}}`；不回传rootPath | 403 `FORBIDDEN`；409 `REQUEST_CONFLICT`；503 `PROJECT_WINDOWS_REQUIRED / PROJECT_UNSAFE_PATH` | 桌 |
 | POST `/projects/{projectId}/revoke` | `requestId`；仅宿主所有者 | 200 `{"project":{"projectId":"project-…","revision":2,"revoked":true,"revokedAt":"…"}}` | 404 `NOT_FOUND`；409 `PROJECT_REVOKED / REQUEST_CONFLICT` | 桌 |
 | POST `/projects/{projectId}/sessions` | `requestId,modelProfileId` | 202 `{"command":Command}` | 404 `NOT_FOUND`；409 `PROJECT_REVOKED`；422 `MODEL_UNAVAILABLE` | 桌、手、安 |
 | GET `/workspaces/browser` | 无 | 200 `{"available":true,"hostId":"host-…","workspaceKind":"browser"}`；可有 `reasonCode` | — | 桌、手、安 |
 | POST `/workspaces/browser/sessions` | `requestId,modelProfileId`；宿主所有者 | 202 `{"command":Command}` | 503 `BROWSER_UNAVAILABLE / BROWSER_CLEANUP_FAILED`；422 `MODEL_UNAVAILABLE` | 桌、手、安 |
 
-项目撤销使绑定旧revision的会话不可再发送。浏览器会话的消息文字需有初始 HTTP(S) URL，缺失可报400 `BROWSER_URL_REQUIRED`；执行失败可在命令/任务中出现 `BROWSER_*` 或 `PROJECT_*`。没有公开的任意项目文件/浏览器命令HTTP接口，成果与来源走任务/成果接口。
+D37 项目实体公开字段为 `projectId,name,instructions,permission,revision,revoked,createdAt,revokedAt?`。`rootPath`、目录身份与内部密钥仅保存在电脑；项目、会话与手机列表均不回传目录路径。新界面创建显式传 `permission:"write"`；旧 POST 省略权限保持只读。
+
+| 路由 | 请求 | 响应 / 行为 | 错误 | 客户端 |
+|---|---|---|---|---|
+| PATCH `/projects/{projectId}` | `expectedRevision`（必填整数）、至少一项 `name / instructions / permission`；name 沿用项目名规则，instructions ≤16000字符 | 200 `{project:Project}`，修订号加一；更新成员会话修订，后续回合自动使用新说明与权限 | 400 INVALID_REQUEST；403 FORBIDDEN；404 NOT_FOUND；409 PROJECT_REVISION_CHANGED / SESSION_BUSY | 桌；Apple（苹果）后续包 |
+| DELETE `/projects/{projectId}` | `{expectedRevision}` | 200 `{deleted:true,projectId}`；只移除登记，不删除文件夹；成员解绑并得到 `projectNotice`，历史来源、成果与会话保留 | 同上；重复删除404 | 桌；Apple后续包 |
+| PATCH `/sessions/{id}/metadata` | 原字段外增加 `projectId`（项目ID或null）；项目与groupId互斥 | 200 `{sessionId,projectId,projectRevision,groupId?,projectNotice}`；仅空闲且属于本人电脑的个人对话可移动；本人手机接续到电脑的对话保留原 conversationId 绑定，可同时归入项目；移入自动移出分组，移入分组自动移出项目；下一回合生效，历史文件不复制或移动 | 409 PROJECT_REVOKED / SESSION_BUSY / SESSION_READ_ONLY；404 SESSION_UNAVAILABLE | 桌、手、安；Apple后续包 |
+
+旧状态启动时原地迁移：保留 ID、名称、目录身份、修订、撤销状态、会话与来源；缺失权限补 `read-only`、说明补空。再次启动幂等。移除保留内部墓碑，旧来源与旧请求仍可查询。项目设置与移除需 `account:manage`，移动会话沿用 `commands:write`、Cookie（会话凭据）与 CSRF（跨站请求伪造防护）；项目只属于宿主所有者。运行或待处理 / 回执不确定的成员会话返回 SESSION_BUSY，先结束或核对后再改。
+
+项目新会话以原生 cwd（工作目录）创建于项目文件夹；普通对话沿用 D11 的独立目录。移动旧会话通过执行参数与 DSH（助手运行时）沙箱策略在下个回合切换默认目录，保留原生历史头及原文件。项目说明每回合注入，原生子任务继承。只读项目 write/edit 与命令写入被拒，不能用审批模式或工具升级参数绕过；可写项目使用原生 workspace-write（工作区内可写）边界，显式越界文件 / 命令写入首先拒绝；确需执行时可通过原生 `sandbox_permissions` 与 `justification` 申请一次升级，必须用户明确审批，即使对话为全部允许。项目文件夹路径也从审批说明中隐去，保留相对文件名。原生沙箱的内部临时运行目录沿用其既有行为。新增成果由磁盘读回核验登记，不要求旧摘要的 sourceSnapshotIds；旧摘要与来源接口仍兼容。项目不建立 MemoWeft 独立记忆世界。
+
+项目撤销旧接口保持兼容，使绑定旧revision的会话不可再发送。浏览器会话的消息文字需有初始 HTTP(S) URL，缺失可报400 `BROWSER_URL_REQUIRED`；执行失败可在命令/任务中出现 `BROWSER_*` 或 `PROJECT_*`。没有公开的任意项目文件/浏览器命令HTTP接口，成果与来源走任务/成果接口。
 
 ### 3.12 同步（9）
 

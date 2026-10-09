@@ -6,6 +6,7 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         if (identity !== core.state.identityGeneration) return;
         core.state.sessions = Array.isArray(payload.sessions) ? payload.sessions : [];
         core.state.sessionGroups = payload.groups || [];
+        await refreshSessionProjects();
         if (!core.state.selectedSessionId && !core.state.newConversation && core.state.sessions.length && core.state.ownerId) {
             let saved = null;
             try {
@@ -26,6 +27,65 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.updateAvailability();
     }
     function sessionList(archived = false) { return core.state.sessions.filter(item => (item.archived === true) === archived).sort((a,b) => Number(b.pinned) - Number(a.pinned)); }
+    async function refreshSessionProjects() {
+        const identity = core.state.identityGeneration;
+        try {
+            const payload = await core.accessApi('/projects');
+            if (identity !== core.state.identityGeneration) return;
+            core.state.projects = payload.projects || [];
+            core.state.projectCanManage = payload.canManage === true;
+            core.state.projectsError = '';
+        } catch (error) {
+            if (identity !== core.state.identityGeneration) return;
+            core.state.projectsError = '项目暂时无法读取，重新连接后再试。';
+        }
+    }
+    async function saveProject(project, fields) {
+        const identity = core.state.identityGeneration;
+        const result = await core.accessApi('/projects' + (project ? '/' + encodeURIComponent(project.projectId) : ''), {
+            method: project ? 'PATCH' : 'POST', protectedWrite: true,
+            body: project ? { ...fields, expectedRevision: project.revision } : fields });
+        if (identity !== core.state.identityGeneration) return null;
+        await core.refreshSessions(); return result;
+    }
+    async function removeProject(project) {
+        const identity = core.state.identityGeneration;
+        const result = await core.accessApi('/projects/' + encodeURIComponent(project.projectId), {
+            method: 'DELETE', protectedWrite: true, body: { expectedRevision: project.revision } });
+        if (identity !== core.state.identityGeneration) return null;
+        await core.refreshSessions(); return result;
+    }
+    async function createProjectConversation(project, modelProfileId) {
+        const identity = core.state.identityGeneration, owner = core.state.ownerId;
+        const key = `weftmate-project-conversation:${owner}:${project.projectId}`;
+        let intent;
+        try { intent = JSON.parse(environment.storage.getItem(key)); } catch {}
+        if (!intent) {
+            intent = { requestId: environment.crypto.randomUUID(), modelProfileId };
+            environment.storage.setItem(key, JSON.stringify(intent));
+        }
+        let command;
+        try {
+            command = (await core.accessApi(`/projects/${encodeURIComponent(project.projectId)}/sessions`, {
+                method: 'POST', protectedWrite: true, body: intent })).command;
+        } catch (error) {
+            if (identity === core.state.identityGeneration && error.status >= 400 && error.status < 500 && error.code !== 'REQUEST_CONFLICT') environment.storage.removeItem(key);
+            throw error;
+        }
+        const deadline = Date.now() + 45000;
+        while (identity === core.state.identityGeneration && Date.now() < deadline) {
+            if (command?.state === 'accepted_by_dsh') {
+                environment.storage.removeItem(key); return command.sessionId;
+            }
+            if (['rejected', 'uncertain'].includes(command?.state)) {
+                if (command.state === 'rejected') environment.storage.removeItem(key);
+                throw { code: command.errorCode || 'REQUEST_FAILED' };
+            }
+            await new Promise(resolve => setTimeout(resolve, 250));
+            command = (await core.accessApi(`/commands/by-request/${encodeURIComponent(intent.requestId)}`)).command;
+        }
+        throw { code: 'NETWORK' };
+    }
     async function updateSession(sessionId, patch) {
         const identity = core.state.identityGeneration;
         const result = await core.accessApi(`/sessions/${encodeURIComponent(sessionId)}/metadata`, { method: 'PATCH', body: patch, protectedWrite: true });
@@ -83,13 +143,14 @@ globalThis.WeftUiCore.factories.sessions = (core, effects, environment) => {
         effects.renderSessions(); effects.updateAvailability();
         return result;
     }
-    return { refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
+    return { refreshSessionProjects, saveProject, removeProject, createProjectConversation, refreshSessions, sessionList, updateSession, sessionGroupAction, forkSession, archiveSession, previewSessionForget, deleteSession, sessionLifecycleMessage };
 };
 globalThis.WeftUiCore.sessionMenuItems = session => [
     {id:'pin',label:session.pinned?'取消置顶':'置顶',key:'P'},
     {id:'unread',label:session.unread?'标记为已读':'标记为未读',key:'U'},
     {id:'rename',label:'重命名',key:'R'}, {id:'fork',label:'分叉',key:'F'},
-    {id:'group',label:'移至分组',submenu:true,separator:true},
+    {id:'project',label:'移至项目',submenu:true,separator:true},
+    {id:'group',label:'移至分组',submenu:true},
     {id:'archive',label:session.archived?'恢复对话':'归档',key:'A',separator:true},
     {id:'delete',label:'删除',key:'D',danger:true},
 ];
