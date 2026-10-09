@@ -1,0 +1,23 @@
+{
+  "elapsedMs": 1828075,
+  "cycles": 68,
+  "passed": 68,
+  "failed": 0,
+  "stopMedianMs": 1384,
+  "stopP95Ms": 2463,
+  "stopMaxMs": 2901,
+  "stopOver2s": 7,
+  "immediateMedianMs": 2.199999988079071,
+  "eventLoopP99Ms": 33.849343,
+  "eventLoopMaxMs": 78.118911,
+  "rssGrowthMiB": 78.82421875,
+  "exactStoreWrites": 579,
+  "storeWritesPerMinute": 19.003596679567305,
+  "logScan": {
+    "files": 1,
+    "bodyHits": 0,
+    "keyHits": 0,
+    "bytes": 78422
+  },
+  "limits": "Other independent QA runs and installer builds overlapped; not an isolated performance benchmark."
+}

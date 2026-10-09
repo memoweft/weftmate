@@ -1,0 +1,66 @@
+[
+  {
+    "name": "models",
+    "startedAt": "2026-10-09T18:56:57.143Z",
+    "durationMs": 30611,
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "[weftmate] ✓ 模型凭据保险库已就绪\n[weftmate] ✓ 伴侣状态就绪:星瑶\n[weftmate] DSH_HOME = C:\\Temp\\weftmate-ms1-alc3FW\\profile\\dsh-home\n[weftmate] [dsh] profile weftmate 已写入（C:\\Temp\\weftmate-ms1-alc3FW\\profile\\dsh-home）\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:50388\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:50394\n[weftmate] ✓ personal-host ready origin=http://127.0.0.1:50394\n[weftmate] ✓ personal-access listening origin=http://127.0.0.1:50403\n[weftmate] personal-host active; managed shutdown via launcher IPC\n[weftmate] ✓ account-model route gate idle previous=unknown\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:60577\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:60641\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:63093\n[weftmate] [dsh:stdout] dsh web: http://127.0.0.1:59012\n\nnode:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nAssertionError [ERR_ASSERTION]: The expression evaluated to a falsy value:\r\n\r\n  assert.ok(root.startsWith(tmpdir()))\r\n\r\n    at file:///D:/AIProjects/WeftMate/Worktrees/w4/tests/evidence/qa-3/runners/models.mjs:149:10\r\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {\r\n  generatedMessage: true,\r\n  code: 'ERR_ASSERTION',\r\n  actual: false,\r\n  expected: true,\r\n  operator: '==',\r\n  diff: 'simple'\r\n}\r\n\r\nNode.js v24.15.0\r\n"
+  },
+  {
+    "name": "d36",
+    "startedAt": "2026-10-09T18:57:27.756Z",
+    "durationMs": 8985,
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nbrowserType.launch: Executable doesn't exist at [windows-home]\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe\r\n╔════════════════════════════════════════════════════════════╗\r\n║ Looks like Playwright was just installed or updated.       ║\r\n║ Please run the following command to download new browsers: ║\r\n║                                                            ║\r\n║     npx playwright install                                 ║\r\n║                                                            ║\r\n║ <3 Playwright Team                                         ║\r\n╚════════════════════════════════════════════════════════════╝\r\n    at D:\\AIProjects\\WeftMate\\Worktrees\\w4\\tests\\evidence\\qa-3\\runners\\d36.mjs:36:30 {\r\n  log: [],\r\n  name: 'Error'\r\n}\r\n\r\nNode.js v24.15.0\r\n"
+  },
+  {
+    "name": "orphan",
+    "startedAt": "2026-10-09T18:57:36.742Z",
+    "durationMs": 90807,
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nelectron.launch: Timeout 90000ms exceeded.\r\nCall log:\r\n\u001b[2m  - <launching> \"D:\\AIProjects\\WeftMate\\Worktrees\\w4\\node_modules\\electron\\dist\\electron.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"D:\\AIProjects\\WeftMate\\Worktrees\\w4\\tests\\integration\\fx-12-orphan-bootstrap.mjs\"\u001b[22m\r\n\u001b[2m  - <launched> pid=17812\u001b[22m\r\n\u001b[2m  - [pid=17812][out]\u001b[22m\r\n\u001b[2m  - [pid=17812][err] Debugger listening on ws://127.0.0.1:63022/73c1a506-9675-4c36-bf8c-9e94060bd20e\u001b[22m\r\n\u001b[2m  - [pid=17812][err] For help, see: https://nodejs.org/learn/getting-started/debugging\u001b[22m\r\n\u001b[2m  - <ws connecting> ws://127.0.0.1:63022/73c1a506-9675-4c36-bf8c-9e94060bd20e\u001b[22m\r\n\u001b[2m  - <ws connected> ws://127.0.0.1:63022/73c1a506-9675-4c36-bf8c-9e94060bd20e\u001b[22m\r\n\u001b[2m  - [pid=17812][err] Debugger attached.\u001b[22m\r\n\u001b[2m  - [pid=17812][err] App threw an error during load\u001b[22m\r\n\u001b[2m  - [pid=17812][err] Error: FX12 requires a temporary profile\u001b[22m\r\n\u001b[2m  - [pid=17812][err]     at file:///D:/AIProjects/WeftMate/Worktrees/w4/tests/integration/fx-12-orphan-bootstrap.mjs:9:48\u001b[22m\r\n\u001b[2m  - [pid=17812][err]     at ModuleJob.run (node:internal/modules/esm/module_job:561:25)\u001b[22m\r\n\u001b[2m  - [pid=17812][err]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\u001b[22m\r\n\u001b[2m  - [pid=17812][err]     at async node:internal/modules/esm/loader:647:26\u001b[22m\r\n\u001b[2m  - [pid=17812][err]     at async loadApplicationPackage (file:///D:/AIProjects/WeftMate/Worktrees/w4/node_modules/electron/dist/resources/default_app.asar/main.js:133:9)\u001b[22m\r\n\u001b[2m  - [pid=17812][err]     at async file:///D:/AIProjects/WeftMate/Worktrees/w4/node_modules/electron/dist/resources/default_app.asar/main.js:277:9\u001b[22m\r\n\r\n    at async file:///D:/AIProjects/WeftMate/Worktrees/w4/tests/evidence/qa-3/runners/orphan.mjs:27:18 {\r\n  log: [\r\n    '  - <launching> \"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w4\\\\node_modules\\\\electron\\\\dist\\\\electron.exe\" \"--inspect=0\" \"--remote-debugging-port=0\" \"D:\\\\AIProjects\\\\WeftMate\\\\Worktrees\\\\w4\\\\tests\\\\integration\\\\fx-12-orphan-bootstrap.mjs\"',\r\n    '  - <launched> pid=17812',\r\n    '  - [pid=17812][out]',\r\n    '  - [pid=17812][err] Debugger listening on ws://127.0.0.1:63022/73c1a506-9675-4c36-bf8c-9e94060bd20e',\r\n    '  - [pid=17812][err] For help, see: https://nodejs.org/learn/getting-started/debugging',\r\n    '  - <ws connecting> ws://127.0.0.1:63022/73c1a506-9675-4c36-bf8c-9e94060bd20e',\r\n    '  - <ws connected> ws://127.0.0.1:63022/73c1a506-9675-4c36-bf8c-9e94060bd20e',\r\n    '  - [pid=17812][err] Debugger attached.',\r\n    '  - [pid=17812][err] App threw an error during load',\r\n    '  - [pid=17812][err] Error: FX12 requires a temporary profile',\r\n    '  - [pid=17812][err]     at file:///D:/AIProjects/WeftMate/Worktrees/w4/tests/integration/fx-12-orphan-bootstrap.mjs:9:48',\r\n    '  - [pid=17812][err]     at ModuleJob.run (node:internal/modules/esm/module_job:561:25)',\r\n    '  - [pid=17812][err]     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)',\r\n    '  - [pid=17812][err]     at async node:internal/modules/esm/loader:647:26',\r\n    '  - [pid=17812][err]     at async loadApplicationPackage (file:///D:/AIProjects/WeftMate/Worktrees/w4/node_modules/electron/dist/resources/default_app.asar/main.js:133:9)',\r\n    '  - [pid=17812][err]     at async file:///D:/AIProjects/WeftMate/Worktrees/w4/node_modules/electron/dist/resources/default_app.asar/main.js:277:9'\r\n  ],\r\n  name: 'TimeoutError'\r\n}\r\n\r\nNode.js v24.15.0\r\n"
+  },
+  {
+    "name": "scroll-focused",
+    "startedAt": "2026-10-09T18:59:07.549Z",
+    "durationMs": 3758,
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "node:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nbrowserType.launch: Executable doesn't exist at [windows-home]\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe\r\n╔════════════════════════════════════════════════════════════╗\r\n║ Looks like Playwright was just installed or updated.       ║\r\n║ Please run the following command to download new browsers: ║\r\n║                                                            ║\r\n║     npx playwright install                                 ║\r\n║                                                            ║\r\n║ <3 Playwright Team                                         ║\r\n╚════════════════════════════════════════════════════════════╝\r\n    at D:\\AIProjects\\WeftMate\\Worktrees\\w4\\tests\\evidence\\qa-3\\runners\\scroll-focused.mjs:10:621 {\r\n  log: [],\r\n  name: 'Error'\r\n}\r\n\r\nNode.js v24.15.0\r\n"
+  },
+  {
+    "name": "ux-1-consistency",
+    "startedAt": "2026-10-09T18:59:11.308Z",
+    "durationMs": 3703,
+    "exitCode": 1,
+    "stdout": "",
+    "stderr": "{\n  \"questions\": [],\n  \"nextBefore\": null,\n  \"hasMore\": false\n}\nWeftMate\n新对话\nCtrl N\nCtrl K\n\n未分组\n项目进度报告\n项目\n添加一个文件夹，开始项目对话。\nT\nTimelineFixture\n项目进度报告\n输出与来源\n本对话用量\n读取项目资料，运行测试，并保存一份进度报告。\n正在加载模型 合成模型… 18 秒\n输入消息\n自动\n合成会话\nnode:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nbrowserType.launch: Executable doesn't exist at [windows-home]\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe\r\n╔════════════════════════════════════════════════════════════╗\r\n║ Looks like Playwright was just installed or updated.       ║\r\n║ Please run the following command to download new browsers: ║\r\n║                                                            ║\r\n║     npx playwright install                                 ║\r\n║                                                            ║\r\n║ <3 Playwright Team                                         ║\r\n╚════════════════════════════════════════════════════════════╝\r\n    at D:\\AIProjects\\WeftMate\\Worktrees\\w4\\tests\\evidence\\qa-3\\runners\\ux-1-consistency.mjs:24:30 {\r\n  log: [],\r\n  name: 'Error'\r\n}\r\n\r\nNode.js v24.15.0\r\n"
+  },
+  {
+    "name": "legacy",
+    "startedAt": "2026-10-09T18:59:15.013Z",
+    "durationMs": 16199,
+    "exitCode": 1,
+    "stdout": "synthetic diagnostics [\n  { kind: 'create' },\n  { kind: 'message', mode: 'steer', text: '读取项目资料，运行测试，并保存一份进度报告。' }\n] { title: '新对话', draft: '', operation: '', transcript: '' }\n",
+    "stderr": "FIX-8 verification failed: browserType.launch: Executable doesn't exist at [windows-home]\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe\n╔════════════════════════════════════════════════════════════╗\n║ Looks like Playwright was just installed or updated.       ║\n║ Please run the following command to download new browsers: ║\n║                                                            ║\n║     npx playwright install                                 ║\n║                                                            ║\n║ <3 Playwright Team                                         ║\n╚════════════════════════════════════════════════════════════╝\nnode:internal/modules/run_main:107\r\n    triggerUncaughtException(\r\n    ^\r\n\r\nbrowserType.launch: Executable doesn't exist at [windows-home]\\AppData\\Local\\ms-playwright\\chromium_headless_shell-1248\\chrome-headless-shell-win64\\chrome-headless-shell.exe\r\n╔════════════════════════════════════════════════════════════╗\r\n║ Looks like Playwright was just installed or updated.       ║\r\n║ Please run the following command to download new browsers: ║\r\n║                                                            ║\r\n║     npx playwright install                                 ║\r\n║                                                            ║\r\n║ <3 Playwright Team                                         ║\r\n╚════════════════════════════════════════════════════════════╝\r\n    at D:\\AIProjects\\WeftMate\\Worktrees\\w4\\tests\\evidence\\qa-3\\runners\\legacy.mjs:52:28 {\r\n  log: [],\r\n  name: 'Error'\r\n}\r\n\r\nNode.js v24.15.0\r\n"
+  },
+  {
+    "name": "menus",
+    "startedAt": "2026-10-09T18:59:31.212Z",
+    "durationMs": 31653,
+    "exitCode": 0,
+    "stdout": "Isolated mimo root: C:\\Temp\\weftmate-ui-5-mimo-a29fdb19-88f1-45bd-8206-8524bd57151e\n{\"passed\":true,\"usage\":{\"requests\":7,\"unknownRequests\":0,\"unpricedRequests\":0,\"inputTokens\":21787,\"cachedInputTokens\":12608,\"outputTokens\":382,\"cost\":0.01019516},\"root\":\"C:\\\\Temp\\\\weftmate-ui-5-mimo-a29fdb19-88f1-45bd-8206-8524bd57151e\"}\n",
+    "stderr": ""
+  },
+  {
+    "name": "project-lifecycle",
+    "startedAt": "2026-10-09T19:00:02.866Z",
+    "durationMs": 70325,
+    "exitCode": 0,
+    "stdout": "Isolated mimo root: C:\\Temp\\weftmate-pj-1-mimo-a82f3e55-4054-42f3-96f0-6faea4ae1caf\nDesktop screenshots complete\nVerifying mobile interface bundle\nMobile web screenshots complete\nOutside write refused\nRead-only write refused\nPJ-1 real model and desktop verification passed\nIsolated result: C:\\Temp\\weftmate-pj-1-mimo-a82f3e55-4054-42f3-96f0-6faea4ae1caf\n",
+    "stderr": ""
+  }
+]

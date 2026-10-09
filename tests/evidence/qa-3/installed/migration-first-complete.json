@@ -1,0 +1,69 @@
+{
+  "backupReadOnly": true,
+  "sourceTaskUntouched": true,
+  "randomPort": true,
+  "publicOrigin": null,
+  "rehearsalAccountPassword": "temporary synthetic password on the copy only",
+  "paidModelRequests": 0,
+  "networkBoundary": "loopback only; 8081 and 18186 denied",
+  "originalFileCount": 66050,
+  "generatedModuleFallbackRecreated": true,
+  "accountIdentityRetained": true,
+  "prepareScript": true,
+  "rehearsalRefused": [
+    "Apply",
+    "Rollback"
+  ],
+  "sourceRuntimeReady": "ready",
+  "sourceVisibility": {
+    "conversationsVisible": true,
+    "memoryHttpStatus": 200,
+    "memoryVisible": false
+  },
+  "installedRuntimeReady": true,
+  "localLogin": true,
+  "sameDataDirectory": true,
+  "installedVisibility": {
+    "conversationsVisible": true,
+    "memoryHttpStatus": 200,
+    "memoryVisible": false
+  },
+  "verifyScript": false,
+  "verifyFailure": {
+    "httpStatus": 401,
+    "stage": "anonymous GET /personal/v1/config",
+    "script": "scripts/migrate-installed-desktop.ps1:69"
+  },
+  "components": {
+    "port": "random loopback, reachable",
+    "login": "copied owner with temporary local password, passed",
+    "memoryBridge": "isolated pinned Core against copied data; model traffic blocked",
+    "relay": "disabled for the offline rehearsal",
+    "certificate": "ACME disabled; existing certificate files preserved in the backup"
+  },
+  "startupFileChanges": {
+    "added": 654,
+    "removed": 32787,
+    "changed": 59
+  },
+  "sourceRollback": true,
+  "rollbackVisibility": {
+    "conversationsVisible": true,
+    "memoryHttpStatus": 200,
+    "memoryVisible": false
+  },
+  "restoredCopy": {
+    "added": 0,
+    "removed": 0,
+    "changed": 0
+  },
+  "backupAfter": {
+    "added": 0,
+    "removed": 0,
+    "changed": 0
+  },
+  "hashesMatchAfterRehearsalRestore": true,
+  "profileLifecyclePassed": true,
+  "passed": false,
+  "memoryVisibilityScope": "Only cognition category limit=1 was queried; 200 with no cognition item before/after/rollback does not prove all memory categories empty or any migration loss. Original memory visibility remains unverified."
+}

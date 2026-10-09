@@ -1,0 +1,79 @@
+{
+  "syntheticAccount": true,
+  "realNsis": true,
+  "realElectron": true,
+  "realDsh": true,
+  "paidModelRequests": 0,
+  "installation": "isolated per-user directory",
+  "shortcutAppUserModelId": "com.memoweft.weftmate.qa3",
+  "firstLaunch": true,
+  "autoStart": {
+    "version": "0.1.1-preview.1",
+    "autoStart": true,
+    "autoStartSupported": true
+  },
+  "uiDownloads": [
+    {
+      "path": "files/ui/0.1.1-preview.9/personal-access-ui/layout.js",
+      "bytes": 5074,
+      "range": false
+    }
+  ],
+  "uiTotalBytes": 1559700,
+  "busyRestartDeferred": true,
+  "taskCompleted": true,
+  "aboutVersionsChannelNotes": true,
+  "appTransfers": [
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 30968,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 8632,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 492389,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 628864,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 148996,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 376433,
+      "range": true
+    },
+    {
+      "path": "WeftMate-Setup-0.1.1-preview.2.exe",
+      "bytes": 136744,
+      "range": true
+    }
+  ],
+  "newInstallerBytes": 174217285,
+  "downloadedInstallerBytes": 1823026,
+  "appUpgrade": {
+    "phase": "healthy",
+    "version": "0.1.1-preview.2",
+    "previousVersion": "0.1.1-preview.1"
+  },
+  "rollback": {
+    "phase": "rolled-back",
+    "version": "0.1.1-preview.2",
+    "rejectedVersion": "0.1.1-preview.3"
+  },
+  "badVersionRejected": true,
+  "channelPersisted": true,
+  "uninstallRetainsData": true,
+  "passed": true
+}

@@ -1,0 +1,107 @@
+{
+  "syntheticOnly": true,
+  "productCodeModified": false,
+  "host": "Mac local isolated HTTP fixture, deterministic planner; no compiled DSH or paid model",
+  "batches": [
+    {
+      "name": "mac-a10",
+      "startedAtUnix": 1791575602.8060002,
+      "durationSec": 41.959,
+      "exitCode": 0
+    },
+    {
+      "name": "mac-projects-light",
+      "startedAtUnix": 1791575644.93376,
+      "durationSec": 10.987,
+      "exitCode": 0
+    },
+    {
+      "name": "mac-a13-light",
+      "startedAtUnix": 1791575656.0913558,
+      "durationSec": 28.158,
+      "exitCode": 0
+    },
+    {
+      "name": "mac-projects-dark",
+      "startedAtUnix": 1791575684.422703,
+      "durationSec": 10.922,
+      "exitCode": 0
+    },
+    {
+      "name": "mac-a13-dark",
+      "startedAtUnix": 1791575695.5173702,
+      "durationSec": 28.175,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-a6-light",
+      "startedAtUnix": 1791575724.43964,
+      "durationSec": 349.293,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-a6-dark",
+      "startedAtUnix": 1791576073.907448,
+      "durationSec": 284.938,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-a7-light",
+      "startedAtUnix": 1791576359.007396,
+      "durationSec": 260.093,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-a9-after-light",
+      "startedAtUnix": 1791576619.258827,
+      "durationSec": 235.341,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-projects-light",
+      "startedAtUnix": 1791576854.765326,
+      "durationSec": 111.05,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-a13-light",
+      "startedAtUnix": 1791576965.979593,
+      "durationSec": 146.766,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-projects-dark",
+      "startedAtUnix": 1791577112.918059,
+      "durationSec": 110.908,
+      "exitCode": 0
+    },
+    {
+      "name": "iphone-a13-dark",
+      "startedAtUnix": 1791577223.9881759,
+      "durationSec": 147.242,
+      "exitCode": 0
+    },
+    {
+      "name": "watch-live",
+      "startedAtUnix": 1791577371.747985,
+      "durationSec": 140.532,
+      "exitCode": 0
+    }
+  ],
+  "startedAt": 1791574091.9999301,
+  "resourceReleasedAt": 1791575602.7794292,
+  "fixtureSourceCommit": "b034e9eaddd4a732eb771235c3e0eaea1564921d",
+  "prebuiltBinarySha256": {
+    "mac": "c7e39ecb438fc9bf0ae189a036069c3cce4bce045214b1f41c1e99ca47327a38",
+    "phone": "92bb8f75a0f933f076e521ef5142c984584c93cf06e1ed529b893cf5b5eb1779",
+    "watch": "3fd03e78de5fad824fa3573b422e9119b658c33f970f42362805e7a398acd978"
+  },
+  "binaryProvenance": "Existing A13 binaries; fixture git HEAD may include later A14. Do not equate fixture HEAD with compiled binary version.",
+  "createdDevices": [
+    "4B0AC9AD-69CC-4C4B-BE01-96F623494AAB",
+    "ACF93D57-7097-45CC-8F26-6B7AEFD955E3"
+  ],
+  "createdPair": "2DADE614-C1DA-40F3-909F-BB93612097E3",
+  "finishedAt": 1791577513.069997,
+  "ownedSimulatorsDeleted": true
+}
