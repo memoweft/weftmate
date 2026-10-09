@@ -1,0 +1,2696 @@
+{
+  "revision": "fb448e80d5fdbb24fc48cafdcecead0f400011a4",
+  "model": "synthetic",
+  "startedAt": "2026-10-09T22:38:00.025Z",
+  "turns": [
+    {
+      "id": "memd-0",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 9242,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-6709d8ee-d1ca-4c97-8868-998ed2015dd8",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-78f9f8bf-6603-4ec2-9427-fefd74bb6fb8",
+          "startedAt": "2026-10-09T22:38:17.421Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:17.538Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:17.539Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:20.518Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:20.519Z"
+            },
+            {
+              "seq": 22,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:20.711Z"
+            },
+            {
+              "seq": 23,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:20.711Z"
+            },
+            {
+              "seq": 24,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:20.712Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 3348,
+          "endedAt": "2026-10-09T22:38:20.769Z"
+        },
+        {
+          "sessionId": "session-6709d8ee-d1ca-4c97-8868-998ed2015dd8",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-13d6917d-28c5-4861-9ecb-1b71896c0d6e",
+          "startedAt": "2026-10-09T22:38:20.829Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 25,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:20.938Z"
+            },
+            {
+              "seq": 26,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:20.939Z"
+            },
+            {
+              "seq": 29,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:22.115Z"
+            },
+            {
+              "seq": 30,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:22.115Z"
+            },
+            {
+              "seq": 38,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:22.191Z"
+            },
+            {
+              "seq": 39,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:22.191Z"
+            },
+            {
+              "seq": 40,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:22.192Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1396,
+          "endedAt": "2026-10-09T22:38:22.225Z"
+        },
+        {
+          "sessionId": "session-6709d8ee-d1ca-4c97-8868-998ed2015dd8",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-59564b21-6bfa-4cb5-ba3a-1cdc91566a19",
+          "startedAt": "2026-10-09T22:38:22.315Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 41,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:22.424Z"
+            },
+            {
+              "seq": 42,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:22.424Z"
+            },
+            {
+              "seq": 44,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:24.036Z"
+            },
+            {
+              "seq": 45,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:24.036Z"
+            },
+            {
+              "seq": 53,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:24.140Z"
+            },
+            {
+              "seq": 54,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:24.140Z"
+            },
+            {
+              "seq": 55,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:24.141Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1890,
+          "endedAt": "2026-10-09T22:38:24.205Z"
+        },
+        {
+          "sessionId": "session-6709d8ee-d1ca-4c97-8868-998ed2015dd8",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-88de56af-d142-47c2-87ae-0eb87cbb755b",
+          "startedAt": "2026-10-09T22:38:24.257Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 56,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:24.341Z"
+            },
+            {
+              "seq": 57,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:24.341Z"
+            },
+            {
+              "seq": 59,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:25.555Z"
+            },
+            {
+              "seq": 60,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:25.556Z"
+            },
+            {
+              "seq": 68,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:25.646Z"
+            },
+            {
+              "seq": 69,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:25.646Z"
+            },
+            {
+              "seq": 70,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:25.647Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1657,
+          "endedAt": "2026-10-09T22:38:25.914Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "<user-profile>\\AppData\\Local\\Temp\\weftmate-eval-memd-0-yWXoR0"
+    },
+    {
+      "id": "memd-1",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 3006,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-564f1511-14dd-4c8e-9235-a4a6c5c43165",
+          "startedAt": "2026-10-09T22:38:33.477Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:33.564Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:33.564Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:33.604Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:33.604Z"
+            },
+            {
+              "seq": 22,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:34.885Z"
+            },
+            {
+              "seq": 23,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:34.886Z"
+            },
+            {
+              "seq": 24,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:34.887Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1604,
+          "endedAt": "2026-10-09T22:38:35.081Z"
+        },
+        {
+          "sessionId": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-7c612a86-ea7e-4067-9e89-27ff5aedbdba",
+          "startedAt": "2026-10-09T22:38:35.129Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 25,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:35.211Z"
+            },
+            {
+              "seq": 26,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:35.212Z"
+            },
+            {
+              "seq": 28,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:35.268Z"
+            },
+            {
+              "seq": 29,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:35.269Z"
+            },
+            {
+              "seq": 37,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:35.335Z"
+            },
+            {
+              "seq": 38,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:35.335Z"
+            },
+            {
+              "seq": 39,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:35.337Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 281,
+          "endedAt": "2026-10-09T22:38:35.410Z"
+        },
+        {
+          "sessionId": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-f95f32f0-7721-4588-becc-b912436b80af",
+          "startedAt": "2026-10-09T22:38:35.457Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 40,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:35.539Z"
+            },
+            {
+              "seq": 41,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:35.539Z"
+            },
+            {
+              "seq": 43,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:35.596Z"
+            },
+            {
+              "seq": 44,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:35.596Z"
+            },
+            {
+              "seq": 52,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:35.662Z"
+            },
+            {
+              "seq": 53,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:35.663Z"
+            },
+            {
+              "seq": 54,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:35.663Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 283,
+          "endedAt": "2026-10-09T22:38:35.740Z"
+        },
+        {
+          "sessionId": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-9fdcba7a-1409-4b97-b298-4061704dbd99",
+          "startedAt": "2026-10-09T22:38:35.804Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 56,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:35.893Z"
+            },
+            {
+              "seq": 57,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:35.894Z"
+            },
+            {
+              "seq": 59,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:35.964Z"
+            },
+            {
+              "seq": 60,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:35.965Z"
+            },
+            {
+              "seq": 68,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:36.049Z"
+            },
+            {
+              "seq": 69,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:36.050Z"
+            },
+            {
+              "seq": 70,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:36.050Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 287,
+          "endedAt": "2026-10-09T22:38:36.091Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "<user-profile>\\AppData\\Local\\Temp\\weftmate-eval-memd-1-dc2RRH"
+    },
+    {
+      "id": "memd-2",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 5393,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-93b04a3c-8787-428a-8f0f-d25c832229b1",
+          "startedAt": "2026-10-09T22:38:43.633Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:43.719Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:43.719Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:43.775Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:43.776Z"
+            },
+            {
+              "seq": 23,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:45.053Z"
+            },
+            {
+              "seq": 24,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:45.053Z"
+            },
+            {
+              "seq": 25,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:45.054Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-36d8de55f292fb6e0ac912b966a850315ed86bb2e945e1a44345f696fd3f17d1",
+              "kind": "cognition",
+              "summary": "用户喝第3种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-4b35be8a7d65316e72f044691120f13a57bd7ea1cd5355b6f71c5e344c5c6f46",
+              "kind": "cognition",
+              "summary": "用户喝第11种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-6acf015d0b093154352c840d0acd649716247a6c3e65efc8379610abeafe3524",
+              "kind": "cognition",
+              "summary": "用户喝第12种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-6cf18ae03e44de61a91035257dc285ec10c7b9dda8c1b92143c4bf86743157d3",
+              "kind": "cognition",
+              "summary": "用户喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-8524a7ac57c0ef1031ff97b5829e79ebe9dc5e42a13b846aa854aa1f7d38b327",
+              "kind": "cognition",
+              "summary": "用户喝第13种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            }
+          ],
+          "durationMs": 1648,
+          "endedAt": "2026-10-09T22:38:45.282Z"
+        },
+        {
+          "sessionId": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-f19546db-8c40-4a57-a490-a9890211b14a",
+          "startedAt": "2026-10-09T22:38:45.344Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 26,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:45.425Z"
+            },
+            {
+              "seq": 27,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:45.425Z"
+            },
+            {
+              "seq": 29,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:45.765Z"
+            },
+            {
+              "seq": 30,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:45.765Z"
+            },
+            {
+              "seq": 38,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:45.833Z"
+            },
+            {
+              "seq": 39,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:45.834Z"
+            },
+            {
+              "seq": 40,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:45.834Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 562,
+          "endedAt": "2026-10-09T22:38:45.906Z"
+        },
+        {
+          "sessionId": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-cce7325d-21b7-4f3b-813f-0b4331c71f9c",
+          "startedAt": "2026-10-09T22:38:46.029Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 42,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:46.110Z"
+            },
+            {
+              "seq": 43,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:46.110Z"
+            },
+            {
+              "seq": 45,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:47.450Z"
+            },
+            {
+              "seq": 46,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:47.450Z"
+            },
+            {
+              "seq": 54,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:47.505Z"
+            },
+            {
+              "seq": 55,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:47.505Z"
+            },
+            {
+              "seq": 56,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:47.506Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1649,
+          "endedAt": "2026-10-09T22:38:47.678Z"
+        },
+        {
+          "sessionId": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-15e5e477-a1cd-4737-8f3a-44e1b239253a",
+          "startedAt": "2026-10-09T22:38:47.741Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 57,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:47.844Z"
+            },
+            {
+              "seq": 58,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:47.845Z"
+            },
+            {
+              "seq": 60,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:48.297Z"
+            },
+            {
+              "seq": 61,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:48.298Z"
+            },
+            {
+              "seq": 69,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:48.362Z"
+            },
+            {
+              "seq": 70,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:48.362Z"
+            },
+            {
+              "seq": 71,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:48.363Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 836,
+          "endedAt": "2026-10-09T22:38:48.577Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "<user-profile>\\AppData\\Local\\Temp\\weftmate-eval-memd-2-TMIEuH"
+    },
+    {
+      "id": "memd-3",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 4806,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-20401eb1-3ec6-4af0-84c8-c4209a2e09ed",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-0b309f82-8c20-40a6-bf3e-ac8066b1414f",
+          "startedAt": "2026-10-09T22:38:54.928Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:55.039Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:55.039Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:55.103Z"
+            },
+            {
+              "seq": 11,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:55.103Z"
+            },
+            {
+              "seq": 23,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:56.393Z"
+            },
+            {
+              "seq": 24,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:56.394Z"
+            },
+            {
+              "seq": 25,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:56.395Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-21d8c26523eb750d0a89279c4d1065f511a045ba6118807c611a892c2b2807bd",
+              "kind": "cognition",
+              "summary": "用户喝第21种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-36d8de55f292fb6e0ac912b966a850315ed86bb2e945e1a44345f696fd3f17d1",
+              "kind": "cognition",
+              "summary": "用户喝第3种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-4b35be8a7d65316e72f044691120f13a57bd7ea1cd5355b6f71c5e344c5c6f46",
+              "kind": "cognition",
+              "summary": "用户喝第11种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-55618b9e57e2b0773a47efc3db191c602978bf4e999c5fd1eb9066537c3e128b",
+              "kind": "cognition",
+              "summary": "用户喝第23种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-6acf015d0b093154352c840d0acd649716247a6c3e65efc8379610abeafe3524",
+              "kind": "cognition",
+              "summary": "用户喝第12种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            }
+          ],
+          "durationMs": 1671,
+          "endedAt": "2026-10-09T22:38:56.599Z"
+        },
+        {
+          "sessionId": "session-20401eb1-3ec6-4af0-84c8-c4209a2e09ed",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-2268f379-f7f6-496a-8853-a00b226e3759",
+          "startedAt": "2026-10-09T22:38:56.676Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 26,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:56.775Z"
+            },
+            {
+              "seq": 27,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:56.775Z"
+            },
+            {
+              "seq": 29,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:56.872Z"
+            },
+            {
+              "seq": 31,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:56.873Z"
+            },
+            {
+              "seq": 39,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:57.020Z"
+            },
+            {
+              "seq": 40,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:57.021Z"
+            },
+            {
+              "seq": 41,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:57.021Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-21d8c26523eb750d0a89279c4d1065f511a045ba6118807c611a892c2b2807bd",
+              "kind": "cognition",
+              "summary": "用户喝第21种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-36d8de55f292fb6e0ac912b966a850315ed86bb2e945e1a44345f696fd3f17d1",
+              "kind": "cognition",
+              "summary": "用户喝第3种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-4b35be8a7d65316e72f044691120f13a57bd7ea1cd5355b6f71c5e344c5c6f46",
+              "kind": "cognition",
+              "summary": "用户喝第11种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-55618b9e57e2b0773a47efc3db191c602978bf4e999c5fd1eb9066537c3e128b",
+              "kind": "cognition",
+              "summary": "用户喝第23种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-6acf015d0b093154352c840d0acd649716247a6c3e65efc8379610abeafe3524",
+              "kind": "cognition",
+              "summary": "用户喝第12种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            }
+          ],
+          "durationMs": 604,
+          "endedAt": "2026-10-09T22:38:57.280Z"
+        },
+        {
+          "sessionId": "session-20401eb1-3ec6-4af0-84c8-c4209a2e09ed",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-578c9b30-3dd8-40c5-b733-c821fbe45190",
+          "startedAt": "2026-10-09T22:38:57.393Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 43,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:57.534Z"
+            },
+            {
+              "seq": 44,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:57.534Z"
+            },
+            {
+              "seq": 46,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:57.629Z"
+            },
+            {
+              "seq": 48,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:57.630Z"
+            },
+            {
+              "seq": 56,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:57.769Z"
+            },
+            {
+              "seq": 57,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:57.769Z"
+            },
+            {
+              "seq": 58,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:57.770Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [
+            {
+              "id": "cognition-21d8c26523eb750d0a89279c4d1065f511a045ba6118807c611a892c2b2807bd",
+              "kind": "cognition",
+              "summary": "用户喝第21种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-36d8de55f292fb6e0ac912b966a850315ed86bb2e945e1a44345f696fd3f17d1",
+              "kind": "cognition",
+              "summary": "用户喝第3种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-4b35be8a7d65316e72f044691120f13a57bd7ea1cd5355b6f71c5e344c5c6f46",
+              "kind": "cognition",
+              "summary": "用户喝第11种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-55618b9e57e2b0773a47efc3db191c602978bf4e999c5fd1eb9066537c3e128b",
+              "kind": "cognition",
+              "summary": "用户喝第23种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            },
+            {
+              "id": "cognition-6acf015d0b093154352c840d0acd649716247a6c3e65efc8379610abeafe3524",
+              "kind": "cognition",
+              "summary": "用户喝第12种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。"
+            }
+          ],
+          "durationMs": 637,
+          "endedAt": "2026-10-09T22:38:58.031Z"
+        },
+        {
+          "sessionId": "session-20401eb1-3ec6-4af0-84c8-c4209a2e09ed",
+          "modelProfileId": "private-model-379a989cae35b3839420e38409f7d384af0fe844",
+          "commandId": "cmd-fcda27fb-0ff4-4d88-a185-900d6069faa8",
+          "startedAt": "2026-10-09T22:38:58.125Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 59,
+              "type": "task.queued",
+              "at": "2026-10-09T22:38:58.320Z"
+            },
+            {
+              "seq": 60,
+              "type": "turn.started",
+              "at": "2026-10-09T22:38:58.321Z"
+            },
+            {
+              "seq": 62,
+              "type": "task.started",
+              "at": "2026-10-09T22:38:58.912Z"
+            },
+            {
+              "seq": 63,
+              "type": "user.message",
+              "at": "2026-10-09T22:38:58.912Z"
+            },
+            {
+              "seq": 71,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:38:58.985Z"
+            },
+            {
+              "seq": 72,
+              "type": "task.ended",
+              "at": "2026-10-09T22:38:58.986Z"
+            },
+            {
+              "seq": 73,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:38:58.986Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1134,
+          "endedAt": "2026-10-09T22:38:59.259Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "<user-profile>\\AppData\\Local\\Temp\\weftmate-eval-memd-3-2S3uzk"
+    },
+    {
+      "id": "memd-4",
+      "category": "memory",
+      "title": "Daily conversations",
+      "status": "passed",
+      "durationMs": 4150,
+      "checks": [
+        {
+          "type": "turn_status",
+          "status": "passed"
+        }
+      ],
+      "turns": [
+        {
+          "sessionId": "session-ac69336f-265c-4797-8151-a29a078986b0",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-e0acce0b-2b75-48a4-8c2f-4d26ff813195",
+          "startedAt": "2026-10-09T22:39:05.858Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 4,
+              "type": "task.queued",
+              "at": "2026-10-09T22:39:05.953Z"
+            },
+            {
+              "seq": 5,
+              "type": "turn.started",
+              "at": "2026-10-09T22:39:05.953Z"
+            },
+            {
+              "seq": 7,
+              "type": "task.started",
+              "at": "2026-10-09T22:39:05.986Z"
+            },
+            {
+              "seq": 8,
+              "type": "user.message",
+              "at": "2026-10-09T22:39:05.986Z"
+            },
+            {
+              "seq": 22,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:39:07.260Z"
+            },
+            {
+              "seq": 23,
+              "type": "task.ended",
+              "at": "2026-10-09T22:39:07.260Z"
+            },
+            {
+              "seq": 24,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:39:07.261Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 1434,
+          "endedAt": "2026-10-09T22:39:07.292Z"
+        },
+        {
+          "sessionId": "session-ac69336f-265c-4797-8151-a29a078986b0",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-310583ff-6bdb-4163-a83d-2ea2e563582f",
+          "startedAt": "2026-10-09T22:39:07.368Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 25,
+              "type": "task.queued",
+              "at": "2026-10-09T22:39:07.690Z"
+            },
+            {
+              "seq": 26,
+              "type": "turn.started",
+              "at": "2026-10-09T22:39:07.691Z"
+            },
+            {
+              "seq": 28,
+              "type": "task.started",
+              "at": "2026-10-09T22:39:07.825Z"
+            },
+            {
+              "seq": 29,
+              "type": "user.message",
+              "at": "2026-10-09T22:39:07.826Z"
+            },
+            {
+              "seq": 37,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:39:07.887Z"
+            },
+            {
+              "seq": 38,
+              "type": "task.ended",
+              "at": "2026-10-09T22:39:07.888Z"
+            },
+            {
+              "seq": 39,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:39:07.888Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 731,
+          "endedAt": "2026-10-09T22:39:08.099Z"
+        },
+        {
+          "sessionId": "session-ac69336f-265c-4797-8151-a29a078986b0",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-6acbf78d-0eea-4119-8187-437510ccb7c8",
+          "startedAt": "2026-10-09T22:39:08.444Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 41,
+              "type": "task.queued",
+              "at": "2026-10-09T22:39:08.580Z"
+            },
+            {
+              "seq": 42,
+              "type": "turn.started",
+              "at": "2026-10-09T22:39:08.581Z"
+            },
+            {
+              "seq": 44,
+              "type": "task.started",
+              "at": "2026-10-09T22:39:08.664Z"
+            },
+            {
+              "seq": 45,
+              "type": "user.message",
+              "at": "2026-10-09T22:39:08.664Z"
+            },
+            {
+              "seq": 53,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:39:08.765Z"
+            },
+            {
+              "seq": 54,
+              "type": "task.ended",
+              "at": "2026-10-09T22:39:08.766Z"
+            },
+            {
+              "seq": 55,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:39:08.769Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 597,
+          "endedAt": "2026-10-09T22:39:09.041Z"
+        },
+        {
+          "sessionId": "session-ac69336f-265c-4797-8151-a29a078986b0",
+          "modelProfileId": "private-model-a2f7ae0a9539330fb5098af4fa02a1ce29334800",
+          "commandId": "cmd-805d159c-1e78-4f57-baa3-5d81800a5b20",
+          "startedAt": "2026-10-09T22:39:09.125Z",
+          "reply": "收到，我理解了。",
+          "status": "completed",
+          "approvals": [],
+          "timeline": [
+            {
+              "seq": 56,
+              "type": "task.queued",
+              "at": "2026-10-09T22:39:09.267Z"
+            },
+            {
+              "seq": 57,
+              "type": "turn.started",
+              "at": "2026-10-09T22:39:09.267Z"
+            },
+            {
+              "seq": 59,
+              "type": "task.started",
+              "at": "2026-10-09T22:39:09.330Z"
+            },
+            {
+              "seq": 60,
+              "type": "user.message",
+              "at": "2026-10-09T22:39:09.330Z"
+            },
+            {
+              "seq": 68,
+              "type": "assistant.message",
+              "at": "2026-10-09T22:39:09.406Z"
+            },
+            {
+              "seq": 69,
+              "type": "task.ended",
+              "at": "2026-10-09T22:39:09.406Z"
+            },
+            {
+              "seq": 70,
+              "type": "turn.ended",
+              "at": "2026-10-09T22:39:09.407Z"
+            }
+          ],
+          "memoryUsedSupported": true,
+          "memoryUsed": [],
+          "durationMs": 345,
+          "endedAt": "2026-10-09T22:39:09.470Z"
+        }
+      ],
+      "replySummary": "收到，我理解了。",
+      "notes": "Synthetic daily preferences",
+      "scratchDir": "<user-profile>\\AppData\\Local\\Temp\\weftmate-eval-memd-4-aY3UmP"
+    }
+  ],
+  "requests": [
+    {
+      "id": 1,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:20.678Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 2,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:20.919Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 3,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:22.168Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 4,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:22.550Z",
+      "formation": true,
+      "status": 503
+    },
+    {
+      "id": 5,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:24.094Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 6,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:25.609Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 7,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:25.701Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 8,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:26.723Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 9,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:27.710Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 10,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:29.574Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 11,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:33.663Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 12,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:35.317Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 13,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:35.646Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 14,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:35.797Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 15,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:36.020Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 16,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:39.321Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 17,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:40.050Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 18,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:40.956Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 19,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:42.200Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 20,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:43.823Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 21,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:45.808Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 22,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:45.894Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 23,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:45.996Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 24,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:47.486Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 25,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:48.344Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 26,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:49.185Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 27,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:49.910Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 28,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:38:50.692Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 29,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:55.152Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 30,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:56.956Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 31,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:57.284Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 32,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:57.729Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 33,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:58.964Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 34,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:38:59.024Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 35,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:39:01.383Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 36,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:39:03.651Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 37,
+      "model": "daily-second",
+      "stream": true,
+      "at": "2026-10-09T22:39:04.252Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 38,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:06.024Z",
+      "switch": true,
+      "switchDelayMs": 1200,
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 39,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:07.867Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 40,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:08.452Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 41,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:08.735Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 42,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:09.379Z",
+      "formation": false,
+      "status": 200
+    },
+    {
+      "id": 43,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:12.453Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 44,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:12.940Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 45,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:13.446Z",
+      "formation": true,
+      "status": 200
+    },
+    {
+      "id": 46,
+      "model": "daily-local",
+      "stream": true,
+      "at": "2026-10-09T22:39:13.959Z",
+      "formation": true,
+      "status": 200
+    }
+  ],
+  "snapshots": [
+    {
+      "label": "before",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "unavailable",
+          "worldRevision": null,
+          "capabilities": {
+            "list": false,
+            "source": false,
+            "inject": false,
+            "correct": false,
+            "mute": false,
+            "deleteEvidence": false,
+            "deleteWorldItem": false
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE",
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": null,
+      "ipc": {
+        "recallAttempts": 0,
+        "recallRequests": 0,
+        "recallWithContext": 0,
+        "recallReplies": 0,
+        "ingestRequests": 0,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-0",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 2,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": false,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 1,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_BOUNDARY_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-6709d8ee-d1ca-4c97-8868-998ed2015dd8",
+              "result_session_id": "session-6709d8ee-d1ca-4c97-8868-998ed2015dd8",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第4种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "611d0226-bbc3-4848-8d89-1c66a1fe062c",
+                  "timestamp": 1791585505
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "6bea891a-f6f8-4ae0-99f7-4876ac75eec6",
+                  "timestamp": 1791585505
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:565b10af29ece9fc416dfe442f441540:5fc20d8fcd9015a49b86c6a039a28b499b44c30bfc9e2e915b428af451d5c7cc",
+              "payload_hash": "5fc20d8fcd9015a49b86c6a039a28b499b44c30bfc9e2e915b428af451d5c7cc"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 4,
+        "recallRequests": 4,
+        "recallWithContext": 0,
+        "recallReplies": 4,
+        "ingestRequests": 4,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-0",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 4,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 4,
+        "recallRequests": 4,
+        "recallWithContext": 0,
+        "recallReplies": 4,
+        "ingestRequests": 4,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-1",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 4,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": false,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 2,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE",
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_MODEL_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+              "result_session_id": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第11种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "8e9b8387-3861-467b-ad31-954a141a9aea",
+                  "timestamp": 1791585513
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "7212bd8d-0faa-4aa4-b742-435384616108",
+                  "timestamp": 1791585514
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:720005be39a4aef9b379390ce9b9f954:f2c6a6118a2a64e5600f0f62521af45789a294166b33418d5c2ba750c3c775af",
+              "payload_hash": "f2c6a6118a2a64e5600f0f62521af45789a294166b33418d5c2ba750c3c775af"
+            },
+            "blocked": false,
+            "lastFailureCode": "MEMORY_MODEL_UNAVAILABLE"
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+              "result_session_id": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第12种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "24cce898-b2b4-4509-84ba-315eb3c99212",
+                  "timestamp": 1791585515
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "c6558646-7dfe-4e5d-bbef-9d6850d99138",
+                  "timestamp": 1791585515
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:394c714bbb68795800b2f549cc067037:c4681476b52e607bb4e7cabae389a0eca3166eb313edbbdda8503ec2284751fc",
+              "payload_hash": "c4681476b52e607bb4e7cabae389a0eca3166eb313edbbdda8503ec2284751fc"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 8,
+        "recallRequests": 8,
+        "recallWithContext": 0,
+        "recallReplies": 8,
+        "ingestRequests": 8,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-1",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 7,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": false,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 1,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 1,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_FORMATION_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+              "result_session_id": "session-8690fe69-d64f-4a49-af8f-38cc3724c1af",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第14种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "5d8f51d7-a788-44f3-807e-772aaafb42ec",
+                  "timestamp": 1791585515
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "52c969fc-0f0c-4af5-a1d6-25e6694ddc34",
+                  "timestamp": 1791585516
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:76908158b495c6b05e066c768fe0eb21:a2e6f45ddac765bb58d702158a049af1034474e8b78524d1a075bba22d4500ef",
+              "payload_hash": "a2e6f45ddac765bb58d702158a049af1034474e8b78524d1a075bba22d4500ef"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 8,
+        "recallRequests": 8,
+        "recallWithContext": 0,
+        "recallReplies": 8,
+        "ingestRequests": 8,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-2",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 10,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": false,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 2,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 1,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_FORMATION_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+              "result_session_id": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第23种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "adc87a5b-6591-4ea5-8ad4-e9af01cea4ce",
+                  "timestamp": 1791585527
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "e58df792-dc37-407f-830e-00cf5efa256d",
+                  "timestamp": 1791585527
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:130108657bff46cff2ee241a8190d35e:96bc07b3b9226bc5a9170c5a4fb5ad14fb4ba4772ea41de95c25981b7402222f",
+              "payload_hash": "96bc07b3b9226bc5a9170c5a4fb5ad14fb4ba4772ea41de95c25981b7402222f"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+              "result_session_id": "session-749b7f59-cf58-4943-ac34-5fc6d7345f81",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第24种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "8f625992-8e7c-43a3-b9d6-96cd1c5b4f5b",
+                  "timestamp": 1791585528
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "fba9e1e6-fd0f-4c8d-a62a-59cc31102373",
+                  "timestamp": 1791585528
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:4bad38f5aacb7a67cdc5cfafbd83b419:49c7f543d22293453752b225b61e071a0b4a428617e8c35bb96cb80794a6800b",
+              "payload_hash": "49c7f543d22293453752b225b61e071a0b4a428617e8c35bb96cb80794a6800b"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 12,
+        "recallRequests": 12,
+        "recallWithContext": 1,
+        "recallReplies": 12,
+        "ingestRequests": 12,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-2",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 12,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 12,
+        "recallRequests": 12,
+        "recallWithContext": 1,
+        "recallReplies": 12,
+        "ingestRequests": 12,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-3",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "degraded",
+          "version": "2.0.0",
+          "worldRevision": 13,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": false,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 1,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "reasonCode": "MEMORY_BOUNDARY_PENDING",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-20401eb1-3ec6-4af0-84c8-c4209a2e09ed",
+              "result_session_id": "session-20401eb1-3ec6-4af0-84c8-c4209a2e09ed",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第32种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "a1743573-efe3-4d52-9fc5-60adad4f9065",
+                  "timestamp": 1791585536
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "c15730bf-136f-4ef0-92cb-dd9d52a4c5fe",
+                  "timestamp": 1791585537
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:a236d57681a684052bb3b73d6ee9c905:71f9e929c8455786e0779eb471214531bcbd00d4ee34732ba262f5e9c7c66094",
+              "payload_hash": "71f9e929c8455786e0779eb471214531bcbd00d4ee34732ba262f5e9c7c66094"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 16,
+        "recallRequests": 16,
+        "recallWithContext": 4,
+        "recallReplies": 16,
+        "ingestRequests": 12,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-3",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 16,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 16,
+        "recallRequests": 16,
+        "recallWithContext": 4,
+        "recallReplies": 16,
+        "ingestRequests": 12,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "group-4",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "unavailable",
+          "worldRevision": null,
+          "capabilities": {
+            "list": false,
+            "source": false,
+            "inject": false,
+            "correct": false,
+            "mute": false,
+            "deleteEvidence": false,
+            "deleteWorldItem": false
+          },
+          "pendingBoundaryCount": 2,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": "MEMORY_PROCESS_UNAVAILABLE",
+          "reasonCode": "MEMORY_PROCESS_UNAVAILABLE",
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-ac69336f-265c-4797-8151-a29a078986b0",
+              "result_session_id": "session-ac69336f-265c-4797-8151-a29a078986b0",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第41种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "6f0372ea-5b43-4a2e-b1a6-1ead95bac9e5",
+                  "timestamp": 1791585545
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "0ba6f031-493c-4be6-88c3-e630bfc500d1",
+                  "timestamp": 1791585547
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:9835686e69bb98e33ceb0b0cec67bef6:a64ec3dc146698c46e7f6f296bc734c234995e74172c50779073466fda598c53",
+              "payload_hash": "a64ec3dc146698c46e7f6f296bc734c234995e74172c50779073466fda598c53"
+            },
+            "blocked": false,
+            "lastFailureCode": "MEMORY_PROCESS_UNAVAILABLE"
+          },
+          {
+            "boundary": {
+              "schema_version": 1,
+              "provider_name": "memoweft",
+              "parent_session_id": "session-ac69336f-265c-4797-8151-a29a078986b0",
+              "result_session_id": "session-ac69336f-265c-4797-8151-a29a078986b0",
+              "mode": "turn",
+              "source_messages": [
+                {
+                  "role": "user",
+                  "content": "我喝第42种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+                  "source_ref": "source:0",
+                  "message_id": "f2e36f2b-4de8-4a26-8fff-cc197a69e732",
+                  "timestamp": 1791585547
+                },
+                {
+                  "role": "assistant",
+                  "content": "收到，我理解了。",
+                  "source_ref": "source:1",
+                  "message_id": "d53d47d7-2db5-470b-b80e-83ae123e4aa2",
+                  "timestamp": 1791585547
+                }
+              ],
+              "event_id": "weftmate-turn-boundary-v1:4557fe9de0a1076d2aecddd95b82d78f:44db2f267a9de05141595c5b437eb1b69af25b6d178adeb6d2ae4823dc2f6e76",
+              "payload_hash": "44db2f267a9de05141595c5b437eb1b69af25b6d178adeb6d2ae4823dc2f6e76"
+            },
+            "blocked": false,
+            "lastFailureCode": null
+          }
+        ],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 20,
+        "recallRequests": 20,
+        "recallWithContext": 4,
+        "recallReplies": 20,
+        "ingestRequests": 16,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "recovered-4",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 20,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 20,
+        "recallRequests": 20,
+        "recallWithContext": 4,
+        "recallReplies": 20,
+        "ingestRequests": 16,
+        "rejectedBindings": 0
+      }
+    },
+    {
+      "label": "final",
+      "status": {
+        "status": 200,
+        "body": {
+          "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+          "state": "ready",
+          "version": "2.0.0",
+          "worldRevision": 20,
+          "capabilities": {
+            "list": true,
+            "source": true,
+            "inject": true,
+            "correct": true,
+            "mute": true,
+            "deleteEvidence": true,
+            "deleteWorldItem": true
+          },
+          "pendingBoundaryCount": 0,
+          "blockedBoundaryCount": 0,
+          "discardedBoundaryCount": 0,
+          "lastFailureCode": null,
+          "pendingFormationCount": 0,
+          "failedFormationCount": 0,
+          "backfill": null,
+          "captureError": null
+        }
+      },
+      "outbox": {
+        "version": 2,
+        "ownerId": "owner-41abcf2f-292c-4678-8046-d94b76484e54",
+        "items": [],
+        "discardedBoundaryCount": 0,
+        "lastFailureCode": null
+      },
+      "ipc": {
+        "recallAttempts": 20,
+        "recallRequests": 20,
+        "recallWithContext": 4,
+        "recallReplies": 20,
+        "ingestRequests": 16,
+        "rejectedBindings": 0
+      }
+    }
+  ],
+  "formalItems": [
+    {
+      "id": "cognition-b9bf10b6260dd1188196218223862ee2bca5806c38f98b11fbb85a6a0efa9c22",
+      "kind": "cognition",
+      "text": "用户喝第2种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:25.745Z",
+      "updatedAt": "2026-10-09T22:38:25.745Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-36d8de55f292fb6e0ac912b966a850315ed86bb2e945e1a44345f696fd3f17d1",
+      "kind": "cognition",
+      "text": "用户喝第3种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:26.760Z",
+      "updatedAt": "2026-10-09T22:38:26.760Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-6cf18ae03e44de61a91035257dc285ec10c7b9dda8c1b92143c4bf86743157d3",
+      "kind": "cognition",
+      "text": "用户喝第1种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:27.742Z",
+      "updatedAt": "2026-10-09T22:38:27.742Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-d685e8d4f8a45d80082ee56ba23b37f105f9b8a8504a4dda83c33cb5eff73d35",
+      "kind": "cognition",
+      "text": "用户喝第4种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:29.615Z",
+      "updatedAt": "2026-10-09T22:38:29.615Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-4b35be8a7d65316e72f044691120f13a57bd7ea1cd5355b6f71c5e344c5c6f46",
+      "kind": "cognition",
+      "text": "用户喝第11种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:39.358Z",
+      "updatedAt": "2026-10-09T22:38:39.358Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-6acf015d0b093154352c840d0acd649716247a6c3e65efc8379610abeafe3524",
+      "kind": "cognition",
+      "text": "用户喝第12种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:40.090Z",
+      "updatedAt": "2026-10-09T22:38:40.090Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-8524a7ac57c0ef1031ff97b5829e79ebe9dc5e42a13b846aa854aa1f7d38b327",
+      "kind": "cognition",
+      "text": "用户喝第13种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:41.009Z",
+      "updatedAt": "2026-10-09T22:38:41.009Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-a59ed095bb30919c21f67227a5c5cfd79f6729838ca32c5e3d7494a204391247",
+      "kind": "cognition",
+      "text": "用户喝第14种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:42.241Z",
+      "updatedAt": "2026-10-09T22:38:42.241Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-21d8c26523eb750d0a89279c4d1065f511a045ba6118807c611a892c2b2807bd",
+      "kind": "cognition",
+      "text": "用户喝第21种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:46.039Z",
+      "updatedAt": "2026-10-09T22:38:46.039Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-c9a78e70d08f07b66995f8068456fa8d87fd83828ff9cd72d4ecf14e9b75ab15",
+      "kind": "cognition",
+      "text": "用户喝第22种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:49.222Z",
+      "updatedAt": "2026-10-09T22:38:49.222Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-55618b9e57e2b0773a47efc3db191c602978bf4e999c5fd1eb9066537c3e128b",
+      "kind": "cognition",
+      "text": "用户喝第23种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:49.943Z",
+      "updatedAt": "2026-10-09T22:38:49.943Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-cca7ff131c515fa7a30a910c6930748d03da1b4d7cdc7f0f66dc3b4a743f0d89",
+      "kind": "cognition",
+      "text": "用户喝第24种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:50.729Z",
+      "updatedAt": "2026-10-09T22:38:50.729Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-ce69d7804b08c6821a57122bf930b667eef3208b022f0d92757f6c8e9d57e256",
+      "kind": "cognition",
+      "text": "用户喝第31种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:38:59.053Z",
+      "updatedAt": "2026-10-09T22:38:59.053Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-4e80ceb204a7deb3001f8ed331556006ae507b38a19939d0f4326c9ede030b06",
+      "kind": "cognition",
+      "text": "用户喝第32种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:39:01.415Z",
+      "updatedAt": "2026-10-09T22:39:01.415Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-7df921b079f6746714cefc9f51dd6ca098363b552dee1efbe3447c4f2383fc7a",
+      "kind": "cognition",
+      "text": "用户喝第33种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:39:03.687Z",
+      "updatedAt": "2026-10-09T22:39:03.687Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-e600fc969c3455b5d7f428d7a6bea29863e2fb1ba8632eb301bb00749a3a48e3",
+      "kind": "cognition",
+      "text": "用户喝第34种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:39:04.290Z",
+      "updatedAt": "2026-10-09T22:39:04.290Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-3b27ba72e2c5e52ada93e2225e02ae546246696c31c1c043cee5f169c4e0f35c",
+      "kind": "cognition",
+      "text": "用户喝第41种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:39:12.488Z",
+      "updatedAt": "2026-10-09T22:39:12.488Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-a256c04d501ada2b3d4fe265f242ecbedb6dc27d48250e0ec1d1f4399ffa09a3",
+      "kind": "cognition",
+      "text": "用户喝第42种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:39:12.974Z",
+      "updatedAt": "2026-10-09T22:39:12.974Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-a857dc63e0215bea00c5b3ec80058cf1b59b478f9e6cdcd554c9c72751d923ba",
+      "kind": "cognition",
+      "text": "用户喝第43种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:39:13.481Z",
+      "updatedAt": "2026-10-09T22:39:13.481Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    },
+    {
+      "id": "cognition-921ba51fbbd7b805534041ea9512e4da7da3c419cbbf1ac71023349bef886265",
+      "kind": "cognition",
+      "text": "用户喝第44种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "truncated": false,
+      "currentState": "current",
+      "createdAt": "2026-10-09T22:39:13.996Z",
+      "updatedAt": "2026-10-09T22:39:13.996Z",
+      "lifecycle": {
+        "invalidAt": null,
+        "archivedAt": null,
+        "mutedAt": null
+      },
+      "sourceCount": 1
+    }
+  ],
+  "sources": [
+    {
+      "evidenceId": "1298cae1-1e19-415a-ac4d-825849f05449",
+      "relation": "support",
+      "currentnessState": "current",
+      "permissions": {
+        "allowLocalRead": true,
+        "allowCloudRead": true,
+        "allowInference": true
+      },
+      "contentAvailable": true,
+      "summary": "我喝第2种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "rawContent": "我喝第2种花茶时偏好加一小撮肉桂粉。请简短回复收到，不调用工具。",
+      "rawContentTruncated": false,
+      "recordedAt": "2026-10-09T22:38:25.570Z"
+    }
+  ],
+  "storage": {
+    "evidence": 20,
+    "interaction_context": 20,
+    "memory_world_job": 20,
+    "cognition": 20
+  }
+}

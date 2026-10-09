@@ -115,7 +115,7 @@ UX-4：创建分支后，通过原有 `/commands` 发送 `kind:"session.message"
 
 主对话遵循 D42 / IA：编辑称「从这里开旁聊并重发」，重新生成同样开旁聊。使用既有 `session.side.create`，`originChatId/originEventId` 指向所选消息，父级为本账户主对话；原主对话保留，以来源引用带上下文，不做整条主对话分叉，也不创建主对话版本切换。重新生成先按逻辑历史找到锚点前的用户消息，支持跨执行段。新旁聊创建回执被受理后再发修改后的 / 原始用户输入。
 
-UX-4 的有用 / 没用反馈仅存当前设备、当前账号的本机记录（`version,sessionId,seq,rating,reason,note,at`；手机本机记录用 `source:"phone",conversationId,messageId` 代替宿主锚点）；没有上传反馈的 HTTP 路由。Windows（视窗系统）通过已有原生加密偏好存储持久化反馈，避免程序随机端口变化丢记录；网页 / 安卓在设备存储保存。导出复用完整历史分页，主对话用跨段 `/chats/{id}/events`；客户端脱敏后预览并保存 Markdown（标记文本）/ PNG（图片文件），工具步骤默认不含，附件仅列名称。安卓新增系统保存文件桥，界面包最低原生 code26。Apple（苹果端）须用相同消息锚点、回执与版本关系，反馈留设备端，导出前沿用凭据 / 本机路径脱敏与预览边界。
+UX-4 的有用 / 没用反馈仅存当前设备、当前账号的本机记录（`version,sessionId,seq,rating,reason,note,at`；手机本机记录用 `source:"phone",conversationId,messageId` 代替宿主锚点）；没有上传反馈的 HTTP 路由。Windows（视窗系统）通过已有原生加密偏好存储持久化反馈，避免程序随机端口变化丢记录；网页 / 安卓在设备存储保存。导出复用完整历史分页，主对话用跨段 `/chats/{id}/events`；客户端脱敏后预览并保存 Markdown（标记文本）/ PNG（图片文件），工具步骤默认不含，附件仅列名称。安卓新增系统保存文件桥，界面包最低原生 code27。Apple（苹果端）须用相同消息锚点、回执与版本关系，反馈留设备端，导出前沿用凭据 / 本机路径脱敏与预览边界。
 | GET `/session-groups` | 无查询 | 200 `{groups:[{id,name}]}`，仅当前账号 | — | 桌、手、安、苹 |
 | POST `/session-groups` | `{name}`，去首尾空白、非空、≤256字符 | 201 `{group:{id,name}}` | 400 INVALID_REQUEST | 桌、手、安、苹 |
 | PATCH `/session-groups/{id}` | `{name}`，同上 | 200 `{group:{id,name}}` | 404 NOT_FOUND | 桌、手、安、苹 |
@@ -1151,3 +1151,21 @@ D33与删除会话清理同一缓存，SQLite使用安全删除及VACUUM（数�
 临时内容不自动回写主对话、不进入动态正文、全局成果库、近期对话离线副本。分叉、引用开旁聊、发布结果对 `hasTemporaryContent` 会话返回409 `TEMPORARY_CONTEXT_CONFIRMATION_REQUIRED`，直到显式分享功能提供确认与预览。TB-1/TB-3未来的全局列表必须排除该标记；对话内自己的输出与来源仍可查看。MEM-2没有新增全局列表接口。
 
 Apple（苹果端）接线：新建入口发送 `/sessions/temporary`；侧栏/标题/输入区显示状态；菜单分别接记忆与召回开关和四档期限；切换说明之前形成的保留；主对话导向临时旁聊。持久化模型添加本节公开字段，`cacheAllowed:false` 的历史不写离线缓存，离线副本继续消费宿主过滤结果；到期404移除本机展示缓存。原生界面与Watch（手表）实机验收由Apple工作包完成。
+
+
+## 11. 记忆摄取健康与历史补整理（MEM-D）
+
+`GET /memory/status` 保留既有字段，新增可选 `pendingFormationCount`、`failedFormationCount`、`captureError` 和 `backfill`。`pendingBoundaryCount` 是宿主 outbox（持久待提交队列）条数，模型不可用时仍返回已知数量。`pendingFormationCount` 是 Core（记忆核心）已接受、尚在形成的作业数；两者不能混为已形成条数。`state=degraded` 也可表示正在整理，已有可用记忆继续沿 `capabilities.inject` 与原目的地权限使用。`reasonCode` 新增 `MEMORY_MODEL_WAITING`（切换中，等待原模型服务）、`MEMORY_FORMATION_PENDING`、`MEMORY_FORMATION_FAILED`；保留 `MEMORY_BUSY`、`MEMORY_MODEL_UNAVAILABLE` 与来源阻断原因。`GET /system.memory` 同步提供 `reasonCode,pendingBoundaryCount,pendingFormationCount,failedFormationCount`，供设置健康项显示。客户端必须区分正常、补交／形成中和暂停，不能把503当作空记忆。
+
+| 接口 | 请求与结果 |
+|---|---|
+| `GET /memory/backfill` | 200 `{ownerId,previewId,sessionCount,turnCount,estimatedUsage:{inputTokens,outputTokens,approximate:true},job}`；扫描账户已完成的原生回合，仅返回计数与估算，不调用形成模型。估算含每回合提示与输出余量，实际重试与模型用量可能不同，不是价格承诺。 |
+| `POST /memory/backfill` | `{action:"start",previewId,confirm:true}` → 202 `{ownerId,job}`；必须先读取预览，再由本人确认。相同预览的重复提交返回同一作业，不重复形成。 |
+| `POST /memory/backfill` | `{action:"pause"\|"resume"\|"cancel",jobId}` → 202 `{ownerId,job}`；暂停／取消停止后续提交，已经交给Core的回合继续形成；取消不删除已经形成的记忆。 |
+| `GET /memory/status` | `backfill:null` 或 `{id,state:"running"\|"paused"\|"cancelled"\|"completed",totalTurns,submittedTurns,skippedTurns,lastError,createdAt}`；`submittedTurns` 包含已检查并跳过的回合，实际提交数为两者之差。`completed` 表示补交结束，是否形成完毕另看形成计数。 |
+
+读接口沿账户会话读取权限，写接口要求 `account:manage` 与原 CSRF（跨站请求伪造防护）。缺少确认／预览失效409 `MEMORY_PREVIEW_REQUIRED`，无此作业404 `MEMORY_JOB_NOT_FOUND`，参数无效400 `INVALID_REQUEST`。所有结果绑定 `ownerId`；切换账户时丢弃旧预览与迟到响应。
+
+补整理按原回合时间顺序进行，每步重核对会话及来源；临时对话、当前关闭记忆的对话、回合冻结策略禁止摄取的内容和已遗忘来源均排除。排除已确认投递的回合及Core已接受的边界；事件标识沿实时摄取算法保持一致，重复确认、重启与未知回执不会重复形成。历史回合默认不自动运行；升级后新完成的普通回合由持久日志恢复漏掉的IPC（进程间通信），先写outbox再尝试投递，忙／路由不可用／子进程离线均退避重试。宿主重启恢复outbox和已确认的补整理进度，暂停状态也持久保留。
+
+Windows（视窗系统）程序与远程手机网页、Android（安卓）界面包已接入。安卓现有 `host.business` 记忆路由支持这些接口，无需新增权限；Apple（苹果端）需接记忆页健康、预览／确认、暂停／继续／取消及进度，旧客户端可忽略新增字段。确认与溯源语义未改变，不把助手提议当作用户事实。

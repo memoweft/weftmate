@@ -1,6 +1,6 @@
 # WeftMate 手机界面
 
-UX-4 界面包 **0.8.13 / 最低原生 code26**：宿主消息操作复用 `src/ui-core/message-actions.js`，呈现与桌面共用 `message-actions.js / .css`，由构建脚本生成。复制、有用 / 没用、选中文字引用、完整 Markdown（标记文本）/ 浅深 PNG（图片文件）导出也覆盖手机本机记录；本机记录使用 `conversationId/messageId` 保存设备端反馈，不上传。尚未由电脑接续到 DSH（助手运行时）的手机消息不提供自造分叉，界面说明「需由电脑接续」；接续后的宿主消息可编辑、重生成与切版本，保留原聊天权限。导出先预览脱敏内容，系统保存文件无需新增权限。见 [UX-4](../../tests/evidence/ux-4/README.md)。
+UX-4 界面包 **0.8.14 / 最低原生 code27**：宿主消息操作复用 `src/ui-core/message-actions.js`，呈现与桌面共用 `message-actions.js / .css`，由构建脚本生成。复制、有用 / 没用、选中文字引用、完整 Markdown（标记文本）/ 浅深 PNG（图片文件）导出也覆盖手机本机记录；本机记录使用 `conversationId/messageId` 保存设备端反馈，不上传。尚未由电脑接续到 DSH（助手运行时）的手机消息不提供自造分叉，界面说明「需由电脑接续」；接续后的宿主消息可编辑、重生成与切版本，保留原聊天权限。导出先预览脱敏内容，系统保存文件无需新增权限。见 [UX-4](../../tests/evidence/ux-4/README.md)。
 
 M3-A：Android（安卓）0.8.11 / code24 新增设备加密副本、云模型凭据原生保管与离线对话；发布最低原生 code24。网页与安卓共用离线状态、相关记忆召回和补交，设计见 [M3_OFFLINE](../../docs/M3_OFFLINE.md)，接口见 CLIENT_API 3.19，验收见 [M3-A](../../tests/evidence/m3-a/README.md)。
 

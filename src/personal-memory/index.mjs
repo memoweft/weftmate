@@ -1,5 +1,5 @@
 import { enterProfileWrite } from '../personal-backup/write-barrier.mjs';
-import { lstat, open, readFile, rename, rm } from 'node:fs/promises';
+import { lstat, open, readFile, readdir, rename, rm } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
 import { ensurePrivateDirectory, ensurePrivateFile } from '../private-host-storage.mjs';
@@ -15,8 +15,6 @@ const REQUIRED_METHODS = ['initialize', 'capabilities', 'health', 'shutdown', 'i
   'preview_recall', 'query_interactions', 'query_world', 'query_evidence', 'query_provenance',
   'submit_command', 'query_command_receipt', 'retry_delete_storage_cleanup'];
 const MAX_ACTIVE_OWNERS = 4;
-const MAX_OUTBOX_ITEMS = 200;
-const MAX_OUTBOX_BYTES = 8 * 1024 * 1024;
 
 const error = (code) => Object.assign(new Error(code), { code });
 const owner = (value) => {
@@ -28,7 +26,7 @@ const owner = (value) => {
 export function createPersonalMemoryManager({ root, enabled = false, python, pythonPath,
   baseUrl, model, credential = () => null, rpcFactory = (options) => new MemoWeftRpc(options),
   processingRoute = null, defaultProcessingRoute = null, maxActiveOwners = MAX_ACTIVE_OWNERS,
-  formationWaitMs = 0, cleanupDeletedMemory = null,
+  formationWaitMs = 0, cleanupDeletedMemory = null, processingHealth = null, retainLocalWorker = false,
   recallMaxItems = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_ITEMS ?? 6),
   recallMaxChars = Number(process.env.WEFTMATE_MEMORY_RECALL_MAX_CHARS ?? 1200) }) {
   if (typeof root !== 'string' || !path.isAbsolute(root) || typeof enabled !== 'boolean' ||
@@ -49,7 +47,9 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   const entries = new Map();
   const failures = new Map();
   const boundaryFailures = new Map();
-  const boundaryFlights = new Set();
+  const flushFlights = new Map();
+  const retryTimers = new Map();
+  const retryCounts = new Map();
   const outboxQueues = new Map();
   const homePromises = new Map();
   const journal = createMemoryCommandJournal({ root });
@@ -129,12 +129,11 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (!info) return { version: 2, ownerId, items: [],
       discardedBoundaryCount: 0, lastFailureCode: null };
     await ensurePrivateFile(file);
-    if (!info.isFile() || info.size > MAX_OUTBOX_BYTES) throw error('MEMORY_OUTBOX_CORRUPT');
+    if (!info.isFile()) throw error('MEMORY_OUTBOX_CORRUPT');
     let state;
     try { state = JSON.parse(await readFile(file, 'utf8')); }
     catch { throw error('MEMORY_OUTBOX_CORRUPT'); }
-    if (![1, 2].includes(state?.version) || state?.ownerId !== ownerId || !Array.isArray(state.items) ||
-        state.items.length > MAX_OUTBOX_ITEMS) {
+    if (![1, 2].includes(state?.version) || state?.ownerId !== ownerId || !Array.isArray(state.items)) {
       throw error('MEMORY_OUTBOX_CORRUPT');
     }
     const items = state.items.map((item) => state.version === 1
@@ -160,7 +159,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
   async function writeOutbox(ownerId, state) {
     const file = outboxFile(ownerId);
     const body = JSON.stringify(state);
-    if (Buffer.byteLength(body, 'utf8') > MAX_OUTBOX_BYTES) throw error('MEMORY_OUTBOX_FULL');
     const releaseWrite = await enterProfileWrite(file);
     const tmp = `${file}.${randomUUID()}.tmp`;
     let handle;
@@ -224,36 +222,60 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       lastFailureCode: state.items.findLast((item) => item.lastFailureCode)?.lastFailureCode ??
         state.lastFailureCode };
   }
-  async function flushPending(ownerId) {
-    if (closing) return;
+  function scheduleRetry(ownerId, immediate = false) {
+    if (closing || retryTimers.has(ownerId)) return;
+    const attempt = retryCounts.get(ownerId) ?? 0;
+    const timer = setTimeout(() => {
+      retryTimers.delete(ownerId);
+      void flushPending(ownerId).catch(() => {});
+    }, immediate ? 0 : Math.min(30_000, 1000 * 2 ** Math.min(attempt, 5)));
+    timer.unref?.(); retryTimers.set(ownerId, timer);
+  }
+  function flushPending(ownerId) {
+    if (flushFlights.has(ownerId)) return flushFlights.get(ownerId);
+    const work = drainPending(ownerId).finally(() => flushFlights.delete(ownerId));
+    flushFlights.set(ownerId, work);
+    return work;
+  }
+  async function drainPending(ownerId) {
+    const results = new Map();
+    if (closing) return results;
+    clearTimeout(retryTimers.get(ownerId)); retryTimers.delete(ownerId);
     let pending;
     try { pending = await queueOutbox(ownerId, () => readOutbox(ownerId)); }
-    catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return; }
+    catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return results; }
     for (const row of pending.items) {
-      if (closing) return;
-      if (row.blocked) continue;
+      if (closing || row.blocked) break;
       const boundary = row.boundary;
-      if (boundaryFlights.has(`${ownerId}\0${boundary.event_id}`)) continue;
       try {
-        await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
+        const result = await withOwner(ownerId, entry => entry.rpc.request('ingest_boundary', { boundary }),
           row.offline === true ? null : boundary.parent_session_id);
         await queueOutbox(ownerId, async () => {
           const latest = await readOutbox(ownerId);
-          latest.items = latest.items.filter((item) => item.boundary.event_id !== boundary.event_id);
+          latest.items = latest.items.filter(item => item.boundary.event_id !== boundary.event_id);
           await writeOutbox(ownerId, latest);
         });
-        const backlog = await outboxStatus(ownerId);
-        const entry = entries.get(ownerId);
-        if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
-        if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
+        results.set(boundary.event_id, { state: 'accepted', jobState: result?.job_state ?? 'unknown' });
+        retryCounts.delete(ownerId);
       } catch (cause) {
         let code;
         try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause); }
-        catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); }
+        catch { code = 'MEMORY_OUTBOX_CORRUPT'; failures.set(ownerId, code); }
+        results.set(boundary.event_id, { state: code === 'MEMORY_SOURCE_DELETED' ? 'discarded'
+          : ['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code) ? 'blocked' : 'queued', reasonCode: code });
         if (code === 'MEMORY_SOURCE_DELETED') continue;
-        return;
+        if (!['MEMORY_BOUNDARY_BLOCKED', 'MEMORY_OUTBOX_CORRUPT'].includes(code)) {
+          scheduleRetry(ownerId); retryCounts.set(ownerId, (retryCounts.get(ownerId) ?? 0) + 1);
+        }
+        break;
       }
     }
+    const backlog = await outboxStatus(ownerId);
+    const entry = entries.get(ownerId);
+    if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
+    if (!backlog.pendingBoundaryCount) boundaryFailures.delete(ownerId);
+    else if (!backlog.blockedBoundaryCount) scheduleRetry(ownerId);
+    return results;
   }
 
   async function prepare(ownerId, sessionId = null) {
@@ -263,7 +285,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     if (sessionId !== null || !existing?.ready || !existing.rpc.child) {
       try { selected = await resolveProcessingRoute(ownerId, sessionId); }
       catch (cause) {
-        if (sessionId !== null && existing && existing.active === 0) {
+        if (sessionId !== null && existing && existing.active === 0 && !(retainLocalWorker && existing.modelTier === 'local')) {
           entries.delete(ownerId); await existing.rpc.close().catch(() => {});
         }
         throw cause;
@@ -322,7 +344,7 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       entry.ready = true;
       entry.initializing = null;
       failures.delete(ownerId);
-      queueMicrotask(() => { void flushPending(ownerId); });
+      scheduleRetry(ownerId, true);
       return entry;
     })().catch(async (cause) => {
       entry.initializing = null;
@@ -398,8 +420,30 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     }
   }
 
+  const startup = enabled ? readdir(path.join(root, 'accounts')).then(ids => {
+    for (const id of ids) if (OWNER.test(id)) scheduleRetry(id, true);
+  }).catch(() => {}) : Promise.resolve();
+
   return {
     enabled,
+    flushPending,
+    async acceptedBoundaryIds(ownerId) {
+      return withOwner(ownerId, async entry => entry.capabilities?.methods?.includes('query_jobs')
+        ? (await entry.rpc.request('query_jobs', { operation: 'list' })).jobs?.map(job => job.acceptance?.boundary_event_id).filter(Boolean) ?? [] : []);
+    },
+    async discardPendingSources(ownerId, { sessionId = null, sourceTexts = [] } = {}) {
+      await flushFlights.get(ownerId)?.catch(() => {});
+      await queueOutbox(ownerId, async () => {
+        const state = await readOutbox(ownerId);
+        const removed = state.items.filter(item => sessionId && item.boundary.parent_session_id === sessionId ||
+          sourceTexts.some(text => item.boundary.source_messages?.some(message => message.content.includes(text))));
+        state.items = state.items.filter(item => !removed.includes(item));
+        state.discardedBoundaryCount += removed.length;
+        if (removed.length) state.lastFailureCode = 'MEMORY_SOURCE_DELETED';
+        await writeOutbox(ownerId, state);
+      });
+    },
+    async pendingStatus(ownerId) { owner(ownerId); return outboxStatus(ownerId); },
     async discardOfflinePending(ownerId) {
       return queueOutbox(ownerId, async () => {
         const state = await readOutbox(ownerId);
@@ -437,24 +481,32 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           entry.backlogCount = backlog.pendingBoundaryCount;
           const revision = revisionResult?.world_revision ?? revisionResult?.revision;
           entry.routeReady = health?.runtime?.route_ready === true;
-          const ready = entry.routeReady && backlog.pendingBoundaryCount === 0;
+          const jobs = entry.capabilities?.methods?.includes('query_jobs')
+            ? (await entry.rpc.request('query_jobs', { operation: 'list' })).jobs ?? [] : [];
+          const pendingFormationCount = jobs.filter(job => ['pending', 'processing', 'retry'].includes(job.worker?.state)).length;
+          const failedFormationCount = jobs.filter(job => ['failed', 'blocked', 'uncertain', 'dead'].includes(job.worker?.state)).length;
+          const routeState = processingHealth ? await processingHealth(ownerId).catch(() => 'unavailable') : 'ready';
+          const ready = entry.routeReady && routeState === 'ready' && backlog.pendingBoundaryCount === 0 && !pendingFormationCount && !failedFormationCount;
           if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
           else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
             ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
           return { state: ready ? 'ready' : 'degraded',
             version: health?.version ?? health?.runtime?.version ?? await readSourceVersion(),
             worldRevision: Number.isSafeInteger(revision) ? revision : null,
-            capabilities: { ...capabilities(entry), inject: ready }, ...backlog,
-            ...(!entry.routeReady ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
+            capabilities: { ...capabilities(entry), inject: entry.routeReady && backlog.pendingBoundaryCount === 0 }, ...backlog,
+            pendingFormationCount, failedFormationCount,
+            ...(!entry.routeReady || routeState === 'unavailable' ? { reasonCode: 'MEMORY_MODEL_UNAVAILABLE' }
+              : routeState === 'waiting' ? { reasonCode: 'MEMORY_MODEL_WAITING' }
+              : failedFormationCount ? { reasonCode: 'MEMORY_FORMATION_FAILED' }
+              : pendingFormationCount ? { reasonCode: 'MEMORY_FORMATION_PENDING' }
               : backlog.pendingBoundaryCount ? { reasonCode: backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
                 ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING' } : {}) };
         });
       } catch (cause) {
-        const code = cause?.code === 'MEMORY_OUTBOX_CORRUPT' ? cause.code
-          : failures.get(ownerId) ?? 'MEMORY_UNAVAILABLE';
+        const code = cause?.code ?? failures.get(ownerId) ?? 'MEMORY_UNAVAILABLE';
+        const backlog = await outboxStatus(ownerId).catch(() => ({ pendingBoundaryCount: null, blockedBoundaryCount: null, discardedBoundaryCount: null }));
         return { state: 'unavailable', worldRevision: null, capabilities: capabilities(null),
-          pendingBoundaryCount: null, blockedBoundaryCount: null,
-          discardedBoundaryCount: null,
+          ...backlog,
           lastFailureCode: code, reasonCode: code };
       }
     },
@@ -581,12 +633,12 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           ? world.world_revision : null, sourceCount: memories.length };
       }, sessionId);
     },
-    async ingest(ownerId, boundary, { offline = false } = {}) {
+    async ingest(ownerId, boundary, { offline = false, defer = false } = {}) {
       owner(ownerId);
       if (!enabled) throw error('MEMORY_DISABLED');
       if (!boundary || typeof boundary !== 'object' || Array.isArray(boundary) ||
           typeof boundary.event_id !== 'string' || !/^[A-Za-z0-9._:-]{1,180}$/.test(boundary.event_id) ||
-          Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 128 * 1024) throw error('MEMORY_REQUEST_INVALID');
+          Buffer.byteLength(JSON.stringify(boundary), 'utf8') > 4 * 1024 * 1024) throw error('MEMORY_REQUEST_INVALID');
       await privateHome(ownerId);
       await queueOutbox(ownerId, async () => {
         const state = await readOutbox(ownerId);
@@ -595,7 +647,6 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
           if (JSON.stringify(prior.boundary) !== JSON.stringify(boundary)) throw error('MEMORY_EVENT_CONFLICT');
           return;
         }
-        if (state.items.length >= MAX_OUTBOX_ITEMS) throw error('MEMORY_OUTBOX_FULL');
         state.items.push({ boundary, blocked: false, lastFailureCode: null, ...(offline ? { offline: true } : {}) });
         await writeOutbox(ownerId, state);
       });
@@ -604,30 +655,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
       if (blocked) {
         return { state: 'blocked', reasonCode: 'MEMORY_BOUNDARY_BLOCKED' };
       }
-      const flight = `${ownerId}\0${boundary.event_id}`;
-      boundaryFlights.add(flight);
-      try {
-        const result = await withOwner(ownerId, (entry) => entry.rpc.request('ingest_boundary', { boundary }),
-          offline ? null : boundary.parent_session_id);
-        await queueOutbox(ownerId, async () => {
-          const state = await readOutbox(ownerId);
-          state.items = state.items.filter((item) => item.boundary.event_id !== boundary.event_id);
-          await writeOutbox(ownerId, state);
-        });
-        const backlog = await outboxStatus(ownerId);
-        const entry = entries.get(ownerId);
-        if (entry) entry.backlogCount = backlog.pendingBoundaryCount;
-        if (backlog.pendingBoundaryCount === 0) boundaryFailures.delete(ownerId);
-        else boundaryFailures.set(ownerId, backlog.lastFailureCode === 'MEMORY_SOURCE_DELETED'
-          ? 'MEMORY_BOUNDARY_PENDING' : backlog.lastFailureCode ?? 'MEMORY_BOUNDARY_PENDING');
-        return { state: 'accepted', jobState: result?.job_state ?? 'unknown' };
-      } catch (cause) {
-        let code;
-        try { code = await noteBoundaryFailure(ownerId, boundary.event_id, cause); }
-        catch { failures.set(ownerId, 'MEMORY_OUTBOX_CORRUPT'); return { state: 'blocked', reasonCode: 'MEMORY_OUTBOX_CORRUPT' }; }
-        return { state: code === 'MEMORY_SOURCE_DELETED' ? 'discarded'
-          : code === 'MEMORY_BOUNDARY_BLOCKED' ? 'blocked' : 'queued', reasonCode: code };
-      } finally { boundaryFlights.delete(flight); }
+      scheduleRetry(ownerId, true);
+      if (defer) return { state: 'queued', reasonCode: 'MEMORY_BOUNDARY_PENDING' };
+      const results = await flushPending(ownerId);
+      return results.get(boundary.event_id) ?? { state: 'queued', reasonCode: 'MEMORY_BOUNDARY_PENDING' };
     },
     submit(ownerId, command) { return withOwner(ownerId, (entry) => entry.rpc.request('submit_command', { command })); },
     receipt(ownerId, commandId) { return withOwner(ownerId, (entry) => entry.rpc.request('query_command_receipt',
@@ -735,6 +766,10 @@ export function createPersonalMemoryManager({ root, enabled = false, python, pyt
     async close() {
       if (closing) return;
       closing = true;
+      await startup;
+      for (const timer of retryTimers.values()) clearTimeout(timer);
+      retryTimers.clear();
+      await Promise.allSettled([...flushFlights.values()]);
       await startQueue.catch(() => {});
       await Promise.all([...outboxQueues.values()].map((pending) => pending.catch(() => {})));
       await Promise.all([...commandFlights.values()].map((pending) => pending.catch(() => {})));
