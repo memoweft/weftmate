@@ -73,6 +73,7 @@
   --wm-space-56: 56px;
   --wm-space-64: 64px;
   --wm-space-72: 72px;
+  --wm-space-settings-nav-gap: 4px;
   --wm-radius-4: 4px;
   --wm-radius-5: 5px;
   --wm-radius-6: 6px;
@@ -221,8 +222,8 @@
   --shadow: 0 8px 24px rgba(0,0,0,.12);
   --shadow-float: 0 12px 36px rgba(0,0,0,.28);
   --brand: var(--wm-color-brand-dark);
-  --success: var(--wm-color-success);
-  --success-soft: var(--wm-color-success-soft);
+  --success: #a7e7cf;
+  --success-soft: #253c32;
   --warning: var(--wm-color-warning);
 }
 :root[data-accent="blue"] {

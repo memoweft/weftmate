@@ -11,10 +11,11 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         if (content) positions.set(selected, content.scrollTop);
         if (selected === 'devices' && id !== 'devices') ui.stopCloudPairing();
         selected = id;
+        if (id !== 'memory' && core.state.currentView === 'memory') core.openAccount();
         if (cloudNotice) cloudNotice.hidden = core.state.cloudAuth.mode !== 'authenticated' || !['account', 'devices'].includes(id);
         for (const [key, panel] of panels) panel.hidden = key !== id;
         ui.byId('settings-title').textContent = category.name;
-        picker.value = id;
+        picker.value = id; picker.dispatchEvent(new Event('weft:sync'));
         for (const button of navigation.querySelectorAll('button')) {
             button.classList.toggle('is-selected', button.dataset.category === id);
             if (button.dataset.category === id) button.setAttribute('aria-current', 'page'); else button.removeAttribute('aria-current');
@@ -40,12 +41,12 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         for (const button of navigation.querySelectorAll('button')) if (button.dataset.category === selected) { button.classList.add('is-selected'); button.setAttribute('aria-current', 'page'); }
     }
     function openSettings(id = selected, options = {}) {
-        if (!dialog.open) { returnFocus = document.activeElement; core.openAccount(); }
+        if (!dialog.open) { returnFocus = document.activeElement; if (id === 'memory') { void core.openMemory(); return; } core.openAccount(); }
         selectSettings(id, options);
     }
     function showSettingsDialog() {
         if (!dialog?.open) { returnFocus = document.activeElement; dialog.showModal(); globalThis.WeftMotion?.reveal(dialog, '240ms'); }
-        selectSettings(selected);
+        selectSettings(core.state.currentView === 'memory' ? 'memory' : selected);
     }
     function hideSettingsDialog() { if (dialog?.open) dialog.close(); }
     async function renderSettingsUpdates(check = false) {
@@ -122,11 +123,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
             if (key === 'theme') { const segmented = globalThis.WeftSettingsControls.segmented(control); row.append(segmented); }
         }
         description('appearance', '界面密度', '当前布局使用标准间距。', '标准');
-        const memory = node('button', 'button secondary', '管理记忆'); memory.type = 'button'; memory.addEventListener('click', () => { hideSettingsDialog(); void core.openMemory(); });
-        panels.get('memory').append(globalThis.WeftSettingsControls.row('记忆管理', '查看理解与来源，纠正或移除已有记忆。', memory));
-        const exports = node('div', 'form-actions');
-        for (const [format, label] of [['json', 'JSON'], ['markdown', 'Markdown']]) { const button = node('button', 'button secondary', label); button.type = 'button'; button.addEventListener('click', () => { void ui.exportMemories(format); }); exports.append(button); }
-        panels.get('memory').append(globalThis.WeftSettingsControls.row('导出我的记忆', '保存当前记忆与来源摘要，已遗忘的内容不会导出。', exports));
+        move('memory', ui.byId('memory-view'));
         description('models', '主模型', '每段对话在输入区单独选择主模型。', '在对话中选择');
         const updates = node('section', 'settings-updates'); updates.id = 'settings-updates'; panels.get('about').append(updates);
         description('about', 'WeftMate', '跨设备、跨对话的个人助手。', globalThis.weftmateDesktop ? '桌面程序' : '远程网页');
@@ -144,6 +141,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         registry = globalThis.WeftUiCore.settingsRegistry({
             account: () => { ui.selectCloudSettings?.('account'); ui.paintCloudSettings?.(); },
             devices: () => { ui.selectCloudSettings?.('devices'); ui.paintCloudSettings?.(); },
+            memory: () => { if (core.state.currentView !== 'memory') void core.openMemory(); },
             backups: () => ui.showSettingsBackups(),
             schedules: () => ui.showSettingsSchedules(),
             usage: options => ui.showSettingsUsage(options),
@@ -155,6 +153,7 @@ globalThis.WeftUiComponents.factories.settingsNavigation = (core, ui) => {
         dialog.addEventListener('cancel', event => { event.preventDefault(); ui.byId('account-back').click(); });
         dialog.addEventListener('close', () => { ui.stopAccountPairing?.(); returnFocus?.focus(); });
         renderSettingsNavigation(); selectSettings(selected);
+        globalThis.WeftPopover.bindSettings(dialog);
         globalThis.WeftSettingsNavigation = { open: openSettings, register: entry => { registry.register(entry); renderSettingsNavigation(); } };
     }
     return { mountSettingsNavigation, openSettings, selectSettings, showSettingsDialog, hideSettingsDialog };

@@ -80,7 +80,8 @@
       "54": "54px",
       "56": "56px",
       "64": "64px",
-      "72": "72px"
+      "72": "72px",
+      "settings-nav-gap": "4px"
     },
     "radius": {
       "4": "4px",
@@ -256,8 +257,8 @@
             "--shadow": "0 8px 24px rgba(0,0,0,.12)",
             "--shadow-float": "0 12px 36px rgba(0,0,0,.28)",
             "--brand": "var(--wm-color-brand-dark)",
-            "--success": "var(--wm-color-success)",
-            "--success-soft": "var(--wm-color-success-soft)",
+            "--success": "#a7e7cf",
+            "--success-soft": "#253c32",
             "--warning": "var(--wm-color-warning)"
           }
         },
@@ -349,14 +350,17 @@
             "--danger": "#f3a4a4",
             "--shadow": "0 8px 28px rgba(0,0,0,.22)",
             "--brand": "var(--wm-color-brand-dark)",
-            "--success": "var(--wm-color-mobile-success)",
-            "--success-soft": "var(--wm-color-success-soft)",
+            "--success": "#a7e7cf",
+            "--success-soft": "#253c32",
             "--warning": "var(--wm-color-mobile-warning)"
           }
         },
         {
           "selector": ":root[data-theme=dark] .approval-actions .primary,:root[data-theme=dark] .approval-risk-actions .primary",
-          "variables": {}
+          "variables": {
+            "--success": "#a7e7cf",
+            "--success-soft": "#253c32"
+          }
         }
       ]
     }
