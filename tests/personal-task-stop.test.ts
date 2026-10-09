@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import test from 'node:test'
@@ -11,14 +11,14 @@ const pause = (ms = 20) => new Promise((resolve) => setTimeout(resolve, ms))
 
 test('stop recovery wakes at persisted backoff and retries a lost acknowledgement without reads', async t => {
   t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 })
-  const source: any = { commandId: 'task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session',
+  const source: any = { payload: { text: 'synthetic' }, commandId: 'task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session',
     taskControl: { state: 'stop_requested', stopRequests: [{ requestId: 'stop', lastAttemptAt: new Date().toISOString(),
       targets: [{ commandId: 'task', receiptId: 'receipt' }] }] } }
   const account = { commands: { task: source }, sessions: { session: { origin: 'personal-remote' } } }
   const stopping = new Map()
   const calls: string[][] = []
   const context: any = { closing: false, storageFault: false, stopping, timestamp: () => Date.now(),
-    accountState: () => account, serial: (work: any) => work(), mutate: (_owner: any, change: any) => change(account),
+    requireOpen: () => {}, accountState: () => account, serial: (work: any) => work(), mutate: (_owner: any, change: any) => change(account),
     backend: { describeSession: async () => ({ sessionId: 'session', agentPreset: 'personal-remote' }),
       stopTask: async ({ receiptIds }: any) => {
         calls.push(receiptIds)
@@ -130,7 +130,9 @@ test('stop freezes exact receipts, ignores same-text unrelated turns, and withdr
     assert.equal(stopped.status, 202, JSON.stringify(stopped.body))
     assert.deepEqual(stopCalls[0], ['receipt-1'])
     assert.equal(stopped.body.task.control.stopStatus, 'cancel_requested')
+    const unchangedStore = statSync(join(root, 'store.json'))
     assert.equal((await request(origin, 'POST', `${route}/stop`, auth, { requestId: 'stop-a' })).status, 202)
+    assert.equal(statSync(join(root, 'store.json')).mtimeMs, unchangedStore.mtimeMs, 'idempotent stop does not rewrite the store')
     assert.equal((await request(origin, 'POST', `${route}/stop`, auth, { requestId: 'stop-b' })).status, 409)
     const now = new Date(Date.now() + 1000).toISOString()
     events = [
@@ -208,4 +210,52 @@ test('stop freezes exact receipts, ignores same-text unrelated turns, and withdr
     await service.close()
     rmSync(root, { recursive: true, force: true })
   }
+})
+
+test('stop retries back off in memory, ignore repeated reads, and stop at terminal evidence', async t => {
+  t.mock.timers.enable({ apis: ['Date', 'setTimeout'], now: 1_000_000 })
+  const source: any = { payload: { text: 'synthetic' }, commandId: 'task', kind: 'session.message', state: 'accepted_by_dsh', sessionId: 'session',
+    taskControl: { state: 'stop_requested', stopRequests: [{ requestId: 'stop', at: new Date().toISOString(),
+      targets: [{ commandId: 'task', receiptId: 'receipt' }] }] } }
+  const account = { ownerId: 'owner', commands: { task: source }, sessions: { session: { origin: 'personal-remote' } } }
+  const stopping = new Map()
+  const calls: number[] = []
+  let changedWrites = 0, terminal = false
+  const context: any = { closing: false, storageFault: false, stopping, timestamp: () => Date.now(),
+    requireOpen: () => {}, accountState: () => account, serial: (work: any) => work(), mutate: (_owner: any, change: any) => {
+      const before = JSON.stringify(account); change(account)
+      if (JSON.stringify(account) !== before) changedWrites++
+    }, backend: {
+      describeSession: async () => ({ sessionId: 'session', agentPreset: 'personal-remote' }),
+      readSourceEvents: async () => ({ events: [
+        { seq: 0, type: 'turn.started', data: { turn: 1 } },
+        { seq: 1, type: 'user.message', data: { receiptId: 'receipt' } },
+        ...(terminal ? [{ seq: 2, type: 'turn.ended', at: new Date().toISOString(), data: { turn: 1, reason: 'aborted' } }] : []),
+      ] }),
+      stopTask: async () => { calls.push(Date.now()); return { outcomes: [{ receiptId: 'receipt', status: 'unconfirmed' }] } },
+    } }
+  const tasks = createTaskOperations(context)
+  try {
+    await tasks.driveTaskStop('owner', 'task', true)
+    for (const delay of [1_000, 2_000, 4_000, 8_000, 16_000, 30_000, 30_000]) {
+      t.mock.timers.tick(delay - 1)
+      await tasks.driveTaskStop('owner', 'task')
+      await tasks.driveTaskStop('owner', 'task', true)
+      const count = calls.length
+      t.mock.timers.tick(1)
+      await Promise.all(stopping.values())
+      assert.equal(calls.length, count + 1)
+    }
+    assert.deepEqual(calls.slice(1).map((at, i) => at - calls[i]), [1_000, 2_000, 4_000, 8_000, 16_000, 30_000, 30_000])
+    assert.equal(changedWrites, 1, 'only the first changed ack is durable')
+    assert.equal(source.taskControl.stopRequests[0].lastAttemptAt, undefined)
+    assert.equal(source.taskControl.stopRequests[0].targets[0].attemptAt, undefined)
+    terminal = true
+    assert.equal((await tasks.taskDetail(account, 'task')).control.stopStatus, 'stopped')
+    const count = calls.length
+    t.mock.timers.tick(60_000)
+    await Promise.all(stopping.values())
+    await tasks.driveTaskStop('owner', 'task', true)
+    assert.equal(calls.length, count, 'terminal native evidence clears pending retries immediately')
+  } finally { tasks.cancelTaskStopRetries() }
 })
