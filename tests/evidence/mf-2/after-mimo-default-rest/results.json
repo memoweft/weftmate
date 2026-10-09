@@ -1,0 +1,3131 @@
+[
+  {
+    "id": "holdout-time",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-treEoJ",
+    "startedAt": "2026-10-09T15:11:49.914Z",
+    "turns": [
+      {
+        "sessionId": "session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1",
+        "modelProfileId": "private-model-fd21a51149161d7cbece44a96644b76f97877af8",
+        "commandId": "cmd-31bc6917-4528-49ca-8999-b86e3195dd06",
+        "startedAt": "2026-10-09T15:11:59.923Z",
+        "reply": "了解，你的线上读书会固定在每周四 19:30（Asia/Shanghai）开始。\n\n需要我顺手建一个每周提醒吗？比如周四 19:00 提前提醒你「准备参加线上读书会」，说一声我就直接创建。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:11:59.978Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:11:59.979Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:12:00.028Z"
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-09T15:12:00.029Z"
+          },
+          {
+            "seq": 212,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:12:11.568Z"
+          },
+          {
+            "seq": 213,
+            "type": "task.ended",
+            "at": "2026-10-09T15:12:11.568Z"
+          },
+          {
+            "seq": 214,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:12:11.571Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 11809,
+        "endedAt": "2026-10-09T15:12:11.732Z"
+      },
+      {
+        "sessionId": "session-b5a8178f-7123-4d71-884e-366c048e0c5f",
+        "modelProfileId": "private-model-fd21a51149161d7cbece44a96644b76f97877af8",
+        "commandId": "cmd-aff9e168-6955-4a7c-a98e-802d33ce270e",
+        "startedAt": "2026-10-09T15:12:13.588Z",
+        "reply": "已更正：周四晚上的线上读书会以后都按 **20:15** 开始，19:30 作废。\n\n我查了当前的定时任务列表，是空的——没有找到设在 19:30 的提醒可取消。如果你需要我建立一个“每周四 20:15”的读书会提醒，说一声即可。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:12:13.640Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:12:13.640Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:12:13.671Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:12:13.672Z"
+          },
+          {
+            "seq": 114,
+            "type": "step.started",
+            "at": "2026-10-09T15:12:20.265Z"
+          },
+          {
+            "seq": 115,
+            "type": "step.completed",
+            "at": "2026-10-09T15:12:20.272Z"
+          },
+          {
+            "seq": 136,
+            "type": "step.started",
+            "at": "2026-10-09T15:12:22.561Z"
+          },
+          {
+            "seq": 137,
+            "type": "step.completed",
+            "at": "2026-10-09T15:12:22.569Z"
+          },
+          {
+            "seq": 280,
+            "type": "step.started",
+            "at": "2026-10-09T15:12:55.514Z"
+          },
+          {
+            "seq": 281,
+            "type": "step.completed",
+            "at": "2026-10-09T15:12:55.522Z"
+          },
+          {
+            "seq": 304,
+            "type": "step.started",
+            "at": "2026-10-09T15:12:57.690Z"
+          },
+          {
+            "seq": 305,
+            "type": "step.completed",
+            "at": "2026-10-09T15:12:57.699Z"
+          },
+          {
+            "seq": 620,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:13:20.810Z"
+          },
+          {
+            "seq": 621,
+            "type": "task.ended",
+            "at": "2026-10-09T15:13:20.811Z"
+          },
+          {
+            "seq": 622,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:13:20.812Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [
+          {
+            "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+            "kind": "cognition",
+            "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+          }
+        ],
+        "durationMs": 67470,
+        "endedAt": "2026-10-09T15:13:21.058Z"
+      },
+      {
+        "sessionId": "session-88166d26-4700-43fd-b848-233a736b28b5",
+        "modelProfileId": "private-model-fd21a51149161d7cbece44a96644b76f97877af8",
+        "commandId": "cmd-57bf6a82-5e46-4d89-a395-78e0547ae2d0",
+        "startedAt": "2026-10-09T15:13:22.859Z",
+        "reply": "按你最近的调整，这周四的线上读书会是 **20:15** 开始（原定的 19:30 已取消，以后都按 20:15）。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:13:22.920Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:13:22.920Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:13:22.956Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:13:22.957Z"
+          },
+          {
+            "seq": 60,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:13:25.241Z"
+          },
+          {
+            "seq": 61,
+            "type": "task.ended",
+            "at": "2026-10-09T15:13:25.241Z"
+          },
+          {
+            "seq": 62,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:13:25.242Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [
+          {
+            "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+            "kind": "cognition",
+            "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+          }
+        ],
+        "durationMs": 2397,
+        "endedAt": "2026-10-09T15:13:25.256Z"
+      }
+    ],
+    "settlements": [
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-bac54e8d093d6ae265f13019c2752ef6f702aadbd1b3131cca879c3102ffa294",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:66382329d1129df555d52f32c75c342f:54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622",
+            "boundary_payload_hash": "54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1",
+            "result_session_id": "session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1\",\"subject_id\":\"owner-803e7539-5e17-4a2d-9fc6-335076880dcd\"}",
+            "formal_target_hash": "39ed55f02b5622666a9d49de694d2c06b2157bd28821d4dcdc1eb06b077588f3",
+            "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"d4160a18-ea32-48d6-a3dd-e59e2f48bbe0\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:12:12.269Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:12:12.282Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:12:12.293Z",
+            "model_completed_at": "2026-10-09T15:12:22.551Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":413,\"completion_tokens_details\":{\"reasoning_tokens\":288},\"prompt_tokens\":4502,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4915}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u6bcf\\u5468\\u7684\\u7ebf\\u4e0a\\u8bfb\\u4e66\\u4f1a\\u56fa\\u5b9a\\u5728\\u5468\\u56db\\u665a\\u4e0a19\\u70b930\\u5206\\u5f00\\u59cb\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"d4160a18-ea32-48d6-a3dd-e59e2f48bbe0\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u7ebf\\u4e0a\\u8bfb\\u4e66\\u4f1a\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u8bfb\\u4e66\\u4f1a\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":413,\"completion_tokens_details\":{\"reasoning_tokens\":288},\"prompt_tokens\":4502,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4915}}",
+            "model_result_hash": "20a0b76d1c66f53c7de48a2b2b4f696f58e2d52a9a3aab6c1ffe24c1513ed95e",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:66382329d1129df555d52f32c75c342f:54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "dda63e73a6f2ab90851ff2b9d7feabbe72086f86ba42c441bd3a986ff4558e55",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:12:12.230Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:66382329d1129df555d52f32c75c342f:54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622\",\"evidence_count\":1,\"evidence_manifest_hash\":\"cd24e4f7864ad3814e9a27baade020cb7c2c23992fde382aad10649831286a34\",\"formal_target_hash\":\"39ed55f02b5622666a9d49de694d2c06b2157bd28821d4dcdc1eb06b077588f3\",\"job_id\":\"memory-world-job-bac54e8d093d6ae265f13019c2752ef6f702aadbd1b3131cca879c3102ffa294\",\"job_state\":\"pending\",\"payload_hash\":\"54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "857a87d0b1afd3c9b2bb80cf68b2fd3f059a2daac0cf3507ecbe55c92a915778",
+            "created_at": "2026-10-09T15:12:12.230Z",
+            "completed_at": "2026-10-09T15:12:22.560Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-c18c9c5fafecea69a9389af86b2c9737c1228f2d609fed1397be6b22fc555241",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:880fd92fbe0aac8dde49f64b1cd94134:cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792",
+            "boundary_payload_hash": "cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-b5a8178f-7123-4d71-884e-366c048e0c5f",
+            "result_session_id": "session-b5a8178f-7123-4d71-884e-366c048e0c5f",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-b5a8178f-7123-4d71-884e-366c048e0c5f\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-b5a8178f-7123-4d71-884e-366c048e0c5f\",\"subject_id\":\"owner-803e7539-5e17-4a2d-9fc6-335076880dcd\"}",
+            "formal_target_hash": "9fe4fbbe4d6b2de7ebbd877f663ebcf9d7aa0a7915b699421fcaffa0a0b74b1e",
+            "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"cead440b-293b-42a1-acf4-ecffdbdf3c57\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:13:21.381Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:13:21.395Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:13:21.411Z",
+            "model_completed_at": "2026-10-09T15:13:42.290Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":307,\"completion_tokens_details\":{\"reasoning_tokens\":129},\"prompt_tokens\":4747,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5054}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u521a\\u624d\\u8bf4\\u7684\\u65f6\\u95f4\\u4e0d\\u5bf9\\uff0c\\u6539\\u523020\\u70b915\\u5206\\uff0c19\\u70b930\\u5206\\u53d6\\u6d88\\uff0c\\u4ee5\\u540e\\u90fd\\u7528\\u65b0\\u65f6\\u95f4\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"cead440b-293b-42a1-acf4-ecffdbdf3c57\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":307,\"completion_tokens_details\":{\"reasoning_tokens\":129},\"prompt_tokens\":4747,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5054}}",
+            "model_result_hash": "e255ea982197595760b13f076e14816e0ce73603b1b07b11c19092d55cdb10b1",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:880fd92fbe0aac8dde49f64b1cd94134:cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef\",\"replacement_cognition_id\":\"cognition-f032c54871e139b88f14c3f3b93719d3413531766f2705d29324daddd4b3f0ea\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "eb6b5d4714fa902d96700a74a228e86835998b7239edf8f856968fd09c3f7ac5",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:13:21.362Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:880fd92fbe0aac8dde49f64b1cd94134:cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792\",\"evidence_count\":1,\"evidence_manifest_hash\":\"aab41da0cdd27f9b73ba6580210e25d368971ed1a352adf9934d20944f3b42cb\",\"formal_target_hash\":\"9fe4fbbe4d6b2de7ebbd877f663ebcf9d7aa0a7915b699421fcaffa0a0b74b1e\",\"job_id\":\"memory-world-job-c18c9c5fafecea69a9389af86b2c9737c1228f2d609fed1397be6b22fc555241\",\"job_state\":\"pending\",\"payload_hash\":\"cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "585582358d01426fa107f3cc37bcc714969cd5f712b257e6bcb7be5991e3894f",
+            "created_at": "2026-10-09T15:13:21.362Z",
+            "completed_at": "2026-10-09T15:13:42.300Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-61fb42eacd90c2158b41efc2c13b7c28604d2930bb36c88a6b0b24b354ea872f",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:4592102be4bdd4945f1927d3773cdc47:0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898",
+            "boundary_payload_hash": "0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-88166d26-4700-43fd-b848-233a736b28b5",
+            "result_session_id": "session-88166d26-4700-43fd-b848-233a736b28b5",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-88166d26-4700-43fd-b848-233a736b28b5\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-88166d26-4700-43fd-b848-233a736b28b5\",\"subject_id\":\"owner-803e7539-5e17-4a2d-9fc6-335076880dcd\"}",
+            "formal_target_hash": "6c42f110da10194ab8686c7af05d893765df013f31c80e5281f75a4d0129e48b",
+            "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"260bdc16-b55a-4e90-85ef-39888573ae28\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:13:42.311Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:13:42.320Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:13:42.328Z",
+            "model_completed_at": "2026-10-09T15:13:42.336Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:13:25.712Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:4592102be4bdd4945f1927d3773cdc47:0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898\",\"evidence_count\":1,\"evidence_manifest_hash\":\"d76c8da487bef51a73f39aa1dbd58953ef10200e5fe4219d4c11e30547876e09\",\"formal_target_hash\":\"6c42f110da10194ab8686c7af05d893765df013f31c80e5281f75a4d0129e48b\",\"job_id\":\"memory-world-job-61fb42eacd90c2158b41efc2c13b7c28604d2930bb36c88a6b0b24b354ea872f\",\"job_state\":\"pending\",\"payload_hash\":\"0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "ee8145258640215e215858af7430f8640ea67319da4f8e31a23bb4bca9abd57f",
+            "created_at": "2026-10-09T15:13:25.712Z",
+            "completed_at": "2026-10-09T15:13:42.336Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+            "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+            "content": "用户每周的线上读书会固定在周四晚上19点30分开始。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": "2026-10-09T15:13:42.300Z",
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:12:22.560Z",
+            "updated_at": "2026-10-09T15:13:42.300Z"
+          },
+          {
+            "id": "cognition-f032c54871e139b88f14c3f3b93719d3413531766f2705d29324daddd4b3f0ea",
+            "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+            "content": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:13:42.300Z",
+            "updated_at": "2026-10-09T15:13:42.300Z"
+          }
+        ],
+        "cognition_transitions": [
+          {
+            "id": "cognition-transition-ee2d562840f31b2894889bd12d363ec6946fdd8ee701d0460a19ecb753f5cf21",
+            "prior_cognition_id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+            "replacement_cognition_id": "cognition-f032c54871e139b88f14c3f3b93719d3413531766f2705d29324daddd4b3f0ea",
+            "reason": "corrects",
+            "revision": 2
+          }
+        ],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-0f5ba62d8ea3c70ef7b9a311c0e44d339d1ca8e078ba8d548a858f9f9aa43b00",
+            "world_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+            "kind": "topic",
+            "canonical_name": "线上读书会",
+            "invalid_at": null,
+            "created_at": "2026-10-09T15:12:22.560Z",
+            "updated_at": "2026-10-09T15:12:22.560Z",
+            "aliases_json": "[\"\\u8bfb\\u4e66\\u4f1a\"]"
+          }
+        ]
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-time-1",
+        "category": "memory",
+        "title": "holdout-time",
+        "status": "passed",
+        "durationMs": 12141,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1",
+            "modelProfileId": "private-model-fd21a51149161d7cbece44a96644b76f97877af8",
+            "commandId": "cmd-31bc6917-4528-49ca-8999-b86e3195dd06",
+            "startedAt": "2026-10-09T15:11:59.923Z",
+            "reply": "了解，你的线上读书会固定在每周四 19:30（Asia/Shanghai）开始。\n\n需要我顺手建一个每周提醒吗？比如周四 19:00 提前提醒你「准备参加线上读书会」，说一声我就直接创建。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:11:59.978Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:11:59.979Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:12:00.028Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T15:12:00.029Z"
+              },
+              {
+                "seq": 212,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:12:11.568Z"
+              },
+              {
+                "seq": 213,
+                "type": "task.ended",
+                "at": "2026-10-09T15:12:11.568Z"
+              },
+              {
+                "seq": 214,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:12:11.571Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 11809,
+            "endedAt": "2026-10-09T15:12:11.732Z"
+          }
+        ],
+        "replySummary": "了解，你的线上读书会固定在每周四 19:30（Asia/Shanghai）开始。\n\n需要我顺手建一个每周提醒吗？比如周四 19:00 提前提醒你「准备参加线上读书会」，说一声我就直接创建。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-time-1-IIIdmQ"
+      },
+      {
+        "id": "holdout-time-2",
+        "category": "memory",
+        "title": "holdout-time",
+        "status": "passed",
+        "durationMs": 67808,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-b5a8178f-7123-4d71-884e-366c048e0c5f",
+            "modelProfileId": "private-model-fd21a51149161d7cbece44a96644b76f97877af8",
+            "commandId": "cmd-aff9e168-6955-4a7c-a98e-802d33ce270e",
+            "startedAt": "2026-10-09T15:12:13.588Z",
+            "reply": "已更正：周四晚上的线上读书会以后都按 **20:15** 开始，19:30 作废。\n\n我查了当前的定时任务列表，是空的——没有找到设在 19:30 的提醒可取消。如果你需要我建立一个“每周四 20:15”的读书会提醒，说一声即可。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:12:13.640Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:12:13.640Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:12:13.671Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:12:13.672Z"
+              },
+              {
+                "seq": 114,
+                "type": "step.started",
+                "at": "2026-10-09T15:12:20.265Z"
+              },
+              {
+                "seq": 115,
+                "type": "step.completed",
+                "at": "2026-10-09T15:12:20.272Z"
+              },
+              {
+                "seq": 136,
+                "type": "step.started",
+                "at": "2026-10-09T15:12:22.561Z"
+              },
+              {
+                "seq": 137,
+                "type": "step.completed",
+                "at": "2026-10-09T15:12:22.569Z"
+              },
+              {
+                "seq": 280,
+                "type": "step.started",
+                "at": "2026-10-09T15:12:55.514Z"
+              },
+              {
+                "seq": 281,
+                "type": "step.completed",
+                "at": "2026-10-09T15:12:55.522Z"
+              },
+              {
+                "seq": 304,
+                "type": "step.started",
+                "at": "2026-10-09T15:12:57.690Z"
+              },
+              {
+                "seq": 305,
+                "type": "step.completed",
+                "at": "2026-10-09T15:12:57.699Z"
+              },
+              {
+                "seq": 620,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:13:20.810Z"
+              },
+              {
+                "seq": 621,
+                "type": "task.ended",
+                "at": "2026-10-09T15:13:20.811Z"
+              },
+              {
+                "seq": 622,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:13:20.812Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+                "kind": "cognition",
+                "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+              }
+            ],
+            "durationMs": 67470,
+            "endedAt": "2026-10-09T15:13:21.058Z"
+          }
+        ],
+        "replySummary": "已更正：周四晚上的线上读书会以后都按 **20:15** 开始，19:30 作废。\n\n我查了当前的定时任务列表，是空的——没有找到设在 19:30 的提醒可取消。如果你需要我建立一个“每周四 20:15”的读书会提醒，说一声即可。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-time-2-wXFRCT"
+      },
+      {
+        "id": "holdout-time-3",
+        "category": "memory",
+        "title": "holdout-time",
+        "status": "passed",
+        "durationMs": 2737,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-88166d26-4700-43fd-b848-233a736b28b5",
+            "modelProfileId": "private-model-fd21a51149161d7cbece44a96644b76f97877af8",
+            "commandId": "cmd-57bf6a82-5e46-4d89-a395-78e0547ae2d0",
+            "startedAt": "2026-10-09T15:13:22.859Z",
+            "reply": "按你最近的调整，这周四的线上读书会是 **20:15** 开始（原定的 19:30 已取消，以后都按 20:15）。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:13:22.920Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:13:22.920Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:13:22.956Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:13:22.957Z"
+              },
+              {
+                "seq": 60,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:13:25.241Z"
+              },
+              {
+                "seq": 61,
+                "type": "task.ended",
+                "at": "2026-10-09T15:13:25.241Z"
+              },
+              {
+                "seq": 62,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:13:25.242Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [
+              {
+                "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+                "kind": "cognition",
+                "summary": "用户每周的线上读书会固定在周四晚上19点30分开始。"
+              }
+            ],
+            "durationMs": 2397,
+            "endedAt": "2026-10-09T15:13:25.256Z"
+          }
+        ],
+        "replySummary": "按你最近的调整，这周四的线上读书会是 **20:15** 开始（原定的 19:30 已取消，以后都按 20:15）。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-time-3-gGkS2M"
+      }
+    ],
+    "expectedValuePresent": true,
+    "rejectedValueMentioned": true,
+    "rubric": "明确回答周四20:15（晚上八点十五）开始，不能仍采用19:30。",
+    "answer": "按你最近的调整，这周四的线上读书会是 **20:15** 开始（原定的 19:30 已取消，以后都按 20:15）。",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+      "items": [
+        {
+          "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+          "kind": "cognition",
+          "text": "用户每周的线上读书会固定在周四晚上19点30分开始。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-09T15:12:22.560Z",
+          "updatedAt": "2026-10-09T15:12:22.560Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "worldRevision": 1,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [
+        {
+          "job_id": "memory-world-job-bac54e8d093d6ae265f13019c2752ef6f702aadbd1b3131cca879c3102ffa294",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:66382329d1129df555d52f32c75c342f:54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622",
+          "boundary_payload_hash": "54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1",
+          "result_session_id": "session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-048bd59a-b1be-42bb-8d1d-a0b27c9c69f1\",\"subject_id\":\"owner-803e7539-5e17-4a2d-9fc6-335076880dcd\"}",
+          "formal_target_hash": "39ed55f02b5622666a9d49de694d2c06b2157bd28821d4dcdc1eb06b077588f3",
+          "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"d4160a18-ea32-48d6-a3dd-e59e2f48bbe0\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:12:12.269Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:12:12.282Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:12:12.293Z",
+          "model_completed_at": "2026-10-09T15:12:22.551Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":413,\"completion_tokens_details\":{\"reasoning_tokens\":288},\"prompt_tokens\":4502,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4915}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u6bcf\\u5468\\u7684\\u7ebf\\u4e0a\\u8bfb\\u4e66\\u4f1a\\u56fa\\u5b9a\\u5728\\u5468\\u56db\\u665a\\u4e0a19\\u70b930\\u5206\\u5f00\\u59cb\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"d4160a18-ea32-48d6-a3dd-e59e2f48bbe0\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u7ebf\\u4e0a\\u8bfb\\u4e66\\u4f1a\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u8bfb\\u4e66\\u4f1a\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":413,\"completion_tokens_details\":{\"reasoning_tokens\":288},\"prompt_tokens\":4502,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4915}}",
+          "model_result_hash": "20a0b76d1c66f53c7de48a2b2b4f696f58e2d52a9a3aab6c1ffe24c1513ed95e",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:66382329d1129df555d52f32c75c342f:54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+          "result_hash": "dda63e73a6f2ab90851ff2b9d7feabbe72086f86ba42c441bd3a986ff4558e55",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:12:12.230Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:66382329d1129df555d52f32c75c342f:54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622\",\"evidence_count\":1,\"evidence_manifest_hash\":\"cd24e4f7864ad3814e9a27baade020cb7c2c23992fde382aad10649831286a34\",\"formal_target_hash\":\"39ed55f02b5622666a9d49de694d2c06b2157bd28821d4dcdc1eb06b077588f3\",\"job_id\":\"memory-world-job-bac54e8d093d6ae265f13019c2752ef6f702aadbd1b3131cca879c3102ffa294\",\"job_state\":\"pending\",\"payload_hash\":\"54b31a6e6bc82e4027d2fbf2767a6dc33ce9d2c15f4ce9dfc96e2f43b32cf622\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "857a87d0b1afd3c9b2bb80cf68b2fd3f059a2daac0cf3507ecbe55c92a915778",
+          "created_at": "2026-10-09T15:12:12.230Z",
+          "completed_at": "2026-10-09T15:12:22.560Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-c18c9c5fafecea69a9389af86b2c9737c1228f2d609fed1397be6b22fc555241",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:880fd92fbe0aac8dde49f64b1cd94134:cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792",
+          "boundary_payload_hash": "cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-b5a8178f-7123-4d71-884e-366c048e0c5f",
+          "result_session_id": "session-b5a8178f-7123-4d71-884e-366c048e0c5f",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-b5a8178f-7123-4d71-884e-366c048e0c5f\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-b5a8178f-7123-4d71-884e-366c048e0c5f\",\"subject_id\":\"owner-803e7539-5e17-4a2d-9fc6-335076880dcd\"}",
+          "formal_target_hash": "9fe4fbbe4d6b2de7ebbd877f663ebcf9d7aa0a7915b699421fcaffa0a0b74b1e",
+          "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"cead440b-293b-42a1-acf4-ecffdbdf3c57\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:13:21.381Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:13:21.395Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:13:21.411Z",
+          "model_completed_at": "2026-10-09T15:13:42.290Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":307,\"completion_tokens_details\":{\"reasoning_tokens\":129},\"prompt_tokens\":4747,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5054}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u521a\\u624d\\u8bf4\\u7684\\u65f6\\u95f4\\u4e0d\\u5bf9\\uff0c\\u6539\\u523020\\u70b915\\u5206\\uff0c19\\u70b930\\u5206\\u53d6\\u6d88\\uff0c\\u4ee5\\u540e\\u90fd\\u7528\\u65b0\\u65f6\\u95f4\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"cead440b-293b-42a1-acf4-ecffdbdf3c57\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":307,\"completion_tokens_details\":{\"reasoning_tokens\":129},\"prompt_tokens\":4747,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":5054}}",
+          "model_result_hash": "e255ea982197595760b13f076e14816e0ce73603b1b07b11c19092d55cdb10b1",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:880fd92fbe0aac8dde49f64b1cd94134:cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef\",\"replacement_cognition_id\":\"cognition-f032c54871e139b88f14c3f3b93719d3413531766f2705d29324daddd4b3f0ea\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+          "result_hash": "eb6b5d4714fa902d96700a74a228e86835998b7239edf8f856968fd09c3f7ac5",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:13:21.362Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:880fd92fbe0aac8dde49f64b1cd94134:cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792\",\"evidence_count\":1,\"evidence_manifest_hash\":\"aab41da0cdd27f9b73ba6580210e25d368971ed1a352adf9934d20944f3b42cb\",\"formal_target_hash\":\"9fe4fbbe4d6b2de7ebbd877f663ebcf9d7aa0a7915b699421fcaffa0a0b74b1e\",\"job_id\":\"memory-world-job-c18c9c5fafecea69a9389af86b2c9737c1228f2d609fed1397be6b22fc555241\",\"job_state\":\"pending\",\"payload_hash\":\"cdec20ae2b1e5a0d2c62ad2ac18cb7b9727620bb83b33e371f27abb54fb49792\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "585582358d01426fa107f3cc37bcc714969cd5f712b257e6bcb7be5991e3894f",
+          "created_at": "2026-10-09T15:13:21.362Z",
+          "completed_at": "2026-10-09T15:13:42.300Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-61fb42eacd90c2158b41efc2c13b7c28604d2930bb36c88a6b0b24b354ea872f",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:4592102be4bdd4945f1927d3773cdc47:0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898",
+          "boundary_payload_hash": "0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-88166d26-4700-43fd-b848-233a736b28b5",
+          "result_session_id": "session-88166d26-4700-43fd-b848-233a736b28b5",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-88166d26-4700-43fd-b848-233a736b28b5\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-88166d26-4700-43fd-b848-233a736b28b5\",\"subject_id\":\"owner-803e7539-5e17-4a2d-9fc6-335076880dcd\"}",
+          "formal_target_hash": "6c42f110da10194ab8686c7af05d893765df013f31c80e5281f75a4d0129e48b",
+          "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"260bdc16-b55a-4e90-85ef-39888573ae28\"]",
+          "state": "no_change",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:13:42.311Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:13:42.320Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:13:42.328Z",
+          "model_completed_at": "2026-10-09T15:13:42.336Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": null,
+          "model_usage_json": null,
+          "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:13:25.712Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:4592102be4bdd4945f1927d3773cdc47:0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898\",\"evidence_count\":1,\"evidence_manifest_hash\":\"d76c8da487bef51a73f39aa1dbd58953ef10200e5fe4219d4c11e30547876e09\",\"formal_target_hash\":\"6c42f110da10194ab8686c7af05d893765df013f31c80e5281f75a4d0129e48b\",\"job_id\":\"memory-world-job-61fb42eacd90c2158b41efc2c13b7c28604d2930bb36c88a6b0b24b354ea872f\",\"job_state\":\"pending\",\"payload_hash\":\"0e19971d8d1c97bd3191a416f2e599ca075e3dd6d33062303452300869550898\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "ee8145258640215e215858af7430f8640ea67319da4f8e31a23bb4bca9abd57f",
+          "created_at": "2026-10-09T15:13:25.712Z",
+          "completed_at": "2026-10-09T15:13:42.336Z",
+          "last_error_type": null,
+          "terminal_state": "no_change",
+          "terminal_detail": null
+        }
+      ],
+      "cognition": [
+        {
+          "id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+          "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+          "content": "用户每周的线上读书会固定在周四晚上19点30分开始。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": "2026-10-09T15:13:42.300Z",
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:12:22.560Z",
+          "updated_at": "2026-10-09T15:13:42.300Z"
+        },
+        {
+          "id": "cognition-f032c54871e139b88f14c3f3b93719d3413531766f2705d29324daddd4b3f0ea",
+          "subject_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+          "content": "用户刚才说的时间不对，改到20点15分，19点30分取消，以后都用新时间。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": null,
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:13:42.300Z",
+          "updated_at": "2026-10-09T15:13:42.300Z"
+        }
+      ],
+      "cognition_transitions": [
+        {
+          "id": "cognition-transition-ee2d562840f31b2894889bd12d363ec6946fdd8ee701d0460a19ecb753f5cf21",
+          "prior_cognition_id": "cognition-aa0816060d2ae97ec5eca172b1eb090ba4246f7afb013c8222a644f4fa1a78ef",
+          "replacement_cognition_id": "cognition-f032c54871e139b88f14c3f3b93719d3413531766f2705d29324daddd4b3f0ea",
+          "reason": "corrects",
+          "revision": 2
+        }
+      ],
+      "relationship": [],
+      "entity": [
+        {
+          "id": "entity-0f5ba62d8ea3c70ef7b9a311c0e44d339d1ca8e078ba8d548a858f9f9aa43b00",
+          "world_id": "owner-803e7539-5e17-4a2d-9fc6-335076880dcd",
+          "kind": "topic",
+          "canonical_name": "线上读书会",
+          "invalid_at": null,
+          "created_at": "2026-10-09T15:12:22.560Z",
+          "updated_at": "2026-10-09T15:12:22.560Z",
+          "aliases_json": "[\"\\u8bfb\\u4e66\\u4f1a\"]"
+        }
+      ]
+    },
+    "endedAt": "2026-10-09T15:13:44.438Z"
+  },
+  {
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-FaJbta",
+    "startedAt": "2026-10-09T15:13:46.224Z",
+    "turns": [
+      {
+        "sessionId": "session-231b1b0b-0731-44d2-a705-3092872b41d0",
+        "modelProfileId": "private-model-4769a00d7e7e007ff86fa2605836e7b2d5b8572a",
+        "commandId": "cmd-0e55caa3-4266-46ae-9a68-9f0b524c3eff",
+        "startedAt": "2026-10-09T15:13:55.351Z",
+        "reply": "好的，记下了：陶艺兴趣组报名都找林舟。要不要我在以后遇到你报名陶艺组活动、或问兴趣组联系人的时候，主动提醒你找林舟？",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:13:55.403Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:13:55.404Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:13:55.451Z"
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-09T15:13:55.451Z"
+          },
+          {
+            "seq": 85,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:14:02.315Z"
+          },
+          {
+            "seq": 86,
+            "type": "task.ended",
+            "at": "2026-10-09T15:14:02.316Z"
+          },
+          {
+            "seq": 87,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:14:02.317Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 7169,
+        "endedAt": "2026-10-09T15:14:02.520Z"
+      },
+      {
+        "sessionId": "session-1606b755-cb6a-431b-a1ab-e35ff5874ee8",
+        "modelProfileId": "private-model-4769a00d7e7e007ff86fa2605836e7b2d5b8572a",
+        "commandId": "cmd-0d25f4bc-c404-4888-8781-322780f24226",
+        "startedAt": "2026-10-09T15:14:06.003Z",
+        "reply": "明白，已更正：陶艺兴趣组的固定联系人是**林洲**（不是林舟），以后报名都找林洲。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:14:06.065Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:14:06.065Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:14:06.092Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:14:06.092Z"
+          },
+          {
+            "seq": 57,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:14:24.899Z"
+          },
+          {
+            "seq": 58,
+            "type": "task.ended",
+            "at": "2026-10-09T15:14:24.900Z"
+          },
+          {
+            "seq": 59,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:14:24.900Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 19005,
+        "endedAt": "2026-10-09T15:14:25.008Z"
+      },
+      {
+        "sessionId": "session-1927cfac-bf37-4cf6-a24a-898e00996a3d",
+        "modelProfileId": "private-model-4769a00d7e7e007ff86fa2605836e7b2d5b8572a",
+        "commandId": "cmd-7bd5c1a3-229b-4a15-b53b-6131da5e5c75",
+        "startedAt": "2026-10-09T15:14:26.740Z",
+        "reply": "报名陶艺兴趣组找**林洲**。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:14:26.787Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:14:26.787Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:14:26.816Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:14:26.817Z"
+          },
+          {
+            "seq": 39,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:14:31.609Z"
+          },
+          {
+            "seq": 40,
+            "type": "task.ended",
+            "at": "2026-10-09T15:14:31.609Z"
+          },
+          {
+            "seq": 41,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:14:31.610Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 5023,
+        "endedAt": "2026-10-09T15:14:31.763Z"
+      }
+    ],
+    "settlements": [
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-7a2d59d901d3c00974785d32aa0adb37cc8b04e38463872ee3c1b5e47609c0eb",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:0a20aab2d32479fe46d92d8577f22321:305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda",
+            "boundary_payload_hash": "305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-231b1b0b-0731-44d2-a705-3092872b41d0",
+            "result_session_id": "session-231b1b0b-0731-44d2-a705-3092872b41d0",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-231b1b0b-0731-44d2-a705-3092872b41d0\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-231b1b0b-0731-44d2-a705-3092872b41d0\",\"subject_id\":\"owner-45462cf6-5558-46ff-8b1a-0d26fad15dec\"}",
+            "formal_target_hash": "683d8111491d3ca834e103f82e104064e06cc1cbb3a433a01552af2c104984f7",
+            "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"c71fe80a-cc76-4545-848d-bd5f6b8da88c\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:14:04.022Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:14:04.034Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:14:04.045Z",
+            "model_completed_at": "2026-10-09T15:14:40.352Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":256,\"completion_tokens_details\":{\"reasoning_tokens\":142},\"prompt_tokens\":4525,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4781}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"naming\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u4eec\\u9676\\u827a\\u5174\\u8da3\\u7ec4\\u7684\\u56fa\\u5b9a\\u8054\\u7cfb\\u4eba\\u53eb\\u6797\\u821f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"c71fe80a-cc76-4545-848d-bd5f6b8da88c\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":256,\"completion_tokens_details\":{\"reasoning_tokens\":142},\"prompt_tokens\":4525,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4781}}",
+            "model_result_hash": "53855dd88fa41c23ebf134ffc1f90c7845e503bc41b5a28089f5c77aeac88eae",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:0a20aab2d32479fe46d92d8577f22321:305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda\",\"cognitions\":[{\"action\":\"form\",\"canonical_name\":\"\\u6797\\u821f\",\"cognition_id\":\"cognition-062da15e67288005b719bfd0abf1c1aa1edb56bc6da5fd43cb474a0bd8483997\",\"confidence\":600,\"cred_status\":\"limited\",\"entity_id\":\"entity-6395c793794968fafb0d1233e8f783eab2871f3bf4b3f8928b01623fbff5b05f\",\"entity_kind\":\"person\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"naming\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "aefe96c51fc8ad82dae4b9ed240b00bc4c4cde72c016143ce991d7aeef1b6432",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:14:03.954Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:0a20aab2d32479fe46d92d8577f22321:305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda\",\"evidence_count\":1,\"evidence_manifest_hash\":\"7953067e57ec0048576abf9cae9eae7b54c14671e179267982bc2ededcf447bb\",\"formal_target_hash\":\"683d8111491d3ca834e103f82e104064e06cc1cbb3a433a01552af2c104984f7\",\"job_id\":\"memory-world-job-7a2d59d901d3c00974785d32aa0adb37cc8b04e38463872ee3c1b5e47609c0eb\",\"job_state\":\"pending\",\"payload_hash\":\"305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "be0e633cf934c807e03e2afb13cbe33df7c5c324f4758845dd1402b17e105832",
+            "created_at": "2026-10-09T15:14:03.954Z",
+            "completed_at": "2026-10-09T15:14:40.361Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-27d097250974eddf1b26ea97101d54d91f013edeff7a4443fa1b012d8f2c111f",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:616d5ccb3f3b3c4976395916eb28f2fc:327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4",
+            "boundary_payload_hash": "327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-1606b755-cb6a-431b-a1ab-e35ff5874ee8",
+            "result_session_id": "session-1606b755-cb6a-431b-a1ab-e35ff5874ee8",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-1606b755-cb6a-431b-a1ab-e35ff5874ee8\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-1606b755-cb6a-431b-a1ab-e35ff5874ee8\",\"subject_id\":\"owner-45462cf6-5558-46ff-8b1a-0d26fad15dec\"}",
+            "formal_target_hash": "7248191177a325beee46ca9125a7f102a7b1a828d72ab97cfca04d014273358f",
+            "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"af3dfa87-5c36-4486-b855-7bafd72971f4\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:14:40.372Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:14:40.380Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:14:40.391Z",
+            "model_completed_at": "2026-10-09T15:14:47.418Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":430,\"completion_tokens_details\":{\"reasoning_tokens\":298},\"prompt_tokens\":4715,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5145}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"alias\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u90a3\\u4e2a\\u4eba\\u540d\\u5199\\u9519\\u4e86\\uff0c\\u5e94\\u8be5\\u662f\\u6797\\u6d32\\uff0c\\u4e0d\\u662f\\u6797\\u821f\\uff0c\\u4ee5\\u540e\\u6309\\u6797\\u6d32\\u8fd9\\u4e2a\\u540d\\u5b57\\u6765\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"af3dfa87-5c36-4486-b855-7bafd72971f4\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u6d32\\\",\\\"kind\\\":\\\"person\\\"},\\\"alias_of\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":430,\"completion_tokens_details\":{\"reasoning_tokens\":298},\"prompt_tokens\":4715,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5145}}",
+            "model_result_hash": "2e1ce576a2700bd9a2a9ad10738fb45f3178c2efdbf1d3ec6201ba31075be681",
+            "world_result_json": "{\"reason\":\"name_correction_not_explicit\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "72edc7fe80a8e491b63d97c99593488daa66217f28909b9cd4dfdde4398c58fa",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:14:25.395Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:616d5ccb3f3b3c4976395916eb28f2fc:327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4\",\"evidence_count\":1,\"evidence_manifest_hash\":\"8320800f812c9ca2bc10c04235867e26549c56fd7542fd51c0c43bfc0cea0b3d\",\"formal_target_hash\":\"7248191177a325beee46ca9125a7f102a7b1a828d72ab97cfca04d014273358f\",\"job_id\":\"memory-world-job-27d097250974eddf1b26ea97101d54d91f013edeff7a4443fa1b012d8f2c111f\",\"job_state\":\"pending\",\"payload_hash\":\"327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "2bab6d7f3312ad5033b825425d97170d64d71078361e1a004d4caa80ef5232a1",
+            "created_at": "2026-10-09T15:14:25.395Z",
+            "completed_at": "2026-10-09T15:14:47.418Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-490d3fd43ed5ad1b1271085b5e9214de0a5f83311caac064e905776628928914",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:cb4969a8168bba9b6db109879df39041:22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c",
+            "boundary_payload_hash": "22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-1927cfac-bf37-4cf6-a24a-898e00996a3d",
+            "result_session_id": "session-1927cfac-bf37-4cf6-a24a-898e00996a3d",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-1927cfac-bf37-4cf6-a24a-898e00996a3d\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-1927cfac-bf37-4cf6-a24a-898e00996a3d\",\"subject_id\":\"owner-45462cf6-5558-46ff-8b1a-0d26fad15dec\"}",
+            "formal_target_hash": "38b7280b7fd79ede90346b9a7896a97168c4160961a90f37574181d5889c4063",
+            "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"1bc6b101-c290-45d2-b211-970501e1571e\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:14:47.429Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:14:47.437Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:14:47.447Z",
+            "model_completed_at": "2026-10-09T15:14:47.454Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:14:32.068Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:cb4969a8168bba9b6db109879df39041:22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c\",\"evidence_count\":1,\"evidence_manifest_hash\":\"6f0f2e54ce9d41c5c4030e73d98b8f6d26eaafb3a4cffb9fcea7cb41337a18fc\",\"formal_target_hash\":\"38b7280b7fd79ede90346b9a7896a97168c4160961a90f37574181d5889c4063\",\"job_id\":\"memory-world-job-490d3fd43ed5ad1b1271085b5e9214de0a5f83311caac064e905776628928914\",\"job_state\":\"pending\",\"payload_hash\":\"22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "328baac251960d812570029f3a4929f04c8ed8c17e04f1bf55496a542d988645",
+            "created_at": "2026-10-09T15:14:32.068Z",
+            "completed_at": "2026-10-09T15:14:47.454Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-062da15e67288005b719bfd0abf1c1aa1edb56bc6da5fd43cb474a0bd8483997",
+            "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+            "content": "用户陶艺兴趣组的固定联系人叫林舟",
+            "content_type": "naming",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:14:40.361Z",
+            "updated_at": "2026-10-09T15:14:40.361Z"
+          }
+        ],
+        "cognition_transitions": [],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-6395c793794968fafb0d1233e8f783eab2871f3bf4b3f8928b01623fbff5b05f",
+            "world_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+            "kind": "person",
+            "canonical_name": "林舟",
+            "invalid_at": null,
+            "created_at": "2026-10-09T15:14:40.361Z",
+            "updated_at": "2026-10-09T15:14:40.361Z",
+            "aliases_json": "[]"
+          }
+        ]
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-name-1",
+        "category": "memory",
+        "title": "holdout-name",
+        "status": "passed",
+        "durationMs": 7494,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-231b1b0b-0731-44d2-a705-3092872b41d0",
+            "modelProfileId": "private-model-4769a00d7e7e007ff86fa2605836e7b2d5b8572a",
+            "commandId": "cmd-0e55caa3-4266-46ae-9a68-9f0b524c3eff",
+            "startedAt": "2026-10-09T15:13:55.351Z",
+            "reply": "好的，记下了：陶艺兴趣组报名都找林舟。要不要我在以后遇到你报名陶艺组活动、或问兴趣组联系人的时候，主动提醒你找林舟？",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:13:55.403Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:13:55.404Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:13:55.451Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T15:13:55.451Z"
+              },
+              {
+                "seq": 85,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:14:02.315Z"
+              },
+              {
+                "seq": 86,
+                "type": "task.ended",
+                "at": "2026-10-09T15:14:02.316Z"
+              },
+              {
+                "seq": 87,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:14:02.317Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 7169,
+            "endedAt": "2026-10-09T15:14:02.520Z"
+          }
+        ],
+        "replySummary": "好的，记下了：陶艺兴趣组报名都找林舟。要不要我在以后遇到你报名陶艺组活动、或问兴趣组联系人的时候，主动提醒你找林舟？",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-name-1-RM4QAp"
+      },
+      {
+        "id": "holdout-name-2",
+        "category": "memory",
+        "title": "holdout-name",
+        "status": "passed",
+        "durationMs": 19345,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-1606b755-cb6a-431b-a1ab-e35ff5874ee8",
+            "modelProfileId": "private-model-4769a00d7e7e007ff86fa2605836e7b2d5b8572a",
+            "commandId": "cmd-0d25f4bc-c404-4888-8781-322780f24226",
+            "startedAt": "2026-10-09T15:14:06.003Z",
+            "reply": "明白，已更正：陶艺兴趣组的固定联系人是**林洲**（不是林舟），以后报名都找林洲。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:14:06.065Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:14:06.065Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:14:06.092Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:14:06.092Z"
+              },
+              {
+                "seq": 57,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:14:24.899Z"
+              },
+              {
+                "seq": 58,
+                "type": "task.ended",
+                "at": "2026-10-09T15:14:24.900Z"
+              },
+              {
+                "seq": 59,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:14:24.900Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 19005,
+            "endedAt": "2026-10-09T15:14:25.008Z"
+          }
+        ],
+        "replySummary": "明白，已更正：陶艺兴趣组的固定联系人是**林洲**（不是林舟），以后报名都找林洲。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-name-2-ZMCODH"
+      },
+      {
+        "id": "holdout-name-3",
+        "category": "memory",
+        "title": "holdout-name",
+        "status": "passed",
+        "durationMs": 5351,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-1927cfac-bf37-4cf6-a24a-898e00996a3d",
+            "modelProfileId": "private-model-4769a00d7e7e007ff86fa2605836e7b2d5b8572a",
+            "commandId": "cmd-7bd5c1a3-229b-4a15-b53b-6131da5e5c75",
+            "startedAt": "2026-10-09T15:14:26.740Z",
+            "reply": "报名陶艺兴趣组找**林洲**。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:14:26.787Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:14:26.787Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:14:26.816Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:14:26.817Z"
+              },
+              {
+                "seq": 39,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:14:31.609Z"
+              },
+              {
+                "seq": 40,
+                "type": "task.ended",
+                "at": "2026-10-09T15:14:31.609Z"
+              },
+              {
+                "seq": 41,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:14:31.610Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 5023,
+            "endedAt": "2026-10-09T15:14:31.763Z"
+          }
+        ],
+        "replySummary": "报名陶艺兴趣组找**林洲**。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-name-3-zLZfTc"
+      }
+    ],
+    "expectedValuePresent": true,
+    "rejectedValueMentioned": false,
+    "rubric": "报名应找林洲，不能把林舟作为当前正确姓名。",
+    "answer": "报名陶艺兴趣组找**林洲**。",
+    "automaticPass": true,
+    "formalItems": {
+      "ownerId": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+      "items": [],
+      "worldRevision": 0,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [
+        {
+          "job_id": "memory-world-job-7a2d59d901d3c00974785d32aa0adb37cc8b04e38463872ee3c1b5e47609c0eb",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:0a20aab2d32479fe46d92d8577f22321:305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda",
+          "boundary_payload_hash": "305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-231b1b0b-0731-44d2-a705-3092872b41d0",
+          "result_session_id": "session-231b1b0b-0731-44d2-a705-3092872b41d0",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-231b1b0b-0731-44d2-a705-3092872b41d0\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-231b1b0b-0731-44d2-a705-3092872b41d0\",\"subject_id\":\"owner-45462cf6-5558-46ff-8b1a-0d26fad15dec\"}",
+          "formal_target_hash": "683d8111491d3ca834e103f82e104064e06cc1cbb3a433a01552af2c104984f7",
+          "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"c71fe80a-cc76-4545-848d-bd5f6b8da88c\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:14:04.022Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:14:04.034Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:14:04.045Z",
+          "model_completed_at": "2026-10-09T15:14:40.352Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":256,\"completion_tokens_details\":{\"reasoning_tokens\":142},\"prompt_tokens\":4525,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4781}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"naming\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u4eec\\u9676\\u827a\\u5174\\u8da3\\u7ec4\\u7684\\u56fa\\u5b9a\\u8054\\u7cfb\\u4eba\\u53eb\\u6797\\u821f\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"c71fe80a-cc76-4545-848d-bd5f6b8da88c\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":256,\"completion_tokens_details\":{\"reasoning_tokens\":142},\"prompt_tokens\":4525,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4781}}",
+          "model_result_hash": "53855dd88fa41c23ebf134ffc1f90c7845e503bc41b5a28089f5c77aeac88eae",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:0a20aab2d32479fe46d92d8577f22321:305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda\",\"cognitions\":[{\"action\":\"form\",\"canonical_name\":\"\\u6797\\u821f\",\"cognition_id\":\"cognition-062da15e67288005b719bfd0abf1c1aa1edb56bc6da5fd43cb474a0bd8483997\",\"confidence\":600,\"cred_status\":\"limited\",\"entity_id\":\"entity-6395c793794968fafb0d1233e8f783eab2871f3bf4b3f8928b01623fbff5b05f\",\"entity_kind\":\"person\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"naming\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+          "result_hash": "aefe96c51fc8ad82dae4b9ed240b00bc4c4cde72c016143ce991d7aeef1b6432",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:14:03.954Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:0a20aab2d32479fe46d92d8577f22321:305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda\",\"evidence_count\":1,\"evidence_manifest_hash\":\"7953067e57ec0048576abf9cae9eae7b54c14671e179267982bc2ededcf447bb\",\"formal_target_hash\":\"683d8111491d3ca834e103f82e104064e06cc1cbb3a433a01552af2c104984f7\",\"job_id\":\"memory-world-job-7a2d59d901d3c00974785d32aa0adb37cc8b04e38463872ee3c1b5e47609c0eb\",\"job_state\":\"pending\",\"payload_hash\":\"305fb7bccb3cd13902e2470919921b6cbcdde8dc1731c6a66ab074d005be7cda\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "be0e633cf934c807e03e2afb13cbe33df7c5c324f4758845dd1402b17e105832",
+          "created_at": "2026-10-09T15:14:03.954Z",
+          "completed_at": "2026-10-09T15:14:40.361Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-27d097250974eddf1b26ea97101d54d91f013edeff7a4443fa1b012d8f2c111f",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:616d5ccb3f3b3c4976395916eb28f2fc:327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4",
+          "boundary_payload_hash": "327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-1606b755-cb6a-431b-a1ab-e35ff5874ee8",
+          "result_session_id": "session-1606b755-cb6a-431b-a1ab-e35ff5874ee8",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-1606b755-cb6a-431b-a1ab-e35ff5874ee8\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-1606b755-cb6a-431b-a1ab-e35ff5874ee8\",\"subject_id\":\"owner-45462cf6-5558-46ff-8b1a-0d26fad15dec\"}",
+          "formal_target_hash": "7248191177a325beee46ca9125a7f102a7b1a828d72ab97cfca04d014273358f",
+          "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"af3dfa87-5c36-4486-b855-7bafd72971f4\"]",
+          "state": "no_change",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:14:40.372Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:14:40.380Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:14:40.391Z",
+          "model_completed_at": "2026-10-09T15:14:47.418Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":430,\"completion_tokens_details\":{\"reasoning_tokens\":298},\"prompt_tokens\":4715,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5145}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"alias\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u90a3\\u4e2a\\u4eba\\u540d\\u5199\\u9519\\u4e86\\uff0c\\u5e94\\u8be5\\u662f\\u6797\\u6d32\\uff0c\\u4e0d\\u662f\\u6797\\u821f\\uff0c\\u4ee5\\u540e\\u6309\\u6797\\u6d32\\u8fd9\\u4e2a\\u540d\\u5b57\\u6765\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"af3dfa87-5c36-4486-b855-7bafd72971f4\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u6d32\\\",\\\"kind\\\":\\\"person\\\"},\\\"alias_of\\\":{\\\"canonical_name\\\":\\\"\\u6797\\u821f\\\",\\\"kind\\\":\\\"person\\\"}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":430,\"completion_tokens_details\":{\"reasoning_tokens\":298},\"prompt_tokens\":4715,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5145}}",
+          "model_result_hash": "2e1ce576a2700bd9a2a9ad10738fb45f3178c2efdbf1d3ec6201ba31075be681",
+          "world_result_json": "{\"reason\":\"name_correction_not_explicit\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "result_hash": "72edc7fe80a8e491b63d97c99593488daa66217f28909b9cd4dfdde4398c58fa",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:14:25.395Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:616d5ccb3f3b3c4976395916eb28f2fc:327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4\",\"evidence_count\":1,\"evidence_manifest_hash\":\"8320800f812c9ca2bc10c04235867e26549c56fd7542fd51c0c43bfc0cea0b3d\",\"formal_target_hash\":\"7248191177a325beee46ca9125a7f102a7b1a828d72ab97cfca04d014273358f\",\"job_id\":\"memory-world-job-27d097250974eddf1b26ea97101d54d91f013edeff7a4443fa1b012d8f2c111f\",\"job_state\":\"pending\",\"payload_hash\":\"327344e002f8118554df605703178865ba2fae5a7dc369c0271524d8aed207c4\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "2bab6d7f3312ad5033b825425d97170d64d71078361e1a004d4caa80ef5232a1",
+          "created_at": "2026-10-09T15:14:25.395Z",
+          "completed_at": "2026-10-09T15:14:47.418Z",
+          "last_error_type": null,
+          "terminal_state": "no_change",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-490d3fd43ed5ad1b1271085b5e9214de0a5f83311caac064e905776628928914",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:cb4969a8168bba9b6db109879df39041:22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c",
+          "boundary_payload_hash": "22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-1927cfac-bf37-4cf6-a24a-898e00996a3d",
+          "result_session_id": "session-1927cfac-bf37-4cf6-a24a-898e00996a3d",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-1927cfac-bf37-4cf6-a24a-898e00996a3d\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-1927cfac-bf37-4cf6-a24a-898e00996a3d\",\"subject_id\":\"owner-45462cf6-5558-46ff-8b1a-0d26fad15dec\"}",
+          "formal_target_hash": "38b7280b7fd79ede90346b9a7896a97168c4160961a90f37574181d5889c4063",
+          "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"1bc6b101-c290-45d2-b211-970501e1571e\"]",
+          "state": "no_change",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:14:47.429Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:14:47.437Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:14:47.447Z",
+          "model_completed_at": "2026-10-09T15:14:47.454Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": null,
+          "model_usage_json": null,
+          "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:14:32.068Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:cb4969a8168bba9b6db109879df39041:22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c\",\"evidence_count\":1,\"evidence_manifest_hash\":\"6f0f2e54ce9d41c5c4030e73d98b8f6d26eaafb3a4cffb9fcea7cb41337a18fc\",\"formal_target_hash\":\"38b7280b7fd79ede90346b9a7896a97168c4160961a90f37574181d5889c4063\",\"job_id\":\"memory-world-job-490d3fd43ed5ad1b1271085b5e9214de0a5f83311caac064e905776628928914\",\"job_state\":\"pending\",\"payload_hash\":\"22c57566ff0250b1dea29eee510e5c2ef6b3aa63090d1cbddd11dc343b7f7b7c\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "328baac251960d812570029f3a4929f04c8ed8c17e04f1bf55496a542d988645",
+          "created_at": "2026-10-09T15:14:32.068Z",
+          "completed_at": "2026-10-09T15:14:47.454Z",
+          "last_error_type": null,
+          "terminal_state": "no_change",
+          "terminal_detail": null
+        }
+      ],
+      "cognition": [
+        {
+          "id": "cognition-062da15e67288005b719bfd0abf1c1aa1edb56bc6da5fd43cb474a0bd8483997",
+          "subject_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+          "content": "用户陶艺兴趣组的固定联系人叫林舟",
+          "content_type": "naming",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": null,
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:14:40.361Z",
+          "updated_at": "2026-10-09T15:14:40.361Z"
+        }
+      ],
+      "cognition_transitions": [],
+      "relationship": [],
+      "entity": [
+        {
+          "id": "entity-6395c793794968fafb0d1233e8f783eab2871f3bf4b3f8928b01623fbff5b05f",
+          "world_id": "owner-45462cf6-5558-46ff-8b1a-0d26fad15dec",
+          "kind": "person",
+          "canonical_name": "林舟",
+          "invalid_at": null,
+          "created_at": "2026-10-09T15:14:40.361Z",
+          "updated_at": "2026-10-09T15:14:40.361Z",
+          "aliases_json": "[]"
+        }
+      ]
+    },
+    "endedAt": "2026-10-09T15:14:49.417Z"
+  },
+  {
+    "id": "holdout-price",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-NTRKpU",
+    "startedAt": "2026-10-09T15:14:51.237Z",
+    "turns": [
+      {
+        "sessionId": "session-612a1cc3-849e-4e96-8d7d-0454770946c7",
+        "modelProfileId": "private-model-e21f635cbedf39444dabf315dd81e3694934627d",
+        "commandId": "cmd-a97da605-5603-43cd-a57d-bf13ea19c87c",
+        "startedAt": "2026-10-09T15:15:00.360Z",
+        "reply": "收到：手工香皂固定 48 元/块。以后涉及报价、算账或做标签时我会按这个价来，需要算总价或改动价格随时告诉我。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:15:00.399Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:15:00.400Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:15:00.441Z"
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-09T15:15:00.442Z"
+          },
+          {
+            "seq": 99,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:15:09.149Z"
+          },
+          {
+            "seq": 100,
+            "type": "task.ended",
+            "at": "2026-10-09T15:15:09.150Z"
+          },
+          {
+            "seq": 101,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:15:09.151Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 8924,
+        "endedAt": "2026-10-09T15:15:09.284Z"
+      },
+      {
+        "sessionId": "session-f810f4fd-d9f3-4808-a773-4383bc623d23",
+        "modelProfileId": "private-model-e21f635cbedf39444dabf315dd81e3694934627d",
+        "commandId": "cmd-b9270cd6-1807-49e5-bebe-35df7bce18a1",
+        "startedAt": "2026-10-09T15:15:11.034Z",
+        "reply": "已记下：手工香皂每块 36 元，之前的 48 元作废，之后都按 36 元计算。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:15:11.077Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:15:11.077Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:15:11.105Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:15:11.106Z"
+          },
+          {
+            "seq": 50,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:15:17.835Z"
+          },
+          {
+            "seq": 51,
+            "type": "task.ended",
+            "at": "2026-10-09T15:15:17.835Z"
+          },
+          {
+            "seq": 52,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:15:17.836Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 6823,
+        "endedAt": "2026-10-09T15:15:17.857Z"
+      },
+      {
+        "sessionId": "session-514dab7e-2aac-4202-aefa-3d191560edf3",
+        "modelProfileId": "private-model-e21f635cbedf39444dabf315dd81e3694934627d",
+        "commandId": "cmd-952a18bc-c1dd-4b03-92bf-6b5c28a8aeef",
+        "startedAt": "2026-10-09T15:15:19.661Z",
+        "reply": "两块一共 72 元（每块 36 元）。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:15:19.716Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:15:19.716Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:15:19.742Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:15:19.743Z"
+          },
+          {
+            "seq": 33,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:15:38.670Z"
+          },
+          {
+            "seq": 34,
+            "type": "task.ended",
+            "at": "2026-10-09T15:15:38.671Z"
+          },
+          {
+            "seq": 35,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:15:38.671Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 19027,
+        "endedAt": "2026-10-09T15:15:38.688Z"
+      }
+    ],
+    "settlements": [
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-4d9f4a17c418f10df7fbd160a841fee29dc3d302016d2dcc85d015b105ec7734",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:dd09bc81cb3532699269426b456ac4e1:c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857",
+            "boundary_payload_hash": "c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-612a1cc3-849e-4e96-8d7d-0454770946c7",
+            "result_session_id": "session-612a1cc3-849e-4e96-8d7d-0454770946c7",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-612a1cc3-849e-4e96-8d7d-0454770946c7\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-612a1cc3-849e-4e96-8d7d-0454770946c7\",\"subject_id\":\"owner-6f35dabd-3060-46ce-a411-03faf73dea0f\"}",
+            "formal_target_hash": "70f8c4ef0c23723c6786ffe28000d64405ce58377801c5552796942e4b717713",
+            "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"be379398-d033-4a91-b371-5acf72baccbd\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:15:09.848Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:15:09.862Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:15:09.870Z",
+            "model_completed_at": "2026-10-09T15:15:29.451Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":429,\"completion_tokens_details\":{\"reasoning_tokens\":306},\"prompt_tokens\":4491,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4920}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u7ed9\\u90bb\\u5c45\\u505a\\u7684\\u624b\\u5de5\\u9999\\u7682\\u56fa\\u5b9a\\u6bcf\\u5757\\u535648\\u5143\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"be379398-d033-4a91-b371-5acf72baccbd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u624b\\u5de5\\u9999\\u7682\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u624b\\u5de5\\u7682\\\",\\\"\\u9999\\u7682\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":429,\"completion_tokens_details\":{\"reasoning_tokens\":306},\"prompt_tokens\":4491,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4920}}",
+            "model_result_hash": "af3177778cca65a200d020c0a680c5ecbfa7eaab85015492734b18aeb90de1e7",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:dd09bc81cb3532699269426b456ac4e1:c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "651e1fbd137740c1603e924bfe5a0645717c5e29bbb868f6b3481cc11d9f444e",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:09.807Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:dd09bc81cb3532699269426b456ac4e1:c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857\",\"evidence_count\":1,\"evidence_manifest_hash\":\"b296311f62c3e5fd0d8ee078f6d5a47faa7324cb14cf4508b44cb216b42b4faa\",\"formal_target_hash\":\"70f8c4ef0c23723c6786ffe28000d64405ce58377801c5552796942e4b717713\",\"job_id\":\"memory-world-job-4d9f4a17c418f10df7fbd160a841fee29dc3d302016d2dcc85d015b105ec7734\",\"job_state\":\"pending\",\"payload_hash\":\"c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "c198e785a2943fd6e3e4e4e2d159090bba50f8ae0c5fab7dc109dab5219c44de",
+            "created_at": "2026-10-09T15:15:09.807Z",
+            "completed_at": "2026-10-09T15:15:29.460Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-616dcd70360a184d0187f849273b67b0be7ca701ea251a49c7b598865aa47422",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:870f85893921b0ff17f95982a2e2edf5:6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae",
+            "boundary_payload_hash": "6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-f810f4fd-d9f3-4808-a773-4383bc623d23",
+            "result_session_id": "session-f810f4fd-d9f3-4808-a773-4383bc623d23",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-f810f4fd-d9f3-4808-a773-4383bc623d23\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-f810f4fd-d9f3-4808-a773-4383bc623d23\",\"subject_id\":\"owner-6f35dabd-3060-46ce-a411-03faf73dea0f\"}",
+            "formal_target_hash": "8dbb0da39170e00e8305ffab23409b4b9fb8331a9ca48c03d3fad5999b010d10",
+            "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"3390c051-2e28-402c-a72a-f477464ad0e6\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:15:29.471Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:15:29.484Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:15:29.497Z",
+            "model_completed_at": "2026-10-09T15:15:33.813Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":279,\"completion_tokens_details\":{\"reasoning_tokens\":92},\"prompt_tokens\":4755,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5034}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u4e0a\\u4e00\\u53e5\\u7684\\u4ef7\\u683c\\u591a\\u62a5\\u4e86\\uff0c\\u5e94\\u5f53\\u662f36\\u5143\\uff0c48\\u5143\\u4f5c\\u5e9f\\uff0c\\u540e\\u9762\\u630936\\u5143\\u7b97\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"3390c051-2e28-402c-a72a-f477464ad0e6\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":279,\"completion_tokens_details\":{\"reasoning_tokens\":92},\"prompt_tokens\":4755,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5034}}",
+            "model_result_hash": "84a3e721a509944a8145f8ff1de4e76cf14f90443f44baadbb44d3ea102e9699",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:870f85893921b0ff17f95982a2e2edf5:6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554\",\"replacement_cognition_id\":\"cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "af671d4722a5387a7321eec26314e4033cdd75f249fedfff4a4e6b08d3d4c9bc",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:18.308Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:870f85893921b0ff17f95982a2e2edf5:6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae\",\"evidence_count\":1,\"evidence_manifest_hash\":\"d10655f2f845468da17b83c5a90891be1a39ef079038447e6e31d406983d4c1d\",\"formal_target_hash\":\"8dbb0da39170e00e8305ffab23409b4b9fb8331a9ca48c03d3fad5999b010d10\",\"job_id\":\"memory-world-job-616dcd70360a184d0187f849273b67b0be7ca701ea251a49c7b598865aa47422\",\"job_state\":\"pending\",\"payload_hash\":\"6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "ca98aa3ec3da9291f3834dbf7ddb4d58b1e0effb35ebab40f77565296c5c3661",
+            "created_at": "2026-10-09T15:15:18.308Z",
+            "completed_at": "2026-10-09T15:15:33.822Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-828158dc858b9f36b8c7b12984d90cff7c13804c9b7895dcb304c7dff1e72822",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:4ec1724118cf114fc0ddc81d05b32bb7:d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29",
+            "boundary_payload_hash": "d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-514dab7e-2aac-4202-aefa-3d191560edf3",
+            "result_session_id": "session-514dab7e-2aac-4202-aefa-3d191560edf3",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-514dab7e-2aac-4202-aefa-3d191560edf3\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-514dab7e-2aac-4202-aefa-3d191560edf3\",\"subject_id\":\"owner-6f35dabd-3060-46ce-a411-03faf73dea0f\"}",
+            "formal_target_hash": "e287c70ac8801f1030271bcd2174f986b1d667343aa6dec56a03fbead6765b14",
+            "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"22dae185-eb15-41ac-8632-3c3ebf7e4e09\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:15:39.405Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:15:39.455Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:15:39.467Z",
+            "model_completed_at": "2026-10-09T15:15:39.479Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:39.379Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:4ec1724118cf114fc0ddc81d05b32bb7:d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29\",\"evidence_count\":1,\"evidence_manifest_hash\":\"1f931f0e6f9ff6785f279faaa75df079676381cc3b61f5fac0be8cee1da563ea\",\"formal_target_hash\":\"e287c70ac8801f1030271bcd2174f986b1d667343aa6dec56a03fbead6765b14\",\"job_id\":\"memory-world-job-828158dc858b9f36b8c7b12984d90cff7c13804c9b7895dcb304c7dff1e72822\",\"job_state\":\"pending\",\"payload_hash\":\"d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "68e8dcfc94c11eec24c978791aa7c8f8d4699752a044afb15149d5e4a1adb0ce",
+            "created_at": "2026-10-09T15:15:39.379Z",
+            "completed_at": "2026-10-09T15:15:39.479Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554",
+            "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+            "content": "用户给邻居做的手工香皂固定每块卖48元。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": "2026-10-09T15:15:33.822Z",
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:15:29.460Z",
+            "updated_at": "2026-10-09T15:15:33.822Z"
+          },
+          {
+            "id": "cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c",
+            "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+            "content": "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:15:33.822Z",
+            "updated_at": "2026-10-09T15:15:33.822Z"
+          }
+        ],
+        "cognition_transitions": [
+          {
+            "id": "cognition-transition-21bce64b21ac88d971883351fc544252d492bc85b6a7d24c07d3f971172bb177",
+            "prior_cognition_id": "cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554",
+            "replacement_cognition_id": "cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c",
+            "reason": "corrects",
+            "revision": 2
+          }
+        ],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-522323a1cf43868ca7b4de74db963ee8b0a322b645d45d89e2803a8bc203a03f",
+            "world_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+            "kind": "topic",
+            "canonical_name": "手工香皂",
+            "invalid_at": null,
+            "created_at": "2026-10-09T15:15:29.460Z",
+            "updated_at": "2026-10-09T15:15:29.460Z",
+            "aliases_json": "[\"\\u624b\\u5de5\\u7682\",\"\\u9999\\u7682\"]"
+          }
+        ]
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-price-1",
+        "category": "memory",
+        "title": "holdout-price",
+        "status": "passed",
+        "durationMs": 9227,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-612a1cc3-849e-4e96-8d7d-0454770946c7",
+            "modelProfileId": "private-model-e21f635cbedf39444dabf315dd81e3694934627d",
+            "commandId": "cmd-a97da605-5603-43cd-a57d-bf13ea19c87c",
+            "startedAt": "2026-10-09T15:15:00.360Z",
+            "reply": "收到：手工香皂固定 48 元/块。以后涉及报价、算账或做标签时我会按这个价来，需要算总价或改动价格随时告诉我。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:15:00.399Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:15:00.400Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:15:00.441Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T15:15:00.442Z"
+              },
+              {
+                "seq": 99,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:15:09.149Z"
+              },
+              {
+                "seq": 100,
+                "type": "task.ended",
+                "at": "2026-10-09T15:15:09.150Z"
+              },
+              {
+                "seq": 101,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:15:09.151Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 8924,
+            "endedAt": "2026-10-09T15:15:09.284Z"
+          }
+        ],
+        "replySummary": "收到：手工香皂固定 48 元/块。以后涉及报价、算账或做标签时我会按这个价来，需要算总价或改动价格随时告诉我。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-price-1-BlsOgj"
+      },
+      {
+        "id": "holdout-price-2",
+        "category": "memory",
+        "title": "holdout-price",
+        "status": "passed",
+        "durationMs": 7144,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-f810f4fd-d9f3-4808-a773-4383bc623d23",
+            "modelProfileId": "private-model-e21f635cbedf39444dabf315dd81e3694934627d",
+            "commandId": "cmd-b9270cd6-1807-49e5-bebe-35df7bce18a1",
+            "startedAt": "2026-10-09T15:15:11.034Z",
+            "reply": "已记下：手工香皂每块 36 元，之前的 48 元作废，之后都按 36 元计算。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:15:11.077Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:15:11.077Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:15:11.105Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:15:11.106Z"
+              },
+              {
+                "seq": 50,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:15:17.835Z"
+              },
+              {
+                "seq": 51,
+                "type": "task.ended",
+                "at": "2026-10-09T15:15:17.835Z"
+              },
+              {
+                "seq": 52,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:15:17.836Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 6823,
+            "endedAt": "2026-10-09T15:15:17.857Z"
+          }
+        ],
+        "replySummary": "已记下：手工香皂每块 36 元，之前的 48 元作废，之后都按 36 元计算。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-price-2-UkfMvl"
+      },
+      {
+        "id": "holdout-price-3",
+        "category": "memory",
+        "title": "holdout-price",
+        "status": "passed",
+        "durationMs": 19377,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-514dab7e-2aac-4202-aefa-3d191560edf3",
+            "modelProfileId": "private-model-e21f635cbedf39444dabf315dd81e3694934627d",
+            "commandId": "cmd-952a18bc-c1dd-4b03-92bf-6b5c28a8aeef",
+            "startedAt": "2026-10-09T15:15:19.661Z",
+            "reply": "两块一共 72 元（每块 36 元）。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:15:19.716Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:15:19.716Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:15:19.742Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:15:19.743Z"
+              },
+              {
+                "seq": 33,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:15:38.670Z"
+              },
+              {
+                "seq": 34,
+                "type": "task.ended",
+                "at": "2026-10-09T15:15:38.671Z"
+              },
+              {
+                "seq": 35,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:15:38.671Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 19027,
+            "endedAt": "2026-10-09T15:15:38.688Z"
+          }
+        ],
+        "replySummary": "两块一共 72 元（每块 36 元）。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-price-3-2QPWB1"
+      }
+    ],
+    "expectedValuePresent": true,
+    "rejectedValueMentioned": false,
+    "rubric": "用新单价36元计算两块共72元，不能按旧价48元算96元。",
+    "answer": "两块一共 72 元（每块 36 元）。",
+    "automaticPass": true,
+    "formalItems": {
+      "ownerId": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+      "items": [
+        {
+          "id": "cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554",
+          "kind": "cognition",
+          "text": "用户给邻居做的手工香皂固定每块卖48元。",
+          "truncated": false,
+          "currentState": "not_current",
+          "createdAt": "2026-10-09T15:15:29.460Z",
+          "updatedAt": "2026-10-09T15:15:33.822Z",
+          "lifecycle": {
+            "invalidAt": "2026-10-09T15:15:33.822Z",
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        },
+        {
+          "id": "cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c",
+          "kind": "cognition",
+          "text": "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+          "truncated": false,
+          "currentState": "current",
+          "createdAt": "2026-10-09T15:15:33.822Z",
+          "updatedAt": "2026-10-09T15:15:33.822Z",
+          "lifecycle": {
+            "invalidAt": null,
+            "archivedAt": null,
+            "mutedAt": null
+          },
+          "sourceCount": 1
+        }
+      ],
+      "worldRevision": 2,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [
+        {
+          "job_id": "memory-world-job-4d9f4a17c418f10df7fbd160a841fee29dc3d302016d2dcc85d015b105ec7734",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:dd09bc81cb3532699269426b456ac4e1:c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857",
+          "boundary_payload_hash": "c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-612a1cc3-849e-4e96-8d7d-0454770946c7",
+          "result_session_id": "session-612a1cc3-849e-4e96-8d7d-0454770946c7",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-612a1cc3-849e-4e96-8d7d-0454770946c7\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-612a1cc3-849e-4e96-8d7d-0454770946c7\",\"subject_id\":\"owner-6f35dabd-3060-46ce-a411-03faf73dea0f\"}",
+          "formal_target_hash": "70f8c4ef0c23723c6786ffe28000d64405ce58377801c5552796942e4b717713",
+          "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"be379398-d033-4a91-b371-5acf72baccbd\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:15:09.848Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:15:09.862Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:15:09.870Z",
+          "model_completed_at": "2026-10-09T15:15:29.451Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":429,\"completion_tokens_details\":{\"reasoning_tokens\":306},\"prompt_tokens\":4491,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4920}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u6211\\u7ed9\\u90bb\\u5c45\\u505a\\u7684\\u624b\\u5de5\\u9999\\u7682\\u56fa\\u5b9a\\u6bcf\\u5757\\u535648\\u5143\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"be379398-d033-4a91-b371-5acf72baccbd\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u624b\\u5de5\\u9999\\u7682\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u624b\\u5de5\\u7682\\\",\\\"\\u9999\\u7682\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":429,\"completion_tokens_details\":{\"reasoning_tokens\":306},\"prompt_tokens\":4491,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4920}}",
+          "model_result_hash": "af3177778cca65a200d020c0a680c5ecbfa7eaab85015492734b18aeb90de1e7",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:dd09bc81cb3532699269426b456ac4e1:c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+          "result_hash": "651e1fbd137740c1603e924bfe5a0645717c5e29bbb868f6b3481cc11d9f444e",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:09.807Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:dd09bc81cb3532699269426b456ac4e1:c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857\",\"evidence_count\":1,\"evidence_manifest_hash\":\"b296311f62c3e5fd0d8ee078f6d5a47faa7324cb14cf4508b44cb216b42b4faa\",\"formal_target_hash\":\"70f8c4ef0c23723c6786ffe28000d64405ce58377801c5552796942e4b717713\",\"job_id\":\"memory-world-job-4d9f4a17c418f10df7fbd160a841fee29dc3d302016d2dcc85d015b105ec7734\",\"job_state\":\"pending\",\"payload_hash\":\"c8af5fb7788ee26e348a5e3397562cba64b8960c20064c2565e22a71ca348857\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "c198e785a2943fd6e3e4e4e2d159090bba50f8ae0c5fab7dc109dab5219c44de",
+          "created_at": "2026-10-09T15:15:09.807Z",
+          "completed_at": "2026-10-09T15:15:29.460Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-616dcd70360a184d0187f849273b67b0be7ca701ea251a49c7b598865aa47422",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:870f85893921b0ff17f95982a2e2edf5:6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae",
+          "boundary_payload_hash": "6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-f810f4fd-d9f3-4808-a773-4383bc623d23",
+          "result_session_id": "session-f810f4fd-d9f3-4808-a773-4383bc623d23",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-f810f4fd-d9f3-4808-a773-4383bc623d23\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-f810f4fd-d9f3-4808-a773-4383bc623d23\",\"subject_id\":\"owner-6f35dabd-3060-46ce-a411-03faf73dea0f\"}",
+          "formal_target_hash": "8dbb0da39170e00e8305ffab23409b4b9fb8331a9ca48c03d3fad5999b010d10",
+          "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"3390c051-2e28-402c-a72a-f477464ad0e6\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:15:29.471Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:15:29.484Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:15:29.497Z",
+          "model_completed_at": "2026-10-09T15:15:33.813Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":279,\"completion_tokens_details\":{\"reasoning_tokens\":92},\"prompt_tokens\":4755,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5034}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u4e0a\\u4e00\\u53e5\\u7684\\u4ef7\\u683c\\u591a\\u62a5\\u4e86\\uff0c\\u5e94\\u5f53\\u662f36\\u5143\\uff0c48\\u5143\\u4f5c\\u5e9f\\uff0c\\u540e\\u9762\\u630936\\u5143\\u7b97\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"3390c051-2e28-402c-a72a-f477464ad0e6\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":279,\"completion_tokens_details\":{\"reasoning_tokens\":92},\"prompt_tokens\":4755,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5034}}",
+          "model_result_hash": "84a3e721a509944a8145f8ff1de4e76cf14f90443f44baadbb44d3ea102e9699",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:870f85893921b0ff17f95982a2e2edf5:6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554\",\"replacement_cognition_id\":\"cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+          "result_hash": "af671d4722a5387a7321eec26314e4033cdd75f249fedfff4a4e6b08d3d4c9bc",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:18.308Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:870f85893921b0ff17f95982a2e2edf5:6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae\",\"evidence_count\":1,\"evidence_manifest_hash\":\"d10655f2f845468da17b83c5a90891be1a39ef079038447e6e31d406983d4c1d\",\"formal_target_hash\":\"8dbb0da39170e00e8305ffab23409b4b9fb8331a9ca48c03d3fad5999b010d10\",\"job_id\":\"memory-world-job-616dcd70360a184d0187f849273b67b0be7ca701ea251a49c7b598865aa47422\",\"job_state\":\"pending\",\"payload_hash\":\"6e8f278a4501cea046d354a5bc2cc6b8a99022157e6cc37874b651f27daa9eae\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "ca98aa3ec3da9291f3834dbf7ddb4d58b1e0effb35ebab40f77565296c5c3661",
+          "created_at": "2026-10-09T15:15:18.308Z",
+          "completed_at": "2026-10-09T15:15:33.822Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-828158dc858b9f36b8c7b12984d90cff7c13804c9b7895dcb304c7dff1e72822",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:4ec1724118cf114fc0ddc81d05b32bb7:d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29",
+          "boundary_payload_hash": "d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-514dab7e-2aac-4202-aefa-3d191560edf3",
+          "result_session_id": "session-514dab7e-2aac-4202-aefa-3d191560edf3",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-514dab7e-2aac-4202-aefa-3d191560edf3\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-514dab7e-2aac-4202-aefa-3d191560edf3\",\"subject_id\":\"owner-6f35dabd-3060-46ce-a411-03faf73dea0f\"}",
+          "formal_target_hash": "e287c70ac8801f1030271bcd2174f986b1d667343aa6dec56a03fbead6765b14",
+          "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"22dae185-eb15-41ac-8632-3c3ebf7e4e09\"]",
+          "state": "no_change",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:15:39.405Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:15:39.455Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:15:39.467Z",
+          "model_completed_at": "2026-10-09T15:15:39.479Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": null,
+          "model_usage_json": null,
+          "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:39.379Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:4ec1724118cf114fc0ddc81d05b32bb7:d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29\",\"evidence_count\":1,\"evidence_manifest_hash\":\"1f931f0e6f9ff6785f279faaa75df079676381cc3b61f5fac0be8cee1da563ea\",\"formal_target_hash\":\"e287c70ac8801f1030271bcd2174f986b1d667343aa6dec56a03fbead6765b14\",\"job_id\":\"memory-world-job-828158dc858b9f36b8c7b12984d90cff7c13804c9b7895dcb304c7dff1e72822\",\"job_state\":\"pending\",\"payload_hash\":\"d9f52896c73040bc145c637c56f45fa42f2d493308193d97231f334a70b02b29\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "68e8dcfc94c11eec24c978791aa7c8f8d4699752a044afb15149d5e4a1adb0ce",
+          "created_at": "2026-10-09T15:15:39.379Z",
+          "completed_at": "2026-10-09T15:15:39.479Z",
+          "last_error_type": null,
+          "terminal_state": "no_change",
+          "terminal_detail": null
+        }
+      ],
+      "cognition": [
+        {
+          "id": "cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554",
+          "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+          "content": "用户给邻居做的手工香皂固定每块卖48元。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": "2026-10-09T15:15:33.822Z",
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:15:29.460Z",
+          "updated_at": "2026-10-09T15:15:33.822Z"
+        },
+        {
+          "id": "cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c",
+          "subject_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+          "content": "用户上一句的价格多报了，应当是36元，48元作废，后面按36元算。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": null,
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:15:33.822Z",
+          "updated_at": "2026-10-09T15:15:33.822Z"
+        }
+      ],
+      "cognition_transitions": [
+        {
+          "id": "cognition-transition-21bce64b21ac88d971883351fc544252d492bc85b6a7d24c07d3f971172bb177",
+          "prior_cognition_id": "cognition-115258b2d24bde1ca45c8a43b2ce259d6e64071744f61563d649d51b3c6fc554",
+          "replacement_cognition_id": "cognition-e493fadad95f4e02fad8bab934fd843a9c114b4c69a25f2218af3ada1c9bc88c",
+          "reason": "corrects",
+          "revision": 2
+        }
+      ],
+      "relationship": [],
+      "entity": [
+        {
+          "id": "entity-522323a1cf43868ca7b4de74db963ee8b0a322b645d45d89e2803a8bc203a03f",
+          "world_id": "owner-6f35dabd-3060-46ce-a411-03faf73dea0f",
+          "kind": "topic",
+          "canonical_name": "手工香皂",
+          "invalid_at": null,
+          "created_at": "2026-10-09T15:15:29.460Z",
+          "updated_at": "2026-10-09T15:15:29.460Z",
+          "aliases_json": "[\"\\u624b\\u5de5\\u7682\",\"\\u9999\\u7682\"]"
+        }
+      ]
+    },
+    "endedAt": "2026-10-09T15:15:42.297Z"
+  },
+  {
+    "id": "holdout-address",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-PVpwwH",
+    "startedAt": "2026-10-09T15:15:44.328Z",
+    "turns": [
+      {
+        "sessionId": "session-04380723-d9e8-43ce-b633-eca3380bb63a",
+        "modelProfileId": "private-model-e8612166aa922b24fdd76d3f534257f6b65320cf",
+        "commandId": "cmd-d18e1397-9b42-458e-b622-d14aec565c07",
+        "startedAt": "2026-10-09T15:15:56.055Z",
+        "reply": "好的，以后在星桥书社订的书，收货地址用青禾路18号。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:15:56.117Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:15:56.118Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:15:56.169Z"
+          },
+          {
+            "seq": 8,
+            "type": "user.message",
+            "at": "2026-10-09T15:15:56.169Z"
+          },
+          {
+            "seq": 44,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:15:58.017Z"
+          },
+          {
+            "seq": 45,
+            "type": "task.ended",
+            "at": "2026-10-09T15:15:58.018Z"
+          },
+          {
+            "seq": 46,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:15:58.019Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 2128,
+        "endedAt": "2026-10-09T15:15:58.183Z"
+      },
+      {
+        "sessionId": "session-9b3983af-3480-4430-8b32-f74f4f97d504",
+        "modelProfileId": "private-model-e8612166aa922b24fdd76d3f534257f6b65320cf",
+        "commandId": "cmd-e455f010-7af3-4297-b4fa-e962e94621f6",
+        "startedAt": "2026-10-09T15:16:00.019Z",
+        "reply": "收到，已更正：以后在星桥书社订的书都寄到**白榆路26号**，之前的青禾路18号作废。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:16:00.089Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:16:00.089Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:16:00.120Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:16:00.121Z"
+          },
+          {
+            "seq": 57,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:16:06.707Z"
+          },
+          {
+            "seq": 58,
+            "type": "task.ended",
+            "at": "2026-10-09T15:16:06.708Z"
+          },
+          {
+            "seq": 59,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:16:06.708Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 6814,
+        "endedAt": "2026-10-09T15:16:06.833Z"
+      },
+      {
+        "sessionId": "session-f336db7e-8fd5-4e10-b04b-b5b062eff87b",
+        "modelProfileId": "private-model-e8612166aa922b24fdd76d3f534257f6b65320cf",
+        "commandId": "cmd-eb42a98b-b123-4eba-9a55-29de3bccb93f",
+        "startedAt": "2026-10-09T15:16:08.642Z",
+        "reply": "这次寄书应写 **白榆路26号**。青禾路18号已作废，今后星桥书社订的书都送白榆路26号这个新地址。",
+        "status": "completed",
+        "approvals": [],
+        "timeline": [
+          {
+            "seq": 4,
+            "type": "task.queued",
+            "at": "2026-10-09T15:16:08.722Z"
+          },
+          {
+            "seq": 5,
+            "type": "turn.started",
+            "at": "2026-10-09T15:16:08.722Z"
+          },
+          {
+            "seq": 7,
+            "type": "task.started",
+            "at": "2026-10-09T15:16:08.753Z"
+          },
+          {
+            "seq": 11,
+            "type": "user.message",
+            "at": "2026-10-09T15:16:08.754Z"
+          },
+          {
+            "seq": 65,
+            "type": "assistant.message",
+            "at": "2026-10-09T15:16:11.192Z"
+          },
+          {
+            "seq": 66,
+            "type": "task.ended",
+            "at": "2026-10-09T15:16:11.193Z"
+          },
+          {
+            "seq": 67,
+            "type": "turn.ended",
+            "at": "2026-10-09T15:16:11.193Z"
+          }
+        ],
+        "memoryUsedSupported": true,
+        "memoryUsed": [],
+        "durationMs": 2637,
+        "endedAt": "2026-10-09T15:16:11.279Z"
+      }
+    ],
+    "settlements": [
+      {
+        "memory_world_job": [
+          {
+            "job_id": "memory-world-job-1a50475db9db49b2871230bb83aaf0657f28565b0017cafe276cbf6eadfaf8f7",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:7d0bd04e83fa21ddfa8516691828353c:8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9",
+            "boundary_payload_hash": "8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-04380723-d9e8-43ce-b633-eca3380bb63a",
+            "result_session_id": "session-04380723-d9e8-43ce-b633-eca3380bb63a",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-04380723-d9e8-43ce-b633-eca3380bb63a\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-04380723-d9e8-43ce-b633-eca3380bb63a\",\"subject_id\":\"owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff\"}",
+            "formal_target_hash": "200333e5badedc5c3f3cfe2bd6896de2cab088978c10eed6eea9b98becabb76b",
+            "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"0f26f27d-96ae-4bdc-94d2-21e017b767ae\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:15:58.684Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:15:58.695Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:15:58.705Z",
+            "model_completed_at": "2026-10-09T15:16:17.176Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":345,\"completion_tokens_details\":{\"reasoning_tokens\":211},\"prompt_tokens\":4508,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4853}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u4ee5\\u540e\\u6211\\u5728\\u661f\\u6865\\u4e66\\u793e\\u8ba2\\u7684\\u4e66\\u90fd\\u5bc4\\u5230\\u9752\\u79be\\u8def18\\u53f7\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"0f26f27d-96ae-4bdc-94d2-21e017b767ae\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u661f\\u6865\\u4e66\\u793e\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u8ba2\\u4e66\\\",\\\"\\u4e66\\u7c4d\\u914d\\u9001\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":345,\"completion_tokens_details\":{\"reasoning_tokens\":211},\"prompt_tokens\":4508,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4853}}",
+            "model_result_hash": "008852cc2a6b489eb3b621825ca7010e23572b8db241704d26768839aa247402",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:7d0bd04e83fa21ddfa8516691828353c:8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+            "result_hash": "6defd23cd8ab080e5b5521064ea97acc00624392a95958c88b0cfc0cf788a8eb",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:58.638Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:7d0bd04e83fa21ddfa8516691828353c:8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9\",\"evidence_count\":1,\"evidence_manifest_hash\":\"771b22e6ef2604d82f22a39c6ef5d8cda41b41aadda3a1025068a03a6ee841f9\",\"formal_target_hash\":\"200333e5badedc5c3f3cfe2bd6896de2cab088978c10eed6eea9b98becabb76b\",\"job_id\":\"memory-world-job-1a50475db9db49b2871230bb83aaf0657f28565b0017cafe276cbf6eadfaf8f7\",\"job_state\":\"pending\",\"payload_hash\":\"8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "5e430e71b5f15d698c3ee6a81be5ab724338e0b7f6809fc9abfa9e1c14013a49",
+            "created_at": "2026-10-09T15:15:58.638Z",
+            "completed_at": "2026-10-09T15:16:17.185Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-36491a11642fbd678554acecc2d7f8f1f2d73afb957268b27ff8fa7866653376",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:cfd8538c695cfdcaf0e5826b434f9479:313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017",
+            "boundary_payload_hash": "313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-9b3983af-3480-4430-8b32-f74f4f97d504",
+            "result_session_id": "session-9b3983af-3480-4430-8b32-f74f4f97d504",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-9b3983af-3480-4430-8b32-f74f4f97d504\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-9b3983af-3480-4430-8b32-f74f4f97d504\",\"subject_id\":\"owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff\"}",
+            "formal_target_hash": "97552a97c74af32e90b9dc3ac93166296b17d59b10aeecea05186e638bad348a",
+            "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"67b57b73-169e-4b35-89f8-607e1f02d8aa\"]",
+            "state": "applied",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:16:17.196Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:16:17.206Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:16:17.216Z",
+            "model_completed_at": "2026-10-09T15:16:26.730Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": "mimo-v2.6-flash",
+            "model_usage_json": "{\"completion_tokens\":311,\"completion_tokens_details\":{\"reasoning_tokens\":121},\"prompt_tokens\":4768,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5079}",
+            "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u524d\\u9762\\u90a3\\u4e2a\\u5730\\u5740\\u4f5c\\u5e9f\\uff0c\\u9752\\u79be\\u8def18\\u53f7\\u5199\\u9519\\u4e86\\uff0c\\u6539\\u6210\\u767d\\u6986\\u8def26\\u53f7\\uff0c\\u4eca\\u540e\\u90fd\\u9001\\u65b0\\u5730\\u5740\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"67b57b73-169e-4b35-89f8-607e1f02d8aa\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":311,\"completion_tokens_details\":{\"reasoning_tokens\":121},\"prompt_tokens\":4768,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5079}}",
+            "model_result_hash": "ffa1b13542f660b6ec9c3ebea37b7f9e730a0b42a13241abf61468a2666ac34e",
+            "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:cfd8538c695cfdcaf0e5826b434f9479:313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a\",\"replacement_cognition_id\":\"cognition-e4b1ecaf5d13ce06041dddc0eeae0ce97207fc4df90db0859b0530c4ab33f7b9\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+            "result_hash": "f875502c9972d009ba7a4189ceb1600528a26acd8ab8c29a4d7fa7c60c1a7f58",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:16:07.304Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:cfd8538c695cfdcaf0e5826b434f9479:313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017\",\"evidence_count\":1,\"evidence_manifest_hash\":\"af373838a4cd99a1c6bf42c74ad9f82591c6ca65e969e334a9be2ab956902a5b\",\"formal_target_hash\":\"97552a97c74af32e90b9dc3ac93166296b17d59b10aeecea05186e638bad348a\",\"job_id\":\"memory-world-job-36491a11642fbd678554acecc2d7f8f1f2d73afb957268b27ff8fa7866653376\",\"job_state\":\"pending\",\"payload_hash\":\"313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "adbbbed235039613c90f25620ae6d94536fcb1423df252aed9ff4bfd7cb91242",
+            "created_at": "2026-10-09T15:16:07.304Z",
+            "completed_at": "2026-10-09T15:16:26.742Z",
+            "last_error_type": null,
+            "terminal_state": "applied",
+            "terminal_detail": null
+          },
+          {
+            "job_id": "memory-world-job-7c8ca39f685fbb5952669c8c39270d0c9da79f1368742d0cb308c08dd560a847",
+            "job_schema_version": 1,
+            "boundary_event_id": "weftmate-turn-boundary-v1:78c6e694c44339fac5041068e1b94560:c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847",
+            "boundary_payload_hash": "c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847",
+            "boundary_schema_version": 1,
+            "provider_name": "memoweft",
+            "parent_session_id": "session-f336db7e-8fd5-4e10-b04b-b5b062eff87b",
+            "result_session_id": "session-f336db7e-8fd5-4e10-b04b-b5b062eff87b",
+            "boundary_mode": "in_place",
+            "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-f336db7e-8fd5-4e10-b04b-b5b062eff87b\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-f336db7e-8fd5-4e10-b04b-b5b062eff87b\",\"subject_id\":\"owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff\"}",
+            "formal_target_hash": "ec3e42f52247c3d7edb7cdba70a3c8a90961c4c0d617f68614034890c6ef380d",
+            "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+            "host_id": "weftmate:dsh",
+            "evidence_ids_json": "[\"6ecb7ac8-8932-4ce5-8eb5-a9a09752955f\"]",
+            "state": "no_change",
+            "attempts": 1,
+            "next_attempt_at": null,
+            "claim_owner": null,
+            "claim_token": null,
+            "claimed_at": "2026-10-09T15:16:26.755Z",
+            "lease_expires_at": null,
+            "heartbeat_at": "2026-10-09T15:16:26.763Z",
+            "fencing_generation": 1,
+            "model_dispatch_started_at": "2026-10-09T15:16:26.772Z",
+            "model_completed_at": "2026-10-09T15:16:26.784Z",
+            "model_task": "memory_world",
+            "model_provider": null,
+            "model_name": null,
+            "model_usage_json": null,
+            "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+            "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+            "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:16:12.405Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:78c6e694c44339fac5041068e1b94560:c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847\",\"evidence_count\":1,\"evidence_manifest_hash\":\"610d6106d085fa1b323c6d1aa93ad7e9ea85403c1f4bf610e613eae3fd8e9cf6\",\"formal_target_hash\":\"ec3e42f52247c3d7edb7cdba70a3c8a90961c4c0d617f68614034890c6ef380d\",\"job_id\":\"memory-world-job-7c8ca39f685fbb5952669c8c39270d0c9da79f1368742d0cb308c08dd560a847\",\"job_state\":\"pending\",\"payload_hash\":\"c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+            "delivery_receipt_hash": "66e8dc8198f69dba75b73f64906d7a810d8a6b82a9d3a4be8ad8b55cb4ef5625",
+            "created_at": "2026-10-09T15:16:12.405Z",
+            "completed_at": "2026-10-09T15:16:26.784Z",
+            "last_error_type": null,
+            "terminal_state": "no_change",
+            "terminal_detail": null
+          }
+        ],
+        "cognition": [
+          {
+            "id": "cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a",
+            "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+            "content": "用户以后我在星桥书社订的书都寄到青禾路18号。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": "2026-10-09T15:16:26.742Z",
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:16:17.185Z",
+            "updated_at": "2026-10-09T15:16:26.742Z"
+          },
+          {
+            "id": "cognition-e4b1ecaf5d13ce06041dddc0eeae0ce97207fc4df90db0859b0530c4ab33f7b9",
+            "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+            "content": "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+            "content_type": "preference",
+            "formed_by": "stated",
+            "confidence": 600,
+            "cred_status": "limited",
+            "scope": null,
+            "valid_at": null,
+            "invalid_at": null,
+            "asked_at": null,
+            "archived_at": null,
+            "muted_at": null,
+            "created_at": "2026-10-09T15:16:26.742Z",
+            "updated_at": "2026-10-09T15:16:26.742Z"
+          }
+        ],
+        "cognition_transitions": [
+          {
+            "id": "cognition-transition-93497dc50fc4baff10a0d39659504ed9f195d06376583c394d3c115603878c8d",
+            "prior_cognition_id": "cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a",
+            "replacement_cognition_id": "cognition-e4b1ecaf5d13ce06041dddc0eeae0ce97207fc4df90db0859b0530c4ab33f7b9",
+            "reason": "corrects",
+            "revision": 2
+          }
+        ],
+        "relationship": [],
+        "entity": [
+          {
+            "id": "entity-2b4d1bbc277b1c6c6f2cdbb371bf31093ea3b1d782b0983d8a3c58916214b407",
+            "world_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+            "kind": "topic",
+            "canonical_name": "星桥书社",
+            "invalid_at": null,
+            "created_at": "2026-10-09T15:16:17.185Z",
+            "updated_at": "2026-10-09T15:16:17.185Z",
+            "aliases_json": "[\"\\u8ba2\\u4e66\",\"\\u4e66\\u7c4d\\u914d\\u9001\"]"
+          }
+        ]
+      }
+    ],
+    "turnResults": [
+      {
+        "id": "holdout-address-1",
+        "category": "memory",
+        "title": "holdout-address",
+        "status": "passed",
+        "durationMs": 2462,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-04380723-d9e8-43ce-b633-eca3380bb63a",
+            "modelProfileId": "private-model-e8612166aa922b24fdd76d3f534257f6b65320cf",
+            "commandId": "cmd-d18e1397-9b42-458e-b622-d14aec565c07",
+            "startedAt": "2026-10-09T15:15:56.055Z",
+            "reply": "好的，以后在星桥书社订的书，收货地址用青禾路18号。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:15:56.117Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:15:56.118Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:15:56.169Z"
+              },
+              {
+                "seq": 8,
+                "type": "user.message",
+                "at": "2026-10-09T15:15:56.169Z"
+              },
+              {
+                "seq": 44,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:15:58.017Z"
+              },
+              {
+                "seq": 45,
+                "type": "task.ended",
+                "at": "2026-10-09T15:15:58.018Z"
+              },
+              {
+                "seq": 46,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:15:58.019Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 2128,
+            "endedAt": "2026-10-09T15:15:58.183Z"
+          }
+        ],
+        "replySummary": "好的，以后在星桥书社订的书，收货地址用青禾路18号。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-address-1-lTBw2G"
+      },
+      {
+        "id": "holdout-address-2",
+        "category": "memory",
+        "title": "holdout-address",
+        "status": "passed",
+        "durationMs": 7149,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-9b3983af-3480-4430-8b32-f74f4f97d504",
+            "modelProfileId": "private-model-e8612166aa922b24fdd76d3f534257f6b65320cf",
+            "commandId": "cmd-e455f010-7af3-4297-b4fa-e962e94621f6",
+            "startedAt": "2026-10-09T15:16:00.019Z",
+            "reply": "收到，已更正：以后在星桥书社订的书都寄到**白榆路26号**，之前的青禾路18号作废。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:16:00.089Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:16:00.089Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:16:00.120Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:16:00.121Z"
+              },
+              {
+                "seq": 57,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:16:06.707Z"
+              },
+              {
+                "seq": 58,
+                "type": "task.ended",
+                "at": "2026-10-09T15:16:06.708Z"
+              },
+              {
+                "seq": 59,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:16:06.708Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 6814,
+            "endedAt": "2026-10-09T15:16:06.833Z"
+          }
+        ],
+        "replySummary": "收到，已更正：以后在星桥书社订的书都寄到**白榆路26号**，之前的青禾路18号作废。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-address-2-W1fL6d"
+      },
+      {
+        "id": "holdout-address-3",
+        "category": "memory",
+        "title": "holdout-address",
+        "status": "passed",
+        "durationMs": 3006,
+        "checks": [
+          {
+            "type": "turn_status",
+            "status": "passed"
+          }
+        ],
+        "turns": [
+          {
+            "sessionId": "session-f336db7e-8fd5-4e10-b04b-b5b062eff87b",
+            "modelProfileId": "private-model-e8612166aa922b24fdd76d3f534257f6b65320cf",
+            "commandId": "cmd-eb42a98b-b123-4eba-9a55-29de3bccb93f",
+            "startedAt": "2026-10-09T15:16:08.642Z",
+            "reply": "这次寄书应写 **白榆路26号**。青禾路18号已作废，今后星桥书社订的书都送白榆路26号这个新地址。",
+            "status": "completed",
+            "approvals": [],
+            "timeline": [
+              {
+                "seq": 4,
+                "type": "task.queued",
+                "at": "2026-10-09T15:16:08.722Z"
+              },
+              {
+                "seq": 5,
+                "type": "turn.started",
+                "at": "2026-10-09T15:16:08.722Z"
+              },
+              {
+                "seq": 7,
+                "type": "task.started",
+                "at": "2026-10-09T15:16:08.753Z"
+              },
+              {
+                "seq": 11,
+                "type": "user.message",
+                "at": "2026-10-09T15:16:08.754Z"
+              },
+              {
+                "seq": 65,
+                "type": "assistant.message",
+                "at": "2026-10-09T15:16:11.192Z"
+              },
+              {
+                "seq": 66,
+                "type": "task.ended",
+                "at": "2026-10-09T15:16:11.193Z"
+              },
+              {
+                "seq": 67,
+                "type": "turn.ended",
+                "at": "2026-10-09T15:16:11.193Z"
+              }
+            ],
+            "memoryUsedSupported": true,
+            "memoryUsed": [],
+            "durationMs": 2637,
+            "endedAt": "2026-10-09T15:16:11.279Z"
+          }
+        ],
+        "replySummary": "这次寄书应写 **白榆路26号**。青禾路18号已作废，今后星桥书社订的书都送白榆路26号这个新地址。",
+        "notes": "Frozen before MF-2 runs. Three independent conversations, one second between turns in default mode. Settled mode additionally waits for accepted Core jobs to settle before each next conversation. Each case must answer the new value as current, never affirm the rejected value; no undeclared approval or blocking question. Source and formal-object checks are reported separately from answer correctness.",
+        "scratchDir": "C:\\temp\\weftmate-eval-holdout-address-3-GULD6v"
+      }
+    ],
+    "expectedValuePresent": true,
+    "rejectedValueMentioned": true,
+    "rubric": "收件地址为白榆路26号，不能继续使用青禾路18号。",
+    "answer": "这次寄书应写 **白榆路26号**。青禾路18号已作废，今后星桥书社订的书都送白榆路26号这个新地址。",
+    "automaticPass": false,
+    "formalItems": {
+      "ownerId": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+      "items": [],
+      "worldRevision": 0,
+      "nextCursor": null,
+      "hasMore": false,
+      "searchScope": "account_snapshot"
+    },
+    "finalStorage": {
+      "memory_world_job": [
+        {
+          "job_id": "memory-world-job-1a50475db9db49b2871230bb83aaf0657f28565b0017cafe276cbf6eadfaf8f7",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:7d0bd04e83fa21ddfa8516691828353c:8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9",
+          "boundary_payload_hash": "8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-04380723-d9e8-43ce-b633-eca3380bb63a",
+          "result_session_id": "session-04380723-d9e8-43ce-b633-eca3380bb63a",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-04380723-d9e8-43ce-b633-eca3380bb63a\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-04380723-d9e8-43ce-b633-eca3380bb63a\",\"subject_id\":\"owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff\"}",
+          "formal_target_hash": "200333e5badedc5c3f3cfe2bd6896de2cab088978c10eed6eea9b98becabb76b",
+          "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"0f26f27d-96ae-4bdc-94d2-21e017b767ae\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:15:58.684Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:15:58.695Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:15:58.705Z",
+          "model_completed_at": "2026-10-09T15:16:17.176Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":345,\"completion_tokens_details\":{\"reasoning_tokens\":211},\"prompt_tokens\":4508,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4853}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"form\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u4ee5\\u540e\\u6211\\u5728\\u661f\\u6865\\u4e66\\u793e\\u8ba2\\u7684\\u4e66\\u90fd\\u5bc4\\u5230\\u9752\\u79be\\u8def18\\u53f7\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"0f26f27d-96ae-4bdc-94d2-21e017b767ae\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"entity\\\":{\\\"canonical_name\\\":\\\"\\u661f\\u6865\\u4e66\\u793e\\\",\\\"kind\\\":\\\"topic\\\",\\\"aliases\\\":[\\\"\\u8ba2\\u4e66\\\",\\\"\\u4e66\\u7c4d\\u914d\\u9001\\\"]}}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":345,\"completion_tokens_details\":{\"reasoning_tokens\":211},\"prompt_tokens\":4508,\"prompt_tokens_details\":{\"cached_tokens\":4352},\"total_tokens\":4853}}",
+          "model_result_hash": "008852cc2a6b489eb3b621825ca7010e23572b8db241704d26768839aa247402",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:7d0bd04e83fa21ddfa8516691828353c:8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9\",\"cognitions\":[{\"action\":\"form\",\"cognition_id\":\"cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":1}",
+          "result_hash": "6defd23cd8ab080e5b5521064ea97acc00624392a95958c88b0cfc0cf788a8eb",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:15:58.638Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:7d0bd04e83fa21ddfa8516691828353c:8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9\",\"evidence_count\":1,\"evidence_manifest_hash\":\"771b22e6ef2604d82f22a39c6ef5d8cda41b41aadda3a1025068a03a6ee841f9\",\"formal_target_hash\":\"200333e5badedc5c3f3cfe2bd6896de2cab088978c10eed6eea9b98becabb76b\",\"job_id\":\"memory-world-job-1a50475db9db49b2871230bb83aaf0657f28565b0017cafe276cbf6eadfaf8f7\",\"job_state\":\"pending\",\"payload_hash\":\"8792fa1a9e16d3d84931eb5d0b9d7a31c39b2084627b64345acced87a6cb2af9\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "5e430e71b5f15d698c3ee6a81be5ab724338e0b7f6809fc9abfa9e1c14013a49",
+          "created_at": "2026-10-09T15:15:58.638Z",
+          "completed_at": "2026-10-09T15:16:17.185Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-36491a11642fbd678554acecc2d7f8f1f2d73afb957268b27ff8fa7866653376",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:cfd8538c695cfdcaf0e5826b434f9479:313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017",
+          "boundary_payload_hash": "313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-9b3983af-3480-4430-8b32-f74f4f97d504",
+          "result_session_id": "session-9b3983af-3480-4430-8b32-f74f4f97d504",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-9b3983af-3480-4430-8b32-f74f4f97d504\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-9b3983af-3480-4430-8b32-f74f4f97d504\",\"subject_id\":\"owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff\"}",
+          "formal_target_hash": "97552a97c74af32e90b9dc3ac93166296b17d59b10aeecea05186e638bad348a",
+          "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"67b57b73-169e-4b35-89f8-607e1f02d8aa\"]",
+          "state": "applied",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:16:17.196Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:16:17.206Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:16:17.216Z",
+          "model_completed_at": "2026-10-09T15:16:26.730Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": "mimo-v2.6-flash",
+          "model_usage_json": "{\"completion_tokens\":311,\"completion_tokens_details\":{\"reasoning_tokens\":121},\"prompt_tokens\":4768,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5079}",
+          "model_result_json": "{\"content\":\"{\\\"schema_version\\\":8,\\\"result\\\":\\\"cognitions\\\",\\\"cognitions\\\":[{\\\"action\\\":\\\"correct\\\",\\\"target\\\":\\\"owner_self\\\",\\\"statement_kind\\\":\\\"preference\\\",\\\"formed_by\\\":\\\"stated\\\",\\\"proposition\\\":\\\"\\u524d\\u9762\\u90a3\\u4e2a\\u5730\\u5740\\u4f5c\\u5e9f\\uff0c\\u9752\\u79be\\u8def18\\u53f7\\u5199\\u9519\\u4e86\\uff0c\\u6539\\u6210\\u767d\\u6986\\u8def26\\u53f7\\uff0c\\u4eca\\u540e\\u90fd\\u9001\\u65b0\\u5730\\u5740\\u3002\\\",\\\"supports\\\":[{\\\"evidence_id\\\":\\\"67b57b73-169e-4b35-89f8-607e1f02d8aa\\\",\\\"sentence_id\\\":\\\"t0\\\"}],\\\"corrects_cognition_id\\\":\\\"cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a\\\"}]}\",\"finish_reason\":\"stop\",\"model\":\"mimo-v2.6-flash\",\"usage\":{\"completion_tokens\":311,\"completion_tokens_details\":{\"reasoning_tokens\":121},\"prompt_tokens\":4768,\"prompt_tokens_details\":{\"cached_tokens\":4288},\"total_tokens\":5079}}",
+          "model_result_hash": "ffa1b13542f660b6ec9c3ebea37b7f9e730a0b42a13241abf61468a2666ac34e",
+          "world_result_json": "{\"boundary_event_id\":\"weftmate-turn-boundary-v1:cfd8538c695cfdcaf0e5826b434f9479:313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017\",\"cognitions\":[{\"action\":\"correct\",\"confidence\":600,\"cred_status\":\"limited\",\"evidence_count\":1,\"formed_by\":\"stated\",\"prior_cognition_id\":\"cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a\",\"replacement_cognition_id\":\"cognition-e4b1ecaf5d13ce06041dddc0eeae0ce97207fc4df90db0859b0530c4ab33f7b9\",\"statement_kind\":\"preference\"}],\"schema_version\":8,\"state\":\"applied\",\"world_revision\":2}",
+          "result_hash": "f875502c9972d009ba7a4189ceb1600528a26acd8ab8c29a4d7fa7c60c1a7f58",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:16:07.304Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:cfd8538c695cfdcaf0e5826b434f9479:313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017\",\"evidence_count\":1,\"evidence_manifest_hash\":\"af373838a4cd99a1c6bf42c74ad9f82591c6ca65e969e334a9be2ab956902a5b\",\"formal_target_hash\":\"97552a97c74af32e90b9dc3ac93166296b17d59b10aeecea05186e638bad348a\",\"job_id\":\"memory-world-job-36491a11642fbd678554acecc2d7f8f1f2d73afb957268b27ff8fa7866653376\",\"job_state\":\"pending\",\"payload_hash\":\"313a18c5b64c1cc6f0590371408967cfb8239b42d390b7febcc92cc308a06017\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "adbbbed235039613c90f25620ae6d94536fcb1423df252aed9ff4bfd7cb91242",
+          "created_at": "2026-10-09T15:16:07.304Z",
+          "completed_at": "2026-10-09T15:16:26.742Z",
+          "last_error_type": null,
+          "terminal_state": "applied",
+          "terminal_detail": null
+        },
+        {
+          "job_id": "memory-world-job-7c8ca39f685fbb5952669c8c39270d0c9da79f1368742d0cb308c08dd560a847",
+          "job_schema_version": 1,
+          "boundary_event_id": "weftmate-turn-boundary-v1:78c6e694c44339fac5041068e1b94560:c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847",
+          "boundary_payload_hash": "c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847",
+          "boundary_schema_version": 1,
+          "provider_name": "memoweft",
+          "parent_session_id": "session-f336db7e-8fd5-4e10-b04b-b5b062eff87b",
+          "result_session_id": "session-f336db7e-8fd5-4e10-b04b-b5b062eff87b",
+          "boundary_mode": "in_place",
+          "formal_target_json": "{\"boundary_schema_version\":1,\"host_id\":\"weftmate:dsh\",\"mode\":\"in_place\",\"parent_session_id\":\"session-f336db7e-8fd5-4e10-b04b-b5b062eff87b\",\"provider_name\":\"memoweft\",\"result_session_id\":\"session-f336db7e-8fd5-4e10-b04b-b5b062eff87b\",\"subject_id\":\"owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff\"}",
+          "formal_target_hash": "ec3e42f52247c3d7edb7cdba70a3c8a90961c4c0d617f68614034890c6ef380d",
+          "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+          "host_id": "weftmate:dsh",
+          "evidence_ids_json": "[\"6ecb7ac8-8932-4ce5-8eb5-a9a09752955f\"]",
+          "state": "no_change",
+          "attempts": 1,
+          "next_attempt_at": null,
+          "claim_owner": null,
+          "claim_token": null,
+          "claimed_at": "2026-10-09T15:16:26.755Z",
+          "lease_expires_at": null,
+          "heartbeat_at": "2026-10-09T15:16:26.763Z",
+          "fencing_generation": 1,
+          "model_dispatch_started_at": "2026-10-09T15:16:26.772Z",
+          "model_completed_at": "2026-10-09T15:16:26.784Z",
+          "model_task": "memory_world",
+          "model_provider": null,
+          "model_name": null,
+          "model_usage_json": null,
+          "model_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "model_result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "world_result_json": "{\"reason\":\"pure_inquiry_no_declarative_facts\",\"schema_version\":1,\"state\":\"no_change\"}",
+          "result_hash": "28913740d834a7863a94d1bddc64fca541786dc081eb2afad954205edb473b33",
+          "delivery_receipt_json": "{\"accepted_at\":\"2026-10-09T15:16:12.405Z\",\"eligible\":1,\"event_id\":\"weftmate-turn-boundary-v1:78c6e694c44339fac5041068e1b94560:c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847\",\"evidence_count\":1,\"evidence_manifest_hash\":\"610d6106d085fa1b323c6d1aa93ad7e9ea85403c1f4bf610e613eae3fd8e9cf6\",\"formal_target_hash\":\"ec3e42f52247c3d7edb7cdba70a3c8a90961c4c0d617f68614034890c6ef380d\",\"job_id\":\"memory-world-job-7c8ca39f685fbb5952669c8c39270d0c9da79f1368742d0cb308c08dd560a847\",\"job_state\":\"pending\",\"payload_hash\":\"c73830a5d8daa7ebb50b8bcc6921ed192e4c85e7d8c9d3b74da77ea765119847\",\"reason\":null,\"schema_version\":1,\"skipped\":0,\"stored\":1}",
+          "delivery_receipt_hash": "66e8dc8198f69dba75b73f64906d7a810d8a6b82a9d3a4be8ad8b55cb4ef5625",
+          "created_at": "2026-10-09T15:16:12.405Z",
+          "completed_at": "2026-10-09T15:16:26.784Z",
+          "last_error_type": null,
+          "terminal_state": "no_change",
+          "terminal_detail": null
+        }
+      ],
+      "cognition": [
+        {
+          "id": "cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a",
+          "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+          "content": "用户以后我在星桥书社订的书都寄到青禾路18号。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": "2026-10-09T15:16:26.742Z",
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:16:17.185Z",
+          "updated_at": "2026-10-09T15:16:26.742Z"
+        },
+        {
+          "id": "cognition-e4b1ecaf5d13ce06041dddc0eeae0ce97207fc4df90db0859b0530c4ab33f7b9",
+          "subject_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+          "content": "用户前面那个地址作废，青禾路18号写错了，改成白榆路26号，今后都送新地址。",
+          "content_type": "preference",
+          "formed_by": "stated",
+          "confidence": 600,
+          "cred_status": "limited",
+          "scope": null,
+          "valid_at": null,
+          "invalid_at": null,
+          "asked_at": null,
+          "archived_at": null,
+          "muted_at": null,
+          "created_at": "2026-10-09T15:16:26.742Z",
+          "updated_at": "2026-10-09T15:16:26.742Z"
+        }
+      ],
+      "cognition_transitions": [
+        {
+          "id": "cognition-transition-93497dc50fc4baff10a0d39659504ed9f195d06376583c394d3c115603878c8d",
+          "prior_cognition_id": "cognition-2c00a5442a9349586f3a2f7f7d6bd3e6c16155928266b348a3fab21ecbb1ad9a",
+          "replacement_cognition_id": "cognition-e4b1ecaf5d13ce06041dddc0eeae0ce97207fc4df90db0859b0530c4ab33f7b9",
+          "reason": "corrects",
+          "revision": 2
+        }
+      ],
+      "relationship": [],
+      "entity": [
+        {
+          "id": "entity-2b4d1bbc277b1c6c6f2cdbb371bf31093ea3b1d782b0983d8a3c58916214b407",
+          "world_id": "owner-c8f9618d-d51f-482d-8c2f-22ed03a7b2ff",
+          "kind": "topic",
+          "canonical_name": "星桥书社",
+          "invalid_at": null,
+          "created_at": "2026-10-09T15:16:17.185Z",
+          "updated_at": "2026-10-09T15:16:17.185Z",
+          "aliases_json": "[\"\\u8ba2\\u4e66\",\"\\u4e66\\u7c4d\\u914d\\u9001\"]"
+        }
+      ]
+    },
+    "endedAt": "2026-10-09T15:16:29.237Z"
+  }
+]

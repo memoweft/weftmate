@@ -1,0 +1,19 @@
+{
+  "core": {
+    "recentEvidence": { "command": "python -m pytest tests/test_recent_evidence.py -q", "passed": 29 },
+    "formationAndPerson": { "command": "python -m pytest tests/test_person_understanding_loop.py tests/test_formation_accuracy.py -q", "passed": 44 },
+    "typing": "mypy --strict on changed source/test modules passed after correcting the test's object-to-str annotation"
+  },
+  "host": {
+    "command": "node --test tests/personal-memory-freshness.integration.test.ts tests/personal-memory-correction.integration.test.ts",
+    "passed": 5,
+    "typecheck": "npm run typecheck passed"
+  },
+  "coreFinalCi": {
+    "commit": "3fec305b87b9857324b0db7e1db408993321ac93",
+    "run": "https://github.com/memoweft/memoweft/actions/runs/37951973564",
+    "pythonTests": 1892,
+    "strictTypedModules": 216
+  },
+  "note": "Only focused tests ran locally. Full suites ran in CI. Initial harness schema/account-prefix mistakes and the rejected workflow are retained separately."
+}

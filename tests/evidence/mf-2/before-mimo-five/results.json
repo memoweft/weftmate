@@ -1,0 +1,57 @@
+[
+  {
+    "id": "qa2-01-water",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-X6su2J",
+    "startedAt": "2026-10-09T15:08:00.467Z",
+    "turns": [],
+    "settlements": [],
+    "error": "Error: Invalid scenario: qa2-01-water-1",
+    "endedAt": "2026-10-09T15:08:07.768Z"
+  },
+  {
+    "id": "holdout-time",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-02vTKA",
+    "startedAt": "2026-10-09T15:08:09.142Z",
+    "turns": [],
+    "settlements": [],
+    "error": "Error: Invalid scenario: holdout-time-1",
+    "endedAt": "2026-10-09T15:08:17.868Z"
+  },
+  {
+    "id": "holdout-name",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-W8Sden",
+    "startedAt": "2026-10-09T15:08:19.538Z",
+    "turns": [],
+    "settlements": [],
+    "error": "Error: Invalid scenario: holdout-name-1",
+    "endedAt": "2026-10-09T15:08:28.976Z"
+  },
+  {
+    "id": "holdout-price",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-lHZi77",
+    "startedAt": "2026-10-09T15:08:30.840Z",
+    "turns": [],
+    "settlements": [],
+    "error": "Error: Invalid scenario: holdout-price-1",
+    "endedAt": "2026-10-09T15:08:41.061Z"
+  },
+  {
+    "id": "holdout-address",
+    "model": "mimo",
+    "settledMode": false,
+    "root": "C:/Temp/weftmate-mf2-qHai4T",
+    "startedAt": "2026-10-09T15:08:42.988Z",
+    "turns": [],
+    "settlements": [],
+    "error": "Error: Invalid scenario: holdout-address-1",
+    "endedAt": "2026-10-09T15:08:52.779Z"
+  }
+]
