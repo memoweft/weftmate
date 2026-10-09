@@ -13,7 +13,9 @@
  *    手机段（UI 展示/模型注入走既有感知面）；开关关时观察丢弃（不开不收）。
  */
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, renameSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
+import { readFile, rm } from 'node:fs/promises';
+import { createLatestFileWriter } from './latest-file-writer.mjs';
 import { join } from 'node:path';
 import { getMobilePerceptionEnabled } from './settings.ts';
 
@@ -64,56 +66,50 @@ export function initDevices(opts: { dshHome: string }): DevicesRuntime {
     }
   } catch { observations = []; }
 
-  const readState = (): DeviceStateFile => {
+  const readState = async (): Promise<DeviceStateFile> => {
     try {
-      if (existsSync(stateFile)) {
-        const parsed = JSON.parse(readFileSync(stateFile, 'utf8'));
-        if (parsed && typeof parsed === 'object' && Array.isArray(parsed.devices)) {
-          return parsed as DeviceStateFile;
-        }
+      const parsed = JSON.parse(await readFile(stateFile, 'utf8'));
+      if (parsed && typeof parsed === 'object' && Array.isArray(parsed.devices)) {
+        return parsed as DeviceStateFile;
       }
     } catch { /* 半写/坏文件走重置 */ }
     return { schemaVersion: 1, pairing: null, devices: [] };
   };
 
-  const writeState = (next: DeviceStateFile): void => {
-    try {
-      const text = `${JSON.stringify(next, null, 2)}\n`;
-      writeFileSync(`${stateFile}.tmp`, text, 'utf8');
-      renameSync(`${stateFile}.tmp`, stateFile);
-    } catch { /* 写失败不致命 */ }
+  const writeStateSnapshot = createLatestFileWriter(stateFile);
+  const writeObservationSnapshot = createLatestFileWriter(observationsFile);
+  const writeState = (next: DeviceStateFile): Promise<void> =>
+    writeStateSnapshot(`${JSON.stringify(next, null, 2)}\n`).catch(() => {});
+  const persistObservations = (): Promise<void> =>
+    writeObservationSnapshot(`${JSON.stringify(observations, null, 2)}\n`).catch(() => {});
+  // State rotation and pairing share one queue, avoiding lost async updates.
+  let stateQueue = Promise.resolve();
+  const stateWork = (work: () => Promise<void>): void => {
+    stateQueue = stateQueue.then(work).catch(() => {});
   };
-
-  const persistObservations = (): void => {
-    try {
-      writeFileSync(`${observationsFile}.tmp`, `${JSON.stringify(observations, null, 2)}\n`, 'utf8');
-      renameSync(`${observationsFile}.tmp`, observationsFile);
-    } catch { /* 写失败不致命 */ }
-  };
-
   /** 每 tick：token 缺/过期即轮换；设备与过期配对状态随文件出给插件。 */
-  const tickState = (): void => {
+  const tickState = async (): Promise<void> => {
     if (disposed) return;
-    const state = readState();
+    const state = await readState();
     const now = Date.now();
     if (state.pairing === null || typeof state.pairing.expiresAt !== 'number' || now >= state.pairing.expiresAt) {
       state.pairing = { token: randomBytes(16).toString('hex'), expiresAt: now + PAIRING_TTL_MS };
-      writeState(state);
+      await writeState(state);
     }
   };
 
   /** 消费插件写入的请求（消费即删，防重复）。 */
-  const tickRequests = (): void => {
+  const tickRequests = async (): Promise<void> => {
     if (disposed) return;
     let raw: any = null;
     try {
-      if (existsSync(requestFile)) raw = JSON.parse(readFileSync(requestFile, 'utf8'));
+      raw = JSON.parse(await readFile(requestFile, 'utf8'));
     } catch { return; } // 半写/坏文件下轮再读
     if (!raw || typeof raw.action !== 'string') return;
-    try { rmSync(requestFile, { force: true }); } catch { /* 删不掉下轮再试 */ }
+    try { await rm(requestFile, { force: true }); } catch { /* 删不掉下轮再试 */ }
     if (raw.action === 'pair') {
       const name = cleanText(raw.deviceName, 80) || '未命名设备';
-      const state = readState();
+      const state = await readState();
       const existing = state.devices.find((device) => device.name === name);
       const device = existing ?? { id: randomBytes(8).toString('hex'), name, lastSeenAt: '' };
       device.lastSeenAt = new Date().toISOString();
@@ -121,7 +117,7 @@ export function initDevices(opts: { dshHome: string }): DevicesRuntime {
         device,
         ...state.devices.filter((item) => item.name !== name),
       ].slice(0, 20);
-      writeState(state);
+      await writeState(state);
       return;
     }
     if (raw.action === 'observation') {
@@ -140,15 +136,15 @@ export function initDevices(opts: { dshHome: string }): DevicesRuntime {
         });
       }
       observations = observations.slice(0, MAX_OBSERVATIONS);
-      persistObservations();
+      await persistObservations();
     }
   };
 
-  tickState();
-  tickRequests();
-  stateTimer = setInterval(tickState, 1_000);
+  stateWork(tickState);
+  stateWork(tickRequests);
+  stateTimer = setInterval(() => stateWork(tickState), 1_000);
   stateTimer.unref?.();
-  requestTimer = setInterval(tickRequests, 1_000);
+  requestTimer = setInterval(() => stateWork(tickRequests), 1_000);
   requestTimer.unref?.();
 
   return {
