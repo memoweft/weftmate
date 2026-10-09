@@ -47,7 +47,8 @@ test('device envelope authenticates contents and identity; storage is encrypted 
   if (tampered.ciphertext === envelope.ciphertext) tampered.ciphertext = 'B' + envelope.ciphertext.slice(1);
   await assert.rejects(vault.open(tampered, identity));
   await vault.save(payload); assert.deepEqual(await vault.load(), payload);
-  await vault.clear(); assert.equal((await vault.load()).snapshot, null); vault.close();
+  await vault.clear(); assert.equal((await vault.load()).snapshot, null);
+  await assert.rejects(vault.open(envelope, identity), 'destroyed device key cannot reopen an old envelope'); vault.close();
 });
 
 test('replica filters private, muted, invalid and mixed-currentness sources, and computes removals', async () => {

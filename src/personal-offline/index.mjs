@@ -73,14 +73,19 @@ export async function createOfflineService(context) {
           const snapshot = await memorySnapshot(context.memoryManager, ownerId);
           const model = await cloudModel(ownerId);
           const generation = account.generation;
-          const delta = replicaDelta(snapshot, body.generation === generation ? body.hashes ?? {} : {});
-          let payload = { ...delta, generation, reset: body.generation !== generation,
-            model, recent: await recent(ownerId), control, syncedAt: new Date(context.timestamp()).toISOString() };
-          if (Buffer.byteLength(JSON.stringify(payload)) > REPLICA_LIMITS.bytes) {
-            payload = { ...payload, recent: [], truncated: true };
-            while (Buffer.byteLength(JSON.stringify(payload)) > REPLICA_LIMITS.bytes && payload.items.length) {
-              const removed = payload.items.pop(); delete payload.hashes[removed.id];
-            }
+          const known = body.generation === generation ? body.hashes ?? {} : {};
+          const recentMessages = await recent(ownerId);
+          const metadata = { generation, reset: body.generation !== generation, model, recent: recentMessages,
+            control, syncedAt: new Date(context.timestamp()).toISOString() };
+          let payload = { ...replicaDelta(snapshot, known), ...metadata };
+          // Bound the resulting replica, not just this delta; otherwise small
+          // incremental responses could grow an unbounded on-device snapshot.
+          while (Buffer.byteLength(JSON.stringify({ ...payload, items: snapshot.items })) > REPLICA_LIMITS.bytes) {
+            if (recentMessages.length) recentMessages.pop();
+            else if (snapshot.items.length) snapshot.items.pop();
+            else throw failure('BODY_TOO_LARGE', 413);
+            snapshot.truncated = true;
+            payload = { ...replicaDelta(snapshot, known), ...metadata };
           }
           context.authenticate(request, 'account:manage');
           account.devices[deviceId] = { publicJwk, keyId: hash(publicJwk) };
