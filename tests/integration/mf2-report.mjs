@@ -21,6 +21,9 @@ for (const p of [...files.filter(p => /requests\.jsonl$/.test(p) && !/memory-req
 for (const p of files.filter(p => /baseline-(mimo|lan)\.json$/.test(p))) {
   for (const [i, judgement] of (json(p).directJudgements ?? []).entries()) requests.set(`${p}:${i}`, { id: `${p}:${i}`, usage: judgement.usage ?? null });
 }
+for (const p of files.filter(p => p.endsWith('direct-semantics.json'))) {
+  for (const result of json(p).results) if (result.semantic?.status !== 'skipped') requests.set(`${p}:${result.id}`, { id: `${p}:${result.id}`, usage: result.semantic?.usage ?? null });
+}
 const total = { requests: requests.size, returnedUsage: 0, missingUsage: 0, input: 0, cached: 0, output: 0 };
 for (const { usage } of requests.values()) {
   if (!usage) { total.missingUsage++; continue; }
