@@ -76,7 +76,9 @@ describe('R6-02 桌宠恢复接缝契约（新基座）', () => {
     const preload = readFileSync(new URL('../src/desktop-pet-preload.cjs', import.meta.url), 'utf8');
     assert.match(preload, /loadSpriteAtlas: \(name\) => ipcRenderer\.invoke\('wm:pet-sprite', name\)/);
     const handler = between(main, "ipcMain.handle('wm:pet-sprite'", '// 最大化状态变化');
-    assert.ok(handler.indexOf('event.sender !== desktopPetWin.webContents') < handler.indexOf('readFileSync'));
+    assert.ok(handler.indexOf('event.sender !== desktopPetWin.webContents') < handler.indexOf('await readFileAsync'));
+    assert.match(handler, /await readFileAsync/);
+    assert.doesNotMatch(handler, /readFileSync/);
     assert.match(handler, /if \(name !== 'xingyao'\) return null/);
     assert.match(handler, /join\(import\.meta\.dirname, 'pets', 'assets', name, 'spritesheet\.webp'\)/);
   });
