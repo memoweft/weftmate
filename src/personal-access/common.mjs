@@ -90,6 +90,7 @@ export function validProjectName(value) {
 
 export function publicProject(project) {
   return { projectId: project.projectId, name: project.name, revision: project.revision,
+    instructions: project.instructions ?? '', permission: project.permission ?? 'read-only',
     revoked: project.revoked, createdAt: project.createdAt,
     ...(project.revokedAt ? { revokedAt: project.revokedAt } : {}) };
 }

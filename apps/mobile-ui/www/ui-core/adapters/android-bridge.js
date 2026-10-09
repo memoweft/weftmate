@@ -36,6 +36,8 @@
       if (pathname === '/personal/v1/auth/profile') return call('auth.profile', body);
       if (pathname === '/personal/v1/auth/change-password') return call('auth.changePassword', body);
       if ((row = match(/^\/personal\/v1\/auth\/devices\/([^/]+)$/))) return call(method === 'DELETE' ? 'auth.revokeDevice' : 'auth.renameDevice', { deviceId: decodeURIComponent(row[1]), ...body });
+      if (pathname === '/personal/v1/projects' && method === 'GET') return call('shared.projects.list');
+      if ((row = match(/^\/personal\/v1\/projects\/([^/]+)\/sessions$/)) && method === 'POST') return call('shared.projects.createSession', { projectId: decodeURIComponent(row[1]), ...body });
       if (pathname === '/personal/v1/sessions') {
         const result = await call('shared.sessions.list');
         if (result.source !== 'host' || !Array.isArray(result.sessions)) throw new Error('OPERATION_FAILED');

@@ -1,0 +1,79 @@
+{
+  "desktop": true,
+  "realMiMo": true,
+  "readWriteCommand": true,
+  "outsideRefused": true,
+  "readonlyRefused": true,
+  "removePreservesFiles": true,
+  "mobileWeb": true,
+  "usage": [
+    {
+      "inputTokens": 466,
+      "outputTokens": 46,
+      "cacheReadTokens": 1728
+    },
+    {
+      "inputTokens": 1313,
+      "outputTokens": 110,
+      "cacheReadTokens": 2048
+    },
+    {
+      "inputTokens": 459,
+      "outputTokens": 114,
+      "cacheReadTokens": 3328
+    },
+    {
+      "inputTokens": 829,
+      "outputTokens": 61,
+      "cacheReadTokens": 3776
+    },
+    {
+      "inputTokens": 356,
+      "outputTokens": 58,
+      "cacheReadTokens": 4544
+    },
+    {
+      "inputTokens": 581,
+      "outputTokens": 85,
+      "cacheReadTokens": 4864
+    },
+    {
+      "inputTokens": 271,
+      "outputTokens": 44,
+      "cacheReadTokens": 5440
+    },
+    {
+      "inputTokens": 754,
+      "outputTokens": 91,
+      "cacheReadTokens": 5440
+    },
+    {
+      "inputTokens": 860,
+      "outputTokens": 34,
+      "cacheReadTokens": 5696
+    },
+    {
+      "inputTokens": 2263,
+      "outputTokens": 54
+    },
+    {
+      "inputTokens": 3436,
+      "outputTokens": 112
+    },
+    {
+      "inputTokens": 467,
+      "outputTokens": 116,
+      "cacheReadTokens": 3392
+    },
+    {
+      "inputTokens": 837,
+      "outputTokens": 70,
+      "cacheReadTokens": 3840
+    }
+  ],
+  "movedConversationCwd": true,
+  "nativeFolderPickerBridge": true,
+  "mobileBundleRealHost": true,
+  "mobileBundleGeometryRegression": "passed against synthetic backend after icon-size correction",
+  "memory": "unchanged source/context world; no new project world"
+}

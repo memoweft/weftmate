@@ -86,7 +86,8 @@ globalThis.WeftUiCore.factories.approvals = (core, effects, environment) => {
         if (!core.sessionIdPattern.test(sessionId))
             return;
         effects.closeResourcePreview();
-        const linked = core.phoneConversations().find((record) => core.phoneBinding(record.id)?.sessionId === sessionId);
+        const linked = !core.state.sessions.find(item => item.sessionId === sessionId)?.projectId &&
+            core.phoneConversations().find((record) => core.phoneBinding(record.id)?.sessionId === sessionId);
         if (linked) {
             core.selectPhoneConversation(linked.id);
             return;
