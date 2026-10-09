@@ -190,7 +190,7 @@ public enum APIFailure: Error, Sendable, Equatable, LocalizedError {
         case .server(402, "USAGE_LIMIT_REACHED"): "本月用量已达到上限，云端模型请求已暂停。请在设置 → 用量提高本月上限，或切换本地模型。"
         case .server(409, _): "当前记录有冲突，请刷新后重试。"
         case .server(_, "DEVICE_LIMIT"): "已登录设备达到上限，请先管理已有设备。"
-        case .server(_, let code): "服务器暂时无法完成操作（\(code)）。"
+        case .server(_, let code): "服务器暂时无法完成操作（\(OperationNames.text(code))）。"
         case .invalidResponse: "服务器响应格式不符合接口约定。"
         case .responseTooLarge: "服务器响应超过读取上限。"
         case .credentialStorage: "无法安全保存登录凭据，请检查钥匙串访问。"

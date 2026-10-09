@@ -61,7 +61,9 @@ final class A9PolishUITests: XCTestCase {
         keep(app, "detail", theme)
         if !before {
             try tap(app.buttons["查看原始数据"])
-            try expect(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "toolCallId")).firstMatch)
+            try expect(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "参数")).firstMatch)
+            XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "toolCallId")).firstMatch.exists)
+            XCTAssertFalse(app.staticTexts.matching(NSPredicate(format: "label CONTAINS %@", "arguments")).firstMatch.exists)
             keep(app, "raw", theme); try tap(app.buttons["查看原始数据"])
         }
         try tap(step); try tap(group)

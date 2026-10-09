@@ -49,7 +49,7 @@ struct HealthSettingsView: View {
             }
             Section("每日摘要") {
                 if let summary = model.latest {
-                    Text(summary.date)
+                    Text(DeviceDateText.day(summary.date))
                     if let sleep = summary.sleep { Text("睡眠 \(sleep.totalMinutes / 60, specifier: "%.1f") 小时") }
                     ForEach(summary.metrics.keys.sorted(), id: \.self) { key in
                         if key != "sleep", let metric = summary.metrics[key] {
@@ -63,7 +63,7 @@ struct HealthSettingsView: View {
                         }
                     }
                     if let count = summary.workoutCount { Text("锻炼 \(count) 次 · \(summary.workoutMinutes ?? 0, specifier: "%.0f") 分钟") }
-                    Text("汇总于 \(summary.summarizedAt)").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
+                    Text("汇总于 \(DeviceDateText.timestamp(summary.summarizedAt))").font(AppleTokens.Fonts.caption).foregroundStyle(AppleTokens.Styles.secondary)
                 } else { Text("还没有健康摘要") }
                 Button("更新摘要") { Task { await model.refresh(app: app) } }.disabled(model.busy || model.uploading)
                 if model.busy { ProgressView("正在读取…") }
