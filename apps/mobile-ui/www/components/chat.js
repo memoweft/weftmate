@@ -349,7 +349,7 @@ async function removeAttachment(attachmentId){if(state.busy||state.transitionPen
 
 function placeModelMenu(){globalThis.WeftPopover.position($('model-popover'),$('model-button'))}
 
-function updateComposer(){uiCore.syncMobileIdentity();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
+function updateComposer(){uiCore.syncMobileIdentity();mobileMessageActions?.refresh();const view=uiCore.mobile.composerState($('draft').value);reportDraftState();
   renderQueuedTasks();
   const button=$('send-button'), stop=view.sendHidden;
   globalThis.WeftMobileMotion?.changed(button,String(stop),'160ms');

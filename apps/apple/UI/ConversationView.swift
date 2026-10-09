@@ -99,6 +99,10 @@ struct ConversationView: View {
     #endif
     @State private var showingSessionActions = false
     @State private var deleteAfterActions = false
+    @State private var importScope: AppleUXScope?
+    @State private var showingPhotos = false
+    @State private var showingCamera = false
+    @State private var expandedSubtasks = false
     @State private var importingAttachments = false
     @State private var photoSelection: [PhotosPickerItem] = []
     @State private var pendingAdoptionProfile: String?
@@ -134,12 +138,13 @@ struct ConversationView: View {
         }
         .fileImporter(isPresented: $importingAttachments, allowedContentTypes: [.item], allowsMultipleSelection: true) { result in
             if case .success(let files) = result {
-                let epoch = model.accountEpoch
-                Task { await model.addAttachments(files, to: conversation, accountEpoch: epoch) }
+                guard let scope = importScope, scope == model.uxScope else { return }
+                Task { await model.addAttachments(files, to: conversation, accountEpoch: scope.epoch) }
             }
         }
         .onChange(of: photoSelection) { _, selection in
-            let epoch = model.accountEpoch
+            guard let scope = importScope, scope == model.uxScope else { photoSelection = []; return }
+            let epoch = scope.epoch
             Task {
                 var files: [URL] = []
                 defer { files.forEach { try? FileManager.default.removeItem(at: $0) }; photoSelection = [] }
@@ -150,10 +155,12 @@ struct ConversationView: View {
                         let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + "." + ext)
                         try data.write(to: file); files.append(file)
                     }
+                    guard scope == model.uxScope else { return }
                     await model.addAttachments(files, to: conversation, accountEpoch: epoch)
-                } catch { attachmentInputError = "图片未添加，请重试。" }
+                } catch { if scope == model.uxScope { attachmentInputError = "图片未添加，请重试。" } }
             }
         }
+        .photosPicker(isPresented: $showingPhotos, selection: $photoSelection, maxSelectionCount: 4, matching: .images)
         .confirmationDialog("上一条本地消息是否已送达无法确定。确认后继续。", isPresented: $confirmingLocalTurn, titleVisibility: .visible) {
             Button("确认并继续") {
                 guard let profile = pendingAdoptionProfile else { return }
@@ -164,13 +171,27 @@ struct ConversationView: View {
             Button("取消", role: .cancel) { pendingAdoptionProfile = nil }
         }
         #if os(iOS)
+        .fullScreenCover(isPresented: $showingCamera) {
+            ComposerCamera { file in
+                showingCamera = false
+                guard let file else { return }
+                guard let scope = importScope, scope == model.uxScope else { try? FileManager.default.removeItem(at: file); return }
+                Task { await model.addAttachments([file], to: conversation, accountEpoch: scope.epoch); try? FileManager.default.removeItem(at: file) }
+            }.ignoresSafeArea()
+        }
         .fullScreenCover(isPresented: $showingPreview) { attachmentPreview }
         .fullScreenCover(isPresented: $resources.visible) { ConversationResourcesPanel(app: model, resources: resources) }
         #endif
-        .onChange(of: model.accountEpoch) { _, _ in showingSessionActions = false; closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
-        .onChange(of: conversation.id) { _, _ in closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: model.accountEpoch) { _, _ in importingAttachments = false; showingCamera = false; showingPhotos = false; importScope = nil; cancelScreenshot(); showingSessionActions = false; closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
+        .onChange(of: conversation.id) { _, _ in cancelScreenshot(); closePreview(); resources.clear(); pendingAdoptionProfile = nil; confirmingLocalTurn = false }
         .onChange(of: resources.selected) { _, _ in resourcePopover = false }
-        .onDisappear { closePreview() }
+        .onDisappear { closePreview(); cancelScreenshot() }
+    }
+
+    private func cancelScreenshot() {
+        #if os(macOS)
+        ComposerMedia.cancelScreenshot()
+        #endif
     }
 
     private var attachmentPreview: some View {
@@ -274,6 +295,9 @@ struct ConversationView: View {
               .modifier(ConversationScrollTracking(visibleID: $visibleMessageID, follow: $follow))
             .background(GeometryReader { geometry in AppleTokens.Colors.clear.preference(key: ConversationViewportHeight.self, value: geometry.size.height) })
             .onPreferenceChange(ConversationViewportHeight.self) { value in viewportHeight = value; if follow.following { proxy.scrollTo("latest", anchor: .bottom) } }
+        .onChange(of: model.subtaskStepTarget) { _, seq in
+            if let seq, let entry = TimelineProjection.conversationEntries(model.timeline.events).first(where: { $0.steps.contains { $0.seq == seq } }) { proxy.scrollTo(entry.id, anchor: .center) }
+        }
             .onChange(of: model.preparingMessages) { _, _ in if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) } }
             .onChange(of: conversation.processing) { _, _ in waitingSince = Date() }
             .onPreferenceChange(ConversationContentHeight.self) { _ in if follow.contentChanged() { proxy.scrollTo("latest", anchor: .bottom) } }
@@ -371,6 +395,7 @@ struct ConversationView: View {
         }
         .task(id: conversation.id) {
             await model.open(conversation)
+            await model.refreshThinking(conversation)
             #if DEBUG
             let args = ProcessInfo.processInfo.arguments
             if args.contains("--ui-testing"), let index = args.firstIndex(of: "--a5-review-scene"), args.indices.contains(index + 1) {
@@ -489,13 +514,39 @@ struct ConversationView: View {
                 }.font(AppleTokens.Fonts.caption)
             }
             if let notice = model.queueNotice { Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted) }
+            let subtasks = ComposerSubtasks.merge(model.timeline.events)
+            if subtasks.contains(where: { $0.state == "running" }) {
+                VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                    Button { expandedSubtasks.toggle() } label: {
+                        WeftLabel("\(subtasks.count) 个子任务", icon: expandedSubtasks ? "collapse" : "right", size: 16)
+                            .frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
+                    }.buttonStyle(.plain).accessibilityIdentifier("composerSubtasks")
+                        .accessibilityValue(expandedSubtasks ? "已展开" : "已收起")
+                    if expandedSubtasks {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
+                                ForEach(subtasks, id: \.stepSeq) { row in
+                                    Button { model.subtaskStepTarget = row.stepSeq } label: {
+                                        HStack { Text(row.name); Spacer(); Text(row.stateLabel); TimelineView(.periodic(from: Date(), by: 1)) { clock in Text(row.duration(at: clock.date)).foregroundStyle(Weave.muted) } }
+                                        .frame(minHeight: AppleTokens.Space.p44).contentShape(Rectangle())
+                                    }.buttonStyle(.plain).accessibilityIdentifier("subtask." + row.id)
+                                }
+                            }
+                        }.frame(maxHeight: AppleTokens.Space.p28 * 6)
+                    }
+                }.font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted)
+            }
+            if model.thinking.confirmed?.enabled == true {
+                WeftLabel("深入思考已开启", icon: "model", size: 16).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("thinkingMarker")
+            }
+            if let error = model.thinkingError { Text(error).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.danger) }
             if model.tasksAvailable(conversation) { ConversationApprovalBar(model: interactions, events: model.timeline.events) }
             else { Text(ProjectPresentation.restrictedNotice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("restrictedSessionNotice") }
             if let notice = conversation.projectNotice ?? model.sessionProjectNotices[conversation.id] ?? conversation.projectName.map({ "项目：" + $0 }) {
                 Text(notice).font(AppleTokens.Fonts.caption).foregroundStyle(Weave.muted).accessibilityIdentifier("projectNotice")
             }
             VStack(alignment: .leading, spacing: AppleTokens.Space.p8) {
-                TextField("向 WeftMate 说说你的目标", text: draft, axis: .vertical)
+                TextField(conversation.running ? (model.runningMessageMode == .queue ? "排队到下一条…" : "引导当前回复…") : "向 WeftMate 说说你的目标", text: draft, axis: .vertical)
                     .lineLimit(2...6).textFieldStyle(.plain).font(AppleTokens.Fonts.body)
                     .focused($draftFocused).padding(.horizontal, AppleTokens.Space.p9).padding(.top, AppleTokens.Space.p7)
                     .disabled(!model.canEditDraft(for: conversation))
@@ -527,22 +578,33 @@ struct ConversationView: View {
                 }
                 HStack(spacing: AppleTokens.Space.p4) {
                     Menu {
-                        Button("添加文件或图片") { importingAttachments = true }
-                        #if DEBUG
-                        if ProcessInfo.processInfo.arguments.contains("--ui-testing") && ProcessInfo.processInfo.arguments.contains("--apple-contract-fixture") {
-                            Button("添加测试文件") {
-                                if let file = try? AppleContractUIFixture.selectedFile() {
-                                    Task { await model.addAttachments([file], to: conversation, accountEpoch: accountEpoch) }
-                                }
-                            }
-                        }
-                        #endif
-                        PhotosPicker(selection: $photoSelection, maxSelectionCount: 4 - (model.attachmentDrafts[key]?.count ?? 0), matching: .images) {
-                            WeftLabel("从照片选择", icon: "image")
-                        }
                         #if os(macOS)
-                        Button("粘贴图片或文件") { pasteAttachments(accountEpoch: accountEpoch) }
+                        Button("添加文件") { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
+                        Button("区域截图") { addNativeMedia(screenshot: true) }.accessibilityIdentifier("composer.screenshot")
+                        Button("粘贴剪贴板图片") { addNativeMedia(screenshot: false) }.accessibilityIdentifier("composer.clipboard")
+                        #else
+                        Button("相机") {
+                            importScope = model.uxScope
+                            if UIImagePickerController.isSourceTypeAvailable(.camera) { showingCamera = true }
+                            else { attachmentInputError = "相机暂不可用，可从照片或文件添加。" }
+                        }.accessibilityIdentifier("composer.camera")
+                        Button("照片") { importScope = model.uxScope; showingPhotos = true }.accessibilityIdentifier("composer.photos")
+                        Button("文件") { importScope = model.uxScope; importingAttachments = true }.accessibilityIdentifier("composer.file")
                         #endif
+                        #if DEBUG
+                        if ProcessInfo.processInfo.arguments.contains("--ui-testing"), ProcessInfo.processInfo.arguments.contains("--a15-synthetic-media") {
+                            Button("添加合成文件") {
+                                let scope = model.uxScope
+                                if let file = try? AppleContractUIFixture.selectedFile() { Task { await model.addAttachments([file], to: conversation, accountEpoch: scope.epoch) } }
+                            }.accessibilityIdentifier("composer.syntheticFile")
+                        }
+                        #endif
+                        if model.thinking.confirmed?.supported == true {
+                            Button { Task { await model.refreshThinking(conversation, enabled: model.thinking.confirmed?.enabled != true) } } label: {
+                                Label("深入思考", image: "wm-model")
+                            }.disabled(model.thinking.pending).accessibilityValue(model.thinking.confirmed?.enabled == true ? "已开启" : "已关闭")
+                                .accessibilityIdentifier("composer.thinking")
+                        }
                     } label: { WeftIcon("plus").frame(width: 44, height: 44) }
                     #if os(macOS)
                     .menuIndicator(.hidden).menuStyle(.borderlessButton)
@@ -657,16 +719,16 @@ struct ConversationView: View {
     }
 
     #if os(macOS)
-    private func pasteAttachments(accountEpoch: UUID) {
-        let pasteboard = NSPasteboard.general
-        if let urls = pasteboard.readObjects(forClasses: [NSURL.self], options: [.urlReadingFileURLsOnly: true]) as? [URL], !urls.isEmpty {
-            Task { await model.addAttachments(urls, to: conversation, accountEpoch: accountEpoch) }
-        } else if let data = pasteboard.data(forType: .tiff) {
-            let file = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString + ".tiff")
+    private func addNativeMedia(screenshot: Bool) {
+        let scope = model.uxScope
+        Task {
             do {
-                try data.write(to: file)
-                Task { await model.addAttachments([file], to: conversation, accountEpoch: accountEpoch); try? FileManager.default.removeItem(at: file) }
-            } catch { attachmentInputError = "图片未添加，请重试。" }
+                let file = try await (screenshot ? ComposerMedia.screenshot() : ComposerMedia.clipboardImage())
+                guard let file else { if !screenshot, scope == model.uxScope { attachmentInputError = "剪贴板中没有图片。" }; return }
+                defer { try? FileManager.default.removeItem(at: file) }
+                guard scope == model.uxScope else { return }
+                await model.addAttachments([file], to: conversation, accountEpoch: scope.epoch)
+            } catch { if scope == model.uxScope { attachmentInputError = "图片未添加，请重试。" } }
         }
     }
     #endif

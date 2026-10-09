@@ -414,7 +414,7 @@ async function loadMemorySnapshot(target,token){try{
       (canList&&!Number.isSafeInteger(statusResult.worldRevision))||
       !['ready','degraded','disabled','unavailable'].includes(statusResult.state)||!statusResult.capabilities||typeof statusResult.capabilities!=='object'){
       throw new Error('MEMORY_INVALID_RESPONSE')}
-  const memory=state.memory;memory.boundOwnerId=statusResult.ownerId;memory.boundScope=token.scope;
+  const memory=state.memory;memory.healthStatus=statusResult;memory.boundOwnerId=statusResult.ownerId;memory.boundScope=token.scope;
     memory.statusWorldRevision=statusResult.worldRevision;memory.worldRevision=null;memory.statusState=statusResult.state;memory.reasonCode=statusResult.reasonCode||'';
     memory.capabilities={list:statusResult.capabilities.list===true,source:statusResult.capabilities.source===true,
       correct:statusResult.capabilities.correct===true,mute:statusResult.capabilities.mute===true,

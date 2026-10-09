@@ -6,6 +6,7 @@
  * second DSH runtime and it does not create a fictitious `session.resume` RPC.
  */
 
+import { boundaryForCompletedTurn } from '../../plugins/weftmate-personal-memory.mjs'
 import { createHash } from 'node:crypto'
 import { describeTool, toolArguments } from './timeline.mjs'
 import { sourceRange } from './source-range.mjs'
@@ -98,14 +99,14 @@ export function contextUsage(value) {
 }
 const HISTORY_PAGE_LIMIT = 200
 const HISTORY_RESPONSE_BYTES_LIMIT = 900_000
-function safeHistoryText(value) {
+function safeHistoryText(value, limit = HISTORY_TEXT_LIMIT) {
   const raw = String(value ?? '')
-  const text = raw.slice(0, HISTORY_TEXT_LIMIT)
+  const text = raw.slice(0, limit)
     .replace(/(?:[A-Za-z]:\\|\\\\)[^\s"'<>]+/g, '[local path]')
     .replace(/(^|[\s(])\/(?:[^\s"'<>/]+\/)*[^\s"'<>/]+/g, '$1[local path]')
     .replace(/\bBearer\s+[^\s,;]+/gi, 'Bearer [redacted]')
     .replace(/(?:sk-[A-Za-z0-9_-]{8,}|(?:api[_-]?key|token|secret|password)\s*[:=]\s*[^\s,;]+)/gi, '[redacted]')
-  return { text, ...(raw.length > HISTORY_TEXT_LIMIT ? { truncated: true } : {}) }
+  return { text, ...(raw.length > limit ? { truncated: true } : {}) }
 }
 function messageText(message, includeHash = false) {
   if (!Array.isArray(message?.content)) return null
@@ -545,6 +546,26 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       owned.set(value.sessionId, { lastSeq: -1, cancelRequested: false })
       return value
     },
+    async memoryBoundaries(sessionId, afterSeq = -1) {
+      if (!Number.isSafeInteger(afterSeq) || afterSeq < -1) throw new TypeError('invalid memory cursor')
+      const listed = await unwrap(await client.sessions.list({}), 'list')
+      const item = (listed?.items ?? []).find(item => sessionIdOf(item) === sessionId)
+      requireOrdinarySummary(item, sessionId)
+      const events = (await logFor(sessionId)).map(row => row.event ?? row)
+      const session = { id: sessionId, header: { agentPreset: item.agentPreset }, events }
+      const items = []
+      for (const event of events) {
+        if (event.seq <= afterSeq || event.type !== 'turn/end') continue
+        const boundary = boundaryForCompletedTurn(session, event)
+        if (!boundary) continue
+        const start = events.findLastIndex(row => row.seq < event.seq && row.type === 'turn/start' && row.data?.turn === event.data.turn)
+        const sourceSeqs = events.slice(start + 1).filter(row => row.seq < event.seq && ['user/message', 'assistant/message'].includes(row.type)).map(row => row.seq)
+        items.push({ turn: event.data.turn, endSeq: event.seq, sourceSeqs,
+          at: Number.isFinite(Number(event.time)) && Number(event.time) > 0 ? new Date(Number(event.time)).toISOString() : null, boundary })
+        if (items.length === 50) return { items, nextSeq: event.seq, hasMore: event.seq < events.at(-1)?.seq }
+      }
+      return { items, nextSeq: events.at(-1)?.seq ?? afterSeq, hasMore: false }
+    },
     async historyPage(sessionId, options = {}) {
       const { afterSeq, beforeSeq, limit = 50 } = options
       if (typeof sessionId !== 'string' || !sessionId) throw new TypeError('sessionId is required')
@@ -567,6 +588,14 @@ export function createDshSessionAdapter(client, { readLog, lifecycle } = {}) {
       requireOrdinarySummary((listed?.items ?? []).find(item => sessionIdOf(item) === sessionId), sessionId)
       const entries = await logFor(sessionId), index = lowerBound(entries, seq)
       const event = entries[index]?.event ?? entries[index]
+      const messageType = event?.seq === seq ? projectHistoryEvent(event)?.type : null;
+      if (['user.message', 'assistant.message'].includes(messageType)) {
+        const message = event.data?.message ?? event.data;
+        const raw = (message.content ?? []).filter(part => part.type === 'text').map(part => part.text).join('');
+        return { seq, type: messageType, text: safeHistoryText(raw, Infinity).text,
+          ...(messageType === 'user.message' ? { messageHash: createHash('sha256').update(raw, 'utf8').digest('hex'),
+            receiptId: event.data?.source?.rpcId } : {}) };
+      }
       if (event?.seq !== seq || !['tool/call', 'tool/result', 'approval/asked', 'approval/decided'].includes(event.type))
         throw new DshAdapterError('session-not-found', 'history.detail')
       const call = event.type === 'tool/call' ? event : relatedCall(entries, index, callIndex(sessionId, entries))

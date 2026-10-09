@@ -163,6 +163,7 @@ class HybridActivity : Activity() {
     private var pendingSpeech: Pair<SpeechAttempt, Int>? = null
     private var pendingAvatarScope: String? = null
     private var pendingAvatarEpoch = 0L
+    @Volatile private var pendingConversationExport: Pair<Long, ByteArray>? = null
     @Volatile private var pendingAttachment: AttachmentPickAttempt? = null
     @Volatile private var pendingArtifactSave: ArtifactSaveAttempt? = null
     @Volatile private var pendingOriginalSave: OriginalSaveAttempt? = null
@@ -305,7 +306,7 @@ class HybridActivity : Activity() {
             val request = try { JSONObject(raw) } catch (_: Exception) { return@addWebMessageListener }
             val id = request.optString("id")
             val method = request.optString("method")
-            if (!method.startsWith("offline.") && raw.length > 128 * 1024) return@addWebMessageListener
+            if (!method.startsWith("offline.") && method !in setOf("conversation.export", "clipboard.copy") && raw.length > 128 * 1024) return@addWebMessageListener
             if (!id.matches(Regex("[A-Za-z0-9_-]{1,80}"))) return@addWebMessageListener
             if (!method.matches(Regex("[A-Za-z.]{1,64}"))) {
                 respond(reply, id, false, JSONObject().put("code", "INVALID_REQUEST"))
@@ -1211,9 +1212,32 @@ class HybridActivity : Activity() {
             }
             JSONObject().put("requested", android.os.Build.VERSION.SDK_INT >= 33)
         }
+        "conversation.export" -> {
+            val mime = params.getString("contentType")
+            require(mime in setOf("text/markdown", "image/png"))
+            val name = params.getString("name")
+            require(name.length in 1..120 && !name.contains('/') && !name.contains('\\'))
+            val bytes = android.util.Base64.decode(params.getString("data"), android.util.Base64.DEFAULT)
+            val attempt = Pair(accountEpoch.get(), bytes)
+            synchronized(this) {
+                if (pendingConversationExport != null) throw ApiFailure(409, "EXPORT_IN_PROGRESS")
+                pendingConversationExport = attempt
+            }
+            runOnUiThread {
+                if (accountEpoch.get() != attempt.first || accountTransition.get()) {
+                    pendingConversationExport = null
+                } else try {
+                    @Suppress("DEPRECATION")
+                    startActivityForResult(Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                        addCategory(Intent.CATEGORY_OPENABLE); type = mime
+                        putExtra(Intent.EXTRA_TITLE, name)
+                    }, 4971)
+                } catch (_: Exception) { pendingConversationExport = null }
+            }
+            JSONObject().put("pending", true)
+        }
         "clipboard.copy" -> {
             val value = params.getString("text")
-            require(value.length <= 32_768)
             val done = CountDownLatch(1)
             val failure = AtomicReference<Exception?>()
             runOnUiThread {
@@ -2222,6 +2246,23 @@ class HybridActivity : Activity() {
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
         if (closed.get()) return
+        if (requestCode == 4971) {
+            val attempt = pendingConversationExport ?: return
+            pendingConversationExport = null
+            if (resultCode != RESULT_OK || data?.data == null) return
+            val uri = data.data!!
+            try { attachmentWorker.execute {
+                if (accountEpoch.get() != attempt.first || accountTransition.get() || closed.get()) return@execute
+                try {
+                    contentResolver.openOutputStream(uri, "w")?.use { it.write(attempt.second) }
+                        ?: throw ApiFailure(500, "EXPORT_FAILED")
+                    emitForAccount(attempt.first, "conversation.exported", JSONObject().put("saved", true))
+                } catch (_: Exception) {
+                    emitForAccount(attempt.first, "conversation.exported", JSONObject().put("saved", false))
+                }
+            } } catch (_: RejectedExecutionException) { }
+            return
+        }
         if (requestCode == ORIGINAL_SAVE_REQUEST) {
             val attempt = pendingOriginalSave ?: return
             pendingOriginalSave = null

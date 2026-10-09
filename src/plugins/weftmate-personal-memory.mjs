@@ -107,7 +107,7 @@ export function boundaryForCompletedTurn(session, event) {
     const assistant = entry.type === 'assistant/message';
     if (!user && !assistant) continue;
     const text = contentText(user ? entry.data?.content : entry.data?.message?.content);
-    if (!text || text.length > 16_384) continue;
+    if (!text.trim()) continue;
     sourceMessages.push({ role: user ? 'user' : 'assistant', content: text,
       source_ref: `source:${sourceMessages.length}`,
       ...(typeof (user ? entry.data?.id : entry.data?.message?.id) === 'string'

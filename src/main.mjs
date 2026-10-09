@@ -1681,39 +1681,43 @@ async function bootstrap() {
           ? { ...proof, credential: true } : null;
       } };
   }
-  function memoryProcessingRouteForSession(ownerId, sessionId) {
+  function memoryBackgroundProfile(ownerId, boundProfileId = null) {
     if (!personalAccessService || !personalMemoryRuntimeConfig) return null;
     const profiles = settingsMod.listModelProfiles().profiles;
-    let boundProfileId = null;
-    if (sessionId !== null) {
-      const binding = personalAccessService.ownerForSession(sessionId);
-      if (!binding || binding.ownerId !== ownerId) return null;
-      const described = { agentPreset: binding.origin === 'shared-chat'
-        ? 'personal-shared-chat' : binding.origin === 'personal-remote' ? 'personal-remote' : null };
-      boundProfileId = settingsMod.sessionModelBinding(sessionId);
-      const destination = memoryRecallDestination({ binding, described, boundProfileId,
-        profiles, access: memoryPolicyAccess(), hasCredential: hasProfileCredential });
-      if (!destination.allowed) return null;
-    }
-    const backgroundProfileId = personalAccessService.backgroundModelProfile(ownerId);
-    const selected = selectBackgroundProfile({ explicit: backgroundProfileId, bound: boundProfileId,
+    return selectBackgroundProfile({ explicit: personalAccessService.backgroundModelProfile(ownerId), bound: boundProfileId,
       current: personalAccessService.currentChatModelProfile(ownerId), profiles,
       allowed: id => personalAccessService.canUseModelProfile(ownerId, id, 'new') });
+  }
+  function memoryProcessingRouteForSession(ownerId, sessionId) {
+    const binding = sessionId === null ? null : personalAccessService?.ownerForSession(sessionId);
+    if (binding && binding.ownerId !== ownerId) return null;
+    const selected = memoryBackgroundProfile(ownerId, binding?.modelProfileId);
     hostLog.write('background.route', { profileId: selected?.id, sessionId: sessionId ?? undefined, configured: !!selected });
-    if (!selected || !personalAccessService.canUseModelProfile(ownerId, selected.id, 'new')) return null;
+    if (!selected) return null;
     const key = credentialForModelProfile(selected);
-    return key ? { profileId: selected.id, baseUrl: modelScheduler.memoryBaseUrl(selected.id, ownerId, sessionId),
+    if (!key) return null;
+    // One local worker survives same-tier model switches. The private scheduler
+    // resolves this owner's currently authorized local model on every attempt.
+    if (memoryRecallModelTier(selected) === 'local') return {
+      profileId: `owner-local-${ownerId}`, baseUrl: modelScheduler.memoryBaseUrl('current-local', ownerId, sessionId),
+      model: '@current', modelTier: 'local', routeFingerprint: null, credential: modelScheduler.memoryCredential(ownerId),
+    };
+    return { profileId: selected.id, baseUrl: modelScheduler.memoryBaseUrl(selected.id, ownerId, sessionId),
       model: selected.model, modelTier: memoryRecallModelTier(selected),
       routeFingerprint: personalAccessService.privateAccountModelProof(ownerId, selected.id)?.routeFingerprint ?? null,
-      credential: key } : null;
+      credential: key };
   }
   const localModelFlag = process.argv.find(arg => arg.startsWith('--local-model-config='));
   const localModelController = localModelFlag
     ? createLocalModelController(localModelFlag.slice('--local-model-config='.length)) : null;
   modelScheduler = await createModelScheduler({
     onEvent: (event, data) => hostLog.write(event, data),
+    memoryProfileFor: ownerId => {
+      const profile = memoryBackgroundProfile(ownerId);
+      return profile && memoryRecallModelTier(profile) === 'local' ? profile : null;
+    },
     backgroundReady: profile => backgroundModelReady(profile, { credentialFor: credentialForModelProfile }),
-    beginUsage: input => input.sessionId && !personalAccessService?.ownerForSession(input.sessionId)
+    beginUsage: input => input.sessionId && !input.ownerId && !personalAccessService?.ownerForSession(input.sessionId)
       ? null : personalAccessService?.beginUsage(input),
     finishUsage: input => personalAccessService?.finishUsage(input),
     isIdle: async () => !personalAccessService?.hasUnissuedDshCommands?.() &&
@@ -1797,17 +1801,14 @@ async function bootstrap() {
       if (request.action === 'recall' && !memoryPolicy.recall) return { state: 'withheld', reasonCode: 'RECALL_DISABLED', memoryPolicy };
       if (request.action === 'ingest') {
         const boundary = assertOwnerBoundBoundary(request.sessionId, request.boundary);
-        if (!memoryProcessingRouteForSession(binding.ownerId, request.sessionId)) {
-          throw Object.assign(new Error('memory model destination unavailable'),
-            { code: 'MEMORY_DESTINATION_BLOCKED' });
-        }
         personalMemoryIpc.ingestRequests++;
         writeHostState();
-        return personalMemoryManager.ingest(binding.ownerId, boundary);
+        return personalAccessService.captureMemoryTurn(binding.ownerId, request.sessionId, request.turn, boundary);
       }
       // DSH is awaiting this pre-step IPC. Calling its session/model gateway here
       // can re-enter the same active turn, so use the host's durable route only.
-      if (!memoryProcessingRouteForSession(binding.ownerId, request.sessionId)) {
+      if (!memoryRecallDestination({ binding, described, boundProfileId: settingsMod.sessionModelBinding(request.sessionId),
+        profiles: settingsMod.listModelProfiles().profiles, access: memoryPolicyAccess(), hasCredential: hasProfileCredential }).allowed) {
         personalMemoryIpc.recallReplies++;
         writeHostState();
         return { state: 'withheld', reasonCode: 'MEMORY_DESTINATION_BLOCKED', memoryPolicy };
@@ -3012,6 +3013,13 @@ async function bootstrap() {
       },
       processingRoute: (ownerId, sessionId) => memoryProcessingRouteForSession(ownerId, sessionId),
       defaultProcessingRoute: ownerId => memoryProcessingRouteForSession(ownerId, null),
+      retainLocalWorker: true,
+      processingHealth: async ownerId => {
+        const route = memoryProcessingRouteForSession(ownerId, null);
+        if (!route) return 'unavailable';
+        const profile = memoryBackgroundProfile(ownerId);
+        return await backgroundModelReady(profile, { credentialFor: credentialForModelProfile }) ? 'ready' : 'waiting';
+      },
     });
   }
   const personalDesktopTask = accessPort === null ? null : createPersonalDesktopTask();
@@ -3338,6 +3346,8 @@ async function bootstrap() {
                 host: { state: runtimeOrigin ? 'ready' : 'unavailable', version: appVersion,
                   lastError: sessionReferenceScan.state === 'failed' ? 'REFERENCE_SCAN_FAILED' : null, canRestart: true },
                 memory: { state: memory.state, version: memory.version ?? null,
+                  reasonCode: memory.reasonCode ?? null, pendingBoundaryCount: memory.pendingBoundaryCount ?? null,
+                  pendingFormationCount: memory.pendingFormationCount ?? null, failedFormationCount: memory.failedFormationCount ?? null,
                   lastError: memory.lastFailureCode ?? memory.reasonCode ?? null, canRestart: !!personalMemoryManager },
                 queue: modelScheduler.queue.status() };
             },

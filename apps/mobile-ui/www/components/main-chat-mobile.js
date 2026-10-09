@@ -16,6 +16,7 @@
   const view = {
     mobile:true,userScrolling:()=>performance.now()-scrollGestureAt<400, byId:id=>id==='chat-intro'?intro:id==='load-older'?older:id==='transcript'?transcript:$(ids[id]||id), element:el,
     toast, readMessageDraft:()=>$('draft').value, closeAttachmentMenu,
+    bindMainMessage:(row,event)=>{row.querySelector('.message-tools')?.remove();mobileMessageActions?.bind(row,event,event.sourceRef?.sessionId);},
     historyNotice:text=>{notice.textContent=text;notice.hidden=!text;},
     get conversationScroll(){return ensureConversationScroll();},
     paintHistoryMessages(events,target){for(const event of events){

@@ -80,6 +80,7 @@ globalThis.WeftUiComponents.factories.mainChat = (core, ui) => {
             if (ui.mobile) { row.setAttribute('role','group');row.setAttribute('aria-label',`${spec.event.type==='user.message'?'我的消息':'助手消息'}：${Array.from(spec.event.data?.text||'附件').slice(0,80).join('')}`); }
             const temporary = ui.element('ol'); ui.paintHistoryMessages([spec.event], temporary); const message = temporary.firstElementChild;
             row.replaceChildren(); if (message) { row.className += ' ' + message.className; row.append(...message.childNodes); }
+            ui.bindMainMessage?.(row, spec.event);
             const complete = !core.state.mainChat.running || spec.event.sourceRef?.sessionId !== core.state.mainChat.activeSessionId || spec.event.type === 'user.message' || spec.event.eventId !== rows.filter(item => item.kind === 'message').at(-1)?.key;
             if (complete && core.supportsChat('sideChats')) {
                 const menu = ui.element('details', 'chat-message-menu'), summary = ui.element('summary'); summary.setAttribute('aria-label', '消息菜单'); summary.append(WeftIcons.create('more', 16));
